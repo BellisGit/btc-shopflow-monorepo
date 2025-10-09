@@ -1,0 +1,11 @@
+{
+  "unocss.root": ".",
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "files.eol": "\n",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
+}
