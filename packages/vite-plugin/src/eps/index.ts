@@ -11,9 +11,6 @@ import type { EpsPluginOptions } from './types';
 export function epsPlugin(options: EpsPluginOptions): Plugin {
   const { epsUrl, outputDir = 'build/eps' } = options;
 
-  // 缓存 EPS 数据（用于虚拟模块和 HMR）
-  let epsData: any = null;
-
   return {
     name: 'vite-plugin-eps',
 
@@ -27,10 +24,6 @@ export function epsPlugin(options: EpsPluginOptions): Plugin {
 
         // 生成代码文件
         await generateEps(apiMeta, outputDir);
-
-        // 缓存数据用于虚拟模块（后续可用于 HMR）
-        epsData = apiMeta;
-        console.log('[EPS] EPS 数据已缓存');
 
         console.log('[EPS] 服务层生成成功');
       } catch (error) {
