@@ -1,36 +1,41 @@
+/**
+ * 通用语言包（本地默认）
+ * 命名规范：{namespace}.{category}.{key}
+ * - common.*: 通用 UI 文案
+ * - sys.*: 系统级文案
+ */
 export default {
-  common: {
-    confirm: '确定',
-    cancel: '取消',
-    save: '保存',
-    delete: '删除',
-    search: '搜索',
-    reset: '重置',
-    add: '新增',
-    edit: '编辑',
-    refresh: '刷新',
-    submit: '提交',
-    back: '返回',
-    close: '关闭',
-  },
-  menu: {
-    dashboard: '首页',
-    system: '系统管理',
-    user: '用户管理',
-    role: '角色管理',
-    menu: '菜单管理',
-  },
-  user: {
-    username: '用户名',
-    password: '密码',
-    login: '登录',
-    logout: '退出登录',
-    profile: '个人信息',
-  },
-  message: {
-    success: '操作成功',
-    error: '操作失败',
-    loading: '加载中...',
-    confirm_delete: '确定要删除吗？',
-  },
+  // 通用按钮
+  'common.button.confirm': '确定',
+  'common.button.cancel': '取消',
+  'common.button.save': '保存',
+  'common.button.delete': '删除',
+  'common.button.search': '搜索',
+  'common.button.reset': '重置',
+  'common.button.add': '新增',
+  'common.button.edit': '编辑',
+  'common.button.refresh': '刷新',
+  'common.button.submit': '提交',
+  'common.button.back': '返回',
+  'common.button.close': '关闭',
+
+  // 通用菜单
+  'common.menu.dashboard': '首页',
+  'common.menu.system': '系统管理',
+  'common.menu.user': '用户管理',
+  'common.menu.role': '角色管理',
+  'common.menu.menu': '菜单管理',
+
+  // 用户相关
+  'sys.user.username': '用户名',
+  'sys.user.password': '密码',
+  'sys.user.login': '登录',
+  'sys.user.logout': '退出登录',
+  'sys.user.profile': '个人信息',
+
+  // 系统消息
+  'sys.message.success': '操作成功',
+  'sys.message.error': '操作失败',
+  'sys.message.loading': '加载中...',
+  'sys.message.confirm_delete': '确定要删除吗？',
 };
