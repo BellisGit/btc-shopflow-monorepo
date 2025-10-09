@@ -15,21 +15,56 @@ export interface I18nPluginOptions {
   locale?: string;
   fallbackLocale?: string;
   messages?: Record<string, any>;
+  /**
+   * 是否从后端加载语言包
+   */
+  loadFromApi?: boolean;
+  /**
+   * API 地址
+   */
+  apiUrl?: string;
 }
 
 /**
- * 创建 i18n 插件
+ * 从后端加载语言包
+ */
+async function loadRemoteMessages(apiUrl: string, locale: string) {
+  try {
+    const cacheKey = `i18n_${locale}`;
+    const cached = storage.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await fetch(`${apiUrl}?locale=${locale}`);
+    const result = await response.json();
+
+    if (result.code === 2000 && result.data?.messages) {
+      // 缓存 1 天
+      storage.set(cacheKey, result.data.messages, 86400);
+      return result.data.messages;
+    }
+  } catch (error) {
+    console.warn('[i18n] Failed to load remote messages:', error);
+  }
+  return {};
+}
+
+/**
+ * 创建 i18n 插件（混合架构）
  * @param options 配置选项
  * @returns i18n 插件
  */
 export function createI18nPlugin(options: I18nPluginOptions = {}) {
+  const currentLocale = storage.get<string>('locale') || options.locale || 'zh-CN';
+
   const i18n = createI18n({
     legacy: false,
-    locale: storage.get<string>('locale') || options.locale || 'zh-CN',
+    locale: currentLocale,
     fallbackLocale: options.fallbackLocale || 'zh-CN',
     messages: {
-      ...messages,
-      ...options.messages, // 允许应用扩展语言包
+      ...messages, // 本地默认语言包（兜底）
+      ...options.messages, // 应用自定义语言包
     },
   });
 
@@ -41,9 +76,26 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       // 监听语言切换并持久化
       const { locale } = i18n.global;
       if (typeof locale !== 'string') {
-        // 使用 watch 监听 locale 变化
         watch(locale, (newLocale: string) => {
           storage.set('locale', newLocale);
+
+          // 如果启用远程加载，切换语言时加载远程语言包
+          if (options.loadFromApi && options.apiUrl) {
+            loadRemoteMessages(options.apiUrl, newLocale).then((remoteMessages) => {
+              if (Object.keys(remoteMessages).length > 0) {
+                i18n.global.mergeLocaleMessage(newLocale, remoteMessages);
+              }
+            });
+          }
+        });
+      }
+
+      // 初始化时加载远程语言包
+      if (options.loadFromApi && options.apiUrl) {
+        loadRemoteMessages(options.apiUrl, currentLocale).then((remoteMessages) => {
+          if (Object.keys(remoteMessages).length > 0) {
+            i18n.global.mergeLocaleMessage(currentLocale, remoteMessages);
+          }
         });
       }
     },
