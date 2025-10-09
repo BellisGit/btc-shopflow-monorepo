@@ -4,12 +4,25 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/shared-components.css"
+  },
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build && tsc --declaration --emitDeclarationOnly",
-    "type-check": "tsc --noEmit"
+    "build": "vite build && vue-tsc --declaration --emitDeclarationOnly",
+    "type-check": "vue-tsc --noEmit",
+    "clean": "rm -rf dist"
   },
   "peerDependencies": {
     "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vue-tsc": "^3.1.1"
   }
 }
