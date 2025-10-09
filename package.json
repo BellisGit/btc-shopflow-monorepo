@@ -1,0 +1,48 @@
+{
+  "name": "btc-shopflow-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BTC ShopFlow 微前端项目",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "preinstall": "npx only-allow pnpm",
+    "dev:all": "pnpm -r --parallel dev",
+    "dev:main": "pnpm --filter main-app dev",
+    "dev:logistics": "pnpm --filter logistics-app dev",
+    "dev:production": "pnpm --filter production-app dev",
+    "build:all": "pnpm -r build",
+    "lint": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\"",
+    "lint:fix": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\" --fix",
+    "format": "prettier --write \"packages/**/*.{ts,tsx,vue,json,md}\"",
+    "type-check": "pnpm -r --parallel run type-check",
+    "clean": "pnpm -r run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@types/node": "^24.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
+    "only-allow": "^1.2.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
