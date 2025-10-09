@@ -23,20 +23,32 @@ export interface I18nPluginOptions {
    * API 地址
    */
   apiUrl?: string;
+  /**
+   * 语言包范围（用于域级隔离）
+   * common - 通用翻译
+   * logistics - 物流域
+   * production - 生产域
+   */
+  scope?: string;
 }
 
 /**
  * 从后端加载语言包
+ * @param apiUrl API 地址
+ * @param locale 语言
+ * @param scope 范围（common/logistics/production）
  */
-async function loadRemoteMessages(apiUrl: string, locale: string) {
+async function loadRemoteMessages(apiUrl: string, locale: string, scope = 'common') {
   try {
-    const cacheKey = `i18n_${locale}`;
+    const cacheKey = `i18n_${scope}_${locale}`;
     const cached = storage.get(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const response = await fetch(`${apiUrl}?locale=${locale}`);
+    // 支持 scope 参数
+    const url = `${apiUrl}?locale=${locale}&scope=${scope}`;
+    const response = await fetch(url);
     const result = await response.json();
 
     if (result.code === 2000 && result.data?.messages) {
@@ -45,7 +57,7 @@ async function loadRemoteMessages(apiUrl: string, locale: string) {
       return result.data.messages;
     }
   } catch (error) {
-    console.warn('[i18n] Failed to load remote messages:', error);
+    console.warn(`[i18n] Failed to load remote messages (${scope}):`, error);
   }
   return {};
 }
@@ -81,7 +93,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
 
           // 如果启用远程加载，切换语言时加载远程语言包
           if (options.loadFromApi && options.apiUrl) {
-            loadRemoteMessages(options.apiUrl, newLocale).then((remoteMessages) => {
+            loadRemoteMessages(options.apiUrl, newLocale, options.scope).then((remoteMessages) => {
               if (Object.keys(remoteMessages).length > 0) {
                 i18n.global.mergeLocaleMessage(newLocale, remoteMessages);
               }
@@ -92,7 +104,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
 
       // 初始化时加载远程语言包
       if (options.loadFromApi && options.apiUrl) {
-        loadRemoteMessages(options.apiUrl, currentLocale).then((remoteMessages) => {
+        loadRemoteMessages(options.apiUrl, currentLocale, options.scope).then((remoteMessages) => {
           if (Object.keys(remoteMessages).length > 0) {
             i18n.global.mergeLocaleMessage(currentLocale, remoteMessages);
           }
