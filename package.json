@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "BTC ShopFlow 微前端项目",
+  "packageManager": "pnpm@8.15.0",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
@@ -10,16 +11,16 @@
   "scripts": {
     "prepare": "husky",
     "preinstall": "npx only-allow pnpm",
-    "dev:all": "pnpm -r --parallel dev",
+    "dev:all": "turbo run dev",
     "dev:main": "pnpm --filter main-app dev",
     "dev:logistics": "pnpm --filter logistics-app dev",
     "dev:production": "pnpm --filter production-app dev",
-    "build:all": "pnpm -r build",
-    "lint": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\"",
+    "build:all": "turbo run build",
+    "lint": "turbo run lint",
     "lint:fix": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\" --fix",
     "format": "prettier --write \"packages/**/*.{ts,tsx,vue,json,md}\"",
-    "type-check": "pnpm -r --parallel run type-check",
-    "clean": "pnpm -r run clean && rm -rf node_modules"
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
@@ -34,6 +35,7 @@
     "lint-staged": "^16.2.3",
     "only-allow": "^1.2.1",
     "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
     "typescript": "^5.9.3",
     "vite": "^7.1.9",
     "vite-plugin-inspect": "^11.3.3"
