@@ -76,9 +76,11 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
     fallbackLocale: options.fallbackLocale || 'zh-CN',
     messages: {
       ...messages, // 本地默认语言包（兜底）
-      ...options.messages, // 应用自定义语言包
     },
   });
+
+  // 保存应用自定义语言包，用于后续合并
+  const customMessages = options.messages || {};
 
   return {
     name: 'i18n',
@@ -95,7 +97,12 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
           if (options.loadFromApi && options.apiUrl) {
             loadRemoteMessages(options.apiUrl, newLocale, options.scope).then((remoteMessages) => {
               if (Object.keys(remoteMessages).length > 0) {
+                // 先合并 API 数据
                 i18n.global.mergeLocaleMessage(newLocale, remoteMessages);
+                // 再合并应用自定义（确保优先级最高）
+                if (customMessages[newLocale]) {
+                  i18n.global.mergeLocaleMessage(newLocale, customMessages[newLocale]);
+                }
               }
             });
           }
@@ -106,8 +113,18 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       if (options.loadFromApi && options.apiUrl) {
         loadRemoteMessages(options.apiUrl, currentLocale, options.scope).then((remoteMessages) => {
           if (Object.keys(remoteMessages).length > 0) {
+            // 先合并 API 数据
             i18n.global.mergeLocaleMessage(currentLocale, remoteMessages);
+            // 再合并应用自定义（确保优先级最高）
+            if (customMessages[currentLocale]) {
+              i18n.global.mergeLocaleMessage(currentLocale, customMessages[currentLocale]);
+            }
           }
+        });
+      } else {
+        // 不使用 API 时，直接合并应用自定义
+        Object.keys(customMessages).forEach((lang) => {
+          i18n.global.mergeLocaleMessage(lang, customMessages[lang]);
         });
       }
     },
