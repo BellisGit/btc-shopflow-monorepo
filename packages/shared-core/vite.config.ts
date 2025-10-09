@@ -10,11 +10,12 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'axios'],
+      external: ['vue', 'axios', 'vue-i18n', '@btc/shared-utils'],
       output: {
         globals: {
           vue: 'Vue',
           axios: 'axios',
+          'vue-i18n': 'VueI18n',
         },
       },
     },

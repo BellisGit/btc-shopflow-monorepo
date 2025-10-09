@@ -1,0 +1,36 @@
+export default {
+  common: {
+    confirm: '确定',
+    cancel: '取消',
+    save: '保存',
+    delete: '删除',
+    search: '搜索',
+    reset: '重置',
+    add: '新增',
+    edit: '编辑',
+    refresh: '刷新',
+    submit: '提交',
+    back: '返回',
+    close: '关闭',
+  },
+  menu: {
+    dashboard: '首页',
+    system: '系统管理',
+    user: '用户管理',
+    role: '角色管理',
+    menu: '菜单管理',
+  },
+  user: {
+    username: '用户名',
+    password: '密码',
+    login: '登录',
+    logout: '退出登录',
+    profile: '个人信息',
+  },
+  message: {
+    success: '操作成功',
+    error: '操作失败',
+    loading: '加载中...',
+    confirm_delete: '确定要删除吗？',
+  },
+};

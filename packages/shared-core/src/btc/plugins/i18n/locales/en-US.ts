@@ -1,0 +1,36 @@
+export default {
+  common: {
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    search: 'Search',
+    reset: 'Reset',
+    add: 'Add',
+    edit: 'Edit',
+    refresh: 'Refresh',
+    submit: 'Submit',
+    back: 'Back',
+    close: 'Close',
+  },
+  menu: {
+    dashboard: 'Dashboard',
+    system: 'System',
+    user: 'User Management',
+    role: 'Role Management',
+    menu: 'Menu Management',
+  },
+  user: {
+    username: 'Username',
+    password: 'Password',
+    login: 'Login',
+    logout: 'Logout',
+    profile: 'Profile',
+  },
+  message: {
+    success: 'Success',
+    error: 'Error',
+    loading: 'Loading...',
+    confirm_delete: 'Are you sure to delete?',
+  },
+};
