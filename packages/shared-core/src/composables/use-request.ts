@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface UseRequestReturn<T> {
   loading: any;
   data: any;
