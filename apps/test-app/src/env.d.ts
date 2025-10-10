@@ -20,3 +20,19 @@ declare module 'virtual:ctx' {
   const ctx: CtxData;
   export default ctx;
 }
+
+declare module 'virtual:eps' {
+  interface ApiMethod {
+    path: string;
+    method: string;
+    name: string;
+    summary?: string;
+  }
+
+  interface ServiceModule {
+    [key: string]: ApiMethod[];
+  }
+
+  const epsData: ServiceModule;
+  export default epsData;
+}

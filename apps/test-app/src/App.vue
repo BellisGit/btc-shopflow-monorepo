@@ -39,21 +39,53 @@
       <p>在 Vue DevTools 中查看组件名称</p>
       <TestComponent />
     </section>
+
+    <!-- 测试 EPS 虚拟模块 -->
+    <section class="test-section">
+      <h2>4. EPS 虚拟模块测试</h2>
+      <div v-if="epsInfo">
+        <p>模块数量: {{ Object.keys(epsInfo).length }}</p>
+        <details v-for="(apis, moduleName) in epsInfo" :key="moduleName">
+          <summary>
+            <strong>{{ moduleName }}</strong> ({{ apis.length }} 个 API)
+          </summary>
+          <ul>
+            <li v-for="api in apis" :key="api.name">
+              <code>{{ api.method }}</code> {{ api.path }} - {{ api.name }}
+            </li>
+          </ul>
+        </details>
+      </div>
+      <p v-else class="loading">加载中...</p>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, onMounted } from 'vue';
 import TestComponent from './components/TestComponent.vue';
 
 const ctxInfo = ref<any>(null);
+const epsInfo = ref<any>(null);
 
 onMounted(async () => {
+  // 加载 Ctx 信息
   try {
     const ctx = await import('virtual:ctx');
     ctxInfo.value = ctx.default;
   } catch (err) {
     ctxInfo.value = { error: 'Failed to load ctx', message: String(err) };
+  }
+
+  // 加载 EPS 信息
+  try {
+    const eps = await import('virtual:eps');
+    epsInfo.value = eps.default;
+    console.log('[EPS Test] 虚拟模块数据:', eps.default);
+  } catch (err) {
+    epsInfo.value = { error: 'Failed to load EPS', message: String(err) };
+    console.error('[EPS Test] 加载失败:', err);
   }
 });
 </script>
@@ -109,5 +141,45 @@ pre {
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
+}
+
+details {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+summary {
+  font-weight: bold;
+  color: #42b883;
+  padding: 0.5rem;
+  user-select: none;
+}
+
+details ul {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+}
+
+details li {
+  padding: 0.25rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+details code {
+  background: #42b883;
+  color: white;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.loading {
+  color: #999;
+  font-style: italic;
 }
 </style>

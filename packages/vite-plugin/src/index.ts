@@ -33,7 +33,7 @@ export function btc(options: Partial<BtcPluginConfig> = {}): Plugin[] {
   if (config.eps?.enable !== false) {
     plugins.push(
       epsPlugin({
-        epsUrl: config.eps?.api || '/admin/base/open/eps',
+        epsUrl: config.eps?.api !== undefined ? config.eps.api : '/admin/base/open/eps',
         outputDir: config.eps?.dist || 'build/eps',
       })
     );

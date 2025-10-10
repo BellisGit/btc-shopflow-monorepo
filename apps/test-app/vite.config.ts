@@ -7,12 +7,12 @@ export default defineConfig({
     vue(),
     btc({
       type: 'admin',
-      reqUrl: '', // 后端地址（可选）
+      reqUrl: '',
       nameTag: true,
       eps: {
-        enable: false, // 禁用 EPS 插件（测试时不需要后端）
-        api: '',
-        dist: '',
+        enable: true,
+        api: '', // 空 URL 表示使用本地 Mock 数据
+        dist: 'build/eps',
         mapping: [],
       },
     }),
