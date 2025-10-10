@@ -23,7 +23,7 @@ import { config } from './config';
  * @param options 配置选项
  * @returns Vite 插件数组
  */
-export function btc(options: BtcPluginConfig = {}): Plugin[] {
+export function btc(options: Partial<BtcPluginConfig> = {}): Plugin[] {
   // 合并配置
   Object.assign(config, options);
 
@@ -39,17 +39,13 @@ export function btc(options: BtcPluginConfig = {}): Plugin[] {
     );
   }
 
-  // SVG 插件（待实现）
-  if (config.svg?.enable) {
-    plugins.push(svgPlugin());
-  }
+  // SVG 插件
+  plugins.push(svgPlugin());
 
-  // Ctx 插件（待实现）
-  if (config.ctx?.enable) {
-    plugins.push(ctxPlugin());
-  }
+  // Ctx 插件
+  plugins.push(ctxPlugin());
 
-  // Tag 插件（待实现）
+  // Tag 插件
   if (config.nameTag) {
     plugins.push(tagPlugin());
   }
