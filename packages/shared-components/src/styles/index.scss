@@ -1,0 +1,83 @@
+// BTC CRUD Component Global Styles
+// 完全对齐 cool-admin 的样式结构（逐字复制）
+
+.btc-crud {
+  height: 100%;
+  overflow: hidden auto;
+  position: relative;
+  box-sizing: border-box;
+  background-color: var(--el-bg-color);
+
+  &.is-border {
+    border: 1px solid var(--el-border-color);
+    border-radius: var(--el-border-radius-base);
+  }
+
+  & > .btc-crud-row {
+    width: 100%;
+
+    &:not(.btc-crud-row--last) > * {
+      margin: 0 10px 10px 0;
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+    .btc-flex1 {
+      margin-right: 0;
+    }
+  }
+}
+
+.btc-flex1 {
+  flex: 1;
+  font-size: 12px;
+}
+
+.btc-table-op {
+  margin-bottom: -5px;
+
+  .el-button {
+    margin-bottom: 5px;
+    outline-offset: -2px !important;
+
+    // text/link 按钮添加边框和内边距 (对齐 cool-admin)
+    &.is-link,
+    &.is-text {
+      border: 1px solid var(--el-button-border-color) !important;
+      padding: 5px 11px !important;
+      background-color: transparent !important;
+
+      // 悬浮、聚焦、激活时都保持背景透明
+      &:hover,
+      &:focus,
+      &:active {
+        background-color: transparent !important;
+      }
+    }
+
+    // 针对所有类型的 link/text 按钮，强制移除背景
+    &.el-button--primary.is-link:hover,
+    &.el-button--primary.is-text:hover,
+    &.el-button--success.is-link:hover,
+    &.el-button--success.is-text:hover,
+    &.el-button--danger.is-link:hover,
+    &.el-button--danger.is-text:hover,
+    &.el-button--warning.is-link:hover,
+    &.el-button--warning.is-text:hover,
+    &.el-button--info.is-link:hover,
+    &.el-button--info.is-text:hover {
+      background-color: transparent !important;
+    }
+  }
+}
+
+.btc-search-key {
+  display: inline-flex;
+
+  .el-input {
+    width: 200px;
+  }
+}
+

@@ -1,0 +1,147 @@
+.btc-form {
+  [class*="el-col-"].is-guttered {
+    min-height: 0;
+  }
+
+  &-item {
+    display: flex;
+    flex-direction: column;
+
+    &__component {
+      display: flex;
+      width: 100%;
+
+      &.flex1 {
+        flex: 1;
+        width: 100%;
+
+        & > div {
+          width: 100%;
+        }
+      }
+
+      // flex: false 时不填满
+      &:not(.flex1) {
+        flex: initial;
+        width: auto;
+      }
+    }
+
+    &__prepend {
+      margin-right: 10px;
+    }
+
+    &__append {
+      margin-left: 10px;
+    }
+
+    &__collapse {
+      width: 100%;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+
+      .el-divider {
+        margin: 16px 0;
+
+        &__text {
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+        }
+      }
+
+      &:hover {
+        .el-divider__text {
+          color: var(--el-color-primary);
+        }
+      }
+
+      i {
+        margin-left: 6px;
+      }
+    }
+
+    &__children {
+      margin-top: 10px;
+    }
+
+    .el-table__header tr {
+      line-height: normal;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .el-form {
+    .el-form-item {
+      .el-form-item {
+        margin-bottom: 18px;
+      }
+
+      .el-input-number {
+        &__decrease,
+        &__increase {
+          border: 0;
+          background-color: transparent;
+        }
+      }
+
+      &__label {
+        .el-tooltip {
+          i {
+            margin-left: 5px;
+          }
+        }
+      }
+
+      &__content {
+        min-width: 0px;
+
+        & > div {
+          width: 100%;
+        }
+      }
+    }
+
+    &:not(.el-form--label-top) {
+      .el-form-item {
+        &.no-label {
+          & > .el-form-item__label {
+            padding: 0;
+            display: none;
+          }
+        }
+      }
+    }
+
+    &.el-form--label-top {
+      .el-form-item {
+        margin-bottom: 22px;
+      }
+
+      .el-form-item__label {
+        margin: 0 0 4px 0;
+        min-height: 22px;
+      }
+
+      .el-form-item__error {
+        padding-top: 4px;
+      }
+    }
+
+    &.el-form--inline {
+      .btc-form__items {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .el-form-item {
+        margin: 0 10px 10px 0;
+      }
+    }
+  }
+}
+

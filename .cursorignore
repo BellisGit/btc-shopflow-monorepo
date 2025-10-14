@@ -1,0 +1,92 @@
+# 图标和图像文件 - 避免 AI Agent 尝试读取不支持的格式
+*.ico
+*.webmanifest
+
+# 依赖和构建产物
+node_modules/
+dist/
+build/
+.git/
+
+
+# 日志文件
+*.log
+
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+
+# 其他大型或无需 AI 分析的文件
+*.map
+*.min.js
+*.min.css
+
+# 图标和图像文件 - 避免 AI Agent 尝试读取不支持的格式
+*.ico
+*.webmanifest
+
+# 依赖和构建产物
+node_modules/
+dist/
+build/
+.git/
+
+
+# 日志文件
+*.log
+
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+
+# 其他大型或无需 AI 分析的文件
+*.map
+*.min.js
+*.min.css
+
+# 图标和图像文件 - 避免 AI Agent 尝试读取不支持的格式
+*.ico
+*.webmanifest
+
+# 依赖和构建产物
+node_modules/
+dist/
+build/
+.git/
+
+
+# 日志文件
+*.log
+
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+
+# 其他大型或无需 AI 分析的文件
+*.map
+*.min.js
+*.min.css
+
+# 图标和图像文件 - 避免 AI Agent 尝试读取不支持的格式
+*.ico
+*.webmanifest
+
+# 依赖和构建产物
+node_modules/
+dist/
+build/
+.git/
+
+
+# 日志文件
+*.log
+
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+
+# 其他大型或无需 AI 分析的文件
+*.map
+*.min.js
+*.min.css
+

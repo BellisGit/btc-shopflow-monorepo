@@ -1,0 +1,409 @@
+<script lang="ts">
+import { defineComponent, h, resolveComponent } from 'vue';
+import {
+  ElForm, ElRow, ElCol, ElFormItem, ElButton, ElTabs, ElTabPane, ElDivider,
+  ElInput, ElInputNumber, ElSelect, ElOption, ElRadioGroup, ElRadio,
+  ElCheckboxGroup, ElCheckbox, ElSwitch, ElDatePicker, ElTimePicker,
+  ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload
+} from 'element-plus';
+import BtcDialog from '../dialog/index.vue';
+import { useFormSetup, useFormActions, useFormItemActions, isBoolean, parseHidden, collapseItem } from './composables';
+
+// 组件映射表
+const componentMap: Record<string, any> = {
+  'el-input': ElInput,
+  'el-input-number': ElInputNumber,
+  'el-select': ElSelect,
+  'el-option': ElOption,
+  'el-radio': ElRadio,
+  'el-radio-group': ElRadioGroup,
+  'el-checkbox': ElCheckbox,
+  'el-checkbox-group': ElCheckboxGroup,
+  'el-switch': ElSwitch,
+  'el-date-picker': ElDatePicker,
+  'el-time-picker': ElTimePicker,
+  'el-cascader': ElCascader,
+  'el-tree-select': ElTreeSelect,
+  'el-color-picker': ElColorPicker,
+  'el-rate': ElRate,
+  'el-slider': ElSlider,
+  'el-upload': ElUpload,
+  'el-divider': ElDivider
+};
+
+export default defineComponent({
+  name: 'BtcForm',
+
+  props: {
+    name: String,
+    inner: Boolean,
+    inline: Boolean,
+    enablePlugin: {
+      type: Boolean,
+      default: true
+    }
+  },
+
+  setup(props, { expose, slots }) {
+    // 表单设置和初始化
+    const formSetup = useFormSetup(props);
+    const {
+      Form,
+      config,
+      form,
+      visible,
+      saving,
+      loading,
+      disabled,
+      Tabs,
+      Action,
+      ElFormApi,
+      setRefs,
+    } = formSetup;
+
+    // 表单操作方法
+    const formActions = useFormActions(formSetup);
+    const {
+      showLoading,
+      hideLoading,
+      setDisabled,
+      done,
+      close,
+      onClosed,
+      clear,
+      reset,
+      submit,
+      open,
+    } = formActions;
+
+    // 表单项动态控制方法
+    const formItemActions = useFormItemActions(formSetup);
+    const {
+      getForm,
+      setForm,
+      setData,
+      setConfig,
+      setOptions,
+      setProps,
+      toggleItem,
+      hideItem,
+      showItem,
+      setTitle,
+      bindForm,
+    } = formItemActions;
+
+
+    // 渲染表单项
+    function renderFormItem(e: any, index: number) {
+      if (!e) return null;
+
+      // 分组判断
+      const inGroup = Tabs.active.value ? e.group === Tabs.active.value || !e.group : true;
+
+      // 隐藏判断
+      e._hidden = parseHidden(e.hidden, form);
+
+      if (e._hidden || !inGroup) {
+        return null;
+      }
+
+      // collapse 默认值
+      if (e.collapse === undefined && isBoolean(e.collapse) === false) {
+        e.collapse = false; // 默认展开
+      }
+
+      // Tabs 组件
+      if (e.type === 'tabs') {
+        return h(ElTabs, {
+          modelValue: Tabs.active.value,
+          'onUpdate:modelValue': (val: string) => {
+            Tabs.change(val);
+          },
+          ...e.props
+        }, {
+          default: () => e.props?.labels?.map((tab: any) => {
+            return h(ElTabPane, {
+              label: tab.label,
+              name: tab.value,
+              lazy: tab.lazy
+            });
+          })
+        });
+      }
+
+      // 普通表单项
+      const FormItem = h(ElFormItem, {
+        label: e.label,
+        prop: e.prop,
+        rules: e.rules,
+        required: e.required,
+        key: `${e.prop || index}`
+      }, {
+        default: () => {
+          const content = [];
+          // 插槽
+          if (e.component?.name?.startsWith('slot-')) {
+            const slotName = e.component.name.replace('slot-', '');
+            return slots[slotName]?.({ scope: form, prop: e.prop, item: e });
+          }
+
+          // 组件实例
+          if (e.component?.vm) {
+            return h(e.component.vm, {
+              modelValue: form[e.prop],
+              'onUpdate:modelValue': (val: any) => {
+                form[e.prop] = val;
+              },
+              scope: form,
+              prop: e.prop,
+              ...e.component.props
+            });
+          }
+
+          // 组件名称
+          if (e.component?.name) {
+            const componentName = e.component.name;
+            const Component = componentMap[componentName] || resolveComponent(componentName);
+
+            const componentProps = {
+              modelValue: form[e.prop],
+              'onUpdate:modelValue': (val: any) => {
+                form[e.prop] = val;
+              },
+              disabled: disabled.value || e.component.props?.disabled,
+              ...e.component.props
+            };
+
+            // 渲染子项（如 el-select 的 options）
+            let children = null;
+
+            if (e.component.options) {
+              if (componentName === 'el-select') {
+                children = e.component.options.map((opt: any) => {
+                  return h(ElOption, {
+                    key: opt.value,
+                    label: opt.label,
+                    value: opt.value
+                  });
+                });
+              } else if (componentName === 'el-radio-group') {
+                children = e.component.options.map((opt: any) => {
+                  return h(ElRadio, {
+                    key: opt.value,
+                    value: opt.value
+                  }, () => opt.label);
+                });
+              } else if (componentName === 'el-checkbox-group') {
+                children = e.component.options.map((opt: any) => {
+                  return h(ElCheckbox, {
+                    key: opt.value,
+                    value: opt.value
+                  }, () => opt.label);
+                });
+              }
+            }
+
+            // 渲染子表单项
+            if (e.children) {
+              children = h('div', { class: 'btc-form-item__children' }, [
+                h(ElRow, { gutter: 10 }, () => e.children.map(renderFormItem))
+              ]);
+            }
+
+            const result = h(Component, componentProps, children ? () => children : undefined);
+
+            // flex 控制：包装在 div 中
+            if (e.flex === false) {
+              content.push(h('div', {
+                class: 'btc-form-item__component',
+                style: { flex: 'initial', width: 'auto' }
+              }, [result]));
+            } else {
+              content.push(h('div', {
+                class: ['btc-form-item__component', 'flex1']
+              }, [result]));
+            }
+
+            // collapse 折叠
+            if (isBoolean(e.collapse)) {
+              content.push(h('div', {
+                class: 'btc-form-item__collapse',
+                onClick: () => collapseItem(e)
+              }, [
+                h('el-divider', { contentPosition: 'center' }, () =>
+                  e.collapse ? '查看更多' : '收起内容'
+                )
+              ]));
+            }
+
+            return content;
+          }
+
+          return null;
+        }
+      });
+
+      // 包装在 el-col 中
+      if (!props.inline) {
+        const span = e.span || 24;
+        return h(ElCol, {
+          span,
+          ...e.col
+        }, () => FormItem);
+      }
+
+      return FormItem;
+    }
+
+    // 渲染表单容器
+    function renderContainer() {
+      const children = config.items.map(renderFormItem);
+
+      const labelPosition = config.props?.labelPosition || 'top';
+
+      return h('div', { class: 'btc-form__container', ref: setRefs('form') }, [
+        h(ElForm, {
+          ref: Form,
+          model: form,
+          labelWidth: config.props?.labelWidth || '100px',
+          labelPosition,
+          inline: props.inline,
+          disabled: saving.value || disabled.value,
+          scrollToError: true,
+          ...config.props,
+          onSubmit: (e: Event) => {
+            submit();
+            e.preventDefault();
+          }
+        }, {
+          default: () => {
+            const items = [
+              slots.prepend?.({ scope: form }),
+              props.inline ? children : h(ElRow, { gutter: 10 }, () => children),
+              slots.append?.({ scope: form })
+            ];
+
+            return h('div', { class: 'btc-form__items' }, items);
+          }
+        })
+      ]);
+    }
+
+    // 渲染底部按钮
+    function renderFooter() {
+      const { hidden, buttons, saveButtonText, closeButtonText, justify } = config.op || {};
+
+      if (hidden) {
+        return null;
+      }
+
+      const Btns = buttons?.map((e: any) => {
+        switch (e) {
+          case 'save':
+            return h(ElButton, {
+              type: 'primary',
+              loading: saving.value,
+              disabled: loading.value,
+              onClick: () => submit()
+            }, () => saveButtonText || '保存');
+
+          case 'close':
+            return h(ElButton, {
+              onClick: () => close('close')
+            }, () => closeButtonText || '关闭');
+
+          default:
+            // 插槽
+            if (typeof e === 'string' && e.startsWith('slot-')) {
+              const slotName = e.replace('slot-', '');
+              return slots[slotName]?.({ scope: form });
+            }
+
+            // 自定义按钮
+            if (typeof e === 'object' && e.label) {
+              return h(ElButton, {
+                type: e.type,
+                ...e.props,
+                onClick: () => {
+                  if (e.onClick) {
+                    e.onClick({ scope: form });
+                  }
+                }
+              }, () => e.label);
+            }
+
+            return null;
+        }
+      });
+
+      return h('div', {
+        class: 'btc-form__footer',
+        style: {
+          justifyContent: justify || 'flex-end'
+        }
+      }, Btns);
+    }
+
+    // 暴露方法
+    const ctx = {
+      Form,
+      visible,
+      saving,
+      form,
+      config,
+      loading,
+      disabled,
+      open,
+      close,
+      done,
+      clear,
+      reset,
+      submit,
+      showLoading,
+      hideLoading,
+      setDisabled,
+      ...Action,
+      ...ElFormApi,
+      // 动态控制方法（对齐 cool-admin，覆盖 Action 中的同名方法）
+      getForm,
+      setForm,
+      setData,
+      setConfig,
+      setOptions,
+      setProps,
+      toggleItem,
+      hideItem,
+      showItem,
+      setTitle,
+      bindForm,
+      // Tabs (exposed for advanced usage)
+      tabs: Tabs
+    };
+
+    expose(ctx);
+
+    // 渲染
+    return () => {
+      if (props.inner) {
+        return renderContainer();
+      }
+
+      return h(BtcDialog, {
+        modelValue: visible.value,
+        'onUpdate:modelValue': (val: boolean) => {
+          visible.value = val;
+        },
+        title: config.title,
+        width: config.width,
+        height: config.height,
+        ...config.dialog,
+        onClosed
+      }, {
+        default: () => renderContainer(),
+        footer: () => renderFooter()
+      });
+    };
+  }
+});
+</script>
+

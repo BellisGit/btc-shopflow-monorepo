@@ -1,0 +1,155 @@
+// Global styles for test app
+
+// 自定义 CSS 变量（与 cool-admin 保持一致）
+:root {
+  --bg-color: var(--el-fill-color-lighter);
+}
+
+// Reset default styles
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+// Custom scrollbar (align with cool-admin)
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+// Debug borders (uncomment to debug layout)
+// .btc-crud-row {
+//   border: 1px dashed red !important;
+// }
+
+// .btc-flex1 {
+//   background: rgba(255, 255, 0, 0.2) !important;
+//   border: 1px solid green !important;
+// }
+
+// .btc-search-key {
+//   border: 1px dashed blue !important;
+// }
+
+// 通用图标按钮样式（与 cool-admin 的 .cl-comm__icon 保持一致）
+.btc-comm__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  width: 26px;
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-fill-color-dark);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .btc-svg {
+    font-size: 16px;
+    color: var(--el-text-color-primary);
+  }
+
+  &:hover {
+    border-color: var(--el-color-primary);
+    background-color: transparent;
+  }
+}
+
+// 文档模式：隐藏左侧边栏、tabbar、顶栏部分元素，只保留汉堡菜单和搜索框
+body.docs-mode {
+  // 侧边栏宽度收缩为 0（保留过渡动画）
+  .app-layout__sidebar {
+    width: 0 !important;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  // 主内容区占满整个宽度
+  .app-layout__main {
+    width: 100% !important;
+  }
+
+  // Tabbar：使用 v-show 隐藏，但需要移除占据的空间
+  .app-process {
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  // 内容区域：保持四周间距（与其他应用一致），但内部 padding 为 0
+  .app-layout__content {
+    padding: 0 !important;
+    margin: 10px !important; // 保持四周间距，与主应用和子应用一致
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    border-radius: 6px;
+  }
+
+  // 顶栏元素优化：只保留汉堡菜单和搜索框
+  .topbar__brand {
+    width: 64px !important; // 只保留汉堡菜单的宽度
+    border-right: none !important; // 移除分隔线
+
+    .topbar__logo-content {
+      display: none !important; // 隐藏 Logo 和标题
+    }
+  }
+
+  .topbar__left {
+    padding-left: 10px; // 与汉堡菜单保持间距
+
+    // 隐藏折叠按钮（第一个图标）
+    .btc-comm__icon:first-child {
+      display: none !important;
+    }
+  }
+}
+
+// 瞬间切换模式：禁用所有过渡动画（用于已缓存的文档切换）
+body.docs-mode-instant {
+  .app-layout__sidebar,
+  .app-layout__main {
+    transition: none !important;
+  }
+}
+

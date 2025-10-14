@@ -1,0 +1,29 @@
+{
+  "name": "quality-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8083",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@btc/shared-components": "workspace:*",
+    "@btc/shared-core": "workspace:*",
+    "@btc/shared-utils": "workspace:*",
+    "element-plus": "^2.8.10",
+    "pinia": "^3.0.3",
+    "vue": "^3.4.0",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@btc/vite-plugin": "workspace:*",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "sass": "^1.93.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0",
+    "vue-tsc": "^1.8.27"
+  }
+}
+

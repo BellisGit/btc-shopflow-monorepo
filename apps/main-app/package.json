@@ -1,0 +1,35 @@
+{
+  "name": "main-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8080",
+    "build": "vite build",
+    "preview": "vite preview",
+    "mock": "node mock-server.js"
+  },
+  "dependencies": {
+    "@btc/shared-components": "workspace:*",
+    "@btc/shared-core": "workspace:*",
+    "@btc/shared-utils": "workspace:*",
+    "@element-plus/icons-vue": "^2.3.1",
+    "@types/nprogress": "^0.2.3",
+    "@vueuse/core": "^13.9.0",
+    "element-plus": "^2.8.10",
+    "mitt": "^3.0.1",
+    "nprogress": "^0.2.0",
+    "pinia": "^3.0.3",
+    "qiankun": "^2.10.16",
+    "vue": "^3.4.0",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@btc/vite-plugin": "workspace:*",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "sass": "^1.93.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0",
+    "vue-tsc": "^1.8.27"
+  }
+}
