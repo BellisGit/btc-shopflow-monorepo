@@ -88,7 +88,7 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, markRaw } from 'vue';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import GlobalSearch from '../global-search/index.vue';
@@ -134,7 +134,7 @@ onMounted(async () => {
         const component = await config.component();
         toolbarComponents.value.push({
           ...config,
-          component: component.default || component
+          component: markRaw(component.default || component)
         });
       } catch (error) {
         console.error('Failed to load toolbar component:', error);
