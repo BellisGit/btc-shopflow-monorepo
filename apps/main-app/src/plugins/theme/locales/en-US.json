@@ -1,0 +1,18 @@
+﻿{
+  "切换主题": "Switch Theme",
+  "暗黑模式": "Dark Mode",
+  "明亮模式": "Light Mode",
+  "theme.title": "Theme Settings",
+  "theme.presets": "Preset Themes",
+  "theme.custom_color": "Custom Color",
+  "theme.switched": "Theme switched to",
+  "theme.presets.brand_red": "Bellis Brand Red",
+  "theme.presets.brand_gray": "Bellis Brand Gray",
+  "theme.presets.blue": "Blue",
+  "theme.presets.green": "Green",
+  "theme.presets.purple": "Purple",
+  "theme.presets.orange": "Orange",
+  "theme.presets.pink": "Pink",
+  "theme.presets.mint": "Mint",
+  "theme.presets.custom": "Custom"
+}

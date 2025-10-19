@@ -55,10 +55,10 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
 const viewGroupRef = ref();
@@ -68,14 +68,7 @@ const activeTab = ref('detail');
 
 // 模块服务（左侧树，用作资源分类）
 const moduleService = createMockCrudService('btc_resource_modules', {
-  defaultData: [
-    {
-      id: 1,
-      name: '用户中心',
-      children: [
-        { id: 11, name: '用户管理', parentId: 1 },
-        { id: 12, name: '部门管理', parentId: 1 },
-      ]
+
     },
     {
       id: 2,
@@ -98,12 +91,7 @@ const moduleService = createMockCrudService('btc_resource_modules', {
 
 // 资源服务（右侧表）
 const resourceService = createMockCrudService('btc_resources', {
-  defaultData: [
-    { id: 1, resourceNameCn: '用户列表', resourceCode: 'user_list', resourceType: '页面', moduleId: 11, description: '用户列表页面', createTime: mockHelpers.randomDate() },
-    { id: 2, resourceNameCn: '用户详情', resourceCode: 'user_detail', resourceType: 'API', moduleId: 11, description: '获取用户详情接口', createTime: mockHelpers.randomDate() },
-    { id: 3, resourceNameCn: '部门列表', resourceCode: 'dept_list', resourceType: '页面', moduleId: 12, description: '部门列表页面', createTime: mockHelpers.randomDate() },
-    { id: 4, resourceNameCn: '角色列表', resourceCode: 'role_list', resourceType: '页面', moduleId: 21, description: '角色列表页面', createTime: mockHelpers.randomDate() },
-  ]
+
 });
 
 const wrappedResourceService = {
@@ -111,7 +99,7 @@ const wrappedResourceService = {
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await resourceService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -157,7 +145,7 @@ const viewGroupOptions = reactive({
     crudRef.value?.crud.handleRefresh();
   },
   onEdit(module?: any) {
-    ElMessage.info(module ? `编辑模块：${module.name}` : '新增模块');
+    message.info(module ? `编辑模块：${module.name}` : '新增模块');
   }
 });
 
@@ -199,7 +187,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
       data.moduleId = selectedModule.value.id;
     }
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();
@@ -212,7 +200,7 @@ const hasPermission = (resource: any, action: any) => {
 };
 
 const togglePermission = (resource: any, action: any, checked: boolean) => {
-  ElMessage.success(checked ? `已授权：${resource.resourceName} - ${action.actionNameCn}` : `已取消：${resource.resourceName} - ${action.actionNameCn}`);
+  message.success(checked ? `已授权：${resource.resourceName} - ${action.actionNameCn}` : `已取消：${resource.resourceName} - ${action.actionNameCn}`);
   // 这里应该调用后端API保存权限关系
 };
 </script>

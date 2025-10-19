@@ -1,84 +1,124 @@
 /**
  * 基础服务类
- * 封装 fetch API 请求
+ * 基于统一的 request 函数，参考 cool-admin 的实现
  */
 
-export interface RequestConfig {
-  url: string;
-  method?: string;
-  params?: Record<string, unknown>;
-  data?: unknown;
-  headers?: Record<string, string>;
-  timeout?: number; // 超时时间（毫秒）
+import { request, type Request } from './request';
+
+export interface BaseServiceOptions {
+  namespace?: string;
+  request?: Request;
 }
 
 export class BaseService {
+  private namespace: string;
+  private request: Request;
+
+  constructor(options: BaseServiceOptions = {}) {
+    this.namespace = options.namespace || '';
+    this.request = options.request || request;
+  }
+
+  /**
+   * 静态请求方法
+   */
+  static async request(options: any): Promise<any> {
+    return request(options);
+  }
+
   /**
    * 发起 HTTP 请求
    */
-  static async request<T = unknown>(config: RequestConfig): Promise<T> {
-    const { url, method = 'GET', params, data, headers = {}, timeout = 10000 } = config;
+  protected async http<T = any>(options: {
+    url: string;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    data?: any;
+    params?: any;
+  }): Promise<T> {
+    const { url, method = 'GET', data, params } = options;
 
-    // 构建完整 URL（处理查询参数）
-    let fullUrl = url;
-    if (params) {
-      const searchParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        searchParams.append(key, String(value));
-      });
-      const queryString = searchParams.toString();
-      fullUrl = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
-    }
+    // 构建完整 URL
+    const fullUrl = this.namespace ? `${this.namespace}${url}` : url;
 
-    // 超时控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    return this.request({
+      url: fullUrl,
+      method,
+      data,
+      params,
+    });
+  }
 
-    // 构建请求配置
-    const fetchOptions: RequestInit = {
-      method: method.toUpperCase(),
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      signal: controller.signal,
+  /**
+   * 列表查询
+   */
+  async list(data?: any): Promise<any[]> {
+    return this.http({
+      url: '/list',
+      method: 'POST',
+      data,
+    });
+  }
+
+  /**
+   * 分页查询
+   */
+  async page(data: any): Promise<{
+    list: any[];
+    pagination: {
+      page: number;
+      size: number;
+      total: number;
     };
+  }> {
+    return this.http({
+      url: '/page',
+      method: 'POST',
+      data,
+    });
+  }
 
-    // 添加请求体（POST/PUT/PATCH）
-    if (data && method.toUpperCase() !== 'GET') {
-      fetchOptions.body = JSON.stringify(data);
-    }
+  /**
+   * 详情查询
+   */
+  async info(params: any): Promise<any> {
+    return this.http({
+      url: '/info',
+      method: 'GET',
+      params,
+    });
+  }
 
-    try {
-      const response = await fetch(fullUrl, fetchOptions);
-      clearTimeout(timeoutId);
+  /**
+   * 新增
+   */
+  async add(data: any): Promise<any> {
+    return this.http({
+      url: '/add',
+      method: 'POST',
+      data,
+    });
+  }
 
-      if (!response.ok) {
-        // 尝试获取错误响应体
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
-      }
+  /**
+   * 更新
+   */
+  async update(data: any): Promise<any> {
+    return this.http({
+      url: '/update',
+      method: 'POST',
+      data,
+    });
+  }
 
-      // 处理空响应或非 JSON 响应
-      const text = await response.text();
-      if (!text) return undefined as T;
-
-      try {
-        return JSON.parse(text) as T;
-      } catch {
-        return text as T;
-      }
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      // 区分超时错误
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${timeout}ms`);
-      }
-
-      console.error('Request failed:', error);
-      throw error;
-    }
+  /**
+   * 删除
+   */
+  async delete(data: { ids: (string | number)[] }): Promise<any> {
+    return this.http({
+      url: '/delete',
+      method: 'POST',
+      data,
+    });
   }
 }
 

@@ -39,10 +39,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { createMockCrudService } from '../../../utils/mock';
+import { useMessage } from '@/utils/use-message';
+import { service } from '../../../../services/eps';
 
 const route = useRoute();
+const message = useMessage();
 const router = useRouter();
 const menuId = route.params.id;
 
@@ -52,16 +53,8 @@ const selectedPermissions = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const menuService = createMockCrudService('btc_menus');
-const permissionService = createMockCrudService('btc_permissions', {
-  defaultData: [
-    { id: 1, permissionName: '查看用户', permissionCode: 'user:view' },
-    { id: 2, permissionName: '编辑用户', permissionCode: 'user:edit' },
-    { id: 3, permissionName: '删除用户', permissionCode: 'user:delete' },
-    { id: 4, permissionName: '查看角色', permissionCode: 'role:view' },
-    { id: 5, permissionName: '分配角色', permissionCode: 'role:assign' },
-  ]
-});
+const menuService = service.base.department;
+const permissionService = service.base.department;
 
 // 加载菜单信息
 const loadMenuInfo = async () => {
@@ -69,7 +62,7 @@ const loadMenuInfo = async () => {
     const data = await menuService.info({ id: menuId });
     menuInfo.value = data;
   } catch (error) {
-    ElMessage.error('加载菜单信息失败');
+    message.error('加载菜单信息失败');
   }
 };
 
@@ -86,7 +79,7 @@ const loadPermissions = async () => {
     // Mock：默认选中一些权限
     selectedPermissions.value = [1, 4];
   } catch (error) {
-    ElMessage.error('加载权限列表失败');
+    message.error('加载权限列表失败');
   }
 };
 
@@ -99,10 +92,10 @@ const handleSave = async () => {
     // 这里应该调用后端API
     // await http.post(`/menus/${menuId}/permissions`, { permissionIds: selectedPermissions.value });
 
-    ElMessage.success('保存成功');
+    message.success('保存成功');
     router.back();
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     saving.value = false;
   }

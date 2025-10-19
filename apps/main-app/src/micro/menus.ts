@@ -79,6 +79,8 @@ export const appMenus: AppMenuConfig = {
         { index: '/test/svg-plugin', title: 'menu.test_features.svg', icon: 'Picture' },
         { index: '/test/i18n', title: 'menu.test_features.i18n', icon: 'ChatDotRound' },
         { index: '/test/select-button', title: 'menu.test_features.select_button', icon: 'Coin' },
+        { index: '/test/message-notification', title: 'menu.test_features.message_notification', icon: 'Message' },
+        { index: '/test/notification-badge', title: 'menu.test_features.notification_badge', icon: 'Bell' },
       ],
     },
     // 文档中心已移至汉堡菜单

@@ -7,7 +7,7 @@
     :max-height="autoHeight ? maxHeight : undefined"
     :height="height"
     :row-key="rowKey || 'id'"
-    :empty-text="emptyText"
+    :empty-text="translatedEmptyText"
     :default-sort="defaultSort"
     highlight-current-row
     fit
@@ -61,16 +61,26 @@
         </div>
       </template>
     </table-column>
+
+    <!-- 自定义空状态插槽 -->
+    <template #empty>
+      <div class="btc-table__empty">
+        <slot name="empty">
+          <el-empty :image-size="100" :description="translatedEmptyText" />
+        </slot>
+      </div>
+    </template>
   </el-table>
 </template>
 
 <script setup lang="ts">
-import { ref, inject, toRefs } from 'vue';
+import { ref, inject, toRefs, computed } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableInstance } from 'element-plus';
 import type { TableProps } from './types';
 import { useTableColumns, useTableOp, useTableHeight, useTableContextMenu, useTableSort } from './composables';
 import TableColumn from './components/table-column.vue';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'BtcTable',
@@ -83,12 +93,21 @@ const props = withDefaults(defineProps<TableProps>(), {
   autoHeight: false,
   rowKey: 'id',
   sortRefresh: true,
+  emptyText: 'common.table.empty',
 });
 
 const emit = defineEmits(['selection-change', 'sort-change']);
 
 // 解构 props
 const { autoHeight, height, rowKey, emptyText } = toRefs(props);
+
+// 国际化
+const { t } = useI18n();
+
+// 计算翻译后的空状态文本
+const translatedEmptyText = computed(() => {
+  return t(emptyText.value);
+});
 
 // 注入 CRUD 上下文
 const crud = inject<UseCrudReturn<any>>('btc-crud');

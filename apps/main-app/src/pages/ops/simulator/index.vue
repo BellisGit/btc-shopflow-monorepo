@@ -100,9 +100,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { useMessage } from '@/utils/use-message';
+import { service } from '../../../../services/eps';
 
+const message = useMessage();
 const simulatorForm = ref({
   userId: null,
   resource: '',
@@ -115,7 +116,7 @@ const result = ref<any>(null);
 const simulating = ref(false);
 
 // Mock服务
-const userService = createMockCrudService('btc_users');
+const userService = service.base.department;
 
 // 是否可以模拟
 const canSimulate = computed(() => {
@@ -155,9 +156,9 @@ const handleSimulate = async () => {
       ]
     };
 
-    ElMessage.success('模拟完成');
+    message.success('模拟完成');
   } catch (error) {
-    ElMessage.error('模拟失败');
+    message.error('模拟失败');
   } finally {
     simulating.value = false;
   }

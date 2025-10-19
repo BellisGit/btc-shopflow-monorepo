@@ -1,11 +1,31 @@
 {
-  "unocss.root": ".",
-  "editor.quickSuggestions": {
-    "strings": true
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "files.eol": "\n",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "terminal.integrated.defaultProfile.windows": "CMD UTF-8",
+  "terminal.integrated.profiles.windows": {
+    "CMD UTF-8": {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "args": ["/K", "chcp 65001"]
+    },
+    "PowerShell": {
+      "source": "PowerShell",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "chcp 65001 >$null; [Console]::OutputEncoding=[System.Text.Encoding]::UTF8; [Console]::InputEncoding=[System.Text.Encoding]::UTF8"
+      ]
+    }
   }
 }

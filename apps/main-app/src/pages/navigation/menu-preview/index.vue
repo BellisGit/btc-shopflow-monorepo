@@ -53,23 +53,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
 import { Setting, Lock, Grid, ChatDotRound } from '@element-plus/icons-vue';
-import { createMockCrudService } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const previewType = ref<'user' | 'role'>('user');
 const selectedTarget = ref<number | null>(null);
 const menuTree = ref<any[]>([]);
 
 // Mock服务
-const userService = createMockCrudService('btc_users');
-const roleService = createMockCrudService('btc_roles', {
-  defaultData: [
-    { id: 1, roleName: '系统管理员', roleCode: 'admin' },
-    { id: 2, roleName: '部门经理', roleCode: 'manager' },
-    { id: 3, roleName: '普通员工', roleCode: 'employee' },
-  ]
-});
+const userService = service.base.department;
+const roleService = service.base.department;
 
 // 目标选项
 const targetOptions = computed(() => {

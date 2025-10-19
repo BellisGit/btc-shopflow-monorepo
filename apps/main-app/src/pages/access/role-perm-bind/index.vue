@@ -41,10 +41,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { createMockCrudService } from '../../../utils/mock';
+import { useMessage } from '@/utils/use-message';
+import { service } from '../../../../services/eps';
 
 const route = useRoute();
+const message = useMessage();
 const router = useRouter();
 const roleId = route.params.id;
 
@@ -55,7 +56,7 @@ const saving = ref(false);
 const treeRef = ref();
 
 // Mock服务
-const roleService = createMockCrudService('btc_roles');
+const roleService = service.base.department;
 
 // Mock权限树数据
 const loadPermissionTree = () => {
@@ -97,7 +98,7 @@ const loadRoleInfo = async () => {
     const data = await roleService.info({ id: roleId });
     roleInfo.value = data;
   } catch (error) {
-    ElMessage.error('加载角色信息失败');
+    message.error('加载角色信息失败');
   }
 };
 
@@ -117,10 +118,10 @@ const handleSave = async () => {
     // 这里应该调用后端API
     // await http.post(`/roles/${roleId}/permissions`, { permissionIds: checkedKeys });
 
-    ElMessage.success('保存成功');
+    message.success('保存成功');
     router.back();
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     saving.value = false;
   }

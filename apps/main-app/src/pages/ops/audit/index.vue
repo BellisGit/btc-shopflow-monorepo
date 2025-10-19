@@ -47,12 +47,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 const detailVisible = ref(false);
 const currentLog = ref<any>({});
@@ -97,7 +98,7 @@ const formatJson = (jsonStr: string) => {
 };
 
 const handleExport = () => {
-  ElMessage.info('导出功能开发中...');
+  message.info('导出功能开发中...');
 };
 
 onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));

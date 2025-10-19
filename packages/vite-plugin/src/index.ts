@@ -17,14 +17,23 @@ import { ctxPlugin } from './ctx';
 import { tagPlugin } from './tag';
 import type { BtcPluginConfig } from './config';
 import { config } from './config';
+import { getProxyTarget } from './proxy';
 
 /**
  * BTC 插件主入口（统一配置）
  * @param options 配置选项
  * @returns Vite 插件数组
  */
-export function btc(options: Partial<BtcPluginConfig> = {}): Plugin[] {
-  // 合并配置
+export function btc(options: Partial<BtcPluginConfig> & { proxy?: any } = {}): Plugin[] {
+  // 应用类型
+  config.type = options.type || 'admin';
+
+  // 请求地址 - 自动从 proxy 配置获取
+  if (options.proxy) {
+    config.reqUrl = getProxyTarget(options.proxy);
+  }
+
+  // 合并其他配置
   Object.assign(config, options);
 
   const plugins: Plugin[] = [];
@@ -33,8 +42,9 @@ export function btc(options: Partial<BtcPluginConfig> = {}): Plugin[] {
   if (config.eps?.enable !== false) {
     plugins.push(
       epsPlugin({
-        epsUrl: config.eps?.api !== undefined ? config.eps.api : '/admin/base/open/eps',
+        epsUrl: config.eps?.api || '/admin/login/eps/contract',
         outputDir: config.eps?.dist || 'build/eps',
+        reqUrl: config.reqUrl || '',
       })
     );
   }

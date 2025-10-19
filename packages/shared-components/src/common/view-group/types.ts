@@ -15,6 +15,7 @@ export interface ViewGroupOptions {
   enableEdit?: boolean;
   enableDelete?: boolean;
   custom?: boolean;
+  autoRefresh?: boolean; // 是否自动刷新
   tree?: TreeConfig;
   onSelect?: (item: any) => void;
   onEdit?: (item?: any) => any;

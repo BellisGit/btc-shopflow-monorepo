@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized } from 'vue-router';
-import Layout from '../layout/index.vue';
+import Layout from '../modules/base/components/layout/index.vue';
 import { config } from '../config';
-import { storage } from '@btc/shared-utils';
-import { zhCN, enUS } from '@btc/shared-core';
+import { tSync } from '../i18n/getters';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -40,6 +39,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../pages/test/select-button/index.vue'),
         meta: { titleKey: 'menu.test_features.select_button' },
       },
+      {
+        path: 'test/eps',
+        name: 'TestEps',
+        component: () => import('../test-eps.vue'),
+        meta: { titleKey: 'menu.test_features.eps' },
+      },
+      {
+        path: 'test/message-notification',
+        name: 'TestMessageNotification',
+        component: () => import('../pages/test/message-notification/index.vue'),
+        meta: { titleKey: 'menu.test_features.message_notification' },
+      },
+      {
+        path: 'test/notification-badge',
+        name: 'TestNotificationBadge',
+        component: () => import('../pages/test/notification-badge/index.vue'),
+        meta: { titleKey: 'menu.test_features.notification_badge' },
+      },
       // 文档中心（iframe 在全局 Layout 中，不需要独立组件）
       {
         path: 'docs',
@@ -59,131 +76,131 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'platform/domains',
         name: 'Domains',
-        component: () => import('../pages/platform/domains/index.vue'),
+        component: () => import('../modules/platform/views/domains/index.vue'),
         meta: { titleKey: 'menu.platform.domains' },
       },
       {
         path: 'platform/modules',
         name: 'Modules',
-        component: () => import('../pages/platform/modules/index.vue'),
+        component: () => import('../modules/platform/views/modules/index.vue'),
         meta: { titleKey: 'menu.platform.modules' },
       },
       {
         path: 'platform/plugins',
         name: 'Plugins',
-        component: () => import('../pages/platform/plugins/index.vue'),
+        component: () => import('../modules/platform/views/plugins/index.vue'),
         meta: { titleKey: 'menu.platform.plugins' },
       },
       // 组织与账号
       {
         path: 'org/tenants',
         name: 'Tenants',
-        component: () => import('../pages/org/tenants/index.vue'),
+        component: () => import('../modules/org/views/tenants/index.vue'),
         meta: { titleKey: 'menu.org.tenants' },
       },
       {
         path: 'org/departments',
         name: 'Departments',
-        component: () => import('../pages/org/departments/index.vue'),
+        component: () => import('../modules/org/views/departments/index.vue'),
         meta: { titleKey: 'menu.org.departments' },
       },
       {
         path: 'org/departments/:id/roles',
         name: 'DeptRoleBind',
-        component: () => import('../pages/org/dept-role-bind/index.vue'),
+        component: () => import('../modules/org/views/dept-role-bind/index.vue'),
         meta: { titleKey: 'menu.org.dept_role_bind' },
       },
       {
         path: 'org/users',
         name: 'Users',
-        component: () => import('../pages/org/users/index.vue'),
+        component: () => import('../modules/org/views/users/index.vue'),
         meta: { titleKey: 'menu.org.users' },
       },
       {
         path: 'org/users/:id/roles',
         name: 'UserRoleAssign',
-        component: () => import('../pages/org/user-role-assign/index.vue'),
+        component: () => import('../modules/org/views/user-role-assign/index.vue'),
         meta: { titleKey: 'menu.org.user_role_assign' },
       },
       // 访问控制
       {
         path: 'access/resources',
         name: 'Resources',
-        component: () => import('../pages/access/resources/index.vue'),
+        component: () => import('../modules/access/views/resources/index.vue'),
         meta: { titleKey: 'menu.access.resources' },
       },
       {
         path: 'access/actions',
         name: 'Actions',
-        component: () => import('../pages/access/actions/index.vue'),
+        component: () => import('../modules/access/views/actions/index.vue'),
         meta: { titleKey: 'menu.access.actions' },
       },
       {
         path: 'access/permissions',
         name: 'Permissions',
-        component: () => import('../pages/access/permissions/index.vue'),
+        component: () => import('../modules/access/views/permissions/index.vue'),
         meta: { titleKey: 'menu.access.permissions' },
       },
       {
         path: 'access/roles',
         name: 'Roles',
-        component: () => import('../pages/access/roles/index.vue'),
+        component: () => import('../modules/access/views/roles/index.vue'),
         meta: { titleKey: 'menu.access.roles' },
       },
       {
         path: 'access/roles/:id/permissions',
         name: 'RolePermBind',
-        component: () => import('../pages/access/role-perm-bind/index.vue'),
+        component: () => import('../modules/access/views/role-perm-bind/index.vue'),
         meta: { titleKey: 'menu.access.role_perm_bind' },
       },
       {
         path: 'access/policies',
         name: 'Policies',
-        component: () => import('../pages/access/policies/index.vue'),
+        component: () => import('../modules/access/views/policies/index.vue'),
         meta: { titleKey: 'menu.access.policies' },
       },
       {
         path: 'access/perm-compose',
         name: 'PermCompose',
-        component: () => import('../pages/access/perm-compose/index.vue'),
+        component: () => import('../modules/access/views/perm-compose/index.vue'),
         meta: { titleKey: 'menu.access.perm_compose' },
       },
       // 导航与可见性
       {
         path: 'navigation/menus',
         name: 'Menus',
-        component: () => import('../pages/navigation/menus/index.vue'),
+        component: () => import('../modules/navigation/views/menus/index.vue'),
         meta: { titleKey: 'menu.navigation.menus' },
       },
       {
         path: 'navigation/menus/:id/permissions',
         name: 'MenuPermBind',
-        component: () => import('../pages/navigation/menu-perm-bind/index.vue'),
+        component: () => import('../modules/navigation/views/menu-perm-bind/index.vue'),
         meta: { titleKey: 'menu.navigation.menu_perm_bind' },
       },
       {
         path: 'navigation/menus/preview',
         name: 'MenuPreview',
-        component: () => import('../pages/navigation/menu-preview/index.vue'),
+        component: () => import('../modules/navigation/views/menu-preview/index.vue'),
         meta: { titleKey: 'menu.navigation.menu_preview' },
       },
       // 运维与审计
       {
         path: 'ops/audit',
         name: 'Audit',
-        component: () => import('../pages/ops/audit/index.vue'),
+        component: () => import('../modules/ops/views/audit/index.vue'),
         meta: { titleKey: 'menu.ops.audit' },
       },
       {
         path: 'ops/baseline',
         name: 'Baseline',
-        component: () => import('../pages/ops/baseline/index.vue'),
+        component: () => import('../modules/ops/views/baseline/index.vue'),
         meta: { titleKey: 'menu.ops.baseline' },
       },
       {
         path: 'ops/simulator',
         name: 'Simulator',
-        component: () => import('../pages/ops/simulator/index.vue'),
+        component: () => import('../modules/ops/views/simulator/index.vue'),
         meta: { titleKey: 'menu.ops.simulator' },
       },
     ],
@@ -231,26 +248,11 @@ const routes: RouteRecordRaw[] = [
   },
 ];
 
-// 语言包映射（必须在最前面定义，供立即执行的初始化使用）
-const localeMessages: Record<string, any> = {
-  'zh-CN': zhCN,
-  'en-US': enUS,
-};
+// 不再需要 localeMessages，直接使用 tSync
 
 // 已删除：路径到i18n键的映射表（改用 meta.titleKey，单一事实来源）
 
-/**
- * 同步获取翻译（避免异步导致的标题闪烁）
- */
-function getTranslation(key: string): string {
-  const currentLocale = storage.get<string>('locale') || 'zh-CN';
-  const messages = localeMessages[currentLocale] || zhCN;
-
-  // 直接通过键获取翻译（语言包的键是完整字符串，不是嵌套对象）
-  const translation = messages[key];
-
-  return translation || key; // 找不到翻译时返回键本身
-}
+// 使用 tSync 函数替代 getTranslation
 
 // 创建 router 实例
 const router = createRouter({
@@ -273,7 +275,33 @@ function updateDocumentTitle(to: RouteLocationNormalized) {
 
   if (titleKey) {
     // 同步获取国际化标题
-    document.title = getTranslation(titleKey);
+    const translatedTitle = tSync(titleKey);
+
+    // 如果返回的是键值本身，说明国际化还没加载完成，延迟重试
+    if (translatedTitle === titleKey) {
+      // 先设置默认标题，避免显示 key
+      document.title = config.app.name;
+
+      // 多次重试翻译，确保国际化加载完成
+      const retryTranslation = (attempt: number = 1) => {
+        if (attempt > 5) return; // 最多重试5次
+
+        setTimeout(() => {
+          const retryTitle = tSync(titleKey);
+          if (retryTitle !== titleKey) {
+            document.title = retryTitle;
+          } else {
+            // 继续重试
+            retryTranslation(attempt + 1);
+          }
+        }, attempt * 100); // 递增延迟：100ms, 200ms, 300ms, 400ms, 500ms
+      };
+
+      retryTranslation();
+    } else {
+      // 翻译成功，直接设置标题
+      document.title = translatedTitle;
+    }
   } else {
     // 回退到系统名称
     document.title = config.app.name;
@@ -284,7 +312,7 @@ function updateDocumentTitle(to: RouteLocationNormalized) {
  * 监听语言切换，更新浏览器标题（同步方式）
  */
 export function setupI18nTitleWatcher() {
-  // 监听 localStorage 中的语言变化
+  // 监听 localStorage 中的语言变化（跨标签页）
   window.addEventListener('storage', (e) => {
     if (e.key === 'locale' && currentRoute) {
       // 语言切换时，同步更新当前页面的标题
@@ -292,10 +320,13 @@ export function setupI18nTitleWatcher() {
     }
   });
 
-  // 也可以通过自定义事件监听（用于同一标签页的语言切换）
-  window.addEventListener('locale-change', () => {
+  // 监听自定义事件（同一标签页的语言切换）
+  window.addEventListener('language-change', () => {
     if (currentRoute) {
-      updateDocumentTitle(currentRoute);
+      // 延迟一点时间，确保 i18n 已经更新
+      setTimeout(() => {
+        updateDocumentTitle(currentRoute!);
+      }, 50);
     }
   });
 }

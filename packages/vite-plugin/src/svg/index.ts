@@ -22,6 +22,9 @@ function findSvg(dir: string): string[] {
     // 获取当前目录的模块名
     const moduleName = dir.match(/[/\\](?:src[/\\](?:plugins|modules)[/\\])([^/\\]+)/)?.[1] || '';
 
+    // 检查是否是 assets/icons 目录
+    const isAssetsIcons = dir.includes('/assets/icons/') || dir.includes('\\assets\\icons\\');
+
     for (const d of dirs) {
       if (d.isDirectory()) {
         arr.push(...findSvg(dir + d.name + '/'));
@@ -30,10 +33,20 @@ function findSvg(dir: string): string[] {
           const baseName = basename(d.name, '.svg');
 
           // 判断是否需要跳过拼接模块名
-          let shouldSkip = config.svg.skipNames?.includes(moduleName);
+          let shouldSkip = config.svg?.skipNames?.includes(moduleName);
 
           // 跳过包含 icon-
           if (baseName.includes('icon-')) {
+            shouldSkip = true;
+          }
+
+          // 如果是 assets/icons 目录，直接使用文件名，不拼接模块名
+          if (isAssetsIcons) {
+            shouldSkip = true;
+          }
+
+          // 如果 moduleName 为空，也跳过拼接
+          if (!moduleName) {
             shouldSkip = true;
           }
 
@@ -41,7 +54,12 @@ function findSvg(dir: string): string[] {
 
           svgIcons.push(iconName);
 
-          const svgContent = readFileSync(dir + d.name).toString();
+          let svgContent = readFileSync(dir + d.name).toString();
+          // 清理 XML 声明和 DOCTYPE
+          svgContent = svgContent
+            .replace(/<\?xml[^>]*\?>/g, '')
+            .replace(/<!DOCTYPE[^>]*>/g, '');
+
           // 提取 viewBox 或使用 width/height
           const viewBoxMatch = svgContent.match(/viewBox=["']([^"']+)["']/);
           const widthMatch = svgContent.match(/width=["']([^"']+)["']/);
@@ -79,7 +97,13 @@ function findSvg(dir: string): string[] {
 function compilerSvg(): string {
   svgIcons = [];
 
-  return findSvg(rootDir('./src/'))
+  // 扫描 src/ 目录下的 modules 和 plugins
+  const srcSvgs = findSvg(rootDir('./src/'));
+
+  // 扫描 assets/icons 目录
+  const assetsSvgs = findSvg(rootDir('./src/assets/icons/'));
+
+  return [...srcSvgs, ...assetsSvgs]
     .map((e) => {
       const result = optimize(e);
       return result.data || e;
@@ -92,6 +116,8 @@ function compilerSvg(): string {
  */
 export async function createSvg(): Promise<{ code: string; svgIcons: string[] }> {
   const html = compilerSvg();
+  // 使用 JSON.stringify 来安全地转义所有特殊字符
+  const escapedHtml = JSON.stringify(html);
 
   const code = `
 if (typeof window !== 'undefined') {
@@ -102,7 +128,7 @@ if (typeof window !== 'undefined') {
 		svgDom.style.height = '0';
 		svgDom.setAttribute('xmlns','http://www.w3.org/2000/svg');
 		svgDom.setAttribute('xmlns:link','http://www.w3.org/1999/xlink');
-		svgDom.innerHTML = '${html}';
+		svgDom.innerHTML = ${escapedHtml};
 		document.body.insertBefore(svgDom, document.body.firstChild);
 	}
 
@@ -128,16 +154,16 @@ export function svgPlugin(): Plugin {
   return {
     name: 'btc:svg',
 
-    async configResolved() {
-      // 生成 SVG sprite
-      const result = await createSvg();
-      svgCode = result.code;
-      iconList = result.svgIcons;
+		async configResolved() {
+			// 生成 SVG sprite
+			const result = await createSvg();
+			svgCode = result.code;
+			iconList = result.svgIcons;
 
-      if (iconList.length > 0) {
-        console.log(`[btc:svg] Found ${iconList.length} SVG icons`);
-      }
-    },
+			if (iconList.length > 0) {
+				console.info(`[btc:svg] 找到 ${iconList.length} 个 SVG 图标`);
+			}
+		},
 
     resolveId(id: string) {
       if (id === 'virtual:svg-icons') {
@@ -152,15 +178,17 @@ export function svgPlugin(): Plugin {
     },
 
     transformIndexHtml() {
-      // 也可以通过 HTML 注入
-      return [
-        {
-          tag: 'script',
-          attrs: { type: 'module' },
-          children: `import 'virtual:svg-icons'`,
-          injectTo: 'head',
-        },
-      ];
+      // 直接注入 SVG sprite 代码到 HTML，避免虚拟模块的 CORS 问题
+      if (svgCode) {
+        return [
+          {
+            tag: 'script',
+            children: svgCode,
+            injectTo: 'body-prepend',
+          },
+        ];
+      }
+      return [];
     },
   };
 }

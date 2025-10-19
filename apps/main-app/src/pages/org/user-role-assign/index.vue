@@ -46,11 +46,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { createMockCrudService } from '../../../utils/mock';
+import { useMessage } from '@/utils/use-message';
+import { service } from '../../../../services/eps';
 
 const route = useRoute();
 const router = useRouter();
+const message = useMessage();
 const userId = route.params.id;
 
 const userInfo = ref<any>({});
@@ -61,12 +62,7 @@ const saving = ref(false);
 // Mock服务
 const userService = createMockCrudService('btc_users');
 const roleService = createMockCrudService('btc_roles', {
-  defaultData: [
-    { id: 1, roleName: '系统管理员', roleCode: 'admin', roleType: 'SYSTEM' },
-    { id: 2, roleName: '部门经理', roleCode: 'manager', roleType: 'BUSINESS' },
-    { id: 3, roleName: '普通员工', roleCode: 'employee', roleType: 'BUSINESS' },
-    { id: 4, roleName: '访客', roleCode: 'guest', roleType: 'SYSTEM' },
-  ]
+
 });
 
 // 加载用户信息
@@ -75,7 +71,7 @@ const loadUserInfo = async () => {
     const data = await userService.info({ id: userId });
     userInfo.value = data;
   } catch (error) {
-    ElMessage.error('加载用户信息失败');
+    message.error('加载用户信息失败');
   }
 };
 
@@ -87,7 +83,7 @@ const loadRoles = async () => {
     // Mock：随机选择已分配的角色
     selectedRoles.value = [3]; // 默认分配员工角色
   } catch (error) {
-    ElMessage.error('加载角色列表失败');
+    message.error('加载角色列表失败');
   }
 };
 
@@ -100,10 +96,10 @@ const handleSave = async () => {
     // 这里应该调用后端API
     // await http.post(`/users/${userId}/roles`, { roleIds: selectedRoles.value });
 
-    ElMessage.success('保存成功');
+    message.success('保存成功');
     router.back();
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     saving.value = false;
   }

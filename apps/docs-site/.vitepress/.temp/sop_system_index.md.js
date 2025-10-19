@@ -1,0 +1,19 @@
+import { ssrRenderAttrs } from "vue/server-renderer";
+import { useSSRContext } from "vue";
+import { _ as _export_sfc } from "./plugin-vue_export-helper.1tPrXgE0.js";
+const __pageData = JSON.parse('{"title":"系统配置操作流程","description":"","frontmatter":{"title":"系统配置操作流程","type":"sop","project":"system","owner":"dev-team","created":"2025-10-13","updated":"2025-10-13","publish":true,"tags":["sop","system","configuration"],"sidebar_label":"系统配置","sidebar_order":3,"sidebar_group":"sop-system"},"headers":[],"relativePath":"sop/system/index.md","filePath":"sop/system/index.md","lastUpdated":1760420026000}');
+const _sfc_main = { name: "sop/system/index.md" };
+function _sfc_ssrRender(_ctx, _push, _parent, _attrs, $props, $setup, $data, $options) {
+  _push(`<div${ssrRenderAttrs(_attrs)}><h1 id="系统配置操作流程" tabindex="-1">系统配置操作流程 <a class="header-anchor" href="#系统配置操作流程" aria-label="Permalink to &quot;系统配置操作流程&quot;">​</a></h1><p>本部分提供了系统配置相关的标准操作流程，包括服务端配置环境变量系统优化等系统级配置操作</p><h2 id="操作流程" tabindex="-1">操作流程 <a class="header-anchor" href="#操作流程" aria-label="Permalink to &quot;操作流程&quot;">​</a></h2><h3 id="服务端配置" tabindex="-1">服务端配置 <a class="header-anchor" href="#服务端配置" aria-label="Permalink to &quot;服务端配置&quot;">​</a></h3><ul><li><strong><a href="/internal/archive/sop/system/server-side-title-injection">服务端标题注入</a></strong> - 服务端标题注入的配置方法</li></ul><hr><h2 id="配置原则" tabindex="-1">配置原则 <a class="header-anchor" href="#配置原则" aria-label="Permalink to &quot;配置原则&quot;">​</a></h2><h3 id="_1-环境隔离" tabindex="-1">1. 环境隔离 <a class="header-anchor" href="#_1-环境隔离" aria-label="Permalink to &quot;1. 环境隔离&quot;">​</a></h3><ul><li>开发测试生产环境配置分离</li><li>敏感信息使用环境变量</li><li>配置文件版本控制</li></ul><h3 id="_2-安全配置" tabindex="-1">2. 安全配置 <a class="header-anchor" href="#_2-安全配置" aria-label="Permalink to &quot;2. 安全配置&quot;">​</a></h3><ul><li>最小权限原则</li><li>敏感数据加密</li><li>定期安全审计</li></ul><h3 id="_3-性能优化" tabindex="-1">3. 性能优化 <a class="header-anchor" href="#_3-性能优化" aria-label="Permalink to &quot;3. 性能优化&quot;">​</a></h3><ul><li>合理的缓存策略</li><li>资源压缩和优化</li><li>监控和告警机制</li></ul><hr><h2 id="配置分类" tabindex="-1">配置分类 <a class="header-anchor" href="#配置分类" aria-label="Permalink to &quot;配置分类&quot;">​</a></h2><h3 id="应用配置" tabindex="-1">应用配置 <a class="header-anchor" href="#应用配置" aria-label="Permalink to &quot;应用配置&quot;">​</a></h3><ul><li>应用启动参数</li><li>功能开关配置</li><li>性能参数调优</li></ul><h3 id="服务配置" tabindex="-1">服务配置 <a class="header-anchor" href="#服务配置" aria-label="Permalink to &quot;服务配置&quot;">​</a></h3><ul><li>数据库连接配置</li><li>缓存服务配置</li><li>外部服务集成</li></ul><h3 id="安全配置" tabindex="-1">安全配置 <a class="header-anchor" href="#安全配置" aria-label="Permalink to &quot;安全配置&quot;">​</a></h3><ul><li>认证授权配置</li><li>数据加密配置</li><li>访问控制配置</li></ul><hr><h2 id="监控与维护" tabindex="-1">监控与维护 <a class="header-anchor" href="#监控与维护" aria-label="Permalink to &quot;监控与维护&quot;">​</a></h2><h3 id="监控指标" tabindex="-1">监控指标 <a class="header-anchor" href="#监控指标" aria-label="Permalink to &quot;监控指标&quot;">​</a></h3><ul><li>系统性能指标</li><li>业务指标监控</li><li>错误日志监控</li></ul><h3 id="维护流程" tabindex="-1">维护流程 <a class="header-anchor" href="#维护流程" aria-label="Permalink to &quot;维护流程&quot;">​</a></h3><ul><li>定期配置检查</li><li>配置变更管理</li><li>问题排查流程</li></ul><hr><h2 id="相关文档" tabindex="-1">相关文档 <a class="header-anchor" href="#相关文档" aria-label="Permalink to &quot;相关文档&quot;">​</a></h2><ul><li><a href="/internal/archive/guides/system">系统配置指南</a></li><li><a href="/internal/archive/guides/deployment">部署指南</a></li><li><a href="/internal/archive/guides/monitoring">监控指南</a></li></ul></div>`);
+}
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("sop/system/index.md");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const index = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender]]);
+export {
+  __pageData,
+  index as default
+};

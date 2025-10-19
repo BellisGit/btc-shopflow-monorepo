@@ -28,48 +28,19 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 
 // Mock数据服务
 const policyService = createMockCrudService('btc_policies', {
-  defaultData: [
-    {
-      id: 1,
-      policyName: '用户管理员策略',
-      policyType: 'RBAC',
-      effect: 'allow',
-      priority: 100,
-      conditions: JSON.stringify({ role: 'admin', resource: 'user' }),
-      description: '允许管理员完全管理用户',
-      createTime: mockHelpers.randomDate()
-    },
-    {
-      id: 2,
-      policyName: '部门经理查看策略',
-      policyType: 'ABAC',
-      effect: 'allow',
-      priority: 50,
-      conditions: JSON.stringify({ role: 'manager', department: 'same' }),
-      description: '允许部门经理查看本部门用户',
-      createTime: mockHelpers.randomDate()
-    },
-    {
-      id: 3,
-      policyName: '禁止删除系统数据',
-      policyType: 'RBAC',
-      effect: 'deny',
-      priority: 200,
-      conditions: JSON.stringify({ action: 'delete', resource: 'system' }),
-      description: '拒绝任何人删除系统数据',
-      createTime: mockHelpers.randomDate()
-    },
-  ]
+
 });
 
 // 添加delete确认
@@ -78,7 +49,7 @@ const wrappedService = {
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await policyService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -119,7 +90,7 @@ const formItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();

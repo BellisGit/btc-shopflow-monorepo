@@ -24,11 +24,19 @@ defineOptions({
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { getCurrentAppFromPath } from '../../store/process';
+// 动态导入 store
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
 const route = useRoute();
 const { t } = useI18n();
+
+// 动态导入 store
+const getCurrentAppFromPath = ref<any>(null);
+
+// 加载 store
+import('../../store/process').then(({ getCurrentAppFromPath: getCurrentApp }) => {
+  getCurrentAppFromPath.value = getCurrentApp;
+});
 
 interface BreadcrumbItem {
   label: string;
@@ -44,7 +52,8 @@ interface BreadcrumbConfig {
 
 // 根据路由生成面包屑（应用隔离）
 const breadcrumbList = computed<BreadcrumbItem[]>(() => {
-  const currentApp = getCurrentAppFromPath(route.path);
+  if (!getCurrentAppFromPath.value) return [];
+  const currentApp = getCurrentAppFromPath.value(route.path);
 
   // 主应用的路径映射（完整层级结构）
   const mainAppBreadcrumbs: Record<string, BreadcrumbConfig[]> = {

@@ -170,6 +170,11 @@ export default defineConfig({
       noExternal: ['element-plus', '@btc/shared-components', '@btc/shared-core']
     },
 
+    // 构建配置
+    build: {
+      chunkSizeWarningLimit: 1000, // 文档站点允许更大的 chunk
+    },
+
     // 服务器配置
     server: {
       port: 8085,

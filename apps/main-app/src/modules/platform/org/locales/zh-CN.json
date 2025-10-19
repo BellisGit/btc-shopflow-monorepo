@@ -1,0 +1,13 @@
+﻿{
+  "org.tenants.title": "租户列表",
+  "org.departments.title": "部门列表",
+  "org.users.title": "用户列表",
+  "org.tenants.tenant_name": "租户名称",
+  "org.departments.department_name": "部门名称",
+  "org.users.username": "用户名",
+  "org.users.name": "姓名",
+  "menu.org": "组织与账号",
+  "menu.org.tenants": "租户列表",
+  "menu.org.departments": "部门列表",
+  "menu.org.users": "用户列表"
+}

@@ -2,6 +2,7 @@
   "name": "@btc/vite-plugin",
   "version": "1.0.0",
   "description": "BTC Vite 插件集合（EPS、SVG、Ctx 等）",
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

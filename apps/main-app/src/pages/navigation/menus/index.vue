@@ -87,12 +87,14 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const viewGroupRef = ref();
 const crudRef = ref();
 const selectedMenu = ref<any>(null);
@@ -105,20 +107,7 @@ const menuPermissions = ref<number[]>([]);
 
 // 菜单服务（左侧树）
 const menuService = createMockCrudService('btc_menus', {
-  defaultData: [
-    {
-      id: 1,
-      name: '系统管理',
-      menuNameCn: '系统管理',
-      menuCode: 'system',
-      menuPath: '/system',
-      menuType: 'DIR',
-      icon: 'setting',
-      sortOrder: 1,
-      children: [
-        { id: 11, name: '用户管理', menuNameCn: '用户管理', menuCode: 'user', menuPath: '/system/user', menuType: 'MENU', icon: 'user', sortOrder: 1, parentId: 1 },
-        { id: 12, name: '角色管理', menuNameCn: '角色管理', menuCode: 'role', menuPath: '/system/role', menuType: 'MENU', icon: 'role', sortOrder: 2, parentId: 1 },
-      ]
+
     },
   ]
 });
@@ -164,7 +153,7 @@ const viewGroupOptions = reactive({
     menuPermissions.value = [1, 2]; // Mock数据
   },
   onEdit(menu?: any) {
-    ElMessage.info(menu ? `编辑菜单：${menu.name}` : '新增菜单');
+    message.info(menu ? `编辑菜单：${menu.name}` : '新增菜单');
   }
 });
 
@@ -186,7 +175,7 @@ const resourceFormItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();
@@ -199,10 +188,10 @@ const handleSaveMenu = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 500));
     await menuService.update(menuForm.value);
-    ElMessage.success('保存成功');
+    message.success('保存成功');
     viewGroupRef.value?.refresh();
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     saving.value = false;
   }
@@ -220,9 +209,9 @@ const handleSavePermissions = async () => {
   savingPerms.value = true;
   try {
     await new Promise(resolve => setTimeout(resolve, 500));
-    ElMessage.success('权限保存成功');
+    message.success('权限保存成功');
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     savingPerms.value = false;
   }

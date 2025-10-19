@@ -1,0 +1,15 @@
+/**
+ * 表单操作方法
+ */
+export declare function useFormActions(formSetup: any): {
+    showLoading: () => void;
+    hideLoading: () => void;
+    setDisabled: (val?: boolean) => void;
+    done: () => void;
+    close: (action?: "close" | "save") => void;
+    onClosed: () => void;
+    clear: () => void;
+    reset: () => void;
+    submit: (callback?: Function) => void;
+    open: (options?: any, plugins?: any[]) => void;
+};

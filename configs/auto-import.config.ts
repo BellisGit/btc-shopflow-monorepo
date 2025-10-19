@@ -36,7 +36,11 @@ export function createAutoImportConfig() {
       },
     ],
 
-    resolvers: [ElementPlusResolver()],
+    resolvers: [
+      ElementPlusResolver({
+        importStyle: false, // 禁用按需样式导入
+      }),
+    ],
 
     dts: 'src/auto-imports.d.ts',
 
@@ -72,14 +76,11 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     ...extraDirs, // 额外的域级组件目录
   ];
 
-  // 如果启用共享组件库
-  if (includeShared) {
-    dirs.push('../../shared-components/src/**');
-  }
-
   return Components({
     resolvers: [
-      ElementPlusResolver(), // Element Plus 组件库
+      ElementPlusResolver({
+        importStyle: false, // 禁用按需样式导入，避免 Vite reloading
+      }),
       // 自定义解析器：@btc/shared-components
       (componentName) => {
         if (componentName.startsWith('Btc')) {
@@ -92,5 +93,10 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     ],
     dts: 'src/components.d.ts',
     dirs,
+    extensions: ['vue', 'tsx'], // 支持 .vue 和 .tsx 文件
+    // 强制重新扫描组件
+    deep: true,
+    // 包含所有 Btc 开头的组件
+    include: [/\.vue$/, /\.tsx$/, /Btc[A-Z]/],
   });
 }

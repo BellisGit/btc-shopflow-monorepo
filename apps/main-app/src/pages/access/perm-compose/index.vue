@@ -281,7 +281,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import {
   Delete,
   Select,
@@ -296,9 +296,10 @@ import {
   Search,
   Close,
 } from '@element-plus/icons-vue';
-import { createMockCrudService } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 // 模式选项
+const message = useMessage();
 const mode = ref<'matrix' | 'compose'>('matrix');
 const modeOptions = [
   { label: '矩阵模式', value: 'matrix' },
@@ -306,63 +307,11 @@ const modeOptions = [
 ];
 
 // Mock服务
-const resourceService = createMockCrudService('btc_resources', {
-  defaultData: [
-    {
-      id: 1,
-      resourceNameCn: '用户管理',
-      resourceCode: 'user',
-      resourceType: '模块',
-      supportedActions: [1, 2, 3, 4],
-      children: [
-        { id: 11, resourceNameCn: '用户列表', resourceCode: 'user.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
-        { id: 12, resourceNameCn: '用户详情', resourceCode: 'user.detail', resourceType: '页面', supportedActions: [1] },
-      ]
-    },
-    {
-      id: 2,
-      resourceNameCn: '角色管理',
-      resourceCode: 'role',
-      resourceType: '模块',
-      supportedActions: [1, 2, 3, 4],
-      children: [
-        { id: 21, resourceNameCn: '角色列表', resourceCode: 'role.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
-        { id: 22, resourceNameCn: '角色分配', resourceCode: 'role.assign', resourceType: '功能', supportedActions: [1, 4] },
-      ]
-    },
-    {
-      id: 3,
-      resourceNameCn: '部门管理',
-      resourceCode: 'department',
-      resourceType: '模块',
-      supportedActions: [1, 2, 3, 4],
-      children: [
-        { id: 31, resourceNameCn: '部门列表', resourceCode: 'dept.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
-      ]
-    },
-    {
-      id: 4,
-      resourceNameCn: '系统设置',
-      resourceCode: 'system',
-      resourceType: '模块',
-      supportedActions: [1, 2],
-      children: [
-        { id: 41, resourceNameCn: '基础配置', resourceCode: 'system.config', resourceType: '页面', supportedActions: [1, 2] },
-      ]
-    },
-  ]
-});
+const resourceService = service.base.department;
 
-const actionService = createMockCrudService('btc_actions', {
-  defaultData: [
-    { id: 1, actionNameCn: '查看', actionCode: 'view', httpMethod: 'GET', icon: 'View' },
-    { id: 2, actionNameCn: '编辑', actionCode: 'edit', httpMethod: 'PUT', icon: 'Edit' },
-    { id: 3, actionNameCn: '删除', actionCode: 'delete', httpMethod: 'DELETE', icon: 'Delete' },
-    { id: 4, actionNameCn: '新增', actionCode: 'create', httpMethod: 'POST', icon: 'Plus' },
-  ]
-});
+const actionService = service.base.department;
 
-const permissionService = createMockCrudService('btc_composed_permissions');
+const permissionService = service.base.department;
 
 // 数据
 const resourceTree = ref<any[]>([]);
@@ -404,7 +353,7 @@ watch(resourceFilterText, (val) => {
 
 // 模式切换
 const handleModeChange = (val: 'matrix' | 'compose') => {
-  ElMessage.info(`切换到${val === 'matrix' ? '矩阵' : '组合'}模式`);
+  message.info(`切换到${val === 'matrix' ? '矩阵' : '组合'}模式`);
 
   // 清空选择状态
   if (val === 'matrix') {
@@ -509,13 +458,13 @@ const handleSelectAllActions = () => {
   if (selectedActions.value.length === filteredActions.value.length) {
     selectedActions.value = [];
     actionTableRef.value?.clearSelection();
-    ElMessage.info('已取消全选');
+    message.info('已取消全选');
   } else {
     selectedActions.value = filteredActions.value.map(a => a.id);
     filteredActions.value.forEach((row: any) => {
       actionTableRef.value?.toggleRowSelection(row, true);
     });
-    ElMessage.success('已全选所有行为');
+    message.success('已全选所有行为');
   }
 };
 
@@ -528,15 +477,15 @@ const handleActionTemplate = (command: string) => {
   switch (command) {
     case 'readonly':
       targetActions = actions.value.filter(a => a.actionCode === 'view');
-      ElMessage.success('已应用只读权限模板');
+      message.success('已应用只读权限模板');
       break;
     case 'editor':
       targetActions = actions.value.filter(a => ['view', 'edit'].includes(a.actionCode));
-      ElMessage.success('已应用编辑权限模板');
+      message.success('已应用编辑权限模板');
       break;
     case 'full':
       targetActions = actions.value;
-      ElMessage.success('已应用完整权限模板');
+      message.success('已应用完整权限模板');
       break;
   }
 
@@ -561,7 +510,7 @@ const getMethodType = (method: string) => {
 // 组合模式：生成权限组合
 const handleCompose = async () => {
   if (!canCompose.value) {
-    ElMessage.warning('请先选择资源和行为');
+    message.warning('请先选择资源和行为');
     return;
   }
 
@@ -599,18 +548,18 @@ const handleCompose = async () => {
     });
 
     if (newPermissions.length === 0) {
-      ElMessage.warning('没有新的权限可生成');
+      message.warning('没有新的权限可生成');
       return;
     }
 
     composedPermissions.value.push(...newPermissions);
-    ElMessage.success(`成功生成 ${newPermissions.length} 个权限`);
+    message.success(`成功生成 ${newPermissions.length} 个权限`);
 
     resourceTreeRef.value?.setCheckedKeys([]);
     selectedResources.value = [];
     selectedActions.value = [];
   } catch (error) {
-    ElMessage.error('生成失败');
+    message.error('生成失败');
   } finally {
     composing.value = false;
   }
@@ -654,7 +603,7 @@ const handleMatrixToggle = (resourceId: number, actionId: number, checked: boole
           actionName: action.actionNameCn,
           description: `${action.actionNameCn}${resource.resourceNameCn}的权限`,
         });
-        ElMessage.success(`已添加：${action.actionNameCn}${resource.resourceNameCn}`);
+        message.success(`已添加：${action.actionNameCn}${resource.resourceNameCn}`);
       }
     }
   } else {
@@ -664,7 +613,7 @@ const handleMatrixToggle = (resourceId: number, actionId: number, checked: boole
     if (index > -1) {
       const perm = composedPermissions.value[index];
       composedPermissions.value.splice(index, 1);
-      ElMessage.info(`已移除：${perm.permissionName}`);
+      message.info(`已移除：${perm.permissionName}`);
     }
   }
 };
@@ -678,14 +627,14 @@ const handleRemovePermission = (index: number) => {
     matrixSelections.value.delete(perm.key);
   }
 
-  ElMessage.success('已移除');
+  message.success('已移除');
 };
 
 // 清空所有结果
 const handleClearAll = () => {
   composedPermissions.value = [];
   matrixSelections.value.clear();
-  ElMessage.success('已清空所有权限');
+  message.success('已清空所有权限');
 };
 
 // 保存权限
@@ -695,11 +644,11 @@ const handleSave = async () => {
     for (const perm of composedPermissions.value) {
       await permissionService.add(perm);
     }
-    ElMessage.success(`成功保存 ${composedPermissions.value.length} 个权限`);
+    message.success(`成功保存 ${composedPermissions.value.length} 个权限`);
     composedPermissions.value = [];
     matrixSelections.value.clear();
   } catch (error) {
-    ElMessage.error('保存失败');
+    message.error('保存失败');
   } finally {
     saving.value = false;
   }

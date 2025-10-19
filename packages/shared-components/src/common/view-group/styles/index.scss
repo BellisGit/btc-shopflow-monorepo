@@ -1,6 +1,7 @@
 .btc-view-group {
   height: 100%;
   width: 100%;
+  overflow: hidden; // 防止内容溢出
 
   :deep(.icon) {
     display: flex;
@@ -45,6 +46,7 @@
     height: 100%;
     width: 100%;
     position: relative;
+    overflow: hidden; // 防止内容溢出
   }
 
   &__left {

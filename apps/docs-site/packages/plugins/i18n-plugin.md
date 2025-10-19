@@ -16,6 +16,15 @@ sidebar_group: packages
 ---
 # i18n 插件使用指南
 
+## 语言代码规范
+
+**重要**：本项目严格使用标准的语言代码格式：
+
+- ✅ **支持的语言**：`zh-CN`（简体中文）、`en-US`（美式英语）
+- ❌ **不支持别名**：`zh`、`en`、`zh_CN`、`zh_cn` 等其他格式
+
+所有语言包文件、配置和代码中都必须使用 `zh-CN` 或 `en-US` 格式。
+
 ## 微前端中的 i18n 架构
 
 ### 架构模式：独立 + 同步
@@ -223,7 +232,7 @@ i18n_common_en-US: { "button.save": "Save", ... }
 i18n_logistics_zh-CN: { "logistics.order": "订单", ... }
 i18n_logistics_en-US: { "logistics.order": "Order", ... }
 i18n_production_zh-CN: { "production.plan": "计划", ... }
-locale: "zh-CN"
+locale: "zh-CN"  // 必须使用 zh-CN 或 en-US 格式
 ```
 
 **优点**：

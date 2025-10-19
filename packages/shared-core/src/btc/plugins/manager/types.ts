@@ -8,6 +8,66 @@ export interface PluginOptions {
 }
 
 /**
+ * 插件元数据配置（兼容 Cool-Admin 风格）
+ */
+export interface PluginMetadata {
+  /**
+   * 插件显示名称
+   */
+  label?: string;
+
+  /**
+   * 插件描述
+   */
+  description?: string;
+
+  /**
+   * 作者
+   */
+  author?: string;
+
+  /**
+   * 版本号
+   */
+  version?: string;
+
+  /**
+   * 更新时间
+   */
+  updateTime?: string;
+
+  /**
+   * 插件文档链接
+   */
+  doc?: string;
+
+  /**
+   * 示例路径列表
+   */
+  demo?: string[];
+
+  /**
+   * 插件图标 URL
+   */
+  icon?: string;
+
+  /**
+   * 插件分类
+   */
+  category?: string;
+
+  /**
+   * 插件标签
+   */
+  tags?: string[];
+
+  /**
+   * 是否推荐使用
+   */
+  recommended?: boolean;
+}
+
+/**
  * 工具栏配置
  */
 export interface ToolbarConfig {
@@ -220,6 +280,12 @@ export interface Plugin<T = any> {
    * 插件元数据
    */
   meta?: Record<string, any>;
+
+  /**
+   * 插件配置元数据（兼容 Cool-Admin 风格）
+   * 提供更丰富的插件信息和配置选项
+   */
+  config?: PluginMetadata;
 }
 
 /**

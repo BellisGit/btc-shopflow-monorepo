@@ -14,7 +14,7 @@ export function useViewGroupData(config: ViewGroupOptions, tree: any, isCustom: 
 
   // 请求参数
   const reqParams = reactive({
-    order: 'createTime',
+    order: 'createdAt',
     sort: 'asc',
     page: 1,
     size: 50,

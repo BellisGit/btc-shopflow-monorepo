@@ -82,7 +82,8 @@ export function useFormSubmit(
             }
 
             // ✅ 提交成功后自动刷新（对标 cool-admin）
-            crud.loadData();
+            // 等待数据刷新完成
+            await crud.loadData();
 
             return result;
           }
@@ -100,8 +101,8 @@ export function useFormSubmit(
           }
         }
 
-        // ✅ 自动刷新
-        crud.loadData();
+        // ✅ 自动刷新，等待完成后再关闭
+        await crud.loadData();
         close();
       }
     } catch (error) {

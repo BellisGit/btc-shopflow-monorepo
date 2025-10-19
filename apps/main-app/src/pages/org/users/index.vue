@@ -32,13 +32,14 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService } from '../../../utils/mock';
-import { createCrudService } from '../../../utils/http';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const viewGroupRef = ref();
 const crudRef = ref();
 const selectedDept = ref<any>(null);
@@ -108,14 +109,14 @@ const departmentService = createMockCrudService('btc_departments_tree', {
 // };
 
 // 用户服务（右侧表） - 使用真实 API
-const baseUserService = createCrudService('user/profile');
+const baseUserService = service.sysuser;
 
 const wrappedUserService = {
   ...baseUserService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await baseUserService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 } as any;
 
@@ -154,7 +155,7 @@ const viewGroupOptions = reactive({
     crudRef.value?.crud.handleRefresh();
   },
   onDragEnd(newList: any[]) {
-    ElMessage.success('部门排序已更新');
+    message.success('部门排序已更新');
     console.log('新的部门顺序:', newList);
     // 这里应该调用后端API保存新顺序
     // departmentService.updateOrder(newList);
@@ -246,7 +247,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     }
 
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();

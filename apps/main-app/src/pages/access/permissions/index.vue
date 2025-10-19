@@ -22,24 +22,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 
-// Mock数据服务
-const permissionService = createMockCrudService('btc_permissions', {
-  defaultData: [
-    { id: 1, permissionName: '查看用户', resourceName: '用户', actionName: '查看', permissionCode: 'user:view', description: '查看用户信息', createTime: mockHelpers.randomDate() },
-    { id: 2, permissionName: '编辑用户', resourceName: '用户', actionName: '编辑', permissionCode: 'user:edit', description: '编辑用户信息', createTime: mockHelpers.randomDate() },
-    { id: 3, permissionName: '删除用户', resourceName: '用户', actionName: '删除', permissionCode: 'user:delete', description: '删除用户', createTime: mockHelpers.randomDate() },
-    { id: 4, permissionName: '查看角色', resourceName: '角色', actionName: '查看', permissionCode: 'role:view', description: '查看角色信息', createTime: mockHelpers.randomDate() },
-    { id: 5, permissionName: '分配角色', resourceName: '角色', actionName: '分配', permissionCode: 'role:assign', description: '分配角色给用户', createTime: mockHelpers.randomDate() },
-  ]
-});
+// 权限服务 - 使用EPS服务
+const permissionService = service.base.permission;
 
 // 添加delete确认
 const wrappedService = {
@@ -47,7 +41,7 @@ const wrappedService = {
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await permissionService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -74,7 +68,7 @@ const formItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();

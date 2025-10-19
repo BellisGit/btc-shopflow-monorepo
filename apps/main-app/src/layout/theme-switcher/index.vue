@@ -57,10 +57,11 @@ defineOptions({
 import { ref, watch } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import { Check } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 
 const { t } = useI18n();
 const theme = useThemePlugin();
+const message = useMessage();
 
 const drawerVisible = ref(false);
 const customColor = ref(theme.currentTheme.value.color);
@@ -78,7 +79,7 @@ function openDrawer() {
 function selectTheme(themeConfig: any) {
   theme.switchTheme(themeConfig);
   customColor.value = themeConfig.color;
-  ElMessage.success(`${t('theme.switched')}: ${themeConfig.label}`);
+  message.success(`${t('theme.switched')}: ${t(themeConfig.label)}`);
 }
 
 function handleColorChange(color: string) {

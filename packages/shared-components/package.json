@@ -1,6 +1,7 @@
 {
   "name": "@btc/shared-components",
   "version": "1.0.0",
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -10,7 +11,8 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./style.css": "./dist/shared-components.css"
+    "./dist/style.css": "./dist/style.css",
+    "./style.css": "./dist/style.css"
   },
   "scripts": {
     "dev": "vite build --watch",
@@ -19,10 +21,19 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
+    "@btc/shared-core": "workspace:*",
+    "@btc/shared-utils": "workspace:*",
+    "@element-plus/icons-vue": "^2.0.0",
+    "element-plus": "^2.0.0",
     "vue": "^3.3.0"
   },
   "devDependencies": {
+    "@btc/shared-core": "workspace:*",
+    "@btc/shared-utils": "workspace:*",
+    "@element-plus/icons-vue": "^2.3.2",
     "@vitejs/plugin-vue": "^5.0.0",
+    "element-plus": "^2.8.10",
+    "sass": "^1.93.2",
     "vite": "^5.0.0",
     "vue-tsc": "^2.0.0"
   }

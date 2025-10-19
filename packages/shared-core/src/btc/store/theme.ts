@@ -9,9 +9,36 @@ import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useThe
  */
 export const useThemeStore = defineStore('theme', () => {
   // 从 localStorage 读取保存的主题配置
-  const currentTheme = ref<ThemeConfig>(
-    storage.get('theme') || THEME_PRESETS[0]
-  );
+  const savedTheme = storage.get('theme') as ThemeConfig | null;
+
+  // 数据迁移：将旧的硬编码标签转换为国际化键值
+  let migratedTheme = THEME_PRESETS[0]; // 默认主题
+
+  if (savedTheme) {
+    // 检查是否是旧格式（硬编码英文标签）
+    const oldLabels = ['Default', 'Green', 'Purple', 'Orange', 'Pink', 'Mint', 'Custom'];
+    if (oldLabels.includes(savedTheme.label)) {
+      // 根据颜色匹配对应的新主题配置
+      const matchedPreset = THEME_PRESETS.find(preset => preset.color === savedTheme.color);
+      if (matchedPreset) {
+        migratedTheme = matchedPreset;
+      } else if (savedTheme.name === 'custom') {
+        // 自定义主题
+        migratedTheme = {
+          name: 'custom',
+          label: 'theme.custom',
+          color: savedTheme.color
+        };
+      }
+      // 保存迁移后的配置
+      storage.set('theme', migratedTheme);
+    } else {
+      // 已经是新格式，直接使用
+      migratedTheme = savedTheme;
+    }
+  }
+
+  const currentTheme = ref<ThemeConfig>(migratedTheme);
 
   // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
   const isDark = useDark();
@@ -60,7 +87,7 @@ export const useThemeStore = defineStore('theme', () => {
     currentTheme.value = {
       ...currentTheme.value,
       name: 'custom',
-      label: 'Custom',
+      label: 'theme.custom',
       color: color,
     };
     setThemeColor(color, isDark.value);

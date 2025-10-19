@@ -4,7 +4,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "skipLibCheck": true
   },
   "include": ["src"]
 }

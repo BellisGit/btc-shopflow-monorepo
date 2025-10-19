@@ -147,7 +147,7 @@
 
           <slot name="title" :selected="selected">
             <span class="title">
-              {{ config.title }}（{{ selected ? (selected[tree.props.label] || selected.name) : '未选择' }}）
+              {{ props.title || config.title }}（{{ (props.selectedItem || selected) ? ((props.selectedItem || selected)[tree.props.label] || (props.selectedItem || selected).name) : t('common.not_selected') }}）
             </span>
           </slot>
 
@@ -172,6 +172,7 @@ import { Search } from '@element-plus/icons-vue';
 import BtcSvg from '../svg/index.vue';
 import type { ViewGroupOptions } from './types';
 import { useViewGroupData, useViewGroupActions, useViewGroupDrag, useViewGroupMenu } from './composables';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'BtcViewGroup',
@@ -190,12 +191,17 @@ function isEmpty(value: any): boolean {
 
 const props = defineProps<{
   options?: ViewGroupOptions;
+  title?: string;
+  selectedItem?: any;
 }>();
 
 const emit = defineEmits<{
   'update:selected': [value: any];
   'refresh': [params?: any];
 }>();
+
+// 国际化
+const { t } = useI18n();
 
 const slots = useSlots();
 
@@ -315,7 +321,10 @@ watch(selected, (val) => {
 });
 
 onMounted(() => {
-  refresh();
+  // 只有在启用自动刷新时才自动刷新
+  if (config.autoRefresh !== false) {
+    refresh();
+  }
 });
 
 // 暴露方法
@@ -333,6 +342,8 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+@use './styles/index.scss';
+
 // 动态变量必须在组件内定义
 $left-width: v-bind('config.leftWidth');
 $bg: var(--el-bg-color);
@@ -348,6 +359,36 @@ $bg: var(--el-bg-color);
   border-left: 1px solid var(--el-border-color-extra-light);
 }
 
-// 引入其他样式
-@import './styles/index.scss';
+// 右侧面板基础样式
+.btc-view-group__right {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .head {
+    flex-shrink: 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
+    background-color: var(--el-bg-color);
+    position: relative;
+
+    .title {
+      flex: 1;
+      text-align: center;
+      font-weight: 500;
+    }
+  }
+
+  .content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 </style>

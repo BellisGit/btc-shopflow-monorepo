@@ -93,7 +93,7 @@
           <el-icon><FolderOpened /></el-icon>
           <span>{{ t('menu.access.resources') }}</span>
         </el-menu-item>
-        <el-menu-item v-show="isMenuItemVisible('行为列表')" index="/access/actions">
+        <el-menu-item v-show="isMenuItemVisible('操作列表')" index="/access/actions">
           <el-icon><TrendCharts /></el-icon>
           <span>{{ t('menu.access.actions') }}</span>
         </el-menu-item>
@@ -171,6 +171,18 @@
           <el-icon><ChatDotRound /></el-icon>
           <span>{{ t('menu.test_features.i18n') }}</span>
         </el-menu-item>
+        <el-menu-item v-show="isMenuItemVisible('选择按钮测试')" index="/test/select-button">
+          <el-icon><Coin /></el-icon>
+          <span>{{ t('menu.test_features.select_button') }}</span>
+        </el-menu-item>
+        <el-menu-item v-show="isMenuItemVisible('消息通知测试')" index="/test/message-notification">
+          <el-icon><Message /></el-icon>
+          <span>{{ t('menu.test_features.message_notification') }}</span>
+        </el-menu-item>
+        <el-menu-item v-show="isMenuItemVisible('通知徽章测试')" index="/test/notification-badge">
+          <el-icon><Bell /></el-icon>
+          <span>{{ t('menu.test_features.notification_badge') }}</span>
+        </el-menu-item>
       </el-sub-menu>
 
       <!-- 文档中心已移至汉堡菜单 -->
@@ -213,6 +225,8 @@ import {
   Picture,
   House,
   Grid,
+  Bell,
+  Message,
   View,
   Reading,
 } from '@element-plus/icons-vue';
@@ -287,7 +301,7 @@ const menuStructure = {
       text: '访问控制',
       children: {
         '/access/resources': '资源列表',
-        '/access/actions': '行为列表',
+        '/access/actions': '操作列表',
         '/access/permissions': '权限列表',
         '/access/roles': '角色列表',
         '/access/policies': '策略列表',
@@ -315,6 +329,9 @@ const menuStructure = {
         '/test/crud': 'CRUD测试',
         '/test/svg-plugin': 'SVG插件测试',
         '/test/i18n': '国际化测试',
+        '/test/select-button': '选择按钮测试',
+        '/test/message-notification': '消息通知测试',
+        '/test/notification-badge': '通知徽章测试',
       }
     },
     // 文档中心已移至汉堡菜单

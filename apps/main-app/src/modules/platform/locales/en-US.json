@@ -1,0 +1,19 @@
+﻿{
+  "platform.common.export_success": "Export successfully",
+  "platform.common.export_failed": "Export failed",
+  "platform.common.no_columns_to_export": "No columns to export",
+  "platform.common.no_data_to_export": "No data to export",
+  "platform.common.select_columns": "Select Columns",
+  "platform.common.please_select_at_least_one_column": "Please select at least one column",
+  "platform.common.add_success": "Added successfully",
+  "platform.common.update_success": "Updated successfully",
+  "platform.common.delete_success": "Deleted successfully",
+  "platform.domains.title": "Domain List",
+  "platform.domains.domain_name": "Domain Name",
+  "platform.domains.domain_code": "Domain Code",
+  "platform.domains.description": "Description",
+  "platform.domains.created_at": "Created Time",
+  "platform.domains.updated_at": "Updated Time",
+  "platform.modules.title": "Module List",
+  "platform.plugins.title": "Plugin List"
+}

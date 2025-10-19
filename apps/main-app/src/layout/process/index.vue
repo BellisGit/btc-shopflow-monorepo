@@ -78,7 +78,7 @@ import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { ElMessageBox } from 'element-plus';
-import { useProcessStore, getCurrentAppFromPath, type ProcessItem } from '../../store/process';
+import type { ProcessItem } from '../../store/process';
 
 interface Props {
   isFullscreen?: boolean;
@@ -95,15 +95,25 @@ defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const process = useProcessStore();
+
+// 动态导入 store
+const processStore = ref<any>(null);
+const getCurrentAppFromPath = ref<any>(null);
+
+// 加载 store
+import('../../store/process').then(({ useProcessStore, getCurrentAppFromPath: getCurrentApp }) => {
+  processStore.value = useProcessStore();
+  getCurrentAppFromPath.value = getCurrentApp;
+});
 
 const scrollerRef = ref();
 const itemRefs = ref<Record<number, HTMLElement>>({});
 
 // 根据当前路由过滤标签（只显示当前应用的标签）
 const filteredTabs = computed(() => {
-  const currentApp = getCurrentAppFromPath(route.path);
-  return process.list.filter(tab => tab.app === currentApp);
+  if (!processStore.value || !getCurrentAppFromPath.value) return [];
+  const currentApp = getCurrentAppFromPath.value(route.path);
+  return processStore.value.list.filter((tab: ProcessItem) => tab.app === currentApp);
 });
 
 function setItemRef(el: any, index: number) {
@@ -239,9 +249,9 @@ function onDel(index: number) {
   const item = filteredTabs.value[index];
 
   // 在原始列表中找到并删除
-  const globalIndex = process.list.findIndex(t => t.fullPath === item.fullPath);
+  const globalIndex = processStore.value.list.findIndex(t => t.fullPath === item.fullPath);
   if (globalIndex > -1) {
-    process.remove(globalIndex);
+    processStore.value.remove(globalIndex);
   }
 
   // 如果删除的是当前激活标签，跳转到最后一个标签或首页
@@ -259,15 +269,15 @@ function handleTabCommand(command: string) {
   switch (command) {
     case 'close-other':
       // 关闭其他标签（只在当前应用内）
-      process.set(
-        process.list.filter((tab) => tab.path === currentPath || tab.app !== currentApp)
+      processStore.value.set(
+        processStore.value.list.filter((tab) => tab.path === currentPath || tab.app !== currentApp)
       );
       break;
 
     case 'close-all':
       // 关闭所有标签（只在当前应用内）
-      const otherAppTabs = process.list.filter((tab) => tab.app !== currentApp);
-      process.set(otherAppTabs);
+      const otherAppTabs = processStore.value.list.filter((tab) => tab.app !== currentApp);
+      processStore.value.set(otherAppTabs);
 
       // 跳转到当前应用首页
       const appHomes: Record<string, string> = {
@@ -297,12 +307,12 @@ function openContextMenu(e: MouseEvent, item: ProcessItem, index: number) {
     }
   ).then(() => {
     if (isCurrentTab) {
-      process.close();
+      processStore.value.close();
       const last = filteredTabs.value[filteredTabs.value.length - 1];
       router.push(last ? last.fullPath : '/');
     } else {
       const currentApp = getCurrentAppFromPath(route.path);
-      process.set(process.list.filter((e) => e.fullPath === item.fullPath || e.app !== currentApp));
+      processStore.value.set(processStore.value.list.filter((e) => e.fullPath === item.fullPath || e.app !== currentApp));
     }
   }).catch(() => {});
 }

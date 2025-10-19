@@ -1,6 +1,6 @@
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { ElMessage } from 'element-plus';
+import { useMessage } from './use-message';
 
 // 配置 NProgress
 NProgress.configure({
@@ -43,11 +43,8 @@ export function delayHint(ms: number, appName: string) {
   clearDelayHint();
   delayHintTimer = window.setTimeout(() => {
     if (skeletonVisible) {
-      ElMessage.info({
-        message: `正在加载「${appName}」...`,
-        duration: 2000,
-        showClose: true,
-      });
+      const message = useMessage();
+      message.info(`正在加载「${appName}」...`);
     }
   }, ms);
 }
@@ -89,11 +86,8 @@ export function loadingError(appName: string, error?: Error) {
   hideSkeleton();
   clearDelayHint();
 
-  ElMessage.error({
-    message: `加载「${appName}」失败，请刷新重试`,
-    duration: 3000,
-    showClose: true,
-  });
+  const message = useMessage();
+  message.error(`加载「${appName}」失败，请刷新重试`);
 
   console.error(`[应用加载失败] ${appName}:`, error);
 }

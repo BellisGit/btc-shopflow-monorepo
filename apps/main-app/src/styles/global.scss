@@ -5,6 +5,17 @@
   --bg-color: var(--el-fill-color-lighter);
 }
 
+// Element Plus 样式重写（参考 cool-admin-vue）
+.el-input-number {
+  width: 100%;
+
+  &__decrease,
+  &__increase {
+    border: 0 !important;
+    background-color: transparent;
+  }
+}
+
 // Reset default styles
 html,
 body {

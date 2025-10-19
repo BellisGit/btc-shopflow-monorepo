@@ -64,18 +64,18 @@ export function ctxPlugin(): Plugin {
   return {
     name: 'btc:ctx',
 
-    async configResolved() {
-      // 生成上下文数据
-      ctxData = await createCtx();
-
-      if (ctxData.modules && ctxData.modules.length > 0) {
-        console.log(
-          `[btc:ctx] Found ${ctxData.modules.length} modules: ${ctxData.modules.join(', ')}`
-        );
-      }
-
-      console.log(`[btc:ctx] Service language: ${ctxData.serviceLang}`);
-    },
+		async configResolved() {
+			// 生成上下文数据
+			ctxData = await createCtx();
+			
+			if (ctxData.modules && ctxData.modules.length > 0) {
+				console.info(
+					`[btc:ctx] 找到 ${ctxData.modules.length} 个模块: ${ctxData.modules.join(', ')}`
+				);
+			}
+			
+			console.info(`[btc:ctx] 服务语言: ${ctxData.serviceLang}`);
+		},
 
     resolveId(id: string) {
       if (id === 'virtual:ctx') {

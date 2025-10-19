@@ -20,6 +20,25 @@ export function formatDateTime(date: Date | string | number): string {
 }
 
 /**
+ * 格式化日期时间（用户友好格式）
+ * @param date 日期对象或字符串
+ * @returns 格式化后的日期时间字符串
+ */
+export function formatDateTimeFriendly(date: Date | string | number | null | undefined): string {
+  if (!date) return '-';
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+}
+
+/**
+ * 检查是否为时间字段
+ * @param fieldName 字段名
+ * @returns 是否为时间字段
+ */
+export function isDateTimeField(fieldName: string): boolean {
+  return /^(createdAt|updatedAt|createTime|updateTime|deletedAt)$/i.test(fieldName);
+}
+
+/**
  * 获取日期范围
  * @param type 范围类型
  * @returns [开始时间, 结束时间]

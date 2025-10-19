@@ -32,18 +32,20 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createCrudService } from '../../../utils/http';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const viewGroupRef = ref();
 const crudRef = ref();
 const selectedDomain = ref<any>(null);
 
 // 域服务（左侧列表）- 使用真实API，包装为 ViewGroup 兼容格式
-const baseDomainService = createCrudService('domain');
+const baseDomainService = service.sysdomain;
 const domainService = {
   page: async (params: any) => {
     const result = await baseDomainService.page(params);
@@ -59,14 +61,14 @@ const domainService = {
 };
 
 // 插件服务（右侧表）- 使用真实API
-const pluginService = createCrudService('plugin');
+const pluginService = service.sysplugin;
 
 const wrappedPluginService = {
   ...pluginService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await pluginService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -145,7 +147,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     }
 
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();

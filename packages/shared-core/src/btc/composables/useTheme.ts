@@ -29,14 +29,17 @@ export interface ThemeConfig {
 
 /**
  * 预设主题列表
+ * 注意：label 字段存储国际化键值，需要在模板中使用 t() 函数进行翻译
  */
 export const THEME_PRESETS: ThemeConfig[] = [
-  { name: 'default', label: 'Default', color: '#409eff' },
-  { name: 'green', label: 'Green', color: '#51C21A' },
-  { name: 'purple', label: 'Purple', color: '#d0378d' },
-  { name: 'orange', label: 'Orange', color: '#FFA500' },
-  { name: 'pink', label: 'Pink', color: '#FF69B4' },
-  { name: 'mint', label: 'Mint', color: '#3EB489' },
+  { name: 'brand-red', label: 'theme.presets.brand_red', color: '#DA281C' },
+  { name: 'brand-gray', label: 'theme.presets.brand_gray', color: '#404040' },
+  { name: 'default', label: 'theme.presets.blue', color: '#409eff' },
+  { name: 'green', label: 'theme.presets.green', color: '#51C21A' },
+  { name: 'purple', label: 'theme.presets.purple', color: '#d0378d' },
+  { name: 'orange', label: 'theme.presets.orange', color: '#FFA500' },
+  { name: 'pink', label: 'theme.presets.pink', color: '#FF69B4' },
+  { name: 'mint', label: 'theme.presets.mint', color: '#3EB489' },
 ];
 
 /**

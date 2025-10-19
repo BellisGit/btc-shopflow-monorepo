@@ -24,7 +24,7 @@ export const config = {
   // API 配置
   api: {
     // 基础路径
-    baseURL: isDev ? '/api' : import.meta.env.VITE_API_BASE_URL || '/api',
+    baseURL: isDev ? '/admin' : import.meta.env.VITE_API_BASE_URL || '/admin',
     // 请求超时时间
     timeout: 30000,
   },

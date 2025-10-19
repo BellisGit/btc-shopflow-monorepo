@@ -1,6 +1,6 @@
 <template>
   <el-segmented
-    v-model="value"
+    v-model="internalValue"
     :options="options"
     :class="['btc-select-button', { 'is-small': small }]"
     @change="handleChange"
@@ -12,7 +12,7 @@ defineOptions({
   name: 'BtcSelectButton'
 });
 
-import { computed } from 'vue';
+import { ref, watch } from 'vue';
 
 interface Props {
   modelValue?: string | number | any[];
@@ -26,20 +26,24 @@ const props = withDefaults(defineProps<Props>(), {
   small: false,
 });
 
-const emit = defineEmits<{
-  'update:modelValue': [value: any];
-  'change': [value: any];
-}>();
+const emit = defineEmits(['update:modelValue', 'change']);
 
-const value = computed({
-  get: () => props.modelValue,
-  set: (val) => {
-    emit('update:modelValue', val);
-  }
+const internalValue = ref(props.modelValue);
+
+// 监听外部值变化
+watch(() => props.modelValue, (newValue) => {
+  internalValue.value = newValue;
+});
+
+// 监听内部值变化
+watch(internalValue, (newValue) => {
+  // 确保不会emit null值，使用空字符串替代
+  emit('update:modelValue', newValue === null ? '' : newValue);
 });
 
 const handleChange = (val: any) => {
-  emit('change', val);
+  // 确保不会emit null值，使用空字符串替代
+  emit('change', val === null ? '' : val);
 };
 </script>
 

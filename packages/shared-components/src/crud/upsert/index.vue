@@ -197,6 +197,11 @@ defineExpose({
       & > div {
         width: 100%;
       }
+
+      // 确保 el-input-number 占满宽度
+      .el-input-number {
+        width: 100%;
+      }
     }
   }
 

@@ -25,9 +25,38 @@ let themePluginInstance: ThemePlugin | null = null;
  */
 export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 从 localStorage 读取保存的主题配置
-  const currentTheme = ref<ThemeConfig>(
-    storage.get('theme') || THEME_PRESETS[0]
-  );
+  const savedTheme = storage.get('theme');
+
+  // 数据迁移：将旧的硬编码标签转换为国际化键值
+  let migratedTheme = THEME_PRESETS[0]; // 默认主题（现在是品牌红）
+
+  if (savedTheme && typeof savedTheme === 'object' && savedTheme !== null) {
+    // 检查是否是旧格式（硬编码中文或英文标签）
+    const oldLabels = ['Default', 'Green', 'Purple', 'Orange', 'Pink', 'Mint', 'Custom', 'Brand Red', 'Brand Gray',
+                      '默认', '绿色', '紫色', '橙色', '粉色', '薄荷绿', '拜里斯品牌红', '拜里斯品牌灰', '蓝色'];
+    if ('label' in savedTheme && typeof savedTheme.label === 'string' && oldLabels.includes(savedTheme.label)) {
+      // 根据颜色匹配对应的新主题配置
+      const matchedPreset = THEME_PRESETS.find(preset => preset.color === (savedTheme as any).color);
+      if (matchedPreset) {
+        migratedTheme = matchedPreset;
+      } else if ((savedTheme as any).name === 'custom') {
+        // 自定义主题
+        migratedTheme = {
+          name: 'custom',
+          label: 'theme.presets.custom',
+          color: (savedTheme as any).color
+        };
+      }
+      // 保存迁移后的配置
+      storage.set('theme', migratedTheme);
+    } else {
+      // 已经是新格式，直接使用
+      migratedTheme = savedTheme as ThemeConfig;
+    }
+  } else {
+  }
+
+  const currentTheme = ref<ThemeConfig>(migratedTheme);
 
   // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
   const isDark = useDark();
@@ -81,7 +110,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     currentTheme.value = {
       ...currentTheme.value,
       name: 'custom',
-      label: 'Custom',
+      label: 'theme.presets.custom',
       color: color,
     };
     setThemeColor(color, isDark.value);
@@ -156,11 +185,12 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     updateThemeColor,
   };
 
-  // 保存单例
+  // 保存单例（但每次创建时都使用最新的 THEME_PRESETS）
   themePluginInstance = theme;
 
   // 初始化主题
   initTheme();
+
 
   const plugin: Plugin & { theme: ThemePlugin } = {
     install(app: App) {
@@ -183,7 +213,11 @@ export function useThemePlugin(): ThemePlugin {
   if (!themePluginInstance) {
     throw new Error('Theme plugin not installed. Please call createThemePlugin() first.');
   }
-  return themePluginInstance;
+  // 确保返回的实例包含最新的 THEME_PRESETS
+  return {
+    ...themePluginInstance,
+    THEME_PRESETS
+  };
 }
 
 /**

@@ -23,15 +23,37 @@ function getCurrentLocale(): string {
  * 过滤 qiankun 沙箱日志
  */
 function filterQiankunLogs() {
+  // 保存原始方法
   const originalLog = console.log;
-  console.log = (...args: any[]) => {
-    const message = args[0];
-    // 过滤 qiankun sandbox 日志
-    if (typeof message === 'string' && message.includes('[qiankun:sandbox]')) {
-      return;
-    }
-    originalLog.apply(console, args);
+  const originalInfo = console.info;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+
+  // 创建过滤器函数
+  const createFilter = (originalMethod: Function) => {
+    return (...args: any[]) => {
+      const message = args[0];
+      // 过滤所有包含 [qiankun:sandbox] 的日志
+      if (typeof message === 'string' && message.includes('[qiankun:sandbox]')) {
+        return;
+      }
+      // 过滤其他 qiankun 相关的日志
+      if (typeof message === 'string' && (
+        message.includes('qiankun modified global properties') ||
+        message.includes('qiankun restored global properties') ||
+        message.includes('qiankun') && message.includes('restore')
+      )) {
+        return;
+      }
+      originalMethod.apply(console, args);
+    };
   };
+
+  // 重写所有 console 方法
+  console.log = createFilter(originalLog);
+  console.info = createFilter(originalInfo);
+  console.warn = createFilter(originalWarn);
+  console.error = createFilter(originalError);
 }
 
 /**

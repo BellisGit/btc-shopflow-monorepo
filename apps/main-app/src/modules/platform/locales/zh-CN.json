@@ -1,0 +1,23 @@
+﻿{
+  "platform.common.export_success": "导出成功",
+  "platform.common.export_failed": "导出失败",
+  "platform.common.no_columns_to_export": "没有可导出的列",
+  "platform.common.no_data_to_export": "没有可导出的数据",
+  "platform.common.select_columns": "选择列",
+  "platform.common.please_select_at_least_one_column": "请至少选择一列",
+  "platform.common.add_success": "添加成功",
+  "platform.common.update_success": "更新成功",
+  "platform.common.delete_success": "删除成功",
+  "platform.domains.title": "域列表",
+  "platform.domains.domain_name": "域名称",
+  "platform.domains.domain_code": "域编码",
+  "platform.domains.description": "描述",
+  "platform.domains.created_at": "创建时间",
+  "platform.domains.updated_at": "更新时间",
+  "platform.modules.title": "模块列表",
+  "platform.plugins.title": "插件列表",
+  "menu.platform": "平台管理",
+  "menu.platform.domains": "域列表",
+  "menu.platform.modules": "模块列表",
+  "menu.platform.plugins": "插件列表"
+}

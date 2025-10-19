@@ -1,5 +1,6 @@
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-utils';
 
 /**
  * 二维数组转 worksheet
@@ -72,6 +73,10 @@ export interface ExportExcelOptions {
   autoWidth?: boolean;
   /** 文件类型 */
   bookType?: XLSX.BookType;
+  /** 字段配置（用于时间格式化） */
+  fields?: Array<{ prop: string; label: string }>;
+  /** 原始数据（用于时间格式化） */
+  rawData?: any[];
 }
 
 /**
@@ -86,10 +91,27 @@ export function exportJsonToExcel(options: ExportExcelOptions) {
     merges = [],
     autoWidth = true,
     bookType = 'xlsx',
+    fields,
+    rawData,
   } = options;
 
+  // 处理时间字段格式化
+  let processedData = data;
+  if (fields && rawData && rawData.length > 0) {
+    processedData = rawData.map(row => {
+      return fields.map(field => {
+        const value = row[field.prop];
+        // 如果是时间字段，进行格式化
+        if (isDateTimeField(field.prop)) {
+          return formatDateTimeFriendly(value);
+        }
+        return value;
+      });
+    });
+  }
+
   // 复制数据
-  const sheetData = [...data];
+  const sheetData = [...processedData];
 
   // 添加表头
   sheetData.unshift(header);
@@ -156,5 +178,50 @@ export function exportJsonToExcel(options: ExportExcelOptions) {
     }),
     `${filename}.${bookType}`
   );
+}
+
+/**
+ * 从表格列配置和原始数据导出Excel（自动处理时间格式化）
+ */
+export function exportTableToExcel(options: {
+  columns: Array<{ prop?: string; label?: string }>;
+  data: any[];
+  filename?: string;
+  autoWidth?: boolean;
+  bookType?: XLSX.BookType;
+}) {
+  const { columns, data, filename = 'export', autoWidth = true, bookType = 'xlsx' } = options;
+
+  // 过滤掉不需要导出的列
+  const exportColumns = columns.filter(col =>
+    col.prop &&
+    !['selection', 'index', 'expand', 'op'].includes((col as any).type || '') &&
+    !(col as any).hidden
+  );
+
+  // 生成表头
+  const header = exportColumns.map(col => col.label || col.prop!);
+
+  // 生成字段配置
+  const fields = exportColumns.map(col => ({
+    prop: col.prop!,
+    label: col.label || col.prop!
+  }));
+
+  // 生成数据（二维数组）
+  const exportData = data.map(row =>
+    exportColumns.map(col => row[col.prop!])
+  );
+
+  // 调用导出函数，传入原始数据用于时间格式化
+  exportJsonToExcel({
+    header,
+    data: exportData,
+    fields,
+    rawData: data,
+    filename,
+    autoWidth,
+    bookType,
+  });
 }
 

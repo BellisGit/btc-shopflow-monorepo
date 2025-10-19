@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 
@@ -178,7 +178,7 @@ const userService = {
     const newUser = { id: nextId++, ...data };
     mockUsers.push(newUser);
 
-    ElMessage.success('Added successfully');
+    message.success('Added successfully');
     return newUser;
   },
 
@@ -190,7 +190,7 @@ const userService = {
       mockUsers[index] = { ...mockUsers[index], ...data };
     }
 
-    ElMessage.success('Updated successfully');
+    message.success('Updated successfully');
     return data;
   },
 
@@ -206,7 +206,7 @@ const userService = {
 
     mockUsers = mockUsers.filter(u => !ids.includes(u.id));
 
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -326,7 +326,7 @@ const handleExport = () => {
   const dataToExport = selection.length > 0 ? selection : mockUsers;
 
   if (dataToExport.length === 0) {
-    ElMessage.warning('No data to export');
+    message.warning('No data to export');
     return;
   }
 
@@ -340,7 +340,7 @@ const handleExport = () => {
  */
 const confirmExport = () => {
   if (exportColumns.value.length === 0) {
-    ElMessage.warning('Please select columns to export');
+    message.warning('Please select columns to export');
     return;
   }
 
@@ -367,7 +367,7 @@ const confirmExport = () => {
   const excelApi = pluginManager.getApi<{ export: Function }>('excel');
 
   if (!excelApi) {
-    ElMessage.error('Excel plugin not available');
+    message.error('Excel plugin not available');
     return;
   }
 
@@ -385,14 +385,14 @@ const confirmExport = () => {
   });
 
   exportDialogVisible.value = false;
-  ElMessage.success('Export successfully');
+  message.success('Export successfully');
 };
 
 /**
  * Custom action
  */
 const handleCustomAction = (row: any) => {
-  ElMessage.info(`${t('common.button.custom')}: ${row.name}`);
+  message.info(`${t('common.button.custom')}: ${row.name}`);
 };
 
 // Auto load data on mounted

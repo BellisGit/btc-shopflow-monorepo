@@ -22,49 +22,79 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { CommonColumns } from '@btc/shared-components';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 
-// 部门服务
-const departmentService = createMockCrudService('btc_departments', {
-  defaultData: [
-    { id: 1, deptNameCn: '物流部', deptCode: 'LOGISTICS', parentId: null, sortOrder: 1, createTime: mockHelpers.randomDate() },
-    { id: 2, deptNameCn: '生产部', deptCode: 'PRODUCTION', parentId: null, sortOrder: 2, createTime: mockHelpers.randomDate() },
-    { id: 3, deptNameCn: '品质部', deptCode: 'QUALITY', parentId: null, sortOrder: 3, createTime: mockHelpers.randomDate() },
-    { id: 4, deptNameCn: '财务部', deptCode: 'FINANCE', parentId: null, sortOrder: 4, createTime: mockHelpers.randomDate() },
-    { id: 5, deptNameCn: '工程部', deptCode: 'ENGINEERING', parentId: null, sortOrder: 5, createTime: mockHelpers.randomDate() },
-  ]
-});
+// 部门服务 - 使用EPS服务
+const departmentService = service.sysdepartment;
+
+// 部门选项数据
+const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
+
+// 加载部门选项数据
+const loadDepartmentOptions = async () => {
+  try {
+    const res = await departmentService.list({
+      order: 'createdAt',
+      sort: 'asc',
+      page: 1,
+      size: 100,
+      keyword: ''
+    });
+
+    // 处理响应数据结构：res.data.list 或直接是数组
+    let dataArray = [];
+    if (res && res.data && res.data.list) {
+      dataArray = res.data.list;
+    } else if (Array.isArray(res)) {
+      dataArray = res;
+    }
+
+    departmentOptions.value = dataArray
+      .filter((dept: any) => dept.id != null && dept.name) // 过滤掉无效数据
+      .map((dept: any) => ({
+        label: dept.name,
+        value: dept.id
+      }));
+  } catch (error) {
+    console.error('加载部门选项失败:', error);
+    // 出错时设置为空数组
+    departmentOptions.value = [];
+  }
+};
 
 const wrappedDepartmentService = {
   ...departmentService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await departmentService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
 // 部门表格列
 const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { prop: 'deptNameCn', label: '部门名称', minWidth: 150 },
+  CommonColumns.selection(),
+  CommonColumns.index(),
+  { prop: 'name', label: '部门名称', minWidth: 150 },
   { prop: 'deptCode', label: '部门编码', width: 120 },
   { prop: 'parentId', label: '上级部门ID', width: 120 },
-  { prop: 'sortOrder', label: '排序', width: 80 },
-  { prop: 'createTime', label: '创建时间', width: 180 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
+  { prop: 'sort', label: '排序', width: 80 },
+  CommonColumns.createdAt(),
+  CommonColumns.operation(),
 ]);
 
 // 部门表单
 const formItems = computed<FormItem[]>(() => [
-  { prop: 'deptNameCn', label: '部门名称', span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'name', label: '部门名称', span: 12, required: true, component: { name: 'el-input' } },
   { prop: 'deptCode', label: '部门编码', span: 12, required: true, component: { name: 'el-input' } },
   {
     prop: 'parentId',
@@ -73,23 +103,17 @@ const formItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-select',
       props: { clearable: true },
-      options: [
-        { label: '物流部', value: 1 },
-        { label: '生产部', value: 2 },
-        { label: '品质部', value: 3 },
-        { label: '财务部', value: 4 },
-        { label: '工程部', value: 5 },
-      ]
+      options: departmentOptions
     }
   },
   {
-    prop: 'sortOrder',
+    prop: 'sort',
     label: '排序',
     span: 12,
-    value: 1,
+    value: 0,
     component: {
       name: 'el-input-number',
-      props: { min: 0 }
+      props: { min: 0, style: { width: '100%' } }
     }
   },
 ]);
@@ -97,14 +121,17 @@ const formItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();
   }
 };
 
-onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
+// 组件挂载时加载部门选项
+onMounted(() => {
+  loadDepartmentOptions();
+});
 </script>
 
 <style lang="scss" scoped>

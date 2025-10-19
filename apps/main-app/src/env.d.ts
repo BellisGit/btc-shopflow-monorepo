@@ -22,17 +22,6 @@ declare module 'virtual:ctx' {
 }
 
 declare module 'virtual:eps' {
-  interface ApiMethod {
-    path: string;
-    method: string;
-    name: string;
-    summary?: string;
-  }
-
-  interface ServiceModule {
-    [key: string]: ApiMethod[];
-  }
-
-  const epsData: ServiceModule;
-  export default epsData;
+  const service: any; // EPS 自动生成的服务树
+  export default service;
 }

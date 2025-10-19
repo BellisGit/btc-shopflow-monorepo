@@ -7,6 +7,7 @@
         <BtcMultiDeleteBtn />
         <BtcFlex1 />
         <BtcSearchKey placeholder="搜索域" />
+        <BtcExportBtn filename="域列表" />
       </BtcRow>
       <BtcRow>
         <BtcTable ref="tableRef" :columns="columns" border />
@@ -22,26 +23,32 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createCrudService, http } from '../../../utils/http';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
+const tableRef = ref();
 
-// 租户下拉选项
-const tenantOptions = ref<{ label: string; value: any }[]>([]);
+// 租户下拉选项 - 暂时使用静态数据
+const tenantOptions = ref<{ label: string; value: any }[]>([
+  { label: '默认租户', value: 'default' },
+  { label: '测试租户', value: 'test' }
+]);
 
 // 域服务 - 使用真实API
-const domainService = createCrudService('domain');
+const domainService = service.sysdomain;
 
 const wrappedDomainService = {
   ...domainService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await domainService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -61,7 +68,8 @@ const columns = computed<TableColumn[]>(() => [
     }
   },
   { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'createTime', label: '创建时间', width: 180 },
+  { prop: 'createdAt', label: '创建时间', width: 180 },
+  { prop: 'updatedAt', label: '更新时间', width: 180 },
   { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
@@ -89,25 +97,14 @@ const formItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();
   }
 };
 
-// 获取租户下拉数据
-const fetchTenantOptions = async () => {
-  try {
-    const data = await http.get<{ label: string; value: any }[]>('/domain/drop');
-    tenantOptions.value = data;
-  } catch (error) {
-    console.error('Failed to fetch tenant options:', error);
-  }
-};
-
 onMounted(() => {
-  fetchTenantOptions();
   setTimeout(() => crudRef.value?.crud.loadData(), 100);
 });
 </script>

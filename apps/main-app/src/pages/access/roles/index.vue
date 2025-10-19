@@ -22,21 +22,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createCrudService } from '../../../utils/http';
+import { service } from '../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 
 const roleService = {
-  ...createCrudService('role'),
+  ...service.sysrole,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    const service = createCrudService('role');
-    await service.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    await service.sysrole.delete({ ids });
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -60,7 +61,7 @@ const formItems = computed<FormItem[]>(() => [
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();

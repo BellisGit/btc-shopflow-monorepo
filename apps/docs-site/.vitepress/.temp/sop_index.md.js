@@ -1,0 +1,19 @@
+import { ssrRenderAttrs } from "vue/server-renderer";
+import { useSSRContext } from "vue";
+import { _ as _export_sfc } from "./plugin-vue_export-helper.1tPrXgE0.js";
+const __pageData = JSON.parse('{"title":"标准操作流程","description":"","frontmatter":{"title":"标准操作流程","type":"sop","project":"btc-shopflow","owner":"dev-team","created":"2025-10-13","updated":"2025-10-13","publish":true,"tags":["sop","procedures"],"sidebar_label":"标准操作","sidebar_order":1,"sidebar_group":"sop"},"headers":[],"relativePath":"sop/index.md","filePath":"sop/index.md","lastUpdated":1760420026000}');
+const _sfc_main = { name: "sop/index.md" };
+function _sfc_ssrRender(_ctx, _push, _parent, _attrs, $props, $setup, $data, $options) {
+  _push(`<div${ssrRenderAttrs(_attrs)}><h1 id="标准操作流程-sop" tabindex="-1">标准操作流程 (SOP) <a class="header-anchor" href="#标准操作流程-sop" aria-label="Permalink to &quot;标准操作流程 (SOP)&quot;">​</a></h1><blockquote><p>Standard Operating Procedures</p></blockquote><p>标准操作流程 (SOP) 提供了项目中常见操作的标准化步骤，确保团队成员能够按照统一的方式完成各种开发任务</p><h2 id="目的" tabindex="-1">目的 <a class="header-anchor" href="#目的" aria-label="Permalink to &quot;目的&quot;">​</a></h2><ul><li><strong>标准化流程</strong>：为常见操作提供标准化的执行步骤</li><li><strong>提高效率</strong>：减少操作错误，提高工作效率</li><li><strong>知识传承</strong>：帮助新团队成员快速上手</li><li><strong>质量保证</strong>：确保操作的一致性和可靠性</li></ul><h2 id="sop-分类" tabindex="-1">SOP 分类 <a class="header-anchor" href="#sop-分类" aria-label="Permalink to &quot;SOP 分类&quot;">​</a></h2><h3 id="开发环境" tabindex="-1">开发环境 <a class="header-anchor" href="#开发环境" aria-label="Permalink to &quot;开发环境&quot;">​</a></h3><ul><li><strong><a href="/internal/archive/sop/development/start-development">开发环境启动</a></strong> - 如何快速启动开发环境</li></ul><h3 id="组件开发" tabindex="-1">组件开发 <a class="header-anchor" href="#组件开发" aria-label="Permalink to &quot;组件开发&quot;">​</a></h3><ul><li><strong><a href="/internal/archive/sop/components/add-layout-component">添加布局组件</a></strong> - 新增布局组件的标准流程</li><li><strong><a href="/internal/archive/sop/components/add-new-svg-icon">添加SVG图标</a></strong> - 添加新SVG图标的标准步骤</li></ul><h3 id="系统配置" tabindex="-1">系统配置 <a class="header-anchor" href="#系统配置" aria-label="Permalink to &quot;系统配置&quot;">​</a></h3><ul><li><strong><a href="/internal/archive/sop/system/server-side-title-injection">服务端标题注入</a></strong> - 服务端标题注入的配置方法</li></ul><hr><h2 id="sop-模板" tabindex="-1">SOP 模板 <a class="header-anchor" href="#sop-模板" aria-label="Permalink to &quot;SOP 模板&quot;">​</a></h2><p>每个 SOP 都应包含以下结构：</p><ol><li><strong>概述</strong>：操作的简要说明</li><li><strong>前置条件</strong>：执行操作前需要满足的条件</li><li><strong>操作步骤</strong>：详细的操作步骤</li><li><strong>验证方法</strong>：如何验证操作是否成功</li><li><strong>常见问题</strong>：可能遇到的问题和解决方案</li><li><strong>相关资源</strong>：相关的文档和工具</li></ol><hr><h2 id="更新流程" tabindex="-1">更新流程 <a class="header-anchor" href="#更新流程" aria-label="Permalink to &quot;更新流程&quot;">​</a></h2><ol><li><strong>识别需求</strong>：发现需要标准化的操作流程</li><li><strong>编写SOP</strong>：按照标准模板编写SOP文档</li><li><strong>团队评审</strong>：团队成员评审SOP的准确性和完整性</li><li><strong>实践验证</strong>：在实际工作中验证SOP的有效性</li><li><strong>持续改进</strong>：根据反馈不断完善SOP</li></ol><hr><h2 id="最佳实践" tabindex="-1">最佳实践 <a class="header-anchor" href="#最佳实践" aria-label="Permalink to &quot;最佳实践&quot;">​</a></h2><ul><li><strong>保持更新</strong>：定期检查和更新SOP，确保其准确性</li><li><strong>简洁明了</strong>：SOP应该简洁明了，易于理解和执行</li><li><strong>图文并茂</strong>：适当使用截图和示例，提高可读性</li><li><strong>版本控制</strong>：记录SOP的版本变更历史</li></ul></div>`);
+}
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("sop/index.md");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const index = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender]]);
+export {
+  __pageData,
+  index as default
+};

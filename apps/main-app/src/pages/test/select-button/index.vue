@@ -101,14 +101,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import type { TableColumn } from '@btc/shared-components';
-import { createMockCrudService } from '../../../utils/mock';
+import { service } from '../../../services/eps';
 
 // 基础用法 - 双状态
 const status = ref(1);
+const message = useMessage();
 const statusOptions = [
-  { label: '全部', value: undefined },
+  { label: '全部', value: '' },
   { label: '启用', value: 1 },
   { label: '禁用', value: 0 },
 ];
@@ -119,7 +120,7 @@ const getStatusLabel = (val: any) => {
 };
 
 const handleStatusChange = (val: any) => {
-  ElMessage.success(`状态切换为：${getStatusLabel(val)}`);
+  message.success(`状态切换为：${getStatusLabel(val)}`);
 };
 
 // 三状态 - 视图模式
@@ -148,18 +149,12 @@ const getTimeRangeLabel = (val: string) => {
 const crudRef = ref();
 const crudStatus = ref(1);
 const crudStatusOptions = [
-  { label: '全部', value: undefined },
+  { label: '全部', value: '' },
   { label: '启用', value: 1 },
   { label: '禁用', value: 0 },
 ];
 
-const userService = createMockCrudService('select_button_users', {
-  defaultData: [
-    { id: 1, name: '张三', phone: '13800138001', status: 1, createTime: '2024-01-01' },
-    { id: 2, name: '李四', phone: '13800138002', status: 0, createTime: '2024-01-02' },
-    { id: 3, name: '王五', phone: '13800138003', status: 1, createTime: '2024-01-03' },
-  ],
-});
+const userService = service.base?.sys?.department;
 
 const columns = computed<TableColumn[]>(() => [
   { type: 'index', label: '序号', width: 60 },

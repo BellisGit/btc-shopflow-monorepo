@@ -498,11 +498,167 @@ export class PluginManager {
       console.log('[PluginManager] All plugins cleared');
     }
   }
+
+  /**
+   * 获取插件元数据
+   * @param name 插件名称
+   * @returns 插件元数据
+   */
+  getPluginMetadata(name: string) {
+    const plugin = this.get(name);
+    return plugin?.config;
+  }
+
+  /**
+   * 按作者筛选插件
+   * @param author 作者名称
+   * @returns 插件名称数组
+   */
+  getPluginsByAuthor(author: string): string[] {
+    return this.list().filter(name => {
+      const plugin = this.get(name);
+      return plugin?.config?.author === author || plugin?.author === author;
+    });
+  }
+
+  /**
+   * 按版本筛选插件
+   * @param version 版本号（支持通配符）
+   * @returns 插件名称数组
+   */
+  getPluginsByVersion(version: string): string[] {
+    return this.list().filter(name => {
+      const plugin = this.get(name);
+      const pluginVersion = plugin?.config?.version || plugin?.version;
+
+      if (!pluginVersion) return false;
+
+      // 支持通配符匹配
+      if (version.includes('*')) {
+        const pattern = version.replace(/\*/g, '.*');
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(pluginVersion);
+      }
+
+      return pluginVersion === version;
+    });
+  }
+
+  /**
+   * 按分类筛选插件
+   * @param category 分类名称
+   * @returns 插件名称数组
+   */
+  getPluginsByCategory(category: string): string[] {
+    return this.list().filter(name => {
+      const plugin = this.get(name);
+      return plugin?.config?.category === category;
+    });
+  }
+
+  /**
+   * 获取推荐插件
+   * @returns 插件名称数组
+   */
+  getRecommendedPlugins(): string[] {
+    return this.list().filter(name => {
+      const plugin = this.get(name);
+      return plugin?.config?.recommended === true;
+    });
+  }
+
+  /**
+   * 搜索插件
+   * @param query 搜索关键词
+   * @returns 插件名称数组
+   */
+  searchPlugins(query: string): string[] {
+    const lowerQuery = query.toLowerCase();
+
+    return this.list().filter(name => {
+      const plugin = this.get(name);
+      const config = plugin?.config;
+
+      // 搜索插件名称
+      if (name.toLowerCase().includes(lowerQuery)) {
+        return true;
+      }
+
+      // 搜索配置中的信息
+      if (config) {
+        if (config.label?.toLowerCase().includes(lowerQuery)) return true;
+        if (config.description?.toLowerCase().includes(lowerQuery)) return true;
+        if (config.author?.toLowerCase().includes(lowerQuery)) return true;
+        if (config.category?.toLowerCase().includes(lowerQuery)) return true;
+        if (config.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))) return true;
+      }
+
+      return false;
+    });
+  }
+
+  /**
+   * 获取所有插件的详细信息
+   * @returns 插件详细信息数组
+   */
+  getPluginsInfo() {
+    return this.list().map(name => {
+      const plugin = this.get(name);
+      const record = this.getRecord(name);
+
+      return {
+        name,
+        config: plugin?.config,
+        version: plugin?.version,
+        author: plugin?.author,
+        description: plugin?.description,
+        status: record?.status,
+        installedAt: record?.installedAt,
+        error: record?.error,
+        hasApi: !!plugin?.api,
+        hasComponents: !!plugin?.components?.length,
+        hasDirectives: !!plugin?.directives && Object.keys(plugin.directives).length > 0,
+        hasToolbar: !!plugin?.toolbar,
+        hasLayout: !!plugin?.layout,
+      };
+    });
+  }
+
+  /**
+   * 输出插件统计信息（仅在 debug 模式下）
+   */
+  logPluginStats(): void {
+    if (!this.options.debug) return;
+
+    const plugins = this.getPluginsInfo();
+    const installed = plugins.filter(p => p.status === 'installed');
+    const failed = plugins.filter(p => p.status === 'failed');
+
+    console.group('[PluginManager] 插件统计信息');
+    console.log(`📊 总插件数: ${plugins.length}`);
+    console.log(`✅ 已安装: ${installed.length}`);
+    console.log(`❌ 安装失败: ${failed.length}`);
+    console.log(`📦 有 API: ${plugins.filter(p => p.hasApi).length}`);
+    console.log(`🧩 有组件: ${plugins.filter(p => p.hasComponents).length}`);
+    console.log(`🎯 有工具栏: ${plugins.filter(p => p.hasToolbar).length}`);
+    console.log(`📐 有布局: ${plugins.filter(p => p.hasLayout).length}`);
+
+    if (failed.length > 0) {
+      console.group('❌ 失败的插件');
+      failed.forEach(plugin => {
+        console.error(`${plugin.name}: ${plugin.error?.message}`);
+      });
+      console.groupEnd();
+    }
+
+    console.groupEnd();
+  }
 }
 
-// 导出类型
+// 导出类型和工具函数
 export * from './types';
 export * from './resource-loader';
+export * from './config-helper';
 
 // 创建单例
 let pluginManagerInstance: PluginManager | null = null;

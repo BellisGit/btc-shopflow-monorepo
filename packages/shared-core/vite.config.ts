@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
+  logLevel: 'error', // 只显示错误，抑制警告
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -10,12 +11,14 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'axios', 'vue-i18n', '@btc/shared-utils'],
+      external: ['vue', 'axios', 'vue-i18n', '@btc/shared-utils', 'pinia', '@vueuse/core'],
       output: {
         globals: {
           vue: 'Vue',
           axios: 'axios',
           'vue-i18n': 'VueI18n',
+          pinia: 'Pinia',
+          '@vueuse/core': 'VueUse',
         },
       },
     },

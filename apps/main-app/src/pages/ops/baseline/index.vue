@@ -56,12 +56,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { createMockCrudService, mockHelpers } from '../../../utils/mock';
+import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
 const selection = ref<any[]>([]);
 const compareVisible = ref(false);
@@ -69,29 +71,7 @@ const compareData = ref<any>({});
 
 // Mock数据服务
 const baselineService = createMockCrudService('btc_baselines', {
-  defaultData: [
-    {
-      id: 1,
-      baselineName: '初始基线',
-      permissionCount: 50,
-      description: '系统初始化时的权限快照',
-      createTime: mockHelpers.randomDate(new Date(2024, 0, 1))
-    },
-    {
-      id: 2,
-      baselineName: '2024-Q1基线',
-      permissionCount: 65,
-      description: '第一季度权限基线',
-      createTime: mockHelpers.randomDate(new Date(2024, 3, 1))
-    },
-    {
-      id: 3,
-      baselineName: '2024-Q2基线',
-      permissionCount: 73,
-      description: '第二季度权限基线',
-      createTime: mockHelpers.randomDate(new Date(2024, 6, 1))
-    },
-  ]
+
 });
 
 // 添加delete确认
@@ -100,7 +80,7 @@ const wrappedService = {
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await baselineService.delete({ ids });
-    ElMessage.success(t('crud.message.delete_success'));
+    message.success(t('crud.message.delete_success'));
   },
 };
 
@@ -124,7 +104,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     // 自动获取当前权限数
     data.permissionCount = mockHelpers.randomNumber(50, 100);
     await next(data);
-    ElMessage.success(t('crud.message.save_success'));
+    message.success(t('crud.message.save_success'));
     close();
   } catch (error) {
     done();
@@ -149,7 +129,7 @@ const handleCreateSnapshot = async () => {
       description: '手动创建的权限快照',
     });
 
-    ElMessage.success('快照创建成功');
+    message.success('快照创建成功');
     crudRef.value?.crud.loadData();
   } catch (error) {
     // 用户取消
@@ -158,7 +138,7 @@ const handleCreateSnapshot = async () => {
 
 const handleCompare = () => {
   if (selection.value.length !== 2) {
-    ElMessage.warning('请选择两个基线进行对比');
+    message.warning('请选择两个基线进行对比');
     return;
   }
 

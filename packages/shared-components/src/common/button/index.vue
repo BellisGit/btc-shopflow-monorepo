@@ -22,7 +22,7 @@ const handleClick = (event: MouseEvent) => {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .btc-button {
   padding: 8px 16px;
   border: none;

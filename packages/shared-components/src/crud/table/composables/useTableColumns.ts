@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import type { TableProps } from '../types';
+import { autoFormatTableColumns } from '../utils/formatters';
 
 /**
  * 表格列配置处理
@@ -56,11 +57,13 @@ export function useTableColumns(props: TableProps) {
   }
 
   /**
-   * 计算列配置 - 智能列宽分配 + 字典匹配
+   * 计算列配置 - 智能列宽分配 + 字典匹配 + 自动时间格式化
    */
   const computedColumns = computed(() => {
     const columns = props.columns || [];
-    return columns.map(column => {
+    // 先进行自动时间格式化
+    const formattedColumns = autoFormatTableColumns(columns);
+    return formattedColumns.map(column => {
       const isFixedWidthColumn = column.type === 'selection' || column.type === 'index' || column.type === 'op';
 
       const config: any = {

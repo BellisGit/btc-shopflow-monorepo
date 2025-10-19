@@ -16,6 +16,7 @@
     "@element-plus/icons-vue": "^2.3.1",
     "@types/nprogress": "^0.2.3",
     "@vueuse/core": "^13.9.0",
+    "axios": "^1.12.2",
     "element-plus": "^2.8.10",
     "mitt": "^3.0.1",
     "nprogress": "^0.2.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
+    "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",

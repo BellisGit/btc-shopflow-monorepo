@@ -6,7 +6,10 @@
 import { ref, reactive } from 'vue';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
-export function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>): UseCrudReturn<T> {
+export function useCrud<T = Record<string, unknown>>(
+  options: CrudOptions<T>,
+  callback?: (app: UseCrudReturn<T>) => void
+): UseCrudReturn<T> {
   const {
     service,
     onLoad,
@@ -34,6 +37,9 @@ export function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>): U
 
   // 选择行
   const selection = ref<T[]>([]);
+
+  // 防止重复调用的标记
+  const isRefreshing = ref(false);
 
   // 新增/编辑弹窗
   const upsertVisible = ref(false);
@@ -252,16 +258,25 @@ export function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>): U
   };
 
   /**
-   * 刷新
+   * 刷新 - 强制更新版本 2024-01-16 15:30
    */
   const handleRefresh = () => {
-    loadData();
+    if (isRefreshing.value) {
+      return;
+    }
+    isRefreshing.value = true;
+    loadData().finally(() => {
+      isRefreshing.value = false;
+    });
   };
 
   /**
-   * 页码改变
+   * 页码改变 - 强制更新版本 2024-01-16 15:30
    */
   const handlePageChange = (page: number) => {
+    if (isRefreshing.value) {
+      return;
+    }
     pagination.page = page;
     loadData();
   };
@@ -293,7 +308,7 @@ export function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>): U
     Object.assign(searchParams.value, params);
   };
 
-  return {
+  const crudInstance = {
     // 数据
     tableData,
     loading,
@@ -339,5 +354,12 @@ export function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>): U
     getParams,
     setParams,
   } as UseCrudReturn<T>;
+
+  // 如果有回调函数，调用它
+  if (callback) {
+    callback(crudInstance);
+  }
+
+  return crudInstance;
 }
 
