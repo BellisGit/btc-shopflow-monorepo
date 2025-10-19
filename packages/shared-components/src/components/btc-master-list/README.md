@@ -25,15 +25,12 @@
 ## 使用场景
 
 ### 1. 部门-用户管理
+
 ```vue
 <template>
   <BtcViewGroup>
     <template #left>
-      <BtcMasterList
-        :service="departmentService"
-        title="组织架构"
-        @select="onDepartmentSelect"
-      />
+      <BtcMasterList :service="departmentService" title="组织架构" @select="onDepartmentSelect" />
     </template>
     <template #right>
       <BtcCrud :service="userService" />
@@ -43,7 +40,7 @@
 
 <script setup>
 const departmentService = {
-  list: () => service.sysdepartment.list()
+  list: () => service.sysdepartment.list(),
 };
 
 const onDepartmentSelect = (department, departmentIds) => {
@@ -54,16 +51,13 @@ const onDepartmentSelect = (department, departmentIds) => {
 ```
 
 ### 2. 域-模块管理
+
 ```vue
 <template>
   <BtcViewGroup>
     <template #left>
       <!-- 直接调用域列表的list API -->
-      <BtcMasterList
-        :service="domainService"
-        title="业务域"
-        @select="onDomainSelect"
-      />
+      <BtcMasterList :service="domainService" title="业务域" @select="onDomainSelect" />
     </template>
     <template #right>
       <BtcCrud :service="moduleService" />
@@ -74,7 +68,7 @@ const onDepartmentSelect = (department, departmentIds) => {
 <script setup>
 // 域服务配置 - 直接调用域列表的list API
 const domainService = {
-  list: () => service.sysdomain.list()
+  list: () => service.sysdomain.list(),
 };
 
 const onDomainSelect = (domain, domainIds) => {
@@ -85,16 +79,13 @@ const onDomainSelect = (domain, domainIds) => {
 ```
 
 ### 3. 域-插件管理
+
 ```vue
 <template>
   <BtcViewGroup>
     <template #left>
       <!-- 直接调用域列表的list API -->
-      <BtcMasterList
-        :service="domainService"
-        title="业务域"
-        @select="onDomainSelect"
-      />
+      <BtcMasterList :service="domainService" title="业务域" @select="onDomainSelect" />
     </template>
     <template #right>
       <BtcCrud :service="pluginService" />
@@ -105,7 +96,7 @@ const onDomainSelect = (domain, domainIds) => {
 <script setup>
 // 域服务配置 - 直接调用域列表的list API
 const domainService = {
-  list: () => service.sysdomain.list()
+  list: () => service.sysdomain.list(),
 };
 
 const onDomainSelect = (domain, domainIds) => {
@@ -116,15 +107,12 @@ const onDomainSelect = (domain, domainIds) => {
 ```
 
 ### 4. 角色-权限管理
+
 ```vue
 <template>
   <BtcViewGroup>
     <template #left>
-      <BtcMasterList
-        :service="roleService"
-        title="角色列表"
-        @select="onRoleSelect"
-      />
+      <BtcMasterList :service="roleService" title="角色列表" @select="onRoleSelect" />
     </template>
     <template #right>
       <BtcCrud :service="permissionService" />
@@ -134,7 +122,7 @@ const onDomainSelect = (domain, domainIds) => {
 
 <script setup>
 const roleService = {
-  list: () => service.sysrole.list()
+  list: () => service.sysrole.list(),
 };
 
 const onRoleSelect = (role, roleIds) => {
@@ -148,43 +136,43 @@ const onRoleSelect = (role, roleIds) => {
 
 ### Props
 
-| 参数 | 说明 | 类型 | 默认值 |
-|------|------|------|--------|
-| service | 服务配置对象 | MasterListService | - |
-| title | 列表标题 | string | - |
-| labelField | 显示字段名 | string | 'name' |
-| idField | ID字段名 | string | 'id' |
-| childrenField | 子节点字段名 | string | 'children' |
-| drag | 是否支持拖拽 | boolean | true |
-| level | 最大层级 | number | 99 |
-| onSelect | 选择回调 | function | - |
-| onAdd | 添加回调 | function | - |
-| onEdit | 编辑回调 | function | - |
-| onDelete | 删除回调 | function | - |
+| 参数          | 说明         | 类型              | 默认值     |
+| ------------- | ------------ | ----------------- | ---------- |
+| service       | 服务配置对象 | MasterListService | -          |
+| title         | 列表标题     | string            | -          |
+| labelField    | 显示字段名   | string            | 'name'     |
+| idField       | ID字段名     | string            | 'id'       |
+| childrenField | 子节点字段名 | string            | 'children' |
+| drag          | 是否支持拖拽 | boolean           | true       |
+| level         | 最大层级     | number            | 99         |
+| onSelect      | 选择回调     | function          | -          |
+| onAdd         | 添加回调     | function          | -          |
+| onEdit        | 编辑回调     | function          | -          |
+| onDelete      | 删除回调     | function          | -          |
 
 ### Events
 
-| 事件名 | 说明 | 参数 |
-|--------|------|------|
-| select | 选择项目时触发 | (item, ids) |
-| refresh | 刷新时触发 | - |
-| add | 添加时触发 | (item) |
-| edit | 编辑时触发 | (item) |
-| delete | 删除时触发 | (item) |
+| 事件名  | 说明           | 参数        |
+| ------- | -------------- | ----------- |
+| select  | 选择项目时触发 | (item, ids) |
+| refresh | 刷新时触发     | -           |
+| add     | 添加时触发     | (item)      |
+| edit    | 编辑时触发     | (item)      |
+| delete  | 删除时触发     | (item)      |
 
 ### Methods
 
-| 方法名 | 说明 | 参数 |
-|--------|------|------|
-| refresh | 刷新数据 | - |
-| rowClick | 点击行 | (item) |
+| 方法名   | 说明     | 参数   |
+| -------- | -------- | ------ |
+| refresh  | 刷新数据 | -      |
+| rowClick | 点击行   | (item) |
 
 ## 服务配置
 
 ```typescript
 interface MasterListService {
-  list: () => Promise<any[]>;           // 必需：获取列表数据
-  add?: (data: any) => Promise<any>;    // 可选：添加数据
+  list: () => Promise<any[]>; // 必需：获取列表数据
+  add?: (data: any) => Promise<any>; // 可选：添加数据
   update?: (data: any) => Promise<any>; // 可选：更新数据
   delete?: (data: any) => Promise<any>; // 可选：删除数据
 }
@@ -196,10 +184,10 @@ interface MasterListService {
 
 ```typescript
 interface MasterListItem {
-  id: string | number;           // 主键
-  name: string;                  // 显示名称
-  children?: MasterListItem[];   // 子节点
-  [key: string]: any;           // 其他字段
+  id: string | number; // 主键
+  name: string; // 显示名称
+  children?: MasterListItem[]; // 子节点
+  [key: string]: any; // 其他字段
 }
 ```
 

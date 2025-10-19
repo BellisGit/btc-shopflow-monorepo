@@ -7,6 +7,7 @@ EPS (EndPoint Service) 是 BTC Shopflow 项目的核心设计，通过扫描后�
 ## 核心原理
 
 ### 1. 后端 API 扫描
+
 - 后端提供 `/admin/base/open/eps` 接口
 - 自动扫描所有 Controller 类和方法
 - 解析注解信息（@Controller、@Post、@Get 等）
@@ -14,6 +15,7 @@ EPS (EndPoint Service) 是 BTC Shopflow 项目的核心设计，通过扫描后�
 - 支持字段验证规则和搜索配置
 
 ### 2. 前端类型生成
+
 - Vite 插件请求 EPS 接口获取 API 信息
 - 根据 API 路径构建 service 对象树
 - 生成对应的 TypeScript 类型定义（eps.d.ts）
@@ -21,12 +23,14 @@ EPS (EndPoint Service) 是 BTC Shopflow 项目的核心设计，通过扫描后�
 - 支持权限系统和搜索配置
 
 ### 3. 热更新支持
+
 - 开发时监听后端 API 变化
 - 自动重新生成类型定义
 - 支持手动刷新 EPS 数据
 - 虚拟模块自动更新
 
 ### 4. 完整实现架构
+
 - **HTTP 请求层**：基于 axios 的统一请求封装（request.ts）
 - **类型定义**：完整的 EPS 类型体系（types.ts）
 - **工具函数**：代码生成和格式化工具（utils.ts）
@@ -61,17 +65,20 @@ EPS (EndPoint Service) 是 BTC Shopflow 项目的核心设计，通过扫描后�
 
 ```typescript
 interface Api {
-  name: string;           // 方法名
-  method: string;         // HTTP 方法（GET/POST/PUT/DELETE）
-  path: string;          // API 路径
-  summary: string;       // API 描述
-  tag: string;          // API 标签/分类
-  dts?: {              // TypeScript 类型定义
-    parameters?: {      // 参数定义
-      description: string;  // 参数描述
-      name: string;         // 参数名
-      required: boolean;    // 是否必填
-      schema: {            // 参数类型
+  name: string; // 方法名
+  method: string; // HTTP 方法（GET/POST/PUT/DELETE）
+  path: string; // API 路径
+  summary: string; // API 描述
+  tag: string; // API 标签/分类
+  dts?: {
+    // TypeScript 类型定义
+    parameters?: {
+      // 参数定义
+      description: string; // 参数描述
+      name: string; // 参数名
+      required: boolean; // 是否必填
+      schema: {
+        // 参数类型
         type: string;
       };
     }[];
@@ -82,47 +89,51 @@ interface Api {
 ### 3. 字段定义结构
 
 #### A. columns（实体字段）
+
 ```typescript
 interface Column {
-  comment: string;        // 字段注释/描述
-  nullable: boolean;      // 是否可为空
-  propertyName: string;   // 属性名（驼峰命名）
-  source: string;         // 数据库字段名（下划线命名）
-  type: string;          // 数据类型
+  comment: string; // 字段注释/描述
+  nullable: boolean; // 是否可为空
+  propertyName: string; // 属性名（驼峰命名）
+  source: string; // 数据库字段名（下划线命名）
+  type: string; // 数据类型
   dict: string[] | string | null; // 字典类型（用于下拉选择）
-  defaultValue: any;     // 默认值
-  [key: string]: any;    // 其他扩展属性
+  defaultValue: any; // 默认值
+  [key: string]: any; // 其他扩展属性
 }
 ```
 
 #### B. pageColumns（分页查询字段）
+
 ```typescript
 interface PageColumn {
-  comment: string;        // 字段注释
-  propertyName: string;   // 参数名
-  source: string;         // 查询参数名
-  type: string;          // 参数类型
+  comment: string; // 字段注释
+  propertyName: string; // 参数名
+  source: string; // 查询参数名
+  type: string; // 参数类型
   dict: string[] | null; // 可选值（如排序方向：asc/desc）
-  defaultValue: any;     // 默认值
+  defaultValue: any; // 默认值
 }
 ```
 
 ### 4. 搜索配置结构
 
 #### A. pageQueryOp（查询操作配置）
+
 ```typescript
 interface PageQueryOp {
-  fieldEq: string[];           // 精确匹配字段（WHERE field = value）
-  fieldLike: string[];         // 模糊匹配字段（WHERE field LIKE '%value%'）
+  fieldEq: string[]; // 精确匹配字段（WHERE field = value）
+  fieldLike: string[]; // 模糊匹配字段（WHERE field LIKE '%value%'）
   keyWordLikeFields: string[]; // 关键词搜索字段（全局搜索时使用）
 }
 ```
 
 #### B. search（搜索字段定义）
+
 ```typescript
 interface Search {
-  fieldEq: Column[];           // 精确匹配字段的完整定义
-  fieldLike: Column[];         // 模糊匹配字段的完整定义  
+  fieldEq: Column[]; // 精确匹配字段的完整定义
+  fieldLike: Column[]; // 模糊匹配字段的完整定义
   keyWordLikeFields: Column[]; // 关键词搜索字段的完整定义
 }
 ```
@@ -132,6 +143,7 @@ interface Search {
 ### 1. API 结构设计原理
 
 #### A. 为什么需要 API 结构？
+
 **设计原因：**
 
 1. **统一接口规范**：
@@ -151,28 +163,31 @@ interface Search {
    - 支持自定义路径和参数
 
 #### B. 实际应用场景
+
 ```typescript
 // 后端定义
 @Controller('/base/sys/user')
 export class UserController {
-  @Post('/page')  // method: 'POST', path: '/page'
-  async page() { }
-  
-  @Get('/info')   // method: 'GET', path: '/info'
-  async info() { }
+  @Post('/page') // method: 'POST', path: '/page'
+  async page() {}
+
+  @Get('/info') // method: 'GET', path: '/info'
+  async info() {}
 }
 
 // 前端生成
-service.base.sys.user.page()  // 调用 POST /base/sys/user/page
-service.base.sys.user.info()  // 调用 GET /base/sys/user/info
+service.base.sys.user.page(); // 调用 POST /base/sys/user/page
+service.base.sys.user.info(); // 调用 GET /base/sys/user/info
 ```
 
 ### 2. 字段定义结构设计原理
 
 #### A. columns（实体字段）设计原因
+
 **设计原因：**
 
 1. **前后端字段映射**：
+
    ```typescript
    // 数据库字段：user_name (下划线)
    // 前端属性：userName (驼峰)
@@ -181,14 +196,16 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
    ```
 
 2. **类型转换支持**：
+
    ```typescript
    // 数据库类型：bigint, varchar, datetime
    // 前端类型：number, string, Date
-   type: 'bigint'  // 映射到 number
-   type: 'varchar' // 映射到 string
+   type: 'bigint'; // 映射到 number
+   type: 'varchar'; // 映射到 string
    ```
 
 3. **表单生成支持**：
+
    ```typescript
    // 根据字段信息自动生成表单
    nullable: false → 必填字段
@@ -198,13 +215,15 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
 
 4. **文档化**：
    ```typescript
-   comment: '用户名' // 提供字段说明
+   comment: '用户名'; // 提供字段说明
    ```
 
 #### B. pageColumns（分页查询字段）设计原因
+
 **设计原因：**
 
 1. **分页参数标准化**：
+
    ```typescript
    // 标准分页参数
    { propertyName: 'page', defaultValue: 1 }
@@ -213,6 +232,7 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
    ```
 
 2. **查询条件支持**：
+
    ```typescript
    // 动态查询条件
    { propertyName: 'departmentIds', type: 'array' }
@@ -228,23 +248,26 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
 ### 3. 搜索配置结构设计原理
 
 #### A. pageQueryOp（查询操作配置）设计原因
+
 **设计原因：**
 
 1. **查询类型分类**：
+
    ```sql
    -- fieldEq: 精确匹配
    WHERE status = 1
    WHERE department_id = 5
-   
+
    -- fieldLike: 模糊匹配
    WHERE username LIKE '%张三%'
    WHERE name LIKE '%李四%'
-   
+
    -- keyWordLikeFields: 关键词搜索
    WHERE (username LIKE '%张%' OR name LIKE '%张%')
    ```
 
 2. **前端组件生成**：
+
    ```typescript
    // 根据配置生成不同的搜索组件
    fieldEq → 下拉选择框（精确匹配）
@@ -261,22 +284,25 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
    ```
 
 #### B. search（搜索字段定义）设计原因
+
 **设计原因：**
 
 1. **字段信息完整性**：
+
    ```typescript
    // 不仅知道字段名，还知道字段的完整信息
    fieldEq: [
      {
        propertyName: 'status',
        type: 'tinyint',
-       dict: ['status'],  // 可以生成下拉选择
-       comment: '状态'
-     }
-   ]
+       dict: ['status'], // 可以生成下拉选择
+       comment: '状态',
+     },
+   ];
    ```
 
 2. **前端组件智能生成**：
+
    ```typescript
    // 根据字段信息生成合适的组件
    dict: ['status'] → 下拉选择框
@@ -294,6 +320,7 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
 ### 4. 整体架构设计优势
 
 #### A. 自动化程度高
+
 ```typescript
 // 后端定义一次，前端自动生成所有相关代码
 @Controller('/base/sys/user')
@@ -301,7 +328,7 @@ service.base.sys.user.info()  // 调用 GET /base/sys/user/info
 export class UserController {
   @Post('/page')
   @ApiOperation('分页查询用户')
-  async page(@Body() dto: UserPageDto) { }
+  async page(@Body() dto: UserPageDto) {}
 }
 
 // 前端自动生成
@@ -311,6 +338,7 @@ interface BaseSysUserService {
 ```
 
 #### B. 类型安全
+
 ```typescript
 // 所有类型都自动生成，避免手动维护
 interface UserPageDto {
@@ -322,19 +350,23 @@ interface UserPageDto {
 ```
 
 #### C. 扩展性强
+
 ```typescript
 // 支持自定义字段类型映射
 config.eps.mapping = [
   { test: ['bigint'], type: 'number' },
   { test: ['varchar'], type: 'string' },
-  { custom: ({ propertyName, type }) => {
-    if (propertyName.includes('Time')) return 'Date';
-    return null;
-  }}
+  {
+    custom: ({ propertyName, type }) => {
+      if (propertyName.includes('Time')) return 'Date';
+      return null;
+    },
+  },
 ];
 ```
 
 #### D. 维护性好
+
 ```typescript
 // 后端修改 API，前端自动更新
 // 无需手动同步前后端接口定义
@@ -370,7 +402,7 @@ config.eps.mapping = [
                 "schema": { "type": "number" }
               },
               {
-                "name": "size", 
+                "name": "size",
                 "description": "每页数量",
                 "required": true,
                 "schema": { "type": "number" }
@@ -386,7 +418,7 @@ config.eps.mapping = [
         },
         {
           "name": "list",
-          "method": "POST", 
+          "method": "POST",
           "path": "/list",
           "summary": "获取用户列表",
           "tag": "用户管理"
@@ -394,7 +426,7 @@ config.eps.mapping = [
         {
           "name": "info",
           "method": "GET",
-          "path": "/info", 
+          "path": "/info",
           "summary": "获取用户详情",
           "tag": "用户管理"
         }
@@ -412,7 +444,7 @@ config.eps.mapping = [
         {
           "comment": "用户名",
           "nullable": false,
-          "propertyName": "username", 
+          "propertyName": "username",
           "source": "username",
           "type": "varchar",
           "dict": null,
@@ -422,7 +454,7 @@ config.eps.mapping = [
           "comment": "姓名",
           "nullable": true,
           "propertyName": "name",
-          "source": "name", 
+          "source": "name",
           "type": "varchar",
           "dict": null,
           "defaultValue": null
@@ -432,7 +464,7 @@ config.eps.mapping = [
           "nullable": true,
           "propertyName": "email",
           "source": "email",
-          "type": "varchar", 
+          "type": "varchar",
           "dict": null,
           "defaultValue": null
         },
@@ -484,7 +516,7 @@ config.eps.mapping = [
         {
           "comment": "更新时间",
           "nullable": false,
-          "propertyName": "updateTime", 
+          "propertyName": "updateTime",
           "source": "update_time",
           "type": "datetime",
           "dict": null,
@@ -505,7 +537,7 @@ config.eps.mapping = [
           "comment": "每页数量",
           "nullable": false,
           "propertyName": "size",
-          "source": "size", 
+          "source": "size",
           "type": "number",
           "dict": null,
           "defaultValue": 20
@@ -563,7 +595,7 @@ config.eps.mapping = [
           },
           {
             "comment": "部门ID",
-            "propertyName": "departmentId", 
+            "propertyName": "departmentId",
             "source": "department_id",
             "type": "bigint",
             "dict": null
@@ -573,7 +605,7 @@ config.eps.mapping = [
           {
             "comment": "用户名",
             "propertyName": "username",
-            "source": "username", 
+            "source": "username",
             "type": "varchar",
             "dict": null
           },
@@ -581,7 +613,7 @@ config.eps.mapping = [
             "comment": "姓名",
             "propertyName": "name",
             "source": "name",
-            "type": "varchar", 
+            "type": "varchar",
             "dict": null
           }
         ],
@@ -594,7 +626,7 @@ config.eps.mapping = [
             "dict": null
           },
           {
-            "comment": "姓名", 
+            "comment": "姓名",
             "propertyName": "name",
             "source": "name",
             "type": "varchar",
@@ -616,52 +648,52 @@ interface BaseSysUserEntity {
    * 用户ID
    */
   id?: bigint;
-  
+
   /**
    * 用户名
    */
   username?: string;
-  
+
   /**
    * 姓名
    */
   name?: string;
-  
+
   /**
    * 邮箱
    */
   email?: string;
-  
+
   /**
    * 手机号
    */
   phone?: string;
-  
+
   /**
    * 头像
    */
   headImg?: string;
-  
+
   /**
    * 部门ID
    */
   departmentId?: bigint;
-  
+
   /**
    * 状态
    */
   status?: number;
-  
+
   /**
    * 创建时间
    */
   createTime?: string;
-  
+
   /**
    * 更新时间
    */
   updateTime?: string;
-  
+
   /**
    * 任意键值
    */
@@ -681,17 +713,17 @@ interface BaseSysUserService {
     orderBy?: string;
     orderDirection?: string;
   }): Promise<BaseSysUserServicePageResponse>;
-  
+
   /**
    * 获取用户列表
    */
   list(data?: any): Promise<BaseSysUserEntity[]>;
-  
+
   /**
    * 获取用户详情
    */
   info(data?: any): Promise<BaseSysUserEntity>;
-  
+
   /**
    * 权限标识
    */
@@ -700,7 +732,7 @@ interface BaseSysUserService {
     list: string;
     info: string;
   };
-  
+
   /**
    * 权限状态
    */
@@ -709,7 +741,7 @@ interface BaseSysUserService {
     list: boolean;
     info: boolean;
   };
-  
+
   request: Request;
 }
 
@@ -762,28 +794,31 @@ const service = {
 ## 使用场景
 
 ### 1. 用户管理页面
+
 ```typescript
 // 获取部门列表（左侧组织架构）
-service.base.sys.department.list()
+service.base.sys.department.list();
 
 // 获取用户分页数据（右侧用户列表）
 service.base.sys.user.page({
   page: 1,
   size: 20,
   departmentIds: [1, 2, 3],
-  keyword: '搜索词'
-})
+  keyword: '搜索词',
+});
 ```
 
 ### 2. 字典数据获取
+
 ```typescript
 // 获取字典数据
 service.dict.info.data({
-  types: ['occupation', 'status']
-})
+  types: ['occupation', 'status'],
+});
 ```
 
 ### 3. 权限检查
+
 ```typescript
 // 动态权限检查
 v-permission="service.base.sys.user.permission.move"
@@ -793,6 +828,7 @@ v-permission="service.base.sys.department.permission.add"
 ## 配置说明
 
 ### 1. Vite 配置
+
 ```typescript
 // vite.config.ts
 import { btc } from '@btc-vue/vite-plugin';
@@ -802,14 +838,15 @@ export default {
     cool({
       type: 'admin',
       eps: {
-        enable: true  // 启用 EPS
-      }
-    })
-  ]
+        enable: true, // 启用 EPS
+      },
+    }),
+  ],
 };
 ```
 
 ### 2. 后端配置
+
 ```typescript
 // 后端需要提供 EPS 接口
 @Controller('/admin/base/open')
@@ -926,7 +963,7 @@ import service from 'virtual:eps';
 const { data } = await service.base.sys.user.page({
   page: 1,
   size: 20,
-  keyword: 'test'
+  keyword: 'test',
 });
 
 // 权限检查
@@ -948,7 +985,7 @@ import epsData from 'virtual:eps-json';
 console.log(epsData); // 包含所有 API 元数据
 
 // 查找特定模块
-const userModule = epsData.find(item => item.prefix === '/base/sys/user');
+const userModule = epsData.find((item) => item.prefix === '/base/sys/user');
 ```
 
 ### 4. 类型安全
@@ -965,14 +1002,32 @@ declare namespace Eps {
   }
 
   interface BaseApiSysUser {
-    page(data?: { page?: number; size?: number; keyword?: string }): Promise<BaseApiSysUserPageResponse>;
+    page(data?: {
+      page?: number;
+      size?: number;
+      keyword?: string;
+    }): Promise<BaseApiSysUserPageResponse>;
     list(data?: any): Promise<UserEntity[]>;
     info(data?: { id: number }): Promise<UserEntity>;
     add(data?: UserEntity): Promise<any>;
     update(data?: UserEntity): Promise<any>;
     delete(data?: { ids: number[] }): Promise<any>;
-    permission: { page: string; list: string; info: string; add: string; update: string; delete: string };
-    _permission: { page: boolean; list: boolean; info: boolean; add: boolean; update: boolean; delete: boolean };
+    permission: {
+      page: string;
+      list: string;
+      info: string;
+      add: string;
+      update: string;
+      delete: string;
+    };
+    _permission: {
+      page: boolean;
+      list: boolean;
+      info: boolean;
+      add: boolean;
+      update: boolean;
+      delete: boolean;
+    };
     request: Request;
   }
 
@@ -983,9 +1038,9 @@ declare namespace Eps {
         user: BaseApiSysUser;
         department: BaseApiSysDepartment;
         // ...
-      }
-    }
-  }
+      };
+    };
+  };
 }
 ```
 

@@ -28,9 +28,9 @@ const notificationCount = ref(3);
 
 ## Props
 
-| 属性名 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| badgeCount | number | 1 | 徽章显示的数字，只有大于1时才显示 |
+| 属性名     | 类型   | 默认值 | 说明                              |
+| ---------- | ------ | ------ | --------------------------------- |
+| badgeCount | number | 1      | 徽章显示的数字，只有大于1时才显示 |
 
 ## 样式特点
 
@@ -41,7 +41,7 @@ const notificationCount = ref(3);
 
 ## 与 BtcMessageBadge 的区别
 
-1. **定位差异**: 
+1. **定位差异**:
    - `BtcMessageBadge`: 徽章中心与消息弹窗右上角顶点重合
    - `BtcNotificationBadge`: 徽章中心与通知弹窗左上角顶点重合
 

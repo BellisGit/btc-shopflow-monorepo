@@ -18,16 +18,19 @@ message-manager/
 ## 核心功能
 
 ### 1. 消息队列管理
+
 - 支持普通消息队列和错误消息优先队列
 - 自动去重和合并重复消息
 - 智能计算消息显示时长
 
 ### 2. 徽章显示
+
 - 重复消息显示数字徽章
 - 支持递增和递减动画
 - 徽章与消息弹窗同步显示和消失
 
 ### 3. 生命周期管理
+
 - 完整的消息显示生命周期
 - 自动递减动画
 - 智能清理机制
@@ -53,7 +56,7 @@ messageManager.setDisplayHandler({
   },
   updateBadge: (messageInstance, badgeCount) => {
     // 更新徽章
-  }
+  },
 });
 
 // 发送消息
@@ -65,11 +68,11 @@ messageManager.enqueue('error', '操作失败！');
 
 ```typescript
 interface MessageQueueConfig {
-  maxConcurrent: number;        // 最多同时显示的消息数量
-  dedupeWindow: number;         // 去重时间窗口（毫秒）
-  errorQueuePriority: boolean;  // 错误消息优先队列
-  enableBadge: boolean;         // 启用徽标显示
-  maxBadgeCount: number;        // 徽标最大显示数量
+  maxConcurrent: number; // 最多同时显示的消息数量
+  dedupeWindow: number; // 去重时间窗口（毫秒）
+  errorQueuePriority: boolean; // 错误消息优先队列
+  enableBadge: boolean; // 启用徽标显示
+  maxBadgeCount: number; // 徽标最大显示数量
 }
 ```
 
@@ -82,14 +85,17 @@ interface MessageQueueConfig {
 ### 四种消息场景
 
 #### 1. 单条消息（无重复）
+
 - **流程**：显示弹窗 → 3秒后自动消失
 - **特点**：不显示徽章，使用Element Plus默认行为
 
 #### 2. 重复1次（count=2）
+
 - **流程**：显示弹窗 + 徽章(2) → 等待2秒 → 徽章消失 → 消息框消失
 - **特点**：徽章直接显示2，无递增过程
 
 #### 3. 重复多次（count>2）
+
 - **流程**：递增阶段 → 等待阶段 → 递减阶段 → 徽章消失 → 消息框消失
 - **详细步骤**：
   1. **递增阶段**：每次新消息到达时，立即更新徽章显示，重新启动2秒等待定时器
@@ -98,6 +104,7 @@ interface MessageQueueConfig {
   4. **清理阶段**：徽章消失，消息框消失
 
 #### 4. 递减期中断（特殊场景）
+
 - **场景**：在递减过程中收到新的重复消息
 - **处理**：停止当前递减 → 当前显示值+1作为新最大值 → 重新启动等待期 → 继续递减流程
 
@@ -121,6 +128,7 @@ interface MessageQueueConfig {
 ### 关键设计点
 
 #### 递增阶段（重置等待机制）
+
 - **策略**：选项b - 重置等待时间
 - **行为**：每次新重复消息到达时：
   1. 清除现有的等待定时器
@@ -129,6 +137,7 @@ interface MessageQueueConfig {
 - **优势**：用户还在操作时不会突然开始递减，体验更流畅
 
 #### 递减阶段（中断恢复机制）
+
 - **触发条件**：递减期间收到新的重复消息
 - **处理流程**：
   1. 停止当前递减动画
@@ -138,6 +147,7 @@ interface MessageQueueConfig {
 - **示例**：递减到5时收到新消息 → 显示6 → 等待2秒 → 从6开始递减
 
 #### 状态管理
+
 ```typescript
 interface MessageLifecycleState {
   phase: 'increment' | 'waiting' | 'countdown' | 'cleanup';

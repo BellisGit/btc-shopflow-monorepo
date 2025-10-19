@@ -24,7 +24,7 @@ import { initResponseInterceptor } from '../utils/response-interceptor-init';
 
 export async function bootstrap(app: App) {
   // ... 其他初始化代码
-  
+
   // 路由初始化
   const router = routerModule.default;
   app.use(router);
@@ -44,10 +44,7 @@ export class Http {
   constructor() {
     // 创建响应拦截器
     const interceptor = responseInterceptor.createResponseInterceptor();
-    this.axiosInstance.interceptors.response.use(
-      interceptor.onFulfilled,
-      interceptor.onRejected
-    );
+    this.axiosInstance.interceptors.response.use(interceptor.onFulfilled, interceptor.onRejected);
   }
 }
 ```
@@ -56,58 +53,58 @@ export class Http {
 
 ### 成功状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 200 | 静默处理 | 操作成功，返回数据 |
-| 2000 | 静默处理 | 操作成功（兼容） |
-| 1000 | 静默处理 | 操作成功（兼容） |
+| 状态码 | 处理方式 | 说明               |
+| ------ | -------- | ------------------ |
+| 200    | 静默处理 | 操作成功，返回数据 |
+| 2000   | 静默处理 | 操作成功（兼容）   |
+| 1000   | 静默处理 | 操作成功（兼容）   |
 
 ### 错误状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 400 | 显示错误消息 | 操作失败 |
-| 500 | 显示错误消息 | 操作失败 |
-| 501 | 显示错误消息 | 系统繁忙，请稍候再试 |
+| 状态码 | 处理方式     | 说明                 |
+| ------ | ------------ | -------------------- |
+| 400    | 显示错误消息 | 操作失败             |
+| 500    | 显示错误消息 | 操作失败             |
+| 501    | 显示错误消息 | 系统繁忙，请稍候再试 |
 
 ### 认证相关状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 401 | 显示警告 + 跳转登录 | 身份已过期，请重新登录 |
-| 410 | 显示错误消息 | 该用户不存在,请先注册 |
-| 511 | 显示错误消息 | 登录失败，未获取到令牌 |
-| 517 | 显示警告 + 跳转登录 | 身份令牌已过期 |
-| 518 | 显示警告 + 跳转登录 | 获取到的身份令牌为空 |
+| 状态码 | 处理方式            | 说明                   |
+| ------ | ------------------- | ---------------------- |
+| 401    | 显示警告 + 跳转登录 | 身份已过期，请重新登录 |
+| 410    | 显示错误消息        | 该用户不存在,请先注册  |
+| 511    | 显示错误消息        | 登录失败，未获取到令牌 |
+| 517    | 显示警告 + 跳转登录 | 身份令牌已过期         |
+| 518    | 显示警告 + 跳转登录 | 获取到的身份令牌为空   |
 
 ### 数据相关状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 510 | 显示警告消息 | 数据为空 |
-| 522 | 显示错误消息 | 参数不能为空 |
-| 523 | 显示错误消息 | 数据错误 |
+| 状态码 | 处理方式     | 说明         |
+| ------ | ------------ | ------------ |
+| 510    | 显示警告消息 | 数据为空     |
+| 522    | 显示错误消息 | 参数不能为空 |
+| 523    | 显示错误消息 | 数据错误     |
 
 ### 用户管理相关状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 520 | 显示错误消息 | 没有该工号 |
-| 521 | 显示错误消息 | 初始密码错误 |
-| 524 | 显示错误消息 | 账号已存在 |
-| 526 | 显示错误消息 | 表单id过期 |
-| 527 | 显示错误消息 | 手机号不存在 |
-| 529 | 显示错误消息 | 邮箱不存在 |
+| 状态码 | 处理方式     | 说明         |
+| ------ | ------------ | ------------ |
+| 520    | 显示错误消息 | 没有该工号   |
+| 521    | 显示错误消息 | 初始密码错误 |
+| 524    | 显示错误消息 | 账号已存在   |
+| 526    | 显示错误消息 | 表单id过期   |
+| 527    | 显示错误消息 | 手机号不存在 |
+| 529    | 显示错误消息 | 邮箱不存在   |
 
 ### Keycloak相关状态码
 
-| 状态码 | 处理方式 | 说明 |
-|--------|----------|------|
-| 512 | 显示错误消息 | keycloak客户端地址错误 |
-| 513 | 显示错误消息 | 获取领域失败 |
-| 514 | 显示错误消息 | 获取客户端id失败 |
-| 515 | 显示错误消息 | 获取客户端密钥失败 |
-| 516 | 显示错误消息 | 连接keycloak失败 |
+| 状态码 | 处理方式     | 说明                   |
+| ------ | ------------ | ---------------------- |
+| 512    | 显示错误消息 | keycloak客户端地址错误 |
+| 513    | 显示错误消息 | 获取领域失败           |
+| 514    | 显示错误消息 | 获取客户端id失败       |
+| 515    | 显示错误消息 | 获取客户端密钥失败     |
+| 516    | 显示错误消息 | 连接keycloak失败       |
 
 ## 自定义处理
 
@@ -120,7 +117,7 @@ const customMessageHandler: MessageHandler = {
   success: (message) => console.log('✅', message),
   error: (message) => console.error('❌', message),
   warning: (message) => console.warn('⚠️', message),
-  info: (message) => console.info('ℹ️', message)
+  info: (message) => console.info('ℹ️', message),
 };
 
 responseInterceptor.setMessageHandler(customMessageHandler);
@@ -134,7 +131,7 @@ import { responseInterceptor, type ConfirmHandler } from '@btc/shared-utils';
 const customConfirmHandler: ConfirmHandler = {
   confirm: async (message, title) => {
     return window.confirm(`${title}: ${message}`);
-  }
+  },
 };
 
 responseInterceptor.setConfirmHandler(customConfirmHandler);
@@ -148,7 +145,7 @@ import { responseInterceptor, type RouterHandler } from '@btc/shared-utils';
 const customRouterHandler: RouterHandler = {
   push: (path) => {
     window.location.href = path;
-  }
+  },
 };
 
 responseInterceptor.setRouterHandler(customRouterHandler);
@@ -170,11 +167,11 @@ responseInterceptor.setRouterHandler(customRouterHandler);
 
 ```typescript
 interface ApiResponse<T = any> {
-  code: number;        // 业务状态码
-  msg: string;         // 响应消息
-  data: T;            // 响应数据
-  total?: number;     // 总数（分页时使用）
-  token?: string;     // 认证令牌（部分接口）
+  code: number; // 业务状态码
+  msg: string; // 响应消息
+  data: T; // 响应数据
+  total?: number; // 总数（分页时使用）
+  token?: string; // 认证令牌（部分接口）
 }
 ```
 
@@ -196,13 +193,13 @@ interface ApiResponse<T = any> {
 ```typescript
 const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
   // 现有配置...
-  
+
   // 新增状态码
   999: {
     code: 999,
     message: '自定义错误消息',
     action: 'show',
-    showType: 'error'
-  }
+    showType: 'error',
+  },
 };
 ```

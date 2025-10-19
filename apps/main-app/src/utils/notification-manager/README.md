@@ -50,33 +50,33 @@ const displayHandler = {
     return ElNotification.success({
       title: title || '成功',
       message,
-      duration: duration || 3000
+      duration: duration || 3000,
     });
   },
   error: (message: string, title?: string, duration?: number, badgeCount?: number) => {
     return ElNotification.error({
       title: title || '错误',
       message,
-      duration: duration || 0
+      duration: duration || 0,
     });
   },
   warning: (message: string, title?: string, duration?: number, badgeCount?: number) => {
     return ElNotification.warning({
       title: title || '警告',
       message,
-      duration: duration || 5000
+      duration: duration || 5000,
     });
   },
   info: (message: string, title?: string, duration?: number, badgeCount?: number) => {
     return ElNotification.info({
       title: title || '信息',
       message,
-      duration: duration || 3000
+      duration: duration || 3000,
     });
   },
   updateBadge: (notificationInstance: any, badgeCount: number) => {
     // 更新徽章逻辑
-  }
+  },
 };
 
 notificationManager.setDisplayHandler(displayHandler);
@@ -99,11 +99,11 @@ const status = notificationManager.getStatus();
 
 ```typescript
 interface NotificationQueueConfig {
-  maxConcurrent: number;        // 最大并发显示数量，默认 3
-  dedupeWindow: number;         // 去重时间窗口（毫秒），默认 10000
-  errorQueuePriority: boolean;  // 错误队列优先级，默认 true
-  enableBadge: boolean;         // 启用徽章功能，默认 true
-  maxBadgeCount: number;        // 最大徽章数字，默认 99
+  maxConcurrent: number; // 最大并发显示数量，默认 3
+  dedupeWindow: number; // 去重时间窗口（毫秒），默认 10000
+  errorQueuePriority: boolean; // 错误队列优先级，默认 true
+  enableBadge: boolean; // 启用徽章功能，默认 true
+  maxBadgeCount: number; // 最大徽章数字，默认 99
 }
 ```
 

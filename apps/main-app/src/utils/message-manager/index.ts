@@ -102,6 +102,13 @@ export class MessageManager {
       // 从 messageMap 获取完整的消息对象（包含 messageInstance）
       const existingMessage = this.messageMap.get(message.id);
       if (existingMessage && existingMessage.messageInstance) {
+        // 检查消息实例是否仍然有效
+        if (!this.isMessageInstanceValid(existingMessage.messageInstance)) {
+          console.log('[MessageManager] Message instance is invalid, recreating');
+          this.recreateMessage(message);
+          return;
+        }
+
         // 更新现有消息的计数
         existingMessage.count = message.count;
         existingMessage.timestamp = message.timestamp;
@@ -149,6 +156,12 @@ export class MessageManager {
       // 检查元素是否可见
       const computedStyle = window.getComputedStyle(domElement);
       if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+        return false;
+      }
+
+      // 检查元素是否具有有效的尺寸
+      const rect = domElement.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
         return false;
       }
 

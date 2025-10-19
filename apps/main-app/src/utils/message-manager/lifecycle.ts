@@ -31,6 +31,7 @@ export class LifecycleManager {
    * 设置消息生命周期
    */
   setupMessageLifecycle(message: QueuedMessage): void {
+    console.log('[LifecycleManager] Setting up lifecycle for message:', message.id, 'count:', message.count);
     if (!this.displayHandler.updateBadge) {
       return;
     }
@@ -39,9 +40,14 @@ export class LifecycleManager {
 
     // 根据消息计数确定生命周期流程
     if (message.count === 1) {
+      console.log('[LifecycleManager] Setting up single message lifecycle (3s timer)');
       // 单条消息：3秒后自动消失
       const singleMessageTimer = setTimeout(() => {
-        this.closeMessageBox(message);
+        // 检查消息是否仍然存在且没有被重复触发
+        const currentState = this.messageStates.get(messageId);
+        if (currentState && currentState.currentCount === 1 && currentState.phase === 'increment') {
+          this.closeMessageBox(message);
+        }
       }, 3000);
 
       // 保存定时器引用
@@ -83,6 +89,7 @@ export class LifecycleManager {
 
     // 特殊处理：如果当前是单条消息状态（count=1），但现在count>1，需要创建徽章
     if (state.currentCount === 1 && message.count > 1) {
+      console.log('[LifecycleManager] Converting single message to badge message, count:', message.count);
       try {
         // 立即显示徽章
         this.displayHandler.updateBadge!(message.messageInstance, message.count);
@@ -93,6 +100,14 @@ export class LifecycleManager {
         state.lastUpdateTime = Date.now();
         state.phase = 'increment';
 
+        // 清除可能存在的其他定时器
+        if (state.incrementTimer) {
+          clearTimeout(state.incrementTimer);
+        }
+        if (state.countdownTimer) {
+          clearInterval(state.countdownTimer);
+        }
+
         // 启动等待期定时器（2秒），等待更多重复消息或进入递减
         state.incrementTimer = setTimeout(() => {
           this.startCountdownAnimation(message);
@@ -100,6 +115,7 @@ export class LifecycleManager {
 
         return;
       } catch (error) {
+        console.error('[LifecycleManager] Failed to update badge:', error);
         // 如果更新徽章失败，说明消息实例无效，抛出错误让上层处理
         throw new Error('Message instance is invalid, cannot update badge');
       }
@@ -144,7 +160,7 @@ export class LifecycleManager {
 
     // 对于 count=2 的情况，直接等待2秒后进入清理阶段
     state.incrementTimer = setTimeout(() => {
-      this.startCleanupPhase(message);
+      this.startCountdownAnimation(message);
     }, 2000);
   }
 
@@ -179,7 +195,6 @@ export class LifecycleManager {
     const state = this.messageStates.get(messageId);
 
     if (!state) return;
-
 
     // 更新计数和最大值
     state.currentCount = message.count;
@@ -220,6 +235,11 @@ export class LifecycleManager {
     // 更新阶段为等待期
     state.phase = 'waiting';
 
+    // 清除现有的定时器
+    if (state.incrementTimer) {
+      clearTimeout(state.incrementTimer);
+    }
+
     // 设置等待期定时器（2秒）
     state.incrementTimer = setTimeout(() => {
       this.startCountdownAnimation(message);
@@ -241,15 +261,15 @@ export class LifecycleManager {
       clearInterval(state.countdownTimer);
     }
 
-    // 将当前显示值+1作为新的最大值
+    // 更新计数和最大值
     state.currentCount = message.count;
-    state.maxCount = message.count;
+    state.maxCount = Math.max(state.maxCount, message.count);
     state.lastUpdateTime = Date.now();
 
     // 更新徽章显示
     this.displayHandler.updateBadge!(message.messageInstance, message.count);
 
-    // 重新启动等待期
+    // 重新启动等待期，从递增阶段开始
     this.startWaitingPeriod(message);
   }
 
@@ -272,7 +292,7 @@ export class LifecycleManager {
       this.displayHandler.updateBadge(message.messageInstance, 2);
       setTimeout(() => {
         this.startCleanupPhase(message);
-      }, 400); // 显示2的时间
+      }, 1000); // 显示2的时间，给用户足够时间看到
       return;
     }
 
@@ -296,7 +316,7 @@ export class LifecycleManager {
         // 显示2一段时间后进入清理阶段
         setTimeout(() => {
           this.startCleanupPhase(message);
-        }, 400); // 显示2的时间
+        }, 1000); // 显示2的时间，给用户足够时间看到
       } else {
         // 这种情况不应该发生
         clearInterval(state.countdownTimer!);
@@ -316,6 +336,17 @@ export class LifecycleManager {
 
     // 更新阶段为清理期
     state.phase = 'cleanup';
+
+    // 清理所有定时器
+    if (state.incrementTimer) {
+      clearTimeout(state.incrementTimer);
+    }
+    if (state.countdownTimer) {
+      clearInterval(state.countdownTimer);
+    }
+    if (state.singleMessageTimer) {
+      clearTimeout(state.singleMessageTimer);
+    }
 
     // 徽章消失
     setTimeout(() => {
@@ -338,15 +369,30 @@ export class LifecycleManager {
    * 关闭消息框
    */
   private closeMessageBox(message: QueuedMessage): void {
+    console.log('[LifecycleManager] Closing message box for:', message.id);
     if (message.messageInstance) {
       // 尝试多种关闭方法
       if (typeof message.messageInstance.close === 'function') {
+        console.log('[LifecycleManager] Using close() method');
         message.messageInstance.close();
       } else if (typeof message.messageInstance.closeMessage === 'function') {
+        console.log('[LifecycleManager] Using closeMessage() method');
         message.messageInstance.closeMessage();
       } else if (typeof message.messageInstance.clear === 'function') {
+        console.log('[LifecycleManager] Using clear() method');
         message.messageInstance.clear();
+      } else {
+        console.log('[LifecycleManager] No close method found, trying to remove DOM element');
+        // 尝试直接移除DOM元素
+        const extendedInstance = message.messageInstance as any;
+        if (extendedInstance.messageContainer) {
+          extendedInstance.messageContainer.remove();
+        } else if (extendedInstance.$el) {
+          extendedInstance.$el.remove();
+        }
       }
+    } else {
+      console.log('[LifecycleManager] No message instance found');
     }
   }
 

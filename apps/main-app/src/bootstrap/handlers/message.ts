@@ -56,14 +56,15 @@ export const initGlobalMessageObserver = () => {
 
                   for (const [key, pending] of pendingEntries) {
                     if (pending.message === messageText) {
+                      console.log('[GlobalObserver] Found matching message:', pending.message, 'badgeCount:', pending.badgeCount);
                       // 标记容器
                       messageElement.setAttribute('data-message-id', pending.messageId);
                       (pending.messageInstance as ExtendedMessageInstance).messageContainer = messageElement;
+                      console.log('[GlobalObserver] Set messageContainer for message instance');
 
                       // 创建徽章（只有当badgeCount大于1时才创建，单条消息不显示徽章）
-                      if (pending.badgeCount && pending.badgeCount > 1) {
-                        createBadgeForMessage(pending.messageInstance, pending.badgeCount, messageElement);
-                      }
+                      // 注意：这里不创建徽章，因为单条消息不需要徽章
+                      // 徽章会在后续的 updateBadge 调用中创建
 
                       // 从待处理列表中移除
                       pendingMessages.delete(key);
@@ -92,8 +93,10 @@ export const initGlobalMessageObserver = () => {
 export const createBadgeForMessage = (messageInstance: any, badgeCount: number, messageElement: HTMLElement) => {
   const extendedInstance = messageInstance as ExtendedMessageInstance;
 
-  if (extendedInstance.badgeApp) {
-    return; // 徽章已经存在
+  if (extendedInstance.badgeElement) {
+    // 如果徽章已经存在，直接更新数字
+    extendedInstance.badgeElement.textContent = badgeCount.toString();
+    return;
   }
 
   // 创建徽章容器
@@ -233,28 +236,33 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
 export const updateBadge = (messageInstance: any, badgeCount: number) => {
   const extendedInstance = messageInstance as ExtendedMessageInstance;
 
+  console.log('[updateBadge] Called with badgeCount:', badgeCount, 'messageInstance:', messageInstance);
+
   // 如果徽章不存在，先创建徽章
   if (!extendedInstance.badgeElement && extendedInstance.messageContainer && badgeCount > 1) {
+    console.log('[updateBadge] Creating badge for message');
     createBadgeForMessage(messageInstance, badgeCount, extendedInstance.messageContainer);
     return;
   }
 
+  // 如果徽章存在，直接更新数字
+  if (extendedInstance.badgeElement) {
+    console.log('[updateBadge] Updating existing badge');
+    extendedInstance.badgeElement.textContent = badgeCount.toString();
+  } else {
+    console.log('[updateBadge] No badge element found, badgeCount:', badgeCount, 'messageContainer:', extendedInstance.messageContainer);
+  }
+
+  // 如果存在Vue组件实例，也更新它
   if (extendedInstance.badgeApp) {
-    // 尝试直接更新Vue组件的props
     try {
       const componentInstance = extendedInstance.badgeApp._instance;
       if (componentInstance && componentInstance.props) {
         componentInstance.props.count = badgeCount;
       }
     } catch (_error) {
-      // 如果Vue组件更新失败，直接更新DOM
-      if (extendedInstance.badgeElement) {
-        extendedInstance.badgeElement.textContent = badgeCount.toString();
-      }
+      // 如果Vue组件更新失败，忽略错误，因为我们已经有DOM更新了
     }
-  } else if (extendedInstance.badgeElement) {
-    // 直接更新DOM元素
-    extendedInstance.badgeElement.textContent = badgeCount.toString();
   }
 };
 

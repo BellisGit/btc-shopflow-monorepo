@@ -27,7 +27,7 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
       if (!container) return;
 
       // 计算表格上方的高度
-      let topHeight = tableEl.offsetTop;
+      const topHeight = tableEl.offsetTop;
 
       // 计算表格下方的高度
       let bottomHeight = 0;

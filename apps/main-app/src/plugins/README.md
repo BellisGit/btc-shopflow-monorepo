@@ -29,62 +29,60 @@ export default (): Plugin => {
     version: '1.0.0',
     description: '插件描述',
     author: '作者',
-    order: 1,           // 加载顺序，数字越大优先级越高
-    enable: true,       // 是否启用
-    
+    order: 1, // 加载顺序，数字越大优先级越高
+    enable: true, // 是否启用
+
     // 工具栏配置
     toolbar: {
       order: 1,
       pc: true,
       h5: true,
-      component: () => import('./components/toolbar.vue')
+      component: () => import('./components/toolbar.vue'),
     },
-    
+
     // 布局配置
     layout: {
       position: 'header',
       order: 1,
-      component: () => import('./components/layout.vue')
+      component: () => import('./components/layout.vue'),
     },
-    
+
     // 全局组件
-    components: [
-      () => import('./components/global.vue')
-    ],
-    
+    components: [() => import('./components/global.vue')],
+
     // 全局指令
     directives: {
       'my-directive': {
         mounted(el, binding) {
           // 指令逻辑
-        }
-      }
+        },
+      },
     },
-    
+
     // 路由配置
     views: [
       {
         path: '/plugin',
-        component: () => import('./views/index.vue')
-      }
+        component: () => import('./views/index.vue'),
+      },
     ],
-    
+
     // 安装钩子
     install(app) {
       console.log('插件安装');
     },
-    
+
     // 卸载钩子
     uninstall() {
       console.log('插件卸载');
     },
-    
+
     // 加载完成钩子
     onLoad(events) {
       return {
         // 导出给其他插件使用的方法
       };
-    }
+    },
   };
 };
 ```
@@ -100,14 +98,12 @@ export default (): ModuleConfig => {
     order: 99,
     toolbar: {
       component: import('./components/toolbar.vue'),
-      h5: false
+      h5: false,
     },
-    components: [
-      () => import('./components/global.vue')
-    ],
+    components: [() => import('./components/global.vue')],
     install() {
       // 安装逻辑
-    }
+    },
   };
 };
 ```
@@ -124,6 +120,7 @@ export default (): ModuleConfig => {
 ### 加载顺序
 
 插件按 `order` 属性排序加载：
+
 - 数字越大，优先级越高
 - 相同 order 的插件按文件名排序
 - 禁用的插件（`enable: false`）会被跳过
@@ -151,11 +148,11 @@ export default (): Plugin => {
     order: 1,
     toolbar: {
       order: 1,
-      component: () => import('./components/theme-switcher.vue')
+      component: () => import('./components/theme-switcher.vue'),
     },
     install(app) {
       console.log('主题切换器已安装');
-    }
+    },
   };
 };
 ```
@@ -175,12 +172,12 @@ export default (): Plugin => {
     views: [
       {
         path: '/user',
-        component: () => import('./views/user-list.vue')
-      }
+        component: () => import('./views/user-list.vue'),
+      },
     ],
     install(app) {
       console.log('用户模块已安装');
-    }
+    },
   };
 };
 ```
@@ -215,7 +212,7 @@ export default (): Plugin => {
 // 扫描更多文件类型
 const moduleFiles = import.meta.glob('/src/{modules,plugins}/*/{config.ts,index.ts,plugin.ts}', {
   eager: true,
-  import: 'default'
+  import: 'default',
 });
 ```
 

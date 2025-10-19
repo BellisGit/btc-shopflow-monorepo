@@ -6,5 +6,10 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["vite.config.ts", "src/config/**/*", "vite-plugin-title-inject.ts", "../../configs/**/*"]
+  "include": [
+    "vite.config.ts",
+    "src/config/**/*",
+    "vite-plugin-title-inject.ts",
+    "../../configs/**/*"
+  ]
 }

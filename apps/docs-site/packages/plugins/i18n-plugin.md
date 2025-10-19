@@ -7,13 +7,14 @@ created: '2025-10-09'
 updated: '2025-10-13'
 publish: true
 tags:
-- packages
-- plugins
-- i18n
+  - packages
+  - plugins
+  - i18n
 sidebar_label: i18n插件
 sidebar_order: 14
 sidebar_group: packages
 ---
+
 # i18n 插件使用指南
 
 ## 语言代码规范
@@ -42,26 +43,26 @@ import { initGlobalState } from 'qiankun';
 
 // 创建主应用的 i18n
 const i18nPlugin = createI18nPlugin({
-loadFromApi: true,
-apiUrl: '/api/admin/i18n/messages',
-scope: 'common', // 加载通用翻译
-messages: {
-'zh-CN': {
-main: { title: 'BTC 微前端系统' },
-},
-},
+  loadFromApi: true,
+  apiUrl: '/api/admin/i18n/messages',
+  scope: 'common', // 加载通用翻译
+  messages: {
+    'zh-CN': {
+      main: { title: 'BTC 微前端系统' },
+    },
+  },
 });
 
 app.use(i18nPlugin);
 
 // 初始化 qiankun 全局状态
 const actions = initGlobalState({
-locale: i18nPlugin.i18n.global.locale.value,
+  locale: i18nPlugin.i18n.global.locale.value,
 });
 
 // 监听语言切换，同步到子应用
 watch(i18nPlugin.i18n.global.locale, (newLocale) => {
-actions.setGlobalState({ locale: newLocale });
+  actions.setGlobalState({ locale: newLocale });
 });
 ```
 
@@ -74,46 +75,46 @@ import { createI18nPlugin } from '@btc/shared-core';
 let i18nInstance: any = null;
 
 export async function mount(props: any) {
-const { container, onGlobalStateChange } = props;
+  const { container, onGlobalStateChange } = props;
 
-// 创建物流应用的 i18n（独立实例）
-const i18nPlugin = createI18nPlugin({
-loadFromApi: true,
-apiUrl: '/api/admin/i18n/messages',
-scope: 'logistics', // 加载物流域翻译
-messages: {
-'zh-CN': {
-logistics: {
-order: '订单',
-warehouse: '仓库',
-procurement: '采购',
-inbound: '入库',
-outbound: '出库',
-},
-},
-'en-US': {
-logistics: {
-order: 'Order',
-warehouse: 'Warehouse',
-procurement: 'Procurement',
-inbound: 'Inbound',
-outbound: 'Outbound',
-},
-},
-},
-});
+  // 创建物流应用的 i18n（独立实例）
+  const i18nPlugin = createI18nPlugin({
+    loadFromApi: true,
+    apiUrl: '/api/admin/i18n/messages',
+    scope: 'logistics', // 加载物流域翻译
+    messages: {
+      'zh-CN': {
+        logistics: {
+          order: '订单',
+          warehouse: '仓库',
+          procurement: '采购',
+          inbound: '入库',
+          outbound: '出库',
+        },
+      },
+      'en-US': {
+        logistics: {
+          order: 'Order',
+          warehouse: 'Warehouse',
+          procurement: 'Procurement',
+          inbound: 'Inbound',
+          outbound: 'Outbound',
+        },
+      },
+    },
+  });
 
-i18nInstance = i18nPlugin.i18n;
-app.use(i18nPlugin);
+  i18nInstance = i18nPlugin.i18n;
+  app.use(i18nPlugin);
 
-// 监听主应用的语言切换
-onGlobalStateChange?.((state: any) => {
-if (state.locale && state.locale !== i18nInstance.global.locale.value) {
-i18nInstance.global.locale.value = state.locale;
-}
-}, true);
+  // 监听主应用的语言切换
+  onGlobalStateChange?.((state: any) => {
+    if (state.locale && state.locale !== i18nInstance.global.locale.value) {
+      i18nInstance.global.locale.value = state.locale;
+    }
+  }, true);
 
-app.mount(container);
+  app.mount(container);
 }
 ```
 
@@ -122,19 +123,19 @@ app.mount(container);
 ```typescript
 // production-app/src/main.ts
 const i18nPlugin = createI18nPlugin({
-loadFromApi: true,
-apiUrl: '/api/admin/i18n/messages',
-scope: 'production', // 加载生产域翻译
-messages: {
-'zh-CN': {
-production: {
-plan: '生产计划',
-schedule: '排期',
-material: '物料',
-workstation: '工位',
-},
-},
-},
+  loadFromApi: true,
+  apiUrl: '/api/admin/i18n/messages',
+  scope: 'production', // 加载生产域翻译
+  messages: {
+    'zh-CN': {
+      production: {
+        plan: '生产计划',
+        schedule: '排期',
+        material: '物料',
+        workstation: '工位',
+      },
+    },
+  },
 });
 ```
 
@@ -193,18 +194,18 @@ GET /api/admin/i18n/messages?locale={locale}&scope={scope}
 
 ```json
 {
-"code": 2000,
-"msg": "操作成功",
-"data": {
-"currentLanguage": "zh_CN",
-"currentLocale": "zh_CN",
-"messages": {
-"button.add.new": "新增",
-"sys.menu.update.success": "菜单更新成功",
-"logistics.order.create": "创建订单",
-"logistics.warehouse.select": "选择仓库"
-}
-}
+  "code": 2000,
+  "msg": "操作成功",
+  "data": {
+    "currentLanguage": "zh_CN",
+    "currentLocale": "zh_CN",
+    "messages": {
+      "button.add.new": "新增",
+      "sys.menu.update.success": "菜单更新成功",
+      "logistics.order.create": "创建订单",
+      "logistics.warehouse.select": "选择仓库"
+    }
+  }
 }
 ```
 
