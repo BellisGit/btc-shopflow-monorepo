@@ -137,6 +137,11 @@ class BtcNotificationManager {
     // 2秒后开始递减（只有在 count > 1 时才安排递减）
     if (notificationState.count > 1) {
       this.scheduleDecrement(key);
+    } else {
+      // 单个通知也需要自动关闭，3秒后关闭
+      setTimeout(() => {
+        this.closeNotification(key);
+      }, 3000);
     }
   }
 

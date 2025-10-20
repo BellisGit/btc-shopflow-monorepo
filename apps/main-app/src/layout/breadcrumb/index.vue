@@ -195,7 +195,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   padding: 5px 10px;
   user-select: none;
   background-color: var(--el-bg-color);
-  margin: 0 10px; // 左右间距与内容区域一致
+  margin: 0; // 与tabbar保持一致，不设置左右间距
   overflow: hidden;
   height: 39px; // 总高度 39px（包含 padding）
   box-sizing: border-box;

@@ -30,11 +30,7 @@
               {{ getTabLabel(item) }}
             </span>
 
-            <btc-svg
-              class="close"
-              name="close"
-              @mousedown.stop="onDel(index)"
-            />
+            <btc-svg class="close" name="close" @mousedown.stop="onDel(index)" />
           </div>
         </div>
       </el-scrollbar>
@@ -71,7 +67,7 @@
 
 <script setup lang="ts">
 defineOptions({
-  name: 'LayoutProcess'
+  name: 'LayoutProcess',
 });
 
 import { ref, watch, computed } from 'vue';
@@ -127,10 +123,10 @@ function getTabLabel(item: ProcessItem) {
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
     // 测试功能
-  '/test/crud': 'menu.test_features.crud',
-  '/test/svg-plugin': 'menu.test_features.svg',
-  '/test/i18n': 'menu.test_features.i18n',
-  '/test/select-button': 'menu.test_features.select_button',
+    '/test/crud': 'menu.test_features.crud',
+    '/test/svg-plugin': 'menu.test_features.svg',
+    '/test/i18n': 'menu.test_features.i18n',
+    '/test/select-button': 'menu.test_features.select_button',
 
     // 文档中心
     '/docs': 'menu.docs_center',
@@ -183,11 +179,11 @@ function getTabLabel(item: ProcessItem) {
 function toBack() {
   const currentApp = getCurrentAppFromPath(route.path);
   const appHomes: Record<string, string> = {
-    'main': '/crud',
-    'logistics': '/logistics',
-    'engineering': '/engineering',
-    'quality': '/quality',
-    'production': '/production',
+    main: '/crud',
+    logistics: '/logistics',
+    engineering: '/engineering',
+    quality: '/quality',
+    production: '/production',
   };
 
   // 如果有历史记录且在当前应用内，则返回
@@ -211,11 +207,11 @@ function toRefresh() {
 function toHome() {
   const currentApp = getCurrentAppFromPath(route.path);
   const appHomes: Record<string, string> = {
-    'main': '/',
-    'logistics': '/logistics',
-    'engineering': '/engineering',
-    'quality': '/quality',
-    'production': '/production',
+    main: '/',
+    logistics: '/logistics',
+    engineering: '/engineering',
+    quality: '/quality',
+    production: '/production',
   };
 
   router.push(appHomes[currentApp] || '/');
@@ -249,7 +245,7 @@ function onDel(index: number) {
   const item = filteredTabs.value[index];
 
   // 在原始列表中找到并删除
-  const globalIndex = processStore.value.list.findIndex(t => t.fullPath === item.fullPath);
+  const globalIndex = processStore.value.list.findIndex((t) => t.fullPath === item.fullPath);
   if (globalIndex > -1) {
     processStore.value.remove(globalIndex);
   }
@@ -274,47 +270,51 @@ function handleTabCommand(command: string) {
       );
       break;
 
-    case 'close-all':
+    case 'close-all': {
       // 关闭所有标签（只在当前应用内）
       const otherAppTabs = processStore.value.list.filter((tab) => tab.app !== currentApp);
       processStore.value.set(otherAppTabs);
 
       // 跳转到当前应用首页
       const appHomes: Record<string, string> = {
-        'main': '/',
-        'logistics': '/logistics',
-        'engineering': '/engineering',
-        'quality': '/quality',
-        'production': '/production',
+        main: '/',
+        logistics: '/logistics',
+        engineering: '/engineering',
+        quality: '/quality',
+        production: '/production',
       };
       router.push(appHomes[currentApp] || '/');
       break;
+    }
   }
 }
 
 // 右键菜单
-function openContextMenu(e: MouseEvent, item: ProcessItem, index: number) {
+function openContextMenu(e: MouseEvent, item: ProcessItem, _index: number) {
   const isCurrentTab = item.path === route.path;
 
-  ElMessageBox.confirm(
-    t('common.tip'),
-    {
-      showCancelButton: true,
-      showConfirmButton: true,
-      confirmButtonText: isCurrentTab ? t('common.close_current') : t('common.close_other'),
-      cancelButtonText: t('common.button.cancel'),
-      type: 'warning',
-    }
-  ).then(() => {
-    if (isCurrentTab) {
-      processStore.value.close();
-      const last = filteredTabs.value[filteredTabs.value.length - 1];
-      router.push(last ? last.fullPath : '/');
-    } else {
-      const currentApp = getCurrentAppFromPath(route.path);
-      processStore.value.set(processStore.value.list.filter((e) => e.fullPath === item.fullPath || e.app !== currentApp));
-    }
-  }).catch(() => {});
+  ElMessageBox.confirm(t('common.tip'), {
+    showCancelButton: true,
+    showConfirmButton: true,
+    confirmButtonText: isCurrentTab ? t('common.close_current') : t('common.close_other'),
+    cancelButtonText: t('common.button.cancel'),
+    type: 'warning',
+  })
+    .then(() => {
+      if (isCurrentTab) {
+        processStore.value.close();
+        const last = filteredTabs.value[filteredTabs.value.length - 1];
+        router.push(last ? last.fullPath : '/');
+      } else {
+        const currentApp = getCurrentAppFromPath(route.path);
+        processStore.value.set(
+          processStore.value.list.filter(
+            (e) => e.fullPath === item.fullPath || e.app !== currentApp
+          )
+        );
+      }
+    })
+    .catch(() => {});
 }
 
 // 监听路由变化，调整滚动位置
@@ -338,6 +338,8 @@ watch(
   user-select: none;
   background-color: var(--el-bg-color);
   overflow: hidden;
+  height: 39px; // 与面包屑保持一致的高度
+  box-sizing: border-box;
   border-bottom: 1px solid var(--el-border-color-extra-light);
 
   &__op {
@@ -385,7 +387,9 @@ watch(
     .close {
       width: 0;
       overflow: hidden;
-      transition: width 0.2s ease-in-out, background-color 0.2s ease-in-out;
+      transition:
+        width 0.2s ease-in-out,
+        background-color 0.2s ease-in-out;
       font-size: 14px;
       border-radius: 4px;
       opacity: 0;
@@ -433,4 +437,3 @@ watch(
   }
 }
 </style>
-

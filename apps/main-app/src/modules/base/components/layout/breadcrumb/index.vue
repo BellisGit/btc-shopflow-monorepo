@@ -1,12 +1,13 @@
 <template>
   <div class="app-breadcrumb">
     <el-breadcrumb separator="|">
-      <el-breadcrumb-item
-        v-for="(item, index) in breadcrumbList"
-        :key="index"
-      >
+      <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
         <span class="breadcrumb-item">
-          <el-icon v-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]" :size="14" class="breadcrumb-icon">
+          <el-icon
+            v-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]"
+            :size="14"
+            class="breadcrumb-icon"
+          >
             <component :is="ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]" />
           </el-icon>
           <span>{{ item.label }}</span>
@@ -18,7 +19,7 @@
 
 <script setup lang="ts">
 defineOptions({
-  name: 'LayoutBreadcrumb'
+  name: 'LayoutBreadcrumb',
 });
 
 import { computed, ref } from 'vue';
@@ -151,29 +152,35 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
   // 子应用的面包屑映射（暂时为空，待实现具体页面）
   const subAppBreadcrumbs: Record<string, Record<string, BreadcrumbConfig[]>> = {
-    'logistics': {},
-    'engineering': {},
-    'quality': {},
-    'production': {},
+    logistics: {},
+    engineering: {},
+    quality: {},
+    production: {},
   };
 
   // 应用首页不显示面包屑
-  if (route.path === '/' || route.path === '/logistics' || route.path === '/engineering' ||
-      route.path === '/quality' || route.path === '/production') {
+  if (
+    route.path === '/' ||
+    route.path === '/logistics' ||
+    route.path === '/engineering' ||
+    route.path === '/quality' ||
+    route.path === '/production'
+  ) {
     return [];
   }
 
   // 获取面包屑数据
-  const breadcrumbData = currentApp === 'main'
-    ? mainAppBreadcrumbs[route.path]
-    : subAppBreadcrumbs[currentApp]?.[route.path];
+  const breadcrumbData =
+    currentApp === 'main'
+      ? mainAppBreadcrumbs[route.path]
+      : subAppBreadcrumbs[currentApp]?.[route.path];
 
   if (!breadcrumbData) {
     return [];
   }
 
   // 转换为带翻译的面包屑
-  return breadcrumbData.map(item => ({
+  return breadcrumbData.map((item) => ({
     label: t(item.i18nKey),
     icon: item.icon,
   }));
@@ -188,9 +195,9 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   padding: 5px 10px;
   user-select: none;
   background-color: var(--el-bg-color);
-  margin: 0 10px; // 左右间距与内容区域一致
+  margin: 0; // 与tabbar保持一致，不设置左右间距
   overflow: hidden;
-  height: 39px;  // 总高度 39px（包含 padding）
+  height: 39px; // 总高度 39px（包含 padding）
   box-sizing: border-box;
 
   :deep(.el-breadcrumb) {
@@ -209,7 +216,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       font-weight: normal;
       cursor: default;
       pointer-events: none;
-      padding: 0;  // 移除默认 padding
+      padding: 0; // 移除默认 padding
     }
 
     &:last-child .el-breadcrumb__inner {
@@ -255,4 +262,3 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 }
 </style>
-
