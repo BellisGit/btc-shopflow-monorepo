@@ -1,4 +1,9 @@
-import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized } from 'vue-router';
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+  type RouteLocationNormalized,
+} from 'vue-router';
 import Layout from '../modules/base/components/layout/index.vue';
 import { config } from '../config';
 import { tSync } from '../i18n/getters';
@@ -50,12 +55,6 @@ const routes: RouteRecordRaw[] = [
         name: 'TestMessageNotification',
         component: () => import('../pages/test/message-notification/index.vue'),
         meta: { titleKey: 'menu.test_features.message_notification' },
-      },
-      {
-        path: 'test/notification-badge',
-        name: 'TestNotificationBadge',
-        component: () => import('../pages/test/notification-badge/index.vue'),
-        meta: { titleKey: 'menu.test_features.notification_badge' },
       },
       // 文档中心（iframe 在全局 Layout 中，不需要独立组件）
       {
@@ -214,7 +213,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/logistics/:pathMatch(.*)+',
     component: Layout,
-    meta: { title: 'Logistics App', isSubApp: true },  // 标记为子应用路由
+    meta: { title: 'Logistics App', isSubApp: true }, // 标记为子应用路由
   },
   {
     path: '/engineering',
@@ -224,7 +223,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/engineering/:pathMatch(.*)+',
     component: Layout,
-    meta: { title: 'Engineering App', isSubApp: true },  // 标记为子应用路由
+    meta: { title: 'Engineering App', isSubApp: true }, // 标记为子应用路由
   },
   {
     path: '/quality',
@@ -234,7 +233,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/quality/:pathMatch(.*)+',
     component: Layout,
-    meta: { title: 'Quality App', isSubApp: true },  // 标记为子应用路由
+    meta: { title: 'Quality App', isSubApp: true }, // 标记为子应用路由
   },
   {
     path: '/production',
@@ -244,7 +243,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/production/:pathMatch(.*)+',
     component: Layout,
-    meta: { title: 'Production App', isSubApp: true },  // 标记为子应用路由
+    meta: { title: 'Production App', isSubApp: true }, // 标记为子应用路由
   },
 ];
 
@@ -334,8 +333,7 @@ export function setupI18nTitleWatcher() {
 // 路由前置守卫：处理 Loading 显示和侧边栏
 router.beforeEach((to, from) => {
   // 检查是否为文档相关路由（只支持 /docs 前缀）
-  const isDocsRoute = to.path === '/docs' ||
-                     to.path.startsWith('/docs/');
+  const isDocsRoute = to.path === '/docs' || to.path.startsWith('/docs/');
 
   if (isDocsRoute) {
     // 检查 iframe 是否已经加载完成（通过全局状态）
@@ -372,8 +370,7 @@ router.beforeEach((to, from) => {
   }
 
   // 如果从文档中心离开，移除 docs-mode 类
-  const wasDocsRoute = from.path === '/docs' ||
-                      from.path.startsWith('/docs/');
+  const wasDocsRoute = from.path === '/docs' || from.path.startsWith('/docs/');
 
   if (wasDocsRoute && !isDocsRoute) {
     const docsIframeLoaded = (window as any).__DOCS_IFRAME_LOADED__ || false;
@@ -400,7 +397,7 @@ router.afterEach((to) => {
   if (to.meta?.isHome === true || to.path === '/') {
     import('../store/process').then(({ useProcessStore }) => {
       const process = useProcessStore();
-      process.list.forEach(tab => {
+      process.list.forEach((tab) => {
         tab.active = false;
       });
     });
@@ -423,7 +420,7 @@ router.afterEach((to) => {
 
   // 只处理主应用的路由，忽略子应用路由
   const fullPath = to.matched[0]?.path || to.path;
-  const isSubAppRoute = ['/logistics', '/engineering', '/quality', '/production'].some(prefix =>
+  const isSubAppRoute = ['/logistics', '/engineering', '/quality', '/production'].some((prefix) =>
     fullPath.startsWith(prefix)
   );
 

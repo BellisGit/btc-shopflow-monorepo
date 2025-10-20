@@ -185,10 +185,6 @@
           <el-icon><Message /></el-icon>
           <span>{{ t('menu.test_features.message_notification') }}</span>
         </el-menu-item>
-        <el-menu-item v-show="isMenuItemVisible('通知徽章测试')" index="/test/notification-badge">
-          <el-icon><Bell /></el-icon>
-          <span>{{ t('menu.test_features.notification_badge') }}</span>
-        </el-menu-item>
       </el-sub-menu>
 
       <!-- 文档中心已移至汉堡菜单 -->
@@ -338,7 +334,6 @@ const menuStructure = {
         '/test/i18n': '国际化测试',
         '/test/select-button': '选择按钮测试',
         '/test/message-notification': '消息通知测试',
-        '/test/notification-badge': '通知徽章测试',
       },
     },
     // 文档中心已移至汉堡菜单

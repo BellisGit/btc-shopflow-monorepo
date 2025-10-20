@@ -13,12 +13,16 @@ import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
 import BtcMasterList from './components/btc-master-list/index.vue';
-import BtcMessageBadge from './components/btc-message-badge/index.vue';
-import BtcNotificationBadge from './components/btc-notification-badge/index.vue';
+
+// 新的消息和通知组件
+import { BtcMessage } from './components/btc-message';
+import { BtcNotification } from './components/btc-notification';
 
 // 导入样式
 import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
+import './components/btc-message/styles.scss';
+import './components/btc-notification/styles.scss';
 
 // CRUD 组件（上下文系统）
 import BtcCrud from './crud/context/index.vue';
@@ -49,8 +53,10 @@ export {
   BtcFormTabs,
   BtcSelectButton,
   BtcMasterList,
-  BtcMessageBadge,
-  BtcNotificationBadge,
+
+  // 新的消息和通知 API
+  BtcMessage,
+  BtcNotification,
 
   // CRUD 系统
   BtcCrud,
