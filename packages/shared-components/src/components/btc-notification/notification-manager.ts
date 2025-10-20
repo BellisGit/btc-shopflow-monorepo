@@ -319,18 +319,12 @@ class BtcNotificationManager {
     const notificationState = this.notifications.get(key);
     if (!notificationState) return;
 
-    console.log(
-      `[BtcNotification] startDecrement called for: ${key}, count: ${notificationState.count}`
-    );
-
     // 设置递减标志，防止在递减过程中被意外关闭
     notificationState.isDecrementing = true;
 
     if (notificationState.count > 1) {
       notificationState.count--;
       notificationState.lastUpdateTime = Date.now();
-
-      console.log(`[BtcNotification] Decremented to: ${notificationState.count}`);
 
       // 直接通过 DOM 操作更新 Element Plus 原生徽章，不重新创建通知
       this.updateNativeBadge(key);
@@ -342,7 +336,6 @@ class BtcNotificationManager {
         }, 500);
       } else {
         // count = 1，徽章已隐藏，等待后关闭通知
-        console.log(`[BtcNotification] Count reached 1, clearing isDecrementing flag`);
         notificationState.isDecrementing = false; // 递减结束，清除标志
         setTimeout(() => {
           this.closeNotification(key);
@@ -350,7 +343,6 @@ class BtcNotificationManager {
       }
     } else {
       // 已经是 1，直接关闭
-      console.log(`[BtcNotification] Already at count 1, clearing isDecrementing flag`);
       notificationState.isDecrementing = false; // 递减结束，清除标志
       this.closeNotification(key);
     }
@@ -363,13 +355,8 @@ class BtcNotificationManager {
     const notificationState = this.notifications.get(key);
 
     if (notificationState) {
-      console.log(
-        `[BtcNotification] handleNotificationClose called for: ${key}, count: ${notificationState.count}, isDecrementing: ${notificationState.isDecrementing}`
-      );
-
       // 如果正在递减中，阻止关闭
       if (notificationState.isDecrementing) {
-        console.log(`[BtcNotification] Blocking close due to isDecrementing flag`);
         return;
       }
 
@@ -391,23 +378,15 @@ class BtcNotificationManager {
   private closeNotification(key: string) {
     const notificationState = this.notifications.get(key);
 
-    console.log(`[BtcNotification] closeNotification called for: ${key}`);
-
     // 如果通知状态不存在，直接返回
     if (!notificationState) {
-      console.log(`[BtcNotification] No notification state found for: ${key}`);
       return;
     }
 
     // 如果正在递减中，阻止关闭
     if (notificationState.isDecrementing) {
-      console.log(
-        `[BtcNotification] Blocking close due to isDecrementing flag in closeNotification`
-      );
       return;
     }
-
-    console.log(`[BtcNotification] Proceeding with close for: ${key}`);
 
     if (notificationState.notificationInstance && notificationState.notificationInstance.close) {
       notificationState.notificationInstance.close();
