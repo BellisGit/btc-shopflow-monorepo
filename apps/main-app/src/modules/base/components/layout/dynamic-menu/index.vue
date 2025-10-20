@@ -238,14 +238,11 @@ import {
   Odometer,
   Document,
   Tickets,
-  ChatDotRound,
-  Picture,
   House,
   Grid,
   View,
   Reading as _Reading,
   Bell as _Bell,
-  Message,
 } from '@element-plus/icons-vue';
 
 interface Props {
