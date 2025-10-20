@@ -45,6 +45,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.test_features.select_button' },
       },
       {
+        path: 'test/components',
+        name: 'TestComponents',
+        component: () => import('../pages/test/components/index.vue'),
+        meta: { titleKey: 'menu.test_features.components' },
+      },
+      {
         path: 'test/eps',
         name: 'TestEps',
         component: () => import('../test-eps.vue'),

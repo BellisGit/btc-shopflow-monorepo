@@ -13,6 +13,7 @@ import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
 import BtcMasterList from './components/btc-master-list/index.vue';
+import BtcCard from './components/btc-card/index.vue';
 
 // 新的消息和通知组件
 import { BtcMessage } from './components/btc-message';
@@ -53,6 +54,7 @@ export {
   BtcFormTabs,
   BtcSelectButton,
   BtcMasterList,
+  BtcCard,
 
   // 新的消息和通知 API
   BtcMessage,
