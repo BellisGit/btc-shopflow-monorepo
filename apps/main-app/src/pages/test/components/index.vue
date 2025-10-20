@@ -1,20 +1,11 @@
 <template>
   <div class="components-test-page">
-    <div class="page-header">
-      <h2>BTC 组件测试中心</h2>
-      <p>统一测试所有自定义组件的功能</p>
-    </div>
-
     <div class="test-grid">
       <!-- BtcMessage 测试卡片 -->
       <BtcCard title="BtcMessage 消息组件" class="test-card">
         <template #extra>
           <el-tag type="success">消息</el-tag>
         </template>
-
-        <div class="test-description">
-          测试基于 Element Plus 的 BtcMessage 组件，支持重复消息徽标计数
-        </div>
 
         <div class="test-buttons">
           <el-button type="success" @click="testBtcMessageSuccess">成功消息</el-button>
@@ -35,10 +26,6 @@
         <template #extra>
           <el-tag type="warning">通知</el-tag>
         </template>
-
-        <div class="test-description">
-          测试基于 Element Plus 的 BtcNotification 组件，支持重复通知徽标计数
-        </div>
 
         <div class="test-buttons">
           <el-button type="success" @click="testBtcNotificationSuccess">成功通知</el-button>
@@ -67,8 +54,6 @@
           <el-tag type="primary">卡片</el-tag>
         </template>
 
-        <div class="test-description">测试新创建的 BtcCard 通用卡片组件</div>
-
         <div class="test-buttons">
           <el-button @click="showCardDemo = !showCardDemo">
             {{ showCardDemo ? '隐藏' : '显示' }}卡片演示
@@ -95,8 +80,6 @@
           <el-tag type="info">表单</el-tag>
         </template>
 
-        <div class="test-description">测试 BtcForm 动态表单组件</div>
-
         <div class="test-buttons">
           <el-button type="primary" @click="testBtcForm">打开表单测试</el-button>
         </div>
@@ -108,8 +91,6 @@
           <el-tag type="success">对话框</el-tag>
         </template>
 
-        <div class="test-description">测试 BtcDialog 对话框组件</div>
-
         <div class="test-buttons">
           <el-button type="primary" @click="testBtcDialog">打开对话框测试</el-button>
         </div>
@@ -120,8 +101,6 @@
         <template #extra>
           <el-tag type="warning">图标</el-tag>
         </template>
-
-        <div class="test-description">测试 BtcSvg 图标组件</div>
 
         <div class="test-buttons">
           <el-button @click="showSvgDemo = !showSvgDemo">
@@ -347,40 +326,16 @@ const testBtcDialog = () => {
 <style lang="scss" scoped>
 .components-test-page {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 30px;
-
-  h2 {
-    color: var(--el-text-color-primary);
-    margin-bottom: 10px;
-  }
-
-  p {
-    color: var(--el-text-color-regular);
-    font-size: 14px;
-  }
+  width: 100%;
 }
 
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
 }
 
 .test-card {
-  .test-description {
-    color: var(--el-text-color-regular);
-    font-size: 14px;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-
   .test-buttons {
     display: flex;
     flex-wrap: wrap;
