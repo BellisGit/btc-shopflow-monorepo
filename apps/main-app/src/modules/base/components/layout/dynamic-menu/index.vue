@@ -174,31 +174,9 @@
           <el-icon><Coin /></el-icon>
           <span>{{ t('menu.test_features') }}</span>
         </template>
-        <el-menu-item v-show="isMenuItemVisible('menu.test_features.crud')" index="/test/crud">
+        <el-menu-item v-show="isMenuItemVisible('menu.test_features.components')" index="/test/components">
           <el-icon><Tickets /></el-icon>
-          <span>{{ t('menu.test_features.crud') }}</span>
-        </el-menu-item>
-        <el-menu-item v-show="isMenuItemVisible('menu.test_features.svg')" index="/test/svg-plugin">
-          <el-icon><Picture /></el-icon>
-          <span>{{ t('menu.test_features.svg') }}</span>
-        </el-menu-item>
-        <el-menu-item v-show="isMenuItemVisible('menu.test_features.i18n')" index="/test/i18n">
-          <el-icon><ChatDotRound /></el-icon>
-          <span>{{ t('menu.test_features.i18n') }}</span>
-        </el-menu-item>
-        <el-menu-item
-          v-show="isMenuItemVisible('menu.test_features.select_button')"
-          index="/test/select-button"
-        >
-          <el-icon><Coin /></el-icon>
-          <span>{{ t('menu.test_features.select_button') }}</span>
-        </el-menu-item>
-        <el-menu-item
-          v-show="isMenuItemVisible('menu.test_features.message_notification')"
-          index="/test/message-notification"
-        >
-          <el-icon><Message /></el-icon>
-          <span>{{ t('menu.test_features.message_notification') }}</span>
+          <span>{{ t('menu.test_features.components') }}</span>
         </el-menu-item>
       </el-sub-menu>
 
@@ -347,11 +325,7 @@ const menuStructure = {
     'test-features': {
       text: '测试功能',
       children: {
-        '/test/crud': 'CRUD测试',
-        '/test/svg-plugin': 'SVG插件测试',
-        '/test/i18n': '国际化测试',
-        '/test/select-button': '选择按钮测试',
-        '/test/message-notification': '消息通知测试',
+        '/test/components': '组件测试中心',
       },
     },
     // 文档中心已移至汉堡菜单

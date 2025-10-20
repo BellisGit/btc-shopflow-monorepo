@@ -16,10 +16,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     '': { key: '', title: '首页', path: '/', i18nKey: 'menu.home' },
 
     // 测试功能
-    'test-crud': { key: 'test-crud', title: 'CRUD测试', path: '/test/crud', i18nKey: 'menu.test_features.crud' },
-    'test-svg-plugin': { key: 'test-svg-plugin', title: 'SVG插件测试', path: '/test/svg-plugin', i18nKey: 'menu.test_features.svg' },
-    'test-i18n': { key: 'test-i18n', title: '国际化测试', path: '/test/i18n', i18nKey: 'menu.test_features.i18n' },
-    'test-select-button': { key: 'test-select-button', title: '状态切换按钮', path: '/test/select-button', i18nKey: 'menu.test_features.select_button' },
+    'test-components': { key: 'test-components', title: '组件测试中心', path: '/test/components', i18nKey: 'menu.test_features.components' },
 
     // 文档中心
     'docs': { key: 'docs', title: '文档中心', path: '/docs', i18nKey: 'menu.docs_center' },

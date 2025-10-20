@@ -136,17 +136,9 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.ops.simulator', icon: 'Opportunity' },
     ],
     // 测试功能
-    '/test/crud': [
+    '/test/components': [
       { i18nKey: 'menu.test_features', icon: 'Coin' },
-      { i18nKey: 'menu.test_features.crud', icon: 'Tickets' },
-    ],
-    '/test/svg-plugin': [
-      { i18nKey: 'menu.test_features', icon: 'Coin' },
-      { i18nKey: 'menu.test_features.svg', icon: 'Picture' },
-    ],
-    '/test/i18n': [
-      { i18nKey: 'menu.test_features', icon: 'Coin' },
-      { i18nKey: 'menu.test_features.i18n', icon: 'ChatDotRound' },
+      { i18nKey: 'menu.test_features.components', icon: 'Tickets' },
     ],
   };
 

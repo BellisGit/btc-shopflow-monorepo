@@ -60,10 +60,5 @@
   "menu.ops.simulator": "Policy Simulator",
   "menu.access.perm_compose": "Permission Compose",
   "menu.test_features": "Test Features",
-  "menu.test_features.crud": "CRUD Test",
-  "menu.test_features.svg": "SVG Test",
-  "menu.test_features.i18n": "I18n Test",
-  "menu.test_features.select_button": "Select Button Test",
-  "menu.test_features.components": "Components Test Center",
-  "menu.test_features.message_notification": "Message Notification Test"
+  "menu.test_features.components": "Components Test Center"
 }

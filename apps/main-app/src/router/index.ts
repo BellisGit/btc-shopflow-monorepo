@@ -21,30 +21,6 @@ const routes: RouteRecordRaw[] = [
       },
       // 测试功能
       {
-        path: 'test/crud',
-        name: 'TestCrud',
-        component: () => import('../pages/test/crud/index.vue'),
-        meta: { titleKey: 'menu.test_features.crud' },
-      },
-      {
-        path: 'test/svg-plugin',
-        name: 'TestSvgPlugin',
-        component: () => import('../pages/test/svg-plugin/index.vue'),
-        meta: { titleKey: 'menu.test_features.svg' },
-      },
-      {
-        path: 'test/i18n',
-        name: 'TestI18n',
-        component: () => import('../pages/test/i18n/index.vue'),
-        meta: { titleKey: 'menu.test_features.i18n' },
-      },
-      {
-        path: 'test/select-button',
-        name: 'TestSelectButton',
-        component: () => import('../pages/test/select-button/index.vue'),
-        meta: { titleKey: 'menu.test_features.select_button' },
-      },
-      {
         path: 'test/components',
         name: 'TestComponents',
         component: () => import('../pages/test/components/index.vue'),
@@ -55,12 +31,6 @@ const routes: RouteRecordRaw[] = [
         name: 'TestEps',
         component: () => import('../test-eps.vue'),
         meta: { titleKey: 'menu.test_features.eps' },
-      },
-      {
-        path: 'test/message-notification',
-        name: 'TestMessageNotification',
-        component: () => import('../pages/test/message-notification/index.vue'),
-        meta: { titleKey: 'menu.test_features.message_notification' },
       },
       // 文档中心（iframe 在全局 Layout 中，不需要独立组件）
       {

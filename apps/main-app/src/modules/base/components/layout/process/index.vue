@@ -123,10 +123,7 @@ function getTabLabel(item: ProcessItem) {
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
     // 测试功能
-    '/test/crud': 'menu.test_features.crud',
-    '/test/svg-plugin': 'menu.test_features.svg',
-    '/test/i18n': 'menu.test_features.i18n',
-    '/test/select-button': 'menu.test_features.select_button',
+    '/test/components': 'menu.test_features.components',
 
     // 文档中心
     '/docs': 'menu.docs_center',

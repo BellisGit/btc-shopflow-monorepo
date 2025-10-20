@@ -1,427 +1,368 @@
 <template>
-  <div class="components-test-page">
-    <div class="test-grid">
-      <!-- BtcMessage 测试卡片 -->
-      <BtcCard title="BtcMessage 消息组件" class="test-card">
-        <template #extra>
-          <el-tag type="success">消息</el-tag>
+  <div class="test-center-page">
+    <!-- 搜索栏 -->
+    <div class="search-section">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索测试功能..."
+        clearable
+        size="large"
+        class="search-input"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
         </template>
-
-        <div class="test-buttons">
-          <el-button type="success" @click="testBtcMessageSuccess">成功消息</el-button>
-          <el-button type="danger" @click="testBtcMessageError">错误消息</el-button>
-          <el-button type="warning" @click="testBtcMessageWarning">警告消息</el-button>
-          <el-button type="info" @click="testBtcMessageInfo">信息消息</el-button>
-        </div>
-
-        <div class="test-buttons">
-          <el-button @click="testBtcMessageDuplicate">重复消息测试</el-button>
-          <el-button type="warning" @click="testBtcMessageBatch">批量消息测试(100次)</el-button>
-          <el-button @click="closeAllBtcMessages">关闭所有消息</el-button>
-        </div>
-      </BtcCard>
-
-      <!-- BtcNotification 测试卡片 -->
-      <BtcCard title="BtcNotification 通知组件" class="test-card">
-        <template #extra>
-          <el-tag type="warning">通知</el-tag>
-        </template>
-
-        <div class="test-buttons">
-          <el-button type="success" @click="testBtcNotificationSuccess">成功通知</el-button>
-          <el-button type="danger" @click="testBtcNotificationError">错误通知</el-button>
-          <el-button type="warning" @click="testBtcNotificationWarning">警告通知</el-button>
-          <el-button type="info" @click="testBtcNotificationInfo">信息通知</el-button>
-        </div>
-
-        <div class="test-buttons">
-          <el-button @click="testBtcNotificationWithTitle">带标题通知</el-button>
-          <el-button @click="testBtcNotificationCustom">自定义通知</el-button>
-        </div>
-
-        <div class="test-buttons">
-          <el-button @click="testBtcNotificationDuplicate">重复通知测试</el-button>
-          <el-button type="warning" @click="testBtcNotificationBatch"
-            >批量通知测试(100次)</el-button
-          >
-          <el-button @click="closeAllBtcNotifications">关闭所有通知</el-button>
-        </div>
-      </BtcCard>
-
-      <!-- BtcCard 测试卡片 -->
-      <BtcCard title="BtcCard 卡片组件" class="test-card">
-        <template #extra>
-          <el-tag type="primary">卡片</el-tag>
-        </template>
-
-        <div class="test-buttons">
-          <el-button @click="showCardDemo = !showCardDemo">
-            {{ showCardDemo ? '隐藏' : '显示' }}卡片演示
-          </el-button>
-        </div>
-
-        <div v-if="showCardDemo" class="card-demo">
-          <BtcCard title="嵌套卡片示例" shadow="hover" border>
-            <p>这是一个嵌套的卡片示例，展示了 BtcCard 组件的基本用法。</p>
-            <template #extra>
-              <el-button size="small" type="primary">操作</el-button>
-            </template>
-            <template #footer>
-              <el-button size="small">取消</el-button>
-              <el-button size="small" type="primary">确定</el-button>
-            </template>
-          </BtcCard>
-        </div>
-      </BtcCard>
-
-      <!-- BtcForm 测试卡片 -->
-      <BtcCard title="BtcForm 表单组件" class="test-card">
-        <template #extra>
-          <el-tag type="info">表单</el-tag>
-        </template>
-
-        <div class="test-buttons">
-          <el-button type="primary" @click="testBtcForm">打开表单测试</el-button>
-        </div>
-      </BtcCard>
-
-      <!-- BtcDialog 测试卡片 -->
-      <BtcCard title="BtcDialog 对话框组件" class="test-card">
-        <template #extra>
-          <el-tag type="success">对话框</el-tag>
-        </template>
-
-        <div class="test-buttons">
-          <el-button type="primary" @click="testBtcDialog">打开对话框测试</el-button>
-        </div>
-      </BtcCard>
-
-      <!-- BtcSvg 测试卡片 -->
-      <BtcCard title="BtcSvg 图标组件" class="test-card">
-        <template #extra>
-          <el-tag type="warning">图标</el-tag>
-        </template>
-
-        <div class="test-buttons">
-          <el-button @click="showSvgDemo = !showSvgDemo">
-            {{ showSvgDemo ? '隐藏' : '显示' }}图标演示
-          </el-button>
-        </div>
-
-        <div v-if="showSvgDemo" class="svg-demo">
-          <div class="svg-grid">
-            <div class="svg-item">
-              <BtcSvg name="home" size="24" />
-              <span>home</span>
-            </div>
-            <div class="svg-item">
-              <BtcSvg name="user" size="24" />
-              <span>user</span>
-            </div>
-            <div class="svg-item">
-              <BtcSvg name="setting" size="24" />
-              <span>setting</span>
-            </div>
-            <div class="svg-item">
-              <BtcSvg name="close" size="24" />
-              <span>close</span>
-            </div>
-          </div>
-        </div>
-      </BtcCard>
+      </el-input>
     </div>
 
-    <!-- 功能说明卡片 -->
-    <BtcCard title="功能说明" class="info-card">
-      <div class="info-content">
-        <h4>组件特性</h4>
-        <ul>
-          <li><strong>BtcMessage</strong>：支持重复消息徽标计数，自动合并相同内容的消息</li>
-          <li><strong>BtcNotification</strong>：支持重复通知徽标计数，自动合并相同内容的通知</li>
-          <li><strong>BtcCard</strong>：通用卡片组件，支持标题、内容、底部插槽</li>
-          <li><strong>BtcForm</strong>：动态表单组件，支持配置化表单生成</li>
-          <li><strong>BtcDialog</strong>：对话框组件，支持全屏和最小化</li>
-          <li><strong>BtcSvg</strong>：SVG图标组件，自动扫描项目中的SVG文件</li>
-        </ul>
+    <!-- 测试实例卡片网格 -->
+    <div class="test-grid">
+      <div
+        v-for="testInstance in filteredTestInstances"
+        :key="testInstance.name"
+        class="test-card"
+        @click="openTestInstance(testInstance)"
+      >
+        <div class="test-card-header">
+          <div class="test-icon">
+            <img src="/logo.png" alt="BTC Logo" class="test-logo" />
+          </div>
+          <div class="test-info">
+            <h3 class="test-title">{{ testInstance.title }}</h3>
+            <p class="test-description">{{ testInstance.description }}</p>
+          </div>
+        </div>
 
-        <h4>使用说明</h4>
-        <p>点击各个卡片中的按钮来测试对应组件的功能。所有组件都支持响应式设计和主题切换。</p>
+        <div class="test-card-body">
+          <div class="test-tags">
+            <el-tag
+              v-for="tag in testInstance.tags"
+              :key="tag"
+              :type="getTagType(tag)"
+              size="small"
+              class="test-tag"
+            >
+              {{ tag }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div class="test-card-footer">
+          <el-button type="primary" size="small" class="test-button">
+            开始测试
+          </el-button>
+        </div>
       </div>
-    </BtcCard>
+    </div>
+
+    <!-- 测试实例弹窗 -->
+    <BtcDialog
+      v-model="dialogVisible"
+      :title="currentTestInstance?.title"
+      :width="getDialogWidth()"
+      :height="getDialogHeight()"
+      :controls="['fullscreen', 'close']"
+      class="test-dialog"
+    >
+      <component
+        v-if="currentTestInstance"
+        :is="currentTestInstance.component"
+        :key="currentTestInstance.name"
+      />
+    </BtcDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { Search } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { BtcDialog } from '@btc/shared-components';
 import {
-  BtcMessage,
-  BtcNotification,
-  BtcCard,
-  BtcSvg,
-  BtcForm,
-  BtcDialog,
-} from '@btc/shared-components';
+  getAllTestInstanceConfigs,
+  loadTestInstanceComponent,
+  type TestInstanceConfig
+} from '@/utils/test-instance-scanner';
 
 defineOptions({
-  name: 'ComponentsTestPage',
+  name: 'TestCenterPage',
 });
 
-// 演示状态
-const showCardDemo = ref(false);
-const showSvgDemo = ref(false);
+// 搜索关键词
+const searchKeyword = ref('');
 
-// BtcMessage 测试方法
-const testBtcMessageSuccess = () => {
-  BtcMessage.success('这是一条成功消息！');
-};
+// 对话框状态
+const dialogVisible = ref(false);
+const currentTestInstance = ref<any>(null);
 
-const testBtcMessageError = () => {
-  BtcMessage.error('这是一条错误消息！');
-};
+// 测试实例接口（扩展配置接口）
+interface TestInstance extends TestInstanceConfig {
+  component: any;
+}
 
-const testBtcMessageWarning = () => {
-  BtcMessage.warning('这是一条警告消息！');
-};
+// 所有测试实例
+const testInstances = ref<TestInstance[]>([]);
 
-const testBtcMessageInfo = () => {
-  BtcMessage.info('这是一条信息消息！');
-};
+// 动态导入所有测试实例
+const loadTestInstances = async () => {
+  try {
+    // 获取所有测试实例配置
+    const configs = getAllTestInstanceConfigs();
 
-const testBtcMessageDuplicate = () => {
-  BtcMessage.success('重复消息测试 - 应该显示徽标计数');
-  setTimeout(() => {
-    BtcMessage.success('重复消息测试 - 应该显示徽标计数');
-  }, 100);
-  setTimeout(() => {
-    BtcMessage.success('重复消息测试 - 应该显示徽标计数');
-  }, 200);
-};
+    // 动态导入所有测试实例组件
+    const testModules = await Promise.all(
+      configs.map(async (config) => {
+        try {
+          const component = await loadTestInstanceComponent(config.name);
+          return {
+            ...config,
+            component
+          };
+        } catch (error) {
+          console.warn(`Failed to load test instance: ${config.name}`, error);
+          return null;
+        }
+      })
+    );
 
-const testBtcMessageBatch = () => {
-  for (let i = 0; i < 100; i++) {
-    setTimeout(() => {
-      BtcMessage.success(`批量消息测试 - 应该显示99+, count: ${i + 1}`);
-    }, i * 10);
+    // 过滤掉加载失败的实例
+    testInstances.value = testModules.filter(Boolean) as TestInstance[];
+  } catch (error) {
+    console.error('加载测试实例失败:', error);
+    ElMessage.error('加载测试实例失败');
   }
 };
 
-const closeAllBtcMessages = () => {
-  BtcMessage.closeAll();
-};
-
-// BtcNotification 测试方法
-const testBtcNotificationSuccess = () => {
-  BtcNotification.success('这是一条成功通知！');
-};
-
-const testBtcNotificationError = () => {
-  BtcNotification.error('这是一条错误通知！');
-};
-
-const testBtcNotificationWarning = () => {
-  BtcNotification.warning('这是一条警告通知！');
-};
-
-const testBtcNotificationInfo = () => {
-  BtcNotification.info('这是一条信息通知！');
-};
-
-const testBtcNotificationWithTitle = () => {
-  BtcNotification.success({
-    title: '操作成功',
-    message: '数据已成功保存到服务器',
-  });
-};
-
-const testBtcNotificationCustom = () => {
-  BtcNotification.success({
-    title: '自定义通知',
-    message: '这是一个自定义的通知消息',
-    duration: 0,
-    showClose: true,
-  });
-};
-
-const testBtcNotificationDuplicate = () => {
-  BtcNotification.success('重复通知测试 - 应该显示徽标计数');
-  setTimeout(() => {
-    BtcNotification.success('重复通知测试 - 应该显示徽标计数');
-  }, 100);
-  setTimeout(() => {
-    BtcNotification.success('重复通知测试 - 应该显示徽标计数');
-  }, 200);
-};
-
-const testBtcNotificationBatch = () => {
-  for (let i = 0; i < 100; i++) {
-    setTimeout(() => {
-      BtcNotification.success(`批量通知测试 - 应该显示99+, count: ${i + 1}`);
-    }, i * 10);
+// 过滤后的测试实例
+const filteredTestInstances = computed(() => {
+  if (!searchKeyword.value) {
+    return testInstances.value;
   }
+
+  const keyword = searchKeyword.value.toLowerCase();
+  return testInstances.value.filter(instance =>
+    instance.title.toLowerCase().includes(keyword) ||
+    instance.description.toLowerCase().includes(keyword) ||
+    instance.tags.some(tag => tag.toLowerCase().includes(keyword))
+  );
+});
+
+// 获取标签类型
+const getTagType = (tag: string) => {
+  const typeMap: Record<string, string> = {
+    'CRUD': 'primary',
+    '表格': 'success',
+    '表单': 'warning',
+    '分页': 'info',
+    '国际化': 'primary',
+    'i18n': 'success',
+    '语言切换': 'warning',
+    '消息': 'success',
+    '通知': 'warning',
+    'BtcMessage': 'primary',
+    'BtcNotification': 'info',
+    '选择按钮': 'primary',
+    'BtcSelectButton': 'success',
+    '状态切换': 'warning',
+    'SVG': 'primary',
+    '图标': 'success',
+    'BtcSvg': 'info',
+    '插件': 'warning'
+  };
+  return typeMap[tag] || 'info';
 };
 
-const closeAllBtcNotifications = () => {
-  BtcNotification.closeAll();
+// 获取弹窗宽度 - 统一尺寸（百分比）
+const getDialogWidth = () => {
+  return '60%';  // 约等于900px在1500px屏幕上的比例
 };
 
-// BtcForm 测试方法
-const testBtcForm = () => {
-  const { Form } = BtcForm();
-  Form.value?.open({
-    title: '表单测试',
-    width: '600px',
-    form: {
-      name: '',
-      email: '',
-      age: 18,
-    },
-    items: [
-      {
-        prop: 'name',
-        label: '姓名',
-        required: true,
-        component: { name: 'el-input' },
-      },
-      {
-        prop: 'email',
-        label: '邮箱',
-        required: true,
-        component: { name: 'el-input' },
-      },
-      {
-        prop: 'age',
-        label: '年龄',
-        component: { name: 'el-input-number', props: { min: 1, max: 120 } },
-      },
-    ],
-    on: {
-      submit: (data: any, { close }: any) => {
-        console.log('表单数据:', data);
-        BtcMessage.success('表单提交成功！');
-        close();
-      },
-    },
-  });
+// 获取弹窗高度 - 统一尺寸（百分比）
+const getDialogHeight = () => {
+  return '60vh'; // 约等于600px在1000px视口高度上的比例
 };
 
-// BtcDialog 测试方法
-const testBtcDialog = () => {
-  const { Dialog } = BtcDialog();
-  Dialog.value?.open({
-    title: '对话框测试',
-    width: '500px',
-    content: '这是一个测试对话框，用于验证 BtcDialog 组件的功能。',
-    on: {
-      confirm: () => {
-        BtcMessage.success('确认操作');
-      },
-      cancel: () => {
-        BtcMessage.info('取消操作');
-      },
-    },
-  });
+// 打开测试实例
+const openTestInstance = (instance: TestInstance) => {
+  currentTestInstance.value = instance;
+  dialogVisible.value = true;
 };
+
+// 组件挂载时加载测试实例
+onMounted(() => {
+  loadTestInstances();
+});
 </script>
 
 <style lang="scss" scoped>
-.components-test-page {
+.test-center-page {
   padding: 20px;
   width: 100%;
+  min-height: 100vh;
+}
+
+.search-section {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+
+  .search-input {
+    width: 400px;
+    max-width: 100%;
+  }
 }
 
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
+  width: 100%;
 }
 
 .test-card {
-  .test-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 15px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-}
-
-.card-demo {
-  margin-top: 20px;
-  padding: 20px;
-  background-color: var(--el-fill-color-light);
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: var(--el-border-radius-base);
-}
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--el-box-shadow-light);
+  display: grid; // 使用 Grid 严格分区
+  grid-template-rows: 35% 40% 25%; // 提高头部比例，避免描述被截断
+  gap: 8px; // 区域间间距，不影响比例
+  height: 240px; // 固定卡片高度
+  box-sizing: border-box; // 确保 padding 包含在总高度内
 
-.svg-demo {
-  margin-top: 20px;
-
-  .svg-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 15px;
-  }
-
-  .svg-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 15px;
-    background-color: var(--el-fill-color-light);
-    border-radius: var(--el-border-radius-base);
-
-    span {
-      font-size: 12px;
-      color: var(--el-text-color-regular);
-    }
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--el-box-shadow);
+    border-color: var(--el-color-primary);
   }
 }
 
-.info-card {
-  .info-content {
-    h4 {
-      color: var(--el-text-color-primary);
-      margin-bottom: 10px;
-      margin-top: 20px;
+.test-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-sizing: border-box;
+  overflow: hidden; // 防止内容溢出
+}
 
-      &:first-child {
-        margin-top: 0;
-      }
-    }
+.test-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: var(--el-color-primary-light-9);
+  border-radius: var(--el-border-radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-color-primary);
+}
 
-    ul {
-      margin: 10px 0;
-      padding-left: 20px;
+.test-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
 
-      li {
-        margin-bottom: 8px;
-        line-height: 1.5;
-        color: var(--el-text-color-regular);
-      }
-    }
+.test-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden; // 防止内容溢出
+}
 
-    p {
-      color: var(--el-text-color-regular);
-      line-height: 1.6;
-    }
-  }
+.test-title {
+  margin: 0 0 4px 0; // 减少间距
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; // 标题单行显示
+}
+
+.test-description {
+  margin: 0;
+  font-size: 13px; // 稍微减小字体
+  color: var(--el-text-color-regular);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; // 提高为 3 行
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1; // 占用剩余空间
+}
+
+.test-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  overflow: hidden; // 防止内容溢出
+}
+
+.test-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow: hidden; // 防止标签溢出
+}
+
+.test-tag {
+  font-size: 12px;
+}
+
+.test-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.test-button {
+  font-size: 14px;
+  padding: 8px 20px;
+}
+
+.test-dialog {
+  // BtcDialog 的样式由组件内部控制，这里只需要基本样式
 }
 
 // 响应式设计
 @media (max-width: 768px) {
   .test-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
 
-  .test-buttons {
-    flex-direction: column;
+  .search-section .search-input {
+    width: 100%;
+  }
 
-    .el-button {
-      width: 100%;
-    }
+  .test-card {
+    padding: 15px;
+  }
+
+  .test-card-header {
+    gap: 12px;
+  }
+
+  .test-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .test-title {
+    font-size: 15px;
+  }
+
+  .test-description {
+    font-size: 13px;
   }
 }
 </style>

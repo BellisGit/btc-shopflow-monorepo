@@ -60,10 +60,5 @@
   "menu.ops.simulator": "策略模拟器",
   "menu.access.perm_compose": "权限组合",
   "menu.test_features": "测试功能",
-  "menu.test_features.crud": "CRUD测试",
-  "menu.test_features.svg": "SVG测试",
-  "menu.test_features.i18n": "国际化测试",
-  "menu.test_features.select_button": "选择按钮测试",
-  "menu.test_features.components": "组件测试中心",
-  "menu.test_features.message_notification": "消息通知测试"
+  "menu.test_features.components": "组件测试中心"
 }
