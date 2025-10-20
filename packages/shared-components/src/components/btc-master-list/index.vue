@@ -29,7 +29,11 @@
       </div>
     </div>
 
-    <div class="btc-master-list__container" v-loading="loading" @contextmenu.stop.prevent="(event) => onContextMenu(event)">
+    <div
+      class="btc-master-list__container"
+      v-loading="loading"
+      @contextmenu.stop.prevent="(event) => onContextMenu(event)"
+    >
       <el-scrollbar>
         <el-tree
           ref="treeRef"
@@ -50,9 +54,10 @@
               <span
                 class="btc-master-list__node-label"
                 :class="{
-                  'is-active': data.id == selectedItem?.id
+                  'is-active': data.id == selectedItem?.id,
                 }"
-              >{{ node.label }}</span>
+                >{{ node.label }}</span
+              >
               <span
                 v-if="browser.isMini"
                 class="btc-master-list__node-icon"
@@ -65,7 +70,6 @@
         </el-tree>
       </el-scrollbar>
     </div>
-
   </div>
 </template>
 
@@ -137,7 +141,7 @@ const props = withDefaults(defineProps<MasterListConfig>(), {
   idField: 'id',
   childrenField: 'children',
   drag: true,
-  level: 99
+  level: 99,
 });
 
 const emit = defineEmits(['refresh', 'select', 'add', 'edit', 'delete', 'load']);
@@ -155,7 +159,7 @@ const isSettingDefault = ref(false); // 标记是否正在设置默认选中
 // 计算属性
 const treeProps = computed(() => ({
   label: props.labelField,
-  children: props.childrenField
+  children: props.childrenField,
 }));
 
 // 浏览器信息（简化版）
@@ -180,10 +184,11 @@ async function refresh() {
     const res = await props.service.list();
 
     // 确保 res 是一个数组
-    const dataArray = Array.isArray(res) ? res : ((res as any)?.data || []);
+    const dataArray = Array.isArray(res) ? res : (res as any)?.data || [];
 
     // 检查数据是否有 parentId 字段，决定是否进行树形处理
-    const hasParentId = dataArray.length > 0 && dataArray[0].hasOwnProperty('parentId');
+    const hasParentId =
+      dataArray.length > 0 && Object.prototype.hasOwnProperty.call(dataArray[0], 'parentId');
     if (hasParentId) {
       list.value = deepTree(dataArray);
     } else {
@@ -203,7 +208,11 @@ async function refresh() {
       }
 
       // 触发 load 事件，通知父组件数据已加载完成
-      emit('load', list.value, selectedItem.value || (list.value.length > 0 ? list.value[0] : null));
+      emit(
+        'load',
+        list.value,
+        selectedItem.value || (list.value.length > 0 ? list.value[0] : null)
+      );
     });
   } catch (error) {
     ElMessage.error('加载数据失败');
@@ -283,7 +292,7 @@ onMounted(() => {
 // 暴露方法
 defineExpose({
   refresh,
-  rowClick
+  rowClick,
 });
 </script>
 
@@ -395,7 +404,6 @@ defineExpose({
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-
     }
 
     &-icon {

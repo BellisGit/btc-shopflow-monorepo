@@ -19,7 +19,7 @@ export interface ViewGroupOptions {
   tree?: TreeConfig;
   onSelect?: (item: any) => void;
   onEdit?: (item?: any) => any;
-  onDelete?: (item: any, ctx: { next: Function; done: Function }) => void;
+  onDelete?: (item: any, ctx: { next: () => void; done: () => void }) => void;
   onData?: (list: any[]) => any[];
   onContextMenu?: (item: any) => any;
   onDragEnd?: (list: any[]) => void;
@@ -29,7 +29,7 @@ export interface TreeConfig {
   visible?: boolean;
   lazy?: boolean;
   props?: TreeProps;
-  onLoad?: Function;
+  onLoad?: (...args: any[]) => any;
   allowDrag?: (node: any) => boolean;
   allowDrop?: (draggingNode: any, dropNode: any, type: string) => boolean;
 }
@@ -60,4 +60,3 @@ export interface ViewGroupExpose {
   refresh: (params?: any) => Promise<void>;
   isMobile: any;
 }
-

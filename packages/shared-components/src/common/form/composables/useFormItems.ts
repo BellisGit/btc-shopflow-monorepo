@@ -9,7 +9,7 @@ export function cloneDeep(obj: any): any {
   if (obj instanceof Array) return obj.map(cloneDeep);
   const cloned = {} as any;
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       cloned[key] = cloneDeep(obj[key]);
     }
   }
@@ -20,7 +20,7 @@ export function isBoolean(val: any): val is boolean {
   return typeof val === 'boolean';
 }
 
-export function isFunction(val: any): val is Function {
+export function isFunction(val: any): val is (...args: any[]) => any {
   return typeof val === 'function';
 }
 
@@ -70,4 +70,3 @@ export function invokeData(d: any) {
     }
   }
 }
-

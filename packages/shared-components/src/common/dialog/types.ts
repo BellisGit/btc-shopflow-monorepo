@@ -30,7 +30,7 @@ export interface DialogProps {
   hideHeader?: boolean;
 
   // 关闭前
-  beforeClose?: Function;
+  beforeClose?: () => void | Promise<void>;
 
   // 是否需要滚动条
   scrollbar?: boolean;
@@ -47,4 +47,3 @@ export interface DialogEmits {
   (e: 'fullscreen-change', value: boolean): void;
   (e: 'closed'): void;
 }
-

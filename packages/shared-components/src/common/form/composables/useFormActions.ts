@@ -44,7 +44,7 @@ export function useFormActions(formSetup: any) {
   }
 
   // 关闭前
-  function beforeClose(doneFn: Function) {
+  function beforeClose(doneFn: () => void) {
     if (config.on?.close) {
       config.on.close(getCloseAction(), doneFn);
     } else {
@@ -96,7 +96,7 @@ export function useFormActions(formSetup: any) {
   }
 
   // 提交
-  function submit(callback?: Function) {
+  function submit(callback?: (data: any, event: { close: () => void; done: () => void }) => void) {
     Form.value?.validate(async (valid: boolean, error: any) => {
       if (valid) {
         saving.value = true;
@@ -114,7 +114,7 @@ export function useFormActions(formSetup: any) {
                 formHook.submit({
                   ...e,
                   value: e.prop ? d[e.prop] : undefined,
-                  form: d
+                  form: d,
                 });
               }
             }
@@ -136,7 +136,7 @@ export function useFormActions(formSetup: any) {
             close() {
               close('save');
             },
-            done
+            done,
           });
         } else {
           done();
@@ -145,7 +145,7 @@ export function useFormActions(formSetup: any) {
         Tabs.toGroup({
           refs,
           config,
-          prop: Object.keys(error)[0]
+          prop: Object.keys(error)[0],
         });
       }
     });
@@ -172,13 +172,14 @@ export function useFormActions(formSetup: any) {
     for (const i in config) {
       switch (i) {
         case 'items':
-          config.items = options.items?.map((e: any) => {
-            const item = typeof e === 'function' ? e() : e;
-            return {
-              ...item,
-              children: item?.children?.map((c: any) => (typeof c === 'function' ? c() : c))
-            };
-          }) || [];
+          config.items =
+            options.items?.map((e: any) => {
+              const item = typeof e === 'function' ? e() : e;
+              return {
+                ...item,
+                children: item?.children?.map((c: any) => (typeof c === 'function' ? c() : c)),
+              };
+            }) || [];
           break;
         case 'on':
         case 'op':
@@ -216,14 +217,14 @@ export function useFormActions(formSetup: any) {
           formHook.bind({
             ...e,
             value: form[e.prop] !== undefined ? form[e.prop] : cloneDeep(e.value),
-            form
+            form,
           });
 
           // 表单验证
           if (e.required) {
             e.rules = {
               required: true,
-              message: `请输入${e.label || ''}`
+              message: `请输入${e.label || ''}`,
             };
           }
         }
@@ -272,4 +273,3 @@ export function useFormActions(formSetup: any) {
     open,
   };
 }
-

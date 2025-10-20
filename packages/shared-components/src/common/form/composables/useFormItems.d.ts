@@ -3,7 +3,7 @@
  */
 export declare function cloneDeep(obj: any): any;
 export declare function isBoolean(val: any): val is boolean;
-export declare function isFunction(val: any): val is Function;
+export declare function isFunction(val: any): val is (...args: any[]) => any;
 /**
  * 判断是否隐藏
  */

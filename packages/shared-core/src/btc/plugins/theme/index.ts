@@ -32,11 +32,35 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
 
   if (savedTheme && typeof savedTheme === 'object' && savedTheme !== null) {
     // 检查是否是旧格式（硬编码中文或英文标签）
-    const oldLabels = ['Default', 'Green', 'Purple', 'Orange', 'Pink', 'Mint', 'Custom', 'Brand Red', 'Brand Gray',
-                      '默认', '绿色', '紫色', '橙色', '粉色', '薄荷绿', '拜里斯品牌红', '拜里斯品牌灰', '蓝色'];
-    if ('label' in savedTheme && typeof savedTheme.label === 'string' && oldLabels.includes(savedTheme.label)) {
+    const oldLabels = [
+      'Default',
+      'Green',
+      'Purple',
+      'Orange',
+      'Pink',
+      'Mint',
+      'Custom',
+      'Brand Red',
+      'Brand Gray',
+      '默认',
+      '绿色',
+      '紫色',
+      '橙色',
+      '粉色',
+      '薄荷绿',
+      '拜里斯品牌红',
+      '拜里斯品牌灰',
+      '蓝色',
+    ];
+    if (
+      'label' in savedTheme &&
+      typeof savedTheme.label === 'string' &&
+      oldLabels.includes(savedTheme.label)
+    ) {
       // 根据颜色匹配对应的新主题配置
-      const matchedPreset = THEME_PRESETS.find(preset => preset.color === (savedTheme as any).color);
+      const matchedPreset = THEME_PRESETS.find(
+        (preset) => preset.color === (savedTheme as any).color
+      );
       if (matchedPreset) {
         migratedTheme = matchedPreset;
       } else if ((savedTheme as any).name === 'custom') {
@@ -44,7 +68,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
         migratedTheme = {
           name: 'custom',
           label: 'theme.presets.custom',
-          color: (savedTheme as any).color
+          color: (savedTheme as any).color,
         };
       }
       // 保存迁移后的配置
@@ -54,6 +78,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
       migratedTheme = savedTheme as ThemeConfig;
     }
   } else {
+    // 没有保存的主题配置，使用默认配置
   }
 
   const currentTheme = ref<ThemeConfig>(migratedTheme);
@@ -86,9 +111,11 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     }
 
     // 广播主题变化事件
-    window.dispatchEvent(new CustomEvent('theme-change', {
-      detail: { color, dark }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('theme-change', {
+        detail: { color, dark },
+      })
+    );
   }
 
   /**
@@ -140,21 +167,18 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
           Math.max(y, window.innerHeight - y)
         );
 
-        const clipPath = [
-          `circle(0 at ${x}px ${y}px)`,
-          `circle(${endRadius}px at ${x}px ${y}px)`
-        ];
+        const clipPath = [`circle(0 at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`];
 
         document.documentElement.animate(
           {
-            clipPath: newDarkValue ? clipPath.reverse() : clipPath
+            clipPath: newDarkValue ? clipPath.reverse() : clipPath,
           },
           {
             duration: 400,
             easing: 'ease-in-out',
             pseudoElement: newDarkValue
               ? '::view-transition-old(root)'
-              : '::view-transition-new(root)'
+              : '::view-transition-new(root)',
           }
         );
       });
@@ -191,7 +215,6 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 初始化主题
   initTheme();
 
-
   const plugin: Plugin & { theme: ThemePlugin } = {
     install(app: App) {
       // 将主题实例挂载到全局属性
@@ -216,7 +239,7 @@ export function useThemePlugin(): ThemePlugin {
   // 确保返回的实例包含最新的 THEME_PRESETS
   return {
     ...themePluginInstance,
-    THEME_PRESETS
+    THEME_PRESETS,
   };
 }
 
@@ -225,4 +248,3 @@ export function useThemePlugin(): ThemePlugin {
  */
 export type { ThemeConfig };
 export { THEME_PRESETS };
-

@@ -7,7 +7,7 @@ function cloneDeep(obj: any): any {
   if (obj instanceof Array) return obj.map(cloneDeep);
   const cloned = {} as any;
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       cloned[key] = cloneDeep(obj[key]);
     }
   }
@@ -41,7 +41,7 @@ export function useBtcForm() {
     width: '50%',
     props: {
       labelWidth: '100px',
-      labelPosition: 'top'
+      labelPosition: 'top',
     },
     on: {},
     op: {
@@ -49,14 +49,14 @@ export function useBtcForm() {
       saveButtonText: '保存',
       closeButtonText: '关闭',
       justify: 'flex-end',
-      buttons: ['close', 'save']
+      buttons: ['close', 'save'],
     },
     dialog: {
-      appendToBody: true
+      appendToBody: true,
     },
     items: [],
     form: {},
-    _data: {}
+    _data: {},
   });
 
   const Form = ref();
@@ -94,7 +94,7 @@ export function useBtcForm() {
       oldForm.value = cloneDeep(val);
     },
     {
-      deep: true
+      deep: true,
     }
   );
 
@@ -105,7 +105,6 @@ export function useBtcForm() {
     visible,
     saving,
     loading,
-    disabled
+    disabled,
   };
 }
-

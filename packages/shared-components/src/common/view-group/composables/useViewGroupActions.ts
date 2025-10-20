@@ -65,7 +65,7 @@ export function useViewGroupActions(
   // 删除
   function remove(item: ViewGroupItem) {
     ElMessageBox.confirm('此操作将会删除选择的数据，是否继续？', '提示', {
-      type: 'warning'
+      type: 'warning',
     })
       .then(() => {
         function next(params: any) {
@@ -95,7 +95,7 @@ export function useViewGroupActions(
 
         // 删除事件
         if (config.onDelete) {
-          config.onDelete(item, { next, done });
+          config.onDelete(item, { next: (params?: any) => next(params), done: () => done() });
         } else {
           const itemId = getItemId(item);
           next({ ids: [itemId] });
@@ -112,4 +112,3 @@ export function useViewGroupActions(
     remove,
   };
 }
-

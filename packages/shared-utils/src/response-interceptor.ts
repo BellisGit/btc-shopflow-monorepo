@@ -53,7 +53,7 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 200,
     message: '操作成功',
     action: 'silent',
-    showType: 'success'
+    showType: 'success',
   },
 
   // 通用错误状态码
@@ -61,19 +61,19 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 400,
     message: '操作失败',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   500: {
     code: 500,
     message: '操作失败',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   501: {
     code: 501,
     message: '系统繁忙，请稍候再试',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
 
   // 认证相关状态码
@@ -82,33 +82,33 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     message: '身份已过期，请重新登录',
     action: 'redirect',
     redirectPath: '/login',
-    showType: 'warning'
+    showType: 'warning',
   },
   410: {
     code: 410,
     message: '该用户不存在,请先注册',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   511: {
     code: 511,
     message: '登录失败，未获取到令牌',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   517: {
     code: 517,
     message: '身份令牌已过期',
     action: 'redirect',
     redirectPath: '/login',
-    showType: 'warning'
+    showType: 'warning',
   },
   518: {
     code: 518,
     message: '获取到的身份令牌为空',
     action: 'redirect',
     redirectPath: '/login',
-    showType: 'warning'
+    showType: 'warning',
   },
 
   // 数据相关状态码
@@ -116,19 +116,19 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 510,
     message: '数据为空',
     action: 'show',
-    showType: 'warning'
+    showType: 'warning',
   },
   522: {
     code: 522,
     message: '参数不能为空',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   523: {
     code: 523,
     message: '数据错误',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
 
   // 用户管理相关状态码
@@ -136,37 +136,37 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 520,
     message: '没有该工号',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   521: {
     code: 521,
     message: '初始密码错误',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   524: {
     code: 524,
     message: '账号已存在',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   526: {
     code: 526,
     message: '表单id过期',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   527: {
     code: 527,
     message: '手机号不存在',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   529: {
     code: 529,
     message: '邮箱不存在',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
 
   // 验证码相关状态码
@@ -174,7 +174,7 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 528,
     message: '验证码已过期',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
 
   // Keycloak相关状态码
@@ -182,34 +182,33 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     code: 512,
     message: 'keycloak客户端地址错误',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   513: {
     code: 513,
     message: '获取领域失败',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   514: {
     code: 514,
     message: '获取客户端id失败',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   515: {
     code: 515,
     message: '获取客户端密钥失败',
     action: 'show',
-    showType: 'error'
+    showType: 'error',
   },
   516: {
     code: 516,
     message: '连接keycloak失败',
     action: 'show',
-    showType: 'error'
-  }
+    showType: 'error',
+  },
 };
-
 
 /**
  * 响应拦截器类
@@ -289,7 +288,7 @@ export class ResponseInterceptor {
 
     // 根据配置执行相应操作
     switch (config.action) {
-      case 'show':
+      case 'show': {
         // 使用智能消息管理器处理消息
         const showType = config.showType || 'error';
         const messageManager = getMessageManager();
@@ -326,8 +325,9 @@ export class ResponseInterceptor {
           }
         }
         break;
+      }
 
-      case 'redirect':
+      case 'redirect': {
         // 使用智能消息管理器处理消息
         const redirectShowType = config.showType || 'warning';
         const redirectMessageManager = getMessageManager();
@@ -374,6 +374,7 @@ export class ResponseInterceptor {
           }
         }, 1500);
         break;
+      }
 
       case 'confirm':
         if (this.confirmHandler) {
@@ -458,7 +459,7 @@ export class ResponseInterceptor {
 
         // 网络错误
         return this.handleNetworkError(error);
-      }
+      },
     };
   }
 }
@@ -467,7 +468,9 @@ export class ResponseInterceptor {
 export const responseInterceptor = new ResponseInterceptor();
 
 // 便捷方法
-export const handleApiResponse = <T>(response: ApiResponse<T>): T | ApiResponse<T> | Promise<never> => {
+export const handleApiResponse = <T>(
+  response: ApiResponse<T>
+): T | ApiResponse<T> | Promise<never> => {
   return responseInterceptor.handleSuccess(response);
 };
 

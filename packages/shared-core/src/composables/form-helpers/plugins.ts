@@ -6,7 +6,7 @@ export interface FormPlugin {
   created?: (options: any, ctx: any) => void;
   onOpen?: (options: any, ctx: any) => void | Promise<void>;
   onSubmit?: (data: any, ctx: any) => any | Promise<any>;
-  onClose?: (done: Function, ctx: any) => void;
+  onClose?: (done: () => void, ctx: any) => void;
 }
 
 export function usePlugins(enablePlugin: boolean = true, { visible }: { visible: any }) {
@@ -56,7 +56,6 @@ export function usePlugins(enablePlugin: boolean = true, { visible }: { visible:
     plugins,
     use,
     clear,
-    submit
+    submit,
   };
 }
-

@@ -16,7 +16,7 @@ export function useTableColumns(props: TableProps) {
     if (allLevels) {
       const path: string[] = [];
 
-      function findPath(list: any[], val: any): boolean {
+      const findPath = (list: any[], val: any): boolean => {
         for (const item of list) {
           path.push(item.label);
 
@@ -31,7 +31,7 @@ export function useTableColumns(props: TableProps) {
           path.pop();
         }
         return false;
-      }
+      };
 
       if (findPath(dict, value)) {
         return path.join(' / ');
@@ -63,8 +63,9 @@ export function useTableColumns(props: TableProps) {
     const columns = props.columns || [];
     // 先进行自动时间格式化
     const formattedColumns = autoFormatTableColumns(columns);
-    return formattedColumns.map(column => {
-      const isFixedWidthColumn = column.type === 'selection' || column.type === 'index' || column.type === 'op';
+    return formattedColumns.map((column) => {
+      const isFixedWidthColumn =
+        column.type === 'selection' || column.type === 'index' || column.type === 'op';
 
       const config: any = {
         ...column,
@@ -143,4 +144,3 @@ export function useTableColumns(props: TableProps) {
     formatDictValue,
   };
 }
-

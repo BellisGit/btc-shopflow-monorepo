@@ -60,11 +60,11 @@ const formItems = computed<BtcFormItem[]>(() => [
         collapseTagsTooltip: true,
         props: {
           label: 'name',
-          children: '_children'
-        }
-      }
-    }
-  }
+          children: '_children',
+        },
+      },
+    },
+  },
 ]);
 
 const open = () => {
@@ -98,7 +98,7 @@ const handleSubmit = async (_data: any, { done, close }: any) => {
 
       // 创建 Blob 对象
       const blob = new Blob([JSON.stringify(result)], {
-        type: 'application/json'
+        type: 'application/json',
       });
 
       const url = URL.createObjectURL(blob);
@@ -106,7 +106,7 @@ const handleSubmit = async (_data: any, { done, close }: any) => {
       // 创建一个 <a> 元素
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${props.filename} ${new Date().toLocaleString('zh-CN').replace(/[\/\s:]/g, '_')}.json`;
+      a.download = `${props.filename} ${new Date().toLocaleString('zh-CN').replace(/[/\s:]/g, '_')}.json`;
 
       // 模拟点击 <a> 元素以触发下载
       a.click();

@@ -23,7 +23,7 @@ export const TYPE_MAPPING: TypeMapping[] = [
  * @returns 格式化后的方法名
  */
 export function formatName(name: string): string {
-  return (name || '').replace(/[:,\s,\/,-]/g, '');
+  return (name || '').replace(/[:,\s,/,-]/g, '');
 }
 
 /**
@@ -118,7 +118,9 @@ export async function formatCode(text: string): Promise<string | null> {
  * @returns 方法名数组
  */
 export function getNames(obj: any): string[] {
-  return Object.keys(obj).filter((e) => !['namespace', 'permission', 'search', 'request'].includes(e));
+  return Object.keys(obj).filter(
+    (e) => !['namespace', 'permission', 'search', 'request'].includes(e)
+  );
 }
 
 /**
@@ -127,7 +129,12 @@ export function getNames(obj: any): string[] {
  * @returns 是否为空
  */
 export function isEmpty(value: any): boolean {
-  return value == null || value === '' || (Array.isArray(value) && value.length === 0) || (typeof value === 'object' && Object.keys(value).length === 0);
+  return (
+    value == null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0) ||
+    (typeof value === 'object' && Object.keys(value).length === 0)
+  );
 }
 
 /**

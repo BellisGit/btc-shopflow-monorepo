@@ -37,7 +37,7 @@ export function useDialog(props: DialogProps, emit: any) {
       }
     },
     {
-      immediate: true
+      immediate: true,
     }
   );
 
@@ -48,7 +48,7 @@ export function useDialog(props: DialogProps, emit: any) {
       fullscreen.value = val || false;
     },
     {
-      immediate: true
+      immediate: true,
     }
   );
 
@@ -60,7 +60,7 @@ export function useDialog(props: DialogProps, emit: any) {
   // 提供
   provide('btc-dialog', {
     visible,
-    fullscreen: isFullscreen
+    fullscreen: isFullscreen,
   });
 
   // 打开
@@ -75,7 +75,7 @@ export function useDialog(props: DialogProps, emit: any) {
     }
 
     if (props.beforeClose) {
-      props.beforeClose(done);
+      props.beforeClose();
     } else {
       done();
     }
@@ -123,4 +123,3 @@ export function useDialog(props: DialogProps, emit: any) {
     dblClickFullscreen,
   };
 }
-

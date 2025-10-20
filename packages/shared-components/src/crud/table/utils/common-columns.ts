@@ -3,7 +3,7 @@
  * 统一处理常见的表格列，如创建时间、更新时间等
  */
 
-import type { TableColumn } from '../types';
+import type { TableColumn, OpButton } from '../types';
 import { formatDateTimeFriendly } from '@btc/shared-utils';
 
 /**
@@ -15,9 +15,9 @@ export function createCreatedAtColumn(): TableColumn {
     prop: 'createdAt',
     label: '创建时间',
     width: 180,
-    formatter: (row: any, column: any, cellValue: any) => {
+    formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
-    }
+    },
   };
 }
 
@@ -30,9 +30,9 @@ export function createUpdatedAtColumn(): TableColumn {
     prop: 'updatedAt',
     label: '更新时间',
     width: 180,
-    formatter: (row: any, column: any, cellValue: any) => {
+    formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
-    }
+    },
   };
 }
 
@@ -40,12 +40,12 @@ export function createUpdatedAtColumn(): TableColumn {
  * 操作列配置
  * 标准的编辑、删除操作按钮
  */
-export function createOperationColumn(buttons: string[] = ['edit', 'delete']): TableColumn {
+export function createOperationColumn(buttons: OpButton[] = ['edit', 'delete']): TableColumn {
   return {
     type: 'op',
     label: '操作',
     width: 200,
-    buttons
+    buttons,
   };
 }
 
@@ -55,7 +55,7 @@ export function createOperationColumn(buttons: string[] = ['edit', 'delete']): T
 export function createSelectionColumn(): TableColumn {
   return {
     type: 'selection',
-    width: 60
+    width: 60,
   };
 }
 
@@ -66,7 +66,7 @@ export function createIndexColumn(): TableColumn {
   return {
     type: 'index',
     label: '序号',
-    width: 60
+    width: 60,
   };
 }
 

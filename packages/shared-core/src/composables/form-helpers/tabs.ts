@@ -41,7 +41,7 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
       if (el) {
         name = el?.getAttribute('data-group');
       } else {
-        function deep(d: any) {
+        const deep = (d: any) => {
           if (d.prop === opts.prop) {
             name = d.group;
           } else {
@@ -49,7 +49,7 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
               d.children.forEach(deep);
             }
           }
-        }
+        };
 
         config.items.forEach(deep);
       }
@@ -85,7 +85,7 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
 
   // 切换
   function change(value: any, isValid = true) {
-    return new Promise((resolve: Function, reject: Function) => {
+    return new Promise<void>((resolve, reject) => {
       function next() {
         active.value = value;
         resolve();
@@ -97,7 +97,7 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
         const arr = config.items
           .filter((e: any) => e.group === active.value && !e._hidden && e.prop)
           .map((e: any) => {
-            return new Promise((r: Function) => {
+            return new Promise((r: (valid: string) => void) => {
               // 验证表单
               Form.value?.validateField(e.prop, (valid: string) => {
                 if (valid) {
@@ -111,7 +111,7 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
 
         Promise.all(arr).then((msg) => {
           if (isError) {
-            reject(msg.filter(Boolean));
+            reject(new Error(msg.filter(Boolean).join(', ')));
           } else {
             next();
           }
@@ -149,7 +149,6 @@ export function useTabs({ config, Form }: { config: BtcFormConfig; Form: any }) 
     change,
     clear,
     mergeProp,
-    toGroup
+    toGroup,
   };
 }
-

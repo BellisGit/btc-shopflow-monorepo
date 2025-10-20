@@ -13,7 +13,7 @@ export interface BtcFormItem {
     vm?: any;
     props?: Record<string, any>;
     options?: any[];
-    slots?: Record<string, Function>;
+    slots?: Record<string, (...args: any[]) => any>;
   };
   rules?: any;
   required?: boolean;
@@ -50,7 +50,7 @@ export interface BtcFormConfig {
   };
   on?: {
     open?: (data: any) => void;
-    close?: (action: 'close' | 'save', done: Function) => void;
+    close?: (action: 'close' | 'save', done: () => void) => void;
     closed?: () => void;
     submit?: (data: any, event: { close: () => void; done: () => void }) => void;
   };
@@ -67,4 +67,3 @@ export interface BtcFormProps {
   inline?: boolean;
   enablePlugin?: boolean;
 }
-

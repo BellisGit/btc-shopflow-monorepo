@@ -99,7 +99,7 @@ export const format: { [key: string]: HookFn } = {
       if (typeof value === 'string') {
         try {
           return JSON.parse(value);
-        } catch (e) {
+        } catch (_e) {
           return value;
         }
       }
@@ -120,7 +120,7 @@ export const format: { [key: string]: HookFn } = {
     }
 
     return value;
-  }
+  },
 };
 
 function init({ value, form, prop }: any) {
@@ -174,7 +174,7 @@ function parse(method: 'submit' | 'bind', { value, hook: pipe, form, prop }: any
       v = f(v, {
         method,
         form,
-        prop
+        prop,
       });
     }
   });
@@ -191,7 +191,7 @@ const formHookDefault = {
 
   submit(data: any) {
     parse('submit', data);
-  }
+  },
 };
 
 export function registerFormHook(name: string, fn: HookFn) {

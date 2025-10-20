@@ -15,7 +15,7 @@ export interface FormItem {
   rules?: any | any[];
   required?: boolean;
   span?: number;
-  value?: any;  // 默认值
+  value?: any; // 默认值
   hidden?: boolean | ((data: { scope: any; mode: string }) => boolean); // 动态隐藏
   hook?: any; // form-hook 转换
   _hidden?: boolean; // 内部使用
@@ -31,7 +31,7 @@ export interface UpsertPlugin {
   created?: (options: any) => void;
   onOpen?: () => void | Promise<void>;
   onSubmit?: (data: any) => any | Promise<any>;
-  onClose?: (done: Function) => void;
+  onClose?: (done: () => void) => void;
 }
 
 /**
@@ -64,10 +64,16 @@ export interface UpsertProps {
   enablePlugin?: boolean; // 是否启用插件
 
   // 生命周期钩子（对标 cl-upsert）
-  onOpen?: () => void;  // 打开时（无数据）
-  onInfo?: (data: any, event: { next: (params?: any) => Promise<any>; done: (data: any) => void }) => Promise<void> | void; // 获取详情
+  onOpen?: () => void; // 打开时（无数据）
+  onInfo?: (
+    data: any,
+    event: { next: (params?: any) => Promise<any>; done: (data: any) => void }
+  ) => Promise<void> | void; // 获取详情
   onOpened?: (data: any) => void; // 打开后（有数据）
-  onSubmit?: (data: any, event: { close: () => void; done: () => void; next: (data: any) => Promise<any> }) => Promise<void> | void; // 提交
+  onSubmit?: (
+    data: any,
+    event: { close: () => void; done: () => void; next: (data: any) => Promise<any> }
+  ) => Promise<void> | void; // 提交
   onClose?: (action: 'close' | 'save', done: () => void) => void; // 关闭前
   onClosed?: () => void; // 关闭后
 }
@@ -96,4 +102,3 @@ export interface FormDataContext {
 export interface CrudContext {
   crud: UseCrudReturn<any>;
 }
-

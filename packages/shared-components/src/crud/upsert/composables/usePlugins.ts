@@ -15,7 +15,7 @@ export function usePlugins(props: UpsertProps) {
     if (props.plugins && props.enablePlugin !== false) {
       registeredPlugins.value = props.plugins;
       // 触发插件 created
-      props.plugins.forEach(p => {
+      props.plugins.forEach((p) => {
         if (p.created) {
           p.created(p.value);
         }
@@ -45,7 +45,7 @@ export function usePlugins(props: UpsertProps) {
     if (props.enablePlugin !== false) {
       for (const p of registeredPlugins.value) {
         if (p.onSubmit) {
-          data = await p.onSubmit(data) || data;
+          data = (await p.onSubmit(data)) || data;
         }
       }
     }
@@ -56,7 +56,7 @@ export function usePlugins(props: UpsertProps) {
   /**
    * 触发插件 onClose
    */
-  const triggerPluginOnClose = (done: Function) => {
+  const triggerPluginOnClose = (done: () => void) => {
     if (props.enablePlugin !== false && registeredPlugins.value.length > 0) {
       let index = 0;
 
@@ -96,4 +96,3 @@ export function usePlugins(props: UpsertProps) {
     clearPlugins,
   };
 }
-
