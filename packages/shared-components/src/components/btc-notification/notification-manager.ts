@@ -15,6 +15,7 @@ interface NotificationState {
   decrementTimeout: number | null;
   lastUpdateTime: number;
   notificationElement: HTMLElement | null;
+  isDecrementing: boolean; // 是否正在递减中
 }
 
 // 通知管理器类
@@ -37,7 +38,7 @@ class BtcNotificationManager {
     } = {}
   ) {
     const key = `${type}:${content}`;
-    const maxCount = options.maxCount || 10;
+    const maxCount = options.maxCount || 99;
 
     if (this.notifications.has(key)) {
       // 通知已存在，递增计数
@@ -76,7 +77,7 @@ class BtcNotificationManager {
       title: options.title,
       message: content,
       type: type,
-      duration: options.duration, // 使用传入的 duration
+      duration: 0, // 设置为0，完全手动控制关闭时机
       showClose: options.showClose,
       position: options.position as any,
       dangerouslyUseHTMLString: options.dangerouslyUseHTMLString,
@@ -91,11 +92,12 @@ class BtcNotificationManager {
       content,
       type,
       count: 1,
-      maxCount: options.maxCount,
+      maxCount: options.maxCount || 99,
       notificationInstance,
       decrementTimeout: null,
       lastUpdateTime: Date.now(),
       notificationElement: null,
+      isDecrementing: false, // 初始化为false
     };
 
     this.notifications.set(key, notificationState);
@@ -141,12 +143,12 @@ class BtcNotificationManager {
   /**
    * 递增通知计数
    */
-  private incrementNotification(key: string, maxCount: number) {
+  private incrementNotification(key: string, _maxCount: number) {
     const notificationState = this.notifications.get(key);
     if (!notificationState) return;
 
-    // 递增计数，但不超过最大值
-    notificationState.count = Math.min(notificationState.count + 1, maxCount);
+    // 递增计数，不限制最大值（与 el-badge 原生逻辑一致）
+    notificationState.count = notificationState.count + 1;
     notificationState.lastUpdateTime = Date.now();
 
     // 直接通过 DOM 操作更新 Element Plus 原生徽章，不调用新的 ElNotification
@@ -179,8 +181,10 @@ class BtcNotificationManager {
       ) as HTMLElement;
 
       if (badgeElement) {
-        // 更新徽章文本
-        badgeElement.textContent = notificationState.count.toString();
+        // 更新徽章文本，支持 99+ 显示
+        const displayText =
+          notificationState.count > 99 ? '99+' : notificationState.count.toString();
+        badgeElement.textContent = displayText;
         if (notificationState.count > 1) {
           badgeElement.style.display = '';
         } else {
@@ -235,7 +239,10 @@ class BtcNotificationManager {
         ) as HTMLElement;
         if (customBadgeElement) {
           if (notificationState.count > 1) {
-            customBadgeElement.textContent = notificationState.count.toString();
+            // 支持 99+ 显示
+            const displayText =
+              notificationState.count > 99 ? '99+' : notificationState.count.toString();
+            customBadgeElement.textContent = displayText;
             badgeContainer.style.display = 'block';
           } else {
             badgeContainer.style.display = 'none';
@@ -280,7 +287,29 @@ class BtcNotificationManager {
    * 重置递减定时器
    */
   private resetDecrementTimeout(key: string) {
-    this.scheduleDecrement(key);
+    const notificationState = this.notifications.get(key);
+    if (!notificationState) return;
+
+    // 清除现有定时器
+    if (notificationState.decrementTimeout) {
+      clearTimeout(notificationState.decrementTimeout);
+    }
+
+    // 使用智能检测机制：500ms后检查是否还有新的递增
+    notificationState.decrementTimeout = window.setTimeout(() => {
+      const currentState = this.notifications.get(key);
+      if (!currentState) return;
+
+      const timeSinceLastUpdate = Date.now() - currentState.lastUpdateTime;
+
+      // 如果500ms内没有新的更新，说明递增阶段结束，开始递减
+      if (timeSinceLastUpdate >= 500) {
+        this.startDecrement(key);
+      } else {
+        // 如果还有新的更新，继续等待
+        this.resetDecrementTimeout(key);
+      }
+    }, 500);
   }
 
   /**
@@ -290,9 +319,18 @@ class BtcNotificationManager {
     const notificationState = this.notifications.get(key);
     if (!notificationState) return;
 
+    console.log(
+      `[BtcNotification] startDecrement called for: ${key}, count: ${notificationState.count}`
+    );
+
+    // 设置递减标志，防止在递减过程中被意外关闭
+    notificationState.isDecrementing = true;
+
     if (notificationState.count > 1) {
       notificationState.count--;
       notificationState.lastUpdateTime = Date.now();
+
+      console.log(`[BtcNotification] Decremented to: ${notificationState.count}`);
 
       // 直接通过 DOM 操作更新 Element Plus 原生徽章，不重新创建通知
       this.updateNativeBadge(key);
@@ -304,12 +342,16 @@ class BtcNotificationManager {
         }, 500);
       } else {
         // count = 1，徽章已隐藏，等待后关闭通知
+        console.log(`[BtcNotification] Count reached 1, clearing isDecrementing flag`);
+        notificationState.isDecrementing = false; // 递减结束，清除标志
         setTimeout(() => {
           this.closeNotification(key);
         }, 2000);
       }
     } else {
       // 已经是 1，直接关闭
+      console.log(`[BtcNotification] Already at count 1, clearing isDecrementing flag`);
+      notificationState.isDecrementing = false; // 递减结束，清除标志
       this.closeNotification(key);
     }
   }
@@ -319,7 +361,18 @@ class BtcNotificationManager {
    */
   private handleNotificationClose(key: string) {
     const notificationState = this.notifications.get(key);
+
     if (notificationState) {
+      console.log(
+        `[BtcNotification] handleNotificationClose called for: ${key}, count: ${notificationState.count}, isDecrementing: ${notificationState.isDecrementing}`
+      );
+
+      // 如果正在递减中，阻止关闭
+      if (notificationState.isDecrementing) {
+        console.log(`[BtcNotification] Blocking close due to isDecrementing flag`);
+        return;
+      }
+
       // 清除定时器
       if (notificationState.decrementTimeout) {
         clearTimeout(notificationState.decrementTimeout);
@@ -337,10 +390,36 @@ class BtcNotificationManager {
    */
   private closeNotification(key: string) {
     const notificationState = this.notifications.get(key);
-    if (notificationState) {
-      notificationState.notificationInstance.close();
-      this.handleNotificationClose(key);
+
+    console.log(`[BtcNotification] closeNotification called for: ${key}`);
+
+    // 如果通知状态不存在，直接返回
+    if (!notificationState) {
+      console.log(`[BtcNotification] No notification state found for: ${key}`);
+      return;
     }
+
+    // 如果正在递减中，阻止关闭
+    if (notificationState.isDecrementing) {
+      console.log(
+        `[BtcNotification] Blocking close due to isDecrementing flag in closeNotification`
+      );
+      return;
+    }
+
+    console.log(`[BtcNotification] Proceeding with close for: ${key}`);
+
+    if (notificationState.notificationInstance && notificationState.notificationInstance.close) {
+      notificationState.notificationInstance.close();
+    }
+
+    // 清除定时器
+    if (notificationState.decrementTimeout) {
+      clearTimeout(notificationState.decrementTimeout);
+    }
+
+    // 从映射中移除
+    this.notifications.delete(key);
   }
 
   /**

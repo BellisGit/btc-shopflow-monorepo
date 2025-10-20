@@ -15,6 +15,7 @@ interface MessageState {
   decrementTimeout: number | null;
   lastUpdateTime: number;
   messageElement: HTMLElement | null;
+  isDecrementing: boolean; // 是否正在递减中
 }
 
 // 消息管理器类
@@ -35,7 +36,7 @@ class BtcMessageManager {
     } = {}
   ) {
     const key = `${type}:${content}`;
-    const maxCount = options.maxCount || 10;
+    const maxCount = options.maxCount || 99;
 
     if (this.messages.has(key)) {
       // 消息已存在，递增计数
@@ -85,11 +86,12 @@ class BtcMessageManager {
       content,
       type,
       count: 1,
-      maxCount: options.maxCount,
+      maxCount: options.maxCount || 99,
       messageInstance,
       decrementTimeout: null,
       lastUpdateTime: Date.now(),
       messageElement: null,
+      isDecrementing: false, // 初始化为false
     };
 
     this.messages.set(key, messageState);
@@ -127,12 +129,12 @@ class BtcMessageManager {
   /**
    * 递增消息计数
    */
-  private incrementMessage(key: string, maxCount: number) {
+  private incrementMessage(key: string, _maxCount: number) {
     const messageState = this.messages.get(key);
     if (!messageState) return;
 
-    // 递增计数，但不超过最大值
-    messageState.count = Math.min(messageState.count + 1, maxCount);
+    // 递增计数，不限制最大值（与 el-badge 原生逻辑一致）
+    messageState.count = messageState.count + 1;
     messageState.lastUpdateTime = Date.now();
 
     // 直接通过 DOM 操作更新 Element Plus 原生徽章，不调用新的 ElMessage
@@ -162,8 +164,9 @@ class BtcMessageManager {
 
       if (badgeElement) {
         if (messageState.count > 1) {
-          // 显示徽章并更新数字
-          badgeElement.textContent = messageState.count.toString();
+          // 显示徽章并更新数字，支持 99+ 显示
+          const displayText = messageState.count > 99 ? '99+' : messageState.count.toString();
+          badgeElement.textContent = displayText;
           badgeElement.style.display = '';
         } else {
           // 隐藏徽章
@@ -216,7 +219,9 @@ class BtcMessageManager {
         ) as HTMLElement;
         if (customBadgeElement) {
           if (messageState.count > 1) {
-            customBadgeElement.textContent = messageState.count.toString();
+            // 支持 99+ 显示
+            const displayText = messageState.count > 99 ? '99+' : messageState.count.toString();
+            customBadgeElement.textContent = displayText;
             badgeContainer.style.display = 'block';
           } else {
             badgeContainer.style.display = 'none';
@@ -258,10 +263,32 @@ class BtcMessageManager {
   }
 
   /**
-   * 重置递减定时器
+   * 重置递减定时器（智能检测机制）
    */
   private resetDecrementTimeout(key: string) {
-    this.scheduleDecrement(key);
+    const messageState = this.messages.get(key);
+    if (!messageState) return;
+
+    // 清除现有定时器
+    if (messageState.decrementTimeout) {
+      clearTimeout(messageState.decrementTimeout);
+    }
+
+    // 使用智能检测机制：500ms后检查是否还有新的递增
+    messageState.decrementTimeout = window.setTimeout(() => {
+      const currentState = this.messages.get(key);
+      if (!currentState) return;
+
+      const timeSinceLastUpdate = Date.now() - currentState.lastUpdateTime;
+
+      // 如果500ms内没有新的更新，说明递增阶段结束，开始递减
+      if (timeSinceLastUpdate >= 500) {
+        this.startDecrement(key);
+      } else {
+        // 如果还有新的更新，继续等待
+        this.resetDecrementTimeout(key);
+      }
+    }, 500);
   }
 
   /**
@@ -270,6 +297,9 @@ class BtcMessageManager {
   private startDecrement(key: string) {
     const messageState = this.messages.get(key);
     if (!messageState) return;
+
+    // 设置递减标志，防止在递减过程中被意外关闭
+    messageState.isDecrementing = true;
 
     if (messageState.count > 1) {
       messageState.count--;
@@ -285,12 +315,14 @@ class BtcMessageManager {
         }, 500);
       } else {
         // count = 1，徽章已隐藏，等待后关闭消息
+        messageState.isDecrementing = false; // 递减结束，清除标志
         setTimeout(() => {
           this.closeMessage(key);
         }, 2000);
       }
     } else {
       // 已经是 1，直接关闭
+      messageState.isDecrementing = false; // 递减结束，清除标志
       this.closeMessage(key);
     }
   }
@@ -300,7 +332,13 @@ class BtcMessageManager {
    */
   private handleMessageClose(key: string) {
     const messageState = this.messages.get(key);
+
     if (messageState) {
+      // 如果正在递减中，阻止关闭
+      if (messageState.isDecrementing) {
+        return;
+      }
+
       // 清除定时器
       if (messageState.decrementTimeout) {
         clearTimeout(messageState.decrementTimeout);
@@ -321,6 +359,11 @@ class BtcMessageManager {
 
     // 如果消息状态不存在，直接返回
     if (!messageState) {
+      return;
+    }
+
+    // 如果正在递减中，阻止关闭
+    if (messageState.isDecrementing) {
       return;
     }
 
