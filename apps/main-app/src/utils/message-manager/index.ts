@@ -3,7 +3,12 @@
  * 基于 ElMessage 封装，提供消息队列管理、重复消息合并、优先级处理和徽标显示功能
  */
 
-import type { MessageType, MessageQueueConfig, MessageDisplayHandler, MessageHistoryItem } from './types';
+import type {
+  MessageType,
+  MessageQueueConfig,
+  MessageDisplayHandler,
+  MessageHistoryItem,
+} from './types';
 import { DEFAULT_CONFIG } from './config';
 import { MessageQueue } from './queue';
 import { BadgeManager } from './badge';
@@ -119,9 +124,9 @@ export class MessageManager {
           if (this.lifecycleManager) {
             this.lifecycleManager.handleMessageUpdate(existingMessage);
           }
-        } catch (error) {
+        } catch (_error) {
           // 如果更新失败，说明消息实例无效，重新创建
-          console.log('[MessageManager] Failed to update message, recreating:', error);
+          console.log('[MessageManager] Failed to update message, recreating:', _error);
           this.recreateMessage(message);
         }
       }
@@ -166,7 +171,7 @@ export class MessageManager {
       }
 
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -362,13 +367,19 @@ export class MessageManager {
       errorQueue: this.errorQueue.getQueueStatus(),
       displayingCount: this.displayingMessages.size,
       totalMessages: this.messageMap.size,
-      historyCount: this.historyManager.getHistoryCount()
+      historyCount: this.historyManager.getHistoryCount(),
     };
   }
 }
 
 // 导出类型
-export type { MessageType, MessageQueueConfig, MessageDisplayHandler, QueuedMessage, MessageHistoryItem } from './types';
+export type {
+  MessageType,
+  MessageQueueConfig,
+  MessageDisplayHandler,
+  QueuedMessage,
+  MessageHistoryItem,
+} from './types';
 
 // 导出配置
 export { DEFAULT_CONFIG, MESSAGE_PRIORITIES, MESSAGE_TYPE_CONFIG } from './config';

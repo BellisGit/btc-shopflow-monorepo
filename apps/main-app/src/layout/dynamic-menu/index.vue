@@ -44,7 +44,10 @@
     <!-- 主应用菜单（默认） -->
     <template v-else>
       <!-- 平台治理 -->
-      <el-sub-menu v-show="hasVisibleChildren(menuStructure.main.platform.children)" index="platform">
+      <el-sub-menu
+        v-show="hasVisibleChildren(menuStructure.main.platform.children)"
+        index="platform"
+      >
         <template #title>
           <el-icon><Coin /></el-icon>
           <span>{{ t('menu.platform') }}</span>
@@ -116,7 +119,10 @@
       </el-sub-menu>
 
       <!-- 导航与可见性 -->
-      <el-sub-menu v-show="hasVisibleChildren(menuStructure.main.navigation.children)" index="navigation">
+      <el-sub-menu
+        v-show="hasVisibleChildren(menuStructure.main.navigation.children)"
+        index="navigation"
+      >
         <template #title>
           <el-icon><Menu /></el-icon>
           <span>{{ t('menu.navigation') }}</span>
@@ -192,7 +198,7 @@
 
 <script setup lang="ts">
 defineOptions({
-  name: 'LayoutDynamicMenu'
+  name: 'LayoutDynamicMenu',
 });
 
 import { ref, computed, watch } from 'vue';
@@ -225,10 +231,10 @@ import {
   Picture,
   House,
   Grid,
-  Bell,
+  Bell as _Bell,
   Message,
   View,
-  Reading,
+  Reading as _Reading,
 } from '@element-plus/icons-vue';
 
 interface Props {
@@ -270,8 +276,9 @@ const hasVisibleChildren = (children: Record<string, any>) => {
     if (typeof child === 'string') {
       return child.toLowerCase().includes(keyword);
     } else if (child.children) {
-      return Object.values(child.children).some((grandChild: any) =>
-        typeof grandChild === 'string' && grandChild.toLowerCase().includes(keyword)
+      return Object.values(child.children).some(
+        (grandChild: any) =>
+          typeof grandChild === 'string' && grandChild.toLowerCase().includes(keyword)
       );
     }
     return false;
@@ -281,23 +288,23 @@ const hasVisibleChildren = (children: Record<string, any>) => {
 // 菜单结构定义（用于搜索匹配）
 const menuStructure = {
   main: {
-    'platform': {
+    platform: {
       text: '平台治理',
       children: {
         '/platform/domains': '域列表',
         '/platform/modules': '模块列表',
         '/platform/plugins': '插件列表',
-      }
+      },
     },
-    'org': {
+    org: {
       text: '组织与账号',
       children: {
         '/org/tenants': '租户列表',
         '/org/departments': '部门列表',
         '/org/users': '用户列表',
-      }
+      },
     },
-    'access': {
+    access: {
       text: '访问控制',
       children: {
         '/access/resources': '资源列表',
@@ -306,22 +313,22 @@ const menuStructure = {
         '/access/roles': '角色列表',
         '/access/policies': '策略列表',
         '/access/perm-compose': '权限组合',
-      }
+      },
     },
-    'navigation': {
+    navigation: {
       text: '导航与可见性',
       children: {
         '/navigation/menus': '菜单列表',
         '/navigation/menus/preview': '菜单预览',
-      }
+      },
     },
-    'ops': {
+    ops: {
       text: '运维与审计',
       children: {
         '/ops/audit': '操作日志',
         '/ops/baseline': '权限基线',
         '/ops/simulator': '策略模拟器',
-      }
+      },
     },
     'test-features': {
       text: '测试功能',
@@ -332,10 +339,10 @@ const menuStructure = {
         '/test/select-button': '选择按钮测试',
         '/test/message-notification': '消息通知测试',
         '/test/notification-badge': '通知徽章测试',
-      }
+      },
     },
     // 文档中心已移至汉堡菜单
-  }
+  },
 };
 
 const defaultOpeneds = computed(() => {
@@ -346,7 +353,9 @@ const defaultOpeneds = computed(() => {
     const keyword = props.searchKeyword.toLowerCase().trim();
     if (!keyword) {
       // 空搜索，恢复默认展开
-      return currentApp.value === 'main' ? ['platform', 'org', 'access', 'navigation', 'ops', 'test-features'] : [];
+      return currentApp.value === 'main'
+        ? ['platform', 'org', 'access', 'navigation', 'ops', 'test-features']
+        : [];
     }
 
     const openeds: string[] = [];
@@ -382,16 +391,19 @@ const defaultOpeneds = computed(() => {
   // 无搜索时的默认展开
   switch (currentApp.value) {
     case 'main':
-      return ['system', 'system-permission', 'vite-plugins', 'components', 'i18n'];  // 修正：使用正确的 index
+      return ['system', 'system-permission', 'vite-plugins', 'components', 'i18n']; // 修正：使用正确的 index
     default:
       return [];
   }
 });
 
 // 监听搜索关键词变化，强制重新渲染菜单以应用新的 defaultOpeneds
-watch(() => props.searchKeyword, () => {
-  menuKey.value++;
-});
+watch(
+  () => props.searchKeyword,
+  () => {
+    menuKey.value++;
+  }
+);
 
 watch(
   () => route.path,
@@ -459,7 +471,9 @@ const handleMenuSelect = (index: string) => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 200px;
     opacity: 1;
     font-size: 14px; // 文字大小 14px
@@ -491,4 +505,3 @@ const handleMenuSelect = (index: string) => {
   }
 }
 </style>
-

@@ -1,6 +1,12 @@
 <template>
   <div class="menus-page">
-    <BtcViewGroup ref="viewGroupRef" :options="viewGroupOptions" :title="t('navigation.menu.list')" :selected-item="selectedModule" style="height: 100%">
+    <BtcViewGroup
+      ref="viewGroupRef"
+      :options="viewGroupOptions"
+      :title="t('navigation.menu.list')"
+      :selected-item="selectedModule"
+      style="height: 100%"
+    >
       <template #left>
         <!-- 使用 btc-master-list 显示域和模块的两级树状结构 -->
         <BtcMasterList
@@ -9,11 +15,16 @@
           @select="onModuleSelect"
           @load="onModuleLoad"
         />
-            </template>
+      </template>
 
       <template #right>
         <!-- 右侧显示具体模块下的菜单表 -->
-        <BtcCrud ref="crudRef" :service="wrappedMenuService" :on-before-refresh="handleBeforeRefresh" style="padding: 10px;">
+        <BtcCrud
+          ref="crudRef"
+          :service="wrappedMenuService"
+          :on-before-refresh="handleBeforeRefresh"
+          style="padding: 10px"
+        >
           <BtcRow>
             <BtcRefreshBtn />
             <BtcAddBtn />
@@ -28,7 +39,12 @@
             <BtcFlex1 />
             <BtcPagination />
           </BtcRow>
-          <BtcUpsert ref="upsertRef" :items="menuFormItems" width="800px" :on-submit="handleFormSubmit" />
+          <BtcUpsert
+            ref="upsertRef"
+            :items="menuFormItems"
+            width="800px"
+            :on-submit="handleFormSubmit"
+          />
         </BtcCrud>
       </template>
     </BtcViewGroup>
@@ -52,12 +68,12 @@ import {
   BtcMultiDeleteBtn,
   BtcRow,
   BtcFlex1,
-  BtcSearchKey
+  BtcSearchKey,
 } from '@btc/shared-components';
 import { service } from '../../../../services/eps';
 
 defineOptions({
-  name: 'NavigationMenus'
+  name: 'NavigationMenus',
 });
 
 const { t } = useI18n();
@@ -78,7 +94,7 @@ const domainModuleService = {
       // 并行获取域列表和模块列表
       const [domains, modules] = await Promise.all([
         service.sysdomain.list(),
-        service.sysmodule.list()
+        service.sysmodule.list(),
       ]);
 
       // 清除超时定时器
@@ -98,8 +114,8 @@ const domainModuleService = {
             moduleId: module.moduleId,
             domainId: module.domainId,
             type: 'module',
-            parentId: `domain_${domain.domainId}`
-          }))
+            parentId: `domain_${domain.domainId}`,
+          })),
       }));
 
       return domainModuleTree;
@@ -122,7 +138,7 @@ const domainModuleService = {
         return [];
       }
     }
-  }
+  },
 };
 
 // 菜单服务（右侧表）
@@ -131,7 +147,9 @@ const menuService = service.sysmenu;
 const wrappedMenuService = {
   ...menuService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
+      type: 'warning',
+    });
     await menuService.delete({ ids });
     const messageManager = (window as any).messageManager;
     if (messageManager) {
@@ -178,17 +196,17 @@ const menuColumns = computed<TableColumn[]>(() => [
     label: t('navigation.menu.name'),
     align: 'left',
     width: 200,
-    fixed: 'left'
+    fixed: 'left',
   },
   {
     prop: 'isShow',
     label: t('navigation.menu.is_show'),
-    width: 100
+    width: 100,
   },
   {
     prop: 'icon',
     label: t('navigation.menu.icon'),
-    width: 100
+    width: 100,
   },
   {
     prop: 'type',
@@ -197,24 +215,24 @@ const menuColumns = computed<TableColumn[]>(() => [
     dict: [
       { label: t('navigation.menu.type.directory'), value: 0, type: 'warning' },
       { label: t('navigation.menu.type.menu'), value: 1, type: 'success' },
-      { label: t('navigation.menu.type.permission'), value: 2, type: 'danger' }
-    ]
+      { label: t('navigation.menu.type.permission'), value: 2, type: 'danger' },
+    ],
   },
   {
     prop: 'router',
     label: t('navigation.menu.router'),
-    minWidth: 170
+    minWidth: 170,
   },
   {
     prop: 'keepAlive',
     label: t('navigation.menu.keep_alive'),
-    width: 100
+    width: 100,
   },
   {
     prop: 'viewPath',
     label: t('navigation.menu.view_path'),
     minWidth: 200,
-    showOverflowTooltip: true
+    showOverflowTooltip: true,
   },
   {
     prop: 'perms',
@@ -222,21 +240,21 @@ const menuColumns = computed<TableColumn[]>(() => [
     headerAlign: 'center',
     minWidth: 300,
     component: {
-      name: 'cl-dict'
-    }
+      name: 'cl-dict',
+    },
   },
   {
     prop: 'orderNum',
     label: t('navigation.menu.order_num'),
     width: 120,
     fixed: 'right',
-    sortable: 'custom'
+    sortable: 'custom',
   },
   {
     prop: 'updateTime',
     label: t('navigation.menu.update_time'),
     sortable: 'custom',
-    width: 170
+    width: 170,
   },
   { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
@@ -245,7 +263,7 @@ const menuColumns = computed<TableColumn[]>(() => [
 const menuTypeOptions = [
   { label: t('navigation.menu.type.directory'), value: 0, type: 'warning' },
   { label: t('navigation.menu.type.menu'), value: 1, type: 'success' },
-  { label: t('navigation.menu.type.permission'), value: 2, type: 'danger' }
+  { label: t('navigation.menu.type.permission'), value: 2, type: 'danger' },
 ];
 
 // 菜单表单
@@ -257,16 +275,16 @@ const menuFormItems = computed<FormItem[]>(() => [
     required: true,
     component: {
       name: 'el-radio-group',
-      options: menuTypeOptions
-    }
+      options: menuTypeOptions,
+    },
   },
   {
     prop: 'name',
     label: t('navigation.menu.node_name'),
     component: {
-      name: 'el-input'
+      name: 'el-input',
     },
-    required: true
+    required: true,
   },
   {
     prop: 'parentId',
@@ -275,9 +293,9 @@ const menuFormItems = computed<FormItem[]>(() => [
       name: 'el-select',
       props: {
         clearable: true,
-        placeholder: t('navigation.menu.select_parent')
-      }
-    }
+        placeholder: t('navigation.menu.select_parent'),
+      },
+    },
   },
   {
     prop: 'router',
@@ -286,9 +304,9 @@ const menuFormItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-input',
       props: {
-        placeholder: t('navigation.menu.router_placeholder')
-      }
-    }
+        placeholder: t('navigation.menu.router_placeholder'),
+      },
+    },
   },
   {
     prop: 'keepAlive',
@@ -299,9 +317,9 @@ const menuFormItems = computed<FormItem[]>(() => [
       name: 'el-radio-group',
       options: [
         { label: t('navigation.menu.keep_alive.enable'), value: true },
-        { label: t('navigation.menu.keep_alive.disable'), value: false }
-      ]
-    }
+        { label: t('navigation.menu.keep_alive.disable'), value: false },
+      ],
+    },
   },
   {
     prop: 'isShow',
@@ -309,8 +327,8 @@ const menuFormItems = computed<FormItem[]>(() => [
     value: true,
     hidden: ({ scope }: any) => scope.type == 2,
     component: {
-      name: 'el-switch'
-    }
+      name: 'el-switch',
+    },
   },
   {
     prop: 'viewPath',
@@ -319,9 +337,9 @@ const menuFormItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-input',
       props: {
-        placeholder: t('navigation.menu.view_path_placeholder')
-      }
-    }
+        placeholder: t('navigation.menu.view_path_placeholder'),
+      },
+    },
   },
   {
     prop: 'icon',
@@ -330,9 +348,9 @@ const menuFormItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-input',
       props: {
-        placeholder: t('navigation.menu.icon_placeholder')
-      }
-    }
+        placeholder: t('navigation.menu.icon_placeholder'),
+      },
+    },
   },
   {
     prop: 'orderNum',
@@ -343,9 +361,9 @@ const menuFormItems = computed<FormItem[]>(() => [
         placeholder: t('navigation.menu.order_num_placeholder'),
         min: 0,
         max: 99,
-        'controls-position': 'right'
-      }
-    }
+        'controls-position': 'right',
+      },
+    },
   },
   {
     prop: 'perms',
@@ -356,10 +374,10 @@ const menuFormItems = computed<FormItem[]>(() => [
       props: {
         type: 'textarea',
         rows: 3,
-        placeholder: t('navigation.menu.perms_placeholder')
-      }
-    }
-  }
+        placeholder: t('navigation.menu.perms_placeholder'),
+      },
+    },
+  },
 ]);
 
 // 刷新前钩子：添加模块ID参数
@@ -390,7 +408,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
       messageManager.enqueue('success', t('crud.message.save_success'));
     }
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };
