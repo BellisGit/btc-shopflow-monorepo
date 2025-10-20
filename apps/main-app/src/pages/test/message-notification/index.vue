@@ -15,6 +15,7 @@
         </div>
         <div class="test-buttons">
           <el-button @click="testBtcMessageDuplicate">重复消息测试</el-button>
+          <el-button type="warning" @click="testBtcMessageBatch">批量消息测试(100次)</el-button>
           <el-button @click="closeAllBtcMessages">关闭所有消息</el-button>
         </div>
       </div>
@@ -37,6 +38,9 @@
         </div>
         <div class="test-buttons">
           <el-button @click="testBtcNotificationDuplicate">重复通知测试</el-button>
+          <el-button type="warning" @click="testBtcNotificationBatch"
+            >批量通知测试(100次)</el-button
+          >
           <el-button @click="closeAllBtcNotifications">关闭所有通知</el-button>
         </div>
       </div>
@@ -48,15 +52,23 @@
           <h4>BtcMessage 特性：</h4>
           <ul>
             <li><strong>重复消息徽标计数</strong>：相同内容的消息会显示重复次数徽标</li>
+            <li>
+              <strong>99+ 显示逻辑</strong>：当重复次数超过99时，显示"99+"，与 el-badge 原生行为一致
+            </li>
             <li><strong>自动递增递减</strong>：连续重复消息时徽标递增，停止后自动递减</li>
-            <li><strong>智能生命周期管理</strong>：消息自动关闭，状态自动清理</li>
+            <li><strong>智能生命周期管理</strong>：消息自动关闭，状态自动清理，无需手动关闭按钮</li>
             <li><strong>类型化支持</strong>：支持 success、warning、info、error 四种类型</li>
             <li><strong>主题适配</strong>：支持亮色/暗色主题切换</li>
+            <li><strong>响应式设计</strong>：移动端友好的徽标尺寸</li>
+            <li><strong>完全兼容</strong>：基于原生 ElMessage，保持所有原生功能</li>
           </ul>
 
           <h4>BtcNotification 特性：</h4>
           <ul>
             <li><strong>重复通知徽标计数</strong>：相同内容的通知会显示重复次数徽标</li>
+            <li>
+              <strong>99+ 显示逻辑</strong>：当重复次数超过99时，显示"99+"，与 el-badge 原生行为一致
+            </li>
             <li><strong>自动递增递减</strong>：连续重复通知时徽标递增，停止后自动递减</li>
             <li><strong>智能生命周期管理</strong>：通知自动关闭，状态自动清理</li>
             <li><strong>类型化支持</strong>：支持 success、warning、info、error 四种类型</li>
@@ -99,6 +111,15 @@ const testBtcMessageDuplicate = () => {
   BtcMessage.success('重复消息测试 - 应该显示徽章');
 };
 
+const testBtcMessageBatch = () => {
+  // 批量发送100次相同消息，测试99+显示功能
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      BtcMessage.success('批量消息测试 - 应该显示99+');
+    }, i * 20); // 每20ms发送一次，1.8秒内完成，给递减逻辑留出时间
+  }
+};
+
 const closeAllBtcMessages = () => {
   BtcMessage.closeAll();
 };
@@ -138,6 +159,15 @@ const testBtcNotificationCustom = () => {
 const testBtcNotificationDuplicate = () => {
   // 快速连续发送相同的成功通知，测试徽标计数功能
   BtcNotification.success('重复通知测试 - 应该显示徽章');
+};
+
+const testBtcNotificationBatch = () => {
+  // 批量发送100次相同通知，测试99+显示功能
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      BtcNotification.success('批量通知测试 - 应该显示99+');
+    }, i * 20); // 每20ms发送一次，1.8秒内完成，给递减逻辑留出时间
+  }
 };
 
 const closeAllBtcNotifications = () => {
