@@ -127,12 +127,12 @@ const handleKeydown = (event: KeyboardEvent) => {
     if (target.tagName === 'TEXTAREA') {
       return;
     }
-    
+
     // 防止在富文本编辑器中触发
     if (target.contentEditable === 'true') {
       return;
     }
-    
+
     event.preventDefault();
     handleSubmit();
   }
