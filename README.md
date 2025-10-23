@@ -1,5 +1,20 @@
 # BTC ShopFlow Monorepo
 
+<div align="center">
+  <img src="https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js" alt="Vue 3.x" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Micro--Frontend-qiankun-FF6B6B?style=flat" alt="Micro Frontend" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="License" />
+</div>
+
+<div align="center">
+  <a href="#中文">中文</a> | <a href="./README_en.md">English</a>
+</div>
+
+---
+
+## 中文
+
 一个基于微前端架构的企业级供应链管理系统，采用 qiankun 微前端框架构建。
 
 ## 📋 项目概述
