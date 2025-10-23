@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="btc-svg-example">
-    <h2>btc-svg 组件示例</h2>
+    <h2>btc-svg 缁勪欢绀轰緥</h2>
 
-    <!-- 基础用法 -->
+    <!-- 鍩虹鐢ㄦ硶 -->
     <section>
-      <h3>基础用法</h3>
+      <h3>鍩虹鐢ㄦ硶</h3>
       <div class="demo-row">
         <btc-svg name="home" />
         <btc-svg name="user" />
@@ -13,9 +13,9 @@
       </div>
     </section>
 
-    <!-- 不同大小 -->
+    <!-- 涓嶅悓澶у皬 -->
     <section>
-      <h3>不同大小</h3>
+      <h3>涓嶅悓澶у皬</h3>
       <div class="demo-row">
         <btc-svg name="home" :size="16" />
         <btc-svg name="home" :size="24" />
@@ -24,9 +24,9 @@
       </div>
     </section>
 
-    <!-- 自定义颜色 -->
+    <!-- 鑷畾涔夐鑹?-->
     <section>
-      <h3>自定义颜色</h3>
+      <h3>鑷畾涔夐鑹?/h3>
       <div class="demo-row">
         <btc-svg name="home" color="#409eff" :size="32" />
         <btc-svg name="home" color="#67c23a" :size="32" />
@@ -35,9 +35,9 @@
       </div>
     </section>
 
-    <!-- 继承父元素颜色 -->
+    <!-- 缁ф壙鐖跺厓绱犻鑹?-->
     <section>
-      <h3>继承父元素颜色</h3>
+      <h3>缁ф壙鐖跺厓绱犻鑹?/h3>
       <div class="demo-row">
         <div style="color: #409eff">
           <btc-svg name="home" :size="32" />
@@ -51,32 +51,32 @@
       </div>
     </section>
 
-    <!-- 在按钮中使用 -->
+    <!-- 鍦ㄦ寜閽腑浣跨敤 -->
     <section>
-      <h3>在按钮中使用</h3>
+      <h3>鍦ㄦ寜閽腑浣跨敤</h3>
       <div class="demo-row">
         <el-button type="primary">
           <btc-svg name="home" :size="16" />
-          首页
+          棣栭〉
         </el-button>
         <el-button type="success">
           <btc-svg name="user" :size="16" />
-          用户
+          鐢ㄦ埛
         </el-button>
         <el-button type="warning">
           <btc-svg name="search" :size="16" />
-          搜索
+          鎼滅储
         </el-button>
       </div>
     </section>
 
-    <!-- 国际化图标 -->
+    <!-- 鍥介檯鍖栧浘鏍?-->
     <section>
-      <h3>国际化图标</h3>
+      <h3>鍥介檯鍖栧浘鏍?/h3>
       <div class="demo-row">
         <el-button @click="locale = 'zh-CN'">
           <btc-svg name="icon-zh" :size="16" />
-          中文
+          涓枃
         </el-button>
         <el-button @click="locale = 'en-US'">
           <btc-svg name="icon-en" :size="16" />
@@ -84,11 +84,9 @@
         </el-button>
         <el-button @click="locale = 'ja-JP'">
           <btc-svg name="icon-ja" :size="16" />
-          日本語
-        </el-button>
+          鏃ユ湰瑾?        </el-button>
         <div class="current-locale">
-          当前语言：
-          <btc-svg :name="getLocaleIcon()" :size="24" color="#409eff" />
+          褰撳墠璇█锛?          <btc-svg :name="getLocaleIcon()" :size="24" color="#409eff" />
           {{ locale }}
         </div>
       </div>
@@ -149,4 +147,5 @@ function getLocaleIcon() {
   }
 }
 </style>
+
 

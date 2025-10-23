@@ -384,7 +384,6 @@ export class LifecycleManager {
           extendedInstance.$el.remove();
         }
       }
-    } else {
     }
   }
 

@@ -8,7 +8,7 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import { createI18nPlugin, createThemePlugin } from '@btc/shared-core';
 import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
-import type { QiankunProps } from '../logistics-app/src/types/qiankun';
+import type { QiankunProps } from '@btc/shared-core';
 import App from './App.vue';
 
 let app: VueApp | null = null;

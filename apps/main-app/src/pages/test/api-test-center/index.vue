@@ -230,11 +230,7 @@ const runTest = async (test: any) => {
       // 重新创建响应拦截器
       http.recreateResponseInterceptor();
 
-      try {
-        result = await http.get(test.customPath);
-      } catch (httpError) {
-        throw httpError;
-      }
+      result = await http.get(test.customPath);
     } else {
       // 检查服务是否存在 - 根据EPS结构，test服务直接在根级别
       if (!service.test) {

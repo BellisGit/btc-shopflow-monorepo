@@ -54,7 +54,7 @@ files.forEach(file => {
   console.log(`\n修复: ${file}`);
 
   try {
-    let content = fs.readFileSync(filePath, 'utf-8');
+    const content = fs.readFileSync(filePath, 'utf-8');
 
     // 分离 frontmatter 和内容
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/);

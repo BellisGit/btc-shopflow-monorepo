@@ -25,6 +25,12 @@
     "lint:docs": "node scripts/check-orphan-docs.js",
     "format": "prettier --write \"packages/**/*.{ts,tsx,vue,json,md}\"",
     "type-check": "turbo run type-check",
+    "tsc:all": "turbo run type-check",
+    "tsc:main": "pnpm --filter main-app type-check",
+    "tsc:logistics": "pnpm --filter logistics-app type-check",
+    "tsc:engineering": "pnpm --filter engineering-app type-check",
+    "tsc:quality": "pnpm --filter quality-app type-check",
+    "tsc:production": "pnpm --filter production-app type-check",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

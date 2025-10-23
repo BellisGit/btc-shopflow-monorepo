@@ -97,6 +97,7 @@ export class Http {
     try {
       const result = interceptor.onFulfilled(mockResponse);
     } catch (error) {
+      console.error('Interceptor error:', error);
     }
   }
 

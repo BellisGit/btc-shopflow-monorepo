@@ -15,5 +15,6 @@ export * from './composables/useBtcForm';
 export * from './composables/form-helpers';
 export * from './types/common';
 export * from './types/crud';
+export * from './types/qiankun';
 
 

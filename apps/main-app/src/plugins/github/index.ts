@@ -1,5 +1,5 @@
 import type { Plugin } from '@btc/shared-core';
-import { definePluginConfig } from '@btc/shared-core/btc/plugins/manager/config-helper';
+import { definePluginConfig } from '@btc/shared-core';
 
 /**
  * GitHub插件

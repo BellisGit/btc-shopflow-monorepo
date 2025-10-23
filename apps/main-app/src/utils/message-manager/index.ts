@@ -24,7 +24,7 @@ export class MessageManager {
   private badgeManager: BadgeManager;
   private lifecycleManager: LifecycleManager | null = null;
   private historyManager: HistoryManager;
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private cleanupInterval: number | null = null;
   private processingMessages = new Set<string>(); // 防止并发处理同一消息
 
   constructor(config: Partial<MessageQueueConfig> = {}) {
@@ -242,7 +242,7 @@ export class MessageManager {
       return;
     }
 
-    const messageInstance = this.displayHandler[message.type](
+    const messageInstance = (this.displayHandler as any)[message.type](
       message.content,
       message.duration,
       message.count

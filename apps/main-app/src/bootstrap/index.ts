@@ -111,17 +111,15 @@ export async function bootstrap(app: App) {
   };
 
   XMLHttpRequest.prototype.send = function(data?: any) {
-    const xhr = this;
-
     // 监听状态变化
-    xhr.addEventListener('readystatechange', function() {
-      if (xhr.readyState === 4) {
+    this.addEventListener('readystatechange', function() {
+      if (this.readyState === 4) {
         // 检查是否是接口测试中心的请求
-        const url = (xhr as any)._url || '';
+        const url = (this as any)._url || '';
         const isTestCenterRequest = url.includes('/admin/system/test/');
 
         // 如果是404错误且不是测试中心的请求，阻止默认的错误日志显示
-        if (xhr.status === 404 && !isTestCenterRequest) {
+        if (this.status === 404 && !isTestCenterRequest) {
           // 静默处理404错误，不显示在控制台
           return;
         }

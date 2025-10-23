@@ -94,12 +94,12 @@ function inferProject(filePath: string, projectMapping: Record<string, string>):
 
   // 默认推断
   if (filePath.includes('/packages/')) {
-    const match = filePath.match(/packages\/([^\/]+)/);
+    const match = filePath.match(/packages\/([^/]+)/);
     return match ? match[1] : 'unknown';
   }
 
   if (filePath.includes('/apps/')) {
-    const match = filePath.match(/apps\/([^\/]+)/);
+    const match = filePath.match(/apps\/([^/]+)/);
     return match ? match[1] : 'unknown';
   }
 
@@ -462,7 +462,7 @@ async function ingest() {
   console.log('\n📝 处理文档...');
   const processedDocs: DocInfo[] = [];
   let skipped = 0;
-  let invalid = 0;
+  const invalid = 0;
 
   for (const file of files) {
     const doc = await processDocument(file, config, validate);

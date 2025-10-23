@@ -36,7 +36,7 @@ function inferMetadata(filePath: string, content: string): FrontmatterTemplate {
 
   let type: FrontmatterTemplate['type'] = 'guide';
   let project = 'general';
-  let author = 'ai:cursor-agent';
+  const author = 'ai:cursor-agent';
 
   // 推断 type
   if (relativePath.includes('/adr/')) {

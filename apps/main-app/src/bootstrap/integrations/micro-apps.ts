@@ -11,7 +11,7 @@ import { setupQiankun, listenSubAppReady, listenSubAppRouteChange } from '@/micr
  */
 export const setupMicroApps = async (app: App) => {
   // 设置qiankun
-  await setupQiankun(app);
+  setupQiankun();
 
   // 监听子应用准备就绪
   listenSubAppReady();

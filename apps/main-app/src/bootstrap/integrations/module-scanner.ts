@@ -130,7 +130,7 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       // 处理 index.ts 文件的命名导出
       if (fileName === 'index.ts' && typeof moduleConfig === 'object') {
         // 查找所有以 Plugin 结尾的导出
-        for (const [exportName, exportValue] of Object.entries(moduleConfig)) {
+        for (const [exportName, exportValue] of Object.entries(moduleConfig || {})) {
           if (exportName.endsWith('Plugin') && isValidPluginConfig(exportValue)) {
             pluginConfigs.push(exportValue as Plugin);
           }

@@ -75,20 +75,16 @@ export function useCrud<T = Record<string, unknown>>(
         }
       }
 
-      console.log('useCrud loadData params:', params);
       const res = await service.page(params);
-      console.log('useCrud loadData response:', res);
 
       // 检查响应数据是否有效
       if (res && typeof res === 'object') {
         tableData.value = res.list || [];
         pagination.total = res.total || 0;
-        console.log('useCrud tableData updated:', tableData.value);
       } else {
         // 如果响应数据无效，清空表格数据
         tableData.value = [];
         pagination.total = 0;
-        console.log('useCrud tableData cleared');
       }
 
       // 刷新后钩子

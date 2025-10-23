@@ -5,7 +5,7 @@
 import type { QueuedNotification } from './types';
 
 export class BadgeManager {
-  private countdownTimers = new Map<string, NodeJS.Timeout>();
+  private countdownTimers = new Map<string, number>();
 
   /**
    * 开始徽章递减动画

@@ -4,7 +4,7 @@
  */
 
 import { responseInterceptor, type MessageHandler, type ConfirmHandler, type RouterHandler } from '@btc/shared-utils';
-import { ElMessageBox } from 'element-plus';
+import { ElMessageBox, ElMessage } from 'element-plus';
 import type { Router } from 'vue-router';
 
 /**
@@ -20,7 +20,6 @@ export function initResponseInterceptor(router: Router) {
         messageManager.success(message);
       } else {
         // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        const { ElMessage } = require('element-plus');
         ElMessage.success(message);
       }
     },
@@ -30,7 +29,6 @@ export function initResponseInterceptor(router: Router) {
         messageManager.error(message);
       } else {
         // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        const { ElMessage } = require('element-plus');
         ElMessage.error(message);
       }
     },
@@ -40,7 +38,6 @@ export function initResponseInterceptor(router: Router) {
         messageManager.warning(message);
       } else {
         // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        const { ElMessage } = require('element-plus');
         ElMessage.warning(message);
       }
     },
@@ -50,7 +47,6 @@ export function initResponseInterceptor(router: Router) {
         messageManager.info(message);
       } else {
         // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        const { ElMessage } = require('element-plus');
         ElMessage.info(message);
       }
     }

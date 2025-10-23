@@ -41,8 +41,8 @@ function inferFrontmatter(filePath: string, content: string): FrontmatterConfig 
   // 根据路径推断类型和项目
   let type = 'guide';
   let project = 'btc-shopflow';
-  let owner = 'dev-team';
-  let tags: string[] = [];
+  const owner = 'dev-team';
+  const tags: string[] = [];
   let sidebarGroup = '';
   let sidebarOrder = 999;
 

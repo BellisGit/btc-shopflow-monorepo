@@ -309,7 +309,7 @@ $bg: var(--el-bg-color);
 
     .content {
       flex: 1;
-      overflow: hidden;
+      overflow: auto;
       display: flex;
       flex-direction: column;
     }

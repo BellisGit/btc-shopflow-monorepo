@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
@@ -16,5 +17,5 @@
       "@btc-locales/*": ["src/locales/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.json"]
 }

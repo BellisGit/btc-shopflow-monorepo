@@ -20,7 +20,7 @@ export class NotificationManager {
   private badgeManager: BadgeManager;
   private lifecycleManager: LifecycleManager | null = null;
   private historyManager: HistoryManager;
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private cleanupInterval: number | null = null;
 
   constructor(config: Partial<NotificationQueueConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -72,7 +72,7 @@ export class NotificationManager {
       return;
     }
 
-    const notificationInstance = this.displayHandler[notification.type](
+    const notificationInstance = (this.displayHandler as any)[notification.type](
       notification.content,
       notification.title,
       notification.duration,

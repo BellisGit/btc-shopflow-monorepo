@@ -7,7 +7,8 @@
     "dev": "vite --port 8080",
     "build": "vite build",
     "preview": "vite preview",
-    "mock": "node mock-server.js"
+    "mock": "node mock-server.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@btc/shared-components": "workspace:*",

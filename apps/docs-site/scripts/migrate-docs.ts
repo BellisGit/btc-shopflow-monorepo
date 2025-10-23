@@ -36,8 +36,8 @@ function inferMeta(filePath: string, content: string): DocMeta {
   // 根据路径推断类型
   let type: DocMeta['type'] = 'guide';
   let project = 'btc-shopflow';
-  let owner = 'dev-team';
-  let tags: string[] = [];
+  const owner = 'dev-team';
+  const tags: string[] = [];
 
   if (relativePath.includes('\\adr\\') || relativePath.includes('/adr/')) {
     type = 'decision';

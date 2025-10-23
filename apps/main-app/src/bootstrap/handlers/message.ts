@@ -251,7 +251,6 @@ export const updateBadge = (messageInstance: any, badgeCount: number) => {
   // 如果徽章存在，直接更新数字
   if (extendedInstance.badgeElement) {
     extendedInstance.badgeElement.textContent = badgeCount.toString();
-  } else {
   }
 
   // 如果存在Vue组件实例，也更新它
