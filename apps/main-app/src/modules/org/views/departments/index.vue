@@ -73,18 +73,6 @@ const loadDepartmentOptions = async () => {
 
 const wrappedDepartmentService = {
   ...departmentService,
-  add: async (data: any) => {
-    console.log('🔍 部门新增数据:', data);
-    const result = await departmentService.add(data);
-    console.log('🔍 部门新增结果:', result);
-    return result;
-  },
-  update: async (data: any) => {
-    console.log('🔍 部门更新数据:', data);
-    const result = await departmentService.update(data);
-    console.log('🔍 部门更新结果:', result);
-    return result;
-  },
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
     await departmentService.delete({ ids });
