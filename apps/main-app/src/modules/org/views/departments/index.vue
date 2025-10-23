@@ -15,7 +15,7 @@
         <BtcFlex1 />
         <BtcPagination />
       </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" :on-submit="handleFormSubmit" />
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
     </BtcCrud>
   </div>
 </template>
@@ -127,15 +127,6 @@ const formItems = computed<FormItem[]>(() => [
   },
 ]);
 
-const handleFormSubmit = async (data: any, { close, done, next }: any) => {
-  try {
-    await next(data);
-    message.success(t('crud.message.save_success'));
-    close();
-  } catch (_error) {
-    done();
-  }
-};
 
 // 组件挂载时加载部门选项
 onMounted(() => {

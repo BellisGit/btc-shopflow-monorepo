@@ -15,7 +15,7 @@
         <BtcFlex1 />
         <BtcPagination />
       </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" :on-submit="handleFormSubmit" />
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
     </BtcCrud>
   </div>
 </template>
@@ -59,15 +59,6 @@ const formItems = computed<FormItem[]>(() => [
   { prop: 'description', label: t('org.tenant.description'), span: 24, component: { name: 'el-input', props: { type: 'textarea' } } },
 ]);
 
-const handleFormSubmit = async (data: any, { close, done, next }: any) => {
-  try {
-    await next(data);
-    message.success(t('crud.message.save_success'));
-    close();
-  } catch (_error) {
-    done();
-  }
-};
 
 // 移除手动调用 loadData，让 BtcCrud 自动加载
 </script>

@@ -58,6 +58,16 @@ export class BaseService {
 
   // 分页查询
   async page(data?: Record<string, any>) {
+    // 如果没有传递参数，使用默认参数
+    if (!data) {
+      data = {
+        order: 'createdAt',
+        sort: 'asc',
+        page: 1,
+        size: 20
+      };
+    }
+
     try {
       return await this.request({
         url: '/page',
@@ -70,7 +80,7 @@ export class BaseService {
         list: [],
         total: 0,
         page: 1,
-        size: 50
+        size: 20
       };
     }
   }
@@ -146,13 +156,13 @@ export function createEps() {
           const { path, method = 'GET' } = methodInfo;
 
           a[i] = function (data?: Record<string, any>) {
-            // 对于 list 方法，如果没有传递参数，使用默认参数
-            if (i === 'list' && !data) {
+            // 对于 list 和 page 方法，如果没有传递参数，使用默认参数
+            if ((i === 'list' || i === 'page') && !data) {
               const defaultParams = {
                 order: 'createdAt',
                 sort: 'asc',
                 page: 1,
-                size: 50
+                size: i === 'list' ? 50 : 20
               };
               data = defaultParams;
             }
@@ -171,7 +181,7 @@ export function createEps() {
                   list: [],
                   total: 0,
                   page: 1,
-                  size: 50
+                  size: i === 'list' ? 50 : 20
                 };
               } else {
                 throw error;
@@ -228,7 +238,7 @@ export function createEps() {
           if (!service.page) {
             service.page = async () => {
               console.warn(`EPS服务不存在: ${path.join('.')}.${key}.page`);
-              return { list: [], total: 0, page: 1, size: 50 };
+              return { list: [], total: 0, page: 1, size: 20 };
             };
           }
           if (!service.info) {

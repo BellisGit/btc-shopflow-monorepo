@@ -15,7 +15,7 @@
         <BtcFlex1 />
         <BtcPagination />
       </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" :on-submit="handleFormSubmit" />
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
     </BtcCrud>
   </div>
 </template>
@@ -189,20 +189,6 @@ const formItems: FormItem[] = [
 
 const crudRef = ref();
 
-const handleFormSubmit = async (data: any) => {
-  try {
-    if (data.id) {
-      await service.syspolicy.update(data);
-      message.success(t('crud.message.save_success'));
-    } else {
-      await service.syspolicy.add(data);
-      message.success(t('crud.message.save_success'));
-    }
-    crudRef.value?.crud.handleRefresh();
-  } catch (error) {
-    console.error('Form submission failed:', error);
-  }
-};
 </script>
 
 <style lang="scss" scoped>

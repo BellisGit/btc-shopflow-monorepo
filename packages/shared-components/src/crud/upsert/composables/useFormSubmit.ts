@@ -79,10 +79,8 @@ export function useFormSubmit(
               let result;
               if (mode.value === 'update') {
                 result = await service.update(data);
-                BtcMessage.success('更新成功');
               } else {
                 result = await service.add(data);
-                BtcMessage.success('新增成功');
               }
 
               // 提交成功后自动刷新

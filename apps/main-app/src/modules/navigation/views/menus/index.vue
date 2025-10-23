@@ -12,7 +12,6 @@
       :show-unassigned="true"
       unassigned-label="未分配"
       @select="onDomainSelect"
-      @form-submit="handleFormSubmit"
     />
   </div>
 </template>
@@ -251,23 +250,6 @@ const menuFormItems = computed<FormItem[]>(() => [
 ]);
 
 
-const handleFormSubmit = async (data: any, { close, done, next }: any) => {
-  try {
-    // 自动添加模块ID
-    if (selectedModule.value) {
-      data.moduleId = selectedModule.value.moduleId;
-    }
-
-    await next(data);
-    const messageManager = (window as any).messageManager;
-    if (messageManager) {
-      messageManager.enqueue('success', t('crud.message.save_success'));
-    }
-    close();
-  } catch (_error) {
-    done();
-  }
-};
 </script>
 
 <style lang="scss" scoped>

@@ -12,7 +12,6 @@
       :show-unassigned="true"
       unassigned-label="未分配"
       @select="onDomainSelect"
-      @form-submit="handleFormSubmit"
     />
   </div>
 </template>
@@ -78,20 +77,6 @@ const moduleFormItems = computed<FormItem[]>(() => [
 ]);
 
 
-const handleFormSubmit = async (data: any, { close, done, next }: any) => {
-  try {
-    // 自动添加域ID
-    if (selectedDomain.value) {
-      data.domainId = selectedDomain.value.domainId;
-    }
-
-    await next(data);
-    message.success(t('crud.message.save_success'));
-    close();
-  } catch (_error) {
-    done();
-  }
-};
 </script>
 
 <style lang="scss" scoped>

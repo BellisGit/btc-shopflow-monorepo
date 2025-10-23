@@ -12,7 +12,6 @@
       :show-unassigned="true"
       unassigned-label="未分配"
       @select="onModuleSelect"
-      @form-submit="handleFormSubmit"
     />
   </div>
 </template>
@@ -89,15 +88,6 @@ const resourceFormItems = computed<FormItem[]>(() => [
   { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
 
-const handleFormSubmit = async (data: any, { close, done, next }: any) => {
-  try {
-    await next(data);
-    message.success(t('crud.message.save_success'));
-    close();
-  } catch (_error) {
-    done();
-  }
-};
 
 </script>
 

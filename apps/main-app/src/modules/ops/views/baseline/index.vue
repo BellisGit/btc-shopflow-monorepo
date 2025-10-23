@@ -18,7 +18,7 @@
         <BtcPagination />
       </BtcRow>
 
-      <BtcUpsert ref="upsertRef" :items="baselineFormItems" width="800px" :on-submit="handleFormSubmit" />
+      <BtcUpsert ref="upsertRef" :items="baselineFormItems" width="800px" />
     </BtcCrud>
   </div>
 </template>
@@ -26,12 +26,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { useMessage } from '@/utils/use-message';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { createMockCrudService } from '@utils/http';
 
 const { t } = useI18n();
-const message = useMessage();
 const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
@@ -70,16 +68,6 @@ const baselineFormItems = computed<FormItem[]>(() => [
   { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
 
-const handleFormSubmit = async (data: any, { close, done }: any) => {
-  try {
-    await baselineService.add(data);
-    message.success(t('crud.message.save_success'));
-    close();
-    crudRef.value?.crud.loadData();
-  } catch (_error) {
-    done();
-  }
-};
 </script>
 
 <style lang="scss" scoped>

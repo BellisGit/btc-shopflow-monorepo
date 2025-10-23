@@ -41,7 +41,6 @@
         ref="upsertRef"
         :items="formItems"
         width="600px"
-        :on-submit="handleFormSubmit"
         :on-open="handleFormOpen"
       >
         <!-- 自定义表单项 -->
@@ -288,20 +287,6 @@ const formItems = computed<FormItem[]>(() => [
 /**
  * 表单提交
  */
-const handleFormSubmit = async (data: any, { close, done }: any) => {
-  try {
-    if (data.id) {
-      await userService.update(data);
-    } else {
-      await userService.add(data);
-    }
-
-    close();
-    crudRef.value?.crud.loadData();
-  } catch (_error) {
-    done();
-  }
-};
 
 /**
  * 表单打开
