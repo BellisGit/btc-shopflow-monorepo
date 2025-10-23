@@ -63,7 +63,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'priority', label: '优先级', width: 100 },
   { prop: 'conditions', label: '条件（JSON）', minWidth: 200 },
   { prop: 'description', label: '描述', minWidth: 150 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -94,7 +93,7 @@ onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 
 <style lang="scss" scoped>
 .policies-list {
-  padding: 20px;
+  padding: 10px;
 }
 </style>
 

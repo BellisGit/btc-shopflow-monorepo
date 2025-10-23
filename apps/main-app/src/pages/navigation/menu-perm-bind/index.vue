@@ -114,7 +114,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .menu-perm-bind {
-  padding: 20px;
 }
 
 .card-header {

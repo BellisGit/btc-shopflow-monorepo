@@ -97,8 +97,6 @@ const columns = computed<TableColumn[]>(() => [
     }
   },
   { prop: 'sort', label: '排序', width: 80 },
-  CommonColumns.createdAt(),
-  CommonColumns.operation(),
 ]);
 
 // 部门表单

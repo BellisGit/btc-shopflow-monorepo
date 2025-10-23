@@ -2,7 +2,7 @@
   <div class="plugins-page">
     <BtcViewGroup ref="viewGroupRef" :options="viewGroupOptions" style="height: 100%">
       <template #right>
-        <BtcCrud ref="crudRef" :service="wrappedPluginService" :on-before-refresh="handleBeforeRefresh" style="padding: 10px;">
+        <BtcCrud ref="crudRef" :service="wrappedPluginService" :on-before-refresh="handleBeforeRefresh">
           <BtcRow>
             <BtcRefreshBtn />
             <BtcAddBtn />
@@ -104,7 +104,6 @@ const pluginColumns = computed<TableColumn[]>(() => [
   { prop: 'version', label: '版本', width: 100 },
   { prop: 'status', label: '状态', width: 100 },
   { prop: 'description', label: '描述', minWidth: 200 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 // 插件表单

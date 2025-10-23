@@ -69,6 +69,5 @@ onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 
 <style lang="scss" scoped>
 .permissions-list {
-  padding: 20px;
 }
 </style>

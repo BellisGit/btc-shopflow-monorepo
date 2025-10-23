@@ -1,11 +1,15 @@
 import { computed } from 'vue';
 import type { TableProps } from '../types';
 import { autoFormatTableColumns } from '../utils/formatters';
+import { CommonColumns } from '../utils/common-columns';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 表格列配置处理
  */
 export function useTableColumns(props: TableProps) {
+  const { t } = useI18n();
+
   /**
    * 格式化字典值
    */
@@ -57,12 +61,30 @@ export function useTableColumns(props: TableProps) {
   }
 
   /**
-   * 计算列配置 - 智能列宽分配 + 字典匹配 + 自动时间格式化
+   * 计算列配置 - 智能列宽分配 + 字典匹配 + 自动时间格式化 + 自动添加通用列
    */
   const computedColumns = computed(() => {
     const columns = props.columns || [];
+
+    // 检查是否已有创建时间列和操作列
+    const hasCreatedAt = columns.some(col => col.prop === 'createdAt' || col.prop === 'createTime');
+    const hasOpColumn = columns.some(col => col.type === 'op');
+
+    // 自动添加通用列
+    const enhancedColumns = [...columns];
+
+    // 自动添加创建时间列（如果不存在）
+    if (!hasCreatedAt) {
+      enhancedColumns.push(CommonColumns.createdAt());
+    }
+
+    // 自动添加操作列（如果不存在）
+    if (!hasOpColumn) {
+      enhancedColumns.push(CommonColumns.operation());
+    }
+
     // 先进行自动时间格式化
-    const formattedColumns = autoFormatTableColumns(columns);
+    const formattedColumns = autoFormatTableColumns(enhancedColumns);
     return formattedColumns.map((column) => {
       const isFixedWidthColumn =
         column.type === 'selection' || column.type === 'index' || column.type === 'op';

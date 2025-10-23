@@ -1,6 +1,6 @@
 <template>
   <div class="policies-page">
-    <BtcCrud ref="crudRef" :service="policyService" style="padding: 10px;">
+    <BtcCrud ref="crudRef" :service="policyService">
       <BtcRow>
         <BtcRefreshBtn />
         <BtcAddBtn />
@@ -97,11 +97,6 @@ const columns = computed<TableColumn[]>(() => [
       { label: '禁用', value: 0 }
     ]
   },
-  {
-    label: '创建时间',
-    prop: 'createTime',
-    width: 160
-  }
 ]);
 
 

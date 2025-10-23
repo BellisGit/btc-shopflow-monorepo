@@ -48,7 +48,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'roleCode', label: t('access.role.code') },
   { prop: 'roleType', label: t('access.role.type') },
   { prop: 'description', label: t('common.description') },
-  { type: 'op', label: '操作', width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [

@@ -61,8 +61,8 @@ export class BaseService {
     // 如果没有传递参数，使用默认参数
     if (!data) {
       data = {
-        order: 'createdAt',
-        sort: 'asc',
+        sort: 'createdAt',
+        order: 'asc',
         page: 1,
         size: 20
       };
@@ -159,8 +159,8 @@ export function createEps() {
             // 对于 list 和 page 方法，如果没有传递参数，使用默认参数
             if ((i === 'list' || i === 'page') && !data) {
               const defaultParams = {
-                order: 'createdAt',
-                sort: 'asc',
+                sort: 'createdAt',
+                order: 'asc',
                 page: 1,
                 size: i === 'list' ? 50 : 20
               };

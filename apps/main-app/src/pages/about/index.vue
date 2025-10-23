@@ -123,7 +123,6 @@ const { t } = useI18n();
 
 <style lang="scss" scoped>
 .about-page {
-  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;

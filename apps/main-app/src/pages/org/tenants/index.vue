@@ -48,7 +48,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'tenantCode', label: '租户编码' },
   { prop: 'tenantType', label: '类型' },
   { prop: 'status', label: '状态' },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [

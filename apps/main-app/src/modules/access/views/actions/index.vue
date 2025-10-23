@@ -49,7 +49,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'actionType', label: t('access.action.type') },
   { prop: 'httpMethod', label: t('access.action.http_method') },
   { prop: 'description', label: t('common.description') },
-  { type: 'op', label: '操作', width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [

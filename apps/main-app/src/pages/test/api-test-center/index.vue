@@ -299,7 +299,6 @@ onMounted(() => {
 
 <style scoped>
 .api-test-center {
-  padding: 20px;
 }
 
 .search-input {

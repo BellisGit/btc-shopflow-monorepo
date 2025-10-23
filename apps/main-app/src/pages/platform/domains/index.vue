@@ -68,9 +68,6 @@ const columns = computed<TableColumn[]>(() => [
     }
   },
   { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'createdAt', label: '创建时间', width: 180 },
-  { prop: 'updatedAt', label: '更新时间', width: 180 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 // 域表单

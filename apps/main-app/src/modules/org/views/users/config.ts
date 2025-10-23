@@ -10,6 +10,7 @@ export const userColumns: TableColumn[] = [
   { type: 'selection', width: 60 },
   { prop: 'username', label: '用户名', width: 120 },
   { prop: 'realName', label: '中文名', minWidth: 100 },
+  { prop: 'position', label: '职位', minWidth: 100 },
   {
     prop: 'name',
     label: '部门',
@@ -40,11 +41,10 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
       label: '用户名',
       span: 12,
       component: {
-        name: 'el-descriptions',
+        name: 'el-input',
         props: {
-          size: 'small',
-          border: true,
-          column: 1
+          readonly: true,
+          placeholder: '系统自动生成'
         }
       }
     },
@@ -53,11 +53,22 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
       label: '中文名',
       span: 12,
       component: {
-        name: 'el-descriptions',
+        name: 'el-input',
         props: {
-          size: 'small',
-          border: true,
-          column: 1
+          readonly: true,
+          placeholder: '暂无数据'
+        }
+      }
+    },
+    {
+      prop: 'position',
+      label: '职位',
+      span: 12,
+      component: {
+        name: 'el-input',
+        props: {
+          readonly: true,
+          placeholder: '暂无数据'
         }
       }
     },

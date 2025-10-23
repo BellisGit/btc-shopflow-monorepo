@@ -183,7 +183,6 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .menu-preview-page {
-  padding: 20px;
 }
 
 .card-header {

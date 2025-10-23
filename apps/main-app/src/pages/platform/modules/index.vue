@@ -2,7 +2,7 @@
   <div class="modules-page">
     <BtcViewGroup ref="viewGroupRef" :options="viewGroupOptions" style="height: 100%">
       <template #right>
-        <BtcCrud ref="crudRef" :service="wrappedModuleService" :on-before-refresh="handleBeforeRefresh" style="padding: 10px;">
+        <BtcCrud ref="crudRef" :service="wrappedModuleService" :on-before-refresh="handleBeforeRefresh">
           <BtcRow>
             <BtcRefreshBtn />
             <BtcAddBtn />
@@ -97,7 +97,6 @@ const moduleColumns = computed<TableColumn[]>(() => [
   { prop: 'moduleCode', label: '模块编码', minWidth: 150 },
   { prop: 'moduleType', label: '类型', width: 100 },
   { prop: 'description', label: '描述', minWidth: 200 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 // 模块表单

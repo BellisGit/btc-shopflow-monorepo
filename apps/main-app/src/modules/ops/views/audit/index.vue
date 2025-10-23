@@ -1,6 +1,6 @@
 <template>
   <div class="audit-page">
-    <BtcCrud ref="crudRef" :service="auditService" style="padding: 10px;">
+    <BtcCrud ref="crudRef" :service="auditService">
       <BtcRow>
         <BtcRefreshBtn />
         <BtcFlex1 />

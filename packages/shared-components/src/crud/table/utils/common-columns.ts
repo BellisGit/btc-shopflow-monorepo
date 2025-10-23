@@ -13,6 +13,7 @@ export function createCreatedAtColumn(): TableColumn {
     prop: 'createdAt',
     label: '创建时间',
     width: 180,
+    sortable: true,
     formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
     },
@@ -27,6 +28,7 @@ export function createUpdatedAtColumn(): TableColumn {
     prop: 'updatedAt',
     label: '更新时间',
     width: 180,
+    sortable: true,
     formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
     },

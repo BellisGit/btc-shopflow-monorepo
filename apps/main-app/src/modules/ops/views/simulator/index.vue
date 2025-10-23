@@ -225,7 +225,6 @@ const handleSimulate = async () => {
 
 <style lang="scss" scoped>
 .simulator-page {
-  padding: 20px;
 }
 
 .card-header {

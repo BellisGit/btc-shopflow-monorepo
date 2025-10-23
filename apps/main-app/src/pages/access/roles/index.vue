@@ -48,7 +48,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'roleCode', label: '角色编码' },
   { prop: 'roleType', label: '类型' },
   { prop: 'description', label: '描述' },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [

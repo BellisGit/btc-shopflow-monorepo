@@ -53,8 +53,6 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'resourceName', label: '资源', minWidth: 100 },
   { prop: 'actionName', label: '行为', minWidth: 100 },
   { prop: 'description', label: '描述', minWidth: 150 },
-  { prop: 'createTime', label: '创建时间', minWidth: 120 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -71,7 +69,6 @@ onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 
 <style lang="scss" scoped>
 .permissions-list {
-  padding: 20px;
 }
 </style>
 

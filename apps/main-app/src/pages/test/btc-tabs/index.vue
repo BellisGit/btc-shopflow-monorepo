@@ -182,7 +182,6 @@ const removeLastTab = () => {
 
 <style scoped>
 .btc-tabs-test {
-  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;

@@ -221,7 +221,7 @@ onUnmounted(() => {
 
       // 只给非 view-group 页面添加 padding
       &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page) {
-        padding: 20px;
+        padding: 10px;
       }
     }
 
