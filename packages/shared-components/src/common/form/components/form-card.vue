@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="btc-form-card">
     <div class="btc-form-card__header" @click="toggle">
       <span class="btc-form-card__label">{{ label }}</span>
@@ -76,4 +76,5 @@ function toggle() {
   }
 }
 </style>
+
 

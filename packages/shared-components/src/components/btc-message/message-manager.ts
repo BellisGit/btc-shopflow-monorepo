@@ -38,11 +38,26 @@ class BtcMessageManager {
     const key = `${type}:${content}`;
     const maxCount = options.maxCount || 99;
 
+    // 防重复机制：如果正在创建相同的消息，直接返回
     if (this.messages.has(key)) {
       // 消息已存在，递增计数
       this.incrementMessage(key, maxCount);
     } else {
       // 新消息，创建消息实例
+
+      // 立即标记为正在创建，防止重复创建
+      this.messages.set(key, {
+        content,
+        type,
+        count: 0, // 临时标记
+        maxCount,
+        messageInstance: null,
+        decrementTimeout: null,
+        lastUpdateTime: Date.now(),
+        messageElement: null,
+        isDecrementing: false,
+      });
+
       this.createNewMessage(key, content, type, {
         duration: options.duration || 3000,
         showClose: false, // BtcMessage 不需要关闭按钮
@@ -66,6 +81,7 @@ class BtcMessageManager {
       maxCount: number;
     }
   ) {
+
     // 使用 Element Plus 原生功能创建消息，完全手动控制生命周期
     const messageInstance = ElMessage({
       message: content,
@@ -81,20 +97,30 @@ class BtcMessageManager {
       },
     });
 
-    // 保存消息状态
-    const messageState: MessageState = {
-      content,
-      type,
-      count: 1,
-      maxCount: options.maxCount || 99,
-      messageInstance,
-      decrementTimeout: null,
-      lastUpdateTime: Date.now(),
-      messageElement: null,
-      isDecrementing: false, // 初始化为false
-    };
 
-    this.messages.set(key, messageState);
+    // 更新消息状态（已经存在临时状态）
+    const existingState = this.messages.get(key);
+    if (existingState) {
+      existingState.count = 1;
+      existingState.messageInstance = messageInstance;
+      existingState.lastUpdateTime = Date.now();
+      // 其他字段保持不变
+    } else {
+      // 如果临时状态不存在，创建新状态（这种情况不应该发生）
+      console.warn('[BtcMessageManager] No existing state found for key:', key);
+      const messageState: MessageState = {
+        content,
+        type,
+        count: 1,
+        maxCount: options.maxCount || 99,
+        messageInstance,
+        decrementTimeout: null,
+        lastUpdateTime: Date.now(),
+        messageElement: null,
+        isDecrementing: false,
+      };
+      this.messages.set(key, messageState);
+    }
 
     // 查找 DOM 元素并保存引用
     setTimeout(() => {
@@ -111,12 +137,16 @@ class BtcMessageManager {
           badgeElement.style.display = 'none';
         }
 
-        messageState.messageElement = lastMessage;
+        const currentState = this.messages.get(key);
+        if (currentState) {
+          currentState.messageElement = lastMessage;
+        }
       }
     }, 100);
 
     // 2秒后开始递减（只有在 count > 1 时才安排递减）
-    if (messageState.count > 1) {
+    const currentState = this.messages.get(key);
+    if (currentState && currentState.count > 1) {
       this.scheduleDecrement(key);
     } else {
       // 单条消息，3秒后自动关闭
@@ -136,6 +166,7 @@ class BtcMessageManager {
     // 递增计数，不限制最大值（与 el-badge 原生逻辑一致）
     messageState.count = messageState.count + 1;
     messageState.lastUpdateTime = Date.now();
+
 
     // 直接通过 DOM 操作更新 Element Plus 原生徽章，不调用新的 ElMessage
     this.updateNativeBadge(key);
@@ -399,6 +430,8 @@ export const BtcMessage = {
   warning: (message: string, options?: any) =>
     messageManager.showMessage(message, 'warning', options),
   info: (message: string, options?: any) => messageManager.showMessage(message, 'info', options),
-  error: (message: string, options?: any) => messageManager.showMessage(message, 'error', options),
+  error: (message: string, options?: any) => {
+    return messageManager.showMessage(message, 'error', options);
+  },
   closeAll: () => messageManager.closeAll(),
 };

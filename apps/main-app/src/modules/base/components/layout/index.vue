@@ -310,7 +310,7 @@ onUnmounted(() => {
 
     // 保留标签页进程栏和面包屑，确保用户可以退出全屏
     .app-layout__content {
-      margin: 0 10px 10px 10px;
+      margin: 10px; // 保持四周间距，包括顶部间距
       width: calc(100% - 20px);
       border-radius: 6px;
     }

@@ -39,7 +39,6 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
     }
 
     // 否则重新获取数据并更新缓存
-    console.log('[EPS] 获取 EPS 数据...');
 
     // 创建 pending 请求
     pendingRequest = (async () => {
@@ -53,11 +52,11 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         // 更新缓存
         epsCache = result;
         cacheTimestamp = Date.now();
-        console.log('[EPS] ✅ EPS 数据已缓存 24 小时');
 
         return result;
       } catch (err) {
         error(`获取 EPS 数据失败: ${err}`);
+        // 返回一个有效的默认结构
         return { service: {}, list: [], isUpdate: false };
       }
     })();
@@ -99,14 +98,17 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         try {
           // 始终使用 getEpsData，它会处理缓存逻辑
           const eps = await getEpsData();
-          // 简化虚拟模块日志
-          console.log(`[EPS Virtual Module] Generated ${Object.keys(eps.service || {}).length} services`);
+
+          // 确保 eps 对象有正确的结构
+          const epsData = eps || { service: {}, list: [], isUpdate: false };
 
           // 参考 cool-admin 的虚拟模块生成
-          return `export const eps = ${JSON.stringify(eps)}`;
+          return `export default ${JSON.stringify(epsData)};`;
         } catch (err) {
           error(`加载 EPS 数据失败: ${err}`);
-          return `export default {};`;
+          // 返回一个有效的默认结构
+          const defaultEps = { service: {}, list: [], isUpdate: false };
+          return `export default ${JSON.stringify(defaultEps)};`;
         }
       }
 

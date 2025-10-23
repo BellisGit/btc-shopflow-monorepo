@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="btc-notification-wrapper">
     <el-notification
       :title="title"
@@ -14,12 +14,12 @@
 </template>
 
 <script setup lang="ts">
-// 组件名称
+// 缁勪欢鍚嶇О
 defineOptions({
   name: 'BtcNotificationComponent',
 });
 
-// Props 定义
+// Props 瀹氫箟
 interface Props {
   title?: string;
   message: string;
@@ -39,12 +39,12 @@ withDefaults(defineProps<Props>(), {
   dangerouslyUseHTMLString: false,
 });
 
-// Emits 定义
+// Emits 瀹氫箟
 const emit = defineEmits<{
   close: [];
 }>();
 
-// 处理关闭事件
+// 澶勭悊鍏抽棴浜嬩欢
 const handleClose = () => {
   emit('close');
 };
@@ -56,3 +56,4 @@ const handleClose = () => {
   display: inline-block;
 }
 </style>
+

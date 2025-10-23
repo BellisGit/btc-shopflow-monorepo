@@ -1,6 +1,5 @@
-/**
- * 表单项管理工具
- */
+﻿/**
+ * 琛ㄥ崟椤圭鐞嗗伐鍏? */
 
 // Helpers
 export function cloneDeep(obj: any): any {
@@ -25,7 +24,7 @@ export function isFunction(val: any): val is (...args: any[]) => any {
 }
 
 /**
- * 判断是否隐藏
+ * 鍒ゆ柇鏄惁闅愯棌
  */
 export function parseHidden(value: any, scope: any) {
   if (isBoolean(value)) {
@@ -37,15 +36,13 @@ export function parseHidden(value: any, scope: any) {
 }
 
 /**
- * 折叠表单项
- */
+ * 鎶樺彔琛ㄥ崟椤? */
 export function collapseItem(item: any) {
   item.collapse = !item.collapse;
 }
 
 /**
- * 转换表单值
- */
+ * 杞崲琛ㄥ崟鍊? */
 export function invokeData(d: any) {
   for (const i in d) {
     if (i.includes('-')) {
@@ -70,3 +67,4 @@ export function invokeData(d: any) {
     }
   }
 }
+

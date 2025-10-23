@@ -38,7 +38,6 @@
         <el-tree
           ref="treeRef"
           node-key="id"
-          default-expand-all
           :data="list"
           :props="treeProps"
           highlight-current
@@ -74,18 +73,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import { Check, Close, Refresh, MoreFilled } from '@element-plus/icons-vue';
-import BtcSvg from '../../common/svg/index.vue';
+import BtcSvg from '@btc-common/svg/index.vue';
 
 // 树形数据处理工具函数
-function deepTree(data: any[], parentId = 0, children = 'children'): any[] {
+function deepTree(data: any[], parentId: any = 0, children = 'children'): any[] {
   const result: any[] = [];
 
   for (const item of data) {
-    if (item.parentId === parentId) {
+    // 处理字符串和数字类型的 parentId 匹配
+    const itemParentId = item.parentId;
+    const isMatch = itemParentId === parentId ||
+                   String(itemParentId) === String(parentId) ||
+                   (itemParentId == null && (parentId === 0 || parentId === '0' || parentId === null));
+
+    if (isMatch) {
       const childrenData = deepTree(data, item.id, children);
       if (childrenData.length > 0) {
         item[children] = childrenData;
@@ -110,38 +115,48 @@ function revDeepTree(data: any[], children = 'children'): any[] {
   return result;
 }
 
-interface MasterListConfig {
-  // 服务配置
-  service: {
-    list: () => Promise<any[]>;
-    add?: (data: any) => Promise<any>;
-    update?: (data: any) => Promise<any>;
-    delete?: (data: any) => Promise<any>;
-  };
-
-  // 显示配置
-  title: string;
-  labelField?: string;
-  idField?: string;
-  childrenField?: string;
-
-  // 功能配置
-  drag?: boolean;
-  level?: number;
-
-  // 事件配置
-  onSelect?: (item: any, ids: any[]) => void;
-  onAdd?: (item: any) => void;
-  onEdit?: (item: any) => void;
-  onDelete?: (item: any) => void;
+// 提取数据数组的工具函数
+function extractDataArray(res: any): any[] {
+  if (Array.isArray(res)) {
+    return res;
+  } else if (res && typeof res === 'object') {
+    // 处理 { list: [...], page: 1, size: 20, total: 5 } 结构
+    if (Array.isArray((res as any).list)) {
+      return (res as any).list;
+    } else if (Array.isArray((res as any).data)) {
+      return (res as any).data;
+    }
+  }
+  return [];
 }
 
-const props = withDefaults(defineProps<MasterListConfig>(), {
-  labelField: 'name',
-  idField: 'id',
-  childrenField: 'children',
+interface Props {
+  service: {
+    list: (params?: any) => Promise<any[]>;
+  };
+  title?: string;
+  showUnassigned?: boolean;
+  unassignedLabel?: string;
+  drag?: boolean;
+  level?: number;
+  idField?: string;
+  labelField?: string;
+  childrenField?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  title: '列表',
+  showUnassigned: false,
+  unassignedLabel: '未分配',
   drag: true,
   level: 99,
+  idField: 'id',
+  labelField: 'name',
+  childrenField: 'children',
+});
+
+defineOptions({
+  name: 'BtcMasterList'
 });
 
 const emit = defineEmits(['refresh', 'select', 'add', 'edit', 'delete', 'load']);
@@ -151,29 +166,24 @@ const { t } = useI18n();
 // 响应式数据
 const list = ref<any[]>([]);
 const loading = ref(false);
-const isDrag = ref(false);
 const selectedItem = ref<any>(null);
-const treeRef = ref();
-const isSettingDefault = ref(false); // 标记是否正在设置默认选中
+const isDrag = ref(false);
 
-// 计算属性
+// 组件引用
+const treeRef = ref<any>(null);
+
+// 树配置
 const treeProps = computed(() => ({
-  label: props.labelField,
   children: props.childrenField,
+  label: props.labelField,
+  disabled: 'disabled',
+  isLeaf: 'isLeaf',
 }));
 
-// 浏览器信息（简化版）
-const browser = ref({ isMini: false });
-
-// 允许拖拽的规则
-function allowDrag({ data }: any) {
-  return data[props.childrenField] && data[props.childrenField].length > 0;
-}
-
-// 允许放置的规则
-function allowDrop(_: any, dropNode: any) {
-  return dropNode.data[props.childrenField] && dropNode.data[props.childrenField].length > 0;
-}
+// 浏览器检测
+const browser = computed(() => ({
+  isMini: window.innerWidth <= 768
+}));
 
 // 刷新数据
 async function refresh() {
@@ -181,104 +191,132 @@ async function refresh() {
   isDrag.value = false;
 
   try {
+    // 调用服务获取数据，不传递参数（EPS 层会自动处理默认参数）
     const res = await props.service.list();
-
-    // 确保 res 是一个数组
-    const dataArray = Array.isArray(res) ? res : (res as any)?.data || [];
+    const dataArray = extractDataArray(res);
 
     // 检查数据是否有 parentId 字段，决定是否进行树形处理
     const hasParentId =
       dataArray.length > 0 && Object.prototype.hasOwnProperty.call(dataArray[0], 'parentId');
+
+    let processedData: any[];
     if (hasParentId) {
-      list.value = deepTree(dataArray);
+      processedData = deepTree(dataArray);
     } else {
-      // 平铺数据直接使用，确保是纯数组
-      list.value = [...dataArray];
+      // 平铺数据直接使用
+      processedData = [...dataArray];
+    }
+
+    // 如果需要显示"未分配"分组，根据数据情况决定位置
+    if (props.showUnassigned) {
+      const unassignedItem = {
+        [props.idField]: 'UNASSIGNED',
+        [props.labelField]: props.unassignedLabel,
+        isUnassigned: true, // 标记这是未分配项
+      };
+
+      // 如果只有未分配项（没有其他数据），显示在最上面
+      // 否则显示在最下面
+      if (processedData.length === 0) {
+        list.value = [unassignedItem];
+      } else {
+        list.value = [...processedData, unassignedItem];
+      }
+    } else {
+      list.value = processedData;
     }
 
     // 延迟执行默认选中，确保数据已经渲染
     nextTick(() => {
-      if (!selectedItem.value && list.value.length > 0) {
-        isSettingDefault.value = true;
-        rowClick(undefined, true); // 传入 skipEmit=true，不触发 select 事件
-        // 延迟重置标记，确保 setCurrentKey 不会触发重复事件
-        setTimeout(() => {
-          isSettingDefault.value = false;
-        }, 100);
+      if (list.value.length > 0) {
+        // 如果启用了"未分配"选项，优先选中"未分配"项
+        if (props.showUnassigned) {
+          const unassignedItem = list.value.find(item => item.isUnassigned);
+          if (unassignedItem) {
+            handleNodeClick(unassignedItem);
+          } else {
+            handleNodeClick(list.value[0]);
+          }
+        } else {
+          handleNodeClick(list.value[0]);
+        }
       }
-
-      // 触发 load 事件，通知父组件数据已加载完成
-      emit(
-        'load',
-        list.value,
-        selectedItem.value || (list.value.length > 0 ? list.value[0] : null)
-      );
     });
+
+    // 导出数据供右侧使用
+    emit('load', list.value);
+
   } catch (error) {
+    console.error('加载数据失败:', error);
     ElMessage.error('加载数据失败');
-    console.error(error);
   } finally {
     loading.value = false;
   }
 }
 
-// 处理用户点击节点
-function handleNodeClick(data: any) {
-  rowClick(data);
+// 处理节点点击
+function handleNodeClick(item: any) {
+  selectedItem.value = item;
+
+  // 设置 el-tree 的当前节点
+  nextTick(() => {
+    if (treeRef.value) {
+      treeRef.value.setCurrentKey(item.id);
+    }
+  });
+
+  // 计算 keyword 参数
+  let keyword: any;
+  if (item.isUnassigned) {
+    keyword = undefined; // 未分配不传 keyword
+  } else if (item.children && item.children.length > 0) {
+    // 有子级：返回所有子级 ID 数组
+    const ids = revDeepTree(item.children).map(e => e.id);
+    ids.unshift(item.id);
+    keyword = ids;
+  } else {
+    // 单层：返回 ID 字符串
+    keyword = item.id;
+  }
+
+  // 导出选中参数
+  emit('select', item, keyword);
 }
 
-// 点击节点
-function rowClick(item?: any, skipEmit = false) {
-  // 如果正在设置默认选中，且是用户点击触发的，则忽略
-  if (isSettingDefault.value && item) {
-    return;
+// 计算当前选中项的 keyword
+function calculateKeyword(item: any): any {
+  if (!item) return undefined;
+
+  if (item.isUnassigned) {
+    return undefined;
+  } else if (item.children && item.children.length > 0) {
+    const ids = revDeepTree(item.children).map(e => e.id);
+    ids.unshift(item.id);
+    return ids;
+  } else {
+    return item.id;
   }
+}
 
-  if (!item) {
-    item = list.value[0];
-  }
+// 拖拽相关
+function allowDrag({ data }: any) {
+  return data.parentId;
+}
 
-  if (item) {
-    let ids: any[] = [];
-
-    // 检查是否有子节点（树形数据）
-    if (item[props.childrenField] && item[props.childrenField].length > 0) {
-      ids = revDeepTree(item[props.childrenField]).map((e: any) => e[props.idField]);
-      ids.unshift(item[props.idField]);
-    } else {
-      // 平铺数据，只包含当前项
-      ids = [item[props.idField]];
-    }
-
-    selectedItem.value = item;
-
-    nextTick(() => {
-      // 设置 ElTree 的当前选中节点
-      if (treeRef.value) {
-        treeRef.value.setCurrentKey(item[props.idField]);
-      }
-
-      // 只有在非 skipEmit 时才触发 select 事件
-      if (!skipEmit) {
-        emit('select', item, ids);
-      }
-    });
-  }
+function allowDrop(_: any, dropNode: any) {
+  return dropNode.data.parentId;
 }
 
 // 右键菜单
-function onContextMenu(event: MouseEvent, data?: any, node?: any) {
+function onContextMenu(event: any, data?: any, node?: any) {
   // 这里可以集成右键菜单组件
-  console.log('右键菜单', { event, data, node });
 }
 
 // 拖拽排序
 function treeOrder(save: boolean) {
   if (save) {
-    // 保存排序
     ElMessage.success('排序已保存');
   } else {
-    // 取消排序
     ElMessage.info('已取消排序');
   }
   isDrag.value = false;
@@ -289,10 +327,12 @@ onMounted(() => {
   refresh();
 });
 
-// 暴露方法
+// 暴露方法和数据
 defineExpose({
   refresh,
-  rowClick,
+  selectedItem,
+  list, // 暴露列表数据供外部使用
+  getKeyword() { return calculateKeyword(selectedItem.value); }
 });
 </script>
 
@@ -314,9 +354,18 @@ defineExpose({
     height: 40px;
     padding: 0 10px;
     border-bottom: 1px solid var(--el-border-color-extra-light);
+    min-width: 0; // 允许 flex 项目收缩
 
     .el-text {
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0; // 允许文本收缩
+      // 确保在折叠时不会换行
+      word-break: keep-all;
+      hyphens: none;
     }
   }
 
@@ -372,19 +421,29 @@ defineExpose({
       .el-tree-node__expand-icon {
         margin-left: 5px;
       }
+    }
 
-      &:hover {
-        background-color: var(--el-fill-color-light);
-      }
+    // 空状态样式 - 在整个容器中垂直水平居中
+    :deep(.el-tree__empty-block) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 200px); // 使用视口高度减去顶部和底部空间
+      min-height: 200px;
+      width: 100%;
+      position: relative;
+    }
 
-      &.is-current {
-        background-color: var(--el-color-primary) !important;
-        color: #fff !important;
-
-        .el-tree-node__label {
-          color: #fff !important;
-        }
-      }
+    :deep(.el-tree__empty-text) {
+      color: var(--el-text-color-placeholder);
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      display: inline-block;
+      word-break: keep-all;
+      hyphens: none;
     }
   }
 
@@ -404,6 +463,10 @@ defineExpose({
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+
+      &.is-active {
+        color: var(--el-color-primary);
+      }
     }
 
     &-icon {

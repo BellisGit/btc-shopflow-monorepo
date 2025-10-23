@@ -26,6 +26,9 @@ export interface Props {
 
   // 是否自动加载数据
   autoLoad?: boolean;
+
+  // 刷新前钩子
+  onBeforeRefresh?: (params: Record<string, unknown>) => Record<string, unknown> | void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -41,6 +44,7 @@ const crudRef = ref<HTMLElement>();
 // 创建 CRUD 实例
 const crud = useCrud({
   service: props.service,
+  onBeforeRefresh: props.onBeforeRefresh,
   ...props.options,
 });
 
@@ -59,19 +63,23 @@ function checkPagination() {
 // 检测父组件的辅助函数
 function checkParentComponent(componentName: string): boolean {
   let parent = getCurrentInstance()?.parent;
+
   while (parent) {
     if (parent.type.name === componentName || parent.type.__name === componentName) {
       return true;
     }
     parent = parent.parent;
   }
+
   return false;
 }
 
 // 组件挂载时自动加载数据
 onMounted(() => {
   // 智能检测：如果有 BtcViewGroup 父组件，则不自动加载
+  // BtcTableGroup 中的 BtcCrud 应该能够自动加载
   const hasViewGroupParent = checkParentComponent('BtcViewGroup');
+  const hasTableGroupParent = checkParentComponent('BtcTableGroup');
 
   if (props.autoLoad && !hasViewGroupParent) {
     crud.loadData();

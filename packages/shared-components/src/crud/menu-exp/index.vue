@@ -14,7 +14,7 @@ import { ref, computed } from 'vue';
 import { Download } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
-import type { BtcFormItem } from '../../common/form/types';
+import type { BtcFormItem } from '@btc-common/form/types';
 
 interface MenuItem {
   id: string | number;

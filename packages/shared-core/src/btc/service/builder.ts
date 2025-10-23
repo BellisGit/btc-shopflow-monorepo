@@ -1,6 +1,5 @@
-/**
- * 服务构建器
- * 从 EPS 数据动态生成 service 对象
+﻿/**
+ * 鏈嶅姟鏋勫缓鍣? * 浠?EPS 鏁版嵁鍔ㄦ€佺敓鎴?service 瀵硅薄
  */
 
 import { BaseService } from './base';
@@ -19,31 +18,29 @@ export interface ServiceModule {
 export type EpsData = Record<string, ServiceModule>;
 
 /**
- * 动态服务类型
- */
+ * 鍔ㄦ€佹湇鍔＄被鍨? */
 export type DynamicService = Record<string, Record<string, (data?: any) => Promise<any>>>;
 
 export class ServiceBuilder {
   /**
-   * 从 EPS 数据构建服务对象
-   * @param epsData - virtual:eps 提供的数据
-   */
+   * 浠?EPS 鏁版嵁鏋勫缓鏈嶅姟瀵硅薄
+   * @param epsData - virtual:eps 鎻愪緵鐨勬暟鎹?   */
   build(epsData: EpsData): DynamicService {
     const service: DynamicService = {};
 
-    // 遍历每个模块
+    // 閬嶅巻姣忎釜妯″潡
     for (const [moduleName, moduleData] of Object.entries(epsData)) {
       service[moduleName] = {};
 
-      // 遍历每个 API
+      // 閬嶅巻姣忎釜 API
       const apis = moduleData.api || [];
       for (const api of apis) {
-        // 为每个 API 创建方法
+        // 涓烘瘡涓?API 鍒涘缓鏂规硶
         service[moduleName][api.name] = (data?: any) => {
           return BaseService.request({
             url: api.path,
             method: api.method,
-            // GET 请求使用 params，其他使用 data
+            // GET 璇锋眰浣跨敤 params锛屽叾浠栦娇鐢?data
             ...(api.method.toLowerCase() === 'get'
               ? { params: data }
               : { data }),
@@ -55,4 +52,6 @@ export class ServiceBuilder {
     return service;
   }
 }
+
+
 

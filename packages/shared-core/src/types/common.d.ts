@@ -1,5 +1,5 @@
-/**
- * 基础 API 响应
+﻿/**
+ * 鍩虹 API 鍝嶅簲
  */
 export interface BaseResponse<T = any> {
     code: number;
@@ -7,7 +7,7 @@ export interface BaseResponse<T = any> {
     data: T;
 }
 /**
- * 分页响应
+ * 鍒嗛〉鍝嶅簲
  */
 export interface PageResponse<T = any> {
     list: T[];
@@ -16,7 +16,7 @@ export interface PageResponse<T = any> {
     size: number;
 }
 /**
- * 分页参数
+ * 鍒嗛〉鍙傛暟
  */
 export interface PageParams {
     page: number;
@@ -24,11 +24,12 @@ export interface PageParams {
     [key: string]: any;
 }
 /**
- * 字典项
- */
+ * 瀛楀吀椤? */
 export interface DictItem {
     label: string;
     value: string | number;
     type?: string;
     color?: string;
 }
+
+

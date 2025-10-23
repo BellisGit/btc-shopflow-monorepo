@@ -1,28 +1,45 @@
-/**
+﻿/**
  * BtcViewGroup 类型定义
  */
 
 export interface ViewGroupOptions {
-  label?: string;
-  title?: string;
-  leftWidth?: string;
+  label: string;           // 左侧标题
+  title?: string;          // 右侧标题
+  leftWidth?: string;      // 左侧宽度
+  service: any;            // 数据服务
+
+  // BtcMasterList 相关配置
+  showUnassigned?: boolean;     // 是否显示"未分配"
+  unassignedLabel?: string;     // "未分配"标签
+  parentField?: string;          // 父级字段名，默认 'parentId'
+
+  // 功能开关（传递给 BtcMasterList）
+  enableDrag?: boolean;    // 启用拖拽排序
+  enableRefresh?: boolean; // 启用刷新（由 BtcMasterList 处理）
+
+  // 树形配置
+  tree: {
+    props: {
+      id: string;
+      label: string;
+    };
+  };
+
+  // 兼容性配置（保留但不再使用）
   data?: Record<string, any>;
-  service?: any;
   enableContextMenu?: boolean;
-  enableRefresh?: boolean;
   enableKeySearch?: boolean;
-  enableDrag?: boolean;
   enableEdit?: boolean;
   enableDelete?: boolean;
   custom?: boolean;
-  autoRefresh?: boolean; // 是否自动刷新
-  tree?: TreeConfig;
+  autoRefresh?: boolean;
   onSelect?: (item: any) => void;
   onEdit?: (item?: any) => any;
   onDelete?: (item: any, ctx: { next: () => void; done: () => void }) => void;
   onData?: (list: any[]) => any[];
   onContextMenu?: (item: any) => any;
   onDragEnd?: (list: any[]) => void;
+  onLoad?: (...args: any[]) => any;
 }
 
 export interface TreeConfig {

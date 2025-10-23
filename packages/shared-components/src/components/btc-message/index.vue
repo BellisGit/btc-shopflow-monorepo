@@ -13,12 +13,12 @@
 </template>
 
 <script setup lang="ts">
-// 组件名称
+// ????
 defineOptions({
   name: 'BtcMessageComponent',
 });
 
-// Props 定义
+// Props ??
 interface Props {
   type?: 'success' | 'warning' | 'info' | 'error';
   message: string;
@@ -36,12 +36,12 @@ withDefaults(defineProps<Props>(), {
   repeatNum: 1,
 });
 
-// Emits 定义
+// Emits ??
 const emit = defineEmits<{
   close: [];
 }>();
 
-// 处理关闭事件
+// ??????
 const handleClose = () => {
   emit('close');
 };
@@ -79,7 +79,7 @@ const handleClose = () => {
   }
 }
 
-// 主题适配
+// ????
 :root {
   --btc-message-badge-success: #67c23a;
   --btc-message-badge-warning: #e6a23c;
@@ -87,7 +87,7 @@ const handleClose = () => {
   --btc-message-badge-error: #f56c6c;
 }
 
-// 暗色主题适配
+// ??????
 [data-theme='dark'] {
   .btc-message-wrapper {
     :deep(.el-badge__content) {
@@ -96,7 +96,7 @@ const handleClose = () => {
   }
 }
 
-// 响应式设计
+// ?????
 @media (max-width: 768px) {
   .btc-message-wrapper {
     :deep(.el-badge__content) {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Common language pack (English)
  * Naming convention: {namespace}.{category}.{key}
  * - app.*: Application info
@@ -283,3 +283,5 @@ declare const _default: {
     'main.home.apps_loaded': string;
 };
 export default _default;
+
+

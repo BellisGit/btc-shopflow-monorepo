@@ -1,7 +1,7 @@
-/**
- * Form Hook 工具
- * 用于表单数据的绑定和提交转换
- * 完整实现 cool-admin 的 form-hook，包含所有8种内置转换器
+﻿/**
+ * Form Hook 宸ュ叿
+ * 鐢ㄤ簬琛ㄥ崟鏁版嵁鐨勭粦瀹氬拰鎻愪氦杞崲
+ * 瀹屾暣瀹炵幇 cool-admin 鐨?form-hook锛屽寘鍚墍鏈?绉嶅唴缃浆鎹㈠櫒
  */
 export interface HookContext {
     method: 'bind' | 'submit';
@@ -22,3 +22,7 @@ export declare const formHook: {
     bind(data: any): void;
     submit(data: any): void;
 };
+
+
+
+

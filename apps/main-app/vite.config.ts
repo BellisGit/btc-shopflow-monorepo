@@ -21,6 +21,12 @@ export default defineConfig({
       '@btc/shared-core': resolve(__dirname, '../../packages/shared-core/src'),
       '@btc/shared-components': resolve(__dirname, '../../packages/shared-components/src'),
       '@btc/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),
+      // shared-components 内部别名
+      '@btc-common': resolve(__dirname, '../../packages/shared-components/src/common'),
+      '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
+      '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
+      '@btc-styles': resolve(__dirname, '../../packages/shared-components/src/styles'),
+      '@btc-locales': resolve(__dirname, '../../packages/shared-components/src/locales'),
     },
   },
   plugins: [
@@ -85,8 +91,6 @@ export default defineConfig({
       '@element-plus/icons-vue',
       '@vueuse/core',
       'axios',
-      'lodash-es',
-      'dayjs',
     ],
   },
   build: {

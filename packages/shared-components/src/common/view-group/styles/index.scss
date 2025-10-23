@@ -52,7 +52,11 @@
   &__left {
     position: relative;
     height: 100%;
+    width: 300px; // 添加固定宽度
     background-color: var(--el-bg-color);
+    flex-shrink: 0; // 防止收缩
+    transition: width 0.2s ease-in-out;
+    overflow: hidden;
 
     .collapse-btn {
       display: flex;
@@ -197,6 +201,24 @@
 
     .content {
       height: calc(100% - 40px);
+    }
+  }
+
+  // 展开/收起状态样式
+  &.is-expand {
+    .btc-view-group__right {
+      width: calc(100% - 300px); // 计算宽度：总宽度减去左侧宽度
+      border-left: 1px solid var(--el-border-color-extra-light);
+    }
+  }
+
+  &.is-collapse {
+    .btc-view-group__left {
+      width: 0; // 左侧隐藏
+    }
+
+    .btc-view-group__right {
+      width: 100%; // 右侧占满全宽
     }
   }
 

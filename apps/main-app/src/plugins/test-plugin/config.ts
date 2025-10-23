@@ -15,7 +15,7 @@ export default (): Plugin => {
     enable: true,
 
     // 安装钩子
-    install(app) {
+    install(_app) {
       // 可以在这里注册全局组件、指令等
       // app.component('TestComponent', TestComponent);
     },
@@ -26,7 +26,7 @@ export default (): Plugin => {
     },
 
     // 加载完成钩子
-    onLoad(events) {
+    onLoad(_events) {
       return {
         testMethod: () => {
           // 测试方法

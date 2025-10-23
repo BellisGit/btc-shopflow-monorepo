@@ -1,19 +1,16 @@
 /**
  * ViewGroup 操作 Hook（选择、编辑、删除等）
  */
-import { nextTick } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+// import { nextTick } from 'vue'; // 不再需要
+import { ElMessageBox } from 'element-plus';
+// import { ElMessage } from 'element-plus'; // 不再直接使用，让响应拦截器统一处理
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
 
 export function useViewGroupActions(
   config: ViewGroupOptions,
   tree: any,
-  list: any,
-  selected: any,
   isMobile: any,
-  isExpand: any,
-  refresh: any,
-  treeRef?: any
+  isExpand: any
 ) {
   // 获取项的 ID（兼容不同的 ID 字段名）
   function getItemId(item: any) {
@@ -28,29 +25,15 @@ export function useViewGroupActions(
 
   // 设置选中值
   function select(data?: ViewGroupItem) {
-    if (!data) {
-      data = list.value[0];
-    }
-
-    selected.value = data;
-
-    nextTick(() => {
-      if (data) {
-        // 如果是树形结构，需要设置 Element Plus Tree 的当前高亮节点
-        if (tree.visible && treeRef?.value) {
-          const itemId = getItemId(data);
-          treeRef.value.setCurrentKey(itemId);
-        }
-
-        if (isMobile.value) {
-          expand(false);
-        }
-
-        if (config.onSelect) {
-          config.onSelect(data);
-        }
+    if (data) {
+      if (isMobile.value) {
+        expand(false);
       }
-    });
+
+      if (config.onSelect) {
+        config.onSelect(data);
+      }
+    }
   }
 
   // 编辑
@@ -71,21 +54,13 @@ export function useViewGroupActions(
         function next(params: any) {
           config.service
             .delete(params)
-            .then(async () => {
-              ElMessage.success('删除成功');
-
-              // 刷新列表
-              await refresh();
-
-              // 删除当前
-              const currentId = getItemId(selected.value);
-              const itemId = getItemId(item);
-              if (currentId === itemId) {
-                select();
-              }
+            .then(() => {
+              // 删除成功，由 BtcMasterList 自动刷新
+              console.log('Delete successful');
             })
             .catch((err: Error) => {
-              ElMessage.error(err.message);
+              // 不在这里显示错误消息，让响应拦截器统一处理
+              console.error('Delete failed:', err);
             });
         }
 

@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
+import { useFormRenderer } from '../../../common/form/composables/useFormRenderer';
 import type { FormItem, UpsertProps, UpsertMode } from '../types';
 
 /**
@@ -8,6 +9,9 @@ import type { FormItem, UpsertProps, UpsertMode } from '../types';
  */
 export function useFormData(props: UpsertProps) {
   const { t } = useI18n();
+
+  // 表单渲染器
+  const { renderComponent } = useFormRenderer();
 
   // 表单实例
   const formRef = ref<FormInstance>();
@@ -55,6 +59,7 @@ export function useFormData(props: UpsertProps) {
    */
   const getComponentProps = (item: FormItem) => {
     const baseProps = item.component?.props || {};
+    const componentName = item.component?.name;
 
     // 如果已经有 placeholder，直接返回
     if (baseProps.placeholder !== undefined) {
@@ -62,7 +67,6 @@ export function useFormData(props: UpsertProps) {
     }
 
     // 为 el-input 和 el-input-number 自动添加 placeholder
-    const componentName = item.component?.name;
     if (componentName === 'el-input' || componentName === 'el-input-number') {
       return {
         ...baseProps,
@@ -128,6 +132,7 @@ export function useFormData(props: UpsertProps) {
 
     // methods
     getComponentProps,
+    renderComponent,
   };
 }
 

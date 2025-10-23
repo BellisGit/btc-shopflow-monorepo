@@ -1,5 +1,5 @@
-/**
- * 插件配置管理
+﻿/**
+ * 鎻掍欢閰嶇疆绠＄悊
  */
 export type Type = 'admin' | 'app' | 'uniapp-x';
 export interface EpsMapping {
@@ -12,23 +12,22 @@ export interface EpsMapping {
 }
 export interface BtcPluginConfig {
     /**
-     * 应用类型
+     * 搴旂敤绫诲瀷
      */
     type: Type;
     /**
-     * 后端请求地址（用于获取服务语言类型等）
+     * 鍚庣璇锋眰鍦板潃锛堢敤浜庤幏鍙栨湇鍔¤瑷€绫诲瀷绛夛級
      */
     reqUrl: string;
     /**
-     * 是否为演示模式
-     */
+     * 鏄惁涓烘紨绀烘ā寮?     */
     demo: boolean;
     /**
-     * 是否启用名称标签
+     * 鏄惁鍚敤鍚嶇О鏍囩
      */
     nameTag: boolean;
     /**
-     * EPS 配置
+     * EPS 閰嶇疆
      */
     eps: {
         enable: boolean;
@@ -37,14 +36,14 @@ export interface BtcPluginConfig {
         mapping: EpsMapping[];
     };
     /**
-     * SVG 配置
+     * SVG 閰嶇疆
      */
     svg: {
         skipNames?: string[];
     };
     /**
-     * 是否清理旧文件
-     */
+     * 鏄惁娓呯悊鏃ф枃浠?     */
     clean: boolean;
 }
 export declare const config: BtcPluginConfig;
+

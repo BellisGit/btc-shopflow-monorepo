@@ -1,6 +1,5 @@
-/**
- * 基础服务类
- * 封装 fetch API 请求
+﻿/**
+ * 鍩虹鏈嶅姟绫? * 灏佽 fetch API 璇锋眰
  */
 export interface RequestConfig {
     url: string;
@@ -12,7 +11,9 @@ export interface RequestConfig {
 }
 export declare class BaseService {
     /**
-     * 发起 HTTP 请求
+     * 鍙戣捣 HTTP 璇锋眰
      */
     static request<T = unknown>(config: RequestConfig): Promise<T>;
 }
+
+

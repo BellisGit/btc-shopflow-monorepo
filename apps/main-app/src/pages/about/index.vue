@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { InfoFilled, CopyrightFilled, Trophy } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
-import { appConfig } from '../../config/app';
+import { appConfig } from '@/config/app';
 
 const { t } = useI18n();
 </script>

@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
- * CRUD 表格列配置
- */
+ * CRUD 琛ㄦ牸鍒楅厤缃? */
 export interface CrudColumn {
   prop: string;
   label: string;
@@ -14,7 +13,7 @@ export interface CrudColumn {
 }
 
 /**
- * CRUD 配置
+ * CRUD 閰嶇疆
  */
 export interface CrudConfig {
   service: any;
@@ -32,7 +31,7 @@ export interface CrudConfig {
 }
 
 /**
- * CRUD 操作按钮配置
+ * CRUD 鎿嶄綔鎸夐挳閰嶇疆
  */
 export interface CrudOperation {
   label: string;
@@ -41,3 +40,5 @@ export interface CrudOperation {
   onClick: (row?: any) => void;
   permission?: string;
 }
+
+

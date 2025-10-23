@@ -56,6 +56,14 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     icon: 'Picture',
     tags: ['SVG', '图标', 'BtcSvg', '插件'],
     path: '/test/svg-plugin'
+  },
+  'btc-tabs': {
+    name: 'btc-tabs',
+    title: 'BtcTabs 组件测试',
+    description: '测试 BtcTabs 标签页组件，包含 tab-ink 动画效果',
+    icon: 'Document',
+    tags: ['BtcTabs', '标签页', 'tab-ink', '动画'],
+    path: '/test/btc-tabs'
   }
 };
 

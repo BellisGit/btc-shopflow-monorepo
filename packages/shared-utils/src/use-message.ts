@@ -1,14 +1,10 @@
-/**
- * 消息管理组合式函数
- * 提供统一的消息发送接口
- */
+﻿/**
+ * 娑堟伅绠＄悊缁勫悎寮忓嚱鏁? * 鎻愪緵缁熶竴鐨勬秷鎭彂閫佹帴鍙? */
 
-// messageManager 现在从全局获取，不再从本地导入
+// messageManager 鐜板湪浠庡叏灞€鑾峰彇锛屼笉鍐嶄粠鏈湴瀵煎叆
 
 /**
- * 使用消息管理器
- * @returns 消息发送方法
- */
+ * 浣跨敤娑堟伅绠＄悊鍣? * @returns 娑堟伅鍙戦€佹柟娉? */
 export function useMessage() {
   const messageManager = (window as any).messageManager;
 
@@ -24,28 +20,28 @@ export function useMessage() {
 
   return {
     /**
-     * 显示成功消息
+     * 鏄剧ず鎴愬姛娑堟伅
      */
     success: (message: string) => {
       messageManager.enqueue('success', message);
     },
 
     /**
-     * 显示错误消息
+     * 鏄剧ず閿欒娑堟伅
      */
     error: (message: string) => {
       messageManager.enqueue('error', message);
     },
 
     /**
-     * 显示警告消息
+     * 鏄剧ず璀﹀憡娑堟伅
      */
     warning: (message: string) => {
       messageManager.enqueue('warning', message);
     },
 
     /**
-     * 显示信息消息
+     * 鏄剧ず淇℃伅娑堟伅
      */
     info: (message: string) => {
       messageManager.enqueue('info', message);
@@ -54,8 +50,7 @@ export function useMessage() {
 }
 
 /**
- * 直接使用消息管理器的方法（用于非组件环境）
- */
+ * 鐩存帴浣跨敤娑堟伅绠＄悊鍣ㄧ殑鏂规硶锛堢敤浜庨潪缁勪欢鐜锛? */
 export const message = {
   success: (message: string) => {
     const messageManager = (window as any).messageManager;
@@ -82,3 +77,7 @@ export const message = {
     }
   }
 };
+
+
+
+

@@ -161,7 +161,7 @@ export function svgPlugin(): Plugin {
 			iconList = result.svgIcons;
 
 			if (iconList.length > 0) {
-				console.info(`[btc:svg] 找到 ${iconList.length} 个 SVG 图标`);
+				console.info(`[btc:svg] 找到 ${iconList.length} 个 svg 图标`);
 			}
 		},
 

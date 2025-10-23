@@ -1,146 +1,71 @@
 <template>
-  <div class="user-role-assign">
-    <el-card class="info-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span>{{ t('org.user.info') }}</span>
-        </div>
-      </template>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item :label="t('org.user.name')">{{ userInfo.name }}</el-descriptions-item>
-        <el-descriptions-item :label="t('org.user.employee_id')">{{ userInfo.employeeId }}</el-descriptions-item>
-        <el-descriptions-item :label="t('org.user.email')">{{ userInfo.email }}</el-descriptions-item>
-        <el-descriptions-item :label="t('org.user.department')">{{ userInfo.department }}</el-descriptions-item>
-        <el-descriptions-item :label="t('org.user.position')">{{ userInfo.position }}</el-descriptions-item>
-        <el-descriptions-item label="ID">{{ userInfo.id }}</el-descriptions-item>
-      </el-descriptions>
-    </el-card>
+  <div class="user-role-assign-page">
+    <BtcCrud ref="crudRef" :service="userRoleService">
+      <BtcRow>
+        <BtcRefreshBtn />
+        <BtcFlex1 />
+        <BtcSearchKey :placeholder="t('org.user_role_assign.search_placeholder')" />
+      </BtcRow>
 
-    <el-card class="roles-card" shadow="hover" style="margin-top: 20px;">
-      <template #header>
-        <div class="card-header">
-          <span>{{ t('org.user.role_assign') }}</span>
-          <div>
-            <el-button @click="handleCancel">{{ t('common.button.cancel') }}</el-button>
-            <el-button type="primary" @click="handleSave" :loading="saving">{{ t('common.button.save') }}</el-button>
-          </div>
-        </div>
-      </template>
+      <BtcRow>
+        <BtcTable ref="tableRef" :columns="roleColumns" border />
+      </BtcRow>
 
-      <el-checkbox-group v-model="selectedRoles">
-        <el-row :gutter="20">
-          <el-col :span="8" v-for="role in allRoles" :key="role.id">
-            <el-checkbox :label="role.id" border style="width: 100%; margin: 10px 0;">
-              <div class="role-info">
-                <div class="role-name">{{ role.roleName }}</div>
-                <div class="role-code">{{ role.roleCode }}</div>
-              </div>
-            </el-checkbox>
-          </el-col>
-        </el-row>
-      </el-checkbox-group>
-    </el-card>
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+    </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useMessage } from '@/utils/use-message';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { service } from '../../../../services/eps';
+import type { TableColumn } from '@btc/shared-components';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const route = useRoute();
-const router = useRouter();
-const message = useMessage();
-const userId = route.params.id;
+const crudRef = ref();
+const tableRef = ref();
 
-const userInfo = ref<any>({});
-const allRoles = ref<any[]>([]);
-const selectedRoles = ref<number[]>([]);
-const saving = ref(false);
+// 获取用户ID
+const userId = computed(() => route.params.id as string);
 
-// Mock服务
-const userService = createMockCrudService('btc_users');
-const roleService = createMockCrudService('btc_roles', {
-
-});
-
-// 加载用户信息
-const loadUserInfo = async () => {
-  try {
-    const data = await userService.info({ id: userId });
-    userInfo.value = data;
-  } catch (error) {
-    message.error(t('org.user.load_info_error'));
+// 用户角色服务
+const userRoleService = {
+  ...service.base.userRole,
+  // 重写查询方法，添加用户ID参数
+  page: async (params: any) => {
+    return service.base.userRole.page({
+      ...params,
+      userId: userId.value
+    });
   }
 };
 
-// 加载角色列表
-const loadRoles = async () => {
-  try {
-    allRoles.value = await roleService.list();
-
-    // Mock：随机选择已分配的角色
-    selectedRoles.value = [3]; // 模拟分配员工角色
-  } catch (error) {
-    message.error(t('org.role.load_list_error'));
-  }
-};
-
-// 保存
-const handleSave = async () => {
-  saving.value = true;
-  try {
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 这里应该调用后端API
-    // await http.post(`/users/${userId}/roles`, { roleIds: selectedRoles.value });
-
-    message.success(t('crud.message.save_success'));
-    router.back();
-  } catch (error) {
-    message.error(t('crud.message.save_error'));
-  } finally {
-    saving.value = false;
-  }
-};
-
-// 取消
-const handleCancel = () => {
-  router.back();
-};
-
-onMounted(() => {
-  loadUserInfo();
-  loadRoles();
-});
+// 角色表格列
+const roleColumns = computed<TableColumn[]>(() => [
+  { type: 'selection', width: 60 },
+  { type: 'index', label: '序号', width: 60 },
+  { prop: 'roleName', label: '角色名称', minWidth: 150 },
+  { prop: 'roleCode', label: '角色编码', minWidth: 150 },
+  { prop: 'description', label: '描述', minWidth: 200 },
+  { prop: 'status', label: '状态', width: 100 },
+  {
+    type: 'op',
+    label: '操作',
+    width: 120,
+    buttons: ['assign', 'unassign']
+  },
+]);
 </script>
 
 <style lang="scss" scoped>
-.user-role-assign {
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.role-info {
-  display: flex;
-  flex-direction: column;
-
-  .role-name {
-    font-weight: 500;
-  }
-
-  .role-code {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    margin-top: 4px;
-  }
+.user-role-assign-page {
+  height: 100%;
+  box-sizing: border-box;
 }
 </style>

@@ -41,7 +41,7 @@ export function tSync(key: string): string {
         // Vue I18n 编译时优化，返回函数需要调用
         try {
           return value({ normalize: (arr: any[]) => arr[0] });
-        } catch (error) {
+        } catch (_error) {
           return key;
         }
       }
@@ -61,14 +61,14 @@ export function tSync(key: string): string {
         } else if (typeof value === 'function') {
           try {
             return value({ normalize: (arr: any[]) => arr[0] });
-          } catch (error) {
+          } catch (_error) {
             return key;
           }
         }
       }
       return key;
     }
-  } catch (error) {
+  } catch (_error) {
     return key;
   }
 }

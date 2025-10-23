@@ -1,7 +1,6 @@
-/**
- * Form API 封装
- * 提供对 el-form 原生方法的访问
- */
+﻿/**
+ * Form API 灏佽
+ * 鎻愪緵瀵?el-form 鍘熺敓鏂规硶鐨勮闂? */
 
 export function useElApi(keys: string[], el: any) {
   const apis: Record<string, any> = {};
@@ -14,4 +13,6 @@ export function useElApi(keys: string[], el: any) {
 
   return apis;
 }
+
+
 

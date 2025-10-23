@@ -1,5 +1,5 @@
-/**
- * 用于测试的 EPS Mock 数据
+﻿/**
+ * 鐢ㄤ簬娴嬭瘯鐨?EPS Mock 鏁版嵁
  */
 export declare const mockEpsData: {
     user: {
@@ -22,7 +22,7 @@ export declare const mockEpsData: {
     }[];
 };
 /**
- * 模拟 EPS API 响应
+ * 妯℃嫙 EPS API 鍝嶅簲
  */
 export declare function createMockEpsResponse(): {
     code: number;
@@ -48,3 +48,4 @@ export declare function createMockEpsResponse(): {
     };
     message: string;
 };
+

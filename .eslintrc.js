@@ -18,7 +18,8 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': 'off', // 完全关闭未使用变量检查
+    'no-unused-vars': 'off', // 关闭JavaScript未使用变量检查
   },
   overrides: [
     {

@@ -5,11 +5,6 @@
 
 // messageManager 现在由外部提供，不再从本地导入
 
-// 获取全局消息管理器的辅助函数
-function getMessageManager() {
-  return (window as any).messageManager;
-}
-
 // 消息显示接口，由外部实现
 export interface MessageHandler {
   success: (message: string) => void;
@@ -257,13 +252,61 @@ export class ResponseInterceptor {
       return response;
     }
 
-    // 成功状态码
-    if (code === 200 || code === 2000 || code === 1000) {
+    // 检查是否为真正的成功响应
+    // 即使 code 是 200，如果消息包含错误信息，也应该按错误处理
+    const isRealSuccess = this.isRealSuccessResponse(code, msg);
+
+    if (isRealSuccess) {
       return data;
     }
 
-    // 其他状态码按错误处理
+    // 其他情况按错误处理
     return this.handleError({ code, message: msg || '未知错误' });
+  }
+
+  /**
+   * 判断是否为真正的成功响应
+   */
+  private isRealSuccessResponse(code: number, msg?: string): boolean {
+    // 明确的成功状态码
+    if (code === 2000 || code === 1000) {
+      return true;
+    }
+
+    // 对于 code: 200，需要检查消息内容
+    if (code === 200) {
+      // 如果没有消息，认为是成功
+      if (!msg) {
+        return true;
+      }
+
+      // 检查消息是否包含错误关键词
+      const errorKeywords = [
+        '不存在',
+        '错误',
+        '失败',
+        '异常',
+        '无效',
+        '过期',
+        '拒绝',
+        '禁止',
+        '未找到',
+        '无法',
+        '不能',
+        '缺少',
+        '不足'
+      ];
+
+      // 如果消息包含错误关键词，认为是错误响应
+      const hasErrorKeyword = errorKeywords.some(keyword =>
+        msg.includes(keyword)
+      );
+
+      return !hasErrorKeyword;
+    }
+
+    // 其他状态码都不是成功
+    return false;
   }
 
   /**
@@ -289,26 +332,8 @@ export class ResponseInterceptor {
     // 根据配置执行相应操作
     switch (config.action) {
       case 'show': {
-        // 使用智能消息管理器处理消息
+        // 使用消息处理器
         const showType = config.showType || 'error';
-        const messageManager = getMessageManager();
-        if (messageManager) {
-          switch (showType) {
-            case 'success':
-              messageManager.enqueue('success', errorMessage);
-              break;
-            case 'warning':
-              messageManager.enqueue('warning', errorMessage);
-              break;
-            case 'info':
-              messageManager.enqueue('info', errorMessage);
-              break;
-            default:
-              messageManager.enqueue('error', errorMessage);
-          }
-        }
-
-        // 兼容旧的消息处理器
         if (this.messageHandler) {
           switch (showType) {
             case 'success':
@@ -328,26 +353,8 @@ export class ResponseInterceptor {
       }
 
       case 'redirect': {
-        // 使用智能消息管理器处理消息
+        // 使用消息处理器
         const redirectShowType = config.showType || 'warning';
-        const redirectMessageManager = getMessageManager();
-        if (redirectMessageManager) {
-          switch (redirectShowType) {
-            case 'success':
-              redirectMessageManager.enqueue('success', errorMessage);
-              break;
-            case 'warning':
-              redirectMessageManager.enqueue('warning', errorMessage);
-              break;
-            case 'info':
-              redirectMessageManager.enqueue('info', errorMessage);
-              break;
-            default:
-              redirectMessageManager.enqueue('error', errorMessage);
-          }
-        }
-
-        // 兼容旧的消息处理器
         if (this.messageHandler) {
           switch (redirectShowType) {
             case 'success':
@@ -399,9 +406,11 @@ export class ResponseInterceptor {
    */
   handleNetworkError(error: any): Promise<never> {
     let message = '网络错误';
+    let errorCode = 500;
 
     if (error.response) {
       const { status, data } = error.response;
+      errorCode = status;
 
       // HTTP 状态码处理
       switch (status) {
@@ -423,44 +432,60 @@ export class ResponseInterceptor {
       message = error.message || '请求配置错误';
     }
 
-    // 使用智能消息管理器处理网络错误
-    const networkMessageManager = getMessageManager();
-    if (networkMessageManager) {
-      networkMessageManager.enqueue('error', message);
-    }
-
-    // 兼容旧的消息处理器
+    // 使用消息处理器处理网络错误
     if (this.messageHandler) {
       this.messageHandler.error(message);
     }
-    return Promise.reject(error);
+
+    // 创建一个包含完整错误信息的错误对象
+    const enhancedError = new Error(message);
+    (enhancedError as any).code = errorCode;
+    (enhancedError as any).response = error.response;
+    (enhancedError as any).originalError = error;
+
+    // 对于404等错误，返回rejected Promise让调用方能够处理
+    return Promise.reject(enhancedError);
   }
 
   /**
    * 创建 axios 响应拦截器
    */
   createResponseInterceptor() {
-    return {
+    const interceptor = {
       onFulfilled: (response: any) => {
-        const { data } = response;
+        const { data, status } = response;
 
+
+        // 如果响应数据为空，检查HTTP状态码
         if (!data) {
+          // 对于404等错误状态码，即使没有响应体也要按错误处理
+          if (status === 404) {
+            const error = new Error('请求的资源不存在');
+            (error as any).code = 404;
+            (error as any).response = response;
+            return Promise.reject(error);
+          }
+          // 其他空响应按成功处理
           return response;
         }
 
-        return this.handleSuccess(data);
+        const result = this.handleSuccess(data);
+        return result;
       },
 
       onRejected: (error: any) => {
+
         // 检查是否是业务错误
         if (error.code && typeof error.code === 'number') {
           return this.handleError(error);
+        } else {
+          // 网络错误
+          return this.handleNetworkError(error);
         }
-
-        // 网络错误
-        return this.handleNetworkError(error);
       },
     };
+
+    return interceptor;
   }
 }
 
@@ -478,6 +503,6 @@ export const handleApiError = (error: { code: number; message: string }): Promis
   return responseInterceptor.handleError(error);
 };
 
-export const handleNetworkError = (error: any): Promise<never> => {
-  return responseInterceptor.handleNetworkError(error);
+export const handleNetworkError = (error: any): void => {
+  responseInterceptor.handleNetworkError(error);
 };

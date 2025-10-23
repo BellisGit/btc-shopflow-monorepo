@@ -1,7 +1,6 @@
-import type { DialogProps } from '../types';
+﻿import type { DialogProps } from '../types';
 /**
- * 对话框状态管理
- */
+ * 瀵硅瘽妗嗙姸鎬佺鐞? */
 export declare function useDialog(props: DialogProps, emit: any): {
     Dialog: globalThis.Ref<any, any>;
     visible: globalThis.Ref<boolean, boolean>;
@@ -16,3 +15,4 @@ export declare function useDialog(props: DialogProps, emit: any): {
     changeFullscreen: (val?: boolean) => void;
     dblClickFullscreen: () => void;
 };
+

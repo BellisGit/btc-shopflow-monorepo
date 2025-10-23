@@ -38,7 +38,7 @@ interface Props {
   drawerVisible?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const _props = withDefaults(defineProps<Props>(), {
   isCollapse: false,
   drawerVisible: false,
 });

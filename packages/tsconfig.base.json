@@ -3,7 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@btc-common/*": ["./src/common/*"],
+      "@btc-components/*": ["./src/components/*"],
+      "@btc-crud/*": ["./src/crud/*"],
+      "@btc-styles/*": ["./src/styles/*"],
+      "@btc-locales/*": ["./src/locales/*"]
     }
   },
   "include": ["src"],

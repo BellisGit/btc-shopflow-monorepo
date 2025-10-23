@@ -1,8 +1,7 @@
-import type { Component } from 'vue';
+﻿import type { Component } from 'vue';
 
 /**
- * 表单项配置
- */
+ * 琛ㄥ崟椤归厤缃? */
 export interface BtcFormItem {
   type?: 'tabs' | string;
   label?: string;
@@ -31,7 +30,7 @@ export interface BtcFormItem {
 }
 
 /**
- * 表单配置
+ * 琛ㄥ崟閰嶇疆
  */
 export interface BtcFormConfig {
   title?: string;
@@ -59,7 +58,7 @@ export interface BtcFormConfig {
 }
 
 /**
- * Props 配置
+ * Props 閰嶇疆
  */
 export interface BtcFormProps {
   name?: string;
@@ -67,3 +66,4 @@ export interface BtcFormProps {
   inline?: boolean;
   enablePlugin?: boolean;
 }
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 插件配置管理
  */
 
@@ -51,7 +51,7 @@ export const config: BtcPluginConfig = {
     dict: false, // 默认禁用字典功能
     mapping: [
       {
-        // 自定义匹配
+        // 自定义映射
         type: 'string',
         custom: ({
           propertyName: _propertyName,
@@ -60,7 +60,7 @@ export const config: BtcPluginConfig = {
           propertyName: string;
           type: string;
         }) => {
-          // 如果没有，返回null或者不返回，则继续遍历其他匹配规则
+          // 如果没有，返回 null 或者不返回，则继续遍历其他匹配规则
           return null;
         },
       },

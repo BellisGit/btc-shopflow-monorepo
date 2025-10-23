@@ -1,31 +1,28 @@
-/**
- * 本地存储工具类
- */
+﻿/**
+ * 鏈湴瀛樺偍宸ュ叿绫? */
 declare class StorageUtil {
     private prefix;
     constructor(prefix?: string);
     /**
-     * 设置存储
-     * @param key 键
-     * @param value 值
-     * @param expire 过期时间（秒）
-     */
+     * 璁剧疆瀛樺偍
+     * @param key 閿?     * @param value 鍊?     * @param expire 杩囨湡鏃堕棿锛堢锛?     */
     set(key: string, value: unknown, expire?: number): void;
     /**
-     * 获取存储
-     * @param key 键
-     * @returns 值
-     */
+     * 鑾峰彇瀛樺偍
+     * @param key 閿?     * @returns 鍊?     */
     get<T = unknown>(key: string): T | null;
     /**
-     * 移除存储
-     * @param key 键
-     */
+     * 绉婚櫎瀛樺偍
+     * @param key 閿?     */
     remove(key: string): void;
     /**
-     * 清空存储
+     * 娓呯┖瀛樺偍
      */
     clear(): void;
 }
 export declare const storage: StorageUtil;
 export {};
+
+
+
+

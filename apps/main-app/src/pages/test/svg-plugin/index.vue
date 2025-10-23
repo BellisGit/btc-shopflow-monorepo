@@ -117,7 +117,8 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, onMounted, computed } from 'vue';
-import TestComponent from '../../../components/TestComponent.vue';
+import { ElMessage } from 'element-plus';
+import TestComponent from '@components/TestComponent.vue';
 import { useCore, initEpsData, usePluginManager } from '@btc/shared-core';
 
 const ctxInfo = ref<any>(null);
@@ -147,7 +148,7 @@ onMounted(async () => {
   try {
     const ctx = await import('virtual:ctx');
     ctxInfo.value = ctx.default || ctx;
-  } catch (error) {
+  } catch (_error) {
     ctxInfo.value = { error: 'Failed to load' };
   }
 
@@ -161,7 +162,7 @@ onMounted(async () => {
     // 测试服务对象
     const core = useCore();
     serviceInfo.value = core.service;
-  } catch (error) {
+  } catch (_error) {
     epsInfo.value = { error: 'Failed to load' };
   }
 });
@@ -191,10 +192,10 @@ await service.${moduleName}.${apis[0] || 'someApi'}(params);
  * Test Excel Plugin
  */
 const testExcelPlugin = () => {
-  const excelApi = pluginManager.getApi<{ export: Function }>('excel');
+  const excelApi = pluginManager.getApi<{ export: (...args: any[]) => void }>('excel');
 
   if (!excelApi) {
-    message.error('Excel plugin not installed');
+    ElMessage.error('Excel plugin not installed');
     return;
   }
 
@@ -210,7 +211,7 @@ const testExcelPlugin = () => {
     filename: 'plugin_test',
   });
 
-  message.success('Excel exported successfully');
+  ElMessage.success('Excel exported successfully');
 };
 
 /**
@@ -220,7 +221,7 @@ const testNotificationPlugin = () => {
   const notificationApi = pluginManager.getApi<any>('notification');
 
   if (!notificationApi) {
-    message.error('Notification plugin not installed');
+    ElMessage.error('Notification plugin not installed');
     return;
   }
 
@@ -240,7 +241,7 @@ const testLoggerPlugin = () => {
   const loggerApi = pluginManager.getApi<any>('logger');
 
   if (!loggerApi) {
-    message.error('Logger plugin not installed');
+    ElMessage.error('Logger plugin not installed');
     return;
   }
 

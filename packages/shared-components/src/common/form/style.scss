@@ -147,3 +147,49 @@
   }
 }
 
+// 描述列表样式
+.descriptions-label-center {
+  width: 25% !important;
+  text-align: center !important;
+}
+
+.descriptions-content-center {
+  width: 75% !important;
+  text-align: center !important;
+}
+
+// 强制覆盖 Element Plus 描述列表内容样式
+.el-descriptions__content {
+  &.descriptions-content-center {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+// 针对描述列表单元格的样式覆盖
+.el-descriptions__cell.el-descriptions__content {
+  &.descriptions-content-center {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+// 直接针对描述列表内容单元格进行样式覆盖
+.el-descriptions__table .el-descriptions__cell.el-descriptions__content {
+  flex: 3 !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+// 针对描述列表标签单元格进行样式覆盖
+.el-descriptions__table .el-descriptions__cell.el-descriptions__label {
+  flex: 1 !important;
+  text-align: center !important;
+}
+

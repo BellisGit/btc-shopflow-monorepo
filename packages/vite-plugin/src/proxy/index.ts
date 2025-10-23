@@ -1,23 +1,24 @@
-// 代理配置处理
+﻿// 浠ｇ悊閰嶇疆澶勭悊
 
 export function getProxyTarget(proxy: any) {
   try {
-    // 直接从传入的 proxy 配置中获取目标地址
+    // 鐩存帴浠庝紶鍏ョ殑 proxy 閰嶇疆涓幏鍙栫洰鏍囧湴鍧€
     if (proxy && typeof proxy === 'object') {
-      // 查找第一个代理配置的 target
+      // 鏌ユ壘绗竴涓唬鐞嗛厤缃殑 target
       for (const [, config] of Object.entries(proxy)) {
         if (config && typeof config === 'object' && 'target' in config) {
           const target = (config as any).target;
           if (target && typeof target === 'string') {
-            console.log(`[btc-proxy] Using proxy target: ${target}`);
+            console.info(`[btc:proxy] 使用代理目标: ${target}`);
             return target;
           }
         }
       }
     }
   } catch (err) {
-    console.error('[btc-proxy] Failed to get proxy target:', err);
+    console.error('[btc:proxy] 获取代理目标失败:', err);
   }
 
   return '';
 }
+

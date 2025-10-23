@@ -1,4 +1,4 @@
-/**
+﻿/**
  * English language pack
  */
 export default {
@@ -279,3 +279,5 @@ export default {
   'main.home.apps': 'Apps',
   'main.home.apps_loaded': 'Loaded Apps',
 };
+
+

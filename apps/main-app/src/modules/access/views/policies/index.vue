@@ -1,63 +1,59 @@
 <template>
   <div class="policies-page">
-    <BtcCrud
-      ref="crudRef"
-      :service="policyService"
-      :columns="columns"
-      :search-form="searchForm"
-      :upsert-form="upsertForm"
-      :permission="permission"
-    >
-      <template #table-operation="{ row }">
-        <el-button
-          v-permission="permission.update"
-          type="primary"
-          size="small"
-          @click="openUpsert(row)"
-        >
-          {{ t('crud.button.edit') }}
-        </el-button>
-        <el-button
-          v-permission="permission.delete"
-          type="danger"
-          size="small"
-          @click="remove(row)"
-        >
-          {{ t('crud.button.delete') }}
-        </el-button>
-      </template>
+    <BtcCrud ref="crudRef" :service="policyService" style="padding: 10px;">
+      <BtcRow>
+        <BtcRefreshBtn />
+        <BtcAddBtn />
+        <BtcMultiDeleteBtn />
+        <BtcFlex1 />
+        <BtcSearchKey placeholder="搜索策略..." />
+      </BtcRow>
+      <BtcRow>
+        <BtcTable ref="tableRef" :columns="columns" border />
+      </BtcRow>
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" :on-submit="handleFormSubmit" />
     </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { service } from '../../../../services/eps';
+import { ref, computed } from 'vue';
+import { ElMessageBox } from 'element-plus';
+import { useI18n } from '@btc/shared-core';
+import { useMessage } from '@/utils/use-message';
+import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcCrud, BtcTable, BtcPagination, BtcAddBtn, BtcRefreshBtn, BtcMultiDeleteBtn, BtcRow, BtcFlex1, BtcSearchKey } from '@btc/shared-components';
+import { service } from '@services/eps';
+
+const { t } = useI18n();
+const message = useMessage();
 
 defineOptions({
   name: 'AccessPolicies'
 });
 
-// ????
-const permission = {
-  list: 'access:policies:list',
-  add: 'access:policies:add',
-  update: 'access:policies:update',
-  delete: 'access:policies:delete',
-  info: 'access:policies:info'
-};
-
 // 策略服务 - 使用EPS服务
-const policyService = service.base.policy;
+const policyService = {
+  ...service.syspolicy,
+  delete: async ({ ids }: { ids: (string | number)[] }) => {
+    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await service.syspolicy.delete({ ids });
+    message.success(t('crud.message.delete_success'));
+  },
+};
 // 表格列配置
-const columns = [
+const columns = computed<TableColumn[]>(() => [
   {
-    label: '????',
+    label: '策略名称',
     prop: 'policyName',
     minWidth: 150
   },
   {
-    label: '????',
+    label: '策略类型',
     prop: 'policyType',
     width: 100,
     dict: [
@@ -67,65 +63,66 @@ const columns = [
     ]
   },
   {
-    label: '??',
+    label: '效果',
     prop: 'effect',
     width: 80,
     dict: [
-      { label: '??', value: 'allow' },
-      { label: '??', value: 'deny' }
+      { label: '允许', value: 'allow' },
+      { label: '拒绝', value: 'deny' }
     ]
   },
   {
-    label: '???',
+    label: '优先级',
     prop: 'priority',
     width: 80
   },
   {
-    label: '??',
+    label: '条件',
     prop: 'conditions',
     minWidth: 200,
     showOverflowTooltip: true
   },
   {
-    label: '??',
+    label: '描述',
     prop: 'description',
     minWidth: 200,
     showOverflowTooltip: true
   },
   {
-    label: '??',
+    label: '状态',
     prop: 'status',
     width: 80,
     dict: [
-      { label: '??', value: 1 },
-      { label: '??', value: 0 }
+      { label: '启用', value: 1 },
+      { label: '禁用', value: 0 }
     ]
   },
   {
-    label: '????',
+    label: '创建时间',
     prop: 'createTime',
     width: 160
   }
-];
+]);
 
-// ??????
-const searchForm = {
-  items: [
+
+// 表单配置
+const formItems: FormItem[] = [
     {
-      label: '????',
+      label: '策略名称',
       prop: 'policyName',
-      component: 'el-input',
+      component: { name: 'el-input' },
+      required: true,
       props: {
-        placeholder: '???????'
+        placeholder: '请输入策略名称'
       }
     },
     {
-      label: '????',
+      label: '策略类型',
       prop: 'policyType',
-      component: 'el-select',
+      component: { name: 'el-select' },
+      required: true,
       props: {
-        placeholder: '???????',
-        clearable: true
+        placeholder: '请选择策略类型'
       },
       dict: [
         { label: 'RBAC', value: 'RBAC' },
@@ -134,124 +131,77 @@ const searchForm = {
       ]
     },
     {
-      label: '??',
+      label: '效果',
       prop: 'effect',
-      component: 'el-select',
-      props: {
-        placeholder: '?????',
-        clearable: true
-      },
-      dict: [
-        { label: '??', value: 'allow' },
-        { label: '??', value: 'deny' }
-      ]
-    },
-    {
-      label: '??',
-      prop: 'status',
-      component: 'el-select',
-      props: {
-        placeholder: '?????',
-        clearable: true
-      },
-      dict: [
-        { label: '??', value: 1 },
-        { label: '??', value: 0 }
-      ]
-    }
-  ]
-};
-
-// ????
-const upsertForm = {
-  items: [
-    {
-      label: '????',
-      prop: 'policyName',
-      component: 'el-input',
+      component: { name: 'el-select' },
       required: true,
       props: {
-        placeholder: '???????'
-      }
-    },
-    {
-      label: '????',
-      prop: 'policyType',
-      component: 'el-select',
-      required: true,
-      props: {
-        placeholder: '???????'
+        placeholder: '请选择效果'
       },
       dict: [
-        { label: 'RBAC', value: 'RBAC' },
-        { label: 'ABAC', value: 'ABAC' },
-        { label: 'ACL', value: 'ACL' }
+        { label: '允许', value: 'allow' },
+        { label: '拒绝', value: 'deny' }
       ]
     },
     {
-      label: '??',
-      prop: 'effect',
-      component: 'el-select',
-      required: true,
-      props: {
-        placeholder: '?????'
-      },
-      dict: [
-        { label: '??', value: 'allow' },
-        { label: '??', value: 'deny' }
-      ]
-    },
-    {
-      label: '???',
+      label: '优先级',
       prop: 'priority',
-      component: 'el-input-number',
+      component: { name: 'el-input-number' },
       required: true,
       props: {
-        placeholder: '??????',
+        placeholder: '请输入优先级',
         min: 1,
         max: 1000
       }
     },
     {
-      label: '??',
+      label: '条件',
       prop: 'conditions',
-      component: 'el-input',
+      component: { name: 'el-input' },
       required: true,
       props: {
         type: 'textarea',
-        placeholder: '???JSON?????',
+        placeholder: '请输入JSON格式条件',
         rows: 4
       }
     },
     {
-      label: '??',
+      label: '描述',
       prop: 'description',
-      component: 'el-input',
+      component: { name: 'el-input' },
       props: {
         type: 'textarea',
-        placeholder: '?????',
+        placeholder: '请输入描述',
         rows: 3
       }
     },
     {
-      label: '??',
+      label: '状态',
       prop: 'status',
-      component: 'el-radio-group',
+      component: { name: 'el-radio-group' },
       required: true,
       dict: [
-        { label: '??', value: 1 },
-        { label: '??', value: 0 }
+        { label: '启用', value: 1 },
+        { label: '禁用', value: 0 }
       ]
     }
-  ]
-};
+];
 
 const crudRef = ref();
-const openUpsert = (row?: any) => {
-  crudRef.value?.openUpsert(row);
-};
-const remove = (row: any) => {
-  crudRef.value?.remove(row);
+
+const handleFormSubmit = async (data: any) => {
+  try {
+    if (data.id) {
+      await service.syspolicy.update(data);
+      message.success(t('crud.message.save_success'));
+    } else {
+      await service.syspolicy.add(data);
+      message.success(t('crud.message.save_success'));
+    }
+    crudRef.value?.crud.handleRefresh();
+  } catch (error) {
+    console.error('Form submission failed:', error);
+  }
 };
 </script>
 

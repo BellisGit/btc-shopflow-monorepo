@@ -22,12 +22,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -54,31 +54,20 @@ const wrappedDomainService = {
   // 域表格列
   const columns = computed<TableColumn[]>(() => [
     { type: 'selection', width: 60 },
-    { type: 'index', label: t('crud.table.index'), width: 60 },
-    { prop: 'domainName', label: t('platform.domains.domain_name'), minWidth: 150 },
+    { type: 'index', label: '序号', width: 60 },
+    { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
     { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
-    {
-      prop: 'tenantId',
-      label: t('org.tenant.name'),
-      width: 150,
-      formatter: (row: any) => {
-        const tenant = tenantOptions.value.find(t => t.value === row.tenantId);
-        return tenant?.label || row.tenantId;
-      }
-    },
+    { prop: 'tenantId', label: '租户ID', width: 150 },
     { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
-    { prop: 'createdAt', label: t('platform.domains.created_at'), width: 180 },
-    { prop: 'updatedAt', label: t('platform.domains.updated_at'), width: 180 },
-    { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
   ]);
 
 // 域表单
 const formItems = computed<FormItem[]>(() => [
-  { prop: 'domainName', label: t('platform.domain.name'), span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'name', label: t('platform.domain.name'), span: 12, required: true, component: { name: 'el-input' } },
   { prop: 'domainCode', label: t('platform.domain.code'), span: 12, required: true, component: { name: 'el-input' } },
   {
     prop: 'tenantId',
-    label: t('org.tenant.name'),
+    label: '租户ID',
     span: 12,
     required: true,
     component: {
@@ -98,14 +87,12 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };
 
-onMounted(() => {
-  setTimeout(() => crudRef.value?.crud.loadData(), 100);
-});
+// 移除手动调用 loadData，让 BtcCrud 自动加载
 </script>
 
 <style lang="scss" scoped>

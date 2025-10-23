@@ -48,7 +48,6 @@ const server = http.createServer((req, res) => {
 
 const PORT = 8001;
 server.listen(PORT, () => {
-	console.log(`Mock EPS Server running at http://localhost:${PORT}`);
-	console.log(`EPS endpoint: http://localhost:${PORT}/admin/base/open/eps`);
+	// Mock EPS Server running
 });
 

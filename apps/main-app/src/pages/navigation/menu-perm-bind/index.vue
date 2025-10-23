@@ -40,7 +40,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const route = useRoute();
 const message = useMessage();
@@ -61,7 +61,7 @@ const loadMenuInfo = async () => {
   try {
     const data = await menuService.info({ id: menuId });
     menuInfo.value = data;
-  } catch (error) {
+  } catch (_error) {
     message.error('加载菜单信息失败');
   }
 };
@@ -78,7 +78,7 @@ const loadPermissions = async () => {
 
     // Mock：默认选中一些权限
     selectedPermissions.value = [1, 4];
-  } catch (error) {
+  } catch (_error) {
     message.error('加载权限列表失败');
   }
 };
@@ -94,7 +94,7 @@ const handleSave = async () => {
 
     message.success('保存成功');
     router.back();
-  } catch (error) {
+  } catch (_error) {
     message.error('保存失败');
   } finally {
     saving.value = false;

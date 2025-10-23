@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { BtcDialog } from '@btc/shared-components';
@@ -100,8 +100,8 @@ interface TestInstance extends TestInstanceConfig {
   component: any;
 }
 
-// 所有测试实例
-const testInstances = ref<TestInstance[]>([]);
+// 所有测试实例（使用 shallowRef 避免深层响应式）
+const testInstances = shallowRef<TestInstance[]>([]);
 
 // 动态导入所有测试实例
 const loadTestInstances = async () => {
@@ -116,7 +116,7 @@ const loadTestInstances = async () => {
           const component = await loadTestInstanceComponent(config.name);
           return {
             ...config,
-            component
+            component: markRaw(component) // 使用 markRaw 标记组件为非响应式
           };
         } catch (error) {
           console.warn(`Failed to load test instance: ${config.name}`, error);

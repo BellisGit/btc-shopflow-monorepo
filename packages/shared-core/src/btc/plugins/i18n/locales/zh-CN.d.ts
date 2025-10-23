@@ -1,10 +1,8 @@
-/**
- * 通用语言包（本地默认）
- * 命名规范：{namespace}.{category}.{key}
- * - app.*: 应用信息
- * - common.*: 通用 UI 文案
- * - sys.*: 系统级文案
- */
+﻿/**
+ * 閫氱敤璇█鍖咃紙鏈湴榛樿锛? * 鍛藉悕瑙勮寖锛歿namespace}.{category}.{key}
+ * - app.*: 搴旂敤淇℃伅
+ * - common.*: 閫氱敤 UI 鏂囨
+ * - sys.*: 绯荤粺绾ф枃妗? */
 declare const _default: {
     'app.slogan': string;
     'common.button.confirm': string;
@@ -283,3 +281,5 @@ declare const _default: {
     'main.home.apps_loaded': string;
 };
 export default _default;
+
+

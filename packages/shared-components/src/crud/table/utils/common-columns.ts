@@ -1,14 +1,12 @@
-/**
- * 通用表格列配置工具
- * 统一处理常见的表格列，如创建时间、更新时间等
+﻿/**
+ * 閫氱敤琛ㄦ牸鍒楅厤缃伐鍏? * 缁熶竴澶勭悊甯歌鐨勮〃鏍煎垪锛屽鍒涘缓鏃堕棿銆佹洿鏂版椂闂寸瓑
  */
 
 import type { TableColumn, OpButton } from '../types';
 import { formatDateTimeFriendly } from '@btc/shared-utils';
 
 /**
- * 创建时间列配置
- * 使用后端标准的 createdAt 字段
+ * 鍒涘缓鏃堕棿鍒楅厤缃? * 浣跨敤鍚庣鏍囧噯鐨?createdAt 瀛楁
  */
 export function createCreatedAtColumn(): TableColumn {
   return {
@@ -22,8 +20,7 @@ export function createCreatedAtColumn(): TableColumn {
 }
 
 /**
- * 更新时间列配置
- * 使用后端标准的 updatedAt 字段
+ * 鏇存柊鏃堕棿鍒楅厤缃? * 浣跨敤鍚庣鏍囧噯鐨?updatedAt 瀛楁
  */
 export function createUpdatedAtColumn(): TableColumn {
   return {
@@ -37,9 +34,7 @@ export function createUpdatedAtColumn(): TableColumn {
 }
 
 /**
- * 操作列配置
- * 标准的编辑、删除操作按钮
- */
+ * 鎿嶄綔鍒楅厤缃? * 鏍囧噯鐨勭紪杈戙€佸垹闄ゆ搷浣滄寜閽? */
 export function createOperationColumn(buttons: OpButton[] = ['edit', 'delete']): TableColumn {
   return {
     type: 'op',
@@ -50,8 +45,7 @@ export function createOperationColumn(buttons: OpButton[] = ['edit', 'delete']):
 }
 
 /**
- * 选择列配置
- */
+ * 閫夋嫨鍒楅厤缃? */
 export function createSelectionColumn(): TableColumn {
   return {
     type: 'selection',
@@ -60,8 +54,7 @@ export function createSelectionColumn(): TableColumn {
 }
 
 /**
- * 序号列配置
- */
+ * 搴忓彿鍒楅厤缃? */
 export function createIndexColumn(): TableColumn {
   return {
     type: 'index',
@@ -71,7 +64,7 @@ export function createIndexColumn(): TableColumn {
 }
 
 /**
- * 常用的表格列组合
+ * 甯哥敤鐨勮〃鏍煎垪缁勫悎
  */
 export const CommonColumns = {
   selection: createSelectionColumn,
@@ -80,3 +73,4 @@ export const CommonColumns = {
   updatedAt: createUpdatedAtColumn,
   operation: createOperationColumn,
 } as const;
+

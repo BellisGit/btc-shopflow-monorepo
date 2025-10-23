@@ -26,14 +26,14 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
 const crudRef = ref();
 
 // 权限服务 - 使用EPS服务
-const permissionService = service.base.permission;
+const permissionService = service.syspermission;
 
 // 添加delete确认
 const wrappedService = {
@@ -47,14 +47,12 @@ const wrappedService = {
 
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
+  { type: 'index', label: '序号', width: 60 },
   { prop: 'permissionName', label: t('access.permission.name'), minWidth: 150 },
   { prop: 'permissionCode', label: t('access.permission.code'), minWidth: 120 },
   { prop: 'resourceName', label: t('access.resource.name'), minWidth: 100 },
   { prop: 'actionName', label: t('access.action.name'), minWidth: 100 },
   { prop: 'description', label: t('common.description'), minWidth: 150 },
-  { prop: 'createTime', label: t('common.create_time'), minWidth: 120 },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -70,7 +68,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

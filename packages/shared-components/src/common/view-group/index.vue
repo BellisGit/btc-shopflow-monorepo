@@ -4,128 +4,20 @@
       <!-- 左侧 -->
       <div class="btc-view-group__left">
         <slot name="left">
-          <div class="scope">
-            <!-- 头部 -->
-            <div class="head">
-              <el-text class="label">{{ config.label }}</el-text>
-
-              <template v-if="isDrag">
-                <el-tooltip content="确认">
-                  <div class="icon" @click="treeOrder(true)">
-                    <btc-svg name="success" />
-                  </div>
-                </el-tooltip>
-
-                <el-tooltip content="取消">
-                  <div class="icon" @click="treeOrder(false)">
-                    <btc-svg name="fail" />
-                  </div>
-                </el-tooltip>
-              </template>
-
-              <template v-else>
-                <el-tooltip v-if="config.enableRefresh" content="刷新">
-                  <div class="icon" @click="refresh()">
-                    <btc-svg name="refresh" />
-                  </div>
-                </el-tooltip>
-
-                <el-tooltip v-if="config.enableDrag && tree.visible" content="拖动排序">
-                  <div class="icon" @click="isDrag = true">
-                    <btc-svg name="sort" />
-                  </div>
-                </el-tooltip>
-
-                <slot name="left-op"></slot>
-              </template>
-            </div>
-
-            <!-- 搜索框 -->
-            <div v-if="config.enableKeySearch" class="search">
-              <el-input
-                v-model="keyWord"
-                placeholder="搜索关键字"
-                clearable
-                :prefix-icon="Search"
-                @change="refresh({ page: 1 })"
-              />
-            </div>
-
-            <!-- 数据区域 -->
-            <div class="data">
-              <el-scrollbar>
-                <!-- 树类型 -->
-                <template v-if="tree.visible">
-                  <el-tree
-                    ref="treeRef"
-                    class="tree"
-                    :node-key="tree.props.id"
-                    highlight-current
-                    auto-expand-parent
-                    :expand-on-click-node="false"
-                    :lazy="tree.lazy"
-                    :data="list"
-                    :props="tree.props"
-                    :load="tree.onLoad"
-                    :draggable="isDrag"
-                    :allow-drag="tree.allowDrag"
-                    :allow-drop="tree.allowDrop"
-                    @node-click="select"
-                    @node-drop="handleDrop"
-                    @node-contextmenu="onTreeContextMenu"
-                  >
-                    <template #default="{ data }">
-                      <div class="item" :class="{ 'is-active': getItemId(selected) === getItemId(data) }">
-                        <component :is="data.icon" v-if="data.icon" />
-
-                        <slot name="item-name" :item="data" :selected="selected">
-                          <el-text truncated>
-                            {{ data[tree.props.label] }}
-                            {{ isEmpty(data[tree.props.children]) ? '' : `（${data[tree.props.children]?.length}）` }}
-                          </el-text>
-                        </slot>
-                      </div>
-                    </template>
-                  </el-tree>
-                </template>
-
-                <!-- 列表类型 -->
-                <template v-else>
-                  <ul
-                    v-infinite-scroll="onMore"
-                    class="list"
-                    :infinite-scroll-immediate="false"
-                    :infinite-scroll-disabled="loaded"
-                  >
-                    <li
-                      v-for="(item, index) in list"
-                      :key="index"
-                      @click="select(item)"
-                      @contextmenu="(e) => onContextMenu(e, item)"
-                    >
-                      <slot name="item" :item="item" :selected="selected" :index="index">
-                        <div class="item" :class="{ 'is-active': getItemId(selected) === getItemId(item) }">
-                          <slot name="item-name" :item="item" :selected="selected" :index="index">
-                            <span class="text-ellipsis overflow-hidden mr-2">
-                              {{ item[tree.props.label] || item.name }}
-                            </span>
-                          </slot>
-
-                          <btc-svg
-                            name="right"
-                            class="ml-auto"
-                            v-show="getItemId(selected) === getItemId(item)"
-                          />
-                        </div>
-                      </slot>
-                    </li>
-
-                    <el-empty v-if="list.length === 0" :image-size="80" />
-                  </ul>
-                </template>
-              </el-scrollbar>
-            </div>
-          </div>
+          <BtcMasterList
+            :key="`master-list-${masterListKey}`"
+            ref="masterListRef"
+            :title="leftTitle"
+            :service="leftService"
+            :id-field="idField"
+            :label-field="labelField"
+            :parent-field="parentField"
+            :drag="enableDrag"
+            :show-unassigned="showUnassigned"
+            :unassigned-label="unassignedLabel"
+            @select="handleLeftSelect"
+            @load="handleLeftLoad"
+          />
         </slot>
 
         <!-- 收起按钮（移动端） -->
@@ -145,9 +37,9 @@
             <btc-svg name="back" />
           </div>
 
-          <slot name="title" :selected="selected">
+          <slot name="title" :selected="selectedItem">
             <span class="title">
-              {{ props.title || config.title }}（{{ (props.selectedItem || selected) ? ((props.selectedItem || selected)[tree.props.label] || (props.selectedItem || selected).name) : t('common.not_selected') }}）
+              {{ rightTitle }}（{{ selectedItem ? selectedItem[labelField || 'name'] || selectedItem.name : t('common.not_selected') }}）
             </span>
           </slot>
 
@@ -156,8 +48,8 @@
           </div>
         </div>
 
-        <div v-if="selected || config.custom" class="content">
-          <slot name="right"></slot>
+        <div v-if="selectedItem || custom" class="content">
+          <slot name="right" :selected="selectedItem" :keyword="selectedKeyword" :left-data="leftListData" :right-data="rightData"></slot>
         </div>
 
         <el-empty v-else :image-size="80" />
@@ -167,17 +59,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, inject, onMounted, useSlots } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+import { ref, reactive, computed, watch, inject, useSlots, nextTick, provide } from 'vue';
 import BtcSvg from '../svg/index.vue';
+import BtcMasterList from '@btc-components/btc-master-list/index.vue';
 import type { ViewGroupOptions } from './types';
-import { useViewGroupData, useViewGroupActions, useViewGroupDrag, useViewGroupMenu } from './composables';
+import { useViewGroupData, useViewGroupActions } from './composables';
 import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'BtcViewGroup',
   components: {
-    BtcSvg
+    BtcSvg,
+    BtcMasterList
   }
 });
 
@@ -190,14 +83,27 @@ function isEmpty(value: any): boolean {
 }
 
 const props = defineProps<{
-  options?: ViewGroupOptions;
-  title?: string;
-  selectedItem?: any;
+  leftService: any; // 左侧服务
+  rightService?: any; // 右侧服务（可选）
+  leftTitle?: string;
+  rightTitle?: string;
+  showUnassigned?: boolean;
+  unassignedLabel?: string;
+  enableDrag?: boolean;
+  leftWidth?: string;
+  custom?: boolean;
+  idField?: string;
+  labelField?: string;
+  parentField?: string;
 }>();
 
 const emit = defineEmits<{
   'update:selected': [value: any];
   'refresh': [params?: any];
+  'select': [item: any, keyword?: any];
+  'left-data-loaded': [data: any[]];
+  'right-data-loaded': [data: any];
+  'load': [data: any[]];
 }>();
 
 // 国际化
@@ -205,190 +111,250 @@ const { t } = useI18n();
 
 const slots = useSlots();
 
-// 配置
-const config = reactive<ViewGroupOptions>({
-  label: '组',
-  title: '列表',
-  leftWidth: '300px',
-  data: {},
-  service: {},
-  enableContextMenu: true,
-  enableRefresh: true,
-  enableKeySearch: true,
-  enableDrag: false,
-  enableEdit: true,
-  enableDelete: true,
-  custom: false,
-  ...inject('btc-view-group__options', {}),
-  ...props.options,
-});
+// 响应式数据
+const selectedItem = ref<any>(null);
+const selectedKeyword = ref<any>(undefined);
+const leftListData = ref<any[]>([]); // 存储左侧列表数据
+const rightData = ref<any>(null); // 存储右侧数据
 
-// 左侧内容是否自定义
-const isCustom = !!slots.left;
-
-// 检查必要配置
-if (isEmpty(config.service) && !isCustom) {
-  console.error('[btc-view-group] service is required');
-}
-
-const isExpand = ref(true);
+const isExpand = ref(true); // 初始状态为展开
 
 // 检测移动端
 const isMobile = computed(() => window.innerWidth <= 768);
 
-// 树配置
-const tree = reactive({
-  visible: !!config.tree?.visible,
-  lazy: config.tree?.lazy || false,
-  props: {
-    label: 'name',
-    children: 'children',
-    disabled: 'disabled',
-    isLeaf: 'isLeaf',
-    id: 'id',
-    ...config.tree?.props,
-  },
-  onLoad: config.tree?.onLoad,
-  allowDrag: config.tree?.allowDrag,
-  allowDrop: config.tree?.allowDrop,
-});
+// 强制重新渲染的key
+const masterListKey = ref(0);
 
-// 使用操作 Hook（需要先定义，因为 useViewGroupData 需要 select 函数）
-const operationsPlaceholder = {
-  getItemId: (item: any) => item?.id,
-  expand: () => {},
-  select: (_data?: any) => {},
-  edit: () => {},
-  remove: () => {},
-};
+// 组件引用
+const masterListRef = ref<any>(null);
 
-// 使用数据管理 Hook（传入 select 函数引用）
-const dataHook = useViewGroupData(config, tree, isCustom, (item) => operationsPlaceholder.select(item));
-const { loading, keyWord, list, selected, loaded, refresh, onMore } = dataHook;
+// 处理左侧选择
+function handleLeftSelect(item: any, keyword: any) {
+  selectedItem.value = item;
+  selectedKeyword.value = keyword;
 
-// 真正的操作 Hook
-const treeRef = ref();
-const operations = useViewGroupActions(
-  config,
-  tree,
-  list,
-  selected,
-  isMobile,
-  isExpand,
-  refresh,
-  treeRef
-);
-const { getItemId, expand, select, edit, remove } = operations;
+  // 注意：不自动加载右侧数据，让父组件（如 BtcTableGroup）来处理
+  // 这样可以避免重复调用接口
 
-// 更新 placeholder 的引用
-Object.assign(operationsPlaceholder, operations);
+  // 触发事件
+  emit('select', item, keyword);
+  emit('update:selected', item);
+}
 
-// 使用拖拽 Hook
-const { isDrag, treeOrder, handleDrop } = useViewGroupDrag(config, list, refresh);
+// 加载右侧数据
+async function loadRightData() {
+  if (!props.rightService || !props.rightService.page) return;
 
-// 使用菜单 Hook
-const { onContextMenu, onTreeContextMenu } = useViewGroupMenu(config, tree);
+  try {
+    const params: any = {
+      order: 'createdAt',
+      sort: 'asc',
+      page: 1,
+      size: 20
+    };
 
-// 刷新后的选择逻辑
-watch(list, () => {
-  const item = selected.value || list.value[0];
-
-  if (item) {
-    if (tree.visible && treeRef.value) {
-      const node = treeRef.value.getNode(item);
-      node?.expand();
+    // 添加 keyword 参数
+    if (selectedKeyword.value !== undefined) {
+      params.keyword = selectedKeyword.value;
     }
 
-    select(item);
-  }
-}, { deep: true });
+    const res = await props.rightService.page(params);
+    rightData.value = res;
 
-// 监听屏幕尺寸变化
+    emit('right-data-loaded', res);
+  } catch (error) {
+    console.error('加载右侧数据失败:', error);
+  }
+}
+
+// 处理左侧数据加载
+function handleLeftLoad(data: any[]) {
+  leftListData.value = data;
+  emit('left-data-loaded', data);
+}
+
+// 处理左侧加载完成
+function handleLeftLoadComplete(_data: any[]) {
+  // 左侧数据加载完成，不需要额外处理
+}
+
+// 收起、展开
+function expand(value?: boolean) {
+  isExpand.value = value === undefined ? !isExpand.value : value;
+}
+
+// 刷新方法
+const refresh = async (params?: any) => {
+  // 只有在必要时才重新渲染BtcMasterList
+  if (masterListRef.value && typeof masterListRef.value.refresh === 'function') {
+    await masterListRef.value.refresh(params);
+  } else {
+    // 强制重新渲染BtcMasterList
+    masterListKey.value++;
+    await nextTick();
+  }
+
+  emit('refresh', params);
+};
+
+// Provide 数据供右侧组件使用
+provide('btc-view-group', {
+  selectedItem: computed(() => selectedItem.value),
+  selectedKeyword: computed(() => selectedKeyword.value),
+  leftListData: computed(() => leftListData.value),
+  rightData: computed(() => rightData.value),
+  rightService: props.rightService,
+  refresh: loadRightData
+});
+
+// 监听屏幕变化 - 只在移动端自动收起
 watch(isMobile, (val) => {
-  expand(!val);
-});
-
-// 刷新时触发 emit
-watch(() => loading.value, () => {
-  if (!loading.value) {
-    emit('refresh');
+  // 移动端时自动收起左侧面板
+  if (val) {
+    expand(false);
   }
 });
 
-// 选中时触发 emit
-watch(selected, (val) => {
-  emit('update:selected', val);
-});
-
-onMounted(() => {
-  // 只有在启用自动刷新时才自动刷新
-  if (config.autoRefresh !== false) {
-    refresh();
-  }
-});
-
-// 暴露方法
+// 暴露
 defineExpose({
-  list,
-  selected,
+  selectedItem,
+  selectedKeyword,
+  leftListData,
+  rightData,
+  refresh: loadRightData,
+  masterListRef,
   isExpand,
-  expand,
-  select,
-  edit,
-  remove,
-  refresh,
-  isMobile,
+  expand
 });
 </script>
 
 <style lang="scss" scoped>
-@use './styles/index.scss';
+@use './styles/index.scss' as *;
 
 // 动态变量必须在组件内定义
-$left-width: v-bind('config.leftWidth');
+$left-width: v-bind('props.leftWidth || "300px"');
 $bg: var(--el-bg-color);
 
-// 左侧面板宽度（使用动态变量）
-.btc-view-group__left {
-  width: $left-width;
-}
-
-// 右侧面板宽度（使用动态变量）
-.btc-view-group.is-expand .btc-view-group__right {
-  width: calc(100% - $left-width);
-  border-left: 1px solid var(--el-border-color-extra-light);
-}
-
-// 右侧面板基础样式
-.btc-view-group__right {
+.btc-view-group {
   height: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
-  .head {
-    flex-shrink: 0;
-    height: 40px;
+  &__wrap {
+    flex: 1;
     display: flex;
-    align-items: center;
-    padding: 0 10px;
-    border-bottom: 1px solid var(--el-border-color-extra-light);
-    background-color: var(--el-bg-color);
-    position: relative;
+    overflow: hidden;
+    background-color: $bg;
+    border-radius: 4px;
+  }
 
-    .title {
+  &__left {
+    position: relative;
+    height: 100%;
+    width: $left-width;
+    background-color: $bg;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+    flex-shrink: 0;
+  }
+
+  &__right {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: $bg;
+    will-change: width;
+
+    .head {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--el-border-color-extra-light);
+      flex-shrink: 0;
+
+      .title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .icon {
+        height: 28px;
+        width: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: transform 0.2s ease-in-out;
+
+        &:hover {
+          background-color: var(--el-fill-color-light);
+        }
+
+        &.is-fold {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .content {
       flex: 1;
-      text-align: center;
-      font-weight: 500;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
   }
 
-  .content {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  // 展开状态
+  &.is-expand {
+    .btc-view-group__right {
+      width: calc(100% - $left-width);
+      border-left: 1px solid var(--el-border-color-extra-light);
+    }
+  }
+
+  // 折叠状态
+  &.is-collapse {
+    .btc-view-group__left {
+      width: 0;
+    }
+
+    .btc-view-group__right {
+      width: 100%;
+    }
   }
 }
 
+// 移动端适配
+@media screen and (max-width: 768px) {
+  .btc-view-group {
+    &__left {
+      overflow: hidden;
+      transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0;
+      z-index: 20;
+      will-change: width;
+    }
+
+    &__right {
+      width: 100% !important;
+    }
+
+    &.is-expand {
+      .btc-view-group__left {
+        width: 100%;
+      }
+    }
+  }
+}
 </style>

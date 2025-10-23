@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BtcDialog Props
  */
 export interface DialogProps {
@@ -23,3 +23,4 @@ export interface DialogEmits {
   (e: 'fullscreen-change', value: boolean): void;
   (e: 'closed'): void;
 }
+

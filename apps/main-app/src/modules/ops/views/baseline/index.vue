@@ -1,167 +1,90 @@
 <template>
   <div class="baseline-page">
-    <BtcCrud
-      ref="crudRef"
-      :service="baselineService"
-      :columns="columns"
-      :search-form="searchForm"
-      :upsert-form="upsertForm"
-      :permission="permission"
-    >
-      <template #table-operation="{ row }">
-        <el-button
-          v-permission="permission.update"
-          type="primary"
-          size="small"
-          @click="openUpsert(row)"
-        >
-          {{ t('crud.button.edit') }}
-        </el-button>
-        <el-button
-          v-permission="permission.delete"
-          type="danger"
-          size="small"
-          @click="remove(row)"
-        >
-          {{ t('crud.button.delete') }}
-        </el-button>
-        <el-button
-          v-permission="permission.info"
-          type="info"
-          size="small"
-          @click="viewDetails(row)"
-        >
-          {{ t('crud.button.info') }}
-        </el-button>
-      </template>
+    <BtcCrud ref="crudRef" :service="baselineService">
+      <BtcRow>
+        <BtcRefreshBtn />
+        <BtcAddBtn />
+        <BtcMultiDeleteBtn />
+        <BtcFlex1 />
+        <BtcSearchKey :placeholder="t('ops.baseline.search_placeholder')" />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcTable ref="tableRef" :columns="baselineColumns" border />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+
+      <BtcUpsert ref="upsertRef" :items="baselineFormItems" width="800px" :on-submit="handleFormSubmit" />
     </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { service } from '../../../../services/eps';
+import { ref, computed } from 'vue';
+import { useI18n } from '@btc/shared-core';
+import { useMessage } from '@/utils/use-message';
+import type { TableColumn, FormItem } from '@btc/shared-components';
+import { createMockCrudService } from '@utils/http';
 
-defineOptions({
-  name: 'OpsBaseline'
-});
-
-// ????
-const permission = {
-  list: 'ops:baseline:list',
-  add: 'ops:baseline:add',
-  update: 'ops:baseline:update',
-  delete: 'ops:baseline:delete',
-  info: 'ops:baseline:info'
-};
-
-// Mock??
-const baselineService = createMockCrudService('btc_baselines', {
-  
-});
-
-// ?????
-const columns = [
-  {
-    label: '????',
-    prop: 'baselineName',
-    minWidth: 150
-  },
-  {
-    label: '????',
-    prop: 'permissionCount',
-    width: 100
-  },
-  {
-    label: '??',
-    prop: 'description',
-    minWidth: 200,
-    showOverflowTooltip: true
-  },
-  {
-    label: '????',
-    prop: 'createTime',
-    width: 160
-  },
-  {
-    label: '????',
-    prop: 'updateTime',
-    width: 160
-  }
-];
-
-// ??????
-const searchForm = {
-  items: [
-    {
-      label: '????',
-      prop: 'baselineName',
-      component: 'el-input',
-      props: {
-        placeholder: '???????'
-      }
-    },
-    {
-      label: '????',
-      prop: 'permissionCount',
-      component: 'el-input-number',
-      props: {
-        placeholder: '???????',
-        min: 0
-      }
-    }
-  ]
-};
-
-// ????
-const upsertForm = {
-  items: [
-    {
-      label: '????',
-      prop: 'baselineName',
-      component: 'el-input',
-      required: true,
-      props: {
-        placeholder: '???????'
-      }
-    },
-    {
-      label: '????',
-      prop: 'permissionCount',
-      component: 'el-input-number',
-      required: true,
-      props: {
-        placeholder: '???????',
-        min: 0
-      }
-    },
-    {
-      label: '??',
-      prop: 'description',
-      component: 'el-input',
-      props: {
-        type: 'textarea',
-        placeholder: '?????',
-        rows: 3
-      }
-    }
-  ]
-};
-
+const { t } = useI18n();
+const message = useMessage();
 const crudRef = ref();
-const openUpsert = (row?: any) => {
-  crudRef.value?.openUpsert(row);
-};
-const remove = (row: any) => {
-  crudRef.value?.remove(row);
-};
-const viewDetails = (row: any) => {
-  crudRef.value?.info(row);
+const tableRef = ref();
+const upsertRef = ref();
+
+// 基线服务 - 使用Mock服务
+const baselineService = createMockCrudService('btc_baseline');
+
+// 基线表格列
+const baselineColumns = computed<TableColumn[]>(() => [
+  { type: 'selection', width: 60 },
+  { type: 'index', label: '序号', width: 60 },
+  { prop: 'baselineName', label: '基线名称', minWidth: 150 },
+  { prop: 'baselineCode', label: '基线编码', minWidth: 150 },
+  { prop: 'version', label: '版本', width: 100 },
+  { prop: 'description', label: '描述', minWidth: 200 },
+  { prop: 'status', label: '状态', width: 100 },
+]);
+
+// 基线表单
+const baselineFormItems = computed<FormItem[]>(() => [
+  { prop: 'baselineName', label: '基线名称', span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'baselineCode', label: '基线编码', span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'version', label: '版本', span: 12, component: { name: 'el-input' } },
+  {
+    prop: 'status',
+    label: '状态',
+    span: 12,
+    component: {
+      name: 'el-select',
+      options: [
+        { label: '启用', value: 'enabled' },
+        { label: '禁用', value: 'disabled' },
+      ]
+    }
+  },
+  { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
+]);
+
+const handleFormSubmit = async (data: any, { close, done }: any) => {
+  try {
+    await baselineService.add(data);
+    message.success(t('crud.message.save_success'));
+    close();
+    crudRef.value?.crud.loadData();
+  } catch (_error) {
+    done();
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .baseline-page {
   height: 100%;
+  box-sizing: border-box;
 }
 </style>

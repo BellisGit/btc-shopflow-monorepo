@@ -6,7 +6,15 @@
     "declaration": true,
     "jsx": "preserve",
     "jsxImportSource": "vue",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@btc-common/*": ["src/common/*"],
+      "@btc-components/*": ["src/components/*"],
+      "@btc-crud/*": ["src/crud/*"],
+      "@btc-styles/*": ["src/styles/*"],
+      "@btc-locales/*": ["src/locales/*"]
+    }
   },
   "include": ["src"]
 }

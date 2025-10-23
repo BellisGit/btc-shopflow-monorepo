@@ -163,7 +163,7 @@ export class MessageQueue {
     // 这个方法现在主要用于清理队列中的残留消息
     const orphanedMessages: string[] = [];
 
-    for (const [messageId, message] of this.messageMap.entries()) {
+    for (const [messageId, _message] of this.messageMap.entries()) {
       // 只清理不在显示中且不在队列中的消息
       if (!this.displayingMessages.has(messageId) &&
           !this.normalQueue.some(msg => msg.id === messageId) &&
@@ -175,6 +175,13 @@ export class MessageQueue {
     orphanedMessages.forEach(messageId => {
       this.messageMap.delete(messageId);
     });
+  }
+
+  /**
+   * 根据ID获取消息
+   */
+  getMessageById(messageId: string): QueuedMessage | undefined {
+    return this.messageMap.get(messageId);
   }
 
   /**

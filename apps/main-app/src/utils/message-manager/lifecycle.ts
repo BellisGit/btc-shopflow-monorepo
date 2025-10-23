@@ -31,7 +31,6 @@ export class LifecycleManager {
    * 设置消息生命周期
    */
   setupMessageLifecycle(message: QueuedMessage): void {
-    console.log('[LifecycleManager] Setting up lifecycle for message:', message.id, 'count:', message.count);
     if (!this.displayHandler.updateBadge) {
       return;
     }
@@ -40,7 +39,6 @@ export class LifecycleManager {
 
     // 根据消息计数确定生命周期流程
     if (message.count === 1) {
-      console.log('[LifecycleManager] Setting up single message lifecycle (3s timer)');
       // 单条消息：3秒后自动消失
       const singleMessageTimer = setTimeout(() => {
         // 检查消息是否仍然存在且没有被重复触发
@@ -76,8 +74,8 @@ export class LifecycleManager {
     const state = this.messageStates.get(messageId);
 
     if (!state) {
-      // 如果状态不存在，重新设置生命周期
-      this.setupMessageLifecycle(message);
+      // 不重新创建，仅初始化状态
+      console.warn('[LifecycleManager] Message state not found, skipping update:', messageId);
       return;
     }
 
@@ -89,10 +87,8 @@ export class LifecycleManager {
 
     // 特殊处理：如果当前是单条消息状态（count=1），但现在count>1，需要创建徽章
     if (state.currentCount === 1 && message.count > 1) {
-      console.log('[LifecycleManager] Converting single message to badge message, count:', message.count);
       try {
-        // 立即显示徽章
-        this.displayHandler.updateBadge!(message.messageInstance, message.count);
+        // 徽章现在由 updateExistingMessageBadge 直接调用，这里不再调用
 
         // 更新状态
         state.currentCount = message.count;
@@ -109,8 +105,10 @@ export class LifecycleManager {
         }
 
         // 启动等待期定时器（2秒），等待更多重复消息或进入递减
+        // 注意：不再调用 startCountdownAnimation，因为徽章已经由 updateExistingMessageBadge 处理
         state.incrementTimer = setTimeout(() => {
-          this.startCountdownAnimation(message);
+          // 直接进入清理阶段，不再进行递减动画
+          this.startCleanupPhase(message);
         }, 2000);
 
         return;
@@ -369,20 +367,15 @@ export class LifecycleManager {
    * 关闭消息框
    */
   private closeMessageBox(message: QueuedMessage): void {
-    console.log('[LifecycleManager] Closing message box for:', message.id);
     if (message.messageInstance) {
       // 尝试多种关闭方法
       if (typeof message.messageInstance.close === 'function') {
-        console.log('[LifecycleManager] Using close() method');
         message.messageInstance.close();
       } else if (typeof message.messageInstance.closeMessage === 'function') {
-        console.log('[LifecycleManager] Using closeMessage() method');
         message.messageInstance.closeMessage();
       } else if (typeof message.messageInstance.clear === 'function') {
-        console.log('[LifecycleManager] Using clear() method');
         message.messageInstance.clear();
       } else {
-        console.log('[LifecycleManager] No close method found, trying to remove DOM element');
         // 尝试直接移除DOM元素
         const extendedInstance = message.messageInstance as any;
         if (extendedInstance.messageContainer) {
@@ -392,7 +385,6 @@ export class LifecycleManager {
         }
       }
     } else {
-      console.log('[LifecycleManager] No message instance found');
     }
   }
 

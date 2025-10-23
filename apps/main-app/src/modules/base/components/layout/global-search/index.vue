@@ -249,8 +249,8 @@ defineOptions({
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { FolderOpened, Document, Star, Search, Clock, Right } from '@element-plus/icons-vue';
-import { searchDocs, getDocUrl, type DocSearchResult } from '@services/docsSearch';
+import { Star, Search, Clock } from '@element-plus/icons-vue';
+import { searchDocs, type DocSearchResult } from '@services/docsSearch';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -351,8 +351,8 @@ watch(searchKeyword, async (keyword) => {
     // 合并结果并添加全局索引
     const allResults = [...menuResults, ...docResults];
     searchResults.value = allResults.map((item, index) => ({ ...item, globalIndex: index }));
-  } catch (error) {
-    console.error('[GlobalSearch] Search failed:', error);
+  } catch (_error) {
+    console.error('[GlobalSearch] Search failed:', _error);
     // 搜索失败时仍然显示菜单结果
     const menuResults = searchData.value
       .filter(item =>
@@ -501,7 +501,7 @@ const loadRecentSearches = () => {
   if (saved) {
     try {
       recentSearches.value = JSON.parse(saved);
-    } catch (e) {
+    } catch (_e) {
       recentSearches.value = [];
     }
   }

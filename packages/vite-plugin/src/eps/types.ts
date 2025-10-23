@@ -1,85 +1,78 @@
-/**
- * EPS 插件类型定义
- * 参考 cool-admin 的完整类型体系
- */
+﻿/**
+ * EPS 鎻掍欢绫诲瀷瀹氫箟
+ * 鍙傝€?cool-admin 鐨勫畬鏁寸被鍨嬩綋绯? */
 
 export interface EpsColumn {
   /**
-   * 属性名
+   * 灞炴€у悕
    */
   propertyName: string;
   /**
-   * 字段注释
+   * 瀛楁娉ㄩ噴
    */
   comment?: string;
   /**
-   * 字段类型
+   * 瀛楁绫诲瀷
    */
   type: string;
   /**
-   * 是否可空
+   * 鏄惁鍙┖
    */
   nullable?: boolean;
   /**
-   * 字段源（数据库字段名）
-   */
+   * 瀛楁婧愶紙鏁版嵁搴撳瓧娈靛悕锛?   */
   source?: string;
   /**
-   * 字典类型
+   * 瀛楀吀绫诲瀷
    */
   dict?: string[];
   /**
-   * 默认值
-   */
+   * 榛樿鍊?   */
   defaultValue?: any;
   /**
-   * 最大长度
-   */
+   * 鏈€澶ч暱搴?   */
   maxLength?: number;
   /**
-   * 最小值
-   */
+   * 鏈€灏忓€?   */
   minValue?: number;
   /**
-   * 最大值
-   */
+   * 鏈€澶у€?   */
   maxValue?: number;
 }
 
 export interface EpsSearch {
   /**
-   * 精确匹配字段
+   * 绮剧‘鍖归厤瀛楁
    */
   fieldEq: EpsColumn[];
   /**
-   * 模糊匹配字段
+   * 妯＄硦鍖归厤瀛楁
    */
   fieldLike: EpsColumn[];
   /**
-   * 关键词匹配字段
-   */
+   * 鍏抽敭璇嶅尮閰嶅瓧娈?   */
   keyWordLikeFields: EpsColumn[];
 }
 
 export interface EpsApi {
   /**
-   * API 名称
+   * API 鍚嶇О
    */
   name: string;
   /**
-   * HTTP 方法
+   * HTTP 鏂规硶
    */
   method: string;
   /**
-   * API 路径
+   * API 璺緞
    */
   path: string;
   /**
-   * API 描述
+   * API 鎻忚堪
    */
   summary?: string;
   /**
-   * 类型定义
+   * 绫诲瀷瀹氫箟
    */
   dts?: {
     parameters?: Array<{
@@ -93,31 +86,31 @@ export interface EpsApi {
 
 export interface EpsEntity {
   /**
-   * API 前缀路径
+   * API 鍓嶇紑璺緞
    */
   prefix: string;
   /**
-   * 实体名称
+   * 瀹炰綋鍚嶇О
    */
   name: string;
   /**
-   * API 列表
+   * API 鍒楄〃
    */
   api: EpsApi[];
   /**
-   * 实体字段
+   * 瀹炰綋瀛楁
    */
   columns?: EpsColumn[];
   /**
-   * 分页查询字段
+   * 鍒嗛〉鏌ヨ瀛楁
    */
   pageColumns?: EpsColumn[];
   /**
-   * 搜索配置
+   * 鎼滅储閰嶇疆
    */
   search?: EpsSearch;
   /**
-   * 分页查询操作配置
+   * 鍒嗛〉鏌ヨ鎿嶄綔閰嶇疆
    */
   pageQueryOp?: {
     fieldEq?: string[];
@@ -125,11 +118,11 @@ export interface EpsEntity {
     keyWordLikeFields?: string[];
   };
   /**
-   * 命名空间
+   * 鍛藉悕绌洪棿
    */
   namespace?: string;
   /**
-   * 权限配置
+   * 鏉冮檺閰嶇疆
    */
   permission?: Record<string, string>;
 }
@@ -140,53 +133,52 @@ export interface EpsData {
 
 export interface TypeMapping {
   /**
-   * 测试条件
+   * 娴嬭瘯鏉′欢
    */
   test?: string[];
   /**
-   * 目标类型
+   * 鐩爣绫诲瀷
    */
   type: string;
   /**
-   * 自定义映射函数
-   */
+   * 鑷畾涔夋槧灏勫嚱鏁?   */
   custom?: (params: { propertyName: string; type: string }) => string | null;
 }
 
 export interface EpsConfig {
   /**
-   * 是否启用
+   * 鏄惁鍚敤
    */
   enable: boolean;
   /**
-   * EPS API URL，空字符串表示使用本地 Mock
+   * EPS API URL锛岀┖瀛楃涓茶〃绀轰娇鐢ㄦ湰鍦?Mock
    */
   api?: string;
   /**
-   * 输出目录
+   * 杈撳嚭鐩綍
    */
   dist?: string;
   /**
-   * 类型映射配置
+   * 绫诲瀷鏄犲皠閰嶇疆
    */
   mapping?: TypeMapping[];
   /**
-   * 是否生成字典类型
+   * 鏄惁鐢熸垚瀛楀吀绫诲瀷
    */
   dict?: boolean;
 }
 
 export interface EpsPluginOptions {
   /**
-   * EPS 元数据 URL
+   * EPS 鍏冩暟鎹?URL
    */
   epsUrl: string;
   /**
-   * 输出目录
+   * 杈撳嚭鐩綍
    */
   outputDir?: string;
   /**
-   * 是否监听变化
+   * 鏄惁鐩戝惉鍙樺寲
    */
   watch?: boolean;
 }
@@ -198,3 +190,4 @@ export interface ServiceTree {
   search?: EpsSearch;
   request?: any;
 }
+

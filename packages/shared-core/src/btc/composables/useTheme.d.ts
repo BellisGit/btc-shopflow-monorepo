@@ -1,5 +1,5 @@
-/**
- * 颜色混合工具函数
+﻿/**
+ * 棰滆壊娣峰悎宸ュ叿鍑芥暟
  */
 export declare function mixColor(color1: string, color2: string, weight: number): string;
 export interface ThemeConfig {
@@ -8,11 +8,11 @@ export interface ThemeConfig {
     color: string;
 }
 /**
- * 预设主题列表
+ * 棰勮涓婚鍒楄〃
  */
 export declare const THEME_PRESETS: ThemeConfig[];
 /**
- * 主题管理 Hook
+ * 涓婚绠＄悊 Hook
  */
 export declare function useTheme(): {
     isDark: globalThis.Ref<boolean, boolean>;
@@ -30,3 +30,5 @@ export declare function useTheme(): {
     toggleDark: (event?: MouseEvent) => void;
     setThemeColor: (color: string, dark?: boolean) => void;
 };
+
+

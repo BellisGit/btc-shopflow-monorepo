@@ -1,4 +1,4 @@
-// @btc/shared-components 入口文件
+﻿// @btc/shared-components 入口文件
 
 // 导入全局样式
 import './styles/index.scss';
@@ -14,6 +14,10 @@ import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
 import BtcMasterList from './components/btc-master-list/index.vue';
 import BtcCard from './components/btc-card/index.vue';
+import BtcTabs from './components/btc-tabs/index.vue';
+import BtcViewsTabsGroup from './components/btc-views-tabs-group/index.vue';
+import BtcCascader from './components/btc-cascader/index.vue';
+import BtcTableGroup from './components/btc-table-group/index.vue';
 
 // 新的消息和通知组件
 import { BtcMessage } from './components/btc-message';
@@ -28,6 +32,7 @@ import './components/btc-notification/styles.scss';
 // CRUD 组件（上下文系统）
 import BtcCrud from './crud/context/index.vue';
 import BtcTable from './crud/table/index.vue';
+// BtcUpsert 组件单独导出，避免循环依赖
 import BtcUpsert from './crud/upsert/index.vue';
 import BtcPagination from './crud/pagination/index.vue';
 import BtcAddBtn from './crud/add-btn/index.vue';
@@ -55,6 +60,10 @@ export {
   BtcSelectButton,
   BtcMasterList,
   BtcCard,
+  BtcTabs,
+  BtcViewsTabsGroup,
+  BtcCascader,
+  BtcTableGroup,
 
   // 新的消息和通知 API
   BtcMessage,
@@ -83,3 +92,5 @@ export type { TableColumn, OpButton } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
+export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/btc-views-tabs-group/types';
+export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/btc-table-group/types';

@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+﻿import { ref } from 'vue';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface UseRequestReturn<T> {
@@ -9,7 +9,7 @@ export interface UseRequestReturn<T> {
 }
 
 /**
- * 通用请求 Composable
+ * 閫氱敤璇锋眰 Composable
  */
 export function useRequest<T = any>(
   requestFn: (...args: any[]) => Promise<T>
@@ -40,3 +40,5 @@ export function useRequest<T = any>(
     execute,
   };
 }
+
+

@@ -1,8 +1,7 @@
-import type { Component } from 'vue';
+﻿import type { Component } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 /**
- * 表单项配置（对齐 cool-admin）
- */
+ * 琛ㄥ崟椤归厤缃紙瀵归綈 cool-admin锛? */
 export interface FormItem {
   prop: string;
   label: string;
@@ -21,7 +20,7 @@ export interface FormItem {
   [key: string]: any;
 }
 /**
- * 插件配置
+ * 鎻掍欢閰嶇疆
  */
 export interface UpsertPlugin {
   name: string;
@@ -32,7 +31,7 @@ export interface UpsertPlugin {
   onClose?: (done: () => void) => void;
 }
 /**
- * Props 配置
+ * Props 閰嶇疆
  */
 export interface UpsertProps {
   items?: FormItem[] | (() => FormItem)[];
@@ -72,12 +71,11 @@ export interface UpsertProps {
   onClosed?: () => void;
 }
 /**
- * 表单模式
+ * 琛ㄥ崟妯″紡
  */
 export type UpsertMode = 'add' | 'update' | 'info';
 /**
- * 表单数据上下文
- */
+ * 琛ㄥ崟鏁版嵁涓婁笅鏂? */
 export interface FormDataContext {
   formRef: any;
   formData: any;
@@ -88,8 +86,8 @@ export interface FormDataContext {
   submitting: any;
 }
 /**
- * CRUD 上下文
- */
+ * CRUD 涓婁笅鏂? */
 export interface CrudContext {
   crud: UseCrudReturn<any>;
 }
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-button v-bind="$attrs" @click="crud.handleRefresh">
     <slot>{{ text || t('crud.button.refresh') }}</slot>
   </el-button>
@@ -23,3 +23,4 @@ if (!crud) {
   throw new Error('[BtcRefreshBtn] Must be used inside <BtcCrud>');
 }
 </script>
+

@@ -1,8 +1,7 @@
-import type { UseCrudReturn } from '@btc/shared-core';
+﻿import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableProps } from '../types';
 /**
- * 表格排序处理（对齐 cool-admin table/helper/sort.ts）
- */
+ * 琛ㄦ牸鎺掑簭澶勭悊锛堝榻?cool-admin table/helper/sort.ts锛? */
 export declare function useTableSort(crud: UseCrudReturn<any>, props: TableProps, emit: any): {
     defaultSort: globalThis.ComputedRef<{
         prop: string;
@@ -24,3 +23,4 @@ export declare function useTableSort(crud: UseCrudReturn<any>, props: TableProps
     }) => void;
     clearSort: () => void;
 };
+

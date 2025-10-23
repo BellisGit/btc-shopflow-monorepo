@@ -1,4 +1,4 @@
-import './styles/index.scss';
+﻿import './styles/index.scss';
 import BtcButton from './common/button/index.vue';
 import BtcSvg from './common/svg/index.vue';
 import BtcDialog from './common/dialog/index.vue';
@@ -26,3 +26,4 @@ export type { TableColumn, OpButton } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
+

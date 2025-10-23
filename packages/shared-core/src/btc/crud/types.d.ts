@@ -1,8 +1,8 @@
-/**
- * CRUD Composable 类型定义
+﻿/**
+ * CRUD Composable 绫诲瀷瀹氫箟
  */
 /**
- * CRUD 服务接口
+ * CRUD 鏈嶅姟鎺ュ彛
  */
 export interface CrudService<T = Record<string, unknown>> {
     page(params: Record<string, unknown>): Promise<{
@@ -17,7 +17,7 @@ export interface CrudService<T = Record<string, unknown>> {
     info?(params: any): Promise<T>;
 }
 /**
- * CRUD 配置选项
+ * CRUD 閰嶇疆閫夐」
  */
 export interface CrudOptions<T = Record<string, unknown>> {
     service: CrudService<T>;
@@ -33,7 +33,7 @@ export interface CrudOptions<T = Record<string, unknown>> {
     onAfterDelete?: () => void;
 }
 /**
- * 分页配置
+ * 鍒嗛〉閰嶇疆
  */
 export interface PaginationConfig {
     page: number;
@@ -41,7 +41,7 @@ export interface PaginationConfig {
     total: number;
 }
 /**
- * useCrud 返回类型
+ * useCrud 杩斿洖绫诲瀷
  */
 export interface UseCrudReturn<T> {
     tableData: import('vue').Ref<T[]>;
@@ -78,3 +78,5 @@ export interface UseCrudReturn<T> {
     getParams: () => Record<string, unknown>;
     setParams: (params: Record<string, unknown>) => void;
 }
+
+

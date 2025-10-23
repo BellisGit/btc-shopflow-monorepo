@@ -17,8 +17,8 @@ import { createMessageHandler, initMessageManager, createNotificationHandler, in
 import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integrations';
 
 // 管理器实例
-import { messageManager } from '../utils/message-manager';
 import { notificationManager } from '../utils/notification-manager';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 应用启动引导程序
@@ -37,21 +37,112 @@ export async function bootstrap(app: App) {
   setupInterceptors();             // 拦截器配置
 
   // 3. 处理器初始化
-  const messageHandler = createMessageHandler();
   const notificationHandler = createNotificationHandler();
 
-  initMessageManager(messageHandler);
   initNotificationManager(notificationHandler);
 
   // 4. 全局暴露
-  (window as any).messageHandler = messageHandler;
   (window as any).notificationHandler = notificationHandler;
-  (window as any).messageManager = messageManager;
   (window as any).notificationManager = notificationManager;
+  (window as any).BtcMessage = BtcMessage;
 
   // 暴露 cleanupBadge 方法（生命周期管理器需要）
-  (window as any).cleanupBadge = messageHandler.cleanupBadge;
   (window as any).cleanupNotificationBadge = notificationHandler.cleanupBadge;
+
+  // 全局捕获未处理的Promise rejection，防止控制台打印错误
+  window.addEventListener('unhandledrejection', (event) => {
+    // 检查是否是HTTP错误
+    if (event.reason && event.reason.name === 'AxiosError') {
+      // 检查是否是接口测试中心的请求（通过URL路径判断）
+      const url = event.reason.config?.url || '';
+      const isTestCenterRequest = url.includes('/admin/system/test/');
+
+      if (!isTestCenterRequest) {
+        // 静默处理非测试中心的axios错误，不打印到控制台
+        event.preventDefault();
+
+        // 显示用户友好的错误消息
+        const message = event.reason.response?.status === 404
+          ? '请求的资源不存在'
+          : '网络请求失败';
+
+        if ((window as any).BtcMessage) {
+          (window as any).BtcMessage.error(message);
+        }
+      }
+      // 对于测试中心的请求，不拦截，让错误正常传播
+    }
+  });
+
+  // 重写console.error来过滤HTTP错误
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const message = args.join(' ');
+
+    // 检查是否是接口测试中心的错误（通过堆栈信息判断）
+    const stack = new Error().stack || '';
+    const isTestCenterError = stack.includes('api-test-center') ||
+                             stack.includes('runTest') ||
+                             message.includes('测试错误详情');
+
+    // 过滤掉非测试中心的HTTP错误信息
+    if (!isTestCenterError && (
+        message.includes('404 (Not Found)') ||
+        message.includes('POST http://') ||
+        message.includes('GET http://') ||
+        message.includes('PUT http://') ||
+        message.includes('DELETE http://'))) {
+      // 静默处理，不打印到控制台
+      return;
+    }
+
+    // 其他错误正常打印
+    originalConsoleError.apply(console, args);
+  };
+
+  // 重写XMLHttpRequest来拦截网络请求日志
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  const originalXHRSend = XMLHttpRequest.prototype.send;
+
+  XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) {
+    (this as any)._method = method;
+    (this as any)._url = url;
+    return originalXHROpen.call(this, method, url, async ?? true, user, password);
+  };
+
+  XMLHttpRequest.prototype.send = function(data?: any) {
+    const xhr = this;
+
+    // 监听状态变化
+    xhr.addEventListener('readystatechange', function() {
+      if (xhr.readyState === 4) {
+        // 检查是否是接口测试中心的请求
+        const url = (xhr as any)._url || '';
+        const isTestCenterRequest = url.includes('/admin/system/test/');
+
+        // 如果是404错误且不是测试中心的请求，阻止默认的错误日志显示
+        if (xhr.status === 404 && !isTestCenterRequest) {
+          // 静默处理404错误，不显示在控制台
+          return;
+        }
+      }
+    });
+
+    return originalXHRSend.call(this, data);
+  };
+
+  // 重写fetch来拦截网络请求日志
+  const originalFetch = window.fetch;
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+    return originalFetch.call(this, input, init).catch((error) => {
+      // 如果是网络错误，静默处理
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        // 静默处理网络错误
+        return Promise.reject(error);
+      }
+      return Promise.reject(error);
+    });
+  };
 }
 
 // 导出各个模块，供其他地方使用

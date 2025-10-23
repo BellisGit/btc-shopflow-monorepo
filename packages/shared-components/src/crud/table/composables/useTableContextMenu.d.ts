@@ -1,8 +1,7 @@
-import type { UseCrudReturn } from '@btc/shared-core';
+﻿import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableProps } from '../types';
 /**
- * 右键菜单处理（对齐 cool-admin table/helper/row.ts）
- */
+ * 鍙抽敭鑿滃崟澶勭悊锛堝榻?cool-admin table/helper/row.ts锛? */
 export declare function useTableContextMenu(
   crud: UseCrudReturn<any>,
   props: TableProps,
@@ -14,3 +13,4 @@ export declare function useTableContextMenu(
   onRowContextMenu: (row: any, column: any, event: MouseEvent) => void;
   handleMenuClick: (item: any) => void;
 };
+

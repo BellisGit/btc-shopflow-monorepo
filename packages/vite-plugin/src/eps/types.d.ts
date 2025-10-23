@@ -1,5 +1,5 @@
-/**
- * EPS 插件类型定义
+﻿/**
+ * EPS 鎻掍欢绫诲瀷瀹氫箟
  */
 export interface ApiMethod {
     path: string;
@@ -17,15 +17,16 @@ export interface EpsData {
 }
 export interface EpsPluginOptions {
     /**
-     * EPS 元数据 URL
+     * EPS 鍏冩暟鎹?URL
      */
     epsUrl: string;
     /**
-     * 输出目录
+     * 杈撳嚭鐩綍
      */
     outputDir?: string;
     /**
-     * 是否监听变化
+     * 鏄惁鐩戝惉鍙樺寲
      */
     watch?: boolean;
 }
+

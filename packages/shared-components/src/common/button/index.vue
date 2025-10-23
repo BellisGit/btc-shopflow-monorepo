@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <button class="btc-button" :class="typeClass" @click="handleClick">
     <slot />
   </button>
@@ -56,3 +56,4 @@ const handleClick = (event: MouseEvent) => {
   color: white;
 }
 </style>
+

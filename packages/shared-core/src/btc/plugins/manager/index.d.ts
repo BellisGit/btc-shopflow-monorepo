@@ -1,11 +1,10 @@
-import type { App } from 'vue';
+﻿import type { App } from 'vue';
 import type { Plugin, PluginOptions, PluginManagerOptions, PluginRecord, PluginLifecycleEvents, ToolbarConfig, LayoutConfig } from './types';
 import { PluginStatus } from './types';
 /**
- * 插件管理器（增强版）
- * 支持组件、指令、路由的自动注册
- * 支持 toolbar、layout 的管理
- * 支持生命周期钩子
+ * 鎻掍欢绠＄悊鍣紙澧炲己鐗堬級
+ * 鏀寔缁勪欢銆佹寚浠ゃ€佽矾鐢辩殑鑷姩娉ㄥ唽
+ * 鏀寔 toolbar銆乴ayout 鐨勭鐞? * 鏀寔鐢熷懡鍛ㄦ湡閽╁瓙
  */
 export declare class PluginManager {
     private plugins;
@@ -17,169 +16,146 @@ export declare class PluginManager {
     private layoutComponents;
     constructor(options?: PluginManagerOptions);
     /**
-     * 设置 Vue 应用实例
+     * 璁剧疆 Vue 搴旂敤瀹炰緥
      */
     setApp(app: App): void;
     /**
-     * 设置 Vue Router 实例
+     * 璁剧疆 Vue Router 瀹炰緥
      */
     setRouter(router: any): void;
     /**
-     * 注册插件
-     * @param plugin 插件对象
-     * @returns 插件管理器实例（支持链式调用）
-     */
+     * 娉ㄥ唽鎻掍欢
+     * @param plugin 鎻掍欢瀵硅薄
+     * @returns 鎻掍欢绠＄悊鍣ㄥ疄渚嬶紙鏀寔閾惧紡璋冪敤锛?     */
     register<T = any>(plugin: Plugin<T>): this;
     /**
-     * 安装插件（增强版）
-     * @param name 插件名称
-     * @param options 插件配置选项
+     * 瀹夎鎻掍欢锛堝寮虹増锛?     * @param name 鎻掍欢鍚嶇О
+     * @param options 鎻掍欢閰嶇疆閫夐」
      */
     install(name: string, options?: PluginOptions): Promise<void>;
     /**
-     * 注册组件
+     * 娉ㄥ唽缁勪欢
      */
     private registerComponents;
     /**
-     * 注册指令
+     * 娉ㄥ唽鎸囦护
      */
     private registerDirectives;
     /**
-     * 注册路由
+     * 娉ㄥ唽璺敱
      */
     private registerRoutes;
     /**
-     * 从组件加载器中提取组件名称
-     */
+     * 浠庣粍浠跺姞杞藉櫒涓彁鍙栫粍浠跺悕绉?     */
     private extractComponentName;
     /**
-     * 卸载插件
-     * @param name 插件名称
+     * 鍗歌浇鎻掍欢
+     * @param name 鎻掍欢鍚嶇О
      */
     uninstall(name: string): Promise<void>;
     /**
-     * 获取插件
-     * @param name 插件名称
-     * @returns 插件对象
+     * 鑾峰彇鎻掍欢
+     * @param name 鎻掍欢鍚嶇О
+     * @returns 鎻掍欢瀵硅薄
      */
     get<T = any>(name: string): Plugin<T> | undefined;
     /**
-     * 获取插件 API
-     * @param name 插件名称
-     * @returns 插件 API 对象
+     * 鑾峰彇鎻掍欢 API
+     * @param name 鎻掍欢鍚嶇О
+     * @returns 鎻掍欢 API 瀵硅薄
      */
     getApi<T = any>(name: string): T | undefined;
     /**
-     * 检查插件是否存在
-     * @param name 插件名称
-     * @returns 是否存在
+     * 妫€鏌ユ彃浠舵槸鍚﹀瓨鍦?     * @param name 鎻掍欢鍚嶇О
+     * @returns 鏄惁瀛樺湪
      */
     has(name: string): boolean;
     /**
-     * 检查插件是否已安装
-     * @param name 插件名称
-     * @returns 是否已安装
-     */
+     * 妫€鏌ユ彃浠舵槸鍚﹀凡瀹夎
+     * @param name 鎻掍欢鍚嶇О
+     * @returns 鏄惁宸插畨瑁?     */
     isInstalled(name: string): boolean;
     /**
-     * 获取所有插件名称
-     * @returns 插件名称数组
+     * 鑾峰彇鎵€鏈夋彃浠跺悕绉?     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     list(): string[];
     /**
-     * 获取所有已安装的插件
-     * @returns 已安装插件名称数组
-     */
+     * 鑾峰彇鎵€鏈夊凡瀹夎鐨勬彃浠?     * @returns 宸插畨瑁呮彃浠跺悕绉版暟缁?     */
     listInstalled(): string[];
     /**
-     * 获取插件状态
-     * @param name 插件名称
-     * @returns 插件状态
-     */
+     * 鑾峰彇鎻掍欢鐘舵€?     * @param name 鎻掍欢鍚嶇О
+     * @returns 鎻掍欢鐘舵€?     */
     getStatus(name: string): PluginStatus | undefined;
     /**
-     * 获取插件记录（包含状态和元数据）
-     * @param name 插件名称
-     * @returns 插件记录
+     * 鑾峰彇鎻掍欢璁板綍锛堝寘鍚姸鎬佸拰鍏冩暟鎹級
+     * @param name 鎻掍欢鍚嶇О
+     * @returns 鎻掍欢璁板綍
      */
     getRecord<T = any>(name: string): PluginRecord<T> | undefined;
     /**
-     * 批量安装插件（支持按 order 排序）
-     * @param names 插件名称数组
-     * @param options 通用配置选项
+     * 鎵归噺瀹夎鎻掍欢锛堟敮鎸佹寜 order 鎺掑簭锛?     * @param names 鎻掍欢鍚嶇О鏁扮粍
+     * @param options 閫氱敤閰嶇疆閫夐」
      */
     installAll(names: string[], options?: PluginOptions): Promise<void>;
     /**
-     * 获取所有工具栏组件（按 order 排序）
-     */
+     * 鑾峰彇鎵€鏈夊伐鍏锋爮缁勪欢锛堟寜 order 鎺掑簭锛?     */
     getToolbarComponents(): ToolbarConfig[];
     /**
-     * 获取指定位置的布局组件（按 order 排序）
-     */
+     * 鑾峰彇鎸囧畾浣嶇疆鐨勫竷灞€缁勪欢锛堟寜 order 鎺掑簭锛?     */
     getLayoutComponents(position?: 'header' | 'sidebar' | 'footer' | 'global'): LayoutConfig[];
     /**
-     * 获取插件的 qiankun 配置
+     * 鑾峰彇鎻掍欢鐨?qiankun 閰嶇疆
      */
     getQiankunConfig(name: string): import("./types").QiankunConfig | undefined;
     /**
-     * 获取所有共享给子应用的插件
+     * 鑾峰彇鎵€鏈夊叡浜粰瀛愬簲鐢ㄧ殑鎻掍欢
      */
     getSharedPlugins(): Plugin[];
     /**
-     * 获取生命周期事件（供其他插件使用）
-     */
+     * 鑾峰彇鐢熷懡鍛ㄦ湡浜嬩欢锛堜緵鍏朵粬鎻掍欢浣跨敤锛?     */
     getLifecycleEvents(): PluginLifecycleEvents;
     /**
-     * 获取插件配置参数
+     * 鑾峰彇鎻掍欢閰嶇疆鍙傛暟
      */
     getPluginOptions(name: string): PluginOptions | undefined;
     /**
-     * 移除插件（从管理器中删除）
-     * @param name 插件名称
+     * 绉婚櫎鎻掍欢锛堜粠绠＄悊鍣ㄤ腑鍒犻櫎锛?     * @param name 鎻掍欢鍚嶇О
      */
     remove(name: string): Promise<void>;
     /**
-     * 清空所有插件
-     */
+     * 娓呯┖鎵€鏈夋彃浠?     */
     clear(): void;
     /**
-     * 获取插件元数据
-     * @param name 插件名称
-     * @returns 插件元数据
-     */
+     * 鑾峰彇鎻掍欢鍏冩暟鎹?     * @param name 鎻掍欢鍚嶇О
+     * @returns 鎻掍欢鍏冩暟鎹?     */
     getPluginMetadata(name: string): import("./types").PluginMetadata | undefined;
     /**
-     * 按作者筛选插件
-     * @param author 作者名称
-     * @returns 插件名称数组
+     * 鎸変綔鑰呯瓫閫夋彃浠?     * @param author 浣滆€呭悕绉?     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     getPluginsByAuthor(author: string): string[];
     /**
-     * 按版本筛选插件
-     * @param version 版本号（支持通配符）
-     * @returns 插件名称数组
+     * 鎸夌増鏈瓫閫夋彃浠?     * @param version 鐗堟湰鍙凤紙鏀寔閫氶厤绗︼級
+     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     getPluginsByVersion(version: string): string[];
     /**
-     * 按分类筛选插件
-     * @param category 分类名称
-     * @returns 插件名称数组
+     * 鎸夊垎绫荤瓫閫夋彃浠?     * @param category 鍒嗙被鍚嶇О
+     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     getPluginsByCategory(category: string): string[];
     /**
-     * 获取推荐插件
-     * @returns 插件名称数组
+     * 鑾峰彇鎺ㄨ崘鎻掍欢
+     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     getRecommendedPlugins(): string[];
     /**
-     * 搜索插件
-     * @param query 搜索关键词
-     * @returns 插件名称数组
+     * 鎼滅储鎻掍欢
+     * @param query 鎼滅储鍏抽敭璇?     * @returns 鎻掍欢鍚嶇О鏁扮粍
      */
     searchPlugins(query: string): string[];
     /**
-     * 获取所有插件的详细信息
-     * @returns 插件详细信息数组
+     * 鑾峰彇鎵€鏈夋彃浠剁殑璇︾粏淇℃伅
+     * @returns 鎻掍欢璇︾粏淇℃伅鏁扮粍
      */
     getPluginsInfo(): {
         name: string;
@@ -197,7 +173,7 @@ export declare class PluginManager {
         hasLayout: boolean;
     }[];
     /**
-     * 输出插件统计信息（仅在 debug 模式下）
+     * 杈撳嚭鎻掍欢缁熻淇℃伅锛堜粎鍦?debug 妯″紡涓嬶級
      */
     logPluginStats(): void;
 }
@@ -205,10 +181,10 @@ export * from './types';
 export * from './resource-loader';
 export * from './config-helper';
 /**
- * 获取插件管理器实例（单例模式）
- */
+ * 鑾峰彇鎻掍欢绠＄悊鍣ㄥ疄渚嬶紙鍗曚緥妯″紡锛? */
 export declare function usePluginManager(options?: PluginManagerOptions): PluginManager;
 /**
- * 重置插件管理器（主要用于测试）
- */
+ * 閲嶇疆鎻掍欢绠＄悊鍣紙涓昏鐢ㄤ簬娴嬭瘯锛? */
 export declare function resetPluginManager(): void;
+
+

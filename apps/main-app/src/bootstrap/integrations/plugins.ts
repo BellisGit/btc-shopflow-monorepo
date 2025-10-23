@@ -5,7 +5,7 @@
 
 import type { App } from 'vue';
 import { usePluginManager, resetPluginManager } from '@btc/shared-core';
-import { scanAndRegisterPlugins, getScanStats } from './module-scanner';
+import { scanAndRegisterPlugins } from './module-scanner';
 import router from '@/router';
 
 // 导出插件管理器实例，供其他组件使用

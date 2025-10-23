@@ -1,22 +1,18 @@
 <template>
   <div class="audit-page">
-    <BtcCrud
-      ref="crudRef"
-      :service="auditService"
-      :columns="columns"
-      :search-form="searchForm"
-      :permission="permission"
-    >
-      <template #table-operation="{ row }">
-        <el-button
-          v-permission="permission.info"
-          type="info"
-          size="small"
-          @click="viewDetails(row)"
-        >
-          {{ t('ops.audit.view_detail') }}
-        </el-button>
-      </template>
+    <BtcCrud ref="crudRef" :service="auditService" style="padding: 10px;">
+      <BtcRow>
+        <BtcRefreshBtn />
+        <BtcFlex1 />
+        <BtcSearchKey placeholder="搜索审计日志..." />
+      </BtcRow>
+      <BtcRow>
+        <BtcTable ref="tableRef" :columns="columns" border />
+      </BtcRow>
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
     </BtcCrud>
 
     <!-- 审计详情对话框 -->
@@ -45,9 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { service } from '../../../../services/eps';
+import type { TableColumn } from '@btc/shared-components';
+import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey } from '@btc/shared-components';
+import { createMockCrudService } from '@utils/http';
 
 defineOptions({
   name: 'OpsAudit'
@@ -55,11 +53,6 @@ defineOptions({
 
 const { t } = useI18n();
 
-// ????
-const permission = {
-  list: 'ops:audit:list',
-  info: 'ops:audit:info'
-};
 
 // Mock??
 const auditService = createMockCrudService('btc_audit_logs', {
@@ -123,7 +116,7 @@ const auditService = createMockCrudService('btc_audit_logs', {
 });
 
 // 审计日志列配置
-const columns = [
+const columns = computed<TableColumn[]>(() => [
   {
     label: t('ops.audit.operation_time'),
     prop: 'operationTime',
@@ -158,65 +151,10 @@ const columns = [
       { label: t('ops.audit.failed'), value: t('ops.audit.failed') }
     ]
   }
-];
+]);
 
-// ??????
-const searchForm = {
-  items: [
-    {
-      label: '????',
-      prop: 'userName',
-      component: 'el-input',
-      props: {
-        placeholder: '??????'
-      }
-    },
-    {
-      label: '????',
-      prop: 'operationType',
-      component: 'el-select',
-      props: {
-        placeholder: '???????',
-        clearable: true
-      },
-      dict: [
-        { label: '??', value: '??' },
-        { label: '??', value: '??' },
-        { label: '??', value: '??' },
-        { label: '??', value: '??' },
-        { label: '??', value: '??' }
-      ]
-    },
-    {
-      label: '??',
-      prop: 'result',
-      component: 'el-select',
-      props: {
-        placeholder: '?????',
-        clearable: true
-      },
-      dict: [
-        { label: '??', value: '??' },
-        { label: '??', value: '??' }
-      ]
-    },
-    {
-      label: '????',
-      prop: 'operationTime',
-      component: 'el-date-picker',
-      props: {
-        type: 'datetimerange',
-        'range-separator': '?',
-        'start-placeholder': '????',
-        'end-placeholder': '????',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        'value-format': 'YYYY-MM-DD HH:mm:ss'
-      }
-    }
-  ]
-};
 
-// ?????
+// 审计详情对话框
 const detailDialogVisible = ref(false);
 const currentLog = ref<any>({});
 
@@ -224,7 +162,7 @@ const currentLog = ref<any>({});
 const formatJson = (jsonStr: string) => {
   try {
     return JSON.stringify(JSON.parse(jsonStr), null, 2);
-  } catch (error) {
+  } catch (_error) {
     return jsonStr;
   }
 };

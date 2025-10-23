@@ -27,7 +27,7 @@ import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { CommonColumns } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -64,8 +64,8 @@ const loadDepartmentOptions = async () => {
         label: dept.name,
         value: dept.id
       }));
-  } catch (error) {
-    console.error('加载部门选项失败:', error);
+  } catch (_error) {
+    console.error('加载部门选项失败:', _error);
     // 出错时设置为空数组
     departmentOptions.value = [];
   }
@@ -86,7 +86,16 @@ const columns = computed<TableColumn[]>(() => [
   CommonColumns.index(),
   { prop: 'name', label: '部门名称', minWidth: 150 },
   { prop: 'deptCode', label: '部门编码', width: 120 },
-  { prop: 'parentId', label: '上级部门ID', width: 120 },
+  {
+    prop: 'parentId',
+    label: '上级部门',
+    width: 120,
+    formatter: (row: any) => {
+      if (!row.parentId) return '-';
+      const parentDept = departmentOptions.value.find(dept => dept.value === row.parentId);
+      return parentDept ? parentDept.label : row.parentId;
+    }
+  },
   { prop: 'sort', label: '排序', width: 80 },
   CommonColumns.createdAt(),
   CommonColumns.operation(),
@@ -103,7 +112,7 @@ const formItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-select',
       props: { clearable: true },
-      options: departmentOptions
+      options: departmentOptions.value
     }
   },
   {
@@ -123,7 +132,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

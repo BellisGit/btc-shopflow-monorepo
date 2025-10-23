@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue';
+﻿import { reactive, ref, watch } from 'vue';
 
 // Helper: deep clone
 function cloneDeep(obj: any): any {
@@ -48,23 +48,19 @@ export function useBtcForm() {
       hidden: false,
       saveButtonText: '保存',
       closeButtonText: '关闭',
-      justify: 'flex-end',
-      buttons: ['close', 'save'],
+      justify: 'center',
+      buttons: [],
     },
-    dialog: {
-      appendToBody: true,
-    },
+    dialog: {},
     items: [],
     form: {},
     _data: {},
   });
 
-  const Form = ref();
-
   // 表单数据
   const form = reactive<Record<string, any>>({});
 
-  // 表单数据备份
+  // 旧表单数据（用于重置）
   const oldForm = ref<Record<string, any>>({});
 
   // 表单是否可见
@@ -79,14 +75,18 @@ export function useBtcForm() {
   // 表单禁用状态
   const disabled = ref(false);
 
+  // 表单引用
+  const Form = ref<any>(null);
+
   // 监听表单变化
   watch(
     () => form,
     (val) => {
       if (config.on?.change) {
         for (const i in val) {
-          if (form[i] !== oldForm.value[i]) {
-            config.on?.change(val, i);
+          if (oldForm.value[i] !== val[i]) {
+            config.on.change(i, val[i], val);
+            break;
           }
         }
       }

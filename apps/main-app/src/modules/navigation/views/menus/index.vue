@@ -1,144 +1,45 @@
 <template>
   <div class="menus-page">
-    <BtcViewGroup
-      ref="viewGroupRef"
-      :options="viewGroupOptions"
-      :title="t('navigation.menu.list')"
-      :selected-item="selectedModule"
-      style="height: 100%"
-    >
-      <template #left>
-        <!-- 使用 btc-master-list 显示域和模块的两级树状结构 -->
-        <BtcMasterList
-          :service="domainModuleService"
-          title="业务域"
-          @select="onModuleSelect"
-          @load="onModuleLoad"
-        />
-      </template>
-
-      <template #right>
-        <!-- 右侧显示具体模块下的菜单表 -->
-        <BtcCrud
-          ref="crudRef"
-          :service="wrappedMenuService"
-          :on-before-refresh="handleBeforeRefresh"
-          style="padding: 10px"
-        >
-          <BtcRow>
-            <BtcRefreshBtn />
-            <BtcAddBtn />
-            <BtcMultiDeleteBtn />
-            <BtcFlex1 />
-            <BtcSearchKey :placeholder="t('navigation.menu.search_placeholder')" />
-          </BtcRow>
-          <BtcRow>
-            <BtcTable ref="tableRef" :columns="menuColumns" border />
-          </BtcRow>
-          <BtcRow>
-            <BtcFlex1 />
-            <BtcPagination />
-          </BtcRow>
-          <BtcUpsert
-            ref="upsertRef"
-            :items="menuFormItems"
-            width="800px"
-            :on-submit="handleFormSubmit"
-          />
-        </BtcCrud>
-      </template>
-    </BtcViewGroup>
+    <BtcTableGroup
+      ref="tableGroupRef"
+      :left-service="domainService"
+      :right-service="wrappedMenuService"
+      :table-columns="menuColumns"
+      :form-items="menuFormItems"
+      left-title="业务域"
+      right-title="菜单列表"
+      search-placeholder="搜索菜单..."
+      :show-unassigned="true"
+      unassigned-label="未分配"
+      @select="onDomainSelect"
+      @form-submit="handleFormSubmit"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
+import { ref, computed } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import {
-  BtcViewGroup,
-  BtcMasterList,
-  BtcCrud,
-  BtcTable,
-  BtcUpsert,
-  BtcPagination,
-  BtcAddBtn,
-  BtcRefreshBtn,
-  BtcMultiDeleteBtn,
-  BtcRow,
-  BtcFlex1,
-  BtcSearchKey,
-} from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { BtcTableGroup } from '@btc/shared-components';
+import { service } from '@services/eps';
 
 defineOptions({
   name: 'NavigationMenus',
 });
 
 const { t } = useI18n();
-const viewGroupRef = ref();
-const crudRef = ref();
+const tableGroupRef = ref();
 const selectedModule = ref<any>(null);
 
-// 域和模块服务配置 - 构建两级树状结构
-const domainModuleService = {
-  list: async () => {
-    // 使用 AbortController 进行超时控制，避免 Promise.reject 触发调试器
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, 10000); // 10秒超时
-
-    try {
-      // 并行获取域列表和模块列表
-      const [domains, modules] = await Promise.all([
-        service.sysdomain.list(),
-        service.sysmodule.list(),
-      ]);
-
-      // 清除超时定时器
-      clearTimeout(timeoutId);
-
-      // 构建树状结构：一级是域，二级是模块
-      const domainModuleTree = domains.map((domain: any) => ({
-        id: `domain_${domain.domainId}`,
-        name: domain.domainName,
-        domainId: domain.domainId,
-        type: 'domain',
-        children: modules
-          .filter((module: any) => module.domainId === domain.domainId)
-          .map((module: any) => ({
-            id: `module_${module.moduleId}`,
-            name: module.moduleName,
-            moduleId: module.moduleId,
-            domainId: module.domainId,
-            type: 'module',
-            parentId: `domain_${domain.domainId}`,
-          })),
-      }));
-
-      return domainModuleTree;
-    } catch (error: any) {
-      // 清除超时定时器
-      clearTimeout(timeoutId);
-
-      // 检查是否是超时错误
-      if (error.name === 'AbortError' || controller.signal.aborted) {
-        // 超时情况：静默返回空数据，不显示错误信息
-        console.warn('域和模块数据加载超时，返回空数据');
-        return [];
-      } else {
-        // 其他错误：显示友好的错误信息
-        console.error('加载域和模块数据失败:', error);
-        const messageManager = (window as any).messageManager;
-        if (messageManager) {
-          messageManager.enqueue('warning', '数据加载失败，请稍后重试');
-        }
-        return [];
-      }
-    }
-  },
+// 域服务配置 - 直接调用域列表的list API
+const domainService = {
+  list: (params?: any) => {
+    // 必须传递参数对象，即使为空对象{}，后端会设置默认值
+    const finalParams = params || {};
+    return service.sysdomain.list(finalParams);
+  }
 };
 
 // 菜单服务（右侧表）
@@ -158,34 +59,10 @@ const wrappedMenuService = {
   },
 };
 
-// ViewGroup 配置
-const viewGroupOptions = reactive({
-  label: t('platform.domain.list'),
-  leftWidth: '300px',
-  enableRefresh: true,
-  enableKeySearch: true,
-  custom: true, // 使用自定义的左右侧内容
-});
-
-// 数据加载完成处理
-const onModuleLoad = (_list: any[], firstItem: any | null) => {
-  if (firstItem && firstItem.type === 'module') {
-    selectedModule.value = firstItem;
-    // 首次加载时，触发右侧表格加载
-    crudRef.value?.crud.setParams({ moduleId: firstItem.moduleId });
-    crudRef.value?.crud.handleRefresh();
-  }
-};
 
 // 用户点击选择处理
-const onModuleSelect = (item: any, _ids: any[]) => {
-  // 只处理模块选择，忽略域选择
-  if (item.type === 'module') {
-    selectedModule.value = item;
-    // 根据模块筛选菜单列表
-    crudRef.value?.crud.setParams({ moduleId: item.moduleId });
-    crudRef.value?.crud.handleRefresh();
-  }
+const onDomainSelect = (domain: any) => {
+  selectedModule.value = domain;
 };
 
 // 菜单表格列
@@ -250,13 +127,6 @@ const menuColumns = computed<TableColumn[]>(() => [
     fixed: 'right',
     sortable: 'custom',
   },
-  {
-    prop: 'updateTime',
-    label: t('navigation.menu.update_time'),
-    sortable: 'custom',
-    width: 170,
-  },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 // 菜单类型选项
@@ -380,20 +250,6 @@ const menuFormItems = computed<FormItem[]>(() => [
   },
 ]);
 
-// 刷新前钩子：添加模块ID参数
-const handleBeforeRefresh = (params: any) => {
-  if (selectedModule.value) {
-    return {
-      ...params,
-      moduleId: selectedModule.value.moduleId,
-    };
-  }
-  // 如果没有选中模块，返回空参数，让表格显示空状态
-  return {
-    ...params,
-    moduleId: null, // 明确设置为null，让后端返回空数据
-  };
-};
 
 const handleFormSubmit = async (data: any, { close, done, next }: any) => {
   try {

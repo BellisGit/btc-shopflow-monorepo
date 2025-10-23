@@ -141,10 +141,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { ElMessageBox, ElMessage } from 'element-plus';
 import { useI18n, zhCN, enUS } from '@btc/shared-core';
 
-const { t, locale, availableLocales } = useI18n();
+const { t, locale } = useI18n();
 
 // Current locale
 const currentLocale = ref(locale.value);
@@ -155,7 +155,7 @@ const searchKey = ref('');
 // Handle locale change
 const handleLocaleChange = (newLocale: string) => {
   locale.value = newLocale;
-  message.success(`Language switched to ${newLocale}`);
+  ElMessage.success(`Language switched to ${newLocale}`);
 };
 
 // Translation test data
@@ -242,12 +242,12 @@ const filteredKeys = computed(() => {
 
 // Show success message
 const showSuccessMessage = () => {
-  message.success(t('sys.message.success'));
+  ElMessage.success(t('sys.message.success'));
 };
 
 // Show error message
 const showErrorMessage = () => {
-  message.error(t('sys.message.error'));
+  ElMessage.error(t('sys.message.error'));
 };
 
 // Show confirm dialog
@@ -257,9 +257,9 @@ const showConfirmDialog = () => {
     t('common.button.confirm'),
     { type: 'warning' }
   ).then(() => {
-    message.success(t('crud.message.delete_success'));
+    ElMessage.success(t('crud.message.delete_success'));
   }).catch(() => {
-    message.info(t('common.button.cancel'));
+    ElMessage.info(t('common.button.cancel'));
   });
 };
 </script>

@@ -53,16 +53,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { Setting, Lock, Grid, ChatDotRound } from '@element-plus/icons-vue';
-import { service } from '../../../../services/eps';
+import { Setting, Lock } from '@element-plus/icons-vue';
+import { service } from '@services/eps';
 
 const previewType = ref<'user' | 'role'>('user');
 const selectedTarget = ref<number | null>(null);
 const menuTree = ref<any[]>([]);
 
 // Mock服务
-const userService = service.base.department;
-const roleService = service.base.department;
+const _userService = service.base.department;
+const _roleService = service.base.department;
 
 // 目标选项
 const targetOptions = computed(() => {

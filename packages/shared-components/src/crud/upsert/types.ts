@@ -11,6 +11,7 @@ export interface FormItem {
     name: string | Component;
     props?: Record<string, any>;
     options?: any[];
+    slots?: Record<string, (...args: any[]) => any>;
   };
   rules?: any | any[];
   required?: boolean;

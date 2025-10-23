@@ -1,9 +1,9 @@
-import { type Ref } from 'vue';
+﻿import { type Ref } from 'vue';
 import type { TableProps } from '../types';
 /**
- * 表格高度自动计算（对齐 cool-admin table/helper/height.ts）
- */
+ * 琛ㄦ牸楂樺害鑷姩璁＄畻锛堝榻?cool-admin table/helper/height.ts锛? */
 export declare function useTableHeight(props: TableProps, tableRef: Ref): {
     maxHeight: Ref<number | undefined, number | undefined>;
     calcMaxHeight: () => void;
 };
+

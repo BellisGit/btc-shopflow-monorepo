@@ -4,7 +4,7 @@
  */
 
 import { ElNotification } from 'element-plus';
-import { notificationManager } from '../../utils/notification-manager';
+import { notificationManager } from '@utils/notification-manager';
 
 // 扩展通知实例类型
 export interface ExtendedNotificationInstance {
@@ -55,7 +55,7 @@ export const initGlobalNotificationObserver = () => {
                   const titleText = notificationTitle.textContent?.trim();
 
                   // 遍历待处理通知，找到匹配的（优先匹配最新的通知）
-                  let matched = false;
+                  let _matched = false;
                   const pendingEntries = Array.from(pendingNotifications.entries()).reverse(); // 从最新的开始匹配
 
                   for (const [key, pending] of pendingEntries) {
@@ -71,7 +71,7 @@ export const initGlobalNotificationObserver = () => {
 
                       // 从待处理列表中移除
                       pendingNotifications.delete(key);
-                      matched = true;
+                      _matched = true;
                       break;
                     }
                   }
@@ -179,7 +179,7 @@ export const setupNotificationBadgePositionObserver = (extendedInstance: Extende
 /**
  * 更新通知徽章位置
  */
-export const updateNotificationBadgePosition = (extendedInstance: ExtendedNotificationInstance, notificationElement: HTMLElement) => {
+export const updateNotificationBadgePosition = (extendedInstance: ExtendedNotificationInstance, _notificationElement: HTMLElement) => {
   if (!extendedInstance.badgeElement) return;
 
   const badgeContainer = extendedInstance.badgeElement.parentElement;

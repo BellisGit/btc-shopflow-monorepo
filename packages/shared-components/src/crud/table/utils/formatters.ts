@@ -1,14 +1,12 @@
-import type { TableColumn } from '../types';
+﻿import type { TableColumn } from '../types';
 import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-utils';
 
 /**
- * 自动格式化表格列（针对时间字段）
- * @param columns 表格列配置
- * @returns 处理后的表格列配置
- */
+ * 鑷姩鏍煎紡鍖栬〃鏍煎垪锛堥拡瀵规椂闂村瓧娈碉級
+ * @param columns 琛ㄦ牸鍒楅厤缃? * @returns 澶勭悊鍚庣殑琛ㄦ牸鍒楅厤缃? */
 export function autoFormatTableColumns(columns: TableColumn[]): TableColumn[] {
   return columns.map(column => {
-    // 如果是时间字段，自动添加格式化器
+    // 濡傛灉鏄椂闂村瓧娈碉紝鑷姩娣诲姞鏍煎紡鍖栧櫒
     if (column.prop && isDateTimeField(column.prop) && !column.formatter) {
       return {
         ...column,
@@ -22,9 +20,9 @@ export function autoFormatTableColumns(columns: TableColumn[]): TableColumn[] {
 }
 
 /**
- * 创建时间字段格式化器
- * @param format 格式化模板，默认为 'YYYY-MM-DD HH:mm:ss'
- * @returns 格式化器函数
+ * 鍒涘缓鏃堕棿瀛楁鏍煎紡鍖栧櫒
+ * @param format 鏍煎紡鍖栨ā鏉匡紝榛樿涓?'YYYY-MM-DD HH:mm:ss'
+ * @returns 鏍煎紡鍖栧櫒鍑芥暟
  */
 export function createDateTimeFormatter(_format = 'YYYY-MM-DD HH:mm:ss') {
   return (_row: any, _column: any, cellValue: any) => {
@@ -33,11 +31,8 @@ export function createDateTimeFormatter(_format = 'YYYY-MM-DD HH:mm:ss') {
 }
 
 /**
- * 为特定字段创建时间格式化器
- * @param fieldName 字段名
- * @returns 表格列配置
- */
-export function createDateTimeColumn(fieldName: string, label = '时间', width = 180): TableColumn {
+ * 涓虹壒瀹氬瓧娈靛垱寤烘椂闂存牸寮忓寲鍣? * @param fieldName 瀛楁鍚? * @returns 琛ㄦ牸鍒楅厤缃? */
+export function createDateTimeColumn(fieldName: string, label = '鏃堕棿', width = 180): TableColumn {
   return {
     prop: fieldName,
     label,
@@ -47,19 +42,18 @@ export function createDateTimeColumn(fieldName: string, label = '时间', width 
 }
 
 /**
- * 为创建时间字段创建列配置
- * @param fieldName 字段名，默认为 'createdAt'
- * @returns 表格列配置
- */
+ * 涓哄垱寤烘椂闂村瓧娈靛垱寤哄垪閰嶇疆
+ * @param fieldName 瀛楁鍚嶏紝榛樿涓?'createdAt'
+ * @returns 琛ㄦ牸鍒楅厤缃? */
 export function createCreatedAtColumn(fieldName = 'createdAt'): TableColumn {
-  return createDateTimeColumn(fieldName, '创建时间');
+  return createDateTimeColumn(fieldName, '鍒涘缓鏃堕棿');
 }
 
 /**
- * 为更新时间字段创建列配置
- * @param fieldName 字段名，默认为 'updatedAt'
- * @returns 表格列配置
- */
+ * 涓烘洿鏂版椂闂村瓧娈靛垱寤哄垪閰嶇疆
+ * @param fieldName 瀛楁鍚嶏紝榛樿涓?'updatedAt'
+ * @returns 琛ㄦ牸鍒楅厤缃? */
 export function createUpdatedAtColumn(fieldName = 'updatedAt'): TableColumn {
-  return createDateTimeColumn(fieldName, '更新时间');
+  return createDateTimeColumn(fieldName, '鏇存柊鏃堕棿');
 }
+

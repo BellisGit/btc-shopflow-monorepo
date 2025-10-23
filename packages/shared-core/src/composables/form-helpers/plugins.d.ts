@@ -1,4 +1,4 @@
-export interface FormPlugin {
+﻿export interface FormPlugin {
   name: string;
   value?: any;
   created?: (options: any, ctx: any) => void;
@@ -37,3 +37,5 @@ export declare function usePlugins(
   clear: () => void;
   submit: (data: any) => Promise<any>;
 };
+
+

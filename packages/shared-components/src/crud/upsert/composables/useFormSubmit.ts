@@ -1,7 +1,8 @@
-import { ref } from 'vue';
+﻿import { ref } from 'vue';
 import { formHook } from '@btc/shared-utils';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 表单提交逻辑
@@ -71,21 +72,31 @@ export function useFormSubmit(
       // 调用 onSubmit 钩子
       if (props.onSubmit) {
         const next = async (data: any) => {
-          // 调用 service.update 或 service.add
-          const service = crud.service;
-          if (service) {
-            let result;
-            if (mode.value === 'update') {
-              result = await service.update(data);
-            } else {
-              result = await service.add(data);
+          try {
+            // 调用 service.update 或 service.add
+            const service = crud.service;
+            if (service) {
+              let result;
+              if (mode.value === 'update') {
+                result = await service.update(data);
+                BtcMessage.success('更新成功');
+              } else {
+                result = await service.add(data);
+                BtcMessage.success('新增成功');
+              }
+
+              // 提交成功后自动刷新
+              // 等待数据刷新完成
+              await crud.loadData();
+
+              // 提交成功后关闭弹窗
+              close();
+
+              return result;
             }
-
-            // ✅ 提交成功后自动刷新（对标 cool-admin）
-            // 等待数据刷新完成
-            await crud.loadData();
-
-            return result;
+          } catch (error: any) {
+            BtcMessage.error(error.message || '操作失败');
+            throw error;
           }
         };
 
@@ -96,17 +107,19 @@ export function useFormSubmit(
         if (service) {
           if (mode.value === 'update') {
             await service.update(submitData);
+            BtcMessage.success('更新成功');
           } else {
             await service.add(submitData);
+            BtcMessage.success('新增成功');
           }
         }
 
-        // ✅ 自动刷新，等待完成后再关闭
+        // 自动刷新，等待完成后再关闭
         await crud.loadData();
         close();
       }
-    } catch (error) {
-      console.error('Form validation or submission failed:', error);
+    } catch (_error) {
+      console.error('Form validation or submission failed:', _error);
     } finally {
       submitting.value = false;
     }
@@ -153,4 +166,3 @@ export function useFormSubmit(
     handleClosed,
   };
 }
-

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-tabs v-model="active" v-bind="$attrs">
     <el-tab-pane
       v-for="tab in labels"
@@ -52,4 +52,5 @@ watch(active, (val) => {
   emit('change', val);
 });
 </script>
+
 

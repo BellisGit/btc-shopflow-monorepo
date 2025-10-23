@@ -1,7 +1,7 @@
-import type { UseCrudReturn } from '@btc/shared-core';
+﻿import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
 /**
- * 表单提交逻辑
+ * 琛ㄥ崟鎻愪氦閫昏緫
  */
 export declare function useFormSubmit(props: UpsertProps, crud: UseCrudReturn<any>, formDataContext: any, pluginContext: any): {
     submitting: globalThis.Ref<boolean, boolean>;
@@ -9,3 +9,4 @@ export declare function useFormSubmit(props: UpsertProps, crud: UseCrudReturn<an
     handleCancel: () => void;
     handleClosed: () => void;
 };
+

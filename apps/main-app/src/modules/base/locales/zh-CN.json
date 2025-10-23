@@ -58,7 +58,9 @@
   "menu.ops.audit": "操作日志",
   "menu.ops.baseline": "权限基线",
   "menu.ops.simulator": "策略模拟器",
+  "ops.baseline.search_placeholder": "搜索基线...",
   "menu.access.perm_compose": "权限组合",
   "menu.test_features": "测试功能",
-  "menu.test_features.components": "组件测试中心"
+  "menu.test_features.components": "组件测试中心",
+  "menu.test_features.api_test_center": "接口测试中心"
 }

@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, markRaw, shallowRef } from 'vue';
 import { useMessage } from '@/utils/use-message';
 
 defineOptions({
@@ -42,10 +42,10 @@ defineOptions({
 
 const message = useMessage();
 
-// 状态管理
-const status = ref('all');
-const viewMode = ref('list');
-const timeRange = ref('today');
+// 状态管理 - 使用 shallowRef 避免深层响应式
+const status = shallowRef('all');
+const viewMode = shallowRef('list');
+const timeRange = shallowRef('today');
 
 // 选项配置
 const statusOptions = [

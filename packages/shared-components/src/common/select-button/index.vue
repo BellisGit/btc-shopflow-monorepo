@@ -12,7 +12,7 @@ defineOptions({
   name: 'BtcSelectButton'
 });
 
-import { ref, watch } from 'vue';
+import { watch, shallowRef } from 'vue';
 
 interface Props {
   modelValue?: string | number | any[];
@@ -28,7 +28,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['update:modelValue', 'change']);
 
-const internalValue = ref(props.modelValue);
+// 使用 shallowRef 避免深层响应式
+const internalValue = shallowRef(props.modelValue);
 
 // 监听外部值变化
 watch(() => props.modelValue, (newValue) => {

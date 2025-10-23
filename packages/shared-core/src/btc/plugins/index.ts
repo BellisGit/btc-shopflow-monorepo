@@ -1,4 +1,4 @@
-// @btc/shared-core 插件系统
+﻿// @btc/shared-core 鎻掍欢绯荤粺
 
 export * from './i18n';
 export * from './excel';
@@ -7,6 +7,8 @@ export * from './theme';
 export * from './github';
 export * from './permission';
 
-// 后续添加其他插件
+// 鍚庣画娣诲姞鍏朵粬鎻掍欢
 // export * from './upload';
 // export * from './pdf';
+
+

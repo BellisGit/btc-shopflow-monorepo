@@ -6,7 +6,7 @@
     :loading="crud.loading.value"
     :max-height="autoHeight ? maxHeight : undefined"
     :height="height"
-    :row-key="rowKey || 'id'"
+    :row-key="rowKey || 'username'"
     :empty-text="translatedEmptyText"
     :default-sort="defaultSort"
     highlight-current-row

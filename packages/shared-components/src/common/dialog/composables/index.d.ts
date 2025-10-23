@@ -1,2 +1,3 @@
-export { useDialog } from './useDialog';
+﻿export { useDialog } from './useDialog';
 export { useDialogRender } from './useDialogRender';
+

@@ -1,14 +1,12 @@
-import { formHook } from '@btc/shared-utils';
+﻿import { formHook } from '@btc/shared-utils';
 
 /**
- * 表单项动态控制方法（对齐 cool-admin form/helper/action.ts）
- */
+ * 琛ㄥ崟椤瑰姩鎬佹帶鍒舵柟娉曪紙瀵归綈 cool-admin form/helper/action.ts锛? */
 export function useFormItemActions(formSetup: any) {
   const { config, form } = formSetup;
 
   /**
-   * 查找表单项
-   */
+   * 鏌ユ壘琛ㄥ崟椤?   */
   function findItemByProp(prop: string): any {
     let result: any;
 
@@ -27,8 +25,7 @@ export function useFormItemActions(formSetup: any) {
   }
 
   /**
-   * 设置配置（通用）
-   */
+   * 璁剧疆閰嶇疆锛堥€氱敤锛?   */
   function set(
     { prop, key, path }: {
       prop?: string;
@@ -37,7 +34,7 @@ export function useFormItemActions(formSetup: any) {
     },
     data?: any
   ) {
-    // 通过路径设置
+    // 閫氳繃璺緞璁剧疆
     if (path) {
       const keys = path.split('.');
       let target: any = config;
@@ -50,7 +47,7 @@ export function useFormItemActions(formSetup: any) {
       return;
     }
 
-    // 通过 prop 设置
+    // 閫氳繃 prop 璁剧疆
     if (prop) {
       const item = findItemByProp(prop);
 
@@ -91,57 +88,52 @@ export function useFormItemActions(formSetup: any) {
   }
 
   /**
-   * 获取表单值
-   */
+   * 鑾峰彇琛ㄥ崟鍊?   */
   function getForm(prop?: string) {
     return prop ? form[prop] : form;
   }
 
   /**
-   * 设置表单值
-   */
+   * 璁剧疆琛ㄥ崟鍊?   */
   function setForm(prop: string, value: any) {
     form[prop] = value;
   }
 
   /**
-   * 设置配置
+   * 璁剧疆閰嶇疆
    */
   function setConfig(path: string, value: any) {
     set({ path }, value);
   }
 
   /**
-   * 设置表单项数据
-   */
+   * 璁剧疆琛ㄥ崟椤规暟鎹?   */
   function setData(prop: string, value: any) {
     set({ prop }, value);
   }
 
   /**
-   * 设置表单项的下拉选项
+   * 璁剧疆琛ㄥ崟椤圭殑涓嬫媺閫夐」
    */
   function setOptions(prop: string, value: any[]) {
     set({ prop, key: 'options' }, value);
   }
 
   /**
-   * 设置表单项的组件属性
-   */
+   * 璁剧疆琛ㄥ崟椤圭殑缁勪欢灞炴€?   */
   function setProps(prop: string, value: any) {
     set({ prop, key: 'props' }, value);
   }
 
   /**
-   * 切换表单项显示/隐藏
+   * 鍒囨崲琛ㄥ崟椤规樉绀?闅愯棌
    */
   function toggleItem(prop: string, value?: boolean) {
     set({ prop, key: 'hidden-toggle' }, value);
   }
 
   /**
-   * 隐藏表单项
-   */
+   * 闅愯棌琛ㄥ崟椤?   */
   function hideItem(...props: string[]) {
     props.forEach((prop) => {
       set({ prop, key: 'hidden' }, true);
@@ -149,8 +141,7 @@ export function useFormItemActions(formSetup: any) {
   }
 
   /**
-   * 显示表单项
-   */
+   * 鏄剧ず琛ㄥ崟椤?   */
   function showItem(...props: string[]) {
     props.forEach((prop) => {
       set({ prop, key: 'hidden' }, false);
@@ -158,14 +149,14 @@ export function useFormItemActions(formSetup: any) {
   }
 
   /**
-   * 设置标题
+   * 璁剧疆鏍囬
    */
   function setTitle(value: string) {
     config.title = value;
   }
 
   /**
-   * 绑定表单数据（手动绑定）
+   * 缁戝畾琛ㄥ崟鏁版嵁锛堟墜鍔ㄧ粦瀹氾級
    */
   function bindForm(data: any) {
     config.items.forEach((e: any) => {
@@ -192,11 +183,9 @@ export function useFormItemActions(formSetup: any) {
   return {
     // 查找
     findItemByProp,
-
     // 表单值操作
     getForm,
     setForm,
-
     // 表单项控制
     setData,
     setConfig,
@@ -209,4 +198,5 @@ export function useFormItemActions(formSetup: any) {
     bindForm,
   };
 }
+
 

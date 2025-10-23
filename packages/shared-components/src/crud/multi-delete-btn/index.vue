@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-button
     v-bind="$attrs"
     type="danger"
@@ -28,3 +28,4 @@ if (!crud) {
   throw new Error('[BtcMultiDeleteBtn] Must be used inside <BtcCrud>');
 }
 </script>
+

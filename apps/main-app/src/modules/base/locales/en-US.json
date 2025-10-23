@@ -58,7 +58,9 @@
   "menu.ops.audit": "Operation Log",
   "menu.ops.baseline": "Permission Baseline",
   "menu.ops.simulator": "Policy Simulator",
+  "ops.baseline.search_placeholder": "Search baseline...",
   "menu.access.perm_compose": "Permission Compose",
   "menu.test_features": "Test Features",
-  "menu.test_features.components": "Components Test Center"
+  "menu.test_features.components": "Components Test Center",
+  "menu.test_features.api_test_center": "API Test Center"
 }

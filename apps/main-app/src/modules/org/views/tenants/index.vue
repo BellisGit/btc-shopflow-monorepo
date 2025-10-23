@@ -21,12 +21,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -45,12 +45,11 @@ const tenantService = {
 
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
+  { type: 'index', label: '序号', width: 60 },
   { prop: 'tenantName', label: t('org.tenant.name') },
   { prop: 'tenantCode', label: t('org.tenant.code') },
   { prop: 'tenantType', label: t('org.tenant.type') },
   { prop: 'status', label: t('org.user.status') },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -65,7 +64,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

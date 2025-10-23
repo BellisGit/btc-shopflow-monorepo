@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 defineOptions({
   name: 'NavigationMenuPermBind'
@@ -76,7 +76,7 @@ const handleSave = async () => {
     }
 
     message.success('????????');
-  } catch (error) {
+  } catch (_error) {
     message.error('????????');
   } finally {
     saving.value = false;

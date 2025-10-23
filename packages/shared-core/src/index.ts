@@ -1,4 +1,4 @@
-// @btc/shared-core 入口文件
+﻿// @btc/shared-core 鍏ュ彛鏂囦欢
 
 export * from './btc';
 export * from './btc/plugins';
@@ -15,3 +15,5 @@ export * from './composables/useBtcForm';
 export * from './composables/form-helpers';
 export * from './types/common';
 export * from './types/crud';
+
+

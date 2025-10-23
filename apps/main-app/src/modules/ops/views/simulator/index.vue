@@ -215,7 +215,7 @@ const handleSimulate = async () => {
     simulationResult.value = result;
 
     message.success('????');
-  } catch (error) {
+  } catch (_error) {
     message.error('??????????');
   } finally {
     simulating.value = false;

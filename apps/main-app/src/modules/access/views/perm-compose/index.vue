@@ -296,7 +296,7 @@ import {
   Search,
   Close,
 } from '@element-plus/icons-vue';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 // 模式选择
 const message = useMessage();
@@ -307,11 +307,11 @@ const modeOptions = [
 ];
 
 // Mock服务
-const resourceService = service.base.department;
+const _resourceService = service.sysresource;
 
-const actionService = service.base.department;
+const _actionService = service.sysaction;
 
-const permissionService = service.base.department;
+const permissionService = service.syspermission;
 
 // 数据
 const resourceTree = ref<any[]>([]);
@@ -391,7 +391,7 @@ const canCompose = computed(() => {
 });
 
 // 资源树复选变化（两种模式通用）
-const handleResourceCheck = (data: any, checked: boolean) => {
+const handleResourceCheck = (_data: any, _checked: boolean) => {
   const checkedKeys = resourceTreeRef.value?.getCheckedKeys() || [];
   selectedResources.value = checkedKeys;
 };
@@ -558,7 +558,7 @@ const handleCompose = async () => {
     resourceTreeRef.value?.setCheckedKeys([]);
     selectedResources.value = [];
     selectedActions.value = [];
-  } catch (error) {
+  } catch (_error) {
     message.error('生成失败');
   } finally {
     composing.value = false;
@@ -647,7 +647,7 @@ const handleSave = async () => {
     message.success(`成功保存 ${composedPermissions.value.length} 个权限`);
     composedPermissions.value = [];
     matrixSelections.value.clear();
-  } catch (error) {
+  } catch (_error) {
     message.error('保存失败');
   } finally {
     saving.value = false;

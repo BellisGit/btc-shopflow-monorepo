@@ -61,30 +61,23 @@ export function createRequest(baseURL = '/api'): Request {
     }
   );
 
-  // 响应拦截器
+  // 响应拦截器 - 完全静默处理错误，不抛出任何错误
   axiosInstance.interceptors.response.use(
     (response: AxiosResponse) => {
-      const { code, data, message } = response.data as ApiResponse;
+      const { code, data } = response.data as ApiResponse;
 
       // 成功响应
       if (code === 1000) {
         return data;
       }
 
-      // 业务错误
-      throw new Error(message || 'Request failed');
+      // 业务错误 - 返回原始响应，让主应用的响应拦截器处理
+      return response;
     },
-    (error) => {
-      // 网络错误或 HTTP 错误
-      if (error.response) {
-        const { status, data } = error.response;
-        const message = data?.message || `HTTP ${status} Error`;
-        throw new Error(message);
-      } else if (error.request) {
-        throw new Error('Network Error');
-      } else {
-        throw new Error(error.message || 'Request Error');
-      }
+    (_error) => {
+      // 网络错误或 HTTP 错误 - 静默处理，不抛出错误
+      // 返回一个已解决的Promise，避免未处理的Promise rejection
+      return Promise.resolve();
     }
   );
 

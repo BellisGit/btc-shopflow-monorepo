@@ -45,7 +45,7 @@
     <template v-else>
       <!-- 平台治理 -->
       <el-sub-menu
-        v-show="hasVisibleChildren(menuStructure.main.platform.children)"
+        v-show="isPlatformVisible"
         index="platform"
       >
         <template #title>
@@ -67,7 +67,7 @@
       </el-sub-menu>
 
       <!-- 组织与账号 -->
-      <el-sub-menu v-show="hasVisibleChildren(menuStructure.main.org.children)" index="org">
+      <el-sub-menu v-show="isOrgVisible" index="org">
         <template #title>
           <el-icon><OfficeBuilding /></el-icon>
           <span>{{ t('menu.org') }}</span>
@@ -87,7 +87,7 @@
       </el-sub-menu>
 
       <!-- 访问控制 -->
-      <el-sub-menu v-show="hasVisibleChildren(menuStructure.main.access.children)" index="access">
+      <el-sub-menu v-show="isAccessVisible" index="access">
         <template #title>
           <el-icon><Lock /></el-icon>
           <span>{{ t('menu.access') }}</span>
@@ -126,7 +126,7 @@
 
       <!-- 导航与可见性 -->
       <el-sub-menu
-        v-show="hasVisibleChildren(menuStructure.main.navigation.children)"
+        v-show="isNavigationVisible"
         index="navigation"
       >
         <template #title>
@@ -147,7 +147,7 @@
       </el-sub-menu>
 
       <!-- 运维与审计 -->
-      <el-sub-menu v-show="hasVisibleChildren(menuStructure.main.ops.children)" index="ops">
+      <el-sub-menu v-show="isOpsVisible" index="ops">
         <template #title>
           <el-icon><Monitor /></el-icon>
           <span>{{ t('menu.ops') }}</span>
@@ -167,7 +167,7 @@
       </el-sub-menu>
 
       <el-sub-menu
-        v-show="hasVisibleChildren(menuStructure.main['test-features'].children)"
+        v-show="isTestFeaturesVisible"
         index="test-features"
       >
         <template #title>
@@ -177,6 +177,10 @@
         <el-menu-item v-show="isMenuItemVisible('menu.test_features.components')" index="/test/components">
           <el-icon><Tickets /></el-icon>
           <span>{{ t('menu.test_features.components') }}</span>
+        </el-menu-item>
+        <el-menu-item v-show="isMenuItemVisible('menu.test_features.api_test_center')" index="/test/api-test-center">
+          <el-icon><Connection /></el-icon>
+          <span>{{ t('menu.test_features.api_test_center') }}</span>
         </el-menu-item>
       </el-sub-menu>
 
@@ -216,9 +220,6 @@ import {
   Odometer,
   Document,
   Tickets,
-  ChatDotRound,
-  Picture,
-  Message,
   House,
   Grid,
   View,
@@ -276,6 +277,24 @@ const hasVisibleChildren = (children: Record<string, any>) => {
     return false;
   });
 };
+
+// 计算属性：平台治理菜单是否可见
+const isPlatformVisible = computed(() => hasVisibleChildren(menuStructure.main.platform.children));
+
+// 计算属性：组织与账号菜单是否可见
+const isOrgVisible = computed(() => hasVisibleChildren(menuStructure.main.org.children));
+
+// 计算属性：访问控制菜单是否可见
+const isAccessVisible = computed(() => hasVisibleChildren(menuStructure.main.access.children));
+
+// 计算属性：导航与可见性菜单是否可见
+const isNavigationVisible = computed(() => hasVisibleChildren(menuStructure.main.navigation.children));
+
+// 计算属性：运维与审计菜单是否可见
+const isOpsVisible = computed(() => hasVisibleChildren(menuStructure.main.ops.children));
+
+// 计算属性：测试功能菜单是否可见
+const isTestFeaturesVisible = computed(() => hasVisibleChildren(menuStructure.main['test-features'].children));
 
 // 菜单结构定义（用于搜索匹配）
 const menuStructure = {

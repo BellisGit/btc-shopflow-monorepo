@@ -1,8 +1,6 @@
-/**
- * 虚拟模块 virtual:eps 的类型声明
- *
- * 使用方式：
- * import epsData from 'virtual:eps';
+﻿/**
+ * 铏氭嫙妯″潡 virtual:eps 鐨勭被鍨嬪０鏄? *
+ * 浣跨敤鏂瑰紡锛? * import epsData from 'virtual:eps';
  */
 
 declare module 'virtual:eps' {
@@ -20,3 +18,4 @@ declare module 'virtual:eps' {
   const epsData: ServiceModule;
   export default epsData;
 }
+

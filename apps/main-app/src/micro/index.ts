@@ -30,7 +30,7 @@ function filterQiankunLogs() {
   const originalError = console.error;
 
   // 创建过滤器函数
-  const createFilter = (originalMethod: Function) => {
+  const createFilter = (originalMethod: (...args: any[]) => void) => {
     return (...args: any[]) => {
       const message = args[0];
       // 过滤所有包含 [qiankun:sandbox] 的日志
@@ -99,7 +99,7 @@ export function setupQiankun() {
       }],
 
       // 应用挂载后
-      afterMount: [(app) => {
+      afterMount: [(_app) => {
         // 如果子应用没有主动调用 onReady，这里兜底
         setTimeout(() => {
           finishLoading();

@@ -29,7 +29,7 @@ defineOptions({
   name: 'LayoutLocaleSwitcher'
 });
 
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 
 const { locale } = useI18n();

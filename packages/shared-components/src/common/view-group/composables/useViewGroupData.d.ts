@@ -1,4 +1,4 @@
-import type { ViewGroupOptions, ViewGroupItem } from '../types';
+﻿import type { ViewGroupOptions, ViewGroupItem } from '../types';
 export declare function useViewGroupData(config: ViewGroupOptions, tree: any, isCustom: boolean, selectFn?: (item?: ViewGroupItem) => void): {
     loading: globalThis.Ref<boolean, boolean>;
     keyWord: globalThis.Ref<string, string>;
@@ -24,3 +24,4 @@ export declare function useViewGroupData(config: ViewGroupOptions, tree: any, is
     refresh: (params?: any) => Promise<false | undefined>;
     onMore: () => void;
 };
+

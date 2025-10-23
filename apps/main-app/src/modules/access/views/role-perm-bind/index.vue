@@ -42,7 +42,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const route = useRoute();
 const message = useMessage();
@@ -97,7 +97,7 @@ const loadRoleInfo = async () => {
   try {
     const data = await roleService.info({ id: roleId });
     roleInfo.value = data;
-  } catch (error) {
+  } catch (_error) {
     message.error('加载角色信息失败');
   }
 };
@@ -111,7 +111,7 @@ const handleCheck = () => {
 const handleSave = async () => {
   saving.value = true;
   try {
-    const checkedKeys = treeRef.value?.getCheckedKeys() || [];
+    const _checkedKeys = treeRef.value?.getCheckedKeys() || [];
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -120,7 +120,7 @@ const handleSave = async () => {
 
     message.success('保存成功');
     router.back();
-  } catch (error) {
+  } catch (_error) {
     message.error('保存失败');
   } finally {
     saving.value = false;

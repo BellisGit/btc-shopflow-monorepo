@@ -31,24 +31,25 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
+import { createMockCrudService } from '@utils/http';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+// import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
 const crudRef = ref();
 
 // Mock数据服务
-const policyService = createMockCrudService('btc_policies', {
+const _policyService = createMockCrudService('btc_policies', {
 
 });
 
 // 添加delete确认
 const wrappedService = {
-  ...policyService,
+  ..._policyService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await policyService.delete({ ids });
+    await _policyService.delete({ ids });
     message.success(t('crud.message.delete_success'));
   },
 };
@@ -92,7 +93,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

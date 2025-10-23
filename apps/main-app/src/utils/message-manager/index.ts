@@ -20,12 +20,12 @@ export class MessageManager {
   private normalQueue: MessageQueue;
   private errorQueue: MessageQueue;
   private displayingMessages = new Set<string>();
-  private messageMap = new Map<string, any>();
   private displayHandler: MessageDisplayHandler | null = null;
   private badgeManager: BadgeManager;
   private lifecycleManager: LifecycleManager | null = null;
   private historyManager: HistoryManager;
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private processingMessages = new Set<string>(); // 防止并发处理同一消息
 
   constructor(config: Partial<MessageQueueConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -55,24 +55,6 @@ export class MessageManager {
   enqueue(type: MessageType, content: string): void {
     const message = this.normalQueue.enqueue(type, content);
 
-    // 只有在是新消息时才添加到 messageMap
-    if (message.count === 1) {
-      this.messageMap.set(message.id, message);
-    } else {
-      // 如果是重复消息，更新现有的 messageMap 条目
-      const existingMessage = this.messageMap.get(message.id);
-
-      if (existingMessage) {
-        // 更新现有消息的计数和其他属性
-        existingMessage.count = message.count;
-        existingMessage.timestamp = message.timestamp;
-        existingMessage.duration = message.duration;
-      } else {
-        // 如果 messageMap 中没有现有消息，说明是第一次消息完成后的重复消息
-        // 这种情况下，应该将消息重新添加到 messageMap
-        this.messageMap.set(message.id, message);
-      }
-    }
 
     // 如果是重复消息，直接更新现有消息的徽章
     if (message.count > 1) {
@@ -85,7 +67,21 @@ export class MessageManager {
         this.displayMessage(message);
       }
     } else {
-      this.processQueue();
+      // 防止并发处理新消息
+      if (this.processingMessages.has(message.id)) {
+        return;
+      }
+
+      this.processingMessages.add(message.id);
+
+      try {
+        this.processQueue();
+      } finally {
+        // 使用 setTimeout 确保消息处理完成后再移除锁
+        setTimeout(() => {
+          this.processingMessages.delete(message.id);
+        }, 100);
+      }
     }
   }
 
@@ -103,33 +99,30 @@ export class MessageManager {
    * 更新现有消息的徽章
    */
   private updateExistingMessageBadge(message: any): void {
-    if (this.displayHandler) {
-      // 从 messageMap 获取完整的消息对象（包含 messageInstance）
-      const existingMessage = this.messageMap.get(message.id);
-      if (existingMessage && existingMessage.messageInstance) {
-        // 检查消息实例是否仍然有效
-        if (!this.isMessageInstanceValid(existingMessage.messageInstance)) {
-          console.log('[MessageManager] Message instance is invalid, recreating');
-          this.recreateMessage(message);
-          return;
-        }
+    if (!this.displayHandler || !this.displayHandler.updateBadge) {
+      return;
+    }
 
-        // 更新现有消息的计数
-        existingMessage.count = message.count;
-        existingMessage.timestamp = message.timestamp;
-        existingMessage.duration = message.duration;
+    const existingMessage = this.normalQueue.getMessageById(message.id);
+    if (!existingMessage || !existingMessage.messageInstance) {
+      return;
+    }
 
-        // 尝试通知生命周期管理器处理更新
-        try {
-          if (this.lifecycleManager) {
-            this.lifecycleManager.handleMessageUpdate(existingMessage);
-          }
-        } catch (_error) {
-          // 如果更新失败，说明消息实例无效，重新创建
-          console.log('[MessageManager] Failed to update message, recreating:', _error);
-          this.recreateMessage(message);
-        }
+    // 直接更新徽章，不经过 lifecycleManager
+    try {
+      this.displayHandler.updateBadge(existingMessage.messageInstance, message.count);
+
+      // 更新消息计数
+      existingMessage.count = message.count;
+      existingMessage.timestamp = message.timestamp;
+      existingMessage.duration = message.duration;
+
+      // 通知生命周期管理器更新（但不触发重新创建）
+      if (this.lifecycleManager) {
+        this.lifecycleManager.handleMessageUpdate(existingMessage);
       }
+    } catch (error) {
+      console.warn('[MessageManager] Failed to update badge:', error);
     }
   }
 
@@ -209,9 +202,6 @@ export class MessageManager {
   private handleMessageCompleted(messageId: string): void {
     // 从显示中的消息集合移除
     this.displayingMessages.delete(messageId);
-
-    // 从消息映射中移除
-    this.messageMap.delete(messageId);
 
     // 从队列中移除
     this.normalQueue.cleanupCompletedMessage(messageId);
@@ -307,7 +297,6 @@ export class MessageManager {
   private cleanupMessage(messageId: string): void {
     // 这个方法现在主要用于紧急清理
     this.displayingMessages.delete(messageId);
-    this.messageMap.delete(messageId);
     this.badgeManager.stopCountdownAnimation(messageId);
 
     // 清理生命周期状态
@@ -341,7 +330,6 @@ export class MessageManager {
     }
 
     this.displayingMessages.clear();
-    this.messageMap.clear();
   }
 
   /**
@@ -366,7 +354,7 @@ export class MessageManager {
       normalQueue: this.normalQueue.getQueueStatus(),
       errorQueue: this.errorQueue.getQueueStatus(),
       displayingCount: this.displayingMessages.size,
-      totalMessages: this.messageMap.size,
+      totalMessages: this.normalQueue.getQueueStatus().totalMessages,
       historyCount: this.historyManager.getHistoryCount(),
     };
   }

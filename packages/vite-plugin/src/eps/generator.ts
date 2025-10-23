@@ -64,9 +64,7 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
   const url = reqUrl + getEpsUrl(processedEpsUrl);
 
   try {
-    console.log(`[EPS] Requesting: ${url}`);
     const response = await axios.get(url, { timeout: 5000 });
-    console.log(`[EPS] Response status: ${response.status}`);
     const { code, data, message } = response.data;
 
     if (code === 1000) {
@@ -83,7 +81,6 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
             });
           }
         });
-        console.log(`[EPS] Loaded ${entities.length} entities`);
         return entities;
       }
     } else {
@@ -91,8 +88,6 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
     }
   } catch (err) {
     // 简化错误日志，只显示关键信息
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    console.log(`[EPS] API request failed: ${errorMessage}`);
     error(`API service is not running → ${url}`);
   }
 
@@ -106,14 +101,12 @@ async function getData(epsUrl: string, _reqUrl: string, outputDir: string, cache
   // 如果有缓存数据，直接使用
   if (cachedData && cachedData.list) {
     epsList = cachedData.list;
-    console.log(`[EPS] 使用缓存数据，加载 ${epsList.length} 个实体`);
   } else {
     // 读取本地 eps.json
     epsList = (await readFile(getEpsPath(outputDir, 'eps.json'), true)) || [];
 
     // 如果没有 epsUrl，使用本地数据
     if (!epsUrl) {
-      console.log('[EPS] 使用本地 Mock 数据模式');
       return;
     }
 
@@ -173,7 +166,7 @@ function createService(_epsUrl: string) {
 
   // 如果没有数据，直接返回错误
   if (epsList.length === 0) {
-    console.error('[EPS] No entities found! EPS data fetch failed.');
+    console.error('[btc:eps] 未找到实体! eps 数据获取失败');
     throw new Error('EPS data fetch failed - no entities available');
   }
 
@@ -186,7 +179,6 @@ function createService(_epsUrl: string) {
     if (!service[serviceKey]) {
       // 直接使用prefix，不需要移除admin前缀
       const namespace = e.prefix || '';
-      console.log(`[EPS Debug] Service: ${serviceKey}, Original prefix: ${e.prefix}, Final namespace: ${namespace}`);
       service[serviceKey] = {
         namespace: namespace,
         permission: {},
@@ -235,7 +227,6 @@ function createService(_epsUrl: string) {
       });
     }
 
-    // console.log(`[EPS Service] Created service ${serviceKey}:`, Object.keys(service[serviceKey]));
   });
 }
 

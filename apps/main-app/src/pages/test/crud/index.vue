@@ -97,7 +97,7 @@
       width="500px"
     >
       <el-form label-position="top">
-        <el-form-item :label="t('crud.message.select_export_columns')">
+        <el-form-item :label="t('crud.ElMessage.select_export_columns')">
           <el-checkbox-group v-model="exportColumns" class="export-checkbox-group">
             <el-checkbox
               v-for="col in exportableColumns"
@@ -123,7 +123,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { ElMessageBox, ElMessage } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 
@@ -178,7 +178,7 @@ const userService = {
     const newUser = { id: nextId++, ...data };
     mockUsers.push(newUser);
 
-    message.success('Added successfully');
+    ElMessage.success('Added successfully');
     return newUser;
   },
 
@@ -190,14 +190,14 @@ const userService = {
       mockUsers[index] = { ...mockUsers[index], ...data };
     }
 
-    message.success('Updated successfully');
+    ElMessage.success('Updated successfully');
     return data;
   },
 
   delete: async ({ ids }: { ids: number[] }) => {
     // Confirm delete
     await ElMessageBox.confirm(
-      t('crud.message.delete_confirm'),
+      t('crud.ElMessage.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
     );
@@ -206,7 +206,7 @@ const userService = {
 
     mockUsers = mockUsers.filter(u => !ids.includes(u.id));
 
-    message.success(t('crud.message.delete_success'));
+    ElMessage.success(t('crud.ElMessage.delete_success'));
   },
 };
 
@@ -298,7 +298,7 @@ const handleFormSubmit = async (data: any, { close, done }: any) => {
 
     close();
     crudRef.value?.crud.loadData();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };
@@ -306,7 +306,7 @@ const handleFormSubmit = async (data: any, { close, done }: any) => {
 /**
  * 表单打开
  */
-const handleFormOpen = (data: any) => {
+const handleFormOpen = (_data: any) => {
   // Form opened
 };
 
@@ -326,7 +326,7 @@ const handleExport = () => {
   const dataToExport = selection.length > 0 ? selection : mockUsers;
 
   if (dataToExport.length === 0) {
-    message.warning('No data to export');
+    ElMessage.warning('No data to export');
     return;
   }
 
@@ -340,7 +340,7 @@ const handleExport = () => {
  */
 const confirmExport = () => {
   if (exportColumns.value.length === 0) {
-    message.warning('Please select columns to export');
+    ElMessage.warning('Please select columns to export');
     return;
   }
 
@@ -364,10 +364,10 @@ const confirmExport = () => {
   );
 
   // Get Excel plugin API
-  const excelApi = pluginManager.getApi<{ export: Function }>('excel');
+  const excelApi = pluginManager.getApi<{ export: (...args: any[]) => void }>('excel');
 
   if (!excelApi) {
-    message.error('Excel plugin not available');
+    ElMessage.error('Excel plugin not available');
     return;
   }
 
@@ -385,14 +385,14 @@ const confirmExport = () => {
   });
 
   exportDialogVisible.value = false;
-  message.success('Export successfully');
+  ElMessage.success('Export successfully');
 };
 
 /**
  * Custom action
  */
 const handleCustomAction = (row: any) => {
-  message.info(`${t('common.button.custom')}: ${row.name}`);
+  ElMessage.info(`${t('common.button.custom')}: ${row.name}`);
 };
 
 // Auto load data on mounted

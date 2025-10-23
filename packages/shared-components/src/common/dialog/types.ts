@@ -1,41 +1,41 @@
-/**
+﻿/**
  * BtcDialog Props
  */
 export interface DialogProps {
-  // 是否可见
+  // 鏄惁鍙
   modelValue: boolean;
 
-  // 标题
+  // 鏍囬
   title?: string;
 
-  // 高度
+  // 楂樺害
   height?: string | number;
 
-  // 宽度
+  // 瀹藉害
   width?: string | number;
 
-  // 內间距
+  // 内边距
   padding?: string;
 
-  // 是否缓存
+  // 鏄惁缂撳瓨
   keepAlive?: boolean;
 
-  // 是否全屏
+  // 鏄惁鍏ㄥ睆
   fullscreen?: boolean;
 
-  // 控制按钮
+  // 鎺у埗鎸夐挳
   controls?: string[];
 
-  // 隐藏头部元素
+  // 闅愯棌澶撮儴鍏冪礌
   hideHeader?: boolean;
 
   // 关闭前
   beforeClose?: () => void | Promise<void>;
 
-  // 是否需要滚动条
+  // 鏄惁闇€瑕佹粴鍔ㄦ潯
   scrollbar?: boolean;
 
-  // 背景透明
+  // 鑳屾櫙閫忔槑
   transparent?: boolean;
 }
 
@@ -47,3 +47,4 @@ export interface DialogEmits {
   (e: 'fullscreen-change', value: boolean): void;
   (e: 'closed'): void;
 }
+

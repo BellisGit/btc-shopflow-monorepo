@@ -1,20 +1,20 @@
-import { ref } from 'vue';
+﻿import { ref } from 'vue';
 import type { UpsertPlugin, UpsertProps } from '../types';
 
 /**
- * 插件系统管理
+ * 鎻掍欢绯荤粺绠＄悊
  */
 export function usePlugins(props: UpsertProps) {
-  // 插件管理
+  // 鎻掍欢绠＄悊
   const registeredPlugins = ref<UpsertPlugin[]>([]);
 
   /**
-   * 注册插件
+   * 娉ㄥ唽鎻掍欢
    */
   const registerPlugins = () => {
     if (props.plugins && props.enablePlugin !== false) {
       registeredPlugins.value = props.plugins;
-      // 触发插件 created
+      // 瑙﹀彂鎻掍欢 created
       props.plugins.forEach((p) => {
         if (p.created) {
           p.created(p.value);
@@ -24,7 +24,7 @@ export function usePlugins(props: UpsertProps) {
   };
 
   /**
-   * 触发插件 onOpen
+   * 瑙﹀彂鎻掍欢 onOpen
    */
   const triggerPluginOnOpen = async () => {
     if (props.enablePlugin !== false) {
@@ -37,7 +37,7 @@ export function usePlugins(props: UpsertProps) {
   };
 
   /**
-   * 触发插件 onSubmit
+   * 瑙﹀彂鎻掍欢 onSubmit
    */
   const triggerPluginOnSubmit = async (submitData: any): Promise<any> => {
     let data = submitData;
@@ -54,7 +54,7 @@ export function usePlugins(props: UpsertProps) {
   };
 
   /**
-   * 触发插件 onClose
+   * 瑙﹀彂鎻掍欢 onClose
    */
   const triggerPluginOnClose = (done: () => void) => {
     if (props.enablePlugin !== false && registeredPlugins.value.length > 0) {
@@ -81,7 +81,7 @@ export function usePlugins(props: UpsertProps) {
   };
 
   /**
-   * 清空插件
+   * 娓呯┖鎻掍欢
    */
   const clearPlugins = () => {
     registeredPlugins.value = [];
@@ -96,3 +96,4 @@ export function usePlugins(props: UpsertProps) {
     clearPlugins,
   };
 }
+

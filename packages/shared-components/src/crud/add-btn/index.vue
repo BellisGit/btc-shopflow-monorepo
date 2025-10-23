@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-button v-bind="$attrs" :type="type" @click="crud.handleAdd">
     <slot>{{ text || t('crud.button.add') }}</slot>
   </el-button>
@@ -26,3 +26,4 @@ if (!crud) {
   throw new Error('[BtcAddBtn] Must be used inside <BtcCrud>');
 }
 </script>
+

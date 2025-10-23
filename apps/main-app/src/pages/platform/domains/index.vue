@@ -27,7 +27,7 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -99,7 +99,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

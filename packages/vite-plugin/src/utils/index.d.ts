@@ -1,45 +1,41 @@
-import prettier from 'prettier';
+﻿import prettier from 'prettier';
 /**
- * 获取项目根目录
- */
+ * 鑾峰彇椤圭洰鏍圭洰褰? */
 export declare function rootDir(path: string): string;
 /**
- * 首字母大写
- */
+ * 棣栧瓧姣嶅ぇ鍐? */
 export declare function firstUpperCase(value: string): string;
 /**
- * 横杠转驼峰
- */
+ * 妯潬杞┘宄? */
 export declare function toCamel(str: string): string;
 /**
- * 创建目录
+ * 鍒涘缓鐩綍
  */
 export declare function createDir(path: string, recursive?: boolean): void;
 /**
- * 读取文件
+ * 璇诲彇鏂囦欢
  */
 export declare function readFile(path: string, json?: boolean): any;
 /**
- * 写入文件
+ * 鍐欏叆鏂囦欢
  */
 export declare function writeFile(path: string, data: string): void;
 /**
- * 解析 body
+ * 瑙ｆ瀽 body
  */
 export declare function parseJson(req: any): Promise<any>;
 /**
- * 格式化内容
- */
+ * 鏍煎紡鍖栧唴瀹? */
 export declare function formatContent(content: string, options?: prettier.Options): Promise<string>;
 /**
- * 错误日志
+ * 閿欒鏃ュ織
  */
 export declare function error(message: string): void;
 /**
- * 成功日志
+ * 鎴愬姛鏃ュ織
  */
 export declare function success(message: string): void;
 /**
- * 比较两个版本号
- */
+ * 姣旇緝涓や釜鐗堟湰鍙? */
 export declare function compareVersion(version1: string, version2: string): number;
+

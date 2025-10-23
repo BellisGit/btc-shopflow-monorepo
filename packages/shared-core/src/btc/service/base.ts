@@ -1,7 +1,5 @@
-/**
- * 基础服务类
- * 基于统一的 request 函数，参考 cool-admin 的实现
- */
+﻿/**
+ * 鍩虹鏈嶅姟绫? * 鍩轰簬缁熶竴鐨?request 鍑芥暟锛屽弬鑰?cool-admin 鐨勫疄鐜? */
 
 import { request, type Request } from './request';
 
@@ -20,14 +18,13 @@ export class BaseService {
   }
 
   /**
-   * 静态请求方法
-   */
+   * 闈欐€佽姹傛柟娉?   */
   static async request(options: any): Promise<any> {
     return request(options);
   }
 
   /**
-   * 发起 HTTP 请求
+   * 鍙戣捣 HTTP 璇锋眰
    */
   protected async http<T = any>(options: {
     url: string;
@@ -37,7 +34,7 @@ export class BaseService {
   }): Promise<T> {
     const { url, method = 'GET', data, params } = options;
 
-    // 构建完整 URL
+    // 鏋勫缓瀹屾暣 URL
     const fullUrl = this.namespace ? `${this.namespace}${url}` : url;
 
     return this.request({
@@ -49,7 +46,7 @@ export class BaseService {
   }
 
   /**
-   * 列表查询
+   * 鍒楄〃鏌ヨ
    */
   async list(data?: any): Promise<any[]> {
     return this.http({
@@ -60,7 +57,7 @@ export class BaseService {
   }
 
   /**
-   * 分页查询
+   * 鍒嗛〉鏌ヨ
    */
   async page(data: any): Promise<{
     list: any[];
@@ -78,7 +75,7 @@ export class BaseService {
   }
 
   /**
-   * 详情查询
+   * 璇︽儏鏌ヨ
    */
   async info(params: any): Promise<any> {
     return this.http({
@@ -89,7 +86,7 @@ export class BaseService {
   }
 
   /**
-   * 新增
+   * 鏂板
    */
   async add(data: any): Promise<any> {
     return this.http({
@@ -100,7 +97,7 @@ export class BaseService {
   }
 
   /**
-   * 更新
+   * 鏇存柊
    */
   async update(data: any): Promise<any> {
     return this.http({
@@ -111,7 +108,7 @@ export class BaseService {
   }
 
   /**
-   * 删除
+   * 鍒犻櫎
    */
   async delete(data: { ids: (string | number)[] }): Promise<any> {
     return this.http({
@@ -121,4 +118,6 @@ export class BaseService {
     });
   }
 }
+
+
 

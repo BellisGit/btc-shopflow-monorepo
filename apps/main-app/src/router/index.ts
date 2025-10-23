@@ -32,6 +32,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../test-eps.vue'),
         meta: { titleKey: 'menu.test_features.eps' },
       },
+      {
+        path: 'test/api-test-center',
+        name: 'ApiTestCenter',
+        component: () => import('../pages/test/api-test-center/index.vue'),
+        meta: { titleKey: 'menu.test_features.api_test_center' },
+      },
       // 文档中心（iframe 在全局 Layout 中，不需要独立组件）
       {
         path: 'docs',

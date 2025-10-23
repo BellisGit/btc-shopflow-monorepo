@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 插件资源加载器
  * 用于加载插件的静态资源（SVG、图片等）
  * 每个插件有独立的资源目录，避免冲突
@@ -57,8 +57,8 @@ export class ResourceLoader {
             plugin: pluginName,
           });
         }
-      } catch (error) {
-        console.error(`[ResourceLoader] Failed to load SVG from ${path}:`, error);
+      } catch (_error) {
+        console.error(`[ResourceLoader] Failed to load SVG from ${path}:`, _error);
       }
     }
   }
@@ -140,4 +140,3 @@ export function useResourceLoader(): ResourceLoader {
 export function resetResourceLoader(): void {
   resourceLoaderInstance = null;
 }
-

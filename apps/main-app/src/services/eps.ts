@@ -1,4 +1,4 @@
-import { eps } from 'virtual:eps';
+import eps from 'virtual:eps';
 import { http } from '../utils/http';
 
 // 基础服务类
@@ -39,55 +39,95 @@ export class BaseService {
 
   // 获取列表
   async list(data?: Record<string, any>) {
-    return this.request({
-      url: '/list',
-      method: 'POST',
-      data
-    });
+    try {
+      return await this.request({
+        url: '/list',
+        method: 'POST',
+        data
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败，返回空数据:', error);
+      return {
+        list: [],
+        total: 0,
+        page: 1,
+        size: 50
+      };
+    }
   }
 
   // 分页查询
   async page(data?: Record<string, any>) {
-    return this.request({
-      url: '/page',
-      method: 'POST',
-      data
-    });
+    try {
+      return await this.request({
+        url: '/page',
+        method: 'POST',
+        data
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败，返回空数据:', error);
+      return {
+        list: [],
+        total: 0,
+        page: 1,
+        size: 50
+      };
+    }
   }
 
   // 获取信息
   async info(params?: Record<string, any>) {
-    return this.request({
-      url: '/info',
-      params
-    });
+    try {
+      return await this.request({
+        url: '/info',
+        params
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败，返回空数据:', error);
+      return null;
+    }
   }
 
   // 更新数据
   async update(data?: Record<string, any>) {
-    return this.request({
-      url: '/update',
-      method: 'POST',
-      data
-    });
+    try {
+      return await this.request({
+        url: '/update',
+        method: 'POST',
+        data
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败:', error);
+      throw error; // 更新操作失败时抛出错误
+    }
   }
 
   // 删除数据
   async delete(data?: Record<string, any>) {
-    return this.request({
-      url: '/delete',
-      method: 'POST',
-      data
-    });
+    try {
+      return await this.request({
+        url: '/delete',
+        method: 'POST',
+        data
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败:', error);
+      throw error; // 删除操作失败时抛出错误
+    }
   }
 
   // 添加数据
   async add(data?: Record<string, any>) {
-    return this.request({
-      url: '/add',
-      method: 'POST',
-      data
-    });
+    try {
+      return await this.request({
+        url: '/add',
+        method: 'POST',
+        data
+      });
+    } catch (error) {
+      console.warn('EPS服务调用失败:', error);
+      throw error; // 添加操作失败时抛出错误
+    }
   }
 }
 
@@ -103,14 +143,40 @@ export function createEps() {
         const methodInfo = d[i];
 
         if (methodInfo && typeof methodInfo === 'object' && methodInfo.path) {
-          const { path, method = 'get' } = methodInfo;
+          const { path, method = 'GET' } = methodInfo;
 
           a[i] = function (data?: Record<string, any>) {
-            return a.request({
-              url: path,
-              method,
-              [method.toLowerCase() === 'post' ? 'data' : 'params']: data
-            });
+            // 对于 list 方法，如果没有传递参数，使用默认参数
+            if (i === 'list' && !data) {
+              const defaultParams = {
+                order: 'createdAt',
+                sort: 'asc',
+                page: 1,
+                size: 50
+              };
+              data = defaultParams;
+            }
+
+            try {
+              return a.request({
+                url: path,
+                method: method.toLowerCase(),
+                [method.toLowerCase() === 'post' || method.toLowerCase() === 'put' ? 'data' : 'params']: data
+              });
+            } catch (error) {
+              console.warn(`EPS服务调用失败 (${d.namespace}.${i}):`, error);
+              // 对于查询操作，返回空数据；对于修改操作，抛出错误
+              if (['list', 'page', 'info'].includes(i)) {
+                return {
+                  list: [],
+                  total: 0,
+                  page: 1,
+                  size: 50
+                };
+              } else {
+                throw error;
+              }
+            }
           };
         } else if (typeof methodInfo === 'function') {
           // 检查是否是 Mock 函数（通过函数体内容判断）
@@ -145,6 +211,60 @@ export function createEps() {
 
   // 遍历每一个方法
   set(eps.service);
+
+  // 添加兜底机制，确保即使服务不存在也不会报错
+  function addFallbackService(obj: any, path: string[] = []) {
+    for (const key in obj) {
+      if (obj[key] && typeof obj[key] === 'object') {
+        if (obj[key].namespace) {
+          // 这是一个服务对象
+          const service = obj[key];
+          if (!service.list) {
+            service.list = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.list`);
+              return { list: [], total: 0, page: 1, size: 50 };
+            };
+          }
+          if (!service.page) {
+            service.page = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.page`);
+              return { list: [], total: 0, page: 1, size: 50 };
+            };
+          }
+          if (!service.info) {
+            service.info = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.info`);
+              return null;
+            };
+          }
+          if (!service.add) {
+            service.add = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.add`);
+              throw new Error('服务不存在');
+            };
+          }
+          if (!service.update) {
+            service.update = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.update`);
+              throw new Error('服务不存在');
+            };
+          }
+          if (!service.delete) {
+            service.delete = async () => {
+              console.warn(`EPS服务不存在: ${path.join('.')}.${key}.delete`);
+              throw new Error('服务不存在');
+            };
+          }
+        } else {
+          // 递归处理嵌套对象
+          addFallbackService(obj[key], [...path, key]);
+        }
+      }
+    }
+  }
+
+  // 添加兜底服务
+  addFallbackService(eps.service);
 
 }
 

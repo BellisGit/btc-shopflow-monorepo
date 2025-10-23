@@ -37,7 +37,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const route = useRoute();
 const deptId = route.params.id;
@@ -57,7 +57,7 @@ const loadDeptInfo = async () => {
   try {
     const data = await departmentService.info({ deptId });
     deptInfo.value = data;
-  } catch (error) {
+  } catch (_error) {
     message.error('加载部门信息失败');
   }
 };
@@ -73,7 +73,7 @@ const loadRoles = async () => {
     }));
 
     // Mock：随机选择一些已绑定的角�?    selectedRoles.value = [1, 3]; // 默认绑定管理员和员工
-  } catch (error) {
+  } catch (_error) {
     message.error('加载角色列表失败');
   }
 };
@@ -88,7 +88,7 @@ const handleSave = async () => {
     // await http.post(`/departments/${deptId}/roles`, { roleIds: selectedRoles.value });
 
     message.success('保存成功');
-  } catch (error) {
+  } catch (_error) {
     message.error('保存失败');
   } finally {
     saving.value = false;

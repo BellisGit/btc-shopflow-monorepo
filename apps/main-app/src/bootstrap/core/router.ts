@@ -4,8 +4,7 @@
  */
 
 import type { App } from 'vue';
-import router from '../../router';
-import { initResponseInterceptor } from '../../utils/response-interceptor-init';
+import router from '@/router';
 
 /**
  * 配置路由
@@ -13,9 +12,6 @@ import { initResponseInterceptor } from '../../utils/response-interceptor-init';
 export const setupRouter = (app: App) => {
   // 安装路由
   app.use(router);
-
-  // 初始化响应拦截器
-  initResponseInterceptor(router);
 };
 
 /**

@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  logLevel: 'error', // 只显示错误，抑制警告
+  logLevel: 'error', // 鍙樉绀洪敊璇紝鎶戝埗璀﹀憡
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -24,3 +24,5 @@ export default defineConfig({
     },
   },
 });
+
+

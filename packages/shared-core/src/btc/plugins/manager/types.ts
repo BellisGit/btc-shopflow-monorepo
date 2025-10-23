@@ -1,188 +1,172 @@
-import type { App, Directive } from 'vue';
+﻿import type { App, Directive } from 'vue';
 
 /**
- * 插件配置选项
+ * 鎻掍欢閰嶇疆閫夐」
  */
 export interface PluginOptions {
   [key: string]: any;
 }
 
 /**
- * 插件元数据配置（兼容 Cool-Admin 风格）
- */
+ * 鎻掍欢鍏冩暟鎹厤缃紙鍏煎 Cool-Admin 椋庢牸锛? */
 export interface PluginMetadata {
   /**
-   * 插件显示名称
+   * 鎻掍欢鏄剧ず鍚嶇О
    */
   label?: string;
 
   /**
-   * 插件描述
+   * 鎻掍欢鎻忚堪
    */
   description?: string;
 
   /**
-   * 作者
-   */
+   * 浣滆€?   */
   author?: string;
 
   /**
-   * 版本号
-   */
+   * 鐗堟湰鍙?   */
   version?: string;
 
   /**
-   * 更新时间
+   * 鏇存柊鏃堕棿
    */
   updateTime?: string;
 
   /**
-   * 插件文档链接
+   * 鎻掍欢鏂囨。閾炬帴
    */
   doc?: string;
 
   /**
-   * 示例路径列表
+   * 绀轰緥璺緞鍒楄〃
    */
   demo?: string[];
 
   /**
-   * 插件图标 URL
+   * 鎻掍欢鍥炬爣 URL
    */
   icon?: string;
 
   /**
-   * 插件分类
+   * 鎻掍欢鍒嗙被
    */
   category?: string;
 
   /**
-   * 插件标签
+   * 鎻掍欢鏍囩
    */
   tags?: string[];
 
   /**
-   * 是否推荐使用
+   * 鏄惁鎺ㄨ崘浣跨敤
    */
   recommended?: boolean;
 }
 
 /**
- * 工具栏配置
- */
+ * 宸ュ叿鏍忛厤缃? */
 export interface ToolbarConfig {
   /**
-   * 排序（数字越小越靠前）
-   */
+   * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?   */
   order?: number;
 
   /**
-   * 是否在 PC 端显示
-   */
+   * 鏄惁鍦?PC 绔樉绀?   */
   pc?: boolean;
 
   /**
-   * 是否在 H5 端显示
-   */
+   * 鏄惁鍦?H5 绔樉绀?   */
   h5?: boolean;
 
   /**
-   * 工具栏组件
-   */
+   * 宸ュ叿鏍忕粍浠?   */
   component: () => Promise<any>;
 }
 
 /**
- * 布局注入配置
+ * 甯冨眬娉ㄥ叆閰嶇疆
  */
 export interface LayoutConfig {
   /**
-   * 注入位置
+   * 娉ㄥ叆浣嶇疆
    */
   position: 'header' | 'sidebar' | 'footer' | 'global';
 
   /**
-   * 排序（数字越小越靠前）
-   */
+   * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?   */
   order?: number;
 
   /**
-   * 布局组件
+   * 甯冨眬缁勪欢
    */
   component: () => Promise<any>;
 }
 
 /**
- * qiankun 微前端配置
- */
+ * qiankun 寰墠绔厤缃? */
 export interface QiankunConfig {
   /**
-   * 是否共享给子应用
+   * 鏄惁鍏变韩缁欏瓙搴旂敤
    */
   shared?: boolean;
 
   /**
-   * 全局状态（供子应用访问）
-   */
+   * 鍏ㄥ眬鐘舵€侊紙渚涘瓙搴旂敤璁块棶锛?   */
   globalState?: Record<string, any>;
 
   /**
-   * 子应用可访问的 API
+   * 瀛愬簲鐢ㄥ彲璁块棶鐨?API
    */
   exposeApi?: string[];
 }
 
 /**
- * 静态资源配置
- */
+ * 闈欐€佽祫婧愰厤缃? */
 export interface StaticConfig {
   /**
-   * SVG 图标目录路径（相对于插件根目录）
+   * SVG 鍥炬爣鐩綍璺緞锛堢浉瀵逛簬鎻掍欢鏍圭洰褰曪級
    */
   svgDir?: string;
 
   /**
-   * 其他静态资源目录
-   */
+   * 鍏朵粬闈欐€佽祫婧愮洰褰?   */
   assetsDir?: string;
 }
 
 /**
- * 生命周期事件参数
+ * 鐢熷懡鍛ㄦ湡浜嬩欢鍙傛暟
  */
 export interface PluginLifecycleEvents {
   /**
-   * 其他插件导出的方法和变量
+   * 鍏朵粬鎻掍欢瀵煎嚭鐨勬柟娉曞拰鍙橀噺
    */
   [key: string]: any;
 }
 
 /**
- * 插件接口（扩展版）
- */
+ * 鎻掍欢鎺ュ彛锛堟墿灞曠増锛? */
 export interface Plugin<T = any> {
   /**
-   * 插件名称（唯一标识）
-   */
+   * 鎻掍欢鍚嶇О锛堝敮涓€鏍囪瘑锛?   */
   name: string;
 
   /**
-   * 插件版本
+   * 鎻掍欢鐗堟湰
    */
   version?: string;
 
   /**
-   * 插件描述
+   * 鎻掍欢鎻忚堪
    */
   description?: string;
 
   /**
-   * 作者
-   */
+   * 浣滆€?   */
   author?: string;
 
   /**
-   * 更新时间
+   * 鏇存柊鏃堕棿
    */
   updateTime?: string;
 
@@ -192,138 +176,128 @@ export interface Plugin<T = any> {
   logo?: string;
 
   /**
-   * 插件依赖（其他插件名称）
+   * 鎻掍欢渚濊禆锛堝叾浠栨彃浠跺悕绉帮級
    */
   dependencies?: string[];
 
   /**
-   * 是否启用
+   * 鏄惁鍚敤
    */
   enable?: boolean;
 
   /**
-   * 加载顺序（数字越大越先加载）
+   * 鍔犺浇椤哄簭锛堟暟瀛楄秺澶ц秺鍏堝姞杞斤級
    */
   order?: number;
 
   /**
-   * 插件安装钩子
-   * @param app Vue 应用实例
-   * @param options 插件配置选项
+   * 鎻掍欢瀹夎閽╁瓙
+   * @param app Vue 搴旂敤瀹炰緥
+   * @param options 鎻掍欢閰嶇疆閫夐」
    */
   install?: (app: App, options?: PluginOptions) => void | Promise<void>;
 
   /**
-   * 插件卸载钩子
+   * 鎻掍欢鍗歌浇閽╁瓙
    */
   uninstall?: () => void | Promise<void>;
 
   /**
-   * 插件加载完成后的钩子
-   * @param events 生命周期事件参数（可以接收其他插件导出的方法）
-   * @returns 导出给其他插件使用的方法和变量
-   */
+   * 鎻掍欢鍔犺浇瀹屾垚鍚庣殑閽╁瓙
+   * @param events 鐢熷懡鍛ㄦ湡浜嬩欢鍙傛暟锛堝彲浠ユ帴鏀跺叾浠栨彃浠跺鍑虹殑鏂规硶锛?   * @returns 瀵煎嚭缁欏叾浠栨彃浠朵娇鐢ㄧ殑鏂规硶鍜屽彉閲?   */
   onLoad?: (events: PluginLifecycleEvents) => Promise<Record<string, any>> | Record<string, any>;
 
   /**
-   * 插件功能实例（如 Excel 导出函数、Upload 工具等）
+   * 鎻掍欢鍔熻兘瀹炰緥锛堝 Excel 瀵煎嚭鍑芥暟銆乁pload 宸ュ叿绛夛級
    */
   api?: T;
 
   /**
-   * 全局组件自动注册
+   * 鍏ㄥ眬缁勪欢鑷姩娉ㄥ唽
    */
   components?: (() => Promise<any>)[];
 
   /**
-   * 全局指令自动注册
-   * key 为指令名，value 为指令定义
-   */
+   * 鍏ㄥ眬鎸囦护鑷姩娉ㄥ唽
+   * key 涓烘寚浠ゅ悕锛寁alue 涓烘寚浠ゅ畾涔?   */
   directives?: Record<string, Directive>;
 
   /**
-   * 视图路由（会被注册到主路由的 children 中）
+   * 瑙嗗浘璺敱锛堜細琚敞鍐屽埌涓昏矾鐢辩殑 children 涓級
    */
   views?: any[];
 
   /**
-   * 页面路由（独立的一级路由）
+   * 椤甸潰璺敱锛堢嫭绔嬬殑涓€绾ц矾鐢憋級
    */
   pages?: any[];
 
   /**
-   * 顶栏工具配置
+   * 椤舵爮宸ュ叿閰嶇疆
    */
   toolbar?: ToolbarConfig;
 
   /**
-   * 布局注入配置
+   * 甯冨眬娉ㄥ叆閰嶇疆
    */
   layout?: LayoutConfig;
 
   /**
-   * 静态资源配置
-   */
+   * 闈欐€佽祫婧愰厤缃?   */
   static?: StaticConfig;
 
   /**
-   * qiankun 微前端配置
-   */
+   * qiankun 寰墠绔厤缃?   */
   qiankun?: QiankunConfig;
 
   /**
-   * 插件配置参数（可供外部使用）
+   * 鎻掍欢閰嶇疆鍙傛暟锛堝彲渚涘閮ㄤ娇鐢級
    */
   options?: PluginOptions;
 
   /**
-   * 插件元数据
-   */
+   * 鎻掍欢鍏冩暟鎹?   */
   meta?: Record<string, any>;
 
   /**
-   * 插件配置元数据（兼容 Cool-Admin 风格）
-   * 提供更丰富的插件信息和配置选项
+   * 鎻掍欢閰嶇疆鍏冩暟鎹紙鍏煎 Cool-Admin 椋庢牸锛?   * 鎻愪緵鏇翠赴瀵岀殑鎻掍欢淇℃伅鍜岄厤缃€夐」
    */
   config?: PluginMetadata;
 }
 
 /**
- * 插件管理器配置
- */
+ * 鎻掍欢绠＄悊鍣ㄩ厤缃? */
 export interface PluginManagerOptions {
   /**
-   * 是否在安装插件时检查依赖
-   */
+   * 鏄惁鍦ㄥ畨瑁呮彃浠舵椂妫€鏌ヤ緷璧?   */
   checkDependencies?: boolean;
 
   /**
-   * 是否允许重复注册（覆盖）
+   * 鏄惁鍏佽閲嶅娉ㄥ唽锛堣鐩栵級
    */
   allowOverride?: boolean;
 
   /**
-   * 是否启用调试日志
+   * 鏄惁鍚敤璋冭瘯鏃ュ織
    */
   debug?: boolean;
 }
 
 /**
- * 插件状态
- */
+ * 鎻掍欢鐘舵€? */
 export enum PluginStatus {
-  /** 已注册但未安装 */
+  /** 宸叉敞鍐屼絾鏈畨瑁?*/
   Registered = 'registered',
-  /** 已安装 */
+  /** 宸插畨瑁?*/
   Installed = 'installed',
-  /** 已卸载 */
+  /** 宸插嵏杞?*/
   Uninstalled = 'uninstalled',
-  /** 安装失败 */
+  /** 瀹夎澶辫触 */
   Failed = 'failed',
 }
 
 /**
- * 插件记录
+ * 鎻掍欢璁板綍
  */
 export interface PluginRecord<T = any> {
   plugin: Plugin<T>;
@@ -331,4 +305,6 @@ export interface PluginRecord<T = any> {
   installedAt?: Date;
   error?: Error;
 }
+
+
 

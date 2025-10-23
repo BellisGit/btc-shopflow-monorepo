@@ -1,18 +1,17 @@
-import { ref } from 'vue';
+﻿import { ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableColumn, OpButton, TableProps } from '../types';
 
 /**
- * 操作列处理 + 列控制
- */
+ * 鎿嶄綔鍒楀鐞?+ 鍒楁帶鍒? */
 export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   const { t } = useI18n();
 
   /**
-   * 获取操作按钮列表
+   * 鑾峰彇鎿嶄綔鎸夐挳鍒楄〃
    */
-  const getOpButtons = (column: TableColumn, _scope: any): OpButton[] => {
+  const _getOpButtons = (column: TableColumn, _scope: any): OpButton[] => {
     const buttons = column.buttons;
     if (!buttons) return ['edit', 'delete'];
     if (typeof buttons === 'function') {
@@ -22,7 +21,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   };
 
   /**
-   * 获取按钮类型
+   * 鑾峰彇鎸夐挳绫诲瀷
    */
   const getButtonType = (btn: string): string => {
     const typeMap: Record<string, string> = {
@@ -34,7 +33,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   };
 
   /**
-   * 获取按钮文本
+   * 鑾峰彇鎸夐挳鏂囨湰
    */
   const getButtonText = (btn: string): string => {
     const textMap: Record<string, string> = {
@@ -46,7 +45,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   };
 
   /**
-   * 处理操作按钮点击
+   * 澶勭悊鎿嶄綔鎸夐挳鐐瑰嚮
    */
   const handleOpClick = (btn: string, row: any) => {
     switch (btn) {
@@ -63,8 +62,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   };
 
   /**
-   * 查找列（支持多级表头）
-   */
+   * 鏌ユ壘鍒楋紙鏀寔澶氱骇琛ㄥご锛?   */
   function findColumns(prop: string | string[], callback: (col: TableColumn) => void) {
     const propList = Array.isArray(prop) ? prop : [prop];
 
@@ -85,8 +83,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   }
 
   /**
-   * 显示列
-   */
+   * 鏄剧ず鍒?   */
   function showColumn(prop: string | string[], status?: boolean) {
     findColumns(prop, (col) => {
       col.hidden = typeof status === 'boolean' ? !status : false;
@@ -94,15 +91,13 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   }
 
   /**
-   * 隐藏列
-   */
+   * 闅愯棌鍒?   */
   function hideColumn(prop: string | string[]) {
     showColumn(prop, false);
   }
 
   /**
-   * 设置列配置（动态替换整个列配置）
-   */
+   * 璁剧疆鍒楅厤缃紙鍔ㄦ€佹浛鎹㈡暣涓垪閰嶇疆锛?   */
   function setColumns(columns: TableColumn[]) {
     if (tableProps && tableProps.columns) {
       tableProps.columns.splice(0, tableProps.columns.length, ...columns);
@@ -110,7 +105,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   }
 
   /**
-   * 重新构建表格（刷新渲染）
+   * 閲嶆柊鏋勫缓琛ㄦ牸锛堝埛鏂版覆鏌擄級
    */
   const rebuildKey = ref(0);
   function reBuild(callback?: () => void) {
@@ -122,7 +117,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
 
   return {
     // 操作列
-    getOpButtons,
+    getOpButtons: _getOpButtons,
     getButtonType,
     getButtonText,
     handleOpClick,
@@ -135,4 +130,5 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
     rebuildKey,
   };
 }
+
 

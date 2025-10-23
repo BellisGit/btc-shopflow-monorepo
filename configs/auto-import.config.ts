@@ -76,6 +76,11 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     ...extraDirs, // 额外的域级组件目录
   ];
 
+  // 如果包含共享组件，添加共享组件目录
+  if (includeShared) {
+    dirs.push('../../packages/shared-components/src/components');
+  }
+
   return Components({
     resolvers: [
       ElementPlusResolver({
@@ -83,7 +88,7 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
       }),
       // 自定义解析器：@btc/shared-components
       (componentName) => {
-        if (componentName.startsWith('Btc')) {
+        if (componentName.startsWith('Btc') || componentName.startsWith('btc-')) {
           return {
             name: componentName,
             from: '@btc/shared-components',
@@ -97,6 +102,6 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     // 强制重新扫描组件
     deep: true,
     // 包含所有 Btc 开头的组件
-    include: [/\.vue$/, /\.tsx$/, /Btc[A-Z]/],
+    include: [/\.vue$/, /\.tsx$/, /Btc[A-Z]/, /btc-[a-z]/],
   });
 }

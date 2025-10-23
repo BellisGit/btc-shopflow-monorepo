@@ -1,7 +1,7 @@
-import type { FormInstance } from 'element-plus';
+﻿import type { FormInstance } from 'element-plus';
 import type { FormItem, UpsertProps, UpsertMode } from '../types';
 /**
- * 表单数据管理
+ * 琛ㄥ崟鏁版嵁绠＄悊
  */
 export declare function useFormData(props: UpsertProps): {
     formRef: globalThis.Ref<FormInstance | undefined, FormInstance | undefined>;
@@ -21,3 +21,4 @@ export declare function useFormData(props: UpsertProps): {
     title: globalThis.ComputedRef<string>;
     getComponentProps: (item: FormItem) => Record<string, any>;
 };
+

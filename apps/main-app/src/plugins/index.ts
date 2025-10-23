@@ -16,7 +16,7 @@ export const excelPlugin: Plugin = {
     export: exportJsonToExcel,
   },
 
-  install(app, options) {
+  install(app, _options) {
     // 可以在这里注入全局属性
     app.config.globalProperties.$excel = {
       export: exportJsonToExcel,
@@ -53,7 +53,7 @@ export const notificationPlugin: Plugin = {
     },
   },
 
-  install(app) {
+  install(_app) {
     // Plugin installed
   },
 };
@@ -73,7 +73,7 @@ export const loggerPlugin: Plugin = {
     },
   },
 
-  install(app) {
+  install(_app) {
     // Plugin installed
   },
 };

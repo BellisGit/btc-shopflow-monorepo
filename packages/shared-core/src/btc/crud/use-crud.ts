@@ -3,7 +3,7 @@
  * 封装 CRUD 通用逻辑：列表加载、分页、搜索、增删改等
  */
 
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
 export function useCrud<T = Record<string, unknown>>(
@@ -54,6 +54,7 @@ export function useCrud<T = Record<string, unknown>>(
    * 加载数据
    */
   const loadData = async () => {
+
     loading.value = true;
     onLoad?.();
 
@@ -65,6 +66,7 @@ export function useCrud<T = Record<string, unknown>>(
         ...searchParams.value,
       };
 
+
       // 刷新前钩子（对应 cool-admin 的 onRefresh）
       if (onBeforeRefresh) {
         const modifiedParams = onBeforeRefresh(params);
@@ -73,14 +75,28 @@ export function useCrud<T = Record<string, unknown>>(
         }
       }
 
+      console.log('useCrud loadData params:', params);
       const res = await service.page(params);
+      console.log('useCrud loadData response:', res);
 
-      tableData.value = res.list;
-      pagination.total = res.total;
+      // 检查响应数据是否有效
+      if (res && typeof res === 'object') {
+        tableData.value = res.list || [];
+        pagination.total = res.total || 0;
+        console.log('useCrud tableData updated:', tableData.value);
+      } else {
+        // 如果响应数据无效，清空表格数据
+        tableData.value = [];
+        pagination.total = 0;
+        console.log('useCrud tableData cleared');
+      }
 
       // 刷新后钩子
       onAfterRefresh?.(res);
     } catch (error) {
+      // 发生错误时，清空表格数据并显示错误状态
+      tableData.value = [];
+      pagination.total = 0;
       onError?.(error);
     } finally {
       loading.value = false;
@@ -181,7 +197,7 @@ export function useCrud<T = Record<string, unknown>>(
     }
 
     try {
-      await service.delete({ ids: [row.id] });
+      await service.delete([row.id]);
       onSuccess?.('删除成功');
       onAfterDelete?.();
       loadData();
@@ -209,7 +225,7 @@ export function useCrud<T = Record<string, unknown>>(
 
     try {
       const ids = selection.value.map((row: any) => row.id);
-      await service.delete({ ids });
+      await service.delete(ids);
       onSuccess?.(`成功删除 ${ids.length} 条数据`);
       onAfterDelete?.();
       clearSelection();
@@ -308,52 +324,63 @@ export function useCrud<T = Record<string, unknown>>(
     Object.assign(searchParams.value, params);
   };
 
-  const crudInstance = {
+  const crudInstance: UseCrudReturn<T> = {
     // 数据
-    tableData,
+    data: tableData as any,
+    tableData: tableData as any,
     loading,
+    total: computed(() => pagination.total),
+    page: computed(() => pagination.page),
+    size: computed(() => pagination.size),
     pagination,
-    searchParams,
-    selection,
-    upsertVisible,
-    currentRow,
-    upsertMode, // 新增：弹窗模式
-    viewVisible,
-    viewRow,
-    service, // 暴露 service
 
-    // 数据加载
+    // 方法
+    refresh: loadData,
     loadData,
-    handleSearch,
+    add: handleAdd,
+    handleAdd,
+    edit: handleEdit,
+    handleEdit,
+    delete: handleMultiDelete,
+    handleDelete: handleDelete as any,
+    handleMultiDelete,
+    search: (keyword: string) => {
+      searchParams.value.keyword = keyword;
+      loadData();
+    },
+    handleSearch: handleSearch as any,
+    reset: handleReset,
     handleReset,
     handleRefresh,
 
-    // 新增/编辑/查看
-    handleAdd,
-    handleEdit,
-    handleInfo, // 新增：info 模式
-    handleAppend,
-    handleView,
-    handleViewClose,
-    closeDialog,
+    // 状态
+    upsertVisible,
+    upsertLoading: ref(false),
+    upsertData: currentRow as any,
+    isEdit: computed(() => upsertMode.value === 'update'),
+    selectedRows: selection as any,
+    selection: selection as any,
+    searchKeyword: ref(''),
+    currentRow: currentRow as any,
+    upsertMode,
+    viewVisible,
+    viewRow: viewRow as any,
 
-    // 删除
-    handleDelete,
-    handleMultiDelete,
+    // 服务
+    service: service as any,
 
-    // 选择管理
+    // 其他方法
     handleSelectionChange,
     clearSelection,
     toggleSelection,
-
-    // 分页
     handlePageChange,
     handleSizeChange,
-
-    // 参数管理
     getParams,
     setParams,
-  } as UseCrudReturn<T>;
+    closeDialog,
+    handleView,
+    handleViewClose,
+  };
 
   // 如果有回调函数，调用它
   if (callback) {

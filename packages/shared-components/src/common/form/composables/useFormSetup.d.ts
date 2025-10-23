@@ -1,5 +1,5 @@
-/**
- * 表单设置和初始化
+﻿/**
+ * 琛ㄥ崟璁剧疆鍜屽垵濮嬪寲
  */
 export declare function useFormSetup(props: any): {
   Form: globalThis.Ref<any, any>;
@@ -87,3 +87,4 @@ export declare function useFormSetup(props: any): {
   setDefForm: (data: any) => void;
   getDefForm: () => Record<string, any> | undefined;
 };
+

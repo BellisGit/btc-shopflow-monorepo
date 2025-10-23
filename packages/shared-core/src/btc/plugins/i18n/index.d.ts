@@ -1,4 +1,4 @@
-import type { App } from 'vue';
+﻿import type { App } from 'vue';
 import type { Composer } from 'vue-i18n';
 import zhCN from './locales/zh-CN';
 import enUS from './locales/en-US';
@@ -8,25 +8,21 @@ export interface I18nPluginOptions {
   fallbackLocale?: string;
   messages?: Record<string, any>;
   /**
-   * 是否从后端加载语言包
-   */
+   * 鏄惁浠庡悗绔姞杞借瑷€鍖?   */
   loadFromApi?: boolean;
   /**
-   * API 地址
+   * API 鍦板潃
    */
   apiUrl?: string;
   /**
-   * 语言包范围（用于域级隔离）
-   * common - 通用翻译
-   * logistics - 物流域
-   * production - 生产域
-   */
+   * 璇█鍖呰寖鍥达紙鐢ㄤ簬鍩熺骇闅旂锛?   * common - 閫氱敤缈昏瘧
+   * logistics - 鐗╂祦鍩?   * production - 鐢熶骇鍩?   */
   scope?: string;
 }
 /**
- * 创建 i18n 插件（混合架构）
- * @param options 配置选项
- * @returns i18n 插件
+ * 鍒涘缓 i18n 鎻掍欢锛堟贩鍚堟灦鏋勶級
+ * @param options 閰嶇疆閫夐」
+ * @returns i18n 鎻掍欢
  */
 export declare function createI18nPlugin(options?: I18nPluginOptions): {
   name: string;
@@ -597,3 +593,5 @@ export declare function createI18nPlugin(options?: I18nPluginOptions): {
 export declare function useI18n(): Composer & {
   setLocale: (newLocale: string) => void;
 };
+
+

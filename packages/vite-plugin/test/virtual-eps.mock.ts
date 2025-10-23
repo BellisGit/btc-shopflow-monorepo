@@ -1,5 +1,5 @@
-/**
- * 用于测试的 EPS Mock 数据
+﻿/**
+ * 鐢ㄤ簬娴嬭瘯鐨?EPS Mock 鏁版嵁
  */
 
 export const mockEpsData = {
@@ -8,31 +8,31 @@ export const mockEpsData = {
       path: '/admin/user/list',
       method: 'POST',
       name: 'list',
-      summary: '用户列表',
+      summary: '鐢ㄦ埛鍒楄〃',
     },
     {
       path: '/admin/user/add',
       method: 'POST',
       name: 'add',
-      summary: '添加用户',
+      summary: '娣诲姞鐢ㄦ埛',
     },
     {
       path: '/admin/user/update',
       method: 'POST',
       name: 'update',
-      summary: '更新用户',
+      summary: '鏇存柊鐢ㄦ埛',
     },
     {
       path: '/admin/user/delete',
       method: 'POST',
       name: 'delete',
-      summary: '删除用户',
+      summary: '鍒犻櫎鐢ㄦ埛',
     },
     {
       path: '/admin/user/info',
       method: 'GET',
       name: 'info',
-      summary: '用户详情',
+      summary: '鐢ㄦ埛璇︽儏',
     },
   ],
   order: [
@@ -40,25 +40,25 @@ export const mockEpsData = {
       path: '/admin/order/page',
       method: 'POST',
       name: 'page',
-      summary: '订单分页',
+      summary: '璁㈠崟鍒嗛〉',
     },
     {
       path: '/admin/order/info',
       method: 'GET',
       name: 'info',
-      summary: '订单详情',
+      summary: '璁㈠崟璇︽儏',
     },
     {
       path: '/admin/order/create',
       method: 'POST',
       name: 'create',
-      summary: '创建订单',
+      summary: '鍒涘缓璁㈠崟',
     },
     {
       path: '/admin/order/cancel',
       method: 'POST',
       name: 'cancel',
-      summary: '取消订单',
+      summary: '鍙栨秷璁㈠崟',
     },
   ],
   product: [
@@ -66,31 +66,31 @@ export const mockEpsData = {
       path: '/admin/product/list',
       method: 'POST',
       name: 'list',
-      summary: '产品列表',
+      summary: '浜у搧鍒楄〃',
     },
     {
       path: '/admin/product/add',
       method: 'POST',
       name: 'add',
-      summary: '添加产品',
+      summary: '娣诲姞浜у搧',
     },
     {
       path: '/admin/product/update',
       method: 'POST',
       name: 'update',
-      summary: '更新产品',
+      summary: '鏇存柊浜у搧',
     },
     {
       path: '/admin/product/delete',
       method: 'POST',
       name: 'delete',
-      summary: '删除产品',
+      summary: '鍒犻櫎浜у搧',
     },
   ],
 };
 
 /**
- * 模拟 EPS API 响应
+ * 妯℃嫙 EPS API 鍝嶅簲
  */
 export function createMockEpsResponse() {
   return {
@@ -99,3 +99,4 @@ export function createMockEpsResponse() {
     message: 'success',
   };
 }
+

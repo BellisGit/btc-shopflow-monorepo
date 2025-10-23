@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="btc-search-key">
     <el-input
       v-model="keyword"
@@ -51,3 +51,4 @@ const handleClear = () => {
   crud.handleReset();
 };
 </script>
+

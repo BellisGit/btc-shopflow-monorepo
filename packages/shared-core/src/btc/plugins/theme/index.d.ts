@@ -1,9 +1,9 @@
-import type { Plugin } from 'vue';
+﻿import type { Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
 /**
- * 主题插件实例
+ * 涓婚鎻掍欢瀹炰緥
  */
 export interface ThemePlugin {
     currentTheme: ReturnType<typeof ref<ThemeConfig>>;
@@ -16,17 +16,18 @@ export interface ThemePlugin {
     updateThemeColor: (color: string) => void;
 }
 /**
- * 创建主题插件
+ * 鍒涘缓涓婚鎻掍欢
  */
 export declare function createThemePlugin(): Plugin & {
     theme: ThemePlugin;
 };
 /**
- * 组合式 API：使用主题插件
- */
+ * 缁勫悎寮?API锛氫娇鐢ㄤ富棰樻彃浠? */
 export declare function useThemePlugin(): ThemePlugin;
 /**
- * 导出主题配置类型
+ * 瀵煎嚭涓婚閰嶇疆绫诲瀷
  */
 export type { ThemeConfig };
 export { THEME_PRESETS };
+
+

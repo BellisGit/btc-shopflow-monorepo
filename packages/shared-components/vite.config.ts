@@ -1,9 +1,18 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@btc-common': resolve(__dirname, 'src/common'),
+      '@btc-components': resolve(__dirname, 'src/components'),
+      '@btc-crud': resolve(__dirname, 'src/crud'),
+      '@btc-styles': resolve(__dirname, 'src/styles'),
+      '@btc-locales': resolve(__dirname, 'src/locales'),
+    },
+  },
   plugins: [
     vue()
   ],
@@ -15,7 +24,7 @@ export default defineConfig({
       }
     }
   },
-  logLevel: 'error', // 只显示错误，抑制警告
+  logLevel: 'error', // 鍙樉绀洪敊璇紝鎶戝埗璀﹀憡
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -41,6 +50,7 @@ export default defineConfig({
         },
       },
     },
-    cssCodeSplit: false, // 将所有 CSS 合并到一个文件中
+    cssCodeSplit: false, // 灏嗘墍鏈?CSS 鍚堝苟鍒颁竴涓枃浠朵腑
   },
 });
+

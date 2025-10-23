@@ -1,12 +1,12 @@
-import type { App, Plugin } from 'vue';
+﻿import type { App, Plugin } from 'vue';
 
 /**
- * GitHub插件API接口
+ * GitHub鎻掍欢API鎺ュ彛
  */
 export interface GitHubPlugin {
   /**
-   * 打开GitHub仓库
-   * @param url GitHub仓库地址
+   * 鎵撳紑GitHub浠撳簱
+   * @param url GitHub浠撳簱鍦板潃
    */
   openRepository: (url?: string) => void;
 }
@@ -14,7 +14,7 @@ export interface GitHubPlugin {
 let githubPluginInstance: GitHubPlugin | null = null;
 
 /**
- * 创建GitHub插件
+ * 鍒涘缓GitHub鎻掍欢
  */
 export function createGitHubPlugin(): Plugin & { github: GitHubPlugin } {
   const github: GitHubPlugin = {
@@ -23,15 +23,14 @@ export function createGitHubPlugin(): Plugin & { github: GitHubPlugin } {
     }
   };
 
-  // 保存单例
+  // 淇濆瓨鍗曚緥
   githubPluginInstance = github;
 
   const plugin: Plugin & { github: GitHubPlugin } = {
     install(app: App) {
-      // 将GitHub实例挂载到全局属性
-      app.config.globalProperties.$github = github;
+      // 灏咷itHub瀹炰緥鎸傝浇鍒板叏灞€灞炴€?      app.config.globalProperties.$github = github;
 
-      // 提供给 composition API 使用
+      // 鎻愪緵缁?composition API 浣跨敤
       app.provide('github', github);
     },
     github,
@@ -41,7 +40,7 @@ export function createGitHubPlugin(): Plugin & { github: GitHubPlugin } {
 }
 
 /**
- * 组合式 API：使用GitHub插件
+ * 缁勫悎寮?API锛氫娇鐢℅itHub鎻掍欢
  */
 export function useGitHubPlugin(): GitHubPlugin {
   if (!githubPluginInstance) {
@@ -49,5 +48,7 @@ export function useGitHubPlugin(): GitHubPlugin {
   }
   return githubPluginInstance;
 }
+
+
 
 

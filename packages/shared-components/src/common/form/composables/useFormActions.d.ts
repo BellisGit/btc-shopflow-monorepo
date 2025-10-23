@@ -1,5 +1,5 @@
-/**
- * 表单操作方法
+﻿/**
+ * 琛ㄥ崟鎿嶄綔鏂规硶
  */
 export declare function useFormActions(formSetup: any): {
   showLoading: () => void;
@@ -13,3 +13,4 @@ export declare function useFormActions(formSetup: any): {
   submit: (callback?: (data: any, event: { close: () => void; done: () => void }) => void) => void;
   open: (options?: any, plugins?: any[]) => void;
 };
+

@@ -47,7 +47,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const route = useRoute();
 const router = useRouter();
@@ -68,7 +68,7 @@ const loadUserInfo = async () => {
   try {
     const data = await userService.info({ id: userId });
     userInfo.value = data;
-  } catch (error) {
+  } catch (_error) {
     message.error('加载用户信息失败');
   }
 };
@@ -80,7 +80,7 @@ const loadRoles = async () => {
 
     // Mock：随机选择已分配的角色
     selectedRoles.value = [3]; // 默认分配员工角色
-  } catch (error) {
+  } catch (_error) {
     message.error('加载角色列表失败');
   }
 };
@@ -96,7 +96,7 @@ const handleSave = async () => {
 
     message.success('保存成功');
     router.back();
-  } catch (error) {
+  } catch (_error) {
     message.error('保存失败');
   } finally {
     saving.value = false;

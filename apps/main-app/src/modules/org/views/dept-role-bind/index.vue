@@ -37,9 +37,11 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { service } from '../../../../services/eps';
+import { useMessage } from '@/utils/use-message';
+import { createMockCrudService } from '@utils/http';
 
 const { t } = useI18n();
+const message = useMessage();
 const route = useRoute();
 const deptId = route.params.id;
 
@@ -59,7 +61,7 @@ const loadDeptInfo = async () => {
   try {
     const data = await departmentService.info({ deptId });
     deptInfo.value = data;
-  } catch (error) {
+  } catch (_error) {
     message.error(t('org.dept.load_info_error'));
   }
 };
@@ -76,7 +78,7 @@ const loadRoles = async () => {
 
     // Mock：随机选择一些已绑定的角色
     selectedRoles.value = [1, 3]; // 模拟绑定管理员和员工
-  } catch (error) {
+  } catch (_error) {
     message.error(t('org.role.load_list_error'));
   }
 };
@@ -92,7 +94,7 @@ const handleSave = async () => {
     // await http.post(`/departments/${deptId}/roles`, { roleIds: selectedRoles.value });
 
     message.success(t('crud.message.save_success'));
-  } catch (error) {
+  } catch (_error) {
     message.error(t('crud.message.save_error'));
   } finally {
     saving.value = false;

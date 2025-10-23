@@ -11,10 +11,10 @@
 import { ref, computed, inject } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
-import BtcForm from '../../common/form/index.vue';
-import BtcSvg from '../../common/svg/index.vue';
+import BtcForm from '@btc-common/form/index.vue';
+import BtcSvg from '@btc-common/svg/index.vue';
 import type { TableColumn } from '../table/types';
-import type { BtcFormItem } from '../../common/form/types';
+import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 
 interface Props {

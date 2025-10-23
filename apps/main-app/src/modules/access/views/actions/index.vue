@@ -26,7 +26,7 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '../../../../services/eps';
+import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -43,13 +43,13 @@ const actionService = {
 
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
+  { type: 'index', label: '序号', width: 60 },
   { prop: 'actionNameCn', label: t('access.action.name') },
   { prop: 'actionCode', label: t('access.action.code') },
   { prop: 'actionType', label: t('access.action.type') },
   { prop: 'httpMethod', label: t('access.action.http_method') },
   { prop: 'description', label: t('common.description') },
-  { type: 'op', label: t('crud.table.operation'), width: 200, buttons: ['edit', 'delete'] },
+  { type: 'op', label: '操作', width: 200, buttons: ['edit', 'delete'] },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -65,7 +65,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
     await next(data);
     message.success(t('crud.message.save_success'));
     close();
-  } catch (error) {
+  } catch (_error) {
     done();
   }
 };

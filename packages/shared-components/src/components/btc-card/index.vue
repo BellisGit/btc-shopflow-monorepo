@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <div class="btc-card" :class="cardClass">
-    <!-- 头部区域 -->
+    <!-- 澶撮儴鍖哄煙 -->
     <div v-if="showHeader" class="btc-card__header">
       <div class="btc-card__title">
         <slot name="title">
@@ -12,12 +12,12 @@
       </div>
     </div>
 
-    <!-- 内容区域 -->
+    <!-- 鍐呭鍖哄煙 -->
     <div class="btc-card__body">
       <slot />
     </div>
 
-    <!-- 底部区域 -->
+    <!-- 搴曢儴鍖哄煙 -->
     <div v-if="$slots.footer" class="btc-card__footer">
       <slot name="footer" />
     </div>
@@ -69,7 +69,7 @@ const cardClass = computed(() => {
   overflow: hidden;
   transition: box-shadow 0.3s ease;
 
-  // 阴影样式
+  // 闃村奖鏍峰紡
   &.is-shadow-always {
     box-shadow: var(--el-box-shadow-light);
   }
@@ -84,12 +84,12 @@ const cardClass = computed(() => {
     box-shadow: none;
   }
 
-  // 边框样式
+  // 杈规鏍峰紡
   &.is-border {
     border: 1px solid var(--el-border-color-light);
   }
 
-  // 头部样式
+  // 澶撮儴鏍峰紡
   &__header {
     display: flex;
     align-items: center;
@@ -110,12 +110,12 @@ const cardClass = computed(() => {
     color: var(--el-text-color-regular);
   }
 
-  // 内容区域样式
+  // 鍐呭鍖哄煙鏍峰紡
   &__body {
     padding: 20px;
   }
 
-  // 底部样式
+  // 搴曢儴鏍峰紡
   &__footer {
     padding: 18px 20px;
     border-top: 1px solid var(--el-border-color-lighter);
@@ -130,3 +130,4 @@ const cardClass = computed(() => {
   }
 }
 </style>
+

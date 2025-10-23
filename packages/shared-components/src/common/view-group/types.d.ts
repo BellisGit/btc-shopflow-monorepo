@@ -1,5 +1,5 @@
-/**
- * BtcViewGroup 类型定义
+﻿/**
+ * BtcViewGroup 绫诲瀷瀹氫箟
  */
 export interface ViewGroupOptions {
   label?: string;
@@ -60,3 +60,4 @@ export interface ViewGroupExpose {
   refresh: (params?: any) => Promise<void>;
   isMobile: any;
 }
+

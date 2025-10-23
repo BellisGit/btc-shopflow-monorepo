@@ -1,4 +1,4 @@
-import type { BtcFormConfig } from '../useBtcForm';
+﻿import type { BtcFormConfig } from '../useBtcForm';
 export declare function useTabs({ config, Form }: {
     config: BtcFormConfig;
     Form: any;
@@ -18,3 +18,5 @@ export declare function useTabs({ config, Form }: {
         refs: any;
     }) => void;
 };
+
+

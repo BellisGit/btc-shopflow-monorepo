@@ -1,10 +1,9 @@
-/**
- * 类型安全的国际化工具
- * 提供编译时类型检查和运行时验证
- */
+﻿/**
+ * 绫诲瀷瀹夊叏鐨勫浗闄呭寲宸ュ叿
+ * 鎻愪緵缂栬瘧鏃剁被鍨嬫鏌ュ拰杩愯鏃堕獙璇? */
 
 export interface I18nKeyPath {
-  // UI 组件命名空间
+  // UI 缁勪欢鍛藉悕绌洪棿
   'ui.button.save': string;
   'ui.button.cancel': string;
   'ui.button.confirm': string;
@@ -38,7 +37,7 @@ export interface I18nKeyPath {
   'ui.download': string;
   'ui.upload': string;
 
-  // 平台治理命名空间
+  // 骞冲彴娌荤悊鍛藉悕绌洪棿
   'platform.common.export_success': string;
   'platform.common.export_failed': string;
   'platform.common.no_columns_to_export': string;
@@ -57,7 +56,7 @@ export interface I18nKeyPath {
   'platform.modules.title': string;
   'platform.plugins.title': string;
 
-  // 业务域命名空间 - 采购
+  // 涓氬姟鍩熷懡鍚嶇┖闂?- 閲囪喘
   'procurement.common.create_po_success': string;
   'procurement.common.create_po_failed': string;
   'procurement.aux.title': string;
@@ -78,7 +77,7 @@ export interface I18nKeyPath {
   'procurement.packaging.weight': string;
   'procurement.packaging.cost': string;
 
-  // 业务域命名空间 - 库存
+  // 涓氬姟鍩熷懡鍚嶇┖闂?- 搴撳瓨
   'inventory.common.stock_in_success': string;
   'inventory.common.stock_out_success': string;
   'inventory.common.stock_check_success': string;
@@ -103,15 +102,14 @@ export interface I18nKeyPath {
 }
 
 /**
- * 类型安全的翻译函数
- */
+ * 绫诲瀷瀹夊叏鐨勭炕璇戝嚱鏁? */
 export type TypeSafeT = <K extends keyof I18nKeyPath>(
   key: K,
   params?: Record<string, any>
 ) => string;
 
 /**
- * 创建类型安全的 useI18n hook
+ * 鍒涘缓绫诲瀷瀹夊叏鐨?useI18n hook
  */
 export function createTypeSafeI18n(t: any): TypeSafeT {
   return <K extends keyof I18nKeyPath>(
@@ -120,18 +118,17 @@ export function createTypeSafeI18n(t: any): TypeSafeT {
   ): string => {
     try {
       return t(key, params);
-    } catch (error) {
-      console.warn(`[i18n] Translation failed for key: ${key}`, error);
+    } catch (_error) {
+      console.warn(`[i18n] Translation failed for key: ${key}`, _error);
       return String(key);
     }
   };
 }
 
 /**
- * 验证翻译键是否存在
- */
+ * 楠岃瘉缈昏瘧閿槸鍚﹀瓨鍦? */
 export function validateI18nKey(key: string): key is keyof I18nKeyPath {
-  // 运行时验证逻辑
+  // 杩愯鏃堕獙璇侀€昏緫
   const validNamespaces = ['ui', 'platform', 'procurement', 'inventory'];
   const parts = key.split('.');
 
@@ -142,12 +139,10 @@ export function validateI18nKey(key: string): key is keyof I18nKeyPath {
 }
 
 /**
- * 获取所有可用的翻译键
- */
+ * 鑾峰彇鎵€鏈夊彲鐢ㄧ殑缈昏瘧閿? */
 export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
   return [
-    // UI 组件键
-    'ui.button.save',
+    // UI 缁勪欢閿?    'ui.button.save',
     'ui.button.cancel',
     'ui.button.confirm',
     'ui.button.reset',
@@ -180,8 +175,7 @@ export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
     'ui.download',
     'ui.upload',
 
-    // 平台治理键
-    'platform.common.export_success',
+    // 骞冲彴娌荤悊閿?    'platform.common.export_success',
     'platform.common.export_failed',
     'platform.common.no_columns_to_export',
     'platform.common.no_data_to_export',
@@ -199,7 +193,7 @@ export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
     'platform.modules.title',
     'platform.plugins.title',
 
-    // 业务域键 - 采购
+    // 涓氬姟鍩熼敭 - 閲囪喘
     'procurement.common.create_po_success',
     'procurement.common.create_po_failed',
     'procurement.aux.title',
@@ -220,7 +214,7 @@ export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
     'procurement.packaging.weight',
     'procurement.packaging.cost',
 
-    // 业务域键 - 库存
+    // 涓氬姟鍩熼敭 - 搴撳瓨
     'inventory.common.stock_in_success',
     'inventory.common.stock_out_success',
     'inventory.common.stock_check_success',
@@ -246,42 +240,40 @@ export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
 }
 
 /**
- * 国际化审计工具
- */
+ * 鍥介檯鍖栧璁″伐鍏? */
 export class I18nAuditor {
   private usedKeys = new Set<string>();
   private definedKeys = new Set<string>();
 
   /**
-   * 记录使用的键
+   * 璁板綍浣跨敤鐨勯敭
    */
   recordUsedKey(key: string) {
     this.usedKeys.add(key);
   }
 
   /**
-   * 记录定义的键
+   * 璁板綍瀹氫箟鐨勯敭
    */
   recordDefinedKey(key: string) {
     this.definedKeys.add(key);
   }
 
   /**
-   * 获取未使用的键
-   */
+   * 鑾峰彇鏈娇鐢ㄧ殑閿?   */
   getUnusedKeys(): string[] {
     return Array.from(this.definedKeys).filter(key => !this.usedKeys.has(key));
   }
 
   /**
-   * 获取缺失的键
+   * 鑾峰彇缂哄け鐨勯敭
    */
   getMissingKeys(): string[] {
     return Array.from(this.usedKeys).filter(key => !this.definedKeys.has(key));
   }
 
   /**
-   * 生成审计报告
+   * 鐢熸垚瀹¤鎶ュ憡
    */
   generateReport(): {
     unused: string[];
@@ -302,5 +294,6 @@ export class I18nAuditor {
   }
 }
 
-// 全局审计器实例
-export const globalI18nAuditor = new I18nAuditor();
+// 鍏ㄥ眬瀹¤鍣ㄥ疄渚?export const globalI18nAuditor = new I18nAuditor();
+
+

@@ -26,51 +26,17 @@
           v-show="!item._hidden"
         >
           <el-form-item
-            :label="item.label"
+            :label="item._hideLabel ? '' : item.label"
             :prop="item.prop"
             :required="item.required"
             :rules="item.rules"
           >
             <slot :name="`item-${item.prop}`" :item="item" :form="formData" :mode="mode">
-              <!-- 自定义组件 -->
+              <!-- 使用 renderComponent 渲染组件 -->
               <component
                 v-if="item.component"
-                :is="item.component.name"
-                v-model="formData[item.prop]"
-                v-bind="getComponentProps(item)"
-              >
-                <!-- el-select 选项 -->
-                <template v-if="item.component.name === 'el-select' && item.component.options">
-                  <el-option
-                    v-for="option in item.component.options"
-                    :key="option.value"
-                    :label="option.label"
-                    :value="option.value"
-                  />
-                </template>
-
-                <!-- el-radio-group 选项 -->
-                <template v-else-if="item.component.name === 'el-radio-group' && item.component.options">
-                  <el-radio
-                    v-for="option in item.component.options"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </el-radio>
-                </template>
-
-                <!-- el-checkbox-group 选项 -->
-                <template v-else-if="item.component.name === 'el-checkbox-group' && item.component.options">
-                  <el-checkbox
-                    v-for="option in item.component.options"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </el-checkbox>
-                </template>
-              </component>
+                :is="renderComponent(item, formData)"
+              />
 
               <!-- 默认输入框 -->
               <el-input
@@ -135,6 +101,7 @@ const {
   submitText,
   title,
   getComponentProps,
+  renderComponent,
 } = formDataContext;
 
 // 插件系统
