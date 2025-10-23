@@ -7,6 +7,9 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="License" />
 </div>
 
+
+---
+
 一个基于微前端架构的企业级供应链管理系统，采用 qiankun 微前端框架构建。
 
 ## 📋 项目概述
