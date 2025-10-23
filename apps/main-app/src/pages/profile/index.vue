@@ -70,14 +70,13 @@ const { t } = useI18n();
 
 <style lang="scss" scoped>
 .profile-page {
-  height: calc(100% + 39px); // 增加面包屑高度（39px）
+  height: 100%; // 增加面包屑高度（39px）
   width: 100%;
   padding: 10px;
   padding-top: 49px; // 增加顶部 padding，确保卡片上边框可见
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  margin-top: -39px; // 向上偏移面包屑高度，确保内容区域占满
 }
 
 :deep(.btc-card) {
