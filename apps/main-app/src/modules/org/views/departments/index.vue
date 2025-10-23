@@ -57,7 +57,7 @@ const loadDepartmentOptions = async () => {
     }
 
     const processedData = dataArray
-      .filter((dept: any) => dept.id != null && dept.name) // 保留所有有效部门
+      .filter((dept: any) => dept.id != null && dept.name && dept.parentId === '0') // 只保留顶级部门
       .map((dept: any) => ({
         label: dept.name,
         value: dept.id
