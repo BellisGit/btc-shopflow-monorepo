@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue';
+import { inject, onMounted, onUnmounted } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcDialog } from '../../index';
 import type { UpsertProps } from './types';
@@ -117,6 +117,35 @@ const { submitting, handleSubmit, handleCancel, handleClosed } = useFormSubmit(
   formDataContext,
   pluginContext
 );
+
+// 键盘事件处理
+const handleKeydown = (event: KeyboardEvent) => {
+  // 只有在弹窗打开且不是禁用状态时才处理 Enter 键
+  if (crud.upsertVisible.value && !isDisabled.value && event.key === 'Enter') {
+    // 防止在文本输入框中触发（如 textarea）
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    // 防止在富文本编辑器中触发
+    if (target.contentEditable === 'true') {
+      return;
+    }
+    
+    event.preventDefault();
+    handleSubmit();
+  }
+};
+
+// 监听键盘事件
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
+});
 
 // 暴露方法和属性
 defineExpose({
