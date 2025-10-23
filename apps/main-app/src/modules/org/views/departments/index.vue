@@ -57,7 +57,7 @@ const loadDepartmentOptions = async () => {
     }
 
     const processedData = dataArray
-      .filter((dept: any) => dept.id != null && dept.name && dept.parentId === '0') // 只保留顶级部门
+      .filter((dept: any) => dept.id != null && dept.name) // 保留所有有效部门
       .map((dept: any) => ({
         label: dept.name,
         value: dept.id
@@ -91,7 +91,12 @@ const columns = computed<TableColumn[]>(() => [
     label: '上级部门',
     width: 120,
     formatter: (row: any) => {
-      if (!row.parentId) return '-';
+      if (!row.parentId || row.parentId === '0') return '-';
+      // 如果 parentId 是部门名称，直接返回
+      if (typeof row.parentId === 'string' && isNaN(Number(row.parentId)) && !row.parentId.match(/^[A-Z0-9-]+$/)) {
+        return row.parentId;
+      }
+      // 如果 parentId 是 ID，查找对应的部门名称
       const parentDept = departmentOptions.value.find(dept => dept.value === row.parentId);
       return parentDept ? parentDept.label : row.parentId;
     }
