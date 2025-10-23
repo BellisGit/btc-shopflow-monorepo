@@ -55,7 +55,7 @@ export default defineComponent({
 
   setup(props, { emit, expose, slots }) {
     // 对话框状态管理
-    const dialogContext = useDialog(props as DialogProps, emit);
+    const dialogContext = useDialog(props as unknown as DialogProps, emit);
 
     const {
       Dialog,
@@ -67,7 +67,7 @@ export default defineComponent({
     } = dialogContext;
 
     // 渲染逻辑
-    const { render } = useDialogRender(props as DialogProps, dialogContext, slots);
+    const { render } = useDialogRender(props as unknown as DialogProps, dialogContext, slots);
 
     // 暴露方法
     expose({

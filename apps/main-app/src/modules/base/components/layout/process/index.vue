@@ -116,6 +116,9 @@ function setItemRef(el: any, index: number) {
 function getTabLabel(item: ProcessItem) {
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
+    // 个人中心
+    '/profile': 'common.profile',
+
     // 测试功能
     '/test/components': 'menu.test_features.components',
 

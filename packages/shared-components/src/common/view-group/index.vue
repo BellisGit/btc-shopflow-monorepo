@@ -308,10 +308,8 @@ $bg: var(--el-bg-color);
     }
 
     .content {
-      flex: 1;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
+      height: calc(100% - 40px);
+      overflow: hidden;
     }
   }
 

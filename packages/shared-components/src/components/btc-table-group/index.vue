@@ -28,7 +28,7 @@
           <BtcSearchKey :placeholder="searchPlaceholder" />
         </BtcRow>
         <BtcRow>
-          <BtcTable :columns="tableColumns" border />
+          <BtcTable :columns="tableColumns" :auto-height="false" :max-height="tableMaxHeight" border />
         </BtcRow>
         <BtcRow>
           <BtcFlex1 />
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
@@ -94,6 +94,30 @@ const emit = defineEmits<TableGroupEmits>();
 // 组件引用
 const viewGroupRef = ref<any>(null);
 const crudRef = ref<any>(null);
+
+// 表格最大高度
+const tableMaxHeight = ref<number>(600); // 默认600px
+
+// 计算表格最大高度
+const calcTableMaxHeight = () => {
+  nextTick(() => {
+    const viewGroupContent = document.querySelector('.btc-view-group .content');
+    if (viewGroupContent) {
+      const contentHeight = viewGroupContent.clientHeight;
+      // 预留空间给搜索栏(50px) + 分页(50px) + 间距(20px) = 120px
+      tableMaxHeight.value = Math.max(400, contentHeight - 120);
+    }
+  });
+};
+
+onMounted(() => {
+  calcTableMaxHeight();
+  window.addEventListener('resize', calcTableMaxHeight);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', calcTableMaxHeight);
+});
 
 // 左侧列表数据（用于表单中的级联选择）
 const leftListData = ref<any[]>([]);

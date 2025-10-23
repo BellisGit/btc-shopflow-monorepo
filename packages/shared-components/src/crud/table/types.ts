@@ -70,6 +70,7 @@ export interface TableProps {
   // 高度控制（对齐 cool-admin）
   autoHeight?: boolean; // 是否自动计算高度
   height?: string | number; // 固定高度
+  maxHeight?: string | number; // 最大高度
 
   // 其他配置
   rowKey?: string; // 行唯一键，默认 'id'

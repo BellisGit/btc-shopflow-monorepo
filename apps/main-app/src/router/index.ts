@@ -19,6 +19,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../pages/home/index.vue'),
         meta: { isHome: true, titleKey: 'menu.home' },
       },
+      // 个人中心
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('../pages/profile/index.vue'),
+        meta: { titleKey: 'common.profile' },
+      },
       // 测试功能
       {
         path: 'test/components',

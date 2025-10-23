@@ -14,7 +14,7 @@ const docsRoot = path.resolve(__dirname, '../../');
 
 interface SidebarItem {
   text: string;
-  link: string;
+  link?: string;
   order?: number;
   collapsed?: boolean;
   items?: SidebarItem[];

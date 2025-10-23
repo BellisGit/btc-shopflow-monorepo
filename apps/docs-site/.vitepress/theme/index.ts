@@ -413,7 +413,7 @@ export default {
         }, true); // 使用 capture 阶段
 
         // 监听页面滚动，自动更新定位符位置（更精细的监听）
-        let scrollTimeout: number | null = null;
+        let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
 
         function handleScroll() {
           if (scrollTimeout) {

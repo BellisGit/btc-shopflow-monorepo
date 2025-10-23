@@ -41,7 +41,7 @@ const filesToFix = [
 ];
 
 // Emoji 替换规则（基于上下文）
-const replacements: Array<[RegExp, string]> = [
+const replacements: Array<[RegExp, string | ((match: string) => string)]> = [
   // 测试和开发
   [/�� 测试/g, '🧪 测试'],
   [/�� 问题/g, '❓ 问题'],
@@ -140,7 +140,11 @@ async function fixFile(filePath: string): Promise<number> {
 
     for (const [pattern, replacement] of replacements) {
       const before = content;
-      content = content.replace(pattern, replacement);
+      if (typeof replacement === 'function') {
+        content = content.replace(pattern, replacement);
+      } else {
+        content = content.replace(pattern, replacement);
+      }
       if (content !== before) {
         fixCount++;
       }

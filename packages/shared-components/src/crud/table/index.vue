@@ -4,8 +4,7 @@
     :key="rebuildKey"
     :data="crud.tableData.value"
     :loading="crud.loading.value"
-    :max-height="autoHeight ? maxHeight : undefined"
-    :height="autoHeight ? height : undefined"
+    :max-height="autoHeight ? autoMaxHeight : (maxHeight || undefined)"
     :row-key="rowKey || 'username'"
     :empty-text="translatedEmptyText"
     :default-sort="defaultSort"
@@ -99,7 +98,7 @@ const props = withDefaults(defineProps<TableProps>(), {
 const emit = defineEmits(['selection-change', 'sort-change']);
 
 // 解构 props
-const { autoHeight, height, rowKey, emptyText } = toRefs(props);
+const { autoHeight, height, maxHeight, rowKey, emptyText } = toRefs(props);
 
 // 国际化
 const { t } = useI18n();
@@ -126,7 +125,7 @@ const { computedColumns } = useTableColumns(props);
 const { getOpButtons, getButtonType, getButtonText, handleOpClick, showColumn, hideColumn, setColumns, reBuild, rebuildKey } = useTableOp(crud, props);
 
 // 高度管理
-const { maxHeight, calcMaxHeight } = useTableHeight(props, tableRef);
+const { maxHeight: autoMaxHeight, calcMaxHeight } = useTableHeight(props, tableRef, crud);
 
 // 排序管理
 const { defaultSort, onSortChange, clearSort } = useTableSort(crud, props, emit);

@@ -88,6 +88,7 @@ defineOptions({
 });
 
 import { ref, onMounted, markRaw } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
@@ -111,6 +112,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const router = useRouter();
 
 // 插件管理器
 const pluginManager = usePluginManager();
@@ -152,7 +154,7 @@ const message = useMessage();
 const handleCommand = (command: string) => {
   switch (command) {
     case 'profile':
-      message.info(t('common.profile'));
+      router.push('/profile');
       break;
     case 'settings':
       message.info(t('common.settings'));

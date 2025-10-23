@@ -40,7 +40,7 @@ function handleLoad(data: any[]) {
 // 加载角色数据
 async function loadRoleOptions() {
   try {
-    const response = await services.sysrole.list({});
+    const response = await services.sysrole.list();
     roleOptions.value = response.list || [];
   } catch (error) {
     console.error('加载角色数据失败:', error);

@@ -4,6 +4,7 @@
 // import { nextTick } from 'vue'; // 不再需要
 import { ElMessageBox } from 'element-plus';
 // import { ElMessage } from 'element-plus'; // 不再直接使用，让响应拦截器统一处理
+import { BtcMessage } from '../../../components/btc-message';
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
 
 export function useViewGroupActions(
@@ -56,7 +57,7 @@ export function useViewGroupActions(
             .delete(params)
             .then(() => {
               // 删除成功，由 BtcMasterList 自动刷新
-              console.log('Delete successful');
+              BtcMessage.success('删除成功');
             })
             .catch((err: Error) => {
               // 不在这里显示错误消息，让响应拦截器统一处理

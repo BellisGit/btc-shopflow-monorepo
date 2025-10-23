@@ -15,7 +15,7 @@
         <BtcFlex1 />
         <BtcPagination />
       </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
     </BtcCrud>
   </div>
 </template>
@@ -26,7 +26,7 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { CommonColumns } from '@btc/shared-components';
+import { CommonColumns, BtcCascader } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -36,34 +36,34 @@ const crudRef = ref();
 // 部门服务 - 使用EPS服务
 const departmentService = service.sysdepartment;
 
+// 调试：检查服务方法
+
 // 部门选项数据
 const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
 
 // 加载部门选项数据
 const loadDepartmentOptions = async () => {
   try {
-    const res = await departmentService.list({
-      order: 'createdAt',
-      sort: 'asc',
-      page: 1,
-      size: 100,
-      keyword: ''
-    });
+    const res = await departmentService.list();
 
-    // 处理响应数据结构：res.data.list 或直接是数组
+    // 处理响应数据结构：res.list 或 res.data.list 或直接是数组
     let dataArray = [];
-    if (res && res.data && res.data.list) {
+    if (res && res.list) {
+      dataArray = res.list;
+    } else if (res && res.data && res.data.list) {
       dataArray = res.data.list;
     } else if (Array.isArray(res)) {
       dataArray = res;
     }
 
-    departmentOptions.value = dataArray
-      .filter((dept: any) => dept.id != null && dept.name) // 过滤掉无效数据
+    const processedData = dataArray
+      .filter((dept: any) => dept.id != null && dept.name && dept.parentId === '0') // 只保留顶级部门
       .map((dept: any) => ({
         label: dept.name,
         value: dept.id
       }));
+
+    departmentOptions.value = processedData;
   } catch (_error) {
     console.error('加载部门选项失败:', _error);
     // 出错时设置为空数组
@@ -109,7 +109,11 @@ const formItems = computed<FormItem[]>(() => [
     span: 12,
     component: {
       name: 'el-select',
-      props: { clearable: true },
+      props: {
+        placeholder: '请选择上级部门',
+        clearable: true,
+        filterable: true
+      },
       options: departmentOptions.value
     }
   },

@@ -12,7 +12,8 @@
     "ingest": "tsx scripts/ingest.ts",
     "add-frontmatter": "tsx scripts/add-frontmatter.ts",
     "validate-frontmatter": "tsx scripts/validate-frontmatter.ts",
-    "new-doc": "tsx scripts/new-doc.ts"
+    "new-doc": "tsx scripts/new-doc.ts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@btc/shared-components": "workspace:*",

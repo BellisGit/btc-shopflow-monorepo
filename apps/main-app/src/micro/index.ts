@@ -33,10 +33,12 @@ function filterQiankunLogs() {
   const createFilter = (originalMethod: (...args: any[]) => void) => {
     return (...args: any[]) => {
       const message = args[0];
+
       // 过滤所有包含 [qiankun:sandbox] 的日志
       if (typeof message === 'string' && message.includes('[qiankun:sandbox]')) {
         return;
       }
+
       // 过滤其他 qiankun 相关的日志
       if (typeof message === 'string' && (
         message.includes('qiankun modified global properties') ||
@@ -45,6 +47,8 @@ function filterQiankunLogs() {
       )) {
         return;
       }
+
+
       originalMethod.apply(console, args);
     };
   };

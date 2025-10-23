@@ -2,7 +2,7 @@
 import { formHook } from '@btc/shared-utils';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage } from '../../../components/btc-message';
 
 /**
  * 表单提交逻辑
@@ -79,8 +79,10 @@ export function useFormSubmit(
               let result;
               if (mode.value === 'update') {
                 result = await service.update(data);
+                BtcMessage.success('更新成功');
               } else {
                 result = await service.add(data);
+                BtcMessage.success('新增成功');
               }
 
               // 提交成功后自动刷新
