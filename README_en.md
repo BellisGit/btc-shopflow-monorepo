@@ -8,12 +8,10 @@
 </div>
 
 <div align="center">
-  <a href="./README.md">中文</a> | <a href="#english">English</a>
+  <a href="./README.md">中文</a> | <a href="#project-overview">English</a>
 </div>
 
 ---
-
-## English
 
 An enterprise-grade supply chain management system based on micro-frontend architecture, built with qiankun micro-frontend framework.
 
@@ -198,7 +196,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Project Maintainer: BTC Team
 - Email: support@btc-shopflow.com
-- Project Repository: https://github.com/btc-team/btc-shopflow-monorepo
+- Project Repository: https://github.com/BellisGit/btc-shopflow-monorepo
 
 ---
 

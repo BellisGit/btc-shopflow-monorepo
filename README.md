@@ -8,12 +8,10 @@
 </div>
 
 <div align="center">
-  <a href="#中文">中文</a> | <a href="./README_en.md">English</a>
+  <a href="#项目概述">中文</a> | <a href="./README_en.md">English</a>
 </div>
 
 ---
-
-## 中文
 
 一个基于微前端架构的企业级供应链管理系统，采用 qiankun 微前端框架构建。
 
@@ -198,7 +196,7 @@ chore: 构建过程或辅助工具的变动
 
 - 项目维护者: BTC Team
 - 邮箱: support@btc-shopflow.com
-- 项目地址: https://github.com/btc-team/btc-shopflow-monorepo
+- 项目地址: https://github.com/BellisGit/btc-shopflow-monorepo
 
 ---
 
