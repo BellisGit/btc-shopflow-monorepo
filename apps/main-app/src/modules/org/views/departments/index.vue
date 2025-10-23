@@ -132,6 +132,21 @@ const formItems = computed<FormItem[]>(() => [
         filterable: true
       },
       options: departmentOptions.value
+    },
+    // 使用 hook 进行数据转换
+    hook: {
+      bind: (value: any) => {
+        // 数据绑定到表单时：将部门名称转换为部门ID
+        if (typeof value === 'string' && isNaN(Number(value)) && !value.match(/^[A-Z0-9-]+$/)) {
+          const dept = departmentOptions.value.find(d => d.label === value);
+          return dept ? dept.value : value;
+        }
+        return value;
+      },
+      submit: (value: any) => {
+        // 提交时保持部门ID不变
+        return value;
+      }
     }
   },
   {
