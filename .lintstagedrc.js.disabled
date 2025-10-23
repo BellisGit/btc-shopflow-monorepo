@@ -1,5 +1,7 @@
 module.exports = {
-  // 配置 lint-staged 行为
+  // 配置 lint-staged 行为 - DISABLED
+  // 此文件已被禁用，pre-commit 钩子不会运行
+  // 如需重新启用，请将此文件重命名为 .lintstagedrc.js
   '*.{ts,tsx,vue}': (filenames) => {
     const files = filenames.join(' ');
     return [
