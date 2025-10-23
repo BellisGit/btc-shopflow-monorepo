@@ -48,6 +48,13 @@ function filterQiankunLogs() {
         return;
       }
 
+      // 过滤 useCrud 调试日志
+      if (typeof message === 'string' && (
+        message.includes('useCrud loadData') ||
+        message.includes('useCrud tableData updated')
+      )) {
+        return; // 直接屏蔽，不打印
+      }
 
       originalMethod.apply(console, args);
     };
