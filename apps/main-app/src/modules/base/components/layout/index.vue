@@ -115,6 +115,11 @@ const showBreadcrumb = computed(() => {
     return false;
   }
 
+  // 个人中心页面不显示面包屑（孤立页面）
+  if (path === '/profile') {
+    return false;
+  }
+
   // 其他页面显示
   return true;
 });
