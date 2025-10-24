@@ -101,6 +101,7 @@ import { ref, onMounted, computed } from 'vue';
 import { ElMessageBox } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcUpsert } from '@btc/shared-components/crud/upsert';
 import { BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();

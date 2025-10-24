@@ -27,6 +27,7 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcUpsert } from '@btc/shared-components/crud/upsert';
 import { CommonColumns, BtcCascader } from '@btc/shared-components';
 import { service } from '@services/eps';
 

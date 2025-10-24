@@ -27,6 +27,7 @@
 import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcUpsert } from '@btc/shared-components/crud/upsert';
 import { createMockCrudService } from '@utils/http';
 
 const { t } = useI18n();

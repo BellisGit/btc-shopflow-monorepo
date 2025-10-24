@@ -131,6 +131,7 @@ import { ElMessageBox, ElMessage } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 
+import { BtcUpsert } from '@btc/shared-components/crud/upsert';
 const { t } = useI18n();
 const pluginManager = usePluginManager();
 

@@ -70,12 +70,11 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { ElMessageBox } from 'element-plus';
 import type { ProcessItem } from '@/store/process';
-import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
 
 interface Props {
   isFullscreen?: boolean;
@@ -93,17 +92,25 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-// 使用静态导入的 store
-const processStore = useProcessStore();
+// 使用动态导入的 store
+const processStore = ref();
+let getCurrentAppFromPath: any = null;
+
+// 动态导入 store
+onMounted(async () => {
+  const { useProcessStore, getCurrentAppFromPath: getCurrentApp } = await import('@/store/process');
+  processStore.value = useProcessStore();
+  getCurrentAppFromPath = getCurrentApp;
+});
 
 const scrollerRef = ref();
 const itemRefs = ref<Record<number, HTMLElement>>({});
 
 // 根据当前路由过滤标签（只显示当前应用的标签）
 const filteredTabs = computed(() => {
-  if (!processStore) return [];
-  const currentApp = getCurrentAppFromPath(route.path);
-  return processStore.list.filter((tab: ProcessItem) => tab.app === currentApp);
+  if (!processStore.value || !getCurrentAppFromPath) return [];
+  const currentApp = getCurrentAppFromPath ? getCurrentAppFromPath(route.path) : null;
+  return processStore.value.list.filter((tab: ProcessItem) => tab.app === currentApp);
 });
 
 function setItemRef(el: any, index: number) {
@@ -171,7 +178,7 @@ function getTabLabel(item: ProcessItem) {
 
 // 返回上一页（在当前应用内）
 function toBack() {
-  const currentApp = getCurrentAppFromPath(route.path);
+  const currentApp = getCurrentAppFromPath ? getCurrentAppFromPath(route.path) : null;
   const appHomes: Record<string, string> = {
     main: '/crud',
     logistics: '/logistics',
@@ -199,7 +206,7 @@ function toRefresh() {
 
 // 回到当前应用首页
 function toHome() {
-  const currentApp = getCurrentAppFromPath(route.path);
+  const currentApp = getCurrentAppFromPath ? getCurrentAppFromPath(route.path) : null;
   const appHomes: Record<string, string> = {
     main: '/',
     logistics: '/logistics',
@@ -253,7 +260,7 @@ function onDel(index: number) {
 
 // 标签页操作菜单命令
 function handleTabCommand(command: string) {
-  const currentApp = getCurrentAppFromPath(route.path);
+  const currentApp = getCurrentAppFromPath ? getCurrentAppFromPath(route.path) : null;
   const currentPath = route.path;
 
   switch (command) {
@@ -300,7 +307,7 @@ function openContextMenu(e: MouseEvent, item: ProcessItem, _index: number) {
         const last = filteredTabs.value[filteredTabs.value.length - 1];
         router.push(last ? last.fullPath : '/');
       } else {
-        const currentApp = getCurrentAppFromPath(route.path);
+        const currentApp = getCurrentAppFromPath ? getCurrentAppFromPath(route.path) : null;
         processStore.set(
           processStore.list.filter(
             (e) => e.fullPath === item.fullPath || e.app !== currentApp

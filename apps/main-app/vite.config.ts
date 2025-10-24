@@ -124,6 +124,10 @@ export default defineConfig({
             if (id.includes('/menu') || id.includes('/breadcrumb') || id.includes('/tabs') || id.includes('/steps') || id.includes('/affix')) {
               return 'element-navigation';
             }
+            // 表单组件
+            if (id.includes('/form') || id.includes('/date-picker') || id.includes('/time-picker') || id.includes('/upload') || id.includes('/rate') || id.includes('/slider')) {
+              return 'element-form';
+            }
             // 其他 Element Plus 组件
             return 'element-others';
           }
@@ -138,13 +142,48 @@ export default defineConfig({
             return 'utils';
           }
 
+          // 大型第三方库单独分块
+          if (id.includes('node_modules/axios')) {
+            return 'axios';
+          }
+          if (id.includes('node_modules/lodash')) {
+            return 'lodash';
+          }
+          if (id.includes('node_modules/@vueuse')) {
+            return 'vueuse';
+          }
+          if (id.includes('node_modules/dayjs')) {
+            return 'dayjs';
+          }
+          if (id.includes('node_modules/moment')) {
+            return 'moment';
+          }
+          if (id.includes('node_modules/echarts')) {
+            return 'echarts';
+          }
+          if (id.includes('node_modules/xlsx')) {
+            return 'xlsx';
+          }
+          if (id.includes('node_modules/jspdf')) {
+            return 'jspdf';
+          }
+
           // BTC 共享包
           if (id.includes('@btc/shared-')) {
             return 'btc-shared';
           }
 
-          // 其他第三方库
+          // 其他第三方库按大小分组
           if (id.includes('node_modules')) {
+            // 大型库单独分块
+            if (id.includes('node_modules/react') || id.includes('node_modules/angular') || id.includes('node_modules/jquery')) {
+              return 'large-libs';
+            }
+            // 中型库
+            if (id.includes('node_modules/bootstrap') || id.includes('node_modules/tailwindcss') || id.includes('node_modules/antd')) {
+              return 'medium-libs';
+            }
+            // 小型库
             return 'vendor';
           }
         },

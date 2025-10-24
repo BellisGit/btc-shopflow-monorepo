@@ -26,6 +26,9 @@ import BtcTableGroup from './components/btc-table-group/index.vue';
 import { BtcMessage } from './components/btc-message';
 import { BtcNotification } from './components/btc-notification';
 
+// 右键菜单组件
+import BtcContextMenu, { ContextMenu } from './components/btc-context-menu';
+
 // 导入样式
 import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
@@ -35,8 +38,8 @@ import './components/btc-notification/styles.scss';
 // CRUD 组件（上下文系统）
 import BtcCrud from './crud/context/index.vue';
 import BtcTable from './crud/table/index.vue';
-// BtcUpsert 组件单独导出，避免循环依赖
-import BtcUpsert from './crud/upsert/index.vue';
+// BtcUpsert 组件不在这里导出，避免循环依赖
+// import BtcUpsert from './crud/upsert/index.vue';
 import BtcPagination from './crud/pagination/index.vue';
 import BtcAddBtn from './crud/add-btn/index.vue';
 import BtcRefreshBtn from './crud/refresh-btn/index.vue';
@@ -73,10 +76,13 @@ export {
   BtcMessage,
   BtcNotification,
 
+  // 右键菜单组件
+  BtcContextMenu,
+
   // CRUD 系统
   BtcCrud,
   BtcTable,
-  BtcUpsert,
+  // BtcUpsert, // 不导出，避免循环依赖
   BtcPagination,
   BtcAddBtn,
   BtcRefreshBtn,
@@ -97,6 +103,9 @@ export const { BtcCodeJson } = CodePlugin;
 
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';
+
+// 导出右键菜单工具类
+export { ContextMenu } from './components/btc-context-menu';
 
 // 导出类型
 export type { TableColumn, OpButton } from './crud/table/types';

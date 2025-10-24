@@ -80,6 +80,14 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     icon: 'Document',
     tags: ['JSON', 'BtcCodeJson', '弹窗', '代码显示'],
     path: '/test/btc-code-json'
+  },
+  'context-menu': {
+    name: 'context-menu',
+    title: '右键菜单组件测试',
+    description: '测试 BtcContextMenu 右键菜单组件，支持多层级菜单、图标、禁用状态等功能',
+    icon: 'Menu',
+    tags: ['右键菜单', 'BtcContextMenu', '多层级', '图标'],
+    path: '/test/context-menu'
   }
 };
 

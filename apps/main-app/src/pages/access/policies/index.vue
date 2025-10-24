@@ -33,6 +33,7 @@ import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import { createMockCrudService } from '@utils/http';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcUpsert } from '@btc/shared-components/crud/upsert';
 // import { service } from '../../../../services/eps';
 
 const { t } = useI18n();
