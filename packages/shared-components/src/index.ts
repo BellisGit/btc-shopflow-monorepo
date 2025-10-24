@@ -12,7 +12,9 @@ import BtcForm from './common/form/index.vue';
 import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
-import BtcCodeJson from './common/code-json/index.vue';
+// 插件系统
+import * as ExcelPlugin from './plugins/excel';
+import * as CodePlugin from './plugins/code';
 import BtcMasterList from './components/btc-master-list/index.vue';
 import BtcCard from './components/btc-card/index.vue';
 import BtcTabs from './components/btc-tabs/index.vue';
@@ -42,8 +44,7 @@ import BtcMultiDeleteBtn from './crud/multi-delete-btn/index.vue';
 import BtcRow from './crud/row/index.vue';
 import BtcFlex1 from './crud/flex1/index.vue';
 import BtcSearchKey from './crud/search-key/index.vue';
-import BtcExportBtn from './crud/btc-export-btn/index.vue';
-import BtcImportBtn from './crud/btc-import-btn/index.vue';
+// 导入导出组件已移动到 excel 插件
 import BtcMenuExp from './crud/menu-exp/index.vue';
 
 // 导出语言包供应用使用
@@ -60,7 +61,7 @@ export {
   BtcFormCard,
   BtcFormTabs,
   BtcSelectButton,
-  BtcCodeJson,
+  // 代码展示组件已移动到 code 插件
   BtcMasterList,
   BtcCard,
   BtcTabs,
@@ -83,10 +84,16 @@ export {
   BtcRow,
   BtcFlex1,
   BtcSearchKey,
-  BtcExportBtn,
-  BtcImportBtn,
+  // 导入导出组件已移动到 excel 插件
   BtcMenuExp,
 };
+
+// 导出插件
+export { ExcelPlugin, CodePlugin };
+
+// 为了向后兼容，直接导出插件中的组件
+export const { BtcExportBtn, BtcImportBtn } = ExcelPlugin;
+export const { BtcCodeJson } = CodePlugin;
 
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';

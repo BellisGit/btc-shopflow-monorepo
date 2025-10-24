@@ -13,6 +13,9 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
+  min-height: 40px; /* 确保有足够的高度来垂直居中 */
+  gap: 10px; /* 默认间距，类似 cool-admin 的 cl-row */
 }
 </style>
 

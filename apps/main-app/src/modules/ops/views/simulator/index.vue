@@ -1,89 +1,76 @@
 <template>
   <div class="simulator-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>{{ t('ops.simulator.title') }}</span>
-          <el-button type="primary" @click="handleSimulate" :loading="simulating">
-            <el-icon><VideoPlay /></el-icon>
-            {{ t('ops.simulator.start') }}
-          </el-button>
-        </div>
-      </template>
+    <BtcRow>
+      <BtcFlex1 />
+      <el-form
+        ref="formRef"
+        :model="simulatorForm"
+        :rules="formRules"
+        inline
+        class="simulator-form"
+      >
+        <el-form-item prop="user">
+          <el-select v-model="simulatorForm.user" :placeholder="t('ops.simulator.select_user')" style="width: 120px" size="default">
+            <el-option :label="t('ops.simulator.admin')" value="admin" />
+            <el-option :label="t('ops.simulator.manager')" value="manager" />
+            <el-option :label="t('ops.simulator.employee')" value="employee" />
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="resource">
+          <el-select v-model="simulatorForm.resource" :placeholder="t('ops.simulator.select_resource')" style="width: 120px" size="default">
+            <el-option :label="t('ops.simulator.user_resource')" value="user" />
+            <el-option :label="t('ops.simulator.role_resource')" value="role" />
+            <el-option :label="t('ops.simulator.system_resource')" value="system" />
+            <el-option :label="t('ops.simulator.order_resource')" value="order" />
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="action">
+          <el-select v-model="simulatorForm.action" :placeholder="t('ops.simulator.select_action')" style="width: 120px" size="default">
+            <el-option :label="t('ops.simulator.view')" value="view" />
+            <el-option :label="t('ops.simulator.edit')" value="edit" />
+            <el-option :label="t('ops.simulator.delete')" value="delete" />
+            <el-option :label="t('ops.simulator.create')" value="create" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <el-button type="primary" @click="handleSimulate" :loading="simulating" size="default">
+        <el-icon><VideoPlay /></el-icon>
+        {{ t('ops.simulator.start') }}
+      </el-button>
+    </BtcRow>
 
-      <div class="simulator-container">
-        <!-- 模拟器表单 -->
-        <div class="simulator-form">
-          <el-form
-            ref="formRef"
-            :model="simulatorForm"
-            :rules="formRules"
-            label-width="100px"
-          >
-            <el-row :gutter="20">
-              <el-col :span="8">
-                <el-form-item :label="t('ops.simulator.user')" prop="user">
-                  <el-select v-model="simulatorForm.user" :placeholder="t('ops.simulator.select_user')">
-                    <el-option :label="t('ops.simulator.admin')" value="admin" />
-                    <el-option :label="t('ops.simulator.manager')" value="manager" />
-                    <el-option :label="t('ops.simulator.employee')" value="employee" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item :label="t('ops.simulator.resource')" prop="resource">
-                  <el-select v-model="simulatorForm.resource" :placeholder="t('ops.simulator.select_resource')">
-                    <el-option :label="t('ops.simulator.user_resource')" value="user" />
-                    <el-option :label="t('ops.simulator.role_resource')" value="role" />
-                    <el-option :label="t('ops.simulator.system_resource')" value="system" />
-                    <el-option :label="t('ops.simulator.order_resource')" value="order" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item :label="t('ops.simulator.action')" prop="action">
-                  <el-select v-model="simulatorForm.action" :placeholder="t('ops.simulator.select_action')">
-                    <el-option :label="t('ops.simulator.view')" value="view" />
-                    <el-option :label="t('ops.simulator.edit')" value="edit" />
-                    <el-option :label="t('ops.simulator.delete')" value="delete" />
-                    <el-option :label="t('ops.simulator.create')" value="create" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </div>
+    <div class="simulator-container">
 
-        <!-- ???? -->
+        <!-- 模拟结果 -->
         <div class="simulator-result" v-if="simulationResult">
           <el-alert
-            :title="simulationResult.decision === 'allow' ? '????' : '????'"
+            :title="simulationResult.decision === 'allow' ? '允许访问' : '拒绝访问'"
             :type="simulationResult.decision === 'allow' ? 'success' : 'error'"
             :description="simulationResult.reason"
             show-icon
             :closable="false"
           />
 
-          <!-- ????? -->
+          <!-- 匹配策略 -->
           <div class="matched-policies" v-if="simulationResult.matchedPolicies.length > 0">
-            <h4>??????</h4>
+            <h4>匹配策略</h4>
             <el-table :data="simulationResult.matchedPolicies" border>
-              <el-table-column prop="policyName" label="????" />
-              <el-table-column prop="policyType" label="????" />
-              <el-table-column prop="effect" label="??">
+              <el-table-column prop="policyName" label="策略名称" />
+              <el-table-column prop="policyType" label="策略类型" />
+              <el-table-column prop="effect" label="效果">
                 <template #default="{ row }">
                   <el-tag :type="row.effect === 'allow' ? 'success' : 'danger'">
-                    {{ row.effect === 'allow' ? '??' : '??' }}
+                    {{ row.effect === 'allow' ? '允许' : '拒绝' }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="priority" label="???" />
+              <el-table-column prop="priority" label="优先级" />
             </el-table>
           </div>
 
-          <!-- ???? -->
+          <!-- 执行步骤 -->
           <div class="execution-steps" v-if="simulationResult.steps.length > 0">
-            <h4>?????</h4>
+            <h4>执行步骤</h4>
             <el-timeline>
               <el-timeline-item
                 v-for="(step, index) in simulationResult.steps"
@@ -96,25 +83,23 @@
             </el-timeline>
           </div>
         </div>
-      </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { useMessage } from '@/utils/use-message';
 import { VideoPlay } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
+import { BtcRow, BtcFlex1, BtcMessage, ExcelPlugin } from '@btc/shared-components';
 
 defineOptions({
   name: 'OpsSimulator'
 });
 
 const { t } = useI18n();
-const message = useMessage();
 
-// ????
+// 表单引用
 const formRef = ref();
 const simulatorForm = reactive({
   user: '',
@@ -123,18 +108,18 @@ const simulatorForm = reactive({
 });
 
 const formRules = {
-  user: [{ required: true, message: '?????', trigger: 'change' }],
-  resource: [{ required: true, message: '?????', trigger: 'change' }],
-  action: [{ required: true, message: '?????', trigger: 'change' }]
+  user: [{ required: true, message: '请选择用户', trigger: 'change' }],
+  resource: [{ required: true, message: '请选择资源', trigger: 'change' }],
+  action: [{ required: true, message: '请选择操作', trigger: 'change' }]
 };
 
-// ????
+// 模拟结果
 const simulationResult = ref<any>(null);
 const simulating = ref(false);
 
-// ??????
+// 模拟权限检查
 const simulatePermission = (user: string, resource: string, action: string) => {
-  // ????????
+  // 权限配置
   const permissions: Record<string, Record<string, string[]>> = {
     admin: {
       user: ['view', 'edit', 'delete', 'create'],
@@ -163,31 +148,31 @@ const simulatePermission = (user: string, resource: string, action: string) => {
   return {
     decision: hasPermission ? 'allow' : 'deny',
     reason: hasPermission
-      ? `????"${action}"??"${resource}"?????`
-      : `????"${action}"??"${resource}"??`,
+      ? `用户"${user}"对"${resource}"资源有"${action}"权限`
+      : `用户"${user}"对"${resource}"资源没有"${action}"权限`,
     matchedPolicies: hasPermission ? [
-      { policyName: '???????', policyType: 'RBAC', effect: 'allow', priority: 100 },
+      { policyName: '管理员策略', policyType: 'RBAC', effect: 'allow', priority: 100 },
     ] : [
-      { policyName: '????????', policyType: 'RBAC', effect: 'deny', priority: 200 },
+      { policyName: '默认拒绝策略', policyType: 'RBAC', effect: 'deny', priority: 200 },
     ],
     steps: [
       {
-        description: `???? ${user} ???`,
+        description: `检查用户 ${user} 权限`,
         timestamp: new Date().toLocaleTimeString(),
         type: 'primary'
       },
       {
-        description: `???? ${resource} ?????`,
+        description: `验证资源 ${resource} 访问权限`,
         timestamp: new Date().toLocaleTimeString(),
         type: 'info'
       },
       {
-        description: `???? ${action} ?????`,
+        description: `执行操作 ${action} 权限检查`,
         timestamp: new Date().toLocaleTimeString(),
         type: hasPermission ? 'success' : 'danger'
       },
       {
-        description: hasPermission ? '??????' : '??????',
+        description: hasPermission ? '权限验证通过' : '权限验证失败',
         timestamp: new Date().toLocaleTimeString(),
         type: hasPermission ? 'success' : 'danger'
       }
@@ -195,7 +180,7 @@ const simulatePermission = (user: string, resource: string, action: string) => {
   };
 };
 
-// ????
+// 处理模拟
 const handleSimulate = async () => {
   if (!formRef.value) return;
 
@@ -203,7 +188,7 @@ const handleSimulate = async () => {
     await formRef.value.validate();
     simulating.value = true;
 
-    // ??????
+    // 模拟延迟
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const result = simulatePermission(
@@ -214,9 +199,9 @@ const handleSimulate = async () => {
 
     simulationResult.value = result;
 
-    message.success('????');
+    BtcMessage.success('模拟完成');
   } catch (_error) {
-    message.error('??????????');
+    BtcMessage.error('表单验证失败，请检查输入');
   } finally {
     simulating.value = false;
   }
@@ -225,21 +210,22 @@ const handleSimulate = async () => {
 
 <style lang="scss" scoped>
 .simulator-page {
+  height: 100%;
+  padding: 20px;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
+.simulator-form {
+  display: inline-flex;
   align-items: center;
+  gap: 10px; /* 表单项之间的间距 */
+
+  .el-form-item {
+    margin-bottom: 0;
+    margin-right: 0; /* 移除默认的右边距，让 gap 生效 */
+  }
 }
 
 .simulator-container {
-  .simulator-form {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: var(--el-fill-color-lighter);
-    border-radius: 6px;
-  }
 
   .simulator-result {
     .matched-policies,
