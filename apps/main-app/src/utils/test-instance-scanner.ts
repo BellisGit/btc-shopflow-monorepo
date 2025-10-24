@@ -72,6 +72,14 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     icon: 'Upload',
     tags: ['导入', 'BtcImportBtn', '文件上传', 'Excel'],
     path: '/test/import-demo'
+  },
+  'btc-code-json': {
+    name: 'btc-code-json',
+    title: 'JSON 代码组件测试',
+    description: '测试 BtcCodeJson 组件，支持弹窗和直接显示两种模式，用于展示 JSON 数据',
+    icon: 'Document',
+    tags: ['JSON', 'BtcCodeJson', '弹窗', '代码显示'],
+    path: '/test/btc-code-json'
   }
 };
 

@@ -374,16 +374,16 @@ export function createMockCrudService(_resource: string) {
 
     // 添加数据
     add: async (_data: any) => {
-      return { success: true };
+      // 不返回任何值，符合 CrudService 的 void 返回类型
     },
 
     // 更新数据
     update: async (_data: any) => {
-      return { success: true };
+      // 不返回任何值，符合 CrudService 的 void 返回类型
     },
 
     // 删除数据
-    delete: async (_data: { ids: (string | number)[] }) => {
+    delete: async (_ids: (string | number)[]) => {
       // 不返回任何值，符合 CrudService 的 void 返回类型
     }
   };

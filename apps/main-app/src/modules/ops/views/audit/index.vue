@@ -1,13 +1,40 @@
 <template>
   <div class="audit-page">
-    <BtcCrud ref="crudRef" :service="auditService">
+    <!-- 操作日志 -->
+    <BtcCrud v-if="logType === 'audit'" ref="auditCrudRef" :service="auditService">
       <BtcRow>
+        <BtcSelectButton
+          v-model="logType"
+          :options="logTypeOptions"
+          @change="handleLogTypeChange"
+        />
         <BtcRefreshBtn />
         <BtcFlex1 />
-        <BtcSearchKey placeholder="搜索审计日志..." />
+        <BtcSearchKey placeholder="搜索操作日志..." />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="auditTableRef" :columns="auditColumns" border />
+      </BtcRow>
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+    </BtcCrud>
+
+    <!-- 请求日志 -->
+    <BtcCrud v-if="logType === 'request'" ref="requestCrudRef" :service="requestService">
+      <BtcRow>
+        <BtcSelectButton
+          v-model="logType"
+          :options="logTypeOptions"
+          @change="handleLogTypeChange"
+        />
+        <BtcRefreshBtn />
+        <BtcFlex1 />
+        <BtcSearchKey placeholder="搜索请求地址、用户昵称、IP..." />
+      </BtcRow>
+      <BtcRow>
+        <BtcTable ref="requestTableRef" :columns="requestColumns" border />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
@@ -44,7 +71,7 @@
 import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
-import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey } from '@btc/shared-components';
+import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey, BtcSelectButton, BtcCodeJson } from '@btc/shared-components';
 import { createMockCrudService } from '@utils/http';
 
 defineOptions({
@@ -53,112 +80,150 @@ defineOptions({
 
 const { t } = useI18n();
 
+// 日志类型选择
+const logType = ref('audit');
+const logTypeOptions = [
+  { label: '操作日志', value: 'audit' },
+  { label: '请求日志', value: 'request' }
+];
 
-// Mock??
-const auditService = createMockCrudService('btc_audit_logs', {
-  list: [
-    {
-      id: 3,
-      operationTime: '2024-01-15 10:40:08',
-      userName: 'manager',
-      operationType: '??',
-      resourceName: '????',
-      ipAddress: '192.168.1.101',
-      result: '??',
-      requestData: JSON.stringify({
-        orderNo: 'ORD20240115001',
-        customerName: '??',
-        amount: 1000
-      }),
-      responseData: JSON.stringify({
-        code: 200,
-        message: '??????',
-        data: {
-          id: 12345
-        }
-      })
-    },
-    {
-      id: 4,
-      operationTime: '2024-01-15 10:45:33',
-      userName: 'employee',
-      operationType: '??',
-      resourceName: '????',
-      ipAddress: '192.168.1.102',
-      result: '??',
-      requestData: JSON.stringify({
-        configId: 1
-      }),
-      responseData: JSON.stringify({
-        code: 403,
-        message: '?????????????'
-      })
-    },
-    {
-      id: 5,
-      operationTime: '2024-01-15 10:50:15',
-      userName: 'admin',
-      operationType: '??',
-      resourceName: '????',
-      ipAddress: '192.168.1.100',
-      result: '??',
-      requestData: JSON.stringify({
-        roleId: 2,
-        roleName: '????',
-        permissions: [1, 2, 3]
-      }),
-      responseData: JSON.stringify({
-        code: 200,
-        message: '??????'
-      })
-    }
-  ]
-});
+// 处理日志类型切换
+const handleLogTypeChange = (value: string) => {
+  logType.value = value;
+};
+
+
+// 审计日志服务
+const auditService = createMockCrudService('btc_audit_logs');
+
+// 请求日志服务
+const requestService = createMockCrudService('btc_request_logs');
 
 // 审计日志列配置
-const columns = computed<TableColumn[]>(() => [
+const auditColumns = computed<TableColumn[]>(() => [
   {
-    label: t('ops.audit.operation_time'),
+    label: '操作时间',
     prop: 'operationTime',
     width: 160
   },
   {
-    label: t('ops.audit.user_name'),
+    label: '用户名',
     prop: 'userName',
     width: 100
   },
   {
-    label: t('ops.audit.operation_type'),
+    label: '操作类型',
     prop: 'operationType',
     width: 100
   },
   {
-    label: t('ops.audit.resource_name'),
+    label: '资源名称',
     prop: 'resourceName',
     minWidth: 120
   },
   {
-    label: t('ops.audit.ip_address'),
+    label: 'IP地址',
     prop: 'ipAddress',
     width: 120
   },
   {
-    label: t('ops.audit.result'),
+    label: '结果',
     prop: 'result',
     width: 80,
     dict: [
-      { label: t('ops.audit.success'), value: t('ops.audit.success') },
-      { label: t('ops.audit.failed'), value: t('ops.audit.failed') }
+      { label: '成功', value: '成功' },
+      { label: '失败', value: '失败' }
+    ]
+  },
+  {
+    label: '操作',
+    prop: 'op',
+    width: 100,
+    fixed: 'right',
+    buttons: [
+      {
+        label: '详情',
+        type: 'primary',
+        onClick: ({ scope }: any) => viewDetails(scope.row)
+      }
+    ]
+  }
+]);
+
+// 请求日志列配置
+const requestColumns = computed<TableColumn[]>(() => [
+  {
+    label: '用户ID',
+    prop: 'userId',
+    width: 80
+  },
+  {
+    label: '用户昵称',
+    prop: 'name',
+    width: 100
+  },
+  {
+    label: '请求地址',
+    prop: 'action',
+    minWidth: 200,
+    showOverflowTooltip: true
+  },
+  {
+    label: '请求参数',
+    prop: 'params',
+    minWidth: 200,
+    component: {
+      name: 'btc-code-json',
+      props: {
+        popover: true
+      }
+    }
+  },
+  {
+    label: 'IP地址',
+    prop: 'ip',
+    width: 120,
+    dict: [],
+    dictColor: true,
+    formatter(row: any) {
+      return row.ip.split(',');
+    }
+  },
+  {
+    label: '请求时间',
+    prop: 'createTime',
+    width: 160,
+    sortable: true
+  },
+  {
+    label: '耗时(ms)',
+    prop: 'duration',
+    width: 100,
+    formatter(row: any) {
+      return `${row.duration}ms`;
+    }
+  },
+  {
+    label: '状态',
+    prop: 'status',
+    width: 80,
+    dict: [
+      { label: '成功', value: 'success', type: 'success' },
+      { label: '失败', value: 'failed', type: 'danger' }
     ]
   }
 ]);
 
 
+// CRUD 引用
+const auditCrudRef = ref();
+const requestCrudRef = ref();
+
 // 审计详情对话框
 const detailDialogVisible = ref(false);
 const currentLog = ref<any>({});
 
-// ???JSON
+// 格式化JSON
 const formatJson = (jsonStr: string) => {
   try {
     return JSON.stringify(JSON.parse(jsonStr), null, 2);
@@ -167,7 +232,6 @@ const formatJson = (jsonStr: string) => {
   }
 };
 
-const crudRef = ref();
 const viewDetails = (row: any) => {
   currentLog.value = row;
   detailDialogVisible.value = true;
@@ -178,6 +242,7 @@ const viewDetails = (row: any) => {
 .audit-page {
   height: 100%;
 }
+
 
 .json-view {
   background: var(--el-fill-color-lighter);

@@ -109,7 +109,7 @@
   "menu.navigation.menus": "Menus",
   "menu.navigation.menu_preview": "Menu Preview",
   "menu.ops": "Operations",
-  "menu.ops.audit": "Audit Log",
+  "menu.ops.audit": "Log Center",
   "menu.ops.baseline": "Baseline",
   "menu.ops.simulator": "Simulator",
   "menu.test_features": "Test Features",

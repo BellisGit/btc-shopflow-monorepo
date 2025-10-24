@@ -29,7 +29,7 @@
         v-else-if="column.component && column.prop"
         :is="column.component.name"
         :modelValue="scope.row[column.prop!]"
-        v-bind="column.component.props"
+        v-bind="getComponentProps(column.component.props, scope)"
         @update:modelValue="(val: any) => column.prop && (scope.row[column.prop] = val)"
       />
 
@@ -59,6 +59,21 @@ defineOptions({
 defineProps<{
   column: TableColumn;
 }>();
+
+// 获取组件属性，过滤掉不应该传递的属性
+const getComponentProps = (props: any, scope: any) => {
+  if (!props) return {};
+
+  // 如果是函数，先执行获取属性
+  if (typeof props === 'function') {
+    props = props(scope);
+  }
+
+  // 过滤掉可能引起警告的属性
+  const { popover, ...filteredProps } = props;
+
+  return filteredProps;
+};
 
 // 智能判断列是否可调整宽度
 const getColumnResizable = (column: TableColumn): boolean => {

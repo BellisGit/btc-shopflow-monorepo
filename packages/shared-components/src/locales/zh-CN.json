@@ -315,7 +315,7 @@
   "menu.navigation.menus": "菜单列表",
   "menu.navigation.menu_preview": "菜单预览",
   "menu.ops": "运维管理",
-  "menu.ops.audit": "审计日志",
+  "menu.ops.audit": "日志中心",
   "menu.ops.baseline": "基线管理",
   "menu.ops.simulator": "模拟器",
   "menu.test_features": "测试功能",

@@ -5,7 +5,15 @@
 </template>
 
 <script setup lang="ts">
-// BtcRow - 鍩轰簬 el-row锛屽畬鍏ㄥ榻?cool-admin 鐨?cl-row
+// BtcRow - 基于 el-row，完全对齐 cool-admin 的 cl-row
 </script>
+
+<style lang="scss" scoped>
+.btc-crud-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+</style>
 
 

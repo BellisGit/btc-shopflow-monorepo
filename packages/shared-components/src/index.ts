@@ -12,6 +12,7 @@ import BtcForm from './common/form/index.vue';
 import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
+import BtcCodeJson from './common/code-json/index.vue';
 import BtcMasterList from './components/btc-master-list/index.vue';
 import BtcCard from './components/btc-card/index.vue';
 import BtcTabs from './components/btc-tabs/index.vue';
@@ -59,6 +60,7 @@ export {
   BtcFormCard,
   BtcFormTabs,
   BtcSelectButton,
+  BtcCodeJson,
   BtcMasterList,
   BtcCard,
   BtcTabs,
