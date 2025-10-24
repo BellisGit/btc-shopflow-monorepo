@@ -85,9 +85,9 @@ export function useFormSubmit(
                 BtcMessage.success('新增成功');
               }
 
-              // 提交成功后自动刷新
-              // 等待数据刷新完成
-              await crud.loadData();
+              // 提交成功后强制刷新数据
+              // 使用 handleRefresh 确保状态管理和防重复调用
+              crud.handleRefresh();
 
               // 提交成功后关闭弹窗
               close();
@@ -115,7 +115,9 @@ export function useFormSubmit(
         }
 
         // 自动刷新，等待完成后再关闭
-        await crud.loadData();
+        // 使用 handleRefresh 确保状态管理和防重复调用
+        await crud.handleRefresh();
+
         close();
       }
     } catch (_error) {

@@ -10,6 +10,7 @@
     :default-sort="defaultSort"
     highlight-current-row
     fit
+    :border="border"
     v-bind="$attrs"
     @selection-change="crud.handleSelectionChange"
     @sort-change="onSortChange"
@@ -93,12 +94,13 @@ const props = withDefaults(defineProps<TableProps>(), {
   rowKey: 'id',
   sortRefresh: true,
   emptyText: 'common.table.empty',
+  border: true,
 });
 
 const emit = defineEmits(['selection-change', 'sort-change']);
 
 // 解构 props
-const { autoHeight, height, maxHeight, rowKey, emptyText } = toRefs(props);
+const { autoHeight, height, maxHeight, rowKey, emptyText, border } = toRefs(props);
 
 // 国际化
 const { t } = useI18n();
@@ -110,6 +112,7 @@ const translatedEmptyText = computed(() => {
 
 // 注入 CRUD 上下文
 const crud = inject<UseCrudReturn<any>>('btc-crud');
+const tableRefContext = inject<any>('btc-table-ref');
 
 if (!crud) {
   throw new Error('[BtcTable] Must be used inside <BtcCrud>');
@@ -120,6 +123,14 @@ const tableRef = ref<TableInstance>();
 
 // 列配置处理
 const { computedColumns } = useTableColumns(props);
+
+// 注册表格引用到上下文
+if (tableRefContext) {
+  tableRefContext.value = {
+    tableRef,
+    columns: computedColumns,
+  };
+}
 
 // 操作列处理 + 列控制
 const { getOpButtons, getButtonType, getButtonText, handleOpClick, showColumn, hideColumn, setColumns, reBuild, rebuildKey } = useTableOp(crud, props);
@@ -133,6 +144,8 @@ const { defaultSort, onSortChange, clearSort } = useTableSort(crud, props, emit)
 // 右键菜单
 const { onRowContextMenu } = useTableContextMenu(crud, props, tableRef);
 
+// Element Plus 原生支持列宽调整，无需额外实现
+
 // 暴露方法
 defineExpose({
   tableRef,
@@ -144,5 +157,10 @@ defineExpose({
   setColumns,
   reBuild,
   clearSort,
+  columns: computedColumns, // 暴露列配置
 });
 </script>
+
+<style lang="scss" scoped>
+// Element Plus 原生支持列宽调整，无需额外样式
+</style>

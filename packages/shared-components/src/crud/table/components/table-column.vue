@@ -2,6 +2,7 @@
   <el-table-column
     v-if="!column.hidden"
     v-bind="column"
+    :resizable="getColumnResizable(column)"
   >
     <!-- 澶氱骇琛ㄥご锛氶€掑綊娓叉煋瀛愬垪 -->
     <template v-if="column.children && column.children.length > 0">
@@ -58,6 +59,20 @@ defineOptions({
 defineProps<{
   column: TableColumn;
 }>();
+
+// 智能判断列是否可调整宽度
+const getColumnResizable = (column: TableColumn): boolean => {
+  // 如果明确设置了 resizable 属性，使用该值
+  if (column.resizable !== undefined) {
+    return column.resizable;
+  }
+
+  // 默认规则：所有列都支持调整（除了明确禁用的类型）
+  const nonResizableTypes = ['selection', 'index'];
+  const result = !nonResizableTypes.includes(column.type || '');
+
+  return result;
+};
 </script>
 
 

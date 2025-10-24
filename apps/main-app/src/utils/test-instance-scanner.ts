@@ -30,7 +30,7 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     title: '国际化测试',
     description: '测试国际化功能和语言切换',
     icon: 'ChatDotRound',
-    tags: ['国际化', 'i18n', '语言切换'],
+    tags: ['国际化', 'i18n', '语言切换', '多语言'],
     path: '/test/i18n'
   },
   'message-notification': {
@@ -46,7 +46,7 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     title: '选择按钮测试',
     description: '测试 BtcSelectButton 选择按钮组件',
     icon: 'Select',
-    tags: ['选择按钮', 'BtcSelectButton', '状态切换'],
+    tags: ['选择按钮', 'BtcSelectButton', '状态切换', '按钮'],
     path: '/test/select-button'
   },
   'svg-plugin': {
@@ -64,6 +64,14 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     icon: 'Document',
     tags: ['BtcTabs', '标签页', 'tab-ink', '动画'],
     path: '/test/btc-tabs'
+  },
+  'import-demo': {
+    name: 'import-demo',
+    title: '导入组件测试',
+    description: '测试 BtcImportBtn 导入按钮组件，包含文件上传、数据解析、批量导入等功能',
+    icon: 'Upload',
+    tags: ['导入', 'BtcImportBtn', '文件上传', 'Excel'],
+    path: '/test/import-demo'
   }
 };
 

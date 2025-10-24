@@ -36,9 +36,9 @@
         <div class="test-card-body">
           <div class="test-tags">
             <el-tag
-              v-for="tag in testInstance.tags"
+              v-for="(tag, index) in testInstance.tags"
               :key="tag"
-              :type="getTagType(tag)"
+              :type="getTagType(tag, index)"
               size="small"
               class="test-tag"
             >
@@ -147,29 +147,10 @@ const filteredTestInstances = computed(() => {
   );
 });
 
-// 获取标签类型
-const getTagType = (tag: string) => {
-  const typeMap: Record<string, string> = {
-    'CRUD': 'primary',
-    '表格': 'success',
-    '表单': 'warning',
-    '分页': 'info',
-    '国际化': 'primary',
-    'i18n': 'success',
-    '语言切换': 'warning',
-    '消息': 'success',
-    '通知': 'warning',
-    'BtcMessage': 'primary',
-    'BtcNotification': 'info',
-    '选择按钮': 'primary',
-    'BtcSelectButton': 'success',
-    '状态切换': 'warning',
-    'SVG': 'primary',
-    '图标': 'success',
-    'BtcSvg': 'info',
-    '插件': 'warning'
-  };
-  return typeMap[tag] || 'info';
+// 获取标签类型 - 按照固定顺序：primary, success, warning, danger
+const getTagType = (tag: string, index: number): 'primary' | 'success' | 'warning' | 'danger' => {
+  const typeOrder: ('primary' | 'success' | 'warning' | 'danger')[] = ['primary', 'success', 'warning', 'danger'];
+  return typeOrder[index % 4];
 };
 
 // 获取弹窗宽度 - 统一尺寸（百分比）

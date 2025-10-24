@@ -6,8 +6,8 @@
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
         <BtcFlex1 />
-        <BtcSearchKey :placeholder="t('platform.domain.search_placeholder')" />
         <BtcExportBtn :filename="t('platform.domain.list')" />
+        <BtcSearchKey :placeholder="t('platform.domain.search_placeholder')" />
       </BtcRow>
       <BtcRow>
         <BtcTable ref="tableRef" :columns="columns" border />

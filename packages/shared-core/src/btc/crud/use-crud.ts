@@ -272,14 +272,28 @@ export function useCrud<T = Record<string, unknown>>(
   /**
    * 刷新 - 强制更新版本 2024-01-16 15:30
    */
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (isRefreshing.value) {
       return;
     }
     isRefreshing.value = true;
-    loadData().finally(() => {
+    try {
+      await loadData();
+    } finally {
       isRefreshing.value = false;
-    });
+    }
+  };
+
+  /**
+   * 强制刷新数据 - 确保数据更新
+   */
+  const forceRefresh = async () => {
+    // 重置刷新状态
+    isRefreshing.value = false;
+    // 强制重新加载数据
+    await loadData();
+    // 确保UI更新完成
+    await new Promise(resolve => setTimeout(resolve, 50));
   };
 
   /**
@@ -333,6 +347,7 @@ export function useCrud<T = Record<string, unknown>>(
     // 方法
     refresh: loadData,
     loadData,
+    forceRefresh,
     add: handleAdd,
     handleAdd,
     edit: handleEdit,

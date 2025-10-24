@@ -1,18 +1,18 @@
 <template>
-  <div class="crud-demo">
+  <div class="import-demo">
     <BtcCrud ref="crudRef" :service="userService">
       <!-- Toolbar -->
       <BtcRow>
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
+        <BtcFlex1 />
         <BtcImportBtn
           :template="'/templates/users.xlsx'"
           :tips="'请按照模板格式填写用户信息，支持用户名、姓名、邮箱、状态等字段'"
           :on-submit="handleImport"
         />
         <BtcExportBtn :filename="'用户列表'" />
-        <BtcFlex1 />
         <BtcSearchKey />
       </BtcRow>
 
@@ -93,43 +93,15 @@
         </el-button>
       </template>
     </el-dialog>
-
-    <!-- 导出列选择对话框 -->
-    <el-dialog
-      v-model="exportDialogVisible"
-      :title="t('common.button.export')"
-      width="500px"
-    >
-      <el-form label-position="top">
-        <el-form-item :label="t('crud.ElMessage.select_export_columns')">
-          <el-checkbox-group v-model="exportColumns" class="export-checkbox-group">
-            <el-checkbox
-              v-for="col in exportableColumns"
-              :key="col.prop"
-              :label="col.label"
-              :value="col.prop"
-            />
-          </el-checkbox-group>
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="exportDialogVisible = false">
-          {{ t('common.button.cancel') }}
-        </el-button>
-        <el-button type="primary" @click="confirmExport">
-          {{ t('common.button.confirm') }}
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 const pluginManager = usePluginManager();
@@ -138,10 +110,6 @@ const pluginManager = usePluginManager();
 const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
-
-// 导出对话框
-const exportDialogVisible = ref(false);
-const exportColumns = ref<string[]>([]);
 
 // Mock data
 let mockUsers = [
@@ -153,6 +121,7 @@ let nextId = 4;
 
 // 模拟服务
 const userService = {
+  baseURL: '/api/users', // 添加baseURL用于实体名称检测
   page: async (params: any) => {
     // 模拟延迟
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -182,7 +151,7 @@ const userService = {
     const newUser = { id: nextId++, ...data };
     mockUsers.push(newUser);
 
-    ElMessage.success('Added successfully');
+    BtcMessage.success('Added successfully');
     return newUser;
   },
 
@@ -194,7 +163,7 @@ const userService = {
       mockUsers[index] = { ...mockUsers[index], ...data };
     }
 
-    ElMessage.success('Updated successfully');
+    BtcMessage.success('Updated successfully');
     return data;
   },
 
@@ -210,7 +179,7 @@ const userService = {
 
     mockUsers = mockUsers.filter(u => !ids.includes(u.id));
 
-    ElMessage.success(t('crud.ElMessage.delete_success'));
+    BtcMessage.success(t('crud.ElMessage.delete_success'));
   },
 };
 
@@ -290,92 +259,10 @@ const formItems = computed<FormItem[]>(() => [
 ]);
 
 /**
- * 表单提交
- */
-
-/**
  * 表单打开
  */
 const handleFormOpen = () => {
   // Form opened
-};
-
-// 可导出的列配置
-const exportableColumns = computed(() => [
-  { prop: 'username', label: t('user.field.username') },
-  { prop: 'name', label: t('user.field.name') },
-  { prop: 'email', label: t('user.field.email') },
-  { prop: 'status', label: t('user.field.status') },
-]);
-
-/**
- * 打开导出对话框
- */
-const handleExport = () => {
-  const selection = crudRef.value?.crud.selection.value || [];
-  const dataToExport = selection.length > 0 ? selection : mockUsers;
-
-  if (dataToExport.length === 0) {
-    ElMessage.warning('No data to export');
-    return;
-  }
-
-  // Select all columns by default
-  exportColumns.value = exportableColumns.value.map(col => col.prop);
-  exportDialogVisible.value = true;
-};
-
-/**
- * Confirm export
- */
-const confirmExport = () => {
-  if (exportColumns.value.length === 0) {
-    ElMessage.warning('Please select columns to export');
-    return;
-  }
-
-  const selection = crudRef.value?.crud.selection.value || [];
-  const dataToExport = selection.length > 0 ? selection : mockUsers;
-
-  // Generate headers and data based on selected columns
-  const header = exportColumns.value.map(prop => {
-    const col = exportableColumns.value.find(c => c.prop === prop);
-    return col?.label || prop;
-  });
-
-  // Data (only selected columns)
-  const data = dataToExport.map((user: any) =>
-    exportColumns.value.map(prop => {
-      if (prop === 'status') {
-        return user.status === 1 ? t('user.status.active') : t('user.status.inactive');
-      }
-      return user[prop];
-    })
-  );
-
-  // Get Excel plugin API
-  const excelApi = pluginManager.getApi<{ export: (...args: any[]) => void }>('excel');
-
-  if (!excelApi) {
-    ElMessage.error('Excel plugin not available');
-    return;
-  }
-
-  // Generate filename with timestamp
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-  const filename = `users_export_${timestamp}`;
-
-  // Export to Excel using plugin
-  excelApi.export({
-    header,
-    data,
-    filename,
-    autoWidth: true,
-    bookType: 'xlsx',
-  });
-
-  exportDialogVisible.value = false;
-  ElMessage.success('Export successfully');
 };
 
 /**
@@ -386,19 +273,114 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     // 模拟导入延迟
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // 验证导入数据
-    const validData = data.list.filter((item: any) => {
-      return item.username && item.name; // 基本验证
-    });
 
+    // 使用 BtcImportBtn 的动态验证结果
+    const validData = data.list;
+
+    // 详细的错误提示
     if (validData.length === 0) {
-      ElMessage.error('导入数据无效，请检查数据格式');
+      const totalRows = data.list.length;
+      const errorMessages = [];
+
+      if (totalRows === 0) {
+        errorMessages.push('Excel文件中没有找到数据行');
+        errorMessages.push('可能的原因：');
+        errorMessages.push('1. Excel文件为空或格式不正确');
+        errorMessages.push('2. 文件损坏或无法读取');
+        errorMessages.push('3. 工作表名称不正确');
+      } else {
+        errorMessages.push(`共${totalRows}行数据，但所有行都缺少必填字段`);
+
+        // 检查第一行数据的字段情况
+        const firstRow = data.list[0];
+        const missingFields = [];
+
+        if (!firstRow.username && !firstRow['用户名']) {
+          missingFields.push('用户名');
+        }
+        if (!firstRow.name && !firstRow['姓名']) {
+          missingFields.push('姓名');
+        }
+
+        if (missingFields.length > 0) {
+          errorMessages.push(`缺少必填字段：${missingFields.join('、')}`);
+        }
+
+        // 检查列名是否正确
+        const availableColumns = Object.keys(firstRow);
+        const expectedColumns = ['用户名', '姓名', '邮箱', '状态', '头像'];
+        const missingColumns = expectedColumns.filter(col => !availableColumns.includes(col));
+
+        if (missingColumns.length > 0) {
+          errorMessages.push(`缺少列：${missingColumns.join('、')}`);
+        }
+
+        // 添加调试信息
+        errorMessages.push(`实际列名：${availableColumns.join('、')}`);
+        errorMessages.push(`第一行数据：${JSON.stringify(firstRow)}`);
+
+        errorMessages.push('请确保Excel文件包含以下列：用户名、姓名、邮箱、状态、头像');
+      }
+
+      BtcMessage.error(errorMessages.join('\n'), {
+        duration: 5000,
+        showClose: true
+      });
       done();
       return;
     }
 
-    // 模拟批量添加用户
-    const newUsers = validData.map((item: any, index: number) => ({
+    // 检查是否有部分数据无效
+    const invalidRows = data.list.length - validData.length;
+    if (invalidRows > 0) {
+      BtcMessage.warning(`发现 ${invalidRows} 行数据格式不正确，已跳过。成功导入 ${validData.length} 条有效数据。`, {
+        duration: 4000,
+        showClose: true
+      });
+    }
+
+    // 去重检查：检查用户名是否已存在
+    const existingUsernames = new Set(mockUsers.map(user => user.username));
+    const duplicateUsers: any[] = [];
+    const uniqueUsers: any[] = [];
+
+    validData.forEach((item: any) => {
+      const username = item.username;
+
+      // 跳过无效的用户名
+      if (!username || username === 'undefined' || username.trim() === '') {
+        return;
+      }
+
+      if (existingUsernames.has(username)) {
+        duplicateUsers.push({
+          username,
+          name: item.name || '未知用户'
+        });
+      } else {
+        uniqueUsers.push(item);
+        existingUsernames.add(username);
+      }
+    });
+
+    // 如果有重复数据，显示警告
+    if (duplicateUsers.length > 0) {
+      const duplicateList = duplicateUsers.map(user => `${user.name}(${user.username})`).join('、');
+      BtcMessage.warning(`发现 ${duplicateUsers.length} 条重复数据，已跳过：${duplicateList}`, {
+        duration: 4000,
+        showClose: true
+      });
+    }
+
+    // 如果没有唯一数据，直接返回
+    if (uniqueUsers.length === 0) {
+      BtcMessage.info('所有数据都已存在，无需重复导入');
+      done();
+      return;
+    }
+
+    // 模拟批量添加用户 - 使用动态验证后的数据
+    const newUsers = uniqueUsers.map((item: any, index: number) => ({
       id: nextId + index,
       username: item.username || `imported_user_${nextId + index}`,
       name: item.name || `Imported User ${nextId + index}`,
@@ -415,11 +397,11 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     crudRef.value?.crud.loadData();
 
     close();
-    ElMessage.success(`成功导入 ${validData.length} 条用户数据`);
+    BtcMessage.success(`成功导入 ${newUsers.length} 条用户数据`);
 
   } catch (error) {
     console.error('导入失败:', error);
-    ElMessage.error('导入失败，请重试');
+    BtcMessage.error('导入失败，请重试');
     done();
   }
 };
@@ -428,7 +410,7 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
  * Custom action
  */
 const handleCustomAction = (row: any) => {
-  ElMessage.info(`${t('common.button.custom')}: ${row.name}`);
+  BtcMessage.info(`${t('common.button.custom')}: ${row.name}`);
 };
 
 // Auto load data on mounted
@@ -440,10 +422,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.export-checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.import-demo {
+  padding: 20px;
 }
 </style>
-

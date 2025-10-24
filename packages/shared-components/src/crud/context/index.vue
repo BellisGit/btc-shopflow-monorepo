@@ -64,6 +64,13 @@ function checkPagination() {
   hasPagination.value = !!paginationEl;
 }
 
+// 管理表格引用
+const tableRef = ref();
+
+// 提供给子组件
+provide('btc-crud', crud);
+provide('btc-table-ref', tableRef);
+
 // 检测父组件的辅助函数
 function checkParentComponent(componentName: string): boolean {
   let parent = getCurrentInstance()?.parent;

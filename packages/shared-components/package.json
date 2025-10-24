@@ -36,5 +36,8 @@
     "sass": "^1.93.2",
     "vite": "^5.0.0",
     "vue-tsc": "^2.0.0"
+  },
+  "dependencies": {
+    "chardet": "^2.1.0"
   }
 }

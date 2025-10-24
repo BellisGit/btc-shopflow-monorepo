@@ -56,9 +56,10 @@ export interface UseCrudReturn<T> {
     viewRow: import('vue').Ref<T | null>;
     service: CrudService;
     loadData: () => Promise<void>;
+    forceRefresh: () => Promise<void>;
     handleSearch: (params: Record<string, unknown>) => void;
     handleReset: () => void;
-    handleRefresh: () => void;
+    handleRefresh: () => Promise<void>;
     handleAdd: () => void;
     handleEdit: (row: T) => void;
     handleInfo: (row: T) => void;

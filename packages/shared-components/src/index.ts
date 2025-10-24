@@ -42,6 +42,7 @@ import BtcRow from './crud/row/index.vue';
 import BtcFlex1 from './crud/flex1/index.vue';
 import BtcSearchKey from './crud/search-key/index.vue';
 import BtcExportBtn from './crud/btc-export-btn/index.vue';
+import BtcImportBtn from './crud/btc-import-btn/index.vue';
 import BtcMenuExp from './crud/menu-exp/index.vue';
 
 // 导出语言包供应用使用
@@ -81,6 +82,7 @@ export {
   BtcFlex1,
   BtcSearchKey,
   BtcExportBtn,
+  BtcImportBtn,
   BtcMenuExp,
 };
 

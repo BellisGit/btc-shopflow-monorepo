@@ -72,6 +72,9 @@ export interface TableProps {
   height?: string | number; // 固定高度
   maxHeight?: string | number; // 最大高度
 
+  // 表格样式
+  border?: boolean; // 是否显示边框，默认 true
+
   // 其他配置
   rowKey?: string; // 行唯一键，默认 'id'
   emptyText?: string; // 空数据文案

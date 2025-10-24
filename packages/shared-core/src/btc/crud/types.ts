@@ -108,6 +108,7 @@ export interface UseCrudReturn<T = Record<string, unknown>> {
   // 方法
   refresh: (params?: Record<string, unknown>) => Promise<void>;
   loadData: (params?: Record<string, unknown>) => Promise<void>;
+  forceRefresh: () => Promise<void>;
   add: () => void;
   handleAdd: () => void;
   edit: (row: T) => void;
@@ -119,7 +120,7 @@ export interface UseCrudReturn<T = Record<string, unknown>> {
   handleSearch: (params?: Record<string, unknown>) => void;
   reset: () => void;
   handleReset: () => void;
-  handleRefresh: () => void;
+  handleRefresh: () => Promise<void>;
 
   // 状态
   upsertVisible: Ref<boolean>;

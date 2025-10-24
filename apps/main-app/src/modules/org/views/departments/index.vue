@@ -6,6 +6,7 @@
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
         <BtcFlex1 />
+        <BtcExportBtn :filename="t('org.departments.title')" />
         <BtcSearchKey placeholder="搜索部门" />
       </BtcRow>
       <BtcRow>

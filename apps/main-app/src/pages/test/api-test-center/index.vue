@@ -135,7 +135,7 @@ const paginatedTestCases = computed(() => {
 });
 
 // 从EPS数据动态生成测试用例
-const testCases = ref([]);
+const testCases = ref<any[]>([]);
 
 // 生成测试用例的函数
 function generateTestCases() {
@@ -143,10 +143,10 @@ function generateTestCases() {
 
   // 从EPS数据中获取test服务的API信息
   if (eps?.list && Array.isArray(eps.list)) {
-    const testEntity = eps.list.find(entity => entity.name === 'TestEntity');
+    const testEntity = eps.list.find((entity: any) => entity.name === 'TestEntity');
 
     if (testEntity && testEntity.api && Array.isArray(testEntity.api)) {
-      testEntity.api.forEach(api => {
+      testEntity.api.forEach((api: any) => {
         // 从API路径中提取错误码
         const codeMatch = api.path.match(/\/(\d+)$/);
         const code = codeMatch ? parseInt(codeMatch[1]) : null;
@@ -298,9 +298,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.api-test-center {
-}
-
 .search-input {
   width: 300px;
 }
@@ -308,5 +305,4 @@ onMounted(() => {
 .test-table {
   margin-top: 20px;
 }
-
 </style>

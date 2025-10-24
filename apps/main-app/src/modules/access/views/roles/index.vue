@@ -6,10 +6,11 @@
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
         <BtcFlex1 />
+        <BtcExportBtn :filename="t('access.role.title')" />
         <BtcSearchKey />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="tableRef" :columns="columns" :border="true" />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
