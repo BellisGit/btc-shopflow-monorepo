@@ -46,7 +46,7 @@ defineOptions({
 // 获取所有传入的属性
 const attrs = useAttrs();
 
-interface Props {
+export interface Props {
   /** JSON 数据 */
   modelValue?: any;
   /** 是否使用弹窗模式 */

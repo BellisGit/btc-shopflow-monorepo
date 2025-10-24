@@ -8,7 +8,7 @@ import {
   ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload, ElDivider,
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
-import BtcCascader from '../../../components/btc-cascader/index.vue';
+import BtcCascader from '@btc-components/btc-cascader/index.vue';
 
 // 组件映射表
 export const componentMap: Record<string, any> = {

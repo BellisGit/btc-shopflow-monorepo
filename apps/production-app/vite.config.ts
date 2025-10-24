@@ -2,10 +2,19 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'path';
 
 export default defineConfig({
   base: '/', // 明确设置为根路径，不使用 /production/
   logLevel: 'error', // 只显示错误，抑制警告
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+      '@btc/shared-core': resolve(__dirname, '../../packages/shared-core/src'),
+      '@btc/shared-components': resolve(__dirname, '../../packages/shared-components/src'),
+      '@btc/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),
+    },
+  },
   plugins: [
     vue({
       script: {

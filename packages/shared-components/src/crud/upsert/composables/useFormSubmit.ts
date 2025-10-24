@@ -2,7 +2,7 @@
 import { formHook } from '@btc/shared-utils';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
-import { BtcMessage } from '../../../components/btc-message';
+import { BtcMessage } from '@btc-components/btc-message';
 
 /**
  * 表单提交逻辑

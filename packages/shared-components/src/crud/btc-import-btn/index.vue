@@ -67,7 +67,7 @@
             max-height="600px"
             @selection-change="table.onSelectionChange"
             @row-click="
-              row => {
+              (row: any) => {
                 row._edit = true;
               }
             "

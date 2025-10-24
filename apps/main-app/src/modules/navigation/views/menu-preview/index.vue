@@ -1,86 +1,68 @@
 <template>
   <div class="menu-preview-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>{{ t('navigation.preview.title') }}</span>
-          <el-button type="primary" @click="handleRefresh">
-            <el-icon><Refresh /></el-icon>
-            {{ t('navigation.preview.refresh') }}
-          </el-button>
-        </div>
-      </template>
+    <div class="preview-container">
+      <!-- 角色选择器 -->
+      <BtcRow>
+        <BtcFlex1 />
+        <el-select
+          v-model="selectedRole"
+          :placeholder="t('navigation.preview.select_role')"
+          @change="handleRoleChange"
+          style="width: 200px;"
+        >
+          <el-option
+            v-for="role in roles"
+            :key="role.id"
+            :label="role.roleName"
+            :value="role.id"
+          />
+        </el-select>
+        <el-button type="primary" @click="handleRefresh" style="margin-left: 10px;">
+          <el-icon><Refresh /></el-icon>
+          {{ t('navigation.preview.refresh') }}
+        </el-button>
+      </BtcRow>
 
-      <div class="preview-container">
-        <!-- 角色选择器 -->
-        <div class="role-selector">
-          <el-select
-            v-model="selectedRole"
-            :placeholder="t('navigation.preview.select_role')"
-            @change="handleRoleChange"
-            style="width: 200px;"
-          >
-            <el-option
-              v-for="role in roles"
-              :key="role.id"
-              :label="role.roleName"
-              :value="role.id"
-            />
-          </el-select>
-        </div>
-
-        <!-- 菜单预览 -->
-        <div class="menu-preview" v-if="selectedRole">
-          <el-menu
-            :default-active="activeMenu"
-            class="preview-menu"
-            mode="vertical"
-            @select="handleMenuSelect"
-          >
-            <template v-for="menu in filteredMenus" :key="menu.id">
-              <el-sub-menu
-                v-if="menu.children && menu.children.length > 0"
-                :index="menu.id.toString()"
-              >
-                <template #title>
-                  <el-icon v-if="menu.icon">
-                    <component :is="menu.icon" />
-                  </el-icon>
-                  <span>{{ menu.label }}</span>
-                </template>
-                <el-menu-item
-                  v-for="child in menu.children"
-                  :key="child.id"
-                  :index="child.id.toString()"
-                >
-                  <el-icon v-if="child.icon">
-                    <component :is="child.icon" />
-                  </el-icon>
-                  <span>{{ child.label }}</span>
-                </el-menu-item>
-              </el-sub-menu>
-              <el-menu-item v-else :index="menu.id.toString()">
+      <!-- 菜单预览 -->
+      <div class="menu-preview" v-if="selectedRole && filteredMenus.length > 0">
+        <el-menu
+          :default-active="activeMenu"
+          class="preview-menu"
+          mode="vertical"
+          @select="handleMenuSelect"
+        >
+          <template v-for="menu in filteredMenus" :key="menu.id">
+            <el-sub-menu
+              v-if="menu.children && menu.children.length > 0"
+              :index="menu.id.toString()"
+            >
+              <template #title>
                 <el-icon v-if="menu.icon">
                   <component :is="menu.icon" />
                 </el-icon>
                 <span>{{ menu.label }}</span>
+              </template>
+              <el-menu-item
+                v-for="child in menu.children"
+                :key="child.id"
+                :index="child.id.toString()"
+              >
+                <el-icon v-if="child.icon">
+                  <component :is="child.icon" />
+                </el-icon>
+                <span>{{ child.label }}</span>
               </el-menu-item>
-            </template>
-          </el-menu>
-        </div>
-
-        <!-- 空状态 -->
-        <div v-else class="no-permission">
-          <el-empty description="请先选择角色查看菜单">
-            <template #image>
-              <el-icon :size="60" color="var(--el-text-color-placeholder)">
-                <User />
+            </el-sub-menu>
+            <el-menu-item v-else :index="menu.id.toString()">
+              <el-icon v-if="menu.icon">
+                <component :is="menu.icon" />
               </el-icon>
-            </template>
-          </el-empty>
-        </div>
+              <span>{{ menu.label }}</span>
+            </el-menu-item>
+          </template>
+        </el-menu>
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -183,22 +165,11 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .menu-preview-page {
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 0;
 }
 
 .preview-container {
   min-height: 400px;
-}
-
-.role-selector {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--el-border-color);
 }
 
 .menu-preview {
@@ -207,12 +178,5 @@ onMounted(() => {
     border-radius: 6px;
     width: 300px;
   }
-}
-
-.no-permission {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
 }
 </style>

@@ -4,7 +4,10 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@btc/shared-core": ["../../packages/shared-core/src"],
+      "@btc/shared-components": ["../../packages/shared-components/src"],
+      "@btc/shared-utils": ["../../packages/shared-utils/src"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx"],

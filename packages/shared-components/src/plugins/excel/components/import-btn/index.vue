@@ -67,7 +67,7 @@
             max-height="600px"
             @selection-change="table.onSelectionChange"
             @row-click="
-              row => {
+              (row: any) => {
                 row._edit = true;
               }
             "
@@ -154,7 +154,7 @@ import BtcForm from '@btc-common/form/index.vue';
 import BtcSvg from '@btc-common/svg/index.vue';
 import * as XLSX from 'xlsx';
 import chardet from 'chardet';
-import type { TableColumn } from '../table/types';
+import type { TableColumn } from '@btc-crud/table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 
 const { t } = useI18n();

@@ -14,11 +14,11 @@ import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
 import BtcForm from '@btc-common/form/index.vue';
 import BtcSvg from '@btc-common/svg/index.vue';
-import type { TableColumn } from '../table/types';
+import type { TableColumn } from '@btc-crud/table/types';
 import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 
-interface Props {
+export interface Props {
   /** 表格列配置（可选，如果不提供则从 CRUD 上下文获取） */
   columns?: TableColumn[];
   /** 表格数据（可选，如果不提供则从 CRUD 上下文获取） */
