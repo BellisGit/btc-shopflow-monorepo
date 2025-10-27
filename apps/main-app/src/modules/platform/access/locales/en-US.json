@@ -1,4 +1,6 @@
 ﻿{
+  "access.role.title": "Role List",
+  "access.roles.title": "Role List",
   "权限管理": "Permission Management",
   "资源列表": "Resource List",
   "行为列表": "Behavior List",

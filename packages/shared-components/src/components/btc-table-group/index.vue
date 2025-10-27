@@ -9,6 +9,7 @@
     :unassigned-label="unassignedLabel"
     :enable-drag="enableDrag"
     :left-width="leftWidth"
+    :op="op"
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
   >
@@ -28,7 +29,7 @@
           <BtcSearchKey :placeholder="searchPlaceholder" />
         </BtcRow>
         <BtcRow>
-          <BtcTable :columns="tableColumns" :auto-height="false" :max-height="tableMaxHeight" border />
+          <BtcTable :columns="tableColumns" :op="op" :auto-height="false" :max-height="tableMaxHeight" border />
         </BtcRow>
         <BtcRow>
           <BtcFlex1 />
@@ -86,7 +87,8 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   upsertWidth: 800,
   searchPlaceholder: '搜索',
   showCreateTime: true,  // 默认显示创建时间列
-  showUpdateTime: false  // 默认不显示更新时间列
+  showUpdateTime: false,  // 默认不显示更新时间列
+  op: undefined // 操作列配置，默认为 undefined
 });
 
 const emit = defineEmits<TableGroupEmits>();
@@ -158,15 +160,14 @@ const tableColumns = computed(() => {
     });
   }
 
-  // 检查是否已有操作列
+  // 检查是否已有操作列，并根据 op 配置决定是否添加
   const hasOpColumn = filteredColumns.some(col => col.type === 'op');
-  if (!hasOpColumn) {
+  if (!hasOpColumn && props.op !== undefined) {
     filteredColumns.push({
       type: 'op',
-      label: '操作',
       width: 200,
       fixed: 'right',
-      buttons: ['edit', 'delete']
+      buttons: props.op.buttons || ['edit', 'delete']
     });
   }
 
@@ -208,8 +209,9 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
   const viewGroup = viewGroupRef.value;
   const selectedKeyword = viewGroup?.selectedKeyword;
 
-  // 注入 keyword 参数
-  if (selectedKeyword !== undefined) {
+  // 只有当 selectedKeyword 有值时才注入 keyword 参数
+  // 不传递 null 值
+  if (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '') {
     params.keyword = selectedKeyword;
   }
 
@@ -220,9 +222,6 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
 function handleLeftDataLoaded(data: any[]) {
   leftListData.value = data;
   emit('load', data);
-
-  // 注意：这里不触发刷新，因为 BtcMasterList 会自动选择第一项
-  // 选择第一项时会触发 handleSelect，从而触发刷新
 }
 
 // 表单提交 - 自动注入选中的 ID

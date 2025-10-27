@@ -47,7 +47,16 @@ export const appMenus: AppMenuConfig = {
         { index: '/access/actions', title: 'menu.access.actions', icon: 'TrendCharts' },
         { index: '/access/permissions', title: 'menu.access.permissions', icon: 'Key' },
         { index: '/access/roles', title: 'menu.access.roles', icon: 'UserFilled' },
-        { index: '/access/policies', title: 'menu.access.policies', icon: 'Document' },
+        {
+          index: 'strategy',
+          title: 'menu.strategy',
+          icon: 'Document',
+          children: [
+            { index: '/strategy/management', title: 'menu.strategy.management', icon: 'Setting' },
+            { index: '/strategy/designer', title: 'menu.strategy.designer', icon: 'Edit' },
+            { index: '/strategy/monitor', title: 'menu.strategy.monitor', icon: 'TrendCharts' },
+          ],
+        },
         { index: '/access/perm-compose', title: 'menu.access.perm_compose', icon: 'Grid' },
       ],
     },
@@ -61,11 +70,27 @@ export const appMenus: AppMenuConfig = {
       ],
     },
     {
+      index: 'data',
+      title: 'menu.data',
+      icon: 'FolderOpened',
+      children: [
+        { index: '/data/recycle', title: 'menu.data.recycle', icon: 'Delete' },
+      ],
+    },
+    {
       index: 'ops',
       title: 'menu.ops',
       icon: 'Monitor',
       children: [
-        { index: '/ops/audit', title: 'menu.ops.audit', icon: 'DocumentCopy' },
+        {
+          index: 'logs',
+          title: 'menu.ops.logs',
+          icon: 'Document',
+          children: [
+            { index: '/ops/logs/operation', title: 'menu.ops.operation_log', icon: 'Operation' },
+            { index: '/ops/logs/request', title: 'menu.ops.request_log', icon: 'Connection' },
+          ],
+        },
         { index: '/ops/baseline', title: 'menu.ops.baseline', icon: 'Histogram' },
         { index: '/ops/simulator', title: 'menu.ops.simulator', icon: 'Opportunity' },
       ],
@@ -76,6 +101,7 @@ export const appMenus: AppMenuConfig = {
       icon: 'Coin',
       children: [
         { index: '/test/components', title: 'menu.test_features.components', icon: 'Tickets' },
+        { index: '/test/api-test-center', title: 'menu.test_features.api_test_center', icon: 'Connection' },
       ],
     },
     // 文档中心已移至汉堡菜单

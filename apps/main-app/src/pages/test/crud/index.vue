@@ -18,7 +18,7 @@
 
       <!-- Table -->
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border>
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border>
           <!-- Custom status column -->
           <template #column-status="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">

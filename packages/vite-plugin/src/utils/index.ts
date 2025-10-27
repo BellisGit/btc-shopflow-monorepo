@@ -120,7 +120,7 @@ export function readFile(path: string, json?: boolean): any {
  */
 export function writeFile(path: string, data: string): void {
   try {
-    fs.writeFileSync(path, data);
+    fs.writeFileSync(path, data, 'utf8');
   } catch (_err) {
     // ignore
   }

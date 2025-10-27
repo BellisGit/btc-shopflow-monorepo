@@ -1,17 +1,28 @@
 ﻿<template>
   <div class="btc-search-key">
-    <el-input
-      v-model="keyword"
-      :placeholder="placeholder"
-      clearable
-      v-bind="$attrs"
-      @keyup.enter="handleSearch"
-      @clear="handleClear"
+    <el-tooltip
+      :content="placeholder"
+      placement="top"
+      :disabled="!showTooltip"
+      :show-after="500"
     >
-      <template #append>
-        <el-button :icon="Search" @click="handleSearch" />
-      </template>
-    </el-input>
+      <el-input
+        v-model="keyword"
+        :placeholder="placeholder"
+        clearable
+        v-bind="$attrs"
+        @keyup.enter="handleSearch"
+        @clear="handleClear"
+        @focus="handleFocus"
+        @blur="handleBlur"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
+      >
+        <template #append>
+          <el-button :icon="Search" @click="handleSearch" />
+        </template>
+      </el-input>
+    </el-tooltip>
   </div>
 </template>
 
@@ -39,6 +50,7 @@ if (!crud) {
 }
 
 const keyword = ref('');
+const showTooltip = ref(false);
 
 const placeholder = computed(() => props.placeholder || t('crud.button.search'));
 
@@ -49,6 +61,24 @@ const handleSearch = () => {
 const handleClear = () => {
   keyword.value = '';
   crud.handleReset();
+};
+
+// 鼠标悬浮时显示tooltip
+const handleMouseEnter = () => {
+  showTooltip.value = true;
+};
+
+const handleMouseLeave = () => {
+  showTooltip.value = false;
+};
+
+// 聚焦时显示tooltip
+const handleFocus = () => {
+  showTooltip.value = true;
+};
+
+const handleBlur = () => {
+  showTooltip.value = false;
 };
 </script>
 

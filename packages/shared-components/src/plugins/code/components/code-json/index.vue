@@ -1,140 +1,230 @@
 <template>
-  <div class="btc-code-json">
-    <!-- 弹窗模式 -->
-    <el-popover
-      v-if="popover"
-      :width="popoverWidth"
-      :trigger="popoverTrigger"
-      placement="top"
-      :persistent="false"
-      :show-arrow="true"
-      v-bind="filteredAttrs"
-    >
-      <template #reference>
-        <el-button
-          type="primary"
-          text
-          size="small"
-          class="json-trigger"
-        >
-          <BtcSvg name="view" :size="14" />
-          查看JSON
-        </el-button>
-      </template>
+<div v-if="text">
+	<div class="btc-code-json__wrap" v-if="popover">
+		<el-popover
+			width="auto"
+			placement="right"
+			popper-class="btc-code-json__popper"
+			effect="dark"
+		>
+			<template #reference>
+				<span class="btc-code-json__text">{{ text }}</span>
+			</template>
 
-      <div class="json-content">
-        <pre class="json-text">{{ formattedJson }}</pre>
-      </div>
-    </el-popover>
+			<viewer />
+		</el-popover>
+	</div>
 
-    <!-- 直接显示模式 -->
-    <div v-else class="json-display">
-      <pre class="json-text">{{ formattedJson }}</pre>
-    </div>
-  </div>
+	<viewer v-else>
+		<template #op>
+			<slot name="op"> </slot>
+		</template>
+	</viewer>
+</div>
 </template>
 
-<script setup lang="ts">
-import { computed, useAttrs } from 'vue';
-import BtcSvg from '@btc-common/svg/index.vue';
-
+<script lang="tsx" setup>
 defineOptions({
-  name: 'BtcCodeJson',
-  inheritAttrs: false
+	name: 'BtcCodeJson'
 });
 
-// 获取所有传入的属性
-const attrs = useAttrs();
+import { ElButton, ElMessage, ElPopover, ElScrollbar } from 'element-plus';
+import { computed, defineComponent, h } from 'vue';
+import { isObject, isString } from 'lodash-es';
 
-export interface Props {
-  /** JSON 数据 */
-  modelValue?: any;
-  /** 是否使用弹窗模式 */
-  popover?: boolean;
-  /** 弹窗宽度 */
-  popoverWidth?: string | number;
-  /** 弹窗触发方式 */
-  popoverTrigger?: 'click' | 'hover';
-  /** 是否格式化显示 */
-  format?: boolean;
-  /** 最大显示长度（超出显示省略号） */
-  maxLength?: number;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  popover: false,
-  popoverWidth: 400,
-  popoverTrigger: 'click',
-  format: true,
-  maxLength: 200
+const props = defineProps({
+	content: null,
+	modelValue: null,
+	popover: Boolean,
+	popoverWidth: {
+		type: [Number, String],
+		default: 400
+	},
+	popoverTrigger: {
+		type: String,
+		default: 'hover'
+	},
+	height: {
+		type: [Number, String],
+		default: '100%'
+	},
+	maxHeight: {
+		type: [Number, String],
+		default: 300
+	},
+	maxLength: {
+		type: Number,
+		default: 100
+	}
 });
 
-// 过滤掉不应该传递给 el-popover 的属性
-const filteredAttrs = computed(() => {
-  const { popover, popoverWidth, popoverTrigger, format, maxLength, modelValue, ...rest } = attrs;
-  return rest;
+// 获取值，兼容 content 和 modelValue
+const value = computed(() => props.modelValue || props.content);
+
+// 复制功能 - 使用更可靠的方法
+const copyToClipboard = async (text: string) => {
+	try {
+		// 优先使用现代 Clipboard API
+		if (navigator.clipboard && window.isSecureContext) {
+			await navigator.clipboard.writeText(text);
+			ElMessage.success('复制成功');
+			return;
+		}
+
+		// fallback: 使用 document.execCommand
+		const textArea = document.createElement('textarea');
+		textArea.value = text;
+		textArea.style.position = 'fixed';
+		textArea.style.left = '-999999px';
+		textArea.style.top = '-999999px';
+		textArea.style.opacity = '0';
+		textArea.style.pointerEvents = 'none';
+		textArea.setAttribute('readonly', '');
+		document.body.appendChild(textArea);
+
+		// 选择文本
+		textArea.select();
+		textArea.setSelectionRange(0, 99999);
+
+		// 执行复制
+		const successful = document.execCommand('copy');
+		document.body.removeChild(textArea);
+
+		if (successful) {
+			ElMessage.success('复制成功');
+		} else {
+			ElMessage.error('复制失败');
+		}
+	} catch (error) {
+		console.error('复制失败:', error);
+		ElMessage.error('复制失败');
+	}
+};
+
+// 显示文本
+const text = computed(() => {
+	const v = value.value;
+
+	if (isString(v)) {
+		const maxLen = props.maxLength;
+		return v.length > maxLen ? v.substring(0, maxLen) + '...' : v;
+	} else if (isObject(v)) {
+		const jsonStr = JSON.stringify(v, null, 4);
+		const maxLen = props.maxLength;
+		return jsonStr.length > maxLen ? jsonStr.substring(0, maxLen) + '...' : jsonStr;
+	} else {
+		const str = String(v);
+		const maxLen = props.maxLength;
+		return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
+	}
 });
 
-// 格式化 JSON 数据
-const formattedJson = computed(() => {
-  if (!props.modelValue) {
-    return '{}';
-  }
+// 视图组件
+const viewer = defineComponent({
+	setup(_, { slots }) {
+		// 获取完整的内容用于弹窗显示
+		const fullContent = computed(() => {
+			const v = value.value;
 
-  let jsonStr: string;
+			if (isString(v)) {
+				// 尝试解析 JSON 字符串以提供更好的显示效果
+				try {
+					const parsed = JSON.parse(v);
+					return JSON.stringify(parsed, null, 4);
+				} catch {
+					// 如果不是有效的 JSON，直接返回原字符串
+					return v;
+				}
+			} else if (isObject(v)) {
+				return JSON.stringify(v, null, 4);
+			} else {
+				return String(v);
+			}
+		});
 
-  if (typeof props.modelValue === 'string') {
-    try {
-      // 尝试解析字符串为 JSON
-      const parsed = JSON.parse(props.modelValue);
-      jsonStr = props.format ? JSON.stringify(parsed, null, 2) : JSON.stringify(parsed);
-    } catch {
-      // 如果解析失败，直接使用原字符串
-      jsonStr = props.modelValue;
-    }
-  } else {
-    // 对象直接序列化
-    jsonStr = props.format ? JSON.stringify(props.modelValue, null, 2) : JSON.stringify(props.modelValue);
-  }
+		function toCopy() {
+			copyToClipboard(fullContent.value);
+		}
 
-  // 如果设置了最大长度，超出部分显示省略号
-  if (props.maxLength && jsonStr.length > props.maxLength) {
-    return jsonStr.substring(0, props.maxLength) + '...';
-  }
-
-  return jsonStr;
+		return () => {
+			return h('div', { class: 'btc-code-json' }, [
+				h('div', { class: 'btc-code-json__op' }, [
+					fullContent.value && fullContent.value != '{}' &&
+						h(
+							ElButton,
+							{
+								type: 'success',
+								size: 'small',
+								onClick: toCopy
+							},
+							{ default: () => '复制' }
+						),
+					slots.op && slots.op()
+				]),
+				h(
+					ElScrollbar,
+					{
+						class: 'btc-code-json__content',
+						maxHeight: props.maxHeight,
+						height: props.height
+					},
+					{
+						default: () =>
+							h('pre', {}, [
+								h('code', {}, fullContent.value)
+							])
+					}
+				)
+			]);
+		};
+	}
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .btc-code-json {
-  .json-trigger {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
+	position: relative;
+	min-width: 200px;
+	max-width: 500px;
+	font-size: 14px;
 
-  .json-content {
-    max-height: 300px;
-    overflow-y: auto;
-  }
+	&__op {
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		z-index: 9;
+	}
 
-  .json-display {
-    max-height: 200px;
-    overflow-y: auto;
-  }
+	&__content {
+		padding: 10px;
 
-  .json-text {
-    margin: 0;
-    padding: 12px;
-    background: var(--el-fill-color-lighter);
-    border-radius: 6px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--el-text-color-primary);
-    white-space: pre-wrap;
-    word-break: break-all;
-    border: 1px solid var(--el-border-color-light);
-  }
+		code {
+			white-space: pre-wrap;
+			word-break: break-all;
+		}
+	}
+
+	&__wrap {
+		.btc-code-json__text {
+			display: block;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			overflow: hidden;
+			cursor: pointer;
+
+			&:hover {
+				color: var(--el-color-primary);
+			}
+		}
+	}
+
+	&__popper {
+		padding: 0 !important;
+		border-radius: 8px !important;
+	}
+
+	&__empty {
+		color: var(--el-text-color-placeholder);
+	}
 }
 </style>

@@ -123,9 +123,19 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     ],
 
     // 运维与审计
-    '/ops/audit': [
+    '/ops/logs/operation': [
       { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.audit', icon: 'DocumentCopy' },
+      { i18nKey: 'menu.ops.logs', icon: 'Document' },
+      { i18nKey: 'menu.ops.operation_log', icon: 'Operation' },
+    ],
+    '/ops/logs/request': [
+      { i18nKey: 'menu.ops', icon: 'Monitor' },
+      { i18nKey: 'menu.ops.logs', icon: 'Document' },
+      { i18nKey: 'menu.ops.request_log', icon: 'Connection' },
+    ],
+    '/data/recycle': [
+      { i18nKey: 'menu.data', icon: 'FolderOpened' },
+      { i18nKey: 'menu.data.recycle', icon: 'Delete' },
     ],
     '/ops/baseline': [
       { i18nKey: 'menu.ops', icon: 'Monitor' },

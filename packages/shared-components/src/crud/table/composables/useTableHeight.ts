@@ -1,115 +1,125 @@
-import { ref, onMounted, onUnmounted, nextTick, watch, type Ref } from 'vue';
+import { debounce, last } from "lodash-es";
+import { nextTick, onActivated, onMounted, ref, Ref } from "vue";
+import { addClass, removeClass } from "../../../utils/dom";
+import { globalMitt } from "../../../utils/mitt";
 import type { TableProps } from '../types';
 
-/**
- * 表格高度自动计算（对齐 cool-admin table/helper/height.ts）
- */
-export function useTableHeight(props: TableProps, tableRef: Ref, crud?: any) {
-  const maxHeight = ref<number | undefined>();
-
-  /**
-   * 计算最大高度（改进版本，更准确的高度计算）
-   */
-  function calcMaxHeight() {
-    if (!props.autoHeight) {
-      maxHeight.value = undefined;
+// 全局处理 ResizeObserver 错误（这是一个已知的浏览器问题）
+if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    const message = args[0];
+    if (typeof message === 'string' && message.includes('ResizeObserver loop')) {
       return;
     }
+    originalConsoleError.apply(console, args);
+  };
 
-    nextTick(() => {
-      const table = tableRef.value;
-      if (!table || !table.$el) return;
+  const resizeObserverErrorHandler = (e: ErrorEvent) => {
+    if (e.message && e.message.includes('ResizeObserver loop')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return false;
+    }
+  };
 
-      const tableEl = table.$el as HTMLElement;
+  window.addEventListener('error', resizeObserverErrorHandler);
 
-      // 获取表格所在的容器（btc-crud）
-      const container = tableEl.closest('.btc-crud');
-      if (!container) return;
+  window.addEventListener('unhandledrejection', (e) => {
+    if (e.reason && e.reason.message && e.reason.message.includes('ResizeObserver loop')) {
+      e.preventDefault();
+    }
+  });
+}
 
-      // 检查是否在 BtcViewGroup 中
-      const viewGroupContent = tableEl.closest('.btc-view-group .content');
-      let availableHeight: number;
+// 表格高度计算 - 适配 Vue 3 的 DOM 结构
+export function useTableHeight(props: TableProps, tableRef: Ref) {
+  // 最大高度
+  const maxHeight = ref(0);
 
-      if (viewGroupContent) {
-        // 在 BtcViewGroup 中，使用 content 区域的高度
-        const contentRect = viewGroupContent.getBoundingClientRect();
-        availableHeight = contentRect.height;
-      } else {
-        // 普通容器，使用 btc-crud 的高度
-        const containerRect = container.getBoundingClientRect();
-        availableHeight = containerRect.height;
-      }
+  // 计算表格最大高度 - 适配 Vue 3
+  const update = debounce(async () => {
+    await nextTick();
 
-      // 计算表格上方的高度（包括所有前面的兄弟元素）
-      let topHeight = 0;
-      let prevSibling = tableEl.previousElementSibling;
-      while (prevSibling) {
-        const htmlElement = prevSibling as HTMLElement;
-        if (htmlElement.offsetHeight > 0) {
-          topHeight += htmlElement.offsetHeight;
-          // 添加元素间的间距
-          const marginBottom = parseInt(window.getComputedStyle(htmlElement).marginBottom, 10) || 0;
-          topHeight += marginBottom;
+    const table = tableRef.value;
+    if (!table || !table.$el) return;
+
+    const tableEl = table.$el as HTMLElement;
+
+    // 找到 btc-crud 容器
+    const crudContainer = tableEl.closest('.btc-crud') as HTMLElement;
+    if (!crudContainer) return;
+
+    // 找到表格所在的 btc-crud-row
+    const tableRow = tableEl.closest('.btc-crud-row') as HTMLElement;
+    if (!tableRow) return;
+
+    await nextTick();
+
+    // 高度计算
+    let h = 0;
+
+    // 表格下间距
+    h += 10;
+
+    // 上高度：表格行相对于 crud 容器的 offsetTop
+    h += tableRow.offsetTop;
+
+    // 获取下高度：遍历表格行后续的所有兄弟元素
+    let nextSibling = tableRow.nextElementSibling;
+    const siblings = [tableRow];
+
+    while (nextSibling) {
+      const htmlElement = nextSibling as HTMLElement;
+      if (htmlElement.offsetHeight > 0) {
+        h += htmlElement.offsetHeight || 0;
+        siblings.push(htmlElement);
+
+        if (htmlElement.className.includes("btc-crud-row--last")) {
+          h += 10;
         }
-        prevSibling = prevSibling.previousElementSibling;
       }
+      nextSibling = nextSibling.nextElementSibling;
+    }
 
-      // 计算表格下方的高度（包括分页组件等）
-      let bottomHeight = 0;
-      let nextSibling = tableEl.nextElementSibling;
-      while (nextSibling) {
-        const htmlElement = nextSibling as HTMLElement;
-        if (htmlElement.offsetHeight > 0) {
-          bottomHeight += htmlElement.offsetHeight;
-          // 添加元素间的间距
-          const marginTop = parseInt(window.getComputedStyle(htmlElement).marginTop, 10) || 0;
-          bottomHeight += marginTop;
-        }
-        nextSibling = nextSibling.nextElementSibling;
-      }
-
-      // 添加容器内边距
-      const containerStyle = window.getComputedStyle(container);
-      const paddingTop = parseInt(containerStyle.paddingTop, 10) || 0;
-      const paddingBottom = parseInt(containerStyle.paddingBottom, 10) || 0;
-
-      // 计算表格的最大高度
-      const calculatedHeight = availableHeight - topHeight - bottomHeight - paddingTop - paddingBottom;
-
-      // 设置最大高度（确保有足够的最小高度，并预留一些缓冲空间）
-      maxHeight.value = Math.max(200, calculatedHeight - 20);
+    // 移除 btc-crud-row--last
+    siblings.forEach((e) => {
+      removeClass(e, "btc-crud-row--last");
     });
-  }
 
-  onMounted(() => {
-    if (props.autoHeight) {
-      calcMaxHeight();
-      window.addEventListener('resize', calcMaxHeight);
+    // 最后一个可视元素
+    const z = last(siblings);
+
+    // 去掉 btc-crud-row 下间距高度
+    if (z?.className.includes("btc-crud-row")) {
+      addClass(z, "btc-crud-row--last");
+      h -= 10;
     }
+
+    // 上间距
+    h += parseInt(window.getComputedStyle(crudContainer).paddingTop, 10);
+
+    // 设置最大高度（参考 cool-admin 的实现）
+    if (props.autoHeight) {
+      maxHeight.value = crudContainer.clientHeight - h;
+    }
+  }, 100);
+
+  // 窗口大小改变事件 - 使用 mitt 事件系统
+  globalMitt.on("resize", () => {
+    update();
   });
 
-  onUnmounted(() => {
-    if (props.autoHeight) {
-      window.removeEventListener('resize', calcMaxHeight);
-    }
+  onMounted(function () {
+    update();
   });
 
-  // 监听数据变化，重新计算高度
-  if (crud && props.autoHeight) {
-    watch(
-      () => crud.tableData.value,
-      () => {
-        nextTick(() => {
-          calcMaxHeight();
-        });
-      },
-      { deep: true }
-    );
-  }
+  onActivated(function () {
+    update();
+  });
 
   return {
     maxHeight,
-    calcMaxHeight,
+    calcMaxHeight: update
   };
 }
-

@@ -1,0 +1,142 @@
+<template>
+  <div class="btc-bar-chart">
+    <v-chart
+      :option="chartOption"
+      :autoresize="autoresize"
+      :style="{ height: height, width: width }"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, watch } from 'vue';
+import { useDark } from '@vueuse/core';
+
+export interface BarChartData {
+  name: string;
+  data: number[];
+  color?: string;
+  barWidth?: number | string;
+}
+
+export interface BarChartProps {
+  title?: string;
+  data: BarChartData[];
+  xAxisData: string[];
+  height?: string;
+  width?: string;
+  autoresize?: boolean;
+  grid?: {
+    left?: string | number;
+    right?: string | number;
+    top?: string | number;
+    bottom?: string | number;
+  };
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  yAxisFormatter?: string;
+}
+
+const props = withDefaults(defineProps<BarChartProps>(), {
+  height: '300px',
+  width: '100%',
+  autoresize: true,
+  grid: () => ({
+    left: '3%',
+    right: '4%',
+    top: '10%',
+    bottom: '3%'
+  }),
+  showLegend: true,
+  showTooltip: true
+});
+
+const isDark = useDark();
+
+const chartOption = reactive({
+  title: {
+    text: props.title || '',
+    textStyle: {
+      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+    }
+  },
+  tooltip: {
+    trigger: 'axis',
+    show: props.showTooltip,
+    backgroundColor: computed(() => isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
+    borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed'),
+    borderWidth: 1,
+    textStyle: {
+      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+    },
+    confine: true,
+    appendToBody: true
+  },
+  legend: {
+    show: props.showLegend,
+    top: '0%',
+    left: 'center',
+    textStyle: {
+      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+    }
+  },
+  grid: props.grid,
+  xAxis: {
+    type: 'category',
+    data: props.xAxisData,
+    axisLine: {
+      lineStyle: {
+        color: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+      }
+    },
+    axisLabel: {
+      color: computed(() => isDark.value ? '#a8abb2' : '#606266')
+    }
+  },
+  yAxis: {
+    type: 'value',
+    axisLine: {
+      show: false
+    },
+    axisTick: {
+      show: false
+    },
+    splitLine: {
+      lineStyle: {
+        color: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+      }
+    },
+    axisLabel: {
+      color: computed(() => isDark.value ? '#a8abb2' : '#606266'),
+      formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
+    }
+  },
+  series: [] as any[]
+});
+
+// 监听数据变化，更新图表
+watch(() => [props.data, props.xAxisData], () => {
+  chartOption.xAxis.data = props.xAxisData;
+  chartOption.series = props.data.map((item) => ({
+    name: item.name,
+    type: 'bar',
+    data: item.data,
+    barWidth: item.barWidth || '60%',
+    itemStyle: {
+      color: item.color || '#409eff'
+    }
+  }));
+}, { immediate: true });
+
+// 监听标题变化
+watch(() => props.title, (newTitle) => {
+  chartOption.title.text = newTitle || '';
+}, { immediate: true });
+</script>
+
+<style lang="scss" scoped>
+.btc-bar-chart {
+  width: 100%;
+  height: 100%;
+}
+</style>

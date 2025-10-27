@@ -10,7 +10,7 @@
         <BtcSearchKey :placeholder="t('platform.domain.search_placeholder')" />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
@@ -34,32 +34,39 @@ const message = useMessage();
 const crudRef = ref();
 const tableRef = ref();
 
-// 租户下拉选项 - 暂时使用静态数据
+// 租户下拉选项 - 暂态使用静态数据
 const tenantOptions = ref<{ label: string; value: any }[]>([
   { label: '默认租户', value: 'default' },
   { label: '测试租户', value: 'test' }
 ]);
 
 // 使用 EPS 域服务
-
 const wrappedDomainService = {
-  ...service.sysdomain,
+  ...service.system?.iam?.sys.domain,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await service.sysdomain.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await service.system?.iam?.sys.domain?.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await service.system?.iam?.sys.domain?.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
 
-  // 域表格列
-  const columns = computed<TableColumn[]>(() => [
-    { type: 'selection', width: 60 },
-    { type: 'index', label: '序号', width: 60 },
-    { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
-    { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
-    { prop: 'tenantId', label: '租户ID', width: 150 },
-    { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
-  ]);
+// 域表格列
+const columns = computed<TableColumn[]>(() => [
+  { type: 'selection', width: 60 },
+  { type: 'index', label: '序号', width: 60 },
+  { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
+  { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
+  { prop: 'tenantId', label: '租户ID', width: 150 },
+  { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
+]);
 
 // 域表单
 const formItems = computed<FormItem[]>(() => [

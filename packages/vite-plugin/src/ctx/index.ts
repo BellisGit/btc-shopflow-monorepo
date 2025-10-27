@@ -98,6 +98,7 @@ export function ctxPlugin(): Plugin {
 
   return {
     name: 'btc:ctx',
+    enforce: 'pre',
 
 		async configResolved() {
 			// 生成上下文数据

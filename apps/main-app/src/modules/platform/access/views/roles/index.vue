@@ -33,10 +33,18 @@ const message = useMessage();
 const crudRef = ref();
 
 const roleService = {
-  ...service.sysrole,
+  ...service.system?.iam?.sys.role,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await service.sysrole.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await service.system?.iam?.sys.role?.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await service.system?.iam?.sys.role?.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
@@ -66,3 +74,4 @@ const formItems = computed<FormItem[]>(() => [
   // 内容样式由布局层统一控制，此处只定义业务相关样式
 }
 </style>
+

@@ -147,8 +147,12 @@ function getTabLabel(item: ProcessItem) {
     '/navigation/menus': 'menu.navigation.menus',
     '/navigation/menus/preview': 'menu.navigation.menu_preview',
 
+    // 数据管理
+    '/data/recycle': 'menu.data.recycle',
+
     // 运维与审计
-    '/ops/audit': 'menu.ops.audit',
+    '/ops/logs/operation': 'menu.ops.operation_log',
+    '/ops/logs/request': 'menu.ops.request_log',
     '/ops/baseline': 'menu.ops.baseline',
     '/ops/simulator': 'menu.ops.simulator',
 

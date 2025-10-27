@@ -40,7 +40,7 @@ export function createUpdatedAtColumn(): TableColumn {
 export function createOperationColumn(buttons: OpButton[] = ['edit', 'delete']): TableColumn {
   return {
     type: 'op',
-    label: '操作',
+    label: 'ui.table.operation', // 使用已有的国际化key
     width: 200,
     buttons,
   };

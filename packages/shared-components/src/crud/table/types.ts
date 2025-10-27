@@ -62,6 +62,13 @@ export type OpButton =
     };
 
 /**
+ * 操作列配置
+ */
+export interface OpConfig {
+  buttons?: OpButton[];
+}
+
+/**
  * Props 配置
  */
 export interface TableProps {
@@ -84,5 +91,8 @@ export interface TableProps {
   }; // 默认排序
   sortRefresh?: boolean; // 排序后是否刷新，默认 true
   contextMenu?: Array<string | any> | boolean; // 右键菜单配置
+
+  // 操作列配置
+  op?: OpConfig; // 操作列配置
 }
 

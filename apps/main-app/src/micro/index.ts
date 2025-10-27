@@ -2,6 +2,7 @@ import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
 import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
+import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
@@ -160,14 +161,12 @@ export function listenSubAppRouteChange() {
 
     // ? 如果是子应用首页，将该应用的所有标签设为未激活
     if (meta?.isHome === true) {
-      import('../store/process').then(({ useProcessStore, getCurrentAppFromPath }) => {
-        const process = useProcessStore();
-        const app = getCurrentAppFromPath(path);
-        process.list.forEach(tab => {
-          if (tab.app === app) {
-            tab.active = false;
-          }
-        });
+      const process = useProcessStore();
+      const app = getCurrentAppFromPath(path);
+      process.list.forEach(tab => {
+        if (tab.app === app) {
+          tab.active = false;
+        }
       });
       return;
     }
@@ -181,22 +180,20 @@ export function listenSubAppRouteChange() {
       return;
     }
 
-    // 动态导入 store 并添加标签
-    import('../store/process').then(({ useProcessStore, getCurrentAppFromPath }) => {
-      const process = useProcessStore();
-      const app = getCurrentAppFromPath(path);
+    // 使用 store 添加标签
+    const process = useProcessStore();
+    const app = getCurrentAppFromPath(path);
 
-      // 确认是子应用
-      if (app === 'main') {
-        return;
-      }
+    // 确认是子应用
+    if (app === 'main') {
+      return;
+    }
 
-      process.add({
-        path,
-        fullPath,
-        name,
-        meta,
-      });
+    process.add({
+      path,
+      fullPath,
+      name,
+      meta,
     });
   });
 }

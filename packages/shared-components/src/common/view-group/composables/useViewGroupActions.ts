@@ -4,7 +4,7 @@
 // import { nextTick } from 'vue'; // 不再需要
 import { ElMessageBox } from 'element-plus';
 // import { ElMessage } from 'element-plus'; // 不再直接使用，让响应拦截器统一处理
-import { BtcMessage } from '@btc-components/btc-message';
+import { BtcMessage } from '../../../components/btc-message';
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
 
 export function useViewGroupActions(

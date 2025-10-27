@@ -153,6 +153,7 @@ export function svgPlugin(): Plugin {
 
   return {
     name: 'btc:svg',
+    enforce: 'pre',
 
 		async configResolved() {
 			// 生成 SVG sprite

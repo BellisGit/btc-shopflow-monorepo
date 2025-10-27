@@ -47,8 +47,12 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'navigation-menu-perm-bind': { key: 'navigation-menu-perm-bind', title: 'Menu Perm Bind', path: '/navigation/menus/:id/permissions', i18nKey: 'menu.navigation.menu_perm_bind' },
     'navigation-menu-preview': { key: 'navigation-menu-preview', title: 'Menu Preview', path: '/navigation/menus/preview', i18nKey: 'menu.navigation.menu_preview' },
 
+    // 数据管理
+    'data-recycle': { key: 'data-recycle', title: 'Data Recycle Bin', path: '/data/recycle', i18nKey: 'menu.data.recycle' },
+
     // 运维与审计
-    'ops-audit': { key: 'ops-audit', title: 'Audit', path: '/ops/audit', i18nKey: 'menu.ops.audit' },
+    'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
+    'ops-logs-request': { key: 'ops-logs-request', title: 'Request Log', path: '/ops/logs/request', i18nKey: 'menu.ops.request_log' },
     'ops-baseline': { key: 'ops-baseline', title: 'Baseline', path: '/ops/baseline', i18nKey: 'menu.ops.baseline' },
     'ops-simulator': { key: 'ops-simulator', title: 'Simulator', path: '/ops/simulator', i18nKey: 'menu.ops.simulator' },
 

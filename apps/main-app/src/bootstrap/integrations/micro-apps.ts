@@ -4,7 +4,7 @@
  */
 
 import type { App } from 'vue';
-import { setupQiankun, listenSubAppReady, listenSubAppRouteChange } from '@/micro';
+import { setupQiankun, listenSubAppReady, listenSubAppRouteChange } from '../../micro';
 
 /**
  * 设置微前端应用

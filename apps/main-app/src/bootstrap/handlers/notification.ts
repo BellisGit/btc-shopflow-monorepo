@@ -4,7 +4,7 @@
  */
 
 import { ElNotification } from 'element-plus';
-import { notificationManager } from '@utils/notification-manager';
+import { notificationManager } from '../../utils/notification-manager';
 
 // 扩展通知实例类型
 export interface ExtendedNotificationInstance {

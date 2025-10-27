@@ -50,6 +50,7 @@ function firstUpperCase(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+
 /**
  * 从远程获取 EPS 数据
  */
@@ -64,7 +65,10 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
   const url = reqUrl + getEpsUrl(processedEpsUrl);
 
   try {
-    const response = await axios.get(url, { timeout: 5000 });
+    const response = await axios.get(url, {
+      timeout: 5000
+    });
+
     const { code, data, message } = response.data;
 
     if (code === 1000) {
@@ -98,24 +102,47 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
  * 获取 EPS 数据（从缓存或本地文件）
  */
 async function getData(epsUrl: string, _reqUrl: string, outputDir: string, cachedData?: any) {
-  // 如果有缓存数据，直接使用
   if (cachedData && cachedData.list) {
     epsList = cachedData.list;
   } else {
-    // 读取本地 eps.json
-    epsList = (await readFile(getEpsPath(outputDir, 'eps.json'), true)) || [];
+    // 读取本地 eps.json（扁平化的实体数组格式）
+    const localData = await readFile(getEpsPath(outputDir, 'eps.json'), true);
 
-    // 如果没有 epsUrl，使用本地数据
+    if (localData) {
+      // 检查是否是新的扁平化格式（数组）
+      if (Array.isArray(localData)) {
+        epsList = localData;
+      } 
+      // 兼容旧的 API 响应格式
+      else if (localData.data) {
+        const entities: any[] = [];
+        Object.entries(localData.data).forEach(([moduleKey, entitiesList]: [string, any]) => {
+          if (Array.isArray(entitiesList)) {
+            entitiesList.forEach((entity: any) => {
+              entities.push({
+                ...entity,
+                moduleKey
+              });
+            });
+          }
+        });
+        epsList = entities;
+      } else {
+        epsList = [];
+      }
+    } else {
+      epsList = [];
+    }
+
     if (!epsUrl) {
       return;
     }
-
-    // 静默使用本地数据，不打印日志
   }
 
   // 初始化处理，补全缺省字段
   epsList.forEach((e) => {
-    if (!e.namespace) e.namespace = '';
+    // 如果没有namespace，使用prefix作为namespace
+    if (!e.namespace) e.namespace = e.prefix || '';
     if (!e.api) e.api = [];
     if (!e.columns) e.columns = [];
     if (!e.pageColumns) e.pageColumns = [];
@@ -133,27 +160,14 @@ async function getData(epsUrl: string, _reqUrl: string, outputDir: string, cache
  * 创建 eps.json 文件
  */
 async function createJson(outputDir: string): Promise<boolean> {
-  const data = epsList.map((e) => {
-    return {
-      prefix: e.prefix,
-      name: e.name || '',
-      api: e.api.map((apiItem: any) => ({
-        name: apiItem.name,
-        method: apiItem.method,
-        path: apiItem.path,
-      })),
-      search: e.search,
-    };
-  });
-
-  const content = JSON.stringify(data, null, 2);
+  // 直接存储扁平化的实体数组，供 createService 函数使用
+  const content = JSON.stringify(epsList, null, '\t');
   const localContent = await readFile(getEpsPath(outputDir, 'eps.json'));
 
-  // 判断是否需要更新
   const isUpdate = content !== localContent;
 
   if (isUpdate) {
-    await writeFile(getEpsPath(outputDir, 'eps.json'), content);
+    writeFile(getEpsPath(outputDir, 'eps.json'), content);
   }
 
   return isUpdate;
@@ -166,7 +180,7 @@ function createService(_epsUrl: string) {
 
   // 如果没有数据，直接返回错误
   if (epsList.length === 0) {
-    console.error('[btc:eps] 未找到实体! eps 数据获取失败');
+    console.error('[eps] 未找到实体! eps 数据获取失败');
     throw new Error('EPS data fetch failed - no entities available');
   }
 
@@ -174,13 +188,26 @@ function createService(_epsUrl: string) {
     // 使用实体名作为服务键（小写，去除 Entity 后缀）
     const serviceKey = e.name ? e.name.toLowerCase().replace(/entity$/, '') : 'unknown';
 
+    // 根据 prefix 构建完整的服务路径
+    // 例如: "admin/system/log/sys/operation" -> ["system", "log", "sys", "operation"]
+    const prefix = e.prefix || '';
+    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin');
+    
+    // 构建嵌套的服务对象
+    let currentLevel = service;
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+      if (!currentLevel[part]) {
+        currentLevel[part] = {};
+      }
+      currentLevel = currentLevel[part];
+    }
 
-    // 创建服务对象
-    if (!service[serviceKey]) {
-      // 直接使用prefix，不需要移除admin前缀
-      const namespace = e.prefix || '';
-      service[serviceKey] = {
-        namespace: namespace,
+    // 在最后一层创建服务对象
+    const finalKey = pathParts[pathParts.length - 1] || serviceKey;
+    if (!currentLevel[finalKey]) {
+      currentLevel[finalKey] = {
+        namespace: prefix,
         permission: {},
         _permission: {},
         search: e.search || {},
@@ -198,9 +225,8 @@ function createService(_epsUrl: string) {
 
 
         if (methodName && !/[-:]/g.test(methodName)) {
-
           // 创建包含 API 信息的对象，而不是直接创建函数
-          service[serviceKey][methodName] = {
+          currentLevel[finalKey][methodName] = {
             path: a.path,
             method: a.method,
             name: a.name,
@@ -219,10 +245,10 @@ function createService(_epsUrl: string) {
     }
 
     // 创建权限
-    if (service[serviceKey].namespace) {
-      Object.keys(service[serviceKey]).forEach((key) => {
+    if (currentLevel[finalKey].namespace) {
+      Object.keys(currentLevel[finalKey]).forEach((key) => {
         if (!['namespace', 'permission', '_permission', 'search'].includes(key)) {
-          service[serviceKey].permission[key] = `${service[serviceKey].namespace}/${key}`.replace(/\//g, ':');
+          currentLevel[finalKey].permission[key] = `${currentLevel[finalKey].namespace}/${key}`.replace(/\//g, ':');
         }
       });
     }
@@ -270,6 +296,23 @@ function createServiceCode(): { content: string; types: string[] } {
               if (!checkName(n)) return;
 
               if (n) {
+                // 处理删除方法的特殊逻辑
+                let urlPath = `"/${d[i].namespace}${a.path}"`;
+                let requestData = 'data';
+
+                // 如果是删除方法，需要特殊处理
+                if (n.toLowerCase().includes('delete')) {
+                  if (a.path.includes('{id}')) {
+                    // 单个删除：替换 {id} 为实际 ID
+                    urlPath = '`/${d[i].namespace}${a.path.replace(/{id}/g, "${Array.isArray(data) ? data[0] : data}")}`';
+                    requestData = 'undefined'; // 删除方法不需要请求体
+                  } else if (n.toLowerCase().includes('batch')) {
+                    // 批量删除：直接使用路径，数据作为请求体
+                    urlPath = `"/${d[i].namespace}${a.path}"`;
+                    requestData = 'data'; // 批量删除需要请求体
+                  }
+                }
+
                 // 方法描述
                 t += `
                   /**
@@ -277,9 +320,9 @@ function createServiceCode(): { content: string; types: string[] } {
                    */
                   ${n}(data?: any): Promise<any> {
                     return request({
-                      url: "/${d[i].namespace}${a.path}",
+                      url: ${urlPath},
                       method: "${(a.method || 'get').toUpperCase()}",
-                      data,
+                      data: ${requestData},
                     });
                   },
                 `;
@@ -318,13 +361,13 @@ function createServiceCode(): { content: string; types: string[] } {
 async function createDescribe(outputDir: string) {
   // 简化的类型描述生成
   const text = `
-    // Entity 接口定义
+    // Entity interface definitions
     ${epsList.map((item) => {
       if (!checkName(item.name)) return '';
 
       let t = `interface ${formatName(item.name)} {`;
 
-      // 添加字段
+      // Add fields
       const columns = [...(item.columns || []), ...(item.pageColumns || [])];
       columns.forEach((col) => {
         t += `
@@ -337,7 +380,7 @@ async function createDescribe(outputDir: string) {
 
       t += `
         /**
-         * 任意键值
+         * Any key-value pairs
          */
         [key: string]: any;
       }
@@ -346,7 +389,7 @@ async function createDescribe(outputDir: string) {
       return t;
     }).join('\n\n')}
 
-    // Service 接口定义
+    // Service interface definitions
     interface Service {
       request: (options: any) => Promise<any>;
       [key: string]: any;
@@ -358,7 +401,7 @@ async function createDescribe(outputDir: string) {
 
   // 是否需要更新
   if (content !== localContent && epsList.length > 0) {
-    await writeFile(getEpsPath(outputDir, 'eps.d.ts'), content);
+    writeFile(getEpsPath(outputDir, 'eps.d.ts'), content);
   }
 }
 
@@ -418,7 +461,7 @@ export async function generateEps(apiMeta: any, outputDir: string) {
   }
 
   // 创建 eps.json
-  await writeFile(getEpsPath(outputDir, 'eps.json'), JSON.stringify(epsData, null, 2));
+  writeFile(getEpsPath(outputDir, 'eps.json'), JSON.stringify(epsData, null, 2));
 
   return {
     success: true,

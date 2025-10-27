@@ -1,5 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
+import { requestLogger } from './request-logger';
+import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 
 /**
  * HTTP 请求工具 - 基于 axios，参考 cool-admin 的实现
@@ -7,9 +9,13 @@ import { responseInterceptor } from '@btc/shared-utils';
 export class Http {
   public baseURL: string;
   private axiosInstance: any;
+  private retryManager: ReturnType<typeof createHttpRetry>;
 
   constructor(baseURL = '') {
     this.baseURL = baseURL;
+
+    // 创建重试管理器
+    this.retryManager = createHttpRetry(RETRY_CONFIGS.standard);
 
     // 创建 axios 实例
     this.axiosInstance = axios.create({
@@ -35,6 +41,10 @@ export class Http {
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
 
         config.headers['Content-Type'] = 'application/json';
+
+        // 记录请求开始时间，用于计算耗时
+        config.metadata = { startTime: Date.now() };
+
         return config;
       },
       (error: any) => {
@@ -46,39 +56,178 @@ export class Http {
 
     // 响应拦截器 - 使用新的响应拦截工具
     const interceptor = responseInterceptor.createResponseInterceptor();
+
+    // 包装响应拦截器，添加请求日志记录
+    const onFulfilled = (response: any) => {
+      this.recordRequestLog(response, 'success');
+      return interceptor.onFulfilled(response);
+    };
+
+    const onRejected = (error: any) => {
+      this.recordRequestLog(error.response || { config: error.config }, 'failed');
+      return interceptor.onRejected(error);
+    };
+
     this.axiosInstance.interceptors.response.use(
-      interceptor.onFulfilled,
-      interceptor.onRejected
+      onFulfilled,
+      onRejected
     );
   }
 
+  /**
+   * 限制对象大小，防止过大的数据导致问题
+   */
+  private limitObjectSize(obj: any, maxDepth: number, maxSize: number): any {
+    if (maxDepth <= 0 || maxSize <= 0) {
+      return '[数据过大，已截断]';
+    }
+
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return obj.length > maxSize ? obj.substring(0, maxSize) + '...' : obj;
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      const limitedArray: any[] = [];
+      let currentSize = 0;
+      for (let i = 0; i < obj.length && currentSize < maxSize; i++) {
+        const limitedItem = this.limitObjectSize(obj[i], maxDepth - 1, maxSize - currentSize);
+        limitedArray.push(limitedItem);
+        currentSize += JSON.stringify(limitedItem).length;
+      }
+      return limitedArray;
+    }
+
+    if (typeof obj === 'object') {
+      const limitedObj: any = {};
+      let currentSize = 0;
+      for (const key in obj) {
+        if (currentSize >= maxSize) {
+          limitedObj['...'] = '[更多数据已截断]';
+          break;
+        }
+        const limitedValue = this.limitObjectSize(obj[key], maxDepth - 1, maxSize - currentSize);
+        limitedObj[key] = limitedValue;
+        currentSize += JSON.stringify(limitedValue).length;
+      }
+      return limitedObj;
+    }
+
+    return obj;
+  }
+
+  /**
+   * 记录请求日志
+   */
+  private recordRequestLog(response: any, status: 'success' | 'failed') {
+    try {
+      const config = response?.config || {};
+      const startTime = config.metadata?.startTime || Date.now();
+      const duration = Date.now() - startTime;
+
+      // 获取用户信息（暂时硬编码，等待token相关API实现）
+      const userId = 17610109231352;
+      const userName = 'Mose Lu';
+
+      // 处理请求参数，确保是对象格式而不是字符串
+      let params = {};
+      if (config.method === 'GET') {
+        // GET请求的参数
+        params = config.params || {};
+      } else {
+        // POST/PUT/DELETE请求的数据
+        if (typeof config.data === 'string') {
+          try {
+            // 限制字符串长度，避免过长的数据
+            const dataStr = config.data.length > 10000 ? config.data.substring(0, 10000) + '...' : config.data;
+            // 如果是JSON字符串，尝试解析
+            params = JSON.parse(dataStr);
+          } catch {
+            // 解析失败，使用原始字符串（截断）
+            const dataStr = config.data.length > 1000 ? config.data.substring(0, 1000) + '...' : config.data;
+            params = { raw: dataStr };
+          }
+        } else {
+          // 已经是对象格式，限制深度和大小
+          params = this.limitObjectSize(config.data || {}, 5, 10000);
+        }
+      }
+
+      // 记录请求日志
+      requestLogger.add({
+        userId,
+        username: userName,
+        requestUrl: config.url || '',
+        params, // 传入对象格式，在 add 方法中会被转换为 JSON 字符串
+        ip: '', // 由后端从请求头中获取真实IP
+        duration,
+        status,
+        createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+      } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
+    } catch (error) {
+      // 日志记录失败不应影响主业务流程
+      console.error('记录请求日志失败:', error);
+    }
+  }
+
   async get<T = any>(url: string, params?: Record<string, any>): Promise<T> {
-    const response = await this.axiosInstance.get(url, { params });
-    return response;
+    return this.retryManager.retryRequest(
+      () => this.axiosInstance.get(url, { params }),
+      RETRY_CONFIGS.fast
+    );
   }
 
   async post<T = any>(url: string, data?: any): Promise<T> {
-    const response = await this.axiosInstance.post(url, data);
-    return response;
+    return this.retryManager.retryRequest(
+      () => this.axiosInstance.post(url, data),
+      RETRY_CONFIGS.standard
+    );
   }
 
   async put<T = any>(url: string, data?: any): Promise<T> {
-    const response = await this.axiosInstance.put(url, data);
-    return response;
+    return this.retryManager.retryRequest(
+      () => this.axiosInstance.put(url, data),
+      RETRY_CONFIGS.standard
+    );
   }
 
   async delete<T = any>(url: string, data?: any): Promise<T> {
-    const response = await this.axiosInstance.delete(url, { data });
-    return response;
+    return this.retryManager.retryRequest(
+      () => this.axiosInstance.delete(url, { data }),
+      RETRY_CONFIGS.standard
+    );
   }
 
   async request<T = any>(options: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.request(options);
-    return response;
+    return this.retryManager.retryRequest(
+      () => this.axiosInstance.request(options),
+      RETRY_CONFIGS.standard
+    );
   }
 
   // 检查拦截器状态的方法
   checkInterceptors() {
+  }
+
+  /**
+   * 获取重试状态
+   */
+  getRetryStatus() {
+    return this.retryManager.getStatus();
+  }
+
+  /**
+   * 重置重试状态
+   */
+  resetRetry() {
+    this.retryManager.reset();
   }
 
   // 测试响应拦截器的方法

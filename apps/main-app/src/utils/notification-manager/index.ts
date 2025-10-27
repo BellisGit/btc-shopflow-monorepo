@@ -20,7 +20,7 @@ export class NotificationManager {
   private badgeManager: BadgeManager;
   private lifecycleManager: LifecycleManager | null = null;
   private historyManager: HistoryManager;
-  private cleanupInterval: number | null = null;
+  private cleanupInterval: any = null;
 
   constructor(config: Partial<NotificationQueueConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };

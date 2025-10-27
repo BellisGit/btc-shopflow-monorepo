@@ -9,7 +9,7 @@
         <BtcSearchKey />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
@@ -33,14 +33,22 @@ const message = useMessage();
 const crudRef = ref();
 
 // 权限服务 - 使用EPS服务
-const permissionService = service.syspermission;
+const permissionService = service.system?.iam?.sys.permission;
 
 // 添加delete确认
 const wrappedService = {
   ...permissionService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await permissionService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await permissionService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await permissionService.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
@@ -71,3 +79,4 @@ onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 .permissions-list {
 }
 </style>
+

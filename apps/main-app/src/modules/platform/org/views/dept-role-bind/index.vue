@@ -25,7 +25,7 @@
       <el-transfer
         v-model="selectedRoles"
         :data="allRoles"
-        :titles="['可用角色', '已绑定角�?]"
+        :titles="['可用角色', '已绑定角�?]"
         filterable
         filter-placeholder="搜索角色"
       />
@@ -49,8 +49,8 @@ const selectedRoles = ref<any[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const departmentService = service.base.department;
-const roleService = service.base.department;
+const departmentService = service.system?.iam?.sys.department;
+const roleService = service.system?.iam?.sys.role;
 
 // 加载部门信息
 const loadDeptInfo = async () => {
@@ -65,14 +65,14 @@ const loadDeptInfo = async () => {
 // 加载角色列表
 const loadRoles = async () => {
   try {
-    const roles = await roleService.list();
+    const roles = await roleService.list({});
     allRoles.value = roles.map((role: any) => ({
       key: role.id,
-      label: `${role.roleName}�?{role.roleCode}）`,
+      label: `${role.roleName}�?{role.roleCode}）`,
       disabled: false,
     }));
 
-    // Mock：随机选择一些已绑定的角�?    selectedRoles.value = [1, 3]; // 默认绑定管理员和员工
+    // Mock：随机选择一些已绑定的角�?    selectedRoles.value = [1, 3]; // 默认绑定管理员和员工
   } catch (_error) {
     message.error('加载角色列表失败');
   }
@@ -82,7 +82,7 @@ const loadRoles = async () => {
 const handleSave = async () => {
   saving.value = true;
   try {
-    // Mock：延迟模拟保�?    await new Promise(resolve => setTimeout(resolve, 500));
+    // Mock：延迟模拟保�?    await new Promise(resolve => setTimeout(resolve, 500));
 
     // 这里应该调用后端API保存绑定关系
     // await http.post(`/departments/${deptId}/roles`, { roleIds: selectedRoles.value });
@@ -118,4 +118,5 @@ onMounted(() => {
   }
 }
 </style>
+
 

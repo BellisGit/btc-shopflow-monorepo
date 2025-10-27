@@ -52,7 +52,7 @@ export class BadgeManager {
     }, interval); // 每400ms递减一次
 
     // 保存定时器引用，用于清理
-    this.countdownTimers.set(message.id, countdownInterval);
+    this.countdownTimers.set(message.id, countdownInterval as any);
   }
 
   /**

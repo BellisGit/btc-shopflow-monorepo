@@ -31,22 +31,22 @@ const route = useRoute();
 const crudRef = ref();
 const tableRef = ref();
 
-// 获取用户ID
+// 用户ID
 const userId = computed(() => route.params.id as string);
 
 // 用户角色服务
 const userRoleService = {
-  ...service.base.userRole,
-  // 重写查询方法，添加用户ID参数
+  ...service.system?.iam?.sysrole,
+  // 添加用户ID到查询参数
   page: async (params: any) => {
-    return service.base.userRole.page({
+    return service.system?.iam?.sysrole?.page({
       ...params,
       userId: userId.value
     });
   }
 };
 
-// 角色表格列
+// 角色列配置
 const roleColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: '序号', width: 60 },
@@ -58,7 +58,10 @@ const roleColumns = computed<TableColumn[]>(() => [
     type: 'op',
     label: '操作',
     width: 120,
-    buttons: ['assign', 'unassign']
+    buttons: [
+      { label: '分配', onClick: () => {} },
+      { label: '取消分配', onClick: () => {} }
+    ]
   },
 ]);
 </script>

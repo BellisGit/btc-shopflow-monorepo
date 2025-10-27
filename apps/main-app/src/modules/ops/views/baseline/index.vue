@@ -10,7 +10,7 @@
       </BtcRow>
 
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="baselineColumns" border />
+        <BtcTable ref="tableRef" :columns="baselineColumns" :op="{ buttons: ['edit', 'delete'] }" border />
       </BtcRow>
 
       <BtcRow>

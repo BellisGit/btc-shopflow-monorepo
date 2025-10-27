@@ -1,7 +1,7 @@
 <template>
   <div class="menu-preview-page">
     <div class="preview-container">
-      <!-- 角色选择器 -->
+      <!-- ???? -->
       <BtcRow>
         <BtcFlex1 />
         <el-select
@@ -23,7 +23,7 @@
         </el-button>
       </BtcRow>
 
-      <!-- 菜单预览 -->
+      <!-- ???? -->
       <div class="menu-preview" v-if="selectedRole && filteredMenus.length > 0">
         <el-menu
           :default-active="activeMenu"
@@ -79,59 +79,59 @@ defineOptions({
   name: 'NavigationMenuPreview'
 });
 
-// Mock服务
+// Mock??
 const message = useMessage();
-const _userService = service.sysuser;
-const _roleService = service.sysrole;
+const _userService = service.system?.iam?.sys.user;
+const _roleService = service.system?.iam?.sys.role;
 
-const menuService = service.sysmenu;
+const menuService = service.system?.iam?.sys.menu;
 
-// 响应式数据
+// ?????
 const roles = ref<any[]>([]);
 const menus = ref<any[]>([]);
 const selectedRole = ref<number | null>(null);
 const activeMenu = ref('');
 
-// 角色变更处理
+// ??????
 const filteredMenus = computed(() => {
   if (!selectedRole.value) return [];
 
   const filterMenus = (menuList: any[]): any[] => {
     return menuList
-      .filter(menu => menu.roles.includes(selectedRole.value))
+      .filter(menu => menu.roles && menu.roles.includes(selectedRole.value))
       .map(menu => ({
         ...menu,
         children: menu.children ? filterMenus(menu.children) : []
       }))
-      .sort((a, b) => a.sort - b.sort);
+      .sort((a, b) => (a.sort || 0) - (b.sort || 0));
   };
 
   return filterMenus(menus.value);
 });
 
-// 角色变更处理
+// ??????
 const handleRoleChange = (roleId: number) => {
   selectedRole.value = roleId;
   activeMenu.value = '';
-  message.success(`已切换到角色: ${roles.value.find(r => r.id === roleId)?.roleName}`);
+  message.success(`??????: ${roles.value.find(r => r.id === roleId)?.roleName}`);
 };
 
 const handleMenuSelect = (index: string) => {
   activeMenu.value = index;
   const menu = menus.value.find(m => m.id.toString() === index);
   if (menu) {
-    message.info(`已选择菜单: ${menu.label}`);
+    message.info(`?????: ${menu.label}`);
   }
 };
 
 const handleRefresh = () => {
   loadData();
-  message.success('刷新成功');
+  message.success('????');
 };
 
-// 构建树形结构
+// ??????
 const buildTree = (data: any[], parentId: any = null): any[] => {
-  // 确保 data 是数组
+  // ?? data ???
   if (!Array.isArray(data)) {
     return [];
   }
@@ -144,16 +144,16 @@ const buildTree = (data: any[], parentId: any = null): any[] => {
     }));
 };
 
-// 加载数据
+// ????
 const loadData = async () => {
   const [rolesData, menusData] = await Promise.all([
-    _roleService.list(),
-    menuService.list()
+    _roleService.list({}),
+    menuService.list({})
   ]);
 
-  // 确保 rolesData 是数组
+  // ?? rolesData ???
   roles.value = Array.isArray(rolesData) ? rolesData : (rolesData?.list || []);
-  // 确保 menusData 是数组，如果不是则使用空数组
+  // ?? menusData ??????????????
   const menuList = Array.isArray(menusData) ? menusData : (menusData?.list || []);
   menus.value = buildTree(menuList);
 };
@@ -180,3 +180,4 @@ onMounted(() => {
   }
 }
 </style>
+

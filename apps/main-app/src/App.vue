@@ -1,16 +1,18 @@
 <template>
   <router-view />
+  <RetryStatusIndicator />
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { initEpsData } from '@btc/shared-core';
+import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
+
+import epsData from 'virtual:eps';
 
 // 初始化 EPS 数据
-onMounted(async () => {
+onMounted(() => {
   try {
-    const eps = await import('virtual:eps');
-    const epsData = eps.default || eps;
     initEpsData(epsData);
   } catch (error) {
     console.error('[App] Failed to load EPS data:', error);

@@ -2,7 +2,7 @@
  * 用户列表页面配置
  */
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+import { service } from '../../../../services/eps';
 
 
 // 用户列表列配置
@@ -89,7 +89,7 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
       }
     },
     {
-      prop: 'roleIds',
+      prop: 'roleId',
       label: '角色',
       span: 12,
       component: {
@@ -97,11 +97,7 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
         props: {
           placeholder: '请选择角色',
           options: roleOptions,
-          multiple: true,
           showCount: true,
-          collapseTags: true,
-          collapseTagsTooltip: true,
-          maxCollapseTags: 2,
           clearable: true,
           filterable: true
         }
@@ -127,7 +123,7 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
 
 // 服务配置 - 直接传递服务对象，让组件自动处理参数
 export const services = {
-  sysdepartment: service.sysdepartment,
-  sysrole: service.sysrole,
-  sysuser: service.sysuser
+  sysdepartment: service.system?.iam?.sys?.department,
+  sysrole: service.system?.iam?.sys?.role,
+  sysuser: service.system?.iam?.sys?.user
 };

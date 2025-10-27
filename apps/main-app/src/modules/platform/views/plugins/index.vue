@@ -6,6 +6,7 @@
       :right-service="wrappedPluginService"
       :table-columns="pluginColumns"
       :form-items="pluginFormItems"
+      :op="{ buttons: ['edit', 'delete'] }"
       left-title="业务域"
       right-title="插件列表"
       search-placeholder="搜索插件..."
@@ -30,30 +31,38 @@ const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
 
-// 域服务配置 - 直接调用域列表的list API
+// 域服务配置- 直接调用域列表的list API
 const domainService = {
   list: (params?: any) => {
-    // 必须传递参数对象，即使为空对象{}，后端会设置默认值
+    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
 
-    return service.sysdomain.list(finalParams);
+    return service.system?.iam?.sys.domain?.list(finalParams);
   }
 };
 
-// 插件服务（右侧表）：使用真实API
-const pluginService = service.sysplugin;
+// 插件服务（右侧表），使用纯后端API
+const pluginService = service.system?.iam?.sys.plugin;
 
 const wrappedPluginService = {
   ...pluginService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await pluginService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await pluginService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await pluginService.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
 
 
-// 用户点击选择处理
+// 域选择处理
 const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
 };
@@ -100,3 +109,4 @@ const pluginFormItems = computed<FormItem[]>(() => [
   box-sizing: border-box;
 }
 </style>
+

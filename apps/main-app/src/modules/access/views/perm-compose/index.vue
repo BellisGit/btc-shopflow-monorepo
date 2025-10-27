@@ -1,6 +1,6 @@
 <template>
   <div class="perm-compose perm-compose-page">
-    <!-- 顶部工具栏 -->
+    <!-- ????? -->
     <div class="perm-compose-header">
       <div class="header-left">
         <BtcSelectButton v-model="mode" :options="modeOptions" @change="handleModeChange" />
@@ -8,43 +8,43 @@
       <div class="header-right">
         <el-button @click="handleClearAll" :disabled="composedPermissions.length === 0">
           <el-icon><Delete /></el-icon>
-          清空结果
+          ????
         </el-button>
         <el-button type="primary" @click="handleSave" :loading="saving" :disabled="composedPermissions.length === 0">
           <el-icon><Select /></el-icon>
-          保存权限
+          ????
         </el-button>
       </div>
     </div>
 
-    <!-- 中间内容区域 -->
+    <!-- ????? -->
     <div class="perm-compose-content">
       <div class="perm-compose-wrap">
-        <!-- 左侧：资源树 -->
+        <!-- ?????? -->
         <div class="perm-compose-left">
           <div class="scope">
-            <!-- 头部 -->
+            <!-- ?? -->
             <div class="head">
-              <el-text class="label">资源树</el-text>
+              <el-text class="label">????</el-text>
               <el-switch
                 v-model="applyToChildren"
-                active-text="应用到子级"
+                active-text="?????"
                 inactive-text=""
                 size="small"
               />
             </div>
 
-            <!-- 搜索框 -->
+            <!-- ??? -->
             <div class="search">
               <el-input
                 v-model="resourceFilterText"
-                placeholder="搜索资源"
+                placeholder="????"
                 clearable
                 :prefix-icon="Search"
               />
             </div>
 
-            <!-- 数据区域 -->
+            <!-- ??? -->
             <div class="data">
               <el-scrollbar>
                 <el-tree
@@ -77,34 +77,34 @@
           </div>
         </div>
 
-        <!-- 中间：行为表格（组合模式）或 权限矩阵（矩阵模式） -->
+        <!-- ?????????????? ?????????? -->
         <div class="perm-compose-middle">
           <div class="scope">
-            <!-- 头部 -->
+            <!-- ?? -->
             <div class="head">
-              <el-text class="label">{{ mode === 'matrix' ? '权限矩阵' : '行为选择' }}</el-text>
+              <el-text class="label">{{ mode === 'matrix' ? '????' : '????' }}</el-text>
               <div class="head-actions" v-if="mode === 'compose'">
-                <el-button size="small" text @click="handleSelectAllActions">全选</el-button>
+                <el-button size="small" text @click="handleSelectAllActions">??</el-button>
                 <el-divider direction="vertical" />
                 <el-dropdown trigger="click" @command="handleActionTemplate">
                   <el-button size="small" text>
-                    预设模板<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    ????<el-icon class="el-icon--right"><ArrowDown /></el-icon>
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="readonly">只读（查看）</el-dropdown-item>
-                      <el-dropdown-item command="editor">编辑（查看+编辑）</el-dropdown-item>
-                      <el-dropdown-item command="full">完整（CRUD）</el-dropdown-item>
+                      <el-dropdown-item command="readonly">??????</el-dropdown-item>
+                      <el-dropdown-item command="editor">?????+???</el-dropdown-item>
+                      <el-dropdown-item command="full">???CRUD?</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
               </div>
             </div>
 
-            <!-- 数据区域 -->
+            <!-- ??? -->
             <div class="data">
               <el-scrollbar>
-                <!-- 组合模式：行为表格 -->
+                <!-- ????????? -->
                 <el-table
                   v-if="mode === 'compose'"
                   ref="actionTableRef"
@@ -115,7 +115,7 @@
                   style="width: 100%;"
                 >
                   <el-table-column type="selection" width="50" :selectable="(row) => isActionSupported(row.id)" />
-                  <el-table-column label="图标" width="60" align="center">
+                  <el-table-column label="??" width="60" align="center">
                     <template #default="{ row }">
                       <el-icon v-if="row.actionCode === 'view'" :size="18" color="var(--el-color-success)"><View /></el-icon>
                       <el-icon v-else-if="row.actionCode === 'create'" :size="18" color="var(--el-color-primary)"><Plus /></el-icon>
@@ -124,22 +124,22 @@
                       <el-icon v-else :size="18"><Operation /></el-icon>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="actionNameCn" label="名称" width="80" />
-                  <el-table-column prop="actionCode" label="编码" min-width="100">
+                  <el-table-column prop="actionNameCn" label="??" width="80" />
+                  <el-table-column prop="actionCode" label="??" min-width="100">
                     <template #default="{ row }">
                       <code class="action-code">{{ row.actionCode }}</code>
                     </template>
                   </el-table-column>
-                  <el-table-column label="方法" width="90" align="center">
+                  <el-table-column label="??" width="90" align="center">
                     <template #default="{ row }">
                       <el-tag size="small" :type="getMethodType(row.httpMethod)" effect="plain">
                         {{ row.httpMethod }}
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="支持度" width="90" align="center" v-if="selectedResources.length > 1">
+                  <el-table-column label="???" width="90" align="center" v-if="selectedResources.length > 1">
                     <template #default="{ row }">
-                      <el-tooltip :content="`${getActionSupportCount(row.id)} / ${selectedResources.length} 个资源支持此行为`" placement="top">
+                      <el-tooltip :content="`${getActionSupportCount(row.id)} / ${selectedResources.length} ????????`" placement="top">
                         <el-tag
                           size="small"
                           :type="getActionSupportCount(row.id) === selectedResources.length ? 'success' : 'warning'"
@@ -152,9 +152,9 @@
                   </el-table-column>
                 </el-table>
 
-                <!-- 矩阵模式：权限矩阵表格 -->
+                <!-- ??????????? -->
                 <div v-if="matrixData.length === 0 && mode === 'matrix'" class="matrix-empty">
-                  <el-empty description="请在左侧选择资源">
+                  <el-empty description="????????">
                     <template #image>
                       <el-icon :size="60" color="var(--el-text-color-placeholder)">
                         <FolderOpened />
@@ -170,7 +170,7 @@
                   highlight-current-row
                   style="width: 100%;"
                 >
-                  <el-table-column prop="resourceNameCn" label="资源" width="220" fixed align="center" header-align="center">
+                  <el-table-column prop="resourceNameCn" label="??" width="220" fixed align="center" header-align="center">
                     <template #default="{ row }">
                       <div class="matrix-resource">
                         <el-icon :size="16"><FolderOpened /></el-icon>
@@ -211,22 +211,22 @@
           </div>
         </div>
 
-        <!-- 右侧：结果预览 -->
+        <!-- ??????? -->
         <div class="perm-compose-right">
           <div class="scope">
-            <!-- 头部 -->
+            <!-- ?? -->
             <div class="head">
-              <el-text class="label">{{ mode === 'matrix' ? '结果预览' : '生成结果' }}</el-text>
+              <el-text class="label">{{ mode === 'matrix' ? '????' : '????' }}</el-text>
               <div class="head-stat">
                 <el-statistic
                   :value="composedPermissions.length"
-                  suffix="个"
+                  suffix="?"
                   :value-style="{ fontSize: '16px', fontWeight: 600, color: 'var(--el-color-primary)' }"
                 />
               </div>
             </div>
 
-            <!-- 组合模式：生成按钮 -->
+            <!-- ????????? -->
             <div v-if="mode === 'compose'" class="compose-action">
               <el-button
                 type="primary"
@@ -237,11 +237,11 @@
                 size="large"
               >
                 <el-icon><Connection /></el-icon>
-                    生成组合（实际将生成 {{ composeCount }} 个）
+                    ?????????? {{ composeCount }} ??
               </el-button>
             </div>
 
-            <!-- 数据区域 -->
+            <!-- ??? -->
             <div class="data" :style="{ height: mode === 'compose' ? 'calc(100% - 110px)' : 'calc(100% - 40px)' }">
               <el-scrollbar>
                 <div class="permission-list">
@@ -262,7 +262,7 @@
                     </div>
                   </transition-group>
 
-                  <el-empty v-if="composedPermissions.length === 0" description="暂无生成的权限" :image-size="80">
+                  <el-empty v-if="composedPermissions.length === 0" description="???????" :image-size="80">
                     <template #image>
                       <el-icon :size="60" color="var(--el-text-color-placeholder)">
                         <Document />
@@ -298,27 +298,27 @@ import {
 } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
-// 模式选择
+// ????
 const message = useMessage();
 const mode = ref<'matrix' | 'compose'>('matrix');
 const modeOptions = [
-  { label: '矩阵模式', value: 'matrix' },
-  { label: '组合模式', value: 'compose' },
+  { label: '????', value: 'matrix' },
+  { label: '????', value: 'compose' },
 ];
 
-// Mock服务
-const _resourceService = service.sysresource;
+// Mock??
+const _resourceService = service.system?.iam?.sys.resource;
 
-const _actionService = service.sysaction;
+const _actionService = service.system?.iam?.sys.action;
 
-const permissionService = service.syspermission;
+const permissionService = service.system?.iam?.sys.permission;
 
-// 数据
+// ?????
 const resourceTree = ref<any[]>([]);
 const actions = ref<any[]>([]);
 const composedPermissions = ref<any[]>([]);
 
-// 资源树配置
+// ?????
 const resourceTreeRef = ref();
 const resourceFilterText = ref('');
 const applyToChildren = ref(false);
@@ -327,35 +327,35 @@ const treeProps = {
   label: 'resourceNameCn',
 };
 
-// 选择状态
+// ????
 const selectedResources = ref<number[]>([]);
 const selectedActions = ref<number[]>([]);
 const currentResource = ref<any>(null);
 
-// 矩阵模式状态
+// ??????
 const matrixSelections = ref<Set<string>>(new Set());
 
-// 加载状态
+// ????
 const composing = ref(false);
 const saving = ref(false);
 
-// 过滤资源节点
+// ??????
 const filterResourceNode = (value: string, data: any) => {
   if (!value) return true;
   return data.resourceNameCn.toLowerCase().includes(value.toLowerCase()) ||
          data.resourceCode.toLowerCase().includes(value.toLowerCase());
 };
 
-// 监听搜索
+// ????
 watch(resourceFilterText, (val) => {
   resourceTreeRef.value?.filter(val);
 });
 
-// 模式切换
+// ????
 const handleModeChange = (val: 'matrix' | 'compose') => {
-  message.info(`切换到${val === 'matrix' ? '矩阵' : '组合'}模式`);
+  message.info(`???${val === 'matrix' ? '??' : '??'}??`);
 
-  // 清空选择状态
+  // ??????
   if (val === 'matrix') {
     selectedResources.value = [];
     selectedActions.value = [];
@@ -365,7 +365,7 @@ const handleModeChange = (val: 'matrix' | 'compose') => {
   }
 };
 
-// 组合模式：计算实际可生成的权限数（考虑资源层级）
+// ????????????????????????
 const composeCount = computed(() => {
   if (selectedResources.value.length === 0 || selectedActions.value.length === 0) {
     return 0;
@@ -376,7 +376,7 @@ const composeCount = computed(() => {
 
   checkedNodes.forEach((resource: any) => {
     selectedActions.value.forEach(actionId => {
-      // 检查该资源是否支持此行为
+      // ???????????
       if (!resource.supportedActions || resource.supportedActions.includes(actionId)) {
         count++;
       }
@@ -390,36 +390,53 @@ const canCompose = computed(() => {
   return composeCount.value > 0;
 });
 
-// 资源树复选变化（两种模式通用）
+// ???????????????
 const handleResourceCheck = (_data: any, _checked: boolean) => {
   const checkedKeys = resourceTreeRef.value?.getCheckedKeys() || [];
   selectedResources.value = checkedKeys;
 };
 
-// 根据当前选择的资源过滤行为（业务逻辑 + 功能提示）
+// ?????????????????? + ?????
 const filteredActions = computed(() => {
-  // 始终显示所有行为
-  return actions.value;
+  // ???????????????
+  if (selectedResources.value.length === 0) {
+    return actions.value;
+  }
+
+  // ???????????
+  const filtered = actions.value.filter(action => {
+    // ???????????????
+    return selectedResources.value.every(resourceId => {
+      const resource = resourceTreeRef.value?.find(r => r.id === resourceId);
+      return resource && resource.supportedActions && resource.supportedActions.includes(action.id);
+    });
+  });
+
+  // ??????????????
+  if (filtered.length === 0) {
+    message.warning('??????????????????????????');
+  }
+
+  return filtered;
 });
 
-// 检查行为是否被所有当前资源支持（用于表格行禁用）
+// ???????????????????????
 const isActionSupported = (actionId: number) => {
   if (selectedResources.value.length === 0) return true;
 
   const checkedNodes = resourceTreeRef.value?.getCheckedNodes() || [];
   if (checkedNodes.length === 0) return true;
 
-  // 至少有一个资源支持此行为即可启用
+  // ???????????????
   const supportedCount = checkedNodes.filter((node: any) =>
     !node.supportedActions || node.supportedActions.includes(actionId)
   ).length;
 
-  // 如果所有资源都支持，返回true（可选）
-  // 如果部分资源支持，也返回 true，但可以在表格中显示提示
-  return supportedCount > 0;
+  // ?????????????????
+  return supportedCount < selectedResources.value.length;
 };
 
-// 获取行为支持的资源数量（用于提示）
+// ?????????????????
 const getActionSupportCount = (actionId: number) => {
   if (selectedResources.value.length === 0) return 0;
 
@@ -429,7 +446,7 @@ const getActionSupportCount = (actionId: number) => {
   ).length;
 };
 
-// 检查资源是否支持某行为（矩阵模式）
+// ?????????????????
 const isActionSupportedByResource = (resourceId: number, actionId: number) => {
   const findResource = (tree: any[], id: number): any => {
     for (const node of tree) {
@@ -447,28 +464,28 @@ const isActionSupportedByResource = (resourceId: number, actionId: number) => {
   return resource.supportedActions.includes(actionId);
 };
 
-// 行为表格选择变化（组合模式）
+// ??????????????
 const actionTableRef = ref();
 const handleActionSelectionChange = (selection: any[]) => {
   selectedActions.value = selection.map(a => a.id);
 };
 
-// 全选行为
+// ????
 const handleSelectAllActions = () => {
   if (selectedActions.value.length === filteredActions.value.length) {
     selectedActions.value = [];
     actionTableRef.value?.clearSelection();
-    message.info('已取消全选');
+    message.info('?????');
   } else {
     selectedActions.value = filteredActions.value.map(a => a.id);
     filteredActions.value.forEach((row: any) => {
       actionTableRef.value?.toggleRowSelection(row, true);
     });
-    message.success('已全选所有行为');
+    message.success('???????');
   }
 };
 
-// 预设模板
+// ????
 const handleActionTemplate = (command: string) => {
   actionTableRef.value?.clearSelection();
 
@@ -477,15 +494,15 @@ const handleActionTemplate = (command: string) => {
   switch (command) {
     case 'readonly':
       targetActions = actions.value.filter(a => a.actionCode === 'view');
-      message.success('已应用只读权限模板');
+      message.success('?????????');
       break;
     case 'editor':
       targetActions = actions.value.filter(a => ['view', 'edit'].includes(a.actionCode));
-      message.success('已应用编辑权限模板');
+      message.success('?????????');
       break;
     case 'full':
       targetActions = actions.value;
-      message.success('已应用完整权限模板');
+      message.success('?????????');
       break;
   }
 
@@ -496,7 +513,7 @@ const handleActionTemplate = (command: string) => {
   });
 };
 
-// HTTP方法类型
+// HTTP????
 const getMethodType = (method: string) => {
   const typeMap: Record<string, any> = {
     'GET': 'success',
@@ -507,10 +524,10 @@ const getMethodType = (method: string) => {
   return typeMap[method] || 'info';
 };
 
-// 组合模式：生成权限组合
+// ???????????
 const handleCompose = async () => {
   if (!canCompose.value) {
-    message.warning('请先选择资源和行为');
+    message.warning('?????????');
     return;
   }
 
@@ -542,30 +559,30 @@ const handleCompose = async () => {
           resourceName: resource.resourceNameCn,
           actionId: action.id,
           actionName: action.actionNameCn,
-          description: `${action.actionNameCn}${resource.resourceNameCn}的权限`,
+          description: `${action.actionNameCn}${resource.resourceNameCn}???`,
         });
       });
     });
 
     if (newPermissions.length === 0) {
-      message.warning('没有新的权限可生成');
+      message.warning('?????????');
       return;
     }
 
     composedPermissions.value.push(...newPermissions);
-    message.success(`成功生成 ${newPermissions.length} 个权限`);
+    message.success(`???? ${newPermissions.length} ???`);
 
     resourceTreeRef.value?.setCheckedKeys([]);
     selectedResources.value = [];
     selectedActions.value = [];
   } catch (_error) {
-    message.error('生成失败');
+    message.error('??????');
   } finally {
     composing.value = false;
   }
 };
 
-// 矩阵模式相关：显示未选择的资源
+// ???????????????
 const matrixData = computed(() => {
   if (mode.value !== 'matrix' || selectedResources.value.length === 0) {
     return [];
@@ -575,12 +592,12 @@ const matrixData = computed(() => {
   return checkedNodes;
 });
 
-// 检查矩阵中的权限是否被选中
+// ??????????????
 const isPermissionChecked = (resourceId: number, actionId: number) => {
   return matrixSelections.value.has(`${resourceId}-${actionId}`);
 };
 
-// 矩阵模式：切换权限（实时生成）
+// ???????????????
 const handleMatrixToggle = (resourceId: number, actionId: number, checked: boolean) => {
   const key = `${resourceId}-${actionId}`;
 
@@ -601,9 +618,9 @@ const handleMatrixToggle = (resourceId: number, actionId: number, checked: boole
           resourceName: resource.resourceNameCn,
           actionId: action.id,
           actionName: action.actionNameCn,
-          description: `${action.actionNameCn}${resource.resourceNameCn}的权限`,
+          description: `${action.actionNameCn}${resource.resourceNameCn}???`,
         });
-        message.success(`已添加：${action.actionNameCn}${resource.resourceNameCn}`);
+        message.success(`????${action.actionNameCn}${resource.resourceNameCn}`);
       }
     }
   } else {
@@ -613,12 +630,12 @@ const handleMatrixToggle = (resourceId: number, actionId: number, checked: boole
     if (index > -1) {
       const perm = composedPermissions.value[index];
       composedPermissions.value.splice(index, 1);
-      message.info(`已移除：${perm.permissionName}`);
+      message.info(`????${perm.permissionName}`);
     }
   }
 };
 
-// 移除单个权限
+// ??????
 const handleRemovePermission = (index: number) => {
   const perm = composedPermissions.value[index];
   composedPermissions.value.splice(index, 1);
@@ -627,84 +644,84 @@ const handleRemovePermission = (index: number) => {
     matrixSelections.value.delete(perm.key);
   }
 
-  message.success('已移除');
+  message.success('???');
 };
 
-// 清空所有结果
+// ??????
 const handleClearAll = () => {
   composedPermissions.value = [];
   matrixSelections.value.clear();
-  message.success('已清空所有权限');
+  message.success('???????');
 };
 
-// 保存权限
+// ????
 const handleSave = async () => {
   saving.value = true;
   try {
     for (const perm of composedPermissions.value) {
       await permissionService.add(perm);
     }
-    message.success(`成功保存 ${composedPermissions.value.length} 个权限`);
+    message.success(`???? ${composedPermissions.value.length} ???`);
     composedPermissions.value = [];
     matrixSelections.value.clear();
   } catch (_error) {
-    message.error('保存失败');
+    message.error('????');
   } finally {
     saving.value = false;
   }
 };
 
-// 加载数据
+// ????
 const loadData = async () => {
-  // 直接从localStorage 获取原始数据（保留树形结构）
+  // ???localStorage ??????????????
   const resourcesRaw = localStorage.getItem('btc_mock_btc_resources');
   const actionsRaw = localStorage.getItem('btc_mock_btc_actions');
 
   if (resourcesRaw) {
     resourceTree.value = JSON.parse(resourcesRaw);
   } else {
-    // 如果没有缓存，使用模拟数据并保存
+    // ????????????????
     resourceTree.value = [
       {
         id: 1,
-        resourceNameCn: '用户管理',
+        resourceNameCn: '????',
         resourceCode: 'user',
-        resourceType: '模块',
+        resourceType: '??',
         supportedActions: [1, 2, 3, 4],
         children: [
-          { id: 11, resourceNameCn: '用户列表', resourceCode: 'user.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
-          { id: 12, resourceNameCn: '用户详情', resourceCode: 'user.detail', resourceType: '页面', supportedActions: [1] },
+          { id: 11, resourceNameCn: '????', resourceCode: 'user.list', resourceType: '??', supportedActions: [1, 2, 3, 4] },
+          { id: 12, resourceNameCn: '????', resourceCode: 'user.detail', resourceType: '??', supportedActions: [1] },
         ]
       },
       {
         id: 2,
-        resourceNameCn: '角色管理',
+        resourceNameCn: '????',
         resourceCode: 'role',
-        resourceType: '模块',
+        resourceType: '??',
         supportedActions: [1, 2, 3, 4],
         children: [
-          { id: 21, resourceNameCn: '角色列表', resourceCode: 'role.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
-          { id: 22, resourceNameCn: '角色分配', resourceCode: 'role.assign', resourceType: '功能', supportedActions: [1, 4] },
+          { id: 21, resourceNameCn: '????', resourceCode: 'role.list', resourceType: '??', supportedActions: [1, 2, 3, 4] },
+          { id: 22, resourceNameCn: '????', resourceCode: 'role.assign', resourceType: '??', supportedActions: [1, 4] },
         ]
       },
       {
         id: 3,
-        resourceNameCn: '部门管理',
+        resourceNameCn: '????',
         resourceCode: 'department',
-        resourceType: '模块',
+        resourceType: '??',
         supportedActions: [1, 2, 3, 4],
         children: [
-          { id: 31, resourceNameCn: '部门列表', resourceCode: 'dept.list', resourceType: '页面', supportedActions: [1, 2, 3, 4] },
+          { id: 31, resourceNameCn: '????', resourceCode: 'dept.list', resourceType: '??', supportedActions: [1, 2, 3, 4] },
         ]
       },
       {
         id: 4,
-        resourceNameCn: '系统配置',
+        resourceNameCn: '????',
         resourceCode: 'system',
-        resourceType: '模块',
+        resourceType: '??',
         supportedActions: [1, 2],
         children: [
-          { id: 41, resourceNameCn: '基础配置', resourceCode: 'system.config', resourceType: '页面', supportedActions: [1, 2] },
+          { id: 41, resourceNameCn: '????', resourceCode: 'system.config', resourceType: '??', supportedActions: [1, 2] },
         ]
       },
     ];
@@ -715,10 +732,10 @@ const loadData = async () => {
     actions.value = JSON.parse(actionsRaw);
   } else {
     actions.value = [
-      { id: 1, actionNameCn: '查看', actionCode: 'view', httpMethod: 'GET' },
-      { id: 2, actionNameCn: '编辑', actionCode: 'edit', httpMethod: 'PUT' },
-      { id: 3, actionNameCn: '删除', actionCode: 'delete', httpMethod: 'DELETE' },
-      { id: 4, actionNameCn: '新增', actionCode: 'create', httpMethod: 'POST' },
+      { id: 1, actionNameCn: '??', actionCode: 'view', httpMethod: 'GET' },
+      { id: 2, actionNameCn: '??', actionCode: 'edit', httpMethod: 'PUT' },
+      { id: 3, actionNameCn: '??', actionCode: 'delete', httpMethod: 'DELETE' },
+      { id: 4, actionNameCn: '??', actionCode: 'create', httpMethod: 'POST' },
     ];
     localStorage.setItem('btc_mock_btc_actions', JSON.stringify(actions.value));
   }
@@ -771,7 +788,7 @@ onMounted(() => {
   gap: 10px;
 }
 
-// 左侧面板（参考btc-view-group 样式）
+// ??????
 .perm-compose-left {
   width: 300px;
   height: 100%;
@@ -779,7 +796,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-// 中间面板
+// ?????????????? ??????????
 .perm-compose-middle {
   flex: 1;
   height: 100%;
@@ -787,7 +804,7 @@ onMounted(() => {
   min-width: 0;
 }
 
-// 右侧面板
+// ???????
 .perm-compose-right {
   width: 360px;
   height: 100%;
@@ -795,106 +812,99 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-// 通用 scope 样式（参考btc-view-group）
-.scope {
+// ????
+.perm-compose-header .head {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  white-space: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  font-size: 14px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  flex-shrink: 0;
 
-  .head {
+  .label {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .head-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 40px;
-    font-size: 14px;
-    padding: 0 10px;
-    border-bottom: 1px solid var(--el-border-color-extra-light);
-    flex-shrink: 0;
-
-    .label {
-      flex: 1;
-      font-weight: 500;
-    }
-
-    .head-actions {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .head-stat {
-      :deep(.el-statistic) {
-        .el-statistic__head {
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
-        }
-      }
-    }
+    gap: 5px;
   }
 
-  .search {
-    padding: 10px;
-    border-bottom: 1px solid var(--el-border-color-extra-light);
-    flex-shrink: 0;
-
-    :deep(.el-input__wrapper) {
-      border-radius: 6px;
-    }
-  }
-
-  .data {
-    flex: 1;
-    overflow: hidden;
-    box-sizing: border-box;
-
-    .tree {
-      :deep(.el-tree-node__content) {
-        height: 38px;
-        margin: 0 5px;
-      }
-
-      .item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        overflow: hidden;
-
-        .el-icon {
-          flex-shrink: 0;
-          color: var(--el-color-primary);
-        }
-
-        .item-label {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .item-tag {
-          flex-shrink: 0;
-          font-size: 11px;
-        }
-
-        &.is-active {
-          color: var(--el-color-primary);
-          font-weight: 500;
-        }
+  .head-stat {
+    :deep(.el-statistic) {
+      .el-statistic__head {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
       }
     }
   }
 }
 
-// 组合操作区域
+// ?????
+.perm-compose-header .search {
+  padding: 10px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  flex-shrink: 0;
+
+  :deep(.el-input__wrapper) {
+    border-radius: 6px;
+  }
+}
+
+// ?????
+.perm-compose-content .data {
+  flex: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  .tree {
+    :deep(.el-tree-node__content) {
+      height: 38px;
+      margin: 0 5px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      overflow: hidden;
+
+      .el-icon {
+        flex-shrink: 0;
+        color: var(--el-color-primary);
+      }
+
+      .item-label {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .item-tag {
+        flex-shrink: 0;
+        font-size: 11px;
+      }
+
+      &.is-active {
+        color: var(--el-color-primary);
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// ?????????
 .compose-action {
   padding: 10px;
   border-bottom: 1px solid var(--el-border-color-extra-light);
   flex-shrink: 0;
 }
 
-// 行为编码样式
+// ??????
 .action-code {
   font-size: 12px;
   color: var(--el-color-primary);
@@ -904,7 +914,7 @@ onMounted(() => {
   border-radius: 3px;
 }
 
-// 矩阵资源列样式
+// ?????????
 .matrix-resource {
   display: flex;
   align-items: center;
@@ -927,7 +937,7 @@ onMounted(() => {
   }
 }
 
-// 矩阵行为表头样式
+// ??????????
 .matrix-action-header {
   display: flex;
   flex-direction: column;
@@ -944,7 +954,7 @@ onMounted(() => {
   }
 }
 
-// 权限列表
+// ????????
 .permission-list {
   padding: 10px;
 }
@@ -1020,7 +1030,7 @@ onMounted(() => {
   }
 }
 
-// 列表动画
+// ??????????
 .list-enter-active,
 .list-leave-active {
   transition: all 0.3s;
@@ -1040,7 +1050,7 @@ onMounted(() => {
   transition: transform 0.3s;
 }
 
-// 表格优化
+// ????
 :deep(.el-table) {
   font-size: 13px;
 
@@ -1058,7 +1068,7 @@ onMounted(() => {
   }
 }
 
-// 矩阵空状态
+// ??????????
 .matrix-empty {
   display: flex;
   align-items: center;
@@ -1071,3 +1081,4 @@ onMounted(() => {
   padding: 40px 0;
 }
 </style>
+

@@ -1,6 +1,7 @@
 <template>
   <el-table
     ref="tableRef"
+    class="btc-table"
     :key="rebuildKey"
     :data="crud.tableData.value"
     :loading="crud.loading.value"
@@ -95,7 +96,9 @@ const props = withDefaults(defineProps<TableProps>(), {
   sortRefresh: true,
   emptyText: 'common.table.empty',
   border: true,
+  op: undefined,
 });
+
 
 const emit = defineEmits(['selection-change', 'sort-change']);
 
@@ -136,7 +139,7 @@ if (tableRefContext) {
 const { getOpButtons, getButtonType, getButtonText, handleOpClick, showColumn, hideColumn, setColumns, reBuild, rebuildKey } = useTableOp(crud, props);
 
 // 高度管理
-const { maxHeight: autoMaxHeight, calcMaxHeight } = useTableHeight(props, tableRef, crud);
+const { maxHeight: autoMaxHeight, calcMaxHeight } = useTableHeight(props, tableRef);
 
 // 排序管理
 const { defaultSort, onSortChange, clearSort } = useTableSort(crud, props, emit);

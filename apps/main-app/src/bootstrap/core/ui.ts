@@ -13,6 +13,9 @@ import '../../styles/theme.scss';
 import '../../styles/nprogress.scss';
 import '@btc/shared-components/styles/index.scss';
 
+// ECharts 插件
+import EChartsPlugin from '../../plugins/echarts';
+
 // Element Plus 国际化
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
@@ -57,6 +60,9 @@ export const setupGlobalStyles = () => {
 export const setupUI = (app: App) => {
   // 配置Element Plus
   setupElementPlus(app);
+
+  // 配置ECharts
+  app.use(EChartsPlugin);
 
   // 配置全局样式
   setupGlobalStyles();

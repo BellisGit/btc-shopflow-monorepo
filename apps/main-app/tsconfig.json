@@ -12,6 +12,7 @@
     "noEmit": true,
     "jsx": "preserve",
     "strict": true,
+    "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
@@ -28,6 +29,6 @@
       "@btc/shared-utils": ["../../packages/shared-utils/src"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -20,5 +20,9 @@
   },
   "dependencies": {
     "dayjs": "^1.11.18"
+  },
+  "devDependencies": {
+    "vite": "^5.4.20",
+    "typescript": "^5.9.3"
   }
 }

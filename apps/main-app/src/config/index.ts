@@ -6,14 +6,14 @@
 import { appConfig } from './app';
 
 // 是否开发模式
-export const isDev = import.meta.env.DEV;
+export const isDev = (import.meta as any).env.DEV;
 
 // 环境变量
 export const env = {
-  MODE: import.meta.env.MODE,
-  DEV: import.meta.env.DEV,
-  PROD: import.meta.env.PROD,
-  SSR: import.meta.env.SSR,
+  MODE: (import.meta as any).env.MODE,
+  DEV: (import.meta as any).env.DEV,
+  PROD: (import.meta as any).env.PROD,
+  SSR: (import.meta as any).env.SSR,
 };
 
 // 导出配置
@@ -24,7 +24,7 @@ export const config = {
   // API 配置
   api: {
     // 基础路径
-    baseURL: isDev ? '/admin' : import.meta.env.VITE_API_BASE_URL || '/admin',
+    baseURL: isDev ? '/admin' : (import.meta as any).env.VITE_API_BASE_URL || 'http://10.80.9.76:8115/admin',
     // 请求超时时间
     timeout: 30000,
   },

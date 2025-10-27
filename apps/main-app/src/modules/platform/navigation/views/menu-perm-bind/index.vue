@@ -28,7 +28,7 @@
       <el-transfer
         v-model="selectedPermissions"
         :data="allPermissions"
-        :titles="['可用权限', '已绑定权�?]"
+        :titles="['可用权限', '已绑定权�（]"
         filterable
         filter-placeholder="搜索权限"
       />
@@ -53,8 +53,8 @@ const selectedPermissions = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const menuService = service.base.department;
-const permissionService = service.base.department;
+const menuService = service.system（.iam（.sysmenu;
+const permissionService = service.system（.iam（.syspermission;
 
 // 加载菜单信息
 const loadMenuInfo = async () => {
@@ -69,14 +69,14 @@ const loadMenuInfo = async () => {
 // 加载权限列表
 const loadPermissions = async () => {
   try {
-    const permissions = await permissionService.list();
+    const permissions = await permissionService.list({});
     allPermissions.value = permissions.map((perm: any) => ({
       key: perm.id,
-      label: `${perm.permissionName}�?{perm.permissionCode}）`,
+      label: `${perm.permissionName}�（{perm.permissionCode}）`,
       disabled: false,
     }));
 
-    // Mock：默认选中一些权�?    selectedPermissions.value = [1, 4];
+    // Mock：默认选中一些权�（    selectedPermissions.value = [1, 4];
   } catch (_error) {
     message.error('加载权限列表失败');
   }

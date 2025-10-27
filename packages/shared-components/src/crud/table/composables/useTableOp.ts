@@ -13,10 +13,15 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
    */
   const _getOpButtons = (column: TableColumn, _scope: any): OpButton[] => {
     const buttons = column.buttons;
-    if (!buttons) return ['edit', 'delete'];
+    // 如果是 undefined，返回默认按钮（编辑、删除）
+    if (buttons === undefined) return ['edit', 'delete'];
+    // 如果是空数组，返回空数组（不显示任何按钮）
+    if (Array.isArray(buttons) && buttons.length === 0) return [];
+    // 如果是函数，执行函数获取按钮
     if (typeof buttons === 'function') {
       return buttons({ scope: _scope });
     }
+    // 直接返回按钮配置
     return buttons;
   };
 

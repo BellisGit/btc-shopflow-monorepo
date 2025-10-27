@@ -7,6 +7,7 @@ import {
 import Layout from '../modules/base/components/layout/index.vue';
 import { config } from '../config';
 import { tSync } from '../i18n/getters';
+import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -33,12 +34,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../pages/test/components/index.vue'),
         meta: { titleKey: 'menu.test_features.components' },
       },
-      {
-        path: 'test/eps',
-        name: 'TestEps',
-        component: () => import('../test-eps.vue'),
-        meta: { titleKey: 'menu.test_features.eps' },
-      },
+      // EPS 测试页面已删除
+      // {
+      //   path: 'test/eps',
+      //   name: 'TestEps',
+      //   component: () => import('../test-eps.vue'),
+      //   meta: { titleKey: 'menu.test_features.eps' },
+      // },
       {
         path: 'test/api-test-center',
         name: 'ApiTestCenter',
@@ -142,10 +144,22 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.access.role_perm_bind' },
       },
       {
-        path: 'access/policies',
-        name: 'Policies',
-        component: () => import('../modules/access/views/policies/index.vue'),
-        meta: { titleKey: 'menu.access.policies' },
+        path: 'strategy/management',
+        name: 'StrategyManagement',
+        component: () => import('../modules/strategy/views/management/index.vue'),
+        meta: { titleKey: 'menu.strategy.management' },
+      },
+      {
+        path: 'strategy/designer',
+        name: 'StrategyDesigner',
+        component: () => import('../modules/strategy/views/designer/index.vue'),
+        meta: { titleKey: 'menu.strategy.designer' },
+      },
+      {
+        path: 'strategy/monitor',
+        name: 'StrategyMonitor',
+        component: () => import('../modules/strategy/views/monitor/index.vue'),
+        meta: { titleKey: 'menu.strategy.monitor' },
       },
       {
         path: 'access/perm-compose',
@@ -174,10 +188,22 @@ const routes: RouteRecordRaw[] = [
       },
       // 运维与审计
       {
-        path: 'ops/audit',
-        name: 'Audit',
-        component: () => import('../modules/ops/views/audit/index.vue'),
-        meta: { titleKey: 'menu.ops.audit' },
+        path: 'ops/logs/operation',
+        name: 'OperationLog',
+        component: () => import('../modules/ops/views/logs/operation/index.vue'),
+        meta: { titleKey: 'menu.ops.operation_log' },
+      },
+      {
+        path: 'ops/logs/request',
+        name: 'RequestLog',
+        component: () => import('../modules/ops/views/logs/request/index.vue'),
+        meta: { titleKey: 'menu.ops.request_log' },
+      },
+      {
+        path: 'data/recycle',
+        name: 'DataRecycle',
+        component: () => import('../modules/data/views/recycle/index.vue'),
+        meta: { titleKey: 'menu.data.recycle' },
       },
       {
         path: 'ops/baseline',
@@ -384,11 +410,9 @@ router.afterEach((to) => {
 
   // 如果是首页（isHome=true），将所有标签设为未激活
   if (to.meta?.isHome === true || to.path === '/') {
-    import('../store/process').then(({ useProcessStore }) => {
-      const process = useProcessStore();
-      process.list.forEach((tab) => {
-        tab.active = false;
-      });
+    const process = useProcessStore();
+    process.list.forEach((tab) => {
+      tab.active = false;
     });
     return;
   }
@@ -422,22 +446,20 @@ router.afterEach((to) => {
     return;
   }
 
-  // 动态导入 store 以避免循环依赖
-  import('../store/process').then(({ useProcessStore, getCurrentAppFromPath }) => {
-    const process = useProcessStore();
-    const currentApp = getCurrentAppFromPath(to.path);
+  // 使用 store 添加路由到标签页
+  const process = useProcessStore();
+  const currentApp = getCurrentAppFromPath(to.path);
 
-    // 再次确认：只添加主应用的路由
-    if (currentApp !== 'main') {
-      return;
-    }
+  // 再次确认：只添加主应用的路由
+  if (currentApp !== 'main') {
+    return;
+  }
 
-    process.add({
-      path: to.path,
-      fullPath: to.fullPath,
-      name: to.name as string,
-      meta: to.meta as any,
-    });
+  process.add({
+    path: to.path,
+    fullPath: to.fullPath,
+    name: to.name as string,
+    meta: to.meta as any,
   });
 });
 

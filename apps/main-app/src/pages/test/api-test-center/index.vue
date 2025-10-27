@@ -232,15 +232,18 @@ const runTest = async (test: any) => {
 
       result = await http.get(test.customPath);
     } else {
-      // 检查服务是否存在 - 根据EPS结构，test服务直接在根级别
-      if (!service.test) {
+      // 检查服务是否存在 - 根据EPS结构，test服务在system下
+      if (!service.system) {
+        throw new Error('system服务不存在');
+      }
+      if (!service.system.test) {
         throw new Error('test服务不存在');
       }
-      if (!service.test[test.method]) {
+      if (!service.system.test[test.method]) {
         throw new Error(`方法 ${test.method} 不存在`);
       }
 
-      result = await service.test[test.method]();
+      result = await service.system.test[test.method]();
     }
 
     const duration = Date.now() - startTime;

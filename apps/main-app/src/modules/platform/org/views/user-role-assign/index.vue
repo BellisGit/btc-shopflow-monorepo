@@ -60,8 +60,8 @@ const selectedRoles = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const userService = service.base.department;
-const roleService = service.base.department;
+const userService = service.system?.iam?.sys.user;
+const roleService = service.system?.iam?.sys.role;
 
 // 加载用户信息
 const loadUserInfo = async () => {
@@ -76,7 +76,7 @@ const loadUserInfo = async () => {
 // 加载角色列表
 const loadRoles = async () => {
   try {
-    allRoles.value = await roleService.list();
+    allRoles.value = await roleService.list({});
 
     // Mock：随机选择已分配的角色
     selectedRoles.value = [3]; // 默认分配员工角色
@@ -140,4 +140,5 @@ onMounted(() => {
   }
 }
 </style>
+
 

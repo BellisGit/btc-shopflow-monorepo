@@ -12,7 +12,7 @@
     "prepare": "echo 'Husky disabled - manual checks only'",
     "preinstall": "npx only-allow pnpm",
     "dev": "chcp 65001 >nul && concurrently -n \"main,logistics,engineering,quality,production,docs\" -c \"bgBlue.bold,bgGreen.bold,bgYellow.bold,bgRed.bold,bgMagenta.bold,bgCyan.bold\" \"pnpm run dev:main\" \"pnpm run dev:logistics\" \"pnpm run dev:engineering\" \"pnpm run dev:quality\" \"pnpm run dev:production\" \"pnpm run dev:docs\"",
-    "dev:all": "turbo run dev",
+    "dev:all": "turbo run dev --concurrency=15",
     "dev:main": "pnpm --filter main-app dev",
     "dev:logistics": "pnpm --filter logistics-app dev",
     "dev:engineering": "pnpm --filter engineering-app dev",

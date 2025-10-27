@@ -4,7 +4,7 @@
  */
 
 import { ElMessage } from 'element-plus';
-import { messageManager } from '@utils/message-manager';
+import { messageManager } from '../../utils/message-manager';
 
 // 扩展消息实例类型
 export interface ExtendedMessageInstance {

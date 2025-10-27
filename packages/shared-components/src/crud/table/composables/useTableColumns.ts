@@ -15,6 +15,7 @@ export function useTableColumns(props: TableProps) {
    */
   function formatDictValue(value: any, dict: any[], allLevels: boolean = false): string {
     if (!dict || dict.length === 0) return value;
+    if (value === null || value === undefined || value === '') return '';
 
     // 如果是树形字典且需要显示所有层级
     if (allLevels) {
@@ -78,9 +79,11 @@ export function useTableColumns(props: TableProps) {
       enhancedColumns.push(CommonColumns.createdAt());
     }
 
-    // 自动添加操作列（如果不存在）
-    if (!hasOpColumn) {
-      enhancedColumns.push(CommonColumns.operation());
+    // 自动添加操作列（如果不存在且 props.op 不为 undefined）
+    if (!hasOpColumn && props.op !== undefined) {
+      // 从 props.op 获取按钮配置
+      const opButtons = props.op?.buttons ?? ['edit', 'delete'];
+      enhancedColumns.push(CommonColumns.operation(opButtons));
     }
 
     // 先进行自动时间格式化
@@ -97,6 +100,19 @@ export function useTableColumns(props: TableProps) {
         // 操作列不显示溢出提示，其他列默认显示
         showOverflowTooltip: column.showOverflowTooltip ?? (column.type === 'op' ? false : true),
       };
+
+      // 处理操作列的国际化标签
+      if (column.type === 'op') {
+        if (column.label && typeof column.label === 'string') {
+          // 如果手动指定了label且是国际化key，进行翻译
+          if (column.label.includes('.')) {
+            config.label = t(column.label);
+          }
+        } else if (!column.label) {
+          // 如果没有指定label，使用默认的国际化标签
+          config.label = t('ui.table.operation');
+        }
+      }
 
       // selection 和 index 列默认固定在左侧（对齐 cool-admin）
       if ((column.type === 'selection' || column.type === 'index') && column.fixed === undefined) {
@@ -132,6 +148,11 @@ export function useTableColumns(props: TableProps) {
             const value = row[column.prop!];
             const dict = column.dict!;
 
+            // 处理 null/undefined/空值
+            if (value === null || value === undefined || value === '') {
+              return { label: '', type: 'info' };
+            }
+
             function find(list: any[]): any {
               for (const item of list) {
                 if (item.value === value) return item;
@@ -151,6 +172,9 @@ export function useTableColumns(props: TableProps) {
           if (!originalFormatter) {
             config.formatter = (row: any) => {
               const value = row[column.prop!];
+              if (value === null || value === undefined || value === '') {
+                return '';
+              }
               return formatDictValue(value, column.dict!, column.dictAllLevels || false);
             };
           }

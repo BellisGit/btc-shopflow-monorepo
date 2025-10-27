@@ -229,13 +229,18 @@ async function refresh() {
     // 延迟执行默认选中，确保数据已经渲染
     nextTick(() => {
       if (list.value.length > 0) {
-        // 如果启用了"未分配"选项，优先选中"未分配"项
+        // 优先选中第一项数据，而不是"未分配"项
         if (props.showUnassigned) {
-          const unassignedItem = list.value.find(item => item.isUnassigned);
-          if (unassignedItem) {
-            handleNodeClick(unassignedItem);
+          // 找到第一个非"未分配"的项
+          const firstDataItem = list.value.find(item => !item.isUnassigned);
+          if (firstDataItem) {
+            handleNodeClick(firstDataItem);
           } else {
-            handleNodeClick(list.value[0]);
+            // 如果没有数据项，只有"未分配"项，则选中"未分配"项
+            const unassignedItem = list.value.find(item => item.isUnassigned);
+            if (unassignedItem) {
+              handleNodeClick(unassignedItem);
+            }
           }
         } else {
           handleNodeClick(list.value[0]);

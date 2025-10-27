@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "BTC Vite 插件集合（EPS、SVG、Ctx 等）",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {

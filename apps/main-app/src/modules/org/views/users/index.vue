@@ -6,6 +6,7 @@
       :right-service="services.sysuser"
       :table-columns="userColumns"
       :form-items="formItems"
+      :op="{ buttons: ['edit', 'delete'] }"
       :on-info="handleUserInfo"
       left-title="部门列表"
       right-title="用户列表"
@@ -19,7 +20,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { BtcTableGroup } from '@btc/shared-components';
 import {
-  userColumns,
   getUserFormItems,
   services
 } from './config';
@@ -27,6 +27,44 @@ import {
 const tableGroupRef = ref();
 const departmentOptions = ref<any[]>([]);
 const roleOptions = ref<any[]>([]);
+
+// 动态表格列配置，角色列会根据角色选项格式化显示
+const userColumns = computed(() => {
+  const baseColumns = [
+    { type: 'selection', width: 60 },
+    { prop: 'username', label: '用户名', width: 120 },
+    { prop: 'realName', label: '中文名', minWidth: 100 },
+    { prop: 'position', label: '职位', minWidth: 100 },
+    {
+      prop: 'name',
+      label: '部门',
+      width: 120,
+    },
+    {
+      prop: 'roleId',
+      label: '角色',
+      width: 120,
+      formatter: (row: any) => {
+        if (!row.roleId || roleOptions.value.length === 0) {
+          return row.roleId; // Element Plus 会自动将空值显示为 '-'
+        }
+        const role = roleOptions.value.find((r: any) => r.id === row.roleId);
+        return role ? role.roleName : row.roleId;
+      }
+    },
+    {
+      prop: 'status',
+      label: '状态',
+      width: 100,
+      dict: [
+        { label: '激活', value: 'ACTIVE', type: 'success' },
+        { label: '禁用', value: 'INACTIVE', type: 'danger' }
+      ],
+      dictColor: true
+    },
+  ];
+  return baseColumns;
+});
 
 // 动态表单配置
 const formItems = computed(() => getUserFormItems(departmentOptions.value, roleOptions.value));
@@ -40,8 +78,13 @@ function handleLoad(data: any[]) {
 // 加载角色数据
 async function loadRoleOptions() {
   try {
-    const response = await services.sysrole.list();
+    const response = await services.sysrole.list({});
     roleOptions.value = response.list || [];
+
+    // 角色数据加载完成后，刷新表格以更新角色名称显示
+    if (tableGroupRef.value && tableGroupRef.value.refresh) {
+      tableGroupRef.value.refresh();
+    }
   } catch (error) {
     console.error('加载角色数据失败:', error);
   }
@@ -75,19 +118,20 @@ async function handleUserInfo(user: any, { next, done }: any) {
       }
     }
 
-    // 处理角色数据回填
-    if (userDetail.roleIds && roleOptions.value.length > 0) {
-      // 如果 roleIds 是字符串，转换为数组
-      if (typeof userDetail.roleIds === 'string') {
-        userDetail.roleIds = userDetail.roleIds.split(',');
-      }
+    // 确保角色选项已加载
+    if (roleOptions.value.length === 0) {
+      await loadRoleOptions();
+    }
 
-      // 转换角色ID为对应的值
-      const roleIds = Array.isArray(userDetail.roleIds) ? userDetail.roleIds : [];
-      userDetail.roleIds = roleIds.map((roleId: string) => {
-        const role = roleOptions.value.find((r: any) => r.id === roleId);
-        return role ? (role.value || role.id) : roleId;
-      });
+    // 处理角色数据回填
+    if (userDetail.roleId && roleOptions.value.length > 0) {
+      // 查找匹配的角色（主要匹配 id 字段）
+      const role = roleOptions.value.find((r: any) => r.id === userDetail.roleId);
+
+      if (role) {
+        // btc-cascader 会自动处理 id -> value 的转换
+        // 保持 roleId 不变，让组件自动匹配
+      }
     }
 
     done(userDetail);

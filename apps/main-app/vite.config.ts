@@ -97,6 +97,25 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // 项目源码 - 单独分块，避免循环依赖
+          if (id.includes('src/') && !id.includes('node_modules')) {
+            // 将 components 相关单独分块
+            if (id.includes('src/components') || id.includes('src/modules') || id.includes('src/pages')) {
+              return 'app-components';
+            }
+            // 其他源码
+            return 'app-src';
+          }
+
+          // BTC 共享包 - 放在最前面，避免循环依赖
+          if (id.includes('@btc/shared-')) {
+            // 进一步细分 shared-components
+            if (id.includes('@btc/shared-components')) {
+              return 'btc-components';
+            }
+            return 'btc-shared';
+          }
+
           // Vue 核心库
           if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) {
             return 'vue-vendor';
@@ -138,11 +157,6 @@ export default defineConfig({
             return 'utils';
           }
 
-          // BTC 共享包
-          if (id.includes('@btc/shared-')) {
-            return 'btc-shared';
-          }
-
           // 其他第三方库
           if (id.includes('node_modules')) {
             return 'vendor';
@@ -153,8 +167,8 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    // 设置 chunk 大小警告限制
-    chunkSizeWarningLimit: 500,
+    // 设置 chunk 大小警告限制（提升到 1000 KB）
+    chunkSizeWarningLimit: 1000,
   },
   css: {
     preprocessorOptions: {

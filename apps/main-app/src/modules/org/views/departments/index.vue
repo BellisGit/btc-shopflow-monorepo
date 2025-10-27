@@ -10,7 +10,7 @@
         <BtcSearchKey placeholder="搜索部门" />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
@@ -27,17 +27,15 @@ import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { CommonColumns, BtcCascader } from '@btc/shared-components';
+import { CommonColumns } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
 const crudRef = ref();
 
-// 部门服务 - 使用EPS服务
-const departmentService = service.sysdepartment;
-
-// 调试：检查服务方法
+// 部门服务 - 使用EPS服务（注意路径：admin/system/iam/sys/department）
+const departmentService = service.system?.iam?.sys?.department;
 
 // 部门选项数据
 const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
@@ -45,10 +43,10 @@ const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
 // 加载部门选项数据
 const loadDepartmentOptions = async () => {
   try {
-    const res = await departmentService.list();
+    const res = await departmentService.list({});
 
     // 处理响应数据结构：res.list 或 res.data.list 或直接是数组
-    let dataArray = [];
+    let dataArray: any[] = [];
     if (res && res.list) {
       dataArray = res.list;
     } else if (res && res.data && res.data.list) {
@@ -76,7 +74,15 @@ const wrappedDepartmentService = {
   ...departmentService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await departmentService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await departmentService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await departmentService.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
@@ -92,7 +98,7 @@ const columns = computed<TableColumn[]>(() => [
     label: '上级部门',
     width: 120,
     formatter: (row: any) => {
-      if (!row.parentId || row.parentId === '0') return '-';
+      if (!row.parentId || row.parentId === '0') return '';
       // 如果 parentId 是部门名称，直接返回
       if (typeof row.parentId === 'string' && isNaN(Number(row.parentId)) && !row.parentId.match(/^[A-Z0-9-]+$/)) {
         return row.parentId;

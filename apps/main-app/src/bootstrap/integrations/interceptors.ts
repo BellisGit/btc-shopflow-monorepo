@@ -3,7 +3,7 @@
  * 负责配置各种拦截器
  */
 
-import { initResponseInterceptor } from '@utils/response-interceptor-init';
+import { initResponseInterceptor } from '../../utils/response-interceptor-init';
 import { router } from '../core/router';
 
 /**

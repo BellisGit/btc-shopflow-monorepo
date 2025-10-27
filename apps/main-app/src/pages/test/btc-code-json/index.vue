@@ -37,6 +37,51 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <div class="test-section">
+      <h3>btc-table 整表测试</h3>
+      <el-table :data="btcTableData" border>
+        <el-table-column
+          label="用户ID"
+          prop="userId"
+          width="100"
+        />
+        <el-table-column
+          label="用户名"
+          prop="username"
+          width="150"
+        />
+        <el-table-column
+          label="请求参数"
+          prop="requestParams"
+          min-width="200"
+        >
+          <template #default="{ row }">
+            <BtcCodeJson
+              :model-value="row.requestParams"
+              :popover="true"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="响应数据"
+          prop="responseData"
+          min-width="200"
+        >
+          <template #default="{ row }">
+            <BtcCodeJson
+              :model-value="row.responseData"
+              :popover="true"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="操作时间"
+          prop="createTime"
+          width="180"
+        />
+      </el-table>
+    </div>
   </div>
 </template>
 
@@ -75,6 +120,48 @@ const tableData = ref([
         email: 'john@example.com'
       }
     })
+  }
+]);
+
+const btcTableData = ref([
+  {
+    userId: 1,
+    username: 'admin',
+    requestParams: {
+      page: 1,
+      size: 10,
+      keyword: 'test'
+    },
+    responseData: {
+      code: 0,
+      msg: 'success',
+      data: {
+        list: [],
+        total: 0
+      }
+    },
+    createTime: '2024-01-01 10:00:00'
+  },
+  {
+    userId: 2,
+    username: 'user1',
+    requestParams: {
+      id: 123,
+      action: 'getUserInfo',
+      params: {
+        userId: 123
+      }
+    },
+    responseData: {
+      code: 0,
+      msg: 'success',
+      data: {
+        id: 123,
+        username: 'user1',
+        email: 'user1@example.com'
+      }
+    },
+    createTime: '2024-01-01 11:00:00'
   }
 ]);
 </script>

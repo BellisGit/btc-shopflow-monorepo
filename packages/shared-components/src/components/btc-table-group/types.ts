@@ -15,6 +15,9 @@ export interface TableGroupProps {
   tableColumns?: any[];
   formItems: any[];
 
+  // 操作列配置
+  op?: { buttons?: any[] };
+
   // 字段配置
   idField?: string;
   labelField?: string;

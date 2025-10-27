@@ -1,10 +1,10 @@
 <template>
   <el-button type="info" @click="open">
     <el-icon><Download /></el-icon>
-    {{ $t('ui.export') }}
+    {{ t('ui.export') }}
   </el-button>
 
-  <BtcDialog ref="dialogRef" :title="$t('ui.export')" width="600px">
+  <BtcDialog ref="dialogRef" :title="t('ui.export')" width="600px">
     <BtcForm ref="formRef" :items="formItems" @submit="handleSubmit" />
   </BtcDialog>
 </template>

@@ -6,6 +6,7 @@
       :right-service="wrappedMenuService"
       :table-columns="menuColumns"
       :form-items="menuFormItems"
+      :op="{ buttons: ['edit', 'delete'] }"
       left-title="业务域"
       right-title="菜单列表"
       search-placeholder="搜索菜单..."
@@ -32,17 +33,17 @@ const { t } = useI18n();
 const tableGroupRef = ref();
 const selectedModule = ref<any>(null);
 
-// 域服务配置 - 直接调用域列表的list API
+// 域服务配置- 直接调用域列表的list API
 const domainService = {
   list: (params?: any) => {
-    // 必须传递参数对象，即使为空对象{}，后端会设置默认值
+    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.sysdomain.list(finalParams);
+    return service.system?.iam?.sys.domain?.list(finalParams);
   }
 };
 
 // 菜单服务（右侧表）
-const menuService = service.sysmenu;
+const menuService = service.system?.iam?.sys.menu;
 
 const wrappedMenuService = {
   ...menuService,
@@ -50,7 +51,15 @@ const wrappedMenuService = {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
       type: 'warning',
     });
-    await menuService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await menuService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await menuService.deleteBatch(ids);
+    }
+
     const messageManager = (window as any).messageManager;
     if (messageManager) {
       messageManager.enqueue('success', t('crud.message.delete_success'));
@@ -59,7 +68,7 @@ const wrappedMenuService = {
 };
 
 
-// 用户点击选择处理
+// 域选择处理
 const onDomainSelect = (domain: any) => {
   selectedModule.value = domain;
 };

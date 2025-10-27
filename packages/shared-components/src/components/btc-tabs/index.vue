@@ -27,8 +27,8 @@
         <div
           v-for="(tab, index) in tabs"
           :key="tab.name || index"
-          v-show="activeTab === (tab.name || index)"
           class="btc-tabs__panel"
+          :class="{ 'is-active': activeTab === (tab.name || index) }"
         >
           <slot
             :name="tab.name || `tab-${index}`"
@@ -82,6 +82,9 @@ const inkStyle = ref({
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
 });
 
+// 防抖定时器，避免频繁更新
+let updateTimer: number | null = null;
+
 // 设置item引用
 const setItemRef = (el: Element | ComponentPublicInstance | null, index: number) => {
   if (el && 'tagName' in el) {
@@ -119,6 +122,20 @@ const setActiveTab = async (tabName: string | number) => {
   }, 0);
 };
 
+// 防抖更新下划线位置
+const debouncedUpdateInkPosition = () => {
+  // 清除之前的定时器
+  if (updateTimer) {
+    clearTimeout(updateTimer);
+  }
+
+  // 设置新的定时器，延迟执行更新
+  updateTimer = window.setTimeout(() => {
+    updateInkPosition();
+    updateTimer = null;
+  }, 16); // 约一帧的时间
+};
+
 // 更新下划线位置
 const updateInkPosition = () => {
   try {
@@ -149,13 +166,31 @@ const updateInkPosition = () => {
       transition: 'none' // 先不添加过渡
     };
 
-    // 下一帧开始动画到目标位置
+    // 使用 requestAnimationFrame 来避免 ResizeObserver 循环问题
+    // 同时使用 try-catch 包装来捕获可能的错误
     requestAnimationFrame(() => {
-      inkStyle.value = {
-        left: `${targetLeft}px`,
-        width: `${targetWidth}px`,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-      };
+      try {
+        // 重新获取最新的位置信息，确保准确性
+        const latestNavRect = navRef.value!.getBoundingClientRect();
+        const latestItemRect = activeItem.getBoundingClientRect();
+
+        const latestTargetLeft = latestItemRect.left - latestNavRect.left;
+        const latestTargetWidth = latestItemRect.width;
+
+        inkStyle.value = {
+          left: `${latestTargetLeft}px`,
+          width: `${latestTargetWidth}px`,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        };
+      } catch (error) {
+        // 如果出现错误，使用之前计算的值作为降级方案
+        inkStyle.value = {
+          left: `${targetLeft}px`,
+          width: `${targetWidth}px`,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        };
+        console.warn('Failed to update ink position with latest values, using fallback:', error);
+      }
     });
   } catch (error) {
     console.warn('Failed to update ink position:', error);
@@ -167,40 +202,33 @@ watch(() => props.tabs, () => {
   initActiveTab();
   // 清空itemRefs数组，让Vue重新设置引用
   itemRefs.value = [];
-  setTimeout(() => {
-    updateInkPosition();
-  }, 0);
+  // 使用防抖更新避免频繁触发
+  debouncedUpdateInkPosition();
 }, { immediate: true });
 
 // 监听modelValue变化
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== undefined && newValue !== activeTab.value) {
     activeTab.value = newValue;
-    setTimeout(() => {
-      updateInkPosition();
-    }, 0);
+    debouncedUpdateInkPosition();
   }
 });
 
 // 监听activeTab变化
 watch(activeTab, () => {
-  setTimeout(() => {
-    updateInkPosition();
-  }, 0);
+  debouncedUpdateInkPosition();
 });
 
 // 组件挂载后初始化
 onMounted(() => {
   initActiveTab();
-  setTimeout(() => {
-    updateInkPosition();
-  }, 0);
+  debouncedUpdateInkPosition();
 });
 
 // 暴露方法
 defineExpose({
   setActiveTab,
-  updateInkPosition
+  updateInkPosition: debouncedUpdateInkPosition
 });
 </script>
 
@@ -264,12 +292,24 @@ defineExpose({
   &__content {
     flex: 1;
     overflow: hidden;
+    position: relative;
   }
 
   &__panel {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+
+    &.is-active {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 }
 </style>

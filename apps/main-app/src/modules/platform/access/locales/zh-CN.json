@@ -2,6 +2,7 @@
   "access.resources.title": "资源列表",
   "access.actions.title": "行为列表",
   "access.permissions.title": "权限列表",
+  "access.role.title": "角色列表",
   "access.roles.title": "角色列表",
   "access.policies.title": "策略列表",
   "access.perm_compose.title": "权限组合",

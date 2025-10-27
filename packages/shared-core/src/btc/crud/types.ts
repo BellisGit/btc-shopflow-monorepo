@@ -11,7 +11,8 @@ export interface CrudService<T = Record<string, unknown>> {
   page: (params: Record<string, unknown>) => Promise<{ list: T[]; total: number }>;
   add: (data: Partial<T>) => Promise<void>;
   update: (data: Partial<T>) => Promise<void>;
-  delete: (ids: (string | number)[]) => Promise<void>;
+  delete: (id: string | number) => Promise<void>; // 单个删除
+  deleteBatch: (ids: (string | number)[]) => Promise<void>; // 批量删除
 }
 
 /**

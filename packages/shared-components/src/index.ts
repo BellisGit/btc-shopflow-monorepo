@@ -3,6 +3,9 @@
 // 导入全局样式
 import './styles/index.scss';
 
+// 初始化全局事件系统
+import './utils/resize';
+
 // 通用组件
 import BtcButton from './common/button/index.vue';
 import BtcSvg from './common/svg/index.vue';
@@ -12,6 +15,7 @@ import BtcForm from './common/form/index.vue';
 import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
+import BtcContainer from './common/container/index.vue';
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';
 import * as CodePlugin from './plugins/code';
@@ -47,6 +51,9 @@ import BtcSearchKey from './crud/search-key/index.vue';
 // 导入导出组件已移动到 excel 插件
 import BtcMenuExp from './crud/menu-exp/index.vue';
 
+// 图表组件
+export * from './charts';
+
 // 导出语言包供应用使用
 export { default as sharedLocalesZhCN } from './locales/zh-CN.json';
 export { default as sharedLocalesEnUS } from './locales/en-US.json';
@@ -61,6 +68,7 @@ export {
   BtcFormCard,
   BtcFormTabs,
   BtcSelectButton,
+  BtcContainer,
   // 代码展示组件已移动到 code 插件
   BtcMasterList,
   BtcCard,
@@ -105,3 +113,4 @@ export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/btc-table-group/types';
+export type { BtcContainerProps } from './common/container/index.vue';

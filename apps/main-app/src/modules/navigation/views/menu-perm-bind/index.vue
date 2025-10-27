@@ -24,25 +24,28 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
   name: 'NavigationMenuPermBind'
 });
 
+const { t } = useI18n();
+
 // Mock??
 const message = useMessage();
-const menuPermService = service.base.department;
-const permissionService = service.base.department;
+const menuPermService = service.system?.iam?.sys.department;
+const permissionService = service.system?.iam?.sys.permission;
 
-// ??
+// ????
 const allPermissions = ref<any[]>([]);
 const selectedPermissions = ref<number[]>([]);
 const saving = ref(false);
 
 // ??????
 const loadPermissions = async () => {
-  const permissions = await permissionService.list();
+  const permissions = await permissionService.list({});
   allPermissions.value = permissions.map(p => ({
     key: p.id,
     label: p.name,
@@ -52,7 +55,7 @@ const loadPermissions = async () => {
 
 // ????????
 const loadBoundPermissions = async () => {
-  const boundPerms = await menuPermService.list();
+  const boundPerms = await menuPermService.list({});
   selectedPermissions.value = boundPerms.map((p: any) => p.permissionId);
 };
 
@@ -60,24 +63,24 @@ const loadBoundPermissions = async () => {
 const handleSave = async () => {
   saving.value = true;
   try {
-    // ???????
-    const existing = await menuPermService.list();
+    // ??????
+    const existing = await menuPermService.list({});
     for (const item of existing) {
       await menuPermService.remove(item.id);
     }
 
-    // ??????
+    // ?????
     for (const permissionId of selectedPermissions.value) {
       await menuPermService.add({
-        menuId: 1, // ??????????ID??
+        menuId: 1, // ???????????ID
         permissionId,
         createTime: new Date().toISOString()
       });
     }
 
-    message.success('????????');
+    message.success('????');
   } catch (_error) {
-    message.error('????????');
+    message.error('????');
   } finally {
     saving.value = false;
   }
@@ -99,3 +102,4 @@ onMounted(() => {
   align-items: center;
 }
 </style>
+

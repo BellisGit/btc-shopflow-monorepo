@@ -120,6 +120,7 @@ import { ref, onMounted, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import TestComponent from '@components/TestComponent.vue';
 import { useCore, initEpsData, usePluginManager } from '@btc/shared-core';
+import epsData from 'virtual:eps';
 
 const ctxInfo = ref<any>(null);
 const epsInfo = ref<any>(null);
@@ -153,8 +154,7 @@ onMounted(async () => {
   }
 
   try {
-    const eps = await import('virtual:eps');
-    epsInfo.value = eps.default || eps;
+    epsInfo.value = epsData;
 
     // 初始化 EPS 数据到全局
     initEpsData(epsInfo.value);

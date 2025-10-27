@@ -6,6 +6,7 @@
       :right-service="wrappedModuleService"
       :table-columns="moduleColumns"
       :form-items="moduleFormItems"
+      :op="{ buttons: ['edit', 'delete'] }"
       left-title="业务域"
       right-title="模块列表"
       search-placeholder="搜索模块..."
@@ -30,30 +31,38 @@ const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
 
-// 域服务配置 - 直接调用域列表的list API
+// 域服务配置- 直接调用域列表的list API
 const domainService = {
   list: (params?: any) => {
-    // 必须传递参数对象，即使为空对象{}，后端会设置默认值
+    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
 
-    return service.sysdomain.list(finalParams);
+    return service.system?.iam?.sys.domain?.list(finalParams);
   }
 };
 
-// 模块服务（右侧表）：使用真实API
-const moduleService = service.sysmodule;
+// 模块服务（右侧表），使用纯后端API
+const moduleService = service.system?.iam?.sys.module;
 
 const wrappedModuleService = {
   ...moduleService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await moduleService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await moduleService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await moduleService.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
 
 
-// 用户点击选择处理
+// 域选择处理
 const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
 };
@@ -85,3 +94,4 @@ const moduleFormItems = computed<FormItem[]>(() => [
   box-sizing: border-box;
 }
 </style>
+

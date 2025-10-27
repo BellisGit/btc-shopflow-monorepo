@@ -9,7 +9,7 @@
         <BtcSearchKey />
       </BtcRow>
       <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" border />
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
       </BtcRow>
       <BtcRow>
         <BtcFlex1 />
@@ -33,12 +33,20 @@ const message = useMessage();
 const crudRef = ref();
 
 
-// 使用真实的 EPS 租户服务，包装删除确认逻辑
+// 使用纯后端 EPS 租户服务，封装删除确认逻辑
 const tenantService = {
-  ...service.systenant,
+  ...service.system?.iam?.sys.tenant,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await service.systenant.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await service.system?.iam?.sys.tenant?.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await service.system?.iam?.sys.tenant?.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
@@ -65,6 +73,6 @@ const formItems = computed<FormItem[]>(() => [
 
 <style lang="scss" scoped>
 .tenant-list {
-  // 内嵌样式由布局系统统一控制，此处仅保留业务相关样式
+  // 嵌套样式由布局系统统一控制，此处仅保留业务相关样式
 }
 </style>

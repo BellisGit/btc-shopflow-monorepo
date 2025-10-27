@@ -3,24 +3,24 @@
     <el-card class="info-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>角色信息</span>
+          <span>????</span>
         </div>
       </template>
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="角色名称">{{ roleInfo.roleName }}</el-descriptions-item>
-        <el-descriptions-item label="角色编码">{{ roleInfo.roleCode }}</el-descriptions-item>
-        <el-descriptions-item label="类型">{{ roleInfo.roleType }}</el-descriptions-item>
-        <el-descriptions-item label="描述">{{ roleInfo.description }}</el-descriptions-item>
+        <el-descriptions-item label="????">{{ roleInfo.roleName }}</el-descriptions-item>
+        <el-descriptions-item label="????">{{ roleInfo.roleCode }}</el-descriptions-item>
+        <el-descriptions-item label="????">{{ roleInfo.roleType }}</el-descriptions-item>
+        <el-descriptions-item label="??">{{ roleInfo.description }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
     <el-card class="perms-card" shadow="hover" style="margin-top: 20px;">
       <template #header>
         <div class="card-header">
-          <span>权限绑定</span>
+          <span>????</span>
           <div>
-            <el-button @click="handleCancel">取消</el-button>
-            <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
+            <el-button @click="handleCancel">??</el-button>
+            <el-button type="primary" @click="handleSave" :loading="saving">??</el-button>
           </div>
         </div>
       </template>
@@ -55,59 +55,59 @@ const checkedPermissions = ref<number[]>([]);
 const saving = ref(false);
 const treeRef = ref();
 
-// Mock服务
-const roleService = service.base.department;
+// Mock??
+const roleService = service.system?.iam?.sys.role;
 
-// Mock权限树数据
+// Mock?????
 const loadPermissionTree = () => {
   permissionTree.value = [
     {
       id: 'user',
-      label: '用户管理',
+      label: '????',
       children: [
-        { id: 1, label: '查看用户' },
-        { id: 2, label: '编辑用户' },
-        { id: 3, label: '删除用户' },
+        { id: 1, label: '????' },
+        { id: 2, label: '????' },
+        { id: 3, label: '????' },
       ]
     },
     {
       id: 'role',
-      label: '角色管理',
+      label: '????',
       children: [
-        { id: 4, label: '查看角色' },
-        { id: 5, label: '分配角色' },
+        { id: 4, label: '????' },
+        { id: 5, label: '????' },
       ]
     },
     {
       id: 'dept',
-      label: '部门管理',
+      label: '????',
       children: [
-        { id: 6, label: '查看部门' },
-        { id: 7, label: '编辑部门' },
+        { id: 6, label: '????' },
+        { id: 7, label: '????' },
       ]
     }
   ];
 
-  // 模拟选中一些权限
+  // ????????
   checkedPermissions.value = [1, 4, 6];
 };
 
-// 加载角色信息
+// ??????
 const loadRoleInfo = async () => {
   try {
     const data = await roleService.info({ id: roleId });
     roleInfo.value = data;
   } catch (_error) {
-    message.error('加载角色信息失败');
+    message.error('????????');
   }
 };
 
-// 处理选中变化
+// ??????
 const handleCheck = () => {
-  // 可以在这里添加额外的逻辑
+  // ????????????
 };
 
-// 保存
+// ??
 const handleSave = async () => {
   saving.value = true;
   try {
@@ -115,19 +115,19 @@ const handleSave = async () => {
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // 这里应该调用后端API
+    // ????????API
     // await http.post(`/roles/${roleId}/permissions`, { permissionIds: checkedKeys });
 
-    message.success('保存成功');
+    message.success('????');
     router.back();
   } catch (_error) {
-    message.error('保存失败');
+    message.error('????');
   } finally {
     saving.value = false;
   }
 };
 
-// 取消
+// ??
 const handleCancel = () => {
   router.back();
 };
@@ -149,3 +149,4 @@ onMounted(() => {
   align-items: center;
 }
 </style>
+

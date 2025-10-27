@@ -2,37 +2,76 @@
 // 完全对齐 cool-admin 的样式结构（逐字复制）
 
 .btc-crud {
-  height: 100%;
-  position: relative;
-  box-sizing: border-box;
-  background-color: var(--el-bg-color);
-  overflow: hidden; // 保持 hidden，滚动条由表格内部处理
+	height: 100%;
+	overflow: hidden auto;
+	position: relative;
+	box-sizing: border-box;
+	background-color: var(--el-bg-color);
 
-  &.is-border {
-    border: 1px solid var(--el-border-color);
-    border-radius: var(--el-border-radius-base);
-  }
+	&.is-border {
+		border: 1px solid var(--el-border-color);
+		border-radius: var(--el-border-radius-base);
+	}
 
-  & > .btc-crud-row {
-    width: 100%;
+	& > .btc-crud-row {
+		width: 100%;
 
-    &:not(.btc-crud-row--last) > * {
-      margin: 0 10px 10px 0;
+		&:not(.btc-crud-row--last) > * {
+			margin: 0 10px 10px 0;
 
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+			&:last-child {
+				margin-right: 0;
+			}
+		}
 
-    .btc-flex1 {
-      margin-right: 0;
-    }
-  }
+		.btc-flex1 {
+			margin-right: 0;
+		}
+	}
 }
 
 .btc-flex1 {
   flex: 1;
   font-size: 12px;
+}
+
+.btc-table {
+	width: 100%;
+
+	.el-table {
+		&.el-loading-parent--relative {
+			box-sizing: border-box;
+		}
+
+		&__header {
+			.el-table__cell {
+				background-color: var(--el-fill-color-lighter) !important;
+				color: var(--el-text-color-primary);
+
+				.cell {
+					line-height: normal;
+				}
+			}
+		}
+
+		&__empty-block {
+			height: auto !important;
+		}
+	}
+
+	.el-loading-mask {
+		.el-loading-spinner {
+			.el-icon-loading {
+				font-size: 25px;
+				color: #000;
+			}
+
+			.el-loading-text {
+				color: var(--el-text-color-secondary);
+				margin-top: 5px;
+			}
+		}
+	}
 }
 
 .btc-table-op {

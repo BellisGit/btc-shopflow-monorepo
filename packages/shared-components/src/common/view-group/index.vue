@@ -82,7 +82,7 @@ function isEmpty(value: any): boolean {
   return false;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   leftService: any; // 左侧服务
   rightService?: any; // 右侧服务（可选）
   leftTitle?: string;
@@ -95,7 +95,10 @@ const props = defineProps<{
   idField?: string;
   labelField?: string;
   parentField?: string;
-}>();
+  op?: { buttons?: any[] }; // 操作列配置
+}>(), {
+  op: undefined,
+});
 
 const emit = defineEmits<{
   'update:selected': [value: any];
@@ -147,8 +150,7 @@ async function loadRightData() {
 
   try {
     const params: any = {
-      order: 'createdAt',
-      sort: 'asc',
+      order: 'asc',  // 修正：order 应该是排序方向，不是字段名
       page: 1,
       size: 20
     };

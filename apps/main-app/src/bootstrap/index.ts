@@ -8,7 +8,7 @@
 import type { App } from 'vue';
 
 // 核心模块
-import { setupStore, setupUI, setupRouter, setupI18n } from './core';
+import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
 
 // 处理器模块
 import { createMessageHandler, initMessageManager, createNotificationHandler, initNotificationManager } from './handlers';
@@ -26,6 +26,7 @@ import { BtcMessage } from '@btc/shared-components';
  */
 export async function bootstrap(app: App) {
   // 1. 核心模块初始化
+  setupEps(app);        // EPS 服务（必须在最前面）
   setupStore(app);      // 状态管理
   setupRouter(app);     // 路由配置
   setupUI(app);         // UI框架配置

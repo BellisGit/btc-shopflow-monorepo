@@ -54,6 +54,7 @@
   "common.button.submit": "提交",
   "common.button.back": "返回",
   "common.button.close": "关闭",
+  "common.loading": "加载中",
   "common.search_menu": "搜索菜单",
   "common.tip": "提示",
   "crud.message.save_success": "保存成功",

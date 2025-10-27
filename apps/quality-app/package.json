@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "pnpm --filter @btc/vite-plugin build",
     "dev": "vite --port 8083",
     "build": "vite build",
     "preview": "vite preview",

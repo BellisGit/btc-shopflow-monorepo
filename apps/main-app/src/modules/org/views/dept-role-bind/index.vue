@@ -69,7 +69,7 @@ const loadDeptInfo = async () => {
 // 加载角色列表
 const loadRoles = async () => {
   try {
-    const roles = await roleService.list();
+    const roles = await roleService.list({});
     allRoles.value = roles.map((role: any) => ({
       key: role.id,
       label: `${role.roleName}（${role.roleCode}）`,

@@ -6,6 +6,7 @@
       :right-service="wrappedResourceService"
       :table-columns="resourceColumns"
       :form-items="resourceFormItems"
+      :op="{ buttons: ['edit', 'delete'] }"
       left-title="模块列表"
       right-title="资源列表"
       search-placeholder="搜索资源..."
@@ -33,26 +34,34 @@ const selectedModule = ref<any>(null);
 // 模块服务（左侧树，用作资源分类）- 使用EPS服务
 const moduleService = {
   list: (params?: any) => {
-    // 必须传递参数对象，即使为空对象{}，后端会设置默认值
+    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.sysmodule.list(finalParams);
+    return service.system?.iam?.sys.module?.list(finalParams);
   }
 };
 
 // 资源服务（右侧表）- 使用EPS服务
-const resourceService = service.sysresource;
+const resourceService = service.system?.iam?.sys.resource;
 
 const wrappedResourceService = {
   ...resourceService,
   delete: async ({ ids }: { ids: (string | number)[] }) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await resourceService.delete({ ids });
+
+    if (ids.length === 1) {
+      // 单个删除：调用 delete 方法，传递单个 ID
+      await resourceService.delete(ids[0]);
+    } else {
+      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+      await resourceService.deleteBatch(ids);
+    }
+
     message.success(t('crud.message.delete_success'));
   },
 };
 
 
-// 用户点击选择处理
+// 模块选择处理
 const onModuleSelect = (module: any) => {
   selectedModule.value = module;
 };
@@ -78,7 +87,7 @@ const resourceFormItems = computed<FormItem[]>(() => [
     component: {
       name: 'el-select',
       options: [
-        { label: '页面', value: '页面' },
+        { label: '菜单', value: '菜单' },
         { label: 'API', value: 'API' },
         { label: '按钮', value: '按钮' },
         { label: '字段', value: '字段' },

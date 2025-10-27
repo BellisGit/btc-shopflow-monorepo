@@ -59,12 +59,18 @@ export function useCrud<T = Record<string, unknown>>(
     onLoad?.();
 
     try {
-      // 合并参数
+      // 合并参数，过滤掉 null 值
       let params: Record<string, unknown> = {
         page: pagination.page,
         size: pagination.size,
-        ...searchParams.value,
       };
+
+      // 只添加非 null 的搜索参数
+      Object.keys(searchParams.value).forEach(key => {
+        if (searchParams.value[key] !== null && searchParams.value[key] !== undefined) {
+          params[key] = searchParams.value[key];
+        }
+      });
 
 
       // 刷新前钩子（对应 cool-admin 的 onRefresh）
@@ -184,6 +190,13 @@ export function useCrud<T = Record<string, unknown>>(
    * 删除单行
    */
   const handleDelete = async (row: T & { id: number | string }) => {
+    // 检查 row 是否有有效的 id
+    if (!row || row.id === undefined || row.id === null) {
+      console.error('删除失败：行数据缺少有效的 id 字段', row);
+      onError?.(new Error('删除失败：缺少有效的 id 字段'));
+      return;
+    }
+
     // 删除前钩子（对应 cool-admin 的 onDelete）
     if (onBeforeDelete) {
       const canDelete = await onBeforeDelete([row]);
@@ -193,11 +206,13 @@ export function useCrud<T = Record<string, unknown>>(
     }
 
     try {
-      await service.delete([row.id]);
+      // 单个删除：传递 {ids: [row.id]} 格式给自定义删除方法
+      await service.delete({ ids: [row.id] });
       onSuccess?.('删除成功');
       onAfterDelete?.();
       loadData();
     } catch (error) {
+      console.error('删除操作失败:', error);
       onError?.(error);
     }
   };
@@ -221,7 +236,8 @@ export function useCrud<T = Record<string, unknown>>(
 
     try {
       const ids = selection.value.map((row: any) => row.id);
-      await service.delete(ids);
+      // 批量删除：使用专门的 deleteBatch 方法
+      await service.deleteBatch(ids);
       onSuccess?.(`成功删除 ${ids.length} 条数据`);
       onAfterDelete?.();
       clearSelection();
