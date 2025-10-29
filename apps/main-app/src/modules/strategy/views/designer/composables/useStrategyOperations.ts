@@ -154,6 +154,17 @@ export function useStrategyOperations(
     });
   };
 
+  // 处理保存
+  const handleSave = async () => {
+    if (nodes.value.length === 0) {
+      ElMessage.warning('请先添加节点');
+      return;
+    }
+
+    // 这里可以添加保存逻辑，比如保存到本地存储或发送到服务器
+    ElMessage.success('策略编排保存成功');
+  };
+
   return {
     // 状态
     strategyName,
@@ -164,6 +175,7 @@ export function useStrategyOperations(
     validateOrchestration,
     previewExecution,
     saveOrchestration,
+    handleSave,
     loadOrchestration,
     clearOrchestration,
     exportOrchestration,

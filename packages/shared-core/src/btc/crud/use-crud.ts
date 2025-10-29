@@ -206,8 +206,8 @@ export function useCrud<T = Record<string, unknown>>(
     }
 
     try {
-      // 单个删除：传递 {ids: [row.id]} 格式给自定义删除方法
-      await service.delete({ ids: [row.id] });
+      // 单个删除：传递单个 ID 给 delete 方法
+      await service.delete(row.id);
       onSuccess?.('删除成功');
       onAfterDelete?.();
       loadData();

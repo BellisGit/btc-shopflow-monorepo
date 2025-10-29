@@ -3,7 +3,12 @@
 </template>
 
 <script setup lang="ts">
-// 寮规€х┖闂寸粍浠讹紝瀹屽叏瀵归綈 cool-admin 鐨?cl-flex1
+// 弹性空间组件，完全对齐 cool-admin 的 cl-flex1
 </script>
 
-
+<style lang="scss" scoped>
+.btc-flex1 {
+  flex: 1;
+  min-width: 0; /* 防止内容溢出 */
+}
+</style>

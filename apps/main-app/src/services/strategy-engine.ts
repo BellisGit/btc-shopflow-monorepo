@@ -13,9 +13,9 @@ import type {
   StrategyCondition,
   StrategyAction,
   StrategyRule,
-  NodeType,
-  StrategyEffect
+  NodeType
 } from '@/types/strategy';
+import { StrategyEffect } from '@/types/strategy';
 import { strategyService } from './strategy';
 
 // 执行引擎配置
@@ -172,7 +172,7 @@ export class StrategyExecutionEngine {
     });
 
     let finalResult: any = context.input;
-    let finalEffect: StrategyEffect = 'ALLOW';
+    let finalEffect: StrategyEffect = StrategyEffect.ALLOW;
 
     // 从每个开始节点开始执行
     for (const startNode of startNodes) {
@@ -324,14 +324,14 @@ export class StrategyExecutionEngine {
     const conditions = node.data.conditions || [];
 
     if (conditions.length === 0) {
-      return { output: input, effect: 'ALLOW' };
+      return { output: input, effect: StrategyEffect.ALLOW };
     }
 
     const result = this.evaluateConditions(conditions, input, session.variables);
 
     return {
       output: { ...input, conditionResult: result },
-      effect: result ? 'ALLOW' : 'DENY'
+      effect: result ? StrategyEffect.ALLOW : StrategyEffect.DENY
     };
   }
 
@@ -345,7 +345,7 @@ export class StrategyExecutionEngine {
   ): Promise<{ output: any; effect?: StrategyEffect }> {
     const actions = node.data.actions || [];
     let output = { ...input };
-    let effect: StrategyEffect = 'ALLOW';
+    let effect: StrategyEffect = StrategyEffect.ALLOW;
 
     for (const action of actions) {
       const actionResult = await this.executeAction(action, output, session.variables);
@@ -420,8 +420,15 @@ export class StrategyExecutionEngine {
 
     for (const connection of nextConnections) {
       // 检查连接条件
-      if (connection.condition && !this.evaluateCondition(connection.condition, output, session.variables)) {
-        continue;
+      if (connection.condition) {
+        if (typeof connection.condition === 'string') {
+          // 简单的字符串条件
+          if (connection.condition === 'false') {
+            continue;
+          }
+        } else if (!this.evaluateCondition(connection.condition, output, session.variables)) {
+          continue;
+        }
       }
 
       const nextNode = session.orchestration.nodes.find(n => n.id === connection.targetNodeId);
@@ -502,10 +509,10 @@ export class StrategyExecutionEngine {
 
     switch (action.type) {
       case 'ALLOW_ACCESS':
-        return { output: { ...context, access: 'allowed' }, effect: 'ALLOW' };
+        return { output: { ...context, access: 'allowed' }, effect: StrategyEffect.ALLOW };
 
       case 'DENY_ACCESS':
-        return { output: { ...context, access: 'denied' }, effect: 'DENY' };
+        return { output: { ...context, access: 'denied' }, effect: StrategyEffect.DENY };
 
       case 'LOG_EVENT':
         console.log('策略日志:', parameters.message || '动作执行', context);

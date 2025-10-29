@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue';
 /**
  * 画布交互管理
  */
-export function useCanvasInteraction() {
+export function useCanvasInteraction(updateTempConnection?: (event: MouseEvent, canvasRef: HTMLElement) => void) {
   // 工具状态
   const currentTool = ref<'select' | 'drag'>('select');
 
@@ -80,6 +80,12 @@ export function useCanvasInteraction() {
       panX.value = event.clientX - dragState.startPos.x;
       panY.value = event.clientY - dragState.startPos.y;
     }
+
+    // 更新临时连接线
+    const canvasRef = document.querySelector('.strategy-canvas') as HTMLElement;
+    if (canvasRef && updateTempConnection) {
+      updateTempConnection(event, canvasRef);
+    }
   };
 
   const handleCanvasMouseUp = () => {
@@ -87,15 +93,15 @@ export function useCanvasInteraction() {
   };
 
   // 滚轮缩放
-  const handleCanvasWheel = (event: WheelEvent, canvasRef: HTMLElement | null) => {
+  const handleCanvasWheel = (event: WheelEvent, canvasRef?: HTMLElement | null) => {
     event.preventDefault();
-    if (!canvasRef) return;
 
     const delta = event.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.max(0.1, Math.min(3, zoom.value * delta));
 
     if (newZoom !== zoom.value) {
-      const rect = canvasRef.getBoundingClientRect();
+      const target = canvasRef || (event.target as HTMLElement);
+      const rect = target.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
 

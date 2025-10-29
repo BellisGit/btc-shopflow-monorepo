@@ -119,8 +119,8 @@ const columns = computed(() => [
         label: t('recycle.restore'),
         type: 'success',
         onClick: ({ scope }: { scope: { row: any } }) => {
-          // 使用 beforeData.$$entity.id 作为恢复的标识
-          const id = scope.row.beforeData?.$$entity?.id || scope.row.id;
+          // 使用日志记录本身的ID
+          const id = scope.row.id;
           restore(id);
         }
       }
@@ -142,8 +142,8 @@ function refresh(params?: any) {
 
 // 数据恢复
 function restore(targetId?: string) {
-  // 从后端数据结构看，使用 beforeData.$$entity.id 作为恢复的标识
-  const ids = targetId ? [targetId] : tableSelection.value.map(e => e.beforeData?.$$entity?.id || e.id);
+  // 使用日志记录本身的ID
+  const ids = targetId ? [targetId] : tableSelection.value.map(e => e.id);
 
   // 过滤掉空值
   const validIds = ids.filter(Boolean);

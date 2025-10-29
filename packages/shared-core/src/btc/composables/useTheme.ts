@@ -151,7 +151,7 @@ export function useTheme() {
    * 初始化主题
    */
   function initTheme() {
-    const savedDark = storage.get<boolean>('isDark');
+    const savedDark = storage.get('isDark') as boolean | null;
     if (savedDark !== null && savedDark !== undefined) {
       isDark.value = savedDark;
       if (isDark.value) {

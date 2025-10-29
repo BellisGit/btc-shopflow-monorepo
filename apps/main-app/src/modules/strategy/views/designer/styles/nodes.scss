@@ -1,0 +1,69 @@
+// SVG 节点类型样式
+.strategy-node {
+  // 节点类型颜色定义
+  &.START {
+    .node-rect {
+      fill: #e1f3d8;
+      stroke: #67c23a;
+    }
+
+    .node-icon text {
+      fill: #67c23a;
+    }
+  }
+
+  &.END {
+    .node-rect {
+      fill: #fde2e2;
+      stroke: #f56c6c;
+    }
+
+    .node-icon text {
+      fill: #f56c6c;
+    }
+  }
+
+  &.CONDITION {
+    .node-rect {
+      fill: #fdf6ec;
+      stroke: #e6a23c;
+    }
+
+    .node-icon text {
+      fill: #e6a23c;
+    }
+  }
+
+  &.ACTION {
+    .node-rect {
+      fill: #ecf5ff;
+      stroke: #409eff;
+    }
+
+    .node-icon text {
+      fill: #409eff;
+    }
+  }
+
+  &.DECISION {
+    .node-rect {
+      fill: #f4f4f5;
+      stroke: #909399;
+    }
+
+    .node-icon text {
+      fill: #909399;
+    }
+  }
+
+  &.GATEWAY {
+    .node-rect {
+      fill: #f3e8ff;
+      stroke: #9c27b0;
+    }
+
+    .node-icon text {
+      fill: #9c27b0;
+    }
+  }
+}

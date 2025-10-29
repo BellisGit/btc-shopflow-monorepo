@@ -1,17 +1,18 @@
 // 组件库样式
 .component-library {
-  width: 280px;
+  width: 100%; // 改为 100%，宽度由父容器控制
+  height: 100%; // 添加高度 100%
   background: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
 
   .library-header {
-    padding: 16px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--el-border-color-light);
 
     h3 {
-      margin: 0 0 12px 0;
+      margin: 0 0 8px 0;
       font-size: 16px;
       font-weight: 600;
     }
@@ -20,43 +21,79 @@
   .library-content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    overflow-x: hidden;
+    padding: 4px 0;
+
+    // 移除 collapse 组件的默认边框
+    .el-collapse {
+      border: none;
+      width: 100%;
+      box-sizing: border-box;
+
+      .el-collapse-item {
+        border: none;
+        border-bottom: 1px solid var(--el-border-color-light);
+        width: 100%;
+        box-sizing: border-box;
+
+        .el-collapse-item__header {
+          border: none;
+          padding: 8px 12px;
+          font-weight: 500;
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        .el-collapse-item__content {
+          padding: 0;
+        }
+      }
+    }
 
     .component-list {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
 
       .component-item {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        padding: 12px;
+        padding: 12px 8px;
         border: 1px solid var(--el-border-color-light);
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: grab;
         transition: all 0.2s;
+        background: var(--el-bg-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
         &:hover {
           border-color: var(--el-color-primary);
           background: var(--el-color-primary-light-9);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
         }
 
         &:active {
           cursor: grabbing;
+          transform: translateY(0);
         }
 
         .component-icon {
-          width: 32px;
-          height: 32px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 4px;
-          margin-right: 12px;
+          border-radius: 8px;
+          margin-bottom: 8px;
           transition: all 0.2s;
 
           .el-icon {
-            font-size: 18px;
+            font-size: 20px;
           }
         }
 
@@ -104,16 +141,24 @@
         }
 
         .component-info {
-          flex: 1;
+          text-align: center;
+          width: 100%;
 
           .component-name {
             font-weight: 500;
             margin-bottom: 2px;
+            font-size: 12px;
+            line-height: 1.2;
           }
 
           .component-desc {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--el-text-color-secondary);
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
         }
       }

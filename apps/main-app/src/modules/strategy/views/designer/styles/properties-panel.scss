@@ -1,8 +1,8 @@
 // 属性面板样式
 .properties-panel {
-  width: 320px;
+  width: 100%; // 改为 100%，宽度由父容器控制
+  height: 100%; // 添加高度 100%
   background: var(--el-bg-color);
-  border-left: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
 

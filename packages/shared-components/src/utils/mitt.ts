@@ -105,7 +105,7 @@ export default function mitt<Events extends Record<EventType, unknown>>(
 
       handlers = all!.get('*');
       if (handlers) {
-        (handlers as WildCardEventHandlerList<Events>)
+        (handlers as unknown as WildCardEventHandlerList<Events>)
           .slice()
           .map((handler) => {
             handler(type, evt!);

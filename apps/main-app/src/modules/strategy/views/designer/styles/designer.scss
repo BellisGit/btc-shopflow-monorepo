@@ -1,74 +1,72 @@
-// 策略编排器主样式
 .strategy-designer {
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--el-bg-color-page);
 
-  // 工具栏样式
-  .designer-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--el-bg-color);
-    border-bottom: 1px solid var(--el-border-color-light);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  // 确保 btc-grid-group 有正确的高度
+  .btc-grid-group {
+    height: 100%;
+    flex: 1;
+  }
 
-    .toolbar-left,
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+  .canvas-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    .el-button {
+      margin: 0;
+      border-radius: 0;
+
+      &:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      &:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+
+    .zoom-input {
+      flex: 1;
+      text-align: center;
+      margin: 0;
+
+      .el-input__wrapper {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+
+        .el-input__inner {
+          text-align: center;
+          font-weight: 500;
+        }
+      }
     }
   }
 
-  // 主内容区域
-  .designer-content {
-    flex: 1;
+  .strategy-input {
     display: flex;
-    overflow: hidden;
+    justify-content: center;
+    align-items: center;
   }
 }
 
 // 响应式设计
 @media (max-width: 1200px) {
   .strategy-designer {
-    .designer-content {
-      .component-library {
-        width: 240px;
-      }
-
-      .properties-panel {
-        width: 280px;
-      }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .strategy-designer {
-    .designer-toolbar {
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-
-      .toolbar-left,
-      .toolbar-center,
-      .toolbar-right {
-        justify-content: center;
-      }
-    }
-
-    .designer-content {
-      .component-library,
-      .properties-panel {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        z-index: 10;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      }
-    }
+    // 窄屏时通过修改 btc-grid-group props 处理
+    // 或在此处覆盖 CSS 变量
   }
 }

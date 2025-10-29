@@ -13,7 +13,8 @@ import type {
 } from '@/types/strategy';
 import {
   StrategyType,
-  StrategyStatus
+  StrategyStatus,
+  StrategyEffect
 } from '@/types/strategy';
 
 // 分页查询参数
@@ -413,7 +414,7 @@ export class MockStrategyService implements StrategyService {
       const errorResult: StrategyExecutionResult = {
         executionId: Date.now().toString(),
         strategyId: id,
-        effect: 'DENY',
+        effect: StrategyEffect.DENY,
         success: false,
         output: context.input,
         executionTime: 0,

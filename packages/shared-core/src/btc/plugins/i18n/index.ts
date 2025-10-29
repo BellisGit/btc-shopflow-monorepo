@@ -71,7 +71,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
     return loc;
   }
 
-  const currentLocale = normalizeLocale(storage.get<string>('locale') || options.locale || 'zh-CN');
+  const currentLocale = normalizeLocale((storage.get('locale') as string) || options.locale || 'zh-CN');
 
   // 初始化时也写 cookie（确保服务端能读到）
   if (typeof document !== 'undefined') {

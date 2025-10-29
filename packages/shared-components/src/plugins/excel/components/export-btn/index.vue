@@ -317,11 +317,16 @@ const exportableColumns = computed(() => {
     }
 
     // 使用 getDateRange 函数获取时间范围
-    const [startDate, endDate] = getDateRange(formData.timeRange);
+    let startDate: string | null = null;
+    let endDate: string | null = null;
+
+    if (formData.timeRange) {
+      [startDate, endDate] = getDateRange(formData.timeRange);
+    }
 
     return {
-      startDate: formatDate(startDate, 'YYYY-MM-DD'),
-      endDate: formatDate(endDate, 'YYYY-MM-DD')
+      startDate: startDate ? formatDate(startDate, 'YYYY-MM-DD') : '',
+      endDate: endDate ? formatDate(endDate, 'YYYY-MM-DD') : ''
     };
   };
 

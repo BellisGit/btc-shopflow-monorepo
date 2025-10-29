@@ -16,6 +16,8 @@ import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './common/select-button/index.vue';
 import BtcContainer from './common/container/index.vue';
+import BtcGridGroup from './common/grid-group/index.vue';
+import BtcSearch from './common/search/index.vue';
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';
 import * as CodePlugin from './plugins/code';
@@ -69,6 +71,8 @@ export {
   BtcFormTabs,
   BtcSelectButton,
   BtcContainer,
+  BtcGridGroup,
+  BtcSearch,
   // 代码展示组件已移动到 code 插件
   BtcMasterList,
   BtcCard,
@@ -113,4 +117,5 @@ export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/btc-table-group/types';
-export type { BtcContainerProps } from './common/container/index.vue';
+export type { BtcContainerProps } from './common/container/types';
+export type { BtcGridGroupProps } from './common/grid-group/types';

@@ -225,7 +225,7 @@ onUnmounted(() => {
       background-color: var(--el-bg-color);
 
       // 只给非 view-group 页面添加 padding
-      &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page) {
+      &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page):not(.btc-grid-group) {
         padding: 10px;
       }
     }

@@ -1,5 +1,6 @@
-import { ref, computed } from 'vue';
+import { ref, computed, markRaw } from 'vue';
 import type { NodeType } from '@/types/strategy';
+import { NodeType as NodeTypeEnum } from '@/types/strategy';
 import {
   VideoPlay,
   VideoPause,
@@ -24,28 +25,28 @@ export function useComponentLibrary() {
       title: '基础组件',
       components: [
         {
-          type: 'START' as NodeType,
+          type: NodeTypeEnum.START,
           name: '开始',
           description: '流程开始节点',
-          icon: VideoPlay
+          icon: markRaw(VideoPlay)
         },
         {
-          type: 'END' as NodeType,
+          type: NodeTypeEnum.END,
           name: '结束',
           description: '流程结束节点',
-          icon: VideoPause
+          icon: markRaw(VideoPause)
         },
         {
-          type: 'CONDITION' as NodeType,
+          type: NodeTypeEnum.CONDITION,
           name: '条件',
           description: '条件判断节点',
-          icon: QuestionFilled
+          icon: markRaw(QuestionFilled)
         },
         {
-          type: 'ACTION' as NodeType,
+          type: NodeTypeEnum.ACTION,
           name: '动作',
           description: '执行动作节点',
-          icon: Lightning
+          icon: markRaw(Lightning)
         }
       ]
     },
@@ -54,16 +55,16 @@ export function useComponentLibrary() {
       title: '高级组件',
       components: [
         {
-          type: 'DECISION' as NodeType,
+          type: NodeTypeEnum.DECISION,
           name: '决策',
           description: '多路决策节点',
-          icon: Share
+          icon: markRaw(Share)
         },
         {
-          type: 'GATEWAY' as NodeType,
+          type: NodeTypeEnum.GATEWAY,
           name: '网关',
           description: '流程网关节点',
-          icon: Connection
+          icon: markRaw(Connection)
         }
       ]
     }
@@ -86,38 +87,75 @@ export function useComponentLibrary() {
   const handleComponentDragStart = (event: DragEvent, component: any) => {
     if (event.dataTransfer) {
       event.dataTransfer.setData('application/json', JSON.stringify(component));
+      event.dataTransfer.setData('component-type', component.type);
       event.dataTransfer.effectAllowed = 'copy';
 
-      // 创建自定义拖拽图像，避免浏览器生成可能包含label元素的默认图像
-      const dragImage = document.createElement('div');
-      dragImage.innerHTML = `
-        <div style="
-          padding: 8px 12px;
-          background: #409eff;
-          color: white;
-          border-radius: 4px;
-          font-size: 12px;
-          white-space: nowrap;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        ">
-          ${component.name}
-        </div>
-      `;
-      dragImage.style.position = 'absolute';
-      dragImage.style.top = '-1000px';
-      dragImage.style.left = '-1000px';
-      dragImage.style.pointerEvents = 'none';
-      document.body.appendChild(dragImage);
+      // 创建自定义拖拽图像 - 使用实际组件大小
+      const dragImage = document.createElement('canvas');
+      dragImage.width = 120;
+      dragImage.height = 60;
+      const ctx = dragImage.getContext('2d');
 
-      event.dataTransfer.setDragImage(dragImage, 0, 0);
+      if (ctx) {
+        // 绘制组件背景
+        const fillColor = getNodeFillColor(component.type);
+        const strokeColor = getNodeStrokeColor(component.type);
+        const textColor = getNodeTextColor(component.type);
 
-      // 延迟清理临时元素，确保拖拽操作完成
-      setTimeout(() => {
-        if (document.body.contains(dragImage)) {
-          document.body.removeChild(dragImage);
-        }
-      }, 100);
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(0, 0, 120, 60);
+
+        // 绘制边框
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, 118, 58);
+
+        // 绘制文本
+        ctx.fillStyle = textColor;
+        ctx.font = '14px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(getNodeText(component.type), 60, 30);
+      }
+
+      event.dataTransfer.setDragImage(dragImage, 60, 30); // 使用组件中心作为拖拽点
     }
+  };
+
+  // 获取节点填充颜色
+  const getNodeFillColor = (type: NodeType): string => {
+    const colorMap = {
+      [NodeTypeEnum.START]: '#67c23a',
+      [NodeTypeEnum.END]: '#f56c6c',
+      [NodeTypeEnum.CONDITION]: '#e6a23c',
+      [NodeTypeEnum.ACTION]: '#409eff',
+      [NodeTypeEnum.DECISION]: '#909399',
+      [NodeTypeEnum.GATEWAY]: '#9c27b0'
+    };
+    return colorMap[type] || '#409eff';
+  };
+
+  // 获取节点边框颜色
+  const getNodeStrokeColor = (type: NodeType): string => {
+    return getNodeFillColor(type);
+  };
+
+  // 获取节点文本颜色
+  const getNodeTextColor = (type: NodeType): string => {
+    return '#ffffff';
+  };
+
+  // 获取节点文本
+  const getNodeText = (type: NodeType): string => {
+    const textMap = {
+      [NodeTypeEnum.START]: '开始',
+      [NodeTypeEnum.END]: '结束',
+      [NodeTypeEnum.CONDITION]: '条件',
+      [NodeTypeEnum.ACTION]: '动作',
+      [NodeTypeEnum.DECISION]: '决策',
+      [NodeTypeEnum.GATEWAY]: '网关'
+    };
+    return textMap[type] || '节点';
   };
 
   const handleCanvasDragOver = (event: DragEvent) => {
@@ -138,12 +176,18 @@ export function useComponentLibrary() {
     }
   };
 
+  // 扁平化的组件库（用于弹窗选择）
+  const componentLibrary = computed(() => {
+    return componentCategories.flatMap(category => category.components);
+  });
+
   return {
     // 状态
     componentSearch,
     activeCategories,
     componentCategories,
     filteredComponentCategories,
+    componentLibrary,
 
     // 方法
     handleComponentDragStart,

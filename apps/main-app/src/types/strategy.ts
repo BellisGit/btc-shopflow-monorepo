@@ -89,6 +89,7 @@ export interface StrategyNode {
   type: NodeType;
   name: string;
   description?: string;
+  text?: string; // 自定义节点文本
   position: {
     x: number;
     y: number;
@@ -104,6 +105,12 @@ export interface StrategyNode {
     height?: number;
     backgroundColor?: string;
     borderColor?: string;
+  };
+  textConfig?: {
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
   };
 }
 
@@ -135,6 +142,7 @@ export interface StrategyOrchestration {
     version: string;
     createdAt: string;
     updatedAt: string;
+    name?: string;
   };
 }
 
