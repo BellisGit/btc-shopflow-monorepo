@@ -156,6 +156,11 @@ function getTabLabel(item: ProcessItem) {
     '/ops/baseline': 'menu.ops.baseline',
     '/ops/simulator': 'menu.ops.simulator',
 
+    // 策略相关
+    '/strategy/management': 'menu.strategy.management',
+    '/strategy/designer': 'menu.strategy.designer',
+    '/strategy/monitor': 'menu.strategy.monitor',
+
     // 子应用路由（只保留首页）
     '/logistics': 'menu.logistics.overview',
     '/engineering': 'menu.engineering.overview',

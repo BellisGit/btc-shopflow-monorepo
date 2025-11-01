@@ -46,16 +46,19 @@ const moduleService = service.system?.iam?.sys.module;
 
 const wrappedModuleService = {
   ...moduleService,
-  delete: async ({ ids }: { ids: (string | number)[] }) => {
+  delete: async (id: string | number) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
-    if (ids.length === 1) {
-      // 单个删除：调用 delete 方法，传递单个 ID
-      await moduleService.delete(ids[0]);
-    } else {
-      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-      await moduleService.deleteBatch(ids);
-    }
+    // 单个删除：直接传递 ID
+    await moduleService.delete(id);
+
+    message.success(t('crud.message.delete_success'));
+  },
+  deleteBatch: async (ids: (string | number)[]) => {
+    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+
+    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+    await moduleService.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

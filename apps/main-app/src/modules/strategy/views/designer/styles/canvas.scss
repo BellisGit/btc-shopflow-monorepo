@@ -4,314 +4,62 @@
   position: relative;
   overflow: hidden;
   background: var(--el-bg-color-page);
-  min-height: 400px;
+  min-height: 0;
   height: 100%;
   width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+}
+
+.canvas-scroll {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .strategy-canvas {
   display: block;
   cursor: default;  // 默认箭头光标
+  overflow: hidden; // 确保内容不溢出容器，避免影响其他区域
 
   &.dragging {
     cursor: grabbing;
   }
 }
 
-// SVG 节点样式 - draw.io 风格
-.strategy-node {
-  cursor: move;
+#text-editor-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1004; // 高于画布
+  pointer-events: none; // 容器不拦截，textarea自行开启
 
-  &.selected {
-    .node-rect {
-      stroke-width: 2;
-      filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
-    }
+  .overlay-textarea-editor,
+  .overlay-contenteditable-editor {
+    pointer-events: auto;
+    // 提前占位边框，避免 focus 抖动
+    border: 1px solid transparent;
   }
-
-  .node-rect {
-    transition: all 0.15s ease;
-
-    &:hover {
-      filter: brightness(1.05);
-    }
-  }
-
-  .node-text {
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .text-edit-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .node-text-input {
-    width: 100%;
-    height: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    text-align: center;
-    padding: 0;
-    margin: 0;
-    font-size: inherit;
-    font-family: inherit;
-    font-weight: inherit;
-    font-style: inherit;
-    color: inherit;
-    line-height: 1;
-    box-sizing: border-box;
-    position: absolute;
-    top: 0;
-    left: 0;
-    vertical-align: middle;
-
-    &:focus {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-  }
-
-  .connection-points {
-    // 默认隐藏
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-
-    // 显示状态
-    &.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .connection-dot {
-      cursor: pointer;
-      transition: all 0.15s ease;
-
-      &:hover {
-        r: 5;
-        stroke-width: 2;
-        fill: #f0f0f0;
-      }
-
-      &.vertex {
-        fill: var(--el-bg-color);
-        stroke: var(--el-border-color);
-      }
-
-      &.edge {
-        fill: var(--el-bg-color);
-        stroke: var(--el-border-color);
-      }
-    }
-
-    .edge-connection-group {
-      .connection-arrow-group {
-        cursor: pointer;
-        transition: opacity 0.2s ease;
-
-        // 默认隐藏
-        opacity: 0;
-        pointer-events: none;
-
-        // 显示状态（悬停或选中节点）
-        &.visible {
-          opacity: 1;
-          pointer-events: auto;
-
-          .arrow-shape {
-            fill: var(--el-color-primary-light-8);  // 使用主题色浅色版本
-            stroke: none;
-          }
-        }
-
-        // 点击激活状态
-        &.active {
-          .arrow-shape {
-            fill: var(--el-color-primary);           // 主题色
-            stroke: var(--el-bg-color);           // 背景色描边
-            stroke-width: 2;
-          }
-        }
-
-        &:hover {
-          .arrow-shape {
-            fill: var(--el-color-primary-light-6);  // 悬停时稍微加深
-          }
-        }
-      }
-    }
-  }
-
-  .connection-label {
-    pointer-events: none;
-    user-select: none;
-    font-family: Arial, sans-serif;
-  }
-}
-
-// 连接线组样式
-.connection-group {
-  cursor: pointer;
-
-  .connection-path {
-    stroke: var(--el-text-color-primary);
-    stroke-width: 1.5;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    transition: all 0.15s ease;
-
-    &:hover {
-      stroke-width: 2;
-      stroke: var(--el-text-color-primary);
-    }
-
-    &.success {
-      stroke: var(--el-text-color-primary);
-    }
-
-    &.danger {
-      stroke: var(--el-text-color-primary);
-    }
-  }
-}
-
-// 临时连接线组样式
-.temp-connection-group {
-  .temp-connection-line {
-    stroke: var(--el-color-primary);
-    stroke-width: 2;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 4, 4;
-    animation: dash 1s linear infinite;
-  }
-}
-
-@keyframes dash {
-  to {
-    stroke-dashoffset: -8;
-  }
-}
-
-// 形状选择弹窗
-.shape-selector-popup {
-  position: fixed;  // 使用 fixed 定位在画布坐标
-  background: var(--el-bg-color);  // 使用主题背景色
-  border: 1px solid var(--el-border-color);
-  border-radius: 8px;
-  box-shadow: var(--el-box-shadow-light);  // 使用主题浅色阴影
-  padding: 8px;
-  z-index: 1001;  // 确保在节点上方
-
-  // 暗色主题下的特殊处理
-  @media (prefers-color-scheme: dark) {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .shape-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-
-  .shape-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-
-    &:hover {
-      background: var(--el-color-primary-light-9);
-    }
-
-    svg {
-      margin-bottom: 4px;
-    }
-
-    .shape-name {
-      font-size: 12px;
-      color: var(--el-text-color-primary);
-    }
-  }
-}
-
-
-// 文本配置区域样式
-.text-config-section {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--el-bg-color-page);
-  border-radius: 6px;
-  border: 1px solid var(--el-border-color-light);
-
-  h4 {
-    margin: 0 0 16px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .el-form {
-    .el-form-item {
-      margin-bottom: 16px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  // 字体预览样式
-  .font-preview {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--el-border-color-light);
-
-    h5 {
-      margin: 0 0 8px 0;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--el-text-color-regular);
-    }
-
-    .preview-text {
-      padding: 8px 12px;
-      background: var(--el-bg-color);
-      border: 1px solid var(--el-border-color);
-      border-radius: 4px;
-      text-align: center;
-      color: var(--el-text-color-primary);
-      min-height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  }
-}
-
-// 连接线箭头标记 - draw.io 风格
-.connection-marker {
-  fill: var(--el-text-color-primary);
 }
 
 // 画布缩放和平移动画
 .canvas-transform-transition {
   transition: transform 0.3s ease;
+}
+
+// 网格背景页面样式
+// 注意：不设置 z-index，依赖 DOM 顺序和 pointer-events: none 来避免拦截事件
+.grid-background-page {
+  position: absolute;
+  pointer-events: none; /* 不拦截鼠标事件，让 SVG 处理 */
+}
+
+// 橡皮筋选框样式：与 SVG 同级，绝对定位在 canvas-scroll 容器内
+.rubber-band-selection {
+  position: absolute;
+  pointer-events: none;
+  // 不设置 z-index，依赖 DOM 顺序确保在 SVG 之上
+  // 样式通过内联 style 绑定动态设置
 }

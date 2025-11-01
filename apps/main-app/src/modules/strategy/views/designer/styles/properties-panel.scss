@@ -8,16 +8,10 @@
 
   .panel-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 16px;
-    border-bottom: 1px solid var(--el-border-color-light);
-
-    h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-    }
+    border-bottom: none;
 
     .panel-actions {
       display: flex;
@@ -28,7 +22,7 @@
   .panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 4px;
 
     // 节点属性表单
     .node-properties-form {
@@ -126,6 +120,59 @@
         font-size: 14px;
         line-height: 1.5;
       }
+    }
+  }
+}
+
+// 文本配置区域样式
+.text-config-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--el-bg-color-page);
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-light);
+
+  h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  .el-form {
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  // 字体预览样式
+  .font-preview {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--el-border-color-light);
+
+    h5 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--el-text-color-regular);
+    }
+
+    .preview-text {
+      padding: 8px 12px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color);
+      border-radius: 4px;
+      text-align: center;
+      color: var(--el-text-color-primary);
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 }

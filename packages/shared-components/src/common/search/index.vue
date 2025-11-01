@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { BtcSvg } from '@btc/shared-components';
+import BtcSvg from '../svg/index.vue';
 import type { BtcSearchProps, BtcSearchEmits } from './types';
 
 defineOptions({

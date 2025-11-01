@@ -72,16 +72,19 @@ const loadDepartmentOptions = async () => {
 
 const wrappedDepartmentService = {
   ...departmentService,
-  delete: async ({ ids }: { ids: (string | number)[] }) => {
+  delete: async (id: string | number) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
-    if (ids.length === 1) {
-      // 单个删除：调用 delete 方法，传递单个 ID
-      await departmentService.delete(ids[0]);
-    } else {
-      // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-      await departmentService.deleteBatch(ids);
-    }
+    // 单个删除：直接传递 ID
+    await departmentService.delete(id);
+
+    message.success(t('crud.message.delete_success'));
+  },
+  deleteBatch: async (ids: (string | number)[]) => {
+    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+
+    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+    await departmentService.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

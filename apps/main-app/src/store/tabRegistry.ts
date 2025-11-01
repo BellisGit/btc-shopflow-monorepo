@@ -50,6 +50,11 @@ const registry: Record<string, Record<string, TabMeta>> = {
     // 数据管理
     'data-recycle': { key: 'data-recycle', title: 'Data Recycle Bin', path: '/data/recycle', i18nKey: 'menu.data.recycle' },
 
+    // 策略相关
+    'strategy-management': { key: 'strategy-management', title: 'Strategy Management', path: '/strategy/management', i18nKey: 'menu.strategy.management' },
+    'strategy-designer': { key: 'strategy-designer', title: 'Strategy Designer', path: '/strategy/designer', i18nKey: 'menu.strategy.designer' },
+    'strategy-monitor': { key: 'strategy-monitor', title: 'Strategy Monitor', path: '/strategy/monitor', i18nKey: 'menu.strategy.monitor' },
+
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
     'ops-logs-request': { key: 'ops-logs-request', title: 'Request Log', path: '/ops/logs/request', i18nKey: 'menu.ops.request_log' },

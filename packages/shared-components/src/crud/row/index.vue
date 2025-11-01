@@ -13,8 +13,8 @@
 import type { RowJustify, RowAlign } from 'element-plus';
 
 interface BtcRowProps {
-  justify?: RowJustify;
-  align?: RowAlign;
+  justify?: typeof RowJustify[keyof typeof RowJustify];
+  align?: typeof RowAlign[keyof typeof RowAlign];
   gutter?: number;
   gap?: number;
 }

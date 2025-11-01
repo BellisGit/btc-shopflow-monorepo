@@ -5,10 +5,11 @@
       <btc-refresh-btn />
       <el-button
         type="success"
-        :disabled="tableSelection.length === 0"
+        :disabled="tableSelection.length === 0 || loading"
+        :loading="loading"
         @click="restore()"
       >
-        {{ $t('recycle.batch_restore') }}
+        {{ tableSelection.length === 1 ? $t('recycle.restore') : $t('recycle.batch_restore') }} ({{ tableSelection.length }})
       </el-button>
 
       <btc-flex1 />
@@ -24,7 +25,6 @@
         :autoHeight="true"
         border
         rowKey="id"
-        @selection-change="handleSelectionChange"
       />
     </btc-row>
 
@@ -40,7 +40,7 @@
 import { ref, computed, onActivated } from 'vue';
 import { ElMessage, ElMessageBox, ElButton } from 'element-plus';
 import { useI18n } from 'vue-i18n';
-import { service } from '@/services/eps';
+import { http } from '@/utils/http';
 
 defineOptions({
   name: 'DataRecycle'
@@ -48,13 +48,17 @@ defineOptions({
 
 const { t } = useI18n();
 
-// 表格选中数据
-const tableSelection = ref<any[]>([]);
+// 加载状态
+const loading = ref(false);
 
-// 处理表格选择变化
-const handleSelectionChange = (selection: any[]) => {
-  tableSelection.value = selection;
-};
+// 获取crud实例
+const crudRef = ref();
+const tableRef = ref();
+
+// 从crud中获取选择状态
+const tableSelection = computed(() => {
+  return crudRef.value?.selection || [];
+});
 
 // 表格列配置 - 根据后端真实数据结构调整
 const columns = computed(() => [
@@ -128,12 +132,34 @@ const columns = computed(() => [
   }
 ]);
 
-// CRUD 配置
-const crudRef = ref();
-const tableRef = ref();
+// CRUD 配置已在上面定义
 
 // 使用真实的 EPS 服务 - 数据回收站
-const recycleService = service.system?.log?.sys?.deletelog;
+// 由于deletelog服务可能还未在EPS中注册，我们直接使用HTTP请求
+const recycleService = {
+  page: async (data?: any) => {
+    return await http.post('/admin/system/log/sys/deletelog/page', data || {});
+  },
+  restore: async (data: any) => {
+    return await http.post('/admin/system/log/sys/deletelog/restore', data);
+  },
+  restoreBatch: async (data: any) => {
+    return await http.post('/admin/system/log/sys/deletelog/restore/batch', data);
+  },
+  // 添加CRUD必需的方法（数据回收站不需要这些功能）
+  add: async () => {
+    throw new Error('数据回收站不支持添加操作');
+  },
+  update: async () => {
+    throw new Error('数据回收站不支持更新操作');
+  },
+  delete: async () => {
+    throw new Error('数据回收站不支持删除操作');
+  },
+  deleteBatch: async () => {
+    throw new Error('数据回收站不支持批量删除操作');
+  }
+};
 
 // 刷新数据
 function refresh(params?: any) {
@@ -149,32 +175,44 @@ function restore(targetId?: string) {
   const validIds = ids.filter(Boolean);
 
   if (validIds.length === 0) {
-    ElMessage.warning('请选择要恢复的数据');
+    ElMessage.warning(t('recycle.please_select_data'));
     return;
   }
 
+  const confirmMessage = validIds.length === 1
+    ? t('recycle.restore_confirm')
+    : t('recycle.batch_restore_confirm', { count: validIds.length });
+
   ElMessageBox.confirm(
-    t('recycle.restore_confirm'),
+    confirmMessage,
     t('common.tip'),
     {
-      type: 'warning'
+      type: 'warning',
+      confirmButtonText: t('common.button.confirm'),
+      cancelButtonText: t('common.button.cancel')
     }
   )
     .then(async () => {
+      loading.value = true;
       try {
-        // 使用真实的恢复 API - POST /restore
-        // 参数是 id，不是 ids，所以需要逐个恢复
-        for (const id of validIds) {
-          await service.system?.log?.sys?.deletelog?.restore({
-            id: id
+        if (validIds.length === 1) {
+          // 单个恢复 - 使用 restore API
+          await recycleService.restore({
+            id: validIds[0]
           });
+          ElMessage.success(t('recycle.restore_success'));
+        } else {
+          // 批量恢复 - 使用 restoreBatch API，传递对象格式
+          await recycleService.restoreBatch({ ids: validIds });
+          ElMessage.success(t('recycle.batch_restore_success', { count: validIds.length }));
         }
 
-        ElMessage.success(t('recycle.restore_success'));
         refresh();
       } catch (err: any) {
         console.error('恢复数据失败:', err);
-        ElMessage.error(err.message || '恢复失败');
+        // HTTP拦截器已经处理了错误提示，这里不需要重复显示
+      } finally {
+        loading.value = false;
       }
     })
     .catch(() => null);

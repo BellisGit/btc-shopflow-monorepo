@@ -82,14 +82,45 @@
       </template>
     </div>
 
-    <!-- 调整大小手柄 -->
+    <!-- 调整大小手柄 - 8个顶点 -->
     <div
       v-if="selected"
       class="resize-handles"
     >
+      <!-- 四个角的手柄 -->
+      <div
+        class="resize-handle top-left"
+        @mousedown.stop="(event) => handleResizeStart(event, 'top-left')"
+      />
+      <div
+        class="resize-handle top-right"
+        @mousedown.stop="(event) => handleResizeStart(event, 'top-right')"
+      />
+      <div
+        class="resize-handle bottom-left"
+        @mousedown.stop="(event) => handleResizeStart(event, 'bottom-left')"
+      />
       <div
         class="resize-handle bottom-right"
-        @mousedown.stop="handleResizeStart"
+        @mousedown.stop="(event) => handleResizeStart(event, 'bottom-right')"
+      />
+
+      <!-- 四个边中点的手柄 -->
+      <div
+        class="resize-handle top-center"
+        @mousedown.stop="(event) => handleResizeStart(event, 'top-center')"
+      />
+      <div
+        class="resize-handle right-center"
+        @mousedown.stop="(event) => handleResizeStart(event, 'right-center')"
+      />
+      <div
+        class="resize-handle bottom-center"
+        @mousedown.stop="(event) => handleResizeStart(event, 'bottom-center')"
+      />
+      <div
+        class="resize-handle left-center"
+        @mousedown.stop="(event) => handleResizeStart(event, 'left-center')"
       />
     </div>
   </div>
@@ -132,6 +163,7 @@ const isDragging = ref(false);
 const isResizing = ref(false);
 const dragStart = ref({ x: 0, y: 0, nodeX: 0, nodeY: 0 });
 const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 });
+const resizeDirection = ref('');
 
 // 计算属性
 const canHaveInput = computed(() => {
@@ -229,13 +261,58 @@ const handleMouseMove = (event: MouseEvent) => {
     const deltaX = (event.clientX - resizeStart.value.x) / props.zoom;
     const deltaY = (event.clientY - resizeStart.value.y) / props.zoom;
 
-    const newWidth = Math.max(80, resizeStart.value.width + deltaX);
-    const newHeight = Math.max(60, resizeStart.value.height + deltaY);
+    let newWidth = props.node.style?.width || 120;
+    let newHeight = props.node.style?.height || 80;
+    let newX = props.node.position.x;
+    let newY = props.node.position.y;
 
-    // 更新节点样式
+    // 根据调整方向计算新的尺寸和位置
+    switch (resizeDirection.value) {
+      case 'top-left':
+        newWidth = Math.max(80, resizeStart.value.width - deltaX);
+        newHeight = Math.max(60, resizeStart.value.height - deltaY);
+        newX = props.node.position.x + deltaX;
+        newY = props.node.position.y + deltaY;
+        break;
+      case 'top-right':
+        newWidth = Math.max(80, resizeStart.value.width + deltaX);
+        newHeight = Math.max(60, resizeStart.value.height - deltaY);
+        newY = props.node.position.y + deltaY;
+        break;
+      case 'bottom-left':
+        newWidth = Math.max(80, resizeStart.value.width - deltaX);
+        newHeight = Math.max(60, resizeStart.value.height + deltaY);
+        newX = props.node.position.x + deltaX;
+        break;
+      case 'bottom-right':
+        newWidth = Math.max(80, resizeStart.value.width + deltaX);
+        newHeight = Math.max(60, resizeStart.value.height + deltaY);
+        break;
+      case 'top-center':
+        newHeight = Math.max(60, resizeStart.value.height - deltaY);
+        newY = props.node.position.y + deltaY;
+        break;
+      case 'bottom-center':
+        newHeight = Math.max(60, resizeStart.value.height + deltaY);
+        break;
+      case 'left-center':
+        newWidth = Math.max(80, resizeStart.value.width - deltaX);
+        newX = props.node.position.x + deltaX;
+        break;
+      case 'right-center':
+        newWidth = Math.max(80, resizeStart.value.width + deltaX);
+        break;
+    }
+
+    // 更新节点样式和位置
     if (props.node.style) {
       props.node.style.width = newWidth;
       props.node.style.height = newHeight;
+    }
+
+    // 更新节点位置（对于需要移动的调整方向）
+    if (newX !== props.node.position.x || newY !== props.node.position.y) {
+      emit('move', props.node.id, { x: newX, y: newY });
     }
   }
 };
@@ -248,7 +325,7 @@ const handleMouseUp = () => {
   document.removeEventListener('mouseup', handleMouseUp);
 };
 
-const handleResizeStart = (event: MouseEvent) => {
+const handleResizeStart = (event: MouseEvent, direction: string) => {
   event.stopPropagation();
 
   isResizing.value = true;
@@ -258,6 +335,9 @@ const handleResizeStart = (event: MouseEvent) => {
     width: props.node.style?.width || 120,
     height: props.node.style?.height || 80
   };
+
+  // 存储调整方向
+  resizeDirection.value = direction;
 
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
@@ -525,18 +605,167 @@ const handleConditionalOutputConnect = (event: MouseEvent, condition: 'true' | '
   }
 
   .resize-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 20;
+
     .resize-handle {
       position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #409eff;
-      border: 1px solid white;
+      width: 12px;
+      height: 12px;
+      background: #409eff !important;
+      border: 2px solid white !important;
       border-radius: 2px;
+      z-index: 21;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+      pointer-events: auto;
+
+      // 四个角的手柄
+      &.top-left {
+        top: -6px;
+        left: -6px;
+        cursor: nw-resize;
+      }
+
+      &.top-right {
+        top: -6px;
+        right: -6px;
+        cursor: ne-resize;
+      }
+
+      &.bottom-left {
+        bottom: -6px;
+        left: -6px;
+        cursor: sw-resize;
+      }
 
       &.bottom-right {
-        bottom: -4px;
-        right: -4px;
-        cursor: nw-resize;
+        bottom: -6px;
+        right: -6px;
+        cursor: se-resize;
+      }
+
+      // 四个边中点的手柄
+      &.top-center {
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: n-resize;
+      }
+
+      &.right-center {
+        top: 50%;
+        right: -6px;
+        transform: translateY(-50%);
+        cursor: e-resize;
+      }
+
+      &.bottom-center {
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: s-resize;
+      }
+
+      &.left-center {
+        top: 50%;
+        left: -6px;
+        transform: translateY(-50%);
+        cursor: w-resize;
+      }
+
+      &:hover {
+        background: #66b1ff;
+        transform: scale(1.2);
+      }
+
+      // 添加双箭头提示
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        border: 2px solid white;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+      }
+
+      &:hover::before {
+        opacity: 1;
+      }
+
+      // 四个角的手柄 - 双对角线箭头
+      &.top-left::before {
+        border-top: 2px solid white;
+        border-right: 2px solid white;
+        width: 6px;
+        height: 6px;
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+
+      &.bottom-right::before {
+        border-top: 2px solid white;
+        border-right: 2px solid white;
+        width: 6px;
+        height: 6px;
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+
+      &.top-right::before {
+        border-top: 2px solid white;
+        border-left: 2px solid white;
+        width: 6px;
+        height: 6px;
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      &.bottom-left::before {
+        border-top: 2px solid white;
+        border-left: 2px solid white;
+        width: 6px;
+        height: 6px;
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      // 四个边中点的手柄 - 双方向箭头
+      &.top-center::before {
+        border-top: 2px solid white;
+        border-bottom: 2px solid white;
+        width: 8px;
+        height: 4px;
+        transform: translate(-50%, -50%);
+      }
+
+      &.bottom-center::before {
+        border-top: 2px solid white;
+        border-bottom: 2px solid white;
+        width: 8px;
+        height: 4px;
+        transform: translate(-50%, -50%);
+      }
+
+      &.left-center::before {
+        border-left: 2px solid white;
+        border-right: 2px solid white;
+        width: 4px;
+        height: 8px;
+        transform: translate(-50%, -50%);
+      }
+
+      &.right-center::before {
+        border-left: 2px solid white;
+        border-right: 2px solid white;
+        width: 4px;
+        height: 8px;
+        transform: translate(-50%, -50%);
       }
     }
   }

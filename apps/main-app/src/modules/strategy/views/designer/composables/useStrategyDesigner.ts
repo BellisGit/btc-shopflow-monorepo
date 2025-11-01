@@ -68,7 +68,7 @@ export function useStrategyDesigner() {
     handleComponentDragStart,
     handleCanvasDragOver,
     parseDropData
-  } = useComponentLibrary();
+  } = useComponentLibrary(nodes);
 
   // 策略操作
   const {

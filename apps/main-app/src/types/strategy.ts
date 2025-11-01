@@ -124,6 +124,11 @@ export interface StrategyConnection {
   targetHandle?: string;     // 目标句柄
   label?: string;            // 连接标签
   condition?: StrategyCondition | 'true' | 'false'; // 连接条件
+  lastSourceX?: number;      // 最后已知的源节点连接点X坐标（用于悬空连线渲染）
+  lastSourceY?: number;      // 最后已知的源节点连接点Y坐标（用于悬空连线渲染）
+  lastTargetX?: number;      // 最后已知的目标节点连接点X坐标（用于悬空连线渲染）
+  lastTargetY?: number;      // 最后已知的目标节点连接点Y坐标（用于悬空连线渲染）
+  lastPath?: string;         // 最后有效的连线路径（用于悬空连线渲染）
   style?: {
     strokeColor?: string;
     strokeWidth?: number;

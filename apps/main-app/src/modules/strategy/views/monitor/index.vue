@@ -201,18 +201,27 @@ const viewModeOptions = [
 // 策略服务适配器
 const wrappedService = {
   ...strategyService,
-  delete: async ({ ids }: { ids: string[] }) => {
+  delete: async (id: string) => {
     await ElMessageBox.confirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
     );
 
-    if (ids.length === 1) {
-      await strategyService.deleteStrategy(ids[0]);
-    } else {
-      await strategyService.deleteStrategies(ids);
-    }
+    // 单个删除：直接传递 ID
+    await strategyService.deleteStrategy(id);
+
+    message.success(t('crud.message.delete_success'));
+  },
+  deleteBatch: async (ids: string[]) => {
+    await ElMessageBox.confirm(
+      t('crud.message.delete_confirm'),
+      t('common.button.confirm'),
+      { type: 'warning' }
+    );
+
+    // 批量删除：调用 deleteStrategies 方法
+    await strategyService.deleteStrategies(ids);
 
     message.success(t('crud.message.delete_success'));
   }

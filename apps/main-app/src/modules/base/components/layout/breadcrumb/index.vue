@@ -145,6 +145,19 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.ops', icon: 'Monitor' },
       { i18nKey: 'menu.ops.simulator', icon: 'Opportunity' },
     ],
+    // 策略相关
+    '/strategy/management': [
+      { i18nKey: 'menu.strategy', icon: 'Document' },
+      { i18nKey: 'menu.strategy.management', icon: 'FolderOpened' },
+    ],
+    '/strategy/designer': [
+      { i18nKey: 'menu.strategy', icon: 'Document' },
+      { i18nKey: 'menu.strategy.designer', icon: 'EditPen' },
+    ],
+    '/strategy/monitor': [
+      { i18nKey: 'menu.strategy', icon: 'Document' },
+      { i18nKey: 'menu.strategy.monitor', icon: 'Monitor' },
+    ],
     // 测试功能
     '/test/components': [
       { i18nKey: 'menu.test_features', icon: 'Coin' },

@@ -1,53 +1,31 @@
 <template>
   <div class="strategy-designer">
-    <btc-grid-group left-width="200px" right-width="320px">
+    <btc-grid-group left-width="200px" right-width="260px">
       <!-- 顶栏左侧：缩放控制 -->
       <template #headerLeft>
-        <div class="zoom-controls btc-flex1">
-          <el-button @click="handleZoomOut" :disabled="canvasScale <= minScale">
-            <el-icon><ZoomOut /></el-icon>
-          </el-button>
-          <el-dropdown @command="handleZoomCommand" trigger="click" placement="bottom">
-            <el-input
-              v-model="scaleInputValue"
-              @blur="handleScaleInputBlur"
-              @keydown.enter="handleScaleInputEnter"
-              @input="handleScaleInputChange"
-              class="zoom-input"
-              size="default"
-            />
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="fit">
-                    <el-icon><FullScreen /></el-icon>
-                    适应窗口大小
-                  </el-dropdown-item>
-                  <el-dropdown-item divided command="100">100%</el-dropdown-item>
-                  <el-dropdown-item command="125">125%</el-dropdown-item>
-                  <el-dropdown-item command="150">150%</el-dropdown-item>
-                  <el-dropdown-item command="175">175%</el-dropdown-item>
-                  <el-dropdown-item command="200">200%</el-dropdown-item>
-                  <el-dropdown-item command="250">250%</el-dropdown-item>
-                  <el-dropdown-item command="300">300%</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-          </el-dropdown>
-          <el-button @click="handleZoomIn" :disabled="canvasScale >= maxScale">
-            <el-icon><ZoomIn /></el-icon>
-          </el-button>
-        </div>
+        <TopToolbar
+          :scale="canvasScale"
+          :min-scale="minScale"
+          :max-scale="maxScale"
+          :scale-input-value="scaleInputValue"
+          :dom-uid="domUid"
+          @zoom-out="handleZoomOut"
+          @zoom-in="handleZoomIn"
+          @zoom-command="handleZoomCommand"
+          @scale-blur="handleScaleInputBlur"
+          @scale-enter="handleScaleInputEnter"
+          @scale-input="handleScaleInputChange"
+        />
       </template>
 
       <!-- 顶栏中间：策略名称 -->
       <template #headerMiddle>
-        <div class="strategy-input btc-flex1">
-          <el-input
-            id="strategy-name-input"
-            v-model="strategyName"
-            placeholder="策略名称"
-            style="width: 200px; margin-left: auto; margin-right: 16px;"
-          />
-        </div>
+        <el-input
+          :id="`strategy-name-input-${domUid}`"
+          v-model="strategyName"
+          placeholder="策略名称"
+          style="width: 200px;"
+        />
       </template>
 
       <!-- 顶栏右侧：操作按钮 -->
@@ -59,163 +37,60 @@
 
       <!-- 内容左侧：组件库 -->
       <template #bodyLeft>
-        <div class="component-library">
-          <div class="library-header">
-            <btc-search
-              id="component-search-input"
-              v-model="componentSearch"
-              placeholder="搜索组件"
-              size="small"
-            />
-          </div>
-
-          <div class="library-content">
-            <el-collapse v-model="activeCategories" accordion>
-              <el-collapse-item
-                v-for="category in filteredComponentCategories"
-                :key="category.name"
-                :title="category.title"
-                :name="category.name"
-                :id="`collapse-${category.name}`"
-              >
-                <div class="component-list">
-                  <div
-                    v-for="component in category.components"
-                    :key="component.type"
-                    :id="`component-item-${component.type}`"
-                    class="component-item"
-                    :data-type="component.type"
-                    :draggable="true"
-                    role="button"
-                    :aria-label="`拖拽 ${component.name} 组件到画布`"
-                    @dragstart="handleComponentDragStart($event, component)"
-                    @click="handleComponentClick(component)"
-                  >
-                    <div class="component-icon">
-                      <el-icon><component :is="component.icon" /></el-icon>
-                    </div>
-                    <div class="component-info">
-                      <div class="component-name">{{ component.name }}</div>
-                      <div class="component-desc">{{ component.description }}</div>
-                    </div>
-                  </div>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-          </div>
-        </div>
+        <ComponentLibraryPanel
+          :search-id="`component-search-input-${domUid}`"
+          :search="componentSearch"
+          :active="activeCategories"
+          :categories="filteredComponentCategories"
+          :get-fill="getNodeFillColor"
+          :get-stroke="getNodeStrokeColor"
+          @update:search="(v:string) => componentSearch = v"
+          @update:active="(v:string[]) => activeCategories = v"
+          @dragstart="handleComponentDragStart"
+          @click-component="handleComponentClick"
+        />
       </template>
 
       <!-- 内容中间：画布 -->
       <template #bodyMiddle>
         <div class="canvas-container">
-          <!-- SVG 画布 -->
-          <svg
-            class="strategy-canvas"
-            :class="{ dragging: isDragging }"
-            :style="{ transform: `translate(${panX}px, ${panY}px) scale(${canvasScale})` }"
-            :viewBox="`0 0 ${canvasDimensions.width} ${canvasDimensions.height}`"
-            :width="canvasDimensions.width"
-            :height="canvasDimensions.height"
-            preserveAspectRatio="none"
-            @drop="handleCanvasDrop"
-            @dragover="(event) => event.preventDefault()"
-            @dragleave="handleCanvasDragLeave"
-            @mousedown="handleCanvasMouseDown"
-            @mousemove="handleCanvasMouseMove"
-            @mouseup="handleCanvasMouseUp"
-            @click="handleCanvasClick"
-          >
-            <!-- 定义箭头标记和网格 -->
-            <defs>
-              <!-- 小网格模式定义 (10x10) -->
-              <pattern id="grid-small" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" :stroke="getGridColor(true)" stroke-width="0.3"/>
-              </pattern>
-
-              <!-- 大网格模式定义 (50x50) -->
-              <pattern id="grid-large" width="50" height="50" patternUnits="userSpaceOnUse">
-                <path d="M 50 0 L 0 0 0 50" fill="none" :stroke="getGridColor(false)" stroke-width="0.5"/>
-              </pattern>
-
-              <!-- 边界网格模式 - 确保边界线完整显示 -->
-              <pattern :id="`grid-boundary-${canvasDimensions.width}-${canvasDimensions.height}`"
-                       :width="canvasDimensions.width"
-                       :height="canvasDimensions.height"
-                       patternUnits="userSpaceOnUse">
-                <!-- 小网格填充 -->
-                <rect width="100%" height="100%" fill="url(#grid-small)"/>
-
-                <!-- 大网格线 - 包括边界线 -->
-                <g>
-                  <!-- 垂直线 -->
-                  <g v-for="x in Math.floor(canvasDimensions.width / 50) + 1" :key="`v-${x-1}`">
-                    <path :d="`M ${(x-1) * 50} 0 L ${(x-1) * 50} ${canvasDimensions.height}`"
-                          fill="none" :stroke="getGridColor(false)" stroke-width="0.5"/>
-                  </g>
-                  <!-- 水平线 -->
-                  <g v-for="y in Math.floor(canvasDimensions.height / 50) + 1" :key="`h-${y-1}`">
-                    <path :d="`M 0 ${(y-1) * 50} L ${canvasDimensions.width} ${(y-1) * 50}`"
-                          fill="none" :stroke="getGridColor(false)" stroke-width="0.5"/>
-                  </g>
-                </g>
-              </pattern>
-
-              <!-- 默认连接线箭头 - draw.io 风格 -->
-              <marker
-                id="arrowhead-default"
-                markerWidth="8"
-                markerHeight="6"
-                refX="7"
-                refY="3"
-                orient="auto"
-                class="connection-marker"
-              >
-                <polygon points="0 0, 8 3, 0 6" :fill="getConnectionColor()" />
-              </marker>
-              <!-- 条件为真时的连接线箭头 -->
-              <marker
-                id="arrowhead-true"
-                markerWidth="8"
-                markerHeight="6"
-                refX="7"
-                refY="3"
-                orient="auto"
-                class="connection-marker"
-              >
-                <polygon points="0 0, 8 3, 0 6" :fill="getConnectionColor()" />
-              </marker>
-              <!-- 条件为假时的连接线箭头 -->
-              <marker
-                id="arrowhead-false"
-                markerWidth="8"
-                markerHeight="6"
-                refX="7"
-                refY="3"
-                orient="auto"
-                class="connection-marker"
-              >
-                <polygon points="0 0, 8 3, 0 6" :fill="getConnectionColor()" />
-              </marker>
-            </defs>
-
-            <!-- 网格背景 - 确保边界线完整显示 -->
-            <rect :width="canvasDimensions.width" :height="canvasDimensions.height" :fill="`url(#grid-boundary-${canvasDimensions.width}-${canvasDimensions.height})`" />
-
-            <!-- 已建立的连接线 -->
-            <g v-for="pathData in connectionPaths" :key="pathData.id" class="connection-group">
-              <path
-                :d="pathData.path"
-                :stroke="pathData.color"
-                stroke-width="2"
-                fill="none"
-                class="connection-path"
-                :marker-end="pathData.marker"
-                @click="selectConnection(connections.find(c => c.id === pathData.id)!)"
-              />
-            </g>
-
-            <!-- 临时连接线 -->
+          <div class="canvas-scroll">
+            <!-- 网格背景 div：在 body_middle 中水平垂直居中 -->
+            <div
+              class="grid-background-page"
+              :style="gridBackgroundStyle"
+            ></div>
+            <!-- SVG 画布 -->
+            <div id="text-editor-layer"></div>
+            <CanvasSvg
+              ref="canvasRef"
+              :canvas-dimensions="canvasDimensions"
+              :pan-x="panX"
+              :pan-y="panY"
+              :scale="canvasScale"
+              :is-dragging="isDragging"
+              :connection-paths="connectionPaths"
+              :is-connection-selected="(id: string) => (selectedConnectionId === id || multiSelectedConnectionIds.has(id))"
+              :get-grid-color="getGridColor"
+              :get-connection-color="getConnectionColor"
+              @drop="handleCanvasDrop"
+              @dragover="(event) => event.preventDefault()"
+              @dragleave="handleCanvasDragLeave"
+              @mousedown="selection.onCanvasMouseDown"
+              @mousemove="selection.onCanvasMouseMove"
+              @mouseup="selection.onCanvasMouseUp"
+              @click="handleCanvasClick"
+              @select-connection="(id: string) => {
+                const conn = connections.find(c => c.id === id);
+                if (conn) {
+                  selectConnection(conn);
+                  // 选中连接线时，清空节点选中状态和多选状态（与节点选中行为一致）
+                  selectNode('');
+                  selection.clearMultiSelection();
+                }
+              }"
+            >
+              <!-- 临时连接线 -->
             <g v-if="tempConnection" class="temp-connection-group">
               <path
                 :d="tempConnection.path"
@@ -227,385 +102,90 @@
               />
             </g>
 
-            <!-- 节点层 -->
-            <g v-for="node in nodes" :key="node.id">
-              <!-- 节点主体 -->
-              <g
-                :class="[
-                  'strategy-node',
-                  node.type,
-                  { selected: selectedNodeId === node.id }
-                ]"
-                :data-node-id="node.id"
-                :transform="`translate(${node.position.x}, ${node.position.y})`"
-                @mousedown="handleNodeMouseDown($event, node, editingNodeId === node.id)"
-                @click="handleNodeClick(node, $event)"
-                @dblclick="handleNodeDoubleClick(node, $event)"
-                @mouseenter="handleNodeMouseEnter(node)"
-                @mouseleave="handleNodeMouseLeave"
-              >
-                <!-- 节点矩形 - 简化版本 -->
-                <rect
-                  :width="node.style?.width || 120"
-                  :height="node.style?.height || 60"
-                  :fill="getNodeFillColor(node.type)"
-                  :stroke="getNodeStrokeColor(node.type)"
-                  stroke-width="2"
-                  rx="4"
-                  ry="4"
-                  class="node-rect"
-                />
+            <!-- 节点内容层（直接在插槽中渲染，不需要额外的 content-layer，避免双重缩放） -->
+            <NodeItem
+              v-for="node in nodes"
+              :key="node.id"
+              :node="node"
+              :selected-node-id="selectedNodeId || ''"
+              :multi-selected-node-ids="multiSelectedNodeIds"
+              :is-dragging="isDragging"
+              :is-resizing="isResizing"
+              :is-editing="editingNodeId === node.id"
+              :dragging-node-id="draggingNodeId || ''"
+              :last-selection-mode="lastSelectionMode"
+              :multi-selected-connection-count="multiSelectedConnectionIds.size"
+              :hovered-arrow-direction="hoveredArrowDirection"
+              :is-mouse-on-node-border="isMouseOnNodeBorder"
+              :default-text-config="defaultTextConfig"
+              :get-node-fill-color="getNodeFillColor"
+              :get-node-stroke-color="getNodeStrokeColor"
+              :get-node-text-color="getNodeTextColor"
+              :get-handle-positions="getHandlePositions"
+              :get-position-box-local-transform="getPositionBoxLocalTransform"
+              :get-arrow-transform="getArrowTransform"
+              :get-node-text="getNodeText"
+              :canvas-dimensions="canvasDimensions"
+              :connections="connections"
+              :selected-connection-id="selectedConnectionId || ''"
+              :multi-selected-connection-ids="multiSelectedConnectionIds"
+              :get-connection-handle="getConnectionHandle"
+              @pointerdown="handleNodePointerDown"
+              @click="handleNodeClick"
+              @dblclick="handleNodeDoubleClick"
+              @mouseenter="handleNodeMouseEnter"
+              @mouseleave="handleNodeMouseLeave"
+              @resize-start="handleResizeStart"
+              @handle-enter="handleResizeHandleEnter"
+              @handle-leave="handleResizeHandleLeave"
+              @arrow-click="handleArrowClick"
+              @arrow-enter="handleArrowEnter"
+              @arrow-leave="handleArrowLeave"
+            />
 
-                <!-- 节点文字 - 居中显示 -->
-                <text
-                  v-if="editingNodeId !== node.id"
-                  :x="(node.style?.width || 120) / 2"
-                  :y="(node.style?.height || 60) / 2"
-                  text-anchor="middle"
-                  dominant-baseline="middle"
-                  :fill="getNodeTextColor(node.type)"
-                  :font-family="node.textConfig?.fontFamily || defaultTextConfig.fontFamily"
-                  :font-weight="node.textConfig?.fontWeight || defaultTextConfig.fontWeight"
-                  :font-style="node.textConfig?.fontStyle || defaultTextConfig.fontStyle"
-                  :font-size="(node.textConfig?.fontSize || defaultTextConfig.fontSize) + 'px'"
-                  class="node-text"
-                >
-                  {{ node.text || getNodeText(node.type) }}
-                </text>
-
-                <!-- 文本编辑模式 -->
-                <foreignObject
-                  v-if="editingNodeId === node.id"
-                  :x="0"
-                  :y="0"
-                  :width="node.style?.width || 120"
-                  :height="node.style?.height || 60"
-                >
-                  <div class="text-edit-container">
-                    <input
-                      v-model="editingText"
-                      type="text"
-                      class="node-text-input"
-                      :style="{
-                        fontSize: (node.textConfig?.fontSize || defaultTextConfig.fontSize) + 'px',
-                        fontFamily: node.textConfig?.fontFamily || defaultTextConfig.fontFamily,
-                        fontWeight: node.textConfig?.fontWeight || defaultTextConfig.fontWeight,
-                        fontStyle: node.textConfig?.fontStyle || defaultTextConfig.fontStyle,
-                        color: getNodeTextColor(node.type)
-                      }"
-                      @blur="finishTextEditing"
-                      @keydown="handleTextEditKeyDown"
-                      ref="textInputRef"
-                    />
-                  </div>
-                </foreignObject>
-
-        <!-- 8个连接点 - 悬停或选中时显示 -->
-        <g class="connection-points" :class="{ visible: hoveredNodeId === node.id || selectedNodeId === node.id }">
-                  <!-- 四个顶点连接点 -->
-                  <!-- 左上角 -->
-                  <circle
-                    :cx="0"
-                    :cy="0"
-                    r="4"
-                    fill="white"
-                    stroke="#666666"
-                    stroke-width="1"
-                    class="connection-dot vertex"
-                    @click="handleConnectionPointClick($event, node, 'top-left')"
-                  />
-
-                  <!-- 右上角 -->
-                  <circle
-                    :cx="(node.style?.width || 120)"
-                    :cy="0"
-                    r="4"
-                    fill="white"
-                    stroke="#666666"
-                    stroke-width="1"
-                    class="connection-dot vertex"
-                    @click="handleConnectionPointClick($event, node, 'top-right')"
-                  />
-
-                  <!-- 左下角 -->
-                  <circle
-                    :cx="0"
-                    :cy="(node.style?.height || 60)"
-                    r="4"
-                    fill="white"
-                    stroke="#666666"
-                    stroke-width="1"
-                    class="connection-dot vertex"
-                    @click="handleConnectionPointClick($event, node, 'bottom-left')"
-                  />
-
-                  <!-- 右下角 -->
-                  <circle
-                    :cx="(node.style?.width || 120)"
-                    :cy="(node.style?.height || 60)"
-                    r="4"
-                    fill="white"
-                    stroke="#666666"
-                    stroke-width="1"
-                    class="connection-dot vertex"
-                    @click="handleConnectionPointClick($event, node, 'bottom-right')"
-                  />
-
-                  <!-- 四个边线中点连接点 + 箭头 -->
-                  <!-- 顶部中点 -->
-                  <g class="edge-connection-group">
-                    <circle
-                      :cx="(node.style?.width || 120) / 2"
-                      :cy="0"
-                      r="4"
-                      fill="white"
-                      stroke="#666666"
-                      stroke-width="1"
-                      class="connection-dot edge"
-                      @click="handleConnectionPointClick($event, node, 'top')"
-                    />
-                    <!-- 顶部箭头 - 使用 path 绘制完整箭头 -->
-                    <g
-                      class="connection-arrow-group"
-                      :class="{
-                        'visible': hoveredNodeId === node.id || selectedNodeId === node.id,
-                        'active': activeArrowDirection === 'top' && selectedNodeId === node.id
-                      }"
-                      @click="handleArrowClick($event, node, 'top')"
-                    >
-                      <!-- 使用 path 绘制完整箭头 - draw.io 风格 -->
-                      <path
-                        :d="`M ${(node.style?.width || 120) / 2 - 3} ${-12}
-                             L ${(node.style?.width || 120) / 2 - 3} ${-28}
-                             L ${(node.style?.width || 120) / 2 - 6} ${-28}
-                             L ${(node.style?.width || 120) / 2} ${-36}
-                             L ${(node.style?.width || 120) / 2 + 6} ${-28}
-                             L ${(node.style?.width || 120) / 2 + 3} ${-28}
-                             L ${(node.style?.width || 120) / 2 + 3} ${-12}
-                             Z`"
-                        class="arrow-shape"
-                      />
-                    </g>
-                  </g>
-
-                  <!-- 右侧中点 -->
-                  <g class="edge-connection-group">
-                    <circle
-                      :cx="(node.style?.width || 120)"
-                      :cy="(node.style?.height || 60) / 2"
-                      r="4"
-                      fill="white"
-                      stroke="#666666"
-                      stroke-width="1"
-                      class="connection-dot edge"
-                      @click="handleConnectionPointClick($event, node, 'right')"
-                    />
-                    <!-- 右侧箭头 - 使用 path 绘制完整箭头 -->
-                    <g
-                      class="connection-arrow-group"
-                      :class="{
-                        'visible': hoveredNodeId === node.id || selectedNodeId === node.id,
-                        'active': activeArrowDirection === 'right' && selectedNodeId === node.id
-                      }"
-                      @click="handleArrowClick($event, node, 'right')"
-                    >
-                      <!-- 使用 path 绘制完整箭头 - draw.io 风格 -->
-                      <path
-                        :d="`M ${(node.style?.width || 120) + 12} ${(node.style?.height || 60) / 2 - 3}
-                             L ${(node.style?.width || 120) + 28} ${(node.style?.height || 60) / 2 - 3}
-                             L ${(node.style?.width || 120) + 28} ${(node.style?.height || 60) / 2 - 6}
-                             L ${(node.style?.width || 120) + 36} ${(node.style?.height || 60) / 2}
-                             L ${(node.style?.width || 120) + 28} ${(node.style?.height || 60) / 2 + 6}
-                             L ${(node.style?.width || 120) + 28} ${(node.style?.height || 60) / 2 + 3}
-                             L ${(node.style?.width || 120) + 12} ${(node.style?.height || 60) / 2 + 3}
-                             Z`"
-                        class="arrow-shape"
-                      />
-                    </g>
-                  </g>
-
-                  <!-- 底部中点 -->
-                  <g class="edge-connection-group">
-                    <circle
-                      :cx="(node.style?.width || 120) / 2"
-                      :cy="(node.style?.height || 60)"
-                      r="4"
-                      fill="white"
-                      stroke="#666666"
-                      stroke-width="1"
-                      class="connection-dot edge"
-                      @click="handleConnectionPointClick($event, node, 'bottom')"
-                    />
-                    <!-- 底部箭头 - 使用 path 绘制完整箭头 -->
-                    <g
-                      class="connection-arrow-group"
-                      :class="{
-                        'visible': hoveredNodeId === node.id || selectedNodeId === node.id,
-                        'active': activeArrowDirection === 'bottom' && selectedNodeId === node.id
-                      }"
-                      @click="handleArrowClick($event, node, 'bottom')"
-                    >
-                      <!-- 使用 path 绘制完整箭头 - draw.io 风格 -->
-                      <path
-                        :d="`M ${(node.style?.width || 120) / 2 - 3} ${(node.style?.height || 60) + 12}
-                             L ${(node.style?.width || 120) / 2 - 3} ${(node.style?.height || 60) + 28}
-                             L ${(node.style?.width || 120) / 2 - 6} ${(node.style?.height || 60) + 28}
-                             L ${(node.style?.width || 120) / 2} ${(node.style?.height || 60) + 36}
-                             L ${(node.style?.width || 120) / 2 + 6} ${(node.style?.height || 60) + 28}
-                             L ${(node.style?.width || 120) / 2 + 3} ${(node.style?.height || 60) + 28}
-                             L ${(node.style?.width || 120) / 2 + 3} ${(node.style?.height || 60) + 12}
-                             Z`"
-                        class="arrow-shape"
-                      />
-                    </g>
-                  </g>
-
-                  <!-- 左侧中点 -->
-                  <g class="edge-connection-group">
-                    <circle
-                      :cx="0"
-                      :cy="(node.style?.height || 60) / 2"
-                      r="4"
-                      fill="white"
-                      stroke="#666666"
-                      stroke-width="1"
-                      class="connection-dot edge"
-                      @click="handleConnectionPointClick($event, node, 'left')"
-                    />
-                    <!-- 左侧箭头 - 使用 path 绘制完整箭头 -->
-                    <g
-                      class="connection-arrow-group"
-                      :class="{
-                        'visible': hoveredNodeId === node.id || selectedNodeId === node.id,
-                        'active': activeArrowDirection === 'left' && selectedNodeId === node.id
-                      }"
-                      @click="handleArrowClick($event, node, 'left')"
-                    >
-                      <!-- 使用 path 绘制完整箭头 - draw.io 风格 -->
-                      <path
-                        :d="`M -12 ${(node.style?.height || 60) / 2 - 3}
-                             L -28 ${(node.style?.height || 60) / 2 - 3}
-                             L -28 ${(node.style?.height || 60) / 2 - 6}
-                             L -36 ${(node.style?.height || 60) / 2}
-                             L -28 ${(node.style?.height || 60) / 2 + 6}
-                             L -28 ${(node.style?.height || 60) / 2 + 3}
-                             L -12 ${(node.style?.height || 60) / 2 + 3}
-                             Z`"
-                        class="arrow-shape"
-                      />
-                    </g>
-                  </g>
-                </g>
-              </g>
-            </g>
-          </svg>
-        </div>
+            <template #overlay-top>
+              <ConnectionHandlesOverlay
+                :connection-paths="connectionPaths"
+                :is-selected="(id: string) => (selectedConnectionId === id || multiSelectedConnectionIds.has(id))"
+                :selected-connection-id="selectedConnectionId"
+                :multi-selected-connection-ids="multiSelectedConnectionIds"
+                :get-connection-handle="getConnectionHandle"
+                :start-drag="startDragConnectionHandle"
+                :is-dragging="isDragging"
+                :is-resizing="isResizing"
+              />
+            </template>
+            </CanvasSvg>
+            <!-- 橡皮筋选框 div：与 SVG 同级，独立 div 元素 -->
+            <div
+              v-if="selection.rubber.active"
+              class="rubber-band-selection"
+              :style="{
+                position: 'absolute',
+                left: `${selection.rubber.x}px`,
+                top: `${selection.rubber.y}px`,
+                width: `${selection.rubber.w}px`,
+                height: `${selection.rubber.h}px`,
+                pointerEvents: 'none',
+                border: '1px solid #888',
+                backgroundColor: 'rgba(0, 0, 0, 0.3)'
+              }"
+            ></div>
+          </div>
+                </div>
       </template>
 
       <!-- 内容右侧：属性面板 -->
       <template #bodyRight>
-        <div class="properties-panel">
-          <div class="panel-header">
-            <h3>属性配置</h3>
-            <div class="panel-actions">
-              <el-button
-                v-if="selectedNode"
-                type="danger"
-                size="small"
-                @click="deleteSelected"
-              >
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
-            </div>
-          </div>
-
-          <div class="panel-content">
-            <!-- 文本配置 -->
-            <div class="text-config-section">
-              <h4>文本配置</h4>
-              <el-form label-width="80px" size="small">
-                <el-form-item label="字体大小">
-            <el-input-number
-              v-model="nodeTextConfig.fontSize"
-              :min="8"
-              :max="32"
-              :step="1"
-              controls-position="right"
-              style="width: 100%"
-            />
-                </el-form-item>
-                <el-form-item label="字体族">
-                  <el-select v-model="nodeTextConfig.fontFamily" style="width: 100%">
-                    <el-option
-                      v-for="option in fontFamilyOptions"
-                      :key="option.value"
-                      :label="option.label"
-                      :value="option.value"
-                    />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="字体粗细">
-                  <el-select v-model="nodeTextConfig.fontWeight" style="width: 100%">
-                    <el-option label="极细" value="100" />
-                    <el-option label="细体" value="300" />
-                    <el-option label="正常" value="normal" />
-                    <el-option label="中等" value="500" />
-                    <el-option label="粗体" value="bold" />
-                    <el-option label="极粗" value="900" />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="字体样式">
-                  <el-select v-model="nodeTextConfig.fontStyle" style="width: 100%">
-                    <el-option label="正常" value="normal" />
-                    <el-option label="斜体" value="italic" />
-                    <el-option label="倾斜" value="oblique" />
-                  </el-select>
-                </el-form-item>
-              </el-form>
-
-              <!-- 字体预览 -->
-              <div class="font-preview">
-                <h5>预览效果</h5>
-                <div
-                  class="preview-text"
-                  :style="{
-                    fontSize: nodeTextConfig.fontSize + 'px',
-                    fontFamily: nodeTextConfig.fontFamily,
-                    fontWeight: nodeTextConfig.fontWeight,
-                    fontStyle: nodeTextConfig.fontStyle
-                  }"
-                >
-                  开始节点
-                </div>
-              </div>
-            </div>
-
-            <!-- 节点属性 -->
-            <StrategyNodeProperties
-              v-if="selectedNode"
-              :node="selectedNode"
-              @update="updateNode"
-            />
-
-            <!-- 连接属性 -->
-            <StrategyConnectionProperties
-              v-if="selectedConnection"
-              :connection="selectedConnection"
-              @update="updateConnection"
-            />
-
-            <!-- 空状态 -->
-            <div v-if="!selectedNode && !selectedConnection" class="empty-state">
-              <div class="empty-icon">
-                <el-icon><Setting /></el-icon>
-              </div>
-              <div class="empty-text">
-                请选择一个节点或连接线来配置属性
-              </div>
-            </div>
-          </div>
-        </div>
+        <PropertiesPanel
+          :selected-node="selectedNode"
+          :selected-connection="selectedConnection"
+          :text-config="nodeTextConfig"
+          :font-family-options="fontFamilyOptions"
+          @delete-selected="deleteSelected"
+          @update-node="updateNode"
+          @update-connection="updateConnection"
+        />
       </template>
     </btc-grid-group>
 
@@ -618,124 +198,98 @@
     </el-dialog>
 
     <!-- 形状选择弹窗 -->
-    <div
-      v-if="showComponentMenuFlag"
-      class="shape-selector-popup"
-      :style="{
-        left: componentMenuPosition.x + 'px',
-        top: componentMenuPosition.y + 'px'
-      }"
-      @click.stop
-    >
-      <div class="shape-grid">
-        <div
-          v-for="component in getCommonComponents()"
-          :key="component.type"
-          class="shape-item"
-          @click="selectComponent(component)"
-        >
-          <!-- 显示形状而不是图标 -->
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <rect
-              v-if="component.type === 'START' || component.type === 'END'"
-              x="5" y="10" width="30" height="20"
-              :fill="getNodeFillColor(component.type)"
-              :stroke="getNodeStrokeColor(component.type)"
-              stroke-width="2"
-              rx="4"
+    <ShapeSelectorPopup
+      :visible="showComponentMenuFlag"
+      :position="componentMenuPosition"
+      :components="getCommonComponents()"
+      :get-fill="getNodeFillColor"
+      :get-stroke="getNodeStrokeColor"
+      @select="selectComponent"
             />
-            <path
-              v-else-if="component.type === 'CONDITION'"
-              :d="`M 20 5 L 35 20 L 20 35 L 5 20 Z`"
-              :fill="getNodeFillColor(component.type)"
-              :stroke="getNodeStrokeColor(component.type)"
-              stroke-width="2"
-            />
-            <rect
-              v-else-if="component.type === 'ACTION'"
-              x="5" y="5" width="30" height="30"
-              :fill="getNodeFillColor(component.type)"
-              :stroke="getNodeStrokeColor(component.type)"
-              stroke-width="2"
-              rx="4"
-            />
-            <path
-              v-else-if="component.type === 'DECISION'"
-              :d="`M 20 5 L 35 20 L 20 35 L 5 20 Z`"
-              :fill="getNodeFillColor(component.type)"
-              :stroke="getNodeStrokeColor(component.type)"
-              stroke-width="2"
-            />
-            <rect
-              v-else-if="component.type === 'GATEWAY'"
-              x="5" y="5" width="30" height="30"
-              :fill="getNodeFillColor(component.type)"
-              :stroke="getNodeStrokeColor(component.type)"
-              stroke-width="2"
-              rx="4"
-            />
-          </svg>
-          <span class="shape-name">{{ component.name }}</span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type { StrategyNode, StrategyConnection } from '@/types/strategy';
-import { ConnectorType } from '@/types/strategy';
-import {
-  ZoomIn,
-  ZoomOut,
-  FullScreen,
-  Delete,
-  Setting,
-  VideoPlay,
-  VideoPause,
-  QuestionFilled,
-  Lightning,
-  Share,
-  Connection,
-  ArrowDown
-} from '@element-plus/icons-vue';
-
-import { BtcSelectButton, BtcSearch, BtcGridGroup } from '@btc/shared-components';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useSelection } from './composables/useSelection';
+import { BtcGridGroup } from '@btc/shared-components';
 import { useComponentLibrary } from './composables/useComponentLibrary';
 import { useCanvasInteraction } from './composables/useCanvasInteraction';
 import { useNodeManagement } from './composables/useNodeManagement';
 import { useConnectionManagement } from './composables/useConnectionManagement';
 import { useStrategyOperations } from './composables/useStrategyOperations';
-import StrategyNodeProperties from './components/StrategyNodeProperties.vue';
-import StrategyConnectionProperties from './components/StrategyConnectionProperties.vue';
+import { useNodeDrag } from './composables/useNodeDrag';
+import { useNodeResize } from './composables/useNodeResize';
+import { useNodeGeometry } from './composables/useNodeGeometry';
+import { useNodeStyle } from './composables/useNodeStyle';
+import { useConnectionHandles } from './composables/useConnectionHandles';
+import { useComponentMenu } from './composables/useComponentMenu';
+import { useTextEditor } from './composables/useTextEditor';
+import { useCanvasDimensions } from './composables/useCanvasDimensions';
+import { useCanvasScale } from './composables/useCanvasScale';
+import { useNodeInteraction } from './composables/useNodeInteraction';
+import { useUtils } from './composables/useUtils';
+import { useUndoRedo } from './composables/useUndoRedo';
+import { useAutoSave } from './composables/useAutoSave';
+import CanvasSvg from './components/CanvasSvg.vue';
+import ConnectionHandlesOverlay from './components/ConnectionHandlesOverlay.vue';
+import NodeItem from './components/NodeItem.vue';
 import StrategyExecutionPreview from './components/StrategyExecutionPreview.vue';
+import TopToolbar from './components/TopToolbar.vue';
+import ComponentLibraryPanel from './components/ComponentLibraryPanel.vue';
+import PropertiesPanel from './components/PropertiesPanel.vue';
+import ShapeSelectorPopup from './components/ShapeSelectorPopup.vue';
 
-// 路由
-const route = useRoute();
+// 画布引用
+const canvasRef = ref<InstanceType<typeof CanvasSvg> | null>(null);
 
-// 使用 composables
-// 先定义基础状态
-// 节点管理
+
+// 使用 composables - 按依赖顺序初始化
+
+// 1. 基础 composables（无依赖）
+const { generateId, domUid } = useUtils();
+const { canvasDimensions } = useCanvasDimensions();
+
+// 2. 画布交互和缩放（需要基础 composables）
+// 先创建临时 updateTempConnection，稍后更新
+let updateTempConnectionTemp: ((event: MouseEvent, canvasRef?: HTMLElement) => void) | undefined;
+const {
+  panX,
+  panY,
+  resetZoom,
+  handleCanvasMouseDown,
+  handleCanvasMouseMove,
+  handleCanvasMouseUp
+} = useCanvasInteraction((event: MouseEvent, canvasRef?: HTMLElement) => {
+  updateTempConnectionTemp?.(event, canvasRef);
+});
+
+const {
+  canvasScale,
+  minScale,
+  maxScale,
+  scaleInputValue,
+  handleZoomIn,
+  handleZoomOut,
+  handleZoomCommand,
+  handleScaleInputChange,
+  handleScaleInputBlur,
+  handleScaleInputEnter
+} = useCanvasScale(panX, panY);
+
+// 3. 节点管理（需要 canvasDimensions）
 const {
   nodes,
   selectedNode,
   selectedNodeId,
   isDragging: nodeIsDragging,
-  draggingNodeId,
   addNode,
-  updateNode,
-  deleteNode,
+  updateNode: updateNodeOriginal,
   selectNode,
-  getNodeStyle,
-  getNodeColor,
-  getOutputConnectionClass,
-  handleNodeMouseDown
-} = useNodeManagement();
+  moveNode
+} = useNodeManagement(canvasDimensions);
 
-// 连接管理
+// 4. 连接管理（需要 nodes）
 const {
   connections,
   selectedConnectionId,
@@ -743,823 +297,274 @@ const {
   connectionState,
   tempConnection,
   connectionPaths,
-  startConnection,
   updateTempConnection,
   completeConnection,
-  getConnectionPath,
-  getConnectionMarker,
-  handleConnectionStart,
+  connectionOffsetY,
   selectConnection,
-  deleteConnection,
-  updateConnection
+  updateConnection: updateConnectionOriginal,
+  updateConnectionPaths
 } = useConnectionManagement(nodes);
 
-// 画布交互
+// 设置全局函数，供节点拖拽和缩放时调用
+(window as any).updateConnectionPaths = updateConnectionPaths;
+
+// 更新 useCanvasInteraction 的 updateTempConnection
+updateTempConnectionTemp = updateTempConnection;
+
+// 5. 几何计算和样式（需要 canvasDimensions 和 connectionState）
 const {
-  zoom,
+  getHandlePositions,
+  getArrowTransform,
+  getArrowTransformByPos,
+  getPositionBoxLocalTransform
+} = useNodeGeometry(canvasDimensions);
+
+const {
+  getNodeText,
+  getNodeFillColor,
+  getNodeStrokeColor,
+  getNodeTextColor,
+  getConnectionColor,
+  getTempConnectionColor,
+  getGridColor
+} = useNodeStyle(nodes, connectionState);
+
+// 6. 连接手柄（需要 connections, nodes, connectionOffsetY, canvasScale）
+const {
+  getConnectionHandle,
+  startDragConnectionHandle
+} = useConnectionHandles(connections, nodes, connectionOffsetY, canvasScale);
+
+// 7. 组件库（需要 nodes）
+const {
+  componentSearch,
+  activeCategories,
+  filteredComponentCategories,
+  componentLibrary,
+  handleComponentDragStart
+} = useComponentLibrary(nodes);
+
+// 9. 组件菜单状态（需要其他 composables）
+const activeArrowDirection = ref('');
+const {
+  showComponentMenuFlag,
+  componentMenuPosition,
+  showComponentMenu,
+  selectComponent,
+  closeComponentMenu,
+  getCommonComponents,
+  findNearbyNode,
+  createConnection: createConnectionOriginal
+} = useComponentMenu(
+  nodes,
+  connections,
+  componentLibrary,
+  addNode,
+  generateId,
+  getConnectionColor,
+  activeArrowDirection
+);
+
+// 包装 createConnection 以记录历史状态（必须在 useNodeInteraction 之前定义）
+// 暂时不在这里记录历史，稍后在正确位置包装
+let createConnectionFromMenu = (sourceNode: any, targetNode: any, direction: string) => {
+  createConnectionOriginal(sourceNode, targetNode, direction);
+};
+
+// 10. 文本编辑（需要多个依赖）- 先创建，dragState稍后更新
+// 先创建 dragState 的占位符（可写 ref，便于 useTextEditor 写入）
+const dragStatePlaceholder = {
+  isDragging: ref(false),
+  maybeDrag: ref(false)
+};
+
+const {
+  editingNodeId,
+  isOverlayEditing,
+  nodeTextConfig,
+  defaultTextConfig,
+  fontFamilyOptions,
+  handleNodeDoubleClick
+} = useTextEditor(
+  nodes,
+  selectedNodeId,
+  canvasScale,
   panX,
   panY,
+  canvasDimensions,
+  dragStatePlaceholder,
+  getNodeText
+);
+
+// 10. 节点缩放（需要多个依赖）
+const isMouseOnNodeBorder = ref(false);
+const {
+  isResizing,
+  handleResizeHandleEnter,
+  handleResizeHandleLeave,
+  handleResizeStart,
+  handleResizeMove,
+  handleResizeEnd
+} = useNodeResize(
+  nodes,
+  selectedNodeId,
+  canvasDimensions,
+  canvasScale,
+  isMouseOnNodeBorder,
+  getHandlePositions,
+  getArrowTransform,
+  getArrowTransformByPos
+);
+
+// 11. 节点拖拽（需要多个依赖）
+const {
   dragState,
-  zoomIn,
-  zoomOut,
-  resetZoom,
-  fitToScreen,
-  handleCanvasMouseDown,
-  handleCanvasMouseMove,
-  handleCanvasMouseUp,
-  handleCanvasWheel
-} = useCanvasInteraction(updateTempConnection);
+  isDragging,
+  draggingNodeId,
+  handleNodePointerDown,
+  handleNodePointerMove,
+  handleNodePointerUp,
+  dragStateRefs
+} = useNodeDrag(
+  nodes,
+  selectedNodeId,
+  canvasDimensions,
+  canvasScale,
+  isResizing,
+  isOverlayEditing,
+  nodeIsDragging,
+  moveNode,
+  getHandlePositions,
+  getArrowTransformByPos,
+  handleNodeDoubleClick
+);
 
-  // 计算属性
-  const isDragging = computed(() => dragState.isDragging || nodeIsDragging.value);
+// 同步 useNodeDrag 的状态到占位符（保持可写）
+watch(dragStateRefs.isDragging, v => { dragStatePlaceholder.isDragging.value = v; }, { immediate: true });
+watch(dragStateRefs.maybeDrag, v => { dragStatePlaceholder.maybeDrag.value = v; }, { immediate: true });
 
-// 获取临时连接线颜色
-const getTempConnectionColor = () => {
-  if (!connectionState.isConnecting || !connectionState.fromNodeId) {
-    return 'var(--el-color-primary)';
-  }
+// 12. 选择与橡皮筋（依赖多个 composables，需要在 useNodeInteraction 之前定义）
+const selection = useSelection({
+  nodes,
+  connections,
+  panX,
+  panY,
+  canvasScale,
+  isOverlayEditing,
+  connectionState,
+  selectedNodeId,
+  connectionOffsetY,
+  getConnectionHandle,
+  fallthrough: { handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp }
+});
+const multiSelectedNodeIds = selection.multiSelectedNodeIds;
+const multiSelectedConnectionIds = selection.multiSelectedConnectionIds;
+const lastSelectionMode = selection.lastSelectionMode;
 
-  const fromNode = nodes.value.find(n => n.id === connectionState.fromNodeId);
-  if (!fromNode) {
-    return 'var(--el-color-primary)';
-  }
+// 13. 节点交互（需要多个依赖，包括 selection）
+const lastSelectionModePlaceholder = ref<'click' | 'rubber'>('click');
+const {
+  hoveredArrowDirection: interactionHoveredArrowDirection,
+  handleNodeClick,
+  handleNodeMouseEnter,
+  handleNodeMouseLeave,
+  handleArrowClick,
+  handleArrowEnter,
+  handleArrowLeave,
+  handleCanvasClick,
+  handleCanvasDragLeave
+} = useNodeInteraction(
+  nodes,
+  selectedNodeId,
+  isOverlayEditing,
+  editingNodeId,
+  showComponentMenuFlag,
+  closeComponentMenu,
+  activeArrowDirection,
+  lastSelectionModePlaceholder,
+  findNearbyNode,
+  createConnectionFromMenu,
+  showComponentMenu,
+  nodeTextConfig,
+  defaultTextConfig,
+  isMouseOnNodeBorder,
+  selection.clearMultiSelection,
+  () => { selectedConnectionId.value = ''; } // 清空连接线选中状态
+);
+// 兼容模板旧引用名
+const hoveredArrowDirection = interactionHoveredArrowDirection;
 
-  // 根据节点类型和连接条件返回颜色
-  if (fromNode.type === 'CONDITION' || fromNode.type === 'DECISION') {
-    if (connectionState.fromCondition === 'true') {
-      return 'var(--el-color-success)'; // 绿色
-    } else if (connectionState.fromCondition === 'false') {
-      return 'var(--el-color-danger)'; // 红色
-    }
-  }
+// 更新 lastSelectionModePlaceholder 的值
+watch(lastSelectionMode, (val) => {
+  lastSelectionModePlaceholder.value = (val === 'rubber') ? 'rubber' : 'click';
+}, { immediate: true });
 
-  return 'var(--el-color-primary)'; // 默认蓝色
-};
+// 14. 撤销/重做管理（需要 nodes, connections, connectionOffsetY）
+const {
+  recordHistory,
+  undo,
+  redo,
+  clearHistory,
+  canUndo,
+  canRedo
+} = useUndoRedo(nodes, connections, connectionOffsetY);
 
-// 获取节点文字 - 简化版本
-const getNodeText = (type: string) => {
-  const textMap: Record<string, string> = {
-    'START': '开始',
-    'END': '结束',
-    'CONDITION': '条件',
-    'ACTION': '动作',
-    'DECISION': '决策',
-    'GATEWAY': '网关'
-  };
-  return textMap[type] || '节点';
-};
+// 15. 策略操作（需要 nodes, connections）
+const {
+  strategyName,
+  currentOrchestration,
+  showPreview,
+  validateOrchestration,
+  previewExecution,
+  handleSave
+} = useStrategyOperations(nodes, connections);
 
-// 获取节点填充颜色 - draw.io 风格
-const getNodeFillColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    'START': '#d5e8d4',      // 浅绿色
-    'END': '#f8cecc',        // 浅红色
-    'CONDITION': '#fff2cc',  // 浅黄色
-    'ACTION': '#dae8fc',     // 浅蓝色
-    'DECISION': '#e1d5e7',   // 浅紫色
-    'GATEWAY': '#f5f5f5'     // 浅灰色
-  };
-  return colorMap[type] || '#f5f5f5';
-};
-
-// 获取节点边框颜色 - draw.io 风格
-const getNodeStrokeColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    'START': '#82b366',      // 绿色
-    'END': '#b85450',        // 红色
-    'CONDITION': '#d6b656',  // 黄色
-    'ACTION': '#6c8ebf',     // 蓝色
-    'DECISION': '#9673a6',   // 紫色
-    'GATEWAY': '#666666'     // 灰色
-  };
-  return colorMap[type] || '#666666';
-};
-
-// 获取节点文字颜色 - draw.io 风格
-const getNodeTextColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    'START': '#2d5016',      // 深绿色
-    'END': '#5c2121',        // 深红色
-    'CONDITION': '#6c5b00',  // 深黄色
-    'ACTION': '#1f4e79',     // 深蓝色
-    'DECISION': '#4c2a5c',   // 深紫色
-    'GATEWAY': '#333333'     // 深灰色
-  };
-  return colorMap[type] || '#333333';
-};
-
-// 连接点点击处理
-const handleConnectionPointClick = (event: MouseEvent, node: any, direction: string) => {
-  event.stopPropagation();
-  // 连接点点击暂时不处理，只处理箭头点击
-};
-
-// 箭头点击处理
-const handleArrowClick = (event: MouseEvent, node: any, direction: string) => {
-  event.stopPropagation();
-
-  // 设置激活的箭头方向
-  activeArrowDirection.value = direction;
-
-  // 设置选中的节点（确保箭头保持显示）
-  selectedNodeId.value = node.id;
-
-  // 检查对应方向是否已有节点
-  const nearbyNode = findNearbyNode(node, direction);
-
-  if (nearbyNode) {
-    // 如果附近有节点，直接创建连接
-    createConnection(node, nearbyNode, direction);
-  } else {
-    // 如果没有节点，显示组件菜单让用户选择要创建的节点类型
-    showComponentMenu(node, direction);
-  }
-};
-
-// 组件菜单相关状态
-const showComponentMenuFlag = ref(false);
-const componentMenuPosition = ref({ x: 0, y: 0 });
-const selectedNodeForConnection = ref<any>(null);
-const selectedDirection = ref('');
-const activeArrowDirection = ref('');
-const hoveredNodeId = ref<string>('');
-
-// 生成唯一ID
-const generateId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
-
-// 获取Element Plus主题颜色
-const getThemeColor = (cssVar: string) => {
-  if (typeof window !== 'undefined') {
-    const color = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
-    return color || '#ffffff'; // 如果获取不到，使用白色作为默认值
-  }
-  return '#ffffff'; // 默认白色
-};
-
-// 判断是否为深色主题
-const isDarkTheme = computed(() => {
-  if (typeof window !== 'undefined') {
-    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--el-bg-color').trim();
-    return bgColor.includes('dark') || bgColor.includes('#1a1a1a') || bgColor.includes('#000');
-  }
-  return false;
+// 16. 自动保存（需要 nodes, connections, connectionOffsetY, canvasScale, strategyName）
+const {
+  saveNow,
+  loadFromIndexedDB,
+  getFileList,
+  deleteFile
+} = useAutoSave({
+  nodes,
+  connections,
+  connectionOffsetY,
+  canvasPosition: { x: panX, y: panY }, // 传递当前画布位置 refs
+  canvasScale,
+  strategyName,
+  autoSaveEnabled: true
 });
 
-// 获取连接线颜色（根据主题动态选择）
-const getConnectionColor = () => {
-  return isDarkTheme.value ? getThemeColor('--el-color-white') : getThemeColor('--el-text-color-primary');
-};
-
-// 简化的网格尺寸 - 固定尺寸确保一致性
-const gridSize = computed(() => {
-  return {
-    small: 10,  // 小网格 10x10px
-    large: 50   // 大网格 50x50px
-  };
+// 监听文本编辑结束，触发保存
+watch(isOverlayEditing, (newVal, oldVal) => {
+  // 当编辑状态从 true 变为 false 时，表示文本编辑完成
+  if (oldVal && !newVal) {
+    recordHistory();
+    saveNow();
+  }
 });
 
-// 画布尺寸响应式状态
-const canvasDimensions = ref({ width: 2000, height: 1500 });
-
-// 动态计算画布尺寸，确保边界对齐
-const updateCanvasDimensions = () => {
-  const largeGrid = gridSize.value.large; // 50px
-
-  // 获取画布容器的实际尺寸
-  const container = document.querySelector('.canvas-container');
-  if (!container) {
-    return;
-  }
-
-  const containerRect = container.getBoundingClientRect();
-  const containerWidth = containerRect.width;
-  const containerHeight = containerRect.height;
-
-  // 计算最接近的大网格整数倍尺寸，确保不超过容器
-  // 使用 Math.floor 确保画布不会超出容器边界
-  const width = Math.floor(containerWidth / largeGrid) * largeGrid;
-  const height = Math.floor(containerHeight / largeGrid) * largeGrid;
-
-  // 确保最小尺寸
-  const minWidth = largeGrid;
-  const minHeight = largeGrid;
-
-  const finalWidth = Math.max(width, minWidth);
-  const finalHeight = Math.max(height, minHeight);
-
-  // 强制边界对齐验证
-  if (finalWidth % largeGrid !== 0 || finalHeight % largeGrid !== 0) {
-    console.error('边界对齐失败！', {
-      width: finalWidth,
-      height: finalHeight,
-      largeGrid,
-      widthRemainder: finalWidth % largeGrid,
-      heightRemainder: finalHeight % largeGrid
-    });
-  }
-
-  canvasDimensions.value = {
-    width: finalWidth,
-    height: finalHeight
-  };
-
-  // 验证边界对齐
-  const widthGrids = finalWidth / largeGrid;
-  const heightGrids = finalHeight / largeGrid;
-
-  console.log(`画布尺寸: ${finalWidth}x${finalHeight}, 大网格: ${largeGrid}px`);
-  console.log(`网格数量: ${widthGrids} x ${heightGrids} = ${widthGrids * heightGrids} 个大网格`);
-  console.log(`边界对齐验证: 宽度${finalWidth} % ${largeGrid} = ${finalWidth % largeGrid}, 高度${finalHeight} % ${largeGrid} = ${finalHeight % largeGrid}`);
-  console.log(`网格线数量: 垂直线${Math.floor(finalWidth / 50) + 1}条, 水平线${Math.floor(finalHeight / 50) + 1}条`);
-
-  // 验证SVG实际尺寸
-  nextTick(() => {
-    const svg = document.querySelector('.strategy-canvas');
-    if (svg) {
-      const svgRect = svg.getBoundingClientRect();
-      console.log(`SVG实际尺寸: ${svgRect.width}x${svgRect.height}`);
-      console.log(`SVG viewBox: ${svg.getAttribute('viewBox')}`);
-      console.log(`SVG width/height属性: ${svg.getAttribute('width')}x${svg.getAttribute('height')}`);
-    }
-  });
+// 重新包装 createConnectionFromMenu 以记录历史状态
+createConnectionFromMenu = (sourceNode: any, targetNode: any, direction: string) => {
+  createConnectionOriginal(sourceNode, targetNode, direction);
+  recordHistory();
+  saveNow();
 };
 
-// 监听窗口大小变化
-let resizeObserver: ResizeObserver | null = null;
-
-onMounted(() => {
-  updateCanvasDimensions();
-
-  // 使用 ResizeObserver 更精确地监听容器尺寸变化
-  const container = document.querySelector('.canvas-container');
-  if (container) {
-    resizeObserver = new ResizeObserver(() => {
-      updateCanvasDimensions();
-    });
-    resizeObserver.observe(container);
-  }
-
-  // 备用：监听窗口大小变化
-  window.addEventListener('resize', updateCanvasDimensions);
-});
-
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-  }
-  window.removeEventListener('resize', updateCanvasDimensions);
-});
-
-
-// 获取网格颜色 - 两种网格并存，固定颜色
-const getGridColor = (isSmall: boolean = true) => {
-  if (isSmall) {
-    // 小网格 - 较浅的颜色
-    return isDarkTheme.value ? getThemeColor('--el-border-color') : getThemeColor('--el-text-color-placeholder');
-  } else {
-    // 大网格 - 使用合适的颜色，确保在两种主题下都可见
-    if (isDarkTheme.value) {
-      // 暗色主题：使用稍亮的边框色
-      return getThemeColor('--el-border-color-light') || getThemeColor('--el-border-color');
-    } else {
-      // 亮色主题：使用更明显的颜色
-      return getThemeColor('--el-text-color-regular') || getThemeColor('--el-text-color-primary') || '#606266';
-    }
-  }
+// 包装 updateNode 和 updateConnection 以触发保存
+const updateNode = (nodeId: string, updates: any) => {
+  updateNodeOriginal(nodeId, updates);
+  recordHistory();
+  saveNow();
 };
 
-// 查找附近节点
-const findNearbyNode = (sourceNode: any, direction: string) => {
-  const threshold = 200; // 距离阈值
-  const sourceX = sourceNode.position.x;
-  const sourceY = sourceNode.position.y;
-  const sourceWidth = sourceNode.style?.width || 120;
-  const sourceHeight = sourceNode.style?.height || 60;
-
-  return nodes.value.find(node => {
-    if (node.id === sourceNode.id) return false;
-
-    const targetX = node.position.x;
-    const targetY = node.position.y;
-    const targetWidth = node.style?.width || 120;
-    const targetHeight = node.style?.height || 60;
-
-    // 计算节点中心点
-    const sourceCenterX = sourceX + sourceWidth / 2;
-    const sourceCenterY = sourceY + sourceHeight / 2;
-    const targetCenterX = targetX + targetWidth / 2;
-    const targetCenterY = targetY + targetHeight / 2;
-
-    // 计算距离
-    const deltaX = targetCenterX - sourceCenterX;
-    const deltaY = targetCenterY - sourceCenterY;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-    // 检查是否在指定方向且距离合适
-    switch (direction) {
-      case 'top':
-        return deltaY < 0 && Math.abs(deltaX) < threshold && Math.abs(deltaY) < threshold;
-      case 'right':
-        return deltaX > 0 && Math.abs(deltaY) < threshold && Math.abs(deltaX) < threshold;
-      case 'bottom':
-        return deltaY > 0 && Math.abs(deltaX) < threshold && Math.abs(deltaY) < threshold;
-      case 'left':
-        return deltaX < 0 && Math.abs(deltaY) < threshold && Math.abs(deltaX) < threshold;
-      default:
-        return false;
-    }
-  });
+const updateConnection = (connectionId: string, updates: any) => {
+  updateConnectionOriginal(connectionId, updates);
+  recordHistory();
+  saveNow();
 };
 
-// 创建连接
-const createConnection = (sourceNode: any, targetNode: any, direction: string) => {
-  // 根据方向确定连接条件
-  let condition: 'true' | 'false' | undefined = undefined;
-  if (sourceNode.type === 'CONDITION' || sourceNode.type === 'DECISION') {
-    if (direction === 'right') {
-      condition = 'true';
-    } else if (direction === 'left') {
-      condition = 'false';
-    }
-  }
-
-      // 创建连接
-      const newConnection: StrategyConnection = {
-        id: generateId(),
-        sourceNodeId: sourceNode.id,
-        targetNodeId: targetNode.id,
-        condition: condition,
-        type: ConnectorType.SEQUENCE,
-        style: {
-          strokeColor: getConnectionColor(),
-          strokeWidth: 2
-        }
-      };
-
-  // 添加到连接列表
-  connections.value.push(newConnection);
-
-  // 清除激活状态
-  activeArrowDirection.value = '';
-};
-
-// 画布缩放状态
-const canvasScale = ref(1); // 缩放比例，1 = 100%
-const minScale = 1; // 最小缩放比例（100%）
-const maxScale = 3; // 最大缩放比例（300%）
-const scaleStep = 0.1; // 每次缩放步长
-
-// 缩放输入框状态
-const scaleInputValue = ref('100%');
-const isInputFocused = ref(false);
-
-// 节点文本配置（全局默认值）
-const defaultTextConfig = {
-  fontSize: 16, // 默认字体大小
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontWeight: 'normal',
-  fontStyle: 'normal'
-};
-
-// 字体族选项
-const fontFamilyOptions = [
-  { label: '系统默认', value: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  { label: '等宽字体', value: "'Courier New', 'Monaco', 'Menlo', monospace" },
-  { label: '衬线字体', value: "'Times New Roman', 'Times', serif" },
-  { label: '圆润字体', value: "'Comic Sans MS', 'Chalkboard', cursive" },
-  { label: '粗体字体', value: "'Impact', 'Arial Black', sans-serif" },
-  { label: '微软雅黑', value: "'Microsoft YaHei', '微软雅黑', sans-serif" },
-  { label: '宋体', value: "'SimSun', '宋体', serif" },
-  { label: '黑体', value: "'SimHei', '黑体', sans-serif" }
-];
-
-// 获取字体族的友好标签
-const getFontFamilyLabel = (fontFamily: string) => {
-  const option = fontFamilyOptions.find(opt => opt.value === fontFamily);
-  return option ? option.label : fontFamily;
-};
-
-// 当前选中节点的文本配置
-const nodeTextConfig = ref({ ...defaultTextConfig });
-
-// 文本编辑状态
-const editingNodeId = ref<string | null>(null);
-const editingText = ref<string>('');
-
-// 显示组件菜单
-const showComponentMenu = (node: any, direction: string) => {
-  selectedNodeForConnection.value = node;
-  selectedDirection.value = direction;
-
-  // 获取画布和节点位置
-  const canvas = document.querySelector('.strategy-canvas') as HTMLElement;
-  if (!canvas) return;
-
-  const canvasRect = canvas.getBoundingClientRect();
-  const nodeWidth = node.style?.width || 120;
-  const nodeHeight = node.style?.height || 60;
-
-  // 计算箭头在屏幕上的位置
-  let menuX = canvasRect.left + node.position.x;
-  let menuY = canvasRect.top + node.position.y;
-
-  switch (direction) {
-    case 'top':
-      menuX += nodeWidth / 2;
-      menuY -= 32; // 箭头尖端位置
-      break;
-    case 'right':
-      menuX += nodeWidth + 32;
-      menuY += nodeHeight / 2;
-      break;
-    case 'bottom':
-      menuX += nodeWidth / 2;
-      menuY += nodeHeight + 32;
-      break;
-    case 'left':
-      menuX -= 32;
-      menuY += nodeHeight / 2;
-      break;
-  }
-
-  componentMenuPosition.value = { x: menuX, y: menuY };
-  showComponentMenuFlag.value = true;
-};
-
-// 选择组件
-const selectComponent = async (component: any) => {
-  if (selectedNodeForConnection.value) {
-    // 在指定方向添加新节点
-    const newNodePosition = calculateNewNodePosition(selectedNodeForConnection.value, selectedDirection.value);
-    const newNode = await addNode(component, newNodePosition);
-
-    // 创建连接
-    if (newNode) {
-      // 根据方向确定连接条件
-      let condition: 'true' | 'false' | undefined = undefined;
-      if (selectedNodeForConnection.value.type === 'CONDITION' || selectedNodeForConnection.value.type === 'DECISION') {
-        if (selectedDirection.value === 'right') {
-          condition = 'true';
-        } else if (selectedDirection.value === 'left') {
-          condition = 'false';
-        }
-      }
-
-      // 创建连接
-      const newConnection: StrategyConnection = {
-        id: generateId(),
-        sourceNodeId: selectedNodeForConnection.value.id,
-        targetNodeId: newNode.id,
-        condition: condition,
-        type: ConnectorType.SEQUENCE,
-        style: {
-          strokeColor: getConnectionColor(),
-          strokeWidth: 2
-        }
-      };
-
-      // 添加到连接列表
-      connections.value.push(newConnection);
-    }
-  }
-
-  // 关闭菜单
-  closeComponentMenu();
-};
-
-// 关闭组件菜单
-const closeComponentMenu = () => {
-  showComponentMenuFlag.value = false;
-  selectedNodeForConnection.value = null;
-  selectedDirection.value = '';
-  activeArrowDirection.value = '';
-};
-
-// 计算新节点位置
-const calculateNewNodePosition = (sourceNode: any, direction: string) => {
-  const offset = 150; // 节点间距
-  const sourceX = sourceNode.position.x;
-  const sourceY = sourceNode.position.y;
-
-  switch (direction) {
-    case 'top':
-      return { x: sourceX, y: sourceY - offset };
-    case 'right':
-      return { x: sourceX + offset, y: sourceY };
-    case 'bottom':
-      return { x: sourceX, y: sourceY + offset };
-    case 'left':
-      return { x: sourceX - offset, y: sourceY };
-    default:
-      return { x: sourceX + offset, y: sourceY };
-  }
-};
-
-// 获取常用组件（缩小版组件库）
-const getCommonComponents = () => {
-  if (!componentLibrary.value || componentLibrary.value.length === 0) {
-    return [];
-  }
-  return componentLibrary.value.slice(0, 6);
-};
-
-// 获取方向文本
-const getDirectionText = (direction: string) => {
-  const directionMap: Record<string, string> = {
-    'top': '上方',
-    'right': '右侧',
-    'bottom': '下方',
-    'left': '左侧'
-  };
-  return directionMap[direction] || '';
-};
-
-// 节点悬停处理
-// 双击延迟处理
-let doubleClickTimer: number | null = null;
-
-// 节点点击处理
-const handleNodeClick = (node: any, event?: MouseEvent) => {
-  // 阻止事件冒泡到画布
-  event?.stopPropagation();
-
-  // 清除双击定时器
-  if (doubleClickTimer) {
-    clearTimeout(doubleClickTimer);
-    doubleClickTimer = null;
-    return; // 如果是双击，不处理单击
-  }
-
-  // 设置双击延迟
-  doubleClickTimer = setTimeout(() => {
-    doubleClickTimer = null;
-
-    // 设置选中的节点
-    selectedNodeId.value = node.id;
-
-    // 更新文本配置为选中节点的配置
-    nodeTextConfig.value = {
-      fontSize: node.textConfig?.fontSize || defaultTextConfig.fontSize,
-      fontFamily: node.textConfig?.fontFamily || defaultTextConfig.fontFamily,
-      fontWeight: node.textConfig?.fontWeight || defaultTextConfig.fontWeight,
-      fontStyle: node.textConfig?.fontStyle || defaultTextConfig.fontStyle
-    };
-
-    // 关闭组件菜单（如果打开）
-    if (showComponentMenuFlag.value) {
-      closeComponentMenu();
-    }
-  }, 200); // 200ms 延迟
-};
-
-// 文本输入框引用
-const textInputRef = ref<HTMLInputElement | null>(null);
-
-// 节点双击处理 - 进入文本编辑模式
-const handleNodeDoubleClick = (node: any, event?: MouseEvent) => {
-  event?.stopPropagation();
-  event?.preventDefault(); // 阻止默认行为
-
-  // 清除单击定时器
-  if (doubleClickTimer) {
-    clearTimeout(doubleClickTimer);
-    doubleClickTimer = null;
-  }
-
-  // 设置编辑状态
-  editingNodeId.value = node.id;
-  editingText.value = node.text || getNodeText(node.type);
-
-  // 选中节点
-  selectedNodeId.value = node.id;
-
-  // 更新文本配置
-  nodeTextConfig.value = {
-    fontSize: node.textConfig?.fontSize || defaultTextConfig.fontSize,
-    fontFamily: node.textConfig?.fontFamily || defaultTextConfig.fontFamily,
-    fontWeight: node.textConfig?.fontWeight || defaultTextConfig.fontWeight,
-    fontStyle: node.textConfig?.fontStyle || defaultTextConfig.fontStyle
-  };
-
-  // 自动聚焦到输入框
-  nextTick(() => {
-    const focusInput = () => {
-      if (textInputRef.value && typeof textInputRef.value.focus === 'function') {
-        textInputRef.value.focus();
-        textInputRef.value.select();
-        return true;
-      }
-      return false;
-    };
-
-    // 立即尝试聚焦
-    if (!focusInput()) {
-      // 如果失败，延迟重试
-      setTimeout(() => {
-        focusInput();
-      }, 50);
-    }
-  });
-};
-
-const handleNodeMouseEnter = (node: any) => {
-  hoveredNodeId.value = node.id;
-  console.log('节点悬停:', node.id, 'hoveredNodeId:', hoveredNodeId.value, 'selectedNodeId:', selectedNodeId.value);
-  console.log('箭头应该显示，检查CSS类:', {
-    hoveredNodeId: hoveredNodeId.value,
-    selectedNodeId: selectedNodeId.value,
-    shouldShow: hoveredNodeId.value === node.id || selectedNodeId.value === node.id
-  });
-
-  // 检查DOM元素
-  nextTick(() => {
-    const arrowGroups = document.querySelectorAll(`[data-node-id="${node.id}"] .connection-arrow-group`);
-    console.log('找到的箭头组数量:', arrowGroups.length);
-    arrowGroups.forEach((group, index) => {
-      const path = group.querySelector('.arrow-shape');
-      console.log(`箭头组 ${index}:`, {
-        element: group,
-        classes: group.className,
-        visible: group.classList.contains('visible'),
-        opacity: getComputedStyle(group).opacity,
-        hasPath: !!path,
-        pathElement: path,
-        pathFill: path ? getComputedStyle(path).fill : 'N/A',
-        pathStroke: path ? getComputedStyle(path).stroke : 'N/A'
-      });
-    });
-  });
-};
-
-const handleNodeMouseLeave = () => {
-  hoveredNodeId.value = '';
-  console.log('节点离开, hoveredNodeId:', hoveredNodeId.value);
-};
-
-// 画布点击处理
-const handleCanvasClick = (event: MouseEvent) => {
-  // 如果点击的是画布本身（不是节点），关闭组件菜单并隐藏箭头
-  if (showComponentMenuFlag.value) {
-    closeComponentMenu();
-  }
-
-  // 点击非节点区域时，清除选中状态，隐藏箭头
-  selectedNodeId.value = '';
-  hoveredNodeId.value = '';
-  activeArrowDirection.value = '';
-};
-
-const handleCanvasDragLeave = (event: DragEvent) => {
-  event.preventDefault();
-};
-
-// 缩放控制函数
-const handleZoomIn = () => {
-  if (canvasScale.value < maxScale) {
-    canvasScale.value = Math.min(canvasScale.value + scaleStep, maxScale);
-    updateScaleInputValue();
-  }
-};
-
-const handleZoomOut = () => {
-  if (canvasScale.value > minScale) {
-    canvasScale.value = Math.max(canvasScale.value - scaleStep, minScale);
-    updateScaleInputValue();
-  }
-};
-
-const handleFitToScreen = () => {
-  canvasScale.value = minScale; // 重置为100%
-  panX.value = 0; // 重置拖拽位置
-  panY.value = 0;
-  updateScaleInputValue();
-};
-
-// 处理缩放下拉菜单命令
-const handleZoomCommand = (command: string) => {
-  if (command === 'fit') {
-    handleFitToScreen();
-  } else {
-    const scale = parseInt(command) / 100;
-    canvasScale.value = Math.max(minScale, Math.min(scale, maxScale));
-    updateScaleInputValue();
-  }
-};
-
-// 更新输入框显示值
-const updateScaleInputValue = () => {
-  if (!isInputFocused.value) {
-    scaleInputValue.value = `${Math.round(canvasScale.value * 100)}%`;
-  }
-};
-
-// 处理输入框内容变化
-const handleScaleInputChange = (value: string) => {
-  // 如果用户删除了百分号，不自动添加
-  // 如果用户输入了纯数字，也不自动添加百分号
-  // 只有在失焦或回车时才处理
-};
-
-// 处理输入框失焦
-const handleScaleInputBlur = () => {
-  isInputFocused.value = false;
-  applyScaleFromInput();
-};
-
-// 处理输入框回车
-const handleScaleInputEnter = () => {
-  isInputFocused.value = false;
-  applyScaleFromInput();
-};
-
-// 应用输入框的缩放值
-const applyScaleFromInput = () => {
-  let inputValue = scaleInputValue.value.trim();
-
-  // 如果输入值不包含百分号，自动添加
-  if (!inputValue.includes('%')) {
-    const numericValue = parseFloat(inputValue);
-    if (!isNaN(numericValue) && numericValue > 0) {
-      inputValue = `${numericValue}%`;
-    }
-  }
-
-  // 移除百分号进行数值计算
-  const numericValue = parseFloat(inputValue.replace('%', ''));
-
-  if (!isNaN(numericValue) && numericValue > 0) {
-    const scale = numericValue / 100;
-    canvasScale.value = Math.max(minScale, Math.min(scale, maxScale));
-  }
-
-  // 更新显示值，确保有百分号
-  scaleInputValue.value = `${Math.round(canvasScale.value * 100)}%`;
-};
-
-// 计算缩放百分比显示
-const scalePercentage = computed(() => {
-  return Math.round(canvasScale.value * 100);
-});
-
-// 更新选中节点的文本配置
-const updateNodeTextConfig = () => {
-  if (selectedNodeId.value) {
-    const selectedNode = nodes.value.find(node => node.id === selectedNodeId.value);
-    if (selectedNode) {
-      // 更新节点的文本配置
-      if (!selectedNode.textConfig) {
-        selectedNode.textConfig = {};
-      }
-      selectedNode.textConfig = { ...nodeTextConfig.value };
-    }
-  }
-};
-
-// 监听文本配置变化，自动更新选中节点
-watch(nodeTextConfig, () => {
-  updateNodeTextConfig();
-}, { deep: true });
-
-// 监听缩放变化，同步输入框值
-watch(canvasScale, () => {
-  updateScaleInputValue();
-});
-
-// 完成文本编辑
-const finishTextEditing = () => {
-  if (editingNodeId.value) {
-    const selectedNode = nodes.value.find(node => node.id === editingNodeId.value);
-    if (selectedNode) {
-      // 更新节点文本
-      selectedNode.text = editingText.value;
-    }
-  }
-
-  // 清除编辑状态
-  editingNodeId.value = null;
-  editingText.value = '';
-};
-
-// 取消文本编辑
-const cancelTextEditing = () => {
-  // 清除编辑状态
-  editingNodeId.value = null;
-  editingText.value = '';
-};
-
-// 处理文本编辑键盘事件
-const handleTextEditKeyDown = (event: KeyboardEvent) => {
-  if (editingNodeId.value) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      finishTextEditing();
-    } else if (event.key === 'Escape') {
-      event.preventDefault();
-      cancelTextEditing();
-    }
-  }
-};
-
+// 处理画布拖放
 const handleCanvasDrop = async (event: DragEvent) => {
   event.preventDefault();
 
@@ -1577,98 +582,168 @@ const handleCanvasDrop = async (event: DragEvent) => {
 
       // 添加节点
       await addNode(component, { x, y });
+      // 添加节点后记录历史状态
+      recordHistory();
+      saveNow();
     } catch (error) {
       console.error('Failed to parse component data:', error);
     }
   }
 };
 
-const {
-  componentSearch,
-  activeCategories,
-  filteredComponentCategories,
-  componentLibrary,
-  handleComponentDragStart
-} = useComponentLibrary();
 
-const {
-  strategyName,
-  currentOrchestration,
-  showPreview,
-  validateOrchestration,
-  previewExecution,
-  handleSave
-} = useStrategyOperations(nodes, connections);
+// 生成网格背景的 SVG pattern（base64 编码）
+const gridPatternSvg = computed(() => {
+  const gridSize = 40; // pattern 单位尺寸
+  const smallGridStep = 10; // 小网格步长
 
+  const svg = `
+<svg style="color-scheme: light dark;" width="${gridSize}" height="${gridSize}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="${gridSize}" height="${gridSize}" patternUnits="userSpaceOnUse">
+      <path d="M 0 ${smallGridStep} L ${gridSize} ${smallGridStep} M ${smallGridStep} 0 L ${smallGridStep} ${gridSize} M 0 ${smallGridStep * 2} L ${gridSize} ${smallGridStep * 2} M ${smallGridStep * 2} 0 L ${smallGridStep * 2} ${gridSize} M 0 ${smallGridStep * 3} L ${gridSize} ${smallGridStep * 3} M ${smallGridStep * 3} 0 L ${smallGridStep * 3} ${gridSize}" fill="none" style="stroke: light-dark(#d0d0d0, #424242);" stroke="#d0d0d0" opacity="0.2" stroke-width="1"/>
+      <path d="M ${gridSize} 0 L 0 0 0 ${gridSize}" fill="none" style="stroke: light-dark(#d0d0d0, #424242);" stroke="#d0d0d0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+</svg>`.trim();
 
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+});
 
-// 删除选中的元素
-const deleteSelected = async () => {
+// 网格背景 div 的样式：尺寸基于 canvasDimensions，在 body_middle 中水平垂直居中
+// 注意：不设置 z-index，依赖 DOM 顺序和 pointer-events: none 来避免拦截事件
+// 使用 box-sizing: border-box 确保边框包含在尺寸内，简化坐标计算
+const gridBackgroundStyle = computed(() => {
+  return {
+    position: 'absolute' as const,
+    left: '50%',
+    top: '50%',
+    width: `${canvasDimensions.value.width}px`,
+    height: `${canvasDimensions.value.height}px`,
+    marginLeft: `-${canvasDimensions.value.width / 2}px`,
+    marginTop: `-${canvasDimensions.value.height / 2}px`,
+    boxSizing: 'border-box' as const,
+    borderTopWidth: '1px',
+    borderRightWidth: '1px',
+    borderBottomWidth: '1px',
+    borderLeftWidth: '1px',
+    borderStyle: 'solid' as const,
+    borderColor: 'var(--el-border-color)',
+    overflow: 'hidden' as const,
+    backgroundColor: 'var(--el-bg-color)',
+    backgroundImage: `url("${gridPatternSvg.value}")`,
+    backgroundPosition: '-1px -1px',
+    pointerEvents: 'none' as const
+  };
+});
+
+// 删除选中的元素（直接删除，不需要确认）
+const deleteSelected = () => {
+  // 正在拖拽或缩放时，不允许删除
+  if (isDragging.value || isResizing.value || dragState.maybeDrag) {
+    return;
+  }
+
+  // 优先处理多选
+  if (multiSelectedNodeIds.value.size > 0 || multiSelectedConnectionIds.value.size > 0) {
+    // 删除多选的节点
+    if (multiSelectedNodeIds.value.size > 0) {
+      const nodesToDelete = Array.from(multiSelectedNodeIds.value);
+      nodes.value = nodes.value.filter(n => !nodesToDelete.includes(n.id));
+    }
+    
+    // 删除多选的连接线
+    if (multiSelectedConnectionIds.value.size > 0) {
+      const connsToDelete = Array.from(multiSelectedConnectionIds.value);
+      connections.value = connections.value.filter(conn => !connsToDelete.includes(conn.id));
+    }
+    
+    // 清空多选状态
+    selection.clearMultiSelection();
+    
+    // 清空单选状态
+    selectedNodeId.value = '';
+    selectedConnectionId.value = '';
+    
+    // 删除后记录历史状态
+    recordHistory();
+    saveNow();
+    
+    return;
+  }
+
+  // 处理单选
   if (selectedNode.value) {
-    try {
-      await ElMessageBox.confirm(
-        '确定要删除选中的节点吗？这将同时删除相关的连接线。',
-        '确认删除',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      );
-
-      // 直接删除节点，跳过确认弹窗和成功消息
-      const nodeId = selectedNode.value.id;
+    const nodeId = selectedNode.value.id;
+    const nodeExists = nodes.value.some(n => n.id === nodeId);
+    if (nodeExists) {
+      // 在删除前记录历史状态（确保连线在节点存在时的正确状态被保存）
+      recordHistory();
+      
       nodes.value = nodes.value.filter(n => n.id !== nodeId);
 
       if (selectedNodeId.value === nodeId) {
         selectedNodeId.value = '';
       }
-
-      // 删除相关连接线
-      connections.value = connections.value.filter(
-        conn => conn.sourceNodeId !== nodeId && conn.targetNodeId !== nodeId
-      );
-
-      ElMessage.success('节点删除成功');
-    } catch {
-      // 用户取消删除
+      
+      // 删除后再次记录历史状态（记录删除后的悬空连线状态）
+      nextTick(() => {
+        recordHistory();
+        saveNow();
+      });
     }
   } else if (selectedConnection.value) {
-    try {
-      await ElMessageBox.confirm(
-        '确定要删除选中的连接线吗？',
-        '确认删除',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      );
-
-      // 直接删除连接线
-      const connectionId = selectedConnection.value.id;
+    const connectionId = selectedConnection.value.id;
+    const connectionExists = connections.value.some(c => c.id === connectionId);
+    if (connectionExists) {
       connections.value = connections.value.filter(conn => conn.id !== connectionId);
 
       if (selectedConnectionId.value === connectionId) {
         selectedConnectionId.value = '';
       }
-
-      ElMessage.success('连接线删除成功');
-    } catch {
-      // 用户取消删除
+      
+      // 删除后记录历史状态
+      recordHistory();
+      saveNow();
     }
   }
 };
 
 // 全局键盘事件处理
 const handleKeyDown = (event: KeyboardEvent) => {
-  // 如果正在编辑文本，不处理删除键
-  if (editingNodeId.value) {
+  // 处理撤销/重做快捷键
+  if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+    event.preventDefault();
+    if (event.shiftKey) {
+      // Ctrl+Shift+Z 或 Cmd+Shift+Z: 重做
+      redo();
+    } else {
+      // Ctrl+Z 或 Cmd+Z: 撤销
+      undo();
+    }
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+    // Ctrl+Y 或 Cmd+Y: 重做
+    event.preventDefault();
+    redo();
+    return;
+  }
+
+  // 编辑文本或覆盖编辑器激活时，屏蔽全局删除/快捷键
+  if (editingNodeId.value || isOverlayEditing.value) {
+    return;
+  }
+
+  // 正在拖拽或缩放时，屏蔽删除操作，避免意外删除节点
+  if (isDragging.value || isResizing.value) {
     return;
   }
 
   if (event.key === 'Delete' || event.key === 'Backspace') {
-    if (selectedNode.value || selectedConnection.value) {
+    if (selectedNode.value || selectedConnection.value || multiSelectedNodeIds.value.size > 0 || multiSelectedConnectionIds.value.size > 0) {
+      event.preventDefault();
       deleteSelected();
     }
   }
@@ -1676,12 +751,107 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 // 全局鼠标事件处理
 const handleGlobalMouseMove = (event: MouseEvent) => {
+  // 处理缩放移动
+  if (isResizing.value) {
+    handleResizeMove(event);
+  }
+  // 处理节点拖拽
+  handleNodePointerMove(event);
+  // 处理画布鼠标移动
   handleCanvasMouseMove(event);
 };
 
 const handleGlobalMouseUp = (event: MouseEvent) => {
+  // 处理缩放结束
+  if (isResizing.value) {
+    handleResizeEnd();
+    // 缩放结束后记录历史状态
+    recordHistory();
+    saveNow();
+  }
+  // 处理节点拖拽结束
+  const wasDragging = dragState.isDragging || dragState.maybeDrag;
+  handleNodePointerUp(event);
+  // 如果节点被拖拽过，记录历史状态
+  if (wasDragging) {
+    recordHistory();
+    saveNow();
+  }
+  // 处理画布鼠标抬起
   handleCanvasMouseUp();
 };
+
+// 监听画布尺寸变化，转换节点坐标以保持相对位置
+// 保存上一次的网格偏移量，确保转换时基于相对坐标计算，避免误差累积
+const lastGridOffset = ref<{ x: number; y: number } | null>(null);
+const lastCanvasDimensions = ref<{ width: number; height: number } | null>(null);
+
+watch(() => canvasDimensions.value, (newDims) => {
+  // 防止在拖拽或缩放过程中触发
+  if (isDragging.value || isResizing.value) {
+    return;
+  }
+
+  // 获取当前容器尺寸
+  const container = document.querySelector('.canvas-scroll') as HTMLElement | null;
+  if (!container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const currentContainerWidth = containerRect.width;
+  const currentContainerHeight = containerRect.height;
+
+  const borderWidth = 1;
+  // 标准化偏移量计算：对计算结果进行取整，确保一致性，避免浮点数精度问题
+  const currentGridOffsetX = Math.round((currentContainerWidth - newDims.width) / 2 + borderWidth);
+  const currentGridOffsetY = Math.round((currentContainerHeight - newDims.height) / 2 + borderWidth);
+
+  // 如果是第一次初始化，只记录偏移量和网格尺寸，不转换坐标
+  if (!lastGridOffset.value || !lastCanvasDimensions.value) {
+    lastGridOffset.value = { x: currentGridOffsetX, y: currentGridOffsetY };
+    lastCanvasDimensions.value = { ...newDims };
+    return;
+  }
+
+  // 只有当网格尺寸或偏移量有显著变化时才进行转换
+  // 由于偏移量已取整，这里检查整数差异即可
+  const gridSizeChanged =
+    Math.abs(newDims.width - lastCanvasDimensions.value.width) > 0.5 ||
+    Math.abs(newDims.height - lastCanvasDimensions.value.height) > 0.5;
+
+  const offsetChanged =
+    currentGridOffsetX !== lastGridOffset.value.x ||
+    currentGridOffsetY !== lastGridOffset.value.y;
+
+  if (!gridSizeChanged && !offsetChanged) {
+    // 没有显著变化，只更新记录
+    lastGridOffset.value = { x: currentGridOffsetX, y: currentGridOffsetY };
+    lastCanvasDimensions.value = { ...newDims };
+    return;
+  }
+
+  // 有显著变化，转换所有节点坐标
+  // 重要：基于相对坐标计算，避免误差累积
+  nodes.value.forEach(node => {
+    // 计算节点在旧网格系统中的相对坐标（精确值，不取整）
+    const relativeX = node.position.x - lastGridOffset.value!.x;
+    const relativeY = node.position.y - lastGridOffset.value!.y;
+
+    // 计算节点在新网格系统中的绝对坐标
+    const newAbsoluteX = relativeX + currentGridOffsetX;
+    const newAbsoluteY = relativeY + currentGridOffsetY;
+
+    // 更新节点位置（最后才取整）
+    const targetNode = nodes.value.find(n => n.id === node.id);
+    if (targetNode) {
+      targetNode.position.x = Math.round(newAbsoluteX);
+      targetNode.position.y = Math.round(newAbsoluteY);
+    }
+  });
+
+  // 更新记录的偏移量和网格尺寸
+  lastGridOffset.value = { x: currentGridOffsetX, y: currentGridOffsetY };
+  lastCanvasDimensions.value = { ...newDims };
+}, { immediate: false });
 
 // 组件挂载
 onMounted(async () => {
@@ -1690,13 +860,10 @@ onMounted(async () => {
   document.addEventListener('mousemove', handleGlobalMouseMove);
   document.addEventListener('mouseup', handleGlobalMouseUp);
 
-  // 等待 DOM 渲染完成
-  await nextTick();
-
-  // 初始化画布
-  // 注意：fitToScreen 需要画布引用和节点数据，这里暂时注释掉
-  // 可以在有节点后再调用
-  // fitToScreen(canvasRef, nodes.value);
+  // 重置缩放与位移
+  try {
+    resetZoom();
+  } catch {}
 });
 
 // 组件卸载
@@ -1707,19 +874,50 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', handleGlobalMouseUp);
 });
 
-// 处理组件点击 - 在画布中心创建组件
+// 处理组件点击 - 在当前可视区域中心创建组件（考虑缩放与平移）
 const handleComponentClick = async (component: any) => {
-  // 计算画布中心位置（考虑画布缩放和平移）
-  const canvasCenterX = 400; // 画布中心 X 坐标
-  const canvasCenterY = 300; // 画布中心 Y 坐标
+  const svg = document.querySelector('.strategy-canvas') as SVGSVGElement | null;
+  if (!svg) return;
 
-  // 添加节点到画布中心
-  await addNode(component, { x: canvasCenterX, y: canvasCenterY });
+  const rect = svg.getBoundingClientRect();
+  const viewCenterClientX = rect.left + rect.width / 2;
+  const viewCenterClientY = rect.top + rect.height / 2;
+
+  // 将屏幕坐标转换为画布本地坐标
+  const centerX = (viewCenterClientX - rect.left - panX.value) / canvasScale.value;
+  const centerY = (viewCenterClientY - rect.top - panY.value) / canvasScale.value;
+
+  // 与 useNodeManagement 保持一致的默认尺寸
+  let nodeWidth = component.style?.width || 120;
+  let nodeHeight = component.style?.height || 60;
+  if (component.type === 'START' || component.type === 'END') {
+    nodeWidth = 60;
+    nodeHeight = 60;
+  }
+
+  // 计算左上角使节点中心对齐视口中心
+  const nodeX = centerX - nodeWidth / 2;
+  const nodeY = centerY - nodeHeight / 2;
+
+  await addNode(component, { x: nodeX, y: nodeY });
+  // 添加节点后记录历史状态
+  recordHistory();
+  saveNow();
+};
+
+// 包装 completeConnection 以记录历史状态
+const handleCompleteConnection = (nodeId: string) => {
+  const result = completeConnection(nodeId);
+  if (result) {
+    // 只有成功创建连接时才记录历史
+    recordHistory();
+    saveNow();
+  }
 };
 
 // 暴露给子组件的方法
 defineExpose({
-  completeConnection: (nodeId: string) => completeConnection(nodeId),
+  completeConnection: handleCompleteConnection,
   selectNode,
   selectConnection
 });

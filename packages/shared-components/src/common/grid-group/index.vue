@@ -8,7 +8,6 @@
       <div v-if="$slots.headerMiddle" class="btc-grid-group__header-middle">
         <slot name="headerMiddle" />
       </div>
-      <el-divider v-if="$slots.headerMiddle && $slots.headerRight" direction="vertical" class="btc-grid-group__header-divider" />
       <div v-if="$slots.headerRight" class="btc-grid-group__header-right">
         <slot name="headerRight" />
       </div>
@@ -61,16 +60,6 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
     min-width: 0; // 确保flex子元素能够正确收缩
   }
 
-  &__header-divider {
-    flex-shrink: 0;
-    margin: 0;
-    height: 20px;
-    width: 1px;
-    box-sizing: border-box;
-    border: none;
-    background: var(--el-border-color);
-  }
-
   &__body {
     flex: 1;
     overflow: hidden;
@@ -83,7 +72,6 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
     flex: 0 0 v-bind(leftWidth);
     display: flex;
     align-items: center;
-    gap: 8px;
     min-width: 0; // 确保flex子元素能够正确收缩
   }
 
@@ -98,6 +86,7 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
     flex: 1;
     display: flex;
     align-items: center;
+    padding-left: 16px;
     min-width: 0; // 确保flex子元素能够正确收缩
   }
 
@@ -114,8 +103,8 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
     flex: 0 0 v-bind(rightWidth);
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    justify-content: space-around;
+    gap: 12px;
     min-width: 0; // 确保flex子元素能够正确收缩
   }
 

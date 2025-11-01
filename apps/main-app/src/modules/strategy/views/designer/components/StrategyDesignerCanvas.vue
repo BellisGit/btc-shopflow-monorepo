@@ -151,48 +151,6 @@
             class="connection-points"
             :class="{ visible: hoveredNodeId === node.id || selectedNodeId === node.id }"
           >
-            <!-- 四个顶点连接点 -->
-            <circle
-              :cx="0"
-              :cy="0"
-              r="4"
-              fill="white"
-              stroke="#666666"
-              stroke-width="1"
-              class="connection-dot vertex"
-              @click="handleConnectionPointClick($event, node, 'top-left')"
-            />
-            <circle
-              :cx="(node.style?.width || 120)"
-              :cy="0"
-              r="4"
-              fill="white"
-              stroke="#666666"
-              stroke-width="1"
-              class="connection-dot vertex"
-              @click="handleConnectionPointClick($event, node, 'top-right')"
-            />
-            <circle
-              :cx="0"
-              :cy="(node.style?.height || 60)"
-              r="4"
-              fill="white"
-              stroke="#666666"
-              stroke-width="1"
-              class="connection-dot vertex"
-              @click="handleConnectionPointClick($event, node, 'bottom-left')"
-            />
-            <circle
-              :cx="(node.style?.width || 120)"
-              :cy="(node.style?.height || 60)"
-              r="4"
-              fill="white"
-              stroke="#666666"
-              stroke-width="1"
-              class="connection-dot vertex"
-              @click="handleConnectionPointClick($event, node, 'bottom-right')"
-            />
-
             <!-- 四个边线中点连接点 + 箭头 -->
             <!-- 顶部中点 -->
             <g class="edge-connection-group">
@@ -450,7 +408,7 @@ const handleArrowClick = (event: MouseEvent, node: any, direction: string, posit
 const handleConnectionPointClick = (event: MouseEvent, node: any, position: string) => {
   event.stopPropagation();
   // 连接点点击处理逻辑
-  console.log('Connection point clicked:', position);
+  
 };
 
 const handleShapeSelect = (shape: any) => {

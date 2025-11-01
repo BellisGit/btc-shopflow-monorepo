@@ -62,11 +62,3 @@
     align-items: center;
   }
 }
-
-// 响应式设计
-@media (max-width: 1200px) {
-  .strategy-designer {
-    // 窄屏时通过修改 btc-grid-group props 处理
-    // 或在此处覆盖 CSS 变量
-  }
-}

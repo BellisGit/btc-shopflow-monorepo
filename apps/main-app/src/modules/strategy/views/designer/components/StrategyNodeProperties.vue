@@ -4,7 +4,7 @@
     <div class="property-section">
       <h4 class="section-title">基础属性</h4>
 
-      <el-form :model="nodeForm" label-width="80px" size="small">
+      <el-form :model="nodeForm" label-width="60px" size="small">
         <el-form-item label="节点名称" prop="name">
           <el-input
             v-model="nodeForm.name"
@@ -40,7 +40,7 @@
     <div class="property-section">
       <h4 class="section-title">样式属性</h4>
 
-      <el-form :model="styleForm" label-width="80px" size="small">
+      <el-form :model="styleForm" label-width="60px" size="small">
         <el-form-item label="宽度" prop="width">
           <el-input-number
             v-model="styleForm.width"
@@ -307,7 +307,7 @@ const updateConfig = (config: Record<string, any>) => {
       font-size: 12px;
       color: var(--el-text-color-regular);
       margin-right: 16px;
-      min-width: 60px;
+      min-width: 48px;
       font-weight: 400;
     }
   }

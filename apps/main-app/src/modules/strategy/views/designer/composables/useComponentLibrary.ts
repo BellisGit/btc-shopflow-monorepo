@@ -1,25 +1,23 @@
-import { ref, computed, markRaw } from 'vue';
+import { ref, computed, type Ref } from 'vue';
 import type { NodeType } from '@/types/strategy';
 import { NodeType as NodeTypeEnum } from '@/types/strategy';
-import {
-  VideoPlay,
-  VideoPause,
-  QuestionFilled,
-  Lightning,
-  Share,
-  Connection
-} from '@element-plus/icons-vue';
 
 /**
  * 组件库管理
  */
-export function useComponentLibrary() {
+export function useComponentLibrary(nodes?: Ref<any[]>) {
   // 搜索状态
   const componentSearch = ref('');
-  const activeCategories = ref(['basic']);
+  const activeCategories = ref(['basic', 'advanced']);
+
+  // 检查节点类型是否已存在
+  const isNodeTypeExists = (nodeType: NodeType): boolean => {
+    if (!nodes?.value) return false;
+    return nodes.value.some(node => node.type === nodeType);
+  };
 
   // 组件库配置
-  const componentCategories = [
+  const componentCategories = computed(() => [
     {
       name: 'basic',
       title: '基础组件',
@@ -27,26 +25,22 @@ export function useComponentLibrary() {
         {
           type: NodeTypeEnum.START,
           name: '开始',
-          description: '流程开始节点',
-          icon: markRaw(VideoPlay)
+          disabled: isNodeTypeExists(NodeTypeEnum.START)
         },
         {
           type: NodeTypeEnum.END,
           name: '结束',
-          description: '流程结束节点',
-          icon: markRaw(VideoPause)
+          disabled: isNodeTypeExists(NodeTypeEnum.END)
         },
         {
           type: NodeTypeEnum.CONDITION,
           name: '条件',
-          description: '条件判断节点',
-          icon: markRaw(QuestionFilled)
+          disabled: false
         },
         {
           type: NodeTypeEnum.ACTION,
           name: '动作',
-          description: '执行动作节点',
-          icon: markRaw(Lightning)
+          disabled: false
         }
       ]
     },
@@ -57,28 +51,25 @@ export function useComponentLibrary() {
         {
           type: NodeTypeEnum.DECISION,
           name: '决策',
-          description: '多路决策节点',
-          icon: markRaw(Share)
+          disabled: false
         },
         {
           type: NodeTypeEnum.GATEWAY,
           name: '网关',
-          description: '流程网关节点',
-          icon: markRaw(Connection)
+          disabled: false
         }
       ]
     }
-  ];
+  ]);
 
   // 过滤后的组件分类
   const filteredComponentCategories = computed(() => {
-    if (!componentSearch.value) return componentCategories;
+    if (!componentSearch.value) return componentCategories.value;
 
-    return componentCategories.map(category => ({
+    return componentCategories.value.map(category => ({
       ...category,
       components: category.components.filter(comp =>
-        comp.name.includes(componentSearch.value) ||
-        comp.description.includes(componentSearch.value)
+        comp.name.includes(componentSearch.value)
       )
     })).filter(category => category.components.length > 0);
   });
@@ -178,7 +169,7 @@ export function useComponentLibrary() {
 
   // 扁平化的组件库（用于弹窗选择）
   const componentLibrary = computed(() => {
-    return componentCategories.flatMap(category => category.components);
+    return componentCategories.value.flatMap(category => category.components);
   });
 
   return {
