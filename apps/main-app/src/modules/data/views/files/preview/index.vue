@@ -1,32 +1,8 @@
 <template>
   <div class="file-preview-page">
-    <BtcGridGroup ref="gridGroupRef" left-width="280px">
-      <!-- 左侧文件分类 -->
-      <template #bodyLeft>
-        <div class="file-preview-left">
-          <div class="header">
-            <h3>{{ t('data.file.preview.categories') }}</h3>
-          </div>
-          <el-scrollbar class="category-list">
-            <div
-              v-for="category in categories"
-              :key="category.id"
-              class="category-item"
-              :class="{ active: selectedCategoryId === category.id }"
-              @click="handleCategorySelect(category)"
-            >
-              <el-icon class="category-icon">
-                <Document />
-              </el-icon>
-              <span class="category-name">{{ category.name }}</span>
-              <span class="category-count">({{ category.count || 0 }})</span>
-            </div>
-          </el-scrollbar>
-        </div>
-      </template>
-
-      <!-- 右侧文件预览区域 -->
-      <template #bodyMiddle>
+    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表">
+      <!-- 左侧分类列表 -->
+      <template #right="{ selected, keyword }">
         <div class="file-preview-right">
           <!-- 操作栏 -->
           <div class="header">
@@ -155,7 +131,7 @@
           </div>
         </div>
       </template>
-    </BtcGridGroup>
+    </BtcViewGroup>
   </div>
 </template>
 
@@ -163,7 +139,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
-import { BtcGridGroup } from '@btc/shared-components';
+import { BtcViewGroup } from '@btc/shared-components';
 import {
   Document,
   Picture,
@@ -182,12 +158,11 @@ defineOptions({
 const { t } = useI18n();
 
 // 组件引用
-const gridGroupRef = ref();
+const viewGroupRef = ref();
 const uploadRef = ref();
 
 // 状态
 const loading = ref(false);
-const selectedCategoryId = ref<string | null>(null);
 const selectedFiles = ref<string[]>([]);
 
 // 分页
@@ -196,16 +171,6 @@ const pagination = reactive({
   size: 20,
   total: 0
 });
-
-// 分类列表
-const categories = ref([
-  { id: 'all', name: '全部文件', count: 0 },
-  { id: 'image', name: '图片', count: 0 },
-  { id: 'video', name: '视频', count: 0 },
-  { id: 'audio', name: '音频', count: 0 },
-  { id: 'document', name: '文档', count: 0 },
-  { id: 'other', name: '其他', count: 0 }
-]);
 
 // 文件列表
 const fileList = ref<any[]>([]);
@@ -232,13 +197,6 @@ const isVideo = (file: any) => {
 
 const isAudio = (file: any) => {
   return file.type?.startsWith('audio/') || /\.(mp3|wav|flac|aac|ogg)$/i.test(file.name);
-};
-
-// 分类选择
-const handleCategorySelect = (category: any) => {
-  selectedCategoryId.value = category.id;
-  pagination.page = 1;
-  refreshFileList();
 };
 
 // 文件选择
@@ -341,9 +299,6 @@ const refreshFileList = async () => {
     //   page: pagination.page,
     //   size: pagination.size
     // };
-    // if (selectedCategoryId.value && selectedCategoryId.value !== 'all') {
-    //   params.category = selectedCategoryId.value;
-    // }
     // const res = await service.system?.iam?.sys.file?.page(params);
     // fileList.value = res.list || [];
     // pagination.total = res.total || 0;
@@ -371,7 +326,7 @@ const handleSizeChange = () => {
 };
 
 onMounted(() => {
-  handleCategorySelect(categories.value[0]);
+  refreshFileList();
 });
 </script>
 
@@ -379,67 +334,6 @@ onMounted(() => {
 .file-preview-page {
   height: 100%;
   box-sizing: border-box;
-
-  .file-preview-left {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--el-border-color-light);
-
-    .header {
-      padding: 16px;
-      border-bottom: 1px solid var(--el-border-color-light);
-
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 500;
-      }
-    }
-
-    .category-list {
-      flex: 1;
-      padding: 8px;
-
-      .category-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        margin-bottom: 4px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s;
-
-        &:hover {
-          background-color: var(--el-fill-color-light);
-        }
-
-        &.active {
-          background-color: var(--el-color-primary-light-9);
-          color: var(--el-color-primary);
-
-          .category-icon {
-            color: var(--el-color-primary);
-          }
-        }
-
-        .category-icon {
-          margin-right: 8px;
-          font-size: 18px;
-        }
-
-        .category-name {
-          flex: 1;
-          font-size: 14px;
-        }
-
-        .category-count {
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
-        }
-      }
-    }
-  }
 
   .file-preview-right {
     height: 100%;
