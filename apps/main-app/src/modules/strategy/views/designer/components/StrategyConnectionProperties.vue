@@ -3,23 +3,23 @@
     <div class="property-section">
       <h4 class="section-title">连接属性</h4>
 
-      <el-form :model="connectionForm" label-width="60px" size="small">
-        <el-form-item label="连接类型" prop="type">
+      <btc-config-form :model="connectionForm" label-width="60px" size="small">
+        <btc-config-form-item label="连接类型" prop="type">
           <el-select v-model="connectionForm.type" @change="updateConnection">
             <el-option label="顺序连接" value="SEQUENCE" />
             <el-option label="条件连接" value="CONDITIONAL" />
           </el-select>
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item label="连接标签" prop="label">
+        <btc-config-form-item label="连接标签" prop="label">
           <el-input
             v-model="connectionForm.label"
             placeholder="连接描述"
             @blur="updateConnection"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item v-if="connectionForm.type === 'CONDITIONAL'" label="条件" prop="condition">
+        <btc-config-form-item v-if="connectionForm.type === 'CONDITIONAL'" label="条件" prop="condition">
           <el-input
             v-model="conditionExpression"
             type="textarea"
@@ -27,41 +27,41 @@
             placeholder="如：result === true"
             @blur="updateCondition"
           />
-        </el-form-item>
-      </el-form>
+        </btc-config-form-item>
+      </btc-config-form>
     </div>
 
     <div class="property-section">
       <h4 class="section-title">样式属性</h4>
 
-      <el-form :model="styleForm" label-width="60px" size="small">
-        <div class="color-picker-block">
-          <span class="color-label">线条颜色</span>
+      <btc-config-form :model="styleForm" label-width="60px" size="small">
+        <btc-config-form-item label="线条颜色" prop="strokeColor">
           <el-color-picker
             v-model="styleForm.strokeColor"
             @change="updateStyle"
             :teleported="false"
+            style="width: 100%"
           />
-        </div>
+        </btc-config-form-item>
 
-        <el-form-item label="线条宽度" prop="strokeWidth">
+        <btc-config-form-item label="线条宽度" prop="strokeWidth">
           <el-input-number
             v-model="styleForm.strokeWidth"
             :min="1"
             :max="10"
             @change="updateStyle"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item label="线条样式" prop="strokeDasharray">
+        <btc-config-form-item label="线条样式" prop="strokeDasharray">
           <el-select v-model="styleForm.strokeDasharray" @change="updateStyle">
             <el-option label="实线" value="" />
             <el-option label="虚线" value="5,5" />
             <el-option label="点线" value="2,2" />
             <el-option label="点划线" value="10,5,2,5" />
           </el-select>
-        </el-form-item>
-      </el-form>
+        </btc-config-form-item>
+      </btc-config-form>
     </div>
 
     <!-- 连接信息 -->
@@ -89,6 +89,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import type { StrategyConnection, StrategyCondition } from '@/types/strategy';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
 interface Props {
@@ -202,10 +203,10 @@ const updateCondition = () => {
     }
   }
 
-  :deep(.el-form-item) {
+  :deep(.btc-config-form-item) {
     margin-bottom: 16px;
 
-    .el-form-item__label {
+    .btc-config-form-item__label {
       font-size: 12px;
       color: var(--el-text-color-regular);
     }
@@ -214,21 +215,6 @@ const updateCondition = () => {
     .el-select,
     .el-input-number {
       width: 100%;
-    }
-  }
-
-  // 颜色选择器块样式，参考官方示例
-  .color-picker-block {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
-
-    .color-label {
-      font-size: 12px;
-      color: var(--el-text-color-regular);
-      margin-right: 16px;
-      min-width: 48px;
-      font-weight: 400;
     }
   }
 

@@ -148,6 +148,9 @@ function getTabLabel(item: ProcessItem) {
     '/navigation/menus/preview': 'menu.navigation.menu_preview',
 
     // 数据管理
+    '/data/files/list': 'menu.data.files.list',
+    '/data/files/templates': 'menu.data.files.templates',
+    '/data/files/preview': 'menu.data.files.preview',
     '/data/recycle': 'menu.data.recycle',
 
     // 运维与审计

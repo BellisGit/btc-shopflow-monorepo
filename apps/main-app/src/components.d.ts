@@ -13,6 +13,8 @@ declare module 'vue' {
     BtcBarChart: typeof import('@btc/shared-components')['BtcBarChart']
     BtcCard: typeof import('./../../../packages/shared-components/src/components/btc-card/index.vue')['default']
     BtcCascader: typeof import('./../../../packages/shared-components/src/components/btc-cascader/index.vue')['default']
+    BtcConfigForm: typeof import('./components/btc-config-form/index.vue')['default']
+    BtcConfigFormItem: typeof import('./components/btc-config-form/btc-config-form-item.vue')['default']
     BtcContainer: typeof import('@btc/shared-components')['BtcContainer']
     BtcCrud: typeof import('@btc/shared-components')['BtcCrud']
     BtcDialog: typeof import('@btc/shared-components')['BtcDialog']

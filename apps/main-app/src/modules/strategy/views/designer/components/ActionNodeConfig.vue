@@ -30,10 +30,9 @@
           </el-button>
         </div>
 
-        <el-form :model="action" size="small" label-width="60px">
-          <el-form-item label="类型" prop="type">
+        <btc-config-form :model="action" size="small" label-width="60px">
+          <btc-config-form-item label="类型" prop="type">
             <el-select
-              :id="`action-type-${index}`"
               v-model="action.type"
               placeholder="选择动作类型"
               @change="emitUpdate"
@@ -41,33 +40,30 @@
               <el-option
                 v-for="type in actionTypes"
                 :key="type.value"
-                :id="`action-type-${index}-${type.value}`"
                 :label="type.label"
                 :value="type.value"
               />
             </el-select>
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="参数" prop="parametersJson">
+          <btc-config-form-item label="参数" prop="parametersJson">
             <el-input
-              :id="`action-params-${index}`"
               v-model="action.parametersJson"
               type="textarea"
               :rows="3"
               placeholder='{"key": "value"}'
               @blur="updateParameters(action)"
             />
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="描述" prop="description">
+          <btc-config-form-item label="描述" prop="description">
             <el-input
-              :id="`action-desc-${index}`"
               v-model="action.description"
               placeholder="动作描述"
               @blur="emitUpdate"
             />
-          </el-form-item>
-        </el-form>
+          </btc-config-form-item>
+        </btc-config-form>
       </div>
     </div>
   </div>
@@ -78,6 +74,7 @@ import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyAction } from '@/types/strategy';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
 interface Props {
@@ -201,14 +198,14 @@ const emitUpdate = () => {
         }
       }
 
-      :deep(.el-form-item) {
+      :deep(.btc-config-form-item) {
         margin-bottom: 12px;
 
         &:last-child {
           margin-bottom: 0;
         }
 
-        .el-form-item__label {
+        .btc-config-form-item__label {
           font-size: 11px;
         }
       }

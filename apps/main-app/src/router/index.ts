@@ -200,6 +200,24 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.ops.request_log' },
       },
       {
+        path: 'data/files/list',
+        name: 'DataFilesList',
+        component: () => import('../modules/data/views/files/list/index.vue'),
+        meta: { titleKey: 'menu.data.files.list' },
+      },
+      {
+        path: 'data/files/templates',
+        name: 'DataFilesTemplates',
+        component: () => import('../modules/data/views/files/templates/index.vue'),
+        meta: { titleKey: 'menu.data.files.templates' },
+      },
+      {
+        path: 'data/files/preview',
+        name: 'DataFilesPreview',
+        component: () => import('../modules/data/views/files/preview/index.vue'),
+        meta: { titleKey: 'menu.data.files.preview' },
+      },
+      {
         path: 'data/recycle',
         name: 'DataRecycle',
         component: () => import('../modules/data/views/recycle/index.vue'),

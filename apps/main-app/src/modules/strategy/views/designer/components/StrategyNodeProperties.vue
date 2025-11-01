@@ -4,16 +4,16 @@
     <div class="property-section">
       <h4 class="section-title">基础属性</h4>
 
-      <el-form :model="nodeForm" label-width="60px" size="small">
-        <el-form-item label="节点名称" prop="name">
+      <btc-config-form :model="nodeForm" label-width="60px" size="small">
+        <btc-config-form-item label="节点名称" prop="name">
           <el-input
             v-model="nodeForm.name"
             @blur="updateNode"
             placeholder="请输入节点名称"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item label="节点描述" prop="description">
+        <btc-config-form-item label="节点描述" prop="description">
           <el-input
             v-model="nodeForm.description"
             type="textarea"
@@ -21,9 +21,9 @@
             @blur="updateNode"
             placeholder="请输入节点描述"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item label="节点类型" prop="type">
+        <btc-config-form-item label="节点类型" prop="type">
           <el-select v-model="nodeForm.type" @change="handleTypeChange" disabled>
             <el-option
               v-for="type in nodeTypes"
@@ -32,52 +32,52 @@
               :value="type.value"
             />
           </el-select>
-        </el-form-item>
-      </el-form>
+        </btc-config-form-item>
+      </btc-config-form>
     </div>
 
     <!-- 样式属性 -->
     <div class="property-section">
       <h4 class="section-title">样式属性</h4>
 
-      <el-form :model="styleForm" label-width="60px" size="small">
-        <el-form-item label="宽度" prop="width">
+      <btc-config-form :model="styleForm" label-width="60px" size="small">
+        <btc-config-form-item label="宽度" prop="width">
           <el-input-number
             v-model="styleForm.width"
             :min="80"
             :max="300"
             @change="updateStyle"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <el-form-item label="高度" prop="height">
+        <btc-config-form-item label="高度" prop="height">
           <el-input-number
             v-model="styleForm.height"
             :min="60"
             :max="200"
             @change="updateStyle"
           />
-        </el-form-item>
+        </btc-config-form-item>
 
-        <div class="color-picker-block">
-          <span class="color-label">背景色</span>
+        <btc-config-form-item label="背景色" prop="backgroundColor">
           <el-color-picker
             v-model="styleForm.backgroundColor"
             @change="updateStyle"
             show-alpha
             :teleported="false"
+            style="width: 100%"
           />
-        </div>
+        </btc-config-form-item>
 
-        <div class="color-picker-block">
-          <span class="color-label">边框色</span>
+        <btc-config-form-item label="边框色" prop="borderColor">
           <el-color-picker
             v-model="styleForm.borderColor"
             @change="updateStyle"
             :teleported="false"
+            style="width: 100%"
           />
-        </div>
-      </el-form>
+        </btc-config-form-item>
+      </btc-config-form>
     </div>
 
     <!-- 节点配置 -->
@@ -132,6 +132,7 @@ import type {
   StrategyAction,
   StrategyRule
 } from '@/types/strategy';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 import ConditionNodeConfig from './ConditionNodeConfig.vue';
 import ActionNodeConfig from './ActionNodeConfig.vue';
 import DecisionNodeConfig from './DecisionNodeConfig.vue';
@@ -282,10 +283,10 @@ const updateConfig = (config: Record<string, any>) => {
     padding: 20px 0;
   }
 
-  :deep(.el-form-item) {
+  :deep(.btc-config-form-item) {
     margin-bottom: 16px;
 
-    .el-form-item__label {
+    .btc-config-form-item__label {
       font-size: 12px;
       color: var(--el-text-color-regular);
     }
@@ -294,21 +295,6 @@ const updateConfig = (config: Record<string, any>) => {
     .el-select,
     .el-input-number {
       width: 100%;
-    }
-  }
-
-  // 颜色选择器块样式，参考官方示例
-  .color-picker-block {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
-
-    .color-label {
-      font-size: 12px;
-      color: var(--el-text-color-regular);
-      margin-right: 16px;
-      min-width: 48px;
-      font-weight: 400;
     }
   }
 

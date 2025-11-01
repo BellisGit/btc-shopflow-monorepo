@@ -2,7 +2,6 @@
   <div class="component-library">
     <div class="library-header">
       <btc-search
-        :id="searchId"
         v-model="searchModel"
         placeholder="搜索组件"
         size="small"
@@ -16,13 +15,11 @@
           :key="category.name"
           :title="category.title"
           :name="category.name"
-          :id="`collapse-${category.name}`"
         >
           <div class="component-list">
             <div
               v-for="component in category.components"
               :key="component.type"
-              :id="`component-item-${component.type}`"
               class="component-item"
               :data-type="component.type"
               :draggable="true"
@@ -79,7 +76,6 @@ import { defineProps, defineEmits, ref, watch } from 'vue';
 import { BtcSearch as btcSearch } from '@btc/shared-components';
 
 const props = defineProps<{
-  searchId: string;
   search: string;
   active: string[];
   categories: Array<{ name: string; title: string; components: any[] }>;

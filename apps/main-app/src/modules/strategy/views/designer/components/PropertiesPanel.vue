@@ -12,16 +12,16 @@
     <div class="panel-content">
       <div class="text-config-section">
         <h4>文本配置</h4>
-        <el-form label-width="60px" size="small">
-          <el-form-item label="字体大小">
+        <el-form :model="textConfig" label-width="60px" size="small">
+          <el-form-item label="字体大小" prop="fontSize">
             <el-input-number v-model="textConfig.fontSize" :min="8" :max="32" :step="1" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="字体族">
+          <el-form-item label="字体族" prop="fontFamily">
             <el-select v-model="textConfig.fontFamily" style="width: 100%">
               <el-option v-for="option in fontFamilyOptions" :key="option.value" :label="option.label" :value="option.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="字体粗细">
+          <el-form-item label="字体粗细" prop="fontWeight">
             <el-select v-model="textConfig.fontWeight" style="width: 100%">
               <el-option label="极细" value="100" />
               <el-option label="细体" value="300" />
@@ -31,7 +31,7 @@
               <el-option label="极粗" value="900" />
             </el-select>
           </el-form-item>
-          <el-form-item label="字体样式">
+          <el-form-item label="字体样式" prop="fontStyle">
             <el-select v-model="textConfig.fontStyle" style="width: 100%">
               <el-option label="正常" value="normal" />
               <el-option label="斜体" value="italic" />

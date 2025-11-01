@@ -74,6 +74,16 @@ export const appMenus: AppMenuConfig = {
       title: 'menu.data',
       icon: 'FolderOpened',
       children: [
+        {
+          index: 'files',
+          title: 'menu.data.files',
+          icon: 'Document',
+          children: [
+            { index: '/data/files/list', title: 'menu.data.files.list', icon: 'List' },
+            { index: '/data/files/templates', title: 'menu.data.files.templates', icon: 'Files' },
+            { index: '/data/files/preview', title: 'menu.data.files.preview', icon: 'View' },
+          ],
+        },
         { index: '/data/recycle', title: 'menu.data.recycle', icon: 'Delete' },
       ],
     },

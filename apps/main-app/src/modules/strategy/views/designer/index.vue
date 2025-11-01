@@ -8,7 +8,6 @@
           :min-scale="minScale"
           :max-scale="maxScale"
           :scale-input-value="scaleInputValue"
-          :dom-uid="domUid"
           @zoom-out="handleZoomOut"
           @zoom-in="handleZoomIn"
           @zoom-command="handleZoomCommand"
@@ -21,7 +20,6 @@
       <!-- 顶栏中间：策略名称 -->
       <template #headerMiddle>
         <el-input
-          :id="`strategy-name-input-${domUid}`"
           v-model="strategyName"
           placeholder="策略名称"
           style="width: 200px;"
@@ -38,7 +36,6 @@
       <!-- 内容左侧：组件库 -->
       <template #bodyLeft>
         <ComponentLibraryPanel
-          :search-id="`component-search-input-${domUid}`"
           :search="componentSearch"
           :active="activeCategories"
           :categories="filteredComponentCategories"
@@ -216,7 +213,7 @@ import { BtcGridGroup } from '@btc/shared-components';
 import { useComponentLibrary } from './composables/useComponentLibrary';
 import { useCanvasInteraction } from './composables/useCanvasInteraction';
 import { useNodeManagement } from './composables/useNodeManagement';
-import { useConnectionManagement } from './composables/useConnectionManagement';
+import { useConnectionManagement } from './composables/connection';
 import { useStrategyOperations } from './composables/useStrategyOperations';
 import { useNodeDrag } from './composables/useNodeDrag';
 import { useNodeResize } from './composables/useNodeResize';

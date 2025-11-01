@@ -285,19 +285,22 @@ const searchData = ref([
   { id: 'm14', type: 'menu', title: '菜单预览', path: '/navigation/menus/preview', breadcrumb: '导航与可见性' },
 
   // 数据管理
-  { id: 'm15', type: 'menu', title: '数据回收站', path: '/data/recycle', breadcrumb: '数据管理' },
+  { id: 'm15', type: 'menu', title: '文件列表', path: '/data/files/list', breadcrumb: '数据管理' },
+  { id: 'm16', type: 'menu', title: '流程模板', path: '/data/files/templates', breadcrumb: '数据管理' },
+  { id: 'm17', type: 'menu', title: '文件预览', path: '/data/files/preview', breadcrumb: '数据管理' },
+  { id: 'm18', type: 'menu', title: '数据回收站', path: '/data/recycle', breadcrumb: '数据管理' },
 
   // 运维与审计
-  { id: 'm16', type: 'menu', title: '操作日志', path: '/ops/logs/operation', breadcrumb: '运维与审计' },
-  { id: 'm17', type: 'menu', title: '请求日志', path: '/ops/logs/request', breadcrumb: '运维与审计' },
-  { id: 'm18', type: 'menu', title: '权限基线', path: '/ops/baseline', breadcrumb: '运维与审计' },
-  { id: 'm19', type: 'menu', title: '策略模拟器', path: '/ops/simulator', breadcrumb: '运维与审计' },
+  { id: 'm19', type: 'menu', title: '操作日志', path: '/ops/logs/operation', breadcrumb: '运维与审计' },
+  { id: 'm20', type: 'menu', title: '请求日志', path: '/ops/logs/request', breadcrumb: '运维与审计' },
+  { id: 'm21', type: 'menu', title: '权限基线', path: '/ops/baseline', breadcrumb: '运维与审计' },
+  { id: 'm22', type: 'menu', title: '策略模拟器', path: '/ops/simulator', breadcrumb: '运维与审计' },
 
   // 测试功能
-  { id: 'm20', type: 'menu', title: 'CRUD测试', path: '/test/crud', breadcrumb: '测试功能' },
-  { id: 'm21', type: 'menu', title: 'SVG插件测试', path: '/test/svg-plugin', breadcrumb: '测试功能' },
-  { id: 'm22', type: 'menu', title: '国际化测试', path: '/test/i18n', breadcrumb: '测试功能' },
-  { id: 'm23', type: 'menu', title: '状态切换按钮', path: '/test/select-button', breadcrumb: '测试功能' },
+  { id: 'm23', type: 'menu', title: 'CRUD测试', path: '/test/crud', breadcrumb: '测试功能' },
+  { id: 'm24', type: 'menu', title: 'SVG插件测试', path: '/test/svg-plugin', breadcrumb: '测试功能' },
+  { id: 'm25', type: 'menu', title: '国际化测试', path: '/test/i18n', breadcrumb: '测试功能' },
+  { id: 'm26', type: 'menu', title: '状态切换按钮', path: '/test/select-button', breadcrumb: '测试功能' },
 
   // 页面
   { id: 'p1', type: 'page', title: '首页', path: '/', breadcrumb: '主应用' },

@@ -45,7 +45,6 @@ const props = defineProps<{
   minScale: number;
   maxScale: number;
   scaleInputValue: string;
-  domUid: string;
 }>();
 
 defineEmits([

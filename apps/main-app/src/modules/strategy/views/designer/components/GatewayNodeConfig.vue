@@ -4,42 +4,39 @@
       <span>网关配置</span>
     </div>
 
-    <el-form :model="configForm" size="small" label-width="80px">
-      <el-form-item label="网关类型" prop="gatewayType">
-        <el-select id="gateway-type-select" v-model="configForm.gatewayType" @change="emitUpdate">
+    <btc-config-form :model="configForm" size="small" label-width="80px">
+      <btc-config-form-item label="网关类型" prop="gatewayType">
+        <el-select v-model="configForm.gatewayType" @change="emitUpdate">
           <el-option
             v-for="type in gatewayTypes"
             :key="type.value"
-            :id="`gateway-type-${type.value}`"
             :label="type.label"
             :value="type.value"
           />
         </el-select>
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item label="合并策略" prop="mergeStrategy">
-        <el-select id="gateway-merge-strategy-select" v-model="configForm.mergeStrategy" @change="emitUpdate">
-          <el-option id="gateway-merge-all" label="全部通过" value="all" />
-          <el-option id="gateway-merge-any" label="任一通过" value="any" />
-          <el-option id="gateway-merge-majority" label="多数通过" value="majority" />
-          <el-option id="gateway-merge-custom" label="自定义" value="custom" />
+      <btc-config-form-item label="合并策略" prop="mergeStrategy">
+        <el-select v-model="configForm.mergeStrategy" @change="emitUpdate">
+          <el-option label="全部通过" value="all" />
+          <el-option label="任一通过" value="any" />
+          <el-option label="多数通过" value="majority" />
+          <el-option label="自定义" value="custom" />
         </el-select>
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item v-if="configForm.mergeStrategy === 'custom'" label="自定义规则" prop="customRule">
+      <btc-config-form-item v-if="configForm.mergeStrategy === 'custom'" label="自定义规则" prop="customRule">
         <el-input
-          id="gateway-custom-rule-input"
           v-model="configForm.customRule"
           type="textarea"
           :rows="3"
           placeholder="如：(result1 && result2) || result3"
           @blur="emitUpdate"
         />
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item label="超时时间" prop="timeout">
+      <btc-config-form-item label="超时时间" prop="timeout">
         <el-input-number
-          id="gateway-timeout-input"
           v-model="configForm.timeout"
           :min="1000"
           :max="60000"
@@ -47,34 +44,32 @@
           @change="emitUpdate"
         />
         <span style="margin-left: 8px; font-size: 12px; color: var(--el-text-color-secondary);">毫秒</span>
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item label="并行执行" prop="parallel">
+      <btc-config-form-item label="并行执行" prop="parallel">
         <el-switch
-          id="gateway-parallel-switch"
           v-model="configForm.parallel"
           @change="emitUpdate"
         />
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item label="失败处理" prop="failureHandling">
-        <el-radio-group id="gateway-failure-handling-group" v-model="configForm.failureHandling" @change="emitUpdate">
-          <el-radio id="gateway-failure-continue" label="continue">继续执行</el-radio>
-          <el-radio id="gateway-failure-stop" label="stop">停止执行</el-radio>
-          <el-radio id="gateway-failure-retry" label="retry">重试</el-radio>
+      <btc-config-form-item label="失败处理" prop="failureHandling">
+        <el-radio-group v-model="configForm.failureHandling" @change="emitUpdate">
+          <el-radio label="continue">继续执行</el-radio>
+          <el-radio label="stop">停止执行</el-radio>
+          <el-radio label="retry">重试</el-radio>
         </el-radio-group>
-      </el-form-item>
+      </btc-config-form-item>
 
-      <el-form-item v-if="configForm.failureHandling === 'retry'" label="重试次数" prop="retryCount">
+      <btc-config-form-item v-if="configForm.failureHandling === 'retry'" label="重试次数" prop="retryCount">
         <el-input-number
-          id="gateway-retry-count-input"
           v-model="configForm.retryCount"
           :min="1"
           :max="10"
           @change="emitUpdate"
         />
-      </el-form-item>
-    </el-form>
+      </btc-config-form-item>
+    </btc-config-form>
 
     <!-- 配置预览 -->
     <div class="config-preview">
@@ -86,6 +81,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
 interface Props {
@@ -146,10 +142,10 @@ const emitUpdate = () => {
     font-weight: 500;
   }
 
-  :deep(.el-form-item) {
+  :deep(.btc-config-form-item) {
     margin-bottom: 16px;
 
-    .el-form-item__label {
+    .btc-config-form-item__label {
       font-size: 12px;
       color: var(--el-text-color-regular);
     }

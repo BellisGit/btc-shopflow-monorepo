@@ -30,19 +30,17 @@
           </el-button>
         </div>
 
-        <el-form :model="condition" size="small" label-width="60px">
-          <el-form-item label="字段" prop="field">
+        <btc-config-form :model="condition" size="small" label-width="60px">
+          <btc-config-form-item label="字段" prop="field">
             <el-input
-              :id="`condition-field-${index}`"
               v-model="condition.field"
               placeholder="如：user.role"
               @blur="emitUpdate"
             />
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="操作符" prop="operator">
+          <btc-config-form-item label="操作符" prop="operator">
             <el-select
-              :id="`condition-operator-${index}`"
               v-model="condition.operator"
               placeholder="选择操作符"
               @change="emitUpdate"
@@ -50,33 +48,30 @@
               <el-option
                 v-for="op in operators"
                 :key="op.value"
-                :id="`condition-operator-${index}-${op.value}`"
                 :label="op.label"
                 :value="op.value"
               />
             </el-select>
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="值" prop="value">
+          <btc-config-form-item label="值" prop="value">
             <el-input
-              :id="`condition-value-${index}`"
               v-model="condition.value"
               placeholder="比较值"
               @blur="emitUpdate"
             />
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item v-if="index > 0" label="逻辑" prop="logicalOperator">
+          <btc-config-form-item v-if="index > 0" label="逻辑" prop="logicalOperator">
             <el-radio-group
-              :id="`condition-logical-${index}`"
               v-model="condition.logicalOperator"
               @change="emitUpdate"
             >
-              <el-radio :id="`condition-logical-and-${index}`" label="AND">且</el-radio>
-              <el-radio :id="`condition-logical-or-${index}`" label="OR">或</el-radio>
+              <el-radio label="AND">且</el-radio>
+              <el-radio label="OR">或</el-radio>
             </el-radio-group>
-          </el-form-item>
-        </el-form>
+          </btc-config-form-item>
+        </btc-config-form>
       </div>
     </div>
 
@@ -91,20 +86,19 @@
     <!-- 测试工具 -->
     <div class="test-section">
       <h5>条件测试</h5>
-      <el-form size="small" label-width="80px">
-        <el-form-item label="测试数据" prop="testData">
+      <btc-config-form :model="{ testData }" size="small" label-width="80px">
+        <btc-config-form-item label="测试数据" prop="testData">
           <el-input
-            id="condition-test-data-input"
             v-model="testData"
             type="textarea"
             :rows="3"
             placeholder='{"user": {"role": "admin"}, "resource": {"type": "document"}}'
           />
-        </el-form-item>
-        <el-form-item>
+        </btc-config-form-item>
+        <btc-config-form-item>
           <el-button type="primary" @click="testConditions">测试条件</el-button>
-        </el-form-item>
-      </el-form>
+        </btc-config-form-item>
+      </btc-config-form>
 
       <div v-if="testResult !== null" class="test-result">
         <el-alert
@@ -123,6 +117,7 @@ import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyCondition } from '@/types/strategy';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
 interface Props {
@@ -364,14 +359,14 @@ const parseValue = (value: string): any => {
         }
       }
 
-      :deep(.el-form-item) {
+      :deep(.btc-config-form-item) {
         margin-bottom: 12px;
 
         &:last-child {
           margin-bottom: 0;
         }
 
-        .el-form-item__label {
+        .btc-config-form-item__label {
           font-size: 11px;
         }
       }

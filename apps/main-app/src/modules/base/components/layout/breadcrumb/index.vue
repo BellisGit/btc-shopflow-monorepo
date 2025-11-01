@@ -133,6 +133,21 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.ops.logs', icon: 'Document' },
       { i18nKey: 'menu.ops.request_log', icon: 'Connection' },
     ],
+    '/data/files/list': [
+      { i18nKey: 'menu.data', icon: 'FolderOpened' },
+      { i18nKey: 'menu.data.files', icon: 'Document' },
+      { i18nKey: 'menu.data.files.list', icon: 'List' },
+    ],
+    '/data/files/templates': [
+      { i18nKey: 'menu.data', icon: 'FolderOpened' },
+      { i18nKey: 'menu.data.files', icon: 'Document' },
+      { i18nKey: 'menu.data.files.templates', icon: 'Files' },
+    ],
+    '/data/files/preview': [
+      { i18nKey: 'menu.data', icon: 'FolderOpened' },
+      { i18nKey: 'menu.data.files', icon: 'Document' },
+      { i18nKey: 'menu.data.files.preview', icon: 'View' },
+    ],
     '/data/recycle': [
       { i18nKey: 'menu.data', icon: 'FolderOpened' },
       { i18nKey: 'menu.data.recycle', icon: 'Delete' },

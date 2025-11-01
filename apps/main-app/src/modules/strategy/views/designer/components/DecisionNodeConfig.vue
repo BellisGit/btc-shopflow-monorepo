@@ -30,38 +30,35 @@
           </el-button>
         </div>
 
-        <el-form :model="rule" size="small" label-width="60px">
-          <el-form-item label="表达式" prop="expression">
+        <btc-config-form :model="rule" size="small" label-width="60px">
+          <btc-config-form-item label="表达式" prop="expression">
             <el-input
-              :id="`decision-expression-${index}`"
               v-model="rule.expression"
               type="textarea"
               :rows="2"
               placeholder="如：user.score > 80 ? 'high' : 'low'"
               @blur="emitUpdate"
             />
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="变量" prop="variablesJson">
+          <btc-config-form-item label="变量" prop="variablesJson">
             <el-input
-              :id="`decision-variables-${index}`"
               v-model="rule.variablesJson"
               type="textarea"
               :rows="2"
               placeholder='{"user": {"score": 0}}'
               @blur="updateVariables(rule)"
             />
-          </el-form-item>
+          </btc-config-form-item>
 
-          <el-form-item label="描述" prop="description">
+          <btc-config-form-item label="描述" prop="description">
             <el-input
-              :id="`decision-desc-${index}`"
               v-model="rule.description"
               placeholder="规则描述"
               @blur="emitUpdate"
             />
-          </el-form-item>
-        </el-form>
+          </btc-config-form-item>
+        </btc-config-form>
       </div>
     </div>
 
@@ -91,6 +88,7 @@ import { computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyRule } from '@/types/strategy';
+import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
 interface Props {
@@ -202,14 +200,14 @@ const emitUpdate = () => {
         }
       }
 
-      :deep(.el-form-item) {
+      :deep(.btc-config-form-item) {
         margin-bottom: 12px;
 
         &:last-child {
           margin-bottom: 0;
         }
 
-        .el-form-item__label {
+        .btc-config-form-item__label {
           font-size: 11px;
         }
       }
