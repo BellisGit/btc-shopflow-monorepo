@@ -1,7 +1,47 @@
 <template>
   <div class="file-preview-page">
-    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表">
+    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表" custom>
       <!-- 左侧分类列表 -->
+      <template #left>
+        <div class="file-preview-left">
+          <div class="header">
+            <h3>{{ t('data.file.preview.categories') }}</h3>
+            <div class="header-actions">
+              <el-button size="small" text @click="handleAddCategory">
+                <el-icon><Plus /></el-icon>
+              </el-button>
+            </div>
+          </div>
+          <div class="search">
+            <el-input
+              v-model="categoryKeyword"
+              :placeholder="t('搜索分类')"
+              size="small"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
+          <el-scrollbar class="category-list">
+            <div
+              v-for="category in filteredCategories"
+              :key="category.id"
+              class="category-item"
+              :class="{ active: selectedCategoryId === category.id }"
+              @click="handleCategorySelect(category)"
+            >
+              <el-icon class="category-icon">
+                <Document />
+              </el-icon>
+              <span class="category-name">{{ category.name }}</span>
+              <span class="category-count">({{ category.count || 0 }})</span>
+            </div>
+          </el-scrollbar>
+        </div>
+      </template>
+      <!-- 右侧文件预览区域 -->
       <template #right="{ selected, keyword }">
         <div class="file-preview-right">
           <!-- 操作栏 -->
@@ -147,7 +187,9 @@ import {
   Check,
   ZoomIn,
   Download,
-  Delete
+  Delete,
+  Plus,
+  Search
 } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
@@ -164,12 +206,32 @@ const uploadRef = ref();
 // 状态
 const loading = ref(false);
 const selectedFiles = ref<string[]>([]);
+const selectedCategoryId = ref<string | null>(null);
+const categoryKeyword = ref('');
 
 // 分页
 const pagination = reactive({
   page: 1,
   size: 20,
   total: 0
+});
+
+// 分类列表
+const categories = ref([
+  { id: 'all', name: '全部文件', count: 0 },
+  { id: 'image', name: '图片', count: 0 },
+  { id: 'video', name: '视频', count: 0 },
+  { id: 'audio', name: '音频', count: 0 },
+  { id: 'document', name: '文档', count: 0 },
+  { id: 'other', name: '其他', count: 0 }
+]);
+
+// 过滤后的分类列表
+const filteredCategories = computed(() => {
+  if (!categoryKeyword.value) return categories.value;
+  return categories.value.filter(cat => 
+    cat.name.toLowerCase().includes(categoryKeyword.value.toLowerCase())
+  );
 });
 
 // 文件列表
@@ -185,6 +247,18 @@ const uploadHeaders = computed(() => {
   // TODO: 添加认证头
   return {};
 });
+
+// 分类选择
+const handleCategorySelect = (category: any) => {
+  selectedCategoryId.value = category.id;
+  pagination.page = 1;
+  refreshFileList();
+};
+
+// 添加分类
+const handleAddCategory = () => {
+  ElMessage.info('添加分类功能待实现');
+};
 
 // 文件类型判断
 const isImage = (file: any) => {
@@ -326,7 +400,7 @@ const handleSizeChange = () => {
 };
 
 onMounted(() => {
-  refreshFileList();
+  handleCategorySelect(categories.value[0]);
 });
 </script>
 
@@ -334,6 +408,79 @@ onMounted(() => {
 .file-preview-page {
   height: 100%;
   box-sizing: border-box;
+
+  .file-preview-left {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--el-border-color-light);
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 4px;
+      }
+    }
+
+    .search {
+      padding: 8px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .category-list {
+      flex: 1;
+      padding: 8px;
+
+      .category-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+          background-color: var(--el-fill-color-light);
+        }
+
+        &.active {
+          background-color: var(--el-color-primary-light-9);
+          color: var(--el-color-primary);
+
+          .category-icon {
+            color: var(--el-color-primary);
+          }
+        }
+
+        .category-icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+
+        .category-name {
+          flex: 1;
+          font-size: 14px;
+        }
+
+        .category-count {
+          font-size: 12px;
+          color: var(--el-text-color-secondary);
+        }
+      }
+    }
+  }
 
   .file-preview-right {
     height: 100%;
