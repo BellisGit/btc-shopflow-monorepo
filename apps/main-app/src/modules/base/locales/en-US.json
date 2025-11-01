@@ -97,5 +97,9 @@
   "data.template.version": "Version",
   "data.template.status": "Status",
   "data.template.description": "Template Description",
-  "data.template.search_placeholder": "Please enter template name or code"
+  "data.template.search_placeholder": "Please enter template name or code",
+  "data.file.preview.categories": "File Categories",
+  "data.file.preview.click_to_upload": "Click to Upload",
+  "data.file.preview.delete_selected": "Delete Selected",
+  "data.file.preview.empty_tip": "No files, click upload button to upload files"
 }

@@ -97,5 +97,9 @@
   "data.template.version": "版本号",
   "data.template.status": "状态",
   "data.template.description": "模板描述",
-  "data.template.search_placeholder": "请输入模板名称或编码"
+  "data.template.search_placeholder": "请输入模板名称或编码",
+  "data.file.preview.categories": "文件分类",
+  "data.file.preview.click_to_upload": "点击上传",
+  "data.file.preview.delete_selected": "删除选中",
+  "data.file.preview.empty_tip": "暂无文件，点击上传按钮上传文件"
 }
