@@ -89,5 +89,13 @@
   "recycle.restore_confirm": "此操作将恢复被删除的数据，是否继续？",
   "recycle.restore_success": "数据恢复成功",
   "common.tip": "提示",
-  "common.operation": "操作"
+  "common.operation": "操作",
+  "common.description": "描述",
+  "data.template.name": "模板名称",
+  "data.template.code": "模板编码",
+  "data.template.category": "模板分类",
+  "data.template.version": "版本号",
+  "data.template.status": "状态",
+  "data.template.description": "模板描述",
+  "data.template.search_placeholder": "请输入模板名称或编码"
 }

@@ -89,5 +89,13 @@
   "recycle.restore_confirm": "This operation will restore the deleted data. Do you want to continue?",
   "recycle.restore_success": "Data restored successfully",
   "common.tip": "Tip",
-  "common.operation": "Operation"
+  "common.operation": "Operation",
+  "common.description": "Description",
+  "data.template.name": "Template Name",
+  "data.template.code": "Template Code",
+  "data.template.category": "Template Category",
+  "data.template.version": "Version",
+  "data.template.status": "Status",
+  "data.template.description": "Template Description",
+  "data.template.search_placeholder": "Please enter template name or code"
 }
