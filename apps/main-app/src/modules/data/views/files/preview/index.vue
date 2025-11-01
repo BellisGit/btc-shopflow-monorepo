@@ -95,7 +95,7 @@
                   <!-- 音频 -->
                   <template v-else-if="isAudio(file)">
                     <div class="file-audio">
-                      <el-icon class="audio-icon"><Headphone /></el-icon>
+                      <el-icon class="audio-icon"><VideoPlay /></el-icon>
                       <audio :src="file.url" controls />
                     </div>
                   </template>
@@ -168,7 +168,6 @@ import {
   Document,
   Picture,
   VideoPlay,
-  Headphone,
   Check,
   ZoomIn,
   Download,
