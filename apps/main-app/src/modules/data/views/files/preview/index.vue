@@ -2,7 +2,7 @@
   <div class="file-preview-page">
     <BtcGridGroup ref="gridGroupRef" left-width="280px">
       <!-- 左侧文件分类 -->
-      <template #left>
+      <template #bodyLeft>
         <div class="file-preview-left">
           <div class="header">
             <h3>{{ t('data.file.preview.categories') }}</h3>
@@ -26,7 +26,7 @@
       </template>
 
       <!-- 右侧文件预览区域 -->
-      <template #right>
+      <template #bodyMiddle>
         <div class="file-preview-right">
           <!-- 操作栏 -->
           <div class="header">
@@ -348,12 +348,14 @@ const refreshFileList = async () => {
     // fileList.value = res.list || [];
     // pagination.total = res.total || 0;
 
-    // 模拟数据
-    fileList.value = [];
-    pagination.total = 0;
+    // 模拟数据用于测试页面
+    setTimeout(() => {
+      fileList.value = [];
+      pagination.total = 0;
+      loading.value = false;
+    }, 500);
   } catch (error) {
     console.error('加载文件列表失败:', error);
-  } finally {
     loading.value = false;
   }
 };
