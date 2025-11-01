@@ -1,6 +1,6 @@
 <template>
   <div class="file-preview-page">
-    <BtcGridGroup ref="gridGroupRef" :left-width="280">
+    <BtcGridGroup ref="gridGroupRef" left-width="280px">
       <!-- 左侧文件分类 -->
       <template #left>
         <div class="file-preview-left">
