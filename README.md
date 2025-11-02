@@ -5,6 +5,8 @@
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Micro--Frontend-qiankun-FF6B6B?style=flat" alt="Micro Frontend" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="License" />
+  <img src="https://img.shields.io/badge/Branch-main-blue?style=flat&logo=git" alt="Main Branch" />
+  <img src="https://img.shields.io/badge/Branch-master-orange?style=flat&logo=git" alt="Master Branch" />
 </div>
 
 > 🌐 **多语言版本**: [English](./README_EN.md) | [简体中文](./README_ZH.md)
@@ -113,6 +115,57 @@ pnpm --filter main-app build
 - **production-app**: 生产管理应用
 - **quality-app**: 品质管理应用
 - **engineering-app**: 工程管理应用
+
+## 🌿 分支策略
+
+### 分支说明
+
+本项目采用双主分支策略：
+
+- **`main`** - **核心分支**：稳定版本分支，用于生产环境
+  - 包含经过充分测试的稳定代码
+  - 始终保持可部署状态
+  - 受保护分支，不允许直接推送
+
+- **`master`** - **阶段性分支**：开发版本分支，用于日常开发
+  - 所有新功能和修复都在此分支开发
+  - 作为开发和测试的主要工作分支
+  - 定期合并到 `main` 分支
+
+### 工作流程
+
+```
+master (开发) → 测试验证 → main (稳定)
+     ↑                              ↓
+     └────────── 合并回 master ──────┘
+```
+
+1. **日常开发**：所有开发工作都在 `master` 分支进行
+2. **测试验证**：在 `master` 分支完成测试和代码审查
+3. **合并到 main**：测试通过后，将 `master` 合并到 `main` 分支
+4. **同步更新**：将 `main` 的更新合并回 `master`，保持同步
+
+### 分支切换示例
+
+```bash
+# 切换到开发分支
+git checkout master
+
+# 开发完成后，测试通过，合并到核心分支
+git checkout main
+git merge master
+git push origin main
+
+# 同步更新回 master
+git checkout master
+git merge main
+git push origin master
+```
+
+**重要提示**：
+- 不要直接在 `main` 分支进行开发
+- 所有功能开发和修复都应该在 `master` 分支完成
+- 只有经过测试验证的代码才能合并到 `main` 分支
 
 ## 🔧 开发指南
 
