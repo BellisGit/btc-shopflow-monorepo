@@ -31,3 +31,4 @@
     },
   ],
 };
+// UTF-8 encoding fix

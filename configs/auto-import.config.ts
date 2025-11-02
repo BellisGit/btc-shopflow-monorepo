@@ -105,3 +105,4 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     include: [/\.vue$/, /\.tsx$/, /Btc[A-Z]/, /btc-[a-z]/],
   });
 }
+// UTF-8 encoding fix
