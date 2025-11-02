@@ -276,7 +276,7 @@ export default defineComponent({
 
       // 合并 props，避免重复定义
       const { labelWidth: _labelWidth, labelPosition: _labelPosition, ...restProps } = config.props || {};
-      
+
       return h('div', { class: 'btc-form__container', ref: setRefs('form') }, [
         h(ElForm, {
           ref: Form,
