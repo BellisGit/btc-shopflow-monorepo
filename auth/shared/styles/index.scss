@@ -1,0 +1,15 @@
+// 共享组件样式入口文件
+// 导入所有子组件样式
+
+@use './auth.scss';
+@use './_base.scss';
+@use './_card-content.scss';
+@use './_components.scss';
+@use './_form-elements.scss';
+@use './_global-override.scss';
+@use './_login-card.scss';
+@use './_login-tabs.scss';
+@use './_registration.scss';
+@use './_responsive.scss';
+@use './_steps.scss';
+@use './_variables.scss';

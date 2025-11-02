@@ -1,0 +1,172 @@
+@use 'variables' as *;
+
+// 登录模式切换标签页样式
+.auth-page .login-card .login-tabs {
+	--tab-active: var(--el-color-primary);
+	--tab-hover: var(--el-text-color-primary);
+
+	position: relative;
+	display: flex;
+	justify-content: flex-start; // 改为左对齐，与第三方登录的 forgot-password 对齐
+	align-items: center;
+	gap: 24px; // 添加间距，让 register-link 与 login-options 的中心对齐
+	// padding 现在由统一容器管理
+	margin: 0;
+	border-bottom: none; // 移除分隔线
+	width: 100%;
+	box-sizing: border-box;
+	
+	// 响应式设计 - 窄屏幕优化
+	@media (max-width: 768px) {
+		gap: 16px; // 窄屏幕下减小间距
+		flex-wrap: wrap; // 允许换行
+	}
+
+	.tabs-container {
+		position: relative;
+		display: flex;
+		gap: $auth-tab-gap;
+		
+		// 响应式设计 - 窄屏幕优化
+		@media (max-width: 768px) {
+			gap: 12px; // 窄屏幕下减小间距
+		}
+	}
+
+	.tab {
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		height: $auth-tab-height;
+		line-height: $auth-tab-height;
+		margin: 0; 
+		padding: 6px 0; // 只保留上下内边距，移除左右内边距让 tab 宽度与文字宽度一致
+		font-size: $auth-tab-font-size;
+		font-weight: 600;
+		background: none;
+		border: 0;
+		cursor: pointer;
+		transition: color .2s ease;
+		white-space: nowrap;
+		color: var(--el-text-color-regular);
+
+		&:hover { 
+			color: var(--el-text-color-primary); 
+		}
+		&.active { 
+			color: var(--el-color-primary); 
+			font-weight: 700;
+		}
+	}
+
+	.ink-bar {
+		position: absolute;
+		bottom: 2px; // 增加与文字的间距
+		height: 2px;
+		background: var(--tab-active);
+		border-radius: 2px;
+		width: 0;
+		transform: translateX(0);
+		opacity: 0;
+		transform-origin: center;
+		transition:
+			transform .2s ease,
+			width .2s ease;
+		pointer-events: none;
+		display: block;
+	}
+
+	// 前往注册链接样式
+	.register-link {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		height: $auth-tab-height;
+		line-height: $auth-tab-height;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--el-color-primary);
+		text-decoration: none;
+		transition: color 0.2s ease;
+		margin-left: auto; // 自动推到右边，与第三方登录的 login-options 中心对齐
+
+		&:hover {
+			color: var(--el-color-primary-light-3);
+		}
+
+		.arrow-right {
+			font-size: 12px;
+			color: var(--el-color-primary);
+			transition: color 0.2s ease;
+			
+			svg {
+				width: 12px;
+				height: 12px;
+				color: var(--el-color-primary);
+			}
+		}
+	}
+
+	// 响应式设计
+	@media (max-width: $auth-mobile-breakpoint) {
+		padding: 20px; // 移动端统一的 20px padding
+		
+		.tab {
+			font-size: 14px;
+			padding: 4px 16px;
+		}
+		
+		.register-link {
+			font-size: 13px;
+			
+			.arrow-right {
+				font-size: 11px;
+				
+				svg {
+					width: 11px;
+					height: 11px;
+				}
+			}
+		}
+	}
+	
+	// 暗黑模式适配 - 现在由主题插件处理，这里可以移除
+	// html.dark & {
+	// 	.tab {
+	// 		color: $auth-dark-tab-color;
+	// 		
+	// 		&:hover {
+	// 			color: $auth-dark-tab-hover;
+	// 		}
+	// 		
+	// 		&.active {
+	// 			color: $auth-dark-tab-active;
+	// 			font-weight: 700;
+	// 		}
+	// 	}
+	// 	
+	// 	.register-link {
+	// 		color: $auth-dark-link-color;
+	// 		
+	// 		&:hover {
+	// 			color: $auth-dark-link-hover;
+	// 		}
+	// 		
+	// 		.arrow-right {
+	// 			color: $auth-dark-link-color;
+	// 			
+	// 			svg {
+	// 				color: $auth-dark-link-color;
+	// 			}
+	// 		}
+	// 		
+	// 		&:hover .arrow-right {
+	// 			color: $auth-dark-link-hover;
+	// 			
+	// 			svg {
+	// 				color: $auth-dark-link-hover;
+	// 			}
+	// 		}
+	// 	}
+	// }
+}

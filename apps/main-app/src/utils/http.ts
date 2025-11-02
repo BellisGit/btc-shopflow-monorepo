@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
+import { getCookie } from './cookie';
 
 /**
  * HTTP 请求工具 - 基于 axios，参考 cool-admin 的实现
@@ -10,6 +11,9 @@ export class Http {
   public baseURL: string;
   private axiosInstance: any;
   private retryManager: ReturnType<typeof createHttpRetry>;
+  // 刷新 token 相关状态
+  private isRefreshing = false;
+  private refreshSubscribers: Array<(token: string) => void> = [];
 
   constructor(baseURL = '') {
     this.baseURL = baseURL;
@@ -21,7 +25,7 @@ export class Http {
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
-      withCredentials: false,
+      withCredentials: true, // 启用 cookie 支持
     });
 
 
@@ -31,8 +35,8 @@ export class Http {
     // 请求拦截器
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
-        // 获取 token
-        const token = localStorage.getItem('token') || '';
+        // 优先从 cookie 获取 token（字段名：access_token），如果没有则从 localStorage 获取（兼容旧代码）
+        const token = getCookie('access_token') || localStorage.getItem('token') || '';
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -65,13 +69,83 @@ export class Http {
     // 响应拦截器 - 使用新的响应拦截工具
     const interceptor = responseInterceptor.createResponseInterceptor();
 
-    // 包装响应拦截器，添加请求日志记录
+    // 包装响应拦截器，添加请求日志记录和 token 刷新逻辑
     const onFulfilled = (response: any) => {
       this.recordRequestLog(response, 'success');
       return interceptor.onFulfilled(response);
     };
 
-    const onRejected = (error: any) => {
+    const onRejected = async (error: any) => {
+      const originalRequest = error.config;
+
+      // 检查是否是 401 错误（未授权）
+      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+        // 检查是否是刷新 token 的请求本身，避免无限循环
+        if (originalRequest.url?.includes('/refresh/access-token')) {
+          // 刷新 token 请求也返回 401，说明 session 已失效，需要重新登录
+          this.recordRequestLog(error.response || { config: error.config }, 'failed');
+          return interceptor.onRejected(error);
+        }
+
+        // 如果正在刷新中，将请求加入队列
+        if (this.isRefreshing) {
+          return new Promise((resolve, reject) => {
+            this.refreshSubscribers.push((token: string) => {
+              // 更新请求的 Authorization header
+              originalRequest.headers['Authorization'] = `Bearer ${token}`;
+              // 重试原请求
+              this.axiosInstance(originalRequest)
+                .then(resolve)
+                .catch(reject);
+            });
+          });
+        }
+
+        // 标记正在刷新
+        originalRequest._retry = true;
+        this.isRefreshing = true;
+
+        try {
+          // 导入 authApi（动态导入避免循环依赖）
+          const { authApi } = await import('@/modules/api-services');
+          
+          // 调用刷新 token API
+          await authApi.refreshAccessToken();
+          
+          // 从 cookie 获取新的 token
+          const newToken = getCookie('access_token');
+          
+          if (newToken) {
+            // 通知所有等待的请求
+            this.refreshSubscribers.forEach(cb => cb(newToken));
+            this.refreshSubscribers = [];
+            
+            // 更新原请求的 Authorization header
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            
+            // 重试原请求
+            this.isRefreshing = false;
+            return this.axiosInstance(originalRequest);
+          } else {
+            throw new Error('刷新 token 后未获取到新的 token');
+          }
+        } catch (refreshError) {
+          // 刷新失败，清空队列并跳转登录
+          this.refreshSubscribers = [];
+          this.isRefreshing = false;
+          
+          // 清除 cookie 和 localStorage
+          const { deleteCookie } = await import('./cookie');
+          deleteCookie('access_token');
+          localStorage.removeItem('token');
+          
+          // 记录日志并使用响应拦截器处理错误（会跳转登录页）
+          this.recordRequestLog(error.response || { config: error.config }, 'failed');
+          return interceptor.onRejected(error);
+        }
+      }
+
+      // 其他错误正常处理
       this.recordRequestLog(error.response || { config: error.config }, 'failed');
       return interceptor.onRejected(error);
     };

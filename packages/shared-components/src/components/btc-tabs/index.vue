@@ -249,7 +249,7 @@ defineExpose({
     display: flex;
     align-items: center;
     height: 40px;
-    padding-left: 10px;
+    padding-left: 0;
   }
 
   &__item {

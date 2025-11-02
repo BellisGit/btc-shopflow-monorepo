@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, reactive, watch } from 'vue';
+import { reactive, watch } from 'vue';
 import StrategyNodeProperties from '../components/StrategyNodeProperties.vue';
 import StrategyConnectionProperties from '../components/StrategyConnectionProperties.vue';
 import { Delete, Setting, FullScreen } from '@element-plus/icons-vue';

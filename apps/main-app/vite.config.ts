@@ -93,6 +93,7 @@ export default defineConfig({
       '@element-plus/icons-vue',
       '@vueuse/core',
       'axios',
+      '@btc/shared-core',
     ],
   },
   build: {

@@ -1,0 +1,231 @@
+@use 'variables' as *;
+
+// 第三方登录组件样式
+.third-party-login {
+	// padding 现在完全由父容器 login-container 统一管理
+
+	.forgot-password {
+		margin: 0; // 移除所有 margin，让内容从容器左边缘开始
+		padding: 0; // 移除所有 padding，由父容器统一管理
+		display: flex;
+		justify-content: flex-start;
+
+		.forgot-password-link {
+			display: flex !important;
+			align-items: center !important;
+			gap: 4px !important;
+			font-size: 14px !important;
+			font-weight: 600 !important;
+			line-height: 1 !important;
+			color: var(--el-text-color-primary) !important;
+			text-decoration: none !important;
+			transition: color 0.2s ease !important;
+			
+			&:hover {
+				color: var(--el-color-primary) !important;
+			}
+			
+			.arrow-right {
+				width: 12px !important;
+				height: 12px !important;
+				color: var(--el-text-color-primary) !important;
+				transition: color 0.2s ease !important;
+			}
+			
+			&:hover .arrow-right {
+				color: var(--el-color-primary) !important;
+			}
+		}
+	}
+
+	.forgot-password-placeholder {
+		margin: 0; // 移除所有 margin，保持与忘记密码链接一致的布局
+		padding: 0; // 移除所有 padding，由父容器统一管理
+		height: 22px;
+	}
+	
+	.divider {
+		display: flex;
+		align-items: center;
+		padding: 0; // 移除所有 padding，由父容器统一管理
+		gap: 12px;
+		width: 100%; // 确保占据完整宽度
+		
+		// 响应式设计 - 窄屏幕优化
+		@media (max-width: 768px) {
+			gap: 8px; // 窄屏幕下减小间距
+		}
+
+		.divider-line {
+			flex: 1;
+			height: 1px;
+			background: var(--el-border-color-light);
+		}
+		
+		.divider-text {
+			color: var(--el-text-color-placeholder);
+			font-size: 14px;
+			white-space: nowrap;
+		}
+	}
+	
+	.login-options {
+		display: flex;
+		justify-content: center;
+		gap: 24px;
+		width: 100%; // 确保占据完整宽度
+		
+		// 响应式设计 - 窄屏幕优化
+		@media (max-width: 768px) {
+			gap: 16px; // 窄屏幕下减小间距
+		}
+
+		.login-option {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			cursor: pointer;
+			padding: 12px;
+			border-radius: 8px;
+			transition: all 0.3s ease;
+
+			&:hover {
+				background: var(--el-fill-color-light);
+			}
+
+			svg {
+				width: 32px;
+				height: 32px;
+				padding-bottom: 8px;
+				transition: transform 0.2s ease;
+			}
+
+			.wechat-icon {
+				color: var(--el-color-success);
+			}
+
+			.app-icon {
+				color: var(--el-color-primary);
+			}
+
+			&:hover svg {
+				transform: scale(1.1);
+			}
+
+			span {
+				font-size: 12px;
+				color: var(--el-text-color-secondary);
+			}
+		}
+	}
+	
+	// 暗黑模式适配 - 现在由主题插件处理，这里可以移除
+	// html.dark & {
+	// 	.forgot-password {
+	// 		.forgot-password-link {
+	// 			color: $auth-dark-text-primary !important;
+	// 			
+	// 		&:hover {
+	// 			color: $auth-dark-link-color !important;
+	// 		}
+	// 		
+	// 		:deep(.arrow-right) {
+	// 			color: $auth-dark-text-primary !important;
+	// 		}
+	// 		
+	// 		&:hover :deep(.arrow-right) {
+	// 			color: $auth-dark-link-color !important;
+	// 		}
+	// 	}
+	// }
+	// 
+	// .divider {
+	// 	.divider-line {
+	// 		background: $auth-dark-divider-color;
+	// 	}
+	// 	
+	// 	.divider-text {
+	// 		color: $auth-dark-divider-text;
+	// 	}
+	// }
+	// 
+	// .login-options {
+	// 	.login-option {
+	// 		&:hover {
+	// 			background: $auth-dark-option-hover;
+	// 		}
+	// 		
+	// 		span {
+	// 			color: $auth-dark-option-text;
+	// 		}
+	// 	}
+	// }
+	// }
+	
+	// 响应式设计
+	@media (max-width: $auth-mobile-breakpoint) {
+		padding: 8px 20px 0 20px; // 移动端统一的 20px padding
+	}
+}
+
+// 协议文本组件样式 - 使用CSS变量，由主题插件控制
+.agreement-text {
+	padding: 0; // 现在由统一容器管理 padding
+	color: var(--el-text-color-placeholder);
+	
+	span {
+		color: var(--el-text-color-placeholder);
+	}
+	
+	.agreement-link {
+		color: var(--el-text-color-secondary);
+		
+		&:hover {
+			color: var(--el-color-primary);
+		}
+	}
+	
+	// 响应式设计由统一容器管理
+}
+
+// 二维码切换按钮样式
+.qr-toggle-btn {
+	.tips {
+		background-color: var(--el-color-success-light-9);
+		color: var(--el-color-success);
+		
+		&::after {
+			border-left-color: var(--el-color-success-light-9);
+		}
+	}
+	
+	&:hover .tips {
+		background-color: var(--el-color-success-light-8);
+		color: var(--el-color-success-dark-2);
+		
+		&::after {
+			border-left-color: var(--el-color-success-light-8);
+		}
+	}
+	
+	// 暗黑模式适配 - 现在由主题插件处理，这里可以移除
+	// html.dark & {
+	// 	.tips {
+	// 		background-color: #2d4a2d;
+	// 		color: #4caf50;
+	// 		
+	// 		&::after {
+	// 			border-left-color: #2d4a2d;
+	// 		}
+	// 	}
+	// 	
+	// 	&:hover .tips {
+	// 		background-color: #3d5a3d;
+	// 		color: #66bb6a;
+	// 		
+	// 		&::after {
+	// 			border-left-color: #3d5a3d;
+	// 		}
+	// 	}
+	// }
+}

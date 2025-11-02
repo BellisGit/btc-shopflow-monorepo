@@ -1,0 +1,62 @@
+@use 'variables' as *;
+
+// 响应式设计
+@media screen and (max-width: $auth-mobile-breakpoint) {
+	.auth-page {
+		.login-card {
+			position: relative;
+			right: auto;
+			top: auto;
+			transform: none;
+			width: 95vw;
+			margin: 20px auto;
+
+			.card-header {
+				padding: 20px 20px 12px 20px;
+
+				.title h1 {
+					font-size: 18px;
+				}
+			}
+
+			.login-tabs {
+				padding-bottom: 10px;
+				margin: 0 20px;
+
+				.tabs-container {
+					gap: 12px;
+				}
+
+				.tab {
+					font-size: 14px;
+					height: 28px;
+					line-height: 28px;
+					padding: 4px 16px;
+				}
+
+				.register-link {
+					height: 28px;
+					line-height: 28px;
+					font-size: 13px;
+				}
+
+				.ink-bar {
+					height: 2px;
+				}
+			}
+
+			.card-content {
+				padding: 20px;
+			}
+		}
+	}
+}
+
+/* 小屏堆叠时，间距收窄 */
+@media (max-width: $auth-small-breakpoint) {
+	.page-login .login-card .login-tabs {
+		.tabs-container {
+			gap: 12px;
+		}
+	}
+}

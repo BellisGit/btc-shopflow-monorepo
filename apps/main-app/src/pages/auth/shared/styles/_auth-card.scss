@@ -1,0 +1,124 @@
+@use 'variables' as *;
+
+// 登录卡片样式
+.auth-page .login-card {
+	position: absolute;
+	right: 5%;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 9;
+	background: var(--el-bg-color);
+	border-radius: $auth-card-border-radius;
+	box-shadow: var(--el-box-shadow-light);
+	width: $auth-card-width;
+	max-width: 90vw;
+	
+	// 设置固定高度，确保不同登录方式高度一致
+	height: $auth-card-height;
+	overflow: visible;
+	display: flex;
+	flex-direction: column;
+
+	// 注册页面需要适中的卡片尺寸
+	&.register-card {
+		width: $auth-card-width;
+		height: $auth-card-height;
+		overflow: visible;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	// 响应式设计 - 窄屏幕优化
+	@media (max-width: $auth-mobile-breakpoint) {
+		width: 100%; // 窄屏幕下占据全宽
+		max-width: 100vw; // 移除最大宽度限制
+		height: auto; // 高度自适应
+		min-height: 500px; // 设置最小高度
+		margin: 20px; // 添加外边距避免贴边
+		position: relative;
+		right: auto;
+		top: auto;
+		transform: none;
+	}
+}
+
+// 卡片头部
+.auth-page .login-card .card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 24px;
+	border-bottom: 1px solid var(--el-border-color-light);
+	position: relative;
+	flex-shrink: 0;
+
+	.title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		height: 48px; // 与右侧雪碧图高度一致，保证垂直居中
+
+		.logo {
+			width: 40px;
+			height: 40px;
+			border-radius: 8px;
+			overflow: hidden;
+			flex-shrink: 0;
+
+			img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+		}
+
+		h1 {
+			font-size: 20px;
+			font-weight: 600;
+			color: var(--el-text-color-primary);
+			margin: 0;
+			letter-spacing: 0.5px;
+			line-height: 1;
+		}
+	}
+}
+
+// 卡片内容
+.auth-page .login-card .card-content {
+	padding: 24px; // 统一的内容区域边距
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow-y: auto;
+	box-sizing: border-box;
+	
+	// 所有登录方式
+	.password-login,
+	.sms-login {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		padding: 0; // 移除内部 padding，使用 card-content 的 padding
+		box-sizing: border-box;
+	}
+	
+	// 二维码登录：在card-content内垂直居中
+	.qr-login {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 0; // 移除内部 padding，使用 card-content 的 padding
+		box-sizing: border-box;
+	}
+	
+	// 响应式设计 - 移动端调整边距
+	@media (max-width: $auth-mobile-breakpoint) {
+		padding: 20px;
+	}
+}

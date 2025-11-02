@@ -6,7 +6,6 @@ import { resolve } from 'path';
 
 export default defineConfig({
   base: '/', // 明确设置为根路径，不使用 /production/
-  logLevel: 'error', // 只显示错误，抑制警告
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

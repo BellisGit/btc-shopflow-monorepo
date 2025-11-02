@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @btc/vite-plugin build",
+    "predev": "turbo run build --filter=@btc/vite-plugin",
     "dev": "vite --port 8080",
     "build": "vite build",
     "preview": "vite preview",

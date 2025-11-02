@@ -4,7 +4,7 @@
 
 export const appConfig = {
   // 系统名称
-  name: 'BTC 车间流程管理系统',
+  name: 'BTC管理系统',
 
   // 系统简称
   shortName: 'BTC ShopFlow',

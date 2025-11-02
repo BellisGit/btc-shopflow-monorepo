@@ -58,7 +58,7 @@
             <el-avatar :size="50" :src="userInfo.avatar" />
             <div class="topbar__user-details">
               <el-text size="default" tag="p">{{ userInfo.name }}</el-text>
-              <el-text size="small" type="info">{{ userInfo.email }}</el-text>
+              <el-text size="small" type="info">{{ userInfo.email || t('common.no_email') }}</el-text>
             </div>
           </div>
 
@@ -87,12 +87,14 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted, markRaw } from 'vue';
+import { ref, onMounted, markRaw, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { usePluginManager } from '@btc/shared-core';
+import { useUser } from '@/composables/useUser';
+import { useLogout } from '@/composables/useLogout';
 import GlobalSearch from '../global-search/index.vue';
 
 interface Props {
@@ -117,14 +119,38 @@ const router = useRouter();
 // 插件管理器
 const pluginManager = usePluginManager();
 
+// 用户相关
+const { userInfo: userInfoComputed, getUserInfo } = useUser();
+const { logout } = useLogout();
+
 // 动态工具栏组件
 const toolbarComponents = ref<any[]>([]);
 
-// 用户信息
-const userInfo = ref({
-  name: 'Admin',
-  email: 'admin@btc-saas.com',
-  avatar: '/logo.png',
+// 用户信息（从 useUser 获取，提供默认值）
+const userInfo = computed(() => {
+  const info = userInfoComputed.value;
+  if (info) {
+    return {
+      name: info.name || info.username || 'Admin',
+      email: info.email || '',
+      avatar: info.avatar || '/logo.png',
+    };
+  }
+  // 如果没有用户信息，尝试从 localStorage 获取
+  const stored = getUserInfo();
+  if (stored) {
+    return {
+      name: stored.name || stored.username || 'Admin',
+      email: stored.email || '',
+      avatar: stored.avatar || '/logo.png',
+    };
+  }
+  // 默认值
+  return {
+    name: 'Admin',
+    email: 'admin@btc-saas.com',
+    avatar: '/logo.png',
+  };
 });
 
 // 初始化工具栏组件
@@ -165,14 +191,16 @@ const handleCommand = (command: string) => {
         t('common.tip'),
         {
           type: 'warning',
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel'),
         }
       )
       .then(() => {
-        message.success(t('common.logout_success'));
-        // 这里可以添加退出登录的逻辑
+        // 执行退出登录
+        logout();
       })
       .catch(() => {
-        // 取消操作
+        // 取消操作，不需要任何处理
       });
       break;
   }

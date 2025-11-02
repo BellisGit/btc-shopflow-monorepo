@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed, watch, type Ref, unref } from 'vue';
+import { computed, watch, type Ref, unref } from 'vue';
 
 const props = defineProps<{
   connectionPaths: Array<{ id: string; path?: string; direction?: 'horizontal' | 'vertical' } & Record<string, any>>;
