@@ -9,4 +9,5 @@ build/
 coverage/
 *.tsbuildinfo
 .turbo
+.vitepress/cache/
 

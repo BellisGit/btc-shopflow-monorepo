@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 import { useConnectionStyle } from './style';
 
@@ -5,8 +6,8 @@ import { useConnectionStyle } from './style';
  * 悬空连线处理逻辑
  * 负责处理一端或两端节点缺失的连线渲染
  */
-export function useOrphanedConnection() {
-  const { getConnectionColor, getConnectionMarker } = useConnectionStyle();
+export function useOrphanedConnection(nodes: Ref<StrategyNode[]>) {
+  const { getConnectionColor, getConnectionMarker } = useConnectionStyle(nodes);
 
   // 处理悬空连线（一端节点缺失的情况）
   const handleOrphanedConnection = (

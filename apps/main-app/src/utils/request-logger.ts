@@ -147,8 +147,12 @@ class RequestLogQueue {
     try {
       // 使用重试机制发送日志
       await this.retryManager.retryRequest(async () => {
-        // 导入 service 需要动态导入避免循环依赖
-        const { service } = await import('@services/eps');
+        // 从全局获取 service（在 main.ts 中已设置），完全避免动态导入
+        const service = typeof window !== 'undefined' ? (window as any).__BTC_SERVICE__ : null;
+        
+        if (!service) {
+          throw new Error('Service 未初始化，无法发送请求日志');
+        }
 
         // 检查服务是否可用
         if (!service?.system?.log?.sys?.request?.update) {

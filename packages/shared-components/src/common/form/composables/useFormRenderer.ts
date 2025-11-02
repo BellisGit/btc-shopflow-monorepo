@@ -9,6 +9,7 @@ import {
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
 import BtcCascader from '@btc-components/btc-cascader/index.vue';
+import BtcUpload from '@btc-components/btc-upload/index.vue';
 
 // 组件映射表
 export const componentMap: Record<string, any> = {
@@ -32,7 +33,8 @@ export const componentMap: Record<string, any> = {
   'el-divider': ElDivider,
   'el-descriptions': ElDescriptions,
   'el-descriptions-item': ElDescriptionsItem,
-  'btc-cascader': BtcCascader
+  'btc-cascader': BtcCascader,
+  'btc-upload': BtcUpload
 };
 
 export function useFormRenderer() {
@@ -127,6 +129,24 @@ export function useFormRenderer() {
         modelValue: form[item.prop],
         'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
         options: item.component?.options || [],
+        ...props
+      });
+    }
+
+    if (componentName === 'btc-upload') {
+      // 处理 btc-upload 的特殊逻辑
+      // 尝试从组件实例获取 service（如果通过 provide 提供）
+      let uploadService = props.uploadService;
+      if (!uploadService && typeof window !== 'undefined') {
+        // 尝试从全局获取 service
+        uploadService = (window as any).__BTC_SERVICE__;
+      }
+
+      return h(Component, {
+        modelValue: form[item.prop],
+        'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
+        prop: item.prop,
+        uploadService,
         ...props
       });
     }

@@ -16,7 +16,7 @@
         <template v-else>
           <div class="item" @click="refresh()">
             <el-tooltip :content="t('common.button.refresh')">
-              <el-icon><Refresh /></el-icon>
+              <BtcSvg name="refresh" />
             </el-tooltip>
           </div>
 
@@ -27,6 +27,16 @@
           </div>
         </template>
       </div>
+    </div>
+
+    <div v-if="enableKeySearch" class="btc-master-list__search">
+      <el-input
+        v-model="keyWord"
+        placeholder="搜索关键字"
+        clearable
+        :prefix-icon="Search"
+        @change="refresh()"
+      />
     </div>
 
     <div
@@ -76,7 +86,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
-import { Check, Close, Refresh, MoreFilled } from '@element-plus/icons-vue';
+import { Check, Close, Refresh, MoreFilled, Search } from '@element-plus/icons-vue';
 import BtcSvg from '@btc-common/svg/index.vue';
 
 // 树形数据处理工具函数
@@ -142,6 +152,7 @@ interface Props {
   idField?: string;
   labelField?: string;
   childrenField?: string;
+  enableKeySearch?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -153,6 +164,7 @@ const props = withDefaults(defineProps<Props>(), {
   idField: 'id',
   labelField: 'name',
   childrenField: 'children',
+  enableKeySearch: false,
 });
 
 defineOptions({
@@ -168,6 +180,7 @@ const list = ref<any[]>([]);
 const loading = ref(false);
 const selectedItem = ref<any>(null);
 const isDrag = ref(false);
+const keyWord = ref('');
 
 // 组件引用
 const treeRef = ref<any>(null);
@@ -191,8 +204,14 @@ async function refresh() {
   isDrag.value = false;
 
   try {
-    // 调用服务获取数据，不传递参数（EPS 层会自动处理默认参数）
-    const res = await props.service.list();
+    // 构建请求参数，包含搜索关键词
+    const params: any = {};
+    if (keyWord.value) {
+      params.keyword = keyWord.value;
+    }
+    
+    // 调用服务获取数据
+    const res = await props.service.list(params);
     const dataArray = extractDataArray(res);
 
     // 检查数据是否有 parentId 字段，决定是否进行树形处理
@@ -345,6 +364,8 @@ defineExpose({
 .btc-master-list {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 
   :deep(.el-tree-node__label) {
     display: block;
@@ -360,6 +381,7 @@ defineExpose({
     padding: 0 10px;
     border-bottom: 1px solid var(--el-border-color-extra-light);
     min-width: 0; // 允许 flex 项目收缩
+    flex-shrink: 0;
 
     .el-text {
       font-weight: 500;
@@ -415,9 +437,23 @@ defineExpose({
     }
   }
 
+  &__search {
+    padding: 10px 10px 0 10px;
+    flex-shrink: 0;
+
+    :deep(.el-input) {
+      .el-input__wrapper {
+        border-radius: 6px;
+      }
+    }
+  }
+
   &__container {
-    height: calc(100% - 40px);
     padding: 10px;
+    flex: 1;
+    overflow: hidden;
+    margin-top: 10px;
+    box-sizing: border-box;
 
     :deep(.el-tree-node__content) {
       height: 38px;
@@ -433,8 +469,7 @@ defineExpose({
       display: flex;
       align-items: center;
       justify-content: center;
-      height: calc(100vh - 200px); // 使用视口高度减去顶部和底部空间
-      min-height: 200px;
+      height: 100%;
       width: 100%;
       position: relative;
     }

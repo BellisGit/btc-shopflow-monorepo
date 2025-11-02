@@ -266,11 +266,35 @@ function createServiceCode(): { content: string; types: string[] } {
   /**
    * 递归处理 service 树，生成接口代码
    */
-  function deep(d: any, k?: string) {
+  function deep(d: any, k?: string, visited: WeakSet<object> = new WeakSet()) {
+    // 基本检查：如果不是对象或已访问过，直接返回
+    if (!d || typeof d !== 'object' || d === null) {
+      return;
+    }
+    
+    // 循环检测：如果已经访问过此对象，跳过（防止循环引用）
+    if (visited.has(d)) {
+      return;
+    }
+    
+    // 标记当前对象为已访问
+    visited.add(d);
+
     if (!k) k = '';
 
     for (const i in d) {
       if (['swagger'].includes(i)) {
+        continue;
+      }
+
+      // 检查属性值是否存在且为对象
+      const value = d[i];
+      if (!value || typeof value !== 'object' || value === null) {
+        continue;
+      }
+
+      // 检查是否已访问过此属性值（防止循环引用）
+      if (visited.has(value)) {
         continue;
       }
 
@@ -279,9 +303,9 @@ function createServiceCode(): { content: string; types: string[] } {
       // 检查方法名
       if (!checkName(name)) continue;
 
-      if (d[i].namespace) {
+      if (value.namespace) {
         // 查找配置
-        const item = epsList.find((e) => (e.prefix || '') === `/${d[i].namespace}`);
+        const item = epsList.find((e) => (e.prefix || '') === `/${value.namespace}`);
 
         if (item) {
           let t = `{`;
@@ -297,18 +321,18 @@ function createServiceCode(): { content: string; types: string[] } {
 
               if (n) {
                 // 处理删除方法的特殊逻辑
-                let urlPath = `"/${d[i].namespace}${a.path}"`;
+                let urlPath = `"/${value.namespace}${a.path}"`;
                 let requestData = 'data';
 
                 // 如果是删除方法，需要特殊处理
                 if (n.toLowerCase().includes('delete')) {
                   if (a.path.includes('{id}')) {
                     // 单个删除：替换 {id} 为实际 ID
-                    urlPath = '`/${d[i].namespace}${a.path.replace(/{id}/g, "${Array.isArray(data) ? data[0] : data}")}`';
+                    urlPath = `\`/${value.namespace}\${a.path.replace(/{id}/g, "\${Array.isArray(data) ? data[0] : data}")}\``;
                     requestData = 'undefined'; // 删除方法不需要请求体
                   } else if (n.toLowerCase().includes('batch')) {
                     // 批量删除：直接使用路径，数据作为请求体
-                    urlPath = `"/${d[i].namespace}${a.path}"`;
+                    urlPath = `"/${value.namespace}${a.path}"`;
                     requestData = 'data'; // 批量删除需要请求体
                   }
                 }
@@ -337,8 +361,9 @@ function createServiceCode(): { content: string; types: string[] } {
           chain += `${formatName(i)}: ${t},\n`;
         }
       } else {
+        // 递归处理嵌套对象，传递 visited Set
         chain += `${formatName(i)}: {`;
-        deep(d[i], name);
+        deep(value, name, visited);
         chain += `} as ${firstUpperCase(i)}Interface,`;
 
         types.push(`${firstUpperCase(i)}Interface`);

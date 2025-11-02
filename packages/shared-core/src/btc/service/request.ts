@@ -49,9 +49,19 @@ export function createRequest(baseURL = '/api'): Request {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // 设置默认 Content-Type
-      if (!config.headers['Content-Type']) {
-        config.headers['Content-Type'] = 'application/json';
+      // 检查是否是 FormData
+      const isFormData = config.data instanceof FormData ||
+                        (config.data && config.data.constructor?.name === 'FormData');
+
+      // 如果是 FormData，不设置 Content-Type，让浏览器自动设置（包括 boundary）
+      // 否则设置为 application/json
+      if (!isFormData) {
+        if (!config.headers['Content-Type']) {
+          config.headers['Content-Type'] = 'application/json';
+        }
+      } else {
+        // FormData 上传时，删除 Content-Type，让浏览器自动设置（包括 boundary）
+        delete config.headers['Content-Type'];
       }
 
       return config;

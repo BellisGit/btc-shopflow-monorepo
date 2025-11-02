@@ -15,6 +15,7 @@
             :drag="enableDrag"
             :show-unassigned="showUnassigned"
             :unassigned-label="unassignedLabel"
+            :enable-key-search="enableKeySearch"
             @select="handleLeftSelect"
             @load="handleLeftLoad"
           />
@@ -28,7 +29,7 @@
 
       <!-- 右侧 -->
       <div class="btc-view-group__right">
-        <div class="head">
+        <div v-if="!custom" class="head">
           <div
             class="icon is-bg absolute left-[10px]"
             :class="{ 'is-fold': !isExpand }"
@@ -48,7 +49,7 @@
           </div>
         </div>
 
-        <div v-if="selectedItem || custom" class="content">
+        <div v-if="selectedItem || custom" class="content" :class="{ 'is-custom': custom }">
           <slot name="right" :selected="selectedItem" :keyword="selectedKeyword" :left-data="leftListData" :right-data="rightData"></slot>
         </div>
 
@@ -83,7 +84,7 @@ function isEmpty(value: any): boolean {
 }
 
 const props = withDefaults(defineProps<{
-  leftService: any; // 左侧服务
+  leftService?: any; // 左侧服务（可选）
   rightService?: any; // 右侧服务（可选）
   leftTitle?: string;
   rightTitle?: string;
@@ -96,8 +97,10 @@ const props = withDefaults(defineProps<{
   labelField?: string;
   parentField?: string;
   op?: { buttons?: any[] }; // 操作列配置
+  enableKeySearch?: boolean; // 是否启用搜索
 }>(), {
   op: undefined,
+  enableKeySearch: false,
 });
 
 const emit = defineEmits<{
@@ -217,6 +220,11 @@ watch(isMobile, (val) => {
   }
 });
 
+// 手动选择方法，供外部调用
+const select = (item: any, keyword?: any) => {
+  handleLeftSelect(item, keyword);
+};
+
 // 暴露
 defineExpose({
   selectedItem,
@@ -226,7 +234,8 @@ defineExpose({
   refresh: loadRightData,
   masterListRef,
   isExpand,
-  expand
+  expand,
+  select
 });
 </script>
 
@@ -248,6 +257,7 @@ $bg: var(--el-bg-color);
     flex: 1;
     display: flex;
     overflow: hidden;
+    position: relative;
     background-color: $bg;
     border-radius: 4px;
   }
@@ -312,6 +322,10 @@ $bg: var(--el-bg-color);
     .content {
       height: calc(100% - 40px);
       overflow: hidden;
+
+      &.is-custom {
+        height: 100%;
+      }
     }
   }
 

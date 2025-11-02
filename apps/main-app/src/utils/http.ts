@@ -40,7 +40,15 @@ export class Http {
         // 添加租户ID请求头
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
 
+        // 如果是 FormData，不设置 Content-Type，让浏览器自动设置
+        // 否则设置为 application/json
+        const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');
+        if (!isFormData) {
         config.headers['Content-Type'] = 'application/json';
+        } else {
+          // FormData 上传时，删除 Content-Type，让浏览器自动设置（包括 boundary）
+          delete config.headers['Content-Type'];
+        }
 
         // 记录请求开始时间，用于计算耗时
         config.metadata = { startTime: Date.now() };

@@ -209,7 +209,7 @@ onUnmounted(() => {
   &__content {
     flex: 1;
     overflow: hidden;
-    margin: 10px; // 统一四周间距
+    margin: 0 10px 10px 10px; // 统一间距（上右左下），顶部不留间距
     width: calc(100% - 20px);
     box-sizing: border-box;
     border-radius: 6px;
@@ -225,7 +225,7 @@ onUnmounted(() => {
       background-color: var(--el-bg-color);
 
       // 只给非 view-group 页面添加 padding
-      &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page):not(.btc-grid-group):not(.strategy-designer) {
+      &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page):not(.btc-grid-group):not(.strategy-designer):not(.templates-page):not(.file-preview-page) {
         padding: 10px;
       }
     }

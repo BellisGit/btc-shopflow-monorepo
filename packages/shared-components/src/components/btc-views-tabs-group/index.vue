@@ -7,6 +7,7 @@
       :show-unassigned="viewGroupOptions.showUnassigned"
       :unassigned-label="viewGroupOptions.unassignedLabel"
       :enable-drag="viewGroupOptions.enableDrag"
+      :enable-key-search="viewGroupOptions.enableKeySearch"
       :enable-refresh="viewGroupOptions.enableRefresh"
       @select="handleViewGroupSelect"
       style="height: 100%"
@@ -204,6 +205,7 @@ const viewGroupOptions = computed(() => {
     showUnassigned: props.config.showUnassigned ?? true,
     unassignedLabel: props.config.unassignedLabel || '未分配',
     enableDrag: false,
+    enableKeySearch: props.config.enableKeySearch ?? false,
     enableRefresh: true,
     tree: { props: { id: 'id', label: 'name' } }
   };

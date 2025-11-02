@@ -5,6 +5,24 @@
   &.el-dialog {
     padding: 0;
     border-radius: 8px;
+    margin-top: 0;
+    // Element Plus 默认使用 margin-top: 15vh 来实现垂直居中
+    // 如果内容较少，可以通过调整 margin-top 来微调位置
+  }
+
+  // 确保 dialog wrapper 使用 flex 布局垂直居中（Element Plus 默认行为）
+  // Element Plus 默认已经设置了垂直居中，但如果被覆盖了，这里确保恢复
+  :deep(.el-overlay) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0;
+  }
+
+  // 确保 dialog 本身不会有过大的 margin-top（Element Plus 默认 15vh）
+  // 如果内容较少，可以通过减少 margin-top 来调整位置
+  &.el-dialog:not(.is-fullscreen) {
+    margin-top: 15vh;
   }
 
   :deep(.el-dialog__header) {
@@ -85,6 +103,13 @@
   &__content {
     min-height: 100px;
     box-sizing: border-box;
+    width: 100%;
+  }
+
+  // 对齐 cool-admin 的样式类名
+  &__default {
+    box-sizing: border-box;
+    width: 100%;
   }
 
   &__footer {

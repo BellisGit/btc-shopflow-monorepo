@@ -225,7 +225,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   padding: 5px 10px;
   user-select: none;
   background-color: var(--el-bg-color);
-  margin: 0; // 与tabbar保持一致，不设置左右间距
+  margin-bottom: 10px; // 与 cool-admin 的 process 保持一致，下边距 10px
   overflow: hidden;
   height: 39px; // 总高度 39px（包含 padding）
   box-sizing: border-box;

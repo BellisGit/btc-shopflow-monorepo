@@ -107,7 +107,7 @@ export function useDialogRender(props: DialogProps, dialogContext: any, slots: a
 
           function content() {
             return h('div', {
-              class: 'btc-dialog__content',
+              class: ['btc-dialog__content', 'btc-dialog__default'],
               style,
               key: cacheKey.value
             }, slots.default?.());

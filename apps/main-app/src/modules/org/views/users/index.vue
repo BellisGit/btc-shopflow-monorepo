@@ -11,6 +11,7 @@
       left-title="部门列表"
       right-title="用户列表"
       :show-unassigned="true"
+      :enable-key-search="true"
       @load="handleLoad"
     />
   </div>

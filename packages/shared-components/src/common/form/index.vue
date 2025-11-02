@@ -7,6 +7,7 @@ import {
   ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload
 } from 'element-plus';
 import BtcDialog from '../dialog/index.vue';
+import BtcUpload from '../../components/btc-upload/index.vue';
 import { useFormSetup, useFormActions, useFormItemActions, isBoolean, parseHidden, collapseItem } from './composables';
 
 // 组件映射表
@@ -28,7 +29,8 @@ const componentMap: Record<string, any> = {
   'el-rate': ElRate,
   'el-slider': ElSlider,
   'el-upload': ElUpload,
-  'el-divider': ElDivider
+  'el-divider': ElDivider,
+  'btc-upload': BtcUpload
 };
 
 export default defineComponent({
@@ -150,9 +152,9 @@ export default defineComponent({
           // 组件实例
           if (e.component?.vm) {
             return h(e.component.vm, {
-              modelValue: form[e.prop],
+              modelValue: (form as Record<string, any>)[e.prop],
               'onUpdate:modelValue': (val: any) => {
-                form[e.prop] = val;
+                (form as Record<string, any>)[e.prop] = val;
               },
               scope: form,
               prop: e.prop,
@@ -166,13 +168,24 @@ export default defineComponent({
             const Component = componentMap[componentName] || resolveComponent(componentName);
 
             const componentProps = {
-              modelValue: form[e.prop],
+              modelValue: (form as Record<string, any>)[e.prop],
               'onUpdate:modelValue': (val: any) => {
-                form[e.prop] = val;
+                (form as Record<string, any>)[e.prop] = val;
               },
               disabled: disabled.value || e.component.props?.disabled,
               ...e.component.props
             };
+
+            // 特殊处理 btc-upload：需要传递 uploadService
+            if (componentName === 'btc-upload') {
+              // 尝试从全局获取 service
+              let uploadService = componentProps.uploadService;
+              if (!uploadService && typeof window !== 'undefined') {
+                uploadService = (window as any).__BTC_SERVICE__;
+              }
+              componentProps.uploadService = uploadService;
+              componentProps.prop = e.prop;
+            }
 
             // 渲染子项（如 el-select 的 options）
             let children = null;
@@ -259,18 +272,21 @@ export default defineComponent({
     function renderContainer() {
       const children = config.items.map(renderFormItem);
 
-      const labelPosition = config.props?.labelPosition || 'top';
+      const labelPosition = (config.props?.labelPosition || 'top') as 'top' | 'left' | 'right';
 
+      // 合并 props，避免重复定义
+      const { labelWidth: _labelWidth, labelPosition: _labelPosition, ...restProps } = config.props || {};
+      
       return h('div', { class: 'btc-form__container', ref: setRefs('form') }, [
         h(ElForm, {
           ref: Form,
           model: form,
           labelWidth: config.props?.labelWidth || '100px',
-          labelPosition,
+          labelPosition: labelPosition,
           inline: props.inline,
           disabled: saving.value || disabled.value,
           scrollToError: true,
-          ...config.props,
+          ...restProps,
           onSubmit: (e: Event) => {
             submit();
             e.preventDefault();

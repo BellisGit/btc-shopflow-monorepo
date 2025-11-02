@@ -36,7 +36,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
   // 导入各个模块
   const { selectOptimalConnectionPoints } = useConnectionPointSelector();
   const { getConnectionPath, generateOrthogonalPath } = useConnectionPathGenerator(nodes, connectionOffsetY);
-  const { handleOrphanedConnection } = useOrphanedConnection();
+  const { handleOrphanedConnection } = useOrphanedConnection(nodes);
   const { computeConnectionStyle, getConnectionColor, getConnectionMarker, getConnectionDirection } = useConnectionStyle(nodes);
 
   // 连接操作

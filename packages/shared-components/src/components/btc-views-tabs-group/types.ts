@@ -53,6 +53,8 @@ export interface BtcViewsTabsGroupConfig {
   showUnassigned?: boolean;
   /** "未分配"标签，默认 '未分配' */
   unassignedLabel?: string;
+  /** 是否启用左侧搜索，默认 false */
+  enableKeySearch?: boolean;
   /** 搜索框占位符 */
   searchPlaceholder?: string;
   /** 表单宽度，默认 '800px' */

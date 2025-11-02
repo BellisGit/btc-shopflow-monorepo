@@ -1,28 +1,27 @@
 <template>
   <div class="file-preview-page">
-    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表" custom>
+    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表">
       <!-- 左侧分类列表 -->
       <template #left>
         <div class="file-preview-left">
           <div class="header">
-            <h3>{{ t('data.file.preview.categories') }}</h3>
+            <el-text class="label">{{ t('data.file.preview.categories') }}</el-text>
             <div class="header-actions">
-              <el-button size="small" text @click="handleAddCategory">
-                <el-icon><Plus /></el-icon>
-              </el-button>
+              <div class="icon" @click="handleRefreshCategories">
+                <btc-svg name="refresh" />
+              </div>
+              <div class="icon" @click="handleAddCategory">
+                <btc-svg name="plus-border" />
+              </div>
             </div>
           </div>
           <div class="search">
             <el-input
               v-model="categoryKeyword"
               :placeholder="t('搜索分类')"
-              size="small"
               clearable
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
+              :prefix-icon="Search"
+            />
           </div>
           <el-scrollbar class="category-list">
             <div
@@ -41,6 +40,7 @@
           </el-scrollbar>
         </div>
       </template>
+
       <!-- 右侧文件预览区域 -->
       <template #right="{ selected, keyword }">
         <div class="file-preview-right">
@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import { BtcViewGroup } from '@btc/shared-components';
@@ -234,6 +234,11 @@ const filteredCategories = computed(() => {
   );
 });
 
+// 当前选中的分类
+const selectedCategory = computed(() => {
+  return categories.value.find(cat => cat.id === selectedCategoryId.value);
+});
+
 // 文件列表
 const fileList = ref<any[]>([]);
 
@@ -252,7 +257,16 @@ const uploadHeaders = computed(() => {
 const handleCategorySelect = (category: any) => {
   selectedCategoryId.value = category.id;
   pagination.page = 1;
+  
+  // 手动触发 ViewGroup 的 select 方法，使右侧内容显示
+  viewGroupRef.value?.select(category);
+  
   refreshFileList();
+};
+
+// 刷新分类列表
+const handleRefreshCategories = () => {
+  ElMessage.info('刷新分类功能待实现');
 };
 
 // 添加分类
@@ -400,7 +414,9 @@ const handleSizeChange = () => {
 };
 
 onMounted(() => {
-  handleCategorySelect(categories.value[0]);
+  nextTick(() => {
+    handleCategorySelect(categories.value[0]);
+  });
 });
 </script>
 
@@ -418,29 +434,53 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px;
-      border-bottom: 1px solid var(--el-border-color-light);
+      height: 40px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--el-border-color-extra-light);
 
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 500;
+      .label {
+        flex: 1;
+        font-size: 14px;
       }
 
       .header-actions {
         display: flex;
-        gap: 4px;
+        align-items: center;
+
+        .icon {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-left: 5px;
+          cursor: pointer;
+          border-radius: 6px;
+          font-size: 16px;
+          height: 26px;
+          width: 26px;
+          color: var(--el-text-color-primary);
+
+          &:hover {
+            background-color: var(--el-fill-color-light);
+          }
+        }
       }
     }
 
     .search {
-      padding: 8px;
-      border-bottom: 1px solid var(--el-border-color-light);
+      padding: 10px 10px 0 10px;
+
+      :deep(.el-input) {
+        .el-input__wrapper {
+          border-radius: 6px;
+        }
+      }
     }
 
     .category-list {
       flex: 1;
       padding: 8px;
+      margin-top: 10px;
+      box-sizing: border-box;
 
       .category-item {
         display: flex;
@@ -490,13 +530,14 @@ onMounted(() => {
     .header {
       display: flex;
       align-items: center;
-      padding: 16px;
-      border-bottom: 1px solid var(--el-border-color-light);
+      height: 50px;
+      padding: 0 10px;
     }
 
     .file-list {
-      flex: 1;
-      padding: 16px;
+      height: calc(100% - 110px);
+      padding: 10px;
+      position: relative;
 
       .file-grid {
         display: grid;
@@ -671,7 +712,12 @@ onMounted(() => {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: auto;
         color: var(--el-text-color-placeholder);
 
         .empty-icon {
@@ -687,9 +733,8 @@ onMounted(() => {
 
     .pagination {
       display: flex;
-      justify-content: flex-end;
-      padding: 16px;
-      border-top: 1px solid var(--el-border-color-light);
+      justify-content: center;
+      padding: 10px;
     }
   }
 }

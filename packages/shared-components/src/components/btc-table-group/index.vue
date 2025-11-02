@@ -8,6 +8,7 @@
     :show-unassigned="showUnassigned"
     :unassigned-label="unassignedLabel"
     :enable-drag="enableDrag"
+    :enable-key-search="enableKeySearch"
     :left-width="leftWidth"
     :op="op"
     @select="handleSelect"
@@ -83,6 +84,7 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   showUnassigned: false,
   unassignedLabel: '未分配',
   enableDrag: false,
+  enableKeySearch: false,
   leftWidth: '300px',
   upsertWidth: 800,
   searchPlaceholder: '搜索',

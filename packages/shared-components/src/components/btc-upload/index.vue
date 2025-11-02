@@ -1,0 +1,682 @@
+<template>
+  <div class="btc-upload__wrap" :class="[customClass]">
+    <div
+      class="btc-upload"
+      :class="[
+        `btc-upload--${type}`,
+        {
+          'is-disabled': disabled,
+          'is-multiple': multiple,
+          'is-small': small
+        }
+      ]"
+    >
+      <template v-if="!drag">
+        <div v-if="type == 'file'" class="btc-upload__file-btn">
+          <el-upload
+            :ref="setRefs('upload')"
+            :drag="drag"
+            action=""
+            :accept="accept"
+            :show-file-list="false"
+            :before-upload="onBeforeUpload"
+            :http-request="httpRequest"
+            :multiple="multiple"
+            :disabled="disabled"
+          >
+            <slot>
+              <el-button type="success">{{ text }}</el-button>
+            </slot>
+          </el-upload>
+        </div>
+      </template>
+
+      <!-- 列表 -->
+      <div v-if="showList" class="btc-upload__list">
+        <!-- 列表项 -->
+        <template v-for="(item, index) in list" :key="item.uid">
+          <el-upload
+            action=""
+            :accept="accept"
+            :show-file-list="false"
+            :http-request="
+              (req: any) => {
+                return httpRequest(req, item);
+              }
+            "
+            :before-upload="
+              (file: File) => {
+                onBeforeUpload(file, item);
+              }
+            "
+            :disabled="disabled"
+          >
+            <slot name="item" :item="item" :index="index">
+              <div class="btc-upload__item">
+                <btc-upload-item
+                  :show-tag="showTag"
+                  :item="item"
+                  :disabled="disabled"
+                  :deletable="deletable"
+                  @remove="remove(index)"
+                />
+
+                <!-- 小图模式 -->
+                <el-icon
+                  v-if="small"
+                  class="btc-upload__item-remove"
+                  @click.stop="remove(index)"
+                >
+                  <CircleCloseFilled />
+                </el-icon>
+              </div>
+            </slot>
+          </el-upload>
+        </template>
+
+        <!-- 触发器 -->
+        <div v-if="(type == 'image' || drag) && isAdd" class="btc-upload__footer">
+          <el-upload
+            :ref="setRefs('upload')"
+            action=""
+            :drag="drag"
+            :accept="accept"
+            :show-file-list="false"
+            :before-upload="onBeforeUpload"
+            :http-request="httpRequest"
+            :multiple="multiple"
+            :disabled="disabled"
+          >
+            <slot>
+              <!-- 拖拽方式 -->
+              <div v-if="drag" class="btc-upload__demo is-dragger">
+                <el-icon :size="46">
+                  <UploadFilled />
+                </el-icon>
+                <div>
+                  {{ t('点击上传或将文件拖动到此处，文件大小限制{n}M', { n: limitSize }) }}
+                </div>
+              </div>
+
+              <!-- 点击方式 -->
+              <div v-else class="btc-upload__demo">
+                <el-icon :size="36">
+                  <component :is="icon" v-if="icon" />
+                  <PictureFilled v-else />
+                </el-icon>
+                <span v-if="text" class="text">{{ text }}</span>
+              </div>
+            </slot>
+          </el-upload>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch, type PropType, nextTick } from 'vue';
+import { assign, isArray, isEmpty, isNumber } from 'lodash-es';
+import { ElMessage } from 'element-plus';
+import { PictureFilled, UploadFilled, CircleCloseFilled } from '@element-plus/icons-vue';
+import { useI18n } from 'vue-i18n';
+import { inject } from 'vue';
+import { useUpload } from './composables/useUpload';
+import BtcUploadItem from './components/upload-item.vue';
+import type { UploadItem } from './types';
+
+defineOptions({
+  name: 'BtcUpload'
+});
+
+const props = defineProps({
+  // 绑定值，单选时字符串，多选时字符串数组
+  modelValue: {
+    type: [String, Array] as PropType<string | string[]>,
+    default: () => []
+  },
+  // 表单字段名（用于验证）
+  prop: String,
+  // 是否禁用
+  isDisabled: Boolean,
+  // 上传类型
+  type: {
+    type: String as PropType<'image' | 'file'>,
+    default: 'image'
+  },
+  // 允许上传的文件类型
+  accept: String,
+  // 是否多选
+  multiple: Boolean,
+  // 限制数量
+  limit: Number,
+  // 限制大小（MB）
+  limitSize: {
+    type: Number,
+    default: 5
+  },
+  // 是否自动上传
+  autoUpload: {
+    type: Boolean,
+    default: true
+  },
+  // 元素大小
+  size: [String, Number, Array] as PropType<string | number | [number, number]>,
+  // 小图模式
+  small: Boolean,
+  // 显示图标
+  icon: null,
+  // 显示文案
+  text: String,
+  // 显示角标
+  showTag: {
+    type: Boolean,
+    default: true
+  },
+  // 是否显示上传列表
+  showFileList: {
+    type: Boolean,
+    default: true
+  },
+  // 列表是否可拖拽
+  draggable: Boolean,
+  // 是否拖拽到特定区域以进行上传
+  drag: {
+    type: Boolean,
+    default: false
+  },
+  // 是否禁用
+  disabled: Boolean,
+  // 是否可删除
+  deletable: Boolean,
+  // 自定义样式名
+  customClass: String,
+  // 上传前钩子
+  beforeUpload: Function as PropType<(file: File, item?: UploadItem, options?: any) => any>,
+  // 上传服务类型：'avatar' | 'file'
+  uploadType: {
+    type: String as PropType<'avatar' | 'file'>,
+    default: 'file'
+  },
+  // 上传服务（可选，如果不提供则尝试从全局获取）
+  uploadService: Object
+});
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string | string[]];
+  'change': [value: string | string[]];
+  'upload': [item: UploadItem, file: File];
+  'success': [item: UploadItem];
+  'error': [item: UploadItem];
+  'progress': [item: UploadItem];
+}>();
+
+const { t } = useI18n();
+
+// 获取 service：优先使用 prop，其次 inject，最后尝试动态导入
+let service: any = props.uploadService;
+
+if (!service) {
+  try {
+    service = inject('service');
+  } catch (e) {
+    // inject 可能不存在
+  }
+}
+
+// 如果仍然没有 service，尝试动态导入（仅在浏览器环境）
+if (!service && typeof window !== 'undefined') {
+  // 在运行时，尝试从应用级别获取 service
+  // 这需要主应用在 window 上暴露 service，或者通过其他方式
+  try {
+    // 尝试从全局变量获取（如果主应用设置了）
+    service = (window as any).__BTC_SERVICE__;
+  } catch (e) {
+    // 忽略错误
+  }
+}
+
+const { toUpload } = useUpload(service);
+const refs: Record<string, any> = {};
+
+function setRefs(name: string) {
+  return (el: any) => {
+    if (el) {
+      refs[name] = el;
+    }
+  };
+}
+
+// 元素尺寸
+const size = computed(() => {
+  const d = props.size || [100, 100];
+  const sizeArray = isArray(d) ? d : [d, d];
+  return sizeArray.map((e: string | number) => (isNumber(e) ? e + 'px' : e));
+});
+
+// 是否禁用
+const disabled = computed(() => {
+  return props.isDisabled || props.disabled;
+});
+
+// 最大上传数量
+const limit = props.limit || 9;
+
+// 文案
+const text = computed(() => {
+  if (props.text !== undefined) {
+    return props.text;
+  } else {
+    switch (props.type) {
+      case 'file':
+        return t('选择文件');
+      case 'image':
+        return t('选择图片');
+      default:
+        return '';
+    }
+  }
+});
+
+// 列表
+const list = ref<UploadItem[]>([]);
+
+// 显示上传列表
+const showList = computed(() => {
+  if (props.type == 'file') {
+    return props.showFileList ? !isEmpty(list.value) : false;
+  } else {
+    return true;
+  }
+});
+
+// 文件格式
+const accept = computed(() => {
+  return props.accept || (props.type == 'file' ? '' : 'image/*');
+});
+
+// 能否添加
+const isAdd = computed(() => {
+  const len = list.value.length;
+
+  if (props.multiple && !disabled.value) {
+    return limit - len > 0;
+  }
+
+  return len == 0;
+});
+
+// 生成唯一 ID
+function uuid(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+// 获取文件类型
+function getType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
+    return 'image';
+  }
+  if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(ext)) {
+    return 'video';
+  }
+  if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) {
+    return 'audio';
+  }
+  return 'file';
+}
+
+// 获取 URL 数组
+function getUrls(list: UploadItem[]): string[] {
+  return list.map(e => e.url || '').filter(Boolean);
+}
+
+// 上传前
+async function onBeforeUpload(file: File, item?: UploadItem) {
+  function next() {
+    // File 对象没有 uid 属性，使用 uuid() 生成
+    const fileUid = (file as any).uid || uuid();
+    const d: UploadItem = {
+      uid: fileUid,
+      size: file.size,
+      name: file.name,
+      type: getType(file.name),
+      progress: props.autoUpload ? 0 : 100,
+      url: '',
+      preload: '',
+      error: ''
+    };
+
+    // 图片预览地址
+    if (d.type == 'image') {
+      if (file instanceof File) {
+        d.preload = window.URL.createObjectURL(file);
+      }
+    }
+
+    // 上传事件
+    emit('upload', d, file);
+
+    // 赋值
+    if (item) {
+      assign(item, d);
+    } else {
+      if (props.multiple) {
+        if (!isAdd.value) {
+          ElMessage.warning(t('最多只能上传{n}个文件', { n: limit }));
+          return false;
+        } else {
+          list.value.push(d);
+        }
+      } else {
+        list.value = [d];
+      }
+    }
+
+    return true;
+  }
+
+  // 文件格式验证
+  if (accept.value && accept.value !== '*') {
+    const fileName = file.name.toLowerCase();
+    const fileExt = '.' + fileName.split('.').pop();
+    const acceptList = accept.value.split(',').map(item => item.trim().toLowerCase());
+
+    const isValidFormat = acceptList.some(acceptItem => {
+      if (acceptItem === 'image/*') {
+        return file.type.startsWith('image/');
+      }
+      if (acceptItem === 'video/*') {
+        return file.type.startsWith('video/');
+      }
+      if (acceptItem === 'audio/*') {
+        return file.type.startsWith('audio/');
+      }
+      return acceptItem === fileExt || acceptItem === file.type;
+    });
+
+    if (!isValidFormat) {
+      ElMessage.error(
+        t('不支持的文件格式，请上传 {formats} 格式的文件', {
+          formats: accept.value
+        })
+      );
+      return false;
+    }
+  }
+
+  // 文件大小限制
+  if (file.size / 1024 / 1024 >= props.limitSize) {
+    ElMessage.error(t('上传文件大小不能超过 {n}MB!', { n: props.limitSize }));
+    return false;
+  }
+
+  // 自定义上传事件
+  if (props.beforeUpload) {
+    const r = props.beforeUpload(file, item, { next });
+
+    if (r instanceof Promise) {
+      r.then(next).catch(() => null);
+    } else {
+      if (r) {
+        return next();
+      }
+    }
+
+    return r;
+  } else {
+    return next();
+  }
+}
+
+// 移除
+function remove(index: number) {
+  list.value.splice(index, 1);
+  update();
+}
+
+// 清空
+function clear() {
+  list.value = [];
+}
+
+// 文件上传请求
+async function httpRequest(req: any, item?: UploadItem) {
+  if (!item) {
+    // File 对象可能没有 uid 属性，需要通过其他方式匹配
+    const fileUid = (req.file as any).uid;
+    item = fileUid ? list.value.find(e => e.uid == fileUid) : undefined;
+  }
+
+  if (!item) {
+    return false;
+  }
+
+  // 上传请求
+  toUpload(req.file, {
+    uploadType: props.uploadType,
+    onProgress(progress) {
+      item!.progress = progress;
+      emit('progress', item!);
+    }
+  })
+    .then(res => {
+      assign(item!, res);
+      emit('success', item!);
+      update();
+    })
+    .catch(err => {
+      item!.error = err.message || '上传失败';
+      emit('error', item!);
+    });
+}
+
+// 检测是否还有未上传的文件
+function check() {
+  return list.value.find(e => !e.url);
+}
+
+// 更新
+function update() {
+  if (!check()) {
+    const urls = getUrls(list.value);
+    const val = props.multiple ? urls : urls[0] || '';
+
+    // 更新绑定值
+    emit('update:modelValue', val);
+    emit('change', val);
+
+    nextTick(() => {
+      // 清空
+      refs.upload?.clearFiles();
+    });
+  }
+}
+
+// 监听绑定值
+watch(
+  () => props.modelValue,
+  (val: any[] | string) => {
+    if (check()) {
+      return;
+    }
+
+    const urls = (isArray(val) ? val : [val]).filter(Boolean);
+
+    list.value = urls
+      .map((url, index) => {
+        const old: Partial<UploadItem> = list.value[index] || {};
+
+        return assign(
+          {
+            progress: 100,
+            uid: uuid(),
+            size: old.size || 0,
+            name: old.name || url.split('/').pop() || '',
+            error: old.error || ''
+          },
+          old,
+          {
+            type: getType(url),
+            url,
+            preload: old.url == url ? (old.preload || '') : url
+          }
+        ) as UploadItem;
+      })
+      .filter((_, i) => {
+        return props.multiple ? true : i == 0;
+      });
+  },
+  {
+    immediate: true
+  }
+);
+
+// 导出
+defineExpose({
+  isAdd,
+  list,
+  check,
+  clear,
+  remove
+});
+</script>
+
+<style lang="scss" scoped>
+.btc-upload {
+  line-height: normal;
+
+  &__file {
+    width: 100%;
+
+    &-btn {
+      width: fit-content;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  &__item,
+  &__demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: v-bind('size[0]');
+    width: v-bind('size[1]');
+    background-color: var(--el-fill-color-light);
+    color: var(--el-text-color-regular);
+    border-radius: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+  }
+
+  &__demo {
+    font-size: 13px;
+
+    .el-icon {
+      font-size: 46px;
+    }
+
+    .text {
+      margin-top: 5px;
+    }
+
+    &.is-dragger {
+      padding: 20px;
+    }
+  }
+
+  &__file-btn {
+    & + .btc-upload__list {
+      margin-top: 10px;
+    }
+  }
+
+  :deep(.el-upload) {
+    display: block;
+
+    .el-upload-dragger {
+      padding: 0;
+      border: 0;
+      background-color: transparent !important;
+      position: relative;
+
+      &.is-dragover {
+        &::after {
+          display: block;
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 100%;
+          width: 100%;
+          pointer-events: none;
+          border-radius: 8px;
+          box-sizing: border-box;
+          border: 1px dashed var(--el-color-primary);
+        }
+      }
+    }
+  }
+
+  &.is-disabled {
+    .btc-upload__demo {
+      color: var(--el-text-color-placeholder);
+    }
+
+    :deep(.btc-upload__item) {
+      cursor: not-allowed;
+      background-color: var(--el-disabled-bg-color);
+    }
+  }
+
+  &.is-multiple {
+    .btc-upload__list {
+      margin-bottom: -5px;
+    }
+
+    .btc-upload__item {
+      margin: 0 5px 5px 0;
+    }
+
+    .btc-upload__footer {
+      margin-bottom: 5px;
+    }
+  }
+
+  &.is-small {
+    .btc-upload__demo {
+      .el-icon {
+        font-size: 20px !important;
+      }
+
+      .text {
+        display: none;
+      }
+    }
+
+    .btc-upload__item-remove {
+      position: absolute;
+      right: 0px;
+      top: 0px;
+      color: var(--el-color-danger);
+      background-color: #fff;
+      border-radius: 100%;
+    }
+  }
+
+  &:not(.is-disabled) {
+    .btc-upload__demo {
+      &:hover {
+        color: var(--el-color-primary);
+      }
+    }
+  }
+}
+</style>

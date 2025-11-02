@@ -12,6 +12,7 @@
       search-placeholder="搜索资源..."
       :show-unassigned="true"
       unassigned-label="未分配"
+      :enable-key-search="true"
       @select="onModuleSelect"
     />
   </div>

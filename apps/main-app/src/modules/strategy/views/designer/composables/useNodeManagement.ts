@@ -301,27 +301,32 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
     const startNodeX = node.position.x;
     const startNodeY = node.position.y;
 
+    // 计算网格边界限制
+    const nodeWidth = node.style?.width || 120;
+    const nodeHeight = node.style?.height || 60;
+
+    // 使用传入的画布尺寸，如果没有则使用默认值
+    const canvasWidth = canvasDimensions?.width || 2000;
+    const canvasHeight = canvasDimensions?.height || 1500;
+
+    // 计算边界限制
+    const minX = 0;
+    const minY = 0;
+    const maxX = canvasWidth - nodeWidth;
+    const maxY = canvasHeight - nodeHeight;
+
+    // 当前新位置，用于在 handleMouseUp 中访问
+    let newPosition = {
+      x: node.position.x,
+      y: node.position.y
+    };
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
 
-      // 计算网格边界限制
-      const nodeWidth = node.style?.width || 120;
-      const nodeHeight = node.style?.height || 60;
-
-      // 使用传入的画布尺寸，如果没有则使用默认值
-      const canvasWidth = canvasDimensions?.width || 2000;
-      const canvasHeight = canvasDimensions?.height || 1500;
-
-      // 计算边界限制
-      const minX = 0;
-      const minY = 0;
-      const maxX = canvasWidth - nodeWidth;
-      const maxY = canvasHeight - nodeHeight;
-
       // 应用边界限制
-      const newPosition = {
+      newPosition = {
         x: Math.max(minX, Math.min(maxX, startNodeX + deltaX)),
         y: Math.max(minY, Math.min(maxY, startNodeY + deltaY))
       };
@@ -345,7 +350,7 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
       const nodeElement = document.querySelector(`[data-node-id="${node.id}"]`) as HTMLElement;
       if (nodeElement) {
         // 直接使用新位置同步回 Vue 数据
-            moveNode(node.id, newPosition);
+        moveNode(node.id, newPosition);
       }
 
       // 清除拖拽状态

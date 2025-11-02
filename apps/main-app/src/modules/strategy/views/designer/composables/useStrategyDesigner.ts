@@ -10,6 +10,10 @@ import { useStrategyOperations } from './useStrategyOperations';
  * 策略设计器主要逻辑
  */
 export function useStrategyDesigner() {
+  // 画布交互状态
+  const panX = ref(0);
+  const panY = ref(0);
+
   // 画布缩放
   const {
     canvasScale,
@@ -19,7 +23,7 @@ export function useStrategyDesigner() {
     handleZoomIn,
     handleZoomOut,
     handleFitToScreen
-  } = useCanvasScale();
+  } = useCanvasScale(panX, panY);
 
   // 节点管理
   const {
@@ -33,12 +37,22 @@ export function useStrategyDesigner() {
     getNodeStyle,
     getNodeColor,
     getOutputConnectionClass,
-    handleNodeMouseDown,
-    handleNodeClick,
-    handleNodeDoubleClick,
-    handleNodeMouseEnter,
-    handleNodeMouseLeave
+    handleNodeMouseDown
   } = useNodeManagement();
+
+  // 节点交互方法占位（这些方法在 useNodeInteraction 中定义，但不在 useNodeManagement 中）
+  const handleNodeClick = (_node: StrategyNode, _event?: MouseEvent) => {
+    // 占位函数，实际实现应在使用此 composable 的组件中提供
+  };
+  const handleNodeDoubleClick = (_node: StrategyNode, _event?: MouseEvent) => {
+    // 占位函数
+  };
+  const handleNodeMouseEnter = (_node: StrategyNode) => {
+    // 占位函数
+  };
+  const handleNodeMouseLeave = () => {
+    // 占位函数
+  };
 
   // 连接管理
   const {
@@ -49,11 +63,23 @@ export function useStrategyDesigner() {
     updateConnection,
     deleteConnection,
     selectConnection,
-    getConnectionStyle,
     getConnectionColor,
-    getConnectionClass,
-    handleConnectionMouseDown
+    getConnectionMarker
   } = useConnectionManagement(nodes);
+
+  // 连接样式和交互方法占位
+  const getConnectionStyle = (_connection: StrategyConnection) => {
+    // 占位函数，实际可以从 useConnectionStyle 中获取
+    return {};
+  };
+  const getConnectionClass = (_connection: StrategyConnection) => {
+    // 占位函数
+    return '';
+  };
+  const handleConnectionMouseDown = (_event: MouseEvent, connection: StrategyConnection) => {
+    // 占位函数，实际可以使用 selectConnection
+    selectConnection(connection);
+  };
 
   // 确保 selectedNode 和 selectedConnection 不为 undefined
   const selectedNode = computed(() => rawSelectedNode.value || null);
@@ -83,8 +109,6 @@ export function useStrategyDesigner() {
   const isDragging = ref(false);
   const isConnecting = ref(false);
   const tempConnection = ref(null);
-  const panX = ref(0);
-  const panY = ref(0);
 
   // 文本编辑状态
   const editingNodeId = ref<string | null>(null);
@@ -162,8 +186,8 @@ export function useStrategyDesigner() {
 
   const handleCanvasClick = (event: MouseEvent) => {
     // 点击非节点区域时清除选择
-    selectedNodeId.value = null;
-    selectedConnectionId.value = null;
+    selectedNodeId.value = '';
+    selectedConnectionId.value = '';
     activeArrowDirection.value = null;
     showShapeSelector.value = false;
   };
@@ -234,7 +258,7 @@ export function useStrategyDesigner() {
           c => c.sourceNodeId !== selectedNode.value!.id && c.targetNodeId !== selectedNode.value!.id
         );
 
-        selectedNodeId.value = null;
+        selectedNodeId.value = '';
       } catch (error) {
         console.error('Failed to delete node:', error);
       }
@@ -244,7 +268,7 @@ export function useStrategyDesigner() {
         if (connectionIndex > -1) {
           connections.value.splice(connectionIndex, 1);
         }
-        selectedConnectionId.value = null;
+        selectedConnectionId.value = '';
       } catch (error) {
         console.error('Failed to delete connection:', error);
       }

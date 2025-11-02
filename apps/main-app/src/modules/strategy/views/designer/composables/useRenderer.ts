@@ -67,8 +67,8 @@ export function useRenderer(geomMap: Map<string, NodeGeometry>, getViewportScale
         // 直接计算世界坐标，不经过矩阵变换
         const worldX = geom.x + lx;
         const worldY = geom.y + ly;
-        const g = handle.parentElement as SVGGElement;
-        if (g && !isNaN(worldX) && !isNaN(worldY) && !isNaN(invZoom)) {
+        const g = handle.parentElement;
+        if (g && g instanceof SVGGElement && !isNaN(worldX) && !isNaN(worldY) && !isNaN(invZoom)) {
           g.setAttribute('transform', `translate(${worldX},${worldY}) scale(${invZoom})`);
         }
       }
@@ -77,8 +77,8 @@ export function useRenderer(geomMap: Map<string, NodeGeometry>, getViewportScale
     // 更新虚线框 - 现在在overlay层中
     const boundaryBox = document.querySelector(`[data-overlay-id="${id}"] .boundary-box`) as SVGRectElement;
     if (boundaryBox) {
-      const boxG = boundaryBox.parentElement as SVGGElement;
-      if (boxG && !isNaN(geom.x) && !isNaN(geom.y)) {
+      const boxG = boundaryBox.parentElement;
+      if (boxG && boxG instanceof SVGGElement && !isNaN(geom.x) && !isNaN(geom.y)) {
         boxG.setAttribute('transform', `translate(${geom.x},${geom.y}) rotate(${geom.rotation * 180 / Math.PI})`);
       }
       boundaryBox.setAttribute('width', geom.width.toString());

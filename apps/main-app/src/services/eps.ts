@@ -220,7 +220,15 @@ export class BaseService {
 // 创建 EPS 服务
 export function createEps() {
   // 设置 request 方法
-  function set(d: Record<string, any>) {
+  function set(d: Record<string, any>, visited: WeakSet<object> = new WeakSet()) {
+    // 如果已经访问过此对象，跳过（防止循环引用）
+    if (d && typeof d === 'object' && d !== null && visited.has(d)) {
+      return;
+    }
+    if (d && typeof d === 'object' && d !== null) {
+      visited.add(d);
+    }
+
     if (d.namespace) {
       const a = new BaseService(d.namespace);
 
@@ -317,10 +325,10 @@ export function createEps() {
       }
 
     } else {
-      // 递归处理嵌套对象
+      // 递归处理嵌套对象时传递 visited Set
       for (const i in d) {
         if (d[i] && typeof d[i] === 'object') {
-          set(d[i]);
+          set(d[i], visited);
         }
       }
     }
@@ -392,8 +400,31 @@ export function createEps() {
 }
 
 // 创建代理对象，动态处理服务访问
+// 使用 WeakMap 缓存代理对象，避免重复代理
+const proxyCache = new WeakMap();
+
+// 创建一个共享的空对象代理，避免无限递归
+// 先创建一个空对象，然后创建代理
+const sharedEmptyObj = {};
+const sharedEmptyProxy = new Proxy(sharedEmptyObj, {
+  get() {
+    // 空代理对象的所有属性访问都返回 undefined
+    return undefined;
+  }
+});
+
 function createServiceProxy(serviceObj: any): any {
-  return new Proxy(serviceObj, {
+  // 如果已经代理过，直接返回缓存的代理
+  if (proxyCache.has(serviceObj)) {
+    return proxyCache.get(serviceObj);
+  }
+
+  // 只对对象创建代理，非对象类型直接返回
+  if (typeof serviceObj !== 'object' || serviceObj === null) {
+    return serviceObj;
+  }
+
+  const proxy = new Proxy(serviceObj, {
     get(target, prop) {
       const value = target[prop];
 
@@ -415,13 +446,17 @@ function createServiceProxy(serviceObj: any): any {
           return fallbackService[prop];
         }
 
-        // 返回新的代理对象，继续支持链式访问
-        return createServiceProxy({});
+        // 使用共享的空代理对象，避免每次创建新的代理导致无限递归
+        return sharedEmptyProxy;
       }
 
       return undefined;
     }
   });
+
+  // 缓存代理对象
+  proxyCache.set(serviceObj, proxy);
+  return proxy;
 }
 
 // 初始化 EPS 服务

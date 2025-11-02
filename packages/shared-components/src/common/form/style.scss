@@ -1,4 +1,23 @@
 .btc-form {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &__container {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__items {
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+  }
+
   [class*="el-col-"].is-guttered {
     min-height: 0;
   }

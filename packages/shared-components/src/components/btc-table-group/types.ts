@@ -29,6 +29,7 @@ export interface TableGroupProps {
 
   // 功能配置
   enableDrag?: boolean;
+  enableKeySearch?: boolean;
   showUnassigned?: boolean;
   unassignedLabel?: string;
 

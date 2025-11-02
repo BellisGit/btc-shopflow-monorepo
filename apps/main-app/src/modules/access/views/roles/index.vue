@@ -11,6 +11,7 @@
       left-title="域列表"
       right-title="角色列表"
       :show-unassigned="true"
+      :enable-key-search="true"
       @load="handleLoad"
     >
     </BtcTableGroup>

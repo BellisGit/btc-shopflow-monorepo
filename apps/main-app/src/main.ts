@@ -1,8 +1,14 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
+import { service } from './services/eps';
 
 const app = createApp(App);
+
+// 将 service 暴露到全局，供共享组件使用
+if (typeof window !== 'undefined') {
+  (window as any).__BTC_SERVICE__ = service;
+}
 
 // 启动
 bootstrap(app)
