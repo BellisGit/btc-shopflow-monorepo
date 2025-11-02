@@ -1,4 +1,4 @@
-# Contributing to BTC ShopFlow
+﻿# Contributing to BTC ShopFlow
 
 Thank you for your interest in contributing to BTC ShopFlow! We welcome contributions from the community.
 

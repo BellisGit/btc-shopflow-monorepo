@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 创建 Auto Import 配置
  */
 export declare function createAutoImportConfig(): import("vite").Plugin<any> | import("vite").Plugin<any>[];

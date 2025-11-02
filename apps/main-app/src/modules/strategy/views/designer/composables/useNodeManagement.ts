@@ -301,19 +301,19 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
     const startNodeX = node.position.x;
     const startNodeY = node.position.y;
 
-    // 计算网格边界限制
-    const nodeWidth = node.style?.width || 120;
-    const nodeHeight = node.style?.height || 60;
+      // 计算网格边界限制
+      const nodeWidth = node.style?.width || 120;
+      const nodeHeight = node.style?.height || 60;
 
-    // 使用传入的画布尺寸，如果没有则使用默认值
-    const canvasWidth = canvasDimensions?.width || 2000;
-    const canvasHeight = canvasDimensions?.height || 1500;
+      // 使用传入的画布尺寸，如果没有则使用默认值
+      const canvasWidth = canvasDimensions?.width || 2000;
+      const canvasHeight = canvasDimensions?.height || 1500;
 
-    // 计算边界限制
-    const minX = 0;
-    const minY = 0;
-    const maxX = canvasWidth - nodeWidth;
-    const maxY = canvasHeight - nodeHeight;
+      // 计算边界限制
+      const minX = 0;
+      const minY = 0;
+      const maxX = canvasWidth - nodeWidth;
+      const maxY = canvasHeight - nodeHeight;
 
     // 当前新位置，用于在 handleMouseUp 中访问
     let newPosition = {
@@ -350,7 +350,7 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
       const nodeElement = document.querySelector(`[data-node-id="${node.id}"]`) as HTMLElement;
       if (nodeElement) {
         // 直接使用新位置同步回 Vue 数据
-        moveNode(node.id, newPosition);
+            moveNode(node.id, newPosition);
       }
 
       // 清除拖拽状态
