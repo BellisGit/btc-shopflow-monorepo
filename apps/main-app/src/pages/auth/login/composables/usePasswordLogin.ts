@@ -26,7 +26,8 @@ export function usePasswordLogin() {
       loading.value = true;
 
       // 调用登录接口
-      // 注意：token 会在 cookie 中，字段名为 access_token，不需要从响应中读取
+      // 注意：token 会在 cookie 中，字段名为 access_token
+      // 同时检查响应体中是否包含 token（向后兼容）
       const response = await authApi.login({
         username: formData.username,
         password: formData.password
@@ -34,9 +35,18 @@ export function usePasswordLogin() {
 
       ElMessage.success(t('登录成功'));
 
-      // token 已经通过 cookie 自动保存（字段名：access_token）
-      // 为了兼容性，也从 cookie 读取 token 保存到 localStorage（如果存在）
-      const token = getCookie('access_token');
+      // 优先从响应体获取 token（如果后端返回）
+      let token: string | null = null;
+      if (response?.token) {
+        token = response.token;
+      } else if (response?.accessToken) {
+        token = response.accessToken;
+      } else {
+        // 如果响应体没有 token，尝试从 cookie 读取
+        token = getCookie('access_token');
+      }
+
+      // 保存 token 到 localStorage（无论来源）
       if (token) {
         localStorage.setItem('token', token);
       }

@@ -36,10 +36,16 @@ export class Http {
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
         // 优先从 cookie 获取 token（字段名：access_token），如果没有则从 localStorage 获取（兼容旧代码）
+        // 注意：HttpOnly cookie 无法通过 JavaScript 读取，但浏览器会自动在请求中发送
         const token = getCookie('access_token') || localStorage.getItem('token') || '';
+        
+        
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
         }
+
+        // 确保 withCredentials 设置为 true（覆盖任何可能的配置覆盖）
+        config.withCredentials = true;
 
         // 添加租户ID请求头
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
@@ -71,8 +77,68 @@ export class Http {
 
     // 包装响应拦截器，添加请求日志记录和 token 刷新逻辑
     const onFulfilled = (response: any) => {
+      // 检查是否是登录接口的响应
+      const isLoginResponse = response.config?.url?.includes('/login');
+      
+      
       this.recordRequestLog(response, 'success');
-      return interceptor.onFulfilled(response);
+      const result = interceptor.onFulfilled(response);
+      
+      // 如果是登录响应，尝试从响应中提取 token 并保存
+      if (isLoginResponse) {
+        // 保存原始响应数据，因为拦截器可能会修改
+        const originalResponseData = response.data;
+        
+        // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
+        const setCookieHeaders = response.headers?.getSetCookie?.() || [];
+        if (setCookieHeaders.length > 0) {
+          // 查找包含 access_token 的 cookie
+          const accessTokenCookie = setCookieHeaders.find((cookie: string) => 
+            cookie.includes('access_token')
+          );
+          if (accessTokenCookie) {
+            // 尝试从 cookie 字符串中提取 token 值（仅用于调试，实际可能是 HttpOnly）
+            const tokenMatch = accessTokenCookie.match(/access_token=([^;]+)/);
+            if (tokenMatch && tokenMatch[1]) {
+              const extractedToken = tokenMatch[1];
+              // 保存到 localStorage 作为备份（即使 cookie 无法发送，也能用 Authorization header）
+              localStorage.setItem('token', extractedToken);
+            }
+          }
+        }
+        
+        // 延迟检查 cookie（等待浏览器设置完成）
+        setTimeout(() => {
+          const token = getCookie('access_token') || localStorage.getItem('token');
+          if (!token) {
+            // 尝试从原始响应数据中提取 token（可能在不同层级）
+            let tokenValue: string | null = null;
+            
+            // 检查原始响应数据
+            if (originalResponseData) {
+              tokenValue = originalResponseData.token || 
+                          originalResponseData.accessToken ||
+                          originalResponseData.data?.token ||
+                          originalResponseData.data?.accessToken ||
+                          originalResponseData.data?.data?.token;
+            }
+            
+            // 检查拦截器处理后的结果
+            if (!tokenValue && result) {
+              tokenValue = result.token || 
+                          result.accessToken ||
+                          result.data?.token ||
+                          result.data?.accessToken;
+            }
+            
+            if (tokenValue) {
+              localStorage.setItem('token', tokenValue);
+            }
+          }
+        }, 100);
+      }
+      
+      return result;
     };
 
     const onRejected = async (error: any) => {
@@ -211,12 +277,53 @@ export class Http {
   private recordRequestLog(response: any, status: 'success' | 'failed') {
     try {
       const config = response?.config || {};
+      
+      // 检查用户是否已登录，未登录时不记录日志
+      const token = getCookie('access_token') || localStorage.getItem('token') || '';
+      if (!token) {
+        return; // 未登录用户不记录请求日志
+      }
+
+      // 获取用户信息
+      let userId: number | undefined;
+      let userName: string | undefined;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          userId = user?.id;
+          userName = user?.name || user?.username;
+        }
+      } catch (err) {
+        // 获取用户信息失败，仍然记录日志但不包含用户信息
+        console.warn('获取用户信息失败:', err);
+      }
+
+      // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
+      if (!userId) {
+        return;
+      }
+
+      // 过滤不需要记录的接口（登录、验证码等公开接口）
+      const url = config.url || '';
+      const filteredPaths = [
+        '/login',
+        '/register',
+        '/captcha',
+        '/code/sms/send',
+        '/code/email/send',
+        '/refresh/access-token',
+        '/logout',
+        '/admin/system/log/sys/request/update',
+        '/admin/system/log/sys/operation/update'
+      ];
+      
+      if (filteredPaths.some(path => url.includes(path))) {
+        return; // 跳过这些接口的日志记录
+      }
+
       const startTime = config.metadata?.startTime || Date.now();
       const duration = Date.now() - startTime;
-
-      // 获取用户信息（暂时硬编码，等待token相关API实现）
-      const userId = 17610109231352;
-      const userName = 'Mose Lu';
 
       // 处理请求参数，确保是对象格式而不是字符串
       let params = {};
@@ -245,7 +352,7 @@ export class Http {
       // 记录请求日志
       requestLogger.add({
         userId,
-        username: userName,
+        username: userName || '',
         requestUrl: config.url || '',
         params, // 传入对象格式，在 add 方法中会被转换为 JSON 字符串
         ip: '', // 由后端从请求头中获取真实IP

@@ -136,11 +136,6 @@ $auth-mobile-breakpoint: 768px;
             height: $auth-input-height;
             color: var(--el-text-color-primary);
           }
-
-          &:-webkit-autofill {
-            -webkit-box-shadow: 0 0 0 1000px var(--el-fill-color-light) inset;
-            box-shadow: 0 0 0 1000px var(--el-fill-color-light) inset;
-          }
         }
       }
 

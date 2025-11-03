@@ -1,45 +1,51 @@
 <template>
-  <div class="password-login">
-    <!-- 登录表单 -->
-    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
-      <el-form-item prop="username">
-        <el-input
-          v-model="form.username"
-          :placeholder="t('请输入用户名或邮箱')"
-          size="large"
-          maxlength="50"
-        />
-      </el-form-item>
-      <el-form-item prop="password">
-        <el-input
-          v-model="form.password"
-          type="password"
-          :placeholder="t('请输入密码')"
-          size="large"
-          show-password
-          maxlength="20"
-          @keyup.enter="handleSubmit"
-        />
-      </el-form-item>
-    </el-form>
+  <BtcLoginFormLayout>
+    <template #form>
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+        <el-form-item prop="username">
+          <el-input
+            v-model="form.username"
+            name="username"
+            autocomplete="username"
+            :placeholder="t('请输入用户名或邮箱')"
+            size="large"
+            maxlength="50"
+            @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
+          />
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            v-model="form.password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            :placeholder="t('请输入密码')"
+            size="large"
+            show-password
+            maxlength="20"
+            @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
+          />
+        </el-form-item>
+      </el-form>
+    </template>
 
-    <!-- 登录按钮 -->
-    <div class="op">
+    <template #button>
       <el-button type="primary" size="large" :loading="loading" @click="handleSubmit">
         {{ t('立即登录') }}
       </el-button>
-    </div>
+    </template>
 
-    <!-- 忘记密码链接 -->
-    <div class="forgot-password-link">
-      <router-link to="/forget-password" class="link">
-        {{ t('忘记密码？') }}
-        <el-icon class="arrow-right">
-          <ArrowRight />
-        </el-icon>
-      </router-link>
-    </div>
-  </div>
+    <template #extra>
+      <div class="forgot-password-link">
+        <router-link to="/forget-password" class="link">
+          {{ t('忘记密码？') }}
+          <el-icon class="arrow-right">
+            <ArrowRight />
+          </el-icon>
+        </router-link>
+      </div>
+    </template>
+  </BtcLoginFormLayout>
 </template>
 
 <script setup lang="ts">
@@ -47,6 +53,8 @@ import { ref, reactive } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
+import BtcLoginFormLayout from '../../../shared/components/login-form-layout/index.vue';
+import { useFormEnterKey } from '../../../shared/composables/useFormEnterKey';
 
 defineOptions({
   name: 'BtcPasswordForm'
@@ -98,6 +106,12 @@ const handleSubmit = async () => {
   }
 };
 
+// 使用 Enter 键处理 Composable
+const { handleEnterKey } = useFormEnterKey({
+  formRef,
+  onSubmit: handleSubmit
+});
+
 // 暴露表单数据和方法供父组件使用
 defineExpose({
   form,
@@ -107,28 +121,17 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.password-login {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-
-  .form {
-    .el-form-item {
-      margin-bottom: 24px;
-    }
-
-    .el-input {
-      width: 100%;
-    }
+.form {
+  .el-form-item {
+    margin-bottom: 24px;
   }
 
-  .op {
+  .el-input {
     width: 100%;
-    margin-top: 4px; // 与表单的间距
-
-    .el-button {
-      width: 100%;
-    }
   }
+}
+
+.forgot-password-link {
+  margin-top: 16px;
 }
 </style>

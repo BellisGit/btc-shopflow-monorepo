@@ -81,7 +81,7 @@ export function useForgetPassword() {
 
     try {
       // 使用验证码 Composable 发送
-      await sendSmsCodeInternal(form.phone, 'reset-password');
+      await sendSmsCodeInternal(form.phone, 'reset');
     } catch (error) {
       // 错误已通过 onError 回调处理
     }

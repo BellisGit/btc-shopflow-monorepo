@@ -5,6 +5,8 @@
       <el-form-item prop="phone">
         <el-input
           v-model="form.phone"
+          name="phone"
+          autocomplete="tel"
           :placeholder="t('请输入手机号')"
           size="large"
           maxlength="11"
@@ -35,11 +37,14 @@
       <el-form-item prop="newPassword">
         <el-input
           v-model="form.newPassword"
+          name="newPassword"
           type="password"
+          autocomplete="new-password"
           :placeholder="t('请输入新密码')"
           size="large"
           show-password
           maxlength="20"
+          @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
         />
       </el-form-item>
 
@@ -47,12 +52,14 @@
       <el-form-item prop="confirmPassword">
         <el-input
           v-model="form.confirmPassword"
+          name="confirmPassword"
           type="password"
+          autocomplete="new-password"
           :placeholder="t('请确认新密码')"
           size="large"
           show-password
           maxlength="20"
-          @keyup.enter="handleSubmit"
+          @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
         />
       </el-form-item>
     </el-form>
@@ -67,10 +74,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import BtcSmsCodeInput from '../../../shared/components/sms-code-input/index.vue';
+import { useFormEnterKey } from '../../../shared/composables/useFormEnterKey';
 
 defineOptions({
   name: 'BtcForgetPasswordForm'
@@ -101,27 +109,45 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
 
-// 手机号输入框回车事件
-const handlePhoneEnter = () => {
-  if (!props.hasSentSms) {
-    emit('send-sms');
-  }
+// 提交表单
+const handleSubmit = async () => {
+  if (!formRef.value) return;
+  emit('submit');
 };
+
+// 使用 Enter 键处理 Composable
+const { handleEnterKey } = useFormEnterKey({
+  formRef,
+  onSubmit: handleSubmit
+});
 
 // 发送验证码
 const handleSendSmsCode = () => {
   emit('send-sms');
 };
 
+// 手机号输入框回车事件
+const handlePhoneEnter = async (event: KeyboardEvent) => {
+  if (!props.hasSentSms) {
+    // 如果还没发送验证码，发送验证码
+    event.preventDefault();
+    handleSendSmsCode();
+    // 发送成功后，自动聚焦验证码输入框
+    await nextTick();
+    setTimeout(() => {
+      if (props.hasSentSms) {
+        handleEnterKey(event, event.target as HTMLElement);
+      }
+    }, 100);
+  } else {
+    // 如果已发送验证码，聚焦验证码输入框
+    handleEnterKey(event, event.target as HTMLElement);
+  }
+};
+
 // 验证码输入完成
 const handleCodeComplete = () => {
   emit('code-complete');
-};
-
-// 提交表单
-const handleSubmit = () => {
-  if (!formRef.value) return;
-  emit('submit');
 };
 
 // 暴露表单引用供父组件使用

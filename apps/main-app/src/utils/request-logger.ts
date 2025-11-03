@@ -32,9 +32,14 @@ class RequestLogQueue {
   // 需要过滤的接口路径（不记录这些接口的日志）
   private readonly FILTERED_PATHS = [
     '/login',
-    '/upload',
+    '/register',
+    '/captcha',
+    '/code/sms/send',
+    '/code/email/send',
     '/refresh-token',
+    '/refresh/access-token',
     '/logout',
+    '/upload',
     '/admin/system/log/sys/request/update', // 过滤请求日志更新接口，避免循环记录
     '/admin/system/log/sys/operation/update' // 过滤操作日志更新接口
   ];

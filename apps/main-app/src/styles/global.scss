@@ -150,3 +150,19 @@ body.docs-mode-instant {
   }
 }
 
+// 彻底覆盖浏览器自动填充背景样式
+// 确保自动填充时输入框保持透明背景，不改变原来的样式
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 9999s ease-out 0s !important;
+}
+

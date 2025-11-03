@@ -50,6 +50,7 @@ export interface RefreshTokenResponse {
 export interface VerifyCodeRequest {
   captchaId: string;
   captcha: string;
+  smsType?: string; // 'login' | 'reset' 等，用于区分验证码类型
 }
 
 /**
@@ -68,6 +69,7 @@ export interface LoginRequest {
 export interface SmsLoginRequest {
   phone: string;
   smsCode: string;
+  smsType?: string; // 'login' | 'reset' 等，用于区分验证码类型
 }
 
 /**

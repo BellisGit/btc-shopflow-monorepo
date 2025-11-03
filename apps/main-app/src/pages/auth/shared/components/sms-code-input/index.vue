@@ -8,8 +8,12 @@
     >
       <input
         :ref="el => setInputRef(el as HTMLInputElement, index)"
+        :id="`sms-code-${index}`"
+        :name="`sms-code-${index}`"
         v-model="codes[index]"
         type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
         maxlength="1"
         :disabled="props.disabled"
         @input="handleInput(index, $event)"
@@ -202,7 +206,7 @@ defineExpose({
 <style lang="scss" scoped>
 .sms-code-input {
   display: flex;
-  gap: 16px;
+  gap: 12px; // 调整为更紧凑的间距，适配正方形输入框
   justify-content: space-between;
   align-items: center;
   width: 100%;
@@ -210,10 +214,11 @@ defineExpose({
   .code-box {
     position: relative;
     flex: 1;
-    max-width: 48px;
-    height: 48px;
+    max-width: 45px; // 保持与高度一致，形成正方形（与 $auth-input-height: 45px 一致）
+    width: 45px; // 固定宽度，确保正方形
+    height: 45px; // 统一与普通输入框高度一致（$auth-input-height: 45px）
     border: 1.5px solid var(--el-border-color-light);
-    border-radius: 12px;
+    border-radius: 10px;
     background-color: var(--el-fill-color-lighter);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -243,14 +248,14 @@ defineExpose({
       }
     }
 
-    input {
+      input {
       width: 100%;
       height: 100%;
       border: none;
       outline: none;
       background: transparent;
       text-align: center;
-      font-size: 20px;
+      font-size: 20px; // 适配 45px 输入框
       font-weight: 700;
       letter-spacing: 0;
       color: var(--el-text-color-primary);
@@ -285,15 +290,16 @@ defineExpose({
 // 响应式设计
 @media (max-width: 768px) {
   .sms-code-input {
-    gap: 12px;
+    gap: 10px;
 
     .code-box {
-      max-width: 42px;
-      height: 42px;
-      border-radius: 10px;
+      max-width: 36px;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
 
       input {
-        font-size: 18px;
+        font-size: 16px;
       }
     }
   }
@@ -301,15 +307,16 @@ defineExpose({
 
 @media (max-width: 480px) {
   .sms-code-input {
-    gap: 10px;
+    gap: 8px;
 
     .code-box {
-      max-width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      max-width: 32px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
 
       input {
-        font-size: 16px;
+        font-size: 14px;
       }
     }
   }

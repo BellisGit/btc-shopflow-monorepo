@@ -1,38 +1,42 @@
 <template>
-  <div class="sms-login">
-    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
-      <el-form-item prop="phone">
-        <el-input
-          v-model="form.phone"
-          :placeholder="t('请输入手机号')"
-          size="large"
-          maxlength="11"
-          @keyup.enter="handlePhoneEnter"
-        >
-          <template #suffix>
-            <el-button
-              :disabled="!canSend || !form.phone"
-              :loading="sending"
-              @click="handleSendSmsCode"
-              class="sms-btn"
-            >
-              {{ countdown > 0 ? `${countdown}s` : t('获取验证码') }}
-            </el-button>
-          </template>
-        </el-input>
-      </el-form-item>
+  <BtcLoginFormLayout>
+    <template #form>
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+        <el-form-item prop="phone">
+          <el-input
+            v-model="form.phone"
+            name="phone"
+            autocomplete="tel"
+            :placeholder="t('请输入手机号')"
+            size="large"
+            maxlength="11"
+            class="phone-input"
+            @keyup.enter="handlePhoneEnter"
+          >
+            <template #suffix>
+              <el-button
+                :disabled="!canSend || !form.phone"
+                :loading="sending"
+                @click="handleSendSmsCode"
+                class="sms-btn"
+              >
+                {{ countdown > 0 ? `${countdown}s` : t('获取验证码') }}
+              </el-button>
+            </template>
+          </el-input>
+        </el-form-item>
 
-      <el-form-item prop="smsCode">
-        <BtcSmsCodeInput
-          v-model="form.smsCode"
-          :disabled="!hasSent"
-          @complete="handleCodeComplete"
-        />
-      </el-form-item>
-    </el-form>
+        <el-form-item prop="smsCode">
+          <BtcSmsCodeInput
+            v-model="form.smsCode"
+            :disabled="!hasSent"
+            @complete="handleCodeComplete"
+          />
+        </el-form-item>
+      </el-form>
+    </template>
 
-    <!-- 登录按钮 -->
-    <div class="op">
+    <template #button>
       <el-button
         type="primary"
         size="large"
@@ -42,18 +46,20 @@
       >
         {{ t('立即登录') }}
       </el-button>
-    </div>
-  </div>
+    </template>
+  </BtcLoginFormLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, nextTick } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { useSmsCode } from '@btc/shared-core';
 import { codeApi } from '@/modules/api-services';
+import BtcLoginFormLayout from '../../../shared/components/login-form-layout/index.vue';
 import BtcSmsCodeInput from '../../../shared/components/sms-code-input/index.vue';
+import { useFormEnterKey } from '../../../shared/composables/useFormEnterKey';
 
 defineOptions({
   name: 'BtcSmsForm'
@@ -115,6 +121,24 @@ const {
   }
 });
 
+// 提交函数
+const handleSubmit = async () => {
+  if (!formRef.value) return;
+  
+  try {
+    await formRef.value.validate();
+    emit('submit', { ...form });
+  } catch {
+    // 验证失败
+  }
+};
+
+// 使用 Enter 键处理 Composable（用于验证码输入框和其他输入框）
+const { handleEnterKey: handleFormEnterKey } = useFormEnterKey({
+  formRef,
+  onSubmit: handleSubmit
+});
+
 // 发送验证码
 const handleSendSmsCode = async () => {
   if (!formRef.value) return;
@@ -131,27 +155,26 @@ const handleSendSmsCode = async () => {
 };
 
 // 手机号输入框回车事件
-const handlePhoneEnter = () => {
+const handlePhoneEnter = async (event: KeyboardEvent) => {
   if (!hasSent.value) {
-    handleSendSmsCode();
+    // 如果还没发送验证码，发送验证码
+    event.preventDefault();
+    await handleSendSmsCode();
+    // 发送成功后，自动聚焦验证码输入框
+    if (hasSent.value) {
+      await nextTick();
+      // 聚焦下一个输入框（验证码输入框）
+      handleFormEnterKey(event, event.target as HTMLElement);
+    }
+  } else {
+    // 如果已发送验证码，聚焦验证码输入框
+    handleFormEnterKey(event, event.target as HTMLElement);
   }
 };
 
 // 验证码输入完成
 const handleCodeComplete = () => {
   emit('code-complete');
-};
-
-// 提交函数
-const handleSubmit = async () => {
-  if (!formRef.value) return;
-  
-  try {
-    await formRef.value.validate();
-    emit('submit', { ...form });
-  } catch {
-    // 验证失败
-  }
 };
 
 // 暴露表单数据和方法供父组件使用
@@ -166,55 +189,59 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.sms-login {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+.form {
+  .el-form-item {
+    margin-bottom: 24px;
+  }
 
-  .form {
-    .el-form-item {
-      margin-bottom: 24px;
+  .el-input {
+    width: 100%;
+  }
+
+  // 强制覆盖手机号输入框的自动填充背景，保持 Element Plus 默认样式
+  :deep(.phone-input .el-input__wrapper),
+  :deep(.el-form-item .el-input__wrapper) {
+    // 移除任何可能的半透明蓝色背景（#465A7E66），使用 Element Plus 默认背景色
+    &[style*="#465A7E"],
+    &[style*="465A7E66"],
+    &[style*="rgba(70, 90, 126"] {
+      background: var(--el-fill-color-blank) !important;
+      background-color: var(--el-fill-color-blank) !important;
     }
-
-    .el-input {
-      width: 100%;
-    }
-
-    :deep(.sms-btn) {
-      font-size: 14px;
-      padding: 8px 12px;
-      height: auto;
-      min-width: 80px;
-      border: none;
-      background: none;
-      color: var(--el-text-color-regular);
-      transition: all 0.3s ease;
-
-      &:hover:not(.is-disabled) {
-        color: var(--el-color-primary);
-        background-color: rgba(64, 158, 255, 0.1);
-      }
-
-      &:active:not(.is-disabled) {
-        transform: translateY(1px);
-        background-color: rgba(64, 158, 255, 0.2);
-      }
-
-      &.is-disabled {
-        color: var(--el-text-color-disabled) !important;
-        background: none !important;
-        border: none !important;
-        cursor: not-allowed !important;
-      }
+    
+    // 当包含自动填充的输入框时，使用 Element Plus 默认背景色
+    &:has(input:-webkit-autofill),
+    &:has(.el-input__inner:-webkit-autofill) {
+      background-color: var(--el-fill-color-blank) !important;
+      background: var(--el-fill-color-blank) !important;
     }
   }
 
-  .op {
-    width: 100%;
-    margin-top: 8px;
+  :deep(.sms-btn) {
+    font-size: 14px;
+    padding: 8px 12px;
+    height: auto;
+    min-width: 80px;
+    border: none;
+    background: none;
+    color: var(--el-text-color-regular);
+    transition: all 0.3s ease;
 
-    .el-button {
-      width: 100%;
+    &:hover:not(.is-disabled) {
+      color: var(--el-color-primary);
+      background-color: rgba(64, 158, 255, 0.1);
+    }
+
+    &:active:not(.is-disabled) {
+      transform: translateY(1px);
+      background-color: rgba(64, 158, 255, 0.2);
+    }
+
+    &.is-disabled {
+      color: var(--el-text-color-disabled) !important;
+      background: none !important;
+      border: none !important;
+      cursor: not-allowed !important;
     }
   }
 }

@@ -114,7 +114,12 @@ const handlePasswordSubmit = async (form: { username: string; password: string }
 
 // 短信登录提交
 const handleSmsSubmit = async (form: { phone: string; smsCode: string }) => {
-  await smsSubmit(form);
+  try {
+    await smsSubmit(form);
+  } catch (error) {
+    // 错误已在 useSmsLogin 中处理，这里只是防止未捕获的错误
+    console.error('登录提交错误:', error);
+  }
 };
 
 // 发送短信验证码（已由SmsForm内部处理，这里只是占位）

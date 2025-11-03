@@ -81,7 +81,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   logout(): Promise<void> {
-    return http.post('/admin/system/iam/sys/logout');
+    return http.get('/admin/system/iam/sys/logout');
   },
 
   /**

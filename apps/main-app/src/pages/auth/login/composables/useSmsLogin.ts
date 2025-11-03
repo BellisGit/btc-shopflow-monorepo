@@ -26,19 +26,40 @@ export function useSmsLogin() {
       loading.value = true;
 
       // 调用短信登录接口
-      // 注意：token 会在 cookie 中，字段名为 access_token，不需要从响应中读取
+      // 注意：token 会在 cookie 中，字段名为 access_token
+      // 同时检查响应体中是否包含 token（向后兼容）
       const response = await authApi.loginBySms({
         phone: formData.phone,
-        smsCode: formData.smsCode
+        smsCode: formData.smsCode,
+        smsType: 'login'
       });
 
       ElMessage.success(t('登录成功'));
 
-      // token 已经通过 cookie 自动保存（字段名：access_token）
-      // 为了兼容性，也从 cookie 读取 token 保存到 localStorage（如果存在）
-      const token = getCookie('access_token');
+      // 优先从响应体获取 token（如果后端返回）
+      let token: string | null = null;
+      if (response?.token) {
+        token = response.token;
+      } else if (response?.accessToken) {
+        token = response.accessToken;
+      } else {
+        // 如果响应体没有 token，尝试从 cookie 读取
+        token = getCookie('access_token');
+      }
+
+      // 保存 token 到 localStorage（无论来源）
       if (token) {
         localStorage.setItem('token', token);
+      } else {
+        // 调试：检查登录响应和 cookie
+        if (import.meta.env.DEV) {
+          console.warn('[SMS Login] No token found:', {
+            responseKeys: response ? Object.keys(response) : [],
+            response: response,
+            cookies: document.cookie.split(';').map(c => c.trim()),
+            hasAccessTokenInCookie: document.cookie.includes('access_token')
+          });
+        }
       }
 
       // 保存用户信息（如果响应中包含用户信息）
@@ -51,7 +72,7 @@ export function useSmsLogin() {
     } catch (error: any) {
       console.error('登录错误:', error);
       ElMessage.error(error.message || t('登录失败'));
-      throw error;
+      // 不再抛出错误，避免在父组件中产生未处理的错误
     } finally {
       loading.value = false;
     }

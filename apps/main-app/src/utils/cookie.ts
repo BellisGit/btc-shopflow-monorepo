@@ -33,8 +33,18 @@ export function getCookie(name: string): string | null {
  * @param name cookie 名称
  * @param value cookie 值
  * @param days 过期天数（可选）
+ * @param options 额外选项（SameSite、Secure 等）
  */
-export function setCookie(name: string, value: string, days?: number): void {
+export function setCookie(
+  name: string,
+  value: string,
+  days?: number,
+  options?: {
+    sameSite?: 'Strict' | 'Lax' | 'None';
+    secure?: boolean;
+    domain?: string;
+  }
+): void {
   if (typeof document === 'undefined') {
     return;
   }
@@ -45,19 +55,58 @@ export function setCookie(name: string, value: string, days?: number): void {
     date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
     expires = '; expires=' + date.toUTCString();
   }
-  
-  document.cookie = name + '=' + value + expires + '; path=/';
+
+  let cookieString = name + '=' + value + expires + '; path=/';
+
+  // 添加 SameSite 属性（默认 Lax，兼容性最好）
+  if (options?.sameSite) {
+    cookieString += `; SameSite=${options.sameSite}`;
+  } else {
+    cookieString += '; SameSite=Lax';
+  }
+
+  // 添加 Secure 属性（仅在 HTTPS 时设置）
+  if (options?.secure && location.protocol === 'https:') {
+    cookieString += '; Secure';
+  }
+
+  // 添加 domain 属性（如果指定）
+  if (options?.domain) {
+    cookieString += `; Domain=${options.domain}`;
+  }
+
+  document.cookie = cookieString;
 }
 
 /**
  * 删除 cookie
  * @param name cookie 名称
+ * @param options 额外选项（domain 等）
  */
-export function deleteCookie(name: string): void {
+export function deleteCookie(
+  name: string,
+  options?: {
+    domain?: string;
+    path?: string;
+  }
+): void {
   if (typeof document === 'undefined') {
     return;
   }
-  
-  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+  const path = options?.path || '/';
+  let cookieString = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=' + path + ';';
+
+  // 如果指定了 domain，也需要删除该 domain 下的 cookie
+  if (options?.domain) {
+    cookieString += ` Domain=${options.domain};`;
+  }
+
+  document.cookie = cookieString;
+
+  // 尝试删除当前 domain 下的 cookie（如果没有指定 domain）
+  if (!options?.domain) {
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=' + path + ';';
+  }
 }
 

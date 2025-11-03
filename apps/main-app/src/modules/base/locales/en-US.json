@@ -155,5 +155,17 @@
   "发送验证码失败": "Failed to send verification code",
   "登录成功": "Login successful",
   "登录失败": "Login failed",
-  "auth.register": "Register"
+  "auth.register": "Register",
+  "auth.forget_password": "Forgot Password",
+  "请输入新密码": "Please enter new password",
+  "请确认密码": "Please confirm password",
+  "请确认新密码": "Please confirm new password",
+  "返回登录": "Back to Login",
+  "重置密码": "Reset Password",
+  "密码重置成功，请重新登录": "Password reset successful, please login again",
+  "两次输入的密码不一致": "The two passwords do not match",
+  "请再次输入密码": "Please enter password again",
+  "立即注册": "Register Now",
+  "注册成功": "Registration successful",
+  "注册失败，请重试": "Registration failed, please try again"
 }
