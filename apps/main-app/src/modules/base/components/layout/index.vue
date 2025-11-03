@@ -1,5 +1,8 @@
 <template>
   <div class="app-layout" :class="{ 'is-collapse': isCollapse, 'is-full': isFullscreen }">
+    <!-- 遮罩层（移动端使用） -->
+    <div class="app-layout__mask" @click="handleMaskClick"></div>
+
     <!-- 顶栏（包含汉堡菜单、Logo、折叠按钮、搜索、主题、语言、用户） -->
     <div class="app-layout__topbar">
       <Topbar
@@ -67,6 +70,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
+import { useBrowser } from '@/composables/useBrowser';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -86,6 +90,12 @@ const isCollapse = ref(false);
 const drawerVisible = ref(false);
 const isFullscreen = ref(false);
 const viewKey = ref(1); // 主应用视图 key
+
+// 浏览器信息
+const { browser, onScreenChange } = useBrowser();
+
+// 跟踪之前的 isMini 状态，只在真正切换移动端/桌面端时才改变折叠状态
+let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由
 const isMainApp = computed(() => {
@@ -142,6 +152,11 @@ const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value;
 };
 
+// 遮罩层点击事件（移动端关闭侧边栏）
+const handleMaskClick = () => {
+  isCollapse.value = true;
+};
+
 // 刷新视图
 function refreshView() {
   if (isMainApp.value) {
@@ -154,6 +169,15 @@ function refreshView() {
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
+
+  // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
+  onScreenChange(() => {
+    // 只在 isMini 状态真正改变时才更新折叠状态（从桌面端切换到移动端，或反之）
+    if (prevIsMini !== browser.isMini) {
+      isCollapse.value = browser.isMini;
+      prevIsMini = browser.isMini;
+    }
+  }, true); // immediate = true，立即执行一次，确保初始状态正确
 });
 
 onUnmounted(() => {
@@ -204,6 +228,17 @@ onUnmounted(() => {
     overflow: hidden;
     width: calc(100% - 255px);
     transition: width 0.2s ease-in-out;
+  }
+
+  &__mask {
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    height: 100%;
+    width: 100%;
+    z-index: 999;
+    display: none;
   }
 
   &__content {
@@ -288,6 +323,59 @@ onUnmounted(() => {
 
     .app-layout__main {
       width: calc(100% - 64px);
+    }
+  }
+
+  // 移动端响应式样式（<= 768px）
+  @media only screen and (max-width: 768px) {
+    &__sidebar {
+      position: absolute;
+      left: 0;
+      z-index: 9999;
+      transition:
+        transform 0.3s cubic-bezier(0.7, 0.3, 0.1, 1),
+        box-shadow 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
+    }
+
+    &__main {
+      width: 100%;
+    }
+
+    &__mask {
+      display: block;
+    }
+
+    &.is-collapse {
+      .app-layout__sidebar {
+        transform: translateX(-100%);
+      }
+
+      .app-layout__mask {
+        display: none;
+      }
+    }
+  }
+
+  // 桌面端响应式样式（> 768px）
+  @media only screen and (min-width: 768px) {
+    &__sidebar,
+    &__main {
+      transition: width 0.2s ease-in-out;
+    }
+
+    &__mask {
+      display: none;
+    }
+
+    &.is-collapse {
+      .app-layout__sidebar {
+        width: 64px;
+        transform: none;
+      }
+
+      .app-layout__main {
+        width: calc(100% - 64px);
+      }
     }
   }
 

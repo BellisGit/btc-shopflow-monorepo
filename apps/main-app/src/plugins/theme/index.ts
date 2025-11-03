@@ -26,7 +26,7 @@ export const themePlugin: Plugin = {
   toolbar: {
     order: 3, // 国际化之后
     pc: true,
-    h5: true,
+    h5: false, // 移动端隐藏主题切换器
     component: () => import('../../modules/base/components/layout/theme-switcher/index.vue')
   }
 };

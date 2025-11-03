@@ -28,15 +28,15 @@
         <btc-svg :name="isCollapse ? 'expand' : 'fold'" />
       </div>
 
-      <!-- 全局搜索 -->
-      <GlobalSearch />
+      <!-- 全局搜索（移动端隐藏） -->
+      <GlobalSearch v-if="!browser.isMini" />
     </div>
 
     <div class="topbar__right">
       <!-- 工具栏 -->
       <ul class="topbar__tools">
-        <!-- 动态插件工具栏组件（按order排序） -->
-        <li v-for="toolbarConfig in toolbarComponents" :key="toolbarConfig.order">
+        <!-- 动态插件工具栏组件（按order排序，根据移动端/桌面端过滤） -->
+        <li v-for="toolbarConfig in filteredToolbarComponents" :key="toolbarConfig.order">
           <component :is="toolbarConfig.component" />
         </li>
       </ul>
@@ -95,6 +95,7 @@ import { useMessage } from '@/utils/use-message';
 import { usePluginManager } from '@btc/shared-core';
 import { useUser } from '@/composables/useUser';
 import { useLogout } from '@/composables/useLogout';
+import { useBrowser } from '@/composables/useBrowser';
 import GlobalSearch from '../global-search/index.vue';
 
 interface Props {
@@ -116,6 +117,9 @@ defineEmits<{
 const { t } = useI18n();
 const router = useRouter();
 
+// 浏览器信息
+const { browser } = useBrowser();
+
 // 插件管理器
 const pluginManager = usePluginManager();
 
@@ -125,6 +129,24 @@ const { logout } = useLogout();
 
 // 动态工具栏组件
 const toolbarComponents = ref<any[]>([]);
+
+// 过滤后的工具栏组件（根据移动端/桌面端显示）
+const filteredToolbarComponents = computed(() => {
+  return toolbarComponents.value.filter(config => {
+    // 与 cool-admin 完全一致的过滤逻辑
+    if (browser.isMini) {
+      // 移动端：使用 h5 属性，如果未定义则默认为 true
+      // 注意：如果 h5 为 false，则隐藏；如果 h5 为 true 或 undefined，则显示
+      const shouldShow = config.h5 ?? true;
+      return shouldShow;
+    } else {
+      // 桌面端：使用 pc 属性，如果未定义则默认为 true
+      // 注意：如果 pc 为 false，则隐藏；如果 pc 为 true 或 undefined，则显示
+      const shouldShow = config.pc ?? true;
+      return shouldShow;
+    }
+  });
+});
 
 // 用户信息（从 useUser 获取，提供默认值）
 const userInfo = computed(() => {
@@ -220,6 +242,7 @@ const handleCommand = (command: string) => {
   flex-shrink: 0;
 
   // 品牌区域（汉堡菜单 + Logo，与侧边栏宽度一致）
+  // 无论屏幕大小，都与侧边栏同步折叠和展开
   &__brand {
     display: flex;
     align-items: stretch;
@@ -229,6 +252,7 @@ const handleCommand = (command: string) => {
     transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
 
+    // 与侧边栏同步折叠
     &.is-collapse {
       width: 64px; // 折叠时只显示汉堡菜单
 
