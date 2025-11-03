@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie } from './cookie';
+import { getCookie, deleteCookie } from './cookie';
 
 /**
  * HTTP 请求工具 - 基于 axios，参考 cool-admin 的实现
@@ -201,7 +201,6 @@ export class Http {
           this.isRefreshing = false;
           
           // 清除 cookie 和 localStorage
-          const { deleteCookie } = await import('./cookie');
           deleteCookie('access_token');
           localStorage.removeItem('token');
           
@@ -314,8 +313,8 @@ export class Http {
         '/code/email/send',
         '/refresh/access-token',
         '/logout',
-        '/admin/system/log/sys/request/update',
-        '/admin/system/log/sys/operation/update'
+        '/api/system/log/sys/request/update',
+        '/api/system/log/sys/operation/update'
       ];
       
       if (filteredPaths.some(path => url.includes(path))) {

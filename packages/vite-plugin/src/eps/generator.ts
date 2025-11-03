@@ -6,13 +6,11 @@ import { createDir, error, readFile, writeFile } from '../utils';
 const service: any = {};
 let epsList: any[] = [];
 
-// EPS 数据缓存（移除，使用 index.ts 中的统一缓存）
-
 /**
  * 获取 EPS 请求地址
  */
 function getEpsUrl(epsUrl: string): string {
-  return epsUrl || '/api/v1/eps';
+  return epsUrl || '/api/login/eps/contract';
 }
 
 /**
@@ -55,17 +53,17 @@ function firstUpperCase(str: string): string {
  * 从远程获取 EPS 数据
  */
 export async function fetchEpsData(epsUrl: string, reqUrl: string) {
-  // 如果 reqUrl 是完整的 URL（包含协议），说明是直接请求后端，不需要重写
-  // 如果 reqUrl 是空字符串或相对路径，说明是通过 Vite 代理，需要重写
-  let processedEpsUrl = epsUrl;
+  let finalUrl: string;
+
   if (!reqUrl || reqUrl.startsWith('/')) {
-    // 通过 Vite 代理时，去掉 /admin 前缀
-    processedEpsUrl = epsUrl.startsWith('/admin') ? epsUrl.replace(/^\/admin/, '') : epsUrl;
+    // 通过代理或相对路径：使用相对路径，保持 /api 前缀
+    finalUrl = getEpsUrl(epsUrl);
+  } else {
+    finalUrl = reqUrl + getEpsUrl(epsUrl);
   }
-  const url = reqUrl + getEpsUrl(processedEpsUrl);
 
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get(finalUrl, {
       timeout: 5000
     });
 
@@ -92,7 +90,7 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
     }
   } catch (err) {
     // 简化错误日志，只显示关键信息
-    error(`API service is not running → ${url}`);
+    error(`API service is not running → ${finalUrl}`);
   }
 
   return [];
@@ -112,7 +110,7 @@ async function getData(epsUrl: string, _reqUrl: string, outputDir: string, cache
       // 检查是否是新的扁平化格式（数组）
       if (Array.isArray(localData)) {
         epsList = localData;
-      } 
+      }
       // 兼容旧的 API 响应格式
       else if (localData.data) {
         const entities: any[] = [];
@@ -142,7 +140,9 @@ async function getData(epsUrl: string, _reqUrl: string, outputDir: string, cache
   // 初始化处理，补全缺省字段
   epsList.forEach((e) => {
     // 如果没有namespace，使用prefix作为namespace
-    if (!e.namespace) e.namespace = e.prefix || '';
+    if (!e.namespace) {
+      e.namespace = e.prefix || '';
+    }
     if (!e.api) e.api = [];
     if (!e.columns) e.columns = [];
     if (!e.pageColumns) e.pageColumns = [];
@@ -189,10 +189,11 @@ function createService(_epsUrl: string) {
     const serviceKey = e.name ? e.name.toLowerCase().replace(/entity$/, '') : 'unknown';
 
     // 根据 prefix 构建完整的服务路径
-    // 例如: "admin/system/log/sys/operation" -> ["system", "log", "sys", "operation"]
+    // 例如: "admin/system/log/sys/operation" 或 "api/system/log/sys/operation" -> ["system", "log", "sys", "operation"]
+    // 过滤掉前缀部分（admin 或 api），只保留实际的业务路径
     const prefix = e.prefix || '';
-    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin');
-    
+    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin' && part !== 'api');
+
     // 构建嵌套的服务对象
     let currentLevel = service;
     for (let i = 0; i < pathParts.length - 1; i++) {
@@ -271,12 +272,12 @@ function createServiceCode(): { content: string; types: string[] } {
     if (!d || typeof d !== 'object' || d === null) {
       return;
     }
-    
+
     // 循环检测：如果已经访问过此对象，跳过（防止循环引用）
     if (visited.has(d)) {
       return;
     }
-    
+
     // 标记当前对象为已访问
     visited.add(d);
 
@@ -304,8 +305,13 @@ function createServiceCode(): { content: string; types: string[] } {
       if (!checkName(name)) continue;
 
       if (value.namespace) {
-        // 查找配置
-        const item = epsList.find((e) => (e.prefix || '') === `/${value.namespace}`);
+        // 查找配置（namespace 已经规范化，直接与 prefix 比较）
+        // 确保 namespace 格式正确（以 / 开头）
+        const normalizedNs = value.namespace.startsWith('/') ? value.namespace : `/${value.namespace}`;
+        const item = epsList.find((e) => {
+          const normalizedPrefix = (e.prefix || '').startsWith('/') ? (e.prefix || '') : `/${e.prefix || ''}`;
+          return normalizedPrefix === normalizedNs;
+        });
 
         if (item) {
           let t = `{`;

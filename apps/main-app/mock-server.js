@@ -28,7 +28,7 @@ const mockEpsData = {
 };
 
 const server = http.createServer((req, res) => {
-	if (req.url === '/admin/base/open/eps') {
+	if (req.url === '/api/base/open/eps') {
 		res.writeHead(200, {
 			'Content-Type': 'application/json',
 			'Access-Control-Allow-Origin': '*',

@@ -56,7 +56,7 @@ export async function bootstrap(app: App) {
     if (event.reason && event.reason.name === 'AxiosError') {
       // 检查是否是接口测试中心的请求（通过URL路径判断）
       const url = event.reason.config?.url || '';
-      const isTestCenterRequest = url.includes('/admin/system/test/');
+      const isTestCenterRequest = url.includes('/api/system/test/');
 
       if (!isTestCenterRequest) {
         // 静默处理非测试中心的axios错误，不打印到控制台
@@ -117,7 +117,7 @@ export async function bootstrap(app: App) {
       if (this.readyState === 4) {
         // 检查是否是接口测试中心的请求
         const url = (this as any)._url || '';
-        const isTestCenterRequest = url.includes('/admin/system/test/');
+        const isTestCenterRequest = url.includes('/api/system/test/');
 
         // 如果是404错误且不是测试中心的请求，阻止默认的错误日志显示
         if (this.status === 404 && !isTestCenterRequest) {

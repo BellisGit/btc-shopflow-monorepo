@@ -40,8 +40,8 @@ class RequestLogQueue {
     '/refresh/access-token',
     '/logout',
     '/upload',
-    '/admin/system/log/sys/request/update', // 过滤请求日志更新接口，避免循环记录
-    '/admin/system/log/sys/operation/update' // 过滤操作日志更新接口
+    '/api/system/log/sys/request/update', // 过滤请求日志更新接口，避免循环记录
+    '/api/system/log/sys/operation/update' // 过滤操作日志更新接口
   ];
 
   constructor() {
@@ -236,8 +236,8 @@ class RequestLogQueue {
       return false;
     }
 
-    // 只记录业务接口（以 /admin/ 开头的请求）
-    if (!url.startsWith('/admin/')) {
+    // 只记录业务接口（以 /api/ 开头的请求）
+    if (!url.startsWith('/api/')) {
       return false;
     }
 

@@ -16,7 +16,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
-    return http.post('/admin/system/iam/sys/code/sms/send', data);
+    return http.post('/api/system/iam/sys/code/sms/send', data);
   },
 
   /**
@@ -25,7 +25,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendEmailCode(data: { email: string; type?: string }): Promise<void> {
-    return http.post('/admin/system/iam/sys/code/email/send', data);
+    return http.post('/api/system/iam/sys/code/email/send', data);
   }
 };
 

@@ -138,13 +138,13 @@ const columns = computed(() => [
 // 由于deletelog服务可能还未在EPS中注册，我们直接使用HTTP请求
 const recycleService = {
   page: async (data?: any) => {
-    return await http.post('/admin/system/log/sys/deletelog/page', data || {});
+    return await http.post('/api/system/log/sys/deletelog/page', data || {});
   },
   restore: async (data: any) => {
-    return await http.post('/admin/system/log/sys/deletelog/restore', data);
+    return await http.post('/api/system/log/sys/deletelog/restore', data);
   },
   restoreBatch: async (data: any) => {
-    return await http.post('/admin/system/log/sys/deletelog/restore/batch', data);
+    return await http.post('/api/system/log/sys/deletelog/restore/batch', data);
   },
   // 添加CRUD必需的方法（数据回收站不需要这些功能）
   add: async () => {

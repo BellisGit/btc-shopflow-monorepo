@@ -245,7 +245,7 @@ const fileList = ref<any[]>([]);
 // 上传配置
 const uploadAction = computed(() => {
   // TODO: 替换为实际的上传接口
-  return '/api/admin/base/open/upload';
+  return '/api/base/open/upload';
 });
 
 const uploadHeaders = computed(() => {

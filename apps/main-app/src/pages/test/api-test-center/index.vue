@@ -175,7 +175,7 @@ function generateTestCases() {
     description: '测试404错误处理（后端不存在此接口）',
     method: 'test404', // 这个方法在后端不存在
     isCustomRequest: true, // 标记为自定义请求
-    customPath: '/admin/system/test/404', // 自定义请求路径
+    customPath: '/api/system/test/404', // 自定义请求路径
     loading: false,
     success: false,
     error: false,
@@ -191,7 +191,7 @@ function generateTestCases() {
     description: '测试响应拦截器是否正常工作（请求已知存在的接口）',
     method: 'testInterceptor', // 这个方法在后端不存在
     isCustomRequest: true, // 标记为自定义请求
-    customPath: '/admin/system/user/page', // 请求一个已知存在的接口
+    customPath: '/api/system/user/page', // 请求一个已知存在的接口
     loading: false,
     success: false,
     error: false,

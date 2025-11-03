@@ -42,7 +42,7 @@ export function btc(options: Partial<BtcPluginConfig> & { proxy?: any } = {}) {
   if (config.eps?.enable !== false) {
     plugins.push(
       epsPlugin({
-        epsUrl: config.eps?.api || '/admin/login/eps/contract',
+        epsUrl: config.eps?.api || '/api/login/eps/contract',
         outputDir: config.eps?.dist || 'build/eps',
         reqUrl: config.reqUrl || '',
       })
