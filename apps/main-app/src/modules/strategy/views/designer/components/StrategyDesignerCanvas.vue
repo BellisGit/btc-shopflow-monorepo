@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="canvas-container">
     <!-- SVG 画布 -->
     <svg

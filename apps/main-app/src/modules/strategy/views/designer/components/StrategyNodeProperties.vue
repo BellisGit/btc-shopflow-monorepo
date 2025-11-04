@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-node-properties">
     <!-- 基础属性 -->
     <div class="property-section">

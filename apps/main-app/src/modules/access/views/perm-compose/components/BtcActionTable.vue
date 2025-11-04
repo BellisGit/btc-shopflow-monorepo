@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="data">
     <el-scrollbar>
       <!-- 组合模式表格 -->

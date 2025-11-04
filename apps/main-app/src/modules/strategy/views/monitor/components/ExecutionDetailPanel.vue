@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="execution-detail-panel">
     <el-row :gutter="16">
       <!-- 执行概览 -->

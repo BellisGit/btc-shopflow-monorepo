@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="menu-preview-page">
     <div class="preview-container">
       <!-- ???? -->
@@ -81,10 +81,10 @@ defineOptions({
 
 // Mock??
 const message = useMessage();
-const _userService = service.system?.iam?.sys.user;
-const _roleService = service.system?.iam?.sys.role;
+const _userService = service.system?.iam?.user;
+const _roleService = service.system?.iam?.role;
 
-const menuService = service.system?.iam?.sys.menu;
+const menuService = service.system?.iam?.menu;
 
 // ?????
 const roles = ref<any[]>([]);

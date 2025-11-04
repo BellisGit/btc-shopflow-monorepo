@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <!-- SVG 画布，网格背景由外部作为兄弟元素提供 -->
   <svg
     ref="svgRef"

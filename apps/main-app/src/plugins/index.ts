@@ -3,6 +3,7 @@ import { exportJsonToExcel } from '@btc/shared-core';
 import { githubPlugin } from './github';
 import { i18nPlugin as i18nToolbarPlugin } from './i18n';
 import { themePlugin as themeToolbarPlugin } from './theme';
+import { userSettingPlugin } from './user-setting';
 
 /**
  * Excel 插件
@@ -31,7 +32,7 @@ export const excelPlugin: Plugin = {
 /**
  * 导出所有插件
  */
-export { githubPlugin, i18nToolbarPlugin, themeToolbarPlugin };
+export { githubPlugin, i18nToolbarPlugin, themeToolbarPlugin, userSettingPlugin };
 
 /**
  * 通知插件（示例）

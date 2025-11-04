@@ -1,0 +1,64 @@
+/**
+ * 清理构建缓存脚本
+ * 在构建前自动清理 Vite 缓存和旧的构建输出
+ */
+
+import { existsSync, rmSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const rootDir = join(__dirname, '..');
+
+const pathsToClean = [
+  // 应用的 Vite 缓存
+  'apps/main-app/node_modules/.vite',
+  'apps/logistics-app/node_modules/.vite',
+  'apps/engineering-app/node_modules/.vite',
+  'apps/quality-app/node_modules/.vite',
+  'apps/production-app/node_modules/.vite',
+  'apps/docs-site/node_modules/.vite',
+  
+  // 应用的构建输出
+  'apps/main-app/dist',
+  'apps/logistics-app/dist',
+  'apps/engineering-app/dist',
+  'apps/quality-app/dist',
+  'apps/production-app/dist',
+  'apps/docs-site/dist',
+  
+  // 包的 Vite 缓存
+  'packages/shared-core/node_modules/.vite',
+  'packages/shared-components/node_modules/.vite',
+  'packages/shared-utils/node_modules/.vite',
+  
+  // 包的构建输出
+  'packages/shared-core/dist',
+  'packages/shared-components/dist',
+  'packages/shared-utils/dist',
+];
+
+console.log('🧹 正在清理构建缓存...\n');
+
+let cleanedCount = 0;
+let skippedCount = 0;
+
+pathsToClean.forEach((relativePath) => {
+  const fullPath = join(rootDir, relativePath);
+  
+  if (existsSync(fullPath)) {
+    try {
+      rmSync(fullPath, { recursive: true, force: true });
+      console.log(`✓ 已清理: ${relativePath}`);
+      cleanedCount++;
+    } catch (error) {
+      console.error(`✗ 清理失败: ${relativePath}`, error.message);
+    }
+  } else {
+    skippedCount++;
+  }
+});
+
+console.log(`\n✅ 清理完成！已清理 ${cleanedCount} 个目录，跳过 ${skippedCount} 个不存在的目录。\n`);
+

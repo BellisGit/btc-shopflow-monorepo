@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="action-node-config">
     <div class="config-header">
       <span>动作配置</span>

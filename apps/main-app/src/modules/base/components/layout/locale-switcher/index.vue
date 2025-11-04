@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dropdown trigger="click" @command="handleCommand">
     <div class="btc-comm__icon">
       <btc-svg name="lang" />

@@ -1,4 +1,4 @@
-import type { Ref } from 'vue';
+﻿import type { Ref } from 'vue';
 import type { StrategyConnection } from '@/types/strategy';
 import { useConnectionPathGenerator } from './path-generator';
 

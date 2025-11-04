@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="properties-panel">
     <div class="panel-header">
       <div class="panel-actions">

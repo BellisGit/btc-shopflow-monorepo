@@ -2,7 +2,10 @@ import type { App, Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { storage } from '@btc/shared-utils';
-import { THEME_PRESETS, type ThemeConfig, mixColor } from '../../composables/useTheme';
+import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
+import { setThemeColor } from './composables/useThemeColor';
+import { migrateThemeConfig } from './composables/useThemeMigration';
+import { createToggleDark } from './composables/useThemeToggle';
 
 /**
  * 主题插件实例
@@ -19,67 +22,15 @@ export interface ThemePlugin {
 }
 
 let themePluginInstance: ThemePlugin | null = null;
+// 保存 setThemeColor 函数的最新引用，用于动态绑定
+let latestSetThemeColor: ((color: string, dark: boolean) => void) | null = null;
 
 /**
  * 创建主题插件
  */
 export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
-  // 从 localStorage 读取保存的主题配置
-  const savedTheme = storage.get('theme');
-
   // 数据迁移：将旧的硬编码标签转换为国际化键值
-  let migratedTheme = THEME_PRESETS[0]; // 默认主题（现在是品牌红）
-
-  if (savedTheme && typeof savedTheme === 'object' && savedTheme !== null) {
-    // 检查是否是旧格式（硬编码中文或英文标签）
-    const oldLabels = [
-      'Default',
-      'Green',
-      'Purple',
-      'Orange',
-      'Pink',
-      'Mint',
-      'Custom',
-      'Brand Red',
-      'Brand Gray',
-      '默认',
-      '绿色',
-      '紫色',
-      '橙色',
-      '粉色',
-      '薄荷绿',
-      '拜里斯品牌红',
-      '拜里斯品牌灰',
-      '蓝色',
-    ];
-    if (
-      'label' in savedTheme &&
-      typeof savedTheme.label === 'string' &&
-      oldLabels.includes(savedTheme.label)
-    ) {
-      // 根据颜色匹配对应的新主题配置
-      const matchedPreset = THEME_PRESETS.find(
-        (preset) => preset.color === (savedTheme as any).color
-      );
-      if (matchedPreset) {
-        migratedTheme = matchedPreset;
-      } else if ((savedTheme as any).name === 'custom') {
-        // 自定义主题
-        migratedTheme = {
-          name: 'custom',
-          label: 'theme.presets.custom',
-          color: (savedTheme as any).color,
-        };
-      }
-      // 保存迁移后的配置
-      storage.set('theme', migratedTheme);
-    } else {
-      // 已经是新格式，直接使用
-      migratedTheme = savedTheme as ThemeConfig;
-    }
-  } else {
-    // 没有保存的主题配置，使用默认配置
-  }
+  const migratedTheme = migrateThemeConfig();
 
   const currentTheme = ref<ThemeConfig>(migratedTheme);
 
@@ -89,41 +40,17 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 主题颜色（只读）
   const color = computed(() => currentTheme.value.color) as any;
 
-  /**
-   * 设置主题颜色
-   */
-  function setThemeColor(color: string, dark: boolean) {
-    const el = document.documentElement;
-    const pre = '--el-color-primary';
-    const mixWhite = '#ffffff';
-    const mixBlack = '#131313';
-
-    el.style.setProperty(pre, color);
-
-    for (let i = 1; i < 10; i += 1) {
-      if (dark) {
-        el.style.setProperty(`${pre}-light-${i}`, mixColor(color, mixBlack, i * 0.1));
-        el.style.setProperty(`${pre}-dark-${i}`, mixColor(color, mixWhite, i * 0.1));
-      } else {
-        el.style.setProperty(`${pre}-light-${i}`, mixColor(color, mixWhite, i * 0.1));
-        el.style.setProperty(`${pre}-dark-${i}`, mixColor(color, mixBlack, i * 0.1));
-      }
-    }
-
-    // 广播主题变化事件
-    window.dispatchEvent(
-      new CustomEvent('theme-change', {
-        detail: { color, dark },
-      })
-    );
-  }
+  // 使用 composable 中的 setThemeColor
+  const themeSetThemeColor = (color: string, dark: boolean) => {
+    setThemeColor(color, dark);
+  };
 
   /**
    * 切换主题
    */
   function switchTheme(theme: ThemeConfig) {
     currentTheme.value = { ...theme };
-    setThemeColor(theme.color, isDark.value);
+    themeSetThemeColor(theme.color, isDark.value);
     document.body.className = `theme-${theme.name}`;
 
     // 持久化到 localStorage
@@ -140,62 +67,25 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
       label: 'theme.presets.custom',
       color: color,
     };
-    setThemeColor(color, isDark.value);
+    themeSetThemeColor(color, isDark.value);
 
     // 持久化到 localStorage
     storage.set('theme', currentTheme.value);
   }
 
-  /**
-   * 切换暗黑模式（带动画）
-   */
-  function toggleDark(event?: MouseEvent) {
-    const newDarkValue = !isDark.value;
-
-    // 如果浏览器支持 View Transition API，使用动画
-    if (event && (document as any).startViewTransition) {
-      const transition = (document as any).startViewTransition(() => {
-        isDark.value = newDarkValue;
-        setThemeColor(currentTheme.value.color, isDark.value);
-      });
-
-      transition.ready.then(() => {
-        const x = event.clientX;
-        const y = event.clientY;
-        const endRadius = Math.hypot(
-          Math.max(x, window.innerWidth - x),
-          Math.max(y, window.innerHeight - y)
-        );
-
-        const clipPath = [`circle(0 at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`];
-
-        document.documentElement.animate(
-          {
-            clipPath: newDarkValue ? clipPath.reverse() : clipPath,
-          },
-          {
-            duration: 400,
-            easing: 'ease-in-out',
-            pseudoElement: newDarkValue
-              ? '::view-transition-old(root)'
-              : '::view-transition-new(root)',
-          }
-        );
-      });
-    } else {
-      // 不支持动画，直接切换
-      isDark.value = newDarkValue;
-      setThemeColor(currentTheme.value.color, isDark.value);
-    }
-  }
+  // 使用 composable 创建 toggleDark 函数
+  const toggleDark = createToggleDark(isDark, currentTheme);
 
   /**
    * 初始化主题
    */
   function initTheme() {
-    setThemeColor(currentTheme.value.color, isDark.value);
+    themeSetThemeColor(currentTheme.value.color, isDark.value);
     document.body.className = `theme-${currentTheme.value.name}`;
   }
+
+  // 保存最新的 setThemeColor 函数引用
+  latestSetThemeColor = themeSetThemeColor;
 
   // 创建主题实例
   const theme: ThemePlugin = {
@@ -205,12 +95,20 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     THEME_PRESETS,
     switchTheme,
     toggleDark,
-    setThemeColor,
+    setThemeColor: themeSetThemeColor,
     updateThemeColor,
   };
 
   // 保存单例（但每次创建时都使用最新的 THEME_PRESETS）
   themePluginInstance = theme;
+
+  // 将主题插件实例挂载到 window，方便同步访问（避免异步 import 延迟）
+  if (typeof window !== 'undefined') {
+    (window as any).__THEME_PLUGIN__ = theme;
+  }
+  if (typeof globalThis !== 'undefined') {
+    (globalThis as any).__THEME_PLUGIN__ = theme;
+  }
 
   // 初始化主题
   initTheme();
@@ -236,11 +134,13 @@ export function useThemePlugin(): ThemePlugin {
   if (!themePluginInstance) {
     throw new Error('Theme plugin not installed. Please call createThemePlugin() first.');
   }
-  // 确保返回的实例包含最新的 THEME_PRESETS
-  return {
-    ...themePluginInstance,
-    THEME_PRESETS,
-  };
+  // 确保 THEME_PRESETS 是最新的
+  themePluginInstance.THEME_PRESETS = THEME_PRESETS;
+  // 动态绑定最新的 setThemeColor 函数，确保热更新时使用最新版本
+  if (latestSetThemeColor) {
+    themePluginInstance.setThemeColor = latestSetThemeColor;
+  }
+  return themePluginInstance;
 }
 
 /**

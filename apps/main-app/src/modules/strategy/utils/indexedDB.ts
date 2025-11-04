@@ -1,4 +1,4 @@
-/**
+﻿/**
  * IndexedDB 持久化工具
  * 模仿 draw.io 的 IndexedDB 存储结构
  * 包含三个对象存储：

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="file-preview-page">
     <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="分类" right-title="文件列表">
       <!-- 左侧分类列表 -->
@@ -328,7 +328,7 @@ const handleFileDelete = async (file: any) => {
     );
 
     // TODO: 调用删除接口
-    // await service.system?.iam?.sys.file?.delete(file.id);
+    // await service.system?.iam?.file?.delete(file.id);
     
     ElMessage.success(t('crud.message.delete_success'));
     refreshFileList();
@@ -347,7 +347,7 @@ const handleBatchDelete = async () => {
     );
 
     // TODO: 调用批量删除接口
-    // await service.system?.iam?.sys.file?.deleteBatch(selectedFiles.value);
+    // await service.system?.iam?.file?.deleteBatch(selectedFiles.value);
     
     ElMessage.success(t('crud.message.delete_success'));
     selectedFiles.value = [];
@@ -387,7 +387,7 @@ const refreshFileList = async () => {
     //   page: pagination.page,
     //   size: pagination.size
     // };
-    // const res = await service.system?.iam?.sys.file?.page(params);
+    // const res = await service.system?.iam?.file?.page(params);
     // fileList.value = res.list || [];
     // pagination.total = res.total || 0;
 

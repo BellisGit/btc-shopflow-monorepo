@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue';
+﻿import { reactive, ref } from 'vue';
 
 type Point = { x: number; y: number };
 

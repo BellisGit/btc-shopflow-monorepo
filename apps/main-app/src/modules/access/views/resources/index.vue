@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="resources-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -37,12 +37,12 @@ const moduleService = {
   list: (params?: any) => {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.system?.iam?.sys.module?.list(finalParams);
+    return service.system?.iam?.module?.list(finalParams);
   }
 };
 
 // 资源服务（右侧表）- 使用EPS服务
-const resourceService = service.system?.iam?.sys.resource;
+const resourceService = service.system?.iam?.resource;
 
 const wrappedResourceService = {
   ...resourceService,

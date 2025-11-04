@@ -4,8 +4,8 @@
 
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import { validatePasswordStrength } from '../../../shared/composables/validation';
-import { passwordLogin } from '../../../shared/composables/api';
+import { validatePasswordStrength } from '../../shared/composables/validation';
+import { passwordLogin } from '../../shared/composables/api';
 
 /**
  * 密码登录表单数据

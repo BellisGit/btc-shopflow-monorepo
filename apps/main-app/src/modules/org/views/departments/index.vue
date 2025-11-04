@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="departments-page">
     <BtcCrud ref="crudRef" :service="wrappedDepartmentService">
       <BtcRow>
@@ -34,8 +34,8 @@ const { t } = useI18n();
 const message = useMessage();
 const crudRef = ref();
 
-// 部门服务 - 使用EPS服务（注意路径：admin/system/iam/sys/department）
-const departmentService = service.system?.iam?.sys?.department;
+// 部门服务 - 使用EPS服务（注意路径：api/system/iam/department）
+const departmentService = service.system?.iam?.department;
 
 // 部门选项数据
 const departmentOptions = ref<Array<{ label: string; value: string }>>([]);

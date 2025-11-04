@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="scope">
     <!-- 资源标题 -->
     <div class="head">

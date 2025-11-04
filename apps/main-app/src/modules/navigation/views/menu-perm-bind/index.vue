@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="menu-perm-bind-page">
     <el-card>
       <template #header>
@@ -35,8 +35,8 @@ const { t } = useI18n();
 
 // Mock??
 const message = useMessage();
-const menuPermService = service.system?.iam?.sys.department;
-const permissionService = service.system?.iam?.sys.permission;
+const menuPermService = service.system?.iam?.department;
+const permissionService = service.system?.iam?.permission;
 
 // ????
 const allPermissions = ref<any[]>([]);

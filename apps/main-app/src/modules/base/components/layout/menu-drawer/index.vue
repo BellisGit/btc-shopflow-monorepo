@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <teleport to="body">
     <transition name="drawer-slide">
       <div v-if="visible" class="menu-drawer">
@@ -201,7 +201,7 @@ const loadApplications = async () => {
   loading.value = true;
   try {
     // 调用域列表的 list 服务
-    const response = await service.system?.iam?.sys.domain?.list({});
+    const response = await service.system?.iam?.domain?.list({});
 
     if (response?.list) {
 

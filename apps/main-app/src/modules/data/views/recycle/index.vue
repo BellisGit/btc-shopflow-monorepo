@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <btc-crud ref="crudRef" class="recycle-page" :service="recycleService">
     <btc-row>
       <!-- 刷新按钮 -->

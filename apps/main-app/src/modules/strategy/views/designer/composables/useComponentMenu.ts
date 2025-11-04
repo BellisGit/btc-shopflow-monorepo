@@ -1,4 +1,4 @@
-import { ref, type Ref, nextTick } from 'vue';
+﻿import { ref, type Ref, nextTick } from 'vue';
 import type { StrategyConnection } from '@/types/strategy';
 import { ConnectorType } from '@/types/strategy';
 

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="users-page">
     <BtcTableGroup
       ref="tableGroupRef"

@@ -1,4 +1,4 @@
-import type { StrategyConnection, StrategyNode } from '@/types/strategy';
+﻿import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 
 /**
  * 连接点选择逻辑

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="permission-list">
     <transition-group name="list">
       <div

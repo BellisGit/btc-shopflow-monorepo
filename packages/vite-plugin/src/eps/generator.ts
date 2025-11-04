@@ -327,28 +327,36 @@ function createServiceCode(): { content: string; types: string[] } {
 
               if (n) {
                 // 处理删除方法的特殊逻辑
-                let urlPath = `"/${value.namespace}${a.path}"`;
+                // 确保 URL 路径正确拼接（避免双斜线）
+                // namespace 去掉结尾的斜线（如果有），path 确保以 / 开头
+                const normalizedNamespace = value.namespace.replace(/\/$/, ''); // 去掉结尾的斜线
+                const normalizedPath = a.path.startsWith('/') ? a.path : `/${a.path}`;
+                const fullPath = `${normalizedNamespace}${normalizedPath}`;
+
+                let urlPath = `"${fullPath}"`;
                 let requestData = 'data';
 
                 // 如果是删除方法，需要特殊处理
                 if (n.toLowerCase().includes('delete')) {
                   if (a.path.includes('{id}')) {
                     // 单个删除：替换 {id} 为实际 ID
-                    urlPath = `\`/${value.namespace}\${a.path.replace(/{id}/g, "\${Array.isArray(data) ? data[0] : data}")}\``;
+                    // 使用字符串拼接避免嵌套模板字符串
+                    urlPath = `"${fullPath}".replace(/{id}/g, Array.isArray(data) ? data[0] : data)`;
                     requestData = 'undefined'; // 删除方法不需要请求体
                   } else if (n.toLowerCase().includes('batch')) {
                     // 批量删除：直接使用路径，数据作为请求体
-                    urlPath = `"/${value.namespace}${a.path}"`;
+                    urlPath = `"${fullPath}"`;
                     requestData = 'data'; // 批量删除需要请求体
                   }
                 }
 
                 // 方法描述
+                // 使用纯 JavaScript 语法（去掉 TypeScript 可选参数语法）
                 t += `
                   /**
                    * ${a.summary || n}
                    */
-                  ${n}(data?: any): Promise<any> {
+                  ${n}(data) {
                     return request({
                       url: ${urlPath},
                       method: "${(a.method || 'get').toUpperCase()}",
@@ -360,7 +368,8 @@ function createServiceCode(): { content: string; types: string[] } {
             });
           }
 
-          t += `} as ${name}\n`;
+          // 去掉 TypeScript 类型断言语法，使用纯 JavaScript
+          t += `}\n`;
 
           types.push(name);
 
@@ -370,7 +379,7 @@ function createServiceCode(): { content: string; types: string[] } {
         // 递归处理嵌套对象，传递 visited Set
         chain += `${formatName(i)}: {`;
         deep(value, name, visited);
-        chain += `} as ${firstUpperCase(i)}Interface,`;
+        chain += `},`;
 
         types.push(`${firstUpperCase(i)}Interface`);
       }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="action-list">
     <BtcCrud ref="crudRef" :service="actionService">
       <BtcRow>
@@ -33,12 +33,12 @@ const message = useMessage();
 const crudRef = ref();
 
 const actionService = {
-  ...service.system?.iam?.sys.action,
+  ...service.system?.iam?.action,
   delete: async (id: string | number) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.sys.action?.delete(id);
+    await service.system?.iam?.action?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -46,7 +46,7 @@ const actionService = {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.sys.action?.deleteBatch(ids);
+    await service.system?.iam?.action?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

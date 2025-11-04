@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="request-log-page">
     <!-- 请求日志 -->
     <BtcCrud ref="requestCrudRef" :service="requestService">

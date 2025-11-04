@@ -4,9 +4,9 @@
 
 import { ref, reactive, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { ensureString, validatePasswordStrength, validatePhone, validateSmsCode } from '../../../shared/composables/validation';
-import { sendSmsCode, registerUser } from '../../../shared/composables/api';
-import { createCountState } from '../../../shared/composables/state';
+import { ensureString, validatePasswordStrength, validatePhone, validateSmsCode } from '../../shared/composables/validation';
+import { sendSmsCode, registerUser } from '../../shared/composables/api';
+import { createCountState } from '../../shared/composables/state';
 import type { EmployeeInfo } from './identity';
 
 /**

@@ -2,6 +2,8 @@
  * 系统基础信息配置
  */
 
+import { systemSettingConfig } from './settings';
+
 export const appConfig = {
   // 系统名称
   name: 'BTC管理系统',
@@ -70,6 +72,9 @@ export const appConfig = {
     // 标签栏高度
     tabbarHeight: 39,
   },
+
+  // 系统设置默认值（从子配置导入）
+  systemSetting: systemSettingConfig,
 };
 
 export default appConfig;

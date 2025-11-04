@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-alert-config">
     <div class="config-header">
       <div class="header-info">

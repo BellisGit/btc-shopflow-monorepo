@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from 'vue';
+﻿import { ref, computed, type Ref } from 'vue';
 import type { NodeType } from '@/types/strategy';
 import { NodeType as NodeTypeEnum } from '@/types/strategy';
 

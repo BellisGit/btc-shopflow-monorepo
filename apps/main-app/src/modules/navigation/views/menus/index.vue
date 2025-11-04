@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="menus-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -39,12 +39,12 @@ const domainService = {
   list: (params?: any) => {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.system?.iam?.sys.domain?.list(finalParams);
+    return service.system?.iam?.domain?.list(finalParams);
   }
 };
 
 // 菜单服务（右侧表）
-const menuService = service.system?.iam?.sys.menu;
+const menuService = service.system?.iam?.menu;
 
 const wrappedMenuService = {
   ...menuService,

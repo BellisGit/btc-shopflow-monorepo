@@ -23,13 +23,22 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
 }
 
 #app {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+}
+
+// 色弱模式样式
+.color-weak {
+  filter: invert(80%);
+  -webkit-filter: invert(80%);
+}
+
+// 自定义圆角 CSS 变量
+:root {
+  --custom-radius: 0.25rem;
 }
 
 // Custom scrollbar (align with cool-admin)
@@ -108,7 +117,6 @@ body.docs-mode {
   .app-process {
     height: 0 !important;
     min-height: 0 !important;
-    overflow: hidden !important;
     padding: 0 !important;
     border: none !important;
   }
@@ -150,6 +158,8 @@ body.docs-mode-instant {
   }
 }
 
+
+
 // 彻底覆盖浏览器自动填充背景样式
 // 确保自动填充时输入框保持透明背景，不改变原来的样式
 input:-webkit-autofill,
@@ -164,5 +174,287 @@ input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
   -webkit-text-fill-color: inherit !important;
   transition: background-color 9999s ease-out 0s !important;
+}
+
+// View Transition 动画禁用（参考 cool-admin，避免水合问题）
+::view-transition-new(root),
+::view-transition-old(root) {
+  animation: none !important;
+}
+
+html.dark {
+  &::view-transition-old(root) {
+    z-index: 100;
+  }
+}
+
+// 盒子样式 - 边框模式（浅色模式增强对比度）
+[data-box-mode='border-mode'] {
+  // Element Plus 卡片
+  .el-card,
+  .btc-card {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: none !important;
+  }
+
+  // 页面内容区域
+  .page-content,
+  .app-layout__content {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: none !important;
+  }
+
+  // 侧边栏
+  .app-layout__sidebar {
+    border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+  }
+}
+
+// 盒子样式 - 阴影模式（浅色模式增强阴影和边框对比度）
+[data-box-mode='shadow-mode'] {
+  // Element Plus 卡片
+  .el-card,
+  .btc-card {
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  // 页面内容区域
+  .page-content,
+  .app-layout__content {
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  // 侧边栏
+  .app-layout__sidebar {
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 2px 0 8px 0px rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+// 深色主题下的样式修复（参考 cool-admin）
+// 使用 html.dark 确保选择器优先级足够高，能够覆盖 scoped 样式
+html.dark {
+  // 面包屑样式（使用 :deep 确保能够穿透 scoped 样式）
+  :deep(.app-breadcrumb) {
+    .breadcrumb-item {
+      border-color: var(--el-border-color) !important;
+      background-color: var(--el-bg-color) !important;
+    }
+
+    .el-breadcrumb__item:last-child {
+      .breadcrumb-item {
+        background-color: var(--el-color-primary-light-9) !important;
+        border-color: var(--el-color-primary-light-5) !important;
+      }
+    }
+  }
+
+  // 标签页样式（使用 :deep 确保能够穿透 scoped 样式）
+  :deep(.app-process) {
+    .app-process__item {
+      border-color: var(--el-border-color) !important;
+      background-color: var(--el-bg-color) !important;
+
+      &:hover:not(.active) {
+        background-color: var(--el-fill-color-light) !important;
+      }
+
+      &.active {
+        background-color: var(--el-color-primary) !important;
+        border-color: var(--el-color-primary) !important;
+        color: #fff !important;
+
+        .close {
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+          }
+        }
+      }
+
+      .close {
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+    }
+  }
+
+  // 按钮边框样式
+  .btc-comm__icon {
+    border-color: var(--el-border-color) !important;
+    background-color: var(--el-bg-color) !important;
+
+    &:hover {
+      background-color: var(--el-fill-color-light) !important;
+      border-color: var(--el-color-primary) !important;
+    }
+  }
+
+  // 深色模式下的盒子样式 - 边框模式
+  &[data-box-mode='border-mode'] {
+    .el-card,
+    .btc-card,
+    .page-content,
+    .app-layout__content {
+      border-color: var(--el-border-color) !important;
+    }
+
+    .app-layout__sidebar {
+      border-right-color: var(--el-border-color) !important;
+    }
+  }
+
+  // 深色模式下的盒子样式 - 阴影模式
+  &[data-box-mode='shadow-mode'] {
+    .el-card,
+    .btc-card,
+    .page-content,
+    .app-layout__content {
+      box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.3) !important;
+      border-color: var(--el-border-color) !important;
+    }
+
+    .app-layout__sidebar {
+      border-right-color: var(--el-border-color) !important;
+      box-shadow: 2px 0 8px 0px rgba(0, 0, 0, 0.2) !important;
+    }
+  }
+}
+
+// 设置抽屉模态框样式（参考 art-design-pro）
+.user-setting-modal {
+  background: transparent !important;
+
+  // 使用 :deep() 确保样式能够穿透 Element Plus 的样式封装
+  :deep(.el-drawer) {
+    // 覆盖 Element Plus 的 CSS 变量（提高不透明度，确保看不到下方内容）
+    --el-drawer-bg-color: rgba(255, 255, 255, 1) !important;
+
+    // 背景滤镜效果（提高不透明度，确保看不到下方内容）
+    background: rgba(255, 255, 255, 1) !important;
+    background-color: rgba(255, 255, 255, 1) !important;
+    background-image: none !important; // 移除可能存在的背景图片
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1) !important;
+
+    // 完整的 backdrop-filter（对齐 art-design-pro 的 mixin，增强模糊效果）
+    --tw-backdrop-blur: blur(30px);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+      var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+      var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+      var(--tw-backdrop-sepia);
+    backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast)
+      var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+      var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+
+    // 确保抽屉内容区域也有不透明背景（而不是透明）
+    .el-drawer__body {
+      background-color: rgba(255, 255, 255, 1) !important;
+      background: rgba(255, 255, 255, 1) !important;
+      // 保持默认 padding 或使用合适的间距
+    }
+  }
+
+  // 去除滚动条（与 art-design-pro 保持一致）
+  // 允许内容滚动（overflow: auto），但隐藏滚动条显示
+  :deep(.el-drawer__body) {
+    // 火狐浏览器 - 隐藏滚动条但保持滚动功能
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important; // IE 和 Edge
+
+    // Webkit 浏览器（Chrome, Safari, Edge）- 隐藏滚动条但保持滚动功能
+    &::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+    }
+
+    &::-webkit-scrollbar-track {
+      display: none !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      display: none !important;
+    }
+  }
+
+  // 直接选择器作为备用
+  .el-drawer__body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+
+    &::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+    }
+  }
+}
+
+// 使用更高优先级的选择器确保覆盖（添加 html 前缀增加特异性）
+html .user-setting-modal {
+  :deep(.el-drawer__body) {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+
+    &::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+    }
+  }
+
+  .el-drawer__body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+
+    &::-webkit-scrollbar {
+      width: 0 !important;
+      height: 0 !important;
+      display: none !important;
+    }
+  }
+}
+
+// 暗黑模式适配（使用 html.dark 确保优先级，与项目保持一致）
+html.dark {
+  .user-setting-modal {
+    :deep(.el-drawer) {
+      // 覆盖 Element Plus 的 CSS 变量（提高不透明度）
+      --el-drawer-bg-color: rgba(0, 0, 0, 1) !important;
+
+      background: rgba(0, 0, 0, 1) !important;
+      background-color: rgba(0, 0, 0, 1) !important;
+      background-image: none !important;
+
+      .el-drawer__body {
+        background-color: rgba(0, 0, 0, 1) !important;
+        background: rgba(0, 0, 0, 1) !important;
+      }
+    }
+
+    :deep(.el-drawer__body) {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+
+      &::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        display: none !important;
+      }
+    }
+
+    .el-drawer__body {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+
+      &::-webkit-scrollbar {
+        width: 0 !important;
+        height: 0 !important;
+        display: none !important;
+      }
+    }
+  }
 }
 

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-monitor">
     <!-- 视图切换 -->
     <div class="monitor-header">

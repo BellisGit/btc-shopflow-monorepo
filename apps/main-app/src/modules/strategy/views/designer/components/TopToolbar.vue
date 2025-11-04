@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="zoom-controls">
     <el-button @click="$emit('zoom-out')" :disabled="scale <= minScale" circle>
       <el-icon><ZoomOut /></el-icon>

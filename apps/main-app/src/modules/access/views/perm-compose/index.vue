@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="perm-compose perm-compose-page">
     <!-- 权限组合页面头部 -->
     <div class="perm-compose-header">
@@ -144,7 +144,7 @@ const modeOptions = [
 ];
 
 // 权限服务
-const permissionService = service.system?.iam?.sys.permission;
+const permissionService = service.system?.iam?.permission;
 
 // 数据管理
 const {

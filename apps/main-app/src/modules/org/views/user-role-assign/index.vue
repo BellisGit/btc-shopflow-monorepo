@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="user-role-assign-page">
     <BtcCrud ref="crudRef" :service="userRoleService">
       <BtcRow>
@@ -36,10 +36,10 @@ const userId = computed(() => route.params.id as string);
 
 // 用户角色服务
 const userRoleService = {
-  ...service.system?.iam?.sysrole,
+  ...service.system?.iam?.role,
   // 添加用户ID到查询参数
   page: async (params: any) => {
-    return service.system?.iam?.sysrole?.page({
+    return service.system?.iam?.role?.page({
       ...params,
       userId: userId.value
     });

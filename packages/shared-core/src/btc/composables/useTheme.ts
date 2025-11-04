@@ -6,12 +6,27 @@ import { storage } from '@btc/shared-utils';
  */
 export function mixColor(color1: string, color2: string, weight: number): string {
   weight = Math.max(Math.min(Number(weight), 1), 0);
+  
+  // 确保颜色格式正确（必须是 #RRGGBB 格式）
+  if (!color1.startsWith('#') || color1.length !== 7) {
+    throw new Error(`mixColor: color1 must be in #RRGGBB format, got: ${color1}`);
+  }
+  if (!color2.startsWith('#') || color2.length !== 7) {
+    throw new Error(`mixColor: color2 must be in #RRGGBB format, got: ${color2}`);
+  }
+  
   const r1 = parseInt(color1.substring(1, 3), 16);
   const g1 = parseInt(color1.substring(3, 5), 16);
   const b1 = parseInt(color1.substring(5, 7), 16);
   const r2 = parseInt(color2.substring(1, 3), 16);
   const g2 = parseInt(color2.substring(3, 5), 16);
   const b2 = parseInt(color2.substring(5, 7), 16);
+  
+  // 验证解析结果
+  if (isNaN(r1) || isNaN(g1) || isNaN(b1) || isNaN(r2) || isNaN(g2) || isNaN(b2)) {
+    throw new Error(`mixColor: Failed to parse color values. color1: ${color1}, color2: ${color2}`);
+  }
+  
   let r = Math.round(r1 * (1 - weight) + r2 * weight).toString(16);
   let g = Math.round(g1 * (1 - weight) + g2 * weight).toString(16);
   let b = Math.round(b1 * (1 - weight) + b2 * weight).toString(16);

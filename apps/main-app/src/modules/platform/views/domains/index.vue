@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="domains-page">
     <BtcCrud ref="crudRef" :service="wrappedDomainService">
       <BtcRow>
@@ -42,12 +42,12 @@ const tenantOptions = ref<{ label: string; value: any }[]>([
 
 // 使用 EPS 域服务
 const wrappedDomainService = {
-  ...service.system?.iam?.sys.domain,
+  ...service.system?.iam?.domain,
   delete: async (id: string | number) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.sys.domain?.delete(id);
+    await service.system?.iam?.domain?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -55,7 +55,7 @@ const wrappedDomainService = {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.sys.domain?.deleteBatch(ids);
+    await service.system?.iam?.domain?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

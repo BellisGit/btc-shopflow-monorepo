@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-detail-panel">
     <el-row :gutter="16">
       <!-- 基本信息 -->

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-breadcrumb">
     <el-breadcrumb separator="|">
       <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
@@ -288,6 +288,21 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       .breadcrumb-icon {
         color: var(--el-color-primary);
       }
+    }
+  }
+}
+
+// 深色主题样式（全局样式，不使用 scoped）
+html.dark .app-breadcrumb {
+  .breadcrumb-item {
+    border-color: var(--el-border-color) !important;
+    background-color: var(--el-bg-color) !important;
+  }
+
+  :deep(.el-breadcrumb__item:last-child) {
+    .breadcrumb-item {
+      background-color: var(--el-color-primary-light-9) !important;
+      border-color: var(--el-color-primary-light-5) !important;
     }
   }
 }

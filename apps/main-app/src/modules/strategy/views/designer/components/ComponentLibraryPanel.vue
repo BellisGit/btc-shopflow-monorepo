@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="component-library">
     <div class="library-header">
       <btc-search

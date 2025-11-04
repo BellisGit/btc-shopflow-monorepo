@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-execution-preview">
     <div class="preview-header">
       <div class="preview-info">

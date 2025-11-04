@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="logs-page">
     <BtcTabs v-model="activeTab" :tabs="logTabs" @tab-change="handleTabChange">
       <!-- 操作日志 Tab -->

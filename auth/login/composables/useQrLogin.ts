@@ -1,34 +1,31 @@
 import { ref } from 'vue';
-import loginQrImage from '/@/assets/images/login_qr.png';
-import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
+import { ElMessage } from 'element-plus';
+import loginQrImage from '@/assets/images/login_qr.png';
 
 export function useQrLogin() {
   const { t } = useI18n();
+  
+  // 二维码URL（占位）
+  const qrCodeUrl = ref<string>(loginQrImage);
 
-  // QR码URL
-  const qrUrl = ref('');
-
-  // 生成QR码
-  const generateQrCode = () => {
-    // 使用实际的二维码图片，添加时间戳防止缓存
-    const timestamp = Date.now();
-    qrUrl.value = `${loginQrImage}?t=${timestamp}`;
+  // 刷新二维码
+  const refreshQrCode = async () => {
+    try {
+      // TODO: 调用后端API获取二维码
+      // const response = await http.post('/base/open/qr/generate');
+      // qrCodeUrl.value = response.data.qrCodeUrl;
+      
+      ElMessage.info(t('二维码登录功能暂未开启'));
+    } catch (error: any) {
+      console.error('刷新二维码错误:', error);
+      ElMessage.error(error.message || t('刷新二维码失败'));
+    }
   };
-
-  // 刷新QR码
-  const refreshQrCode = () => {
-    generateQrCode();
-    ElMessage.info(t('二维码已刷新'));
-  };
-
-  // 初始化
-  generateQrCode();
 
   return {
-    qrUrl,
-    generateQrCode,
-    refreshQrCode,
-    t
+    qrCodeUrl,
+    refreshQrCode
   };
 }
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <g class="connection-handles-overlay">
     <!-- 调试信息 -->
     <text v-if="false" x="10" y="20" fill="red" font-size="12">

@@ -5,25 +5,15 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: 100%;
+	height: 100vh;
 	width: 100%;
 	position: relative;
 	background-color: $auth-light-bg;
+	overflow: hidden;
 	
 	// 暗黑模式适配
 	html.dark & {
 		background-color: $auth-dark-bg;
-	}
-}
-
-// 全局最高优先级输入框样式覆盖 - 专门处理认证页面
-.auth-page .el-input__inner {
-	height: $auth-input-height;
-	color: $auth-light-input-color;
-	font-size: $auth-input-font-size;
-	
-	&::placeholder {
-		color: $auth-light-input-placeholder;
 	}
 }
 
@@ -36,35 +26,17 @@
 	width: 90%;
 	pointer-events: none;
 	transform: rotate(180deg) scaleY(-1);
-
-	.btc-svg {
-		height: 100%;
-		width: 100%;
-		
-	// 明亮主题配色
-	g:nth-child(1) path {
-		fill: var(--el-text-color-secondary);
-	}
-	
-	g:nth-child(2) path {
-		fill: var(--el-color-danger);
-	}
-	
-	// 暗黑模式适配 - 现在由主题插件处理，这里可以移除
-	// html.dark & {
-	// 	g:nth-child(1) path {
-	// 		fill: #606060;
-	// 	}
-	// 	
-	// 	g:nth-child(2) path {
-	// 		fill: #ff6b6b;
-	// 	}
-	// }
-	}
+	z-index: 1;
+	overflow: hidden;
 }
 
-// 版权信息 - 已被 footer 组件的样式覆盖
-// 保留此样式作为 fallback，但实际样式由 footer/styles.scss 定义
+// 拜里斯品牌主题色配色
+// SVG 文件中的 path 已经直接设置了拜里斯品牌色（#404040 和 #DA281C）
+// 这里可以为暗黑模式添加透明度调整（如果需要的话）
+// 注意：由于 SVG sprite 通过 <use> 引用，CSS 无法直接修改 symbol 内部的 fill 属性
+// 如果需要在暗黑模式下调整颜色，需要修改 SVG 文件本身或使用 JavaScript 动态修改
+
+// 版权信息
 .auth-page .copyright {
 	position: absolute;
 	bottom: 20px;

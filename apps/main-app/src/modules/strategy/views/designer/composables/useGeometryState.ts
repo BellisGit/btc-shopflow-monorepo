@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue';
+﻿import { ref, type Ref } from 'vue';
 import type { NodeType } from '@/types/strategy';
 
 // 节点几何状态类型

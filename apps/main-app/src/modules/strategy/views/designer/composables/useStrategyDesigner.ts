@@ -1,4 +1,4 @@
-import { ref, computed, watch, nextTick } from 'vue';
+﻿import { ref, computed, watch, nextTick } from 'vue';
 import type { StrategyNode, StrategyConnection } from '@/types/strategy';
 import { useCanvasScale } from './useCanvasScale';
 import { useNodeManagement } from './useNodeManagement';

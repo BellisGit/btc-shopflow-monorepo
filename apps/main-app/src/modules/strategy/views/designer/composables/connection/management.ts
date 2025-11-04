@@ -1,4 +1,4 @@
-import { ref, computed, reactive, watch, type Ref } from 'vue';
+﻿import { ref, computed, reactive, watch, type Ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 import { ConnectorType } from '@/types/strategy';

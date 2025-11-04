@@ -71,17 +71,50 @@ export function createRequest(baseURL = '/api'): Request {
     }
   );
 
-  // 响应拦截器 - 完全静默处理错误，不抛出任何错误
+  // 响应拦截器 - 提取业务数据
   axiosInstance.interceptors.response.use(
     (response: AxiosResponse) => {
-      const { code, data } = response.data as ApiResponse;
-
-      // 成功响应
-      if (code === 1000) {
-        return data;
+      const responseData = response.data;
+      
+      // 如果没有 data，返回原始响应
+      if (!responseData) {
+        return response;
       }
 
-      // 业务错误 - 返回原始响应，让主应用的响应拦截器处理
+      // 检查是否是标准 API 响应格式 { code: 200, msg: '...', data: {...} }
+      if (responseData && typeof responseData === 'object' && responseData.code !== undefined) {
+        const { code, data, msg } = responseData;
+
+        // 成功响应（code: 200, 1000, 2000）
+        if (code === 1000 || code === 2000) {
+          // 返回 data 字段
+          return data;
+        }
+
+        // code: 200 且消息不包含错误关键词
+        if (code === 200) {
+          const errorKeywords = [
+            '不存在', '错误', '失败', '异常', '无效', '过期', '拒绝', '禁止',
+            '未找到', '无法', '不能', '缺少', '不足'
+          ];
+          
+          const hasErrorKeyword = errorKeywords.some(keyword => msg?.includes(keyword));
+          
+          if (!hasErrorKeyword) {
+            // 成功响应，提取 data.data（嵌套的 data）
+            if (data && typeof data === 'object' && 'data' in data && !Array.isArray(data)) {
+              return data.data;
+            }
+            // 如果没有嵌套的 data，直接返回 data
+            return data;
+          }
+        }
+
+        // 其他情况（业务错误），返回原始响应对象，让调用方处理
+        return response;
+      }
+
+      // 如果响应格式不符合标准格式，返回原始响应
       return response;
     },
     (_error) => {
@@ -109,7 +142,13 @@ export function createRequest(baseURL = '/api'): Request {
       config.baseURL = customBaseURL;
     }
 
-    return axiosInstance.request(config);
+    try {
+      const response = await axiosInstance.request(config);
+      return response;
+    } catch (error) {
+      console.error('[Request] 请求失败:', error);
+      throw error;
+    }
   };
 }
 

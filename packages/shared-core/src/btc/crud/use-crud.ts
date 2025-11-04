@@ -81,12 +81,81 @@ export function useCrud<T = Record<string, unknown>>(
         }
       }
 
-      const res = await service.page(params);
+      // 检查 service 是否存在
+      if (!service) {
+        loading.value = false;
+        return;
+      }
+
+      // 检查 service.page 是否是函数
+      if (typeof service.page !== 'function') {
+        loading.value = false;
+        throw new Error('service.page 不是一个函数');
+      }
+
+      const res = await service.page(params) as any;
 
       // 检查响应数据是否有效
       if (res && typeof res === 'object') {
-        tableData.value = res.list || [];
-        pagination.total = res.total || 0;
+        // 检查是否是 Axios 响应对象
+        const isAxiosResponse = res.data && res.status && res.headers;
+        
+        // 如果是 Axios 响应对象（有 data, status, headers 等属性）
+        if (isAxiosResponse) {
+          // 这是一个 Axios 响应对象，需要提取 data
+          const responseData = res.data;
+          
+          // 检查是否是标准 API 响应格式 { code: 200, msg: '...', data: {...} }
+          if (responseData && typeof responseData === 'object' && responseData.code !== undefined) {
+            // 响应拦截器可能没有正确处理，手动提取 data.data
+            if (responseData.data && typeof responseData.data === 'object') {
+              const actualData = responseData.data;
+              
+              if (actualData.list !== undefined) {
+                // 标准格式：{ list: [], total: 0 }
+                const list = Array.isArray(actualData.list) ? actualData.list : [];
+                const total = typeof actualData.total === 'number' ? actualData.total : 0;
+                tableData.value = list;
+                pagination.total = total;
+              } else {
+                tableData.value = [];
+                pagination.total = 0;
+              }
+            } else {
+              tableData.value = [];
+              pagination.total = 0;
+            }
+          } else {
+            // 直接使用 responseData
+            if (responseData.list !== undefined) {
+              const list = Array.isArray(responseData.list) ? responseData.list : [];
+              const total = typeof responseData.total === 'number' ? responseData.total : 0;
+              tableData.value = list;
+              pagination.total = total;
+            } else {
+              tableData.value = [];
+              pagination.total = 0;
+            }
+          }
+        } else if (Array.isArray(res)) {
+          // 如果 res 本身就是数组，直接使用
+          tableData.value = res;
+          pagination.total = res.length;
+        } else if (res.list !== undefined) {
+          // 标准格式：{ list: [], total: 0 }
+          const list = Array.isArray(res.list) ? res.list : [];
+          const total = typeof res.total === 'number' ? res.total : 0;
+          tableData.value = list;
+          pagination.total = total;
+        } else if (res.data && Array.isArray(res.data)) {
+          // 嵌套格式：{ data: [] }
+          tableData.value = res.data;
+          pagination.total = typeof res.total === 'number' ? res.total : res.data.length;
+        } else {
+          // 其他格式，尝试提取数组
+          tableData.value = [];
+          pagination.total = 0;
+        }
       } else {
         // 如果响应数据无效，清空表格数据
         tableData.value = [];

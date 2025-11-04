@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-execution-history">
     <div class="history-header">
       <div class="header-info">

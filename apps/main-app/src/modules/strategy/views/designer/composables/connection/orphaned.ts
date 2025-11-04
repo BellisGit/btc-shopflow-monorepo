@@ -1,4 +1,4 @@
-import type { Ref } from 'vue';
+﻿import type { Ref } from 'vue';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 import { useConnectionStyle } from './style';
 

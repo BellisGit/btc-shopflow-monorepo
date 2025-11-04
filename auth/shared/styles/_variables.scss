@@ -7,6 +7,7 @@ $auth-card-width: 450px;
 $auth-card-height: 650px;
 $auth-card-border-radius: 12px;
 $auth-card-padding: 24px;
+$auth-card-header-height: 56px; // 登录卡片头部高度
 $auth-tab-height: 32px;
 $auth-tab-padding: 6px 20px;
 $auth-tab-font-size: 16px;
@@ -42,7 +43,7 @@ $auth-light-tab-active: var(--el-color-primary);
 $auth-light-border-color: #f0f0f0;
 $auth-light-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 
-// 暗色主题颜色变量
+// 暗色主题颜色变量（备用，主要使用CSS变量）
 $auth-dark-bg: var(--el-bg-color);
 $auth-dark-card-bg: var(--el-bg-color);
 $auth-dark-card-border: var(--el-border-color);

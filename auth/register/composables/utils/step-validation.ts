@@ -3,7 +3,7 @@
  */
 
 import { ElMessage } from 'element-plus';
-import { validatePhone, validateSmsCode } from '../../../shared/composables/validation';
+import { validatePhone, validateSmsCode } from '../../shared/composables/validation';
 
 /**
  * 步骤验证结果

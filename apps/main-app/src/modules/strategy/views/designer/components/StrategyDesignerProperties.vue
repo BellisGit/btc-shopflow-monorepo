@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="properties-panel">
     <div class="panel-header">
       <h3>属性配置</h3>

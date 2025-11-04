@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-management">
     <!-- 策略列表 -->
     <BtcCrud ref="crudRef" :service="wrappedService" class="strategy-crud">

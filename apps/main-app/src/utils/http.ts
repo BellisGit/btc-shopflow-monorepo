@@ -80,9 +80,24 @@ export class Http {
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login');
       
+      // 调试日志：检查响应拦截器调用
+      console.log('[Http.onFulfilled] 收到 Axios 响应:', {
+        url: response.config?.url,
+        hasData: !!response.data,
+        dataCode: response.data?.code,
+        dataMsg: response.data?.msg
+      });
       
       this.recordRequestLog(response, 'success');
       const result = interceptor.onFulfilled(response);
+      
+      // 调试日志：检查拦截器返回结果
+      console.log('[Http.onFulfilled] 拦截器返回结果:', {
+        resultType: typeof result,
+        isResponseObject: result && result.data && result.status && result.headers,
+        hasList: result && typeof result === 'object' && 'list' in result,
+        hasTotal: result && typeof result === 'object' && 'total' in result
+      });
       
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {

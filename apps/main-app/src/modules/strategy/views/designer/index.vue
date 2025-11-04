@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-designer">
     <btc-grid-group left-width="200px" right-width="260px">
       <!-- 顶栏左侧：缩放控制 -->

@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+﻿import { ref, reactive } from 'vue';
 
 /**
  * 画布交互管理

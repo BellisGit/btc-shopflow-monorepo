@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="docs-iframe-wrapper" :class="{ 'is-hidden': !isVisible }">
     <iframe
       v-if="iframeCreated"

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="permissions-list">
     <BtcCrud ref="crudRef" :service="wrappedService">
       <BtcRow>
@@ -33,7 +33,7 @@ const message = useMessage();
 const crudRef = ref();
 
 // 权限服务 - 使用EPS服务
-const permissionService = service.system?.iam?.sys.permission;
+const permissionService = service.system?.iam?.permission;
 
 // 添加delete确认
 const wrappedService = {

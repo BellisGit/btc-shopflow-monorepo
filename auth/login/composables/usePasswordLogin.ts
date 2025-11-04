@@ -1,73 +1,70 @@
-import { ref, reactive, nextTick } from 'vue';
+import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
-import { useBtc } from '/@/btc';
-import { useBase } from '/$/base';
-import { passwordLogin } from '../../shared/composables/api';
+import { useRouter } from 'vue-router';
+import { authApi } from '@/modules/api-services';
+import { useUser } from '@/composables/useUser';
+import { getCookie } from '@/utils/cookie';
 
 export function usePasswordLogin() {
-  const { router } = useBtc();
-  const { user, menu } = useBase();
+  const router = useRouter();
+  const { setUserInfo } = useUser();
   const { t } = useI18n();
 
   // 表单数据
   const form = reactive({
-    username: '',
-    password: '',
-    captchaId: '',
-    verifyCode: ''
+    username: localStorage.getItem('username') || '',
+    password: ''
   });
 
   // 加载状态
   const loading = ref(false);
 
-  // 验证规则 - 暂时禁用以测试问题
-  const rules = {
-    // username: [
-    //   { required: true, message: t('请输入账号或者邮箱'), trigger: 'change' }
-    // ],
-    // password: [
-    //   { required: true, message: t('请输入密码'), trigger: 'change' }
-    // ]
-  };
-
   // 提交登录
-  const submit = async () => {
+  const submit = async (formData: { username: string; password: string }) => {
     try {
       loading.value = true;
 
       // 调用登录接口
-      const response = await passwordLogin(form);
+      // 注意：token 会在 cookie 中，字段名为 access_token
+      // 同时检查响应体中是否包含 token（向后兼容）
+      const response = await authApi.login({
+        username: formData.username,
+        password: formData.password
+      });
 
-      if (response.code === 2000) {
-        ElMessage.success(t('登录成功'));
+      ElMessage.success(t('登录成功'));
 
-        // 保存token和用户信息
-        if (response.data) {
-          if (response.data.token) {
-            // 使用用户状态管理的setToken方法
-            user.setToken(response.data.token);
-          }
-          if (response.data.user) {
-            user.setInfo(response.data.user);
-          }
-        }
-
-        // 使用nextTick确保状态更新后再跳转
-        await nextTick();
-        router.push('/');
+      // 优先从响应体获取 token（如果后端返回）
+      let token: string | null = null;
+      if (response?.token) {
+        token = response.token;
+      } else if (response?.accessToken) {
+        token = response.accessToken;
       } else {
-        ElMessage.error(response.msg || t('登录失败'));
+        // 如果响应体没有 token，尝试从 cookie 读取
+        token = getCookie('access_token');
       }
+
+      // 保存 token 到 localStorage（无论来源）
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+
+      // 保存用户信息（如果响应中包含用户信息）
+      if (response && response.user) {
+        setUserInfo(response.user);
+      }
+
+      // 保存用户名到 localStorage（记住用户名）
+      localStorage.setItem('username', formData.username);
+
+      // 跳转到首页
+      router.push('/');
     } catch (error: any) {
-      // 安全地记录错误信息，避免循环引用
-      const errorInfo = {
-        message: error.message || 'Unknown error',
-        status: error.response?.status,
-        statusText: error.response?.statusText
-      };
-      console.error('登录错误:', errorInfo);
+      console.error('登录错误:', error);
       ElMessage.error(error.message || t('登录失败'));
+      throw error;
     } finally {
       loading.value = false;
     }
@@ -76,7 +73,6 @@ export function usePasswordLogin() {
   return {
     form,
     loading,
-    rules,
     submit
   };
 }

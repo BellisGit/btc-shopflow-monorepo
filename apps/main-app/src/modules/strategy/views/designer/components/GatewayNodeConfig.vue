@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="gateway-node-config">
     <div class="config-header">
       <span>网关配置</span>

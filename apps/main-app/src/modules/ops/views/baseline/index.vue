@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="baseline-page">
     <BtcCrud ref="crudRef" :service="baselineService">
       <BtcRow>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 用户列表页面配置
  */
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -123,7 +123,7 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
 
 // 服务配置 - 直接传递服务对象，让组件自动处理参数
 export const services = {
-  sysdepartment: service.system?.iam?.sys?.department,
-  sysrole: service.system?.iam?.sys?.role,
-  sysuser: service.system?.iam?.sys?.user
+  sysdepartment: service.system?.iam?.department,
+  sysrole: service.system?.iam?.role,
+  sysuser: service.system?.iam?.user
 };

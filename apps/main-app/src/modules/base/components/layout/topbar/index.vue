@@ -1,7 +1,14 @@
-<template>
-  <div class="topbar">
+﻿<template>
+  <div class="topbar" :class="{ 'is-dark-menu': isDarkMenuStyle }">
     <!-- 左侧：汉堡菜单 + Logo 区域（与侧边栏宽度一致） -->
-    <div class="topbar__brand" :class="{ 'is-collapse': isCollapse }">
+      <div
+        class="topbar__brand"
+        :class="{
+          'is-collapse': isCollapse && props.menuType !== 'top' && props.menuType !== 'dual-menu',
+          'menu-type-top': props.menuType === 'top',
+          'menu-type-dual-menu': props.menuType === 'dual-menu',
+        }"
+      >
       <!-- 汉堡菜单 -->
       <div
         class="topbar__hamburger"
@@ -14,22 +21,42 @@
         <span class="hamburger-line"></span>
       </div>
 
-      <!-- Logo + 标题 -->
-      <div class="topbar__logo-content">
+      <!-- Logo + 标题（顶部菜单和双栏菜单模式下隐藏） -->
+      <div
+        v-if="props.menuType !== 'top' && props.menuType !== 'dual-menu'"
+        class="topbar__logo-content"
+        :class="{ 'is-dark-menu': isDarkMenuStyle }"
+        :style="{
+          backgroundColor: menuThemeConfig.background,
+        }"
+      >
         <img src="/logo.png" alt="BTC Logo" class="topbar__logo-img" />
-        <h2 class="topbar__logo-text">{{ t('app.title') }}</h2>
+        <h2
+          class="topbar__logo-text"
+          :style="{ color: menuThemeConfig.systemNameColor }"
+        >{{ t('app.title') }}</h2>
       </div>
     </div>
 
-    <!-- 中间：工具区域（折叠按钮 + 搜索框） -->
+    <!-- 中间：工具区域（折叠按钮 + 搜索框 + 顶部菜单） -->
     <div class="topbar__left">
-      <!-- 折叠按钮 -->
-      <div class="btc-comm__icon" @click="$emit('toggle-sidebar')">
+      <!-- 折叠按钮（仅左侧菜单和混合菜单显示） -->
+      <div
+        v-if="props.menuType === 'left' || props.menuType === 'top-left'"
+        class="btc-comm__icon"
+        @click="$emit('toggle-sidebar')"
+      >
         <btc-svg :name="isCollapse ? 'expand' : 'fold'" />
       </div>
 
-      <!-- 全局搜索（移动端隐藏） -->
-      <GlobalSearch v-if="!browser.isMini" />
+      <!-- 全局搜索（移动端隐藏，且设置中启用，顶部菜单模式下也显示） -->
+      <GlobalSearch v-if="!browser.isMini && showGlobalSearch" />
+
+      <!-- 顶部菜单（仅顶部菜单模式显示，在搜索框右侧） -->
+      <TopMenu v-if="props.menuType === 'top'" />
+
+      <!-- 混合菜单顶部（仅混合菜单模式显示，在搜索框右侧） -->
+      <TopLeftMenu v-if="props.menuType === 'top-left'" />
     </div>
 
     <div class="topbar__right">
@@ -93,19 +120,25 @@ import { useI18n } from 'vue-i18n';
 import { ElMessageBox } from 'element-plus';
 import { useMessage } from '@/utils/use-message';
 import { usePluginManager } from '@btc/shared-core';
+import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
+import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useUser } from '@/composables/useUser';
 import { useLogout } from '@/composables/useLogout';
 import { useBrowser } from '@/composables/useBrowser';
 import GlobalSearch from '../global-search/index.vue';
+import TopMenu from '../top-menu/index.vue';
+import TopLeftMenu from '../top-left-menu/index.vue';
 
 interface Props {
   isCollapse?: boolean;
   drawerVisible?: boolean;
+  menuType?: string;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   isCollapse: false,
   drawerVisible: false,
+  menuType: 'left',
 });
 
 defineEmits<{
@@ -119,6 +152,46 @@ const router = useRouter();
 
 // 浏览器信息
 const { browser } = useBrowser();
+
+// 获取设置状态
+const { showGlobalSearch, menuThemeType, isDark } = useSettingsState();
+const { menuStyleList } = useSettingsConfig();
+
+// 判断是否为深色菜单风格（展示层逻辑）
+const isDarkMenuStyle = computed(() => {
+  return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
+});
+
+// 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
+const menuThemeConfig = computed(() => {
+  // 深色主题下强制使用深色菜单配置（展示层逻辑）
+  if (isDark?.value === true) {
+    return {
+      background: 'var(--el-bg-color)',
+      systemNameColor: '#BABBBD',
+      rightLineColor: '#EDEEF0',
+    };
+  }
+
+  // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
+  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  const themeConfig = menuStyleList.value.find(item => item.theme === theme);
+
+  if (themeConfig) {
+    return {
+      background: themeConfig.background,
+      systemNameColor: themeConfig.systemNameColor,
+      rightLineColor: themeConfig.rightLineColor,
+    };
+  }
+
+  // 默认配置
+  return {
+    background: '#FFFFFF',
+    systemNameColor: 'var(--el-text-color-primary)',
+    rightLineColor: '#EDEEF0',
+  };
+});
 
 // 插件管理器
 const pluginManager = usePluginManager();
@@ -249,6 +322,8 @@ const handleCommand = (command: string) => {
     width: 255px; // 与侧边栏宽度一致
     height: 47px;
     border-right: 1px solid var(--el-border-color); // 右侧分隔线
+    border-bottom: 1px solid var(--el-border-color-extra-light); // 底部分隔线（logo区域和搜索区域之间），与 tabbar 和面包屑保持一致
+    position: relative;
     transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
 
@@ -259,6 +334,24 @@ const handleCommand = (command: string) => {
       .topbar__logo-content {
         opacity: 0;
         visibility: hidden;
+      }
+    }
+
+    // 顶部菜单模式：只显示汉堡菜单，隐藏logo和标题
+    &.menu-type-top {
+      width: 64px; // 只显示汉堡菜单
+
+      .topbar__logo-content {
+        display: none;
+      }
+    }
+
+    // 双栏菜单模式：品牌区域宽度固定，隐藏 logo 和标题
+    &.menu-type-dual-menu {
+      width: 64px; // 与折叠菜单和双栏菜单左侧栏宽度一致
+
+      .topbar__logo-content {
+        display: none !important; // 完全隐藏 logo 和标题
       }
     }
   }
@@ -346,12 +439,19 @@ const handleCommand = (command: string) => {
     overflow: hidden;
   }
 
-  // 左侧工具区（折叠按钮 + 搜索）
+  // 深色菜单风格下的 logo 文字颜色
+  &__logo-content.is-dark-menu &__logo-text {
+    color: #BABBBD;
+  }
+
+  // 左侧工具区（折叠按钮 + 搜索 + 顶部菜单）
   &__left {
     display: flex;
     align-items: center;
     gap: 5px; // 与 tabbar 的按钮间距保持一致
     padding-left: 10px; // 与品牌区域的间距（对应 tabbar 内容区的 padding-left）
+    flex: 1; // 占据剩余空间，让顶部菜单可以展开
+    overflow: hidden; // 防止溢出
   }
 
   &__title {

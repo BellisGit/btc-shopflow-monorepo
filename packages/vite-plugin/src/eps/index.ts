@@ -102,7 +102,41 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
           // 确保 eps 对象有正确的结构
           const epsData = eps || { service: {}, list: [], isUpdate: false };
 
-          // 参考 cool-admin 的虚拟模块生成
+          // 生成 service 代码（包含实际的函数，而不是 JSON）
+          const { serviceCode } = epsData;
+
+          // 如果 serviceCode 存在，生成包含函数的代码
+          if (serviceCode && serviceCode.content) {
+            // 导入 request 函数
+            // 注意：使用模板字符串时，确保 serviceCode.content 是有效的 JavaScript 代码
+            // 转义 serviceContent 中的特殊字符，避免模板字符串解析错误
+            const serviceContent = String(serviceCode.content);
+            const listData = JSON.stringify(epsData.list || []);
+            const isUpdate = epsData.isUpdate || false;
+
+            // 使用字符串拼接而不是模板字符串中的嵌套，避免语法错误
+            // 注意：namespace 已经包含完整路径（包括 /api 前缀），所以 baseURL 设为空字符串
+            const code = [
+              "import { createRequest } from '@btc/shared-core';",
+              "const request = createRequest(''); // namespace 已包含完整路径，不需要 baseURL",
+              "",
+              "// 生成的 service 对象",
+              `const serviceObj = ${serviceContent};`,
+              "",
+              "// 导出 service 和 list",
+              "export const service = serviceObj;",
+              `export const list = ${listData};`,
+              "export default {",
+              "  service: serviceObj,",
+              `  list: ${listData},`,
+              `  isUpdate: ${isUpdate}`,
+              "};"
+            ].join('\n');
+
+            return code;
+          }
+
+          // 如果没有 serviceCode，回退到 JSON（但 service 会是空对象）
           return `export default ${JSON.stringify(epsData)};`;
         } catch (err) {
           error(`加载 EPS 数据失败: ${err}`);

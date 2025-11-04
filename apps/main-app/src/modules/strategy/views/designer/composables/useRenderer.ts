@@ -1,4 +1,4 @@
-import type { NodeGeometry } from './useGeometryState';
+﻿import type { NodeGeometry } from './useGeometryState';
 
 export function useRenderer(geomMap: Map<string, NodeGeometry>, getViewportScale: () => number) {
 

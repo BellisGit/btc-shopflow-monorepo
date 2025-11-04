@@ -1,4 +1,4 @@
-import { ref, computed, watch, type Ref } from 'vue';
+﻿import { ref, computed, watch, type Ref } from 'vue';
 
 /**
  * 画布缩放管理

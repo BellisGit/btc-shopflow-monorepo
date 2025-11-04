@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="decision-node-config">
     <div class="config-header">
       <span>决策规则</span>

@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+﻿import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
 /**
  * 画布尺寸管理

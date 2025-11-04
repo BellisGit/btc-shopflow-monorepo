@@ -1,0 +1,286 @@
+/**
+ * 菜单风格样式
+ * 参考 art-design-pro 的实现方式
+ * 样式限定在侧边栏容器内，不影响其他组件
+ */
+
+// 菜单高度和通用变量
+$menu-height: 46px; // 菜单高度
+$menu-icon-size: 20px; // 菜单图标大小
+$menu-font-size: 14px; // 菜单字体大小
+// 使用 Element Plus 的灰色变量，如果没有则使用默认值
+$hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标移入背景色（参考 art-design-pro）
+
+// 侧边栏容器 - 限定菜单风格样式的作用范围
+.app-layout__sidebar {
+  // ---------------------- Modify default style ----------------------
+
+  // 菜单图标（通用）
+  .el-icon {
+    margin-right: 10px;
+    font-size: $menu-icon-size;
+  }
+
+  // 菜单高度（通用）
+  .el-sub-menu__title,
+  .el-menu-item {
+    height: $menu-height !important;
+    margin-bottom: 4px;
+    line-height: $menu-height !important;
+
+    span {
+      font-size: $menu-font-size !important;
+    }
+
+    &.is-active {
+      .el-icon {
+        color: var(--el-color-primary) !important;
+      }
+    }
+  }
+
+  // 右侧箭头
+  .el-sub-menu__icon-arrow {
+    width: 13px !important;
+    font-size: 13px !important;
+  }
+
+  // ---------------------- Design theme menu ----------------------
+  .sidebar__menu.el-menu-design,
+  .el-menu-design {
+    .el-sub-menu__title,
+    .el-menu-item {
+      width: calc(100% - 16px) !important;
+      margin-left: 8px !important;
+      margin-right: 8px !important;
+      border-radius: 6px !important;
+
+      .el-icon {
+        margin-left: -4px !important;
+      }
+    }
+
+    // 选中颜色
+    .el-menu-item.is-active {
+      color: var(--el-color-primary) !important;
+      background-color: var(--el-color-primary-light-9) !important;
+    }
+
+    // 鼠标移入背景色
+    .el-sub-menu__title:hover,
+    .el-menu-item:not(.is-active):hover {
+      background: $hover-bg-color !important;
+    }
+
+    // 右侧箭头
+    .el-sub-menu__icon-arrow {
+      color: var(--el-text-color-regular) !important;
+    }
+  }
+
+  // ---------------------- Dark theme menu ----------------------
+  .sidebar__menu.el-menu-dark,
+  .el-menu-dark {
+    // 用户选择深色菜单风格时，直接设置背景色
+    // 浅色系统主题下：使用系统默认深色背景 #141414
+    // 深色系统主题下：使用 var(--el-bg-color) 与内容区域一致
+    background-color: #141414 !important;
+
+    // 子菜单也需要使用相同的背景色
+    .el-sub-menu .el-menu {
+      background-color: #141414 !important;
+    }
+
+    // 深色系统主题下，覆盖为 var(--el-bg-color)
+    html.dark & {
+      background-color: var(--el-bg-color) !important;
+
+      .el-sub-menu .el-menu {
+        background-color: var(--el-bg-color) !important;
+      }
+    }
+
+    .el-sub-menu__title,
+    .el-menu-item {
+      width: calc(100% - 16px) !important;
+      margin-left: 8px !important;
+      margin-right: 8px !important;
+      border-radius: 6px !important;
+      color: #BABBBD !important;
+
+      .el-icon {
+        margin-left: -4px !important;
+        color: #BABBBD !important;
+      }
+
+      span {
+        color: #BABBBD !important;
+      }
+    }
+
+    // 选中颜色
+    .el-menu-item.is-active {
+      background-color: var(--el-color-primary-light-1) !important;
+      color: #fff !important;
+
+      .el-icon {
+        color: #fff !important;
+      }
+
+      span {
+        color: #fff !important;
+      }
+    }
+
+    // 鼠标移入背景色
+    .el-sub-menu__title:hover,
+    .el-menu-item:not(.is-active):hover {
+      background: #0f1015 !important;
+    }
+
+    // 右侧箭头
+    .el-sub-menu__icon-arrow {
+      color: #BABBBD !important;
+    }
+  }
+
+  // ---------------------- Light theme menu ----------------------
+  .sidebar__menu.el-menu-light,
+  .el-menu-light {
+    .el-sub-menu__title,
+    .el-menu-item {
+      // Light 风格：没有圆角和特殊 margin，图标左边距为正数
+      .el-icon {
+        margin-left: 4px !important;
+      }
+    }
+
+    // 选中颜色
+    .el-menu-item.is-active {
+      color: var(--el-color-primary) !important;
+      background-color: var(--el-color-primary-light-9) !important;
+      position: relative !important;
+
+      &::before {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 4px !important;
+        height: 100% !important;
+        content: '' !important;
+        background: var(--el-color-primary) !important;
+      }
+    }
+
+    // 鼠标移入背景色
+    .el-sub-menu__title:hover,
+    .el-menu-item:not(.is-active):hover {
+      background: $hover-bg-color !important;
+    }
+
+    .el-sub-menu__icon-arrow {
+      color: var(--el-text-color-regular) !important;
+    }
+  }
+
+  // 菜单折叠状态
+  .el-menu--collapse {
+    .el-sub-menu.is-active {
+      .el-sub-menu__title {
+        .el-icon {
+          color: var(--el-color-primary) !important;
+        }
+      }
+    }
+  }
+  // 深色菜单风格下的顶栏 logo 和搜索区域样式
+  .topbar.is-dark-menu {
+    .topbar__logo-content {
+      .topbar__logo-text {
+        color: #BABBBD !important;
+      }
+    }
+
+    // 品牌区域底部分隔线（logo 区域和搜索区域之间）使用深色边框，与搜索框保持一致
+    .topbar__brand {
+      border-bottom-color: #3F4257 !important;
+    }
+  }
+
+  // 深色菜单风格下的侧边栏容器背景
+  // 在深色系统主题下，侧边栏容器背景必须和内容区域一致
+  &.has-dark-menu {
+    html.dark & {
+      background-color: var(--el-bg-color) !important;
+    }
+    border-right-color: var(--el-border-color-extra-light) !important;
+  }
+}
+
+// 深色菜单风格下的顶栏品牌区域样式（全局选择器，确保样式能够正确应用）
+.topbar.is-dark-menu {
+  .topbar__brand {
+    // 品牌区域底部分隔线（logo 区域和搜索区域之间）使用深色边框，与搜索框保持一致
+    border-bottom-color: #3F4257 !important;
+  }
+}
+
+// 深色菜单风格下的侧边栏容器和搜索框样式（全局选择器，确保样式能够正确应用）
+.sidebar.is-dark-menu {
+  // 在深色系统主题下，侧边栏背景必须和内容区域一致
+  html.dark & {
+    background-color: var(--el-bg-color) !important;
+  }
+
+  .sidebar__search {
+    // 浅色系统主题下，深色菜单风格的搜索框样式
+    // 搜索框容器背景色与菜单背景一致
+    background-color: #141414 !important;
+
+    // 搜索框下边框颜色（深色菜单风格下使用深色边框，与菜单样式一致）
+    border-bottom-color: #3F4257 !important;
+
+    // 搜索框输入框样式（深色样式）
+    // 使用更高优先级的选择器覆盖 scoped 样式
+    .el-input__wrapper {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: none !important;
+      height: 27px !important;
+      padding: 0 12px !important;
+      border-radius: 6px !important;
+
+      .el-input__inner {
+        color: #BABBBD !important;
+        font-size: 13px !important;
+
+        &::placeholder {
+          color: rgba(186, 187, 189, 0.6) !important;
+        }
+      }
+    }
+
+    .el-input__prefix {
+      display: flex !important;
+      align-items: center !important;
+
+      .btc-svg {
+        color: #BABBBD !important;
+      }
+    }
+
+    .el-input__suffix {
+      .el-input__clear {
+        color: #BABBBD !important;
+      }
+    }
+  }
+}
+
+// 深色菜单风格下的侧边栏容器背景（全局选择器）
+.app-layout__sidebar.has-dark-menu {
+  // 在深色系统主题下，侧边栏容器背景必须和内容区域一致
+  html.dark & {
+    background-color: var(--el-bg-color) !important;
+  }
+  border-right-color: var(--el-border-color-extra-light) !important;
+}

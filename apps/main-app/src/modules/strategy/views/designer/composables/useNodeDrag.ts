@@ -1,4 +1,4 @@
-import { ref, reactive, computed, type Ref } from 'vue';
+﻿import { ref, reactive, computed, type Ref } from 'vue';
 
 const DRAG_THRESHOLD_PX = 4;
 

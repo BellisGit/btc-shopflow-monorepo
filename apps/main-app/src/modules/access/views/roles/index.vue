@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="roles-page">
     <BtcTableGroup
       ref="tableGroupRef"

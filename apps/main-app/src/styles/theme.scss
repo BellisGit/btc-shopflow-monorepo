@@ -28,8 +28,8 @@ html.dark {
     }
   }
 
-  // 优化暗黑模式下的遮罩层
-  .el-overlay {
+  // 优化暗黑模式下的遮罩层（排除设置抽屉）
+  .el-overlay:not(.user-setting-modal) {
     background-size: 4px 4px;
     backdrop-filter: saturate(50%) blur(4px);
   }
@@ -41,10 +41,39 @@ html.dark {
 
   // 优化菜单在暗黑模式下的显示
   .el-menu {
-    --el-menu-bg-color: var(--el-bg-color);
+    // 对于普通菜单，使用 Element Plus 的默认变量
     --el-menu-hover-bg-color: var(--el-fill-color-light);
     --el-menu-text-color: var(--el-text-color-primary);
     --el-menu-active-color: var(--el-color-primary);
+  }
+
+  // 深色菜单风格在深色系统主题下，背景色必须和内容区域一致
+  // 注意：不设置 --el-menu-bg-color，而是直接使用 background-color 覆盖
+  // 这样可以避免 Element Plus 的 var(--el-menu-bg-color) 覆盖我们的设置
+  .el-menu-dark {
+    background-color: var(--el-bg-color) !important;
+
+    .el-sub-menu .el-menu {
+      background-color: var(--el-bg-color) !important;
+    }
+  }
+
+  // 确保侧边栏容器内的深色菜单也使用正确的背景色（最高优先级）
+  .app-layout__sidebar {
+    .sidebar__menu.el-menu-dark,
+    .el-menu-dark {
+      background-color: var(--el-bg-color) !important;
+
+      .el-sub-menu .el-menu {
+        background-color: var(--el-bg-color) !important;
+      }
+    }
+
+    // 确保子菜单的背景色也被覆盖（匹配您提到的选择器）
+    .sidebar__menu.el-menu-dark .el-sub-menu .el-menu,
+    .el-menu-dark .el-sub-menu .el-menu {
+      background-color: var(--el-bg-color) !important;
+    }
   }
 
   // 优化下拉菜单
@@ -52,8 +81,8 @@ html.dark {
     --el-dropdown-menu-box-shadow: var(--el-box-shadow-light);
   }
 
-  // 优化抽屉
-  .el-drawer {
+  // 优化抽屉（排除设置抽屉，设置抽屉有自己的样式）
+  .el-overlay:not(.user-setting-modal) .el-drawer {
     --el-drawer-bg-color: var(--el-bg-color);
   }
 }

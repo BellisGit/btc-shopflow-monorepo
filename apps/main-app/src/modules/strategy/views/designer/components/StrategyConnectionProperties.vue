@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="strategy-connection-properties">
     <div class="property-section">
       <h4 class="section-title">连接属性</h4>

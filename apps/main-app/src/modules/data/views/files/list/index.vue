@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="files-page">
     <btc-crud ref="crudRef" class="files-page" :service="fileService">
       <btc-row>

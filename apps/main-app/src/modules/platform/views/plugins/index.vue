@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="plugins-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -38,12 +38,12 @@ const domainService = {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
 
-    return service.system?.iam?.sys.domain?.list(finalParams);
+    return service.system?.iam?.domain?.list(finalParams);
   }
 };
 
 // 插件服务（右侧表），使用纯后端API
-const pluginService = service.system?.iam?.sys.plugin;
+const pluginService = service.system?.iam?.plugin;
 
 const wrappedPluginService = {
   ...pluginService,

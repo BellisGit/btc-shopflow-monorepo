@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="global-search">
     <!-- 搜索触发器 -->
     <div

@@ -4,9 +4,9 @@
 
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import { validatePhone, validateSmsCode } from '../../../shared/composables/validation';
-import { sendSmsCode, smsLogin } from '../../../shared/composables/api';
-import { createCountState } from '../../../shared/composables/state';
+import { validatePhone, validateSmsCode } from '../../shared/composables/validation';
+import { sendSmsCode, smsLogin } from '../../shared/composables/api';
+import { createCountState } from '../../shared/composables/state';
 
 /**
  * 短信登录表单数据

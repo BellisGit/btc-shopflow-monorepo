@@ -1,5 +1,5 @@
-<template>
-  <div class="app-process">
+﻿<template>
+  <div v-if="showWorkTab" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
       <li class="btc-comm__icon" @click="toBack">
@@ -70,12 +70,13 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { ElMessageBox } from 'element-plus';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
+import { useSettingsState } from '@/plugins/user-setting/composables';
 
 interface Props {
   isFullscreen?: boolean;
@@ -95,6 +96,25 @@ const { t } = useI18n();
 
 // 使用静态导入的 store
 const processStore = useProcessStore();
+
+// 获取设置状态
+const { showWorkTab, tabStyle } = useSettingsState();
+
+// 标签页样式类
+const tabStyleClass = computed(() => tabStyle.value || 'tab-default');
+
+// 监听标签页样式变化
+function handleTabStyleChange(event: CustomEvent) {
+  // 样式类会自动通过 computed 更新
+}
+
+onMounted(() => {
+  window.addEventListener('tab-style-change', handleTabStyleChange as EventListener);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('tab-style-change', handleTabStyleChange as EventListener);
+});
 
 const scrollerRef = ref();
 const itemRefs = ref<Record<number, HTMLElement>>({});
@@ -438,6 +458,107 @@ watch(
         margin-right: -2px;
         width: 14px;
         opacity: 1;
+      }
+    }
+  }
+
+  // 标签页风格：tab-card
+  &.tab-card {
+    border-bottom: 1px solid var(--el-border-color);
+
+    .app-process__item {
+      border-radius: calc(var(--custom-radius) / 2.5 + 2px);
+    }
+  }
+
+  // 标签页风格：tab-google
+  &.tab-google {
+    padding: 5px 20px 0;
+    border-bottom: 1px solid var(--el-border-color);
+
+    .app-process__list {
+      padding-left: 5px;
+    }
+
+    .app-process__item {
+      position: relative;
+      height: 37px !important;
+      line-height: 37px !important;
+      border: none !important;
+      border-radius: calc(var(--custom-radius) / 2.5 + 4px) !important;
+      margin-right: 0;
+
+      &::before,
+      &::after {
+        position: absolute;
+        bottom: 0;
+        width: 20px;
+        height: 20px;
+        content: '';
+        border-radius: 50%;
+        box-shadow: 0 0 0 30px transparent;
+      }
+
+      &::before {
+        left: -20px;
+        clip-path: inset(50% -10px 0 50%);
+      }
+
+      &::after {
+        right: -20px;
+        clip-path: inset(50% 50% 0 -10px);
+      }
+
+      &:hover:not(.active) {
+        color: var(--el-text-color-regular) !important;
+        background-color: var(--el-fill-color-light) !important;
+        border-bottom: 1px solid var(--el-bg-color) !important;
+        border-radius: calc(var(--custom-radius) / 2.5 + 4px) !important;
+      }
+
+      &.active {
+        color: var(--el-color-primary) !important;
+        background-color: var(--el-color-primary-light-9) !important;
+        border-bottom: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+
+        &::before,
+        &::after {
+          box-shadow: 0 0 0 30px var(--el-color-primary-light-9);
+        }
+      }
+    }
+  }
+}
+</style>
+
+// 深色主题样式（全局样式，不使用 scoped）
+<style lang="scss">
+html.dark .app-process {
+  .app-process__item {
+    border-color: var(--el-border-color) !important;
+    background-color: var(--el-bg-color) !important;
+
+    &:hover:not(.active) {
+      background-color: var(--el-fill-color-light) !important;
+    }
+
+    &.active {
+      background-color: var(--el-color-primary) !important;
+      border-color: var(--el-color-primary) !important;
+      color: #fff !important;
+
+      .close {
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.3) !important;
+        }
+      }
+    }
+
+    .close {
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
       }
     }
   }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="condition-node-config">
     <div class="config-header">
       <span>条件配置</span>

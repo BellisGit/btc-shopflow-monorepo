@@ -347,6 +347,46 @@ $bg: var(--el-bg-color);
       width: 100%;
     }
   }
+
+  // btc-crud 在 view-group 内使用 flex 布局，确保内容正确显示
+  :deep(.btc-crud) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: visible !important; // 允许内容正常显示，不裁剪
+
+    // 表格行应该占据剩余空间，但允许内容自适应高度
+    .btc-crud-row {
+              // 如果包含表格，让这一行根据内容自适应，但可以收缩
+        &:has(.btc-table) {
+          flex: 0 1 auto !important; // flex-grow: 0 (不占据额外空间), flex-shrink: 1 (可以收缩), flex-basis: auto (根据内容)
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+          min-height: 0 !important; // 允许 flex 子元素收缩到内容以下
+          max-height: 100% !important; // 限制最大高度为容器高度
+
+          .btc-table {
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            // 表格根据 max-height 和内容自适应高度，不会拉伸填充剩余空间
+
+            // el-table 根据 max-height 自适应，不强制填满
+            :deep(.el-table) {
+              // 不设置 height，让表格根据 max-height 和内容自适应
+            }
+          }
+        }
+
+      // 其他行不缩放
+      &:not(:has(.btc-table)) {
+        flex-shrink: 0 !important;
+      }
+    }
+  }
 }
 
 // 移动端适配

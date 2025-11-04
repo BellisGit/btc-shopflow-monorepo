@@ -10,33 +10,33 @@ import { tSync } from '../i18n/getters';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 
 const routes: RouteRecordRaw[] = [
-  // 登录页面（不在 Layout 中）
+  // 登录页面（不在 Layout 中）- 使用根目录 auth 包
   {
     path: '/login',
     name: 'Login',
-    component: () => import('../pages/auth/login/index.vue'),
+    component: () => import('@auth/login/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
       titleKey: 'auth.login'
     }
   },
-  // 忘记密码页面（不在 Layout 中）
+  // 忘记密码页面（不在 Layout 中）- 使用根目录 auth 包
   {
     path: '/forget-password',
     name: 'ForgetPassword',
-    component: () => import('../pages/auth/forget-password/index.vue'),
+    component: () => import('@auth/forget-password/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局
       titleKey: 'auth.login.password.forgot'
     }
   },
-  // 注册页面（不在 Layout 中）
+  // 注册页面（不在 Layout 中）- 使用根目录 auth 包
   {
     path: '/register',
     name: 'Register',
-    component: () => import('../pages/auth/register/index.vue'),
+    component: () => import('@auth/register/index.vue'),
     meta: {
       public: true, // 公开页面，不需要认证
       noLayout: true, // 不使用 Layout 布局

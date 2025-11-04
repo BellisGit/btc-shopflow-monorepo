@@ -27,6 +27,7 @@ import BtcTabs from './components/btc-tabs/index.vue';
 import BtcViewsTabsGroup from './components/btc-views-tabs-group/index.vue';
 import BtcCascader from './components/btc-cascader/index.vue';
 import BtcTableGroup from './components/btc-table-group/index.vue';
+import BtcColorPicker from './components/btc-color-picker/index.vue';
 
 // 新的消息和通知组件
 import { BtcMessage } from './components/btc-message';
@@ -80,6 +81,7 @@ export {
   BtcViewsTabsGroup,
   BtcCascader,
   BtcTableGroup,
+  BtcColorPicker,
 
   // 新的消息和通知 API
   BtcMessage,

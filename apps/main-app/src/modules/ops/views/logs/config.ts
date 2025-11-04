@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 日志中心配置
  */
 import type { TableColumn } from '@btc/shared-components';

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="test-page">
     <h1>测试 btc-grid-group 组件</h1>
     <btc-grid-group left-width="200px" right-width="200px">

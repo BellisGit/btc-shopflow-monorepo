@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="role-perm-bind">
     <el-card class="info-card" shadow="hover">
       <template #header>
@@ -56,7 +56,7 @@ const saving = ref(false);
 const treeRef = ref();
 
 // Mock??
-const roleService = service.system?.iam?.sys.role;
+const roleService = service.system?.iam?.role;
 
 // Mock?????
 const loadPermissionTree = () => {

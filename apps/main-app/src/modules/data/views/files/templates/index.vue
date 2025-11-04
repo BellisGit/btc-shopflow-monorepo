@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="templates-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -41,12 +41,12 @@ const domainService = {
   list: (params?: any) => {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.system?.iam?.sys.domain?.list(finalParams);
+    return service.system?.iam?.domain?.list(finalParams);
   }
 };
 
 // 流程模板服务（右侧表），使用纯后端API
-const templateService = service.system?.iam?.sys.processTemplate;
+const templateService = service.system?.iam?.processTemplate;
 
 const wrappedTemplateService = {
   ...templateService,

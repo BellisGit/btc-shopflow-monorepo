@@ -1,5 +1,14 @@
-<template>
-  <div class="app-layout" :class="{ 'is-collapse': isCollapse, 'is-full': isFullscreen }">
+﻿<template>
+  <div
+    class="app-layout"
+    :class="{
+      'is-collapse': isCollapse && menuType !== 'top' && menuType !== 'dual-menu',
+      'is-full': isFullscreen,
+      'menu-type-top': menuType === 'top',
+      'menu-type-top-left': menuType === 'top-left',
+      'menu-type-dual-menu': menuType === 'dual-menu',
+    }"
+  >
     <!-- 遮罩层（移动端使用） -->
     <div class="app-layout__mask" @click="handleMaskClick"></div>
 
@@ -8,20 +17,30 @@
       <Topbar
         :is-collapse="isCollapse"
         :drawer-visible="drawerVisible"
+        :menu-type="menuType"
         @toggle-sidebar="toggleSidebar"
         @toggle-drawer="toggleDrawer"
         @open-drawer="openDrawer"
       />
     </div>
 
+
+
     <!-- 下方：左侧边栏 + 右侧内容 -->
     <div class="app-layout__body">
-      <!-- 左侧边栏（只有搜索和菜单） -->
-      <div class="app-layout__sidebar">
+      <!-- 左侧边栏（左侧菜单、双栏菜单左侧、混合菜单左侧） -->
+      <div
+        v-if="menuType === 'left' || menuType === 'dual-menu' || menuType === 'top-left'"
+        class="app-layout__sidebar"
+        :class="{ 'has-dark-menu': isDarkMenuStyle }"
+      >
         <Sidebar
+          v-if="menuType === 'left'"
           :is-collapse="isCollapse"
           :drawer-visible="drawerVisible"
         />
+        <DualMenu v-else-if="menuType === 'dual-menu'" />
+        <TopLeftSidebar v-else />
       </div>
 
       <!-- 右侧内容 -->
@@ -34,12 +53,12 @@
         />
 
         <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
-        <Breadcrumb v-if="showBreadcrumb" />
+        <Breadcrumb v-if="showBreadcrumb && showCrumbs" />
 
         <div class="app-layout__content">
             <!-- 主应用路由出口 -->
             <router-view v-if="isMainApp && !isDocsApp" v-slot="{ Component }">
-              <transition name="slide" mode="out-in">
+              <transition :name="pageTransitionName" mode="out-in">
                 <keep-alive :include="[]">
                   <component :is="Component" :key="viewKey" />
                 </keep-alive>
@@ -71,6 +90,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
+import { useSettingsState } from '@/plugins/user-setting/composables';
+import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -78,6 +99,8 @@ import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
 import AppSkeleton from '@/components/AppSkeleton.vue';
 import DocsIframe from './docs-iframe/index.vue';
+import TopLeftSidebar from './top-left-sidebar/index.vue';
+import DualMenu from './dual-menu/index.vue';
 
 // 创建事件总线
 const emitter = mitt();
@@ -88,6 +111,26 @@ const emitter = mitt();
 const route = useRoute();
 const isCollapse = ref(false);
 const drawerVisible = ref(false);
+
+// 获取设置状态
+const { showCrumbs, pageTransition, menuType, menuThemeType, isDark } = useSettingsState();
+
+// 判断是否为深色菜单风格
+const isDarkMenuStyle = computed(() => {
+  return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
+});
+
+// 页面切换动画名称
+const pageTransitionName = computed(() => {
+  const transition = pageTransition.value || 'slide-left';
+  return transition || ''; // 空字符串表示无动画
+});
+
+// 监听页面切换动画变化
+function handlePageTransitionChange(event: CustomEvent) {
+  // 动画名称会自动通过 computed 更新
+}
+
 const isFullscreen = ref(false);
 const viewKey = ref(1); // 主应用视图 key
 
@@ -169,6 +212,7 @@ function refreshView() {
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
+  window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
 
   // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
   onScreenChange(() => {
@@ -182,6 +226,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
+  window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
   delete (window as any).__APP_EMITTER__;
 });
 </script>
@@ -213,11 +258,16 @@ onUnmounted(() => {
   &__sidebar {
     width: 255px;
     height: 100%;
-    background-color: var(--el-bg-color);
+    background-color: transparent; // 背景色由菜单风格控制
     transition: width 0.2s ease-in-out;
     overflow: hidden;
     flex-shrink: 0;
     border-right: 1px solid var(--el-border-color-extra-light);
+
+    // 双栏菜单模式：宽度为 274px（与顶栏搜索框对齐）
+    .menu-type-dual-menu & {
+      width: 274px;
+    }
   }
 
   &__main {
@@ -228,6 +278,21 @@ onUnmounted(() => {
     overflow: hidden;
     width: calc(100% - 255px);
     transition: width 0.2s ease-in-out;
+
+    // 顶部菜单模式：全宽
+    .menu-type-top & {
+      width: 100%;
+    }
+
+    // 双栏菜单模式：减去左侧菜单宽度（与顶栏搜索框对齐）
+    .menu-type-dual-menu & {
+      width: calc(100% - 274px);
+    }
+
+    // 混合菜单模式：减去左侧菜单宽度
+    .menu-type-top-left & {
+      width: calc(100% - 255px);
+    }
   }
 
   &__mask {
@@ -255,12 +320,22 @@ onUnmounted(() => {
     :deep(> *) {
       width: 100%;
       height: 100%;
-      overflow: auto;
       box-sizing: border-box;
       background-color: var(--el-bg-color);
 
-      // 只给非 view-group 页面添加 padding
+      // 使用 btc-view-group 的页面（滚动由内部组件控制，不需要外层滚动）
+      &.users-page,
+      &.resources-page,
+      &.menus-page,
+      &.modules-page,
+      &.plugins-page,
+      &.perm-compose-page {
+        overflow: hidden;
+      }
+
+      // 其他页面允许滚动
       &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page):not(.btc-grid-group):not(.strategy-designer):not(.templates-page):not(.file-preview-page) {
+        overflow: auto;
         padding: 10px;
       }
     }
@@ -281,37 +356,133 @@ onUnmounted(() => {
     }
 
     // 路由过渡动画（加快速度）
-    .slide-enter-active {
+    // slide-left 动画（默认）
+    .slide-left-enter-active {
       position: absolute;
       top: 0;
       width: 100%;
       transition: all 0.25s ease-in-out 0.1s;
     }
 
-    .slide-leave-active {
+    .slide-left-leave-active {
       position: absolute;
       top: 0;
       width: 100%;
       transition: all 0.25s ease-in-out;
     }
 
-    .slide-enter-to {
+    .slide-left-enter-to {
       transform: translate3d(0, 0, 0);
       opacity: 1;
     }
 
-    .slide-enter-from {
+    .slide-left-enter-from {
       transform: translate3d(-5%, 0, 0);
       opacity: 0;
     }
 
-    .slide-leave-to {
+    .slide-left-leave-to {
       transform: translate3d(5%, 0, 0);
       opacity: 0;
     }
 
-    .slide-leave-from {
+    .slide-left-leave-from {
       transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+
+    // slide-bottom 动画
+    .slide-bottom-enter-active {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      transition: all 0.25s ease-in-out 0.1s;
+    }
+
+    .slide-bottom-leave-active {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      transition: all 0.25s ease-in-out;
+    }
+
+    .slide-bottom-enter-to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+
+    .slide-bottom-enter-from {
+      transform: translate3d(0, 5%, 0);
+      opacity: 0;
+    }
+
+    .slide-bottom-leave-to {
+      transform: translate3d(0, -5%, 0);
+      opacity: 0;
+    }
+
+    .slide-bottom-leave-from {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+
+    // slide-top 动画
+    .slide-top-enter-active {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      transition: all 0.25s ease-in-out 0.1s;
+    }
+
+    .slide-top-leave-active {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      transition: all 0.25s ease-in-out;
+    }
+
+    .slide-top-enter-to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+
+    .slide-top-enter-from {
+      transform: translate3d(0, -5%, 0);
+      opacity: 0;
+    }
+
+    .slide-top-leave-to {
+      transform: translate3d(0, 5%, 0);
+      opacity: 0;
+    }
+
+    .slide-top-leave-from {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+
+    // fade 动画
+    .fade-enter-active {
+      transition: opacity 0.25s ease-in-out;
+    }
+
+    .fade-leave-active {
+      transition: opacity 0.25s ease-in-out;
+    }
+
+    .fade-enter-to {
+      opacity: 1;
+    }
+
+    .fade-enter-from {
+      opacity: 0;
+    }
+
+    .fade-leave-to {
+      opacity: 0;
+    }
+
+    .fade-leave-from {
       opacity: 1;
     }
   }
@@ -323,6 +494,23 @@ onUnmounted(() => {
 
     .app-layout__main {
       width: calc(100% - 64px);
+    }
+
+    // 顶部菜单模式：折叠不影响
+    &.menu-type-top {
+      .app-layout__main {
+        width: 100%;
+      }
+    }
+
+    // 双栏菜单模式：折叠不影响（双栏菜单有自己的宽度，与顶栏搜索框对齐）
+    &.menu-type-dual-menu {
+      .app-layout__sidebar {
+        width: 274px;
+      }
+      .app-layout__main {
+        width: calc(100% - 274px);
+      }
     }
   }
 
@@ -403,7 +591,7 @@ onUnmounted(() => {
 
     // 保留标签页进程栏和面包屑，确保用户可以退出全屏
     .app-layout__content {
-      margin: 10px; // 保持四周间距，包括顶部间距
+      margin: 0 10px 10px 10px; // 保持左右和底部间距，顶部不留间距（与正常模式一致）
       width: calc(100% - 20px);
       border-radius: 6px;
     }

@@ -11,6 +11,7 @@ export default defineConfig({
       '@btc-crud': resolve(__dirname, 'src/crud'),
       '@btc-styles': resolve(__dirname, 'src/styles'),
       '@btc-locales': resolve(__dirname, 'src/locales'),
+      '@assets': resolve(__dirname, 'src/assets'),
     },
   },
   plugins: [

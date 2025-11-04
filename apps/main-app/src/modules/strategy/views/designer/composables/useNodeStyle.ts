@@ -1,4 +1,4 @@
-import { computed, type Ref } from 'vue';
+﻿import { computed, type Ref } from 'vue';
 
 /**
  * 节点样式getter函数

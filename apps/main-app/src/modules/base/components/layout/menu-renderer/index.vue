@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <template v-for="item in menuItems" :key="item.index">
     <!-- 有子菜单的情况 -->
     <el-sub-menu

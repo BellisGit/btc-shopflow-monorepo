@@ -20,6 +20,7 @@
     "dev:quality": "pnpm --filter quality-app dev",
     "dev:production": "pnpm --filter production-app dev",
     "dev:docs": "pnpm --filter docs-site dev",
+    "prebuild:all": "node scripts/clean-cache.mjs",
     "build:all": "turbo run build",
     "lint": "turbo run lint",
     "lint:fix": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\" --fix",

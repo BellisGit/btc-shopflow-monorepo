@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 角色列表页面配置
  */
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -138,6 +138,6 @@ export const getRoleFormItems = (domainOptions: any[] = [], roleOptions: any[] =
 
 // 服务配置
 export const services = {
-  sysdomain: service.system?.iam?.sys?.domain,
-  sysrole: service.system?.iam?.sys?.role
+  sysdomain: service.system?.iam?.domain,
+  sysrole: service.system?.iam?.role
 };

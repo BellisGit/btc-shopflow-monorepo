@@ -1,82 +1,81 @@
-import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useBase } from '/$/base';
+import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getTenantList } from '../../shared/composables/api';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { http } from '@/utils/http';
 
 export function useRegister() {
-  const { app } = useBase();
+  const router = useRouter();
   const { t } = useI18n();
 
-  // 确保app对象有info属性
-  const appInfo = app?.info || { name: 'BTC Admin', version: '1.0.0' };
+  const form = reactive({
+    username: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
 
-  // 当前步骤状态
-  const currentStep = ref<'tenant-select' | 'INERT' | 'UK-HEAD' | 'SUPPLIER'>('tenant-select');
+  const loading = ref(false);
 
-  // 供应商列表状态
-  const supplierList = ref<any[]>([]);
-  const selectedSupplier = ref<any>(null);
-
-  // 处理租户选择
-  async function handleTenantSelected(tenant: string | any) {
-    if (typeof tenant === 'string') {
-      if (tenant === 'SUPPLIER') {
-        // 如果是供应商，先获取供应商列表，然后直接进入注册流程第一步
-        await loadSupplierList();
-        currentStep.value = 'SUPPLIER';
-      } else {
-        // 其他租户类型直接进入注册流程
-        currentStep.value = tenant as any;
+  const rules = reactive({
+    username: [
+      { required: true, message: t('请输入用户名或邮箱'), trigger: 'blur' },
+      { min: 2, max: 50, message: t('用户名长度在 2 到 50 个字符'), trigger: 'blur' }
+    ],
+    phone: [
+      { required: true, message: t('请输入手机号'), trigger: 'blur' },
+      { pattern: /^1[3-9]\d{9}$/, message: t('请输入正确的手机号'), trigger: 'blur' }
+    ],
+    password: [
+      { required: true, message: t('请输入密码'), trigger: 'blur' },
+      { min: 6, max: 20, message: t('密码长度在 6 到 20 个字符'), trigger: 'blur' }
+    ],
+    confirmPassword: [
+      { required: true, message: t('请再次输入密码'), trigger: 'blur' },
+      {
+        validator: (rule: any, value: string, callback: any) => {
+          if (value !== form.password) {
+            callback(new Error(t('两次输入的密码不一致')));
+          } else {
+            callback();
+          }
+        },
+        trigger: 'blur'
       }
-    } else {
-      // 如果选择的是具体供应商，进入注册流程
-      selectedSupplier.value = tenant;
-      currentStep.value = 'SUPPLIER';
-    }
-  }
+    ]
+  });
 
-  // 加载供应商列表
-  async function loadSupplierList() {
+  const register = async (formRef: any) => {
+    if (!formRef) return;
     try {
-      const response = await getTenantList('SUPPLIER');
+      loading.value = true;
+      await formRef.validate();
 
-      if (response.code === 2000) {
-        supplierList.value = response.data || [];
-      } else {
-        ElMessage.error(response.msg || '获取供应商列表失败');
-        supplierList.value = [];
-      }
+      // 调用注册 API
+      await http.post('/base/open/register', {
+        username: form.username,
+        phone: form.phone,
+        password: form.password
+      });
+
+      ElMessage.success(t('注册成功'));
+      // 注册成功后跳转到登录页
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
     } catch (error: any) {
-      console.error('获取供应商列表失败', error);
-      ElMessage.error(error.message || '获取供应商列表失败');
-      supplierList.value = [];
+      console.error('注册失败:', error);
+      ElMessage.error(error.message || t('注册失败，请重试'));
+    } finally {
+      loading.value = false;
     }
-  }
-
-  // 返回租户选择
-  function backToTenantSelect() {
-    currentStep.value = 'tenant-select';
-  }
-
-  // 处理注册完成
-  function handleRegistrationComplete(data: any) {
-    ElMessage.success('注册成功！');
-
-    // 跳转到登录页面
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 1500);
-  }
+  };
 
   return {
-    currentStep,
-    supplierList,
-    selectedSupplier,
-    handleTenantSelected,
-    handleRegistrationComplete,
-    backToTenantSelect,
-    app: { info: appInfo },
-    t
+    form,
+    rules,
+    loading,
+    register
   };
 }
+

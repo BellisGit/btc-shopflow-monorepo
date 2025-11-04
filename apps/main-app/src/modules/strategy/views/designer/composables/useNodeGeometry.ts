@@ -1,4 +1,4 @@
-import { type Ref } from 'vue';
+﻿import { type Ref } from 'vue';
 
 /**
  * 节点几何计算函数

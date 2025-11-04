@@ -3,7 +3,7 @@
  */
 
 import { ref, computed } from 'vue';
-import { createStepState } from '../../../shared/composables/state';
+import { createStepState } from '../../shared/composables/state';
 
 /**
  * 步骤配置

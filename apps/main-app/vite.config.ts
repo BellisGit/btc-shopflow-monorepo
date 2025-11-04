@@ -8,9 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
 import { titleInjectPlugin } from './vite-plugin-title-inject';
 import { proxy } from './src/config/proxy';
-
-// 动态加载 vite-plugin（在顶层使用 await）
-const { btc } = await import('@btc/vite-plugin');
+import { btc } from '@btc/vite-plugin'
 
 export default defineConfig({
   resolve: {
@@ -20,6 +18,7 @@ export default defineConfig({
       '@services': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/services'),
       '@components': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/components'),
       '@utils': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/utils'),
+      '@auth': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../auth'),
       '@btc/shared-core': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-core/src'),
       '@btc/shared-components': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src'),
       '@btc/shared-utils': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-utils/src'),
@@ -29,7 +28,14 @@ export default defineConfig({
       '@btc-crud': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/crud'),
       '@btc-styles': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/styles'),
       '@btc-locales': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/locales'),
+      '@assets': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/assets'),
+      '@user-setting-assets': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/plugins/user-setting/assets'),
+      // 修复 element-plus 路径解析问题
+      'element-plus/es': 'element-plus/es',
+      'element-plus/dist': 'element-plus/dist',
     },
+    // 确保 element-plus 的路径解析正确
+    dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],
   },
   plugins: [
     titleInjectPlugin(), // 服务端标题注入（必须在最前面）
@@ -63,7 +69,8 @@ export default defineConfig({
         fileURLToPath(new URL('./src/{modules,plugins}/**/locales/**', import.meta.url)),
         fileURLToPath(new URL('../../packages/shared-components/src/locales/**', import.meta.url)),
         fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts', import.meta.url))
+        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts', import.meta.url)),
+        fileURLToPath(new URL('./src/plugins/user-setting/locales/**', import.meta.url))
       ],
       runtimeOnly: true, // 明确设置为 true，生成字符串而不是 AST 对象
     })

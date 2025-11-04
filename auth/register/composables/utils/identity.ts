@@ -4,8 +4,8 @@
 
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
-import { ensureString } from '../../../shared/composables/validation';
-import { verifyEmployeeIdentity } from '../../../shared/composables/api';
+import { ensureString } from '../../shared/composables/validation';
+import { verifyEmployeeIdentity } from '../../shared/composables/api';
 
 /**
  * 身份验证表单数据

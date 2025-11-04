@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="user-role-assign">
     <el-card class="info-card" shadow="hover">
       <template #header>
@@ -60,8 +60,8 @@ const selectedRoles = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const userService = service.system?.iam?.sys.user;
-const roleService = service.system?.iam?.sys.role;
+const userService = service.system?.iam?.user;
+const roleService = service.system?.iam?.role;
 
 // 加载用户信息
 const loadUserInfo = async () => {

@@ -1,11 +1,14 @@
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
-import { useBtc } from '/@/btc';
-import { service } from '/@/btc';
+import { useRouter } from 'vue-router';
+import { authApi } from '@/modules/api-services';
+import { useUser } from '@/composables/useUser';
+import { getCookie } from '@/utils/cookie';
 
 export function useSmsLogin() {
-  const { router } = useBtc();
+  const router = useRouter();
+  const { setUserInfo } = useUser();
   const { t } = useI18n();
 
   // 表单数据
@@ -14,82 +17,70 @@ export function useSmsLogin() {
     smsCode: ''
   });
 
-  // 状态
-  const saving = ref(false);
-  const smsCountdown = ref(0);
-  const hasSentSms = ref(false);
+  // 加载状态
+  const loading = ref(false);
 
-  // 发送短信验证码
-  const sendSmsCode = async () => {
-    if (!form.phone) {
-      ElMessage.warning(t('请输入手机号'));
-      return;
-    }
-
+  // 提交登录
+  const submit = async (formData: { phone: string; smsCode: string }) => {
     try {
-      await service.base.sys.user.sendSmsCode({ phone: form.phone });
-      hasSentSms.value = true;
-      smsCountdown.value = 60;
+      loading.value = true;
 
-      // 倒计时
-      const timer = setInterval(() => {
-        smsCountdown.value--;
-        if (smsCountdown.value <= 0) {
-          clearInterval(timer);
-        }
-      }, 1000);
-
-      ElMessage.success(t('验证码已发送'));
-    } catch (error: any) {
-      ElMessage.error(error.message || t('发送失败'));
-    }
-  };
-
-  // 处理手机号输入
-  const handlePhoneEnter = () => {
-    if (form.phone && form.phone.length === 11) {
-      sendSmsCode();
-    }
-  };
-
-  // 登录
-  const onLogin = async () => {
-    if (!form.phone || !form.smsCode) {
-      ElMessage.warning(t('请完善信息'));
-      return;
-    }
-
-    try {
-      saving.value = true;
-
-      await service.base.sys.user.smsLogin(form);
+      // 调用短信登录接口
+      // 注意：token 会在 cookie 中，字段名为 access_token
+      // 同时检查响应体中是否包含 token（向后兼容）
+      const response = await authApi.loginBySms({
+        phone: formData.phone,
+        smsCode: formData.smsCode,
+        smsType: 'login'
+      });
 
       ElMessage.success(t('登录成功'));
+
+      // 优先从响应体获取 token（如果后端返回）
+      let token: string | null = null;
+      if (response?.token) {
+        token = response.token;
+      } else if (response?.accessToken) {
+        token = response.accessToken;
+      } else {
+        // 如果响应体没有 token，尝试从 cookie 读取
+        token = getCookie('access_token');
+      }
+
+      // 保存 token 到 localStorage（无论来源）
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        // 调试：检查登录响应和 cookie
+        if (import.meta.env.DEV) {
+          console.warn('[SMS Login] No token found:', {
+            responseKeys: response ? Object.keys(response) : [],
+            response: response,
+            cookies: document.cookie.split(';').map(c => c.trim()),
+            hasAccessTokenInCookie: document.cookie.includes('access_token')
+          });
+        }
+      }
+
+      // 保存用户信息（如果响应中包含用户信息）
+      if (response && response.user) {
+        setUserInfo(response.user);
+      }
+
+      // 跳转到首页
       router.push('/');
     } catch (error: any) {
+      console.error('登录错误:', error);
       ElMessage.error(error.message || t('登录失败'));
+      // 不再抛出错误，避免在父组件中产生未处理的错误
     } finally {
-      saving.value = false;
-    }
-  };
-
-  // 验证码输入完成
-  const onCodeComplete = (code: string) => {
-    form.smsCode = code;
-    if (form.smsCode && form.smsCode.length === 6) {
-      onLogin();
+      loading.value = false;
     }
   };
 
   return {
     form,
-    saving,
-    smsCountdown,
-    hasSentSms,
-    sendSmsCode,
-    handlePhoneEnter,
-    onCodeComplete,
-    onLogin,
-    t
+    loading,
+    submit
   };
 }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="role-list">
     <BtcCrud ref="crudRef" :service="roleService">
       <BtcRow>
@@ -33,12 +33,12 @@ const message = useMessage();
 const crudRef = ref();
 
 const roleService = {
-  ...service.system?.iam?.sys.role,
+  ...service.system?.iam?.role,
   delete: async (id: string | number) => {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.sys.role?.delete(id);
+    await service.system?.iam?.role?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -46,7 +46,7 @@ const roleService = {
     await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.sys.role?.deleteBatch(ids);
+    await service.system?.iam?.role?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },
