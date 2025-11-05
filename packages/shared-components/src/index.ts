@@ -28,6 +28,9 @@ import BtcViewsTabsGroup from './components/btc-views-tabs-group/index.vue';
 import BtcCascader from './components/btc-cascader/index.vue';
 import BtcTableGroup from './components/btc-table-group/index.vue';
 import BtcColorPicker from './components/btc-color-picker/index.vue';
+import BtcUpload from './components/btc-upload/index.vue';
+import { BtcIconButton } from './components/btc-icon-button';
+import BtcAvatar from './components/btc-avatar/index.vue';
 
 // 新的消息和通知组件
 import { BtcMessage } from './components/btc-message';
@@ -38,6 +41,8 @@ import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
 import './components/btc-message/styles.scss';
 import './components/btc-notification/styles.scss';
+import './components/btc-icon-button/index.scss';
+import './components/btc-avatar/index.scss';
 
 // CRUD 组件（上下文系统）
 import BtcCrud from './crud/context/index.vue';
@@ -82,6 +87,9 @@ export {
   BtcCascader,
   BtcTableGroup,
   BtcColorPicker,
+  BtcUpload,
+  BtcIconButton,
+  BtcAvatar,
 
   // 新的消息和通知 API
   BtcMessage,
@@ -111,6 +119,7 @@ export const { BtcCodeJson } = CodePlugin;
 
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';
+export { useUpload } from './components/btc-upload/composables/useUpload';
 
 // 导出类型
 export type { TableColumn, OpButton } from './crud/table/types';
@@ -121,3 +130,9 @@ export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/btc-vi
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/btc-table-group/types';
 export type { BtcContainerProps } from './common/container/types';
 export type { BtcGridGroupProps } from './common/grid-group/types';
+export type {
+  IconButtonConfig,
+  IconButtonDropdown,
+  IconButtonDropdownItem,
+  IconButtonPopover
+} from './components/btc-icon-button';

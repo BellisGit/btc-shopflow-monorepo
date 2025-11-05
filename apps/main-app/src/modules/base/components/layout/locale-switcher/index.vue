@@ -1,9 +1,13 @@
 ﻿<template>
   <el-dropdown trigger="click" @command="handleCommand">
-    <div class="btc-comm__icon">
-      <btc-svg name="lang" />
-    </div>
-
+    <template #default>
+      <BtcIconButton
+        :config="{
+          icon: 'lang',
+          tooltip: t('common.tooltip.locale')
+        }"
+      />
+    </template>
     <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item
@@ -29,10 +33,11 @@ defineOptions({
   name: 'LayoutLocaleSwitcher'
 });
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
+import { BtcIconButton } from '@btc/shared-components';
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 
 const languages = ref([
   {

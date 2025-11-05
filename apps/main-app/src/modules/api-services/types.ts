@@ -36,15 +36,6 @@ export interface HealthCheckResponse {
 }
 
 /**
- * 刷新 Token 响应类型
- */
-export interface RefreshTokenResponse {
-  token: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-/**
  * 验证码校验请求参数
  */
 export interface VerifyCodeRequest {

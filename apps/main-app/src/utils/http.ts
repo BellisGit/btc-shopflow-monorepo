@@ -11,9 +11,6 @@ export class Http {
   public baseURL: string;
   private axiosInstance: any;
   private retryManager: ReturnType<typeof createHttpRetry>;
-  // 刷新 token 相关状态
-  private isRefreshing = false;
-  private refreshSubscribers: Array<(token: string) => void> = [];
 
   constructor(baseURL = '') {
     this.baseURL = baseURL;
@@ -80,24 +77,8 @@ export class Http {
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login');
       
-      // 调试日志：检查响应拦截器调用
-      console.log('[Http.onFulfilled] 收到 Axios 响应:', {
-        url: response.config?.url,
-        hasData: !!response.data,
-        dataCode: response.data?.code,
-        dataMsg: response.data?.msg
-      });
-      
       this.recordRequestLog(response, 'success');
       const result = interceptor.onFulfilled(response);
-      
-      // 调试日志：检查拦截器返回结果
-      console.log('[Http.onFulfilled] 拦截器返回结果:', {
-        resultType: typeof result,
-        isResponseObject: result && result.data && result.status && result.headers,
-        hasList: result && typeof result === 'object' && 'list' in result,
-        hasTotal: result && typeof result === 'object' && 'total' in result
-      });
       
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {
@@ -157,75 +138,7 @@ export class Http {
     };
 
     const onRejected = async (error: any) => {
-      const originalRequest = error.config;
-
-      // 检查是否是 401 错误（未授权）
-      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-        // 检查是否是刷新 token 的请求本身，避免无限循环
-        if (originalRequest.url?.includes('/refresh/access-token')) {
-          // 刷新 token 请求也返回 401，说明 session 已失效，需要重新登录
-          this.recordRequestLog(error.response || { config: error.config }, 'failed');
-          return interceptor.onRejected(error);
-        }
-
-        // 如果正在刷新中，将请求加入队列
-        if (this.isRefreshing) {
-          return new Promise((resolve, reject) => {
-            this.refreshSubscribers.push((token: string) => {
-              // 更新请求的 Authorization header
-              originalRequest.headers['Authorization'] = `Bearer ${token}`;
-              // 重试原请求
-              this.axiosInstance(originalRequest)
-                .then(resolve)
-                .catch(reject);
-            });
-          });
-        }
-
-        // 标记正在刷新
-        originalRequest._retry = true;
-        this.isRefreshing = true;
-
-        try {
-          // 导入 authApi（动态导入避免循环依赖）
-          const { authApi } = await import('@/modules/api-services');
-          
-          // 调用刷新 token API
-          await authApi.refreshAccessToken();
-          
-          // 从 cookie 获取新的 token
-          const newToken = getCookie('access_token');
-          
-          if (newToken) {
-            // 通知所有等待的请求
-            this.refreshSubscribers.forEach(cb => cb(newToken));
-            this.refreshSubscribers = [];
-            
-            // 更新原请求的 Authorization header
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-            
-            // 重试原请求
-            this.isRefreshing = false;
-            return this.axiosInstance(originalRequest);
-          } else {
-            throw new Error('刷新 token 后未获取到新的 token');
-          }
-        } catch (refreshError) {
-          // 刷新失败，清空队列并跳转登录
-          this.refreshSubscribers = [];
-          this.isRefreshing = false;
-          
-          // 清除 cookie 和 localStorage
-          deleteCookie('access_token');
-          localStorage.removeItem('token');
-          
-          // 记录日志并使用响应拦截器处理错误（会跳转登录页）
-          this.recordRequestLog(error.response || { config: error.config }, 'failed');
-          return interceptor.onRejected(error);
-        }
-      }
-
-      // 其他错误正常处理
+      // 所有错误统一处理，由响应拦截器处理错误（包括401会跳转登录页）
       this.recordRequestLog(error.response || { config: error.config }, 'failed');
       return interceptor.onRejected(error);
     };

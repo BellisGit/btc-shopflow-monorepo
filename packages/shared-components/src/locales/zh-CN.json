@@ -311,6 +311,8 @@
   "common.upload.tip": "支持 Excel (.xlsx, .xls) 和 CSV 文件",
   "common.import.template_tip": "请按照模版填写信息",
   "common.import.select_file": "请选择文件",
+  "选择图片": "选择图片",
+  "选择文件": "选择文件",
   "common.import.onSubmit_required": "onSubmit 回调函数是必需的",
   "user.field.avatar": "头像",
   "user.field.username": "用户名",

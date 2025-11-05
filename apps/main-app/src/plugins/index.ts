@@ -4,6 +4,8 @@ import { githubPlugin } from './github';
 import { i18nPlugin as i18nToolbarPlugin } from './i18n';
 import { themePlugin as themeToolbarPlugin } from './theme';
 import { userSettingPlugin } from './user-setting';
+import { notificationPlugin } from './notification';
+import { messagePlugin } from './message';
 
 /**
  * Excel 插件
@@ -32,50 +34,12 @@ export const excelPlugin: Plugin = {
 /**
  * 导出所有插件
  */
-export { githubPlugin, i18nToolbarPlugin, themeToolbarPlugin, userSettingPlugin };
-
-/**
- * 通知插件（示例）
- */
-export const notificationPlugin: Plugin = {
-  name: 'notification',
-  version: '1.0.0',
-  description: 'Notification management plugin',
-
-  api: {
-    success(message: string) {
-      console.log('? Success:', message);
-    },
-    error(message: string) {
-      console.error('? Error:', message);
-    },
-    info(message: string) {
-      console.log('?? Info:', message);
-    },
-  },
-
-  install(_app) {
-    // Plugin installed
-  },
-};
-
-/**
- * Logger 插件（示例，依赖 notification）
- */
-export const loggerPlugin: Plugin = {
-  name: 'logger',
-  version: '1.0.0',
-  description: 'Logger plugin with notification',
-  dependencies: ['notification'], // 依赖 notification 插件
-
-  api: {
-    log(level: string, message: string) {
-      console.log(`[${level.toUpperCase()}] ${message}`);
-    },
-  },
-
-  install(_app) {
-    // Plugin installed
-  },
+export { 
+  githubPlugin, 
+  i18nToolbarPlugin, 
+  themeToolbarPlugin, 
+  userSettingPlugin,
+  notificationPlugin,
+  messagePlugin
 };
 

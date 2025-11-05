@@ -34,7 +34,6 @@ export function useLogout() {
       
       // 清除所有 localStorage 中的认证相关数据
       localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('username');
       localStorage.removeItem('user');
 
@@ -63,7 +62,6 @@ export function useLogout() {
       // 强制清除所有缓存
       deleteCookie('access_token');
       localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('username');
       localStorage.removeItem('user');
       clearUserInfo();

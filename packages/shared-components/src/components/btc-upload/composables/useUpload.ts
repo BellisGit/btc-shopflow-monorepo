@@ -1,10 +1,10 @@
-import { ElMessage } from 'element-plus';
+﻿import { ElMessage } from 'element-plus';
 import type { UploadOptions, UploadResponse } from '../types';
 
 /**
  * 文件上传 composable
  */
-export function useUpload(service?: any) {
+export function useUpload(service?: any): { toUpload: (file: File, options?: UploadOptions) => Promise<UploadResponse> } {
   /**
    * 上传文件
    */
@@ -15,7 +15,7 @@ export function useUpload(service?: any) {
     const { uploadType = 'file', onProgress } = options;
 
     if (!service) {
-      throw new Error('上传服务未提供，请确保 service 已正确注入');
+      throw new Error('上传服务未提供，请确认 service 已正确注入');
     }
 
     try {
@@ -27,41 +27,40 @@ export function useUpload(service?: any) {
 
       // 根据上传类型选择服务
       if (uploadType === 'avatar') {
-        // 头像上传：使用 service.system.file.avatar（prefix: "admin/system/file/avatar"）
-        // 根据 EPS 配置，路径为 system.file.avatar，方法名为 avatar
-        const avatarService = service.system?.file?.avatar;
+        // 头像上传：根据 EPS 数据，prefix 是 /api/upload/file/avatar
+        // 过滤掉 api 后路径是 upload/file/avatar，所以服务路径是 service.upload.file.avatar
+        const avatarService = service.upload?.file?.avatar;
         if (!avatarService) {
-          throw new Error('头像上传服务不可用，请检查 service.system.file.avatar 是否存在');
+          throw new Error('头像上传服务不可用，请检查 service.upload.file.avatar 是否存在');
         }
         if (typeof avatarService.avatar !== 'function') {
-          throw new Error('头像上传方法不可用，请检查 service.system.file.avatar.avatar 是否存在');
+          throw new Error('头像上传方法不可用，请检查 service.upload.file.avatar.avatar 是否存在');
         }
-        // 调用 avatar 服务的 avatar 方法（根据 API 配置，方法名为 avatar）
+        // 调用 avatar 服务的 avatar 方法（根据 API 配置，方法名是 avatar）
         response = await avatarService.avatar(formData);
       } else {
-        // 普通文件上传：使用 service.system.file.upload
-        const fileService = service.system?.file?.upload;
+        // 普通文件上传：根据 EPS 数据，prefix 是 /api/upload/file/
+        // 过滤掉 api 后路径是 upload/file，所以服务路径是 service.upload.file
+        const fileService = service.upload?.file;
         if (!fileService) {
-          throw new Error('文件上传服务不可用，请检查 service.system.file.SysFileAssetEntity 是否存在');
+          throw new Error('文件上传服务不可用，请检查 service.upload.file 是否存在');
         }
         response = await fileService.upload(formData);
       }
 
-      // 处理响应，获取 URL
-      // 根据实际 API 响应结构调整
+
+      // 响应拦截器已经提取了 data 字段，所以 response 应该是 data 对象
+      // 新格式：返回对象包含 objectKey 字段（文件 URL）
       let url = '';
-      if (typeof response === 'string') {
-        url = response;
-      } else if (response?.url) {
-        url = response.url;
-      } else if (response?.data?.url) {
-        url = response.data.url;
-      } else if (response?.data) {
-        url = response.data;
+      if (response?.objectKey) {
+        url = response.objectKey;
+      } else if (response?.data?.objectKey) {
+        // 如果响应拦截器没有提取 data（异常情况），这里作为备用
+        url = response.data.objectKey;
       }
 
       if (!url) {
-        throw new Error('上传成功，但未获取到文件地址');
+        throw new Error('上传成功，但未获取到文件地址（objectKey 字段不存在）');
       }
 
       // 模拟进度完成
@@ -72,9 +71,19 @@ export function useUpload(service?: any) {
         fileId: Date.now().toString()
       };
     } catch (error: any) {
-      const errorMessage = error?.message || '文件上传失败';
+      // 优先使用后端返回的错误消息
+      let errorMessage = '文件上传失败';
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.msg || errorData.message || errorMessage;
+      } else if (error?.msg || error?.message) {
+        errorMessage = error.msg || error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
       ElMessage.error(errorMessage);
-      throw error;
+      throw new Error(errorMessage);
     }
   }
 

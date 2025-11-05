@@ -29,7 +29,7 @@ defineOptions({
 });
 
 // 审计日志服务（操作日志）
-const auditService = service.system?.log?.sys?.operation;
+const auditService = service.system?.log?.operation;
 
 // 审计日志列配置
 const auditColumns = computed<TableColumn[]>(() => [

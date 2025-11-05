@@ -24,14 +24,13 @@ export const userSettingPlugin: Plugin = {
 
   // 工具栏配置
   toolbar: {
-    order: 3, // 国际化之后
+    order: 5, // 在消息插件之后
     pc: true,
     h5: false, // 移动端隐藏
     component: () => import('./index.vue')
   }
 };
 
-// 导出组件和 composables
-export { default as BtcUserSetting } from './index.vue';
+// 导出组件和 composables（主组件通过动态导入使用）
 export { default as BtcUserSettingDrawer } from './components/theme-drawer.vue';
 export * from './composables';

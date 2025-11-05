@@ -48,7 +48,6 @@ export function useLogin() {
       // 调用登录接口
       const response = await http.post<{
         token: string;
-        refreshToken?: string;
         expiresIn?: number;
         user?: any;
       }>('/base/open/login', {
@@ -59,14 +58,9 @@ export function useLogin() {
       if (response) {
         ElMessage.success(t('登录成功'));
 
-        // 保存 token
+        // 保存 token（如果响应中包含）
         if (response.token) {
           localStorage.setItem('token', response.token);
-          
-          // 如果有 refreshToken，也保存
-          if (response.refreshToken) {
-            localStorage.setItem('refreshToken', response.refreshToken);
-          }
         }
 
         // 保存用户信息

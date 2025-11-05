@@ -249,36 +249,24 @@ export class ResponseInterceptor {
 
     // 如果没有 code 字段，直接返回原始数据
     if (code === undefined || code === null) {
-      console.log('[ResponseInterceptor.handleSuccess] 没有 code 字段，返回原始数据:', response);
       return response;
     }
 
     // 检查是否为真正的成功响应
     // 即使 code 是 200，如果消息包含错误信息，也应该按错误处理
     const isRealSuccess = this.isRealSuccessResponse(code, msg);
-    
-    console.log('[ResponseInterceptor.handleSuccess]', {
-      code,
-      msg,
-      isRealSuccess,
-      hasData: !!data,
-      dataKeys: data && typeof data === 'object' ? Object.keys(data) : 'N/A'
-    });
 
     if (isRealSuccess) {
       // 返回 data 字段（实际业务数据）
       // 如果 data 本身是对象且包含 data 字段，进一步提取
       if (data && typeof data === 'object' && 'data' in data && !Array.isArray(data)) {
         const nestedData = (data as any).data;
-        console.log('[ResponseInterceptor.handleSuccess] 返回嵌套 data.data:', nestedData);
         return nestedData;
       }
-      console.log('[ResponseInterceptor.handleSuccess] 返回 data:', data);
       return data;
     }
 
     // 其他情况按错误处理
-    console.warn('[ResponseInterceptor.handleSuccess] 按错误处理:', { code, msg });
     return this.handleError({ code, message: msg || '未知错误' });
   }
 
@@ -486,27 +474,9 @@ export class ResponseInterceptor {
           return data;
         }
 
-        // 调试日志：打印原始响应数据
-        console.log('[ResponseInterceptor.onFulfilled] 收到响应 data:', {
-          hasData: !!data,
-          dataCode: data?.code,
-          dataMsg: data?.msg,
-          dataDataKeys: data?.data && typeof data.data === 'object' ? Object.keys(data.data) : 'N/A'
-        });
-
         // 调用 handleSuccess 处理 response.data（业务响应数据）
         // handleSuccess 会提取出 data.data（实际业务数据）
         const result = this.handleSuccess(data);
-        
-        // 调试日志：打印处理后的结果
-        console.log('[ResponseInterceptor.onFulfilled] handleSuccess 返回结果:', {
-          resultType: typeof result,
-          isPromise: result instanceof Promise,
-          isArray: Array.isArray(result),
-          hasList: result && typeof result === 'object' && 'list' in result,
-          hasTotal: result && typeof result === 'object' && 'total' in result,
-          resultKeys: result && typeof result === 'object' && !Array.isArray(result) && !(result instanceof Promise) ? Object.keys(result) : 'N/A'
-        });
 
         // 确保返回处理后的数据（response.data 经过 handleSuccess 处理后的结果）
         // 而不是原始响应对象（response）

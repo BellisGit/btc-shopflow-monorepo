@@ -17,6 +17,7 @@ export interface ThemePlugin {
   THEME_PRESETS: typeof THEME_PRESETS;
   switchTheme: (theme: ThemeConfig) => void;
   toggleDark: (event?: MouseEvent) => void;
+  changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
   setThemeColor: (color: string, dark: boolean) => void;
   updateThemeColor: (color: string) => void;
 }
@@ -73,8 +74,52 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     storage.set('theme', currentTheme.value);
   }
 
-  // 使用 composable 创建 toggleDark 函数
-  const toggleDark = createToggleDark(isDark, currentTheme);
+  /**
+   * 切换暗黑模式（带动画，参考 cool-admin-vue-8.x）
+   */
+  function changeDark(el: Element, isDarkValue: boolean, cb: () => void) {
+    // 如果浏览器支持 View Transition API，使用动画
+    if ((document as any).startViewTransition) {
+      // @ts-ignore
+      const transition = document.startViewTransition(() => {
+        cb();
+      });
+
+      transition.ready.then(() => {
+        const rect = el.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const endRadius = Math.hypot(
+          Math.max(x, innerWidth - x),
+          Math.max(y, innerHeight - y)
+        );
+        const clipPath = [
+          `circle(0 at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`
+        ];
+        
+        document.documentElement.animate(
+          {
+            clipPath: isDarkValue ? clipPath.reverse() : clipPath
+          },
+          {
+            duration: 400,
+            pseudoElement: isDarkValue
+              ? '::view-transition-old(root)'
+              : '::view-transition-new(root)'
+          }
+        );
+      }).catch((error: any) => {
+        console.error('[ThemePlugin] View Transition 错误:', error);
+      });
+    } else {
+      // 不支持动画，直接执行回调
+      cb();
+    }
+  }
+
+  // 使用 composable 创建 toggleDark 函数（传入 changeDark 方法）
+  const toggleDark = createToggleDark(isDark, currentTheme, changeDark);
 
   /**
    * 初始化主题
@@ -95,6 +140,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     THEME_PRESETS,
     switchTheme,
     toggleDark,
+    changeDark,
     setThemeColor: themeSetThemeColor,
     updateThemeColor,
   };

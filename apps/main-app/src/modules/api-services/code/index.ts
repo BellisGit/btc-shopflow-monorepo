@@ -6,6 +6,11 @@
 import { http } from '@/utils/http';
 
 /**
+ * 验证码 API 基础路径
+ */
+const baseUrl = '/api/system/auth';
+
+/**
  * 验证码 API 服务对象
  * 提供所有验证码相关的 API 调用
  */
@@ -16,7 +21,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
-    return http.post('/api/system/iam/sys/code/sms/send', data);
+    return http.post(`${baseUrl}/code/sms/send`, data);
   },
 
   /**
@@ -25,7 +30,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendEmailCode(data: { email: string; type?: string }): Promise<void> {
-    return http.post('/api/system/iam/sys/code/email/send', data);
+    return http.post(`${baseUrl}/code/email/send`, data);
   }
 };
 

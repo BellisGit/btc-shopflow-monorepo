@@ -7,6 +7,7 @@ import { ref, computed, nextTick } from 'vue';
 import { storage } from '@btc/shared-utils';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
+import { useThemePlugin } from '@btc/shared-core';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -187,55 +188,30 @@ function createSettingsState() {
     storage.set('systemThemeType', theme);
     storage.set('systemThemeMode', theme);
 
-    // 尝试获取主题插件实例（先尝试同步获取，如果失败则使用动态导入）
+    // 尝试获取主题插件实例
     let themePlugin: any = null;
     
     // 优先尝试从 window 获取（同步方式）
     themePlugin = (window as any).__THEME_PLUGIN__ || (globalThis as any).__THEME_PLUGIN__;
     
-    // 如果同步获取失败，尝试动态导入（异步方式）
+    // 如果从 window 获取失败，尝试使用静态导入的 useThemePlugin
     if (!themePlugin || !themePlugin.isDark) {
-      // 使用动态导入获取主题插件
-      import('@btc/shared-core').then(({ useThemePlugin }) => {
-        try {
-          const plugin = useThemePlugin();
-          if (plugin && plugin.isDark) {
-            // 如果已经是目标状态，直接返回
-            if (plugin.isDark.value === targetIsDark) {
-              return;
-            }
-
-            // 临时禁用过渡效果
-            disableTransitions();
-
-            // 使用与 toggleDark 相同的逻辑：同步更新 isDark 状态
-            plugin.isDark.value = targetIsDark;
-
-            // 同步更新主题颜色 CSS 变量
-            if (plugin.setThemeColor && plugin.currentTheme?.value) {
-              plugin.setThemeColor(
-                plugin.currentTheme.value.color,
-                targetIsDark
-              );
-            }
-
-            // 强制浏览器立即重新计算样式
-            const htmlEl = document.documentElement;
-            void htmlEl.offsetHeight;
-
-            // 恢复过渡效果
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                enableTransitions();
-              });
-            });
-          }
-        } catch (e) {
-          console.warn('Failed to get theme plugin:', e);
+      try {
+        const plugin = useThemePlugin();
+        if (plugin && plugin.isDark) {
+          themePlugin = plugin;
         }
-      }).catch(() => {
-        console.warn('Failed to import theme plugin');
-      });
+      } catch (e) {
+        console.warn('Failed to get theme plugin:', e);
+        // 如果获取失败，直接应用 DOM 变化（不使用主题插件）
+        applySystemTheme();
+        return;
+      }
+    }
+    
+    // 如果仍然获取不到主题插件，直接应用 DOM 变化
+    if (!themePlugin || !themePlugin.isDark) {
+      applySystemTheme();
       return;
     }
 
@@ -244,7 +220,7 @@ function createSettingsState() {
       return;
     }
 
-    // 临时禁用过渡效果（参考 art-design-pro，关键步骤）
+    // 设置面板切换主题不需要动画，直接切换（参考 cool-admin-vue-8.x）
     disableTransitions();
 
     // 使用与 toggleDark 相同的逻辑：同步更新 isDark 状态
@@ -258,6 +234,19 @@ function createSettingsState() {
         themePlugin.currentTheme.value.color,
         targetIsDark
       );
+    }
+
+    // 同步更新设置状态（如果存在）
+    try {
+      const SystemThemeEnum = {
+        LIGHT: 'light',
+        DARK: 'dark',
+        AUTO: 'auto',
+      };
+      storage.set('systemThemeType', theme);
+      storage.set('systemThemeMode', theme);
+    } catch (e) {
+      // 忽略错误
     }
 
     // 强制浏览器立即重新计算样式（关键步骤）

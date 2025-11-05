@@ -32,6 +32,33 @@ export async function bootstrap(app: App) {
   setupUI(app);         // UI框架配置
   setupI18n(app);       // 国际化配置
 
+  // 设置 loading 页面文本（在 i18n 初始化后）
+  setTimeout(() => {
+    try {
+      const t = (app.config.globalProperties as any).$t;
+      if (t) {
+        const loading = document.getElementById('Loading');
+        if (loading) {
+          const nameEl = loading.querySelector('.preload__name');
+          const titleEl = loading.querySelector('.preload__title');
+          const subTitleEl = loading.querySelector('.preload__sub-title');
+
+          if (nameEl) {
+            nameEl.textContent = t('app.name') || '拜里斯车间管理系统';
+          }
+          if (titleEl) {
+            titleEl.textContent = t('app.loading.title') || '正在加载资源';
+          }
+          if (subTitleEl) {
+            subTitleEl.textContent = t('app.loading.subtitle') || '部分资源可能加载时间较长，请耐心等待';
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[i18n] Failed to set loading page text:', error);
+    }
+  }, 0);
+
   // 2. 集成模块初始化
   await autoDiscoverPlugins(app);  // 自动发现插件
   await setupMicroApps(app);       // 微前端设置

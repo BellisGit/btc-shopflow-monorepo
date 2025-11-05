@@ -1,13 +1,22 @@
 ﻿<template>
   <!-- 主题设置按钮 -->
-  <div class="btc-comm__icon" @click="openDrawer">
-    <btc-svg name="theme" />
-  </div>
+  <BtcIconButton
+    :config="{
+      icon: 'theme',
+      tooltip: t('common.tooltip.theme_settings'),
+      onClick: openDrawer
+    }"
+  />
 
   <!-- 暗黑模式切换 -->
-  <div class="btc-comm__icon ml-[10px]" @click="handleDarkToggle">
-    <btc-svg :name="theme.isDark.value ? 'light' : 'dark'" />
-  </div>
+  <BtcIconButton
+    :config="{
+      icon: () => theme.isDark.value ? 'light' : 'dark',
+      tooltip: t('common.tooltip.toggle_dark'),
+      onClick: handleDarkToggle,
+      class: 'ml-[10px]'
+    }"
+  />
 
   <!-- 主题设置抽屉 -->
     <el-drawer
@@ -85,11 +94,12 @@ import { useI18n, useThemePlugin } from '@btc/shared-core';
 import { Check } from '@element-plus/icons-vue';
 import { useMessage } from '@/utils/use-message';
 import type { ThemeConfig } from '@btc/shared-core';
-import { BtcColorPicker } from '@btc/shared-components';
+import { BtcColorPicker, BtcIconButton } from '@btc/shared-components';
 
 const { t } = useI18n();
 const theme = useThemePlugin();
 const message = useMessage();
+
 
 const drawerVisible = ref(false);
 // 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为空字符串（不设置默认值）
@@ -280,7 +290,19 @@ function handleColorPickerHide() {
   isConfirmed.value = false;
 }
 
-function handleDarkToggle(event: MouseEvent) {
+function handleDarkToggle(event?: MouseEvent) {
+  if (!event) {
+    // 如果没有事件，直接调用（不带动画）
+    if (theme?.toggleDark) {
+      theme.toggleDark();
+    }
+    return;
+  }
+  
+  if (!theme || !theme.toggleDark) {
+    return;
+  }
+  
   theme.toggleDark(event);
 }
 </script>

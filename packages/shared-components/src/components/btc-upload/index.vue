@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="btc-upload__wrap" :class="[customClass]">
     <div
       class="btc-upload"
       :class="[
-        `btc-upload--${type}`,
+        `btc-upload--${fileType}`,
         {
           'is-disabled': disabled,
           'is-multiple': multiple,
@@ -12,7 +12,7 @@
       ]"
     >
       <template v-if="!drag">
-        <div v-if="type == 'file'" class="btc-upload__file-btn">
+        <div v-if="fileType == 'file'" class="btc-upload__file-btn">
           <el-upload
             :ref="setRefs('upload')"
             :drag="drag"
@@ -74,8 +74,8 @@
           </el-upload>
         </template>
 
-        <!-- 触发器 -->
-        <div v-if="(type == 'image' || drag) && isAdd" class="btc-upload__footer">
+        <!-- 触发按钮 -->
+        <div v-if="(fileType == 'image' || drag) && isAdd" class="btc-upload__footer">
           <el-upload
             :ref="setRefs('upload')"
             action=""
@@ -139,9 +139,9 @@ const props = defineProps({
   prop: String,
   // 是否禁用
   isDisabled: Boolean,
-  // 上传类型
-  type: {
-    type: String as PropType<'image' | 'file'>,
+  // 上传类型（使用引号避免与对象内部 type 字段冲突）
+  'type': {
+    type: String,
     default: 'image'
   },
   // 允许上传的文件类型
@@ -193,7 +193,7 @@ const props = defineProps({
   customClass: String,
   // 上传前钩子
   beforeUpload: Function as PropType<(file: File, item?: UploadItem, options?: any) => any>,
-  // 上传服务类型：'avatar' | 'file'
+  // 上传服务类型 'avatar' | 'file'
   uploadType: {
     type: String as PropType<'avatar' | 'file'>,
     default: 'file'
@@ -236,7 +236,8 @@ if (!service && typeof window !== 'undefined') {
   }
 }
 
-const { toUpload } = useUpload(service);
+const uploadComposable = useUpload(service);
+const toUpload = uploadComposable.toUpload;
 const refs: Record<string, any> = {};
 
 function setRefs(name: string) {
@@ -259,15 +260,22 @@ const disabled = computed(() => {
   return props.isDisabled || props.disabled;
 });
 
+// 上传类型（处理默认值，避免与 props.uploadType 冲突）
+const fileType = computed(() => {
+  return props.type || 'image';
+});
+
 // 最大上传数量
-const limit = props.limit || 9;
+const limit = computed(() => {
+  return props.limit || 9;
+});
 
 // 文案
 const text = computed(() => {
   if (props.text !== undefined) {
     return props.text;
   } else {
-    switch (props.type) {
+    switch (fileType.value) {
       case 'file':
         return t('选择文件');
       case 'image':
@@ -283,7 +291,7 @@ const list = ref<UploadItem[]>([]);
 
 // 显示上传列表
 const showList = computed(() => {
-  if (props.type == 'file') {
+  if (fileType.value == 'file') {
     return props.showFileList ? !isEmpty(list.value) : false;
   } else {
     return true;
@@ -292,7 +300,7 @@ const showList = computed(() => {
 
 // 文件格式
 const accept = computed(() => {
-  return props.accept || (props.type == 'file' ? '' : 'image/*');
+  return props.accept || (fileType.value == 'file' ? '' : 'image/*');
 });
 
 // 能否添加
@@ -300,7 +308,7 @@ const isAdd = computed(() => {
   const len = list.value.length;
 
   if (props.multiple && !disabled.value) {
-    return limit - len > 0;
+    return limit.value - len > 0;
   }
 
   return len == 0;
@@ -363,7 +371,7 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
     } else {
       if (props.multiple) {
         if (!isAdd.value) {
-          ElMessage.warning(t('最多只能上传{n}个文件', { n: limit }));
+          ElMessage.warning(t('最多只能上传{n}个文件', { n: limit.value }));
           return false;
         } else {
           list.value.push(d);
@@ -380,9 +388,9 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
   if (accept.value && accept.value !== '*') {
     const fileName = file.name.toLowerCase();
     const fileExt = '.' + fileName.split('.').pop();
-    const acceptList = accept.value.split(',').map(item => item.trim().toLowerCase());
+    const acceptList = accept.value.split(',').map((item: string) => item.trim().toLowerCase());
 
-    const isValidFormat = acceptList.some(acceptItem => {
+    const isValidFormat = acceptList.some((acceptItem: string) => {
       if (acceptItem === 'image/*') {
         return file.type.startsWith('image/');
       }
@@ -445,29 +453,52 @@ async function httpRequest(req: any, item?: UploadItem) {
   if (!item) {
     // File 对象可能没有 uid 属性，需要通过其他方式匹配
     const fileUid = (req.file as any).uid;
-    item = fileUid ? list.value.find(e => e.uid == fileUid) : undefined;
+    item = fileUid ? list.value.find((e: UploadItem) => e.uid == fileUid) : undefined;
   }
 
   if (!item) {
     return false;
   }
 
+  // 保存 item 引用，避免在异步操作中丢失
+  const currentItem = item;
+  
+  if (!currentItem) {
+    return false;
+  }
+
   // 上传请求
   toUpload(req.file, {
     uploadType: props.uploadType,
-    onProgress(progress) {
-      item!.progress = progress;
-      emit('progress', item!);
+    onProgress(progress: number) {
+      if (currentItem) {
+        currentItem.progress = progress;
+        emit('progress', currentItem);
+      }
     }
   })
-    .then(res => {
-      assign(item!, res);
-      emit('success', item!);
+    .then((res: any) => {
+      if (!currentItem) {
+        return;
+      }
+
+      // toUpload 已经返回 { url, fileId } 格式
+      // 验证响应是否有效（必须包含 url 字段）
+      if (!res || typeof res !== 'object' || !res.url) {
+        throw new Error('上传响应格式错误：未找到 url 字段');
+      }
+
+      // 将响应数据赋值给 item，url 已经在 useUpload 中提取好了
+      assign(currentItem, res);
+      emit('success', currentItem);
       update();
     })
-    .catch(err => {
-      item!.error = err.message || '上传失败';
-      emit('error', item!);
+    .catch((err: any) => {
+      if (currentItem) {
+        currentItem.error = err.message || '上传失败';
+        emit('error', currentItem);
+      }
+      // 不调用 update()，避免将错误对象传递到 modelValue
     });
 }
 
@@ -501,10 +532,20 @@ watch(
       return;
     }
 
-    const urls = (isArray(val) ? val : [val]).filter(Boolean);
+    // 如果 val 是对象类型（可能是错误对象），忽略它
+    if (val && typeof val === 'object' && !isArray(val)) {
+      console.warn('[Upload Warn] modelValue 是对象类型，可能是错误对象，已忽略', val);
+      return;
+    }
+
+    // 确保 val 是数组或字符串，并转换为字符串数组
+    const urlArray = (isArray(val) ? val : [val]).filter(Boolean);
+
+    // 过滤出字符串类型的 URL
+    const urls = urlArray.filter((url: any): url is string => typeof url === 'string');
 
     list.value = urls
-      .map((url, index) => {
+      .map((url: string, index: number) => {
         const old: Partial<UploadItem> = list.value[index] || {};
 
         return assign(
@@ -512,7 +553,7 @@ watch(
             progress: 100,
             uid: uuid(),
             size: old.size || 0,
-            name: old.name || url.split('/').pop() || '',
+            name: old.name || (url ? url.split('/').pop() || '' : ''),
             error: old.error || ''
           },
           old,
@@ -523,7 +564,7 @@ watch(
           }
         ) as UploadItem;
       })
-      .filter((_, i) => {
+      .filter((_: any, i: number) => {
         return props.multiple ? true : i == 0;
       });
   },

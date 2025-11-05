@@ -149,25 +149,10 @@ try {
   await authApi.logout();
   // 清除本地存储的 token 和用户信息
   localStorage.removeItem('token');
-  localStorage.removeItem('refreshToken');
   router.push('/login');
 } catch (error) {
   console.error('退出登录失败:', error);
   // 即使 API 调用失败，前端也要执行清理操作
-}
-```
-
-#### 8. 刷新 Token
-
-```typescript
-import { authApi } from '@/modules/api-services';
-
-try {
-  const response = await authApi.refreshAccessToken();
-  localStorage.setItem('token', response.token);
-} catch (error) {
-  // token 刷新失败，可能需要重新登录
-  router.push('/login');
 }
 ```
 
@@ -241,7 +226,6 @@ await codeApi.sendEmailCode({
 | `loginBySms()` | 手机号登录 | `SmsLoginRequest` | `LoginResponse` |
 | `logout()` | 退出登录 | - | `Promise<void>` |
 | `logoutBatch()` | 批量退出登录 | `LogoutBatchRequest` | `Promise<void>` |
-| `refreshAccessToken()` | 刷新 access_token | - | `RefreshTokenResponse` |
 | `register()` | 用户注册 | `RegisterRequest` | `Promise<void>` |
 | `resetPassword()` | 重置密码 | `ResetPasswordRequest` | `Promise<void>` |
 | `verifyCode()` | 验证码校验 | `VerifyCodeRequest` | `Promise<void>` |
@@ -256,7 +240,6 @@ await codeApi.sendEmailCode({
 - `RegisterRequest` - 注册请求
 - `ResetPasswordRequest` - 重置密码请求
 - `CaptchaResponse` - 验证码响应
-- `RefreshTokenResponse` - 刷新 Token 响应
 - 等等...
 
 ## 扩展指南

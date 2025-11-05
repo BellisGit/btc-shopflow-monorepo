@@ -2,14 +2,32 @@
   <div v-if="showWorkTab" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
-      <li class="btc-comm__icon" @click="toBack">
-        <btc-svg name="back" />
+      <li>
+        <BtcIconButton
+          :config="{
+            icon: 'back',
+            tooltip: t('common.tooltip.back'),
+            onClick: toBack
+          }"
+        />
       </li>
-      <li class="btc-comm__icon" @click="toRefresh">
-        <btc-svg name="refresh" />
+      <li>
+        <BtcIconButton
+          :config="{
+            icon: 'refresh',
+            tooltip: t('common.tooltip.refresh'),
+            onClick: toRefresh
+          }"
+        />
       </li>
-      <li class="btc-comm__icon" @click="toHome">
-        <btc-svg name="home" />
+      <li>
+        <BtcIconButton
+          :config="{
+            icon: 'home',
+            tooltip: t('common.tooltip.home'),
+            onClick: toHome
+          }"
+        />
       </li>
     </ul>
 
@@ -40,26 +58,30 @@
     <ul class="app-process__op">
       <!-- 标签页操作菜单 -->
       <li>
-        <el-dropdown trigger="click" @command="handleTabCommand">
-          <div class="btc-comm__icon">
-            <btc-svg name="close-border" />
-          </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="close-other" :disabled="filteredTabs.length <= 1">
-                {{ t('common.close_other') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="close-all" :disabled="filteredTabs.length === 0">
-                {{ t('common.close_all') }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <BtcIconButton
+          :config="{
+            icon: 'close-border',
+            tooltip: t('common.tooltip.close_other_tabs'),
+            dropdown: {
+              items: [
+                { command: 'close-other', label: t('common.close_other'), disabled: filteredTabs.length <= 1 },
+                { command: 'close-all', label: t('common.close_all'), disabled: filteredTabs.length === 0 }
+              ],
+              onCommand: handleTabCommand
+            }
+          }"
+        />
       </li>
 
       <!-- 全屏按钮 -->
-      <li class="btc-comm__icon" @click="$emit('toggle-fullscreen')">
-        <btc-svg :name="isFullscreen ? 'screen-normal' : 'screen-full'" />
+      <li>
+        <BtcIconButton
+          :config="{
+            icon: () => isFullscreen ? 'screen-normal' : 'screen-full',
+            tooltip: () => isFullscreen ? t('common.tooltip.exit_fullscreen') : t('common.tooltip.fullscreen'),
+            onClick: () => $emit('toggle-fullscreen')
+          }"
+        />
       </li>
     </ul>
   </div>
@@ -74,6 +96,7 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { ElMessageBox } from 'element-plus';
+import { BtcIconButton } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
 import { useSettingsState } from '@/plugins/user-setting/composables';
@@ -375,10 +398,6 @@ watch(
     margin: 0;
     padding: 0;
     gap: 5px; // 使用 gap 统一间距
-
-    .btc-comm__icon {
-      // 移除单独的 margin，由 gap 统一控制
-    }
   }
 
   &__container {

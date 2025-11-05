@@ -51,7 +51,7 @@ defineOptions({
 });
 
 // 请求日志服务
-const requestService = service.system?.log?.sys?.request;
+const requestService = service.system?.log?.request;
 
 // 请求日志列配置
 const requestColumns = computed<TableColumn[]>(() => {

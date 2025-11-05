@@ -1,11 +1,19 @@
-// View Transition API 样式 - 支持主题切换动画
+// View Transition API 样式 - 支持主题切换动画（参考 cool-admin-vue-8.x）
+// 禁用默认动画，完全使用 JavaScript animate() API 控制
 ::view-transition-new(root),
 ::view-transition-old(root) {
   animation: none !important;
 }
 
+// 确保根元素有 view-transition-name（View Transition API 需要）
+html {
+  view-transition-name: root;
+}
+
 // 暗黑模式样式
 html.dark {
+  // View Transition 遮罩层 z-index 设置（参考 cool-admin-vue-8.x）
+  // 当切换到暗黑模式时，旧视图（亮色）需要在上层显示
   &::view-transition-old(root) {
     z-index: 100;
   }

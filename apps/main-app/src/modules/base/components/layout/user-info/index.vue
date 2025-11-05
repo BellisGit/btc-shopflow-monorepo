@@ -1,0 +1,151 @@
+<template>
+  <el-dropdown
+    class="user-info"
+    placement="bottom-end"
+    popper-class="user-info__popper"
+    @command="handleCommand"
+  >
+    <div class="user-info__trigger">
+      <span
+        class="user-info__name"
+        :data-full-name="userInfo.name"
+        @mouseenter="handleNameHover"
+        @mouseleave="handleNameLeave"
+      >
+        <span class="user-info__name-text" :class="{ 'is-dark': isDark }">{{ displayedName }}</span>
+        <span
+          class="user-info__name-cursor"
+          v-if="isTyping"
+          :style="{ transform: `translateX(${cursorPosition * 0.6}em)` }"
+        >|</span>
+      </span>
+      <div class="user-info__avatar-box user-info__avatar-box--small">
+        <el-avatar :size="26" :src="userInfo.avatar" />
+      </div>
+    </div>
+
+    <template #dropdown>
+      <div class="user-info__header">
+        <div class="user-info__avatar-box user-info__avatar-box--large">
+          <el-image
+            :src="userInfo.avatar || '/logo.png'"
+            :preview-src-list="[userInfo.avatar || '/logo.png']"
+            fit="cover"
+            class="user-info__avatar-img"
+          >
+            <template #error>
+              <el-avatar :size="50">
+                <el-icon><User /></el-icon>
+              </el-avatar>
+            </template>
+          </el-image>
+        </div>
+        <div class="user-info__details">
+          <el-text size="default" tag="p">{{ userInfo.name }}</el-text>
+          <el-text size="small" type="info">{{ userInfo.position || '' }}</el-text>
+        </div>
+      </div>
+
+      <el-dropdown-menu>
+        <el-dropdown-item command="profile">
+          <btc-svg name="my" :size="16" />
+          <span>{{ t('common.profile') }}</span>
+        </el-dropdown-item>
+        <el-dropdown-item command="settings">
+          <btc-svg name="set" :size="16" />
+          <span>{{ t('common.settings') }}</span>
+        </el-dropdown-item>
+        <el-dropdown-item divided command="logout">
+          <btc-svg name="exit" :size="16" />
+          <span>{{ t('common.logout') }}</span>
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </template>
+  </el-dropdown>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { ElMessageBox } from 'element-plus';
+import { useMessage } from '@/utils/use-message';
+import { useSettingsState } from '@/plugins/user-setting/composables';
+import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
+import { useUser } from '@/composables/useUser';
+import { useLogout } from '@/composables/useLogout';
+import { User } from '@element-plus/icons-vue';
+import { useUserInfo } from './index';
+
+defineOptions({
+  name: 'UserInfo'
+});
+
+const { t } = useI18n();
+const router = useRouter();
+const message = useMessage();
+const { logout } = useLogout();
+
+// 获取设置状态
+const { menuThemeType, isDark: isDarkTheme } = useSettingsState();
+
+// 判断是否为深色菜单风格
+const isDark = computed(() => {
+  return isDarkTheme?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
+});
+
+// 用户相关
+const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+
+// 使用 composable
+const {
+  profileUserInfo,
+  displayedName,
+  isTyping,
+  cursorPosition,
+  userInfo,
+  loadProfileInfo,
+  handleNameHover,
+  handleNameLeave
+} = useUserInfo();
+
+// 初始化
+onMounted(async () => {
+  await loadProfileInfo();
+});
+
+// 处理用户下拉菜单命令
+const handleCommand = (command: string) => {
+  switch (command) {
+    case 'profile':
+      router.push('/profile');
+      break;
+    case 'settings':
+      router.push('/settings');
+      break;
+    case 'logout':
+      ElMessageBox.confirm(t('common.logoutConfirm'), t('common.warning'), {
+        type: 'warning',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel')
+      })
+        .then(() => {
+          logout();
+          message.success(t('common.logoutSuccess'));
+        })
+        .catch(() => {
+          // 取消操作
+        });
+      break;
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+@use './index.scss';
+</style>
+
+<style lang="scss">
+@use './popper.scss';
+</style>
+

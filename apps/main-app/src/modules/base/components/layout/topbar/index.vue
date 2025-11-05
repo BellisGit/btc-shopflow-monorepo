@@ -10,16 +10,18 @@
         }"
       >
       <!-- 汉堡菜单 -->
-      <div
-        class="topbar__hamburger"
-        :class="{ 'is-active': drawerVisible }"
-        @click.stop="$emit('toggle-drawer')"
-        @mouseenter="$emit('open-drawer')"
-      >
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-      </div>
+      <el-tooltip :content="t('common.tooltip.menu')" placement="bottom">
+        <div
+          class="topbar__hamburger"
+          :class="{ 'is-active': drawerVisible }"
+          @click.stop="$emit('toggle-drawer')"
+          @mouseenter="$emit('open-drawer')"
+        >
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </div>
+      </el-tooltip>
 
       <!-- Logo + 标题（顶部菜单和双栏菜单模式下隐藏） -->
       <div
@@ -41,13 +43,14 @@
     <!-- 中间：工具区域（折叠按钮 + 搜索框 + 顶部菜单） -->
     <div class="topbar__left">
       <!-- 折叠按钮（仅左侧菜单和混合菜单显示） -->
-      <div
+      <BtcIconButton
         v-if="props.menuType === 'left' || props.menuType === 'top-left'"
-        class="btc-comm__icon"
-        @click="$emit('toggle-sidebar')"
-      >
-        <btc-svg :name="isCollapse ? 'expand' : 'fold'" />
-      </div>
+        :config="{
+          icon: () => isCollapse ? 'expand' : 'fold',
+          tooltip: () => isCollapse ? t('common.tooltip.expand_sidebar') : t('common.tooltip.collapse_sidebar'),
+          onClick: () => $emit('toggle-sidebar')
+        }"
+      />
 
       <!-- 全局搜索（移动端隐藏，且设置中启用，顶部菜单模式下也显示） -->
       <GlobalSearch v-if="!browser.isMini && showGlobalSearch" />
@@ -69,42 +72,7 @@
       </ul>
 
       <!-- 用户信息 -->
-      <el-dropdown
-        class="topbar__user-dropdown"
-        placement="bottom-end"
-        popper-class="topbar__user-popper"
-        @command="handleCommand"
-      >
-        <div class="topbar__user">
-          <span class="topbar__user-name">{{ userInfo.name }}</span>
-          <el-avatar :size="26" :src="userInfo.avatar" />
-        </div>
-
-        <template #dropdown>
-          <div class="topbar__user-info">
-            <el-avatar :size="50" :src="userInfo.avatar" />
-            <div class="topbar__user-details">
-              <el-text size="default" tag="p">{{ userInfo.name }}</el-text>
-              <el-text size="small" type="info">{{ userInfo.email || t('common.no_email') }}</el-text>
-            </div>
-          </div>
-
-          <el-dropdown-menu>
-                   <el-dropdown-item command="profile">
-                     <btc-svg name="my" :size="16" />
-                     <span>{{ t('common.profile') }}</span>
-                   </el-dropdown-item>
-                   <el-dropdown-item command="settings">
-                     <btc-svg name="set" :size="16" />
-                     <span>{{ t('common.settings') }}</span>
-                   </el-dropdown-item>
-                   <el-dropdown-item divided command="logout">
-                     <btc-svg name="exit" :size="16" />
-                     <span>{{ t('common.logout') }}</span>
-                   </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+      <UserInfo />
     </div>
   </div>
 </template>
@@ -115,19 +83,16 @@ defineOptions({
 });
 
 import { ref, onMounted, markRaw, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { ElMessageBox } from 'element-plus';
-import { useMessage } from '@/utils/use-message';
 import { usePluginManager } from '@btc/shared-core';
+import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
-import { useUser } from '@/composables/useUser';
-import { useLogout } from '@/composables/useLogout';
 import { useBrowser } from '@/composables/useBrowser';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
+import UserInfo from '../user-info/index.vue';
 
 interface Props {
   isCollapse?: boolean;
@@ -148,7 +113,6 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
-const router = useRouter();
 
 // 浏览器信息
 const { browser } = useBrowser();
@@ -164,7 +128,28 @@ const isDarkMenuStyle = computed(() => {
 
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
 const menuThemeConfig = computed(() => {
-  // 深色主题下强制使用深色菜单配置（展示层逻辑）
+  // 优先判断菜单风格类型（不受系统主题影响）
+  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  
+  // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
+  if (theme === MenuThemeEnum.DARK) {
+    // 深色系统主题下，使用 var(--el-bg-color) 与内容区域一致
+    if (isDark?.value === true) {
+      return {
+        background: 'var(--el-bg-color)',
+        systemNameColor: '#BABBBD',
+        rightLineColor: '#EDEEF0',
+      };
+    }
+    // 浅色系统主题下，使用深色菜单背景色
+    return {
+      background: '#141414',
+      systemNameColor: '#BABBBD',
+      rightLineColor: '#3F4257',
+    };
+  }
+
+  // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
   if (isDark?.value === true) {
     return {
       background: 'var(--el-bg-color)',
@@ -174,7 +159,6 @@ const menuThemeConfig = computed(() => {
   }
 
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
 
   if (themeConfig) {
@@ -196,9 +180,6 @@ const menuThemeConfig = computed(() => {
 // 插件管理器
 const pluginManager = usePluginManager();
 
-// 用户相关
-const { userInfo: userInfoComputed, getUserInfo } = useUser();
-const { logout } = useLogout();
 
 // 动态工具栏组件
 const toolbarComponents = ref<any[]>([]);
@@ -221,35 +202,10 @@ const filteredToolbarComponents = computed(() => {
   });
 });
 
-// 用户信息（从 useUser 获取，提供默认值）
-const userInfo = computed(() => {
-  const info = userInfoComputed.value;
-  if (info) {
-    return {
-      name: info.name || info.username || 'Admin',
-      email: info.email || '',
-      avatar: info.avatar || '/logo.png',
-    };
-  }
-  // 如果没有用户信息，尝试从 localStorage 获取
-  const stored = getUserInfo();
-  if (stored) {
-    return {
-      name: stored.name || stored.username || 'Admin',
-      email: stored.email || '',
-      avatar: stored.avatar || '/logo.png',
-    };
-  }
-  // 默认值
-  return {
-    name: 'Admin',
-    email: 'admin@btc-saas.com',
-    avatar: '/logo.png',
-  };
-});
 
-// 初始化工具栏组件
+// 初始化工具栏组件和用户信息
 onMounted(async () => {
+  // 加载工具栏组件
   try {
     const toolbarConfigs = pluginManager.getToolbarComponents();
 
@@ -267,39 +223,9 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to get toolbar components:', error);
   }
+
 });
 
-// 处理用户下拉菜单命令
-const message = useMessage();
-
-const handleCommand = (command: string) => {
-  switch (command) {
-    case 'profile':
-      router.push('/profile');
-      break;
-    case 'settings':
-      message.info(t('common.settings'));
-      break;
-    case 'logout':
-      ElMessageBox.confirm(
-        t('common.logout_confirm'),
-        t('common.tip'),
-        {
-          type: 'warning',
-          confirmButtonText: t('common.confirm'),
-          cancelButtonText: t('common.cancel'),
-        }
-      )
-      .then(() => {
-        // 执行退出登录
-        logout();
-      })
-      .catch(() => {
-        // 取消操作，不需要任何处理
-      });
-      break;
-  }
-};
 </script>
 
 <style lang="scss" scoped>
@@ -497,48 +423,68 @@ const handleCommand = (command: string) => {
     }
 
     &-name {
-      font-size: 14px;
-      color: var(--el-text-color-primary);
+      position: relative;
+      display: inline-block;
       margin-right: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+
+      // 使用伪元素预留完整宽度（不可见，用于保持布局）
+      &::before {
+        content: attr(data-full-name);
+        visibility: hidden;
+        display: inline-block;
+        height: 0;
+        font-weight: bold;
+      }
+
+      &-text {
+        position: absolute;
+        left: 0;
+        top: 0;
+        white-space: nowrap;
+        // 从左到右炫彩渐变（静态，不动画）- 亮色模式
+        background: linear-gradient(to right, #4F46E5, #EC4899, #06B6D4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+
+        // 暗色模式适配
+        &.is-dark {
+          background: linear-gradient(to right, #818cf8, #f472b6, #22d3ee);
+          -webkit-background-clip: text;
+          background-clip: text;
+        }
+      }
+
+      &-cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: inline-block;
+        color: #4F46E5;
+        animation: cursorBlink 1.2s infinite;
+        white-space: nowrap;
+        // 光标位置跟随文字，通过 JavaScript 动态设置
+
+        // 暗色模式适配
+        .topbar.is-dark-menu & {
+          color: #818cf8;
+        }
+      }
     }
-  }
-}
-</style>
 
-<style lang="scss">
-// 用户下拉菜单样式（非 scoped）
-.topbar__user-popper {
-  .el-dropdown-menu__item {
-    padding: 6px 12px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .topbar__user-info {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    width: 200px;
-    border-bottom: 1px solid var(--el-color-info-light-9);
-
-    .topbar__user-details {
-      margin-left: 10px;
-      flex: 1;
-      font-size: 12px;
-
-      p {
-        margin: 0;
-        font-weight: 500;
+    @keyframes cursorBlink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
       }
     }
   }
-
-  .btc-svg {
-    margin-right: 8px;
-    font-size: 16px;
-  }
 }
 </style>
+
 

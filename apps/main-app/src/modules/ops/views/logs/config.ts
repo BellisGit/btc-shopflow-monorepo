@@ -125,23 +125,18 @@ export const requestLogColumns: TableColumn[] = [
   }
 ];
 
-// EPS 服务 - 使用正确的服务路径（根据后端 prefix: admin/system/log/sys/operation 和 admin/system/log/sys/request）
+// EPS 服务 - 使用正确的服务路径（根据后端 prefix，已移除 sys 层级）
 export const logServices = {
-  operationLog: service.system?.log?.sys?.operation,
-  requestLog: service.system?.log?.sys?.request,
+  operationLog: service.system?.log?.operation,
+  requestLog: service.system?.log?.request,
 };
 
 // 调试：打印日志服务结构
-console.log('[Logs Debug] service.system:', service.system);
 console.log('[Logs Debug] service.system?.log:', service.system?.log);
-console.log('[Logs Debug] service.system?.log?.sys:', service.system?.log?.sys);
 if (service.system?.log) {
   console.log('[Logs Debug] service.system?.log keys:', Object.keys(service.system.log));
-}
-if (service.system?.log?.sys) {
-  console.log('[Logs Debug] service.system?.log?.sys keys:', Object.keys(service.system.log.sys));
-  console.log('[Logs Debug] service.system?.log?.sys?.operation:', service.system.log.sys.operation);
-  console.log('[Logs Debug] service.system?.log?.sys?.request:', service.system.log.sys.request);
+  console.log('[Logs Debug] service.system?.log?.operation:', service.system.log.operation);
+  console.log('[Logs Debug] service.system?.log?.request:', service.system.log.request);
 }
 
 // 日志服务已正确配置

@@ -1,13 +1,22 @@
 <template>
   <!-- 主题设置按钮 -->
-  <div class="btc-comm__icon" @click="openDrawer">
-    <BtcSvg name="theme" />
-  </div>
+  <BtcIconButton
+    :config="{
+      icon: 'theme',
+      tooltip: t('common.tooltip.theme_settings'),
+      onClick: openDrawer
+    }"
+  />
 
   <!-- 暗黑模式切换 -->
-  <div class="btc-comm__icon ml-[10px]" @click="handleDarkToggle">
-    <BtcSvg :name="theme.isDark.value ? 'light' : 'dark'" />
-  </div>
+  <BtcIconButton
+    :config="{
+      icon: () => theme.isDark.value ? 'light' : 'dark',
+      tooltip: t('common.tooltip.toggle_dark'),
+      onClick: handleDarkToggle,
+      class: 'ml-[10px]'
+    }"
+  />
 
   <!-- 用户设置抽屉 -->
   <BtcUserSettingDrawer v-model="drawerVisible" />
@@ -15,7 +24,8 @@
 
 <script setup lang="ts">
 import { provide } from 'vue';
-import BtcSvg from '@btc-common/svg/index.vue';
+import { useI18n } from 'vue-i18n';
+import { BtcIconButton } from '@btc/shared-components';
 import { useUserSetting } from './composables';
 import BtcUserSettingDrawer from './components/theme-drawer.vue';
 
@@ -23,6 +33,7 @@ defineOptions({
   name: 'BtcUserSetting'
 });
 
+const { t } = useI18n();
 const userSetting = useUserSetting();
 const {
   drawerVisible,

@@ -6,6 +6,7 @@
 import { useSettingsState } from './useSettingsState';
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
+import { useThemePlugin } from '@btc/shared-core';
 
 /**
  * 设置处理器组合式函数
@@ -107,14 +108,12 @@ export function useSettingsHandlers() {
     selectColor: (color: string) => {
       settingsState.setSystemThemeColor(color);
       // 如果存在主题插件，也更新主题插件
+      // 使用静态导入，避免动态导入警告
       try {
-        // 动态导入主题插件以避免循环依赖
-        import('@btc/shared-core').then(({ useThemePlugin }) => {
-          const theme = useThemePlugin();
-          if (theme && theme.updateThemeColor) {
-            theme.updateThemeColor(color);
-          }
-        });
+        const theme = useThemePlugin();
+        if (theme && theme.updateThemeColor) {
+          theme.updateThemeColor(color);
+        }
       } catch (e) {
         // 如果主题插件不可用，忽略错误
         console.warn('Theme plugin not available:', e);

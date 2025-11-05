@@ -339,6 +339,8 @@
   "common.upload.tip": "Supports Excel (.xlsx, .xls) and CSV files",
   "common.import.template_tip": "Please fill in the information according to the template",
   "common.import.select_file": "Please select a file",
+  "选择图片": "Select Image",
+  "选择文件": "Select File",
   "common.import.onSubmit_required": "onSubmit callback function is required",
   "user.field.avatar": "Avatar",
   "user.field.username": "Username",

@@ -8,15 +8,18 @@ import type {
   LoginResponse,
   CaptchaResponse,
   HealthCheckResponse,
-  RefreshTokenResponse,
   VerifyCodeRequest,
   LoginRequest,
   SmsLoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
-  SendCodeRequest,
   LogoutBatchRequest
 } from '../types';
+
+/**
+ * 认证 API 基础路径
+ */
+const baseUrl = '/api/system/auth';
 
 /**
  * 认证 API 服务对象
@@ -29,7 +32,7 @@ export const authApi = {
    * @returns 验证码信息（包含 captchaId 和图片数据）
    */
   getCaptcha(params?: { height?: number; width?: number; color?: string }): Promise<CaptchaResponse> {
-    return http.get('/api/system/iam/sys/captcha', params);
+    return http.get(`${baseUrl}/captcha`, params);
   },
 
   /**
@@ -38,7 +41,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   sendEmailCode(data: { email: string; type?: string }): Promise<void> {
-    return http.post('/api/system/iam/sys/code/email/send', data);
+    return http.post(`${baseUrl}/code/email/send`, data);
   },
 
   /**
@@ -47,7 +50,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
-    return http.post('/api/system/iam/sys/code/sms/send', data);
+    return http.post(`${baseUrl}/code/sms/send`, data);
   },
 
   /**
@@ -55,7 +58,7 @@ export const authApi = {
    * @returns 健康状态信息
    */
   healthCheck(): Promise<HealthCheckResponse> {
-    return http.get('/api/system/iam/sys/health');
+    return http.get(`${baseUrl}/health`);
   },
 
   /**
@@ -64,7 +67,7 @@ export const authApi = {
    * @returns 登录响应（包含 token 和用户信息）
    */
   login(data: LoginRequest): Promise<LoginResponse> {
-    return http.post('/api/system/iam/sys/login', data);
+    return http.post(`${baseUrl}/login`, data);
   },
 
   /**
@@ -73,7 +76,7 @@ export const authApi = {
    * @returns 登录响应（包含 token 和用户信息）
    */
   loginBySms(data: SmsLoginRequest): Promise<LoginResponse> {
-    return http.post('/api/system/iam/sys/login/sms', data);
+    return http.post(`${baseUrl}/login/sms`, data);
   },
 
   /**
@@ -81,7 +84,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   logout(): Promise<void> {
-    return http.get('/api/system/iam/sys/logout');
+    return http.get(`${baseUrl}/logout`);
   },
 
   /**
@@ -90,15 +93,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   logoutBatch(data: LogoutBatchRequest): Promise<void> {
-    return http.post('/api/system/iam/sys/logout/batch', data);
-  },
-
-  /**
-   * 刷新 access_token
-   * @returns 新的 token 信息
-   */
-  refreshAccessToken(): Promise<RefreshTokenResponse> {
-    return http.get('/api/system/iam/sys/refresh/access-token');
+    return http.post(`${baseUrl}/logout/batch`, data);
   },
 
   /**
@@ -107,7 +102,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   register(data: RegisterRequest): Promise<void> {
-    return http.post('/api/system/iam/sys/register', data);
+    return http.post(`${baseUrl}/register`, data);
   },
 
   /**
@@ -116,7 +111,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   resetPassword(data: ResetPasswordRequest): Promise<void> {
-    return http.post('/api/system/iam/sys/reset/password', data);
+    return http.post(`${baseUrl}/reset/password`, data);
   },
 
   /**
@@ -125,7 +120,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   verifyCode(data: VerifyCodeRequest): Promise<void> {
-    return http.post('/api/system/iam/sys/verify/code', data);
+    return http.post(`${baseUrl}/verify/code`, data);
   }
 };
 

@@ -178,6 +178,10 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.test_features', icon: 'Coin' },
       { i18nKey: 'menu.test_features.components', icon: 'Tickets' },
     ],
+    '/test/api-test-center': [
+      { i18nKey: 'menu.test_features', icon: 'Coin' },
+      { i18nKey: 'menu.test_features.api_test_center', icon: 'Connection' },
+    ],
   };
 
   // 子应用的面包屑映射（暂时为空，待实现具体页面）
@@ -225,7 +229,6 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   padding: 5px 10px;
   user-select: none;
   background-color: var(--el-bg-color);
-  margin-bottom: 10px; // 与 cool-admin 的 process 保持一致，下边距 10px
   overflow: hidden;
   height: 39px; // 总高度 39px（包含 padding）
   box-sizing: border-box;

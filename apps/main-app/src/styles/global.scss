@@ -176,17 +176,7 @@ input:-webkit-autofill:active {
   transition: background-color 9999s ease-out 0s !important;
 }
 
-// View Transition 动画禁用（参考 cool-admin，避免水合问题）
-::view-transition-new(root),
-::view-transition-old(root) {
-  animation: none !important;
-}
-
-html.dark {
-  &::view-transition-old(root) {
-    z-index: 100;
-  }
-}
+// View Transition 动画在 theme.scss 中定义
 
 // 盒子样式 - 边框模式（浅色模式增强对比度）
 [data-box-mode='border-mode'] {
@@ -198,8 +188,7 @@ html.dark {
   }
 
   // 页面内容区域
-  .page-content,
-  .app-layout__content {
+  .page-content {
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: none !important;
   }
@@ -220,8 +209,7 @@ html.dark {
   }
 
   // 页面内容区域
-  .page-content,
-  .app-layout__content {
+  .page-content {
     box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.08) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
   }
@@ -296,8 +284,7 @@ html.dark {
   &[data-box-mode='border-mode'] {
     .el-card,
     .btc-card,
-    .page-content,
-    .app-layout__content {
+    .page-content {
       border-color: var(--el-border-color) !important;
     }
 
@@ -310,8 +297,7 @@ html.dark {
   &[data-box-mode='shadow-mode'] {
     .el-card,
     .btc-card,
-    .page-content,
-    .app-layout__content {
+    .page-content {
       box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.3) !important;
       border-color: var(--el-border-color) !important;
     }

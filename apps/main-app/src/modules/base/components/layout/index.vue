@@ -45,15 +45,20 @@
 
       <!-- 右侧内容 -->
       <div class="app-layout__main">
-        <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
-        <Process
-          v-show="!isDocsApp"
-          :is-fullscreen="isFullscreen"
-          @toggle-fullscreen="toggleFullscreen"
-        />
+        <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
+        <div class="app-layout__header">
+          <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
+          <Process
+            v-show="!isDocsApp"
+            :is-fullscreen="isFullscreen"
+            @toggle-fullscreen="toggleFullscreen"
+          />
 
-        <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
-        <Breadcrumb v-if="showBreadcrumb && showCrumbs" />
+          <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
+          <Breadcrumb
+            v-if="showBreadcrumb && showCrumbs"
+          />
+        </div>
 
         <div class="app-layout__content">
             <!-- 主应用路由出口 -->
@@ -293,6 +298,12 @@ onUnmounted(() => {
     .menu-type-top-left & {
       width: calc(100% - 255px);
     }
+  }
+
+  // 顶部区域容器（顶栏、tabbar、面包屑的统一容器）
+  &__header {
+    flex-shrink: 0;
+    margin-bottom: 10px; // 统一的 10px 间距，无论显示哪些组件都保持一致的间距
   }
 
   &__mask {
