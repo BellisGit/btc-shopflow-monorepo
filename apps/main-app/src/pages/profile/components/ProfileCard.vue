@@ -55,6 +55,12 @@
               editable
               @edit="$emit('edit-field', 'phone')"
             />
+            <ProfileInfoItem
+              label="密码"
+              :value="userInfo.initPass ? '已设置' : '未设置'"
+              editable
+              @edit="$emit('edit-field', 'initPass')"
+            />
           </el-col>
         </el-row>
       </div>

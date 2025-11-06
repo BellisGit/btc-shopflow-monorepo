@@ -37,6 +37,9 @@ export interface DialogProps {
 
   // 鑳屾櫙閫忔槑
   transparent?: boolean;
+
+  // 是否居中
+  alignCenter?: boolean;
 }
 
 /**

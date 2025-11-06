@@ -1,7 +1,7 @@
 /**
  * BtcViewsTabsGroup 组件类型定义
  */
-import type { TableColumn, FormItem } from '../../index';
+import type { TableColumn, FormItem } from '../../../index';
 
 /**
  * 查询参数配置

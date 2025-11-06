@@ -4,7 +4,7 @@
  */
 
 import { ref, computed, nextTick } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { settingsStorage } from '@/utils/storage-manager';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
 import { useThemePlugin } from '@btc/shared-core';
@@ -20,19 +20,19 @@ function createSettingsState() {
   const defaultSetting = config.app.systemSetting;
 
   // 菜单相关设置
-  const menuType = ref<MenuTypeEnum>(storage.get('menuType') || MenuTypeEnum.LEFT);
-  const menuOpenWidth = ref<number>(storage.get('menuOpenWidth') ?? defaultSetting.defaultMenuWidth);
-  const menuOpen = ref<boolean>(storage.get('menuOpen') ?? true);
+  const menuType = ref<MenuTypeEnum>(settingsStorage.getItem('menuType') || MenuTypeEnum.LEFT);
+  const menuOpenWidth = ref<number>(settingsStorage.getItem('menuOpenWidth') ?? defaultSetting.defaultMenuWidth);
+  const menuOpen = ref<boolean>(settingsStorage.getItem('menuOpen') ?? true);
 
   // 主题相关设置
-  const storedSystemThemeType = storage.get('systemThemeType');
+  const storedSystemThemeType = settingsStorage.getItem('systemThemeType');
   const systemThemeType = ref<SystemThemeEnum>(
     storedSystemThemeType && Object.values(SystemThemeEnum).includes(storedSystemThemeType as SystemThemeEnum)
       ? (storedSystemThemeType as SystemThemeEnum)
       : defaultSetting.defaultSystemThemeType
   );
   
-  const storedSystemThemeMode = storage.get('systemThemeMode');
+  const storedSystemThemeMode = settingsStorage.getItem('systemThemeMode');
   const systemThemeMode = ref<SystemThemeEnum>(
     storedSystemThemeMode && Object.values(SystemThemeEnum).includes(storedSystemThemeMode as SystemThemeEnum)
       ? (storedSystemThemeMode as SystemThemeEnum)
@@ -41,15 +41,15 @@ function createSettingsState() {
   
   // 如果使用的是默认值且存储中没有值，保存默认值到存储
   if (!storedSystemThemeType || !Object.values(SystemThemeEnum).includes(storedSystemThemeType as SystemThemeEnum)) {
-    storage.set('systemThemeType', systemThemeType.value);
+    settingsStorage.setItem('systemThemeType', systemThemeType.value);
   }
   if (!storedSystemThemeMode || !Object.values(SystemThemeEnum).includes(storedSystemThemeMode as SystemThemeEnum)) {
-    storage.set('systemThemeMode', systemThemeMode.value);
+    settingsStorage.setItem('systemThemeMode', systemThemeMode.value);
   }
   
   // 菜单风格设置 - 从存储读取或使用默认值
   // 如果存储中没有值，使用默认值；如果存储的值无效，也使用默认值
-  const storedMenuTheme = storage.get('menuThemeType');
+  const storedMenuTheme = settingsStorage.getItem('menuThemeType');
   const validMenuTheme = storedMenuTheme && Object.values(MenuThemeEnum).includes(storedMenuTheme as MenuThemeEnum)
     ? (storedMenuTheme as MenuThemeEnum)
     : defaultSetting.defaultMenuTheme;
@@ -58,30 +58,30 @@ function createSettingsState() {
   
   // 如果使用的是默认值且存储中没有值，保存默认值到存储
   if (!storedMenuTheme || !Object.values(MenuThemeEnum).includes(storedMenuTheme as MenuThemeEnum)) {
-    storage.set('menuThemeType', validMenuTheme);
+    settingsStorage.setItem('menuThemeType', validMenuTheme);
   }
   
-  const systemThemeColor = ref<string>(storage.get('systemThemeColor') || defaultSetting.defaultSystemThemeColor);
+  const systemThemeColor = ref<string>(settingsStorage.getItem('systemThemeColor') || defaultSetting.defaultSystemThemeColor);
 
   // 界面显示设置
-  const showMenuButton = ref<boolean>(storage.get('showMenuButton') ?? true);
-  const showFastEnter = ref<boolean>(storage.get('showFastEnter') ?? true);
-  const showRefreshButton = ref<boolean>(storage.get('showRefreshButton') ?? true);
-  const showCrumbs = ref<boolean>(storage.get('showCrumbs') ?? defaultSetting.defaultShowCrumbs);
-  const showWorkTab = ref<boolean>(storage.get('showWorkTab') ?? defaultSetting.defaultShowWorkTab);
-  const showGlobalSearch = ref<boolean>(storage.get('showGlobalSearch') ?? defaultSetting.defaultShowGlobalSearch);
-  const showLanguage = ref<boolean>(storage.get('showLanguage') ?? true);
-  const showNprogress = ref<boolean>(storage.get('showNprogress') ?? true);
-  const colorWeak = ref<boolean>(storage.get('colorWeak') ?? defaultSetting.defaultColorWeak);
-  const watermarkVisible = ref<boolean>(storage.get('watermarkVisible') ?? false);
+  const showMenuButton = ref<boolean>(settingsStorage.getItem('showMenuButton') ?? true);
+  const showFastEnter = ref<boolean>(settingsStorage.getItem('showFastEnter') ?? true);
+  const showRefreshButton = ref<boolean>(settingsStorage.getItem('showRefreshButton') ?? true);
+  const showCrumbs = ref<boolean>(settingsStorage.getItem('showCrumbs') ?? defaultSetting.defaultShowCrumbs);
+  const showWorkTab = ref<boolean>(settingsStorage.getItem('showWorkTab') ?? defaultSetting.defaultShowWorkTab);
+  const showGlobalSearch = ref<boolean>(settingsStorage.getItem('showGlobalSearch') ?? defaultSetting.defaultShowGlobalSearch);
+  const showLanguage = ref<boolean>(settingsStorage.getItem('showLanguage') ?? true);
+  const showNprogress = ref<boolean>(settingsStorage.getItem('showNprogress') ?? true);
+  const colorWeak = ref<boolean>(settingsStorage.getItem('colorWeak') ?? defaultSetting.defaultColorWeak);
+  const watermarkVisible = ref<boolean>(settingsStorage.getItem('watermarkVisible') ?? false);
 
   // 其他设置
-  const containerWidth = ref<ContainerWidthEnum>(storage.get('containerWidth') || ContainerWidthEnum.FULL);
-  const boxBorderMode = ref<boolean>(storage.get('boxBorderMode') ?? defaultSetting.defaultBoxBorderMode);
-  const uniqueOpened = ref<boolean>(storage.get('uniqueOpened') ?? defaultSetting.defaultUniqueOpened);
-  const tabStyle = ref<string>(storage.get('tabStyle') || defaultSetting.defaultTabStyle);
-  const pageTransition = ref<string>(storage.get('pageTransition') || defaultSetting.defaultPageTransition);
-  const customRadius = ref<string>(storage.get('customRadius') || defaultSetting.defaultCustomRadius);
+  const containerWidth = ref<ContainerWidthEnum>(settingsStorage.getItem('containerWidth') || ContainerWidthEnum.FULL);
+  const boxBorderMode = ref<boolean>(settingsStorage.getItem('boxBorderMode') ?? defaultSetting.defaultBoxBorderMode);
+  const uniqueOpened = ref<boolean>(settingsStorage.getItem('uniqueOpened') ?? defaultSetting.defaultUniqueOpened);
+  const tabStyle = ref<string>(settingsStorage.getItem('tabStyle') || defaultSetting.defaultTabStyle);
+  const pageTransition = ref<string>(settingsStorage.getItem('pageTransition') || defaultSetting.defaultPageTransition);
+  const customRadius = ref<string>(settingsStorage.getItem('customRadius') || defaultSetting.defaultCustomRadius);
 
   // 初始化时应用设置
   // 1. 应用系统主题（应用到 DOM）- 确保在页面加载时立即应用
@@ -139,7 +139,7 @@ function createSettingsState() {
    */
   function switchMenuLayouts(type: MenuTypeEnum) {
     menuType.value = type;
-    storage.set('menuType', type);
+    settingsStorage.setItem('menuType', type);
   }
 
   /**
@@ -149,7 +149,7 @@ function createSettingsState() {
    */
   function switchMenuStyles(theme: MenuThemeEnum) {
     menuThemeType.value = theme;
-    storage.set('menuThemeType', theme);
+    settingsStorage.setItem('menuThemeType', theme);
   }
 
   /**
@@ -185,8 +185,8 @@ function createSettingsState() {
     // 先更新设置状态（同步执行，避免响应式延迟）
     systemThemeType.value = theme;
     systemThemeMode.value = theme;
-    storage.set('systemThemeType', theme);
-    storage.set('systemThemeMode', theme);
+    settingsStorage.setItem('systemThemeType', theme);
+    settingsStorage.setItem('systemThemeMode', theme);
 
     // 尝试获取主题插件实例
     let themePlugin: any = null;
@@ -243,8 +243,8 @@ function createSettingsState() {
         DARK: 'dark',
         AUTO: 'auto',
       };
-      storage.set('systemThemeType', theme);
-      storage.set('systemThemeMode', theme);
+      settingsStorage.setItem('systemThemeType', theme);
+      settingsStorage.setItem('systemThemeMode', theme);
     } catch (e) {
       // 忽略错误
     }
@@ -266,7 +266,7 @@ function createSettingsState() {
    */
   function setSystemThemeColor(color: string) {
     systemThemeColor.value = color;
-    storage.set('systemThemeColor', color);
+    settingsStorage.setItem('systemThemeColor', color);
     // 这里可以触发主题色更新事件
     window.dispatchEvent(new CustomEvent('theme-color-change', { detail: { color } }));
   }
@@ -276,7 +276,7 @@ function createSettingsState() {
    */
   function setContainerWidth(width: ContainerWidthEnum) {
     containerWidth.value = width;
-    storage.set('containerWidth', width);
+    settingsStorage.setItem('containerWidth', width);
   }
 
   /**
@@ -285,7 +285,7 @@ function createSettingsState() {
   function setBoxMode(type: BoxStyleType) {
     const isBorderMode = type === BoxStyleType.BORDER;
     boxBorderMode.value = isBorderMode;
-    storage.set('boxBorderMode', isBorderMode);
+    settingsStorage.setItem('boxBorderMode', isBorderMode);
     document.documentElement.setAttribute('data-box-mode', type);
   }
 
@@ -294,7 +294,7 @@ function createSettingsState() {
    */
   function toggleWorkTab() {
     showWorkTab.value = !showWorkTab.value;
-    storage.set('showWorkTab', showWorkTab.value);
+    settingsStorage.setItem('showWorkTab', showWorkTab.value);
   }
 
   /**
@@ -302,7 +302,7 @@ function createSettingsState() {
    */
   function setWorkTab(value: boolean) {
     showWorkTab.value = value;
-    storage.set('showWorkTab', value);
+    settingsStorage.setItem('showWorkTab', value);
   }
 
   /**
@@ -310,7 +310,7 @@ function createSettingsState() {
    */
   function toggleMenuButton() {
     showMenuButton.value = !showMenuButton.value;
-    storage.set('showMenuButton', showMenuButton.value);
+    settingsStorage.setItem('showMenuButton', showMenuButton.value);
   }
 
   /**
@@ -318,7 +318,7 @@ function createSettingsState() {
    */
   function toggleFastEnter() {
     showFastEnter.value = !showFastEnter.value;
-    storage.set('showFastEnter', showFastEnter.value);
+    settingsStorage.setItem('showFastEnter', showFastEnter.value);
   }
 
   /**
@@ -326,7 +326,7 @@ function createSettingsState() {
    */
   function toggleRefreshButton() {
     showRefreshButton.value = !showRefreshButton.value;
-    storage.set('showRefreshButton', showRefreshButton.value);
+    settingsStorage.setItem('showRefreshButton', showRefreshButton.value);
   }
 
   /**
@@ -334,7 +334,7 @@ function createSettingsState() {
    */
   function toggleCrumbs() {
     showCrumbs.value = !showCrumbs.value;
-    storage.set('showCrumbs', showCrumbs.value);
+    settingsStorage.setItem('showCrumbs', showCrumbs.value);
   }
 
   /**
@@ -342,7 +342,7 @@ function createSettingsState() {
    */
   function setCrumbs(value: boolean) {
     showCrumbs.value = value;
-    storage.set('showCrumbs', value);
+    settingsStorage.setItem('showCrumbs', value);
   }
 
   /**
@@ -350,7 +350,7 @@ function createSettingsState() {
    */
   function toggleLanguage() {
     showLanguage.value = !showLanguage.value;
-    storage.set('showLanguage', showLanguage.value);
+    settingsStorage.setItem('showLanguage', showLanguage.value);
   }
 
   /**
@@ -358,7 +358,7 @@ function createSettingsState() {
    */
   function toggleUniqueOpened() {
     uniqueOpened.value = !uniqueOpened.value;
-    storage.set('uniqueOpened', uniqueOpened.value);
+    settingsStorage.setItem('uniqueOpened', uniqueOpened.value);
   }
 
   /**
@@ -366,7 +366,7 @@ function createSettingsState() {
    */
   function setUniqueOpened(value: boolean) {
     uniqueOpened.value = value;
-    storage.set('uniqueOpened', value);
+    settingsStorage.setItem('uniqueOpened', value);
   }
 
   /**
@@ -374,7 +374,7 @@ function createSettingsState() {
    */
   function toggleNprogress() {
     showNprogress.value = !showNprogress.value;
-    storage.set('showNprogress', showNprogress.value);
+    settingsStorage.setItem('showNprogress', showNprogress.value);
   }
 
   /**
@@ -382,7 +382,7 @@ function createSettingsState() {
    */
   function toggleColorWeak() {
     colorWeak.value = !colorWeak.value;
-    storage.set('colorWeak', colorWeak.value);
+    settingsStorage.setItem('colorWeak', colorWeak.value);
     // 应用 CSS 类到 html 元素
     const htmlEl = document.documentElement;
     if (colorWeak.value) {
@@ -397,7 +397,7 @@ function createSettingsState() {
    */
   function setColorWeak(value: boolean) {
     colorWeak.value = value;
-    storage.set('colorWeak', value);
+    settingsStorage.setItem('colorWeak', value);
     // 应用 CSS 类到 html 元素
     const htmlEl = document.documentElement;
     if (value) {
@@ -412,7 +412,7 @@ function createSettingsState() {
    */
   function toggleWatermark() {
     watermarkVisible.value = !watermarkVisible.value;
-    storage.set('watermarkVisible', watermarkVisible.value);
+    settingsStorage.setItem('watermarkVisible', watermarkVisible.value);
   }
 
   /**
@@ -420,7 +420,7 @@ function createSettingsState() {
    */
   function setTabStyle(style: string) {
     tabStyle.value = style;
-    storage.set('tabStyle', style);
+    settingsStorage.setItem('tabStyle', style);
     // 触发样式更新事件
     window.dispatchEvent(new CustomEvent('tab-style-change', { detail: { style } }));
   }
@@ -430,7 +430,7 @@ function createSettingsState() {
    */
   function setPageTransition(transition: string) {
     pageTransition.value = transition;
-    storage.set('pageTransition', transition);
+    settingsStorage.setItem('pageTransition', transition);
     // 触发页面过渡动画更新事件
     window.dispatchEvent(new CustomEvent('page-transition-change', { detail: { transition } }));
   }
@@ -440,7 +440,7 @@ function createSettingsState() {
    */
   function setCustomRadius(radius: string) {
     customRadius.value = radius;
-    storage.set('customRadius', radius);
+    settingsStorage.setItem('customRadius', radius);
     // 设置 CSS 变量
     document.documentElement.style.setProperty('--custom-radius', `${radius}rem`);
   }
@@ -450,7 +450,7 @@ function createSettingsState() {
    */
   function toggleGlobalSearch() {
     showGlobalSearch.value = !showGlobalSearch.value;
-    storage.set('showGlobalSearch', showGlobalSearch.value);
+    settingsStorage.setItem('showGlobalSearch', showGlobalSearch.value);
   }
 
   /**
@@ -458,7 +458,7 @@ function createSettingsState() {
    */
   function setGlobalSearch(value: boolean) {
     showGlobalSearch.value = value;
-    storage.set('showGlobalSearch', value);
+    settingsStorage.setItem('showGlobalSearch', value);
   }
 
   /**
@@ -466,7 +466,7 @@ function createSettingsState() {
    */
   function setMenuOpenWidth(width: number) {
     menuOpenWidth.value = width;
-    storage.set('menuOpenWidth', width);
+    settingsStorage.setItem('menuOpenWidth', width);
   }
 
   /**

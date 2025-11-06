@@ -5,7 +5,7 @@
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
-import { BtcMessage } from '../../btc-message';
+import { BtcMessage } from '@btc-components/feedback/btc-message';
 
 /**
  * 用户设置组合式函数

@@ -51,9 +51,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
-import BtcTabs from '@btc-components/btc-tabs/index.vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '../../index';
-import BtcUpsert from '../../crud/upsert/index.vue';
+import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '../../../index';
+import BtcUpsert from '@btc-crud/upsert/index.vue';
 import type { BtcViewsTabsGroupConfig } from './types';
 
 defineOptions({

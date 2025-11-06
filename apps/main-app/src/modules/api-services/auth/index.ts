@@ -121,6 +121,24 @@ export const authApi = {
    */
   verifyCode(data: VerifyCodeRequest): Promise<void> {
     return http.post(`${baseUrl}/verify/code`, data);
+  },
+
+  /**
+   * 验证短信验证码（用于身份验证，不登录）
+   * @param data 手机号和短信验证码
+   * @returns Promise<void>
+   */
+  verifySmsCode(data: { phone: string; smsCode: string; smsType?: string }): Promise<void> {
+    return http.post(`${baseUrl}/verify/sms`, data);
+  },
+
+  /**
+   * 验证邮箱验证码（用于身份验证）
+   * @param data 邮箱和验证码
+   * @returns Promise<void>
+   */
+  verifyEmailCode(data: { email: string; emailCode: string; type?: string }): Promise<void> {
+    return http.post(`${baseUrl}/verify/email`, data);
   }
 };
 

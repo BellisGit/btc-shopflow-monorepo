@@ -18,7 +18,12 @@
       "@btc-components/*": ["src/components/*"],
       "@btc-crud/*": ["src/crud/*"],
       "@btc-styles/*": ["src/styles/*"],
-      "@btc-locales/*": ["src/locales/*"]
+      "@btc-locales/*": ["src/locales/*"],
+      "@assets/*": ["src/assets/*"],
+      "@plugins/*": ["src/plugins/*"],
+      "@utils/*": ["src/utils/*"],
+      "@btc/shared-components": ["src/index.ts"],
+      "@btc/shared-components/*": ["src/*"]
     }
   },
   "include": ["src"],

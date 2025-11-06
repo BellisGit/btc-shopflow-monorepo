@@ -13,7 +13,7 @@ import { ElMessage } from 'element-plus';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
 import BtcForm from '@btc-common/form/index.vue';
-import BtcSvg from '@btc-common/svg/index.vue';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';

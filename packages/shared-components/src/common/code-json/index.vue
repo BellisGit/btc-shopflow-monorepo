@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
-import BtcSvg from '@btc-common/svg/index.vue';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'BtcCodeJson',

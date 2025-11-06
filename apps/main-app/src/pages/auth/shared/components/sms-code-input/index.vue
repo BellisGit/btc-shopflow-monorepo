@@ -1,5 +1,5 @@
 <template>
-  <div class="sms-code-input">
+  <div class="sms-code-input" :class="`sms-code-input--${props.size}`">
     <div
       v-for="(item, index) in codes"
       :key="index"
@@ -8,8 +8,8 @@
     >
       <input
         :ref="el => setInputRef(el as HTMLInputElement, index)"
-        :id="`sms-code-${index}`"
-        :name="`sms-code-${index}`"
+        :id="`${props.idPrefix}-${index}`"
+        :name="`${props.idPrefix}-${index}`"
         v-model="codes[index]"
         type="text"
         inputmode="numeric"
@@ -37,12 +37,16 @@ interface Props {
   modelValue?: string;
   length?: number;
   disabled?: boolean;
+  size?: 'small' | 'middle';
+  idPrefix?: string; // ID前缀，用于生成唯一的input id
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   length: 6,
-  disabled: false
+  disabled: false,
+  size: 'middle',
+  idPrefix: 'sms-code'
 });
 
 const emit = defineEmits<{
@@ -206,19 +210,46 @@ defineExpose({
 <style lang="scss" scoped>
 .sms-code-input {
   display: flex;
-  gap: 12px; // 调整为更紧凑的间距，适配正方形输入框
   justify-content: space-between;
   align-items: center;
   width: 100%;
 
+  // middle 尺寸（默认，45px）
+  &--middle {
+    gap: 12px;
+
+    .code-box {
+      max-width: 45px;
+      width: 45px;
+      height: 45px;
+      border-radius: 10px;
+
+      input {
+        font-size: 20px;
+      }
+    }
+  }
+
+  // small 尺寸（30px）
+  &--small {
+    gap: 8px;
+
+    .code-box {
+      max-width: 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+
+      input {
+        font-size: 16px;
+      }
+    }
+  }
+
   .code-box {
     position: relative;
     flex: 1;
-    max-width: 45px; // 保持与高度一致，形成正方形（与 $auth-input-height: 45px 一致）
-    width: 45px; // 固定宽度，确保正方形
-    height: 45px; // 统一与普通输入框高度一致（$auth-input-height: 45px）
     border: 1.5px solid var(--el-border-color-light);
-    border-radius: 10px;
     background-color: var(--el-fill-color-lighter);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -242,7 +273,7 @@ defineExpose({
     &.filled {
       border-color: var(--el-color-primary);
       background-color: var(--el-color-primary-light-9);
-      
+
       &:not(.active) {
         box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
       }
@@ -255,12 +286,13 @@ defineExpose({
       outline: none;
       background: transparent;
       text-align: center;
-      font-size: 20px; // 适配 45px 输入框
       font-weight: 700;
       letter-spacing: 0;
       color: var(--el-text-color-primary);
       caret-color: var(--el-color-primary);
       padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
 
       &:disabled {
         background-color: var(--el-disabled-bg-color);
@@ -282,6 +314,7 @@ defineExpose({
 
       &[type='number'] {
         -moz-appearance: textfield;
+        appearance: textfield;
       }
     }
   }
@@ -290,6 +323,7 @@ defineExpose({
 // 响应式设计
 @media (max-width: 768px) {
   .sms-code-input {
+    &--middle {
     gap: 10px;
 
     .code-box {
@@ -300,6 +334,22 @@ defineExpose({
 
       input {
         font-size: 16px;
+        }
+      }
+    }
+
+    &--small {
+      gap: 6px;
+
+      .code-box {
+        max-width: 28px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+
+        input {
+          font-size: 14px;
+        }
       }
     }
   }
@@ -307,6 +357,7 @@ defineExpose({
 
 @media (max-width: 480px) {
   .sms-code-input {
+    &--middle {
     gap: 8px;
 
     .code-box {
@@ -317,6 +368,22 @@ defineExpose({
 
       input {
         font-size: 14px;
+        }
+      }
+    }
+
+    &--small {
+      gap: 4px;
+
+      .code-box {
+        max-width: 26px;
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+
+        input {
+          font-size: 12px;
+        }
       }
     }
   }

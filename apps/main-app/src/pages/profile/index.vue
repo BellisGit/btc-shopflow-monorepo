@@ -34,6 +34,16 @@
 
     <!-- 编辑表单 -->
     <BtcForm ref="Form" />
+
+    <!-- 身份验证弹窗 -->
+    <BtcIdentityVerify
+      v-model="verifyVisible"
+      :user-info="{
+        phone: userInfo.phone,
+        email: userInfo.email
+      }"
+      @success="handleVerifySuccess"
+    />
   </div>
 </template>
 
@@ -41,10 +51,11 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { View, Hide } from '@element-plus/icons-vue';
-import { storage } from '@btc/shared-utils';
+import { settingsStorage, userStorage } from '@/utils/storage-manager';
 import { useProfile } from './composables/useProfile';
 import { useProfileForm } from './composables/useProfileForm';
 import ProfileCard from './components/ProfileCard.vue';
+import BtcIdentityVerify from './components/BtcIdentityVerify.vue';
 
 defineOptions({
   name: 'Profile'
@@ -53,19 +64,48 @@ defineOptions({
 // 使用个人信息 composable
 const { userInfo, loading, showFullInfo, loadUserInfo, handleToggleShowFull } = useProfile();
 
-// 使用表单 composable
-const { Form, handleEditField } = useProfileForm(userInfo, showFullInfo, loadUserInfo);
+// 身份验证弹窗显示状态
+const verifyVisible = ref(false);
+// 验证成功后的回调函数
+let verifySuccessCallback: (() => void) | null = null;
 
-// 摇滚风格开关（从 localStorage 读取，默认 true）
+// 使用表单 composable
+const { Form, handleEditField, handleEdit, handleEditAvatar } = useProfileForm(
+  userInfo,
+  showFullInfo,
+  loadUserInfo,
+  () => {
+    // 打开验证弹窗
+    verifyVisible.value = true;
+  },
+  (callback: () => void) => {
+    // 保存验证成功后的回调
+    verifySuccessCallback = callback;
+  }
+);
+
+// 处理验证成功
+const handleVerifySuccess = () => {
+  // 关闭验证弹窗
+  verifyVisible.value = false;
+  
+  // 执行验证成功后的回调（打开编辑表单）
+  if (verifySuccessCallback) {
+    verifySuccessCallback();
+    verifySuccessCallback = null;
+  }
+};
+
+// 摇滚风格开关（从统一存储读取，默认 false）
 const getRockStyleEnabled = (): boolean => {
-  const stored = storage.get<boolean>('avatarRockStyle');
-  return stored === true || stored === false ? stored : true;
+  const stored = settingsStorage.getItem('avatarRockStyle');
+  return stored === true || stored === false ? stored : false;
 };
 const rockStyleEnabled = ref<boolean>(getRockStyleEnabled());
 
 // 处理摇滚风格变化
 const handleRockStyleChange = (value: boolean) => {
-  storage.set('avatarRockStyle', value);
+  settingsStorage.setItem('avatarRockStyle', value);
   // 触发自定义事件，通知其他组件更新
   window.dispatchEvent(new CustomEvent('avatarRockStyleChanged', { detail: value }));
 };
@@ -85,6 +125,28 @@ const handleAvatarChange = async (avatarUrl: string) => {
       id: userInfo.value.id,
       avatar: avatarUrl
     });
+
+    // 更新统一存储
+    userStorage.setAvatar(avatarUrl);
+
+    // 同时更新 useUser 中的信息
+    const { useUser } = await import('@/composables/useUser');
+    const { getUserInfo, setUserInfo } = useUser();
+    const currentUser = getUserInfo();
+    if (currentUser) {
+      setUserInfo({
+        ...currentUser,
+        avatar: avatarUrl
+      });
+    }
+
+    // 触发自定义事件，通知顶栏更新
+    window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+      detail: {
+        avatar: avatarUrl,
+        name: userInfo.value.name
+      }
+    }));
 
     ElMessage.success('头像更新成功');
     

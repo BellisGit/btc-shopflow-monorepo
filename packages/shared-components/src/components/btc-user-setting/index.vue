@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { provide } from 'vue';
-import BtcSvg from '../../common/svg/index.vue';
+import BtcSvg from '../others/btc-svg/index.vue';
 import { useUserSetting } from './composables';
 import BtcUserSettingDrawer from './components/theme-drawer.vue';
 

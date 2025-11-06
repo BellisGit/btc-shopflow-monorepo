@@ -19,6 +19,9 @@
       <el-descriptions-item label="手机号" label-class-name="profile-label">
         <span class="profile-value">{{ userInfo.phone || '-' }}</span>
       </el-descriptions-item>
+      <el-descriptions-item label="密码" label-class-name="profile-label">
+        <span class="profile-value">{{ userInfo.initPass ? '已设置' : '未设置' }}</span>
+      </el-descriptions-item>
     </el-descriptions>
   </div>
 </template>

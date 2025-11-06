@@ -1,21 +1,71 @@
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
 import { service } from '@services/eps';
+import { userStorage } from '@/utils/storage-manager';
 
 export function useUserInfo() {
+  // 用户相关（需要在读取缓存之前初始化）
+  const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+  
   // 从个人信息服务获取的用户信息
-  const profileUserInfo = ref<any>(null);
+  // 初始化时立即从缓存读取，避免闪烁
+  const cachedUser = getUserInfo();
+  const cachedAvatar = userStorage.getAvatar();
+  const cachedName = userStorage.getName();
+  
+  const profileUserInfo = ref<any>(
+    (cachedAvatar || cachedName) ? {
+      name: cachedName || cachedUser?.name || '',
+      avatar: cachedAvatar || cachedUser?.avatar || '/logo.png',
+    } : null
+  );
+  
+  // 初始化显示名称
+  const displayedName = ref(cachedName || cachedUser?.name || '');
 
   // 打字机效果相关
-  const displayedName = ref('');
   const isTyping = ref(false);
   const cursorPosition = ref(0);
   let typingTimer: number | null = null;
 
-  // 用户相关
-  const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+  // 监听用户信息更新事件
+  const handleUserInfoUpdated = (event: CustomEvent) => {
+    const { avatar, name } = event.detail || {};
+    
+    // 更新统一存储
+    if (avatar) {
+      userStorage.setAvatar(avatar);
+    }
+    if (name) {
+      userStorage.setName(name);
+    }
+    
+    // 更新 profileUserInfo，触发响应式更新
+    if (profileUserInfo.value) {
+      profileUserInfo.value = {
+        ...profileUserInfo.value,
+        ...(avatar && { avatar }),
+        ...(name && { name }),
+      };
+    } else {
+      // 如果还没有 profileUserInfo，从缓存和 useUser 获取
+      const currentUser = getUserInfo();
+      const cachedAvatar = userStorage.getAvatar();
+      const cachedName = userStorage.getName();
+      profileUserInfo.value = {
+        avatar: avatar || cachedAvatar || currentUser?.avatar || '/logo.png',
+        name: name || cachedName || currentUser?.name || '',
+        position: currentUser?.position || '',
+      };
+    }
+    
+    // 更新显示名称
+    if (name) {
+      displayedName.value = name;
+    }
+  };
 
-  // 用户信息（优先从个人信息服务获取，否则从 useUser 获取，提供默认值）
+  // 用户信息（优先从个人信息服务获取，否则从 localStorage 缓存或 useUser 获取，提供默认值）
   const userInfo = computed(() => {
     // 优先使用从个人信息服务获取的数据
     if (profileUserInfo.value) {
@@ -26,7 +76,20 @@ export function useUserInfo() {
       };
     }
 
-    // 其次从 useUser 获取
+    // 其次从统一存储获取头像和用户名
+    const cachedAvatar = userStorage.getAvatar();
+    const cachedName = userStorage.getName();
+    if (cachedAvatar || cachedName) {
+      // 从 useUser 获取其他信息（如 position）
+      const info = userInfoComputed.value || getUserInfo();
+      return {
+        name: cachedName || info?.name || info?.username || '',
+        position: info?.position || '',
+        avatar: cachedAvatar || info?.avatar || '/logo.png',
+      };
+    }
+
+    // 再次从 useUser 获取
     const info = userInfoComputed.value;
     if (info) {
       return {
@@ -62,10 +125,33 @@ export function useUserInfo() {
         return;
       }
 
-      // 获取脱敏信息即可（用于显示头像和基本信息）
+      // 如果 profileUserInfo 还没有值，从缓存读取（初始化时已经读取过，这里作为兜底）
+      if (!profileUserInfo.value) {
+        const cachedUser = getUserInfo();
+        const cachedAvatar = userStorage.getAvatar();
+        const cachedName = userStorage.getName();
+        
+        if (cachedAvatar || cachedName) {
+          profileUserInfo.value = {
+            name: cachedName || (cachedUser?.name || ''),
+            avatar: cachedAvatar || (cachedUser?.avatar || '/logo.png'),
+          };
+          displayedName.value = cachedName || cachedUser?.name || '';
+        }
+      }
+
+      // 获取脱敏信息（用于显示头像和基本信息）
       const data = await profileService.info();
       if (data) {
         profileUserInfo.value = data;
+
+        // 更新统一存储（头像和用户名）
+        if (data.avatar) {
+          userStorage.setAvatar(data.avatar);
+        }
+        if (data.name) {
+          userStorage.setName(data.name);
+        }
 
         // 同时更新 useUser 中的信息，保持一致性
         const currentUser = getUserInfo();
@@ -137,6 +223,15 @@ export function useUserInfo() {
       displayedName.value = newName || '';
     }
   }, { immediate: true });
+
+  // 在组件挂载时监听事件，卸载时移除监听
+  onMounted(() => {
+    window.addEventListener('userInfoUpdated', handleUserInfoUpdated as EventListener);
+  });
+
+  onUnmounted(() => {
+    window.removeEventListener('userInfoUpdated', handleUserInfoUpdated as EventListener);
+  });
 
   return {
     profileUserInfo,

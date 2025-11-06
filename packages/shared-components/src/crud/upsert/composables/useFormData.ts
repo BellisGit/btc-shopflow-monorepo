@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
-import { useFormRenderer } from '../../../common/form/composables/useFormRenderer';
+import { useFormRenderer } from '@btc-common/form/composables/useFormRenderer';
 import type { FormItem, UpsertProps, UpsertMode } from '../types';
 
 /**

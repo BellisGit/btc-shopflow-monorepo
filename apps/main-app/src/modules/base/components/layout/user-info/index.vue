@@ -20,7 +20,12 @@
         >|</span>
       </span>
       <div class="user-info__avatar-box user-info__avatar-box--small">
-        <el-avatar :size="26" :src="userInfo.avatar" />
+        <img 
+          :src="avatarUrl"
+          :alt="userInfo.name || '用户头像'"
+          class="user-info__avatar-img-small"
+          @error="handleAvatarError"
+        />
       </div>
     </div>
 
@@ -108,6 +113,18 @@ const {
   handleNameHover,
   handleNameLeave
 } = useUserInfo();
+
+// 头像 URL（确保始终有值，避免空白）
+const avatarUrl = computed(() => {
+  const url = userInfo.value?.avatar;
+  return url && url !== '/logo.png' ? url : '/logo.png';
+});
+
+// 头像加载失败处理
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  img.src = '/logo.png';
+};
 
 // 初始化
 onMounted(async () => {

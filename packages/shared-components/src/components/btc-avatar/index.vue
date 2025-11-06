@@ -44,7 +44,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import type { Ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { User, Edit } from '@element-plus/icons-vue';
-import { useUpload } from '../btc-upload/composables/useUpload';
+import { useUpload } from '@btc-components/btc-upload/composables/useUpload';
 import { useAvatarRhythm } from './composables/useAvatarRhythm';
 import './index.scss';
 
@@ -171,11 +171,7 @@ const handleFileSelect = async (event: Event) => {
   try {
     // 直接使用 useUpload 上传文件
     const res = await toUpload(file, {
-      uploadType: 'avatar',
-      onProgress: (progress) => {
-        // 可以在这里显示上传进度
-        console.log('上传进度:', progress);
-      }
+      uploadType: 'avatar'
     });
 
     // 验证响应是否有效

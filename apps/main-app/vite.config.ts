@@ -29,6 +29,8 @@ export default defineConfig({
       '@btc-styles': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/styles'),
       '@btc-locales': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/locales'),
       '@assets': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/assets'),
+      '@plugins': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/plugins'),
+      '@btc-utils': resolve(fileURLToPath(new URL('.', import.meta.url)), '../../packages/shared-components/src/utils'),
       '@user-setting-assets': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/plugins/user-setting/assets'),
       // 修复 element-plus 路径解析问题
       'element-plus/es': 'element-plus/es',

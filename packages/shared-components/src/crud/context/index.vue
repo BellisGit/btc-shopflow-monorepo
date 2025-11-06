@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { provide, onMounted, ref, onUpdated, getCurrentInstance } from 'vue';
 import { useCrud, type CrudService, type CrudOptions } from '@btc/shared-core';
-import { BtcMessage } from '../../components/btc-message';
+import { BtcMessage } from '../../components/feedback/btc-message';
 
 /**
  * BtcCrud 上下文容器

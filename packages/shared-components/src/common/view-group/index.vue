@@ -61,8 +61,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, inject, useSlots, nextTick, provide } from 'vue';
-import BtcSvg from '../svg/index.vue';
-import BtcMasterList from '@btc-components/btc-master-list/index.vue';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
 import type { ViewGroupOptions } from './types';
 import { useViewGroupData, useViewGroupActions } from './composables';
 import { useI18n } from '@btc/shared-core';

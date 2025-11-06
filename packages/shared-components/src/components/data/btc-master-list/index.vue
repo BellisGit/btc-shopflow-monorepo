@@ -87,7 +87,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import { Check, Close, Refresh, MoreFilled, Search } from '@element-plus/icons-vue';
-import BtcSvg from '@btc-common/svg/index.vue';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 // 树形数据处理工具函数
 function deepTree(data: any[], parentId: any = 0, children = 'children'): any[] {

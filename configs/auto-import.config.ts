@@ -76,9 +76,18 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
     ...extraDirs, // 额外的域级组件目录
   ];
 
-  // 如果包含共享组件，添加共享组件目录
+  // 如果包含共享组件，添加共享组件分组目录
   if (includeShared) {
-    dirs.push('../../packages/shared-components/src/components');
+    // 添加分组目录，支持自动导入
+    dirs.push(
+      '../../packages/shared-components/src/components/basic',
+      '../../packages/shared-components/src/components/layout',
+      '../../packages/shared-components/src/components/navigation',
+      '../../packages/shared-components/src/components/form',
+      '../../packages/shared-components/src/components/data',
+      '../../packages/shared-components/src/components/feedback',
+      '../../packages/shared-components/src/components/others'
+    );
   }
 
   return Components({

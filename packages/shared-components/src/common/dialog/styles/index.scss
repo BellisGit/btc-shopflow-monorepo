@@ -5,24 +5,56 @@
   &.el-dialog {
     padding: 0;
     border-radius: 8px;
-    margin-top: 0;
-    // Element Plus 默认使用 margin-top: 15vh 来实现垂直居中
-    // 如果内容较少，可以通过调整 margin-top 来微调位置
+    // 使用 align-center 时，不需要设置 margin-top
+    // Element Plus 的 align-center 会通过 flex 布局实现垂直居中
   }
 
   // 确保 dialog wrapper 使用 flex 布局垂直居中（Element Plus 默认行为）
   // Element Plus 默认已经设置了垂直居中，但如果被覆盖了，这里确保恢复
+  // 当使用 align-center 时，需要确保 overlay 有足够的高度来实现垂直居中
   :deep(.el-overlay) {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 0;
+    min-height: 100vh; // 确保有足够的高度来实现垂直居中
   }
 
-  // 确保 dialog 本身不会有过大的 margin-top（Element Plus 默认 15vh）
-  // 如果内容较少，可以通过减少 margin-top 来调整位置
-  &.el-dialog:not(.is-fullscreen) {
-    margin-top: 15vh;
+  // 响应式设计：确保在任何屏幕尺寸下都能正确显示
+  // 注意：使用 align-center 时，margin 不会影响垂直居中，只影响水平边距
+  @media (max-width: 768px) {
+    &.el-dialog {
+      width: calc(100% - 32px) !important;
+      max-width: calc(100% - 32px) !important;
+      margin-left: 16px !important;
+      margin-right: 16px !important;
+      // 不设置 margin-top 和 margin-bottom，让 align-center 处理垂直居中
+    }
+  }
+
+  @media (max-width: 480px) {
+    &.el-dialog {
+      width: calc(100% - 24px) !important;
+      max-width: calc(100% - 24px) !important;
+      margin-left: 12px !important;
+      margin-right: 12px !important;
+      // 不设置 margin-top 和 margin-bottom，让 align-center 处理垂直居中
+    }
+  }
+
+  // 当使用 align-center 时，Element Plus 会自动处理居中
+  // 不需要设置 margin-top，让 Element Plus 的 align-center 正常工作
+  // 移除 margin-top 设置，让 align-center 通过 flex 布局实现居中
+
+  // 当设置了高度时，确保 dialog 和 body 都能正确应用
+  &.has-height {
+    display: flex;
+    flex-direction: column;
+
+    :deep(.el-dialog__body) {
+      height: 100%;
+      min-height: 0; // 允许 flex 子元素收缩
+    }
   }
 
   :deep(.el-dialog__header) {
@@ -35,6 +67,9 @@
     box-sizing: border-box;
     flex: 1;
     overflow: hidden;
+    // 当设置了高度时，确保 body 能够正确应用
+    display: flex;
+    flex-direction: column;
   }
 
   :deep(.el-dialog__footer) {

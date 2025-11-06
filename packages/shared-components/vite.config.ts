@@ -12,6 +12,9 @@ export default defineConfig({
       '@btc-styles': resolve(__dirname, 'src/styles'),
       '@btc-locales': resolve(__dirname, 'src/locales'),
       '@assets': resolve(__dirname, 'src/assets'),
+      '@plugins': resolve(__dirname, 'src/plugins'),
+      '@utils': resolve(__dirname, 'src/utils'),
+      '@btc/shared-components': resolve(__dirname, 'src'),
     },
   },
   plugins: [

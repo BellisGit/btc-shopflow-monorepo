@@ -1,12 +1,12 @@
 ﻿import './styles/index.scss';
-import BtcButton from './common/button/index.vue';
-import BtcSvg from './common/svg/index.vue';
+import BtcButton from './components/basic/btc-button/index.vue';
+import BtcSvg from './components/others/btc-svg/index.vue';
 import BtcDialog from './common/dialog/index.vue';
 import BtcViewGroup from './common/view-group/index.vue';
 import BtcForm from './common/form/index.vue';
 import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
-import BtcSelectButton from './common/select-button/index.vue';
+import BtcSelectButton from './components/form/btc-select-button/index.vue';
 import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
 import BtcCrud from './crud/context/index.vue';
@@ -24,6 +24,6 @@ import BtcMenuExp from './crud/menu-exp/index.vue';
 export { BtcButton, BtcSvg, BtcDialog, BtcViewGroup, BtcForm, BtcFormCard, BtcFormTabs, BtcSelectButton, BtcCrud, BtcTable, BtcUpsert, BtcPagination, BtcAddBtn, BtcRefreshBtn, BtcMultiDeleteBtn, BtcRow, BtcFlex1, BtcSearchKey, BtcExportBtn, BtcMenuExp, };
 export type { TableColumn, OpButton } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
-export type { DialogProps } from './common/dialog/types';
-export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
+export type { DialogProps } from './components/feedback/btc-dialog/types';
+export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './components/form/btc-form/types';
 

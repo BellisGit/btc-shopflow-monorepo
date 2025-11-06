@@ -6,6 +6,7 @@ import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { service } from '@services/eps';
 import { http } from '@/utils/http';
+import { userStorage } from '@/utils/storage-manager';
 
 /**
  * 个人信息 composable
@@ -21,6 +22,17 @@ export function useProfile() {
    * @param showFull 是否显示完整信息（true=明文，false=脱敏）
    */
   const loadUserInfo = async (showFull = false) => {
+    // 优先从统一存储读取缓存
+    const cachedAvatar = userStorage.getAvatar();
+    const cachedName = userStorage.getName();
+    if (cachedAvatar || cachedName) {
+      userInfo.value = {
+        ...userInfo.value,
+        ...(cachedAvatar && { avatar: cachedAvatar }),
+        ...(cachedName && { name: cachedName }),
+      };
+    }
+
     loading.value = true;
     try {
       // 根据 prefix: admin/system/base/profile，服务路径应该是 system.base.profile
@@ -70,6 +82,22 @@ export function useProfile() {
           // 调用包装后的 info 方法
           data = await profileService.info();
           userInfo.value = data || {};
+          
+          // 更新统一存储（头像和用户名）
+          if (data?.avatar) {
+            userStorage.setAvatar(data.avatar);
+          }
+          if (data?.name) {
+            userStorage.setName(data.name);
+          }
+          
+          // 触发同步事件，通知顶栏更新
+          window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+            detail: {
+              avatar: data?.avatar,
+              name: data?.name
+            }
+          }));
         } finally {
           // 恢复原始的 info 方法
           profileService.info = originalInfo;
@@ -78,6 +106,22 @@ export function useProfile() {
         // 直接调用，不需要参数
         data = await profileService.info();
         userInfo.value = data || {};
+        
+        // 更新统一存储（头像和用户名）
+        if (data?.avatar) {
+          userStorage.setAvatar(data.avatar);
+        }
+        if (data?.name) {
+          userStorage.setName(data.name);
+        }
+        
+        // 触发同步事件，通知顶栏更新
+        window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+          detail: {
+            avatar: data?.avatar,
+            name: data?.name
+          }
+        }));
       }
     } catch (error: any) {
       console.error('加载用户信息失败:', error);

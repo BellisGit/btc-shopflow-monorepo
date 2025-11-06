@@ -79,12 +79,19 @@ export function useDialogRender(props: DialogProps, dialogContext: any, slots: a
 
   // 渲染主函数
   function render() {
+    const height = isFullscreen.value ? '100%' : props.height;
+    
     return h(
       ElDialog,
       {
         ref: Dialog,
-        class: ['btc-dialog', { 'is-transparent': props.transparent }],
+        class: ['btc-dialog', { 
+          'is-transparent': props.transparent,
+          'has-height': !!height
+        }],
         width: props.width,
+        style: height ? { height } : undefined,
+        alignCenter: props.alignCenter !== false, // 默认 true，使对话框水平垂直居中
         beforeClose: props.beforeClose as any,
         showClose: false,
         appendToBody: true,
@@ -99,10 +106,10 @@ export function useDialogRender(props: DialogProps, dialogContext: any, slots: a
       {
         header: renderHeader,
         default: () => {
-          const height = isFullscreen.value ? '100%' : props.height;
+          const contentHeight = isFullscreen.value ? '100%' : (props.scrollbar !== false ? props.height : '100%');
           const style = {
             padding: props.padding || '20px',
-            height
+            height: props.scrollbar !== false ? 'auto' : contentHeight
           };
 
           function content() {
@@ -114,8 +121,7 @@ export function useDialogRender(props: DialogProps, dialogContext: any, slots: a
           }
 
           if (props.scrollbar !== false) {
-            style.height = 'auto';
-            return h(ElScrollbar, { height }, () => content());
+            return h(ElScrollbar, { height: contentHeight }, () => content());
           } else {
             return content();
           }

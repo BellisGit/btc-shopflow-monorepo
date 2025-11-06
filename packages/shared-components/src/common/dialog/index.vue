@@ -48,7 +48,12 @@ export default defineComponent({
       default: true
     },
     // 背景透明
-    transparent: Boolean
+    transparent: Boolean,
+    // 是否居中
+    alignCenter: {
+      type: Boolean,
+      default: true
+    }
   },
 
   emits: ['update:modelValue', 'fullscreen-change', 'closed'],

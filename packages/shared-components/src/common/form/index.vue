@@ -223,7 +223,22 @@ export default defineComponent({
               ]);
             }
 
-            const result = h(Component, componentProps, children ? () => children : undefined);
+            // 处理组件 slots（如 el-input 的 suffix）
+            const componentSlots: any = {};
+            if (e.component?.slots) {
+              Object.keys(e.component.slots).forEach(slotName => {
+                componentSlots[slotName] = (props?: any) => {
+                  return e.component.slots[slotName]({ scope: form, prop: e.prop, item: e, ...props });
+                };
+              });
+            }
+
+            // 如果有 children，添加到 default slot；slots 可以同时存在
+            if (children) {
+              componentSlots.default = () => children;
+            }
+
+            const result = h(Component, componentProps, Object.keys(componentSlots).length > 0 ? componentSlots : undefined);
 
             // flex 控制：包装在 div 中
             if (e.flex === false) {

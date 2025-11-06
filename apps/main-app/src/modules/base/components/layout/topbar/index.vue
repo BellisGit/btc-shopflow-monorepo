@@ -10,18 +10,16 @@
         }"
       >
       <!-- 汉堡菜单 -->
-      <el-tooltip :content="t('common.tooltip.menu')" placement="bottom">
-        <div
-          class="topbar__hamburger"
-          :class="{ 'is-active': drawerVisible }"
-          @click.stop="$emit('toggle-drawer')"
-          @mouseenter="$emit('open-drawer')"
-        >
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-        </div>
-      </el-tooltip>
+      <div
+        class="topbar__hamburger"
+        :class="{ 'is-active': drawerVisible }"
+        @click.stop="$emit('toggle-drawer')"
+        @mouseenter="$emit('open-drawer')"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </div>
 
       <!-- Logo + 标题（顶部菜单和双栏菜单模式下隐藏） -->
       <div

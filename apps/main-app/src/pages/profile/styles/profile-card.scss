@@ -29,10 +29,6 @@
   padding: 12px 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
 
-  &:last-child {
-    border-bottom: none;
-  }
-
   &__key {
     width: 100px;
     flex-shrink: 0;

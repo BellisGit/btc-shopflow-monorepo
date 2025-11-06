@@ -29,7 +29,7 @@
 import { h, getCurrentInstance, toRaw } from 'vue';
 import { ElTag } from 'element-plus';
 import type { TableColumn } from '../types';
-import { BtcCodeJson } from '../../../plugins/code';
+import { BtcCodeJson } from '@btc/shared-components/plugins/code';
 
 defineOptions({
   name: 'TableColumn',

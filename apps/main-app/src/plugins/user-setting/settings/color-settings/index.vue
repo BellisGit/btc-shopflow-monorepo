@@ -48,8 +48,8 @@ import { computed, ref, watch } from 'vue';
 import { Check } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
-import BtcColorPicker from '@btc-components/btc-color-picker/index.vue';
-import { BtcMessage } from '@btc-components/btc-message';
+import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
+import { BtcMessage } from '@btc-components/feedback/btc-message';
 import '../../settings/color-settings/styles/index.scss';
 import type { ThemeConfig } from '@btc/shared-core';
 

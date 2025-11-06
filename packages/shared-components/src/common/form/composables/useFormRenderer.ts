@@ -8,7 +8,7 @@ import {
   ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload, ElDivider,
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
-import BtcCascader from '@btc-components/btc-cascader/index.vue';
+import BtcCascader from '@btc-components/navigation/btc-cascader/index.vue';
 import BtcUpload from '@btc-components/btc-upload/index.vue';
 
 // 组件映射表

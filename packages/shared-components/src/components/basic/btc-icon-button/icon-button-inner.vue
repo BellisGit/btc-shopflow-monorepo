@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import BtcSvg from '../../common/svg/index.vue';
+import BtcSvg from '../../others/btc-svg/index.vue';
 import type { IconButtonConfig } from './index.vue';
 
 const props = defineProps<{

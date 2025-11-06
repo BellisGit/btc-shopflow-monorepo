@@ -1,7 +1,7 @@
 import { debounce, last } from "lodash-es";
 import { nextTick, onActivated, onMounted, ref, Ref } from "vue";
-import { addClass, removeClass } from "../../../utils/dom";
-import { globalMitt } from "../../../utils/mitt";
+import { addClass, removeClass } from "@btc/shared-components/utils/dom";
+import { globalMitt } from "@btc/shared-components/utils/mitt";
 import type { TableProps } from '../types';
 
 // 全局处理 ResizeObserver 错误（这是一个已知的浏览器问题）

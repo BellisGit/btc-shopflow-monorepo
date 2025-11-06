@@ -6,42 +6,53 @@ import './styles/index.scss';
 // 初始化全局事件系统
 import './utils/resize';
 
-// 通用组件
-import BtcButton from './common/button/index.vue';
-import BtcSvg from './common/svg/index.vue';
-import BtcDialog from './common/dialog/index.vue';
-import BtcViewGroup from './common/view-group/index.vue';
+// Basic 基础组件
+import BtcButton from './components/basic/btc-button/index.vue';
+import { BtcIconButton } from './components/basic/btc-icon-button';
+import BtcAvatar from './components/btc-avatar/index.vue';
+import BtcCard from './components/basic/btc-card/index.vue';
+
+// Layout 布局组件
+import BtcContainer from './components/layout/btc-container/index.vue';
+import BtcGridGroup from './components/layout/btc-grid-group/index.vue';
+
+// Navigation 导航组件
+import BtcTabs from './components/navigation/btc-tabs/index.vue';
+import BtcCascader from './components/navigation/btc-cascader/index.vue';
+
+// Form 表单组件
 import BtcForm from './common/form/index.vue';
 import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
-import BtcSelectButton from './common/select-button/index.vue';
-import BtcContainer from './common/container/index.vue';
-import BtcGridGroup from './common/grid-group/index.vue';
-import BtcSearch from './common/search/index.vue';
+import BtcSelectButton from './components/form/btc-select-button/index.vue';
+import BtcColorPicker from './components/form/btc-color-picker/index.vue';
+import BtcUpload from './components/btc-upload/index.vue';
+
+// Data 数据展示组件
+import BtcMasterList from './components/data/btc-master-list/index.vue';
+import BtcTableGroup from './components/data/btc-table-group/index.vue';
+import BtcViewsTabsGroup from './components/data/btc-views-tabs-group/index.vue';
+
+// Feedback 反馈组件
+import BtcDialog from './common/dialog/index.vue';
+import { BtcMessage } from './components/feedback/btc-message';
+import { BtcNotification } from './components/feedback/btc-notification';
+
+// Others 其他组件
+import BtcSvg from './components/others/btc-svg/index.vue';
+import BtcViewGroup from './common/view-group/index.vue';
+import BtcSearch from './components/others/btc-search/index.vue';
+
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';
 import * as CodePlugin from './plugins/code';
-import BtcMasterList from './components/btc-master-list/index.vue';
-import BtcCard from './components/btc-card/index.vue';
-import BtcTabs from './components/btc-tabs/index.vue';
-import BtcViewsTabsGroup from './components/btc-views-tabs-group/index.vue';
-import BtcCascader from './components/btc-cascader/index.vue';
-import BtcTableGroup from './components/btc-table-group/index.vue';
-import BtcColorPicker from './components/btc-color-picker/index.vue';
-import BtcUpload from './components/btc-upload/index.vue';
-import { BtcIconButton } from './components/btc-icon-button';
-import BtcAvatar from './components/btc-avatar/index.vue';
-
-// 新的消息和通知组件
-import { BtcMessage } from './components/btc-message';
-import { BtcNotification } from './components/btc-notification';
 
 // 导入样式
 import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
-import './components/btc-message/styles.scss';
-import './components/btc-notification/styles.scss';
-import './components/btc-icon-button/index.scss';
+import './components/feedback/btc-message/styles.scss';
+import './components/feedback/btc-notification/styles.scss';
+import './components/basic/btc-icon-button/index.scss';
 import './components/btc-avatar/index.scss';
 
 // CRUD 组件（上下文系统）
@@ -126,13 +137,13 @@ export type { TableColumn, OpButton } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
-export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/btc-views-tabs-group/types';
-export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/btc-table-group/types';
-export type { BtcContainerProps } from './common/container/types';
-export type { BtcGridGroupProps } from './common/grid-group/types';
+export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
+export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
+export type { BtcContainerProps } from './components/layout/btc-container/types';
+export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
 export type {
   IconButtonConfig,
   IconButtonDropdown,
   IconButtonDropdownItem,
   IconButtonPopover
-} from './components/btc-icon-button';
+} from './components/basic/btc-icon-button';

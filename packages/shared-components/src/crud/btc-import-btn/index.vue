@@ -151,7 +151,7 @@ import { ElMessage } from 'element-plus';
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import BtcForm from '@btc-common/form/index.vue';
-import BtcSvg from '@btc-common/svg/index.vue';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import * as XLSX from 'xlsx';
 import chardet from 'chardet';
 import type { TableColumn } from '../table/types';

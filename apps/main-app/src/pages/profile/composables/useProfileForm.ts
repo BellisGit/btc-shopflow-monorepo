@@ -2,11 +2,14 @@
  * 个人信息表单相关逻辑
  */
 
-import { computed } from 'vue';
-import { ElMessage } from 'element-plus';
-import { useBtcForm } from '@btc/shared-core';
+import { computed, ref, h } from 'vue';
+import { ElMessage, ElButton, ElInput } from 'element-plus';
+import { useBtcForm, useSmsCode } from '@btc/shared-core';
 import { service } from '@services/eps';
 import type { Ref } from 'vue';
+import { userStorage } from '@/utils/storage-manager';
+import { codeApi } from '@/modules/api-services';
+import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
 
 /**
  * 个人信息表单 composable
@@ -14,7 +17,9 @@ import type { Ref } from 'vue';
 export function useProfileForm(
   userInfo: Ref<any>,
   showFullInfo: Ref<boolean>,
-  loadUserInfo: (showFull: boolean) => Promise<void>
+  loadUserInfo: (showFull: boolean) => Promise<void>,
+  onRequestVerify?: () => void,
+  onSetVerifyCallback?: (callback: () => void) => void
 ) {
   const { Form } = useBtcForm();
 
@@ -111,6 +116,22 @@ export function useProfileForm(
       rules: [
         { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
       ]
+    },
+    {
+      prop: 'initPass',
+      label: '密码',
+      span: 12,
+      component: {
+        name: 'el-input',
+        props: {
+          type: 'password',
+          placeholder: '请输入密码',
+          showPassword: true
+        }
+      },
+      rules: [
+        { min: 6, message: '密码长度至少6位', trigger: 'blur' }
+      ]
     }
   ]);
 
@@ -118,17 +139,14 @@ export function useProfileForm(
    * 打开编辑表单
    */
   const handleEdit = async () => {
-    // 需要先加载完整信息才能编辑
-    if (!showFullInfo.value) {
-      try {
-        await loadUserInfo(true);
-        showFullInfo.value = true;
-      } catch (error) {
-        ElMessage.error('无法加载完整信息，请稍后重试');
-        return;
-      }
-    }
+    // 完整编辑表单不需要验证，直接打开
+    openEditForm();
+  };
 
+  /**
+   * 打开编辑表单（内部方法）
+   */
+  const openEditForm = () => {
     Form.value?.open({
       title: '编辑个人信息',
       width: '800px',
@@ -140,7 +158,8 @@ export function useProfileForm(
         position: userInfo.value.position || '',
         email: userInfo.value.email || '',
         phone: userInfo.value.phone || '',
-        avatar: userInfo.value.avatar || ''
+        avatar: userInfo.value.avatar || '',
+        initPass: '' // 密码字段不显示已有值，让用户输入新密码
       },
       items: formItems.value,
       props: {
@@ -160,8 +179,67 @@ export function useProfileForm(
               return;
             }
 
-            // 调用更新接口
-            await profileService.update(data);
+            // 分别处理需要特殊接口的字段
+            const updateData: any = { ...data };
+
+            // 如果修改了手机号，使用专门的接口
+            if (updateData.phone !== undefined && updateData.phone !== userInfo.value.phone) {
+              await profileService.phone({
+                phone: updateData.phone
+              });
+              delete updateData.phone;
+            }
+
+            // 如果修改了邮箱，使用专门的接口
+            if (updateData.email !== undefined && updateData.email !== userInfo.value.email) {
+              await profileService.email({
+                email: updateData.email
+              });
+              delete updateData.email;
+            }
+
+            // 如果修改了密码，使用专门的接口
+            if (updateData.initPass && updateData.initPass.trim() !== '') {
+              await profileService.password({
+                initPass: updateData.initPass
+              });
+              delete updateData.initPass;
+            }
+
+            // 如果还有其他字段需要更新，使用通用更新接口
+            if (Object.keys(updateData).length > 1 || (Object.keys(updateData).length === 1 && !updateData.id)) {
+              await profileService.update(updateData);
+            }
+
+            // 如果更新了头像，更新统一存储
+            if (data.avatar) {
+              userStorage.setAvatar(data.avatar);
+            }
+            // 如果更新了用户名，更新统一存储
+            if (data.name) {
+              userStorage.setName(data.name);
+            }
+
+            // 同时更新 useUser 中的信息
+            const { useUser } = await import('@/composables/useUser');
+            const { getUserInfo, setUserInfo } = useUser();
+            const currentUser = getUserInfo();
+            if (currentUser) {
+              setUserInfo({
+                ...currentUser,
+                ...(data.avatar && { avatar: data.avatar }),
+                ...(data.name && { name: data.name }),
+                ...(data.position && { position: data.position }),
+              });
+            }
+
+            // 触发自定义事件，通知顶栏更新
+            window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+              detail: {
+                avatar: data.avatar || userInfo.value.avatar,
+                name: data.name || userInfo.value.name
+              }
+            }));
 
             ElMessage.success('保存成功');
             close();
@@ -182,17 +260,27 @@ export function useProfileForm(
    * 编辑单个字段
    */
   const handleEditField = async (field: string) => {
-    // 需要先加载完整信息才能编辑
-    if (!showFullInfo.value) {
-      try {
-        await loadUserInfo(true);
-        showFullInfo.value = true;
-      } catch (error) {
-        ElMessage.error('无法加载完整信息，请稍后重试');
+    // 定义需要验证的字段
+    const fieldsRequiringVerify = ['phone', 'email', 'initPass'];
+
+    // 只有编辑手机号、邮箱、密码时才需要验证
+    if (fieldsRequiringVerify.includes(field) && onRequestVerify && onSetVerifyCallback) {
+      onSetVerifyCallback(() => {
+        // 验证成功后打开字段编辑表单
+        openFieldEditForm(field);
+      });
+      onRequestVerify();
         return;
       }
-    }
 
+    // 其他字段直接打开表单，不需要验证
+    openFieldEditForm(field);
+  };
+
+  /**
+   * 打开字段编辑表单（内部方法）
+   */
+  const openFieldEditForm = (field: string) => {
     // 根据字段获取对应的表单项配置
     const fieldConfig: Record<string, any> = {
       realName: {
@@ -231,49 +319,237 @@ export function useProfileForm(
         }
       },
       email: {
-        prop: 'email',
-        label: '邮箱',
-        span: 24,
-        component: {
-          name: 'el-input',
-          props: {
-            placeholder: '请输入邮箱'
+        items: [
+          {
+            prop: 'email',
+            label: '新邮箱',
+            span: 24,
+            required: true,
+            component: {
+              name: 'el-input',
+              props: {
+                placeholder: '请输入新邮箱'
+              },
+              slots: {
+                suffix: ({ scope }: any) => {
+                  // 邮箱验证码状态管理（手动实现，因为 useSmsCode 只支持手机号）
+                  const emailCountdown = ref(0);
+                  const emailSending = ref(false);
+                  let emailTimer: ReturnType<typeof setInterval> | null = null;
+
+                  const sendEmailCode = async () => {
+                    if (emailCountdown.value > 0 || emailSending.value || !scope.email) {
+                      return;
+                    }
+
+                    if (!/^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/.test(scope.email)) {
+                      ElMessage.warning('请输入正确的邮箱地址');
+                      return;
+                    }
+
+                    emailSending.value = true;
+                    try {
+                      await codeApi.sendEmailCode({
+                        email: scope.email,
+                        type: 'update'
+                      });
+                      ElMessage.success('验证码已发送');
+
+                      // 开始倒计时
+                      emailCountdown.value = 60;
+                      if (emailTimer) {
+                        clearInterval(emailTimer);
+                      }
+                      emailTimer = setInterval(() => {
+                        emailCountdown.value--;
+                        if (emailCountdown.value <= 0) {
+                          if (emailTimer) {
+                            clearInterval(emailTimer);
+                            emailTimer = null;
+                          }
+                        }
+                      }, 1000);
+                    } catch (error: any) {
+                      ElMessage.error(error.message || '发送验证码失败');
+                    } finally {
+                      emailSending.value = false;
+                    }
+                  };
+
+                  return h(ElButton, {
+                    link: true,
+                    size: 'small',
+                    disabled: emailCountdown.value > 0 || emailSending.value || !scope.email,
+                    loading: emailSending.value,
+                    onClick: sendEmailCode
+                  }, () => emailCountdown.value > 0 ? `${emailCountdown.value}s` : '获取验证码');
+                }
+              }
+            },
+            rules: [
+              { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+            ]
+          },
+          {
+            prop: 'emailCode',
+            label: '验证码',
+            span: 24,
+            required: true,
+            component: {
+              vm: BtcSmsCodeInput,
+              props: {}
+            },
+            rules: [
+              { required: true, message: '请输入验证码', trigger: 'blur' },
+              { len: 6, message: '验证码长度为6位', trigger: 'blur' }
+            ]
           }
-        },
-        rules: [
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
         ]
       },
       phone: {
-        prop: 'phone',
-        label: '手机号',
-        span: 24,
-        component: {
-          name: 'el-input',
-          props: {
-            placeholder: '请输入手机号'
+        items: [
+          {
+            prop: 'phone',
+            label: '新手机号',
+            span: 24,
+            required: true,
+            component: {
+              name: 'el-input',
+              props: {
+                placeholder: '请输入新手机号'
+              },
+              slots: {
+                suffix: ({ scope }: any) => {
+                  // 创建验证码发送 composable
+                  const smsCodeState = useSmsCode({
+                    sendSmsCode: codeApi.sendSmsCode,
+                    countdown: 60,
+                    minInterval: 60,
+                    onSuccess: () => {
+                      ElMessage.success('验证码已发送');
+                    },
+                    onError: (error) => {
+                      ElMessage.error(error.message || '发送验证码失败');
+                    }
+                  });
+
+                  return h(ElButton, {
+                    link: true,
+                    size: 'small',
+                    disabled: !smsCodeState.canSend.value || !scope.phone,
+                    loading: smsCodeState.sending.value,
+                    onClick: async () => {
+                      if (!scope.phone || !/^1[3-9]\d{9}$/.test(scope.phone)) {
+                        ElMessage.warning('请输入正确的手机号');
+                        return;
+                      }
+                      await smsCodeState.send(scope.phone, 'update');
+                    }
+                  }, () => smsCodeState.countdown.value > 0 ? `${smsCodeState.countdown.value}s` : '获取验证码');
+                }
+              }
+            },
+            rules: [
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+            ]
+          },
+          {
+            prop: 'smsCode',
+            label: '验证码',
+            span: 24,
+            required: true,
+            component: {
+              vm: BtcSmsCodeInput,
+              props: {}
+            },
+            rules: [
+              { required: true, message: '请输入验证码', trigger: 'blur' },
+              { len: 6, message: '验证码长度为6位', trigger: 'blur' }
+            ]
           }
-        },
-        rules: [
-          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+        ]
+      },
+      initPass: {
+        items: [
+          {
+            prop: 'initPass',
+            label: '新密码',
+            span: 24,
+            required: true,
+            component: {
+              name: 'el-input',
+              props: {
+                type: 'password',
+                placeholder: '请输入新密码',
+                showPassword: true
+              }
+            },
+            rules: [
+              { required: true, message: '请输入新密码', trigger: 'blur' },
+              { min: 6, message: '密码长度至少6位', trigger: 'blur' }
+            ]
+          },
+          {
+            prop: 'confirmPassword',
+            label: '确认密码',
+            span: 24,
+            required: true,
+            component: {
+              name: 'el-input',
+              props: {
+                type: 'password',
+                placeholder: '请再次输入新密码',
+                showPassword: true
+              }
+            },
+            rules: [
+              { required: true, message: '请确认密码', trigger: 'blur' },
+              {
+                validator: (rule: any, value: any, callback: any) => {
+                  // 通过闭包访问表单数据（需要在创建表单时动态设置）
+                  // 这里先不验证，在提交时统一验证
+                  callback();
+                },
+                trigger: 'blur'
+              }
+            ]
+          }
         ]
       }
     };
 
-    const item = fieldConfig[field];
-    if (!item) {
+    const config = fieldConfig[field];
+    if (!config) {
       ElMessage.warning('该字段不支持编辑');
       return;
     }
 
+    // 获取表单项（单个字段或多个字段）
+    const items = config.items || [config];
+
+    // 构建表单初始值
+    const formData: any = {
+      id: userInfo.value.id || ''
+    };
+
+    if (field === 'phone') {
+      formData.phone = '';
+      formData.smsCode = '';
+    } else if (field === 'email') {
+      formData.email = '';
+      formData.emailCode = '';
+    } else if (field === 'initPass') {
+      formData.initPass = '';
+      formData.confirmPassword = '';
+    } else {
+      formData[field] = userInfo.value[field] || '';
+    }
+
     Form.value?.open({
-      title: `编辑${item.label}`,
+      title: `编辑${config.label || items[0].label}`,
       width: '500px',
-      form: {
-        id: userInfo.value.id || '',
-        [field]: userInfo.value[field] || ''
-      },
-      items: [item],
+      form: formData,
+      items: items,
       props: {
         labelWidth: '100px',
         labelPosition: 'top'
@@ -291,11 +567,85 @@ export function useProfileForm(
               return;
             }
 
-            // 调用更新接口（只更新该字段）
-            await profileService.update({
-              id: userInfo.value.id,
-              [field]: data[field]
-            });
+            // 根据字段类型调用不同的接口
+            if (field === 'phone') {
+              // 使用专门的手机号更新接口
+              if (!data.phone || data.phone.trim() === '') {
+                ElMessage.warning('手机号不能为空');
+                done();
+                return;
+              }
+              if (!data.smsCode || data.smsCode.length !== 6) {
+                ElMessage.warning('请输入6位验证码');
+                done();
+                return;
+              }
+              await profileService.phone({
+                phone: data.phone,
+                smsCode: data.smsCode
+              });
+            } else if (field === 'email') {
+              // 使用专门的邮箱更新接口
+              if (!data.email || data.email.trim() === '') {
+                ElMessage.warning('邮箱不能为空');
+                done();
+                return;
+              }
+              if (!data.emailCode || data.emailCode.length !== 6) {
+                ElMessage.warning('请输入6位验证码');
+                done();
+                return;
+              }
+              await profileService.email({
+                email: data.email,
+                emailCode: data.emailCode
+              });
+            } else if (field === 'initPass') {
+              // 使用专门的密码更新接口
+              if (!data.initPass || data.initPass.trim() === '') {
+                ElMessage.warning('密码不能为空');
+                done();
+                return;
+              }
+              if (data.initPass !== data.confirmPassword) {
+                ElMessage.warning('两次输入的密码不一致');
+                done();
+                return;
+              }
+              await profileService.password({
+                initPass: data.initPass
+              });
+            } else {
+              // 其他字段使用通用的更新接口
+              const updatePayload: any = {
+                id: userInfo.value.id
+              };
+              updatePayload[field] = data[field];
+              await profileService.update(updatePayload);
+            }
+
+            // 如果更新的是 name（用户名），更新统一存储
+            if (field === 'name' && data.name) {
+              userStorage.setName(data.name);
+              // 同时更新 useUser 中的信息
+              const { useUser } = await import('@/composables/useUser');
+              const { getUserInfo, setUserInfo } = useUser();
+              const currentUser = getUserInfo();
+              if (currentUser) {
+                setUserInfo({
+                  ...currentUser,
+                  name: data.name
+                });
+              }
+
+              // 触发自定义事件，通知顶栏更新
+              window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+                detail: {
+                  name: data.name,
+                  avatar: userInfo.value.avatar
+                }
+              }));
+            }
 
             ElMessage.success('保存成功');
             close();
@@ -316,17 +666,14 @@ export function useProfileForm(
    * 编辑头像
    */
   const handleEditAvatar = async () => {
-    // 需要先加载完整信息才能编辑
-    if (!showFullInfo.value) {
-      try {
-        await loadUserInfo(true);
-        showFullInfo.value = true;
-      } catch (error) {
-        ElMessage.error('无法加载完整信息，请稍后重试');
-        return;
-      }
-    }
+    // 编辑头像不需要验证，直接打开表单
+    openAvatarEditForm();
+  };
 
+  /**
+   * 打开头像编辑表单（内部方法）
+   */
+  const openAvatarEditForm = () => {
     Form.value?.open({
       title: '编辑头像',
       width: '500px',
