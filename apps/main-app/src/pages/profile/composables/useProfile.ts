@@ -6,7 +6,7 @@ import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { service } from '@services/eps';
 import { http } from '@/utils/http';
-import { userStorage } from '@/utils/storage-manager';
+import { appStorage } from '@/utils/app-storage';
 
 /**
  * 个人信息 composable
@@ -23,8 +23,8 @@ export function useProfile() {
    */
   const loadUserInfo = async (showFull = false) => {
     // 优先从统一存储读取缓存
-    const cachedAvatar = userStorage.getAvatar();
-    const cachedName = userStorage.getName();
+    const cachedAvatar = appStorage.user.getAvatar();
+    const cachedName = appStorage.user.getName();
     if (cachedAvatar || cachedName) {
       userInfo.value = {
         ...userInfo.value,
@@ -85,10 +85,10 @@ export function useProfile() {
           
           // 更新统一存储（头像和用户名）
           if (data?.avatar) {
-            userStorage.setAvatar(data.avatar);
+            appStorage.user.setAvatar(data.avatar);
           }
           if (data?.name) {
-            userStorage.setName(data.name);
+            appStorage.user.setName(data.name);
           }
           
           // 触发同步事件，通知顶栏更新
@@ -109,10 +109,10 @@ export function useProfile() {
         
         // 更新统一存储（头像和用户名）
         if (data?.avatar) {
-          userStorage.setAvatar(data.avatar);
+          appStorage.user.setAvatar(data.avatar);
         }
         if (data?.name) {
-          userStorage.setName(data.name);
+          appStorage.user.setName(data.name);
         }
         
         // 触发同步事件，通知顶栏更新

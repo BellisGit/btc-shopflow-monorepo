@@ -56,7 +56,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { View, Hide } from '@element-plus/icons-vue';
-import { settingsStorage, userStorage } from '@/utils/storage-manager';
+import { appStorage } from '@/utils/app-storage';
 import { useProfile } from './composables/useProfile';
 import { useProfileForm } from './composables/useProfileForm';
 import ProfileCard from './components/ProfileCard.vue';
@@ -149,14 +149,14 @@ const handleVerifySuccess = async (isBinding: boolean = false) => {
 
 // 摇滚风格开关（从统一存储读取，默认 false）
 const getRockStyleEnabled = (): boolean => {
-  const stored = settingsStorage.getItem('avatarRockStyle');
+  const stored = appStorage.settings.getItem('avatarRockStyle');
   return stored === true || stored === false ? stored : false;
 };
 const rockStyleEnabled = ref<boolean>(getRockStyleEnabled());
 
 // 处理摇滚风格变化
 const handleRockStyleChange = (value: boolean) => {
-  settingsStorage.setItem('avatarRockStyle', value);
+  appStorage.settings.setItem('avatarRockStyle', value);
   // 触发自定义事件，通知其他组件更新
   window.dispatchEvent(new CustomEvent('avatarRockStyleChanged', { detail: value }));
 };
@@ -178,7 +178,7 @@ const handleAvatarChange = async (avatarUrl: string) => {
     });
 
     // 更新统一存储
-    userStorage.setAvatar(avatarUrl);
+    appStorage.user.setAvatar(avatarUrl);
 
     // 同时更新 useUser 中的信息
     const { useUser } = await import('@/composables/useUser');

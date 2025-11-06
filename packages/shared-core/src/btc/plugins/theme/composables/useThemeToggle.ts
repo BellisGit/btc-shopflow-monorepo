@@ -60,6 +60,7 @@ export function createToggleDark(
         setThemeColor(currentTheme.value.color, isDark.value);
 
         // 同步更新设置状态（如果存在）
+        // 使用统一的 settings 存储，而不是单独的 systemThemeType 和 systemThemeMode
         try {
           const SystemThemeEnum = {
             LIGHT: 'light',
@@ -67,8 +68,16 @@ export function createToggleDark(
             AUTO: 'auto',
           };
           const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
-          storage.set('systemThemeType', newTheme);
-          storage.set('systemThemeMode', newTheme);
+          // 获取现有的 settings，更新主题相关字段
+          const currentSettings = storage.get('settings') || {};
+          storage.set('settings', {
+            ...currentSettings,
+            systemThemeType: newTheme,
+            systemThemeMode: newTheme
+          });
+          // 清理旧的独立存储 key
+          storage.remove('systemThemeType');
+          storage.remove('systemThemeMode');
         } catch (e) {
           // 忽略错误
         }
@@ -87,8 +96,16 @@ export function createToggleDark(
           AUTO: 'auto',
         };
         const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
-        storage.set('systemThemeType', newTheme);
-        storage.set('systemThemeMode', newTheme);
+        // 获取现有的 settings，更新主题相关字段
+        const currentSettings = storage.get('settings') || {};
+        storage.set('settings', {
+          ...currentSettings,
+          systemThemeType: newTheme,
+          systemThemeMode: newTheme
+        });
+        // 清理旧的独立存储 key
+        storage.remove('systemThemeType');
+        storage.remove('systemThemeMode');
       } catch (e) {
         // 忽略错误
       }

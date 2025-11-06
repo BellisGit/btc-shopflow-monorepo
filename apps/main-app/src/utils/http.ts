@@ -3,6 +3,7 @@ import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 import { getCookie, deleteCookie } from './cookie';
+import { appStorage } from './app-storage';
 
 /**
  * HTTP 请求工具 - 基于 axios，参考 cool-admin 的实现
@@ -32,9 +33,9 @@ export class Http {
     // 请求拦截器
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
-        // 优先从 cookie 获取 token（字段名：access_token），如果没有则从 localStorage 获取（兼容旧代码）
+        // 优先从 cookie 获取 token（字段名：access_token），如果没有则从统一存储获取
         // 注意：HttpOnly cookie 无法通过 JavaScript 读取，但浏览器会自动在请求中发送
-        const token = getCookie('access_token') || localStorage.getItem('token') || '';
+        const token = getCookie('access_token') || appStorage.auth.getToken() || '';
         
         
         if (token) {
@@ -97,15 +98,15 @@ export class Http {
             const tokenMatch = accessTokenCookie.match(/access_token=([^;]+)/);
             if (tokenMatch && tokenMatch[1]) {
               const extractedToken = tokenMatch[1];
-              // 保存到 localStorage 作为备份（即使 cookie 无法发送，也能用 Authorization header）
-              localStorage.setItem('token', extractedToken);
+              // 保存到统一存储作为备份（即使 cookie 无法发送，也能用 Authorization header）
+              appStorage.auth.setToken(extractedToken);
             }
           }
         }
         
         // 延迟检查 cookie（等待浏览器设置完成）
         setTimeout(() => {
-          const token = getCookie('access_token') || localStorage.getItem('token');
+          const token = getCookie('access_token') || appStorage.auth.getToken();
           if (!token) {
             // 尝试从原始响应数据中提取 token（可能在不同层级）
             let tokenValue: string | null = null;
@@ -128,7 +129,7 @@ export class Http {
             }
             
             if (tokenValue) {
-              localStorage.setItem('token', tokenValue);
+              appStorage.auth.setToken(tokenValue);
             }
           }
         }, 100);
@@ -206,7 +207,7 @@ export class Http {
       const config = response?.config || {};
       
       // 检查用户是否已登录，未登录时不记录日志
-      const token = getCookie('access_token') || localStorage.getItem('token') || '';
+      const token = getCookie('access_token') || appStorage.auth.getToken() || '';
       if (!token) {
         return; // 未登录用户不记录请求日志
       }
@@ -215,9 +216,8 @@ export class Http {
       let userId: number | undefined;
       let userName: string | undefined;
       try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
+        const user = appStorage.user.get();
+        if (user) {
           userId = user?.id;
           userName = user?.name || user?.username;
         }
@@ -494,7 +494,7 @@ export class BaseService {
       }
     }
 
-    return http.request({
+    return this.axiosInstance.request({
       ...options,
       url
     });

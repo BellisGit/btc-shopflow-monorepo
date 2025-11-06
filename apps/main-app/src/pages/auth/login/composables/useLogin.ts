@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { http } from '@/utils/http';
 import { useUser } from '@/composables/useUser';
+import { appStorage } from '@/utils/app-storage';
 
 export function useLogin() {
   const router = useRouter();
@@ -11,8 +12,13 @@ export function useLogin() {
   const { t } = useI18n();
 
   // 表单数据
+  // 从统一存储中获取用户名
+  const getStoredUsername = (): string => {
+    return appStorage.user.getUsername() || '';
+  };
+
   const form = reactive({
-    username: localStorage.getItem('username') || '',
+    username: getStoredUsername(),
     password: ''
   });
 
@@ -60,7 +66,7 @@ export function useLogin() {
 
         // 保存 token（如果响应中包含）
         if (response.token) {
-          localStorage.setItem('token', response.token);
+          appStorage.auth.setToken(response.token);
         }
 
         // 保存用户信息
@@ -68,8 +74,8 @@ export function useLogin() {
           setUserInfo(response.user);
         }
 
-        // 保存用户名到 localStorage（记住用户名）
-        localStorage.setItem('username', form.username);
+        // 保存用户名到统一存储（记住用户名）
+        appStorage.user.setUsername(form.username);
 
         // 使用 nextTick 确保状态更新后再跳转
         await nextTick();

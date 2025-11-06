@@ -171,6 +171,12 @@ const STATUS_CODE_CONFIG: Record<number, StatusCodeConfig> = {
     action: 'show',
     showType: 'error',
   },
+  532: {
+    code: 532,
+    message: '验证码校验失败',
+    action: 'show',
+    showType: 'error',
+  },
 
   // Keycloak相关状态码
   512: {
@@ -484,7 +490,6 @@ export class ResponseInterceptor {
       },
 
       onRejected: (error: any) => {
-
         // 检查是否是业务错误
         if (error.code && typeof error.code === 'number') {
           return this.handleError(error);

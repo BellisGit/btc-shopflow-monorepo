@@ -1,7 +1,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
 import { service } from '@services/eps';
-import { userStorage } from '@/utils/storage-manager';
+import { appStorage } from '@/utils/app-storage';
 
 export function useUserInfo() {
   // 用户相关（需要在读取缓存之前初始化）
@@ -10,8 +10,8 @@ export function useUserInfo() {
   // 从个人信息服务获取的用户信息
   // 初始化时立即从缓存读取，避免闪烁
   const cachedUser = getUserInfo();
-  const cachedAvatar = userStorage.getAvatar();
-  const cachedName = userStorage.getName();
+  const cachedAvatar = appStorage.user.getAvatar();
+  const cachedName = appStorage.user.getName();
   
   const profileUserInfo = ref<any>(
     (cachedAvatar || cachedName) ? {
@@ -34,10 +34,10 @@ export function useUserInfo() {
     
     // 更新统一存储
     if (avatar) {
-      userStorage.setAvatar(avatar);
+      appStorage.user.setAvatar(avatar);
     }
     if (name) {
-      userStorage.setName(name);
+      appStorage.user.setName(name);
     }
     
     // 更新 profileUserInfo，触发响应式更新
@@ -50,8 +50,8 @@ export function useUserInfo() {
     } else {
       // 如果还没有 profileUserInfo，从缓存和 useUser 获取
       const currentUser = getUserInfo();
-      const cachedAvatar = userStorage.getAvatar();
-      const cachedName = userStorage.getName();
+      const cachedAvatar = appStorage.user.getAvatar();
+      const cachedName = appStorage.user.getName();
       profileUserInfo.value = {
         avatar: avatar || cachedAvatar || currentUser?.avatar || '/logo.png',
         name: name || cachedName || currentUser?.name || '',
@@ -77,8 +77,8 @@ export function useUserInfo() {
     }
 
     // 其次从统一存储获取头像和用户名
-    const cachedAvatar = userStorage.getAvatar();
-    const cachedName = userStorage.getName();
+    const cachedAvatar = appStorage.user.getAvatar();
+    const cachedName = appStorage.user.getName();
     if (cachedAvatar || cachedName) {
       // 从 useUser 获取其他信息（如 position）
       const info = userInfoComputed.value || getUserInfo();
@@ -128,8 +128,8 @@ export function useUserInfo() {
       // 如果 profileUserInfo 还没有值，从缓存读取（初始化时已经读取过，这里作为兜底）
       if (!profileUserInfo.value) {
         const cachedUser = getUserInfo();
-        const cachedAvatar = userStorage.getAvatar();
-        const cachedName = userStorage.getName();
+        const cachedAvatar = appStorage.user.getAvatar();
+        const cachedName = appStorage.user.getName();
         
         if (cachedAvatar || cachedName) {
           profileUserInfo.value = {
@@ -147,10 +147,10 @@ export function useUserInfo() {
 
         // 更新统一存储（头像和用户名）
         if (data.avatar) {
-          userStorage.setAvatar(data.avatar);
+          appStorage.user.setAvatar(data.avatar);
         }
         if (data.name) {
-          userStorage.setName(data.name);
+          appStorage.user.setName(data.name);
         }
 
         // 同时更新 useUser 中的信息，保持一致性

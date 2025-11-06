@@ -5,6 +5,7 @@ import { authApi } from '@/modules/api-services';
 import { useUser } from './useUser';
 import { useProcessStore } from '@/store/process';
 import { deleteCookie } from '@/utils/cookie';
+import { appStorage } from '@/utils/app-storage';
 
 /**
  * 退出登录 composable
@@ -32,11 +33,9 @@ export function useLogout() {
       // 清除 cookie 中的 token
       deleteCookie('access_token');
       
-      // 清除所有 localStorage 中的认证相关数据
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('username');
-      localStorage.removeItem('user');
+      // 清除所有认证相关数据（使用统一存储管理器）
+      appStorage.auth.clear();
+      appStorage.user.clear();
 
       // 清除所有 sessionStorage（可选，根据需求决定）
       // sessionStorage.clear();
@@ -62,10 +61,8 @@ export function useLogout() {
 
       // 强制清除所有缓存
       deleteCookie('access_token');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('username');
-      localStorage.removeItem('user');
+      appStorage.auth.clear();
+      appStorage.user.clear();
       clearUserInfo();
       processStore.clear();
 

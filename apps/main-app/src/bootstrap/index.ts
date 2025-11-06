@@ -19,12 +19,16 @@ import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integr
 // 管理器实例
 import { notificationManager } from '../utils/notification-manager';
 import { BtcMessage } from '@btc/shared-components';
+import { appStorage } from '../utils/app-storage';
 
 /**
  * 应用启动引导程序
  * 负责初始化所有核心功能模块
  */
 export async function bootstrap(app: App) {
+  // 0. 初始化存储管理器（必须在最前面，确保旧的存储 key 被迁移）
+  appStorage.init();
+
   // 1. 核心模块初始化
   setupEps(app);        // EPS 服务（必须在最前面）
   setupStore(app);      // 状态管理
@@ -102,31 +106,9 @@ export async function bootstrap(app: App) {
     }
   });
 
-  // 重写console.error来过滤HTTP错误
-  const originalConsoleError = console.error;
-  console.error = (...args: any[]) => {
-    const message = args.join(' ');
-
-    // 检查是否是接口测试中心的错误（通过堆栈信息判断）
-    const stack = new Error().stack || '';
-    const isTestCenterError = stack.includes('api-test-center') ||
-                             stack.includes('runTest') ||
-                             message.includes('测试错误详情');
-
-    // 过滤掉非测试中心的HTTP错误信息
-    if (!isTestCenterError && (
-        message.includes('404 (Not Found)') ||
-        message.includes('POST http://') ||
-        message.includes('GET http://') ||
-        message.includes('PUT http://') ||
-        message.includes('DELETE http://'))) {
-      // 静默处理，不打印到控制台
-      return;
-    }
-
-    // 其他错误正常打印
-    originalConsoleError.apply(console, args);
-  };
+  // 不再过滤 console.error，允许所有错误日志正常显示
+  // 保留原始方法的引用，但不重写 console.error
+  // 这样所有错误日志都能正常显示，包括调试日志
 
   // 重写XMLHttpRequest来拦截网络请求日志
   const originalXHROpen = XMLHttpRequest.prototype.open;

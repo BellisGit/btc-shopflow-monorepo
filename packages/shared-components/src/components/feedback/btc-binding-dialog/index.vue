@@ -183,7 +183,15 @@ defineOptions({
 
 // 定义 API 函数类型
 export interface SaveBindingApi {
-  (params: { id?: number | string; phone?: string; email?: string }): Promise<void>;
+  (params: {
+    id?: number | string;
+    phone?: string;
+    email?: string;
+    smsCode?: string;
+    smsType?: string;
+    emailCode?: string;
+    scene?: string;
+  }): Promise<void>;
 }
 
 interface Props {
@@ -198,11 +206,11 @@ interface Props {
   /** 发送短信验证码函数 */
   sendSmsCode: (phone: string, smsType?: string) => Promise<void>;
   /** 发送邮箱验证码函数 */
-  sendEmailCode: (email: string, type?: string) => Promise<void>;
+  sendEmailCode: (email: string, scene?: string) => Promise<void>;
   /** 验证短信验证码函数 */
   verifySmsCode: (phone: string, smsCode: string, smsType?: string) => Promise<void>;
   /** 验证邮箱验证码函数 */
-  verifyEmailCode: (email: string, emailCode: string, type?: string) => Promise<void>;
+  verifyEmailCode: (email: string, emailCode: string, scene?: string) => Promise<void>;
   /** 保存绑定信息 */
   saveBinding: SaveBindingApi;
   /** 验证码输入组件 */
@@ -259,16 +267,20 @@ const {
   onSuccess: async () => {
     // 验证成功后直接保存绑定信息
     try {
-      if (props.bindField === 'phone' && phoneForm.phone) {
+      if (props.bindField === 'phone' && phoneForm.phone && phoneForm.smsCode) {
         await props.saveBinding({
           id: props.userInfo.id,
-          phone: phoneForm.phone
+          phone: phoneForm.phone,
+          smsCode: phoneForm.smsCode,
+          smsType: 'bind'
         });
         ElMessage.success('手机号绑定成功');
-      } else if (props.bindField === 'email' && emailForm.email) {
+      } else if (props.bindField === 'email' && emailForm.email && emailForm.emailCode) {
         await props.saveBinding({
           id: props.userInfo.id,
-          email: emailForm.email
+          email: emailForm.email,
+          emailCode: emailForm.emailCode,
+          scene: 'bind'
         });
         ElMessage.success('邮箱绑定成功');
       }
@@ -307,22 +319,15 @@ const handleSendSmsCode = async () => {
     ElMessage.warning('请输入正确的手机号');
     return;
   }
-  // 传递手机号参数
+  // sendSmsCode 来自 useSmsCode，需要传递 phone 和 smsType 参数
+  // 绑定流程使用 'bind'
   await sendSmsCode(phoneForm.phone, 'bind');
 };
 
 // 发送邮箱验证码
 const handleSendEmailCode = async () => {
-  if (!emailForm.email) {
-    ElMessage.warning('请输入邮箱地址');
-    return;
-  }
-  // 验证邮箱格式
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(emailForm.email)) {
-    ElMessage.warning('请输入正确的邮箱地址');
-    return;
-  }
+  // useIdentityVerify composable 中的 sendEmailCode 不接受参数
+  // 它会自动使用 emailForm.email，并在内部调用 props.sendEmailCode(emailForm.email, 'auth')
   await sendEmailCode();
 };
 

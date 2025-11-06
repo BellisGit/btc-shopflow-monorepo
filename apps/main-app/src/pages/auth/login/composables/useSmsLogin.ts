@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { authApi } from '@/modules/api-services';
 import { useUser } from '@/composables/useUser';
 import { getCookie } from '@/utils/cookie';
+import { appStorage } from '@/utils/app-storage';
 
 export function useSmsLogin() {
   const router = useRouter();
@@ -47,9 +48,9 @@ export function useSmsLogin() {
         token = getCookie('access_token');
       }
 
-      // 保存 token 到 localStorage（无论来源）
+      // 保存 token 到统一存储（无论来源）
       if (token) {
-        localStorage.setItem('token', token);
+        appStorage.auth.setToken(token);
       } else {
         // 调试：检查登录响应和 cookie
         if (import.meta.env.DEV) {

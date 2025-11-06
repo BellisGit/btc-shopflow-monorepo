@@ -3,6 +3,7 @@ import { microApps } from './apps';
 import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
+import { appStorage } from '../utils/app-storage';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
@@ -16,7 +17,8 @@ const appNameMap: Record<string, string> = {
  * 获取当前语言
  */
 function getCurrentLocale(): string {
-  // 从 localStorage 读取，或返回默认值
+  // 从统一存储读取，或返回默认值
+  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
   return localStorage.getItem('locale') || 'zh-CN';
 }
 
@@ -24,40 +26,20 @@ function getCurrentLocale(): string {
  * 过滤 qiankun 沙箱日志
  */
 function filterQiankunLogs() {
-  // 保存原始方法
+  // 保存原始方法（保存到全局，供其他地方使用）
+  (console as any).__originalLog = console.log;
+  (console as any).__originalInfo = console.info;
+  (console as any).__originalWarn = console.warn;
+  (console as any).__originalError = console.error;
+  
   const originalLog = console.log;
   const originalInfo = console.info;
   const originalWarn = console.warn;
   const originalError = console.error;
 
-  // 创建过滤器函数
-  const createFilter = (originalMethod: (...args: any[]) => void) => {
-    return (...args: any[]) => {
-      const message = args[0];
-
-      // 过滤所有包含 [qiankun:sandbox] 的日志
-      if (typeof message === 'string' && message.includes('[qiankun:sandbox]')) {
-        return;
-      }
-
-      // 过滤其他 qiankun 相关的日志
-      if (typeof message === 'string' && (
-        message.includes('qiankun modified global properties') ||
-        message.includes('qiankun restored global properties') ||
-        message.includes('qiankun') && message.includes('restore')
-      )) {
-        return;
-      }
-
-      originalMethod.apply(console, args);
-    };
-  };
-
-  // 重写所有 console 方法
-  console.log = createFilter(originalLog);
-  console.info = createFilter(originalInfo);
-  console.warn = createFilter(originalWarn);
-  console.error = createFilter(originalError);
+  // 不再过滤日志，允许所有日志正常显示
+  // 保留原始方法的引用，但不重写 console 方法
+  // 这样所有日志都能正常显示，包括调试日志
 }
 
 /**

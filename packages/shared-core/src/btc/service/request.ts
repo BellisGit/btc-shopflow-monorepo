@@ -117,7 +117,7 @@ export function createRequest(baseURL = '/api'): Request {
       // 如果响应格式不符合标准格式，返回原始响应
       return response;
     },
-    (_error) => {
+    (error: any) => {
       // 网络错误或 HTTP 错误 - 静默处理，不抛出错误
       // 返回一个已解决的Promise，避免未处理的Promise rejection
       return Promise.resolve();

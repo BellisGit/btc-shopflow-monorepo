@@ -55,6 +55,7 @@ import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
 import BtcLoginFormLayout from '../../../shared/components/login-form-layout/index.vue';
 import { useFormEnterKey } from '../../../shared/composables/useFormEnterKey';
+import { appStorage } from '@/utils/app-storage';
 
 defineOptions({
   name: 'BtcPasswordForm'
@@ -75,8 +76,13 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 // 表单数据
+// 从统一存储中获取用户名
+const getStoredUsername = (): string => {
+  return appStorage.user.getUsername() || '';
+};
+
 const form = reactive({
-  username: localStorage.getItem('username') || '',
+  username: getStoredUsername(),
   password: ''
 });
 

@@ -2,12 +2,12 @@
  * 个人信息表单相关逻辑
  */
 
-import { computed, ref, h } from 'vue';
+import { computed, ref, h, markRaw } from 'vue';
 import { ElMessage, ElButton, ElInput } from 'element-plus';
 import { useBtcForm, useSmsCode } from '@btc/shared-core';
 import { service } from '@services/eps';
 import type { Ref } from 'vue';
-import { userStorage } from '@/utils/storage-manager';
+import { appStorage } from '@/utils/app-storage';
 import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
 
 /**
@@ -21,6 +21,32 @@ export function useProfileForm(
   onSetVerifyCallback?: (callback: () => void) => void
 ) {
   const { Form } = useBtcForm();
+
+  // 在 setup 阶段创建 useSmsCode 实例，避免在渲染函数中调用导致生命周期钩子问题
+  const sendSmsCodeWrapper = async (data: { phone: string; smsType?: string }) => {
+    const profileService = service.system?.base?.profile;
+    if (!profileService) {
+      throw new Error('用户信息服务不可用');
+    }
+    // EPS 服务：POST /api/system/base/profile/bind/phone/send
+    // 绑定流程使用 bindPhone 方法，smsType 为 'bind'
+    await profileService.bindPhone({
+      phone: data.phone,
+      smsType: data.smsType || 'bind'
+    });
+  };
+
+  const phoneUpdateSmsCodeState = useSmsCode({
+    sendSmsCode: sendSmsCodeWrapper,
+    countdown: 60,
+    minInterval: 60,
+    onSuccess: () => {
+      ElMessage.success('验证码已发送');
+    },
+    onError: (error) => {
+      ElMessage.error(error.message || '发送验证码失败');
+    }
+  });
 
   /**
    * 表单配置
@@ -238,11 +264,11 @@ export function useProfileForm(
 
             // 如果更新了头像，更新统一存储
             if (data.avatar) {
-              userStorage.setAvatar(data.avatar);
+              appStorage.user.setAvatar(data.avatar);
             }
             // 如果更新了用户名，更新统一存储
             if (data.name) {
-              userStorage.setName(data.name);
+              appStorage.user.setName(data.name);
             }
 
             // 同时更新 useUser 中的信息
@@ -444,7 +470,7 @@ export function useProfileForm(
             span: 24,
             required: true,
             component: {
-              vm: BtcSmsCodeInput,
+              vm: markRaw(BtcSmsCodeInput),
               props: {}
             },
             rules: [
@@ -468,43 +494,20 @@ export function useProfileForm(
               },
               slots: {
                 suffix: ({ scope }: any) => {
-                  // 创建验证码发送 composable
-                  // 使用 EPS 服务包装发送函数
-                  // useSmsCode 期望的函数签名：sendSmsCode: (data: { phone: string; smsType?: string }) => Promise<void>
-                  const sendSmsCodeWrapper = async (data: { phone: string; smsType?: string }) => {
-                    const profileService = service.system?.base?.profile;
-                    if (!profileService) {
-                      throw new Error('用户信息服务不可用');
-                    }
-                    // EPS 服务：GET /api/system/base/profile/phone/send（无参数）
-                    await profileService.sendPhone();
-                  };
-                  
-                  const smsCodeState = useSmsCode({
-                    sendSmsCode: sendSmsCodeWrapper,
-                    countdown: 60,
-                    minInterval: 60,
-                    onSuccess: () => {
-                      ElMessage.success('验证码已发送');
-                    },
-                    onError: (error) => {
-                      ElMessage.error(error.message || '发送验证码失败');
-                    }
-                  });
-
+                  // 使用在 setup 阶段创建的 useSmsCode 实例
                   return h(ElButton, {
                     link: true,
                     size: 'small',
-                    disabled: !smsCodeState.canSend.value || !scope.phone,
-                    loading: smsCodeState.sending.value,
+                    disabled: !phoneUpdateSmsCodeState.canSend.value || !scope.phone,
+                    loading: phoneUpdateSmsCodeState.sending.value,
                     onClick: async () => {
                       if (!scope.phone || !/^1[3-9]\d{9}$/.test(scope.phone)) {
                         ElMessage.warning('请输入正确的手机号');
                         return;
                       }
-                      await smsCodeState.send(scope.phone, 'update');
+                      await phoneUpdateSmsCodeState.send(scope.phone, 'bind');
                     }
-                  }, () => smsCodeState.countdown.value > 0 ? `${smsCodeState.countdown.value}s` : '获取验证码');
+                  }, () => phoneUpdateSmsCodeState.countdown.value > 0 ? `${phoneUpdateSmsCodeState.countdown.value}s` : '获取验证码');
                 }
               }
             },
@@ -518,7 +521,7 @@ export function useProfileForm(
             span: 24,
             required: true,
             component: {
-              vm: BtcSmsCodeInput,
+              vm: markRaw(BtcSmsCodeInput),
               props: {}
             },
             rules: [
@@ -709,7 +712,7 @@ export function useProfileForm(
 
             // 如果更新的是 name（用户名），更新统一存储
             if (field === 'name' && data.name) {
-              userStorage.setName(data.name);
+              appStorage.user.setName(data.name);
               // 同时更新 useUser 中的信息
               const { useUser } = await import('@/composables/useUser');
               const { getUserInfo, setUserInfo } = useUser();

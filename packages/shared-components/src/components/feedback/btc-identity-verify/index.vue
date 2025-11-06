@@ -8,225 +8,73 @@
     class="identity-verify-dialog"
   >
     <div class="identity-verify">
-      <!-- 关闭按钮（绝对定位在整个 dialog body 的右上角） -->
+      <!-- 关闭按钮 -->
       <el-icon class="identity-verify__close-icon" @click="handleClose">
         <Close />
       </el-icon>
 
-      <!-- 顶部Header区域（左右分栏） -->
-      <div class="identity-verify__header">
-        <!-- Header左侧：标题 -->
-        <div class="identity-verify__header-left">
-          <div class="identity-verify__header-title">验证身份</div>
-        </div>
-        <!-- Header右侧：提示语 -->
-        <div class="identity-verify__header-right">
-          <div class="identity-verify__header-desc">
-            为确保账号
-            <span class="identity-verify__header-account">{{ accountName }}</span>
-            是您本人操作，请任意选择一种方式验证身份
-          </div>
-        </div>
-      </div>
+      <!-- 头部 -->
+      <VerifyHeader :account-name="accountName" />
 
-      <!-- 内容Content区域（左右分栏） -->
+      <!-- 内容区域 -->
       <div class="identity-verify__content">
-        <!-- Content左侧：垂直 tabs -->
-        <div class="identity-verify__content-left">
-          <div class="verify-tabs">
-            <div
-              class="verify-tabs__item"
-              :class="{
-                'is-active': currentVerifyType === 'phone',
-                'is-disabled': !canUsePhoneVerify
-              }"
-              @click="canUsePhoneVerify ? switchVerifyType('phone') : null"
-            >
-              手机号验证
-            </div>
-            <div
-              class="verify-tabs__item"
-              :class="{
-                'is-active': currentVerifyType === 'email',
-                'is-disabled': !canUseEmailVerify
-              }"
-              @click="canUseEmailVerify ? switchVerifyType('email') : null"
-            >
-              邮箱验证
-            </div>
-          </div>
-        </div>
+        <!-- 左侧：验证方式切换 -->
+        <VerifyTabs
+          :current-verify-type="currentVerifyType"
+          :can-use-phone-verify="canUsePhoneVerify"
+          :can-use-email-verify="canUseEmailVerify"
+          @switch="switchVerifyType"
+        />
 
-        <!-- 右侧验证表单 -->
+        <!-- 右侧：验证表单 -->
         <div class="identity-verify__content-right">
           <div class="verify-form">
-            <!-- 表单内容区域（使用百分比高度） -->
-            <div class="verify-form__content">
-              <!-- 手机号验证表单 -->
-              <template v-if="currentVerifyType === 'phone'">
-                <div class="verify-form__item">
-                  <span class="verify-form__item-label">手机号</span>
-                  <div class="verify-form__item-text">
-                    <span v-if="loadingPhone" class="verify-form__item-loading">
-                      <el-icon class="is-loading">
-                        <Loading />
-                      </el-icon>
-                      加载中...
-                    </span>
-                    <span v-else-if="phoneForm.phone" class="verify-form__item-value">
-                      {{ maskedPhone }}
-                    </span>
-                    <el-input
-                      v-else
-                      v-model="phoneForm.phone"
-                      placeholder="请输入手机号（用于验证和绑定）"
-                      size="large"
-                      :disabled="verifying"
-                    />
-                  </div>
-                </div>
+            <!-- 手机号验证表单 -->
+            <PhoneVerifyForm
+              v-if="currentVerifyType === 'phone'"
+              :phone="phoneForm.phone"
+              :sms-code="phoneForm.smsCode"
+              :loading="loadingPhone"
+              :verifying="verifying"
+              :verify-error="verifyError"
+              :sms-countdown="smsCountdown"
+              :sms-sending="smsSending"
+              :sms-has-sent="smsHasSent"
+              :sms-can-send="smsCanSend"
+              :has-phone="hasPhone"
+              :sms-code-input-component="smsCodeInputComponent"
+              @update:phone="phoneForm.phone = $event"
+              @update:sms-code="phoneForm.smsCode = $event"
+              @send-sms-code="handleSendSmsCode"
+              @verify="handleVerify"
+              @sms-code-complete="handleSmsCodeComplete"
+            />
 
-                <div class="verify-form__item verify-form__item-code">
-                  <label for="phone-sms-code-0" class="verify-form__item-label">验证码</label>
-                  <div class="verify-form__item-code-wrapper">
-                    <component
-                      :is="smsCodeInputComponent"
-                      id-prefix="phone-sms-code"
-                      v-model="phoneForm.smsCode"
-                      size="small"
-                      :disabled="!smsHasSent || verifying"
-                      @complete="handleSmsCodeComplete"
-                    />
-                    <el-button
-                      class="send-code-btn"
-                      type="primary"
-                      plain
-                      size="large"
-                      :disabled="!smsCanSend || !phoneForm.phone || verifying"
-                      :loading="smsSending"
-                      @click="handleSendSmsCode"
-                    >
-                      {{ smsCountdown > 0 ? `${smsCountdown}s` : '获取验证码' }}
-                    </el-button>
-                    <div v-if="!hasPhone && phoneForm.phone" class="verify-form__item-hint">
-                      验证成功后，该手机号将自动绑定
-                    </div>
-                  </div>
-                </div>
+            <!-- 邮箱验证表单 -->
+            <EmailVerifyForm
+              v-else
+              :email="emailForm.email"
+              :email-code="emailForm.emailCode"
+              :loading="loadingEmail"
+              :verifying="verifying"
+              :verify-error="verifyError"
+              :email-countdown="emailCountdown"
+              :email-sending="emailSending"
+              :email-has-sent="emailHasSent"
+              :sms-code-input-component="smsCodeInputComponent"
+              @update:email="emailForm.email = $event"
+              @update:email-code="emailForm.emailCode = $event"
+              @send-email-code="handleSendEmailCode"
+              @verify="handleVerify"
+              @email-code-complete="handleEmailCodeComplete"
+            />
 
-                <div class="verify-form__item">
-                  <el-button
-                    class="verify-form__item-button"
-                    type="primary"
-                    size="large"
-                    :loading="verifying"
-                    :disabled="!phoneForm.smsCode || phoneForm.smsCode.length !== 6"
-                    @click="handleVerify"
-                  >
-                    立即验证
-                  </el-button>
-                </div>
-
-                <div v-if="verifyError" class="verify-form__item-error">
-                  {{ verifyError }}
-                </div>
-              </template>
-
-              <!-- 邮箱验证表单 -->
-              <template v-else>
-                <div class="verify-form__item">
-                  <span class="verify-form__item-label">邮箱</span>
-                  <div class="verify-form__item-text">
-                    <span v-if="loadingEmail" class="verify-form__item-loading">
-                      <el-icon class="is-loading">
-                        <Loading />
-                      </el-icon>
-                      加载中...
-                    </span>
-                    <span v-else-if="emailForm.email" class="verify-form__item-value">
-                      {{ maskedEmail }}
-                    </span>
-                    <el-input
-                      v-else
-                      v-model="emailForm.email"
-                      placeholder="请输入邮箱（用于验证和绑定）"
-                      size="large"
-                      :disabled="verifying"
-                    />
-                  </div>
-                </div>
-
-                <div class="verify-form__item verify-form__item-code">
-                  <label for="email-sms-code-0" class="verify-form__item-label">验证码</label>
-                  <div class="verify-form__item-code-wrapper">
-                    <component
-                      :is="smsCodeInputComponent"
-                      id-prefix="email-sms-code"
-                      v-model="emailForm.emailCode"
-                      size="small"
-                      :disabled="!emailHasSent || verifying"
-                      @complete="handleEmailCodeComplete"
-                    />
-                    <el-button
-                      class="send-code-btn"
-                      type="primary"
-                      plain
-                      size="large"
-                      :disabled="emailCountdown > 0 || emailSending || !emailForm.email || verifying"
-                      :loading="emailSending"
-                      @click="handleSendEmailCode"
-                    >
-                      {{ emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码' }}
-                    </el-button>
-                  </div>
-                </div>
-
-                <div class="verify-form__item">
-                  <el-button
-                    class="verify-form__item-button"
-                    type="primary"
-                    size="large"
-                    :loading="verifying"
-                    :disabled="!emailForm.emailCode || emailForm.emailCode.length !== 6"
-                    @click="handleVerify"
-                  >
-                    立即验证
-                  </el-button>
-                </div>
-
-                <div v-if="verifyError" class="verify-form__item-error">
-                  {{ verifyError }}
-                </div>
-              </template>
-            </div>
-
-            <!-- 分隔线和提示区域（固定高度占比） -->
-            <div class="verify-form__footer">
-              <div class="verify-form__divider"></div>
-
-              <div class="verify-form__item-tip">
-                <template v-if="currentVerifyType === 'phone'">
-                  <div v-if="hasPhone">
-                    1. 接收验证码的手机号为您账号中绑定的安全手机号
-                  </div>
-                  <div v-else>
-                    1. 请输入您的手机号，验证码将发送至该手机号
-                  </div>
-                  <div>2. 发送验证码后，您可以在手机短信中获取（1分钟内未收到，建议在垃圾短信中查看）</div>
-                  <div v-if="!hasPhone" class="verify-form__item-tip-highlight">
-                    3. 验证成功后，该手机号将自动绑定到您的账号
-                  </div>
-                </template>
-                <template v-else>
-                  <div v-if="hasEmail">
-                    验证码已发送至您的邮箱，请查收。如未收到，请检查垃圾邮件或稍后重试。
-                  </div>
-                  <div v-else>
-                    <div>1. 请输入您的邮箱地址，验证码将发送至该邮箱</div>
-                  </div>
-                </template>
-              </div>
-            </div>
+            <!-- 底部提示 -->
+            <VerifyFormFooter
+              :current-verify-type="currentVerifyType"
+              :has-phone="hasPhone"
+              :has-email="hasEmail"
+            />
           </div>
         </div>
       </div>
@@ -237,11 +85,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Close, Loading } from '@element-plus/icons-vue';
+import { Close } from '@element-plus/icons-vue';
 import { useIdentityVerify, type VerifyType } from './composables/useIdentityVerify';
-import { hidePhone } from '@btc/shared-utils';
 import BtcDialog from '@btc-common/dialog/index.vue';
 import type { Component } from 'vue';
+import VerifyHeader from './components/VerifyHeader.vue';
+import VerifyTabs from './components/VerifyTabs.vue';
+import PhoneVerifyForm from './components/PhoneVerifyForm.vue';
+import EmailVerifyForm from './components/EmailVerifyForm.vue';
+import VerifyFormFooter from './components/VerifyFormFooter.vue';
 
 defineOptions({
   name: 'BtcIdentityVerify'
@@ -268,11 +120,11 @@ interface Props {
   /** 发送短信验证码函数 */
   sendSmsCode: (phone: string, smsType?: string) => Promise<void>;
   /** 发送邮箱验证码函数 */
-  sendEmailCode: (email: string, type?: string) => Promise<void>;
+  sendEmailCode: (email: string, scene?: string) => Promise<void>;
   /** 验证短信验证码函数 */
   verifySmsCode: (phone: string, smsCode: string, smsType?: string) => Promise<void>;
   /** 验证邮箱验证码函数 */
-  verifyEmailCode: (email: string, emailCode: string, type?: string) => Promise<void>;
+  verifyEmailCode: (email: string, emailCode: string, scene?: string) => Promise<void>;
   /** 检查手机号绑定状态 */
   checkPhoneBinding: VerifyPhoneApi;
   /** 检查邮箱绑定状态 */
@@ -301,85 +153,32 @@ const visible = computed({
   set: (val) => emit('update:modelValue', val)
 });
 
-// 账号显示（使用传入的 accountName）
+// 账号显示
 const accountName = computed(() => props.accountName || '您');
 
-// 手机号和邮箱绑定状态（通过 verify 接口获取）
+// 手机号和邮箱绑定状态
 const phoneBound = ref<boolean>(false);
 const emailBound = ref<boolean>(false);
 const checkingStatus = ref<boolean>(false);
 
-// 检查是否有手机号和邮箱（基于实际绑定状态）
+// 检查是否有手机号和邮箱
 const hasPhone = computed(() => phoneBound.value);
 const hasEmail = computed(() => emailBound.value);
 const hasPhoneOnly = computed(() => hasPhone.value && !hasEmail.value);
 const hasEmailOnly = computed(() => hasEmail.value && !hasPhone.value);
 const hasBoth = computed(() => hasPhone.value && hasEmail.value);
-const hasNeither = computed(() => !hasPhone.value && !hasEmail.value);
 
-// 根据 editingField 和绑定状态，决定可用哪些验证方式
-// 身份验证（如密码编辑）只能使用已绑定的验证方式
-// 如果正在编辑手机号，但只有邮箱绑定：只能使用邮箱验证
-// 如果正在编辑邮箱，但只有手机号绑定：只能使用手机号验证
+// 根据绑定状态，决定可用哪些验证方式
+// 身份验证不受 editingField 影响，只要绑定了就可以使用
 const canUsePhoneVerify = computed(() => {
-  // 如果没有编辑字段（如密码编辑），只能使用已绑定的手机号验证
-  if (!props.editingField) {
-    return hasPhone.value;
-  }
-  // 如果正在编辑手机号，必须有至少一个已绑定的联系方式用于验证
-  if (props.editingField === 'phone') {
-    return hasPhone.value || hasEmail.value;
-  }
-  // 如果正在编辑邮箱，必须有手机号绑定才能使用手机号验证
-  if (props.editingField === 'email') {
-    return hasPhone.value;
-  }
-  // 其他情况（如 initPass），只能使用已绑定的手机号验证
   return hasPhone.value;
 });
 
 const canUseEmailVerify = computed(() => {
-  // 如果没有编辑字段（如密码编辑），只能使用已绑定的邮箱验证
-  if (!props.editingField) {
-    return hasEmail.value;
-  }
-  // 如果正在编辑邮箱，必须有至少一个已绑定的联系方式用于验证
-  if (props.editingField === 'email') {
-    return hasPhone.value || hasEmail.value;
-  }
-  // 如果正在编辑手机号，必须有邮箱绑定才能使用邮箱验证
-  if (props.editingField === 'phone') {
-    return hasEmail.value;
-  }
-  // 其他情况（如 initPass），只能使用已绑定的邮箱验证
   return hasEmail.value;
 });
 
-// 脱敏手机号显示
-const maskedPhone = computed(() => {
-  if (!phoneForm.phone) {
-    return '';
-  }
-  return hidePhone(phoneForm.phone);
-});
-
-// 脱敏邮箱显示
-const maskedEmail = computed(() => {
-  if (!emailForm.email) {
-    return '';
-  }
-  // 邮箱脱敏：显示前3位和@后的域名，中间用***代替
-  const email = emailForm.email;
-  const atIndex = email.indexOf('@');
-  if (atIndex <= 0) {
-    return email;
-  }
-  const prefix = email.substring(0, Math.min(3, atIndex));
-  const suffix = email.substring(atIndex);
-  return `${prefix}***${suffix}`;
-});
-
-// 响应式宽度 - 统一使用40%左右，让内容能够适应
+// 响应式宽度
 const dialogWidth = computed(() => {
   if (typeof window !== 'undefined') {
     if (window.innerWidth <= 480) {
@@ -388,7 +187,6 @@ const dialogWidth = computed(() => {
       return 'calc(100% - 32px)';
     }
   }
-  // 统一使用40%左右，确保内容不会挤在左侧
   return '40%';
 });
 
@@ -422,7 +220,6 @@ const {
   verifySmsCode: props.verifySmsCode,
   verifyEmailCode: props.verifyEmailCode,
   onSuccess: () => {
-    // 验证流程，验证成功后触发success事件，由页面处理后续逻辑（如打开编辑表单）
     emit('success');
   },
   onError: (error) => {
@@ -437,19 +234,52 @@ const switchVerifyType = (type: VerifyType) => {
 
 // 发送手机验证码
 const handleSendSmsCode = async () => {
+  // 检查是否可以发送（复用 useSmsCode 的状态检查）
+  if (!smsCanSend.value) {
+    return;
+  }
+
+  // 设置发送状态
+  smsSending.value = true;
+
   try {
-    await sendSmsCode(phoneForm.phone, 'verify');
-  } catch (error) {
-    // 错误已通过 composable 处理
+    // 对于验证流程，phoneForm.phone 可能是脱敏的手机号（如 135****3080）
+    // 不能使用 useSmsCode 的 send 方法（会验证格式），应该直接调用 props.sendSmsCode
+    // 验证流程会调用 sendSmsCodeForVerify()，不需要传递手机号，后端会使用当前用户的手机号
+    // 绑定流程会调用 sendSmsCodeForBind(phone)，需要传递手机号
+    // 这里传递 phoneForm.phone，即使它是脱敏的，对于验证流程也不影响（因为不会使用这个参数）
+    await props.sendSmsCode(phoneForm.phone || '', 'auth');
+
+    // 手动更新状态（因为绕过了 useSmsCode 的 send 方法）
+    smsHasSent.value = true;
+    ElMessage.success('验证码已发送');
+
+    // 开始倒计时
+    smsCountdown.value = 60;
+    const timer = setInterval(() => {
+      smsCountdown.value--;
+      if (smsCountdown.value <= 0) {
+        clearInterval(timer);
+      }
+    }, 1000);
+  } catch (error: any) {
+    console.error('发送手机验证码失败:', error);
+    ElMessage.error(error?.message || '发送验证码失败');
+  } finally {
+    smsSending.value = false;
   }
 };
 
 // 发送邮箱验证码
 const handleSendEmailCode = async () => {
   try {
+    // 对于验证流程，emailForm.email 可能是脱敏的邮箱（如 ml***@bellis-technology.cn）
+    // useIdentityVerify 中的 sendEmailCode 会处理脱敏邮箱的情况
+    // 验证流程会调用 sendEmailCodeForVerify()，不需要传递邮箱，后端会使用当前用户的邮箱
     await sendEmailCode();
-  } catch (error) {
-    // 错误已通过 composable 处理
+  } catch (error: any) {
+    console.error('发送邮箱验证码失败:', error);
+    ElMessage.error(error?.message || '发送验证码失败');
   }
 };
 
@@ -464,13 +294,34 @@ const handleEmailCodeComplete = () => {
 
 // 执行验证
 const handleVerify = async () => {
-  await verify();
+  console.log('[验证窗口] 点击立即验证，开始验证...', {
+    currentVerifyType: currentVerifyType.value,
+    phoneForm: phoneForm,
+    emailForm: emailForm
+  });
+  
+  const result = await verify();
+  
+  console.log('[验证窗口] 验证结果:', {
+    success: result,
+    currentVerifyType: currentVerifyType.value,
+    verifyError: verifyError.value
+  });
+  
+  // 只有验证成功时才继续，验证失败时 verify 会返回 false 并显示错误信息
+  if (!result) {
+    // 验证失败，不触发 success 事件
+    console.log('[验证窗口] 验证失败，不触发 success 事件');
+    return;
+  }
+  
+  console.log('[验证窗口] 验证成功，将触发 success 事件');
 };
 
 // 关闭弹窗
 const handleClose = () => {
   if (verifying.value) {
-    return; // 验证进行中不允许关闭
+    return;
   }
   reset();
   emit('cancel');
@@ -478,7 +329,8 @@ const handleClose = () => {
 };
 
 // 检查手机号和邮箱绑定状态
-const checkBindingStatus = async () => {
+// initialPhoneBound 和 initialEmailBound 用于在检查失败时保留初始状态
+const checkBindingStatus = async (initialPhoneBound: boolean = false, initialEmailBound: boolean = false) => {
   if (checkingStatus.value) {
     return;
   }
@@ -488,22 +340,32 @@ const checkBindingStatus = async () => {
     // 检查手机号状态
     try {
       const phoneResponse = await props.checkPhoneBinding({ type: 'phone' });
-      // 处理响应数据：可能是字符串、对象或嵌套对象
+      // 检查是否是错误响应对象
+      if (phoneResponse && typeof phoneResponse === 'object' && 'code' in phoneResponse) {
+        const errorObj = phoneResponse as any;
+        if (errorObj.code && errorObj.code !== 200) {
+          // 这是错误响应，抛出错误以便被 catch 捕获
+          throw new Error(errorObj.msg || '检查手机号绑定状态失败');
+        }
+      }
+
       let phoneData = '';
       if (typeof phoneResponse === 'string') {
         phoneData = phoneResponse;
       } else if (phoneResponse && typeof phoneResponse === 'object') {
-        // 尝试多种可能的数据路径
         const responseObj = phoneResponse as any;
         phoneData = responseObj.data || responseObj.phone || responseObj.phoneNumber || responseObj.value || '';
-        // 如果 data 是对象，继续提取
-        if (typeof phoneData === 'object' && phoneData !== null) {
-          const phoneDataObj = phoneData as any;
-          phoneData = phoneDataObj.phone || phoneDataObj.value || phoneDataObj.data || '';
+        // 确保 phoneData 是字符串类型
+        if (typeof phoneData !== 'string') {
+          if (phoneData && typeof phoneData === 'object') {
+            const phoneDataObj = phoneData as any;
+            phoneData = phoneDataObj.phone || phoneDataObj.value || phoneDataObj.data || '';
+          } else {
+            phoneData = '';
+          }
         }
       }
 
-      // 判断是否已绑定：数据不为空且不是无效值
       const isValidPhone = !!(
         phoneData &&
         typeof phoneData === 'string' &&
@@ -514,41 +376,57 @@ const checkBindingStatus = async () => {
         phoneData.length > 0
       );
 
-      phoneBound.value = isValidPhone;
+      // 如果 API 返回有效数据，更新绑定状态；否则保留初始状态
+      if (isValidPhone) {
+        phoneBound.value = true;
+      } else if (!initialPhoneBound) {
+        // 只有在没有初始状态时才设置为 false
+        phoneBound.value = false;
+      }
 
       if (phoneBound.value && phoneData) {
-        // 已绑定时，保存脱敏的手机号用于显示
         phoneForm.phone = phoneData.trim();
       } else {
-        // 未绑定时，清空表单，允许用户输入
         phoneForm.phone = '';
       }
     } catch (error: any) {
-      // 如果接口返回错误，说明未绑定
       console.warn('检查手机号绑定状态失败:', error);
-      phoneBound.value = false;
-      phoneForm.phone = '';
+      // 如果检查失败，保留初始状态（如果之前从 props.userInfo 中设置了）
+      if (!initialPhoneBound) {
+        phoneBound.value = false;
+        phoneForm.phone = '';
+      }
     }
 
     // 检查邮箱状态
     try {
       const emailResponse = await props.checkEmailBinding({ type: 'email' });
-      // 处理响应数据：可能是字符串、对象或嵌套对象
+      // 检查是否是错误响应对象
+      if (emailResponse && typeof emailResponse === 'object' && 'code' in emailResponse) {
+        const errorObj = emailResponse as any;
+        if (errorObj.code && errorObj.code !== 200) {
+          // 这是错误响应，抛出错误以便被 catch 捕获
+          throw new Error(errorObj.msg || '检查邮箱绑定状态失败');
+        }
+      }
+
       let emailData = '';
       if (typeof emailResponse === 'string') {
         emailData = emailResponse;
       } else if (emailResponse && typeof emailResponse === 'object') {
-        // 尝试多种可能的数据路径
         const responseObj = emailResponse as any;
         emailData = responseObj.data || responseObj.email || responseObj.emailAddress || responseObj.value || '';
-        // 如果 data 是对象，继续提取
-        if (typeof emailData === 'object' && emailData !== null) {
-          const emailDataObj = emailData as any;
-          emailData = emailDataObj.email || emailDataObj.value || emailDataObj.data || '';
+        // 确保 emailData 是字符串类型
+        if (typeof emailData !== 'string') {
+          if (emailData && typeof emailData === 'object') {
+            const emailDataObj = emailData as any;
+            emailData = emailDataObj.email || emailDataObj.value || emailDataObj.data || '';
+          } else {
+            emailData = '';
+          }
         }
       }
 
-      // 判断是否已绑定：数据不为空且不是无效值
       const isValidEmail = !!(
         emailData &&
         typeof emailData === 'string' &&
@@ -559,20 +437,26 @@ const checkBindingStatus = async () => {
         emailData.length > 0
       );
 
-      emailBound.value = isValidEmail;
+      // 如果 API 返回有效数据，更新绑定状态；否则保留初始状态
+      if (isValidEmail) {
+        emailBound.value = true;
+      } else if (!initialEmailBound) {
+        // 只有在没有初始状态时才设置为 false
+        emailBound.value = false;
+      }
 
       if (emailBound.value && emailData) {
-        // 已绑定时，保存脱敏的邮箱用于显示
         emailForm.email = emailData.trim();
       } else {
-        // 未绑定时，清空表单，允许用户输入
         emailForm.email = '';
       }
     } catch (error: any) {
-      // 如果接口返回错误，说明未绑定
       console.warn('检查邮箱绑定状态失败:', error);
-      emailBound.value = false;
-      emailForm.email = '';
+      // 如果检查失败，保留初始状态（如果之前从 props.userInfo 中设置了）
+      if (!initialEmailBound) {
+        emailBound.value = false;
+        emailForm.email = '';
+      }
     }
   } catch (error: any) {
     console.error('检查绑定状态失败:', error);
@@ -581,49 +465,87 @@ const checkBindingStatus = async () => {
   }
 };
 
-// 获取安全手机号（已绑定情况下）
+// 获取安全手机号
 const fetchSecurePhone = async () => {
   if (loadingPhone.value || phoneForm.phone || !phoneBound.value) {
-    return; // 已加载或正在加载，或未绑定
+    return;
   }
 
   loadingPhone.value = true;
   try {
-    // 使用 verify API 获取脱敏手机号
     const response = await props.checkPhoneBinding({ type: 'phone' });
 
-    // 后端直接返回脱敏的手机号字符串
-    const maskedPhone = typeof response === 'string' ? response : (response?.data || response?.phone);
-    if (maskedPhone) {
-      phoneForm.phone = maskedPhone;
+    // 检查是否是错误响应对象
+    if (response && typeof response === 'object' && 'code' in response) {
+      const errorObj = response as any;
+      if (errorObj.code && errorObj.code !== 200) {
+        throw new Error(errorObj.msg || '获取安全手机号失败');
+      }
+    }
+
+    let maskedPhone = '';
+    if (typeof response === 'string') {
+      maskedPhone = response;
+    } else if (response && typeof response === 'object') {
+      const responseObj = response as any;
+      maskedPhone = responseObj.data || responseObj.phone || responseObj.phoneNumber || responseObj.value || '';
+      // 确保 maskedPhone 是字符串类型
+      if (typeof maskedPhone !== 'string') {
+        maskedPhone = '';
+      }
+    }
+
+    if (maskedPhone && typeof maskedPhone === 'string') {
+      phoneForm.phone = maskedPhone.trim();
     }
   } catch (error: any) {
     console.error('获取安全手机号失败:', error);
     ElMessage.error(error?.message || '获取安全手机号失败');
+    // 确保 phoneForm.phone 是字符串类型
+    phoneForm.phone = '';
   } finally {
     loadingPhone.value = false;
   }
 };
 
-// 获取安全邮箱（已绑定情况下）
+// 获取安全邮箱
 const fetchSecureEmail = async () => {
   if (loadingEmail.value || emailForm.email || !emailBound.value) {
-    return; // 已加载或正在加载，或未绑定
+    return;
   }
 
   loadingEmail.value = true;
   try {
-    // 使用 verify API 获取脱敏邮箱
     const response = await props.checkEmailBinding({ type: 'email' });
 
-    // 后端直接返回脱敏的邮箱字符串
-    const maskedEmail = typeof response === 'string' ? response : (response?.data || response?.email);
-    if (maskedEmail) {
-      emailForm.email = maskedEmail;
+    // 检查是否是错误响应对象
+    if (response && typeof response === 'object' && 'code' in response) {
+      const errorObj = response as any;
+      if (errorObj.code && errorObj.code !== 200) {
+        throw new Error(errorObj.msg || '获取安全邮箱失败');
+      }
+    }
+
+    let maskedEmail = '';
+    if (typeof response === 'string') {
+      maskedEmail = response;
+    } else if (response && typeof response === 'object') {
+      const responseObj = response as any;
+      maskedEmail = responseObj.data || responseObj.email || responseObj.emailAddress || responseObj.value || '';
+      // 确保 maskedEmail 是字符串类型
+      if (typeof maskedEmail !== 'string') {
+        maskedEmail = '';
+      }
+    }
+
+    if (maskedEmail && typeof maskedEmail === 'string') {
+      emailForm.email = maskedEmail.trim();
     }
   } catch (error: any) {
     console.error('获取安全邮箱失败:', error);
     ElMessage.error(error?.message || '获取安全邮箱失败');
+    // 确保 emailForm.email 是字符串类型
+    emailForm.email = '';
   } finally {
     loadingEmail.value = false;
   }
@@ -636,75 +558,54 @@ watch(visible, async (isVisible) => {
     return;
   }
 
-  // 打开弹窗时，先根据传入的 userInfo 设置初始绑定状态（快速显示）
-  // 这样可以避免在检查完成前显示错误的"（可绑定）"提示
+  // 打开弹窗时，先根据传入的 userInfo 设置初始绑定状态和脱敏信息
+  let initialPhoneBound = false;
+  let initialEmailBound = false;
   if (props.userInfo) {
     const hasPhoneFromProps = !!(props.userInfo.phone && props.userInfo.phone !== '-' && props.userInfo.phone.trim() !== '');
     const hasEmailFromProps = !!(props.userInfo.email && props.userInfo.email !== '-' && props.userInfo.email.trim() !== '');
 
-    // 如果 props 中有值，先设置绑定状态，避免显示错误的提示
-    if (hasPhoneFromProps) {
+    if (hasPhoneFromProps && props.userInfo.phone) {
       phoneBound.value = true;
+      initialPhoneBound = true;
+      // 直接使用 props.userInfo 中的脱敏手机号，避免再次调用 API
+      phoneForm.phone = props.userInfo.phone.trim();
     }
-    if (hasEmailFromProps) {
+    if (hasEmailFromProps && props.userInfo.email) {
       emailBound.value = true;
+      initialEmailBound = true;
+      // 直接使用 props.userInfo 中的脱敏邮箱，避免再次调用 API
+      emailForm.email = props.userInfo.email.trim();
     }
   }
 
-  // 然后检查手机号和邮箱的绑定状态（从后端获取最新状态）
-  await checkBindingStatus();
+  // 只有在 props.userInfo 中没有脱敏信息时，才调用 API 检查绑定状态
+  // 如果已经有脱敏信息，说明已经绑定了，不需要再次检查
+  if (!initialPhoneBound || !initialEmailBound) {
+    await checkBindingStatus(initialPhoneBound, initialEmailBound);
+  }
 
-  // 根据 editingField 和绑定状态自动选择验证方式
-  if (props.editingField) {
-    // 如果有编辑字段，根据可用验证方式自动选择
-    if (props.editingField === 'phone') {
-      // 编辑手机号：优先使用邮箱验证（如果可用），否则使用手机号验证（如果可用）
-      if (canUseEmailVerify.value) {
-        // 如果邮箱验证可用，优先使用（因为不能用自己的手机号验证自己）
-        if (currentVerifyType.value !== 'email') {
-          switchVerifyType('email');
-        }
-      } else if (canUsePhoneVerify.value) {
-        // 如果只有手机号验证可用，使用它
-        if (currentVerifyType.value !== 'phone') {
-          switchVerifyType('phone');
-        }
-      }
-    } else if (props.editingField === 'email') {
-      // 编辑邮箱：优先使用手机号验证（如果可用），否则使用邮箱验证（如果可用）
-      if (canUsePhoneVerify.value) {
-        // 如果手机号验证可用，优先使用（因为不能用自己的邮箱验证自己）
-        if (currentVerifyType.value !== 'phone') {
-          switchVerifyType('phone');
-        }
-      } else if (canUseEmailVerify.value) {
-        // 如果只有邮箱验证可用，使用它
-        if (currentVerifyType.value !== 'email') {
-          switchVerifyType('email');
-        }
-      }
+  // 根据绑定状态自动选择验证方式
+  // 身份验证不受 editingField 影响，只要绑定了就可以使用
+  if (hasEmailOnly.value) {
+    if (currentVerifyType.value !== 'email') {
+      switchVerifyType('email');
     }
-  } else {
-    // 没有编辑字段（如密码编辑），只能使用已绑定的验证方式
-    if (hasEmailOnly.value) {
-      // 如果只有邮箱，自动切换到邮箱验证
-      if (currentVerifyType.value !== 'email') {
-        switchVerifyType('email');
-      }
-    } else if (hasPhoneOnly.value) {
-      // 如果只有手机号，自动切换到手机号验证
-      if (currentVerifyType.value !== 'phone') {
-        switchVerifyType('phone');
-      }
-    } else if (hasBoth.value) {
-      // 如果都有，根据当前选择获取对应的脱敏信息
-      if (currentVerifyType.value === 'phone' && !phoneForm.phone) {
-        fetchSecurePhone();
-      } else if (currentVerifyType.value === 'email' && !emailForm.email) {
-        fetchSecureEmail();
-      }
+  } else if (hasPhoneOnly.value) {
+    if (currentVerifyType.value !== 'phone') {
+      switchVerifyType('phone');
     }
-    // 如果都没有绑定（hasNeither），不自动切换，让用户看到所有验证方式都被禁用
+  } else if (hasBoth.value) {
+    // 同时支持两种验证方式时，默认选择第一个tab（手机号验证）
+    if (currentVerifyType.value !== 'phone') {
+      switchVerifyType('phone');
+    }
+    // 如果已经有脱敏信息（从 props.userInfo 中获取），就不需要再次调用 API
+    if (currentVerifyType.value === 'phone' && !phoneForm.phone) {
+      fetchSecurePhone();
+    } else if (currentVerifyType.value === 'email' && !emailForm.email) {
+      fetchSecureEmail();
+    }
   }
 }, { immediate: true });
 
@@ -714,7 +615,8 @@ watch(currentVerifyType, (verifyType) => {
     return;
   }
 
-  // 如果用户有对应的绑定，从后端获取脱敏信息
+  // 只有在没有脱敏信息时才调用 API 获取
+  // 如果已经有脱敏信息（从 props.userInfo 中获取），就不需要再次调用
   if (verifyType === 'phone' && hasPhone.value && !phoneForm.phone) {
     fetchSecurePhone();
   } else if (verifyType === 'email' && hasEmail.value && !emailForm.email) {
@@ -731,15 +633,9 @@ watch(visible, (val) => {
 </script>
 
 <style lang="scss">
-// 设置 el-dialog__body 为定位上下文，使关闭按钮可以相对于它定位
-.identity-verify-dialog {
-  :deep(.el-dialog__body) {
-    position: relative;
-  }
-}
+@use './styles/dialog.scss' as *;
 </style>
 
 <style lang="scss" scoped>
-@use './styles.scss' as *;
+@use './styles/index.scss' as *;
 </style>
-

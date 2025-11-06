@@ -14,7 +14,7 @@ export interface SendSmsCodeFn {
 }
 
 export interface SendEmailCodeFn {
-  (email: string, type?: string): Promise<void>;
+  (email: string, scene?: string): Promise<void>;
 }
 
 export interface VerifySmsCodeFn {
@@ -22,7 +22,7 @@ export interface VerifySmsCodeFn {
 }
 
 export interface VerifyEmailCodeFn {
-  (email: string, emailCode: string, type?: string): Promise<void>;
+  (email: string, emailCode: string, scene?: string): Promise<void>;
 }
 
 export interface IdentityVerifyOptions {
@@ -114,22 +114,24 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
       return;
     }
 
+    // 对于验证流程，emailForm.email 可能是脱敏的邮箱（如 ml***@bellis-technology.cn）
+    // 不需要验证邮箱格式，因为验证流程会调用 sendEmailCodeForVerify()，不需要传递邮箱
+    // 对于绑定流程，需要验证邮箱格式
+    // 这里只检查是否有邮箱值，不验证格式（因为脱敏邮箱也符合格式）
     if (!emailForm.email) {
       ElMessage.warning('请输入邮箱地址');
-      return;
-    }
-
-    // 验证邮箱格式
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailForm.email)) {
-      ElMessage.warning('请输入正确的邮箱地址');
       return;
     }
 
     emailSending.value = true;
 
     try {
-      await sendEmailCodeApi(emailForm.email, 'verify');
+      // 调用 sendEmailCodeApi，对于验证流程会调用 sendEmailCodeForVerify()（不需要邮箱参数）
+      // 对于绑定流程会调用 sendEmailCodeForBind(email, scene)（需要邮箱参数）
+      // 即使传递脱敏邮箱，对于验证流程也不影响（因为不会使用这个参数）
+      // 注意：scene 参数由外部传入的 sendEmailCodeApi 函数决定（绑定流程为 'bind'，验证流程为 'auth'）
+      // 这里传递 'auth' 作为默认值，但实际值由 sendEmailCodeApi 函数内部决定
+      await sendEmailCodeApi(emailForm.email, 'auth');
 
       emailHasSent.value = true;
       ElMessage.success('验证码已发送');
@@ -172,13 +174,23 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
 
         // 调用验证码校验接口
         try {
-          await verifySmsCodeApi(phoneForm.phone, phoneForm.smsCode, 'verify');
+          const response = await verifySmsCodeApi(phoneForm.phone, phoneForm.smsCode, 'auth');
+          console.log('[验证窗口] 手机号验证码校验成功，返回:', response);
+          // 只有验证成功时才调用 onSuccess
+          onSuccess?.();
+          return true;
         } catch (error: any) {
-          throw new Error(error.message || '验证码校验失败');
+          // 确保错误被正确抛出，阻止后续的 onSuccess 调用
+          console.log('[验证窗口] 手机号验证码校验失败，错误:', {
+            message: error?.message,
+            msg: error?.msg,
+            code: error?.code,
+            response: error?.response,
+            error: error
+          });
+          const errorMessage = error?.message || error?.msg || '验证码校验失败';
+          throw new Error(errorMessage);
         }
-        
-        onSuccess?.();
-        return true;
       } else {
         // 验证邮箱验证码
         if (!emailForm.email) {
@@ -189,20 +201,33 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
         }
 
         // 调用验证码校验接口
+        // 邮箱接口需要传递 email（必填）、emailCode（必填）和 scene（场景，必填）
         try {
-          await verifyEmailCodeApi(emailForm.email, emailForm.emailCode, 'verify');
+          const response = await verifyEmailCodeApi(emailForm.email, emailForm.emailCode, 'auth');
+          console.log('[验证窗口] 邮箱验证码校验成功，返回:', response);
+          // 只有验证成功时才调用 onSuccess
+          onSuccess?.();
+          return true;
         } catch (error: any) {
-          throw new Error(error.message || '验证码校验失败');
+          // 确保错误被正确抛出，阻止后续的 onSuccess 调用
+          console.log('[验证窗口] 邮箱验证码校验失败，错误:', {
+            message: error?.message,
+            msg: error?.msg,
+            code: error?.code,
+            response: error?.response,
+            error: error
+          });
+          const errorMessage = error?.message || error?.msg || '验证码校验失败';
+          throw new Error(errorMessage);
         }
-        
-        onSuccess?.();
-        return true;
       }
     } catch (error: any) {
-      const err = error instanceof Error ? error : new Error(error.message || '验证失败');
+      // 验证失败，确保不调用 onSuccess
+      const err = error instanceof Error ? error : new Error(error?.message || error?.msg || '验证失败');
       verifyError.value = err.message;
       ElMessage.error(err.message);
       onError?.(err);
+      // 返回 false 表示验证失败，阻止触发 success 事件
       return false;
     } finally {
       verifying.value = false;

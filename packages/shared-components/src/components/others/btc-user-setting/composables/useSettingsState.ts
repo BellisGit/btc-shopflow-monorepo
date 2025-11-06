@@ -72,8 +72,16 @@ export function useSettingsState() {
   function switchThemeStyles(theme: SystemThemeEnum) {
     systemThemeType.value = theme;
     systemThemeMode.value = theme;
-    storage.set('systemThemeType', theme);
-    storage.set('systemThemeMode', theme);
+    // 使用统一的 settings 存储，而不是单独的 systemThemeType 和 systemThemeMode
+    const currentSettings = storage.get('settings') || {};
+    storage.set('settings', {
+      ...currentSettings,
+      systemThemeType: theme,
+      systemThemeMode: theme
+    });
+    // 清理旧的独立存储 key
+    storage.remove('systemThemeType');
+    storage.remove('systemThemeMode');
 
     // 应用到 DOM
     const htmlEl = document.documentElement;
@@ -97,7 +105,14 @@ export function useSettingsState() {
    */
   function setSystemThemeColor(color: string) {
     systemThemeColor.value = color;
-    storage.set('systemThemeColor', color);
+    // 使用统一的 settings 存储
+    const currentSettings = storage.get('settings') || {};
+    storage.set('settings', {
+      ...currentSettings,
+      systemThemeColor: color
+    });
+    // 清理旧的独立存储 key
+    storage.remove('systemThemeColor');
     // 这里可以触发主题色更新事件
     window.dispatchEvent(new CustomEvent('theme-color-change', { detail: { color } }));
   }
