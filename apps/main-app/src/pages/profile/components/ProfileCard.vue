@@ -46,14 +46,18 @@
             <ProfileInfoItem
               label="邮箱"
               :value="userInfo.email || '-'"
-              editable
+              :editable="hasEmail"
+              :bindable="true"
               @edit="$emit('edit-field', 'email')"
+              @bind="$emit('bind-field', 'email')"
             />
             <ProfileInfoItem
               label="手机号"
               :value="userInfo.phone || '-'"
-              editable
+              :editable="hasPhone"
+              :bindable="true"
               @edit="$emit('edit-field', 'phone')"
+              @bind="$emit('bind-field', 'phone')"
             />
             <ProfileInfoItem
               label="密码"
@@ -86,12 +90,24 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'edit-field': [field: string];
+  'bind-field': [field: string];
   'avatar-change': [avatarUrl: string];
 }>();
 
 // 头像 URL
 const avatarUrl = computed(() => {
   return props.userInfo?.avatar || '/logo.png';
+});
+
+// 判断手机号和邮箱是否存在
+const hasPhone = computed(() => {
+  const phone = props.userInfo?.phone;
+  return !!(phone && phone !== '-' && phone.trim() !== '');
+});
+
+const hasEmail = computed(() => {
+  const email = props.userInfo?.email;
+  return !!(email && email !== '-' && email.trim() !== '');
 });
 
 // 处理头像变更

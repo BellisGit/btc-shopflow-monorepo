@@ -14,7 +14,7 @@ export function getCookie(name: string): string | null {
 
   const nameEQ = name + '=';
   const ca = document.cookie.split(';');
-  
+
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
     while (c.charAt(0) === ' ') {
@@ -24,7 +24,7 @@ export function getCookie(name: string): string | null {
       return c.substring(nameEQ.length, c.length);
     }
   }
-  
+
   return null;
 }
 
@@ -80,6 +80,7 @@ export function setCookie(
 
 /**
  * 删除 cookie
+ * 注意：如果 cookie 是 HttpOnly 的，前端无法删除，需要后端通过 Set-Cookie header 清除
  * @param name cookie 名称
  * @param options 额外选项（domain 等）
  */
@@ -95,18 +96,15 @@ export function deleteCookie(
   }
 
   const path = options?.path || '/';
-  let cookieString = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=' + path + ';';
+  const domain = options?.domain;
 
-  // 如果指定了 domain，也需要删除该 domain 下的 cookie
-  if (options?.domain) {
-    cookieString += ` Domain=${options.domain};`;
+  // 基本删除尝试（仅对非 HttpOnly cookie 有效）
+  let cookieString = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+
+  if (domain) {
+    cookieString += `; Domain=${domain}`;
   }
 
   document.cookie = cookieString;
-
-  // 尝试删除当前 domain 下的 cookie（如果没有指定 domain）
-  if (!options?.domain) {
-    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=' + path + ';';
-  }
 }
 

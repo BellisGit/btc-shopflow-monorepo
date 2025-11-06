@@ -9,7 +9,7 @@ import {
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
 import BtcCascader from '@btc-components/navigation/btc-cascader/index.vue';
-import BtcUpload from '@btc-components/btc-upload/index.vue';
+import BtcUpload from '@btc-components/form/btc-upload/index.vue';
 
 // 组件映射表
 export const componentMap: Record<string, any> = {

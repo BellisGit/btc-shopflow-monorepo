@@ -10,6 +10,16 @@
       >
         <Edit />
       </el-icon>
+      <el-button
+        v-else-if="bindable && (value === '-' || !value || value.trim() === '')"
+        link
+        type="primary"
+        size="small"
+        class="profile-info-item__bind-btn"
+        @click="$emit('bind')"
+      >
+        去绑定
+      </el-button>
       <el-icon
         v-else-if="copyable"
         class="profile-info-item__copy-icon"
@@ -34,10 +44,12 @@ const props = defineProps<{
   value: string;
   editable?: boolean;
   copyable?: boolean;
+  bindable?: boolean;
 }>();
 
 defineEmits<{
   edit: [];
+  bind: [];
 }>();
 
 // 复制功能 - 使用更可靠的方法（参考 btc-json-code）

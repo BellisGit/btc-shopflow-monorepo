@@ -28,6 +28,7 @@
         :show-full-info="showFullInfo"
         :rock-style="rockStyleEnabled"
         @edit-field="handleEditField"
+        @bind-field="handleBindField"
         @avatar-change="handleAvatarChange"
       />
     </btc-card>
@@ -36,12 +37,16 @@
     <BtcForm ref="Form" />
 
     <!-- 身份验证弹窗 -->
-    <BtcIdentityVerify
+    <BtcIdentityVerifyWrapper
       v-model="verifyVisible"
       :user-info="{
+        id: userInfo.id,
         phone: userInfo.phone,
         email: userInfo.email
       }"
+      :skip-verification="skipVerification"
+      :bind-field="bindField"
+      :editing-field="editingField"
       @success="handleVerifySuccess"
     />
   </div>
@@ -55,7 +60,7 @@ import { settingsStorage, userStorage } from '@/utils/storage-manager';
 import { useProfile } from './composables/useProfile';
 import { useProfileForm } from './composables/useProfileForm';
 import ProfileCard from './components/ProfileCard.vue';
-import BtcIdentityVerify from './components/BtcIdentityVerify.vue';
+import BtcIdentityVerifyWrapper from './components/BtcIdentityVerifyWrapper.vue';
 
 defineOptions({
   name: 'Profile'
@@ -70,12 +75,16 @@ const verifyVisible = ref(false);
 let verifySuccessCallback: (() => void) | null = null;
 
 // 使用表单 composable
-const { Form, handleEditField, handleEdit, handleEditAvatar } = useProfileForm(
+const { Form, handleEditField: handleEditFieldFromForm, handleEdit, handleEditAvatar } = useProfileForm(
   userInfo,
   showFullInfo,
   loadUserInfo,
-  () => {
-    // 打开验证弹窗
+  (field: string) => {
+    // 打开验证弹窗，传递当前编辑的字段
+    editingField.value = field;
+    // 确保不是绑定模式
+    skipVerification.value = false;
+    bindField.value = null;
     verifyVisible.value = true;
   },
   (callback: () => void) => {
@@ -84,16 +93,58 @@ const { Form, handleEditField, handleEdit, handleEditAvatar } = useProfileForm(
   }
 );
 
-// 处理验证成功
-const handleVerifySuccess = () => {
-  // 关闭验证弹窗
-  verifyVisible.value = false;
+// 包装 handleEditField，处理编辑字段
+const handleEditField = (field: string) => {
+  // 先重置绑定相关状态，确保是验证模式
+  skipVerification.value = false;
+  bindField.value = null;
+  editingField.value = field; // 设置编辑字段
   
-  // 执行验证成功后的回调（打开编辑表单）
-  if (verifySuccessCallback) {
-    verifySuccessCallback();
+  // 调用 composable 的 handleEditField
+  handleEditFieldFromForm(field);
+};
+
+// 绑定字段相关状态
+const skipVerification = ref(false);
+const bindField = ref<string | null>(null);
+// 当前正在编辑的字段（用于限制验证方式）
+const editingField = ref<string | null>(null);
+
+// 处理绑定字段
+const handleBindField = (field: string) => {
+  bindField.value = field;
+  editingField.value = null; // 绑定模式不需要 editingField
+  skipVerification.value = true;
+  // 打开验证弹窗（绑定模式）
+  verifyVisible.value = true;
+};
+
+
+// 处理验证成功
+const handleVerifySuccess = async (isBinding: boolean = false) => {
+  // 重新加载用户信息（验证成功后可能绑定了新的手机号或邮箱）
+  await loadUserInfo(showFullInfo.value);
+  
+  // 如果是绑定流程，跳过编辑表单弹窗步骤
+  if (isBinding || skipVerification.value) {
+    // 绑定流程已完成，不需要打开编辑表单
     verifySuccessCallback = null;
+    // 重置绑定状态
+    skipVerification.value = false;
+    bindField.value = null;
+    editingField.value = null;
+  } else {
+    // 验证流程，执行回调打开编辑表单
+    if (verifySuccessCallback) {
+      verifySuccessCallback();
+      verifySuccessCallback = null;
+    }
+    // 重置编辑字段状态
+    editingField.value = null;
   }
+  
+  // 关闭验证弹窗（如果还开着）
+  verifyVisible.value = false;
 };
 
 // 摇滚风格开关（从统一存储读取，默认 false）

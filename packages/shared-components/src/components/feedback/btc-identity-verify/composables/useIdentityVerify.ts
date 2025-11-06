@@ -6,9 +6,24 @@
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useSmsCode } from '@btc/shared-core';
-import { codeApi, authApi } from '@/modules/api-services';
 
 export type VerifyType = 'phone' | 'email';
+
+export interface SendSmsCodeFn {
+  (phone: string, smsType?: string): Promise<void>;
+}
+
+export interface SendEmailCodeFn {
+  (email: string, type?: string): Promise<void>;
+}
+
+export interface VerifySmsCodeFn {
+  (phone: string, smsCode: string, smsType?: string): Promise<void>;
+}
+
+export interface VerifyEmailCodeFn {
+  (email: string, emailCode: string, type?: string): Promise<void>;
+}
 
 export interface IdentityVerifyOptions {
   /** 用户信息（包含手机号和邮箱） */
@@ -16,6 +31,14 @@ export interface IdentityVerifyOptions {
     phone?: string;
     email?: string;
   };
+  /** 发送短信验证码函数 */
+  sendSmsCode: SendSmsCodeFn;
+  /** 发送邮箱验证码函数 */
+  sendEmailCode: SendEmailCodeFn;
+  /** 验证短信验证码函数 */
+  verifySmsCode: VerifySmsCodeFn;
+  /** 验证邮箱验证码函数 */
+  verifyEmailCode: VerifyEmailCodeFn;
   /** 验证成功回调 */
   onSuccess?: () => void;
   /** 验证失败回调 */
@@ -26,7 +49,15 @@ export interface IdentityVerifyOptions {
  * 身份验证 Composable
  */
 export function useIdentityVerify(options: IdentityVerifyOptions) {
-  const { userInfo, onSuccess, onError } = options;
+  const { 
+    userInfo, 
+    sendSmsCode: sendSmsCodeApi,
+    sendEmailCode: sendEmailCodeApi,
+    verifySmsCode: verifySmsCodeApi,
+    verifyEmailCode: verifyEmailCodeApi,
+    onSuccess, 
+    onError 
+  } = options;
 
   // 当前验证方式
   const currentVerifyType = ref<VerifyType>('phone');
@@ -56,7 +87,9 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     send: sendSmsCode,
     reset: resetSmsCode
   } = useSmsCode({
-    sendSmsCode: codeApi.sendSmsCode,
+    sendSmsCode: (data: { phone: string; smsType?: string }) => {
+      return sendSmsCodeApi(data.phone, data.smsType);
+    },
     countdown: 60,
     minInterval: 60,
     onSuccess: () => {
@@ -96,10 +129,7 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     emailSending.value = true;
 
     try {
-      await codeApi.sendEmailCode({
-        email: emailForm.email,
-        type: 'verify'
-      });
+      await sendEmailCodeApi(emailForm.email, 'verify');
 
       emailHasSent.value = true;
       ElMessage.success('验证码已发送');
@@ -141,13 +171,8 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
         }
 
         // 调用验证码校验接口
-        // 参考 auth 中的方式，使用 authApi 进行验证
         try {
-          await authApi.verifySmsCode({
-            phone: phoneForm.phone,
-            smsCode: phoneForm.smsCode,
-            smsType: 'verify'
-          });
+          await verifySmsCodeApi(phoneForm.phone, phoneForm.smsCode, 'verify');
         } catch (error: any) {
           throw new Error(error.message || '验证码校验失败');
         }
@@ -164,13 +189,8 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
         }
 
         // 调用验证码校验接口
-        // 参考 auth 中的方式，使用 authApi 进行验证
         try {
-          await authApi.verifyEmailCode({
-            email: emailForm.email,
-            emailCode: emailForm.emailCode,
-            type: 'verify'
-          });
+          await verifyEmailCodeApi(emailForm.email, emailForm.emailCode, 'verify');
         } catch (error: any) {
           throw new Error(error.message || '验证码校验失败');
         }

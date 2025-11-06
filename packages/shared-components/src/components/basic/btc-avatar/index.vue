@@ -44,7 +44,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import type { Ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { User, Edit } from '@element-plus/icons-vue';
-import { useUpload } from '@btc-components/btc-upload/composables/useUpload';
+import { useUpload } from '@btc-components/form/btc-upload/composables/useUpload';
 import { useAvatarRhythm } from './composables/useAvatarRhythm';
 import './index.scss';
 

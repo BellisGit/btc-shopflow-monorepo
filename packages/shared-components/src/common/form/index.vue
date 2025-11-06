@@ -7,7 +7,7 @@ import {
   ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload
 } from 'element-plus';
 import BtcDialog from '../dialog/index.vue';
-import BtcUpload from '../../components/btc-upload/index.vue';
+import BtcUpload from '../../components/form/btc-upload/index.vue';
 import { useFormSetup, useFormActions, useFormItemActions, isBoolean, parseHidden, collapseItem } from './composables';
 
 // 组件映射表

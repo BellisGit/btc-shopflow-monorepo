@@ -9,7 +9,7 @@ import './utils/resize';
 // Basic 基础组件
 import BtcButton from './components/basic/btc-button/index.vue';
 import { BtcIconButton } from './components/basic/btc-icon-button';
-import BtcAvatar from './components/btc-avatar/index.vue';
+import BtcAvatar from './components/basic/btc-avatar/index.vue';
 import BtcCard from './components/basic/btc-card/index.vue';
 
 // Layout 布局组件
@@ -26,7 +26,7 @@ import BtcFormCard from './common/form/components/form-card.vue';
 import BtcFormTabs from './common/form/components/form-tabs.vue';
 import BtcSelectButton from './components/form/btc-select-button/index.vue';
 import BtcColorPicker from './components/form/btc-color-picker/index.vue';
-import BtcUpload from './components/btc-upload/index.vue';
+import BtcUpload from './components/form/btc-upload/index.vue';
 
 // Data 数据展示组件
 import BtcMasterList from './components/data/btc-master-list/index.vue';
@@ -37,6 +37,8 @@ import BtcViewsTabsGroup from './components/data/btc-views-tabs-group/index.vue'
 import BtcDialog from './common/dialog/index.vue';
 import { BtcMessage } from './components/feedback/btc-message';
 import { BtcNotification } from './components/feedback/btc-notification';
+import { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
+import { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
 
 // Others 其他组件
 import BtcSvg from './components/others/btc-svg/index.vue';
@@ -53,7 +55,7 @@ import './common/form/style.scss';
 import './components/feedback/btc-message/styles.scss';
 import './components/feedback/btc-notification/styles.scss';
 import './components/basic/btc-icon-button/index.scss';
-import './components/btc-avatar/index.scss';
+import './components/basic/btc-avatar/index.scss';
 
 // CRUD 组件（上下文系统）
 import BtcCrud from './crud/context/index.vue';
@@ -105,6 +107,8 @@ export {
   // 新的消息和通知 API
   BtcMessage,
   BtcNotification,
+  BtcIdentityVerify,
+  BtcBindingDialog,
 
   // CRUD 系统
   BtcCrud,
@@ -130,7 +134,7 @@ export const { BtcCodeJson } = CodePlugin;
 
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';
-export { useUpload } from './components/btc-upload/composables/useUpload';
+export { useUpload } from './components/form/btc-upload/composables/useUpload';
 
 // 导出类型
 export type { TableColumn, OpButton } from './crud/table/types';

@@ -8,7 +8,6 @@ import { useBtcForm, useSmsCode } from '@btc/shared-core';
 import { service } from '@services/eps';
 import type { Ref } from 'vue';
 import { userStorage } from '@/utils/storage-manager';
-import { codeApi } from '@/modules/api-services';
 import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
 
 /**
@@ -18,7 +17,7 @@ export function useProfileForm(
   userInfo: Ref<any>,
   showFullInfo: Ref<boolean>,
   loadUserInfo: (showFull: boolean) => Promise<void>,
-  onRequestVerify?: () => void,
+  onRequestVerify?: (field: string) => void,
   onSetVerifyCallback?: (callback: () => void) => void
 ) {
   const { Form } = useBtcForm();
@@ -182,19 +181,45 @@ export function useProfileForm(
             // 分别处理需要特殊接口的字段
             const updateData: any = { ...data };
 
+            // 验证手机号：如果原值存在，新值不能为空（只能换绑，不能删除）
+            if (updateData.phone !== undefined) {
+              const originalPhone = userInfo.value.phone;
+              const hasOriginalPhone = originalPhone && originalPhone !== '-' && originalPhone.trim() !== '';
+              const newPhone = updateData.phone || '';
+              
+              if (hasOriginalPhone && newPhone.trim() === '') {
+                ElMessage.warning('手机号不能为空，只能换绑，不能删除');
+                done();
+                return;
+              }
+
             // 如果修改了手机号，使用专门的接口
-            if (updateData.phone !== undefined && updateData.phone !== userInfo.value.phone) {
+              if (newPhone !== originalPhone && newPhone.trim() !== '') {
               await profileService.phone({
-                phone: updateData.phone
+                  phone: newPhone
               });
+              }
               delete updateData.phone;
             }
 
+            // 验证邮箱：如果原值存在，新值不能为空（只能换绑，不能删除）
+            if (updateData.email !== undefined) {
+              const originalEmail = userInfo.value.email;
+              const hasOriginalEmail = originalEmail && originalEmail !== '-' && originalEmail.trim() !== '';
+              const newEmail = updateData.email || '';
+              
+              if (hasOriginalEmail && newEmail.trim() === '') {
+                ElMessage.warning('邮箱不能为空，只能换绑，不能删除');
+                done();
+                return;
+            }
+
             // 如果修改了邮箱，使用专门的接口
-            if (updateData.email !== undefined && updateData.email !== userInfo.value.email) {
+              if (newEmail !== originalEmail && newEmail.trim() !== '') {
               await profileService.email({
-                email: updateData.email
+                  email: newEmail
               });
+              }
               delete updateData.email;
             }
 
@@ -260,6 +285,18 @@ export function useProfileForm(
    * 编辑单个字段
    */
   const handleEditField = async (field: string) => {
+    // 对于手机号和邮箱，检查当前值是否为空
+    if (field === 'phone' || field === 'email') {
+      const currentValue = userInfo.value[field];
+      const isEmpty = !currentValue || currentValue === '-' || currentValue.trim() === '';
+      
+      // 如果为空，直接打开绑定弹窗（跳过身份验证）
+      if (isEmpty) {
+        handleBindField(field);
+        return;
+      }
+    }
+
     // 定义需要验证的字段
     const fieldsRequiringVerify = ['phone', 'email', 'initPass'];
 
@@ -269,12 +306,21 @@ export function useProfileForm(
         // 验证成功后打开字段编辑表单
         openFieldEditForm(field);
       });
-      onRequestVerify();
+      // 传递当前编辑的字段信息
+      onRequestVerify(field);
         return;
       }
 
     // 其他字段直接打开表单，不需要验证
     openFieldEditForm(field);
+  };
+
+  /**
+   * 绑定字段（直接打开绑定弹窗，不需要身份验证）
+   */
+  const handleBindField = (field: string) => {
+    // 绑定字段不需要通过 onRequestVerify，因为绑定流程由主页面直接处理
+    // 这个函数保留是为了兼容性，实际绑定逻辑在主页面的 handleBindField 中
   };
 
   /**
@@ -349,10 +395,12 @@ export function useProfileForm(
 
                     emailSending.value = true;
                     try {
-                      await codeApi.sendEmailCode({
-                        email: scope.email,
-                        type: 'update'
-                      });
+                      const profileService = service.system?.base?.profile;
+                      if (!profileService) {
+                        throw new Error('用户信息服务不可用');
+                      }
+                      // EPS 服务：GET /api/system/base/profile/email/send（无参数）
+                      await profileService.sendEmail();
                       ElMessage.success('验证码已发送');
 
                       // 开始倒计时
@@ -421,8 +469,19 @@ export function useProfileForm(
               slots: {
                 suffix: ({ scope }: any) => {
                   // 创建验证码发送 composable
+                  // 使用 EPS 服务包装发送函数
+                  // useSmsCode 期望的函数签名：sendSmsCode: (data: { phone: string; smsType?: string }) => Promise<void>
+                  const sendSmsCodeWrapper = async (data: { phone: string; smsType?: string }) => {
+                    const profileService = service.system?.base?.profile;
+                    if (!profileService) {
+                      throw new Error('用户信息服务不可用');
+                    }
+                    // EPS 服务：GET /api/system/base/profile/phone/send（无参数）
+                    await profileService.sendPhone();
+                  };
+                  
                   const smsCodeState = useSmsCode({
-                    sendSmsCode: codeApi.sendSmsCode,
+                    sendSmsCode: sendSmsCodeWrapper,
                     countdown: 60,
                     minInterval: 60,
                     onSuccess: () => {
@@ -569,12 +628,24 @@ export function useProfileForm(
 
             // 根据字段类型调用不同的接口
             if (field === 'phone') {
-              // 使用专门的手机号更新接口
-              if (!data.phone || data.phone.trim() === '') {
+              // 验证手机号不能为空（只能换绑，不能删除）
+              const originalPhone = userInfo.value.phone;
+              const hasOriginalPhone = originalPhone && originalPhone !== '-' && originalPhone.trim() !== '';
+              const newPhone = data.phone || '';
+              
+              if (!newPhone || newPhone.trim() === '') {
                 ElMessage.warning('手机号不能为空');
                 done();
                 return;
               }
+              
+              // 如果原值存在，确保新值不为空（只能换绑）
+              if (hasOriginalPhone && newPhone.trim() === '') {
+                ElMessage.warning('手机号不能为空，只能换绑，不能删除');
+                done();
+                return;
+              }
+              
               if (!data.smsCode || data.smsCode.length !== 6) {
                 ElMessage.warning('请输入6位验证码');
                 done();
@@ -585,12 +656,24 @@ export function useProfileForm(
                 smsCode: data.smsCode
               });
             } else if (field === 'email') {
-              // 使用专门的邮箱更新接口
-              if (!data.email || data.email.trim() === '') {
+              // 验证邮箱不能为空（只能换绑，不能删除）
+              const originalEmail = userInfo.value.email;
+              const hasOriginalEmail = originalEmail && originalEmail !== '-' && originalEmail.trim() !== '';
+              const newEmail = data.email || '';
+              
+              if (!newEmail || newEmail.trim() === '') {
                 ElMessage.warning('邮箱不能为空');
                 done();
                 return;
               }
+              
+              // 如果原值存在，确保新值不为空（只能换绑）
+              if (hasOriginalEmail && newEmail.trim() === '') {
+                ElMessage.warning('邮箱不能为空，只能换绑，不能删除');
+                done();
+                return;
+              }
+              
               if (!data.emailCode || data.emailCode.length !== 6) {
                 ElMessage.warning('请输入6位验证码');
                 done();
@@ -741,6 +824,7 @@ export function useProfileForm(
     formItems,
     handleEdit,
     handleEditField,
+    handleBindField,
     handleEditAvatar
   };
 }
