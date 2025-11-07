@@ -42,11 +42,12 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import type { Ref } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { User, Edit } from '@element-plus/icons-vue';
 import { useUpload } from '@btc-components/form/btc-upload/composables/useUpload';
 import { useAvatarRhythm } from './composables/useAvatarRhythm';
 import './index.scss';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcAvatar'
@@ -156,14 +157,14 @@ const handleFileSelect = async (event: Event) => {
 
   // 验证文件大小（5MB）
   if (file.size / 1024 / 1024 >= 5) {
-    ElMessage.error('上传文件大小不能超过 5MB!');
+    BtcMessage.error('上传文件大小不能超过 5MB!');
     target.value = '';
     return;
   }
 
   // 验证文件类型
   if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件!');
+    BtcMessage.error('请选择图片文件!');
     target.value = '';
     return;
   }
@@ -185,7 +186,7 @@ const handleFileSelect = async (event: Event) => {
     }
   } catch (error: any) {
     console.error('上传失败:', error);
-    ElMessage.error(error?.message || '上传失败');
+    BtcMessage.error(error?.message || '上传失败');
   } finally {
     // 清空 input 值，以便下次可以选择同一个文件
     target.value = '';
@@ -196,4 +197,3 @@ const handleFileSelect = async (event: Event) => {
 <style lang="scss" scoped>
 @use './index.scss' as *;
 </style>
-

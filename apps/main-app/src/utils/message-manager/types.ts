@@ -24,7 +24,7 @@ export interface QueuedMessage {
   duration: number;             // 智能计算的显示时长
   timestamp: number;
   retryCount: number;
-  messageInstance?: any;        // ElMessage 实例引用
+  messageInstance?: any;        // BtcMessage 实例引用
 }
 
 // 消息显示回调接口

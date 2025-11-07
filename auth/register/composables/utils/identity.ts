@@ -3,7 +3,7 @@
  */
 
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { ensureString } from '../../shared/composables/validation';
 import { verifyEmployeeIdentity } from '../../shared/composables/api';
 
@@ -88,7 +88,7 @@ export function createIdentityVerifier(
 
   const verifyIdentity = async () => {
     if (!form.empId || !form.initPassword) {
-      ElMessage.warning('请填写完整的身份验证信息');
+      BtcMessage.warning('请填写完整的身份验证信息');
       return;
     }
 
@@ -111,17 +111,17 @@ export function createIdentityVerifier(
         };
 
         employeeInfo.value = info;
-        ElMessage.success('身份验证成功！');
+        BtcMessage.success('身份验证成功！');
         onSuccess?.(info);
       } else {
         // 验证失败
         verifyError.value = response.msg || '工号验证失败';
-        ElMessage.error(response.msg || '工号验证失败');
+        BtcMessage.error(response.msg || '工号验证失败');
         onError?.(response);
       }
     } catch (error: any) {
       verifyError.value = error.msg || '验证失败，请重试';
-      ElMessage.error(error.msg || '验证失败，请重试');
+      BtcMessage.error(error.msg || '验证失败，请重试');
       onError?.(error);
     } finally {
       verifying.value = false;

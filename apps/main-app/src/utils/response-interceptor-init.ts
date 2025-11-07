@@ -4,7 +4,7 @@
  */
 
 import { responseInterceptor, type MessageHandler, type ConfirmHandler, type RouterHandler } from '@btc/shared-utils';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { Router } from 'vue-router';
 
 /**
@@ -19,8 +19,7 @@ export function initResponseInterceptor(router: Router) {
       if (messageManager && messageManager.success) {
         messageManager.success(message);
       } else {
-        // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        ElMessage.success(message);
+        BtcMessage.success(message);
       }
     },
     error: (message: string) => {
@@ -28,8 +27,7 @@ export function initResponseInterceptor(router: Router) {
       if (messageManager && messageManager.error) {
         messageManager.error(message);
       } else {
-        // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        ElMessage.error(message);
+        BtcMessage.error(message);
       }
     },
     warning: (message: string) => {
@@ -37,8 +35,7 @@ export function initResponseInterceptor(router: Router) {
       if (messageManager && messageManager.warning) {
         messageManager.warning(message);
       } else {
-        // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        ElMessage.warning(message);
+        BtcMessage.warning(message);
       }
     },
     info: (message: string) => {
@@ -46,8 +43,7 @@ export function initResponseInterceptor(router: Router) {
       if (messageManager && messageManager.info) {
         messageManager.info(message);
       } else {
-        // 如果BtcMessage不可用，使用Element Plus的ElMessage作为后备
-        ElMessage.info(message);
+        BtcMessage.info(message);
       }
     }
   };
@@ -55,7 +51,7 @@ export function initResponseInterceptor(router: Router) {
   // 设置确认对话框处理器
   const confirmHandler: ConfirmHandler = {
     confirm: (message: string, title = '确认') => {
-      return ElMessageBox.confirm(message, title, {
+      return BtcConfirm(message, title, {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'

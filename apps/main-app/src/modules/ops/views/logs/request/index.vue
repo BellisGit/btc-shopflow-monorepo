@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey } from '@btc/shared-components';
 import { service } from '@services/eps';
@@ -166,25 +166,25 @@ async function saveKeepDays() {
   try {
     // 暂时注释掉，等待后端提供接口
     // await requestService.setKeep({ value: keepDays.value });
-    ElMessage.success('保存成功');
+    BtcMessage.success('保存成功');
   } catch (err: any) {
-    ElMessage.error(err.message || '保存失败');
+    BtcMessage.error(err.message || '保存失败');
   }
 }
 
 // 清空日志
 function clearLogs() {
-  ElMessageBox.confirm('是否要清空日志？', '提示', {
+  BtcConfirm('是否要清空日志？', '提示', {
     type: 'warning'
   })
     .then(async () => {
       try {
         // 暂时注释掉，等待后端提供接口
         // await requestService.clear();
-        ElMessage.success('清空成功');
+        BtcMessage.success('清空成功');
         requestCrudRef.value?.refresh();
       } catch (err: any) {
-        ElMessage.error(err.message || '清空失败');
+        BtcMessage.error(err.message || '清空失败');
       }
     })
     .catch(() => null);

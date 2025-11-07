@@ -160,8 +160,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { Message, OfficeBuilding, Document, User, Phone, Lock } from '@element-plus/icons-vue';
+import { BtcMessage } from '@btc/shared-components';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useInertRegistration } from '../../composables/useInertRegistration';
 
@@ -299,12 +300,12 @@ const handleFinish = () => {
     };
 
     console.log('UK Head 注册数据:', registrationData);
-    ElMessage.success('英国总部注册成功！');
+    BtcMessage.success('英国总部注册成功！');
 
     // 调用父组件的完成处理
     originalHandleFinish();
   }).catch(() => {
-    ElMessage.error('请完善表单信息');
+    BtcMessage.error('请完善表单信息');
   });
 };
 

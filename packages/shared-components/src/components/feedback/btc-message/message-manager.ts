@@ -1,9 +1,8 @@
+import { ElMessage } from 'element-plus';
 /**
  * BtcMessage 消息管理器
- * 基于 Element Plus 的 ElMessage 封装，支持重复消息徽标计数功能
+ * 基于 Element Plus 消息能力封装的 BtcMessage，支持重复消息徽标计数功能
  */
-
-import { ElMessage } from 'element-plus';
 
 // 消息状态接口
 interface MessageState {
@@ -97,7 +96,6 @@ class BtcMessageManager {
       },
     });
 
-
     // 更新消息状态（已经存在临时状态）
     const existingState = this.messages.get(key);
     if (existingState) {
@@ -167,8 +165,7 @@ class BtcMessageManager {
     messageState.count = messageState.count + 1;
     messageState.lastUpdateTime = Date.now();
 
-
-    // 直接通过 DOM 操作更新 Element Plus 原生徽章，不调用新的 ElMessage
+    // 直接通过 DOM 操作更新 Element Plus 原生徽章，不再触发新的 BtcMessage 实例
     this.updateNativeBadge(key);
 
     // 重置递减定时器（只有在 count > 1 时才安排递减）

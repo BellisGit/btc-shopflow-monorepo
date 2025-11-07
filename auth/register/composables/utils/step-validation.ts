@@ -2,7 +2,7 @@
  * 步骤表单验证工具函数
  */
 
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { validatePhone, validateSmsCode } from '../../shared/composables/validation';
 
 /**
@@ -154,7 +154,7 @@ export function useStepValidation(validator: StepValidator) {
 
     const result = validator.validateStep(step, formData);
     if (!result.isValid && result.message) {
-      ElMessage.warning(result.message);
+      BtcMessage.warning(result.message);
     }
     return result.isValid;
   };

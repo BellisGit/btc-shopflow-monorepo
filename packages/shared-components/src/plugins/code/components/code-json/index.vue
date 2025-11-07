@@ -28,9 +28,10 @@ defineOptions({
 	name: 'BtcCodeJson'
 });
 
-import { ElButton, ElMessage, ElPopover, ElScrollbar } from 'element-plus';
+import { ElButton, ElPopover, ElScrollbar } from 'element-plus';
 import { computed, defineComponent, h } from 'vue';
 import { isObject, isString } from 'lodash-es';
+import { BtcMessage } from '@btc/shared-components';
 
 const props = defineProps({
 	content: null,
@@ -67,7 +68,7 @@ const copyToClipboard = async (text: string) => {
 		// 优先使用现代 Clipboard API
 		if (navigator.clipboard && window.isSecureContext) {
 			await navigator.clipboard.writeText(text);
-			ElMessage.success('复制成功');
+			BtcMessage.success('复制成功');
 			return;
 		}
 
@@ -91,13 +92,13 @@ const copyToClipboard = async (text: string) => {
 		document.body.removeChild(textArea);
 
 		if (successful) {
-			ElMessage.success('复制成功');
+			BtcMessage.success('复制成功');
 		} else {
-			ElMessage.error('复制失败');
+			BtcMessage.error('复制失败');
 		}
 	} catch (error) {
 		console.error('复制失败:', error);
-		ElMessage.error('复制失败');
+		BtcMessage.error('复制失败');
 	}
 };
 

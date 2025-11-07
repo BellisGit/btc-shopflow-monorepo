@@ -4,8 +4,8 @@
  */
 
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
 import { useSmsCode } from '@btc/shared-core';
+import { BtcMessage } from '@btc/shared-components';
 
 export type VerifyType = 'phone' | 'email';
 
@@ -14,15 +14,15 @@ export interface SendSmsCodeFn {
 }
 
 export interface SendEmailCodeFn {
-  (email: string, scene?: string): Promise<void>;
+  (email: string, smsType?: string): Promise<void>;
 }
 
 export interface VerifySmsCodeFn {
-  (phone: string, smsCode: string, smsType?: string): Promise<void>;
+  (phone: string, smsCode: string, smsType?: string): Promise<void | boolean>;
 }
 
 export interface VerifyEmailCodeFn {
-  (email: string, emailCode: string, scene?: string): Promise<void>;
+  (email: string, emailCode: string, smsType?: string): Promise<void | boolean>;
 }
 
 export interface IdentityVerifyOptions {
@@ -93,10 +93,10 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     countdown: 60,
     minInterval: 60,
     onSuccess: () => {
-      ElMessage.success('验证码已发送');
+      BtcMessage.success('验证码已发送');
     },
     onError: (error) => {
-      ElMessage.error(error.message || '发送验证码失败');
+      BtcMessage.error(error.message || '发送验证码失败');
     }
   });
 
@@ -119,7 +119,7 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     // 对于绑定流程，需要验证邮箱格式
     // 这里只检查是否有邮箱值，不验证格式（因为脱敏邮箱也符合格式）
     if (!emailForm.email) {
-      ElMessage.warning('请输入邮箱地址');
+      BtcMessage.warning('请输入邮箱地址');
       return;
     }
 
@@ -127,14 +127,14 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
 
     try {
       // 调用 sendEmailCodeApi，对于验证流程会调用 sendEmailCodeForVerify()（不需要邮箱参数）
-      // 对于绑定流程会调用 sendEmailCodeForBind(email, scene)（需要邮箱参数）
+      // 对于绑定流程会调用 sendEmailCodeForBind(email, smsType)（需要邮箱参数）
       // 即使传递脱敏邮箱，对于验证流程也不影响（因为不会使用这个参数）
-      // 注意：scene 参数由外部传入的 sendEmailCodeApi 函数决定（绑定流程为 'bind'，验证流程为 'auth'）
+      // 注意：smsType 参数由外部传入的 sendEmailCodeApi 函数决定（绑定流程为 'bind'，验证流程为 'auth'）
       // 这里传递 'auth' 作为默认值，但实际值由 sendEmailCodeApi 函数内部决定
       await sendEmailCodeApi(emailForm.email, 'auth');
 
       emailHasSent.value = true;
-      ElMessage.success('验证码已发送');
+      BtcMessage.success('验证码已发送');
 
       // 开始倒计时
       emailCountdown.value = 60;
@@ -148,7 +148,7 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
         }
       }, 1000);
     } catch (error: any) {
-      ElMessage.error(error.message || '发送验证码失败');
+      BtcMessage.error(error.message || '发送验证码失败');
       throw error;
     } finally {
       emailSending.value = false;
@@ -162,72 +162,57 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     verifying.value = true;
     verifyError.value = '';
 
+    const handleFailure = (message: string, showToast = true) => {
+      const finalMessage = message || '验证失败';
+      verifyError.value = finalMessage;
+      if (showToast && finalMessage) {
+        BtcMessage.error(finalMessage);
+      }
+      onError?.(new Error(finalMessage));
+      return false;
+    };
+
     try {
       if (currentVerifyType.value === 'phone') {
-        // 验证手机号验证码
         if (!phoneForm.phone) {
-          throw new Error('请输入手机号');
+          return handleFailure('请输入手机号');
         }
         if (!phoneForm.smsCode || phoneForm.smsCode.length !== 6) {
-          throw new Error('请输入6位验证码');
+          return handleFailure('请输入6位验证码');
         }
 
-        // 调用验证码校验接口
-        try {
-          const response = await verifySmsCodeApi(phoneForm.phone, phoneForm.smsCode, 'auth');
-          console.log('[验证窗口] 手机号验证码校验成功，返回:', response);
-          // 只有验证成功时才调用 onSuccess
-          onSuccess?.();
-          return true;
-        } catch (error: any) {
-          // 确保错误被正确抛出，阻止后续的 onSuccess 调用
-          console.log('[验证窗口] 手机号验证码校验失败，错误:', {
-            message: error?.message,
-            msg: error?.msg,
-            code: error?.code,
-            response: error?.response,
-            error: error
-          });
-          const errorMessage = error?.message || error?.msg || '验证码校验失败';
-          throw new Error(errorMessage);
+        const result = await verifySmsCodeApi(phoneForm.phone, phoneForm.smsCode, 'auth');
+        if (result === false) {
+          return handleFailure('验证码校验失败', false);
         }
+
+        onSuccess?.();
+        return true;
       } else {
-        // 验证邮箱验证码
         if (!emailForm.email) {
-          throw new Error('请输入邮箱地址');
+          return handleFailure('请输入邮箱地址');
         }
         if (!emailForm.emailCode || emailForm.emailCode.length !== 6) {
-          throw new Error('请输入6位验证码');
+          return handleFailure('请输入6位验证码');
         }
 
-        // 调用验证码校验接口
-        // 邮箱接口需要传递 email（必填）、emailCode（必填）和 scene（场景，必填）
-        try {
-          const response = await verifyEmailCodeApi(emailForm.email, emailForm.emailCode, 'auth');
-          console.log('[验证窗口] 邮箱验证码校验成功，返回:', response);
-          // 只有验证成功时才调用 onSuccess
-          onSuccess?.();
-          return true;
-        } catch (error: any) {
-          // 确保错误被正确抛出，阻止后续的 onSuccess 调用
-          console.log('[验证窗口] 邮箱验证码校验失败，错误:', {
-            message: error?.message,
-            msg: error?.msg,
-            code: error?.code,
-            response: error?.response,
-            error: error
-          });
-          const errorMessage = error?.message || error?.msg || '验证码校验失败';
-          throw new Error(errorMessage);
+        const result = await verifyEmailCodeApi(emailForm.email, emailForm.emailCode, 'auth');
+        if (result === false) {
+          return handleFailure('验证码校验失败', false);
         }
+
+        onSuccess?.();
+        return true;
       }
     } catch (error: any) {
-      // 验证失败，确保不调用 onSuccess
       const err = error instanceof Error ? error : new Error(error?.message || error?.msg || '验证失败');
-      verifyError.value = err.message;
-      ElMessage.error(err.message);
+      const message = err.message || '验证失败';
+      // 避免重复 toast：若 verifyError 已设置则说明前面已提示
+      if (!verifyError.value) {
+        verifyError.value = message;
+        BtcMessage.error(message);
+      }
       onError?.(err);
-      // 返回 false 表示验证失败，阻止触发 success 事件
       return false;
     } finally {
       verifying.value = false;

@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { authApi } from '@/modules/api-services';
@@ -34,7 +34,7 @@ export function useSmsLogin() {
         smsType: 'login'
       });
 
-      ElMessage.success(t('登录成功'));
+      BtcMessage.success(t('登录成功'));
 
       // 优先从响应体获取 token（如果后端返回）
       let token: string | null = null;
@@ -71,7 +71,7 @@ export function useSmsLogin() {
       router.push('/');
     } catch (error: any) {
       console.error('登录错误:', error);
-      ElMessage.error(error.message || t('登录失败'));
+      BtcMessage.error(error.message || t('登录失败'));
       // 不再抛出错误，避免在父组件中产生未处理的错误
     } finally {
       loading.value = false;

@@ -1,8 +1,9 @@
 /**
  * ViewGroup 右键菜单 Hook
  */
-import { ElMessage } from 'element-plus';
+
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
+import { BtcMessage } from '@btc/shared-components';
 
 export function useViewGroupMenu(config: ViewGroupOptions, tree: any) {
   // 右键菜单（列表项）
@@ -53,7 +54,7 @@ export function useViewGroupMenu(config: ViewGroupOptions, tree: any) {
     if (config.enableDelete !== false) actions.push('删除');
     if (tree.visible) actions.push('添加子项');
 
-    ElMessage.info(`右键菜单: ${actions.join(', ')}`);
+    BtcMessage.info(`右键菜单: ${actions.join(', ')}`);
   }
 
   return {
@@ -61,4 +62,3 @@ export function useViewGroupMenu(config: ViewGroupOptions, tree: any) {
     onTreeContextMenu,
   };
 }
-

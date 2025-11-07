@@ -116,6 +116,7 @@ placeholder="请选择角色"
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { BtcMessage } from '@btc/shared-components';
 
 // Props
 interface Props {
@@ -283,7 +284,7 @@ throw error
 // 提交后处理
 static afterSubmit(response: any, mode: string) {
 const message = mode === 'create' ? '创建成功' : '更新成功'
-ElMessage.success(message)
+BtcMessage.success(message)
 
 // 触发刷新事件
 window.dispatchEvent(new CustomEvent('form-submitted', {

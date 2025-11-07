@@ -117,13 +117,14 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType, nextTick } from 'vue';
 import { assign, isArray, isEmpty, isNumber } from 'lodash-es';
-import { ElMessage } from 'element-plus';
+
 import { PictureFilled, UploadFilled, CircleCloseFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { inject } from 'vue';
 import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcUpload'
@@ -371,7 +372,7 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
     } else {
       if (props.multiple) {
         if (!isAdd.value) {
-          ElMessage.warning(t('最多只能上传{n}个文件', { n: limit.value }));
+          BtcMessage.warning(t('最多只能上传{n}个文件', { n: limit.value }));
           return false;
         } else {
           list.value.push(d);
@@ -404,7 +405,7 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
     });
 
     if (!isValidFormat) {
-      ElMessage.error(
+      BtcMessage.error(
         t('不支持的文件格式，请上传 {formats} 格式的文件', {
           formats: accept.value
         })
@@ -415,7 +416,7 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
 
   // 文件大小限制
   if (file.size / 1024 / 1024 >= props.limitSize) {
-    ElMessage.error(t('上传文件大小不能超过 {n}MB!', { n: props.limitSize }));
+    BtcMessage.error(t('上传文件大小不能超过 {n}MB!', { n: props.limitSize }));
     return false;
   }
 

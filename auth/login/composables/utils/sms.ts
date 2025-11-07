@@ -3,7 +3,7 @@
  */
 
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { validatePhone, validateSmsCode } from '../../shared/composables/validation';
 import { sendSmsCode, smsLogin } from '../../shared/composables/api';
 import { createCountState } from '../../shared/composables/state';
@@ -79,12 +79,12 @@ export function createSmsSender(form: SmsLoginForm) {
 
   const handleSendSms = async () => {
     if (!form.phone) {
-      ElMessage.warning('请先输入手机号');
+      BtcMessage.warning('请先输入手机号');
       return;
     }
 
     if (!validatePhone(form.phone)) {
-      ElMessage.warning('请输入正确的手机号');
+      BtcMessage.warning('请输入正确的手机号');
       return;
     }
 
@@ -93,7 +93,7 @@ export function createSmsSender(form: SmsLoginForm) {
       const response = await sendSmsCode(form.phone, 'login');
 
       if (response.code === 2000) {
-        ElMessage.success('验证码已发送');
+        BtcMessage.success('验证码已发送');
         hasSentSms.value = true;
         
         // 开始倒计时
@@ -105,10 +105,10 @@ export function createSmsSender(form: SmsLoginForm) {
           }
         }, 1000);
       } else {
-        ElMessage.error(response.msg || '发送失败，请重试');
+        BtcMessage.error(response.msg || '发送失败，请重试');
       }
     } catch (error: any) {
-      ElMessage.error(error.message || '发送失败，请重试');
+      BtcMessage.error(error.message || '发送失败，请重试');
     } finally {
       sendingSms.value = false;
     }
@@ -144,17 +144,17 @@ export function createSmsLoginHandler(
 
   const handleLogin = async () => {
     if (!form.phone || !form.smsCode) {
-      ElMessage.warning('请填写完整的登录信息');
+      BtcMessage.warning('请填写完整的登录信息');
       return;
     }
 
     if (!validatePhone(form.phone)) {
-      ElMessage.warning('请输入正确的手机号');
+      BtcMessage.warning('请输入正确的手机号');
       return;
     }
 
     if (!validateSmsCode(form.smsCode)) {
-      ElMessage.warning('请输入6位数字验证码');
+      BtcMessage.warning('请输入6位数字验证码');
       return;
     }
 
@@ -166,14 +166,14 @@ export function createSmsLoginHandler(
       });
 
       if (response.code === 2000) {
-        ElMessage.success('登录成功');
+        BtcMessage.success('登录成功');
         onSuccess?.(response.data);
       } else {
-        ElMessage.error(response.msg || '登录失败');
+        BtcMessage.error(response.msg || '登录失败');
         onError?.(response);
       }
     } catch (error: any) {
-      ElMessage.error(error.message || '登录失败，请重试');
+      BtcMessage.error(error.message || '登录失败，请重试');
       onError?.(error);
     } finally {
       loading.value = false;

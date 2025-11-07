@@ -174,8 +174,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
 import { Search, Check, Message, OfficeBuilding, User, Phone, Lock } from '@element-plus/icons-vue';
+import { BtcMessage } from '@btc/shared-components';
 import BtcStepsForm from '/@/modules/base/components/btc/btc-steps-form/index.vue';
 import { useInertRegistration } from '../../composables/useInertRegistration';
 
@@ -255,7 +255,7 @@ const isSupplierSelected = (supplier: any) => {
 // 选择供应商
 const selectSupplier = (supplier: any) => {
   selectedSupplier.value = supplier;
-  ElMessage.success(`已选择供应商：${supplier.name}`);
+  BtcMessage.success(`已选择供应商：${supplier.name}`);
 };
 
 // 处理供应商搜索
@@ -273,7 +273,7 @@ const handleNextStep = () => {
   if (currentStep.value === 0) {
     // 第一步：检查是否选择了供应商
     if (!selectedSupplier.value) {
-      ElMessage.warning('请先选择一个供应商');
+      BtcMessage.warning('请先选择一个供应商');
       return;
     }
   }

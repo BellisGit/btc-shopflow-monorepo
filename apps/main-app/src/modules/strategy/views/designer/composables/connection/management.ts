@@ -1,5 +1,5 @@
 ﻿import { ref, computed, reactive, watch, type Ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { StrategyConnection, StrategyNode } from '@/types/strategy';
 import { ConnectorType } from '@/types/strategy';
 import { useConnectionPointSelector } from './point-selector';
@@ -142,7 +142,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     );
 
     if (existingConnection) {
-      ElMessage.warning('节点之间已存在连接');
+      BtcMessage.warning('节点之间已存在连接');
       connectionState.isConnecting = false;
       connectionState.tempConnection = null;
       connectionState.fromNodeId = '';
@@ -175,7 +175,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     connectionState.fromNodeId = '';
     connectionState.fromCondition = undefined;
 
-    ElMessage.success('连接创建成功');
+    BtcMessage.success('连接创建成功');
     return true;
   };
 
@@ -200,7 +200,9 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
   const deleteConnection = async (connectionId: string, skipConfirm = false) => {
     try {
       if (!skipConfirm) {
-        await ElMessageBox.confirm('确定要删除这个连接吗？', '确认删除', {
+        await BtcConfirm('确定要删除这个连接吗？', '确认删除', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
           type: 'warning'
         });
       }
@@ -211,7 +213,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
         selectedConnectionId.value = '';
       }
 
-      ElMessage.success('连接删除成功');
+      BtcMessage.success('连接删除成功');
       return true;
     } catch {
       return false;

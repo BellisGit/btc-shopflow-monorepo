@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcLoginOptions'
@@ -28,11 +28,11 @@ defineOptions({
 
 // 微信登录
 function onWechatLogin() {
-  ElMessage.info('微信登录功能暂未开启');
+  BtcMessage.info('微信登录功能暂未开启');
 }
 
 // APP登录
 function onAppLogin() {
-  ElMessage.info('APP登录功能暂未开启');
+  BtcMessage.info('APP登录功能暂未开启');
 }
 </script>

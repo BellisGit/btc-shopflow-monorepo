@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import loginQrImage from '@/assets/images/login_qr.png';
 
 export function useQrLogin() {
@@ -16,10 +16,10 @@ export function useQrLogin() {
       // const response = await http.post('/base/open/qr/generate');
       // qrCodeUrl.value = response.data.qrCodeUrl;
       
-      ElMessage.info(t('二维码登录功能暂未开启'));
+      BtcMessage.info(t('二维码登录功能暂未开启'));
     } catch (error: any) {
       console.error('刷新二维码错误:', error);
-      ElMessage.error(error.message || t('刷新二维码失败'));
+      BtcMessage.error(error.message || t('刷新二维码失败'));
     }
   };
 

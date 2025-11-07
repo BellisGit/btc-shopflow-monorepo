@@ -147,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, inject, type PropType } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import BtcForm from '@btc-common/form/index.vue';
@@ -156,6 +156,7 @@ import * as XLSX from 'xlsx';
 import chardet from 'chardet';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
+import { BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 
@@ -584,7 +585,7 @@ function open() {
       submit(_: any, { done, close }: { done: () => void; close: () => void }) {
         if (!upload.filename) {
           done();
-          return ElMessage.error(t('common.import.select_file'));
+          return BtcMessage.error(t('common.import.select_file'));
         }
 
         if (props.onSubmit) {
@@ -593,7 +594,7 @@ function open() {
             ..._
           }, { done, close });
         } else {
-          ElMessage.error(t('common.import.onSubmit_required'));
+          BtcMessage.error(t('common.import.onSubmit_required'));
           done();
         }
       }
@@ -652,11 +653,13 @@ function onUpload(raw: File, _: any, { next }: any) {
     if (fileNameAnalysis && fileNameAnalysis.matchScore < 60) {
       // 显示文件名建议
       setTimeout(() => {
-        ElMessage.warning({
-          message: `文件名"${fileNameAnalysis.fileName}"与当前实体"${fileNameAnalysis.entityName}"匹配度较低。\n${fileNameAnalysis.suggestions.join('\n')}`,
-          duration: 6000,
-          showClose: true
-        });
+        BtcMessage.warning(
+          `文件名"${fileNameAnalysis.fileName}"与当前实体"${fileNameAnalysis.entityName}"匹配度较低。\n${fileNameAnalysis.suggestions.join('\n')}`,
+          {
+            duration: 6000,
+            showClose: true
+          }
+        );
       }, 1000);
     }
 

@@ -54,7 +54,7 @@
 import { ref, reactive, nextTick } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useSmsCode } from '@btc/shared-core';
 import { codeApi } from '@/modules/api-services';
 import BtcLoginFormLayout from '../../../shared/components/login-form-layout/index.vue';
@@ -113,11 +113,11 @@ const {
   countdown: 60,
   minInterval: 60,
   onSuccess: () => {
-    ElMessage.success(t('验证码已发送'));
+    BtcMessage.success(t('验证码已发送'));
     emit('send-sms');
   },
   onError: (error) => {
-    ElMessage.error(error.message || t('发送验证码失败'));
+    BtcMessage.error(error.message || t('发送验证码失败'));
   }
 });
 

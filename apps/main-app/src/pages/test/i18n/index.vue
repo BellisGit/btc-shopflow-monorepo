@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n, zhCN, enUS } from '@btc/shared-core';
 
 const { t, locale } = useI18n();
@@ -155,7 +155,7 @@ const searchKey = ref('');
 // Handle locale change
 const handleLocaleChange = (newLocale: string) => {
   locale.value = newLocale;
-  ElMessage.success(`Language switched to ${newLocale}`);
+  BtcMessage.success(`Language switched to ${newLocale}`);
 };
 
 // Translation test data
@@ -242,24 +242,24 @@ const filteredKeys = computed(() => {
 
 // Show success message
 const showSuccessMessage = () => {
-  ElMessage.success(t('sys.message.success'));
+  BtcMessage.success(t('sys.message.success'));
 };
 
 // Show error message
 const showErrorMessage = () => {
-  ElMessage.error(t('sys.message.error'));
+  BtcMessage.error(t('sys.message.error'));
 };
 
 // Show confirm dialog
 const showConfirmDialog = () => {
-  ElMessageBox.confirm(
+  BtcConfirm(
     t('crud.message.delete_confirm'),
     t('common.button.confirm'),
     { type: 'warning' }
   ).then(() => {
-    ElMessage.success(t('crud.message.delete_success'));
+    BtcMessage.success('操作成功');
   }).catch(() => {
-    ElMessage.info(t('common.button.cancel'));
+    BtcMessage.info(t('common.button.cancel'));
   });
 };
 </script>

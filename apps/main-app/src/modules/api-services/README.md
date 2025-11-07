@@ -30,6 +30,7 @@ import { authApi, codeApi } from '@/modules/api-services';
 
 ```typescript
 import { authApi } from '@/modules/api-services';
+import { BtcMessage } from '@btc/shared-components';
 
 try {
   const response = await authApi.login({
@@ -74,15 +75,16 @@ try {
 
 ```typescript
 import { authApi } from '@/modules/api-services';
+import { BtcMessage } from '@btc/shared-components';
 
 try {
   await authApi.sendSmsCode({
     phone: '13800138000',
     smsType: 'login'  // 'login' | 'register' | 'reset-password' | 'forgot'
   });
-  ElMessage.success('验证码已发送');
+  BtcMessage.success('验证码已发送');
 } catch (error) {
-  ElMessage.error('发送验证码失败');
+  BtcMessage.error('发送验证码失败');
 }
 ```
 
@@ -117,9 +119,9 @@ try {
     password: '123456',
     smsCode: '123456'  // 可选
   });
-  ElMessage.success('注册成功');
+  BtcMessage.success('注册成功');
 } catch (error) {
-  ElMessage.error('注册失败');
+  BtcMessage.error('注册失败');
 }
 ```
 
@@ -134,9 +136,9 @@ try {
     smsCode: '123456',
     newPassword: 'newpass123'
   });
-  ElMessage.success('密码重置成功');
+  BtcMessage.success('密码重置成功');
 } catch (error) {
-  ElMessage.error('重置密码失败');
+  BtcMessage.error('重置密码失败');
 }
 ```
 
@@ -170,7 +172,7 @@ const { countdown, sending, canSend, send, reset } = useSmsCode({
   countdown: 60,
   minInterval: 60,
   onSuccess: () => {
-    ElMessage.success('验证码已发送');
+    BtcMessage.success('验证码已发送');
   }
 });
 
@@ -182,7 +184,7 @@ const emailCode = useEmailCode({
   sendEmailCode: codeApi.sendEmailCode,
   countdown: 60,
   onSuccess: () => {
-    ElMessage.success('验证码已发送到邮箱');
+    BtcMessage.success('验证码已发送到邮箱');
   }
 });
 
@@ -326,7 +328,7 @@ export { otherModuleApi } from './other-module';  // 新增
 import { ref } from 'vue';
 import { useSmsCode } from '@btc/shared-core';
 import { codeApi } from '@/modules/api-services';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 
 const phone = ref('');
 
@@ -335,10 +337,10 @@ const { countdown, sending, canSend, send } = useSmsCode({
   countdown: 60,
   minInterval: 60,
   onSuccess: () => {
-    ElMessage.success('验证码已发送');
+    BtcMessage.success('验证码已发送');
   },
   onError: (error) => {
-    ElMessage.error(error.message);
+    BtcMessage.error(error.message);
   }
 });
 
@@ -381,7 +383,7 @@ try {
   await authApi.login(data);
 } catch (error: any) {
   // 统一错误处理
-  ElMessage.error(error.message || '操作失败');
+  BtcMessage.error(error.message || '操作失败');
 }
 ```
 

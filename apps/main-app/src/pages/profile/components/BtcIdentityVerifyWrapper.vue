@@ -36,7 +36,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { BtcIdentityVerify, BtcBindingDialog } from '@btc/shared-components';
+import BtcIdentityVerify from '@btc-components/feedback/btc-identity-verify/index.vue';
+import BtcBindingDialog from '@btc-components/feedback/btc-binding-dialog/index.vue';
+import { useMessage } from '@/utils/use-message';
 import { service } from '@services/eps';
 import { appStorage } from '@/utils/app-storage';
 import BtcSmsCodeInput from '@/pages/auth/shared/components/sms-code-input/index.vue';
@@ -71,65 +73,65 @@ const accountName = computed(() => appStorage.user.getName() || '您');
 
 // 验证码输入组件
 const smsCodeInputComponent = BtcSmsCodeInput;
+const message = useMessage();
 
 // 绑定流程：发送手机号验证码
-// EPS 服务：POST /api/system/base/profile/bind/phone/send
-// 参数：phone（必填），smsType（必填），值为 'bind'
+// EPS 服务：POST /api/system/base/phone/bind
+// 参数：phone（必填），smsType（默认 'bind'）
 const sendSmsCodeForBind = async (phone: string) => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+  const phoneService = service.system?.base?.phone;
+  if (!phoneService?.bind) {
+    throw new Error('手机号服务不可用');
   }
-  await profileService.bindPhone({
+  await phoneService.bind({
     phone,
     smsType: 'bind'
   });
 };
 
 // 绑定流程：发送邮箱验证码
-// EPS 服务：POST /api/system/base/profile/bind/email/send
-// 邮箱接口需要传递 email（必填）和 scene（场景，必填），值为 'bind'
-const sendEmailCodeForBind = async (email: string, scene?: string) => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+// EPS 服务：POST /api/system/base/email/bind
+// 邮箱接口需要传递 email（必填）和 smsType（默认 'bind'）
+const sendEmailCodeForBind = async (email: string, smsType?: string) => {
+  const emailService = service.system?.base?.email;
+  if (!emailService?.bind) {
+    throw new Error('邮箱服务不可用');
   }
-  await profileService.bindEmail({
+  await emailService.bind({
     email,
-    scene: scene || 'bind'
+    scene: smsType || 'bind',
+    smsType: smsType || 'bind',
+    type: smsType || 'bind'
   });
 };
 
 // 验证流程：发送手机号验证码
-// EPS 服务：POST /api/system/base/profile/verify/phone/send
-// 方法名：sendPhone
-// 参数：type（必填），值为 'auth'
+// EPS 服务：POST /api/system/base/phone/send
+// 参数：type（默认 'auth'，后端兼容 smsType）
 const sendSmsCodeForVerify = async () => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+  const phoneService = service.system?.base?.phone;
+  if (!phoneService?.send) {
+    throw new Error('手机号服务不可用');
   }
-  if (!profileService.sendPhone) {
-    throw new Error('sendPhone 方法不可用，请检查 EPS 服务配置');
-  }
-  // POST 方法，需要传递 type 参数
-  await profileService.sendPhone({ type: 'auth' });
+  await phoneService.send({
+    type: 'auth',
+    smsType: 'auth'
+  });
 };
 
 // 验证流程：发送邮箱验证码
-// EPS 服务：POST /api/system/base/profile/verify/email/send
-// 方法名：sendEmail
-// 参数：type（必填），值为 'auth'
+// EPS 服务：POST /api/system/base/email/send
+// 参数：type（默认 'auth'，后端兼容 scene / smsType）
 const sendEmailCodeForVerify = async () => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+  const emailService = service.system?.base?.email;
+  if (!emailService?.send) {
+    throw new Error('邮箱服务不可用');
   }
-  if (!profileService.sendEmail) {
-    throw new Error('sendEmail 方法不可用，请检查 EPS 服务配置');
-  }
-  // POST 方法，需要传递 type 参数
-  await profileService.sendEmail({ type: 'auth' });
+  await emailService.send({
+    type: 'auth',
+    scene: 'auth',
+    smsType: 'auth'
+  });
 };
 
 // 统一的发送短信验证码函数（根据流程选择不同的 API）
@@ -144,88 +146,76 @@ const sendSmsCode = async (phone: string, smsType?: string) => {
 };
 
 // 统一的发送邮箱验证码函数（根据流程选择不同的 API）
-// 邮箱接口需要传递 email（必填）和 scene（场景，必填）
-const sendEmailCode = async (email: string, scene?: string) => {
-  // 如果是绑定流程，使用绑定接口，传递 scene: 'bind'
+// 邮箱接口需要传递 email（必填）和 smsType（必填）
+const sendEmailCode = async (email: string, smsType?: string) => {
+  // 如果是绑定流程，使用绑定接口，传递 smsType: 'bind'
   if (props.skipVerification && props.bindField === 'email') {
-    await sendEmailCodeForBind(email, scene || 'bind');
+    await sendEmailCodeForBind(email, smsType || 'bind');
   } else {
     // 验证流程，使用验证接口（无参数，后端会使用当前用户邮箱）
     await sendEmailCodeForVerify();
   }
 };
 
+const extractResponse = (result: any) => {
+  if (!result || typeof result !== 'object') {
+    return { code: undefined, msg: undefined };
+  }
+  if ('data' in result && result.data && typeof result.data === 'object') {
+    const dataObj = result.data as any;
+    return { code: dataObj.code, msg: dataObj.msg };
+  }
+  return { code: (result as any).code, msg: (result as any).msg };
+};
+
 // 验证短信验证码
-// 验证流程：POST /api/system/base/profile/verify/code（校验邮箱或者手机号验证码）
-// 绑定流程：PUT /api/system/base/profile/phone/update（验证验证码并修改手机号）
-const verifySmsCode = async (phone: string, smsCode: string, smsType?: string) => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+// 验证流程：POST /api/system/base/phone/verify
+// 绑定流程：PUT /api/system/base/phone/update（saveBinding 中处理）
+const verifySmsCode = async (_phone: string, smsCode: string, smsType?: string) => {
+  const phoneService = service.system?.base?.phone;
+  if (!phoneService?.verify) {
+    throw new Error('手机号服务不可用');
   }
 
-  // 对于验证流程，使用 verify/code 接口校验验证码
-  // 对于绑定流程，验证码验证会在 saveBinding 时一起完成
   if (smsType === 'auth' || !smsType) {
-    // 验证流程：使用 verify/code 接口校验验证码
-    // EPS 服务：POST /api/system/base/profile/verify/code
-    // 参数：type（必填，值为 'phone' 或 'email'），code（必填，验证码）
-    // 注意：不需要传递 phone 或 email，后端会通过 cookie 获取当前用户信息
-    if (!profileService.verifyCode) {
-      throw new Error('verifyCode 方法不可用，请检查 EPS 服务配置');
-    }
-    const response = await profileService.verifyCode({
-      type: 'phone',
-      code: smsCode
+    const response = await phoneService.verify({
+      code: smsCode,
+      smsType: smsType || 'auth'
     });
-    // 检查响应中的 code，如果不是 200，抛出错误
-    if (response && typeof response === 'object' && 'code' in response) {
-      const responseObj = response as any;
-      if (responseObj.code && responseObj.code !== 200) {
-        throw new Error(responseObj.msg || '验证码校验失败');
-      }
+    const { code, msg } = extractResponse(response);
+    const isSuccess = code === undefined || code === null || code === 200 || code === 1000 || code === 2000;
+    if (!isSuccess) {
+      message.error(msg || '验证码校验失败');
+      return false;
     }
-  } else {
-    // 绑定流程：验证码验证会在 saveBinding 时一起完成
-    return Promise.resolve();
   }
+  return true;
 };
 
 // 验证邮箱验证码
-// 验证流程：POST /api/system/base/profile/verify/code（校验邮箱或者手机号验证码）
-// 绑定流程：PUT /api/system/base/profile/email/update（验证验证码并修改邮箱）
-// 邮箱接口需要传递 email（必填）、code（验证码，必填）和 scene（场景，必填）
-const verifyEmailCode = async (email: string, emailCode: string, scene?: string) => {
-  const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
+// 验证流程：POST /api/system/base/email/verify
+// 绑定流程：PUT /api/system/base/email/update
+// 邮箱接口需要传递 code（验证码，必填）和 smsType（默认 'auth' 或 'bind'）
+const verifyEmailCode = async (_email: string, emailCode: string, smsType?: string) => {
+  const emailService = service.system?.base?.email;
+  if (!emailService?.verify) {
+    throw new Error('邮箱服务不可用');
   }
 
-  // 对于验证流程，使用 verify/code 接口校验验证码
-  // 对于绑定流程，验证码验证会在 saveBinding 时一起完成
-  if (scene === 'auth' || !scene) {
-    // 验证流程：使用 verify/code 接口校验验证码
-    // EPS 服务：POST /api/system/base/profile/verify/code
-    // 参数：type（必填，值为 'phone' 或 'email'），code（必填，验证码）
-    // 注意：不需要传递 phone 或 email，后端会通过 cookie 获取当前用户信息
-    if (!profileService.verifyCode) {
-      throw new Error('verifyCode 方法不可用，请检查 EPS 服务配置');
-    }
-    const response = await profileService.verifyCode({
-      type: 'email',
-      code: emailCode
+  if (smsType === 'auth' || !smsType) {
+    const response = await emailService.verify({
+      code: emailCode,
+      scene: smsType || 'auth',
+      smsType: smsType || 'auth'
     });
-    // 检查响应中的 code，如果不是 200，抛出错误
-    if (response && typeof response === 'object' && 'code' in response) {
-      const responseObj = response as any;
-      if (responseObj.code && responseObj.code !== 200) {
-        throw new Error(responseObj.msg || '验证码校验失败');
-      }
+    const { code, msg } = extractResponse(response);
+    const isSuccess = code === undefined || code === null || code === 200 || code === 1000 || code === 2000;
+    if (!isSuccess) {
+      message.error(msg || '验证码校验失败');
+      return false;
     }
-  } else {
-    // 绑定流程：验证码验证会在 saveBinding 时一起完成
-    return Promise.resolve();
   }
+  return true;
 };
 
 // 检查手机号绑定状态
@@ -253,35 +243,47 @@ const saveBinding = async (params: {
   email?: string;
   smsCode?: string;
   smsType?: string;
-  emailCode?: string;
   scene?: string;
+  emailCode?: string;
 }) => {
   const profileService = service.system?.base?.profile;
-  if (!profileService) {
-    throw new Error('用户信息服务不可用');
-  }
+  const phoneService = service.system?.base?.phone;
+  const emailService = service.system?.base?.email;
 
-  // 手机号绑定：使用专门的 phone 接口，传递 phone, smsCode, smsType
   if (params.phone && params.smsCode) {
-    await profileService.phone({
+    if (!phoneService?.update) {
+      throw new Error('手机号服务不可用');
+    }
+    await phoneService.update({
       phone: params.phone,
       smsCode: params.smsCode,
       smsType: params.smsType || 'bind'
     });
+    return;
   }
-  // 邮箱绑定：使用专门的 email 接口，传递 email, code, scene
-  // 接口需要：email(必填), scene(场景，必填), code(验证码，必填)
-  else if (params.email && params.emailCode) {
-    await profileService.email({
+
+  if (params.email && params.emailCode) {
+    if (!emailService?.update) {
+      throw new Error('邮箱服务不可用');
+    }
+    const response = await emailService.update({
       email: params.email,
-      code: params.emailCode, // 接口需要 code 字段，不是 emailCode
-      scene: params.scene || 'bind'
+      code: params.emailCode,
+      scene: params.scene || params.smsType || 'bind',
+      smsType: params.smsType || 'bind'
     });
+    const { code, msg } = extractResponse(response);
+    if (code && code !== 200 && code !== 1000 && code !== 2000) {
+      message.error(msg || '换绑失败');
+      return;
+    }
+    return;
   }
-  // 其他情况：使用通用 update 接口
-  else {
-    await profileService.update(params);
+
+  if (!profileService?.update) {
+    throw new Error('用户信息服务不可用');
   }
+  await profileService.update(params);
 };
 
 const handleSuccess = () => {

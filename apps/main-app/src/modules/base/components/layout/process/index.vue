@@ -95,8 +95,7 @@ defineOptions({
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { ElMessageBox } from 'element-plus';
-import { BtcIconButton } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
 import { useSettingsState } from '@/plugins/user-setting/composables';
@@ -342,28 +341,22 @@ function handleTabCommand(command: string) {
 function openContextMenu(e: MouseEvent, item: ProcessItem, _index: number) {
   const isCurrentTab = item.path === route.path;
 
-  ElMessageBox.confirm(t('common.tip'), {
-    showCancelButton: true,
-    showConfirmButton: true,
-    confirmButtonText: isCurrentTab ? t('common.close_current') : t('common.close_other'),
-    cancelButtonText: t('common.button.cancel'),
-    type: 'warning',
-  })
-    .then(() => {
-      if (isCurrentTab) {
-        processStore.close();
-        const last = filteredTabs.value[filteredTabs.value.length - 1];
-        router.push(last ? last.fullPath : '/');
-      } else {
-        const currentApp = getCurrentAppFromPath(route.path);
-        processStore.set(
-          processStore.list.filter(
-            (e) => e.fullPath === item.fullPath || e.app !== currentApp
-          )
-        );
-      }
-    })
-    .catch(() => {});
+  BtcConfirm(t('common.tip'), {
+    type: 'warning'
+  }).catch(() => {
+    if (isCurrentTab) {
+      processStore.close();
+      const last = filteredTabs.value[filteredTabs.value.length - 1];
+      router.push(last ? last.fullPath : '/');
+    } else {
+      const currentApp = getCurrentAppFromPath(route.path);
+      processStore.set(
+        processStore.list.filter(
+          (e) => e.fullPath === item.fullPath || e.app !== currentApp
+        )
+      );
+    }
+  });
 }
 
 // 监听路由变化，调整滚动位置

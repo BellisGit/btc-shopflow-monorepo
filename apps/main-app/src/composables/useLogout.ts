@@ -1,4 +1,4 @@
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { authApi } from '@/modules/api-services';
@@ -51,7 +51,7 @@ export function useLogout() {
       // 如果有使用其他缓存库，也需要清除
 
       // 显示退出成功提示
-      ElMessage.success(t('common.logout_success'));
+      BtcMessage.success(t('common.logout_success'));
 
       // 跳转到登录页
       router.push('/login');

@@ -1,5 +1,5 @@
 ﻿import { ref, computed, type Ref } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import type { StrategyOrchestration, StrategyNode, StrategyConnection } from '@/types/strategy';
 import { strategyService } from '@/services/strategy';
 
@@ -34,14 +34,14 @@ export function useStrategyOperations(
       const result = await strategyService.validateOrchestration(currentOrchestration.value);
 
       if (result.valid) {
-        ElMessage.success('策略编排验证通过');
+        BtcMessage.success('策略编排验证通过');
         return true;
       } else {
-        ElMessage.error(`验证失败：${result.errors.join(', ')}`);
+        BtcMessage.error(`验证失败：${result.errors.join(', ')}`);
         return false;
       }
     } catch (error) {
-      ElMessage.error('验证失败');
+      BtcMessage.error('验证失败');
       return false;
     }
   };
@@ -49,7 +49,7 @@ export function useStrategyOperations(
   // 预览执行
   const previewExecution = () => {
     if (nodes.value.length === 0) {
-      ElMessage.warning('请先添加节点');
+      BtcMessage.warning('请先添加节点');
       return;
     }
 
@@ -59,16 +59,16 @@ export function useStrategyOperations(
   // 保存编排
   const saveOrchestration = async (strategyId?: string) => {
     if (!strategyId) {
-      ElMessage.warning('请先选择或创建策略');
+      BtcMessage.warning('请先选择或创建策略');
       return false;
     }
 
     try {
       await strategyService.updateOrchestration(strategyId, currentOrchestration.value);
-      ElMessage.success('策略编排保存成功');
+      BtcMessage.success('策略编排保存成功');
       return true;
     } catch (error) {
-      ElMessage.error('保存失败');
+      BtcMessage.error('保存失败');
       return false;
     }
   };
@@ -84,11 +84,11 @@ export function useStrategyOperations(
         strategyName.value = orchestration.metadata.name;
       }
 
-      ElMessage.success('策略编排加载成功');
+      BtcMessage.success('策略编排加载成功');
       return orchestration;
     } catch (error) {
       console.error('Failed to load orchestration:', error);
-      ElMessage.error('加载策略编排失败');
+      BtcMessage.error('加载策略编排失败');
       return null;
     }
   };
@@ -98,7 +98,7 @@ export function useStrategyOperations(
     nodes.value = [];
     connections.value = [];
     strategyName.value = '新策略编排';
-    ElMessage.success('编排已清空');
+    BtcMessage.success('编排已清空');
   };
 
   // 导出编排
@@ -113,7 +113,7 @@ export function useStrategyOperations(
     link.click();
 
     URL.revokeObjectURL(url);
-    ElMessage.success('编排导出成功');
+    BtcMessage.success('编排导出成功');
   };
 
   // 导入编排
@@ -133,20 +133,20 @@ export function useStrategyOperations(
               strategyName.value = data.metadata.name;
             }
 
-            ElMessage.success('编排导入成功');
+            BtcMessage.success('编排导入成功');
             resolve(true);
           } else {
-            ElMessage.error('无效的编排文件格式');
+            BtcMessage.error('无效的编排文件格式');
             resolve(false);
           }
         } catch (error) {
-          ElMessage.error('编排文件解析失败');
+          BtcMessage.error('编排文件解析失败');
           resolve(false);
         }
       };
 
       reader.onerror = () => {
-        ElMessage.error('文件读取失败');
+        BtcMessage.error('文件读取失败');
         resolve(false);
       };
 
@@ -157,12 +157,12 @@ export function useStrategyOperations(
   // 处理保存
   const handleSave = async () => {
     if (nodes.value.length === 0) {
-      ElMessage.warning('请先添加节点');
+      BtcMessage.warning('请先添加节点');
       return;
     }
 
     // 这里可以添加保存逻辑，比如保存到本地存储或发送到服务器
-    ElMessage.success('策略编排保存成功');
+    BtcMessage.success('策略编排保存成功');
   };
 
   return {

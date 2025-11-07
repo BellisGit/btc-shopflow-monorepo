@@ -1,5 +1,6 @@
-﻿import { ElMessage } from 'element-plus';
+﻿
 import type { UploadOptions, UploadResponse } from '../types';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 文件上传 composable
@@ -48,7 +49,6 @@ export function useUpload(service?: any): { toUpload: (file: File, options?: Upl
         response = await fileService.upload(formData);
       }
 
-
       // 响应拦截器已经提取了 data 字段，所以 response 应该是 data 对象
       // 新格式：返回对象包含 objectKey 字段（文件 URL）
       let url = '';
@@ -82,7 +82,7 @@ export function useUpload(service?: any): { toUpload: (file: File, options?: Upl
         errorMessage = error;
       }
 
-      ElMessage.error(errorMessage);
+      BtcMessage.error(errorMessage);
       throw new Error(errorMessage);
     }
   }

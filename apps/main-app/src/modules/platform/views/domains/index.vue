@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { ref, computed, onMounted } from 'vue';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -34,17 +34,56 @@ const message = useMessage();
 const crudRef = ref();
 const tableRef = ref();
 
-// 租户下拉选项 - 暂态使用静态数据
-const tenantOptions = ref<{ label: string; value: any }[]>([
-  { label: '默认租户', value: 'default' },
-  { label: '测试租户', value: 'test' }
-]);
+// 租户下拉选项
+const tenantOptions = ref<{ label: string; value: any }[]>([]);
+const tenantLoading = ref(false);
+
+const loadTenantOptions = async () => {
+  const tenantService = service.system?.iam?.tenant;
+
+  if (!tenantService || typeof tenantService.list !== 'function') {
+    console.warn('[Domain] 租户列表服务不可用');
+    tenantOptions.value = [];
+    return;
+  }
+
+  tenantLoading.value = true;
+  try {
+    const response = await tenantService.list({});
+    const list = Array.isArray(response?.list) ? response.list : Array.isArray(response) ? response : [];
+
+    tenantOptions.value = list
+      .map((tenant: any) => {
+        const value = tenant?.id ?? tenant?.tenantId ?? tenant?.tenantCode ?? tenant?.code;
+        const label = tenant?.tenantName ?? tenant?.name ?? tenant?.tenantCode ?? value;
+
+        if (value === undefined || value === null) {
+          return null;
+        }
+
+        return {
+          value,
+          label: String(label ?? value),
+        };
+      })
+      .filter((item): item is { label: string; value: any } => !!item);
+  } catch (error) {
+    console.warn('[Domain] 获取租户列表失败:', error);
+    tenantOptions.value = [];
+  } finally {
+    tenantLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadTenantOptions();
+});
 
 // 使用 EPS 域服务
 const wrappedDomainService = {
   ...service.system?.iam?.domain,
   delete: async (id: string | number) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
     await service.system?.iam?.domain?.delete(id);
@@ -52,7 +91,7 @@ const wrappedDomainService = {
     message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: (string | number)[]) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
     await service.system?.iam?.domain?.deleteBatch(ids);
@@ -85,6 +124,7 @@ const formItems = computed<FormItem[]>(() => [
       props: {
         filterable: true,
         clearable: true,
+        loading: tenantLoading.value,
       },
       options: tenantOptions.value
     }

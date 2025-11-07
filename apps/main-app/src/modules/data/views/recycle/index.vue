@@ -38,7 +38,8 @@
 
 <script lang="ts" setup>
 import { ref, computed, onActivated } from 'vue';
-import { ElMessage, ElMessageBox, ElButton } from 'element-plus';
+import { ElButton } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { http } from '@/utils/http';
 
@@ -175,7 +176,7 @@ function restore(targetId?: string) {
   const validIds = ids.filter(Boolean);
 
   if (validIds.length === 0) {
-    ElMessage.warning(t('recycle.please_select_data'));
+    BtcMessage.warning(t('recycle.please_select_data'));
     return;
   }
 
@@ -183,7 +184,7 @@ function restore(targetId?: string) {
     ? t('recycle.restore_confirm')
     : t('recycle.batch_restore_confirm', { count: validIds.length });
 
-  ElMessageBox.confirm(
+  BtcConfirm(
     confirmMessage,
     t('common.tip'),
     {
@@ -200,11 +201,11 @@ function restore(targetId?: string) {
           await recycleService.restore({
             id: validIds[0]
           });
-          ElMessage.success(t('recycle.restore_success'));
+          BtcMessage.success(t('recycle.restore_success'));
         } else {
           // 批量恢复 - 使用 restoreBatch API，传递对象格式
           await recycleService.restoreBatch({ ids: validIds });
-          ElMessage.success(t('recycle.batch_restore_success', { count: validIds.length }));
+          BtcMessage.success(t('recycle.batch_restore_success', { count: validIds.length }));
         }
 
         refresh();

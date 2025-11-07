@@ -3,7 +3,7 @@
  */
 
 import { ref, reactive, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { ensureString, validatePasswordStrength, validatePhone, validateSmsCode } from '../../shared/composables/validation';
 import { sendSmsCode, registerUser } from '../../shared/composables/api';
 import { createCountState } from '../../shared/composables/state';
@@ -184,19 +184,19 @@ export function createRegisterSmsSender(form: RegisterForm) {
 
     // 渐进式验证提示
     if (!password) {
-      ElMessage.warning('请先输入登录密码');
+      BtcMessage.warning('请先输入登录密码');
       return;
     }
     if (!confirmPassword) {
-      ElMessage.warning('请先确认密码');
+      BtcMessage.warning('请先确认密码');
       return;
     }
     if (!phone) {
-      ElMessage.warning('请先输入手机号');
+      BtcMessage.warning('请先输入手机号');
       return;
     }
     if (!validatePhone(phone)) {
-      ElMessage.warning('请输入正确的手机号');
+      BtcMessage.warning('请输入正确的手机号');
       return;
     }
 
@@ -206,7 +206,7 @@ export function createRegisterSmsSender(form: RegisterForm) {
       const response = await sendSmsCode(phone, 'register');
 
       if (response.code === 2000) {
-        ElMessage.success('验证码已发送');
+        BtcMessage.success('验证码已发送');
 
         // 开始倒计时
         setSmsCountdown(60);
@@ -218,10 +218,10 @@ export function createRegisterSmsSender(form: RegisterForm) {
           }
         }, 1000);
       } else {
-        ElMessage.error(response.msg || '发送失败，请重试');
+        BtcMessage.error(response.msg || '发送失败，请重试');
       }
     } catch (error: any) {
-      ElMessage.error(error.message || '发送失败，请重试');
+      BtcMessage.error(error.message || '发送失败，请重试');
     } finally {
       sendingSms.value = false;
     }
@@ -273,7 +273,7 @@ export function createRegisterHandler(
 
       const sessionId = getSessionId();
       if (!sessionId) {
-        ElMessage.error('会话已过期，请重新验证身份');
+        BtcMessage.error('会话已过期，请重新验证身份');
         onError?.({ msg: '会话已过期' });
         return;
       }
@@ -296,7 +296,7 @@ export function createRegisterHandler(
       const response = await registerUser(sanitizedData);
 
       // 如果到达这里，说明请求成功（code === 2000）
-      ElMessage.success('注册成功！');
+      BtcMessage.success('注册成功！');
       onSuccess?.(response.data);
     } catch (error: any) {
       console.error('注册请求失败:', error);
@@ -314,7 +314,7 @@ export function createRegisterHandler(
         errorMessage = error.message;
       }
 
-      ElMessage.error(errorMessage);
+      BtcMessage.error(errorMessage);
       onError?.(errorData);
     } finally {
       registering.value = false;

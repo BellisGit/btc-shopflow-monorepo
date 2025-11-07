@@ -177,7 +177,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import { BtcViewGroup } from '@btc/shared-components';
 import {
@@ -266,12 +266,12 @@ const handleCategorySelect = (category: any) => {
 
 // 刷新分类列表
 const handleRefreshCategories = () => {
-  ElMessage.info('刷新分类功能待实现');
+  BtcMessage.info('刷新分类功能待实现');
 };
 
 // 添加分类
 const handleAddCategory = () => {
-  ElMessage.info('添加分类功能待实现');
+  BtcMessage.info('添加分类功能待实现');
 };
 
 // 文件类型判断
@@ -321,7 +321,7 @@ const handleFileDownload = (file: any) => {
 // 文件删除
 const handleFileDelete = async (file: any) => {
   try {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -330,7 +330,7 @@ const handleFileDelete = async (file: any) => {
     // TODO: 调用删除接口
     // await service.system?.iam?.file?.delete(file.id);
     
-    ElMessage.success(t('crud.message.delete_success'));
+    BtcMessage.success(t('crud.message.delete_success'));
     refreshFileList();
   } catch (error) {
     // 用户取消删除
@@ -340,7 +340,7 @@ const handleFileDelete = async (file: any) => {
 // 批量删除
 const handleBatchDelete = async () => {
   try {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -349,7 +349,7 @@ const handleBatchDelete = async () => {
     // TODO: 调用批量删除接口
     // await service.system?.iam?.file?.deleteBatch(selectedFiles.value);
     
-    ElMessage.success(t('crud.message.delete_success'));
+    BtcMessage.success(t('crud.message.delete_success'));
     selectedFiles.value = [];
     refreshFileList();
   } catch (error) {
@@ -361,7 +361,7 @@ const handleBatchDelete = async () => {
 const beforeUpload = (file: File) => {
   const isLt100M = file.size / 1024 / 1024 < 100;
   if (!isLt100M) {
-    ElMessage.error('文件大小不能超过 100MB!');
+    BtcMessage.error('文件大小不能超过 100MB!');
     return false;
   }
   return true;
@@ -369,13 +369,13 @@ const beforeUpload = (file: File) => {
 
 // 上传成功
 const handleUploadSuccess = (response: any, file: any) => {
-  ElMessage.success('上传成功');
+  BtcMessage.success('上传成功');
   refreshFileList();
 };
 
 // 上传失败
 const handleUploadError = (error: any) => {
-  ElMessage.error('上传失败');
+  BtcMessage.error('上传失败');
 };
 
 // 刷新文件列表

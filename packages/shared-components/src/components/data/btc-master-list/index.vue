@@ -84,10 +84,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { useI18n } from '@btc/shared-core';
 import { Check, Close, Refresh, MoreFilled, Search } from '@element-plus/icons-vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import { BtcMessage } from '@btc/shared-components';
 
 // 树形数据处理工具函数
 function deepTree(data: any[], parentId: any = 0, children = 'children'): any[] {
@@ -272,7 +273,7 @@ async function refresh() {
 
   } catch (error) {
     console.error('加载数据失败:', error);
-    ElMessage.error('加载数据失败');
+    BtcMessage.error('加载数据失败');
   } finally {
     loading.value = false;
   }
@@ -339,9 +340,9 @@ function onContextMenu(event: any, data?: any, node?: any) {
 // 拖拽排序
 function treeOrder(save: boolean) {
   if (save) {
-    ElMessage.success('排序已保存');
+    BtcMessage.success('排序已保存');
   } else {
-    ElMessage.info('已取消排序');
+    BtcMessage.info('已取消排序');
   }
   isDrag.value = false;
 }

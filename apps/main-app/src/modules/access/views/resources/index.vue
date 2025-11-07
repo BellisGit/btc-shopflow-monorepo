@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -47,7 +47,7 @@ const resourceService = service.system?.iam?.resource;
 const wrappedResourceService = {
   ...resourceService,
   delete: async (id: string | number) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
     await resourceService.delete(id);
@@ -55,7 +55,7 @@ const wrappedResourceService = {
     message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: (string | number)[]) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
     await resourceService.deleteBatch(ids);

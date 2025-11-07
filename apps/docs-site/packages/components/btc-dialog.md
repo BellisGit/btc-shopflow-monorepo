@@ -128,10 +128,10 @@ title="编辑用户"
 </template>
 
 <script setup lang="ts">
-import { ElMessageBox } from 'element-plus';
+import { BtcConfirm } from '@btc/shared-components';
 
 const handleBeforeClose = (done: () => void) => {
-ElMessageBox.confirm('确定要关闭吗？数据将不会保存')
+BtcConfirm('确定要关闭吗？数据将不会保存')
 .then(() => {
 done(); // 调用 done 才会真正关闭
 })

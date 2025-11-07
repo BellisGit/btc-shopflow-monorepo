@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyAction } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
@@ -148,7 +148,7 @@ const updateParameters = (action: ExtendedAction) => {
     action.parameters = JSON.parse(action.parametersJson || '{}');
     emitUpdate();
   } catch (error) {
-    ElMessage.error('参数格式错误，请输入有效的JSON');
+    BtcMessage.error('参数格式错误，请输入有效的JSON');
   }
 };
 

@@ -1,5 +1,5 @@
 import { ref, reactive, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { http } from '@/utils/http';
@@ -39,12 +39,12 @@ export function useLogin() {
   const submit = async () => {
     // 基础验证
     if (!form.username) {
-      ElMessage.error(t('用户名不能为空'));
+      BtcMessage.error(t('用户名不能为空'));
       return;
     }
 
     if (!form.password) {
-      ElMessage.error(t('密码不能为空'));
+      BtcMessage.error(t('密码不能为空'));
       return;
     }
 
@@ -62,7 +62,7 @@ export function useLogin() {
       });
 
       if (response) {
-        ElMessage.success(t('登录成功'));
+        BtcMessage.success(t('登录成功'));
 
         // 保存 token（如果响应中包含）
         if (response.token) {
@@ -81,7 +81,7 @@ export function useLogin() {
         await nextTick();
         router.push('/');
       } else {
-        ElMessage.error(t('登录失败'));
+        BtcMessage.error(t('登录失败'));
       }
     } catch (error: any) {
       // 安全地记录错误信息
@@ -90,7 +90,7 @@ export function useLogin() {
         response: error.response
       };
       console.error('登录错误:', errorInfo);
-      ElMessage.error(error.message || t('登录失败'));
+      BtcMessage.error(error.message || t('登录失败'));
       
       // 返回错误，让调用方刷新验证码
       throw error;

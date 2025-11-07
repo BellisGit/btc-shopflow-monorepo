@@ -2,8 +2,9 @@
  * ViewGroup 拖拽排序 Hook
  */
 import { ref } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import type { ViewGroupOptions } from '../types';
+import { BtcMessage } from '@btc/shared-components';
 
 export function useViewGroupDrag(config: ViewGroupOptions, list: any, refresh: any) {
   const isDrag = ref(false);
@@ -12,7 +13,7 @@ export function useViewGroupDrag(config: ViewGroupOptions, list: any, refresh: a
   function treeOrder(confirm: boolean) {
     if (confirm) {
       // 确认排序 - 这里应该调用后端API保存新的顺序
-      ElMessage.success('排序已保存');
+      BtcMessage.success('排序已保存');
 
       if (config.onDragEnd) {
         config.onDragEnd(list.value);
@@ -36,4 +37,3 @@ export function useViewGroupDrag(config: ViewGroupOptions, list: any, refresh: a
     handleDrop,
   };
 }
-

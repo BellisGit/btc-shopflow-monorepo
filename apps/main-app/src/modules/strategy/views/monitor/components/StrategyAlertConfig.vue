@@ -162,7 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { Strategy, StrategyAlert } from '@/types/strategy';
 import { StrategyType, StrategyStatus } from '@/types/strategy';
 import { strategyService } from '@/services/strategy';
@@ -350,7 +350,7 @@ const saveAlert = async () => {
 
     await strategyService.createAlert(alertData);
 
-    ElMessage.success('告警规则保存成功');
+    BtcMessage.success('告警规则保存成功');
     emit('save');
 
     // 重新加载告警列表
@@ -358,7 +358,7 @@ const saveAlert = async () => {
     resetForm();
 
   } catch (error) {
-    ElMessage.error('保存失败');
+    BtcMessage.error(error.message || '保存失败');
   } finally {
     saving.value = false;
   }
@@ -388,17 +388,19 @@ const editAlert = (alert: StrategyAlert) => {
 
 const deleteAlert = async (alert: StrategyAlert) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个告警规则吗？', '确认删除', {
+    await BtcConfirm('确定要删除这个告警规则吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
       type: 'warning'
     });
 
     await strategyService.deleteAlert(alert.id);
-    ElMessage.success('告警规则删除成功');
+    BtcMessage.success('告警规则删除成功');
 
     loadExistingAlerts();
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败');
+      BtcMessage.error('删除失败');
     }
   }
 };

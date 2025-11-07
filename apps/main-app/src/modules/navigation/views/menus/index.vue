@@ -20,7 +20,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { ElTree } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
@@ -49,7 +50,7 @@ const menuService = service.system?.iam?.menu;
 const wrappedMenuService = {
   ...menuService,
   delete: async (id: string | number) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
       type: 'warning',
     });
 
@@ -62,7 +63,7 @@ const wrappedMenuService = {
     }
   },
   deleteBatch: async (ids: (string | number)[]) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), {
       type: 'warning',
     });
 

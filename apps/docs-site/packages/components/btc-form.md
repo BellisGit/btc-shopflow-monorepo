@@ -41,6 +41,7 @@ sidebar_group: packages
 <script setup>
 import { ref } from 'vue';
 import { useBtcForm } from '@btc/shared-core';
+import { BtcMessage } from '@btc/shared-components';
 
 const { Form } = useBtcForm();
 </script>
@@ -62,7 +63,7 @@ on: {
 submit: async (data, { close, done }) => {
 try {
 await userService.add(data);
-ElMessage.success('保存成功');
+BtcMessage.success('保存成功');
 close();
 } catch (error) {
 done();

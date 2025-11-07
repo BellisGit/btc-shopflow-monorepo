@@ -84,9 +84,17 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { Close } from '@element-plus/icons-vue';
-import { useIdentityVerify, type VerifyType } from './composables/useIdentityVerify';
+import {
+  useIdentityVerify,
+  type VerifyType,
+  type SendSmsCodeFn,
+  type SendEmailCodeFn,
+  type VerifySmsCodeFn,
+  type VerifyEmailCodeFn
+} from './composables/useIdentityVerify';
+import type { VerifyPhoneApi, VerifyEmailApi } from './types';
 import BtcDialog from '@btc-common/dialog/index.vue';
 import type { Component } from 'vue';
 import VerifyHeader from './components/VerifyHeader.vue';
@@ -94,19 +102,11 @@ import VerifyTabs from './components/VerifyTabs.vue';
 import PhoneVerifyForm from './components/PhoneVerifyForm.vue';
 import EmailVerifyForm from './components/EmailVerifyForm.vue';
 import VerifyFormFooter from './components/VerifyFormFooter.vue';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcIdentityVerify'
 });
-
-// 定义 API 函数类型
-export interface VerifyPhoneApi {
-  (params: { type: 'phone' }): Promise<string | { data: string; phone?: string }>;
-}
-
-export interface VerifyEmailApi {
-  (params: { type: 'email' }): Promise<string | { data: string; email?: string }>;
-}
 
 interface Props {
   modelValue: boolean;
@@ -118,13 +118,13 @@ interface Props {
   /** 账号名称（用于显示） */
   accountName?: string;
   /** 发送短信验证码函数 */
-  sendSmsCode: (phone: string, smsType?: string) => Promise<void>;
+  sendSmsCode: SendSmsCodeFn;
   /** 发送邮箱验证码函数 */
-  sendEmailCode: (email: string, scene?: string) => Promise<void>;
+  sendEmailCode: SendEmailCodeFn;
   /** 验证短信验证码函数 */
-  verifySmsCode: (phone: string, smsCode: string, smsType?: string) => Promise<void>;
+  verifySmsCode: VerifySmsCodeFn;
   /** 验证邮箱验证码函数 */
-  verifyEmailCode: (email: string, emailCode: string, scene?: string) => Promise<void>;
+  verifyEmailCode: VerifyEmailCodeFn;
   /** 检查手机号绑定状态 */
   checkPhoneBinding: VerifyPhoneApi;
   /** 检查邮箱绑定状态 */
@@ -252,7 +252,7 @@ const handleSendSmsCode = async () => {
 
     // 手动更新状态（因为绕过了 useSmsCode 的 send 方法）
     smsHasSent.value = true;
-    ElMessage.success('验证码已发送');
+    BtcMessage.success('验证码已发送');
 
     // 开始倒计时
     smsCountdown.value = 60;
@@ -264,7 +264,7 @@ const handleSendSmsCode = async () => {
     }, 1000);
   } catch (error: any) {
     console.error('发送手机验证码失败:', error);
-    ElMessage.error(error?.message || '发送验证码失败');
+    BtcMessage.error(error?.message || '发送验证码失败');
   } finally {
     smsSending.value = false;
   }
@@ -279,7 +279,7 @@ const handleSendEmailCode = async () => {
     await sendEmailCode();
   } catch (error: any) {
     console.error('发送邮箱验证码失败:', error);
-    ElMessage.error(error?.message || '发送验证码失败');
+    BtcMessage.error(error?.message || '发送验证码失败');
   }
 };
 
@@ -294,28 +294,12 @@ const handleEmailCodeComplete = () => {
 
 // 执行验证
 const handleVerify = async () => {
-  console.log('[验证窗口] 点击立即验证，开始验证...', {
-    currentVerifyType: currentVerifyType.value,
-    phoneForm: phoneForm,
-    emailForm: emailForm
-  });
-  
   const result = await verify();
-  
-  console.log('[验证窗口] 验证结果:', {
-    success: result,
-    currentVerifyType: currentVerifyType.value,
-    verifyError: verifyError.value
-  });
-  
+
   // 只有验证成功时才继续，验证失败时 verify 会返回 false 并显示错误信息
   if (!result) {
-    // 验证失败，不触发 success 事件
-    console.log('[验证窗口] 验证失败，不触发 success 事件');
     return;
   }
-  
-  console.log('[验证窗口] 验证成功，将触发 success 事件');
 };
 
 // 关闭弹窗
@@ -500,7 +484,7 @@ const fetchSecurePhone = async () => {
     }
   } catch (error: any) {
     console.error('获取安全手机号失败:', error);
-    ElMessage.error(error?.message || '获取安全手机号失败');
+    BtcMessage.error(error?.message || '获取安全手机号失败');
     // 确保 phoneForm.phone 是字符串类型
     phoneForm.phone = '';
   } finally {
@@ -543,7 +527,7 @@ const fetchSecureEmail = async () => {
     }
   } catch (error: any) {
     console.error('获取安全邮箱失败:', error);
-    ElMessage.error(error?.message || '获取安全邮箱失败');
+    BtcMessage.error(error?.message || '获取安全邮箱失败');
     // 确保 emailForm.email 是字符串类型
     emailForm.email = '';
   } finally {

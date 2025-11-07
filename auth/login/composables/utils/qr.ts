@@ -3,7 +3,7 @@
  */
 
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 二维码登录状态
@@ -71,12 +71,12 @@ export function createQrCodeGenerator(
         state.expiresAt = Date.now() + response.data.expiresIn * 1000;
         
         onSuccess?.(state.qrCode);
-        ElMessage.success('二维码已生成');
+        BtcMessage.success('二维码已生成');
       } else {
-        ElMessage.error('二维码生成失败');
+        BtcMessage.error('二维码生成失败');
       }
     } catch (error: any) {
-      ElMessage.error('二维码生成失败，请重试');
+      BtcMessage.error('二维码生成失败，请重试');
     } finally {
       loading.value = false;
     }
@@ -182,7 +182,7 @@ export function createQrLoginHandler(
 ) {
   const handleQrLogin = async () => {
     if (state.status !== 'confirmed') {
-      ElMessage.warning('请先确认登录');
+      BtcMessage.warning('请先确认登录');
       return;
     }
 
@@ -200,14 +200,14 @@ export function createQrLoginHandler(
 
       if (response.code === 2000) {
         state.status = 'success';
-        ElMessage.success('登录成功');
+        BtcMessage.success(response.msg || '登录成功');
         onSuccess?.(response.data);
       } else {
-        ElMessage.error(response.msg || '登录失败');
+        BtcMessage.error(response.msg || '登录失败');
         onError?.(response);
       }
     } catch (error: any) {
-      ElMessage.error('登录失败，请重试');
+      BtcMessage.error(error.message || '二维码登录失败');
       onError?.(error);
     }
   };

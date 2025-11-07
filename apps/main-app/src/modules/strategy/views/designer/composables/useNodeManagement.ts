@@ -1,5 +1,5 @@
 ﻿import { ref, computed, nextTick } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { StrategyNode, NodeType } from '@/types/strategy';
 import { NodeType as NodeTypeEnum } from '@/types/strategy';
 
@@ -140,7 +140,7 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
     // 验证节点类型唯一性
     const validation = validateNodeTypeUniqueness(component.type);
     if (!validation.valid) {
-      ElMessage.warning(validation.message!);
+      BtcMessage.warning(validation.message!);
       return null;
     }
 
@@ -209,7 +209,9 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
   const deleteNode = async (nodeId: string, skipConfirm = false) => {
     try {
       if (!skipConfirm) {
-        await ElMessageBox.confirm('确定要删除这个节点吗？', '确认删除', {
+        await BtcConfirm('确定要删除这个节点吗？', '确认删除', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
           type: 'warning'
         });
       }
@@ -220,7 +222,7 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
         selectedNodeId.value = '';
       }
 
-      ElMessage.success('节点删除成功');
+      BtcMessage.success('节点删除成功');
       return true;
     } catch {
       return false;

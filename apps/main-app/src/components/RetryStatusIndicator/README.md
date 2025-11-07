@@ -183,7 +183,7 @@ http.resetRetry();
 watch(() => retryStatus.value.retryCount, (count) => {
   if (count > 2) {
     // 重试次数过多时的自定义处理
-    ElMessage.warning('网络连接不稳定，请检查网络设置');
+    BtcMessage.warning('网络连接不稳定，请检查网络设置');
   }
 });
 ```

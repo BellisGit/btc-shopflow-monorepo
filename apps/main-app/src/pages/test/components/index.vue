@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
 import {
   getAllTestInstanceConfigs,
@@ -129,7 +129,7 @@ const loadTestInstances = async () => {
     testInstances.value = testModules.filter(Boolean) as TestInstance[];
   } catch (error) {
     console.error('加载测试实例失败:', error);
-    ElMessage.error('加载测试实例失败');
+    BtcMessage.error('加载测试实例失败');
   }
 };
 

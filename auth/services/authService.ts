@@ -9,7 +9,6 @@
 import { request } from '/@/btc/service/request';
 import { storage } from '/@/btc/utils';
 import type { ApiResponse } from '/@/btc/service/request';
-import { ElMessage } from 'element-plus';
 
 // ==================== 类型定义 ====================
 

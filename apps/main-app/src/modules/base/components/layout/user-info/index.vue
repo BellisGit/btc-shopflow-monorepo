@@ -73,7 +73,7 @@
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -141,10 +141,10 @@ const handleCommand = (command: string) => {
       router.push('/settings');
       break;
     case 'logout':
-      ElMessageBox.confirm(t('common.logoutConfirm'), t('common.warning'), {
-        type: 'warning',
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel')
+      BtcConfirm(t('common.logoutConfirm'), t('common.warning'), {
+        confirmButtonText: t('common.button.confirm'),
+        cancelButtonText: t('common.button.cancel'),
+        type: 'warning'
       })
         .then(() => {
           logout();

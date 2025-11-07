@@ -132,7 +132,7 @@ interface NotificationQueueConfig {
 
 ## 与 MessageManager 的区别
 
-1. **基础组件**: 基于 `ElNotification` 而不是 `ElMessage`
+1. **基础组件**: 基于 `ElNotification` 而不是 `BtcMessage`
 2. **定位方式**: 徽章中心与左上角顶点重合，而不是右上角
 3. **标题支持**: 支持可选的标题参数
 4. **显示位置**: 通常在页面右上角显示

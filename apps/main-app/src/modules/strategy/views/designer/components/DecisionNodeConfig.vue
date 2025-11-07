@@ -85,7 +85,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyRule } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
@@ -150,7 +150,7 @@ const updateVariables = (rule: ExtendedRule) => {
     rule.variables = JSON.parse(rule.variablesJson || '{}');
     emitUpdate();
   } catch (error) {
-    ElMessage.error('变量格式错误，请输入有效的JSON');
+    BtcMessage.error('变量格式错误，请输入有效的JSON');
   }
 };
 

@@ -73,7 +73,7 @@ const sendSmsCode = async (phone: string, smsType?: string) => {
   // 发送短信验证码
 };
 
-const sendEmailCode = async (email: string, type?: string) => {
+const sendEmailCode = async (email: string, smsType?: string) => {
   // 发送邮箱验证码
 };
 
@@ -81,7 +81,7 @@ const verifySmsCode = async (phone: string, smsCode: string, smsType?: string) =
   // 验证短信验证码
 };
 
-const verifyEmailCode = async (email: string, emailCode: string, type?: string) => {
+const verifyEmailCode = async (email: string, emailCode: string, smsType?: string) => {
   // 验证邮箱验证码
 };
 
@@ -113,9 +113,9 @@ const handleCancel = () => {
 | userInfo | 用户信息 | `{ id?: number \| string; phone?: string; email?: string }` | - | ✅ |
 | accountName | 账号名称 | `string` | `'您'` | ❌ |
 | sendSmsCode | 发送短信验证码函数 | `(phone: string, smsType?: string) => Promise<void>` | - | ✅ |
-| sendEmailCode | 发送邮箱验证码函数 | `(email: string, type?: string) => Promise<void>` | - | ✅ |
+| sendEmailCode | 发送邮箱验证码函数 | `(email: string, smsType?: string) => Promise<void>` | - | ✅ |
 | verifySmsCode | 验证短信验证码函数 | `(phone: string, smsCode: string, smsType?: string) => Promise<void>` | - | ✅ |
-| verifyEmailCode | 验证邮箱验证码函数 | `(email: string, emailCode: string, type?: string) => Promise<void>` | - | ✅ |
+| verifyEmailCode | 验证邮箱验证码函数 | `(email: string, emailCode: string, smsType?: string) => Promise<void>` | - | ✅ |
 | checkPhoneBinding | 检查手机号绑定状态 | `(params: { type: 'phone' }) => Promise<string \| { data: string; phone?: string }>` | - | ✅ |
 | checkEmailBinding | 检查邮箱绑定状态 | `(params: { type: 'email' }) => Promise<string \| { data: string; email?: string }>` | - | ✅ |
 | smsCodeInputComponent | 验证码输入组件 | `Component` | - | ❌ |

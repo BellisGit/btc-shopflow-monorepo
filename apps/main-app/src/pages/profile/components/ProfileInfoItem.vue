@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { Edit, CopyDocument } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'ProfileInfoItem'
@@ -58,7 +58,7 @@ const handleCopy = async () => {
     // 优先使用现代 Clipboard API
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(props.value);
-      ElMessage.success('复制成功');
+      BtcMessage.success('复制成功');
       return;
     }
 
@@ -82,13 +82,13 @@ const handleCopy = async () => {
     document.body.removeChild(textArea);
 
     if (successful) {
-      ElMessage.success('复制成功');
+      BtcMessage.success('复制成功');
     } else {
-      ElMessage.error('复制失败');
+      BtcMessage.error('复制失败');
     }
   } catch (error) {
     console.error('复制失败:', error);
-    ElMessage.error('复制失败');
+    BtcMessage.error('复制失败');
   }
 };
 </script>

@@ -113,7 +113,7 @@ export default defineConfig({
           if (id.includes('src/') && !id.includes('node_modules')) {
             // 模块按功能拆分
             if (id.includes('src/modules')) {
-              const moduleName = id.match(/src\/modules\/([^\/]+)/)?.[1];
+              const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
               if (moduleName && ['access', 'navigation', 'org'].includes(moduleName)) {
                 return `module-${moduleName}`;
               }

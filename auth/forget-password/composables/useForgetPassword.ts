@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useSmsCode } from '@btc/shared-core';
@@ -31,10 +31,10 @@ export function useForgetPassword() {
     countdown: 60,
     minInterval: 60,
     onSuccess: () => {
-      ElMessage.success(t('验证码已发送'));
+      BtcMessage.success(t('验证码已发送'));
     },
     onError: (error) => {
-      ElMessage.error(error.message || t('发送验证码失败'));
+      BtcMessage.error(error.message || t('发送验证码失败'));
     }
   });
 
@@ -70,12 +70,12 @@ export function useForgetPassword() {
   // 发送验证码
   const sendSmsCode = async () => {
     if (!form.phone) {
-      ElMessage.warning(t('请输入手机号'));
+      BtcMessage.warning(t('请输入手机号'));
       return;
     }
 
     if (!/^1[3-9]\d{9}$/.test(form.phone)) {
-      ElMessage.warning(t('请输入正确的手机号'));
+      BtcMessage.warning(t('请输入正确的手机号'));
       return;
     }
 
@@ -101,7 +101,7 @@ export function useForgetPassword() {
         newPassword: form.newPassword
       });
 
-      ElMessage.success(t('密码重置成功，请重新登录'));
+      BtcMessage.success(t('密码重置成功，请重新登录'));
       
       // 跳转到登录页
       setTimeout(() => {
@@ -109,7 +109,7 @@ export function useForgetPassword() {
       }, 1500);
     } catch (error: any) {
       if (error.message) {
-        ElMessage.error(error.message);
+        BtcMessage.error(error.message);
       }
       throw error;
     } finally {

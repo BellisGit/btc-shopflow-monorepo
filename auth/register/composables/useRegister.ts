@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { http } from '@/utils/http';
@@ -58,14 +58,14 @@ export function useRegister() {
         password: form.password
       });
 
-      ElMessage.success(t('注册成功'));
+      BtcMessage.success(t('注册成功'));
       // 注册成功后跳转到登录页
       setTimeout(() => {
         router.push('/login');
       }, 1500);
     } catch (error: any) {
       console.error('注册失败:', error);
-      ElMessage.error(error.message || t('注册失败，请重试'));
+      BtcMessage.error(error.message || t('注册失败，请重试'));
     } finally {
       loading.value = false;
     }

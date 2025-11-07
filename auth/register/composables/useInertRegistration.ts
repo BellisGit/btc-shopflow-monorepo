@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { useBase } from '/$/base';
 import { request } from '/@/btc/service/request';
 import {
@@ -76,7 +76,7 @@ export function useInertRegistration() {
 
   const sendSmsCode = async () => {
     // 内网员工注册不使用短信验证
-    ElMessage.warning('内网员工注册不需要验证码');
+    BtcMessage.warning('内网员工注册不需要验证码');
   };
 
   // 注册处理
@@ -135,7 +135,7 @@ export function useInertRegistration() {
     if (currentStep.value === 0) {
       // 第一步：验证员工工号和初始密码
       if (!identityForm.empId || !identityForm.initPassword) {
-        ElMessage.error('请填写完整信息');
+        BtcMessage.error('请填写完整信息');
         return;
       }
 
@@ -152,7 +152,7 @@ export function useInertRegistration() {
         });
 
         if (response.code === 2000) {
-          ElMessage.success('员工信息验证成功');
+          BtcMessage.success('员工信息验证成功');
           // 保存会话ID和员工信息
           if (response.data) {
             sessionId.value = response.data.sessionId || '';
@@ -162,10 +162,10 @@ export function useInertRegistration() {
           }
           nextStep(); // 进入第二步
         } else {
-          ElMessage.error(response.msg || '员工信息验证失败');
+          BtcMessage.error(response.msg || '员工信息验证失败');
         }
       } catch (error: any) {
-        ElMessage.error(error.message || '员工信息验证失败');
+        BtcMessage.error(error.message || '员工信息验证失败');
       } finally {
         verifying.value = false;
       }
@@ -183,10 +183,10 @@ export function useInertRegistration() {
           }
         });
 
-        ElMessage.success('注册申请已提交，请等待管理员审核');
+        BtcMessage.success('注册申请已提交，请等待管理员审核');
         nextStep();
       } catch (error: any) {
-        ElMessage.error(error.message || '提交失败');
+        BtcMessage.error(error.message || '提交失败');
       }
     }
   };

@@ -114,7 +114,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyCondition } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
@@ -237,7 +237,7 @@ const testConditions = () => {
     const result = evaluateConditions(conditions.value, data);
     testResult.value = result;
   } catch (error) {
-    ElMessage.error('测试数据格式错误，请输入有效的JSON');
+    BtcMessage.error('测试数据格式错误，请输入有效的JSON');
     testResult.value = null;
   }
 };

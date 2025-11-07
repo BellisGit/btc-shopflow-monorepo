@@ -3,7 +3,7 @@
  */
 
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { validatePasswordStrength } from '../../shared/composables/validation';
 import { passwordLogin } from '../../shared/composables/api';
 
@@ -76,7 +76,7 @@ export function createPasswordLoginHandler(
 
   const handleLogin = async () => {
     if (!form.username || !form.password) {
-      ElMessage.warning('请填写完整的登录信息');
+      BtcMessage.warning('请填写完整的登录信息');
       return;
     }
 
@@ -90,14 +90,14 @@ export function createPasswordLoginHandler(
       });
 
       if (response.code === 2000) {
-        ElMessage.success('登录成功');
+        BtcMessage.success('登录成功');
         onSuccess?.(response.data);
       } else {
-        ElMessage.error(response.msg || '登录失败');
+        BtcMessage.error(response.msg || '登录失败');
         onError?.(response);
       }
     } catch (error: any) {
-      ElMessage.error(error.message || '登录失败，请重试');
+      BtcMessage.error(error.message || '登录失败，请重试');
       onError?.(error);
     } finally {
       loading.value = false;

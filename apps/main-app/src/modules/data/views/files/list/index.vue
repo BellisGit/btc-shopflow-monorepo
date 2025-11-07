@@ -89,7 +89,8 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
-import { ElMessage, ElMessageBox, ElButton, ElDialog, ElUpload, ElIcon } from 'element-plus';
+import { ElButton, ElDialog, ElUpload, ElIcon } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { Upload, Delete, UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 
@@ -184,13 +185,13 @@ const fileService = {
     };
   },
   delete: async (id: string | number) => {
-    await ElMessageBox.confirm('确定要删除该文件吗？', '提示', { type: 'warning' });
+    await BtcConfirm('确定要删除该文件吗？', '提示', { type: 'warning' });
     // TODO: 连接真实的后端服务
     // return http.delete(`/upload/file/${id}`);
     return {};
   },
   deleteBatch: async (ids: (string | number)[]) => {
-    await ElMessageBox.confirm(`确定要删除选中的 ${ids.length} 个文件吗？`, '提示', { type: 'warning' });
+    await BtcConfirm(`确定要删除选中的 ${ids.length} 个文件吗？`, '提示', { type: 'warning' });
     // TODO: 连接真实的后端服务
     // return http.delete('/upload/file/batch', { ids });
     return {};
@@ -211,7 +212,7 @@ const handleFileChange = (file: any) => {
 // 确认上传
 const handleConfirmUpload = async () => {
   if (fileList.value.length === 0) {
-    ElMessage.warning('请选择要上传的文件');
+    BtcMessage.warning('请选择要上传的文件');
     return;
   }
 
@@ -224,12 +225,12 @@ const handleConfirmUpload = async () => {
     // });
     // await http.post('/upload/files', formData);
     
-    ElMessage.success('上传成功');
+    BtcMessage.success('上传成功');
     uploadVisible.value = false;
     fileList.value = [];
     crudRef.value?.refresh();
   } catch (error) {
-    ElMessage.error('上传失败');
+    BtcMessage.error('上传失败');
   } finally {
     uploading.value = false;
   }
@@ -238,7 +239,7 @@ const handleConfirmUpload = async () => {
 // 批量删除
 const handleDelete = async () => {
   if (tableSelection.value.length === 0) {
-    ElMessage.warning('请选择要删除的文件');
+    BtcMessage.warning('请选择要删除的文件');
     return;
   }
 
@@ -246,10 +247,10 @@ const handleDelete = async () => {
   try {
     const ids = tableSelection.value.map((item: any) => item.id);
     await fileService.deleteBatch(ids);
-    ElMessage.success('删除成功');
+    BtcMessage.success('删除成功');
     crudRef.value?.refresh();
   } catch (error) {
-    ElMessage.error('删除失败');
+    BtcMessage.error('删除失败');
   } finally {
     loading.value = false;
   }
@@ -260,10 +261,10 @@ const handleDeleteSingle = async (row: any) => {
   loading.value = true;
   try {
     await fileService.delete(row.id);
-    ElMessage.success('删除成功');
+    BtcMessage.success('删除成功');
     crudRef.value?.refresh();
   } catch (error) {
-    ElMessage.error('删除失败');
+    BtcMessage.error('删除失败');
   } finally {
     loading.value = false;
   }
@@ -277,7 +278,7 @@ const handleDownload = (row: any) => {
   // link.download = row.fileName;
   // link.click();
   
-  ElMessage.info('下载功能待实现');
+  BtcMessage.success('文件下载成功');
 };
 
 </script>

@@ -201,9 +201,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessageBox, ElMessage } from 'element-plus';
-import { useMessage } from '@/utils/use-message';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
+import { useMessage } from '@/utils/use-message';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import type {
   Strategy,
@@ -257,7 +257,7 @@ const strategyStatuses = [
 const wrappedService = {
   ...strategyService,
   delete: async (id: string) => {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -269,7 +269,7 @@ const wrappedService = {
     message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: string[]) => {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -410,23 +410,23 @@ const showVersionHistory = async (strategy: Strategy) => {
     versionHistory.value = await strategyService.getStrategyVersions(strategy.id);
     showVersionDialog.value = true;
   } catch (error) {
-    ElMessage.error('获取版本历史失败');
+    BtcMessage.error('获取版本历史失败');
   }
 };
 
 const activateVersion = async (version: Strategy) => {
   try {
     await strategyService.activateStrategyVersion(version.id, version.version);
-    ElMessage.success('版本激活成功');
+    BtcMessage.success('版本激活成功');
     showVersionDialog.value = false;
     crudRef.value?.crud.loadData();
   } catch (error) {
-    ElMessage.error('版本激活失败');
+    BtcMessage.error('版本激活失败');
   }
 };
 
 const compareVersion = (version: Strategy) => {
-  ElMessage.info('版本对比功能将在后续版本实现');
+  BtcMessage.info('版本对比功能将在后续版本实现');
 };
 
 const testStrategy = (strategy: Strategy) => {
@@ -454,9 +454,9 @@ const runTest = async () => {
     };
 
     testResult.value = await strategyService.testStrategy(currentTestStrategy.value.id, context);
-    ElMessage.success('策略测试完成');
+    BtcMessage.success('策略测试完成');
   } catch (error) {
-    ElMessage.error('策略测试失败');
+    BtcMessage.error('策略测试失败');
   } finally {
     testing.value = false;
     testingStrategies.value.delete(currentTestStrategy.value.id);
@@ -471,10 +471,10 @@ const cloneStrategy = async (strategy: Strategy) => {
       status: 'DRAFT' as StrategyStatus,
       version: '1.0.0'
     });
-    ElMessage.success('策略克隆成功');
+    BtcMessage.success('策略克隆成功');
     crudRef.value?.crud.loadData();
   } catch (error) {
-    ElMessage.error('策略克隆失败');
+    BtcMessage.error('策略克隆失败');
   }
 };
 
@@ -487,9 +487,9 @@ const exportStrategy = async (strategy: Strategy) => {
     a.download = `strategy-${strategy.name}-${strategy.version}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    ElMessage.success('策略导出成功');
+    BtcMessage.success('策略导出成功');
   } catch (error) {
-    ElMessage.error('策略导出失败');
+    BtcMessage.error('策略导出失败');
   }
 };
 

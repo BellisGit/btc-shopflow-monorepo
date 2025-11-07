@@ -101,7 +101,7 @@
       width="500px"
     >
       <el-form label-position="top">
-        <el-form-item :label="t('crud.ElMessage.select_export_columns')">
+        <el-form-item :label="t('crud.message.select_export_columns')">
           <el-checkbox-group v-model="exportColumns" class="export-checkbox-group">
             <el-checkbox
               v-for="col in exportableColumns"
@@ -127,9 +127,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessageBox, ElMessage } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 const pluginManager = usePluginManager();
@@ -182,7 +182,7 @@ const userService = {
     const newUser = { id: nextId++, ...data };
     mockUsers.push(newUser);
 
-    ElMessage.success('Added successfully');
+    BtcMessage.success('Added successfully');
     return newUser;
   },
 
@@ -194,14 +194,14 @@ const userService = {
       mockUsers[index] = { ...mockUsers[index], ...data };
     }
 
-    ElMessage.success('Updated successfully');
+    BtcMessage.success('Updated successfully');
     return data;
   },
 
   delete: async (ids: (string | number)[]) => {
     // Confirm delete
-    await ElMessageBox.confirm(
-      t('crud.ElMessage.delete_confirm'),
+    await BtcConfirm(
+      t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
     );
@@ -210,7 +210,7 @@ const userService = {
 
     mockUsers = mockUsers.filter(u => !ids.includes(u.id));
 
-    ElMessage.success(t('crud.ElMessage.delete_success'));
+    BtcMessage.success(t('crud.message.delete_success'));
   },
 };
 
@@ -316,7 +316,7 @@ const handleExport = () => {
   const dataToExport = selection.length > 0 ? selection : mockUsers;
 
   if (dataToExport.length === 0) {
-    ElMessage.warning('No data to export');
+    BtcMessage.warning('No data to export');
     return;
   }
 
@@ -330,7 +330,7 @@ const handleExport = () => {
  */
 const confirmExport = () => {
   if (exportColumns.value.length === 0) {
-    ElMessage.warning('Please select columns to export');
+    BtcMessage.warning('请先选择要导出的列');
     return;
   }
 
@@ -357,7 +357,7 @@ const confirmExport = () => {
   const excelApi = pluginManager.getApi<{ export: (...args: any[]) => void }>('excel');
 
   if (!excelApi) {
-    ElMessage.error('Excel plugin not available');
+    BtcMessage.error('Excel plugin not available');
     return;
   }
 
@@ -375,7 +375,7 @@ const confirmExport = () => {
   });
 
   exportDialogVisible.value = false;
-  ElMessage.success('Export successfully');
+  BtcMessage.success('导出成功');
 };
 
 /**
@@ -392,7 +392,7 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     });
 
     if (validData.length === 0) {
-      ElMessage.error('导入数据无效，请检查数据格式');
+      BtcMessage.error('导入数据无效，请检查数据格式');
       done();
       return;
     }
@@ -415,11 +415,11 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
     crudRef.value?.crud.loadData();
 
     close();
-    ElMessage.success(`成功导入 ${validData.length} 条用户数据`);
+    BtcMessage.success(`成功导入 ${validData.length} 条用户数据`);
 
   } catch (error) {
     console.error('导入失败:', error);
-    ElMessage.error('导入失败，请重试');
+    BtcMessage.error('导入失败，请重试');
     done();
   }
 };
@@ -428,7 +428,7 @@ const handleImport = async (data: { list: any[]; file: File; filename: string },
  * Custom action
  */
 const handleCustomAction = (row: any) => {
-  ElMessage.info(`${t('common.button.custom')}: ${row.name}`);
+  BtcMessage.info(`${t('common.button.custom')}: ${row.name}`);
 };
 
 // Auto load data on mounted

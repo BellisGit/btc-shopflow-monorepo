@@ -32,6 +32,7 @@ sidebar_group: packages
 ```typescript
 import { useCrud } from '@btc/shared-core';
 import type { User } from './types';
+import { BtcMessage } from '@btc/shared-components';
 
 const userService = {
 page: async (params) => ({
@@ -67,8 +68,8 @@ handleSelectionChange,
 clearSelection,
 } = useCrud<User>({
 service: userService,
-onSuccess: (msg) => ElMessage.success(msg),
-onError: (err) => ElMessage.error(err.message),
+onSuccess: (msg) => BtcMessage.success(msg),
+onError: (err) => BtcMessage.error(err.message),
 });
 
 // 初始加载
@@ -267,52 +268,12 @@ onLoad: () => {
 console.log('开始加载...');
 },
 onSuccess: (msg) => {
-ElMessage.success(msg);
+BtcMessage.success(msg);
 // 可以在这里做其他操作，如刷新其他数据
 },
 onError: (error) => {
 console.error('操作失败:', error);
-ElMessage.error(error.message);
+BtcMessage.error(error.message);
 },
 });
 ```
-
-## Service 接口规范
-
-```typescript
-interface CrudService<T> {
-// 分页查询
-page(params: {
-page: number;
-size: number;
-[key: string]: unknown;
-}): Promise<{
-list: T[];
-total: number;
-}>;
-
-// 新增
-add(data: Partial<T>): Promise<T>;
-
-// 更新
-update(data: Partial<T>): Promise<T>;
-
-// 删除
-delete(params: { ids: (number | string)[] }): Promise<void>;
-}
-```
-
-## 最佳实践
-
-1. **类型安全**：始终使用泛型 `useCrud<YourType>()`
-2. **错误处理**：提供 `onError` 回调处理错误
-3. **加载状态**：使用 `loading` 显示加载动画
-4. **批量操作**：利用 `selection` 和 `handleMultiDelete`
-5. **分页持久化**：必要时将 `pagination` 存储到 URL 或 localStorage
-
-## 相关链接
-
-- [BaseService API](../service/base.ts)
-- [ServiceBuilder](../service/builder.ts)
-- [useCore](../index.ts)
-

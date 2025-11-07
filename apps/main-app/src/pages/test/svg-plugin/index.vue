@@ -117,7 +117,7 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, onMounted, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import TestComponent from '@components/TestComponent.vue';
 import { useCore, initEpsData, usePluginManager } from '@btc/shared-core';
 import epsData from 'virtual:eps';
@@ -195,7 +195,7 @@ const testExcelPlugin = () => {
   const excelApi = pluginManager.getApi<{ export: (...args: any[]) => void }>('excel');
 
   if (!excelApi) {
-    ElMessage.error('Excel plugin not installed');
+    BtcMessage.error('Excel plugin not installed');
     return;
   }
 
@@ -211,7 +211,7 @@ const testExcelPlugin = () => {
     filename: 'plugin_test',
   });
 
-  ElMessage.success('Excel exported successfully');
+  BtcMessage.success('Excel plugin export triggered');
 };
 
 /**
@@ -221,7 +221,7 @@ const testNotificationPlugin = () => {
   const notificationApi = pluginManager.getApi<any>('notification');
 
   if (!notificationApi) {
-    ElMessage.error('Notification plugin not installed');
+    BtcMessage.error('Notification plugin not installed');
     return;
   }
 
@@ -241,7 +241,7 @@ const testLoggerPlugin = () => {
   const loggerApi = pluginManager.getApi<any>('logger');
 
   if (!loggerApi) {
-    ElMessage.error('Logger plugin not installed');
+    BtcMessage.error('Logger plugin not installed');
     return;
   }
 

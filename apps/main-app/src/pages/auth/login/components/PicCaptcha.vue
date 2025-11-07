@@ -13,9 +13,9 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { ElMessageBox } from 'element-plus';
 import { Loading } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
+import { BtcAlert } from '@btc/shared-components';
 import { http } from '@/utils/http';
 
 defineOptions({
@@ -67,13 +67,13 @@ async function refresh() {
       emit('update:modelValue', captchaId);
       emit('change');
     } else {
-      ElMessageBox.alert(t('验证码获取失败'), {
+      BtcAlert(t('验证码获取失败'), {
         title: t('提示'),
         type: 'error'
       });
     }
   } catch (err: any) {
-    ElMessageBox.alert(err.message || t('验证码获取失败'), {
+    BtcAlert(err.message || t('验证码获取失败'), {
       title: t('提示'),
       type: 'error'
     });

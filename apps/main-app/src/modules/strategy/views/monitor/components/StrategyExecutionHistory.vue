@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { Refresh } from '@element-plus/icons-vue';
 import type { StrategyExecutionResult } from '@/types/strategy';
 import { strategyService } from '@/services/strategy';
@@ -188,7 +188,7 @@ const refreshHistory = async () => {
     executionHistory.value = result.list;
     totalRecords.value = result.total;
   } catch (error) {
-    ElMessage.error('加载执行历史失败');
+    BtcMessage.error('加载执行历史失败');
   } finally {
     loading.value = false;
   }
@@ -212,9 +212,9 @@ const viewExecutionDetail = (execution: StrategyExecutionResult) => {
 const replayExecution = async (execution: StrategyExecutionResult) => {
   try {
     // 模拟重放执行
-    ElMessage.success('执行重放已启动');
+    BtcMessage.success('执行重放已启动');
   } catch (error) {
-    ElMessage.error('执行重放失败');
+    BtcMessage.error('执行重放失败');
   }
 };
 

@@ -51,14 +51,14 @@ export interface UseEmailCodeReturn {
  * <script setup lang="ts">
  * import { useEmailCode } from '@btc/shared-core';
  * import { codeApi } from '@/modules/api-services';
- * import { ElMessage } from 'element-plus';
- * 
+ * import { BtcMessage } from '@btc/shared-components';
+ *
  * const { countdown, sending, canSend, send, reset } = useEmailCode({
  *   sendEmailCode: codeApi.sendEmailCode,
  *   countdown: 60,
  *   minInterval: 60,
  *   onSuccess: () => {
- *     ElMessage.success('验证码已发送');
+ *     BtcMessage.success('验证码已发送');
  *   }
  * });
  * 
@@ -203,4 +203,3 @@ export function useEmailCode(options: UseEmailCodeOptions): UseEmailCodeReturn {
     reset
   };
 }
-

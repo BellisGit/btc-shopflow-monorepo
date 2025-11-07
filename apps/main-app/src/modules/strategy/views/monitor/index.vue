@@ -151,7 +151,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type {
@@ -202,7 +202,7 @@ const viewModeOptions = [
 const wrappedService = {
   ...strategyService,
   delete: async (id: string) => {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -214,7 +214,7 @@ const wrappedService = {
     message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: string[]) => {
-    await ElMessageBox.confirm(
+    await BtcConfirm(
       t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
@@ -336,7 +336,7 @@ const configureAlerts = (strategy: Strategy) => {
 
 
 const handleAlertSave = () => {
-  ElMessage.success('告警配置保存成功');
+  BtcMessage.success('告警配置保存成功');
   showAlertsDialog.value = false;
 };
 

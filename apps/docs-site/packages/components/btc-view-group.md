@@ -336,6 +336,7 @@ departmentService.updateOrder(newList);
 
 ```vue
 <script setup lang="ts">
+import { BtcConfirm } from '@btc/shared-components';
 const options = {
 label: '部门',
 service: departmentService,
@@ -343,7 +344,7 @@ tree: { visible: true },
 
 // 删除部门时的特殊处理
 onDelete(dept, { next, done }) {
-ElMessageBox.confirm(
+BtcConfirm(
 `删除"${dept.name}"时，该部门的用户如何处理？`,
 '提示',
 {

@@ -31,8 +31,15 @@ declare module 'virtual:ctx' {
 }
 
 declare module 'virtual:eps' {
-  const service: any; // EPS 自动生成的服务树
-  export default service;
+  export const service: Record<string, any>;
+  export const list: any[];
+  interface EpsModule {
+    service: typeof service;
+    list: typeof list;
+    isUpdate?: boolean;
+  }
+  const eps: EpsModule;
+  export default eps;
 }
 
 declare module 'virtual:eps-json' {

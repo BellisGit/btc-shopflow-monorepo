@@ -118,6 +118,7 @@ bookType: 'csv', // 导出为 CSV 格式
 ```vue
 <script setup lang="ts">
 import { exportJsonToExcel, useI18n } from '@btc/shared-core';
+import { BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 
@@ -149,7 +150,7 @@ filename: `用户数据_${new Date().toISOString().split('T')[0]}`,
 autoWidth: true,
 });
 
-ElMessage.success(`已导出 ${dataToExport.length} 条数据`);
+BtcMessage.success(`已导出 ${dataToExport.length} 条数据`);
 };
 </script>
 ```

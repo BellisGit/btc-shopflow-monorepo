@@ -171,28 +171,24 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { Close } from '@element-plus/icons-vue';
-import { useIdentityVerify, type VerifyType } from '../btc-identity-verify/composables/useIdentityVerify';
+import {
+  useIdentityVerify,
+  type VerifyType,
+  type SendSmsCodeFn,
+  type SendEmailCodeFn,
+  type VerifySmsCodeFn,
+  type VerifyEmailCodeFn
+} from '../btc-identity-verify/composables/useIdentityVerify';
+import type { SaveBindingApi } from './types';
 import BtcDialog from '@btc-common/dialog/index.vue';
 import type { Component } from 'vue';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcBindingDialog'
 });
-
-// 定义 API 函数类型
-export interface SaveBindingApi {
-  (params: {
-    id?: number | string;
-    phone?: string;
-    email?: string;
-    smsCode?: string;
-    smsType?: string;
-    emailCode?: string;
-    scene?: string;
-  }): Promise<void>;
-}
 
 interface Props {
   modelValue: boolean;
@@ -204,13 +200,13 @@ interface Props {
   /** 账号名称（用于显示） */
   accountName?: string;
   /** 发送短信验证码函数 */
-  sendSmsCode: (phone: string, smsType?: string) => Promise<void>;
+  sendSmsCode: SendSmsCodeFn;
   /** 发送邮箱验证码函数 */
-  sendEmailCode: (email: string, scene?: string) => Promise<void>;
+  sendEmailCode: SendEmailCodeFn;
   /** 验证短信验证码函数 */
-  verifySmsCode: (phone: string, smsCode: string, smsType?: string) => Promise<void>;
+  verifySmsCode: VerifySmsCodeFn;
   /** 验证邮箱验证码函数 */
-  verifyEmailCode: (email: string, emailCode: string, scene?: string) => Promise<void>;
+  verifyEmailCode: VerifyEmailCodeFn;
   /** 保存绑定信息 */
   saveBinding: SaveBindingApi;
   /** 验证码输入组件 */
@@ -272,17 +268,19 @@ const {
           id: props.userInfo.id,
           phone: phoneForm.phone,
           smsCode: phoneForm.smsCode,
-          smsType: 'bind'
+          smsType: 'bind',
+          scene: 'bind'
         });
-        ElMessage.success('手机号绑定成功');
+        BtcMessage.success('手机号绑定成功');
       } else if (props.bindField === 'email' && emailForm.email && emailForm.emailCode) {
         await props.saveBinding({
           id: props.userInfo.id,
           email: emailForm.email,
           emailCode: emailForm.emailCode,
+          smsType: 'bind',
           scene: 'bind'
         });
-        ElMessage.success('邮箱绑定成功');
+        BtcMessage.success('邮箱绑定成功');
       }
 
       // 绑定成功后，关闭弹窗并触发 success 事件
@@ -290,7 +288,7 @@ const {
       emit('success');
     } catch (error: any) {
       console.error('保存绑定信息失败:', error);
-      ElMessage.error(error?.message || '保存绑定信息失败');
+      BtcMessage.error(error?.message || '保存绑定信息失败');
     }
   },
   onError: (error) => {
@@ -310,13 +308,13 @@ watch(() => props.bindField, (field) => {
 // 发送手机验证码
 const handleSendSmsCode = async () => {
   if (!phoneForm.phone) {
-    ElMessage.warning('请输入手机号');
+    BtcMessage.warning('请输入手机号');
     return;
   }
   // 验证手机号格式
   const phoneRegex = /^1[3-9]\d{9}$/;
   if (!phoneRegex.test(phoneForm.phone)) {
-    ElMessage.warning('请输入正确的手机号');
+    BtcMessage.warning('请输入正确的手机号');
     return;
   }
   // sendSmsCode 来自 useSmsCode，需要传递 phone 和 smsType 参数
@@ -391,4 +389,3 @@ watch(visible, (isVisible) => {
 <style lang="scss" scoped>
 @use './styles.scss' as *;
 </style>
-

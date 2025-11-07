@@ -188,7 +188,7 @@ console.log('Custom action:', row);
 <BtcCrud
 ref="crudRef"
 :service="service"
-:options="{ onSuccess: (msg) => ElMessage.success(msg) }"
+:options="{ onSuccess: (msg) => BtcMessage.success(msg) }"
 >
 <!-- 子组件 -->
 </BtcCrud>

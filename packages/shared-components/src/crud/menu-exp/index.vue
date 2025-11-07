@@ -12,9 +12,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Download } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+
 import { useI18n } from '@btc/shared-core';
 import type { BtcFormItem } from '@btc-common/form/types';
+import { BtcMessage } from '@btc/shared-components';
 
 interface MenuItem {
   id: string | number;
@@ -69,7 +70,7 @@ const formItems = computed<BtcFormItem[]>(() => [
 
 const open = () => {
   if (!props.data || props.data.length === 0) {
-    ElMessage.warning('没有菜单数据可导出');
+    BtcMessage.warning('没有菜单数据可导出');
     return;
   }
 
@@ -84,7 +85,7 @@ const handleSubmit = async (_data: any, { done, close }: any) => {
   const ids = [...checkedKeys, ...halfCheckedKeys];
 
   if (ids.length === 0) {
-    ElMessage.warning(t('请先选择要导出的菜单'));
+    BtcMessage.warning(t('请先选择要导出的菜单'));
     done();
     return;
   }
@@ -114,14 +115,14 @@ const handleSubmit = async (_data: any, { done, close }: any) => {
       // 清理 URL 对象
       URL.revokeObjectURL(url);
 
-      ElMessage.success(t('导出成功'));
+      BtcMessage.success(t('导出成功'));
       close();
     } else {
-      ElMessage.error('导出服务未配置');
+      BtcMessage.error('导出服务未配置');
     }
   } catch (error) {
     console.error('导出失败:', error);
-    ElMessage.error(t('导出失败'));
+    BtcMessage.error(t('导出失败'));
   } finally {
     loading.value = false;
     done();

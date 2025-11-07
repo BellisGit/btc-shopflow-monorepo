@@ -1,9 +1,9 @@
 /**
  * 消息处理器模块
- * 负责管理 ElMessage 的显示、徽章创建和生命周期管理
+ * 负责管理 BtcMessage 的显示、徽章创建和生命周期管理
  */
 
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { messageManager } from '../../utils/message-manager';
 
 // 扩展消息实例类型
@@ -201,8 +201,8 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
   // 生成消息ID
   const messageId = `message-${Date.now()}-${++messageInstanceCounter}`;
 
-  // 使用原生 ElMessage 弹出消息，设置合理的显示时间
-  const messageInstance = ElMessage[type]({
+  // 使用 BtcMessage 弹出消息，设置合理的显示时间
+  const messageInstance = BtcMessage[type]({
     message: message,
     duration: 0, // 设置为0，完全禁用自动关闭
     showClose: false, // 不显示关闭按钮

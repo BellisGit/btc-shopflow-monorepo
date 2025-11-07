@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import {
   Refresh,
   VideoPlay,
@@ -299,7 +299,7 @@ const resetPreview = () => {
 
 const startPreview = async () => {
   if (props.orchestration.nodes.length === 0) {
-    ElMessage.warning('请先添加节点');
+    BtcMessage.warning('请先添加节点');
     return;
   }
 
@@ -307,7 +307,7 @@ const startPreview = async () => {
     const inputData = JSON.parse(configForm.value.inputData);
     await executeOrchestration(inputData);
   } catch (error) {
-    ElMessage.error('输入数据格式错误');
+    BtcMessage.error('输入数据格式错误，请输入有效的JSON');
   }
 };
 

@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { ElMessage } from 'element-plus';
+import { BtcMessage } from '@btc/shared-components';
 import { BtcTabs } from '@btc/shared-components';
 import type { BtcTab } from '@btc/shared-components';
 
@@ -140,12 +140,12 @@ const tableData = ref([
 
 // 标签切换处理
 const handleTabChange = (tab: BtcTab, index: number) => {
-  ElMessage.success(`切换到标签: ${tab.label} (索引: ${index})`);
+  BtcMessage.success(`切换到标签: ${tab.label} (索引: ${index})`);
 };
 
 // 显示消息
 const showMessage = (tabName: string) => {
-  ElMessage.info(`来自 ${tabName} 的消息`);
+  BtcMessage.info(`来自 ${tabName} 的消息`);
 };
 
 // 设置激活标签
@@ -161,21 +161,21 @@ const addNewTab = () => {
     label: `新标签${newIndex}`,
     content: `新标签${newIndex}的内容`
   });
-  ElMessage.success(`添加了新标签: 新标签${newIndex}`);
+  BtcMessage.success(`添加了新标签: 新标签${newIndex}`);
 };
 
 // 删除最后标签
 const removeLastTab = () => {
   if (tabs.value.length > 1) {
     const removedTab = tabs.value.pop();
-    ElMessage.success(`删除了标签: ${removedTab?.label}`);
+    BtcMessage.success(`删除了标签: ${removedTab?.label}`);
 
     // 如果删除的是当前激活的标签，切换到第一个标签
     if (activeTab.value === removedTab?.name) {
       activeTab.value = tabs.value[0].name || 'tab-1';
     }
   } else {
-    ElMessage.warning('至少需要保留一个标签');
+    BtcMessage.warning('至少需要保留一个标签');
   }
 };
 </script>

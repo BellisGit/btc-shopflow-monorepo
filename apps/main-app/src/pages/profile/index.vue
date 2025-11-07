@@ -54,13 +54,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
 import { View, Hide } from '@element-plus/icons-vue';
 import { appStorage } from '@/utils/app-storage';
 import { useProfile } from './composables/useProfile';
-import { useProfileForm } from './composables/useProfileForm';
+import { useProfileForm } from './composables/form';
 import ProfileCard from './components/ProfileCard.vue';
 import BtcIdentityVerifyWrapper from './components/BtcIdentityVerifyWrapper.vue';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'Profile'
@@ -167,7 +167,7 @@ const handleAvatarChange = async (avatarUrl: string) => {
     const { service } = await import('@services/eps');
     const profileService = service.system?.base?.profile;
     if (!profileService) {
-      ElMessage.warning('用户信息服务不可用');
+      BtcMessage.warning('用户信息服务不可用');
       return;
     }
 
@@ -199,13 +199,13 @@ const handleAvatarChange = async (avatarUrl: string) => {
       }
     }));
 
-    ElMessage.success('头像更新成功');
+    BtcMessage.success('头像更新成功');
     
     // 重新加载用户信息
     await loadUserInfo(showFullInfo.value);
   } catch (error: any) {
     console.error('保存头像失败:', error);
-    ElMessage.error(error?.message || '保存头像失败');
+    BtcMessage.error(error?.message || '保存头像失败');
   }
 };
 

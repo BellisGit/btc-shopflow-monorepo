@@ -60,7 +60,7 @@
             <li><strong>类型化支持</strong>：支持 success、warning、info、error 四种类型</li>
             <li><strong>主题适配</strong>：支持亮色/暗色主题切换</li>
             <li><strong>响应式设计</strong>：移动端友好的徽标尺寸</li>
-            <li><strong>完全兼容</strong>：基于原生 ElMessage，保持所有原生功能</li>
+            <li><strong>完全兼容</strong>：基于原生 BtcMessage，保持所有原生功能</li>
           </ul>
 
           <h4>BtcNotification 特性：</h4>

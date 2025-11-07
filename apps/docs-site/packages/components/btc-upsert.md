@@ -65,6 +65,8 @@ width="800px"
 <script setup>
 import { computed } from 'vue';
 import type { FormItem } from '@btc/shared-components';
+import { BtcMessage } from '@btc/shared-components';
+import { BtcConfirm } from '@btc/shared-components';
 
 const formItems = computed<FormItem[]>(() => [
 {
@@ -91,12 +93,13 @@ await userService.add(data);
 }
 close();
 crudRef.value?.crud.loadData();
+BtcMessage.success('保存成功');
 } catch (error) {
 done(); // 恢复按钮状态
+BtcMessage.error(error?.message || '保存失败');
 }
 };
 </script>
-```
 
 ## 配置选项
 
@@ -217,7 +220,7 @@ status: 1
 await next(processedData);
 
 // 提交后处理
-ElMessage.success('保存成功');
+BtcMessage.success('保存成功');
 close();
 
 } catch (error) {
@@ -301,7 +304,7 @@ options: options.value // 响应式选项
 <script setup>
 const handleClose = (action, done) => {
 if (action === 'close') {
-ElMessageBox.confirm('表单未保存，确定关闭？', '提示', {
+BtcConfirm('表单未保存，确定关闭？', '提示', {
 type: 'warning'
 })
 .then(() => done()) // 确认关闭

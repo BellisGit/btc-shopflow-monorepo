@@ -98,10 +98,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 const pluginManager = usePluginManager();
@@ -169,8 +168,8 @@ const userService = {
 
   delete: async (ids: (string | number)[]) => {
     // Confirm delete
-    await ElMessageBox.confirm(
-      t('crud.ElMessage.delete_confirm'),
+    await BtcConfirm(
+      t('crud.message.delete_confirm'),
       t('common.button.confirm'),
       { type: 'warning' }
     );
@@ -179,7 +178,7 @@ const userService = {
 
     mockUsers = mockUsers.filter(u => !ids.includes(u.id));
 
-    BtcMessage.success(t('crud.ElMessage.delete_success'));
+    BtcMessage.success(t('crud.message.delete_success'));
   },
 };
 

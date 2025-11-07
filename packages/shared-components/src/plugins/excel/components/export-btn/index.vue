@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue';
-import { ElMessage } from 'element-plus';
+
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
 import BtcForm from '@btc-common/form/index.vue';
@@ -17,6 +17,7 @@ import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
+import { BtcMessage } from '@btc/shared-components';
 
 export interface Props {
   /** 表格列配置（可选，如果不提供则从 CRUD 上下文获取） */
@@ -60,7 +61,6 @@ const hasSelection = computed(() => {
 const currentFilterTotal = computed(() => {
   return crud?.pagination?.total || 0;
 });
-
 
 // 计算数据的实际时间范围
 const dataTimeRange = ref<{ min: string; max: string } | null>(null);
@@ -246,7 +246,7 @@ const exportableColumns = computed(() => {
 
   const open = async () => {
     if (!columns.value || columns.value.length === 0) {
-      ElMessage.error(t('platform.common.no_columns_to_export'));
+      BtcMessage.error(t('platform.common.no_columns_to_export'));
       return;
     }
 
@@ -349,7 +349,7 @@ const exportableColumns = computed(() => {
   const handleSubmit = async (data: any, { done, close }: any) => {
     // 1. 验证列选择
     if (!data.checked || data.checked.length === 0) {
-      ElMessage.warning(t('platform.common.please_select_at_least_one_column'));
+      BtcMessage.warning(t('platform.common.please_select_at_least_one_column'));
       done();
       return;
     }
@@ -379,7 +379,7 @@ const exportableColumns = computed(() => {
       }
 
       if (!exportData || exportData.length === 0) {
-        ElMessage.warning(t('platform.common.no_data_to_export'));
+        BtcMessage.warning(t('platform.common.no_data_to_export'));
         done();
         return;
       }
@@ -393,11 +393,11 @@ const exportableColumns = computed(() => {
         bookType: props.bookType,
       });
 
-      ElMessage.success(t('platform.common.export_success'));
+      BtcMessage.success(t('platform.common.export_success'));
       close();
     } catch (error) {
       console.error('导出失败:', error);
-      ElMessage.error(t('platform.common.export_failed'));
+      BtcMessage.error(t('platform.common.export_failed'));
     } finally {
       loading.value = false;
       done();

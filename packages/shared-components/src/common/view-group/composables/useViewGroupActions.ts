@@ -2,8 +2,9 @@
  * ViewGroup 操作 Hook（选择、编辑、删除等）
  */
 // import { nextTick } from 'vue'; // 不再需要
-import { ElMessageBox } from 'element-plus';
-// import { ElMessage } from 'element-plus'; // 不再直接使用，让响应拦截器统一处理
+
+//  // 不再直接使用，让响应拦截器统一处理
+import { BtcConfirm } from '@btc-components/feedback/btc-message-box';
 import { BtcMessage } from '@btc-components/feedback/btc-message';
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
 
@@ -48,7 +49,7 @@ export function useViewGroupActions(
 
   // 删除
   function remove(item: ViewGroupItem) {
-    ElMessageBox.confirm('此操作将会删除选择的数据，是否继续？', '提示', {
+    BtcConfirm('此操作将会删除选择的数据，是否继续？', '提示', {
       type: 'warning',
     })
       .then(() => {

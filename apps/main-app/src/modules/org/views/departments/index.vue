@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessageBox } from 'element-plus';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -73,7 +73,7 @@ const loadDepartmentOptions = async () => {
 const wrappedDepartmentService = {
   ...departmentService,
   delete: async (id: string | number) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
     await departmentService.delete(id);
@@ -81,7 +81,7 @@ const wrappedDepartmentService = {
     message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: (string | number)[]) => {
-    await ElMessageBox.confirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
     await departmentService.deleteBatch(ids);
