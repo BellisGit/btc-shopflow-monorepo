@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鏍煎紡鍖栭噾棰? * @param value 閲戦
  * @param currency 璐у竵绗﹀彿
  * @returns 鏍煎紡鍖栧悗鐨勯噾棰濆瓧绗︿覆
@@ -28,7 +28,3 @@ export declare function hidePhone(phone: string): string;
  * @returns 闅愯棌鍚庣殑韬唤璇佸彿
  */
 export declare function hideIdCard(idCard: string): string;
-
-
-
-

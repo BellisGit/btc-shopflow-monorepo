@@ -1,4 +1,4 @@
-﻿import type { Plugin } from 'vue';
+import type { Plugin } from 'vue';
 /**
  * GitHub鎻掍欢API鎺ュ彛
  */
@@ -19,5 +19,3 @@ export declare function createGitHubPlugin(): Plugin & {
  * 缁勫悎寮?API锛氫娇鐢℅itHub鎻掍欢
  */
 export declare function useGitHubPlugin(): GitHubPlugin;
-
-

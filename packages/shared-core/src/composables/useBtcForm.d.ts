@@ -1,4 +1,4 @@
-﻿export interface BtcFormConfig {
+export interface BtcFormConfig {
     title?: string;
     height?: string;
     width?: string;
@@ -42,5 +42,3 @@ export declare function useBtcForm(): {
     loading: globalThis.Ref<boolean, boolean>;
     disabled: globalThis.Ref<boolean, boolean>;
 };
-
-

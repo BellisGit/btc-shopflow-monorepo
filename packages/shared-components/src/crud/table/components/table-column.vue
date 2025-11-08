@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, getCurrentInstance, toRaw } from 'vue';
+import { h, getCurrentInstance, toRaw, resolveComponent } from 'vue';
 import { ElTag } from 'element-plus';
 import type { TableColumn } from '../types';
 import { BtcCodeJson } from '@btc/shared-components/plugins/code';
@@ -77,9 +77,15 @@ const renderContent = (column: TableColumn, scope: any) => {
     const componentName = column.component.name;
     if (typeof componentName === 'string') {
       // 从预定义的映射中获取组件
-      const component = componentMap[componentName];
+      const component =
+        componentMap[componentName] ||
+        instance?.appContext.app.component?.(componentName);
       if (component) {
         return h(toRaw(component), props);
+      }
+      const resolved = resolveComponent(componentName);
+      if (resolved && typeof resolved !== 'string') {
+        return h(resolved, props);
       }
       // 如果找不到，回退到显示原始值
       return h('span', {}, { default: () => rawValue || '' });

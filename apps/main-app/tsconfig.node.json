@@ -1,15 +1,41 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
+    "target": "ES2020",
     "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "composite": true,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@modules/*": ["src/modules/*"],
+      "@services/*": ["src/services/*"],
+      "@components/*": ["src/components/*"],
+      "@utils/*": ["src/utils/*"],
+      "@btc-components/*": ["../../packages/shared-components/src/components/*"],
+      "@btc/shared-core": ["../../packages/shared-core/src"],
+      "@btc/shared-core/*": ["../../packages/shared-core/src/*"],
+      "@btc/shared-components": ["../../packages/shared-components/src"],
+      "@btc/shared-components/*": ["../../packages/shared-components/src/*"],
+      "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"]
+    }
   },
   "include": [
-    "vite.config.ts",
-    "src/config/**/*",
-    "vite-plugin-title-inject.ts",
-    "../../configs/**/*"
-  ]
+    "src/config/settings/index.ts",
+    "src/config/settings/layout.ts",
+    "src/config/settings/menu.ts",
+    "src/config/settings/theme.ts",
+    "src/config/settings/ui.ts",
+    "src/plugins/user-setting/config/enums.ts"
+  ],
+  "exclude": []
 }

@@ -2,12 +2,12 @@
  * 全局配置文件
  * 参考：cool-admin-vue-8.x/src/config/index.ts
  */
-export declare const isDev: boolean;
+export declare const isDev: any;
 export declare const env: {
-    MODE: string;
-    DEV: boolean;
-    PROD: boolean;
-    SSR: boolean;
+    MODE: any;
+    DEV: any;
+    PROD: any;
+    SSR: any;
 };
 export declare const config: {
     app: {
@@ -47,6 +47,23 @@ export declare const config: {
             sidebarCollapseWidth: number;
             topbarHeight: number;
             tabbarHeight: number;
+        };
+        systemSetting: {
+            defaultTabStyle: "tab-default";
+            defaultPageTransition: "slide-left";
+            defaultShowWorkTab: boolean;
+            defaultUniqueOpened: boolean;
+            defaultShowGlobalSearch: boolean;
+            defaultShowCrumbs: boolean;
+            defaultColorWeak: boolean;
+            defaultContainerWidth: "full";
+            defaultBoxBorderMode: boolean;
+            defaultCustomRadius: string;
+            defaultMenuType: "left";
+            defaultMenuWidth: number;
+            defaultSystemThemeType: "auto";
+            defaultSystemThemeColor: string;
+            defaultMenuTheme: import("../plugins/user-setting/config/enums").MenuThemeEnum;
         };
     };
     api: {

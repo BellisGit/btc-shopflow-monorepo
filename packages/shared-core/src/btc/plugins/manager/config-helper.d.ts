@@ -1,12 +1,16 @@
-﻿import type { PluginMetadata } from './types';
+import type { PluginMetadata } from './types';
 /**
- * 瀹氫箟鎻掍欢閰嶇疆鐨勮緟鍔╁嚱鏁? * 鎻愪緵绫诲瀷鎻愮ず鍜岄粯璁ゅ€? *
- * @param metadata 鎻掍欢鍏冩暟鎹厤缃? * @returns 鏍囧噯鍖栫殑鎻掍欢鍏冩暟鎹? *
+ * 定义插件配置的辅助函数
+ * 提供类型提示和默认值
+ *
+ * @param metadata 插件元数据配置
+ * @returns 标准化的插件元数据
+ *
  * @example
  * ```typescript
  * const config = definePluginConfig({
- *   label: 'GitHub 闆嗘垚',
- *   description: '鎻愪緵 GitHub 浠ｇ爜灞曠ず鍔熻兘',
+ *   label: 'GitHub 集成',
+ *   description: '提供 GitHub 代码展示功能',
  *   author: 'BTC Team',
  *   version: '1.0.0',
  *   updateTime: '2024-01-15',
@@ -19,34 +23,38 @@
  */
 export declare function definePluginConfig(metadata: PluginMetadata): PluginMetadata;
 /**
- * 鍚堝苟鎻掍欢閰嶇疆
- * 灏嗙敤鎴烽厤缃笌榛樿閰嶇疆鍚堝苟
+ * 合并插件配置
+ * 将用户配置与默认配置合并
  *
- * @param userConfig 鐢ㄦ埛閰嶇疆
- * @param defaultConfig 榛樿閰嶇疆
- * @returns 鍚堝苟鍚庣殑閰嶇疆
+ * @param userConfig 用户配置
+ * @param defaultConfig 默认配置
+ * @returns 合并后的配置
  */
 export declare function mergePluginConfig<T extends Record<string, any>>(userConfig: T, defaultConfig: T): T;
 /**
- * 鍒涘缓鎻掍欢閰嶇疆妯℃澘
- * 鐢ㄤ簬蹇€熺敓鎴愭彃浠堕厤缃? *
- * @param pluginName 鎻掍欢鍚嶇О
- * @returns 鎻掍欢閰嶇疆妯℃澘
+ * 创建插件配置模板
+ * 用于快速生成插件配置
+ *
+ * @param pluginName 插件名称
+ * @returns 插件配置模板
  */
 export declare function createPluginConfigTemplate(pluginName: string): PluginMetadata;
 /**
- * 楠岃瘉鎻掍欢閰嶇疆
- * 妫€鏌ラ厤缃殑瀹屾暣鎬у拰鏈夋晥鎬? *
- * @param metadata 鎻掍欢鍏冩暟鎹? * @returns 楠岃瘉缁撴灉
+ * 验证插件配置
+ * 检查配置的完整性和有效性
+ *
+ * @param metadata 插件元数据
+ * @returns 验证结果
  */
 export declare function validatePluginConfig(metadata: PluginMetadata): {
     valid: boolean;
     errors: string[];
 };
 /**
- * 鏍煎紡鍖栨彃浠朵俊鎭? * 灏嗘彃浠堕厤缃牸寮忓寲涓哄彲璇荤殑瀛楃涓? *
- * @param metadata 鎻掍欢鍏冩暟鎹? * @returns 鏍煎紡鍖栫殑鎻掍欢淇℃伅
+ * 格式化插件信息
+ * 将插件配置格式化为可读的字符串
+ *
+ * @param metadata 插件元数据
+ * @returns 格式化的插件信息
  */
 export declare function formatPluginInfo(metadata: PluginMetadata): string;
-
-

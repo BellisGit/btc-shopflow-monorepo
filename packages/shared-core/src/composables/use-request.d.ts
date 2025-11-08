@@ -1,4 +1,4 @@
-﻿export interface UseRequestReturn<T> {
+export interface UseRequestReturn<T> {
     loading: any;
     data: any;
     error: any;
@@ -8,5 +8,3 @@
  * 閫氱敤璇锋眰 Composable
  */
 export declare function useRequest<T = any>(requestFn: (...args: any[]) => Promise<T>): UseRequestReturn<T>;
-
-

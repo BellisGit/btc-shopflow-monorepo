@@ -1,6 +1,7 @@
 // BTC CRUD Component Global Styles
 // 完全对齐 cool-admin 的样式结构（逐字复制）
 
+// source is cool-admin-vue-8.x/packages/crud/src/static/index.scss - ensure btc classes mirror cl classes closely
 .btc-crud {
 	height: 100%;
 	overflow: hidden auto;
@@ -35,15 +36,44 @@
   font-size: 12px;
 }
 
+.btc-search-key {
+	display: inline-flex;
+
+	&__select {
+		margin-right: 10px;
+
+		&.el-select {
+			width: 100px;
+		}
+	}
+
+	&__wrap {
+		display: inline-flex;
+		align-items: center;
+
+		.el-input {
+			flex: 1;
+		}
+
+		.el-button {
+			margin-left: 10px;
+		}
+	}
+}
+
 .btc-table {
 	width: 100%;
 
-	.el-table {
+	&.el-table {
+		--el-table-header-height: 49px;
+		--el-table-footer-row-height: 49px;
+		--el-table-row-height: 49px;
+
 		&.el-loading-parent--relative {
 			box-sizing: border-box;
 		}
 
-		&__header {
+		.el-table__header {
 			.el-table__cell {
 				background-color: var(--el-fill-color-lighter) !important;
 				color: var(--el-text-color-primary);
@@ -51,10 +81,20 @@
 				.cell {
 					line-height: normal;
 				}
+
+				&.is-sortable {
+					.btc-table-header__search {
+						width: auto;
+
+						&.is-input {
+							width: calc(100% - 24px) !important;
+						}
+					}
+				}
 			}
 		}
 
-		&__empty-block {
+		.el-table__empty-block {
 			height: auto !important;
 		}
 	}
@@ -69,54 +109,353 @@
 			.el-loading-text {
 				color: var(--el-text-color-secondary);
 				margin-top: 5px;
-			}
 		}
 	}
 }
 
-.btc-table-op {
+	&__op {
   margin-bottom: -5px;
 
   .el-button {
     margin-bottom: 5px;
     outline-offset: -2px !important;
 
-    // text/link 按钮添加边框和内边距 (对齐 cool-admin)
-    &.is-link,
-    &.is-text {
-      border: 1px solid var(--el-button-border-color) !important;
-      padding: 5px 11px !important;
-      background-color: transparent !important;
+			&.is-text {
+				border: 1px solid var(--el-button-border-color) !important;
 
-      // 悬浮、聚焦、激活时都保持背景透明
-      &:hover,
-      &:focus,
-      &:active {
-        background-color: transparent !important;
-      }
-    }
+				&:hover {
+					background-color: var(--el-button-bg-color) !important;
+				}
+			}
+		}
+	}
 
-    // 针对所有类型的 link/text 按钮，强制移除背景
-    &.el-button--primary.is-link:hover,
-    &.el-button--primary.is-text:hover,
-    &.el-button--success.is-link:hover,
-    &.el-button--success.is-text:hover,
-    &.el-button--danger.is-link:hover,
-    &.el-button--danger.is-text:hover,
-    &.el-button--warning.is-link:hover,
-    &.el-button--warning.is-text:hover,
-    &.el-button--info.is-link:hover,
-    &.el-button--info.is-text:hover {
-      background-color: transparent !important;
-    }
-  }
+	.btc-table-header__search {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		width: 100%;
+		cursor: pointer;
+
+		&-label {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 5px;
+		}
+
+		&:hover {
+			color: var(--el-color-primary);
+		}
+
+		&-inner {
+			flex: 1;
+
+			& > div {
+				width: 100%;
+
+				.el-date-editor {
+					margin-right: 0;
+				}
+			}
+		}
+
+		&-close {
+			font-size: 14px;
+			height: 30px;
+			width: 30px;
+			border: 1px solid var(--el-border-color);
+			border-radius: 6px;
+			background-color: var(--el-fill-color-blank);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.2s;
+			color: var(--el-text-color-secondary);
+
+			&:hover {
+				border-color: var(--el-border-color-hover);
+				color: var(--el-text-color-primary);
+			}
+		}
+	}
+
+	.is-left {
+		.btc-table-header__search-label {
+			justify-content: flex-start;
+		}
+	}
+
+	.is-right {
+		.btc-table-header__search-label {
+			justify-content: flex-end;
+		}
+	}
 }
 
-.btc-search-key {
-  display: inline-flex;
+.btc-table-op {
+	display: inline-block;
+	margin-bottom: -5px;
 
-  .el-input {
-    width: 200px;
+	.el-button {
+		margin-bottom: 5px;
+		outline-offset: -2px !important;
+
+		&.is-text {
+			padding: 6px 16px;
+			border: 1px solid var(--el-button-border-color) !important;
+			border-radius: 6px;
+			background-color: transparent !important;
+
+			&:hover,
+			&:focus,
+			&:active {
+				background-color: var(--el-button-bg-color) !important;
+			}
+		}
+
+		& + .el-button {
+			margin-left: 10px;
+		}
+	}
+}
+
+.btc-pagination {
+	&.el-pagination {
+		--el-pagination-border-radius: var(--el-border-radius-base);
+	}
+
+	.btn-prev,
+	.btn-next,
+	.el-pager li {
+		border-radius: var(--el-border-radius-base);
+	}
+}
+
+.btc-filter {
+	display: flex;
+	align-items: center;
+	margin: 0 10px;
+
+	&__label {
+		font-size: 12px;
+		margin-right: 10px;
+		white-space: nowrap;
+	}
+
+	.el-select {
+		min-width: 120px;
+	}
+}
+
+.btc-dialog {
+	display: flex;
+	flex-direction: column;
+
+	&.el-dialog {
+		padding: 0;
+		border-radius: 8px;
+	}
+
+	.el-dialog {
+		&__header {
+			padding: 0;
+			margin-right: 0;
+
+			&-slot {
+				&.is-drag {
+					-moz-user-select: none;
+					-webkit-user-select: none;
+					-ms-user-select: none;
+					-khtml-user-select: none;
+					user-select: none;
+					cursor: move;
+				}
+			}
+		}
+
+		&__body {
+			padding: 0;
+			box-sizing: border-box;
+			flex: 1;
+			overflow: hidden;
+		}
+
+		&__footer {
+			padding: 0;
+		}
+	}
+
+	&__header {
+		position: relative;
+		padding: 10px;
+		border-bottom: 1px solid var(--el-border-color-extra-light);
+		text-align: center;
+		user-select: none;
+	}
+
+	&__default {
+		box-sizing: border-box;
+	}
+
+	&__footer {
+		border-top: 1px solid var(--el-border-color-extra-light);
+		padding: 20px;
+	}
+
+	&__title {
+		display: block;
+		font-size: 15px;
+		letter-spacing: 0.5px;
+	}
+
+	&__controls {
+		display: flex;
+		justify-content: flex-end;
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		z-index: 9;
+		width: 100%;
+
+		&-icon,
+		.minimize,
+		.maximize,
+		.close {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 28px;
+			width: 28px;
+			border: 0;
+			background-color: transparent;
+			cursor: pointer;
+			outline: none;
+			border-radius: 6px;
+			margin-left: 5px;
+
+			i {
+				font-size: 18px;
+			}
+
+			&:hover {
+				background-color: var(--el-fill-color-darker);
+			}
+		}
+	}
+}
+
+.btc-context-menu {
+	position: absolute;
+	z-index: 9999;
+
+	&__box {
+		width: 160px;
+		background-color: var(--el-bg-color);
+		border: 1px solid var(--el-border-color-extra-light);
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1),
+			0 2px 4px -2px rgba(0, 0, 0, 0.1);
+		border-radius: 6px;
+		position: absolute;
+		top: 0;
+		padding: 5px;
+
+		&.is-append {
+			right: calc(-100% - 5px);
+			top: -5px;
+		}
+
+		& > div {
+			display: flex;
+			align-items: center;
+			font-size: 12px;
+			cursor: pointer;
+			padding: 5px 15px;
+			color: var(--el-text-color-primary);
+			position: relative;
+			border-radius: 4px;
+
+			span {
+				flex: 1;
+				user-select: none;
+			}
+
+			&:hover {
+				background-color: var(--el-fill-color-lighter);
+			}
+
+			i {
+				&:first-child {
+					margin-right: 5px;
+				}
+
+				&:last-child {
+					margin-left: 5px;
+    }
+  }
+
+			&.is-active {
+				background-color: #f7f7f7;
+				color: #000;
+			}
+
+			&.is-ellipsis {
+				span {
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+				}
+			}
+
+			&.is-disabled {
+				span {
+					color: #ccc;
+
+					&:hover {
+						color: #ccc;
+					}
+				}
+			}
+		}
+	}
+
+	&__target {
+		position: relative;
+
+		&::after {
+			content: "";
+			display: block;
+			position: absolute;
+			left: 0;
+			top: 0;
+			height: 100%;
+			width: 100%;
+			background-color: rgba(0, 0, 0, 0.05);
+		}
+	}
+}
+
+@media only screen and (max-width: 768px) {
+	.el-table {
+		&__body {
+			&-wrapper {
+				&::-webkit-scrollbar {
+					height: 6px;
+					width: 6px;
+				}
+			}
+		}
+	}
+
+	.btc-search-key {
+		width: 100%;
+		margin-right: 0 !important;
+
+		&__wrap {
+			width: 100% !important;
   }
 }
+}
+// end of imported styles
 

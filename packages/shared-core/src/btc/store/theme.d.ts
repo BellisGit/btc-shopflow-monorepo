@@ -1,6 +1,6 @@
-﻿import { type ThemeConfig } from '../composables/useTheme';
+import { type ThemeConfig } from '../composables/useTheme';
 /**
- * 涓婚 Store
+ * 主题 Store
  */
 export declare const useThemeStore: import("pinia").StoreDefinition<"theme", Pick<{
     currentTheme: globalThis.Ref<{
@@ -54,5 +54,3 @@ export declare const useThemeStore: import("pinia").StoreDefinition<"theme", Pic
     setThemeColor: (color: string, dark: boolean) => void;
     updateThemeColor: (color: string) => void;
 }, "switchTheme" | "toggleDark" | "setThemeColor" | "updateThemeColor">>;
-
-

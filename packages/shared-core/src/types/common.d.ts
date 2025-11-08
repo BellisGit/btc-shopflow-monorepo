@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鍩虹 API 鍝嶅簲
  */
 export interface BaseResponse<T = any> {
@@ -31,5 +31,3 @@ export interface DictItem {
     type?: string;
     color?: string;
 }
-
-

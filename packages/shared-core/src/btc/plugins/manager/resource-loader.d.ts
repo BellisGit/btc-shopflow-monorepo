@@ -1,58 +1,68 @@
-﻿/**
- * 鎻掍欢璧勬簮鍔犺浇鍣? * 鐢ㄤ簬鍔犺浇鎻掍欢鐨勯潤鎬佽祫婧愶紙SVG銆佸浘鐗囩瓑锛? * 姣忎釜鎻掍欢鏈夌嫭绔嬬殑璧勬簮鐩綍锛岄伩鍏嶅啿绐? */
 /**
- * SVG 璧勬簮閰嶇疆
+ * 插件资源加载器
+ * 用于加载插件的静态资源（SVG、图片等）
+ * 每个插件有独立的资源目录，避免冲突
+ */
+/**
+ * SVG 资源配置
  */
 export interface SvgResource {
     /**
-     * SVG 鍚嶇О锛堟枃浠跺悕锛?     */
+     * SVG 名称（文件名）
+     */
     name: string;
     /**
-     * SVG 鍐呭鎴栬矾寰?     */
+     * SVG 内容或路径
+     */
     content: string;
     /**
-     * 鎵€灞炴彃浠?     */
+     * 所属插件
+     */
     plugin: string;
 }
 /**
- * 璧勬簮鍔犺浇鍣? */
+ * 资源加载器
+ */
 export declare class ResourceLoader {
     private svgCache;
     /**
-     * 娉ㄥ唽 SVG 璧勬簮
-     * @param pluginName 鎻掍欢鍚嶇О
-     * @param svgModules import.meta.glob 杩斿洖鐨勬ā鍧楀璞?     */
+     * 注册 SVG 资源
+     * @param pluginName 插件名称
+     * @param svgModules import.meta.glob 返回的模块对象
+     */
     registerSvgFromGlob(pluginName: string, svgModules: Record<string, () => Promise<any>>): Promise<void>;
     /**
-     * 鎵嬪姩娉ㄥ唽鍗曚釜 SVG
+     * 手动注册单个 SVG
      */
     registerSvg(pluginName: string, name: string, content: string): void;
     /**
-     * 鑾峰彇 SVG 璧勬簮
-     * @param pluginName 鎻掍欢鍚嶇О
-     * @param name SVG 鍚嶇О
+     * 获取 SVG 资源
+     * @param pluginName 插件名称
+     * @param name SVG 名称
      */
     getSvg(pluginName: string, name: string): SvgResource | undefined;
     /**
-     * 鑾峰彇鎻掍欢鐨勬墍鏈?SVG
+     * 获取插件的所有 SVG
      */
     getPluginSvgs(pluginName: string): SvgResource[];
     /**
-     * 鑾峰彇鎵€鏈?SVG
+     * 获取所有 SVG
      */
     getAllSvgs(): SvgResource[];
     /**
-     * 娓呴櫎鎻掍欢鐨勬墍鏈夎祫婧?     */
+     * 清除插件的所有资源
+     */
     clearPlugin(pluginName: string): void;
     /**
-     * 浠庤矾寰勪腑鎻愬彇鏂囦欢鍚?     */
+     * 从路径中提取文件名
+     */
     private extractFileName;
 }
 /**
- * 鑾峰彇璧勬簮鍔犺浇鍣ㄥ疄渚嬶紙鍗曚緥妯″紡锛? */
+ * 获取资源加载器实例（单例模式）
+ */
 export declare function useResourceLoader(): ResourceLoader;
 /**
- * 閲嶇疆璧勬簮鍔犺浇鍣紙鐢ㄤ簬娴嬭瘯锛? */
+ * 重置资源加载器（用于测试）
+ */
 export declare function resetResourceLoader(): void;
-
-

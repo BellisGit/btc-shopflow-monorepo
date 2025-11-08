@@ -35,16 +35,7 @@
           :autoHeight="true"
           border
           rowKey="id"
-        >
-          <template #op="{ row }">
-            <el-button link type="primary" @click="handleDownload(row)">
-              下载
-            </el-button>
-            <el-button link type="danger" @click="handleDeleteSingle(row)">
-              删除
-            </el-button>
-          </template>
-        </btc-table>
+        />
       </btc-row>
 
       <btc-row>
@@ -63,6 +54,7 @@
         action="#"
         :auto-upload="false"
         :on-change="handleFileChange"
+        :on-remove="handleFileRemove"
         :file-list="fileList"
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -84,21 +76,58 @@
         </span>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="detailVisible" title="文件详情" width="420px">
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="文件名">
+          {{ detailRow?.originalName || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="类型">
+          {{ detailRow?.mime || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="大小">
+          {{ formatSize(detailRow?.sizeBytes) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="上传时间">
+          {{ detailRow?.createdAt || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="链接">
+          <el-link
+            v-if="detailRow?.fileUrl"
+            :href="detailRow.fileUrl"
+            target="_blank"
+            type="primary"
+          >
+            打开文件
+          </el-link>
+          <span v-else>-</span>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue';
 import { ElButton, ElDialog, ElUpload, ElIcon } from 'element-plus';
+import type { UploadFile } from 'element-plus';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import type { TableColumn } from '@btc/shared-components';
 import { Upload, Delete, UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
+import { service } from '@/services/eps';
+import type { CrudService } from '@btc/shared-core';
+import BtcFileThumbnailCell from '@/components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue';
+import BtcFileActionsCell from '@/components/btc-file-actions-cell/BtcFileActionsCell.vue';
 
 defineOptions({
   name: 'DataFilesList'
 });
 
-const { t } = useI18n();
+useI18n();
 
 // 加载状态
 const loading = ref(false);
@@ -108,10 +137,12 @@ const uploading = ref(false);
 const crudRef = ref();
 const tableRef = ref();
 const uploadRef = ref();
+const detailVisible = ref(false);
+const detailRow = ref<Record<string, any> | null>(null);
 
 // 上传对话框
 const uploadVisible = ref(false);
-const fileList = ref<any[]>([]);
+const fileList = ref<UploadFile[]>([]);
 
 // 从crud中获取选择状态
 const tableSelection = computed(() => {
@@ -119,7 +150,7 @@ const tableSelection = computed(() => {
 });
 
 // 表格列配置
-const columns = computed(() => [
+const columns = computed<TableColumn[]>(() => [
   {
     type: 'selection'
   },
@@ -129,72 +160,173 @@ const columns = computed(() => [
     width: 60
   },
   {
+    label: '缩略图',
+    prop: 'fileUrl',
+    width: 88,
+    align: 'center',
+    headerAlign: 'center',
+    component: {
+      name: BtcFileThumbnailCell,
+      props: (scope: any) => ({
+        modelValue: scope.row.fileUrl,
+        mime: scope.row.mime,
+        originalName: scope.row.originalName,
+      }),
+    },
+  },
+  {
     label: '文件名',
-    prop: 'fileName',
+    prop: 'originalName',
     minWidth: 200
   },
   {
     label: '文件类型',
-    prop: 'fileType',
+    prop: 'mime',
     width: 120
   },
   {
     label: '文件大小',
-    prop: 'fileSize',
+    prop: 'sizeBytes',
     width: 120,
-    formatter: (row: any) => {
-      const size = row.fileSize || 0;
-      if (size < 1024) return size + ' B';
-      if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB';
-      if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB';
-      return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-    }
-  },
-  {
-    label: '上传人',
-    prop: 'uploader',
-    width: 120
+    formatter: (row: any) => formatSize(row.sizeBytes)
   },
   {
     label: '上传时间',
-    prop: 'uploadTime',
+    prop: 'createdAt',
     width: 180
   },
   {
     label: '操作',
     prop: 'op',
     width: 200,
-    fixed: 'right'
+    align: 'center',
+    fixed: 'right' as const,
+    component: {
+      name: BtcFileActionsCell,
+      props: (scope: any) => ({
+        row: scope.row,
+        onShare: handleShare,
+        onDetail: handleDetail,
+        onDelete: handleDeleteSingle,
+      })
+    }
   }
 ]);
 
-// 文件服务（模拟）
-const fileService = {
-  page: async (params: any) => {
-    // TODO: 连接真实的后端服务
-    // return http.post('/upload/file/list', params);
-    
-    // 模拟数据
+const epsFileService = service.upload?.file?.files;
+
+function normalizePageResponse(response: any, page: number, size: number) {
+  if (!response) {
     return {
       list: [],
+      total: 0,
+      pagination: { page, size, total: 0 }
+    };
+  }
+
+  if (Array.isArray(response.list) && response.pagination) {
+    const { pagination } = response;
+    const total = Number(
+      pagination.total ?? pagination.count ?? response.total ?? response.pagination?.total ?? 0
+    );
+    return {
+      list: response.list,
+      total,
       pagination: {
-        page: 1,
-        size: 20,
-        total: 0
+        page: Number(pagination.page ?? page),
+        size: Number(pagination.size ?? size),
+        total
       }
     };
+  }
+
+  if (Array.isArray(response.records)) {
+    const total = Number(response.total ?? response.pagination?.total ?? 0);
+    return {
+      list: response.records,
+      total,
+      pagination: {
+        page: Number(response.current ?? page),
+        size: Number(response.size ?? size),
+        total
+      }
+    };
+  }
+
+  if (Array.isArray(response.list) && typeof response.total !== 'undefined') {
+    return {
+      list: response.list,
+      total: Number(response.total ?? 0),
+      pagination: {
+        page,
+        size,
+        total: Number(response.total ?? 0)
+      }
+    };
+  }
+
+  if (Array.isArray(response)) {
+    return {
+      list: response,
+      total: response.length,
+      pagination: { page, size, total: response.length }
+    };
+  }
+
+  return {
+    list: [],
+    total: 0,
+    pagination: { page, size, total: 0 }
+  };
+}
+
+const fileService: CrudService<any> = {
+  async page(params: any = {}) {
+    const page = Number(params.page ?? 1);
+    const size = Number(params.size ?? 20);
+    const keyword = params.keyword ? String(params.keyword) : undefined;
+
+    const pageFn = epsFileService?.page;
+    if (typeof pageFn !== 'function') {
+      throw new Error('未找到文件分页服务，请先同步 EPS 元数据');
+    }
+
+    const payload: Record<string, any> = {
+      page,
+      size
+    };
+
+    if (keyword) {
+      payload.keyword = keyword;
+    }
+
+    const response = await pageFn(payload);
+    const normalized = normalizePageResponse(response, page, size);
+    return {
+      list: normalized.list,
+      total: normalized.total,
+      pagination: normalized.pagination
+    };
   },
-  delete: async (id: string | number) => {
-    await BtcConfirm('确定要删除该文件吗？', '提示', { type: 'warning' });
-    // TODO: 连接真实的后端服务
-    // return http.delete(`/upload/file/${id}`);
-    return {};
+  async add() {
+    throw new Error('文件列表不支持新增操作');
   },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(`确定要删除选中的 ${ids.length} 个文件吗？`, '提示', { type: 'warning' });
-    // TODO: 连接真实的后端服务
-    // return http.delete('/upload/file/batch', { ids });
-    return {};
+  async update() {
+    throw new Error('文件列表不支持编辑操作');
+  },
+  async delete(id: string | number) {
+    const deleteFn = epsFileService?.delete;
+    if (typeof deleteFn !== 'function') {
+      throw new Error('未找到文件删除服务，请先同步 EPS 元数据');
+    }
+    return deleteFn(id);
+  },
+  async deleteBatch(ids: (string | number)[]) {
+    const deleteFn = epsFileService?.delete;
+    if (typeof deleteFn !== 'function') {
+      throw new Error('未找到文件删除服务，请先同步 EPS 元数据');
+    }
+    await Promise.all(ids.map((id) => deleteFn(id)));
   }
 };
 
@@ -205,8 +337,12 @@ const handleUpload = () => {
 };
 
 // 文件选择变化
-const handleFileChange = (file: any) => {
-  // 文件已添加到文件列表
+const handleFileChange = (_file: UploadFile, uploadFiles: UploadFile[]) => {
+  fileList.value = [...uploadFiles];
+};
+
+const handleFileRemove = (_file: UploadFile, uploadFiles: UploadFile[]) => {
+  fileList.value = [...uploadFiles];
 };
 
 // 确认上传
@@ -218,19 +354,26 @@ const handleConfirmUpload = async () => {
 
   uploading.value = true;
   try {
-    // TODO: 连接真实的后端服务
-    // const formData = new FormData();
-    // fileList.value.forEach((file: any) => {
-    //   formData.append('files', file.raw);
-    // });
-    // await http.post('/upload/files', formData);
-    
+    const formData = new FormData();
+    fileList.value.forEach((file) => {
+      if (file.raw) {
+        formData.append('file', file.raw as File);
+      }
+    });
+
+    const uploadFn = epsFileService?.upload;
+    if (typeof uploadFn !== 'function') {
+      throw new Error('未找到文件上传服务，请先同步 EPS 元数据');
+    }
+
+    await uploadFn(formData);
+
     BtcMessage.success('上传成功');
     uploadVisible.value = false;
     fileList.value = [];
     crudRef.value?.refresh();
-  } catch (error) {
-    BtcMessage.error('上传失败');
+  } catch (error: any) {
+    BtcMessage.error(error?.message || '上传失败');
   } finally {
     uploading.value = false;
   }
@@ -243,14 +386,18 @@ const handleDelete = async () => {
     return;
   }
 
+  await BtcConfirm(`确定要删除选中的 ${tableSelection.value.length} 个文件吗？`, '提示', {
+    type: 'warning'
+  });
+
   loading.value = true;
   try {
     const ids = tableSelection.value.map((item: any) => item.id);
     await fileService.deleteBatch(ids);
     BtcMessage.success('删除成功');
     crudRef.value?.refresh();
-  } catch (error) {
-    BtcMessage.error('删除失败');
+  } catch (error: any) {
+    BtcMessage.error(error?.message || '删除失败');
   } finally {
     loading.value = false;
   }
@@ -258,28 +405,55 @@ const handleDelete = async () => {
 
 // 单个删除
 const handleDeleteSingle = async (row: any) => {
+  await BtcConfirm('确定要删除该文件吗？', '提示', { type: 'warning' });
+
   loading.value = true;
   try {
     await fileService.delete(row.id);
     BtcMessage.success('删除成功');
     crudRef.value?.refresh();
-  } catch (error) {
-    BtcMessage.error('删除失败');
+  } catch (error: any) {
+    BtcMessage.error(error?.message || '删除失败');
   } finally {
     loading.value = false;
   }
 };
 
-// 下载文件
-const handleDownload = (row: any) => {
-  // TODO: 连接真实的后端服务
-  // const link = document.createElement('a');
-  // link.href = `/api/upload/file/${row.id}/download`;
-  // link.download = row.fileName;
-  // link.click();
-  
-  BtcMessage.success('文件下载成功');
-};
+function formatSize(value?: number) {
+  const size = Number(value || 0);
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+async function handleShare(row: any) {
+  if (!row?.fileUrl) {
+    BtcMessage.warning('当前文件暂无可分享的链接');
+    return;
+  }
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(row.fileUrl);
+    } else {
+      const input = document.createElement('input');
+      input.value = row.fileUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    BtcMessage.success('文件链接已复制');
+  } catch (error) {
+    console.error('copy link error', error);
+    BtcMessage.error('复制链接失败，请手动复制');
+  }
+}
+
+function handleDetail(row: any) {
+  detailRow.value = row;
+  detailVisible.value = true;
+}
 
 </script>
 

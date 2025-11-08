@@ -1,7 +1,7 @@
 /**
  * 主题相关配置
  */
-import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
+import { MenuThemeEnum } from '../../plugins/user-setting/config/enums';
 
 export const themeConfig = {
   // 系统主题类型

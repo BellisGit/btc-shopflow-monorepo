@@ -22,27 +22,27 @@ export declare const useProcessStore: import("pinia").StoreDefinition<"process",
     list: globalThis.Ref<{
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[], ProcessItem[] | {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[]>;
     add: (data: ProcessItem) => void;
     remove: (index: number) => void;
@@ -53,42 +53,42 @@ export declare const useProcessStore: import("pinia").StoreDefinition<"process",
     getAppTabs: (app: string) => {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[];
     setTitle: (title: string) => void;
 }, "list">, Pick<{
     list: globalThis.Ref<{
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[], ProcessItem[] | {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[]>;
     add: (data: ProcessItem) => void;
     remove: (index: number) => void;
@@ -99,42 +99,42 @@ export declare const useProcessStore: import("pinia").StoreDefinition<"process",
     getAppTabs: (app: string) => {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[];
     setTitle: (title: string) => void;
 }, never>, Pick<{
     list: globalThis.Ref<{
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[], ProcessItem[] | {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[]>;
     add: (data: ProcessItem) => void;
     remove: (index: number) => void;
@@ -145,15 +145,15 @@ export declare const useProcessStore: import("pinia").StoreDefinition<"process",
     getAppTabs: (app: string) => {
         path: string;
         fullPath: string;
-        name?: string | undefined;
+        name?: string;
         meta: {
-            label?: string | undefined;
-            keepAlive?: boolean | undefined;
-            isHome?: boolean | undefined;
-            process?: boolean | undefined;
+            label?: string;
+            keepAlive?: boolean;
+            isHome?: boolean;
+            process?: boolean;
         };
-        active?: boolean | undefined;
-        app?: string | undefined;
+        active?: boolean;
+        app?: string;
     }[];
     setTitle: (title: string) => void;
-}, "close" | "add" | "clear" | "set" | "remove" | "setTitle" | "clearCurrentApp" | "getAppTabs">>;
+}, "clear" | "set" | "add" | "close" | "remove" | "clearCurrentApp" | "getAppTabs" | "setTitle">>;

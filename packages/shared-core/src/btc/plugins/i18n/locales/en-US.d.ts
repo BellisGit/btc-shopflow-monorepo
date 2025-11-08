@@ -1,9 +1,5 @@
-﻿/**
- * Common language pack (English)
- * Naming convention: {namespace}.{category}.{key}
- * - app.*: Application info
- * - common.*: Common UI text
- * - sys.*: System-level text
+/**
+ * English language pack
  */
 declare const _default: {
     'app.slogan': string;
@@ -21,6 +17,7 @@ declare const _default: {
     'common.button.close': string;
     'common.button.export': string;
     'common.button.custom': string;
+    'common.button.sort': string;
     'common.refresh': string;
     'common.refresh_success': string;
     'common.fullscreen': string;
@@ -296,5 +293,3 @@ declare const _default: {
     'main.home.apps_loaded': string;
 };
 export default _default;
-
-

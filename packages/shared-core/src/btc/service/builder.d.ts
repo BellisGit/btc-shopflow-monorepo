@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鏈嶅姟鏋勫缓鍣? * 浠?EPS 鏁版嵁鍔ㄦ€佺敓鎴?service 瀵硅薄
  */
 export interface ApiMethod {
@@ -17,8 +17,6 @@ export type DynamicService = Record<string, Record<string, (data?: any) => Promi
 export declare class ServiceBuilder {
     /**
      * 浠?EPS 鏁版嵁鏋勫缓鏈嶅姟瀵硅薄
-     * @param epsData - virtual:eps 鎻愪緵鐨勬暟鎹?     */
+     * @param epsData - virtual:eps 鎻愪緵鐨勬暟鎹?   */
     build(epsData: EpsData): DynamicService;
 }
-
-

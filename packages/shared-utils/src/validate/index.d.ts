@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 楠岃瘉閭
  * @param email 閭鍦板潃
  * @returns 鏄惁鏈夋晥
@@ -25,7 +25,3 @@ export declare function isUrl(url: string): boolean;
  * @param value 鍊? * @returns 鏄惁涓虹┖
  */
 export declare function isEmpty(value: unknown): boolean;
-
-
-
-

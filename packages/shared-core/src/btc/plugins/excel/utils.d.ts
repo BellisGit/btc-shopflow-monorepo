@@ -1,23 +1,41 @@
-﻿import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 export interface ExportExcelOptions {
-    /** 澶氱骇琛ㄥご */
+    /** 多级表头 */
     multiHeader?: string[][];
-    /** 琛ㄥご */
+    /** 表头 */
     header: string[];
-    /** 鏁版嵁 */
+    /** 数据 */
     data: any[][];
-    /** 鏂囦欢鍚嶏紙涓嶅惈鎵╁睍鍚嶏級 */
+    /** 文件名（不含扩展名） */
     filename?: string;
-    /** 鍚堝苟鍗曞厓鏍奸厤缃紙濡?['A1:B1']锛?*/
+    /** 合并单元格配置（如 ['A1:B1']） */
     merges?: string[];
-    /** 鏄惁鑷姩鍒楀 */
+    /** 是否自动列宽 */
     autoWidth?: boolean;
-    /** 鏂囦欢绫诲瀷 */
+    /** 文件类型 */
     bookType?: XLSX.BookType;
+    /** 字段配置（用于时间格式化） */
+    fields?: Array<{
+        prop: string;
+        label: string;
+    }>;
+    /** 原始数据（用于时间格式化） */
+    rawData?: any[];
 }
 /**
- * 瀵煎嚭 JSON 鏁版嵁涓?Excel
+ * 导出 JSON 数据为 Excel
  */
 export declare function exportJsonToExcel(options: ExportExcelOptions): void;
-
-
+/**
+ * 从表格列配置和原始数据导出Excel（自动处理时间格式化）
+ */
+export declare function exportTableToExcel(options: {
+    columns: Array<{
+        prop?: string;
+        label?: string;
+    }>;
+    data: any[];
+    filename?: string;
+    autoWidth?: boolean;
+    bookType?: XLSX.BookType;
+}): void;

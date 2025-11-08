@@ -1,23 +1,22 @@
-﻿/**
- * CRUD Composable 绫诲瀷瀹氫箟
- */
 /**
- * CRUD 鏈嶅姟鎺ュ彛
+ * CRUD 相关类型定义
+ */
+import type { Ref } from 'vue';
+/**
+ * CRUD 服务接口
  */
 export interface CrudService<T = Record<string, unknown>> {
-    page(params: Record<string, unknown>): Promise<{
+    page: (params: Record<string, unknown>) => Promise<{
         list: T[];
         total: number;
     }>;
-    add(data: Partial<T>): Promise<T>;
-    update(data: Partial<T>): Promise<T>;
-    delete(params: {
-        ids: (number | string)[];
-    }): Promise<void>;
-    info?(params: any): Promise<T>;
+    add: (data: Partial<T>) => Promise<void>;
+    update: (data: Partial<T>) => Promise<void>;
+    delete: (id: string | number) => Promise<void>;
+    deleteBatch: (ids: (string | number)[]) => Promise<void>;
 }
 /**
- * CRUD 閰嶇疆閫夐」
+ * CRUD 选项配置
  */
 export interface CrudOptions<T = Record<string, unknown>> {
     service: CrudService<T>;
@@ -33,7 +32,7 @@ export interface CrudOptions<T = Record<string, unknown>> {
     onAfterDelete?: () => void;
 }
 /**
- * 鍒嗛〉閰嶇疆
+ * 分页配置
  */
 export interface PaginationConfig {
     page: number;
@@ -41,43 +40,113 @@ export interface PaginationConfig {
     total: number;
 }
 /**
- * useCrud 杩斿洖绫诲瀷
+ * 表格列配置
  */
-export interface UseCrudReturn<T> {
-    tableData: import('vue').Ref<T[]>;
-    loading: import('vue').Ref<boolean>;
-    pagination: PaginationConfig;
-    searchParams: import('vue').Ref<Record<string, unknown>>;
-    selection: import('vue').Ref<T[]>;
-    upsertVisible: import('vue').Ref<boolean>;
-    currentRow: import('vue').Ref<T | null>;
-    upsertMode: import('vue').Ref<'add' | 'update' | 'info'>;
-    viewVisible: import('vue').Ref<boolean>;
-    viewRow: import('vue').Ref<T | null>;
-    service: CrudService;
-    loadData: () => Promise<void>;
+export interface TableColumn {
+    prop: string;
+    label: string;
+    width?: number | string;
+    minWidth?: number | string;
+    fixed?: boolean | 'left' | 'right';
+    sortable?: boolean;
+    formatter?: (row: any, column: any, cellValue: any, index: number) => string;
+    show?: boolean;
+    type?: 'selection' | 'index' | 'expand';
+    align?: 'left' | 'center' | 'right';
+    headerAlign?: 'left' | 'center' | 'right';
+    className?: string;
+    labelClassName?: string;
+    resizable?: boolean;
+    showOverflowTooltip?: boolean;
+    children?: TableColumn[];
+}
+/**
+ * 表单项配置
+ */
+export interface FormItem {
+    prop: string;
+    label: string;
+    type: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'date' | 'datetime' | 'number' | 'switch' | 'upload' | 'cascader' | 'tree-select';
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    readonly?: boolean;
+    options?: Array<{
+        label: string;
+        value: any;
+        disabled?: boolean;
+    }>;
+    rules?: Array<{
+        required?: boolean;
+        message?: string;
+        trigger?: string;
+        validator?: (rule: any, value: any, callback: any) => void;
+    }>;
+    span?: number;
+    offset?: number;
+    push?: number;
+    pull?: number;
+    xs?: number;
+    sm?: number;
+    md?: number;
+    lg?: number;
+    xl?: number;
+    show?: boolean;
+    defaultValue?: any;
+    component?: string;
+    props?: Record<string, any>;
+    children?: FormItem[];
+}
+/**
+ * CRUD 返回类型
+ */
+export interface UseCrudReturn<T = Record<string, unknown>> {
+    data: Ref<T[]>;
+    tableData: Ref<T[]>;
+    loading: Ref<boolean>;
+    total: Ref<number>;
+    page: Ref<number>;
+    size: Ref<number>;
+    pagination: {
+        page: number;
+        size: number;
+        total: number;
+    };
+    refresh: (params?: Record<string, unknown>) => Promise<void>;
+    loadData: (params?: Record<string, unknown>) => Promise<void>;
     forceRefresh: () => Promise<void>;
-    handleSearch: (params: Record<string, unknown>) => void;
+    add: () => void;
+    handleAdd: () => void;
+    edit: (row: T) => void;
+    handleEdit: (row: T) => void;
+    delete: (rows: T[]) => Promise<void>;
+    handleDelete: (row: T) => Promise<void>;
+    handleMultiDelete: (rows: T[]) => Promise<void>;
+    search: (keyword: string) => void;
+    handleSearch: (params?: Record<string, unknown>) => void;
+    reset: () => void;
     handleReset: () => void;
     handleRefresh: () => Promise<void>;
-    handleAdd: () => void;
-    handleEdit: (row: T) => void;
-    handleInfo: (row: T) => void;
-    handleAppend: (row?: T) => void;
-    handleView: (row: T) => void;
-    handleViewClose: () => void;
-    closeDialog: () => void;
-    handleDelete: (row: T & {
-        id: number | string;
-    }) => Promise<void>;
-    handleMultiDelete: () => Promise<void>;
-    handleSelectionChange: (rows: T[]) => void;
+    upsertVisible: Ref<boolean>;
+    upsertLoading: Ref<boolean>;
+    upsertData: Ref<Partial<T>>;
+    isEdit: Ref<boolean>;
+    selectedRows: Ref<T[]>;
+    selection: Ref<T[]>;
+    searchKeyword: Ref<string>;
+    currentRow: Ref<T | null>;
+    upsertMode: Ref<'add' | 'update' | 'info'>;
+    viewVisible: Ref<boolean>;
+    viewRow: Ref<T | null>;
+    service: any;
+    handleSelectionChange: (selection: T[]) => void;
     clearSelection: () => void;
-    toggleSelection: (row: T, selected?: boolean) => void;
+    toggleSelection: (row: T) => void;
     handlePageChange: (page: number) => void;
     handleSizeChange: (size: number) => void;
     getParams: () => Record<string, unknown>;
     setParams: (params: Record<string, unknown>) => void;
+    closeDialog: () => void;
+    handleView: (row: T) => void;
+    handleViewClose: () => void;
 }
-
-

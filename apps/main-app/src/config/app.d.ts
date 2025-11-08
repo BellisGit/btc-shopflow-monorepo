@@ -39,5 +39,22 @@ export declare const appConfig: {
         topbarHeight: number;
         tabbarHeight: number;
     };
+    systemSetting: {
+        defaultTabStyle: "tab-default";
+        defaultPageTransition: "slide-left";
+        defaultShowWorkTab: boolean;
+        defaultUniqueOpened: boolean;
+        defaultShowGlobalSearch: boolean;
+        defaultShowCrumbs: boolean;
+        defaultColorWeak: boolean;
+        defaultContainerWidth: "full";
+        defaultBoxBorderMode: boolean;
+        defaultCustomRadius: string;
+        defaultMenuType: "left";
+        defaultMenuWidth: number;
+        defaultSystemThemeType: "auto";
+        defaultSystemThemeColor: string;
+        defaultMenuTheme: import("../plugins/user-setting/config/enums").MenuThemeEnum;
+    };
 };
 export default appConfig;

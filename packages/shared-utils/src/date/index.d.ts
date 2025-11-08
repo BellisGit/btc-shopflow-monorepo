@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鏍煎紡鍖栨棩鏈? * @param date 鏃ユ湡瀵硅薄鎴栧瓧绗︿覆
  * @param format 鏍煎紡鍖栨ā鏉? * @returns 鏍煎紡鍖栧悗鐨勬棩鏈熷瓧绗︿覆
  */
@@ -29,7 +29,3 @@ export declare function getDateRange(type: 'today' | 'week' | 'month'): [string,
  * @param unit 鍗曚綅
  * @returns 鏃ユ湡宸? */
 export declare function dateDiff(date1: Date | string, date2: Date | string, unit?: 'day' | 'hour' | 'minute'): number;
-
-
-
-

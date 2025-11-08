@@ -1,5 +1,5 @@
-﻿import type { BtcFormConfig } from '../useBtcForm';
-export declare function useAction({ config, form }: {
+import type { BtcFormConfig } from '../useBtcForm';
+export declare function useAction({ config, form, Form }: {
     config: BtcFormConfig;
     form: any;
     Form?: any;
@@ -12,5 +12,3 @@ export declare function useAction({ config, form }: {
     hideItem: (...props: string[]) => void;
     toggleItem: (prop: string, visible?: boolean) => void;
 };
-
-

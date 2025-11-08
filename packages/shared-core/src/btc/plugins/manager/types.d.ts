@@ -1,4 +1,4 @@
-﻿import type { App, Directive } from 'vue';
+import type { App, Directive } from 'vue';
 /**
  * 鎻掍欢閰嶇疆閫夐」
  */
@@ -17,10 +17,10 @@ export interface PluginMetadata {
      */
     description?: string;
     /**
-     * 浣滆€?     */
+     * 浣滆€?   */
     author?: string;
     /**
-     * 鐗堟湰鍙?     */
+     * 鐗堟湰鍙?   */
     version?: string;
     /**
      * 鏇存柊鏃堕棿
@@ -55,16 +55,16 @@ export interface PluginMetadata {
  * 宸ュ叿鏍忛厤缃? */
 export interface ToolbarConfig {
     /**
-     * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?     */
+     * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?   */
     order?: number;
     /**
-     * 鏄惁鍦?PC 绔樉绀?     */
+     * 鏄惁鍦?PC 绔樉绀?   */
     pc?: boolean;
     /**
-     * 鏄惁鍦?H5 绔樉绀?     */
+     * 鏄惁鍦?H5 绔樉绀?   */
     h5?: boolean;
     /**
-     * 宸ュ叿鏍忕粍浠?     */
+     * 宸ュ叿鏍忕粍浠?   */
     component: () => Promise<any>;
 }
 /**
@@ -76,7 +76,7 @@ export interface LayoutConfig {
      */
     position: 'header' | 'sidebar' | 'footer' | 'global';
     /**
-     * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?     */
+     * 鎺掑簭锛堟暟瀛楄秺灏忚秺闈犲墠锛?   */
     order?: number;
     /**
      * 甯冨眬缁勪欢
@@ -91,7 +91,7 @@ export interface QiankunConfig {
      */
     shared?: boolean;
     /**
-     * 鍏ㄥ眬鐘舵€侊紙渚涘瓙搴旂敤璁块棶锛?     */
+     * 鍏ㄥ眬鐘舵€侊紙渚涘瓙搴旂敤璁块棶锛?   */
     globalState?: Record<string, any>;
     /**
      * 瀛愬簲鐢ㄥ彲璁块棶鐨?API
@@ -106,7 +106,7 @@ export interface StaticConfig {
      */
     svgDir?: string;
     /**
-     * 鍏朵粬闈欐€佽祫婧愮洰褰?     */
+     * 鍏朵粬闈欐€佽祫婧愮洰褰?   */
     assetsDir?: string;
 }
 /**
@@ -122,7 +122,7 @@ export interface PluginLifecycleEvents {
  * 鎻掍欢鎺ュ彛锛堟墿灞曠増锛? */
 export interface Plugin<T = any> {
     /**
-     * 鎻掍欢鍚嶇О锛堝敮涓€鏍囪瘑锛?     */
+     * 鎻掍欢鍚嶇О锛堝敮涓€鏍囪瘑锛?   */
     name: string;
     /**
      * 鎻掍欢鐗堟湰
@@ -133,7 +133,7 @@ export interface Plugin<T = any> {
      */
     description?: string;
     /**
-     * 浣滆€?     */
+     * 浣滆€?   */
     author?: string;
     /**
      * 鏇存柊鏃堕棿
@@ -167,7 +167,7 @@ export interface Plugin<T = any> {
     uninstall?: () => void | Promise<void>;
     /**
      * 鎻掍欢鍔犺浇瀹屾垚鍚庣殑閽╁瓙
-     * @param events 鐢熷懡鍛ㄦ湡浜嬩欢鍙傛暟锛堝彲浠ユ帴鏀跺叾浠栨彃浠跺鍑虹殑鏂规硶锛?     * @returns 瀵煎嚭缁欏叾浠栨彃浠朵娇鐢ㄧ殑鏂规硶鍜屽彉閲?     */
+     * @param events 鐢熷懡鍛ㄦ湡浜嬩欢鍙傛暟锛堝彲浠ユ帴鏀跺叾浠栨彃浠跺鍑虹殑鏂规硶锛?   * @returns 瀵煎嚭缁欏叾浠栨彃浠朵娇鐢ㄧ殑鏂规硶鍜屽彉閲?   */
     onLoad?: (events: PluginLifecycleEvents) => Promise<Record<string, any>> | Record<string, any>;
     /**
      * 鎻掍欢鍔熻兘瀹炰緥锛堝 Excel 瀵煎嚭鍑芥暟銆乁pload 宸ュ叿绛夛級
@@ -179,7 +179,7 @@ export interface Plugin<T = any> {
     components?: (() => Promise<any>)[];
     /**
      * 鍏ㄥ眬鎸囦护鑷姩娉ㄥ唽
-     * key 涓烘寚浠ゅ悕锛寁alue 涓烘寚浠ゅ畾涔?     */
+     * key 涓烘寚浠ゅ悕锛寁alue 涓烘寚浠ゅ畾涔?   */
     directives?: Record<string, Directive>;
     /**
      * 瑙嗗浘璺敱锛堜細琚敞鍐屽埌涓昏矾鐢辩殑 children 涓級
@@ -198,20 +198,20 @@ export interface Plugin<T = any> {
      */
     layout?: LayoutConfig;
     /**
-     * 闈欐€佽祫婧愰厤缃?     */
+     * 闈欐€佽祫婧愰厤缃?   */
     static?: StaticConfig;
     /**
-     * qiankun 寰墠绔厤缃?     */
+     * qiankun 寰墠绔厤缃?   */
     qiankun?: QiankunConfig;
     /**
      * 鎻掍欢閰嶇疆鍙傛暟锛堝彲渚涘閮ㄤ娇鐢級
      */
     options?: PluginOptions;
     /**
-     * 鎻掍欢鍏冩暟鎹?     */
+     * 鎻掍欢鍏冩暟鎹?   */
     meta?: Record<string, any>;
     /**
-     * 鎻掍欢閰嶇疆鍏冩暟鎹紙鍏煎 Cool-Admin 椋庢牸锛?     * 鎻愪緵鏇翠赴瀵岀殑鎻掍欢淇℃伅鍜岄厤缃€夐」
+     * 鎻掍欢閰嶇疆鍏冩暟鎹紙鍏煎 Cool-Admin 椋庢牸锛?   * 鎻愪緵鏇翠赴瀵岀殑鎻掍欢淇℃伅鍜岄厤缃€夐」
      */
     config?: PluginMetadata;
 }
@@ -219,7 +219,7 @@ export interface Plugin<T = any> {
  * 鎻掍欢绠＄悊鍣ㄩ厤缃? */
 export interface PluginManagerOptions {
     /**
-     * 鏄惁鍦ㄥ畨瑁呮彃浠舵椂妫€鏌ヤ緷璧?     */
+     * 鏄惁鍦ㄥ畨瑁呮彃浠舵椂妫€鏌ヤ緷璧?   */
     checkDependencies?: boolean;
     /**
      * 鏄惁鍏佽閲嶅娉ㄥ唽锛堣鐩栵級
@@ -251,5 +251,3 @@ export interface PluginRecord<T = any> {
     installedAt?: Date;
     error?: Error;
 }
-
-

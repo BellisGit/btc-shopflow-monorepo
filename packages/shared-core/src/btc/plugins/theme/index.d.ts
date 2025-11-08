@@ -1,9 +1,9 @@
-﻿import type { Plugin } from 'vue';
+import type { Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
 /**
- * 涓婚鎻掍欢瀹炰緥
+ * 主题插件实例
  */
 export interface ThemePlugin {
     currentTheme: ReturnType<typeof ref<ThemeConfig>>;
@@ -12,22 +12,22 @@ export interface ThemePlugin {
     THEME_PRESETS: typeof THEME_PRESETS;
     switchTheme: (theme: ThemeConfig) => void;
     toggleDark: (event?: MouseEvent) => void;
+    changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
     setThemeColor: (color: string, dark: boolean) => void;
     updateThemeColor: (color: string) => void;
 }
 /**
- * 鍒涘缓涓婚鎻掍欢
+ * 创建主题插件
  */
 export declare function createThemePlugin(): Plugin & {
     theme: ThemePlugin;
 };
 /**
- * 缁勫悎寮?API锛氫娇鐢ㄤ富棰樻彃浠? */
+ * 组合式 API：使用主题插件
+ */
 export declare function useThemePlugin(): ThemePlugin;
 /**
- * 瀵煎嚭涓婚閰嶇疆绫诲瀷
+ * 导出主题配置类型
  */
 export type { ThemeConfig };
 export { THEME_PRESETS };
-
-

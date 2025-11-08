@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CRUD 琛ㄦ牸鍒楅厤缃? */
 export interface CrudColumn {
     prop: string;
@@ -36,5 +36,3 @@ export interface CrudOperation {
     onClick: (row?: any) => void;
     permission?: string;
 }
-
-

@@ -1,6 +1,7 @@
-﻿import type { Component } from 'vue';
+import type { Component } from 'vue';
 /**
- * 琛ㄦ牸鍒楅厤缃紙瀵归綈 cool-admin锛? */
+ * 表格列配置（对齐 cool-admin）
+ */
 export interface TableColumn {
     type?: 'selection' | 'index' | 'expand' | 'op' | string;
     prop?: string;
@@ -34,7 +35,7 @@ export interface TableColumn {
     [key: string]: any;
 }
 /**
- * 鎿嶄綔鎸夐挳閰嶇疆
+ * 操作按钮配置
  */
 export type OpButton = 'edit' | 'delete' | 'info' | `slot-${string}` | {
     label: string;
@@ -44,12 +45,20 @@ export type OpButton = 'edit' | 'delete' | 'info' | `slot-${string}` | {
     }) => void;
 };
 /**
- * Props 閰嶇疆
+ * 操作列配置
+ */
+export interface OpConfig {
+    buttons?: OpButton[];
+}
+/**
+ * Props 配置
  */
 export interface TableProps {
     columns?: TableColumn[];
     autoHeight?: boolean;
     height?: string | number;
+    maxHeight?: string | number;
+    border?: boolean;
     rowKey?: string;
     emptyText?: string;
     defaultSort?: {
@@ -58,5 +67,6 @@ export interface TableProps {
     };
     sortRefresh?: boolean;
     contextMenu?: Array<string | any> | boolean;
+    op?: OpConfig;
+    disableAutoCreatedAt?: boolean;
 }
-

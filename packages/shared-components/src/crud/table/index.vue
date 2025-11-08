@@ -41,7 +41,7 @@
               <!-- 预定义按钮 -->
               <el-button
                 v-else-if="typeof btn === 'string'"
-                link
+                text
                 :type="getButtonType(btn)"
                 @click="handleOpClick(btn, scope.row)"
               >
@@ -51,7 +51,7 @@
               <!-- 自定义按钮 -->
               <el-button
                 v-else-if="typeof btn === 'object'"
-                link
+                text
                 :type="btn.type"
                 @click="btn.onClick?.({ scope })"
               >
