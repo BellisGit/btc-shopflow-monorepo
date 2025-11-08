@@ -6,6 +6,7 @@
   "日志中心": "Log Center",
   "menu.ops": "Operations & Monitoring",
   "menu.ops.audit": "Audit Log",
+  "menu.ops.api_list": "API List",
   "menu.ops.baseline": "Baseline Configuration",
   "menu.ops.simulator": "Simulator",
   "menu.ops.logs": "Log Center"

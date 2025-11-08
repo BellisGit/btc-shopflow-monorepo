@@ -3,7 +3,7 @@
  * 提供登录、注册、密码重置等认证相关的 API 调用方法
  */
 
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 import type {
   LoginResponse,
   CaptchaResponse,
@@ -32,7 +32,7 @@ export const authApi = {
    * @returns 验证码信息（包含 captchaId 和图片数据）
    */
   getCaptcha(params?: { height?: number; width?: number; color?: string }): Promise<CaptchaResponse> {
-    return http.get(`${baseUrl}/captcha`, params);
+    return requestAdapter.get(`${baseUrl}/captcha`, params);
   },
 
   /**
@@ -41,7 +41,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   sendEmailCode(data: { email: string; type?: string }): Promise<void> {
-    return http.post(`${baseUrl}/code/email/send`, data);
+    return requestAdapter.post(`${baseUrl}/code/email/send`, data, { notifySuccess: false });
   },
 
   /**
@@ -50,7 +50,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
-    return http.post(`${baseUrl}/code/sms/send`, data);
+    return requestAdapter.post(`${baseUrl}/code/sms/send`, data, { notifySuccess: false });
   },
 
   /**
@@ -58,7 +58,7 @@ export const authApi = {
    * @returns 健康状态信息
    */
   healthCheck(): Promise<HealthCheckResponse> {
-    return http.get(`${baseUrl}/health`);
+    return requestAdapter.get(`${baseUrl}/health`);
   },
 
   /**
@@ -67,7 +67,7 @@ export const authApi = {
    * @returns 登录响应（包含 token 和用户信息）
    */
   login(data: LoginRequest): Promise<LoginResponse> {
-    return http.post(`${baseUrl}/login`, data);
+    return requestAdapter.post(`${baseUrl}/login`, data, { notifySuccess: false });
   },
 
   /**
@@ -76,7 +76,7 @@ export const authApi = {
    * @returns 登录响应（包含 token 和用户信息）
    */
   loginBySms(data: SmsLoginRequest): Promise<LoginResponse> {
-    return http.post(`${baseUrl}/login/sms`, data);
+    return requestAdapter.post(`${baseUrl}/login/sms`, data, { notifySuccess: false });
   },
 
   /**
@@ -84,7 +84,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   logout(): Promise<void> {
-    return http.get(`${baseUrl}/logout`);
+    return requestAdapter.get(`${baseUrl}/logout`);
   },
 
   /**
@@ -93,7 +93,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   logoutBatch(data: LogoutBatchRequest): Promise<void> {
-    return http.post(`${baseUrl}/logout/batch`, data);
+    return requestAdapter.post(`${baseUrl}/logout/batch`, data, { notifySuccess: false });
   },
 
   /**
@@ -102,7 +102,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   register(data: RegisterRequest): Promise<void> {
-    return http.post(`${baseUrl}/register`, data);
+    return requestAdapter.post(`${baseUrl}/register`, data, { notifySuccess: false });
   },
 
   /**
@@ -111,7 +111,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   resetPassword(data: ResetPasswordRequest): Promise<void> {
-    return http.post(`${baseUrl}/reset/password`, data);
+    return requestAdapter.post(`${baseUrl}/reset/password`, data, { notifySuccess: false });
   },
 
   /**
@@ -120,7 +120,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   verifyCode(data: VerifyCodeRequest): Promise<void> {
-    return http.post(`${baseUrl}/verify/code`, data);
+    return requestAdapter.post(`${baseUrl}/verify/code`, data, { notifySuccess: false });
   },
 
   /**
@@ -129,7 +129,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   verifySmsCode(data: { phone: string; smsCode: string; smsType?: string }): Promise<void> {
-    return http.post(`${baseUrl}/verify/sms`, data);
+    return requestAdapter.post(`${baseUrl}/verify/sms`, data, { notifySuccess: false });
   },
 
   /**
@@ -138,7 +138,7 @@ export const authApi = {
    * @returns Promise<void>
    */
   verifyEmailCode(data: { email: string; emailCode: string; type?: string }): Promise<void> {
-    return http.post(`${baseUrl}/verify/email`, data);
+    return requestAdapter.post(`${baseUrl}/verify/email`, data, { notifySuccess: false });
   }
 };
 

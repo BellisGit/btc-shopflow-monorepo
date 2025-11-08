@@ -36,5 +36,11 @@ export const microApps: MicroAppConfig[] = [
     container: '#subapp-viewport',
     activeRule: (location) => location.pathname.startsWith('/production'),
   },
+  {
+    name: 'finance',
+    entry: '//localhost:8085',
+    container: '#subapp-viewport',
+    activeRule: (location) => location.pathname.startsWith('/finance'),
+  },
 ];
 

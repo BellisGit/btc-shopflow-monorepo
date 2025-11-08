@@ -184,6 +184,26 @@ pnpm format
 pnpm type-check
 ```
 
+## 🧪 自动化测试
+
+项目提供三层测试保障，均可通过 pnpm 命令运行：
+
+```bash
+# 单元与组件测试（Vitest + Testing Library）
+pnpm test:unit
+
+# 业务契约集成测试（Vitest + MSW）
+pnpm test:integration
+
+# 端到端测试（Playwright）
+pnpm test:e2e
+
+# CI 一次性跑完所有测试
+pnpm test:ci
+```
+
+> 首次执行端到端测试前，请运行 `pnpm exec playwright install --with-deps` 安装浏览器依赖。
+
 ### 提交规范
 
 使用 Conventional Commits 规范：

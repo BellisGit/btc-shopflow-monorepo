@@ -99,3 +99,18 @@ export interface LogoutBatchRequest {
   userIds: string[];
 }
 
+/**
+ * 接口文档数据结构
+ */
+export interface ApiDoc {
+  id?: string;
+  name: string;
+  method: string;
+  path: string;
+  domain?: string;
+  owner?: string;
+  description?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+

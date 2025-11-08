@@ -198,6 +198,7 @@ function getTabLabel(item: ProcessItem) {
     // 运维与审计
     '/ops/logs/operation': 'menu.ops.operation_log',
     '/ops/logs/request': 'menu.ops.request_log',
+    '/ops/api-list': 'menu.ops.api_list',
     '/ops/baseline': 'menu.ops.baseline',
     '/ops/simulator': 'menu.ops.simulator',
 

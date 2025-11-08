@@ -224,13 +224,13 @@ const runTest = async (test: any) => {
     let result;
 
     if (test.isCustomRequest) {
-      // 自定义请求，直接使用HTTP工具请求指定路径
-      const { http } = await import('@/utils/http');
+      // 自定义请求，直接使用业务适配层请求指定路径
+      const { requestAdapter, recreateResponseInterceptor } = await import('@/utils/requestAdapter');
 
       // 重新创建响应拦截器
-      http.recreateResponseInterceptor();
+      recreateResponseInterceptor();
 
-      result = await http.get(test.customPath);
+      result = await requestAdapter.get(test.customPath);
     } else {
       // 检查服务是否存在 - 根据EPS结构，test服务在system下
       if (!service.system) {

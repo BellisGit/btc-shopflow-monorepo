@@ -83,8 +83,19 @@ declare const _default: {
     'menu.navigation.menu_preview': string;
     'menu.ops': string;
     'menu.ops.audit': string;
+    'menu.ops.api_list': string;
     'menu.ops.baseline': string;
     'menu.ops.simulator': string;
+    'ops.api_list.description': string;
+    'ops.api_list.search_placeholder': string;
+    'ops.api_list.fields.controller': string;
+    'ops.api_list.fields.tags': string;
+    'ops.api_list.fields.name': string;
+    'ops.api_list.fields.method': string;
+    'ops.api_list.fields.path': string;
+    'ops.api_list.fields.description': string;
+    'ops.api_list.fields.notes': string;
+    'ops.api_list.fields.parameters': string;
     'menu.test_features': string;
     'menu.test_features.crud': string;
     'menu.test_features.svg': string;
@@ -149,6 +160,8 @@ declare const _default: {
     'micro_app.quality.description': string;
     'micro_app.production.title': string;
     'micro_app.production.description': string;
+    'micro_app.finance.title': string;
+    'micro_app.finance.description': string;
     'micro_app.docs.title': string;
     'micro_app.docs.description': string;
     'menu.logistics.overview': string;

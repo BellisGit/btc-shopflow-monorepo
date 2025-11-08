@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ElTooltip } from 'element-plus';
-import { http } from '@/utils/http';
+import { getRetryStatus } from '@/utils/requestAdapter';
 
 defineOptions({
   name: 'RetryStatusIndicator'
@@ -46,7 +46,7 @@ const tooltipContent = computed(() => {
 });
 
 function checkRetryStatus() {
-  const status = http.getRetryStatus();
+  const status = getRetryStatus();
   retryStatus.value = status;
 
   // 只有在重试中或有重试历史时才显示指示器

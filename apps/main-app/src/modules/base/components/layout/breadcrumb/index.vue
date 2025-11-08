@@ -156,6 +156,10 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.ops', icon: 'Monitor' },
       { i18nKey: 'menu.ops.baseline', icon: 'Histogram' },
     ],
+    '/ops/api-list': [
+      { i18nKey: 'menu.ops', icon: 'Monitor' },
+      { i18nKey: 'menu.ops.api_list', icon: 'List' },
+    ],
     '/ops/simulator': [
       { i18nKey: 'menu.ops', icon: 'Monitor' },
       { i18nKey: 'menu.ops.simulator', icon: 'Opportunity' },

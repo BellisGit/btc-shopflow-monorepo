@@ -3,7 +3,7 @@
  * 提供短信和邮箱验证码的发送功能
  */
 
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 
 /**
  * 验证码 API 基础路径
@@ -21,7 +21,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
-    return http.post(`${baseUrl}/code/sms/send`, data);
+    return requestAdapter.post(`${baseUrl}/code/sms/send`, data, { notifySuccess: false });
   },
 
   /**
@@ -30,7 +30,7 @@ export const codeApi = {
    * @returns Promise<void>
    */
   sendEmailCode(data: { email: string; type?: string }): Promise<void> {
-    return http.post(`${baseUrl}/code/email/send`, data);
+    return requestAdapter.post(`${baseUrl}/code/email/send`, data, { notifySuccess: false });
   }
 };
 

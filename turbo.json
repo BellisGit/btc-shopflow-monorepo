@@ -25,6 +25,18 @@
       "outputs": ["coverage/**"],
       "cache": true
     },
+    "test:unit": {
+      "outputs": ["apps/main-app/coverage/unit/**"],
+      "cache": true
+    },
+    "test:integration": {
+      "outputs": ["apps/main-app/coverage/integration/**"],
+      "cache": true
+    },
+    "test:e2e": {
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "cache": false
+    },
     "clean": {
       "cache": false
     }

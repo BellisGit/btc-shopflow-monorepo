@@ -107,6 +107,8 @@ const detectCurrentApp = () => {
     currentApp.value = 'quality';
   } else if (path.startsWith('/production')) {
     currentApp.value = 'production';
+  } else if (path.startsWith('/finance')) {
+    currentApp.value = 'finance';
   } else {
     currentApp.value = 'main';
   }
@@ -161,6 +163,12 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
     color: '#909399',
     entry: '//localhost:8084',
     activeRule: '/production',
+  },
+  'FINANCE': {
+    icon: 'icon-amount',
+    color: '#d48806',
+    entry: '//localhost:8085',
+    activeRule: '/finance',
   },
 };
 

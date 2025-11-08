@@ -67,6 +67,10 @@
               <btc-svg name="production" :size="48" />
               <span>{{ t('micro_app.production.title') }}</span>
             </div>
+            <div class="access-item" @click="goToModule('finance')">
+              <btc-svg name="icon-amount" :size="48" />
+              <span>{{ t('micro_app.finance.title') }}</span>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -89,7 +93,7 @@
             </div>
             <div class="info-item">
               <span class="label">{{ t('main.home.apps') }}:</span>
-              <el-tag type="info" size="small">5 {{ t('main.home.apps_loaded') }}</el-tag>
+              <el-tag type="info" size="small">6 {{ t('main.home.apps_loaded') }}</el-tag>
             </div>
           </div>
         </el-card>

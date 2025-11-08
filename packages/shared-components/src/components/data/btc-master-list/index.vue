@@ -14,15 +14,29 @@
         </div>
 
         <template v-else>
-          <div class="item" @click="refresh()">
+          <div class="item">
             <el-tooltip :content="t('common.button.refresh')">
-              <BtcSvg name="refresh" />
+              <button
+                type="button"
+                class="btc-master-list__icon-btn btc-comm__icon"
+                :aria-label="t('common.button.refresh')"
+                @click="refresh()"
+              >
+                <BtcSvg name="refresh" />
+              </button>
             </el-tooltip>
           </div>
 
-          <div class="item" v-if="drag && !browser.isMini" @click="isDrag = true">
+          <div class="item" v-if="drag && !browser.isMini">
             <el-tooltip :content="t('common.button.sort')">
-              <BtcSvg name="sort" />
+              <button
+                type="button"
+                class="btc-master-list__icon-btn btc-comm__icon"
+                :aria-label="t('common.button.sort')"
+                @click="isDrag = true"
+              >
+                <BtcSvg name="sort" />
+              </button>
             </el-tooltip>
           </div>
         </template>
@@ -407,16 +421,7 @@ defineExpose({
       align-items: center;
       list-style: none;
       margin-left: 5px;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 16px;
-      height: 26px;
-      width: 26px;
-      color: var(--el-text-color-primary);
-
-      &:hover {
-        background-color: var(--el-fill-color-light);
-      }
+      cursor: default;
     }
 
     .btns {
@@ -435,6 +440,25 @@ defineExpose({
           }
         }
       }
+    }
+
+  }
+
+  &__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: 2px;
     }
   }
 

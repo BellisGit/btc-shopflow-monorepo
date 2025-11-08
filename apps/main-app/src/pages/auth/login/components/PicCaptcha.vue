@@ -16,7 +16,7 @@ import { onMounted, ref } from 'vue';
 import { Loading } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { BtcAlert } from '@btc/shared-components';
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 
 defineOptions({
   name: 'PicCaptcha'
@@ -46,14 +46,18 @@ async function refresh() {
 
   try {
     // 调用验证码接口
-    const response = await http.post<{
+    const response = await requestAdapter.post<{
       captchaId: string;
       data: string;
-    }>('/base/open/captcha', {
-      height: 45,
-      width: 150,
-      color: '#2c3142'
-    });
+    }>(
+      '/base/open/captcha',
+      {
+        height: 45,
+        width: 150,
+        color: '#2c3142'
+      },
+      { silent: true }
+    );
 
     if (response && response.captchaId && response.data) {
       const { captchaId, data } = response;

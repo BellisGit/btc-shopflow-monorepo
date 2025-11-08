@@ -263,6 +263,12 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.ops.baseline' },
       },
       {
+        path: 'ops/api-list',
+        name: 'OpsApiList',
+        component: () => import('../modules/ops/views/api-list/index.vue'),
+        meta: { titleKey: 'menu.ops.api_list' },
+      },
+      {
         path: 'ops/simulator',
         name: 'Simulator',
         component: () => import('../modules/ops/views/simulator/index.vue'),

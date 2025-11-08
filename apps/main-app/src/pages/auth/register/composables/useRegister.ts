@@ -2,7 +2,7 @@ import { ref, reactive } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 
 export function useRegister() {
   const router = useRouter();
@@ -52,11 +52,15 @@ export function useRegister() {
       await formRef.validate();
 
       // 调用注册 API
-      await http.post('/base/open/register', {
-        username: form.username,
-        phone: form.phone,
-        password: form.password
-      });
+      await requestAdapter.post(
+        '/base/open/register',
+        {
+          username: form.username,
+          phone: form.phone,
+          password: form.password
+        },
+        { notifySuccess: false }
+      );
 
       BtcMessage.success(t('注册成功'));
       // 注册成功后跳转到登录页

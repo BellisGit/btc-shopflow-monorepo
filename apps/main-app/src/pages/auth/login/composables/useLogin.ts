@@ -2,7 +2,7 @@ import { ref, reactive, nextTick } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 import { useUser } from '@/composables/useUser';
 import { appStorage } from '@/utils/app-storage';
 
@@ -52,14 +52,18 @@ export function useLogin() {
       loading.value = true;
 
       // 调用登录接口
-      const response = await http.post<{
+      const response = await requestAdapter.post<{
         token: string;
         expiresIn?: number;
         user?: any;
-      }>('/base/open/login', {
-        username: form.username,
-        password: form.password
-      });
+      }>(
+        '/base/open/login',
+        {
+          username: form.username,
+          password: form.password
+        },
+        { notifySuccess: false }
+      );
 
       if (response) {
         BtcMessage.success(t('登录成功'));

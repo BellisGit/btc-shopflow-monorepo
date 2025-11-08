@@ -101,6 +101,7 @@ export const appMenus: AppMenuConfig = {
             { index: '/ops/logs/request', title: 'menu.ops.request_log', icon: 'Connection' },
           ],
         },
+        { index: '/ops/api-list', title: 'menu.ops.api_list', icon: 'List' },
         { index: '/ops/baseline', title: 'menu.ops.baseline', icon: 'Histogram' },
         { index: '/ops/simulator', title: 'menu.ops.simulator', icon: 'Opportunity' },
       ],
@@ -210,6 +211,30 @@ export const appMenus: AppMenuConfig = {
       index: '/production/materials',
       title: '物料管理',
       icon: 'icon-goods',
+    },
+  ],
+
+  // 财务应用菜单
+  finance: [
+    {
+      index: '/finance',
+      title: '财务概览',
+      icon: 'home',
+    },
+    {
+      index: '/finance/receivables',
+      title: '应收管理',
+      icon: 'icon-amount',
+    },
+    {
+      index: '/finance/payables',
+      title: '应付管理',
+      icon: 'icon-card',
+    },
+    {
+      index: '/finance/reports',
+      title: '财务报表',
+      icon: 'icon-stats',
     },
   ],
 };

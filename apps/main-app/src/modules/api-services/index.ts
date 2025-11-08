@@ -5,6 +5,7 @@
 
 export { authApi } from './auth';
 export { codeApi } from './code';
+export { sysApi } from './sys';
 
 // 未来可以添加其他业务模块的 API 服务
 // export { otherApi } from './other-module';

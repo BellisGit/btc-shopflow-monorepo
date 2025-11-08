@@ -41,7 +41,7 @@ import { ref, computed, onActivated } from 'vue';
 import { ElButton } from 'element-plus';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 
 defineOptions({
   name: 'DataRecycle'
@@ -139,13 +139,13 @@ const columns = computed(() => [
 // 由于deletelog服务可能还未在EPS中注册，我们直接使用HTTP请求
 const recycleService = {
   page: async (data?: any) => {
-    return await http.post('/api/system/log/deletelog/page', data || {});
+    return await requestAdapter.post('/api/system/log/deletelog/page', data || {}, { notifySuccess: false });
   },
   restore: async (data: any) => {
-    return await http.post('/api/system/log/deletelog/restore', data);
+    return await requestAdapter.post('/api/system/log/deletelog/restore', data, { notifySuccess: false });
   },
   restoreBatch: async (data: any) => {
-    return await http.post('/api/system/log/deletelog/restore/batch', data);
+    return await requestAdapter.post('/api/system/log/deletelog/restore/batch', data, { notifySuccess: false });
   },
   // 添加CRUD必需的方法（数据回收站不需要这些功能）
   add: async () => {

@@ -6,6 +6,7 @@
   "日志中心": "日志中心",
   "menu.ops": "运维监控",
   "menu.ops.audit": "审计日志",
+  "menu.ops.api_list": "接口列表",
   "menu.ops.baseline": "基线配置",
   "menu.ops.simulator": "模拟器",
   "menu.ops.logs": "日志中心"

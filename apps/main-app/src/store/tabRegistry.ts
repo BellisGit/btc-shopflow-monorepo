@@ -61,6 +61,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
     'ops-logs-request': { key: 'ops-logs-request', title: 'Request Log', path: '/ops/logs/request', i18nKey: 'menu.ops.request_log' },
+    'ops-api-list': { key: 'ops-api-list', title: 'API List', path: '/ops/api-list', i18nKey: 'menu.ops.api_list' },
     'ops-baseline': { key: 'ops-baseline', title: 'Baseline', path: '/ops/baseline', i18nKey: 'menu.ops.baseline' },
     'ops-simulator': { key: 'ops-simulator', title: 'Simulator', path: '/ops/simulator', i18nKey: 'menu.ops.simulator' },
 

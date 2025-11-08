@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "mock": "node mock-server.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:unit": "vitest --config vitest.config.ts --run",
+    "test:integration": "vitest --config vitest.integration.config.ts --run"
   },
   "dependencies": {
     "@btc/shared-components": "workspace:*",
@@ -34,9 +36,15 @@
     "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/vue": "^8.1.0",
+    "@vue/test-utils": "^2.4.6",
+    "msw": "^2.3.2",
+    "jsdom": "^24.1.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.0",
+    "vitest": "^1.6.0",
     "vue-tsc": "^1.8.27"
   }
 }

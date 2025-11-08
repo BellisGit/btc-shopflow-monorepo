@@ -75,14 +75,14 @@ import RetryStatusIndicator from '@/components/RetryStatusIndicator.vue';
 ### 核心依赖
 
 ```typescript
-import { http } from '@/utils/http';
+import { getRetryStatus } from '@/utils/requestAdapter';
 ```
 
 ### 状态检查逻辑
 
 ```typescript
 function checkRetryStatus() {
-  const status = http.getRetryStatus();
+  const status = getRetryStatus();
   retryStatus.value = status;
   
   // 只有在重试中或有重试历史时才显示指示器

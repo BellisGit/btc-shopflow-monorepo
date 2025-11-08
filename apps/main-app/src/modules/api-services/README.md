@@ -10,6 +10,8 @@
 modules/api-services/
 ├── auth/
 │   └── index.ts          # 认证相关 API 服务（登录、注册、密码重置等）
+├── sys/
+│   └── index.ts           # 系统级别 API（例如接口文档、系统设置等）
 ├── index.ts              # 统一导出所有 API 服务
 ├── config.ts             # 模块配置文件
 ├── types.ts              # 共享类型定义
@@ -21,7 +23,7 @@ modules/api-services/
 ### 导入 API 服务
 
 ```typescript
-import { authApi, codeApi } from '@/modules/api-services';
+import { authApi, codeApi, sysApi } from '@/modules/api-services';
 ```
 
 ### 使用示例
@@ -219,6 +221,13 @@ await codeApi.sendEmailCode({
 | `sendEmailCode()` | 发送邮箱验证码 | `{ email, type? }` | `Promise<void>` |
 
 ### 认证 API (authApi)
+### 系统 API (sysApi)
+
+| 方法 | 说明 | 参数类型 | 返回类型 |
+|------|------|---------|---------|
+| `sysApi.apiDocs.page()` | 分页查询接口文档 | `Record<string, any>` | `Promise<any>` |
+| `sysApi.apiDocs.list()` | 查询接口文档列表 | `Record<string, any>` | `Promise<any>` |
+
 
 | 方法 | 说明 | 参数类型 | 返回类型 |
 |------|------|---------|---------|
@@ -253,12 +262,12 @@ await codeApi.sendEmailCode({
 在 `modules/api-services/` 下创建新的目录，例如 `other-module/index.ts`：
 
 ```typescript
-import { http } from '@/utils/http';
+import { requestAdapter } from '@/utils/requestAdapter';
 
 export const otherModuleApi = {
   // 定义 API 方法
   someMethod(data: SomeRequest) {
-    return http.post('/some/path', data);
+    return requestAdapter.post('/some/path', data, { notifySuccess: false });
   }
 };
 ```
