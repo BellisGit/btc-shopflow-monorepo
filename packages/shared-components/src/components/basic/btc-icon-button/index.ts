@@ -3,6 +3,6 @@ export type {
   IconButtonConfig,
   IconButtonDropdown,
   IconButtonDropdownItem,
-  IconButtonPopover
-} from './index.vue';
+  IconButtonPopover,
+} from './types';
 

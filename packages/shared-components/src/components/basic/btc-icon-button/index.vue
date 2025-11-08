@@ -51,37 +51,9 @@ defineOptions({
   name: 'BtcIconButton'
 });
 
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+import type { IconButtonConfig } from './types';
 import IconButtonInner from './icon-button-inner.vue';
-
-export interface IconButtonDropdownItem {
-  command: string;
-  label: string;
-  disabled?: boolean;
-}
-
-export interface IconButtonDropdown {
-  items: IconButtonDropdownItem[];
-  onCommand: (command: string) => void;
-}
-
-export interface IconButtonPopover {
-  component: any;
-  width?: number;
-  placement?: string;
-  popperClass?: string;
-}
-
-export interface IconButtonConfig {
-  icon: string | (() => string); // 图标名称（必需），支持动态函数
-  tooltip?: string | (() => string); // tooltip 文本，支持动态函数
-  onClick?: (event?: MouseEvent) => void; // 点击事件（可选接收事件对象）
-  badge?: number; // badge 数量（可选）
-  dropdown?: IconButtonDropdown; // dropdown 配置（可选）
-  popover?: IconButtonPopover; // popover 配置（可选）
-  size?: number; // 图标大小（默认 16）
-  class?: string; // 额外类名
-}
 
 const props = defineProps<{
   config: IconButtonConfig;

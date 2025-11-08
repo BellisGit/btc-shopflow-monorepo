@@ -29,6 +29,7 @@ import { computed, ref } from 'vue';
 import type { TableColumn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
 import { useI18n, type CrudService } from '@btc/shared-core';
+import { sortByLocale } from '@btc/shared-utils';
 import { sysApi } from '@/modules/api-services';
 
 const { t } = useI18n();
@@ -49,6 +50,7 @@ interface ApiListRecord {
 interface ApiControllerNode {
   id: string;
   label: string;
+  name: string;
   className: string;
   simpleName: string;
   tags: string[];
@@ -131,9 +133,12 @@ function buildControllers(payload: Record<string, any>): ApiControllerNode[] {
       };
     });
 
+    const displayName = tagsText || simpleName;
+
     return {
       id: controller?.className || simpleName,
-      label: simpleName,
+      label: displayName,
+      name: displayName,
       className: controller?.className || simpleName,
       simpleName,
       tags,
@@ -142,24 +147,33 @@ function buildControllers(payload: Record<string, any>): ApiControllerNode[] {
   });
 }
 
-async function ensureDocsLoaded() {
-  if (loadingDocs.value) return;
-  if (controllerList.value.length) return;
+async function loadControllers(forceReload = false) {
+  if (loadingDocs.value) {
+    if (!forceReload) return;
+  }
+  if (!forceReload && controllerList.value.length) return;
 
   try {
     loadingDocs.value = true;
+    const currentSelectedId = selectedControllerId.value;
+
     const response = await fetchApiDocsWithFallback();
     const payload = extractPayload(response);
     const nodes = buildControllers(payload);
+    const sortedNodes = sortByLocale(nodes, (node) => node.label ?? '');
 
-    controllerList.value = nodes;
-    controllerMap.value = nodes.reduce<Record<string, ApiControllerNode>>((acc, node) => {
+    controllerList.value = sortedNodes;
+    controllerMap.value = sortedNodes.reduce<Record<string, ApiControllerNode>>((acc, node) => {
       acc[node.id] = node;
       return acc;
     }, {});
 
-    if (!selectedControllerId.value && nodes.length > 0) {
-      selectedControllerId.value = nodes[0].id;
+    if (currentSelectedId && controllerMap.value[currentSelectedId]) {
+      selectedControllerId.value = currentSelectedId;
+    } else if (sortedNodes.length > 0) {
+      selectedControllerId.value = sortedNodes[0].id;
+    } else {
+      selectedControllerId.value = null;
     }
   } finally {
     loadingDocs.value = false;
@@ -168,26 +182,27 @@ async function ensureDocsLoaded() {
 
 const controllerService = {
   async list(params?: { keyword?: string }) {
-    await ensureDocsLoaded();
+    const forceReload = params?.keyword === undefined;
+    await loadControllers(forceReload);
 
     const keyword = params?.keyword ? params.keyword.toLowerCase() : '';
-    if (!keyword) {
-      return controllerList.value;
-    }
+    const matched = keyword
+      ? controllerList.value.filter((controller) => {
+          return (
+            controller.label.toLowerCase().includes(keyword) ||
+            controller.className.toLowerCase().includes(keyword) ||
+            controller.tags.some((tag) => tag.toLowerCase().includes(keyword))
+          );
+        })
+      : controllerList.value;
 
-    return controllerList.value.filter((controller) => {
-      return (
-        controller.label.toLowerCase().includes(keyword) ||
-        controller.className.toLowerCase().includes(keyword) ||
-        controller.tags.some((tag) => tag.toLowerCase().includes(keyword))
-      );
-    });
+    return sortByLocale(matched, (controller) => controller.label ?? '');
   },
 };
 
 const apiService: CrudService<ApiListRecord> = {
   async page(params: Record<string, any> = {}) {
-    await ensureDocsLoaded();
+    await loadControllers();
 
     const controllerId = selectedControllerId.value;
     const keyword = String(params.keyword || '').trim().toLowerCase();
@@ -247,14 +262,6 @@ const columns = computed<TableColumn[]>(() => [
     headerAlign: 'center',
   },
   {
-    prop: 'controller',
-    label: t('ops.api_list.fields.controller'),
-    minWidth: 200,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
     prop: 'tagsText',
     label: t('ops.api_list.fields.tags'),
     minWidth: 160,
@@ -264,20 +271,37 @@ const columns = computed<TableColumn[]>(() => [
     showOverflowTooltip: true,
   },
   {
+    prop: 'controller',
+    label: t('ops.api_list.fields.controller'),
+    minWidth: 200,
+    align: 'center',
+    headerAlign: 'center',
+    showOverflowTooltip: true,
+  },
+  {
     prop: 'methodName',
     label: t('ops.api_list.fields.name'),
-    minWidth: 160,
+    minWidth: 140,
     align: 'center',
     headerAlign: 'center',
     showOverflowTooltip: true,
   },
   {
     prop: 'httpMethods',
-    label: t('ops.api_list.fields.method'),
-    width: 140,
+    label: t('ops.api_list.fields.request_type'),
+    width: 120,
     align: 'center',
     headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.httpMethods || '-',
+    dictColor: true,
+    dict: [
+      { value: 'GET', label: 'GET', type: 'success' as const },
+      { value: 'POST', label: 'POST', type: 'primary' as const },
+      { value: 'PUT', label: 'PUT', type: 'warning' as const },
+      { value: 'DELETE', label: 'DELETE', type: 'danger' as const },
+      { value: 'PATCH', label: 'PATCH', type: 'info' as const },
+      { value: 'OPTIONS', label: 'OPTIONS', type: 'info' as const },
+      { value: 'HEAD', label: 'HEAD', type: 'info' as const }
+    ],
   },
   {
     prop: 'paths',
@@ -296,18 +320,9 @@ const columns = computed<TableColumn[]>(() => [
     showOverflowTooltip: true,
   },
   {
-    prop: 'notes',
-    label: t('ops.api_list.fields.notes'),
-    minWidth: 220,
-    align: 'center',
-    headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.notes || '-',
-    showOverflowTooltip: true,
-  },
-  {
     prop: 'parameters',
     label: t('ops.api_list.fields.parameters'),
-    minWidth: 220,
+    minWidth: 280,
     align: 'center',
     headerAlign: 'center',
     component: {
@@ -317,6 +332,16 @@ const columns = computed<TableColumn[]>(() => [
         maxLength: 800,
       },
     },
+  },
+  {
+    prop: 'notes',
+    label: t('ops.api_list.fields.notes'),
+    minWidth: 220,
+    align: 'center',
+    headerAlign: 'center',
+    formatter: (row: ApiListRecord) => row.notes || '-',
+    showOverflowTooltip: true,
+    fixed: 'right' as const,
   },
 ]);
 

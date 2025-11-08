@@ -102,6 +102,7 @@
   "ops.api_list.fields.tags": "Tags",
   "ops.api_list.fields.name": "Method Name",
   "ops.api_list.fields.method": "HTTP Method",
+  "ops.api_list.fields.request_type": "Request Type",
   "ops.api_list.fields.path": "Request Path",
   "ops.api_list.fields.description": "Description",
   "ops.api_list.fields.notes": "Notes",

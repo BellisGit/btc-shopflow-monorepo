@@ -4,8 +4,8 @@ import { ref, computed } from 'vue';
  * 用户信息接口
  */
 export interface UserInfo {
-  id: number;
-  name: string;
+  id: string | number;
+  name?: string;
   username: string;
   email?: string;
   avatar?: string;
@@ -61,7 +61,7 @@ export function useUser() {
   /**
    * 获取用户ID
    */
-  const getUserId = (): number | undefined => {
+  const getUserId = (): string | number | undefined => {
     const user = getUserInfo();
     return user?.id;
   };

@@ -477,11 +477,11 @@ export const http = new Http('');
  */
 export class BaseService {
   private namespace?: string;
+  private readonly httpClient: Http;
 
-  constructor(namespace?: string) {
-    if (namespace) {
-      this.namespace = namespace;
-    }
+  constructor(namespace?: string, httpClient: Http = http) {
+    this.httpClient = httpClient;
+    this.namespace = namespace;
   }
 
   // 发送请求
@@ -494,7 +494,7 @@ export class BaseService {
       }
     }
 
-    return this.axiosInstance.request({
+    return this.httpClient.request({
       ...options,
       url
     });

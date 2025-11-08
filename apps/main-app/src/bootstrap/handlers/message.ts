@@ -4,10 +4,11 @@
  */
 
 import { BtcMessage } from '@btc/shared-components';
+import type { MessageHandler } from 'element-plus';
 import { messageManager } from '../../utils/message-manager';
 
 // 扩展消息实例类型
-export interface ExtendedMessageInstance {
+export type ExtendedMessageInstance = MessageHandler & {
   messageContainer?: HTMLElement | null;
   badgeApp?: any | null;
   badgeElement?: HTMLElement | null;
@@ -17,7 +18,7 @@ export interface ExtendedMessageInstance {
   badgePositionInterval?: number | null;
   badgeBodyMutationObserver?: MutationObserver | null;
   messageId?: string;
-}
+};
 
 // 消息实例ID计数器
 let messageInstanceCounter = 0;
@@ -202,8 +203,7 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
   const messageId = `message-${Date.now()}-${++messageInstanceCounter}`;
 
   // 使用 BtcMessage 弹出消息，设置合理的显示时间
-  const messageInstance = BtcMessage[type]({
-    message: message,
+  const messageInstance = BtcMessage[type](message, {
     duration: 0, // 设置为0，完全禁用自动关闭
     showClose: false, // 不显示关闭按钮
     dangerouslyUseHTMLString: false // 确保不会因为HTML内容导致问题

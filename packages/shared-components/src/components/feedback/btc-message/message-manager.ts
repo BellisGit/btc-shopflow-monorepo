@@ -1,4 +1,4 @@
-import { ElMessage } from 'element-plus';
+import { ElMessage, type MessageHandler } from 'element-plus';
 /**
  * BtcMessage 消息管理器
  * 基于 Element Plus 消息能力封装的 BtcMessage，支持重复消息徽标计数功能
@@ -10,7 +10,7 @@ interface MessageState {
   type: 'success' | 'warning' | 'info' | 'error';
   count: number;
   maxCount: number;
-  messageInstance: any;
+  messageInstance: MessageHandler | null;
   decrementTimeout: number | null;
   lastUpdateTime: number;
   messageElement: HTMLElement | null;
@@ -32,38 +32,26 @@ class BtcMessageManager {
       showClose?: boolean;
       dangerouslyUseHTMLString?: boolean;
       maxCount?: number;
-    } = {}
-  ) {
+    } = {},
+  ): MessageHandler {
     const key = `${type}:${content}`;
     const maxCount = options.maxCount || 99;
 
-    // 防重复机制：如果正在创建相同的消息，直接返回
-    if (this.messages.has(key)) {
-      // 消息已存在，递增计数
+    const existingState = this.messages.get(key);
+    if (existingState && existingState.messageInstance) {
       this.incrementMessage(key, maxCount);
-    } else {
-      // 新消息，创建消息实例
-
-      // 立即标记为正在创建，防止重复创建
-      this.messages.set(key, {
-        content,
-        type,
-        count: 0, // 临时标记
-        maxCount,
-        messageInstance: null,
-        decrementTimeout: null,
-        lastUpdateTime: Date.now(),
-        messageElement: null,
-        isDecrementing: false,
-      });
-
-      this.createNewMessage(key, content, type, {
-        duration: options.duration || 3000,
-        showClose: false, // BtcMessage 不需要关闭按钮
-        dangerouslyUseHTMLString: options.dangerouslyUseHTMLString || false,
-        maxCount,
-      });
+      return existingState.messageInstance;
     }
+
+    // 新消息，创建消息实例
+    const handler = this.createNewMessage(key, content, type, {
+      duration: options.duration || 3000,
+      showClose: false, // BtcMessage 不需要关闭按钮
+      dangerouslyUseHTMLString: options.dangerouslyUseHTMLString || false,
+      maxCount,
+    });
+
+    return handler;
   }
 
   /**
@@ -78,8 +66,8 @@ class BtcMessageManager {
       showClose: boolean;
       dangerouslyUseHTMLString: boolean;
       maxCount: number;
-    }
-  ) {
+    },
+  ): MessageHandler {
 
     // 使用 Element Plus 原生功能创建消息，完全手动控制生命周期
     const messageInstance = ElMessage({
@@ -96,29 +84,18 @@ class BtcMessageManager {
       },
     });
 
-    // 更新消息状态（已经存在临时状态）
-    const existingState = this.messages.get(key);
-    if (existingState) {
-      existingState.count = 1;
-      existingState.messageInstance = messageInstance;
-      existingState.lastUpdateTime = Date.now();
-      // 其他字段保持不变
-    } else {
-      // 如果临时状态不存在，创建新状态（这种情况不应该发生）
-      console.warn('[BtcMessageManager] No existing state found for key:', key);
-      const messageState: MessageState = {
-        content,
-        type,
-        count: 1,
-        maxCount: options.maxCount || 99,
-        messageInstance,
-        decrementTimeout: null,
-        lastUpdateTime: Date.now(),
-        messageElement: null,
-        isDecrementing: false,
-      };
-      this.messages.set(key, messageState);
-    }
+    const messageState: MessageState = {
+      content,
+      type,
+      count: 1,
+      maxCount: options.maxCount || 99,
+      messageInstance,
+      decrementTimeout: null,
+      lastUpdateTime: Date.now(),
+      messageElement: null,
+      isDecrementing: false,
+    };
+    this.messages.set(key, messageState);
 
     // 查找 DOM 元素并保存引用
     setTimeout(() => {
@@ -152,6 +129,8 @@ class BtcMessageManager {
         this.closeMessage(key);
       }, 3000);
     }
+
+    return messageInstance;
   }
 
   /**

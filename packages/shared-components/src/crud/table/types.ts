@@ -94,5 +94,8 @@ export interface TableProps {
 
   // 操作列配置
   op?: OpConfig; // 操作列配置
+
+  // 自动列配置
+  disableAutoCreatedAt?: boolean; // 禁止自动追加创建时间列
 }
 

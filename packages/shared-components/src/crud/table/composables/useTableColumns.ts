@@ -75,7 +75,7 @@ export function useTableColumns(props: TableProps) {
     const enhancedColumns = [...columns];
 
     // 自动添加创建时间列（如果不存在）
-    if (!hasCreatedAt) {
+    if (!hasCreatedAt && !props.disableAutoCreatedAt) {
       enhancedColumns.push(CommonColumns.createdAt());
     }
 

@@ -97,6 +97,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   emptyText: 'common.table.empty',
   border: true,
   op: undefined,
+  disableAutoCreatedAt: false,
 });
 
 

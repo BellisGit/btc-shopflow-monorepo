@@ -20,7 +20,15 @@ function createSettingsState() {
   const defaultSetting = config.app.systemSetting;
 
   // 菜单相关设置
-  const menuType = ref<MenuTypeEnum>(appStorage.settings.getItem('menuType') || MenuTypeEnum.LEFT);
+  const storedMenuType = appStorage.settings.getItem('menuType');
+  const resolvedMenuType =
+    storedMenuType && Object.values(MenuTypeEnum).includes(storedMenuType as MenuTypeEnum)
+      ? (storedMenuType as MenuTypeEnum)
+      : MenuTypeEnum.LEFT;
+  const menuType = ref<MenuTypeEnum>(resolvedMenuType);
+  if (!storedMenuType || !Object.values(MenuTypeEnum).includes(storedMenuType as MenuTypeEnum)) {
+    appStorage.settings.setItem('menuType', resolvedMenuType);
+  }
   const menuOpenWidth = ref<number>(appStorage.settings.getItem('menuOpenWidth') ?? defaultSetting.defaultMenuWidth);
   const menuOpen = ref<boolean>(appStorage.settings.getItem('menuOpen') ?? true);
 
@@ -29,7 +37,7 @@ function createSettingsState() {
   const systemThemeType = ref<SystemThemeEnum>(
     storedSystemThemeType && Object.values(SystemThemeEnum).includes(storedSystemThemeType as SystemThemeEnum)
       ? (storedSystemThemeType as SystemThemeEnum)
-      : defaultSetting.defaultSystemThemeType
+      : (defaultSetting.defaultSystemThemeType as SystemThemeEnum)
   );
   
   const storedSystemThemeMode = appStorage.settings.getItem('systemThemeMode');
@@ -76,7 +84,15 @@ function createSettingsState() {
   const watermarkVisible = ref<boolean>(appStorage.settings.getItem('watermarkVisible') ?? false);
 
   // 其他设置
-  const containerWidth = ref<ContainerWidthEnum>(appStorage.settings.getItem('containerWidth') || ContainerWidthEnum.FULL);
+  const storedContainerWidth = appStorage.settings.getItem('containerWidth');
+  const resolvedContainerWidth =
+    storedContainerWidth && Object.values(ContainerWidthEnum).includes(storedContainerWidth as ContainerWidthEnum)
+      ? (storedContainerWidth as ContainerWidthEnum)
+      : ContainerWidthEnum.FULL;
+  const containerWidth = ref<ContainerWidthEnum>(resolvedContainerWidth);
+  if (!storedContainerWidth || !Object.values(ContainerWidthEnum).includes(storedContainerWidth as ContainerWidthEnum)) {
+    appStorage.settings.setItem('containerWidth', resolvedContainerWidth);
+  }
   const boxBorderMode = ref<boolean>(appStorage.settings.getItem('boxBorderMode') ?? defaultSetting.defaultBoxBorderMode);
   const uniqueOpened = ref<boolean>(appStorage.settings.getItem('uniqueOpened') ?? defaultSetting.defaultUniqueOpened);
   const tabStyle = ref<string>(appStorage.settings.getItem('tabStyle') || defaultSetting.defaultTabStyle);

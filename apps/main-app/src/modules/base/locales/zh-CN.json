@@ -102,6 +102,7 @@
   "ops.api_list.fields.tags": "标签",
   "ops.api_list.fields.name": "方法名",
   "ops.api_list.fields.method": "HTTP 方法",
+  "ops.api_list.fields.request_type": "请求类型",
   "ops.api_list.fields.path": "请求路径",
   "ops.api_list.fields.description": "接口说明",
   "ops.api_list.fields.notes": "备注",

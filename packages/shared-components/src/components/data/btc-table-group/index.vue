@@ -30,7 +30,14 @@
           <BtcSearchKey :placeholder="searchPlaceholder" />
         </BtcRow>
         <BtcRow>
-          <BtcTable :columns="tableColumns" :op="op" :auto-height="false" :max-height="tableMaxHeight" border />
+          <BtcTable
+            :columns="tableColumns"
+            :op="op"
+            :auto-height="false"
+            :max-height="tableMaxHeight"
+            :disable-auto-created-at="disableAutoCreatedAt"
+            border
+          />
         </BtcRow>
         <BtcRow>
           <BtcFlex1 />
@@ -101,6 +108,7 @@ const crudRef = ref<any>(null);
 
 // 表格最大高度
 const tableMaxHeight = ref<number>(600); // 默认600px
+const disableAutoCreatedAt = computed(() => !props.showCreateTime);
 
 // 计算表格最大高度
 const calcTableMaxHeight = () => {
