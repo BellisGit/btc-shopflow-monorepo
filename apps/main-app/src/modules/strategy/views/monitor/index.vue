@@ -34,6 +34,7 @@
 
           <BtcFlex1 />
           <BtcSearchKey />
+          <BtcCrudActions />
         </BtcRow>
 
         <BtcRow>

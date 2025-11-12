@@ -9,21 +9,21 @@
       <div class="icon-list">
         <div class="icon-item">
           <svg class="icon">
-            <use href="#icon-icon-home"></use>
+            <use href="#icon-home"></use>
           </svg>
-          <span>icon-home</span>
+          <span>home</span>
         </div>
         <div class="icon-item">
           <svg class="icon">
-            <use href="#icon-user-avatar"></use>
+            <use href="#icon-user"></use>
           </svg>
-          <span>user-avatar</span>
+          <span>user</span>
         </div>
         <div class="icon-item">
           <svg class="icon">
-            <use href="#icon-order-cart"></use>
+            <use href="#icon-cart"></use>
           </svg>
-          <span>order-cart</span>
+          <span>cart</span>
         </div>
       </div>
     </section>

@@ -36,8 +36,8 @@ html.dark {
     }
   }
 
-  // 优化暗黑模式下的遮罩层（排除设置抽屉）
-  .el-overlay:not(.user-setting-modal) {
+  // 优化暗黑模式下的遮罩层（排除偏好设置抽屉）
+  .el-overlay:not(.user-preferences-modal) {
     background-size: 4px 4px;
     backdrop-filter: saturate(50%) blur(4px);
   }
@@ -89,8 +89,8 @@ html.dark {
     --el-dropdown-menu-box-shadow: var(--el-box-shadow-light);
   }
 
-  // 优化抽屉（排除设置抽屉，设置抽屉有自己的样式）
-  .el-overlay:not(.user-setting-modal) .el-drawer {
+  // 优化抽屉（排除偏好设置抽屉，偏好设置抽屉有自己的样式）
+  .el-overlay:not(.user-preferences-modal) .el-drawer {
     --el-drawer-bg-color: var(--el-bg-color);
   }
 }

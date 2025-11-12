@@ -1,5 +1,5 @@
 <template>
-  <!-- 主题设置按钮 -->
+<!-- 偏好设置按钮 -->
   <BtcIconButton
     :config="{
       icon: 'theme',
@@ -27,7 +27,7 @@ import { provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcIconButton } from '@btc/shared-components';
 import { useUserSetting } from './composables';
-import BtcUserSettingDrawer from './components/theme-drawer.vue';
+import BtcUserSettingDrawer from './components/preferences-drawer.vue';
 
 defineOptions({
   name: 'BtcUserSetting'

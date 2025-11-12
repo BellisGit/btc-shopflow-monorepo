@@ -1,20 +1,24 @@
 ﻿<template>
-  <btc-crud ref="crudRef" class="recycle-page" :service="recycleService">
+  <div class="recycle-page">
+    <btc-crud ref="crudRef" :service="recycleService">
     <btc-row>
-      <!-- 刷新按钮 -->
-      <btc-refresh-btn />
-      <el-button
-        type="success"
-        :disabled="tableSelection.length === 0 || loading"
-        :loading="loading"
-        @click="restore()"
-      >
-        {{ tableSelection.length === 1 ? $t('recycle.restore') : $t('recycle.batch_restore') }} ({{ tableSelection.length }})
-      </el-button>
+      <div class="btc-crud-primary-actions">
+        <!-- 刷新按钮 -->
+        <btc-refresh-btn />
+        <el-button
+          type="success"
+          :disabled="tableSelection.length === 0 || loading"
+          :loading="loading"
+          @click="restore()"
+        >
+          {{ tableSelection.length === 1 ? $t('recycle.restore') : $t('recycle.batch_restore') }} ({{ tableSelection.length }})
+        </el-button>
+      </div>
 
       <btc-flex1 />
       <!-- 关键字搜索 -->
       <btc-search-key />
+      <btc-crud-actions />
     </btc-row>
 
     <btc-row>
@@ -34,6 +38,7 @@
       <btc-pagination />
     </btc-row>
   </btc-crud>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -229,5 +234,10 @@ onActivated(() => {
 .recycle-page {
   height: 100%;
   overflow: hidden;
+
+  :global(.btc-row) {
+    padding: 10px;
+    box-sizing: border-box;
+  }
 }
 </style>

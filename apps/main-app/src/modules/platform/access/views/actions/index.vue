@@ -7,6 +7,7 @@
         <BtcMultiDeleteBtn />
         <BtcFlex1 />
         <BtcSearchKey />
+        <BtcCrudActions />
       </BtcRow>
       <BtcRow>
         <BtcTable ref="tableRef" :columns="columns" border />

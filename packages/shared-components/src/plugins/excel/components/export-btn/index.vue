@@ -1,23 +1,40 @@
 <template>
-        <el-button type="info" @click="open" :loading="loading">
-          <BtcSvg name="export" class="mr-[5px]" />
-          {{ text || t('ui.export') }}
-        </el-button>
+  <BtcTableButton
+    class="btc-crud-action-icon"
+    v-if="isMinimal"
+    ref="buttonRef"
+    :config="iconButtonConfig"
+  />
+  <el-button
+    v-else
+    ref="buttonRef"
+    class="btc-crud-btn btc-crud-btn--with-icon btc-export-btn"
+    type="info"
+    @click="open"
+    :loading="loading"
+  >
+    <BtcSvg name="export" class="btc-crud-btn__icon" />
+    <span class="btc-crud-btn__text">{{ buttonLabel }}</span>
+  </el-button>
 
   <BtcForm ref="formRef" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, watch, onBeforeUnmount } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
 
-import { useI18n, exportTableToExcel } from '@btc/shared-core';
+import { useI18n, exportTableToExcel, useThemePlugin } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
 import BtcForm from '@btc-common/form/index.vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
+import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { useCrudLayout } from '@btc-crud/context/layout';
 
 export interface Props {
   /** 表格列配置（可选，如果不提供则从 CRUD 上下文获取） */
@@ -45,12 +62,65 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useI18n();
 const loading = ref(false);
 const formRef = ref();
+const buttonRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
+const theme = useThemePlugin();
 
 // 从 CRUD 上下文获取数据
 const crud = inject<UseCrudReturn<any>>('btc-crud');
 const tableRefContext = inject<any>('btc-table-ref');
+const crudLayout = useCrudLayout();
 
-// 导出模式状态
+const buttonLabel = computed(() => props.text || t('ui.export'));
+const isMinimal = computed(() => theme.buttonStyle?.value === 'minimal');
+
+const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({
+  icon: 'export',
+  tooltip: buttonLabel.value,
+  ariaLabel: buttonLabel.value,
+  type: 'info',
+  onClick: () => {
+    if (!loading.value) {
+      open();
+    }
+  },
+  disabled: loading.value,
+}));
+
+const resolveButtonElement = (): HTMLElement | null => {
+  const target = buttonRef.value;
+  if (!target) return null;
+  if (target instanceof HTMLElement) return target;
+  const el = (target as ComponentPublicInstance).$el;
+  return el instanceof HTMLElement ? el : null;
+};
+
+const updateTrailing = () => {
+  if (!crudLayout) return;
+  const el = resolveButtonElement();
+  if (el) {
+    crudLayout.registerTrailing('export', el);
+  } else {
+    crudLayout.registerTrailing('export', null);
+  }
+};
+
+if (crudLayout) {
+  watch(
+    () => resolveButtonElement(),
+    () => {
+      updateTrailing();
+    },
+    { immediate: true },
+  );
+}
+
+watch(isMinimal, () => {
+  updateTrailing();
+});
+
+onBeforeUnmount(() => {
+  crudLayout?.registerTrailing('export', null);
+});
 
 // 计算是否有选中数据
 const hasSelection = computed(() => {

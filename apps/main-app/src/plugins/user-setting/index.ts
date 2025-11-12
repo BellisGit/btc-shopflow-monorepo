@@ -32,5 +32,5 @@ export const userSettingPlugin: Plugin = {
 };
 
 // 导出组件和 composables（主组件通过动态导入使用）
-export { default as BtcUserSettingDrawer } from './components/theme-drawer.vue';
+export { default as BtcUserSettingDrawer } from './components/preferences-drawer.vue';
 export * from './composables';

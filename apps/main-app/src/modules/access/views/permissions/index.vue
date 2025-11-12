@@ -1,28 +1,29 @@
 ﻿<template>
-  <div class="permissions-list">
-    <BtcCrud ref="crudRef" :service="wrappedService">
-      <BtcRow>
+  <BtcCrud ref="crudRef" :service="wrappedService">
+    <BtcRow>
+      <div class="btc-crud-primary-actions">
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
-        <BtcFlex1 />
-        <BtcSearchKey />
-      </BtcRow>
-      <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
-        <BtcPagination />
-      </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
-    </BtcCrud>
-  </div>
+      </div>
+      <BtcFlex1 />
+      <BtcSearchKey />
+      <BtcCrudActions />
+    </BtcRow>
+    <BtcRow>
+      <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
+    </BtcRow>
+    <BtcRow>
+      <BtcFlex1 />
+      <BtcPagination />
+    </BtcRow>
+    <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
+  </BtcCrud>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -78,8 +79,4 @@ const formItems = computed<FormItem[]>(() => [
 onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 </script>
 
-<style lang="scss" scoped>
-.permissions-list {
-}
-</style>
 

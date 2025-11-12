@@ -128,7 +128,7 @@ const isDarkMenuStyle = computed(() => {
 const menuThemeConfig = computed(() => {
   // 优先判断菜单风格类型（不受系统主题影响）
   const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
-  
+
   // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
   if (theme === MenuThemeEnum.DARK) {
     // 深色系统主题下，使用 var(--el-bg-color) 与内容区域一致
@@ -395,6 +395,7 @@ onMounted(async () => {
   &__tools {
     display: flex;
     margin-right: 10px;
+    column-gap: 10px;
 
     & > li {
       display: flex;
@@ -403,7 +404,6 @@ onMounted(async () => {
       list-style: none;
       height: 45px;
       cursor: pointer;
-      margin-left: 10px;
     }
   }
 

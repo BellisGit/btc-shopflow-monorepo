@@ -14,6 +14,7 @@ export function createCreatedAtColumn(): TableColumn {
     label: '创建时间',
     width: 180,
     sortable: true,
+    toggleable: true,
     formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
     },
@@ -29,6 +30,7 @@ export function createUpdatedAtColumn(): TableColumn {
     label: '更新时间',
     width: 180,
     sortable: true,
+    toggleable: true,
     formatter: (_row: any, _column: any, cellValue: any) => {
       return formatDateTimeFriendly(cellValue);
     },
@@ -41,8 +43,11 @@ export function createOperationColumn(buttons: OpButton[] = ['edit', 'delete']):
   return {
     type: 'op',
     label: 'ui.table.operation', // 使用已有的国际化key
-    width: 200,
+    width: 220,
+    align: 'center',
+    headerAlign: 'center',
     buttons,
+    toggleable: true,
   };
 }
 
@@ -52,6 +57,8 @@ export function createSelectionColumn(): TableColumn {
   return {
     type: 'selection',
     width: 60,
+    toggleable: false,
+    alwaysVisible: true,
   };
 }
 
@@ -62,6 +69,8 @@ export function createIndexColumn(): TableColumn {
     type: 'index',
     label: '序号',
     width: 60,
+    toggleable: false,
+    alwaysVisible: true,
   };
 }
 

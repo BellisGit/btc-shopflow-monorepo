@@ -134,9 +134,7 @@ const menuColumns = computed<TableColumn[]>(() => [
     label: t('navigation.menu.perms'),
     headerAlign: 'center',
     minWidth: 300,
-    component: {
-      name: 'cl-dict',
-    },
+    showOverflowTooltip: true,
   },
   {
     prop: 'orderNum',

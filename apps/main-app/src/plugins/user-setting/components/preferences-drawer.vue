@@ -5,8 +5,9 @@
     size="380px"
     append-to-body
     :lock-scroll="false"
+    modal-class="user-preferences-modal"
   >
-    <div class="theme-drawer">
+    <div class="preferences-drawer">
       <!-- 头部关闭按钮 -->
       <SettingHeader @close="closeDrawer" />
 
@@ -21,6 +22,9 @@
 
       <!-- 系统主题色 -->
       <ColorSettings />
+
+      <!-- 按钮风格 -->
+      <ButtonStyleSettings />
 
       <!-- 盒子样式 -->
       <BoxStyleSettings />
@@ -41,6 +45,7 @@ import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
 import ThemeStyleSettings from '../settings/theme-style/index.vue';
 import ColorSettings from '../settings/color-settings/index.vue';
+import ButtonStyleSettings from '../settings/button-style/index.vue';
 import BoxStyleSettings from '../settings/box-style/index.vue';
 import ContainerWidthSettings from '../settings/container-width/index.vue';
 import BasicSettings from '../settings/basic-settings/index.vue';

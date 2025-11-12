@@ -251,6 +251,16 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.data.files.preview' },
       },
       {
+        path: 'data/dictionary',
+        redirect: '/data/dictionary/file-categories',
+      },
+      {
+        path: 'data/dictionary/file-categories',
+        name: 'DataDictionaryFileCategories',
+        component: () => import('../modules/data/views/dictionary/file-categories/index.vue'),
+        meta: { titleKey: 'menu.data.dictionary.file_categories' },
+      },
+      {
         path: 'data/recycle',
         name: 'DataRecycle',
         component: () => import('../modules/data/views/recycle/index.vue'),

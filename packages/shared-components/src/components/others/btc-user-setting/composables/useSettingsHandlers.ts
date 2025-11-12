@@ -6,6 +6,7 @@
 import { useSettingsState } from './useSettingsState';
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
+import type { ButtonStyle } from '@btc/shared-core';
 
 /**
  * 设置处理器组合式函数
@@ -128,6 +129,13 @@ export function useSettingsHandlers() {
     },
   };
 
+  // 按钮风格处理器
+  const buttonStyleHandlers = {
+    setStyle: (style: ButtonStyle) => {
+      settingsState.setButtonStyle(style);
+    },
+  };
+
   // 主题风格处理器
   const themeStyleHandlers = {
     // 切换主题风格
@@ -160,6 +168,7 @@ export function useSettingsHandlers() {
     boxStyleHandlers,
     colorHandlers,
     containerHandlers,
+    buttonStyleHandlers,
     themeStyleHandlers,
     menuLayoutHandlers,
     menuStyleHandlers,

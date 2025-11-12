@@ -1,23 +1,24 @@
 ﻿<template>
-  <div class="tenant-list">
-    <BtcCrud ref="crudRef" :service="tenantService">
-      <BtcRow>
+  <BtcCrud ref="crudRef" :service="tenantService">
+    <BtcRow>
+      <div class="btc-crud-primary-actions">
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
-        <BtcFlex1 />
-        <BtcSearchKey />
-      </BtcRow>
-      <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
-        <BtcPagination />
-      </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
-    </BtcCrud>
-  </div>
+      </div>
+      <BtcFlex1 />
+      <BtcSearchKey />
+      <BtcCrudActions />
+    </BtcRow>
+    <BtcRow>
+      <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
+    </BtcRow>
+    <BtcRow>
+      <BtcFlex1 />
+      <BtcPagination />
+    </BtcRow>
+    <BtcUpsert ref="upsertRef" :items="formItems" width="800px" />
+  </BtcCrud>
 </template>
 
 <script setup lang="ts">
@@ -60,7 +61,16 @@ const columns = computed<TableColumn[]>(() => [
   { prop: 'tenantName', label: t('org.tenant.name') },
   { prop: 'tenantCode', label: t('org.tenant.code') },
   { prop: 'tenantType', label: t('org.tenant.type') },
-  { prop: 'status', label: t('org.user.status') },
+  {
+    prop: 'status',
+    label: t('org.user.status'),
+    width: 120,
+    dict: [
+      { label: '启用', value: 'ACTIVE', type: 'success' },
+      { label: '禁用', value: 'INACTIVE', type: 'danger' },
+    ],
+    dictColor: true,
+  },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
@@ -74,8 +84,3 @@ const formItems = computed<FormItem[]>(() => [
 // 移除手动调用 loadData，让 BtcCrud 自动加载
 </script>
 
-<style lang="scss" scoped>
-.tenant-list {
-  // 嵌套样式由布局系统统一控制，此处仅保留业务相关样式
-}
-</style>

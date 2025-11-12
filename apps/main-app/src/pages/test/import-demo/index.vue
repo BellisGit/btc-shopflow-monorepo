@@ -3,17 +3,21 @@
     <BtcCrud ref="crudRef" :service="userService">
       <!-- Toolbar -->
       <BtcRow>
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
         <BtcFlex1 />
-        <BtcImportBtn
-          :template="'/templates/users.xlsx'"
-          :tips="'请按照模板格式填写用户信息，支持用户名、姓名、邮箱、状态等字段'"
-          :on-submit="handleImport"
-        />
-        <BtcExportBtn :filename="'用户列表'" />
         <BtcSearchKey />
+        <BtcCrudActions>
+          <BtcImportBtn
+            :template="'/templates/users.xlsx'"
+            :tips="'请按照模板格式填写用户信息，支持用户名、姓名、邮箱、状态等字段'"
+            :on-submit="handleImport"
+          />
+          <BtcExportBtn :filename="'用户列表'" />
+        </BtcCrudActions>
       </BtcRow>
 
       <!-- Table -->

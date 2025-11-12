@@ -1,23 +1,24 @@
 ﻿<template>
-  <div class="action-list">
-    <BtcCrud ref="crudRef" :service="actionService">
-      <BtcRow>
+  <BtcCrud ref="crudRef" :service="actionService">
+    <BtcRow>
+      <div class="btc-crud-primary-actions">
         <BtcRefreshBtn />
         <BtcAddBtn />
         <BtcMultiDeleteBtn />
-        <BtcFlex1 />
-        <BtcSearchKey />
-      </BtcRow>
-      <BtcRow>
-        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-      </BtcRow>
-      <BtcRow>
-        <BtcFlex1 />
-        <BtcPagination />
-      </BtcRow>
-      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
-    </BtcCrud>
-  </div>
+      </div>
+      <BtcFlex1 />
+      <BtcSearchKey />
+      <BtcCrudActions />
+    </BtcRow>
+    <BtcRow>
+      <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
+    </BtcRow>
+    <BtcRow>
+      <BtcFlex1 />
+      <BtcPagination />
+    </BtcRow>
+    <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
+  </BtcCrud>
 </template>
 
 <script setup lang="ts">
@@ -74,9 +75,4 @@ const formItems = computed<FormItem[]>(() => [
 onMounted(() => setTimeout(() => crudRef.value?.crud.loadData(), 100));
 </script>
 
-<style lang="scss" scoped>
-.action-list {
-  // 内容样式由布局层统一控制，此处只定义业务相关样式
-}
-</style>
 

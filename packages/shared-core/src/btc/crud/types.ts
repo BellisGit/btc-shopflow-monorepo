@@ -150,4 +150,6 @@ export interface UseCrudReturn<T = Record<string, unknown>> {
   closeDialog: () => void;
   handleView: (row: T) => void;
   handleViewClose: () => void;
+  toolbarContext?: any;
+  setToolbarContext?: (context: any) => void;
 }

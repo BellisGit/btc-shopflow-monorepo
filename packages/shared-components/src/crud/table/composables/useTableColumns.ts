@@ -99,6 +99,11 @@ export function useTableColumns(props: TableProps) {
         resizable: column.resizable ?? (column.type === 'selection' || column.type === 'index' ? false : true), // 智能列宽调整
         // 操作列不显示溢出提示，其他列默认显示
         showOverflowTooltip: column.showOverflowTooltip ?? (column.type === 'op' ? false : true),
+        toggleable:
+          typeof column.toggleable === 'boolean'
+            ? column.toggleable
+            : !(column.type === 'selection' || column.type === 'index'),
+        alwaysVisible: column.alwaysVisible ?? column.toggleable === false,
       };
 
       // 处理操作列的国际化标签

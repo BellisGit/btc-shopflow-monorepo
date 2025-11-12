@@ -13,6 +13,7 @@
             <BtcRefreshBtn />
             <BtcFlex1 />
             <BtcSearchKey placeholder="搜索操作日志..." />
+            <BtcCrudActions />
           </BtcRow>
           <BtcRow>
             <BtcTable
@@ -44,6 +45,7 @@
             <BtcRefreshBtn />
             <BtcFlex1 />
             <BtcSearchKey placeholder="搜索请求日志..." />
+            <BtcCrudActions />
           </BtcRow>
           <BtcRow>
             <BtcTable

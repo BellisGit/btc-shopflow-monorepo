@@ -1,12 +1,14 @@
 export interface IconButtonDropdownItem {
-  command: string;
-  label: string;
-  disabled?: boolean;
+	command: string;
+	label: string;
+	icon?: string | (() => string);
+	disabled?: boolean;
 }
 
 export interface IconButtonDropdown {
-  items: IconButtonDropdownItem[];
-  onCommand: (command: string) => void;
+	items: IconButtonDropdownItem[];
+	onCommand: (command: string) => void;
+	popperClass?: string;
 }
 
 export interface IconButtonPopover {
@@ -25,5 +27,6 @@ export interface IconButtonConfig {
   popover?: IconButtonPopover;
   size?: number;
   class?: string;
+  disabled?: boolean;
 }
 

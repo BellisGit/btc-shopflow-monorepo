@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { service } from './services/eps';
+import 'virtual:svg-icons';
 
 const app = createApp(App);
 

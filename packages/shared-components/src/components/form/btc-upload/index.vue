@@ -10,6 +10,7 @@
           'is-small': small
         }
       ]"
+      :style="uploadStyleVars"
     >
       <template v-if="!drag">
         <div v-if="fileType == 'file'" class="btc-upload__file-btn">
@@ -124,7 +125,7 @@ import { inject } from 'vue';
 import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage } from '@btc-components/feedback/btc-message';
 
 defineOptions({
   name: 'BtcUpload'
@@ -255,6 +256,11 @@ const size = computed(() => {
   const sizeArray = isArray(d) ? d : [d, d];
   return sizeArray.map((e: string | number) => (isNumber(e) ? e + 'px' : e));
 });
+
+const uploadStyleVars = computed(() => ({
+  '--btc-upload-height': size.value[0],
+  '--btc-upload-width': size.value[1]
+}));
 
 // 是否禁用
 const disabled = computed(() => {
@@ -607,8 +613,8 @@ defineExpose({
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: v-bind('size[0]');
-    width: v-bind('size[1]');
+    height: var(--btc-upload-height, 100px);
+    width: var(--btc-upload-width, 100px);
     background-color: var(--el-fill-color-light);
     color: var(--el-text-color-regular);
     border-radius: 8px;

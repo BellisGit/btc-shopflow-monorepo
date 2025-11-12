@@ -1,19 +1,21 @@
 ﻿<template>
-  <div class="request-log-page">
-    <!-- 请求日志 -->
-    <BtcCrud ref="requestCrudRef" :service="requestService">
+  <BtcCrud
+    ref="requestCrudRef"
+    class="request-log-page"
+    :service="requestService"
+  >
       <BtcRow>
-        <BtcRefreshBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
 
-        <!-- 清空日志按钮 -->
-        <el-button
-          type="danger"
-          @click="clearLogs"
-        >
-          清空
-        </el-button>
+          <el-button
+            type="danger"
+            @click="clearLogs"
+          >
+            清空
+          </el-button>
+        </div>
 
-        <!-- 日志保存天数配置 -->
         <div class="log-keep-filter">
           <span>日志保存天数：</span>
           <el-input-number
@@ -27,23 +29,39 @@
 
         <BtcFlex1 />
         <BtcSearchKey placeholder="搜索请求地址、用户昵称、IP..." />
+        <BtcCrudActions />
       </BtcRow>
+
       <BtcRow>
-        <BtcTable ref="requestTableRef" :columns="requestColumns" :autoHeight="true" border />
+      <BtcTable
+        ref="tableRef"
+        :columns="requestColumns"
+        :context-menu="['refresh']"
+        border
+      />
       </BtcRow>
+
       <BtcRow>
         <BtcFlex1 />
         <BtcPagination />
       </BtcRow>
     </BtcCrud>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { TableColumn } from '@btc/shared-components';
-import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey } from '@btc/shared-components';
+import {
+  BtcCrud,
+  BtcTable,
+  BtcPagination,
+  BtcRefreshBtn,
+  BtcRow,
+  BtcFlex1,
+  BtcSearchKey,
+  BtcCrudActions,
+} from '@btc/shared-components';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -146,6 +164,62 @@ const requestColumns = computed<TableColumn[]>(() => {
 
 // CRUD 引用
 const requestCrudRef = ref();
+const tableRef = ref();
+
+const toPx = (value: number | undefined | null) =>
+  value != null ? `${Math.round(value)}px` : '0px';
+
+const logHeightMetrics = () => {
+  const crudEl = requestCrudRef.value?.$el as HTMLElement | undefined;
+  const tableEl = tableRef.value?.$el as HTMLElement | undefined;
+
+  console.group('[RequestLog] container heights');
+  console.log('BtcCrud:', toPx(crudEl?.offsetHeight));
+
+  const rows = crudEl?.querySelectorAll<HTMLElement>('.btc-crud-row') ?? [];
+  rows.forEach((row, index) => {
+    console.log(`  btc-crud-row #${index + 1}:`, toPx(row.offsetHeight));
+    const children = Array.from(row.children) as HTMLElement[];
+    children.forEach((child, childIndex) => {
+      console.log(
+        `    child #${childIndex + 1} <${child.tagName.toLowerCase()}${child.className ? `.${child.className}` : ''}>:`,
+        toPx(child.offsetHeight),
+      );
+    });
+  });
+
+  if (tableEl) {
+    console.log('table element height:', toPx(tableEl.offsetHeight));
+    console.log('table max-height style:', tableEl.style.maxHeight || '(auto)');
+    const headerWrapper = tableEl.querySelector<HTMLElement>('.el-table__header-wrapper');
+    const bodyWrapper = tableEl.querySelector<HTMLElement>('.el-table__body-wrapper');
+    console.log('table header wrapper height:', toPx(headerWrapper?.offsetHeight));
+    console.log('table body wrapper height:', toPx(bodyWrapper?.offsetHeight));
+
+    const dataRows = bodyWrapper?.querySelectorAll<HTMLElement>('tbody > tr.el-table__row') ?? [];
+    let totalRowsHeight = 0;
+    dataRows.forEach((tr, idx) => {
+      const rowHeight = tr.offsetHeight;
+      totalRowsHeight += rowHeight;
+      console.log(`    data row #${idx + 1} height:`, toPx(rowHeight));
+    });
+    if (dataRows.length > 0) {
+      console.log('    accumulated data rows height:', toPx(totalRowsHeight));
+    }
+
+    const tbody = bodyWrapper?.querySelector('tbody');
+    let computedBodyHeight = tbody?.scrollHeight ?? 0;
+    if (!computedBodyHeight && dataRows.length > 0) {
+      computedBodyHeight = totalRowsHeight;
+    }
+    if (!computedBodyHeight && bodyWrapper) {
+      computedBodyHeight = bodyWrapper.scrollHeight || bodyWrapper.offsetHeight || 0;
+    }
+    console.log('    computed body height (used in maxHeight check):', toPx(computedBodyHeight));
+    console.log('    computed content height:', toPx((headerWrapper?.offsetHeight ?? 0) + computedBodyHeight));
+  }
+  console.groupEnd();
+};
 
 // 日志保存天数
 const keepDays = ref(31);
@@ -159,6 +233,9 @@ onMounted(async () => {
   } catch (err) {
     console.error('获取日志保存天数失败', err);
   }
+
+  logHeightMetrics();
+  requestCrudRef.value?.crud?.mitt?.on?.('crud.refresh', logHeightMetrics);
 });
 
 // 保存天数
@@ -182,7 +259,7 @@ function clearLogs() {
         // 暂时注释掉，等待后端提供接口
         // await requestService.clear();
         BtcMessage.success('清空成功');
-        requestCrudRef.value?.refresh();
+        requestCrudRef.value?.refresh?.();
       } catch (err: any) {
         BtcMessage.error(err.message || '清空失败');
       }
@@ -193,11 +270,6 @@ function clearLogs() {
 </script>
 
 <style lang="scss" scoped>
-.request-log-page {
-  height: 100%;
-  overflow: hidden; // 防止页面滚动，让表格内部处理滚动
-}
-
 .log-keep-filter {
   display: inline-flex;
   align-items: center;

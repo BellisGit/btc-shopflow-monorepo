@@ -51,6 +51,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'data-files-list': { key: 'data-files-list', title: 'File List', path: '/data/files/list', i18nKey: 'menu.data.files.list' },
     'data-files-templates': { key: 'data-files-templates', title: 'Process Templates', path: '/data/files/templates', i18nKey: 'menu.data.files.templates' },
     'data-files-preview': { key: 'data-files-preview', title: 'File Preview', path: '/data/files/preview', i18nKey: 'menu.data.files.preview' },
+    'data-dictionary-file-categories': { key: 'data-dictionary-file-categories', title: 'File Categories', path: '/data/dictionary/file-categories', i18nKey: 'menu.data.dictionary.file_categories' },
     'data-recycle': { key: 'data-recycle', title: 'Data Recycle Bin', path: '/data/recycle', i18nKey: 'menu.data.recycle' },
 
     // 策略相关

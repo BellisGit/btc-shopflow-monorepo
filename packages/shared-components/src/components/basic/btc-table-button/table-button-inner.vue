@@ -1,0 +1,211 @@
+<template>
+  <div class="btc-table-button-wrapper">
+    <el-tooltip
+      v-if="tooltipText"
+      :content="tooltipText"
+      placement="bottom"
+      teleported
+    >
+      <button
+        class="btc-table-button"
+        :class="buttonClasses"
+        type="button"
+        :disabled="isDisabled"
+        :aria-label="ariaLabel"
+        :title="ariaLabel"
+        @click="handleClick"
+      >
+        <BtcSvg v-if="iconName" :name="iconName" :size="config.size || 16" />
+        <span v-if="hasLabel" class="btc-table-button__label">
+          {{ labelText }}
+        </span>
+        <span v-if="hasBadge" class="btc-table-button__badge">
+          {{ badgeText }}
+        </span>
+      </button>
+    </el-tooltip>
+    <button
+      v-else
+      class="btc-table-button"
+      :class="buttonClasses"
+      type="button"
+      :disabled="isDisabled"
+      :aria-label="ariaLabel"
+      :title="ariaLabel"
+      @click="handleClick"
+    >
+      <BtcSvg v-if="iconName" :name="iconName" :size="config.size || 16" />
+      <span v-if="hasLabel" class="btc-table-button__label">
+        {{ labelText }}
+      </span>
+      <span v-if="hasBadge" class="btc-table-button__badge">
+        {{ badgeText }}
+      </span>
+    </button>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import BtcSvg from '../../others/btc-svg/index.vue';
+import type { BtcTableButtonConfig } from './types';
+
+defineOptions({
+  name: 'BtcTableButtonInner',
+});
+
+const props = defineProps<{
+  config: BtcTableButtonConfig;
+}>();
+
+const iconName = computed(() => {
+  if (typeof props.config.icon === 'function') {
+    return props.config.icon();
+  }
+  return props.config.icon;
+});
+
+const tooltipText = computed(() => {
+  if (!props.config.tooltip) return undefined;
+  if (typeof props.config.tooltip === 'function') {
+    return props.config.tooltip();
+  }
+  return props.config.tooltip;
+});
+
+const ariaLabel = computed(() => {
+  if (props.config.ariaLabel) {
+    return typeof props.config.ariaLabel === 'function'
+      ? props.config.ariaLabel()
+      : props.config.ariaLabel;
+  }
+  if (tooltipText.value) return tooltipText.value;
+  return undefined;
+});
+
+const isDisabled = computed(() => Boolean(props.config.disabled));
+
+const labelText = computed(() => {
+  const value = props.config.label;
+  if (!value) return '';
+  return typeof value === 'function' ? value() : value;
+});
+
+const shouldShowLabel = computed(() => {
+  if (!labelText.value) return false;
+  return props.config.showLabel ?? false;
+});
+
+const hasLabel = computed(() => shouldShowLabel.value);
+
+const buttonClasses = computed(() => {
+  const classes: Array<string | Record<string, boolean>> = [
+    `is-${props.config.type || 'default'}`,
+  ];
+  const extraClass = props.config.class;
+  if (Array.isArray(extraClass)) {
+    classes.push(...extraClass);
+  } else if (extraClass) {
+    classes.push(extraClass);
+  }
+  if (hasLabel.value) {
+    classes.push('has-label');
+  }
+  classes.push({ 'is-disabled': isDisabled.value });
+  return classes;
+});
+
+const hasBadge = computed(() => typeof props.config.badge === 'number' && props.config.badge > 0);
+const badgeText = computed(() => {
+  if (!hasBadge.value) return '';
+  const value = props.config.badge as number;
+  return value > 99 ? '99+' : String(value);
+});
+
+const handleClick = (event: MouseEvent) => {
+  if (isDisabled.value) {
+    event.preventDefault();
+    return;
+  }
+  props.config.onClick?.(event);
+};
+</script>
+
+<style scoped lang="scss">
+.btc-table-button-wrapper {
+  display: inline-flex;
+}
+
+.btc-table-button {
+  --btc-table-button-color: var(--el-color-primary);
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--btc-table-button-color) 35%, transparent);
+  background-color: color-mix(in srgb, var(--btc-table-button-color) 6%, transparent);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  padding: 0;
+
+  .btc-svg {
+    color: var(--btc-table-button-color);
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--btc-table-button-color);
+    background-color: color-mix(in srgb, var(--btc-table-button-color) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--btc-table-button-color) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.is-disabled {
+    border-color: color-mix(in srgb, var(--el-border-color) 80%, transparent);
+    background-color: color-mix(in srgb, var(--el-border-color) 10%, transparent);
+    cursor: not-allowed;
+    pointer-events: none;
+
+    .btc-svg {
+      color: color-mix(in srgb, var(--el-text-color-secondary) 60%, transparent);
+    }
+  }
+
+  &.has-label {
+    padding: 0 12px;
+    min-width: 40px;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 12px;
+    line-height: 16px;
+    color: inherit;
+    white-space: nowrap;
+  }
+
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background-color: var(--el-color-danger);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
+}
+</style>
+

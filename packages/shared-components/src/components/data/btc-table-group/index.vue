@@ -23,18 +23,27 @@
         style="padding: 10px;"
       >
         <BtcRow>
-          <BtcRefreshBtn />
-          <BtcAddBtn />
-          <BtcMultiDeleteBtn />
+          <div class="btc-crud-primary-actions">
+            <BtcRefreshBtn />
+            <BtcAddBtn />
+            <BtcMultiDeleteBtn />
+          </div>
           <BtcFlex1 />
           <BtcSearchKey :placeholder="searchPlaceholder" />
+          <BtcCrudActions>
+            <slot
+              name="actions"
+              :selected="selected"
+              :keyword="keyword"
+              :left-data="leftData"
+              :right-data="rightData"
+            />
+          </BtcCrudActions>
         </BtcRow>
         <BtcRow>
           <BtcTable
             :columns="tableColumns"
             :op="op"
-            :auto-height="false"
-            :max-height="tableMaxHeight"
             :disable-auto-created-at="disableAutoCreatedAt"
             border
           />
@@ -54,7 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick } from 'vue';
+import { globalMitt } from '@btc/shared-components/utils/mitt';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
@@ -66,6 +76,8 @@ import BtcRow from '@btc-crud/row/index.vue';
 import BtcFlex1 from '@btc-crud/flex1/index.vue';
 import BtcSearchKey from '@btc-crud/search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
+import BtcCrudActions from '@btc-crud/actions/index.vue';
+import { useContentHeight } from '@btc/shared-components/composables/content-height';
 import type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './types';
 
 defineOptions({
@@ -81,7 +93,8 @@ defineOptions({
     BtcRow,
     BtcFlex1,
     BtcSearchKey,
-    BtcUpsert
+    BtcUpsert,
+    BtcCrudActions
   }
 });
 
@@ -105,31 +118,15 @@ const emit = defineEmits<TableGroupEmits>();
 // 组件引用
 const viewGroupRef = ref<any>(null);
 const crudRef = ref<any>(null);
+const { emit: emitContentResize } = useContentHeight();
 
-// 表格最大高度
-const tableMaxHeight = ref<number>(600); // 默认600px
-const disableAutoCreatedAt = computed(() => !props.showCreateTime);
-
-// 计算表格最大高度
-const calcTableMaxHeight = () => {
+const scheduleContentResize = () => {
   nextTick(() => {
-    const viewGroupContent = document.querySelector('.btc-view-group .content');
-    if (viewGroupContent) {
-      const contentHeight = viewGroupContent.clientHeight;
-      // 预留空间给搜索栏(50px) + 分页(50px) + 间距(20px) = 120px
-      tableMaxHeight.value = Math.max(400, contentHeight - 120);
-    }
+    emitContentResize();
   });
 };
 
-onMounted(() => {
-  calcTableMaxHeight();
-  window.addEventListener('resize', calcTableMaxHeight);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calcTableMaxHeight);
-});
+const disableAutoCreatedAt = computed(() => !props.showCreateTime);
 
 // 左侧列表数据（用于表单中的级联选择）
 const leftListData = ref<any[]>([]);
@@ -210,6 +207,8 @@ function handleSelect(item: any, keyword: any) {
   nextTick(() => {
     if (crudRef.value) {
       crudRef.value.refresh();
+      globalMitt.emit('resize');
+      scheduleContentResize();
     }
   });
 }
@@ -232,6 +231,7 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
 function handleLeftDataLoaded(data: any[]) {
   leftListData.value = data;
   emit('load', data);
+  scheduleContentResize();
 }
 
 // 表单提交 - 自动注入选中的 ID
@@ -254,6 +254,7 @@ async function handleFormSubmit(data: any, event: any) {
       await event.next(data);
     }
   }
+  scheduleContentResize();
 }
 
 // 刷新方法
@@ -262,6 +263,7 @@ const refresh = async (params?: any) => {
     await viewGroupRef.value.refresh(params);
   }
   emit('refresh', params);
+  scheduleContentResize();
 };
 
 // 暴露

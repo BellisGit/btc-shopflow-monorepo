@@ -7,7 +7,8 @@ import { ref, computed, nextTick } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
-import { useThemePlugin } from '@btc/shared-core';
+import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
+import { storage } from '@btc/shared-utils';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -98,6 +99,49 @@ function createSettingsState() {
   const tabStyle = ref<string>(appStorage.settings.getItem('tabStyle') || defaultSetting.defaultTabStyle);
   const pageTransition = ref<string>(appStorage.settings.getItem('pageTransition') || defaultSetting.defaultPageTransition);
   const customRadius = ref<string>(appStorage.settings.getItem('customRadius') || defaultSetting.defaultCustomRadius);
+
+  // 按钮风格设置
+  const initialSettings = appStorage.settings.get();
+  const legacyButtonStyle = storage.get<ButtonStyle>('button-style');
+  const storedButtonStyle = (initialSettings?.buttonStyle ?? legacyButtonStyle) as ButtonStyle | null;
+  const resolvedButtonStyle: ButtonStyle =
+    storedButtonStyle === 'minimal' ? 'minimal' : 'default';
+  const buttonStyle = ref<ButtonStyle>(resolvedButtonStyle);
+  if (!initialSettings?.buttonStyle || (initialSettings.buttonStyle !== 'default' && initialSettings.buttonStyle !== 'minimal')) {
+    appStorage.settings.set({ buttonStyle: resolvedButtonStyle });
+  }
+  if (legacyButtonStyle) {
+    storage.remove('buttonStyle');
+  }
+
+  const resolveThemePlugin = () => {
+    try {
+      return useThemePlugin();
+    } catch {
+      return (globalThis as any).__THEME_PLUGIN__ || null;
+    }
+  };
+
+  const applyButtonStyle = (style: ButtonStyle) => {
+    const themePlugin = resolveThemePlugin();
+    const nextAction = () => {
+      if (themePlugin?.setButtonStyle) {
+        themePlugin.setButtonStyle(style);
+      } else if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-button-style', style);
+      }
+    };
+    nextAction();
+  };
+
+  applyButtonStyle(buttonStyle.value);
+
+  function setButtonStyle(style: ButtonStyle) {
+    if (buttonStyle.value === style) return;
+    buttonStyle.value = style;
+    appStorage.settings.set({ buttonStyle: style });
+    applyButtonStyle(style);
+  }
 
   // 初始化时应用设置
   // 1. 应用系统主题（应用到 DOM）- 确保在页面加载时立即应用
@@ -525,6 +569,7 @@ function createSettingsState() {
     tabStyle,
     pageTransition,
     customRadius,
+    buttonStyle,
     isDark,
     // 方法
     switchMenuLayouts,
@@ -546,6 +591,7 @@ function createSettingsState() {
     setTabStyle,
     setPageTransition,
     setCustomRadius,
+    setButtonStyle,
     setMenuOpenWidth,
     toggleGlobalSearch,
     setWorkTab,

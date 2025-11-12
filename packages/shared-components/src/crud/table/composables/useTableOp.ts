@@ -1,7 +1,8 @@
-﻿import { ref } from 'vue';
+﻿import { nextTick, ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableColumn, OpButton, TableProps } from '../types';
+import { globalMitt } from '@btc/shared-components/utils/mitt';
 
 /**
  * 鎿嶄綔鍒楀鐞?+ 鍒楁帶鍒? */
@@ -38,7 +39,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
   };
 
   /**
-   * 鑾峰彇鎸夐挳鏂囨湰
+   * 获取按钮文本
    */
   const getButtonText = (btn: string): string => {
     const textMap: Record<string, string> = {
@@ -47,6 +48,18 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
       info: t('crud.button.info'),
     };
     return textMap[btn] || btn;
+  };
+
+  /**
+   * 获取按钮图标
+   */
+  const getButtonIcon = (btn: string): string | undefined => {
+    const iconMap: Record<string, string> = {
+      edit: 'edit',
+      delete: 'delete',
+      info: 'info',
+    };
+    return iconMap[btn];
   };
 
   /**
@@ -91,6 +104,9 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
    * 鏄剧ず鍒?   */
   function showColumn(prop: string | string[], status?: boolean) {
     findColumns(prop, (col) => {
+      if (status === false && (col.toggleable === false || col.alwaysVisible)) {
+        return;
+      }
       col.hidden = typeof status === 'boolean' ? !status : false;
     });
   }
@@ -118,6 +134,9 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
     if (callback) {
       callback();
     }
+    nextTick(() => {
+      globalMitt.emit('resize');
+    });
   }
 
   return {
@@ -125,6 +144,7 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
     getOpButtons: _getOpButtons,
     getButtonType,
     getButtonText,
+    getButtonIcon,
     handleOpClick,
 
     // 列控制

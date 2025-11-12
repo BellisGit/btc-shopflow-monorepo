@@ -58,6 +58,12 @@ btc-shopflow-monorepo/
 └── implementation-docs/           # 实现文档
 ```
 
+## ✨ 最近更新
+
+- `btc-crud` 顶部与 `btc-table-toolbar` 统一使用 `BtcTableButton`，图标与边框同步应用类型化主题色。
+- 标签栏右侧下拉菜单改用新的 `tabbar-menu.svg` 图标，并提供固定/取消固定、关闭左侧、关闭右侧等快捷操作。
+- 下拉菜单项统一使用 `BtcSvg` 图标展示，交互体验与按钮风格偏好保持一致。
+
 ## 🚀 快速开始
 
 ### 环境要求

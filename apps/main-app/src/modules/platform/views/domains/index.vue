@@ -2,12 +2,16 @@
   <div class="domains-page">
     <BtcCrud ref="crudRef" :service="wrappedDomainService">
       <BtcRow>
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
         <BtcFlex1 />
-        <BtcExportBtn :filename="t('platform.domain.list')" />
         <BtcSearchKey :placeholder="t('platform.domain.search_placeholder')" />
+        <BtcCrudActions>
+          <BtcExportBtn :filename="t('platform.domain.list')" />
+        </BtcCrudActions>
       </BtcRow>
       <BtcRow>
         <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
@@ -23,7 +27,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
@@ -37,6 +41,13 @@ const tableRef = ref();
 // 租户下拉选项
 const tenantOptions = ref<{ label: string; value: any }[]>([]);
 const tenantLoading = ref(false);
+const tenantLabelMap = computed(() => {
+  const map = new Map<any, string>();
+  tenantOptions.value.forEach((item) => {
+    map.set(item.value, item.label);
+  });
+  return map;
+});
 
 const loadTenantOptions = async () => {
   const tenantService = service.system?.iam?.tenant;
@@ -106,7 +117,12 @@ const columns = computed<TableColumn[]>(() => [
   { type: 'index', label: '序号', width: 60 },
   { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
   { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
-  { prop: 'tenantId', label: '租户ID', width: 150 },
+  {
+    prop: 'tenantId',
+    label: '租户名称',
+    width: 150,
+    formatter: (_row, _column, cellValue) => tenantLabelMap.value.get(cellValue) ?? cellValue ?? '-',
+  },
   { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
 ]);
 
@@ -116,7 +132,7 @@ const formItems = computed<FormItem[]>(() => [
   { prop: 'domainCode', label: t('platform.domain.code'), span: 12, required: true, component: { name: 'el-input' } },
   {
     prop: 'tenantId',
-    label: '租户ID',
+    label: '租户名称',
     span: 12,
     required: true,
     component: {
@@ -140,5 +156,10 @@ const formItems = computed<FormItem[]>(() => [
 .domains-page {
   height: 100%;
   box-sizing: border-box;
+
+  :deep(.btc-table-toolbar-host),
+  :deep(.btc-table-toolbar--inline) {
+    margin-bottom: 0;
+  }
 }
 </style>

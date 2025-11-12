@@ -10,9 +10,6 @@
               <div class="icon" @click="handleRefreshCategories">
                 <btc-svg name="refresh" />
               </div>
-              <div class="icon" @click="handleAddCategory">
-                <btc-svg name="plus-border" />
-              </div>
             </div>
           </div>
           <div class="search">
@@ -180,17 +177,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import { BtcViewGroup } from '@btc/shared-components';
-import {
-  Document,
-  Picture,
-  VideoPlay,
-  Check,
-  ZoomIn,
-  Download,
-  Delete,
-  Plus,
-  Search
-} from '@element-plus/icons-vue';
+import { Document, Picture, VideoPlay, Check, ZoomIn, Download, Delete, Search } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -270,10 +257,6 @@ const handleRefreshCategories = () => {
 };
 
 // 添加分类
-const handleAddCategory = () => {
-  BtcMessage.info('添加分类功能待实现');
-};
-
 // 文件类型判断
 const isImage = (file: any) => {
   return file.type?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);

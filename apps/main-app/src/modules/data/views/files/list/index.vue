@@ -2,29 +2,46 @@
   <div class="files-page">
     <btc-crud ref="crudRef" class="files-page" :service="fileService">
       <btc-row>
-        <!-- 刷新按钮 -->
-        <btc-refresh-btn />
-        <el-button
-          type="primary"
-          :loading="loading"
-          @click="handleUpload"
-        >
-          <el-icon><Upload /></el-icon>
-          上传文件
-        </el-button>
-        <el-button
-          type="danger"
-          :disabled="tableSelection.length === 0 || loading"
-          :loading="loading"
-          @click="handleDelete"
-        >
-          <el-icon><Delete /></el-icon>
-          删除文件
-        </el-button>
+        <div class="btc-crud-primary-actions">
+          <!-- 刷新按钮 -->
+          <btc-refresh-btn />
+          <BtcTableButton
+            v-if="isMinimal"
+            class="btc-crud-action-icon"
+            :config="uploadButtonConfig"
+          />
+          <el-button
+            v-else
+            type="primary"
+            class="btc-crud-btn"
+            :loading="loading"
+            @click="handleUpload"
+          >
+            <BtcSvg class="btc-crud-btn__icon" name="upload" />
+            <span class="btc-crud-btn__text">上传文件</span>
+          </el-button>
+          <BtcTableButton
+            v-if="isMinimal"
+            class="btc-crud-action-icon"
+            :config="deleteButtonConfig"
+          />
+          <el-button
+            v-else
+            type="danger"
+            class="btc-crud-btn"
+            :disabled="selectionCount === 0 || loading"
+            :loading="loading"
+            @click="handleDelete"
+          >
+            <BtcSvg class="btc-crud-btn__icon" name="delete" />
+            <span class="btc-crud-btn__text">删除文件</span>
+          </el-button>
+        </div>
 
         <btc-flex1 />
         <!-- 关键字搜索 -->
         <btc-search-key />
+        <btc-crud-actions />
       </btc-row>
 
       <btc-row>
@@ -114,14 +131,15 @@
 import { ref, computed } from 'vue';
 import { ElButton, ElDialog, ElUpload, ElIcon } from 'element-plus';
 import type { UploadFile } from 'element-plus';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcTableButton, BtcSvg, CommonColumns } from '@btc/shared-components';
 import type { TableColumn } from '@btc/shared-components';
-import { Upload, Delete, UploadFilled } from '@element-plus/icons-vue';
+import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import { service } from '@/services/eps';
 import type { CrudService } from '@btc/shared-core';
 import BtcFileThumbnailCell from '@/components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue';
-import BtcFileActionsCell from '@/components/btc-file-actions-cell/BtcFileActionsCell.vue';
+import { useThemePlugin } from '@btc/shared-core';
+import { DEFAULT_OPERATION_WIDTH } from '@btc/shared-components';
 
 defineOptions({
   name: 'DataFilesList'
@@ -150,15 +168,32 @@ const tableSelection = computed(() => {
 });
 
 // 表格列配置
+const selectionCount = computed(() => tableSelection.value.length);
+const theme = useThemePlugin();
+const isMinimal = computed(() => theme.buttonStyle?.value === 'minimal');
+
+const uploadButtonConfig = computed(() => ({
+  icon: 'upload',
+  type: 'primary' as const,
+  tooltip: '上传文件',
+  ariaLabel: '上传文件',
+  disabled: loading.value,
+  onClick: () => handleUpload(),
+}));
+
+const deleteButtonConfig = computed(() => ({
+  icon: 'delete',
+  type: 'danger' as const,
+  tooltip: '删除文件',
+  ariaLabel: '删除文件',
+  badge: selectionCount.value || undefined,
+  disabled: selectionCount.value === 0 || loading.value,
+  onClick: () => handleDelete(),
+}));
+
 const columns = computed<TableColumn[]>(() => [
-  {
-    type: 'selection'
-  },
-  {
-    type: 'index',
-    label: '序号',
-    width: 60
-  },
+  CommonColumns.selection(),
+  CommonColumns.index(),
   {
     label: '缩略图',
     prop: 'fileUrl',
@@ -196,20 +231,31 @@ const columns = computed<TableColumn[]>(() => [
     width: 180
   },
   {
+    type: 'op',
     label: '操作',
-    prop: 'op',
-    width: 200,
+    width: DEFAULT_OPERATION_WIDTH,
     align: 'center',
     fixed: 'right' as const,
-    component: {
-      name: BtcFileActionsCell,
-      props: (scope: any) => ({
-        row: scope.row,
-        onShare: handleShare,
-        onDetail: handleDetail,
-        onDelete: handleDeleteSingle,
-      })
-    }
+    buttons: [
+      {
+        label: '分享',
+        type: 'success',
+        icon: 'share',
+        onClick: ({ scope }: { scope: any }) => handleShare(scope.row),
+      },
+      {
+        label: '详情',
+        type: 'primary',
+        icon: 'info',
+        onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
+      },
+      {
+        label: '删除',
+        type: 'danger',
+        icon: 'delete',
+        onClick: ({ scope }: { scope: any }) => handleDeleteSingle(scope.row),
+      },
+    ],
   }
 ]);
 

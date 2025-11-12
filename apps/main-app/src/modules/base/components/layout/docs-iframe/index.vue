@@ -474,6 +474,10 @@ defineExpose({
   &.is-hidden {
     pointer-events: none; // 事件隔离
     visibility: hidden;   // 对屏幕阅读器隐藏
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
   }
 }
 

@@ -130,7 +130,7 @@ onUnmounted(() => {
 const fixedApplications: MicroApp[] = [
   {
     name: 'docs',
-    icon: 'icon-tutorial',
+    icon: 'tutorial',
     color: '#7c3aed',
     entry: '//localhost:8080/docs',
     activeRule: '/docs',
@@ -141,31 +141,31 @@ const fixedApplications: MicroApp[] = [
 // 域到应用的映射配置（不包括系统域和文档域）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
   'LOGISTICS': {
-    icon: 'icon-map',
+    icon: 'map',
     color: '#67c23a',
     entry: '//localhost:8081',
     activeRule: '/logistics',
   },
   'ENGINEERING': {
-    icon: 'icon-design',
+    icon: 'design',
     color: '#e6a23c',
     entry: '//localhost:8082',
     activeRule: '/engineering',
   },
   'QUALITY': {
-    icon: 'icon-approve',
+    icon: 'approve',
     color: '#f56c6c',
     entry: '//localhost:8083',
     activeRule: '/quality',
   },
   'PRODUCTION': {
-    icon: 'icon-work',
+    icon: 'work',
     color: '#909399',
     entry: '//localhost:8084',
     activeRule: '/production',
   },
   'FINANCE': {
-    icon: 'icon-amount',
+    icon: 'amount-alt',
     color: '#d48806',
     entry: '//localhost:8085',
     activeRule: '/finance',

@@ -15,6 +15,8 @@ export interface TableColumn {
     showOverflowTooltip?: boolean;
     resizable?: boolean;
     hidden?: boolean;
+    toggleable?: boolean;
+    alwaysVisible?: boolean;
     formatter?: (row: any, column: any, cellValue: any, index: number) => string;
     component?: {
         name: string | Component;
@@ -50,6 +52,13 @@ export type OpButton = 'edit' | 'delete' | 'info' | `slot-${string}` | {
 export interface OpConfig {
     buttons?: OpButton[];
 }
+export type TableSize = 'small' | 'default' | 'large';
+export type TableToolbarItem = 'size' | 'columns' | 'style';
+export interface TableToolbarOptions {
+    visible?: boolean;
+    layout?: TableToolbarItem[];
+    storageKey?: string;
+}
 /**
  * Props 配置
  */
@@ -59,6 +68,10 @@ export interface TableProps {
     height?: string | number;
     maxHeight?: string | number;
     border?: boolean;
+    stripe?: boolean;
+    headerBackground?: boolean;
+    size?: TableSize;
+    headerCellStyle?: Record<string, any> | ((data: any) => Record<string, any>);
     rowKey?: string;
     emptyText?: string;
     defaultSort?: {
@@ -69,4 +82,6 @@ export interface TableProps {
     contextMenu?: Array<string | any> | boolean;
     op?: OpConfig;
     disableAutoCreatedAt?: boolean;
+    toolbar?: boolean | TableToolbarOptions;
+    storageKey?: string;
 }

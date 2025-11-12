@@ -1,5 +1,9 @@
 <template>
-  <div class="btc-view-group" :class="[isExpand ? 'is-expand' : 'is-collapse']">
+  <div
+    class="btc-view-group"
+    :class="[isExpand ? 'is-expand' : 'is-collapse']"
+    :style="viewGroupStyle"
+  >
     <div class="btc-view-group__wrap">
       <!-- 左侧 -->
       <div class="btc-view-group__left">
@@ -28,7 +32,7 @@
       </div>
 
       <!-- 右侧 -->
-      <div class="btc-view-group__right">
+      <div class="btc-view-group__right" :style="rightPaneStyle">
         <div v-if="!custom" class="head">
           <div
             class="icon is-bg absolute left-[10px]"
@@ -66,6 +70,7 @@ import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
 import type { ViewGroupOptions } from './types';
 import { useViewGroupData, useViewGroupActions } from './composables';
 import { useI18n } from '@btc/shared-core';
+import { useContentHeight } from '../../composables/content-height';
 
 defineOptions({
   name: 'BtcViewGroup',
@@ -125,6 +130,36 @@ const rightData = ref<any>(null); // 存储右侧数据
 
 const isExpand = ref(true); // 初始状态为展开
 
+const leftPaneWidth = computed(() => {
+  if (typeof props.leftWidth === 'string' && props.leftWidth.trim()) {
+    return props.leftWidth;
+  }
+  return '300px';
+});
+
+const viewGroupStyle = computed(() => ({
+  '--btc-view-group-left-width': leftPaneWidth.value,
+}));
+
+const { height: contentHeight, emit: emitContentResize } = useContentHeight();
+
+const rightPaneStyle = computed(() => {
+  const value = contentHeight.value;
+  if (!value || value <= 0) {
+    return {};
+  }
+  return {
+    height: `${value}px`,
+    minHeight: `${value}px`,
+  };
+});
+
+const scheduleContentResize = () => {
+  nextTick(() => {
+    emitContentResize();
+  });
+};
+
 // 检测移动端
 const isMobile = computed(() => window.innerWidth <= 768);
 
@@ -145,6 +180,7 @@ function handleLeftSelect(item: any, keyword: any) {
   // 触发事件
   emit('select', item, keyword);
   emit('update:selected', item);
+  scheduleContentResize();
 }
 
 // 加载右侧数据
@@ -167,6 +203,7 @@ async function loadRightData() {
     rightData.value = res;
 
     emit('right-data-loaded', res);
+    scheduleContentResize();
   } catch (error) {
     console.error('加载右侧数据失败:', error);
   }
@@ -176,6 +213,7 @@ async function loadRightData() {
 function handleLeftLoad(data: any[]) {
   leftListData.value = data;
   emit('left-data-loaded', data);
+  scheduleContentResize();
 }
 
 // 处理左侧加载完成
@@ -186,6 +224,7 @@ function handleLeftLoadComplete(_data: any[]) {
 // 收起、展开
 function expand(value?: boolean) {
   isExpand.value = value === undefined ? !isExpand.value : value;
+  scheduleContentResize();
 }
 
 // 刷新方法
@@ -200,6 +239,7 @@ const refresh = async (params?: any) => {
   }
 
   emit('refresh', params);
+  scheduleContentResize();
 };
 
 // Provide 数据供右侧组件使用
@@ -218,11 +258,13 @@ watch(isMobile, (val) => {
   if (val) {
     expand(false);
   }
+  scheduleContentResize();
 });
 
 // 手动选择方法，供外部调用
 const select = (item: any, keyword?: any) => {
   handleLeftSelect(item, keyword);
+  scheduleContentResize();
 };
 
 // 暴露
@@ -242,8 +284,6 @@ defineExpose({
 <style lang="scss" scoped>
 @use './styles/index.scss' as *;
 
-// 动态变量必须在组件内定义
-$left-width: v-bind('props.leftWidth || "300px"');
 $bg: var(--el-bg-color);
 
 .btc-view-group {
@@ -265,7 +305,7 @@ $bg: var(--el-bg-color);
   &__left {
     position: relative;
     height: 100%;
-    width: $left-width;
+    width: var(--btc-view-group-left-width, 300px);
     background-color: $bg;
     overflow: hidden;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -332,7 +372,7 @@ $bg: var(--el-bg-color);
   // 展开状态
   &.is-expand {
     .btc-view-group__right {
-      width: calc(100% - $left-width);
+      width: calc(100% - var(--btc-view-group-left-width, 300px));
       border-left: 1px solid var(--el-border-color-extra-light);
     }
   }
@@ -348,45 +388,6 @@ $bg: var(--el-bg-color);
     }
   }
 
-  // btc-crud 在 view-group 内使用 flex 布局，确保内容正确显示
-  :deep(.btc-crud) {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    overflow: visible !important; // 允许内容正常显示，不裁剪
-
-    // 表格行应该占据剩余空间，但允许内容自适应高度
-    .btc-crud-row {
-              // 如果包含表格，让这一行根据内容自适应，但可以收缩
-        &:has(.btc-table) {
-          flex: 0 1 auto !important; // flex-grow: 0 (不占据额外空间), flex-shrink: 1 (可以收缩), flex-basis: auto (根据内容)
-          display: flex !important;
-          flex-direction: column !important;
-          overflow: hidden !important;
-          min-height: 0 !important; // 允许 flex 子元素收缩到内容以下
-          max-height: 100% !important; // 限制最大高度为容器高度
-
-          .btc-table {
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            min-height: 0 !important;
-            width: 100% !important;
-            // 表格根据 max-height 和内容自适应高度，不会拉伸填充剩余空间
-
-            // el-table 根据 max-height 自适应，不强制填满
-            :deep(.el-table) {
-              // 不设置 height，让表格根据 max-height 和内容自适应
-            }
-          }
-        }
-
-      // 其他行不缩放
-      &:not(:has(.btc-table)) {
-        flex-shrink: 0 !important;
-      }
-    }
-  }
 }
 
 // 移动端适配

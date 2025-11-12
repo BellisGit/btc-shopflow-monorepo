@@ -8,7 +8,8 @@
       teleported
     >
       <div
-        :class="['btc-comm__icon', 'btc-icon-button', config.class]"
+        :class="buttonClasses"
+        :aria-disabled="isDisabled"
         @click="handleClick($event)"
       >
         <btc-svg
@@ -25,7 +26,8 @@
     </el-tooltip>
     <div
       v-else
-      :class="['btc-comm__icon', 'btc-icon-button', config.class]"
+      :class="buttonClasses"
+      :aria-disabled="isDisabled"
       @click="handleClick($event)"
     >
       <btc-svg
@@ -68,8 +70,21 @@ const tooltipText = computed(() => {
   return props.config.tooltip;
 });
 
+const isDisabled = computed(() => Boolean(props.config.disabled));
+
+const buttonClasses = computed(() => [
+  'btc-comm__icon',
+  'btc-icon-button',
+  props.config.class,
+  { 'is-disabled': isDisabled.value }
+]);
+
 // 处理点击事件
 const handleClick = (event: MouseEvent) => {
+  if (isDisabled.value) {
+    event.preventDefault();
+    return;
+  }
   if (props.config.onClick) {
     // 传递事件对象，以便用于动画计算（如主题切换动画）
     props.config.onClick(event as any);

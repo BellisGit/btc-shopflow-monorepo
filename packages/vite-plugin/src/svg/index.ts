@@ -103,7 +103,10 @@ function compilerSvg(): string {
   // 扫描 assets/icons 目录
   const assetsSvgs = findSvg(rootDir('./src/assets/icons/'));
 
-  return [...srcSvgs, ...assetsSvgs]
+  // 扫描共享组件的 icons 目录，确保跨应用的公共组件也能使用这些图标
+  const sharedAssetsSvgs = findSvg(rootDir('../packages/shared-components/src/assets/icons/'));
+
+  return [...srcSvgs, ...assetsSvgs, ...sharedAssetsSvgs]
     .map((e) => {
       // 检查是否是 bg.svg（包含 icon-bg symbol）
       const isBgIcon = e.includes('id="icon-bg"');

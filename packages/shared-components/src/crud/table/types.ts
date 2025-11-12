@@ -19,6 +19,8 @@ export interface TableColumn {
   showOverflowTooltip?: boolean;
   resizable?: boolean;
   hidden?: boolean; // 是否隐藏列
+  toggleable?: boolean; // 是否允许通过工具栏切换显示
+  alwaysVisible?: boolean; // 兼容旧字段，true 时与 toggleable: false 相同
 
   // 渲染
   formatter?: (row: any, column: any, cellValue: any, index: number) => string;
@@ -58,6 +60,7 @@ export type OpButton =
   | {
       label: string;
       type?: string;
+      icon?: string;
       onClick?: (options: { scope: any }) => void;
     };
 
@@ -66,6 +69,15 @@ export type OpButton =
  */
 export interface OpConfig {
   buttons?: OpButton[];
+}
+
+export type TableSize = 'small' | 'default' | 'large';
+export type TableToolbarItem = 'size' | 'columns' | 'style';
+
+export interface TableToolbarOptions {
+  visible?: boolean;
+  layout?: TableToolbarItem[];
+  storageKey?: string;
 }
 
 /**
@@ -81,6 +93,10 @@ export interface TableProps {
 
   // 表格样式
   border?: boolean; // 是否显示边框，默认 true
+  stripe?: boolean;
+  headerBackground?: boolean;
+  size?: TableSize;
+  headerCellStyle?: Record<string, any> | ((data: any) => Record<string, any>);
 
   // 其他配置
   rowKey?: string; // 行唯一键，默认 'id'
@@ -97,5 +113,9 @@ export interface TableProps {
 
   // 自动列配置
   disableAutoCreatedAt?: boolean; // 禁止自动追加创建时间列
+
+  // 工具栏与偏好
+  toolbar?: boolean | TableToolbarOptions;
+  storageKey?: string;
 }
 

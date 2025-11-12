@@ -40,6 +40,7 @@
         </BtcColorPicker>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -197,5 +198,6 @@ watch(() => theme.currentTheme.value, (newTheme) => {
     customColor.value = newTheme.color;
   }
 });
+
 </script>
 

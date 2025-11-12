@@ -2,7 +2,7 @@
   "切换主题": "Switch Theme",
   "暗黑模式": "Dark Mode",
   "明亮模式": "Light Mode",
-  "theme.title": "Theme Settings",
+  "theme.title": "Preferences",
   "theme.presets": "Preset Themes",
   "theme.custom_color": "Custom Color",
   "theme.switched": "Theme switched to",

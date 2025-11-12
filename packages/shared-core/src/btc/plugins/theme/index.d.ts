@@ -15,7 +15,10 @@ export interface ThemePlugin {
     changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
     setThemeColor: (color: string, dark: boolean) => void;
     updateThemeColor: (color: string) => void;
+    buttonStyle: ReturnType<typeof ref<ButtonStyle>>;
+    setButtonStyle: (style: ButtonStyle) => void;
 }
+export type ButtonStyle = 'default' | 'minimal';
 /**
  * 创建主题插件
  */

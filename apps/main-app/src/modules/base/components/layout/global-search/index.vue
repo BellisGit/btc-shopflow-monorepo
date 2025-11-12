@@ -37,13 +37,15 @@
             <!-- 搜索输入区 -->
             <div class="search-modal__header">
               <form class="search-modal__form" @submit.prevent="handleEnter">
-                <label class="search-modal__icon">
+                <label class="search-modal__icon" for="global-search-input">
                   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="8" stroke="currentColor" fill="none" stroke-width="1.4"></circle>
                     <path d="m21 21-4.3-4.3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
                   </svg>
                 </label>
                 <input
+                  id="global-search-input"
+                  name="global-search"
                   ref="inputRef"
                   v-model="searchKeyword"
                   type="search"
@@ -288,6 +290,7 @@ const searchData = ref([
   { id: 'm15', type: 'menu', title: '文件列表', path: '/data/files/list', breadcrumb: '数据管理' },
   { id: 'm16', type: 'menu', title: '流程模板', path: '/data/files/templates', breadcrumb: '数据管理' },
   { id: 'm17', type: 'menu', title: '文件预览', path: '/data/files/preview', breadcrumb: '数据管理' },
+  { id: 'm17-1', type: 'menu', title: '文件分类', path: '/data/dictionary/file-categories', breadcrumb: '数据管理' },
   { id: 'm18', type: 'menu', title: '数据回收站', path: '/data/recycle', breadcrumb: '数据管理' },
 
   // 运维与审计

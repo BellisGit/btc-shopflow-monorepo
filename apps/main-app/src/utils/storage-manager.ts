@@ -53,6 +53,7 @@ export interface AppSettingsStorage {
   tabStyle?: string;
   pageTransition?: string;
   customRadius?: string;
+  buttonStyle?: string;
   
   [key: string]: any;
 }

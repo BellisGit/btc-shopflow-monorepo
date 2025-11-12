@@ -5,6 +5,7 @@
         <BtcRefreshBtn />
         <BtcFlex1 />
         <BtcSearchKey :placeholder="t('org.user_role_assign.search_placeholder')" />
+        <BtcCrudActions />
       </BtcRow>
 
       <BtcRow>

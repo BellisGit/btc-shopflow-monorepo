@@ -4,7 +4,7 @@
  */
 
 import { computed } from 'vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { configImages } from '../config/images';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 
@@ -14,6 +14,22 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
 export function useSettingsConfig() {
   const { t } = useI18n();
   const theme = useThemePlugin();
+  const buttonStyleOptions = computed(() => {
+    const currentStyle = theme.buttonStyle?.value || 'default';
+    return [
+      {
+        value: 'default' as ButtonStyle,
+        label: t('theme.buttonStyles.default') || 'Default',
+        active: currentStyle === 'default',
+      },
+      {
+        value: 'minimal' as ButtonStyle,
+        label: t('theme.buttonStyles.minimal') || 'Minimal',
+        active: currentStyle === 'minimal',
+      },
+    ];
+  });
+
 
   // 主题风格选项
   const themeList = computed(() => [
@@ -285,6 +301,7 @@ export function useSettingsConfig() {
     menuLayoutList,
     menuStyleList,
     mainColors,
+    buttonStyleOptions,
     // 配置选项对象（用于兼容旧代码）
     configOptions,
     containerWidthOptions,

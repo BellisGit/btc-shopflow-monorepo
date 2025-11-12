@@ -150,7 +150,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     ],
     '/data/recycle': [
       { i18nKey: 'menu.data', icon: 'FolderOpened' },
-      { i18nKey: 'menu.data.recycle', icon: 'Delete' },
+      { i18nKey: 'menu.data.recycle', icon: 'DeleteFilled' },
     ],
     '/ops/baseline': [
       { i18nKey: 'menu.ops', icon: 'Monitor' },

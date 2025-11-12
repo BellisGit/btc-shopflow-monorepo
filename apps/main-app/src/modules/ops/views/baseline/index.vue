@@ -2,11 +2,14 @@
   <div class="baseline-page">
     <BtcCrud ref="crudRef" :service="baselineService">
       <BtcRow>
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
         <BtcFlex1 />
         <BtcSearchKey :placeholder="t('ops.baseline.search_placeholder')" />
+        <BtcCrudActions />
       </BtcRow>
 
       <BtcRow>

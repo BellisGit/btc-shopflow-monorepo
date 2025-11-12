@@ -19,3 +19,21 @@
   z-index: 10;
 }
 
+.btc-icon-button__dropdown-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 20px;
+}
+
+.btc-icon-button__dropdown-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: inherit;
+}
+
+.btc-icon-button__dropdown-label {
+  font-size: 13px;
+}
+

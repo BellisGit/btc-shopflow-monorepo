@@ -65,6 +65,8 @@ import {
   View,
   Operation,
   Opportunity,
+  CollectionTag,
+  DeleteFilled,
 } from '@element-plus/icons-vue';
 
 defineOptions({
@@ -112,6 +114,8 @@ const iconMap: Record<string, any> = {
   View,
   Operation,
   Opportunity, // 添加缺失的图标
+  CollectionTag,
+  DeleteFilled,
 };
 
 // 获取图标组件

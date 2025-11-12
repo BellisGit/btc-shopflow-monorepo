@@ -127,18 +127,18 @@ export const appMenus: AppMenuConfig = {
     },
     {
       index: '/logistics/orders',
-      title: '订单管理',
-      icon: 'icon-list',
+      title: '物流概览',
+      icon: 'list',
     },
     {
       index: '/logistics/transport',
       title: '运输管理',
-      icon: 'icon-device',
+      icon: 'device',
     },
     {
       index: '/logistics/warehouse',
       title: '仓储管理',
-      icon: 'icon-folder',
+      icon: 'folder',
     },
   ],
 
@@ -152,7 +152,7 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/engineering/projects',
       title: '项目列表',
-      icon: 'icon-design',
+      icon: 'design',
     },
     {
       index: '/engineering/progress',
@@ -162,7 +162,7 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/engineering/monitoring',
       title: '施工监控',
-      icon: 'icon-monitor',
+      icon: 'monitor',
     },
   ],
 
@@ -176,17 +176,17 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/quality/inspection',
       title: '质量检验',
-      icon: 'icon-approve',
+      icon: 'approve',
     },
     {
       index: '/quality/reports',
       title: '质量报告',
-      icon: 'icon-doc',
+      icon: 'doc',
     },
     {
       index: '/quality/defects',
       title: '不良品管理',
-      icon: 'icon-warn',
+      icon: 'warn',
     },
   ],
 
@@ -200,17 +200,17 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/production/plans',
       title: '生产计划',
-      icon: 'icon-task',
+      icon: 'task',
     },
     {
       index: '/production/schedule',
       title: '排程管理',
-      icon: 'icon-time',
+      icon: 'time',
     },
     {
       index: '/production/materials',
       title: '物料管理',
-      icon: 'icon-goods',
+      icon: 'goods',
     },
   ],
 
@@ -224,17 +224,17 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/finance/receivables',
       title: '应收管理',
-      icon: 'icon-amount',
+      icon: 'amount-alt',
     },
     {
       index: '/finance/payables',
       title: '应付管理',
-      icon: 'icon-card',
+      icon: 'card',
     },
     {
       index: '/finance/reports',
       title: '财务报表',
-      icon: 'icon-stats',
+      icon: 'stats',
     },
   ],
 };

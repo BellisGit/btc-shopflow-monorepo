@@ -3,7 +3,7 @@
  */
 
 import BtcUserSetting from './index.vue';
-import BtcUserSettingDrawer from './components/theme-drawer.vue';
+import BtcUserSettingDrawer from './components/preferences-drawer.vue';
 
 export { BtcUserSetting, BtcUserSettingDrawer };
 export { useUserSetting } from './composables';

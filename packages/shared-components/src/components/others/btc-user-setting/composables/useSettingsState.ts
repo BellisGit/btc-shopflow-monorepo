@@ -4,6 +4,7 @@
 import { ref, computed } from 'vue';
 import { storage } from '@btc/shared-utils';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
 /**
  * 璁剧疆鐘舵€佺鐞嗙粍鍚堝紡鍑芥暟
@@ -39,6 +40,48 @@ export function useSettingsState() {
   const tabStyle = ref<string>(storage.get('tabStyle') || 'tab-default');
   const pageTransition = ref<string>(storage.get('pageTransition') || 'slide-left');
   const customRadius = ref<string>(storage.get('customRadius') || '0.25');
+
+  // 按钮风格设置
+  const getSettings = (): Record<string, any> => (storage.get('settings') as Record<string, any> | null) ?? {};
+  const initialSettings = getSettings();
+  const legacyButtonStyle = storage.get<ButtonStyle>('button-style');
+  const storedButtonStyle = initialSettings.buttonStyle ?? legacyButtonStyle;
+  const resolvedButtonStyle: ButtonStyle =
+    storedButtonStyle === 'minimal' ? 'minimal' : 'default';
+  const buttonStyle = ref<ButtonStyle>(resolvedButtonStyle);
+  if (!initialSettings.buttonStyle || (initialSettings.buttonStyle !== 'default' && initialSettings.buttonStyle !== 'minimal')) {
+    storage.set('settings', { ...initialSettings, buttonStyle: resolvedButtonStyle });
+  }
+  if (legacyButtonStyle) {
+    storage.remove('buttonStyle');
+  }
+
+  const resolveThemePlugin = () => {
+    try {
+      return useThemePlugin();
+    } catch {
+      return (globalThis as any).__THEME_PLUGIN__ || null;
+    }
+  };
+
+  const applyButtonStyle = (style: ButtonStyle) => {
+    const themePlugin = resolveThemePlugin();
+    if (themePlugin?.setButtonStyle) {
+      themePlugin.setButtonStyle(style);
+    } else if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-button-style', style);
+    }
+  };
+
+  applyButtonStyle(buttonStyle.value);
+
+  function setButtonStyle(style: ButtonStyle) {
+    if (buttonStyle.value === style) return;
+    buttonStyle.value = style;
+    const settings = getSettings();
+    storage.set('settings', { ...settings, buttonStyle: style });
+    applyButtonStyle(style);
+  }
 
   // 鍒濆鍖栨椂搴旂敤璁剧疆
   // 搴旂敤鑹插急妯″紡
@@ -287,6 +330,7 @@ export function useSettingsState() {
     tabStyle,
     pageTransition,
     customRadius,
+    buttonStyle,
     isDark,
     switchMenuLayouts,
     switchMenuStyles,
@@ -307,6 +351,7 @@ export function useSettingsState() {
     setTabStyle,
     setPageTransition,
     setCustomRadius,
+    setButtonStyle,
     setMenuOpenWidth,
     toggleGlobalSearch,
   };

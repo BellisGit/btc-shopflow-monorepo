@@ -23,6 +23,7 @@
   <el-dropdown
     v-else-if="config.dropdown"
     trigger="click"
+    :popper-class="config.dropdown.popperClass"
     @command="handleDropdownCommand"
   >
     <template #default>
@@ -36,7 +37,14 @@
           :command="item.command"
           :disabled="item.disabled"
         >
-          {{ item.label }}
+          <span class="btc-icon-button__dropdown-item">
+            <BtcSvg
+              v-if="resolveDropdownIcon(item.icon)"
+              :name="resolveDropdownIcon(item.icon)"
+              class="btc-icon-button__dropdown-icon"
+            />
+            <span class="btc-icon-button__dropdown-label">{{ item.label }}</span>
+          </span>
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
@@ -54,6 +62,7 @@ defineOptions({
 import { ref } from 'vue';
 import type { IconButtonConfig } from './types';
 import IconButtonInner from './icon-button-inner.vue';
+import BtcSvg from '../../others/btc-svg/index.vue';
 
 const props = defineProps<{
   config: IconButtonConfig;
@@ -67,6 +76,14 @@ const handlePopoverClose = () => {
 
 const handleDropdownCommand = (command: string) => {
   props.config.dropdown?.onCommand(command);
+};
+
+const resolveDropdownIcon = (icon?: string | (() => string)) => {
+  if (!icon) return '';
+  if (typeof icon === 'function') {
+    return icon();
+  }
+  return icon;
 };
 </script>
 

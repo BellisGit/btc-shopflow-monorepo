@@ -71,12 +71,24 @@ const onModuleSelect = (module: any) => {
 };
 
 // 资源表格列
+const resourceTypeDict = [
+  { label: '文件', value: 'FILE', type: 'info' },
+  { label: 'API', value: 'API', type: 'warning' },
+  { label: '数据表', value: 'TABLE', type: 'primary' },
+] as const;
+
 const resourceColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: '序号', width: 60 },
   { prop: 'resourceNameCn', label: '资源名称', minWidth: 150 },
   { prop: 'resourceCode', label: '资源编码', minWidth: 150 },
-  { prop: 'resourceType', label: '类型', width: 100 },
+  {
+    prop: 'resourceType',
+    label: '类型',
+    width: 120,
+    dict: resourceTypeDict.map((item) => ({ ...item })),
+    dictColor: true,
+  },
   { prop: 'description', label: '描述', minWidth: 200 },
 ]);
 
@@ -90,12 +102,10 @@ const resourceFormItems = computed<FormItem[]>(() => [
     span: 12,
     component: {
       name: 'el-select',
-      options: [
-        { label: '菜单', value: '菜单' },
-        { label: 'API', value: 'API' },
-        { label: '按钮', value: '按钮' },
-        { label: '字段', value: '字段' },
-      ]
+      options: resourceTypeDict.map((item) => ({
+        label: item.label,
+        value: item.value,
+      })),
     }
   },
   { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },

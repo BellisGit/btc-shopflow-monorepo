@@ -1,5 +1,5 @@
 ﻿<template>
-  <!-- 主题设置按钮 -->
+  <!-- 偏好设置按钮 -->
   <BtcIconButton
     :config="{
       icon: 'theme',
@@ -18,14 +18,14 @@
     }"
   />
 
-  <!-- 主题设置抽屉 -->
+      <!-- 偏好设置抽屉 -->
     <el-drawer
       v-model="drawerVisible"
       :title="t('theme.title')"
       size="420px"
       append-to-body
     >
-      <div class="theme-drawer">
+      <div class="preferences-drawer">
         <el-form label-position="top">
           <!-- 预设主题（包含自定义主题） -->
           <el-form-item :label="t('theme.presets')">
@@ -308,8 +308,8 @@ function handleDarkToggle(event?: MouseEvent) {
 </script>
 
 <style lang="scss">
-// 主题抽屉样式
-.theme-drawer {
+// 偏好设置抽屉样式
+.preferences-drawer {
   padding: 0 2px;
 }
 

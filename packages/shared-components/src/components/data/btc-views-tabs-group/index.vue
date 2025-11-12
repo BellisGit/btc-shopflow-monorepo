@@ -22,14 +22,16 @@
               style="padding: 10px;"
             >
               <BtcRow>
-                <BtcRefreshBtn />
-                <BtcAddBtn />
-                <BtcMultiDeleteBtn />
+                <div class="btc-crud-primary-actions">
+                  <BtcRefreshBtn />
+                  <BtcAddBtn />
+                  <BtcMultiDeleteBtn />
+                </div>
                 <BtcFlex1 />
                 <BtcSearchKey :placeholder="searchPlaceholder" />
               </BtcRow>
               <BtcRow>
-                <BtcTable :columns="columns" :row-key="'id'" :auto-height="false" :max-height="tableMaxHeight" border />
+                <BtcTable :columns="columns" :row-key="'id'" border />
               </BtcRow>
               <BtcRow>
                 <BtcFlex1 />
@@ -49,12 +51,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
+import { globalMitt } from '@btc/shared-components/utils/mitt';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '../../../index';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import type { BtcViewsTabsGroupConfig } from './types';
+import { useContentHeight } from '@btc/shared-components/composables/content-height';
 
 defineOptions({
   name: 'BtcViewsTabsGroup'
@@ -72,30 +76,13 @@ const emit = defineEmits<{
 // 组件引用
 const viewGroupRef = ref();
 const crudRef = ref();
+const { emit: emitContentResize } = useContentHeight();
 
-// 表格最大高度
-const tableMaxHeight = ref<number>(600); // 默认600px
-
-// 计算表格最大高度
-const calcTableMaxHeight = () => {
+const scheduleContentResize = () => {
   nextTick(() => {
-    const viewGroupContent = document.querySelector('.btc-view-group .content');
-    if (viewGroupContent) {
-      const contentHeight = viewGroupContent.clientHeight;
-      // 预留空间给搜索栏(50px) + 分页(50px) + 间距(20px) = 120px
-      tableMaxHeight.value = Math.max(400, contentHeight - 120);
-    }
+    emitContentResize();
   });
 };
-
-onMounted(() => {
-  calcTableMaxHeight();
-  window.addEventListener('resize', calcTableMaxHeight);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calcTableMaxHeight);
-});
 
 // 当前选中的 tab
 const activeTab = ref('');
@@ -227,6 +214,7 @@ const handleTabChange = async (tab: any, index: number) => {
   if (viewGroupRef.value) {
     await viewGroupRef.value.refresh();
   }
+  scheduleContentResize();
 };
 
 // CRUD 刷新前处理
@@ -268,11 +256,15 @@ const handleViewGroupSelect = (item: any, ids?: any) => {
   nextTick(() => {
     if (crudRef.value && crudRef.value.crud && crudRef.value.crud.loadData) {
       crudRef.value.crud.loadData();
+      globalMitt.emit('resize');
+      scheduleContentResize();
     } else {
       // 如果 nextTick 后还是没有引用，再延迟一点
       setTimeout(() => {
         if (crudRef.value && crudRef.value.crud && crudRef.value.crud.loadData) {
           crudRef.value.crud.loadData();
+          globalMitt.emit('resize');
+          scheduleContentResize();
         }
       }, 100);
     }
@@ -292,6 +284,7 @@ onMounted(() => {
   }
   // 标记初始化完成
   isInitialized.value = true;
+  scheduleContentResize();
 });
 
 // 获取左侧菜单数据的方法

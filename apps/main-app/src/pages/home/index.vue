@@ -68,7 +68,7 @@
               <span>{{ t('micro_app.production.title') }}</span>
             </div>
             <div class="access-item" @click="goToModule('finance')">
-              <btc-svg name="icon-amount" :size="48" />
+              <btc-svg name="amount-alt" :size="48" />
               <span>{{ t('micro_app.finance.title') }}</span>
             </div>
           </div>

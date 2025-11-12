@@ -6,6 +6,7 @@ export declare function useTableOp(crud: UseCrudReturn<any>, tableProps: TablePr
     getOpButtons: (column: TableColumn, _scope: any) => OpButton[];
     getButtonType: (btn: string) => string;
     getButtonText: (btn: string) => string;
+    getButtonIcon: (btn: string) => string | undefined;
     handleOpClick: (btn: string, row: any) => void;
     showColumn: (prop: string | string[], status?: boolean) => void;
     hideColumn: (prop: string | string[]) => void;

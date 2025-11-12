@@ -10,6 +10,8 @@ import { createToggleDark } from './composables/useThemeToggle';
 /**
  * 主题插件实例
  */
+export type ButtonStyle = 'default' | 'minimal';
+
 export interface ThemePlugin {
   currentTheme: ReturnType<typeof ref<ThemeConfig>>;
   isDark: ReturnType<typeof useDark>;
@@ -20,6 +22,8 @@ export interface ThemePlugin {
   changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
   setThemeColor: (color: string, dark: boolean) => void;
   updateThemeColor: (color: string) => void;
+  buttonStyle: ReturnType<typeof ref<ButtonStyle>>;
+  setButtonStyle: (style: ButtonStyle) => void;
 }
 
 let themePluginInstance: ThemePlugin | null = null;
@@ -37,6 +41,25 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
 
   // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
   const isDark = useDark();
+
+  const settings = storage.get('settings') as Record<string, any> | null;
+  const storedButtonStyle = (settings?.buttonStyle ?? storage.get('button-style')) as ButtonStyle | null;
+  const buttonStyle = ref<ButtonStyle>(storedButtonStyle || 'default');
+
+  const applyButtonStyle = (style: ButtonStyle) => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('data-button-style', style);
+  };
+
+  applyButtonStyle(buttonStyle.value);
+
+  function setButtonStyle(style: ButtonStyle) {
+    buttonStyle.value = style;
+    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
+    storage.set('settings', { ...currentSettings, buttonStyle: style });
+    storage.set('button-style', style);
+    applyButtonStyle(style);
+  }
 
   // 主题颜色（只读）
   const color = computed(() => currentTheme.value.color) as any;
@@ -143,6 +166,8 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     changeDark,
     setThemeColor: themeSetThemeColor,
     updateThemeColor,
+    buttonStyle,
+    setButtonStyle,
   };
 
   // 保存单例（但每次创建时都使用最新的 THEME_PRESETS）

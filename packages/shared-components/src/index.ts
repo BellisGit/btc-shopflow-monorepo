@@ -16,6 +16,7 @@ import './common/form/style.scss';
 import './components/feedback/btc-message/styles.scss';
 import './components/feedback/btc-notification/styles.scss';
 import './components/basic/btc-icon-button/index.scss';
+import './components/basic/btc-table-button/index.scss';
 import './components/basic/btc-avatar/index.scss';
 
 // 图表组件
@@ -28,6 +29,7 @@ export { default as sharedLocalesEnUS } from './locales/en-US.json';
 // Basic 基础组件
 export { default as BtcButton } from './components/basic/btc-button/index.vue';
 export { BtcIconButton } from './components/basic/btc-icon-button';
+export { default as BtcTableButton } from './components/basic/btc-table-button/index.vue';
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
 
@@ -77,6 +79,8 @@ export { default as BtcMultiDeleteBtn } from './crud/multi-delete-btn/index.vue'
 export { default as BtcRow } from './crud/row/index.vue';
 export { default as BtcFlex1 } from './crud/flex1/index.vue';
 export { default as BtcSearchKey } from './crud/search-key/index.vue';
+export { default as BtcCrudActions } from './crud/actions/index.vue';
+export { default as BtcTableToolbar } from './crud/toolbar/inline.vue';
 // 导入导出组件已移动到 excel 插件
 export { default as BtcMenuExp } from './crud/menu-exp/index.vue';
 
@@ -87,9 +91,13 @@ export { ExcelPlugin, CodePlugin };
 export const { BtcExportBtn, BtcImportBtn } = ExcelPlugin;
 export const { BtcCodeJson } = CodePlugin;
 
+// 常量导出
+export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
+
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';
 export { useUpload } from './components/form/btc-upload/composables/useUpload';
+export { provideContentHeight, useContentHeight } from './composables/content-height';
 
 // 导出类型
 export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-identity-verify/types';

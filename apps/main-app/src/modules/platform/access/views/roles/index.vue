@@ -2,11 +2,14 @@
   <div class="role-list">
     <BtcCrud ref="crudRef" :service="roleService">
       <BtcRow>
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
         <BtcFlex1 />
         <BtcSearchKey />
+        <BtcCrudActions />
       </BtcRow>
       <BtcRow>
         <BtcTable ref="tableRef" :columns="columns" border />

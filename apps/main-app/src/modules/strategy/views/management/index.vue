@@ -10,9 +10,11 @@
           @change="handleTypeChange"
         />
 
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
 
         <!-- 状态筛选 -->
         <el-select
@@ -32,6 +34,7 @@
 
         <BtcFlex1 />
         <BtcSearchKey />
+        <BtcCrudActions />
       </BtcRow>
 
       <BtcRow>
@@ -502,9 +505,16 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .strategy-management {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
   padding: 16px;
 
   .strategy-crud {
+    flex: 1 1 auto;
+    min-height: 0;
+
     .strategy-tags {
       display: flex;
       flex-wrap: wrap;

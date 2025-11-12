@@ -6,6 +6,7 @@
         <BtcRefreshBtn />
         <BtcFlex1 />
         <BtcSearchKey placeholder="搜索操作日志..." />
+        <BtcCrudActions />
       </BtcRow>
       <BtcRow>
         <BtcTable ref="auditTableRef" :columns="auditColumns" border />

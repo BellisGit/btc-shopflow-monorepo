@@ -49,6 +49,33 @@ const componentMap: Record<string, any> = {
 
 // 渲染列内容
 const renderContent = (column: TableColumn, scope: any) => {
+  if (column.component?.name === 'cl-dict' && column.prop) {
+    const rawValue = scope.row[column.prop!];
+    const props = getComponentProps(column.component.props, scope);
+    const dictSource =
+      column.dict ||
+      props?.dict ||
+      props?.options ||
+      [];
+    const dictArray = Array.isArray(dictSource) ? dictSource : [];
+    const values = Array.isArray(rawValue)
+      ? rawValue
+      : rawValue == null || rawValue === ''
+        ? []
+        : (typeof rawValue === 'string' && rawValue.includes(','))
+          ? rawValue.split(',').map((item: string) => item.trim()).filter(Boolean)
+          : [rawValue];
+    const labels = values.map((val: any) => {
+      const match = dictArray.find((item: any) => item?.value === val || item?.value === Number(val) || String(item?.value) === String(val));
+      if (match && match.label != null) {
+        return match.label;
+      }
+      return val ?? '';
+    });
+    const display = labels.length > 0 ? labels.join('、') : '';
+    return h('span', { class: 'btc-table-dict-cell' }, display);
+  }
+
   // 字典颜色标签
   if (column._dictFormatter && column.prop) {
     const dict = column._dictFormatter(scope.row);

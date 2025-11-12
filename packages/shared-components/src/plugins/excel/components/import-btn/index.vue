@@ -1,7 +1,18 @@
 <template>
-  <el-button :disabled="disabled" :type="type" @click="triggerFileSelect">
-    <BtcSvg name="import" :size="16" />
-    {{ t('common.button.import') }}
+  <BtcTableButton
+    class="btc-crud-action-icon"
+    v-if="isMinimal"
+    :config="iconButtonConfig"
+  />
+  <el-button
+    v-else
+    :disabled="disabled"
+    class="btc-crud-btn btc-crud-btn--with-icon btc-import-btn"
+    :type="type"
+    @click="triggerFileSelect"
+  >
+    <BtcSvg name="import" class="btc-crud-btn__icon" />
+    <span class="btc-crud-btn__text">{{ buttonLabel }}</span>
   </el-button>
 
   <!-- 隐藏的文件输入元素 -->
@@ -149,16 +160,19 @@
 import { ref, reactive, computed, inject, type PropType } from 'vue';
 
 import { UploadFilled } from '@element-plus/icons-vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, useThemePlugin } from '@btc/shared-core';
 import BtcForm from '@btc-common/form/index.vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';
+import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-button/types';
 import * as XLSX from 'xlsx';
 import chardet from 'chardet';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage } from '@btc-components/feedback/btc-message';
 
 const { t } = useI18n();
+const theme = useThemePlugin();
 
 // 从 CRUD 上下文获取数据
 const crud = inject<UseCrudReturn<any>>('btc-crud');
@@ -463,6 +477,35 @@ const upload = reactive({
   file: null as File | null,
   list: [] as any[]
 });
+
+const buttonLabel = computed(() => t('common.button.import'));
+const isMinimal = computed(() => theme.buttonStyle?.value === 'minimal');
+const isButtonDisabled = computed(() => Boolean(props.disabled));
+
+const allowedButtonTypes = ['primary', 'success', 'warning', 'danger', 'info', 'default'] as const;
+type AllowedButtonType = typeof allowedButtonTypes[number];
+
+const iconType = computed<AllowedButtonType>(() => {
+  const value = (props.type || 'success') as string;
+  if (allowedButtonTypes.includes(value as AllowedButtonType)) {
+    return value as AllowedButtonType;
+  }
+  if (value === 'text') return 'default';
+  return 'success';
+});
+
+const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({
+  icon: 'import',
+  tooltip: buttonLabel.value,
+  ariaLabel: buttonLabel.value,
+  type: iconType.value,
+  disabled: isButtonDisabled.value,
+  onClick: () => {
+    if (!isButtonDisabled.value) {
+      triggerFileSelect();
+    }
+  },
+}));
 
 // 分页信息
 const pagination = reactive({

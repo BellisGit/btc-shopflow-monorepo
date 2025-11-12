@@ -30,6 +30,14 @@ body {
   height: 100%;
 }
 
+.request-log-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden auto;
+}
+
 // 色弱模式样式
 .color-weak {
   filter: invert(80%);
@@ -75,13 +83,14 @@ body {
 
 // 通用图标按钮样式（与 cool-admin 的 .cl-comm__icon 保持一致）
 .btc-comm__icon {
+  --btc-icon-color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   height: 26px;
   width: 26px;
-  background-color: var(--el-bg-color);
-  border: 1px solid var(--el-fill-color-dark);
+  background-color: color-mix(in srgb, var(--btc-icon-color) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--btc-icon-color) 35%, transparent);
   border-radius: 6px;
   transition: all 0.2s ease-in-out;
   outline: none;
@@ -90,12 +99,63 @@ body {
 
   .btc-svg {
     font-size: 16px;
-    color: var(--el-text-color-primary);
+    color: var(--btc-icon-color);
   }
 
   &:hover {
-    border-color: var(--el-color-primary);
-    background-color: transparent;
+    border-color: var(--btc-icon-color);
+    background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.btc-icon-button--breath {
+  --btc-breath-color: var(--el-color-primary);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--btc-breath-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 30%, transparent);
+    animation: btc-breathe 1.5s ease-in-out infinite;
+  }
+}
+
+.btc-icon-button--breath--warning::after {
+  --btc-breath-color: var(--el-color-danger);
+  animation: none;
+  opacity: 1;
+  transform: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 35%, transparent);
+}
+
+.btc-icon-button--breath--success::after {
+  --btc-breath-color: var(--el-color-success);
+}
+
+@keyframes btc-breathe {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
   }
 }
 
@@ -310,7 +370,7 @@ html.dark {
 }
 
 // 设置抽屉模态框样式（参考 art-design-pro）
-.user-setting-modal {
+.user-preferences-modal {
   background: transparent !important;
 
   // 使用 :deep() 确保样式能够穿透 Element Plus 的样式封装
@@ -379,7 +439,7 @@ html.dark {
 }
 
 // 使用更高优先级的选择器确保覆盖（添加 html 前缀增加特异性）
-html .user-setting-modal {
+html .user-preferences-modal {
   :deep(.el-drawer__body) {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -405,7 +465,7 @@ html .user-setting-modal {
 
 // 暗黑模式适配（使用 html.dark 确保优先级，与项目保持一致）
 html.dark {
-  .user-setting-modal {
+  .user-preferences-modal {
     :deep(.el-drawer) {
       // 覆盖 Element Plus 的 CSS 变量（提高不透明度）
       --el-drawer-bg-color: rgba(0, 0, 0, 1) !important;

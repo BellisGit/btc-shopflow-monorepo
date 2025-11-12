@@ -1,5 +1,5 @@
 <template>
-  <div class="btc-grid-group">
+  <div class="btc-grid-group" :style="gridGroupStyle">
     <!-- 顶栏区域 -->
     <div class="btc-grid-group__header">
       <div v-if="$slots.headerLeft" class="btc-grid-group__header-left">
@@ -29,6 +29,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 interface BtcGridGroupProps {
   leftWidth?: string;    // 左侧区域宽度，默认 '20%'
   rightWidth?: string;   // 右侧区域宽度，默认 '25%'
@@ -38,6 +40,11 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
   leftWidth: '20%',
   rightWidth: '25%'
 });
+
+const gridGroupStyle = computed(() => ({
+  '--btc-grid-group-left-width': props.leftWidth,
+  '--btc-grid-group-right-width': props.rightWidth
+}));
 </script>
 
 <style lang="scss" scoped>
@@ -69,14 +76,14 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
   }
 
   &__header-left {
-    flex: 0 0 v-bind(leftWidth);
+    flex: 0 0 var(--btc-grid-group-left-width, 20%);
     display: flex;
     align-items: center;
     min-width: 0; // 确保flex子元素能够正确收缩
   }
 
   &__body-left {
-    flex: 0 0 v-bind(leftWidth);
+    flex: 0 0 var(--btc-grid-group-left-width, 20%);
     display: flex;
     flex-direction: column;
     min-width: 0; // 确保flex子元素能够正确收缩
@@ -100,7 +107,7 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
   }
 
   &__header-right {
-    flex: 0 0 v-bind(rightWidth);
+    flex: 0 0 var(--btc-grid-group-right-width, 25%);
     display: flex;
     align-items: center;
     justify-content: space-around;
@@ -109,7 +116,7 @@ const props = withDefaults(defineProps<BtcGridGroupProps>(), {
   }
 
   &__body-right {
-    flex: 0 0 v-bind(rightWidth);
+    flex: 0 0 var(--btc-grid-group-right-width, 25%);
     display: flex;
     flex-direction: column;
     min-width: 0; // 确保flex子元素能够正确收缩

@@ -60,7 +60,7 @@
           />
         </div>
 
-        <div class="app-layout__content">
+        <div class="app-layout__content" ref="contentRef">
             <!-- 主应用路由出口 -->
             <router-view v-if="isMainApp && !isDocsApp" v-slot="{ Component }">
               <transition :name="pageTransitionName" mode="out-in">
@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
@@ -106,6 +106,7 @@ import AppSkeleton from '@/components/AppSkeleton.vue';
 import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
+import { provideContentHeight } from '@/composables/useContentHeight';
 
 // 创建事件总线
 const emitter = mitt();
@@ -116,6 +117,22 @@ const emitter = mitt();
 const route = useRoute();
 const isCollapse = ref(false);
 const drawerVisible = ref(false);
+const contentRef = ref<HTMLElement | null>(null);
+const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
+
+watch(
+  () => contentRef.value,
+  (el) => {
+    registerContentHeight(el ?? null);
+  },
+  { immediate: true },
+);
+
+const scheduleContentResize = () => {
+  nextTick(() => {
+    emitContentResize();
+  });
+};
 
 // 获取设置状态
 const { showCrumbs, pageTransition, menuType, menuThemeType, isDark } = useSettingsState();
@@ -184,25 +201,30 @@ const showBreadcrumb = computed(() => {
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value;
+  scheduleContentResize();
 };
 
 const toggleDrawer = () => {
   drawerVisible.value = !drawerVisible.value;
+  scheduleContentResize();
 };
 
 const openDrawer = () => {
   if (!drawerVisible.value) {
     drawerVisible.value = true;
   }
+  scheduleContentResize();
 };
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value;
+  scheduleContentResize();
 };
 
 // 遮罩层点击事件（移动端关闭侧边栏）
 const handleMaskClick = () => {
   isCollapse.value = true;
+  scheduleContentResize();
 };
 
 // 刷新视图
@@ -213,6 +235,7 @@ function refreshView() {
     // 子应用视图刷新（通过事件通知子应用）
     emitter.emit('subapp.refresh');
   }
+  scheduleContentResize();
 }
 
 onMounted(() => {
@@ -226,8 +249,17 @@ onMounted(() => {
       isCollapse.value = browser.isMini;
       prevIsMini = browser.isMini;
     }
+    scheduleContentResize();
   }, true); // immediate = true，立即执行一次，确保初始状态正确
+  scheduleContentResize();
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    scheduleContentResize();
+  },
+);
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
@@ -326,30 +358,6 @@ onUnmounted(() => {
     border-radius: 6px;
     position: relative;
     background-color: var(--el-bg-color);
-
-    // 统一的页面容器样式（应用于所有路由视图）
-    :deep(> *) {
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      background-color: var(--el-bg-color);
-
-      // 使用 btc-view-group 的页面（滚动由内部组件控制，不需要外层滚动）
-      &.users-page,
-      &.resources-page,
-      &.menus-page,
-      &.modules-page,
-      &.plugins-page,
-      &.perm-compose-page {
-        overflow: hidden;
-      }
-
-      // 其他页面允许滚动
-      &:not(.users-page):not(.resources-page):not(.menus-page):not(.modules-page):not(.plugins-page):not(.perm-compose-page):not(.btc-grid-group):not(.strategy-designer):not(.templates-page):not(.file-preview-page) {
-        overflow: auto;
-        padding: 10px;
-      }
-    }
 
     // 子应用挂载点（覆盖默认样式，不需要 padding）
     #subapp-viewport {

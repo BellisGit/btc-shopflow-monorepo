@@ -28,6 +28,121 @@ export function getCurrentAppFromPath(path: string): string {
  */
 export const useProcessStore = defineStore('process', () => {
   const list = ref<ProcessItem[]>([]); // 所有标签
+  const pinned = ref<string[]>([]);
+
+  const isPinned = (fullPath: string) => pinned.value.includes(fullPath);
+
+  const reorderTabs = () => {
+    if (!list.value.length || !pinned.value.length) return;
+    const pinnedSet = new Set(pinned.value);
+
+    const pinnedTabs: ProcessItem[] = [];
+    pinned.value.forEach((path) => {
+      const tab = list.value.find((item) => item.fullPath === path);
+      if (tab) {
+        pinnedTabs.push(tab);
+      }
+    });
+
+    const otherTabs = list.value.filter((tab) => !pinnedSet.has(tab.fullPath));
+
+    list.value = [...pinnedTabs, ...otherTabs];
+  };
+
+  const pin = (fullPath: string) => {
+    if (!isPinned(fullPath)) {
+      pinned.value.push(fullPath);
+      reorderTabs();
+    }
+  };
+
+  const unpin = (fullPath: string) => {
+    pinned.value = pinned.value.filter((path) => path !== fullPath);
+    reorderTabs();
+  };
+
+  const togglePin = (fullPath: string) => {
+    if (isPinned(fullPath)) {
+      unpin(fullPath);
+    } else {
+      pin(fullPath);
+    }
+  };
+
+  const findIndex = (predicate: (tab: ProcessItem) => boolean) =>
+    list.value.findIndex(predicate);
+
+  const removeByFullPaths = (paths: Set<string>) => {
+    if (!paths.size) return false;
+    let changed = false;
+    list.value = list.value.filter((tab) => {
+      if (paths.has(tab.fullPath)) {
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+    if (!changed) return false;
+    if (paths.size) {
+      pinned.value = pinned.value.filter((path) => !paths.has(path));
+    }
+    reorderTabs();
+    return true;
+  };
+
+  const closeByFullPath = (fullPath: string) => {
+    if (!fullPath || isPinned(fullPath)) return false;
+    const paths = new Set<string>([fullPath]);
+    return removeByFullPaths(paths);
+  };
+
+  const collectPaths = (tabs: ProcessItem[], app?: string, exclude?: Set<string>) => {
+    const result = new Set<string>();
+    tabs.forEach((tab) => {
+      if (app && tab.app !== app) return;
+      if (isPinned(tab.fullPath)) return;
+      if (exclude && exclude.has(tab.fullPath)) return;
+      result.add(tab.fullPath);
+    });
+    return result;
+  };
+
+  const closeLeft = (fullPath: string, app: string) => {
+    const targetIndex = findIndex((tab) => tab.fullPath === fullPath);
+    if (targetIndex <= 0) return false;
+    const leftTabs = list.value.slice(0, targetIndex);
+    const paths = collectPaths(leftTabs, app);
+    return removeByFullPaths(paths);
+  };
+
+  const closeRight = (fullPath: string, app: string) => {
+    const targetIndex = findIndex((tab) => tab.fullPath === fullPath);
+    if (targetIndex === -1) return false;
+    const rightTabs = list.value.slice(targetIndex + 1);
+    const paths = collectPaths(rightTabs, app);
+    return removeByFullPaths(paths);
+  };
+
+  const closeOthers = (fullPath: string, app: string) => {
+    const targetIndex = findIndex((tab) => tab.fullPath === fullPath);
+    if (targetIndex === -1) return false;
+    const exclude = new Set<string>([fullPath]);
+    const otherTabs = list.value.filter((tab) => tab.fullPath !== fullPath);
+    const paths = collectPaths(otherTabs, app, exclude);
+    return removeByFullPaths(paths);
+  };
+
+  const closeAll = (app: string) => {
+    const appTabs = list.value.filter((tab) => tab.app === app);
+    const paths = collectPaths(appTabs, app);
+    return removeByFullPaths(paths);
+  };
+
+  const syncPinned = () => {
+    const exists = new Set(list.value.map((tab) => tab.fullPath));
+    pinned.value = pinned.value.filter((path) => exists.has(path));
+    reorderTabs();
+  };
 
   /**
    * 添加标签（通过 tabRegistry 解析元数据）
@@ -78,6 +193,9 @@ export const useProcessStore = defineStore('process', () => {
         };
       }
     }
+
+    syncPinned();
+    reorderTabs();
   }
 
   /**
@@ -87,7 +205,11 @@ export const useProcessStore = defineStore('process', () => {
     const index = list.value.findIndex((e) => e.active);
 
     if (index > -1) {
+      const removed = list.value[index];
       list.value.splice(index, 1);
+      if (removed) {
+        unpin(removed.fullPath);
+      }
     }
   }
 
@@ -95,7 +217,11 @@ export const useProcessStore = defineStore('process', () => {
    * 移除指定标签
    */
   function remove(index: number) {
+    const removed = list.value[index];
     list.value.splice(index, 1);
+    if (removed) {
+      unpin(removed.fullPath);
+    }
   }
 
   /**
@@ -103,6 +229,8 @@ export const useProcessStore = defineStore('process', () => {
    */
   function set(data: ProcessItem[]) {
     list.value = data;
+    syncPinned();
+    reorderTabs();
   }
 
   /**
@@ -110,20 +238,22 @@ export const useProcessStore = defineStore('process', () => {
    */
   function clear() {
     list.value = [];
+    pinned.value = [];
   }
 
   /**
    * 清空当前应用的标签
    */
   function clearCurrentApp(app: string) {
-    list.value = list.value.filter(tab => tab.app !== app);
+    list.value = list.value.filter((tab) => tab.app !== app);
+    syncPinned();
   }
 
   /**
    * 获取当前应用的标签
    */
   function getAppTabs(app: string) {
-    return list.value.filter(tab => tab.app === app);
+    return list.value.filter((tab) => tab.app === app);
   }
 
   /**
@@ -139,6 +269,16 @@ export const useProcessStore = defineStore('process', () => {
 
   return {
     list,
+    pinned,
+    isPinned,
+    pin,
+    unpin,
+    togglePin,
+    closeByFullPath,
+    closeLeft,
+    closeRight,
+    closeOthers,
+    closeAll,
     add,
     remove,
     close,
@@ -149,5 +289,3 @@ export const useProcessStore = defineStore('process', () => {
     setTitle,
   };
 });
-
-

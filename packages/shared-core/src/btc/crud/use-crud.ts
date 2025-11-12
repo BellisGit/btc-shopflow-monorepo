@@ -3,7 +3,7 @@
  * 封装 CRUD 通用逻辑：列表加载、分页、搜索、增删改等
  */
 
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, shallowRef } from 'vue';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
 export function useCrud<T = Record<string, unknown>>(
@@ -37,6 +37,11 @@ export function useCrud<T = Record<string, unknown>>(
 
   // 选择行
   const selection = ref<T[]>([]);
+  const toolbarContext = shallowRef<any>(null);
+
+  const setToolbarContext = (context: any) => {
+    toolbarContext.value = context;
+  };
 
   // 防止重复调用的标记
   const isRefreshing = ref(false);
@@ -476,6 +481,8 @@ export function useCrud<T = Record<string, unknown>>(
     closeDialog,
     handleView,
     handleViewClose,
+    toolbarContext,
+    setToolbarContext,
   };
 
   // 如果有回调函数，调用它
