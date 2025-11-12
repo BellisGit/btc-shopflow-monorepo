@@ -8,8 +8,8 @@
       :form-items="templateFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
       left-title="业务域"
-      right-title="流程模板列表"
-      search-placeholder="搜索流程模板..."
+      right-title="受控文件列表"
+      search-placeholder="搜索受控文件..."
       :show-unassigned="true"
       unassigned-label="未分配"
       :enable-key-search="true"
@@ -45,7 +45,7 @@ const domainService = {
   }
 };
 
-// 流程模板服务（右侧表），使用纯后端API
+// 受控文件服务（右侧表），使用纯后端API
 const templateService = service.system?.iam?.processTemplate;
 
 const wrappedTemplateService = {
@@ -73,7 +73,7 @@ const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
 };
 
-// 流程模板表格列
+// 受控文件表格列
 const templateColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: '序号', width: 60 },
@@ -85,7 +85,7 @@ const templateColumns = computed<TableColumn[]>(() => [
   { prop: 'description', label: t('data.template.description'), minWidth: 200 },
 ]);
 
-// 流程模板表单
+// 受控文件表单
 const templateFormItems = computed<FormItem[]>(() => [
   { prop: 'templateName', label: t('data.template.name'), span: 12, required: true, component: { name: 'el-input' } },
   { prop: 'templateCode', label: t('data.template.code'), span: 12, required: true, component: { name: 'el-input' } },

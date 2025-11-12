@@ -104,7 +104,7 @@
   "menu.data": "数据管理",
   "menu.data.files": "文件管理",
   "menu.data.files.list": "文件列表",
-  "menu.data.files.templates": "流程模板",
+  "menu.data.files.templates": "受控文件",
   "menu.data.files.preview": "文件预览",
   "menu.data.dictionary": "字典管理",
   "menu.data.dictionary.file_categories": "文件分类",

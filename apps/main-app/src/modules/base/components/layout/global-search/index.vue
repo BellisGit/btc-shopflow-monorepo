@@ -288,7 +288,7 @@ const searchData = ref([
 
   // 数据管理
   { id: 'm15', type: 'menu', title: '文件列表', path: '/data/files/list', breadcrumb: '数据管理' },
-  { id: 'm16', type: 'menu', title: '流程模板', path: '/data/files/templates', breadcrumb: '数据管理' },
+  { id: 'm16', type: 'menu', title: '受控文件', path: '/data/files/templates', breadcrumb: '数据管理' },
   { id: 'm17', type: 'menu', title: '文件预览', path: '/data/files/preview', breadcrumb: '数据管理' },
   { id: 'm17-1', type: 'menu', title: '文件分类', path: '/data/dictionary/file-categories', breadcrumb: '数据管理' },
   { id: 'm18', type: 'menu', title: '数据回收站', path: '/data/recycle', breadcrumb: '数据管理' },

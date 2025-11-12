@@ -104,7 +104,7 @@
   "menu.data": "Data Management",
   "menu.data.files": "File Management",
   "menu.data.files.list": "File List",
-  "menu.data.files.templates": "Process Templates",
+  "menu.data.files.templates": "Controlled Files",
   "menu.data.files.preview": "File Preview",
   "menu.data.dictionary": "Dictionary Management",
   "menu.data.dictionary.file_categories": "File Categories",
