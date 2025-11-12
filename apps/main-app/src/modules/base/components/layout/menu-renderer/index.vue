@@ -8,7 +8,11 @@
     >
       <template #title>
         <el-icon>
-          <component :is="getIconComponent(item.icon)" />
+          <component
+            v-if="!isSvgIcon(item.icon)"
+            :is="getIconComponent(item.icon)"
+          />
+          <BtcSvg v-else :name="getSvgName(item.icon)" :size="18" />
         </el-icon>
         <span>{{ t(item.title) }}</span>
       </template>
@@ -27,7 +31,11 @@
       v-show="isMenuVisible(item)"
     >
       <el-icon>
-        <component :is="getIconComponent(item.icon)" />
+        <component
+          v-if="!isSvgIcon(item.icon)"
+          :is="getIconComponent(item.icon)"
+        />
+        <BtcSvg v-else :name="getSvgName(item.icon)" :size="18" />
       </el-icon>
       <span>{{ t(item.title) }}</span>
     </el-menu-item>
@@ -38,6 +46,7 @@
 import { defineComponent } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { MenuItem } from '@/micro/menus';
+import { BtcSvg } from '@btc/shared-components';
 import {
   Lock,
   Location,
@@ -67,6 +76,7 @@ import {
   Opportunity,
   CollectionTag,
   DeleteFilled,
+  Collection,
 } from '@element-plus/icons-vue';
 
 defineOptions({
@@ -116,12 +126,17 @@ const iconMap: Record<string, any> = {
   Opportunity, // 添加缺失的图标
   CollectionTag,
   DeleteFilled,
+  Collection,
 };
 
 // 获取图标组件
 const getIconComponent = (iconName: string) => {
   return iconMap[iconName] || Coin; // 默认图标
 };
+
+const isSvgIcon = (iconName: string) => iconName?.startsWith('svg:');
+
+const getSvgName = (iconName: string) => iconName.replace(/^svg:/, '');
 
 // 判断菜单项是否可见（支持搜索过滤）
 const isMenuVisible = (item: MenuItem): boolean => {

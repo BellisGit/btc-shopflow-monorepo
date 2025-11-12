@@ -1,24 +1,24 @@
 ﻿<template>
-  <BtcCrud ref="crudRef" :service="actionService">
-    <BtcRow>
-      <div class="btc-crud-primary-actions">
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
-      </div>
-      <BtcFlex1 />
-      <BtcSearchKey />
-      <BtcCrudActions />
-    </BtcRow>
-    <BtcRow>
-      <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
-    </BtcRow>
-    <BtcRow>
-      <BtcFlex1 />
-      <BtcPagination />
-    </BtcRow>
-    <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
-  </BtcCrud>
+    <BtcCrud ref="crudRef" :service="actionService">
+      <BtcRow>
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <BtcAddBtn />
+          <BtcMultiDeleteBtn />
+        </div>
+        <BtcFlex1 />
+        <BtcSearchKey />
+        <BtcCrudActions />
+      </BtcRow>
+      <BtcRow>
+        <BtcTable ref="tableRef" :columns="columns" :op="{ buttons: ['edit', 'delete'] }" border />
+      </BtcRow>
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+      <BtcUpsert ref="upsertRef" :items="formItems" width="800px"  />
+    </BtcCrud>
 </template>
 
 <script setup lang="ts">

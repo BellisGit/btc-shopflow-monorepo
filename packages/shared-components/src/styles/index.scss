@@ -20,14 +20,6 @@
 	> .btc-crud-row {
 		width: 100%;
 
-		&:not(.btc-crud-row--last) > * {
-			margin: 0 10px 10px 0;
-
-			&:last-child {
-				margin-right: 0;
-			}
-		}
-
 		.btc-flex1 {
 			margin-right: 0;
 		}
@@ -42,7 +34,16 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	row-gap: 0;
+	row-gap: 10px;
+	column-gap: 10px;
+}
+
+.btc-crud-row > .btc-search-key {
+	margin-right: -10px;
+
+	&:first-child {
+		margin-left: -10px;
+	}
 }
 
 .btc-table {

@@ -191,6 +191,8 @@ const deleteButtonConfig = computed(() => ({
   onClick: () => handleDelete(),
 }));
 
+const OPERATION_WIDTH = DEFAULT_OPERATION_WIDTH + 60; // 三个按钮需要更宽的空间
+
 const columns = computed<TableColumn[]>(() => [
   CommonColumns.selection(),
   CommonColumns.index(),
@@ -233,7 +235,7 @@ const columns = computed<TableColumn[]>(() => [
   {
     type: 'op',
     label: '操作',
-    width: DEFAULT_OPERATION_WIDTH,
+    width: OPERATION_WIDTH,
     align: 'center',
     fixed: 'right' as const,
     buttons: [

@@ -72,19 +72,31 @@ export const appMenus: AppMenuConfig = {
     {
       index: 'data',
       title: 'menu.data',
-      icon: 'FolderOpened',
+      icon: 'svg:database',
       children: [
         {
           index: 'files',
           title: 'menu.data.files',
-          icon: 'Document',
+          icon: 'svg:folder',
           children: [
             { index: '/data/files/list', title: 'menu.data.files.list', icon: 'List' },
             { index: '/data/files/templates', title: 'menu.data.files.templates', icon: 'Files' },
             { index: '/data/files/preview', title: 'menu.data.files.preview', icon: 'View' },
           ],
         },
-        { index: '/data/recycle', title: 'menu.data.recycle', icon: 'Delete' },
+        {
+          index: 'dictionary',
+          title: 'menu.data.dictionary',
+          icon: 'svg:dict',
+          children: [
+            {
+              index: '/data/dictionary/file-categories',
+              title: 'menu.data.dictionary.file_categories',
+              icon: 'CollectionTag',
+            },
+          ],
+        },
+        { index: '/data/recycle', title: 'menu.data.recycle', icon: 'svg:recycle-bin' },
       ],
     },
     {

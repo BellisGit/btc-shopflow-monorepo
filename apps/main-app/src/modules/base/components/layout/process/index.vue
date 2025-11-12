@@ -60,13 +60,10 @@
       <li>
         <BtcIconButton
           :config="{
-            icon: 'close-border',
-            tooltip: t('common.tooltip.close_other_tabs'),
+            icon: 'tabbar-menu',
+            tooltip: t('common.tooltip.tab_actions'),
             dropdown: {
-              items: [
-                { command: 'close-other', label: t('common.close_other'), disabled: filteredTabs.length <= 1 },
-                { command: 'close-all', label: t('common.close_all'), disabled: filteredTabs.length === 0 }
-              ],
+              items: dropdownMenuItems,
               onCommand: handleTabCommand
             }
           }"
@@ -148,6 +145,89 @@ const filteredTabs = computed(() => {
   return processStore.list.filter((tab: ProcessItem) => tab.app === currentApp);
 });
 
+// 当前激活标签的索引
+const currentTabIndex = computed(() => {
+  const currentPath = route.path;
+  return filteredTabs.value.findIndex((tab) => tab.path === currentPath);
+});
+
+// 当前激活标签
+const currentTab = computed(() => {
+  if (currentTabIndex.value >= 0) {
+    return filteredTabs.value[currentTabIndex.value];
+  }
+  return null;
+});
+
+// 检查固定状态
+const checkFixedStatus = computed(() => {
+  const currentIdx = currentTabIndex.value;
+  if (currentIdx < 0) {
+    return {
+      isCurrentPinned: false,
+      areAllLeftPinned: false,
+      areAllRightPinned: false,
+      areAllOtherPinned: false,
+      areAllPinned: false,
+    };
+  }
+
+  const leftTabs = filteredTabs.value.slice(0, currentIdx);
+  const rightTabs = filteredTabs.value.slice(currentIdx + 1);
+  const otherTabs = filteredTabs.value.filter((_, idx) => idx !== currentIdx);
+
+  return {
+    isCurrentPinned: currentTab.value ? processStore.isPinned(currentTab.value.fullPath) : false,
+    areAllLeftPinned: leftTabs.length > 0 && leftTabs.every((tab) => processStore.isPinned(tab.fullPath)),
+    areAllRightPinned: rightTabs.length > 0 && rightTabs.every((tab) => processStore.isPinned(tab.fullPath)),
+    areAllOtherPinned: otherTabs.length > 0 && otherTabs.every((tab) => processStore.isPinned(tab.fullPath)),
+    areAllPinned: filteredTabs.value.length > 0 && filteredTabs.value.every((tab) => processStore.isPinned(tab.fullPath)),
+  };
+});
+
+// 下拉菜单项
+const dropdownMenuItems = computed(() => {
+  const fixedStatus = checkFixedStatus.value;
+  const isCurrentPinned = fixedStatus.isCurrentPinned;
+  const currentIdx = currentTabIndex.value;
+  const isFirstTab = currentIdx === 0;
+  const isLastTab = currentIdx === filteredTabs.value.length - 1;
+  const isOnlyTab = filteredTabs.value.length === 1;
+
+  return [
+    {
+      command: 'pin',
+      label: isCurrentPinned ? t('common.unpin') : t('common.pin'),
+      icon: () => (isCurrentPinned ? 'unlock' : 'pin'),
+      disabled: false,
+    },
+    {
+      command: 'close-left',
+      label: t('common.close_left'),
+      icon: 'arrow-left',
+      disabled: isFirstTab || fixedStatus.areAllLeftPinned,
+    },
+    {
+      command: 'close-right',
+      label: t('common.close_right'),
+      icon: 'arrow-right',
+      disabled: isLastTab || fixedStatus.areAllRightPinned,
+    },
+    {
+      command: 'close-other',
+      label: t('common.close_other'),
+      icon: 'close',
+      disabled: isOnlyTab || fixedStatus.areAllOtherPinned,
+    },
+    {
+      command: 'close-all',
+      label: t('common.close_all'),
+      icon: 'close-border',
+      disabled: filteredTabs.value.length === 0 || fixedStatus.areAllPinned,
+    },
+  ];
+});
+
 function setItemRef(el: any, index: number) {
   if (el) {
     itemRefs.value[index] = el;
@@ -193,6 +273,7 @@ function getTabLabel(item: ProcessItem) {
     '/data/files/list': 'menu.data.files.list',
     '/data/files/templates': 'menu.data.files.templates',
     '/data/files/preview': 'menu.data.files.preview',
+    '/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
     '/data/recycle': 'menu.data.recycle',
 
     // 运维与审计
@@ -312,17 +393,44 @@ function handleTabCommand(command: string) {
   const currentPath = route.path;
 
   switch (command) {
+    case 'pin':
+      // 固定/取消固定当前标签
+      if (currentTab.value) {
+        processStore.togglePin(currentTab.value.fullPath);
+      }
+      break;
+
+    case 'close-left':
+      // 关闭左侧标签（只在当前应用内）
+      if (currentTab.value) {
+        const closed = processStore.closeLeft(currentTab.value.fullPath, currentApp);
+        if (closed && currentTabIndex.value > 0) {
+          // 如果关闭了左侧标签，确保当前标签可见
+          const newIndex = filteredTabs.value.findIndex((tab) => tab.path === currentPath);
+          if (newIndex >= 0) {
+            adjustScroll(newIndex);
+          }
+        }
+      }
+      break;
+
+    case 'close-right':
+      // 关闭右侧标签（只在当前应用内）
+      if (currentTab.value) {
+        processStore.closeRight(currentTab.value.fullPath, currentApp);
+      }
+      break;
+
     case 'close-other':
       // 关闭其他标签（只在当前应用内）
-      processStore.set(
-        processStore.list.filter((tab) => tab.path === currentPath || tab.app !== currentApp)
-      );
+      if (currentTab.value) {
+        processStore.closeOthers(currentTab.value.fullPath, currentApp);
+      }
       break;
 
     case 'close-all': {
       // 关闭所有标签（只在当前应用内）
-      const otherAppTabs = processStore.list.filter((tab) => tab.app !== currentApp);
-      processStore.set(otherAppTabs);
+      processStore.closeAll(currentApp);
 
       // 跳转到当前应用首页
       const appHomes: Record<string, string> = {

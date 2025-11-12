@@ -261,7 +261,7 @@ onMounted(() => {
   if (crudRef.value && typeof ResizeObserver !== 'undefined') {
     containerResizeObserver = new ResizeObserver(() => {
       scheduleTableAutoHeight();
-    });
+  });
     containerResizeObserver.observe(crudRef.value);
   }
 });
