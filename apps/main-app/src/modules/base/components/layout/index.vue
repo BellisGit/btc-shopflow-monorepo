@@ -359,13 +359,38 @@ onUnmounted(() => {
     position: relative;
     background-color: var(--el-bg-color);
 
-    // 子应用挂载点（覆盖默认样式，不需要 padding）
+    // 子应用挂载点（遵循文档流，高度自适应）
     #subapp-viewport {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
+      position: static !important;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
       padding: 0 !important;
       background-color: var(--el-bg-color);
+    }
+
+    :deep(#subapp-viewport > [data-qiankun]) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    :deep(#subapp-viewport > [data-qiankun] > *) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    :deep(qiankun-head) {
+      display: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
     }
 
     // 文档 iframe 容器（覆盖默认样式，不需要 padding）

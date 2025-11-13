@@ -215,7 +215,35 @@ watch(
   { immediate: true }
 );
 
+const isExternalLink = (value: string) => /^(https?:|mailto:|tel:)/.test(value);
+
+const linkHandler = (index: string) => {
+  if (!index) return false;
+
+  if (isExternalLink(index)) {
+    window.open(index, '_blank', 'noopener,noreferrer');
+    return true;
+  }
+
+  return false;
+};
+
 const handleMenuSelect = (index: string) => {
+    // 动态菜单跳转处理
+    if (!index) return;
+
+    if (!currentApp.value) {
+      throw new Error('动态菜单未找到所属应用');
+    }
+
+    const normalizedIndex = index.startsWith('/') ? index : `/${index}`;
+    const fullPath = normalizedIndex;
+
+    // 如果点击的是外链，直接打开新窗口
+    if (linkHandler(normalizedIndex)) {
+      return;
+    }
+
   // 确保使用绝对路径，避免相对路径拼接
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
   router.push(absolutePath);

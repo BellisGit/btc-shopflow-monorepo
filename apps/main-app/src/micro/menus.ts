@@ -133,24 +133,43 @@ export const appMenus: AppMenuConfig = {
   // 物流应用菜单
   logistics: [
     {
-      index: '/logistics',
-      title: '物流概览',
-      icon: 'home',
-    },
-    {
-      index: '/logistics/orders',
-      title: '物流概览',
-      icon: 'list',
-    },
-    {
-      index: '/logistics/transport',
-      title: '运输管理',
-      icon: 'device',
+      index: '/logistics/procurement',
+      title: 'menu.logistics.procurementModule',
+      icon: 'svg:cart',
+      children: [
+        { index: '/logistics/procurement/auxiliary', title: 'menu.logistics.procurement.auxiliary', icon: 'Collection' },
+        { index: '/logistics/procurement/packaging', title: 'menu.logistics.procurement.packaging', icon: 'CollectionTag' },
+        { index: '/logistics/procurement/supplier', title: 'menu.logistics.procurement.supplier', icon: 'User' },
+      ],
     },
     {
       index: '/logistics/warehouse',
-      title: '仓储管理',
-      icon: 'folder',
+      title: 'menu.logistics.warehouseModule',
+      icon: 'svg:folder',
+      children: [
+        {
+          index: '/logistics/warehouse/material',
+          title: 'menu.logistics.warehouse.material',
+          icon: 'Files',
+          children: [
+            { index: '/logistics/warehouse/material/list', title: 'menu.logistics.warehouse.material.list', icon: 'List' },
+          ],
+        },
+        {
+          index: '/logistics/warehouse/inventory',
+          title: 'menu.logistics.warehouse.inventory',
+          icon: 'Odometer',
+          children: [
+            { index: '/logistics/warehouse/inventory/info', title: 'menu.logistics.warehouse.inventory.info', icon: 'Document' },
+            { index: '/logistics/warehouse/inventory/detail', title: 'menu.logistics.warehouse.inventory.detail', icon: 'Histogram' },
+          ],
+        },
+      ],
+    },
+    {
+      index: '/logistics/customs',
+      title: 'menu.logistics.customsModule',
+      icon: 'svg:map',
     },
   ],
 
@@ -159,22 +178,22 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/engineering',
       title: '工程概览',
-      icon: 'home',
+      icon: 'svg:home',
     },
     {
       index: '/engineering/projects',
       title: '项目列表',
-      icon: 'design',
+      icon: 'svg:design',
     },
     {
       index: '/engineering/progress',
       title: '进度管理',
-      icon: 'trend',
+      icon: 'svg:trend',
     },
     {
       index: '/engineering/monitoring',
       title: '施工监控',
-      icon: 'monitor',
+      icon: 'svg:monitor',
     },
   ],
 
@@ -183,22 +202,22 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/quality',
       title: '品质概览',
-      icon: 'home',
+      icon: 'svg:home',
     },
     {
       index: '/quality/inspection',
       title: '质量检验',
-      icon: 'approve',
+      icon: 'svg:approve',
     },
     {
       index: '/quality/reports',
       title: '质量报告',
-      icon: 'doc',
+      icon: 'svg:doc',
     },
     {
       index: '/quality/defects',
       title: '不良品管理',
-      icon: 'warn',
+      icon: 'svg:warn',
     },
   ],
 
@@ -207,22 +226,22 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/production',
       title: '生产概览',
-      icon: 'home',
+      icon: 'svg:home',
     },
     {
       index: '/production/plans',
       title: '生产计划',
-      icon: 'task',
+      icon: 'svg:task',
     },
     {
       index: '/production/schedule',
       title: '排程管理',
-      icon: 'time',
+      icon: 'svg:time',
     },
     {
       index: '/production/materials',
       title: '物料管理',
-      icon: 'goods',
+      icon: 'svg:goods',
     },
   ],
 
@@ -231,22 +250,22 @@ export const appMenus: AppMenuConfig = {
     {
       index: '/finance',
       title: '财务概览',
-      icon: 'home',
+      icon: 'svg:home',
     },
     {
       index: '/finance/receivables',
       title: '应收管理',
-      icon: 'amount-alt',
+      icon: 'svg:amount-alt',
     },
     {
       index: '/finance/payables',
       title: '应付管理',
-      icon: 'card',
+      icon: 'svg:card',
     },
     {
       index: '/finance/reports',
       title: '财务报表',
-      icon: 'stats',
+      icon: 'svg:stats',
     },
   ],
 };

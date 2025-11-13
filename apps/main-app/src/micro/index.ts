@@ -2,6 +2,7 @@ import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
 import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
+import { getManifestTabs } from './manifests';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { appStorage } from '../utils/app-storage';
 
@@ -12,6 +13,22 @@ const appNameMap: Record<string, string> = {
   quality: '品质应用',
   production: '生产应用',
 };
+
+function registerManifestTabsForApp(appName: string) {
+  const tabs = getManifestTabs(appName);
+  if (!tabs.length) {
+    return;
+  }
+
+  const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
+    key: tab.key,
+    title: tab.labelKey ?? tab.label ?? tab.path,
+    path: tab.path,
+    i18nKey: tab.labelKey,
+  }));
+
+  registerTabs(appName, normalizedTabs);
+}
 
 /**
  * 获取当前语言
@@ -32,14 +49,22 @@ function filterQiankunLogs() {
   (console as any).__originalWarn = console.warn;
   (console as any).__originalError = console.error;
   
-  const originalLog = console.log;
-  const originalInfo = console.info;
-  const originalWarn = console.warn;
-  const originalError = console.error;
+  const originalInfo = console.info.bind(console);
+  const originalWarn = console.warn.bind(console);
 
-  // 不再过滤日志，允许所有日志正常显示
-  // 保留原始方法的引用，但不重写 console 方法
-  // 这样所有日志都能正常显示，包括调试日志
+  console.info = (...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
+      return;
+    }
+    originalInfo(...args);
+  };
+
+  console.warn = (...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
+      return;
+    }
+    originalWarn(...args);
+  };
 }
 
 /**
@@ -80,6 +105,8 @@ export function setupQiankun() {
 
         // 切入子应用前，清理其他子应用的映射，防串味
         clearTabsExcept(app.name);
+
+        registerManifestTabsForApp(app.name);
 
         return Promise.resolve();
       }],

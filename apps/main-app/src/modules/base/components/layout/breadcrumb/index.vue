@@ -22,22 +22,16 @@ defineOptions({
   name: 'LayoutBreadcrumb',
 });
 
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-// 动态导入 store
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
+import { getManifestRoute } from '@/micro/manifests';
 
 const route = useRoute();
 const { t } = useI18n();
-
-// 动态导入 store
-const getCurrentAppFromPath = ref<any>(null);
-
-// 加载 store
-import('@/store/process').then(({ getCurrentAppFromPath: getCurrentApp }) => {
-  getCurrentAppFromPath.value = getCurrentApp;
-});
+const processStore = useProcessStore();
 
 interface BreadcrumbItem {
   label: string;
@@ -53,8 +47,59 @@ interface BreadcrumbConfig {
 
 // 根据路由生成面包屑（应用隔离）
 const breadcrumbList = computed<BreadcrumbItem[]>(() => {
-  if (!getCurrentAppFromPath.value) return [];
-  const currentApp = getCurrentAppFromPath.value(route.path);
+  const normalizedPath = route.path.replace(/\/+$/, '') || '/';
+  const currentApp = getCurrentAppFromPath(normalizedPath);
+
+  const currentTab =
+    processStore.list.find(
+      (tab) =>
+        (tab.fullPath && tab.fullPath.replace(/\/+$/, '') === normalizedPath) ||
+        (tab.path && tab.path.replace(/\/+$/, '') === normalizedPath),
+    ) ?? null;
+
+  const normalizeBreadcrumbEntries = (entries: any[] | undefined) => {
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return [];
+    }
+
+    return entries
+      .map((item) => {
+        const key =
+          (typeof item.labelKey === 'string' && item.labelKey) ||
+          (typeof item.i18nKey === 'string' && item.i18nKey);
+        const rawLabel =
+          (typeof item.label === 'string' && item.label) ||
+          (typeof key === 'string' ? key : '');
+
+        if (!rawLabel) {
+          return null;
+        }
+
+        const translated = key ? t(key) : t(rawLabel);
+        const label =
+          translated && translated !== (key ?? rawLabel) ? translated : rawLabel;
+
+        return {
+          label,
+          icon: item.icon,
+        };
+      })
+      .filter(Boolean) as BreadcrumbItem[];
+  };
+
+  const metaBreadcrumbs = normalizeBreadcrumbEntries(
+    currentTab?.meta?.breadcrumbs,
+  );
+  if (metaBreadcrumbs.length > 0) {
+    return metaBreadcrumbs;
+  }
+
+  const manifestBreadcrumbs = normalizeBreadcrumbEntries(
+    getManifestRoute(currentApp, normalizedPath)?.breadcrumbs,
+  );
+  if (manifestBreadcrumbs.length > 0) {
+    return manifestBreadcrumbs;
+  }
 
   // 主应用的路径映射（完整层级结构）
   const mainAppBreadcrumbs: Record<string, BreadcrumbConfig[]> = {
@@ -201,22 +246,24 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     production: {},
   };
 
-  // 应用首页不显示面包屑
-  if (
-    route.path === '/' ||
-    route.path === '/logistics' ||
-    route.path === '/engineering' ||
-    route.path === '/quality' ||
-    route.path === '/production'
-  ) {
+  const homePaths = new Set([
+    '/',
+    '/logistics',
+    '/engineering',
+    '/quality',
+    '/production',
+    '/finance',
+  ]);
+
+  if (homePaths.has(normalizedPath)) {
     return [];
   }
 
   // 获取面包屑数据
   const breadcrumbData =
     currentApp === 'main'
-      ? mainAppBreadcrumbs[route.path]
-      : subAppBreadcrumbs[currentApp]?.[route.path];
+      ? mainAppBreadcrumbs[normalizedPath]
+      : subAppBreadcrumbs[currentApp]?.[normalizedPath];
 
   if (!breadcrumbData) {
     return [];
@@ -282,12 +329,15 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     border-radius: var(--el-border-radius-base);
     background-color: var(--el-fill-color-blank);
     height: 26px;
-    line-height: 26px;
   }
 
   .breadcrumb-icon {
     flex-shrink: 0;
     color: var(--el-text-color-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 
   // 最后一级样式（当前页面）

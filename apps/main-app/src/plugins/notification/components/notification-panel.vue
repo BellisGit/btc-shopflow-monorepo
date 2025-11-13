@@ -86,7 +86,7 @@ defineOptions({
 
 import { ref, computed } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import '@/plugins/user-setting/assets/icons/system/iconfont.css';
+import '@assets/icons/system/iconfont.css';
 
 defineEmits<{
   close: [];

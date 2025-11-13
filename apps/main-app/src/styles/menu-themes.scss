@@ -17,7 +17,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
 
   // 菜单图标（通用）
   .el-icon {
-    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    min-width: 24px;
+    flex: 0 0 24px;
+    margin-right: 12px;
     font-size: $menu-icon-size;
   }
 
@@ -54,9 +60,12 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       margin-left: 8px !important;
       margin-right: 8px !important;
       border-radius: 6px !important;
+      display: flex;
+      align-items: center;
+      gap: 12px;
 
       .el-icon {
-        margin-left: -4px !important;
+        margin-right: 0 !important;
       }
     }
 
@@ -107,9 +116,13 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       margin-right: 8px !important;
       border-radius: 6px !important;
       color: #BABBBD !important;
+      display: flex;
+      align-items: center;
+      gap: 12px;
 
       .el-icon {
         margin-left: -4px !important;
+        margin-right: 0 !important;
         color: #BABBBD !important;
       }
 

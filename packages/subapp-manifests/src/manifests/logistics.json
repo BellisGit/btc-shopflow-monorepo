@@ -1,0 +1,189 @@
+{
+  "app": {
+    "id": "logistics",
+    "basePath": "/logistics",
+    "nameKey": "menu.logistics.overview"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "labelKey": "menu.logistics.overview",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": []
+    },
+    {
+      "path": "/procurement",
+      "labelKey": "menu.logistics.procurementModule",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.procurementModule"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.procurementModule", "icon": "ShoppingCart" }
+      ]
+    },
+    {
+      "path": "/procurement/auxiliary",
+      "labelKey": "menu.logistics.procurement.auxiliary",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.procurement.auxiliary"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.procurementModule", "icon": "ShoppingCart" },
+        { "labelKey": "menu.logistics.procurement.auxiliary", "icon": "Collection" }
+      ]
+    },
+    {
+      "path": "/procurement/packaging",
+      "labelKey": "menu.logistics.procurement.packaging",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.procurement.packaging"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.procurementModule", "icon": "ShoppingCart" },
+        { "labelKey": "menu.logistics.procurement.packaging", "icon": "CollectionTag" }
+      ]
+    },
+    {
+      "path": "/procurement/supplier",
+      "labelKey": "menu.logistics.procurement.supplier",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.procurement.supplier"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.procurementModule", "icon": "ShoppingCart" },
+        { "labelKey": "menu.logistics.procurement.supplier", "icon": "User" }
+      ]
+    },
+    {
+      "path": "/warehouse",
+      "labelKey": "menu.logistics.warehouseModule",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouseModule"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" }
+      ]
+    },
+    {
+      "path": "/warehouse/material",
+      "labelKey": "menu.logistics.warehouse.material",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.material", "icon": "Files" }
+      ]
+    },
+    {
+      "path": "/warehouse/material/list",
+      "labelKey": "menu.logistics.warehouse.material.list",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouse.material.list"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.material", "icon": "Files" },
+        { "labelKey": "menu.logistics.warehouse.material.list", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/warehouse/inventory",
+      "labelKey": "menu.logistics.warehouse.inventory",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" }
+      ]
+    },
+    {
+      "path": "/warehouse/inventory/info",
+      "labelKey": "menu.logistics.warehouse.inventory.info",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouse.inventory.info"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.warehouse.inventory.info", "icon": "Document" }
+      ]
+    },
+    {
+      "path": "/warehouse/inventory/detail",
+      "labelKey": "menu.logistics.warehouse.inventory.detail",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouse.inventory.detail"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.warehouse.inventory.detail", "icon": "Histogram" }
+      ]
+    },
+    {
+      "path": "/customs",
+      "labelKey": "menu.logistics.customsModule",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.customsModule"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.customsModule", "icon": "MapLocation" }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "index": "/logistics/procurement",
+      "labelKey": "menu.logistics.procurementModule",
+      "icon": "svg:cart",
+      "children": [
+        { "index": "/logistics/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary", "icon": "Collection" },
+        { "index": "/logistics/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging", "icon": "CollectionTag" },
+        { "index": "/logistics/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier", "icon": "User" }
+      ]
+    },
+    {
+      "index": "/logistics/warehouse",
+      "labelKey": "menu.logistics.warehouseModule",
+      "icon": "svg:folder",
+      "children": [
+        {
+          "index": "/logistics/warehouse/material",
+          "labelKey": "menu.logistics.warehouse.material",
+          "icon": "Files",
+          "children": [
+            { "index": "/logistics/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list", "icon": "List" }
+          ]
+        },
+        {
+          "index": "/logistics/warehouse/inventory",
+          "labelKey": "menu.logistics.warehouse.inventory",
+          "icon": "Odometer",
+          "children": [
+            { "index": "/logistics/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info", "icon": "Document" },
+            { "index": "/logistics/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail", "icon": "Histogram" }
+          ]
+        }
+      ]
+    },
+    {
+      "index": "/logistics/customs",
+      "labelKey": "menu.logistics.customsModule",
+      "icon": "svg:map"
+    }
+  ]
+}
+

@@ -95,6 +95,7 @@ import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
+import { getManifestRoute } from '@/micro/manifests';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 
 interface Props {
@@ -236,6 +237,53 @@ function setItemRef(el: any, index: number) {
 
 // 获取标签的国际化文本
 function getTabLabel(item: ProcessItem) {
+  const app = getCurrentAppFromPath(item.path);
+  const manifestRoute = getManifestRoute(app, item.path);
+
+  if (manifestRoute?.tab?.labelKey) {
+    const translated = t(manifestRoute.tab.labelKey);
+    if (translated && translated !== manifestRoute.tab.labelKey) {
+      return translated;
+    }
+  }
+
+  if (manifestRoute?.labelKey) {
+    const translated = t(manifestRoute.labelKey);
+    if (translated && translated !== manifestRoute.labelKey) {
+      return translated;
+    }
+  }
+
+  const metaLabelKey =
+    typeof item.meta?.labelKey === 'string' && item.meta.labelKey.length > 0
+      ? item.meta.labelKey
+      : typeof item.meta?.hostLabelKey === 'string'
+      ? item.meta.hostLabelKey
+      : undefined;
+
+  if (metaLabelKey) {
+    const translated = t(metaLabelKey);
+    if (translated && translated !== metaLabelKey) {
+      return translated;
+    }
+  }
+
+  if (typeof item.meta?.label === 'string' && item.meta.label.length > 0) {
+    const translated = t(item.meta.label);
+    if (translated && translated !== item.meta.label) {
+      return translated;
+    }
+    return item.meta.label;
+  }
+
+  if (typeof item.meta?.title === 'string' && item.meta.title.length > 0) {
+    const translated = t(item.meta.title);
+    if (translated && translated !== item.meta.title) {
+      return translated;
+    }
+    return item.meta.title;
+  }
+
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
     // 个人中心
@@ -533,6 +581,9 @@ watch(
 
     .close {
       width: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
       transition:
         width 0.2s ease-in-out,
@@ -541,6 +592,7 @@ watch(
       border-radius: 4px;
       opacity: 0;
       cursor: pointer;
+      color: var(--el-text-color-secondary);
 
       &:hover {
         background-color: rgba(0, 0, 0, 0.1);
@@ -566,6 +618,7 @@ watch(
       color: #fff;
 
       .close {
+        color: #fff;
         &:hover {
           background-color: rgba(255, 255, 255, 0.3) !important;
         }

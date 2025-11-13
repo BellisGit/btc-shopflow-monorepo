@@ -124,13 +124,26 @@
       outline: none;
       border-radius: 6px;
       margin-left: 5px;
+      color: var(--el-text-color-secondary);
 
       i {
         font-size: 18px;
       }
 
+      svg {
+        width: 18px;
+        height: 18px;
+        color: inherit;
+      }
+
       &:hover {
         background-color: var(--el-fill-color-darker);
+        color: var(--el-text-color-primary);
+      }
+
+      &.close:hover {
+        background-color: var(--el-color-danger);
+        color: #fff;
       }
     }
   }

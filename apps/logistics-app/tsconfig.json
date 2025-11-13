@@ -5,9 +5,19 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@services": ["./src/services"],
+      "@services/*": ["./src/services/*"],
       "@btc/shared-core": ["../../packages/shared-core/src"],
       "@btc/shared-components": ["../../packages/shared-components/src"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src"]
+      "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc-common": ["../../packages/shared-components/src/common"],
+      "@btc-common/*": ["../../packages/shared-components/src/common/*"],
+      "@btc-components": ["../../packages/shared-components/src/components"],
+      "@btc-components/*": ["../../packages/shared-components/src/components/*"],
+      "@btc-crud": ["../../packages/shared-components/src/crud"],
+      "@btc-crud/*": ["../../packages/shared-components/src/crud/*"],
+      "@assets": ["../../packages/shared-components/src/assets"],
+      "@assets/*": ["../../packages/shared-components/src/assets/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx"],

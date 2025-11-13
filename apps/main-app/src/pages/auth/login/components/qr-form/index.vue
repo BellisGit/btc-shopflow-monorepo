@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import loginQrImage from '@/assets/images/login_qr.png';
+import loginQrImage from '@assets/images/login_qr.png';
 
 defineOptions({
   name: 'BtcQrForm'

@@ -98,6 +98,9 @@ watch(
 );
 
 const handleMenuSelect = (index: string) => {
+  if (import.meta.env.DEV) {
+    console.log('[main-app] top-left-sidebar select', { index, currentApp: currentApp.value });
+  }
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
   router.push(absolutePath);
 };

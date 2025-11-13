@@ -1,0 +1,385 @@
+import { createApp } from 'vue';
+import type { App as VueApp } from 'vue';
+import type { Router } from 'vue-router';
+import type { Pinia } from 'pinia';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import type { QiankunProps } from '@btc/shared-core';
+import '@btc/shared-components/styles/index.scss';
+import '../styles/global.scss';
+import '../styles/theme.scss';
+
+import App from '../App.vue';
+import { createLogisticsRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
+import type { LogisticsI18nPlugin } from './core/i18n';
+import type { LogisticsThemePlugin } from './core/ui';
+
+type CleanupListener = [event: string, handler: EventListener];
+
+interface CleanupState {
+  routerAfterEach?: () => void;
+  listeners: CleanupListener[];
+}
+
+export interface LogisticsAppContext {
+  app: VueApp;
+  router: Router;
+  pinia: Pinia;
+  i18n: LogisticsI18nPlugin;
+  theme: LogisticsThemePlugin;
+  cleanup: CleanupState;
+  props: QiankunProps;
+  translate: (key?: string | null) => string;
+  registerTabs: (props?: QiankunProps) => void;
+}
+
+const createTranslate = (context: LogisticsAppContext) => {
+  return (key?: string | null) => {
+    if (!key) {
+      return '';
+    }
+
+    try {
+      return (context.i18n?.i18n?.global?.t as any)?.(key) ?? key;
+    } catch (_err) {
+      return key;
+    }
+  };
+};
+
+const LOGISTICS_BASE_PATH = '/logistics';
+
+const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
+
+const getCurrentHostPath = () =>
+  `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+const normalizeToHostPath = (relativeFullPath: string) => {
+  const normalizedRelative = relativeFullPath === '' ? '/' : ensureLeadingSlash(relativeFullPath);
+
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return normalizedRelative;
+  }
+
+  if (normalizedRelative === '/' || normalizedRelative === LOGISTICS_BASE_PATH) {
+    return LOGISTICS_BASE_PATH;
+  }
+
+  if (normalizedRelative.startsWith(`${LOGISTICS_BASE_PATH}/`)) {
+    return normalizedRelative;
+  }
+
+  return `${LOGISTICS_BASE_PATH}${normalizedRelative}`;
+};
+
+const deriveInitialSubRoute = () => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return '/';
+  }
+
+  const { pathname, search, hash } = window.location;
+  if (!pathname.startsWith(LOGISTICS_BASE_PATH)) {
+    return '/';
+  }
+
+  const suffix = pathname.slice(LOGISTICS_BASE_PATH.length) || '/';
+  return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+};
+
+const extractHostSubRoute = () => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return '/';
+  }
+
+  const { pathname, search, hash } = window.location;
+  if (!pathname.startsWith(LOGISTICS_BASE_PATH)) {
+    return '/';
+  }
+
+  const suffix = pathname.slice(LOGISTICS_BASE_PATH.length) || '/';
+  return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+};
+
+let syncingFromSubApp = false;
+let syncingFromHost = false;
+
+const syncHostWithSubRoute = (fullPath: string) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ || syncingFromHost) {
+    return;
+  }
+
+  const targetUrl = fullPath || LOGISTICS_BASE_PATH;
+  const currentUrl = getCurrentHostPath();
+
+  if (currentUrl === targetUrl) {
+    return;
+  }
+
+  syncingFromSubApp = true;
+  window.history.pushState(window.history.state, '', targetUrl);
+};
+
+const syncSubRouteWithHost = (context: LogisticsAppContext) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return;
+  }
+
+  const targetRoute = extractHostSubRoute();
+  const normalizedTarget = ensureLeadingSlash(targetRoute);
+  const currentRoute = ensureLeadingSlash(
+    context.router.currentRoute.value.fullPath || context.router.currentRoute.value.path || '/',
+  );
+
+  if (normalizedTarget === currentRoute) {
+    return;
+  }
+
+  syncingFromHost = true;
+  context.router.replace(normalizedTarget).catch(() => {}).finally(() => {
+    syncingFromHost = false;
+  });
+};
+
+const createRegisterTabs = (context: LogisticsAppContext) => {
+  return (props?: QiankunProps) => {
+    const targetProps = props ?? context.props;
+    const register = targetProps?.registerTabs;
+    if (!register) {
+      return;
+    }
+
+    const translate = context.translate;
+
+    register([
+      {
+        key: 'procurement',
+        title: translate('logistics.menu.procurementModule'),
+        path: '/logistics/procurement',
+        i18nKey: 'menu.logistics.procurementModule',
+      },
+      {
+        key: 'warehouse',
+        title: translate('logistics.menu.warehouseModule'),
+        path: '/logistics/warehouse',
+        i18nKey: 'menu.logistics.warehouseModule',
+      },
+      {
+        key: 'customs',
+        title: translate('logistics.menu.customsModule'),
+        path: '/logistics/customs',
+        i18nKey: 'menu.logistics.customsModule',
+      },
+    ]);
+  };
+};
+
+const setupRouteSync = (context: LogisticsAppContext) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return;
+  }
+
+  context.cleanup.routerAfterEach = context.router.afterEach((to) => {
+    const relativeFullPath = ensureLeadingSlash(to.fullPath || to.path || '');
+    const fullPath = normalizeToHostPath(relativeFullPath);
+
+    syncHostWithSubRoute(fullPath);
+    const tabLabelKey = to.meta?.tabLabelKey as string | undefined;
+    const tabLabel =
+      tabLabelKey ??
+      (to.meta?.tabLabel as string | undefined) ??
+      (to.meta?.title as string | undefined) ??
+      (to.name as string | undefined) ??
+      fullPath;
+
+    const label = tabLabelKey ? context.translate(tabLabelKey) : tabLabel;
+
+    const metaPayload = {
+      ...to.meta,
+      label,
+    } as Record<string, any>;
+
+    if (
+      typeof metaPayload.labelKey !== 'string' ||
+      metaPayload.labelKey.length === 0
+    ) {
+      if (typeof to.meta?.labelKey === 'string' && to.meta.labelKey.length > 0) {
+        metaPayload.labelKey = to.meta.labelKey;
+      } else if (
+        typeof tabLabelKey === 'string' &&
+        tabLabelKey.startsWith('menu.')
+      ) {
+        metaPayload.labelKey = tabLabelKey;
+      }
+    }
+
+    if (!metaPayload.breadcrumbs && Array.isArray(to.meta?.breadcrumbs)) {
+      metaPayload.breadcrumbs = to.meta.breadcrumbs;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('subapp:route-change', {
+        detail: {
+          path: fullPath,
+          fullPath,
+          name: to.name,
+          meta: metaPayload,
+        },
+      }),
+    );
+  });
+};
+
+const setupEventBridge = (context: LogisticsAppContext) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return;
+  }
+
+  const languageListener = ((event: Event) => {
+    const custom = event as CustomEvent<{ locale: string }>;
+    const newLocale = custom.detail?.locale as 'zh-CN' | 'en-US';
+    if (newLocale && context.i18n?.i18n?.global) {
+      context.i18n.i18n.global.locale.value = newLocale;
+      context.registerTabs();
+    }
+  }) as EventListener;
+
+  const themeListener = ((event: Event) => {
+    const custom = event as CustomEvent<{ color: string; dark: boolean }>;
+    const detail = custom.detail;
+    if (detail && context.theme?.theme) {
+      context.theme.theme.setThemeColor(detail.color, detail.dark);
+    }
+  }) as EventListener;
+
+  window.addEventListener('language-change', languageListener);
+  window.addEventListener('theme-change', themeListener);
+
+  context.cleanup.listeners.push(['language-change', languageListener], ['theme-change', themeListener]);
+};
+
+const ensureCleanUrl = (context: LogisticsAppContext) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return;
+  }
+
+  context.router.isReady().then(() => {
+    const currentPath = window.location.pathname;
+    if (currentPath.endsWith('/') && currentPath !== '/') {
+      window.history.replaceState(window.history.state, '', currentPath.slice(0, -1) + window.location.search + window.location.hash);
+    }
+  });
+};
+
+const setupHostLocationBridge = (context: LogisticsAppContext) => {
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return;
+  }
+
+  const handleRoutingEvent = () => {
+    if (syncingFromSubApp) {
+      syncingFromSubApp = false;
+      return;
+    }
+
+    syncSubRouteWithHost(context);
+  };
+
+  window.addEventListener('single-spa:routing-event', handleRoutingEvent);
+  window.addEventListener('popstate', handleRoutingEvent);
+  context.cleanup.listeners.push(['single-spa:routing-event', handleRoutingEvent], ['popstate', handleRoutingEvent]);
+
+  handleRoutingEvent();
+};
+
+export const createLogisticsApp = (props: QiankunProps = {}): LogisticsAppContext => {
+  const app = createApp(App);
+  const router = createLogisticsRouter();
+  setupRouter(app, router);
+  const pinia = setupStore(app);
+  const theme = setupUI(app);
+  const i18n = setupI18n(app, props.locale || 'zh-CN');
+
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    const initialRoute = deriveInitialSubRoute();
+    router.replace(initialRoute).catch(() => {});
+  }
+
+  const context: LogisticsAppContext = {
+    app,
+    router,
+    pinia,
+    i18n,
+    theme,
+    cleanup: {
+      listeners: [],
+    },
+    props,
+    translate: () => '',
+    registerTabs: () => {},
+  };
+
+  context.translate = createTranslate(context);
+  context.registerTabs = createRegisterTabs(context);
+
+  return context;
+};
+
+export const mountLogisticsApp = (context: LogisticsAppContext, props: QiankunProps = {}) => {
+  context.props = props;
+
+  const mountPoint =
+    (props.container && (props.container.querySelector('#app') || props.container)) ||
+    '#app';
+  if (!mountPoint) {
+    throw new Error('[logistics-app] 无法找到挂载节点 #app');
+  }
+
+  context.app.mount(mountPoint);
+
+  setupRouteSync(context);
+  setupHostLocationBridge(context);
+  setupEventBridge(context);
+  ensureCleanUrl(context);
+  context.registerTabs(props);
+
+  if (props.onReady) {
+    props.onReady();
+  }
+
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'logistics' } }));
+  }
+};
+
+export const updateLogisticsApp = (context: LogisticsAppContext, props: QiankunProps) => {
+  context.props = {
+    ...context.props,
+    ...props,
+  };
+
+  if (props.locale && context.i18n?.i18n?.global) {
+    context.i18n.i18n.global.locale.value = props.locale as 'zh-CN' | 'en-US';
+  }
+
+  context.registerTabs(props);
+};
+
+export const unmountLogisticsApp = (context: LogisticsAppContext, props: QiankunProps = {}) => {
+  if (context.cleanup.routerAfterEach) {
+    context.cleanup.routerAfterEach();
+    context.cleanup.routerAfterEach = undefined;
+  }
+
+  context.cleanup.listeners.forEach(([event, handler]) => {
+    window.removeEventListener(event, handler);
+  });
+  context.cleanup.listeners = [];
+
+  const clearTabs = props.clearTabs ?? context.props?.clearTabs;
+  if (clearTabs) {
+    clearTabs();
+  }
+
+  context.app.unmount();
+  context.props = {};
+};
+

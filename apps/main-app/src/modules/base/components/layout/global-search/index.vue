@@ -308,7 +308,9 @@ const searchData = ref([
 
   // 页面
   { id: 'p1', type: 'page', title: '首页', path: '/', breadcrumb: '主应用' },
-  { id: 'p2', type: 'page', title: '物流概览', path: '/logistics', breadcrumb: '物流应用' },
+  { id: 'p2', type: 'page', title: 'menu.logistics.procurementModule', path: '/logistics/procurement', breadcrumb: '物流应用' },
+  { id: 'p3', type: 'page', title: 'menu.logistics.warehouse', path: '/logistics/warehouse', breadcrumb: '物流应用' },
+  { id: 'p4', type: 'page', title: 'menu.logistics.customs', path: '/logistics/customs', breadcrumb: '物流应用' },
   { id: 'p3', type: 'page', title: '工程概览', path: '/engineering', breadcrumb: '工程应用' },
   { id: 'p4', type: 'page', title: '品质概览', path: '/quality', breadcrumb: '品质应用' },
   { id: 'p5', type: 'page', title: '生产概览', path: '/production', breadcrumb: '生产应用' },

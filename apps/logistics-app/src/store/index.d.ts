@@ -1,2 +1,2 @@
 export { useThemeStore } from '@btc/shared-core';
-export { useProcessStore } from './process';
+export { useProcessStore } from './modules/process';

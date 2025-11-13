@@ -1,38 +1,90 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "strict": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@modules/*": ["src/modules/*"],
-      "@services/*": ["src/services/*"],
-      "@components/*": ["src/components/*"],
-      "@utils/*": ["src/utils/*"],
-      "@btc-components/*": ["../../packages/shared-components/src/components/*"],
-      "@btc/shared-core": ["../../packages/shared-core/src"],
-      "@btc/shared-core/*": ["../../packages/shared-core/src/*"],
-      "@btc/shared-components": ["../../packages/shared-components/src"],
-      "@btc/shared-components/*": ["../../packages/shared-components/src/*"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"]
-    }
-  },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+    "compilerOptions":  {
+                            "target":  "ES2020",
+                            "useDefineForClassFields":  true,
+                            "module":  "ESNext",
+                            "lib":  [
+                                        "ES2020",
+                                        "DOM",
+                                        "DOM.Iterable"
+                                    ],
+                            "skipLibCheck":  true,
+                            "moduleResolution":  "bundler",
+                            "allowImportingTsExtensions":  true,
+                            "resolveJsonModule":  true,
+                            "isolatedModules":  true,
+                            "noEmit":  true,
+                            "jsx":  "preserve",
+                            "strict":  true,
+                            "noImplicitAny":  false,
+                            "noUnusedLocals":  false,
+                            "noUnusedParameters":  false,
+                            "noFallthroughCasesInSwitch":  true,
+                            "types":  [
+                                          "vite/client"
+                                      ],
+                            "baseUrl":  ".",
+                            "paths":  {
+                                          "@/*":  [
+                                                      "src/*"
+                                                  ],
+                                          "@modules/*":  [
+                                                             "src/modules/*"
+                                                         ],
+                                          "@services/*":  [
+                                                              "src/services/*"
+                                                          ],
+                                          "@components/*":  [
+                                                                "src/components/*"
+                                                            ],
+                                          "@utils/*":  [
+                                                           "src/utils/*"
+                                                       ],
+                                          "@btc-components/*":  [
+                                                                    "../../packages/shared-components/src/components/*"
+                                                                ],
+                                          "@btc/shared-core":  [
+                                                                   "../../packages/shared-core/src"
+                                                               ],
+                                          "@btc/shared-core/*":  [
+                                                                     "../../packages/shared-core/src/*"
+                                                                 ],
+                                          "@btc/shared-components":  [
+                                                                         "../../packages/shared-components/src"
+                                                                     ],
+                                          "@btc/shared-components/*":  [
+                                                                           "../../packages/shared-components/src/*"
+                                                                       ],
+                                          "@btc/shared-utils":  [
+                                                                    "../../packages/shared-utils/src"
+                                                                ],
+                                          "@btc/shared-utils/*":  [
+                                                                      "../../packages/shared-utils/src/*"
+                                                                  ],
+                                          "@assets":  [
+                                                          "../../packages/shared-components/src/assets"
+                                                      ],
+                                          "@assets/*":  [
+                                                            "../../packages/shared-components/src/assets/*"
+                                                        ],
+                                          "@btc/subapp-manifests":  [
+                                                                        "../../packages/subapp-manifests/dist/index.js"
+                                                                    ],
+                                          "@btc/subapp-manifests/*":  [
+                                                                          "../../packages/subapp-manifests/dist/*"
+                                                                      ]
+                                      }
+                        },
+    "include":  [
+                    "src/**/*.ts",
+                    "src/**/*.d.ts",
+                    "src/**/*.tsx",
+                    "src/**/*.vue",
+                    "src/env.d.ts"
+                ],
+    "references":  [
+                       {
+                           "path":  "./tsconfig.node.json"
+                       }
+                   ]
 }

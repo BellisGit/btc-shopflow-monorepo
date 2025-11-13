@@ -28,6 +28,10 @@
 	> .btc-crud-row > .btc-table {
 		width: 100%;
 	}
+
+	> .btc-crud-row + .btc-crud-row {
+		margin-top: var(--btc-crud-gap, 10px);
+	}
 }
 
 .btc-crud-row {
@@ -377,7 +381,7 @@
 	width: var(--btc-crud-op-width, 220px);
 	min-width: 0;
 	justify-content: flex-end;
-	margin-bottom: var(--btc-crud-gap);
+	margin-bottom: 0;
 	> .btc-export-btn,
 	> .btc-table-toolbar {
 		flex: 0 0 auto;

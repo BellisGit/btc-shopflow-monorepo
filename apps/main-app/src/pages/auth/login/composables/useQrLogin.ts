@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
-import loginQrImage from '@/assets/images/login_qr.png';
+import loginQrImage from '@assets/images/login_qr.png';
 
 export function useQrLogin() {
   const { t } = useI18n();

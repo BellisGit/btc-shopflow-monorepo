@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
-import { BtcDialog } from '../../index';
+import BtcDialog from '../../common/dialog/index.vue';
 import type { UpsertProps } from './types';
 import { useFormData, useFormInit, useFormSubmit, usePlugins } from './composables';
 

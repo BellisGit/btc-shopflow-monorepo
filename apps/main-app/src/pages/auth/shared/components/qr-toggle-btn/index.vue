@@ -83,7 +83,7 @@ const labelText = computed(() => {
     width: 16px;
     height: 16px;
     display: inline-block;
-    background: url('@/assets/images/scan.png') no-repeat center/contain;
+    background: url('@assets/images/scan.png') no-repeat center/contain;
     filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(120deg) brightness(104%) contrast(97%);
   }
 
@@ -124,7 +124,7 @@ const labelText = computed(() => {
   width: 48px;
   height: 48px;
   flex-shrink: 0;
-  background-image: url('@/assets/images/login_cut_light.png');
+  background-image: url('@assets/images/login_cut_light.png');
   background-repeat: no-repeat;
   background-size: 200% 200%;
   /* 默认左列（0%），行由根上注入的 --sy 决定 */
@@ -134,7 +134,7 @@ const labelText = computed(() => {
 
 /* 暗黑模式使用暗色雪碧图 */
 html.dark .sprite-icon {
-  background-image: url('@/assets/images/login_cut_dark.png');
+  background-image: url('@assets/images/login_cut_dark.png');
 }
 
 /* 悬浮切到右列 */

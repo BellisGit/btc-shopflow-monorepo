@@ -173,24 +173,44 @@ export const useProcessStore = defineStore('process', () => {
       // 使用 fullPath 进行更精确的去重
       const index = list.value.findIndex((e) => e.fullPath === data.fullPath);
 
+      const buildMeta = (previousMeta: Record<string, any> = {}) => {
+        const mergedMeta: Record<string, any> = {
+          ...previousMeta,
+          ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
+          ...(tabMeta.title ? { title: tabMeta.title } : {}),
+          ...data.meta,
+        };
+
+        if (
+          typeof mergedMeta.label !== 'string' &&
+          typeof mergedMeta.title === 'string'
+        ) {
+          mergedMeta.label = mergedMeta.title;
+        }
+
+        if (
+          typeof mergedMeta.labelKey !== 'string' &&
+          typeof mergedMeta.label === 'string' &&
+          mergedMeta.label.startsWith('menu.')
+        ) {
+          mergedMeta.labelKey = mergedMeta.label;
+        }
+
+        return mergedMeta;
+      };
+
       if (index < 0) {
         // 添加新标签，使用 tabRegistry 的元数据
         list.value.push({
           ...data,
           active: true,
           app,
-          meta: {
-            ...data.meta,
-            label: tabMeta.i18nKey || tabMeta.title,
-          },
+          meta: buildMeta(),
         });
       } else {
         // 更新已存在的标签
         list.value[index].active = true;
-        list.value[index].meta = {
-          ...data.meta,
-          label: tabMeta.i18nKey || tabMeta.title,
-        };
+        list.value[index].meta = buildMeta(list.value[index].meta);
       }
     }
 

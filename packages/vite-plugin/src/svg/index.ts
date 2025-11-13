@@ -110,12 +110,12 @@ function compilerSvg(): string {
     .map((e) => {
       // 检查是否是 bg.svg（包含 icon-bg symbol）
       const isBgIcon = e.includes('id="icon-bg"');
-      
+
       if (isBgIcon) {
         // bg.svg 不进行优化，保留所有原始属性（特别是 fill 属性）
         return e;
       }
-      
+
       // 其他 SVG 正常优化，配置 svgo 保留 fill 属性
       const result = optimize(e, {
         plugins: [

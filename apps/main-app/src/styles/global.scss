@@ -315,6 +315,7 @@ html.dark {
         color: #fff !important;
 
         .close {
+          color: #fff !important;
           &:hover {
             background-color: rgba(255, 255, 255, 0.3) !important;
           }
@@ -322,6 +323,7 @@ html.dark {
       }
 
       .close {
+        color: var(--el-text-color-regular) !important;
         &:hover {
           background-color: rgba(255, 255, 255, 0.1) !important;
         }
