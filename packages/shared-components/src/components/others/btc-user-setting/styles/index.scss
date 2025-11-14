@@ -4,26 +4,12 @@
 
 // 偏好设置抽屉样式
 .preferences-drawer {
-  padding: 0;
-  overflow-y: auto;
-  max-height: 100vh;
+  padding: 20px; // 添加边距
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   box-sizing: border-box;
-
-  // 去除滚动条
-  &::-webkit-scrollbar {
-    width: 0 !important;
-  }
-}
-
-// 去除火狐浏览器滚动条
-:deep(.el-drawer__body) {
-  scrollbar-width: none;
-  overflow-x: hidden;
-  padding: 0 !important; // 移除Element Plus默认的padding，让内容更紧凑
-
-  &::-webkit-scrollbar {
-    width: 0 !important;
-  }
+  // 不设置 overflow，让滚动由 .el-drawer__body 处理（全局样式已配置）
 }
 
 // 公共的设置框样式（用于菜单布局、菜单风格、主题风格）

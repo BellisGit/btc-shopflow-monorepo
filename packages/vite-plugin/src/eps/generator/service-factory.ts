@@ -11,7 +11,7 @@ export function createService(_epsUrl: string, state: EpsState = epsState) {
     const serviceKey = e.name ? e.name.toLowerCase().replace(/entity$/, '') : 'unknown';
 
     const prefix = e.prefix || '';
-    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin' && part !== 'api');
+    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin' && part !== 'api').map((part: string) => toCamel(part));
 
     let currentLevel = state.service;
     for (let i = 0; i < pathParts.length - 1; i++) {

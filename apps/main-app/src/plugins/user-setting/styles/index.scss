@@ -3,17 +3,13 @@
  */
 
 .preferences-drawer {
-  padding: 0;
+  padding: 20px; // 添加边距
   display: flex;
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
   // 不设置 overflow，让内容自然流动，滚动由具体组件（如 btc-table）自己处理
 }
-
-// 保持 Element Plus 的默认 padding 和 overflow: auto（允许滚动），只隐藏滚动条显示
-// 滚动条隐藏由 global.scss 中的样式处理
-// 不需要在这里设置 padding，使用 Element Plus 默认值即可
 
 // 公共的设置框样式（用于菜单布局、菜单风格、主题风格）
 .setting-box-wrap {

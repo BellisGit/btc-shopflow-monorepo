@@ -5,6 +5,9 @@
     :with-header="false"
     :close-on-click-modal="closeOnClickModal"
     :destroy-on-close="destroyOnClose"
+    :modal="false"
+    append-to-body
+    :lock-scroll="false"
     @update:model-value="handleVisibleChange"
   >
     <div class="btc-transfer-drawer">

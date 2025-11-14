@@ -45,36 +45,26 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { BtcMessage, BtcTransferDrawer, BtcBindTransferBtn } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { services as userServices } from '../users/config';
-import { services as roleServices } from '../../../access/views/roles/config';
+import { services as roleServices } from '@modules/access/views/roles/config';
 
 const { t } = useI18n();
-const route = useRoute();
 const crudRef = ref();
 const transferDrawerRef = ref<any>(null);
 const drawerVisible = ref(false);
 const submitting = ref(false);
 
-const userId = computed(() => route.params.id as string);
+// 使用 EPS userRole 服务（参考用户列表的使用方式，直接传递服务对象）
+const userRoleService = service.system?.iam?.userRole;
 
-const userRoleService = {
-  ...service.system?.iam?.role,
-  list: async (params: any) =>
-    service.system?.iam?.role?.list({
-      ...params,
-      userId: userId.value,
-    }),
-};
-
+// 根据 EPS pageColumns 定义表格列：只显示 username
 const roleColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'roleName', label: t('org.user_role_assign.columns.roleName'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'description', label: t('org.user_role_assign.columns.description'), minWidth: 200, showOverflowTooltip: true },
+  { prop: 'username', label: t('org.user_role_assign.columns.username'), minWidth: 160, showOverflowTooltip: true },
 ]);
 
 const userTransferColumns = computed<TransferPanelColumn[]>(() => [
