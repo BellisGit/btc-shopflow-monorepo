@@ -2,8 +2,8 @@ import sharedCoreZh from '@btc/shared-core/btc/plugins/i18n/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/btc/plugins/i18n/locales/en-US';
 import sharedComponentsZh from '@btc/shared-components/locales/zh-CN.json';
 import sharedComponentsEn from '@btc/shared-components/locales/en-US.json';
-import zhCN from '../modules/logistics/locales/zh-CN.json';
-import enUS from '../modules/logistics/locales/en-US.json';
+import zhCN from '../locales/zh-CN.json';
+import enUS from '../locales/en-US.json';
 
 const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => Object.assign({}, ...sources);
 

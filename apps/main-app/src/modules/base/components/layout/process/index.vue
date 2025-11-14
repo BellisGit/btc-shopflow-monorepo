@@ -310,8 +310,8 @@ function getTabLabel(item: ProcessItem) {
     '/access/actions': 'menu.access.actions',
     '/access/permissions': 'menu.access.permissions',
     '/access/roles': 'menu.access.roles',
-    '/access/policies': 'menu.access.policies',
     '/access/perm-compose': 'menu.access.perm_compose',
+    '/org/users/users-roles': 'menu.access.user_role_bind',
 
     // 导航与可见性
     '/navigation/menus': 'menu.navigation.menus',
@@ -321,6 +321,7 @@ function getTabLabel(item: ProcessItem) {
     '/data/files/list': 'menu.data.files.list',
     '/data/files/templates': 'menu.data.files.templates',
     '/data/files/preview': 'menu.data.files.preview',
+    '/data/inventory/check': 'menu.data.inventory',
     '/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
     '/data/recycle': 'menu.data.recycle',
 

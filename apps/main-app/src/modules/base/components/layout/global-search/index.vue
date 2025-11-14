@@ -273,14 +273,10 @@ const searchData = ref([
   { id: 'm4', type: 'menu', title: '租户列表', path: '/org/tenants', breadcrumb: '组织与账号' },
   { id: 'm5', type: 'menu', title: '部门列表', path: '/org/departments', breadcrumb: '组织与账号' },
   { id: 'm6', type: 'menu', title: '用户列表', path: '/org/users', breadcrumb: '组织与账号' },
-
-  // 访问控制
-  { id: 'm7', type: 'menu', title: '资源列表', path: '/access/resources', breadcrumb: '访问控制' },
-  { id: 'm8', type: 'menu', title: '行为列表', path: '/access/actions', breadcrumb: '访问控制' },
-  { id: 'm9', type: 'menu', title: '权限列表', path: '/access/permissions', breadcrumb: '访问控制' },
-  { id: 'm10', type: 'menu', title: '角色列表', path: '/access/roles', breadcrumb: '访问控制' },
-  { id: 'm11', type: 'menu', title: '策略列表', path: '/access/policies', breadcrumb: '访问控制' },
-  { id: 'm12', type: 'menu', title: '权限组合', path: '/access/perm-compose', breadcrumb: '访问控制' },
+  { id: 'm7', type: 'menu', title: '部门列表', path: '/org/departments', breadcrumb: '组织与账号' },
+  { id: 'm8', type: 'menu', title: '租户列表', path: '/org/tenants', breadcrumb: '组织与账号' },
+  { id: 'm9', type: 'menu', title: '部门角色分配', path: '/org/departments/:id/roles', breadcrumb: '组织与账号' },
+  { id: 'm12', type: 'menu', title: '角色绑定', path: '/org/users/users-roles', breadcrumb: '访问控制 · 用户分配' },
 
   // 导航与可见性
   { id: 'm13', type: 'menu', title: '菜单列表', path: '/navigation/menus', breadcrumb: '导航与可见性' },
@@ -291,20 +287,26 @@ const searchData = ref([
   { id: 'm16', type: 'menu', title: '受控文件', path: '/data/files/templates', breadcrumb: '数据管理' },
   { id: 'm17', type: 'menu', title: '文件预览', path: '/data/files/preview', breadcrumb: '数据管理' },
   { id: 'm17-1', type: 'menu', title: '文件分类', path: '/data/dictionary/file-categories', breadcrumb: '数据管理' },
+  { id: 'm17-2', type: 'menu', title: '盘点数据', path: '/data/inventory/check', breadcrumb: '数据管理' },
   { id: 'm18', type: 'menu', title: '数据回收站', path: '/data/recycle', breadcrumb: '数据管理' },
 
+  // 策略中心
+  { id: 'm19', type: 'menu', title: '策略管理', path: '/strategy/management', breadcrumb: '策略中心' },
+  { id: 'm20', type: 'menu', title: '策略编排', path: '/strategy/designer', breadcrumb: '策略中心' },
+  { id: 'm21', type: 'menu', title: '策略监控', path: '/strategy/monitor', breadcrumb: '策略中心' },
+
   // 运维与审计
-  { id: 'm19', type: 'menu', title: '操作日志', path: '/ops/logs/operation', breadcrumb: '运维与审计' },
-  { id: 'm20', type: 'menu', title: '请求日志', path: '/ops/logs/request', breadcrumb: '运维与审计' },
-  { id: 'm21', type: 'menu', title: '接口列表', path: '/ops/api-list', breadcrumb: '运维与审计' },
-  { id: 'm22', type: 'menu', title: '权限基线', path: '/ops/baseline', breadcrumb: '运维与审计' },
-  { id: 'm23', type: 'menu', title: '策略模拟器', path: '/ops/simulator', breadcrumb: '运维与审计' },
+  { id: 'm22', type: 'menu', title: '操作日志', path: '/ops/logs/operation', breadcrumb: '运维与审计' },
+  { id: 'm23', type: 'menu', title: '请求日志', path: '/ops/logs/request', breadcrumb: '运维与审计' },
+  { id: 'm24', type: 'menu', title: '接口列表', path: '/ops/api-list', breadcrumb: '运维与审计' },
+  { id: 'm25', type: 'menu', title: '权限基线', path: '/ops/baseline', breadcrumb: '运维与审计' },
+  { id: 'm26', type: 'menu', title: '策略模拟器', path: '/ops/simulator', breadcrumb: '运维与审计' },
 
   // 测试功能
-  { id: 'm24', type: 'menu', title: 'CRUD测试', path: '/test/crud', breadcrumb: '测试功能' },
-  { id: 'm25', type: 'menu', title: 'SVG插件测试', path: '/test/svg-plugin', breadcrumb: '测试功能' },
-  { id: 'm26', type: 'menu', title: '国际化测试', path: '/test/i18n', breadcrumb: '测试功能' },
-  { id: 'm27', type: 'menu', title: '状态切换按钮', path: '/test/select-button', breadcrumb: '测试功能' },
+  { id: 'm27', type: 'menu', title: 'CRUD测试', path: '/test/crud', breadcrumb: '测试功能' },
+  { id: 'm28', type: 'menu', title: 'SVG插件测试', path: '/test/svg-plugin', breadcrumb: '测试功能' },
+  { id: 'm29', type: 'menu', title: '国际化测试', path: '/test/i18n', breadcrumb: '测试功能' },
+  { id: 'm30', type: 'menu', title: '状态切换按钮', path: '/test/select-button', breadcrumb: '测试功能' },
 
   // 页面
   { id: 'p1', type: 'page', title: '首页', path: '/', breadcrumb: '主应用' },

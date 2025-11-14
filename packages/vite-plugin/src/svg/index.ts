@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Plugin } from 'vite';
 import { readFileSync, readdirSync } from 'fs';
-import { basename, extname } from 'path';
+import { basename, extname, join } from 'path';
 import { optimize } from 'svgo';
-import { rootDir } from '../utils';
+import { rootDir, setRootDir } from '../utils';
 import { config } from '../config';
 
 let svgIcons: string[] = [];
@@ -91,6 +91,29 @@ function findSvg(dir: string): string[] {
   return arr;
 }
 
+function listSvgFiles(dir: string): string[] {
+  const files: string[] = [];
+
+  try {
+    const entries = readdirSync(dir, {
+      withFileTypes: true,
+    });
+
+    for (const entry of entries) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...listSvgFiles(full));
+      } else if (entry.isFile() && extname(entry.name) === '.svg') {
+        files.push(full);
+      }
+    }
+  } catch (_err) {
+    // ignore missing directories
+  }
+
+  return files;
+}
+
 /**
  * 编译 SVG
  */
@@ -101,10 +124,27 @@ function compilerSvg(): string {
   const srcSvgs = findSvg(rootDir('./src/'));
 
   // 扫描 assets/icons 目录
-  const assetsSvgs = findSvg(rootDir('./src/assets/icons/'));
+  let assetsSvgs: string[] = [];
+  const localAssetsDir = rootDir('./src/assets/icons/');
+  const localSvgFiles = listSvgFiles(localAssetsDir);
+
+  if (localSvgFiles.length > 0) {
+    if (config.svg?.allowAppIcons) {
+      assetsSvgs = findSvg(localAssetsDir);
+    } else {
+      const sample = localSvgFiles
+        .slice(0, 5)
+        .map((file) => file.replace(`${rootDir('./')}`, ''))
+        .join(', ');
+      console.warn(
+        `[btc:svg] 检测到 ${localSvgFiles.length} 个应用内 SVG 图标（src/assets/icons）。已跳过处理，请迁移到 packages/shared-components/src/assets/icons。` +
+          (sample ? ` 示例: ${sample}` : '')
+      );
+    }
+  }
 
   // 扫描共享组件的 icons 目录，确保跨应用的公共组件也能使用这些图标
-  const sharedAssetsSvgs = findSvg(rootDir('../packages/shared-components/src/assets/icons/'));
+  const sharedAssetsSvgs = findSvg(rootDir('../../packages/shared-components/src/assets/icons/'));
 
   return [...srcSvgs, ...assetsSvgs, ...sharedAssetsSvgs]
     .map((e) => {
@@ -178,9 +218,12 @@ export function svgPlugin(): Plugin {
     name: 'btc:svg',
     enforce: 'pre',
 
-		async configResolved() {
-			// 生成 SVG sprite
-			const result = await createSvg();
+		async configResolved(resolved) {
+      // 同步 Vite 根目录，确保多包场景下路径解析正确
+      setRootDir(resolved.root);
+
+      // 生成 SVG sprite
+      const result = await createSvg();
 			svgCode = result.code;
 			iconList = result.svgIcons;
 

@@ -53,6 +53,8 @@ export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
 export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
+export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
+export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
 
 // Feedback 反馈组件
 export { default as BtcDialog } from './common/dialog/index.vue';
@@ -76,6 +78,7 @@ export { default as BtcPagination } from './crud/pagination/index.vue';
 export { default as BtcAddBtn } from './crud/add-btn/index.vue';
 export { default as BtcRefreshBtn } from './crud/refresh-btn/index.vue';
 export { default as BtcMultiDeleteBtn } from './crud/multi-delete-btn/index.vue';
+export { default as BtcBindTransferBtn } from './crud/bind-transfer-btn/index.vue';
 export { default as BtcRow } from './crud/row/index.vue';
 export { default as BtcFlex1 } from './crud/flex1/index.vue';
 export { default as BtcSearchKey } from './crud/search-key/index.vue';
@@ -108,6 +111,16 @@ export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
+export type {
+  TransferKey,
+  TransferPanelProps,
+  TransferPanelColumn,
+  TransferPanelEmits,
+  TransferPanelExpose,
+  SelectedItemDisplay,
+  TransferPanelChangePayload,
+  TransferPanelRemovePayload,
+} from './components/data/btc-transfer-panel/types';
 export type { BtcContainerProps } from './components/layout/btc-container/types';
 export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
 export type {

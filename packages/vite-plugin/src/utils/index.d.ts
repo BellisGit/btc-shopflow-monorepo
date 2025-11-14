@@ -1,6 +1,7 @@
 ﻿import prettier from 'prettier';
 /**
  * 鑾峰彇椤圭洰鏍圭洰褰? */
+export declare function setRootDir(root: string): void;
 export declare function rootDir(path: string): string;
 /**
  * 棣栧瓧姣嶅ぇ鍐? */

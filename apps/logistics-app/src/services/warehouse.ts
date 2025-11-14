@@ -9,16 +9,16 @@ function resolveWarehouseService() {
   return warehouse as Record<string, any>;
 }
 
-function ensureMethod(entityKey: string, method: string) {
+function ensureMethod(serviceKey: string, method: string) {
   const warehouse = resolveWarehouseService();
-  const entity = warehouse?.[entityKey];
+  const entity = warehouse?.[serviceKey];
   if (!entity) {
-    throw new Error(`[warehouseService] 未找到实体 ${entityKey} 的 EPS 服务`);
+    throw new Error(`[warehouseService] 未找到实体 ${serviceKey} 的 EPS 服务`);
   }
 
   const fn = entity?.[method];
   if (typeof fn !== 'function') {
-    throw new Error(`[warehouseService] EPS 服务 logistics.warehouse.${entityKey}.${method} 未定义`);
+    throw new Error(`[warehouseService] EPS 服务 logistics.warehouse.${serviceKey}.${method} 未定义`);
   }
 
   return fn as (...args: any[]) => Promise<any>;
@@ -83,7 +83,7 @@ interface PageParams {
   [key: string]: any;
 }
 
-export function createWarehouseCrudService(entityKey: string): CrudService<any> {
+export function createWarehouseCrudService(serviceKey: string): CrudService<any> {
   return {
     async page(params: PageParams = {}) {
       const page = Number(params.page ?? 1);
@@ -93,7 +93,7 @@ export function createWarehouseCrudService(entityKey: string): CrudService<any> 
         payload.keyword = params.keyword;
       }
 
-      const pageFn = ensureMethod(entityKey, 'page');
+      const pageFn = ensureMethod(serviceKey, 'page');
       const response = await pageFn(payload);
       const normalized = normalizePageResponse(response, page, size);
       return {
@@ -103,19 +103,19 @@ export function createWarehouseCrudService(entityKey: string): CrudService<any> 
       };
     },
     async add(data: any) {
-      const addFn = ensureMethod(entityKey, 'add');
+      const addFn = ensureMethod(serviceKey, 'add');
       await addFn(data);
     },
     async update(data: any) {
-      const updateFn = ensureMethod(entityKey, 'update');
+      const updateFn = ensureMethod(serviceKey, 'update');
       await updateFn(data);
     },
     async delete(id: string | number) {
-      const deleteFn = ensureMethod(entityKey, 'delete');
+      const deleteFn = ensureMethod(serviceKey, 'delete');
       await deleteFn(id);
     },
     async deleteBatch(ids: (string | number)[]) {
-      const deleteFn = ensureMethod(entityKey, 'delete');
+      const deleteFn = ensureMethod(serviceKey, 'delete');
       await Promise.all(ids.map((id) => deleteFn(id)));
     },
   };

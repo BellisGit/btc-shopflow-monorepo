@@ -3,11 +3,18 @@ import fs from 'fs';
 import { join } from 'path';
 import prettier from 'prettier';
 
+let projectRoot = process.cwd();
+
+export function setRootDir(root: string): void {
+  if (!root) return;
+  projectRoot = root;
+}
+
 /**
  * 获取项目根目录
  */
 export function rootDir(path: string): string {
-  return join(process.cwd(), path);
+  return join(projectRoot, path);
 }
 
 /**

@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { BtcTableGroup } from '@btc/shared-components';
 import {
   getUserFormItems,
@@ -27,7 +27,6 @@ import {
 
 const tableGroupRef = ref();
 const departmentOptions = ref<any[]>([]);
-const roleOptions = ref<any[]>([]);
 
 // 动态表格列配置，角色列会根据角色选项格式化显示
 const userColumns = computed(() => {
@@ -40,18 +39,6 @@ const userColumns = computed(() => {
       prop: 'name',
       label: '部门',
       width: 120,
-    },
-    {
-      prop: 'roleId',
-      label: '角色',
-      width: 120,
-      formatter: (row: any) => {
-        if (!row.roleId || roleOptions.value.length === 0) {
-          return row.roleId; // Element Plus 会自动将空值显示为 '-'
-        }
-        const role = roleOptions.value.find((r: any) => r.id === row.roleId);
-        return role ? role.roleName : row.roleId;
-      }
     },
     {
       prop: 'status',
@@ -68,27 +55,12 @@ const userColumns = computed(() => {
 });
 
 // 动态表单配置
-const formItems = computed(() => getUserFormItems(departmentOptions.value, roleOptions.value));
+const formItems = computed(() => getUserFormItems(departmentOptions.value));
 
 // 处理左侧数据加载
 function handleLoad(data: any[]) {
   // 左侧数据加载完成，更新部门选项
   departmentOptions.value = data;
-}
-
-// 加载角色数据
-async function loadRoleOptions() {
-  try {
-    const response = await services.sysrole.list({});
-    roleOptions.value = response.list || [];
-
-    // 角色数据加载完成后，刷新表格以更新角色名称显示
-    if (tableGroupRef.value && tableGroupRef.value.refresh) {
-      tableGroupRef.value.refresh();
-    }
-  } catch (error) {
-    console.error('加载角色数据失败:', error);
-  }
 }
 
 // 处理用户信息获取（编辑时）
@@ -119,32 +91,12 @@ async function handleUserInfo(user: any, { next, done }: any) {
       }
     }
 
-    // 确保角色选项已加载
-    if (roleOptions.value.length === 0) {
-      await loadRoleOptions();
-    }
-
-    // 处理角色数据回填
-    if (userDetail.roleId && roleOptions.value.length > 0) {
-      // 查找匹配的角色（主要匹配 id 字段）
-      const role = roleOptions.value.find((r: any) => r.id === userDetail.roleId);
-
-      if (role) {
-        // btc-cascader 会自动处理 id -> value 的转换
-        // 保持 roleId 不变，让组件自动匹配
-      }
-    }
-
     done(userDetail);
   } catch (error) {
     console.error('获取用户详情失败:', error);
     done(user);
   }
 }
-
-onMounted(() => {
-  loadRoleOptions();
-});
 </script>
 
 <style lang="scss" scoped>

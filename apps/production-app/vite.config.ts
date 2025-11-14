@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
+import { btc } from '@btc/vite-plugin';
 
 export default defineConfig({
   base: '/', // 明确设置为根路径，不使用 /production/
@@ -22,6 +23,9 @@ export default defineConfig({
           readFile: (file: string) => readFileSync(file, 'utf-8'),
         },
       },
+    }),
+    btc({
+      type: 'subapp',
     }),
     qiankun('production', {
       useDevMode: true,

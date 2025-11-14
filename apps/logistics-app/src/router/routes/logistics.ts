@@ -4,13 +4,13 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'logistics-home',
-    component: () => import('../../pages/home/index.vue'),
+    component: () => import('../../modules/home/views/index.vue'),
     meta: { isHome: true, process: false, tabLabelKey: 'logistics.placeholder.disabledHome' },
   },
   {
     path: '/procurement',
     name: 'logistics-procurement',
-    component: () => import('../../modules/logistics/views/procurement/index.vue'),
+    component: () => import('../../modules/procurement/views/index.vue'),
     meta: {
       tabLabelKey: 'menu.logistics.procurementModule',
       labelKey: 'menu.logistics.procurementModule',
@@ -22,7 +22,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/procurement/auxiliary',
     name: 'logistics-procurement-auxiliary',
-    component: () => import('../../modules/logistics/views/procurement/auxiliary/index.vue'),
+    component: () => import('../../modules/procurement/views/auxiliary/index.vue'),
     meta: {
       labelKey: 'menu.logistics.procurement.auxiliary',
       breadcrumbs: [
@@ -35,7 +35,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/procurement/packaging',
     name: 'logistics-procurement-packaging',
-    component: () => import('../../modules/logistics/views/procurement/packaging/index.vue'),
+    component: () => import('../../modules/procurement/views/packaging/index.vue'),
     meta: {
       labelKey: 'menu.logistics.procurement.packaging',
       breadcrumbs: [
@@ -48,7 +48,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/procurement/supplier',
     name: 'logistics-procurement-supplier',
-    component: () => import('../../modules/logistics/views/procurement/supplier/index.vue'),
+    component: () => import('../../modules/procurement/views/supplier/index.vue'),
     meta: {
       labelKey: 'menu.logistics.procurement.supplier',
       breadcrumbs: [
@@ -61,7 +61,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/warehouse',
     name: 'logistics-warehouse',
-    component: () => import('../../modules/logistics/views/warehouse/index.vue'),
+    component: () => import('../../modules/warehouse/views/index.vue'),
     meta: {
       tabLabelKey: 'menu.logistics.warehouseModule',
       labelKey: 'menu.logistics.warehouseModule',
@@ -80,7 +80,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/warehouse/material/list',
     name: 'logistics-warehouse-material-list',
-    component: () => import('../../modules/logistics/views/warehouse/material/list/index.vue'),
+    component: () => import('../../modules/warehouse/views/material/list/index.vue'),
     meta: {
       labelKey: 'menu.logistics.warehouse.material.list',
       breadcrumbs: [
@@ -101,7 +101,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/warehouse/inventory/info',
     name: 'logistics-warehouse-inventory-info',
-    component: () => import('../../modules/logistics/views/warehouse/inventory/info/index.vue'),
+    component: () => import('../../modules/warehouse/views/inventory/info/index.vue'),
     meta: {
       labelKey: 'menu.logistics.warehouse.inventory.info',
       breadcrumbs: [
@@ -115,7 +115,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/warehouse/inventory/detail',
     name: 'logistics-warehouse-inventory-detail',
-    component: () => import('../../modules/logistics/views/warehouse/inventory/detail/index.vue'),
+    component: () => import('../../modules/warehouse/views/inventory/detail/index.vue'),
     meta: {
       labelKey: 'menu.logistics.warehouse.inventory.detail',
       breadcrumbs: [
@@ -129,7 +129,7 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   {
     path: '/customs',
     name: 'logistics-customs',
-    component: () => import('../../modules/logistics/views/customs/index.vue'),
+    component: () => import('../../modules/customs/views/index.vue'),
     meta: {
       tabLabelKey: 'logistics.menu.customsModule',
       labelKey: 'menu.logistics.customsModule',

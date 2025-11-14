@@ -31,14 +31,13 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'org-departments': { key: 'org-departments', title: 'Departments', path: '/org/departments', i18nKey: 'menu.org.departments' },
     'org-users': { key: 'org-users', title: 'Users', path: '/org/users', i18nKey: 'menu.org.users' },
     'org-dept-role-bind': { key: 'org-dept-role-bind', title: 'Dept Role Bind', path: '/org/departments/:id/roles', i18nKey: 'menu.org.dept_role_bind' },
-    'org-user-role-assign': { key: 'org-user-role-assign', title: 'User Role Assign', path: '/org/users/:id/roles', i18nKey: 'menu.org.user_role_assign' },
+    'org-user-role-assign': { key: 'org-user-role-assign', title: 'User Role Assign', path: '/org/users/users-roles', i18nKey: 'menu.org.user_role_bind' },
 
     // 访问控制
     'access-resources': { key: 'access-resources', title: 'Resources', path: '/access/resources', i18nKey: 'menu.access.resources' },
     'access-actions': { key: 'access-actions', title: 'Actions', path: '/access/actions', i18nKey: 'menu.access.actions' },
     'access-permissions': { key: 'access-permissions', title: 'Permissions', path: '/access/permissions', i18nKey: 'menu.access.permissions' },
     'access-roles': { key: 'access-roles', title: 'Roles', path: '/access/roles', i18nKey: 'menu.access.roles' },
-    'access-policies': { key: 'access-policies', title: 'Policies', path: '/access/policies', i18nKey: 'menu.access.policies' },
     'access-role-perm-bind': { key: 'access-role-perm-bind', title: 'Role Perm Bind', path: '/access/roles/:id/permissions', i18nKey: 'menu.access.role_perm_bind' },
     'access-perm-compose': { key: 'access-perm-compose', title: 'Perm Compose', path: '/access/perm-compose', i18nKey: 'menu.access.perm_compose' },
 
@@ -51,6 +50,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'data-files-list': { key: 'data-files-list', title: 'File List', path: '/data/files/list', i18nKey: 'menu.data.files.list' },
     'data-files-templates': { key: 'data-files-templates', title: 'Controlled Files', path: '/data/files/templates', i18nKey: 'menu.data.files.templates' },
     'data-files-preview': { key: 'data-files-preview', title: 'File Preview', path: '/data/files/preview', i18nKey: 'menu.data.files.preview' },
+    'data-inventory-check': { key: 'data-inventory-check', title: 'Inventory Check', path: '/data/inventory/check', i18nKey: 'menu.data.inventory' },
     'data-dictionary-file-categories': { key: 'data-dictionary-file-categories', title: 'File Categories', path: '/data/dictionary/file-categories', i18nKey: 'menu.data.dictionary.file_categories' },
     'data-recycle': { key: 'data-recycle', title: 'Data Recycle Bin', path: '/data/recycle', i18nKey: 'menu.data.recycle' },
 

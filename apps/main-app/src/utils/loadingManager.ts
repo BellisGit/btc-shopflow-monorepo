@@ -39,12 +39,11 @@ export function hideSkeleton() {
  * @param ms 延迟时间（毫秒）
  * @param appName 应用名称
  */
-export function delayHint(ms: number, appName: string) {
+export function delayHint(ms: number, _appName: string) {
   clearDelayHint();
   delayHintTimer = window.setTimeout(() => {
     if (skeletonVisible) {
-      const message = useMessage();
-      message.info(`正在加载「${appName}」...`);
+      // 保留骨架屏但不再额外弹出“正在加载”提示
     }
   }, ms);
 }

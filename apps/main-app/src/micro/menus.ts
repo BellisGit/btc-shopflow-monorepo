@@ -43,21 +43,37 @@ export const appMenus: AppMenuConfig = {
       title: 'menu.access',
       icon: 'Lock',
       children: [
-        { index: '/access/resources', title: 'menu.access.resources', icon: 'FolderOpened' },
-        { index: '/access/actions', title: 'menu.access.actions', icon: 'TrendCharts' },
-        { index: '/access/permissions', title: 'menu.access.permissions', icon: 'Key' },
-        { index: '/access/roles', title: 'menu.access.roles', icon: 'UserFilled' },
         {
-          index: 'strategy',
-          title: 'menu.strategy',
-          icon: 'Document',
+          index: 'access-config',
+          title: 'menu.access.config',
+          icon: 'Setting',
           children: [
-            { index: '/strategy/management', title: 'menu.strategy.management', icon: 'Setting' },
-            { index: '/strategy/designer', title: 'menu.strategy.designer', icon: 'Edit' },
-            { index: '/strategy/monitor', title: 'menu.strategy.monitor', icon: 'TrendCharts' },
+            { index: '/access/resources', title: 'menu.access.resources', icon: 'FolderOpened' },
+            { index: '/access/actions', title: 'menu.access.actions', icon: 'TrendCharts' },
+            { index: '/access/permissions', title: 'menu.access.permissions', icon: 'Key' },
+            { index: '/access/roles', title: 'menu.access.roles', icon: 'UserFilled' },
           ],
         },
-        { index: '/access/perm-compose', title: 'menu.access.perm_compose', icon: 'Grid' },
+        {
+          index: 'access-relations',
+          title: 'menu.access.relations',
+          icon: 'Link',
+          children: [
+            { index: '/access/perm-compose', title: 'menu.access.perm_compose', icon: 'Grid' },
+            {
+              index: 'access-user',
+              title: 'menu.access.user_assign',
+              icon: 'User',
+              children: [
+                {
+                  index: '/org/users/users-roles',
+                  title: 'menu.access.user_role_bind',
+                  icon: 'UserFilled',
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
     {
@@ -96,6 +112,7 @@ export const appMenus: AppMenuConfig = {
             },
           ],
         },
+        { index: '/data/inventory/check', title: 'menu.data.inventory', icon: 'Histogram' },
         { index: '/data/recycle', title: 'menu.data.recycle', icon: 'svg:recycle-bin' },
       ],
     },
@@ -116,6 +133,16 @@ export const appMenus: AppMenuConfig = {
         { index: '/ops/api-list', title: 'menu.ops.api_list', icon: 'List' },
         { index: '/ops/baseline', title: 'menu.ops.baseline', icon: 'Histogram' },
         { index: '/ops/simulator', title: 'menu.ops.simulator', icon: 'Opportunity' },
+      ],
+    },
+    {
+      index: 'strategy',
+      title: 'menu.strategy',
+      icon: 'Document',
+      children: [
+        { index: '/strategy/management', title: 'menu.strategy.management', icon: 'Setting' },
+        { index: '/strategy/designer', title: 'menu.strategy.designer', icon: 'Edit' },
+        { index: '/strategy/monitor', title: 'menu.strategy.monitor', icon: 'TrendCharts' },
       ],
     },
     {

@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
+import { btc } from '@btc/vite-plugin';
 
 export default defineConfig({
   base: '/', // 明确设置为根路径，不使用 /engineering/
@@ -23,8 +24,15 @@ export default defineConfig({
         },
       },
     }),
+    btc({
+      type: 'subapp',
+    }),
     qiankun('engineering', {
       useDevMode: true,
+    }),
+    btc({
+      svgSprite: true,
+      sharedTooling: true,
     }),
   ],
   server: {

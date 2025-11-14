@@ -17,11 +17,6 @@ export const userColumns: TableColumn[] = [
     width: 120,
   },
   {
-    prop: 'roleId',
-    label: '角色',
-    width: 120,
-  },
-  {
     prop: 'status',
     label: '状态',
     width: 100,
@@ -34,7 +29,7 @@ export const userColumns: TableColumn[] = [
 ];
 
 // 用户表单配置
-export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any[] = []): FormItem[] => {
+export const getUserFormItems = (departmentOptions: any[] = []): FormItem[] => {
   const formItems = [
     {
       prop: 'username',
@@ -89,21 +84,6 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
       }
     },
     {
-      prop: 'roleId',
-      label: '角色',
-      span: 12,
-      component: {
-        name: 'btc-cascader',
-        props: {
-          placeholder: '请选择角色',
-          options: roleOptions,
-          showCount: true,
-          clearable: true,
-          filterable: true
-        }
-      }
-    },
-    {
       prop: 'status',
       label: '状态',
       span: 12,
@@ -124,6 +104,5 @@ export const getUserFormItems = (departmentOptions: any[] = [], roleOptions: any
 // 服务配置 - 直接传递服务对象，让组件自动处理参数
 export const services = {
   sysdepartment: service.system?.iam?.department,
-  sysrole: service.system?.iam?.role,
   sysuser: service.system?.iam?.user
 };

@@ -297,6 +297,30 @@
 	--btc-crud-op-width: 220px;
 }
 
+.el-table__fixed-right,
+.el-table__fixed-right-patch {
+  position: relative;
+  overflow: visible !important;
+}
+
+.el-table__fixed-right::before,
+.el-table__fixed-right-patch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 1px;
+  background-color: var(--el-border-color);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.el-table__fixed-right .el-table__cell,
+.el-table__fixed-right-patch .el-table__cell {
+  border-left: 1px solid var(--el-border-color) !important;
+}
+
 .btc-table-toolbar,
 .btc-table-toolbar--inline,
 .btc-table-toolbar-host {
@@ -953,4 +977,10 @@
 }
 }
 // end of imported styles
+
+// 覆盖 Element Plus Drawer 的默认 padding
+.el-drawer__body {
+	padding: 0 !important;
+	overflow: hidden !important;
+}
 

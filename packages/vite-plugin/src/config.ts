@@ -32,6 +32,7 @@ export interface BtcPluginConfig {
    */
   svg?: {
     skipNames?: string[];
+    allowAppIcons?: boolean;
   };
   /**
    * 是否清理旧文件
@@ -100,6 +101,7 @@ export const config: BtcPluginConfig = {
   },
   svg: {
     skipNames: ['base', 'icons'],
+    allowAppIcons: false,
   },
   clean: false,
 };

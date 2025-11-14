@@ -1,3 +1,5 @@
+@import '@btc/shared-components/styles/index.scss';
+
 // Global styles for test app
 
 // 自定义 CSS 变量（与 cool-admin 保持一致）
@@ -96,5 +98,15 @@ qiankun-head {
   height: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
+}
+
+.el-table__fixed-right,
+.el-table__fixed-right-patch {
+  border-left: 1px solid var(--el-border-color) !important;
+}
+
+.el-table__fixed-right .el-table__cell,
+.el-table__fixed-right-patch .el-table__cell {
+  border-left: 1px solid var(--el-border-color) !important;
 }
 

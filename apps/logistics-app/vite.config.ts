@@ -5,6 +5,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
 import { btc } from '@btc/vite-plugin';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
+import { proxy as mainProxy } from '../main-app/src/config/proxy';
+
+const proxy = mainProxy;
 
 export default defineConfig({
   base: '/', // 明确设置为根路径，不使用 /logistics/
@@ -34,10 +37,11 @@ export default defineConfig({
     createComponentsConfig({ includeShared: true }),
     btc({
       type: 'subapp',
+      proxy,
       eps: {
         enable: true,
-        api: '/__btc__/eps',
         dist: './build/eps',
+        api: '/api/login/eps/contract',
       },
     }),
     qiankun('logistics', {
@@ -50,6 +54,7 @@ export default defineConfig({
     cors: true,
     origin: 'http://localhost:8081',
     strictPort: false,
+    proxy,
     headers: {
       'Access-Control-Allow-Origin': '*',
     },

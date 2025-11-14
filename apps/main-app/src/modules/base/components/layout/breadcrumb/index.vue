@@ -134,27 +134,34 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     // 访问控制
     '/access/resources': [
       { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.config', icon: 'Setting' },
       { i18nKey: 'menu.access.resources', icon: 'FolderOpened' },
     ],
     '/access/actions': [
       { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.config', icon: 'Setting' },
       { i18nKey: 'menu.access.actions', icon: 'TrendCharts' },
     ],
     '/access/permissions': [
       { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.config', icon: 'Setting' },
       { i18nKey: 'menu.access.permissions', icon: 'Key' },
     ],
     '/access/roles': [
       { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.config', icon: 'Setting' },
       { i18nKey: 'menu.access.roles', icon: 'UserFilled' },
-    ],
-    '/access/policies': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.policies', icon: 'Document' },
     ],
     '/access/perm-compose': [
       { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.relations', icon: 'Link' },
       { i18nKey: 'menu.access.perm_compose', icon: 'Grid' },
+    ],
+    '/org/users/:id/roles': [
+      { i18nKey: 'menu.access', icon: 'Lock' },
+      { i18nKey: 'menu.access.relations', icon: 'Link' },
+      { i18nKey: 'menu.access.user_assign', icon: 'User' },
+      { i18nKey: 'menu.access.user_role_bind', icon: 'UserFilled' },
     ],
 
     // 导航与可见性
@@ -192,6 +199,10 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.data', icon: 'FolderOpened' },
       { i18nKey: 'menu.data.files', icon: 'Document' },
       { i18nKey: 'menu.data.files.preview', icon: 'View' },
+    ],
+    '/data/inventory/check': [
+      { i18nKey: 'menu.data', icon: 'FolderOpened' },
+      { i18nKey: 'menu.data.inventory', icon: 'Histogram' },
     ],
     '/data/dictionary/file-categories': [
       { i18nKey: 'menu.data', icon: 'FolderOpened' },

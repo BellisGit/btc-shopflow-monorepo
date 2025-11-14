@@ -4,6 +4,7 @@ import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+import 'virtual:svg-icons';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { createI18nPlugin, createThemePlugin } from '@btc/shared-core';
 import type { App as VueApp } from 'vue';

@@ -140,10 +140,10 @@ const routes: RouteRecordRaw[] = [
         meta: { titleKey: 'menu.org.users' },
       },
       {
-        path: 'org/users/:id/roles',
+        path: 'org/users/users-roles',
         name: 'UserRoleAssign',
         component: () => import('../modules/org/views/user-role-assign/index.vue'),
-        meta: { titleKey: 'menu.org.user_role_assign' },
+        meta: { titleKey: 'menu.access.user_role_bind' },
       },
       // 访问控制
       {
@@ -249,6 +249,12 @@ const routes: RouteRecordRaw[] = [
         name: 'DataFilesPreview',
         component: () => import('../modules/data/views/files/preview/index.vue'),
         meta: { titleKey: 'menu.data.files.preview' },
+      },
+      {
+        path: 'data/inventory/check',
+        name: 'DataInventoryCheck',
+        component: () => import('../modules/data/views/inventory/check/index.vue'),
+        meta: { titleKey: 'menu.data.inventory' },
       },
       {
         path: 'data/dictionary',
