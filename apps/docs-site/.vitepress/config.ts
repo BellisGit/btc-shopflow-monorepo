@@ -177,12 +177,12 @@ export default defineConfig({
 
     // 服务器配置
     server: {
-      port: 8085,
+      port: 8087,
       host: '0.0.0.0',
       strictPort: true, // 端口被占用时报错而不是自动换端口
       cors: true, // 允许跨域（iframe 嵌入需要）
       hmr: {
-        port: 8086, // 使用不同的端口避免冲突
+        port: 8088, // 使用不同的端口避免冲突
         host: 'localhost', // 改为 localhost，避免 0.0.0.0 的问题
       },
     }

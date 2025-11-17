@@ -1,4 +1,4 @@
----
+﻿---
 title: BtcForm 组件
 type: package
 project: components
@@ -265,5 +265,5 @@ on: { submit: handleSubmit }
 
 ## 更多示例
 
-查看 `apps/main-app/src/pages/system/` 目录下的权限管理页面，了解更多实际使用案例
+查看 `apps/admin-app/src/pages/system/` 目录下的权限管理页面，了解更多实际使用案例
 

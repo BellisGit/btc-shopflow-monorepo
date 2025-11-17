@@ -1,4 +1,4 @@
----
+﻿---
 title: 系统架构决策
 type: adr
 project: system

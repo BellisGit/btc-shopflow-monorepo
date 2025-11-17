@@ -1,4 +1,4 @@
----
+﻿---
 title: 添加新的 SVG 图标
 type: sop
 project: components
@@ -26,7 +26,7 @@ sidebar_group: sop-components
 ### 1. 将 SVG 文件放到应用的 icons 目录
 ```bash
 # 示例：添加到主应用
-cp your-icon.svg apps/main-app/src/assets/icons/
+cp your-icon.svg apps/admin-app/src/assets/icons/
 ```
 
 ### 2. 如果修改了插件代码，重新构建插件
@@ -38,7 +38,7 @@ pnpm build
 ### 3. 重启开发服务器
 ```bash
 # Ctrl+C 停止服务器，然后重新启动
-pnpm --filter main-app dev
+pnpm --filter admin-app dev
 ```
 
 ## 验证

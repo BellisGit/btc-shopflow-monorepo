@@ -1,8 +1,57 @@
 import { readFile, writeFile } from '../utils';
 import type { EpsState } from './state';
+import type { EpsColumn, EpsEntity } from '../types';
 
 export function getEpsPath(outputDir: string, filename?: string): string {
   return `${outputDir}/${filename || ''}`;
+}
+
+/**
+ * 从 columns 和 pageColumns 中查找匹配的字段
+ * @param sources 字段名数组（可能是字符串数组或对象数组）
+ * @param item eps 实体
+ * @returns {EpsColumn[]} 字段数组
+ */
+function findColumns(sources: string[] | Array<{ field: string; value?: any }> | undefined, item: EpsEntity): EpsColumn[] {
+  if (!sources || sources.length === 0) {
+    return [];
+  }
+
+  // 合并 columns 和 pageColumns
+  const allColumns = [...(item.columns || []), ...(item.pageColumns || [])];
+
+  // 提取字段名数组（处理字符串数组和对象数组两种情况）
+  const fieldNames = sources.map((source) => {
+    if (typeof source === 'string') {
+      return source;
+    }
+    // 对象数组，提取 field 属性
+    if (source && typeof source === 'object' && 'field' in source) {
+      return source.field;
+    }
+    return null;
+  }).filter((name): name is string => name !== null && name !== ''); // 过滤掉空字符串
+
+  // 根据 propertyName 或 source 字段匹配（不区分大小写）
+  // 优先通过 propertyName 匹配，其次通过 source 匹配
+  return fieldNames
+    .map((fieldName) => {
+      const lowerFieldName = fieldName.toLowerCase();
+      // 优先通过 propertyName 匹配
+      let matched = allColumns.find((col) => {
+        const colPropertyName = (col.propertyName || '').toLowerCase();
+        return colPropertyName === lowerFieldName;
+      });
+      // 如果 propertyName 没有匹配到，且 source 不为空，尝试通过 source 匹配
+      if (!matched) {
+        matched = allColumns.find((col) => {
+          const colSource = (col.source || '').toLowerCase();
+          return colSource && colSource === lowerFieldName;
+        });
+      }
+      return matched;
+    })
+    .filter((col): col is EpsColumn => col !== undefined);
 }
 
 export async function getData(
@@ -52,6 +101,30 @@ export async function getData(
     if (!e.api) e.api = [];
     if (!e.columns) e.columns = [];
     if (!e.pageColumns) e.pageColumns = [];
+    
+    // 检查 search 是否为空（所有数组都为空或不存在）
+    const isSearchEmpty = !e.search || 
+      (!e.search.fieldEq || e.search.fieldEq.length === 0) &&
+      (!e.search.fieldLike || e.search.fieldLike.length === 0) &&
+      (!e.search.keyWordLikeFields || e.search.keyWordLikeFields.length === 0);
+    
+    // 如果 search 为空且存在 pageQueryOp，则将其转换为 search 对象
+    if (isSearchEmpty && e.pageQueryOp) {
+      const convertedFieldEq = findColumns(e.pageQueryOp.fieldEq, e);
+      const convertedFieldLike = findColumns(e.pageQueryOp.fieldLike, e);
+      const convertedKeyWordLikeFields = findColumns(e.pageQueryOp.keyWordLikeFields, e);
+      
+      // 只要有任何字段被找到，就创建 search 对象
+      if (convertedFieldEq.length > 0 || convertedFieldLike.length > 0 || convertedKeyWordLikeFields.length > 0) {
+        e.search = {
+          fieldEq: convertedFieldEq,
+          fieldLike: convertedFieldLike,
+          keyWordLikeFields: convertedKeyWordLikeFields,
+        };
+      }
+    }
+    
+    // 如果 search 仍然为空，初始化为空对象
     if (!e.search) {
       e.search = {
         fieldEq: [],

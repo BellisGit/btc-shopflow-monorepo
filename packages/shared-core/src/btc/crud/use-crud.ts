@@ -4,6 +4,7 @@
  */
 
 import { ref, reactive, computed, shallowRef } from 'vue';
+import { normalizeKeywordIds } from '@btc/shared-components/src/utils/array';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
 export function useCrud<T = Record<string, unknown>>(
@@ -70,13 +71,123 @@ export function useCrud<T = Record<string, unknown>>(
         size: pagination.size,
       };
 
-      // 只添加非 null 的搜索参数
-      Object.keys(searchParams.value).forEach(key => {
-        if (searchParams.value[key] !== null && searchParams.value[key] !== undefined) {
-          params[key] = searchParams.value[key];
-        }
-      });
+      // 根据 service.search 配置组织搜索参数
+      // 注意：service 对象可能包含 search 属性（从 EPS 生成的服务对象）
+      const searchConfig = (service as any)?.search;
 
+      if (searchConfig && (searchConfig.fieldEq || searchConfig.fieldLike || searchConfig.keyWordLikeFields)) {
+        const keywordParams: Record<string, unknown> = {};
+        let hasKeywordParams = false;
+
+        // 获取已存在的 keyword 对象（如果页面传递了 keyword 参数）
+        let existingKeyword = searchParams.value.keyword && typeof searchParams.value.keyword === 'object' && !Array.isArray(searchParams.value.keyword)
+          ? searchParams.value.keyword
+          : {};
+
+        // 统一处理 keyword 对象中的 ids 字段为数组格式
+        // 使用 normalizeKeywordIds 确保空字符串、null、undefined 都转换为空数组
+        existingKeyword = normalizeKeywordIds(existingKeyword);
+
+        // 获取 fieldEq 字段列表
+        let fieldEqFields = searchConfig.fieldEq || [];
+        if (!Array.isArray(fieldEqFields) || fieldEqFields.length === 0) {
+          // 如果 searchConfig.fieldEq 为空，尝试从 pageColumns 中获取字段名（后备方案）
+          const pageColumns = (service as any)?._pageColumns || (service as any)?.pageColumns;
+          if (Array.isArray(pageColumns) && pageColumns.length > 0) {
+            fieldEqFields = pageColumns
+              .map((col: any) => col?.propertyName || col?.field || col?.name)
+              .filter((name: any): name is string => !!name);
+          }
+        }
+
+        // 处理 fieldEq（等值查询）- 始终包含在 keyword 对象中，即使值为空
+        // 确保所有 fieldEq 中配置的字段都被包含在 keyword 对象中
+        if (Array.isArray(fieldEqFields) && fieldEqFields.length > 0) {
+          fieldEqFields.forEach((field: any) => {
+            // 支持多种字段格式：对象 { propertyName: "xxx" } 或字符串 "xxx"
+            let fieldName: string | undefined;
+            if (typeof field === 'string') {
+              fieldName = field;
+            } else if (field && typeof field === 'object') {
+              // 优先使用 propertyName，其次使用 field，最后使用 name
+              fieldName = field.propertyName || field.field || field.name;
+            }
+
+            // 确保字段名存在，并且始终添加到 keywordParams 中（即使值为空）
+            if (fieldName) {
+              // 优先从 keyword 对象中读取，其次从 searchParams.value 中读取，最后使用空字符串
+              const value = existingKeyword[fieldName] !== undefined
+                ? existingKeyword[fieldName]
+                : (searchParams.value[fieldName] !== undefined ? searchParams.value[fieldName] : '');
+              // 即使值为空，也包含在 keyword 对象中（后端需要空字符串）
+              keywordParams[fieldName] = value !== null && value !== undefined ? value : '';
+              hasKeywordParams = true;
+            }
+          });
+        }
+
+        // 处理 fieldLike（模糊查询）- 始终包含在 keyword 对象中，即使值为空
+        if (Array.isArray(searchConfig.fieldLike) && searchConfig.fieldLike.length > 0) {
+          searchConfig.fieldLike.forEach((field: any) => {
+            // 支持多种字段格式：对象 { propertyName: "xxx" } 或字符串 "xxx"
+            let fieldName: string | undefined;
+            if (typeof field === 'string') {
+              fieldName = field;
+            } else if (field && typeof field === 'object') {
+              fieldName = field.propertyName || field.field || field.name;
+            }
+
+            if (fieldName) {
+              // 优先从 keyword 对象中读取，其次从 searchParams.value 中读取，最后使用空字符串
+              const value = existingKeyword[fieldName] !== undefined
+                ? existingKeyword[fieldName]
+                : (searchParams.value[fieldName] !== undefined ? searchParams.value[fieldName] : '');
+              // 即使值为空，也包含在 keyword 对象中（后端需要空字符串）
+              keywordParams[fieldName] = value !== null && value !== undefined ? value : '';
+              hasKeywordParams = true;
+            }
+          });
+        }
+
+        // 处理 keyWordLikeFields（关键字搜索字段）
+        // 如果 keyWordLikeFields 配置了字段，将关键字应用到这些字段
+        // 如果 keyWordLikeFields 为空或只有空字符串，将关键字应用到 fieldEq 中的第一个字段（通常是主搜索字段）
+        const keyword = searchParams.value.keyword;
+        if (keyword !== null && keyword !== undefined && keyword !== '') {
+          const keyWordFields = searchConfig.keyWordLikeFields || [];
+          const validKeyWordFields = keyWordFields
+            .map((field: any) => field?.propertyName || field)
+            .filter((fieldName: string) => fieldName && fieldName !== '');
+
+          if (validKeyWordFields.length > 0) {
+            // 如果配置了有效的 keyWordLikeFields，应用到这些字段
+            validKeyWordFields.forEach((fieldName: string) => {
+              keywordParams[fieldName] = keyword;
+              hasKeywordParams = true;
+            });
+          } else if (Array.isArray(searchConfig.fieldEq) && searchConfig.fieldEq.length > 0) {
+            // 如果没有配置 keyWordLikeFields，将关键字应用到 fieldEq 中的第一个字段（通常是主搜索字段，如 username）
+            const firstField = searchConfig.fieldEq[0];
+            const firstFieldName = firstField?.propertyName || firstField;
+            if (firstFieldName) {
+              keywordParams[firstFieldName] = keyword;
+              hasKeywordParams = true;
+            }
+          }
+        }
+
+        // 如果有搜索配置，始终添加 keyword 对象（即使为空对象）
+        if (hasKeywordParams || (searchConfig.fieldEq && searchConfig.fieldEq.length > 0) || (searchConfig.fieldLike && searchConfig.fieldLike.length > 0)) {
+          params.keyword = keywordParams;
+        }
+      } else {
+        // 如果没有 search 配置，使用扁平化参数（向后兼容）
+        Object.keys(searchParams.value).forEach(key => {
+          if (searchParams.value[key] !== null && searchParams.value[key] !== undefined) {
+            params[key] = searchParams.value[key];
+          }
+        });
+      }
 
       // 刷新前钩子（对应 cool-admin 的 onRefresh）
       if (onBeforeRefresh) {
@@ -84,6 +195,12 @@ export function useCrud<T = Record<string, unknown>>(
         if (modifiedParams) {
           params = modifiedParams;
         }
+      }
+
+      // 在 onBeforeRefresh 之后，统一处理 params.keyword.ids 为数组格式
+      // 使用 normalizeKeywordIds 确保空字符串、null、undefined 都转换为空数组
+      if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
+        params.keyword = normalizeKeywordIds(params.keyword);
       }
 
       // 检查 service 是否存在
@@ -104,18 +221,18 @@ export function useCrud<T = Record<string, unknown>>(
       if (res && typeof res === 'object') {
         // 检查是否是 Axios 响应对象
         const isAxiosResponse = res.data && res.status && res.headers;
-        
+
         // 如果是 Axios 响应对象（有 data, status, headers 等属性）
         if (isAxiosResponse) {
           // 这是一个 Axios 响应对象，需要提取 data
           const responseData = res.data;
-          
+
           // 检查是否是标准 API 响应格式 { code: 200, msg: '...', data: {...} }
           if (responseData && typeof responseData === 'object' && responseData.code !== undefined) {
             // 响应拦截器可能没有正确处理，手动提取 data.data
             if (responseData.data && typeof responseData.data === 'object') {
               const actualData = responseData.data;
-              
+
               if (actualData.list !== undefined) {
                 // 标准格式：{ list: [], total: 0 }
                 const list = Array.isArray(actualData.list) ? actualData.list : [];

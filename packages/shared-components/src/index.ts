@@ -78,6 +78,7 @@ export { default as BtcPagination } from './crud/pagination/index.vue';
 export { default as BtcAddBtn } from './crud/add-btn/index.vue';
 export { default as BtcRefreshBtn } from './crud/refresh-btn/index.vue';
 export { default as BtcMultiDeleteBtn } from './crud/multi-delete-btn/index.vue';
+export { default as BtcMultiUnbindBtn } from './crud/multi-unbind-btn/index.vue';
 export { default as BtcBindTransferBtn } from './crud/bind-transfer-btn/index.vue';
 export { default as BtcRow } from './crud/row/index.vue';
 export { default as BtcFlex1 } from './crud/flex1/index.vue';

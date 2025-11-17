@@ -1,4 +1,4 @@
-# BtcTableGroup 组件
+﻿# BtcTableGroup 组件
 
 `BtcTableGroup` 是一个增强型的复合组件，它在 `BtcViewGroup` 的基础上，内置了 `BtcMasterList` 作为左侧内容，并内置了 `BtcCrud` 作为右侧内容，旨在提供一个开箱即用的"左树右表"联动解决方案。
 

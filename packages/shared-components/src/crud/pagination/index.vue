@@ -33,18 +33,35 @@ if (!crud) {
 
 // 初始化标记，避免在组件初始化时触发页码变化事件
 const isInitialized = ref(false);
+// 记录初始页码，避免在初始化时触发事件
+const initialPage = ref(crud.pagination.page);
+// 标记是否已经处理过初始页码设置
+const hasHandledInitialPage = ref(false);
 
 onMounted(() => {
+  // 记录初始页码
+  initialPage.value = crud.pagination.page;
+  hasHandledInitialPage.value = true;
   // 延迟标记为已初始化，确保不会在初始化时触发事件
   setTimeout(() => {
     isInitialized.value = true;
-  }, 100);
+  }, 200);
 });
 
 // 处理页码变化事件
 const handleCurrentChange = (page: number) => {
-  // 只有在初始化完成后才处理页码变化
-  if (isInitialized.value) {
+  // 如果还在初始化阶段，只更新初始页码，不触发数据加载
+  if (!isInitialized.value) {
+    if (!hasHandledInitialPage.value) {
+      initialPage.value = page;
+      hasHandledInitialPage.value = true;
+    }
+    return;
+  }
+  
+  // 只有在初始化完成后，并且页码确实发生了变化，才触发数据加载
+  if (page !== initialPage.value) {
+    initialPage.value = page; // 更新初始页码
     crud.handlePageChange(page);
   }
 };

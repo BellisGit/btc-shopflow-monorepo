@@ -1,4 +1,4 @@
----
+﻿---
 title: BtcDialog 组件
 type: package
 project: components

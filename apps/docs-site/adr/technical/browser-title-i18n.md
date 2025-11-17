@@ -1,4 +1,4 @@
----
+﻿---
 title: 浏览器标题国际化方案
 type: adr
 project: technical
@@ -127,7 +127,7 @@ document.title = getTranslation(titleKey);
 
 ### 1. 路由声明 titleKey
 
-**文件**: `apps/main-app/src/router/index.ts`
+**文件**: `apps/admin-app/src/router/index.ts`
 
 ```typescript
 const routes = [
@@ -152,7 +152,7 @@ meta: { titleKey: 'menu.org.user_role_assign' } // 动态路由也用同一个�
 
 ### 2. 同步翻译函数
 
-**文件**: `apps/main-app/src/router/index.ts`
+**文件**: `apps/admin-app/src/router/index.ts`
 
 ```typescript
 import { zhCN, enUS } from '@btc/shared-core';
@@ -179,7 +179,7 @@ return messages[key] || key;
 
 ### 3. 路由守卫更新标题
 
-**文件**: `apps/main-app/src/router/index.ts`
+**文件**: `apps/admin-app/src/router/index.ts`
 
 ```typescript
 router.afterEach((to) => {
@@ -201,7 +201,7 @@ document.title = config.app.name;
 
 ### 4. HTML 占位符
 
-**文件**: `apps/main-app/index.html`
+**文件**: `apps/admin-app/index.html`
 
 ```html
 <!-- 占位符，供服务端注入使用 -->
@@ -214,7 +214,7 @@ document.title = config.app.name;
 
 ### 5. Vite 插件：服务端标题注入
 
-**文件**: `apps/main-app/vite-plugin-title-inject.ts`
+**文件**: `apps/admin-app/vite-plugin-title-inject.ts`
 
 ```typescript
 export function titleInjectPlugin(): Plugin {
@@ -288,7 +288,7 @@ detail: { locale: newLocale }
 
 ### 5. 语言切换监听
 
-**文件**: `apps/main-app/src/router/index.ts`
+**文件**: `apps/admin-app/src/router/index.ts`
 
 ```typescript
 export function setupI18nTitleWatcher() {
@@ -409,7 +409,7 @@ detail: { locale: newLocale }
 ## 相关文档
 
 - [浏览器标题国际化修复](../BROWSER-TITLE-I18N-FIX.md) - 详细实现
-- [路由配置](../../apps/main-app/src/router/index.ts) - 源码
+- [路由配置](../../apps/admin-app/src/router/index.ts) - 源码
 - [国际化配置](../LANGUAGE-SYNC-GUIDE.md) - i18n 系统
 
 ---

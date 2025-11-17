@@ -1,0 +1,140 @@
+// View Transition API 样式 - 支持主题切换动画（参考 cool-admin-vue-8.x）
+// 禁用默认动画，完全使用 JavaScript animate() API 控制
+::view-transition-new(root),
+::view-transition-old(root) {
+  animation: none !important;
+}
+
+// 确保根元素有 view-transition-name（View Transition API 需要）
+html {
+  view-transition-name: root;
+}
+
+// 暗黑模式样式
+html.dark {
+  // Element Plus 组件背景色使用 #0a0a0a
+  --el-bg-color: #0a0a0a;
+
+  // View Transition 遮罩层 z-index 设置（参考 cool-admin-vue-8.x）
+  // 当切换到暗黑模式时，旧视图（亮色）需要在上层显示
+  &::view-transition-old(root) {
+    z-index: 100;
+  }
+
+  // 暗黑模式下的背景色层次
+  // 布局区域（顶栏、面包屑、tabbar、内容区域、侧边栏）使用 #0a0a0a
+  // 组件背景使用 Element Plus 的 --el-bg-color #0a0a0a
+  // 全局背景使用 Element Plus 默认的暗色背景（不修改）
+
+  // 顶栏背景色
+  .topbar {
+    background-color: #0a0a0a !important;
+  }
+
+  // 面包屑背景色
+  .app-breadcrumb {
+    background-color: #0a0a0a !important;
+  }
+
+  // Tabbar 背景色
+  .app-process {
+    background-color: #0a0a0a !important;
+  }
+
+  // 内容区域背景色
+  .app-layout__content {
+    background-color: #0a0a0a !important;
+  }
+
+  // 子应用挂载点背景色（确保不被子应用样式覆盖）
+  #subapp-viewport {
+    background-color: #0a0a0a !important;
+  }
+
+  // 侧边栏容器背景色（深色系统主题下）
+  .app-layout__sidebar {
+    background-color: #0a0a0a !important;
+  }
+
+  // 调整暗黑模式下的表格背景色
+  .el-table {
+    --el-table-bg-color: var(--el-bg-color);
+    --el-table-tr-bg-color: var(--el-bg-color);
+    --el-table-row-hover-bg-color: var(--el-fill-color-light);
+
+    &__header {
+      .el-table__cell {
+        background-color: var(--el-bg-color) !important;
+      }
+    }
+  }
+
+  // 优化暗黑模式下的遮罩层（排除偏好设置抽屉）
+  .el-overlay:not(.user-preferences-modal) {
+    background-size: 4px 4px;
+    backdrop-filter: saturate(50%) blur(4px);
+  }
+
+  // CRUD 容器背景
+  .crud-container {
+    background-color: var(--el-bg-color) !important;
+  }
+
+  // btc-crud 组件背景
+  .btc-crud {
+    background-color: var(--el-bg-color) !important;
+  }
+
+  // 优化菜单在暗黑模式下的显示
+  .el-menu {
+    // 对于普通菜单，使用 Element Plus 的默认变量
+    --el-menu-hover-bg-color: var(--el-fill-color-light);
+    --el-menu-text-color: var(--el-text-color-primary);
+    --el-menu-active-color: var(--el-color-primary);
+  }
+
+  // 深色菜单风格在深色系统主题下，背景色必须和内容区域一致（使用 #0a0a0a）
+  // 注意：不设置 --el-menu-bg-color，而是直接使用 background-color 覆盖
+  // 这样可以避免 Element Plus 的 var(--el-menu-bg-color) 覆盖我们的设置
+  .el-menu-dark {
+    background-color: #0a0a0a !important;
+
+    .el-sub-menu .el-menu {
+      background-color: #0a0a0a !important;
+    }
+  }
+
+  // 确保侧边栏容器内的深色菜单也使用正确的背景色（最高优先级）
+  .app-layout__sidebar {
+    .sidebar__menu.el-menu-dark,
+    .el-menu-dark {
+      background-color: #0a0a0a !important;
+
+      .el-sub-menu .el-menu {
+        background-color: #0a0a0a !important;
+      }
+    }
+
+    // 确保子菜单的背景色也被覆盖（匹配您提到的选择器）
+    .sidebar__menu.el-menu-dark .el-sub-menu .el-menu,
+    .el-menu-dark .el-sub-menu .el-menu {
+      background-color: #0a0a0a !important;
+    }
+  }
+
+  // 优化下拉菜单
+  .el-dropdown-menu {
+    --el-dropdown-menu-box-shadow: var(--el-box-shadow-light);
+  }
+
+  // 优化抽屉（排除偏好设置抽屉，偏好设置抽屉有自己的样式）
+  .el-overlay:not(.user-preferences-modal) .el-drawer {
+    --el-drawer-bg-color: var(--el-bg-color);
+  }
+}
+
+// 确保暗黑模式下的文本颜色正确
+.dark {
+  color-scheme: dark;
+}
+

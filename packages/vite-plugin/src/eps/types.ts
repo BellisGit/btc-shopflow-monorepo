@@ -113,9 +113,9 @@ export interface EpsEntity {
    * 鍒嗛〉鏌ヨ鎿嶄綔閰嶇疆
    */
   pageQueryOp?: {
-    fieldEq?: string[];
-    fieldLike?: string[];
-    keyWordLikeFields?: string[];
+    fieldEq?: string[] | Array<{ field: string; value?: any }>;
+    fieldLike?: string[] | Array<{ field: string; value?: any }>;
+    keyWordLikeFields?: string[] | Array<{ field: string; value?: any }>;
   };
   /**
    * 鍛藉悕绌洪棿

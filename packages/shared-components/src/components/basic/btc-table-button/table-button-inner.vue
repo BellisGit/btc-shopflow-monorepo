@@ -194,17 +194,22 @@ const handleClick = (event: MouseEvent) => {
 
   &__badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    border-radius: 8px;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 50%;
     background-color: var(--el-color-danger);
     color: #fff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1;
+    box-sizing: border-box;
+    white-space: nowrap;
   }
 }
 </style>

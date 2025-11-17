@@ -1,4 +1,4 @@
----
+﻿---
 title: 'BTC SVG 图标组件'
 type: package
 project: components

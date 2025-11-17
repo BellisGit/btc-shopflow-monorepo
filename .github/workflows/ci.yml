@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm -w run lint || pnpm -w run lint:fix --if-present
+
+      - name: Type check
+        run: pnpm -w run type-check --if-present
+
+      - name: Build
+        run: pnpm -w run build
+
+      - name: Unit tests
+        run: pnpm -w run test:unit --if-present
+
+      - name: Integration tests
+        run: pnpm -w run test:integration --if-present
+
+      - name: E2E tests
+        run: pnpm -w run test:e2e --if-present
+
+

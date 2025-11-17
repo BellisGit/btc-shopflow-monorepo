@@ -1,4 +1,4 @@
----
+﻿---
 title: 快速设置指南 - 局域网访问文档中心
 type: guide
 project: btc-shopflow

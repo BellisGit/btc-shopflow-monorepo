@@ -1,4 +1,4 @@
-# BtcIdentityVerify 身份验证组件
+﻿# BtcIdentityVerify 身份验证组件
 
 身份验证弹窗组件，支持手机号和邮箱两种验证方式。
 

@@ -66,11 +66,11 @@ function inferMetadata(filePath: string, content: string): FrontmatterTemplate {
     project = 'shared-utils';
   } else if (relativePath.includes('packages/vite-plugin')) {
     project = 'vite-plugin';
-  } else if (relativePath.includes('apps/main-app/src/layout')) {
+  } else if (relativePath.includes('apps/admin-app/src/layout')) {
     project = 'layout';
-  } else if (relativePath.includes('apps/main-app/src/config')) {
+  } else if (relativePath.includes('apps/admin-app/src/config')) {
     project = 'config';
-  } else if (relativePath.includes('apps/main-app/src/plugins')) {
+  } else if (relativePath.includes('apps/admin-app/src/plugins')) {
     project = 'plugins';
   } else if (relativePath.includes('/configs')) {
     project = 'configs';

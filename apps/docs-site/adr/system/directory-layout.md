@@ -1,4 +1,4 @@
----
+﻿---
 title: 基于目录的布局架构
 type: adr
 project: system

@@ -1,4 +1,4 @@
----
+﻿---
 title: BtcUpsert 组件
 type: package
 project: components
@@ -365,5 +365,5 @@ upsertRef.value?.mode // 'add' | 'update' | 'info'
 
 ## 完整示例
 
-查看 `apps/main-app/src/pages/system/` 目录下的10个权限管理页面
+查看 `apps/admin-app/src/pages/system/` 目录下的10个权限管理页面
 

@@ -227,11 +227,22 @@ const handleBeforeRefresh = (params: any) => {
       params.keyword = '';
     } else {
       // 指定项 - 将选中项的ID作为keyword传递
-      // 如果selectedItem包含ids，则使用ids（可能是字符串或数组），否则使用单个id
+      // 统一封装为 { ids: [...] } 格式，ids 统一为数组
+      let ids: any;
       if (selectedItem.value.ids !== undefined) {
-        params.keyword = selectedItem.value.ids;
+        ids = selectedItem.value.ids;
       } else {
-        params.keyword = selectedItem.value.id;
+        ids = selectedItem.value.id;
+      }
+      
+      // 统一将 ids 转换为数组
+      const normalizedIds = Array.isArray(ids) ? ids : (ids !== undefined && ids !== null && ids !== '' ? [ids] : []);
+      
+      // 如果 keyword 已经是对象，合并 ids；否则创建新对象
+      if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
+        params.keyword = { ...params.keyword, ids: normalizedIds };
+      } else {
+        params.keyword = { ids: normalizedIds };
       }
     }
   }

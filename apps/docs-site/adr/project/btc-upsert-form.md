@@ -1,4 +1,4 @@
----
+﻿---
 title: 'BtcUpsert 与 BtcForm 职责澄清 - 对标 cool-admin'
 type: adr
 project: project
@@ -164,4 +164,4 @@ BtcForm (通用表单) cl-form
 - `docs/BTC-UPSERT-VS-FORM-GUIDE.md` - 使用指南
 - `cool-admin-vue-8.x/packages/crud/src/components/upsert/` - 参考实现
 - `cool-admin-vue-8.x/packages/crud/src/components/form/` - 参考实现
-- `apps/main-app/src/pages/system/` - 实际使用示例（10个页面）
+- `apps/admin-app/src/pages/system/` - 实际使用示例（10个页面）

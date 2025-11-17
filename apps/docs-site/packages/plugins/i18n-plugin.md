@@ -1,4 +1,4 @@
----
+﻿---
 title: i18n 插件使用指南
 type: package
 project: plugins
@@ -34,10 +34,10 @@ sidebar_group: packages
 
 ## 使用示例
 
-### 1. 主应用（main-app）
+### 1. 主应用（admin-app）
 
 ```typescript
-// main-app/src/main.ts
+// admin-app/src/main.ts
 import { createI18nPlugin } from '@btc/shared-core';
 import { initGlobalState } from 'qiankun';
 
@@ -247,7 +247,7 @@ locale: "zh-CN"  // 必须使用 zh-CN 或 en-US 格式
 
 ```
 
-主应用 (main-app)
+主应用 (admin-app)
 i18n: scope=common
 GlobalState: { locale: 'zh-CN' }
 

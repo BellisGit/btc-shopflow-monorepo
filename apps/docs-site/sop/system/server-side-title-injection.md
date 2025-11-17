@@ -1,4 +1,4 @@
----
+﻿---
 title: 服务端标题注入实施指南
 type: sop
 project: system
@@ -62,7 +62,7 @@ document.cookie = `locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
 
 ### 2) 开发环境：Vite 插件注入
 
-**创建插件**: `apps/main-app/vite-plugin-title-inject.ts`
+**创建插件**: `apps/admin-app/vite-plugin-title-inject.ts`
 
 ```typescript
 import type { Plugin } from 'vite';
@@ -115,7 +115,7 @@ return html.replace('__PAGE_TITLE__', pageTitle);
 }
 ```
 
-**注册插件**: `apps/main-app/vite.config.ts`
+**注册插件**: `apps/admin-app/vite.config.ts`
 
 ```typescript
 import { titleInjectPlugin } from './vite-plugin-title-inject';
@@ -193,7 +193,7 @@ curl -H "Cookie: locale=zh-CN" http://localhost/access/permissions | grep "<titl
 
 ### 开发环境
 
-1. 启动 dev server: `pnpm --filter main-app dev`
+1. 启动 dev server: `pnpm --filter admin-app dev`
 2. 访问权限列表: `http://localhost:8080/access/permissions`
 3. 查看源代码: `Ctrl + U`
 4. 检查 `<title>` 标签: 应该是 `<title>权限列表</title>`

@@ -26,11 +26,11 @@
       "cache": true
     },
     "test:unit": {
-      "outputs": ["apps/main-app/coverage/unit/**"],
+      "outputs": ["apps/admin-app/coverage/unit/**"],
       "cache": true
     },
     "test:integration": {
-      "outputs": ["apps/main-app/coverage/integration/**"],
+      "outputs": ["apps/admin-app/coverage/integration/**"],
       "cache": true
     },
     "test:e2e": {

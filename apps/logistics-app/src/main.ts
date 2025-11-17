@@ -22,7 +22,19 @@ const render = (props: QiankunProps = {}) => {
 };
 
 renderWithQiankun({
-  async bootstrap() {},
+  bootstrap() {
+    // 使用 queueMicrotask 确保在下一个事件循环中 resolve
+    // 避免模块加载阻塞导致的超时问题
+    return new Promise<void>((resolve, reject) => {
+      try {
+        queueMicrotask(() => {
+          resolve();
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  },
   async mount(props: QiankunProps) {
     render(props);
   },

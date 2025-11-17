@@ -1,4 +1,4 @@
----
+﻿---
 title: VitePress 文档站点集成简要方案
 type: rfc
 project: btc-shopflow

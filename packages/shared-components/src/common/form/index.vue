@@ -47,6 +47,8 @@ export default defineComponent({
   },
 
   setup(props, { expose, slots }) {
+    // 生成本表单唯一前缀，用于组合每个输入控件的唯一 id
+    const formUid = `btc-form-${Math.random().toString(36).slice(2, 8)}`;
     // 表单设置和初始化
     const formSetup = useFormSetup(props);
     const {
@@ -167,12 +169,18 @@ export default defineComponent({
             const componentName = e.component.name;
             const Component = componentMap[componentName] || resolveComponent(componentName);
 
+            // 为控件生成稳定且唯一的 id
+            const baseProp = e.prop || `field-${index}`;
+            const inputId = `${formUid}-${baseProp}-${index}`;
+
             const componentProps = {
               modelValue: (form as Record<string, any>)[e.prop],
               'onUpdate:modelValue': (val: any) => {
                 (form as Record<string, any>)[e.prop] = val;
               },
               disabled: disabled.value || e.component.props?.disabled,
+              id: inputId,
+              name: baseProp,
               ...e.component.props
             };
 

@@ -4,6 +4,7 @@ import { createThemePlugin } from '@btc/shared-core';
 
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+import '../../styles/theme.scss';
 
 export type LogisticsThemePlugin = ReturnType<typeof createThemePlugin>;
 

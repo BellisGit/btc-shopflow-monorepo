@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
 import { btc } from '@btc/vite-plugin';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
-import { proxy as mainProxy } from '../main-app/src/config/proxy';
+import { proxy as mainProxy } from '../admin-app/src/config/proxy';
 
 const proxy = mainProxy;
 
@@ -49,10 +49,10 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 8081,
+    port: 8082,
     host: '0.0.0.0',
     cors: true,
-    origin: 'http://localhost:8081',
+    origin: 'http://localhost:8082',
     strictPort: false,
     proxy,
     headers: {

@@ -1,7 +1,7 @@
 <template>
   <div :class="['logistics-app', { 'is-standalone': isStandalone }]">
     <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
+      <transition name="slide-left" mode="out-in">
         <div :key="viewKey" ref="contentRef" class="logistics-app__page">
           <component :is="Component" />
         </div>
@@ -84,19 +84,5 @@ watch(contentRef, (el) => {
   min-width: 0;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease-in-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
-}
 </style>
 

@@ -1,4 +1,4 @@
----
+﻿---
 title: 启动开发环境
 type: sop
 project: development
@@ -31,7 +31,7 @@ pnpm install
 
 ### 2. 启动主应用（必需）
 ```bash
-pnpm --filter main-app dev
+pnpm --filter admin-app dev
 ```
 
 ### 3. 启动子应用（按需）

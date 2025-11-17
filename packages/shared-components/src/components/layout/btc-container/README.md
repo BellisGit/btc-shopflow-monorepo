@@ -1,4 +1,4 @@
-# BtcContainer 布局容器
+﻿# BtcContainer 布局容器
 
 `BtcContainer` 是一个智能的布局容器组件，它继承父组件的完整宽高，根据子组件数量智能划分空间，优先宽度布局，超出时显示滚动条。
 

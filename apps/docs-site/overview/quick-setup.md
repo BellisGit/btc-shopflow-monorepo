@@ -1,4 +1,4 @@
----
+﻿---
 title: 快速设置指南 - 局域网访问文档中心
 type: overview
 project: btc-shopflow
@@ -42,7 +42,7 @@ ifconfig | grep inet
 
 **方法 A：创建配置文件（推荐）**
 
-在 `apps/main-app/` 目录下创建 `.env.development.local` 文件：
+在 `apps/admin-app/` 目录下创建 `.env.development.local` 文件：
 
 ```bash
 # 文档中心地址（局域网访问）
@@ -51,7 +51,7 @@ VITE_DOCS_URL=http://10.80.8.199:8085
 
 **方法 B：修改现有配置**
 
-编辑 `apps/main-app/.env.development` 文件：
+编辑 `apps/admin-app/.env.development` 文件：
 
 ```bash
 # 将 localhost 改为您的 IP 地址

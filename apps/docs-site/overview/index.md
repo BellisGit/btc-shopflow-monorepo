@@ -1,4 +1,4 @@
----
+﻿---
 title: 项目概览
 type: overview
 project: btc-shopflow
@@ -23,7 +23,7 @@ sidebar_group: overview
 - **[项目介绍](./project-introduction)** - BTC车间流程管理系统整体介绍
 - **[快速设置](./quick-setup)** - 局域网访问文档中心的配置指南
 - **[应用概览](./apps-overview)** - 所有微前端应用的介绍
-- **[主应用说明](./main-app-readme)** - 主应用详细功能说明
+- **[主应用说明](./admin-app-readme)** - 主应用详细功能说明
 - **[后端架构](./backend-architecture)** - 后端微服务架构概览
 
 ### 开发指南

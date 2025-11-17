@@ -1,6 +1,6 @@
 ﻿/**
  * 自动导入配置模板
- * 供所有应用（main-app, logistics-app 等）使用
+ * 供所有应用（admin-app, logistics-app 等）使用
  */
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';

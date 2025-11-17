@@ -1,4 +1,4 @@
----
+﻿---
 title: "iframe 优化"
 type: guide
 project: btc-shopflow
@@ -34,7 +34,7 @@ sidebar_group: integration
 
 ### 1. iframe 位置：全局 Layout
 
-**位置**：`apps/main-app/src/layout/index.vue`
+**位置**：`apps/admin-app/src/layout/index.vue`
 ```vue
 <div class="app-layout__content">
 <!-- 主应用路由出口 -->
@@ -341,20 +341,20 @@ VitePress router.go(path) （内部路由，无白屏）
 ## 文件清单
 
 ### 新增
-- `apps/main-app/src/layout/docs-iframe/index.vue` - 全局文档 iframe 组件
+- `apps/admin-app/src/layout/docs-iframe/index.vue` - 全局文档 iframe 组件
 
 ### 删除
-- `apps/main-app/src/pages/docs/index.vue` - 旧的路由级组件
+- `apps/admin-app/src/pages/docs/index.vue` - 旧的路由级组件
 
 ### 修改
-1. **`apps/main-app/src/layout/index.vue`**
+1. **`apps/admin-app/src/layout/index.vue`**
 - 添加 `isDocsApp` computed
 - 引入 `DocsIframe` 组件并传递 `visible` prop
 
-2. **`apps/main-app/src/router/index.ts`**
+2. **`apps/admin-app/src/router/index.ts`**
 - `/docs` 路由改为空组件（实际渲染由 Layout 处理）
 
-3. **`apps/main-app/src/layout/global-search/index.vue`**
+3. **`apps/admin-app/src/layout/global-search/index.vue`**
 - 文档导航改为 postMessage 方式
 - 通过自定义事件 `docs-navigate` 触发
 

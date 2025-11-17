@@ -1,0 +1,200 @@
+/**
+ * Tab 元数据注册表（主应用主导，命名空间化）
+ */
+
+import { getManifestRoute, getManifest } from '@/micro/manifests';
+
+export interface TabMeta {
+  key: string;
+  title: string;
+  path: string;
+  i18nKey?: string;
+}
+
+// 两级映射：app 级 + 路由级
+const registry: Record<string, Record<string, TabMeta>> = {
+  // 管理域自己的 tabs
+  admin: {
+    '': { key: '', title: '首页', path: '/admin', i18nKey: 'menu.home' },
+
+    // 测试功能
+    'test-components': { key: 'test-components', title: '组件测试中心', path: '/admin/test/components', i18nKey: 'menu.test_features.components' },
+    'test-api-test-center': { key: 'test-api-test-center', title: 'API测试中心', path: '/admin/test/api-test-center', i18nKey: 'menu.test_features.api_test_center' },
+
+    // 平台治理
+    'platform-domains': { key: 'platform-domains', title: 'Domains', path: '/admin/platform/domains', i18nKey: 'menu.platform.domains' },
+    'platform-modules': { key: 'platform-modules', title: 'Modules', path: '/admin/platform/modules', i18nKey: 'menu.platform.modules' },
+    'platform-plugins': { key: 'platform-plugins', title: 'Plugins', path: '/admin/platform/plugins', i18nKey: 'menu.platform.plugins' },
+
+    // 组织与账号
+    'org-tenants': { key: 'org-tenants', title: 'Tenants', path: '/admin/org/tenants', i18nKey: 'menu.org.tenants' },
+    'org-departments': { key: 'org-departments', title: 'Departments', path: '/admin/org/departments', i18nKey: 'menu.org.departments' },
+    'org-users': { key: 'org-users', title: 'Users', path: '/admin/org/users', i18nKey: 'menu.org.users' },
+    'org-dept-role-bind': { key: 'org-dept-role-bind', title: 'Dept Role Bind', path: '/admin/org/departments/:id/roles', i18nKey: 'menu.org.dept_role_bind' },
+    'org-users-users-roles': { key: 'org-users-users-roles', title: 'User Role Assign', path: '/admin/org/users/users-roles', i18nKey: 'menu.access.user_role_bind' },
+
+    // 访问控制
+    'access-resources': { key: 'access-resources', title: 'Resources', path: '/admin/access/resources', i18nKey: 'menu.access.resources' },
+    'access-actions': { key: 'access-actions', title: 'Actions', path: '/admin/access/actions', i18nKey: 'menu.access.actions' },
+    'access-permissions': { key: 'access-permissions', title: 'Permissions', path: '/admin/access/permissions', i18nKey: 'menu.access.permissions' },
+    'access-roles': { key: 'access-roles', title: 'Roles', path: '/admin/access/roles', i18nKey: 'menu.access.roles' },
+    'access-role-perm-bind': { key: 'access-role-perm-bind', title: 'Role Perm Bind', path: '/admin/access/roles/:id/permissions', i18nKey: 'menu.access.role_perm_bind' },
+    'access-perm-compose': { key: 'access-perm-compose', title: 'Perm Compose', path: '/admin/access/perm-compose', i18nKey: 'menu.access.perm_compose' },
+
+    // 导航与可见性
+    'navigation-menus': { key: 'navigation-menus', title: 'Menus', path: '/admin/navigation/menus', i18nKey: 'menu.navigation.menus' },
+    'navigation-menu-perm-bind': { key: 'navigation-menu-perm-bind', title: 'Menu Perm Bind', path: '/admin/navigation/menus/:id/permissions', i18nKey: 'menu.navigation.menu_perm_bind' },
+    'navigation-menu-preview': { key: 'navigation-menu-preview', title: 'Menu Preview', path: '/admin/navigation/menus/preview', i18nKey: 'menu.navigation.menu_preview' },
+
+    // 策略相关
+    'strategy-management': { key: 'strategy-management', title: 'Strategy Management', path: '/admin/strategy/management', i18nKey: 'menu.strategy.management' },
+    'strategy-designer': { key: 'strategy-designer', title: 'Strategy Designer', path: '/admin/strategy/designer', i18nKey: 'menu.strategy.designer' },
+    'strategy-monitor': { key: 'strategy-monitor', title: 'Strategy Monitor', path: '/admin/strategy/monitor', i18nKey: 'menu.strategy.monitor' },
+
+    // 运维与审计
+    'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/admin/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
+    'ops-logs-request': { key: 'ops-logs-request', title: 'Request Log', path: '/admin/ops/logs/request', i18nKey: 'menu.ops.request_log' },
+    'ops-api-list': { key: 'ops-api-list', title: 'API List', path: '/admin/ops/api-list', i18nKey: 'menu.ops.api_list' },
+    'ops-baseline': { key: 'ops-baseline', title: 'Baseline', path: '/admin/ops/baseline', i18nKey: 'menu.ops.baseline' },
+    'ops-simulator': { key: 'ops-simulator', title: 'Simulator', path: '/admin/ops/simulator', i18nKey: 'menu.ops.simulator' },
+  },
+  // 子应用的表在进入时注册
+  system: {},
+  logistics: {},
+  engineering: {},
+  quality: {},
+  production: {},
+  finance: {},
+};
+
+/**
+ * 当前激活应用（根据路径前缀判断）
+ */
+export function getActiveApp(pathname: string): string {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/logistics')) return 'logistics';
+  if (pathname.startsWith('/engineering')) return 'engineering';
+  if (pathname.startsWith('/quality')) return 'quality';
+  if (pathname.startsWith('/production')) return 'production';
+  if (pathname.startsWith('/finance')) return 'finance';
+  if (pathname.startsWith('/docs')) return 'docs';
+  // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
+  return 'system';
+}
+
+/**
+ * 从路径提取 key
+ */
+function extractKey(pathname: string, app: string): string {
+  if (app === 'admin') {
+    // 管理域：/admin/platform/domains -> 'platform-domains'
+    const prefix = '/admin';
+    const suffix = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
+    const path = suffix.replace(/^\//, '').replace(/\//g, '-');
+    return path || '';
+  } else if (app === 'system') {
+    // 系统域：/data/files/list -> 'data-files-list', / -> ''
+    const path = pathname.replace(/^\//, '').replace(/\//g, '-');
+    return path || '';
+  } else {
+    // 其他子应用：/logistics/procurement -> 'procurement'
+    const prefix = `/${app}`;
+    const suffix = pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
+    const path = suffix.replace(/^\//, '').replace(/\//g, '-');
+    return path || '';
+  }
+}
+
+/**
+ * 解析 Tab 元数据
+ */
+export function resolveTabMeta(pathname: string): TabMeta | null {
+  const app = getActiveApp(pathname);
+
+  // 管理域：从 registry 查找（静态配置）
+  if (app === 'admin') {
+    const key = extractKey(pathname, app);
+    const appDict = registry[app];
+    if (appDict && appDict[key]) {
+      return appDict[key];
+    }
+    return null;
+  }
+
+  // 所有子应用都从 manifest 查找
+  if (app !== 'main') {
+    const manifestRoute = getManifestRoute(app, pathname);
+    
+    if (manifestRoute && manifestRoute.tab?.enabled !== false) {
+      // 从 manifest 构建 TabMeta
+      const manifest = getManifest(app);
+      if (manifest) {
+        const basePath = manifest.app.basePath ?? `/${app}`;
+        const routePath = manifestRoute.path;
+        const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
+        const manifestKey = routePath.replace(/^\//, "") || "home";
+        
+        return {
+          key: manifestKey,
+          title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
+          path: fullPath,
+          i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
+        };
+      }
+    }
+    
+    // 如果从 manifest 查不到，返回 null
+    return null;
+  }
+
+  // main 命名空间可以兜底（兼容旧逻辑）
+  const key = extractKey(pathname, app);
+  const mainDict = registry.main;
+  if (mainDict[key]) {
+    return mainDict[key];
+  }
+
+  // main 命名空间也查不到，返回 null（不要创建脏 Tab）
+  return null;
+}
+
+/**
+ * 注册子应用的 Tab 定义
+ */
+export function registerTabs(app: string, tabs: TabMeta[]) {
+  if (!registry[app]) {
+    registry[app] = {};
+  }
+
+  tabs.forEach(tab => {
+    registry[app][tab.key] = tab;
+  });
+}
+
+/**
+ * 清理子应用的 Tab 定义
+ */
+export function clearTabs(app: string) {
+  if (app !== 'main' && registry[app]) {
+    registry[app] = {};
+  }
+}
+
+/**
+ * 清理除指定应用外的所有 Tab 定义
+ */
+export function clearTabsExcept(app: string) {
+  Object.keys(registry).forEach(key => {
+    if (key !== 'main' && key !== app) {
+      registry[key] = {};
+    }
+  });
+}
+
+/**
+ * 获取指定命名空间的所有 Tab 元数据
+ */
+export function getTabsForNamespace(app: string): TabMeta[] {
+  return Object.values(registry[app] || {});
+}
+

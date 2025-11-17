@@ -1,4 +1,4 @@
-# BtcColorPicker 颜色选择器组件
+﻿# BtcColorPicker 颜色选择器组件
 
 基于 Element Plus `el-color-picker-panel` 封装的颜色选择器组件，提供统一的外观、预定义颜色支持和透明度选择功能。
 

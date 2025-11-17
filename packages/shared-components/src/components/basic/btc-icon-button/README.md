@@ -1,4 +1,4 @@
-# BtcIconButton 图标按钮组件
+﻿# BtcIconButton 图标按钮组件
 
 统一的图标按钮组件，自带 tooltip、统一样式、btc-svg，支持 badge、dropdown、popover 等功能。
 

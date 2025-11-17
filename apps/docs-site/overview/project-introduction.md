@@ -1,4 +1,4 @@
----
+﻿---
 title: BTC 车间流程管理系统
 type: overview
 project: btc-shopflow
@@ -65,7 +65,7 @@ pnpm dev:docs
 ```
 btc-shopflow-monorepo/
 apps/ # 应用
-main-app/ # 主应用（系统管理）
+admin-app/ # 主应用（系统管理）
 logistics-app/ # 物流应用
 engineering-app/ # 工程应用
 quality-app/ # 品质应用
@@ -83,7 +83,7 @@ README.md # 本文件
 
 - **文档中心**：查看完整文档组件 API架构决策操作手册
 - **应用 README**：
-- [主应用](/overview/main-app-readme)
+- [主应用](/overview/admin-app-readme)
 - [物流应用](/overview/logistics-app-readme)
 - [工程应用](/overview/engineering-app-readme)
 - [品质应用](/overview/quality-app-readme)

@@ -1,4 +1,4 @@
-# BtcViewsTabsGroup 组件
+﻿# BtcViewsTabsGroup 组件
 
 `BtcViewsTabsGroup` 是一个高度封装的复合组件，整合了 `BtcViewGroup`、`BtcTabs`、`BtcMasterList` 和 `BtcCrud`，支持多 tab 视图切换和自动数据刷新。
 

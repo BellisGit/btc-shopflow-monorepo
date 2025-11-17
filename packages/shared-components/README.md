@@ -1,4 +1,4 @@
-# @btc/shared-components
+﻿# @btc/shared-components
 
 BTC 共享组件库，提供项目中所有应用共享的可复用 Vue 组件。
 

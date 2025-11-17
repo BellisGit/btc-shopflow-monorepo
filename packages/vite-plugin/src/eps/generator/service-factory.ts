@@ -29,7 +29,16 @@ export function createService(_epsUrl: string, state: EpsState = epsState) {
         permission: {},
         _permission: {},
         search: e.search || {},
+        _pageColumns: e.pageColumns || [], // 保存 pageColumns 供 use-crud 使用
       };
+    } else {
+      // 如果服务对象已存在，更新 search 和 pageColumns 属性（确保 pageQueryOp 转换后的 search 被应用）
+      if (e.search) {
+        currentLevel[finalKey].search = e.search;
+      }
+      if (e.pageColumns) {
+        currentLevel[finalKey]._pageColumns = e.pageColumns;
+      }
     }
 
     if (e.api && Array.isArray(e.api)) {
@@ -111,6 +120,19 @@ export function createServiceCode(state: EpsState = epsState): { content: string
 
         if (item) {
           let t = `{`;
+
+          // 添加 namespace 属性
+          t += `
+            namespace: "${value.namespace}",
+          `;
+
+          // 添加 search 属性（如果存在）
+          if (item.search) {
+            const searchStr = JSON.stringify(item.search);
+            t += `
+              search: ${searchStr},
+            `;
+          }
 
           if (item.api) {
             item.api.forEach((a: any) => {

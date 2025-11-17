@@ -1,14 +1,14 @@
----
+﻿---
 title: 主应用（Main App）
 type: overview
-project: main-app
+project: admin-app
 owner: dev-team
 created: '2025-10-14'
 updated: '2025-10-14'
 publish: true
 tags:
 - overview
-- main-app
+- admin-app
 - micro-frontend
 sidebar_label: 主应用说明
 sidebar_order: 4
@@ -61,7 +61,7 @@ sidebar_group: overview
 ## 目录结构
 
 ```
-apps/main-app/
+apps/admin-app/
 src/
 pages/
 platform/ # 平台治理
@@ -107,10 +107,10 @@ mock.ts # Mock数据服务
 ```bash
 # 从根目录
 cd btc-shopflow-monorepo
-pnpm --filter main-app dev
+pnpm --filter admin-app dev
 
-# 或直接在 main-app 目录
-cd apps/main-app
+# 或直接在 admin-app 目录
+cd apps/admin-app
 pnpm dev
 ```
 
@@ -119,7 +119,7 @@ pnpm dev
 ### 生产构建
 
 ```bash
-pnpm --filter main-app build
+pnpm --filter admin-app build
 ```
 
 ---

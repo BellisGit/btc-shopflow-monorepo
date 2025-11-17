@@ -1,4 +1,4 @@
----
+﻿---
 title: "文档迁移"
 type: guide
 project: btc-shopflow
@@ -27,8 +27,8 @@ sidebar_group: integration
 ### 1. 项目文档迁移
 
 #### 1.1 主应用文档
-- **来源**: `btc-shopflow-monorepo/apps/main-app/README.md`
-- **目标**: `docs-site/overview/main-app-readme.md`
+- **来源**: `btc-shopflow-monorepo/apps/admin-app/README.md`
+- **目标**: `docs-site/overview/admin-app-readme.md`
 - **内容**: 主应用架构说明、功能模块介绍
 
 #### 1.2 包文档迁移

@@ -1,14 +1,14 @@
----
+﻿---
 title: 主应用（Main App）
 type: guide
-project: main-app
+project: admin-app
 owner: dev-team
 created: '2025-10-14'
 updated: '2025-10-14'
 publish: true
 tags:
 - overview
-- main-app
+- admin-app
 - micro-frontend
 sidebar_label: 主应用说明
 sidebar_order: 4
@@ -58,7 +58,7 @@ sidebar_group: guides
 ## 目录结构
 
 ```
-main-app/
+admin-app/
 ├── src/
 │   ├── components/     # 全局组件
 │   ├── layout/         # 布局组件
@@ -77,7 +77,7 @@ main-app/
 ```bash
 pnpm dev:main
 # 或
-cd apps/main-app && pnpm dev
+cd apps/admin-app && pnpm dev
 ```
 
 ### 访问地址

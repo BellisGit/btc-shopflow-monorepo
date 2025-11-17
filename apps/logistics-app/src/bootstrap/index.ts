@@ -64,7 +64,8 @@ const normalizeToHostPath = (relativeFullPath: string) => {
     return LOGISTICS_BASE_PATH;
   }
 
-  if (normalizedRelative.startsWith(`${LOGISTICS_BASE_PATH}/`)) {
+  // 如果已经是完整路径（以 /logistics 开头），直接返回
+  if (normalizedRelative === LOGISTICS_BASE_PATH || normalizedRelative.startsWith(`${LOGISTICS_BASE_PATH}/`)) {
     return normalizedRelative;
   }
 
@@ -107,7 +108,20 @@ const syncHostWithSubRoute = (fullPath: string) => {
     return;
   }
 
-  const targetUrl = fullPath || LOGISTICS_BASE_PATH;
+  // 确保 fullPath 是有效的路径，如果已经是完整路径则直接使用
+  let targetUrl = fullPath || LOGISTICS_BASE_PATH;
+  
+  // 如果 fullPath 已经是完整路径（以 /logistics 开头），直接使用
+  // 否则确保它以 LOGISTICS_BASE_PATH 开头
+  if (!targetUrl.startsWith(LOGISTICS_BASE_PATH)) {
+    // 如果 fullPath 是相对路径，拼接 base path
+    if (targetUrl === '/' || targetUrl === '') {
+      targetUrl = LOGISTICS_BASE_PATH;
+    } else {
+      targetUrl = `${LOGISTICS_BASE_PATH}${targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`}`;
+    }
+  }
+
   const currentUrl = getCurrentHostPath();
 
   if (currentUrl === targetUrl) {

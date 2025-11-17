@@ -13,6 +13,10 @@ export default defineConfig({
       '@btc/shared-core': resolve(__dirname, '../../packages/shared-core/src'),
       '@btc/shared-components': resolve(__dirname, '../../packages/shared-components/src'),
       '@btc/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),
+      '@btc-common': resolve(__dirname, '../../packages/shared-components/src/common'),
+      '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
+      '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
+      '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
     },
   },
   plugins: [
@@ -32,10 +36,10 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 8083,
+    port: 8084,
     host: '0.0.0.0',
     cors: true,
-    origin: 'http://localhost:8083',
+    origin: 'http://localhost:8084',
     strictPort: false,
     headers: {
       'Access-Control-Allow-Origin': '*',

@@ -1,4 +1,4 @@
----
+﻿---
 title: 创建 BtcDialog 和 BtcViewGroup 组件
 type: adr
 project: technical

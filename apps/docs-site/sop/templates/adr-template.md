@@ -1,4 +1,4 @@
----
+﻿---
 doc_type: adr
 title: "简短动词开头，如：采用微前端架构"
 owner: "dev-team"

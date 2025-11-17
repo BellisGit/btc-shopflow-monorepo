@@ -1,4 +1,4 @@
-# BtcSearch 搜索框组件
+﻿# BtcSearch 搜索框组件
 
 ## 概述
 

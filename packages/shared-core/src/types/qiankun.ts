@@ -9,6 +9,16 @@ export interface TabMeta {
 }
 
 /**
+ * 菜单项
+ */
+export interface MenuItem {
+  index: string;
+  title: string;
+  icon: string;
+  children?: MenuItem[];
+}
+
+/**
  * Qiankun 子应用 Props 类型定义
  */
 export interface QiankunProps {

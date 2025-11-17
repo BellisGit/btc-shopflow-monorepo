@@ -1,0 +1,123 @@
+{
+  "app": {
+    "id": "system",
+    "basePath": "/",
+    "nameKey": "menu.system.home"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "labelKey": "menu.system.home",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": []
+    },
+    {
+      "path": "/data/files/list",
+      "labelKey": "menu.data.files.list",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.list"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.list", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/data/files/templates",
+      "labelKey": "menu.data.files.templates",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.templates"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.templates", "icon": "Files" }
+      ]
+    },
+    {
+      "path": "/data/files/preview",
+      "labelKey": "menu.data.files.preview",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.preview"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.preview", "icon": "View" }
+      ]
+    },
+    {
+      "path": "/data/inventory/check",
+      "labelKey": "menu.data.inventory",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.inventory"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.inventory", "icon": "Odometer" }
+      ]
+    },
+    {
+      "path": "/data/dictionary/file-categories",
+      "labelKey": "menu.data.dictionary.file_categories",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.dictionary.file_categories"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.data.dictionary.file_categories", "icon": "FolderOpened" }
+      ]
+    },
+    {
+      "path": "/data/recycle",
+      "labelKey": "menu.data.recycle",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.recycle"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.recycle", "icon": "Delete" }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "index": "data",
+      "labelKey": "menu.data",
+      "icon": "Folder",
+      "children": [
+        {
+          "index": "data-files",
+          "labelKey": "menu.data.files",
+          "icon": "Document",
+          "children": [
+            { "index": "/data/files/list", "labelKey": "menu.data.files.list", "icon": "List" },
+            { "index": "/data/files/templates", "labelKey": "menu.data.files.templates", "icon": "Files" },
+            { "index": "/data/files/preview", "labelKey": "menu.data.files.preview", "icon": "View" }
+          ]
+        },
+        { "index": "/data/inventory/check", "labelKey": "menu.data.inventory", "icon": "Odometer" },
+        {
+          "index": "data-dictionary",
+          "labelKey": "menu.data.dictionary",
+          "icon": "Collection",
+          "children": [
+            { "index": "/data/dictionary/file-categories", "labelKey": "menu.data.dictionary.file_categories", "icon": "FolderOpened" }
+          ]
+        },
+        { "index": "/data/recycle", "labelKey": "menu.data.recycle", "icon": "Delete" }
+      ]
+    }
+  ]
+}
+

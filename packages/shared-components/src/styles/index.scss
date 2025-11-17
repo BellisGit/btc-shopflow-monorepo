@@ -1,3 +1,6 @@
+// 页面切换过渡动画样式（必须在文件开头）
+@use './transitions.scss';
+
 .btc-table-dict-cell {
 	display: inline-flex;
 	align-items: center;
@@ -10,7 +13,6 @@
 	overflow: hidden auto;
 	position: relative;
 	box-sizing: border-box;
-	background-color: var(--el-bg-color, #fff);
 
 	&.is-border {
 		border: 1px solid var(--el-border-color);

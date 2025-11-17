@@ -1,4 +1,4 @@
----
+﻿---
 title: '系统管理菜单重构 - 按业务领域重组权限管理'
 type: adr
 project: system

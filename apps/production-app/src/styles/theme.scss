@@ -4,16 +4,31 @@
   animation: none !important;
 }
 
+// 全局设置 --el-bg-color，确保子应用加载时就能使用正确的背景色
+// 覆盖 Element Plus 默认的 #141414，统一使用 #0a0a0a
+// 注意：CSS 变量不支持 !important，但可以通过选择器优先级覆盖
+// 使用 html.dark 选择器（比 :root 优先级更高）确保覆盖 Element Plus 的样式
+html.dark,
+html.dark :root,
+html.dark html {
+  --el-bg-color: #0a0a0a;
+}
+
 // 暗黑模式样式
-html.dark {
+// 同时支持 html.dark 和 .dark，确保在 qiankun 样式隔离环境下也能正确应用
+html.dark,
+.dark {
+  // Element Plus 组件背景色使用 #0a0a0a
+  --el-bg-color: #0a0a0a;
+
   &::view-transition-old(root) {
     z-index: 100;
   }
 
-  // 暗黑模式下的背景色层次（与 cool-admin 保持一致）
-  // 整体页面背景使用较浅的深色
-  // 组件背景（侧边栏、顶栏、内容卡片）使用 Element Plus 的 --el-bg-color（更深的黑色）
-  // 这样形成两层对比，产生视觉分界
+  // 暗黑模式下的背景色层次
+  // 布局区域（顶栏、面包屑、tabbar、内容区域、侧边栏）使用 #0a0a0a
+  // 组件背景使用 Element Plus 的 --el-bg-color #0a0a0a
+  // 全局背景使用 Element Plus 默认的暗色背景（不修改）
 
   // 调整暗黑模式下的表格背景色
   .el-table {
@@ -39,6 +54,11 @@ html.dark {
     background-color: var(--el-bg-color) !important;
   }
 
+  // btc-crud 组件背景
+  .btc-crud {
+    background-color: var(--el-bg-color) !important;
+  }
+
   // 优化菜单在暗黑模式下的显示
   .el-menu {
     --el-menu-bg-color: var(--el-bg-color);
@@ -56,6 +76,11 @@ html.dark {
   .el-drawer {
     --el-drawer-bg-color: var(--el-bg-color);
   }
+}
+
+// 确保子应用根容器使用正确的背景色
+#app {
+  background-color: var(--el-bg-color) !important;
 }
 
 // 确保暗黑模式下的文本颜色正确

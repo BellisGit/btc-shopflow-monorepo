@@ -194,9 +194,24 @@ async function loadRightData() {
       size: 20
     };
 
-    // 添加 keyword 参数
+    // 添加 keyword 参数 - 统一将 ids 处理为数组
     if (selectedKeyword.value !== undefined) {
-      params.keyword = selectedKeyword.value;
+      const kw = selectedKeyword.value;
+      if (kw !== null && kw !== '') {
+        if (typeof kw === 'object' && kw !== null && !Array.isArray(kw)) {
+          // 如果是对象，统一处理其中的 ids 字段为数组
+          if ('ids' in kw) {
+            const normalizedIds = Array.isArray(kw.ids) ? kw.ids : (kw.ids !== undefined && kw.ids !== null && kw.ids !== '' ? [kw.ids] : []);
+            params.keyword = { ...kw, ids: normalizedIds };
+          } else {
+            params.keyword = kw;
+          }
+        } else {
+          // 字符串或数组，统一转换为数组格式
+          const normalizedIds = Array.isArray(kw) ? kw : (kw !== undefined && kw !== null && kw !== '' ? [kw] : []);
+          params.keyword = { ids: normalizedIds };
+        }
+      }
     }
 
     const res = await props.rightService.page(params);
@@ -273,7 +288,8 @@ defineExpose({
   selectedKeyword,
   leftListData,
   rightData,
-  refresh: loadRightData,
+  refresh, // 修复：使用真正的 refresh 方法，而不是 loadRightData
+  loadRightData, // 如果需要单独调用 loadRightData，也暴露出来
   masterListRef,
   isExpand,
   expand,

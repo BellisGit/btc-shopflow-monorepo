@@ -27,7 +27,7 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: `pnpm --filter main-app exec vite --host ${HOST} --port ${PORT}`,
+    command: `pnpm --filter admin-app exec vite --host ${HOST} --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',

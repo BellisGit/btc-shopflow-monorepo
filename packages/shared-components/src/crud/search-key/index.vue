@@ -41,7 +41,7 @@
           type="button"
           :aria-label="placeholder"
           :title="placeholder"
-          @click.prevent="toggleExpand"
+          @click.prevent="handleSearchButtonClick"
           @mousedown.stop="handleSearchButtonMousedown"
           @mouseenter="handleAppendMouseEnter"
           @mouseleave="handleAppendMouseLeave"
@@ -199,6 +199,16 @@ const handleSearch = () => {
 
 const handleSearchButtonMousedown = () => {
   clearCollapseTimer();
+};
+
+const handleSearchButtonClick = () => {
+  if (isExpanded.value) {
+    // 如果已展开，触发搜索
+    handleSearch();
+  } else {
+    // 如果未展开，先展开输入框
+    toggleExpand();
+  }
 };
 
 const handleContainerMouseEnter = () => {

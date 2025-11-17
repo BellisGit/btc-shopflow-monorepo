@@ -6,6 +6,11 @@
 			placement="right"
 			popper-class="btc-code-json__popper"
 			effect="dark"
+			:trigger="popoverTrigger"
+			:teleported="teleported"
+			:persistent="false"
+			:show-arrow="true"
+			:popper-options="{ strategy: popperStrategy }"
 		>
 			<template #reference>
 				<span class="btc-code-json__text">{{ text }}</span>
@@ -29,7 +34,8 @@ defineOptions({
 });
 
 import { ElButton, ElPopover, ElScrollbar } from 'element-plus';
-import { computed, defineComponent, h } from 'vue';
+import type { TooltipTriggerType } from 'element-plus';
+import { computed, defineComponent, h, type PropType } from 'vue';
 import { isObject, isString } from 'lodash-es';
 import { BtcMessage } from '@btc/shared-components';
 
@@ -42,8 +48,16 @@ const props = defineProps({
 		default: 400
 	},
 	popoverTrigger: {
-		type: String,
-		default: 'hover'
+		type: [String, Array] as PropType<TooltipTriggerType | TooltipTriggerType[]>,
+		default: 'click'
+	},
+	teleported: {
+		type: Boolean,
+		default: true
+	},
+	popperStrategy: {
+		type: String as unknown as () => 'absolute' | 'fixed',
+		default: 'fixed'
 	},
 	height: {
 		type: [Number, String],

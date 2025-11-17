@@ -1,4 +1,4 @@
----
+﻿---
 title: "LocaleSwitcher 组件（语言切换）"
 type: api
 project: layout

@@ -1,4 +1,4 @@
-# BtcCascader 级联选择器组件
+﻿# BtcCascader 级联选择器组件
 
 基于 Element Plus `el-cascader` 封装的级联选择器组件，提供统一的配置和增强功能。
 

@@ -251,7 +251,7 @@ async function main() {
   fs.mkdirSync(layoutDir, { recursive: true });
 
   for (const component of layoutComponents) {
-    const sourcePath = path.join(rootDir, 'apps/main-app/src/layout', component, 'README.md');
+    const sourcePath = path.join(rootDir, 'apps/admin-app/src/layout', component, 'README.md');
     if (fs.existsSync(sourcePath)) {
       const targetPath = path.join(layoutDir, `${component}.md`);
       migrateDoc(sourcePath, targetPath);
@@ -259,7 +259,7 @@ async function main() {
   }
 
   // Layout 总 README
-  const layoutReadmePath = path.join(rootDir, 'apps/main-app/src/layout/README.md');
+  const layoutReadmePath = path.join(rootDir, 'apps/admin-app/src/layout/README.md');
   if (fs.existsSync(layoutReadmePath)) {
     const targetPath = path.join(layoutDir, 'index.md');
     migrateDoc(layoutReadmePath, targetPath);

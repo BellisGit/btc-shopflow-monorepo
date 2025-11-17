@@ -1,4 +1,4 @@
----
+﻿---
 title: "组件名称"
 type: component
 sidebar_label: "组件名称"

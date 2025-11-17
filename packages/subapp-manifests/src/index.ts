@@ -1,4 +1,9 @@
 ﻿import logisticsManifestJson from "./manifests/logistics.json" with { type: "json" };
+import systemManifestJson from "./manifests/system.json" with { type: "json" };
+import qualityManifestJson from "./manifests/quality.json" with { type: "json" };
+import engineeringManifestJson from "./manifests/engineering.json" with { type: "json" };
+import productionManifestJson from "./manifests/production.json" with { type: "json" };
+import financeManifestJson from "./manifests/finance.json" with { type: "json" };
 
 export interface SubAppManifestRoute {
   path: string;
@@ -62,6 +67,12 @@ export function getManifestTabs(
     });
 }
 
+export function getManifestMenus(app: string): Array<{ index: string; labelKey?: string; label?: string; icon?: string; children?: any[] }> {
+  const manifest = getManifest(app);
+  if (!manifest) return [];
+  return manifest.menus ?? [];
+}
+
 export function getAllManifests() {
   return { ...manifestRegistry };
 }
@@ -75,4 +86,59 @@ registerManifest("logistics", {
   routes: logisticsManifestJson.routes ?? [],
   menus: logisticsManifestJson.menus ?? [],
   raw: logisticsManifestJson,
+});
+
+registerManifest("system", {
+  app: {
+    id: systemManifestJson.app?.id ?? "system",
+    basePath: systemManifestJson.app?.basePath ?? "/",
+    nameKey: systemManifestJson.app?.nameKey,
+  },
+  routes: systemManifestJson.routes ?? [],
+  menus: systemManifestJson.menus ?? [],
+  raw: systemManifestJson,
+});
+
+registerManifest("quality", {
+  app: {
+    id: qualityManifestJson.app?.id ?? "quality",
+    basePath: qualityManifestJson.app?.basePath ?? "/quality",
+    nameKey: qualityManifestJson.app?.nameKey,
+  },
+  routes: qualityManifestJson.routes ?? [],
+  menus: qualityManifestJson.menus ?? [],
+  raw: qualityManifestJson,
+});
+
+registerManifest("engineering", {
+  app: {
+    id: engineeringManifestJson.app?.id ?? "engineering",
+    basePath: engineeringManifestJson.app?.basePath ?? "/engineering",
+    nameKey: engineeringManifestJson.app?.nameKey,
+  },
+  routes: engineeringManifestJson.routes ?? [],
+  menus: engineeringManifestJson.menus ?? [],
+  raw: engineeringManifestJson,
+});
+
+registerManifest("production", {
+  app: {
+    id: productionManifestJson.app?.id ?? "production",
+    basePath: productionManifestJson.app?.basePath ?? "/production",
+    nameKey: productionManifestJson.app?.nameKey,
+  },
+  routes: productionManifestJson.routes ?? [],
+  menus: productionManifestJson.menus ?? [],
+  raw: productionManifestJson,
+});
+
+registerManifest("finance", {
+  app: {
+    id: financeManifestJson.app?.id ?? "finance",
+    basePath: financeManifestJson.app?.basePath ?? "/finance",
+    nameKey: financeManifestJson.app?.nameKey,
+  },
+  routes: financeManifestJson.routes ?? [],
+  menus: financeManifestJson.menus ?? [],
+  raw: financeManifestJson,
 });

@@ -1,4 +1,4 @@
----
+﻿---
 title: "布局隐藏"
 type: guide
 project: btc-shopflow
@@ -35,7 +35,7 @@ sidebar_group: integration
 ### 1. **侧边栏（Sidebar）** - CSS 控制
 
 **方式**：`body.docs-mode` 类 + CSS 控制宽度
-**位置**：`apps/main-app/src/styles/global.scss`
+**位置**：`apps/admin-app/src/styles/global.scss`
 
 ```scss
 body.docs-mode {
@@ -55,7 +55,7 @@ visibility: hidden;
 ### 2. **Tabbar（Process）** - v-show + CSS
 
 **方式**：条件渲染 + CSS 高度控制
-**位置**：`apps/main-app/src/layout/index.vue`
+**位置**：`apps/admin-app/src/layout/index.vue`
 
 ```vue
 <!-- Tabbar 组件 -->
@@ -80,7 +80,7 @@ overflow: hidden;
 ### 3. **面包屑（Breadcrumb）** - v-if
 
 **方式**：条件渲染
-**位置**：`apps/main-app/src/layout/index.vue`
+**位置**：`apps/admin-app/src/layout/index.vue`
 
 ```vue
 <!-- 面包屑组件 -->
@@ -95,7 +95,7 @@ overflow: hidden;
 ### 4. **顶栏元素** - CSS 控制
 
 **方式**：`body.docs-mode` 类 + 精确的 CSS 选择器
-**位置**：`apps/main-app/src/styles/global.scss`
+**位置**：`apps/admin-app/src/styles/global.scss`
 
 ```scss
 body.docs-mode {
@@ -126,7 +126,7 @@ display: none !important;
 ### 5. **内容区域** - CSS 控制
 
 **方式**：移除 margin，占满整个空间
-**位置**：`apps/main-app/src/styles/global.scss`
+**位置**：`apps/admin-app/src/styles/global.scss`
 
 ```scss
 body.docs-mode {
@@ -148,7 +148,7 @@ height: 100%;
 
 ### 1. 路由守卫触发
 
-**位置**：`apps/main-app/src/router/index.ts`
+**位置**：`apps/admin-app/src/router/index.ts`
 
 ```typescript
 router.beforeEach((to, from) => {
@@ -168,7 +168,7 @@ document.body.classList.remove('docs-mode');
 
 ### 2. 布局状态管理
 
-**位置**：`apps/main-app/src/layout/index.vue`
+**位置**：`apps/admin-app/src/layout/index.vue`
 
 ```typescript
 const isDocsApp = computed(() => {

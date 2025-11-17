@@ -1,4 +1,4 @@
----
+﻿---
 title: 文档中心部署指南
 type: guide
 project: deployment
@@ -52,7 +52,7 @@ npm run dev -- --host 0.0.0.0 --port 8085
 
 ```bash
 # 启动主应用
-cd btc-shopflow-monorepo/apps/main-app
+cd btc-shopflow-monorepo/apps/admin-app
 npm run dev
 
 # 启动文档站点

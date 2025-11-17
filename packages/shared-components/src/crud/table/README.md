@@ -1,4 +1,4 @@
-# BtcTable 列宽调整功能
+﻿# BtcTable 列宽调整功能
 
 ## 功能概述
 

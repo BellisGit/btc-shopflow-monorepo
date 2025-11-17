@@ -1,4 +1,4 @@
-# BtcNotification 组件
+﻿# BtcNotification 组件
 
 基于 Element Plus 的 `ElNotification` 封装的通知组件，支持重复消息徽标计数功能。
 

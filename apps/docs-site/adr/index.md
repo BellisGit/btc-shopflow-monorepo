@@ -1,4 +1,4 @@
----
+﻿---
 title: 架构决策记录
 type: adr
 project: btc-shopflow

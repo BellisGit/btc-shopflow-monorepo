@@ -1,0 +1,88 @@
+// 移动端全局样式
+// 注意：所有样式应使用全局样式文件，禁止内联或局部样式
+
+.mobile-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobile-layout__content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-page {
+  padding: 16px;
+}
+
+.not-found-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.session-list-page {
+  height: 100%;
+}
+
+.scanner-page {
+  position: relative;
+  height: 100%;
+  background: #000;
+}
+
+.scanner-page__camera {
+  width: 100%;
+  height: 100%;
+}
+
+.scanner-page__camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-page__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-page__frame {
+  width: 250px;
+  height: 250px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+}
+
+.scanner-page__actions {
+  position: absolute;
+  bottom: 32px;
+  left: 16px;
+  right: 16px;
+}
+
+.count-entry-page {
+  padding: 16px;
+}
+
+.sync-status-page {
+  padding: 16px;
+}
+

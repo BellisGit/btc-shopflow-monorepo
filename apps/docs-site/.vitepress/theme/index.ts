@@ -6,8 +6,8 @@ import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 
 // 复用主应用的样式（CSS 变量会被继承）
-import '../../../main-app/src/styles/theme.scss';
-import '../../../main-app/src/styles/global.scss';
+import '../../../admin-app/src/styles/theme.scss';
+import '../../../admin-app/src/styles/global.scss';
 
 // 导入自定义样式（最后加载，确保覆盖优先级最高）
 import './custom.css';

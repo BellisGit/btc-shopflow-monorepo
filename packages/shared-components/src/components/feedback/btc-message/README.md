@@ -1,4 +1,4 @@
-# BtcMessage 组件
+﻿# BtcMessage 组件
 
 基于 Element Plus 的 `BtcMessage` 封装的消息组件，支持重复消息徽标计数功能。
 

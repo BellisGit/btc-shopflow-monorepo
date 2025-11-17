@@ -1,6 +1,10 @@
 <template>
   <div class="engineering-app">
-    <router-view :key="viewKey" />
+    <router-view v-slot="{ Component }">
+      <transition name="slide-left" mode="out-in">
+        <component :is="Component" :key="viewKey" />
+      </transition>
+    </router-view>
   </div>
 </template>
 

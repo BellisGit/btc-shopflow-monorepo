@@ -213,7 +213,7 @@ function handleSelect(item: any, keyword: any) {
   });
 }
 
-// 处理刷新前钩子 - 注入 keyword 参数
+// 处理刷新前钩子 - 注入 keyword 参数，统一将 ids 处理为数组
 function handleBeforeRefresh(params: Record<string, unknown>) {
   const viewGroup = viewGroupRef.value;
   const selectedKeyword = viewGroup?.selectedKeyword;
@@ -221,7 +221,26 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
   // 只有当 selectedKeyword 有值时才注入 keyword 参数
   // 不传递 null 值
   if (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '') {
-    params.keyword = selectedKeyword;
+    // 统一封装：页面侧的 selectedKeyword（字符串/数组/对象）
+    // - 对象：统一处理其中的 ids 字段为数组
+    // - 其他：封装到 { ids: [...] }，统一为数组格式
+    if (typeof selectedKeyword === 'object' && selectedKeyword !== null && !Array.isArray(selectedKeyword)) {
+      // 如果是对象，统一处理其中的 ids 字段为数组
+      if ('ids' in selectedKeyword) {
+        const normalizedIds = Array.isArray(selectedKeyword.ids) 
+          ? selectedKeyword.ids 
+          : (selectedKeyword.ids !== undefined && selectedKeyword.ids !== null && selectedKeyword.ids !== '' ? [selectedKeyword.ids] : []);
+        (params as any).keyword = { ...selectedKeyword, ids: normalizedIds };
+      } else {
+        (params as any).keyword = selectedKeyword;
+      }
+    } else {
+      // 字符串或数组，统一转换为数组格式
+      const normalizedIds = Array.isArray(selectedKeyword) 
+        ? selectedKeyword 
+        : (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '' ? [selectedKeyword] : []);
+      (params as any).keyword = { ids: normalizedIds };
+    }
   }
 
   return params;

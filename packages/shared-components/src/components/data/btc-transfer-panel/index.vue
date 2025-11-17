@@ -54,7 +54,7 @@
                 border
                 :reserve-selection="true"
               >
-                <template v-for="(slotFn, slotName) in scopedSlots" v-slot:[slotName]="scope">
+                <template v-for="( slotName ) in scopedSlots" v-slot:[slotName]="scope">
                   <slot :name="slotName" v-bind="scope" />
                 </template>
               </BtcTable>
@@ -129,7 +129,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, nextTick, ref, useSlots, watch } from 'vue';
+import { computed, nextTick, ref, useSlots, watch } from 'vue';
 import { ElCol } from 'element-plus';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
@@ -140,11 +140,10 @@ import BtcSearchKey from '@btc-crud/search-key/index.vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcIconButton from '@btc-components/basic/btc-icon-button/index.vue';
 import { useI18n } from '@btc/shared-core';
-import type { CrudService, UseCrudReturn } from '@btc/shared-core/src/btc/crud';
+import type { CrudService } from '@btc/shared-core/src/btc/crud';
 import type { IconButtonConfig } from '@btc-components/basic/btc-icon-button/types';
 import type {
   TransferKey,
-  TransferPanelProps,
   TransferPanelEmits,
   TransferPanelExpose,
   TransferPanelColumn,
@@ -199,7 +198,6 @@ const tableComponentRef = ref<InstanceType<typeof BtcTable> | null>(null);
 const collapsed = ref(false);
 
 const autoLoadComputed = computed(() => props.autoLoad ?? true);
-const hasFilters = computed(() => !!slots.filters);
 const scopedSlots = computed(() => slots);
 const panelStyle = computed(() => {
   if (!props.height) return undefined;
@@ -468,13 +466,13 @@ function applySelectionChange(rows: any[]) {
   if (!crud) return;
 
   const pageRows = crud.tableData.value ?? [];
-  const pageKeySet = new Set(pageRows.map((row) => resolveRowKey(row)));
-  const selectedPageKeys = new Set(rows.map((row) => resolveRowKey(row)));
+  const pageKeySet = new Set<string>(pageRows.map((row) => resolveRowKey(row)));
+  const selectedPageKeys = new Set<string>(rows.map((row) => resolveRowKey(row)));
 
   const newSet = new Set(selectedKeySet.value);
   const mapCopy: Record<string, any> = { ...selectedRecordMap.value };
 
-  pageKeySet.forEach((key) => {
+  pageKeySet.forEach((key: string) => {
     if (!key) return;
     if (!selectedPageKeys.has(key) && key in mapCopy) {
       delete mapCopy[key];

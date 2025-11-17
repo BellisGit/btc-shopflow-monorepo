@@ -1,4 +1,4 @@
----
+﻿---
 title: '插件管理器 (Plugin Manager)'
 type: package
 project: plugins

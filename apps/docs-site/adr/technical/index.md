@@ -1,4 +1,4 @@
----
+﻿---
 title: 技术实现决策
 type: adr
 project: technical

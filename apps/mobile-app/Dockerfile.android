@@ -1,0 +1,63 @@
+# 多阶段构建：Android APK
+FROM node:20-bullseye AS base
+
+# 安装 OpenJDK 17
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置 Java 环境变量
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# 安装 Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+
+RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
+    cd $ANDROID_HOME/cmdline-tools && \
+    curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip && \
+    unzip commandlinetools.zip && \
+    mv cmdline-tools latest && \
+    rm commandlinetools.zip
+
+# 安装 Android SDK 组件
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platforms;android-34" \
+               "build-tools;34.0.0" \
+               "platform-tools"
+
+# 安装 Gradle
+ENV GRADLE_VERSION=8.5
+RUN curl -o gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
+    unzip gradle.zip -d /opt && \
+    rm gradle.zip && \
+    mv /opt/gradle-${GRADLE_VERSION} /opt/gradle
+
+ENV PATH=/opt/gradle/bin:$PATH
+
+# 构建阶段：复制 Web 构建产物
+FROM base AS builder
+
+WORKDIR /app
+
+# 复制已构建的 dist 目录（从 Web 构建阶段）
+COPY apps/mobile-app/dist ./dist
+
+# 安装 Capacitor CLI
+RUN npm install -g @capacitor/cli
+
+# 初始化 Capacitor 项目（如果 android 目录不存在）
+WORKDIR /app/apps/mobile-app
+
+# 同步到 Android
+RUN npx cap sync android || true
+
+# 构建 APK
+WORKDIR /app/apps/mobile-app/android
+RUN ./gradlew assembleRelease
+
+# 输出阶段
+FROM scratch AS export
+COPY --from=builder /app/apps/mobile-app/android/app/build/outputs/apk/release/app-release.apk /app-release.apk
+

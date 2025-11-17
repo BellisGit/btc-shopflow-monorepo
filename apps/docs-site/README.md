@@ -1,4 +1,4 @@
-# BTC 文档中心
+﻿# BTC 文档中心
 
 内部开发者档案库 - Engineering Knowledge Archive
 
@@ -115,5 +115,5 @@ tags: [tag1, tag2]
 
 ## 相关链接
 
-- [主应用](../main-app/README.md)
+- [主应用](../admin-app/README.md)
 - [项目根目录](../../README.md)

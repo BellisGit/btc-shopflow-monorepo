@@ -1,4 +1,4 @@
----
+﻿---
 title: 添加新的布局组件
 type: sop
 project: components
@@ -24,7 +24,7 @@ sidebar_group: sop-components
 
 ### 1. 创建组件目录
 ```bash
-cd apps/main-app/src/layout
+cd apps/admin-app/src/layout
 mkdir my-component
 ```
 
@@ -83,6 +83,6 @@ import MyComponent from './my-component/index.vue'
 ## 失败回滚
 删除创建的目录：
 ```bash
-rm -rf apps/main-app/src/layout/my-component
+rm -rf apps/admin-app/src/layout/my-component
 ```
 

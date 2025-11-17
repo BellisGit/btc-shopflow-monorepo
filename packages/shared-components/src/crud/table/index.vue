@@ -501,7 +501,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   toolbarMounted.value = false;
-  tableRefContext.value = null;
+  if (tableRefContext && typeof tableRefContext === 'object' && 'value' in tableRefContext) {
+    // 在父级 provide 仍存在时安全清理引用，避免在未提供上下文时读写抛错
+    (tableRefContext as any).value = null;
+  }
 });
 
 if (tableRefContext) {
@@ -600,7 +603,7 @@ watch(
 defineExpose({
   tableRef,
   crud,
-  maxHeight,
+  maxHeight: autoMaxHeight,
   calcMaxHeight,
   showColumn,
   hideColumn,

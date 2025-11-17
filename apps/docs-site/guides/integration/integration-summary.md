@@ -1,4 +1,4 @@
----
+﻿---
 title: "集成总结"
 type: guide
 project: btc-shopflow
@@ -82,9 +82,9 @@ sidebar_group: integration
 6. `apps/docs-site/components/*.md` - 组件文档页面（crud, form, table, upsert, dialog, view-group）
 
 #### 主应用
-7. `apps/main-app/src/layout/docs-iframe/index.vue` - 全局文档 iframe 组件
-8. `apps/main-app/src/services/docsSearch.ts` - 文档搜索服务
-9. `apps/main-app/src/utils/loading.ts` - 全局 Loading 控制
+7. `apps/admin-app/src/layout/docs-iframe/index.vue` - 全局文档 iframe 组件
+8. `apps/admin-app/src/services/docsSearch.ts` - 文档搜索服务
+9. `apps/admin-app/src/utils/loading.ts` - 全局 Loading 控制
 
 #### 文档
 10. `vitepress-integration.md` - VitePress 集成完整文档
@@ -97,14 +97,14 @@ sidebar_group: integration
 ### 修改文件
 
 #### 主应用
-1. `apps/main-app/src/layout/index.vue` - 引入 DocsIframe，添加 isDocsApp
-2. `apps/main-app/src/layout/global-search/index.vue` - 整合文档搜索
-3. `apps/main-app/src/layout/menu-drawer/index.vue` - 添加 iframe 点击监听
-4. `apps/main-app/src/router/index.ts` - 路由守卫优化，docs 路由配置
-5. `apps/main-app/src/micro/menus.ts` - 添加文档应用菜单
-6. `apps/main-app/src/store/tabRegistry.ts` - 添加 docs 应用识别
-7. `apps/main-app/src/styles/global.scss` - docs-mode 和 docs-mode-instant 样式
-8. `apps/main-app/index.html` - 全局 Loading 动画
+1. `apps/admin-app/src/layout/index.vue` - 引入 DocsIframe，添加 isDocsApp
+2. `apps/admin-app/src/layout/global-search/index.vue` - 整合文档搜索
+3. `apps/admin-app/src/layout/menu-drawer/index.vue` - 添加 iframe 点击监听
+4. `apps/admin-app/src/router/index.ts` - 路由守卫优化，docs 路由配置
+5. `apps/admin-app/src/micro/menus.ts` - 添加文档应用菜单
+6. `apps/admin-app/src/store/tabRegistry.ts` - 添加 docs 应用识别
+7. `apps/admin-app/src/styles/global.scss` - docs-mode 和 docs-mode-instant 样式
+8. `apps/admin-app/index.html` - 全局 Loading 动画
 
 #### 配置
 9. `package.json` - 添加 dev:docs 脚本

@@ -1,4 +1,4 @@
----
+﻿---
 title: 应用目录说明
 type: guide
 project: btc-shopflow
@@ -21,7 +21,7 @@ sidebar_group: guides
 
 ## 应用列表
 
-### 1. main-app（主应用）
+### 1. admin-app（主应用）
 - **端口**：8080
 - **功能**：系统管理权限配置qiankun容器
 - **特点**：包含全局布局汉堡菜单应用切换器
@@ -54,7 +54,7 @@ sidebar_group: guides
 ## 微前端架构
 
 ### qiankun框架
-- **主应用**: main-app作为容器应用
+- **主应用**: admin-app作为容器应用
 - **子应用**: 各业务应用作为独立应用
 - **通信**: 通过qiankun的通信机制
 

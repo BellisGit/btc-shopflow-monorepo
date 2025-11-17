@@ -1,4 +1,4 @@
----
+﻿---
 title: 采用文档金字塔体系约束文档增长
 type: adr
 project: system

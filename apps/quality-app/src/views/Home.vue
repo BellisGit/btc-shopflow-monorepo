@@ -1,52 +1,227 @@
 <template>
   <div class="quality-home">
-    <el-row :gutter="20">
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <el-statistic :title="t('quality.home.stats.pending')" :value="45" />
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <el-statistic :title="t('quality.home.stats.defects')" :value="12" />
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <el-statistic :title="t('quality.home.stats.rate')" :value="98.5" suffix="%" />
-        </el-card>
-      </el-col>
-    </el-row>
+    <section class="quality-home__intro">
+      <h2 class="quality-home__title">
+        {{ t('quality.home.todo.title', { date: todayLabel }) }}
+      </h2>
+      <p class="quality-home__subtitle">
+        {{ t('quality.home.todo.subtitle') }}
+      </p>
+    </section>
 
-    <el-card style="margin-top: 20px">
-      <template #header>
-        <span>{{ t('quality.home.management') }}</span>
-      </template>
-      <el-space wrap>
-        <el-button type="primary" disabled>{{ t('quality.home.inspection') }}</el-button>
-        <el-button type="danger" disabled>{{ t('quality.home.defect_handling') }}</el-button>
-        <el-button type="success" disabled>{{ t('quality.home.reports') }}</el-button>
-      </el-space>
-      <el-alert type="info" :closable="false" style="margin-top: 20px">
-        品质应用功能页面待开发
-      </el-alert>
-    </el-card>
+    <BtcCrud ref="crudRef" class="quality-home__todo" :service="todoService">
+      <BtcRow>
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+        </div>
+        <BtcFlex1 />
+        <BtcSearchKey :placeholder="t('quality.home.todo.searchPlaceholder')" />
+        <BtcCrudActions />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcTable
+          ref="tableRef"
+          :columns="columns"
+          :disable-auto-created-at="true"
+          border
+        />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+    </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
+import type { CrudService } from '@btc/shared-core';
+import type { TableColumn } from '@btc/shared-components';
+import {
+  BtcCrud,
+  BtcRow,
+  BtcRefreshBtn,
+  BtcFlex1,
+  BtcSearchKey,
+  BtcCrudActions,
+  BtcTable,
+  BtcPagination,
+} from '@btc/shared-components';
+import { formatDateTime } from '@btc/shared-utils';
+
+interface TodoMeta {
+  id: number;
+  taskKey: 'inspection' | 'defect' | 'report' | 'review' | 'standard';
+  priority: 'high' | 'medium' | 'low';
+  owner: string;
+  dueTime: string;
+  status: 'pending' | 'in_progress' | 'done';
+}
+
+interface TodoItem extends TodoMeta {
+  task: string;
+}
+
+defineOptions({
+  name: 'QualityHome',
+});
 
 const { t } = useI18n();
+const crudRef = ref();
+const tableRef = ref();
+
+const formatTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return formatDateTime(date, 'HH:mm');
+};
+
+const todayLabel = computed(() => formatDateTime(new Date(), 'YYYY-MM-DD'));
+
+const todayTodosMeta = ref<TodoMeta[]>([
+  {
+    id: 1,
+    taskKey: 'inspection',
+    priority: 'high',
+    owner: '王敏',
+    dueTime: `${todayLabel.value}T09:30:00`,
+    status: 'pending',
+  },
+  {
+    id: 2,
+    taskKey: 'defect',
+    priority: 'medium',
+    owner: '李强',
+    dueTime: `${todayLabel.value}T11:00:00`,
+    status: 'in_progress',
+  },
+  {
+    id: 3,
+    taskKey: 'report',
+    priority: 'high',
+    owner: '陈蕾',
+    dueTime: `${todayLabel.value}T14:00:00`,
+    status: 'pending',
+  },
+  {
+    id: 4,
+    taskKey: 'review',
+    priority: 'low',
+    owner: '赵云',
+    dueTime: `${todayLabel.value}T15:30:00`,
+    status: 'pending',
+  },
+  {
+    id: 5,
+    taskKey: 'standard',
+    priority: 'medium',
+    owner: '刘波',
+    dueTime: `${todayLabel.value}T17:00:00`,
+    status: 'done',
+  },
+]);
+
+const todoService: CrudService<TodoItem> = {
+  async page(params: Record<string, any> = {}) {
+    const page = Number(params.page ?? 1);
+    const size = Number(params.size ?? 10);
+    const keyword = String(params.keyword ?? '').trim().toLowerCase();
+
+    const translated = todayTodosMeta.value.map<TodoItem>((item) => ({
+      ...item,
+      task: t(`quality.home.todo.items.${item.taskKey}`),
+    }));
+
+    let filtered = [...translated];
+
+    if (keyword) {
+      filtered = filtered.filter((item) => {
+        return [item.task, item.owner].some((field) =>
+          String(field).toLowerCase().includes(keyword),
+        );
+      });
+    }
+
+    const total = filtered.length;
+    const start = (page - 1) * size;
+    const end = start + size;
+
+    return {
+      list: filtered.slice(start, end),
+      pagination: {
+        page,
+        size,
+        total,
+      },
+    };
+  },
+};
+
+const priorityDict = computed(() => [
+  { label: t('quality.home.todo.priority.high'), value: 'high', type: 'danger' },
+  { label: t('quality.home.todo.priority.medium'), value: 'medium', type: 'warning' },
+  { label: t('quality.home.todo.priority.low'), value: 'low', type: 'info' },
+]);
+
+const statusDict = computed(() => [
+  { label: t('quality.home.todo.status.pending'), value: 'pending', type: 'info' },
+  { label: t('quality.home.todo.status.in_progress'), value: 'in_progress', type: 'warning' },
+  { label: t('quality.home.todo.status.done'), value: 'done', type: 'success' },
+]);
+
+const columns = computed<TableColumn[]>(() => [
+  { type: 'index', label: '#', width: 56 },
+  { prop: 'task', label: t('quality.home.todo.columns.task'), minWidth: 220, showOverflowTooltip: true },
+  { prop: 'priority', label: t('quality.home.todo.columns.priority'), width: 120, dict: priorityDict.value, dictColor: true },
+  { prop: 'owner', label: t('quality.home.todo.columns.owner'), width: 140 },
+  {
+    prop: 'dueTime',
+    label: t('quality.home.todo.columns.time'),
+    width: 120,
+    formatter: (_row, _column, value: string) => formatTime(value),
+  },
+  { prop: 'status', label: t('quality.home.todo.columns.status'), width: 140, dict: statusDict.value, dictColor: true },
+]);
 </script>
 
 <style scoped lang="scss">
 .quality-home {
-  .content {
-    p {
-      font-size: 16px;
-    }
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.quality-home__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quality-home__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--btc-color-text-primary);
+}
+
+.quality-home__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--btc-color-text-regular);
+}
+
+.quality-home__todo {
+  flex: 1;
+  min-height: 0;
 }
 </style>
 

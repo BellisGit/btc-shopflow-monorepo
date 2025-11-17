@@ -1,4 +1,4 @@
----
+﻿---
 title: 修复 SVG 插件双连字符 Bug
 type: adr
 project: technical

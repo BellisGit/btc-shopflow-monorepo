@@ -1,4 +1,4 @@
-## BtcTransferPanel
+﻿## BtcTransferPanel
 
 一个基于 `BtcCrud` 的可复用穿梭式分配面板，左侧使用 CRUD 表格呈现可选择的数据，右侧展示已选条目，可折叠并支持分页、多页缓存。
 

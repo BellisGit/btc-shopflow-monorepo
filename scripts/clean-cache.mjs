@@ -13,7 +13,7 @@ const rootDir = join(__dirname, '..');
 
 const pathsToClean = [
   // 应用的 Vite 缓存
-  'apps/main-app/node_modules/.vite',
+  'apps/admin-app/node_modules/.vite',
   'apps/logistics-app/node_modules/.vite',
   'apps/engineering-app/node_modules/.vite',
   'apps/quality-app/node_modules/.vite',
@@ -21,7 +21,7 @@ const pathsToClean = [
   'apps/docs-site/node_modules/.vite',
   
   // 应用的构建输出
-  'apps/main-app/dist',
+  'apps/admin-app/dist',
   'apps/logistics-app/dist',
   'apps/engineering-app/dist',
   'apps/quality-app/dist',

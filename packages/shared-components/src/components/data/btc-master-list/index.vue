@@ -304,7 +304,7 @@ function handleNodeClick(item: any) {
     }
   });
 
-  // 计算 keyword 参数
+  // 计算 keyword 参数 - 统一返回数组格式
   let keyword: any;
   if (item.isUnassigned) {
     keyword = undefined; // 未分配不传 keyword
@@ -314,15 +314,15 @@ function handleNodeClick(item: any) {
     ids.unshift(item.id);
     keyword = ids;
   } else {
-    // 单层：返回 ID 字符串
-    keyword = item.id;
+    // 单层：统一返回数组格式（即使只有一个ID）
+    keyword = [item.id];
   }
 
   // 导出选中参数
   emit('select', item, keyword);
 }
 
-// 计算当前选中项的 keyword
+// 计算当前选中项的 keyword - 统一返回数组格式
 function calculateKeyword(item: any): any {
   if (!item) return undefined;
 
@@ -333,7 +333,8 @@ function calculateKeyword(item: any): any {
     ids.unshift(item.id);
     return ids;
   } else {
-    return item.id;
+    // 统一返回数组格式（即使只有一个ID）
+    return [item.id];
   }
 }
 

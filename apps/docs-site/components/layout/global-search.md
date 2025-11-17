@@ -1,4 +1,4 @@
----
+﻿---
 title: "GlobalSearch 组件（全局搜索）"
 type: api
 project: layout

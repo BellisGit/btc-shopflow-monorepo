@@ -19,7 +19,7 @@ function collect(dir) {
 
 const root = process.cwd();
 const sharedDir = path.join(root, "packages/shared-components/src/assets/icons");
-const mainDir = path.join(root, "apps/main-app/src/assets/icons");
+const mainDir = path.join(root, "apps/admin-app/src/assets/icons");
 const logisticsDir = path.join(root, "apps/logistics-app/src/assets/icons");
 const engineeringDir = path.join(root, "apps/engineering-app/src/assets/icons");
 const qualityDir = path.join(root, "apps/quality-app/src/assets/icons");
@@ -39,7 +39,7 @@ function diff(name, set) {
 }
 
 const reports = [
-  diff("main-app", main),
+  diff("admin-app", main),
   diff("logistics-app", logistics),
   diff("engineering-app", engineering),
   diff("quality-app", quality),
