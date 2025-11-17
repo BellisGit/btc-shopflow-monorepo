@@ -456,9 +456,6 @@ onUnmounted(() => {
       overflow: hidden !important; // 容器不滚动，滚动由 iframe 内部处理
     }
 
-    // 路由过渡动画（加快速度）
-    // slide-left 动画样式已移至 shared-components/styles/transitions.scss
-
     // slide-bottom 动画
     .slide-bottom-enter-active {
       position: absolute;
