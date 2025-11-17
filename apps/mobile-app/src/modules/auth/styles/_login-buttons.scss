@@ -1,0 +1,351 @@
+@use './variables' as *;
+
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-buttons__phone {
+  height: $login-button-height;
+  position: relative;
+  // 确保按钮宽度不小于二级标题宽度（二级标题约18-20个字符，14px字体，约280px）
+  min-width: 280px;
+  width: 100%;
+  // 苹果UI风格毛玻璃背景 - 左侧黑色，右侧红色，与页面背景相反，形成"你中有我"效果
+  // 左侧黑色使用更高不透明度，抵消红色背景对毛玻璃效果的影响
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.95) 50%, rgba(218, 40, 28, 0.8) 50%, rgba(218, 40, 28, 0.8) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 500;
+  // 毛玻璃质感阴影
+  box-shadow: 
+    0 8px 32px rgba(218, 40, 28, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // 增加 van-button__content 内部元素之间的水平间距
+  :deep(.van-button__content) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; // 图标和文本之间的间距（增加间距）
+  }
+  
+  // 渐变背景增强层次
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // 图标样式 - 确保垂直居中
+  .login-buttons__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  span {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); // 文字阴影增强可读性
+  }
+
+  // 点击微缩动效
+  &:active {
+    transform: scale(0.96);
+    box-shadow: 
+      0 4px 16px rgba(218, 40, 28, 0.4),
+      0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.login-buttons__qr {
+  height: $login-button-height;
+  position: relative;
+  // 确保按钮宽度不小于二级标题宽度（二级标题约18-20个字符，14px字体，约280px）
+  min-width: 280px;
+  width: 100%;
+  // 苹果UI风格毛玻璃背景 - 灰色调
+  background: rgba(245, 247, 250, 0.8); // 80%透明度浅灰色调
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  color: #333 !important; // 深色文字在灰色背景上可见
+  font-size: 16px;
+  font-weight: 500;
+  // 毛玻璃质感阴影
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // 增加 van-button__content 内部元素之间的水平间距
+  :deep(.van-button__content) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; // 图标和文本之间的间距（增加间距）
+  }
+  
+  // 渐变背景增强层次
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(0, 0, 0, 0.05) 100%
+    );
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  span {
+    color: #333 !important; // 深色文字在灰色背景上可见
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); // 轻微白色阴影增强可读性
+    font-weight: 500;
+  }
+
+  // 二维码图标样式 - 确保垂直居中
+  .login-buttons__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    color: #333 !important; // 深色图标在灰色背景上可见
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: block;
+    fill: #333 !important; // 深色SVG填充在灰色背景上可见
+    color: #333 !important; // 确保currentColor为深色
+  }
+  
+  // 覆盖白色图标类，使用深色
+  .login-buttons__icon--white {
+    color: #333 !important;
+    
+    svg {
+      fill: #333 !important;
+      color: #333 !important;
+    }
+  }
+
+  // 点击微缩动效
+  &:active {
+    transform: scale(0.96);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.35),
+      0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.login-buttons__icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.login-buttons__icon--white {
+  color: #fff;
+}
+
+.login-buttons__icon--black {
+  color: #000;
+}
+
+.login-buttons__other {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.login-buttons__other-text {
+  display: block;
+  font-size: 14px;
+  color: $text-other;
+  margin-bottom: 16px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.login-buttons__social {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.login-buttons__social-item {
+  width: 48px;
+  height: 48px;
+  position: relative;
+  // 苹果UI风格毛玻璃背景 - 降低透明度
+  background: rgba(245, 247, 250, 0.4); // 40%透明度浅灰色调
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  
+  // 渐变背景增强层次
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(0, 0, 0, 0.05) 100%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // SVG 图标样式
+  svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1)); // 轻微阴影增强图标层次
+  }
+
+  // 微信图标：使用更鲜艳的绿色
+  &--wechat {
+    .wechat-icon {
+      path {
+        fill: #07C160; // 更鲜艳的微信绿色，提高亮度
+      }
+    }
+    
+    // hover时增强毛玻璃效果
+    &:hover {
+      background: rgba(245, 247, 250, 0.5);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  // QQ图标：使用更鲜艳的蓝色
+  &--qq {
+    .qq-icon {
+      path {
+        fill: #12B7F5; // 更鲜艳的QQ蓝色，提高亮度
+      }
+    }
+    
+    // hover时增强毛玻璃效果
+    &:hover {
+      background: rgba(245, 247, 250, 0.5);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  // 点击微缩动效
+  &:active {
+    transform: scale(0.92);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.2),
+      0 1px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 暗色模式适配
+@media (prefers-color-scheme: dark) {
+  .login-buttons__phone {
+    // 暗色模式下保持红渐变
+    background: linear-gradient(
+      135deg,
+      #DA281C 0%,
+      #C81E14 50%,
+      #B01E15 100%
+    );
+  }
+
+  .login-buttons__qr {
+    // 暗色模式下保持白色背景
+    background: #fff;
+    color: #000;
+  }
+
+  .login-buttons__social-item {
+    // 暗色模式下保持红边
+    border-color: #DA281C;
+    color: #DA281C;
+  }
+}
+

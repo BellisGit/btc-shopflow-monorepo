@@ -25,10 +25,12 @@
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "@zxing/library": "^0.21.0",
     "sass": "^1.93.2",
+    "sharp": "^0.34.5",
     "typescript": "^5.3.3",
     "unplugin-vue-components": "^0.27.0",
     "vite": "^5.0.0",
@@ -37,4 +39,3 @@
     "workbox-build": "^7.1.0"
   }
 }
-

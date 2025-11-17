@@ -20,7 +20,7 @@
       "@assets/*": ["../../packages/shared-components/src/assets/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx"],
   "references": [
     { "path": "../../packages/shared-core" },
     { "path": "../../packages/shared-components" },

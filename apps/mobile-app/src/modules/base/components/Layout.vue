@@ -29,7 +29,7 @@ const showNavBar = computed(() => {
 });
 
 const navTitle = computed(() => {
-  return (route.meta.title as string) || 'BTC ShopFlow';
+  return (route.meta.title as string) || '拜里斯科技';
 });
 
 function handleBack() {

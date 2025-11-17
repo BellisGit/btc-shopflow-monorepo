@@ -6,6 +6,8 @@ import { ref, type Ref } from 'vue';
 import type { MenuItem } from '@/micro/menus';
 import { appMenus } from '@/micro/menus';
 
+export type { MenuItem };
+
 // 使用响应式对象存储菜单
 const registry: Ref<Record<string, MenuItem[]>> = ref({
   // 管理域自己的菜单（从静态配置初始化）

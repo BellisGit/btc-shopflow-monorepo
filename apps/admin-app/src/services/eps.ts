@@ -1,5 +1,5 @@
 import epsModule, { service as rawService, list as rawList } from 'virtual:eps';
-import { normalizeKeywordIds } from '@btc-utils/array';
+import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
 
 type AnyRecord = Record<string, any>;
 
@@ -53,18 +53,6 @@ function normalizePageParams(params: AnyRecord | undefined | null, serviceNode?:
   // 使用 normalizeKeywordIds 确保空字符串、null、undefined 都转换为空数组
   p.keyword = normalizeKeywordIds(keywordObj);
 
-  // 调试：打印传递给 page 方法的参数（包含完整调用栈信息）
-  const stack = new Error().stack;
-  const stackLines = stack?.split('\n') || [];
-  // 获取前5行调用栈（跳过 Error 和 normalizePageParams 本身）
-  const relevantStack = stackLines.slice(2, 7).map(line => line.trim()).filter(Boolean);
-  console.log('[EPS] normalizePageParams - 传递给 page 方法的参数:', JSON.stringify(p, null, 2));
-  console.log('[EPS] 调用栈:', relevantStack);
-  if (p.keyword && typeof p.keyword === 'object') {
-    console.log('[EPS] keyword 对象内容:', JSON.stringify(p.keyword, null, 2));
-    console.log('[EPS] keyword 对象键:', Object.keys(p.keyword));
-  }
-
   return p;
 }
 
@@ -82,9 +70,7 @@ function wrapServiceTree<T extends AnyRecord>(svc: T): T {
         const original = val;
         // 传递当前节点作为 serviceNode，以便 normalizePageParams 可以访问 search 配置
         (wrapped as AnyRecord)[key] = async (params?: AnyRecord) => {
-          console.log(`[EPS] ${key} 方法被调用，参数:`, params);
           const np = normalizePageParams(params, node);
-          console.log(`[EPS] ${key} 方法调用完成`);
           return await original(np);
         };
       } else if (val && typeof val === 'object') {

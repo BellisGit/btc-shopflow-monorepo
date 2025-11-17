@@ -527,7 +527,7 @@ const getStringOpButtonConfig = (btn: string, scope: any): BtcTableButtonConfig 
   const icon = isMinimalButtonStyle.value ? rawIcon : undefined;
   const showLabel = !isMinimalButtonStyle.value || !icon;
   return {
-    icon: icon || undefined,
+    icon: icon || (() => ''),
     label: text,
     showLabel,
     tooltip: () => text,

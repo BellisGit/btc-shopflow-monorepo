@@ -58,6 +58,8 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  // 移除 manifest 路由，让 Vite/VitePWA 直接提供文件
+  // 注意：不要在这里定义 manifest 路由，否则会拦截 Vite 的静态文件服务
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -75,8 +77,27 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, _from, next) => {
+  // 排除静态资源路径，这些路径不应该进入 Vue Router
+  // 应该由 Vite 开发服务器直接提供，但如果进入了路由系统，直接放行
+  // 特别注意：manifest.webmanifest 必须完全排除，否则会拦截 VitePWA 的 manifest 生成
+  if (
+    to.path.startsWith('/icons/') ||
+    to.path.startsWith('/assets/') ||
+    to.path.startsWith('/manifest.webmanifest') || // 使用 startsWith 以支持版本号参数
+    to.path === '/favicon.ico' ||
+    to.path.endsWith('.png') ||
+    to.path.endsWith('.svg') ||
+    to.path.endsWith('.ico') ||
+    to.path.endsWith('.webmanifest')
+  ) {
+    // 静态资源，直接放行，不进行认证检查
+    // 注意：这不会阻止 Vite 提供文件，但如果请求进入了路由系统，至少不会重定向到登录页
+    next();
+    return;
+  }
+
   const authStore = useAuthStore();
-  
+
   if (to.meta.public || authStore.isAuthenticated) {
     next();
   } else {

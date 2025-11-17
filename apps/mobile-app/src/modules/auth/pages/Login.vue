@@ -1,65 +1,53 @@
 <template>
   <div class="login-page">
-    <Form @submit="handleLogin">
-      <CellGroup inset>
-        <Field
-          v-model="form.username"
-          name="username"
-          label="用户名"
-          placeholder="请输入用户名"
-          :rules="[{ required: true, message: '请填写用户名' }]"
-        />
-        <Field
-          v-model="form.password"
-          type="password"
-          name="password"
-          label="密码"
-          placeholder="请输入密码"
-          :rules="[{ required: true, message: '请填写密码' }]"
-        />
-      </CellGroup>
-      <div style="margin: 16px">
-        <Button round block type="primary" native-type="submit">
-          登录
-        </Button>
+    <div class="login-page__container">
+      <!-- Logo 和标题 -->
+      <BtcLoginHeader />
+
+      <!-- 登录按钮组 -->
+      <BtcLoginButtons
+        @phone-login="handlePhoneLogin"
+        @qr-login="handleQrLogin"
+        @wechat-login="handleWeChatLogin"
+        @qq-login="handleQQLogin"
+      />
+
+      <!-- 用户协议 -->
+      <BtcAgreementCheckbox v-model="agreed" />
       </div>
-    </Form>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { Form, CellGroup, Field, Button } from 'vant';
-import { useAuthStore } from '@/stores/auth';
+import BtcLoginHeader from '../components/login-header/index.vue';
+import BtcLoginButtons from '../components/login-buttons/index.vue';
+import BtcAgreementCheckbox from '../components/agreement-checkbox/index.vue';
+import '../styles/index.scss';
 
 defineOptions({
   name: 'BtcMobileLogin',
 });
 
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
+const agreed = ref(false);
 
-const form = ref({
-  username: '',
-  password: '',
-});
+const handlePhoneLogin = () => {
+  // TODO: 打开手机号登录弹窗
+  console.log('Phone login');
+};
 
-async function handleLogin() {
-  try {
-    // TODO: 调用登录 API
-    const mockToken = 'mock-token-' + Date.now();
-    const mockUser = { id: 1, username: form.value.username };
-    
-    authStore.login(mockToken, mockUser);
-    
-    const redirect = (route.query.redirect as string) || '/';
-    router.push(redirect);
-  } catch (error) {
-    console.error('[Login] Failed:', error);
-  }
-}
+const handleQrLogin = () => {
+  // TODO: 处理扫码登录
+  console.log('QR login');
+};
+
+const handleWeChatLogin = () => {
+  // TODO: 处理微信登录
+  console.log('WeChat login');
+};
+
+const handleQQLogin = () => {
+  // TODO: 处理 QQ 登录
+  console.log('QQ login');
+};
 </script>
-
-

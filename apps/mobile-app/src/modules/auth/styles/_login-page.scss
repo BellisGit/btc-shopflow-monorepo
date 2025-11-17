@@ -1,0 +1,90 @@
+@use './variables' as *;
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  position: relative;
+  overflow: hidden;
+  
+  // 红黑左右等分布局（左侧纯红，右侧纯黑）
+  background: linear-gradient(to right, #DA281C 0%, #DA281C 50%, #000 50%, #000 100%);
+  
+  // 左侧红色区域subtle科技纹理
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    bottom: 0;
+    background-image: 
+      // 水平科技纹理线
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.02) 3px,
+        rgba(255, 255, 255, 0.02) 6px
+      ),
+      // 垂直科技纹理线
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.02) 3px,
+        rgba(255, 255, 255, 0.02) 6px
+      );
+    background-size: 30px 30px;
+    background-position: 0 0;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  // 右侧黑色区域subtle科技纹理
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    bottom: 0;
+    background-image: 
+      // 水平科技纹理线
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.03) 3px,
+        rgba(255, 255, 255, 0.03) 6px
+      ),
+      // 垂直科技纹理线
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.03) 3px,
+        rgba(255, 255, 255, 0.03) 6px
+      );
+    background-size: 30px 30px;
+    background-position: 0 0;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+.login-page__container {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  // 元素排版居中且呼吸感充足
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+

@@ -24,13 +24,7 @@
   height: 100%;
 }
 
-.login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 16px;
-}
+// 登录页面样式已移至 modules/auth/styles/index.scss
 
 .session-list-page {
   height: 100%;

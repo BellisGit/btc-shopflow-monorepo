@@ -56,7 +56,7 @@
             :disabled="option.disabled"
             :id="`btc-table-column-${option.key}`"
             :name="`btc-table-column-${option.key}`"
-            @change="(value) => handleColumnVisibility(option.key, value)"
+            @change="(value: unknown) => handleColumnVisibility(option.key, value)"
           >
             {{ option.label }}
           </el-checkbox>
@@ -80,7 +80,7 @@
           :model-value="currentStripe"
           id="btc-table-style-stripe"
           name="btc-table-style-stripe"
-          @change="(value) => handleStripeChange(value === true)"
+          @change="(value: unknown) => handleStripeChange(value === true)"
         >
           {{ t('btc.table.style.zebra') }}
         </el-checkbox>
@@ -89,7 +89,7 @@
           :model-value="currentBorder"
           id="btc-table-style-border"
           name="btc-table-style-border"
-          @change="(value) => handleBorderChange(value === true)"
+          @change="(value: unknown) => handleBorderChange(value === true)"
         >
           {{ t('btc.table.style.border') }}
         </el-checkbox>
@@ -98,7 +98,7 @@
           :model-value="currentHeaderBackground"
           id="btc-table-style-header"
           name="btc-table-style-header"
-          @change="(value) => handleHeaderBackgroundChange(value === true)"
+          @change="(value: unknown) => handleHeaderBackgroundChange(value === true)"
         >
           {{ t('btc.table.style.headerBackground') }}
         </el-checkbox>

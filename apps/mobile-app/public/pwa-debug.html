@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA 诊断工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    .section h2 {
+      margin-bottom: 15px;
+      color: #1976d2;
+      font-size: 18px;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .status.success {
+      background: #4caf50;
+      color: white;
+    }
+    .status.error {
+      background: #f44336;
+      color: white;
+    }
+    .status.warning {
+      background: #ff9800;
+      color: white;
+    }
+    .icon-preview {
+      display: inline-block;
+      width: 64px;
+      height: 64px;
+      margin: 10px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 8px;
+      background: repeating-linear-gradient(45deg, #f0f0f0 0, #f0f0f0 10px, #fff 10px, #fff 20px);
+      vertical-align: top;
+    }
+    .icon-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .icon-info {
+      display: inline-block;
+      vertical-align: top;
+      margin-left: 10px;
+      font-size: 12px;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .error {
+      color: #f44336;
+      margin-top: 10px;
+    }
+    .success {
+      color: #4caf50;
+      margin-top: 10px;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>PWA 诊断工具</h1>
+    
+    <div class="section">
+      <h2>Manifest 检查 <span id="manifest-status" class="status">检查中...</span></h2>
+      <div id="manifest-content"></div>
+    </div>
+
+    <div class="section">
+      <h2>图标检查 <span id="icons-status" class="status">检查中...</span></h2>
+      <div id="icons-content"></div>
+    </div>
+
+    <div class="section">
+      <h2>Service Worker 状态</h2>
+      <div id="sw-content"></div>
+    </div>
+
+    <div class="section">
+      <h2>操作建议</h2>
+      <div id="suggestions"></div>
+    </div>
+  </div>
+
+  <script>
+    async function checkManifest() {
+      try {
+        const response = await fetch('/manifest.webmanifest');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const manifest = await response.json();
+        
+        document.getElementById('manifest-status').textContent = '✓ 正常';
+        document.getElementById('manifest-status').className = 'status success';
+        
+        document.getElementById('manifest-content').innerHTML = `
+          <div class="success">✓ Manifest 文件可访问</div>
+          <pre>${JSON.stringify(manifest, null, 2)}</pre>
+        `;
+        
+        return manifest;
+      } catch (error) {
+        document.getElementById('manifest-status').textContent = '✗ 错误';
+        document.getElementById('manifest-status').className = 'status error';
+        document.getElementById('manifest-content').innerHTML = `
+          <div class="error">✗ 无法加载 manifest: ${error.message}</div>
+        `;
+        return null;
+      }
+    }
+
+    async function checkIcons(manifest) {
+      if (!manifest || !manifest.icons) {
+        document.getElementById('icons-status').textContent = '✗ 无图标';
+        document.getElementById('icons-status').className = 'status error';
+        document.getElementById('icons-content').innerHTML = '<div class="error">Manifest 中没有图标配置</div>';
+        return;
+      }
+
+      let successCount = 0;
+      let failCount = 0;
+      const iconsHtml = [];
+
+      for (const icon of manifest.icons) {
+        try {
+          const response = await fetch(icon.src);
+          if (response.ok) {
+            successCount++;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            iconsHtml.push(`
+              <div class="icon-preview">
+                <img src="${url}" alt="${icon.sizes}" onerror="this.parentElement.innerHTML='加载失败'">
+              </div>
+              <div class="icon-info">
+                <strong>${icon.sizes}</strong><br>
+                路径: ${icon.src}<br>
+                类型: ${icon.type || 'image/png'}<br>
+                用途: ${icon.purpose || 'any'}<br>
+                <span class="success">✓ 可访问</span>
+              </div>
+              <br style="clear: both;">
+            `);
+          } else {
+            failCount++;
+            iconsHtml.push(`
+              <div class="icon-info">
+                <strong>${icon.sizes}</strong><br>
+                路径: ${icon.src}<br>
+                <span class="error">✗ 无法访问 (HTTP ${response.status})</span>
+              </div>
+              <br style="clear: both;">
+            `);
+          }
+        } catch (error) {
+          failCount++;
+          iconsHtml.push(`
+            <div class="icon-info">
+              <strong>${icon.sizes}</strong><br>
+              路径: ${icon.src}<br>
+              <span class="error">✗ 错误: ${error.message}</span>
+            </div>
+            <br style="clear: both;">
+          `);
+        }
+      }
+
+      if (failCount === 0) {
+        document.getElementById('icons-status').textContent = `✓ 全部正常 (${successCount})`;
+        document.getElementById('icons-status').className = 'status success';
+      } else if (successCount > 0) {
+        document.getElementById('icons-status').textContent = `⚠ 部分失败 (${successCount}/${successCount + failCount})`;
+        document.getElementById('icons-status').className = 'status warning';
+      } else {
+        document.getElementById('icons-status').textContent = '✗ 全部失败';
+        document.getElementById('icons-status').className = 'status error';
+      }
+
+      document.getElementById('icons-content').innerHTML = iconsHtml.join('');
+    }
+
+    function checkServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          if (registrations.length > 0) {
+            document.getElementById('sw-content').innerHTML = `
+              <div class="success">✓ 已注册 ${registrations.length} 个 Service Worker</div>
+              <button onclick="unregisterSW()">注销所有 Service Worker</button>
+            `;
+          } else {
+            document.getElementById('sw-content').innerHTML = `
+              <div>ℹ 未注册 Service Worker（开发环境中正常）</div>
+            `;
+          }
+        });
+      } else {
+        document.getElementById('sw-content').innerHTML = `
+          <div class="error">✗ 浏览器不支持 Service Worker</div>
+        `;
+      }
+    }
+
+    window.unregisterSW = async function() {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        alert('已注销所有 Service Worker，请刷新页面');
+        location.reload();
+      }
+    };
+
+    function generateSuggestions(manifest) {
+      const suggestions = [];
+      
+      if (!manifest) {
+        suggestions.push('❌ Manifest 文件无法加载，请检查服务器配置');
+        document.getElementById('suggestions').innerHTML = suggestions.join('<br>');
+        return;
+      }
+
+      if (!manifest.icons || manifest.icons.length === 0) {
+        suggestions.push('❌ Manifest 中没有配置图标');
+      } else {
+        suggestions.push(`✓ Manifest 中配置了 ${manifest.icons.length} 个图标`);
+      }
+
+      suggestions.push('📋 如果图标仍然显示为默认图标，请尝试：');
+      suggestions.push('1. 完全清除浏览器缓存（包括 Service Worker）');
+      suggestions.push('2. 卸载现有的 PWA（长按桌面图标 > 卸载）');
+      suggestions.push('3. 在浏览器中访问应用，打开开发者工具（F12）');
+      suggestions.push('4. Application > Storage > Clear site data（清除站点数据）');
+      suggestions.push('5. 重新访问应用并安装到桌面');
+      suggestions.push('6. 检查浏览器控制台是否有错误信息');
+
+      document.getElementById('suggestions').innerHTML = suggestions.join('<br>');
+    }
+
+    // 执行检查
+    (async () => {
+      const manifest = await checkManifest();
+      await checkIcons(manifest);
+      checkServiceWorker();
+      generateSuggestions(manifest);
+    })();
+  </script>
+</body>
+</html>
+

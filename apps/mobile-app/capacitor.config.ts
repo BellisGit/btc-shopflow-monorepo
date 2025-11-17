@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.btc.shopflow.mobile',
-  appName: 'BTC ShopFlow Mobile',
+  appName: '拜里斯科技',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

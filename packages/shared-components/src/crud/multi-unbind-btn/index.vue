@@ -71,7 +71,7 @@ const isDisabled = computed(() => {
 });
 
 function handleClick() {
-  if (!isDisabled.value && selectionCount.value > 0) {
+  if (!isDisabled.value && selectionCount.value > 0 && crud) {
     emit('click', crud.selection.value as any[]);
   }
 }

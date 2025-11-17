@@ -107,8 +107,9 @@ function render(props: QiankunProps = {}) {
     app.mount(mountPoint);
 
     // 在 qiankun 环境下，同步初始路由
-    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    if (qiankunWindow.__POWERED_BY_QIANKUN__ && router) {
       router.isReady().then(() => {
+        if (!router) return;
         // 从浏览器 URL 提取子应用路由
         const currentPath = window.location.pathname;
         if (currentPath.startsWith('/quality')) {

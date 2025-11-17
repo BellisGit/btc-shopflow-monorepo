@@ -80,13 +80,13 @@ export function useCrud<T = Record<string, unknown>>(
         let hasKeywordParams = false;
 
         // 获取已存在的 keyword 对象（如果页面传递了 keyword 参数）
-        let existingKeyword = searchParams.value.keyword && typeof searchParams.value.keyword === 'object' && !Array.isArray(searchParams.value.keyword)
-          ? searchParams.value.keyword
+        let existingKeyword: Record<string, unknown> = searchParams.value.keyword && typeof searchParams.value.keyword === 'object' && !Array.isArray(searchParams.value.keyword)
+          ? (searchParams.value.keyword as Record<string, unknown>)
           : {};
 
         // 统一处理 keyword 对象中的 ids 字段为数组格式
         // 使用 normalizeKeywordIds 确保空字符串、null、undefined 都转换为空数组
-        existingKeyword = normalizeKeywordIds(existingKeyword);
+        existingKeyword = normalizeKeywordIds(existingKeyword) as Record<string, unknown>;
 
         // 获取 fieldEq 字段列表
         let fieldEqFields = searchConfig.fieldEq || [];

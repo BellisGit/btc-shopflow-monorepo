@@ -26,7 +26,10 @@ app.use(router);
 setupI18n(app);
 
 // PWA Service Worker
-if ('serviceWorker' in navigator) {
+// 在开发环境中，如果使用自签名证书，Service Worker 注册会失败
+// 因此完全禁用开发环境的 Service Worker 注册
+// 生产环境使用有效证书时，Service Worker 会正常注册
+if ('serviceWorker' in navigator && !import.meta.env.DEV) {
   registerSW({
     immediate: true,
     onRegisteredSW(swUrl, registration) {
