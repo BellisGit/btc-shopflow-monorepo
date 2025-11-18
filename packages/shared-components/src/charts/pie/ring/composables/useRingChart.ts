@@ -4,7 +4,7 @@ import type { RingChartProps } from '../../../types/pie';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 环形图 composable
+ * ??? composable
  */
 export function useRingChart(
   props: RingChartProps,
@@ -55,18 +55,18 @@ export function useRingChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -80,7 +80,7 @@ export function useRingChart(
       },
       series: [
         {
-          name: '数据',
+          name: '??',
           type: 'pie',
           radius: [innerRadius, outerRadius],
           center: props.center || ['50%', '50%'],

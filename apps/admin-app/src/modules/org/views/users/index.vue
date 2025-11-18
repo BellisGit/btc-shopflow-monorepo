@@ -12,6 +12,7 @@
       right-title="用户列表"
       :show-unassigned="true"
       :enable-key-search="true"
+      :left-size="'middle'"
       @load="handleLoad"
     />
   </div>

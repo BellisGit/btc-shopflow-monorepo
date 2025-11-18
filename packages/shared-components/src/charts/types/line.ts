@@ -18,6 +18,8 @@ export interface LineChartDataItem {
   lineWidth?: number;
   /** 是否显示标记点 */
   showSymbol?: boolean;
+  /** 堆叠组名 */
+  stack?: string;
 }
 
 /**

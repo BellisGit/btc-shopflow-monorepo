@@ -9,45 +9,54 @@ export { BtcRadarChart } from './radar';
 export { BtcScatterChart } from './scatter';
 export { BtcKLineChart } from './kline';
 
-// 导出所有类型
+// 导出所有类型（从各个类型文件直接导出）
 export type {
-  // 基础类型
   BaseChartProps,
   AxisDisplayProps,
   InteractionProps,
   GridConfig,
-  ChartThemeConfig,
-  // 折线图类型
+  ChartThemeConfig
+} from './types/base';
+
+export type {
   LineChartProps,
-  LineChartDataItem,
-  // 柱状图类型
+  LineChartDataItem
+} from './types/line';
+
+export type {
   BarChartProps,
   BarChartDataItem,
   HBarChartProps,
-  DualBarCompareChartProps,
-  // 饼图类型
+  DualBarCompareChartProps
+} from './types/bar';
+
+export type {
   PieChartProps,
   PieChartDataItem,
-  RingChartProps,
-  // 雷达图类型
+  RingChartProps
+} from './types/pie';
+
+export type {
   RadarChartProps,
   RadarChartDataItem,
-  RadarIndicator,
-  // 散点图类型
+  RadarIndicator
+} from './types/radar';
+
+export type {
   ScatterChartProps,
   ScatterChartDataItem,
-  ScatterDataPoint,
-  // K线图类型
+  ScatterDataPoint
+} from './types/scatter';
+
+export type {
   KLineChartProps,
   KLineChartDataItem,
   KLineDataPoint
-} from './types';
+} from './types/kline';
 
 // 向后兼容：导出旧类型名称作为新类型的别名
-export type {
-  LineChartDataItem as LineChartData,
-  BarChartDataItem as BarChartData
-} from './types';
+export type { LineChartDataItem as LineChartData } from './types/line';
+export type { BarChartDataItem as BarChartData } from './types/bar';
 
 // 导出 composables
 export { useChart, useChartComponent } from './composables';

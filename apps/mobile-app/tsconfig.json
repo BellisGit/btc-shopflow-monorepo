@@ -28,7 +28,10 @@
       "@btc/shared-components": ["../../packages/shared-components/src"],
       "@btc/shared-components/*": ["../../packages/shared-components/src/*"],
       "@btc/shared-utils": ["../../packages/shared-utils/src"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"]
+      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
+      "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
+      "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
+      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts"],

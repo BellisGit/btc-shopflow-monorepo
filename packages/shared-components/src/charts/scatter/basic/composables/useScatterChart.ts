@@ -4,7 +4,7 @@ import type { ScatterChartProps } from '../../../types/scatter';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 散点图 composable
+ * ??? composable
  */
 export function useScatterChart(
   props: ScatterChartProps,
@@ -57,18 +57,18 @@ export function useScatterChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -130,24 +130,26 @@ export function useScatterChart(
       },
       series: (props.data || []).map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
+        const symbolSize = item.symbolSize || 10;
         
         return {
           name: item.name,
-          type: 'scatter',
+          type: 'scatter' as const,
           data: (item.data || []).map(point => {
-            // 确保 value 是数组格式 [x, y]
+            // ?? value ????? [x, y]
             const value = Array.isArray(point.value) ? point.value : [point.value, 0];
+            const pointSymbolSize = point.symbolSize || symbolSize;
             return {
               value: value,
               name: point.name,
-              symbolSize: point.symbolSize || item.symbolSize || 10,
+              symbolSize: typeof pointSymbolSize === 'function' ? pointSymbolSize : (typeof pointSymbolSize === 'number' ? pointSymbolSize : 10),
               itemStyle: {
                 color: point.color || baseColor
               }
             };
           }),
           symbol: item.symbol || 'circle',
-          symbolSize: item.symbolSize || 10,
+          symbolSize: typeof symbolSize === 'function' ? symbolSize : (typeof symbolSize === 'number' ? symbolSize : 10),
           itemStyle: {
             color: baseColor
           },
@@ -157,7 +159,7 @@ export function useScatterChart(
             fontSize: 12
           }
         };
-      })
+      }) as any
     };
 
     return option;
@@ -167,4 +169,3 @@ export function useScatterChart(
     buildOption
   };
 }
-

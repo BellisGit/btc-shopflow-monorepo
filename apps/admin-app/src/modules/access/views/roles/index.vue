@@ -12,6 +12,7 @@
       right-title="角色列表"
       :show-unassigned="true"
       :enable-key-search="true"
+      :left-size="'small'"
       @load="handleLoad"
     >
     </BtcTableGroup>

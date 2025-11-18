@@ -94,6 +94,16 @@ export function useChart(
   const updateChartInstance = () => {
     if (containerRef.value) {
       try {
+        // 检查 DOM 是否有尺寸
+        const rect = containerRef.value.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          // DOM 还没有尺寸，延迟重试
+          setTimeout(() => {
+            updateChartInstance();
+          }, 100);
+          return;
+        }
+        
         chartInstance.value = getInstanceByDom(containerRef.value);
         if (chartInstance.value && props.autoresize) {
           chartInstance.value.resize();

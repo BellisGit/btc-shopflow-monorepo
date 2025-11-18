@@ -13,6 +13,7 @@
       :show-unassigned="true"
       unassigned-label="未分配"
       :enable-key-search="true"
+      :left-size="'small'"
       @select="onDomainSelect"
     />
   </div>

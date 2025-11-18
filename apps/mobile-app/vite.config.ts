@@ -33,6 +33,14 @@ export default defineConfig({
       '@btc-locales': withPackages('shared-components/src/locales'),
       '@assets': withPackages('shared-components/src/assets'),
       '@btc-utils': withPackages('shared-components/src/utils'),
+      // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
+      '@charts-utils/css-var': withPackages('shared-components/src/charts/utils/css-var'),
+      '@charts-utils/color': withPackages('shared-components/src/charts/utils/color'),
+      '@charts-utils/gradient': withPackages('shared-components/src/charts/utils/gradient'),
+      '@charts-composables/useChartComponent': withPackages('shared-components/src/charts/composables/useChartComponent'),
+      '@charts-types': withPackages('shared-components/src/charts/types'),
+      '@charts-utils': withPackages('shared-components/src/charts/utils'),
+      '@charts-composables': withPackages('shared-components/src/charts/composables'),
     },
     dedupe: ['vue', 'vue-router', 'pinia'],
   },
@@ -185,6 +193,14 @@ export default defineConfig({
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Service-Worker-Allowed': '/' // 8. 补充：允许SW控制根路径下所有资源
+    },
+    fs: {
+      strict: false,
+      allow: [
+        withRoot('.'),
+        withPackages('.'),
+        withPackages('shared-components/src'),
+      ],
     },
   },
   build: {

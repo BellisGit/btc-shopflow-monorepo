@@ -72,7 +72,16 @@
                                                                     ],
                                           "@btc/subapp-manifests/*":  [
                                                                           "../../packages/subapp-manifests/dist/*"
-                                                                      ]
+                                                                      ],
+                                          "@charts-types/*":  [
+                                                                   "../../packages/shared-components/src/charts/types/*"
+                                                               ],
+                                          "@charts-utils/*":  [
+                                                                  "../../packages/shared-components/src/charts/utils/*"
+                                                              ],
+                                          "@charts-composables/*":  [
+                                                                        "../../packages/shared-components/src/charts/composables/*"
+                                                                    ]
                                       }
                         },
     "include":  [

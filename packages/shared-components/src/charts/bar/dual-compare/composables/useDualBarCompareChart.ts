@@ -4,7 +4,7 @@ import type { DualBarCompareChartProps } from '../../../types/bar';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 双柱对比图 composable
+ * ???? composable
  */
 export function useDualBarCompareChart(
   props: DualBarCompareChartProps,
@@ -45,7 +45,7 @@ export function useDualBarCompareChart(
         textStyle: {
           color: textColor
         },
-        data: [props.label1 || '数据1', props.label2 || '数据2']
+        data: [props.label1 || '??1', props.label2 || '??2']
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -54,18 +54,18 @@ export function useDualBarCompareChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -115,8 +115,8 @@ export function useDualBarCompareChart(
       },
       series: [
         ...props.data1.map((item, index) => ({
-          name: props.label1 || '数据1',
-          type: 'bar',
+          name: props.label1 || '??1',
+          type: 'bar' as const,
           data: item.data,
           barWidth: item.barWidth || '30%',
           itemStyle: {
@@ -124,14 +124,14 @@ export function useDualBarCompareChart(
           },
           label: {
             show: props.showLabel ?? false,
-            position: 'top',
+            position: 'top' as const,
             color: textColor,
             fontSize: 12
           }
         })),
         ...props.data2.map((item, index) => ({
-          name: props.label2 || '数据2',
-          type: 'bar',
+          name: props.label2 || '??2',
+          type: 'bar' as const,
           data: item.data,
           barWidth: item.barWidth || '30%',
           itemStyle: {
@@ -139,12 +139,12 @@ export function useDualBarCompareChart(
           },
           label: {
             show: props.showLabel ?? false,
-            position: 'top',
+            position: 'top' as const,
             color: textColor,
             fontSize: 12
           }
         }))
-      ]
+      ] as any
     };
 
     return option;
@@ -154,4 +154,3 @@ export function useDualBarCompareChart(
     buildOption
   };
 }
-

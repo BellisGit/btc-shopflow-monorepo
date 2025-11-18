@@ -17,6 +17,14 @@ export default defineConfig({
       '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
+      '@charts-utils/css-var': resolve(__dirname, '../../packages/shared-components/src/charts/utils/css-var'),
+      '@charts-utils/color': resolve(__dirname, '../../packages/shared-components/src/charts/utils/color'),
+      '@charts-utils/gradient': resolve(__dirname, '../../packages/shared-components/src/charts/utils/gradient'),
+      '@charts-composables/useChartComponent': resolve(__dirname, '../../packages/shared-components/src/charts/composables/useChartComponent'),
+      '@charts-types': resolve(__dirname, '../../packages/shared-components/src/charts/types'),
+      '@charts-utils': resolve(__dirname, '../../packages/shared-components/src/charts/utils'),
+      '@charts-composables': resolve(__dirname, '../../packages/shared-components/src/charts/composables'),
     },
   },
   plugins: [
@@ -50,6 +58,11 @@ export default defineConfig({
     },
     fs: {
       strict: false,
+      allow: [
+        resolve(__dirname, '../..'),
+        resolve(__dirname, '../../packages'),
+        resolve(__dirname, '../../packages/shared-components/src'),
+      ],
     },
   },
   css: {

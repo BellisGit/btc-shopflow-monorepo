@@ -37,7 +37,7 @@ export interface TableGroupProps {
 
   // 样式配置
   leftWidth?: string;
-  leftSize?: 'default' | 'small'; // 左侧宽度类型：default（300px）或 small（150px）
+  leftSize?: 'default' | 'small' | 'middle'; // 左侧宽度类型：default（300px）、small（150px）或 middle（225px）
   upsertWidth?: string | number;
   searchPlaceholder?: string;
 }

@@ -98,7 +98,7 @@ const props = withDefaults(defineProps<{
   unassignedLabel?: string;
   enableDrag?: boolean;
   leftWidth?: string; // 直接指定左侧宽度（优先级最高）
-  leftSize?: 'default' | 'small'; // 左侧宽度类型：default（300px）或 small（150px）
+  leftSize?: 'default' | 'small' | 'middle'; // 左侧宽度类型：default（300px）、small（150px）或 middle（225px）
   custom?: boolean;
   idField?: string;
   labelField?: string;
@@ -133,15 +133,20 @@ const rightData = ref<any>(null); // 存储右侧数据
 
 const isExpand = ref(true); // 初始状态为展开
 
-// 计算左侧宽度：如果指定了 leftWidth 则使用，否则根据 leftSize 计算
-const leftPaneWidth = computed(() => {
-  // 如果明确指定了 leftWidth，优先使用
-  if (props.leftWidth && typeof props.leftWidth === 'string' && props.leftWidth.trim()) {
-    return props.leftWidth;
-  }
-  // 根据 leftSize 计算宽度：default 为 300px，small 为 150px（300px 的一半）
-  return props.leftSize === 'small' ? '150px' : '300px';
-});
+  // 计算左侧宽度：如果指定了 leftWidth 则使用，否则根据 leftSize 计算
+  const leftPaneWidth = computed(() => {
+    // 如果明确指定了 leftWidth，优先使用
+    if (props.leftWidth && typeof props.leftWidth === 'string' && props.leftWidth.trim()) {
+      return props.leftWidth;
+    }
+    // 根据 leftSize 计算宽度：default 为 300px，small 为 150px，middle 为 225px
+    if (props.leftSize === 'small') {
+      return '150px';
+    } else if (props.leftSize === 'middle') {
+      return '225px';
+    }
+    return '300px';
+  });
 
 const viewGroupStyle = computed(() => {
   const width = leftPaneWidth.value;

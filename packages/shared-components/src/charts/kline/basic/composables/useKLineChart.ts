@@ -3,7 +3,7 @@ import type { EChartsOption } from 'echarts';
 import type { KLineChartProps } from '../../../types/kline';
 
 /**
- * K线图 composable
+ * K?? composable
  */
 export function useKLineChart(
   props: KLineChartProps,
@@ -39,7 +39,7 @@ export function useKLineChart(
         formatter: (params: any) => {
           const data = params[0].data;
           if (Array.isArray(data)) {
-            return `日期: ${params[0].name}<br/>开盘: ${data[0]}<br/>收盘: ${data[1]}<br/>最低: ${data[2]}<br/>最高: ${data[3]}`;
+            return `??: ${params[0].name}<br/>??: ${data[0]}<br/>??: ${data[1]}<br/>??: ${data[2]}<br/>??: ${data[3]}`;
           }
           return '';
         },
@@ -53,7 +53,7 @@ export function useKLineChart(
         textStyle: {
           color: textColor
         },
-        data: ['K线', ...(props.showVolume ? ['成交量'] : [])]
+        data: ['K?', ...(props.showVolume ? ['???'] : [])]
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -62,18 +62,18 @@ export function useKLineChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -85,7 +85,7 @@ export function useKLineChart(
           }
         }
       },
-      grid: props.showVolume ? [
+      grid: (props.showVolume ? [
         {
           left: '10%',
           right: '8%',
@@ -108,8 +108,8 @@ export function useKLineChart(
           bottom: '10%',
           gridIndex: 0
         }
-      ],
-      xAxis: props.showVolume ? [
+      ]) as any,
+      xAxis: (props.showVolume ? [
         {
           type: 'category',
           data: (props.data || []).map(item => item.date),
@@ -171,7 +171,7 @@ export function useKLineChart(
           min: 'dataMin',
           max: 'dataMax'
         }
-      ],
+      ]) as any,
       yAxis: props.showVolume ? [
         {
           scale: true,
@@ -264,8 +264,8 @@ export function useKLineChart(
       ],
       series: [
         {
-          name: 'K线',
-          type: 'candlestick',
+          name: 'K?',
+          type: 'candlestick' as const,
           xAxisIndex: 0,
           yAxisIndex: 0,
           data: (props.data || []).map(item => item.value),
@@ -277,8 +277,8 @@ export function useKLineChart(
           }
         },
         ...(props.showVolume ? [{
-          name: '成交量',
-          type: 'bar',
+          name: '???',
+          type: 'bar' as const,
           xAxisIndex: 1,
           yAxisIndex: 1,
           data: (props.data || []).map(item => item.volume || 0),
@@ -294,7 +294,7 @@ export function useKLineChart(
             }
           }
         }] : [])
-      ]
+      ] as any
     };
 
     return option;
@@ -304,4 +304,3 @@ export function useKLineChart(
     buildOption
   };
 }
-

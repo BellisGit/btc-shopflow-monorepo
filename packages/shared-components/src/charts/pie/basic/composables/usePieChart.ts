@@ -4,7 +4,7 @@ import type { PieChartProps } from '../../../types/pie';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 饼图 composable
+ * ?? composable
  */
 export function usePieChart(
   props: PieChartProps,
@@ -52,18 +52,18 @@ export function usePieChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -77,9 +77,9 @@ export function usePieChart(
       },
       series: [
         {
-          name: '数据',
+          name: '??',
           type: 'pie',
-          // 饼图应该是实心的，如果传入数组则使用，否则使用单个值（实心）
+          // ??????????????????????????????
           radius: Array.isArray(props.radius) ? props.radius : (props.radius || '60%'),
           center: props.center || ['50%', '50%'],
           avoidLabelOverlap: false,
@@ -121,4 +121,3 @@ export function usePieChart(
     buildOption
   };
 }
-

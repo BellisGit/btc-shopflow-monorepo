@@ -4,7 +4,7 @@ import type { RadarChartProps } from '../../../types/radar';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 雷达图 composable
+ * ??? composable
  */
 export function useRadarChart(
   props: RadarChartProps,
@@ -51,18 +51,18 @@ export function useRadarChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -111,7 +111,6 @@ export function useRadarChart(
           data: [
             {
               value: item.data || [],
-              name: item.name,
               itemStyle: {
                 color: baseColor
               },

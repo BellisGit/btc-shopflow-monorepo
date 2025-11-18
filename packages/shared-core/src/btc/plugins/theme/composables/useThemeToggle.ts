@@ -69,7 +69,7 @@ export function createToggleDark(
           };
           const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
           // 获取现有的 settings，更新主题相关字段
-          const currentSettings = storage.get('settings') || {};
+          const currentSettings = storage.get<Record<string, any>>('settings') || {};
           storage.set('settings', {
             ...currentSettings,
             systemThemeType: newTheme,
@@ -97,7 +97,7 @@ export function createToggleDark(
         };
         const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
         // 获取现有的 settings，更新主题相关字段
-        const currentSettings = storage.get('settings') || {};
+        const currentSettings = storage.get<Record<string, any>>('settings') || {};
         storage.set('settings', {
           ...currentSettings,
           systemThemeType: newTheme,

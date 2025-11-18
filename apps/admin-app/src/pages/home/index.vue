@@ -46,74 +46,7 @@
     <!-- 策略监控图表分析 -->
     <div class="main-home__bottom-row">
       <div class="strategy-charts">
-        <BtcContainer :gap="8" :cols-per-row="4">
-          <div class="chart-item">
-            <h4>折线图</h4>
-            <BtcLineChart
-              :data="executionTrendData"
-              :x-axis-data="executionTrendXAxis"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>柱状图</h4>
-            <BtcBarChart
-              :data="responseTimeData"
-              :x-axis-data="responseTimeXAxis"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>饼图</h4>
-            <BtcPieChart
-              :data="typeDistributionData"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>横向柱状图</h4>
-            <BtcHBarChart
-              :data="hBarChartData"
-              :y-axis-data="hBarChartYAxis"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>双柱对比图</h4>
-            <BtcDualBarCompareChart
-              :data1="dualBarData1"
-              :data2="dualBarData2"
-              :x-axis-data="dualBarXAxis"
-              label1="本月"
-              label2="上月"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>环形图</h4>
-            <BtcRingChart
-              :data="ringChartData"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>雷达图</h4>
-            <BtcRadarChart
-              :indicators="radarIndicators"
-              :data="radarChartData"
-              height="300px"
-            />
-          </div>
-          <div class="chart-item">
-            <h4>散点图</h4>
-            <BtcScatterChart
-              :data="scatterChartData"
-              x-axis-name="X轴"
-              y-axis-name="Y轴"
-              height="300px"
-            />
-          </div>
-        </BtcContainer>
+        <BtcChartDemo :gap="8" :cols-per-row="4" chart-height="300px" />
       </div>
     </div>
   </div>
@@ -126,19 +59,10 @@ import { Loading } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import {
   BtcCard,
-  BtcContainer,
-  BtcLineChart,
-  BtcBarChart,
-  BtcPieChart,
-  BtcHBarChart,
-  BtcDualBarCompareChart,
-  BtcRingChart,
-  BtcRadarChart,
-  BtcScatterChart
+  BtcChartDemo
 } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { getDomainList } from '@/utils/domain-cache';
-import { useHomeCharts } from './composables/useHomeCharts';
 
 const router = useRouter();
 const route = useRoute();
@@ -258,24 +182,6 @@ const goToModule = (domainCode: string) => {
 onMounted(() => {
   loadDomains();
 });
-
-// 使用 composable 管理图表数据
-const {
-  executionTrendData,
-  executionTrendXAxis,
-  responseTimeData,
-  responseTimeXAxis,
-  typeDistributionData,
-  hBarChartData,
-  hBarChartYAxis,
-  dualBarData1,
-  dualBarData2,
-  dualBarXAxis,
-  ringChartData,
-  radarIndicators,
-  radarChartData,
-  scatterChartData
-} = useHomeCharts();
 </script>
 
 <style scoped lang="scss">
@@ -466,52 +372,6 @@ const {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  // 确保 BtcContainer 能够正确计算高度并滚动（参考 art-design-pro）
-  :deep(.btc-container) {
-    flex: 1;
-    min-height: 0;
-    // 确保内容不会被压缩，保持图表容器完整性
-    align-content: start;
-    // 允许内容自然流动
-    grid-auto-flow: row;
-  }
-
-  .chart-item {
-    background: var(--el-bg-color-page);
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 6px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    height: 340px; // 固定高度：标题高度(约40px) + 图表高度(300px)
-    flex-shrink: 0; // 防止被压缩
-
-    h4 {
-      margin: 0 0 8px 0;
-      color: var(--el-text-color-primary);
-      font-size: 13px;
-      font-weight: 500;
-      flex-shrink: 0;
-      height: 20px;
-      line-height: 20px;
-    }
-
-    // 图表容器固定高度
-    :deep(.btc-line-chart),
-    :deep(.btc-bar-chart),
-    :deep(.btc-pie-chart),
-    :deep(.btc-h-bar-chart),
-    :deep(.btc-dual-bar-compare-chart),
-    :deep(.btc-ring-chart),
-    :deep(.btc-radar-chart),
-    :deep(.btc-scatter-chart) {
-      height: 300px;
-      width: 100%;
-      flex: 1;
-      min-height: 0;
-    }
-  }
 }
 </style>
 

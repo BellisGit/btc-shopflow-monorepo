@@ -5,7 +5,7 @@ import { createHorizontalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 横向柱状图 composable
+ * ????? composable
  */
 export function useHBarChart(
   props: HBarChartProps,
@@ -54,18 +54,18 @@ export function useHBarChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -129,7 +129,7 @@ export function useHBarChart(
           }
         };
 
-        // 如果使用渐变
+        // ??????
         if (props.useGradient) {
           seriesConfig.itemStyle = {
             color: createHorizontalGradient(baseColor, 0.8, 0.2)

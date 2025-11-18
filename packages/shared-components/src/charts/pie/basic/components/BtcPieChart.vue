@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<PieChartProps>(), {
   height: '300px',
   width: '100%',
   autoresize: true,
-  radius: () => '60%', // 饼图默认实心，使用单个半径值
+  radius: () => '60%', // 饼图默认实心，使用坕个坊径�?
   center: () => ['50%', '50%'],
   showLegend: true,
   showTooltip: true,
@@ -51,6 +51,6 @@ const handleChartReady = () => {
 </script>
 
 <style lang="scss" scoped>
-@import '../styles/index.scss';
+@use '../styles/index.scss';
 </style>
 

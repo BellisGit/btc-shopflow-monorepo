@@ -2,18 +2,19 @@
   <div class="resources-page">
     <BtcTableGroup
       ref="tableGroupRef"
-      :left-service="moduleService"
+      :left-service="domainService"
       :right-service="wrappedResourceService"
       :table-columns="resourceColumns"
       :form-items="resourceFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
-      left-title="模块列表"
+      left-title="业务域"
       right-title="资源列表"
       search-placeholder="搜索资源..."
       :show-unassigned="true"
       unassigned-label="未分配"
       :enable-key-search="true"
-      @select="onModuleSelect"
+      :left-size="'small'"
+      @select="onDomainSelect"
     />
   </div>
 </template>
@@ -30,14 +31,14 @@ import { service } from '@services/eps';
 const { t } = useI18n();
 const message = useMessage();
 const tableGroupRef = ref();
-const selectedModule = ref<any>(null);
+const selectedDomain = ref<any>(null);
 
-// 模块服务（左侧树，用作资源分类）- 使用EPS服务
-const moduleService = {
+// 域服务配置 - 直接调用域列表的list API
+const domainService = {
   list: (params?: any) => {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.system?.iam?.module?.list(finalParams);
+    return service.system?.iam?.domain?.list(finalParams);
   }
 };
 
@@ -65,9 +66,9 @@ const wrappedResourceService = {
 };
 
 
-// 模块选择处理
-const onModuleSelect = (module: any) => {
-  selectedModule.value = module;
+// 域选择处理
+const onDomainSelect = (domain: any) => {
+  selectedDomain.value = domain;
 };
 
 // 资源表格列

@@ -40,6 +40,14 @@ export default defineConfig({
       '@plugins': withPackages('shared-components/src/plugins'),
       '@btc-utils': withPackages('shared-components/src/utils'),
       '@btc-crud': withPackages('shared-components/src/crud'),
+      // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
+      '@charts-utils/css-var': withPackages('shared-components/src/charts/utils/css-var'),
+      '@charts-utils/color': withPackages('shared-components/src/charts/utils/color'),
+      '@charts-utils/gradient': withPackages('shared-components/src/charts/utils/gradient'),
+      '@charts-composables/useChartComponent': withPackages('shared-components/src/charts/composables/useChartComponent'),
+      '@charts-types': withPackages('shared-components/src/charts/types'),
+      '@charts-utils': withPackages('shared-components/src/charts/utils'),
+      '@charts-composables': withPackages('shared-components/src/charts/composables'),
       'element-plus/es': 'element-plus/es',
       'element-plus/dist': 'element-plus/dist',
     },
@@ -96,6 +104,11 @@ export default defineConfig({
     proxy,
     fs: {
       strict: false,
+      allow: [
+        withRoot('.'),
+        withPackages('.'),
+        withPackages('shared-components/src'),
+      ],
     },
   },
   optimizeDeps: {
@@ -263,6 +276,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'modern-compiler',
+        silenceDeprecations: ['legacy-js-api', 'import'],
       },
     },
   },

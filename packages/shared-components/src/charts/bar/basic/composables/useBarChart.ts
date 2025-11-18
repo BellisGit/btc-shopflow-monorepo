@@ -5,7 +5,7 @@ import { createVerticalGradient, createHorizontalGradient } from '../../../utils
 import { getColorByIndex } from '../../../utils/color';
 
 /**
- * 柱状图 composable
+ * ??? composable
  */
 export function useBarChart(
   props: BarChartProps,
@@ -51,18 +51,18 @@ export function useBarChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '保存为图片',
+            title: '?????',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '数据视图',
+            title: '????',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '还原'
+            title: '??'
           }
         },
         iconStyle: {
@@ -126,7 +126,7 @@ export function useBarChart(
           }
         };
 
-        // 如果使用渐变
+        // ??????
         if (props.useGradient) {
           const gradient = props.gradientDirection === 'horizontal'
             ? createHorizontalGradient(baseColor, 0.8, 0.2)
@@ -140,7 +140,7 @@ export function useBarChart(
           };
         }
 
-        // 如果设置了 stack，添加堆叠
+        // ????? stack?????
         if (item.stack) {
           seriesConfig.stack = item.stack;
         }

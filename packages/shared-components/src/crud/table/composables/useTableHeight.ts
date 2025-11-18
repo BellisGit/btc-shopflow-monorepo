@@ -106,15 +106,26 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
 
         if (props.autoHeight) {
           const available = containerEl.clientHeight - h;
-          // 如果可用高度太小（小于100px），说明容器高度受限，使用用户设置的 maxHeight 或默认值
-          // 只有当可用高度足够大时，才设置 max-height 来限制表格高度
-          const maxAllowed = props.maxHeight ? (typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(String(props.maxHeight), 10)) : 400;
           
-          if (available > 100) {
-            maxHeight.value = Math.min(available, maxAllowed);
+          // 如果用户设置了 maxHeight，使用该值作为上限
+          if (props.maxHeight) {
+            const maxAllowed = typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(String(props.maxHeight), 10);
+            
+            if (available > 100) {
+              // 可用高度足够时，使用可用高度和用户设置的上限中的较小值
+              maxHeight.value = Math.min(available, maxAllowed);
+            } else {
+              // 容器高度受限时，使用用户设置的上限
+              maxHeight.value = maxAllowed;
+            }
           } else {
-            // 容器高度受限，使用用户设置的 maxHeight 或默认值
-            maxHeight.value = maxAllowed;
+            // 用户没有设置 maxHeight，直接使用可用高度（不设置默认上限）
+            if (available > 100) {
+              maxHeight.value = available;
+            } else {
+              // 容器高度受限，不设置 max-height，让表格自然显示
+              maxHeight.value = undefined;
+            }
           }
         } else {
           maxHeight.value = 0;

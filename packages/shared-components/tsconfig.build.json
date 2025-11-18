@@ -23,7 +23,11 @@
       "@plugins/*": ["src/plugins/*"],
       "@utils/*": ["src/utils/*"],
       "@btc/shared-components": ["src/index.ts"],
-      "@btc/shared-components/*": ["src/*"]
+      "@btc/shared-components/*": ["src/*"],
+      "@charts/*": ["src/charts/*"],
+      "@charts-types/*": ["src/charts/types/*"],
+      "@charts-utils/*": ["src/charts/utils/*"],
+      "@charts-composables/*": ["src/charts/composables/*"]
     }
   },
   "include": ["src"],

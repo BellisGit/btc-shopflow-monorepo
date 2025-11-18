@@ -55,6 +55,7 @@ export { default as BtcTableGroup } from './components/data/btc-table-group/inde
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
+export { default as BtcChartDemo } from './components/data/btc-chart-demo/index.vue';
 
 // Feedback 反馈组件
 export { default as BtcDialog } from './common/dialog/index.vue';

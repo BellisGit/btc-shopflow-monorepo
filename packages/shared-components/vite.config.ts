@@ -15,6 +15,15 @@ export default defineConfig({
       '@plugins': resolve(__dirname, 'src/plugins'),
       '@utils': resolve(__dirname, 'src/utils'),
       '@btc/shared-components': resolve(__dirname, 'src'),
+      // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
+      '@charts-utils/css-var': resolve(__dirname, 'src/charts/utils/css-var'),
+      '@charts-utils/color': resolve(__dirname, 'src/charts/utils/color'),
+      '@charts-utils/gradient': resolve(__dirname, 'src/charts/utils/gradient'),
+      '@charts-composables/useChartComponent': resolve(__dirname, 'src/charts/composables/useChartComponent'),
+      '@charts': resolve(__dirname, 'src/charts'),
+      '@charts-types': resolve(__dirname, 'src/charts/types'),
+      '@charts-utils': resolve(__dirname, 'src/charts/utils'),
+      '@charts-composables': resolve(__dirname, 'src/charts/composables'),
     },
   },
   plugins: [

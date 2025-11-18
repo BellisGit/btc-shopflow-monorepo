@@ -17,7 +17,10 @@
       "@btc-crud": ["../../packages/shared-components/src/crud"],
       "@btc-crud/*": ["../../packages/shared-components/src/crud/*"],
       "@assets": ["../../packages/shared-components/src/assets"],
-      "@assets/*": ["../../packages/shared-components/src/assets/*"]
+      "@assets/*": ["../../packages/shared-components/src/assets/*"],
+      "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
+      "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
+      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx"],
