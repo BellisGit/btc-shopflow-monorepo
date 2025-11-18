@@ -20,7 +20,8 @@ import {
   LegendComponent,
   DataZoomComponent,
   MarkLineComponent,
-  MarkPointComponent
+  MarkPointComponent,
+  ToolboxComponent
 } from 'echarts/components';
 
 // 注册必要的组件
@@ -35,7 +36,8 @@ use([
   LegendComponent,
   DataZoomComponent,
   MarkLineComponent,
-  MarkPointComponent
+  MarkPointComponent,
+  ToolboxComponent
 ]);
 
 export default {

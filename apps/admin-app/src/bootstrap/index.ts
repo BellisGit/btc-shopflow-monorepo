@@ -26,7 +26,7 @@ import { appStorage } from '../utils/app-storage';
  * 负责初始化所有核心功能模块
  */
 export async function bootstrap(app: App) {
-  // 0. 初始化存储管理器（必须在最前面，确保旧的存储 key 被迁移）
+  // 0. 初始化存储管理器（必须在最前面）
   appStorage.init();
 
   // 1. 核心模块初始化

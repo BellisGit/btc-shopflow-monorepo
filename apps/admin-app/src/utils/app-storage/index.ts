@@ -13,14 +13,14 @@ export const APP_STORAGE_KEYS = {
   // 用户相关
   USER: 'user',
   USERNAME: 'username', // 向后兼容，已迁移到 user
-  
+
   // 应用设置
   SETTINGS: 'settings',
-  
+
   // 认证相关
   TOKEN: 'token',
   REFRESH_TOKEN: 'refreshToken',
-  
+
   // 其他
   LOCALE: 'locale',
   RECENT_SEARCHES: 'recent-searches',
@@ -67,7 +67,7 @@ class AppStorageManager {
     if (version) {
       this.version = version;
     }
-    this.migrateStorageKeys();
+    // 不再执行迁移逻辑，从源头禁止创建独立键
   }
 
   /**
@@ -113,7 +113,7 @@ class AppStorageManager {
      */
     setAvatar(avatar: string): void {
       this.set({ avatar });
-      
+
       // 预加载头像图片到浏览器缓存
       if (avatar && avatar !== '/logo.png' && typeof window !== 'undefined') {
         const img = new Image();
@@ -420,63 +420,13 @@ class AppStorageManager {
     return { removed, freed };
   }
 
-  /**
-   * 迁移旧的存储 key
-   */
-  private migrateStorageKeys(): void {
-    try {
-      const currentSettings = storage.get<AppSettingsStorage>(APP_STORAGE_KEYS.SETTINGS) || {};
-      let hasChanges = false;
-
-      // 迁移 systemThemeType
-      const oldSystemThemeType = storage.get<string>('systemThemeType');
-      if (oldSystemThemeType && !currentSettings.systemThemeType) {
-        currentSettings.systemThemeType = oldSystemThemeType;
-        hasChanges = true;
-        storage.remove('systemThemeType');
-      }
-
-      // 迁移 systemThemeMode
-      const oldSystemThemeMode = storage.get<string>('systemThemeMode');
-      if (oldSystemThemeMode && !currentSettings.systemThemeMode) {
-        currentSettings.systemThemeMode = oldSystemThemeMode;
-        hasChanges = true;
-        storage.remove('systemThemeMode');
-      }
-
-      // 迁移 systemThemeColor
-      const oldSystemThemeColor = storage.get<string>('systemThemeColor');
-      if (oldSystemThemeColor && !currentSettings.systemThemeColor) {
-        currentSettings.systemThemeColor = oldSystemThemeColor;
-        hasChanges = true;
-        storage.remove('systemThemeColor');
-      }
-
-      // 迁移 username 到 user 存储
-      const oldUsername = localStorage.getItem(APP_STORAGE_KEYS.USERNAME);
-      if (oldUsername) {
-        const currentUser = this.user.get() || {};
-        if (!currentUser.username) {
-          this.user.set({ username: oldUsername });
-          localStorage.removeItem(APP_STORAGE_KEYS.USERNAME);
-        }
-      }
-
-      // 如果有变化，保存更新后的 settings
-      if (hasChanges) {
-        storage.set(APP_STORAGE_KEYS.SETTINGS, currentSettings);
-      }
-    } catch (error) {
-      console.warn('[AppStorage] 迁移存储键时出错:', error);
-    }
-  }
 
   /**
    * 导出所有存储数据（用于备份或调试）
    */
   export(): Record<string, any> {
     const data: Record<string, any> = {};
-    
+
     // 导出所有 btc_ 前缀的 key
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);

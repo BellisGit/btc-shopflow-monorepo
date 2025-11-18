@@ -9,6 +9,9 @@
             v-if="chartsReady"
             :data="executionTrendData"
             :x-axis-data="executionTrendXAxis"
+            :show-tooltip="true"
+            :show-label="true"
+            :show-toolbar="true"
             height="100%"
           />
         </div>
@@ -18,6 +21,9 @@
             v-if="chartsReady"
             :data="responseTimeData"
             :x-axis-data="responseTimeXAxis"
+            :show-tooltip="true"
+            :show-label="true"
+            :show-toolbar="true"
             height="100%"
           />
         </div>
@@ -26,16 +32,20 @@
           <BtcPieChart
             v-if="chartsReady"
             :data="typeDistributionData"
+            :show-tooltip="true"
+            :show-toolbar="true"
             height="100%"
           />
         </div>
         <div class="chart-item">
           <h4>成功率统计</h4>
-          <BtcBarChart
+          <BtcLineChart
             v-if="chartsReady"
             :data="successRateData"
             :x-axis-data="successRateXAxis"
-            y-axis-formatter="%"
+            :show-tooltip="true"
+            :show-label="true"
+            :show-toolbar="true"
             height="100%"
           />
         </div>
@@ -103,15 +113,17 @@ const typeDistributionData = ref<PieChartDataItem[]>([
   { name: '工作流策略', value: 20, color: '#409eff' }
 ]);
 
-const successRateData = ref<BarChartData[]>([
+const successRateData = ref<LineChartData[]>([
   {
     name: '成功率',
-    data: [95, 88, 92, 85],
-    color: '#67c23a'
+    data: [95, 88, 92, 85, 90, 87, 93],
+    color: '#e6a23c',
+    smooth: true,
+    areaStyle: true
   }
 ]);
 
-const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据策略', '工作流策略']);
+const successRateXAxis = ref<string[]>(['周一', '周二', '周三', '周四', '周五', '周六', '周日']);
 </script>
 
 <style scoped lang="scss">

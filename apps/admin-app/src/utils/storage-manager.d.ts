@@ -91,11 +91,6 @@ export declare const userStorage: {
     clear(): void;
 };
 /**
- * 迁移旧的独立存储 key 到统一的 settings 存储
- * 在应用启动时调用一次即可
- */
-export declare function migrateStorageKeys(): void;
-/**
  * 应用设置存储管理器
  */
 export declare const settingsStorage: {

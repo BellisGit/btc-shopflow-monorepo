@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { authApi } from '@/modules/api-services';
 import { useUser } from '@/composables/useUser';
 import { getCookie } from '@/utils/cookie';
+import { appStorage } from '@/utils/app-storage';
 
 export function usePasswordLogin() {
   const router = useRouter();
@@ -12,8 +13,13 @@ export function usePasswordLogin() {
   const { t } = useI18n();
 
   // 表单数据
+  // 从统一存储中获取用户名
+  const getStoredUsername = (): string => {
+    return appStorage.user.getUsername() || '';
+  };
+
   const form = reactive({
-    username: localStorage.getItem('username') || '',
+    username: getStoredUsername(),
     password: ''
   });
 
@@ -56,8 +62,8 @@ export function usePasswordLogin() {
         setUserInfo(response.user);
       }
 
-      // 保存用户名到 localStorage（记住用户名）
-      localStorage.setItem('username', formData.username);
+      // 保存用户名到统一存储（记住用户名）
+      appStorage.user.setUsername(formData.username);
 
       // 跳转到首页
       router.push('/');

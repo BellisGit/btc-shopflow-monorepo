@@ -1,7 +1,7 @@
 <template>
   <div
     class="btc-view-group"
-    :class="[isExpand ? 'is-expand' : 'is-collapse']"
+    :class="[isExpand ? 'is-expand' : 'is-collapse', `is-left-size-${props.leftSize || 'default'}`]"
     :style="viewGroupStyle"
   >
     <div class="btc-view-group__wrap">
@@ -20,6 +20,7 @@
             :show-unassigned="showUnassigned"
             :unassigned-label="unassignedLabel"
             :enable-key-search="enableKeySearch"
+            :hide-expand-icon="props.leftSize === 'small'"
             @select="handleLeftSelect"
             @load="handleLeftLoad"
           />
@@ -96,7 +97,8 @@ const props = withDefaults(defineProps<{
   showUnassigned?: boolean;
   unassignedLabel?: string;
   enableDrag?: boolean;
-  leftWidth?: string;
+  leftWidth?: string; // 直接指定左侧宽度（优先级最高）
+  leftSize?: 'default' | 'small'; // 左侧宽度类型：default（300px）或 small（150px）
   custom?: boolean;
   idField?: string;
   labelField?: string;
@@ -106,6 +108,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   op: undefined,
   enableKeySearch: false,
+  leftSize: 'default',
 });
 
 const emit = defineEmits<{
@@ -130,16 +133,22 @@ const rightData = ref<any>(null); // 存储右侧数据
 
 const isExpand = ref(true); // 初始状态为展开
 
+// 计算左侧宽度：如果指定了 leftWidth 则使用，否则根据 leftSize 计算
 const leftPaneWidth = computed(() => {
-  if (typeof props.leftWidth === 'string' && props.leftWidth.trim()) {
+  // 如果明确指定了 leftWidth，优先使用
+  if (props.leftWidth && typeof props.leftWidth === 'string' && props.leftWidth.trim()) {
     return props.leftWidth;
   }
-  return '300px';
+  // 根据 leftSize 计算宽度：default 为 300px，small 为 150px（300px 的一半）
+  return props.leftSize === 'small' ? '150px' : '300px';
 });
 
-const viewGroupStyle = computed(() => ({
-  '--btc-view-group-left-width': leftPaneWidth.value,
-}));
+const viewGroupStyle = computed(() => {
+  const width = leftPaneWidth.value;
+  return {
+    '--btc-view-group-left-width': width || '300px',
+  };
+});
 
 const { height: contentHeight, emit: emitContentResize } = useContentHeight();
 
@@ -318,16 +327,6 @@ $bg: var(--el-bg-color);
     border-radius: 4px;
   }
 
-  &__left {
-    position: relative;
-    height: 100%;
-    width: var(--btc-view-group-left-width, 300px);
-    background-color: $bg;
-    overflow: hidden;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: width;
-    flex-shrink: 0;
-  }
 
   &__right {
     display: flex;

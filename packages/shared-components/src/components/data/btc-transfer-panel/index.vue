@@ -51,6 +51,8 @@
                 :op="undefined"
                 :row-key="rowKeyProp"
                 :disable-auto-created-at="true"
+                :auto-height="autoHeight"
+                :max-height="maxHeight"
                 border
                 :reserve-selection="true"
               >
@@ -175,6 +177,8 @@ const props = withDefaults(
       collapse?: string;
     };
     pagination?: any;
+    autoHeight?: boolean;
+    maxHeight?: string | number;
   }>(),
   {
     sourceTitle: '',
@@ -186,6 +190,7 @@ const props = withDefaults(
     collapsible: true,
     rowKey: 'id',
     targetEmptyText: '暂无选择',
+    autoHeight: true,
   }
 );
 
@@ -198,6 +203,7 @@ const tableComponentRef = ref<InstanceType<typeof BtcTable> | null>(null);
 const collapsed = ref(false);
 
 const autoLoadComputed = computed(() => props.autoLoad ?? true);
+const autoHeight = computed(() => props.autoHeight ?? true);
 const scopedSlots = computed(() => slots);
 const panelStyle = computed(() => {
   if (!props.height) return undefined;

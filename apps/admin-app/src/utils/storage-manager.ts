@@ -142,57 +142,6 @@ export const userStorage = {
   },
 };
 
-/**
- * 迁移旧的独立存储 key 到统一的 settings 存储
- * 在应用启动时调用一次即可
- */
-export function migrateStorageKeys() {
-  try {
-    const currentSettings = storage.get<AppSettingsStorage>('settings') || {};
-    let hasChanges = false;
-
-    // 迁移 systemThemeType
-    const oldSystemThemeType = storage.get<string>('systemThemeType');
-    if (oldSystemThemeType && !currentSettings.systemThemeType) {
-      currentSettings.systemThemeType = oldSystemThemeType;
-      hasChanges = true;
-      storage.remove('systemThemeType');
-    }
-
-    // 迁移 systemThemeMode
-    const oldSystemThemeMode = storage.get<string>('systemThemeMode');
-    if (oldSystemThemeMode && !currentSettings.systemThemeMode) {
-      currentSettings.systemThemeMode = oldSystemThemeMode;
-      hasChanges = true;
-      storage.remove('systemThemeMode');
-    }
-
-    // 迁移 systemThemeColor
-    const oldSystemThemeColor = storage.get<string>('systemThemeColor');
-    if (oldSystemThemeColor && !currentSettings.systemThemeColor) {
-      currentSettings.systemThemeColor = oldSystemThemeColor;
-      hasChanges = true;
-      storage.remove('systemThemeColor');
-    }
-
-    // 迁移 username 到 user 存储
-    const oldUsername = localStorage.getItem('username');
-    if (oldUsername) {
-      const currentUser = userStorage.get() || {};
-      if (!currentUser.username) {
-        userStorage.set({ username: oldUsername });
-        localStorage.removeItem('username');
-      }
-    }
-
-    // 如果有变化，保存更新后的 settings
-    if (hasChanges) {
-      storage.set('settings', currentSettings);
-    }
-  } catch (error) {
-    console.warn('[Storage Migration] 迁移存储键时出错:', error);
-  }
-}
 
 /**
  * 应用设置存储管理器

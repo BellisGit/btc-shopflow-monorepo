@@ -146,6 +146,14 @@ export interface TransferPanelProps<T = any> {
    * 分页配置，存在时在底部显示分页器
    */
   pagination?: TransferPanelPagination;
+  /**
+   * 表格是否自动计算高度
+   */
+  autoHeight?: boolean;
+  /**
+   * 表格最大高度
+   */
+  maxHeight?: string | number;
 }
 
 export interface TransferPanelChangePayload<T = any> {

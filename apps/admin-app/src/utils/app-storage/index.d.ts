@@ -176,10 +176,6 @@ declare class AppStorageManager {
         freed: number;
     };
     /**
-     * 迁移旧的存储 key
-     */
-    private migrateStorageKeys;
-    /**
      * 导出所有存储数据（用于备份或调试）
      */
     export(): Record<string, any>;

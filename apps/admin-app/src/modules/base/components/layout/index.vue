@@ -65,11 +65,13 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component }">
-              <component v-if="isOpsLogs" :is="Component" />
-              <keep-alive v-else>
-                <component :is="Component" />
-              </keep-alive>
+            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
+              <transition :name="pageTransitionName" mode="out-in">
+                <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
+                <keep-alive v-else>
+                  <component :is="Component" :key="route.fullPath" />
+                </keep-alive>
+              </transition>
             </router-view>
 
             <!-- 文档应用 iframe（全局缓存，v-show 控制显示/隐藏） -->
@@ -148,6 +150,10 @@ const isDarkMenuStyle = computed(() => {
 const pageTransitionName = computed(() => {
   const path = route.path || '';
   // 日志中心关闭过渡，避免尺寸变化引发观察链
+  // 禁用以下页面的动画：
+  // - /admin/ops/logs (日志中心主页)
+  // - /admin/ops/logs/operation (操作日志页面)
+  // - /admin/ops/logs/request (请求日志页面)
   if (path.startsWith('/admin/ops/logs')) {
     return '';
   }

@@ -1,7 +1,7 @@
 <template>
   <div class="main-home">
-    <el-row :gutter="20" class="main-home__top-row">
-      <el-col :span="16">
+    <div class="main-home__top-row">
+      <div class="main-home__quick-access">
         <BtcCard :title="t('main.home.quick_access')" class="main-home__card">
           <div v-if="loading" class="loading-container">
             <el-icon class="is-loading">
@@ -21,9 +21,9 @@
             </div>
           </div>
         </BtcCard>
-      </el-col>
+      </div>
 
-      <el-col :span="8">
+      <div class="main-home__system-info">
         <BtcCard :title="t('main.home.system_info')" class="main-home__card">
           <div class="system-info">
             <div class="info-item">
@@ -40,50 +40,48 @@
             </div>
           </div>
         </BtcCard>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
 
     <!-- 策略监控图表分析 -->
-    <el-row :gutter="20" class="main-home__bottom-row">
-      <el-col :span="24">
-        <div class="strategy-charts">
-          <BtcContainer :gap="10">
-            <div class="chart-item">
-              <h4>执行次数趋势</h4>
-              <BtcLineChart
-                :data="executionTrendData"
-                :x-axis-data="executionTrendXAxis"
-                height="100%"
-              />
-            </div>
-            <div class="chart-item">
-              <h4>响应时间分布</h4>
-              <BtcBarChart
-                :data="responseTimeData"
-                :x-axis-data="responseTimeXAxis"
-                height="100%"
-              />
-            </div>
-            <div class="chart-item">
-              <h4>策略类型分布</h4>
-              <BtcPieChart
-                :data="typeDistributionData"
-                height="100%"
-              />
-            </div>
-            <div class="chart-item">
-              <h4>成功率统计</h4>
-              <BtcBarChart
-                :data="successRateData"
-                :x-axis-data="successRateXAxis"
-                y-axis-formatter="%"
-                height="100%"
-              />
-            </div>
-          </BtcContainer>
-        </div>
-      </el-col>
-    </el-row>
+    <div class="main-home__bottom-row">
+      <div class="strategy-charts">
+        <BtcContainer :gap="10">
+          <div class="chart-item">
+            <h4>执行次数趋势</h4>
+            <BtcLineChart
+              :data="executionTrendData"
+              :x-axis-data="executionTrendXAxis"
+              height="100%"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>响应时间分布</h4>
+            <BtcBarChart
+              :data="responseTimeData"
+              :x-axis-data="responseTimeXAxis"
+              height="100%"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>策略类型分布</h4>
+            <BtcPieChart
+              :data="typeDistributionData"
+              height="100%"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>成功率统计</h4>
+            <BtcBarChart
+              :data="successRateData"
+              :x-axis-data="successRateXAxis"
+              y-axis-formatter="%"
+              height="100%"
+            />
+          </div>
+        </BtcContainer>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -260,13 +258,25 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  padding: 10px;
 
   &__top-row {
     flex-shrink: 0;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     max-height: 300px;
+    display: flex;
+    gap: 10px;
 
-    .el-col {
+    .main-home__quick-access {
+      flex: 7;
+      min-width: 0;
+      height: 100%;
+      max-height: 300px;
+    }
+
+    .main-home__system-info {
+      flex: 3;
+      min-width: 0;
       height: 100%;
       max-height: 300px;
     }
@@ -277,12 +287,6 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
     min-height: 0;
     display: flex;
     flex-direction: column;
-
-    .el-col {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
   }
 
   &__card {

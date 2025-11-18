@@ -44,16 +44,13 @@ export function useSettingsState() {
   // 按钮风格设置
   const getSettings = (): Record<string, any> => (storage.get('settings') as Record<string, any> | null) ?? {};
   const initialSettings = getSettings();
-  const legacyButtonStyle = storage.get<ButtonStyle>('button-style');
-  const storedButtonStyle = initialSettings.buttonStyle ?? legacyButtonStyle;
+  // 只从统一的 settings 存储中读取，不再读取旧的独立键
+  const storedButtonStyle = initialSettings.buttonStyle as ButtonStyle | null;
   const resolvedButtonStyle: ButtonStyle =
     storedButtonStyle === 'minimal' ? 'minimal' : 'default';
   const buttonStyle = ref<ButtonStyle>(resolvedButtonStyle);
   if (!initialSettings.buttonStyle || (initialSettings.buttonStyle !== 'default' && initialSettings.buttonStyle !== 'minimal')) {
     storage.set('settings', { ...initialSettings, buttonStyle: resolvedButtonStyle });
-  }
-  if (legacyButtonStyle) {
-    storage.remove('buttonStyle');
   }
 
   const resolveThemePlugin = () => {
@@ -95,7 +92,8 @@ export function useSettingsState() {
    */
   function switchMenuLayouts(type: MenuTypeEnum) {
     menuType.value = type;
-    storage.set('menuType', type);
+    const settings = getSettings();
+    storage.set('settings', { ...settings, menuType: type });
   }
 
   /**
@@ -103,7 +101,8 @@ export function useSettingsState() {
    */
   function switchMenuStyles(theme: MenuThemeEnum) {
     menuThemeType.value = theme;
-    storage.set('menuThemeType', theme);
+    const settings = getSettings();
+    storage.set('settings', { ...settings, menuThemeType: theme });
   }
 
   /**
@@ -260,8 +259,9 @@ export function useSettingsState() {
    * 璁剧疆鏍囩椤垫牱寮?   */
   function setTabStyle(style: string) {
     tabStyle.value = style;
-    storage.set('tabStyle', style);
-    // 瑙﹀彂鏍峰紡鏇存柊浜嬩欢
+    const settings = getSettings();
+    storage.set('settings', { ...settings, tabStyle: style });
+    // 触发样式更新事件
     window.dispatchEvent(new CustomEvent('tab-style-change', { detail: { style } }));
   }
 

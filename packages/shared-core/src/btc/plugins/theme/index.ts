@@ -43,7 +43,8 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   const isDark = useDark();
 
   const settings = storage.get('settings') as Record<string, any> | null;
-  const storedButtonStyle = (settings?.buttonStyle ?? storage.get('button-style')) as ButtonStyle | null;
+  // 只从统一的 settings 存储中读取，不再读取旧的独立键
+  const storedButtonStyle = settings?.buttonStyle as ButtonStyle | null;
   const buttonStyle = ref<ButtonStyle>(storedButtonStyle || 'default');
 
   const applyButtonStyle = (style: ButtonStyle) => {
@@ -54,10 +55,10 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   applyButtonStyle(buttonStyle.value);
 
   function setButtonStyle(style: ButtonStyle) {
+    if (buttonStyle.value === style) return; // 避免重复设置
     buttonStyle.value = style;
     const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
     storage.set('settings', { ...currentSettings, buttonStyle: style });
-    storage.set('button-style', style);
     applyButtonStyle(style);
   }
 
@@ -77,8 +78,9 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     themeSetThemeColor(theme.color, isDark.value);
     document.body.className = `theme-${theme.name}`;
 
-    // 持久化到 localStorage
-    storage.set('theme', currentTheme.value);
+    // 持久化到统一的 settings 存储中
+    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
+    storage.set('settings', { ...currentSettings, theme: currentTheme.value });
   }
 
   /**
@@ -93,8 +95,9 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     };
     themeSetThemeColor(color, isDark.value);
 
-    // 持久化到 localStorage
-    storage.set('theme', currentTheme.value);
+    // 持久化到统一的 settings 存储中
+    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
+    storage.set('settings', { ...currentSettings, theme: currentTheme.value });
   }
 
   /**

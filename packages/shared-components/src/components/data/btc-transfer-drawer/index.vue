@@ -29,10 +29,14 @@
       </header>
 
       <div class="btc-transfer-drawer__content">
-        <div class="btc-transfer-drawer__panels">
-          <div
+        <el-splitter class="btc-transfer-drawer__splitter" layout="vertical">
+          <el-splitter-panel
             v-for="section in normalizedSections"
             :key="section.key"
+            :size="50"
+            :min="10"
+            :max="90"
+            :resizable="false"
             class="btc-transfer-drawer__panel"
             :class="{ 'is-expanded': isExpanded(section.key), 'is-collapsed': !isExpanded(section.key) }"
           >
@@ -50,7 +54,12 @@
             </header>
 
             <div class="btc-transfer-drawer__panel-body" :data-key="section.key">
+              <!-- 如果有自定义内容 slot，使用自定义内容，否则使用 BtcTransferPanel -->
+              <template v-if="$slots[`content-${section.key}`]">
+                <slot :name="`content-${section.key}`" />
+              </template>
               <BtcTransferPanel
+                v-else
                 :ref="setPanelRef(section.key)"
                 v-model="panelState[section.key]"
                 v-bind="cleanedTransferProps[section.key]"
@@ -67,8 +76,8 @@
                 </template>
               </BtcTransferPanel>
             </div>
-          </div>
-        </div>
+          </el-splitter-panel>
+        </el-splitter>
       </div>
 
       <footer class="btc-transfer-drawer__footer">
@@ -85,6 +94,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
+import { ElSplitter, ElSplitterPanel } from 'element-plus';
 import BtcSvg from '../../others/btc-svg/index.vue';
 import BtcTransferPanel from '../btc-transfer-panel/index.vue';
 import type { TransferKey, TransferPanelChangePayload } from '../btc-transfer-panel/types';
@@ -101,6 +111,7 @@ interface Props {
   confirmLoading?: boolean;
   closeOnClickModal?: boolean;
   destroyOnClose?: boolean;
+  autoHeight?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -110,6 +121,7 @@ const props = withDefaults(defineProps<Props>(), {
   confirmLoading: false,
   closeOnClickModal: false,
   destroyOnClose: false,
+  autoHeight: true,
 });
 
 const emit = defineEmits<{
@@ -128,12 +140,16 @@ const normalizedSections = computed(() => props.sections ?? []);
 const cleanedTransferProps = computed(() => {
   const result: Record<string, any> = {};
   normalizedSections.value.forEach((section) => {
-    const props = { ...section.transferProps };
+    const transferProps = { ...section.transferProps };
     // 移除 null 或 undefined 的 data 属性
-    if (props.data === null || props.data === undefined) {
-      delete props.data;
+    if (transferProps.data === null || transferProps.data === undefined) {
+      delete transferProps.data;
     }
-    result[section.key] = props;
+    // 如果 transferProps 中没有设置 autoHeight，使用组件级别的 autoHeight
+    if (transferProps.autoHeight === undefined) {
+      transferProps.autoHeight = props.autoHeight;
+    }
+    result[section.key] = transferProps;
   });
   return result;
 });
@@ -313,41 +329,40 @@ defineExpose({
 }
 
 .btc-transfer-drawer__content {
+  overflow: hidden;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  max-height: 100%;
   padding: 0 16px;
   margin-bottom: 16px;
 }
 
-.btc-transfer-drawer__panels {
+.btc-transfer-drawer__splitter {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  max-height: 100%;
+  width: 100%;
   overflow: hidden;
+
+  :deep(.el-splitter__panel) {
+    overflow: hidden;
+    max-height: 100%;
+  }
+
+  :deep(.el-splitter-bar) {
+    display: none; // 隐藏分隔条，因为 resizable="false"
+  }
 }
 
 .btc-transfer-drawer__panel {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  background-color: transparent;
-  box-shadow: none;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
 }
 
-.btc-transfer-drawer__panel.is-expanded {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .btc-transfer-drawer__panel.is-collapsed {
-  flex: 0 0 auto;
-  min-height: auto;
+  display: none;
 }
 
 .btc-transfer-drawer__panel-header {
@@ -394,6 +409,7 @@ defineExpose({
 .btc-transfer-drawer__panel-body {
   flex: 1;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;

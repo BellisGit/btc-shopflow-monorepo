@@ -6,7 +6,7 @@
     :data="crud.tableData.value"
     :loading="crud.loading.value"
       :height="height || undefined"
-    :max-height="autoHeight ? (autoMaxHeight ?? maxHeight ?? undefined) : (maxHeight || undefined)"
+    :max-height="autoHeight ? (autoMaxHeight && autoMaxHeight > 0 ? autoMaxHeight : (maxHeight ?? undefined)) : (maxHeight || undefined)"
     :row-key="rowKey || 'username'"
     :empty-text="translatedEmptyText"
       :default-sort="computedDefaultSort"

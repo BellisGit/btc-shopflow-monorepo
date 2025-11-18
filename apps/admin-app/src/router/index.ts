@@ -434,6 +434,17 @@ router.beforeEach((to, from) => {
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）
 router.afterEach((to) => {
+  // 清理所有 ECharts tooltip，防止页面切换时残留
+  try {
+    const tooltipElements = document.querySelectorAll('.echarts-tooltip');
+    tooltipElements.forEach(el => {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    });
+  } catch (error) {
+    // 忽略错误
+  }
   // 动态更新浏览器标题
   updateDocumentTitle(to);
 

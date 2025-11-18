@@ -54,8 +54,8 @@
             :key="option.key"
             :model-value="option.checked"
             :disabled="option.disabled"
-            :id="`btc-table-column-${option.key}`"
-            :name="`btc-table-column-${option.key}`"
+            :id="`btc-table-column-${option.key}-${instanceId}`"
+            :name="`btc-table-column-${option.key}-${instanceId}`"
             @change="(value: unknown) => handleColumnVisibility(option.key, value)"
           >
             {{ option.label }}
@@ -78,8 +78,8 @@
         <el-checkbox
           v-if="!isStripeControlled"
           :model-value="currentStripe"
-          id="btc-table-style-stripe"
-          name="btc-table-style-stripe"
+          :id="`btc-table-style-stripe-${instanceId}`"
+          :name="`btc-table-style-stripe-${instanceId}`"
           @change="(value: unknown) => handleStripeChange(value === true)"
         >
           {{ t('btc.table.style.zebra') }}
@@ -87,8 +87,8 @@
         <el-checkbox
           v-if="!isBorderControlled"
           :model-value="currentBorder"
-          id="btc-table-style-border"
-          name="btc-table-style-border"
+          :id="`btc-table-style-border-${instanceId}`"
+          :name="`btc-table-style-border-${instanceId}`"
           @change="(value: unknown) => handleBorderChange(value === true)"
         >
           {{ t('btc.table.style.border') }}
@@ -96,8 +96,8 @@
         <el-checkbox
           v-if="!isHeaderBackgroundControlled"
           :model-value="currentHeaderBackground"
-          id="btc-table-style-header"
-          name="btc-table-style-header"
+          :id="`btc-table-style-header-${instanceId}`"
+          :name="`btc-table-style-header-${instanceId}`"
           @change="(value: unknown) => handleHeaderBackgroundChange(value === true)"
         >
           {{ t('btc.table.style.headerBackground') }}
@@ -122,6 +122,10 @@ import { useI18n } from '@btc/shared-core';
 import { useCrudLayout } from '../context/layout';
 import BtcTableButton from '../../components/basic/btc-table-button/index.vue';
 import type { BtcTableButtonConfig } from '../../components/basic/btc-table-button/types';
+
+// 生成唯一实例 ID，避免多个工具栏实例的 checkbox ID 冲突
+// 使用时间戳和随机数确保每个实例都有唯一的 ID
+const instanceId = `toolbar-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 const props = defineProps<{
   binding: any | null;

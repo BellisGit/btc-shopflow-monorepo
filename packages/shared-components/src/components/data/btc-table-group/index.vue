@@ -9,7 +9,7 @@
     :unassigned-label="unassignedLabel"
     :enable-drag="enableDrag"
     :enable-key-search="enableKeySearch"
-    :left-width="leftWidth"
+    :left-size="props.leftSize"
     :op="op"
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
@@ -25,8 +25,12 @@
         <BtcRow>
           <div class="btc-crud-primary-actions">
             <BtcRefreshBtn />
-            <BtcAddBtn />
-            <BtcMultiDeleteBtn />
+            <slot name="add-btn">
+              <BtcAddBtn v-if="props.showAddBtn" />
+            </slot>
+            <slot name="multi-delete-btn">
+              <BtcMultiDeleteBtn v-if="props.showMultiDeleteBtn" />
+            </slot>
           </div>
           <BtcFlex1 />
           <BtcSearchKey :placeholder="searchPlaceholder" />
@@ -105,13 +109,17 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   unassignedLabel: '未分配',
   enableDrag: false,
   enableKeySearch: false,
-  leftWidth: '300px',
+  leftWidth: undefined, // 如果未指定，将根据 leftSize 计算
+  leftSize: 'default', // 默认类型
   upsertWidth: 800,
   searchPlaceholder: '搜索',
   showCreateTime: true,  // 默认显示创建时间列
   showUpdateTime: false,  // 默认不显示更新时间列
-  op: undefined // 操作列配置，默认为 undefined
+  op: undefined, // 操作列配置，默认为 undefined
+  showAddBtn: true, // 默认显示新增按钮
+  showMultiDeleteBtn: true, // 默认显示批量删除按钮
 });
+
 
 const emit = defineEmits<TableGroupEmits>();
 
@@ -145,9 +153,16 @@ const tableColumns = computed(() => {
       col.prop === 'update_time')
   );
 
+  // 查找操作列的位置
+  const opColumnIndex = filteredColumns.findIndex(col => col.type === 'op');
+  const hasOpColumn = opColumnIndex !== -1;
+  
+  // 准备要插入的时间列
+  const timeColumns: any[] = [];
+  
   // 添加创建时间列（如果启用）
   if (props.showCreateTime) {
-    filteredColumns.push({
+    timeColumns.push({
       prop: 'createdAt', // 固定使用后端字段名
       label: '创建时间',
       sortable: 'desc',
@@ -158,7 +173,7 @@ const tableColumns = computed(() => {
 
   // 添加更新时间列（如果启用）
   if (props.showUpdateTime) {
-    filteredColumns.push({
+    timeColumns.push({
       prop: 'updatedAt', // 固定使用后端字段名
       label: '更新时间',
       sortable: 'desc',
@@ -167,14 +182,27 @@ const tableColumns = computed(() => {
     });
   }
 
-  // 检查是否已有操作列，并根据 op 配置决定是否添加
-  const hasOpColumn = filteredColumns.some(col => col.type === 'op');
+  // 如果有操作列，在操作列之前插入时间列；否则在末尾添加
+  if (hasOpColumn && timeColumns.length > 0) {
+    filteredColumns.splice(opColumnIndex, 0, ...timeColumns);
+  } else if (timeColumns.length > 0) {
+    filteredColumns.push(...timeColumns);
+  }
+
+  // 检查是否已有操作列，并根据 op 配置决定是否添加 - 操作列始终在最后
   if (!hasOpColumn && props.op !== undefined) {
+    const buttons = props.op.buttons || ['edit', 'delete'];
+    const buttonCount = Array.isArray(buttons) ? buttons.length : 2;
+    // 根据按钮数量动态设置宽度：1个按钮126px（116+10，保证工具栏宽度），2个按钮220px（默认），3个及以上按钮300px
+    const opWidth = buttonCount === 1 ? 126 : buttonCount === 2 ? 220 : 300;
+    const opMinWidth = buttonCount === 1 ? 126 : 200;
+    
     filteredColumns.push({
       type: 'op',
-      width: 200,
+      minWidth: opMinWidth, // 最小宽度，确保有足够空间显示按钮和间距
+      width: opWidth, // 根据按钮数量动态设置宽度
       fixed: 'right',
-      buttons: props.op.buttons || ['edit', 'delete']
+      buttons
     });
   }
 
@@ -183,6 +211,9 @@ const tableColumns = computed(() => {
 
 // 计算表单项（注入左侧数据到级联选择器）
 const computedFormItems = computed(() => {
+  if (!props.formItems || !Array.isArray(props.formItems)) {
+    return [];
+  }
   return props.formItems.map(item => {
     // 如果是级联选择器，注入左侧列表数据
     if (item.component?.name === 'btc-cascader') {

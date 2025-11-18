@@ -52,10 +52,11 @@
   &__left {
     position: relative;
     height: 100%;
-    width: 300px; // 添加固定宽度
+    width: var(--btc-view-group-left-width, 300px); // 使用 CSS 变量，默认 300px
     background-color: var(--el-bg-color);
     flex-shrink: 0; // 防止收缩
-    transition: width 0.2s ease-in-out;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
     overflow: hidden;
 
     .collapse-btn {
@@ -207,7 +208,7 @@
   // 展开/收起状态样式
   &.is-expand {
     .btc-view-group__right {
-      width: calc(100% - 300px); // 计算宽度：总宽度减去左侧宽度
+      width: calc(100% - var(--btc-view-group-left-width, 300px)); // 计算宽度：总宽度减去左侧宽度
       border-left: 1px solid var(--el-border-color-extra-light);
     }
   }
@@ -237,6 +238,45 @@
     &.is-expand {
       .btc-view-group__left {
         width: 100%;
+      }
+    }
+  }
+
+  // small 类型下，菜单项文本居中显示，隐藏勾选
+  &.is-left-size-small {
+    :deep(.btc-master-list) {
+      // 隐藏 el-tree 的 checkbox（如果启用）
+      .el-tree-node__checkbox {
+        display: none !important;
+      }
+
+      // 隐藏 el-tree 的 selection 相关元素
+      .el-tree-node__selection {
+        display: none !important;
+      }
+
+      .el-tree-node__content {
+        justify-content: center !important;
+
+        // 完全隐藏展开/折叠图标元素（即使内容为空，元素本身仍占据空间）
+        .el-tree-node__expand-icon {
+          display: none !important;
+          width: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .btc-master-list__node {
+          justify-content: center !important;
+          width: auto !important; // 不占据全部宽度，让内容自然居中
+          flex: 0 0 auto !important; // 不占据剩余空间
+
+          .btc-master-list__node-label {
+            justify-content: center !important;
+            text-align: center !important;
+            flex: 0 0 auto !important; // 移除 flex: 1，不占据剩余空间
+          }
+        }
       }
     }
   }

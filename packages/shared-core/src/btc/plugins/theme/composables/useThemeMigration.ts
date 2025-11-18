@@ -52,8 +52,9 @@ export function migrateThemeConfig(): ThemeConfig {
           color: (savedTheme as any).color,
         };
       }
-      // 保存迁移后的配置
-      storage.set('theme', migratedTheme);
+      // 保存迁移后的配置到统一的 settings 存储中
+      const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
+      storage.set('settings', { ...currentSettings, theme: migratedTheme });
     } else {
       // 已经是新格式，直接使用
       migratedTheme = savedTheme as ThemeConfig;

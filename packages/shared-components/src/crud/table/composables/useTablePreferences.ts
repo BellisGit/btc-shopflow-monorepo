@@ -1,9 +1,10 @@
 import { ref, computed, watch } from 'vue';
+import { storage } from '@btc/shared-utils';
 
 type TableSize = 'small' | 'default' | 'large';
 
 export interface TablePreferenceOptions {
-  storageKey?: string;
+  storageKey?: string; // 用于区分不同表格的偏好设置，会作为 settings 中的子键
   defaultSize?: TableSize;
   defaultStripe?: boolean;
   defaultBorder?: boolean;
@@ -19,22 +20,18 @@ interface PersistedPreferences {
   hiddenColumns?: string[];
 }
 
-const DEFAULT_STORAGE_KEY = 'btc-table-preferences';
-
-function isClient() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+interface TablePreferencesStorage {
+  [key: string]: PersistedPreferences;
 }
 
-function loadPreferences(key: string): PersistedPreferences {
-  if (!isClient()) {
-    return {};
-  }
+const DEFAULT_STORAGE_KEY = 'default';
 
+function loadPreferences(key: string): PersistedPreferences {
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed ? parsed : {};
+    // 从统一的 settings 存储中读取表格偏好设置
+    const settings = storage.get<{ tablePreferences?: TablePreferencesStorage }>('settings') || {};
+    const allPreferences = settings.tablePreferences || {};
+    return allPreferences[key] || {};
   } catch (error) {
     console.warn('[BtcTable] Failed to parse table preferences:', error);
     return {};
@@ -42,9 +39,13 @@ function loadPreferences(key: string): PersistedPreferences {
 }
 
 function persistPreferences(key: string, value: PersistedPreferences) {
-  if (!isClient()) return;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    // 将表格偏好设置存储到统一的 settings 中
+    const settings = storage.get<{ tablePreferences?: TablePreferencesStorage }>('settings') || {};
+    const allPreferences = settings.tablePreferences || {};
+    allPreferences[key] = value;
+    settings.tablePreferences = allPreferences;
+    storage.set('settings', settings);
   } catch (error) {
     console.warn('[BtcTable] Failed to save table preferences:', error);
   }

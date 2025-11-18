@@ -69,6 +69,8 @@
           :allow-drag="allowDrag"
           :allow-drop="allowDrop"
           :expand-on-click-node="false"
+          :icon="props.hideExpandIcon ? EmptyIcon : undefined"
+          :class="{ 'hide-expand-icon': props.hideExpandIcon }"
           @node-contextmenu="onContextMenu"
           @node-click="handleNodeClick"
         >
@@ -97,12 +99,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, nextTick, watch, defineComponent, h } from 'vue';
 
 import { useI18n } from '@btc/shared-core';
 import { Check, Close, Refresh, MoreFilled, Search } from '@element-plus/icons-vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { BtcMessage } from '@btc/shared-components';
+
+// 空图标组件，用于隐藏展开/折叠图标
+const EmptyIcon = defineComponent({
+  setup() {
+    return () => null;
+  }
+});
 
 // 树形数据处理工具函数
 function deepTree(data: any[], parentId: any = 0, children = 'children'): any[] {
@@ -168,6 +177,7 @@ interface Props {
   labelField?: string;
   childrenField?: string;
   enableKeySearch?: boolean;
+  hideExpandIcon?: boolean; // 是否隐藏展开/折叠图标
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -180,6 +190,7 @@ const props = withDefaults(defineProps<Props>(), {
   labelField: 'name',
   childrenField: 'children',
   enableKeySearch: false,
+  hideExpandIcon: false,
 });
 
 defineOptions({
@@ -484,10 +495,23 @@ defineExpose({
     :deep(.el-tree-node__content) {
       height: 38px;
       border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; // default 左对齐
+      text-align: left; // default 左对齐
 
       .el-tree-node__expand-icon {
         margin-left: 5px;
       }
+    }
+
+    // 当 hideExpandIcon 为 true 时，隐藏展开/折叠图标
+    :deep(.hide-expand-icon .el-tree-node__expand-icon) {
+      display: none !important;
+      width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: hidden !important;
     }
 
     // 空状态样式 - 在整个容器中垂直水平居中

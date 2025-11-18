@@ -1,5 +1,5 @@
 <template>
-  <div class="btc-pie-chart">
+  <div ref="chartContainerRef" class="btc-pie-chart">
     <v-chart
       :option="chartOption"
       :autoresize="autoresize"
@@ -9,8 +9,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive, watch, ref, onBeforeUnmount } from 'vue';
 import { useDark } from '@vueuse/core';
+import { getInstanceByDom } from 'echarts/core';
 
 export interface PieChartDataItem {
   name: string;
@@ -28,6 +29,7 @@ export interface PieChartProps {
   center?: [string, string];
   showLegend?: boolean;
   showTooltip?: boolean;
+  showToolbar?: boolean;
   legendPosition?: 'top' | 'bottom' | 'left' | 'right';
 }
 
@@ -39,6 +41,7 @@ const props = withDefaults(defineProps<PieChartProps>(), {
   center: () => ['50%', '50%'],
   showLegend: true,
   showTooltip: true,
+  showToolbar: false,
   legendPosition: 'top'
 });
 
@@ -72,6 +75,36 @@ const chartOption = reactive({
                            props.legendPosition === 'left' ? '0%' : '0%',
     textStyle: {
       color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+    }
+  },
+  toolbox: {
+    show: props.showToolbar,
+    right: '10px',
+    top: '10px',
+    feature: {
+      saveAsImage: {
+        show: true,
+        title: '保存为图片',
+        type: 'png',
+        pixelRatio: 2
+      },
+      dataView: {
+        show: true,
+        title: '数据视图',
+        readOnly: false
+      },
+      restore: {
+        show: true,
+        title: '还原'
+      }
+    },
+    iconStyle: {
+      borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+    },
+    emphasis: {
+      iconStyle: {
+        borderColor: computed(() => isDark.value ? '#409eff' : '#409eff')
+      }
     }
   },
   series: [
@@ -131,6 +164,34 @@ const defaultColors = [
 function getDefaultColor(index: number): string {
   return defaultColors[index % defaultColors.length];
 }
+
+// 图表容器引用
+const chartContainerRef = ref<HTMLElement | null>(null);
+
+// 组件卸载时清理 tooltip
+onBeforeUnmount(() => {
+  if (chartContainerRef.value) {
+    try {
+      const chartInstance = getInstanceByDom(chartContainerRef.value);
+      if (chartInstance) {
+        // 隐藏 tooltip
+        chartInstance.dispatchAction({
+          type: 'hideTip'
+        });
+      }
+    } catch (error) {
+      // 忽略错误，可能图表已经销毁
+    }
+  }
+  
+  // 清理 body 中残留的 tooltip DOM
+  const tooltipElements = document.querySelectorAll('.echarts-tooltip');
+  tooltipElements.forEach(el => {
+    if (el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  });
+});
 </script>
 
 <style lang="scss" scoped>

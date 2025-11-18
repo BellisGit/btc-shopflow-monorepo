@@ -13,7 +13,7 @@ export interface TableGroupProps {
 
   // 表格配置
   tableColumns?: any[];
-  formItems: any[];
+  formItems?: any[];
 
   // 操作列配置
   op?: { buttons?: any[] };
@@ -32,9 +32,12 @@ export interface TableGroupProps {
   enableKeySearch?: boolean;
   showUnassigned?: boolean;
   unassignedLabel?: string;
+  showAddBtn?: boolean; // 是否显示新增按钮，默认 true
+  showMultiDeleteBtn?: boolean; // 是否显示批量删除按钮，默认 true
 
   // 样式配置
   leftWidth?: string;
+  leftSize?: 'default' | 'small'; // 左侧宽度类型：default（300px）或 small（150px）
   upsertWidth?: string | number;
   searchPlaceholder?: string;
 }

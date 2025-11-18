@@ -5,7 +5,7 @@ import { globalMitt } from '@btc/shared-components/utils/mitt';
 import type { TableProps } from '../types';
 
 export function useTableHeight(props: TableProps, tableRef: Ref) {
-  const maxHeight = ref<number>(0);
+  const maxHeight = ref<number | undefined>(0);
 
   const update = debounce(async () => {
     await nextTick();
@@ -13,6 +13,14 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
     let vm: any = tableRef.value;
 
     if (vm) {
+      // 如果用户设置了 maxHeight，直接使用，不进行自动计算
+      if (props.maxHeight && props.autoHeight) {
+        const maxAllowed = typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(String(props.maxHeight), 10);
+        maxHeight.value = maxAllowed;
+        return;
+      }
+
+      // 查找 btc-crud 容器
       while (
         vm.$parent &&
         !(vm.$parent.$el && vm.$parent.$el.classList && vm.$parent.$el.classList.contains('btc-crud'))
@@ -25,6 +33,39 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
         const rowEl = vm.$el as HTMLElement;
 
         await nextTick();
+
+        // 查找合适的容器：优先查找 .page，其次查找 btc-transfer-panel 或 btc-transfer-drawer__panel-body
+        let containerEl: HTMLElement | null = null;
+        
+        // 向上查找 .page 容器
+        let parent: HTMLElement | null = crudEl.parentElement;
+        while (parent) {
+          if (parent.classList.contains('page')) {
+            containerEl = parent;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+
+        // 如果没有找到 .page，查找 btc-transfer-panel 或 btc-transfer-drawer__panel-body
+        if (!containerEl) {
+          parent = crudEl.parentElement;
+          while (parent) {
+            if (
+              parent.classList.contains('btc-transfer-panel') ||
+              parent.classList.contains('btc-transfer-drawer__panel-body')
+            ) {
+              containerEl = parent;
+              break;
+            }
+            parent = parent.parentElement;
+          }
+        }
+
+        // 如果都没找到，使用 crudEl 本身
+        if (!containerEl) {
+          containerEl = crudEl;
+        }
 
         let h = 0;
 
@@ -64,8 +105,17 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
         h += parseInt(window.getComputedStyle(crudEl).paddingTop, 10) || 0;
 
         if (props.autoHeight) {
-          const available = crudEl.clientHeight - h;
-          maxHeight.value = available > 0 ? available : 0;
+          const available = containerEl.clientHeight - h;
+          // 如果可用高度太小（小于100px），说明容器高度受限，使用用户设置的 maxHeight 或默认值
+          // 只有当可用高度足够大时，才设置 max-height 来限制表格高度
+          const maxAllowed = props.maxHeight ? (typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(String(props.maxHeight), 10)) : 400;
+          
+          if (available > 100) {
+            maxHeight.value = Math.min(available, maxAllowed);
+          } else {
+            // 容器高度受限，使用用户设置的 maxHeight 或默认值
+            maxHeight.value = maxAllowed;
+          }
         } else {
           maxHeight.value = 0;
         }

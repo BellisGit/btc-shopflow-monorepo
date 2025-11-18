@@ -102,16 +102,13 @@ function createSettingsState() {
 
   // 按钮风格设置
   const initialSettings = appStorage.settings.get();
-  const legacyButtonStyle = storage.get<ButtonStyle>('button-style');
-  const storedButtonStyle = (initialSettings?.buttonStyle ?? legacyButtonStyle) as ButtonStyle | null;
+  // 只从统一的 settings 存储中读取，不再读取旧的独立键
+  const storedButtonStyle = initialSettings?.buttonStyle as ButtonStyle | null;
   const resolvedButtonStyle: ButtonStyle =
     storedButtonStyle === 'minimal' ? 'minimal' : 'default';
   const buttonStyle = ref<ButtonStyle>(resolvedButtonStyle);
   if (!initialSettings?.buttonStyle || (initialSettings.buttonStyle !== 'default' && initialSettings.buttonStyle !== 'minimal')) {
     appStorage.settings.set({ buttonStyle: resolvedButtonStyle });
-  }
-  if (legacyButtonStyle) {
-    storage.remove('buttonStyle');
   }
 
   const resolveThemePlugin = () => {
