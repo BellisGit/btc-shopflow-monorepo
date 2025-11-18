@@ -14,7 +14,7 @@
               v-for="domain in quickAccessDomains"
               :key="domain.domainCode"
               class="access-item"
-              @click="goToModule(domain.domainCode.toLowerCase())"
+              @click="goToModule(domain.domainCode)"
             >
               <btc-svg :name="domain.icon" :size="36" />
               <span>{{ domain.name }}</span>
@@ -46,37 +46,71 @@
     <!-- 策略监控图表分析 -->
     <div class="main-home__bottom-row">
       <div class="strategy-charts">
-        <BtcContainer :gap="10">
+        <BtcContainer :gap="8" :cols-per-row="4">
           <div class="chart-item">
-            <h4>执行次数趋势</h4>
+            <h4>折线图</h4>
             <BtcLineChart
               :data="executionTrendData"
               :x-axis-data="executionTrendXAxis"
-              height="100%"
+              height="300px"
             />
           </div>
           <div class="chart-item">
-            <h4>响应时间分布</h4>
+            <h4>柱状图</h4>
             <BtcBarChart
               :data="responseTimeData"
               :x-axis-data="responseTimeXAxis"
-              height="100%"
+              height="300px"
             />
           </div>
           <div class="chart-item">
-            <h4>策略类型分布</h4>
+            <h4>饼图</h4>
             <BtcPieChart
               :data="typeDistributionData"
-              height="100%"
+              height="300px"
             />
           </div>
           <div class="chart-item">
-            <h4>成功率统计</h4>
-            <BtcBarChart
-              :data="successRateData"
-              :x-axis-data="successRateXAxis"
-              y-axis-formatter="%"
-              height="100%"
+            <h4>横向柱状图</h4>
+            <BtcHBarChart
+              :data="hBarChartData"
+              :y-axis-data="hBarChartYAxis"
+              height="300px"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>双柱对比图</h4>
+            <BtcDualBarCompareChart
+              :data1="dualBarData1"
+              :data2="dualBarData2"
+              :x-axis-data="dualBarXAxis"
+              label1="本月"
+              label2="上月"
+              height="300px"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>环形图</h4>
+            <BtcRingChart
+              :data="ringChartData"
+              height="300px"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>雷达图</h4>
+            <BtcRadarChart
+              :indicators="radarIndicators"
+              :data="radarChartData"
+              height="300px"
+            />
+          </div>
+          <div class="chart-item">
+            <h4>散点图</h4>
+            <BtcScatterChart
+              :data="scatterChartData"
+              x-axis-name="X轴"
+              y-axis-name="Y轴"
+              height="300px"
             />
           </div>
         </BtcContainer>
@@ -95,15 +129,16 @@ import {
   BtcContainer,
   BtcLineChart,
   BtcBarChart,
-  BtcPieChart
-} from '@btc/shared-components';
-import type {
-  LineChartData,
-  BarChartData,
-  PieChartDataItem
+  BtcPieChart,
+  BtcHBarChart,
+  BtcDualBarCompareChart,
+  BtcRingChart,
+  BtcRadarChart,
+  BtcScatterChart
 } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { getDomainList } from '@/utils/domain-cache';
+import { useHomeCharts } from './composables/useHomeCharts';
 
 const router = useRouter();
 const route = useRoute();
@@ -152,13 +187,15 @@ const loadDomains = async () => {
     const response = await getDomainList(service);
 
     if (response?.list) {
-      // 过滤出需要显示在快速入口的域（排除 SYSTEM 和 DOCS）
+      // 过滤出需要显示在快速入口的域（排除 SYSTEM、DOCS 和 ADMIN）
       const domains = response.list
         .filter((domain: any) =>
           domain.domainCode !== 'SYSTEM' &&
           domain.name !== '系统域' &&
           domain.domainCode !== 'DOCS' &&
-          domain.name !== '文档中心'
+          domain.name !== '文档中心' &&
+          domain.domainCode !== 'ADMIN' &&
+          domain.name !== '管理域'
         )
         .map((domain: any) => {
           const domainCode = domain.domainCode;
@@ -202,8 +239,19 @@ const loadDomains = async () => {
   }
 };
 
-const goToModule = (module: string) => {
-  router.push(`/admin/${module}`);
+const goToModule = (domainCode: string) => {
+  // 将域代码转换为路径，直接跳转到对应域（参考汉堡菜单的切换逻辑）
+  // 域代码到路径的映射
+  const domainPathMap: Record<string, string> = {
+    'LOGISTICS': '/logistics',
+    'ENGINEERING': '/engineering',
+    'QUALITY': '/quality',
+    'PRODUCTION': '/production',
+    'FINANCE': '/finance'
+  };
+
+  const targetPath = domainPathMap[domainCode] || `/${domainCode.toLowerCase()}`;
+  router.push(targetPath);
 };
 
 // 生命周期
@@ -211,74 +259,56 @@ onMounted(() => {
   loadDomains();
 });
 
-// 图表数据
-const executionTrendData = ref<LineChartData[]>([
-  {
-    name: '执行次数',
-    data: [120, 132, 101, 134, 90, 230, 210],
-    color: '#409eff',
-    smooth: true
-  }
-]);
-
-const executionTrendXAxis = ref<string[]>(['周一', '周二', '周三', '周四', '周五', '周六', '周日']);
-
-const responseTimeData = ref<BarChartData[]>([
-  {
-    name: '响应时间分布',
-    data: [320, 280, 150, 80, 20],
-    color: '#67c23a'
-  }
-]);
-
-const responseTimeXAxis = ref<string[]>(['0-50ms', '50-100ms', '100-200ms', '200-500ms', '500ms+']);
-
-const typeDistributionData = ref<PieChartDataItem[]>([
-  { name: '权限策略', value: 35, color: '#f56c6c' },
-  { name: '业务策略', value: 25, color: '#67c23a' },
-  { name: '数据策略', value: 20, color: '#e6a23c' },
-  { name: '工作流策略', value: 20, color: '#409eff' }
-]);
-
-const successRateData = ref<BarChartData[]>([
-  {
-    name: '成功率',
-    data: [95, 88, 92, 85],
-    color: '#67c23a'
-  }
-]);
-
-const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据策略', '工作流策略']);
+// 使用 composable 管理图表数据
+const {
+  executionTrendData,
+  executionTrendXAxis,
+  responseTimeData,
+  responseTimeXAxis,
+  typeDistributionData,
+  hBarChartData,
+  hBarChartYAxis,
+  dualBarData1,
+  dualBarData2,
+  dualBarXAxis,
+  ringChartData,
+  radarIndicators,
+  radarChartData,
+  scatterChartData
+} = useHomeCharts();
 </script>
 
 <style scoped lang="scss">
 // 页面内容样式（不包含布局相关的 padding、margin、background）
 .main-home {
+  padding: 10px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
-  padding: 10px;
 
   &__top-row {
-    flex-shrink: 0;
     margin-bottom: 10px;
-    max-height: 300px;
+    height: 300px;
     display: flex;
-    gap: 10px;
+    gap: 8px; // 与底部 BtcContainer 的 gap 保持一致
 
     .main-home__quick-access {
-      flex: 7;
+      // 精确计算：3个图表宽度 = (100% - 3 * gap) * 3/4 + 2 * gap
+      width: calc((100% - 3 * 8px) * 3 / 4 + 2 * 8px);
       min-width: 0;
       height: 100%;
-      max-height: 300px;
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
     .main-home__system-info {
-      flex: 3;
+      // 精确计算：1个图表宽度 = (100% - 3 * gap) * 1/4
+      width: calc((100% - 3 * 8px) * 1 / 4);
       min-width: 0;
       height: 100%;
-      max-height: 300px;
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
   }
 
@@ -291,7 +321,6 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
 
   &__card {
     height: 100%;
-    max-height: 300px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -323,10 +352,15 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
 }
 
 .quick-access-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 8px 0;
+  // 水平均匀分布，垂直居中
+  justify-content: space-around;
+  align-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .access-item {
@@ -334,30 +368,71 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 16px;
+  // 正方形卡片
+  width: 100px;
+  height: 100px;
+  aspect-ratio: 1;
+  // 设计感增强
+  border-radius: 12px;
   border: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  // 添加微妙的背景渐变效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
 
   &:hover {
     border-color: var(--el-color-primary);
     background-color: var(--el-color-primary-light-9);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .btc-svg {
+      transform: scale(1.1);
+    }
   }
 
   .btc-svg {
     flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
   }
 
   span {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--el-text-color-primary);
     font-weight: 500;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.3;
+    z-index: 1;
+    // 限制文字最多显示两行
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -387,37 +462,52 @@ const successRateXAxis = ref<string[]>(['权限策略', '业务策略', '数据�
 
 .strategy-charts {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  overflow: hidden;
 
-  // BtcContainer 占据剩余空间
+  // 确保 BtcContainer 能够正确计算高度并滚动（参考 art-design-pro）
   :deep(.btc-container) {
     flex: 1;
     min-height: 0;
+    // 确保内容不会被压缩，保持图表容器完整性
+    align-content: start;
+    // 允许内容自然流动
+    grid-auto-flow: row;
   }
 
   .chart-item {
     background: var(--el-bg-color-page);
     border: 1px solid var(--el-border-color-light);
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 6px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    height: 340px; // 固定高度：标题高度(约40px) + 图表高度(300px)
+    flex-shrink: 0; // 防止被压缩
 
     h4 {
-      margin: 0 0 16px 0;
+      margin: 0 0 8px 0;
       color: var(--el-text-color-primary);
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 500;
       flex-shrink: 0;
+      height: 20px;
+      line-height: 20px;
     }
 
-    // 图表容器占据剩余空间
+    // 图表容器固定高度
     :deep(.btc-line-chart),
     :deep(.btc-bar-chart),
-    :deep(.btc-pie-chart) {
+    :deep(.btc-pie-chart),
+    :deep(.btc-h-bar-chart),
+    :deep(.btc-dual-bar-compare-chart),
+    :deep(.btc-ring-chart),
+    :deep(.btc-radar-chart),
+    :deep(.btc-scatter-chart) {
+      height: 300px;
+      width: 100%;
       flex: 1;
       min-height: 0;
     }

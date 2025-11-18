@@ -10,7 +10,10 @@ import {
 import {
   BarChart,
   LineChart,
-  PieChart
+  PieChart,
+  RadarChart,
+  ScatterChart,
+  CandlestickChart
 } from 'echarts/charts';
 
 import {
@@ -30,6 +33,9 @@ use([
   BarChart,
   LineChart,
   PieChart,
+  RadarChart,
+  ScatterChart,
+  CandlestickChart,
   GridComponent,
   TooltipComponent,
   TitleComponent,

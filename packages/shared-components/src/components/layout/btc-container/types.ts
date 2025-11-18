@@ -4,32 +4,17 @@
 
 export interface BtcContainerProps {
   /**
-   * 子组件数量（自动计算，通常不需要手动设置）
+   * 子组件之间的间距，默认 10px
    */
-  childCount?: number;
+  gap?: number | string;
 
   /**
-   * 是否启用响应式布局
+   * 每行列数，不指定时根据子组件数量自动计算
    */
-  responsive?: boolean;
+  colsPerRow?: number;
 
   /**
-   * 响应式断点（px）
+   * 每行最大列数（已废弃，使用 colsPerRow）
    */
-  breakpoint?: number;
-
-  /**
-   * 组件间距（px）
-   */
-  gap?: number;
-
-  /**
-   * 自定义样式类
-   */
-  class?: string;
-
-  /**
-   * 自定义样式
-   */
-  style?: string | Record<string, any>;
+  maxColsPerRow?: number;
 }
