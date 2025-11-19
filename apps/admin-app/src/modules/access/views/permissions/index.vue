@@ -60,18 +60,23 @@ const wrappedService = {
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: '序号', width: 60 },
-  { prop: 'permissionName', label: t('access.permission.name'), minWidth: 150 },
-  { prop: 'permissionCode', label: t('access.permission.code'), minWidth: 120 },
-  { prop: 'resourceName', label: t('access.resource.name'), minWidth: 100 },
-  { prop: 'actionName', label: t('access.action.name'), minWidth: 100 },
-  { prop: 'description', label: t('common.description'), minWidth: 150 },
+  { prop: 'permName', label: t('access.permission.name'), minWidth: 150, showOverflowTooltip: true },
+  { prop: 'permCode', label: t('access.permission.code'), minWidth: 150, showOverflowTooltip: true },
+  { prop: 'permType', label: t('access.permission.type'), minWidth: 100 },
+  { prop: 'permCategory', label: t('access.permission.category'), minWidth: 100 },
+  { prop: 'moduleId', label: t('platform.module.name'), minWidth: 120 },
+  { prop: 'pluginId', label: t('platform.plugin.name'), minWidth: 120 },
+  { prop: 'description', label: t('common.description'), minWidth: 150, showOverflowTooltip: true },
+  { prop: 'createdAt', label: t('common.create_time'), minWidth: 160, formatter: (row: any) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' },
 ]);
 
 const formItems = computed<FormItem[]>(() => [
-  { prop: 'permissionName', label: t('access.permission.name'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'permissionCode', label: t('access.permission.code'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'resourceName', label: t('access.resource.name'), span: 12, required: true, component: { name: 'el-input', props: { placeholder: t('access.resource.placeholder') } } },
-  { prop: 'actionName', label: t('access.action.name'), span: 12, required: true, component: { name: 'el-input', props: { placeholder: t('access.action.placeholder') } } },
+  { prop: 'permName', label: t('access.permission.name'), span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'permCode', label: t('access.permission.code'), span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'permType', label: t('access.permission.type'), span: 12, component: { name: 'el-input' } },
+  { prop: 'permCategory', label: t('access.permission.category'), span: 12, component: { name: 'el-input' } },
+  { prop: 'moduleId', label: t('platform.module.name'), span: 12, component: { name: 'el-input' } },
+  { prop: 'pluginId', label: t('platform.plugin.name'), span: 12, component: { name: 'el-input' } },
   { prop: 'description', label: t('common.description'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
 

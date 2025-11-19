@@ -19,10 +19,11 @@ defineOptions({
 .system-home {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 10px;
   height: 100%;
-  padding: 24px;
+  padding: 10px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .strategy-charts {
@@ -30,5 +31,20 @@ defineOptions({
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
+
+  :deep(.btc-chart-demo) {
+    height: 100%;
+    min-height: 0;
+  }
+
+  :deep(.btc-container) {
+    height: 100%;
+    min-height: 0;
+  }
+
+  :deep(.chart-item) {
+    min-height: 300px;
+  }
 }
 </style>

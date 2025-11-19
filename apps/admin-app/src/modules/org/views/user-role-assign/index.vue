@@ -29,26 +29,86 @@
       </template>
     </BtcTableGroup>
 
-    <BtcTransferDrawer
-      ref="transferDrawerRef"
-      v-model:visible="drawerVisible"
+    <el-drawer
+      v-model="drawerVisible"
       :title="t('org.user_role_assign.drawer.title')"
-      :subtitle="t('org.user_role_assign.drawer.subtitle')"
-      :sections="drawerSectionsComputed"
-      :confirm-loading="submitting"
-      :cancel-text="t('common.button.cancel')"
-      :confirm-text="t('common.button.confirm')"
-      @cancel="closeDrawer"
-      @confirm="handleSubmit"
-      @update:section-keys="handleSectionKeys"
-    />
+      size="800px"
+      :close-on-click-modal="false"
+      :modal="false"
+      append-to-body
+      :lock-scroll="false"
+      class="user-role-assign-drawer-wrapper"
+    >
+      <template #default>
+        <div class="user-role-assign-drawer">
+          <!-- 用户选择部分 -->
+          <div class="drawer-section user-section">
+            <div class="section-title">{{ t('org.user_role_assign.drawer.subjectSectionTitle') }}</div>
+            <el-select
+              ref="userSelectRef"
+              v-model="selectedUserId"
+              filterable
+              remote
+              :remote-method="searchUsers"
+              :loading="userSearchLoading"
+              :placeholder="t('org.user_role_assign.drawer.searchUser')"
+              clearable
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 100%"
+              @change="handleUserChange"
+              @clear="handleRemoveUser"
+              @visible-change="handleSelectVisibleChange"
+            >
+              <el-option
+                v-for="user in userOptions"
+                :key="user.id"
+                :label="user.username"
+                :value="user.id"
+              >
+                <span>{{ user.username }}</span>
+                <span v-if="user.realName" style="color: var(--el-text-color-secondary); margin-left: 8px;">
+                  ({{ user.realName }})
+                </span>
+              </el-option>
+            </el-select>
+          </div>
+
+          <!-- 角色选择部分 -->
+          <div class="drawer-section role-section">
+            <div class="section-title">{{ t('org.user_role_assign.drawer.roleSectionTitle') }}</div>
+            <BtcTransferPanel
+              ref="roleTransferRef"
+              v-model="selectedRoleKeys"
+              :service="roleTransferService"
+              :columns="roleTransferColumns"
+              :options="roleOptions"
+              display-prop="roleName"
+              description-prop="description"
+              row-key="id"
+              :auto-load="false"
+              :collapsible="false"
+            />
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <div class="drawer-footer">
+          <el-button @click="closeDrawer">{{ t('common.button.cancel') }}</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">
+            {{ t('common.button.confirm') }}
+          </el-button>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, shallowRef, markRaw } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcMessage, BtcTransferDrawer, BtcMultiUnbindBtn, BtcConfirm, BtcTableGroup, BtcSvg } from '@btc/shared-components';
+import { BtcMessage, BtcTransferPanel, BtcMultiUnbindBtn, BtcConfirm, BtcTableGroup, BtcSvg } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
 import { service } from '@services/eps';
 import { services as userServices } from '../users/config';
@@ -56,10 +116,22 @@ import { services as roleServices } from '@modules/access/views/roles/config';
 
 const { t } = useI18n();
 const tableGroupRef = ref();
-const transferDrawerRef = ref<any>(null);
+const roleTransferRef = ref<any>(null);
+const userSelectRef = ref<any>(null);
 const drawerVisible = ref(false);
 const submitting = ref(false);
 const selectedDomain = ref<any>(null);
+const selectedUserId = ref<(string | number)[]>([]); // multiple 模式下使用数组
+const selectedRoleKeys = ref<TransferKey[]>([]);
+const userOptions = ref<any[]>([]);
+const userSearchLoading = ref(false);
+
+// 监听域选择变化，如果已选择用户则重新加载角色列表
+watch(() => selectedDomain.value, async () => {
+  if (selectedUserId.value.length > 0 && drawerVisible.value) {
+    roleTransferRef.value?.refresh?.();
+  }
+});
 
 // 域服务配置 - 直接调用域列表的list API
 const domainService = {
@@ -78,7 +150,7 @@ const wrappedUserRoleService = {
   ...userRoleService,
   page: async (params: any) => {
     // BtcTableGroup 会将左侧选中的域 ID 作为 keyword 传递，格式为 { ids: [...] }
-    // 需要将其转换为 domainId 参数
+    // 需要将 domainId 放在 keyword 对象中
     const finalParams = { ...params };
 
     // 处理 keyword 参数
@@ -88,17 +160,50 @@ const wrappedUserRoleService = {
       // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
       if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
         const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
-        // 取第一个 ID 作为 domainId
+        // 取第一个 ID 作为 domainId，放在 keyword 对象中
         if (ids.length > 0 && ids[0] !== undefined && ids[0] !== null && ids[0] !== '') {
-          finalParams.domainId = ids[0];
+          // 确保 keyword 是一个对象
+          if (typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
+            finalParams.keyword = {};
+          }
+          // 将 domainId 放在 keyword 对象中
+          finalParams.keyword.domainId = ids[0];
+          // 确保 keyword 中有 username 和 roleId 字段
+          if (finalParams.keyword.username === undefined) {
+            finalParams.keyword.username = '';
+          }
+          if (finalParams.keyword.roleId === undefined) {
+            finalParams.keyword.roleId = '';
+          }
         }
-        // 清除 keyword，避免影响搜索
-        delete finalParams.keyword;
+        // 删除 ids 字段，因为已经转换为 domainId
+        delete finalParams.keyword.ids;
       } else if (typeof keyword === 'number' || (typeof keyword === 'string' && !isNaN(Number(keyword)) && keyword !== '')) {
         // 如果 keyword 直接是数字或可转换为数字的字符串
-        finalParams.domainId = typeof keyword === 'number' ? keyword : Number(keyword);
-        delete finalParams.keyword;
+        finalParams.keyword = {
+          username: '',
+          roleId: '',
+          domainId: typeof keyword === 'number' ? keyword : keyword,
+        };
+      } else if (typeof keyword === 'object' && !Array.isArray(keyword)) {
+        // 如果 keyword 已经是对象，确保有 domainId、username 和 roleId 字段
+        if (finalParams.keyword.domainId === undefined) {
+          finalParams.keyword.domainId = '';
+        }
+        if (finalParams.keyword.username === undefined) {
+          finalParams.keyword.username = '';
+        }
+        if (finalParams.keyword.roleId === undefined) {
+          finalParams.keyword.roleId = '';
+        }
       }
+    } else {
+      // 如果 keyword 不存在，初始化一个包含 domainId 的对象
+      finalParams.keyword = {
+        username: '',
+        roleId: '',
+        domainId: '',
+      };
     }
 
     return userRoleService?.page?.(finalParams);
@@ -135,87 +240,41 @@ const roleColumns = computed<TableColumn[]>(() => [
   },
 ]);
 
-const userTransferColumns = computed<TransferPanelColumn[]>(() => [
-  { prop: 'username', label: t('org.user_role_assign.user.username'), minWidth: 160 },
-  { prop: 'realName', label: t('org.user_role_assign.user.realName'), minWidth: 160 },
-]);
+const userService = userServices.sysuser;
+const roleService = roleServices.sysrole;
 
 const roleTransferColumns = computed<TransferPanelColumn[]>(() => [
   { prop: 'roleName', label: t('org.user_role_assign.columns.roleName'), minWidth: 160 },
   { prop: 'description', label: t('org.user_role_assign.columns.description'), minWidth: 220 },
 ]);
 
-const userService = userServices.sysuser;
-const roleService = roleServices.sysrole;
-
-const selectedUserKeys = ref<TransferKey[]>([]);
-const selectedRoleKeys = ref<TransferKey[]>([]);
-
-// 提取稳定的函数引用，避免每次 computed 重新计算时创建新函数
-const handleUserBeforeRefresh = (params: Record<string, unknown>) => {
-  // 确保搜索关键字只传递到 search 对象中的正确字段，不影响外源性 ids
-  if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
-    const keyword = params.keyword as Record<string, unknown>;
-    // 如果 keyword 中有 ids 字段且是字符串或字符串数组（搜索关键字被错误映射），
-    // 将其移到 username，但保留外源性的 ids（数字或数字数组）
-    if (keyword.ids !== undefined) {
-      const idsValue = keyword.ids;
-      // 判断是否是搜索关键字（字符串类型）
-      if (typeof idsValue === 'string' && idsValue !== '') {
-        // 字符串类型的 ids 是搜索关键字，移到 username
-        keyword.username = idsValue;
-        delete keyword.ids;
-      } else if (Array.isArray(idsValue) && idsValue.length > 0) {
-        // 判断数组中的元素类型
-        const firstElement = idsValue[0];
-        if (typeof firstElement === 'string') {
-          // 字符串数组是搜索关键字，移到 username
-          keyword.username = firstElement;
-          delete keyword.ids;
-        }
-        // 数字数组是外源性参数，保留不变
-      }
-      // 其他情况（数字、空数组等）保留不变，因为可能是外源性参数
-    }
-  }
-  return params;
-};
-
+// 处理角色搜索参数
 const handleRoleBeforeRefresh = (params: Record<string, unknown>) => {
-  // 确保搜索关键字只传递到 search 对象中的正确字段，不影响外源性 ids
   if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
     const keyword = params.keyword as Record<string, unknown>;
-    // 如果 keyword 中有 ids 字段且是字符串或字符串数组（搜索关键字被错误映射），
-    // 将其移到 roleName，但保留外源性的 ids（数字或数字数组）
     if (keyword.ids !== undefined) {
       const idsValue = keyword.ids;
-      // 判断是否是搜索关键字（字符串类型）
       if (typeof idsValue === 'string' && idsValue !== '') {
-        // 字符串类型的 ids 是搜索关键字，移到 roleName
         keyword.roleName = idsValue;
         delete keyword.ids;
       } else if (Array.isArray(idsValue) && idsValue.length > 0) {
-        // 判断数组中的元素类型
         const firstElement = idsValue[0];
         if (typeof firstElement === 'string') {
-          // 字符串数组是搜索关键字，移到 roleName
           keyword.roleName = firstElement;
           delete keyword.ids;
         }
-        // 数字数组是外源性参数，保留不变
       }
-      // 其他情况（数字、空数组等）保留不变，因为可能是外源性参数
     }
   }
+  // 添加用户ID和域ID参数
+  if (selectedUserId.value.length > 0) {
+    if (!params.keyword || typeof params.keyword !== 'object' || Array.isArray(params.keyword)) {
+      params.keyword = {};
+    }
+    (params.keyword as Record<string, unknown>).userId = selectedUserId.value[0];
+    (params.keyword as Record<string, unknown>).domainId = selectedDomain.value?.id || '';
+  }
   return params;
-};
-
-// 提取静态配置对象，避免每次 computed 重新计算时创建新对象
-const userOptions = {
-  search: {
-    keyWordLikeFields: ['username'],
-  },
-  onBeforeRefresh: handleUserBeforeRefresh,
 };
 
 const roleOptions = {
@@ -225,83 +284,157 @@ const roleOptions = {
   onBeforeRefresh: handleRoleBeforeRefresh,
 };
 
-// 使用 shallowRef 存储 sections，减少深度响应式
-const drawerSections = shallowRef<any[]>([]);
-
-// 更新 sections 的函数
-function updateDrawerSections() {
-  const sections: any[] = [];
-
-  const userSection = {
-    key: 'users',
-    title: t('org.user_role_assign.drawer.subjectSectionTitle'),
-    transferProps: markRaw({
-      service: userService,
-      columns: userTransferColumns.value,
-      displayProp: 'username',
-      descriptionProp: 'realName',
-      rowKey: 'id',
-      collapsible: false,
-      options: userOptions,
-      // 不设置 maxHeight，让表格根据数据动态计算高度，但不超过穿梭框的可用空间
-    }),
-    modelValue: [...selectedUserKeys.value],
-  };
-  sections.push(userSection);
-
-  const roleSection = {
-    key: 'roles',
-    title: t('org.user_role_assign.drawer.roleSectionTitle'),
-      transferProps: markRaw({
-        service: roleService,
-        columns: roleTransferColumns.value,
-        displayProp: 'roleName',
-        descriptionProp: 'description',
-        rowKey: 'id',
-        collapsible: false,
-        options: roleOptions,
-        // 不设置 maxHeight，让表格根据数据动态计算高度，但不超过穿梭框的可用空间
-      }),
-    modelValue: [...selectedRoleKeys.value],
-  };
-  sections.push(roleSection);
-
-  drawerSections.value = sections;
-}
-
-// 使用 computed 来响应式返回 sections
-const drawerSectionsComputed = computed(() => {
-  // 只在抽屉可见时返回 sections，避免不必要的计算
-  if (!drawerVisible.value) {
-    return [];
-  }
-
-  // 如果 sections 为空，则初始化
-  if (drawerSections.value.length === 0) {
-    updateDrawerSections();
-  }
-
-  return drawerSections.value;
-});
-
-// 监听选择变化，只更新 modelValue，不重新创建对象
-watch([selectedUserKeys, selectedRoleKeys], () => {
-  if (drawerVisible.value && drawerSections.value.length > 0) {
-    const userSection = drawerSections.value.find(s => s.key === 'users');
-    const roleSection = drawerSections.value.find(s => s.key === 'roles');
-    if (userSection) {
-      userSection.modelValue = [...selectedUserKeys.value];
+// 角色穿梭框服务：只使用 userRoleService.data 方法，包装成 page 方法供 BtcTransferPanel 使用
+const roleTransferService = computed(() => ({
+  page: async (params: any) => {
+    // 如果没有选择用户，直接返回空数据，不调用 API
+    if (!selectedUserId.value || selectedUserId.value.length === 0) {
+      return { list: [], total: 0 };
     }
-    if (roleSection) {
-      roleSection.modelValue = [...selectedRoleKeys.value];
+
+    // 只使用 userRoleService.data 方法，参数格式和 page 完全一致
+    if (!userRoleService?.data) {
+      return { list: [], total: 0 };
+    }
+
+    const finalParams = { ...params };
+
+    // 确保 keyword 格式正确
+    if (!finalParams.keyword || typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
+      finalParams.keyword = {
+        username: '',
+        roleId: '',
+        domainId: selectedDomain.value?.id || '',
+        userId: selectedUserId.value[0],
+      };
+    } else {
+      if (finalParams.keyword.userId === undefined) {
+        finalParams.keyword.userId = selectedUserId.value[0];
+      }
+      if (finalParams.keyword.domainId === undefined) {
+        finalParams.keyword.domainId = selectedDomain.value?.id || '';
+      }
+      if (finalParams.keyword.username === undefined) {
+        finalParams.keyword.username = '';
+      }
+      if (finalParams.keyword.roleId === undefined) {
+        finalParams.keyword.roleId = '';
+      }
+    }
+
+    // 只使用 userRoleService.data 方法（不使用 page 方法）
+    const response = await userRoleService.data(finalParams);
+
+    // 处理返回数据：data 方法返回的可能是数组或对象
+    if (Array.isArray(response)) {
+      return { list: response, total: response.length };
+    } else if (response && typeof response === 'object' && 'list' in response) {
+      return response;
+    } else {
+      return { list: [], total: 0 };
+    }
+  },
+}));
+
+// 搜索用户（用于 el-select remote）
+const searchUsers = async (query: string) => {
+  if (!query) {
+    userOptions.value = [];
+    return;
+  }
+
+  userSearchLoading.value = true;
+  try {
+    const response = await userService.page?.({
+      page: 1,
+      size: 20,
+      keyword: query,
+    });
+    userOptions.value = response?.list || [];
+  } catch (error) {
+    console.error('[UserRoleAssign] search users error', error);
+    userOptions.value = [];
+  } finally {
+    userSearchLoading.value = false;
+  }
+};
+
+// 处理用户选择变化（el-select multiple 模式下，value 是数组）
+const handleUserChange = (value: (string | number)[]) => {
+  // 限制只能选择一个用户：如果选择了多个，只保留最后一个
+  if (value.length > 1) {
+    selectedUserId.value = [value[value.length - 1]];
+  } else {
+    selectedUserId.value = value;
+  }
+
+  // 选择后清空输入内容
+  if (selectedUserId.value.length > 0) {
+    nextTick(() => {
+      // 清空输入框内容
+      if (userSelectRef.value) {
+        // el-select filterable 模式的搜索输入框
+        const selectInput = userSelectRef.value.$el?.querySelector('.el-select__input');
+        if (selectInput) {
+          selectInput.value = '';
+          // 触发 input 事件让组件更新查询字符串
+          selectInput.dispatchEvent(new Event('input', { bubbles: true }));
+          // 尝试直接设置组件的查询字符串（Element Plus 内部使用 query）
+          if (userSelectRef.value.setQuery) {
+            userSelectRef.value.setQuery('');
+          } else if (userSelectRef.value.query) {
+            userSelectRef.value.query = '';
+          }
+        }
+      }
+      // 清空搜索关键字和选项
+      userOptions.value = [];
+    });
+  }
+
+  // 清空角色选择
+  selectedRoleKeys.value = [];
+  if (roleTransferRef.value) {
+    roleTransferRef.value.clearSelection?.();
+  }
+
+  // 刷新角色面板以加载可分配角色
+  if (selectedUserId.value.length > 0 && drawerVisible.value) {
+    roleTransferRef.value?.refresh?.();
+  }
+};
+
+// 处理移除用户
+const handleRemoveUser = () => {
+  selectedUserId.value = [];
+  selectedRoleKeys.value = [];
+  userOptions.value = [];
+
+  // 清空角色选择并刷新表格（确保数据被清空）
+  if (roleTransferRef.value) {
+    roleTransferRef.value.clearSelection?.();
+    // 刷新表格，由于没有用户，roleTransferService 会返回空数据
+    if (drawerVisible.value) {
+      roleTransferRef.value.refresh?.();
     }
   }
-}, { flush: 'post' });
+};
+
+// 处理下拉框显示状态：有选择时不允许打开下拉框
+const handleSelectVisibleChange = (visible: boolean) => {
+  // 如果有选择且下拉框要打开，强制关闭
+  if (visible && selectedUserId.value.length > 0) {
+    nextTick(() => {
+      userSelectRef.value?.blur?.();
+    });
+  }
+};
 
 function openDrawer() {
   // 清空之前的选择
-  selectedUserKeys.value = [];
+  selectedUserId.value = [];
   selectedRoleKeys.value = [];
+  userOptions.value = [];
   drawerVisible.value = true;
 }
 
@@ -309,22 +442,15 @@ function closeDrawer() {
   drawerVisible.value = false;
   // 延迟重置状态，确保抽屉关闭动画完成
   setTimeout(() => {
-    selectedUserKeys.value = [];
+    selectedUserId.value = [];
     selectedRoleKeys.value = [];
+    userOptions.value = [];
   }, 300);
-}
-
-function handleSectionKeys(payload: { key: string; keys: TransferKey[] }) {
-  if (payload.key === 'users') {
-    selectedUserKeys.value = [...payload.keys];
-  } else if (payload.key === 'roles') {
-    selectedRoleKeys.value = [...payload.keys];
-  }
 }
 
 async function handleSubmit() {
   // 验证是否选择了用户和角色
-  if (!selectedUserKeys.value || selectedUserKeys.value.length === 0) {
+  if (!selectedUserId.value || selectedUserId.value.length === 0) {
     BtcMessage.warning(t('org.user_role_assign.messages.selectUsers'));
     return;
   }
@@ -339,7 +465,7 @@ async function handleSubmit() {
     // 批量绑定模式：使用 bind
     // 后端要求 roleId 和 userId 都为数组格式
     await userRoleService?.bind?.({
-      userId: selectedUserKeys.value,
+      userId: selectedUserId.value,
       roleId: selectedRoleKeys.value,
     });
 
@@ -424,157 +550,120 @@ async function handleMultiUnbind(rows: any[]) {
   box-sizing: border-box;
 }
 
-// 修改穿梭框布局，禁用容器滚动条，让内部组件自己滚动
-:deep(.btc-transfer-drawer__content) {
+// 覆盖抽屉默认样式（只影响当前抽屉）
+:deep(.user-role-assign-drawer-wrapper) {
+  // drawer header 和 body 之间的分隔线
+  .el-drawer__header {
+    border-bottom: 1px solid var(--el-border-color-light);
+    // 保留默认的 margin-bottom，只添加分隔线
+  }
+
+  // 覆盖 footer 的默认边距和样式 - 使用更高优先级的选择器
+  &.el-drawer .el-drawer__footer,
+  .el-drawer__footer {
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+    text-align: left !important; // 覆盖默认的 right，因为我们使用 flex-start
+  }
+}
+
+// 抽屉布局样式
+.user-role-assign-drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
-:deep(.btc-transfer-drawer__splitter) {
-  height: 100%;
-
-  .el-splitter__panel {
-    overflow: hidden;
-  }
-
-  // 限制 panel-header 的高度
-  .btc-transfer-drawer__panel-header {
-    flex-shrink: 0;
-    height: auto;
-  }
-
-  // 限制 panel-body 的高度，减去 header 高度，不产生滚动条，让内部组件自己滚动
-  .btc-transfer-drawer__panel-body {
-    height: calc(100% - 48px) !important;
-    max-height: calc(100% - 48px) !important;
-    overflow: hidden;
-  }
-
-  // 限制 BtcTransferPanel 的高度，使用 flex 布局
-  .btc-transfer-panel {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  // 限制内部主内容区域的高度，使用 flex 布局
-  .btc-transfer-panel__main {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  // 限制 toolbar 高度
-  .btc-transfer-panel__toolbar {
-    flex-shrink: 0;
-    height: auto;
-    min-height: 40px;
-  }
-
-  // 限制 pagination 高度
-  .btc-transfer-panel__pagination-row {
-    flex-shrink: 0;
-    height: auto;
-    min-height: 40px;
-  }
-
-  // 限制表格行的高度，使用 flex 布局，让表格内部滚动
-  .btc-transfer-panel__table-row {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-
-    :deep(.el-col) {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    :deep(.btc-table) {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    :deep(.el-table) {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    :deep(.el-table__inner-wrapper) {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    :deep(.el-table__header-wrapper) {
-      flex-shrink: 0;
-    }
-
-    :deep(.el-table__body-wrapper) {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto !important;
-    }
-  }
-}
-
-.user-role-assign__drawer-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 16px;
-}
-
-.user-role-assign__transfer-section {
+.drawer-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: hidden;
+}
+
+.user-section {
+  flex: 0 0 auto;
+  min-height: auto;
+  max-height: 150px;
+  margin-bottom: 24px; // 用户主体和角色主体之间的间距
+}
+
+.role-section {
   flex: 1;
   min-height: 0;
-}
-
-.user-role-assign__section-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.user-role-assign__transfer-panel {
-  flex: 1;
-  min-height: 0;
-}
-
-.user-role-assign__drawer-header {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-.user-role-assign__drawer-title {
-  font-size: 18px;
+// 确保角色穿梭框左右部分的分隔线可见
+.role-section :deep(.btc-transfer-panel) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  // 确保左右两侧都有边框，形成分隔线效果
+  .btc-transfer-panel__main {
+    border: 1px solid var(--el-border-color-light);
+  }
+
+  .btc-transfer-panel__selected {
+    border: 1px solid var(--el-border-color-light);
+  }
+}
+
+.section-title {
+  font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+  flex-shrink: 0;
 }
 
-.user-role-assign__drawer-subtitle {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
+
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid var(--el-border-color-light); // 顶部分隔线
 }
 
+// 角色穿梭框样式 - 保持左右布局（BtcTransferPanel 默认就是左右布局）
+.role-section :deep(.btc-transfer-panel) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+</style>
+
+<style lang="scss">
+// 全局样式：覆盖角色绑定抽屉的样式（非 scoped，提高优先级）
+.user-role-assign-drawer-wrapper.el-drawer {
+  // drawer header 和 body 之间的分隔线
+  .el-drawer__header {
+    border-bottom: 1px solid var(--el-border-color-light) !important;
+    // 减少 header 的高度，使分隔线距离顶栏更近
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+    min-height: auto !important;
+  }
+
+  // 覆盖 footer 的默认边距和样式
+  .el-drawer__footer {
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+    text-align: left !important;
+  }
+}
 </style>
