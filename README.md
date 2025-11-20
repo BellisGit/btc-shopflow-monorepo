@@ -271,8 +271,8 @@ chore: 构建过程或辅助工具的变动
 
 ## 📞 联系方式
 
-- 项目维护者: BTC Team
-- 邮箱: support@btc-shopflow.com
+- 项目维护者: BTC IT Team
+- OutLook邮箱: mlu@bellis-technology.cn
 - 项目地址: https://github.com/BellisGit/btc-shopflow-monorepo
 
 ---
