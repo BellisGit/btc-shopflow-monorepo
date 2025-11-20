@@ -32,7 +32,6 @@ body,
 *,
 :before,
 :after {
-  box-sizing: border-box;
   border-width: 0;
   border-style: solid;
   border-color: #e5e7eb;
@@ -89,38 +88,8 @@ body,
   background-color: rgba(255, 255, 255, 0.4);
 }
 
-// 通用图标按钮样式（与 cool-admin 的 .cl-comm__icon 保持一致）
-.btc-comm__icon {
-  --btc-icon-color: var(--el-text-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 26px;
-  width: 26px;
-  background-color: color-mix(in srgb, var(--btc-icon-color) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--btc-icon-color) 35%, transparent);
-  border-radius: 6px;
-  transition: all 0.2s ease-in-out;
-  outline: none;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  .btc-svg {
-    font-size: 16px;
-    color: var(--btc-icon-color);
-  }
-
-  &:hover {
-    border-color: var(--btc-icon-color);
-    background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
-  }
-
-  &.is-disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-    pointer-events: none;
-  }
-}
+// 通用图标按钮样式已移至 @btc/shared-components/src/styles/index.scss
+// 不再在此处重复定义
 
 .btc-icon-button--breath {
   --btc-breath-color: var(--el-color-primary);

@@ -230,12 +230,12 @@ onMounted(async () => {
 .topbar {
   height: 47px;
   min-height: 47px;
-  width: 100%; // 相对于父容器 .app-layout__topbar 的宽度，不受滚动条影响
+  width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
   background-color: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
   display: flex;
   align-items: center;
-  box-sizing: border-box;
+  box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保边框包含在宽度内
   flex-shrink: 0;
   overflow: visible; // 确保内容不被裁切
 

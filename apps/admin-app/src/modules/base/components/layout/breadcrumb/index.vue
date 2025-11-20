@@ -285,7 +285,8 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   background-color: var(--el-bg-color);
   overflow: hidden;
   height: 39px; // 总高度 39px（包含 padding）
-  box-sizing: border-box;
+  width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
+  box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保边框包含在宽度内
 
   :deep(.el-breadcrumb) {
     font-size: 14px;

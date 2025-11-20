@@ -67,31 +67,8 @@ body {
 //   border: 1px dashed blue !important;
 // }
 
-// 通用图标按钮样式（与 cool-admin 的 .cl-comm__icon 保持一致）
-.btc-comm__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 26px;
-  width: 26px;
-  background-color: var(--el-bg-color);
-  border: 1px solid var(--el-fill-color-dark);
-  border-radius: 6px;
-  transition: all 0.2s ease-in-out;
-  outline: none;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  .btc-svg {
-    font-size: 16px;
-    color: var(--el-text-color-primary);
-  }
-
-  &:hover {
-    border-color: var(--el-color-primary);
-    background-color: transparent;
-  }
-}
+// 通用图标按钮样式已移至 @btc/shared-components/src/styles/index.scss
+// 不再在此处重复定义
 
 qiankun-head {
   display: none !important;

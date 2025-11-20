@@ -59,9 +59,10 @@ export default defineConfig({
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     },
     hmr: {
-      // 允许跨域热更新（主应用访问子应用时）
-      host: '0.0.0.0',
+      protocol: 'ws',
+      host: 'localhost', // HMR WebSocket 需要使用 localhost，浏览器无法连接 0.0.0.0
       port: 8085,
+      overlay: false, // 关闭热更新错误浮层，减少开销
     },
     fs: {
       strict: false,

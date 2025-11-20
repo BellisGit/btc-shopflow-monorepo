@@ -999,6 +999,54 @@ ul.topbar__left {
   }
 }
 
+// 通用图标按钮样式（与 cool-admin 的 .cl-comm__icon 保持一致）
+// 用于 btc-icon-button 组件的基础样式
+.btc-comm__icon {
+  --btc-icon-color: var(--el-text-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  width: 26px;
+  // 先设置基础边框颜色（使用 Element Plus 变量，确保初始渲染时有边框）
+  border: 1px solid var(--el-fill-color-dark);
+  // 如果支持 color-mix，则使用更精细的颜色混合（覆盖基础边框）
+  @supports (background-color: color-mix(in srgb, red 50%, blue)) {
+    border-color: color-mix(in srgb, var(--btc-icon-color) 35%, transparent);
+    background-color: color-mix(in srgb, var(--btc-icon-color) 6%, transparent);
+  }
+  // 如果不支持 color-mix，使用基础背景色
+  @supports not (background-color: color-mix(in srgb, red 50%, blue)) {
+    background-color: var(--el-bg-color);
+  }
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .btc-svg {
+    font-size: 16px;
+    color: var(--btc-icon-color);
+  }
+
+  &:hover {
+    border-color: var(--btc-icon-color);
+    @supports (background-color: color-mix(in srgb, red 50%, blue)) {
+      background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
+    }
+    @supports not (background-color: color-mix(in srgb, red 50%, blue)) {
+      background-color: transparent;
+    }
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
 // 覆盖 Element Plus Drawer 的默认 padding
 .el-drawer__body {
 	padding: 0 !important;

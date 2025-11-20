@@ -7,6 +7,7 @@
     white-space: nowrap;
     padding: 5px 5px 5px 10px;
     border-radius: 6px;
+    overflow: visible; // 确保头像边框完整显示，不被裁剪
 
     &:hover {
       background-color: var(--el-fill-color-light);
@@ -80,6 +81,7 @@
     position: relative;
     display: inline-block;
     border-radius: 50%;
+    overflow: visible; // 确保渐变边框完整显示，不被父容器裁剪
     // 炫彩渐变边框 - 亮色模式
     background: linear-gradient(135deg, #4F46E5, #EC4899, #06B6D4);
     // 暗色模式适配
@@ -108,7 +110,8 @@
       height: 100%;
       border-radius: 50%;
       border: 1px solid rgba(0, 0, 0, 0.1);
-      background-color: var(--el-bg-color);
+      box-sizing: border-box; // 确保 border 包含在宽高内，不会超出容器
+      overflow: hidden; // 确保图片不会超出圆形容器边界
     }
 
     // 小头像图片（原生 img 标签）
@@ -120,6 +123,8 @@
       border: 1px solid rgba(0, 0, 0, 0.1);
       background-color: var(--el-bg-color);
       object-fit: cover;
+      box-sizing: border-box; // 确保 border 包含在宽高内，不会超出容器
+      overflow: hidden; // 确保图片不会超出圆形容器边界
     }
 
     & .user-info__avatar-img {
@@ -131,12 +136,7 @@
       cursor: pointer;
       overflow: hidden;
       display: block;
-
-      :deep(.el-image__inner) {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
+      box-sizing: border-box; // 确保 border 包含在宽高内，不会超出容器
     }
   }
 }

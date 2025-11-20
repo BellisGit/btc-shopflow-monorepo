@@ -542,7 +542,8 @@ watch(
   background-color: var(--el-bg-color);
   overflow: hidden;
   height: 39px; // 与面包屑保持一致的高度
-  box-sizing: border-box;
+  width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
+  box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保边框包含在宽度内
   border-bottom: 1px solid var(--el-border-color-extra-light);
 
   &__op {

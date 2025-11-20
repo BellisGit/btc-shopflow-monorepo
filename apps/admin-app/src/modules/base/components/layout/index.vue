@@ -377,13 +377,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column; // 上下布局
   height: 100vh;
-  width: 100vw; // 使用 100vw 而不是 100%，避免滚动条出现/消失时导致宽度变化
+  width: 100%; // 使用 100% 而不是 100vw，避免滚动条导致裁切（与系统域一致）
   overflow: hidden;
   background-color: var(--bg-color);
 
   // 顶栏区域
   &__topbar {
-    width: 100%; // 相对于 .app-layout 的宽度（100vw），不受滚动条影响
+    width: 100%;
     flex-shrink: 0;
     z-index: 1000; // 确保顶栏在最上层
     overflow: visible; // 确保内容不被裁切
@@ -396,17 +396,16 @@ onUnmounted(() => {
     flex: 1;
     height: calc(100vh - 47px); // 减去顶栏高度
     overflow: hidden;
-    width: 100%; // 相对于 .app-layout 的宽度（100vw），不受滚动条影响
+    // 移除 width 和 box-sizing，让 flex 布局自动计算宽度
   }
 
   &__sidebar {
-    width: 255px;
+    width: 255px; // 使用 !important 确保宽度稳定
     height: 100%;
     background-color: transparent; // 背景色由菜单风格控制
     transition: width 0.2s ease-in-out;
     overflow: hidden;
-    flex-shrink: 0;
-    border-right: 1px solid var(--el-border-color-extra-light);
+    box-sizing: border-box; // 使用 !important 覆盖全局 border-box，与系统域保持一致
 
     // 双栏菜单模式：宽度为 274px（与顶栏搜索框对齐）
     .menu-type-dual-menu & {
@@ -421,30 +420,12 @@ onUnmounted(() => {
     height: 100%;
     overflow: hidden;
     min-width: 0; // 确保 flex 子元素可以收缩
-    // 移除 width: calc(100% - 255px)，只使用 flex: 1，避免滚动条出现/消失时导致宽度变化
-    // transition: width 0.2s ease-in-out; // 移除 transition，因为不再使用固定宽度
-
-    // 顶部菜单模式：全宽（flex: 1 已经处理）
-    // .menu-type-top & {
-    //   width: 100%;
-    // }
-
-    // 双栏菜单模式：flex: 1 已经处理
-    // .menu-type-dual-menu & {
-    //   width: calc(100% - 274px);
-    // }
-
-    // 混合菜单模式：flex: 1 已经处理
-    // .menu-type-top-left & {
-    //   width: calc(100% - 255px);
-    // }
   }
 
   // 顶部区域容器（顶栏、tabbar、面包屑的统一容器）
   &__header {
     flex-shrink: 0;
-    width: 100%; // 相对于 .app-layout__main 的宽度，不受滚动条影响
-    box-sizing: border-box;
+    width: 100%; // 与系统域一致，移除 !important
   }
 
   &__mask {
@@ -464,13 +445,12 @@ onUnmounted(() => {
     flex-direction: column;
     overflow: hidden;
     margin: 10px; // 统一四周间距（包含与 header 之间的间距）
-    // 移除 width: calc(100% - 20px)，使用 flex 布局自动计算宽度，避免滚动条出现/消失时导致宽度变化
+    width: calc(100% - 20px); // 减去左右 margin（与系统域一致，移除 !important）
     box-sizing: border-box;
     border-radius: 6px;
     position: relative;
     background-color: var(--el-bg-color);
     min-height: 0;
-    min-width: 0; // 确保 flex 子元素可以收缩
 
 
     // 主应用路由视图（占据内容区域完整尺寸）
@@ -494,10 +474,12 @@ onUnmounted(() => {
       position: static !important;
       display: flex;
       flex-direction: column;
-      width: 100%;
+      width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
       flex: 1;
       min-height: 0;
+      min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
       padding: 0 !important;
+      box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保宽度计算一致
       background-color: var(--el-bg-color) !important;
     }
 
