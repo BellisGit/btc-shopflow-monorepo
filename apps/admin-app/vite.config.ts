@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { fileURLToPath, URL } from 'node:url';
@@ -20,6 +21,7 @@ const withRoot = (relativePath: string) =>
   resolve(fileURLToPath(new URL('../..', import.meta.url)), relativePath);
 
 export default defineConfig({
+  base: '/', // 明确设置为根路径，与其他子应用保持一致
   resolve: {
     alias: {
       '@': withSrc('src'),
@@ -31,7 +33,7 @@ export default defineConfig({
       '@btc/shared-core': withPackages('shared-core/src'),
       '@btc/shared-components': withPackages('shared-components/src'),
       '@btc/shared-utils': withPackages('shared-utils/src'),
-      '@btc/subapp-manifests': withPackages('subapp-manifests/dist/index.js'),
+      '@btc/subapp-manifests': withPackages('subapp-manifests/src/index.ts'),
       '@btc-common': withPackages('shared-components/src/common'),
       '@btc-components': withPackages('shared-components/src/components'),
       '@btc-styles': withPackages('shared-components/src/styles'),
@@ -51,7 +53,7 @@ export default defineConfig({
       'element-plus/es': 'element-plus/es',
       'element-plus/dist': 'element-plus/dist',
     },
-    dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],
+    dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [
     titleInjectPlugin(),
@@ -69,7 +71,7 @@ export default defineConfig({
       configFile: withRoot('uno.config.ts'),
     }),
     btc({
-      type: 'admin',
+      type: 'subapp',
       proxy,
       eps: {
         enable: true,
@@ -80,13 +82,16 @@ export default defineConfig({
         skipNames: ['base', 'icons'],
       },
     }),
+    qiankun('admin', {
+      useDevMode: true,
+    }),
     VueI18nPlugin({
       include: [
         fileURLToPath(new URL('./src/{modules,plugins}/**/locales/**', import.meta.url)),
         fileURLToPath(new URL('../../packages/shared-components/src/locales/**', import.meta.url)),
+        fileURLToPath(new URL('../../packages/shared-components/src/plugins/**/locales/**', import.meta.url)),
         fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts', import.meta.url)),
         fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts', import.meta.url)),
-        fileURLToPath(new URL('./src/plugins/user-setting/locales/**', import.meta.url)),
       ],
       runtimeOnly: true,
     }),
@@ -95,11 +100,20 @@ export default defineConfig({
     charset: 'utf8',
   },
   server: {
-    port: 8080,
+    port: 8081,
     host: '0.0.0.0',
     strictPort: false,
+    cors: true,
+    origin: 'http://localhost:8081',
     headers: {
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    },
+    hmr: {
+      // HMR WebSocket 需要使用 localhost，浏览器无法连接 0.0.0.0
+      host: 'localhost',
+      port: 8081,
     },
     proxy,
     fs: {
@@ -112,20 +126,14 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [
-      'vue',
-      'vue-router',
-      'pinia',
-      'element-plus',
-      '@element-plus/icons-vue',
-      '@vueuse/core',
-      'axios',
-      '@btc/shared-core',
-    ],
+    // 启用依赖预构建，让 Vite 自动发现并预构建依赖（包括 dayjs 和 element-plus）
+    include: ['dayjs', 'element-plus'], // 明确包含 dayjs 和 element-plus，确保正确预构建
   },
   build: {
+    target: 'es2020', // 兼容 ES 模块的最低目标
     rollupOptions: {
       output: {
+        format: 'esm', // 明确指定输出格式为 ESM
         manualChunks(id) {
           if (id.includes('src/') && !id.includes('node_modules')) {
             if (id.includes('src/modules')) {

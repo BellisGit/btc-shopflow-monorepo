@@ -160,12 +160,12 @@ class RequestLogQueue {
         }
 
         // 检查服务是否可用
-        if (!service?.system?.log?.sys?.request?.update) {
+        if (!service?.admin?.log?.sys?.request?.update) {
           throw new Error('请求日志服务不可用');
         }
 
         // 批量发送：将所有日志作为数组一次性发送
-        return await service.system.log.sys.request.update(logsToSend);
+        return await service.admin.log.sys.request.update(logsToSend);
       });
 
       // 发送成功，重置状态

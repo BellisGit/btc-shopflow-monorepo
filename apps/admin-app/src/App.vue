@@ -1,33 +1,102 @@
 <template>
-  <router-view />
-  <RetryStatusIndicator />
+  <div :class="['admin-app', { 'is-standalone': isStandalone }]">
+    <div class="admin-app__container" ref="containerRef">
+      <router-view v-slot="{ Component, route }">
+        <transition name="slide-left" mode="out-in">
+          <div :key="route.fullPath" ref="contentRef" class="admin-app__page">
+            <component :is="Component" />
+          </div>
+        </transition>
+      </router-view>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { initEpsData } from '@btc/shared-core';
-import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { provideContentHeight } from '@btc/shared-components';
 
-import epsData from 'virtual:eps';
+defineOptions({
+  name: 'AdminApp',
+});
 
-// 初始化 EPS 数据
+const route = useRoute();
+const viewKey = ref(1);
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+const emitter = (window as any).__APP_EMITTER__;
+const containerRef = ref<HTMLElement | null>(null);
+const contentRef = ref<HTMLElement | null>(null);
+const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
+
+// 刷新视图
+function refreshView() {
+  viewKey.value += 1;
+}
+
 onMounted(() => {
-  try {
-    initEpsData(epsData);
-  } catch (error) {
-    console.error('[App] Failed to load EPS data:', error);
+  if (emitter) {
+    emitter.on('subapp.refresh', refreshView);
   }
+  registerContentHeight(contentRef.value);
+  const handleWindowResize = () => emitContentResize();
+  window.addEventListener('resize', handleWindowResize);
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleWindowResize);
+  });
+});
+
+onUnmounted(() => {
+  if (emitter) {
+    emitter.off('subapp.refresh', refreshView);
+  }
+});
+
+watch(contentRef, (el) => {
+  registerContentHeight(el ?? null);
+  emitContentResize();
 });
 </script>
 
-<style>
-#app {
+<style scoped>
+.admin-app {
+  flex: 1;
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-#main-app {
+.admin-app.is-standalone {
+  padding: 20px;
+}
+
+.admin-app__container {
+  flex: 1;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-app__page {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-app__page > * {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 </style>

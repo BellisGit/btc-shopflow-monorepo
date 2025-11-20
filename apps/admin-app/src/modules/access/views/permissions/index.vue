@@ -34,7 +34,7 @@ const message = useMessage();
 const crudRef = ref();
 
 // 权限服务 - 使用EPS服务
-const permissionService = service.system?.iam?.permission;
+const permissionService = service.admin?.iam?.permission;
 
 // 添加delete确认
 const wrappedService = {

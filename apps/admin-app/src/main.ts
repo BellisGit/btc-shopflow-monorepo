@@ -1,29 +1,60 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import { bootstrap } from './bootstrap';
-import { service } from './services/eps';
+import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
+import type { QiankunProps } from '@btc/shared-core';
+import {
+  createAdminApp,
+  mountAdminApp,
+  unmountAdminApp,
+  updateAdminApp,
+} from './bootstrap';
+import type { AdminAppContext } from './bootstrap';
 
-const app = createApp(App);
+let context: AdminAppContext | null = null;
 
-// 将 service 暴露到全局，供共享组件使用
-if (typeof window !== 'undefined') {
-  (window as any).__BTC_SERVICE__ = service;
+const render = (props: QiankunProps = {}) => {
+  if (context) {
+    unmountAdminApp(context);
+    context = null;
+  }
+
+  context = createAdminApp(props);
+  mountAdminApp(context, props);
+};
+
+// qiankun 生命周期钩子（标准 ES 模块导出格式）
+function bootstrap() {
+  // bootstrap 阶段不需要做任何初始化工作，所有初始化都在 mount 阶段完成
+  // 直接返回已 resolve 的 Promise，避免超时警告
+  return Promise.resolve();
 }
 
-// 启动
-bootstrap(app)
-  .then(() => {
-    app.mount('#app');
+async function mount(props: QiankunProps) {
+  render(props);
+}
 
-    // 应用挂载后，延迟关闭 Loading
-    setTimeout(() => {
-      const el = document.getElementById('Loading');
-      if (el) {
-        el.classList.add('is-hide');
-      }
-    }, 300);
-  })
-  .catch(err => {
-    console.error('BTC Shopflow 启动失败', err);
-  });
+async function unmount(props: QiankunProps = {}) {
+  if (context) {
+    unmountAdminApp(context, props);
+    context = null;
+  }
+}
+
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+renderWithQiankun({
+  bootstrap,
+  mount,
+  async update(props: QiankunProps) {
+    if (context) {
+      updateAdminApp(context, props);
+    }
+  },
+  unmount,
+});
+
+// 标准 ES 模块导出（qiankun 需要）
+export default { bootstrap, mount, unmount };
+
+// 独立运行（非 qiankun 环境）
+if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  render();
+}

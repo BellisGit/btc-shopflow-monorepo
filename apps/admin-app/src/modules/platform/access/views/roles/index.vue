@@ -36,12 +36,12 @@ const message = useMessage();
 const crudRef = ref();
 
 const roleService = {
-  ...service.system?.iam?.role,
+  ...service.admin?.iam?.role,
   delete: async (id: string | number) => {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.role?.delete(id);
+    await service.admin?.iam?.role?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -49,7 +49,7 @@ const roleService = {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.role?.deleteBatch(ids);
+    await service.admin?.iam?.role?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

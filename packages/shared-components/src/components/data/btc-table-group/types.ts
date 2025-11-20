@@ -34,6 +34,8 @@ export interface TableGroupProps {
   unassignedLabel?: string;
   showAddBtn?: boolean; // 是否显示新增按钮，默认 true
   showMultiDeleteBtn?: boolean; // 是否显示批量删除按钮，默认 true
+  showSearchKey?: boolean; // 是否显示搜索框，默认 true
+  showToolbar?: boolean; // 是否显示右侧工具栏按钮，默认 true
 
   // 样式配置
   leftWidth?: string;

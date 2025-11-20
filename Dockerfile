@@ -20,7 +20,7 @@ COPY packages/shared-components/package.json packages/shared-components/package.
 COPY packages/shared-utils/package.json packages/shared-utils/package.json
 COPY packages/vite-plugin/package.json packages/vite-plugin/package.json
 COPY apps/admin-app/package.json apps/admin-app/package.json
-COPY apps/docs-site/package.json apps/docs-site/package.json
+COPY apps/docs-site-app/package.json apps/docs-site-app/package.json
 COPY apps/engineering-app/package.json apps/engineering-app/package.json
 COPY apps/finance-app/package.json apps/finance-app/package.json
 COPY apps/logistics-app/package.json apps/logistics-app/package.json

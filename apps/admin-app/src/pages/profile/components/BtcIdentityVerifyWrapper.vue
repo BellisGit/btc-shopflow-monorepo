@@ -79,7 +79,7 @@ const message = useMessage();
 // EPS 服务：POST /api/system/base/phone/bind
 // 参数：phone（必填），smsType（默认 'bind'）
 const sendSmsCodeForBind = async (phone: string) => {
-  const phoneService = service.system?.base?.phone;
+  const phoneService = service.admin?.base?.phone;
   if (!phoneService?.bind) {
     throw new Error('手机号服务不可用');
   }
@@ -93,7 +93,7 @@ const sendSmsCodeForBind = async (phone: string) => {
 // EPS 服务：POST /api/system/base/email/bind
 // 邮箱接口需要传递 email（必填）和 smsType（默认 'bind'）
 const sendEmailCodeForBind = async (email: string, smsType?: string) => {
-  const emailService = service.system?.base?.email;
+  const emailService = service.admin?.base?.email;
   if (!emailService?.bind) {
     throw new Error('邮箱服务不可用');
   }
@@ -109,7 +109,7 @@ const sendEmailCodeForBind = async (email: string, smsType?: string) => {
 // EPS 服务：POST /api/system/base/phone/send
 // 参数：type（默认 'auth'，后端兼容 smsType）
 const sendSmsCodeForVerify = async () => {
-  const phoneService = service.system?.base?.phone;
+  const phoneService = service.admin?.base?.phone;
   if (!phoneService?.send) {
     throw new Error('手机号服务不可用');
   }
@@ -123,7 +123,7 @@ const sendSmsCodeForVerify = async () => {
 // EPS 服务：POST /api/system/base/email/send
 // 参数：type（默认 'auth'，后端兼容 scene / smsType）
 const sendEmailCodeForVerify = async () => {
-  const emailService = service.system?.base?.email;
+  const emailService = service.admin?.base?.email;
   if (!emailService?.send) {
     throw new Error('邮箱服务不可用');
   }
@@ -172,7 +172,7 @@ const extractResponse = (result: any) => {
 // 验证流程：POST /api/system/base/phone/verify
 // 绑定流程：PUT /api/system/base/phone/update（saveBinding 中处理）
 const verifySmsCode = async (_phone: string, smsCode: string, smsType?: string) => {
-  const phoneService = service.system?.base?.phone;
+  const phoneService = service.admin?.base?.phone;
   if (!phoneService?.verify) {
     throw new Error('手机号服务不可用');
   }
@@ -197,7 +197,7 @@ const verifySmsCode = async (_phone: string, smsCode: string, smsType?: string) 
 // 绑定流程：PUT /api/system/base/email/update
 // 邮箱接口需要传递 code（验证码，必填）和 smsType（默认 'auth' 或 'bind'）
 const verifyEmailCode = async (_email: string, emailCode: string, smsType?: string) => {
-  const emailService = service.system?.base?.email;
+  const emailService = service.admin?.base?.email;
   if (!emailService?.verify) {
     throw new Error('邮箱服务不可用');
   }
@@ -220,7 +220,7 @@ const verifyEmailCode = async (_email: string, emailCode: string, smsType?: stri
 
 // 检查手机号绑定状态
 const checkPhoneBinding = async ({ type }: { type: 'phone' }) => {
-  const profileService = service.system?.base?.profile;
+  const profileService = service.admin?.base?.profile;
   if (!profileService) {
     throw new Error('用户信息服务不可用');
   }
@@ -229,7 +229,7 @@ const checkPhoneBinding = async ({ type }: { type: 'phone' }) => {
 
 // 检查邮箱绑定状态
 const checkEmailBinding = async ({ type }: { type: 'email' }) => {
-  const profileService = service.system?.base?.profile;
+  const profileService = service.admin?.base?.profile;
   if (!profileService) {
     throw new Error('用户信息服务不可用');
   }
@@ -246,9 +246,9 @@ const saveBinding = async (params: {
   scene?: string;
   emailCode?: string;
 }) => {
-  const profileService = service.system?.base?.profile;
-  const phoneService = service.system?.base?.phone;
-  const emailService = service.system?.base?.email;
+  const profileService = service.admin?.base?.profile;
+  const phoneService = service.admin?.base?.phone;
+  const emailService = service.admin?.base?.email;
 
   if (params.phone && params.smsCode) {
     if (!phoneService?.update) {

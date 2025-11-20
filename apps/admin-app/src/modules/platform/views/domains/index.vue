@@ -50,7 +50,7 @@ const tenantLabelMap = computed(() => {
 });
 
 const loadTenantOptions = async () => {
-  const tenantService = service.system?.iam?.tenant;
+  const tenantService = service.admin?.iam?.tenant;
 
   if (!tenantService || typeof tenantService.list !== 'function') {
     console.warn('[Domain] 租户列表服务不可用');
@@ -92,12 +92,12 @@ onMounted(() => {
 
 // 使用 EPS 域服务
 const wrappedDomainService = {
-  ...service.system?.iam?.domain,
+  ...service.admin?.iam?.domain,
   delete: async (id: string | number) => {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.domain?.delete(id);
+    await service.admin?.iam?.domain?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -105,7 +105,7 @@ const wrappedDomainService = {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.domain?.deleteBatch(ids);
+    await service.admin?.iam?.domain?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

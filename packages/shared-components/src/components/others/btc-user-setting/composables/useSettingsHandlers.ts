@@ -6,7 +6,7 @@
 import { useSettingsState } from './useSettingsState';
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
-import type { ButtonStyle } from '@btc/shared-core';
+import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
 /**
  * 设置处理器组合式函数
@@ -100,19 +100,36 @@ export function useSettingsHandlers() {
   const colorHandlers = {
     // 选择主题色
     selectColor: (color: string) => {
+      if (!color) {
+        console.warn('[Settings] selectColor: color is empty');
+        return;
+      }
+      
+      console.log('[Settings] selectColor called with:', color);
+      
       settingsState.setSystemThemeColor(color);
+      
       // 如果存在主题插件，也更新主题插件
+      // 使用静态导入，确保同步执行
       try {
-        // 动态导入主题插件以避免循环依赖
-        import('@btc/shared-core').then(({ useThemePlugin }) => {
-          const theme = useThemePlugin();
-          if (theme && theme.updateThemeColor) {
-            theme.updateThemeColor(color);
-          }
-        });
+        const theme = useThemePlugin();
+        console.log('[Settings] useThemePlugin result:', theme);
+        if (theme && theme.updateThemeColor) {
+          console.log('[Settings] Calling theme.updateThemeColor with:', color);
+          theme.updateThemeColor(color);
+        } else {
+          console.warn('[Settings] Theme plugin or updateThemeColor method not available');
+        }
       } catch (e) {
-        // 如果主题插件不可用，忽略错误
-        console.warn('Theme plugin not available:', e);
+        console.error('[Settings] Error calling useThemePlugin:', e);
+        // 如果主题插件不可用，尝试从全局获取
+        const globalTheme = (globalThis as any).__THEME_PLUGIN__ || (window as any).__THEME_PLUGIN__;
+        if (globalTheme && globalTheme.updateThemeColor) {
+          console.log('[Settings] Using global theme plugin');
+          globalTheme.updateThemeColor(color);
+        } else {
+          console.warn('[Settings] Theme plugin not available:', e);
+        }
       }
       // 触发页面重新加载或更新主题
       window.dispatchEvent(new CustomEvent('theme-color-change', { detail: { color } }));

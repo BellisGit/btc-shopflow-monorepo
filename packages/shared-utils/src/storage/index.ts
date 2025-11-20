@@ -46,6 +46,8 @@ class StorageUtil {
         'theme',
         'isDark',
         'username', // 用户名应该存储在 user.username 中
+        'user_avatar', // 头像应该存储在 user.avatar 中
+        'user_name', // 用户名应该存储在 user.name 中
       ];
       
       if (unifiedStorageKeys.includes(key)) {

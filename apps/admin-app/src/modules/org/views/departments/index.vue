@@ -56,7 +56,7 @@ const tableRef = ref();
 let detachCrudRefreshListener: (() => void) | null = null;
 
 // 部门服务 - 使用EPS服务（注意路径：api/system/iam/department）
-const departmentService = service.system?.iam?.department;
+const departmentService = service.admin?.iam?.department;
 
 // 部门选项数据
 const departmentOptions = ref<Array<{ label: string; value: string }>>([]);

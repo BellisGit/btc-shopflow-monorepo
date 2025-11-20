@@ -29,7 +29,13 @@ function handleLanguageChange(e: CustomEvent<{ locale: string }>) {
 
 function handleThemeChange(e: CustomEvent<{ color: string; dark: boolean }>) {
   if (themePlugin?.theme) {
-    themePlugin.theme.setThemeColor(e.detail.color, e.detail.dark);
+    // 检查当前颜色是否已经相同，避免不必要的调用和递归
+    const currentColor = themePlugin.theme.currentTheme.value?.color;
+    const currentDark = themePlugin.theme.isDark.value;
+    // 只有当颜色或暗黑模式不同时才更新
+    if (currentColor !== e.detail.color || currentDark !== e.detail.dark) {
+      themePlugin.theme.setThemeColor(e.detail.color, e.detail.dark);
+    }
   }
 }
 
@@ -132,59 +138,65 @@ function render(props: QiankunProps = {}) {
   }
 }
 
+// qiankun 生命周期钩子（标准 ES 模块导出格式）
+function bootstrap() {
+  // bootstrap 阶段不需要做任何初始化工作，所有初始化都在 mount 阶段完成
+  // 直接返回已 resolve 的 Promise，避免超时警告
+  return Promise.resolve(undefined);
+}
+
+async function mount(props: QiankunProps) {
+  render(props);
+
+  // 通知主应用：子应用已就绪
+  if (props.onReady) {
+    props.onReady();
+  }
+  window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'production' }}));
+}
+
+async function update(props: QiankunProps) {
+  if (props.locale && i18nPlugin?.i18n?.global) {
+    i18nPlugin.i18n.global.locale.value = props.locale as 'zh-CN' | 'en-US';
+  }
+}
+
+async function unmount(props: QiankunProps = {}) {
+  // ? 解绑路由监听器（防止幽灵事件）
+  if (routerUnwatch) {
+    routerUnwatch();
+    routerUnwatch = null;
+  }
+
+  // 清理子应用的 Tab 映射
+  if (props.clearTabs) {
+    props.clearTabs();
+  }
+
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    window.removeEventListener('language-change', handleLanguageChange as EventListener);
+    window.removeEventListener('theme-change', handleThemeChange as EventListener);
+  }
+
+  app?.unmount();
+  app = null;
+  router = null;
+  i18nPlugin = null;
+  themePlugin = null;
+}
+
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
 renderWithQiankun({
-  bootstrap() {
-    // 使用 queueMicrotask 确保在下一个事件循环中 resolve
-    // 避免模块加载阻塞导致的超时问题
-    return new Promise<void>((resolve, reject) => {
-      try {
-        queueMicrotask(() => {
-          resolve();
-        });
-      } catch (err) {
-        reject(err);
-      }
-    });
-  },
-  async mount(props: QiankunProps) {
-    render(props);
-
-    // 通知主应用：子应用已就绪
-    if (props.onReady) {
-      props.onReady();
-    }
-    window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'production' }}));
-  },
-  async update(props: QiankunProps) {
-    if (props.locale && i18nPlugin?.i18n?.global) {
-      i18nPlugin.i18n.global.locale.value = props.locale as 'zh-CN' | 'en-US';
-    }
-  },
-  async unmount(props: QiankunProps) {
-    // ? 解绑路由监听器（防止幽灵事件）
-    if (routerUnwatch) {
-      routerUnwatch();
-      routerUnwatch = null;
-    }
-
-    // 清理子应用的 Tab 映射
-    if (props.clearTabs) {
-      props.clearTabs();
-    }
-
-    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-      window.removeEventListener('language-change', handleLanguageChange as EventListener);
-      window.removeEventListener('theme-change', handleThemeChange as EventListener);
-    }
-
-    app?.unmount();
-    app = null;
-    router = null;
-    i18nPlugin = null;
-    themePlugin = null;
-  },
+  bootstrap,
+  mount,
+  update,
+  unmount,
 });
 
+// 标准 ES 模块导出（qiankun 需要）
+export default { bootstrap, mount, unmount };
+
+// 独立运行（非 qiankun 环境）
 if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   render();
 }

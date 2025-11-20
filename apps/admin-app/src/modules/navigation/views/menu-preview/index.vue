@@ -81,10 +81,10 @@ defineOptions({
 
 // Mock??
 const message = useMessage();
-const _userService = service.system?.iam?.user;
-const _roleService = service.system?.iam?.role;
+const _userService = service.admin?.iam?.user;
+const _roleService = service.admin?.iam?.role;
 
-const menuService = service.system?.iam?.menu;
+const menuService = service.admin?.iam?.menu;
 
 // ?????
 const roles = ref<any[]>([]);

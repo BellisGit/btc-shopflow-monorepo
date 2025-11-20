@@ -40,7 +40,7 @@ defineOptions({
 const route = useRoute();
 
 // 审计日志服务（操作日志）
-const rawAuditService = service.system?.log?.operation as any;
+const rawAuditService = service.admin?.log?.operation as any;
 function normalizePageResult(res: any) {
   if (!res) return { list: [], total: 0 };
   const list =

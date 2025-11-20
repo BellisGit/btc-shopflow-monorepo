@@ -33,15 +33,17 @@
             </slot>
           </div>
           <BtcFlex1 />
-          <BtcSearchKey :placeholder="searchPlaceholder" />
-          <BtcCrudActions>
-            <slot
-              name="actions"
-              :selected="selected"
-              :keyword="keyword"
-              :left-data="leftData"
-              :right-data="rightData"
-            />
+          <BtcSearchKey v-if="props.showSearchKey" :placeholder="searchPlaceholder" />
+          <BtcCrudActions v-if="props.showToolbar" :show-toolbar="props.op !== undefined">
+            <template #default>
+              <slot
+                name="actions"
+                :selected="selected"
+                :keyword="keyword"
+                :left-data="leftData"
+                :right-data="rightData"
+              />
+            </template>
           </BtcCrudActions>
         </BtcRow>
         <BtcRow>
@@ -118,6 +120,8 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   op: undefined, // 操作列配置，默认为 undefined
   showAddBtn: true, // 默认显示新增按钮
   showMultiDeleteBtn: true, // 默认显示批量删除按钮
+  showSearchKey: true, // 默认显示搜索框
+  showToolbar: true, // 默认显示右侧工具栏按钮
 });
 
 

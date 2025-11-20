@@ -47,7 +47,7 @@ export function useFormEditor({
       on: {
         submit: async (data, { close, done }) => {
           try {
-            const profileService = service.system?.base?.profile;
+            const profileService = service.admin?.base?.profile;
             if (!profileService) {
               BtcMessage.warning('用户信息服务不可用');
               done();
@@ -68,7 +68,7 @@ export function useFormEditor({
               }
 
               if (newPhone !== originalPhone && newPhone.trim() !== '') {
-                const phoneService = service.system?.base?.phone;
+                const phoneService = service.admin?.base?.phone;
                 if (!phoneService?.update) {
                   BtcMessage.warning('手机号服务不可用');
                   done();
@@ -98,7 +98,7 @@ export function useFormEditor({
               }
 
               if (newEmail !== originalEmail && newEmail.trim() !== '') {
-                const emailService = service.system?.base?.email;
+                const emailService = service.admin?.base?.email;
                 if (!emailService?.update) {
                   BtcMessage.warning('邮箱服务不可用');
                   done();

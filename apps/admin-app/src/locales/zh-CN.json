@@ -1,0 +1,22 @@
+{
+  "app.title": "管理系统",
+  "app.description": "系统管理、平台治理、组织与账号、访问控制",
+  "app.welcome": "欢迎使用管理系统",
+  "app.version": "版本 1.0.0",
+  "common.button.save": "保存",
+  "common.button.cancel": "取消",
+  "common.button.confirm": "确定",
+  "common.button.reset": "重置",
+  "common.button.submit": "提交",
+  "common.button.search": "搜索",
+  "common.button.add": "新增",
+  "common.button.edit": "编辑",
+  "common.button.delete": "删除",
+  "common.button.view": "查看",
+  "common.button.refresh": "刷新",
+  "common.message.success": "操作成功",
+  "common.message.error": "操作失败",
+  "common.message.warning": "警告",
+  "common.message.info": "提示"
+}
+

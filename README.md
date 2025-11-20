@@ -47,7 +47,7 @@ btc-shopflow-monorepo/
 │   ├── production-app/             # 生产应用
 │   ├── quality-app/                # 品质应用
 │   ├── engineering-app/            # 工程应用
-│   └── docs-site/                  # 文档站点
+│   └── docs-site-app/              # 文档站点
 ├── packages/                       # 共享包
 │   ├── shared-components/         # 共享组件库
 │   ├── shared-core/               # 核心功能库
@@ -255,7 +255,7 @@ chore: 构建过程或辅助工具的变动
 
 - [架构设计文档](./docs/cool-admin-vue-架构设计文档.md)
 - [实现文档](./implementation-docs/)
-- [组件文档](./apps/docs-site/)
+- [组件文档](./apps/docs-site-app/)
 
 ## 🤝 贡献指南
 

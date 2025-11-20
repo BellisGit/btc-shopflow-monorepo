@@ -11,4 +11,3 @@ export const setupStore = (app: App, store?: Pinia) => {
 };
 
 export type { Pinia };
-

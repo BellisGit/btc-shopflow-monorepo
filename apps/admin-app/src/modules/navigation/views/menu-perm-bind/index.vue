@@ -35,8 +35,8 @@ const { t } = useI18n();
 
 // Mock??
 const message = useMessage();
-const menuPermService = service.system?.iam?.department;
-const permissionService = service.system?.iam?.permission;
+const menuPermService = service.admin?.iam?.department;
+const permissionService = service.admin?.iam?.permission;
 
 // ????
 const allPermissions = ref<any[]>([]);

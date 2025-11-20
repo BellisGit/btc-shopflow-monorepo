@@ -508,10 +508,14 @@ export function ensureStandardTargets(state: EpsState): void {
       return normalizePrefix(item.prefix) === normalizedTargetPrefix;
     });
 
+    // 如果找到现有实体且已有 moduleKey，使用现有的 moduleKey，否则使用默认值
+    const defaultModuleKey = 'system.base';
+    const moduleKey = existing?.moduleKey || defaultModuleKey;
+
     const targetEntity = {
       ..._.cloneDeep(target),
       namespace: target.prefix,
-      moduleKey: 'system.base'
+      moduleKey: moduleKey
     };
 
     if (!targetEntity.columns) {
@@ -521,7 +525,10 @@ export function ensureStandardTargets(state: EpsState): void {
     if (existing) {
       existing.prefix = targetEntity.prefix;
       existing.namespace = targetEntity.namespace;
-      existing.moduleKey = targetEntity.moduleKey;
+      // 保留后端返回的 moduleKey，不要覆盖
+      if (!existing.moduleKey) {
+        existing.moduleKey = targetEntity.moduleKey;
+      }
       existing.api = mergeArrayBy(existing.api, targetEntity.api, 'name');
       existing.columns = mergeArrayBy(existing.columns, targetEntity.columns!, 'propertyName');
       existing.pageColumns = mergeArrayBy(existing.pageColumns, targetEntity.pageColumns || [], 'propertyName');

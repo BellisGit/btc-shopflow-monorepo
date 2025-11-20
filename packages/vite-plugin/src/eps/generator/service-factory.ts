@@ -1,5 +1,6 @@
 import { epsState, type EpsState } from './state';
 import { checkName, firstUpperCase, formatName, toCamel } from './utils';
+import { config } from '../../config';
 
 export function createService(_epsUrl: string, state: EpsState = epsState) {
   if (state.epsList.length === 0) {
@@ -11,18 +12,38 @@ export function createService(_epsUrl: string, state: EpsState = epsState) {
     const serviceKey = e.name ? e.name.toLowerCase().replace(/entity$/, '') : 'unknown';
 
     const prefix = e.prefix || '';
-    const pathParts = prefix.split('/').filter((part: string) => part && part !== 'admin' && part !== 'api').map((part: string) => toCamel(part));
+    let pathParts: string[] = [];
+    let finalKey: string;
+
+    // 优先使用 moduleKey（模块名称）来构建 service 树
+    if (e.moduleKey) {
+      // moduleKey 格式：admin.iam，需要转换为路径数组
+      // 所有部分都作为路径，最终键直接使用 name 属性
+      pathParts = e.moduleKey.split('.').map((part: string) => toCamel(part));
+      // 直接使用 name 属性作为实体名称
+      finalKey = e.name ? toCamel(e.name) : serviceKey;
+    } else {
+      // 如果没有 moduleKey，则从 prefix 解析路径（兼容历史数据）
+      // 过滤掉空字符串和 'api'，保留其他路径部分
+      pathParts = prefix.split('/').filter((part: string) => {
+        return part && part !== 'api';
+      }).map((part: string) => toCamel(part));
+      // 优先使用 name 属性，如果没有则从 pathParts 中取最后一个
+      finalKey = e.name ? toCamel(e.name) : (pathParts[pathParts.length - 1] || serviceKey);
+      // 如果使用 prefix 且没有 name，需要移除最后一个作为路径的一部分
+      if (pathParts.length > 0 && !e.name) {
+        pathParts = pathParts.slice(0, -1);
+      }
+    }
 
     let currentLevel = state.service;
-    for (let i = 0; i < pathParts.length - 1; i++) {
+    for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
       if (!currentLevel[part]) {
         currentLevel[part] = {};
       }
       currentLevel = currentLevel[part];
     }
-
-    const finalKey = pathParts[pathParts.length - 1] || serviceKey;
     if (!currentLevel[finalKey]) {
       currentLevel[finalKey] = {
         namespace: prefix,
@@ -112,6 +133,7 @@ export function createServiceCode(state: EpsState = epsState): { content: string
       if (!checkName(name)) continue;
 
       if (value.namespace) {
+        // 通过 namespace 匹配对应的 EPS 实体
         const normalizedNs = value.namespace.startsWith('/') ? value.namespace : `/${value.namespace}`;
         const item = state.epsList.find((e) => {
           const normalizedPrefix = (e.prefix || '').startsWith('/') ? (e.prefix || '') : `/${e.prefix || ''}`;

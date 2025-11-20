@@ -18,7 +18,7 @@ const pathsToClean = [
   'apps/engineering-app/node_modules/.vite',
   'apps/quality-app/node_modules/.vite',
   'apps/production-app/node_modules/.vite',
-  'apps/docs-site/node_modules/.vite',
+  'apps/docs-site-app/node_modules/.vite',
   
   // 应用的构建输出
   'apps/admin-app/dist',
@@ -26,7 +26,7 @@ const pathsToClean = [
   'apps/engineering-app/dist',
   'apps/quality-app/dist',
   'apps/production-app/dist',
-  'apps/docs-site/dist',
+  'apps/docs-site-app/dist',
   
   // 包的 Vite 缓存
   'packages/shared-core/node_modules/.vite',

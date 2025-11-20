@@ -136,3 +136,11 @@ export const requestAdapter: RequestAdapter = {
 
 export type { BaseAdapterOptions as RequestAdapterOptions };
 
+export const httpClient = http;
+
+export const getRetryStatus = () => http.getRetryStatus();
+
+export const resetRetryStatus = () => http.resetRetry();
+
+export const recreateResponseInterceptor = () => http.recreateResponseInterceptor();
+

@@ -6,20 +6,20 @@ import { appStorage } from '@/utils/app-storage';
 export function useUserInfo() {
   // 用户相关（需要在读取缓存之前初始化）
   const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
-  
+
   // 从个人信息服务获取的用户信息
   // 初始化时立即从缓存读取，避免闪烁
   const cachedUser = getUserInfo();
   const cachedAvatar = appStorage.user.getAvatar();
   const cachedName = appStorage.user.getName();
-  
+
   const profileUserInfo = ref<any>(
     (cachedAvatar || cachedName) ? {
       name: cachedName || cachedUser?.name || '',
       avatar: cachedAvatar || cachedUser?.avatar || '/logo.png',
     } : null
   );
-  
+
   // 初始化显示名称
   const displayedName = ref(cachedName || cachedUser?.name || '');
 
@@ -31,7 +31,7 @@ export function useUserInfo() {
   // 监听用户信息更新事件
   const handleUserInfoUpdated = (event: CustomEvent) => {
     const { avatar, name } = event.detail || {};
-    
+
     // 更新统一存储
     if (avatar) {
       appStorage.user.setAvatar(avatar);
@@ -39,7 +39,7 @@ export function useUserInfo() {
     if (name) {
       appStorage.user.setName(name);
     }
-    
+
     // 更新 profileUserInfo，触发响应式更新
     if (profileUserInfo.value) {
       profileUserInfo.value = {
@@ -58,7 +58,7 @@ export function useUserInfo() {
         position: currentUser?.position || '',
       };
     }
-    
+
     // 更新显示名称
     if (name) {
       displayedName.value = name;
@@ -120,8 +120,12 @@ export function useUserInfo() {
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
-      const profileService = service.system?.base?.profile;
+      const profileService = service.admin?.base?.profile;
       if (!profileService) {
+        return;
+      }
+
+      if (!profileService.info) {
         return;
       }
 
@@ -130,7 +134,7 @@ export function useUserInfo() {
         const cachedUser = getUserInfo();
         const cachedAvatar = appStorage.user.getAvatar();
         const cachedName = appStorage.user.getName();
-        
+
         if (cachedAvatar || cachedName) {
           profileUserInfo.value = {
             name: cachedName || (cachedUser?.name || ''),

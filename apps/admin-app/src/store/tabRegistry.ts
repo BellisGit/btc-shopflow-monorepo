@@ -51,6 +51,9 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'strategy-designer': { key: 'strategy-designer', title: 'Strategy Designer', path: '/admin/strategy/designer', i18nKey: 'menu.strategy.designer' },
     'strategy-monitor': { key: 'strategy-monitor', title: 'Strategy Monitor', path: '/admin/strategy/monitor', i18nKey: 'menu.strategy.monitor' },
 
+    // 数据治理
+    'governance-files-templates': { key: 'governance-files-templates', title: 'Controlled Files', path: '/admin/governance/files/templates', i18nKey: 'menu.data.files.templates' },
+
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/admin/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
     'ops-logs-request': { key: 'ops-logs-request', title: 'Request Log', path: '/admin/ops/logs/request', i18nKey: 'menu.ops.request_log' },
@@ -109,6 +112,11 @@ function extractKey(pathname: string, app: string): string {
  * 解析 Tab 元数据
  */
 export function resolveTabMeta(pathname: string): TabMeta | null {
+  // 个人信息页面不在菜单中，不需要 TabMeta
+  if (pathname === '/profile') {
+    return null;
+  }
+
   const app = getActiveApp(pathname);
 
   // 管理域：从 registry 查找（静态配置）
@@ -118,6 +126,42 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
     if (appDict && appDict[key]) {
       return appDict[key];
     }
+    
+    // 如果精确匹配失败，尝试匹配动态路由
+    // 例如：/admin/org/departments/123/roles -> org-departments-123-roles
+    // 应该匹配：org-dept-role-bind（对应路径 /admin/org/departments/:id/roles）
+    if (appDict) {
+      // 移除路径中的数字参数，然后尝试匹配
+      const pathWithoutNumbers = key.replace(/-\d+-/g, '-').replace(/-\d+$/g, '').replace(/^\d+-/g, '');
+      
+      // 尝试匹配所有 registry key，查找路径模式匹配的
+      for (const [registryKey, tabMeta] of Object.entries(appDict)) {
+        // 如果 registry key 对应的路径模式与当前路径匹配
+        // 例如：org-dept-role-bind 的路径是 /admin/org/departments/:id/roles
+        // 提取路径模式：org-departments-:id-roles -> org-departments-roles（移除 :id）
+        const registryPath = tabMeta.path.replace(/\/admin/, '').replace(/^\//, '').replace(/\/:id\//g, '/').replace(/\/:id$/g, '').replace(/\//g, '-');
+        const currentPathPattern = pathWithoutNumbers;
+        
+        // 如果路径模式匹配（忽略参数位置）
+        if (registryPath === currentPathPattern || 
+            (registryPath.includes('dept') && currentPathPattern.includes('departments')) ||
+            (registryPath.includes('role') && currentPathPattern.includes('roles'))) {
+          // 进一步验证：检查关键路径段是否匹配
+          const registrySegments = registryPath.split('-').filter(s => s.length > 2);
+          const currentSegments = currentPathPattern.split('-').filter(s => s.length > 2);
+          
+          // 如果关键段匹配度足够高，返回该 tabMeta
+          const matchCount = registrySegments.filter(regSeg => 
+            currentSegments.some(curSeg => regSeg.includes(curSeg) || curSeg.includes(regSeg))
+          ).length;
+          
+          if (matchCount >= Math.min(registrySegments.length, currentSegments.length) * 0.6) {
+            return tabMeta;
+          }
+        }
+      }
+    }
+    
     return null;
   }
 

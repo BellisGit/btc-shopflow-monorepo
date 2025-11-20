@@ -13,8 +13,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
-    "prepare": "pnpm run build"
+    "build": "node ../../scripts/run-without-env.js tsup src/index.ts --format esm --dts --clean",
+    "prepare": "node ../../scripts/run-without-env.js tsup src/index.ts --format esm --dts --clean"
   },
   "devDependencies": {
     "tsup": "^7.3.0",

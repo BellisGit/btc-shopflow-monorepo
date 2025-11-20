@@ -49,8 +49,8 @@ const selectedRoles = ref<any[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const departmentService = service.system?.iam?.department;
-const roleService = service.system?.iam?.role;
+const departmentService = service.admin?.iam?.department;
+const roleService = service.admin?.iam?.role;
 
 // 加载部门信息
 const loadDeptInfo = async () => {

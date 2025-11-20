@@ -22,7 +22,7 @@ services:
     image: btc-shopflow/system-app:latest
     container_name: btc-system-app
     ports:
-      - "8082:80"
+      - "8080:80"
     restart: unless-stopped
 
   # 可按需取消注释以启用更多子应用
@@ -35,7 +35,7 @@ services:
     image: btc-shopflow/engineering-app:latest
     container_name: btc-engineering-app
     ports:
-      - "8083:80"
+      - "8085:80"
     restart: unless-stopped
 
   finance-app:
@@ -47,7 +47,7 @@ services:
     image: btc-shopflow/finance-app:latest
     container_name: btc-finance-app
     ports:
-      - "8084:80"
+      - "8086:80"
     restart: unless-stopped
 
   logistics-app:
@@ -59,7 +59,7 @@ services:
     image: btc-shopflow/logistics-app:latest
     container_name: btc-logistics-app
     ports:
-      - "8085:80"
+      - "8082:80"
     restart: unless-stopped
 
   production-app:
@@ -71,7 +71,7 @@ services:
     image: btc-shopflow/production-app:latest
     container_name: btc-production-app
     ports:
-      - "8086:80"
+      - "8084:80"
     restart: unless-stopped
 
   quality-app:
@@ -83,19 +83,19 @@ services:
     image: btc-shopflow/quality-app:latest
     container_name: btc-quality-app
     ports:
-      - "8087:80"
+      - "8083:80"
     restart: unless-stopped
 
-  docs-site:
+  docs-site-app:
     build:
       context: .
       dockerfile: ./Dockerfile
       args:
-        APP_DIR: apps/docs-site
-    image: btc-shopflow/docs-site:latest
-    container_name: btc-docs-site
+        APP_DIR: apps/docs-site-app
+    image: btc-shopflow/docs-site-app:latest
+    container_name: btc-docs-site-app
     ports:
-      - "8090:80"
+      - "8087:80"
     restart: unless-stopped
 
   mobile-app:

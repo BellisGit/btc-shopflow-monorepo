@@ -103,6 +103,6 @@ export const getUserFormItems = (departmentOptions: any[] = []): FormItem[] => {
 
 // 服务配置 - 直接传递服务对象，让组件自动处理参数
 export const services = {
-  sysdepartment: service.system?.iam?.department,
-  sysuser: service.system?.iam?.user
+  sysdepartment: service.admin?.iam?.department,
+  sysuser: service.admin?.iam?.user
 };

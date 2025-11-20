@@ -38,12 +38,12 @@ const domainService = {
   list: (params?: any) => {
     // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
     const finalParams = params || {};
-    return service.system?.iam?.domain?.list(finalParams);
+    return service.admin?.iam?.domain?.list(finalParams);
   }
 };
 
 // 资源服务（右侧表）- 使用EPS服务
-const resourceService = service.system?.iam?.resource;
+const resourceService = service.admin?.iam?.resource;
 
 const wrappedResourceService = {
   ...resourceService,

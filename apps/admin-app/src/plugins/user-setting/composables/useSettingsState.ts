@@ -205,8 +205,18 @@ function createSettingsState() {
    * UI 层面的限制在 menu-style 组件中处理
    */
   function switchMenuStyles(theme: MenuThemeEnum) {
+    // 如果主题相同，直接返回，避免重复调用
+    if (menuThemeType.value === theme) {
+      return;
+    }
+    
     menuThemeType.value = theme;
-    appStorage.settings.setItem('menuThemeType', theme);
+    
+    // 检查存储中的值是否已经相同，避免不必要的更新
+    const currentSettings = appStorage.settings.get();
+    if (currentSettings.menuThemeType !== theme) {
+      appStorage.settings.setItem('menuThemeType', theme);
+    }
   }
 
   /**

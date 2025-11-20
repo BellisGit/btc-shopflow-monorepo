@@ -60,8 +60,8 @@ const selectedRoles = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const userService = service.system?.iam?.user;
-const roleService = service.system?.iam?.role;
+const userService = service.admin?.iam?.user;
+const roleService = service.admin?.iam?.role;
 
 // 加载用户信息
 const loadUserInfo = async () => {

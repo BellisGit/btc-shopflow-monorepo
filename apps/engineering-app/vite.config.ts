@@ -55,6 +55,13 @@ export default defineConfig({
     strictPort: false,
     headers: {
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    },
+    hmr: {
+      // 允许跨域热更新（主应用访问子应用时）
+      host: '0.0.0.0',
+      port: 8085,
     },
     fs: {
       strict: false,

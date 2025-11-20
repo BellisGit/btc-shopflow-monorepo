@@ -1,44 +1,87 @@
 <template>
-  <BtcCrud ref="crudRef" :service="inventoryService">
-    <BtcRow>
-      <div class="btc-crud-primary-actions">
-        <BtcRefreshBtn />
-        <BtcAddBtn />
-        <BtcMultiDeleteBtn />
-      </div>
-      <BtcFlex1 />
-      <BtcSearchKey />
-      <BtcCrudActions>
-        <BtcExportBtn :filename="t('menu.data.inventory')" />
-      </BtcCrudActions>
-    </BtcRow>
+  <div class="inventory-check-page">
+    <BtcTableGroup
+      ref="tableGroupRef"
+      :left-service="checkService"
+      :right-service="wrappedResultService"
+      :table-columns="resultColumns"
+      :form-items="resultFormItems"
+      :op="{ buttons: opButtons }"
+      :left-title="t('inventory.check.list')"
+      :right-title="t('inventory.result.title')"
+      :search-placeholder="t('inventory.result.search_placeholder')"
+      :show-unassigned="false"
+      :enable-key-search="true"
+      :left-size="'small'"
+      :show-add-btn="false"
+      :show-multi-delete-btn="false"
+      @select="onCheckSelect"
+    />
 
-    <BtcRow>
-      <BtcTable
-        ref="tableRef"
-        :columns="columns"
-        :op="{ buttons: ['edit', 'delete'] }"
-        border
-      />
-    </BtcRow>
-
-    <BtcRow>
-      <BtcFlex1 />
-      <BtcPagination />
-    </BtcRow>
-
-    <BtcUpsert ref="upsertRef" :items="formItems" width="720px" />
-  </BtcCrud>
+    <!-- 详情弹窗 -->
+    <BtcDialog
+      v-model="detailVisible"
+      :title="t('inventory.result.detail.title')"
+      width="800px"
+    >
+      <el-descriptions :column="2" border>
+        <el-descriptions-item :label="t('system.inventory.base.fields.checkNo')">
+          {{ detailRow?.baseId || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.material.fields.materialCode')">
+          {{ detailRow?.materialCode || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.material.fields.materialName')">
+          {{ detailRow?.materialName || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.material.fields.specification')">
+          {{ detailRow?.specification || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.material.fields.unit')">
+          {{ detailRow?.unit || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('inventory.result.fields.batchNo')">
+          {{ detailRow?.batchNo || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.material.fields.expireCycle')">
+          {{ detailRow?.validity || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('inventory.result.fields.storageLocation')">
+          {{ detailRow?.storageLocation || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('inventory.result.fields.diffRate')">
+          {{ detailRow?.diffRate || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('inventory.result.fields.isDiff')">
+          <el-tag :type="detailRow?.isDiff === 1 ? 'danger' : 'success'">
+            {{ detailRow?.isDiff === 1 ? t('common.yes') : t('common.no') }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.inventory.base.fields.checkerId')">
+          {{ detailRow?.checkerId || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.inventory.base.fields.createdAt')">
+          {{ detailRow?.createdAt || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('system.inventory.base.fields.remark')" :span="2">
+          {{ detailRow?.remark || '-' }}
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailVisible = false">{{ t('common.button.close') }}</el-button>
+      </template>
+    </BtcDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import type { FormItem, TableColumn } from '@btc/shared-components';
+import { ref, computed } from 'vue';
 import { BtcConfirm } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { service } from '@/services/eps';
-import type { CrudService } from '@btc/shared-core';
 import { useI18n } from '@btc/shared-core';
+import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcTableGroup } from '@btc/shared-components';
+import { service } from '@/services/eps';
 
 defineOptions({
   name: 'BtcDataInventoryCheck'
@@ -46,121 +89,143 @@ defineOptions({
 
 const { t } = useI18n();
 const message = useMessage();
-const crudRef = ref();
-const tableRef = ref();
-const upsertRef = ref();
+const tableGroupRef = ref();
+const selectedCheck = ref<any>(null);
+const detailVisible = ref(false);
+const detailRow = ref<any>(null);
 
-const rawService = service.system?.base?.check;
+// 盘点列表服务（左侧）- 使用示例数据
+const checkService = {
+  list: async (params?: any) => {
+    // 示例数据：测试盘1，测试盘2，测试盘3，初盘，复盘，终盘
+    const mockData = [
+      { id: 1, name: '测试盘1', checkNo: 'CHECK001', checkType: '测试', status: '已完成' },
+      { id: 2, name: '测试盘2', checkNo: 'CHECK002', checkType: '测试', status: '已完成' },
+      { id: 3, name: '测试盘3', checkNo: 'CHECK003', checkType: '测试', status: '进行中' },
+      { id: 4, name: '初盘', checkNo: 'CHECK004', checkType: '初盘', status: '已完成' },
+      { id: 5, name: '复盘', checkNo: 'CHECK005', checkType: '复盘', status: '已完成' },
+      { id: 6, name: '终盘', checkNo: 'CHECK006', checkType: '终盘', status: '已完成' },
+    ];
 
-if (!rawService) {
-  console.warn('[DataInventoryCheck] 未找到 EPS 盘点数据服务，请确认已同步元数据');
-}
+    // 模拟分页和搜索
+    let filteredData = [...mockData];
+    if (params?.keyword) {
+      const keyword = params.keyword.toLowerCase();
+      filteredData = mockData.filter(item =>
+        item.name.toLowerCase().includes(keyword) ||
+        item.checkNo.toLowerCase().includes(keyword)
+      );
+    }
 
-const inventoryService: CrudService<any> = {
-  ...(rawService || {}),
+    return {
+      list: filteredData,
+      pagination: {
+        total: filteredData.length,
+        page: 1,
+        size: 10,
+      }
+    };
+  }
+};
+
+// 盘点结果服务（右侧表），使用纯后端API
+const resultService = service.system?.base?.check;
+
+const wrappedResultService = {
+  ...resultService,
   async delete(id: string | number) {
-    await BtcConfirm('确认删除该记录吗？', '提示', { type: 'warning' });
-    if (!rawService?.delete) {
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    if (!resultService?.delete) {
       throw new Error('未找到删除服务接口');
     }
-    await rawService.delete(id);
-    message.success('删除成功');
+    await resultService.delete(id);
+    message.success(t('crud.message.delete_success'));
   },
   async deleteBatch(ids: (string | number)[]) {
-    await BtcConfirm(`确认删除选中的 ${ids.length} 条记录吗？`, '提示', { type: 'warning' });
-    if (rawService?.deleteBatch) {
-      await rawService.deleteBatch(ids);
-    } else if (rawService?.delete) {
-      await Promise.all(ids.map(id => rawService.delete!(id)));
+    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+    if (resultService?.deleteBatch) {
+      await resultService.deleteBatch(ids);
+    } else if (resultService?.delete) {
+      await Promise.all(ids.map(id => resultService.delete!(id)));
     } else {
       throw new Error('未找到删除服务接口');
     }
-    message.success('删除成功');
-  },
-  async page(params?: Record<string, any>) {
-    if (!rawService?.page) {
-      throw new Error('未找到分页服务接口');
-    }
-    return rawService.page(params);
-  },
-  async add(data: any) {
-    if (!rawService?.add) {
-      throw new Error('未找到新增服务接口');
-    }
-    const result = await rawService.add(data);
-    message.success('新增成功');
-    return result;
-  },
-  async update(data: any) {
-    if (!rawService?.update) {
-      throw new Error('未找到更新服务接口');
-    }
-    const result = await rawService.update(data);
-    message.success('更新成功');
-    return result;
+    message.success(t('crud.message.delete_success'));
   },
 };
 
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'baseId', label: '盘点任务ID', minWidth: 160 },
-  { prop: 'materialCode', label: '物料编码', minWidth: 140 },
-  { prop: 'materialName', label: '物料名称', minWidth: 160 },
-  { prop: 'specification', label: '物料规格', minWidth: 140 },
-  { prop: 'unit', label: '计量单位', minWidth: 120 },
-  { prop: 'batchNo', label: '批次号', minWidth: 140 },
-  { prop: 'validity', label: '有效期', minWidth: 140 },
-  { prop: 'bookQty', label: '账面数量', minWidth: 120 },
-  { prop: 'actualQty', label: '实际数量', minWidth: 120 },
-  { prop: 'storageLocation', label: '仓位', minWidth: 140 },
-  { prop: 'diffQty', label: '差异数量', minWidth: 120 },
-  { prop: 'diffRate', label: '差异率', minWidth: 120 },
+// 盘点选择处理
+const onCheckSelect = (check: any) => {
+  selectedCheck.value = check;
+  // 可以根据选中的盘点，过滤右侧的盘点结果
+  // 这里可以通过 tableGroupRef 来刷新右侧表格
+};
+
+// 操作按钮配置
+const opButtons = computed(() => [
   {
-    prop: 'isDiff',
-    label: '是否有差异',
-    width: 120,
-    dict: [
-      { label: '是', value: 1, type: 'danger' },
-      { label: '否', value: 0, type: 'success' },
-    ],
-    dictColor: true,
+    label: t('common.button.detail'),
+    type: 'warning',
+    icon: 'View',
+    onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
   },
-  { prop: 'checkerId', label: '盘点人ID', minWidth: 140 },
-  { prop: 'remark', label: '备注', minWidth: 160 },
+  'edit',
 ]);
 
-const formItems = computed<FormItem[]>(() => [
-  { prop: 'baseId', label: '盘点任务ID', span: 12, component: { name: 'el-input' } },
-  { prop: 'materialCode', label: '物料编码', span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'materialName', label: '物料名称', span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'specification', label: '物料规格', span: 12, component: { name: 'el-input' } },
-  { prop: 'unit', label: '计量单位', span: 12, component: { name: 'el-input' } },
-  { prop: 'batchNo', label: '批次号', span: 12, component: { name: 'el-input' } },
-  { prop: 'validity', label: '有效期', span: 12, component: { name: 'el-input', props: { placeholder: 'YYYY-MM-DD' } } },
-  { prop: 'bookQty', label: '账面数量', span: 12, component: { name: 'el-input' } },
-  { prop: 'actualQty', label: '实际数量', span: 12, component: { name: 'el-input' } },
-  { prop: 'storageLocation', label: '仓位', span: 12, component: { name: 'el-input' } },
-  { prop: 'diffQty', label: '差异数量', span: 12, component: { name: 'el-input' } },
-  { prop: 'diffRate', label: '差异率', span: 12, component: { name: 'el-input' } },
+// 处理详情按钮点击
+const handleDetail = (row: any) => {
+  detailRow.value = row;
+  detailVisible.value = true;
+};
+
+// 盘点结果表格列（只显示：序号、物料编码、账面数量、实际数量、差异数量、创建时间、操作列）
+const resultColumns = computed<TableColumn[]>(() => [
+  { type: 'selection', width: 60 },
+  { type: 'index', label: t('common.index'), width: 60 },
+  { prop: 'materialCode', label: t('system.material.fields.materialCode'), minWidth: 140 },
+  { prop: 'bookQty', label: t('inventory.result.fields.bookQty'), minWidth: 120 },
+  { prop: 'actualQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
+  { prop: 'diffQty', label: t('inventory.result.fields.diffQty'), minWidth: 120 },
+  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), minWidth: 180 },
+]);
+
+// 盘点结果表单
+const resultFormItems = computed<FormItem[]>(() => [
+  { prop: 'baseId', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' } },
+  { prop: 'materialCode', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
+  { prop: 'materialName', label: t('system.material.fields.materialName'), span: 12, component: { name: 'el-input' }, required: true },
+  { prop: 'specification', label: t('system.material.fields.specification'), span: 12, component: { name: 'el-input' } },
+  { prop: 'unit', label: t('system.material.fields.unit'), span: 12, component: { name: 'el-input' } },
+  { prop: 'batchNo', label: t('inventory.result.fields.batchNo'), span: 12, component: { name: 'el-input' } },
+  { prop: 'validity', label: t('system.material.fields.expireCycle'), span: 12, component: { name: 'el-input', props: { placeholder: 'YYYY-MM-DD' } } },
+  { prop: 'bookQty', label: t('inventory.result.fields.bookQty'), span: 12, component: { name: 'el-input' } },
+  { prop: 'actualQty', label: t('inventory.result.fields.actualQty'), span: 12, component: { name: 'el-input' } },
+  { prop: 'storageLocation', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
+  { prop: 'diffQty', label: t('inventory.result.fields.diffQty'), span: 12, component: { name: 'el-input' } },
+  { prop: 'diffRate', label: t('inventory.result.fields.diffRate'), span: 12, component: { name: 'el-input' } },
   {
     prop: 'isDiff',
-    label: '是否有差异',
+    label: t('inventory.result.fields.isDiff'),
     span: 12,
     component: {
       name: 'el-select',
       props: {
-        placeholder: '请选择差异状态',
+        placeholder: t('inventory.result.fields.isDiff_placeholder'),
       },
     },
     options: [
-      { label: '是', value: 1 },
-      { label: '否', value: 0 },
+      { label: t('common.yes'), value: 1 },
+      { label: t('common.no'), value: 0 },
     ],
   },
-  { prop: 'checkerId', label: '盘点人ID', span: 12, component: { name: 'el-input' } },
-  { prop: 'remark', label: '备注', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
+  { prop: 'checkerId', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
+  { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
 </script>
 
-
+<style lang="scss" scoped>
+.inventory-check-page {
+  height: 100%;
+  box-sizing: border-box;
+}
+</style>

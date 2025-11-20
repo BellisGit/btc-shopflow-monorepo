@@ -37,12 +37,22 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 数据迁移：将旧的硬编码标签转换为国际化键值
   const migratedTheme = migrateThemeConfig();
 
-  const currentTheme = ref<ThemeConfig>(migratedTheme);
+  // 从统一的 settings 存储中读取主题配置
+  const settings = storage.get('settings') as Record<string, any> | null;
+  const savedTheme = settings?.theme as ThemeConfig | null;
+  
+  // 优先使用 settings 中保存的主题，否则使用迁移后的主题
+  const currentTheme = ref<ThemeConfig>(savedTheme || migratedTheme);
 
   // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
   const isDark = useDark();
 
-  const settings = storage.get('settings') as Record<string, any> | null;
+  // 初始化时应用主题色
+  if (currentTheme.value?.color) {
+    setThemeColor(currentTheme.value.color, isDark.value);
+    document.body.className = `theme-${currentTheme.value.name}`;
+  }
+
   // 只从统一的 settings 存储中读取，不再读取旧的独立键
   const storedButtonStyle = settings?.buttonStyle as ButtonStyle | null;
   const buttonStyle = ref<ButtonStyle>(storedButtonStyle || 'default');
@@ -87,17 +97,29 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
    * 更新主题颜色
    */
   function updateThemeColor(color: string) {
+    if (!color) {
+      console.warn('[Theme] updateThemeColor: color is empty');
+      return;
+    }
+    
     currentTheme.value = {
       ...currentTheme.value,
       name: 'custom',
       label: 'theme.presets.custom',
       color: color,
     };
+    
+    // 立即应用主题色到 CSS 变量
     themeSetThemeColor(color, isDark.value);
+    
+    // 更新 body 类名
+    document.body.className = 'theme-custom';
 
     // 持久化到统一的 settings 存储中
     const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
     storage.set('settings', { ...currentSettings, theme: currentTheme.value });
+    
+    console.log('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
   }
 
   /**

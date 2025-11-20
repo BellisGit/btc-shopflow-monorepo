@@ -4,9 +4,10 @@
  */
 
 import type { App } from 'vue';
+import type { Router } from 'vue-router';
 import { usePluginManager, resetPluginManager } from '@btc/shared-core';
 import { scanAndRegisterPlugins } from './module-scanner';
-import router from '../../router';
+import { createAdminRouter } from '../../router';
 
 // 导出插件管理器实例，供其他组件使用
 export let globalPluginManager: ReturnType<typeof usePluginManager>;
@@ -15,14 +16,17 @@ export let globalPluginManager: ReturnType<typeof usePluginManager>;
  * 自动发现并注册插件
  * 类似 Cool-Admin 的模块发现机制
  */
-export async function autoDiscoverPlugins(app: App) {
+export async function autoDiscoverPlugins(app: App, router?: Router) {
   // 重置插件管理器单例
   resetPluginManager();
+
+  // 如果没有传入 router，创建一个新的实例（仅用于插件管理器）
+  const routerInstance = router ?? createAdminRouter();
 
   // 初始化插件管理器
   const pluginManager = usePluginManager({ debug: false });
   pluginManager.setApp(app);
-  pluginManager.setRouter(router);
+  pluginManager.setRouter(routerInstance);
 
   // 设置全局插件管理器实例
   globalPluginManager = pluginManager;

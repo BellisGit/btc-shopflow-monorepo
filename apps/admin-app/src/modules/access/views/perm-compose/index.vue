@@ -144,7 +144,7 @@ const modeOptions = [
 ];
 
 // 权限服务
-const permissionService = service.system?.iam?.permission;
+const permissionService = service.admin?.iam?.permission;
 
 // 数据管理
 const {

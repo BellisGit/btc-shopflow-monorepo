@@ -1,18 +1,24 @@
 <template>
-  <el-pagination
-    v-model:current-page="crud.pagination.page"
-    v-model:page-size="crud.pagination.size"
-    :total="crud.pagination.total"
-    :page-sizes="pageSizes"
-    :layout="layout"
-    v-bind="$attrs"
-    @current-change="handleCurrentChange"
-    @size-change="crud.handleSizeChange"
-  />
+  <el-config-provider :locale="elLocale">
+    <el-pagination
+      v-model:current-page="crud.pagination.page"
+      v-model:page-size="crud.pagination.size"
+      :total="crud.pagination.total"
+      :page-sizes="pageSizes"
+      :layout="layout"
+      v-bind="$attrs"
+      @current-change="handleCurrentChange"
+      @size-change="crud.handleSizeChange"
+    />
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { inject, ref, onMounted } from 'vue';
+import { inject, ref, onMounted, computed } from 'vue';
+import { ElConfigProvider } from 'element-plus';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import en from 'element-plus/es/locale/lang/en';
+import { useI18n } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 
 export interface Props {
@@ -30,6 +36,13 @@ const crud = inject<UseCrudReturn<any>>('btc-crud');
 if (!crud) {
   throw new Error('[BtcPagination] Must be used inside <BtcCrud>');
 }
+
+// 获取当前语言并设置 Element Plus 的 locale
+const { locale } = useI18n();
+const elLocale = computed(() => {
+  const currentLocale = locale.value || 'zh-CN';
+  return currentLocale === 'zh-CN' ? zhCn : en;
+});
 
 // 初始化标记，避免在组件初始化时触发页码变化事件
 const isInitialized = ref(false);

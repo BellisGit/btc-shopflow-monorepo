@@ -44,7 +44,7 @@ btc-shopflow-monorepo/
 │   ├── production-app/            # Production App
 │   ├── quality-app/               # Quality App
 │   ├── engineering-app/           # Engineering App
-│   └── docs-site/                 # Documentation Site
+│   └── docs-site-app/             # Documentation Site
 ├── packages/                      # Shared Packages
 │   ├── shared-components/         # Shared Component Library
 │   ├── shared-core/              # Core Functionality Library
@@ -175,7 +175,7 @@ Each sub-application is an independent Vue 3 project that supports:
 
 - [Architecture Design Document](./docs/cool-admin-vue-架构设计文档.md)
 - [Implementation Documentation](./implementation-docs/)
-- [Component Documentation](./apps/docs-site/)
+- [Component Documentation](./apps/docs-site-app/)
 
 ## 🤝 Contributing Guide
 

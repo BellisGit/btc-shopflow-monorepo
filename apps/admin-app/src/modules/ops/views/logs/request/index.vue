@@ -75,7 +75,7 @@ defineOptions({
 });
 
 // 请求日志服务（打印可用方法）
-const rawRequestService = service.system?.log?.request as any;
+const rawRequestService = service.admin?.log?.request as any;
 // 包装：兜底提供 list 方法以避免卡在 loading（待确认真实分页方法名后再收敛）
 function normalizePageResult(res: any) {
   if (!res) return { list: [], total: 0 };

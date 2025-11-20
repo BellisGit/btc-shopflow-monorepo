@@ -1,13 +1,20 @@
+/**
+ * 路由配置模块
+ * 负责配置Vue Router
+ */
+
 import type { App } from 'vue';
-import type { Router } from 'vue-router';
-import { createSystemRouter } from '../../router';
+import router from '../../router';
 
-export { createSystemRouter } from '../../router';
-
-export const setupRouter = (app: App, router?: Router) => {
-  const instance = router ?? createSystemRouter();
-  app.use(instance);
-  return instance;
+/**
+ * 配置路由
+ */
+export const setupRouter = (app: App) => {
+  // 安装路由
+  app.use(router);
 };
 
-export type { Router };
+/**
+ * 导出路由实例
+ */
+export { router };

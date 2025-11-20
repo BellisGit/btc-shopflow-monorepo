@@ -1,63 +1,29 @@
-import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { createApp } from 'vue';
+import App from './App.vue';
+import { bootstrap } from './bootstrap';
+import { service } from './services/eps';
 import 'virtual:svg-icons';
-import type { QiankunProps } from '@btc/shared-core';
-import {
-  createSystemApp,
-  mountSystemApp,
-  unmountSystemApp,
-  updateSystemApp,
-} from './bootstrap';
-import type { SystemAppContext } from './bootstrap';
 
-let context: SystemAppContext | null = null;
+const app = createApp(App);
 
-const render = (props: QiankunProps = {}) => {
-  if (context) {
-    unmountSystemApp(context);
-    context = null;
-  }
+// 将 service 暴露到全局，供共享组件使用
+if (typeof window !== 'undefined') {
+  (window as any).__BTC_SERVICE__ = service;
+}
 
-  context = createSystemApp(props);
-  mountSystemApp(context, props);
-};
+// 启动
+bootstrap(app)
+  .then(() => {
+    app.mount('#app');
 
-renderWithQiankun({
-  bootstrap() {
-    // 使用 queueMicrotask 确保在下一个事件循环中 resolve
-    // 避免模块加载阻塞导致的超时问题
-    return new Promise<void>((resolve, reject) => {
-      try {
-        queueMicrotask(() => {
-          resolve();
-        });
-      } catch (err) {
-        reject(err);
+    // 应用挂载后，延迟关闭 Loading
+    setTimeout(() => {
+      const el = document.getElementById('Loading');
+      if (el) {
+        el.classList.add('is-hide');
       }
-    });
-  },
-  async mount(props: QiankunProps) {
-    render(props);
-  },
-  async update(props: QiankunProps) {
-    if (context) {
-      updateSystemApp(context, props);
-    }
-  },
-  async unmount(props: QiankunProps) {
-    if (context) {
-      unmountSystemApp(context, props);
-      context = null;
-    }
-  },
-});
-
-if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-  render();
-}
-
-export async function unmount() {
-  if (context) {
-    unmountSystemApp(context);
-    context = null;
-  }
-}
+    }, 300);
+  })
+  .catch(err => {
+    console.error('BTC Shopflow 启动失败', err);
+  });

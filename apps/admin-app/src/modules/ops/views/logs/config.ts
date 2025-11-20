@@ -125,8 +125,8 @@ export const requestLogColumns: TableColumn[] = [
 
 // EPS 服务 - 使用正确的服务路径（根据后端 prefix，已移除 sys 层级）
 export const logServices = {
-  operationLog: service.system?.log?.operation,
-  requestLog: service.system?.log?.request,
+  operationLog: service.admin?.log?.operation,
+  requestLog: service.admin?.log?.request,
 };
 
 // Tab 配置

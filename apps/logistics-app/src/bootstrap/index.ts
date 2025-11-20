@@ -260,7 +260,13 @@ const setupEventBridge = (context: LogisticsAppContext) => {
     const custom = event as CustomEvent<{ color: string; dark: boolean }>;
     const detail = custom.detail;
     if (detail && context.theme?.theme) {
-      context.theme.theme.setThemeColor(detail.color, detail.dark);
+      // 检查当前颜色是否已经相同，避免不必要的调用和递归
+      const currentColor = context.theme.theme.currentTheme.value?.color;
+      const currentDark = context.theme.theme.isDark.value;
+      // 只有当颜色或暗黑模式不同时才更新
+      if (currentColor !== detail.color || currentDark !== detail.dark) {
+        context.theme.theme.setThemeColor(detail.color, detail.dark);
+      }
     }
   }) as EventListener;
 

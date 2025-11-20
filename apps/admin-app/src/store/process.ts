@@ -8,6 +8,9 @@ export interface ProcessItem {
   name?: string;
   meta: {
     label?: string;
+    labelKey?: string;
+    title?: string;
+    titleKey?: string;
     keepAlive?: boolean;
     isHome?: boolean;
     process?: boolean;
@@ -148,14 +151,37 @@ export const useProcessStore = defineStore('process', () => {
    * 添加标签（通过 tabRegistry 解析元数据）
    */
   function add(data: ProcessItem) {
+    // 跳过个人信息页面（不在菜单中，不需要添加到标签页）
+    if (data.path === '/profile') {
+      return;
+    }
+
     // 确定标签所属应用
     const app = getCurrentAppFromPath(data.path);
 
     // 解析 Tab 元数据
-    const tabMeta = resolveTabMeta(data.path);
+    let tabMeta = resolveTabMeta(data.path);
+
+    // 如果解析失败，尝试从路由 name 和 meta 中获取信息（仅限管理域）
+    if (!tabMeta && app === 'admin' && data.name && data.meta) {
+      // 从路由的 meta 中获取 titleKey 或 title
+      const titleKey = data.meta.titleKey as string | undefined;
+      const title = data.meta.title as string | undefined;
+      
+      if (titleKey || title) {
+        // 创建一个临时的 TabMeta
+        tabMeta = {
+          key: data.name,
+          title: title || titleKey || data.name,
+          path: data.path,
+          i18nKey: titleKey,
+        };
+      }
+    }
 
     // 如果解析失败（没有元数据），拒绝添加（防止脏 Tab）
     if (!tabMeta) {
+      console.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
       return;
     }
 

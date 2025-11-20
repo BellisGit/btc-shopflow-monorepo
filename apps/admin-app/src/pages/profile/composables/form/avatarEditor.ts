@@ -50,7 +50,7 @@ export function useAvatarEditor({
       on: {
         submit: async (data, { close, done }) => {
           try {
-            const profileService = service.system?.base?.profile;
+            const profileService = service.admin?.base?.profile;
             if (!profileService) {
               BtcMessage.warning('用户信息服务不可用');
               done();

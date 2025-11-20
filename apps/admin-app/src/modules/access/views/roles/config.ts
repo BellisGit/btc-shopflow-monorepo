@@ -138,6 +138,6 @@ export const getRoleFormItems = (domainOptions: any[] = [], roleOptions: any[] =
 
 // 服务配置
 export const services = {
-  sysdomain: service.system?.iam?.domain,
-  sysrole: service.system?.iam?.role
+  sysdomain: service.admin?.iam?.domain,
+  sysrole: service.admin?.iam?.role
 };

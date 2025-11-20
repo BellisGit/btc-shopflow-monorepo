@@ -36,12 +36,12 @@ const crudRef = ref();
 
 // 使用纯后端 EPS 租户服务，封装删除确认逻辑
 const tenantService = {
-  ...service.system?.iam?.tenant,
+  ...service.admin?.iam?.tenant,
   delete: async (id: string | number) => {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
-    await service.system?.iam?.tenant?.delete(id);
+    await service.admin?.iam?.tenant?.delete(id);
 
     message.success(t('crud.message.delete_success'));
   },
@@ -49,7 +49,7 @@ const tenantService = {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.system?.iam?.tenant?.deleteBatch(ids);
+    await service.admin?.iam?.tenant?.deleteBatch(ids);
 
     message.success(t('crud.message.delete_success'));
   },

@@ -1,19 +1,22 @@
-/**
- * 国际化配置模块
- * 负责配置Vue I18n国际化
- */
-
 import type { App } from 'vue';
-import { createI18nPlugin, createThemePlugin } from '@btc/shared-core';
-import messages from '@intlify/unplugin-vue-i18n/messages';
+import { createI18nPlugin } from '@btc/shared-core';
+import {
+  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
+  getLocaleMessages,
+  normalizeLocale,
+} from '../../i18n/getters';
 
-/**
- * 配置国际化
- */
-export const setupI18n = (app: App) => {
-  // 国际化
-  app.use(createI18nPlugin({ messages }));
+export type AdminI18nPlugin = ReturnType<typeof createI18nPlugin>;
 
-  // 主题
-  app.use(createThemePlugin());
+export const setupI18n = (app: App, locale: string = DEFAULT_LOCALE, fallbackLocale: string = FALLBACK_LOCALE) => {
+  const i18n = createI18nPlugin({
+    locale: normalizeLocale(locale),
+    fallbackLocale: normalizeLocale(fallbackLocale),
+    messages: getLocaleMessages(),
+    scope: 'admin',
+  });
+
+  app.use(i18n);
+  return i18n;
 };
