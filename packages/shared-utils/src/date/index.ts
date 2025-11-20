@@ -1,12 +1,10 @@
-﻿// 使用兼容方式导入 dayjs，同时支持默认导出和命名空间导出
-import * as dayjsModule from 'dayjs';
-// dayjs 在 ES 模块中可能没有 default，需要处理兼容性
-// 获取默认导出或命名空间导出
+﻿// 使用兼容方式导入 dayjs
+// 在 ES 模块环境中，dayjs 可能没有 default export，使用命名空间导入并提取函数
+import dayjsLib from 'dayjs';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dayjsRaw = (dayjsModule as any).default || dayjsModule;
-// 类型断言：dayjs 是一个可调用的函数，兼容 ES 模块和 CommonJS
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dayjs = dayjsRaw as any;
+const dayjs = (dayjsLib && typeof dayjsLib === 'object' && (dayjsLib as any).default) 
+  ? (dayjsLib as any).default 
+  : dayjsLib;
 
 /**
  * 鏍煎紡鍖栨棩鏈? * @param date 鏃ユ湡瀵硅薄鎴栧瓧绗︿覆

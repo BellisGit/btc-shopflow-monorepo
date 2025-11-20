@@ -14,6 +14,8 @@
   "common.button.delete": "Delete",
   "common.button.view": "View",
   "common.button.refresh": "Refresh",
+  "common.enabled": "Enabled",
+  "common.disabled": "Disabled",
   "common.message.success": "Success",
   "common.message.error": "Error",
   "common.message.warning": "Warning",
@@ -41,6 +43,7 @@
   "logistics.menu.warehouse.inventory": "Inventory Management",
   "logistics.menu.warehouse.inventory.info": "Inventory Records",
   "logistics.menu.warehouse.inventory.detail": "Variance Records",
+  "logistics.menu.config": "Configuration Center",
   "menu.logistics.procurementModule": "Procurement Module",
   "menu.logistics.procurement.auxiliary": "Auxiliary Management",
   "menu.logistics.procurement.packaging": "Packaging Management",
@@ -53,6 +56,8 @@
   "menu.logistics.warehouse.inventory.detail": "Variance Records",
   "menu.logistics.customsModule": "Customs Module",
   "menu.logistics.overview": "Logistics Overview",
+  "menu.logistics.config": "Configuration Center",
+  "menu.logistics.config.storageLocation": "Storage Location Configuration",
   "logistics.home.todo.title": "Today's Tasks ({date})",
   "logistics.home.todo.subtitle": "Keep an eye on today's priorities to align warehouse and procurement teams.",
   "logistics.home.todo.searchPlaceholder": "Search by task or owner",
@@ -114,7 +119,13 @@
   "logistics.inventory.diff.fields.diffReason": "Difference Reason",
   "logistics.inventory.diff.fields.processPerson": "Processor",
   "logistics.inventory.diff.fields.processTime": "Process Time",
-  "logistics.inventory.diff.fields.processRemark": "Process Remark"
+  "logistics.inventory.diff.fields.processRemark": "Process Remark",
+  "logistics.config.storageLocation.fields.domainId": "Domain ID",
+  "logistics.config.storageLocation.fields.name": "Domain Name",
+  "logistics.config.storageLocation.fields.position": "Position",
+  "logistics.config.storageLocation.fields.description": "Description",
+  "logistics.config.storageLocation.fields.createdAt": "Created At",
+  "logistics.config.storageLocation.fields.updatedAt": "Updated At"
 }
 
 

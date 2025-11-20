@@ -26,7 +26,8 @@ html.dark,
   }
 
   // 暗黑模式下的背景色层次
-  // 布局区域（顶栏、面包屑、tabbar、内容区域、侧边栏）使用 #0a0a0a
+  // 注意：布局区域（顶栏、面包屑、tabbar、内容区域、侧边栏）的背景色样式已移至共享组件
+  // @btc/shared-components/styles/dark-theme.scss，所有应用自动应用
   // 组件背景使用 Element Plus 的 --el-bg-color #0a0a0a
   // 全局背景使用 Element Plus 默认的暗色背景（不修改）
 

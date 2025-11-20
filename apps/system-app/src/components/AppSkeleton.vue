@@ -32,6 +32,15 @@ defineOptions({
   animation: fadeIn 0.2s ease-in;
 }
 
+// 确保当通过 v-show="false" 或 style.display="none" 隐藏时，完全不可见
+.app-skeleton[style*="display: none"],
+.app-skeleton[style*="display:none"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

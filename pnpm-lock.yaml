@@ -156,6 +156,9 @@ importers:
       qiankun:
         specifier: ^2.10.16
         version: 2.10.16
+      single-spa:
+        specifier: ^6.0.3
+        version: 6.0.3
       vue:
         specifier: ^3.4.0
         version: 3.5.22(typescript@5.9.3)
@@ -367,6 +370,9 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
+      dayjs:
+        specifier: ^1.11.18
+        version: 1.11.18
       element-plus:
         specifier: ^2.8.10
         version: 2.11.4(vue@3.5.22)
@@ -605,6 +611,9 @@ importers:
       qiankun:
         specifier: ^2.10.16
         version: 2.10.16
+      single-spa:
+        specifier: ^6.0.3
+        version: 6.0.3
       vue:
         specifier: ^3.4.0
         version: 3.5.22(typescript@5.9.3)
@@ -9468,6 +9477,10 @@ packages:
 
   /single-spa@5.9.5:
     resolution: {integrity: sha512-9SQdmsyz4HSP+3gs6PJzhkaMEg+6zTlu9oxIghnwUX3eq+ajq4ft5egl0iyR55LAmO/UwvU8NgIWs/ZyQMa6dw==}
+    dev: false
+
+  /single-spa@6.0.3:
+    resolution: {integrity: sha512-pXlwHXHhs3hx/MnGQHBLdFCVAN2rlm9TLBKazbDMyZ25QRxoen2vlUZ47MyXKa9K8Gd5UZs/gkuQad4TGbViwg==}
     dev: false
 
   /sirv@3.0.2:

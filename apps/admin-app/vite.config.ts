@@ -114,6 +114,7 @@ export default defineConfig({
       // HMR WebSocket 需要使用 localhost，浏览器无法连接 0.0.0.0
       host: 'localhost',
       port: 8081,
+      overlay: false, // 关闭热更新错误浮层，减少开销
     },
     proxy,
     fs: {
@@ -123,14 +124,32 @@ export default defineConfig({
         withPackages('.'),
         withPackages('shared-components/src'),
       ],
+      // 启用缓存，加速依赖加载
+      cachedChecks: true,
     },
   },
   optimizeDeps: {
-    // 启用依赖预构建，让 Vite 自动发现并预构建依赖（包括 dayjs 和 element-plus）
-    include: ['dayjs', 'element-plus'], // 明确包含 dayjs 和 element-plus，确保正确预构建
+    // 启用依赖预构建，加速开发环境模块加载
+    // 显式声明需要预构建的第三方依赖，避免 Vite 漏判导致实时编译耗时
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'dayjs',
+      'element-plus',
+      '@element-plus/icons-vue',
+      '@btc/shared-core',
+      '@btc/shared-components',
+      '@btc/shared-utils',
+    ],
+    // 排除不需要预构建的依赖
+    exclude: [],
+    // 强制预构建，即使依赖已经是最新的
+    force: false,
   },
   build: {
     target: 'es2020', // 兼容 ES 模块的最低目标
+    sourcemap: false, // 开发环境关闭 sourcemap，减少文件体积和加载时间
     rollupOptions: {
       output: {
         format: 'esm', // 明确指定输出格式为 ESM

@@ -63,6 +63,7 @@ import { Check, Right, Loading } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
+import { finishLoading } from '@/utils/loadingManager';
 
 interface MicroApp {
   name: string;
@@ -369,11 +370,46 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 
+  // 设置超时保护，确保 loading 状态最终会被清除
+  let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+  const maxLoadingTime = 10000; // 10秒超时
+
+  // 监听 afterMount 事件，确保 loading 状态被清除
+  const handleAfterMount = () => {
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
+    window.removeEventListener('qiankun:after-mount', handleAfterMount);
+  };
+
+  // 设置超时保护
+  loadingTimeout = setTimeout(() => {
+    console.warn(`[MenuDrawer] 应用 ${app.name} 加载超时，强制清除 loading 状态`);
+    finishLoading(); // 强制清除 loading 状态
+    window.removeEventListener('qiankun:after-mount', handleAfterMount);
+    loadingTimeout = null;
+  }, maxLoadingTime);
+
+  // 监听 afterMount 事件
+  window.addEventListener('qiankun:after-mount', handleAfterMount);
+
+  try {
   // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用
   // 使用 nextTick 确保路由切换完成，容器准备好后再继续
   await router.push(targetPath);
   await nextTick();
   detectCurrentApp();
+  } catch (error) {
+    // 如果路由切换失败，清除监听和超时，并强制清除 loading 状态
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
+    finishLoading(); // 强制清除 loading 状态
+    window.removeEventListener('qiankun:after-mount', handleAfterMount);
+    console.error(`[MenuDrawer] 切换到应用 ${app.name} 失败:`, error);
+  }
 };
 
 const handleClose = () => {

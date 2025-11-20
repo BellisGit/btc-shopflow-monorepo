@@ -15,7 +15,7 @@ export interface MicroAppConfig {
  */
 const DEV_HOST =
   typeof window !== 'undefined' && window.location.hostname
-    ? window.location.hostname
+    ? (window.location.hostname === '0.0.0.0' ? 'localhost' : window.location.hostname)
     : 'localhost';
 
 export const microApps: MicroAppConfig[] = [

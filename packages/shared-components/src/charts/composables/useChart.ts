@@ -114,7 +114,7 @@ export function useChart(
     }
   };
 
-  // 清理 tooltip
+  // 清理 tooltip、toolbox 和 ECharts 实例
   const cleanupTooltip = () => {
     if (chartInstance.value) {
       try {
@@ -135,9 +135,35 @@ export function useChart(
     });
   };
 
+  // 清理 toolbox 相关 DOM
+  const cleanupToolbox = () => {
+    // 清理 body 中残留的 toolbox 相关 DOM（数据视图弹窗等）
+    const toolboxElements = document.querySelectorAll('.echarts-toolbox, .echarts-data-view');
+    toolboxElements.forEach(el => {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    });
+  };
+
+  // 销毁 ECharts 实例
+  const disposeChart = () => {
+    if (chartInstance.value) {
+      try {
+        // 销毁 ECharts 实例，这会自动清理所有相关的 DOM 元素（包括 toolbox）
+        chartInstance.value.dispose();
+        chartInstance.value = null;
+      } catch (error) {
+        // 忽略错误，可能图表已经销毁
+      }
+    }
+  };
+
   // 组件卸载时清理
   onBeforeUnmount(() => {
     cleanupTooltip();
+    cleanupToolbox();
+    disposeChart();
     if (resizeTimer) {
       cancelAnimationFrame(resizeTimer);
     }

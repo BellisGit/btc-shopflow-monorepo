@@ -31,6 +31,7 @@ export default defineConfig({
       '@charts-utils': resolve(__dirname, '../../packages/shared-components/src/charts/utils'),
       '@charts-composables': resolve(__dirname, '../../packages/shared-components/src/charts/composables'),
     },
+    dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [
     vue({
@@ -74,8 +75,9 @@ export default defineConfig({
     },
     hmr: {
       protocol: 'ws',
-      host: '0.0.0.0', // 子应用 IP，确保热更新不冲突
+      host: 'localhost', // HMR WebSocket 需要使用 localhost，浏览器无法连接 0.0.0.0
       port: 8082,
+      overlay: false, // 关闭热更新错误浮层，减少开销
     },
     fs: {
       strict: false,
@@ -84,6 +86,8 @@ export default defineConfig({
         resolve(__dirname, '../../packages'),
         resolve(__dirname, '../../packages/shared-components/src'),
       ],
+      // 启用缓存，加速依赖加载
+      cachedChecks: true,
     },
   },
   css: {
@@ -96,6 +100,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2020', // 兼容 ES 模块的最低目标
+    sourcemap: false, // 开发环境关闭 sourcemap，减少文件体积和加载时间
     rollupOptions: {
       output: {
         format: 'esm', // 明确指定输出格式为 ESM
@@ -235,8 +240,22 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
   },
   optimizeDeps: {
-    // Vite 5.1+ 新配置方式：禁用依赖预构建（避免生成 CommonJS 脚本）
-    noDiscovery: true,
-    include: undefined, // 或设置为空数组 []
+    // 启用依赖预构建，加速开发环境模块加载
+    // 显式声明需要预构建的第三方依赖，避免 Vite 漏判导致实时编译耗时
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'dayjs',
+      'element-plus',
+      '@element-plus/icons-vue',
+      '@btc/shared-core',
+      '@btc/shared-components',
+      '@btc/shared-utils',
+    ],
+    // 排除不需要预构建的依赖
+    exclude: [],
+    // 强制预构建，即使依赖已经是最新的
+    force: false,
   },
 });

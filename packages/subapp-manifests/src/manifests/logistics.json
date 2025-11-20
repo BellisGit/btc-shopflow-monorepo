@@ -142,6 +142,28 @@
       "breadcrumbs": [
         { "labelKey": "menu.logistics.customsModule", "icon": "MapLocation" }
       ]
+    },
+    {
+      "path": "/config",
+      "labelKey": "menu.logistics.config",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.config", "icon": "Setting" }
+      ]
+    },
+    {
+      "path": "/config/storage-location",
+      "labelKey": "menu.logistics.config.storageLocation",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.config.storageLocation"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.config", "icon": "Setting" },
+        { "labelKey": "menu.logistics.config.storageLocation", "icon": "Box" }
+      ]
     }
   ],
   "menus": [
@@ -183,6 +205,14 @@
       "index": "/logistics/customs",
       "labelKey": "menu.logistics.customsModule",
       "icon": "svg:map"
+    },
+    {
+      "index": "/logistics/config",
+      "labelKey": "menu.logistics.config",
+      "icon": "Setting",
+      "children": [
+        { "index": "/logistics/config/storage-location", "labelKey": "menu.logistics.config.storageLocation", "icon": "Box" }
+      ]
     }
   ]
 }

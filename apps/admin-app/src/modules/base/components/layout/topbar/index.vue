@@ -230,7 +230,7 @@ onMounted(async () => {
 .topbar {
   height: 47px;
   min-height: 47px;
-  width: 100%; // 明确设置宽度为 100%，确保延伸到最右侧
+  width: 100%; // 相对于父容器 .app-layout__topbar 的宽度，不受滚动条影响
   background-color: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
   display: flex;
@@ -373,7 +373,7 @@ onMounted(async () => {
   &__left {
     display: flex;
     align-items: center;
-    gap: 5px; // 与 tabbar 的按钮间距保持一致
+    gap: 5px !important; // 与 tabbar 的按钮间距保持一致，使用 !important 确保优先级
     padding-left: 10px; // 与品牌区域的间距（对应 tabbar 内容区的 padding-left）
     flex: 1; // 占据剩余空间，让顶部菜单可以展开
     overflow: hidden; // 防止溢出
@@ -395,14 +395,18 @@ onMounted(async () => {
 
   &__tools {
     display: flex;
+    margin: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
+    padding: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
     margin-right: 0; // 移除右边距，让背景延伸到最右侧
-    column-gap: 10px;
+    column-gap: 10px !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
 
     & > li {
       display: flex;
       justify-content: center;
       align-items: center;
       list-style: none;
+      margin: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
+      padding: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
       height: 45px;
       cursor: pointer;
     }

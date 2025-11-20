@@ -4,6 +4,9 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+// 样式文件在模块加载时同步导入
+// Vite 会优化处理：开发环境按需加载，生产环境打包到单独 CSS 文件
+// 这些导入不会阻塞 JavaScript 执行
 import '@btc/shared-components/styles/index.scss';
 import '../styles/global.scss';
 import '../styles/theme.scss';
@@ -182,6 +185,12 @@ const createRegisterTabs = (context: LogisticsAppContext) => {
         path: '/logistics/customs',
         i18nKey: 'menu.logistics.customsModule',
       },
+      {
+        key: 'config',
+        title: translate('logistics.menu.config'),
+        path: '/logistics/config',
+        i18nKey: 'menu.logistics.config',
+      },
     ]);
   };
 };
@@ -311,6 +320,8 @@ const setupHostLocationBridge = (context: LogisticsAppContext) => {
 };
 
 export const createLogisticsApp = (props: QiankunProps = {}): LogisticsAppContext => {
+  // 这些初始化操作都是轻量级的，不会阻塞
+  // createApp、createRouter、createPinia 等都是同步的快速操作
   const app = createApp(App);
   const router = createLogisticsRouter();
   setupRouter(app, router);
@@ -318,9 +329,13 @@ export const createLogisticsApp = (props: QiankunProps = {}): LogisticsAppContex
   const theme = setupUI(app);
   const i18n = setupI18n(app, props.locale || 'zh-CN');
 
+  // 路由初始化使用 nextTick 避免阻塞，确保在下一个事件循环中执行
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {
     const initialRoute = deriveInitialSubRoute();
+    // 使用 Promise.resolve().then() 确保路由替换在下一个 tick 执行，不阻塞当前初始化
+    Promise.resolve().then(() => {
     router.replace(initialRoute).catch(() => {});
+    });
   }
 
   const context: LogisticsAppContext = {

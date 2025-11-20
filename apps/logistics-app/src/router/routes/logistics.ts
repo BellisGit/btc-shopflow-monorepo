@@ -139,5 +139,30 @@ export const logisticsRoutes: RouteRecordRaw[] = [
       ],
     },
   },
+  {
+    path: '/config',
+    name: 'logistics-config',
+    component: () => import('../../modules/config/views/index.vue'),
+    meta: {
+      tabLabelKey: 'menu.logistics.config',
+      labelKey: 'menu.logistics.config',
+      breadcrumbs: [
+        { labelKey: 'menu.logistics.config', icon: 'Setting' },
+      ],
+    },
+  },
+  {
+    path: '/config/storage-location',
+    name: 'logistics-config-storage-location',
+    component: () => import('../../modules/config/views/storage-location/index.vue'),
+    meta: {
+      labelKey: 'menu.logistics.config.storageLocation',
+      breadcrumbs: [
+        { labelKey: 'menu.logistics.config', icon: 'Setting' },
+        { labelKey: 'menu.logistics.config.storageLocation', icon: 'Location' },
+      ],
+      tabLabelKey: 'menu.logistics.config.storageLocation',
+    },
+  },
 ];
 

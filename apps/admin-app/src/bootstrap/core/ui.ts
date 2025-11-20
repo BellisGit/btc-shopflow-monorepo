@@ -8,11 +8,18 @@ import '../../styles/theme.scss';
 
 export type AdminThemePlugin = ReturnType<typeof createThemePlugin>;
 
+// 缓存 themePlugin 实例，避免重复创建
+let themePluginInstance: AdminThemePlugin | null = null;
+
 export const setupUI = (app: App) => {
-  const themePlugin = createThemePlugin();
+  // 复用 themePlugin 实例，避免重复创建
+  if (!themePluginInstance) {
+    themePluginInstance = createThemePlugin();
+  }
 
+  // ElementPlus 和 themePlugin 的注册是轻量级操作，不会阻塞
   app.use(ElementPlus);
-  app.use(themePlugin);
+  app.use(themePluginInstance);
 
-  return themePlugin;
+  return themePluginInstance;
 };

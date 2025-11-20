@@ -15,7 +15,7 @@ export interface MicroAppConfig {
  */
 const DEV_HOST =
   typeof window !== 'undefined' && window.location.hostname
-    ? window.location.hostname
+    ? (window.location.hostname === '0.0.0.0' ? 'localhost' : window.location.hostname)
     : 'localhost';
 
 export const microApps: MicroAppConfig[] = [
@@ -24,14 +24,14 @@ export const microApps: MicroAppConfig[] = [
     entry: `//${DEV_HOST}:8081`,
     container: '#subapp-viewport',
     activeRule: (location) => location.pathname.startsWith('/admin'),
-    timeout: 10000,
+    timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
   {
     name: 'logistics',
     entry: `//${DEV_HOST}:8082`,
     container: '#subapp-viewport',
     activeRule: (location) => location.pathname.startsWith('/logistics'),
-    timeout: 10000,
+    timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
   {
     name: 'engineering',

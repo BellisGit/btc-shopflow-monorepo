@@ -251,12 +251,29 @@ router.beforeEach((to, from) => {
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）
 router.afterEach((to) => {
-  // 清理所有 ECharts tooltip，防止页面切换时残留
+  // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
+  // 使用统一的清理函数，自动清理所有图表组件
   try {
-    const tooltipElements = document.querySelectorAll('.echarts-tooltip');
-    tooltipElements.forEach(el => {
-      if (el.parentNode) {
-        el.parentNode.removeChild(el);
+    // 动态导入清理函数，避免在路由文件中直接导入导致循环依赖
+    import('@btc/shared-components').then(({ cleanupAllECharts }) => {
+      cleanupAllECharts();
+    }).catch(() => {
+      // 如果导入失败，使用备用清理逻辑
+      try {
+        const tooltipElements = document.querySelectorAll('.echarts-tooltip');
+        tooltipElements.forEach(el => {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+        const toolboxElements = document.querySelectorAll('.echarts-toolbox, .echarts-data-view');
+        toolboxElements.forEach(el => {
+          if (el.parentNode && el.parentNode === document.body) {
+            el.parentNode.removeChild(el);
+          }
+        });
+      } catch (fallbackError) {
+        // 忽略错误
       }
     });
   } catch (error) {

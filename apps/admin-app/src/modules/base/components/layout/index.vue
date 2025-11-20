@@ -377,13 +377,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column; // 上下布局
   height: 100vh;
-  width: 100%; // 使用 100% 而不是 100vw，避免滚动条导致裁切
+  width: 100vw; // 使用 100vw 而不是 100%，避免滚动条出现/消失时导致宽度变化
   overflow: hidden;
   background-color: var(--bg-color);
 
   // 顶栏区域
   &__topbar {
-    width: 100%;
+    width: 100%; // 相对于 .app-layout 的宽度（100vw），不受滚动条影响
     flex-shrink: 0;
     z-index: 1000; // 确保顶栏在最上层
     overflow: visible; // 确保内容不被裁切
@@ -396,6 +396,7 @@ onUnmounted(() => {
     flex: 1;
     height: calc(100vh - 47px); // 减去顶栏高度
     overflow: hidden;
+    width: 100%; // 相对于 .app-layout 的宽度（100vw），不受滚动条影响
   }
 
   &__sidebar {
@@ -419,29 +420,30 @@ onUnmounted(() => {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    width: calc(100% - 255px);
-    transition: width 0.2s ease-in-out;
+    min-width: 0; // 确保 flex 子元素可以收缩
+    // 移除 width: calc(100% - 255px)，只使用 flex: 1，避免滚动条出现/消失时导致宽度变化
+    // transition: width 0.2s ease-in-out; // 移除 transition，因为不再使用固定宽度
 
-    // 顶部菜单模式：全宽
-    .menu-type-top & {
-      width: 100%;
-    }
+    // 顶部菜单模式：全宽（flex: 1 已经处理）
+    // .menu-type-top & {
+    //   width: 100%;
+    // }
 
-    // 双栏菜单模式：减去左侧菜单宽度（与顶栏搜索框对齐）
-    .menu-type-dual-menu & {
-      width: calc(100% - 274px);
-    }
+    // 双栏菜单模式：flex: 1 已经处理
+    // .menu-type-dual-menu & {
+    //   width: calc(100% - 274px);
+    // }
 
-    // 混合菜单模式：减去左侧菜单宽度
-    .menu-type-top-left & {
-      width: calc(100% - 255px);
-    }
+    // 混合菜单模式：flex: 1 已经处理
+    // .menu-type-top-left & {
+    //   width: calc(100% - 255px);
+    // }
   }
 
   // 顶部区域容器（顶栏、tabbar、面包屑的统一容器）
   &__header {
     flex-shrink: 0;
-    width: 100%;
+    width: 100%; // 相对于 .app-layout__main 的宽度，不受滚动条影响
     box-sizing: border-box;
   }
 
@@ -462,12 +464,13 @@ onUnmounted(() => {
     flex-direction: column;
     overflow: hidden;
     margin: 10px; // 统一四周间距（包含与 header 之间的间距）
-    width: calc(100% - 20px); // 减去左右 margin
+    // 移除 width: calc(100% - 20px)，使用 flex 布局自动计算宽度，避免滚动条出现/消失时导致宽度变化
     box-sizing: border-box;
     border-radius: 6px;
     position: relative;
     background-color: var(--el-bg-color);
     min-height: 0;
+    min-width: 0; // 确保 flex 子元素可以收缩
 
 
     // 主应用路由视图（占据内容区域完整尺寸）

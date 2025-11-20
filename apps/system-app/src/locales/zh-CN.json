@@ -308,7 +308,21 @@
   "验证码已发送": "验证码已发送",
   "发送验证码失败": "发送验证码失败",
   "登录成功": "登录成功",
-  "登录失败": "登录失败"
+  "登录失败": "登录失败",
+  "menu.logistics.overview": "物流概览",
+  "menu.logistics.procurementModule": "采购模块",
+  "menu.logistics.warehouseModule": "仓储模块",
+  "menu.logistics.customsModule": "海关模块",
+  "menu.logistics.procurement.auxiliary": "辅料管理",
+  "menu.logistics.procurement.packaging": "包材管理",
+  "menu.logistics.procurement.supplier": "供应商管理",
+  "menu.logistics.warehouse.material": "物料管理",
+  "menu.logistics.warehouse.material.list": "物料列表",
+  "menu.logistics.warehouse.inventory": "盘点管理",
+  "menu.logistics.warehouse.inventory.info": "盘点记录表",
+  "menu.logistics.warehouse.inventory.detail": "差异记录表",
+  "menu.logistics.config": "配置中心",
+  "menu.logistics.config.storageLocation": "仓位配置"
 }
 
 

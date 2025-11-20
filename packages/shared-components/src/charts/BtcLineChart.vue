@@ -207,7 +207,7 @@ watch(() => props.title, (newTitle) => {
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null);
 
-// 组件卸载时清理 tooltip
+// 组件卸载时清理 tooltip、toolbox 和 ECharts 实例
 onBeforeUnmount(() => {
   if (chartContainerRef.value) {
     try {
@@ -217,6 +217,8 @@ onBeforeUnmount(() => {
         chartInstance.dispatchAction({
           type: 'hideTip'
         });
+        // 销毁 ECharts 实例，这会自动清理所有相关的 DOM 元素（包括 toolbox）
+        chartInstance.dispose();
       }
     } catch (error) {
       // 忽略错误，可能图表已经销毁
@@ -226,6 +228,14 @@ onBeforeUnmount(() => {
   // 清理 body 中残留的 tooltip DOM
   const tooltipElements = document.querySelectorAll('.echarts-tooltip');
   tooltipElements.forEach(el => {
+    if (el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  });
+  
+  // 清理 body 中残留的 toolbox 相关 DOM（数据视图弹窗等）
+  const toolboxElements = document.querySelectorAll('.echarts-toolbox, .echarts-data-view');
+  toolboxElements.forEach(el => {
     if (el.parentNode) {
       el.parentNode.removeChild(el);
     }

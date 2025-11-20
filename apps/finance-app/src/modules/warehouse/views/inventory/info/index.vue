@@ -40,7 +40,8 @@ import { useI18n } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
-import { createWarehouseCrudService } from '@/services/warehouse';
+import { createCrudServiceFromEps } from '@btc/shared-core';
+import { service } from '@services/eps';
 import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({
@@ -53,7 +54,10 @@ const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
 
-const inventoryInfoService: CrudService<any> = createWarehouseCrudService('check');
+const inventoryInfoService: CrudService<any> = createCrudServiceFromEps(
+  ['logistics', 'warehouse', 'check'],
+  service
+);
 
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
   value ? formatDateTime(value) : '--';

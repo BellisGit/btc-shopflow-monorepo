@@ -549,9 +549,9 @@ watch(
     display: flex;
     align-items: center;
     list-style: none;
-    margin: 0;
-    padding: 0;
-    gap: 5px; // 使用 gap 统一间距
+    margin: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
+    padding: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
+    gap: 5px !important; // 使用 gap 统一间距，使用 !important 确保优先级
   }
 
   &__container {

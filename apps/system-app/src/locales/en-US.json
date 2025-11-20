@@ -307,7 +307,21 @@
   "验证码已发送": "Verification code sent",
   "发送验证码失败": "Failed to send verification code",
   "登录成功": "Login successful",
-  "登录失败": "Login failed"
+  "登录失败": "Login failed",
+  "menu.logistics.overview": "Logistics Overview",
+  "menu.logistics.procurementModule": "Procurement Module",
+  "menu.logistics.warehouseModule": "Warehouse Module",
+  "menu.logistics.customsModule": "Customs Module",
+  "menu.logistics.procurement.auxiliary": "Auxiliary Materials Management",
+  "menu.logistics.procurement.packaging": "Packaging Management",
+  "menu.logistics.procurement.supplier": "Supplier Management",
+  "menu.logistics.warehouse.material": "Material Management",
+  "menu.logistics.warehouse.material.list": "Material List",
+  "menu.logistics.warehouse.inventory": "Inventory Management",
+  "menu.logistics.warehouse.inventory.info": "Inventory Records",
+  "menu.logistics.warehouse.inventory.detail": "Variance Records",
+  "menu.logistics.config": "Configuration Center",
+  "menu.logistics.config.storageLocation": "Storage Location Configuration"
 }
 
 

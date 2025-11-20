@@ -1,0 +1,76 @@
+// 暗色模式下的布局背景色样式（共享样式）
+// 确保所有应用（包括系统域主应用）都应用统一的暗色背景色 #0a0a0a
+// 使用 !important 确保切换应用时不会被覆盖
+// 使用高优先级选择器确保在所有场景下都能正确应用
+
+html.dark,
+html.dark body,
+html.dark #app {
+  // Element Plus 组件背景色使用 #0a0a0a
+  --el-bg-color: #0a0a0a !important;
+}
+
+html.dark {
+  // 顶栏背景色
+  .app-layout__topbar,
+  .topbar {
+    background-color: #0a0a0a !important;
+  }
+
+  // 面包屑背景色
+  .app-breadcrumb {
+    background-color: #0a0a0a !important;
+  }
+
+  // Tabbar 背景色
+  .app-process,
+  .app-process.tab-default {
+    background-color: #0a0a0a !important;
+  }
+
+  // 内容区域背景色（确保切换应用时不被覆盖）
+  // 使用更高优先级的选择器，确保覆盖子应用可能设置的样式
+  .app-layout__content,
+  .app-layout__main .app-layout__content {
+    background-color: #0a0a0a !important;
+  }
+
+  // 子应用挂载点背景色（确保不被子应用样式覆盖）
+  #subapp-viewport {
+    background-color: #0a0a0a !important;
+  }
+
+  // 侧边栏容器背景色（深色系统主题下）
+  .app-layout__sidebar,
+  .app-layout__sidebar.has-dark-menu {
+    background-color: #0a0a0a !important;
+  }
+
+  // 深色菜单风格在深色系统主题下，背景色必须和内容区域一致（使用 #0a0a0a）
+  .el-menu-dark {
+    background-color: #0a0a0a !important;
+
+    .el-sub-menu .el-menu {
+      background-color: #0a0a0a !important;
+    }
+  }
+
+  // 确保侧边栏容器内的深色菜单也使用正确的背景色（最高优先级）
+  .app-layout__sidebar {
+    .sidebar__menu.el-menu-dark,
+    .el-menu-dark {
+      background-color: #0a0a0a !important;
+
+      .el-sub-menu .el-menu {
+        background-color: #0a0a0a !important;
+      }
+    }
+
+    // 确保子菜单的背景色也被覆盖
+    .sidebar__menu.el-menu-dark .el-sub-menu .el-menu,
+    .el-menu-dark .el-sub-menu .el-menu {
+      background-color: #0a0a0a !important;
+    }
+  }
+}
+

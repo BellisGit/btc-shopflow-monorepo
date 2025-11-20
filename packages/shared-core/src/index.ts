@@ -7,6 +7,7 @@ export * from './btc/plugins/permission';
 export * from './btc/service/base';
 export * from './btc/service/builder';
 export * from './btc/service/request';
+export * from './btc/service';
 export * from './btc/crud';
 export * from './btc/composables/useTheme';
 export * from './btc/store/theme';

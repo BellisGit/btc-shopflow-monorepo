@@ -345,12 +345,15 @@ const searchUsers = async (query: string) => {
 
   userSearchLoading.value = true;
   try {
-    const response = await userService.page?.({
+    const response = await userService.data?.({
       page: 1,
       size: 20,
-      keyword: query,
+      keyword: {
+        username: query,
+      },
     });
-    userOptions.value = response?.list || [];
+    // data 方法可能直接返回数组，也可能返回包含 list 的对象
+    userOptions.value = Array.isArray(response) ? response : (response?.list || []);
   } catch (error) {
     console.error('[UserRoleAssign] search users error', error);
     userOptions.value = [];
@@ -460,6 +463,10 @@ async function handleSubmit() {
     return;
   }
 
+  // 保存当前选中的域，以便刷新后恢复选择
+  const currentDomain = selectedDomain.value;
+  const currentDomainId = currentDomain?.id;
+
   submitting.value = true;
   try {
     // 批量绑定模式：使用 bind
@@ -471,7 +478,37 @@ async function handleSubmit() {
 
     BtcMessage.success(t('org.user_role_assign.messages.bindSuccess'));
     closeDrawer();
-    tableGroupRef.value?.refresh?.();
+    
+    // 只刷新右侧表格，不刷新左侧列表，避免重置选择
+    if (tableGroupRef.value?.crudRef?.crud?.loadData) {
+      await tableGroupRef.value.crudRef.crud.loadData();
+    } else {
+      // 如果无法只刷新右侧，则刷新整个表格并恢复选择
+      await tableGroupRef.value?.refresh?.();
+      
+      // 刷新后恢复左侧域的选择状态
+      // 由于 BtcMasterList 的 refresh 会在 nextTick 中自动选中第一项，
+      // 我们需要在更晚的时机恢复选择，确保覆盖默认选择
+      if (currentDomain && currentDomainId && tableGroupRef.value?.viewGroupRef) {
+        // 使用多次 nextTick 和 setTimeout 确保在默认选择之后恢复
+        await nextTick();
+        await nextTick();
+        setTimeout(() => {
+          const viewGroup = tableGroupRef.value?.viewGroupRef;
+          if (viewGroup?.masterListRef) {
+            // 从左侧列表中查找对应的域对象
+            const leftList = viewGroup.masterListRef.list || [];
+            const domainItem = leftList.find((item: any) => item.id === currentDomainId);
+            if (domainItem) {
+              viewGroup.select?.(domainItem, currentDomainId);
+            } else {
+              // 如果找不到，直接使用保存的域对象
+              viewGroup.select?.(currentDomain, currentDomainId);
+            }
+          }
+        }, 200);
+      }
+    }
   } catch (error: any) {
     console.error('[UserRoleAssign] submit error', error);
     const errorMessage = error?.message || error?.response?.data?.message || t('common.message.error');
@@ -482,6 +519,10 @@ async function handleSubmit() {
 }
 
 async function handleUnbind(row: any) {
+  // 保存当前选中的域，以便刷新后恢复选择
+  const currentDomain = selectedDomain.value;
+  const currentDomainId = currentDomain?.id;
+
   try {
     await BtcConfirm(
       t('org.user_role_assign.messages.unbindConfirm', {
@@ -498,7 +539,34 @@ async function handleUnbind(row: any) {
     });
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
-    tableGroupRef.value?.refresh?.();
+    
+    // 只刷新右侧表格，不刷新左侧列表，避免重置选择
+    if (tableGroupRef.value?.crudRef?.crud?.loadData) {
+      await tableGroupRef.value.crudRef.crud.loadData();
+    } else {
+      // 如果无法只刷新右侧，则刷新整个表格并恢复选择
+      await tableGroupRef.value?.refresh?.();
+      
+      // 刷新后恢复左侧域的选择状态
+      if (currentDomain && currentDomainId && tableGroupRef.value?.viewGroupRef) {
+        await nextTick();
+        await nextTick();
+        setTimeout(() => {
+          const viewGroup = tableGroupRef.value?.viewGroupRef;
+          if (viewGroup?.masterListRef) {
+            // 从左侧列表中查找对应的域对象
+            const leftList = viewGroup.masterListRef.list || [];
+            const domainItem = leftList.find((item: any) => item.id === currentDomainId);
+            if (domainItem) {
+              viewGroup.select?.(domainItem, currentDomainId);
+            } else {
+              // 如果找不到，直接使用保存的域对象
+              viewGroup.select?.(currentDomain, currentDomainId);
+            }
+          }
+        }, 200);
+      }
+    }
   } catch (error: any) {
     // 用户取消操作时不显示错误
     if (error?.message === 'cancel' || error === 'cancel') {
@@ -516,6 +584,10 @@ async function handleMultiUnbind(rows: any[]) {
     return;
   }
 
+  // 保存当前选中的域，以便刷新后恢复选择
+  const currentDomain = selectedDomain.value;
+  const currentDomainId = currentDomain?.id;
+
   try {
     await BtcConfirm(
       t('org.user_role_assign.messages.unbindBatchConfirm', { count: rows.length }),
@@ -531,7 +603,34 @@ async function handleMultiUnbind(rows: any[]) {
     await userRoleService?.unbindBatch?.(unbindList);
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
-    tableGroupRef.value?.refresh?.();
+    
+    // 只刷新右侧表格，不刷新左侧列表，避免重置选择
+    if (tableGroupRef.value?.crudRef?.crud?.loadData) {
+      await tableGroupRef.value.crudRef.crud.loadData();
+    } else {
+      // 如果无法只刷新右侧，则刷新整个表格并恢复选择
+      await tableGroupRef.value?.refresh?.();
+      
+      // 刷新后恢复左侧域的选择状态
+      if (currentDomain && currentDomainId && tableGroupRef.value?.viewGroupRef) {
+        await nextTick();
+        await nextTick();
+        setTimeout(() => {
+          const viewGroup = tableGroupRef.value?.viewGroupRef;
+          if (viewGroup?.masterListRef) {
+            // 从左侧列表中查找对应的域对象
+            const leftList = viewGroup.masterListRef.list || [];
+            const domainItem = leftList.find((item: any) => item.id === currentDomainId);
+            if (domainItem) {
+              viewGroup.select?.(domainItem, currentDomainId);
+            } else {
+              // 如果找不到，直接使用保存的域对象
+              viewGroup.select?.(currentDomain, currentDomainId);
+            }
+          }
+        }, 200);
+      }
+    }
   } catch (error: any) {
     // 用户取消操作时不显示错误
     if (error?.message === 'cancel' || error === 'cancel') {

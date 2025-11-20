@@ -1,6 +1,9 @@
 // 页面切换过渡动画样式（必须在文件开头）
 @use './transitions.scss';
 
+// 暗色模式布局背景色样式（必须在文件开头，确保优先级）
+@use './dark-theme.scss';
+
 .btc-table-dict-cell {
 	display: inline-flex;
 	align-items: center;
@@ -979,6 +982,22 @@
 }
 }
 // end of imported styles
+
+// 重置 ul/li 默认样式，确保顶栏和 tabbar 按钮间距一致
+// 防止浏览器默认样式在组件样式加载前生效，导致按钮间距先大后小
+ul.app-process__op,
+ul.topbar__tools,
+ul.topbar__left {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  
+  > li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
 
 // 覆盖 Element Plus Drawer 的默认 padding
 .el-drawer__body {

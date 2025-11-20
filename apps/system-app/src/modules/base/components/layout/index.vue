@@ -78,10 +78,14 @@
             <DocsIframe :visible="isDocsApp" />
 
             <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
-              <!-- 骨架屏（挂载在这里，相对于内容区域定位） -->
-              <AppSkeleton />
+            <!-- 注意：容器必须始终在 DOM 中，这样骨架屏才能被找到 -->
+            <!-- qiankun 会在容器内创建包装器，所以骨架屏需要放在容器外部，使用绝对定位覆盖 -->
+            <div id="subapp-viewport" v-show="shouldShowSubAppViewport" style="position: relative;">
+              <!-- qiankun 会在这里挂载子应用 -->
             </div>
+            <!-- 骨架屏放在容器外部，使用绝对定位覆盖，确保在子应用之上 -->
+            <!-- 使用 v-show 而不是 v-if，确保始终在 DOM 中 -->
+            <AppSkeleton v-show="isQiankunLoading" class="app-layout__skeleton" />
           </div>
         </div>
       </div>
@@ -181,7 +185,12 @@ let prevIsMini = browser.isMini;
 // system-app 是主应用，处理系统域路由（默认域）
 // 管理域（/admin/*）和其他业务域都是子应用
 const isMainApp = computed(() => {
-  const path = route.path;
+  // 同时检查 Vue Router 的 path 和 window.location.pathname
+  // 因为路由同步可能导致两者不一致
+  const routerPath = route.path;
+  const locationPath = window.location.pathname;
+  const path = routerPath || locationPath;
+  
   // 排除不需要 Layout 的页面
   if (path === '/login' ||
       path === '/forget-password' ||
@@ -189,16 +198,16 @@ const isMainApp = computed(() => {
     return false;
   }
   // 管理域是子应用，不是主应用
-  if (path.startsWith('/admin')) {
+  if (path.startsWith('/admin') || locationPath.startsWith('/admin')) {
     return false;
   }
   // 其他子应用路径
-  if (path.startsWith('/logistics') ||
-      path.startsWith('/engineering') ||
-      path.startsWith('/quality') ||
-      path.startsWith('/production') ||
-      path.startsWith('/finance') ||
-      path.startsWith('/docs')) {
+  if (path.startsWith('/logistics') || locationPath.startsWith('/logistics') ||
+      path.startsWith('/engineering') || locationPath.startsWith('/engineering') ||
+      path.startsWith('/quality') || locationPath.startsWith('/quality') ||
+      path.startsWith('/production') || locationPath.startsWith('/production') ||
+      path.startsWith('/finance') || locationPath.startsWith('/finance') ||
+      path.startsWith('/docs') || locationPath.startsWith('/docs')) {
     return false;
   }
   // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
@@ -218,10 +227,13 @@ const isQiankunLoading = ref(false);
 const shouldShowSubAppViewport = computed(() => {
   // 如果 qiankun 正在加载，强制显示容器
   if (isQiankunLoading.value) {
+    // console.log('[Layout] shouldShowSubAppViewport: true (isQiankunLoading)');
     return true;
   }
   // 正常情况：非主应用且非文档应用时显示
-  return !isMainApp.value && !isDocsApp.value;
+  const result = !isMainApp.value && !isDocsApp.value;
+  // console.log('[Layout] shouldShowSubAppViewport:', result, `(isMainApp: ${isMainApp.value}, isDocsApp: ${isDocsApp.value})`);
+  return result;
 });
 
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
@@ -299,10 +311,22 @@ function refreshView() {
 
 // qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
 const handleQiankunBeforeLoad = () => {
+  // console.log('[Layout] qiankun:before-load 事件触发，设置 isQiankunLoading = true');
   isQiankunLoading.value = true;
 };
 const handleQiankunAfterMount = () => {
+  // console.log('[Layout] qiankun:after-mount 事件触发，设置 isQiankunLoading = false');
   isQiankunLoading.value = false;
+  // 强制隐藏骨架屏，确保立即生效
+  // nextTick(() => {
+  //   const skeleton = document.getElementById('app-skeleton');
+  //   if (skeleton) {
+  //     skeleton.style.setProperty('display', 'none', 'important');
+  //     skeleton.style.setProperty('visibility', 'hidden', 'important');
+  //     skeleton.style.setProperty('opacity', '0', 'important');
+  //     console.log('[Layout] 强制隐藏骨架屏');
+  //   }
+  // });
 };
 
 onMounted(() => {
@@ -328,13 +352,17 @@ onMounted(() => {
     const container = document.querySelector('#subapp-viewport');
     if (container) {
       // 检查初始状态
-      isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
+      const hasLoadingAttr = container.hasAttribute('data-qiankun-loading');
+      isQiankunLoading.value = hasLoadingAttr;
+      // console.log('[Layout] 初始化 isQiankunLoading:', hasLoadingAttr);
 
       // 使用 MutationObserver 监听属性变化
       qiankunLoadingObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-            isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
+            const hasAttr = container.hasAttribute('data-qiankun-loading');
+            // console.log('[Layout] MutationObserver 检测到 data-qiankun-loading 变化:', hasAttr);
+            isQiankunLoading.value = hasAttr;
           }
         });
       });
@@ -419,23 +447,24 @@ onUnmounted(() => {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    width: calc(100% - 255px);
-    transition: width 0.2s ease-in-out;
+    min-width: 0; // 确保 flex 子元素可以收缩
+    // 移除 width: calc(100% - 255px)，只使用 flex: 1，避免滚动条出现/消失时导致宽度变化
+    // transition: width 0.2s ease-in-out; // 移除 transition，因为不再使用固定宽度
 
-    // 顶部菜单模式：全宽
-    .menu-type-top & {
-      width: 100%;
-    }
+    // 顶部菜单模式：全宽（flex: 1 已经处理）
+    // .menu-type-top & {
+    //   width: 100%;
+    // }
 
-    // 双栏菜单模式：减去左侧菜单宽度（与顶栏搜索框对齐）
-    .menu-type-dual-menu & {
-      width: calc(100% - 274px);
-    }
+    // 双栏菜单模式：flex: 1 已经处理
+    // .menu-type-dual-menu & {
+    //   width: calc(100% - 274px);
+    // }
 
-    // 混合菜单模式：减去左侧菜单宽度
-    .menu-type-top-left & {
-      width: calc(100% - 255px);
-    }
+    // 混合菜单模式：flex: 1 已经处理
+    // .menu-type-top-left & {
+    //   width: calc(100% - 255px);
+    // }
   }
 
   // 顶部区域容器（顶栏、tabbar、面包屑的统一容器）
@@ -525,6 +554,28 @@ onUnmounted(() => {
     .docs-iframe-wrapper {
       padding: 0 !important; // iframe内部的VitePress有自己的布局
       overflow: hidden !important; // 容器不滚动，滚动由 iframe 内部处理
+    }
+
+    // 骨架屏（放在容器外部，使用绝对定位覆盖）
+    .app-layout__skeleton {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      pointer-events: none; // Allow interaction with elements below when hidden
+    }
+
+    // 确保当 v-show="false" 时，骨架屏完全隐藏
+    .app-layout__skeleton[style*="display: none"],
+    .app-layout__skeleton[style*="display:none"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      pointer-events: none;
+      background-color: var(--el-bg-color);
     }
 
     // slide-bottom 动画

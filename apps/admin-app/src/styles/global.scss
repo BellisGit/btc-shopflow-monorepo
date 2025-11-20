@@ -176,10 +176,10 @@ body.docs-mode {
     visibility: hidden;
   }
 
-  // 主内容区占满整个宽度
-  .app-layout__main {
-    width: 100% !important;
-  }
+  // 主内容区占满整个宽度（flex: 1 已经处理，不需要固定宽度）
+  // .app-layout__main {
+  //   width: 100% !important;
+  // }
 
   // Tabbar：使用 v-show 隐藏，但需要移除占据的空间
   .app-process {
@@ -193,8 +193,8 @@ body.docs-mode {
   .app-layout__content {
     padding: 0 !important;
     margin: 10px !important; // 保持四周间距，与主应用和子应用一致
-    width: calc(100% - 20px);
-    height: calc(100% - 20px);
+    // 移除 width: calc(100% - 20px)，使用 flex 布局自动计算宽度
+    // height: calc(100% - 20px); // 移除固定高度，使用 flex: 1
     border-radius: 6px;
   }
 
@@ -389,14 +389,15 @@ html.dark {
 :deep(.el-scrollbar__wrap) {
   overflow-y: scroll !important; // 始终保留滚动条空间，避免出现/消失导致重排
   overflow-x: hidden !important;
-  scrollbar-gutter: stable both-edges;
+  // 移除 scrollbar-gutter，按用户要求取消滚动条预留
 }
 
 // 布局内容容器使用原生滚动（内部表格自身处理滚动）
-.app-layout__content {
-  overflow-y: scroll;
-  overflow-x: hidden;
-}
+// 注意：不要在这里设置 overflow，应该在布局组件中统一管理
+// .app-layout__content {
+//   overflow-y: scroll;
+//   overflow-x: hidden;
+// }
 
 // 设置抽屉模态框样式（参考 art-design-pro）
 .user-preferences-modal {

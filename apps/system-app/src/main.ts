@@ -16,14 +16,23 @@ bootstrap(app)
   .then(() => {
     app.mount('#app');
 
-    // 应用挂载后，延迟关闭 Loading
+    // 应用挂载后，立即关闭并移除所有 Loading 元素（如果存在）
+    // 注意：system-app 的 index.html 中没有 #Loading 元素，但子应用可能有
+    // 这里确保所有 Loading 元素都被移除，避免一直显示
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      // 立即隐藏
+      loadingEl.style.display = 'none';
+      loadingEl.style.visibility = 'hidden';
+      loadingEl.style.opacity = '0';
+      // 延迟移除，确保动画完成
     setTimeout(() => {
-      const el = document.getElementById('Loading');
-      if (el) {
-        el.classList.add('is-hide');
+        if (loadingEl.parentNode) {
+          loadingEl.parentNode.removeChild(loadingEl);
       }
-    }, 300);
+      }, 100);
+    }
   })
   .catch(err => {
-    console.error('BTC Shopflow 启动失败', err);
+    // console.error('BTC Shopflow 启动失败', err);
   });
