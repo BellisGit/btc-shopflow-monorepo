@@ -127,7 +127,7 @@
   "menu.data.files.templates": "Controlled Files",
   "menu.data.files.preview": "File Preview",
   "menu.data.inventory": "Inventory Data",
-  "menu.inventory.result": "Inventory Result",
+  "menu.inventory.result": "Live Inventory Data",
   "inventory.check.list": "Check List",
   "inventory.result.title": "Inventory Result",
   "inventory.result.search_placeholder": "Search inventory results...",
@@ -320,8 +320,16 @@
   "menu.logistics.warehouse.inventory": "Inventory Management",
   "menu.logistics.warehouse.inventory.info": "Inventory Records",
   "menu.logistics.warehouse.inventory.detail": "Variance Records",
-  "menu.logistics.config": "Configuration Center",
-  "menu.logistics.config.storageLocation": "Storage Location Configuration"
+  "menu.logistics.warehouse.inventory.result": "Inventory Result",
+  "menu.logistics.config": "Inventory Management",
+  "menu.logistics.config.storageLocation": "Storage Location Configuration",
+  "menu.finance.overview": "Finance Overview",
+  "menu.finance.home": "Finance Home",
+  "menu.finance.receivables": "Receivables",
+  "menu.finance.payables": "Payables",
+  "menu.finance.reports": "Financial Reports",
+  "menu.finance.inventoryManagement": "Inventory Management",
+  "menu.finance.inventoryManagement.result": "Inventory Result"
 }
 
 

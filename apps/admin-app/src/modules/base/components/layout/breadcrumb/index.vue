@@ -28,6 +28,7 @@ import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
 import { getManifestRoute } from '@/micro/manifests';
+import { getMenusForApp } from '@/store/menuRegistry';
 
 const route = useRoute();
 const { t } = useI18n();
@@ -43,6 +44,31 @@ interface BreadcrumbItem {
 interface BreadcrumbConfig {
   i18nKey: string;
   icon?: string;
+}
+
+// 从菜单注册表中查找菜单项的图标
+function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined {
+  const menus = getMenusForApp(app);
+  
+  // 递归查找菜单项
+  function findInMenuItems(items: any[]): string | undefined {
+    for (const item of items) {
+      // 检查当前菜单项的 title 是否匹配 i18nKey
+      if (item.title === i18nKey && item.icon) {
+        return item.icon;
+      }
+      // 递归查找子菜单
+      if (item.children && item.children.length > 0) {
+        const found = findInMenuItems(item.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return undefined;
+  }
+  
+  return findInMenuItems(menus);
 }
 
 // 根据路由生成面包屑（应用隔离）
@@ -102,134 +128,135 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 
   // 管理域的路径映射（完整层级结构）
+  // 注意：图标将从菜单注册表中自动获取，这里只保留 i18nKey
   const adminAppBreadcrumbs: Record<string, BreadcrumbConfig[]> = {
     // 平台治理
     '/admin/platform/domains': [
-      { i18nKey: 'menu.platform', icon: 'Coin' },
-      { i18nKey: 'menu.platform.domains', icon: 'Location' },
+      { i18nKey: 'menu.platform' },
+      { i18nKey: 'menu.platform.domains' },
     ],
     '/admin/platform/modules': [
-      { i18nKey: 'menu.platform', icon: 'Coin' },
-      { i18nKey: 'menu.platform.modules', icon: 'Files' },
+      { i18nKey: 'menu.platform' },
+      { i18nKey: 'menu.platform.modules' },
     ],
     '/admin/platform/plugins': [
-      { i18nKey: 'menu.platform', icon: 'Coin' },
-      { i18nKey: 'menu.platform.plugins', icon: 'Connection' },
+      { i18nKey: 'menu.platform' },
+      { i18nKey: 'menu.platform.plugins' },
     ],
 
     // 组织与账号
     '/admin/org/tenants': [
-      { i18nKey: 'menu.org', icon: 'OfficeBuilding' },
-      { i18nKey: 'menu.org.tenants', icon: 'School' },
+      { i18nKey: 'menu.org' },
+      { i18nKey: 'menu.org.tenants' },
     ],
     '/admin/org/departments': [
-      { i18nKey: 'menu.org', icon: 'OfficeBuilding' },
-      { i18nKey: 'menu.org.departments', icon: 'Postcard' },
+      { i18nKey: 'menu.org' },
+      { i18nKey: 'menu.org.departments' },
     ],
     '/admin/org/users': [
-      { i18nKey: 'menu.org', icon: 'OfficeBuilding' },
-      { i18nKey: 'menu.org.users', icon: 'User' },
+      { i18nKey: 'menu.org' },
+      { i18nKey: 'menu.org.users' },
     ],
 
     // 访问控制
     '/admin/access/resources': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.config', icon: 'Setting' },
-      { i18nKey: 'menu.access.resources', icon: 'FolderOpened' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.config' },
+      { i18nKey: 'menu.access.resources' },
     ],
     '/admin/access/actions': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.config', icon: 'Setting' },
-      { i18nKey: 'menu.access.actions', icon: 'TrendCharts' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.config' },
+      { i18nKey: 'menu.access.actions' },
     ],
     '/admin/access/permissions': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.config', icon: 'Setting' },
-      { i18nKey: 'menu.access.permissions', icon: 'Key' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.config' },
+      { i18nKey: 'menu.access.permissions' },
     ],
     '/admin/access/roles': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.config', icon: 'Setting' },
-      { i18nKey: 'menu.access.roles', icon: 'UserFilled' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.config' },
+      { i18nKey: 'menu.access.roles' },
     ],
     '/admin/access/perm-compose': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.relations', icon: 'Link' },
-      { i18nKey: 'menu.access.perm_compose', icon: 'Grid' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.relations' },
+      { i18nKey: 'menu.access.perm_compose' },
     ],
     '/admin/org/users/:id/roles': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.relations', icon: 'Link' },
-      { i18nKey: 'menu.access.user_assign', icon: 'User' },
-      { i18nKey: 'menu.access.user_role_bind', icon: 'UserFilled' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.relations' },
+      { i18nKey: 'menu.access.user_assign' },
+      { i18nKey: 'menu.access.user_role_bind' },
     ],
     '/admin/org/users/users-roles': [
-      { i18nKey: 'menu.access', icon: 'Lock' },
-      { i18nKey: 'menu.access.relations', icon: 'Link' },
-      { i18nKey: 'menu.access.user_assign', icon: 'User' },
-      { i18nKey: 'menu.access.user_role_bind', icon: 'UserFilled' },
+      { i18nKey: 'menu.access' },
+      { i18nKey: 'menu.access.relations' },
+      { i18nKey: 'menu.access.user_assign' },
+      { i18nKey: 'menu.access.user_role_bind' },
     ],
 
     // 导航与可见性
     '/admin/navigation/menus': [
-      { i18nKey: 'menu.navigation', icon: 'Menu' },
-      { i18nKey: 'menu.navigation.menus', icon: 'List' },
+      { i18nKey: 'menu.navigation' },
+      { i18nKey: 'menu.navigation.menus' },
     ],
     '/admin/navigation/menus/preview': [
-      { i18nKey: 'menu.navigation', icon: 'Menu' },
-      { i18nKey: 'menu.navigation.menu_preview', icon: 'View' },
+      { i18nKey: 'menu.navigation' },
+      { i18nKey: 'menu.navigation.menu_preview' },
     ],
 
     // 运维与审计
     '/admin/ops/logs/operation': [
-      { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.logs', icon: 'Document' },
-      { i18nKey: 'menu.ops.operation_log', icon: 'Operation' },
+      { i18nKey: 'menu.ops' },
+      { i18nKey: 'menu.ops.logs' },
+      { i18nKey: 'menu.ops.operation_log' },
     ],
     '/admin/ops/logs/request': [
-      { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.logs', icon: 'Document' },
-      { i18nKey: 'menu.ops.request_log', icon: 'Connection' },
+      { i18nKey: 'menu.ops' },
+      { i18nKey: 'menu.ops.logs' },
+      { i18nKey: 'menu.ops.request_log' },
     ],
     '/admin/ops/baseline': [
-      { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.baseline', icon: 'Histogram' },
+      { i18nKey: 'menu.ops' },
+      { i18nKey: 'menu.ops.baseline' },
     ],
     '/admin/ops/api-list': [
-      { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.api_list', icon: 'List' },
+      { i18nKey: 'menu.ops' },
+      { i18nKey: 'menu.ops.api_list' },
     ],
     '/admin/ops/simulator': [
-      { i18nKey: 'menu.ops', icon: 'Monitor' },
-      { i18nKey: 'menu.ops.simulator', icon: 'Opportunity' },
+      { i18nKey: 'menu.ops' },
+      { i18nKey: 'menu.ops.simulator' },
     ],
     // 策略相关
     '/admin/strategy/management': [
-      { i18nKey: 'menu.strategy', icon: 'Document' },
-      { i18nKey: 'menu.strategy.management', icon: 'FolderOpened' },
+      { i18nKey: 'menu.strategy' },
+      { i18nKey: 'menu.strategy.management' },
     ],
     '/admin/strategy/designer': [
-      { i18nKey: 'menu.strategy', icon: 'Document' },
-      { i18nKey: 'menu.strategy.designer', icon: 'EditPen' },
+      { i18nKey: 'menu.strategy' },
+      { i18nKey: 'menu.strategy.designer' },
     ],
     '/admin/strategy/monitor': [
-      { i18nKey: 'menu.strategy', icon: 'Document' },
-      { i18nKey: 'menu.strategy.monitor', icon: 'Monitor' },
+      { i18nKey: 'menu.strategy' },
+      { i18nKey: 'menu.strategy.monitor' },
     ],
     // 数据治理
     '/admin/governance/files/templates': [
-      { i18nKey: 'menu.governance', icon: 'DataAnalysis' },
-      { i18nKey: 'menu.data.files', icon: 'Document' },
-      { i18nKey: 'menu.data.files.templates', icon: 'Files' },
+      { i18nKey: 'menu.governance' },
+      { i18nKey: 'menu.data.files' },
+      { i18nKey: 'menu.data.files.templates' },
     ],
-    // 测试功能
+    // 测试功能（图标将从菜单注册表中获取）
     '/admin/test/components': [
-      { i18nKey: 'menu.test_features', icon: 'Coin' },
-      { i18nKey: 'menu.test_features.components', icon: 'Tickets' },
+      { i18nKey: 'menu.test_features' },
+      { i18nKey: 'menu.test_features.components' },
     ],
     '/admin/test/api-test-center': [
-      { i18nKey: 'menu.test_features', icon: 'Coin' },
-      { i18nKey: 'menu.test_features.api_test_center', icon: 'Connection' },
+      { i18nKey: 'menu.test_features' },
+      { i18nKey: 'menu.test_features.api_test_center' },
     ],
   };
 
@@ -267,11 +294,15 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     return [];
   }
 
-  // 转换为带翻译的面包屑
-  return breadcrumbData.map((item) => ({
-    label: t(item.i18nKey),
-    icon: item.icon,
-  }));
+  // 转换为带翻译的面包屑，并从菜单注册表中获取图标
+  return breadcrumbData.map((item) => {
+    // 优先使用菜单注册表中的图标，如果没有则使用配置中的图标
+    const menuIcon = findMenuIconByI18nKey(item.i18nKey, currentApp);
+    return {
+      label: t(item.i18nKey),
+      icon: menuIcon || item.icon,
+    };
+  });
 });
 </script>
 

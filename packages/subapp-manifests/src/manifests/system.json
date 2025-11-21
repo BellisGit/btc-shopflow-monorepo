@@ -61,7 +61,7 @@
       },
       "breadcrumbs": [
         { "labelKey": "menu.inventory", "icon": "Odometer" },
-        { "labelKey": "menu.inventory.dataSource", "icon": "Database" },
+        { "labelKey": "menu.inventory.dataSource", "icon": "Files" },
         { "labelKey": "menu.inventory.dataSource.bom", "icon": "List" }
       ]
     },
@@ -74,7 +74,7 @@
       },
       "breadcrumbs": [
         { "labelKey": "menu.inventory", "icon": "Odometer" },
-        { "labelKey": "menu.inventory.dataSource", "icon": "Database" },
+        { "labelKey": "menu.inventory.dataSource", "icon": "Files" },
         { "labelKey": "menu.inventory.dataSource.list", "icon": "List" }
       ]
     },
@@ -120,44 +120,39 @@
     {
       "index": "data",
       "labelKey": "menu.data",
-      "icon": "Folder",
       "children": [
         {
           "index": "data-files",
           "labelKey": "menu.data.files",
-          "icon": "Document",
           "children": [
-            { "index": "/data/files/list", "labelKey": "menu.data.files.list", "icon": "List" },
-            { "index": "/data/files/template", "labelKey": "menu.data.files.template", "icon": "Files" },
-            { "index": "/data/files/preview", "labelKey": "menu.data.files.preview", "icon": "View" }
+            { "index": "/data/files/list", "labelKey": "menu.data.files.list" },
+            { "index": "/data/files/template", "labelKey": "menu.data.files.template" },
+            { "index": "/data/files/preview", "labelKey": "menu.data.files.preview" }
           ]
         },
         {
           "index": "data-dictionary",
           "labelKey": "menu.data.dictionary",
-          "icon": "Collection",
           "children": [
-            { "index": "/data/dictionary/file-categories", "labelKey": "menu.data.dictionary.file_categories", "icon": "FolderOpened" }
+            { "index": "/data/dictionary/file-categories", "labelKey": "menu.data.dictionary.file_categories" }
           ]
         },
-        { "index": "/data/recycle", "labelKey": "menu.data.recycle", "icon": "Delete" }
+        { "index": "/data/recycle", "labelKey": "menu.data.recycle" }
       ]
     },
     {
       "index": "inventory",
       "labelKey": "menu.inventory",
-      "icon": "Odometer",
       "children": [
         {
           "index": "inventory-dataSource",
           "labelKey": "menu.inventory.dataSource",
-          "icon": "Database",
           "children": [
-            { "index": "/data/inventory/bom", "labelKey": "menu.inventory.dataSource.bom", "icon": "List" },
-            { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list", "icon": "List" }
+            { "index": "/data/inventory/bom", "labelKey": "menu.inventory.dataSource.bom" },
+            { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list" }
           ]
         },
-        { "index": "/data/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" }
+        { "index": "/data/inventory/check", "labelKey": "menu.inventory.result" }
       ]
     }
   ]

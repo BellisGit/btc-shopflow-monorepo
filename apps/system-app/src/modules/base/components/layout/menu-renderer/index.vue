@@ -43,7 +43,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineComponent } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { MenuItem } from '@/micro/menus';
 import { BtcSvg } from '@btc/shared-components';
@@ -77,6 +76,62 @@ import {
   CollectionTag,
   DeleteFilled,
   Collection,
+  Setting,
+  Edit,
+  DataAnalysis,
+  ShoppingCart,
+  Box,
+  MapLocation,
+  Folder,
+  Delete,
+  Check,
+  Warning,
+  Money,
+  CreditCard,
+  Clock,
+  ShoppingBag,
+  Goods,
+  Van,
+  Ship,
+  Tools,
+  Cpu,
+  Printer,
+  Camera,
+  Picture,
+  VideoCamera,
+  Microphone,
+  Headset,
+  Phone,
+  Message,
+  ChatDotRound,
+  ChatLineRound,
+  Bell,
+  Notification,
+  Promotion,
+  Discount,
+  Star,
+  StarFilled,
+  Share,
+  Download,
+  Upload,
+  Link,
+  Search,
+  Filter,
+  Sort,
+  Refresh,
+  Loading,
+  Plus,
+  Minus,
+  Close,
+  CircleCheck,
+  CircleClose,
+  InfoFilled,
+  SuccessFilled,
+  WarningFilled,
+  CirclePlus,
+  Remove,
+  CircleCheckFilled,
+  CircleCloseFilled,
 } from '@element-plus/icons-vue';
 
 defineOptions({
@@ -123,20 +178,77 @@ const iconMap: Record<string, any> = {
   Grid,
   View,
   Operation,
-  Opportunity, // 添加缺失的图标
+  Opportunity,
   CollectionTag,
   DeleteFilled,
   Collection,
+  Setting,
+  Edit,
+  DataAnalysis,
+  ShoppingCart,
+  Box,
+  MapLocation,
+  Folder,
+  Delete,
+  Check,
+  Warning,
+  Money,
+  CreditCard,
+  Clock,
+  ShoppingBag,
+  Goods,
+  Van,
+  Ship,
+  Tools,
+  Cpu,
+  Printer,
+  Camera,
+  Picture,
+  VideoCamera,
+  Microphone,
+  Headset,
+  Phone,
+  Message,
+  ChatDotRound,
+  ChatLineRound,
+  Bell,
+  Notification,
+  Promotion,
+  Discount,
+  Star,
+  StarFilled,
+  Share,
+  Download,
+  Upload,
+  Link,
+  Search,
+  Filter,
+  Sort,
+  Refresh,
+  Loading,
+  Plus,
+  Minus,
+  Close,
+  CircleCheck,
+  CircleClose,
+  InfoFilled,
+  SuccessFilled,
+  WarningFilled,
+  CirclePlus,
+  Remove,
+  CircleCheckFilled,
+  CircleCloseFilled,
 };
 
 // 获取图标组件
-const getIconComponent = (iconName: string) => {
+const getIconComponent = (iconName?: string) => {
+  if (!iconName) return Coin;
   return iconMap[iconName] || Coin; // 默认图标
 };
 
-const isSvgIcon = (iconName: string) => iconName?.startsWith('svg:');
+const isSvgIcon = (iconName?: string) => iconName?.startsWith('svg:') ?? false;
 
-const getSvgName = (iconName: string) => iconName.replace(/^svg:/, '');
+const getSvgName = (iconName?: string) => iconName?.replace(/^svg:/, '') || '';
 
 // 判断菜单项是否可见（支持搜索过滤）
 const isMenuVisible = (item: MenuItem): boolean => {

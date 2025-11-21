@@ -19,5 +19,6 @@ export * from './composables/use-email-code';
 export * from './types/common';
 export * from './types/crud';
 export * from './types/qiankun';
+export * from './utils/menu-icon-assigner';
 
 

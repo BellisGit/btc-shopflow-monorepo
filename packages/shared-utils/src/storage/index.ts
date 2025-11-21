@@ -1,5 +1,6 @@
 ﻿/**
- * 鏈湴瀛樺偍宸ュ叿绫? */
+ * 本地存储工具类
+ */
 class StorageUtil {
   private prefix: string;
 
@@ -8,8 +9,11 @@ class StorageUtil {
   }
 
   /**
-   * 璁剧疆瀛樺偍
-   * @param key 閿?   * @param value 鍊?   * @param expire 杩囨湡鏃堕棿锛堢锛?   */
+   * 设置存储
+   * @param key 键
+   * @param value 值
+   * @param expire 过期时间（秒）
+   */
   set(key: string, value: unknown, expire?: number): void {
     // 禁止创建独立的键，统一使用 settings 和 user 存储
     // 允许的键：settings, user, locale, i18n 相关的缓存键
@@ -65,8 +69,10 @@ class StorageUtil {
   }
 
   /**
-   * 鑾峰彇瀛樺偍
-   * @param key 閿?   * @returns 鍊?   */
+   * 获取存储
+   * @param key 键
+   * @returns 值
+   */
   get<T = unknown>(key: string): T | null {
     const str = localStorage.getItem(this.prefix + key);
     if (!str) return null;
@@ -84,14 +90,15 @@ class StorageUtil {
   }
 
   /**
-   * 绉婚櫎瀛樺偍
-   * @param key 閿?   */
+   * 移除存储
+   * @param key 键
+   */
   remove(key: string): void {
     localStorage.removeItem(this.prefix + key);
   }
 
   /**
-   * 娓呯┖瀛樺偍
+   * 清空存储
    */
   clear(): void {
     Object.keys(localStorage).forEach((key) => {
@@ -103,7 +110,3 @@ class StorageUtil {
 }
 
 export const storage = new StorageUtil();
-
-
-
-

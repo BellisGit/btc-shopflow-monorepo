@@ -26,45 +26,25 @@
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item :label="t('system.inventory.base.fields.checkNo')">
-          {{ detailRow?.baseId || '-' }}
+          {{ detailRow?.checkNo || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="流程ID">
+          {{ detailRow?.processId || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('system.material.fields.materialCode')">
-          {{ detailRow?.materialCode || '-' }}
+          {{ detailRow?.partName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('system.material.fields.materialName')">
-          {{ detailRow?.materialName || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('system.material.fields.specification')">
-          {{ detailRow?.specification || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('system.material.fields.unit')">
-          {{ detailRow?.unit || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.batchNo')">
-          {{ detailRow?.batchNo || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('system.material.fields.expireCycle')">
-          {{ detailRow?.validity || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.storageLocation')">
-          {{ detailRow?.storageLocation || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.diffRate')">
-          {{ detailRow?.diffRate || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.isDiff')">
-          <el-tag :type="detailRow?.isDiff === 1 ? 'danger' : 'success'">
-            {{ detailRow?.isDiff === 1 ? t('common.yes') : t('common.no') }}
-          </el-tag>
+        <el-descriptions-item :label="t('inventory.result.fields.actualQty')">
+          {{ detailRow?.partQty || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('system.inventory.base.fields.checkerId')">
-          {{ detailRow?.checkerId || '-' }}
+          {{ detailRow?.checker || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('inventory.result.fields.storageLocation')">
+          {{ detailRow?.position || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('system.inventory.base.fields.createdAt')">
           {{ detailRow?.createdAt || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('system.inventory.base.fields.remark')" :span="2">
-          {{ detailRow?.remark || '-' }}
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
@@ -128,8 +108,8 @@ const checkService = {
   }
 };
 
-// 盘点结果服务（右侧表），使用纯后端API
-const resultService = service.system?.base?.check;
+// 盘点结果服务（右侧表），使用新的data-source API
+const resultService = service.system?.base?.dataSource;
 
 const wrappedResultService = {
   ...resultService,
@@ -178,30 +158,26 @@ const handleDetail = (row: any) => {
   detailVisible.value = true;
 };
 
-// 盘点结果表格列（只显示：序号、物料编码、账面数量、实际数量、差异数量、创建时间、操作列）
+// 盘点结果表格列（根据新的data-source API字段）
 const resultColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'materialCode', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'bookQty', label: t('inventory.result.fields.bookQty'), minWidth: 120 },
-  { prop: 'actualQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
-  { prop: 'diffQty', label: t('inventory.result.fields.diffQty'), minWidth: 120 },
+  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), minWidth: 140 },
+  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
+  { prop: 'partQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
+  { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), minWidth: 120 },
+  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
   { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), minWidth: 180 },
 ]);
 
-// 盘点结果表单
+// 盘点结果表单（根据新的data-source API字段）
 const resultFormItems = computed<FormItem[]>(() => [
-  { prop: 'baseId', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' } },
-  { prop: 'materialCode', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'materialName', label: t('system.material.fields.materialName'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'specification', label: t('system.material.fields.specification'), span: 12, component: { name: 'el-input' } },
-  { prop: 'unit', label: t('system.material.fields.unit'), span: 12, component: { name: 'el-input' } },
-  { prop: 'batchNo', label: t('inventory.result.fields.batchNo'), span: 12, component: { name: 'el-input' } },
-  { prop: 'validity', label: t('system.material.fields.expireCycle'), span: 12, component: { name: 'el-input', props: { placeholder: 'YYYY-MM-DD' } } },
-  { prop: 'bookQty', label: t('inventory.result.fields.bookQty'), span: 12, component: { name: 'el-input' } },
-  { prop: 'actualQty', label: t('inventory.result.fields.actualQty'), span: 12, component: { name: 'el-input' } },
-  { prop: 'storageLocation', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
-  { prop: 'diffQty', label: t('inventory.result.fields.diffQty'), span: 12, component: { name: 'el-input' } },
+  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' } },
+  { prop: 'processId', label: '流程ID', span: 12, component: { name: 'el-input' } },
+  { prop: 'partName', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
+  { prop: 'partQty', label: t('inventory.result.fields.actualQty'), span: 12, component: { name: 'el-input-number' }, required: true },
+  { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
+  { prop: 'position', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
   { prop: 'diffRate', label: t('inventory.result.fields.diffRate'), span: 12, component: { name: 'el-input' } },
   {
     prop: 'isDiff',

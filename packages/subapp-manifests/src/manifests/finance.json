@@ -45,8 +45,39 @@
       "breadcrumbs": [
         { "labelKey": "menu.finance.reports", "icon": "DataAnalysis" }
       ]
+    },
+    {
+      "path": "/inventory",
+      "labelKey": "menu.finance.inventoryManagement",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.finance.inventoryManagement"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.finance.inventoryManagement" }
+      ]
+    },
+    {
+      "path": "/inventory/result",
+      "labelKey": "menu.finance.inventoryManagement.result",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.finance.inventoryManagement.result"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.finance.inventoryManagement" },
+        { "labelKey": "menu.finance.inventoryManagement.result" }
+      ]
     }
   ],
-  "menus": []
+  "menus": [
+    {
+      "index": "/finance/inventory",
+      "labelKey": "menu.finance.inventoryManagement",
+      "children": [
+        { "index": "/finance/inventory/result", "labelKey": "menu.finance.inventoryManagement.result" }
+      ]
+    }
+  ]
 }
 

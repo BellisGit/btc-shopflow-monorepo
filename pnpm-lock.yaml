@@ -611,9 +611,6 @@ importers:
       qiankun:
         specifier: ^2.10.16
         version: 2.10.16
-      single-spa:
-        specifier: ^6.0.3
-        version: 6.0.3
       vue:
         specifier: ^3.4.0
         version: 3.5.22(typescript@5.9.3)

@@ -114,8 +114,7 @@
         "labelKey": "menu.logistics.warehouse.inventory.info"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
-        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
         { "labelKey": "menu.logistics.warehouse.inventory.info", "icon": "Document" }
       ]
     },
@@ -127,8 +126,7 @@
         "labelKey": "menu.logistics.warehouse.inventory.detail"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
-        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
         { "labelKey": "menu.logistics.warehouse.inventory.detail", "icon": "Histogram" }
       ]
     },
@@ -154,6 +152,18 @@
       ]
     },
     {
+      "path": "/warehouse/inventory/result",
+      "labelKey": "menu.logistics.warehouse.inventory.result",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouse.inventory.result"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.warehouse.inventory.result", "icon": "List" }
+      ]
+    },
+    {
       "path": "/config/storage-location",
       "labelKey": "menu.logistics.config.storageLocation",
       "tab": {
@@ -172,9 +182,9 @@
       "labelKey": "menu.logistics.procurementModule",
       "icon": "svg:cart",
       "children": [
-        { "index": "/logistics/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary", "icon": "Collection" },
-        { "index": "/logistics/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging", "icon": "CollectionTag" },
-        { "index": "/logistics/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier", "icon": "User" }
+        { "index": "/logistics/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary" },
+        { "index": "/logistics/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging" },
+        { "index": "/logistics/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier" }
       ]
     },
     {
@@ -185,18 +195,8 @@
         {
           "index": "/logistics/warehouse/material",
           "labelKey": "menu.logistics.warehouse.material",
-          "icon": "Files",
           "children": [
-            { "index": "/logistics/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list", "icon": "List" }
-          ]
-        },
-        {
-          "index": "/logistics/warehouse/inventory",
-          "labelKey": "menu.logistics.warehouse.inventory",
-          "icon": "Odometer",
-          "children": [
-            { "index": "/logistics/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info", "icon": "Document" },
-            { "index": "/logistics/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail", "icon": "Histogram" }
+            { "index": "/logistics/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list" }
           ]
         }
       ]
@@ -209,9 +209,11 @@
     {
       "index": "/logistics/config",
       "labelKey": "menu.logistics.config",
-      "icon": "Setting",
       "children": [
-        { "index": "/logistics/config/storage-location", "labelKey": "menu.logistics.config.storageLocation", "icon": "Box" }
+        { "index": "/logistics/config/storage-location", "labelKey": "menu.logistics.config.storageLocation" },
+        { "index": "/logistics/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info" },
+        { "index": "/logistics/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail" },
+        { "index": "/logistics/warehouse/inventory/result", "labelKey": "menu.logistics.warehouse.inventory.result" }
       ]
     }
   ]

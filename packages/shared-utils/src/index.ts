@@ -1,14 +1,18 @@
-﻿// @btc/shared-utils 鍏ュ彛鏂囦欢
+﻿// @btc/shared-utils 入口文件
 
+// 核心工具模块
 export * from './date';
 export * from './format';
 export * from './validate';
 export * from './storage';
-export * from './form-hook';
-export * from './response-interceptor';
-export * from './use-message';
+
+// 数据处理模块
 export * from './array';
+export * from './object';
+export * from './string';
+export * from './number';
 
-
-
-
+// 业务功能模块
+export * from './form';
+export * from './hooks';
+export * from './http';

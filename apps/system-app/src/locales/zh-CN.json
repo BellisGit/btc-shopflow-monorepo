@@ -128,7 +128,7 @@
   "menu.data.files.templates": "受控文件",
   "menu.data.files.preview": "文件预览",
   "menu.data.inventory": "盘点数据",
-  "menu.inventory.result": "盘点结果",
+  "menu.inventory.result": "实盘数据",
   "inventory.check.list": "盘点列表",
   "inventory.result.title": "盘点结果",
   "inventory.result.search_placeholder": "搜索盘点结果...",
@@ -321,8 +321,16 @@
   "menu.logistics.warehouse.inventory": "盘点管理",
   "menu.logistics.warehouse.inventory.info": "盘点记录表",
   "menu.logistics.warehouse.inventory.detail": "差异记录表",
-  "menu.logistics.config": "配置中心",
-  "menu.logistics.config.storageLocation": "仓位配置"
+  "menu.logistics.warehouse.inventory.result": "盘点结果表",
+  "menu.logistics.config": "盘点管理",
+  "menu.logistics.config.storageLocation": "仓位配置",
+  "menu.finance.overview": "财务概览",
+  "menu.finance.home": "财务首页",
+  "menu.finance.receivables": "应收账款",
+  "menu.finance.payables": "应付账款",
+  "menu.finance.reports": "财务报表",
+  "menu.finance.inventoryManagement": "盘点管理",
+  "menu.finance.inventoryManagement.result": "盘点结果"
 }
 
 

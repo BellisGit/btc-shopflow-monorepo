@@ -27,6 +27,7 @@ import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuI
 import { getManifestTabs, getManifestMenus } from './manifests';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { appStorage } from '../utils/app-storage';
+import { assignIconsToMenuTree } from '@btc/shared-core';
 
 
 // 应用名称映射（用于显示友好的中文名称）
@@ -54,15 +55,32 @@ export function registerManifestTabsForApp(appName: string) {
 }
 
 // 递归转换菜单项（支持任意深度）
-function normalizeMenuItems(items: any[]): MenuItem[] {
-  return items.map((item) => ({
-    index: item.index,
-    title: item.labelKey ?? item.label ?? item.index,
-    icon: item.icon ?? 'Document',
-    children: item.children && item.children.length > 0
-      ? normalizeMenuItems(item.children)
-      : undefined,
+// 使用智能图标分配，确保同一域内图标不重复且语义匹配
+function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
+  // 创建已使用图标集合（用于域内去重），如果已存在则复用
+  const iconSet = usedIcons || new Set<string>();
+  
+  // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
+  const itemsWithLabelKey = items.map(item => ({
+    ...item,
+    labelKey: item.labelKey || item.title || item.label,
   }));
+  
+  // 使用智能图标分配工具（会递归处理所有子菜单）
+  const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
+  
+  // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
+  const convertToMenuItem = (item: any): MenuItem => ({
+    index: item.index,
+    title: item.labelKey ?? item.label ?? item.title ?? item.index,
+    icon: item.icon,
+    children: item.children && item.children.length > 0
+      ? item.children.map(convertToMenuItem)
+      : undefined,
+  });
+  
+  // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
+  return itemsWithIcons.map(convertToMenuItem);
 }
 
 // 深度比较两个菜单数组是否相同
@@ -109,7 +127,8 @@ export function registerManifestMenusForApp(appName: string) {
   }
 
   // 将 manifest 菜单格式转换为 MenuItem 格式（递归处理任意深度）
-  const normalizedMenus: MenuItem[] = normalizeMenuItems(menus);
+  // 传递 appName 用于域内图标去重
+  const normalizedMenus: MenuItem[] = normalizeMenuItems(menus, appName);
 
   // 获取现有菜单
   const existingMenus = getMenusForApp(appName);

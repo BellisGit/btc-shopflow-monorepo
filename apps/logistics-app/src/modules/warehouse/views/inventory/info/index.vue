@@ -121,7 +121,7 @@ const formItems = computed<FormItem[]>(() => [
 ]);
 
 onMounted(() => {
-  crudRef.value?.crud?.loadData?.();
+  // 移除手动调用 loadData，让 BtcCrud 自动加载
   nextTick(() => {
     tableRef.value?.calcMaxHeight?.();
   });

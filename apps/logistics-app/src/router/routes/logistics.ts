@@ -127,6 +127,19 @@ export const logisticsRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/warehouse/inventory/result',
+    name: 'logistics-warehouse-inventory-result',
+    component: () => import('../../modules/warehouse/views/inventory/result/index.vue'),
+    meta: {
+      labelKey: 'menu.logistics.warehouse.inventory.result',
+      breadcrumbs: [
+        { labelKey: 'menu.logistics.config', icon: 'Odometer' },
+        { labelKey: 'menu.logistics.warehouse.inventory.result', icon: 'List' },
+      ],
+      tabLabelKey: 'menu.logistics.warehouse.inventory.result',
+    },
+  },
+  {
     path: '/customs',
     name: 'logistics-customs',
     component: () => import('../../modules/customs/views/index.vue'),
