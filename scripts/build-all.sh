@@ -68,8 +68,12 @@ FROM nginx:alpine
 # 复制构建产物
 COPY --from=builder /app/apps/${app_name}/dist /usr/share/nginx/html
 
-# 复制 nginx 配置
-COPY apps/${app_name}/nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null || echo "server { listen 80; location / { try_files \\\$uri \\\$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
+# 复制 nginx 配置或创建默认配置
+RUN if [ -f "apps/${app_name}/nginx.conf" ]; then \
+        cp apps/${app_name}/nginx.conf /etc/nginx/conf.d/default.conf; \
+    else \
+        echo 'server { listen 80; location / { try_files \$uri \$uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf; \
+    fi
 
 EXPOSE 80
 
