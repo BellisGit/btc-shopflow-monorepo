@@ -15,10 +15,10 @@ on:
         description: 'GitHub commit SHA'
         required: true
         type: string
-    secrets:
-      GH_TOKEN:
+      gh_token:
         description: 'GitHub token for registry access'
         required: true
+        type: string
 
 jobs:
   build-quality-app:
