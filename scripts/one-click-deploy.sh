@@ -132,35 +132,140 @@ EOF
 install_k3s() {
     log_info "检查K3s安装状态..."
     
-    if command -v kubectl &> /dev/null; then
-        log_success "K3s已安装: $(kubectl version --client --short)"
+    if command -v kubectl &> /dev/null && systemctl is-active --quiet k3s; then
+        log_success "K3s已安装: $(kubectl version --client --short 2>/dev/null || echo 'kubectl available')"
         return
     fi
     
     log_info "开始安装K3s..."
     
-    # 安装K3s
-    curl -sfL https://get.k3s.io | sh -
-    
-    if [ $? -ne 0 ]; then
+    # 方法1: 尝试官方源
+    log_info "尝试官方源安装..."
+    if curl -sfL --connect-timeout 10 https://get.k3s.io | sh -; then
+        log_success "官方源安装成功"
+    else
         log_warning "官方源安装失败，尝试国内镜像..."
-        curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -
+        
+        # 方法2: 尝试国内镜像
+        if curl -sfL --connect-timeout 10 https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -; then
+            log_success "国内镜像安装成功"
+        else
+            log_warning "国内镜像也失败，尝试手动安装..."
+            
+            # 方法3: 手动安装
+            install_k3s_manual
+        fi
     fi
     
     # 配置kubectl
-    mkdir -p ~/.kube
-    cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-    chown $(id -u):$(id -g) ~/.kube/config
-    
-    # 验证安装
-    sleep 10
-    if kubectl get nodes &> /dev/null; then
-        log_success "K3s安装成功"
-        kubectl get nodes
+    if [ -f /etc/rancher/k3s/k3s.yaml ]; then
+        mkdir -p ~/.kube
+        cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+        chown $(id -u):$(id -g) ~/.kube/config
+        
+        # 验证安装
+        sleep 15
+        if kubectl get nodes &> /dev/null; then
+            log_success "K3s安装成功"
+            kubectl get nodes
+        else
+            log_error "K3s配置失败，但服务可能正在启动..."
+            systemctl status k3s --no-pager
+        fi
     else
-        log_error "K3s安装失败"
-        exit 1
+        log_error "K3s安装失败，配置文件不存在"
+        install_docker_compose_fallback
     fi
+}
+
+# 手动安装K3s
+install_k3s_manual() {
+    log_info "尝试手动安装K3s..."
+    
+    # 下载K3s二进制文件
+    K3S_VERSION="v1.28.8+k3s1"
+    
+    if curl -L --connect-timeout 30 -o /usr/local/bin/k3s "https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s"; then
+        chmod +x /usr/local/bin/k3s
+        
+        # 创建systemd服务
+        cat > /etc/systemd/system/k3s.service << EOF
+[Unit]
+Description=Lightweight Kubernetes
+Documentation=https://k3s.io
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=exec
+ExecStartPre=/bin/sh -xc '! /usr/bin/systemctl is-enabled --quiet nm-cloud-setup.service'
+ExecStartPre=-/sbin/modprobe br_netfilter
+ExecStartPre=-/sbin/modprobe overlay
+ExecStart=/usr/local/bin/k3s server
+KillMode=process
+Delegate=yes
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        
+        systemctl daemon-reload
+        systemctl enable k3s
+        systemctl start k3s
+        
+        # 创建kubectl链接
+        ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
+        
+        log_success "K3s手动安装完成"
+    else
+        log_error "K3s手动安装也失败"
+        return 1
+    fi
+}
+
+# Docker Compose备用方案
+install_docker_compose_fallback() {
+    log_warning "K3s安装失败，使用Docker Compose作为备用方案..."
+    
+    # 安装docker-compose
+    if ! command -v docker-compose &> /dev/null; then
+        log_info "安装Docker Compose..."
+        curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+    fi
+    
+    # 创建docker-compose.yml
+    cat > /tmp/btc-shopflow-compose.yml << EOF
+version: '3.8'
+services:
+  system-app:
+    image: btc-shopflow/system-app:latest
+    ports:
+      - "30080:80"
+    restart: unless-stopped
+    
+  admin-app:
+    image: btc-shopflow/admin-app:latest
+    ports:
+      - "30081:80"
+    restart: unless-stopped
+    
+  finance-app:
+    image: btc-shopflow/finance-app:latest
+    ports:
+      - "30086:80"
+    restart: unless-stopped
+EOF
+    
+    log_info "Docker Compose配置已创建: /tmp/btc-shopflow-compose.yml"
+    log_info "稍后可以使用: docker-compose -f /tmp/btc-shopflow-compose.yml up -d"
 }
 
 # 克隆或更新项目
@@ -210,27 +315,55 @@ build_images() {
     fi
 }
 
-# 部署到Kubernetes
+# 部署到Kubernetes或Docker Compose
 deploy_to_k8s() {
-    log_info "开始部署到Kubernetes..."
+    log_info "开始部署应用..."
     
-    cd k8s
-    ./deploy.sh
-    
-    if [ $? -eq 0 ]; then
-        log_success "Kubernetes部署完成"
+    # 检查K3s是否可用
+    if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then
+        log_info "使用Kubernetes部署..."
         
-        # 等待Pod启动
-        log_info "等待Pod启动..."
-        sleep 30
+        cd k8s
+        ./deploy.sh
         
-        # 检查部署状态
-        kubectl get pods -n btc-shopflow
-        kubectl get svc -n btc-shopflow
-        
+        if [ $? -eq 0 ]; then
+            log_success "Kubernetes部署完成"
+            
+            # 等待Pod启动
+            log_info "等待Pod启动..."
+            sleep 30
+            
+            # 检查部署状态
+            kubectl get pods -n btc-shopflow
+            kubectl get svc -n btc-shopflow
+        else
+            log_error "Kubernetes部署失败，尝试Docker Compose..."
+            deploy_with_docker_compose
+        fi
     else
-        log_error "Kubernetes部署失败"
-        exit 1
+        log_warning "Kubernetes不可用，使用Docker Compose部署..."
+        deploy_with_docker_compose
+    fi
+}
+
+# Docker Compose部署
+deploy_with_docker_compose() {
+    log_info "使用Docker Compose部署..."
+    
+    if [ -f /tmp/btc-shopflow-compose.yml ]; then
+        cd /tmp
+        docker-compose -f btc-shopflow-compose.yml up -d
+        
+        if [ $? -eq 0 ]; then
+            log_success "Docker Compose部署完成"
+            docker-compose -f btc-shopflow-compose.yml ps
+        else
+            log_error "Docker Compose部署失败"
+            return 1
+        fi
+    else
+        log_error "Docker Compose配置文件不存在"
+        return 1
     fi
 }
 
@@ -273,14 +406,32 @@ health_check() {
     done
     
     # 检查HTTP响应
-    sleep 10
+    log_info "等待应用启动..."
+    sleep 15
+    
     for port in "${ports[@]}"; do
+        local app_name=""
+        case $port in
+            30080) app_name="主应用" ;;
+            30081) app_name="管理应用" ;;
+            30086) app_name="财务应用" ;;
+        esac
+        
         if curl -f -s --max-time 10 "http://localhost:$port" > /dev/null 2>&1; then
-            log_success "应用 $port 健康检查通过"
+            log_success "$app_name ($port) 健康检查通过"
         else
-            log_warning "应用 $port 健康检查失败"
+            log_warning "$app_name ($port) 健康检查失败，可能仍在启动中"
         fi
     done
+    
+    # 检查部署方式
+    if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then
+        log_info "Kubernetes集群状态:"
+        kubectl get pods -n btc-shopflow 2>/dev/null || log_warning "无法获取Pod状态"
+    elif command -v docker-compose &> /dev/null; then
+        log_info "Docker Compose服务状态:"
+        docker-compose -f /tmp/btc-shopflow-compose.yml ps 2>/dev/null || log_warning "无法获取容器状态"
+    fi
 }
 
 # 生成部署报告
@@ -302,11 +453,14 @@ BTC ShopFlow 部署报告
 - Docker: $(docker --version 2>/dev/null || echo "未安装")
 - Kubernetes: $(kubectl version --client --short 2>/dev/null || echo "未安装")
 
+部署方式:
+$(if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then echo "Kubernetes (K3s)"; elif command -v docker-compose &> /dev/null; then echo "Docker Compose"; else echo "未知"; fi)
+
 应用状态:
-$(kubectl get pods -n btc-shopflow 2>/dev/null || echo "Kubernetes未配置")
+$(if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then kubectl get pods -n btc-shopflow 2>/dev/null || echo "Kubernetes Pod状态获取失败"; else docker-compose -f /tmp/btc-shopflow-compose.yml ps 2>/dev/null || echo "Docker容器状态获取失败"; fi)
 
 服务状态:
-$(kubectl get svc -n btc-shopflow 2>/dev/null || echo "服务未配置")
+$(if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then kubectl get svc -n btc-shopflow 2>/dev/null || echo "Kubernetes服务状态获取失败"; else echo "Docker Compose模式 - 直接端口映射"; fi)
 
 端口监听:
 $(netstat -tlnp | grep -E ":(80|443|30080|30081|30086) ")
