@@ -37,6 +37,14 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
     
+    - name: Prepare Docker tags
+      id: tags
+      run: |
+        # Convert repository name to lowercase for Docker compatibility
+        REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+        echo "Docker tags will use: $REPO_LOWER"
+
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
     
