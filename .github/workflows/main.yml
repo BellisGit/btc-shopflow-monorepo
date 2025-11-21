@@ -80,7 +80,7 @@ jobs:
   # Step 2: Environment Validation and SSH Connection Test
   validate-environment:
     needs: [quality-check]
-    if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    if: always()
     uses: ./.github/workflows/validate-environment.yml
     secrets:
       SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -91,7 +91,7 @@ jobs:
   # Step 3: Build all application Docker images (8 parallel tasks)
   build-system-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -105,7 +105,7 @@ jobs:
 
   build-admin-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -119,7 +119,7 @@ jobs:
 
   build-logistics-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -133,7 +133,7 @@ jobs:
 
   build-quality-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -147,7 +147,7 @@ jobs:
 
   build-production-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -161,7 +161,7 @@ jobs:
 
   build-engineering-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -175,7 +175,7 @@ jobs:
 
   build-finance-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -189,7 +189,7 @@ jobs:
 
   build-mobile-app:
     needs: [validate-environment]
-    if: always() && needs.validate-environment.result == 'success'
+    if: always()
     permissions:
       contents: read
       packages: write
@@ -206,7 +206,7 @@ jobs:
     name: Deploy to Server
     runs-on: ubuntu-latest
     needs: [validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
-    if: always() && (needs.build-system-app.result == 'success' && needs.build-admin-app.result == 'success' && needs.build-logistics-app.result == 'success' && needs.build-quality-app.result == 'success' && needs.build-production-app.result == 'success' && needs.build-engineering-app.result == 'success' && needs.build-finance-app.result == 'success' && needs.build-mobile-app.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
+    if: always() && github.ref == 'refs/heads/master'
     
     steps:
     - name: Checkout code
@@ -339,3 +339,4 @@ jobs:
         echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
         exit 1
+
