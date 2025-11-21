@@ -771,13 +771,52 @@ jobs:
     - name: 🔐 Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        chmod 700 ~/.ssh
+        
+        # 处理SSH密钥（支持base64编码和原始格式）
+        if echo "${{ secrets.SERVER_KEY }}" | base64 -d >/dev/null 2>&1; then
+          echo "🔧 Decoding base64 SSH key..."
+          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        else
+          echo "🔧 Using raw SSH key..."
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        fi
+        
+        # 修复密钥格式（处理\n转义）
+        sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+        # 添加主机密钥
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        # 验证密钥格式
+        if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+          echo "❌ SSH key format is invalid"
+          echo "🔍 Key file content (first 2 lines):"
+          head -2 ~/.ssh/id_rsa
+          exit 1
+        fi
+        
+        echo "✅ SSH key setup completed"
 
     - name: 🔍 Verify server connection
       run: |
-        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'Server connection successful'"
+        echo "🧪 Testing SSH connection..."
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo '✅ Server connection successful'" || {
+          echo "❌ SSH connection failed"
+          echo "🔍 Debugging information:"
+          echo "Host: ${{ secrets.SERVER_HOST }}"
+          echo "Port: ${{ secrets.SERVER_PORT }}"
+          echo "User: ${{ secrets.SERVER_USER }}"
+          echo "Key file permissions:"
+          ls -la ~/.ssh/id_rsa
+          echo "Key fingerprint:"
+          ssh-keygen -l -f ~/.ssh/id_rsa 2>/dev/null || echo "Cannot read key fingerprint"
+          exit 1
+        }
 
     - name: 🚀 Deploy to server
       run: |
@@ -871,9 +910,25 @@ jobs:
     - name: 🔐 Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        chmod 700 ~/.ssh
+        
+        # 处理SSH密钥（支持base64编码和原始格式）
+        if echo "${{ secrets.SERVER_KEY }}" | base64 -d >/dev/null 2>&1; then
+          echo "🔧 Decoding base64 SSH key..."
+          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        else
+          echo "🔧 Using raw SSH key..."
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        fi
+        
+        # 修复密钥格式（处理\n转义）
+        sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+        # 添加主机密钥
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        echo "✅ SSH key setup completed for rollback"
 
     - name: 🔄 Rollback deployment
       run: |
