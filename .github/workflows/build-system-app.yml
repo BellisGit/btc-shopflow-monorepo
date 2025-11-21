@@ -27,9 +27,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    permissions:
-      contents: read
-      packages: write
     
     steps:
     - name: Checkout code
