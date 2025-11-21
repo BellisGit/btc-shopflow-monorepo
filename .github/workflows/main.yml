@@ -69,39 +69,125 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/validate-environment.yml
 
-  # 第三步：等待构建完成（构建工作流将自动触发）
-  wait-for-builds:
-    name: Wait for Build Workflows
-    runs-on: ubuntu-latest
+  # 第三步：构建所有应用的Docker镜像（8个并行任务）
+  build-system-app:
     needs: [validate-environment]
     if: always() && needs.validate-environment.result == 'success'
-    
-    steps:
-    - name: Build workflows triggered
-      run: |
-        echo "✅ Environment validation completed successfully"
-        echo "🚀 8 independent build workflows will be triggered automatically"
-        echo "Each build workflow will run as a separate workflow run"
-        echo ""
-        echo "Build workflows that will be triggered:"
-        echo "- Build System App"
-        echo "- Build Admin App"
-        echo "- Build Logistics App"
-        echo "- Build Quality App"
-        echo "- Build Production App"
-        echo "- Build Engineering App"
-        echo "- Build Finance App"
-        echo "- Build Mobile App"
-        echo ""
-        echo "⏳ Waiting for builds to complete before deployment..."
-        sleep 30
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-system-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-admin-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-admin-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-logistics-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-logistics-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-quality-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-quality-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-production-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-production-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-engineering-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-engineering-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-finance-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-finance-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mobile-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-mobile-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第四步：部署到服务器
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
-    needs: [validate-environment, wait-for-builds]
-    if: always() && (needs.wait-for-builds.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
+    needs: [validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
+    if: always() && (needs.build-system-app.result == 'success' && needs.build-admin-app.result == 'success' && needs.build-logistics-app.result == 'success' && needs.build-quality-app.result == 'success' && needs.build-production-app.result == 'success' && needs.build-engineering-app.result == 'success' && needs.build-finance-app.result == 'success' && needs.build-mobile-app.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
     
     steps:
     - name: Checkout code
@@ -183,10 +269,15 @@ jobs:
       run: |
         echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Build Status:" >> $GITHUB_STEP_SUMMARY
-        echo "- 8 independent build workflows were triggered automatically" >> $GITHUB_STEP_SUMMARY
-        echo "- Check individual workflow runs for detailed build status" >> $GITHUB_STEP_SUMMARY
-        echo "- Environment validation: ${{ needs.validate-environment.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Built Images:" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Application URLs:" >> $GITHUB_STEP_SUMMARY
         echo "- 主应用: http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
@@ -197,7 +288,7 @@ jobs:
   notify:
     name: Notify Status
     runs-on: ubuntu-latest
-    needs: [quality-check, validate-environment, wait-for-builds, deploy]
+    needs: [quality-check, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app, deploy]
     if: always()
     
     steps:
@@ -210,16 +301,21 @@ jobs:
         echo "URL: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}" >> $GITHUB_STEP_SUMMARY
         
     - name: Failure notification
-      if: needs.deploy.result == 'failure' || needs.wait-for-builds.result == 'failure' || needs.quality-check.result == 'failure' || needs.validate-environment.result == 'failure'
+      if: needs.deploy.result == 'failure' || needs.build-system-app.result == 'failure' || needs.build-admin-app.result == 'failure' || needs.build-logistics-app.result == 'failure' || needs.build-quality-app.result == 'failure' || needs.build-production-app.result == 'failure' || needs.build-engineering-app.result == 'failure' || needs.build-finance-app.result == 'failure' || needs.build-mobile-app.result == 'failure' || needs.quality-check.result == 'failure' || needs.validate-environment.result == 'failure'
       run: |
         echo "**Deployment Failed!**" >> $GITHUB_STEP_SUMMARY
         echo "Please check the logs for details" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Results:" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Results:" >> $GITHUB_STEP_SUMMARY
         echo "- Quality Check: ${{ needs.quality-check.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Environment Validation: ${{ needs.validate-environment.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Wait for Builds: ${{ needs.wait-for-builds.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Check individual build workflow runs for detailed build status" >> $GITHUB_STEP_SUMMARY
         exit 1
