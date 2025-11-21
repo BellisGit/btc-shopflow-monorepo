@@ -13,17 +13,37 @@
 
 在GitHub仓库的 `Settings > Secrets and variables > Actions` 中添加以下secrets：
 
-### 1. KUBE_CONFIG
-Kubernetes集群的配置文件（base64编码）
+### 1. SERVER_HOST
+服务器的IP地址或域名
+
+例如: `192.168.1.100` 或 `your-server.com`
+
+### 2. SERVER_USER
+SSH登录用户名
+
+例如: `root` 或 `ubuntu`
+
+### 3. SERVER_PORT
+SSH端口号
+
+例如: `22` (默认) 或 `2222`
+
+### 4. SERVER_KEY
+SSH私钥内容
 
 ```bash
-# 在你的本地机器或服务器上执行
-cat ~/.kube/config | base64 -w 0
+# 在你的本地机器上执行（如果还没有SSH密钥）
+ssh-keygen -t rsa -b 4096 -C "github-actions@btc-shopflow"
+
+# 复制私钥内容
+cat ~/.ssh/id_rsa
 ```
 
-将输出的base64字符串添加为 `KUBE_CONFIG` secret。
+将私钥内容（包括 `-----BEGIN OPENSSH PRIVATE KEY-----` 和 `-----END OPENSSH PRIVATE KEY-----`）添加为 `SERVER_KEY` secret。
 
-### 2. GITHUB_TOKEN (自动提供)
+**注意**: 确保对应的公钥已添加到服务器的 `~/.ssh/authorized_keys` 文件中。
+
+### 5. GITHUB_TOKEN (自动提供)
 GitHub自动提供此token，用于访问Container Registry。
 
 ## 🌐 环境变量配置
@@ -44,22 +64,42 @@ GitHub自动提供此token，用于访问Container Registry。
 - `APP_URL`: `https://staging.btc-shopflow.com`
 - `NAMESPACE`: `btc-shopflow-staging`
 
-## 🏗️ Kubernetes集群准备
+## 🖥️ 服务器准备
 
-确保你的K8s集群已经准备好以下资源：
+确保你的服务器已经准备好以下环境：
 
-### 1. 命名空间
+### 1. Docker环境
 ```bash
-kubectl apply -f k8s/namespace.yaml
+# 安装Docker
+curl -fsSL https://get.docker.com | bash
+systemctl start docker
+systemctl enable docker
 ```
 
-### 2. ConfigMap
+### 2. 项目目录
 ```bash
-kubectl apply -f k8s/configmap.yaml -n btc-shopflow
+# 创建项目目录
+mkdir -p /www/wwwroot
+cd /www/wwwroot
+
+# 克隆项目
+git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+cd btc-shopflow-monorepo
 ```
 
-### 3. 基础部署文件
-确保 `k8s/deployments/` 目录包含所有应用的部署文件。
+### 3. SSH密钥配置
+```bash
+# 将GitHub Actions的公钥添加到authorized_keys
+echo "your-public-key-here" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+### 4. 防火墙配置
+```bash
+# 开放应用端口
+firewall-cmd --permanent --add-port=30080-30091/tcp
+firewall-cmd --reload
+```
 
 ## 🔄 工作流程说明
 
@@ -75,15 +115,15 @@ kubectl apply -f k8s/configmap.yaml -n btc-shopflow
 - 推送镜像到GitHub Container Registry
 - 运行镜像健康检查
 
-### 2. ☸️ Kubernetes Deployment (`k8s-deploy.yml`)
+### 2. ☸️ SSH Deployment (`k8s-deploy.yml`)
 **触发条件:**
 - Docker构建工作流成功完成
 - 手动触发
 
 **功能:**
-- 验证集群连接
-- 更新K8s部署的镜像
-- 等待部署完成
+- SSH连接到服务器
+- 拉取最新代码和Docker镜像
+- 使用Docker Compose重启服务
 - 运行健康检查
 - 失败时自动回滚
 
@@ -94,7 +134,7 @@ kubectl apply -f k8s/configmap.yaml -n btc-shopflow
 
 **功能:**
 - 构建所有Docker镜像
-- 部署到Kubernetes
+- SSH部署到服务器
 - 运行完整的健康检查
 - 发送部署状态通知
 
@@ -106,8 +146,8 @@ kubectl apply -f k8s/configmap.yaml -n btc-shopflow
 # 测试Docker构建
 ./scripts/build-all.sh
 
-# 测试K8s部署
-kubectl apply -f k8s/deployments/complete-apps.yaml -n btc-shopflow
+# 测试服务器部署
+./scripts/deploy.sh
 ```
 
 ## 📊 监控部署状态
@@ -117,19 +157,19 @@ kubectl apply -f k8s/deployments/complete-apps.yaml -n btc-shopflow
 2. 查看工作流运行状态
 3. 点击具体的运行查看详细日志
 
-### Kubernetes命令
+### 服务器命令
 ```bash
-# 查看部署状态
-kubectl get deployments -n btc-shopflow
+# SSH连接到服务器
+ssh -p SERVER_PORT SERVER_USER@SERVER_HOST
 
-# 查看Pod状态
-kubectl get pods -n btc-shopflow
+# 查看Docker容器状态
+docker ps
 
-# 查看服务状态
-kubectl get services -n btc-shopflow
+# 查看服务日志
+docker-compose -f docker-compose.prod.yml logs -f
 
-# 查看部署历史
-kubectl rollout history deployment/btc-system-app -n btc-shopflow
+# 重启服务
+docker-compose -f docker-compose.prod.yml restart
 ```
 
 ## 🔧 故障排除

@@ -99,65 +99,55 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔧 Setup kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.28.0'
-
-    - name: 🔐 Configure kubectl
+    - name: 🔐 Setup SSH
       run: |
-        mkdir -p ~/.kube
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
-        chmod 600 ~/.kube/config
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-    - name: 🔍 Verify cluster connection
+    - name: 🔍 Verify server connection
       run: |
-        kubectl cluster-info
-        kubectl get nodes
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'Server connection successful'"
 
-    - name: 🏗️ Update deployment images
+    - name: 🚀 Deploy to server
       run: |
-        # 更新所有应用的镜像
-        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        set -e
         
-        for app in "${apps[@]}"; do
-          echo "🔄 Updating $app deployment..."
-          kubectl set image deployment/btc-$app $app=${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }} -n btc-shopflow
-        done
-
-    - name: ⏳ Wait for rollout
-      run: |
-        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        echo "📁 Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo
         
-        for app in "${apps[@]}"; do
-          echo "⏳ Waiting for $app rollout..."
-          kubectl rollout status deployment/btc-$app -n btc-shopflow --timeout=600s
-        done
-
-    - name: 🔍 Verify deployment
-      run: |
-        echo "📊 Deployment status:"
-        kubectl get deployments -n btc-shopflow
-        kubectl get pods -n btc-shopflow
-        kubectl get services -n btc-shopflow
+        echo "📥 Pulling latest code..."
+        git pull origin master
+        
+        echo "🚀 Running deployment script..."
+        chmod +x scripts/deploy.sh
+        ./scripts/deploy.sh
+        
+        EOF
 
     - name: 🧪 Health check
       run: |
         echo "🧪 Running health checks..."
         
-        # 获取服务端点
-        SYSTEM_APP_IP=$(kubectl get svc btc-system-app-service -n btc-shopflow -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "")
-        ADMIN_APP_IP=$(kubectl get svc btc-admin-app-service -n btc-shopflow -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "")
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
         
-        if [ -n "$SYSTEM_APP_IP" ]; then
-          echo "🔍 Testing system app at $SYSTEM_APP_IP..."
-          curl -f -s --max-time 30 "http://$SYSTEM_APP_IP" > /dev/null && echo "✅ System app is healthy" || echo "❌ System app health check failed"
-        fi
+        ports=(30080 30081 30082 30083 30084 30085 30086 30091)
+        app_names=("主应用" "管理后台" "物流系统" "质量系统" "生产系统" "工程系统" "财务系统" "移动端")
         
-        if [ -n "$ADMIN_APP_IP" ]; then
-          echo "🔍 Testing admin app at $ADMIN_APP_IP..."
-          curl -f -s --max-time 30 "http://$ADMIN_APP_IP" > /dev/null && echo "✅ Admin app is healthy" || echo "❌ Admin app health check failed"
-        fi
+        for i in "${!ports[@]}"; do
+          port=${ports[$i]}
+          app_name=${app_names[$i]}
+          
+          if curl -f -s --max-time 10 "http://localhost:$port" > /dev/null 2>&1; then
+            echo "✅ $app_name ($port) 服务正常"
+          else
+            echo "⚠️ $app_name ($port) 服务可能仍在启动"
+          fi
+        done
+        
+        EOF
 
   notify:
     name: 📢 Notify Deployment Status

@@ -57,173 +57,207 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔧 Setup kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.28.0'
-
-    - name: 🔐 Configure kubectl
+    - name: 🔐 Setup SSH
       run: |
-        mkdir -p ~/.kube
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
-        chmod 600 ~/.kube/config
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-    - name: 🔍 Verify cluster connection
+    - name: 🔍 Verify server connection
       run: |
-        echo "🔍 Verifying cluster connection..."
-        kubectl cluster-info
-        kubectl get nodes
-        echo "✅ Cluster connection verified"
+        echo "🔍 Verifying server connection..."
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'Server connection successful'"
+        echo "✅ Server connection verified"
 
-    - name: 📋 Check namespace
+    - name: 🚀 Deploy to server via SSH
       run: |
-        if ! kubectl get namespace ${{ env.NAMESPACE }} &> /dev/null; then
-          echo "📝 Creating namespace ${{ env.NAMESPACE }}..."
-          kubectl apply -f k8s/namespace.yaml
-        else
-          echo "✅ Namespace ${{ env.NAMESPACE }} already exists"
-        fi
-
-    - name: 🔧 Apply ConfigMaps
-      run: |
-        echo "🔧 Applying ConfigMaps..."
-        kubectl apply -f k8s/configmap.yaml -n ${{ env.NAMESPACE }}
-
-    - name: 🏗️ Deploy applications
-      run: |
-        echo "🏗️ Deploying applications..."
+        echo "🚀 Deploying to server via SSH..."
         
-        # 应用所有部署配置
-        if [ -f "k8s/deployments/complete-apps.yaml" ]; then
-          kubectl apply -f k8s/deployments/complete-apps.yaml -n ${{ env.NAMESPACE }}
-        else
-          # 逐个应用部署文件
-          for deployment in k8s/deployments/*.yaml; do
-            if [ -f "$deployment" ] && [ "$(basename "$deployment")" != "complete-apps.yaml" ]; then
-              echo "📦 Applying $deployment..."
-              kubectl apply -f "$deployment" -n ${{ env.NAMESPACE }}
-            fi
-          done
-        fi
-
-    - name: 🔄 Update images
-      run: |
-        echo "🔄 Updating deployment images..."
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        set -e
         
+        echo "📁 Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo
+        
+        echo "📥 Pulling latest code..."
+        git pull origin master
+        
+        echo "🐳 Pulling latest Docker images..."
         apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
         
         for app in "${apps[@]}"; do
-          deployment_name="btc-$app"
-          image_name="${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }}"
+          echo "📥 Pulling ${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }}..."
+          docker pull ${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }} || echo "⚠️ Failed to pull $app image"
           
-          echo "🔄 Updating $deployment_name with image $image_name..."
-          
-          # 检查部署是否存在
-          if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then
-            kubectl set image deployment/"$deployment_name" "$app"="$image_name" -n ${{ env.NAMESPACE }}
-          else
-            echo "⚠️ Deployment $deployment_name not found, skipping image update"
-          fi
+          # Tag as latest for local use
+          docker tag ${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }} btc-shopflow/$app:latest || echo "⚠️ Failed to tag $app image"
         done
-
-    - name: 🌐 Apply Ingress
-      run: |
-        echo "🌐 Applying Ingress configuration..."
-        if [ -f "k8s/ingress.yaml" ]; then
-          kubectl apply -f k8s/ingress.yaml -n ${{ env.NAMESPACE }}
-        fi
-
-    - name: 📈 Apply HPA
-      run: |
-        echo "📈 Applying HPA configuration..."
-        if [ -f "k8s/hpa.yaml" ]; then
-          kubectl apply -f k8s/hpa.yaml -n ${{ env.NAMESPACE }}
-        fi
-
-    - name: ⏳ Wait for rollout
-      run: |
-        echo "⏳ Waiting for deployments to be ready..."
         
-        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
-        
-        for app in "${apps[@]}"; do
-          deployment_name="btc-$app"
-          
-          if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then
-            echo "⏳ Waiting for $deployment_name rollout..."
-            kubectl rollout status deployment/"$deployment_name" -n ${{ env.NAMESPACE }} --timeout=600s
-          else
-            echo "⚠️ Deployment $deployment_name not found, skipping rollout wait"
-          fi
-        done
-
-    - name: 🔍 Verify deployment
-      run: |
-        echo "🔍 Verifying deployment status..."
-        
-        echo "📊 Deployments:"
-        kubectl get deployments -n ${{ env.NAMESPACE }}
-        
-        echo ""
-        echo "🏃 Pods:"
-        kubectl get pods -n ${{ env.NAMESPACE }}
-        
-        echo ""
-        echo "🌐 Services:"
-        kubectl get services -n ${{ env.NAMESPACE }}
-        
-        echo ""
-        echo "🔗 Ingress:"
-        kubectl get ingress -n ${{ env.NAMESPACE }} || echo "No ingress found"
-
-    - name: 🧪 Health check
-      run: |
-        echo "🧪 Running health checks..."
-        
-        # 检查所有 Pod 是否运行正常
-        failed_pods=$(kubectl get pods -n ${{ env.NAMESPACE }} --field-selector=status.phase!=Running --no-headers | wc -l)
-        
-        if [ "$failed_pods" -eq 0 ]; then
-          echo "✅ All pods are running successfully"
+        echo "🔄 Restarting services..."
+        if [ -f "docker-compose.prod.yml" ]; then
+          docker-compose -f docker-compose.prod.yml down
+          docker-compose -f docker-compose.prod.yml up -d
         else
-          echo "❌ $failed_pods pods are not running properly"
-          kubectl get pods -n ${{ env.NAMESPACE }} --field-selector=status.phase!=Running
+          echo "📝 Creating docker-compose.prod.yml..."
+          cat > docker-compose.prod.yml << 'COMPOSE_EOF'
+        version: '3.8'
+        
+        services:
+          system-app:
+            image: btc-shopflow/system-app:latest
+            container_name: btc-system-app
+            ports:
+              - "30080:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          admin-app:
+            image: btc-shopflow/admin-app:latest
+            container_name: btc-admin-app
+            ports:
+              - "30081:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          finance-app:
+            image: btc-shopflow/finance-app:latest
+            container_name: btc-finance-app
+            ports:
+              - "30086:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          logistics-app:
+            image: btc-shopflow/logistics-app:latest
+            container_name: btc-logistics-app
+            ports:
+              - "30082:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          quality-app:
+            image: btc-shopflow/quality-app:latest
+            container_name: btc-quality-app
+            ports:
+              - "30083:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          production-app:
+            image: btc-shopflow/production-app:latest
+            container_name: btc-production-app
+            ports:
+              - "30084:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          engineering-app:
+            image: btc-shopflow/engineering-app:latest
+            container_name: btc-engineering-app
+            ports:
+              - "30085:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+          mobile-app:
+            image: btc-shopflow/mobile-app:latest
+            container_name: btc-mobile-app
+            ports:
+              - "30091:80"
+            restart: unless-stopped
+            environment:
+              - NODE_ENV=production
+            networks:
+              - btc-network
+        
+        networks:
+          btc-network:
+            driver: bridge
+        COMPOSE_EOF
+          
+          docker-compose -f docker-compose.prod.yml up -d
         fi
         
-        # 检查服务端点
-        services=$(kubectl get services -n ${{ env.NAMESPACE }} -o jsonpath='{.items[*].metadata.name}')
+        echo "⏳ Waiting for services to start..."
+        sleep 30
         
-        for service in $services; do
-          if [[ "$service" == *"-service" ]]; then
-            echo "🔍 Checking service: $service"
-            kubectl describe service "$service" -n ${{ env.NAMESPACE }} | grep -E "(Endpoints|Port)" || true
+        echo "🔍 Checking service status..."
+        docker-compose -f docker-compose.prod.yml ps
+        
+        EOF
+
+    - name: 🧪 Health check via SSH
+      run: |
+        echo "🧪 Running health checks via SSH..."
+        
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        
+        echo "🧪 Testing application endpoints..."
+        
+        ports=(30080 30081 30082 30083 30084 30085 30086 30091)
+        app_names=("主应用" "管理后台" "物流系统" "质量系统" "生产系统" "工程系统" "财务系统" "移动端")
+        
+        for i in "${!ports[@]}"; do
+          port=${ports[$i]}
+          app_name=${app_names[$i]}
+          
+          if curl -f -s --max-time 10 "http://localhost:$port" > /dev/null 2>&1; then
+            echo "✅ $app_name ($port) 服务正常"
+          else
+            echo "⚠️ $app_name ($port) 服务可能仍在启动"
           fi
         done
+        
+        echo ""
+        echo "📊 Docker 容器状态:"
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        
+        EOF
 
     - name: 📊 Generate deployment report
       run: |
-        echo "## 🚀 Kubernetes Deployment Report" >> $GITHUB_STEP_SUMMARY
+        echo "## 🚀 SSH Deployment Report" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Namespace**: ${{ env.NAMESPACE }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Server**: ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
         echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
-        echo "### 📦 Deployed Applications:" >> $GITHUB_STEP_SUMMARY
-        kubectl get deployments -n ${{ env.NAMESPACE }} --no-headers | while read line; do
-          name=$(echo $line | awk '{print $1}')
-          ready=$(echo $line | awk '{print $2}')
-          echo "- **$name**: $ready" >> $GITHUB_STEP_SUMMARY
-        done
-        
+        echo "### 📦 Deployment Method:" >> $GITHUB_STEP_SUMMARY
+        echo "- SSH连接到服务器" >> $GITHUB_STEP_SUMMARY
+        echo "- 拉取最新代码和Docker镜像" >> $GITHUB_STEP_SUMMARY
+        echo "- 使用Docker Compose重启服务" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🌐 Services:" >> $GITHUB_STEP_SUMMARY
-        kubectl get services -n ${{ env.NAMESPACE }} --no-headers | while read line; do
-          name=$(echo $line | awk '{print $1}')
-          type=$(echo $line | awk '{print $2}')
-          ports=$(echo $line | awk '{print $5}')
-          echo "- **$name** ($type): $ports" >> $GITHUB_STEP_SUMMARY
-        done
+        echo "### 🌐 应用端口:" >> $GITHUB_STEP_SUMMARY
+        echo "- 主应用: 30080" >> $GITHUB_STEP_SUMMARY
+        echo "- 管理后台: 30081" >> $GITHUB_STEP_SUMMARY
+        echo "- 物流系统: 30082" >> $GITHUB_STEP_SUMMARY
+        echo "- 质量系统: 30083" >> $GITHUB_STEP_SUMMARY
+        echo "- 生产系统: 30084" >> $GITHUB_STEP_SUMMARY
+        echo "- 工程系统: 30085" >> $GITHUB_STEP_SUMMARY
+        echo "- 财务系统: 30086" >> $GITHUB_STEP_SUMMARY
+        echo "- 移动端: 30091" >> $GITHUB_STEP_SUMMARY
 
   rollback:
     name: 🔄 Rollback on Failure
@@ -232,45 +266,42 @@ jobs:
     if: failure() && needs.check-build.outputs.should-deploy == 'true'
     
     steps:
-    - name: 🔧 Setup kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.28.0'
-
-    - name: 🔐 Configure kubectl
+    - name: 🔐 Setup SSH
       run: |
-        mkdir -p ~/.kube
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
-        chmod 600 ~/.kube/config
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-    - name: 🔄 Rollback deployments
+    - name: 🔄 Rollback via SSH
       run: |
-        echo "🔄 Rolling back deployments due to failure..."
+        echo "🔄 Rolling back deployment due to failure..."
         
-        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        set -e
         
-        for app in "${apps[@]}"; do
-          deployment_name="btc-$app"
-          
-          if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then
-            echo "🔄 Rolling back $deployment_name..."
-            kubectl rollout undo deployment/"$deployment_name" -n ${{ env.NAMESPACE }}
-          fi
-        done
-
-    - name: ⏳ Wait for rollback
-      run: |
+        echo "🔄 Stopping current services..."
+        cd /www/wwwroot/btc-shopflow-monorepo
+        
+        if [ -f "docker-compose.prod.yml" ]; then
+          docker-compose -f docker-compose.prod.yml down
+        fi
+        
+        echo "🔄 Reverting to previous commit..."
+        git reset --hard HEAD~1
+        
+        echo "🔄 Restarting services with previous version..."
+        if [ -f "docker-compose.prod.yml" ]; then
+          docker-compose -f docker-compose.prod.yml up -d
+        fi
+        
         echo "⏳ Waiting for rollback to complete..."
+        sleep 30
         
-        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        echo "🔍 Checking rollback status..."
+        docker-compose -f docker-compose.prod.yml ps
         
-        for app in "${apps[@]}"; do
-          deployment_name="btc-$app"
-          
-          if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then
-            kubectl rollout status deployment/"$deployment_name" -n ${{ env.NAMESPACE }} --timeout=300s
-          fi
-        done
+        EOF
 
   notify:
     name: 📢 Notify Status
