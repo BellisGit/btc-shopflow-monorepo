@@ -47,9 +47,9 @@ jobs:
       run: |
         echo "Validating GitHub token for registry access..."
         
-        if [ -n "${{ inputs.gh_token }}" ]; then
+        if [ -n "${{ secrets.gh_token }}" ]; then
           echo "? GH_TOKEN is available for Docker registry"
-          echo "Token length: $(echo '${{ inputs.gh_token }}' | wc -c) characters"
+          echo "Token length: $(echo '${{ secrets.gh_token }}' | wc -c) characters"
         else
           echo "? GH_TOKEN is not available"
           exit 1
@@ -97,7 +97,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ inputs.gh_token }}
+        password: ${{ secrets.gh_token }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5

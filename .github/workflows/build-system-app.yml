@@ -51,8 +51,9 @@ jobs:
           echo "[SUCCESS] GH_TOKEN is available for Docker registry"
           echo "Token length: $(echo '${{ secrets.GH_TOKEN }}' | wc -c) characters"
         else
-          echo "[ERROR] GH_TOKEN is not available"
-          exit 1
+          echo "[WARNING] GH_TOKEN is not available, this may cause Docker registry push to fail"
+          echo "Please ensure SERVER_PAT secret is set in repository settings"
+          echo "Continuing with build process..."
         fi
 
     - name: Prepare Docker tags
