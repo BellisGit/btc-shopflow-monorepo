@@ -212,17 +212,51 @@ jobs:
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
-        # 处理SSH密钥（支持base64编码和原始格式）
-        if echo "${{ secrets.SERVER_KEY }}" | base64 -d >/dev/null 2>&1; then
+        # 创建SSH密钥文件
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa_raw
+        
+        # 处理不同的密钥格式
+        if echo "${{ secrets.SERVER_KEY }}" | grep -q "BEGIN.*PRIVATE KEY"; then
+          echo "Using PEM format SSH key..."
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        elif echo "${{ secrets.SERVER_KEY }}" | base64 -d 2>/dev/null | grep -q "BEGIN.*PRIVATE KEY"; then
           echo "Decoding base64 SSH key..."
           echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
         else
-          echo "Using raw SSH key..."
-          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+          echo "Processing raw SSH key with newline fixes..."
+          # 处理可能的换行符问题
+          echo "${{ secrets.SERVER_KEY }}" | sed 's/\\n/\n/g' | sed 's/ RSA PRIVATE KEY/ RSA PRIVATE KEY/g' > ~/.ssh/id_rsa
         fi
         
-        # 修复密钥格式（处理\n转义）
-        sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+        # 确保密钥文件格式正确
+        chmod 600 ~/.ssh/id_rsa
+        
+        # 检查密钥是否包含正确的头部
+        if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
+          echo "SSH key does not contain valid PEM headers"
+          echo "Attempting to fix common formatting issues..."
+          
+          # 尝试修复常见的格式问题
+          sed -i 's/-----BEGIN RSA PRIVATE KEY-----/-----BEGIN RSA PRIVATE KEY-----\n/g' ~/.ssh/id_rsa
+          sed -i 's/-----END RSA PRIVATE KEY-----/\n-----END RSA PRIVATE KEY-----/g' ~/.ssh/id_rsa
+          sed -i '/^$/d' ~/.ssh/id_rsa
+          
+          # 确保每行不超过64字符（除了头尾）
+          awk '
+          /BEGIN.*PRIVATE KEY/ { print; next }
+          /END.*PRIVATE KEY/ { print; next }
+          { 
+            line = $0
+            gsub(/[^A-Za-z0-9+\/=]/, "", line)
+            while (length(line) > 64) {
+              print substr(line, 1, 64)
+              line = substr(line, 65)
+            }
+            if (length(line) > 0) print line
+          }' ~/.ssh/id_rsa > ~/.ssh/id_rsa_fixed
+          mv ~/.ssh/id_rsa_fixed ~/.ssh/id_rsa
+        fi
+        
         chmod 600 ~/.ssh/id_rsa
         
         # 添加主机密钥
@@ -230,13 +264,19 @@ jobs:
         
         # 验证密钥格式
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "SSH key format is invalid"
-          echo "Key file content (first 2 lines):"
-          head -2 ~/.ssh/id_rsa
+          echo "SSH key format is still invalid after processing"
+          echo "Key file structure:"
+          echo "Lines: $(wc -l < ~/.ssh/id_rsa)"
+          echo "First line: $(head -1 ~/.ssh/id_rsa)"
+          echo "Last line: $(tail -1 ~/.ssh/id_rsa)"
+          echo ""
+          echo "Please ensure your SERVER_KEY secret contains a valid SSH private key in PEM format"
+          echo "The key should start with '-----BEGIN RSA PRIVATE KEY-----' or '-----BEGIN PRIVATE KEY-----'"
           exit 1
         fi
         
-        echo "SSH key setup completed"
+        echo "SSH key setup completed successfully"
+        echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa)"
 
     - name: Verify server connection
       run: |
