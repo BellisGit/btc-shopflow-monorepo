@@ -60,7 +60,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # 构建应用
-RUN pnpm run build:${app_name}
+RUN cd apps/${app_name} && pnpm run build
 
 # Production stage
 FROM nginx:alpine
