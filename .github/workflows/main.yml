@@ -68,6 +68,12 @@ jobs:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/validate-environment.yml
+    with:
+      server_host: ${{ secrets.SERVER_HOST }}
+      server_user: ${{ secrets.SERVER_USER || 'root' }}
+      server_port: ${{ secrets.SERVER_PORT || '22' }}
+    secrets:
+      SERVER_KEY: ${{ secrets.SERVER_KEY }}
 
   # 第三步：构建所有应用的Docker镜像（8个并行任务）
   build-system-app:
