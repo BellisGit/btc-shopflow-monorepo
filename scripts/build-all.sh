@@ -41,7 +41,7 @@ build_app() {
         echo "📝 创建 ${app_name} 的 Dockerfile..."
         cat > "${app_path}/Dockerfile" << EOF
 # Multi-stage build for ${app_name}
-FROM node:18-alpine as builder
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
