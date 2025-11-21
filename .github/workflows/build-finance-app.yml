@@ -56,9 +56,10 @@ jobs:
         COPY package*.json pnpm-*.yaml ./
         COPY packages ./packages
         COPY apps/finance-app ./apps/finance-app
-        RUN npm install -g pnpm
+        RUN npm install -g pnpm@8.15.0
         RUN pnpm install --frozen-lockfile
-        RUN cd apps/finance-app && pnpm run build
+        # Build dependencies first, then the app
+        RUN pnpm --filter @btc/vite-plugin run build && pnpm --filter finance-app run build
 
         FROM nginx:alpine
         COPY --from=builder /app/apps/finance-app/dist /usr/share/nginx/html

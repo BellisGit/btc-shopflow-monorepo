@@ -74,12 +74,15 @@ jobs:
         cat > apps/admin-app/Dockerfile << 'EOF'
         FROM node:20-alpine AS builder
         WORKDIR /app
+        # Copy package files first for better Docker layer caching
         COPY package*.json pnpm-*.yaml ./
+        RUN npm install -g pnpm@8.15.0
+        RUN pnpm install --frozen-lockfile
+        # Copy source code
         COPY packages ./packages
         COPY apps/admin-app ./apps/admin-app
-        RUN npm install -g pnpm
-        RUN pnpm install --frozen-lockfile
-        RUN cd apps/admin-app && pnpm run build
+        # Build dependencies first, then the app
+        RUN pnpm --filter @btc/vite-plugin run build && pnpm --filter admin-app run build
 
         FROM nginx:alpine
         COPY --from=builder /app/apps/admin-app/dist /usr/share/nginx/html
