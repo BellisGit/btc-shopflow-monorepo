@@ -73,29 +73,54 @@ jobs:
         
         # Validate key format
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "?SSH key format is invalid"
+          echo "[ERROR] SSH key format is invalid"
           echo "Please check your SERVER_KEY secret format"
           exit 1
         fi
         
+        # Show key fingerprint for debugging
+        echo "[INFO] SSH key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa)"
+        echo "[INFO] SSH key type: $(ssh-keygen -l -f ~/.ssh/id_rsa | awk '{print $4}')"
+        
         # Add host key
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         
-        echo " Testing SSH connection..."
+        echo "[INFO] Testing SSH connection..."
+        echo "[DEBUG] Connection details:"
+        echo "  Host: ${{ secrets.SERVER_HOST }}"
+        echo "  Port: ${{ secrets.SERVER_PORT || '22' }}"
+        echo "  User: ${{ secrets.SERVER_USER || 'root' }}"
+        
         if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
             ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
             "echo 'SSH connection test successful'"; then
-          echo "?SSH connection successful!"
+          echo "[SUCCESS] SSH connection successful!"
           echo "ssh_available=true" >> $GITHUB_ENV
         else
-          echo "?SSH connection failed!"
-          echo "Please check your SERVER_KEY, SERVER_HOST, SERVER_USER, and SERVER_PORT secrets"
+          echo "[ERROR] SSH connection failed!"
+          echo ""
+          echo "TROUBLESHOOTING STEPS:"
+          echo "1. Verify your SSH key is added to the server:"
+          echo "   - Copy your PUBLIC key (not private) to ~/.ssh/authorized_keys on server"
+          echo "   - Run: cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+          echo ""
+          echo "2. Check server SSH configuration:"
+          echo "   - Ensure PubkeyAuthentication is enabled in /etc/ssh/sshd_config"
+          echo "   - Restart SSH service: sudo systemctl restart sshd"
+          echo ""
+          echo "3. Verify file permissions on server:"
+          echo "   - chmod 700 ~/.ssh"
+          echo "   - chmod 600 ~/.ssh/authorized_keys"
+          echo ""
+          echo "4. Test manually from your local machine:"
+          echo "   - ssh -i your_private_key ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }}"
+          echo ""
           echo "Common issues:"
-          echo "- Incorrect SSH private key format"
-          echo "- Wrong server IP address"
-          echo "- Firewall blocking SSH port"
-          echo "- SSH key not authorized on server"
+          echo "- SSH key not added to server's authorized_keys"
+          echo "- Wrong server IP address: ${{ secrets.SERVER_HOST }}"
+          echo "- Firewall blocking SSH port: ${{ secrets.SERVER_PORT || '22' }}"
+          echo "- SSH service not running on server"
           exit 1
         fi
 
