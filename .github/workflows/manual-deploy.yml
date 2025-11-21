@@ -1,4 +1,4 @@
-name: 🎯 Manual Deploy
+name: 🎯 Manual Deploy (Legacy)
 
 on:
   workflow_dispatch:
