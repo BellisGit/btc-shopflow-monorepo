@@ -28,7 +28,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # 第一步：代码质量检查
+  # 第一步：代码质量检�?
   quality-check:
     name: Quality Check
     runs-on: ubuntu-latest
@@ -54,21 +54,21 @@ jobs:
         echo "Validating GitHub tokens for registry access..."
         
         if [ -n "${{ secrets.SERVER_PAT }}" ]; then
-          echo "✅ SERVER_PAT is available for GitHub Container Registry"
+          echo "�?SERVER_PAT is available for GitHub Container Registry"
           echo "PAT length: $(echo '${{ secrets.SERVER_PAT }}' | wc -c) characters"
         elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
-          echo "✅ GITHUB_TOKEN is available (fallback)"
+          echo "�?GITHUB_TOKEN is available (fallback)"
         else
-          echo "❌ No GitHub token available for registry access"
+          echo "�?No GitHub token available for registry access"
           exit 1
         fi
 
     - name: Build dependencies
       run: |
         echo "Building dependencies before type checking..."
-        # 先构建vite-plugin，因为其他包可能依赖它
+        # 先构建vite-plugin，因为其他包可能依赖�?
         pnpm --filter @btc/vite-plugin run build
-        # 使用turbo构建所有包的依赖
+        # 使用turbo构建所有包的依�?
         node scripts/turbo.js run build --filter="@btc/*"
 
     - name: Type check
@@ -88,135 +88,130 @@ jobs:
       SERVER_USER: ${{ secrets.SERVER_USER }}
       SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
-  # 第三步：触发8个独立的构建工作流
-  trigger-builds:
-    name: Trigger Build Workflows
-    runs-on: ubuntu-latest
+  # 第三步：构建所有应用的Docker镜像�?个并行任务）
+  build-system-app:
     needs: [validate-environment]
     if: always() && needs.validate-environment.result == 'success'
-    
-    steps:
-    - name: Trigger System App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-system-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Admin App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-admin-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Logistics App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-logistics-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Quality App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-quality-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Production App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-production-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Engineering App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-engineering-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Finance App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-finance-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Trigger Mobile App Build
-      uses: peter-evans/repository-dispatch@v3
-      with:
-        token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
-        event-type: build-mobile-app
-        client-payload: |
-          {
-            "registry": "ghcr.io",
-            "github_repository": "${{ github.repository }}",
-            "github_sha": "${{ github.sha }}"
-          }
-    
-    - name: Wait for builds to start
-      run: |
-        echo "✅ All 8 build workflows have been triggered!"
-        echo "Each build will run as an independent workflow."
-        echo "Check the Actions tab to see 8 separate workflow runs."
-        sleep 10
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-system-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
-  # 第四步：等待构建完成并部署到服务器
+  build-admin-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-admin-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-logistics-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-logistics-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-quality-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-quality-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-production-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-production-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-engineering-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-engineering-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-finance-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-finance-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  build-mobile-app:
+    needs: [validate-environment]
+    if: always() && needs.validate-environment.result == 'success'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/build-mobile-app.yml
+    with:
+      registry: ghcr.io
+      github_repository: ${{ github.repository }}
+      github_sha: ${{ github.sha }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+
+  # 第四步：部署到服务器
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
-    needs: [validate-environment, trigger-builds]
-    if: always() && (needs.trigger-builds.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
+    needs: [validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
+    if: always() && (needs.build-system-app.result == 'success' && needs.build-admin-app.result == 'success' && needs.build-logistics-app.result == 'success' && needs.build-quality-app.result == 'success' && needs.build-production-app.result == 'success' && needs.build-engineering-app.result == 'success' && needs.build-finance-app.result == 'success' && needs.build-mobile-app.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Wait for builds to complete
-      run: |
-        echo "⏳ Waiting for independent build workflows to complete..."
-        echo "The 8 build workflows are running independently."
-        echo "In a production setup, you would check their status via GitHub API."
-        echo "For now, we'll wait 5 minutes for builds to complete."
-        sleep 300
 
     - name: Setup SSH
       run: |
@@ -235,7 +230,7 @@ jobs:
         # 添加主机密钥
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         
-        echo "✅ SSH key setup completed successfully"
+        echo "�?SSH key setup completed successfully"
 
     - name: Deploy applications
       run: |
@@ -248,7 +243,7 @@ jobs:
         
         echo "Starting BTC ShopFlow deployment..."
         
-        # 检查项目目录
+        # 检查项目目�?
         if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
           echo "Creating project directory..."
           mkdir -p /www/wwwroot
@@ -281,7 +276,7 @@ jobs:
         
         echo "Checking application health on IP: ${{ secrets.SERVER_HOST }}"
         
-        # 检查主要应用
+        # 检查主要应�?
         for port in 30080 30081 30086; do
           if curl -f -s --max-time 10 http://${{ secrets.SERVER_HOST }}:$port > /dev/null; then
             echo "Port $port is healthy"
@@ -294,13 +289,18 @@ jobs:
       run: |
         echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Build Workflows:" >> $GITHUB_STEP_SUMMARY
-        echo "- 8 independent build workflows were triggered" >> $GITHUB_STEP_SUMMARY
-        echo "- Check the Actions tab for individual build status" >> $GITHUB_STEP_SUMMARY
-        echo "- Build Trigger: ${{ needs.trigger-builds.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Built Images:" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Application URLs:" >> $GITHUB_STEP_SUMMARY
-        echo "- 主应用: http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
+        echo "- 主应�? http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
         echo "- 管理后台: http://${{ secrets.SERVER_HOST }}:30081" >> $GITHUB_STEP_SUMMARY
         echo "- 财务系统: http://${{ secrets.SERVER_HOST }}:30086" >> $GITHUB_STEP_SUMMARY
 
@@ -308,7 +308,7 @@ jobs:
   notify:
     name: Notify Status
     runs-on: ubuntu-latest
-    needs: [quality-check, validate-environment, trigger-builds, deploy]
+    needs: [quality-check, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app, deploy]
     if: always()
     
     steps:
@@ -321,16 +321,21 @@ jobs:
         echo "URL: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}" >> $GITHUB_STEP_SUMMARY
         
     - name: Failure notification
-      if: needs.deploy.result == 'failure' || needs.trigger-builds.result == 'failure' || needs.quality-check.result == 'failure' || needs.validate-environment.result == 'failure'
+      if: needs.deploy.result == 'failure' || needs.build-system-app.result == 'failure' || needs.build-admin-app.result == 'failure' || needs.build-logistics-app.result == 'failure' || needs.build-quality-app.result == 'failure' || needs.build-production-app.result == 'failure' || needs.build-engineering-app.result == 'failure' || needs.build-finance-app.result == 'failure' || needs.build-mobile-app.result == 'failure' || needs.quality-check.result == 'failure' || needs.validate-environment.result == 'failure'
       run: |
         echo "**Deployment Failed!**" >> $GITHUB_STEP_SUMMARY
         echo "Please check the logs for details" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Results:" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Results:" >> $GITHUB_STEP_SUMMARY
         echo "- Quality Check: ${{ needs.quality-check.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Environment Validation: ${{ needs.validate-environment.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Build Trigger: ${{ needs.trigger-builds.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Check individual build workflow runs for detailed build status" >> $GITHUB_STEP_SUMMARY
         exit 1
