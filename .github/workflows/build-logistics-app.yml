@@ -1,4 +1,4 @@
-﻿name: Build Logistics App
+name: Build Logistics App
 
 on:
   workflow_call:
@@ -24,6 +24,9 @@ jobs:
   build-logistics-app:
     name: Build Logistics App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
@@ -44,11 +47,11 @@ jobs:
       run: |
         echo "Validating GitHub token for registry access..."
         
-        if [ -n "${{ secrets.GH_TOKEN }}" ]; then
-          echo "✅ GH_TOKEN is available for Docker registry"
-          echo "Token length: $(echo '${{ secrets.GH_TOKEN }}' | wc -c) characters"
+        if [ -n "${{ inputs.gh_token }}" ]; then
+          echo "? GH_TOKEN is available for Docker registry"
+          echo "Token length: $(echo '${{ inputs.gh_token }}' | wc -c) characters"
         else
-          echo "❌ GH_TOKEN is not available"
+          echo "? GH_TOKEN is not available"
           exit 1
         fi
 
@@ -58,7 +61,7 @@ jobs:
         # Convert repository name to lowercase for Docker compatibility
         REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
         echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
-        echo "📋 Docker tags will use: $REPO_LOWER"
+        echo "?? Docker tags will use: $REPO_LOWER"
     
     - name: Build dependencies
       run: |
@@ -94,7 +97,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ inputs.gh_token }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -105,3 +108,4 @@ jobs:
         tags: |
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/logistics-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/logistics-app:${{ inputs.github_sha }}
+

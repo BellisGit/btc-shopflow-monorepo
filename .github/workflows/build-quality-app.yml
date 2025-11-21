@@ -1,4 +1,4 @@
-﻿name: Build Quality App
+name: Build Quality App
 
 on:
   workflow_call:
@@ -24,6 +24,9 @@ jobs:
   build-quality-app:
     name: Build Quality App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
@@ -83,7 +86,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ inputs.gh_token }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -94,3 +97,4 @@ jobs:
         tags: |
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:${{ inputs.github_sha }}
+

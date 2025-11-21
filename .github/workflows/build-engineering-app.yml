@@ -1,4 +1,4 @@
-﻿name: Build Engineering App
+name: Build Engineering App
 
 on:
   workflow_call:
@@ -24,6 +24,9 @@ jobs:
   build-engineering-app:
     name: Build Engineering App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
@@ -83,7 +86,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ inputs.gh_token }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -94,3 +97,4 @@ jobs:
         tags: |
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/engineering-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/engineering-app:${{ inputs.github_sha }}
+
