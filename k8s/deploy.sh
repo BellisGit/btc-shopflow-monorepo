@@ -54,6 +54,7 @@ deploy_apps() {
     echo "🏗️  部署核心应用..."
     kubectl apply -f deployments/system-app.yaml -n $NAMESPACE
     kubectl apply -f deployments/admin-app.yaml -n $NAMESPACE
+    kubectl apply -f deployments/finance-app.yaml -n $NAMESPACE
     kubectl apply -f deployments/logistics-app.yaml -n $NAMESPACE
     
     # 4. 部署其他应用
@@ -117,7 +118,7 @@ show_status() {
 wait_for_deployment() {
     echo "⏳ 等待部署就绪..."
     
-    deployments=("btc-system-app" "btc-admin-app" "btc-logistics-app")
+    deployments=("btc-system-app" "btc-admin-app" "btc-finance-app" "btc-logistics-app")
     
     for deployment in "${deployments[@]}"; do
         echo "等待 $deployment 就绪..."

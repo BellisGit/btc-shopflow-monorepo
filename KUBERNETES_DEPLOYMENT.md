@@ -351,6 +351,266 @@ velero backup create btc-shopflow-backup --include-namespaces btc-shopflow
 
 ---
 
+## 🏢 宝塔面板部署指南
+
+### 前置条件
+- 已安装宝塔面板 7.x 或更高版本
+- 服务器配置：4核8G内存，100G硬盘以上
+- 已安装 Docker 和 Docker Compose
+- 已配置域名解析
+
+### 1. 环境准备
+
+#### 1.1 安装 Docker
+```bash
+# 在宝塔面板终端中执行
+curl -fsSL https://get.docker.com | bash -s docker
+systemctl start docker
+systemctl enable docker
+
+# 安装 Docker Compose
+curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+```
+
+#### 1.2 安装 Kubernetes (K3s)
+```bash
+# 安装 K3s (轻量级 Kubernetes)
+curl -sfL https://get.k3s.io | sh -
+
+# 配置 kubectl
+mkdir -p ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown $(id -u):$(id -g) ~/.kube/config
+
+# 验证安装
+kubectl get nodes
+```
+
+### 2. 项目部署
+
+#### 2.1 克隆项目
+```bash
+# 在宝塔面板文件管理器中，或通过终端
+cd /www/wwwroot
+git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+cd btc-shopflow-monorepo
+```
+
+#### 2.2 构建 Docker 镜像
+```bash
+# 构建所有应用镜像
+./scripts/build-all.sh
+
+# 或单独构建
+docker build -t btc-shopflow/system-app:latest -f apps/system-app/Dockerfile .
+docker build -t btc-shopflow/admin-app:latest -f apps/admin-app/Dockerfile .
+docker build -t btc-shopflow/finance-app:latest -f apps/finance-app/Dockerfile .
+```
+
+#### 2.3 部署到 Kubernetes
+```bash
+# 进入 k8s 目录
+cd k8s
+
+# 执行一键部署脚本
+chmod +x deploy.sh
+./deploy.sh
+
+# 或手动部署
+kubectl apply -f namespace.yaml
+kubectl apply -f configmap.yaml
+kubectl apply -f deployments/
+kubectl apply -f ingress.yaml
+kubectl apply -f hpa.yaml
+```
+
+### 3. 宝塔面板配置
+
+#### 3.1 反向代理配置
+在宝塔面板中配置反向代理：
+
+1. **添加站点**
+   - 域名：`bellis.com.cn`
+   - 根目录：`/www/wwwroot/btc-shopflow-monorepo`
+
+2. **配置反向代理**
+   ```nginx
+   # 主应用
+   location / {
+       proxy_pass http://127.0.0.1:30080;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   
+   # 管理应用
+   location /admin {
+       proxy_pass http://127.0.0.1:30081;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   
+   # 财务应用
+   location /finance {
+       proxy_pass http://127.0.0.1:30086;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+   }
+   ```
+
+#### 3.2 SSL 证书配置
+1. 在宝塔面板中申请 Let's Encrypt 证书
+2. 或上传自有证书
+3. 强制 HTTPS 访问
+
+#### 3.3 防火墙配置
+开放必要端口：
+- 80 (HTTP)
+- 443 (HTTPS)
+- 30080-30091 (K8s NodePort)
+
+### 4. 监控和维护
+
+#### 4.1 宝塔面板监控
+- 启用系统监控
+- 配置资源告警
+- 设置自动备份
+
+#### 4.2 应用健康检查
+```bash
+# 检查 Pod 状态
+kubectl get pods -n btc-shopflow
+
+# 查看应用日志
+kubectl logs -f deployment/btc-system-app -n btc-shopflow
+
+# 检查服务状态
+kubectl get svc -n btc-shopflow
+```
+
+#### 4.3 自动化脚本
+创建维护脚本 `/www/server/panel/script/btc-maintenance.sh`：
+```bash
+#!/bin/bash
+# BTC ShopFlow 维护脚本
+
+# 检查应用状态
+echo "=== 检查应用状态 ==="
+kubectl get pods -n btc-shopflow
+
+# 重启异常应用
+echo "=== 重启异常应用 ==="
+kubectl rollout restart deployment -n btc-shopflow
+
+# 清理未使用的镜像
+echo "=== 清理 Docker 镜像 ==="
+docker system prune -f
+
+echo "=== 维护完成 ==="
+```
+
+### 5. 故障排除
+
+#### 5.1 常见问题
+1. **Pod 启动失败**
+   ```bash
+   kubectl describe pod <pod-name> -n btc-shopflow
+   kubectl logs <pod-name> -n btc-shopflow
+   ```
+
+2. **服务无法访问**
+   ```bash
+   kubectl get svc -n btc-shopflow
+   kubectl get ingress -n btc-shopflow
+   ```
+
+3. **资源不足**
+   ```bash
+   kubectl top nodes
+   kubectl top pods -n btc-shopflow
+   ```
+
+#### 5.2 性能优化
+- 调整 Pod 资源限制
+- 配置 HPA 自动扩展
+- 优化 Nginx 配置
+- 启用 CDN 加速
+
+### 6. 备份和恢复
+
+#### 6.1 数据备份
+```bash
+# 备份 Kubernetes 配置
+kubectl get all -n btc-shopflow -o yaml > /www/backup/k8s-backup-$(date +%Y%m%d).yaml
+
+# 备份应用数据
+tar -czf /www/backup/btc-shopflow-$(date +%Y%m%d).tar.gz /www/wwwroot/btc-shopflow-monorepo
+```
+
+#### 6.2 自动备份
+在宝塔面板计划任务中添加：
+```bash
+# 每日凌晨 2 点备份
+0 2 * * * /www/server/panel/script/btc-backup.sh
+```
+
+### 7. 升级部署
+
+#### 7.1 滚动更新
+```bash
+# 更新代码
+cd /www/wwwroot/btc-shopflow-monorepo
+git pull origin master
+
+# 重新构建镜像
+./scripts/build-all.sh
+
+# 滚动更新
+kubectl rollout restart deployment -n btc-shopflow
+```
+
+#### 7.2 版本回滚
+```bash
+# 查看部署历史
+kubectl rollout history deployment/btc-system-app -n btc-shopflow
+
+# 回滚到上一版本
+kubectl rollout undo deployment/btc-system-app -n btc-shopflow
+```
+
+---
+
+## 📱 宝塔面板快速部署总结
+
+### 一键部署命令
+```bash
+# 1. 安装环境
+curl -fsSL https://get.docker.com | bash -s docker
+curl -sfL https://get.k3s.io | sh -
+
+# 2. 部署项目
+cd /www/wwwroot
+git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+cd btc-shopflow-monorepo/k8s
+chmod +x deploy.sh && ./deploy.sh
+
+# 3. 配置反向代理（在宝塔面板中操作）
+# 4. 申请 SSL 证书（在宝塔面板中操作）
+```
+
+### 访问地址
+- 主应用：https://bellis.com.cn
+- 管理后台：https://bellis.com.cn/admin
+- 财务系统：https://bellis.com.cn/finance
+
+---
+
 🎉 **恭喜！您的 BTC ShopFlow 项目现已完全支持 Kubernetes 部署！**
 
-这套完整的 K8s 部署方案包含了从基础部署到生产级优化的所有配置，支持自动扩展、监控告警、CI/CD 集成等企业级功能。
+这套完整的 K8s 部署方案包含了从基础部署到生产级优化的所有配置，支持自动扩展、监控告警、CI/CD 集成等企业级功能，并特别针对宝塔面板用户提供了详细的部署指南。
