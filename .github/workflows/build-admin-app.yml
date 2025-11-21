@@ -37,10 +37,10 @@ jobs:
         echo "Validating GitHub token for registry access..."
         
         if [ -n "${{ inputs.gh_token }}" ]; then
-          echo "âœ?GH_TOKEN is available for Docker registry"
+          echo "[SUCCESS] GH_TOKEN is available for Docker registry"
           echo "Token length: $(echo '${{ inputs.gh_token }}' | wc -c) characters"
         else
-          echo "â?GH_TOKEN is not available"
+          echo "[ERROR] GH_TOKEN is not available"
           exit 1
         fi
 
@@ -50,7 +50,7 @@ jobs:
         # Convert repository name to lowercase for Docker compatibility
         REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
         echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
-        echo "ðŸ“‹ Docker tags will use: $REPO_LOWER"
+        echo "[INFO] Docker tags will use: $REPO_LOWER"
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -110,3 +110,4 @@ jobs:
         tags: |
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/admin-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/admin-app:${{ inputs.github_sha }}
+

@@ -98,3 +98,5 @@ jobs:
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:${{ inputs.github_sha }}
 
+
+

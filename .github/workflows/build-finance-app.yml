@@ -88,3 +88,5 @@ jobs:
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/finance-app:latest
           ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/finance-app:${{ inputs.github_sha }}
 
+
+
