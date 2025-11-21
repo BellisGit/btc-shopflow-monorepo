@@ -78,8 +78,11 @@ jobs:
 
   # 第二步：构建System App
   build-system-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-system-app.yml
     with:
       registry: ghcr.io
@@ -90,8 +93,11 @@ jobs:
 
   # 第二步：构建Admin App
   build-admin-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-admin-app.yml
     with:
       registry: ghcr.io
@@ -102,8 +108,11 @@ jobs:
 
   # 第二步：构建Logistics App
   build-logistics-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-logistics-app.yml
     with:
       registry: ghcr.io
@@ -114,8 +123,11 @@ jobs:
 
   # 第二步：构建Quality App
   build-quality-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-quality-app.yml
     with:
       registry: ghcr.io
@@ -126,8 +138,11 @@ jobs:
 
   # 第二步：构建Production App
   build-production-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-production-app.yml
     with:
       registry: ghcr.io
@@ -138,8 +153,11 @@ jobs:
 
   # 第二步：构建Engineering App
   build-engineering-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-engineering-app.yml
     with:
       registry: ghcr.io
@@ -150,8 +168,11 @@ jobs:
 
   # 第二步：构建Finance App
   build-finance-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-finance-app.yml
     with:
       registry: ghcr.io
@@ -162,8 +183,11 @@ jobs:
 
   # 第二步：构建Mobile App
   build-mobile-app:
-    needs: quality-check
+    needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-mobile-app.yml
     with:
       registry: ghcr.io
