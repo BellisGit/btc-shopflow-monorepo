@@ -29,11 +29,82 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # Step 1: Code Quality Check
+  # Step 1: SSH Connection Validation (Fast Fail)
+  validate-ssh:
+    name: Validate SSH Connection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Test SSH connection
+      run: |
+        echo "ðŸ” Testing SSH connection first to fail fast if credentials are invalid..."
+        
+        if [ -z "${{ secrets.SERVER_KEY }}" ]; then
+          echo "âš ï¸ SERVER_KEY not set - SSH deployment will be skipped"
+          echo "ssh_available=false" >> $GITHUB_ENV
+          exit 0
+        fi
+        
+        if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "âš ï¸ SERVER_HOST not set - SSH deployment will be skipped"
+          echo "ssh_available=false" >> $GITHUB_ENV
+          exit 0
+        fi
+        
+        echo "ðŸ”‘ Setting up SSH key..."
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        
+        # Process SSH key
+        echo "Processing SSH key..."
+        if echo "${{ secrets.SERVER_KEY }}" | grep -q "^[A-Za-z0-9+/]*={0,2}$" && [ ${#SERVER_KEY} -gt 100 ]; then
+          echo "Detected base64 encoded key, decoding..."
+          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        else
+          echo "Processing key as plain text..."
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+          sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+        fi
+        
+        chmod 600 ~/.ssh/id_rsa
+        
+        # Validate key format
+        if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+          echo "â?SSH key format is invalid"
+          echo "Please check your SERVER_KEY secret format"
+          exit 1
+        fi
+        
+        # Add host key
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        echo "ðŸ§ª Testing SSH connection..."
+        if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
+            "echo 'SSH connection test successful'"; then
+          echo "âœ?SSH connection successful!"
+          echo "ssh_available=true" >> $GITHUB_ENV
+        else
+          echo "â?SSH connection failed!"
+          echo "Please check your SERVER_KEY, SERVER_HOST, SERVER_USER, and SERVER_PORT secrets"
+          echo "Common issues:"
+          echo "- Incorrect SSH private key format"
+          echo "- Wrong server IP address"
+          echo "- Firewall blocking SSH port"
+          echo "- SSH key not authorized on server"
+          exit 1
+        fi
+
+  # Step 2: Code Quality Check
   quality-check:
     name: Quality Check
     runs-on: ubuntu-latest
-    if: github.event.inputs.deploy_only != 'true'
+    needs: [validate-ssh]
+    if: always() && github.event.inputs.deploy_only != 'true'
     
     steps:
     - name: Checkout code
@@ -78,10 +149,10 @@ jobs:
     - name: Lint check
       run: pnpm run lint
 
-  # Step 2: Environment Validation and SSH Connection Test
+  # Step 3: Environment Validation
   validate-environment:
-    needs: [quality-check]
-    if: always()
+    needs: [validate-ssh, quality-check]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     uses: ./.github/workflows/validate-environment.yml
     secrets:
       SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -89,10 +160,10 @@ jobs:
       SERVER_USER: ${{ secrets.SERVER_USER }}
       SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
-  # Step 3: Build all application Docker images (8 parallel tasks)
+  # Step 4: Build all application Docker images (8 parallel tasks)
   build-system-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -105,8 +176,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-admin-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -119,8 +190,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -133,8 +204,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -147,8 +218,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -161,8 +232,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -175,8 +246,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -189,8 +260,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
-    needs: [validate-environment]
-    if: always()
+    needs: [validate-ssh, validate-environment]
+    if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -202,12 +273,12 @@ jobs:
     secrets:
       GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
-  # Step 4: Deploy to Server
+  # Step 5: Deploy to Server
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
-    needs: [validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
-    if: always() && github.ref == 'refs/heads/master'
+    needs: [validate-ssh, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
+    if: always() && needs.validate-ssh.result == 'success' && github.ref == 'refs/heads/master'
     
     steps:
     - name: Checkout code
@@ -243,7 +314,7 @@ jobs:
           
           # Ensure proper PEM format
           if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-            echo "âŒ Key doesn't appear to be in PEM format"
+            echo "â?Key doesn't appear to be in PEM format"
             echo "First 100 characters of key:"
             head -c 100 ~/.ssh/id_rsa
             exit 1
@@ -272,7 +343,7 @@ jobs:
         echo "Last line: $(tail -1 ~/.ssh/id_rsa)"
         
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "âŒ SSH key format is still invalid after processing"
+          echo "â?SSH key format is still invalid after processing"
           echo ""
           echo "=== DEBUGGING INFORMATION ==="
           echo "Key file contents (first 5 lines):"
@@ -300,7 +371,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         fi
         
-        echo "âœ… SSH key setup completed successfully"
+        echo "âœ?SSH key setup completed successfully"
         echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa)"
 
     - name: Deploy applications
@@ -325,12 +396,12 @@ jobs:
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
             ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
             "echo 'SSH connection test successful'"; then
-          echo "âŒ SSH connection failed, skipping deployment"
+          echo "â?SSH connection failed, skipping deployment"
           echo "Please check your SERVER_KEY, SERVER_HOST, SERVER_USER, and SERVER_PORT secrets"
           exit 0
         fi
         
-        echo "âœ… SSH connection successful, proceeding with deployment..."
+        echo "âœ?SSH connection successful, proceeding with deployment..."
         
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
@@ -400,11 +471,11 @@ jobs:
         echo "- Admin Panel: http://${{ secrets.SERVER_HOST }}:30081" >> $GITHUB_STEP_SUMMARY
         echo "- Finance System: http://${{ secrets.SERVER_HOST }}:30086" >> $GITHUB_STEP_SUMMARY
 
-  # Step 5: Notification
+  # Step 6: Notification
   notify:
     name: Notify Status
     runs-on: ubuntu-latest
-    needs: [quality-check, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app, deploy]
+    needs: [validate-ssh, quality-check, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app, deploy]
     if: always()
     
     steps:
@@ -435,4 +506,5 @@ jobs:
         echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
         exit 1
+
 
