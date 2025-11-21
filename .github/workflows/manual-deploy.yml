@@ -93,15 +93,17 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: 📦 Setup Node.js and pnpm
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-
     - name: 📦 Setup pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8.15.0
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        cache-dependency-path: 'pnpm-lock.yaml'
 
     - name: 📥 Install dependencies
       run: pnpm install --frozen-lockfile
