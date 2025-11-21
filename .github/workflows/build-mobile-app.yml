@@ -44,7 +44,10 @@ jobs:
       run: pnpm install --no-frozen-lockfile
     
     - name: Build dependencies
-      run: node scripts/turbo.js run build --filter="@btc/*"
+      run: |
+        echo "Building dependencies for mobile-app..."
+        pnpm --filter @btc/vite-plugin run build
+        node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build mobile-app
       run: cd apps/mobile-app && pnpm run build

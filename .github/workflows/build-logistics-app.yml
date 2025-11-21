@@ -44,7 +44,12 @@ jobs:
       run: pnpm install --no-frozen-lockfile
     
     - name: Build dependencies
-      run: node scripts/turbo.js run build --filter="@btc/*"
+      run: |
+        echo "Building dependencies for logistics-app..."
+        # 先构建vite-plugin，因为其他包可能依赖它
+        pnpm --filter @btc/vite-plugin run build
+        # 然后构建其他依赖包
+        node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build logistics-app
       run: cd apps/logistics-app && pnpm run build
