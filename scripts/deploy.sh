@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# BTC ShopFlow 简化部署脚本
-# 专门处理网络问题和K3s安装失败的情况
+# BTC ShopFlow 生产环境部署脚本
+# 使用Docker Compose进行稳定可靠的部署
 
 set -e
 
@@ -23,7 +23,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-echo "🚀 BTC ShopFlow 简化部署脚本"
+echo "🚀 BTC ShopFlow 生产环境部署脚本"
 echo "================================"
 
 # 1. 检查Docker
@@ -93,6 +93,61 @@ services:
     networks:
       - btc-network
 
+  logistics-app:
+    image: btc-shopflow/logistics-app:latest
+    container_name: btc-logistics-app
+    ports:
+      - "30082:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
+  quality-app:
+    image: btc-shopflow/quality-app:latest
+    container_name: btc-quality-app
+    ports:
+      - "30083:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
+  production-app:
+    image: btc-shopflow/production-app:latest
+    container_name: btc-production-app
+    ports:
+      - "30084:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
+  engineering-app:
+    image: btc-shopflow/engineering-app:latest
+    container_name: btc-engineering-app
+    ports:
+      - "30085:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
+  mobile-app:
+    image: btc-shopflow/mobile-app:latest
+    container_name: btc-mobile-app
+    ports:
+      - "30091:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
 networks:
   btc-network:
     driver: bridge
@@ -115,7 +170,12 @@ log_info "配置防火墙..."
 if systemctl is-active --quiet firewalld; then
     firewall-cmd --permanent --add-port=30080/tcp
     firewall-cmd --permanent --add-port=30081/tcp
+    firewall-cmd --permanent --add-port=30082/tcp
+    firewall-cmd --permanent --add-port=30083/tcp
+    firewall-cmd --permanent --add-port=30084/tcp
+    firewall-cmd --permanent --add-port=30085/tcp
     firewall-cmd --permanent --add-port=30086/tcp
+    firewall-cmd --permanent --add-port=30091/tcp
     firewall-cmd --reload
     log_success "防火墙配置完成"
 fi
@@ -124,11 +184,16 @@ fi
 log_info "执行健康检查..."
 sleep 20
 
-for port in 30080 30081 30086; do
+ports=(30080 30081 30082 30083 30084 30085 30086 30091)
+app_names=("主应用" "管理后台" "物流系统" "质量系统" "生产系统" "工程系统" "财务系统" "移动端")
+
+for i in "${!ports[@]}"; do
+    port=${ports[$i]}
+    app_name=${app_names[$i]}
     if curl -f -s --max-time 10 "http://localhost:$port" > /dev/null 2>&1; then
-        log_success "端口 $port 服务正常"
+        log_success "$app_name ($port) 服务正常"
     else
-        log_warning "端口 $port 服务可能仍在启动"
+        log_warning "$app_name ($port) 服务可能仍在启动"
     fi
 done
 
@@ -144,8 +209,13 @@ cat << EOF
 
 📱 访问地址:
 - 主应用:   http://$SERVER_IP:30080
-- 管理后台: http://$SERVER_IP:30081  
+- 管理后台: http://$SERVER_IP:30081
+- 物流系统: http://$SERVER_IP:30082
+- 质量系统: http://$SERVER_IP:30083
+- 生产系统: http://$SERVER_IP:30084
+- 工程系统: http://$SERVER_IP:30085
 - 财务系统: http://$SERVER_IP:30086
+- 移动端:   http://$SERVER_IP:30091
 
 🔧 管理命令:
 - 查看状态: docker-compose -f docker-compose.prod.yml ps
@@ -160,4 +230,4 @@ cat << EOF
 
 EOF
 
-log_success "简化部署完成！"
+log_success "生产环境部署完成！"

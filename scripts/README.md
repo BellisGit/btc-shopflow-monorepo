@@ -1,50 +1,41 @@
-# 🛠️ BTC ShopFlow 部署和维护脚本
+# 🛠️ BTC ShopFlow 部署脚本
 
-本目录包含了用于 BTC ShopFlow 项目部署、维护和备份的所有脚本。
+本目录包含了用于 BTC ShopFlow 项目部署和维护的脚本。
 
 ## 📋 脚本清单
 
-### 🚀 部署脚本
+### 🚀 主要部署脚本
+
+#### `deploy.sh` - **生产环境部署脚本**
+**用途**: 一键部署所有BTC ShopFlow应用到生产环境  
+**技术**: Docker + Docker Compose  
+**特点**: 稳定可靠，无网络依赖问题
+
+**使用方法**:
+```bash
+# 在Linux服务器上执行
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+```
+
+**功能**:
+- 自动检查Docker环境
+- 构建所有应用的Docker镜像
+- 创建Docker Compose配置
+- 启动所有服务（8个应用）
+- 配置防火墙规则
+- 执行健康检查
+- 生成访问地址和管理命令
+
+### 🔧 辅助脚本
 
 #### `build-all.sh`
-**用途**: 构建所有应用的 Docker 镜像  
+**用途**: 构建所有应用的Docker镜像  
 **使用方法**:
 ```bash
 chmod +x scripts/build-all.sh
 ./scripts/build-all.sh
 ```
-
-**功能**:
-- 自动检测项目中的所有应用
-- 为每个应用创建 Dockerfile（如果不存在）
-- 构建 Docker 镜像并打标签
-- 显示构建结果和镜像列表
-
-### 🔧 维护脚本
-
-#### `btc-maintenance.sh`
-**用途**: 日常系统维护和健康检查  
-**使用方法**:
-```bash
-chmod +x scripts/btc-maintenance.sh
-./scripts/btc-maintenance.sh
-```
-
-**功能**:
-- 检查系统资源使用情况
-- 监控 Docker 和 Kubernetes 状态
-- 检查应用健康状态
-- 自动重启异常应用
-- 清理系统垃圾文件
-- 生成维护报告
-
-**建议**: 在宝塔面板计划任务中设置每日执行
-```bash
-# 每日凌晨 3 点执行维护
-0 3 * * * /www/wwwroot/btc-shopflow-monorepo/scripts/btc-maintenance.sh
-```
-
-### 💾 备份脚本
 
 #### `btc-backup.sh`
 **用途**: 备份项目配置、代码和数据  
@@ -54,18 +45,77 @@ chmod +x scripts/btc-backup.sh
 ./scripts/btc-backup.sh
 ```
 
-**功能**:
-- 备份 Kubernetes 配置文件
-- 备份项目源代码
-- 导出 Docker 镜像
-- 备份数据库（需要配置）
-- 清理旧备份文件（保留7天）
-- 生成备份报告
-
-**建议**: 在宝塔面板计划任务中设置每日备份
+#### `btc-maintenance.sh`
+**用途**: 日常系统维护和健康检查  
+**使用方法**:
 ```bash
-# 每日凌晨 2 点备份
-0 2 * * * /www/wwwroot/btc-shopflow-monorepo/scripts/btc-backup.sh
+chmod +x scripts/btc-maintenance.sh
+./scripts/btc-maintenance.sh
+```
+
+## 🚀 快速部署指南
+
+### 前置条件
+- Linux服务器（CentOS/Ubuntu）
+- 已安装Docker
+- 已克隆项目到 `/www/wwwroot/btc-shopflow-monorepo`
+
+### 一键部署
+```bash
+# 1. 进入项目目录
+cd /www/wwwroot/btc-shopflow-monorepo
+
+# 2. 执行部署脚本
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+```
+
+### 部署后访问
+部署完成后，可通过以下地址访问各应用：
+
+| 应用 | 端口 | 访问地址 |
+|------|------|----------|
+| 主应用 | 30080 | http://服务器IP:30080 |
+| 管理后台 | 30081 | http://服务器IP:30081 |
+| 物流系统 | 30082 | http://服务器IP:30082 |
+| 质量系统 | 30083 | http://服务器IP:30083 |
+| 生产系统 | 30084 | http://服务器IP:30084 |
+| 工程系统 | 30085 | http://服务器IP:30085 |
+| 财务系统 | 30086 | http://服务器IP:30086 |
+| 移动端 | 30091 | http://服务器IP:30091 |
+
+## 🔧 日常管理
+
+### 服务管理命令
+```bash
+# 查看服务状态
+docker-compose -f docker-compose.prod.yml ps
+
+# 查看服务日志
+docker-compose -f docker-compose.prod.yml logs -f
+
+# 重启所有服务
+docker-compose -f docker-compose.prod.yml restart
+
+# 重启单个服务
+docker-compose -f docker-compose.prod.yml restart system-app
+
+# 停止所有服务
+docker-compose -f docker-compose.prod.yml down
+
+# 更新并重启服务
+git pull origin master
+./scripts/build-all.sh
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 健康检查
+```bash
+# 执行系统维护
+./scripts/btc-maintenance.sh
+
+# 执行数据备份
+./scripts/btc-backup.sh
 ```
 
 ## 🏢 宝塔面板集成
@@ -86,66 +136,88 @@ chmod +x scripts/btc-backup.sh
 - 执行周期: 每天 03:00
 - 脚本内容: `/www/wwwroot/btc-shopflow-monorepo/scripts/btc-maintenance.sh`
 
-### 2. 监控配置
+### 2. 反向代理配置
 
-在宝塔面板 → 监控中配置：
-- CPU 使用率告警: > 80%
-- 内存使用率告警: > 80%
-- 磁盘使用率告警: > 80%
+在宝塔面板中为每个应用配置反向代理：
 
-### 3. 日志管理
+```nginx
+# 主应用
+location / {
+    proxy_pass http://127.0.0.1:30080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
 
-日志文件位置：
-- 维护日志: `/www/logs/btc-maintenance.log`
-- 备份报告: `/www/backup/btc-shopflow/backup-report-*.txt`
-- 维护报告: `/www/logs/maintenance-report-*.txt`
+# 管理后台
+location /admin {
+    proxy_pass http://127.0.0.1:30081;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+
+# 财务系统
+location /finance {
+    proxy_pass http://127.0.0.1:30086;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+```
+
+### 3. SSL证书配置
+- 在宝塔面板中申请Let's Encrypt证书
+- 开启强制HTTPS访问
 
 ## 🚨 故障排除
 
 ### 常见问题
 
-1. **脚本权限问题**
+1. **Docker服务未启动**
 ```bash
-chmod +x scripts/*.sh
-```
-
-2. **Docker 未安装**
-```bash
-curl -fsSL https://get.docker.com | bash -s docker
 systemctl start docker
 systemctl enable docker
 ```
 
-3. **Kubernetes 未安装**
+2. **端口被占用**
 ```bash
-curl -sfL https://get.k3s.io | sh -
+# 查看端口占用
+netstat -tlnp | grep 30080
+# 停止占用进程
+kill -9 <PID>
 ```
 
-4. **kubectl 配置问题**
+3. **镜像构建失败**
 ```bash
-mkdir -p ~/.kube
-sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-sudo chown $(id -u):$(id -g) ~/.kube/config
+# 清理Docker缓存
+docker system prune -f
+# 重新构建
+./scripts/build-all.sh
+```
+
+4. **服务启动失败**
+```bash
+# 查看详细日志
+docker-compose -f docker-compose.prod.yml logs <service-name>
 ```
 
 ### 日志查看
 
 ```bash
-# 查看维护日志
-tail -f /www/logs/btc-maintenance.log
+# 查看部署日志
+docker-compose -f docker-compose.prod.yml logs
 
-# 查看最新备份报告
-ls -la /www/backup/btc-shopflow/backup-report-*.txt | tail -1
+# 查看特定服务日志
+docker-compose -f docker-compose.prod.yml logs system-app
 
-# 查看 Kubernetes Pod 日志
-kubectl logs -f deployment/btc-system-app -n btc-shopflow
+# 实时查看日志
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
 ## 📞 技术支持
 
 如果遇到问题，请检查：
-1. 脚本执行权限
-2. 系统依赖是否安装完整
+1. Docker服务是否正常运行
+2. 项目代码是否最新
 3. 网络连接是否正常
 4. 磁盘空间是否充足
 
@@ -155,7 +227,11 @@ kubectl logs -f deployment/btc-system-app -n btc-shopflow
 
 ## 📝 更新日志
 
-- **v1.0.0** (2024-11-21): 初始版本，包含基础的构建、维护和备份脚本
-- 支持宝塔面板集成
-- 支持 Docker 和 Kubernetes 环境
-- 自动化维护和监控功能
+- **v2.0.0** (2024-11-21): 简化为单一部署脚本，使用Docker Compose，提高稳定性
+- **v1.0.0** (2024-11-21): 初始版本，包含多种部署方案
+
+---
+
+🎉 **现在只需要一个命令就能完成整个项目的部署！**
+
+这个简化的部署方案避免了Kubernetes的复杂性和网络问题，使用成熟稳定的Docker Compose技术，确保部署过程简单可靠。
