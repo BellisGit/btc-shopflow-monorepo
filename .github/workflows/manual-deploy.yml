@@ -128,14 +128,14 @@ jobs:
         if [ ! -f "${app_path}/Dockerfile" ]; then
           echo "📝 Creating Dockerfile for ${app_name}..."
           cat > "${app_path}/Dockerfile" << 'DOCKERFILE'
-        FROM node:18-alpine as builder
+        FROM node:20-alpine AS builder
         WORKDIR /app
         COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
         COPY apps/ ./apps/
         COPY packages/ ./packages/
         COPY auth/ ./auth/
         RUN npm install -g pnpm
-        RUN pnpm install --frozen-lockfile
+        RUN pnpm install --no-frozen-lockfile
         RUN cd apps/APP_NAME && pnpm run build
         FROM nginx:alpine
         COPY --from=builder /app/apps/APP_NAME/dist /usr/share/nginx/html
