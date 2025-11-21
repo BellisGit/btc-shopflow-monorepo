@@ -163,18 +163,31 @@ install_k3s() {
     fi
 }
 
-# 检查项目目录
-check_project() {
+# 克隆或更新项目
+clone_or_update_project() {
     log_info "检查项目目录..."
     
-    if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
-        log_error "项目目录不存在: /www/wwwroot/btc-shopflow-monorepo"
-        log_info "请先执行: cd /www/wwwroot && git clone https://github.com/BellisGit/btc-shopflow-monorepo.git"
-        exit 1
+    cd /www/wwwroot
+    
+    if [ ! -d "btc-shopflow-monorepo" ]; then
+        log_info "克隆项目master分支..."
+        git clone -b master --single-branch https://github.com/BellisGit/btc-shopflow-monorepo.git
+        
+        if [ $? -ne 0 ]; then
+            log_error "项目克隆失败"
+            exit 1
+        fi
+        log_success "项目克隆完成"
+    else
+        log_info "项目目录已存在，更新代码..."
+        cd btc-shopflow-monorepo
+        git fetch origin master
+        git reset --hard origin/master
+        log_success "项目更新完成"
     fi
     
     cd /www/wwwroot/btc-shopflow-monorepo
-    log_success "项目目录检查完成"
+    log_success "项目准备完成"
 }
 
 # 构建Docker镜像
@@ -331,7 +344,7 @@ main() {
     update_system
     install_docker
     install_k3s
-    check_project
+    clone_or_update_project
     build_images
     deploy_to_k8s
     configure_firewall
