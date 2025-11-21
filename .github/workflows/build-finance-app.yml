@@ -21,36 +21,36 @@ on:
 
 jobs:
   build-finance-app:
-    name: 🏗�?Build Finance App Docker Image
+    name: Build Finance App Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: 🏷�?Job Info - Finance App (7/8)
+    - name: Job Info - Finance App (7/8)
       run: |
-        echo "🏗�?Starting build for: finance-app"
-        echo "📊 Job Index: 7/8"
-        echo "🔧 Build Group: docker-builds"
-        echo "�?Start Time: $(date)"
+        echo "Starting build for: finance-app"
+        echo "Job Index: 7/8"
+        echo "Build Group: docker-builds"
+        echo "Start Time: $(date)"
 
-    - name: 🐳 Set up Docker Buildx
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: 🔐 Log in to Container Registry
+    - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
         password: ${{ secrets.GH_TOKEN }}
 
-    - name: 🏗�?Build Finance App Docker Image
+    - name: Build Finance App Docker Image
       run: |
-        echo "🏗�?Building finance-app..."
+        echo "Building finance-app..."
         
         cat > "apps/finance-app/Dockerfile" << 'EOF'
         FROM node:20-alpine AS builder
@@ -62,7 +62,7 @@ jobs:
         COPY turbo.json ./
         COPY tsconfig.json ./
         
-        # 复制源代�?
+        # 复制源代码
         COPY apps/ ./apps/
         COPY packages/ ./packages/
         COPY auth/ ./auth/
@@ -96,7 +96,7 @@ jobs:
         docker tag btc-shopflow/finance-app:latest ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest
         docker push ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest
 
-    - name: �?Build Complete
+    - name: Build Complete
       run: |
-        echo "�?Finance App build completed successfully"
-        echo "📦 Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest"
+        echo "Finance App build completed successfully"
+        echo "Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest"

@@ -1,4 +1,4 @@
-name: 🚀 BTC ShopFlow CI/CD
+name: BTC ShopFlow CI/CD
 
 on:
   push:
@@ -28,52 +28,52 @@ env:
 jobs:
   # 第一步：代码质量检查和测试
   quality-check:
-    name: 🔍 Quality Check & Test
+    name: Quality Check & Test
     runs-on: ubuntu-latest
     if: github.event.inputs.deploy_only != 'true'
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: 📦 Setup pnpm
+    - name: Setup pnpm
       uses: pnpm/action-setup@v2
       with:
         version: 8.15.0
 
-    - name: 📦 Setup Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.19.0'
         cache: 'pnpm'
 
-    - name: 📥 Install dependencies
+    - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
-    - name: 🧪 Install Playwright browsers
+    - name: Install Playwright browsers
       run: pnpm exec playwright install --with-deps
 
-    - name: 🏗️ Build shared packages
+    - name: Build shared packages
       run: |
-        echo "🔧 Building shared packages in dependency order..."
+        echo "Building shared packages in dependency order..."
         pnpm --filter @btc/vite-plugin run build
         pnpm --filter @btc/shared-utils run build
         pnpm --filter @btc/shared-core run build
         pnpm --filter @btc/shared-components run build
 
-    # - name: 🧹 Lint
+    # - name: Lint
     #   run: pnpm run lint
 
-    - name: 🔍 Type check
+    - name: Type check
       run: pnpm run type-check
 
-    - name: 🧪 Unit tests
+    - name: Unit tests
       run: pnpm run test:unit
 
-    - name: 🧪 Integration tests
+    - name: Integration tests
       run: pnpm run test:integration
 
-    - name: 🧪 E2E tests
+    - name: E2E tests
       run: pnpm run test:e2e
 
   # 第二步：构建System App
@@ -174,26 +174,26 @@ jobs:
 
   # 第三步：部署到服务器
   deploy:
-    name: 🚀 Deploy to Server
+    name: Deploy to Server
     runs-on: ubuntu-latest
     needs: [quality-check, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
     if: always() && (needs.build-system-app.result == 'success' && needs.build-admin-app.result == 'success' && needs.build-logistics-app.result == 'success' && needs.build-quality-app.result == 'success' && needs.build-production-app.result == 'success' && needs.build-engineering-app.result == 'success' && needs.build-finance-app.result == 'success' && needs.build-mobile-app.result == 'success' || github.event.inputs.deploy_only == 'true') && github.ref == 'refs/heads/master'
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔐 Setup SSH
+    - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
         # 处理SSH密钥（支持base64编码和原始格式）
         if echo "${{ secrets.SERVER_KEY }}" | base64 -d >/dev/null 2>&1; then
-          echo "🔧 Decoding base64 SSH key..."
+          echo "Decoding base64 SSH key..."
           echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
         else
-          echo "🔧 Using raw SSH key..."
+          echo "Using raw SSH key..."
           echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
         fi
         
@@ -206,23 +206,23 @@ jobs:
         
         # 验证密钥格式
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "❌ SSH key format is invalid"
-          echo "🔍 Key file content (first 2 lines):"
+          echo "SSH key format is invalid"
+          echo "Key file content (first 2 lines):"
           head -2 ~/.ssh/id_rsa
           exit 1
         fi
         
-        echo "✅ SSH key setup completed"
+        echo "SSH key setup completed"
 
-    - name: 🔍 Verify server connection
+    - name: Verify server connection
       run: |
-        echo "🧪 Testing SSH connection..."
+        echo "Testing SSH connection..."
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo '✅ Server connection successful'" || {
-          echo "❌ SSH connection failed"
-          echo "🔍 Debugging information:"
+            "echo 'Server connection successful'" || {
+          echo "SSH connection failed"
+          echo "Debugging information:"
           echo "Host: ${{ secrets.SERVER_HOST }}"
           echo "Port: ${{ secrets.SERVER_PORT }}"
           echo "User: ${{ secrets.SERVER_USER }}"
@@ -233,32 +233,32 @@ jobs:
           exit 1
         }
 
-    - name: 🚀 Deploy applications
+    - name: Deploy applications
       run: |
-        echo "🚀 Deploying BTC ShopFlow applications..."
+        echo "Deploying BTC ShopFlow applications..."
         
         ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
         set -e
         
-        echo "📂 Navigating to project directory..."
-        cd /www/wwwroot/btc-shopflow-monorepo || { echo "❌ Project directory not found"; exit 1; }
+        echo "Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo || { echo "Project directory not found"; exit 1; }
         
-        echo "📥 Pulling latest code..."
+        echo "Pulling latest code..."
         git pull origin master
         
-        echo "🔐 Logging into container registry..."
+        echo "Logging into container registry..."
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
         
-        echo "🚀 Starting deployment script..."
+        echo "Starting deployment script..."
         chmod +x scripts/deploy.sh
         ./scripts/deploy.sh
         
-        echo "✅ Deployment completed successfully"
+        echo "Deployment completed successfully"
         EOF
 
-    - name: 🧪 Health checks
+    - name: Health checks
       run: |
-        echo "🧪 Performing health checks..."
+        echo "Performing health checks..."
         
         # 等待服务启动
         sleep 30
@@ -266,61 +266,61 @@ jobs:
         # 检查主要应用
         for port in 30080 30081 30086; do
           if curl -f -s --max-time 10 http://${{ secrets.SERVER_HOST }}:$port > /dev/null; then
-            echo "✅ Port $port is healthy"
+            echo "Port $port is healthy"
           else
-            echo "❌ Port $port health check failed"
+            echo "Port $port health check failed"
           fi
         done
 
-    - name: 📊 Deployment summary
+    - name: Deployment summary
       run: |
-        echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Built Images:" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Built Images:" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🌐 Application URLs:" >> $GITHUB_STEP_SUMMARY
+        echo "### Application URLs:" >> $GITHUB_STEP_SUMMARY
         echo "- 主应用: http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
         echo "- 管理后台: http://${{ secrets.SERVER_HOST }}:30081" >> $GITHUB_STEP_SUMMARY
         echo "- 财务系统: http://${{ secrets.SERVER_HOST }}:30086" >> $GITHUB_STEP_SUMMARY
 
   # 第四步：通知
   notify:
-    name: 📢 Notify Status
+    name: Notify Status
     runs-on: ubuntu-latest
     needs: [quality-check, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app, deploy]
     if: always()
     
     steps:
-    - name: 📢 Success notification
+    - name: Success notification
       if: needs.deploy.result == 'success'
       run: |
-        echo "🎉 **Deployment Successful!**" >> $GITHUB_STEP_SUMMARY
-        echo "✅ All steps completed successfully" >> $GITHUB_STEP_SUMMARY
-        echo "🌐 Environment: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
-        echo "🔗 URL: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Successful!**" >> $GITHUB_STEP_SUMMARY
+        echo "All steps completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "Environment: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+        echo "URL: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}" >> $GITHUB_STEP_SUMMARY
         
-    - name: 📢 Failure notification
+    - name: Failure notification
       if: needs.deploy.result == 'failure' || needs.build-system-app.result == 'failure' || needs.build-admin-app.result == 'failure' || needs.build-logistics-app.result == 'failure' || needs.build-quality-app.result == 'failure' || needs.build-production-app.result == 'failure' || needs.build-engineering-app.result == 'failure' || needs.build-finance-app.result == 'failure' || needs.build-mobile-app.result == 'failure' || needs.quality-check.result == 'failure'
       run: |
-        echo "❌ **Deployment Failed!**" >> $GITHUB_STEP_SUMMARY
-        echo "🔍 Please check the logs for details" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Failed!**" >> $GITHUB_STEP_SUMMARY
+        echo "Please check the logs for details" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📊 Build Results:" >> $GITHUB_STEP_SUMMARY
-        echo "- System App: ${{ needs.build-system-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Admin App: ${{ needs.build-admin-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Logistics App: ${{ needs.build-logistics-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Quality App: ${{ needs.build-quality-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Production App: ${{ needs.build-production-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Engineering App: ${{ needs.build-engineering-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Finance App: ${{ needs.build-finance-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Mobile App: ${{ needs.build-mobile-app.result == 'success' && '✅' || '❌' }} ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Deploy: ${{ needs.deploy.result == 'success' && '✅' || '❌' }} ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Results:" >> $GITHUB_STEP_SUMMARY
+        echo "- System App: ${{ needs.build-system-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Admin App: ${{ needs.build-admin-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Logistics App: ${{ needs.build-logistics-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality App: ${{ needs.build-quality-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Production App: ${{ needs.build-production-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Engineering App: ${{ needs.build-engineering-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Finance App: ${{ needs.build-finance-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
         exit 1

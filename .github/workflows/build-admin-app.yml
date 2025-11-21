@@ -21,48 +21,48 @@ on:
 
 jobs:
   build-admin-app:
-    name: 🝗�?Build Admin App Docker Image
+    name: Build Admin App Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: 🝷�?Job Info - Admin App (2/8)
+    - name: Job Info - Admin App (2/8)
       run: |
-        echo "🝗�?Starting build for: admin-app"
-        echo "📊 Job Index: 2/8"
-        echo "🔧 Build Group: docker-builds"
-        echo "�?Start Time: $(date)"
+        echo "Starting build for: admin-app"
+        echo "Job Index: 2/8"
+        echo "Build Group: docker-builds"
+        echo "Start Time: $(date)"
 
-    - name: 🝳 Set up Docker Buildx
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: 🔝 Log in to Container Registry
+    - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
         password: ${{ secrets.GH_TOKEN }}
 
-    - name: 🝗�?Build Admin App Docker Image
+    - name: Build Admin App Docker Image
       run: |
-        echo "🝗�?Building admin-app..."
+        echo "Building admin-app..."
         
         cat > "apps/admin-app/Dockerfile" << 'EOF'
         FROM node:20-alpine AS builder
         WORKDIR /app
         
-        # 夝制酝置文件
+        # 复制配置文件
         COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
         COPY .npmrc* ./
         COPY turbo.json ./
         COPY tsconfig.json ./
         
-        # 夝制溝代�?
+        # 复制源代码
         COPY apps/ ./apps/
         COPY packages/ ./packages/
         COPY auth/ ./auth/
@@ -96,7 +96,7 @@ jobs:
         docker tag btc-shopflow/admin-app:latest ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest
         docker push ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest
 
-    - name: �?Build Complete
+    - name: Build Complete
       run: |
-        echo "�?Admin App build completed successfully"
-        echo "📦 Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest"
+        echo "Admin App build completed successfully"
+        echo "Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest"
