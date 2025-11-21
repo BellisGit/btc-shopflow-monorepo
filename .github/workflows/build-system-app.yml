@@ -16,12 +16,12 @@ on:
         required: true
         type: string
     secrets:
-      GITHUB_TOKEN:
+      GH_TOKEN:
         required: true
 
 jobs:
   build-system-app:
-    name: 🏗️ Build System App Docker Image
+    name: 🏗�?Build System App Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,12 +31,12 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🏷️ Job Info - System App (1/8)
+    - name: 🏷�?Job Info - System App (1/8)
       run: |
-        echo "🏗️ Starting build for: system-app"
+        echo "🏗�?Starting build for: system-app"
         echo "📊 Job Index: 1/8"
         echo "🔧 Build Group: docker-builds"
-        echo "⏰ Start Time: $(date)"
+        echo "�?Start Time: $(date)"
 
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -46,11 +46,11 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GH_TOKEN }}
 
-    - name: 🏗️ Build System App Docker Image
+    - name: 🏗�?Build System App Docker Image
       run: |
-        echo "🏗️ Building system-app..."
+        echo "🏗�?Building system-app..."
         
         cat > "apps/system-app/Dockerfile" << 'EOF'
         FROM node:20-alpine AS builder
@@ -62,7 +62,7 @@ jobs:
         COPY turbo.json ./
         COPY tsconfig.json ./
         
-        # 复制源代码
+        # 复制源代�?
         COPY apps/ ./apps/
         COPY packages/ ./packages/
         COPY auth/ ./auth/
@@ -96,7 +96,7 @@ jobs:
         docker tag btc-shopflow/system-app:latest ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
         docker push ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
 
-    - name: ✅ Build Complete
+    - name: �?Build Complete
       run: |
-        echo "✅ System App build completed successfully"
+        echo "�?System App build completed successfully"
         echo "📦 Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest"

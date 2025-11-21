@@ -82,11 +82,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-system-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Admin App
   build-admin-app:
@@ -94,11 +94,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-admin-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Logistics App
   build-logistics-app:
@@ -106,11 +106,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-logistics-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Quality App
   build-quality-app:
@@ -118,11 +118,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-quality-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Production App
   build-production-app:
@@ -130,11 +130,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-production-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Engineering App
   build-engineering-app:
@@ -142,11 +142,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-engineering-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Finance App
   build-finance-app:
@@ -154,11 +154,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-finance-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第二步：构建Mobile App
   build-mobile-app:
@@ -166,11 +166,11 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-mobile-app.yml
     with:
-      registry: ghcr.io
+      registry: ${{ env.REGISTRY }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # 第三步：部署到服务器
   deploy:
