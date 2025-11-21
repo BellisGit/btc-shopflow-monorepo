@@ -1,29 +1,21 @@
 name: Build Mobile App
 
 on:
-  workflow_call:
-    inputs:
-      registry:
-        description: 'Container registry URL'
-        required: true
-        type: string
-      github_repository:
-        description: 'GitHub repository name'
-        required: true
-        type: string
-      github_sha:
-        description: 'GitHub commit SHA'
-        required: true
-        type: string
-    secrets:
-      GH_TOKEN:
-        description: 'GitHub token for registry access'
-        required: true
+  workflow_run:
+    workflows: ["BTC ShopFlow CI/CD Pipeline"]
+    types:
+      - completed
+    branches: [master]
+  workflow_dispatch:
 
 jobs:
   build-mobile-app:
     name: Build Mobile App
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
@@ -70,9 +62,9 @@ jobs:
     - name: Login to Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ inputs.registry }}
+        registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -81,5 +73,5 @@ jobs:
         file: apps/mobile-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/mobile-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/mobile-app:${{ inputs.github_sha }}
+          ghcr.io/${{ github.repository }}/mobile-app:latest
+          ghcr.io/${{ github.repository }}/mobile-app:${{ github.sha }}
