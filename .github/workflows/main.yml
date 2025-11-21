@@ -82,7 +82,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-system-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -94,7 +94,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-admin-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -106,7 +106,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-logistics-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -118,7 +118,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-quality-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -130,7 +130,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-production-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -142,7 +142,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-engineering-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -154,7 +154,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-finance-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
@@ -166,7 +166,7 @@ jobs:
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
     uses: ./.github/workflows/build-mobile-app.yml
     with:
-      registry: ${{ env.REGISTRY }}
+      registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
