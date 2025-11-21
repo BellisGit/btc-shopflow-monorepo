@@ -52,8 +52,11 @@ jobs:
         fi
     
     - name: Setup SSH
-      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
+        if [ -z "${{ secrets.SERVER_KEY }}" ] || [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "⚠️ Skipping SSH setup - SERVER_KEY or SERVER_HOST not available"
+          exit 0
+        fi
         echo "Setting up SSH connection..."
         
         mkdir -p ~/.ssh
@@ -79,8 +82,12 @@ jobs:
     
     - name: Validate SSH connection
       id: ssh-check
-      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
+        if [ -z "${{ secrets.SERVER_KEY }}" ] || [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "⚠️ Skipping SSH validation - SERVER_KEY or SERVER_HOST not available"
+          echo "validated=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
         echo "Testing SSH connection..."
         
         if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
@@ -96,8 +103,11 @@ jobs:
         fi
     
     - name: Validate server environment
-      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
+        if [ -z "${{ secrets.SERVER_KEY }}" ] || [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "⚠️ Skipping server environment validation - SERVER_KEY or SERVER_HOST not available"
+          exit 0
+        fi
         echo "Validating server environment..."
         
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
