@@ -51,10 +51,10 @@ jobs:
         echo "Validating GitHub token for registry access..."
         
         if [ -n "${{ inputs.gh_token }}" ]; then
-          echo "�?GH_TOKEN is available for Docker registry"
+          echo "[SUCCESS] GH_TOKEN is available for Docker registry"
           echo "Token length: $(echo '${{ inputs.gh_token }}' | wc -c) characters"
         else
-          echo "�?GH_TOKEN is not available"
+          echo "[ERROR] GH_TOKEN is not available"
           exit 1
         fi
 
@@ -64,13 +64,13 @@ jobs:
         # Convert repository name to lowercase for Docker compatibility
         REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
         echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
-        echo "📋 Docker tags will use: $REPO_LOWER"
+        echo "[INFO] Docker tags will use: $REPO_LOWER"
 
     - name: Build dependencies
       run: |
         echo "Building dependencies for system-app..."
-        # 先构建vite-plugin，因为其他包可能依赖�?        pnpm --filter @btc/vite-plugin run build
-        # 然后构建其他依赖�?        node scripts/turbo.js run build --filter="@btc/*"
+        # 先构建vite-plugin，因为其他包坯能依赖�?        pnpm --filter @btc/vite-plugin run build
+        # 然坎构建其他依赖�?        node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build system-app
       run: cd apps/system-app && pnpm run build
