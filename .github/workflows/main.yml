@@ -226,28 +226,71 @@ jobs:
         chmod 700 ~/.ssh
         
         # Create SSH private key file with proper formatting
-        echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa 2>/dev/null || {
-          # If base64 decode fails, try direct write with newline fixes
+        echo "Processing SSH key..."
+        
+        # Try to detect if the key is base64 encoded
+        if echo "${{ secrets.SERVER_KEY }}" | grep -q "^[A-Za-z0-9+/]*={0,2}$" && [ ${#SERVER_KEY} -gt 100 ]; then
+          echo "Detected base64 encoded key, decoding..."
+          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        else
+          echo "Processing key as plain text..."
+          # Write the key directly and fix formatting
           echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
-          # Fix common formatting issues
+          
+          # Fix escaped newlines
           sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
-          sed -i 's/-----BEGIN RSA PRIVATE KEY-----/-----BEGIN RSA PRIVATE KEY-----\n/' ~/.ssh/id_rsa
-          sed -i 's/-----END RSA PRIVATE KEY-----/\n-----END RSA PRIVATE KEY-----/' ~/.ssh/id_rsa
-          # Remove any duplicate headers/footers and ensure proper format
-          awk '/-----BEGIN RSA PRIVATE KEY-----/{p=1} p; /-----END RSA PRIVATE KEY-----/{p=0}' ~/.ssh/id_rsa > ~/.ssh/id_rsa.tmp
-          mv ~/.ssh/id_rsa.tmp ~/.ssh/id_rsa
-        }
+          
+          # Ensure proper PEM format
+          if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
+            echo "❌ Key doesn't appear to be in PEM format"
+            echo "First 100 characters of key:"
+            head -c 100 ~/.ssh/id_rsa
+            exit 1
+          fi
+          
+          # Fix header/footer formatting
+          sed -i 's/-----BEGIN RSA PRIVATE KEY-----/-----BEGIN RSA PRIVATE KEY-----/' ~/.ssh/id_rsa
+          sed -i 's/-----END RSA PRIVATE KEY-----/-----END RSA PRIVATE KEY-----/' ~/.ssh/id_rsa
+          sed -i 's/-----BEGIN PRIVATE KEY-----/-----BEGIN PRIVATE KEY-----/' ~/.ssh/id_rsa
+          sed -i 's/-----END PRIVATE KEY-----/-----END PRIVATE KEY-----/' ~/.ssh/id_rsa
+          
+          # Ensure headers are on their own lines
+          sed -i 's/-----BEGIN RSA PRIVATE KEY-----\(.\)/-----BEGIN RSA PRIVATE KEY-----\n\1/g' ~/.ssh/id_rsa
+          sed -i 's/\(.\)-----END RSA PRIVATE KEY-----/\1\n-----END RSA PRIVATE KEY-----/g' ~/.ssh/id_rsa
+          sed -i 's/-----BEGIN PRIVATE KEY-----\(.\)/-----BEGIN PRIVATE KEY-----\n\1/g' ~/.ssh/id_rsa
+          sed -i 's/\(.\)-----END PRIVATE KEY-----/\1\n-----END PRIVATE KEY-----/g' ~/.ssh/id_rsa
+        fi
         
         chmod 600 ~/.ssh/id_rsa
         
         # Validate SSH key format
+        echo "Validating SSH key format..."
+        echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
+        echo "Key file lines: $(wc -l < ~/.ssh/id_rsa)"
+        echo "First line: $(head -1 ~/.ssh/id_rsa)"
+        echo "Last line: $(tail -1 ~/.ssh/id_rsa)"
+        
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "❌ SSH key format is invalid after processing"
-          echo "Key file contents (first and last lines):"
-          head -1 ~/.ssh/id_rsa
-          tail -1 ~/.ssh/id_rsa
-          echo "Key file line count: $(wc -l < ~/.ssh/id_rsa)"
-          echo "Please check your SERVER_KEY secret format"
+          echo "❌ SSH key format is still invalid after processing"
+          echo ""
+          echo "=== DEBUGGING INFORMATION ==="
+          echo "Key file contents (first 5 lines):"
+          head -5 ~/.ssh/id_rsa
+          echo "..."
+          echo "Key file contents (last 5 lines):"
+          tail -5 ~/.ssh/id_rsa
+          echo ""
+          echo "Key validation error:"
+          ssh-keygen -l -f ~/.ssh/id_rsa 2>&1 || true
+          echo ""
+          echo "Please ensure your SERVER_KEY secret contains a valid SSH private key in PEM format."
+          echo "The key should start with '-----BEGIN [RSA] PRIVATE KEY-----' and end with '-----END [RSA] PRIVATE KEY-----'"
+          echo ""
+          echo "⚠️ SSH key validation failed. You can:"
+          echo "1. Fix your SERVER_KEY secret with a valid SSH private key"
+          echo "2. Or remove SERVER_KEY to skip SSH-based deployment"
+          echo ""
+          echo "For now, marking this step as failed but allowing workflow to continue..."
           exit 1
         fi
         
