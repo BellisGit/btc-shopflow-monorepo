@@ -209,7 +209,7 @@ jobs:
   build-logistics-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-logistics-app.yml
+    uses: ./.github/workflows/build-logistics-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
@@ -219,7 +219,7 @@ uses: ./.github/workflows/build-logistics-app.yml
   build-quality-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-quality-app.yml
+    uses: ./.github/workflows/build-quality-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
@@ -229,7 +229,7 @@ uses: ./.github/workflows/build-quality-app.yml
   build-production-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-production-app.yml
+    uses: ./.github/workflows/build-production-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
@@ -239,7 +239,7 @@ uses: ./.github/workflows/build-production-app.yml
   build-engineering-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-engineering-app.yml
+    uses: ./.github/workflows/build-engineering-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
@@ -249,7 +249,7 @@ uses: ./.github/workflows/build-engineering-app.yml
   build-finance-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-finance-app.yml
+    uses: ./.github/workflows/build-finance-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
@@ -259,7 +259,7 @@ uses: ./.github/workflows/build-finance-app.yml
   build-mobile-app:
     needs: [validate-ssh, validate-environment]
     if: always() && (needs.validate-ssh.result == 'success' || needs.validate-ssh.result == 'skipped')
-uses: ./.github/workflows/build-mobile-app.yml
+    uses: ./.github/workflows/build-mobile-app.yml
     with:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
