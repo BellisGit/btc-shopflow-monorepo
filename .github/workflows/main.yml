@@ -49,6 +49,12 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
+    - name: Build dependencies
+      run: |
+        echo "Building dependencies before type checking..."
+        # 使用turbo构建所有包的依赖
+        node scripts/turbo.js run build --filter="@btc/*"
+
     - name: Type check
       run: pnpm run type-check
 
