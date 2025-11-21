@@ -1,33 +1,72 @@
 name: Build Admin App
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       registry:
         description: 'Container registry URL'
-        required: true
+        required: false
+        default: 'ghcr.io'
         type: string
       github_repository:
         description: 'GitHub repository name'
-        required: true
+        required: false
         type: string
       github_sha:
         description: 'GitHub commit SHA'
-        required: true
+        required: false
         type: string
-    secrets:
-      GH_TOKEN:
-        description: 'GitHub token for registry access'
-        required: true
+  repository_dispatch:
+    types: [build-admin-app]
 
 jobs:
   build-admin-app:
     name: Build Admin App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Set build parameters
+      id: params
+      run: |
+        # 设置构建参数，支持workflow_dispatch和repository_dispatch
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          REGISTRY="${{ github.event.inputs.registry || 'ghcr.io' }}"
+          REPO="${{ github.event.inputs.github_repository || github.repository }}"
+          SHA="${{ github.event.inputs.github_sha || github.sha }}"
+        else
+          # repository_dispatch
+          REGISTRY="${{ github.event.client_payload.registry || 'ghcr.io' }}"
+          REPO="${{ github.event.client_payload.github_repository || github.repository }}"
+          SHA="${{ github.event.client_payload.github_sha || github.sha }}"
+        fi
+        
+        echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+        echo "repository=$REPO" >> $GITHUB_OUTPUT
+        echo "sha=$SHA" >> $GITHUB_OUTPUT
+        
+        echo "📋 Build parameters:"
+        echo "- Registry: $REGISTRY"
+        echo "- Repository: $REPO"
+        echo "- SHA: $SHA"
+
+    - name: Validate GitHub Token
+      run: |
+        echo "Validating GitHub token for registry access..."
+        
+        if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+          echo "✅ SERVER_PAT is available for Docker registry"
+        elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+          echo "✅ GITHUB_TOKEN is available (fallback)"
+        else
+          echo "❌ No GitHub token available"
+          exit 1
+        fi
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -43,9 +82,7 @@ jobs:
     - name: Build dependencies
       run: |
         echo "Building dependencies for admin-app..."
-        # 先构建vite-plugin，因为其他包可能依赖它
         pnpm --filter @btc/vite-plugin run build
-        # 然后构建其他依赖包
         node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build admin-app
@@ -65,7 +102,7 @@ jobs:
 
         FROM nginx:alpine
         COPY --from=builder /app/apps/admin-app/dist /usr/share/nginx/html
-        COPY apps/admin-app/nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null || echo "server { listen 80; location / { try_files \$uri \$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
+        RUN echo 'server { listen 80; location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
         EXPOSE 80
         CMD ["nginx", "-g", "daemon off;"]
         EOF
@@ -73,9 +110,9 @@ jobs:
     - name: Login to Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ inputs.registry }}
+        registry: ${{ steps.params.outputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -84,5 +121,5 @@ jobs:
         file: apps/admin-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/admin-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/admin-app:${{ inputs.github_sha }}
+          ${{ steps.params.outputs.registry }}/${{ steps.params.outputs.repository }}/admin-app:latest
+          ${{ steps.params.outputs.registry }}/${{ steps.params.outputs.repository }}/admin-app:${{ steps.params.outputs.sha }}
