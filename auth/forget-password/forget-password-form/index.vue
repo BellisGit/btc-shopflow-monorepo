@@ -1,13 +1,14 @@
 <template>
   <div class="forget-password-form">
-    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off">
       <!-- 手机号 -->
       <el-form-item prop="phone">
         <el-input
+          id="forget-password-phone"
           v-model="form.phone"
           name="phone"
-          autocomplete="tel"
-          :placeholder="t('请输入手机号')"
+          autocomplete="off"
+          :placeholder="t('auth.phone_placeholder')"
           size="large"
           maxlength="11"
           @keyup.enter="handlePhoneEnter"
@@ -18,7 +19,7 @@
               @click="handleSendSmsCode"
               class="sms-btn"
             >
-              {{ smsCountdown > 0 ? `${smsCountdown}s` : t('获取验证码') }}
+              {{ smsCountdown > 0 ? `${smsCountdown}s` : t('auth.get_sms_code') }}
             </el-button>
           </template>
         </el-input>
@@ -36,11 +37,12 @@
       <!-- 新密码 -->
       <el-form-item prop="newPassword">
         <el-input
+          id="forget-password-new-password"
           v-model="form.newPassword"
           name="newPassword"
           type="password"
           autocomplete="new-password"
-          :placeholder="t('请输入新密码')"
+          :placeholder="t('auth.new_password_placeholder')"
           size="large"
           show-password
           maxlength="20"
@@ -51,11 +53,12 @@
       <!-- 确认密码 -->
       <el-form-item prop="confirmPassword">
         <el-input
+          id="forget-password-confirm-password"
           v-model="form.confirmPassword"
           name="confirmPassword"
           type="password"
           autocomplete="new-password"
-          :placeholder="t('请确认新密码')"
+          :placeholder="t('auth.confirm_new_password_placeholder')"
           size="large"
           show-password
           maxlength="20"
@@ -67,7 +70,7 @@
     <!-- 提交按钮 -->
     <div class="op">
       <el-button type="primary" size="large" :loading="loading" @click="handleSubmit">
-        {{ t('重置密码') }}
+        {{ t('auth.reset_password') }}
       </el-button>
     </div>
   </div>

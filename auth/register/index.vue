@@ -1,5 +1,5 @@
 <template>
-  <BtcAuthLayout>
+  <BtcAuthLayout class="glassmorphism">
     <div class="login-card">
       <BtcAuthHeader />
 
@@ -8,7 +8,7 @@
         <div class="back-to-login-wrapper">
           <div class="back-to-login">
             <router-link to="/login" class="back-to-login-link">
-              {{ t('返回登录') }}
+              {{ t('auth.back_to_login') }}
               <el-icon class="arrow-right">
                 <ArrowRight />
               </el-icon>
@@ -22,6 +22,12 @@
           :loading="loading"
           @submit="handleSubmit"
           ref="formRef"
+        />
+
+        <!-- 协议文本 -->
+        <BtcAgreementText 
+          ref="agreementRef"
+          @agreement-change="handleAgreementChange" 
         />
       </div>
     </div>
@@ -38,6 +44,8 @@ import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
 import BtcAuthFooter from '../shared/components/auth-footer/index.vue';
 import BtcRegisterForm from './register-form/index.vue';
+import BtcAgreementText from '../shared/components/agreement-text/index.vue';
+import { BtcMessage } from '@btc/shared-components';
 import { useRegister } from './composables/useRegister';
 import '../shared/styles/index.scss';
 
@@ -47,6 +55,9 @@ defineOptions({
 
 const { t } = useI18n();
 const formRef = ref();
+const agreementRef = ref();
+// 协议同意状态
+const isAgreed = ref(false);
 
 const {
   form,
@@ -55,10 +66,32 @@ const {
   register
 } = useRegister();
 
+// 协议状态变化处理
+const handleAgreementChange = (agreed: boolean) => {
+  isAgreed.value = agreed;
+};
+
+// 检查协议同意状态
+const checkAgreement = (): boolean => {
+  if (!isAgreed.value) {
+    BtcMessage.warning(t('auth.message.agreement_required'));
+    return false;
+  }
+  return true;
+};
+
 // 提交表单
 const handleSubmit = async () => {
-  if (!formRef.value) return;
-  await register(formRef.value.formRef);
+  try {
+    if (!formRef.value) return;
+    if (!checkAgreement()) {
+      return;
+    }
+    await register(formRef.value.formRef);
+  } catch (error) {
+    console.error('注册错误:', error);
+    // 错误已在 useRegister 中处理，这里只是防止未捕获的错误
+  }
 };
 </script>
 

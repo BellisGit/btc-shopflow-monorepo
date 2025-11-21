@@ -6,7 +6,7 @@ import { systemSettingConfig } from './settings';
 
 export const appConfig = {
   // 系统名称
-  name: 'BTC管理系统',
+  name: 'BTC车间管理',
 
   // 系统简称
   shortName: 'BTC ShopFlow',

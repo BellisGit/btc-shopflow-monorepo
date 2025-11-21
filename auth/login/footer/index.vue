@@ -1,7 +1,18 @@
 <template>
-  <a href="https://btc-admin.com" class="copyright">
-    {{ t('Copyright © {year} {appName}. All rights reserved.', { year: copyrightYear, appName: app.info.name }) }}
-  </a>
+  <div class="s-bottom-layer-content">
+    <a href="https://about.bellis.com.cn" class="footer-link">关于我们</a>
+    <a href="https://news.bellis.com.cn" class="footer-link">新闻动态</a>
+    <a href="https://terms.bellis.com.cn" class="footer-link">服务条款</a>
+    <a href="https://help.bellis.com.cn" class="footer-link">帮助中心</a>
+    <!-- 企业服务暂时隐藏，保留逻辑 -->
+    <a href="https://business.bellis.com.cn" class="footer-link" style="display: none;">企业服务</a>
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="footer-link beian-link">
+      桂ICP备2025062018号-1
+    </a>
+    <span class="copyright-text">
+      {{ t('© {year} {appName}', { year: copyrightYear, appName: app.info.name }) }}
+    </span>
+  </div>
 </template>
 
 <script lang="ts" setup>

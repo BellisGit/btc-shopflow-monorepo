@@ -10,38 +10,38 @@ html.dark {
 		.divider-text {
 			color: $auth-dark-divider-text;
 		}
-		
+
 		// 登录选项文本颜色 - 主题插件未覆盖
 		.login-option span {
 			color: $auth-dark-option-text;
 		}
-		
+
 		// 协议文本颜色 - 现在由主题插件处理，这里可以移除
 		// .agreement-text {
 		// 	color: $auth-dark-text-placeholder;
-		// 	
+		//
 		// 	span {
 		// 		color: $auth-dark-text-placeholder;
 		// 	}
-		// 	
+		//
 		// 	.agreement-link {
 		// 		color: $auth-dark-text-secondary;
-		// 		
+		//
 		// 		&:hover {
 		// 			color: $auth-dark-link-color;
 		// 		}
 		// 	}
 		// }
-		
+
 		// 忘记密码链接颜色 - 主题插件未覆盖
 		.forgot-password-link {
 			color: $auth-dark-text-primary;
-			
+
 			&:hover {
 				color: $auth-dark-link-color;
 			}
 		}
-		
+
 		// Tab 标签颜色 - 主题插件已覆盖，但我们需要确保激活状态更明显
 		.login-tabs {
 			.tab {
@@ -50,10 +50,21 @@ html.dark {
 				}
 			}
 		}
-		
-		// 版权信息颜色 - 主题插件未覆盖
-		.copyright {
-			color: $auth-dark-text-regular;
+
+		// 底部信息颜色 - 主题插件未覆盖
+		.s-bottom-layer-content {
+			.footer-link {
+				color: $auth-dark-text-placeholder;
+
+				&:hover {
+					color: $auth-dark-text-regular;
+				}
+			}
+
+			.copyright-text {
+				color: $auth-dark-text-placeholder;
+			}
 		}
+
 	}
 }

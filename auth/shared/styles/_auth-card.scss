@@ -9,9 +9,17 @@
 	z-index: 9;
 	background: var(--el-bg-color);
 	border-radius: $auth-card-border-radius;
-	box-shadow: var(--el-box-shadow-light);
+	// 增强边框和阴影效果，提高可见性
+	border: 1px solid var(--el-border-color);
+	box-shadow: $auth-light-card-shadow;
 	width: $auth-card-width;
 	max-width: 90vw;
+	
+	// 暗黑模式下的增强效果
+	html.dark & {
+		border: 1px solid var(--el-border-color-darker);
+		box-shadow: $auth-dark-card-shadow;
+	}
 	
 	// 设置固定高度，确保不同登录方式高度一致
 	height: $auth-card-height;

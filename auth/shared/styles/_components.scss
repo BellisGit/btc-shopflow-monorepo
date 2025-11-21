@@ -1,280 +1,75 @@
-@use 'variables' as *;
+// ===== 认证页面组件样式 =====
 
-// 覆盖浏览器自动填充的背景色（全局处理）
-// 使用 box-shadow 技巧 + transition 延迟来覆盖浏览器默认的蓝色/黄色背景
-// 注意：box-shadow 中使用具体颜色值，因为某些浏览器可能不支持 CSS 变量
-// 需要同时覆盖 input 元素和 .el-input__wrapper 包装器
-.auth-page,
-.login-card,
-.card-content,
-.sms-login,
-.password-login,
-.register-form,
-.forget-password-form {
-  // ===== 第一步：覆盖 input 元素本身的自动填充背景 =====
-  // 使用透明背景，让输入框保持完全透明，不改变原来的样式
-  // 注意：不要使用 :-internal-autofill-selected，Chrome 会忽略开发者定义的这种伪类
-  :deep(input:-webkit-autofill),
-  :deep(input:-webkit-autofill:hover),
-  :deep(input:-webkit-autofill:focus),
-  :deep(input:-webkit-autofill:active),
-  :deep(.el-input__inner:-webkit-autofill),
-  :deep(.el-input__inner:-webkit-autofill:hover),
-  :deep(.el-input__inner:-webkit-autofill:focus),
-  :deep(.el-input__inner:-webkit-autofill:active) {
-    // 移除浏览器默认的 appearance 样式
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    // 使用透明背景，保持输入框原有样式
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    // 使用透明 box-shadow 覆盖浏览器内部 autofill 背景层
-    box-shadow: 0 0 0 1000px transparent inset !important;
-    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
-    // 保留原来的文字颜色
-    -webkit-text-fill-color: inherit !important;
-    // 长延迟 transition 防止 Chrome 的 autofill 背景闪烁
-    transition: background-color 9999s ease-out 0s !important;
-    -webkit-transition: background-color 9999s ease-out 0s !important;
-  }
-
-  // ===== 第二步：覆盖 .el-input__wrapper 包装器的背景色 =====
-  // 当包装器包含自动填充的输入框时，保持包装器的默认背景色
-  :deep(.el-input__wrapper:has(input:-webkit-autofill)),
-  :deep(.el-input__wrapper:has(.el-input__inner:-webkit-autofill)),
-  :deep(.el-input__wrapper:has(input[autocomplete="tel"]:-webkit-autofill)),
-  :deep(.el-input__wrapper:has(.el-input__inner[autocomplete="tel"]:-webkit-autofill)) {
-    // 使用 Element Plus 默认背景色，保持原有样式
-    background-color: var(--el-fill-color-blank) !important;
-    background: var(--el-fill-color-blank) !important;
-    // 移除可能的半透明背景
-    &[style*="background"],
-    &[style*="background-color"],
-    &[style*="#465A7E"],
-    &[style*="465A7E66"] {
-      background: var(--el-fill-color-blank) !important;
-      background-color: var(--el-fill-color-blank) !important;
-    }
-  }
-
-  // 强制覆盖所有可能被设置背景色的包装器状态
-  :deep(.el-input__wrapper) {
-    // 当包含自动填充输入框时，无论任何状态都使用 Element Plus 默认背景色
-    &:has(input:-webkit-autofill),
-    &:has(.el-input__inner:-webkit-autofill) {
-      background-color: var(--el-fill-color-blank) !important;
-      background: var(--el-fill-color-blank) !important;
+.auth-page {
+  // ===== 基础输入框样式 =====
+  :deep(.el-input) {
+    .el-input__inner {
+      // 增强输入框边框可见性
+      border: 1px solid var(--el-border-color);
       
-      &:hover,
-      &.is-focus,
-      &.is-hovering,
-      &[style*="background"],
-      &[style*="#465A7E"] {
-        background-color: var(--el-fill-color-blank) !important;
-        background: var(--el-fill-color-blank) !important;
+      &:hover {
+        border-color: var(--el-border-color-hover);
       }
-    }
-  }
-
-  // ===== 第三步：针对特定 autocomplete 类型的输入框（如手机号 tel）=====
-  :deep(input[autocomplete="tel"]:-webkit-autofill),
-  :deep(input[autocomplete="tel"]:-webkit-autofill:hover),
-  :deep(input[autocomplete="tel"]:-webkit-autofill:focus),
-  :deep(input[autocomplete="tel"]:-webkit-autofill:active),
-  :deep(.el-input__inner[autocomplete="tel"]:-webkit-autofill),
-  :deep(.el-input__inner[autocomplete="tel"]:-webkit-autofill:hover),
-  :deep(.el-input__inner[autocomplete="tel"]:-webkit-autofill:focus),
-  :deep(.el-input__inner[autocomplete="tel"]:-webkit-autofill:active) {
-    // 移除浏览器默认的 appearance 样式
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    // 使用透明背景，保持输入框原有样式
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    // 使用透明 box-shadow 覆盖浏览器内部 autofill 背景层
-    box-shadow: 0 0 0 1000px transparent inset !important;
-    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
-    // 保留原来的文字颜色
-    -webkit-text-fill-color: inherit !important;
-    // 长延迟 transition 防止 Chrome 的 autofill 背景闪烁
-    transition: background-color 9999s ease-out 0s !important;
-    -webkit-transition: background-color 9999s ease-out 0s !important;
-  }
-
-  // 针对手机号输入框的包装器（最高优先级）
-  :deep(.phone-input .el-input__wrapper:has(input:-webkit-autofill)),
-  :deep(.phone-input .el-input__wrapper:has(.el-input__inner:-webkit-autofill)),
-  :deep(.phone-input .el-input__wrapper[style*="#465A7E"]) {
-    background-color: var(--el-fill-color-blank) !important;
-    background: var(--el-fill-color-blank) !important;
-  }
-
-  // ===== 第四步：强制覆盖内联样式（如果 Element Plus 动态设置了背景色）=====
-  :deep(.el-input__wrapper[style*="background"]),
-  :deep(.el-input__wrapper[style*="background-color"]),
-  :deep(.el-input__wrapper[style*="#465A7E"]) {
-    &:has(input:-webkit-autofill),
-    &:has(.el-input__inner:-webkit-autofill) {
-      background: var(--el-fill-color-blank) !important;
-      background-color: var(--el-fill-color-blank) !important;
-    }
-  }
-
-  // 暗色主题支持（如果需要可以取消注释）
-  // &[data-theme="dark"],
-  // html.dark & {
-  //   :deep(input:-webkit-autofill),
-  //   :deep(input:-webkit-autofill:hover),
-  //   :deep(input:-webkit-autofill:focus),
-  //   :deep(input:-webkit-autofill:active),
-  //   :deep(.el-input__inner:-webkit-autofill),
-  //   :deep(.el-input__inner:-webkit-autofill:hover),
-  //   :deep(.el-input__inner:-webkit-autofill:focus),
-  //   :deep(.el-input__inner:-webkit-autofill:active) {
-  //     -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
-  //     box-shadow: 0 0 0 1000px #1e1e1e inset !important;
-  //     -webkit-text-fill-color: #fff !important;
-  //     background-color: #1e1e1e !important;
-  //     background: #1e1e1e !important;
-  //     transition: background-color 5000s ease-in-out 0s !important;
-  //     -webkit-transition: background-color 5000s ease-in-out 0s !important;
-  //   }
-  // }
-}
-
-// ===== 全局强制覆盖（补充覆盖，确保所有情况都被处理）=====
-// 直接覆盖所有可能包含 #465A7E66 背景的包装器
-.auth-page,
-.login-card,
-.card-content,
-.sms-login,
-.password-login,
-.register-form,
-.forget-password-form {
-  // 强制覆盖内联样式中的半透明蓝色背景（无论来源），使用 Element Plus 默认背景色
-  :deep(.el-input__wrapper[style*="#465A7E"]),
-  :deep(.el-input__wrapper[style*="465A7E66"]),
-  :deep(.el-input__wrapper[style*="rgba(70, 90, 126, 0.4)"]) {
-    background: var(--el-fill-color-blank) !important;
-    background-color: var(--el-fill-color-blank) !important;
-  }
-}
-
-// 短信验证码输入组件样式
-.sms-code-input {
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  .code-box {
-    position: relative;
-    flex: 1;
-    max-width: 48px;
-    height: 48px;
-    border: 1.5px solid var(--el-border-color-light);
-    border-radius: 12px;
-    background-color: var(--el-fill-color-lighter);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-
-    &:hover:not(.active):not(.filled) {
-      border-color: var(--el-border-color);
-      background-color: var(--el-fill-color-light);
-    }
-
-    &.active {
-      border-color: var(--el-color-primary);
-      background-color: var(--el-color-primary-light-9);
-      // 使用 Element Plus 主题色配合透明度
-      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-      transform: translateY(-2px);
-    }
-
-    &.filled {
-      border-color: var(--el-color-primary);
-      background-color: var(--el-color-primary-light-9);
       
-      &:not(.active) {
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+      &:focus {
+        // 确保焦点状态清晰可见
+        border-color: var(--el-color-primary);
+        box-shadow: 0 0 0 2px var(--el-color-primary-light-7);
       }
     }
-
-    input {
-      width: 100%;
-      height: 100%;
-      border: none;
-      outline: none;
-      background: transparent;
-      text-align: center;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0;
-      color: var(--el-text-color-primary);
-      caret-color: var(--el-color-primary);
-      padding: 0;
-
-      &:disabled {
-        background-color: var(--el-disabled-bg-color);
-        color: var(--el-disabled-text-color);
-        cursor: not-allowed;
-      }
-
-      &::placeholder {
-        color: var(--el-text-color-placeholder);
-        opacity: 0.4;
-      }
-
-      // 移除输入框的默认样式
-      &::-webkit-outer-spin-button,
-      &::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-
-      &[type='number'] {
-        -moz-appearance: textfield;
+  }
+  
+  // 暗黑模式下的输入框增强
+  html.dark & {
+    :deep(.el-input) {
+      .el-input__inner {
+        border: 1px solid var(--el-border-color-darker);
+        
+        &:hover {
+          border-color: var(--el-border-color);
+        }
+        
+        &:focus {
+          border-color: var(--el-color-primary);
+        }
       }
     }
   }
 }
 
-// 响应式设计
+// ===== 全局输入框样式重置 =====
+input, textarea {
+  // 重置浏览器默认样式
+  &:focus {
+    outline: none;
+  }
+
+  // 确保占位符文本样式一致
+  &::placeholder {
+    color: var(--el-text-color-placeholder);
+    opacity: 1;
+  }
+}
+
+// ===== 响应式设计 =====
 @media (max-width: 768px) {
-  .sms-code-input {
-    gap: 12px;
-
-    .code-box {
-      max-width: 42px;
-      height: 42px;
-      border-radius: 10px;
-
-      input {
-        font-size: 18px;
+  .auth-page {
+    :deep(.el-input) {
+      .el-input__inner {
+        font-size: 16px; // 防止 iOS Safari 缩放
       }
     }
   }
 }
 
-@media (max-width: 480px) {
-  .sms-code-input {
-    gap: 10px;
-
-    .code-box {
-      max-width: 38px;
-      height: 38px;
-      border-radius: 8px;
-
-      input {
-        font-size: 16px;
+// ===== 无障碍访问支持 =====
+.auth-page {
+  :deep(.el-input) {
+    .el-input__inner {
+      &:focus {
+        // 确保焦点状态清晰可见
+        box-shadow: 0 0 0 2px var(--el-color-primary-light-7);
       }
     }
   }
 }
-

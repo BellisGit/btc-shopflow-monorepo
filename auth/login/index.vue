@@ -1,5 +1,5 @@
 <template>
-  <BtcAuthLayout>
+  <BtcAuthLayout class="glassmorphism">
     <div class="login-card">
       <BtcAuthHeader>
         <template #toggle>
@@ -47,7 +47,11 @@
     <BtcThirdPartyLogin v-if="currentLoginMode !== 'qr'" />
 
     <!-- 协议文本（仅在非二维码模式显示） -->
-    <BtcAgreementText v-if="currentLoginMode !== 'qr'" />
+    <BtcAgreementText 
+      v-if="currentLoginMode !== 'qr'" 
+      ref="agreementRef"
+      @agreement-change="handleAgreementChange" 
+    />
       </div>
     </div>
 
@@ -56,8 +60,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { BtcMessage } from '@btc/shared-components';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
 import BtcAuthFooter from '../shared/components/auth-footer/index.vue';
@@ -79,6 +84,11 @@ defineOptions({
 });
 
 const { t } = useI18n();
+
+// 协议组件引用
+const agreementRef = ref();
+// 协议同意状态
+const isAgreed = ref(false);
 
 // 登录模式管理
 const { currentLoginMode, switchLoginMode, toggleQrLogin, getToggleInfo } = useAuthTabs('password');
@@ -107,18 +117,43 @@ const toggleInfo = computed(() => {
   return getToggleInfo();
 });
 
+// 协议状态变化处理
+const handleAgreementChange = (agreed: boolean) => {
+  isAgreed.value = agreed;
+};
+
+// 检查协议同意状态
+const checkAgreement = (): boolean => {
+  if (!isAgreed.value) {
+    BtcMessage.warning(t('auth.message.agreement_required'));
+    return false;
+  }
+  return true;
+};
+
 // 账密登录提交
 const handlePasswordSubmit = async (form: { username: string; password: string }) => {
-  await passwordSubmit(form);
+  try {
+    if (!checkAgreement()) {
+      return;
+    }
+    await passwordSubmit(form);
+  } catch (error) {
+    console.error('密码登录错误:', error);
+    // 错误已在 usePasswordLogin 中处理，这里只是防止未捕获的错误
+  }
 };
 
 // 短信登录提交
 const handleSmsSubmit = async (form: { phone: string; smsCode: string }) => {
   try {
+    if (!checkAgreement()) {
+      return;
+    }
     await smsSubmit(form);
   } catch (error) {
     // 错误已在 useSmsLogin 中处理，这里只是防止未捕获的错误
-    console.error('登录提交错误:', error);
+    console.error('短信登录错误:', error);
   }
 };
 

@@ -149,7 +149,6 @@ const handleCommand = (command: string) => {
       })
         .then(() => {
           logout();
-          message.success(t('common.logoutSuccess'));
         })
         .catch(() => {
           // 取消操作

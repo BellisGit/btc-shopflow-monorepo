@@ -31,33 +31,33 @@ export function useForgetPassword() {
     countdown: 60,
     minInterval: 60,
     onSuccess: () => {
-      BtcMessage.success(t('验证码已发送'));
+      BtcMessage.success(t('auth.message.sms_code_sent'));
     },
     onError: (error) => {
-      BtcMessage.error(error.message || t('发送验证码失败'));
+      BtcMessage.error(error.message || t('auth.message.sms_code_send_failed'));
     }
   });
 
   // 表单验证规则
   const rules = reactive({
     phone: [
-      { required: true, message: t('请输入手机号'), trigger: 'blur' },
-      { pattern: /^1[3-9]\d{9}$/, message: t('请输入正确的手机号'), trigger: 'blur' }
+      { required: true, message: t('auth.validation.phone_required'), trigger: 'blur' },
+      { pattern: /^1[3-9]\d{9}$/, message: t('auth.validation.phone_format'), trigger: 'blur' }
     ],
     smsCode: [
-      { required: true, message: t('请输入验证码'), trigger: 'blur' },
-      { len: 6, message: t('验证码长度为6位'), trigger: 'blur' }
+      { required: true, message: t('auth.validation.sms_code_required'), trigger: 'blur' },
+      { len: 6, message: t('auth.validation.sms_code_length'), trigger: 'blur' }
     ],
     newPassword: [
-      { required: true, message: t('请输入新密码'), trigger: 'blur' },
-      { min: 6, max: 20, message: t('密码长度在 6 到 20 个字符'), trigger: 'blur' }
+      { required: true, message: t('auth.validation.new_password_required'), trigger: 'blur' },
+      { min: 6, max: 20, message: t('auth.validation.password_length'), trigger: 'blur' }
     ],
     confirmPassword: [
-      { required: true, message: t('请确认密码'), trigger: 'blur' },
+      { required: true, message: t('auth.validation.confirm_new_password_required'), trigger: 'blur' },
       {
         validator: (rule: any, value: string, callback: Function) => {
           if (value !== form.newPassword) {
-            callback(new Error(t('两次输入的密码不一致')));
+            callback(new Error(t('auth.validation.confirm_password_mismatch')));
           } else {
             callback();
           }
@@ -70,12 +70,12 @@ export function useForgetPassword() {
   // 发送验证码
   const sendSmsCode = async () => {
     if (!form.phone) {
-      BtcMessage.warning(t('请输入手机号'));
+      BtcMessage.warning(t('auth.message.phone_required_for_sms'));
       return;
     }
 
     if (!/^1[3-9]\d{9}$/.test(form.phone)) {
-      BtcMessage.warning(t('请输入正确的手机号'));
+      BtcMessage.warning(t('auth.message.phone_format_error'));
       return;
     }
 
@@ -101,7 +101,7 @@ export function useForgetPassword() {
         newPassword: form.newPassword
       });
 
-      BtcMessage.success(t('密码重置成功，请重新登录'));
+      BtcMessage.success(t('auth.message.reset_password_success'));
       
       // 跳转到登录页
       setTimeout(() => {

@@ -51,7 +51,7 @@ export function useLogout() {
       // 如果有使用其他缓存库，也需要清除
 
       // 显示退出成功提示
-      BtcMessage.success(t('common.logout_success'));
+      BtcMessage.success(t('common.logoutSuccess'));
 
       // 跳转到登录页
       router.push('/login');

@@ -1,12 +1,29 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off">
+        <!-- 隐藏的假输入框，用于欺骗浏览器自动填充 -->
+        <input 
+          id="fake-username" 
+          name="fake-username" 
+          type="text" 
+          style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" 
+          tabindex="-1" 
+        />
+        <input 
+          id="fake-password" 
+          name="fake-password" 
+          type="password" 
+          style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" 
+          tabindex="-1" 
+        />
+        
         <el-form-item prop="username">
           <el-input
+            id="login-username"
             v-model="form.username"
-            name="username"
-            autocomplete="username"
+            :name="`username_${Math.random().toString(36).substr(2, 9)}`"
+            autocomplete="off"
             :placeholder="t('请输入用户名或邮箱')"
             size="large"
             maxlength="50"
@@ -15,10 +32,11 @@
         </el-form-item>
         <el-form-item prop="password">
           <el-input
+            id="login-password"
             v-model="form.password"
-            name="password"
+            :name="`password_${Math.random().toString(36).substr(2, 9)}`"
             type="password"
-            autocomplete="current-password"
+            autocomplete="off"
             :placeholder="t('请输入密码')"
             size="large"
             show-password
@@ -55,6 +73,7 @@ import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
 import BtcLoginFormLayout from '../../shared/components/login-form-layout/index.vue';
 import { useFormEnterKey } from '../../shared/composables/useFormEnterKey';
+import { useDisableAutofill } from '../../shared/composables/useDisableAutofill';
 
 defineOptions({
   name: 'BtcPasswordForm'
@@ -111,6 +130,9 @@ const { handleEnterKey } = useFormEnterKey({
   formRef,
   onSubmit: handleSubmit
 });
+
+// 使用禁用自动填充 Composable
+useDisableAutofill();
 
 // 暴露表单数据和方法供父组件使用
 defineExpose({

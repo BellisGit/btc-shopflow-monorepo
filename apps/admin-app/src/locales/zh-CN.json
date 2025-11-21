@@ -1,7 +1,7 @@
 {
-  "app.title": "管理系统",
+  "app.title": "车间管理",
   "app.description": "系统管理、平台治理、组织与账号、访问控制",
-  "app.welcome": "欢迎使用管理系统",
+  "app.welcome": "欢迎使用车间管理",
   "app.version": "版本 1.0.0",
   "common.button.save": "保存",
   "common.button.cancel": "取消",

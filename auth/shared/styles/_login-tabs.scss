@@ -198,7 +198,7 @@
 		.divider-line {
 			flex: 1;
 			height: 1px;
-			background: var(--el-border-color-light);
+			// 移除背景色，让箭头装饰组件自己控制样式
 		}
 
 		.divider-text {

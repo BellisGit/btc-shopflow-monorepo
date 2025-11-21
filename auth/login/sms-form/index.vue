@@ -4,6 +4,7 @@
       <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
         <el-form-item prop="phone">
           <el-input
+            id="sms-phone"
             v-model="form.phone"
             name="phone"
             autocomplete="tel"

@@ -1,13 +1,14 @@
 <template>
   <div class="register-form">
-    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+    <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off">
       <!-- 用户名/邮箱输入 -->
       <el-form-item prop="username">
         <el-input
+          id="register-username"
           v-model="form.username"
           name="username"
-          autocomplete="username"
-          :placeholder="t('请输入用户名或邮箱')"
+          autocomplete="off"
+          :placeholder="t('auth.username_placeholder')"
           size="large"
           maxlength="50"
           @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
@@ -17,10 +18,11 @@
       <!-- 手机号输入 -->
       <el-form-item prop="phone">
         <el-input
+          id="register-phone"
           v-model="form.phone"
           name="phone"
-          autocomplete="tel"
-          :placeholder="t('请输入手机号')"
+          autocomplete="off"
+          :placeholder="t('auth.phone_placeholder')"
           size="large"
           maxlength="11"
           @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
@@ -30,11 +32,12 @@
       <!-- 密码输入 -->
       <el-form-item prop="password">
         <el-input
+          id="register-password"
           v-model="form.password"
           name="password"
           type="password"
           autocomplete="new-password"
-          :placeholder="t('请输入密码')"
+          :placeholder="t('auth.password_placeholder')"
           size="large"
           show-password
           maxlength="20"
@@ -45,11 +48,12 @@
       <!-- 确认密码输入 -->
       <el-form-item prop="confirmPassword">
         <el-input
+          id="register-confirm-password"
           v-model="form.confirmPassword"
           name="confirmPassword"
           type="password"
           autocomplete="new-password"
-          :placeholder="t('请再次输入密码')"
+          :placeholder="t('auth.confirm_password_placeholder')"
           size="large"
           show-password
           maxlength="20"
@@ -61,7 +65,7 @@
     <!-- 提交按钮 -->
     <div class="op">
       <el-button type="primary" size="large" :loading="loading" @click="handleSubmit">
-        {{ t('立即注册') }}
+        {{ t('auth.register_now') }}
       </el-button>
     </div>
   </div>
