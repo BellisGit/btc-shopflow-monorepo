@@ -1,1 +1,234 @@
-﻿name: Manual Deploy (Legacy) on: workflow_dispatch: inputs: apps: description: '选择要部署的应用 (用逗号分隔，或填写 "all" 部署所有应用)' required: true default: 'all' type: string environment: description: '部署环境' required: true default: 'production' type: choice options: - production - staging skip_build: description: '跳过构建，直接部署现有镜像' required: false default: false type: boolean force_recreate: description: '强制重新创建Pod' required: false default: false type: boolean env: REGISTRY: ghcr.io NAMESPACE: btc-shopflow jobs: prepare: name: 🔧 Prepare Deployment runs-on: ubuntu-latest outputs: apps-matrix: ${{ steps.apps.outputs.matrix }} should-build: ${{ steps.build.outputs.should-build }} steps: - name: 📋 Parse applications id: apps run: | input_apps="${{ github.event.inputs.apps }}" if [ "$input_apps" == "all" ]; then apps='["system-app","admin-app","logistics-app","quality-app","production-app","engineering-app","finance-app","mobile-app"]' else # 将逗号分隔的字符串转换为JSON数组 apps=$(echo "$input_apps" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"]/') fi echo "matrix=$apps" >> $GITHUB_OUTPUT echo "📦 Selected apps: $apps" - name: 🏗️ Determine build requirement id: build run: | if [ "${{ github.event.inputs.skip_build }}" == "true" ]; then echo "should-build=false" >> $GITHUB_OUTPUT echo "⏭️ Skipping build, using existing images" else echo "should-build=true" >> $GITHUB_OUTPUT echo "🏗️ Will build new images" fi build: name: 🏗️ Build Selected Apps runs-on: ubuntu-latest needs: prepare if: needs.prepare.outputs.should-build == 'true' permissions: contents: read packages: write strategy: matrix: app: ${{ fromJson(needs.prepare.outputs.apps-matrix) }} fail-fast: false steps: - name: 📥 Checkout code uses: actions/checkout@v4 - name: 🐳 Set up Docker Buildx uses: docker/setup-buildx-action@v3 - name: 🔐 Log in to Container Registry uses: docker/login-action@v3 with: registry: ${{ env.REGISTRY }} username: ${{ github.actor }} password: ${{ secrets.GITHUB_TOKEN }} - name: 📦 Setup pnpm uses: pnpm/action-setup@v2 with: version: 8.15.0 - name: 📦 Setup Node.js uses: actions/setup-node@v4 with: node-version: '20.19.0' cache: 'pnpm' - name: 📥 Install dependencies run: pnpm install --no-frozen-lockfile - name: 🏗️ Build ${{ matrix.app }} run: | echo "🏗️ Building ${{ matrix.app }}..." if [ ! -d "apps/${{ matrix.app }}" ]; then echo "❌ App directory apps/${{ matrix.app }} does not exist" exit 1 fi # 使用构建脚本 chmod +x scripts/build-all.sh # 创建临时脚本只构建指定应用 cat > build-single.sh << 'EOF' #!/bin/bash app_name=$1 app_path="apps/${app_name}" if [ ! -f "${app_path}/Dockerfile" ]; then echo "📝 Creating Dockerfile for ${app_name}..." cat > "${app_path}/Dockerfile" << 'DOCKERFILE' FROM node:20-alpine AS builder WORKDIR /app COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./ COPY apps/ ./apps/ COPY packages/ ./packages/ COPY auth/ ./auth/ RUN npm install -g pnpm RUN pnpm install --no-frozen-lockfile RUN cd apps/APP_NAME && pnpm run build FROM nginx:alpine COPY --from=builder /app/apps/APP_NAME/dist /usr/share/nginx/html RUN echo 'server { listen 80; location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf EXPOSE 80 CMD ["nginx", "-g", "daemon off;"] DOCKERFILE sed -i "s/APP_NAME/${app_name}/g" "${app_path}/Dockerfile" fi docker build -t btc-shopflow/${app_name}:latest -f ${app_path}/Dockerfile . EOF chmod +x build-single.sh ./build-single.sh ${{ matrix.app }} - name: 📤 Push image run: | echo "📤 Pushing ${{ matrix.app }} to registry..." docker tag btc-shopflow/${{ matrix.app }}:latest ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:latest docker tag btc-shopflow/${{ matrix.app }}:latest ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:${{ github.sha }} docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:latest docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:${{ github.sha }} deploy: name: 🚀 Deploy to Kubernetes runs-on: ubuntu-latest needs: [prepare, build] if: always() && (needs.build.result == 'success' || needs.prepare.outputs.should-build == 'false') environment: name: ${{ github.event.inputs.environment }} url: ${{ vars.APP_URL || 'https://btc-shopflow.com' }} steps: - name: 📥 Checkout code uses: actions/checkout@v4 - name: 🔐 Setup SSH run: | mkdir -p ~/.ssh echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa chmod 600 ~/.ssh/id_rsa ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts - name: 🔍 Verify server connection run: | ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'Server connection successful'" - name: 📋 Prepare namespace run: | if ! kubectl get namespace ${{ env.NAMESPACE }} &> /dev/null; then kubectl apply -f k8s/namespace.yaml fi kubectl apply -f k8s/configmap.yaml -n ${{ env.NAMESPACE }} - name: 🚀 Deploy applications run: | echo "🚀 Deploying selected applications..." selected_apps='${{ needs.prepare.outputs.apps-matrix }}' echo "Selected apps: $selected_apps" # 应用基础配置 if [ -f "k8s/deployments/complete-apps.yaml" ]; then kubectl apply -f k8s/deployments/complete-apps.yaml -n ${{ env.NAMESPACE }} fi # 更新指定应用的镜像 echo "$selected_apps" | jq -r '.[]' | while read app; do deployment_name="btc-$app" if [ "${{ needs.prepare.outputs.should-build }}" == "true" ]; then image_name="${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }}" else image_name="${{ env.REGISTRY }}/${{ github.repository }}/$app:latest" fi echo "🔄 Updating $deployment_name with image $image_name..." if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then kubectl set image deployment/"$deployment_name" "$app"="$image_name" -n ${{ env.NAMESPACE }} if [ "${{ github.event.inputs.force_recreate }}" == "true" ]; then echo "🔄 Force recreating pods for $deployment_name..." kubectl rollout restart deployment/"$deployment_name" -n ${{ env.NAMESPACE }} fi else echo "⚠️ Deployment $deployment_name not found" fi done - name: ⏳ Wait for deployment run: | echo "⏳ Waiting for deployments to be ready..." selected_apps='${{ needs.prepare.outputs.apps-matrix }}' echo "$selected_apps" | jq -r '.[]' | while read app; do deployment_name="btc-$app" if kubectl get deployment "$deployment_name" -n ${{ env.NAMESPACE }} &> /dev/null; then echo "⏳ Waiting for $deployment_name..." kubectl rollout status deployment/"$deployment_name" -n ${{ env.NAMESPACE }} --timeout=600s fi done - name: 🔍 Verify deployment run: | echo "🔍 Deployment verification:" kubectl get deployments -n ${{ env.NAMESPACE }} kubectl get pods -n ${{ env.NAMESPACE }} kubectl get services -n ${{ env.NAMESPACE }} - name: 📊 Generate report run: | echo "## 🎯 Manual Deployment Report" >> $GITHUB_STEP_SUMMARY echo "" >> $GITHUB_STEP_SUMMARY echo "**Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY echo "**Selected Apps**: ${{ github.event.inputs.apps }}" >> $GITHUB_STEP_SUMMARY echo "**Skip Build**: ${{ github.event.inputs.skip_build }}" >> $GITHUB_STEP_SUMMARY echo "**Force Recreate**: ${{ github.event.inputs.force_recreate }}" >> $GITHUB_STEP_SUMMARY echo "" >> $GITHUB_STEP_SUMMARY echo "### 📦 Deployment Status:" >> $GITHUB_STEP_SUMMARY kubectl get deployments -n ${{ env.NAMESPACE }} --no-headers | while read line; do name=$(echo $line | awk '{print $1}') ready=$(echo $line | awk '{print $2}') echo "- **$name**: $ready" >> $GITHUB_STEP_SUMMARY done notify: name: 📢 Notify Result runs-on: ubuntu-latest needs: [prepare, build, deploy] if: always() steps: - name: 📢 Success notification if: needs.deploy.result == 'success' run: | echo "🎉 **Manual Deployment Successful!**" echo "✅ Selected applications deployed successfully" echo "🎯 Apps: ${{ github.event.inputs.apps }}" echo "🌐 Environment: ${{ github.event.inputs.environment }}" - name: 📢 Failure notification if: needs.deploy.result == 'failure' || needs.build.result == 'failure' run: | echo "❌ **Manual Deployment Failed!**" echo "🔍 Please check the logs for details" exit 1 
+﻿name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: '选择要部署的应用 (用逗号分隔，或填写 "all" 部署所有应用)'
+        required: true
+        default: 'all'
+        type: string
+      environment:
+        description: '部署环境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      skip_build:
+        description: '跳过构建，直接部署现有镜像'
+        required: false
+        default: false
+        type: boolean
+      force_recreate:
+        description: '强制重新创建Pod'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      apps-matrix: ${{ steps.apps.outputs.matrix }}
+      should-build: ${{ steps.build.outputs.should-build }}
+    
+    steps:
+    - name: Parse applications
+      id: apps
+      run: |
+        input_apps="${{ github.event.inputs.apps }}"
+        if [ "$input_apps" == "all" ]; then
+          apps='["system-app","admin-app","logistics-app","quality-app","production-app","engineering-app","finance-app","mobile-app"]'
+        else
+          # 将逗号分隔的字符串转换为JSON数组
+          apps=$(echo "$input_apps" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"]/') 
+        fi
+        echo "matrix=$apps" >> $GITHUB_OUTPUT
+        echo "Selected apps: $apps"
+    
+    - name: Determine build requirement
+      id: build
+      run: |
+        if [ "${{ github.event.inputs.skip_build }}" == "true" ]; then
+          echo "should-build=false" >> $GITHUB_OUTPUT
+          echo "Skipping build, using existing images"
+        else
+          echo "should-build=true" >> $GITHUB_OUTPUT
+          echo "Will build new images"
+        fi
+
+  build:
+    name: Build Selected Apps
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should-build == 'true'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: ${{ fromJson(needs.prepare.outputs.apps-matrix) }}
+      fail-fast: false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile
+    
+    - name: Build application
+      run: |
+        echo "Building ${{ matrix.app }}..."
+        if [ ! -d "apps/${{ matrix.app }}" ]; then
+          echo "App directory apps/${{ matrix.app }} does not exist"
+          exit 1
+        fi
+        cd apps/${{ matrix.app }} && pnpm run build
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Dockerfile
+      run: |
+        cat > apps/${{ matrix.app }}/Dockerfile << 'EOF'
+        FROM node:20-alpine AS builder
+        WORKDIR /app
+        COPY package*.json pnpm-*.yaml ./
+        COPY packages ./packages
+        COPY apps/${{ matrix.app }} ./apps/${{ matrix.app }}
+        RUN npm install -g pnpm
+        RUN pnpm install --frozen-lockfile
+        RUN cd apps/${{ matrix.app }} && pnpm run build
+
+        FROM nginx:alpine
+        COPY --from=builder /app/apps/${{ matrix.app }}/dist /usr/share/nginx/html
+        COPY apps/${{ matrix.app }}/nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null || echo "server { listen 80; location / { try_files \$uri \$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
+        EXPOSE 80
+        CMD ["nginx", "-g", "daemon off;"]
+        EOF
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: apps/${{ matrix.app }}/Dockerfile
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:latest
+          ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.app }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    if: always() && (needs.build.result == 'success' || needs.prepare.outputs.should-build == 'false')
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Verify server connection
+      run: |
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
+            "echo 'Server connection successful'"
+    
+    - name: Deploy applications
+      run: |
+        echo "Deploying selected applications..."
+        selected_apps='${{ needs.prepare.outputs.apps-matrix }}'
+        echo "Selected apps: $selected_apps"
+        
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} << EOF
+        set -e
+        
+        echo "Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo
+        
+        echo "Pulling latest code..."
+        git pull origin master
+        
+        echo "Logging into container registry..."
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+        
+        echo "Starting selective deployment..."
+        chmod +x scripts/deploy.sh
+        
+        # 设置环境变量来指定要部署的应用
+        export DEPLOY_APPS="$selected_apps"
+        export FORCE_RECREATE="${{ github.event.inputs.force_recreate }}"
+        
+        ./scripts/deploy.sh
+        
+        echo "Deployment completed successfully"
+        EOF
+    
+    - name: Generate deployment report
+      run: |
+        echo "## Manual Deployment Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Selected Apps**: ${{ github.event.inputs.apps }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Skip Build**: ${{ github.event.inputs.skip_build }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Force Recreate**: ${{ github.event.inputs.force_recreate }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Application URLs:" >> $GITHUB_STEP_SUMMARY
+        echo "- 主应用: http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
+        echo "- 管理后台: http://${{ secrets.SERVER_HOST }}:30081" >> $GITHUB_STEP_SUMMARY
+        echo "- 财务系统: http://${{ secrets.SERVER_HOST }}:30086" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Notify Result
+    runs-on: ubuntu-latest
+    needs: [prepare, build, deploy]
+    if: always()
+    
+    steps:
+    - name: Success notification
+      if: needs.deploy.result == 'success'
+      run: |
+        echo "**Manual Deployment Successful!**" >> $GITHUB_STEP_SUMMARY
+        echo "Selected applications deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "Apps: ${{ github.event.inputs.apps }}" >> $GITHUB_STEP_SUMMARY
+        echo "Environment: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Failure notification
+      if: needs.deploy.result == 'failure' || needs.build.result == 'failure'
+      run: |
+        echo "**Manual Deployment Failed!**" >> $GITHUB_STEP_SUMMARY
+        echo "Please check the logs for details" >> $GITHUB_STEP_SUMMARY
+        exit 1
