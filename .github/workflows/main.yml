@@ -211,20 +211,39 @@ jobs:
       run: |
         echo "Setting up Aliyun CLI for deployment..."
         
+        # 检查必需的secrets
+        if [ -z "${{ secrets.ALIYUN_ACCESS_KEY_ID }}" ]; then
+          echo "❌ Error: ALIYUN_ACCESS_KEY_ID secret is not set"
+          echo "Please add ALIYUN_ACCESS_KEY_ID to your GitHub repository secrets"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.SERVER_KEY }}" ]; then
+          echo "❌ Error: SERVER_KEY (AccessKey Secret) is not set"
+          echo "Please add SERVER_KEY (your Aliyun AccessKey Secret) to your GitHub repository secrets"
+          exit 1
+        fi
+        
+        echo "✅ Required secrets are available"
+        
         # 安装阿里云CLI
+        echo "📥 Downloading Aliyun CLI..."
         curl -L https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz -o aliyun-cli.tgz
         tar -xzf aliyun-cli.tgz
         sudo mv aliyun /usr/local/bin/
         
+        echo "🔧 Configuring Aliyun CLI..."
         # 配置阿里云凭证
         aliyun configure set \
           --profile default \
           --mode AK \
-          --region ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
-          --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} \
-          --access-key-secret ${{ secrets.SERVER_KEY }}
+          --region "${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }}" \
+          --access-key-id "${{ secrets.ALIYUN_ACCESS_KEY_ID }}" \
+          --access-key-secret "${{ secrets.SERVER_KEY }}"
         
-        echo "Aliyun CLI configured successfully"
+        echo "✅ Aliyun CLI configured successfully"
+        echo "Region: ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }}"
+        echo "Access Key ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}"
 
     - name: Verify Aliyun connection
       run: |
