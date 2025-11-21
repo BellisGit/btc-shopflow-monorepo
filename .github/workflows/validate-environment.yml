@@ -2,22 +2,18 @@ name: Validate Environment
 
 on:
   workflow_call:
-    inputs:
-      server_host:
-        description: 'Server Host IP'
-        required: false
-        type: string
-      server_user:
-        description: 'Server User'
-        required: false
-        type: string
-      server_port:
-        description: 'Server Port'
-        required: false
-        type: string
     secrets:
       SERVER_KEY:
         description: 'SSH Private Key'
+        required: false
+      SERVER_HOST:
+        description: 'Server Host IP'
+        required: false
+      SERVER_USER:
+        description: 'Server User'
+        required: false
+      SERVER_PORT:
+        description: 'Server Port'
         required: false
     outputs:
       ssh_validated:
@@ -47,16 +43,16 @@ jobs:
           echo "✅ SERVER_KEY is available"
         fi
         
-        if [ -z "${{ inputs.server_host }}" ]; then
+        if [ -z "${{ secrets.SERVER_HOST }}" ]; then
           echo "⚠️ Warning: SERVER_HOST is not set"
           echo "Please add SERVER_HOST (your server IP address) to your GitHub repository secrets"
           echo "Continuing with limited validation..."
         else
-          echo "✅ SERVER_HOST is available: ${{ inputs.server_host }}"
+          echo "✅ SERVER_HOST is available: ${{ secrets.SERVER_HOST }}"
         fi
     
     - name: Setup SSH
-      if: ${{ secrets.SERVER_KEY != '' && inputs.server_host != '' }}
+      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
         echo "Setting up SSH connection..."
         
@@ -71,7 +67,7 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         
         # 添加主机密钥
-        ssh-keyscan -H ${{ inputs.server_host }} >> ~/.ssh/known_hosts 2>/dev/null
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         
         # 验证密钥格式
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
@@ -83,13 +79,13 @@ jobs:
     
     - name: Validate SSH connection
       id: ssh-check
-      if: ${{ secrets.SERVER_KEY != '' && inputs.server_host != '' }}
+      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
         echo "Testing SSH connection..."
         
         if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
-            -i ~/.ssh/id_rsa -p ${{ inputs.server_port || '22' }} \
-            ${{ inputs.server_user || 'root' }}@${{ inputs.server_host }} \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
             "echo 'SSH connection successful'"; then
           echo "✅ SSH connection validated successfully"
           echo "validated=true" >> $GITHUB_OUTPUT
@@ -100,13 +96,13 @@ jobs:
         fi
     
     - name: Validate server environment
-      if: ${{ secrets.SERVER_KEY != '' && inputs.server_host != '' }}
+      if: ${{ secrets.SERVER_KEY != '' && secrets.SERVER_HOST != '' }}
       run: |
         echo "Validating server environment..."
         
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
-            -i ~/.ssh/id_rsa -p ${{ inputs.server_port || '22' }} \
-            ${{ inputs.server_user || 'root' }}@${{ inputs.server_host }} << 'EOF'
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} << 'EOF'
         
         echo "Checking Docker installation..."
         if ! command -v docker &> /dev/null; then
