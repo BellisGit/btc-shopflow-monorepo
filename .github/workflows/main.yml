@@ -1,6 +1,6 @@
 name: BTC ShopFlow CI/CD Pipeline
 
-# Trigger workflow to test current configuration
+# Trigger workflow to test updated SSH key configuration
 on:
   push:
     branches: [ master ]
