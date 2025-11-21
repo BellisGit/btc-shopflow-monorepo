@@ -28,6 +28,11 @@ on:
 env:
   REGISTRY: ghcr.io
 
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
 jobs:
   # Step 1: SSH Connection Validation (Fast Fail)
   validate-ssh:
