@@ -1,5 +1,6 @@
 name: BTC ShopFlow CI/CD Pipeline
 
+# Trigger workflow to test current configuration
 on:
   push:
     branches: [ master ]
