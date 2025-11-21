@@ -50,6 +50,18 @@ jobs:
     - name: 📥 Install dependencies
       run: pnpm install --no-frozen-lockfile
 
+    - name: 🏗️ Build shared packages
+      run: |
+        echo "Building shared packages in dependency order..."
+        # 首先构建 shared-utils（被其他包依赖）
+        pnpm --filter @btc/shared-utils run build
+        # 然后构建 shared-core（依赖 shared-utils）
+        pnpm --filter @btc/shared-core run build
+        # 最后构建 shared-components（依赖前两者）
+        pnpm --filter @btc/shared-components run build
+        # 构建 vite-plugin
+        pnpm --filter @btc/vite-plugin run build
+
     - name: 🔍 Lint
       run: pnpm run lint
 
