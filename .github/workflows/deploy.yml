@@ -1,0 +1,181 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: btc-shopflow
+
+jobs:
+  build:
+    name: 🏗️ Build Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 📦 Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8.15.0
+
+    - name: 📥 Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: 🏗️ Build all applications
+      run: |
+        chmod +x scripts/build-all.sh
+        ./scripts/build-all.sh
+
+    - name: 🏷️ Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: 📤 Push images to registry
+      run: |
+        # 为每个应用打标签并推送到GitHub Container Registry
+        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        
+        for app in "${apps[@]}"; do
+          echo "🏷️ Tagging and pushing $app..."
+          docker tag btc-shopflow/$app:latest ${{ env.REGISTRY }}/${{ github.repository }}/$app:latest
+          docker tag btc-shopflow/$app:latest ${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository }}/$app:latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }}
+        done
+
+  deploy:
+    name: 🚀 Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build
+    environment: 
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: 🔐 Configure kubectl
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+
+    - name: 🔍 Verify cluster connection
+      run: |
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: 🏗️ Update deployment images
+      run: |
+        # 更新所有应用的镜像
+        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        
+        for app in "${apps[@]}"; do
+          echo "🔄 Updating $app deployment..."
+          kubectl set image deployment/btc-$app $app=${{ env.REGISTRY }}/${{ github.repository }}/$app:${{ github.sha }} -n btc-shopflow
+        done
+
+    - name: ⏳ Wait for rollout
+      run: |
+        apps=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+        
+        for app in "${apps[@]}"; do
+          echo "⏳ Waiting for $app rollout..."
+          kubectl rollout status deployment/btc-$app -n btc-shopflow --timeout=600s
+        done
+
+    - name: 🔍 Verify deployment
+      run: |
+        echo "📊 Deployment status:"
+        kubectl get deployments -n btc-shopflow
+        kubectl get pods -n btc-shopflow
+        kubectl get services -n btc-shopflow
+
+    - name: 🧪 Health check
+      run: |
+        echo "🧪 Running health checks..."
+        
+        # 获取服务端点
+        SYSTEM_APP_IP=$(kubectl get svc btc-system-app-service -n btc-shopflow -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "")
+        ADMIN_APP_IP=$(kubectl get svc btc-admin-app-service -n btc-shopflow -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "")
+        
+        if [ -n "$SYSTEM_APP_IP" ]; then
+          echo "🔍 Testing system app at $SYSTEM_APP_IP..."
+          curl -f -s --max-time 30 "http://$SYSTEM_APP_IP" > /dev/null && echo "✅ System app is healthy" || echo "❌ System app health check failed"
+        fi
+        
+        if [ -n "$ADMIN_APP_IP" ]; then
+          echo "🔍 Testing admin app at $ADMIN_APP_IP..."
+          curl -f -s --max-time 30 "http://$ADMIN_APP_IP" > /dev/null && echo "✅ Admin app is healthy" || echo "❌ Admin app health check failed"
+        fi
+
+  notify:
+    name: 📢 Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+    
+    steps:
+    - name: 📢 Deployment Success Notification
+      if: needs.deploy.result == 'success'
+      run: |
+        echo "🎉 部署成功！"
+        echo "✅ 所有应用已成功部署到生产环境"
+        echo "🔗 访问地址: ${{ vars.APP_URL || 'https://btc-shopflow.com' }}"
+        
+    - name: 📢 Deployment Failure Notification
+      if: needs.deploy.result == 'failure'
+      run: |
+        echo "❌ 部署失败！"
+        echo "🔍 请检查部署日志以获取详细信息"
+        exit 1
