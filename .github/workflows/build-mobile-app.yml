@@ -24,9 +24,6 @@ jobs:
   build-mobile-app:
     name: Build Mobile App
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     
     steps:
     - name: Checkout code

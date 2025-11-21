@@ -24,9 +24,6 @@ jobs:
   build-production-app:
     name: Build Production App
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     
     steps:
     - name: Checkout code

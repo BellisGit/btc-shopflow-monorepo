@@ -24,9 +24,6 @@ jobs:
   build-system-app:
     name: Build System App
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     
     steps:
     - name: Checkout code

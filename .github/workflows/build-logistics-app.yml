@@ -24,9 +24,6 @@ jobs:
   build-logistics-app:
     name: Build Logistics App
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     
     steps:
     - name: Checkout code

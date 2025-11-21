@@ -67,6 +67,9 @@ jobs:
   build-system-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-system-app.yml
     with:
       registry: ghcr.io
@@ -78,6 +81,9 @@ jobs:
   build-admin-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-admin-app.yml
     with:
       registry: ghcr.io
@@ -89,6 +95,9 @@ jobs:
   build-logistics-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-logistics-app.yml
     with:
       registry: ghcr.io
@@ -100,6 +109,9 @@ jobs:
   build-quality-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-quality-app.yml
     with:
       registry: ghcr.io
@@ -111,6 +123,9 @@ jobs:
   build-production-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-production-app.yml
     with:
       registry: ghcr.io
@@ -122,6 +137,9 @@ jobs:
   build-engineering-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-engineering-app.yml
     with:
       registry: ghcr.io
@@ -133,6 +151,9 @@ jobs:
   build-finance-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-finance-app.yml
     with:
       registry: ghcr.io
@@ -144,6 +165,9 @@ jobs:
   build-mobile-app:
     needs: [quality-check]
     if: always() && (needs.quality-check.result == 'success' || github.event.inputs.deploy_only == 'true')
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-mobile-app.yml
     with:
       registry: ghcr.io
