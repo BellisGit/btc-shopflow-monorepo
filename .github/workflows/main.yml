@@ -138,12 +138,29 @@ jobs:
           cat > "apps/${{ matrix.app }}/Dockerfile" << 'EOF'
         FROM node:20-alpine AS builder
         WORKDIR /app
+        
+        # 复制配置文件
         COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+        COPY .npmrc* ./
+        COPY turbo.json ./
+        
+        # 复制源代码
         COPY apps/ ./apps/
         COPY packages/ ./packages/
         COPY auth/ ./auth/
-        RUN npm install -g pnpm
+        COPY scripts/ ./scripts/
+        COPY configs/ ./configs/
+        
+        # 安装pnpm
+        RUN npm install -g pnpm@8.15.0
+        
+        # 设置pnpm配置
+        RUN pnpm config set store-dir /root/.local/share/pnpm/store
+        
+        # 安装依赖
         RUN pnpm install --no-frozen-lockfile
+        
+        # 构建应用
         RUN cd apps/${{ matrix.app }} && pnpm run build
         FROM nginx:alpine
         COPY --from=builder /app/apps/${{ matrix.app }}/dist /usr/share/nginx/html
