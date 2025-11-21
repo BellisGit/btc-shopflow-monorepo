@@ -1,0 +1,86 @@
+name: Build Finance App
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: 'Container registry URL'
+        required: true
+        type: string
+      github_repository:
+        description: 'GitHub repository name'
+        required: true
+        type: string
+      github_sha:
+        description: 'GitHub commit SHA'
+        required: true
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'GitHub token for registry access'
+        required: true
+
+jobs:
+  build-finance-app:
+    name: Build Finance App
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile
+    
+    - name: Build dependencies
+      run: node scripts/turbo.js run build --filter="@btc/*"
+    
+    - name: Build finance-app
+      run: cd apps/finance-app && pnpm run build
+    
+    - name: Create Dockerfile
+      run: |
+        cat > apps/finance-app/Dockerfile << 'EOF'
+        FROM node:20-alpine AS builder
+        WORKDIR /app
+        COPY package*.json pnpm-*.yaml ./
+        COPY packages ./packages
+        COPY apps/finance-app ./apps/finance-app
+        RUN npm install -g pnpm
+        RUN pnpm install --frozen-lockfile
+        RUN cd apps/finance-app && pnpm run build
+
+        FROM nginx:alpine
+        COPY --from=builder /app/apps/finance-app/dist /usr/share/nginx/html
+        RUN echo 'server { listen 80; location / { try_files \$uri \$uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+        EXPOSE 80
+        CMD ["nginx", "-g", "daemon off;"]
+        EOF
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GH_TOKEN }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: apps/finance-app/Dockerfile
+        push: true
+        tags: |
+          ${{ inputs.registry }}/${{ inputs.github_repository }}/finance-app:latest
+          ${{ inputs.registry }}/${{ inputs.github_repository }}/finance-app:${{ inputs.github_sha }}
