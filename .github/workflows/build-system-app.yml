@@ -55,6 +55,14 @@ jobs:
           exit 1
         fi
 
+    - name: Prepare Docker tags
+      id: tags
+      run: |
+        # Convert repository name to lowercase for Docker compatibility
+        REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+        echo "📋 Docker tags will use: $REPO_LOWER"
+
     - name: Build dependencies
       run: |
         echo "Building dependencies for system-app..."
@@ -99,5 +107,9 @@ jobs:
         file: apps/system-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/system-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/system-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/system-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/system-app:${{ inputs.github_sha }}
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+      env:
+        DOCKER_BUILDKIT: 1

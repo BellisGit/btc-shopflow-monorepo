@@ -1,4 +1,4 @@
-name: Build Logistics App
+﻿name: Build Logistics App
 
 on:
   workflow_call:
@@ -51,6 +51,14 @@ jobs:
           echo "❌ GH_TOKEN is not available"
           exit 1
         fi
+
+    - name: Prepare Docker tags
+      id: tags
+      run: |
+        # Convert repository name to lowercase for Docker compatibility
+        REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+        echo "📋 Docker tags will use: $REPO_LOWER"
     
     - name: Build dependencies
       run: |
@@ -94,5 +102,5 @@ jobs:
         file: apps/logistics-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/logistics-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/logistics-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/logistics-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/logistics-app:${{ inputs.github_sha }}

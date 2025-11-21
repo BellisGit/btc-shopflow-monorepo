@@ -1,4 +1,4 @@
-name: Build Mobile App
+﻿name: Build Mobile App
 
 on:
   workflow_call:
@@ -81,5 +81,5 @@ jobs:
         file: apps/mobile-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/mobile-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/mobile-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/mobile-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/mobile-app:${{ inputs.github_sha }}

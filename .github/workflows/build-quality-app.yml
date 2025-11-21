@@ -1,4 +1,4 @@
-name: Build Quality App
+﻿name: Build Quality App
 
 on:
   workflow_call:
@@ -81,5 +81,5 @@ jobs:
         file: apps/quality-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/quality-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/quality-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/quality-app:${{ inputs.github_sha }}

@@ -1,4 +1,4 @@
-name: Build Engineering App
+﻿name: Build Engineering App
 
 on:
   workflow_call:
@@ -81,5 +81,5 @@ jobs:
         file: apps/engineering-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/engineering-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/engineering-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/engineering-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/engineering-app:${{ inputs.github_sha }}

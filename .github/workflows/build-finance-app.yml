@@ -1,4 +1,4 @@
-name: Build Finance App
+﻿name: Build Finance App
 
 on:
   workflow_call:
@@ -81,5 +81,5 @@ jobs:
         file: apps/finance-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/finance-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/finance-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/finance-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/finance-app:${{ inputs.github_sha }}

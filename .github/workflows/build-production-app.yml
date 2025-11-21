@@ -1,4 +1,4 @@
-name: Build Production App
+﻿name: Build Production App
 
 on:
   workflow_call:
@@ -81,5 +81,5 @@ jobs:
         file: apps/production-app/Dockerfile
         push: true
         tags: |
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/production-app:latest
-          ${{ inputs.registry }}/${{ inputs.github_repository }}/production-app:${{ inputs.github_sha }}
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/production-app:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/production-app:${{ inputs.github_sha }}
