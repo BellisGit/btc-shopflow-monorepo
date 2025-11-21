@@ -29,10 +29,10 @@ COPY apps/quality-app/package.json apps/quality-app/package.json
 COPY apps/system-app/package.json apps/system-app/package.json
 
 FROM base AS deps
-# 使用 frozen-lockfile 保证一致性；若无 pnpm-lock.yaml，会回退到 install
+# 安装依赖
 COPY pnpm-lock.yaml* ./
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
+    pnpm install --no-frozen-lockfile
 
 FROM base AS build
 COPY --from=deps /repo/node_modules /repo/node_modules
