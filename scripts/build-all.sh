@@ -45,19 +45,17 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# 复制 package.json 和 pnpm-lock.yaml
-COPY package.json pnpm-lock.yaml ./
-COPY apps/${app_name}/package.json ./apps/${app_name}/
+# 复制所有 package.json 文件
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/ ./apps/
 COPY packages/ ./packages/
+COPY auth/ ./auth/
 
 # 安装 pnpm
 RUN npm install -g pnpm
 
-# 安装依赖
+# 安装所有依赖
 RUN pnpm install --frozen-lockfile
-
-# 复制源代码
-COPY . .
 
 # 构建应用
 RUN cd apps/${app_name} && pnpm run build
