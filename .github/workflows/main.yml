@@ -207,7 +207,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
     needs: [validate-ssh, validate-environment]
@@ -218,7 +218,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
     needs: [validate-ssh, validate-environment]
@@ -229,7 +229,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
     needs: [validate-ssh, validate-environment]
@@ -240,7 +240,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
     needs: [validate-ssh, validate-environment]
@@ -251,7 +251,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
     needs: [validate-ssh, validate-environment]
@@ -262,7 +262,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
     needs: [validate-ssh, validate-environment]
@@ -273,7 +273,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   # Step 5: Deploy to Server
   deploy:
