@@ -102,11 +102,11 @@ const checkAgreement = (): boolean => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    if (!formRef.value) return;
+  if (!formRef.value) return;
     if (!checkAgreement()) {
       return;
     }
-    await resetPassword(formRef.value.formRef);
+  await resetPassword(formRef.value.formRef);
   } catch (error) {
     console.error('重置密码错误:', error);
     // 错误已在 useForgetPassword 中处理，这里只是防止未捕获的错误

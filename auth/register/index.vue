@@ -83,11 +83,11 @@ const checkAgreement = (): boolean => {
 // 提交表单
 const handleSubmit = async () => {
   try {
-    if (!formRef.value) return;
+  if (!formRef.value) return;
     if (!checkAgreement()) {
       return;
     }
-    await register(formRef.value.formRef);
+  await register(formRef.value.formRef);
   } catch (error) {
     console.error('注册错误:', error);
     // 错误已在 useRegister 中处理，这里只是防止未捕获的错误

@@ -55,11 +55,10 @@ deploy_apps() {
     kubectl apply -f deployments/system-app.yaml -n $NAMESPACE
     kubectl apply -f deployments/admin-app.yaml -n $NAMESPACE
     kubectl apply -f deployments/finance-app.yaml -n $NAMESPACE
-    kubectl apply -f deployments/logistics-app.yaml -n $NAMESPACE
     
     # 4. 部署其他应用
     echo "📦 部署其他应用..."
-    kubectl apply -f deployments/all-apps.yaml -n $NAMESPACE
+    kubectl apply -f deployments/complete-apps.yaml -n $NAMESPACE
     
     # 5. 配置 Ingress
     echo "🌐 配置 Ingress..."
@@ -118,7 +117,7 @@ show_status() {
 wait_for_deployment() {
     echo "⏳ 等待部署就绪..."
     
-    deployments=("btc-system-app" "btc-admin-app" "btc-finance-app" "btc-logistics-app")
+    deployments=("btc-system-app" "btc-admin-app" "btc-finance-app" "btc-logistics-app" "btc-quality-app" "btc-production-app" "btc-engineering-app" "btc-mobile-app")
     
     for deployment in "${deployments[@]}"; do
         echo "等待 $deployment 就绪..."

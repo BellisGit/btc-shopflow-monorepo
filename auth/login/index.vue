@@ -137,7 +137,7 @@ const handlePasswordSubmit = async (form: { username: string; password: string }
     if (!checkAgreement()) {
       return;
     }
-    await passwordSubmit(form);
+  await passwordSubmit(form);
   } catch (error) {
     console.error('密码登录错误:', error);
     // 错误已在 usePasswordLogin 中处理，这里只是防止未捕获的错误

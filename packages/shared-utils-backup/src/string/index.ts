@@ -34,18 +34,6 @@ export function kebabCase(str: string): string {
 }
 
 /**
- * 下划线命名转换
- * @param str 字符串
- * @returns 下划线命名字符串
- */
-export function snakeCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1_$2')
-    .replace(/[\s-]+/g, '_')
-    .toLowerCase();
-}
-
-/**
  * 截断字符串
  * @param str 字符串
  * @param length 最大长度
@@ -55,31 +43,6 @@ export function snakeCase(str: string): string {
 export function truncate(str: string, length: number, suffix = '...'): string {
   if (str.length <= length) return str;
   return str.slice(0, length - suffix.length) + suffix;
-}
-
-/**
- * 移除字符串中的HTML标签
- * @param str 字符串
- * @returns 移除HTML标签后的字符串
- */
-export function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, '');
-}
-
-/**
- * 转义HTML字符
- * @param str 字符串
- * @returns 转义后的字符串
- */
-export function escapeHtml(str: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return str.replace(/[&<>"']/g, (char) => map[char]);
 }
 
 /**
@@ -97,16 +60,4 @@ export function randomString(
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
-}
-
-/**
- * 字符串模板替换
- * @param template 模板字符串
- * @param data 数据对象
- * @returns 替换后的字符串
- */
-export function template(template: string, data: Record<string, any>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    return data[key] !== undefined ? String(data[key]) : match;
-  });
 }
