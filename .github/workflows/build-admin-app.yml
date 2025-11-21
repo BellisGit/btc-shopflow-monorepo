@@ -24,6 +24,9 @@ jobs:
   build-admin-app:
     name: Build Admin App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code

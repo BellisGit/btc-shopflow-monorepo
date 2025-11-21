@@ -24,6 +24,9 @@ jobs:
   build-logistics-app:
     name: Build Logistics App
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
     - name: Checkout code
@@ -43,9 +46,7 @@ jobs:
     - name: Build dependencies
       run: |
         echo "Building dependencies for logistics-app..."
-        # 先构建vite-plugin，因为其他包可能依赖它
         pnpm --filter @btc/vite-plugin run build
-        # 然后构建其他依赖包
         node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build logistics-app

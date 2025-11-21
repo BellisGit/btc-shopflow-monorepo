@@ -1,0 +1,107 @@
+name: Validate Environment
+
+on:
+  workflow_call:
+    outputs:
+      ssh_validated:
+        description: 'SSH connection validation result'
+        value: ${{ jobs.validate-environment.outputs.ssh_validated }}
+
+jobs:
+  validate-environment:
+    name: Validate Environment
+    runs-on: ubuntu-latest
+    outputs:
+      ssh_validated: ${{ steps.ssh-check.outputs.validated }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Validate required secrets
+      run: |
+        echo "Validating required secrets..."
+        
+        if [ -z "${{ secrets.SERVER_KEY }}" ]; then
+          echo "❌ Error: SERVER_KEY (SSH private key) is not set"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "❌ Error: SERVER_HOST is not set"
+          exit 1
+        fi
+        
+        echo "✅ All required secrets are available"
+    
+    - name: Setup SSH
+      run: |
+        echo "Setting up SSH connection..."
+        
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        
+        # 创建SSH私钥文件
+        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+        
+        # 修复密钥格式
+        sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        # 添加主机密钥
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        # 验证密钥格式
+        if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+          echo "❌ SSH key format is invalid"
+          exit 1
+        fi
+        
+        echo "✅ SSH key setup completed successfully"
+    
+    - name: Validate SSH connection
+      id: ssh-check
+      run: |
+        echo "Testing SSH connection..."
+        
+        if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
+            "echo 'SSH connection successful'"; then
+          echo "✅ SSH connection validated successfully"
+          echo "validated=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ SSH connection failed"
+          echo "validated=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+    
+    - name: Validate server environment
+      run: |
+        echo "Validating server environment..."
+        
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        
+        echo "Checking Docker installation..."
+        if ! command -v docker &> /dev/null; then
+          echo "❌ Docker is not installed on the server"
+          exit 1
+        fi
+        
+        echo "Checking Docker service status..."
+        if ! docker info &> /dev/null; then
+          echo "❌ Docker service is not running"
+          exit 1
+        fi
+        
+        echo "Checking project directory..."
+        if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
+          echo "⚠️ Project directory does not exist, will be created during deployment"
+        else
+          echo "✅ Project directory exists"
+        fi
+        
+        echo "✅ Server environment validation completed"
+        EOF
