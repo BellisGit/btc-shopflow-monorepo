@@ -40,21 +40,21 @@ jobs:
     
     - name: Test SSH connection
       run: |
-        echo "ðŸ” Testing SSH connection first to fail fast if credentials are invalid..."
+        echo "[INFO] Testing SSH connection first to fail fast if credentials are invalid..."
         
         if [ -z "${{ secrets.SERVER_KEY }}" ]; then
-          echo "âš ï¸ SERVER_KEY not set - SSH deployment will be skipped"
+          echo "[WARNING] SERVER_KEY not set - SSH deployment will be skipped"
           echo "ssh_available=false" >> $GITHUB_ENV
           exit 0
         fi
         
         if [ -z "${{ secrets.SERVER_HOST }}" ]; then
-          echo "âš ï¸ SERVER_HOST not set - SSH deployment will be skipped"
+          echo "[WARNING] SERVER_HOST not set - SSH deployment will be skipped"
           echo "ssh_available=false" >> $GITHUB_ENV
           exit 0
         fi
         
-        echo "ðŸ”‘ Setting up SSH key..."
+        echo "[INFO] Setting up SSH key..."
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         
@@ -73,7 +73,7 @@ jobs:
         
         # Validate key format
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "â?SSH key format is invalid"
+          echo "?SSH key format is invalid"
           echo "Please check your SERVER_KEY secret format"
           exit 1
         fi
@@ -81,15 +81,15 @@ jobs:
         # Add host key
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         
-        echo "ðŸ§ª Testing SSH connection..."
+        echo " Testing SSH connection..."
         if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
             ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
             "echo 'SSH connection test successful'"; then
-          echo "âœ?SSH connection successful!"
+          echo "?SSH connection successful!"
           echo "ssh_available=true" >> $GITHUB_ENV
         else
-          echo "â?SSH connection failed!"
+          echo "?SSH connection failed!"
           echo "Please check your SERVER_KEY, SERVER_HOST, SERVER_USER, and SERVER_PORT secrets"
           echo "Common issues:"
           echo "- Incorrect SSH private key format"
@@ -290,7 +290,7 @@ jobs:
         echo "Setting up SSH connection..."
         
         if [ -z "${{ secrets.SERVER_KEY }}" ]; then
-          echo "âš ï¸ SERVER_KEY is not set, skipping SSH setup"
+          echo " SERVER_KEY is not set, skipping SSH setup"
           exit 0
         fi
         
@@ -314,7 +314,7 @@ jobs:
           
           # Ensure proper PEM format
           if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-            echo "â?Key doesn't appear to be in PEM format"
+            echo "?Key doesn't appear to be in PEM format"
             echo "First 100 characters of key:"
             head -c 100 ~/.ssh/id_rsa
             exit 1
@@ -343,7 +343,7 @@ jobs:
         echo "Last line: $(tail -1 ~/.ssh/id_rsa)"
         
         if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "â?SSH key format is still invalid after processing"
+          echo "?SSH key format is still invalid after processing"
           echo ""
           echo "=== DEBUGGING INFORMATION ==="
           echo "Key file contents (first 5 lines):"
@@ -358,7 +358,7 @@ jobs:
           echo "Please ensure your SERVER_KEY secret contains a valid SSH private key in PEM format."
           echo "The key should start with '-----BEGIN [RSA] PRIVATE KEY-----' and end with '-----END [RSA] PRIVATE KEY-----'"
           echo ""
-          echo "âš ï¸ SSH key validation failed. You can:"
+          echo " SSH key validation failed. You can:"
           echo "1. Fix your SERVER_KEY secret with a valid SSH private key"
           echo "2. Or remove SERVER_KEY to skip SSH-based deployment"
           echo ""
@@ -371,7 +371,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
         fi
         
-        echo "âœ?SSH key setup completed successfully"
+        echo "?SSH key setup completed successfully"
         echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa)"
 
     - name: Deploy applications
@@ -380,13 +380,13 @@ jobs:
         
         # Check if SSH key exists
         if [ ! -f ~/.ssh/id_rsa ]; then
-          echo "âš ï¸ SSH key not found, skipping deployment"
+          echo " SSH key not found, skipping deployment"
           exit 0
         fi
         
         # Check if required secrets are set
         if [ -z "${{ secrets.SERVER_HOST }}" ]; then
-          echo "âš ï¸ SERVER_HOST not set, skipping deployment"
+          echo " SERVER_HOST not set, skipping deployment"
           exit 0
         fi
         
@@ -396,12 +396,12 @@ jobs:
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
             ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
             "echo 'SSH connection test successful'"; then
-          echo "â?SSH connection failed, skipping deployment"
+          echo "?SSH connection failed, skipping deployment"
           echo "Please check your SERVER_KEY, SERVER_HOST, SERVER_USER, and SERVER_PORT secrets"
           exit 0
         fi
         
-        echo "âœ?SSH connection successful, proceeding with deployment..."
+        echo "?SSH connection successful, proceeding with deployment..."
         
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
             -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
@@ -506,5 +506,6 @@ jobs:
         echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
         exit 1
+
 
 
