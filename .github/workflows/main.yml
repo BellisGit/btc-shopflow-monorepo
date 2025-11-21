@@ -194,7 +194,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+    secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-admin-app:
     needs: [validate-ssh, validate-environment]
@@ -204,7 +205,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
     needs: [validate-ssh, validate-environment]
@@ -214,7 +216,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
     needs: [validate-ssh, validate-environment]
@@ -224,7 +227,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
     needs: [validate-ssh, validate-environment]
@@ -234,7 +238,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
     needs: [validate-ssh, validate-environment]
@@ -244,7 +249,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
     needs: [validate-ssh, validate-environment]
@@ -254,7 +260,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
     needs: [validate-ssh, validate-environment]
@@ -264,7 +271,8 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
+      secrets:
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   # Step 5: Deploy to Server
   deploy:
@@ -499,6 +507,7 @@ jobs:
         echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Deploy: ${{ needs.deploy.result }}" >> $GITHUB_STEP_SUMMARY
         exit 1
+
 
 
 

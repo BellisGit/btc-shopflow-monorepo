@@ -15,10 +15,10 @@ on:
         description: 'GitHub commit SHA'
         required: true
         type: string
-      gh_token:
+    secrets:
+      GH_TOKEN:
         description: 'GitHub token for registry access'
         required: true
-        type: string
 
 jobs:
   build-system-app:
@@ -47,9 +47,9 @@ jobs:
       run: |
         echo "Validating GitHub token for registry access..."
         
-        if [ -n "${{ inputs.gh_token }}" ]; then
+        if [ -n "${{ secrets.GH_TOKEN }}" ]; then
           echo "[SUCCESS] GH_TOKEN is available for Docker registry"
-          echo "Token length: $(echo '${{ inputs.gh_token }}' | wc -c) characters"
+          echo "Token length: $(echo '${{ secrets.GH_TOKEN }}' | wc -c) characters"
         else
           echo "[ERROR] GH_TOKEN is not available"
           exit 1
@@ -96,7 +96,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ inputs.gh_token }}
+        password: ${{ secrets.GH_TOKEN }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
