@@ -207,105 +207,76 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH
+    - name: Setup Aliyun CLI
       run: |
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
+        echo "Setting up Aliyun CLI for deployment..."
         
-        # 创建SSH密钥文件
-        echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa_raw
+        # 安装阿里云CLI
+        curl -L https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz -o aliyun-cli.tgz
+        tar -xzf aliyun-cli.tgz
+        sudo mv aliyun /usr/local/bin/
         
-        # 处理不同的密钥格式
-        if echo "${{ secrets.SERVER_KEY }}" | grep -q "BEGIN.*PRIVATE KEY"; then
-          echo "Using PEM format SSH key..."
-          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
-        elif echo "${{ secrets.SERVER_KEY }}" | base64 -d 2>/dev/null | grep -q "BEGIN.*PRIVATE KEY"; then
-          echo "Decoding base64 SSH key..."
-          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
-        else
-          echo "Processing raw SSH key with newline fixes..."
-          # 处理可能的换行符问题
-          echo "${{ secrets.SERVER_KEY }}" | sed 's/\\n/\n/g' | sed 's/ RSA PRIVATE KEY/ RSA PRIVATE KEY/g' > ~/.ssh/id_rsa
-        fi
+        # 配置阿里云凭证
+        aliyun configure set \
+          --profile default \
+          --mode AK \
+          --region ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --access-key-id ${{ secrets.ALIYUN_ACCESS_KEY_ID }} \
+          --access-key-secret ${{ secrets.SERVER_KEY }}
         
-        # 确保密钥文件格式正确
-        chmod 600 ~/.ssh/id_rsa
-        
-        # 检查密钥是否包含正确的头部
-        if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-          echo "SSH key does not contain valid PEM headers"
-          echo "Attempting to fix common formatting issues..."
-          
-          # 尝试修复常见的格式问题
-          sed -i 's/-----BEGIN RSA PRIVATE KEY-----/-----BEGIN RSA PRIVATE KEY-----\n/g' ~/.ssh/id_rsa
-          sed -i 's/-----END RSA PRIVATE KEY-----/\n-----END RSA PRIVATE KEY-----/g' ~/.ssh/id_rsa
-          sed -i '/^$/d' ~/.ssh/id_rsa
-          
-          # 确保每行不超过64字符（除了头尾）
-          awk '
-          /BEGIN.*PRIVATE KEY/ { print; next }
-          /END.*PRIVATE KEY/ { print; next }
-          { 
-            line = $0
-            gsub(/[^A-Za-z0-9+\/=]/, "", line)
-            while (length(line) > 64) {
-              print substr(line, 1, 64)
-              line = substr(line, 65)
-            }
-            if (length(line) > 0) print line
-          }' ~/.ssh/id_rsa > ~/.ssh/id_rsa_fixed
-          mv ~/.ssh/id_rsa_fixed ~/.ssh/id_rsa
-        fi
-        
-        chmod 600 ~/.ssh/id_rsa
-        
-        # 添加主机密钥
-        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
-        
-        # 验证密钥格式
-        if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-          echo "SSH key format is still invalid after processing"
-          echo "Key file structure:"
-          echo "Lines: $(wc -l < ~/.ssh/id_rsa)"
-          echo "First line: $(head -1 ~/.ssh/id_rsa)"
-          echo "Last line: $(tail -1 ~/.ssh/id_rsa)"
-          echo ""
-          echo "Please ensure your SERVER_KEY secret contains a valid SSH private key in PEM format"
-          echo "The key should start with '-----BEGIN RSA PRIVATE KEY-----' or '-----BEGIN PRIVATE KEY-----'"
-          exit 1
-        fi
-        
-        echo "SSH key setup completed successfully"
-        echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa)"
+        echo "Aliyun CLI configured successfully"
 
-    - name: Verify server connection
+    - name: Verify Aliyun connection
       run: |
-        echo "Testing SSH connection..."
-        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
-            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo 'Server connection successful'" || {
-          echo "SSH connection failed"
-          echo "Debugging information:"
-          echo "Host: ${{ secrets.SERVER_HOST }}"
-          echo "Port: ${{ secrets.SERVER_PORT }}"
-          echo "User: ${{ secrets.SERVER_USER }}"
-          echo "Key file permissions:"
-          ls -la ~/.ssh/id_rsa
-          echo "Key fingerprint:"
-          ssh-keygen -l -f ~/.ssh/id_rsa 2>/dev/null || echo "Cannot read key fingerprint"
+        echo "Testing Aliyun API connection..."
+        
+        # 测试阿里云API连接
+        if aliyun ecs DescribeRegions --output json >/dev/null 2>&1; then
+          echo "Aliyun API connection successful"
+          echo "Available regions:"
+          aliyun ecs DescribeRegions --output table
+        else
+          echo "Aliyun API connection failed"
+          echo "Please check your ALIYUN_ACCESS_KEY_ID and SERVER_KEY (AccessKey Secret)"
           exit 1
-        }
+        fi
 
     - name: Deploy applications
       run: |
-        echo "Deploying BTC ShopFlow applications..."
+        echo "Deploying BTC ShopFlow applications to Aliyun..."
         
-        ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        # 获取ECS实例信息
+        echo "Getting ECS instance information..."
+        INSTANCE_ID=$(aliyun ecs DescribeInstances \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --output json | jq -r '.Instances.Instance[0].InstanceId')
+        
+        if [ "$INSTANCE_ID" = "null" ] || [ -z "$INSTANCE_ID" ]; then
+          echo "No ECS instances found. Please ensure you have ECS instances in the specified region."
+          exit 1
+        fi
+        
+        echo "Found ECS instance: $INSTANCE_ID"
+        
+        # 使用阿里云ECS助手执行部署命令
+        COMMAND_ID=$(aliyun ecs CreateCommand \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --Type RunShellScript \
+          --CommandContent "$(echo '#!/bin/bash
         set -e
         
+        echo "Starting BTC ShopFlow deployment..."
+        
+        # 检查项目目录
+        if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
+          echo "Creating project directory..."
+          mkdir -p /www/wwwroot
+          cd /www/wwwroot
+          git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+        fi
+        
         echo "Navigating to project directory..."
-        cd /www/wwwroot/btc-shopflow-monorepo || { echo "Project directory not found"; exit 1; }
+        cd /www/wwwroot/btc-shopflow-monorepo
         
         echo "Pulling latest code..."
         git pull origin master
@@ -318,7 +289,48 @@ jobs:
         ./scripts/deploy.sh
         
         echo "Deployment completed successfully"
-        EOF
+        ' | base64 -w 0)" \
+          --Name "btc-shopflow-deploy-$(date +%Y%m%d%H%M%S)" \
+          --Description "Deploy BTC ShopFlow applications" \
+          --output json | jq -r '.CommandId')
+        
+        echo "Created deployment command: $COMMAND_ID"
+        
+        # 执行命令
+        INVOKE_ID=$(aliyun ecs InvokeCommand \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --CommandId $COMMAND_ID \
+          --InstanceId.1 $INSTANCE_ID \
+          --output json | jq -r '.InvokeId')
+        
+        echo "Command invocation started: $INVOKE_ID"
+        
+        # 等待命令执行完成
+        echo "Waiting for deployment to complete..."
+        for i in {1..60}; do
+          STATUS=$(aliyun ecs DescribeInvocations \
+            --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+            --InvokeId $INVOKE_ID \
+            --output json | jq -r '.Invocations.Invocation[0].InvokeStatus')
+          
+          if [ "$STATUS" = "Finished" ]; then
+            echo "Deployment completed successfully"
+            break
+          elif [ "$STATUS" = "Failed" ]; then
+            echo "Deployment failed"
+            exit 1
+          else
+            echo "Deployment in progress... ($i/60)"
+            sleep 10
+          fi
+        done
+        
+        # 获取执行结果
+        echo "Getting deployment results..."
+        aliyun ecs DescribeInvocationResults \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --InvokeId $INVOKE_ID \
+          --output json | jq -r '.Invocation.InvocationResults.InvocationResult[0].Output' | base64 -d
 
     - name: Health checks
       run: |
@@ -327,12 +339,24 @@ jobs:
         # 等待服务启动
         sleep 30
         
+        # 获取ECS实例的公网IP
+        PUBLIC_IP=$(aliyun ecs DescribeInstances \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --output json | jq -r '.Instances.Instance[0].PublicIpAddress.IpAddress[0]')
+        
+        if [ "$PUBLIC_IP" = "null" ] || [ -z "$PUBLIC_IP" ]; then
+          echo "Could not get public IP, using SERVER_HOST from secrets"
+          PUBLIC_IP="${{ secrets.SERVER_HOST }}"
+        fi
+        
+        echo "Checking application health on IP: $PUBLIC_IP"
+        
         # 检查主要应用
         for port in 30080 30081 30086; do
-          if curl -f -s --max-time 10 http://${{ secrets.SERVER_HOST }}:$port > /dev/null; then
+          if curl -f -s --max-time 10 http://$PUBLIC_IP:$port > /dev/null; then
             echo "Port $port is healthy"
           else
-            echo "Port $port health check failed"
+            echo "Port $port health check failed (this may be normal if the service is still starting)"
           fi
         done
 
@@ -351,9 +375,15 @@ jobs:
         echo "- Mobile App: ${{ needs.build-mobile-app.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Application URLs:" >> $GITHUB_STEP_SUMMARY
-        echo "- 主应用: http://${{ secrets.SERVER_HOST }}:30080" >> $GITHUB_STEP_SUMMARY
-        echo "- 管理后台: http://${{ secrets.SERVER_HOST }}:30081" >> $GITHUB_STEP_SUMMARY
-        echo "- 财务系统: http://${{ secrets.SERVER_HOST }}:30086" >> $GITHUB_STEP_SUMMARY
+        
+        # 获取ECS实例的公网IP用于显示
+        PUBLIC_IP=$(aliyun ecs DescribeInstances \
+          --RegionId ${{ secrets.ALIYUN_REGION || 'cn-hangzhou' }} \
+          --output json | jq -r '.Instances.Instance[0].PublicIpAddress.IpAddress[0]' 2>/dev/null || echo "${{ secrets.SERVER_HOST }}")
+        
+        echo "- 主应用: http://$PUBLIC_IP:30080" >> $GITHUB_STEP_SUMMARY
+        echo "- 管理后台: http://$PUBLIC_IP:30081" >> $GITHUB_STEP_SUMMARY
+        echo "- 财务系统: http://$PUBLIC_IP:30086" >> $GITHUB_STEP_SUMMARY
 
   # 第四步：通知
   notify:
