@@ -30,22 +30,22 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Lint
-        run: pnpm -w run lint || pnpm -w run lint:fix --if-present
+        run: pnpm run lint
 
       - name: Type check
-        run: pnpm -w run type-check --if-present
+        run: pnpm run type-check
 
       - name: Build
-        run: pnpm -w run build
+        run: pnpm run build:all
 
       - name: Unit tests
-        run: pnpm -w run test:unit --if-present
+        run: pnpm run test:unit
 
       - name: Integration tests
-        run: pnpm -w run test:integration --if-present
+        run: pnpm run test:integration
 
       - name: E2E tests
-        run: pnpm -w run test:e2e --if-present
+        run: pnpm run test:e2e
 
 
 
