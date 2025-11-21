@@ -1,0 +1,102 @@
+name: Build System App
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: 'Container registry'
+        required: true
+        type: string
+      github_repository:
+        description: 'GitHub repository'
+        required: true
+        type: string
+      github_sha:
+        description: 'GitHub SHA'
+        required: true
+        type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+jobs:
+  build-system-app:
+    name: 🏗️ Build System App Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🏷️ Job Info - System App (1/8)
+      run: |
+        echo "🏗️ Starting build for: system-app"
+        echo "📊 Job Index: 1/8"
+        echo "🔧 Build Group: docker-builds"
+        echo "⏰ Start Time: $(date)"
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🏗️ Build System App Docker Image
+      run: |
+        echo "🏗️ Building system-app..."
+        
+        cat > "apps/system-app/Dockerfile" << 'EOF'
+        FROM node:20-alpine AS builder
+        WORKDIR /app
+        
+        # 复制配置文件
+        COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+        COPY .npmrc* ./
+        COPY turbo.json ./
+        COPY tsconfig.json ./
+        
+        # 复制源代码
+        COPY apps/ ./apps/
+        COPY packages/ ./packages/
+        COPY auth/ ./auth/
+        COPY scripts/ ./scripts/
+        COPY configs/ ./configs/
+        
+        # 安装pnpm
+        RUN npm install -g pnpm@8.15.0
+        RUN pnpm config set store-dir /root/.local/share/pnpm/store
+        
+        # 安装依赖
+        RUN pnpm install --no-frozen-lockfile
+        
+        # 先构建必需的共享包
+        RUN pnpm --filter @btc/vite-plugin run build
+        RUN pnpm --filter @btc/shared-utils run build
+        RUN pnpm --filter @btc/shared-core run build
+        RUN pnpm --filter @btc/shared-components run build
+        
+        # 构建应用
+        RUN cd apps/system-app && pnpm run build
+        
+        FROM nginx:alpine
+        COPY --from=builder /app/apps/system-app/dist /usr/share/nginx/html
+        RUN echo 'server { listen 80; location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+        EXPOSE 80
+        CMD ["nginx", "-g", "daemon off;"]
+        EOF
+        
+        docker build -t btc-shopflow/system-app:latest -f apps/system-app/Dockerfile .
+        docker tag btc-shopflow/system-app:latest ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
+        docker push ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
+
+    - name: ✅ Build Complete
+      run: |
+        echo "✅ System App build completed successfully"
+        echo "📦 Image: ${{ inputs.registry }}/$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest"
