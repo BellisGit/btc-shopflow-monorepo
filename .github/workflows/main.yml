@@ -49,6 +49,20 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
+    - name: Validate GitHub Token
+      run: |
+        echo "Validating GitHub tokens for registry access..."
+        
+        if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+          echo "✅ SERVER_PAT is available for GitHub Container Registry"
+          echo "PAT length: $(echo '${{ secrets.SERVER_PAT }}' | wc -c) characters"
+        elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+          echo "✅ GITHUB_TOKEN is available (fallback)"
+        else
+          echo "❌ No GitHub token available for registry access"
+          exit 1
+        fi
+
     - name: Build dependencies
       run: |
         echo "Building dependencies before type checking..."
@@ -88,7 +102,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-admin-app:
     needs: [validate-environment]
@@ -102,7 +116,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
     needs: [validate-environment]
@@ -116,7 +130,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
     needs: [validate-environment]
@@ -130,7 +144,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
     needs: [validate-environment]
@@ -144,7 +158,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
     needs: [validate-environment]
@@ -158,7 +172,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
     needs: [validate-environment]
@@ -172,7 +186,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
     needs: [validate-environment]
@@ -186,7 +200,7 @@ jobs:
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
     secrets:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   # 第四步：部署到服务器
   deploy:
@@ -244,7 +258,7 @@ jobs:
         git pull origin master
         
         echo "Logging into container registry..."
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
         
         echo "Starting deployment script..."
         chmod +x scripts/deploy.sh

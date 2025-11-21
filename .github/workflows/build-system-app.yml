@@ -43,6 +43,18 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
     
+    - name: Validate GitHub Token
+      run: |
+        echo "Validating GitHub token for registry access..."
+        
+        if [ -n "${{ secrets.GH_TOKEN }}" ]; then
+          echo "✅ GH_TOKEN is available for Docker registry"
+          echo "Token length: $(echo '${{ secrets.GH_TOKEN }}' | wc -c) characters"
+        else
+          echo "❌ GH_TOKEN is not available"
+          exit 1
+        fi
+
     - name: Build dependencies
       run: |
         echo "Building dependencies for system-app..."
