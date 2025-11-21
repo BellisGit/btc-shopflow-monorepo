@@ -151,8 +151,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/system-app:latest -f apps/system-app/Dockerfile .
-        docker tag btc-shopflow/system-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/system-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/system-app:latest
+        docker tag btc-shopflow/system-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/system-app:latest
 
   # 第二步：构建Admin App
   build-admin-app:
@@ -223,8 +223,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/admin-app:latest -f apps/admin-app/Dockerfile .
-        docker tag btc-shopflow/admin-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/admin-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/admin-app:latest
+        docker tag btc-shopflow/admin-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/admin-app:latest
 
   # 第二步：构建Logistics App
   build-logistics-app:
@@ -295,8 +295,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/logistics-app:latest -f apps/logistics-app/Dockerfile .
-        docker tag btc-shopflow/logistics-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/logistics-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/logistics-app:latest
+        docker tag btc-shopflow/logistics-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/logistics-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/logistics-app:latest
 
   # 第二步：构建Quality App
   build-quality-app:
@@ -367,8 +367,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/quality-app:latest -f apps/quality-app/Dockerfile .
-        docker tag btc-shopflow/quality-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/quality-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/quality-app:latest
+        docker tag btc-shopflow/quality-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/quality-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/quality-app:latest
 
   # 第二步：构建Production App
   build-production-app:
@@ -439,8 +439,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/production-app:latest -f apps/production-app/Dockerfile .
-        docker tag btc-shopflow/production-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/production-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/production-app:latest
+        docker tag btc-shopflow/production-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/production-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/production-app:latest
 
   # 第二步：构建Engineering App
   build-engineering-app:
@@ -511,8 +511,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/engineering-app:latest -f apps/engineering-app/Dockerfile .
-        docker tag btc-shopflow/engineering-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/engineering-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/engineering-app:latest
+        docker tag btc-shopflow/engineering-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/engineering-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/engineering-app:latest
 
   # 第二步：构建Finance App
   build-finance-app:
@@ -583,8 +583,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/finance-app:latest -f apps/finance-app/Dockerfile .
-        docker tag btc-shopflow/finance-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/finance-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/finance-app:latest
+        docker tag btc-shopflow/finance-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/finance-app:latest
 
   # 第二步：构建Mobile App
   build-mobile-app:
@@ -655,8 +655,8 @@ jobs:
         EOF
         
         docker build -t btc-shopflow/mobile-app:latest -f apps/mobile-app/Dockerfile .
-        docker tag btc-shopflow/mobile-app:latest ${{ env.REGISTRY }}/${{ github.repository }}/mobile-app:latest
-        docker push ${{ env.REGISTRY }}/${{ github.repository }}/mobile-app:latest
+        docker tag btc-shopflow/mobile-app:latest ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/mobile-app:latest
+        docker push ${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/mobile-app:latest
 
   # 第三步：部署到服务器
   deploy:
