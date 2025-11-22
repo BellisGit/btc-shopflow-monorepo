@@ -65,6 +65,7 @@ jobs:
         FROM node:20-alpine AS builder
         WORKDIR /app
         COPY package*.json pnpm-*.yaml ./
+        COPY scripts ./scripts
         COPY packages ./packages
         COPY apps/finance-app ./apps/finance-app
         RUN npm install -g pnpm@8.15.0

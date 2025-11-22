@@ -79,6 +79,7 @@ jobs:
         WORKDIR /app
         # Copy package files first for better Docker layer caching
         COPY package*.json pnpm-*.yaml ./
+        COPY scripts ./scripts
         RUN npm install -g pnpm@8.15.0
         RUN pnpm install --frozen-lockfile
         # Copy source code
