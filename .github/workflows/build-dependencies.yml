@@ -20,17 +20,27 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
     
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+    
+    - name: Setup pnpm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    
     - name: Install dependencies
-      run: pnpm install --no-frozen-lockfile
+      run: pnpm install --frozen-lockfile
     
-    - name: Build vite-plugin
+    - name: Build packages
       run: |
-        echo "Building @btc/vite-plugin..."
+        echo "Building packages sequentially (ensuring dependencies)..."
+        # 顺序构建，确保依赖关系正确
         pnpm --filter @btc/vite-plugin run build
-    
-    - name: Build shared packages
-      run: |
-        echo "Building shared packages..."
         pnpm --filter @btc/shared-utils run build
         pnpm --filter @btc/shared-core run build
         pnpm --filter @btc/shared-components run build

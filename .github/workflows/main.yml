@@ -221,9 +221,19 @@ jobs:
 
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
-
-    - name: Install dependencies
-      run: pnpm install --no-frozen-lockfile
+    
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+    
+    - name: Setup pnpm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
 
     - name: Restore built packages cache
       uses: actions/cache@v3
@@ -235,9 +245,19 @@ jobs:
         restore-keys: |
           packages-build-
 
+    - name: Install dependencies (skip if cached)
+      run: |
+        if [ ! -d "${{ env.STORE_PATH }}" ] || [ -z "$(ls -A ${{ env.STORE_PATH }} 2>/dev/null)" ]; then
+          echo "Installing dependencies..."
+          pnpm install --frozen-lockfile
+        else
+          echo "Using cached pnpm store, installing missing dependencies..."
+          pnpm install --frozen-lockfile --prefer-offline
+        fi
+
     - name: Build packages if cache miss
       run: |
-        if [ ! -d "packages/shared-core/dist" ]; then
+        if [ ! -d "packages/shared-core/dist" ] || [ ! -f "packages/shared-core/dist/index.js" ]; then
           echo "Cache miss, building packages..."
           pnpm --filter @btc/vite-plugin run build
           pnpm --filter @btc/shared-utils run build
@@ -248,11 +268,12 @@ jobs:
           echo "Using cached packages"
         fi
 
-    - name: Type check
-      run: pnpm run type-check
-
-    - name: Lint check
-      run: pnpm run lint
+    - name: Type check and Lint (parallel)
+      run: |
+        echo "Running type-check and lint in parallel..."
+        pnpm run type-check &
+        pnpm run lint &
+        wait
 
   # Step 5: Environment Validation
   validate-environment:
@@ -411,59 +432,67 @@ jobs:
           export DOCKER_CONFIG=/tmp/.docker
           echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          echo "📥 Pulling Docker images from container registry..."
+          echo "📥 Pulling Docker images from container registry (parallel)..."
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           
-          # 拉取所有应用镜像（带超时和重试）
+          # 并行拉取所有应用镜像的函数
+          pull_image_async() {
+            local app=$1
+            local tag=$2
+            local timeout_duration=${3:-300}
+            local max_retries=${4:-2}
+            
+            echo "[$app] Starting pull for $tag..."
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $max_retries ]; do
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if timeout $timeout_duration docker pull ghcr.io/$REPO_LOWER/$app:$tag 2>&1; then
+                docker tag ghcr.io/$REPO_LOWER/$app:$tag btc-shopflow/$app:latest 2>/dev/null || true
+                echo "[$app] ✅ Successfully pulled $tag"
+                return 0
+              else
+                echo "[$app] ⚠️  Failed to pull $tag (attempt $RETRY_COUNT/$max_retries)"
+                if [ $RETRY_COUNT -lt $max_retries ]; then
+                  sleep $((RETRY_COUNT * 5))
+                fi
+              fi
+            done
+            return 1
+          }
+          
+          # 并行拉取所有镜像（后台执行）
+          PIDS=()
           for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📦 Processing $app..."
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            
-            PULL_SUCCESS=false
-            MAX_RETRIES=3
-            TIMEOUT_DURATION=600  # 10分钟超时
-            
-            # 先尝试拉取latest标签
-            for tag in "latest" "${{ github.sha }}"; do
-              if [ "$PULL_SUCCESS" = true ]; then
-                break
+            # 先尝试 latest，失败则尝试 SHA
+            (
+              if ! pull_image_async "$app" "latest" 300 2; then
+                pull_image_async "$app" "${{ github.sha }}" 300 2 || true
               fi
               
-              RETRY_COUNT=0
-              while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$PULL_SUCCESS" = false ]; do
-                RETRY_COUNT=$((RETRY_COUNT + 1))
-                echo "[Attempt $RETRY_COUNT/$MAX_RETRIES] Pulling $app:$tag (timeout: ${TIMEOUT_DURATION}s)..."
-                
-                # 使用 timeout 命令包装 docker pull
-                if timeout $TIMEOUT_DURATION docker pull ghcr.io/$REPO_LOWER/$app:$tag; then
-                  docker tag ghcr.io/$REPO_LOWER/$app:$tag btc-shopflow/$app:latest || true
-                  echo "✅ Successfully pulled $app:$tag"
-                  PULL_SUCCESS=true
-                  break
-                else
-                  EXIT_CODE=$?
-                  echo "⚠️  Failed to pull $app:$tag (exit code: $EXIT_CODE)"
-                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                    WAIT_TIME=$((RETRY_COUNT * 10))
-                    echo "⏳ Waiting ${WAIT_TIME}s before retry..."
-                    sleep $WAIT_TIME
-                  fi
-                fi
-              done
-            done
-            
-            # 如果拉取失败，检查是否已有镜像
-            if [ "$PULL_SUCCESS" = false ]; then
-              echo "⚠️  Warning: Failed to pull $app image after all retries, checking if already exists..."
-              if docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "$app"; then
-                echo "✅ Using existing $app image"
-              else
-                echo "❌ No $app image available, deployment may fail for this app"
+              # 如果都失败，检查是否已有镜像
+              if ! docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "$app"; then
+                echo "[$app] ⚠️  No image available"
               fi
-            fi
-            echo ""
+            ) &
+            PIDS+=($!)
           done
+          
+          # 等待所有后台任务完成
+          echo "⏳ Waiting for all images to be pulled..."
+          FAILED=0
+          for pid in "${PIDS[@]}"; do
+            if ! wait "$pid"; then
+              FAILED=$((FAILED + 1))
+            fi
+          done
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "⚠️  $FAILED images failed to pull, checking existing images..."
+          fi
+          
+          echo ""
+          echo "📊 Final image status:"
           
           echo "📊 Final image status:"
           docker images btc-shopflow/ --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" || true
@@ -550,7 +579,20 @@ jobs:
             "    driver: bridge" > docker-compose.prod.yml
           
           echo "Starting services..."
+          # 停止并删除所有 btc-shopflow 相关的旧容器（包括使用旧镜像的）
+          echo "🧹 清理所有 btc-shopflow 相关容器..."
+          docker ps -a --filter "name=btc-" --format "{{.ID}} {{.Names}}" | while read -r container_id container_name; do
+            if [ -n "$container_id" ]; then
+              echo "停止并删除容器: $container_name ($container_id)"
+              docker stop "$container_id" 2>/dev/null || true
+              docker rm -f "$container_id" 2>/dev/null || true
+            fi
+          done
+          
+          # 使用 docker-compose 停止（如果存在）
           docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+          
+          # 启动新服务
           docker-compose -f docker-compose.prod.yml up -d
           
           echo "Cleaning up unused images after deployment..."
