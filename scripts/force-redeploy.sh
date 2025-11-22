@@ -11,12 +11,120 @@ echo ""
 CONTAINER_NAME="btc-system-app"
 IMAGE_NAME="btc-shopflow/system-app:latest"
 
-# 1. 检查是否有 docker-compose.prod.yml
-if [ ! -f "docker-compose.prod.yml" ]; then
-    echo "❌ docker-compose.prod.yml 文件不存在"
-    echo "请先运行部署脚本或确保文件存在"
-    exit 1
+# 1. 查找或创建 docker-compose.prod.yml
+COMPOSE_FILE="docker-compose.prod.yml"
+
+# 尝试在多个位置查找文件
+if [ ! -f "$COMPOSE_FILE" ]; then
+    # 尝试在常见位置查找
+    if [ -f "/www/wwwroot/docker-compose.prod.yml" ]; then
+        COMPOSE_FILE="/www/wwwroot/docker-compose.prod.yml"
+        cd /www/wwwroot
+    elif [ -f "/www/wwwroot/btc-shopflow-monorepo/docker-compose.prod.yml" ]; then
+        COMPOSE_FILE="/www/wwwroot/btc-shopflow-monorepo/docker-compose.prod.yml"
+        cd /www/wwwroot/btc-shopflow-monorepo
+    elif [ -f "$HOME/docker-compose.prod.yml" ]; then
+        COMPOSE_FILE="$HOME/docker-compose.prod.yml"
+        cd "$HOME"
+    else
+        # 如果找不到，创建文件
+        echo "📝 未找到 docker-compose.prod.yml，正在创建..."
+        
+        # 确定当前工作目录（优先使用 /www/wwwroot）
+        if [ -d "/www/wwwroot" ]; then
+            WORK_DIR="/www/wwwroot"
+        else
+            WORK_DIR="$(pwd)"
+        fi
+        
+        cd "$WORK_DIR"
+        
+        cat > "$COMPOSE_FILE" << 'EOF'
+version: '3.8'
+
+services:
+  system-app:
+    image: btc-shopflow/system-app:latest
+    container_name: btc-system-app
+    ports:
+      - "30080:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  admin-app:
+    image: btc-shopflow/admin-app:latest
+    container_name: btc-admin-app
+    ports:
+      - "30081:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  finance-app:
+    image: btc-shopflow/finance-app:latest
+    container_name: btc-finance-app
+    ports:
+      - "30086:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  logistics-app:
+    image: btc-shopflow/logistics-app:latest
+    container_name: btc-logistics-app
+    ports:
+      - "30082:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  quality-app:
+    image: btc-shopflow/quality-app:latest
+    container_name: btc-quality-app
+    ports:
+      - "30083:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  production-app:
+    image: btc-shopflow/production-app:latest
+    container_name: btc-production-app
+    ports:
+      - "30084:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  engineering-app:
+    image: btc-shopflow/engineering-app:latest
+    container_name: btc-engineering-app
+    ports:
+      - "30085:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  mobile-app:
+    image: btc-shopflow/mobile-app:latest
+    container_name: btc-mobile-app
+    ports:
+      - "30091:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+networks:
+  btc-network:
+    driver: bridge
+EOF
+        echo "✅ 已创建 docker-compose.prod.yml 在: $WORK_DIR/$COMPOSE_FILE"
+    fi
 fi
+
+echo "📄 使用 docker-compose 文件: $COMPOSE_FILE"
+echo ""
 
 echo "📦 当前容器状态:"
 docker ps -a --filter "name=${CONTAINER_NAME}" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
@@ -38,7 +146,7 @@ echo ""
 
 # 4. 使用 docker-compose 重新拉取并启动
 echo "📥 重新拉取镜像并启动容器..."
-if docker-compose -f docker-compose.prod.yml pull system-app; then
+if docker-compose -f "$COMPOSE_FILE" pull system-app; then
     echo "✅ 镜像拉取成功"
 else
     echo "⚠️  镜像拉取失败，尝试从本地构建或检查网络连接"
@@ -47,7 +155,7 @@ echo ""
 
 # 5. 启动容器
 echo "🚀 启动容器..."
-docker-compose -f docker-compose.prod.yml up -d system-app
+docker-compose -f "$COMPOSE_FILE" up -d system-app
 echo ""
 
 # 6. 等待容器启动
