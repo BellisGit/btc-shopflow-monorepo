@@ -43,15 +43,17 @@ WORKDIR /repo/${APP_DIR}
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm build
 
-# 运行时镜像：Nginx 提供静态资源，并支持 SPA fallback
-FROM nginx:1.27-alpine AS runner
+# 运行时镜像：使用 Node.js 提供静态资源服务
+ARG NODE_VERSION=20-alpine
+FROM node:${NODE_VERSION} AS runner
 ARG APP_DIR=apps/admin-app
 ENV APP_DIR=${APP_DIR}
-# 拷贝通用 nginx 配置（若存在）
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-# 拷贝构建产物到 nginx 根目录
-COPY --from=build /repo/${APP_DIR}/dist /usr/share/nginx/html
+WORKDIR /app
+# 安装 serve 用于提供静态文件服务
+RUN npm install -g serve
+# 拷贝构建产物
+COPY --from=build /repo/${APP_DIR}/dist ./dist
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "dist", "-l", "80"]
 
 
