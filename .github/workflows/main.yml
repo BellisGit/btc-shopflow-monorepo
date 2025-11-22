@@ -366,7 +366,7 @@ jobs:
     name: Deploy to Server
     runs-on: ubuntu-latest
     needs: [validate-ssh, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
-    if: always() && needs.validate-ssh.result == 'success' && github.ref == 'refs/heads/master'
+    if: always() && needs.validate-ssh.result == 'success' && needs.validate-environment.result == 'success' && github.ref == 'refs/heads/master'
     
     steps:
     - name: Deploy applications
@@ -393,21 +393,42 @@ jobs:
           echo "Navigating to project directory..."
           cd /www/wwwroot/btc-shopflow-monorepo
           
-          echo "Logging into container registry..."
+          echo "✅ 服务器资源已在初始化阶段验证通过"
+          echo "📊 当前磁盘空间状态:"
+          df -h
+          
+          echo "🧹 清理未使用的Docker资源（轻量级清理）..."
+          # 轻量级清理：只清理未使用的资源，不影响正在运行的容器
+          docker image prune -f || true
+          docker builder prune -af || true
+          
+          echo "🔐 Logging into container registry..."
+          # 使用临时凭证存储位置，避免磁盘空间问题
+          mkdir -p /tmp/.docker
+          export DOCKER_CONFIG=/tmp/.docker
           echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           
-          echo "Pulling Docker images from container registry..."
+          echo "📥 Pulling Docker images from container registry..."
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           
-          # 拉取所有应用镜像
+          # 拉取所有应用镜像（如果空间不足，优先拉取最新的）
           for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
             echo "Pulling $app image..."
-            docker pull ghcr.io/$REPO_LOWER/$app:${{ github.sha }} || docker pull ghcr.io/$REPO_LOWER/$app:latest || echo "Warning: Failed to pull $app image"
-            # 如果拉取了特定SHA的镜像，也标记为latest
-            if docker images ghcr.io/$REPO_LOWER/$app:${{ github.sha }} --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
-              docker tag ghcr.io/$REPO_LOWER/$app:${{ github.sha }} btc-shopflow/$app:latest || true
-            elif docker images ghcr.io/$REPO_LOWER/$app:latest --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
+            # 先尝试拉取latest标签（通常更小，因为可能有缓存层）
+            if docker pull ghcr.io/$REPO_LOWER/$app:latest 2>&1; then
               docker tag ghcr.io/$REPO_LOWER/$app:latest btc-shopflow/$app:latest || true
+              echo "✅ Successfully pulled $app:latest"
+            elif docker pull ghcr.io/$REPO_LOWER/$app:${{ github.sha }} 2>&1; then
+              docker tag ghcr.io/$REPO_LOWER/$app:${{ github.sha }} btc-shopflow/$app:latest || true
+              echo "✅ Successfully pulled $app:${{ github.sha }}"
+            else
+              echo "⚠️  Warning: Failed to pull $app image, checking if already exists..."
+              # 检查是否已经有镜像
+              if docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
+                echo "✅ Using existing $app image"
+              else
+                echo "❌ No $app image available, deployment may fail for this app"
+              fi
             fi
           done
           
@@ -496,8 +517,21 @@ jobs:
           docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
           docker-compose -f docker-compose.prod.yml up -d
           
-          echo "Cleaning up old images..."
+          echo "Cleaning up unused images after deployment..."
+          # 只清理未使用的镜像，保留正在使用的
           docker image prune -f || true
+          
+          # 删除旧版本的镜像（如果存在）
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          if [ -n "$REPO_LOWER" ]; then
+            # 删除除了最新标签之外的其他标签
+            for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+              docker images ghcr.io/$REPO_LOWER/$app --format "{{.ID}} {{.Tag}}" | grep -v "latest" | grep -v "${{ github.sha }}" | awk '{print $1}' | xargs -r docker rmi -f || true
+            done
+          fi
+          
+          echo "Final disk space:"
+          df -h
           
           echo "Deployment completed successfully"
 
