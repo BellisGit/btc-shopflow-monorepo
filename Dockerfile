@@ -48,6 +48,7 @@ WORKDIR /repo
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --prefer-offline
 # 构建指定子应用（从根目录使用 filter 构建，需要先构建依赖包）
+# Vite build 默认会读取 .env.production 文件（如果存在）
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     APP_NAME=$(basename ${APP_DIR}) && \
     pnpm --filter @btc/vite-plugin build && \
@@ -63,11 +64,26 @@ FROM node:${NODE_VERSION} AS runner
 ARG APP_DIR=apps/admin-app
 ENV APP_DIR=${APP_DIR}
 WORKDIR /app
+
 # 安装 serve 用于提供静态文件服务
 RUN npm install -g serve
+
 # 拷贝构建产物
 COPY --from=build /repo/${APP_DIR}/dist ./dist
+
+# 验证 dist 目录是否存在且不为空
+RUN if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then \
+      echo "ERROR: dist directory is empty or does not exist!" && \
+      echo "APP_DIR=${APP_DIR}" && \
+      ls -la /app || true && \
+      exit 1; \
+    else \
+      echo "✅ dist directory is valid" && \
+      ls -la dist | head -10; \
+    fi
+
 EXPOSE 80
-CMD ["serve", "-s", "dist", "-l", "80"]
+# 使用 -s 参数支持 SPA 路由，-n 参数禁用缓存
+CMD ["serve", "-s", "dist", "-l", "80", "-n"]
 
 
