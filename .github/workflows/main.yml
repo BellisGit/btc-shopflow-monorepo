@@ -286,7 +286,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
@@ -298,7 +298,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
@@ -310,7 +310,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
@@ -322,7 +322,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
@@ -334,7 +334,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
@@ -346,7 +346,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
@@ -358,13 +358,14 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   # Step 7: Deploy to Server
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [validate-ssh, validate-environment, build-system-app, build-admin-app, build-logistics-app, build-quality-app, build-production-app, build-engineering-app, build-finance-app, build-mobile-app]
     if: always() && needs.validate-ssh.result == 'success' && needs.validate-environment.result == 'success' && github.ref == 'refs/heads/master'
     
@@ -377,163 +378,198 @@ jobs:
         username: ${{ secrets.SERVER_USER || 'root' }}
         key: ${{ secrets.SERVER_KEY }}
         port: ${{ secrets.SERVER_PORT || '22' }}
+        timeout: 1800s
+        command_timeout: 25m
         script: |
-          set -e
-          
-          echo "Starting BTC ShopFlow deployment..."
-          
-          # Check project directory
-          if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
-            echo "Creating project directory..."
-            mkdir -p /www/wwwroot
-            cd /www/wwwroot
-            git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
-          fi
-          
-          echo "Navigating to project directory..."
-          cd /www/wwwroot/btc-shopflow-monorepo
-          
-          echo "✅ 服务器资源已在初始化阶段验证通过"
-          echo "📊 当前磁盘空间状态:"
-          df -h
-          
-          echo "🧹 清理未使用的Docker资源（轻量级清理）..."
-          # 轻量级清理：只清理未使用的资源，不影响正在运行的容器
-          docker image prune -f || true
-          docker builder prune -af || true
-          
-          echo "🔐 Logging into container registry..."
-          # 使用临时凭证存储位置，避免磁盘空间问题
-          mkdir -p /tmp/.docker
-          export DOCKER_CONFIG=/tmp/.docker
-          echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          
-          echo "📥 Pulling Docker images from container registry..."
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          
-          # 拉取所有应用镜像（如果空间不足，优先拉取最新的）
-          for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
-            echo "Pulling $app image..."
-            # 先尝试拉取latest标签（通常更小，因为可能有缓存层）
-            if docker pull ghcr.io/$REPO_LOWER/$app:latest 2>&1; then
-              docker tag ghcr.io/$REPO_LOWER/$app:latest btc-shopflow/$app:latest || true
-              echo "✅ Successfully pulled $app:latest"
-            elif docker pull ghcr.io/$REPO_LOWER/$app:${{ github.sha }} 2>&1; then
-              docker tag ghcr.io/$REPO_LOWER/$app:${{ github.sha }} btc-shopflow/$app:latest || true
-              echo "✅ Successfully pulled $app:${{ github.sha }}"
-            else
-              echo "⚠️  Warning: Failed to pull $app image, checking if already exists..."
-              # 检查是否已经有镜像
-              if docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
+        set -e
+        
+        echo "Starting BTC ShopFlow deployment..."
+        
+        # Check project directory
+        if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
+          echo "Creating project directory..."
+          mkdir -p /www/wwwroot
+          cd /www/wwwroot
+          git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+        fi
+        
+        echo "Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo
+        
+        echo "✅ 服务器资源已在初始化阶段验证通过"
+        echo "📊 当前磁盘空间状态:"
+        df -h
+        
+        echo "🧹 清理未使用的Docker资源（轻量级清理）..."
+        # 轻量级清理：只清理未使用的资源，不影响正在运行的容器
+        docker image prune -f || true
+        docker builder prune -af || true
+        
+        echo "🔐 Logging into container registry..."
+        # 使用临时凭证存储位置，避免磁盘空间问题
+        mkdir -p /tmp/.docker
+        export DOCKER_CONFIG=/tmp/.docker
+        echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        
+        echo "📥 Pulling Docker images from container registry..."
+        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        
+        # 拉取所有应用镜像（带超时和重试）
+        for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📦 Processing $app..."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            
+            PULL_SUCCESS=false
+            MAX_RETRIES=3
+            TIMEOUT_DURATION=600  # 10分钟超时
+            
+            # 先尝试拉取latest标签
+            for tag in "latest" "${{ github.sha }}"; do
+              if [ "$PULL_SUCCESS" = true ]; then
+                break
+              fi
+              
+              RETRY_COUNT=0
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$PULL_SUCCESS" = false ]; do
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                echo "[Attempt $RETRY_COUNT/$MAX_RETRIES] Pulling $app:$tag (timeout: ${TIMEOUT_DURATION}s)..."
+                
+                # 使用 timeout 命令包装 docker pull，并启用进度输出
+                if timeout $TIMEOUT_DURATION docker pull --progress=plain ghcr.io/$REPO_LOWER/$app:$tag; then
+                  docker tag ghcr.io/$REPO_LOWER/$app:$tag btc-shopflow/$app:latest || true
+                  echo "✅ Successfully pulled $app:$tag"
+                  PULL_SUCCESS=true
+                  break
+                else
+                  EXIT_CODE=$?
+                  echo "⚠️  Failed to pull $app:$tag (exit code: $EXIT_CODE)"
+                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    WAIT_TIME=$((RETRY_COUNT * 10))
+                    echo "⏳ Waiting ${WAIT_TIME}s before retry..."
+                    sleep $WAIT_TIME
+                  fi
+                fi
+              done
+            done
+            
+            # 如果拉取失败，检查是否已有镜像
+            if [ "$PULL_SUCCESS" = false ]; then
+              echo "⚠️  Warning: Failed to pull $app image after all retries, checking if already exists..."
+              if docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "$app"; then
                 echo "✅ Using existing $app image"
               else
                 echo "❌ No $app image available, deployment may fail for this app"
               fi
             fi
+            echo ""
           done
           
-          echo "Creating Docker Compose configuration..."
-          printf '%s\n' \
-            "version: '3.8'" \
-            "" \
-            "services:" \
-            "  system-app:" \
-            "    image: btc-shopflow/system-app:latest" \
-            "    container_name: btc-system-app" \
-            "    ports:" \
-            "      - \"30080:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  admin-app:" \
-            "    image: btc-shopflow/admin-app:latest" \
-            "    container_name: btc-admin-app" \
-            "    ports:" \
-            "      - \"30081:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  finance-app:" \
-            "    image: btc-shopflow/finance-app:latest" \
-            "    container_name: btc-finance-app" \
-            "    ports:" \
-            "      - \"30086:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  logistics-app:" \
-            "    image: btc-shopflow/logistics-app:latest" \
-            "    container_name: btc-logistics-app" \
-            "    ports:" \
-            "      - \"30082:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  quality-app:" \
-            "    image: btc-shopflow/quality-app:latest" \
-            "    container_name: btc-quality-app" \
-            "    ports:" \
-            "      - \"30083:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  production-app:" \
-            "    image: btc-shopflow/production-app:latest" \
-            "    container_name: btc-production-app" \
-            "    ports:" \
-            "      - \"30084:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  engineering-app:" \
-            "    image: btc-shopflow/engineering-app:latest" \
-            "    container_name: btc-engineering-app" \
-            "    ports:" \
-            "      - \"30085:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "  mobile-app:" \
-            "    image: btc-shopflow/mobile-app:latest" \
-            "    container_name: btc-mobile-app" \
-            "    ports:" \
-            "      - \"30091:80\"" \
-            "    restart: unless-stopped" \
-            "    networks:" \
-            "      - btc-network" \
-            "" \
-            "networks:" \
-            "  btc-network:" \
-            "    driver: bridge" > docker-compose.prod.yml
-          
-          echo "Starting services..."
-          docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
-          docker-compose -f docker-compose.prod.yml up -d
-          
-          echo "Cleaning up unused images after deployment..."
-          # 只清理未使用的镜像，保留正在使用的
-          docker image prune -f || true
-          
-          # 删除旧版本的镜像（如果存在）
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          if [ -n "$REPO_LOWER" ]; then
-            # 删除除了最新标签之外的其他标签
-            for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
-              docker images ghcr.io/$REPO_LOWER/$app --format "{{.ID}} {{.Tag}}" | grep -v "latest" | grep -v "${{ github.sha }}" | awk '{print $1}' | xargs -r docker rmi -f || true
-            done
-          fi
-          
-          echo "Final disk space:"
-          df -h
-          
-          echo "Deployment completed successfully"
+        echo "📊 Final image status:"
+        docker images btc-shopflow/ --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" || true
+        
+        echo "Creating Docker Compose configuration..."
+        printf '%s\n' \
+          "version: '3.8'" \
+          "" \
+          "services:" \
+          "  system-app:" \
+          "    image: btc-shopflow/system-app:latest" \
+          "    container_name: btc-system-app" \
+          "    ports:" \
+          "      - \"30080:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  admin-app:" \
+          "    image: btc-shopflow/admin-app:latest" \
+          "    container_name: btc-admin-app" \
+          "    ports:" \
+          "      - \"30081:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  finance-app:" \
+          "    image: btc-shopflow/finance-app:latest" \
+          "    container_name: btc-finance-app" \
+          "    ports:" \
+          "      - \"30086:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  logistics-app:" \
+          "    image: btc-shopflow/logistics-app:latest" \
+          "    container_name: btc-logistics-app" \
+          "    ports:" \
+          "      - \"30082:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  quality-app:" \
+          "    image: btc-shopflow/quality-app:latest" \
+          "    container_name: btc-quality-app" \
+          "    ports:" \
+          "      - \"30083:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  production-app:" \
+          "    image: btc-shopflow/production-app:latest" \
+          "    container_name: btc-production-app" \
+          "    ports:" \
+          "      - \"30084:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  engineering-app:" \
+          "    image: btc-shopflow/engineering-app:latest" \
+          "    container_name: btc-engineering-app" \
+          "    ports:" \
+          "      - \"30085:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "  mobile-app:" \
+          "    image: btc-shopflow/mobile-app:latest" \
+          "    container_name: btc-mobile-app" \
+          "    ports:" \
+          "      - \"30091:80\"" \
+          "    restart: unless-stopped" \
+          "    networks:" \
+          "      - btc-network" \
+          "" \
+          "networks:" \
+          "  btc-network:" \
+          "    driver: bridge" > docker-compose.prod.yml
+        
+        echo "Starting services..."
+        docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+        docker-compose -f docker-compose.prod.yml up -d
+        
+        echo "Cleaning up unused images after deployment..."
+        # 只清理未使用的镜像，保留正在使用的
+        docker image prune -f || true
+        
+        # 删除旧版本的镜像（如果存在）
+        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        if [ -n "$REPO_LOWER" ]; then
+          # 删除除了最新标签之外的其他标签
+          for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+            docker images ghcr.io/$REPO_LOWER/$app --format "{{.ID}} {{.Tag}}" | grep -v "latest" | grep -v "${{ github.sha }}" | awk '{print $1}' | xargs -r docker rmi -f || true
+          done
+        fi
+        
+        echo "Final disk space:"
+        df -h
+        
+        echo "Deployment completed successfully"
 
     - name: Health checks
       run: |
