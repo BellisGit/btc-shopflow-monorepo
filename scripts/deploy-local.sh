@@ -189,11 +189,11 @@ log_success "所有镜像上传完成"
 log_info "在服务器上加载镜像并部署..."
 ssh -o StrictHostKeyChecking=no \
     -i "$SSH_KEY" -p "$SERVER_PORT" \
-    "$SERVER_USER@$SERVER_HOST" << 'REMOTE_SCRIPT'
+    "$SERVER_USER@$SERVER_HOST" << REMOTE_SCRIPT
 set -e
 
-REMOTE_PATH="${REMOTE_PATH:-/www/wwwroot/btc-shopflow-monorepo}"
-cd "$REMOTE_PATH"
+REMOTE_PATH="$REMOTE_PATH"
+cd "\$REMOTE_PATH"
 
 echo "[INFO] 加载Docker镜像..."
 for image in tmp/docker-images/*.tar.gz; do
