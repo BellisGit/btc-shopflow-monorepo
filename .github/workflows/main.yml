@@ -435,8 +435,8 @@ jobs:
                 RETRY_COUNT=$((RETRY_COUNT + 1))
                 echo "[Attempt $RETRY_COUNT/$MAX_RETRIES] Pulling $app:$tag (timeout: ${TIMEOUT_DURATION}s)..."
                 
-                # 使用 timeout 命令包装 docker pull，并启用进度输出
-                if timeout $TIMEOUT_DURATION docker pull --progress=plain ghcr.io/$REPO_LOWER/$app:$tag; then
+                # 使用 timeout 命令包装 docker pull
+                if timeout $TIMEOUT_DURATION docker pull ghcr.io/$REPO_LOWER/$app:$tag; then
                   docker tag ghcr.io/$REPO_LOWER/$app:$tag btc-shopflow/$app:latest || true
                   echo "✅ Successfully pulled $app:$tag"
                   PULL_SUCCESS=true
