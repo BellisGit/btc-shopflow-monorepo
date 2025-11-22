@@ -381,41 +381,41 @@ jobs:
         timeout: 1800s
         command_timeout: 25m
         script: |
-        set -e
-        
-        echo "Starting BTC ShopFlow deployment..."
-        
-        # Check project directory
-        if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
-          echo "Creating project directory..."
-          mkdir -p /www/wwwroot
-          cd /www/wwwroot
-          git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
-        fi
-        
-        echo "Navigating to project directory..."
-        cd /www/wwwroot/btc-shopflow-monorepo
-        
-        echo "✅ 服务器资源已在初始化阶段验证通过"
-        echo "📊 当前磁盘空间状态:"
-        df -h
-        
-        echo "🧹 清理未使用的Docker资源（轻量级清理）..."
-        # 轻量级清理：只清理未使用的资源，不影响正在运行的容器
-        docker image prune -f || true
-        docker builder prune -af || true
-        
-        echo "🔐 Logging into container registry..."
-        # 使用临时凭证存储位置，避免磁盘空间问题
-        mkdir -p /tmp/.docker
-        export DOCKER_CONFIG=/tmp/.docker
-        echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        
-        echo "📥 Pulling Docker images from container registry..."
-        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        
-        # 拉取所有应用镜像（带超时和重试）
-        for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+          set -e
+          
+          echo "Starting BTC ShopFlow deployment..."
+          
+          # Check project directory
+          if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
+            echo "Creating project directory..."
+            mkdir -p /www/wwwroot
+            cd /www/wwwroot
+            git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+          fi
+          
+          echo "Navigating to project directory..."
+          cd /www/wwwroot/btc-shopflow-monorepo
+          
+          echo "✅ 服务器资源已在初始化阶段验证通过"
+          echo "📊 当前磁盘空间状态:"
+          df -h
+          
+          echo "🧹 清理未使用的Docker资源（轻量级清理）..."
+          # 轻量级清理：只清理未使用的资源，不影响正在运行的容器
+          docker image prune -f || true
+          docker builder prune -af || true
+          
+          echo "🔐 Logging into container registry..."
+          # 使用临时凭证存储位置，避免磁盘空间问题
+          mkdir -p /tmp/.docker
+          export DOCKER_CONFIG=/tmp/.docker
+          echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          
+          echo "📥 Pulling Docker images from container registry..."
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # 拉取所有应用镜像（带超时和重试）
+          for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📦 Processing $app..."
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -465,111 +465,111 @@ jobs:
             echo ""
           done
           
-        echo "📊 Final image status:"
-        docker images btc-shopflow/ --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" || true
-        
-        echo "Creating Docker Compose configuration..."
-        printf '%s\n' \
-          "version: '3.8'" \
-          "" \
-          "services:" \
-          "  system-app:" \
-          "    image: btc-shopflow/system-app:latest" \
-          "    container_name: btc-system-app" \
-          "    ports:" \
-          "      - \"30080:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  admin-app:" \
-          "    image: btc-shopflow/admin-app:latest" \
-          "    container_name: btc-admin-app" \
-          "    ports:" \
-          "      - \"30081:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  finance-app:" \
-          "    image: btc-shopflow/finance-app:latest" \
-          "    container_name: btc-finance-app" \
-          "    ports:" \
-          "      - \"30086:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  logistics-app:" \
-          "    image: btc-shopflow/logistics-app:latest" \
-          "    container_name: btc-logistics-app" \
-          "    ports:" \
-          "      - \"30082:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  quality-app:" \
-          "    image: btc-shopflow/quality-app:latest" \
-          "    container_name: btc-quality-app" \
-          "    ports:" \
-          "      - \"30083:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  production-app:" \
-          "    image: btc-shopflow/production-app:latest" \
-          "    container_name: btc-production-app" \
-          "    ports:" \
-          "      - \"30084:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  engineering-app:" \
-          "    image: btc-shopflow/engineering-app:latest" \
-          "    container_name: btc-engineering-app" \
-          "    ports:" \
-          "      - \"30085:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "  mobile-app:" \
-          "    image: btc-shopflow/mobile-app:latest" \
-          "    container_name: btc-mobile-app" \
-          "    ports:" \
-          "      - \"30091:80\"" \
-          "    restart: unless-stopped" \
-          "    networks:" \
-          "      - btc-network" \
-          "" \
-          "networks:" \
-          "  btc-network:" \
-          "    driver: bridge" > docker-compose.prod.yml
-        
-        echo "Starting services..."
-        docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
-        docker-compose -f docker-compose.prod.yml up -d
-        
-        echo "Cleaning up unused images after deployment..."
-        # 只清理未使用的镜像，保留正在使用的
-        docker image prune -f || true
-        
-        # 删除旧版本的镜像（如果存在）
-        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        if [ -n "$REPO_LOWER" ]; then
-          # 删除除了最新标签之外的其他标签
-          for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
-            docker images ghcr.io/$REPO_LOWER/$app --format "{{.ID}} {{.Tag}}" | grep -v "latest" | grep -v "${{ github.sha }}" | awk '{print $1}' | xargs -r docker rmi -f || true
-          done
-        fi
-        
-        echo "Final disk space:"
-        df -h
-        
-        echo "Deployment completed successfully"
+          echo "📊 Final image status:"
+          docker images btc-shopflow/ --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" || true
+          
+          echo "Creating Docker Compose configuration..."
+          printf '%s\n' \
+            "version: '3.8'" \
+            "" \
+            "services:" \
+            "  system-app:" \
+            "    image: btc-shopflow/system-app:latest" \
+            "    container_name: btc-system-app" \
+            "    ports:" \
+            "      - \"30080:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  admin-app:" \
+            "    image: btc-shopflow/admin-app:latest" \
+            "    container_name: btc-admin-app" \
+            "    ports:" \
+            "      - \"30081:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  finance-app:" \
+            "    image: btc-shopflow/finance-app:latest" \
+            "    container_name: btc-finance-app" \
+            "    ports:" \
+            "      - \"30086:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  logistics-app:" \
+            "    image: btc-shopflow/logistics-app:latest" \
+            "    container_name: btc-logistics-app" \
+            "    ports:" \
+            "      - \"30082:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  quality-app:" \
+            "    image: btc-shopflow/quality-app:latest" \
+            "    container_name: btc-quality-app" \
+            "    ports:" \
+            "      - \"30083:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  production-app:" \
+            "    image: btc-shopflow/production-app:latest" \
+            "    container_name: btc-production-app" \
+            "    ports:" \
+            "      - \"30084:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  engineering-app:" \
+            "    image: btc-shopflow/engineering-app:latest" \
+            "    container_name: btc-engineering-app" \
+            "    ports:" \
+            "      - \"30085:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  mobile-app:" \
+            "    image: btc-shopflow/mobile-app:latest" \
+            "    container_name: btc-mobile-app" \
+            "    ports:" \
+            "      - \"30091:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "networks:" \
+            "  btc-network:" \
+            "    driver: bridge" > docker-compose.prod.yml
+          
+          echo "Starting services..."
+          docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          echo "Cleaning up unused images after deployment..."
+          # 只清理未使用的镜像，保留正在使用的
+          docker image prune -f || true
+          
+          # 删除旧版本的镜像（如果存在）
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          if [ -n "$REPO_LOWER" ]; then
+            # 删除除了最新标签之外的其他标签
+            for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+              docker images ghcr.io/$REPO_LOWER/$app --format "{{.ID}} {{.Tag}}" | grep -v "latest" | grep -v "${{ github.sha }}" | awk '{print $1}' | xargs -r docker rmi -f || true
+            done
+          fi
+          
+          echo "Final disk space:"
+          df -h
+          
+          echo "Deployment completed successfully"
 
     - name: Health checks
       run: |
