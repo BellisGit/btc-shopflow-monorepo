@@ -412,86 +412,85 @@ jobs:
           done
           
           echo "Creating Docker Compose configuration..."
-          cat > docker-compose.prod.yml << 'COMPOSE_EOF'
-version: '3.8'
-
-services:
-  system-app:
-    image: btc-shopflow/system-app:latest
-    container_name: btc-system-app
-    ports:
-      - "30080:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  admin-app:
-    image: btc-shopflow/admin-app:latest
-    container_name: btc-admin-app
-    ports:
-      - "30081:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  finance-app:
-    image: btc-shopflow/finance-app:latest
-    container_name: btc-finance-app
-    ports:
-      - "30086:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  logistics-app:
-    image: btc-shopflow/logistics-app:latest
-    container_name: btc-logistics-app
-    ports:
-      - "30082:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  quality-app:
-    image: btc-shopflow/quality-app:latest
-    container_name: btc-quality-app
-    ports:
-      - "30083:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  production-app:
-    image: btc-shopflow/production-app:latest
-    container_name: btc-production-app
-    ports:
-      - "30084:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  engineering-app:
-    image: btc-shopflow/engineering-app:latest
-    container_name: btc-engineering-app
-    ports:
-      - "30085:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-  mobile-app:
-    image: btc-shopflow/mobile-app:latest
-    container_name: btc-mobile-app
-    ports:
-      - "30091:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-
-networks:
-  btc-network:
-    driver: bridge
-COMPOSE_EOF
+          printf '%s\n' \
+            "version: '3.8'" \
+            "" \
+            "services:" \
+            "  system-app:" \
+            "    image: btc-shopflow/system-app:latest" \
+            "    container_name: btc-system-app" \
+            "    ports:" \
+            "      - \"30080:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  admin-app:" \
+            "    image: btc-shopflow/admin-app:latest" \
+            "    container_name: btc-admin-app" \
+            "    ports:" \
+            "      - \"30081:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  finance-app:" \
+            "    image: btc-shopflow/finance-app:latest" \
+            "    container_name: btc-finance-app" \
+            "    ports:" \
+            "      - \"30086:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  logistics-app:" \
+            "    image: btc-shopflow/logistics-app:latest" \
+            "    container_name: btc-logistics-app" \
+            "    ports:" \
+            "      - \"30082:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  quality-app:" \
+            "    image: btc-shopflow/quality-app:latest" \
+            "    container_name: btc-quality-app" \
+            "    ports:" \
+            "      - \"30083:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  production-app:" \
+            "    image: btc-shopflow/production-app:latest" \
+            "    container_name: btc-production-app" \
+            "    ports:" \
+            "      - \"30084:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  engineering-app:" \
+            "    image: btc-shopflow/engineering-app:latest" \
+            "    container_name: btc-engineering-app" \
+            "    ports:" \
+            "      - \"30085:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "  mobile-app:" \
+            "    image: btc-shopflow/mobile-app:latest" \
+            "    container_name: btc-mobile-app" \
+            "    ports:" \
+            "      - \"30091:80\"" \
+            "    restart: unless-stopped" \
+            "    networks:" \
+            "      - btc-network" \
+            "" \
+            "networks:" \
+            "  btc-network:" \
+            "    driver: bridge" > docker-compose.prod.yml
           
           echo "Starting services..."
           docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
