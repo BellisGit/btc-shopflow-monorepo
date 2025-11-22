@@ -141,11 +141,19 @@ export default defineConfig({
       '@btc/shared-core',
       '@btc/shared-components',
       '@btc/shared-utils',
+      'vite-plugin-qiankun/dist/helper',
+      'qiankun',
+      'single-spa',
     ],
     // 排除不需要预构建的依赖
     exclude: [],
     // 强制预构建，即使依赖已经是最新的
+    // 如果遇到模块解析问题，临时设置为 true 强制重新预构建
     force: false,
+    // 确保依赖正确解析
+    esbuildOptions: {
+      plugins: [],
+    },
   },
   build: {
     target: 'es2020', // 兼容 ES 模块的最低目标

@@ -221,7 +221,7 @@ jobs:
 
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
-    
+
     - name: Get pnpm store directory
       shell: bash
       run: |
@@ -307,7 +307,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-logistics-app:
@@ -319,7 +319,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-quality-app:
@@ -331,7 +331,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-production-app:
@@ -343,7 +343,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-engineering-app:
@@ -355,7 +355,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-finance-app:
@@ -367,7 +367,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   build-mobile-app:
@@ -379,7 +379,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-    secrets:
+      secrets:
       gh_token: ${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}
 
   # Step 7: Deploy to Server
@@ -402,21 +402,21 @@ jobs:
         timeout: 1800s
         command_timeout: 25m
         script: |
-          set -e
-          
-          echo "Starting BTC ShopFlow deployment..."
-          
-          # Check project directory
-          if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
-            echo "Creating project directory..."
-            mkdir -p /www/wwwroot
-            cd /www/wwwroot
-            git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
-          fi
-          
-          echo "Navigating to project directory..."
-          cd /www/wwwroot/btc-shopflow-monorepo
-          
+        set -e
+        
+        echo "Starting BTC ShopFlow deployment..."
+        
+        # Check project directory
+        if [ ! -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
+          echo "Creating project directory..."
+          mkdir -p /www/wwwroot
+          cd /www/wwwroot
+          git clone https://github.com/BellisGit/btc-shopflow-monorepo.git
+        fi
+        
+        echo "Navigating to project directory..."
+        cd /www/wwwroot/btc-shopflow-monorepo
+        
           echo "✅ 服务器资源已在初始化阶段验证通过"
           echo "📊 当前磁盘空间状态:"
           df -h
@@ -430,8 +430,8 @@ jobs:
           # 使用临时凭证存储位置，避免磁盘空间问题
           mkdir -p /tmp/.docker
           export DOCKER_CONFIG=/tmp/.docker
-          echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          
+        echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        
           echo "📥 Pulling Docker images from container registry (parallel)..."
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           
@@ -610,8 +610,8 @@ jobs:
           
           echo "Final disk space:"
           df -h
-          
-          echo "Deployment completed successfully"
+        
+        echo "Deployment completed successfully"
 
     - name: Health checks
       run: |

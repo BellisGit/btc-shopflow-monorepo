@@ -143,6 +143,7 @@ export default defineConfig({
     // 主应用不应该使用 external，所有依赖都应该被打包
     // external 配置仅用于子应用（微前端场景）
     rollupOptions: {
+      output: {
         manualChunks(id) {
           // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {

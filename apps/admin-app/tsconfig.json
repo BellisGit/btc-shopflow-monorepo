@@ -21,7 +21,8 @@
                             "noUnusedParameters":  false,
                             "noFallthroughCasesInSwitch":  true,
                             "types":  [
-                                          "vite/client"
+                                          "vite/client",
+                                          "node"
                                       ],
                             "baseUrl":  ".",
                             "paths":  {

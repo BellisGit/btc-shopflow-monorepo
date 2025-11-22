@@ -26,7 +26,7 @@ export function useUserInfo() {
   // 打字机效果相关
   const isTyping = ref(false);
   const cursorPosition = ref(0);
-  let typingTimer: number | null = null;
+  let typingTimer: ReturnType<typeof setInterval> | null = null;
 
   // 监听用户信息更新事件
   const handleUserInfoUpdated = (event: CustomEvent) => {

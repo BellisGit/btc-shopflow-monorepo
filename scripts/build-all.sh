@@ -144,7 +144,7 @@ EOF
     else
         # 完整构建：上下文是项目根目录（需要所有源码）
         echo "🔨 构建Docker镜像（完整构建模式，可能较慢）..."
-        docker build -t "${REGISTRY}/${app_name}:latest" -f "${app_path}/Dockerfile" .
+    docker build -t "${REGISTRY}/${app_name}:latest" -f "${app_path}/Dockerfile" .
     fi
     
     if [ $? -eq 0 ]; then

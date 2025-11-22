@@ -25,7 +25,7 @@ export function useNodeInteraction(
   const hoveredNodeId = ref<string>('');
   const currentHoveredNode = ref<any>(null);
   const hoveredArrowDirection = ref('');
-  let doubleClickTimer: number | null = null;
+  let doubleClickTimer: ReturnType<typeof setTimeout> | null = null;
 
   // 箭头悬浮事件处理
   const handleArrowEnter = (direction: string) => {

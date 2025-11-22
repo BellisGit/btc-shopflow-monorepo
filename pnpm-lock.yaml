@@ -187,6 +187,9 @@ importers:
       '@testing-library/vue':
         specifier: ^8.1.0
         version: 8.1.0(vue@3.5.22)
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.7.0
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.20)(vue@3.5.22)
