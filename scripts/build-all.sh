@@ -50,6 +50,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ ./apps/
 COPY packages/ ./packages/
 COPY auth/ ./auth/
+COPY scripts/ ./scripts/
 
 # 安装 pnpm
 RUN npm install -g pnpm
