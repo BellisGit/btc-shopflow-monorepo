@@ -25,8 +25,28 @@ export default defineConfig({
 
 	plugins: [
 		typescript({
-			module: "esnext",
-			exclude: ["./node_modules/**"],
+			tsconfig: false,
+			compilerOptions: {
+				target: "ES2020",
+				module: "ESNext",
+				lib: ["ES2020", "DOM", "DOM.Iterable"],
+				moduleResolution: "bundler",
+				resolveJsonModule: true,
+				allowJs: true,
+				strict: true,
+				noUnusedLocals: false,
+				noUnusedParameters: false,
+				noFallthroughCasesInSwitch: true,
+				esModuleInterop: true,
+				skipLibCheck: true,
+				allowSyntheticDefaultImports: true,
+				forceConsistentCasingInFileNames: true,
+				isolatedModules: true,
+				declaration: true,
+				outDir: "./dist",
+				rootDir: "./src"
+			},
+			exclude: ["./node_modules/**", "./dist/**"],
 		}),
 	],
 });
