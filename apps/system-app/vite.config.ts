@@ -140,36 +140,12 @@ export default defineConfig({
     }
   },
   build: {
+    // 主应用不应该使用 external，所有依赖都应该被打包
+    // external 配置仅用于子应用（微前端场景）
     rollupOptions: {
-      external: [
-        'vue',
-        'vue-router',
-        'pinia',
-        'element-plus',
-        '@element-plus/icons-vue',
-        'axios',
-        'lodash-es',
-        'dayjs',
-        '@vueuse/core'
-      ],
-      output: {
-        globals: {
-          vue: 'Vue',
-          'vue-router': 'VueRouter',
-          pinia: 'Pinia',
-          'element-plus': 'ElementPlus',
-          '@element-plus/icons-vue': 'ElementPlusIconsVue',
-          axios: 'axios',
-          'lodash-es': 'lodash',
-          dayjs: 'dayjs',
-          '@vueuse/core': 'VueUse'
-        },
         manualChunks(id) {
-          // 对于 external 的依赖，不会被包含在构建中，所以跳过
+          // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {
-            // 跳过 external 的依赖
-            return undefined;
-          }
 
           if (id.includes('src/') && !id.includes('node_modules')) {
             if (id.includes('src/modules')) {
