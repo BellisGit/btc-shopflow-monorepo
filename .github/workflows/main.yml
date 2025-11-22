@@ -173,7 +173,10 @@ jobs:
         if [ ! -d "packages/shared-core/dist" ]; then
           echo "Cache miss, building packages..."
           pnpm --filter @btc/vite-plugin run build
-          node scripts/turbo.js run build --filter="@btc/*"
+          pnpm --filter @btc/shared-utils run build
+          pnpm --filter @btc/shared-core run build
+          pnpm --filter @btc/shared-components run build
+          pnpm --filter @btc/subapp-manifests run build
         else
           echo "Using cached packages"
         fi

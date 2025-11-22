@@ -31,7 +31,10 @@ jobs:
     - name: Build shared packages
       run: |
         echo "Building shared packages..."
-        node scripts/turbo.js run build --filter="@btc/*"
+        pnpm --filter @btc/shared-utils run build
+        pnpm --filter @btc/shared-core run build
+        pnpm --filter @btc/shared-components run build
+        pnpm --filter @btc/subapp-manifests run build
     
     - name: Cache built packages
       uses: actions/cache@v3

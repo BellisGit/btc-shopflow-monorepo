@@ -71,8 +71,11 @@ jobs:
           echo "Building dependencies for ${{ inputs.app_name }}..."
           # Build vite-plugin first as other packages may depend on it
           pnpm --filter @btc/vite-plugin run build
-          # Use turbo to build all package dependencies
-          node scripts/turbo.js run build --filter="@btc/*"
+          # Build all package dependencies in order
+          pnpm --filter @btc/shared-utils run build
+          pnpm --filter @btc/shared-core run build
+          pnpm --filter @btc/shared-components run build
+          pnpm --filter @btc/subapp-manifests run build
         else
           echo "Using cached built packages"
         fi

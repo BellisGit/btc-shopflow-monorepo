@@ -59,9 +59,12 @@ RUN npm install -g pnpm
 # 安装所有依赖
 RUN pnpm install --no-frozen-lockfile
 
-# 构建依赖包（vite-plugin等）
+# 构建依赖包（按依赖顺序）
 RUN pnpm --filter @btc/vite-plugin run build
-RUN node scripts/turbo.js run build --filter="@btc/*"
+RUN pnpm --filter @btc/shared-utils run build
+RUN pnpm --filter @btc/shared-core run build
+RUN pnpm --filter @btc/shared-components run build
+RUN pnpm --filter @btc/subapp-manifests run build
 
 # 构建应用
 RUN cd apps/${app_name} && pnpm run build
