@@ -38,11 +38,16 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 
 FROM base AS build
 ARG APP_DIR
+# 先复制依赖（从 deps 阶段，利用缓存加速）
 COPY --from=deps /repo/node_modules /repo/node_modules
-# 完整拷贝源代码用于构建
+COPY --from=deps /repo/pnpm-lock.yaml /repo/pnpm-lock.yaml
+# 拷贝源代码（.dockerignore 已排除 node_modules）
 COPY . .
-# 构建指定子应用（从根目录使用 filter 构建，需要先构建依赖包）
+# 重新安装依赖以确保 prepare 脚本正确执行（源代码现在已存在）
 WORKDIR /repo
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
+# 构建指定子应用（从根目录使用 filter 构建，需要先构建依赖包）
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     APP_NAME=$(basename ${APP_DIR}) && \
     pnpm --filter @btc/vite-plugin build && \
