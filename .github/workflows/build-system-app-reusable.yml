@@ -40,16 +40,38 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
     
+    - name: Cache pnpm store
+      uses: actions/cache@v3
+      with:
+        path: ~/.pnpm-store
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+    
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
     
-    - name: Build dependencies
+    - name: Restore built packages cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          packages/*/dist
+          packages/*/build
+        key: packages-build-${{ github.sha }}
+        restore-keys: |
+          packages-build-
+    
+    - name: Build dependencies if needed
       run: |
-        echo "Building dependencies for system-app..."
-        # Build vite-plugin first as other packages may depend on it
-        pnpm --filter @btc/vite-plugin run build
-        # Use turbo to build all package dependencies
-        node scripts/turbo.js run build --filter="@btc/*"
+        if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
+          echo "Building dependencies for system-app..."
+          # Build vite-plugin first as other packages may depend on it
+          pnpm --filter @btc/vite-plugin run build
+          # Use turbo to build all package dependencies
+          node scripts/turbo.js run build --filter="@btc/*"
+        else
+          echo "Using cached built packages"
+        fi
     
     - name: Build system-app
       run: cd apps/system-app && pnpm run build
@@ -86,13 +108,6 @@ jobs:
         echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
         echo "[INFO] Docker tags will use: $REPO_LOWER"
 
-    - name: Build dependencies
-      run: |
-        echo "Building dependencies for system-app..."
-        # Build vite-plugin first as other packages may depend on it
-        pnpm --filter @btc/vite-plugin run build
-        # Use turbo to build all package dependencies
-        node scripts/turbo.js run build --filter="@btc/*"
     
     - name: Build system-app
       run: cd apps/system-app && pnpm run build
