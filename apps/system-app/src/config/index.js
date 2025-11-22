@@ -19,7 +19,7 @@ export var config = {
     // API 配置
     api: {
         // 基础路径
-        baseURL: isDev ? '/api' : import.meta.env.VITE_API_BASE_URL || 'http://10.80.9.76:8115/api',
+        baseURL: isDev ? '/api' : import.meta.env.VITE_API_BASE_URL || 'http://10.0.0.168:8115/api',
         // 请求超时时间
         timeout: 30000,
     },
