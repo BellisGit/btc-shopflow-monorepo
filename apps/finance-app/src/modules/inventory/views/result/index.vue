@@ -72,15 +72,66 @@ const detailRow = ref<any>(null);
 // 创建财务盘点结果服务
 // 调试：检查EPS服务结构
 console.log('[Finance EPS Debug] Available service keys:', Object.keys(service));
-console.log('[Finance EPS Debug] Finance service:', service.finance);
-if (service.finance) {
-  console.log('[Finance EPS Debug] Finance.base service:', service.finance.base);
-}
+console.log('[Finance EPS Debug] Full service object:', service);
 
-const financeInventoryService: CrudService<any> = createCrudServiceFromEps(
-  'finance.base',
-  service
-);
+// 检查不同的可能路径
+console.log('[Finance EPS Debug] service.finance:', service.finance);
+console.log('[Finance EPS Debug] service["finance.base"]:', service["finance.base"]);
+
+let financeInventoryService: CrudService<any>;
+
+try {
+  // 尝试不同的路径格式
+  if (service["finance.base"]) {
+    console.log('[Finance EPS Debug] Using direct "finance.base" key');
+    financeInventoryService = createCrudServiceFromEps("finance.base", service);
+  } else if (service.finance && service.finance.base) {
+    console.log('[Finance EPS Debug] Using nested finance.base path');
+    financeInventoryService = createCrudServiceFromEps(['finance', 'base'], service);
+  } else {
+    console.error('[Finance EPS Debug] No valid finance service found, creating fallback service');
+    // 创建一个fallback服务用于调试
+    financeInventoryService = {
+      async page(params: any) {
+        console.log('[Finance EPS Debug] Fallback page called with params:', params);
+        return { list: [], total: 0 };
+      },
+      async add(data: any) {
+        console.log('[Finance EPS Debug] Fallback add called with data:', data);
+      },
+      async update(data: any) {
+        console.log('[Finance EPS Debug] Fallback update called with data:', data);
+      },
+      async delete(id: any) {
+        console.log('[Finance EPS Debug] Fallback delete called with id:', id);
+      },
+      async deleteBatch(ids: any[]) {
+        console.log('[Finance EPS Debug] Fallback deleteBatch called with ids:', ids);
+      }
+    };
+  }
+} catch (error) {
+  console.error('[Finance EPS Debug] Error creating service:', error);
+  // 创建一个fallback服务
+  financeInventoryService = {
+    async page(params: any) {
+      console.log('[Finance EPS Debug] Error fallback page called with params:', params);
+      return { list: [], total: 0 };
+    },
+    async add(data: any) {
+      console.log('[Finance EPS Debug] Error fallback add called');
+    },
+    async update(data: any) {
+      console.log('[Finance EPS Debug] Error fallback update called');
+    },
+    async delete(id: any) {
+      console.log('[Finance EPS Debug] Error fallback delete called');
+    },
+    async deleteBatch(ids: any[]) {
+      console.log('[Finance EPS Debug] Error fallback deleteBatch called');
+    }
+  };
+}
 
 const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: any) => formatTableNumber(value);
 
