@@ -39,12 +39,16 @@ if [ ! -f "$COMPOSE_FILE" ]; then
         
         cd "$WORK_DIR"
         
-        cat > "$COMPOSE_FILE" << 'EOF'
+        # 获取 GitHub 仓库名（默认值）
+        GITHUB_REPO="${GITHUB_REPO:-bellisgit/btc-shopflow-monorepo}"
+        REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
+        
+        cat > "$COMPOSE_FILE" << EOF
 version: '3.8'
 
 services:
   system-app:
-    image: btc-shopflow/system-app:latest
+    image: ghcr.io/${REPO_LOWER}/system-app:latest
     container_name: btc-system-app
     ports:
       - "30080:80"
@@ -53,7 +57,7 @@ services:
       - btc-network
 
   admin-app:
-    image: btc-shopflow/admin-app:latest
+    image: ghcr.io/${REPO_LOWER}/admin-app:latest
     container_name: btc-admin-app
     ports:
       - "30081:80"
@@ -62,7 +66,7 @@ services:
       - btc-network
 
   finance-app:
-    image: btc-shopflow/finance-app:latest
+    image: ghcr.io/${REPO_LOWER}/finance-app:latest
     container_name: btc-finance-app
     ports:
       - "30086:80"
@@ -71,7 +75,7 @@ services:
       - btc-network
 
   logistics-app:
-    image: btc-shopflow/logistics-app:latest
+    image: ghcr.io/${REPO_LOWER}/logistics-app:latest
     container_name: btc-logistics-app
     ports:
       - "30082:80"
@@ -80,7 +84,7 @@ services:
       - btc-network
 
   quality-app:
-    image: btc-shopflow/quality-app:latest
+    image: ghcr.io/${REPO_LOWER}/quality-app:latest
     container_name: btc-quality-app
     ports:
       - "30083:80"
@@ -89,7 +93,7 @@ services:
       - btc-network
 
   production-app:
-    image: btc-shopflow/production-app:latest
+    image: ghcr.io/${REPO_LOWER}/production-app:latest
     container_name: btc-production-app
     ports:
       - "30084:80"
@@ -98,7 +102,7 @@ services:
       - btc-network
 
   engineering-app:
-    image: btc-shopflow/engineering-app:latest
+    image: ghcr.io/${REPO_LOWER}/engineering-app:latest
     container_name: btc-engineering-app
     ports:
       - "30085:80"
@@ -107,7 +111,7 @@ services:
       - btc-network
 
   mobile-app:
-    image: btc-shopflow/mobile-app:latest
+    image: ghcr.io/${REPO_LOWER}/mobile-app:latest
     container_name: btc-mobile-app
     ports:
       - "30091:80"
@@ -139,17 +143,72 @@ echo ""
 
 # 3. 删除旧镜像（强制重新拉取）
 echo "🗑️  删除旧镜像..."
+GITHUB_REPO="${GITHUB_REPO:-bellisgit/btc-shopflow-monorepo}"
+REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
+GHCR_IMAGE="ghcr.io/${REPO_LOWER}/system-app:latest"
+
 docker rmi ${IMAGE_NAME} 2>/dev/null || true
-docker rmi ghcr.io/$(echo "${GITHUB_REPO:-bellisgit/btc-shopflow-monorepo}" | tr '[:upper:]' '[:lower:]')/system-app:latest 2>/dev/null || true
+docker rmi ${GHCR_IMAGE} 2>/dev/null || true
+docker rmi ghcr.io/${REPO_LOWER}/system-app:latest 2>/dev/null || true
 echo "✅ 旧镜像已删除"
 echo ""
 
-# 4. 使用 docker-compose 重新拉取并启动
+# 登录到 GitHub Container Registry（如果需要）
+echo "🔐 检查 GitHub Container Registry 访问..."
+if ! docker pull ${GHCR_IMAGE} --quiet 2>/dev/null; then
+    echo "⚠️  无法拉取镜像，可能需要登录 GitHub Container Registry"
+    echo "   运行以下命令登录:"
+    echo "   echo \$GITHUB_TOKEN | docker login ghcr.io -u \$GITHUB_USERNAME --password-stdin"
+    echo ""
+fi
+
+# 4. 检查并更新 docker-compose.prod.yml 中的镜像路径（如果需要）
+echo "🔍 检查 docker-compose 文件中的镜像路径..."
+if grep -q "^[[:space:]]*image:[[:space:]]*btc-shopflow/" "$COMPOSE_FILE" 2>/dev/null; then
+    echo "⚠️  发现旧格式镜像路径，更新为 ghcr.io 格式..."
+    GITHUB_REPO="${GITHUB_REPO:-bellisgit/btc-shopflow-monorepo}"
+    REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
+    
+    # 备份原文件
+    cp "$COMPOSE_FILE" "${COMPOSE_FILE}.bak"
+    
+    # 更新镜像路径
+    sed -i "s|image: btc-shopflow/|image: ghcr.io/${REPO_LOWER}/|g" "$COMPOSE_FILE"
+    echo "✅ 镜像路径已更新"
+    echo ""
+fi
+
+# 5. 登录到 GitHub Container Registry（如果需要）
+echo "🔐 检查 GitHub Container Registry 访问..."
+GITHUB_REPO="${GITHUB_REPO:-bellisgit/btc-shopflow-monorepo}"
+REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
+GHCR_IMAGE="ghcr.io/${REPO_LOWER}/system-app:latest"
+
+# 尝试拉取镜像（测试访问）
+if ! docker pull ${GHCR_IMAGE} --quiet 2>/dev/null; then
+    echo "⚠️  无法直接拉取镜像，可能需要登录"
+    echo "   如果镜像是私有的，需要运行:"
+    echo "   echo \$GITHUB_TOKEN | docker login ghcr.io -u \$GITHUB_USERNAME --password-stdin"
+    echo ""
+fi
+
+# 6. 使用 docker-compose 重新拉取并启动
 echo "📥 重新拉取镜像并启动容器..."
-if docker-compose -f "$COMPOSE_FILE" pull system-app; then
+if docker-compose -f "$COMPOSE_FILE" pull system-app 2>&1; then
     echo "✅ 镜像拉取成功"
 else
-    echo "⚠️  镜像拉取失败，尝试从本地构建或检查网络连接"
+    echo "⚠️  docker-compose pull 失败，尝试直接拉取镜像..."
+    if docker pull ${GHCR_IMAGE}; then
+        # 标记镜像以便 docker-compose 使用
+        docker tag ${GHCR_IMAGE} ghcr.io/${REPO_LOWER}/system-app:latest 2>/dev/null || true
+        echo "✅ 直接拉取成功"
+    else
+        echo "❌ 镜像拉取失败，请检查："
+        echo "   1. 网络连接"
+        echo "   2. GitHub Container Registry 访问权限"
+        echo "   3. 镜像是否存在: https://github.com/${GITHUB_REPO}/pkgs/container/system-app"
+        echo ""
+    fi
 fi
 echo ""
 
