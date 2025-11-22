@@ -146,6 +146,20 @@ export default defineConfig({
         manualChunks(id) {
           // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {
+            if (id.includes('vue-i18n') || id.includes('@intlify')) {
+              return 'vue-i18n';
+            }
+            if (id.includes('unocss') || id.includes('@unocss')) {
+              return 'lib-unocss';
+            }
+            if (id.includes('echarts')) {
+              return 'lib-echarts';
+            }
+            if (id.includes('qiankun')) {
+              return 'qiankun';
+            }
+            return 'vendor';
+          }
 
           if (id.includes('src/') && !id.includes('node_modules')) {
             if (id.includes('src/modules')) {
@@ -222,23 +236,6 @@ export default defineConfig({
               return 'btc-manifests';
             }
             return 'btc-shared';
-          }
-
-          // 对于非 external 的 node_modules 依赖
-          if (id.includes('node_modules')) {
-            if (id.includes('vue-i18n') || id.includes('@intlify')) {
-              return 'vue-i18n';
-            }
-            if (id.includes('unocss') || id.includes('@unocss')) {
-              return 'lib-unocss';
-            }
-            if (id.includes('echarts')) {
-              return 'lib-echarts';
-            }
-            if (id.includes('qiankun')) {
-              return 'qiankun';
-            }
-            return 'vendor';
           }
 
           return undefined;
