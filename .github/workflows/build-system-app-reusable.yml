@@ -83,23 +83,31 @@ jobs:
       run: |
         echo "Validating GitHub token for registry access..."
         
+        # 优先使用传递的 GH_TOKEN，如果不存在则使用 GITHUB_TOKEN
         if [ -n "${{ secrets.GH_TOKEN }}" ]; then
-          echo "[SUCCESS] GH_TOKEN is available for Docker registry"
-          echo "Token length: $(echo '${{ secrets.GH_TOKEN }}' | wc -c) characters"
-          
-          # Test token permissions
-          echo "Testing token permissions for ghcr.io..."
-          if echo "${{ secrets.GH_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin; then
-            echo "[SUCCESS] Token has valid permissions for ghcr.io"
-          else
-            echo "[ERROR] Token authentication failed for ghcr.io"
-            echo "Please ensure SERVER_PAT has 'write:packages' scope"
-            exit 1
-          fi
+          TOKEN="${{ secrets.GH_TOKEN }}"
+          echo "[INFO] Using provided GH_TOKEN"
+        elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          echo "[INFO] Falling back to GITHUB_TOKEN"
         else
-          echo "[ERROR] GH_TOKEN is not available"
+          echo "[ERROR] No token available"
           echo "Please set SERVER_PAT secret with 'write:packages' scope in repository settings"
-          echo "Falling back to GITHUB_TOKEN may not work for package registry"
+          exit 1
+        fi
+        
+        echo "[SUCCESS] Token is available for Docker registry"
+        echo "Token length: $(echo "$TOKEN" | wc -c) characters"
+        
+        # Test token permissions
+        echo "Testing token permissions for ghcr.io..."
+        if echo "$TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin; then
+          echo "[SUCCESS] Token has valid permissions for ghcr.io"
+          # 将 TOKEN 导出为环境变量，供后续步骤使用
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+        else
+          echo "[ERROR] Token authentication failed for ghcr.io"
+          echo "Please ensure SERVER_PAT has 'write:packages' scope"
           exit 1
         fi
 
@@ -120,7 +128,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GH_TOKEN }}
+        password: ${{ env.TOKEN }}
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
