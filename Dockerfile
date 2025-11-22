@@ -31,10 +31,10 @@ COPY apps/system-app/package.json apps/system-app/package.json
 COPY apps/mobile-app/package.json apps/mobile-app/package.json
 
 FROM base AS deps
-# 安装依赖
+# 安装依赖（忽略 prepare 脚本，因为此时还没有源代码）
 COPY pnpm-lock.yaml* ./
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    pnpm install --no-frozen-lockfile
+    pnpm install --no-frozen-lockfile --ignore-scripts
 
 FROM base AS build
 COPY --from=deps /repo/node_modules /repo/node_modules
