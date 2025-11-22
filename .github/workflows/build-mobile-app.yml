@@ -72,7 +72,7 @@ jobs:
         COPY packages ./packages
         COPY apps/mobile-app ./apps/mobile-app
         # Build dependencies first, then the app
-        RUN pnpm --filter @btc/vite-plugin run build && pnpm --filter mobile-app run build
+        RUN pnpm --filter @btc/vite-plugin run build && pnpm --filter @btc/mobile-app run build
 
         FROM nginx:alpine
         COPY --from=builder /app/apps/mobile-app/dist /usr/share/nginx/html
