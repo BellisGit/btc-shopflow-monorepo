@@ -441,7 +441,18 @@ jobs:
         cd /www/wwwroot/btc-shopflow-monorepo
         
         echo "Pulling latest code..."
+        # Check for local changes
+        if ! git diff-index --quiet HEAD --; then
+          echo "Local changes detected, stashing them..."
+          git stash push -m "Auto-stash before deployment $(date)"
+        fi
+        
+        # Reset any uncommitted changes and pull latest
+        git reset --hard HEAD
+        git clean -fd
         git pull origin master
+        
+        echo "Successfully updated to latest code"
         
         echo "Logging into container registry..."
         echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
