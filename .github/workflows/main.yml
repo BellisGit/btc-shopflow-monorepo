@@ -510,70 +510,113 @@ jobs:
         echo "Navigating to project directory..."
         cd /www/wwwroot/btc-shopflow-monorepo
         
-        echo "Pulling latest code..."
-        
-        # Check network connectivity to GitHub
-        echo "Checking network connectivity to GitHub..."
-        if ! curl -s --max-time 5 https://github.com > /dev/null; then
-          echo "⚠️  Warning: Cannot reach GitHub, network may be unstable"
-          echo "Will attempt git pull with retries..."
-        else
-          echo "✅ Network connectivity to GitHub is OK"
-        fi
-        
-        # Check for local changes
-        if ! git diff-index --quiet HEAD --; then
-          echo "Local changes detected, stashing them..."
-          git stash push -m "Auto-stash before deployment $(date)"
-        fi
-        
-        # Reset any uncommitted changes
-        git reset --hard HEAD
-        
-        # Clean untracked files (Dockerfiles will be regenerated during build)
-        echo "Cleaning untracked files..."
-        git clean -fd || echo "Warning: git clean had issues, continuing..."
-        
-        # Retry git pull with exponential backoff
-        echo "Attempting to pull latest code from GitHub..."
-        MAX_RETRIES=3
-        RETRY_DELAY=5
-        RETRY_COUNT=0
-        PULL_SUCCESS=false
-        
-        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          if git pull origin master 2>&1; then
-            echo "✅ Successfully pulled latest code"
-            PULL_SUCCESS=true
-            break
-          else
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-              echo "⚠️  Git pull failed (attempt $RETRY_COUNT/$MAX_RETRIES), retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            else
-              echo "❌ Git pull failed after $MAX_RETRIES attempts"
-              echo "Current commit:"
-              git log -1 --oneline || true
-              echo "⚠️  Continuing with existing code (may not be latest)"
-              PULL_SUCCESS=false
-            fi
-          fi
-        done
-        
-        if [ "$PULL_SUCCESS" = "true" ]; then
-          echo "✅ Code update completed successfully"
-        else
-          echo "⚠️  Code update had issues, but continuing with deployment"
-        fi
-        
         echo "Logging into container registry..."
         echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
         
-        echo "Starting deployment script..."
-        chmod +x scripts/deploy.sh
-        ./scripts/deploy.sh
+        echo "Pulling Docker images from container registry..."
+        # 镜像已经在GitHub Actions中构建并推送到ghcr.io，直接拉取即可
+        REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        
+        # 拉取所有应用镜像
+        for app in system-app admin-app finance-app logistics-app quality-app production-app engineering-app mobile-app; do
+          echo "Pulling $app image..."
+          docker pull ghcr.io/$REPO_LOWER/$app:${{ github.sha }} || docker pull ghcr.io/$REPO_LOWER/$app:latest || echo "Warning: Failed to pull $app image"
+          # 如果拉取了特定SHA的镜像，也标记为latest
+          if docker images ghcr.io/$REPO_LOWER/$app:${{ github.sha }} --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
+            docker tag ghcr.io/$REPO_LOWER/$app:${{ github.sha }} btc-shopflow/$app:latest || true
+          elif docker images ghcr.io/$REPO_LOWER/$app:latest --format "{{.Repository}}:{{.Tag}}" | grep -q "$app"; then
+            docker tag ghcr.io/$REPO_LOWER/$app:latest btc-shopflow/$app:latest || true
+          fi
+        done
+        
+        echo "Creating Docker Compose configuration..."
+        cat > docker-compose.prod.yml << 'COMPOSE_EOF'
+version: '3.8'
+
+services:
+  system-app:
+    image: btc-shopflow/system-app:latest
+    container_name: btc-system-app
+    ports:
+      - "30080:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  admin-app:
+    image: btc-shopflow/admin-app:latest
+    container_name: btc-admin-app
+    ports:
+      - "30081:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  finance-app:
+    image: btc-shopflow/finance-app:latest
+    container_name: btc-finance-app
+    ports:
+      - "30086:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  logistics-app:
+    image: btc-shopflow/logistics-app:latest
+    container_name: btc-logistics-app
+    ports:
+      - "30082:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  quality-app:
+    image: btc-shopflow/quality-app:latest
+    container_name: btc-quality-app
+    ports:
+      - "30083:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  production-app:
+    image: btc-shopflow/production-app:latest
+    container_name: btc-production-app
+    ports:
+      - "30084:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  engineering-app:
+    image: btc-shopflow/engineering-app:latest
+    container_name: btc-engineering-app
+    ports:
+      - "30085:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+  mobile-app:
+    image: btc-shopflow/mobile-app:latest
+    container_name: btc-mobile-app
+    ports:
+      - "30091:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+
+networks:
+  btc-network:
+    driver: bridge
+COMPOSE_EOF
+        
+        echo "Starting services..."
+        docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+        docker-compose -f docker-compose.prod.yml up -d
+        
+        echo "Cleaning up old images..."
+        docker image prune -f || true
         
         echo "Deployment completed successfully"
         EOF
