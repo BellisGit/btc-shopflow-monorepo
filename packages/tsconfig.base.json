@@ -1,6 +1,21 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
@@ -8,7 +23,10 @@
       "@btc-components/*": ["./src/components/*"],
       "@btc-crud/*": ["./src/crud/*"],
       "@btc-styles/*": ["./src/styles/*"],
-      "@btc-locales/*": ["./src/locales/*"]
+      "@btc-locales/*": ["./src/locales/*"],
+      "@btc/shared-utils": ["../packages/shared-utils/src"],
+      "@btc/shared-components": ["../packages/shared-components/src"],
+      "@btc/shared-core": ["../packages/shared-core/src"]
     }
   },
   "include": ["src"],

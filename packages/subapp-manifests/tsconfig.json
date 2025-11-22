@@ -1,10 +1,21 @@
 {
-  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "./",
+    "target": "ES2020",
     "module": "NodeNext",
+    "lib": ["ES2020"],
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "baseUrl": "./",
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
@@ -14,4 +25,3 @@
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
 }
-
