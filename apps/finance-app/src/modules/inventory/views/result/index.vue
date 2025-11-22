@@ -36,7 +36,7 @@
     <BtcDialog
       v-model="detailVisible"
       :title="t('finance.inventory.result.detail.title')"
-      width="800px"
+      width="900px"
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item :label="t('finance.inventory.result.fields.materialCode')">
@@ -44,6 +44,25 @@
         </el-descriptions-item>
         <el-descriptions-item :label="t('finance.inventory.result.fields.position')">
           {{ detailRow?.position || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('finance.inventory.result.fields.unitCost')">
+          {{ formatTableNumber(detailRow?.unitCost) || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('finance.inventory.result.fields.bookQty')">
+          {{ formatTableNumber(detailRow?.bookQty) || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('finance.inventory.result.fields.actualQty')">
+          {{ formatTableNumber(detailRow?.actualQty) || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('finance.inventory.result.fields.diffQty')">
+          <span :class="{ 'text-red-500': (detailRow?.diffQty || 0) < 0, 'text-green-500': (detailRow?.diffQty || 0) > 0 }">
+            {{ formatTableNumber(detailRow?.diffQty) || '-' }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('finance.inventory.result.fields.varianceCost')" :span="2">
+          <span :class="{ 'text-red-500': (detailRow?.varianceCost || 0) < 0, 'text-green-500': (detailRow?.varianceCost || 0) > 0 }">
+            {{ formatTableNumber(detailRow?.varianceCost) || '-' }}
+          </span>
         </el-descriptions-item>
       </el-descriptions>
     </BtcDialog>
@@ -69,90 +88,32 @@ const { t } = useI18n();
 const detailVisible = ref(false);
 const detailRow = ref<any>(null);
 
-// 创建财务盘点结果服务
-// 调试：检查EPS服务结构
-console.log('[Finance EPS Debug] Available service keys:', Object.keys(service));
-console.log('[Finance EPS Debug] Full service object:', service);
+// 创建财务盘点结果服务 - 参考管理域的参数处理方式
+const baseFinanceService = createCrudServiceFromEps('finance.base.financeResult', service);
 
-// 检查不同的可能路径
-console.log('[Finance EPS Debug] service.finance:', service.finance);
-console.log('[Finance EPS Debug] service["finance.base"]:', service["finance.base"]);
-
-let financeInventoryService: CrudService<any>;
-
-try {
-  // 尝试不同的路径格式
-  if (service["finance.base"]) {
-    console.log('[Finance EPS Debug] Using direct "finance.base" key');
-    financeInventoryService = createCrudServiceFromEps("finance.base", service);
-  } else if (service.finance && service.finance.base) {
-    console.log('[Finance EPS Debug] Using nested finance.base path');
-    console.log('[Finance EPS Debug] service.finance.base:', service.finance.base);
-    console.log('[Finance EPS Debug] service.finance.base.page:', service.finance.base.page);
+// 包装服务以正确处理参数传递
+const financeInventoryService: CrudService<any> = {
+  ...baseFinanceService,
+  async page(params: any) {
+    // 参考管理域的模式，确保keyword对象包含所有必需字段
+    const finalParams = { ...params };
     
-    financeInventoryService = createCrudServiceFromEps(['finance', 'base'], service);
-    
-    // 包装原始服务以添加调试信息
-    const originalService = financeInventoryService;
-    financeInventoryService = {
-      ...originalService,
-      async page(params: any) {
-        console.log('[Finance EPS Debug] Page method called with params:', params);
-        console.log('[Finance EPS Debug] About to call original service.page...');
-        try {
-          const result = await originalService.page(params);
-          console.log('[Finance EPS Debug] Page method result:', result);
-          return result;
-        } catch (error) {
-          console.error('[Finance EPS Debug] Page method error:', error);
-          throw error;
-        }
-      }
-    };
-  } else {
-    console.error('[Finance EPS Debug] No valid finance service found, creating fallback service');
-    // 创建一个fallback服务用于调试
-    financeInventoryService = {
-      async page(params: any) {
-        console.log('[Finance EPS Debug] Fallback page called with params:', params);
-        return { list: [], total: 0 };
-      },
-      async add(data: any) {
-        console.log('[Finance EPS Debug] Fallback add called with data:', data);
-      },
-      async update(data: any) {
-        console.log('[Finance EPS Debug] Fallback update called with data:', data);
-      },
-      async delete(id: any) {
-        console.log('[Finance EPS Debug] Fallback delete called with id:', id);
-      },
-      async deleteBatch(ids: any[]) {
-        console.log('[Finance EPS Debug] Fallback deleteBatch called with ids:', ids);
-      }
-    };
-  }
-} catch (error) {
-  console.error('[Finance EPS Debug] Error creating service:', error);
-  // 创建一个fallback服务
-  financeInventoryService = {
-    async page(params: any) {
-      console.log('[Finance EPS Debug] Error fallback page called with params:', params);
-      return { list: [], total: 0 };
-    },
-    async add(data: any) {
-      console.log('[Finance EPS Debug] Error fallback add called');
-    },
-    async update(data: any) {
-      console.log('[Finance EPS Debug] Error fallback update called');
-    },
-    async delete(id: any) {
-      console.log('[Finance EPS Debug] Error fallback delete called');
-    },
-    async deleteBatch(ids: any[]) {
-      console.log('[Finance EPS Debug] Error fallback deleteBatch called');
+    // 确保keyword是一个对象，并包含EPS配置中的所有fieldEq字段
+    if (!finalParams.keyword || typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
+      finalParams.keyword = {};
     }
-  };
-}
+    
+    // 根据EPS配置的fieldEq，添加必需的字段
+    if (finalParams.keyword.materialCode === undefined) {
+      finalParams.keyword.materialCode = '';
+    }
+    if (finalParams.keyword.position === undefined) {
+      finalParams.keyword.position = '';
+    }
+    
+    return await baseFinanceService.page(finalParams);
+  }
+};
 
 const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: any) => formatTableNumber(value);
 
@@ -160,14 +121,19 @@ const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: an
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 48 },
   { type: 'index', label: t('common.index'), width: 60 },
-  { label: t('finance.inventory.result.fields.materialCode'), prop: 'materialCode', minWidth: 140, showOverflowTooltip: true },
-  { label: t('finance.inventory.result.fields.position'), prop: 'position', minWidth: 140, showOverflowTooltip: true },
+  { label: t('finance.inventory.result.fields.materialCode'), prop: 'materialCode', minWidth: 120, showOverflowTooltip: true },
+  { label: t('finance.inventory.result.fields.position'), prop: 'position', width: 80, showOverflowTooltip: true },
+  { label: `${t('finance.inventory.result.fields.unitCost')} ($)`, prop: 'unitCost', width: 100, align: 'right', formatter: formatNumber },
+  { label: t('finance.inventory.result.fields.bookQty'), prop: 'bookQty', width: 100, align: 'right', formatter: formatNumber },
+  { label: t('finance.inventory.result.fields.actualQty'), prop: 'actualQty', width: 100, align: 'right', formatter: formatNumber },
+  { label: t('finance.inventory.result.fields.diffQty'), prop: 'diffQty', width: 100, align: 'right', formatter: formatNumber },
+  { label: `${t('finance.inventory.result.fields.varianceCost')} ($)`, prop: 'varianceCost', width: 120, align: 'right', formatter: formatNumber },
 ]);
 
 // 操作按钮配置
 const opButtons = computed(() => [
   {
-    label: t('common.button.view'),
+    label: t('common.button.detail'),
     type: 'warning',
     icon: 'View',
     onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
@@ -195,7 +161,7 @@ const formItems = computed<FormItem[]>(() => [
       name: 'el-input',
       props: {
         placeholder: t('finance.inventory.result.fields.materialCode'),
-        maxlength: 120
+        maxlength: 50
       }
     },
   },
@@ -207,7 +173,52 @@ const formItems = computed<FormItem[]>(() => [
       name: 'el-input',
       props: {
         placeholder: t('finance.inventory.result.fields.position'),
-        maxlength: 120
+        maxlength: 10
+      }
+    },
+  },
+  {
+    label: t('finance.inventory.result.fields.unitCost'),
+    prop: 'unitCost',
+    required: true,
+    component: {
+      name: 'el-input-number',
+      props: {
+        placeholder: t('finance.inventory.result.fields.unitCost'),
+        precision: 5,
+        min: 0,
+        step: 0.01,
+        controlsPosition: 'right'
+      }
+    },
+  },
+  {
+    label: t('finance.inventory.result.fields.bookQty'),
+    prop: 'bookQty',
+    required: true,
+    component: {
+      name: 'el-input-number',
+      props: {
+        placeholder: t('finance.inventory.result.fields.bookQty'),
+        precision: 0,
+        min: 0,
+        step: 1,
+        controlsPosition: 'right'
+      }
+    },
+  },
+  {
+    label: t('finance.inventory.result.fields.actualQty'),
+    prop: 'actualQty',
+    required: true,
+    component: {
+      name: 'el-input-number',
+      props: {
+        placeholder: t('finance.inventory.result.fields.actualQty'),
+        precision: 0,
+        min: 0,
+        step: 1,
+        controlsPosition: 'right'
       }
     },
   },
@@ -217,7 +228,6 @@ const formItems = computed<FormItem[]>(() => [
 <style scoped lang="scss">
 .finance-crud-wrapper {
   height: 100%;
-  padding: 24px;
   box-sizing: border-box;
 }
 </style>
