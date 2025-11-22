@@ -37,13 +37,20 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --no-frozen-lockfile --ignore-scripts
 
 FROM base AS build
+ARG APP_DIR
 COPY --from=deps /repo/node_modules /repo/node_modules
 # 完整拷贝源代码用于构建
 COPY . .
-# 构建指定子应用
-WORKDIR /repo/${APP_DIR}
+# 构建指定子应用（从根目录使用 filter 构建，需要先构建依赖包）
+WORKDIR /repo
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    pnpm build
+    APP_NAME=$(basename ${APP_DIR}) && \
+    pnpm --filter @btc/vite-plugin build && \
+    pnpm --filter @btc/shared-utils build && \
+    pnpm --filter @btc/shared-core build && \
+    pnpm --filter @btc/shared-components build && \
+    pnpm --filter @btc/subapp-manifests build && \
+    pnpm --filter ${APP_NAME} build
 
 # 运行时镜像：使用 Node.js 提供静态资源服务
 ARG NODE_VERSION=20-alpine
