@@ -51,12 +51,17 @@ COPY apps/ ./apps/
 COPY packages/ ./packages/
 COPY auth/ ./auth/
 COPY scripts/ ./scripts/
+COPY configs/ ./configs/
 
 # 安装 pnpm
 RUN npm install -g pnpm
 
 # 安装所有依赖
 RUN pnpm install --no-frozen-lockfile
+
+# 构建依赖包（vite-plugin等）
+RUN pnpm --filter @btc/vite-plugin run build
+RUN node scripts/turbo.js run build --filter="@btc/*"
 
 # 构建应用
 RUN cd apps/${app_name} && pnpm run build
