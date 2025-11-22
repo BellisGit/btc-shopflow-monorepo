@@ -70,8 +70,15 @@ const detailVisible = ref(false);
 const detailRow = ref<any>(null);
 
 // 创建财务盘点结果服务
+// 调试：检查EPS服务结构
+console.log('[Finance EPS Debug] Available service keys:', Object.keys(service));
+console.log('[Finance EPS Debug] Finance service:', service.finance);
+if (service.finance) {
+  console.log('[Finance EPS Debug] Finance.base service:', service.finance.base);
+}
+
 const financeInventoryService: CrudService<any> = createCrudServiceFromEps(
-  ['finance', 'base'],
+  'finance.base',
   service
 );
 
