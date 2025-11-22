@@ -511,18 +511,62 @@ jobs:
         cd /www/wwwroot/btc-shopflow-monorepo
         
         echo "Pulling latest code..."
+        
+        # Check network connectivity to GitHub
+        echo "Checking network connectivity to GitHub..."
+        if ! curl -s --max-time 5 https://github.com > /dev/null; then
+          echo "⚠️  Warning: Cannot reach GitHub, network may be unstable"
+          echo "Will attempt git pull with retries..."
+        else
+          echo "✅ Network connectivity to GitHub is OK"
+        fi
+        
         # Check for local changes
         if ! git diff-index --quiet HEAD --; then
           echo "Local changes detected, stashing them..."
           git stash push -m "Auto-stash before deployment $(date)"
         fi
         
-        # Reset any uncommitted changes and pull latest
+        # Reset any uncommitted changes
         git reset --hard HEAD
-        git clean -fd
-        git pull origin master
         
-        echo "Successfully updated to latest code"
+        # Clean untracked files (Dockerfiles will be regenerated during build)
+        echo "Cleaning untracked files..."
+        git clean -fd || echo "Warning: git clean had issues, continuing..."
+        
+        # Retry git pull with exponential backoff
+        echo "Attempting to pull latest code from GitHub..."
+        MAX_RETRIES=3
+        RETRY_DELAY=5
+        RETRY_COUNT=0
+        PULL_SUCCESS=false
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          if git pull origin master 2>&1; then
+            echo "✅ Successfully pulled latest code"
+            PULL_SUCCESS=true
+            break
+          else
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "⚠️  Git pull failed (attempt $RETRY_COUNT/$MAX_RETRIES), retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            else
+              echo "❌ Git pull failed after $MAX_RETRIES attempts"
+              echo "Current commit:"
+              git log -1 --oneline || true
+              echo "⚠️  Continuing with existing code (may not be latest)"
+              PULL_SUCCESS=false
+            fi
+          fi
+        done
+        
+        if [ "$PULL_SUCCESS" = "true" ]; then
+          echo "✅ Code update completed successfully"
+        else
+          echo "⚠️  Code update had issues, but continuing with deployment"
+        fi
         
         echo "Logging into container registry..."
         echo "${{ secrets.SERVER_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
