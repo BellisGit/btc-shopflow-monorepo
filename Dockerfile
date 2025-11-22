@@ -19,6 +19,7 @@ COPY packages/shared-core/package.json packages/shared-core/package.json
 COPY packages/shared-components/package.json packages/shared-components/package.json
 COPY packages/shared-utils/package.json packages/shared-utils/package.json
 COPY packages/vite-plugin/package.json packages/vite-plugin/package.json
+COPY packages/subapp-manifests/package.json packages/subapp-manifests/package.json
 COPY apps/admin-app/package.json apps/admin-app/package.json
 COPY apps/docs-site-app/package.json apps/docs-site-app/package.json
 COPY apps/engineering-app/package.json apps/engineering-app/package.json
@@ -27,6 +28,7 @@ COPY apps/logistics-app/package.json apps/logistics-app/package.json
 COPY apps/production-app/package.json apps/production-app/package.json
 COPY apps/quality-app/package.json apps/quality-app/package.json
 COPY apps/system-app/package.json apps/system-app/package.json
+COPY apps/mobile-app/package.json apps/mobile-app/package.json
 
 FROM base AS deps
 # 安装依赖
