@@ -307,7 +307,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-logistics-app:
@@ -319,7 +319,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-quality-app:
@@ -331,7 +331,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-production-app:
@@ -343,7 +343,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-engineering-app:
@@ -355,7 +355,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-finance-app:
@@ -367,7 +367,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   build-mobile-app:
@@ -379,7 +379,7 @@ jobs:
       registry: ghcr.io
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      secrets:
+    secrets:
       gh_token: ${{ secrets.SERVER_PAT }}
 
   # Step 7: Deploy to Server
