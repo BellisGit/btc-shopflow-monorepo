@@ -1,0 +1,116 @@
+name: Build App (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: 'Application name (e.g., system-app, admin-app)'
+        required: true
+        type: string
+      registry:
+        description: 'Container registry URL'
+        required: true
+        type: string
+      github_repository:
+        description: 'GitHub repository name'
+        required: true
+        type: string
+      github_sha:
+        description: 'GitHub commit SHA'
+        required: true
+        type: string
+    secrets:
+      gh_token:
+        description: 'GitHub token for registry access'
+        required: true
+
+jobs:
+  build-app:
+    name: Build ${{ inputs.app_name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile
+    
+    - name: Validate GitHub Token
+      run: |
+        echo "Validating GitHub token for registry access..."
+        
+        if [ -n "${{ secrets.gh_token }}" ]; then
+          echo "[SUCCESS] gh_token is available for Docker registry"
+          echo "Token length: $(echo '${{ secrets.gh_token }}' | wc -c) characters"
+        else
+          echo "[WARNING] gh_token is not available, this may cause Docker registry push to fail"
+          echo "Please ensure SERVER_PAT secret is set in repository settings"
+          echo "Continuing with build process..."
+        fi
+
+    - name: Prepare Docker tags
+      id: tags
+      run: |
+        # Convert repository name to lowercase for Docker compatibility
+        REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+        echo "[INFO] Docker tags will use: $REPO_LOWER"
+
+    - name: Build dependencies
+      run: |
+        echo "Building dependencies for ${{ inputs.app_name }}..."
+        # Build vite-plugin first as other packages may depend on it
+        pnpm --filter @btc/vite-plugin run build
+        # Use turbo to build all package dependencies
+        node scripts/turbo.js run build --filter="@btc/*"
+    
+    - name: Build application
+      run: cd apps/${{ inputs.app_name }} && pnpm run build
+    
+    - name: Create Dockerfile
+      run: |
+        cat > apps/${{ inputs.app_name }}/Dockerfile << 'EOF'
+        FROM node:20-alpine AS builder
+        WORKDIR /app
+        # Copy the pre-built application
+        COPY apps/${{ inputs.app_name }}/dist ./dist
+
+        FROM nginx:alpine
+        COPY --from=builder /app/dist /usr/share/nginx/html
+        RUN echo 'server { listen 80; location / { try_files \$uri \$uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+        EXPOSE 80
+        CMD ["nginx", "-g", "daemon off;"]
+        EOF
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.gh_token }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: apps/${{ inputs.app_name }}/Dockerfile
+        push: true
+        tags: |
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ inputs.app_name }}:latest
+          ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ inputs.app_name }}:${{ inputs.github_sha }}
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+      env:
+        DOCKER_BUILDKIT: 1
