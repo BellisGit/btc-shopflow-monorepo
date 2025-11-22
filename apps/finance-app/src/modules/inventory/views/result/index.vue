@@ -87,7 +87,28 @@ try {
     financeInventoryService = createCrudServiceFromEps("finance.base", service);
   } else if (service.finance && service.finance.base) {
     console.log('[Finance EPS Debug] Using nested finance.base path');
+    console.log('[Finance EPS Debug] service.finance.base:', service.finance.base);
+    console.log('[Finance EPS Debug] service.finance.base.page:', service.finance.base.page);
+    
     financeInventoryService = createCrudServiceFromEps(['finance', 'base'], service);
+    
+    // 包装原始服务以添加调试信息
+    const originalService = financeInventoryService;
+    financeInventoryService = {
+      ...originalService,
+      async page(params: any) {
+        console.log('[Finance EPS Debug] Page method called with params:', params);
+        console.log('[Finance EPS Debug] About to call original service.page...');
+        try {
+          const result = await originalService.page(params);
+          console.log('[Finance EPS Debug] Page method result:', result);
+          return result;
+        } catch (error) {
+          console.error('[Finance EPS Debug] Page method error:', error);
+          throw error;
+        }
+      }
+    };
   } else {
     console.error('[Finance EPS Debug] No valid finance service found, creating fallback service');
     // 创建一个fallback服务用于调试
