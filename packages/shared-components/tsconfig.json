@@ -1,13 +1,26 @@
 {
-  "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
     "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
-    "jsx": "preserve",
-    "jsxImportSource": "vue",
-    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@btc-common/*": ["src/common/*"],
@@ -23,8 +36,11 @@
       "@charts/*": ["src/charts/*"],
       "@charts-types/*": ["src/charts/types/*"],
       "@charts-utils/*": ["src/charts/utils/*"],
-      "@charts-composables/*": ["src/charts/composables/*"]
+      "@charts-composables/*": ["src/charts/composables/*"],
+      "@btc/shared-utils": ["../shared-utils/src"],
+      "@btc/shared-core": ["../shared-core/src"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.json"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.json"],
+  "exclude": ["node_modules", "dist"]
 }
