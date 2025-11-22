@@ -1,6 +1,7 @@
 import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
-import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
+// 延迟导入 loadingManager 以避免循环依赖
+// import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from './manifests';
@@ -169,8 +170,9 @@ export function setupQiankun() {
     ...app,
     props: {
       locale: currentLocale,
-      onReady: () => {
-        // 子应用加载完成
+      onReady: async () => {
+        // 子应用加载完成（延迟导入以避免循环依赖）
+        const { finishLoading } = await import('../utils/loadingManager');
         finishLoading();
       },
       // Tab 管理 API
@@ -220,8 +222,10 @@ export function setupQiankun() {
     appsWithProps,
     {
       // 应用加载前
-      beforeLoad: [(app) => {
+      beforeLoad: [async (app) => {
         const appName = appNameMap[app.name] || app.name;
+        // 延迟导入以避免循环依赖
+        const { startLoading } = await import('../utils/loadingManager');
         startLoading(appName);
 
         // 确保容器存在且可见（qiankun 需要容器可见才能加载）
@@ -322,8 +326,9 @@ export function setupQiankun() {
           container.style.removeProperty('opacity');
         }
 
-        // 如果子应用没有主动调用 onReady，这里兜底
-        setTimeout(() => {
+        // 如果子应用没有主动调用 onReady，这里兜底（延迟导入以避免循环依赖）
+        setTimeout(async () => {
+          const { finishLoading } = await import('../utils/loadingManager');
           finishLoading();
         }, 100);
         return Promise.resolve();
@@ -391,11 +396,12 @@ export function setupQiankun() {
     registerManifestMenusForApp('system');
   }
 
-  // 监听全局错误
-  window.addEventListener('error', (event) => {
+  // 监听全局错误（延迟导入以避免循环依赖）
+  window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
       const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
     }
   });
@@ -405,7 +411,9 @@ export function setupQiankun() {
  * 监听子应用就绪事件
  */
 export function listenSubAppReady() {
-  window.addEventListener('subapp:ready', () => {
+  window.addEventListener('subapp:ready', async () => {
+    // 延迟导入以避免循环依赖
+    const { finishLoading } = await import('../utils/loadingManager');
     finishLoading();
   });
 }
