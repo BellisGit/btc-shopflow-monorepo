@@ -152,9 +152,10 @@ jobs:
         find packages -name "tsconfig.json" -exec echo "Checking: {}" \;
         
         # Check if any tsconfig files have problematic extends
-        if find packages -name "tsconfig.json" -exec grep -l '"extends".*"\.\./tsconfig\.json"' {} \; | head -1; then
+        PROBLEMATIC_FILES=$(find packages -name "tsconfig.json" -exec grep -l '"extends".*"\.\./tsconfig\.json"' {} \; 2>/dev/null || true)
+        if [ -n "$PROBLEMATIC_FILES" ]; then
           echo "❌ Found tsconfig files with problematic inheritance:"
-          find packages -name "tsconfig.json" -exec grep -l '"extends".*"\.\./tsconfig\.json"' {} \;
+          echo "$PROBLEMATIC_FILES"
           echo ""
           echo "These files extend '../tsconfig.json' which may not be available in Docker build context."
           echo "Please use standalone tsconfig files or fix the inheritance chain."
