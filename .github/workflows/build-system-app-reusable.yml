@@ -43,6 +43,17 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
     
+    - name: Build dependencies
+      run: |
+        echo "Building dependencies for system-app..."
+        # Build vite-plugin first as other packages may depend on it
+        pnpm --filter @btc/vite-plugin run build
+        # Use turbo to build all package dependencies
+        node scripts/turbo.js run build --filter="@btc/*"
+    
+    - name: Build system-app
+      run: cd apps/system-app && pnpm run build
+    
     - name: Validate GitHub Token
       run: |
         echo "Validating GitHub token for registry access..."

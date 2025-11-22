@@ -152,28 +152,6 @@ jobs:
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
-    - name: Validate GitHub Token
-      run: |
-        echo "Validating GitHub tokens for registry access..."
-        
-        if [ -n "${{ secrets.SERVER_PAT }}" ]; then
-          echo "? SERVER_PAT is available for GitHub Container Registry"
-          echo "PAT length: $(echo '${{ secrets.SERVER_PAT }}' | wc -c) characters"
-        elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
-          echo "? GITHUB_TOKEN is available (fallback)"
-        else
-          echo "? No GitHub token available for registry access"
-          exit 1
-        fi
-
-    - name: Build dependencies
-      run: |
-        echo "Building dependencies before type checking..."
-        # Build vite-plugin first as other packages may depend on it
-        pnpm --filter @btc/vite-plugin run build
-        # Use turbo to build all package dependencies
-        node scripts/turbo.js run build --filter="@btc/*"
-
     - name: Type check
       run: pnpm run type-check
 
