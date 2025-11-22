@@ -24,7 +24,11 @@ export const config = {
   // API 配置
   api: {
     // 基础路径
-    baseURL: isDev ? '/api' : (import.meta as any).env.VITE_API_BASE_URL || 'http://10.0.0.168:8115/api',
+    // 开发环境：使用代理 /api（通过 vite.config.ts 中的 proxy 配置转发到开发后端）
+    // 生产环境：使用环境变量 VITE_API_BASE_URL（在 .env.production 中配置）
+    baseURL: isDev 
+      ? '/api' 
+      : ((import.meta as any).env.VITE_API_BASE_URL || 'http://10.0.0.168:8115/api'),
     // 请求超时时间
     timeout: 30000,
   },
