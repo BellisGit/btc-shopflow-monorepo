@@ -54,10 +54,21 @@ jobs:
         if [ -n "${{ secrets.gh_token }}" ]; then
           echo "[SUCCESS] gh_token is available for Docker registry"
           echo "Token length: $(echo '${{ secrets.gh_token }}' | wc -c) characters"
+          
+          # Test token permissions
+          echo "Testing token permissions for ghcr.io..."
+          if echo "${{ secrets.gh_token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin; then
+            echo "[SUCCESS] Token has valid permissions for ghcr.io"
+          else
+            echo "[ERROR] Token authentication failed for ghcr.io"
+            echo "Please ensure SERVER_PAT has 'write:packages' scope"
+            exit 1
+          fi
         else
-          echo "[WARNING] gh_token is not available, this may cause Docker registry push to fail"
-          echo "Please ensure SERVER_PAT secret is set in repository settings"
-          echo "Continuing with build process..."
+          echo "[ERROR] gh_token is not available"
+          echo "Please set SERVER_PAT secret with 'write:packages' scope in repository settings"
+          echo "Falling back to GITHUB_TOKEN may not work for package registry"
+          exit 1
         fi
 
     - name: Prepare Docker tags
