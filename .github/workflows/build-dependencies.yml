@@ -1,0 +1,44 @@
+name: Build Dependencies
+
+on:
+  workflow_call:
+
+jobs:
+  build-dependencies:
+    name: Build Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile
+    
+    - name: Build vite-plugin
+      run: |
+        echo "Building @btc/vite-plugin..."
+        pnpm --filter @btc/vite-plugin run build
+    
+    - name: Build shared packages
+      run: |
+        echo "Building shared packages..."
+        node scripts/turbo.js run build --filter="@btc/*"
+    
+    - name: Cache built packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          packages/*/dist
+          packages/*/build
+        key: packages-build-${{ github.sha }}
+        restore-keys: |
+          packages-build-
