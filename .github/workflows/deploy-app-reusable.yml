@@ -1,0 +1,281 @@
+name: Deploy App (Reusable)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Application name to deploy (e.g., system-app)'
+        required: true
+        type: string
+      image_path:
+        description: 'Path to Docker image file on server'
+        required: true
+        type: string
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: string
+  repository_dispatch:
+    types: [deploy-app]
+
+env:
+  REGISTRY: ghcr.io
+
+permissions:
+  contents: read
+
+jobs:
+  # Step 1: Validate SSH Connection
+  validate-ssh:
+    name: Validate SSH Connection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Test SSH connection
+      run: |
+        echo "[INFO] Testing SSH connection..."
+        
+        if [ -z "${{ secrets.SERVER_KEY }}" ]; then
+          echo "[ERROR] SERVER_KEY not set"
+          exit 1
+        fi
+        
+        if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+          echo "[ERROR] SERVER_HOST not set"
+          exit 1
+        fi
+        
+        echo "[INFO] Setting up SSH key..."
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        
+        SERVER_KEY="${{ secrets.SERVER_KEY }}"
+        if echo "$SERVER_KEY" | grep -q "^[A-Za-z0-9+/]*={0,2}$" && [ ${#SERVER_KEY} -gt 100 ]; then
+          echo "${{ secrets.SERVER_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        else
+          echo "${{ secrets.SERVER_KEY }}" > ~/.ssh/id_rsa
+          sed -i 's/\\n/\n/g' ~/.ssh/id_rsa
+        fi
+        
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        
+        if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes \
+            -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT || '22' }} \
+            ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
+            "echo 'SSH connection test successful'"; then
+          echo "[SUCCESS] SSH connection successful!"
+          echo "ssh_available=true" >> $GITHUB_ENV
+        else
+          echo "[ERROR] SSH connection failed!"
+          exit 1
+        fi
+
+  # Step 2: Deploy Application
+  deploy-app:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [validate-ssh]
+    if: always() && needs.validate-ssh.result == 'success'
+    
+    steps:
+    - name: Deploy application
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER || 'root' }}
+        key: ${{ secrets.SERVER_KEY }}
+        port: ${{ secrets.SERVER_PORT || '22' }}
+        timeout: 900s
+        command_timeout: 10m
+        script: |
+          set -e
+          
+          # Get app name and image path from inputs
+          APP_NAME="${{ inputs.app_name || github.event.client_payload.app_name }}"
+          IMAGE_PATH="${{ inputs.image_path || github.event.client_payload.image_path }}"
+          ENVIRONMENT="${{ inputs.environment || github.event.client_payload.environment || 'production' }}"
+          
+          if [ -z "$APP_NAME" ]; then
+            echo "[ERROR] App name is required"
+            exit 1
+          fi
+          
+          if [ -z "$IMAGE_PATH" ]; then
+            echo "[ERROR] Image path is required"
+            exit 1
+          fi
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Starting BTC ShopFlow Deployment"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "App: $APP_NAME"
+          echo "Image Path: $IMAGE_PATH"
+          echo "Environment: $ENVIRONMENT"
+          echo ""
+          
+          # App to port mapping
+          declare -A APP_PORTS=(
+            ["system-app"]="30080"
+            ["admin-app"]="30081"
+            ["logistics-app"]="30082"
+            ["quality-app"]="30083"
+            ["production-app"]="30084"
+            ["engineering-app"]="30085"
+            ["finance-app"]="30086"
+            ["mobile-app"]="30091"
+          )
+          
+          PORT=${APP_PORTS[$APP_NAME]}
+          if [ -z "$PORT" ]; then
+            echo "[ERROR] Unknown app: $APP_NAME"
+            echo "Supported apps: ${!APP_PORTS[@]}"
+            exit 1
+          fi
+          
+          CONTAINER_NAME="btc-${APP_NAME//-app/}"
+          
+          # Check if image file exists
+          if [ ! -f "$IMAGE_PATH" ]; then
+            echo "[ERROR] Image file not found: $IMAGE_PATH"
+            echo "Please ensure the image was uploaded successfully"
+            exit 1
+          fi
+          
+          echo "📥 Loading Docker image from file..."
+          if docker load < "$IMAGE_PATH"; then
+            echo "[SUCCESS] Image loaded successfully"
+          else
+            echo "[ERROR] Failed to load image"
+            exit 1
+          fi
+          
+          # Tag the loaded image
+          LOADED_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "$APP_NAME" | head -1)
+          if [ -n "$LOADED_IMAGE" ]; then
+            echo "[INFO] Tagging image: $LOADED_IMAGE -> btc-shopflow/$APP_NAME:latest"
+            docker tag "$LOADED_IMAGE" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+          fi
+          
+          echo ""
+          echo "📊 Image status:"
+          docker images btc-shopflow/$APP_NAME --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" || echo "[WARNING] Image not found"
+          echo ""
+          
+          # Stop and remove old container
+          echo "🔄 Updating container: $CONTAINER_NAME"
+          if docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.Names}}" | grep -q "^$CONTAINER_NAME$"; then
+            echo "[$APP_NAME] Stopping existing container..."
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            echo "[$APP_NAME] ✅ Container stopped and removed"
+          else
+            echo "[$APP_NAME] ℹ️  Container not found (will be created)"
+          fi
+          
+          # Generate docker-compose configuration for this app only
+          echo "📝 Generating docker-compose configuration..."
+          COMPOSE_FILE="docker-compose.prod.yml"
+          
+          cat > "$COMPOSE_FILE" << EOF
+          version: '3.8'
+          
+          services:
+            $APP_NAME:
+              image: btc-shopflow/$APP_NAME:latest
+              container_name: $CONTAINER_NAME
+              ports:
+                - "$PORT:80"
+              restart: unless-stopped
+              networks:
+                - btc-network
+          
+          networks:
+            btc-network:
+              driver: bridge
+          EOF
+          
+          echo "✅ Docker Compose configuration generated"
+          echo ""
+          cat "$COMPOSE_FILE"
+          echo ""
+          
+          # Start the service
+          echo "🚀 Starting service with docker-compose..."
+          docker-compose -f "$COMPOSE_FILE" up -d
+          
+          echo ""
+          echo "⏳ Waiting for container to start..."
+          sleep 5
+          
+          echo ""
+          echo "📋 Container status:"
+          if docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -q "$CONTAINER_NAME"; then
+            echo "[$APP_NAME] ✅ Container is running"
+            docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          else
+            echo "[$APP_NAME] ⚠️  Container status unknown"
+            echo "Container logs:"
+            docker logs "$CONTAINER_NAME" --tail 50 2>&1 || echo "No logs available"
+          fi
+          
+          echo ""
+          echo "🧹 Cleaning up image file..."
+          rm -f "$IMAGE_PATH" || true
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Deployment completed successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "App: $APP_NAME"
+          echo "Port: $PORT"
+          echo "Container: $CONTAINER_NAME"
+          echo ""
+
+    - name: Health check
+      run: |
+        APP_NAME="${{ inputs.app_name || github.event.client_payload.app_name }}"
+        
+        declare -A APP_PORTS=(
+          ["system-app"]="30080"
+          ["admin-app"]="30081"
+          ["logistics-app"]="30082"
+          ["quality-app"]="30083"
+          ["production-app"]="30084"
+          ["engineering-app"]="30085"
+          ["finance-app"]="30086"
+          ["mobile-app"]="30091"
+        )
+        
+        PORT=${APP_PORTS[$APP_NAME]}
+        
+        if [ -n "$PORT" ]; then
+          echo "Performing health check..."
+          sleep 10
+          
+          echo "Checking $APP_NAME on port $PORT..."
+          if curl -f -s --max-time 5 http://${{ secrets.SERVER_HOST }}:$PORT > /dev/null; then
+            echo "✅ $APP_NAME is healthy"
+          else
+            echo "⚠️  $APP_NAME health check failed (may still be starting)"
+          fi
+        fi
+
+    - name: Deployment summary
+      run: |
+        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployed App:" >> $GITHUB_STEP_SUMMARY
+        APP_NAME="${{ inputs.app_name || github.event.client_payload.app_name }}"
+        echo "- $APP_NAME" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Environment:" >> $GITHUB_STEP_SUMMARY
+        echo "${{ inputs.environment || github.event.client_payload.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Commit SHA:" >> $GITHUB_STEP_SUMMARY
+        echo "${{ github.event.client_payload.github_sha || github.sha }}" >> $GITHUB_STEP_SUMMARY
