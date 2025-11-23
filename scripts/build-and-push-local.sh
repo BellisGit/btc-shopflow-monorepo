@@ -266,6 +266,36 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     REPO_OWNER=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
     REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
     
+    # 验证 Token 是否有效
+    log_info "验证 GitHub Token..."
+    TOKEN_CHECK=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/user" 2>&1)
+    
+    TOKEN_CHECK_CODE=$(echo "$TOKEN_CHECK" | tail -n1)
+    TOKEN_CHECK_BODY=$(echo "$TOKEN_CHECK" | sed '$d')
+    
+    if [ "$TOKEN_CHECK_CODE" -ne 200 ]; then
+        log_error "❌ GitHub Token 验证失败 (HTTP $TOKEN_CHECK_CODE)"
+        log_warning "响应: $TOKEN_CHECK_BODY"
+        log_info ""
+        log_info "💡 解决方案:"
+        log_info "  1. 检查 Token 是否有效: https://github.com/settings/tokens"
+        log_info "  2. 确认 Token 未过期"
+        log_info "  3. 重新生成 Token 并设置:"
+        log_info "     PowerShell: \$env:GITHUB_TOKEN=\"your_new_token\""
+        log_info "     Git Bash: export GITHUB_TOKEN=\"your_new_token\""
+        log_info "  4. 确保 Token 具有以下权限:"
+        log_info "     - ✅ write:packages (推送镜像)"
+        log_info "     - ✅ actions:write (触发工作流)"
+        log_info "     - ✅ repo (如果仓库是私有的)"
+        exit 1
+    fi
+    
+    log_success "✅ GitHub Token 验证通过"
+    
     # 触发 GitHub Actions 工作流
     log_info "触发轻量级部署工作流: $APP_NAME"
     
@@ -327,19 +357,52 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
         log_error "⚠️  触发部署工作流失败 (HTTP $HTTP_CODE)"
         log_warning "响应: $RESPONSE_BODY"
         log_info ""
-        log_info "💡 可能的原因:"
-        log_info "  1. Token 缺少 'workflow' 或 'actions:write' 权限"
-        log_info "  2. 工作流文件尚未被 GitHub 识别（可能需要等待几分钟）"
-        log_info "  3. 工作流文件名或路径不正确"
-        log_info ""
-        log_info "💡 解决方案:"
-        log_info "  1. 检查 Token 权限: https://github.com/settings/tokens"
-        log_info "     - 确保勾选了 'workflow' 或 'actions:write' 权限"
-        log_info "  2. 等待几分钟后重试（新工作流需要时间被 GitHub 识别）"
-        log_info "  3. 手动触发部署:"
-        log_info "     pnpm deploy:$APP_NAME"
-        log_info "  4. 或在 GitHub 网页上手动触发:"
-        log_info "     https://github.com/$GITHUB_REPO/actions/workflows/deploy-only.yml"
+        
+        if [ "$HTTP_CODE" -eq 401 ]; then
+            log_error "❌ 认证失败: Token 无效或已过期"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token 是否有效: https://github.com/settings/tokens"
+            log_info "  2. 如果 Token 已过期，重新生成:"
+            log_info "     - 访问: https://github.com/settings/tokens/new"
+            log_info "     - 选择权限: write:packages, actions:write, repo"
+            log_info "  3. 设置新 Token:"
+            log_info "     PowerShell: \$env:GITHUB_TOKEN=\"your_new_token\""
+            log_info "     Git Bash: export GITHUB_TOKEN=\"your_new_token\""
+        elif [ "$HTTP_CODE" -eq 403 ]; then
+            log_error "❌ 权限不足: Token 缺少必要的权限"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token 权限: https://github.com/settings/tokens"
+            log_info "  2. 确保勾选了以下权限:"
+            log_info "     - ✅ write:packages (推送镜像)"
+            log_info "     - ✅ actions:write (触发工作流)"
+            log_info "     - ✅ repo (如果仓库是私有的)"
+            log_info "  3. 如果权限不足，重新生成 Token 并选择所有需要的权限"
+        elif [ "$HTTP_CODE" -eq 404 ]; then
+            log_error "❌ 工作流未找到: deploy-only.yml 可能尚未被 GitHub 识别"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 等待 2-5 分钟让 GitHub 识别新工作流"
+            log_info "  2. 访问: https://github.com/$GITHUB_REPO/actions 查看工作流列表"
+            log_info "  3. 手动触发部署:"
+            log_info "     pnpm deploy:$APP_NAME"
+            log_info "  4. 或在 GitHub 网页上手动触发:"
+            log_info "     https://github.com/$GITHUB_REPO/actions/workflows/deploy-only.yml"
+        else
+            log_error "❌ 未知错误 (HTTP $HTTP_CODE)"
+            log_info ""
+            log_info "💡 可能的原因:"
+            log_info "  1. Token 权限不足"
+            log_info "  2. 工作流文件尚未被 GitHub 识别"
+            log_info "  3. 网络连接问题"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token: https://github.com/settings/tokens"
+            log_info "  2. 等待几分钟后重试"
+            log_info "  3. 手动触发部署:"
+            log_info "     pnpm deploy:$APP_NAME"
+        fi
     fi
     echo ""
 fi
