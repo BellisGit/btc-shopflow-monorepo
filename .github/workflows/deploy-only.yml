@@ -210,63 +210,93 @@ jobs:
           
           echo "📥 Pulling Docker images for selected apps..."
           
-          # Function to pull image with retry
+          # Function to pull image with retry (optimized for speed)
           pull_image_async() {
             local app=$1
             local tag=$2
-            local timeout_duration=${3:-300}
-            local max_retries=${4:-2}
+            local timeout_duration=${3:-180}  # Reduced from 300 to 180 seconds
+            local max_retries=${4:-1}  # Reduced from 2 to 1 retry for faster failure
             
-            echo "[$app] Starting pull for $tag..."
+            echo "[$app] 🚀 Pulling image: ghcr.io/$REPO_LOWER/$app:$tag"
+            START_TIME=$(date +%s)
+            
             RETRY_COUNT=0
-            
             while [ $RETRY_COUNT -lt $max_retries ]; do
               RETRY_COUNT=$((RETRY_COUNT + 1))
-              if timeout $timeout_duration docker pull ghcr.io/$REPO_LOWER/$app:$tag 2>&1; then
+              
+              # Use shorter timeout and faster retry
+              if timeout $timeout_duration docker pull ghcr.io/$REPO_LOWER/$app:$tag > /dev/null 2>&1; then
                 docker tag ghcr.io/$REPO_LOWER/$app:$tag btc-shopflow/$app:latest 2>/dev/null || true
-                echo "[$app] ✅ Successfully pulled $tag"
+                ELAPSED=$(($(date +%s) - START_TIME))
+                echo "[$app] ✅ Pulled in ${ELAPSED}s"
                 return 0
               else
-                echo "[$app] ⚠️  Failed to pull $tag (attempt $RETRY_COUNT/$max_retries)"
+                echo "[$app] ⚠️  Pull failed (attempt $RETRY_COUNT/$max_retries)"
                 if [ $RETRY_COUNT -lt $max_retries ]; then
-                  sleep $((RETRY_COUNT * 5))
+                  sleep 3  # Reduced retry delay
                 fi
               fi
             done
             return 1
           }
           
-          # Pull images for selected apps only
+          # Pull images for selected apps only (parallel execution)
+          echo "📥 Pulling Docker images in parallel..."
           PIDS=()
           for app in $APPS_LIST; do
             (
-              if ! pull_image_async "$app" "latest" 300 2; then
-                if [ -n "$GITHUB_SHA" ] && [ "$GITHUB_SHA" != "latest" ]; then
-                  pull_image_async "$app" "$GITHUB_SHA" 300 2 || true
+              # Try to pull latest tag first, fallback to SHA tag if specified
+              if ! pull_image_async "$app" "latest" 180 1; then
+                if [ -n "$GITHUB_SHA" ] && [ "$GITHUB_SHA" != "latest" ] && [ "$GITHUB_SHA" != "" ]; then
+                  echo "[$app] 🔄 Trying SHA tag: $GITHUB_SHA"
+                  pull_image_async "$app" "$GITHUB_SHA" 180 1 || true
                 fi
               fi
               
               # Verify image exists
-              if ! docker images btc-shopflow/$app --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "$app"; then
-                echo "[$app] ⚠️  No image available"
+              if ! docker images btc-shopflow/$app:latest --format "{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "$app"; then
+                echo "[$app] ❌ No image available after pull attempts"
               else
-                echo "[$app] ✅ Image ready"
+                echo "[$app] ✅ Image ready for deployment"
               fi
             ) &
             PIDS+=($!)
           done
           
-          # Wait for all pulls to complete
-          echo "⏳ Waiting for images to be pulled..."
+          # Wait for all pulls to complete (with timeout)
+          echo "⏳ Waiting for all images to be pulled (max 5 minutes)..."
           FAILED=0
+          PULL_START=$(date +%s)
+          PULL_TIMEOUT=300  # 5 minutes total timeout
+          
           for pid in "${PIDS[@]}"; do
-            if ! wait "$pid"; then
+            # Wait with timeout
+            WAIT_START=$(date +%s)
+            while kill -0 "$pid" 2>/dev/null; do
+              ELAPSED=$(($(date +%s) - WAIT_START))
+              if [ $ELAPSED -gt $PULL_TIMEOUT ]; then
+                echo "⏱️  Timeout waiting for image pull, killing process..."
+                kill "$pid" 2>/dev/null || true
+                FAILED=$((FAILED + 1))
+                break
+              fi
+              sleep 1
+            done
+            
+            # Check exit status
+            if wait "$pid" 2>/dev/null; then
+              # Process completed successfully
+              :
+            else
               FAILED=$((FAILED + 1))
             fi
           done
           
+          TOTAL_TIME=$(($(date +%s) - PULL_START))
+          echo "⏱️  Total pull time: ${TOTAL_TIME}s"
+          
           if [ $FAILED -gt 0 ]; then
-            echo "⚠️  $FAILED images failed to pull"
+            echo "⚠️  Warning: $FAILED images failed to pull (may use existing images)"
           fi
           
           echo ""
