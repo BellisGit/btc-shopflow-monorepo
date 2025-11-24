@@ -93,8 +93,48 @@ jobs:
           fi
           
           echo "🔄 Updating container..."
-          docker stop "$CONTAINER_NAME" 2>/dev/null || true
-          docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+          
+          # 停止并删除旧容器（包括使用相同端口的容器）
+          echo "📋 检查现有容器..."
+          EXISTING_CONTAINER=$(docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.ID}}" | head -1)
+          if [ -n "$EXISTING_CONTAINER" ]; then
+            echo "🛑 停止旧容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+          fi
+          
+          # 检查并停止占用端口的容器（使用更可靠的方法）
+          echo "🔍 检查端口 $PORT 占用情况..."
+          PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+          if [ -n "$PORT_CONTAINERS" ]; then
+            echo "⚠️  发现占用端口 $PORT 的容器:"
+            echo "$PORT_CONTAINERS"
+            echo "$PORT_CONTAINERS" | while read -r container; do
+              if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                echo "🛑 停止容器: $container"
+                docker stop "$container" 2>/dev/null || true
+                docker rm -f "$container" 2>/dev/null || true
+              fi
+            done
+          fi
+          
+          # 使用 docker-compose down 确保完全清理（如果存在旧的 compose 配置）
+          if [ -f "docker-compose.prod.yml" ]; then
+            echo "🧹 清理旧的 docker-compose 服务..."
+            docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+          fi
+          
+          # 等待端口释放（使用 Docker 命令检查）
+          echo "⏳ 等待端口 $PORT 释放..."
+          for i in {1..10}; do
+            ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+            if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+              echo "✅ 端口 $PORT 已释放"
+              break
+            fi
+            echo "   等待中... ($i/10)"
+            sleep 1
+          done
           
           cat > docker-compose.prod.yml << EOF
           version: '3.8'
@@ -112,6 +152,7 @@ jobs:
               driver: bridge
           EOF
           
+          echo "🚀 启动新容器..."
           docker-compose -f docker-compose.prod.yml up -d
           sleep 5
           
