@@ -1,0 +1,40 @@
+name: Deploy Quality App
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.deploy/quality-app/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    name: Validate Deployment
+    uses: ./.github/workflows/validate-deployment.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy Quality App
+    needs: [validate]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: quality-app
+      app_port: "30083"
+      container_name: btc-quality
+    secrets: inherit
+
+  cleanup:
+    name: Clean up deployment marker
+    needs: [deploy]
+    if: always() && needs.deploy.result == 'success' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Clean up
+      run: |
+        rm -rf ".deploy/quality-app" || true

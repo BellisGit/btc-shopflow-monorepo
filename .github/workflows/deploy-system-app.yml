@@ -1,0 +1,44 @@
+name: Deploy System App
+
+# ⚠️ 此工作流仅用于部署 system-app
+# - 触发条件：推送到 .deploy/system-app/** 路径的文件
+# - 不会触发任何构建过程（构建在本地完成）
+# - 不会影响其他应用的部署
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.deploy/system-app/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    name: Validate Deployment
+    uses: ./.github/workflows/validate-deployment.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy System App
+    needs: [validate]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: system-app
+      app_port: "30080"
+      container_name: btc-system
+    secrets: inherit
+
+  cleanup:
+    name: Clean up deployment marker
+    needs: [deploy]
+    if: always() && needs.deploy.result == 'success' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Clean up
+      run: |
+        rm -rf ".deploy/system-app" || true
