@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getActiveApp, resolveTabMeta } from './tabRegistry';
+// 使用动态导入避免循环依赖（tabRegistry 可能导入 micro/manifests，而 micro/index.ts 导入 process.ts）
+// import { getActiveApp, resolveTabMeta } from './tabRegistry';
 
 export interface ProcessItem {
   path: string;
@@ -20,10 +21,19 @@ export interface ProcessItem {
 }
 
 /**
- * 获取当前应用名称（使用统一的 tabRegistry）
+ * 获取当前应用名称（根据路径前缀判断）
+ * 此函数不依赖 tabRegistry，避免循环依赖
  */
 export function getCurrentAppFromPath(path: string): string {
-  return getActiveApp(path);
+  if (path.startsWith('/admin')) return 'admin';
+  if (path.startsWith('/logistics')) return 'logistics';
+  if (path.startsWith('/engineering')) return 'engineering';
+  if (path.startsWith('/quality')) return 'quality';
+  if (path.startsWith('/production')) return 'production';
+  if (path.startsWith('/finance')) return 'finance';
+  if (path.startsWith('/docs')) return 'docs';
+  // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
+  return 'system';
 }
 
 /**
@@ -149,6 +159,7 @@ export const useProcessStore = defineStore('process', () => {
 
   /**
    * 添加标签（通过 tabRegistry 解析元数据）
+   * 使用动态导入避免循环依赖
    */
   function add(data: ProcessItem) {
     // 跳过个人信息页面和认证页面（不在菜单中，不需要添加到标签页）
@@ -159,34 +170,8 @@ export const useProcessStore = defineStore('process', () => {
       return;
     }
 
-    // 确定标签所属应用
+    // 获取应用名称（不依赖 tabRegistry，避免循环依赖）
     const app = getCurrentAppFromPath(data.path);
-
-    // 解析 Tab 元数据
-    let tabMeta = resolveTabMeta(data.path);
-
-    // 如果解析失败，尝试从路由 name 和 meta 中获取信息（仅限管理域）
-    if (!tabMeta && app === 'admin' && data.name && data.meta) {
-      // 从路由的 meta 中获取 titleKey 或 title
-      const titleKey = data.meta.titleKey as string | undefined;
-      const title = data.meta.title as string | undefined;
-      
-      if (titleKey || title) {
-        // 创建一个临时的 TabMeta
-        tabMeta = {
-          key: data.name,
-          title: title || titleKey || data.name,
-          path: data.path,
-          i18nKey: titleKey,
-        };
-      }
-    }
-
-    // 如果解析失败（没有元数据），拒绝添加（防止脏 Tab）
-    if (!tabMeta) {
-      console.warn('[Process] Failed to resolve tab meta for:', data.path, data.name);
-      return;
-    }
 
     // 将所有标签设为非激活状态
     list.value.forEach((e) => {
@@ -202,11 +187,10 @@ export const useProcessStore = defineStore('process', () => {
       // 使用 fullPath 进行更精确的去重
       const index = list.value.findIndex((e) => e.fullPath === data.fullPath);
 
+      // 先使用传入的 meta 信息构建基础 meta
       const buildMeta = (previousMeta: Record<string, any> = {}) => {
         const mergedMeta: Record<string, any> = {
           ...previousMeta,
-          ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
-          ...(tabMeta.title ? { title: tabMeta.title } : {}),
           ...data.meta,
         };
 
@@ -229,7 +213,7 @@ export const useProcessStore = defineStore('process', () => {
       };
 
       if (index < 0) {
-        // 添加新标签，使用 tabRegistry 的元数据
+        // 添加新标签，先使用基础 meta，后续异步更新
         const newTab = {
           ...data,
           active: true,
@@ -246,6 +230,28 @@ export const useProcessStore = defineStore('process', () => {
 
     syncPinned();
     reorderTabs();
+
+    // 异步解析并更新 Tab 元数据（避免循环依赖）
+    (async () => {
+      try {
+        const { resolveTabMeta } = await import('./tabRegistry');
+        const tabMeta = resolveTabMeta(data.path);
+        
+        if (tabMeta) {
+          // 更新标签的 meta 信息
+          const index = list.value.findIndex((e) => e.fullPath === data.fullPath);
+          if (index >= 0) {
+            list.value[index].meta = {
+              ...list.value[index].meta,
+              ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
+              ...(tabMeta.title ? { title: tabMeta.title } : {}),
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('[Process] Failed to resolve tab meta:', error);
+      }
+    })();
   }
 
   /**
