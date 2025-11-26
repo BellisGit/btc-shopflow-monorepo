@@ -40,10 +40,10 @@ jobs:
     name: Validate SSH Connection
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Test SSH connection
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Test SSH connection
       run: |
         echo "[INFO] Testing SSH connection..."
         
@@ -91,7 +91,7 @@ jobs:
       apps_list: ${{ steps.parse.outputs.apps_list }}
       apps_json: ${{ steps.parse.outputs.apps_json }}
     steps:
-    - name: Parse apps input
+      - name: Parse apps input
       id: parse
       run: |
         # Get apps from workflow_dispatch or repository_dispatch
@@ -152,7 +152,7 @@ jobs:
     if: always() && needs.validate-ssh.result == 'success'
     
     steps:
-    - name: Deploy applications
+      - name: Deploy applications
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -414,7 +414,7 @@ jobs:
           echo "Deployed apps: $APPS_LIST"
           echo ""
 
-    - name: Health checks
+      - name: Health checks
       run: |
         echo "Performing health checks..."
         sleep 10
@@ -443,7 +443,7 @@ jobs:
           fi
         done
 
-    - name: Deployment summary
+      - name: Deployment summary
       run: |
         echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
