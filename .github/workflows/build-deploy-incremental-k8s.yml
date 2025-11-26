@@ -77,8 +77,16 @@ jobs:
             # 检测是否需要认证
             if [ -n "${{ secrets.PRIVATE_REGISTRY_USERNAME }}" ] && [ -n "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" ]; then
               echo "✅ 检测到认证配置，将使用认证登录"
-              echo "registry_username=${{ secrets.PRIVATE_REGISTRY_USERNAME }}" >> $GITHUB_OUTPUT
-              echo "registry_password=${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" >> $GITHUB_OUTPUT
+              {
+                echo "registry_username<<EOF"
+                echo "${{ secrets.PRIVATE_REGISTRY_USERNAME }}"
+                echo "EOF"
+              } >> $GITHUB_OUTPUT
+              {
+                echo "registry_password<<EOF"
+                echo "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}"
+                echo "EOF"
+              } >> $GITHUB_OUTPUT
               echo "needs_auth=true" >> $GITHUB_OUTPUT
             else
               echo "ℹ️  未配置认证信息，将尝试匿名访问（适用于不需要认证的私有仓库）"
@@ -90,8 +98,16 @@ jobs:
             echo "✅ 未配置私有仓库，将使用 GitHub Container Registry (GHCR)"
             echo "registry=ghcr.io" >> $GITHUB_OUTPUT
             echo "use_ghcr=true" >> $GITHUB_OUTPUT
-            echo "registry_username=${{ github.actor }}" >> $GITHUB_OUTPUT
-            echo "registry_password=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+            {
+              echo "registry_username<<EOF"
+              echo "${{ github.actor }}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+            {
+              echo "registry_password<<EOF"
+              echo "${{ secrets.GITHUB_TOKEN }}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
             echo "needs_auth=false" >> $GITHUB_OUTPUT
           fi
           
@@ -173,15 +189,17 @@ jobs:
           if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "changed_apps=" >> $GITHUB_OUTPUT
-            echo "changed_apps_json=[]" >> $GITHUB_OUTPUT
+            echo 'changed_apps_json=[]' >> $GITHUB_OUTPUT
             echo "未检测到需要构建的应用"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "changed_apps=${CHANGED_APPS[*]}" >> $GITHUB_OUTPUT
-            # 生成 JSON 数组用于 matrix（使用 jq 或手动构建）
-            JSON_APPS=$(printf '%s\n' "${CHANGED_APPS[@]}" | jq -R . | jq -s . 2>/dev/null || echo "[]")
-            if [ "$JSON_APPS" = "[]" ]; then
-              # 如果 jq 失败，手动构建 JSON 数组
+            # 生成 JSON 数组用于 matrix
+            # 使用 jq 生成，如果失败则手动构建
+            if command -v jq >/dev/null 2>&1; then
+              JSON_APPS=$(printf '%s\n' "${CHANGED_APPS[@]}" | jq -R . | jq -s .)
+            else
+              # 手动构建 JSON 数组
               JSON_APPS="["
               for i in "${!CHANGED_APPS[@]}"; do
                 if [ $i -gt 0 ]; then
@@ -191,7 +209,12 @@ jobs:
               done
               JSON_APPS+="]"
             fi
-            echo "changed_apps_json=$JSON_APPS" >> $GITHUB_OUTPUT
+            # 使用多行输出格式，避免特殊字符问题
+            {
+              echo "changed_apps_json<<EOF"
+              echo "$JSON_APPS"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
             echo "检测到需要构建的应用: ${CHANGED_APPS[*]}"
           fi
 
