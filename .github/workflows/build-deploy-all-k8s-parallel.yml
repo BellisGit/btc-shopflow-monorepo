@@ -284,41 +284,58 @@ jobs:
           
       - name: Generate summary report
         run: |
-          echo "## 📊 构建和部署结果汇总" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 统计信息" >> $GITHUB_STEP_SUMMARY
-          echo "- **总应用数**: ${{ steps.collect.outputs.total_apps }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **成功**: ${{ steps.collect.outputs.success_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **失败**: ${{ steps.collect.outputs.fail_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          TOTAL_APPS="${{ steps.collect.outputs.total_apps }}"
+          SUCCESS_COUNT="${{ steps.collect.outputs.success_count }}"
+          FAIL_COUNT="${{ steps.collect.outputs.fail_count }}"
+          SUCCESSFUL_APPS="${{ steps.collect.outputs.successful_apps }}"
+          FAILED_APPS="${{ steps.collect.outputs.failed_apps }}"
+          SUCCESSFUL_APPS_JSON="${{ steps.collect.outputs.successful_apps_json }}"
+          IMAGE_TAG="${{ needs.detect-image-tag.outputs.image_tag }}"
+          REGISTRY="${{ needs.detect-image-tag.outputs.registry }}"
+          K8S_NAMESPACE="${{ needs.detect-image-tag.outputs.k8s_namespace }}"
+          GIT_SHA="${{ github.sha }}"
           
-          if [ -n "${{ steps.collect.outputs.successful_apps }}" ]; then
-            echo "### ✅ 成功应用" >> $GITHUB_STEP_SUMMARY
-            SUCCESSFUL_APPS="${{ steps.collect.outputs.successful_apps }}"
-            IFS=',' read -ra APPS <<< "$SUCCESSFUL_APPS"
-            for app in "${APPS[@]}"; do
-              echo "- \`$app\`" >> $GITHUB_STEP_SUMMARY
-            done
-            echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📊 构建和部署结果汇总"
+            echo ""
+            echo "### 统计信息"
+            echo "- **总应用数**: $TOTAL_APPS"
+            echo "- **成功**: $SUCCESS_COUNT"
+            echo "- **失败**: $FAIL_COUNT"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$SUCCESSFUL_APPS" ] && [ "$SUCCESSFUL_APPS" != "" ]; then
+            {
+              echo "### ✅ 成功应用"
+              IFS=',' read -ra APPS <<< "$SUCCESSFUL_APPS"
+              for app in "${APPS[@]}"; do
+                echo "- \`$app\`"
+              done
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
           fi
           
-          if [ -n "${{ steps.collect.outputs.failed_apps }}" ]; then
-            echo "### ❌ 失败应用" >> $GITHUB_STEP_SUMMARY
-            FAILED_APPS="${{ steps.collect.outputs.failed_apps }}"
-            IFS=',' read -ra APPS <<< "$FAILED_APPS"
-            for app in "${APPS[@]}"; do
-              echo "- \`$app\`" >> $GITHUB_STEP_SUMMARY
-            done
-            echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$FAILED_APPS" ] && [ "$FAILED_APPS" != "" ]; then
+            {
+              echo "### ❌ 失败应用"
+              IFS=',' read -ra APPS <<< "$FAILED_APPS"
+              for app in "${APPS[@]}"; do
+                echo "- \`$app\`"
+              done
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
           fi
           
-          echo "### 📋 详细信息" >> $GITHUB_STEP_SUMMARY
-          echo "- **镜像标签**: ${{ needs.detect-image-tag.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **仓库**: ${{ needs.detect-image-tag.outputs.registry }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **命名空间**: ${{ needs.detect-image-tag.outputs.k8s_namespace }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Git SHA**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Webhook 数据" >> $GITHUB_STEP_SUMMARY
-          echo "成功应用 JSON: \`${{ steps.collect.outputs.successful_apps_json }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> 💡 此数据可用于通用运维系统的 webhook 通知" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### 📋 详细信息"
+            echo "- **镜像标签**: $IMAGE_TAG"
+            echo "- **仓库**: $REGISTRY"
+            echo "- **命名空间**: $K8S_NAMESPACE"
+            echo "- **Git SHA**: $GIT_SHA"
+            echo ""
+            echo "### 🔗 Webhook 数据"
+            echo "成功应用 JSON: \`$SUCCESSFUL_APPS_JSON\`"
+            echo ""
+            echo "> 💡 此数据可用于通用运维系统的 webhook 通知"
+          } >> $GITHUB_STEP_SUMMARY
