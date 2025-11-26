@@ -1,11 +1,14 @@
 // 用户下拉菜单样式（非 scoped）
 .user-info__popper {
   .el-dropdown-menu__item {
-    padding: 6px 12px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: auto !important; // 防止被其他样式覆盖
+    height: auto !important; // 防止被其他样式覆盖
+    line-height: 1.5 !important; // 确保行高正常
   }
 
   .user-info__header {
@@ -41,8 +44,12 @@
   }
 
   .btc-svg {
-    margin-right: 8px;
-    font-size: 16px;
+    margin-right: 8px !important;
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important; // 防止图标被压缩
+    display: inline-block !important; // 确保图标显示
   }
 }
 
