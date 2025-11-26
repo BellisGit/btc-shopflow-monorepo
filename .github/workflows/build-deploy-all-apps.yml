@@ -261,7 +261,7 @@ jobs:
   # 步骤3: 总结成功和失败的应用
   summary:
     name: Summary
-    needs: [build-all, deploy-all]
+    needs: [build-all, deploy-system, deploy-admin, deploy-logistics, deploy-quality, deploy-production, deploy-engineering, deploy-finance, deploy-mobile]
     if: always()
     runs-on: ubuntu-latest
     permissions:
