@@ -9,6 +9,7 @@ permissions:
   contents: read
   packages: write
   actions: read
+  checks: read
 
 jobs:
   detect-image-tag:
@@ -120,3 +121,189 @@ jobs:
       K8S_SERVER: ${{ secrets.K8S_SERVER }}
       K8S_CA_CERT: ${{ secrets.K8S_CA_CERT }}
       K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
+
+  summary:
+    name: Summary Successful Apps
+    needs: [detect-image-tag, build-deploy-all]
+    if: always()
+    runs-on: ubuntu-latest
+    outputs:
+      successful_apps: ${{ steps.collect.outputs.successful_apps }}
+      successful_apps_json: ${{ steps.collect.outputs.successful_apps_json }}
+      failed_apps: ${{ steps.collect.outputs.failed_apps }}
+      failed_apps_json: ${{ steps.collect.outputs.failed_apps_json }}
+      total_apps: ${{ steps.collect.outputs.total_apps }}
+      success_count: ${{ steps.collect.outputs.success_count }}
+      fail_count: ${{ steps.collect.outputs.fail_count }}
+    steps:
+      - name: Collect successful applications
+        id: collect
+        run: |
+          echo "📊 收集构建和部署结果..."
+          
+          # 定义所有应用列表（与 matrix 中的应用列表对应）
+          ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+          
+          # 获取当前工作流运行 ID
+          WORKFLOW_RUN_ID="${{ github.run_id }}"
+          
+          # 获取 GitHub Token
+          GITHUB_TOKEN="${{ github.token }}"
+          REPO="${{ github.repository }}"
+          
+          SUCCESSFUL_APPS=()
+          FAILED_APPS=()
+          
+          echo "检查每个应用的构建和部署状态..."
+          
+          # 通过 GitHub API 获取所有 jobs 的状态
+          echo "获取工作流运行的所有 jobs..."
+          JOBS_JSON=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs?per_page=100")
+          
+          # 检查每个应用的运行状态
+          for app in "${ALL_APPS[@]}"; do
+            echo "检查 $app 的状态..."
+            
+            # 查找包含应用名称的 job
+            # 可复用工作流的 job 名称格式为 "Build and Deploy $app"
+            JOB_CONCLUSION=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name | contains(\"$app\")) | .conclusion" | head -1)
+            
+            if [ "$JOB_CONCLUSION" = "success" ]; then
+              SUCCESSFUL_APPS+=("$app")
+              echo "  ✅ $app: 成功"
+            elif [ "$JOB_CONCLUSION" = "failure" ] || [ "$JOB_CONCLUSION" = "cancelled" ]; then
+              FAILED_APPS+=("$app")
+              echo "  ❌ $app: 失败 (状态: $JOB_CONCLUSION)"
+            else
+              # 如果找不到 job 或状态未知，检查是否还在运行
+              JOB_STATUS=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name | contains(\"$app\")) | .status" | head -1)
+              if [ "$JOB_STATUS" = "in_progress" ] || [ "$JOB_STATUS" = "queued" ]; then
+                echo "  ⏳ $app: 运行中 (状态: $JOB_STATUS)"
+                # 运行中的应用暂时不加入失败列表
+              else
+                FAILED_APPS+=("$app")
+                echo "  ❌ $app: 未知状态 (状态: ${JOB_CONCLUSION:-${JOB_STATUS:-unknown}})"
+              fi
+            fi
+          done
+          
+          # 生成成功应用列表（逗号分隔）
+          if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then
+            SUCCESSFUL_APPS_STR=$(IFS=','; echo "${SUCCESSFUL_APPS[*]}")
+            echo "successful_apps=$SUCCESSFUL_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "successful_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          # 生成失败应用列表（逗号分隔）
+          if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+            FAILED_APPS_STR=$(IFS=','; echo "${FAILED_APPS[*]}")
+            echo "failed_apps=$FAILED_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "failed_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          # 生成 JSON 格式的成功应用列表（用于 webhook）
+          SUCCESSFUL_APPS_JSON="["
+          for i in "${!SUCCESSFUL_APPS[@]}"; do
+            if [ $i -gt 0 ]; then
+              SUCCESSFUL_APPS_JSON+=","
+            fi
+            SUCCESSFUL_APPS_JSON+="\"${SUCCESSFUL_APPS[$i]}\""
+          done
+          SUCCESSFUL_APPS_JSON+="]"
+          {
+            echo "successful_apps_json<<EOF"
+            echo "$SUCCESSFUL_APPS_JSON"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          # 生成 JSON 格式的失败应用列表
+          FAILED_APPS_JSON="["
+          for i in "${!FAILED_APPS[@]}"; do
+            if [ $i -gt 0 ]; then
+              FAILED_APPS_JSON+=","
+            fi
+            FAILED_APPS_JSON+="\"${FAILED_APPS[$i]}\""
+          done
+          FAILED_APPS_JSON+="]"
+          {
+            echo "failed_apps_json<<EOF"
+            echo "$FAILED_APPS_JSON"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          # 统计信息
+          TOTAL_APPS=${#ALL_APPS[@]}
+          SUCCESS_COUNT=${#SUCCESSFUL_APPS[@]}
+          FAIL_COUNT=${#FAILED_APPS[@]}
+          
+          echo "total_apps=$TOTAL_APPS" >> $GITHUB_OUTPUT
+          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+          echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 构建和部署结果汇总"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "总应用数: $TOTAL_APPS"
+          echo "成功: $SUCCESS_COUNT"
+          echo "失败: $FAIL_COUNT"
+          echo ""
+          if [ $SUCCESS_COUNT -gt 0 ]; then
+            echo "✅ 成功应用:"
+            for app in "${SUCCESSFUL_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          echo ""
+          if [ $FAIL_COUNT -gt 0 ]; then
+            echo "❌ 失败应用:"
+            for app in "${FAILED_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+      - name: Generate summary report
+        run: |
+          echo "## 📊 构建和部署结果汇总" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 统计信息" >> $GITHUB_STEP_SUMMARY
+          echo "- **总应用数**: ${{ steps.collect.outputs.total_apps }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **成功**: ${{ steps.collect.outputs.success_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **失败**: ${{ steps.collect.outputs.fail_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ steps.collect.outputs.successful_apps }}" ]; then
+            echo "### ✅ 成功应用" >> $GITHUB_STEP_SUMMARY
+            SUCCESSFUL_APPS="${{ steps.collect.outputs.successful_apps }}"
+            IFS=',' read -ra APPS <<< "$SUCCESSFUL_APPS"
+            for app in "${APPS[@]}"; do
+              echo "- \`$app\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.collect.outputs.failed_apps }}" ]; then
+            echo "### ❌ 失败应用" >> $GITHUB_STEP_SUMMARY
+            FAILED_APPS="${{ steps.collect.outputs.failed_apps }}"
+            IFS=',' read -ra APPS <<< "$FAILED_APPS"
+            for app in "${APPS[@]}"; do
+              echo "- \`$app\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### 📋 详细信息" >> $GITHUB_STEP_SUMMARY
+          echo "- **镜像标签**: ${{ needs.detect-image-tag.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **仓库**: ${{ needs.detect-image-tag.outputs.registry }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **命名空间**: ${{ needs.detect-image-tag.outputs.k8s_namespace }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git SHA**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Webhook 数据" >> $GITHUB_STEP_SUMMARY
+          echo "成功应用 JSON: \`${{ steps.collect.outputs.successful_apps_json }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 此数据可用于通用运维系统的 webhook 通知" >> $GITHUB_STEP_SUMMARY
