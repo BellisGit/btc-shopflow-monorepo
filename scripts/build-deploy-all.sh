@@ -362,7 +362,8 @@ main() {
         
         for app in "${changed_apps[@]}"; do
             log_info "构建和推送: $app"
-            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --no-push 2>/dev/null || bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" 2>/dev/null; then
+            # 构建并推送镜像（不使用 --auto-deploy，因为后面会统一触发全量部署工作流）
+            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" 2>/dev/null; then
                 log_success "✅ $app 镜像构建和推送成功"
                 ((build_success_count++))
             else
