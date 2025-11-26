@@ -222,8 +222,8 @@ if [ -z "$GITHUB_TOKEN" ]; then
     exit 1
 fi
 
-# 获取当前 Git SHA
-GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "latest")
+# 获取当前 Git SHA（固定使用 7 位，确保与部署工作流一致）
+GIT_SHA=$(git rev-parse HEAD 2>/dev/null | cut -c1-7 || echo "latest")
 
 # 设置镜像标签
 IMAGE_TAG_LATEST="${REGISTRY}/${REPO_LOWER}/${APP_NAME}:latest"
