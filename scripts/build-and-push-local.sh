@@ -438,9 +438,20 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
         log_warning "无法获取工作流列表 (HTTP $WORKFLOWS_HTTP_CODE)，将尝试使用完整路径触发..."
     fi
     
-    # 优先使用 repository_dispatch（更可靠，不依赖工作流文件名）
-    # repository_dispatch 不需要工作流文件被 GitHub 识别，可以直接触发
-    log_info "尝试使用 repository_dispatch 触发工作流（更可靠）..."
+    # 优先使用 repository_dispatch 触发应用特定的工作流
+    # 对于 system-app，使用 deploy-system-app.yml 工作流
+    # 对于其他应用，使用 deploy-only.yml 工作流
+    if [ "$APP_NAME" = "system-app" ]; then
+        EVENT_TYPE="deploy-system-app"
+        TARGET_WORKFLOW="deploy-system-app.yml"
+        TARGET_WORKFLOW_NAME="Deploy System App"
+    else
+        EVENT_TYPE="deploy-apps"
+        TARGET_WORKFLOW="deploy-only.yml"
+        TARGET_WORKFLOW_NAME="Deploy Only (Lightweight)"
+    fi
+    
+    log_info "尝试使用 repository_dispatch 触发 $TARGET_WORKFLOW 工作流..."
     REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
         -X POST \
         -H "Accept: application/vnd.github+json" \
@@ -449,9 +460,11 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
         -H "Content-Type: application/json" \
         "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
         -d "{
-            \"event_type\": \"deploy-${APP_NAME}\",
+            \"event_type\": \"$EVENT_TYPE\",
             \"client_payload\": {
                 \"app_name\": \"$APP_NAME\",
+                \"apps\": \"$APP_NAME\",
+                \"environment\": \"production\",
                 \"github_sha\": \"$GIT_SHA\"
             }
         }" 2>&1)
@@ -460,11 +473,53 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
     
     if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
-        log_success "✅ 工作流已通过 repository_dispatch 触发"
-        HTTP_CODE=204
-        RESPONSE_BODY=""
+        log_success "✅ repository_dispatch 请求已发送 (HTTP 204)"
+        log_info "等待工作流启动（最多等待 10 秒）..."
+        
+        # 等待几秒后验证工作流是否真的启动了
+        sleep 3
+        
+        # 查询最近的工作流运行记录
+        WORKFLOW_RUNS=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=5&event=repository_dispatch" 2>&1)
+        
+        # 检查是否有新的运行记录
+        if echo "$WORKFLOW_RUNS" | grep -q '"workflow_runs"'; then
+            LATEST_RUN=$(echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
+            RUN_STATUS=$(echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+            RUN_URL=$(echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+            
+            if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
+                log_success "✅ 工作流已启动！"
+                log_info "   运行 ID: $LATEST_RUN"
+                log_info "   状态: ${RUN_STATUS:-unknown}"
+                log_info "   查看: $RUN_URL"
+            else
+                log_warning "⚠️  工作流可能还在启动中..."
+            fi
+        else
+            log_warning "⚠️  无法验证工作流是否启动，请手动检查"
+        fi
+        
+        log_info ""
+        log_info "查看工作流运行状态: https://github.com/$GITHUB_REPO/actions"
+        log_info "查找 '$TARGET_WORKFLOW_NAME' 工作流的最新运行"
+        log_info ""
+        log_info "📋 部署信息:"
+        log_info "  - 应用: $APP_NAME"
+        log_info "  - 工作流: $TARGET_WORKFLOW"
+        log_info "  - 环境: production"
+        log_info "  - SHA: $GIT_SHA"
+        log_info "  - 分支: master"
+        exit 0
     else
         log_warning "repository_dispatch 失败 (HTTP $REPO_DISPATCH_HTTP_CODE)，尝试 workflow_dispatch..."
+        if [ -n "$REPO_DISPATCH_BODY" ]; then
+            log_info "响应: $REPO_DISPATCH_BODY"
+        fi
         
         # 回退到 workflow_dispatch
         # 优先使用工作流 ID，其次尝试文件名，最后使用完整路径
