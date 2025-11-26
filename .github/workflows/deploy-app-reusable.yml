@@ -16,6 +16,19 @@ on:
         required: false
         type: string
         description: "Docker image tag (defaults to SHA or latest)"
+    secrets:
+      SERVER_HOST:
+        required: false
+      SERVER_USER:
+        required: false
+      SERVER_KEY:
+        required: false
+      SERVER_PORT:
+        required: false
+      SERVER_PAT:
+        required: false
+      GITHUB_TOKEN:
+        required: false
 
 permissions:
   contents: read

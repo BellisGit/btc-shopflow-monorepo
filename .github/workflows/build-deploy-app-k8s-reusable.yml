@@ -472,5 +472,5 @@ jobs:
       SERVER_KEY: ${{ secrets.SERVER_KEY }}
       SERVER_PORT: ${{ secrets.SERVER_PORT }}
       SERVER_PAT: ${{ secrets.SERVER_PAT }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
 
