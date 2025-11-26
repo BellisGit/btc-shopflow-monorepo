@@ -148,18 +148,28 @@ jobs:
     if: always() && !contains(needs.build-all.result, 'failure')
     runs-on: ubuntu-latest
     steps:
+      - name: Check build results
+        run: |
+          echo "检查构建结果..."
+          echo "build-all result: ${{ needs.build-all.result }}"
+      
       - name: Trigger deploy-all-apps workflow
         uses: actions/github-script@v7
         with:
           script: |
-            const { data } = await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-all-apps.yml',
-              ref: 'master',
-              inputs: {}
-            });
-            console.log('✅ 全量部署工作流已触发');
+            try {
+              const response = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'deploy-all-apps.yml',
+                ref: 'master',
+                inputs: {}
+              });
+              console.log('✅ 全量部署工作流已触发');
+            } catch (error) {
+              console.error('❌ 触发全量部署工作流失败:', error.message);
+              throw error;
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
