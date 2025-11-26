@@ -335,61 +335,183 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     log_info "触发部署工作流: $APP_NAME"
     log_info "工作流文件: $WORKFLOW_FILE"
     
-    # 先检查工作流是否存在（列出所有工作流）
-    log_info "检查工作流是否存在..."
-    WORKFLOWS_RESPONSE=$(curl -s -w "\n%{http_code}" \
+    # 先尝试直接获取特定工作流的信息（使用文件名）
+    # 这样可以避免依赖工作流列表 API
+    log_info "尝试直接获取工作流信息..."
+    WORKFLOW_INFO_RESPONSE=$(curl -s -w "\n%{http_code}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GITHUB_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows" 2>&1)
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_FILE" 2>&1)
+    
+    WORKFLOW_INFO_HTTP_CODE=$(echo "$WORKFLOW_INFO_RESPONSE" | tail -n1)
+    WORKFLOW_INFO_BODY=$(echo "$WORKFLOW_INFO_RESPONSE" | sed '$d')
+    
+    if [ "$WORKFLOW_INFO_HTTP_CODE" -eq 200 ]; then
+        # 成功获取工作流信息，提取 ID
+        WORKFLOW_ID=$(echo "$WORKFLOW_INFO_BODY" | grep -oE "\"id\":[0-9]+" | head -1 | cut -d':' -f2 | tr -d ' ')
+        if [ -n "$WORKFLOW_ID" ]; then
+            log_info "✅ 成功获取工作流 ID: $WORKFLOW_ID"
+        fi
+    else
+        log_warning "无法直接获取工作流信息 (HTTP $WORKFLOW_INFO_HTTP_CODE)"
+        if [ "$WORKFLOW_INFO_HTTP_CODE" -eq 404 ]; then
+            log_info "💡 提示：工作流可能还没有被 GitHub 识别"
+            log_info "💡 解决方案："
+            log_info "   1. 在 GitHub 网页上手动触发一次工作流："
+            log_info "      https://github.com/$GITHUB_REPO/actions/workflows/$WORKFLOW_FILE"
+            log_info "   2. 或者创建一个测试提交来触发 push 事件，让工作流运行一次"
+            log_info "   3. 等待几分钟后重试"
+        fi
+        log_info "尝试获取工作流列表..."
+    fi
+    
+    # 如果直接获取失败，尝试获取工作流列表
+    if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
+        log_info "检查工作流是否存在（获取工作流列表）..."
+        WORKFLOWS_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows?per_page=100" 2>&1)
     
     WORKFLOWS_HTTP_CODE=$(echo "$WORKFLOWS_RESPONSE" | tail -n1)
     WORKFLOWS_BODY=$(echo "$WORKFLOWS_RESPONSE" | sed '$d')
     
     WORKFLOW_ID=""
     if [ "$WORKFLOWS_HTTP_CODE" -eq 200 ]; then
-        # 尝试从响应中提取工作流 ID（使用完整路径或文件名）
-        WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -o "\"id\":[0-9]*,\"node_id\":\"[^\"]*\",\"name\":\"[^\"]*\",\"path\":\".*${WORKFLOW_FILE}\"" | grep -o "\"id\":[0-9]*" | head -1 | cut -d':' -f2)
-        if [ -z "$WORKFLOW_ID" ]; then
-            # 如果没找到，尝试使用路径匹配
-            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -o "\"id\":[0-9]*,\"node_id\":\"[^\"]*\",\"name\":\"[^\"]*\",\"path\":\".*${WORKFLOW_PATH}\"" | grep -o "\"id\":[0-9]*" | head -1 | cut -d':' -f2)
+        # GitHub API 返回格式: {"total_count":N,"workflows":[{"id":123,"node_id":"...","name":"...","path":".github/workflows/deploy-system-app.yml",...},...]}
+        # 使用 jq 或更可靠的 JSON 解析方式提取工作流 ID
+        # 方法1: 直接使用 jq（如果可用）
+        if command -v jq > /dev/null 2>&1; then
+            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | jq -r ".workflows[] | select(.path == \"$WORKFLOW_PATH\" or .path | endswith(\"$WORKFLOW_FILE\")) | .id" | head -1)
         fi
         
-        if [ -n "$WORKFLOW_ID" ]; then
+        # 方法2: 如果 jq 不可用，使用 grep 和 sed
+        if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
+            # 提取包含工作流路径的所有行，然后提取 ID
+            # GitHub API 返回的 JSON 格式中，path 和 id 可能在同一个对象中
+            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -oE "\"id\":[0-9]+[^}]*\"path\":\"[^\"]*${WORKFLOW_FILE}\"" | grep -oE "\"id\":([0-9]+)" | head -1 | cut -d':' -f2 | tr -d ' ')
+        fi
+        
+        # 方法3: 使用完整路径匹配
+        if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
+            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -oE "\"id\":[0-9]+[^}]*\"path\":\"${WORKFLOW_PATH}\"" | grep -oE "\"id\":([0-9]+)" | head -1 | cut -d':' -f2 | tr -d ' ')
+        fi
+        
+        # 方法4: 反向匹配 - 先找路径再找 ID
+        if [ -z "$WORKFLOW_ID" ] || [ "$WORKFLOW_ID" = "null" ]; then
+            # 找到包含路径的行，然后向前查找 ID
+            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -B 20 "\"path\":\".*${WORKFLOW_FILE}\"" | grep -oE "\"id\":[0-9]+" | tail -1 | cut -d':' -f2 | tr -d ' ')
+        fi
+        
+        if [ -n "$WORKFLOW_ID" ] && [ "$WORKFLOW_ID" != "null" ]; then
             log_info "找到工作流 ID: $WORKFLOW_ID"
         else
             log_warning "工作流 $WORKFLOW_FILE 未在可用工作流列表中找到"
-            log_info "可用工作流列表："
-            echo "$WORKFLOWS_BODY" | grep -o "\"path\":\"[^\"]*\"" | sed 's/"path":"//;s/"//' | head -10
+            log_info "调试信息 - 可用工作流列表："
+            echo "$WORKFLOWS_BODY" | grep -oE "\"path\":\"[^\"]*\"" | sed 's/"path":"//;s/"//' | grep -E "deploy-.*\.yml" | head -10
+            
+            # 调试：输出完整的 JSON 响应以便排查（保存到临时文件）
+            DEBUG_FILE=$(mktemp 2>/dev/null || echo "/tmp/workflows-debug-$$.json")
+            echo "$WORKFLOWS_BODY" > "$DEBUG_FILE"
+            log_info "完整工作流列表已保存到: $DEBUG_FILE"
+            log_info "工作流列表 API 响应（前 3000 字符）："
+            echo "$WORKFLOWS_BODY" | head -c 3000
+            echo ""
+            
+            # 调试：检查工作流列表是否包含我们的工作流（使用不同的匹配方式）
+            if echo "$WORKFLOWS_BODY" | grep -q "$WORKFLOW_PATH"; then
+                log_info "✅ 在响应中找到完整路径 $WORKFLOW_PATH"
+                # 如果找到了路径但没提取到 ID，尝试更精确的提取
+                log_info "尝试更精确地提取工作流 ID..."
+                WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | python3 -c "import sys, json; data=json.load(sys.stdin); wf=[w for w in data.get('workflows',[]) if w.get('path')=='$WORKFLOW_PATH']; print(wf[0]['id'] if wf else '')" 2>/dev/null || echo "")
+            elif echo "$WORKFLOWS_BODY" | grep -q "$WORKFLOW_FILE"; then
+                log_info "✅ 在响应中找到文件名 $WORKFLOW_FILE"
+            else
+                log_warning "⚠️  在响应中未找到工作流 $WORKFLOW_FILE 或 $WORKFLOW_PATH"
+                log_info "💡 提示：工作流文件可能刚提交，GitHub 需要一些时间才能识别"
+                log_info "💡 或者工作流文件可能有语法错误，导致 GitHub 无法识别"
+            fi
         fi
     else
-        log_warning "无法获取工作流列表 (HTTP $WORKFLOWS_HTTP_CODE)，继续尝试触发..."
+        log_warning "无法获取工作流列表 (HTTP $WORKFLOWS_HTTP_CODE)，将尝试使用完整路径触发..."
     fi
     
-    # 使用 workflow_dispatch API 触发对应应用的工作流
-    # 优先使用工作流 ID，如果没有则使用文件名
-    if [ -n "$WORKFLOW_ID" ]; then
-        WORKFLOW_IDENTIFIER="$WORKFLOW_ID"
-        log_info "使用工作流 ID 触发: $WORKFLOW_IDENTIFIER"
-    else
-        WORKFLOW_IDENTIFIER="$WORKFLOW_FILE"
-        log_info "使用工作流文件名触发: $WORKFLOW_IDENTIFIER"
-    fi
-    
-    log_info "使用 workflow_dispatch 触发 $WORKFLOW_FILE 工作流..."
-    RESPONSE=$(curl -s -w "\n%{http_code}" \
+    # 优先使用 repository_dispatch（更可靠，不依赖工作流文件名）
+    # repository_dispatch 不需要工作流文件被 GitHub 识别，可以直接触发
+    log_info "尝试使用 repository_dispatch 触发工作流（更可靠）..."
+    REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
         -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GITHUB_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
-        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
         -d "{
-            \"ref\": \"master\"
+            \"event_type\": \"deploy-${APP_NAME}\",
+            \"client_payload\": {
+                \"app_name\": \"$APP_NAME\",
+                \"github_sha\": \"$GIT_SHA\"
+            }
         }" 2>&1)
     
-    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+    REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
+    REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
+    
+    if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
+        log_success "✅ 工作流已通过 repository_dispatch 触发"
+        HTTP_CODE=204
+        RESPONSE_BODY=""
+    else
+        log_warning "repository_dispatch 失败 (HTTP $REPO_DISPATCH_HTTP_CODE)，尝试 workflow_dispatch..."
+        
+        # 回退到 workflow_dispatch
+        # 优先使用工作流 ID，其次尝试文件名，最后使用完整路径
+        if [ -n "$WORKFLOW_ID" ] && [ "$WORKFLOW_ID" != "null" ]; then
+            WORKFLOW_IDENTIFIER="$WORKFLOW_ID"
+            log_info "使用工作流 ID 触发: $WORKFLOW_IDENTIFIER"
+        else
+            WORKFLOW_IDENTIFIER="$WORKFLOW_FILE"
+            log_info "尝试使用文件名触发: $WORKFLOW_IDENTIFIER"
+        fi
+        
+        log_info "使用 workflow_dispatch 触发 $WORKFLOW_FILE 工作流..."
+        RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
+            -d "{
+                \"ref\": \"master\"
+            }" 2>&1)
+        
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+        
+        # 如果使用文件名失败，尝试使用完整路径
+        if [ "$HTTP_CODE" -eq 404 ] && [ "$WORKFLOW_IDENTIFIER" = "$WORKFLOW_FILE" ]; then
+            log_warning "使用文件名触发失败，尝试使用完整路径..."
+            WORKFLOW_IDENTIFIER="$WORKFLOW_PATH"
+            log_info "使用完整路径触发: $WORKFLOW_IDENTIFIER"
+            
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+                -X POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                -H "Content-Type: application/json" \
+                "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
+                -d "{
+                    \"ref\": \"master\"
+                }" 2>&1)
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+        fi
+    fi
     
     if [ "$HTTP_CODE" -eq 204 ]; then
         log_success "✅ 工作流已触发 (workflow_dispatch)"
