@@ -1,0 +1,117 @@
+name: Deploy All Apps
+
+# 全量部署工作流：使用可复用工作流同时部署所有8个应用
+# - 触发条件：
+#   1. repository_dispatch 事件（通过 API 触发，event_type: deploy-all-apps）
+#   2. workflow_dispatch（手动触发）
+# - 使用 matrix 策略并行部署所有应用
+# - 不会触发任何构建过程（构建在本地完成）
+on:
+  repository_dispatch:
+    types: [deploy-all-apps]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+jobs:
+  validate:
+    name: Validate Deployment
+    uses: ./.github/workflows/validate-deployment.yml
+    secrets: inherit
+
+  detect-image-tag:
+    name: Detect Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+    steps:
+      - name: Detect image tag
+        id: detect
+        run: |
+          echo "🔍 开始检测镜像标签..."
+          echo "  - client_payload.image_tag: ${{ github.event.client_payload.image_tag }}"
+          echo "  - client_payload.github_sha: ${{ github.event.client_payload.github_sha }}"
+          echo "  - github.sha: ${{ github.sha }}"
+          
+          # 优先级：client_payload.image_tag > client_payload.github_sha > github.sha > latest
+          if [ -n "${{ github.event.client_payload.image_tag }}" ]; then
+            # 从完整镜像标签中提取标签部分（去掉 registry 前缀）
+            FULL_TAG="${{ github.event.client_payload.image_tag }}"
+            IMAGE_TAG=$(echo "$FULL_TAG" | sed 's|.*:||' || echo "")
+            echo "  ✅ 从 client_payload.image_tag 提取: $IMAGE_TAG"
+          elif [ -n "${{ github.event.client_payload.github_sha }}" ]; then
+            # 使用 client_payload 中的 github_sha（确保是 7 位）
+            GIT_SHA="${{ github.event.client_payload.github_sha }}"
+            # 如果长度不是 7 位，截取前 7 位
+            if [ ${#GIT_SHA} -gt 7 ]; then
+              IMAGE_TAG="${GIT_SHA:0:7}"
+            elif [ ${#GIT_SHA} -lt 7 ]; then
+              # 如果太短，使用 github.sha 的前 7 位
+              GITHUB_SHA="${{ github.sha }}"
+              IMAGE_TAG="${GITHUB_SHA:0:7}"
+            else
+              IMAGE_TAG="$GIT_SHA"
+            fi
+            echo "  ✅ 从 client_payload.github_sha 获取: $IMAGE_TAG"
+          else
+            # 使用当前 commit SHA 的前7位
+            GITHUB_SHA="${{ github.sha }}"
+            IMAGE_TAG="${GITHUB_SHA:0:7}"
+            echo "  ✅ 从 github.sha 获取: $IMAGE_TAG"
+          fi
+          
+          # 如果标签为空或太短，使用 latest
+          if [ -z "$IMAGE_TAG" ] || [ ${#IMAGE_TAG} -lt 7 ]; then
+            echo "  ⚠️  标签为空或太短，使用 latest"
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 最终镜像标签: $IMAGE_TAG"
+
+  deploy-all:
+    name: Deploy All Apps
+    needs: [validate, detect-image-tag]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - app_name: system-app
+            app_port: "30080"
+            container_name: btc-system-app
+          - app_name: admin-app
+            app_port: "30081"
+            container_name: btc-admin-app
+          - app_name: logistics-app
+            app_port: "30082"
+            container_name: btc-logistics-app
+          - app_name: quality-app
+            app_port: "30083"
+            container_name: btc-quality-app
+          - app_name: production-app
+            app_port: "30084"
+            container_name: btc-production-app
+          - app_name: engineering-app
+            app_port: "30085"
+            container_name: btc-engineering-app
+          - app_name: finance-app
+            app_port: "30086"
+            container_name: btc-finance-app
+          - app_name: mobile-app
+            app_port: "30091"
+            container_name: btc-mobile-app
+      fail-fast: false
+      max-parallel: 8
+    steps:
+      - name: Deploy ${{ matrix.app_name }}
+        uses: ./.github/workflows/deploy-app-reusable.yml
+        with:
+          app_name: ${{ matrix.app_name }}
+          app_port: ${{ matrix.app_port }}
+          container_name: ${{ matrix.container_name }}
+          image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+        secrets: inherit
+

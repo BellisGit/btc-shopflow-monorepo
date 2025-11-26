@@ -325,42 +325,154 @@ main() {
     log_info "开始构建和部署..."
     log_info ""
     
-    # 为每个应用执行构建和部署
-    local success_count=0
-    local fail_count=0
-    local failed_apps=()
+    # 判断是否使用全量部署工作流
+    # 如果部署所有应用（8个），使用全量部署工作流；否则逐个部署
+    local use_bulk_deploy=false
+    if [ ${#changed_apps[@]} -eq 8 ]; then
+        # 检查是否包含所有应用
+        local all_present=true
+        for required_app in "${ALL_APPS[@]}"; do
+            local found=false
+            for app in "${changed_apps[@]}"; do
+                if [ "$app" == "$required_app" ]; then
+                    found=true
+                    break
+                fi
+            done
+            if [ "$found" = false ]; then
+                all_present=false
+                break
+            fi
+        done
+        if [ "$all_present" = true ]; then
+            use_bulk_deploy=true
+            log_info "检测到部署所有应用，将使用全量部署工作流"
+        fi
+    fi
     
-    for app in "${changed_apps[@]}"; do
+    if [ "$use_bulk_deploy" = true ]; then
+        # 使用全量部署工作流：先构建和推送所有镜像，然后触发一次全量部署工作流
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        log_info "📦 构建和部署: $app"
+        log_info "📦 步骤 1: 构建和推送所有应用镜像"
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --auto-deploy; then
-            log_success "✅ $app 构建和部署成功"
-            ((success_count++))
-        else
-            log_error "❌ $app 构建和部署失败"
-            ((fail_count++))
-            failed_apps+=("$app")
+        local build_success_count=0
+        local build_fail_count=0
+        local build_failed_apps=()
+        
+        for app in "${changed_apps[@]}"; do
+            log_info "构建和推送: $app"
+            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --no-push 2>/dev/null || bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" 2>/dev/null; then
+                log_success "✅ $app 镜像构建和推送成功"
+                ((build_success_count++))
+            else
+                log_error "❌ $app 镜像构建和推送失败"
+                ((build_fail_count++))
+                build_failed_apps+=("$app")
+            fi
+        done
+        
+        if [ $build_fail_count -gt 0 ]; then
+            log_error "部分应用镜像构建失败，无法继续全量部署"
+            log_error "失败的应用: ${build_failed_apps[*]}"
+            exit 1
         fi
         
         log_info ""
-    done
-    
-    # 输出总结
-    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_info "📊 构建和部署总结"
-    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_info "总计: ${#changed_apps[@]} 个应用"
-    log_success "成功: $success_count 个"
-    if [ $fail_count -gt 0 ]; then
-        log_error "失败: $fail_count 个"
-        log_error "失败的应用: ${failed_apps[*]}"
-    fi
-    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    if [ $fail_count -gt 0 ]; then
-        exit 1
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_info "📦 步骤 2: 触发全量部署工作流"
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # 触发全量部署工作流
+        # 获取 GITHUB_TOKEN
+        local GITHUB_TOKEN=""
+        if [ -n "$GITHUB_TOKEN" ]; then
+            GITHUB_TOKEN="$GITHUB_TOKEN"
+        elif command -v git > /dev/null 2>&1; then
+            GITHUB_TOKEN=$(git config --global credential.helper 2>/dev/null | head -1 || echo "")
+            if [ -z "$GITHUB_TOKEN" ]; then
+                # 尝试从 Git Credential Manager 获取
+                if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [[ "$OSTYPE" == *"win"* ]]; then
+                    GITHUB_TOKEN=$(powershell.exe -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User')" 2>/dev/null | tr -d '\r\n' || echo "")
+                else
+                    GITHUB_TOKEN="${GITHUB_TOKEN}"
+                fi
+            fi
+        fi
+        
+        if [ -z "$GITHUB_TOKEN" ]; then
+            log_error "未设置 GITHUB_TOKEN 环境变量，无法触发全量部署工作流"
+            log_info "请设置 GITHUB_TOKEN 环境变量后重试"
+            exit 1
+        fi
+        
+        local GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
+        local GIT_SHA=$(git rev-parse HEAD | cut -c1-7 || echo "latest")
+        
+        log_info "触发全量部署工作流: deploy-all-apps.yml"
+        log_info "仓库: $GITHUB_REPO"
+        log_info "镜像标签: $GIT_SHA"
+        
+        local REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPO/dispatches" \
+            -d "{\"event_type\":\"deploy-all-apps\",\"client_payload\":{\"github_sha\":\"$GIT_SHA\",\"image_tag\":\"ghcr.io/$(echo $GITHUB_REPO | tr '[:upper:]' '[:lower:]')/system-app:$GIT_SHA\"}}" 2>&1)
+        
+        local REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
+        local REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
+        
+        if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
+            log_success "✅ 全量部署工作流已触发 (HTTP 204)"
+            log_info "可以在 GitHub Actions 页面查看部署进度:"
+            log_info "  https://github.com/$GITHUB_REPO/actions/workflows/deploy-all-apps.yml"
+        else
+            log_error "❌ 全量部署工作流触发失败 (HTTP $REPO_DISPATCH_HTTP_CODE)"
+            if [ -n "$REPO_DISPATCH_BODY" ]; then
+                log_error "响应: $REPO_DISPATCH_BODY"
+            fi
+            exit 1
+        fi
+    else
+        # 逐个部署：为每个应用执行构建和部署
+        local success_count=0
+        local fail_count=0
+        local failed_apps=()
+        
+        for app in "${changed_apps[@]}"; do
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            log_info "📦 构建和部署: $app"
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            
+            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --auto-deploy; then
+                log_success "✅ $app 构建和部署成功"
+                ((success_count++))
+            else
+                log_error "❌ $app 构建和部署失败"
+                ((fail_count++))
+                failed_apps+=("$app")
+            fi
+            
+            log_info ""
+        done
+        
+        # 输出总结
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_info "📊 构建和部署总结"
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_info "总计: ${#changed_apps[@]} 个应用"
+        log_success "成功: $success_count 个"
+        if [ $fail_count -gt 0 ]; then
+            log_error "失败: $fail_count 个"
+            log_error "失败的应用: ${failed_apps[*]}"
+        fi
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        if [ $fail_count -gt 0 ]; then
+            exit 1
+        fi
     fi
 }
 
