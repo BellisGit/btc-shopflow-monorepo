@@ -245,6 +245,14 @@ jobs:
       - name: Deploy application
         if: inputs.skip_deploy != 'true'
         run: |
+          # 确保 kubectl 配置已加载
+          if [ -f ~/.kube/config ]; then
+            export KUBECONFIG=~/.kube/config
+            echo "✅ 使用 kubectl 配置: ~/.kube/config"
+          else
+            echo "⚠️  未找到 kubectl 配置，可能无法连接到集群"
+          fi
+          
           APP_NAME="${{ inputs.app_name }}"
           IMAGE_TAG="${{ inputs.image_tag }}"
           REGISTRY="${{ inputs.registry }}"
@@ -307,9 +315,16 @@ jobs:
               # 确保命名空间正确（替换所有 namespace 字段）
               sed -i "s|namespace:.*|namespace: $K8S_NAMESPACE|g" "$TEMP_YAML"
               
+              # 验证 kubectl 配置
+              echo "验证 kubectl 配置..."
+              if ! kubectl cluster-info >/dev/null 2>&1; then
+                echo "⚠️  kubectl 无法连接到集群，尝试跳过验证..."
+              fi
+              
               # 应用 YAML 文件（kubectl apply 会自动只应用相关的资源）
+              # 使用 --validate=false 跳过客户端验证，避免 OpenAPI schema 下载失败
               echo "应用 YAML 文件..."
-              kubectl apply -f "$TEMP_YAML" -n "$K8S_NAMESPACE"
+              kubectl apply -f "$TEMP_YAML" -n "$K8S_NAMESPACE" --validate=false
               
               # 等待 Deployment 就绪
               echo "等待 Deployment 就绪..."
