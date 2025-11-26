@@ -70,6 +70,7 @@ jobs:
   build-and-deploy:
     name: Build and Deploy All Apps
     needs: detect-image-tag
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
