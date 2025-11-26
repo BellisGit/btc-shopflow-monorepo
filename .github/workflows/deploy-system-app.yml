@@ -1,7 +1,10 @@
 name: Deploy System App
 
 # ⚠️ 此工作流仅用于部署 system-app
-# - 触发条件：推送到 .deploy/system-app/** 路径的文件
+# - 触发条件：
+#   1. 推送到 .deploy/system-app/** 路径的文件
+#   2. repository_dispatch 事件（通过 API 触发）
+#   3. workflow_dispatch（手动触发）
 # - 不会触发任何构建过程（构建在本地完成）
 # - 不会影响其他应用的部署
 on:
@@ -9,6 +12,8 @@ on:
     branches: [ master ]
     paths:
       - '.deploy/system-app/**'
+  repository_dispatch:
+    types: [deploy-system-app]
   workflow_dispatch:
 
 permissions:
