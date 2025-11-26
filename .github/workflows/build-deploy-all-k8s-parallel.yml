@@ -133,8 +133,6 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.sha }}
 
-  # 并行构建和部署所有应用（每个应用独立完成构建→部署流程）
-  # 每个应用构建完成后立即部署，不需要等待其他应用
   build-deploy-all:
     name: Build and Deploy All Apps (Parallel)
     needs: detect-config
