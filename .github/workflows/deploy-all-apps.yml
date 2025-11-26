@@ -72,46 +72,91 @@ jobs:
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "✅ 最终镜像标签: $IMAGE_TAG"
 
-  deploy-all:
-    name: Deploy All Apps
+  deploy-system-app:
+    name: Deploy System App
     needs: [validate, detect-image-tag]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - app_name: system-app
-            app_port: "30080"
-            container_name: btc-system-app
-          - app_name: admin-app
-            app_port: "30081"
-            container_name: btc-admin-app
-          - app_name: logistics-app
-            app_port: "30082"
-            container_name: btc-logistics-app
-          - app_name: quality-app
-            app_port: "30083"
-            container_name: btc-quality-app
-          - app_name: production-app
-            app_port: "30084"
-            container_name: btc-production-app
-          - app_name: engineering-app
-            app_port: "30085"
-            container_name: btc-engineering-app
-          - app_name: finance-app
-            app_port: "30086"
-            container_name: btc-finance-app
-          - app_name: mobile-app
-            app_port: "30091"
-            container_name: btc-mobile-app
-      fail-fast: false
-      max-parallel: 8
-    steps:
-      - name: Deploy ${{ matrix.app_name }}
-        uses: ./.github/workflows/deploy-app-reusable.yml
-        with:
-          app_name: ${{ matrix.app_name }}
-          app_port: ${{ matrix.app_port }}
-          container_name: ${{ matrix.container_name }}
-          image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
-        secrets: inherit
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: system-app
+      app_port: "30080"
+      container_name: btc-system-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-admin-app:
+    name: Deploy Admin App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: admin-app
+      app_port: "30081"
+      container_name: btc-admin-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-logistics-app:
+    name: Deploy Logistics App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: logistics-app
+      app_port: "30082"
+      container_name: btc-logistics-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-quality-app:
+    name: Deploy Quality App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: quality-app
+      app_port: "30083"
+      container_name: btc-quality-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-production-app:
+    name: Deploy Production App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: production-app
+      app_port: "30084"
+      container_name: btc-production-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-engineering-app:
+    name: Deploy Engineering App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: engineering-app
+      app_port: "30085"
+      container_name: btc-engineering-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-finance-app:
+    name: Deploy Finance App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: finance-app
+      app_port: "30086"
+      container_name: btc-finance-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-mobile-app:
+    name: Deploy Mobile App
+    needs: [validate, detect-image-tag]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: mobile-app
+      app_port: "30091"
+      container_name: btc-mobile-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
 
