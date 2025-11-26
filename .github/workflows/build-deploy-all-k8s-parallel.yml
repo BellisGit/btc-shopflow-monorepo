@@ -2,8 +2,8 @@ name: Build and Deploy All Apps to K8s (Parallel)
 
 # 完整的工作流：并行构建所有应用，每个应用构建完成后立即部署
 # - 触发条件：
-#   1. workflow_dispatch（手动触发）
-#   2. push 到 master 分支（可选）
+#   1. repository_dispatch（通过脚本触发，event_type: build-deploy-all-k8s）
+#   2. workflow_dispatch（手动触发）
 # - 功能：
 #   1. 并行构建所有应用（使用可复用工作流）
 #   2. 每个应用构建完成后立即部署（不等待其他应用）
@@ -30,92 +30,54 @@ permissions:
   actions: read
 
 jobs:
-  detect-config:
-    name: Detect and Validate Configuration
+  detect-image-tag:
+    name: Detect Image Tag
     runs-on: ubuntu-latest
     outputs:
-      registry: ${{ steps.config.outputs.registry }}
-      registry_username: ${{ steps.config.outputs.registry_username }}
-      registry_password: ${{ steps.config.outputs.registry_password }}
-      use_ghcr: ${{ steps.config.outputs.use_ghcr }}
-      needs_auth: ${{ steps.config.outputs.needs_auth }}
-      repo_owner_lower: ${{ steps.config.outputs.repo_owner_lower }}
-      image_tag: ${{ steps.config.outputs.image_tag }}
-      skip_build: ${{ steps.config.outputs.skip_build }}
-      skip_deploy: ${{ steps.config.outputs.skip_deploy }}
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+      repo_owner_lower: ${{ steps.detect.outputs.repo_owner_lower }}
     steps:
-      - name: Detect registry configuration
-        id: config
+      - name: Detect image tag and repository owner
+        id: detect
         run: |
-          echo "🔍 检测镜像仓库配置..."
+          echo "🔍 开始检测镜像标签和仓库信息..."
+          echo "  - client_payload.github_sha: ${{ github.event.client_payload.github_sha }}"
+          echo "  - github.sha: ${{ github.sha }}"
           
           # 转换仓库所有者名称为小写
           REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "repo_owner_lower=$REPO_OWNER_LOWER" >> $GITHUB_OUTPUT
+          echo "  ✅ 仓库所有者（小写）: $REPO_OWNER_LOWER"
           
           # 生成镜像标签（使用 SHA 前7位）
-          # 优先使用 client_payload 中的 github_sha，否则使用当前 commit SHA
           if [ -n "${{ github.event.client_payload.github_sha }}" ]; then
             GIT_SHA="${{ github.event.client_payload.github_sha }}"
+            echo "  ✅ 从 client_payload.github_sha 获取: $GIT_SHA"
           else
             GIT_SHA="${{ github.sha }}"
+            echo "  ✅ 从 github.sha 获取: $GIT_SHA"
           fi
-          IMAGE_TAG="${GIT_SHA:0:7}"
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           
-          # 完整工作流：总是执行构建和部署
-          echo "skip_build=false" >> $GITHUB_OUTPUT
-          echo "skip_deploy=false" >> $GITHUB_OUTPUT
-          
-          # 检测是否配置了私有仓库
-          if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
-            PRIVATE_REGISTRY="${{ secrets.PRIVATE_REGISTRY }}"
-            echo "✅ 检测到私有仓库配置: $PRIVATE_REGISTRY"
-            echo "registry=$PRIVATE_REGISTRY" >> $GITHUB_OUTPUT
-            echo "use_ghcr=false" >> $GITHUB_OUTPUT
-            
-            # 检测是否需要认证
-            if [ -n "${{ secrets.PRIVATE_REGISTRY_USERNAME }}" ] && [ -n "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" ]; then
-              echo "✅ 检测到认证配置，将使用认证登录"
-              {
-                echo "registry_username<<EOF"
-                echo "${{ secrets.PRIVATE_REGISTRY_USERNAME }}"
-                echo "EOF"
-              } >> $GITHUB_OUTPUT
-              {
-                echo "registry_password<<EOF"
-                echo "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}"
-                echo "EOF"
-              } >> $GITHUB_OUTPUT
-              echo "needs_auth=true" >> $GITHUB_OUTPUT
-            else
-              echo "ℹ️  未配置认证信息，将尝试匿名访问（适用于不需要认证的私有仓库）"
-              echo "registry_username=" >> $GITHUB_OUTPUT
-              echo "registry_password=" >> $GITHUB_OUTPUT
-              echo "needs_auth=false" >> $GITHUB_OUTPUT
-            fi
+          if [ ${#GIT_SHA} -gt 7 ]; then
+            IMAGE_TAG="${GIT_SHA:0:7}"
+          elif [ ${#GIT_SHA} -lt 7 ]; then
+            IMAGE_TAG="latest"
+            echo "  ⚠️  SHA 太短，使用 latest"
           else
-            echo "✅ 未配置私有仓库，将使用 GitHub Container Registry (GHCR)"
-            echo "registry=ghcr.io" >> $GITHUB_OUTPUT
-            echo "use_ghcr=true" >> $GITHUB_OUTPUT
-            {
-              echo "registry_username<<EOF"
-              echo "${{ github.actor }}"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-            {
-              echo "registry_password<<EOF"
-              echo "${{ github.token }}"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-            echo "needs_auth=true" >> $GITHUB_OUTPUT
+            IMAGE_TAG="$GIT_SHA"
           fi
-        env:
-          GITHUB_SHA: ${{ github.sha }}
+          
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "  ⚠️  标签为空，使用 latest"
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 最终镜像标签: $IMAGE_TAG"
 
   build-deploy-all:
     name: Build and Deploy All Apps (Parallel)
-    needs: detect-config
+    needs: detect-image-tag
     strategy:
       fail-fast: false
       matrix:
@@ -131,17 +93,16 @@ jobs:
     uses: ./.github/workflows/build-deploy-app-k8s-reusable.yml
     with:
       app_name: ${{ matrix.app }}
-      registry: ${{ needs.detect-config.outputs.registry }}
+      registry: ${{ secrets.PRIVATE_REGISTRY || 'ghcr.io' }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
-      github_repository_owner: ${{ needs.detect-config.outputs.repo_owner_lower }}
-      image_tag: ${{ needs.detect-config.outputs.image_tag }}
+      github_repository_owner: ${{ needs.detect-image-tag.outputs.repo_owner_lower }}
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
       k8s_namespace: ${{ secrets.K8S_NAMESPACE || 'btc-shopflow' }}
-      skip_build: ${{ needs.detect-config.outputs.skip_build == 'true' }}
-      skip_deploy: ${{ needs.detect-config.outputs.skip_deploy == 'true' }}
+      skip_build: false
+      skip_deploy: false
     secrets:
-      gh_token: ${{ needs.detect-config.outputs.registry_password || github.token }}
+      gh_token: ${{ secrets.PRIVATE_REGISTRY_PASSWORD || github.token }}
       K8S_SERVER: ${{ secrets.K8S_SERVER }}
       K8S_CA_CERT: ${{ secrets.K8S_CA_CERT }}
       K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
-
