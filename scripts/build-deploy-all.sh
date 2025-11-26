@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "选项:"
             echo "  --force-all        强制构建和部署所有应用（忽略变更检测）"
-            echo "  --base <ref>       指定基准 Git 引用（默认: HEAD~1 或 origin/master）"
+            echo "  --base <ref>       指定基准 Git 引用（可选，用于检测相对于该引用的变更）"
             echo "  --dry-run          仅显示将要构建和部署的应用，不实际执行"
             echo "  --help, -h         显示帮助信息"
             echo ""
@@ -81,7 +81,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT"
 
-# 检测变更的应用
+# 检测变更的应用（基于工作区变更，不需要提交）
 detect_changed_apps() {
     local changed_apps=()
     
@@ -91,36 +91,49 @@ detect_changed_apps() {
         return 0
     fi
     
-    log_info "检测变更的应用..."
+    log_info "检测工作区变更的应用（无需提交）..."
     
-    # 确定基准引用
-    local base_ref="$BASE_REF"
-    if [ -z "$base_ref" ]; then
-        # 尝试使用 origin/master（如果存在）
-        if git rev-parse --verify origin/master > /dev/null 2>&1; then
-            base_ref="origin/master"
-        # 否则使用 HEAD~1
-        elif git rev-parse --verify HEAD~1 > /dev/null 2>&1; then
-            base_ref="HEAD~1"
-        else
-            log_warning "无法确定基准引用，将使用 --force-all 模式"
-            changed_apps=("${ALL_APPS[@]}")
-            return 0
+    # 获取工作区变更的文件列表（未暂存 + 已暂存但未提交）
+    local changed_files=""
+    
+    # 检测未暂存的变更
+    local unstaged_files
+    unstaged_files=$(git diff --name-only 2>/dev/null || echo "")
+    
+    # 检测已暂存但未提交的变更
+    local staged_files
+    staged_files=$(git diff --cached --name-only 2>/dev/null || echo "")
+    
+    # 合并所有变更的文件
+    if [ -n "$unstaged_files" ] && [ -n "$staged_files" ]; then
+        changed_files=$(echo -e "$unstaged_files\n$staged_files" | sort -u)
+    elif [ -n "$unstaged_files" ]; then
+        changed_files="$unstaged_files"
+    elif [ -n "$staged_files" ]; then
+        changed_files="$staged_files"
+    fi
+    
+    # 如果指定了基准引用，也检测相对于基准的变更
+    if [ -n "$BASE_REF" ]; then
+        log_info "同时检测相对于 $BASE_REF 的变更..."
+        local base_changed_files
+        base_changed_files=$(git diff --name-only "$BASE_REF" HEAD 2>/dev/null || echo "")
+        if [ -n "$base_changed_files" ]; then
+            if [ -n "$changed_files" ]; then
+                changed_files=$(echo -e "$changed_files\n$base_changed_files" | sort -u)
+            else
+                changed_files="$base_changed_files"
+            fi
         fi
     fi
     
-    log_info "基准引用: $base_ref"
-    
-    # 获取变更的文件列表
-    local changed_files
-    changed_files=$(git diff --name-only "$base_ref" HEAD 2>/dev/null || echo "")
-    
     if [ -z "$changed_files" ]; then
-        log_warning "未检测到变更的文件"
+        log_warning "未检测到变更的文件（工作区或暂存区）"
+        log_info "提示: 使用 --force-all 强制部署所有应用"
         return 0
     fi
     
-    log_info "变更的文件:"
+    log_info "检测到变更的文件:"
     echo "$changed_files" | while read -r file; do
         if [ -n "$file" ]; then
             echo "  - $file"
@@ -172,37 +185,75 @@ detect_changed_apps() {
     echo "${changed_apps[@]}"
 }
 
-# 使用 Turbo 检测变更（备用方法）
+# 使用 Turbo 检测变更（基于文件系统时间戳和缓存）
 detect_changed_apps_with_turbo() {
     local changed_apps=()
     
-    log_info "使用 Turbo 检测变更的应用..."
+    log_info "使用 Turbo 检测需要构建的应用（基于文件系统变更）..."
     
     # 检查 turbo 是否可用
-    if ! command -v turbo > /dev/null 2>&1 && ! node scripts/turbo.js --version > /dev/null 2>&1; then
+    local turbo_cmd="node scripts/turbo.js"
+    if command -v turbo > /dev/null 2>&1; then
+        turbo_cmd="turbo"
+    elif ! $turbo_cmd --version > /dev/null 2>&1; then
         log_warning "Turbo 不可用，使用 Git diff 方法"
         return 1
     fi
     
-    # 使用 turbo run build --dry-run=json 获取需要构建的应用
-    # 注意：这需要 Turbo 能够检测到变更
-    local turbo_cmd="node scripts/turbo.js"
-    if command -v turbo > /dev/null 2>&1; then
-        turbo_cmd="turbo"
-    fi
-    
-    # 尝试获取需要构建的应用列表
-    # Turbo 的 --dry-run=json 输出包含需要执行的任务
+    # 使用 turbo run build --dry-run=json 获取需要构建的包
+    # Turbo 会基于文件系统时间戳和缓存来判断哪些包需要构建
+    log_info "运行 Turbo dry-run 检测..."
     local turbo_output
     turbo_output=$($turbo_cmd run build --dry-run=json 2>/dev/null || echo "")
     
     if [ -z "$turbo_output" ]; then
-        log_warning "无法使用 Turbo 检测变更，回退到 Git diff 方法"
+        log_warning "无法获取 Turbo 输出，回退到 Git diff 方法"
         return 1
     fi
     
-    # 解析 Turbo 输出（简化版，实际可能需要更复杂的 JSON 解析）
-    # 这里我们主要使用 Git diff 方法，Turbo 方法作为备用
+    # 解析 JSON 输出，提取需要构建的应用
+    # Turbo 的 JSON 输出格式：{"tasks": [{"taskId": "app-name#build", "package": "app-name", ...}, ...]}
+    # 需要安装 jq 来解析 JSON，如果没有则使用 grep 简单匹配
+    if command -v jq > /dev/null 2>&1; then
+        # 使用 jq 解析 JSON
+        local packages
+        packages=$(echo "$turbo_output" | jq -r '.tasks[]? | select(.taskId | endswith("#build")) | .package' 2>/dev/null || echo "")
+        
+        while IFS= read -r package; do
+            if [ -n "$package" ]; then
+                # 检查是否是应用包
+                for app in "${ALL_APPS[@]}"; do
+                    if [[ "$package" == "$app" ]] || [[ "$package" == *"$app"* ]]; then
+                        # 避免重复添加
+                        local found=false
+                        for existing in "${changed_apps[@]}"; do
+                            if [ "$existing" == "$app" ]; then
+                                found=true
+                                break
+                            fi
+                        done
+                        if [ "$found" = false ]; then
+                            changed_apps+=("$app")
+                        fi
+                        break
+                    fi
+                done
+            fi
+        done <<< "$packages"
+    else
+        # 如果没有 jq，使用 grep 简单匹配应用名称
+        for app in "${ALL_APPS[@]}"; do
+            if echo "$turbo_output" | grep -q "\"$app#build\"" || echo "$turbo_output" | grep -q "\"package\":\"$app\""; then
+                changed_apps+=("$app")
+            fi
+        done
+    fi
+    
+    if [ ${#changed_apps[@]} -gt 0 ]; then
+        log_info "Turbo 检测到需要构建的应用: ${changed_apps[*]}"
+        echo "${changed_apps[@]}"
+        return 0
+    fi
     
     return 1
 }
@@ -214,10 +265,14 @@ main() {
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     # 检测变更的应用
+    # 优先使用 Turbo 检测（基于文件系统），如果失败则使用 Git diff
     local changed_apps
-    if ! changed_apps=($(detect_changed_apps)); then
-        log_error "检测变更失败"
-        exit 1
+    if ! changed_apps=($(detect_changed_apps_with_turbo 2>/dev/null)); then
+        log_info "Turbo 检测失败，使用 Git diff 方法..."
+        if ! changed_apps=($(detect_changed_apps)); then
+            log_error "检测变更失败"
+            exit 1
+        fi
     fi
     
     if [ ${#changed_apps[@]} -eq 0 ]; then
