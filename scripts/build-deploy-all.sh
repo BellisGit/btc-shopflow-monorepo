@@ -204,8 +204,9 @@ detect_changed_apps_with_turbo() {
     # 使用 turbo run build --dry-run 获取文本输出（更可靠）
     # 文本输出会显示实际会执行的任务
     log_info "运行 Turbo dry-run 检测..."
+    # 将 stderr 重定向到 /dev/null，避免日志干扰
     local turbo_output
-    turbo_output=$($turbo_cmd run build --dry-run 2>&1 || echo "")
+    turbo_output=$($turbo_cmd run build --dry-run 2>/dev/null || echo "")
     
     if [ -z "$turbo_output" ]; then
         log_warning "无法获取 Turbo 输出，回退到 Git diff 方法"
@@ -219,7 +220,8 @@ detect_changed_apps_with_turbo() {
     for app in "${ALL_APPS[@]}"; do
         # 检查输出中是否包含该应用的构建任务
         # 匹配格式：app-name#build 或 "app-name#build" 或 app-name (在任务列表中)
-        if echo "$turbo_output" | grep -qE "\"$app#build\"|$app#build|•.*$app.*build" 2>/dev/null; then
+        # 使用更精确的匹配，避免匹配到日志信息
+        if echo "$turbo_output" | grep -qE "(^|[[:space:]])$app#build([[:space:]]|$|\")|(^|[[:space:]])$app([[:space:]]|$)" 2>/dev/null; then
             # 避免重复添加
             local found=false
             for existing in "${changed_apps[@]}"; do
@@ -236,7 +238,8 @@ detect_changed_apps_with_turbo() {
     
     if [ ${#changed_apps[@]} -gt 0 ]; then
         log_info "Turbo 检测到需要构建的应用: ${changed_apps[*]}"
-        echo "${changed_apps[@]}"
+        # 只输出应用名称，不输出日志（通过重定向 stderr 到 /dev/null）
+        echo "${changed_apps[@]}" >&1
         return 0
     fi
     
@@ -254,13 +257,36 @@ main() {
     
     # 检测变更的应用
     # 优先使用 Turbo 检测（基于文件系统），如果失败则使用 Git diff
-    local changed_apps
-    if ! changed_apps=($(detect_changed_apps_with_turbo 2>/dev/null)); then
+    local changed_apps_raw
+    local changed_apps=()
+    
+    # 调用检测函数，将 stderr 重定向到 /dev/null，只捕获 stdout（应用名称）
+    if ! changed_apps_raw=$(detect_changed_apps_with_turbo 2>/dev/null); then
         log_info "Turbo 检测失败，使用 Git diff 方法..."
-        if ! changed_apps=($(detect_changed_apps)); then
+        if ! changed_apps_raw=$(detect_changed_apps 2>/dev/null); then
             log_error "检测变更失败"
             exit 1
         fi
+    fi
+    
+    # 解析返回的应用名称数组（过滤掉空字符串和日志信息）
+    if [ -n "$changed_apps_raw" ]; then
+        while IFS= read -r app_name; do
+            # 过滤掉空字符串、日志标记、ANSI 颜色代码等
+            if [ -n "$app_name" ] && [[ "$app_name" != *"[INFO]"* ]] && [[ "$app_name" != *"[SUCCESS]"* ]] && [[ "$app_name" != *"[WARNING]"* ]] && [[ "$app_name" != *"[ERROR]"* ]] && [[ "$app_name" =~ ^[a-z-]+-app$ ]]; then
+                # 避免重复添加
+                local found=false
+                for existing in "${changed_apps[@]}"; do
+                    if [ "$existing" == "$app_name" ]; then
+                        found=true
+                        break
+                    fi
+                done
+                if [ "$found" = false ]; then
+                    changed_apps+=("$app_name")
+                fi
+            fi
+        done <<< "$changed_apps_raw"
     fi
     
     if [ ${#changed_apps[@]} -eq 0 ]; then
