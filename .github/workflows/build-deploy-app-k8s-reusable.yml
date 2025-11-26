@@ -1,0 +1,277 @@
+name: Build and Deploy App to K8s (Reusable)
+
+# ⚠️ 此工作流是可复用的，不会自动触发
+# - 只能通过其他工作流调用（workflow_call）
+# - 用于构建应用并立即部署到 Kubernetes 集群
+# - 每个应用独立完成构建→部署流程，不等待其他应用
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: 'Application name (e.g., system-app, admin-app)'
+        required: true
+        type: string
+      registry:
+        description: 'Container registry URL'
+        required: true
+        type: string
+      github_repository:
+        description: 'GitHub repository name'
+        required: true
+        type: string
+      github_sha:
+        description: 'GitHub commit SHA'
+        required: true
+        type: string
+      github_repository_owner:
+        description: 'GitHub repository owner (lowercase)'
+        required: true
+        type: string
+      image_tag:
+        description: 'Docker image tag (e.g., commit SHA short)'
+        required: true
+        type: string
+      k8s_namespace:
+        description: 'K8s namespace (default: btc-shopflow)'
+        required: false
+        type: string
+        default: 'btc-shopflow'
+      skip_build:
+        description: 'Skip build step'
+        required: false
+        type: boolean
+        default: false
+      skip_deploy:
+        description: 'Skip deploy step'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      gh_token:
+        description: 'GitHub token for registry access'
+        required: true
+      K8S_SERVER:
+        required: false
+      K8S_CA_CERT:
+        required: false
+      K8S_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy ${{ inputs.app_name }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ========== 构建阶段 ==========
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # ========== 构建阶段（仅在未跳过时执行）==========
+      - name: Setup Node.js
+        if: inputs.skip_build != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        if: inputs.skip_build != 'true'
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        if: inputs.skip_build != 'true'
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        if: inputs.skip_build != 'true'
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        if: inputs.skip_build != 'true'
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        if: inputs.skip_build != 'true'
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ inputs.github_sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build dependencies if needed
+        if: inputs.skip_build != 'true'
+        run: |
+          if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
+            echo "Building dependencies for ${{ inputs.app_name }}..."
+            pnpm --filter @btc/vite-plugin run build
+            pnpm --filter @btc/shared-utils run build
+            pnpm --filter @btc/shared-core run build
+            pnpm --filter @btc/shared-components run build
+            pnpm --filter @btc/subapp-manifests run build
+          else
+            echo "Using cached built packages"
+          fi
+      
+      - name: Build application
+        if: inputs.skip_build != 'true'
+        run: cd apps/${{ inputs.app_name }} && pnpm run build
+      
+      - name: Skip build (placeholder)
+        if: inputs.skip_build == 'true'
+        run: echo "⏭️  跳过构建步骤（使用已有镜像）"
+      
+      # ========== Docker 构建和推送（仅在未跳过构建时执行）==========
+      - name: Validate GitHub Token
+        if: inputs.skip_build != 'true'
+        run: |
+          echo "Validating GitHub token for registry access..."
+          TOKEN="${{ secrets.gh_token }}"
+          if [ -z "$TOKEN" ]; then
+            echo "[ERROR] No token available"
+            exit 1
+          fi
+          echo "[SUCCESS] Token is available"
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+      
+      - name: Prepare Docker tags
+        if: inputs.skip_build != 'true'
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ inputs.github_repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Login to Container Registry
+        if: inputs.skip_build != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ env.TOKEN }}
+      
+      - name: Set up Docker Buildx
+        if: inputs.skip_build != 'true'
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push Docker image
+        if: inputs.skip_build != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=apps/${{ inputs.app_name }}
+          push: true
+          tags: |
+            ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ inputs.app_name }}:latest
+            ${{ inputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ inputs.app_name }}:${{ inputs.github_sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      # ========== 部署阶段 ==========
+      - name: Setup kubectl
+        if: inputs.skip_deploy != 'true'
+        uses: azure/setup-kubectl@v3
+      
+      - name: Skip deploy (placeholder)
+        if: inputs.skip_deploy == 'true'
+        run: echo "⏭️  跳过部署步骤"
+      
+      - name: Configure K8s
+        if: inputs.skip_deploy != 'true'
+        run: |
+          # 配置 kubectl（使用 secrets 中的配置）
+          if [ -n "${{ secrets.K8S_SERVER }}" ]; then
+            mkdir -p ~/.kube
+            cat > ~/.kube/config <<EOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_SERVER }}
+              certificate-authority-data: ${{ secrets.K8S_CA_CERT }}
+            name: k8s-cluster
+          contexts:
+          - context:
+              cluster: k8s-cluster
+              user: k8s-user
+            name: k8s-context
+          current-context: k8s-context
+          users:
+          - name: k8s-user
+            user:
+              token: ${{ secrets.K8S_TOKEN }}
+          EOF
+            kubectl config use-context k8s-context
+            echo "✅ K8s 配置完成"
+          else
+            echo "⚠️  未配置 K8s 集群信息，跳过部署"
+            exit 0
+          fi
+      
+      - name: Deploy application
+        if: inputs.skip_deploy != 'true'
+        run: |
+          APP_NAME="${{ inputs.app_name }}"
+          IMAGE_TAG="${{ inputs.image_tag }}"
+          REGISTRY="${{ inputs.registry }}"
+          REPO_OWNER="${{ inputs.github_repository_owner }}"
+          K8S_NAMESPACE="${{ inputs.k8s_namespace }}"
+          
+          # 应用名称到 Deployment 名称的映射
+          declare -A DEPLOYMENT_NAMES=(
+            ["system-app"]="btc-system-app"
+            ["admin-app"]="btc-admin-app"
+            ["logistics-app"]="btc-logistics-app"
+            ["quality-app"]="btc-quality-app"
+            ["production-app"]="btc-production-app"
+            ["engineering-app"]="btc-engineering-app"
+            ["finance-app"]="btc-finance-app"
+            ["mobile-app"]="btc-mobile-app"
+          )
+          
+          DEPLOYMENT_NAME="${DEPLOYMENT_NAMES[$APP_NAME]}"
+          FULL_IMAGE_TAG="$REGISTRY/$REPO_OWNER/$APP_NAME:$IMAGE_TAG"
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 部署应用: $APP_NAME"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Deployment: $DEPLOYMENT_NAME"
+          echo "镜像: $FULL_IMAGE_TAG"
+          echo "命名空间: $K8S_NAMESPACE"
+          
+          # 检查 Deployment 是否存在
+          if kubectl get deployment "$DEPLOYMENT_NAME" -n "$K8S_NAMESPACE" >/dev/null 2>&1; then
+            echo "✅ 更新现有 Deployment..."
+            kubectl set image deployment/"$DEPLOYMENT_NAME" "$APP_NAME=$FULL_IMAGE_TAG" -n "$K8S_NAMESPACE"
+            kubectl rollout status deployment/"$DEPLOYMENT_NAME" -n "$K8S_NAMESPACE" --timeout=5m
+            echo "✅ $APP_NAME 部署完成"
+          else
+            echo "⚠️  Deployment 不存在: $DEPLOYMENT_NAME"
+            echo "请先创建 Deployment 或使用 YAML 文件"
+            exit 1
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ $APP_NAME 构建和部署成功"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
