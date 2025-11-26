@@ -258,11 +258,33 @@ jobs:
             EOF
             
             echo "🚀 启动新容器..."
-            docker-compose -f "$COMPOSE_FILE" up -d
+            if ! docker-compose -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              echo "[ERROR] 检查 docker-compose 配置..."
+              cat "$COMPOSE_FILE"
+              echo "[ERROR] 检查容器日志..."
+              docker-compose -f "$COMPOSE_FILE" logs 2>&1 || true
+              exit 1
+            fi
+            
             sleep 5
             
             echo "📋 Container status:"
             docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            # 验证容器是否正在运行
+            echo "🔍 验证容器状态..."
+            CONTAINER_STATUS=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.Status}}" || echo "")
+            if [ -z "$CONTAINER_STATUS" ]; then
+              echo "[ERROR] 容器未运行！"
+              echo "[ERROR] 检查容器日志..."
+              docker logs "$CONTAINER_NAME" 2>&1 || true
+              echo "[ERROR] 检查所有容器状态..."
+              docker ps -a | grep "$CONTAINER_NAME" || true
+              exit 1
+            else
+              echo "✅ 容器正在运行: $CONTAINER_STATUS"
+            fi
             
             echo ""
             echo "🧹 Cleaning up unused images..."
