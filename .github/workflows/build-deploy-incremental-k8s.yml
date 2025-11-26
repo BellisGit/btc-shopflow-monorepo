@@ -196,19 +196,15 @@ jobs:
             echo "changed_apps=${CHANGED_APPS[*]}" >> $GITHUB_OUTPUT
             # 生成 JSON 数组用于 matrix
             # 使用 jq 生成，如果失败则手动构建
-            if command -v jq >/dev/null 2>&1; then
-              JSON_APPS=$(printf '%s\n' "${CHANGED_APPS[@]}" | jq -R . | jq -s .)
-            else
-              # 手动构建 JSON 数组
-              JSON_APPS="["
-              for i in "${!CHANGED_APPS[@]}"; do
-                if [ $i -gt 0 ]; then
-                  JSON_APPS+=","
-                fi
-                JSON_APPS+="\"${CHANGED_APPS[$i]}\""
-              done
-              JSON_APPS+="]"
-            fi
+            JSON_APPS="["
+            for i in "${!CHANGED_APPS[@]}"; do
+              if [ $i -gt 0 ]; then
+                JSON_APPS+=","
+              fi
+              JSON_APPS+="\"${CHANGED_APPS[$i]}\""
+            done
+            JSON_APPS+="]"
+            
             # 使用多行输出格式，避免特殊字符问题
             {
               echo "changed_apps_json<<EOF"
