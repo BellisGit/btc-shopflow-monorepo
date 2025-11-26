@@ -333,12 +333,12 @@ main() {
     fi
     
     log_info ""
-    log_info "开始构建和部署..."
-    log_info ""
     
-    # 判断是否使用全量部署工作流
-    # 如果部署所有应用（8个），使用全量部署工作流；否则逐个部署
+    # 判断是否使用云端构建（GitHub Actions）
+    # 如果部署所有应用（8个）且未指定 --local，使用云端构建
+    local use_cloud_build=$USE_CLOUD_BUILD
     local use_bulk_deploy=false
+    
     if [ ${#changed_apps[@]} -eq 8 ]; then
         # 检查是否包含所有应用
         local all_present=true
@@ -357,9 +357,105 @@ main() {
         done
         if [ "$all_present" = true ]; then
             use_bulk_deploy=true
-            log_info "检测到部署所有应用，将使用全量部署工作流"
         fi
     fi
+    
+    # 如果使用云端构建，触发 GitHub Actions 工作流
+    if [ "$use_cloud_build" = true ] && [ "$use_bulk_deploy" = true ]; then
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_info "☁️  使用云端构建（GitHub Actions 并行构建）"
+        log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_info "将触发 GitHub Actions 并行构建所有应用"
+        log_info "构建完成后会自动触发全量部署工作流"
+        log_info ""
+        
+        # 获取 GITHUB_TOKEN
+        local GITHUB_TOKEN=""
+        
+        # 方法1: 从环境变量获取
+        if [ -n "${GITHUB_TOKEN}" ]; then
+            GITHUB_TOKEN="${GITHUB_TOKEN}"
+        fi
+        
+        # 方法2: 从 Git 凭据管理器获取
+        if [ -z "$GITHUB_TOKEN" ] && command -v git-credential-manager > /dev/null 2>&1; then
+            GITHUB_TOKEN=$(git credential fill <<< "protocol=https
+host=github.com
+" 2>/dev/null | grep password | cut -d= -f2 | head -1)
+        fi
+        
+        # 方法3: 从 Windows 用户级环境变量获取（通过 PowerShell）
+        if [ -z "$GITHUB_TOKEN" ]; then
+            IS_WINDOWS=false
+            if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
+                IS_WINDOWS=true
+            fi
+            
+            if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
+                if command -v powershell.exe > /dev/null 2>&1; then
+                    PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+                    GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+                    if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+                        GITHUB_TOKEN=""
+                    fi
+                    if [ -z "${GITHUB_TOKEN// }" ]; then
+                        GITHUB_TOKEN=""
+                    fi
+                fi
+            fi
+        fi
+        
+        if [ -z "$GITHUB_TOKEN" ]; then
+            log_error "未设置 GITHUB_TOKEN 环境变量，无法触发云端构建"
+            log_info "请设置 GITHUB_TOKEN 环境变量，或使用 --local 参数在本地构建"
+            exit 1
+        fi
+        
+        local GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
+        local GIT_SHA=$(git rev-parse HEAD | cut -c1-7 || echo "latest")
+        
+        log_info "触发云端构建工作流: build-all-apps.yml"
+        log_info "仓库: $GITHUB_REPO"
+        log_info "镜像标签: $GIT_SHA"
+        
+        local REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPO/dispatches" \
+            -d "{\"event_type\":\"build-all-apps\",\"client_payload\":{\"github_sha\":\"$GIT_SHA\"}}" 2>&1)
+        
+        local REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
+        local REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
+        
+        if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
+            log_success "✅ 云端构建工作流已触发 (HTTP 204)"
+            log_info "可以在 GitHub Actions 页面查看构建进度:"
+            log_info "  https://github.com/$GITHUB_REPO/actions/workflows/build-all-apps.yml"
+            log_info ""
+            log_info "构建完成后会自动触发全量部署工作流"
+            exit 0
+        else
+            log_error "❌ 云端构建工作流触发失败 (HTTP $REPO_DISPATCH_HTTP_CODE)"
+            if [ -n "$REPO_DISPATCH_BODY" ]; then
+                log_error "响应: $REPO_DISPATCH_BODY"
+            fi
+            log_info ""
+            log_info "提示: 使用 --local 参数在本地构建"
+            exit 1
+        fi
+    fi
+    
+    # 本地构建模式
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "💻 使用本地构建（串行构建）"
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "提示: 使用云端构建（默认）可以并行构建，速度更快"
+    log_info "      运行 '$0 --cloud' 使用云端构建"
+    log_info ""
+    log_info "开始构建和部署..."
+    log_info ""
     
     if [ "$use_bulk_deploy" = true ]; then
         # 使用全量部署工作流：先构建和推送所有镜像，然后触发一次全量部署工作流
