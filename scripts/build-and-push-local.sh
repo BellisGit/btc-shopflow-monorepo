@@ -479,26 +479,41 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
         # 等待几秒后验证工作流是否真的启动了
         sleep 3
         
-        # 查询最近的工作流运行记录
+        # 查询最近的工作流运行记录，过滤出正确的工作流
         WORKFLOW_RUNS=$(curl -s \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=5&event=repository_dispatch" 2>&1)
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=10&event=repository_dispatch" 2>&1)
         
-        # 检查是否有新的运行记录
+        # 检查是否有新的运行记录，并查找正确的工作流
         if echo "$WORKFLOW_RUNS" | grep -q '"workflow_runs"'; then
-            LATEST_RUN=$(echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
-            RUN_STATUS=$(echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-            RUN_URL=$(echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+            # 尝试查找匹配的工作流名称或路径
+            WORKFLOW_NAME_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "$TARGET_WORKFLOW_NAME" | head -1)
+            WORKFLOW_PATH_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "$TARGET_WORKFLOW" | head -1)
             
-            if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
-                log_success "✅ 工作流已启动！"
-                log_info "   运行 ID: $LATEST_RUN"
-                log_info "   状态: ${RUN_STATUS:-unknown}"
-                log_info "   查看: $RUN_URL"
+            if [ -n "$WORKFLOW_NAME_MATCH" ] || [ -n "$WORKFLOW_PATH_MATCH" ]; then
+                # 提取运行信息
+                LATEST_RUN=$(echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
+                RUN_STATUS=$(echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                RUN_URL=$(echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+                WORKFLOW_NAME=$(echo "$WORKFLOW_RUNS" | grep -oE '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
+                
+                if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
+                    log_success "✅ 工作流已启动！"
+                    log_info "   运行 ID: $LATEST_RUN"
+                    log_info "   工作流: ${WORKFLOW_NAME:-$TARGET_WORKFLOW_NAME}"
+                    log_info "   状态: ${RUN_STATUS:-unknown}"
+                    log_info "   查看: $RUN_URL"
+                else
+                    log_warning "⚠️  工作流可能还在启动中..."
+                fi
             else
-                log_warning "⚠️  工作流可能还在启动中..."
+                log_warning "⚠️  未找到 '$TARGET_WORKFLOW_NAME' 工作流的运行记录"
+                log_info "   这可能意味着："
+                log_info "   1. 工作流文件可能还没有被 GitHub 识别"
+                log_info "   2. 工作流可能触发了其他工作流（如 deploy-app-reusable.yml）"
+                log_info "   3. 请手动检查 GitHub Actions 页面"
             fi
         else
             log_warning "⚠️  无法验证工作流是否启动，请手动检查"
