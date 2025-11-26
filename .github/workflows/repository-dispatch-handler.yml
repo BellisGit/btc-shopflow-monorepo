@@ -20,7 +20,10 @@ jobs:
           if [ "$EVENT_TYPE" = "deploy-system-app" ]; then
             APP_NAME="system-app"
           else
-            APP_NAME="${{ github.event.client_payload.app_name || github.event.client_payload.apps }}"
+            APP_NAME="${{ github.event.client_payload.app_name }}"
+            if [ -z "$APP_NAME" ]; then
+              APP_NAME="${{ github.event.client_payload.apps }}"
+            fi
           fi
           
           if [ -z "$APP_NAME" ]; then
@@ -32,7 +35,11 @@ jobs:
           echo "📋 部署请求详情:"
           echo "- 应用: $APP_NAME"
           echo "- 事件类型: $EVENT_TYPE"
-          echo "- SHA: ${{ github.event.client_payload.github_sha || github.sha }}"
+          GITHUB_SHA="${{ github.event.client_payload.github_sha }}"
+          if [ -z "$GITHUB_SHA" ]; then
+            GITHUB_SHA="${{ github.sha }}"
+          fi
+          echo "- SHA: $GITHUB_SHA"
 
   trigger-deployment:
     needs: handle-deploy
@@ -56,9 +63,12 @@ jobs:
                 console.log('📋 触发 system-app 部署工作流');
               } else {
                 workflowFile = 'deploy-only.yml';
-                inputs.apps = '${{ github.event.client_payload.apps || github.event.client_payload.app_name }}';
-                inputs.environment = '${{ github.event.client_payload.environment || "production" }}';
-                inputs.github_sha = '${{ github.event.client_payload.github_sha || github.sha }}';
+                const apps = '${{ github.event.client_payload.apps }}';
+                inputs.apps = apps || '${{ github.event.client_payload.app_name }}';
+                const environment = '${{ github.event.client_payload.environment }}';
+                inputs.environment = environment || 'production';
+                const githubSha = '${{ github.event.client_payload.github_sha }}';
+                inputs.github_sha = githubSha || '${{ github.sha }}';
                 console.log('📋 触发 deploy-only 工作流');
               }
               
@@ -73,7 +83,9 @@ jobs:
               console.log('✅ 部署工作流已成功触发!');
               console.log('📋 触发详情:');
               console.log('- 工作流:', workflowFile);
-              console.log('- 应用:', '${{ github.event.client_payload.app_name || github.event.client_payload.apps }}');
+              const appName = '${{ github.event.client_payload.app_name }}';
+              const apps = '${{ github.event.client_payload.apps }}';
+              console.log('- 应用:', appName || apps);
               
             } catch (error) {
               console.error('🚨 触发部署工作流失败:', error.message);
