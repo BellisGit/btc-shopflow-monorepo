@@ -1,0 +1,83 @@
+name: Repository Dispatch Handler
+
+on:
+  repository_dispatch:
+    types: [deploy-system-app, deploy-apps]
+
+jobs:
+  handle-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 验证部署请求参数
+        run: |
+          echo "🔍 验证部署请求参数..."
+          
+          # 检查事件类型
+          EVENT_TYPE="${{ github.event.action }}"
+          echo "📋 事件类型: $EVENT_TYPE"
+          
+          # 获取应用名称
+          if [ "$EVENT_TYPE" = "deploy-system-app" ]; then
+            APP_NAME="system-app"
+          else
+            APP_NAME="${{ github.event.client_payload.app_name || github.event.client_payload.apps }}"
+          fi
+          
+          if [ -z "$APP_NAME" ]; then
+            echo "🚨 缺少必需参数: app_name"
+            exit 1
+          fi
+          
+          echo "✅ 部署请求参数验证通过"
+          echo "📋 部署请求详情:"
+          echo "- 应用: $APP_NAME"
+          echo "- 事件类型: $EVENT_TYPE"
+          echo "- SHA: ${{ github.event.client_payload.github_sha || github.sha }}"
+
+  trigger-deployment:
+    needs: handle-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 触发部署工作流
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              console.log('🚀 触发部署工作流...');
+              
+              // 获取事件类型和应用名称
+              const eventType = '${{ github.event.action }}';
+              let workflowFile;
+              let inputs = {};
+              
+              if (eventType === 'deploy-system-app') {
+                workflowFile = 'deploy-system-app.yml';
+                console.log('📋 触发 system-app 部署工作流');
+              } else {
+                workflowFile = 'deploy-only.yml';
+                inputs.apps = '${{ github.event.client_payload.apps || github.event.client_payload.app_name }}';
+                inputs.environment = '${{ github.event.client_payload.environment || "production" }}';
+                inputs.github_sha = '${{ github.event.client_payload.github_sha || github.sha }}';
+                console.log('📋 触发 deploy-only 工作流');
+              }
+              
+              const { data: response } = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowFile,
+                ref: 'master',
+                inputs: inputs
+              });
+              
+              console.log('✅ 部署工作流已成功触发!');
+              console.log('📋 触发详情:');
+              console.log('- 工作流:', workflowFile);
+              console.log('- 应用:', '${{ github.event.client_payload.app_name || github.event.client_payload.apps }}');
+              
+            } catch (error) {
+              console.error('🚨 触发部署工作流失败:', error.message);
+              console.error('错误详情:', error);
+              throw error;
+            }
+
