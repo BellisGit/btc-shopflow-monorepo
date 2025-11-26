@@ -33,7 +33,6 @@ declare module 'vue' {
     BtcGridGroup: typeof import('./../../../packages/shared-components/src/components/layout/btc-grid-group/index.vue')['default']
     BtcIconButton: typeof import('./../../../packages/shared-components/src/components/basic/btc-icon-button/index.vue')['default']
     BtcIdentityVerify: typeof import('./../../../packages/shared-components/src/components/feedback/btc-identity-verify/index.vue')['default']
-    BtcImportBtn: typeof import('@btc/shared-components')['BtcImportBtn']
     BtcMasterList: typeof import('./../../../packages/shared-components/src/components/data/btc-master-list/index.vue')['default']
     BtcMessage: typeof import('./../../../packages/shared-components/src/components/feedback/btc-message/index.vue')['default']
     BtcMultiDeleteBtn: typeof import('@btc/shared-components')['BtcMultiDeleteBtn']

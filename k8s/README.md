@@ -27,23 +27,45 @@ k8s/
 2. **kubectl**: 已配置并能连接到集群
 3. **Docker 镜像**: 确保所有应用镜像已构建并推送到镜像仓库
 4. **Ingress Controller**: 集群中已安装 Nginx Ingress Controller
+5. **私有镜像仓库**: 已搭建并配置（推荐用于增量部署）
 
-### 构建和推送镜像
+### 增量构建和部署（推荐）
+
+**增量构建和部署**是推荐的部署方式，实现"修改代码仅增量构建、修改应用仅增量部署"的极简更新流程。
+
+#### 1. 设置私有镜像仓库
 
 ```bash
-# 构建所有应用镜像
-docker-compose build
+# 在云服务器上执行（首次设置）
+bash scripts/setup-private-registry.sh
 
-# 推送到镜像仓库（需要先登录）
-docker push btc-shopflow/system-app:latest
-docker push btc-shopflow/admin-app:latest
-docker push btc-shopflow/logistics-app:latest
-# ... 其他应用
+# 配置本地 Docker 允许访问私有仓库
+# 编辑 /etc/docker/daemon.json（Linux）或 Docker Desktop 设置（Windows/Mac）
+# 添加：{ "insecure-registries": ["<云服务器IP>:5000"] }
+# 然后重启 Docker
 ```
 
-### 部署到 Kubernetes
+#### 2. 增量构建和部署
 
-#### 方式一：使用部署脚本（推荐）
+```bash
+# 增量构建和部署（仅变更的应用）
+pnpm build-deploy:k8s --registry <云服务器IP>:5000
+
+# 全量构建和部署（所有应用）
+pnpm build-deploy:k8s:all --registry <云服务器IP>:5000
+
+# 仅构建（不部署）
+pnpm build:k8s --registry <云服务器IP>:5000
+
+# 仅部署（不构建）
+pnpm deploy:k8s --registry <云服务器IP>:5000 --apps system-app,admin-app
+```
+
+详细说明请参考：[增量部署文档](docs/K8S_INCREMENTAL_DEPLOYMENT.md)
+
+### 传统部署方式
+
+#### 方式一：使用部署脚本
 
 ```bash
 # 部署到开发环境

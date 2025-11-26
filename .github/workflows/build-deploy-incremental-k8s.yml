@@ -1,0 +1,391 @@
+name: Build and Deploy to K8s (Incremental)
+
+# 配置说明：
+# 1. 镜像仓库配置（在 GitHub Secrets 中设置）：
+#    - PRIVATE_REGISTRY: 镜像仓库地址
+#      * 使用 GHCR: 留空（默认使用 ghcr.io）
+#      * 使用私有仓库: 设置为 IP:PORT（如：192.168.1.100:5000）
+#      * 使用 Docker Hub: 设置为 docker.io
+#    - PRIVATE_REGISTRY_USERNAME: 仓库用户名
+#      * GHCR: 留空（自动使用 github.actor）
+#      * 私有仓库（需要认证）: 填写用户名
+#      * 私有仓库（不需要认证）: 留空
+#      * Docker Hub: Docker Hub 用户名
+#    - PRIVATE_REGISTRY_PASSWORD: 仓库密码/Token
+#      * GHCR: 留空（自动使用 GITHUB_TOKEN）
+#      * 私有仓库（需要认证）: 填写密码
+#      * 私有仓库（不需要认证）: 留空
+#      * Docker Hub: Docker Hub 密码或 Access Token
+# 2. K8s 部署配置（可选，在 GitHub Secrets 中设置）：
+#    - K8S_SERVER: K8s API 服务器地址
+#    - K8S_CA_CERT: K8s CA 证书（base64 编码）
+#    - K8S_TOKEN: K8s 访问令牌
+#    - K8S_NAMESPACE: K8s 命名空间（默认：btc-shopflow）
+# 详细配置说明请参考：docs/GITHUB_ACTIONS_K8S_SETUP.md
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      deploy_all:
+        description: 'Deploy all apps (not just changed)'
+        required: false
+        type: boolean
+        default: false
+      skip_build:
+        description: 'Skip build step'
+        required: false
+        type: boolean
+        default: false
+      skip_deploy:
+        description: 'Skip deploy step'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+jobs:
+  detect-config:
+    name: Detect and Validate Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.config.outputs.registry }}
+      registry_username: ${{ steps.config.outputs.registry_username }}
+      registry_password: ${{ steps.config.outputs.registry_password }}
+      use_ghcr: ${{ steps.config.outputs.use_ghcr }}
+      needs_auth: ${{ steps.config.outputs.needs_auth }}
+    steps:
+      - name: Detect registry configuration
+        id: config
+        run: |
+          echo "🔍 检测镜像仓库配置..."
+          
+          # 检测是否配置了私有仓库
+          if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
+            PRIVATE_REGISTRY="${{ secrets.PRIVATE_REGISTRY }}"
+            echo "✅ 检测到私有仓库配置: $PRIVATE_REGISTRY"
+            echo "registry=$PRIVATE_REGISTRY" >> $GITHUB_OUTPUT
+            echo "use_ghcr=false" >> $GITHUB_OUTPUT
+            
+            # 检测是否需要认证
+            if [ -n "${{ secrets.PRIVATE_REGISTRY_USERNAME }}" ] && [ -n "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" ]; then
+              echo "✅ 检测到认证配置，将使用认证登录"
+              echo "registry_username=${{ secrets.PRIVATE_REGISTRY_USERNAME }}" >> $GITHUB_OUTPUT
+              echo "registry_password=${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" >> $GITHUB_OUTPUT
+              echo "needs_auth=true" >> $GITHUB_OUTPUT
+            else
+              echo "ℹ️  未配置认证信息，将尝试匿名访问（适用于不需要认证的私有仓库）"
+              echo "registry_username=" >> $GITHUB_OUTPUT
+              echo "registry_password=" >> $GITHUB_OUTPUT
+              echo "needs_auth=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "✅ 未配置私有仓库，将使用 GitHub Container Registry (GHCR)"
+            echo "registry=ghcr.io" >> $GITHUB_OUTPUT
+            echo "use_ghcr=true" >> $GITHUB_OUTPUT
+            echo "registry_username=${{ github.actor }}" >> $GITHUB_OUTPUT
+            echo "registry_password=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "needs_auth=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 配置摘要"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "镜像仓库: $(echo '${{ steps.config.outputs.registry }}' || echo 'ghcr.io')"
+          echo "使用 GHCR: $(echo '${{ steps.config.outputs.use_ghcr }}' || echo 'true')"
+          echo "需要认证: $(echo '${{ steps.config.outputs.needs_auth }}' || echo 'false')"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  detect-changes:
+    name: Detect Changed Apps
+    runs-on: ubuntu-latest
+    outputs:
+      changed_apps: ${{ steps.detect.outputs.changed_apps }}
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+      changed_apps_json: ${{ steps.detect.outputs.changed_apps_json }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 需要获取历史提交以检测变更
+      
+      - name: Setup jq
+        run: |
+          # jq 用于生成 JSON 数组
+          sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Detect changed applications
+        id: detect
+        run: |
+          echo "🔍 检测变更的应用..."
+          
+          # 获取变更的文件列表
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+          
+          # 如果无法获取基准，使用 HEAD~1
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="HEAD~1"
+          fi
+          
+          echo "基准提交: $BASE_SHA"
+          echo "当前提交: $HEAD_SHA"
+          
+          # 所有应用列表
+          ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+          CHANGED_APPS=()
+          
+          # 检测每个应用的变更
+          for app in "${ALL_APPS[@]}"; do
+            if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- "apps/$app/" 2>/dev/null; then
+              # 检查共享包是否有变更
+              if ! git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- packages/ configs/ scripts/ turbo.json package.json pnpm-lock.yaml 2>/dev/null; then
+                echo "⚠️  $app: 共享包有变更，需要重新构建"
+                CHANGED_APPS+=("$app")
+              else
+                echo "✅ $app: 无变更"
+              fi
+            else
+              echo "⚠️  $app: 有变更，需要构建"
+              CHANGED_APPS+=("$app")
+            fi
+          done
+          
+          # 如果手动触发且选择了 deploy_all，则构建所有应用
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.deploy_all }}" = "true" ]; then
+            CHANGED_APPS=("${ALL_APPS[@]}")
+            echo "手动触发：构建所有应用"
+          fi
+          
+          if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "changed_apps=" >> $GITHUB_OUTPUT
+            echo "changed_apps_json=[]" >> $GITHUB_OUTPUT
+            echo "未检测到需要构建的应用"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changed_apps=${CHANGED_APPS[*]}" >> $GITHUB_OUTPUT
+            # 生成 JSON 数组用于 matrix（使用 jq 或手动构建）
+            JSON_APPS=$(printf '%s\n' "${CHANGED_APPS[@]}" | jq -R . | jq -s . 2>/dev/null || echo "[]")
+            if [ "$JSON_APPS" = "[]" ]; then
+              # 如果 jq 失败，手动构建 JSON 数组
+              JSON_APPS="["
+              for i in "${!CHANGED_APPS[@]}"; do
+                if [ $i -gt 0 ]; then
+                  JSON_APPS+=","
+                fi
+                JSON_APPS+="\"${CHANGED_APPS[$i]}\""
+              done
+              JSON_APPS+="]"
+            fi
+            echo "changed_apps_json=$JSON_APPS" >> $GITHUB_OUTPUT
+            echo "检测到需要构建的应用: ${CHANGED_APPS[*]}"
+          fi
+
+  build:
+    name: Build Changed Apps
+    needs: [detect-config, detect-changes]
+    if: needs.detect-changes.outputs.has_changes == 'true' && github.event.inputs.skip_build != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.detect-changes.outputs.changed_apps_json) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build dependencies if needed
+        run: |
+          if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
+            echo "Building shared dependencies..."
+            pnpm --filter @btc/vite-plugin run build
+            pnpm --filter @btc/shared-utils run build
+            pnpm --filter @btc/shared-core run build
+            pnpm --filter @btc/shared-components run build
+            pnpm --filter @btc/subapp-manifests run build
+          fi
+      
+      - name: Build ${{ matrix.app }}
+        run: cd apps/${{ matrix.app }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          # 使用检测到的配置（自动选择 GHCR 或私有仓库）
+          registry: ${{ needs.detect-config.outputs.registry }}
+          username: ${{ needs.detect-config.outputs.registry_username }}
+          password: ${{ needs.detect-config.outputs.registry_password }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=apps/${{ matrix.app }}
+          push: true
+          tags: |
+            ${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}/${{ matrix.app }}:${{ github.sha }}
+            ${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}/${{ matrix.app }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+
+  deploy:
+    name: Deploy to K8s
+    needs: [detect-config, detect-changes, build]
+    if: needs.detect-changes.outputs.has_changes == 'true' && github.event.inputs.skip_deploy != 'true' && (needs.build.result == 'success' || github.event.inputs.skip_build == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+      
+      - name: Configure K8s
+        run: |
+          # 配置 kubectl（使用 secrets 中的配置）
+          if [ -n "${{ secrets.K8S_SERVER }}" ]; then
+            mkdir -p ~/.kube
+            cat > ~/.kube/config <<EOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+          - cluster:
+              server: ${{ secrets.K8S_SERVER }}
+              certificate-authority-data: ${{ secrets.K8S_CA_CERT }}
+            name: k8s-cluster
+          contexts:
+          - context:
+              cluster: k8s-cluster
+              user: k8s-user
+            name: k8s-context
+          current-context: k8s-context
+          users:
+          - name: k8s-user
+            user:
+              token: ${{ secrets.K8S_TOKEN }}
+          EOF
+            kubectl config use-context k8s-context
+          else
+            echo "⚠️  未配置 K8s 集群信息，跳过部署"
+            echo "请在 GitHub Secrets 中配置："
+            echo "  - K8S_SERVER: K8s API 服务器地址"
+            echo "  - K8S_CA_CERT: CA 证书（base64 编码）"
+            echo "  - K8S_TOKEN: 访问令牌"
+            exit 0
+          fi
+      
+      - name: Deploy changed applications
+        run: |
+          CHANGED_APPS="${{ needs.detect-changes.outputs.changed_apps }}"
+          # 使用检测到的镜像仓库配置
+          PRIVATE_REGISTRY="${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}"
+          K8S_NAMESPACE="${{ secrets.K8S_NAMESPACE || 'btc-shopflow' }}"
+          GIT_SHA="${{ github.sha }}"
+          
+          echo "🚀 开始部署到 K8s..."
+          echo "变更的应用: $CHANGED_APPS"
+          echo "私有仓库: $PRIVATE_REGISTRY"
+          echo "命名空间: $K8S_NAMESPACE"
+          echo "Git SHA: $GIT_SHA"
+          
+          # 应用名称到 Deployment 名称的映射
+          declare -A DEPLOYMENT_NAMES=(
+            ["system-app"]="btc-system-app"
+            ["admin-app"]="btc-admin-app"
+            ["logistics-app"]="btc-logistics-app"
+            ["quality-app"]="btc-quality-app"
+            ["production-app"]="btc-production-app"
+            ["engineering-app"]="btc-engineering-app"
+            ["finance-app"]="btc-finance-app"
+            ["mobile-app"]="btc-mobile-app"
+          )
+          
+          # 将应用列表转换为数组
+          IFS=' ' read -r -a APPS_ARRAY <<< "$CHANGED_APPS"
+          
+          # 部署每个变更的应用
+          for app in "${APPS_ARRAY[@]}"; do
+            DEPLOYMENT_NAME="${DEPLOYMENT_NAMES[$app]}"
+            IMAGE_TAG="$PRIVATE_REGISTRY/$app:${GIT_SHA:0:7}"
+            
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 部署应用: $app"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Deployment: $DEPLOYMENT_NAME"
+            echo "镜像: $IMAGE_TAG"
+            
+            # 检查 Deployment 是否存在
+            if kubectl get deployment "$DEPLOYMENT_NAME" -n "$K8S_NAMESPACE" >/dev/null 2>&1; then
+              echo "更新现有 Deployment..."
+              kubectl set image deployment/"$DEPLOYMENT_NAME" "$app=$IMAGE_TAG" -n "$K8S_NAMESPACE"
+              kubectl rollout status deployment/"$DEPLOYMENT_NAME" -n "$K8S_NAMESPACE" --timeout=5m
+            else
+              echo "创建新 Deployment..."
+              # 这里可以应用 YAML 文件或使用 kubectl create
+              echo "⚠️  Deployment 不存在，需要手动创建或使用 YAML 文件"
+            fi
+            
+            echo "✅ $app 部署完成"
+          done
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ 所有应用部署完成"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

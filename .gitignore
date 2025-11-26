@@ -4,6 +4,7 @@ dist/
 *.log
 .env.local
 .env.*.local
+.k8s-config
 .turbo/
 build/
 coverage/
