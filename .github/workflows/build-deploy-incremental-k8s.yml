@@ -301,6 +301,13 @@ jobs:
           username: ${{ needs.detect-config.outputs.registry_username }}
           password: ${{ needs.detect-config.outputs.registry_password || github.token }}
       
+      - name: Prepare image tags
+        id: tags
+        run: |
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_owner_lower=$REPO_OWNER_LOWER" >> $GITHUB_OUTPUT
+          echo "Repository owner (lowercase): $REPO_OWNER_LOWER"
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -310,8 +317,8 @@ jobs:
             APP_DIR=apps/${{ matrix.app }}
           push: true
           tags: |
-            ${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}/${{ matrix.app }}:${{ github.sha }}
-            ${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}/${{ matrix.app }}:latest
+            ${{ needs.detect-config.outputs.registry }}/${{ steps.tags.outputs.repo_owner_lower }}/${{ matrix.app }}:${{ github.sha }}
+            ${{ needs.detect-config.outputs.registry }}/${{ steps.tags.outputs.repo_owner_lower }}/${{ matrix.app }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
         env:
@@ -367,7 +374,8 @@ jobs:
         run: |
           CHANGED_APPS="${{ needs.detect-changes.outputs.changed_apps }}"
           # 使用检测到的镜像仓库配置
-          PRIVATE_REGISTRY="${{ needs.detect-config.outputs.registry }}/${{ github.repository_owner }}"
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          PRIVATE_REGISTRY="${{ needs.detect-config.outputs.registry }}/$REPO_OWNER_LOWER"
           K8S_NAMESPACE="${{ secrets.K8S_NAMESPACE || 'btc-shopflow' }}"
           GIT_SHA="${{ github.sha }}"
           
