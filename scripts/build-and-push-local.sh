@@ -298,8 +298,10 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     REPO_OWNER=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
     REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
     
-    # 验证 Token 是否有效
-    log_info "验证 GitHub Token..."
+    # 验证 Token 是否有效并检查权限
+    log_info "验证 GitHub Token 和权限..."
+    
+    # 1. 验证 Token 基本有效性
     TOKEN_CHECK=$(curl -s -w "\n%{http_code}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -310,23 +312,87 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     TOKEN_CHECK_BODY=$(echo "$TOKEN_CHECK" | sed '$d')
     
     if [ "$TOKEN_CHECK_CODE" -ne 200 ]; then
-        log_error "GitHub Token 验证失败 (HTTP $TOKEN_CHECK_CODE)"
-        log_warning "响应: $TOKEN_CHECK_BODY"
+        log_error "❌ GitHub Token 验证失败 (HTTP $TOKEN_CHECK_CODE)"
+        if [ -n "$TOKEN_CHECK_BODY" ]; then
+            log_warning "响应: $TOKEN_CHECK_BODY"
+        fi
         log_info ""
-        log_info "解决方案:"
-        log_info "  1. 检查 Token 是否有效: https://github.com/settings/tokens"
-        log_info "  2. 确认 Token 未过期"
-        log_info "  3. 重新生成 Token 并设置:"
-        log_info "     PowerShell: \$env:GITHUB_TOKEN=\"your_new_token\""
-        log_info "     Git Bash: export GITHUB_TOKEN=\"your_new_token\""
-        log_info "  4. 确保 Token 具有以下权限:"
-        log_info "     - write:packages (推送镜像)"
-        log_info "     - actions:write (触发工作流)"
-        log_info "     - repo (如果仓库是私有的)"
+        log_error "🔴 PAT 问题诊断:"
+        log_info "  1. Token 可能已过期或无效"
+        log_info "  2. Token 可能被撤销"
+        log_info "  3. Token 格式可能不正确"
+        log_info ""
+        log_info "💡 解决方案:"
+        log_info "  1. 访问: https://github.com/settings/tokens"
+        log_info "  2. 检查现有 Token 是否有效"
+        log_info "  3. 如果无效，创建新 Token:"
+        log_info "     - 点击 'Generate new token' -> 'Generate new token (classic)'"
+        log_info "     - 设置过期时间（建议 90 天或更长）"
+        log_info "     - 必须勾选以下权限:"
+        log_info "       ✅ repo (全选，包括 repo:status, repo_deployment, public_repo)"
+        log_info "       ✅ write:packages (推送镜像到 GHCR)"
+        log_info "       ✅ actions:write (触发 GitHub Actions 工作流)"
+        log_info "  4. 复制新 Token 并设置:"
+        log_info "     PowerShell (永久):"
+        log_info "       [System.Environment]::SetEnvironmentVariable('GITHUB_TOKEN', 'your_new_token', 'User')"
+        log_info "     PowerShell (临时):"
+        log_info "       \$env:GITHUB_TOKEN=\"your_new_token\""
+        log_info "     Git Bash:"
+        log_info "       export GITHUB_TOKEN=\"your_new_token\""
         exit 1
     fi
     
+    # 2. 检查 Token 权限（通过尝试访问仓库信息）
+    REPO_CHECK=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME" 2>&1)
+    
+    REPO_CHECK_CODE=$(echo "$REPO_CHECK" | tail -n1)
+    REPO_CHECK_BODY=$(echo "$REPO_CHECK" | sed '$d')
+    
+    if [ "$REPO_CHECK_CODE" -ne 200 ]; then
+        log_error "❌ 无法访问仓库 (HTTP $REPO_CHECK_CODE)"
+        if [ "$REPO_CHECK_CODE" -eq 404 ]; then
+            log_error "   仓库不存在或 Token 没有访问权限"
+        elif [ "$REPO_CHECK_CODE" -eq 403 ]; then
+            log_error "   Token 缺少 'repo' 权限"
+        fi
+        log_info ""
+        log_info "💡 解决方案:"
+        log_info "  1. 确保 Token 具有 'repo' 权限（全选）"
+        log_info "  2. 如果仓库是私有的，必须勾选 'repo' 权限"
+        log_info "  3. 重新生成 Token 并设置正确的权限"
+        exit 1
+    fi
+    
+    # 3. 检查 actions:write 权限（通过尝试获取工作流列表）
+    ACTIONS_CHECK=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows?per_page=1" 2>&1)
+    
+    ACTIONS_CHECK_CODE=$(echo "$ACTIONS_CHECK" | tail -n1)
+    
+    if [ "$ACTIONS_CHECK_CODE" -ne 200 ]; then
+        log_warning "⚠️  无法获取工作流列表 (HTTP $ACTIONS_CHECK_CODE)"
+        if [ "$ACTIONS_CHECK_CODE" -eq 403 ]; then
+            log_error "   Token 可能缺少 'actions:write' 权限"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 确保 Token 具有 'actions:write' 权限"
+            log_info "  2. 重新生成 Token 并勾选 'actions:write' 权限"
+        fi
+    fi
+    
     log_success "✅ GitHub Token 验证通过"
+    log_info "   - Token 有效"
+    log_info "   - 可以访问仓库"
+    if [ "$ACTIONS_CHECK_CODE" -eq 200 ]; then
+        log_info "   - 可以访问 Actions API"
+    fi
     
     # 触发 GitHub Actions 工作流
     # 根据应用名称确定工作流文件
@@ -438,207 +504,220 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
         log_warning "无法获取工作流列表 (HTTP $WORKFLOWS_HTTP_CODE)，将尝试使用完整路径触发..."
     fi
     
-    # 使用 push 触发工作流：创建触发文件并提交 push
-    # 对于 system-app，使用 deploy-system-app.yml 工作流（监听 .deploy/system-app/**）
-    # 对于其他应用，使用 deploy-only.yml 工作流（需要 repository_dispatch）
+    # 统一使用 repository_dispatch 触发所有应用的工作流
+    # 这是推荐的脚本触发方式，不需要提交代码，更干净可靠
     if [ "$APP_NAME" = "system-app" ]; then
+        EVENT_TYPE="deploy-system-app"
         TARGET_WORKFLOW="deploy-system-app.yml"
         TARGET_WORKFLOW_NAME="Deploy System App"
-        TRIGGER_DIR=".deploy/system-app"
     else
+        EVENT_TYPE="deploy-apps"
         TARGET_WORKFLOW="deploy-only.yml"
         TARGET_WORKFLOW_NAME="Deploy Only (Lightweight)"
-        TRIGGER_DIR=".deploy/$APP_NAME"
     fi
     
-    # 对于 system-app，使用 push 触发
-    if [ "$APP_NAME" = "system-app" ]; then
-        log_info "使用 push 触发 $TARGET_WORKFLOW 工作流..."
-        log_info "创建触发文件: $TRIGGER_DIR/.trigger"
-        
-        # 创建触发目录
-        mkdir -p "$TRIGGER_DIR"
-        
-        # 创建触发文件，包含部署信息
-        cat > "$TRIGGER_DIR/.trigger" <<EOF
-# 自动生成的部署触发文件
-# 应用: $APP_NAME
-# 镜像标签: $IMAGE_TAG
-# 提交 SHA: $GIT_SHA
-# 生成时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-EOF
-        
-        # 检查 git 状态
-        if ! git rev-parse --git-dir > /dev/null 2>&1; then
-            log_error "当前目录不是 Git 仓库"
-            exit 1
-        fi
-        
-        # 确保在 master 分支
-        CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null)
-        if [ "$CURRENT_BRANCH" != "master" ]; then
-            log_warning "当前分支: $CURRENT_BRANCH，切换到 master 分支..."
-            git checkout master 2>/dev/null || {
-                log_error "无法切换到 master 分支"
-                exit 1
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "🚀 触发部署工作流"
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "应用: $APP_NAME"
+    log_info "工作流: $TARGET_WORKFLOW"
+    log_info "事件类型: $EVENT_TYPE"
+    log_info ""
+    
+    # 使用 repository_dispatch 触发（所有应用统一使用）
+    log_info "使用 repository_dispatch 触发 $TARGET_WORKFLOW 工作流..."
+    log_info "发送 API 请求到 GitHub..."
+    
+    REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        -H "Content-Type: application/json" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
+        -d "{
+            \"event_type\": \"$EVENT_TYPE\",
+            \"client_payload\": {
+                \"app_name\": \"$APP_NAME\",
+                \"apps\": \"$APP_NAME\",
+                \"environment\": \"production\",
+                \"github_sha\": \"$GIT_SHA\",
+                \"image_tag\": \"$IMAGE_TAG_SHA\"
             }
+        }" 2>&1)
+    
+    REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
+    REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
+    
+    # 详细错误处理
+    if [ "$REPO_DISPATCH_HTTP_CODE" -ne 204 ]; then
+        log_error "❌ repository_dispatch 请求失败 (HTTP $REPO_DISPATCH_HTTP_CODE)"
+        if [ -n "$REPO_DISPATCH_BODY" ]; then
+            log_warning "响应内容: $REPO_DISPATCH_BODY"
         fi
+        log_info ""
         
-        # 添加触发文件
-        git add "$TRIGGER_DIR/.trigger"
-        
-        # 提交
-        COMMIT_MSG="chore(deploy): 触发 $APP_NAME 部署 [skip ci]"
-        if git commit -m "$COMMIT_MSG" > /dev/null 2>&1; then
-            log_success "✅ 触发文件已创建并提交"
+        # 根据 HTTP 状态码提供具体的错误诊断
+        if [ "$REPO_DISPATCH_HTTP_CODE" -eq 401 ]; then
+            log_error "🔴 PAT 认证失败"
+            log_info ""
+            log_info "可能原因:"
+            log_info "  1. Token 无效或已过期"
+            log_info "  2. Token 格式不正确（可能包含多余的空格或换行）"
+            log_info "  3. Token 已被撤销"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token: https://github.com/settings/tokens"
+            log_info "  2. 如果 Token 无效，创建新 Token:"
+            log_info "     - 访问: https://github.com/settings/tokens/new"
+            log_info "     - 选择 'Generate new token (classic)'"
+            log_info "     - 设置过期时间"
+            log_info "     - 必须勾选权限: repo (全选), write:packages, actions:write"
+            log_info "  3. 设置新 Token:"
+            log_info "     PowerShell: [System.Environment]::SetEnvironmentVariable('GITHUB_TOKEN', 'your_token', 'User')"
+            log_info "     然后刷新环境变量或重新打开终端"
             
-            # Push 到远程
-            log_info "推送到远程仓库..."
-            if git push origin master > /dev/null 2>&1; then
-                log_success "✅ 已推送到远程仓库，工作流将自动触发"
-                log_info ""
-                log_info "查看工作流运行状态: https://github.com/$GITHUB_REPO/actions"
-                log_info "查找 '$TARGET_WORKFLOW_NAME' 工作流的最新运行"
-                log_info ""
-                log_info "📋 部署信息:"
-                log_info "  - 应用: $APP_NAME"
-                log_info "  - 工作流: $TARGET_WORKFLOW"
-                log_info "  - 环境: production"
-                log_info "  - SHA: $GIT_SHA"
-                log_info "  - 分支: master"
-                exit 0
-            else
-                log_error "❌ 推送失败，请检查 Git 配置和权限"
-                exit 1
-            fi
+        elif [ "$REPO_DISPATCH_HTTP_CODE" -eq 403 ]; then
+            log_error "🔴 PAT 权限不足"
+            log_info ""
+            log_info "可能原因:"
+            log_info "  1. Token 缺少 'repo' 权限（必需）"
+            log_info "  2. Token 缺少 'actions:write' 权限（触发工作流必需）"
+            log_info "  3. 仓库设置了分支保护，限制了 API 触发"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token 权限: https://github.com/settings/tokens"
+            log_info "  2. 确保 Token 具有以下权限:"
+            log_info "     ✅ repo (全选，包括所有子权限)"
+            log_info "     ✅ write:packages (推送镜像)"
+            log_info "     ✅ actions:write (触发工作流)"
+            log_info "  3. 如果权限不足，重新生成 Token 并勾选所有必需权限"
+            log_info "  4. 检查仓库设置: Settings -> Actions -> General"
+            log_info "     确保 'Allow GitHub Actions to create and approve pull requests' 已启用"
+            
+        elif [ "$REPO_DISPATCH_HTTP_CODE" -eq 404 ]; then
+            log_error "🔴 仓库或端点不存在"
+            log_info ""
+            log_info "可能原因:"
+            log_info "  1. 仓库名称或所有者不正确"
+            log_info "  2. 仓库不存在或无权访问"
+            log_info "  3. GitHub API 端点错误"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查仓库名称: $GITHUB_REPO"
+            log_info "  2. 确认仓库存在且可访问"
+            log_info "  3. 检查脚本中的 REPO_OWNER 和 REPO_NAME 变量"
+            
+        elif [ "$REPO_DISPATCH_HTTP_CODE" -eq 422 ]; then
+            log_error "🔴 请求参数无效"
+            log_info ""
+            log_info "可能原因:"
+            log_info "  1. event_type 格式不正确"
+            log_info "  2. client_payload 格式错误"
+            log_info "  3. 工作流未配置 repository_dispatch 触发器"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查工作流文件是否配置了 repository_dispatch:"
+            log_info "     .github/workflows/$TARGET_WORKFLOW"
+            log_info "  2. 确保工作流中的 event_type 与脚本中的一致:"
+            log_info "     脚本使用: $EVENT_TYPE"
+            log_info "     工作流应监听: types: [$EVENT_TYPE]"
+            log_info "  3. 检查工作流文件语法是否正确"
+            
         else
-            log_warning "⚠️  提交失败（可能没有更改）"
-            # 尝试强制推送（如果文件已存在）
-            if git diff --cached --quiet; then
-                log_info "触发文件已存在，尝试更新..."
-                echo "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> "$TRIGGER_DIR/.trigger"
-                git add "$TRIGGER_DIR/.trigger"
-                git commit -m "$COMMIT_MSG" > /dev/null 2>&1 && git push origin master > /dev/null 2>&1 && {
-                    log_success "✅ 触发文件已更新并推送"
-                    exit 0
-                } || {
-                    log_error "❌ 更新触发文件失败"
-                    exit 1
-                }
-            else
-                log_error "❌ 提交失败"
-                exit 1
-            fi
+            log_error "🔴 未知错误 (HTTP $REPO_DISPATCH_HTTP_CODE)"
+            log_info ""
+            log_info "可能原因:"
+            log_info "  - GitHub API 临时问题"
+            log_info "  - 网络连接问题"
+            log_info "  - 速率限制"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 等待几分钟后重试"
+            log_info "  2. 检查网络连接"
+            log_info "  3. 查看 GitHub Status: https://www.githubstatus.com/"
         fi
+        
+        log_info ""
+        log_info "📋 调试信息:"
+        log_info "  - 仓库: $GITHUB_REPO"
+        log_info "  - 事件类型: $EVENT_TYPE"
+        log_info "  - 工作流: $TARGET_WORKFLOW"
+        log_info "  - HTTP 状态码: $REPO_DISPATCH_HTTP_CODE"
+        
+        # 尝试回退到 workflow_dispatch
+        log_info ""
+        log_warning "尝试使用 workflow_dispatch 作为备选方案..."
+        # 继续执行 workflow_dispatch 逻辑
     else
-        # 对于其他应用，继续使用 repository_dispatch
-        EVENT_TYPE="deploy-apps"
-        log_info "尝试使用 repository_dispatch 触发 $TARGET_WORKFLOW 工作流..."
-        REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST \
+        # 成功发送 repository_dispatch 请求
+        log_success "✅ repository_dispatch 请求已发送 (HTTP 204)"
+        log_info "等待工作流启动（最多等待 15 秒）..."
+        
+        # 等待几秒后验证工作流是否真的启动了
+        sleep 5
+        
+        # 查询最近的工作流运行记录
+        WORKFLOW_RUNS=$(curl -s \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
-            -d "{
-                \"event_type\": \"$EVENT_TYPE\",
-                \"client_payload\": {
-                    \"app_name\": \"$APP_NAME\",
-                    \"apps\": \"$APP_NAME\",
-                    \"environment\": \"production\",
-                    \"github_sha\": \"$GIT_SHA\"
-                }
-            }" 2>&1)
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=10&event=repository_dispatch" 2>&1)
         
-        REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
-        REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
-        
-        if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
-            log_success "✅ repository_dispatch 请求已发送 (HTTP 204)"
-            log_info "等待工作流启动（最多等待 10 秒）..."
+        # 检查是否有新的运行记录
+        if echo "$WORKFLOW_RUNS" | grep -q '"workflow_runs"'; then
+            # 尝试查找目标工作流
+            WORKFLOW_NAME_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "$TARGET_WORKFLOW_NAME\|$TARGET_WORKFLOW" | head -1)
             
-            # 等待几秒后验证工作流是否真的启动了
-            sleep 3
-            
-            # 查询最近的工作流运行记录，过滤出正确的工作流
-            # 首先查找 repository-dispatch-handler 工作流（这是直接触发的）
-            WORKFLOW_RUNS=$(curl -s \
-                -H "Accept: application/vnd.github+json" \
-                -H "Authorization: Bearer $GITHUB_TOKEN" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/runs?per_page=10&event=repository_dispatch" 2>&1)
-            
-            # 检查是否有新的运行记录
-            if echo "$WORKFLOW_RUNS" | grep -q '"workflow_runs"'; then
-                # 优先查找 repository-dispatch-handler 工作流（这是直接触发的）
-                HANDLER_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "repository-dispatch-handler\|Repository Dispatch Handler" | head -1)
+            if [ -n "$WORKFLOW_NAME_MATCH" ]; then
+                # 提取运行信息
+                LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].id' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
+                RUN_STATUS=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].status' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                RUN_URL=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].html_url' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+                WORKFLOW_NAME=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].name' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
                 
-                if [ -n "$HANDLER_MATCH" ]; then
-                    # 提取 handler 运行信息
-                    LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].id' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
-                    RUN_STATUS=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].status' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-                    RUN_URL=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].html_url' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
-                    WORKFLOW_NAME=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].name' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
-                    
-                    if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
-                        log_success "✅ 工作流已启动！"
-                        log_info "   运行 ID: $LATEST_RUN"
-                        log_info "   工作流: ${WORKFLOW_NAME:-Repository Dispatch Handler}"
-                        log_info "   状态: ${RUN_STATUS:-unknown}"
-                        log_info "   查看: $RUN_URL"
-                        log_info ""
-                        log_info "   Handler 将自动触发 $TARGET_WORKFLOW 工作流"
-                    else
-                        log_warning "⚠️  工作流可能还在启动中..."
-                    fi
-                else
-                    # 回退：尝试查找目标工作流（可能是直接触发的）
-                    WORKFLOW_NAME_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "$TARGET_WORKFLOW_NAME" | head -1)
-                    WORKFLOW_PATH_MATCH=$(echo "$WORKFLOW_RUNS" | grep -i "$TARGET_WORKFLOW" | head -1)
-                    
-                    if [ -n "$WORKFLOW_NAME_MATCH" ] || [ -n "$WORKFLOW_PATH_MATCH" ]; then
-                        LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].id' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"id":[0-9]+' | head -1 | cut -d':' -f2 | tr -d ' ')
-                        RUN_STATUS=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].status' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-                        RUN_URL=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].html_url' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"html_url":"[^"]*"' | head -1 | cut -d'"' -f4)
-                        WORKFLOW_NAME=$(echo "$WORKFLOW_RUNS" | jq -r '.workflow_runs[0].name' 2>/dev/null || echo "$WORKFLOW_RUNS" | grep -oE '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
-                        
-                        if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
-                            log_success "✅ 工作流已启动！"
-                            log_info "   运行 ID: $LATEST_RUN"
-                            log_info "   工作流: ${WORKFLOW_NAME:-$TARGET_WORKFLOW_NAME}"
-                            log_info "   状态: ${RUN_STATUS:-unknown}"
-                            log_info "   查看: $RUN_URL"
-                        else
-                            log_warning "⚠️  工作流可能还在启动中..."
-                        fi
-                    else
-                        log_warning "⚠️  未找到工作流的运行记录"
-                        log_info "   这可能意味着："
-                        log_info "   1. 工作流文件可能还没有被 GitHub 识别"
-                        log_info "   2. 请手动检查 GitHub Actions 页面"
-                        log_info "   3. 查找 'Repository Dispatch Handler' 或 '$TARGET_WORKFLOW_NAME' 工作流"
-                    fi
+                if [ -n "$LATEST_RUN" ] && [ -n "$RUN_URL" ]; then
+                    log_success "✅ 工作流已成功启动！"
+                    log_info ""
+                    log_info "📋 工作流信息:"
+                    log_info "  - 运行 ID: $LATEST_RUN"
+                    log_info "  - 工作流: ${WORKFLOW_NAME:-$TARGET_WORKFLOW_NAME}"
+                    log_info "  - 状态: ${RUN_STATUS:-unknown}"
+                    log_info "  - 查看: $RUN_URL"
+                    log_info ""
+                    log_info "📋 部署信息:"
+                    log_info "  - 应用: $APP_NAME"
+                    log_info "  - 工作流: $TARGET_WORKFLOW"
+                    log_info "  - 环境: production"
+                    log_info "  - SHA: $GIT_SHA"
+                    log_info "  - 镜像: $IMAGE_TAG_SHA"
+                    log_info "  - 分支: master"
+                    exit 0
                 fi
-            else
-                log_warning "⚠️  无法验证工作流是否启动，请手动检查"
             fi
-            
-            log_info ""
-            log_info "查看工作流运行状态: https://github.com/$GITHUB_REPO/actions"
-            log_info "查找 '$TARGET_WORKFLOW_NAME' 工作流的最新运行"
-            log_info ""
-            log_info "📋 部署信息:"
-            log_info "  - 应用: $APP_NAME"
-            log_info "  - 工作流: $TARGET_WORKFLOW"
-            log_info "  - 环境: production"
-            log_info "  - SHA: $GIT_SHA"
-            log_info "  - 分支: master"
-            exit 0
-        else
-            log_warning "repository_dispatch 失败 (HTTP $REPO_DISPATCH_HTTP_CODE)，尝试 workflow_dispatch..."
+        fi
+        
+        # 如果没找到运行记录，但 API 返回 204，说明请求已接受
+        log_warning "⚠️  工作流可能还在启动中，或工作流文件尚未被 GitHub 识别"
+        log_info ""
+        log_info "💡 提示:"
+        log_info "  1. repository_dispatch 请求已成功发送 (HTTP 204)"
+        log_info "  2. 工作流可能需要几秒钟才能出现在 Actions 页面"
+        log_info "  3. 如果工作流未出现，请检查:"
+        log_info "     - 工作流文件是否正确配置了 repository_dispatch 触发器"
+        log_info "     - 工作流文件中的 event_type 是否与脚本中的一致"
+        log_info "     - 工作流文件语法是否正确"
+        log_info ""
+        log_info "查看工作流运行状态: https://github.com/$GITHUB_REPO/actions"
+        log_info "查找 '$TARGET_WORKFLOW_NAME' 工作流的最新运行"
+        exit 0
+    fi
+    
+    # 如果 repository_dispatch 失败，尝试 workflow_dispatch（备选方案）
+    if [ "$REPO_DISPATCH_HTTP_CODE" -ne 204 ]; then
+        log_warning "repository_dispatch 失败，尝试使用 workflow_dispatch 作为备选方案..."
         if [ -n "$REPO_DISPATCH_BODY" ]; then
-            log_info "响应: $REPO_DISPATCH_BODY"
+            log_info "repository_dispatch 响应: $REPO_DISPATCH_BODY"
         fi
         
         # 回退到 workflow_dispatch
