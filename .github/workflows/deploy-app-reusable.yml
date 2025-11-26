@@ -209,10 +209,13 @@ jobs:
               done
             fi
             
-            # 使用 docker-compose down 确保完全清理（如果存在旧的 compose 配置）
-            if [ -f "docker-compose.prod.yml" ]; then
-              echo "🧹 清理旧的 docker-compose 服务..."
-              docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+            # 使用应用特定的 compose 文件名，避免影响其他应用
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            
+            # 只清理当前应用的 compose 配置（如果存在）
+            if [ -f "$COMPOSE_FILE" ]; then
+              echo "🧹 清理当前应用的 docker-compose 服务..."
+              docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
             fi
             
             # 再次确认容器已被删除
@@ -237,7 +240,8 @@ jobs:
               sleep 1
             done
             
-            cat > docker-compose.prod.yml << EOF
+            # 使用应用特定的 compose 文件名，避免覆盖其他应用的配置
+            cat > "$COMPOSE_FILE" << EOF
             version: '3.8'
             services:
               $APP_NAME:
@@ -254,7 +258,7 @@ jobs:
             EOF
             
             echo "🚀 启动新容器..."
-            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f "$COMPOSE_FILE" up -d
             sleep 5
             
             echo "📋 Container status:"
