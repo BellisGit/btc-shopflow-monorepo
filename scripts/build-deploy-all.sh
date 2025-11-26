@@ -199,7 +199,7 @@ else
         log_info ""
         log_info "💡 解决方案:"
         log_info "  1. 检查工作流文件是否配置了 repository_dispatch:"
-     .github/workflows/build-deploy-all-apps.yml"
+        log_info "     .github/workflows/build-deploy-all-apps.yml"
         log_info "  2. 确保工作流中的 event_type 与脚本中的一致:"
         log_info "     脚本使用: build-deploy-all-apps"
         log_info "     工作流应监听: types: [build-deploy-all-apps]"
