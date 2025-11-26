@@ -340,21 +340,22 @@ jobs:
             echo "✅ 镜像验证通过: btc-shopflow/$APP_NAME:latest"
             
             # 使用应用特定的 compose 文件名，避免覆盖其他应用的配置
-            cat > "$COMPOSE_FILE" << EOF
-version: '3.8'
-services:
-  $APP_NAME:
-    image: btc-shopflow/$APP_NAME:latest
-    container_name: $CONTAINER_NAME
-    ports:
-      - "$PORT:80"
-    restart: unless-stopped
-    networks:
-      - btc-network
-networks:
-  btc-network:
-    external: true
-EOF
+            # 使用 printf 逐行写入，避免 YAML 解析问题
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
             
             echo "📋 Docker Compose 配置:"
             cat "$COMPOSE_FILE"
