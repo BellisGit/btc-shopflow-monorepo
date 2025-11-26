@@ -57,6 +57,16 @@ on:
         required: false
       K8S_TOKEN:
         required: false
+      SERVER_HOST:
+        required: false
+      SERVER_USER:
+        required: false
+      SERVER_KEY:
+        required: false
+      SERVER_PORT:
+        required: false
+      SERVER_PAT:
+        required: false
 
 permissions:
   contents: read
@@ -456,5 +466,11 @@ jobs:
       app_port: ${{ needs.determine-server-port.outputs.app_port }}
       container_name: btc-${{ inputs.app_name }}
       image_tag: ${{ needs.build-and-deploy.outputs.image_tag }}
-    secrets: inherit
+    secrets:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_KEY: ${{ secrets.SERVER_KEY }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+      SERVER_PAT: ${{ secrets.SERVER_PAT }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -121,6 +121,11 @@ jobs:
       K8S_SERVER: ${{ secrets.K8S_SERVER }}
       K8S_CA_CERT: ${{ secrets.K8S_CA_CERT }}
       K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_KEY: ${{ secrets.SERVER_KEY }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+      SERVER_PAT: ${{ secrets.SERVER_PAT }}
 
   summary:
     name: Summary Successful Apps
