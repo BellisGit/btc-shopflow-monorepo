@@ -20,14 +20,65 @@ jobs:
     uses: ./.github/workflows/validate-deployment.yml
     secrets: inherit
 
+  detect-image-tag:
+    name: Detect Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+    steps:
+      - name: Detect image tag
+        id: detect
+        run: |
+          echo "🔍 开始检测镜像标签..."
+          echo "  - client_payload.image_tag: ${{ github.event.client_payload.image_tag }}"
+          echo "  - client_payload.github_sha: ${{ github.event.client_payload.github_sha }}"
+          echo "  - github.sha: ${{ github.sha }}"
+          
+          # 优先级：client_payload.image_tag > client_payload.github_sha > github.sha > latest
+          if [ -n "${{ github.event.client_payload.image_tag }}" ]; then
+            # 从完整镜像标签中提取标签部分（去掉 registry 前缀）
+            FULL_TAG="${{ github.event.client_payload.image_tag }}"
+            IMAGE_TAG=$(echo "$FULL_TAG" | sed 's|.*:||' || echo "")
+            echo "  ✅ 从 client_payload.image_tag 提取: $IMAGE_TAG"
+          elif [ -n "${{ github.event.client_payload.github_sha }}" ]; then
+            # 使用 client_payload 中的 github_sha（确保是 7 位）
+            GIT_SHA="${{ github.event.client_payload.github_sha }}"
+            # 如果长度不是 7 位，截取前 7 位
+            if [ ${#GIT_SHA} -gt 7 ]; then
+              IMAGE_TAG="${GIT_SHA:0:7}"
+            elif [ ${#GIT_SHA} -lt 7 ]; then
+              # 如果太短，使用 github.sha 的前 7 位
+              GITHUB_SHA="${{ github.sha }}"
+              IMAGE_TAG="${GITHUB_SHA:0:7}"
+            else
+              IMAGE_TAG="$GIT_SHA"
+            fi
+            echo "  ✅ 从 client_payload.github_sha 获取: $IMAGE_TAG"
+          else
+            # 使用当前 commit SHA 的前7位
+            GITHUB_SHA="${{ github.sha }}"
+            IMAGE_TAG="${GITHUB_SHA:0:7}"
+            echo "  ✅ 从 github.sha 获取: $IMAGE_TAG"
+          fi
+          
+          # 如果标签为空或太短，使用 latest
+          if [ -z "$IMAGE_TAG" ] || [ ${#IMAGE_TAG} -lt 7 ]; then
+            echo "  ⚠️  标签为空或太短，使用 latest"
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 最终镜像标签: $IMAGE_TAG"
+
   deploy:
     name: Deploy Logistics App
-    needs: [validate]
+    needs: [validate, detect-image-tag]
     uses: ./.github/workflows/deploy-app-reusable.yml
     with:
       app_name: logistics-app
       app_port: "30082"
       container_name: btc-logistics-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
     secrets: inherit
 
   cleanup:
