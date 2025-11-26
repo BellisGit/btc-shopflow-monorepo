@@ -35,6 +35,11 @@ on:
         required: false
         type: boolean
         default: false
+      force_rebuild:
+        description: 'Force rebuild even if no changes detected (useful after failed builds)'
+        required: false
+        type: boolean
+        default: false
       skip_build:
         description: 'Skip build step'
         required: false
@@ -186,6 +191,16 @@ jobs:
             echo "手动触发：构建所有应用"
           fi
           
+          # 如果手动触发且选择了 force_rebuild，即使没有变化也构建所有应用
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+            if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
+              CHANGED_APPS=("${ALL_APPS[@]}")
+              echo "强制重新构建：构建所有应用（即使没有检测到变更）"
+            else
+              echo "强制重新构建：已检测到变更的应用，将构建这些应用"
+            fi
+          fi
+          
           if [ ${#CHANGED_APPS[@]} -eq 0 ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "changed_apps=" >> $GITHUB_OUTPUT
@@ -217,7 +232,7 @@ jobs:
   build:
     name: Build Changed Apps
     needs: [detect-config, detect-changes]
-    if: needs.detect-changes.outputs.has_changes == 'true' && github.event.inputs.skip_build != 'true'
+    if: (needs.detect-changes.outputs.has_changes == 'true' || github.event.inputs.force_rebuild == 'true') && github.event.inputs.skip_build != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -305,7 +320,7 @@ jobs:
   deploy:
     name: Deploy to K8s
     needs: [detect-config, detect-changes, build]
-    if: needs.detect-changes.outputs.has_changes == 'true' && github.event.inputs.skip_deploy != 'true' && (needs.build.result == 'success' || github.event.inputs.skip_build == 'true')
+    if: (needs.detect-changes.outputs.has_changes == 'true' || github.event.inputs.force_rebuild == 'true') && github.event.inputs.skip_deploy != 'true' && (needs.build.result == 'success' || github.event.inputs.skip_build == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
