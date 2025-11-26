@@ -460,13 +460,20 @@ main() {
             log_info "📦 构建和部署: $app"
             log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             
-            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --auto-deploy; then
+            # 使用 set +e 临时禁用错误退出，确保即使构建失败也继续下一个应用
+            set +e
+            bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --auto-deploy
+            BUILD_EXIT_CODE=$?
+            set -e  # 重新启用错误退出
+            
+            if [ $BUILD_EXIT_CODE -eq 0 ]; then
                 log_success "✅ $app 构建和部署成功"
                 ((success_count++))
             else
-                log_error "❌ $app 构建和部署失败"
+                log_error "❌ $app 构建和部署失败 (退出码: $BUILD_EXIT_CODE)"
                 ((fail_count++))
                 failed_apps+=("$app")
+                log_warning "继续构建下一个应用..."
             fi
             
             log_info ""
