@@ -446,12 +446,12 @@ jobs:
       - name: Deployment summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Deployed Apps:" >> $GITHUB_STEP_SUMMARY
-        APPS_LIST="${{ needs.parse-apps.outputs.apps_list }}"
-        for app in $APPS_LIST; do
-          echo "- $app" >> $GITHUB_STEP_SUMMARY
-        done
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Commit SHA:" >> $GITHUB_STEP_SUMMARY
-        echo "${{ inputs.github_sha || github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Apps:" >> $GITHUB_STEP_SUMMARY
+          APPS_LIST="${{ needs.parse-apps.outputs.apps_list }}"
+          for app in $APPS_LIST; do
+            echo "- $app" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Commit SHA:" >> $GITHUB_STEP_SUMMARY
+          echo "${{ inputs.github_sha || github.sha }}" >> $GITHUB_STEP_SUMMARY
