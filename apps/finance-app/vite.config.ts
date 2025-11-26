@@ -102,11 +102,11 @@ export default defineConfig(({ command, mode }) => {
   // 关键：base 配置
   // - 开发模式（vite dev）：使用绝对路径，确保资源路径正确（用于 qiankun 主应用加载）
   // - 构建模式（vite build）：根据环境变量决定 base
-  //   - 如果设置了 VITE_PREVIEW=true，使用相对路径 '/'（用于独立预览）
-  //   - 否则使用绝对路径（用于 qiankun 主应用加载）
+  //   - 如果设置了 VITE_PREVIEW=true，使用绝对路径（http://localhost:4186/），用于本地预览测试
+  //   - 否则使用相对路径（/），让浏览器根据当前域名（finance.bellis.com.cn）自动解析
   // - 预览模式（vite preview）：使用已构建的产物，base 在构建时已确定
   const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
-  const base = isPreviewBuild ? '/' : `http://${APP_HOST}:${APP_PORT}/`;
+  const base = isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/';
 
   return {
   base,

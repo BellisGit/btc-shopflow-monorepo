@@ -25,10 +25,9 @@ const APP_HOST = appConfig.preHost;
 const MAIN_APP_CONFIG = getAppConfig('system-app');
 const MAIN_APP_ORIGIN = MAIN_APP_CONFIG ? `http://${MAIN_APP_CONFIG.preHost}:${MAIN_APP_CONFIG.prePort}` : 'http://localhost:4180';
 
-// 构建时输出 base 配置，用于调试
-if (process.env.NODE_ENV === 'production' || process.env.BUILD) {
-  console.log(`[admin-app] 构建配置 - base: http://${APP_HOST}:${APP_PORT}/`);
-}
+// 判断是否为预览构建（用于本地预览测试）
+// 生产构建应该使用相对路径，让浏览器根据当前域名自动解析
+const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
 
 // 验证所有 chunk 生成插件
 const chunkVerifyPlugin = (): Plugin => {
@@ -153,7 +152,8 @@ const optimizeChunksPlugin = (): Plugin => {
 
 // 确保动态导入使用正确的 base URL 插件
 const ensureBaseUrlPlugin = (): Plugin => {
-  const baseUrl = `http://${APP_HOST}:${APP_PORT}/`;
+  // 预览构建使用绝对路径，生产构建使用相对路径
+  const baseUrl = isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/';
   const mainAppPort = MAIN_APP_CONFIG?.prePort || '4180'; // 主应用端口，需要替换的目标
 
   return {
@@ -470,13 +470,15 @@ const ensureCssPlugin = (): Plugin => {
 };
 
 // 构建时输出 base 配置，用于调试
-const BASE_URL = `http://${APP_HOST}:${APP_PORT}/`;
-console.log(`[admin-app vite.config] Base URL: ${BASE_URL}, APP_HOST: ${APP_HOST}, APP_PORT: ${APP_PORT}`);
+// 生产构建使用相对路径，预览构建使用绝对路径
+const BASE_URL = isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/';
+console.log(`[admin-app vite.config] Base URL: ${BASE_URL}, APP_HOST: ${APP_HOST}, APP_PORT: ${APP_PORT}, isPreviewBuild: ${isPreviewBuild}`);
 
 export default defineConfig({
-  // 关键：base 使用子应用的绝对路径，确保资源路径正确
-  // 在 qiankun 环境中，主应用的资源拦截器会修复资源路径
-  // 使用绝对路径可以确保独立运行时资源路径正确
+  // 关键：base 配置
+  // - 预览构建：使用绝对路径（http://localhost:4181/），用于本地预览测试
+  // - 生产构建：使用相对路径（/），让浏览器根据当前域名（admin.bellis.com.cn）自动解析
+  // 这样在生产环境访问时，资源路径会自动使用当前域名，而不是硬编码的 localhost
   base: BASE_URL,
   resolve: {
     alias: {

@@ -23,6 +23,10 @@ const APP_HOST = appConfig.preHost;
 const MAIN_APP_CONFIG = getAppConfig('system-app');
 const MAIN_APP_ORIGIN = MAIN_APP_CONFIG ? `http://${MAIN_APP_CONFIG.preHost}:${MAIN_APP_CONFIG.prePort}` : 'http://localhost:4180';
 
+// 判断是否为预览构建（用于本地预览测试）
+// 生产构建应该使用相对路径，让浏览器根据当前域名自动解析
+const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
+
 // CORS 插件（支持 credentials）
 const corsPlugin = (): Plugin => {
   // CORS 中间件函数（用于开发服务器）
@@ -107,7 +111,10 @@ const corsPlugin = (): Plugin => {
 export default defineConfig({
   // 关键：base 指向子应用本地预览的绝对路径（必须带末尾 /）
   // 这样构建产物中的资源路径会基于这个 base URL
-  base: `http://${APP_HOST}:${APP_PORT}/`,
+  // 关键：base 配置
+  // - 预览构建（VITE_PREVIEW=true）：使用绝对路径（http://localhost:4182/），用于本地预览测试
+  // - 生产构建：使用相对路径（/），让浏览器根据当前域名（admin.bellis.com.cn）自动解析
+  base: isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
