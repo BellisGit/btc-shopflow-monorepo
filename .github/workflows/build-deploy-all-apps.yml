@@ -11,130 +11,42 @@ permissions:
   actions: write
 
 jobs:
-  trigger-system:
-    name: Trigger System App
+  build-deploy-all:
+    name: Build and Deploy All Apps
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - system-app
+          - admin-app
+          - logistics-app
+          - quality-app
+          - production-app
+          - engineering-app
+          - finance-app
+          - mobile-app
     steps:
-      - name: Trigger deploy-system-app workflow
+      - name: Trigger ${{ matrix.app }} workflow
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-system-app.yml',
-              ref: 'master',
-            });
-
-  trigger-admin:
-    name: Trigger Admin App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-admin-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-admin-app.yml',
-              ref: 'master',
-            });
-
-  trigger-logistics:
-    name: Trigger Logistics App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-logistics-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-logistics-app.yml',
-              ref: 'master',
-            });
-
-  trigger-production:
-    name: Trigger Production App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-production-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-production-app.yml',
-              ref: 'master',
-            });
-
-  trigger-quality:
-    name: Trigger Quality App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-quality-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-quality-app.yml',
-              ref: 'master',
-            });
-
-  trigger-engineering:
-    name: Trigger Engineering App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-engineering-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-engineering-app.yml',
-              ref: 'master',
-            });
-
-  trigger-finance:
-    name: Trigger Finance App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-finance-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-finance-app.yml',
-              ref: 'master',
-            });
-
-  trigger-mobile:
-    name: Trigger Mobile App
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger deploy-mobile-app workflow
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-mobile-app.yml',
-              ref: 'master',
-            });
+            const appName = '${{ matrix.app }}';
+            const workflowFile = `deploy-${appName}.yml`;
+            
+            console.log(`🚀 Triggering ${workflowFile} workflow...`);
+            
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowFile,
+                ref: 'master',
+              });
+              
+              console.log(`✅ Successfully triggered ${workflowFile}`);
+            } catch (error) {
+              console.error(`❌ Failed to trigger ${workflowFile}:`, error.message);
+              core.setFailed(`Failed to trigger ${workflowFile}: ${error.message}`);
+            }
