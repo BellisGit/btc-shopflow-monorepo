@@ -12,6 +12,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/auth/phone-login',
+    name: 'PhoneLogin',
+    component: () => import('@/modules/auth/pages/PhoneLogin.vue'),
+    meta: {
+      public: true,
+      title: '手机号登录',
+    },
+  },
+  {
     path: '/',
     component: () => import('@/modules/base/components/Layout.vue'),
     redirect: '/home',

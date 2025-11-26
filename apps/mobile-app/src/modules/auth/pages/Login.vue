@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import BtcLoginHeader from '../components/login-header/index.vue';
 import BtcLoginButtons from '../components/login-buttons/index.vue';
 import BtcAgreementCheckbox from '../components/agreement-checkbox/index.vue';
@@ -29,11 +30,12 @@ defineOptions({
   name: 'BtcMobileLogin',
 });
 
+const router = useRouter();
+const route = useRoute();
 const agreed = ref(false);
 
 const handlePhoneLogin = () => {
-  // TODO: 打开手机号登录弹窗
-  console.log('Phone login');
+  router.push({ name: 'PhoneLogin', query: route.query });
 };
 
 const handleQrLogin = () => {

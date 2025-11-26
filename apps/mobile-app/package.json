@@ -15,6 +15,7 @@
     "@btc/shared-utils": "workspace:*",
     "@capacitor/core": "^6.0.0",
     "@vueuse/core": "^13.9.0",
+    "axios": "^1.12.2",
     "dexie": "^4.0.0",
     "pinia": "^3.0.3",
     "vant": "^4.9.0",

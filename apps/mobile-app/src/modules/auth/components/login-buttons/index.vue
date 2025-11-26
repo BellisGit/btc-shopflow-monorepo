@@ -70,12 +70,6 @@ const qrLoading = ref(false);
 
 const handlePhoneLogin = async () => {
   emit('phoneLogin');
-  // TODO: 打开验证码登录弹窗或跳转
-  showToast({
-    type: 'loading',
-    message: '验证码登录功能开发中...',
-    duration: 1500,
-  });
 };
 
 const handleQrLogin = async () => {
