@@ -40,7 +40,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useCurrentApp } from '@/composables/useCurrentApp';
-import { appMenus } from '@/micro/menus';
+import { getMenusForApp } from '@/store/menuRegistry';
 import MenuRenderer from '../menu-renderer/index.vue';
 
 const route = useRoute();
@@ -54,9 +54,9 @@ const searchKeyword = ref('');
 const menuRef = ref();
 const menuKey = ref(0);
 
-// 获取当前应用的菜单项
+// 获取当前应用的菜单项（从 menuRegistry 获取）
 const allMenuItems = computed(() => {
-  return appMenus[currentApp.value] || [];
+  return getMenusForApp(currentApp.value);
 });
 
 // 根据当前路由找到对应的一级菜单，显示其子菜单

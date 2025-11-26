@@ -97,6 +97,8 @@
   "navigation.menu.type.permission": "权限",
   "navigation.menu.keep_alive.enable": "开启",
   "navigation.menu.keep_alive.disable": "关闭",
+  "menu.access.role_assign": "角色分配",
+  "menu.access.role_permission_bind": "权限绑定",
   "org.departments.title": "部门列表",
   "org.departments.import_tips": "请下载模板并填入部门信息后导入",
   "ops.baseline.search_placeholder": "搜索基线...",

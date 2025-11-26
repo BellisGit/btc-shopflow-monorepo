@@ -472,6 +472,14 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
   ensureCleanUrl(context);
   context.registerTabs(props);
 
+  // 独立运行时：初始化菜单和 tabbar
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    import('../micro/index').then(({ registerManifestMenusForApp, registerManifestTabsForApp }) => {
+      registerManifestTabsForApp('admin').catch(console.error);
+      registerManifestMenusForApp('admin').catch(console.error);
+    });
+  }
+
   // 关键：确保 onReady 回调被调用
   // 直接调用 onReady，不延迟（与物流域保持一致）
   if (props.onReady) {

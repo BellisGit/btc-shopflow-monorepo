@@ -40,6 +40,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'access-roles': { key: 'access-roles', title: 'Roles', path: '/admin/access/roles', i18nKey: 'menu.access.roles' },
     'access-role-perm-bind': { key: 'access-role-perm-bind', title: 'Role Perm Bind', path: '/admin/access/roles/:id/permissions', i18nKey: 'menu.access.role_perm_bind' },
     'access-perm-compose': { key: 'access-perm-compose', title: 'Perm Compose', path: '/admin/access/perm-compose', i18nKey: 'menu.access.perm_compose' },
+    'access-role-permission-bind': { key: 'access-role-permission-bind', title: 'Role Permission Bind', path: '/admin/access/role-permission-bind', i18nKey: 'menu.access.role_permission_bind' },
 
     // 导航与可见性
     'navigation-menus': { key: 'navigation-menus', title: 'Menus', path: '/admin/navigation/menus', i18nKey: 'menu.navigation.menus' },

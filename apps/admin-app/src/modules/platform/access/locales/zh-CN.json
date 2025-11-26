@@ -12,5 +12,7 @@
   "menu.access.permissions": "权限列表",
   "menu.access.roles": "角色列表",
   "menu.access.policies": "策略列表",
-  "menu.access.perm_compose": "权限组合"
+  "menu.access.perm_compose": "权限组合",
+  "menu.access.role_assign": "角色分配",
+  "menu.access.role_permission_bind": "权限绑定"
 }

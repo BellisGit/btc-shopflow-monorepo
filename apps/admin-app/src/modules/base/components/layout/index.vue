@@ -98,6 +98,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -180,7 +181,22 @@ let prevIsMini = browser.isMini;
 // 判断是否为主应用路由（系统域路由）
 // 主应用就是系统域（默认域），处理所有非子应用的路径
 // 管理域（/admin/*）是子应用，不是主应用路由
+// 独立运行时：所有路由都是主应用路由（因为这是独立运行的管理域应用）
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
+  // 独立运行时，所有路由都是主应用路由
+  if (isStandalone) {
+    const path = route.path;
+    // 排除不需要 Layout 的页面
+    if (path === '/login' ||
+        path === '/forget-password' ||
+        path === '/register') {
+      return false;
+    }
+    return true;
+  }
+  
+  // qiankun 模式下的逻辑
   const path = route.path;
   // 排除不需要 Layout 的页面
   if (path === '/login' ||
@@ -215,7 +231,12 @@ const isQiankunLoading = ref(false);
 
 // 判断子应用容器是否应该显示
 // 当 qiankun 正在加载时，即使 isMainApp 为 true 也要显示
+// 独立运行时：不显示子应用容器（因为这是独立运行的应用本身）
 const shouldShowSubAppViewport = computed(() => {
+  // 独立运行时，不显示子应用容器
+  if (isStandalone) {
+    return false;
+  }
   // 如果 qiankun 正在加载，强制显示容器
   if (isQiankunLoading.value) {
     return true;

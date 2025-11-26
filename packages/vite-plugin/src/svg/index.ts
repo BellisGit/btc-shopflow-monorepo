@@ -185,12 +185,25 @@ export async function createSvg(): Promise<{ code: string; svgIcons: string[] }>
   const code = `
 if (typeof window !== 'undefined') {
 	function loadSvg() {
+		// 确保 body 存在
+		if (!document.body) {
+			setTimeout(loadSvg, 10);
+			return;
+		}
+
+		// 检查是否已经加载过（避免重复加载）
+		if (document.getElementById('btc-svg-sprite')) {
+			return;
+		}
+
 		const svgDom = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		svgDom.id = 'btc-svg-sprite';
 		svgDom.style.position = 'absolute';
 		svgDom.style.width = '0';
 		svgDom.style.height = '0';
+		svgDom.style.overflow = 'hidden';
 		svgDom.setAttribute('xmlns','http://www.w3.org/2000/svg');
-		svgDom.setAttribute('xmlns:link','http://www.w3.org/1999/xlink');
+		svgDom.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
 		svgDom.innerHTML = ${escapedHtml};
 		document.body.insertBefore(svgDom, document.body.firstChild);
 	}
@@ -198,6 +211,7 @@ if (typeof window !== 'undefined') {
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', loadSvg);
 	} else {
+		// 如果 DOM 已经加载完成，立即执行
 		loadSvg();
 	}
 }
@@ -213,24 +227,43 @@ if (typeof window !== 'undefined') {
 export function svgPlugin(): Plugin {
   let svgCode = '';
   let iconList: string[] = [];
+  let isInitialized = false;
+
+  // 初始化 SVG sprite（确保在构建和开发时都能正确生成）
+  async function initializeSvg(resolved?: any) {
+    if (isInitialized) return;
+
+    // 同步 Vite 根目录，确保多包场景下路径解析正确
+    if (resolved) {
+      setRootDir(resolved.root);
+    }
+
+    // 生成 SVG sprite
+    const result = await createSvg();
+    svgCode = result.code;
+    iconList = result.svgIcons;
+
+    if (iconList.length > 0) {
+      console.info(`[btc:svg] 找到 ${iconList.length} 个 svg 图标`);
+    }
+
+    isInitialized = true;
+  }
 
   return {
     name: 'btc:svg',
     enforce: 'pre',
 
 		async configResolved(resolved) {
-      // 同步 Vite 根目录，确保多包场景下路径解析正确
-      setRootDir(resolved.root);
-
-      // 生成 SVG sprite
-      const result = await createSvg();
-			svgCode = result.code;
-			iconList = result.svgIcons;
-
-			if (iconList.length > 0) {
-				console.info(`[btc:svg] 找到 ${iconList.length} 个 svg 图标`);
-			}
+      await initializeSvg(resolved);
 		},
+
+    async buildStart() {
+      // 构建时确保 SVG sprite 已生成
+      if (!isInitialized) {
+        await initializeSvg();
+      }
+    },
 
     resolveId(id: string) {
       if (id === 'virtual:svg-icons') {
@@ -252,7 +285,7 @@ export function svgPlugin(): Plugin {
         if (html.includes('loadSvg') || html.includes('virtual:svg-icons')) {
           return html;
         }
-        
+
         // 使用 Vite 的标准方式注入脚本
         // 在 </body> 之前插入脚本，确保在 DOM 加载前执行
         const scriptTag = `<script>${svgCode}</script>`;

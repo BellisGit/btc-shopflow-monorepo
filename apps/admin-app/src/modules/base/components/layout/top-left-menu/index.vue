@@ -26,7 +26,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 import { useCurrentApp } from '@/composables/useCurrentApp';
-import { appMenus } from '@/micro/menus';
+import { getMenusForApp } from '@/store/menuRegistry';
 import MenuRenderer from '../menu-renderer/index.vue';
 
 const route = useRoute();
@@ -37,9 +37,9 @@ const { uniqueOpened } = useSettingsState();
 
 const activeMenu = ref(route.path);
 
-// 获取当前应用的菜单项
+// 获取当前应用的菜单项（从 menuRegistry 获取）
 const allMenuItems = computed(() => {
-  return appMenus[currentApp.value] || [];
+  return getMenusForApp(currentApp.value);
 });
 
 // 只显示一级菜单（混合菜单的顶部只显示一级）

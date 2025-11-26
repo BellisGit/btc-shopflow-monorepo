@@ -82,7 +82,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useCurrentApp } from '@/composables/useCurrentApp';
-import { appMenus } from '@/micro/menus';
+import { getMenusForApp } from '@/store/menuRegistry';
 import { Expand, Fold } from '@element-plus/icons-vue';
 import MenuRenderer from '../menu-renderer/index.vue';
 import {
@@ -127,9 +127,9 @@ const menuKey = ref(0);
 const showText = ref(false);
 const selectedFirstLevel = ref<string>('');
 
-// 获取当前应用的菜单项
+// 获取当前应用的菜单项（从 menuRegistry 获取）
 const allMenuItems = computed(() => {
-  return appMenus[currentApp.value] || [];
+  return getMenusForApp(currentApp.value);
 });
 
 // 一级菜单项（只显示有子菜单的项）

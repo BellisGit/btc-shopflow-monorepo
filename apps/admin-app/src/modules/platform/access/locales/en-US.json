@@ -5,5 +5,14 @@
   "资源列表": "Resource List",
   "行为列表": "Behavior List",
   "权限列表": "Permission List",
-  "角色列表": "Role List"
+  "角色列表": "Role List",
+  "menu.access": "Permission Management",
+  "menu.access.resources": "Resource List",
+  "menu.access.actions": "Action List",
+  "menu.access.permissions": "Permission List",
+  "menu.access.roles": "Role List",
+  "menu.access.policies": "Policy List",
+  "menu.access.perm_compose": "Permission Composition",
+  "menu.access.role_assign": "Role Assignment",
+  "menu.access.role_permission_bind": "Permission Binding"
 }

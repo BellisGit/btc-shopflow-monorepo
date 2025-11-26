@@ -248,6 +248,8 @@
   "menu.access.relations": "Resource Assignment",
   "menu.access.user_assign": "User Assignment",
   "menu.access.user_role_bind": "Role Binding",
+  "menu.access.role_assign": "Role Assignment",
+  "menu.access.role_permission_bind": "Permission Binding",
   "menu.ops.logs": "Log Center",
   "menu.ops.operation_log": "Operation Log",
   "menu.ops.request_log": "Request Log",

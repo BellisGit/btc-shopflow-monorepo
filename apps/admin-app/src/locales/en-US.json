@@ -97,6 +97,8 @@
   "navigation.menu.type.permission": "Permission",
   "navigation.menu.keep_alive.enable": "Enable",
   "navigation.menu.keep_alive.disable": "Disable",
+  "menu.access.role_assign": "Role Assignment",
+  "menu.access.role_permission_bind": "Permission Binding",
   "org.departments.title": "Department List",
   "org.departments.import_tips": "Download the template and fill in department data before importing.",
   "ops.baseline.search_placeholder": "Search baseline...",

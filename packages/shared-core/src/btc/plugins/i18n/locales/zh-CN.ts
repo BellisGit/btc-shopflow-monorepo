@@ -76,6 +76,8 @@ export default {
   'menu.access.relations': '资源分配',
   'menu.access.user_assign': '用户分配',
   'menu.access.user_role_bind': '角色绑定',
+  'menu.access.role_assign': '角色分配',
+  'menu.access.role_permission_bind': '权限绑定',
   'menu.access.resources': '资源列表',
   'menu.access.actions': '操作列表',
   'menu.access.permissions': '权限列表',

@@ -94,6 +94,8 @@
   "menu.access.relations": "Resource Assignment",
   "menu.access.user_assign": "User Assignment",
   "menu.access.user_role_bind": "Role Binding",
+  "menu.access.role_assign": "Role Assignment",
+  "menu.access.role_permission_bind": "Permission Binding",
   "menu.access.resources": "Resource List",
   "menu.access.actions": "Action List",
   "menu.access.permissions": "Permission List",

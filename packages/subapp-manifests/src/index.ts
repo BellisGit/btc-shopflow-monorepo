@@ -1,4 +1,5 @@
-﻿import logisticsManifestJson from "./manifests/logistics.json" with { type: "json" };
+﻿import adminManifestJson from "./manifests/admin.json" with { type: "json" };
+import logisticsManifestJson from "./manifests/logistics.json" with { type: "json" };
 import systemManifestJson from "./manifests/system.json" with { type: "json" };
 import qualityManifestJson from "./manifests/quality.json" with { type: "json" };
 import engineeringManifestJson from "./manifests/engineering.json" with { type: "json" };
@@ -76,6 +77,17 @@ export function getManifestMenus(app: string): Array<{ index: string; labelKey?:
 export function getAllManifests() {
   return { ...manifestRegistry };
 }
+
+registerManifest("admin", {
+  app: {
+    id: adminManifestJson.app?.id ?? "admin",
+    basePath: adminManifestJson.app?.basePath ?? "/admin",
+    nameKey: adminManifestJson.app?.nameKey,
+  },
+  routes: adminManifestJson.routes ?? [],
+  menus: adminManifestJson.menus ?? [],
+  raw: adminManifestJson,
+});
 
 registerManifest("logistics", {
   app: {

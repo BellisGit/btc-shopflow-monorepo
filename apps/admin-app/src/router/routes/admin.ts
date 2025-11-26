@@ -1,6 +1,12 @@
 import type { RouteRecordRaw } from 'vue-router';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import Layout from '../../modules/base/components/layout/index.vue';
 
-export const adminRoutes: RouteRecordRaw[] = [
+// 判断是否独立运行
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+
+// 基础路由（页面组件）
+const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'AdminHome',
@@ -94,6 +100,12 @@ export const adminRoutes: RouteRecordRaw[] = [
     component: () => import('../../modules/access/views/perm-compose/index.vue'),
     meta: { titleKey: 'menu.access.perm_compose' },
   },
+  {
+    path: '/access/role-permission-bind',
+    name: 'AdminRolePermissionBind',
+    component: () => import('../../modules/access/views/role-permission-bind/index.vue'),
+    meta: { titleKey: 'menu.access.role_permission_bind' },
+  },
   // 导航与可见性
   {
     path: '/navigation/menus',
@@ -184,4 +196,17 @@ export const adminRoutes: RouteRecordRaw[] = [
     meta: { titleKey: 'menu.test_features.api_test_center' },
   },
 ];
+
+// 根据运行模式返回不同的路由配置
+// 独立运行时：使用 Layout 包裹所有路由
+// qiankun 模式：直接返回页面路由（由主应用提供 Layout）
+export const adminRoutes: RouteRecordRaw[] = isStandalone
+  ? [
+      {
+        path: '/',
+        component: Layout,
+        children: pageRoutes,
+      },
+    ]
+  : pageRoutes;
 

@@ -381,7 +381,7 @@ export function setupQiankun() {
     },
   });
 
-  // 初始加载时，如果当前路径匹配系统域，立即注册菜单和 tabs
+  // 初始加载时，根据当前路径注册对应应用的菜单和 tabs
   const currentPath = window.location.pathname;
   const isSystemPath = !currentPath.startsWith('/admin') &&
                        !currentPath.startsWith('/logistics') &&
@@ -390,10 +390,14 @@ export function setupQiankun() {
                        !currentPath.startsWith('/production') &&
                        !currentPath.startsWith('/finance') &&
                        !currentPath.startsWith('/docs');
+  const isAdminPath = currentPath.startsWith('/admin');
 
   if (isSystemPath) {
     registerManifestTabsForApp('system');
     registerManifestMenusForApp('system');
+  } else if (isAdminPath) {
+    registerManifestTabsForApp('admin');
+    registerManifestMenusForApp('admin');
   }
 
   // 监听全局错误（延迟导入以避免循环依赖）
