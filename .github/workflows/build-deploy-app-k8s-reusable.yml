@@ -142,7 +142,14 @@ jobs:
         if: inputs.skip_build != 'true'
         run: |
           echo "Validating GitHub token for registry access..."
-          TOKEN="${{ secrets.gh_token }}"
+          # 优先使用传入的 gh_token，如果为空则使用 github.token
+          if [ -n "${{ secrets.gh_token }}" ]; then
+            TOKEN="${{ secrets.gh_token }}"
+            echo "[INFO] Using provided gh_token"
+          else
+            TOKEN="${{ github.token }}"
+            echo "[INFO] Using github.token as fallback"
+          fi
           if [ -z "$TOKEN" ]; then
             echo "[ERROR] No token available"
             exit 1

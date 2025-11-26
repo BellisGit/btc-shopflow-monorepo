@@ -19,7 +19,7 @@ jobs:
       repo_owner_lower: ${{ steps.detect.outputs.repo_owner_lower }}
       registry: ${{ steps.detect.outputs.registry }}
       k8s_namespace: ${{ steps.detect.outputs.k8s_namespace }}
-      gh_token: ${{ steps.detect.outputs.gh_token }}
+      has_private_password: ${{ steps.detect.outputs.has_private_password }}
     steps:
       - name: Detect image tag and repository owner
         id: detect
@@ -79,15 +79,15 @@ jobs:
           fi
           echo "k8s_namespace=$K8S_NAMESPACE" >> $GITHUB_OUTPUT
           
-          # 检测 GitHub Token（优先使用 PRIVATE_REGISTRY_PASSWORD，否则使用 github.token）
+          # 检测是否有私有仓库密码（用于决定使用哪个 token）
           if [ -n "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" ]; then
-            GH_TOKEN="${{ secrets.PRIVATE_REGISTRY_PASSWORD }}"
-            echo "  ✅ 使用私有仓库密码作为 Token"
+            echo "has_private_password=true" >> $GITHUB_OUTPUT
+            echo "  ✅ 检测到私有仓库密码"
           else
-            GH_TOKEN="${{ github.token }}"
-            echo "  ✅ 使用 GitHub Token"
+            echo "has_private_password=false" >> $GITHUB_OUTPUT
+            echo "  ✅ 未配置私有仓库密码，将使用 github.token"
           fi
-          echo "gh_token=$GH_TOKEN" >> $GITHUB_OUTPUT
+          
 
   build-deploy-all:
     name: Build and Deploy All Apps (Parallel)
@@ -116,7 +116,7 @@ jobs:
       skip_build: false
       skip_deploy: false
     secrets:
-      gh_token: ${{ needs.detect-image-tag.outputs.gh_token }}
+      gh_token: ${{ secrets.PRIVATE_REGISTRY_PASSWORD }}
       K8S_SERVER: ${{ secrets.K8S_SERVER }}
       K8S_CA_CERT: ${{ secrets.K8S_CA_CERT }}
       K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
