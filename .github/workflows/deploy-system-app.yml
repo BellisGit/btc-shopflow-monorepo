@@ -42,5 +42,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Clean up
-      run: |
-        rm -rf ".deploy/system-app" || true
+        run: |
+          rm -rf ".deploy/system-app" || true

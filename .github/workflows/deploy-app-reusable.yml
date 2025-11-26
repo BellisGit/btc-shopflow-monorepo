@@ -24,10 +24,10 @@ jobs:
     timeout-minutes: 15
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Detect deployment info
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Detect deployment info
       id: detect-deploy
       run: |
         APP_NAME="${{ inputs.app_name }}"
@@ -51,7 +51,7 @@ jobs:
         echo "   Image Tag: $IMAGE_TAG"
         echo "   Environment: $ENVIRONMENT"
         
-    - name: Deploy application
+      - name: Deploy application
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_HOST }}

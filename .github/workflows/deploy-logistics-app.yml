@@ -33,8 +33,8 @@ jobs:
     if: always() && needs.deploy.result == 'success' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Clean up
-      run: |
-        rm -rf ".deploy/logistics-app" || true
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Clean up
+        run: |
+          rm -rf ".deploy/logistics-app" || true
