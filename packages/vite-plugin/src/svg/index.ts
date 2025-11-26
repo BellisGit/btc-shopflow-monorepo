@@ -244,18 +244,28 @@ export function svgPlugin(): Plugin {
       }
     },
 
-    transformIndexHtml() {
+    transformIndexHtml(html, { path, filename }) {
       // 直接注入 SVG sprite 代码到 HTML，避免虚拟模块的 CORS 问题
+      // 在构建和开发模式下都确保 SVG sprite 被注入
       if (svgCode) {
-        return [
-          {
-            tag: 'script',
-            children: svgCode,
-            injectTo: 'body-prepend',
-          },
-        ];
+        // 检查是否已经注入（避免重复注入）
+        if (html.includes('loadSvg') || html.includes('virtual:svg-icons')) {
+          return html;
+        }
+        
+        // 使用 Vite 的标准方式注入脚本
+        // 在 </body> 之前插入脚本，确保在 DOM 加载前执行
+        const scriptTag = `<script>${svgCode}</script>`;
+        if (html.includes('</body>')) {
+          return html.replace('</body>', `${scriptTag}\n</body>`);
+        } else if (html.includes('</html>')) {
+          return html.replace('</html>', `${scriptTag}\n</html>`);
+        } else {
+          // 如果都没有，直接追加
+          return html + scriptTag;
+        }
       }
-      return [];
+      return html;
     },
   };
 }
