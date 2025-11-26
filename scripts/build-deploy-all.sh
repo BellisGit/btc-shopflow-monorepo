@@ -370,19 +370,22 @@ main() {
             set +e
             bash "$SCRIPT_DIR/build-and-push-local.sh" "$app"
             BUILD_EXIT_CODE=$?
-            set -e  # 重新启用错误退出
+            set +e  # 保持禁用错误退出，直到循环结束
             
             if [ $BUILD_EXIT_CODE -eq 0 ]; then
                 log_success "✅ $app 镜像构建和推送成功"
-                ((build_success_count++))
+                build_success_count=$((build_success_count + 1))
             else
                 log_error "❌ $app 镜像构建和推送失败 (退出码: $BUILD_EXIT_CODE)"
-                ((build_fail_count++))
+                build_fail_count=$((build_fail_count + 1))
                 build_failed_apps+=("$app")
                 log_warning "继续构建下一个应用..."
             fi
             log_info ""
         done
+        
+        # 循环结束后，重新启用错误退出（仅用于关键步骤）
+        set -e
         
         if [ $build_fail_count -gt 0 ]; then
             log_error "部分应用镜像构建失败，无法继续全量部署"
@@ -464,20 +467,23 @@ main() {
             set +e
             bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" --auto-deploy
             BUILD_EXIT_CODE=$?
-            set -e  # 重新启用错误退出
+            set +e  # 保持禁用错误退出，直到循环结束
             
             if [ $BUILD_EXIT_CODE -eq 0 ]; then
                 log_success "✅ $app 构建和部署成功"
-                ((success_count++))
+                success_count=$((success_count + 1))
             else
                 log_error "❌ $app 构建和部署失败 (退出码: $BUILD_EXIT_CODE)"
-                ((fail_count++))
+                fail_count=$((fail_count + 1))
                 failed_apps+=("$app")
                 log_warning "继续构建下一个应用..."
             fi
             
             log_info ""
         done
+        
+        # 循环结束后，重新启用错误退出（仅用于关键步骤）
+        set -e
         
         # 输出总结
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
