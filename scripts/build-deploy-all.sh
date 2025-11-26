@@ -361,9 +361,12 @@ main() {
         local build_failed_apps=()
         
         for app in "${changed_apps[@]}"; do
-            log_info "构建和推送: $app"
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            log_info "📦 构建和推送: $app"
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             # 构建并推送镜像（不使用 --auto-deploy，因为后面会统一触发全量部署工作流）
-            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app" 2>/dev/null; then
+            # 不重定向 stderr，以便看到构建过程中的错误信息
+            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app"; then
                 log_success "✅ $app 镜像构建和推送成功"
                 ((build_success_count++))
             else
@@ -371,6 +374,7 @@ main() {
                 ((build_fail_count++))
                 build_failed_apps+=("$app")
             fi
+            log_info ""
         done
         
         if [ $build_fail_count -gt 0 ]; then
@@ -385,20 +389,22 @@ main() {
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
         # 触发全量部署工作流
-        # 获取 GITHUB_TOKEN
+        # 获取 GITHUB_TOKEN（使用与 build-and-push-local.sh 相同的逻辑）
         local GITHUB_TOKEN=""
-        if [ -n "$GITHUB_TOKEN" ]; then
-            GITHUB_TOKEN="$GITHUB_TOKEN"
-        elif command -v git > /dev/null 2>&1; then
+        
+        # 方法1: 从环境变量获取
+        if [ -n "${GITHUB_TOKEN}" ]; then
+            GITHUB_TOKEN="${GITHUB_TOKEN}"
+        fi
+        
+        # 方法2: 从 Git Credential Manager 获取（Windows）
+        if [ -z "$GITHUB_TOKEN" ] && ([ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [[ "$OSTYPE" == *"win"* ]]); then
+            GITHUB_TOKEN=$(powershell.exe -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User')" 2>/dev/null | tr -d '\r\n' || echo "")
+        fi
+        
+        # 方法3: 从 Git 配置获取
+        if [ -z "$GITHUB_TOKEN" ] && command -v git > /dev/null 2>&1; then
             GITHUB_TOKEN=$(git config --global credential.helper 2>/dev/null | head -1 || echo "")
-            if [ -z "$GITHUB_TOKEN" ]; then
-                # 尝试从 Git Credential Manager 获取
-                if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [[ "$OSTYPE" == *"win"* ]]; then
-                    GITHUB_TOKEN=$(powershell.exe -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User')" 2>/dev/null | tr -d '\r\n' || echo "")
-                else
-                    GITHUB_TOKEN="${GITHUB_TOKEN}"
-                fi
-            fi
         fi
         
         if [ -z "$GITHUB_TOKEN" ]; then
