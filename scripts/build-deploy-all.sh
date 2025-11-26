@@ -3,7 +3,8 @@
 # 一次性构建和部署所有应用
 # 默认部署所有应用，也可以使用 --changed 参数只部署变更的应用
 
-set -e
+# 注意：不使用 set -e，因为我们需要在循环中继续执行，即使某个应用构建失败
+# 我们会在关键位置手动检查错误
 
 # 颜色定义
 RED='\033[0;31m'
@@ -365,14 +366,20 @@ main() {
             log_info "📦 构建和推送: $app"
             log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             # 构建并推送镜像（不使用 --auto-deploy，因为后面会统一触发全量部署工作流）
-            # 不重定向 stderr，以便看到构建过程中的错误信息
-            if bash "$SCRIPT_DIR/build-and-push-local.sh" "$app"; then
+            # 使用 set +e 临时禁用错误退出，确保即使构建失败也继续下一个应用
+            set +e
+            bash "$SCRIPT_DIR/build-and-push-local.sh" "$app"
+            BUILD_EXIT_CODE=$?
+            set -e  # 重新启用错误退出
+            
+            if [ $BUILD_EXIT_CODE -eq 0 ]; then
                 log_success "✅ $app 镜像构建和推送成功"
                 ((build_success_count++))
             else
-                log_error "❌ $app 镜像构建和推送失败"
+                log_error "❌ $app 镜像构建和推送失败 (退出码: $BUILD_EXIT_CODE)"
                 ((build_fail_count++))
                 build_failed_apps+=("$app")
+                log_warning "继续构建下一个应用..."
             fi
             log_info ""
         done
