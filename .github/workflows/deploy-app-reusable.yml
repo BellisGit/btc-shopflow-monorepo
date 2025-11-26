@@ -114,12 +114,54 @@ jobs:
             
             echo "$TOKEN" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
             
-            # 从 GHCR 拉取镜像
+            # 从 GHCR 拉取镜像（带超时和重试机制）
             echo "📥 Pulling Docker image from $REGISTRY..."
-            if ! docker pull "$IMAGE_NAME:$IMAGE_TAG"; then
-              echo "⚠️  Failed to pull $IMAGE_NAME:$IMAGE_TAG, trying latest..."
-              if ! docker pull "$IMAGE_NAME:latest"; then
-                echo "[ERROR] Failed to pull image from $REGISTRY"
+            
+            # 拉取镜像的函数（带超时和重试）
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-600}  # 默认10分钟超时
+              local max_retries=${3:-2}  # 默认重试2次
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                echo "⏱️  超时设置: ${timeout_seconds} 秒"
+                
+                START_TIME=$(date +%s)
+                
+                # 使用 timeout 命令限制拉取时间
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 5 秒后重试..."
+                    sleep 5
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            # 尝试拉取指定标签的镜像
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 600 2; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 600 2; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                echo "[ERROR] 已尝试的标签: $IMAGE_TAG, latest"
                 exit 1
               fi
               IMAGE_TAG="latest"
