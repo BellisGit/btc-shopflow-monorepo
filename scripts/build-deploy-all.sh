@@ -186,6 +186,7 @@ detect_changed_apps() {
 }
 
 # 使用 Turbo 检测变更（基于文件系统时间戳和缓存）
+# 注意：Turbo 的 --dry-run=json 会列出所有任务，我们需要使用文本输出来判断实际会执行的任务
 detect_changed_apps_with_turbo() {
     local changed_apps=()
     
@@ -200,54 +201,38 @@ detect_changed_apps_with_turbo() {
         return 1
     fi
     
-    # 使用 turbo run build --dry-run=json 获取需要构建的包
-    # Turbo 会基于文件系统时间戳和缓存来判断哪些包需要构建
+    # 使用 turbo run build --dry-run 获取文本输出（更可靠）
+    # 文本输出会显示实际会执行的任务
     log_info "运行 Turbo dry-run 检测..."
     local turbo_output
-    turbo_output=$($turbo_cmd run build --dry-run=json 2>/dev/null || echo "")
+    turbo_output=$($turbo_cmd run build --dry-run 2>&1 || echo "")
     
     if [ -z "$turbo_output" ]; then
         log_warning "无法获取 Turbo 输出，回退到 Git diff 方法"
         return 1
     fi
     
-    # 解析 JSON 输出，提取需要构建的应用
-    # Turbo 的 JSON 输出格式：{"tasks": [{"taskId": "app-name#build", "package": "app-name", ...}, ...]}
-    # 需要安装 jq 来解析 JSON，如果没有则使用 grep 简单匹配
-    if command -v jq > /dev/null 2>&1; then
-        # 使用 jq 解析 JSON
-        local packages
-        packages=$(echo "$turbo_output" | jq -r '.tasks[]? | select(.taskId | endswith("#build")) | .package' 2>/dev/null || echo "")
-        
-        while IFS= read -r package; do
-            if [ -n "$package" ]; then
-                # 检查是否是应用包
-                for app in "${ALL_APPS[@]}"; do
-                    if [[ "$package" == "$app" ]] || [[ "$package" == *"$app"* ]]; then
-                        # 避免重复添加
-                        local found=false
-                        for existing in "${changed_apps[@]}"; do
-                            if [ "$existing" == "$app" ]; then
-                                found=true
-                                break
-                            fi
-                        done
-                        if [ "$found" = false ]; then
-                            changed_apps+=("$app")
-                        fi
-                        break
-                    fi
-                done
-            fi
-        done <<< "$packages"
-    else
-        # 如果没有 jq，使用 grep 简单匹配应用名称
-        for app in "${ALL_APPS[@]}"; do
-            if echo "$turbo_output" | grep -q "\"$app#build\"" || echo "$turbo_output" | grep -q "\"package\":\"$app\""; then
+    # 从文本输出中提取应用名称
+    # Turbo 的输出格式类似：• Packages in scope: system-app, admin-app, ...
+    # 或者：• Tasks to run: system-app#build, admin-app#build, ...
+    # 我们查找包含应用名称和 #build 的行
+    for app in "${ALL_APPS[@]}"; do
+        # 检查输出中是否包含该应用的构建任务
+        # 匹配格式：app-name#build 或 "app-name#build" 或 app-name (在任务列表中)
+        if echo "$turbo_output" | grep -qE "\"$app#build\"|$app#build|•.*$app.*build" 2>/dev/null; then
+            # 避免重复添加
+            local found=false
+            for existing in "${changed_apps[@]}"; do
+                if [ "$existing" == "$app" ]; then
+                    found=true
+                    break
+                fi
+            done
+            if [ "$found" = false ]; then
                 changed_apps+=("$app")
             fi
-        done
-    fi
+        fi
+    done
     
     if [ ${#changed_apps[@]} -gt 0 ]; then
         log_info "Turbo 检测到需要构建的应用: ${changed_apps[*]}"
@@ -255,6 +240,9 @@ detect_changed_apps_with_turbo() {
         return 0
     fi
     
+    # 如果没有检测到，可能是所有应用都需要构建（共享包变更）
+    # 或者没有变更。这里我们返回失败，让调用者使用 Git diff 方法
+    log_info "Turbo 未检测到需要构建的应用"
     return 1
 }
 
