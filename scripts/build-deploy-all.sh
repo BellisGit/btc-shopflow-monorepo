@@ -215,7 +215,7 @@ else
         log_info "  2. 确保 Token 有 actions:write 权限"
         log_info "  3. 重新生成 Token 并更新环境变量"
     else
-        log_error "🔴 未知错误 (HTTP ${REPO_DISPATCH_HTTP_CODE})"
+        log_error "🔴 未知错误 [HTTP ${REPO_DISPATCH_HTTP_CODE}]"
         log_info "可能原因:"
         log_info "  - GitHub API 临时问题"
         log_info "  - 网络连接问题"
