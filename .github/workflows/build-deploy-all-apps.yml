@@ -8,226 +8,133 @@ on:
 permissions:
   contents: read
   packages: write
-  actions: read
+  actions: write
 
 jobs:
-  detect-image-tag:
-    name: Detect Image Tag
+  trigger-system:
+    name: Trigger System App
     runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.detect.outputs.image_tag }}
-      repo_owner_lower: ${{ steps.detect.outputs.repo_owner_lower }}
-      registry: ${{ steps.detect.outputs.registry }}
     steps:
-      - name: Detect image tag and repository owner
-        id: detect
-        run: |
-          echo "🔍 开始检测镜像标签和仓库信息..."
-          echo "  - client_payload.github_sha: ${{ github.event.client_payload.github_sha }}"
-          echo "  - github.sha: ${{ github.sha }}"
-          
-          # 转换仓库所有者名称为小写
-          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_owner_lower=$REPO_OWNER_LOWER" >> $GITHUB_OUTPUT
-          echo "  ✅ 仓库所有者（小写）: $REPO_OWNER_LOWER"
-          
-          # 生成镜像标签（使用 SHA 前7位）
-          if [ -n "${{ github.event.client_payload.github_sha }}" ]; then
-            GIT_SHA="${{ github.event.client_payload.github_sha }}"
-            echo "  ✅ 从 client_payload.github_sha 获取: $GIT_SHA"
-          else
-            GIT_SHA="${{ github.sha }}"
-            echo "  ✅ 从 github.sha 获取: $GIT_SHA"
-          fi
-          
-          if [ ${#GIT_SHA} -gt 7 ]; then
-            IMAGE_TAG="${GIT_SHA:0:7}"
-          elif [ ${#GIT_SHA} -lt 7 ]; then
-            IMAGE_TAG="latest"
-            echo "  ⚠️  SHA 太短，使用 latest"
-          else
-            IMAGE_TAG="$GIT_SHA"
-          fi
-          
-          if [ -z "$IMAGE_TAG" ]; then
-            echo "  ⚠️  标签为空，使用 latest"
-            IMAGE_TAG="latest"
-          fi
-          
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "✅ 最终镜像标签: $IMAGE_TAG"
-          
-          # 检测镜像仓库（默认使用 ghcr.io）
-          if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
-            REGISTRY="${{ secrets.PRIVATE_REGISTRY }}"
-            echo "  ✅ 使用私有仓库: $REGISTRY"
-          else
-            REGISTRY="ghcr.io"
-            echo "  ✅ 使用默认仓库: $REGISTRY"
-          fi
-          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+      - name: Trigger deploy-system-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-system-app.yml',
+              ref: 'master',
+            });
 
-  build-and-deploy:
-    name: Build and Deploy All Apps
-    needs: detect-image-tag
+  trigger-admin:
+    name: Trigger Admin App
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        app:
-          - system-app
-          - admin-app
-          - logistics-app
-          - quality-app
-          - production-app
-          - engineering-app
-          - finance-app
-          - mobile-app
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      # ========== 构建阶段 ==========
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Trigger deploy-admin-app workflow
+        uses: actions/github-script@v7
         with:
-          node-version: '20'
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      
-      - name: Cache pnpm store
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      
-      - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile --prefer-offline
-      
-      - name: Restore built packages cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            packages/*/dist
-            packages/*/build
-          key: packages-build-${{ github.sha }}
-          restore-keys: |
-            packages-build-
-      
-      - name: Build dependencies if needed
-        run: |
-          if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
-            echo "Building shared dependencies..."
-            pnpm --filter @btc/vite-plugin run build
-            pnpm --filter @btc/shared-utils run build
-            pnpm --filter @btc/shared-core run build
-            pnpm --filter @btc/shared-components run build
-            pnpm --filter @btc/subapp-manifests run build
-          fi
-      
-      - name: Build ${{ matrix.app }}
-        run: cd apps/${{ matrix.app }} && pnpm run build
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Login to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ needs.detect-image-tag.outputs.registry }}
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-      
-      - name: Prepare Docker tags
-        id: tags
-        run: |
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          build-args: |
-            APP_DIR=apps/${{ matrix.app }}
-          push: true
-          tags: |
-            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:latest
-            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:${{ needs.detect-image-tag.outputs.image_tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        env:
-          DOCKER_BUILDKIT: 1
-      
-      # ========== 部署阶段 ==========
-      - name: Determine app port
-        id: port
-        run: |
-          APP_NAME="${{ matrix.app }}"
-          APP_PORT=""
-          case "$APP_NAME" in
-            system-app)
-              APP_PORT="30080"
-              ;;
-            admin-app)
-              APP_PORT="30081"
-              ;;
-            logistics-app)
-              APP_PORT="30082"
-              ;;
-            quality-app)
-              APP_PORT="30083"
-              ;;
-            production-app)
-              APP_PORT="30084"
-              ;;
-            engineering-app)
-              APP_PORT="30085"
-              ;;
-            finance-app)
-              APP_PORT="30086"
-              ;;
-            mobile-app)
-              APP_PORT="30091"
-              ;;
-            *)
-              APP_PORT="8080"
-              echo "⚠️  未知应用端口，使用默认 8080"
-              ;;
-          esac
-          echo "app_port=$APP_PORT" >> $GITHUB_OUTPUT
-          echo "✅ 应用 ${APP_NAME} 端口: ${APP_PORT}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-admin-app.yml',
+              ref: 'master',
+            });
 
-  deploy:
-    name: Deploy All Apps
-    needs: [detect-image-tag, build-and-deploy]
-    strategy:
-      fail-fast: false
-      matrix:
-        app:
-          - system-app
-          - admin-app
-          - logistics-app
-          - quality-app
-          - production-app
-          - engineering-app
-          - finance-app
-          - mobile-app
-    uses: ./.github/workflows/deploy-app-reusable.yml
-    with:
-      app_name: ${{ matrix.app }}
-      app_port: ${{ matrix.app == 'system-app' && '30080' || matrix.app == 'admin-app' && '30081' || matrix.app == 'logistics-app' && '30082' || matrix.app == 'quality-app' && '30083' || matrix.app == 'production-app' && '30084' || matrix.app == 'engineering-app' && '30085' || matrix.app == 'finance-app' && '30086' || matrix.app == 'mobile-app' && '30091' || '8080' }}
-      container_name: btc-${{ matrix.app }}
-      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
-    secrets: inherit
+  trigger-logistics:
+    name: Trigger Logistics App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-logistics-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-logistics-app.yml',
+              ref: 'master',
+            });
 
+  trigger-production:
+    name: Trigger Production App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-production-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-production-app.yml',
+              ref: 'master',
+            });
+
+  trigger-quality:
+    name: Trigger Quality App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-quality-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-quality-app.yml',
+              ref: 'master',
+            });
+
+  trigger-engineering:
+    name: Trigger Engineering App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-engineering-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-engineering-app.yml',
+              ref: 'master',
+            });
+
+  trigger-finance:
+    name: Trigger Finance App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-finance-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-finance-app.yml',
+              ref: 'master',
+            });
+
+  trigger-mobile:
+    name: Trigger Mobile App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy-mobile-app workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-mobile-app.yml',
+              ref: 'master',
+            });
