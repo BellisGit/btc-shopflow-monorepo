@@ -290,7 +290,12 @@ jobs:
             # 只清理当前应用的 compose 配置（如果存在）
             if [ -f "$COMPOSE_FILE" ]; then
               echo "🧹 清理当前应用的 docker-compose 服务..."
-              docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+              # 检测 docker-compose 命令（支持新旧版本）
+              if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+              elif docker compose version >/dev/null 2>&1; then
+                docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+              fi
             fi
             
             # 再次确认容器已被删除
@@ -315,30 +320,70 @@ jobs:
               sleep 1
             done
             
+            # 检查并创建网络（如果不存在）
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            else
+              echo "✅ Docker 网络已存在: btc-network"
+            fi
+            
+            # 验证镜像是否存在
+            echo "🔍 验证镜像是否存在..."
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              echo "[ERROR] 可用镜像列表:"
+              docker images | grep "btc-shopflow/$APP_NAME" || echo "  (无)"
+              exit 1
+            fi
+            echo "✅ 镜像验证通过: btc-shopflow/$APP_NAME:latest"
+            
             # 使用应用特定的 compose 文件名，避免覆盖其他应用的配置
             cat > "$COMPOSE_FILE" << EOF
-            version: '3.8'
-            services:
-              $APP_NAME:
-                image: btc-shopflow/$APP_NAME:latest
-                container_name: $CONTAINER_NAME
-                ports:
-                  - "$PORT:80"
-                restart: unless-stopped
-                networks:
-                  - btc-network
-            networks:
-              btc-network:
-                driver: bridge
-            EOF
+version: '3.8'
+services:
+  $APP_NAME:
+    image: btc-shopflow/$APP_NAME:latest
+    container_name: $CONTAINER_NAME
+    ports:
+      - "$PORT:80"
+    restart: unless-stopped
+    networks:
+      - btc-network
+networks:
+  btc-network:
+    external: true
+EOF
+            
+            echo "📋 Docker Compose 配置:"
+            cat "$COMPOSE_FILE"
+            echo ""
+            
+            # 检测 docker-compose 命令（支持新旧版本）
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+              echo "✅ 使用 docker-compose 命令"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+              echo "✅ 使用 docker compose 命令"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
             
             echo "🚀 启动新容器..."
-            if ! docker-compose -f "$COMPOSE_FILE" up -d; then
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
               echo "[ERROR] 容器启动失败"
               echo "[ERROR] 检查 docker-compose 配置..."
               cat "$COMPOSE_FILE"
               echo "[ERROR] 检查容器日志..."
-              docker-compose -f "$COMPOSE_FILE" logs 2>&1 || true
+              $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs 2>&1 || true
+              echo "[ERROR] 检查镜像..."
+              docker images | grep "btc-shopflow/$APP_NAME" || echo "  (无相关镜像)"
+              echo "[ERROR] 检查网络..."
+              docker network ls | grep btc-network || echo "  (网络不存在)"
               exit 1
             fi
             
