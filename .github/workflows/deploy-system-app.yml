@@ -27,14 +27,44 @@ jobs:
     uses: ./.github/workflows/validate-deployment.yml
     secrets: inherit
 
+  detect-image-tag:
+    name: Detect Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+    steps:
+      - name: Detect image tag
+        id: detect
+        run: |
+          # 优先级：client_payload.image_tag > client_payload.github_sha > github.sha > latest
+          if [ -n "${{ github.event.client_payload.image_tag }}" ]; then
+            # 从完整镜像标签中提取标签部分（去掉 registry 前缀）
+            FULL_TAG="${{ github.event.client_payload.image_tag }}"
+            IMAGE_TAG=$(echo "$FULL_TAG" | sed 's|.*:||' || echo "")
+          elif [ -n "${{ github.event.client_payload.github_sha }}" ]; then
+            IMAGE_TAG="${{ github.event.client_payload.github_sha }}"
+          else
+            GITHUB_SHA="${{ github.sha }}"
+            IMAGE_TAG="${GITHUB_SHA:0:7}"
+          fi
+          
+          # 如果标签为空或太短，使用 latest
+          if [ -z "$IMAGE_TAG" ] || [ ${#IMAGE_TAG} -lt 7 ]; then
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 检测到镜像标签: $IMAGE_TAG"
+
   deploy:
     name: Deploy System App
-    needs: [validate]
+    needs: [validate, detect-image-tag]
     uses: ./.github/workflows/deploy-app-reusable.yml
     with:
       app_name: system-app
       app_port: "30080"
       container_name: btc-system-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
     secrets: inherit
 
   cleanup:
