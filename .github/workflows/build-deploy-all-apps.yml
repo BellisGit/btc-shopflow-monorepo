@@ -170,35 +170,91 @@ jobs:
           DOCKER_BUILDKIT: 1
 
   # 步骤2: 同时部署所有应用
-  deploy-all:
-    name: Deploy All Apps
+  deploy-system:
+    name: Deploy System App
     needs: [detect-image-tag, build-all]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: system-app
-            port: "30080"
-          - app: admin-app
-            port: "30081"
-          - app: logistics-app
-            port: "30082"
-          - app: quality-app
-            port: "30083"
-          - app: production-app
-            port: "30084"
-          - app: engineering-app
-            port: "30085"
-          - app: finance-app
-            port: "30086"
-          - app: mobile-app
-            port: "30091"
     uses: ./.github/workflows/deploy-app-reusable.yml
     with:
-      app_name: ${{ matrix.app }}
-      app_port: ${{ matrix.port }}
-      container_name: btc-${{ matrix.app }}
+      app_name: system-app
+      app_port: "30080"
+      container_name: btc-system-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-admin:
+    name: Deploy Admin App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: admin-app
+      app_port: "30081"
+      container_name: btc-admin-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-logistics:
+    name: Deploy Logistics App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: logistics-app
+      app_port: "30082"
+      container_name: btc-logistics-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-quality:
+    name: Deploy Quality App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: quality-app
+      app_port: "30083"
+      container_name: btc-quality-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-production:
+    name: Deploy Production App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: production-app
+      app_port: "30084"
+      container_name: btc-production-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-engineering:
+    name: Deploy Engineering App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: engineering-app
+      app_port: "30085"
+      container_name: btc-engineering-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-finance:
+    name: Deploy Finance App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: finance-app
+      app_port: "30086"
+      container_name: btc-finance-app
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  deploy-mobile:
+    name: Deploy Mobile App
+    needs: [detect-image-tag, build-all]
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: mobile-app
+      app_port: "30091"
+      container_name: btc-mobile-app
       image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
     secrets: inherit
 
@@ -237,9 +293,20 @@ jobs:
             });
             
             // 检查每个应用的构建和部署状态
+            const deployJobMap = {
+              'system-app': 'Deploy System App',
+              'admin-app': 'Deploy Admin App',
+              'logistics-app': 'Deploy Logistics App',
+              'quality-app': 'Deploy Quality App',
+              'production-app': 'Deploy Production App',
+              'engineering-app': 'Deploy Engineering App',
+              'finance-app': 'Deploy Finance App',
+              'mobile-app': 'Deploy Mobile App',
+            };
+            
             for (const app of APPS) {
               const buildJobName = `Build All Apps (${app})`;
-              const deployJobName = `Deploy All Apps (${app})`;
+              const deployJobName = deployJobMap[app];
               
               const buildJob = jobs.data.jobs.find(job => job.name === buildJobName);
               const deployJob = jobs.data.jobs.find(job => job.name === deployJobName);
