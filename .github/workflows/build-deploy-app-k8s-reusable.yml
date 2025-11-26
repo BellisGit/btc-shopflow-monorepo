@@ -207,22 +207,28 @@ jobs:
         uses: azure/setup-kubectl@v3
       
       - name: Skip deploy (placeholder)
-        if: inputs.skip_deploy == 'true'
-        run: echo "⏭️  跳过部署步骤"
+        if: inputs.skip_deploy == 'true' || env.has_k8s_config == 'false'
+        run: |
+          if [ "${{ inputs.skip_deploy }}" = "true" ]; then
+            echo "⏭️  跳过部署步骤（skip_deploy=true）"
+          else
+            echo "⏭️  跳过部署步骤（未配置 K8s）"
+          fi
       
       - name: Configure K8s
         if: inputs.skip_deploy != 'true'
         run: |
           # 配置 kubectl（使用 secrets 中的配置）
           if [ -z "${{ secrets.K8S_SERVER }}" ]; then
-            echo "❌ 未配置 K8s 集群信息（K8S_SERVER secret 不存在）"
-            echo "请在 GitHub Secrets 中配置："
+            echo "⚠️  未配置 K8s 集群信息（K8S_SERVER secret 不存在）"
+            echo "跳过 K8s 部署步骤"
+            echo ""
+            echo "如需部署到 K8s，请在 GitHub Secrets 中配置："
             echo "  - K8S_SERVER: K8s API 服务器地址"
             echo "  - K8S_CA_CERT: CA 证书（base64 编码）"
             echo "  - K8S_TOKEN: 访问令牌"
-            echo ""
-            echo "如果不需要部署到 K8s，请设置 skip_deploy=true"
-            exit 1
+            echo "has_k8s_config=false" >> $GITHUB_ENV
+            exit 0
           fi
           
           echo "配置 kubectl..."
@@ -250,6 +256,7 @@ jobs:
           # 显式设置 KUBECONFIG 环境变量
           export KUBECONFIG=~/.kube/config
           echo "KUBECONFIG=~/.kube/config" >> $GITHUB_ENV
+          echo "has_k8s_config=true" >> $GITHUB_ENV
           
           # 验证配置文件已创建
           if [ ! -f ~/.kube/config ]; then
@@ -269,7 +276,7 @@ jobs:
           fi
       
       - name: Deploy application
-        if: inputs.skip_deploy != 'true'
+        if: inputs.skip_deploy != 'true' && env.has_k8s_config == 'true'
         run: |
           # 确保 kubectl 配置已加载（配置应该在 Configure K8s step 中已创建）
           # 使用 GITHUB_ENV 中的 KUBECONFIG，如果不存在则使用默认路径
