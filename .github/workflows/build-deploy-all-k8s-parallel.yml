@@ -23,17 +23,6 @@ on:
   repository_dispatch:
     types: [build-deploy-all-k8s]
   workflow_dispatch:
-    inputs:
-      skip_build:
-        description: 'Skip build step'
-        required: false
-        type: boolean
-        default: false
-      skip_deploy:
-        description: 'Skip deploy step'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -74,18 +63,9 @@ jobs:
           IMAGE_TAG="${GIT_SHA:0:7}"
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           
-          # 从 client_payload 获取 skip_build 和 skip_deploy
-          if [ "${{ github.event.client_payload.skip_build }}" = "true" ]; then
-            echo "skip_build=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip_build=${{ github.event.inputs.skip_build }}" >> $GITHUB_OUTPUT
-          fi
-          
-          if [ "${{ github.event.client_payload.skip_deploy }}" = "true" ]; then
-            echo "skip_deploy=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip_deploy=${{ github.event.inputs.skip_deploy }}" >> $GITHUB_OUTPUT
-          fi
+          # 完整工作流：总是执行构建和部署
+          echo "skip_build=false" >> $GITHUB_OUTPUT
+          echo "skip_deploy=false" >> $GITHUB_OUTPUT
           
           # 检测是否配置了私有仓库
           if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
