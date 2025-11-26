@@ -2,6 +2,10 @@
 
 # 一次性构建和部署所有应用
 # 默认部署所有应用，也可以使用 --changed 参数只部署变更的应用
+# 
+# 构建方式：
+# - 本地构建：在本地串行构建所有应用（较慢）
+# - 云端构建：触发 GitHub Actions 并行构建所有应用（推荐，更快）
 
 # 注意：不使用 set -e，因为我们需要在循环中继续执行，即使某个应用构建失败
 # 我们会在关键位置手动检查错误
@@ -37,6 +41,7 @@ ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app
 DEPLOY_CHANGED=false
 BASE_REF=""
 DRY_RUN=false
+USE_CLOUD_BUILD=true  # 默认使用云端构建（GitHub Actions）
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -52,6 +57,14 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=true
             shift
             ;;
+        --local)
+            USE_CLOUD_BUILD=false
+            shift
+            ;;
+        --cloud)
+            USE_CLOUD_BUILD=true
+            shift
+            ;;
         --help|-h)
             echo "用法: $0 [OPTIONS]"
             echo ""
@@ -59,12 +72,14 @@ while [[ $# -gt 0 ]]; do
             echo "  --changed          只构建和部署变更的应用（默认：部署所有应用）"
             echo "  --base <ref>       指定基准 Git 引用（仅与 --changed 一起使用）"
             echo "  --dry-run          仅显示将要构建和部署的应用，不实际执行"
+            echo "  --local            在本地构建（串行，较慢）"
+            echo "  --cloud            在 GitHub Actions 构建（并行，快速，默认）"
             echo "  --help, -h         显示帮助信息"
             echo ""
             echo "示例:"
-            echo "  $0                  # 部署所有应用（默认）"
-            echo "  $0 --changed        # 只部署变更的应用"
-            echo "  $0 --changed --base origin/master  # 相对于 origin/master 检测变更"
+            echo "  $0                  # 使用云端构建部署所有应用（推荐）"
+            echo "  $0 --local          # 在本地构建部署所有应用"
+            echo "  $0 --changed        # 只部署变更的应用（云端构建）"
             echo "  $0 --dry-run        # 仅查看将要部署的应用"
             exit 0
             ;;
@@ -306,11 +321,6 @@ main() {
             echo "  - $app"
         done
     fi
-    
-    log_success "检测到 ${#changed_apps[@]} 个需要构建和部署的应用:"
-    for app in "${changed_apps[@]}"; do
-        echo "  - $app"
-    done
     
     if [ "$DRY_RUN" = true ]; then
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
