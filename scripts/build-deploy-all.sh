@@ -399,22 +399,46 @@ main() {
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
         # 触发全量部署工作流
-        # 获取 GITHUB_TOKEN（使用与 build-and-push-local.sh 相同的逻辑）
+        # 获取 GITHUB_TOKEN（使用与 build-and-push-local.sh 相同的完整逻辑）
         local GITHUB_TOKEN=""
         
-        # 方法1: 从环境变量获取
+        # 方法1: 从环境变量获取（如果已经设置）
         if [ -n "${GITHUB_TOKEN}" ]; then
             GITHUB_TOKEN="${GITHUB_TOKEN}"
         fi
         
-        # 方法2: 从 Git Credential Manager 获取（Windows）
-        if [ -z "$GITHUB_TOKEN" ] && ([ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [[ "$OSTYPE" == *"win"* ]]); then
-            GITHUB_TOKEN=$(powershell.exe -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User')" 2>/dev/null | tr -d '\r\n' || echo "")
+        # 方法2: 从 Git 凭据管理器获取
+        if [ -z "$GITHUB_TOKEN" ] && command -v git-credential-manager > /dev/null 2>&1; then
+            GITHUB_TOKEN=$(git credential fill <<< "protocol=https
+host=github.com
+" 2>/dev/null | grep password | cut -d= -f2 | head -1)
         fi
         
-        # 方法3: 从 Git 配置获取
-        if [ -z "$GITHUB_TOKEN" ] && command -v git > /dev/null 2>&1; then
-            GITHUB_TOKEN=$(git config --global credential.helper 2>/dev/null | head -1 || echo "")
+        # 方法3: 从 Windows 用户级环境变量获取（通过 PowerShell）
+        if [ -z "$GITHUB_TOKEN" ]; then
+            # 检测是否为 Windows 环境
+            IS_WINDOWS=false
+            if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
+                IS_WINDOWS=true
+            fi
+            
+            # 如果检测到 Windows 或者 PowerShell 可用，尝试读取
+            if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
+                if command -v powershell.exe > /dev/null 2>&1; then
+                    # 使用和 build-and-push-local.sh 完全相同的命令
+                    PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+                    # 清理输出：移除回车符、换行符和可能的 PowerShell 提示符
+                    GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+                    # 如果读取成功但包含错误信息，清空变量
+                    if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+                        GITHUB_TOKEN=""
+                    fi
+                    # 如果结果为空或只包含空白字符，清空变量
+                    if [ -z "${GITHUB_TOKEN// }" ]; then
+                        GITHUB_TOKEN=""
+                    fi
+                fi
+            fi
         fi
         
         if [ -z "$GITHUB_TOKEN" ]; then
