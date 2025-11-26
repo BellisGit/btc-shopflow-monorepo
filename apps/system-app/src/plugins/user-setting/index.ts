@@ -31,6 +31,11 @@ export const userSettingPlugin: Plugin = {
   }
 };
 
-// 导出组件和 composables（主组件通过动态导入使用）
+// 导出组件（主组件通过动态导入使用）
 export { default as BtcUserSettingDrawer } from './components/preferences-drawer.vue';
-export * from './composables';
+
+// 移除立即导出 composables，避免在模块加载时触发循环依赖
+// composables 应该通过动态导入使用，例如：
+// const { useSettingsState } = await import('./composables/useSettingsState');
+// 或者从 '@btc/shared-core' 等共享包中导入
+// export * from './composables';

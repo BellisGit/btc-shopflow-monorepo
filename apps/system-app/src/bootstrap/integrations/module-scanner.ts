@@ -19,8 +19,9 @@ const pluginFiles = import.meta.glob('/src/plugins/**/plugin.ts', {
 });
 
 // 扫描 plugins 目录下的 index.ts 文件（支持命名导出）
+// 使用 lazy: true 避免在模块加载时立即执行插件代码，从而避免循环依赖
 const pluginIndexFiles = import.meta.glob('/src/plugins/*/index.ts', {
-  eager: true,
+  eager: false,
   import: '*'
 });
 
@@ -113,8 +114,8 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
   const plugins: Plugin[] = [];
   const processedModules = new Set<string>();
 
-
-  for (const [filePath, moduleConfig] of Object.entries(allFiles)) {
+  // 处理所有文件（包括懒加载的插件文件）
+  for (const [filePath, moduleConfigOrLoader] of Object.entries(allFiles)) {
     try {
       const { type, name, fileName } = parseFilePath(filePath);
       const moduleKey = `${type}/${name}`;
@@ -124,6 +125,13 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
         continue;
       }
 
+      // 如果模块配置是函数（懒加载），需要先调用它
+      let moduleConfig: any;
+      if (typeof moduleConfigOrLoader === 'function') {
+        moduleConfig = await moduleConfigOrLoader();
+      } else {
+        moduleConfig = moduleConfigOrLoader;
+      }
 
       let pluginConfigs: Plugin[] = [];
 

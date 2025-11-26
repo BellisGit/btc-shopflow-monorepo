@@ -419,7 +419,7 @@ const handleConfirmUpload = async () => {
     BtcMessage.success('上传成功');
     uploadVisible.value = false;
     fileList.value = [];
-    crudRef.value?.refresh();
+    crudRef.value?.crud?.refresh();
   } catch (error: any) {
     BtcMessage.error(error?.message || '上传失败');
   } finally {
@@ -443,7 +443,7 @@ const handleDelete = async () => {
     const ids = tableSelection.value.map((item: any) => item.id);
     await fileService.deleteBatch(ids);
     BtcMessage.success('删除成功');
-    crudRef.value?.refresh();
+    crudRef.value?.crud?.refresh();
   } catch (error: any) {
     BtcMessage.error(error?.message || '删除失败');
   } finally {
@@ -459,7 +459,7 @@ const handleDeleteSingle = async (row: any) => {
   try {
     await fileService.delete(row.id);
     BtcMessage.success('删除成功');
-    crudRef.value?.refresh();
+    crudRef.value?.crud?.refresh();
   } catch (error: any) {
     BtcMessage.error(error?.message || '删除失败');
   } finally {

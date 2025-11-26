@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @btc/vite-plugin build",
+    "predev": "pnpm --filter @btc/vite-plugin build && pnpm check:circular",
     "dev": "vite --port 8080",
-    "build": "vite build",
-    "preview": "vite preview",
+    "prebuild": "pnpm check:circular",
+    "build": "node scripts/build.js build",
+    "preview": "node scripts/build.js preview",
     "type-check": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {

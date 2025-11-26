@@ -41,22 +41,55 @@ ARG APP_DIR
 # 先复制依赖（从 deps 阶段，利用缓存加速）
 COPY --from=deps /repo/node_modules /repo/node_modules
 COPY --from=deps /repo/pnpm-lock.yaml /repo/pnpm-lock.yaml
-# 拷贝源代码（.dockerignore 已排除 node_modules）
-COPY . .
+
+# ⚠️ 关键优化：只复制必要的源代码，避免触发其他应用的构建
+# 只复制共享包和指定应用的源代码（不复制其他应用）
+COPY packages/ packages/
+COPY ${APP_DIR}/ ${APP_DIR}/
+# 复制 scripts 目录（某些包的 prepare 脚本需要）
+COPY scripts/ scripts/
+# 复制 configs 目录（某些应用的 vite.config.ts 需要）
+COPY configs/ configs/
+# 复制 auth 目录（system-app 依赖，包含登录、注册等页面）
+COPY auth/ auth/
+# 复制必要的配置文件
+COPY turbo.json ./
+COPY .npmrc* ./
+COPY .env* ./
+# 复制 uno.config.ts（某些应用需要）
+COPY uno.config.ts* ./
+
+# ⚠️ 特殊处理：如果构建的应用依赖其他应用的配置，需要复制相关文件
+# system-app 依赖 admin-app 的 proxy 配置，需要复制 admin-app/src/config 目录
+# 注意：只复制必要的配置文件，不复制整个 admin-app，避免触发 admin-app 的构建
+RUN mkdir -p apps/admin-app/src/config || true
+COPY apps/admin-app/src/config/ apps/admin-app/src/config/
+
 # 重新安装依赖以确保 prepare 脚本正确执行（源代码现在已存在）
 WORKDIR /repo
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --prefer-offline
-# 构建指定子应用（从根目录使用 filter 构建，需要先构建依赖包）
-# Vite build 默认会读取 .env.production 文件（如果存在）
+
+# ⚠️ 只构建指定应用及其依赖包（不会构建其他应用）
+# 使用 --filter 精确指定要构建的包，避免触发其他应用的构建
+# 注意：由于只复制了指定应用的源代码，其他应用不会被触发构建
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     APP_NAME=$(basename ${APP_DIR}) && \
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" && \
+    echo "🔨 Building ${APP_NAME} and dependencies ONLY..." && \
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" && \
     pnpm --filter @btc/vite-plugin build && \
     pnpm --filter @btc/shared-utils build && \
     pnpm --filter @btc/shared-core build && \
     pnpm --filter @btc/shared-components build && \
     pnpm --filter @btc/subapp-manifests build && \
-    pnpm --filter ${APP_NAME} build
+    echo "" && \
+    echo "🔨 Building ${APP_NAME}..." && \
+    pnpm --filter ${APP_NAME} build && \
+    echo "" && \
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" && \
+    echo "✅ Build completed for ${APP_NAME} only (no other apps were built)" && \
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 运行时镜像：使用 Node.js 提供静态资源服务
 ARG NODE_VERSION=20-alpine

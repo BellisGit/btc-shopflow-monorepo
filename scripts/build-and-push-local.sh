@@ -162,6 +162,34 @@ host=github.com
     fi
 fi
 
+# Windows 上尝试从注册表读取用户级环境变量（通过 PowerShell）
+if [ -z "$GITHUB_TOKEN" ]; then
+    # 检测是否为 Windows 环境
+    IS_WINDOWS=false
+    if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
+        IS_WINDOWS=true
+    fi
+    
+    # 如果检测到 Windows 或者 PowerShell 可用，尝试读取
+    if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
+        if command -v powershell.exe > /dev/null 2>&1; then
+            # 使用和测试脚本完全相同的命令（已验证可以工作）
+            # 注意：在双引号中使用 \$ 转义，确保 bash 不解释 PowerShell 变量
+            PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+            # 清理输出：移除回车符、换行符和可能的 PowerShell 提示符
+            GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+            # 如果读取成功但包含错误信息，清空变量
+            if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+                GITHUB_TOKEN=""
+            fi
+            # 如果结果为空或只包含空白字符，清空变量
+            if [ -z "${GITHUB_TOKEN// }" ]; then
+                GITHUB_TOKEN=""
+            fi
+        fi
+    fi
+fi
+
 if [ -z "$GITHUB_TOKEN" ]; then
     log_error "未设置 GITHUB_TOKEN 环境变量"
     log_info ""
@@ -170,8 +198,10 @@ if [ -z "$GITHUB_TOKEN" ]; then
     log_info "  PowerShell (当前会话):"
     log_info "    \$env:GITHUB_TOKEN=\"your_token_here\""
     log_info ""
-    log_info "  PowerShell (永久设置):"
+    log_info "  PowerShell (永久设置，推荐):"
     log_info "    [System.Environment]::SetEnvironmentVariable('GITHUB_TOKEN', 'your_token_here', 'User')"
+    log_info "    然后刷新环境变量: . scripts/refresh-env.ps1"
+    log_info "    或者重新打开 PowerShell 终端"
     log_info ""
     log_info "  Git Bash / WSL:"
     log_info "    export GITHUB_TOKEN=your_token_here"
@@ -186,7 +216,9 @@ if [ -z "$GITHUB_TOKEN" ]; then
     log_info "     - ✅ repo (如果仓库是私有的)"
     log_info "  4. 生成后复制 token（只显示一次！）"
     log_info ""
-    log_info "💡 提示: 设置环境变量后，请重新运行此命令"
+    log_info "💡 提示:"
+    log_info "  - 永久设置后，运行: . scripts/refresh-env.ps1"
+    log_info "  - 或者重新打开 PowerShell 终端"
     exit 1
 fi
 
@@ -278,81 +310,143 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     TOKEN_CHECK_BODY=$(echo "$TOKEN_CHECK" | sed '$d')
     
     if [ "$TOKEN_CHECK_CODE" -ne 200 ]; then
-        log_error "❌ GitHub Token 验证失败 (HTTP $TOKEN_CHECK_CODE)"
+        log_error "GitHub Token 验证失败 (HTTP $TOKEN_CHECK_CODE)"
         log_warning "响应: $TOKEN_CHECK_BODY"
         log_info ""
-        log_info "💡 解决方案:"
+        log_info "解决方案:"
         log_info "  1. 检查 Token 是否有效: https://github.com/settings/tokens"
         log_info "  2. 确认 Token 未过期"
         log_info "  3. 重新生成 Token 并设置:"
         log_info "     PowerShell: \$env:GITHUB_TOKEN=\"your_new_token\""
         log_info "     Git Bash: export GITHUB_TOKEN=\"your_new_token\""
         log_info "  4. 确保 Token 具有以下权限:"
-        log_info "     - ✅ write:packages (推送镜像)"
-        log_info "     - ✅ actions:write (触发工作流)"
-        log_info "     - ✅ repo (如果仓库是私有的)"
+        log_info "     - write:packages (推送镜像)"
+        log_info "     - actions:write (触发工作流)"
+        log_info "     - repo (如果仓库是私有的)"
         exit 1
     fi
     
     log_success "✅ GitHub Token 验证通过"
     
     # 触发 GitHub Actions 工作流
-    log_info "触发轻量级部署工作流: $APP_NAME"
+    # 根据应用名称确定工作流文件
+    WORKFLOW_FILE="deploy-${APP_NAME}.yml"
+    WORKFLOW_PATH=".github/workflows/${WORKFLOW_FILE}"
+    log_info "触发部署工作流: $APP_NAME"
+    log_info "工作流文件: $WORKFLOW_FILE"
     
-    # 方法1: 尝试使用 repository_dispatch API（更可靠，不依赖工作流文件名）
-    log_info "尝试使用 repository_dispatch 触发 deploy-only 工作流..."
+    # 先检查工作流是否存在（列出所有工作流）
+    log_info "检查工作流是否存在..."
+    WORKFLOWS_RESPONSE=$(curl -s -w "\n%{http_code}" \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows" 2>&1)
+    
+    WORKFLOWS_HTTP_CODE=$(echo "$WORKFLOWS_RESPONSE" | tail -n1)
+    WORKFLOWS_BODY=$(echo "$WORKFLOWS_RESPONSE" | sed '$d')
+    
+    WORKFLOW_ID=""
+    if [ "$WORKFLOWS_HTTP_CODE" -eq 200 ]; then
+        # 尝试从响应中提取工作流 ID（使用完整路径或文件名）
+        WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -o "\"id\":[0-9]*,\"node_id\":\"[^\"]*\",\"name\":\"[^\"]*\",\"path\":\".*${WORKFLOW_FILE}\"" | grep -o "\"id\":[0-9]*" | head -1 | cut -d':' -f2)
+        if [ -z "$WORKFLOW_ID" ]; then
+            # 如果没找到，尝试使用路径匹配
+            WORKFLOW_ID=$(echo "$WORKFLOWS_BODY" | grep -o "\"id\":[0-9]*,\"node_id\":\"[^\"]*\",\"name\":\"[^\"]*\",\"path\":\".*${WORKFLOW_PATH}\"" | grep -o "\"id\":[0-9]*" | head -1 | cut -d':' -f2)
+        fi
+        
+        if [ -n "$WORKFLOW_ID" ]; then
+            log_info "找到工作流 ID: $WORKFLOW_ID"
+        else
+            log_warning "工作流 $WORKFLOW_FILE 未在可用工作流列表中找到"
+            log_info "可用工作流列表："
+            echo "$WORKFLOWS_BODY" | grep -o "\"path\":\"[^\"]*\"" | sed 's/"path":"//;s/"//' | head -10
+        fi
+    else
+        log_warning "无法获取工作流列表 (HTTP $WORKFLOWS_HTTP_CODE)，继续尝试触发..."
+    fi
+    
+    # 使用 workflow_dispatch API 触发对应应用的工作流
+    # 优先使用工作流 ID，如果没有则使用文件名
+    if [ -n "$WORKFLOW_ID" ]; then
+        WORKFLOW_IDENTIFIER="$WORKFLOW_ID"
+        log_info "使用工作流 ID 触发: $WORKFLOW_IDENTIFIER"
+    else
+        WORKFLOW_IDENTIFIER="$WORKFLOW_FILE"
+        log_info "使用工作流文件名触发: $WORKFLOW_IDENTIFIER"
+    fi
+    
+    log_info "使用 workflow_dispatch 触发 $WORKFLOW_FILE 工作流..."
     RESPONSE=$(curl -s -w "\n%{http_code}" \
         -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer $GITHUB_TOKEN" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/json" \
-        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
         -d "{
-            \"event_type\": \"deploy-apps\",
-            \"client_payload\": {
-                \"apps\": \"$APP_NAME\",
-                \"environment\": \"production\",
-                \"github_sha\": \"$GIT_SHA\"
-            }
+            \"ref\": \"master\"
         }" 2>&1)
     
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
     
-    # 如果 repository_dispatch 失败，尝试 workflow_dispatch
-    if [ "$HTTP_CODE" -ne 204 ]; then
-        log_warning "repository_dispatch 失败 (HTTP $HTTP_CODE)，尝试 workflow_dispatch..."
-        
-        # 方法2: 使用 workflow_dispatch API（需要工作流文件名）
-        RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "Content-Type: application/json" \
-            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/deploy-only.yml/dispatches" \
-            -d "{
-                \"ref\": \"master\",
-                \"inputs\": {
-                    \"apps\": \"$APP_NAME\",
-                    \"environment\": \"production\",
-                    \"github_sha\": \"$GIT_SHA\"
-                }
-            }" 2>&1)
-        
-        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-        RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
-    fi
-    
     if [ "$HTTP_CODE" -eq 204 ]; then
-        log_success "✅ 轻量级部署工作流已触发"
+        log_success "✅ 工作流已触发 (workflow_dispatch)"
         log_info "查看工作流运行状态: https://github.com/$GITHUB_REPO/actions"
+        log_info "查找 'Deploy $APP_NAME' 工作流的最新运行"
         log_info ""
         log_info "📋 部署信息:"
         log_info "  - 应用: $APP_NAME"
+        log_info "  - 工作流: $WORKFLOW_FILE"
         log_info "  - 环境: production"
         log_info "  - SHA: $GIT_SHA"
+        log_info "  - 分支: master"
+    else
+        log_error "⚠️  触发部署工作流失败 (HTTP $HTTP_CODE)"
+        if [ -n "$RESPONSE_BODY" ]; then
+            log_warning "响应: $RESPONSE_BODY"
+        fi
+        log_info ""
+        
+        if [ "$HTTP_CODE" -eq 404 ]; then
+            log_error "❌ 工作流未找到: $WORKFLOW_FILE 可能不在 master 分支上"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 确保 .github/workflows/$WORKFLOW_FILE 文件存在于 master 分支"
+            log_info "  2. 检查工作流文件路径是否正确"
+            log_info "  3. 确保工作流文件已提交并推送到 master 分支"
+            log_info "  4. 检查工作流文件名是否正确（应该是 deploy-${APP_NAME}.yml）"
+        elif [ "$HTTP_CODE" -eq 401 ]; then
+            log_error "❌ 认证失败: Token 无效或已过期"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 检查 Token 是否有效: https://github.com/settings/tokens"
+            log_info "  2. 如果 Token 已过期，重新生成"
+            log_info "  3. 确保 Token 有 actions:write 权限"
+        elif [ "$HTTP_CODE" -eq 403 ]; then
+            log_error "❌ 权限不足: Token 缺少必要的权限"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 确保 Token 具有以下权限:"
+            log_info "     - actions:write (触发工作流)"
+            log_info "     - repo (如果仓库是私有的)"
+            log_info "  2. 重新生成 Token 并设置正确的权限"
+        else
+            log_error "❌ 未知错误 (HTTP $HTTP_CODE)"
+            log_info ""
+            log_info "💡 可能的原因:"
+            log_info "  - 工作流文件语法错误"
+            log_info "  - 工作流文件不在 master 分支上"
+            log_info "  - GitHub API 临时问题"
+            log_info ""
+            log_info "💡 解决方案:"
+            log_info "  1. 手动在 GitHub 上触发工作流测试"
+            log_info "  2. 检查工作流文件: .github/workflows/deploy-only.yml"
+            log_info "  3. 确保工作流文件已提交到 master 分支"
+        fi
+        exit 1
+    fi
     else
         log_error "⚠️  触发部署工作流失败 (HTTP $HTTP_CODE)"
         log_warning "响应: $RESPONSE_BODY"

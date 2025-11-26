@@ -3,16 +3,35 @@
  * 提供所有设置的变更处理方法
  */
 
-import { useSettingsState } from './useSettingsState';
+// 使用延迟加载避免循环依赖
+// 静态导入会导致模块加载时立即执行，可能形成循环依赖
 import { BoxStyleType, ContainerWidthEnum } from '../config/enums';
 import type { SystemThemeEnum, MenuThemeEnum, MenuTypeEnum } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
+
+// 使用延迟导入避免循环依赖
+// 即使在同一 chunk 中，静态导入仍然会在模块加载时触发模块加载，
+// 这可能导致循环依赖问题，特别是在打包后的代码中
+// 改为在函数内部从全局缓存获取，避免静态导入
+// import { useSettingsState } from './useSettingsState';
 
 /**
  * 设置处理器组合式函数
  */
 export function useSettingsHandlers() {
-  const settingsState = useSettingsState();
+  // 从全局缓存获取 useSettingsState，避免静态导入导致的循环依赖
+  // useSettingsState 模块在加载时会将自己暴露到 globalThis
+  // 使用延迟获取，确保模块已经初始化
+  const getUseSettingsState = () => {
+  const useSettingsStateModule = (globalThis as any).__USE_SETTINGS_STATE_MODULE__;
+  if (!useSettingsStateModule || !useSettingsStateModule.useSettingsState) {
+      // 如果模块还没有加载，尝试等待一下（这种情况不应该发生，但为了安全起见）
+    throw new Error('useSettingsState module not loaded. This should not happen if modules are loaded in the correct order.');
+  }
+    return useSettingsStateModule.useSettingsState();
+  };
+  
+  const settingsState = getUseSettingsState();
 
   // DOM 操作相关
   const domOperations = {

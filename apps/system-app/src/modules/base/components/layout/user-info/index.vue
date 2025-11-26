@@ -75,7 +75,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useSettingsState } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useUser } from '@/composables/useUser';
 import { useLogout } from '@/composables/useLogout';

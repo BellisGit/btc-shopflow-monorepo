@@ -1,6 +1,12 @@
 import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
-import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
+import { getAppConfig } from '@configs/app-env.config';
+
+// 获取主应用配置（用于判断当前是否在主应用预览端口）
+const MAIN_APP_CONFIG = getAppConfig('system-app');
+const MAIN_APP_PREVIEW_PORT = MAIN_APP_CONFIG?.prePort || '4180';
+// 使用动态导入避免循环依赖导致的打包错误
+// import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 
 /**
  * 清除所有 #Loading 元素（可能来自子应用的 index.html）
@@ -22,12 +28,24 @@ function clearLoadingElement() {
     }, 100);
   }
 }
-import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
-import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
+
 import { getManifestTabs, getManifestMenus } from './manifests';
-import { useProcessStore, getCurrentAppFromPath } from '../store/process';
-import { appStorage } from '../utils/app-storage';
 import { assignIconsToMenuTree } from '@btc/shared-core';
+
+// 定义类型，避免直接导入（在函数内部动态导入）
+type TabMeta = {
+  key: string;
+  title: string;
+  path: string;
+  i18nKey?: string;
+};
+
+type MenuItem = {
+  index: string;
+  title: string;
+  icon?: string;
+  children?: MenuItem[];
+};
 
 
 // 应用名称映射（用于显示友好的中文名称）
@@ -38,11 +56,14 @@ const appNameMap: Record<string, string> = {
   production: '生产应用',
 };
 
-export function registerManifestTabsForApp(appName: string) {
+export async function registerManifestTabsForApp(appName: string) {
   const tabs = getManifestTabs(appName);
   if (!tabs.length) {
     return;
   }
+
+  // 动态导入避免循环依赖
+  const { registerTabs } = await import('../store/tabRegistry');
 
   const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
     key: tab.key,
@@ -59,16 +80,16 @@ export function registerManifestTabsForApp(appName: string) {
 function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
   // 创建已使用图标集合（用于域内去重），如果已存在则复用
   const iconSet = usedIcons || new Set<string>();
-  
+
   // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
   const itemsWithLabelKey = items.map(item => ({
     ...item,
     labelKey: item.labelKey || item.title || item.label,
   }));
-  
+
   // 使用智能图标分配工具（会递归处理所有子菜单）
   const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
-  
+
   // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
   const convertToMenuItem = (item: any): MenuItem => ({
     index: item.index,
@@ -78,7 +99,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
       ? item.children.map(convertToMenuItem)
       : undefined,
   });
-  
+
   // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
   return itemsWithIcons.map(convertToMenuItem);
 }
@@ -112,8 +133,12 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
   return true;
 }
 
-export function registerManifestMenusForApp(appName: string) {
+export async function registerManifestMenusForApp(appName: string) {
   const menus = getManifestMenus(appName);
+
+  // 动态导入避免循环依赖
+  const { getMenusForApp, registerMenus } = await import('../store/menuRegistry');
+
   if (!menus.length) {
     // 如果菜单为空，且当前应用已经有菜单，则保留现有菜单，避免清空
     // 这对于系统域特别重要，因为系统域是默认应用，不应该被清空
@@ -189,6 +214,362 @@ function filterQiankunLogs() {
   };
 }
 
+// 创建 entry 映射，用于在拦截器中查找应用的入口地址
+// 注意：这个映射需要在 setupQiankun 外部定义，以便拦截器可以访问
+// 使用懒加载模式，避免构建时的循环依赖问题
+let globalEntryMap: Map<string, string> | null = null;
+
+// 关键：在模块级别尽早设置全局资源拦截器
+// 这确保拦截器在页面加载时就能拦截所有资源请求，包括动态 import
+// 使用立即执行函数（IIFE）来避免在构建时执行代码
+if (typeof window !== 'undefined') {
+  // 在浏览器环境中，立即设置拦截器
+  (function() {
+    // 全局拦截 fetch 请求，修复从错误端口加载的资源
+    const originalFetch = window.fetch;
+    // 标记拦截器已设置，防止被覆盖
+    (window as any).__btc_resource_interceptor_set__ = true;
+    window.fetch = function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+      let url: string;
+      if (typeof input === 'string') {
+        url = input;
+      } else if (input instanceof URL) {
+        url = input.href;
+      } else {
+        url = input.url;
+      }
+
+      // 判断是否是资源文件
+      const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
+
+      // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
+      const currentPort = window.location.port;
+      if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+        // 如果当前在子应用路径下，检查 URL 是否需要修复
+        const currentPath = window.location.pathname;
+        let targetAppName: string | null = null;
+
+        if (currentPath.startsWith('/admin')) {
+          targetAppName = 'admin';
+        } else if (currentPath.startsWith('/logistics')) {
+          targetAppName = 'logistics';
+        } else if (currentPath.startsWith('/engineering')) {
+          targetAppName = 'engineering';
+        } else if (currentPath.startsWith('/quality')) {
+          targetAppName = 'quality';
+        } else if (currentPath.startsWith('/production')) {
+          targetAppName = 'production';
+        } else if (currentPath.startsWith('/finance')) {
+          targetAppName = 'finance';
+        }
+
+        // 如果当前在子应用路径下，尝试修复 URL
+        if (targetAppName) {
+          try {
+            // 延迟获取 entryMap，避免构建时的循环依赖
+            const entryMap = getGlobalEntryMap();
+            const appEntry = entryMap.get(targetAppName);
+            if (appEntry && !appEntry.startsWith('/')) {
+              const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+              if (entryMatch) {
+                const targetPort = entryMatch[4] || '';
+                if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                  const currentHost = window.location.hostname;
+                  const protocol = window.location.protocol;
+                  let needsFix = false;
+                  let fixedUrl = url;
+
+                  // 情况1：URL 包含错误的端口（主应用预览端口）- 这是最常见的情况
+                  // 检查 URL 中是否包含主应用预览端口或当前端口
+                  const portRegex = new RegExp(`:${currentPort}(?=/|$|\\s)`, 'g');
+                  if (portRegex.test(url)) {
+                    fixedUrl = url.replace(portRegex, `:${targetPort}`);
+                    needsFix = true;
+                  }
+                  // 情况2：相对路径的资源文件（以 / 开头）
+                  else if (url.startsWith('/') && !url.startsWith('//')) {
+                    fixedUrl = `${protocol}//${currentHost}:${targetPort}${url}`;
+                    needsFix = true;
+                  }
+                  // 情况3：协议相对路径（//host/），但没有端口或端口错误
+                  else if (url.startsWith('//')) {
+                    // 检查是否是当前 hostname 或 localhost
+                    const hostMatch = url.match(/^\/\/([^:/]+)(?::(\d+))?/);
+                    if (hostMatch) {
+                      const urlHost = hostMatch[1];
+                      const urlPort = hostMatch[2];
+                      // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
+                      if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                        fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
+                        needsFix = true;
+                      }
+                    }
+                  }
+                  // 情况4：相对路径但包含 /assets/（可能以 ./ 或 ../ 开头）
+                  else if (url.includes('/assets/') && !url.includes('://') && !url.startsWith('/') && !url.startsWith('data:') && !url.startsWith('blob:')) {
+                    fixedUrl = `${protocol}//${currentHost}:${targetPort}/${url.replace(/^\.\/?/, '')}`;
+                    needsFix = true;
+                  }
+
+                  if (needsFix && fixedUrl !== url) {
+                    console.log(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
+                    // 使用修复后的 URL 调用原始 fetch
+                    if (typeof input === 'string') {
+                      return originalFetch.call(this, fixedUrl, init);
+                    } else if (input instanceof URL) {
+                      return originalFetch.call(this, new URL(fixedUrl), init);
+                    } else {
+                      return originalFetch.call(this, new Request(fixedUrl, input), init);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            // 如果获取 entryMap 失败，继续使用原始 URL
+            console.error('[资源拦截器] 获取 entryMap 失败:', error);
+          }
+        }
+      }
+
+      // 默认行为：先执行原始请求
+      return originalFetch.call(this, input as any, init).then(async (response) => {
+        // 如果响应是 HTML（说明可能是 404 页面），且请求的是 JavaScript 文件，尝试修复并重试
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html') && isAssetFile && url.includes('/assets/')) {
+          const currentPath = window.location.pathname;
+          let targetAppName: string | null = null;
+
+          if (currentPath.startsWith('/admin')) {
+            targetAppName = 'admin';
+          } else if (currentPath.startsWith('/logistics')) {
+            targetAppName = 'logistics';
+          } else if (currentPath.startsWith('/engineering')) {
+            targetAppName = 'engineering';
+          } else if (currentPath.startsWith('/quality')) {
+            targetAppName = 'quality';
+          } else if (currentPath.startsWith('/production')) {
+            targetAppName = 'production';
+          } else if (currentPath.startsWith('/finance')) {
+            targetAppName = 'finance';
+          }
+
+          if (targetAppName && currentPort === MAIN_APP_PREVIEW_PORT) {
+            try {
+              const entryMap = getGlobalEntryMap();
+              const appEntry = entryMap.get(targetAppName);
+              if (appEntry && !appEntry.startsWith('/')) {
+                const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+                if (entryMatch) {
+                  const targetPort = entryMatch[4] || '';
+                  if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                    const currentHost = window.location.hostname;
+                    const protocol = window.location.protocol;
+
+                    // 提取文件名
+                    const fileName = url.split('/').pop() || '';
+                    // 尝试从正确的端口加载
+                    const fixedUrl = `${protocol}//${currentHost}:${targetPort}/assets/${fileName}`;
+
+                    console.log(`[Resource Interceptor] 检测到 404，尝试修复路径: ${url} -> ${fixedUrl}`);
+                    const retryResponse = await originalFetch.call(this, fixedUrl, init);
+                    const retryContentType = retryResponse.headers.get('content-type');
+
+                    // 如果返回的是 JavaScript，使用修复后的响应
+                    if (retryContentType && (retryContentType.includes('application/javascript') ||
+                        retryContentType.includes('text/javascript') ||
+                        retryContentType.includes('application/x-javascript'))) {
+                      return retryResponse;
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('[资源拦截器] 重试失败:', error);
+            }
+          }
+        }
+
+        return response;
+      });
+    };
+  })();
+}
+
+/**
+ * 获取或初始化全局 entry 映射
+ * 延迟初始化，避免构建时的循环依赖问题
+ */
+function getGlobalEntryMap(): Map<string, string> {
+  if (!globalEntryMap) {
+    globalEntryMap = new Map<string, string>();
+    // 延迟访问 microApps，确保在运行时才执行
+    const apps = microApps;
+    apps.forEach(app => {
+      globalEntryMap!.set(app.name, app.entry);
+    });
+  }
+  return globalEntryMap;
+}
+
+/**
+ * 初始化全局资源拦截器
+ * 必须在页面加载时尽早设置，确保能拦截所有资源请求
+ */
+function setupGlobalResourceInterceptor() {
+  // 确保 globalEntryMap 已初始化
+  getGlobalEntryMap();
+
+  // 全局拦截 fetch 请求，修复从错误端口加载的资源
+  // 这是最后的兜底方案，确保所有资源请求都能被正确修复
+  const originalFetch = window.fetch;
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    let url: string;
+    if (typeof input === 'string') {
+      url = input;
+    } else if (input instanceof URL) {
+      url = input.href;
+    } else {
+      url = input.url;
+    }
+
+    // 关键：在主应用预览端口下，检查所有资源请求
+    // 包括：/assets/ 路径、.js 文件、相对路径等
+    // 判断是否是资源文件
+    const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
+
+    // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
+    const currentPort = window.location.port;
+    if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+      // 如果当前在子应用路径下，检查 URL 是否需要修复
+      const currentPath = window.location.pathname;
+      let targetAppName: string | null = null;
+
+      if (currentPath.startsWith('/admin')) {
+        targetAppName = 'admin';
+      } else if (currentPath.startsWith('/logistics')) {
+        targetAppName = 'logistics';
+      } else if (currentPath.startsWith('/engineering')) {
+        targetAppName = 'engineering';
+      } else if (currentPath.startsWith('/quality')) {
+        targetAppName = 'quality';
+      } else if (currentPath.startsWith('/production')) {
+        targetAppName = 'production';
+      } else if (currentPath.startsWith('/finance')) {
+        targetAppName = 'finance';
+      }
+
+      // 如果当前在子应用路径下，尝试修复 URL
+      if (targetAppName) {
+        const appEntry = getGlobalEntryMap().get(targetAppName);
+        if (appEntry && !appEntry.startsWith('/')) {
+          const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+          if (entryMatch) {
+            const targetPort = entryMatch[4] || '';
+            if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+              const currentHost = window.location.hostname;
+              const protocol = window.location.protocol;
+              let needsFix = false;
+              let fixedUrl = url;
+
+              // 情况1：URL 包含错误的端口（主应用预览端口）- 这是最常见的情况
+              // 检查 URL 中是否包含主应用预览端口或当前端口
+              const portRegex = new RegExp(`:${currentPort}(?=/|$|\\s)`, 'g');
+              const mainPortRegex = new RegExp(`:${MAIN_APP_PREVIEW_PORT}(?=/|$|\\s)`, 'g');
+              if (portRegex.test(url) || mainPortRegex.test(url)) {
+                fixedUrl = url.replace(portRegex, `:${targetPort}`).replace(mainPortRegex, `:${targetPort}`);
+                needsFix = true;
+              }
+              // 情况2：相对路径的资源文件（以 / 开头）
+              else if (url.startsWith('/') && !url.startsWith('//')) {
+                fixedUrl = `${protocol}//${currentHost}:${targetPort}${url}`;
+                needsFix = true;
+              }
+              // 情况3：协议相对路径（//host/），但没有端口或端口错误
+              else if (url.startsWith('//')) {
+                // 检查是否是当前 hostname 或 localhost
+                const hostMatch = url.match(/^\/\/([^:/]+)(?::(\d+))?/);
+                if (hostMatch) {
+                  const urlHost = hostMatch[1];
+                  const urlPort = hostMatch[2];
+                  // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
+                  if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                    fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
+                    needsFix = true;
+                  }
+                }
+              }
+              // 情况4：相对路径但包含 /assets/（可能以 ./ 或 ../ 开头）
+              else if (url.includes('/assets/') && !url.includes('://') && !url.startsWith('/') && !url.startsWith('data:') && !url.startsWith('blob:')) {
+                fixedUrl = `${protocol}//${currentHost}:${targetPort}/${url.replace(/^\.\/?/, '')}`;
+                needsFix = true;
+              }
+
+              if (needsFix && fixedUrl !== url) {
+                console.log(`[Resource Interceptor] 修复资源路径: ${url} -> ${fixedUrl}`);
+                // 使用修复后的 URL 调用原始 fetch
+                if (typeof input === 'string') {
+                  return originalFetch.call(this, fixedUrl, init);
+                } else if (input instanceof URL) {
+                  return originalFetch.call(this, new URL(fixedUrl), init);
+                } else {
+                  return originalFetch.call(this, new Request(fixedUrl, input), init);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 默认行为
+    return originalFetch.call(this, input as any, init);
+  };
+
+
+  // 同时拦截 XMLHttpRequest（qiankun 可能使用它）
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null) {
+    let urlStr = typeof url === 'string' ? url : url.href;
+
+    // 检查是否是资源请求且从错误的端口加载
+    if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === MAIN_APP_PREVIEW_PORT) {
+      // 根据当前路径判断是哪个应用
+      const currentPath = window.location.pathname;
+      let targetAppName: string | null = null;
+
+      if (currentPath.startsWith('/admin')) {
+        targetAppName = 'admin';
+      } else if (currentPath.startsWith('/logistics')) {
+        targetAppName = 'logistics';
+      } else if (currentPath.startsWith('/engineering')) {
+        targetAppName = 'engineering';
+      } else if (currentPath.startsWith('/quality')) {
+        targetAppName = 'quality';
+      } else if (currentPath.startsWith('/production')) {
+        targetAppName = 'production';
+      } else if (currentPath.startsWith('/finance')) {
+        targetAppName = 'finance';
+      }
+
+      if (targetAppName) {
+        const appEntry = getGlobalEntryMap().get(targetAppName);
+        if (appEntry && !appEntry.startsWith('/')) {
+          const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+          if (entryMatch) {
+            const port = entryMatch[4] || '';
+            if (port && port !== MAIN_APP_PREVIEW_PORT) {
+              urlStr = urlStr.replace(`:${window.location.port}`, `:${port}`);
+            }
+          }
+        }
+      }
+    }
+
+    return originalXHROpen.call(this, method, urlStr, async ?? true, username ?? null, password ?? null);
+  };
+}
+
 /**
  * 初始化qiankun微前端
  */
@@ -196,8 +577,23 @@ export function setupQiankun() {
   // 过滤 qiankun 日志
   filterQiankunLogs();
 
+  // 检查拦截器是否已被设置（模块级别已设置）
+  if (!(window as any).__btc_resource_interceptor_set__) {
+    // 如果模块级别的拦截器没有被设置，在这里设置
+    setupGlobalResourceInterceptor();
+  } else {
+    // 确保 globalEntryMap 已初始化
+    getGlobalEntryMap();
+  }
+
   // 获取当前语言
   const currentLocale = getCurrentLocale();
+
+  // 创建 entry 映射，用于在 getTemplate 中查找应用的入口地址
+  const entryMap = new Map<string, string>();
+  microApps.forEach(app => {
+    entryMap.set(app.name, app.entry);
+  });
 
   // 注册子应用，传递当前语言和 Tab 管理回调
   const appsWithProps = microApps.map(app => {
@@ -226,10 +622,9 @@ export function setupQiankun() {
       },
     };
 
-    // 打印超时配置，便于调试
-    // if (app.name === 'admin') {
-    //   console.log(`[qiankun] 管理域应用超时配置:`, timeoutsConfig, '应用配置:', app);
-    // }
+    // 开发环境：打印应用配置，便于调试
+    if (import.meta.env.DEV) {
+    }
 
 
     return {
@@ -254,9 +649,15 @@ export function setupQiankun() {
           // finishLoading 应该在 afterMount 中统一调用
           // console.log(`[qiankun] 子应用 ${app.name} onReady 完成，等待 afterMount 清除 loading 状态`);
       },
-      // Tab 管理 API
-      registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
-      clearTabs: () => clearTabs(app.name),
+      // Tab 管理 API（使用动态导入避免循环依赖）
+      registerTabs: async (tabs: TabMeta[]) => {
+        const { registerTabs: registerTabsFn } = await import('../store/tabRegistry');
+        registerTabsFn(app.name, tabs);
+      },
+      clearTabs: async () => {
+        const { clearTabs: clearTabsFn } = await import('../store/tabRegistry');
+        clearTabsFn(app.name);
+      },
       setActiveTab: (tabKey: string) => {
         // console.log('[Main] Sub-app set active tab:', app.name, tabKey);
       },
@@ -264,14 +665,147 @@ export function setupQiankun() {
     // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
     // 这是解决 Vite 子应用 ES 模块加载问题的关键配置
     scriptType: 'module' as const,
-      // 自定义 getTemplate：确保所有 script 标签都有 type="module"
-    getTemplate: (tpl: string) => {
-      return tpl.replace(
+      // 自定义 getTemplate：确保所有 script 标签都有 type="module"，并修复资源路径
+      getTemplate: (tpl: string) => {
+      // 获取子应用的入口地址（用于修复相对路径的资源）
+      const entryUrl = app.entry;
+      let processedTpl = tpl;
+
+      // 修复相对路径的资源（script src、link href）
+      // 将相对路径转换为绝对路径，使用子应用的入口地址作为基础
+      if (entryUrl && !entryUrl.startsWith('/')) {
+        // 解析入口地址，获取协议、主机和端口
+        const entryMatch = entryUrl.match(/^(\/\/)([^:]+)(:(\d+))?/);
+        if (entryMatch) {
+          const protocol = window.location.protocol;
+          // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
+          // 这样可以支持通过 IP 地址访问（如 10.80.8.199）
+          const currentHost = window.location.hostname;
+          const port = entryMatch[4] || '';
+          const baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
+
+          // 修复所有 script src 中的相对路径（包括已经包含端口的错误路径）
+          processedTpl = processedTpl.replace(
+            /<script([^>]*?)\s+src\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+            (match, before, src, after) => {
+              // 如果 src 已经是完整 URL 且端口正确，直接返回
+              // 检查是否匹配当前 hostname 和正确的端口
+              if ((src.includes(`://${currentHost}:${port}/`) || src.includes(`//${currentHost}:${port}/`)) ||
+                  (src.includes(`://localhost:${port}/`) || src.includes(`//localhost:${port}/`))) {
+                return match;
+              }
+
+              // 如果 src 是相对路径（以 / 开头），转换为完整的 URL
+              if (src.startsWith('/')) {
+                const fullUrl = `${baseUrl}${src}`;
+                return `<script${before} src="${fullUrl}"${after}>`;
+              }
+              // 如果 src 是相对路径（不以 / 开头，如 assets/file.js），也转换为完整的 URL
+              if (!src.includes('://') && !src.startsWith('//') && !src.startsWith('data:') && !src.startsWith('blob:')) {
+                // 确保以 / 开头
+                const normalizedSrc = src.startsWith('/') ? src : `/${src}`;
+                const fullUrl = `${baseUrl}${normalizedSrc}`;
+                return `<script${before} src="${fullUrl}"${after}>`;
+              }
+              // 如果 src 是绝对路径但包含错误的端口（主应用预览端口或其他主应用端口），修复它
+              const currentPort = window.location.port;
+              // 检查是否包含错误的端口（当前页面的端口），且 hostname 匹配
+              const isWrongPort = (src.includes(`://${currentHost}:${currentPort}/`) ||
+                                   src.includes(`//${currentHost}:${currentPort}/`) ||
+                                   src.includes(`://localhost:${currentPort}/`) ||
+                                   src.includes(`//localhost:${currentPort}/`));
+              if (isWrongPort && currentPort !== port) {
+                // 替换所有出现的错误端口和 hostname
+                let fixedUrl = src.replace(new RegExp(`://${currentHost}:${currentPort}(?=/|"|'|$)`, 'g'), `://${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`//${currentHost}:${currentPort}(?=/|"|'|$)`, 'g'), `//${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`://localhost:${currentPort}(?=/|"|'|$)`, 'g'), `://${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`//localhost:${currentPort}(?=/|"|'|$)`, 'g'), `//${currentHost}:${port}`);
+                return `<script${before} src="${fixedUrl}"${after}>`;
+              }
+              // 如果 src 是协议相对路径（//host/），添加正确的端口
+              // 匹配当前 hostname 或 localhost（因为配置中可能使用 localhost）
+              if ((src.startsWith(`//${currentHost}/`) || src.startsWith(`//localhost/`)) && !src.includes(':')) {
+                const fixedUrl = port ? src.replace(/^\/\/[^/]+\//, `//${currentHost}:${port}/`) : src.replace(/^\/\/[^/]+\//, `//${currentHost}/`);
+                return `<script${before} src="${fixedUrl}"${after}>`;
+              }
+              return match;
+            }
+          );
+
+          // 修复 link href 中的相对路径
+          processedTpl = processedTpl.replace(
+            /<link([^>]*?)\s+href\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+            (match, before, href, after) => {
+              // 如果 href 已经是完整 URL 且端口正确，直接返回
+              if ((href.includes(`://${currentHost}:${port}/`) || href.includes(`//${currentHost}:${port}/`)) ||
+                  (href.includes(`://localhost:${port}/`) || href.includes(`//localhost:${port}/`))) {
+                return match;
+              }
+
+              // 如果 href 是相对路径（以 / 开头），转换为完整的 URL
+              if (href.startsWith('/')) {
+                const fullUrl = `${baseUrl}${href}`;
+                return `<link${before} href="${fullUrl}"${after}>`;
+              }
+              // 如果 href 是绝对路径但包含错误的端口（主应用端口），修复它
+              const currentPort = window.location.port;
+              // 检查是否包含错误的端口（当前页面的端口），且 hostname 匹配
+              const isWrongPort = (href.includes(`://${currentHost}:${currentPort}/`) ||
+                                   href.includes(`//${currentHost}:${currentPort}/`) ||
+                                   href.includes(`://localhost:${currentPort}/`) ||
+                                   href.includes(`//localhost:${currentPort}/`));
+              if (isWrongPort && currentPort !== port) {
+                // 替换所有出现的错误端口和 hostname
+                let fixedUrl = href.replace(new RegExp(`://${currentHost}:${currentPort}(?=/|"|'|$)`, 'g'), `://${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`//${currentHost}:${currentPort}(?=/|"|'|$)`, 'g'), `//${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`://localhost:${currentPort}(?=/|"|'|$)`, 'g'), `://${currentHost}:${port}`);
+                fixedUrl = fixedUrl.replace(new RegExp(`//localhost:${currentPort}(?=/|"|'|$)`, 'g'), `//${currentHost}:${port}`);
+                return `<link${before} href="${fixedUrl}"${after}>`;
+              }
+              // 如果 href 是协议相对路径（//host/），添加正确的端口
+              // 匹配当前 hostname 或 localhost（因为配置中可能使用 localhost）
+              if ((href.startsWith(`//${currentHost}/`) || href.startsWith(`//localhost/`)) && !href.includes(':')) {
+                const fixedUrl = port ? href.replace(/^\/\/[^/]+\//, `//${currentHost}:${port}/`) : href.replace(/^\/\/[^/]+\//, `//${currentHost}/`);
+                return `<link${before} href="${fixedUrl}"${after}>`;
+              }
+              return match;
+            }
+          );
+
+          // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的端口
+          // 这会影响动态导入的模块路径解析
+          // 使用当前页面的 hostname 和正确的端口构建 base URL
+          const baseHref = `${protocol}//${currentHost}${port ? `:${port}` : ''}/`;
+          // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
+          processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');
+          // 在 <head> 标签内添加新的 <base> 标签
+          if (processedTpl.includes('<head')) {
+            processedTpl = processedTpl.replace(
+              /(<head[^>]*>)/i,
+              `$1<base href="${baseHref}">`
+            );
+          } else {
+            // 如果没有 <head> 标签，在 <html> 标签后添加
+            processedTpl = processedTpl.replace(
+              /(<html[^>]*>)/i,
+              `$1<base href="${baseHref}">`
+            );
+          }
+        }
+      }
+
+      // 确保所有 script 标签都有 type="module"
+      const finalTpl = processedTpl.replace(
         /<script(\s+[^>]*)?>/gi,
-          (match, attrs = '') => attrs.includes('type=')
-            ? match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"')
-            : `<script type="module"${attrs}>`
+          (match, attrs = '') => {
+            if (attrs.includes('type=')) {
+              return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
+            }
+            return `<script type="module"${attrs}>`;
+          }
       );
+
+      return finalTpl;
     },
     // 配置生命周期超时时间（single-spa 格式）
       // qiankun 会将 timeouts 配置传递给 single-spa
@@ -287,6 +821,7 @@ export function setupQiankun() {
       // 应用加载前（每次应用加载时都会调用，包括重复加载）
       beforeLoad: [(app) => {
         const appName = appNameMap[app.name] || app.name;
+
         // console.log(`[qiankun] 子应用 ${app.name} beforeLoad 开始`);
 
         // 关键：在加载子应用前，先清除可能存在的 #Loading 元素
@@ -309,7 +844,7 @@ export function setupQiankun() {
           const maxRetries = 4; // 最多重试 4 次（约 200ms）
           const retryDelay = 50; // 每次重试间隔 50ms
 
-          const ensureContainer = () => {
+          const ensureContainer = async () => {
                 const container = document.querySelector('#subapp-viewport') as HTMLElement;
 
             if (container && container.isConnected) {
@@ -320,12 +855,15 @@ export function setupQiankun() {
                   container.setAttribute('data-qiankun-loading', 'true');
 
               // 清理其他应用的 tabs/menus（快速操作，无阻塞）
+              // 动态导入避免循环依赖
+              const { clearTabsExcept } = await import('../store/tabRegistry');
+              const { clearMenusExcept } = await import('../store/menuRegistry');
               clearTabsExcept(app.name);
               clearMenusExcept(app.name);
               // 关键：先注册菜单，再注册 tabs，确保菜单在切换应用时不会丢失
               // 即使菜单内容相同，也要重新注册，因为可能被 clearMenusExcept 清空了
-              registerManifestMenusForApp(app.name);
-              registerManifestTabsForApp(app.name);
+              await registerManifestMenusForApp(app.name);
+              await registerManifestTabsForApp(app.name);
 
               // 先触发事件，确保 Layout 组件的 isQiankunLoading 状态被更新
               // 这样 shouldShowSubAppViewport 会返回 true，容器会显示，骨架屏会渲染
@@ -344,7 +882,7 @@ export function setupQiankun() {
             } else if (retryCount < maxRetries) {
               // 容器不存在，轻量重试
                   retryCount++;
-                    setTimeout(ensureContainer, retryDelay);
+                    setTimeout(() => ensureContainer(), retryDelay);
                   } else {
                     // 超过最大重试次数，报错
               // console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
@@ -359,7 +897,7 @@ export function setupQiankun() {
 
       // 应用挂载前（在 mount 之前调用，作为 beforeLoad 的兜底）
       // 如果 beforeLoad 被跳过（应用已加载过），这里确保 loading 状态被正确设置
-      beforeMount: [(_app) => {
+      beforeMount: [async (_app) => {
         const appName = appNameMap[_app.name] || _app.name;
         // console.log(`[qiankun] 子应用 ${_app.name} beforeMount 钩子被触发`);
 
@@ -392,11 +930,14 @@ export function setupQiankun() {
 
           // 关键修复：清理其他应用的 tabs/menus，并重新注册当前应用的菜单
           // 这是修复物流域菜单消失的关键：即使 beforeLoad 被跳过，也要确保菜单被注册
+          // 动态导入避免循环依赖
+          const { clearTabsExcept } = await import('../store/tabRegistry');
+          const { clearMenusExcept } = await import('../store/menuRegistry');
           clearTabsExcept(_app.name);
           clearMenusExcept(_app.name);
           // 关键：先注册菜单，再注册 tabs，确保菜单在切换应用时不会丢失
-          registerManifestMenusForApp(_app.name);
-          registerManifestTabsForApp(_app.name);
+          await registerManifestMenusForApp(_app.name);
+          await registerManifestTabsForApp(_app.name);
 
           // 由于骨架屏使用 v-show，它始终在 DOM 中
           // 但需要等待一个微任务，确保 Vue 的响应式更新完成（isQiankunLoading 已更新，骨架屏已显示）
@@ -411,7 +952,6 @@ export function setupQiankun() {
 
       // 应用挂载后
       afterMount: [(_app) => {
-        // console.log(`[qiankun] 子应用 ${_app.name} afterMount 钩子被触发`);
 
         // 关键：清除可能存在的 #Loading 元素（来自子应用的 index.html）
         // 这个元素会导致页面一直显示 loading 状态
@@ -434,7 +974,6 @@ export function setupQiankun() {
           container.style.removeProperty('display');
           container.style.removeProperty('visibility');
           container.style.removeProperty('opacity');
-          // console.log(`[qiankun] 子应用 ${_app.name} 容器状态已清理`);
 
           // 确保容器可见（使用 nextTick 确保 Vue 的响应式更新完成）
           // 使用 requestAnimationFrame 确保 DOM 更新完成
@@ -509,18 +1048,19 @@ export function setupQiankun() {
           window.dispatchEvent(new CustomEvent('qiankun:after-mount', {
             detail: { appName: _app.name }
           }));
-          // console.log(`[qiankun] 子应用 ${_app.name} afterMount 事件已触发`);
         });
 
         return Promise.resolve();
       }],
 
       // 应用卸载后
-      afterUnmount: [(app) => {
+      afterUnmount: [async (app) => {
         // console.log(`[qiankun] 子应用 ${app.name} afterUnmount 钩子被触发`);
-        // 离开子应用，清理其映射
-        clearTabs(app.name);
-        clearMenus(app.name);
+        // 离开子应用，清理其映射（使用动态导入避免循环依赖）
+        const { clearTabs: clearTabsFn } = await import('../store/tabRegistry');
+        const { clearMenus: clearMenusFn } = await import('../store/menuRegistry');
+        clearTabsFn(app.name);
+        clearMenusFn(app.name);
 
         // 关键：清除可能存在的 #Loading 元素（来自子应用的 index.html）
         // 这个元素会导致页面一直显示 loading 状态
@@ -541,14 +1081,651 @@ export function setupQiankun() {
     prefetch: false,
     sandbox: {
       strictStyleIsolation: false,
-      experimentalStyleIsolation: true,
+      experimentalStyleIsolation: false, // 关闭样式隔离：主应用和子应用样式共享
       loose: false,
     },
-    singular: true, // 单例模式：同时只能运行一个子应用
-    // 简化 importEntryOpts：只保留必要的 scriptType，删除重复的 getTemplate 和 fetch
+    singular: true, // 单例模式：同时只能运行一个子应用（子应用之间不会同时存在，因此不需要额外隔离）
+    // 关键：在 importEntryOpts 中配置 getTemplate 和 fetch，修复资源路径
     // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {
       scriptType: 'module', // 全局强制 module 类型，双重保险
+      // 自定义 fetch：拦截所有请求，包括 HTML 和资源文件
+      // 这是修复资源路径的关键：在获取 HTML 时就修复其中的资源路径
+      fetch: async (url: string, options?: RequestInit, ...args: any[]) => {
+
+        // 关键：在发送请求前，先检查 URL 是否需要修复
+        // 这可以避免请求错误的端口，导致服务器返回 HTML（404 页面）
+        const currentPath = window.location.pathname;
+        let targetAppName: string | null = null;
+
+        // 根据当前路径判断是哪个应用
+        if (currentPath.startsWith('/admin')) {
+          targetAppName = 'admin';
+        } else if (currentPath.startsWith('/logistics')) {
+          targetAppName = 'logistics';
+        } else if (currentPath.startsWith('/engineering')) {
+          targetAppName = 'engineering';
+        } else if (currentPath.startsWith('/quality')) {
+          targetAppName = 'quality';
+        } else if (currentPath.startsWith('/production')) {
+          targetAppName = 'production';
+        } else if (currentPath.startsWith('/finance')) {
+          targetAppName = 'finance';
+        }
+
+        // 如果当前在子应用路径下，且请求的 URL 包含错误的端口（主应用预览端口），需要修复
+        if (targetAppName && window.location.port === MAIN_APP_PREVIEW_PORT) {
+          const appEntry = entryMap.get(targetAppName);
+          if (appEntry && !appEntry.startsWith('/')) {
+            const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+            if (entryMatch) {
+              const port = entryMatch[4] || '';
+              const currentHost = window.location.hostname;
+              const protocol = window.location.protocol;
+              const currentPort = window.location.port;
+
+              // 判断是否是资源文件或 API 请求
+              const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
+
+              // 跳过 API 请求（以 /api/ 开头）
+              if (!url.includes('/api/')) {
+                let needsFix = false;
+                let fixedUrl = url;
+
+                // 检查多种情况：
+                // 1. URL 包含错误的端口（主应用端口）且是资源文件
+                if (isAssetFile && url.includes(`:${currentPort}`)) {
+                  fixedUrl = url.replace(new RegExp(`:${currentPort}(?=/|$)`, 'g'), port ? `:${port}` : '');
+                  needsFix = true;
+                }
+                // 2. URL 是相对路径（以 / 开头）且是资源文件
+                else if (isAssetFile && url.startsWith('/')) {
+                  fixedUrl = `${protocol}//${currentHost}:${port}${url}`;
+                  needsFix = true;
+                }
+                // 3. URL 是协议相对路径（//host/）且指向当前主机
+                else if (isAssetFile && url.startsWith(`//${currentHost}/`) && !url.includes(':')) {
+                  fixedUrl = `${protocol}//${currentHost}:${port}${url.slice(`//${currentHost}`.length)}`;
+                  needsFix = true;
+                }
+
+                if (needsFix && fixedUrl !== url) {
+                  url = fixedUrl;
+                }
+              }
+            }
+          }
+        }
+
+        // 执行请求（可能已经修复了 URL）
+        let response = await fetch(url, options);
+
+        // 如果是 HTML 请求（text/html），需要修复其中的资源路径
+        const contentType = response.headers.get('content-type');
+
+        // 关键：如果请求的是 JavaScript 文件，但返回的是 HTML（404 页面），说明路径错误
+        // 需要尝试修复路径并重新请求
+        if (targetAppName && contentType && contentType.includes('text/html') &&
+            (url.endsWith('.js') || url.endsWith('.mjs') || url.includes('/assets/'))) {
+          const appEntry = entryMap.get(targetAppName);
+          if (appEntry && !appEntry.startsWith('/')) {
+            const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+            if (entryMatch) {
+              const port = entryMatch[4] || '';
+              const currentHost = window.location.hostname;
+              const protocol = window.location.protocol;
+              const currentPort = window.location.port;
+
+              if (port && port !== currentPort) {
+                // 尝试修复 URL：替换端口
+                let fixedUrl = url;
+
+                // 如果 URL 包含错误的端口，替换它
+                if (url.includes(`:${currentPort}`)) {
+                  fixedUrl = url.replace(new RegExp(`:${currentPort}(?=/|$)`, 'g'), `:${port}`);
+                }
+                // 如果 URL 是相对路径，转换为绝对路径
+                else if (url.startsWith('/')) {
+                  fixedUrl = `${protocol}//${currentHost}:${port}${url}`;
+                }
+                // 如果 URL 只包含文件名，尝试从 /assets/ 路径加载
+                else if (!url.includes('://') && !url.includes('/')) {
+                  fixedUrl = `${protocol}//${currentHost}:${port}/assets/${url}`;
+                }
+
+                // 如果 URL 被修复了，重新请求
+                if (fixedUrl !== url) {
+                  const retryResponse = await fetch(fixedUrl, options);
+                  const retryContentType = retryResponse.headers.get('content-type');
+
+                  // 如果返回的是 JavaScript，使用修复后的响应
+                  if (retryContentType && (retryContentType.includes('application/javascript') ||
+                      retryContentType.includes('text/javascript') ||
+                      retryContentType.includes('application/x-javascript'))) {
+                    return retryResponse;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // 关键：如果请求的是 JavaScript 文件（.js），但返回的是 HTML，说明路径错误
+        // 需要修复 URL 并重新请求
+        if (contentType && contentType.includes('text/html') && url.endsWith('.js')) {
+
+          // 尝试修复 URL
+          if (targetAppName) {
+            const appEntry = entryMap.get(targetAppName);
+            if (appEntry && !appEntry.startsWith('/')) {
+              const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+              if (entryMatch) {
+                const port = entryMatch[4] || '';
+                const currentHost = window.location.hostname;
+                const protocol = window.location.protocol;
+
+                // 提取文件名
+                const fileName = url.split('/').pop() || '';
+
+                // 尝试从 /assets/ 路径加载
+                const fixedUrl = `${protocol}//${currentHost}:${port}/assets/${fileName}`;
+
+                // 重新请求
+                const retryResponse = await fetch(fixedUrl, options);
+                const retryContentType = retryResponse.headers.get('content-type');
+
+                if (retryContentType && retryContentType.includes('application/javascript')) {
+                  return retryResponse;
+                }
+              }
+            }
+          }
+        }
+
+        if (contentType && contentType.includes('text/html')) {
+
+          // 克隆响应以便读取内容
+          const clonedResponse = response.clone();
+          const html = await clonedResponse.text();
+
+          // 修复 HTML 中的资源路径
+          let fixedHtml = html;
+
+          // 从 URL 推断应用的入口地址
+          // URL 格式可能是：http://10.80.8.199:4182/ 或 //10.80.8.199:4182/
+          // 需要匹配子应用的入口地址
+          let matchedAppEntry: string | null = null;
+          let matchedAppName: string | null = null;
+
+          for (const [appName, appEntry] of entryMap.entries()) {
+            if (appEntry && !appEntry.startsWith('/')) {
+              // 解析入口地址
+              const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+              if (entryMatch) {
+                const entryHost = entryMatch[2];
+                const entryPort = entryMatch[4] || '';
+
+                // 检查 URL 是否匹配这个入口地址
+                // URL 可能是完整 URL 或协议相对 URL
+                const urlMatch = url.match(/^(https?:\/\/|\/\/)([^:]+)(:(\d+))?/);
+                if (urlMatch) {
+                  const urlHost = urlMatch[2];
+                  const urlPort = urlMatch[4] || '';
+
+                  // 匹配主机和端口
+                  if (urlHost === entryHost && urlPort === entryPort) {
+                    matchedAppEntry = appEntry;
+                    matchedAppName = appName;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          // 如果找到了匹配的应用，修复 HTML 中的资源路径
+          if (matchedAppEntry && matchedAppName) {
+            const entryMatch = matchedAppEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+            if (entryMatch) {
+              const protocol = window.location.protocol;
+              const host = entryMatch[2];
+              const port = entryMatch[4] || '';
+              const baseUrl = `${protocol}//${host}${port ? `:${port}` : ''}`;
+
+              // 修复 script src 中的相对路径和错误的绝对路径
+              fixedHtml = fixedHtml.replace(
+                /<script([^>]*?)\s+src\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+                (match, before, src, after) => {
+                  // 如果 src 是相对路径（以 / 开头），转换为完整的 URL
+                  if (src.startsWith('/')) {
+                    const fullUrl = `${baseUrl}${src}`;
+                    return `<script${before} src="${fullUrl}"${after}>`;
+                  }
+                  // 如果 src 是绝对路径但包含错误的端口（当前页面的端口），修复它
+                  if ((src.startsWith('http://') || src.startsWith('https://') || src.startsWith('//'))
+                      && window.location.port === MAIN_APP_PREVIEW_PORT && src.includes(`:${window.location.port}`)) {
+                    const fixedUrl = src.replace(`:${window.location.port}`, `:${port}`);
+                    return `<script${before} src="${fixedUrl}"${after}>`;
+                  }
+                  return match;
+                }
+              );
+
+              // 修复 link href 中的相对路径和错误的绝对路径
+              fixedHtml = fixedHtml.replace(
+                /<link([^>]*?)\s+href\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+                (match, before, href, after) => {
+                  // 如果 href 是相对路径（以 / 开头），转换为完整的 URL
+                  if (href.startsWith('/')) {
+                    const fullUrl = `${baseUrl}${href}`;
+                    return `<link${before} href="${fullUrl}"${after}>`;
+                  }
+                  // 如果 href 是绝对路径但包含错误的端口（当前页面的端口），修复它
+                  if ((href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))
+                      && window.location.port === MAIN_APP_PREVIEW_PORT && href.includes(`:${window.location.port}`)) {
+                    const fixedUrl = href.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
+                    return `<link${before} href="${fixedUrl}"${after}>`;
+                  }
+                  return match;
+                }
+              );
+
+              // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的端口
+              // 这会影响动态导入的模块路径解析
+              // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
+              fixedHtml = fixedHtml.replace(/<base[^>]*>/gi, '');
+              // 在 <head> 标签内添加新的 <base> 标签
+              if (fixedHtml.includes('<head')) {
+                fixedHtml = fixedHtml.replace(
+                  /(<head[^>]*>)/i,
+                  `$1<base href="${baseUrl}/">`
+                );
+              } else {
+                // 如果没有 <head> 标签，在 <html> 标签后添加
+                fixedHtml = fixedHtml.replace(
+                  /(<html[^>]*>)/i,
+                  `$1<base href="${baseUrl}/">`
+                );
+              }
+            }
+          }
+
+          // 返回修复后的 HTML
+          return new Response(fixedHtml, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
+        }
+
+        // 如果是资源文件请求且包含错误的端口，修复它（在响应处理之后，作为最后的兜底）
+        // 关键：检查 URL 是否包含当前页面的端口（主应用预览端口），如果是，说明需要修复
+        const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
+        if (isAssetFile && window.location.port === MAIN_APP_PREVIEW_PORT) {
+          // 根据当前路径判断是哪个应用
+          const currentPath = window.location.pathname;
+          let targetAppName: string | null = null;
+
+          if (currentPath.startsWith('/admin')) {
+            targetAppName = 'admin';
+          } else if (currentPath.startsWith('/logistics')) {
+            targetAppName = 'logistics';
+          } else if (currentPath.startsWith('/engineering')) {
+            targetAppName = 'engineering';
+          } else if (currentPath.startsWith('/quality')) {
+            targetAppName = 'quality';
+          } else if (currentPath.startsWith('/production')) {
+            targetAppName = 'production';
+          } else if (currentPath.startsWith('/finance')) {
+            targetAppName = 'finance';
+          }
+
+          if (targetAppName) {
+            const appEntry = entryMap.get(targetAppName);
+            if (appEntry && !appEntry.startsWith('/')) {
+              const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
+              if (entryMatch) {
+                const port = entryMatch[4] || '';
+                const protocol = window.location.protocol;
+                const host = window.location.hostname;
+
+                if (port && port !== MAIN_APP_PREVIEW_PORT) {
+                  // 修复 URL，将端口替换为正确的端口
+                  let fixedUrl = url;
+
+                  // 如果 URL 包含错误的端口（主应用预览端口），直接替换
+                  if (url.includes(`:${window.location.port}`)) {
+                    fixedUrl = url.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
+                  }
+                  // 如果 URL 是相对路径（以 / 开头），转换为完整的 URL
+                  else if (url.startsWith('/')) {
+                    fixedUrl = `${protocol}//${host}:${port}${url}`;
+                  }
+                  // 如果 URL 是绝对路径但指向当前主机，修复端口
+                  else if (url.startsWith(`${protocol}//${host}:`) || url.startsWith(`//${host}:`)) {
+                    fixedUrl = url.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
+                  }
+                  // 如果 URL 是协议相对路径（以 // 开头），添加协议并修复端口
+                  else if (url.startsWith('//')) {
+                    const urlHostMatch = url.match(/^\/\/([^:]+)(:(\d+))?(.+)$/);
+                    if (urlHostMatch && urlHostMatch[1] === host) {
+                      fixedUrl = `${protocol}//${host}:${port}${urlHostMatch[4] || ''}`;
+                    }
+                  }
+
+                  if (fixedUrl !== url) {
+                    return fetch(fixedUrl, options);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // 默认返回原始响应
+        return response;
+      },
+      // 自定义 getTemplate：修复资源路径，确保从正确的端口加载
+      // 注意：qiankun 的 getTemplate 可能接收 entry 作为第二个参数，也可能不接收
+      // 我们通过检查 HTML 中的资源路径来推断应用的入口地址
+      getTemplate: (tpl: string, entry?: string) => {
+
+        let processedTpl = tpl;
+
+        // 尝试从 entry 参数获取，如果没有则从 entryMap 中查找匹配的应用
+        let baseUrl = '';
+        let matchedAppName: string | null = null;
+        const currentHost = window.location.hostname;
+        const protocol = window.location.protocol;
+        const currentPort = window.location.port;
+
+        // 首先尝试从 entry 参数获取
+        if (entry) {
+          // 解析入口地址（可能是完整 URL 或协议相对路径）
+          let entryUrl: URL | null = null;
+          try {
+            // 如果是完整 URL（http:// 或 https://），直接解析
+            if (entry.startsWith('http://') || entry.startsWith('https://')) {
+              entryUrl = new URL(entry);
+            }
+            // 如果是协议相对路径（//host:port），转换为完整 URL
+            else if (entry.startsWith('//')) {
+              entryUrl = new URL(`${protocol}${entry}`);
+            }
+            // 如果是相对路径（/path），使用当前页面的 origin
+            else if (entry.startsWith('/')) {
+              entryUrl = new URL(entry, window.location.origin);
+            }
+          } catch (e) {
+            console.warn('[getTemplate] 解析 entry URL 失败:', entry, e);
+          }
+
+          if (entryUrl) {
+            // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
+            // 这样可以支持通过 IP 地址访问（如 10.80.8.199）
+            const port = entryUrl.port || '';
+            baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
+
+            // 从 entryMap 中查找匹配的应用名称
+            for (const [appName, appEntry] of entryMap.entries()) {
+              if (appEntry === entry) {
+                matchedAppName = appName;
+                break;
+              }
+            }
+            console.log('[getTemplate] 从 entry 参数获取:', { baseUrl, matchedAppName, port, entry });
+          }
+        }
+
+        // 如果没有从 entry 参数获取到，尝试从当前路径判断是哪个应用
+        if (!baseUrl) {
+          const currentPath = window.location.pathname;
+          if (currentPath.startsWith('/admin')) {
+            matchedAppName = 'admin';
+          } else if (currentPath.startsWith('/logistics')) {
+            matchedAppName = 'logistics';
+          } else if (currentPath.startsWith('/engineering')) {
+            matchedAppName = 'engineering';
+          } else if (currentPath.startsWith('/quality')) {
+            matchedAppName = 'quality';
+          } else if (currentPath.startsWith('/production')) {
+            matchedAppName = 'production';
+          } else if (currentPath.startsWith('/finance')) {
+            matchedAppName = 'finance';
+          }
+
+          if (matchedAppName) {
+            const appEntry = entryMap.get(matchedAppName);
+            if (appEntry) {
+              // 解析 entry（可能是完整 URL 或协议相对路径）
+              let entryUrl: URL | null = null;
+              try {
+                if (appEntry.startsWith('http://') || appEntry.startsWith('https://')) {
+                  entryUrl = new URL(appEntry);
+                } else if (appEntry.startsWith('//')) {
+                  entryUrl = new URL(`${protocol}${appEntry}`);
+                } else if (appEntry.startsWith('/')) {
+                  entryUrl = new URL(appEntry, window.location.origin);
+                }
+              } catch (e) {
+                console.warn('[getTemplate] 解析 appEntry URL 失败:', appEntry, e);
+              }
+
+              if (entryUrl) {
+                // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
+                const port = entryUrl.port || '';
+                baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
+                console.log('[getTemplate] 从路径判断获取:', { matchedAppName, baseUrl, port, appEntry });
+              }
+            }
+          }
+        }
+
+        // 如果还是没有找到，尝试从 HTML 中的资源路径推断
+        if (!baseUrl) {
+          const resourceMatch = tpl.match(/(?:src|href)=["']([^"']+)/);
+          if (resourceMatch) {
+            const resourceUrl = resourceMatch[1];
+            // 如果是绝对路径，提取基础 URL
+            if (resourceUrl.startsWith('http://') || resourceUrl.startsWith('https://')) {
+              const url = new URL(resourceUrl);
+              baseUrl = `${url.protocol}//${url.host}`;
+            }
+          }
+        }
+
+        // 如果找到了 baseUrl，修复资源路径
+        if (baseUrl) {
+          const baseUrlObj = new URL(baseUrl);
+          const targetPort = baseUrlObj.port;
+          console.log('[getTemplate] 开始修复资源路径', { baseUrl, targetPort, currentPort, currentHost });
+
+          // 修复所有 script src 中的相对路径和包含错误端口的绝对路径
+          processedTpl = processedTpl.replace(
+            /<script([^>]*?)\s+src\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+            (match, before, src, after) => {
+              // 如果 src 已经是完整 URL 且端口正确，直接返回
+              // 检查是否匹配当前 hostname 和正确的端口
+              if ((src.includes(`://${currentHost}:${targetPort}/`) || src.includes(`//${currentHost}:${targetPort}/`)) ||
+                  (src.includes(`://localhost:${targetPort}/`) || src.includes(`//localhost:${targetPort}/`))) {
+                return match;
+              }
+
+              let fixedSrc = src;
+
+              // 关键：如果 src 包含 localhost，但当前页面是通过 IP 访问的，需要替换 hostname
+              // 因为子应用的 base 可能设置为 http://localhost:${APP_PORT}/，但用户通过 IP 访问
+              if (src.includes('localhost') && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+                fixedSrc = src.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 替换 localhost 为当前 hostname script: ${src} -> ${fixedSrc}`);
+              }
+
+              // 情况1：如果 src 是相对路径（以 / 开头），转换为完整的 URL（绝对路径）
+              // 这是关键：入口脚本必须是绝对路径，这样 import.meta.url 才会是正确的端口
+              if (fixedSrc.startsWith('/')) {
+                fixedSrc = `${baseUrl.replace(/localhost/g, currentHost)}${fixedSrc}`;
+                console.log(`[getTemplate] 修复相对路径 script: ${src} -> ${fixedSrc}`);
+              }
+              // 情况2：如果 src 是相对路径（不以 / 开头，如 assets/file.js），也转换为完整的 URL
+              else if (!fixedSrc.includes('://') && !fixedSrc.startsWith('//') && !fixedSrc.startsWith('data:') && !fixedSrc.startsWith('blob:')) {
+                // 确保以 / 开头
+                const normalizedSrc = fixedSrc.startsWith('/') ? fixedSrc : `/${fixedSrc}`;
+                fixedSrc = `${baseUrl.replace(/localhost/g, currentHost)}${normalizedSrc}`;
+                console.log(`[getTemplate] 修复非绝对路径 script: ${src} -> ${fixedSrc}`);
+              }
+              // 情况3：如果 src 包含错误的端口（当前页面的端口），修复它
+              else if (currentPort && currentPort !== targetPort && (
+                fixedSrc.includes(`:${currentPort}`) ||
+                fixedSrc.includes(`://${currentHost}:${currentPort}`) ||
+                fixedSrc.includes(`//${currentHost}:${currentPort}`) ||
+                fixedSrc.includes(`://localhost:${currentPort}`) ||
+                fixedSrc.includes(`//localhost:${currentPort}`)
+              )) {
+                // 替换所有出现的错误端口
+                fixedSrc = fixedSrc.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), `:${targetPort}`);
+                // 同时替换 localhost 为当前 hostname
+                fixedSrc = fixedSrc.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 修复错误端口 script: ${src} -> ${fixedSrc}`);
+              }
+              // 情况4：如果 src 是协议相对路径（//host/），添加正确的端口
+              else if (fixedSrc.startsWith('//') && !fixedSrc.includes(':')) {
+                // 检查是否是当前 hostname 或 localhost
+                const hostMatch = fixedSrc.match(/^\/\/([^/]+)(.*)$/);
+                if (hostMatch) {
+                  const urlHost = hostMatch[1];
+                  const urlPath = hostMatch[2];
+                  if (urlHost === currentHost || urlHost === 'localhost') {
+                    fixedSrc = targetPort ? `//${currentHost}:${targetPort}${urlPath}` : `//${currentHost}${urlPath}`;
+                    console.log(`[getTemplate] 修复协议相对路径 script: ${src} -> ${fixedSrc}`);
+                  }
+                }
+              }
+              // 情况5：如果 src 是完整 URL 但包含 localhost，替换为当前 hostname
+              else if ((fixedSrc.startsWith('http://localhost') || fixedSrc.startsWith('https://localhost')) && currentHost !== 'localhost') {
+                fixedSrc = fixedSrc.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 替换完整 URL 中的 localhost script: ${src} -> ${fixedSrc}`);
+              }
+
+              if (fixedSrc !== src) {
+                return `<script${before} src="${fixedSrc}"${after}>`;
+              }
+              return match;
+            }
+          );
+
+          // 修复所有 link href 中的相对路径和包含错误端口的绝对路径
+          // 这是关键：确保 CSS 文件路径正确，否则样式无法加载
+          processedTpl = processedTpl.replace(
+            /<link([^>]*?)\s+href\s*=\s*["']([^"']+)["']([^>]*)>/gi,
+            (match, before, href, after) => {
+              // 如果 href 已经是完整 URL 且端口正确，直接返回
+              // 检查是否匹配当前 hostname 和正确的端口
+              if ((href.includes(`://${currentHost}:${targetPort}/`) || href.includes(`//${currentHost}:${targetPort}/`)) ||
+                  (href.includes(`://localhost:${targetPort}/`) || href.includes(`//localhost:${targetPort}/`))) {
+                return match;
+              }
+
+              let fixedHref = href;
+
+              // 关键：如果 href 包含 localhost，但当前页面是通过 IP 访问的，需要替换 hostname
+              // 因为子应用的 base 可能设置为 http://localhost:${APP_PORT}/，但用户通过 IP 访问
+              if (href.includes('localhost') && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+                fixedHref = href.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 替换 localhost 为当前 hostname link: ${href} -> ${fixedHref}`);
+              }
+
+              // 情况1：如果 href 是相对路径（以 / 开头），转换为完整的 URL
+              if (fixedHref.startsWith('/')) {
+                fixedHref = `${baseUrl.replace(/localhost/g, currentHost)}${fixedHref}`;
+                console.log(`[getTemplate] 修复相对路径 link: ${href} -> ${fixedHref}`);
+              }
+              // 情况2：如果 href 是相对路径（不以 / 开头），也转换为完整的 URL
+              else if (!fixedHref.includes('://') && !fixedHref.startsWith('//') && !fixedHref.startsWith('data:') && !fixedHref.startsWith('blob:')) {
+                const normalizedHref = fixedHref.startsWith('/') ? fixedHref : `/${fixedHref}`;
+                fixedHref = `${baseUrl.replace(/localhost/g, currentHost)}${normalizedHref}`;
+                console.log(`[getTemplate] 修复非绝对路径 link: ${href} -> ${fixedHref}`);
+              }
+              // 情况3：如果 href 包含错误的端口（当前页面的端口），修复它
+              else if (currentPort && currentPort !== targetPort && (
+                fixedHref.includes(`:${currentPort}`) ||
+                fixedHref.includes(`://${currentHost}:${currentPort}`) ||
+                fixedHref.includes(`//${currentHost}:${currentPort}`) ||
+                fixedHref.includes(`://localhost:${currentPort}`) ||
+                fixedHref.includes(`//localhost:${currentPort}`)
+              )) {
+                // 替换所有出现的错误端口
+                fixedHref = fixedHref.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), `:${targetPort}`);
+                // 同时替换 localhost 为当前 hostname
+                fixedHref = fixedHref.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 修复错误端口 link: ${href} -> ${fixedHref}`);
+              }
+              // 情况4：如果 href 是协议相对路径（//host/），添加正确的端口
+              else if (fixedHref.startsWith('//') && !fixedHref.includes(':')) {
+                const hostMatch = fixedHref.match(/^\/\/([^/]+)(.*)$/);
+                if (hostMatch) {
+                  const urlHost = hostMatch[1];
+                  const urlPath = hostMatch[2];
+                  if (urlHost === currentHost || urlHost === 'localhost') {
+                    fixedHref = targetPort ? `//${currentHost}:${targetPort}${urlPath}` : `//${currentHost}${urlPath}`;
+                    console.log(`[getTemplate] 修复协议相对路径 link: ${href} -> ${fixedHref}`);
+                  }
+                }
+              }
+              // 情况5：如果 href 是完整 URL 但包含 localhost，替换为当前 hostname
+              else if ((fixedHref.startsWith('http://localhost') || fixedHref.startsWith('https://localhost')) && currentHost !== 'localhost') {
+                fixedHref = fixedHref.replace(/localhost/g, currentHost);
+                console.log(`[getTemplate] 替换完整 URL 中的 localhost link: ${href} -> ${fixedHref}`);
+              }
+
+              if (fixedHref !== href) {
+                return `<link${before} href="${fixedHref}"${after}>`;
+              }
+              return match;
+            }
+          );
+
+          // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的端口
+          // 这会影响动态导入的模块路径解析
+          // 使用当前页面的 hostname 和正确的端口构建 base URL
+          const baseHref = `${protocol}//${currentHost}${targetPort ? `:${targetPort}` : ''}/`;
+          console.log('[getTemplate] 设置 base URL:', baseHref);
+
+          // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
+          processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');
+
+          // 在 <head> 标签内添加新的 <base> 标签，放在最前面（在所有其他标签之前）
+          // 这是关键：<base> 标签必须在所有其他资源标签之前，才能影响所有后续的资源加载
+          if (processedTpl.includes('<head')) {
+            // 匹配 <head> 标签，在它后面立即插入 <base> 标签
+            processedTpl = processedTpl.replace(
+              /(<head[^>]*>)/i,
+              `$1\n    <base href="${baseHref}">`
+            );
+          } else {
+            // 如果没有 <head> 标签，在 <html> 标签后添加
+            processedTpl = processedTpl.replace(
+              /(<html[^>]*>)/i,
+              `$1\n  <base href="${baseHref}">`
+            );
+          }
+
+          console.log('[getTemplate] 处理后的 HTML 模板前 1000 字符:', processedTpl.substring(0, 1000));
+        } else {
+          console.warn('[getTemplate] 未找到 baseUrl，无法修复资源路径');
+        }
+
+        // 确保所有 script 标签都有 type="module"
+        const finalTpl = processedTpl.replace(
+          /<script(\s+[^>]*)?>/gi,
+          (match, attrs = '') => attrs.includes('type=')
+            ? match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"')
+            : `<script type="module"${attrs}>`
+        );
+
+        console.log('[getTemplate] 最终处理后的 HTML 包含的 script 标签:', finalTpl.match(/<script[^>]*>/gi)?.slice(0, 5));
+
+        return finalTpl;
+      },
     },
   });
 
@@ -563,16 +1740,108 @@ export function setupQiankun() {
                        !currentPath.startsWith('/docs');
 
   if (isSystemPath) {
-    registerManifestTabsForApp('system');
-    registerManifestMenusForApp('system');
+    // 动态导入避免循环依赖（这些函数已经是异步的）
+    registerManifestTabsForApp('system').catch(console.error);
+    registerManifestMenusForApp('system').catch(console.error);
   }
 
   // 监听全局错误
-  window.addEventListener('error', (event) => {
+  window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
       const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      // 动态导入避免循环依赖
+      const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
+    }
+
+    // 处理资源加载错误（404），尝试修复路径
+    if (event.target && (event.target instanceof HTMLScriptElement || event.target instanceof HTMLLinkElement)) {
+      const target = event.target as HTMLScriptElement | HTMLLinkElement;
+      const src = (event.target instanceof HTMLScriptElement ? event.target.src : null) ||
+                  (event.target instanceof HTMLLinkElement ? event.target.href : null);
+
+      if (src && window.location.port === '4180' && (src.includes('/assets/') || src.endsWith('.js') || src.endsWith('.css') || src.endsWith('.mjs'))) {
+        // 根据当前路径判断是哪个应用
+        const currentPath = window.location.pathname;
+        let targetAppName: string | null = null;
+
+        if (currentPath.startsWith('/admin')) {
+          targetAppName = 'admin';
+        } else if (currentPath.startsWith('/logistics')) {
+          targetAppName = 'logistics';
+        } else if (currentPath.startsWith('/engineering')) {
+          targetAppName = 'engineering';
+        } else if (currentPath.startsWith('/quality')) {
+          targetAppName = 'quality';
+        } else if (currentPath.startsWith('/production')) {
+          targetAppName = 'production';
+        } else if (currentPath.startsWith('/finance')) {
+          targetAppName = 'finance';
+        }
+
+        if (targetAppName) {
+          const appEntry = entryMap.get(targetAppName);
+          if (appEntry) {
+            // 解析 entry（可能是完整 URL 或协议相对路径）
+            let entryUrl: URL | null = null;
+            try {
+              if (appEntry.startsWith('http://') || appEntry.startsWith('https://')) {
+                entryUrl = new URL(appEntry);
+              } else if (appEntry.startsWith('//')) {
+                entryUrl = new URL(`${window.location.protocol}${appEntry}`);
+              } else if (appEntry.startsWith('/')) {
+                entryUrl = new URL(appEntry, window.location.origin);
+              }
+            } catch (e) {
+              console.warn('[错误处理] 解析 appEntry URL 失败:', appEntry, e);
+            }
+
+            if (entryUrl) {
+              const port = entryUrl.port || '';
+              const protocol = window.location.protocol;
+              const host = window.location.hostname;
+
+              if (port && port !== MAIN_APP_PREVIEW_PORT) {
+                // 修复 URL
+                let fixedUrl = src;
+
+                if (src.includes(`:${window.location.port}`)) {
+                  fixedUrl = src.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
+                } else if (src.startsWith('/')) {
+                  fixedUrl = `${protocol}//${host}:${port}${src}`;
+                } else if (src.startsWith('//') && !src.includes(':')) {
+                  // 协议相对路径，添加端口
+                  fixedUrl = `//${host}:${port}${src.slice(`//${host}`.length)}`;
+                }
+
+                // 重新加载资源
+                if (fixedUrl !== src) {
+                  console.log(`[错误处理] 修复资源路径: ${src} -> ${fixedUrl}`);
+                  if (target instanceof HTMLScriptElement) {
+                    const newScript = document.createElement('script');
+                    newScript.src = fixedUrl;
+                    newScript.type = 'module';
+                    target.parentNode?.replaceChild(newScript, target);
+                  } else if (target instanceof HTMLLinkElement) {
+                    // 对于 CSS 文件，直接更新 href 可能不够，需要重新创建 link 标签
+                    const newLink = document.createElement('link');
+                    newLink.rel = target.rel || 'stylesheet';
+                    newLink.href = fixedUrl;
+                    if (target.type) {
+                      newLink.type = target.type;
+                    }
+                    target.parentNode?.replaceChild(newLink, target);
+                  }
+
+                  // 阻止默认错误处理
+                  event.preventDefault();
+                }
+              }
+            }
+          }
+        }
+      }
     }
   });
 }
@@ -581,7 +1850,9 @@ export function setupQiankun() {
  * 监听子应用就绪事件
  */
 export function listenSubAppReady() {
-  window.addEventListener('subapp:ready', () => {
+  window.addEventListener('subapp:ready', async () => {
+    // 动态导入避免循环依赖
+    const { finishLoading } = await import('../utils/loadingManager');
     finishLoading();
   });
 }
@@ -594,21 +1865,21 @@ export function listenSubAppRouteChange() {
     const customEvent = event as CustomEvent;
     const { path, fullPath, name, meta } = customEvent.detail;
 
-    // ? 如果是子应用首页，将该应用的所有标签设为未激活
-    if (meta?.isHome === true) {
+    // 动态导入避免循环依赖
+    (async () => {
+      const { useProcessStore, getCurrentAppFromPath } = await import('../store/process');
       const process = useProcessStore();
       const app = getCurrentAppFromPath(path);
-      process.list.forEach(tab => {
-        if (tab.app === app) {
-          tab.active = false;
-        }
-      });
-      return;
-    }
 
-    // 使用统一的 getCurrentAppFromPath 来判断应用类型，更通用
-    const process = useProcessStore();
-    const app = getCurrentAppFromPath(path);
+      // ? 如果是子应用首页，将该应用的所有标签设为未激活
+      if (meta?.isHome === true) {
+        process.list.forEach(tab => {
+          if (tab.app === app) {
+            tab.active = false;
+          }
+        });
+        return;
+      }
 
     // 排除管理域（admin）和无效应用（main）
     // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
@@ -621,12 +1892,14 @@ export function listenSubAppRouteChange() {
       return;
     }
 
-    process.add({
-      path,
-      fullPath,
-      name,
-      meta,
-    });
+      process.add({
+        path,
+        fullPath,
+        name,
+        meta,
+      });
+    })();
   });
 }
+
 

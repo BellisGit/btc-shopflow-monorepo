@@ -26,7 +26,9 @@
 import { useWindowSize } from '@vueuse/core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';
+import { useSettingsConfig } from '../../composables/useSettingsConfig';
+import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
+import { useSettingsState } from '../../composables/useSettingsState';
 import '../../settings/menu-layout/styles/index.scss';
 
 const { width } = useWindowSize();

@@ -146,7 +146,7 @@ const opButtons = computed(() => [
   {
     label: t('common.button.detail'),
     type: 'warning',
-    icon: 'View',
+    icon: 'info',
     onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
   },
   'edit',

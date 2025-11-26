@@ -8,33 +8,88 @@ import { resolve } from 'path';
 import type { Plugin } from 'vite';
 import { btc } from '@btc/vite-plugin';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
-import { proxy as mainProxy } from '../admin-app/src/config/proxy';
+import { proxy } from './src/config/proxy';
+import { getViteAppConfig } from '../../configs/vite-app-config';
 
-const proxy = mainProxy;
+// 从统一配置中获取应用配置
+const config = getViteAppConfig('system-app');
 
-// CORS 预检请求处理插件（仅处理 API 请求）
+// CORS 预检请求处理插件（处理 API 请求和所有请求的 CORS 头）
 const corsPreflightPlugin = (): Plugin => {
+  // CORS 中间件函数（用于开发服务器）
+  const corsDevMiddleware = (req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
+
+    // 设置 CORS 响应头（所有请求都需要）
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+      // Chrome 私有网络访问要求（仅开发服务器需要）
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    } else {
+      // 如果没有 origin，也设置基本的 CORS 头（允许所有来源）
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+      // Chrome 私有网络访问要求（仅开发服务器需要）
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+
+    // 处理 OPTIONS 预检请求 - 必须在任何其他处理之前返回
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 200;
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.setHeader('Content-Length', '0');
+      res.end();
+      return;
+    }
+
+    next();
+  };
+
+  // CORS 中间件函数（用于预览服务器，不需要私有网络访问头）
+  const corsPreviewMiddleware = (req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
+
+    // 设置 CORS 响应头（所有请求都需要）
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+    } else {
+      // 如果没有 origin，也设置基本的 CORS 头（允许所有来源）
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+    }
+
+    // 处理 OPTIONS 预检请求 - 必须在任何其他处理之前返回
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 200;
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.setHeader('Content-Length', '0');
+      res.end();
+      return;
+    }
+
+    next();
+  };
+
   return {
     name: 'cors-preflight',
     configureServer(server) {
+      // 开发服务器：包含私有网络访问头
       server.middlewares.use((req, res, next) => {
-        // 只处理 API 路径的 OPTIONS 预检请求，静态资源不需要
-        if (req.method === 'OPTIONS' && req.url?.startsWith('/api')) {
-          const origin = req.headers.origin || '*';
-          const requestHeaders = req.headers['access-control-request-headers'] || 'Content-Type, Authorization, X-Requested-With, Accept, Origin';
-          
-          res.writeHead(200, {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-            'Access-Control-Allow-Headers': requestHeaders,
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Max-Age': '86400',
-            'Content-Length': '0',
-          });
-          res.end();
-          return;
-        }
-        next();
+        corsDevMiddleware(req, res, next);
+      });
+    },
+    configurePreviewServer(server) {
+      // 预览服务器：不包含私有网络访问头
+      server.middlewares.use((req, res, next) => {
+        corsPreviewMiddleware(req, res, next);
       });
     },
   };
@@ -63,6 +118,7 @@ export default defineConfig({
       '@charts-types': resolve(__dirname, '../../packages/shared-components/src/charts/types'),
       '@charts-utils': resolve(__dirname, '../../packages/shared-components/src/charts/utils'),
       '@charts-composables': resolve(__dirname, '../../packages/shared-components/src/charts/composables'),
+      '@configs': resolve(__dirname, '../../configs'),
     },
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],
   },
@@ -75,7 +131,7 @@ export default defineConfig({
         },
       },
     }),
-    createAutoImportConfig({ includeShared: true }),
+    createAutoImportConfig(),
     createComponentsConfig({ includeShared: true }),
     UnoCSS({
       configFile: resolve(__dirname, '../../uno.config.ts'),
@@ -103,7 +159,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 8080,
+    port: config.devPort,
     host: '0.0.0.0',
     strictPort: false,
     proxy,
@@ -117,6 +173,14 @@ export default defineConfig({
         resolve(__dirname, '../../packages'),
         resolve(__dirname, '../../packages/shared-components/src'),
       ],
+    },
+  },
+  preview: {
+    port: config.prePort,
+    host: '0.0.0.0',
+    proxy,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
     },
   },
   optimizeDeps: {
@@ -144,9 +208,16 @@ export default defineConfig({
     // external 配置仅用于子应用（微前端场景）
     rollupOptions: {
       output: {
+        // 确保相对路径的 import 使用正确的 base URL
+        // 这样在微前端场景下，资源路径会正确解析
+        format: 'es',
+        // 确保所有 chunk 之间的 import 使用相对路径
+        // 这样浏览器会根据当前模块的位置解析，而不是根据页面 URL
+        preserveModules: false,
         manualChunks(id) {
           // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {
+            // 进一步分割大型库，减少 vendor chunk 大小
             if (id.includes('vue-i18n') || id.includes('@intlify')) {
               return 'vue-i18n';
             }
@@ -158,6 +229,27 @@ export default defineConfig({
             }
             if (id.includes('qiankun')) {
               return 'qiankun';
+            }
+            if (id.includes('xlsx')) {
+              return 'file-xlsx';
+            }
+            if (id.includes('file-saver')) {
+              return 'file-saver';
+            }
+            // 分割 Element Plus 相关依赖
+            if (id.includes('element-plus')) {
+              return 'element-plus';
+            }
+            // 分割 Vue 相关依赖
+            if (id.includes('vue') && !id.includes('vue-router')) {
+              return 'vue-core';
+            }
+            if (id.includes('vue-router')) {
+              return 'vue-router';
+            }
+            // 分割 Pinia
+            if (id.includes('pinia')) {
+              return 'pinia';
             }
             return 'vendor';
           }
@@ -174,45 +266,56 @@ export default defineConfig({
               return 'app-pages';
             }
             if (id.includes('src/components')) {
-              return 'app-components';
+              // components 依赖 useSettingsState（在 app-src 中），合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/micro')) {
               return 'app-micro';
             }
+            if (id.includes('src/plugins/user-setting/components')) {
+              // 将 user-setting 的组件放到 app-components，避免循环依赖
+              return 'app-components';
+            }
             if (id.includes('src/plugins')) {
               // system-app 有多个插件，可以进一步细分
+              // 注意：user-setting 插件与 store 之间存在依赖关系，
+              // 将它们放在 store 之后但在其他插件之前，避免循环依赖问题
               if (id.includes('src/plugins/user-setting')) {
-                return 'app-plugin-user-setting';
+                // user-setting 插件与 store 有依赖关系，但 bootstrap 也依赖它
+                // 将它们都放在 app-src 中，避免跨 chunk 循环依赖
+                return 'app-src';
               }
               if (id.includes('src/plugins/echarts')) {
                 return 'app-plugin-echarts';
               }
-              return 'app-plugins';
+              // 其他插件与 bootstrap 有依赖关系（bootstrap 会扫描插件），放在 app-src 中
+              // 避免 bootstrap 和 plugins 之间的循环依赖
+              return 'app-src';
             }
             if (id.includes('src/store')) {
-              return 'app-store';
+              // store 与 bootstrap 有依赖关系（bootstrap 导出 store），放在 app-src 中
+              // 避免 bootstrap（app-src）和 store（app-store）之间的循环依赖
+              return 'app-src';
+            }
+            if (id.includes('src/bootstrap')) {
+              // bootstrap 与 main.ts、services 和 store 有依赖关系，放在 app-src 中
+              return 'app-src';
             }
             if (id.includes('src/services')) {
-              return 'app-services';
+              // services 与 main.ts 和 bootstrap 有依赖关系，放在 app-src 中
+              return 'app-src';
             }
             if (id.includes('src/utils')) {
-              // system-app 的 utils 有特殊的管理器
-              if (id.includes('src/utils/message-manager')) {
-                return 'app-utils-message';
-              }
-              if (id.includes('src/utils/notification-manager')) {
-                return 'app-utils-notification';
-              }
-              return 'app-utils';
+              // utils 与 bootstrap 有依赖关系（bootstrap 导入多个 utils），放在 app-src 中
+              // 避免 bootstrap（app-src）和 utils（app-utils）之间的循环依赖
+              return 'app-src';
             }
             if (id.includes('src/composables')) {
               return 'app-composables';
             }
-            if (id.includes('src/bootstrap')) {
-              return 'app-bootstrap';
-            }
             if (id.includes('src/config')) {
-              return 'app-config';
+              // config 依赖 plugins/user-setting/config/enums（在 app-src 中），合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/router')) {
               return 'app-router';
@@ -223,9 +326,9 @@ export default defineConfig({
             if (id.includes('src/assets')) {
               return 'app-assets';
             }
-            if (id.includes('src/types')) {
-              return 'app-types';
-            }
+            // 移除 src/types 的单独 chunk
+            // types 目录中的文件通常很小，合并到 app-src 即可
+            // 避免生成空 chunk 警告
             return 'app-src';
           }
 
@@ -246,6 +349,6 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 2000, // 提高警告阈值，vendor chunk 较大是正常的
   },
 });

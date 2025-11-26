@@ -79,17 +79,47 @@ host=github.com
     fi
 fi
 
+# Windows 上尝试从注册表读取用户级环境变量（通过 PowerShell）
+# 检测 Windows 环境：检查 WINDIR 或 OSTYPE，或者直接尝试 PowerShell
+if [ -z "$GITHUB_TOKEN" ]; then
+    # 检测是否为 Windows 环境
+    IS_WINDOWS=false
+    if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
+        IS_WINDOWS=true
+    fi
+    
+    # 如果检测到 Windows 或者 PowerShell 可用，尝试读取
+    if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
+    if command -v powershell.exe > /dev/null 2>&1; then
+            # 使用和测试脚本完全相同的命令（已验证可以工作）
+            # 注意：在双引号中使用 \$ 转义，确保 bash 不解释 PowerShell 变量
+            PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+            # 清理输出：移除回车符、换行符和可能的 PowerShell 提示符
+            GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+            # 如果读取成功但包含错误信息，清空变量
+            if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+                GITHUB_TOKEN=""
+            fi
+            # 如果结果为空或只包含空白字符，清空变量
+            if [ -z "${GITHUB_TOKEN// }" ]; then
+                GITHUB_TOKEN=""
+            fi
+        fi
+    fi
+fi
+
 if [ -z "$GITHUB_TOKEN" ]; then
     log_error "未设置 GITHUB_TOKEN 环境变量"
     log_info ""
     log_info "📝 设置方法:"
     log_info ""
-    log_info "  PowerShell (当前会话):"
+    log_info "  PowerShell (永久设置，推荐):"
+    log_info "    [System.Environment]::SetEnvironmentVariable('GITHUB_TOKEN', 'your_token_here', 'User')"
+    log_info "    然后刷新环境变量: . scripts/refresh-env.ps1"
+    log_info ""
+    log_info "  PowerShell (当前会话，临时):"
     log_info "    \$env:GITHUB_TOKEN=\"your_token_here\""
     log_info "    然后运行: bash -c \"export GITHUB_TOKEN=\\$env:GITHUB_TOKEN; bash scripts/trigger-deploy.sh --apps system-app\""
-    log_info ""
-    log_info "  PowerShell (永久设置):"
-    log_info "    [System.Environment]::SetEnvironmentVariable('GITHUB_TOKEN', 'your_token_here', 'User')"
     log_info ""
     log_info "  Git Bash / WSL:"
     log_info "    export GITHUB_TOKEN=your_token_here"
@@ -104,7 +134,9 @@ if [ -z "$GITHUB_TOKEN" ]; then
     log_info "     - ✅ repo (如果仓库是私有的)"
     log_info "  4. 生成后复制 token（只显示一次！）"
     log_info ""
-    log_info "💡 提示: 设置环境变量后，请重新运行此命令"
+    log_info "💡 提示:"
+    log_info "  - 永久设置后，运行: . scripts/refresh-env.ps1"
+    log_info "  - 或者重新打开 PowerShell 终端"
     exit 1
 fi
 

@@ -47,6 +47,45 @@ export function colorToHex(color: string): string {
 // 防止递归调用的标志
 let isSettingThemeColor = false;
 
+// 导出同步函数，供外部调用
+export function syncThemeColorToSubApps(): void {
+  const pre = '--el-color-primary';
+  const el = document.documentElement;
+  
+  // 从 html 元素获取当前的主题色变量值
+  const htmlColor = el.style.getPropertyValue(pre) || getComputedStyle(el).getPropertyValue(pre).trim();
+  if (!htmlColor) return;
+
+  const setThemeColorToContainer = (container: HTMLElement) => {
+    container.style.setProperty(pre, htmlColor);
+    // 同步所有 light 和 dark 变量
+    for (let i = 1; i < 10; i += 1) {
+      const lightVar = el.style.getPropertyValue(`${pre}-light-${i}`) || getComputedStyle(el).getPropertyValue(`${pre}-light-${i}`).trim();
+      const darkVar = el.style.getPropertyValue(`${pre}-dark-${i}`) || getComputedStyle(el).getPropertyValue(`${pre}-dark-${i}`).trim();
+      if (lightVar) container.style.setProperty(`${pre}-light-${i}`, lightVar);
+      if (darkVar) container.style.setProperty(`${pre}-dark-${i}`, darkVar);
+    }
+  };
+
+  // 设置到子应用容器
+  const subappViewport = document.querySelector('#subapp-viewport') as HTMLElement;
+  if (subappViewport) {
+    setThemeColorToContainer(subappViewport);
+  }
+
+  // 设置到所有 [data-qiankun] 元素
+  const qiankunContainers = document.querySelectorAll('[data-qiankun]') as NodeListOf<HTMLElement>;
+  qiankunContainers.forEach(container => {
+    setThemeColorToContainer(container);
+  });
+
+  // 设置到子应用内的 #app 元素（子应用的根元素）
+  const subappRoots = document.querySelectorAll('#subapp-viewport #app, [data-qiankun] #app') as NodeListOf<HTMLElement>;
+  subappRoots.forEach(root => {
+    setThemeColorToContainer(root);
+  });
+}
+
 /**
  * 设置主题颜色到 CSS 变量
  */
@@ -135,6 +174,63 @@ export function setThemeColor(color: string, dark: boolean, skipEvent = false): 
         el.style.setProperty(`${pre}-dark-${i}`, '#ecf5ff');
       }
     }
+
+    // ========== 关键：在微前端环境下，确保主题色变量也设置到子应用容器 ==========
+    // 注意：已关闭 qiankun 的样式隔离（experimentalStyleIsolation: false），CSS 变量可以正常继承
+    // 但为了确保子应用加载后能立即获取到主题色，仍然显式设置到容器上
+    const setThemeColorToContainer = (container: HTMLElement) => {
+      // 设置到容器本身
+      container.style.setProperty(pre, color);
+      try {
+        for (let i = 1; i < 10; i += 1) {
+          const weight = i * 0.1;
+          const lightColor = dark
+            ? mixColor(hexColor, mixBlack, weight)
+            : mixColor(hexColor, mixWhite, weight);
+          const darkColor = dark
+            ? mixColor(hexColor, mixWhite, weight)
+            : mixColor(hexColor, mixBlack, weight);
+
+          const lightVarName = `${pre}-light-${i}`;
+          const darkVarName = `${pre}-dark-${i}`;
+
+          container.style.setProperty(lightVarName, lightColor);
+          container.style.setProperty(darkVarName, darkColor);
+        }
+      } catch (error) {
+        // 如果出错，至少设置主颜色
+        console.warn('[Theme] Error setting theme color to container:', error);
+      }
+    };
+
+    // 同步主题色到所有子应用容器的辅助函数
+    const syncThemeToSubApps = () => {
+      // 设置到子应用容器
+      const subappViewport = document.querySelector('#subapp-viewport') as HTMLElement;
+      if (subappViewport) {
+        setThemeColorToContainer(subappViewport);
+      }
+
+      // 设置到所有 [data-qiankun] 元素
+      const qiankunContainers = document.querySelectorAll('[data-qiankun]') as NodeListOf<HTMLElement>;
+      qiankunContainers.forEach(container => {
+        setThemeColorToContainer(container);
+      });
+
+      // 设置到子应用内的 #app 元素（子应用的根元素）
+      const subappRoots = document.querySelectorAll('#subapp-viewport #app, [data-qiankun] #app') as NodeListOf<HTMLElement>;
+      subappRoots.forEach(root => {
+        setThemeColorToContainer(root);
+      });
+    };
+
+    // 立即同步
+    syncThemeToSubApps();
+
+    // 使用 setTimeout 延迟再次同步，确保子应用加载完成后也能获取到主题色
+    setTimeout(() => {
+      syncThemeToSubApps();
+    }, 100);
 
     // 只有在不跳过事件时才广播主题变化事件（用于跨应用通信）
     if (!skipEvent) {

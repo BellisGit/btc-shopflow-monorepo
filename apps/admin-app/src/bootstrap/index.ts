@@ -4,12 +4,11 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
-// 样式文件在模块加载时同步导入
-// Vite 会优化处理：开发环境按需加载，生产环境打包到单独 CSS 文件
-// 这些导入不会阻塞 JavaScript 执行
-import '@btc/shared-components/styles/index.scss';
-import '../styles/global.scss';
-import '../styles/theme.scss';
+// 注意：样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
+// 这里不再重复导入，避免样式重复
+// import '@btc/shared-components/styles/index.scss';
+// import '../styles/global.scss';
+// import '../styles/theme.scss';
 
 import App from '../App.vue';
 import { createAdminRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
@@ -387,48 +386,85 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
   context.props = props;
 
   // 查找挂载点：优先从 props.container 中查找 #app，如果没有则使用 props.container 本身，最后回退到全局 #app
-  let mountPoint: string | HTMLElement = '#app';
-  if (props.container) {
-    const appElement = props.container.querySelector('#app');
-    if (appElement) {
-      mountPoint = appElement as HTMLElement;
-    } else if (props.container instanceof HTMLElement) {
-      mountPoint = props.container;
-    }
-  }
-
+  // 与 logistics-app 保持一致，确保挂载逻辑可靠
+  let mountPoint: string | HTMLElement =
+    (props.container && (props.container.querySelector('#app') || props.container)) ||
+    '#app';
+  
   // 如果 mountPoint 是字符串，确保元素存在
   if (typeof mountPoint === 'string') {
     const element = document.querySelector(mountPoint);
     if (!element) {
-      throw new Error(`[admin-app] 无法找到挂载节点 ${mountPoint}`);
+      // 如果找不到 #app，尝试在容器中创建
+      if (props.container && props.container instanceof HTMLElement) {
+        const appDiv = document.createElement('div');
+        appDiv.id = 'app';
+        props.container.appendChild(appDiv);
+        mountPoint = appDiv;
+      } else {
+        throw new Error(`[admin-app] 无法找到挂载节点 ${mountPoint}`);
+      }
+    } else {
+      mountPoint = element as HTMLElement;
     }
-    mountPoint = element as HTMLElement;
   }
 
-  // console.log('[admin-app] 开始挂载，mountPoint:', mountPoint, 'container:', props.container);
+  // 先挂载 Vue 应用，确保 DOM 已准备好
   context.app.mount(mountPoint);
-  // console.log('[admin-app] Vue 应用已挂载');
 
-  // 路由初始化：在应用挂载后再初始化路由，确保路由状态一致
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    const initialRoute = deriveInitialSubRoute();
-    // console.log('[admin-app] 初始化路由，initialRoute:', initialRoute, '当前路由:', context.router.currentRoute.value.fullPath);
-    // 使用 nextTick 确保 Vue 应用完全挂载后再初始化路由
-    import('vue').then(({ nextTick }) => {
-      nextTick(() => {
-        context.router.replace(initialRoute).then(() => {
-          // console.log('[admin-app] 路由初始化成功，当前路由:', context.router.currentRoute.value.fullPath, '匹配的路由:', context.router.currentRoute.value.matched);
-          // 检查路由是否匹配成功
-          // if (context.router.currentRoute.value.matched.length === 0) {
-          //   console.warn('[admin-app] 路由未匹配，可能没有对应的路由配置');
-          // }
-        }).catch((error) => {
-          // console.error('[admin-app] 路由初始化失败:', error);
+  // 路由初始化：在应用挂载后立即初始化路由，确保路由状态一致
+  // 使用 router.isReady() 确保路由系统已准备好，然后使用 nextTick 确保 DOM 已更新
+  context.router.isReady().then(() => {
+    return import('vue').then(({ nextTick }) => {
+      return new Promise<void>((resolve) => {
+        nextTick(() => {
+          if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+            const initialRoute = deriveInitialSubRoute();
+            // 如果当前路由不匹配，则替换为初始路由
+            if (context.router.currentRoute.value.matched.length === 0 || context.router.currentRoute.value.fullPath !== initialRoute) {
+              context.router.replace(initialRoute).then(() => {
+                // 检查路由是否匹配成功
+                if (context.router.currentRoute.value.matched.length === 0) {
+                  // 如果路由未匹配，尝试使用默认路由
+                  context.router.replace('/').catch((error) => {
+                    console.error('[admin-app] 使用默认路由失败:', error);
+                  }).finally(() => {
+                    resolve();
+                  });
+                } else {
+                  resolve();
+                }
+              }).catch((error) => {
+                console.error('[admin-app] 路由初始化失败:', error);
+                // 如果路由初始化失败，尝试使用默认路由
+                context.router.replace('/').catch((err) => {
+                  console.error('[admin-app] 使用默认路由也失败:', err);
+                }).finally(() => {
+                  resolve();
+                });
+              });
+            } else {
+              resolve();
+            }
+          } else {
+            // 非 qiankun 环境，确保路由已初始化
+            if (context.router.currentRoute.value.matched.length === 0) {
+              console.warn('[admin-app] 非 qiankun 环境，路由未匹配，尝试使用默认路由 /');
+              context.router.replace('/').catch((error) => {
+                console.error('[admin-app] 使用默认路由失败:', error);
+              }).finally(() => {
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          }
         });
       });
     });
-  }
+  }).catch((error) => {
+    console.error('[admin-app] 路由准备失败:', error);
+  });
 
   setupRouteSync(context);
   setupHostLocationBridge(context);
@@ -439,10 +475,7 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
   // 关键：确保 onReady 回调被调用
   // 直接调用 onReady，不延迟（与物流域保持一致）
   if (props.onReady) {
-    // console.log('[admin-app] 调用 onReady 回调');
     props.onReady();
-  } else {
-    // console.warn('[admin-app] onReady 回调不存在');
   }
 
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {

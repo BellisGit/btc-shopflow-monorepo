@@ -3,14 +3,111 @@ import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
+import type { Plugin } from 'vite';
 import { btc } from '@btc/vite-plugin';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
 import { proxy as mainProxy } from '../admin-app/src/config/proxy';
+import { getAppConfig } from '../../configs/app-env.config';
 
 const proxy = mainProxy;
 
+// 从统一配置中获取应用配置
+const appConfig = getAppConfig('logistics-app');
+if (!appConfig) {
+  throw new Error('未找到 logistics-app 的环境配置');
+}
+
+// 子应用预览端口和主机（预览环境使用）
+const APP_PORT = parseInt(appConfig.prePort, 10);
+const APP_HOST = appConfig.preHost;
+const MAIN_APP_CONFIG = getAppConfig('system-app');
+const MAIN_APP_ORIGIN = MAIN_APP_CONFIG ? `http://${MAIN_APP_CONFIG.preHost}:${MAIN_APP_CONFIG.prePort}` : 'http://localhost:4180';
+
+// CORS 插件（支持 credentials）
+const corsPlugin = (): Plugin => {
+  // CORS 中间件函数（用于开发服务器）
+  const corsDevMiddleware = (req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
+    
+    // 设置 CORS 响应头（所有请求都需要）
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+      // Chrome 私有网络访问要求（仅开发服务器需要）
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    } else {
+      // 如果没有 origin，也设置基本的 CORS 头（允许所有来源）
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+      // Chrome 私有网络访问要求（仅开发服务器需要）
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    
+    // 处理 OPTIONS 预检请求 - 必须在任何其他处理之前返回
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 200;
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.setHeader('Content-Length', '0');
+      res.end();
+      return;
+    }
+    
+    next();
+  };
+
+  // CORS 中间件函数（用于预览服务器，不需要私有网络访问头）
+  const corsPreviewMiddleware = (req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
+    
+    // 设置 CORS 响应头（所有请求都需要）
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+    } else {
+      // 如果没有 origin，也设置基本的 CORS 头（允许所有来源）
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
+    }
+    
+    // 处理 OPTIONS 预检请求 - 必须在任何其他处理之前返回
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 200;
+      res.setHeader('Access-Control-Max-Age', '86400');
+      res.setHeader('Content-Length', '0');
+      res.end();
+      return;
+    }
+    
+    next();
+  };
+
+  return {
+    name: 'cors-with-credentials',
+    configureServer(server) {
+      // 开发服务器：包含私有网络访问头
+      server.middlewares.use((req, res, next) => {
+        corsDevMiddleware(req, res, next);
+      });
+    },
+    configurePreviewServer(server) {
+      // 预览服务器：不包含私有网络访问头
+      server.middlewares.use((req, res, next) => {
+        corsPreviewMiddleware(req, res, next);
+      });
+    },
+  };
+};
+
 export default defineConfig({
-  base: '/', // 明确设置为根路径，不使用 /logistics/
+  // 关键：base 指向子应用本地预览的绝对路径（必须带末尾 /）
+  // 这样构建产物中的资源路径会基于这个 base URL
+  base: `http://${APP_HOST}:${APP_PORT}/`,
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -34,6 +131,7 @@ export default defineConfig({
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [
+    corsPlugin(), // 添加 CORS 插件，支持 credentials
     vue({
       script: {
         fs: {
@@ -58,7 +156,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    port: 8082,
+    port: parseInt(appConfig.devPort, 10),
     host: '0.0.0.0',
     strictPort: false,
     proxy,
@@ -75,8 +173,8 @@ export default defineConfig({
     },
     hmr: {
       protocol: 'ws',
-      host: 'localhost', // HMR WebSocket 需要使用 localhost，浏览器无法连接 0.0.0.0
-      port: 8082,
+      host: appConfig.devHost, // HMR WebSocket 需要使用配置的主机，浏览器无法连接 0.0.0.0
+      port: parseInt(appConfig.devPort, 10),
       overlay: false, // 关闭热更新错误浮层，减少开销
     },
     fs: {
@@ -89,6 +187,22 @@ export default defineConfig({
       // 启用缓存，加速依赖加载
       cachedChecks: true,
     },
+  },
+  // 预览服务器配置（启动构建产物的静态服务器）
+  preview: {
+    port: APP_PORT,
+    strictPort: true, // 端口被占用时报错，避免自动切换
+    open: false, // 启动后不自动打开浏览器
+    host: '0.0.0.0',
+    proxy,
+    headers: {
+      // 允许主应用（4180）跨域访问当前子应用资源
+      'Access-Control-Allow-Origin': MAIN_APP_ORIGIN,
+      'Access-Control-Allow-Methods': 'GET,OPTIONS',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+    historyApiFallback: true, // 支持单页应用路由（避免子应用路由刷新 404）
   },
   css: {
     preprocessorOptions: {
@@ -105,6 +219,12 @@ export default defineConfig({
       output: {
         format: 'esm', // 明确指定输出格式为 ESM
         manualChunks(id) {
+          // 重要：Element Plus 的匹配必须在最前面，确保所有 element-plus 相关代码都在同一个 chunk
+          // 避免 Vite 的自动代码分割将 element-plus 分割成多个 chunk（如 element-layout、element-data、element-feedback 等）
+          if (id.includes('element-plus') || id.includes('@element-plus')) {
+            return 'element-plus';
+          }
+
           if (id.includes('src/') && !id.includes('node_modules')) {
             if (id.includes('src/modules')) {
               const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
@@ -123,25 +243,31 @@ export default defineConfig({
               return 'app-micro';
             }
             if (id.includes('src/plugins')) {
-              return 'app-plugins';
+              // 插件与 bootstrap 有依赖关系（bootstrap 会扫描插件），合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/store')) {
-              return 'app-store';
+              // store 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/services')) {
-              return 'app-services';
+              // services 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/utils')) {
-              return 'app-utils';
+              // utils 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/composables')) {
               return 'app-composables';
             }
             if (id.includes('src/bootstrap')) {
-              return 'app-bootstrap';
+              // bootstrap 与多个模块有依赖关系，放在 app-src 中
+              return 'app-src';
             }
             if (id.includes('src/config')) {
-              return 'app-config';
+              // config 可能依赖 plugins，合并到 app-src 避免循环依赖
+              return 'app-src';
             }
             if (id.includes('src/router')) {
               return 'app-router';
@@ -153,7 +279,8 @@ export default defineConfig({
               return 'app-assets';
             }
             if (id.includes('src/types')) {
-              return 'app-types';
+              // types 通常很小，合并到 app-src 避免空 chunk
+              return 'app-src';
             }
             return 'app-src';
           }
@@ -167,35 +294,6 @@ export default defineConfig({
 
           if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) {
             return 'vue-vendor';
-          }
-
-          if (id.includes('node_modules/element-plus')) {
-            if (id.includes('/theme') || id.includes('/utils') || id.includes('/locale') || id.includes('/directives')) {
-              return 'element-core';
-            }
-            if (id.includes('/button') || id.includes('/input') || id.includes('/form') || id.includes('/select') || id.includes('/checkbox') || id.includes('/radio') || id.includes('/switch')) {
-              return 'element-basic';
-            }
-            if (id.includes('/layout') || id.includes('/container') || id.includes('/row') || id.includes('/col') || id.includes('/grid') || id.includes('/divider')) {
-              return 'element-layout';
-            }
-            if (id.includes('/table') || id.includes('/pagination') || id.includes('/tree') || id.includes('/calendar') || id.includes('/tag') || id.includes('/badge') || id.includes('/card')) {
-              return 'element-data';
-            }
-            if (id.includes('/dialog') || id.includes('/drawer') || id.includes('/message') || id.includes('/notification') || id.includes('/popover') || id.includes('/tooltip') || id.includes('/alert') || id.includes('/loading')) {
-              return 'element-feedback';
-            }
-            if (id.includes('/menu') || id.includes('/breadcrumb') || id.includes('/tabs') || id.includes('/steps') || id.includes('/affix') || id.includes('/backtop')) {
-              return 'element-navigation';
-            }
-            if (id.includes('/date-picker') || id.includes('/time-picker') || id.includes('/cascader') || id.includes('/upload') || id.includes('/rate') || id.includes('/slider') || id.includes('/color-picker')) {
-              return 'element-form';
-            }
-            return 'element-others';
-          }
-
-          if (id.includes('node_modules/@element-plus/icons-vue')) {
-            return 'element-icons';
           }
 
           if (id.includes('node_modules/axios')) {
@@ -237,7 +335,7 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 2000, // 提高警告阈值，element-plus chunk 较大是正常的
   },
   optimizeDeps: {
     // 启用依赖预构建，加速开发环境模块加载

@@ -225,6 +225,8 @@ const runTest = async (test: any) => {
 
     if (test.isCustomRequest) {
       // 自定义请求，直接使用业务适配层请求指定路径
+      // 使用静态导入，避免与静态导入冲突导致代码分割警告
+      // requestAdapter 已经在其他地方被静态导入，这里也使用静态导入保持一致
       const { requestAdapter, recreateResponseInterceptor } = await import('@/utils/requestAdapter');
 
       // 重新创建响应拦截器

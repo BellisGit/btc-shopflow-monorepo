@@ -2,9 +2,11 @@ import type { App } from 'vue';
 import ElementPlus from 'element-plus';
 import { createThemePlugin } from '@btc/shared-core';
 
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
-import '../../styles/theme.scss';
+// 注意：所有样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
+// 这里不再重复导入，避免样式重复和样式被提取到不同的 chunk 中
+// import 'element-plus/dist/index.css';
+// import 'element-plus/theme-chalk/dark/css-vars.css';
+// import '../../styles/theme.scss';
 
 export type AdminThemePlugin = ReturnType<typeof createThemePlugin>;
 

@@ -48,7 +48,8 @@
 import { computed } from 'vue';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { useI18n, type ButtonStyle } from '@btc/shared-core';
-import { useSettingsHandlers, useSettingsState } from '../../composables';
+import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
+import { useSettingsState } from '../../composables/useSettingsState';
 import './styles/index.scss';
 
 const { t } = useI18n();

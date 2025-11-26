@@ -13,6 +13,7 @@ import * as CodePlugin from './plugins/code';
 // 导入样式
 import './common/dialog/styles/index.scss';
 import './common/form/style.scss';
+import './common/view-group/styles/index.scss'; // btc-view-group 样式（btc-table-group 依赖）
 import './components/feedback/btc-message/styles.scss';
 import './components/feedback/btc-notification/styles.scss';
 import './components/basic/btc-icon-button/index.scss';
@@ -21,6 +22,18 @@ import './components/basic/btc-avatar/index.scss';
 
 // 图表组件
 export * from './charts';
+
+// 导入图表组件样式（必须在导出后导入，确保样式被正确提取）
+// 注意：由于 cssCodeSplit: false，所有 CSS 会被合并到一个 style.css 文件中
+import './charts/line/basic/styles/index.scss';
+import './charts/bar/basic/styles/index.scss';
+import './charts/bar/horizontal/styles/index.scss';
+import './charts/bar/dual-compare/styles/index.scss';
+import './charts/pie/basic/styles/index.scss';
+import './charts/pie/ring/styles/index.scss';
+import './charts/radar/basic/styles/index.scss';
+import './charts/scatter/basic/styles/index.scss';
+import './charts/kline/basic/styles/index.scss';
 
 // 导出语言包供应用使用
 export { default as sharedLocalesZhCN } from './locales/zh-CN.json';

@@ -1,4 +1,11 @@
 // View Transition API 样式 - 支持主题切换动画
+// 确保根元素有 view-transition-name（View Transition API 需要）
+// 主应用统一控制整个页面的 View Transition，子应用不应该设置
+html {
+  view-transition-name: root;
+}
+
+// 禁用默认动画，完全使用 JavaScript animate() API 控制
 ::view-transition-new(root),
 ::view-transition-old(root) {
   animation: none !important;
@@ -27,61 +34,10 @@ html.dark,
 
   // 暗黑模式下的背景色层次
   // 注意：布局区域（顶栏、面包屑、tabbar、内容区域、侧边栏）的背景色样式已移至共享组件
-  // @btc/shared-components/styles/dark-theme.scss，所有应用自动应用
+  // @btc/shared-components/styles/dark-theme.css，所有应用自动应用
+  // 组件级别的暗色主题样式也已移至共享组件库，确保在 qiankun 样式隔离环境下也能正确应用
   // 组件背景使用 Element Plus 的 --el-bg-color #0a0a0a
   // 全局背景使用 Element Plus 默认的暗色背景（不修改）
-
-  // 调整暗黑模式下的表格背景色
-  .el-table {
-    --el-table-bg-color: var(--el-bg-color);
-    --el-table-tr-bg-color: var(--el-bg-color);
-    --el-table-row-hover-bg-color: var(--el-fill-color-light);
-
-    &__header {
-      .el-table__cell {
-        background-color: var(--el-bg-color) !important;
-      }
-    }
-  }
-
-  // 优化暗黑模式下的遮罩层
-  .el-overlay {
-    background-size: 4px 4px;
-    backdrop-filter: saturate(50%) blur(4px);
-  }
-
-  // CRUD 容器背景
-  .crud-container {
-    background-color: var(--el-bg-color) !important;
-  }
-
-  // btc-crud 组件背景
-  .btc-crud {
-    background-color: var(--el-bg-color) !important;
-  }
-
-  // 优化菜单在暗黑模式下的显示
-  .el-menu {
-    --el-menu-bg-color: var(--el-bg-color);
-    --el-menu-hover-bg-color: var(--el-fill-color-light);
-    --el-menu-text-color: var(--el-text-color-primary);
-    --el-menu-active-color: var(--el-color-primary);
-  }
-
-  // 优化下拉菜单
-  .el-dropdown-menu {
-    --el-dropdown-menu-box-shadow: var(--el-box-shadow-light);
-  }
-
-  // 优化抽屉
-  .el-drawer {
-    --el-drawer-bg-color: var(--el-bg-color);
-  }
-}
-
-// 确保子应用根容器使用正确的背景色
-#app {
-  background-color: var(--el-bg-color) !important;
 }
 
 // 确保暗黑模式下的文本颜色正确

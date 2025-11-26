@@ -1,5 +1,17 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
+import 'virtual:uno.css';
+// Element Plus 样式
+import 'element-plus/dist/index.css';
+import 'element-plus/theme-chalk/dark/css-vars.css';
+// 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
+import '@btc/shared-components/styles/dark-theme.css';
+// 应用全局样式（global.scss 中已通过 @import 导入共享组件样式）
+// 注意：共享组件样式在 global.scss 中使用 @import 导入，确保构建时被正确合并
+import './styles/global.scss';
+import './styles/theme.scss';
+import './styles/nprogress.scss';
+import './styles/menu-themes.scss';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createAdminApp,
@@ -24,41 +36,27 @@ const render = (props: QiankunProps = {}) => {
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
 function bootstrap() {
-  // bootstrap 阶段不需要做任何初始化工作，所有初始化都在 mount 阶段完成
-  // 不使用 async，直接返回 resolved Promise，确保最快速度
-  // 关键：bootstrap 超时可能是模块加载阶段的问题，而不是函数执行问题
   return Promise.resolve();
 }
 
 async function mount(props: QiankunProps) {
-  // console.log('[admin-app] mount 开始', props);
-  try {
   render(props);
-    // 使用 nextTick 确保 Vue 的渲染完成后再返回
-    await new Promise(resolve => {
-      // 使用 requestAnimationFrame 确保 DOM 更新完成
+  // 使用 nextTick 确保 Vue 的渲染完成后再返回
+  await new Promise(resolve => {
+    // 使用 requestAnimationFrame 确保 DOM 更新完成
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // console.log('[admin-app] mount 完成');
-          resolve(undefined);
-        });
+        // console.log('[admin-app] mount 完成');
+        resolve(undefined);
       });
     });
-  } catch (error) {
-    // console.error('[admin-app] mount 失败:', error);
-    throw error;
-  }
+  });
 }
 
 async function unmount(props: QiankunProps = {}) {
-  try {
   if (context) {
     unmountAdminApp(context, props);
     context = null;
-    }
-  } catch (error) {
-    // console.error('[admin-app] unmount 失败:', error);
-    throw error;
   }
 }
 

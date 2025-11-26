@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: engineering-app
       app_port: "30085"
-      container_name: btc-engineering
+      container_name: btc-engineering-app
     secrets: inherit
 
   cleanup:

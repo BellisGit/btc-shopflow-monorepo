@@ -1,5 +1,9 @@
 name: Build System App (Reusable)
 
+# ⚠️ 此工作流是可复用的，不会自动触发
+# - 只能通过其他工作流调用（workflow_call）
+# - 不会响应 push 或其他事件
+# - 如需构建应用，请在本地运行 pnpm build:system 命令
 on:
   workflow_call:
     inputs:

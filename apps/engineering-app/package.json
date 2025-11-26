@@ -7,7 +7,9 @@
     "predev": "pnpm --filter @btc/vite-plugin build",
     "dev": "vite --port 8085",
     "build": "vite build",
+    "build:preview": "VITE_PREVIEW=true vite build",
     "preview": "vite preview",
+    "preview:build": "pnpm build:preview && vite preview",
     "type-check": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {

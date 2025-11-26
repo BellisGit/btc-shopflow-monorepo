@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { storage } from '@btc/shared-utils';
 import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
-import { setThemeColor } from './composables/useThemeColor';
+import { setThemeColor, syncThemeColorToSubApps } from './composables/useThemeColor';
 import { migrateThemeConfig } from './composables/useThemeMigration';
 import { createToggleDark } from './composables/useThemeToggle';
 
@@ -78,6 +78,11 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 使用 composable 中的 setThemeColor
   const themeSetThemeColor = (color: string, dark: boolean) => {
     setThemeColor(color, dark);
+    // 在微前端环境下，确保主题色同步到子应用
+    // 使用 setTimeout 确保 DOM 更新完成后再同步
+    setTimeout(() => {
+      syncThemeColorToSubApps();
+    }, 0);
   };
 
   /**
@@ -208,6 +213,37 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
 
   // 初始化主题
   initTheme();
+
+  // ========== 关键：在微前端环境下，监听子应用加载并同步主题色 ==========
+  // 注意：已关闭 qiankun 的样式隔离，CSS 变量可以正常继承
+  // 使用 MutationObserver 监听子应用的加载，确保主题色变量能够同步到新加载的子应用
+  // 这样可以确保子应用加载后立即获取到正确的主题色
+  if (typeof window !== 'undefined' && typeof MutationObserver !== 'undefined') {
+    // 监听子应用容器的变化
+    const observer = new MutationObserver(() => {
+      syncThemeColorToSubApps();
+    });
+
+    // 开始观察
+    const observeTarget = document.body;
+    if (observeTarget) {
+      observer.observe(observeTarget, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+      });
+
+      // 初始同步
+      setTimeout(() => {
+        syncThemeColorToSubApps();
+      }, 500);
+
+      // 定期同步（作为备用方案，确保子应用加载后也能获取到主题色）
+      setInterval(() => {
+        syncThemeColorToSubApps();
+      }, 2000);
+    }
+  }
 
   const plugin: Plugin & { theme: ThemePlugin } = {
     install(app: App) {

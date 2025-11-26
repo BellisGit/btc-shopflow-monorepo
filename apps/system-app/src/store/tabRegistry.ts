@@ -2,7 +2,21 @@
  * Tab 元数据注册表（主应用主导，命名空间化）
  */
 
-import { getManifestRoute, getManifest } from '@/micro/manifests';
+// 使用动态导入避免循环依赖（micro/index.ts 导入 store/tabRegistry，而 store/tabRegistry 导入 micro/manifests）
+// import { getManifestRoute, getManifest } from '@/micro/manifests';
+
+// 延迟加载的 manifest 函数（避免循环依赖）
+let getManifestRoute: any = null;
+let getManifest: any = null;
+
+async function loadManifestFunctions() {
+  if (!getManifestRoute || !getManifest) {
+    const manifestModule = await import('@/micro/manifests');
+    getManifestRoute = manifestModule.getManifestRoute;
+    getManifest = manifestModule.getManifest;
+  }
+  return { getManifestRoute, getManifest };
+}
 
 export interface TabMeta {
   key: string;
@@ -169,28 +183,9 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
   }
 
   // 所有子应用都从 manifest 查找
+  // 注意：由于循环依赖，manifest 函数是延迟加载的，这里只能返回 null
+  // 实际的 manifest 解析应该在异步上下文中进行（如 process.ts 中的动态导入）
   if (app !== 'main') {
-    const manifestRoute = getManifestRoute(app, pathname);
-    
-    if (manifestRoute && manifestRoute.tab?.enabled !== false) {
-      // 从 manifest 构建 TabMeta
-      const manifest = getManifest(app);
-      if (manifest) {
-        const basePath = manifest.app.basePath ?? `/${app}`;
-        const routePath = manifestRoute.path;
-        const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
-        const manifestKey = routePath.replace(/^\//, "") || "home";
-        
-        return {
-          key: manifestKey,
-          title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
-          path: fullPath,
-          i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
-        };
-      }
-    }
-    
-    // 如果从 manifest 查不到，返回 null
     return null;
   }
 

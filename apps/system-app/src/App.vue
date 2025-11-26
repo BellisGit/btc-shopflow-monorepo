@@ -1,6 +1,8 @@
 <template>
-  <router-view />
-  <RetryStatusIndicator />
+  <div class="system-app">
+    <router-view />
+    <RetryStatusIndicator />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -24,10 +26,32 @@ onMounted(() => {
 #app {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
 }
 
 #main-app {
   width: 100%;
   height: 100%;
+}
+
+.system-app {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.system-app > router-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>

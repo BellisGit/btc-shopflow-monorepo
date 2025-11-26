@@ -30,7 +30,8 @@ defineOptions({
 import DynamicMenu from '../dynamic-menu/index.vue';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
+import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 
 const { t } = useI18n();

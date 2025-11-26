@@ -6,6 +6,7 @@
 import { ref, computed, nextTick } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+// 现在都在 app-src chunk 中，可以使用静态导入
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
@@ -17,7 +18,7 @@ let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
  * 创建设置状态的函数（内部使用）
  */
 function createSettingsState() {
-  // 从系统配置获取默认值
+  // 从系统配置获取默认值（现在都在 app-src chunk 中，可以直接使用静态导入的 config）
   const defaultSetting = config.app.systemSetting;
 
   // 菜单相关设置
@@ -163,33 +164,53 @@ function createSettingsState() {
     }
   };
 
-  // 立即应用系统主题
-  applySystemTheme();
+  // 延迟应用设置，避免在模块加载时立即执行（导致循环依赖）
+  // 这些代码会在首次调用 useSettingsState() 时执行（通过初始化函数）
+  
+  // 初始化函数：应用所有设置到 DOM
+  const applyInitialSettings = () => {
+    // 1. 应用系统主题（应用到 DOM）- 确保在页面加载时立即应用
+    applySystemTheme();
 
-  // 监听系统主题变化（AUTO 模式）
-  if (systemThemeType.value === SystemThemeEnum.AUTO) {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleThemeChange = () => {
-      applySystemTheme();
-    };
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleThemeChange);
-    } else {
-      // 兼容旧浏览器
-      mediaQuery.addListener(handleThemeChange);
+    // 监听系统主题变化（AUTO 模式）
+    if (systemThemeType.value === SystemThemeEnum.AUTO) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleThemeChange = () => {
+        applySystemTheme();
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleThemeChange);
+      } else {
+        // 兼容旧浏览器
+        mediaQuery.addListener(handleThemeChange);
+      }
     }
-  }
 
-  // 2. 应用盒子模式
-  document.documentElement.setAttribute('data-box-mode', boxBorderMode.value ? BoxStyleType.BORDER : BoxStyleType.SHADOW);
+    // 2. 应用盒子模式
+    document.documentElement.setAttribute('data-box-mode', boxBorderMode.value ? BoxStyleType.BORDER : BoxStyleType.SHADOW);
 
-  // 3. 应用色弱模式
-  if (colorWeak.value) {
-    document.documentElement.classList.add('color-weak');
-  }
+    // 3. 应用色弱模式
+    if (colorWeak.value) {
+      document.documentElement.classList.add('color-weak');
+    }
 
-  // 4. 应用自定义圆角
-  document.documentElement.style.setProperty('--custom-radius', `${customRadius.value}rem`);
+    // 4. 应用自定义圆角
+    document.documentElement.style.setProperty('--custom-radius', `${customRadius.value}rem`);
+  };
+  
+  // 标记是否已初始化
+  let settingsApplied = false;
+  
+  // 在首次访问时应用初始设置（延迟执行，避免在模块加载时立即执行）
+  const ensureInitialSettingsApplied = () => {
+    if (!settingsApplied && typeof window !== 'undefined' && typeof document !== 'undefined') {
+      settingsApplied = true;
+      // 使用 nextTick 确保在 Vue 应用初始化之后执行
+      nextTick(() => {
+        applyInitialSettings();
+      });
+    }
+  };
 
   /**
    * 切换菜单布局
@@ -606,7 +627,18 @@ function createSettingsState() {
     setGlobalSearch,
     setCrumbs,
     setColorWeak,
+    // 内部方法：确保初始设置已应用（延迟执行）
+    _ensureInitialSettingsApplied: ensureInitialSettingsApplied,
   };
+}
+
+/**
+ * 初始化配置（在应用启动时调用）
+ * 现在使用静态导入，此函数不再需要异步加载 config
+ */
+export async function initSettingsConfig() {
+  // config 已经通过静态导入加载，不需要额外操作
+  // 保留此函数以保持 API 兼容性
 }
 
 /**
@@ -616,7 +648,42 @@ function createSettingsState() {
 export function useSettingsState() {
   if (!settingsStateInstance) {
     settingsStateInstance = createSettingsState();
+    // 首次初始化时，确保初始设置已应用（延迟执行）
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      // 使用 nextTick 确保在 Vue 应用初始化之后执行
+      nextTick(() => {
+        if ((settingsStateInstance as any)._ensureInitialSettingsApplied) {
+          (settingsStateInstance as any)._ensureInitialSettingsApplied();
+        }
+      });
+    }
+  } else {
+    // 如果实例已存在，也要确保初始设置已应用（可能在之前调用时未应用）
+    if ((settingsStateInstance as any)._ensureInitialSettingsApplied) {
+      (settingsStateInstance as any)._ensureInitialSettingsApplied();
+    }
   }
   return settingsStateInstance;
+}
+
+// 在模块加载时，将 useSettingsState 函数暴露到全局，供 useSettingsHandlers 使用
+// 这样可以避免静态导入导致的循环依赖
+// 注意：这里必须在 useSettingsState 函数定义之后执行，确保函数已经完全定义
+// 使用 Object.defineProperty 确保属性可以被正确设置，即使模块还在初始化中
+if (typeof globalThis !== 'undefined') {
+  try {
+    Object.defineProperty(globalThis, '__USE_SETTINGS_STATE_MODULE__', {
+      value: {
+        useSettingsState,
+      },
+      writable: true,
+      configurable: true,
+    });
+  } catch (e) {
+    // 如果 Object.defineProperty 失败，使用普通赋值
+    (globalThis as any).__USE_SETTINGS_STATE_MODULE__ = {
+      useSettingsState,
+    };
+  }
 }
 

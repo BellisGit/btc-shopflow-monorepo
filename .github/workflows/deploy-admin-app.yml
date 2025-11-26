@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: admin-app
       app_port: "30081"
-      container_name: btc-admin
+      container_name: btc-admin-app
     secrets: inherit
 
   cleanup:

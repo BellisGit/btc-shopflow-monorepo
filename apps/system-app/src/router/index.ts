@@ -7,7 +7,8 @@ import {
 import Layout from '../modules/base/components/layout/index.vue';
 import { config } from '../config';
 import { tSync } from '../i18n/getters';
-import { useProcessStore, getCurrentAppFromPath } from '../store/process';
+// 使用动态导入避免循环依赖
+// import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micro/index';
 import { systemRoutes } from './routes/system';
 
@@ -293,9 +294,14 @@ router.afterEach((to) => {
 
   // 如果是首页（isHome=true），将所有标签设为未激活
   if (to.meta?.isHome === true || to.path === '/') {
+    // 动态导入避免循环依赖
+    import('../store/process').then(({ useProcessStore }) => {
     const process = useProcessStore();
     process.list.forEach((tab) => {
       tab.active = false;
+      });
+    }).catch(() => {
+      // 忽略错误
     });
     return;
   }
@@ -338,23 +344,24 @@ router.afterEach((to) => {
     return;
   }
 
-  // 使用 store 添加路由到标签页
+  // 使用 store 添加路由到标签页（动态导入避免循环依赖）
+  import('../store/process').then(({ useProcessStore, getCurrentAppFromPath }) => {
   const process = useProcessStore();
   const currentApp = getCurrentAppFromPath(to.path);
 
   // 再次确认：只添加系统域的路由（不是子应用）
   if (currentApp === 'system') {
     // 系统域路由，添加到标签页
-  } else {
-    // 其他子应用路由，不添加到标签页
-    return;
-  }
-
   process.add({
     path: to.path,
     fullPath: to.fullPath,
     name: to.name as string,
     meta: to.meta as any,
+      });
+    }
+    // 其他子应用路由，不添加到标签页
+  }).catch(() => {
+    // 忽略错误
   });
 });
 

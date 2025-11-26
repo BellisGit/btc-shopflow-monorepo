@@ -160,13 +160,13 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
   'QUALITY': {
     icon: 'approve',
     color: '#f56c6c',
-    entry: '//localhost:8084',
+    entry: '//localhost:8083',
     activeRule: '/quality',
   },
   'PRODUCTION': {
     icon: 'work',
     color: '#909399',
-    entry: '//localhost:8083',
+    entry: '//localhost:8084',
     activeRule: '/production',
   },
   'FINANCE': {

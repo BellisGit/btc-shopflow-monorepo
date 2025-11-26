@@ -23,6 +23,10 @@ services:
     container_name: btc-system-app
     ports:
       - "8080:80"
+    environment:
+      - DOCKER_ENV=production
+      - NODE_ENV=production
+      - DOCKER=true
     restart: unless-stopped
 
   # 可按需取消注释以启用更多子应用

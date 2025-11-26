@@ -1,8 +1,11 @@
 // 页面切换过渡动画样式（必须在文件开头）
-@use './transitions.scss';
+@import './transitions.scss';
 
 // 暗色模式布局背景色样式（必须在文件开头，确保优先级）
-@use './dark-theme.scss';
+// 注意：在微前端环境下，SCSS 可能无法正确穿透样式隔离
+// 因此使用 CSS 文件而不是 SCSS，确保样式能够正确应用
+// 使用 @import 而不是 @use，确保样式被正确合并到构建产物中
+@import './dark-theme.css';
 
 .btc-table-dict-cell {
 	display: inline-flex;

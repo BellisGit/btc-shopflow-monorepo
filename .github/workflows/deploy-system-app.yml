@@ -28,7 +28,7 @@ jobs:
     with:
       app_name: system-app
       app_port: "30080"
-      container_name: btc-system
+      container_name: btc-system-app
     secrets: inherit
 
   cleanup:

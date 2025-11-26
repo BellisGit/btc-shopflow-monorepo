@@ -24,8 +24,29 @@ const proxy: Record<string, string | ProxyOptions> = {
           proxyRes.headers['Access-Control-Allow-Origin'] = origin as string;
           proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
           proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
-          const requestHeaders = req.headers['access-control-request-headers'] || 'Content-Type, Authorization, X-Requested-With, Accept, Origin';
+          const requestHeaders = req.headers['access-control-request-headers'] || 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id';
           proxyRes.headers['Access-Control-Allow-Headers'] = requestHeaders as string;
+          
+          // 关键：修复 Set-Cookie 响应头，确保跨域请求时 cookie 能够正确设置
+          // 在预览模式下（不同端口），需要设置 SameSite=None; Secure
+          const setCookieHeader = proxyRes.headers['set-cookie'];
+          if (setCookieHeader) {
+            const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+            const fixedCookies = cookies.map((cookie: string) => {
+              // 如果 cookie 不包含 SameSite，或者 SameSite 不是 None，需要修复
+              if (!cookie.includes('SameSite=None')) {
+                // 移除现有的 SameSite 设置（如果有）
+                let fixedCookie = cookie.replace(/;\s*SameSite=(Strict|Lax|None)/gi, '');
+                // 添加 SameSite=None; Secure（对于跨域请求）
+                // 注意：Secure 需要 HTTPS，但在开发/预览环境中，我们仍然添加它
+                // 浏览器会忽略 Secure（如果协议是 HTTP）
+                fixedCookie += '; SameSite=None; Secure';
+                return fixedCookie;
+              }
+              return cookie;
+            });
+            proxyRes.headers['set-cookie'] = fixedCookies;
+          }
         }
         // 记录后端响应状态
         if (proxyRes.statusCode && proxyRes.statusCode >= 500) {

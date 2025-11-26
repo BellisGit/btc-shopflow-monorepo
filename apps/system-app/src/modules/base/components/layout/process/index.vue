@@ -96,7 +96,7 @@ import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
 import { getManifestRoute } from '@/micro/manifests';
-import { useSettingsState } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 
 interface Props {
   isFullscreen?: boolean;

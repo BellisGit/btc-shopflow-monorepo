@@ -80,7 +80,7 @@ defineOptions({
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsState } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useCurrentApp } from '@/composables/useCurrentApp';
 import { appMenus } from '@/micro/menus';
 import { Expand, Fold } from '@element-plus/icons-vue';

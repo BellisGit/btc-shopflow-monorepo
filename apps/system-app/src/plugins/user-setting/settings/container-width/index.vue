@@ -19,7 +19,9 @@
 <script setup lang="ts">
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';
+import { useSettingsConfig } from '../../composables/useSettingsConfig';
+import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
+import { useSettingsState } from '../../composables/useSettingsState';
 import '../../settings/container-width/styles/index.scss';
 
 const { t } = useI18n();

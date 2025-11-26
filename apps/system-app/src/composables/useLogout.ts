@@ -3,7 +3,8 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { authApi } from '@/modules/api-services';
 import { useUser } from './useUser';
-import { useProcessStore } from '@/store/process';
+// 使用动态导入避免循环依赖
+// import { useProcessStore } from '@/store/process';
 import { deleteCookie } from '@/utils/cookie';
 import { appStorage } from '@/utils/app-storage';
 
@@ -14,7 +15,16 @@ export function useLogout() {
   const router = useRouter();
   const { t } = useI18n();
   const { clearUserInfo } = useUser();
-  const processStore = useProcessStore();
+  // 延迟获取 processStore，避免循环依赖
+  let processStore: ReturnType<typeof import('@/store/process').useProcessStore> | null = null;
+  
+  const getProcessStore = async () => {
+    if (!processStore) {
+      const { useProcessStore } = await import('@/store/process');
+      processStore = useProcessStore();
+    }
+    return processStore;
+  };
 
   /**
    * 退出登录
@@ -44,7 +54,8 @@ export function useLogout() {
       clearUserInfo();
 
       // 清除标签页（Process Store）
-      processStore.clear();
+      const store = await getProcessStore();
+      store.clear();
 
       // 清除其他可能的缓存
       // 如果有使用 IndexedDB，也需要清除
@@ -64,7 +75,10 @@ export function useLogout() {
       appStorage.auth.clear();
       appStorage.user.clear();
       clearUserInfo();
-      processStore.clear();
+      // 清除标签页（Process Store）
+      getProcessStore().then(store => store.clear()).catch(() => {
+        // 忽略错误
+      });
 
       // 跳转到登录页
       router.push('/login');

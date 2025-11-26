@@ -80,7 +80,7 @@
             <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
             <!-- 注意：容器必须始终在 DOM 中，这样骨架屏才能被找到 -->
             <!-- qiankun 会在容器内创建包装器，所以骨架屏需要放在容器外部，使用绝对定位覆盖 -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport" style="position: relative;">
+            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
               <!-- qiankun 会在这里挂载子应用 -->
             </div>
             <!-- 骨架屏放在容器外部，使用绝对定位覆盖，确保在子应用之上 -->
@@ -103,7 +103,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
-import { useSettingsState } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
@@ -533,6 +533,19 @@ onUnmounted(() => {
       flex-direction: column;
       min-height: 0;
       min-width: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    // qiankun 包装器容器（确保高度正确）
+    :deep(#subapp-viewport [id^="__qiankun_microapp_wrapper"]) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
     }
 
     :deep(#subapp-viewport > [data-qiankun] > *) {
@@ -541,6 +554,17 @@ onUnmounted(() => {
       flex-direction: column;
       min-height: 0;
       min-width: 0;
+    }
+
+    // 子应用的 #app 元素（确保高度正确）
+    :deep(#subapp-viewport #app) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
     }
 
     :deep(qiankun-head) {

@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: logistics-app
       app_port: "30082"
-      container_name: btc-logistics
+      container_name: btc-logistics-app
     secrets: inherit
 
   cleanup:

@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: production-app
       app_port: "30084"
-      container_name: btc-production
+      container_name: btc-production-app
     secrets: inherit
 
   cleanup:

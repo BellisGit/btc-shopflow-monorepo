@@ -3,6 +3,13 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { service } from './services/eps';
 import 'virtual:svg-icons';
+// 关键：确保 Element Plus 样式在最前面加载，避免被其他样式覆盖
+// 开启样式隔离后，需要确保 Element Plus 样式在主应用中被正确加载
+import 'element-plus/dist/index.css';
+import 'element-plus/theme-chalk/dark/css-vars.css';
+// 关键：在关闭样式隔离的情况下，需要在主应用入口直接引入样式，确保样式被正确加载
+// 虽然 bootstrap/core/ui.ts 中也引入了，但在入口文件引入可以确保样式在应用启动时就被处理
+import '@btc/shared-components/styles/index.scss';
 
 const app = createApp(App);
 

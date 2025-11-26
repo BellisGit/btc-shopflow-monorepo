@@ -29,7 +29,8 @@ defineOptions({
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
+import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useCurrentApp } from '@/composables/useCurrentApp';
 import { getMenusForApp, getMenuRegistry } from '@/store/menuRegistry';

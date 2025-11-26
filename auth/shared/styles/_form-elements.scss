@@ -55,6 +55,30 @@
 	}
 }
 
+// 确保登录按钮有背景色（备用样式，防止 glassmorphism 样式未生效）
+// 使用更高优先级的选择器，确保样式能够正确应用
+.auth-page .el-button.el-button--primary,
+.auth-page .button-container .el-button.el-button--primary,
+.auth-page :deep(.el-button.el-button--primary) {
+	// 如果 glassmorphism 样式未生效，使用 Element Plus 默认主题色
+	background-color: var(--el-color-primary) !important;
+	background: var(--el-color-primary) !important;
+	border-color: var(--el-color-primary) !important;
+	color: var(--el-color-white) !important;
+	
+	&:hover {
+		background-color: var(--el-color-primary-light-3) !important;
+		background: var(--el-color-primary-light-3) !important;
+		border-color: var(--el-color-primary-light-3) !important;
+	}
+	
+	&:active {
+		background-color: var(--el-color-primary-dark-2) !important;
+		background: var(--el-color-primary-dark-2) !important;
+		border-color: var(--el-color-primary-dark-2) !important;
+	}
+}
+
 // 忘记密码页面的按钮样式
 .auth-page .login-card .card-content .forget-password {
 	// 短信验证码按钮样式

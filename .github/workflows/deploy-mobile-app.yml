@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: mobile-app
       app_port: "30091"
-      container_name: btc-mobile
+      container_name: btc-mobile-app
     secrets: inherit
 
   cleanup:

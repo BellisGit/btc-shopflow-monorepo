@@ -350,10 +350,10 @@ export function setupQiankun() {
     prefetch: false,
     sandbox: {
       strictStyleIsolation: false,
-      experimentalStyleIsolation: true,
+      experimentalStyleIsolation: false, // 关闭样式隔离：主应用和子应用样式共享
       loose: false,
     },
-    singular: true, // 单例模式：同时只能运行一个子应用
+    singular: true, // 单例模式：同时只能运行一个子应用（子应用之间不会同时存在，因此不需要额外隔离）
     // 关键：允许加载跨域模块脚本，强制以 module 类型加载
     // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {

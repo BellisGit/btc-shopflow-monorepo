@@ -82,7 +82,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     // await service.system?.base?.inventoryMaterial?.import(formData);
     message.success(t('inventory.dataSource.list.import.success'));
     // 刷新表格
-    tableGroupRef.value?.crudRef?.refresh();
+    tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
     message.error(t('inventory.dataSource.list.import.failed'));

@@ -114,7 +114,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
   return {
     name: 'i18n',
     install(app: App) {
-      app.use(i18n);
+      app.use(i18n as any);
 
       // 明确挂载 $ts 函数，避免被遮蔽
       app.config.globalProperties.$ts = (key: string, params?: any) => {
@@ -129,7 +129,7 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       // 监听语言切换并持久化
       const { locale } = i18n.global;
       if (typeof locale !== 'string') {
-        watch(locale, (newLocale: string) => {
+        watch(() => locale.value, (newLocale: string) => {
           storage.set('locale', newLocale);
 
           // 同时写 cookie（供服务端读取，实现首帧标题正确）

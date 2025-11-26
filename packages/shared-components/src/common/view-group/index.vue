@@ -33,7 +33,7 @@
       </div>
 
       <!-- 右侧 -->
-      <div class="btc-view-group__right" :style="rightPaneStyle">
+      <div class="btc-view-group__right">
         <div v-if="!custom" class="head">
           <div
             class="icon is-bg absolute left-[10px]"
@@ -54,7 +54,7 @@
           </div>
         </div>
 
-        <div v-if="selectedItem || custom" class="content" :class="{ 'is-custom': custom }">
+        <div v-if="selectedItem || custom" class="content page" :class="{ 'is-custom': custom }">
           <slot name="right" :selected="selectedItem" :keyword="selectedKeyword" :left-data="leftListData" :right-data="rightData"></slot>
         </div>
 
@@ -156,17 +156,6 @@ const viewGroupStyle = computed(() => {
 });
 
 const { height: contentHeight, emit: emitContentResize } = useContentHeight();
-
-const rightPaneStyle = computed(() => {
-  const value = contentHeight.value;
-  if (!value || value <= 0) {
-    return {};
-  }
-  return {
-    height: `${value}px`,
-    minHeight: `${value}px`,
-  };
-});
 
 const scheduleContentResize = () => {
   nextTick(() => {
@@ -324,7 +313,7 @@ $bg: var(--el-bg-color);
   overflow: hidden;
 
   &__wrap {
-    flex: 1;
+    height: 100%;
     display: flex;
     overflow: hidden;
     position: relative;
@@ -381,7 +370,10 @@ $bg: var(--el-bg-color);
 
     .content {
       height: calc(100% - 40px);
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
+      box-sizing: border-box;
 
       &.is-custom {
         height: 100%;

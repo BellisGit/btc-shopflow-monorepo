@@ -20,10 +20,11 @@
       "@assets/*": ["../../packages/shared-components/src/assets/*"],
       "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
       "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
-      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
+      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"],
+      "@configs/*": ["../../configs/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
   "references": [
     { "path": "../../packages/shared-core" },
     { "path": "../../packages/shared-components" },

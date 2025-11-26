@@ -13,6 +13,12 @@
       "persistent": true,
       "outputs": []
     },
+    "preview": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "outputs": []
+    },
     "lint": {
       "outputs": [],
       "cache": true

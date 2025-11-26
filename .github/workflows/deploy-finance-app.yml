@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: finance-app
       app_port: "30086"
-      container_name: btc-finance
+      container_name: btc-finance-app
     secrets: inherit
 
   cleanup:

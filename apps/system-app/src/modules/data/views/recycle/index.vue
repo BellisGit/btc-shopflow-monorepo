@@ -169,7 +169,7 @@ const recycleService = {
 
 // 刷新数据
 function refresh(params?: any) {
-  crudRef.value?.refresh(params);
+  crudRef.value?.crud?.refresh(params);
 }
 
 // 数据恢复

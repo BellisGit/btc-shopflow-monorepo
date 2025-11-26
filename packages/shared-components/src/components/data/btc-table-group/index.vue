@@ -327,3 +327,10 @@ defineExpose<TableGroupExpose>({
   refresh
 });
 </script>
+
+<style lang="scss" scoped>
+:deep(.btc-view-group) {
+  height: 100%;
+  width: 100%;
+}
+</style>

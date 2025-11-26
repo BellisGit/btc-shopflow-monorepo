@@ -77,12 +77,12 @@ export const config = {
     apps: [
       {
         name: 'logistics',
-        entry: isDev ? '//localhost:8081' : '/logistics/',
+        entry: isDev ? '//localhost:8082' : '/logistics/',
         activeRule: '/logistics',
       },
       {
         name: 'engineering',
-        entry: isDev ? '//localhost:8082' : '/engineering/',
+        entry: isDev ? '//localhost:8085' : '/engineering/',
         activeRule: '/engineering',
       },
       {

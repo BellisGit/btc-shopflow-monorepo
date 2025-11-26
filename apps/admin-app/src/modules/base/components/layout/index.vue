@@ -489,6 +489,19 @@ onUnmounted(() => {
       flex-direction: column;
       min-height: 0;
       min-width: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    // qiankun 包装器容器（确保高度正确）
+    :deep(#subapp-viewport [id^="__qiankun_microapp_wrapper"]) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
     }
 
     :deep(#subapp-viewport > [data-qiankun] > *) {
@@ -497,6 +510,17 @@ onUnmounted(() => {
       flex-direction: column;
       min-height: 0;
       min-width: 0;
+    }
+
+    // 子应用的 #app 元素（确保高度正确）
+    :deep(#subapp-viewport #app) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
     }
 
     :deep(qiankun-head) {

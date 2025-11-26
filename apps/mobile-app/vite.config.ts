@@ -7,6 +7,10 @@ import { VantResolver } from 'unplugin-vue-components/resolvers';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'path';
+import { getViteAppConfig } from '../../configs/vite-app-config';
+
+// 从统一配置中获取应用配置
+const config = getViteAppConfig('mobile-app');
 
 const withSrc = (relativePath: string) =>
   resolve(fileURLToPath(new URL('.', import.meta.url)), relativePath);
@@ -185,7 +189,7 @@ export default defineConfig({
     charset: 'utf8',
   },
   server: {
-    port: 8091,
+    port: config.devPort,
     host: '0.0.0.0',
     strictPort: false,
     https: true,
@@ -201,6 +205,14 @@ export default defineConfig({
         withPackages('.'),
         withPackages('shared-components/src'),
       ],
+    },
+  },
+  preview: {
+    port: config.prePort,
+    host: '0.0.0.0',
+    https: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
     },
   },
   build: {

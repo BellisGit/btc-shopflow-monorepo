@@ -20,6 +20,8 @@ import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integr
 import { notificationManager } from '../utils/notification-manager';
 import { BtcMessage } from '@btc/shared-components';
 import { appStorage } from '../utils/app-storage';
+// 用户设置（现在都在 app-src chunk 中，可以使用静态导入）
+import { initSettingsConfig } from '../plugins/user-setting/composables/useSettingsState';
 
 /**
  * 应用启动引导程序
@@ -79,6 +81,9 @@ export async function bootstrap(app: App) {
   }, 0);
 
   // 2. 集成模块初始化
+  // 初始化设置配置（现在都在 app-src chunk 中，使用静态导入）
+  await initSettingsConfig();
+  
   await autoDiscoverPlugins(app);  // 自动发现插件
   await setupMicroApps(app);       // 微前端设置
   setupInterceptors();             // 拦截器配置

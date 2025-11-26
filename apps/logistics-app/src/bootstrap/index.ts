@@ -7,6 +7,8 @@ import type { QiankunProps } from '@btc/shared-core';
 // 样式文件在模块加载时同步导入
 // Vite 会优化处理：开发环境按需加载，生产环境打包到单独 CSS 文件
 // 这些导入不会阻塞 JavaScript 执行
+// 关键：在关闭样式隔离的情况下，需要直接 import 样式文件，确保样式被正确加载
+// 虽然 global.scss 中也通过 @import 引入了，但直接 import 可以确保样式在模块加载时就被处理
 import '@btc/shared-components/styles/index.scss';
 import '../styles/global.scss';
 import '../styles/theme.scss';

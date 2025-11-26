@@ -16,7 +16,8 @@ import type {
   NodeType
 } from '@/types/strategy';
 import { StrategyEffect } from '@/types/strategy';
-import { strategyService } from './strategy';
+// 使用动态导入避免循环依赖（strategy.ts 也导入 strategy-engine.ts）
+// import { strategyService } from './strategy';
 
 // 执行引擎配置
 interface EngineConfig {
@@ -97,6 +98,9 @@ export class StrategyExecutionEngine {
     const sessionId = this.generateSessionId();
 
     try {
+      // 动态导入 strategyService 避免循环依赖
+      const { strategyService } = await import('./strategy');
+      
       // 获取策略和编排信息
       const strategy = await strategyService.getStrategy(strategyId);
       const orchestration = await strategyService.getOrchestration(strategyId);

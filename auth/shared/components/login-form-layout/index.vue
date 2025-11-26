@@ -84,6 +84,8 @@ defineOptions({
       width: 100%;
       height: 45px; // 统一按钮高度
       min-height: 45px; // 确保最小高度一致
+      // 关键：不覆盖按钮的背景色，让 glassmorphism 样式生效
+      // 只设置尺寸相关属性，不设置背景色
     }
   }
 

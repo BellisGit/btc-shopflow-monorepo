@@ -74,10 +74,19 @@ if (!turboPath) {
 }
 
 // 运行 turbo，传递所有参数
+// 关键：在 Windows 上，清除 NODE_PATH 环境变量以避免"环境变量名或值太长"错误
+// pnpm 的 PowerShell 脚本会设置很长的 NODE_PATH，导致 PowerShell 报错
 const args = process.argv.slice(2);
+const env = { ...process.env };
+if (isWindows) {
+  // 在 Windows 上，清除 NODE_PATH 以避免长度限制问题
+  // Node.js 会自动解析 node_modules，不需要 NODE_PATH
+  delete env.NODE_PATH;
+}
 const child = spawn('node', [turboPath, ...args], {
   stdio: 'inherit',
   shell: false,
+  env: env,
 });
 
 child.on('close', (code) => {

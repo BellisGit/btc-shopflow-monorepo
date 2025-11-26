@@ -24,7 +24,7 @@ jobs:
     with:
       app_name: quality-app
       app_port: "30083"
-      container_name: btc-quality
+      container_name: btc-quality-app
     secrets: inherit
 
   cleanup:

@@ -1,5 +1,9 @@
 name: Deploy Only (Lightweight)
 
+# ⚠️ 此工作流不会自动触发
+# - 只能通过 workflow_dispatch 或 repository_dispatch 手动触发
+# - 不会响应 push 事件
+# - 推荐使用各个应用的 deploy-{app-name}.yml 工作流进行部署
 on:
   workflow_dispatch:
     inputs:
@@ -28,6 +32,7 @@ env:
 permissions:
   contents: read
   packages: read
+  actions: write
 
 jobs:
   # Step 1: Validate SSH Connection
@@ -330,7 +335,7 @@ jobs:
           # Add services for each selected app
           for app in $APPS_LIST; do
             PORT=${APP_PORTS[$app]}
-            CONTAINER_NAME="btc-${app//-app/}"
+            CONTAINER_NAME="btc-$app"
             
             if [ -z "$PORT" ]; then
               echo "[WARNING] No port mapping for $app, skipping"
@@ -366,7 +371,7 @@ jobs:
           echo "🔄 Updating containers for selected apps..."
           
           for app in $APPS_LIST; do
-            CONTAINER_NAME="btc-${app//-app/}"
+            CONTAINER_NAME="btc-$app"
             echo "[$app] Stopping container: $CONTAINER_NAME"
             
             # Stop existing container if running
@@ -386,7 +391,7 @@ jobs:
           echo ""
           echo "📋 Container status:"
           for app in $APPS_LIST; do
-            CONTAINER_NAME="btc-${app//-app/}"
+            CONTAINER_NAME="btc-$app"
             if docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -q "$CONTAINER_NAME"; then
               echo "[$app] ✅ Container is running"
             else

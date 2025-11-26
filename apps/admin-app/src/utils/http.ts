@@ -35,8 +35,20 @@ export class Http {
       (config: any) => {
         // 优先从 cookie 获取 token（字段名：access_token），如果没有则从统一存储获取
         // 注意：HttpOnly cookie 无法通过 JavaScript 读取，但浏览器会自动在请求中发送
-        const token = getCookie('access_token') || appStorage.auth.getToken() || '';
+        const cookieToken = getCookie('access_token');
+        const storageToken = appStorage.auth.getToken();
+        const token = cookieToken || storageToken || '';
         
+        // 调试日志（仅在开发/预览环境）
+        if (import.meta.env.DEV || window.location.port.startsWith('41')) {
+          if (!token && config.url?.includes('/api/')) {
+            console.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
+              hasCookieToken: !!cookieToken,
+              hasStorageToken: !!storageToken,
+              cookies: document.cookie.split(';').map(c => c.trim()),
+            });
+          }
+        }
         
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;

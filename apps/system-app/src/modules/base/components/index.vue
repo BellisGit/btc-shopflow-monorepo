@@ -99,7 +99,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
-import { useSettingsState } from '@/plugins/user-setting/composables';
+import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';

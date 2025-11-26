@@ -19,7 +19,9 @@
 import { computed } from 'vue';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';
+import { useSettingsConfig } from '../../composables/useSettingsConfig';
+import { useSettingsHandlers } from '../../composables/useSettingsHandlers';
+import { useSettingsState } from '../../composables/useSettingsState';
 import { BoxStyleType } from '../../config/enums';
 import '../../settings/box-style/styles/index.scss';
 

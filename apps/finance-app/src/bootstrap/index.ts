@@ -4,6 +4,8 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+// 关键：在关闭样式隔离的情况下，需要直接 import 样式文件，确保样式被正确加载
+// 虽然 global.scss 中也通过 @import 引入了，但直接 import 可以确保样式在模块加载时就被处理
 import '@btc/shared-components/styles/index.scss';
 import '../styles/global.scss';
 import '../styles/theme.scss';

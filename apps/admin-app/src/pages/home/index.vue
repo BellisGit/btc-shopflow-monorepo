@@ -373,5 +373,30 @@ onMounted(() => {
   flex-direction: column;
   overflow: hidden;
 }
+
+// 暗色模式样式（使用 :deep() 确保样式能够穿透 scoped）
+:deep(html.dark) {
+  // 快速访问项在暗色模式下的样式
+  .access-item {
+    background: var(--el-bg-color) !important;
+    border-color: var(--el-border-color) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+
+    span {
+      color: var(--el-text-color-primary) !important;
+    }
+
+    &:hover {
+      background-color: var(--el-fill-color-light) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    // 暗色模式下的渐变效果
+    &::before {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+    }
+  }
+}
+
 </style>
 
