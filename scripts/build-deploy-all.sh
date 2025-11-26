@@ -107,6 +107,8 @@ fi
 
 # 获取仓库信息
 GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
+REPO_OWNER=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
+REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
 GIT_SHA=$(git rev-parse HEAD || echo "")
 
 if [ -z "$GIT_SHA" ]; then
@@ -142,7 +144,7 @@ REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
     -H "Authorization: Bearer $GITHUB_TOKEN" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     -H "Content-Type: application/json" \
-    "https://api.github.com/repos/$GITHUB_REPO/dispatches" \
+    "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
     -d "{
         \"event_type\": \"build-deploy-all-k8s\",
         \"client_payload\": $CLIENT_PAYLOAD
@@ -228,6 +230,8 @@ else
     log_info ""
     log_info "📋 调试信息:"
     log_info "  - 仓库: $GITHUB_REPO"
+    log_info "  - 仓库所有者: $REPO_OWNER"
+    log_info "  - 仓库名称: $REPO_NAME"
     log_info "  - 事件类型: build-deploy-all-k8s"
     log_info "  - 工作流文件: build-deploy-all-k8s-parallel.yml"
     log_info "  - HTTP 状态码: $REPO_DISPATCH_HTTP_CODE"
