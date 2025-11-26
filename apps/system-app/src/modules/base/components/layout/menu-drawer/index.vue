@@ -64,6 +64,7 @@ import { useI18n } from '@btc/shared-core';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
 import { finishLoading } from '@/utils/loadingManager';
+import { getAppConfig } from '@configs/app-env.config';
 
 interface MicroApp {
   name: string;
@@ -367,6 +368,41 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 关闭抽屉
   handleClose();
 
+  // 判断是否为生产环境（通过 hostname 判断）
+  const isProduction = window.location.hostname.includes('bellis.com.cn');
+  
+  // 生产环境：使用子域名跳转
+  if (isProduction) {
+    // 文档应用特殊处理（文档应用可能没有独立的子域名）
+    if (app.name === 'docs') {
+      // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
+      // 这里先使用路径方式，如果需要可以后续配置
+      const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+      await router.push(targetPath);
+      await nextTick();
+      detectCurrentApp();
+      return;
+    }
+
+    // 根据应用名称获取生产环境域名配置
+    const appConfig = getAppConfig(`${app.name}-app`);
+    if (appConfig && appConfig.prodHost) {
+      // 构建完整的 URL（保留当前协议和路径）
+      const protocol = window.location.protocol;
+      const currentPath = window.location.pathname;
+      // 如果当前在子应用路径下，切换到根路径；否则保持当前路径
+      const targetPath = currentPath.startsWith(`/${app.name}`) ? '/' : currentPath;
+      const targetUrl = `${protocol}//${appConfig.prodHost}${targetPath}`;
+      
+      // 使用 window.location.href 跳转到子域名
+      window.location.href = targetUrl;
+      return;
+    } else {
+      console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+    }
+  }
+
+  // 开发/预览环境：使用路径方式切换（原有逻辑）
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 
