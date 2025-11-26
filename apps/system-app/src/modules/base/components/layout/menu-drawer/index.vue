@@ -385,7 +385,20 @@ const handleSwitchApp = async (app: MicroApp) => {
     }
 
     // 根据应用名称获取生产环境域名配置
-    const appConfig = getAppConfig(`${app.name}-app`);
+    // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
+    const appNameMapping: Record<string, string> = {
+      'system': 'system-app',
+      'admin': 'admin-app',
+      'logistics': 'logistics-app',
+      'engineering': 'engineering-app',
+      'quality': 'quality-app',
+      'production': 'production-app',
+      'finance': 'finance-app',
+      'mobile': 'mobile-app',
+      'docs': 'docs-app', // 文档应用可能没有配置，但先加上
+    };
+    const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
+    const appConfig = getAppConfig(mappedAppName);
     if (appConfig && appConfig.prodHost) {
       // 构建完整的 URL
       const protocol = window.location.protocol;

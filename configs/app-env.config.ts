@@ -38,7 +38,7 @@ export const APP_ENV_CONFIGS: AppEnvConfig[] = [
     devPort: '8082',
     preHost: 'localhost',
     prePort: '4182',
-    prodHost: 'admin.bellis.com.cn',
+    prodHost: 'logistics.bellis.com.cn',
   },
   {
     appName: 'quality-app',
