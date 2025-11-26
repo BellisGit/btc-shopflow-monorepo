@@ -97,7 +97,7 @@ jobs:
             echo "Port: $PORT"
             echo ""
             
-            # 登录到 GHCR
+            # 登录到 GHCR（带超时和重试机制）
             echo "🔐 Logging into container registry..."
             mkdir -p /tmp/.docker
             export DOCKER_CONFIG=/tmp/.docker
@@ -112,7 +112,52 @@ jobs:
               exit 1
             fi
             
-            echo "$TOKEN" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
+            # Docker 登录函数（带超时和重试）
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}  # 默认30秒超时
+              local max_retries=${5:-3}  # 默认重试3次
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                # 使用 timeout 命令限制登录时间
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            # 执行登录（30秒超时，重试3次）
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              echo "[ERROR] 请检查网络连接和 Token 权限"
+              exit 1
+            fi
             
             # 从 GHCR 拉取镜像（带超时和重试机制）
             echo "📥 Pulling Docker image from $REGISTRY..."
@@ -175,16 +220,24 @@ jobs:
             
             # 强制停止并删除所有同名容器（包括已停止的）
             echo "📋 检查并清理现有容器..."
+            echo "   目标容器名: $CONTAINER_NAME"
             
             # 方法1: 使用容器名称精确匹配（包括已停止的容器）
-            EXISTING_CONTAINERS=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" || true)
+            # 使用 ^${CONTAINER_NAME}$ 确保完全匹配，避免误删其他容器
+            EXISTING_CONTAINERS=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null || true)
             if [ -n "$EXISTING_CONTAINERS" ]; then
               echo "🛑 发现同名容器，正在强制删除..."
               echo "$EXISTING_CONTAINERS" | while read -r container_id; do
                 if [ -n "$container_id" ]; then
-                  echo "  停止并删除容器 ID: $container_id"
-                  docker stop "$container_id" 2>/dev/null || true
-                  docker rm -f "$container_id" 2>/dev/null || true
+                  # 验证容器名确实匹配（防止误删）
+                  CONTAINER_NAME_CHECK=$(docker ps -a --filter "id=$container_id" --format "{{.Names}}" 2>/dev/null || echo "")
+                  if [ "$CONTAINER_NAME_CHECK" = "$CONTAINER_NAME" ]; then
+                    echo "  停止并删除容器 ID: $container_id (名称: $CONTAINER_NAME_CHECK)"
+                    docker stop "$container_id" 2>/dev/null || true
+                    docker rm -f "$container_id" 2>/dev/null || true
+                  else
+                    echo "  ⚠️  跳过容器 ID: $container_id (名称不匹配: $CONTAINER_NAME_CHECK != $CONTAINER_NAME)"
+                  fi
                 fi
               done
             fi
@@ -193,6 +246,19 @@ jobs:
             echo "🛑 强制删除容器: $CONTAINER_NAME"
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            
+            # 方法3: 通过容器名列表查找（额外保险）
+            echo "🔍 通过容器名列表再次检查..."
+            ALL_CONTAINERS=$(docker ps -a --format "{{.Names}}\t{{.ID}}" 2>/dev/null || true)
+            if [ -n "$ALL_CONTAINERS" ]; then
+              echo "$ALL_CONTAINERS" | while IFS=$'\t' read -r name id; do
+                if [ "$name" = "$CONTAINER_NAME" ] && [ -n "$id" ]; then
+                  echo "  🛑 发现残留容器: $name (ID: $id)，正在删除..."
+                  docker stop "$id" 2>/dev/null || true
+                  docker rm -f "$id" 2>/dev/null || true
+                fi
+              done
+            fi
             
             # 检查并停止占用端口的容器
             echo "🔍 检查端口 $PORT 占用情况..."
