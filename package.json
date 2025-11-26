@@ -39,6 +39,7 @@
     "build-preview:all": "node scripts/build-preview-all.js",
     "setup:docker": "bash scripts/setup-docker-remote.sh",
     "build:app": "bash scripts/build-and-push-local.sh",
+    "build-deploy:all": "bash scripts/build-deploy-all.sh",
     "build-deploy:system": "bash scripts/build-and-push-local.sh system-app --auto-deploy",
     "build-deploy:admin": "bash scripts/build-and-push-local.sh admin-app --auto-deploy",
     "build-deploy:logistics": "bash scripts/build-and-push-local.sh logistics-app --auto-deploy",
