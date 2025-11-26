@@ -5,6 +5,8 @@ on:
     branches: [ master ]
     paths:
       - '.deploy/admin-app/**'
+  repository_dispatch:
+    types: [deploy-admin-app]
   workflow_dispatch:
 
 permissions:

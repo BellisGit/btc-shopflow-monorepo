@@ -505,16 +505,54 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     fi
     
     # 统一使用 repository_dispatch 触发所有应用的工作流
-    # 这是推荐的脚本触发方式，不需要提交代码，更干净可靠
-    if [ "$APP_NAME" = "system-app" ]; then
-        EVENT_TYPE="deploy-system-app"
-        TARGET_WORKFLOW="deploy-system-app.yml"
-        TARGET_WORKFLOW_NAME="Deploy System App"
-    else
-        EVENT_TYPE="deploy-apps"
-        TARGET_WORKFLOW="deploy-only.yml"
-        TARGET_WORKFLOW_NAME="Deploy Only (Lightweight)"
-    fi
+    # 每个应用都有自己特定的工作流和事件类型
+    case "$APP_NAME" in
+        system-app)
+            EVENT_TYPE="deploy-system-app"
+            TARGET_WORKFLOW="deploy-system-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy System App"
+            ;;
+        admin-app)
+            EVENT_TYPE="deploy-admin-app"
+            TARGET_WORKFLOW="deploy-admin-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Admin App"
+            ;;
+        logistics-app)
+            EVENT_TYPE="deploy-logistics-app"
+            TARGET_WORKFLOW="deploy-logistics-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Logistics App"
+            ;;
+        quality-app)
+            EVENT_TYPE="deploy-quality-app"
+            TARGET_WORKFLOW="deploy-quality-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Quality App"
+            ;;
+        production-app)
+            EVENT_TYPE="deploy-production-app"
+            TARGET_WORKFLOW="deploy-production-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Production App"
+            ;;
+        engineering-app)
+            EVENT_TYPE="deploy-engineering-app"
+            TARGET_WORKFLOW="deploy-engineering-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Engineering App"
+            ;;
+        finance-app)
+            EVENT_TYPE="deploy-finance-app"
+            TARGET_WORKFLOW="deploy-finance-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Finance App"
+            ;;
+        mobile-app)
+            EVENT_TYPE="deploy-mobile-app"
+            TARGET_WORKFLOW="deploy-mobile-app.yml"
+            TARGET_WORKFLOW_NAME="Deploy Mobile App"
+            ;;
+        *)
+            log_error "未知的应用名称: $APP_NAME"
+            log_info "支持的应用: system-app, admin-app, logistics-app, quality-app, production-app, engineering-app, finance-app, mobile-app"
+            exit 1
+            ;;
+    esac
     
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     log_info "🚀 触发部署工作流"
