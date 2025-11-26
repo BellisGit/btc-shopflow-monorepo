@@ -141,9 +141,6 @@ jobs:
         run: |
           echo "📊 收集构建和部署结果..."
           
-          # 定义所有应用列表（与 matrix 中的应用列表对应）
-          ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
-          
           # 获取当前工作流运行 ID
           WORKFLOW_RUN_ID="${{ github.run_id }}"
           
@@ -151,16 +148,34 @@ jobs:
           GITHUB_TOKEN="${{ github.token }}"
           REPO="${{ github.repository }}"
           
-          SUCCESSFUL_APPS=()
-          FAILED_APPS=()
-          
-          echo "检查每个应用的构建和部署状态..."
-          
           # 通过 GitHub API 获取所有 jobs 的状态
           echo "获取工作流运行的所有 jobs..."
           JOBS_JSON=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$REPO/actions/runs/$WORKFLOW_RUN_ID/jobs?per_page=100")
+          
+          # 从 jobs 中动态提取应用列表（匹配 "Build and Deploy" 开头的 jobs）
+          # 可复用工作流的 job 名称格式为 "Build and Deploy $app"
+          echo "从实际运行的 jobs 中提取应用列表..."
+          ALL_APPS_JSON=$(echo "$JOBS_JSON" | jq -r '[.jobs[] | select(.name | startswith("Build and Deploy")) | .name | sub("Build and Deploy "; "")] | unique | sort')
+          
+          # 将 JSON 数组转换为 bash 数组
+          ALL_APPS=()
+          while IFS= read -r app; do
+            if [ -n "$app" ] && [ "$app" != "null" ]; then
+              # 移除引号
+              app=$(echo "$app" | tr -d '"')
+              ALL_APPS+=("$app")
+            fi
+          done <<< "$(echo "$ALL_APPS_JSON" | jq -r '.[]')"
+          
+          echo "检测到的应用列表: ${ALL_APPS[*]}"
+          echo ""
+          
+          SUCCESSFUL_APPS=()
+          FAILED_APPS=()
+          
+          echo "检查每个应用的构建和部署状态..."
           
           # 检查每个应用的运行状态
           for app in "${ALL_APPS[@]}"; do
@@ -168,7 +183,7 @@ jobs:
             
             # 查找包含应用名称的 job
             # 可复用工作流的 job 名称格式为 "Build and Deploy $app"
-            JOB_CONCLUSION=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name | contains(\"$app\")) | .conclusion" | head -1)
+            JOB_CONCLUSION=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name == \"Build and Deploy $app\") | .conclusion" | head -1)
             
             if [ "$JOB_CONCLUSION" = "success" ]; then
               SUCCESSFUL_APPS+=("$app")
@@ -178,7 +193,7 @@ jobs:
               echo "  ❌ $app: 失败 (状态: $JOB_CONCLUSION)"
             else
               # 如果找不到 job 或状态未知，检查是否还在运行
-              JOB_STATUS=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name | contains(\"$app\")) | .status" | head -1)
+              JOB_STATUS=$(echo "$JOBS_JSON" | jq -r ".jobs[] | select(.name == \"Build and Deploy $app\") | .status" | head -1)
               if [ "$JOB_STATUS" = "in_progress" ] || [ "$JOB_STATUS" = "queued" ]; then
                 echo "  ⏳ $app: 运行中 (状态: $JOB_STATUS)"
                 # 运行中的应用暂时不加入失败列表
