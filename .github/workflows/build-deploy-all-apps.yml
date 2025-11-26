@@ -11,8 +11,66 @@ permissions:
   actions: write
 
 jobs:
-  build-deploy-all:
-    name: Build and Deploy All Apps
+  detect-image-tag:
+    name: Detect Image Tag
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+      repo_owner_lower: ${{ steps.detect.outputs.repo_owner_lower }}
+      registry: ${{ steps.detect.outputs.registry }}
+    steps:
+      - name: Detect image tag and repository owner
+        id: detect
+        run: |
+          echo "🔍 开始检测镜像标签和仓库信息..."
+          echo "  - client_payload.github_sha: ${{ github.event.client_payload.github_sha }}"
+          echo "  - github.sha: ${{ github.sha }}"
+          
+          # 转换仓库所有者名称为小写
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_owner_lower=$REPO_OWNER_LOWER" >> $GITHUB_OUTPUT
+          echo "  ✅ 仓库所有者（小写）: $REPO_OWNER_LOWER"
+          
+          # 生成镜像标签（使用 SHA 前7位）
+          if [ -n "${{ github.event.client_payload.github_sha }}" ]; then
+            GIT_SHA="${{ github.event.client_payload.github_sha }}"
+            echo "  ✅ 从 client_payload.github_sha 获取: $GIT_SHA"
+          else
+            GIT_SHA="${{ github.sha }}"
+            echo "  ✅ 从 github.sha 获取: $GIT_SHA"
+          fi
+          
+          if [ ${#GIT_SHA} -gt 7 ]; then
+            IMAGE_TAG="${GIT_SHA:0:7}"
+          elif [ ${#GIT_SHA} -lt 7 ]; then
+            IMAGE_TAG="latest"
+            echo "  ⚠️  SHA 太短，使用 latest"
+          else
+            IMAGE_TAG="$GIT_SHA"
+          fi
+          
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "  ⚠️  标签为空，使用 latest"
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 最终镜像标签: $IMAGE_TAG"
+          
+          # 检测镜像仓库（默认使用 ghcr.io）
+          if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
+            REGISTRY="${{ secrets.PRIVATE_REGISTRY }}"
+            echo "  ✅ 使用私有仓库: $REGISTRY"
+          else
+            REGISTRY="ghcr.io"
+            echo "  ✅ 使用默认仓库: $REGISTRY"
+          fi
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+
+  # 步骤1: 同时构建所有应用
+  build-all:
+    name: Build All Apps
+    needs: detect-image-tag
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -27,26 +85,255 @@ jobs:
           - finance-app
           - mobile-app
     steps:
-      - name: Trigger ${{ matrix.app }} workflow
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build dependencies if needed
+        run: |
+          if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
+            echo "Building shared dependencies..."
+            pnpm --filter @btc/vite-plugin run build
+            pnpm --filter @btc/shared-utils run build
+            pnpm --filter @btc/shared-core run build
+            pnpm --filter @btc/shared-components run build
+            pnpm --filter @btc/subapp-manifests run build
+          fi
+      
+      - name: Build ${{ matrix.app }}
+        run: cd apps/${{ matrix.app }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ needs.detect-image-tag.outputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=apps/${{ matrix.app }}
+          push: true
+          tags: |
+            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:latest
+            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:${{ needs.detect-image-tag.outputs.image_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+
+  # 步骤2: 同时部署所有应用
+  deploy-all:
+    name: Deploy All Apps
+    needs: [detect-image-tag, build-all]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: system-app
+            port: "30080"
+          - app: admin-app
+            port: "30081"
+          - app: logistics-app
+            port: "30082"
+          - app: quality-app
+            port: "30083"
+          - app: production-app
+            port: "30084"
+          - app: engineering-app
+            port: "30085"
+          - app: finance-app
+            port: "30086"
+          - app: mobile-app
+            port: "30091"
+    uses: ./.github/workflows/deploy-app-reusable.yml
+    with:
+      app_name: ${{ matrix.app }}
+      app_port: ${{ matrix.port }}
+      container_name: btc-${{ matrix.app }}
+      image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
+    secrets: inherit
+
+  # 步骤3: 总结成功和失败的应用
+  summary:
+    name: Summary
+    needs: [build-all, deploy-all]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      successful_apps: ${{ steps.collect.outputs.successful_apps }}
+      failed_apps: ${{ steps.collect.outputs.failed_apps }}
+      total_apps: ${{ steps.collect.outputs.total_apps }}
+      success_count: ${{ steps.collect.outputs.success_count }}
+      fail_count: ${{ steps.collect.outputs.fail_count }}
+    steps:
+      - name: Collect results
+        id: collect
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const appName = '${{ matrix.app }}';
-            const workflowFile = `deploy-${appName}.yml`;
+            const APPS = ['system-app', 'admin-app', 'logistics-app', 'quality-app', 'production-app', 'engineering-app', 'finance-app', 'mobile-app'];
+            const SUCCESSFUL_APPS = [];
+            const FAILED_APPS = [];
             
-            console.log(`🚀 Triggering ${workflowFile} workflow...`);
+            // 获取当前工作流运行的所有 jobs
+            const runId = context.runId;
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+            });
             
-            try {
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflowFile,
-                ref: 'master',
-              });
+            // 检查每个应用的构建和部署状态
+            for (const app of APPS) {
+              const buildJobName = `Build All Apps (${app})`;
+              const deployJobName = `Deploy All Apps (${app})`;
               
-              console.log(`✅ Successfully triggered ${workflowFile}`);
-            } catch (error) {
-              console.error(`❌ Failed to trigger ${workflowFile}:`, error.message);
-              core.setFailed(`Failed to trigger ${workflowFile}: ${error.message}`);
+              const buildJob = jobs.data.jobs.find(job => job.name === buildJobName);
+              const deployJob = jobs.data.jobs.find(job => job.name === deployJobName);
+              
+              const buildSuccess = buildJob && buildJob.conclusion === 'success';
+              const deploySuccess = deployJob && deployJob.conclusion === 'success';
+              
+              if (buildSuccess && deploySuccess) {
+                SUCCESSFUL_APPS.push(app);
+              } else {
+                FAILED_APPS.push(app);
+                if (!buildSuccess) {
+                  console.log(`❌ ${app}: 构建失败`);
+                }
+                if (!deploySuccess) {
+                  console.log(`❌ ${app}: 部署失败`);
+                }
+              }
             }
+            
+            // 输出结果
+            core.setOutput('successful_apps', SUCCESSFUL_APPS.join(','));
+            core.setOutput('failed_apps', FAILED_APPS.join(','));
+            core.setOutput('total_apps', APPS.length.toString());
+            core.setOutput('success_count', SUCCESSFUL_APPS.length.toString());
+            core.setOutput('fail_count', FAILED_APPS.length.toString());
+            
+            console.log('');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📊 构建和部署结果汇总');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log(`总应用数: ${APPS.length}`);
+            console.log(`成功: ${SUCCESSFUL_APPS.length}`);
+            console.log(`失败: ${FAILED_APPS.length}`);
+            console.log('');
+            if (SUCCESSFUL_APPS.length > 0) {
+              console.log('✅ 成功应用:');
+              SUCCESSFUL_APPS.forEach(app => console.log(`  - ${app}`));
+            }
+            console.log('');
+            if (FAILED_APPS.length > 0) {
+              console.log('❌ 失败应用:');
+              FAILED_APPS.forEach(app => console.log(`  - ${app}`));
+            }
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      - name: Generate summary report
+        run: |
+          SUMMARY_TITLE="## 📊 构建和部署结果汇总"
+          STATS_INFO="### 统计信息"
+          TOTAL_APPS_COUNT="${{ steps.collect.outputs.total_apps }}"
+          SUCCESS_COUNT_VAL="${{ steps.collect.outputs.success_count }}"
+          FAIL_COUNT_VAL="${{ steps.collect.outputs.fail_count }}"
+          
+          SUCCESS_APPS_HEADER="### ✅ 成功应用"
+          SUCCESSFUL_APPS_STR="${{ steps.collect.outputs.successful_apps }}"
+          
+          FAILED_APPS_HEADER="### ❌ 失败应用"
+          FAILED_APPS_STR="${{ steps.collect.outputs.failed_apps }}"
+          
+          DETAIL_INFO_HEADER="### 📋 详细信息"
+          IMAGE_TAG_VAL="${{ needs.detect-image-tag.outputs.image_tag }}"
+          REGISTRY_VAL="${{ needs.detect-image-tag.outputs.registry }}"
+          GIT_SHA_VAL="${{ github.sha }}"
+          
+          {
+            echo "$SUMMARY_TITLE"
+            echo ""
+            echo "$STATS_INFO"
+            echo "- **总应用数**: $TOTAL_APPS_COUNT"
+            echo "- **成功**: $SUCCESS_COUNT_VAL"
+            echo "- **失败**: $FAIL_COUNT_VAL"
+            echo ""
+            
+            if [ -n "$SUCCESSFUL_APPS_STR" ]; then
+              echo "$SUCCESS_APPS_HEADER"
+              IFS=',' read -ra APPS <<< "$SUCCESSFUL_APPS_STR"
+              for app in "${APPS[@]}"; do
+                echo "- \`$app\`"
+              done
+              echo ""
+            fi
+            
+            if [ -n "$FAILED_APPS_STR" ]; then
+              echo "$FAILED_APPS_HEADER"
+              IFS=',' read -ra APPS <<< "$FAILED_APPS_STR"
+              for app in "${APPS[@]}"; do
+                echo "- \`$app\`"
+              done
+              echo ""
+            fi
+            
+            echo "$DETAIL_INFO_HEADER"
+            echo "- **镜像标签**: $IMAGE_TAG_VAL"
+            echo "- **仓库**: $REGISTRY_VAL"
+            echo "- **Git SHA**: $GIT_SHA_VAL"
+          } >> $GITHUB_STEP_SUMMARY
