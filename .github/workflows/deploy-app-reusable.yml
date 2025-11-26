@@ -173,16 +173,28 @@ jobs:
             
             echo "🔄 Updating container..."
             
-            # 停止并删除旧容器（包括使用相同端口的容器）
-            echo "📋 检查现有容器..."
-            EXISTING_CONTAINER=$(docker ps -a --filter "name=$CONTAINER_NAME" --format "{{.ID}}" | head -1)
-            if [ -n "$EXISTING_CONTAINER" ]; then
-              echo "🛑 停止旧容器: $CONTAINER_NAME"
-              docker stop "$CONTAINER_NAME" 2>/dev/null || true
-              docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            # 强制停止并删除所有同名容器（包括已停止的）
+            echo "📋 检查并清理现有容器..."
+            
+            # 方法1: 使用容器名称精确匹配（包括已停止的容器）
+            EXISTING_CONTAINERS=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" || true)
+            if [ -n "$EXISTING_CONTAINERS" ]; then
+              echo "🛑 发现同名容器，正在强制删除..."
+              echo "$EXISTING_CONTAINERS" | while read -r container_id; do
+                if [ -n "$container_id" ]; then
+                  echo "  停止并删除容器 ID: $container_id"
+                  docker stop "$container_id" 2>/dev/null || true
+                  docker rm -f "$container_id" 2>/dev/null || true
+                fi
+              done
             fi
             
-            # 检查并停止占用端口的容器（使用更可靠的方法）
+            # 方法2: 直接尝试删除（防止方法1遗漏）
+            echo "🛑 强制删除容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            
+            # 检查并停止占用端口的容器
             echo "🔍 检查端口 $PORT 占用情况..."
             PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
             if [ -n "$PORT_CONTAINERS" ]; then
@@ -201,6 +213,16 @@ jobs:
             if [ -f "docker-compose.prod.yml" ]; then
               echo "🧹 清理旧的 docker-compose 服务..."
               docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+            fi
+            
+            # 再次确认容器已被删除
+            echo "🔍 验证容器是否已完全删除..."
+            REMAINING=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" | wc -l || echo "0")
+            if [ "$REMAINING" -gt 0 ]; then
+              echo "⚠️  仍有容器残留，尝试强制清理..."
+              docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
+            else
+              echo "✅ 容器已完全清理"
             fi
             
             # 等待端口释放（使用 Docker 命令检查）
