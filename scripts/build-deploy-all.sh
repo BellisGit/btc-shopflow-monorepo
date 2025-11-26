@@ -137,7 +137,7 @@ fi
 CLIENT_PAYLOAD+="}"
 
 # 触发工作流
-log_info "正在触发工作流: build-deploy-all-k8s-parallel.yml"
+log_info "正在触发工作流: build-deploy-all-apps.yml"
 REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
     -X POST \
     -H "Accept: application/vnd.github+json" \
@@ -146,7 +146,7 @@ REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
     -H "Content-Type: application/json" \
     "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
     -d "{
-        \"event_type\": \"build-deploy-all-k8s\",
+        \"event_type\": \"build-deploy-all-apps\",
         \"client_payload\": $CLIENT_PAYLOAD
     }" 2>&1)
 
@@ -157,7 +157,7 @@ if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
     log_success "✅ 工作流已触发 (HTTP 204)"
     log_info ""
     log_info "可以在 GitHub Actions 页面查看进度:"
-    log_info "  https://github.com/$GITHUB_REPO/actions/workflows/build-deploy-all-k8s-parallel.yml"
+    log_info "  https://github.com/$GITHUB_REPO/actions/workflows/build-deploy-all-apps.yml"
     log_info ""
     log_info "工作流将并行构建和部署所有应用："
     log_info "  - system-app"
@@ -189,7 +189,7 @@ else
         log_info "💡 解决方案:"
         log_info "  1. 确保工作流文件已提交并推送到 GitHub"
         log_info "  2. 等待几分钟让 GitHub Actions 识别新工作流"
-        log_info "  3. 检查文件路径: .github/workflows/build-deploy-all-k8s-parallel.yml"
+        log_info "  3. 检查文件路径: .github/workflows/build-deploy-all-apps.yml"
     elif [ "$REPO_DISPATCH_HTTP_CODE" -eq 422 ]; then
         log_error "🔴 请求参数无效"
         log_info "可能原因:"
@@ -199,10 +199,10 @@ else
         log_info ""
         log_info "💡 解决方案:"
         log_info "  1. 检查工作流文件是否配置了 repository_dispatch:"
-        log_info "     .github/workflows/build-deploy-all-k8s-parallel.yml"
+     .github/workflows/build-deploy-all-apps.yml"
         log_info "  2. 确保工作流中的 event_type 与脚本中的一致:"
-        log_info "     脚本使用: build-deploy-all-k8s"
-        log_info "     工作流应监听: types: [build-deploy-all-k8s]"
+        log_info "     脚本使用: build-deploy-all-apps"
+        log_info "     工作流应监听: types: [build-deploy-all-apps]"
         log_info "  3. 检查工作流文件语法是否正确"
     elif [ "$REPO_DISPATCH_HTTP_CODE" -eq 401 ]; then
         log_error "🔴 认证失败"
@@ -232,8 +232,8 @@ else
     log_info "  - 仓库: $GITHUB_REPO"
     log_info "  - 仓库所有者: $REPO_OWNER"
     log_info "  - 仓库名称: $REPO_NAME"
-    log_info "  - 事件类型: build-deploy-all-k8s"
-    log_info "  - 工作流文件: build-deploy-all-k8s-parallel.yml"
+    log_info "  - 事件类型: build-deploy-all-apps"
+    log_info "  - 工作流文件: build-deploy-all-apps.yml"
     log_info "  - HTTP 状态码: $REPO_DISPATCH_HTTP_CODE"
     log_info "  - Git SHA: $GIT_SHA"
     

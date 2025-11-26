@@ -27,8 +27,6 @@ on:
         required: false
       SERVER_PAT:
         required: false
-      GITHUB_TOKEN:
-        required: false
 
 permissions:
   contents: read
@@ -118,11 +116,9 @@ jobs:
             # 使用 GitHub Token 登录（从环境变量或 secrets）
             if [ -n "${{ secrets.SERVER_PAT }}" ]; then
               TOKEN="${{ secrets.SERVER_PAT }}"
-            elif [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
-              TOKEN="${{ secrets.GITHUB_TOKEN }}"
             else
-              echo "[ERROR] No token available for registry"
-              exit 1
+              # 使用系统自动提供的 github.token（不需要作为 secret 传递）
+              TOKEN="${{ github.token }}"
             fi
             
             # Docker 登录函数（带超时和重试）
