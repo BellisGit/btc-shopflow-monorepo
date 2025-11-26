@@ -1,23 +1,4 @@
-name: Build and Deploy All Apps to K8s (Parallel)
-
-# 完整的工作流：并行构建所有应用，每个应用构建完成后立即部署
-# - 触发条件：
-#   1. repository_dispatch（通过脚本触发，event_type: build-deploy-all-k8s）
-#   2. workflow_dispatch（手动触发）
-# - 功能：
-#   1. 并行构建所有应用（使用可复用工作流）
-#   2. 每个应用构建完成后立即部署（不等待其他应用）
-#   3. 所有应用的构建和部署都在同一个主工作流内完成
-# - 配置说明：
-#   1. 镜像仓库配置（在 GitHub Secrets 中设置）：
-#      - PRIVATE_REGISTRY: 镜像仓库地址（可选，默认使用 ghcr.io）
-#      - PRIVATE_REGISTRY_USERNAME: 仓库用户名（可选）
-#      - PRIVATE_REGISTRY_PASSWORD: 仓库密码/Token（可选）
-#   2. K8s 部署配置（在 GitHub Secrets 中设置）：
-#      - K8S_SERVER: K8s API 服务器地址
-#      - K8S_CA_CERT: K8s CA 证书（base64 编码）
-#      - K8S_TOKEN: K8s 访问令牌
-#      - K8S_NAMESPACE: K8s 命名空间（可选，默认：btc-shopflow）
+name: Build and Deploy All Apps
 
 on:
   repository_dispatch:
@@ -36,6 +17,9 @@ jobs:
     outputs:
       image_tag: ${{ steps.detect.outputs.image_tag }}
       repo_owner_lower: ${{ steps.detect.outputs.repo_owner_lower }}
+      registry: ${{ steps.detect.outputs.registry }}
+      k8s_namespace: ${{ steps.detect.outputs.k8s_namespace }}
+      gh_token: ${{ steps.detect.outputs.gh_token }}
     steps:
       - name: Detect image tag and repository owner
         id: detect
@@ -74,6 +58,36 @@ jobs:
           
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "✅ 最终镜像标签: $IMAGE_TAG"
+          
+          # 检测镜像仓库（默认使用 ghcr.io）
+          if [ -n "${{ secrets.PRIVATE_REGISTRY }}" ]; then
+            REGISTRY="${{ secrets.PRIVATE_REGISTRY }}"
+            echo "  ✅ 使用私有仓库: $REGISTRY"
+          else
+            REGISTRY="ghcr.io"
+            echo "  ✅ 使用默认仓库: $REGISTRY"
+          fi
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          
+          # 检测 K8s 命名空间（默认使用 btc-shopflow）
+          if [ -n "${{ secrets.K8S_NAMESPACE }}" ]; then
+            K8S_NAMESPACE="${{ secrets.K8S_NAMESPACE }}"
+            echo "  ✅ 使用 K8s 命名空间: $K8S_NAMESPACE"
+          else
+            K8S_NAMESPACE="btc-shopflow"
+            echo "  ✅ 使用默认 K8s 命名空间: $K8S_NAMESPACE"
+          fi
+          echo "k8s_namespace=$K8S_NAMESPACE" >> $GITHUB_OUTPUT
+          
+          # 检测 GitHub Token（优先使用 PRIVATE_REGISTRY_PASSWORD，否则使用 github.token）
+          if [ -n "${{ secrets.PRIVATE_REGISTRY_PASSWORD }}" ]; then
+            GH_TOKEN="${{ secrets.PRIVATE_REGISTRY_PASSWORD }}"
+            echo "  ✅ 使用私有仓库密码作为 Token"
+          else
+            GH_TOKEN="${{ github.token }}"
+            echo "  ✅ 使用 GitHub Token"
+          fi
+          echo "gh_token=$GH_TOKEN" >> $GITHUB_OUTPUT
 
   build-deploy-all:
     name: Build and Deploy All Apps (Parallel)
@@ -93,16 +107,16 @@ jobs:
     uses: ./.github/workflows/build-deploy-app-k8s-reusable.yml
     with:
       app_name: ${{ matrix.app }}
-      registry: ${{ secrets.PRIVATE_REGISTRY || 'ghcr.io' }}
+      registry: ${{ needs.detect-image-tag.outputs.registry }}
       github_repository: ${{ github.repository }}
       github_sha: ${{ github.sha }}
       github_repository_owner: ${{ needs.detect-image-tag.outputs.repo_owner_lower }}
       image_tag: ${{ needs.detect-image-tag.outputs.image_tag }}
-      k8s_namespace: ${{ secrets.K8S_NAMESPACE || 'btc-shopflow' }}
+      k8s_namespace: ${{ needs.detect-image-tag.outputs.k8s_namespace }}
       skip_build: false
       skip_deploy: false
     secrets:
-      gh_token: ${{ secrets.PRIVATE_REGISTRY_PASSWORD || github.token }}
+      gh_token: ${{ needs.detect-image-tag.outputs.gh_token }}
       K8S_SERVER: ${{ secrets.K8S_SERVER }}
       K8S_CA_CERT: ${{ secrets.K8S_CA_CERT }}
       K8S_TOKEN: ${{ secrets.K8S_TOKEN }}
