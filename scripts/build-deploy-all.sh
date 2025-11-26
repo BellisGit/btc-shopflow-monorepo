@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 自动检测变更的应用并构建部署
-# 使用 Turbo 的变更检测功能，只构建和部署被修改的应用
+# 一次性构建和部署所有应用
+# 默认部署所有应用，也可以使用 --changed 参数只部署变更的应用
 
 set -e
 
@@ -33,14 +33,14 @@ declare -A APP_MAP=(
 ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
 
 # 解析命令行参数
-FORCE_ALL=false
+DEPLOY_CHANGED=false
 BASE_REF=""
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --force-all)
-            FORCE_ALL=true
+        --changed)
+            DEPLOY_CHANGED=true
             shift
             ;;
         --base)
@@ -55,15 +55,15 @@ while [[ $# -gt 0 ]]; do
             echo "用法: $0 [OPTIONS]"
             echo ""
             echo "选项:"
-            echo "  --force-all        强制构建和部署所有应用（忽略变更检测）"
-            echo "  --base <ref>       指定基准 Git 引用（可选，用于检测相对于该引用的变更）"
+            echo "  --changed          只构建和部署变更的应用（默认：部署所有应用）"
+            echo "  --base <ref>       指定基准 Git 引用（仅与 --changed 一起使用）"
             echo "  --dry-run          仅显示将要构建和部署的应用，不实际执行"
             echo "  --help, -h         显示帮助信息"
             echo ""
             echo "示例:"
-            echo "  $0                  # 检测变更并部署"
-            echo "  $0 --force-all      # 部署所有应用"
-            echo "  $0 --base origin/master  # 相对于 origin/master 检测变更"
+            echo "  $0                  # 部署所有应用（默认）"
+            echo "  $0 --changed        # 只部署变更的应用"
+            echo "  $0 --changed --base origin/master  # 相对于 origin/master 检测变更"
             echo "  $0 --dry-run        # 仅查看将要部署的应用"
             exit 0
             ;;
@@ -84,12 +84,6 @@ cd "$PROJECT_ROOT"
 # 检测变更的应用（基于工作区变更，不需要提交）
 detect_changed_apps() {
     local changed_apps=()
-    
-    if [ "$FORCE_ALL" = true ]; then
-        log_info "强制模式：将构建和部署所有应用"
-        changed_apps=("${ALL_APPS[@]}")
-        return 0
-    fi
     
     log_info "检测工作区变更的应用（无需提交）..."
     
@@ -252,47 +246,64 @@ detect_changed_apps_with_turbo() {
 # 主函数
 main() {
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    log_info "🚀 自动检测变更并构建部署"
+    log_info "🚀 构建和部署所有应用"
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    # 检测变更的应用
-    # 优先使用 Turbo 检测（基于文件系统），如果失败则使用 Git diff
-    local changed_apps_raw
     local changed_apps=()
     
-    # 调用检测函数，将 stderr 重定向到 /dev/null，只捕获 stdout（应用名称）
-    if ! changed_apps_raw=$(detect_changed_apps_with_turbo 2>/dev/null); then
-        log_info "Turbo 检测失败，使用 Git diff 方法..."
-        if ! changed_apps_raw=$(detect_changed_apps 2>/dev/null); then
-            log_error "检测变更失败"
-            exit 1
-        fi
-    fi
-    
-    # 解析返回的应用名称数组（过滤掉空字符串和日志信息）
-    if [ -n "$changed_apps_raw" ]; then
-        while IFS= read -r app_name; do
-            # 过滤掉空字符串、日志标记、ANSI 颜色代码等
-            if [ -n "$app_name" ] && [[ "$app_name" != *"[INFO]"* ]] && [[ "$app_name" != *"[SUCCESS]"* ]] && [[ "$app_name" != *"[WARNING]"* ]] && [[ "$app_name" != *"[ERROR]"* ]] && [[ "$app_name" =~ ^[a-z-]+-app$ ]]; then
-                # 避免重复添加
-                local found=false
-                for existing in "${changed_apps[@]}"; do
-                    if [ "$existing" == "$app_name" ]; then
-                        found=true
-                        break
-                    fi
-                done
-                if [ "$found" = false ]; then
-                    changed_apps+=("$app_name")
-                fi
+    # 如果指定了 --changed，则检测变更的应用
+    if [ "$DEPLOY_CHANGED" = true ]; then
+        log_info "检测变更的应用..."
+        
+        # 优先使用 Turbo 检测（基于文件系统），如果失败则使用 Git diff
+        local changed_apps_raw
+        
+        # 调用检测函数，将 stderr 重定向到 /dev/null，只捕获 stdout（应用名称）
+        if ! changed_apps_raw=$(detect_changed_apps_with_turbo 2>/dev/null); then
+            log_info "Turbo 检测失败，使用 Git diff 方法..."
+            if ! changed_apps_raw=$(detect_changed_apps 2>/dev/null); then
+                log_error "检测变更失败"
+                exit 1
             fi
-        done <<< "$changed_apps_raw"
-    fi
-    
-    if [ ${#changed_apps[@]} -eq 0 ]; then
-        log_warning "未检测到需要构建和部署的应用"
-        log_info "提示: 使用 --force-all 强制部署所有应用"
-        exit 0
+        fi
+        
+        # 解析返回的应用名称数组（过滤掉空字符串和日志信息）
+        if [ -n "$changed_apps_raw" ]; then
+            while IFS= read -r app_name; do
+                # 过滤掉空字符串、日志标记、ANSI 颜色代码等
+                if [ -n "$app_name" ] && [[ "$app_name" != *"[INFO]"* ]] && [[ "$app_name" != *"[SUCCESS]"* ]] && [[ "$app_name" != *"[WARNING]"* ]] && [[ "$app_name" != *"[ERROR]"* ]] && [[ "$app_name" =~ ^[a-z-]+-app$ ]]; then
+                    # 避免重复添加
+                    local found=false
+                    for existing in "${changed_apps[@]}"; do
+                        if [ "$existing" == "$app_name" ]; then
+                            found=true
+                            break
+                        fi
+                    done
+                    if [ "$found" = false ]; then
+                        changed_apps+=("$app_name")
+                    fi
+                fi
+            done <<< "$changed_apps_raw"
+        fi
+        
+        if [ ${#changed_apps[@]} -eq 0 ]; then
+            log_warning "未检测到需要构建和部署的应用"
+            log_info "提示: 不使用 --changed 参数将部署所有应用"
+            exit 0
+        fi
+        
+        log_success "检测到 ${#changed_apps[@]} 个需要构建和部署的应用:"
+        for app in "${changed_apps[@]}"; do
+            echo "  - $app"
+        done
+    else
+        # 默认：部署所有应用
+        log_info "将构建和部署所有应用:"
+        changed_apps=("${ALL_APPS[@]}")
+        for app in "${changed_apps[@]}"; do
+            echo "  - $app"
+        done
     fi
     
     log_success "检测到 ${#changed_apps[@]} 个需要构建和部署的应用:"
