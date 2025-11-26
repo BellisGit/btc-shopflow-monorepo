@@ -41,7 +41,7 @@ ALL_APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app
 DEPLOY_CHANGED=false
 BASE_REF=""
 DRY_RUN=false
-USE_CLOUD_BUILD=true  # 默认使用云端构建（GitHub Actions）
+USE_CLOUD_BUILD=false  # 默认使用本地构建（更快，利用本地缓存）
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -72,8 +72,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --changed          只构建和部署变更的应用（默认：部署所有应用）"
             echo "  --base <ref>       指定基准 Git 引用（仅与 --changed 一起使用）"
             echo "  --dry-run          仅显示将要构建和部署的应用，不实际执行"
-            echo "  --local            在本地构建（串行，较慢）"
-            echo "  --cloud            在 GitHub Actions 构建（并行，快速，默认）"
+            echo "  --local            在本地构建（默认，利用本地缓存，更快）"
+            echo "  --cloud            在 GitHub Actions 构建（并行，但需要安装依赖）"
             echo "  --help, -h         显示帮助信息"
             echo ""
             echo "示例:"
