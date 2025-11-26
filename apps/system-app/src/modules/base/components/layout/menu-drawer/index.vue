@@ -387,11 +387,22 @@ const handleSwitchApp = async (app: MicroApp) => {
     // 根据应用名称获取生产环境域名配置
     const appConfig = getAppConfig(`${app.name}-app`);
     if (appConfig && appConfig.prodHost) {
-      // 构建完整的 URL（保留当前协议和路径）
+      // 构建完整的 URL
       const protocol = window.location.protocol;
       const currentPath = window.location.pathname;
-      // 如果当前在子应用路径下，切换到根路径；否则保持当前路径
-      const targetPath = currentPath.startsWith(`/${app.name}`) ? '/' : currentPath;
+      
+      // 判断当前路径是否属于其他子应用
+      const isSubAppPath = currentPath.startsWith('/admin') ||
+                          currentPath.startsWith('/logistics') ||
+                          currentPath.startsWith('/engineering') ||
+                          currentPath.startsWith('/quality') ||
+                          currentPath.startsWith('/production') ||
+                          currentPath.startsWith('/finance') ||
+                          currentPath.startsWith('/docs');
+      
+      // 如果当前路径属于其他子应用，或者当前路径是系统域的主路径，切换到目标子域名的根路径
+      // 否则保持当前路径（适用于系统域的非主路径，如 /profile）
+      const targetPath = isSubAppPath ? '/' : currentPath;
       const targetUrl = `${protocol}//${appConfig.prodHost}${targetPath}`;
       
       // 使用 window.location.href 跳转到子域名
