@@ -276,56 +276,100 @@ jobs:
     steps:
       - name: Collect results
         id: collect
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const APPS = ['system-app', 'admin-app', 'logistics-app', 'quality-app', 'production-app', 'engineering-app', 'finance-app', 'mobile-app'];
-            const SUCCESSFUL_APPS = [];
-            const FAILED_APPS = [];
+        run: |
+          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
+          SUCCESSFUL_APPS=()
+          FAILED_APPS=()
+          
+          # 检查每个应用的构建和部署状态
+          # 构建 job 使用 matrix，需要通过 API 查找
+          # 部署 job 使用 needs 上下文直接检查
+          
+          for app in "${APPS[@]}"; do
+            # 检查构建状态（从 build-all job 的 matrix 输出）
+            # 注意：matrix job 的结论需要通过 API 获取，但我们可以通过检查部署 job 的状态来推断
+            # 如果部署 job 成功，说明构建也成功了（因为部署依赖构建）
             
-            // 获取当前工作流运行的所有 jobs
-            const runId = context.runId;
-            const jobs = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            });
+            # 检查部署状态（使用 needs 上下文）
+            case "$app" in
+              system-app)
+                DEPLOY_RESULT="${{ needs.deploy-system.result }}"
+                ;;
+              admin-app)
+                DEPLOY_RESULT="${{ needs.deploy-admin.result }}"
+                ;;
+              logistics-app)
+                DEPLOY_RESULT="${{ needs.deploy-logistics.result }}"
+                ;;
+              quality-app)
+                DEPLOY_RESULT="${{ needs.deploy-quality.result }}"
+                ;;
+              production-app)
+                DEPLOY_RESULT="${{ needs.deploy-production.result }}"
+                ;;
+              engineering-app)
+                DEPLOY_RESULT="${{ needs.deploy-engineering.result }}"
+                ;;
+              finance-app)
+                DEPLOY_RESULT="${{ needs.deploy-finance.result }}"
+                ;;
+              mobile-app)
+                DEPLOY_RESULT="${{ needs.deploy-mobile.result }}"
+                ;;
+            esac
             
-            // 检查每个应用的构建和部署状态
-            const deployJobMap = {
-              'system-app': 'Deploy System App',
-              'admin-app': 'Deploy Admin App',
-              'logistics-app': 'Deploy Logistics App',
-              'quality-app': 'Deploy Quality App',
-              'production-app': 'Deploy Production App',
-              'engineering-app': 'Deploy Engineering App',
-              'finance-app': 'Deploy Finance App',
-              'mobile-app': 'Deploy Mobile App',
-            };
-            
-            for (const app of APPS) {
-              const buildJobName = `Build All Apps (${app})`;
-              const deployJobName = deployJobMap[app];
-              
-              const buildJob = jobs.data.jobs.find(job => job.name === buildJobName);
-              const deployJob = jobs.data.jobs.find(job => job.name === deployJobName);
-              
-              const buildSuccess = buildJob && buildJob.conclusion === 'success';
-              const deploySuccess = deployJob && deployJob.conclusion === 'success';
-              
-              if (buildSuccess && deploySuccess) {
-                SUCCESSFUL_APPS.push(app);
-              } else {
-                FAILED_APPS.push(app);
-                if (!buildSuccess) {
-                  console.log(`❌ ${app}: 构建失败`);
-                }
-                if (!deploySuccess) {
-                  console.log(`❌ ${app}: 部署失败`);
-                }
-              }
-            }
+            # 如果部署成功，说明构建和部署都成功了
+            # 如果部署失败或跳过，说明构建或部署失败了
+            if [ "$DEPLOY_RESULT" = "success" ]; then
+              SUCCESSFUL_APPS+=("$app")
+              echo "✅ $app: 构建和部署都成功"
+            else
+              FAILED_APPS+=("$app")
+              echo "❌ $app: 状态 = $DEPLOY_RESULT"
+            fi
+          done
+          
+          # 生成输出
+          if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then
+            SUCCESSFUL_APPS_STR=$(IFS=','; echo "${SUCCESSFUL_APPS[*]}")
+            echo "successful_apps=$SUCCESSFUL_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "successful_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+            FAILED_APPS_STR=$(IFS=','; echo "${FAILED_APPS[*]}")
+            echo "failed_apps=$FAILED_APPS_STR" >> $GITHUB_OUTPUT
+          else
+            echo "failed_apps=" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "total_apps=${#APPS[@]}" >> $GITHUB_OUTPUT
+          echo "success_count=${#SUCCESSFUL_APPS[@]}" >> $GITHUB_OUTPUT
+          echo "fail_count=${#FAILED_APPS[@]}" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 构建和部署结果汇总"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "总应用数: ${#APPS[@]}"
+          echo "成功: ${#SUCCESSFUL_APPS[@]}"
+          echo "失败: ${#FAILED_APPS[@]}"
+          echo ""
+          if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then
+            echo "✅ 成功应用:"
+            for app in "${SUCCESSFUL_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          echo ""
+          if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+            echo "❌ 失败应用:"
+            for app in "${FAILED_APPS[@]}"; do
+              echo "  - $app"
+            done
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             
             // 输出结果
             core.setOutput('successful_apps', SUCCESSFUL_APPS.join(','));
