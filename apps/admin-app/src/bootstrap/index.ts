@@ -4,6 +4,8 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import 'virtual:svg-register';
 // 注意：样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
 // 这里不再重复导入，避免样式重复
 // import '@btc/shared-components/styles/index.scss';

@@ -231,8 +231,8 @@ const loadApplications = async () => {
 
     // me 接口返回的数据结构：{ code: 200, msg: "...", data: [...] }
     // 兼容处理：支持 response.data（me接口）、response.list（list接口）、直接数组
-    const domainList = Array.isArray(response) 
-      ? response 
+    const domainList = Array.isArray(response)
+      ? response
       : (response?.data || response?.list || []);
 
     if (Array.isArray(domainList) && domainList.length > 0) {
@@ -241,9 +241,9 @@ const loadApplications = async () => {
       domainList.forEach((domain: any) => {
         // me 接口返回的域数据可能没有 domainCode，需要根据 name 或 id 推断
         // 或者使用 name 作为 key
-        const domainCode = domain.domainCode || 
-          (domain.name === '系统域' ? 'SYSTEM' : 
-           domain.name === '管理域' ? 'ADMIN' : 
+        const domainCode = domain.domainCode ||
+          (domain.name === '系统域' ? 'SYSTEM' :
+           domain.name === '管理域' ? 'ADMIN' :
            domain.id || domain.name);
         if (domainCode) {
           domainMap.set(domainCode, domain);
@@ -258,8 +258,8 @@ const loadApplications = async () => {
 
       // 1. 添加主应用（系统域 - 默认域）
       const systemDomain = Array.from(domainMap.values())
-        .find((domain: any) => 
-          domain.domainCode === 'SYSTEM' || 
+        .find((domain: any) =>
+          domain.domainCode === 'SYSTEM' ||
           domain.name === '系统域' ||
           domain.id === '17601901464201'
         );
@@ -277,8 +277,8 @@ const loadApplications = async () => {
 
       // 2. 添加管理域应用
       const adminDomain = Array.from(domainMap.values())
-        .find((domain: any) => 
-          domain.domainCode === 'ADMIN' || 
+        .find((domain: any) =>
+          domain.domainCode === 'ADMIN' ||
           domain.name === '管理域' ||
           domain.id === 'SDOM-9473'
         );
@@ -370,7 +370,7 @@ const handleSwitchApp = async (app: MicroApp) => {
 
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = window.location.hostname.includes('bellis.com.cn');
-  
+
   // 生产环境：使用子域名跳转
   if (isProduction) {
     // 文档应用特殊处理（文档应用可能没有独立的子域名）
@@ -400,24 +400,10 @@ const handleSwitchApp = async (app: MicroApp) => {
     const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
     const appConfig = getAppConfig(mappedAppName);
     if (appConfig && appConfig.prodHost) {
-      // 构建完整的 URL
+      // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
       const protocol = window.location.protocol;
-      const currentPath = window.location.pathname;
-      
-      // 判断当前路径是否属于其他子应用
-      const isSubAppPath = currentPath.startsWith('/admin') ||
-                          currentPath.startsWith('/logistics') ||
-                          currentPath.startsWith('/engineering') ||
-                          currentPath.startsWith('/quality') ||
-                          currentPath.startsWith('/production') ||
-                          currentPath.startsWith('/finance') ||
-                          currentPath.startsWith('/docs');
-      
-      // 如果当前路径属于其他子应用，或者当前路径是系统域的主路径，切换到目标子域名的根路径
-      // 否则保持当前路径（适用于系统域的非主路径，如 /profile）
-      const targetPath = isSubAppPath ? '/' : currentPath;
-      const targetUrl = `${protocol}//${appConfig.prodHost}${targetPath}`;
-      
+      const targetUrl = `${protocol}//${appConfig.prodHost}/`;
+
       // 使用 window.location.href 跳转到子域名
       window.location.href = targetUrl;
       return;

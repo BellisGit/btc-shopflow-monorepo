@@ -97,9 +97,26 @@ export function createComponentsConfig(options: ComponentsConfigOptions = {}) {
       }),
       // 自定义解析器：@btc/shared-components
       (componentName) => {
+        // 将 kebab-case 转换为 PascalCase
+        // 例如: btc-svg -> BtcSvg
+        const convertToPascalCase = (name: string): string => {
+          if (name.startsWith('Btc')) {
+            return name; // 已经是 PascalCase
+          }
+          if (name.startsWith('btc-')) {
+            // btc-svg -> BtcSvg
+            return name
+              .split('-')
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+              .join('');
+          }
+          return name;
+        };
+
         if (componentName.startsWith('Btc') || componentName.startsWith('btc-')) {
+          const pascalName = convertToPascalCase(componentName);
           return {
-            name: componentName,
+            name: pascalName,
             from: '@btc/shared-components',
           };
         }

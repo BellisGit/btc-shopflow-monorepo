@@ -7,6 +7,9 @@
 
 import type { App } from 'vue';
 
+// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import 'virtual:svg-register';
+
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
 

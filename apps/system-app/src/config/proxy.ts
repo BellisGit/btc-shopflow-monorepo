@@ -23,6 +23,9 @@ const getBackendTarget = (): string => {
   return target;
 };
 
+// 获取动态代理目标（支持运行时切换）
+// 在开发环境中，可以通过读取配置文件来决定代理目标
+// 但 vite 代理配置是静态的，所以这里返回默认的开发环境目标
 const backendTarget = getBackendTarget();
 
 const proxy: Record<string, string | ProxyOptions> = {
@@ -212,7 +215,7 @@ const proxy: Record<string, string | ProxyOptions> = {
         }
       });
     },
-  }
+  },
 };
 
 export { proxy };

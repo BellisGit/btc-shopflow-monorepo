@@ -6,9 +6,9 @@
 import { requestAdapter } from '@/utils/requestAdapter';
 
 /**
- * 验证码 API 基础路径
+ * 验证码 API 基础路径（不包含 /api 前缀，由 baseURL 统一处理）
  */
-const baseUrl = '/api/system/auth';
+const baseUrl = '/system/auth';
 
 /**
  * 验证码 API 服务对象

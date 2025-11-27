@@ -1,6 +1,16 @@
 import { db } from '@/db';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// 获取 API baseURL（使用 try-catch 避免生产环境 import.meta 问题）
+function getApiBaseURL(): string {
+  try {
+    return (import.meta as any).env?.VITE_API_BASE_URL || 'https://api.bellis.com.cn/api';
+  } catch (e) {
+    // 如果 import.meta 不可用，使用生产环境后端
+    return 'https://api.bellis.com.cn/api';
+  }
+}
+
+const API_BASE_URL = getApiBaseURL();
 
 export async function enqueueOp(op: { type: string; payload: any }) {
   await db.pending_ops.add({

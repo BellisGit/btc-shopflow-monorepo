@@ -60,51 +60,51 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT"
-
-# 获取 GITHUB_TOKEN
+        
+        # 获取 GITHUB_TOKEN
 GITHUB_TOKEN=""
-
-# 方法1: 从环境变量获取
-if [ -n "${GITHUB_TOKEN}" ]; then
-    GITHUB_TOKEN="${GITHUB_TOKEN}"
-fi
-
-# 方法2: 从 Git 凭据管理器获取
-if [ -z "$GITHUB_TOKEN" ] && command -v git-credential-manager > /dev/null 2>&1; then
-    GITHUB_TOKEN=$(git credential fill <<< "protocol=https
+        
+        # 方法1: 从环境变量获取
+        if [ -n "${GITHUB_TOKEN}" ]; then
+            GITHUB_TOKEN="${GITHUB_TOKEN}"
+        fi
+        
+        # 方法2: 从 Git 凭据管理器获取
+        if [ -z "$GITHUB_TOKEN" ] && command -v git-credential-manager > /dev/null 2>&1; then
+            GITHUB_TOKEN=$(git credential fill <<< "protocol=https
 host=github.com
 " 2>/dev/null | grep password | cut -d= -f2 | head -1)
-fi
-
-# 方法3: 从 Windows 用户级环境变量获取（通过 PowerShell）
-if [ -z "$GITHUB_TOKEN" ]; then
-    IS_WINDOWS=false
-    if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
-        IS_WINDOWS=true
-    fi
-    
-    if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
-        if command -v powershell.exe > /dev/null 2>&1; then
-            PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
-            GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
-            if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
-                GITHUB_TOKEN=""
+        fi
+        
+        # 方法3: 从 Windows 用户级环境变量获取（通过 PowerShell）
+        if [ -z "$GITHUB_TOKEN" ]; then
+            IS_WINDOWS=false
+            if [ -n "$WINDIR" ] || [ "$OS" = "Windows_NT" ] || [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "win32" ]; then
+                IS_WINDOWS=true
             fi
-            if [ -z "${GITHUB_TOKEN// }" ]; then
-                GITHUB_TOKEN=""
+            
+            if [ "$IS_WINDOWS" = "true" ] || command -v powershell.exe > /dev/null 2>&1; then
+                if command -v powershell.exe > /dev/null 2>&1; then
+                    PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+                    GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+                    if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+                        GITHUB_TOKEN=""
+                    fi
+                    if [ -z "${GITHUB_TOKEN// }" ]; then
+                        GITHUB_TOKEN=""
+                    fi
+                fi
             fi
         fi
-    fi
-fi
-
-if [ -z "$GITHUB_TOKEN" ]; then
+        
+        if [ -z "$GITHUB_TOKEN" ]; then
     log_error "未设置 GITHUB_TOKEN 环境变量，无法触发工作流"
     log_info "请设置 GITHUB_TOKEN 环境变量后重试"
     log_info "  Windows: 在用户环境变量中设置 GITHUB_TOKEN"
     log_info "  Linux/Mac: export GITHUB_TOKEN=your_token"
-    exit 1
-fi
-
+            exit 1
+        fi
+        
 # 获取仓库信息
 GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
 REPO_OWNER=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
@@ -119,7 +119,7 @@ fi
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "🚀 触发并行构建和部署工作流"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info "仓库: $GITHUB_REPO"
+        log_info "仓库: $GITHUB_REPO"
 log_info "Git SHA: $GIT_SHA"
 log_info "跳过构建: $SKIP_BUILD"
 log_info "跳过部署: $SKIP_DEPLOY"
@@ -139,21 +139,21 @@ CLIENT_PAYLOAD+="}"
 # 触发工作流
 log_info "正在触发工作流: build-deploy-all-apps.yml"
 REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -X POST \
-    -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer $GITHUB_TOKEN" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
     -H "Content-Type: application/json" \
     "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
     -d "{
         \"event_type\": \"build-deploy-all-apps\",
         \"client_payload\": $CLIENT_PAYLOAD
     }" 2>&1)
-
+        
 REPO_DISPATCH_HTTP_CODE=$(echo "$REPO_DISPATCH_RESPONSE" | tail -n1)
 REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
-
-if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
+        
+        if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
     log_success "✅ 工作流已触发 (HTTP 204)"
     log_info ""
     log_info "可以在 GitHub Actions 页面查看进度:"
@@ -168,15 +168,15 @@ if [ "$REPO_DISPATCH_HTTP_CODE" -eq 204 ]; then
     log_info "  - engineering-app"
     log_info "  - finance-app"
     log_info "  - mobile-app"
-    log_info ""
+            log_info ""
     log_info "每个应用构建完成后立即部署，互不等待"
-    exit 0
-else
+            exit 0
+        else
     log_error "❌ 工作流触发失败 (HTTP $REPO_DISPATCH_HTTP_CODE)"
-    if [ -n "$REPO_DISPATCH_BODY" ]; then
-        log_error "响应: $REPO_DISPATCH_BODY"
-    fi
-    log_info ""
+            if [ -n "$REPO_DISPATCH_BODY" ]; then
+                log_error "响应: $REPO_DISPATCH_BODY"
+            fi
+            log_info ""
     
     # 根据不同的 HTTP 状态码提供具体的错误信息
     if [ "$REPO_DISPATCH_HTTP_CODE" -eq 404 ]; then
@@ -185,7 +185,7 @@ else
         log_info "  1. 工作流文件尚未提交到 GitHub"
         log_info "  2. 工作流文件路径不正确"
         log_info "  3. 工作流文件尚未被 GitHub Actions 识别"
-        log_info ""
+    log_info ""
         log_info "💡 解决方案:"
         log_info "  1. 确保工作流文件已提交并推送到 GitHub"
         log_info "  2. 等待几分钟让 GitHub Actions 识别新工作流"
@@ -196,7 +196,7 @@ else
         log_info "  1. event_type 格式不正确"
         log_info "  2. client_payload 格式错误"
         log_info "  3. 工作流未配置 repository_dispatch 触发器"
-        log_info ""
+    log_info ""
         log_info "💡 解决方案:"
         log_info "  1. 检查工作流文件是否配置了 repository_dispatch:"
         log_info "     .github/workflows/build-deploy-all-apps.yml"
@@ -225,9 +225,9 @@ else
         log_info "  1. 等待几分钟后重试"
         log_info "  2. 检查网络连接"
         log_info "  3. 查看 GitHub Status: https://www.githubstatus.com/"
-    fi
-    
-    log_info ""
+            fi
+            
+            log_info ""
     log_info "📋 调试信息:"
     log_info "  - 仓库: $GITHUB_REPO"
     log_info "  - 仓库所有者: $REPO_OWNER"
@@ -237,5 +237,5 @@ else
     log_info "  - HTTP 状态码: $REPO_DISPATCH_HTTP_CODE"
     log_info "  - Git SHA: $GIT_SHA"
     
-    exit 1
-fi
+            exit 1
+        fi

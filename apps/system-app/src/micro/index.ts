@@ -1098,8 +1098,23 @@ export function setupQiankun() {
         const currentPath = window.location.pathname;
         let targetAppName: string | null = null;
 
-        // 根据当前路径判断是哪个应用
-        if (currentPath.startsWith('/admin')) {
+        // 根据当前路径或子域名判断是哪个应用
+        const hostname = window.location.hostname;
+        const subdomainMap: Record<string, string> = {
+          'admin.bellis.com.cn': 'admin',
+          'logistics.bellis.com.cn': 'logistics',
+          'quality.bellis.com.cn': 'quality',
+          'production.bellis.com.cn': 'production',
+          'engineering.bellis.com.cn': 'engineering',
+          'finance.bellis.com.cn': 'finance',
+        };
+        
+        // 首先尝试从子域名判断
+        if (subdomainMap[hostname]) {
+          targetAppName = subdomainMap[hostname];
+        }
+        // 如果子域名没有匹配，尝试从路径判断
+        else if (currentPath.startsWith('/admin')) {
           targetAppName = 'admin';
         } else if (currentPath.startsWith('/logistics')) {
           targetAppName = 'logistics';
@@ -1461,10 +1476,26 @@ export function setupQiankun() {
           }
 
           if (entryUrl) {
-            // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
-            // 这样可以支持通过 IP 地址访问（如 10.80.8.199）
+            // 关键：如果 entry 是完整 URL（包含子域名），使用 entry 中的 hostname
+            // 否则使用当前页面的 hostname（支持通过 IP 地址访问，如 10.80.8.199）
             const port = entryUrl.port || '';
-            baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
+            let finalHost = entryUrl.hostname;
+            
+            // 如果 entry 是相对路径（/path），使用当前页面的 hostname
+            if (entry.startsWith('/')) {
+              finalHost = currentHost;
+            }
+            // 如果 entry 是完整 URL，检查是否是子域名
+            else if (entry.startsWith('http://') || entry.startsWith('https://')) {
+              // 使用 entry 中的 hostname（可能是子域名）
+              finalHost = entryUrl.hostname;
+            }
+            // 如果 entry 是协议相对路径（//host:port），也使用 entry 中的 hostname
+            else if (entry.startsWith('//')) {
+              finalHost = entryUrl.hostname;
+            }
+            
+            baseUrl = `${entryUrl.protocol}//${finalHost}${port ? `:${port}` : ''}`;
 
             // 从 entryMap 中查找匹配的应用名称
             for (const [appName, appEntry] of entryMap.entries()) {
@@ -1473,14 +1504,31 @@ export function setupQiankun() {
                 break;
               }
             }
-            console.log('[getTemplate] 从 entry 参数获取:', { baseUrl, matchedAppName, port, entry });
+            console.log('[getTemplate] 从 entry 参数获取:', { baseUrl, matchedAppName, port, entry, finalHost, entryHostname: entryUrl.hostname });
           }
         }
 
-        // 如果没有从 entry 参数获取到，尝试从当前路径判断是哪个应用
+        // 如果没有从 entry 参数获取到，尝试从当前路径或子域名判断是哪个应用
         if (!baseUrl) {
           const currentPath = window.location.pathname;
-          if (currentPath.startsWith('/admin')) {
+          const hostname = window.location.hostname;
+          let matchedAppName: string | null = null;
+
+          // 首先尝试从子域名判断
+          const subdomainMap: Record<string, string> = {
+            'admin.bellis.com.cn': 'admin',
+            'logistics.bellis.com.cn': 'logistics',
+            'quality.bellis.com.cn': 'quality',
+            'production.bellis.com.cn': 'production',
+            'engineering.bellis.com.cn': 'engineering',
+            'finance.bellis.com.cn': 'finance',
+          };
+          
+          if (subdomainMap[hostname]) {
+            matchedAppName = subdomainMap[hostname];
+          }
+          // 如果子域名没有匹配，尝试从路径判断
+          else if (currentPath.startsWith('/admin')) {
             matchedAppName = 'admin';
           } else if (currentPath.startsWith('/logistics')) {
             matchedAppName = 'logistics';
@@ -1512,10 +1560,17 @@ export function setupQiankun() {
               }
 
               if (entryUrl) {
-                // 关键：使用当前页面的 hostname，而不是 entry 中的 hostname
+                // 关键：如果当前是子域名访问，使用子域名作为 baseUrl；否则使用当前 hostname
                 const port = entryUrl.port || '';
-                baseUrl = `${protocol}//${currentHost}${port ? `:${port}` : ''}`;
-                console.log('[getTemplate] 从路径判断获取:', { matchedAppName, baseUrl, port, appEntry });
+                let finalHost = currentHost;
+                
+                // 如果是子域名访问，使用子域名作为 host
+                if (subdomainMap[hostname] === matchedAppName) {
+                  finalHost = hostname;
+                }
+                
+                baseUrl = `${protocol}//${finalHost}${port ? `:${port}` : ''}`;
+                console.log('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost });
               }
             }
           }
@@ -1538,15 +1593,17 @@ export function setupQiankun() {
         if (baseUrl) {
           const baseUrlObj = new URL(baseUrl);
           const targetPort = baseUrlObj.port;
-          console.log('[getTemplate] 开始修复资源路径', { baseUrl, targetPort, currentPort, currentHost });
+          const targetHost = baseUrlObj.hostname; // 使用 baseUrl 中的 hostname（可能是子域名）
+          console.log('[getTemplate] 开始修复资源路径', { baseUrl, targetPort, targetHost, currentPort, currentHost });
 
           // 修复所有 script src 中的相对路径和包含错误端口的绝对路径
           processedTpl = processedTpl.replace(
             /<script([^>]*?)\s+src\s*=\s*["']([^"']+)["']([^>]*)>/gi,
             (match, before, src, after) => {
-              // 如果 src 已经是完整 URL 且端口正确，直接返回
-              // 检查是否匹配当前 hostname 和正确的端口
-              if ((src.includes(`://${currentHost}:${targetPort}/`) || src.includes(`//${currentHost}:${targetPort}/`)) ||
+              // 如果 src 已经是完整 URL 且匹配目标 hostname 和端口，直接返回
+              // 检查是否匹配目标 hostname（可能是子域名）和正确的端口
+              if ((src.includes(`://${targetHost}:${targetPort}/`) || src.includes(`//${targetHost}:${targetPort}/`)) ||
+                  (targetPort && (src.includes(`://${targetHost}/`) || src.includes(`//${targetHost}/`))) ||
                   (src.includes(`://localhost:${targetPort}/`) || src.includes(`//localhost:${targetPort}/`))) {
                 return match;
               }
@@ -1562,15 +1619,16 @@ export function setupQiankun() {
 
               // 情况1：如果 src 是相对路径（以 / 开头），转换为完整的 URL（绝对路径）
               // 这是关键：入口脚本必须是绝对路径，这样 import.meta.url 才会是正确的端口
+              // 使用 targetHost（可能是子域名）而不是 currentHost
               if (fixedSrc.startsWith('/')) {
-                fixedSrc = `${baseUrl.replace(/localhost/g, currentHost)}${fixedSrc}`;
+                fixedSrc = `${baseUrl.replace(/localhost/g, targetHost)}${fixedSrc}`;
                 console.log(`[getTemplate] 修复相对路径 script: ${src} -> ${fixedSrc}`);
               }
               // 情况2：如果 src 是相对路径（不以 / 开头，如 assets/file.js），也转换为完整的 URL
               else if (!fixedSrc.includes('://') && !fixedSrc.startsWith('//') && !fixedSrc.startsWith('data:') && !fixedSrc.startsWith('blob:')) {
                 // 确保以 / 开头
                 const normalizedSrc = fixedSrc.startsWith('/') ? fixedSrc : `/${fixedSrc}`;
-                fixedSrc = `${baseUrl.replace(/localhost/g, currentHost)}${normalizedSrc}`;
+                fixedSrc = `${baseUrl.replace(/localhost/g, targetHost)}${normalizedSrc}`;
                 console.log(`[getTemplate] 修复非绝对路径 script: ${src} -> ${fixedSrc}`);
               }
               // 情况3：如果 src 包含错误的端口（当前页面的端口），修复它
@@ -1581,10 +1639,13 @@ export function setupQiankun() {
                 fixedSrc.includes(`://localhost:${currentPort}`) ||
                 fixedSrc.includes(`//localhost:${currentPort}`)
               )) {
-                // 替换所有出现的错误端口
-                fixedSrc = fixedSrc.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), `:${targetPort}`);
-                // 同时替换 localhost 为当前 hostname
-                fixedSrc = fixedSrc.replace(/localhost/g, currentHost);
+                // 替换所有出现的错误端口，并使用 targetHost（可能是子域名）
+                fixedSrc = fixedSrc.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), targetPort ? `:${targetPort}` : '');
+                // 同时替换 localhost 和 currentHost 为 targetHost（可能是子域名）
+                fixedSrc = fixedSrc.replace(/localhost/g, targetHost);
+                if (currentHost !== targetHost) {
+                  fixedSrc = fixedSrc.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
+                }
                 console.log(`[getTemplate] 修复错误端口 script: ${src} -> ${fixedSrc}`);
               }
               // 情况4：如果 src 是协议相对路径（//host/），添加正确的端口
@@ -1594,16 +1655,21 @@ export function setupQiankun() {
                 if (hostMatch) {
                   const urlHost = hostMatch[1];
                   const urlPath = hostMatch[2];
-                  if (urlHost === currentHost || urlHost === 'localhost') {
-                    fixedSrc = targetPort ? `//${currentHost}:${targetPort}${urlPath}` : `//${currentHost}${urlPath}`;
+                  if (urlHost === currentHost || urlHost === 'localhost' || urlHost === targetHost) {
+                    fixedSrc = targetPort ? `//${targetHost}:${targetPort}${urlPath}` : `//${targetHost}${urlPath}`;
                     console.log(`[getTemplate] 修复协议相对路径 script: ${src} -> ${fixedSrc}`);
                   }
                 }
               }
-              // 情况5：如果 src 是完整 URL 但包含 localhost，替换为当前 hostname
-              else if ((fixedSrc.startsWith('http://localhost') || fixedSrc.startsWith('https://localhost')) && currentHost !== 'localhost') {
-                fixedSrc = fixedSrc.replace(/localhost/g, currentHost);
+              // 情况5：如果 src 是完整 URL 但包含 localhost 或错误的 hostname，替换为 targetHost
+              else if ((fixedSrc.startsWith('http://localhost') || fixedSrc.startsWith('https://localhost')) && targetHost !== 'localhost') {
+                fixedSrc = fixedSrc.replace(/localhost/g, targetHost);
                 console.log(`[getTemplate] 替换完整 URL 中的 localhost script: ${src} -> ${fixedSrc}`);
+              }
+              // 情况6：如果 src 包含错误的 hostname（当前页面的 hostname），但应该是子域名
+              else if (currentHost !== targetHost && fixedSrc.includes(`://${currentHost}`)) {
+                fixedSrc = fixedSrc.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
+                console.log(`[getTemplate] 替换错误的 hostname script: ${src} -> ${fixedSrc}`);
               }
 
               if (fixedSrc !== src) {
@@ -1618,9 +1684,10 @@ export function setupQiankun() {
           processedTpl = processedTpl.replace(
             /<link([^>]*?)\s+href\s*=\s*["']([^"']+)["']([^>]*)>/gi,
             (match, before, href, after) => {
-              // 如果 href 已经是完整 URL 且端口正确，直接返回
-              // 检查是否匹配当前 hostname 和正确的端口
-              if ((href.includes(`://${currentHost}:${targetPort}/`) || href.includes(`//${currentHost}:${targetPort}/`)) ||
+              // 如果 href 已经是完整 URL 且匹配目标 hostname 和端口，直接返回
+              // 检查是否匹配目标 hostname（可能是子域名）和正确的端口
+              if ((href.includes(`://${targetHost}:${targetPort}/`) || href.includes(`//${targetHost}:${targetPort}/`)) ||
+                  (targetPort && (href.includes(`://${targetHost}/`) || href.includes(`//${targetHost}/`))) ||
                   (href.includes(`://localhost:${targetPort}/`) || href.includes(`//localhost:${targetPort}/`))) {
                 return match;
               }
@@ -1629,20 +1696,22 @@ export function setupQiankun() {
 
               // 关键：如果 href 包含 localhost，但当前页面是通过 IP 访问的，需要替换 hostname
               // 因为子应用的 base 可能设置为 http://localhost:${APP_PORT}/，但用户通过 IP 访问
-              if (href.includes('localhost') && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-                fixedHref = href.replace(/localhost/g, currentHost);
-                console.log(`[getTemplate] 替换 localhost 为当前 hostname link: ${href} -> ${fixedHref}`);
+              // 使用 targetHost（可能是子域名）而不是 currentHost
+              if (href.includes('localhost') && targetHost !== 'localhost' && targetHost !== '127.0.0.1') {
+                fixedHref = href.replace(/localhost/g, targetHost);
+                console.log(`[getTemplate] 替换 localhost 为 targetHost link: ${href} -> ${fixedHref}`);
               }
 
               // 情况1：如果 href 是相对路径（以 / 开头），转换为完整的 URL
+              // 使用 targetHost（可能是子域名）而不是 currentHost
               if (fixedHref.startsWith('/')) {
-                fixedHref = `${baseUrl.replace(/localhost/g, currentHost)}${fixedHref}`;
+                fixedHref = `${baseUrl.replace(/localhost/g, targetHost)}${fixedHref}`;
                 console.log(`[getTemplate] 修复相对路径 link: ${href} -> ${fixedHref}`);
               }
               // 情况2：如果 href 是相对路径（不以 / 开头），也转换为完整的 URL
               else if (!fixedHref.includes('://') && !fixedHref.startsWith('//') && !fixedHref.startsWith('data:') && !fixedHref.startsWith('blob:')) {
                 const normalizedHref = fixedHref.startsWith('/') ? fixedHref : `/${fixedHref}`;
-                fixedHref = `${baseUrl.replace(/localhost/g, currentHost)}${normalizedHref}`;
+                fixedHref = `${baseUrl.replace(/localhost/g, targetHost)}${normalizedHref}`;
                 console.log(`[getTemplate] 修复非绝对路径 link: ${href} -> ${fixedHref}`);
               }
               // 情况3：如果 href 包含错误的端口（当前页面的端口），修复它
@@ -1653,10 +1722,13 @@ export function setupQiankun() {
                 fixedHref.includes(`://localhost:${currentPort}`) ||
                 fixedHref.includes(`//localhost:${currentPort}`)
               )) {
-                // 替换所有出现的错误端口
-                fixedHref = fixedHref.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), `:${targetPort}`);
-                // 同时替换 localhost 为当前 hostname
-                fixedHref = fixedHref.replace(/localhost/g, currentHost);
+                // 替换所有出现的错误端口，并使用 targetHost（可能是子域名）
+                fixedHref = fixedHref.replace(new RegExp(`:${currentPort}(?=/|$|"|'|\\s)`, 'g'), targetPort ? `:${targetPort}` : '');
+                // 同时替换 localhost 和 currentHost 为 targetHost（可能是子域名）
+                fixedHref = fixedHref.replace(/localhost/g, targetHost);
+                if (currentHost !== targetHost) {
+                  fixedHref = fixedHref.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
+                }
                 console.log(`[getTemplate] 修复错误端口 link: ${href} -> ${fixedHref}`);
               }
               // 情况4：如果 href 是协议相对路径（//host/），添加正确的端口
@@ -1665,16 +1737,21 @@ export function setupQiankun() {
                 if (hostMatch) {
                   const urlHost = hostMatch[1];
                   const urlPath = hostMatch[2];
-                  if (urlHost === currentHost || urlHost === 'localhost') {
-                    fixedHref = targetPort ? `//${currentHost}:${targetPort}${urlPath}` : `//${currentHost}${urlPath}`;
+                  if (urlHost === currentHost || urlHost === 'localhost' || urlHost === targetHost) {
+                    fixedHref = targetPort ? `//${targetHost}:${targetPort}${urlPath}` : `//${targetHost}${urlPath}`;
                     console.log(`[getTemplate] 修复协议相对路径 link: ${href} -> ${fixedHref}`);
                   }
                 }
               }
-              // 情况5：如果 href 是完整 URL 但包含 localhost，替换为当前 hostname
-              else if ((fixedHref.startsWith('http://localhost') || fixedHref.startsWith('https://localhost')) && currentHost !== 'localhost') {
-                fixedHref = fixedHref.replace(/localhost/g, currentHost);
+              // 情况5：如果 href 是完整 URL 但包含 localhost 或错误的 hostname，替换为 targetHost
+              else if ((fixedHref.startsWith('http://localhost') || fixedHref.startsWith('https://localhost')) && targetHost !== 'localhost') {
+                fixedHref = fixedHref.replace(/localhost/g, targetHost);
                 console.log(`[getTemplate] 替换完整 URL 中的 localhost link: ${href} -> ${fixedHref}`);
+              }
+              // 情况6：如果 href 包含错误的 hostname（当前页面的 hostname），但应该是子域名
+              else if (currentHost !== targetHost && fixedHref.includes(`://${currentHost}`)) {
+                fixedHref = fixedHref.replace(new RegExp(currentHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), targetHost);
+                console.log(`[getTemplate] 替换错误的 hostname link: ${href} -> ${fixedHref}`);
               }
 
               if (fixedHref !== href) {
@@ -1686,9 +1763,25 @@ export function setupQiankun() {
 
           // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的端口
           // 这会影响动态导入的模块路径解析
-          // 使用当前页面的 hostname 和正确的端口构建 base URL
-          const baseHref = `${protocol}//${currentHost}${targetPort ? `:${targetPort}` : ''}/`;
-          console.log('[getTemplate] 设置 base URL:', baseHref);
+          // 如果当前是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
+          const hostname = window.location.hostname;
+          const subdomainMap: Record<string, string> = {
+            'admin.bellis.com.cn': 'admin',
+            'logistics.bellis.com.cn': 'logistics',
+            'quality.bellis.com.cn': 'quality',
+            'production.bellis.com.cn': 'production',
+            'engineering.bellis.com.cn': 'engineering',
+            'finance.bellis.com.cn': 'finance',
+          };
+          
+          // 如果是子域名访问，使用子域名作为 base URL
+          let baseHost = currentHost;
+          if (subdomainMap[hostname] && matchedAppName === subdomainMap[hostname]) {
+            baseHost = hostname;
+          }
+          
+          const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}/`;
+          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, matchedAppName });
 
           // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
           processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');

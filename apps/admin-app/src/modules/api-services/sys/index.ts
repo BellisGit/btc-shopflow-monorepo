@@ -5,7 +5,7 @@
 
 import { requestAdapter } from '@/utils/requestAdapter';
 
-const baseUrl = '/api/system';
+const baseUrl = '/system';
 
 /**
  * 系统 API 服务对象

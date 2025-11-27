@@ -3,6 +3,31 @@ import { getCookie, setCookie } from './cookie';
 import { useAuthStore } from '@/stores/auth';
 
 /**
+ * 获取动态 baseURL
+ * 移动应用直接请求生产环境后端，避免协议问题
+ */
+function getDynamicBaseURL(): string {
+  // 优先使用环境变量（使用 try-catch 避免生产环境 import.meta 问题）
+  try {
+    const env = (import.meta as any).env;
+    if (env?.VITE_API_BASE_URL) {
+      return env.VITE_API_BASE_URL;
+    }
+    
+    // 生产环境或非开发环境：直接使用生产环境后端
+    if (env?.PROD || !env?.DEV) {
+      return 'https://api.bellis.com.cn/api';
+    }
+  } catch (e) {
+    // 如果 import.meta 不可用（生产环境构建后），直接使用生产环境后端
+    return 'https://api.bellis.com.cn/api';
+  }
+  
+  // 开发环境：使用相对路径（通过代理）
+  return '/api';
+}
+
+/**
  * HTTP 请求工具 - 移动端版本
  */
 export class Http {
@@ -10,7 +35,8 @@ export class Http {
   private axiosInstance: any;
 
   constructor(baseURL = '') {
-    this.baseURL = baseURL;
+    // 如果未提供 baseURL，使用动态 baseURL
+    this.baseURL = baseURL || getDynamicBaseURL();
 
     // 创建 axios 实例
     this.axiosInstance = axios.create({
@@ -25,6 +51,11 @@ export class Http {
     // 请求拦截器
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
+        // 动态更新 baseURL（确保使用最新的 baseURL）
+        const dynamicBaseURL = getDynamicBaseURL();
+        config.baseURL = dynamicBaseURL;
+        this.axiosInstance.defaults.baseURL = dynamicBaseURL;
+        
         // 从 cookie 或 localStorage 获取 token
         const cookieToken = getCookie('access_token');
         const authStore = useAuthStore();
@@ -46,9 +77,18 @@ export class Http {
           }
         }
 
-        // 确保 withCredentials 设置为 true
-        config.withCredentials = true;
-        config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
+        // 根据 baseURL 是否为跨域请求，动态设置 withCredentials
+        const isCrossOrigin = dynamicBaseURL && (dynamicBaseURL.startsWith('http://') || dynamicBaseURL.startsWith('https://'));
+        if (isCrossOrigin) {
+          // 跨域请求：不设置 withCredentials，避免 CORS 错误
+          config.withCredentials = false;
+          // 跨域请求不发送 X-Tenant-Id（服务器可能不允许此请求头）
+        } else {
+          // 同源请求（通过代理）：使用 withCredentials 发送 cookie
+          config.withCredentials = true;
+          // 同源请求可以发送 X-Tenant-Id
+          config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
+        }
 
         const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');
         if (!isFormData) {
@@ -155,5 +195,6 @@ export class Http {
   }
 }
 
-export const http = new Http('');
+// 使用动态 baseURL 初始化
+export const http = new Http();
 

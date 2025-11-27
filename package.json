@@ -35,6 +35,9 @@
     "build:logistics": "pnpm --filter logistics-app build",
     "preview:logistics": "pnpm --filter logistics-app preview",
     "build-preview:logistics": "pnpm build:logistics && pnpm preview:logistics",
+    "build:mobile": "pnpm --filter mobile-app build",
+    "preview:mobile": "pnpm --filter mobile-app preview",
+    "build-preview:mobile": "pnpm build:mobile && pnpm preview:mobile",
     "preview:all": "node scripts/turbo.js run preview --concurrency=15",
     "build-preview:all": "node scripts/build-preview-all.js",
     "setup:docker": "bash scripts/setup-docker-remote.sh",
@@ -80,6 +83,7 @@
     "tsc:engineering": "pnpm --filter engineering-app type-check",
     "tsc:quality": "pnpm --filter quality-app type-check",
     "tsc:production": "pnpm --filter production-app type-check",
+    "tsc:mobile": "pnpm --filter mobile-app type-check",
     "clean": "node scripts/turbo.js run clean && rm -rf node_modules"
   },
   "devDependencies": {

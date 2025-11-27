@@ -89,27 +89,58 @@ router.beforeEach((to, _from, next) => {
   // 排除静态资源路径，这些路径不应该进入 Vue Router
   // 应该由 Vite 开发服务器直接提供，但如果进入了路由系统，直接放行
   // 特别注意：manifest.webmanifest 必须完全排除，否则会拦截 VitePWA 的 manifest 生成
+  // 检查路径（去除查询参数和 hash）
+  const pathWithoutQuery = to.path.split('?')[0];
+  
   if (
-    to.path.startsWith('/icons/') ||
-    to.path.startsWith('/assets/') ||
-    to.path.startsWith('/manifest.webmanifest') || // 使用 startsWith 以支持版本号参数
-    to.path === '/favicon.ico' ||
-    to.path.endsWith('.png') ||
-    to.path.endsWith('.svg') ||
-    to.path.endsWith('.ico') ||
-    to.path.endsWith('.webmanifest')
+    pathWithoutQuery.startsWith('/icons/') ||
+    pathWithoutQuery.startsWith('/assets/') ||
+    pathWithoutQuery.startsWith('/manifest.webmanifest') || // 使用 startsWith 以支持版本号参数
+    pathWithoutQuery === '/favicon.ico' ||
+    pathWithoutQuery.endsWith('.png') ||
+    pathWithoutQuery.endsWith('.svg') ||
+    pathWithoutQuery.endsWith('.ico') ||
+    pathWithoutQuery.endsWith('.webmanifest')
   ) {
     // 静态资源，直接放行，不进行认证检查
     // 注意：这不会阻止 Vite 提供文件，但如果请求进入了路由系统，至少不会重定向到登录页
+    try {
+      if ((import.meta as any).env?.DEV && pathWithoutQuery.startsWith('/manifest.webmanifest')) {
+        console.log('[Router] Manifest request detected, allowing:', pathWithoutQuery);
+      }
+    } catch (e) {
+      // 生产环境忽略调试日志
+    }
     next();
     return;
   }
 
   const authStore = useAuthStore();
 
-  if (to.meta.public || authStore.isAuthenticated) {
+  // 公开页面（登录、注册、手机号登录等）直接放行
+  if (to.meta.public) {
+    next();
+    return;
+  }
+
+  // 需要认证的页面
+  if (authStore.isAuthenticated) {
+    try {
+      if ((import.meta as any).env?.DEV) {
+        console.log('[Router] Authenticated user, allowing access:', to.path);
+      }
+    } catch (e) {
+      // 生产环境忽略调试日志
+    }
     next();
   } else {
+    try {
+      if ((import.meta as any).env?.DEV) {
+        console.log('[Router] Unauthenticated user, redirecting to login:', to.fullPath);
+      }
+    } catch (e) {
+      // 生产环境忽略调试日志
+    }
     next({ name: 'Login', query: { redirect: to.fullPath } });
   }
 });

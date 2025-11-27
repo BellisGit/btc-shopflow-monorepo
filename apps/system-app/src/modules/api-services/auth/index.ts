@@ -17,9 +17,9 @@ import type {
 } from '../types';
 
 /**
- * 认证 API 基础路径
+ * 认证 API 基础路径（不包含 /api 前缀，由 baseURL 统一处理）
  */
-const baseUrl = '/api/system/auth';
+const baseUrl = '/system/auth';
 
 /**
  * 认证 API 服务对象

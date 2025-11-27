@@ -22,6 +22,9 @@ import '../../styles/nprogress.scss';
 // ECharts 插件
 import EChartsPlugin from '../../plugins/echarts';
 
+// 显式注册 BtcSvg 组件，确保在生产环境也能正常工作
+import { BtcSvg } from '@btc/shared-components';
+
 // Element Plus 国际化
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
@@ -69,6 +72,11 @@ export const setupUI = (app: App) => {
 
   // 配置ECharts
   app.use(EChartsPlugin);
+
+  // 显式注册 BtcSvg 组件，确保在生产环境也能正常工作
+  // 同时注册 kebab-case 和 PascalCase 两种形式
+  app.component('BtcSvg', BtcSvg);
+  app.component('btc-svg', BtcSvg);
 
   // 配置全局样式
   setupGlobalStyles();

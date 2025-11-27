@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -8,6 +8,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'path';
 import { getViteAppConfig } from '../../configs/vite-app-config';
+import { btc } from '@btc/vite-plugin';
 
 // 从统一配置中获取应用配置
 const config = getViteAppConfig('mobile-app');
@@ -54,6 +55,12 @@ export default defineConfig({
       script: {
         defineModel: true,
         propsDestructure: true,
+      },
+    }),
+    btc({
+      type: 'mobile',
+      svg: {
+        skipNames: ['base', 'icons'],
       },
     }),
     Components({
@@ -122,11 +129,15 @@ export default defineConfig({
       // main.ts 中已有手动注册逻辑，会优雅处理证书错误
       injectRegister: false,
       strategies: 'generateSW', // 保持自动生成SW（适合大多数场景）
+      // 确保 manifest 文件格式正确
+      // 使用 .webmanifest 扩展名，浏览器会自动识别为 application/manifest+json
       filename: 'manifest.webmanifest',
       devOptions: {
         enabled: true,
         type: 'module',
         navigateFallback: '/', // 开发环境 fallback 到首页，避免404
+        // 确保开发环境中 manifest 可用
+        suppressWarnings: true,
       },
       manifest: {
         // 使用中文标题，确保 PWA 安装后显示正确
@@ -175,15 +186,28 @@ export default defineConfig({
             purpose: 'any'
           },
           {
-            src: '/icons/apple-touch-icon.png', // iOS专属图标（180x180）
-            sizes: '180x180',
+            src: '/icons/apple-touch-icon.png', // iOS专属图标
+            // 注意：不指定 sizes，让浏览器自动检测实际尺寸
+            // 如果实际文件不是 180x180，指定错误的 sizes 会导致验证失败
             type: 'image/png',
-            purpose: 'apple-touch-icon' // 明确用途，Safari优先读取
+            purpose: 'any' // Web App Manifest 规范：purpose 只能是 'any' 或 'maskable'
           }
         ],
       },
       disableDevLogs: true,
     }),
+    // 开发环境 manifest 中间件：确保 manifest 文件正确提供
+    {
+      name: 'manifest-middleware',
+      configureServer(server) {
+        server.middlewares.use('/manifest.webmanifest', (req, res, next) => {
+          // 确保 manifest 请求返回正确的 Content-Type
+          res.setHeader('Content-Type', 'application/manifest+json');
+          // 让 VitePWA 插件处理 manifest 请求
+          next();
+        });
+      },
+    } as Plugin,
   ],
   esbuild: {
     charset: 'utf8',
@@ -206,6 +230,8 @@ export default defineConfig({
         withPackages('shared-components/src'),
       ],
     },
+    // 确保 manifest 文件在开发环境中正确提供
+    middlewareMode: false,
   },
   preview: {
     port: config.prePort,

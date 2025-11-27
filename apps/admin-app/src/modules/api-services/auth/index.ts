@@ -19,7 +19,7 @@ import type {
 /**
  * 认证 API 基础路径
  */
-const baseUrl = '/api/system/auth';
+const baseUrl = '/system/auth';
 
 /**
  * 认证 API 服务对象

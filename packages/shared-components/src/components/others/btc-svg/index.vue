@@ -1,6 +1,7 @@
 <template>
   <svg :class="svgClass" :style="style" aria-hidden="true">
-    <use :xlink:href="iconName" />
+    <!-- 同时支持 href 和 xlink:href，确保兼容性 -->
+    <use :href="iconName" :xlink:href="iconName" />
   </svg>
 </template>
 

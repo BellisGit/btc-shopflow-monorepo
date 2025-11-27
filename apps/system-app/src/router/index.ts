@@ -285,7 +285,7 @@ router.afterEach((to) => {
 
   // 检查是否是系统域路径（包括根路径、/profile 和 /data/* 路径）
   const isSystemPath = to.path === '/' || to.path === '/profile' || to.path.startsWith('/data');
-  
+
   // 如果是系统域路径，确保菜单已注册
   if (isSystemPath) {
     registerManifestTabsForApp('system');

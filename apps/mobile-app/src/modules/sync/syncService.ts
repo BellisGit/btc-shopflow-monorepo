@@ -1,8 +1,18 @@
 import { db } from '@/db';
 import { processQueue } from './backgroundSync';
 
+// 获取 API baseURL（使用 try-catch 避免生产环境 import.meta 问题）
+function getApiBaseURL(): string {
+  try {
+    return (import.meta as any).env?.VITE_API_BASE_URL || 'https://api.bellis.com.cn/api';
+  } catch (e) {
+    // 如果 import.meta 不可用，使用生产环境后端
+    return 'https://api.bellis.com.cn/api';
+  }
+}
+
 export async function pullUpdates(lastSyncTime?: number) {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE_URL = getApiBaseURL();
   
   try {
     const response = await fetch(

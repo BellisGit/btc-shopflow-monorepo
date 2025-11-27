@@ -77,7 +77,26 @@ const getAppEntry = (appName: string): string => {
 
   switch (envType) {
     case 'production':
-      // 生产环境：使用相对路径，由 Nginx 反向代理
+      // 生产环境：根据子域名判断使用子域名还是相对路径
+      // 如果当前访问的是子域名，使用子域名作为入口；否则使用相对路径
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomainMap: Record<string, string> = {
+          'admin.bellis.com.cn': 'admin',
+          'logistics.bellis.com.cn': 'logistics',
+          'quality.bellis.com.cn': 'quality',
+          'production.bellis.com.cn': 'production',
+          'engineering.bellis.com.cn': 'engineering',
+          'finance.bellis.com.cn': 'finance',
+        };
+        
+        // 如果当前访问的是对应子应用的子域名，使用子域名作为入口
+        if (subdomainMap[hostname] === appName) {
+          const protocol = window.location.protocol;
+          return `${protocol}//${hostname}/`;
+        }
+      }
+      // 否则使用相对路径，由 Nginx 反向代理
       return `/${appName}/`;
 
     case 'preview': {
@@ -93,47 +112,104 @@ const getAppEntry = (appName: string): string => {
   }
 };
 
+/**
+ * 子域名到应用路径的映射
+ */
+const subdomainToPathMap: Record<string, string> = {
+  'admin.bellis.com.cn': '/admin',
+  'logistics.bellis.com.cn': '/logistics',
+  'quality.bellis.com.cn': '/quality',
+  'production.bellis.com.cn': '/production',
+  'engineering.bellis.com.cn': '/engineering',
+  'finance.bellis.com.cn': '/finance',
+};
+
+/**
+ * 根据子域名获取应用路径
+ */
+const getPathFromSubdomain = (hostname: string): string | null => {
+  return subdomainToPathMap[hostname] || null;
+};
+
 export const microApps: MicroAppConfig[] = [
   {
     name: 'admin',
     entry: getAppEntry('admin'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/admin'),
+    activeRule: (location) => {
+      // 支持路径匹配：/admin 开头
+      if (location.pathname.startsWith('/admin')) {
+        return true;
+      }
+      // 支持子域名匹配：admin.bellis.com.cn
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/admin';
+    },
     timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
   {
     name: 'logistics',
     entry: getAppEntry('logistics'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/logistics'),
+    activeRule: (location) => {
+      if (location.pathname.startsWith('/logistics')) {
+        return true;
+      }
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/logistics';
+    },
     timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
   {
     name: 'engineering',
     entry: getAppEntry('engineering'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/engineering'),
+    activeRule: (location) => {
+      if (location.pathname.startsWith('/engineering')) {
+        return true;
+      }
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/engineering';
+    },
     timeout: 10000,
   },
   {
     name: 'quality',
     entry: getAppEntry('quality'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/quality'),
+    activeRule: (location) => {
+      if (location.pathname.startsWith('/quality')) {
+        return true;
+      }
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/quality';
+    },
     timeout: 10000,
   },
   {
     name: 'production',
     entry: getAppEntry('production'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/production'),
+    activeRule: (location) => {
+      if (location.pathname.startsWith('/production')) {
+        return true;
+      }
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/production';
+    },
     timeout: 10000,
   },
   {
     name: 'finance',
     entry: getAppEntry('finance'),
     container: '#subapp-viewport',
-    activeRule: (location) => location.pathname.startsWith('/finance'),
+    activeRule: (location) => {
+      if (location.pathname.startsWith('/finance')) {
+        return true;
+      }
+      const subdomainPath = getPathFromSubdomain(location.hostname);
+      return subdomainPath === '/finance';
+    },
     timeout: 10000,
   },
 ];

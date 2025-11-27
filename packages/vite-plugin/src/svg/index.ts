@@ -144,7 +144,17 @@ function compilerSvg(): string {
   }
 
   // 扫描共享组件的 icons 目录，确保跨应用的公共组件也能使用这些图标
-  const sharedAssetsSvgs = findSvg(rootDir('../../packages/shared-components/src/assets/icons/'));
+  const sharedAssetsDir = rootDir('../../packages/shared-components/src/assets/icons/');
+  const sharedAssetsSvgs = findSvg(sharedAssetsDir);
+  
+  // 开发环境：输出调试信息
+  if (process.env.NODE_ENV !== 'production') {
+    const sharedSvgFiles = listSvgFiles(sharedAssetsDir);
+    if (sharedSvgFiles.length > 0) {
+      console.debug(`[btc:svg] 扫描共享组件图标目录: ${sharedAssetsDir}`);
+      console.debug(`[btc:svg] 找到 ${sharedSvgFiles.length} 个共享 SVG 文件`);
+    }
+  }
 
   return [...srcSvgs, ...assetsSvgs, ...sharedAssetsSvgs]
     .map((e) => {
@@ -182,26 +192,25 @@ export async function createSvg(): Promise<{ code: string; svgIcons: string[] }>
   // 使用 JSON.stringify 来安全地转义所有特殊字符
   const escapedHtml = JSON.stringify(html);
 
+  // 参考 cool-admin 的实现，简化代码，避免使用 import.meta.env（在字符串中不会被替换）
+  // 确保在 body 存在时才执行，避免报错
   const code = `
 if (typeof window !== 'undefined') {
 	function loadSvg() {
-		// 确保 body 存在
 		if (!document.body) {
 			setTimeout(loadSvg, 10);
 			return;
 		}
-
-		// 检查是否已经加载过（避免重复加载）
 		if (document.getElementById('btc-svg-sprite')) {
 			return;
 		}
-
 		const svgDom = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svgDom.id = 'btc-svg-sprite';
 		svgDom.style.position = 'absolute';
 		svgDom.style.width = '0';
 		svgDom.style.height = '0';
 		svgDom.style.overflow = 'hidden';
+		svgDom.style.visibility = 'hidden';
 		svgDom.setAttribute('xmlns','http://www.w3.org/2000/svg');
 		svgDom.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
 		svgDom.innerHTML = ${escapedHtml};
@@ -210,8 +219,10 @@ if (typeof window !== 'undefined') {
 
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', loadSvg);
+		if (document.body) {
+			loadSvg();
+		}
 	} else {
-		// 如果 DOM 已经加载完成，立即执行
 		loadSvg();
 	}
 }
@@ -269,11 +280,23 @@ export function svgPlugin(): Plugin {
       if (id === 'virtual:svg-icons') {
         return '\0virtual:svg-icons';
       }
+      if (id === 'virtual:svg-register') {
+        return '\0virtual:svg-register';
+      }
     },
 
-    load(id: string) {
+    async load(id: string) {
+      // 如果还没有初始化，立即初始化（开发环境可能会在 configResolved 之前调用 load）
+      if (!isInitialized) {
+        await initializeSvg();
+      }
+
       if (id === '\0virtual:svg-icons') {
-        return svgCode;
+        return svgCode || '';
+      }
+      if (id === '\0virtual:svg-register') {
+        // 返回执行 loadSvg() 的代码，确保在应用启动时 SVG sprite 就被加载
+        return svgCode || '';
       }
     },
 
@@ -282,19 +305,30 @@ export function svgPlugin(): Plugin {
       // 在构建和开发模式下都确保 SVG sprite 被注入
       if (svgCode) {
         // 检查是否已经注入（避免重复注入）
-        if (html.includes('loadSvg') || html.includes('virtual:svg-icons')) {
+        // 使用更严格的检查，避免误判
+        if (html.includes('btc-svg-sprite') || html.includes('loadSvg')) {
           return html;
         }
 
         // 使用 Vite 的标准方式注入脚本
-        // 在 </body> 之前插入脚本，确保在 DOM 加载前执行
+        // 在 </head> 之前插入脚本，确保尽早执行（在 DOM 加载前）
+        // 这样可以确保 SVG sprite 在主应用的组件渲染前就已经加载
         const scriptTag = `<script>${svgCode}</script>`;
-        if (html.includes('</body>')) {
+
+        // 优先在 </head> 之前插入（更早执行）
+        if (html.includes('</head>')) {
+          return html.replace('</head>', `${scriptTag}\n</head>`);
+        }
+        // 如果没有 </head>，在 </body> 之前插入
+        else if (html.includes('</body>')) {
           return html.replace('</body>', `${scriptTag}\n</body>`);
-        } else if (html.includes('</html>')) {
+        }
+        // 如果都没有，在 </html> 之前插入
+        else if (html.includes('</html>')) {
           return html.replace('</html>', `${scriptTag}\n</html>`);
-        } else {
-          // 如果都没有，直接追加
+        }
+        // 如果都没有，直接追加
+        else {
           return html + scriptTag;
         }
       }

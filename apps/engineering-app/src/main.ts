@@ -4,6 +4,8 @@ import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import 'virtual:svg-register';
 import 'virtual:svg-icons';
 import './styles/theme.scss';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';

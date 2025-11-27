@@ -1,7 +1,9 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
+import { processURL } from '@btc/shared-core';
 import { getCookie, setCookie } from './cookie';
 import { appStorage } from './app-storage';
+import { config } from '../config';
 
 /**
  * HTTP 请求工具 - 简化版本
@@ -17,7 +19,7 @@ export class Http {
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
-      withCredentials: true,
+      withCredentials: true, // 始终设置为 true，发送 cookie
     });
 
     // 强制设置 baseURL
@@ -26,6 +28,19 @@ export class Http {
     // 请求拦截器
     this.axiosInstance.interceptors.request.use(
       (config: any) => {
+        // 动态更新 baseURL（支持运行时切换环境）
+        const dynamicBaseURL = getDynamicBaseURL();
+        
+        // 处理 URL 和 baseURL（避免重复拼接 /api）
+        if (config.url) {
+          const processed = processURL(dynamicBaseURL, config.url);
+          config.url = processed.url;
+          config.baseURL = processed.baseURL;
+        } else {
+          config.baseURL = dynamicBaseURL;
+        }
+        this.axiosInstance.defaults.baseURL = config.baseURL;
+        
         // 优先从 cookie 获取 token（字段名：access_token），如果没有则从统一存储获取
         // 注意：HttpOnly cookie 无法通过 JavaScript 读取，但浏览器会自动在请求中发送
         const cookieToken = getCookie('access_token');
@@ -52,10 +67,18 @@ export class Http {
           }
         }
 
-        // 确保 withCredentials 设置为 true（覆盖任何可能的配置覆盖）
-        // 这确保浏览器会自动发送 cookie，即使 JavaScript 无法读取 HttpOnly cookie
+        // 始终设置 withCredentials 为 true，发送 cookie
         config.withCredentials = true;
+        
+        // 根据请求类型决定是否发送 X-Tenant-Id
+        const isCrossOrigin = config.baseURL && (config.baseURL.startsWith('http://') || config.baseURL.startsWith('https://'));
+        if (isCrossOrigin) {
+          // 跨域请求不发送 X-Tenant-Id（服务器可能不允许此请求头）
+          // 如果需要，应该由服务器在 Access-Control-Allow-Headers 中允许
+        } else {
+          // 同源请求可以发送 X-Tenant-Id
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
+        }
 
         const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');
         if (!isFormData) {
@@ -192,7 +215,76 @@ export class Http {
   recreateResponseInterceptor() {
     // 简化版本，不需要重新创建拦截器
   }
+
+  /**
+   * 动态修改 baseURL（用于开发环境切换 API 服务器）
+   * 注意：在开发环境中，可以直接使用完整 URL 或 /api 路径
+   */
+  setBaseURL(baseURL: string) {
+    this.baseURL = baseURL;
+    this.axiosInstance.defaults.baseURL = baseURL;
+  }
+
+  /**
+   * 获取当前的 baseURL
+   */
+  getBaseURL(): string {
+    return this.baseURL;
+  }
 }
 
 
-export const http = new Http('');
+/**
+ * 判断是否在开发环境中运行
+ */
+function isDevelopment(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || 
+         hostname === '127.0.0.1' || 
+         /^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname);
+}
+
+/**
+ * 获取动态 baseURL（支持开发环境切换）
+ * 开发环境：使用 /api（通过 vite 代理）或完整 URL（直接请求生产后端）
+ */
+function getDynamicBaseURL(): string {
+  let baseURL: string;
+  
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('dev_api_base_url');
+    if (stored) {
+      // 自动清理：将旧的 /api-prod 路径转换为完整 URL（兼容旧数据）
+      if (stored === '/api-prod') {
+        localStorage.setItem('dev_api_base_url', 'https://api.bellis.com.cn/api');
+        return 'https://api.bellis.com.cn/api';
+      }
+      baseURL = stored;
+    } else {
+      baseURL = config.api.baseURL;
+    }
+  } else {
+    baseURL = config.api.baseURL;
+  }
+  
+  // 清理 baseURL 中可能存在的重复 /api
+  // 如果 baseURL 是完整 URL 且以 /api/api 结尾，移除一个 /api
+  if ((baseURL.startsWith('http://') || baseURL.startsWith('https://')) && baseURL.endsWith('/api/api')) {
+    const cleaned = baseURL.replace(/\/api\/api$/, '/api');
+    // 如果是从 localStorage 读取的，更新存储的值
+    if (typeof window !== 'undefined' && localStorage.getItem('dev_api_base_url') === baseURL) {
+      localStorage.setItem('dev_api_base_url', cleaned);
+    }
+    return cleaned;
+  }
+  
+  return baseURL;
+}
+
+// 从 localStorage 读取 API baseURL（如果存在），否则使用配置中的默认值
+function getInitialBaseURL(): string {
+  return getDynamicBaseURL();
+}
+
+export const http = new Http(getInitialBaseURL());

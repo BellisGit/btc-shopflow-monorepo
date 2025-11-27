@@ -63,6 +63,7 @@ import { Check, Right, Loading } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
+import { getAppConfig } from '@configs/app-env.config';
 
 interface MicroApp {
   name: string;
@@ -366,6 +367,51 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 关闭抽屉
   handleClose();
 
+  // 判断是否为生产环境（通过 hostname 判断）
+  const isProduction = window.location.hostname.includes('bellis.com.cn');
+  
+  // 生产环境：使用子域名跳转
+  if (isProduction) {
+    // 文档应用特殊处理（文档应用可能没有独立的子域名）
+    if (app.name === 'docs') {
+      // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
+      // 这里先使用路径方式，如果需要可以后续配置
+      const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+      await router.push(targetPath);
+      await nextTick();
+      detectCurrentApp();
+      return;
+    }
+
+    // 根据应用名称获取生产环境域名配置
+    // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
+    const appNameMapping: Record<string, string> = {
+      'system': 'system-app',
+      'admin': 'admin-app',
+      'logistics': 'logistics-app',
+      'engineering': 'engineering-app',
+      'quality': 'quality-app',
+      'production': 'production-app',
+      'finance': 'finance-app',
+      'mobile': 'mobile-app',
+      'docs': 'docs-app', // 文档应用可能没有配置，但先加上
+    };
+    const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
+    const appConfig = getAppConfig(mappedAppName);
+    if (appConfig && appConfig.prodHost) {
+      // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
+      const protocol = window.location.protocol;
+      const targetUrl = `${protocol}//${appConfig.prodHost}/`;
+      
+      // 使用 window.location.href 跳转到子域名
+      window.location.href = targetUrl;
+      return;
+    } else {
+      console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+    }
+  }
+
+  // 开发/预览环境：使用路径方式切换（原有逻辑）
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 

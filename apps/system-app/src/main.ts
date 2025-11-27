@@ -2,6 +2,9 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { service } from './services/eps';
+import { isDev } from './config';
+// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import 'virtual:svg-register';
 import 'virtual:svg-icons';
 // 关键：确保 Element Plus 样式在最前面加载，避免被其他样式覆盖
 // 开启样式隔离后，需要确保 Element Plus 样式在主应用中被正确加载
@@ -10,6 +13,8 @@ import 'element-plus/theme-chalk/dark/css-vars.css';
 // 关键：在关闭样式隔离的情况下，需要在主应用入口直接引入样式，确保样式被正确加载
 // 虽然 bootstrap/core/ui.ts 中也引入了，但在入口文件引入可以确保样式在应用启动时就被处理
 import '@btc/shared-components/styles/index.scss';
+// 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
+// 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
 
 const app = createApp(App);
 
@@ -38,6 +43,18 @@ bootstrap(app)
           loadingEl.parentNode.removeChild(loadingEl);
       }
       }, 100);
+    }
+
+    // 仅在开发环境注册开发工具组件
+    if (isDev) {
+      import('./components/DevTools/index.vue').then(({ default: DevTools }) => {
+        const devToolsApp = createApp(DevTools);
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        devToolsApp.mount(container);
+      }).catch(err => {
+        console.warn('开发工具加载失败:', err);
+      });
     }
   })
   .catch(err => {

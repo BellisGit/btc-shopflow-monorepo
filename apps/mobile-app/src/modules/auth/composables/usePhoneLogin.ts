@@ -40,14 +40,19 @@ export function usePhoneLogin() {
       if (token) {
         authStore.setToken(token);
       } else {
-        // 调试：检查登录响应和 cookie
-        if (import.meta.env.DEV) {
-          console.warn('[PhoneLogin] No token found:', {
-            responseKeys: response ? Object.keys(response) : [],
-            response: response,
-            cookies: document.cookie.split(';').map(c => c.trim()),
-            hasAccessTokenInCookie: document.cookie.includes('access_token')
-          });
+        // 调试：检查登录响应和 cookie（仅在开发环境）
+        // 使用 try-catch 避免生产环境 import.meta 问题
+        try {
+          if ((import.meta as any).env?.DEV) {
+            console.warn('[PhoneLogin] No token found:', {
+              responseKeys: response ? Object.keys(response) : [],
+              response: response,
+              cookies: document.cookie.split(';').map(c => c.trim()),
+              hasAccessTokenInCookie: document.cookie.includes('access_token')
+            });
+          }
+        } catch (e) {
+          // 生产环境忽略调试日志
         }
       }
 

@@ -123,16 +123,30 @@ jobs:
           restore-keys: |
             packages-build-
       
-      - name: Build dependencies if needed
+      - name: Build shared dependencies
         run: |
-          if [ ! -d "packages/vite-plugin/dist" ] || [ ! -f "packages/vite-plugin/dist/index.js" ]; then
-            echo "Building shared dependencies..."
-            pnpm --filter @btc/vite-plugin run build
-            pnpm --filter @btc/shared-utils run build
-            pnpm --filter @btc/shared-core run build
-            pnpm --filter @btc/shared-components run build
-            pnpm --filter @btc/subapp-manifests run build
-          fi
+          echo "🔨 构建共享依赖包..."
+          echo "  这确保共享组件包（如 @btc/shared-components）的修改能够生效"
+          echo ""
+          
+          # 始终重新构建共享依赖，确保修改生效
+          # 使用 --force 确保即使缓存存在也重新构建
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build
+          
+          echo "✅ 共享依赖包构建完成"
       
       - name: Build ${{ matrix.app }}
         run: cd apps/${{ matrix.app }} && pnpm run build

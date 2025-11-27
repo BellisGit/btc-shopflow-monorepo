@@ -36,7 +36,7 @@ jobs:
   deploy-app:
     name: Deploy ${{ inputs.app_name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     
     steps:
       - name: Checkout code
@@ -86,8 +86,8 @@ jobs:
           username: ${{ secrets.SERVER_USER || 'root' }}
           key: ${{ secrets.SERVER_KEY }}
           port: ${{ secrets.SERVER_PORT || '22' }}
-          timeout: 900s
-          command_timeout: 10m
+          timeout: 1800s
+          command_timeout: 20m
           script: |
             set -e
             
@@ -171,11 +171,60 @@ jobs:
             # 从 GHCR 拉取镜像（带超时和重试机制）
             echo "📥 Pulling Docker image from $REGISTRY..."
             
-            # 拉取镜像的函数（带超时和重试）
+            # 配置 Docker 客户端超时和重试设置
+            echo "⚙️  配置 Docker 客户端..."
+            mkdir -p /etc/docker
+            # 配置 Docker daemon 的超时设置（如果可能）
+            if [ -f /etc/docker/daemon.json ]; then
+              echo "⚠️  Docker daemon.json 已存在，跳过配置"
+            else
+              echo "📝 创建 Docker daemon 配置文件（可选）..."
+              cat > /tmp/docker-daemon.json <<EOF
+{
+  "max-concurrent-downloads": 3,
+  "max-concurrent-uploads": 5,
+  "registry-mirrors": []
+}
+EOF
+              # 只有在是 root 用户且可以修改时才应用
+              if [ "$(id -u)" -eq 0 ] && command -v systemctl >/dev/null 2>&1; then
+                cp /tmp/docker-daemon.json /etc/docker/daemon.json 2>/dev/null || true
+              fi
+            fi
+            
+            # 配置 Docker 客户端
+            mkdir -p ~/.docker
+            cat > ~/.docker/config.json <<EOF
+{
+  "max-concurrent-downloads": 3,
+  "max-concurrent-uploads": 5
+}
+EOF
+            
+            # 配置环境变量以优化 Docker 拉取
+            export DOCKER_CLI_EXPERIMENTAL=enabled
+            
+            # 清理 Docker 网络缓存（可能有助于解决网络问题）
+            echo "🧹 清理 Docker 网络缓存..."
+            docker network prune -f 2>/dev/null || true
+            
+            # 检查网络连接
+            echo "🌐 检查网络连接..."
+            if timeout 15 curl -sSf -m 10 https://ghcr.io >/dev/null 2>&1; then
+              echo "✅ 网络连接正常"
+            else
+              echo "⚠️  网络连接测试失败，但继续尝试拉取镜像..."
+              echo "📊 DNS 解析测试..."
+              nslookup ghcr.io 2>/dev/null || echo "  DNS 解析失败"
+              echo "📊 路由测试..."
+              ping -c 2 ghcr.io 2>/dev/null || echo "  路由测试失败"
+            fi
+            
+            # 拉取镜像的函数（带超时和重试，支持进度显示）
             pull_image_with_timeout() {
               local image=$1
-              local timeout_seconds=${2:-600}  # 默认10分钟超时
-              local max_retries=${3:-2}  # 默认重试2次
+              local timeout_seconds=${2:-300}  # 默认5分钟超时（缩短超时时间）
+              local max_retries=${3:-3}  # 默认重试3次
               local retry_count=0
               
               while [ $retry_count -lt $max_retries ]; do
@@ -185,12 +234,26 @@ jobs:
                 
                 START_TIME=$(date +%s)
                 
+                # 在后台运行进度监控
+                (
+                  while true; do
+                    sleep 30
+                    ELAPSED=$(($(date +%s) - START_TIME))
+                    echo "💓 下载进行中... (已耗时: ${ELAPSED}秒)"
+                  done
+                ) &
+                PROGRESS_PID=$!
+                
                 # 使用 timeout 命令限制拉取时间
                 if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  kill $PROGRESS_PID 2>/dev/null || true
+                  wait $PROGRESS_PID 2>/dev/null || true
                   ELAPSED=$(($(date +%s) - START_TIME))
                   echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
                   return 0
                 else
+                  kill $PROGRESS_PID 2>/dev/null || true
+                  wait $PROGRESS_PID 2>/dev/null || true
                   EXIT_CODE=$?
                   ELAPSED=$(($(date +%s) - START_TIME))
                   
@@ -201,8 +264,8 @@ jobs:
                   fi
                   
                   if [ $retry_count -lt $max_retries ]; then
-                    echo "⏳ 等待 5 秒后重试..."
-                    sleep 5
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
                   fi
                 fi
               done
@@ -210,15 +273,58 @@ jobs:
               return 1
             }
             
-            # 尝试拉取指定标签的镜像
-            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 600 2; then
-              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
-              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 600 2; then
-                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
-                echo "[ERROR] 已尝试的标签: $IMAGE_TAG, latest"
-                exit 1
+            # 检查镜像是否已存在（避免不必要的拉取）
+            echo "🔍 检查镜像是否已存在..."
+            if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${IMAGE_NAME}:${IMAGE_TAG}$"; then
+              echo "✅ 镜像已存在本地: $IMAGE_NAME:$IMAGE_TAG"
+              echo "🔄 验证镜像完整性..."
+              if docker inspect "$IMAGE_NAME:$IMAGE_TAG" >/dev/null 2>&1; then
+                echo "✅ 镜像验证通过，跳过拉取"
+              else
+                echo "⚠️  镜像损坏，重新拉取..."
+                docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+                if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+                  echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+                  IMAGE_TAG="latest"
+                  if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+                    echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                    echo "[ERROR] 已尝试的标签: $IMAGE_TAG, latest"
+                    echo ""
+                    echo "[ERROR] 网络诊断信息:"
+                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    timeout 15 curl -v https://ghcr.io 2>&1 | head -30 || echo "  ❌ 无法连接到 ghcr.io"
+                    echo ""
+                    echo "📊 Docker 系统信息:"
+                    docker system df 2>&1 || true
+                    exit 1
+                  fi
+                fi
               fi
-              IMAGE_TAG="latest"
+            else
+              # 尝试拉取指定标签的镜像
+              if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+                echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+                  if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                    echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                    echo "[ERROR] 已尝试的标签: $IMAGE_TAG, latest"
+                    echo ""
+                    echo "[ERROR] 网络诊断信息:"
+                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    timeout 15 curl -v https://ghcr.io 2>&1 | head -30 || echo "  ❌ 无法连接到 ghcr.io"
+                    echo ""
+                    echo "📊 Docker 系统信息:"
+                    docker system df 2>&1 || true
+                    echo ""
+                    echo "📊 Docker 网络信息:"
+                    docker network ls 2>&1 || true
+                    echo ""
+                    echo "📊 本地镜像列表:"
+                    docker images | head -10 || true
+                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    exit 1
+                  fi
+                IMAGE_TAG="latest"
+              fi
             fi
             
             # 标记为本地镜像
@@ -231,11 +337,35 @@ jobs:
             echo "📋 检查并清理现有容器..."
             echo "   目标容器名: $CONTAINER_NAME"
             
-            # 方法1: 使用容器名称精确匹配（包括已停止的容器）
-            # 使用 ^${CONTAINER_NAME}$ 确保完全匹配，避免误删其他容器
+            # 方法1: 通过容器名列表精确查找（最可靠的方法）
+            # 获取所有容器，然后精确匹配容器名
+            echo "🔍 方法1: 通过容器名列表精确查找..."
+            ALL_CONTAINERS=$(docker ps -a --format "{{.Names}}\t{{.ID}}" 2>/dev/null || true)
+            FOUND_CONTAINERS=""
+            if [ -n "$ALL_CONTAINERS" ]; then
+              while IFS=$'\t' read -r name id; do
+                if [ "$name" = "$CONTAINER_NAME" ] && [ -n "$id" ]; then
+                  echo "  🛑 发现容器: $name (ID: $id)"
+                  FOUND_CONTAINERS="$FOUND_CONTAINERS $id"
+                fi
+              done <<< "$ALL_CONTAINERS"
+            fi
+            
+            # 删除找到的容器
+            if [ -n "$FOUND_CONTAINERS" ]; then
+              echo "🛑 正在停止并删除找到的容器..."
+              for container_id in $FOUND_CONTAINERS; do
+                echo "  停止并删除容器 ID: $container_id"
+                docker stop "$container_id" 2>/dev/null || true
+                docker rm -f "$container_id" 2>/dev/null || true
+              done
+            fi
+            
+            # 方法2: 使用 Docker filter（作为备用方法）
+            echo "🔍 方法2: 使用 Docker filter 查找..."
             EXISTING_CONTAINERS=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null || true)
             if [ -n "$EXISTING_CONTAINERS" ]; then
-              echo "🛑 发现同名容器，正在强制删除..."
+              echo "🛑 通过 filter 发现容器，正在删除..."
               echo "$EXISTING_CONTAINERS" | while read -r container_id; do
                 if [ -n "$container_id" ]; then
                   # 验证容器名确实匹配（防止误删）
@@ -251,23 +381,10 @@ jobs:
               done
             fi
             
-            # 方法2: 直接尝试删除（防止方法1遗漏）
-            echo "🛑 强制删除容器: $CONTAINER_NAME"
+            # 方法3: 直接尝试删除（防止方法1和方法2遗漏）
+            echo "🛑 方法3: 直接尝试删除容器: $CONTAINER_NAME"
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-            
-            # 方法3: 通过容器名列表查找（额外保险）
-            echo "🔍 通过容器名列表再次检查..."
-            ALL_CONTAINERS=$(docker ps -a --format "{{.Names}}\t{{.ID}}" 2>/dev/null || true)
-            if [ -n "$ALL_CONTAINERS" ]; then
-              echo "$ALL_CONTAINERS" | while IFS=$'\t' read -r name id; do
-                if [ "$name" = "$CONTAINER_NAME" ] && [ -n "$id" ]; then
-                  echo "  🛑 发现残留容器: $name (ID: $id)，正在删除..."
-                  docker stop "$id" 2>/dev/null || true
-                  docker rm -f "$id" 2>/dev/null || true
-                fi
-              done
-            fi
             
             # 检查并停止占用端口的容器
             echo "🔍 检查端口 $PORT 占用情况..."
@@ -298,12 +415,44 @@ jobs:
               fi
             fi
             
-            # 再次确认容器已被删除
+            # 再次确认容器已被删除（使用多种方法验证）
             echo "🔍 验证容器是否已完全删除..."
-            REMAINING=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" | wc -l || echo "0")
-            if [ "$REMAINING" -gt 0 ]; then
+            
+            # 方法1: 使用 filter 检查
+            REMAINING_FILTER=$(docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | wc -l || echo "0")
+            
+            # 方法2: 通过容器名列表检查（更可靠）
+            REMAINING_LIST=$(docker ps -a --format "{{.Names}}" 2>/dev/null | grep -c "^${CONTAINER_NAME}$" || echo "0")
+            
+            # 方法3: 直接尝试查找容器
+            REMAINING_DIRECT=$(docker ps -a --format "{{.Names}}\t{{.ID}}" 2>/dev/null | grep -P "^${CONTAINER_NAME}\t" | wc -l || echo "0")
+            
+            echo "   通过 filter 检查: $REMAINING_FILTER 个容器"
+            echo "   通过列表检查: $REMAINING_LIST 个容器"
+            echo "   通过直接查找: $REMAINING_DIRECT 个容器"
+            
+            # 如果任一方法发现容器，尝试删除
+            if [ "$REMAINING_FILTER" -gt 0 ] || [ "$REMAINING_LIST" -gt 0 ] || [ "$REMAINING_DIRECT" -gt 0 ]; then
               echo "⚠️  仍有容器残留，尝试强制清理..."
-              docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" | xargs -r docker rm -f 2>/dev/null || true
+              
+              # 再次通过列表精确查找并删除
+              ALL_REMAINING=$(docker ps -a --format "{{.Names}}\t{{.ID}}" 2>/dev/null || true)
+              if [ -n "$ALL_REMAINING" ]; then
+                while IFS=$'\t' read -r name id; do
+                  if [ "$name" = "$CONTAINER_NAME" ] && [ -n "$id" ]; then
+                    echo "  🛑 强制删除残留容器: $name (ID: $id)"
+                    docker stop "$id" 2>/dev/null || true
+                    docker rm -f "$id" 2>/dev/null || true
+                  fi
+                done <<< "$ALL_REMAINING"
+              fi
+              
+              # 使用 filter 和 xargs 作为最后手段
+              docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+              
+              # 直接尝试删除
+              docker stop "$CONTAINER_NAME" 2>/dev/null || true
+              docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
             else
               echo "✅ 容器已完全清理"
             fi
@@ -393,18 +542,108 @@ jobs:
             echo "📋 Container status:"
             docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             
-            # 验证容器是否正在运行
-            echo "🔍 验证容器状态..."
-            CONTAINER_STATUS=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.Status}}" || echo "")
-            if [ -z "$CONTAINER_STATUS" ]; then
-              echo "[ERROR] 容器未运行！"
-              echo "[ERROR] 检查容器日志..."
-              docker logs "$CONTAINER_NAME" 2>&1 || true
-              echo "[ERROR] 检查所有容器状态..."
-              docker ps -a | grep "$CONTAINER_NAME" || true
+            # 验证容器是否正在运行（带超时机制和多种查找方法）
+            echo "🔍 验证容器状态（最多等待30秒）..."
+            CONTAINER_STATUS=""
+            CONTAINER_ID=""
+            MAX_WAIT=30  # 增加到30秒
+            WAIT_INTERVAL=2  # 每次检查间隔2秒
+            ELAPSED=0
+            
+            # 容器查找函数（使用多种方法）
+            find_container() {
+              local found_id=""
+              local found_status=""
+              
+              # 方法1: 使用 filter 查找
+              found_id=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$found_id" ]; then
+                found_status=$(docker ps --filter "id=$found_id" --format "{{.Status}}" 2>/dev/null || echo "")
+                if [ -n "$found_status" ]; then
+                  echo "$found_id|$found_status"
+                  return 0
+                fi
+              fi
+              
+              # 方法2: 通过容器名列表查找（更可靠）
+              local all_containers=$(docker ps --format "{{.Names}}\t{{.ID}}\t{{.Status}}" 2>/dev/null || true)
+              if [ -n "$all_containers" ]; then
+                while IFS=$'\t' read -r name id status; do
+                  if [ "$name" = "$CONTAINER_NAME" ] && [ -n "$id" ]; then
+                    echo "$id|$status"
+                    return 0
+                  fi
+                done <<< "$all_containers"
+              fi
+              
+              # 方法3: 通过 docker-compose 查找
+              local compose_containers=$($DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps -q 2>/dev/null || true)
+              if [ -n "$compose_containers" ]; then
+                for compose_id in $compose_containers; do
+                  local compose_name=$(docker ps --filter "id=$compose_id" --format "{{.Names}}" 2>/dev/null || echo "")
+                  if [ "$compose_name" = "$CONTAINER_NAME" ]; then
+                    found_status=$(docker ps --filter "id=$compose_id" --format "{{.Status}}" 2>/dev/null || echo "")
+                    if [ -n "$found_status" ]; then
+                      echo "$compose_id|$found_status"
+                      return 0
+                    fi
+                  fi
+                done
+              fi
+              
+              return 1
+            }
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              # 使用多种方法查找容器
+              CONTAINER_INFO=$(find_container 2>/dev/null || echo "")
+              
+              if [ -n "$CONTAINER_INFO" ]; then
+                CONTAINER_ID=$(echo "$CONTAINER_INFO" | cut -d'|' -f1)
+                CONTAINER_STATUS=$(echo "$CONTAINER_INFO" | cut -d'|' -f2)
+                
+                if [ -n "$CONTAINER_STATUS" ] && [ -n "$CONTAINER_ID" ]; then
+                  echo "✅ 容器正在运行: $CONTAINER_STATUS (ID: ${CONTAINER_ID:0:12})"
+                  break
+                fi
+              fi
+              
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              if [ $ELAPSED -lt $MAX_WAIT ]; then
+                echo "   等待容器启动... (${ELAPSED}/${MAX_WAIT}秒)"
+                # 显示当前所有容器状态（用于调试）
+                if [ $((ELAPSED % 6)) -eq 0 ]; then
+                  echo "   📊 当前所有容器:"
+                  docker ps --format "  {{.Names}}\t{{.Status}}" | grep -E "(NAME|$CONTAINER_NAME)" || echo "  (无相关容器)"
+                fi
+                sleep $WAIT_INTERVAL
+              fi
+            done
+            
+            # 如果超时仍未找到容器，报告错误并退出
+            if [ -z "$CONTAINER_STATUS" ] || [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时（${MAX_WAIT}秒）！容器未运行！"
+              echo "[ERROR] 详细诊断信息:"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "[ERROR] 1. 检查所有容器状态..."
+              docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.ID}}" | grep -E "(NAME|$CONTAINER_NAME)" || echo "  (无相关容器)"
+              echo ""
+              echo "[ERROR] 2. 检查 docker-compose 状态..."
+              $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps 2>&1 || true
+              echo ""
+              echo "[ERROR] 3. 检查 docker-compose 日志..."
+              $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs --tail=50 2>&1 || true
+              echo ""
+              echo "[ERROR] 4. 尝试直接查找容器..."
+              docker ps -a | grep "$CONTAINER_NAME" || echo "  (未找到)"
+              echo ""
+              echo "[ERROR] 5. 检查容器是否存在（包括已停止的）..."
+              docker ps -a --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.ID}}" || echo "  (未找到)"
+              echo ""
+              echo "[ERROR] 6. 检查 Docker 事件（最近5条）..."
+              docker events --since 30s --until 0s --filter "container=$CONTAINER_NAME" 2>&1 | tail -5 || echo "  (无法获取事件)"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               exit 1
-            else
-              echo "✅ 容器正在运行: $CONTAINER_STATUS"
             fi
             
             echo ""

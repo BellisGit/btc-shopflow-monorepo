@@ -142,10 +142,6 @@ export default defineConfig(({ command, mode }) => {
     qiankun('engineering', {
       useDevMode: true,
     }),
-    btc({
-      svgSprite: true,
-      sharedTooling: true,
-    }),
   ],
   server: {
     port: config.devPort,

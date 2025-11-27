@@ -4,6 +4,8 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
+import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
 // Vite 会优化处理：开发环境按需加载，生产环境打包到单独 CSS 文件
 // 这些导入不会阻塞 JavaScript 执行

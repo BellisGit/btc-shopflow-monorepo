@@ -9,9 +9,10 @@
     border-radius: 6px;
     overflow: visible; // 确保头像边框完整显示，不被裁剪
 
-    &:hover {
-      background-color: var(--el-fill-color-light);
-    }
+    // 移除整个 trigger 的 hover 背景，避免与名字的悬浮效果冲突
+    // &:hover {
+    //   background-color: var(--el-fill-color-light);
+    // }
   }
 
   &__name {
