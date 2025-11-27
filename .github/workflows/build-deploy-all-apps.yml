@@ -370,32 +370,6 @@ jobs:
             done
           fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            
-            // 输出结果
-            core.setOutput('successful_apps', SUCCESSFUL_APPS.join(','));
-            core.setOutput('failed_apps', FAILED_APPS.join(','));
-            core.setOutput('total_apps', APPS.length.toString());
-            core.setOutput('success_count', SUCCESSFUL_APPS.length.toString());
-            core.setOutput('fail_count', FAILED_APPS.length.toString());
-            
-            console.log('');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📊 构建和部署结果汇总');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log(`总应用数: ${APPS.length}`);
-            console.log(`成功: ${SUCCESSFUL_APPS.length}`);
-            console.log(`失败: ${FAILED_APPS.length}`);
-            console.log('');
-            if (SUCCESSFUL_APPS.length > 0) {
-              console.log('✅ 成功应用:');
-              SUCCESSFUL_APPS.forEach(app => console.log(`  - ${app}`));
-            }
-            console.log('');
-            if (FAILED_APPS.length > 0) {
-              console.log('❌ 失败应用:');
-              FAILED_APPS.forEach(app => console.log(`  - ${app}`));
-            }
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
       - name: Generate summary report
         run: |
