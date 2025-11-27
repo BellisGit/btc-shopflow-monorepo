@@ -46,52 +46,62 @@ function isDevelopment(): boolean {
 }
 
 /**
- * 获取动态 baseURL（支持开发环境切换）
- * 开发环境：使用 /api（通过 vite 代理转发到开发后端）或完整 URL（直接请求生产后端）
- * 生产环境：使用 /api 或完整 URL
+ * 获取动态 baseURL：统一使用 /api，通过代理转发到后端
+ * 开发环境：Vite 代理 /api 到 http://10.80.9.76:8115
+ * 生产环境：Nginx 代理 /api 到 http://10.0.0.168:8115
+ *
+ * 注意：所有环境统一使用 /api，不再支持从 localStorage 读取 HTTP URL
  */
 function getDynamicBaseURL(): string {
-  let baseURL: string;
+  // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    // HTTPS 页面：强制清理 localStorage 并返回 /api
+    const stored = localStorage.getItem('dev_api_base_url');
+    if (stored && stored !== '/api') {
+      console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
+      localStorage.removeItem('dev_api_base_url');
+    }
+    return '/api';
+  }
 
-  // 在浏览器环境中，从 localStorage 读取保存的 baseURL
+  // 开发环境（HTTP）：清理所有旧的 localStorage 数据（统一使用 /api，不再支持 HTTP URL）
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('dev_api_base_url');
-    if (stored) {
-      // 自动清理：将旧的 /api-prod 路径转换为完整 URL（兼容旧数据）
-      if (stored === '/api-prod') {
-        localStorage.setItem('dev_api_base_url', 'https://api.bellis.com.cn/api');
-        return 'https://api.bellis.com.cn/api';
-      }
-      baseURL = stored;
-    } else {
-  // 默认使用 /api（开发环境通过代理转发到后端）
-      baseURL = '/api';
-}
-  } else {
-    // 默认使用 /api（开发环境通过代理转发到后端）
-    baseURL = '/api';
-  }
-
-  // 清理 baseURL 中可能存在的重复 /api
-  // 如果 baseURL 是完整 URL 且以 /api/api 结尾，移除一个 /api
-  if ((baseURL.startsWith('http://') || baseURL.startsWith('https://')) && baseURL.endsWith('/api/api')) {
-    const cleaned = baseURL.replace(/\/api\/api$/, '/api');
-    // 如果是从 localStorage 读取的，更新存储的值
-    if (typeof window !== 'undefined' && localStorage.getItem('dev_api_base_url') === baseURL) {
-      localStorage.setItem('dev_api_base_url', cleaned);
+    // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
+    if (stored && stored !== '/api') {
+      console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
+      localStorage.removeItem('dev_api_base_url');
     }
-    return cleaned;
   }
 
-  return baseURL;
+  // 统一返回 /api，由代理处理
+  return '/api';
 }
 
 export function processURL(baseURL: string, url: string): { url: string; baseURL: string } {
+  // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (baseURL.startsWith('http://')) {
+      console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
+      baseURL = '/api';
+      // 清理 localStorage 中的 HTTP URL
+      localStorage.removeItem('dev_api_base_url');
+    }
+  }
+
   // 首先清理 baseURL 中可能存在的重复 /api
   // 如果 baseURL 是完整 URL 且以 /api/api 结尾，移除一个 /api
   let cleanedBaseURL = baseURL;
   if ((cleanedBaseURL.startsWith('http://') || cleanedBaseURL.startsWith('https://')) && cleanedBaseURL.endsWith('/api/api')) {
     cleanedBaseURL = cleanedBaseURL.replace(/\/api\/api$/, '/api');
+  }
+
+  // 再次验证：确保清理后的 baseURL 不是 HTTP（在 HTTPS 页面下）
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (cleanedBaseURL.startsWith('http://')) {
+      console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', cleanedBaseURL);
+      cleanedBaseURL = '/api';
+    }
   }
 
   // 处理 URL：统一移除 /api 前缀（如果存在），避免重复拼接
@@ -125,7 +135,21 @@ export function processURL(baseURL: string, url: string): { url: string; baseURL
 export function createRequest(baseURL: string = ''): Request {
   // 如果 baseURL 为空字符串或未提供，使用动态 baseURL
   // 这样 virtual:eps 生成的代码（传入 ''）也能使用动态 baseURL
-  const finalBaseURL = baseURL || getDynamicBaseURL();
+  let finalBaseURL = baseURL || getDynamicBaseURL();
+
+  // 强制验证：在 HTTPS 页面下，baseURL 不能是 HTTP URL
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (finalBaseURL.startsWith('http://')) {
+      console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', finalBaseURL);
+      finalBaseURL = '/api';
+      // 清理 localStorage 中的 HTTP URL
+      localStorage.removeItem('dev_api_base_url');
+    } else if (finalBaseURL && finalBaseURL !== '/api') {
+      // HTTPS 页面下，如果不是 /api，也强制使用 /api
+      console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', finalBaseURL);
+      finalBaseURL = '/api';
+    }
+  }
 
   // 创建 axios 实例
   const axiosInstance = axios.create({
@@ -137,6 +161,37 @@ export function createRequest(baseURL: string = ''): Request {
   // 请求拦截器
   axiosInstance.interceptors.request.use(
     (config) => {
+      // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
+      if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+        // HTTPS 页面：强制清理 localStorage 并返回 /api
+        const stored = localStorage.getItem('dev_api_base_url');
+        if (stored && stored !== '/api') {
+          console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
+          localStorage.removeItem('dev_api_base_url');
+        }
+        // 强制使用 /api，忽略任何其他值
+        config.baseURL = '/api';
+        axiosInstance.defaults.baseURL = '/api';
+
+        // 处理 URL（移除 /api 前缀，避免重复拼接）
+        if (config.url) {
+          const processed = processURL('/api', config.url);
+          config.url = processed.url;
+          // 确保 baseURL 是 /api
+          config.baseURL = '/api';
+        }
+
+        // 最终验证：确保 baseURL 不是 HTTP
+        if (config.baseURL && config.baseURL.startsWith('http://')) {
+          console.error('[HTTP] 严重错误：HTTPS 页面下 baseURL 仍然是 HTTP URL，强制修复为 /api');
+          config.baseURL = '/api';
+          axiosInstance.defaults.baseURL = '/api';
+        }
+
+        return config;
+      }
+
+      // 开发环境（HTTP）：正常处理
       // 动态更新 baseURL（支持运行时切换环境）
       const dynamicBaseURL = getDynamicBaseURL();
 

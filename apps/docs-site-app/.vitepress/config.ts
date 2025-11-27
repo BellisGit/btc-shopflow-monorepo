@@ -3,6 +3,7 @@ import { exportSearchIndexPlugin } from './plugins/exportSearchIndex';
 import { fileURLToPath, URL } from 'node:url';
 import { generateNav } from './utils/auto-nav';
 import { generateSidebar } from './utils/auto-sidebar';
+import { getViteAppConfig } from '../../../configs/vite-app-config';
 
 export default defineConfig({
   title: '拜里斯文档库',
@@ -177,14 +178,22 @@ export default defineConfig({
 
     // 服务器配置
     server: {
-      port: 8087,
+      port: getViteAppConfig('docs-site-app').devPort,
       host: '0.0.0.0',
       strictPort: true, // 端口被占用时报错而不是自动换端口
       cors: true, // 允许跨域（iframe 嵌入需要）
       hmr: {
-        port: 8088, // 使用不同的端口避免冲突
+        port: getViteAppConfig('docs-site-app').devPort + 1, // 使用不同的端口避免冲突
         host: 'localhost', // 改为 localhost，避免 0.0.0.0 的问题
       },
-    }
+    },
+    
+    // 预览服务器配置（注意：VitePress 的预览端口需要通过命令行参数设置）
+    // preview: {
+    //   port: getViteAppConfig('docs-site-app').prePort,
+    //   host: '0.0.0.0',
+    //   strictPort: true,
+    //   cors: true,
+    // }
   }
 });

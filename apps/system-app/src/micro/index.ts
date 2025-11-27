@@ -531,6 +531,21 @@ function setupGlobalResourceInterceptor() {
   const originalXHROpen = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null) {
     let urlStr = typeof url === 'string' ? url : url.href;
+    
+    // 强制验证：在 HTTPS 页面下，绝对不允许 HTTP URL
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      if (urlStr.startsWith('http://')) {
+        console.error('[HTTP] Micro 拦截：检测到 HTTPS 页面，阻止 HTTP 请求:', urlStr);
+        // 尝试提取路径部分
+        try {
+          const urlObj = new URL(urlStr);
+          urlStr = urlObj.pathname + urlObj.search;
+        } catch (e) {
+          // 如果 URL 解析失败，直接移除协议和域名
+          urlStr = urlStr.replace(/^https?:\/\/[^/]+/, '');
+        }
+      }
+    }
 
     // 检查是否是资源请求且从错误的端口加载
     if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === MAIN_APP_PREVIEW_PORT) {

@@ -8,25 +8,10 @@ interface ProxyOptions {
   configure?: (proxy: any, options: any) => void;
 }
 
-// 根据环境变量确定后端地址
-// 开发环境（包括 vite dev 和 vite preview）：10.80.9.76:8115
-// Docker 容器内生产环境：10.0.0.168:8115
-const getBackendTarget = (): string => {
-  // 只有在 Docker 容器内且明确标识为生产环境时才使用生产地址
-  // 可以通过环境变量 DOCKER_ENV=production 或 VITE_API_TARGET=production 来标识
-  const isDockerProduction = 
-    process.env.DOCKER_ENV === 'production' || 
-    process.env.VITE_API_TARGET === 'production' ||
-    (process.env.NODE_ENV === 'production' && process.env.DOCKER === 'true');
-  
-  const target = isDockerProduction ? 'http://10.0.0.168:8115' : 'http://10.80.9.76:8115';
-  return target;
-};
-
-// 获取动态代理目标（支持运行时切换）
-// 在开发环境中，可以通过读取配置文件来决定代理目标
-// 但 vite 代理配置是静态的，所以这里返回默认的开发环境目标
-const backendTarget = getBackendTarget();
+// 开发环境代理目标：统一代理到开发后端
+// 开发环境：Vite 代理 /api 到 http://10.80.9.76:8115
+// 生产环境：由 Nginx 代理，不需要 Vite 代理
+const backendTarget = 'http://10.80.9.76:8115';
 
 const proxy: Record<string, string | ProxyOptions> = {
   '/api': {

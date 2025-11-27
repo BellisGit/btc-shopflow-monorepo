@@ -3,6 +3,9 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { service } from './services/eps';
 import { isDev } from './config';
+
+// 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
+// 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 import 'virtual:svg-icons';

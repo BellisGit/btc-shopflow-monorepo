@@ -86,7 +86,7 @@ export async function bootstrap(app: App) {
   // 2. 集成模块初始化
   // 初始化设置配置（现在都在 app-src chunk 中，使用静态导入）
   await initSettingsConfig();
-  
+
   await autoDiscoverPlugins(app);  // 自动发现插件
   await setupMicroApps(app);       // 微前端设置
   setupInterceptors();             // 拦截器配置
@@ -134,17 +134,20 @@ export async function bootstrap(app: App) {
   // 这样所有错误日志都能正常显示，包括调试日志
 
   // 重写XMLHttpRequest来拦截网络请求日志
-  const originalXHROpen = XMLHttpRequest.prototype.open;
-  const originalXHRSend = XMLHttpRequest.prototype.send;
+  // 注意：index.html 中已经设置了 HTTP URL 拦截，这里只需要添加日志记录功能
+  const currentXHROpen = XMLHttpRequest.prototype.open;
+  const currentXHRSend = XMLHttpRequest.prototype.send;
 
   XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) {
+    // 记录请求信息（用于日志拦截）
     (this as any)._method = method;
     (this as any)._url = url;
-    return originalXHROpen.call(this, method, url, async ?? true, user, password);
+    // 调用当前的 open（index.html 中设置的拦截器）
+    return currentXHROpen.call(this, method, url, async ?? true, user, password);
   };
 
   XMLHttpRequest.prototype.send = function(data?: any) {
-    // 监听状态变化
+    // 监听状态变化（用于日志拦截）
     this.addEventListener('readystatechange', function() {
       if (this.readyState === 4) {
         // 检查是否是接口测试中心的请求
@@ -159,13 +162,16 @@ export async function bootstrap(app: App) {
       }
     });
 
-    return originalXHRSend.call(this, data);
+    // 调用当前的 send（index.html 中设置的拦截器）
+    return currentXHRSend.call(this, data);
   };
 
   // 重写fetch来拦截网络请求日志
-  const originalFetch = window.fetch;
+  // 注意：index.html 中已经设置了 HTTP URL 拦截，这里只需要添加错误处理
+  const currentFetch = window.fetch;
   window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
-    return originalFetch.call(this, input, init).catch((error) => {
+    // 调用当前的 fetch（index.html 中设置的拦截器）
+    return currentFetch.call(this, input, init).catch((error) => {
       // 如果是网络错误，静默处理
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         // 静默处理网络错误

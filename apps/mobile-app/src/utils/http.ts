@@ -39,10 +39,10 @@ export class Http {
     this.baseURL = baseURL || getDynamicBaseURL();
 
     // 创建 axios 实例
+    // 注意：withCredentials 在请求拦截器中根据是否跨域动态设置
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
-      withCredentials: true,
     });
 
     // 强制设置 baseURL

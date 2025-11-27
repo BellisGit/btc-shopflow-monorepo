@@ -129,9 +129,8 @@ export default defineConfig({
       // main.ts 中已有手动注册逻辑，会优雅处理证书错误
       injectRegister: false,
       strategies: 'generateSW', // 保持自动生成SW（适合大多数场景）
-      // 确保 manifest 文件格式正确
-      // 使用 .webmanifest 扩展名，浏览器会自动识别为 application/manifest+json
-      filename: 'manifest.webmanifest',
+      // Service Worker 文件名（必须是 .js 文件）
+      filename: 'sw.js',
       devOptions: {
         enabled: true,
         type: 'module',

@@ -63,24 +63,14 @@ interface ApiItem {
 
 const reloading = ref(false);
 
-// 开发环境后端地址
-const DEV_BACKEND_URL = 'http://10.80.9.76:8115/api';
-const PROD_BACKEND_URL = 'https://api.bellis.com.cn/api';
-
+// 统一使用 /api 代理，不再支持直接使用 HTTP/HTTPS URL
 const apiList = ref<ApiItem[]>([
   {
-    label: '开发环境',
+    label: '统一代理',
     value: '/api',
-    url: DEV_BACKEND_URL,
+    url: '/api（通过代理转发）',
     type: 'dev',
     enabled: true,
-  },
-  {
-    label: '生产环境',
-    value: PROD_BACKEND_URL, // 使用完整 URL，直接请求生产环境
-    url: PROD_BACKEND_URL,
-    type: 'prod',
-    enabled: false,
   },
 ]);
 
@@ -93,25 +83,30 @@ const currentApiType = computed(() => {
 
 // 从 localStorage 或 http 实例获取当前 API
 function loadCurrentApi() {
+  // 统一使用 /api，清理所有非 /api 的值
   const stored = localStorage.getItem('dev_api_base_url');
-  const httpBaseURL = http.getBaseURL();
-  
-  // 自动清理：将旧的 /api-prod 路径转换为完整 URL（兼容旧数据）
-  let storedValue = stored;
-  if (stored === '/api-prod') {
-    storedValue = PROD_BACKEND_URL;
-    localStorage.setItem('dev_api_base_url', PROD_BACKEND_URL);
+  if (stored && stored !== '/api') {
+    // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
+    console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
+    localStorage.removeItem('dev_api_base_url');
   }
   
-  currentApi.value = storedValue || httpBaseURL || config.api.baseURL;
+  // 统一使用 /api
+  currentApi.value = '/api';
   
-  // 更新开关状态（根据值匹配，可能是 /api 或完整 URL）
+  // 更新开关状态
   apiList.value.forEach(item => {
     item.enabled = item.value === currentApi.value;
   });
 }
 
 function handleSwitch(item: ApiItem) {
+  // 统一使用 /api，不允许切换到其他值
+  if (item.value !== '/api') {
+    ElMessage.warning('统一使用 /api 代理，不允许切换');
+    return;
+  }
+  
   // 只有当前项可以启用
   apiList.value.forEach(api => {
     api.enabled = api.value === item.value;
@@ -120,22 +115,13 @@ function handleSwitch(item: ApiItem) {
   // 更新当前 API
   currentApi.value = item.value;
   
-  // 保存到 localStorage
+  // 保存到 localStorage（统一使用 /api）
   localStorage.setItem('dev_api_base_url', item.value);
   
   // 更新 http 实例
   http.setBaseURL(item.value);
   
-  // 检查是否是开发环境切换到生产环境
-  const isDev = window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1' || 
-                /^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(window.location.hostname);
-  
-  if (isDev && item.type === 'prod') {
-    ElMessage.warning(`注意：在开发环境中切换到生产环境会有 CORS 限制。请确保生产环境服务器允许来自开发环境的请求，或使用代理。`);
-  } else {
-    ElMessage.success(`已切换到 ${item.label}，正在刷新页面...`);
-  }
+  ElMessage.success(`已切换到 ${item.label}，正在刷新页面...`);
   
   // 自动刷新页面
   reloading.value = true;
@@ -159,11 +145,13 @@ function handleReload() {
   }, 300);
 }
 
-// 清理旧的 localStorage 数据（将旧的 /api-prod 转换为完整 URL）
+// 清理旧的 localStorage 数据（统一使用 /api）
 function cleanupOldStorage() {
   const stored = localStorage.getItem('dev_api_base_url');
-  if (stored === '/api-prod') {
-    localStorage.setItem('dev_api_base_url', PROD_BACKEND_URL);
+  if (stored && stored !== '/api') {
+    // 清理所有非 /api 的值
+    console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
+    localStorage.removeItem('dev_api_base_url');
   }
 }
 
