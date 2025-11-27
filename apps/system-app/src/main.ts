@@ -15,8 +15,18 @@ import 'element-plus/theme-chalk/dark/css-vars.css';
 import '@btc/shared-components/styles/index.scss';
 // 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
 // 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
+import { BtcSvg } from '@btc/shared-components';
 
 const app = createApp(App);
+
+// 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
+// 使用 typeof 确保组件被实际引用，避免被 tree-shake 掉
+if (typeof BtcSvg !== 'undefined') {
+  app.component('BtcSvg', BtcSvg);
+  app.component('btc-svg', BtcSvg);
+} else {
+  console.error('[BtcSvg] 组件导入失败，请检查 @btc/shared-components 构建');
+}
 
 // 将 service 暴露到全局，供共享组件使用
 if (typeof window !== 'undefined') {

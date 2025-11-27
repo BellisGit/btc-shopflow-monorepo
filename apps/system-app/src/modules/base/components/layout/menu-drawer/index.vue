@@ -61,6 +61,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { Check, Right, Loading } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
+import { BtcSvg } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
 import { finishLoading } from '@/utils/loadingManager';

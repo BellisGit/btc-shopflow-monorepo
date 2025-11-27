@@ -179,13 +179,13 @@ jobs:
               echo "⚠️  Docker daemon.json 已存在，跳过配置"
             else
               echo "📝 创建 Docker daemon 配置文件（可选）..."
-              cat > /tmp/docker-daemon.json <<EOF
+              cat > /tmp/docker-daemon.json <<'JSON_EOF'
 {
   "max-concurrent-downloads": 3,
   "max-concurrent-uploads": 5,
   "registry-mirrors": []
 }
-EOF
+JSON_EOF
               # 只有在是 root 用户且可以修改时才应用
               if [ "$(id -u)" -eq 0 ] && command -v systemctl >/dev/null 2>&1; then
                 cp /tmp/docker-daemon.json /etc/docker/daemon.json 2>/dev/null || true
@@ -194,12 +194,12 @@ EOF
             
             # 配置 Docker 客户端
             mkdir -p ~/.docker
-            cat > ~/.docker/config.json <<EOF
+            cat > ~/.docker/config.json <<'JSON_EOF'
 {
   "max-concurrent-downloads": 3,
   "max-concurrent-uploads": 5
 }
-EOF
+JSON_EOF
             
             # 配置环境变量以优化 Docker 拉取
             export DOCKER_CLI_EXPERIMENTAL=enabled
