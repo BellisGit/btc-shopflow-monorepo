@@ -46,44 +46,15 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Deploy Static Files
-    # 如果是 workflow_run 触发，仅在原工作流成功时执行
-    if: |
-      github.event_name != 'workflow_run' || 
-      github.event.workflow_run.conclusion == 'success'
+  determine-apps:
+    name: Determine Apps
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      SERVER_HOST: ${{ secrets.SERVER_HOST }}
-      SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
-      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
-      SSH_KEY: ${{ secrets.SERVER_KEY }}
+    outputs:
+      apps: ${{ steps.apps.outputs.apps }}
+      apps_json: ${{ steps.apps.outputs.apps_json }}
+      build_all: ${{ steps.apps.outputs.build_all }}
+      skip_build: ${{ steps.apps.outputs.skip_build }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      
-      - name: Cache pnpm store
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      
       - name: Determine apps to build and deploy
         id: apps
         run: |
@@ -135,14 +106,42 @@ jobs:
           echo "📋 将部署的应用: $APPS"
           echo "📋 跳过构建: $SKIP_BUILD"
           echo "📋 Matrix JSON: $APPS_JSON"
+
+  build-shared-deps:
+    name: Build Shared Dependencies
+    needs: determine-apps
+    if: needs.determine-apps.outputs.skip_build != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       
       - name: Install dependencies
-        if: steps.apps.outputs.skip_build != 'true'
         run: |
           pnpm install --frozen-lockfile --prefer-offline
       
       - name: Restore built packages cache
-        if: steps.apps.outputs.skip_build != 'true'
         uses: actions/cache@v3
         with:
           path: |
@@ -153,7 +152,6 @@ jobs:
             packages-build-
       
       - name: Build shared dependencies
-        if: steps.apps.outputs.skip_build != 'true'
         continue-on-error: true
         run: |
           echo "🔨 构建共享依赖包..."
@@ -162,13 +160,69 @@ jobs:
           pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
           pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
           pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+
+  build-apps:
+    name: Build Applications (Parallel)
+    needs: [determine-apps, build-shared-deps]
+    if: always()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.determine-apps.outputs.apps_json) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - name: Build applications (parallel)
-        if: steps.apps.outputs.skip_build != 'true'
-        strategy:
-          fail-fast: false
-          matrix:
-            app: ${{ fromJson(steps.apps.outputs.apps_json) }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Check if build is needed
+        id: check_build
+        run: |
+          SKIP_BUILD="${{ needs.determine-apps.outputs.skip_build }}"
+          echo "skip_build=$SKIP_BUILD" >> $GITHUB_OUTPUT
+          if [ "$SKIP_BUILD" = "true" ]; then
+            echo "⏭️ 跳过构建（使用已有构建产物）"
+            echo "skipped=true" >> $GITHUB_OUTPUT
+          else
+            echo "skipped=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Build application
+        if: steps.check_build.outputs.skipped != 'true'
         run: |
           set -e
           APP_NAME="${{ matrix.app }}"
@@ -193,6 +247,26 @@ jobs:
           echo "📦 构建产物统计:"
           find apps/$APP_NAME/dist -type f | wc -l | xargs echo "  总文件数:"
           du -sh apps/$APP_NAME/dist | awk '{print "  总大小: " $1}'
+
+  deploy:
+    name: Deploy Static Files
+    # 总是等待 determine-apps 和 build-apps（如果跳过构建，build-apps 会立即完成）
+    needs: [determine-apps, build-apps]
+    # 如果是 workflow_run 触发，仅在原工作流成功时执行
+    # 如果跳过构建，build-apps 会成功完成（跳过构建步骤）
+    if: |
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
+      (needs.determine-apps.outputs.skip_build == 'true' || needs.build-apps.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+      SSH_KEY: ${{ secrets.SERVER_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup SSH
         run: |
@@ -236,9 +310,9 @@ jobs:
           set -e
           chmod +x scripts/deploy-static.sh
           
-          APPS="${{ steps.apps.outputs.apps }}"
+          APPS="${{ needs.determine-apps.outputs.apps }}"
           
-          if [ "${{ steps.apps.outputs.build_all }}" = "true" ]; then
+          if [ "${{ needs.determine-apps.outputs.build_all }}" = "true" ]; then
             # 批量部署
             ./scripts/deploy-static.sh --all
           else
@@ -254,13 +328,13 @@ jobs:
           echo "## 📊 部署结果" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **部署模式**: ${{ steps.apps.outputs.build_all == 'true' && '批量部署' || '单应用部署' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **部署应用**: ${{ steps.apps.outputs.apps }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **部署模式**: ${{ needs.determine-apps.outputs.build_all == 'true' && '批量部署' || '单应用部署' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **部署应用**: ${{ needs.determine-apps.outputs.apps }}" >> $GITHUB_STEP_SUMMARY
           echo "- **服务器**: ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
-          SKIP_BUILD_VAL="${{ steps.apps.outputs.skip_build }}"
+          SKIP_BUILD_VAL="${{ needs.determine-apps.outputs.skip_build }}"
           if [ "$SKIP_BUILD_VAL" = "true" ]; then
             echo "- **构建**: 已跳过（使用已有构建产物）" >> $GITHUB_STEP_SUMMARY
           else
-            echo "- **构建**: 已完成" >> $GITHUB_STEP_SUMMARY
+            echo "- **构建**: 已完成（并行构建）" >> $GITHUB_STEP_SUMMARY
           fi
 
