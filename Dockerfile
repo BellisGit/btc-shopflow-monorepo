@@ -8,22 +8,15 @@ FROM nginx:alpine
 ARG APP_DIR
 ENV APP_DIR=${APP_DIR}
 
-# 复制构建产物到 Nginx 默认目录
-COPY ${APP_DIR}/dist /usr/share/nginx/html
-
-# 复制 Nginx 配置文件
+# 复制 Nginx 配置文件（先复制配置文件，利用 Docker 缓存）
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 验证 dist 目录
-RUN if [ ! -d "/usr/share/nginx/html" ] || [ -z "$(ls -A /usr/share/nginx/html 2>/dev/null)" ]; then \
-      echo "ERROR: dist directory is empty or does not exist!" && \
-      echo "Please ensure you have run 'pnpm build' for ${APP_DIR} before building this Docker image." && \
-      ls -la /usr/share/nginx/html || true && \
-      exit 1; \
-    else \
-      echo "✅ dist directory is valid" && \
-      ls -la /usr/share/nginx/html | head -10; \
-    fi
+# 复制构建产物到 Nginx 默认目录（最后复制，因为 dist 内容变化最频繁）
+COPY ${APP_DIR}/dist /usr/share/nginx/html
+
+# 验证 dist 目录（简化验证，减少镜像层）
+RUN test -d /usr/share/nginx/html && test -n "$(ls -A /usr/share/nginx/html 2>/dev/null)" || \
+    (echo "ERROR: dist directory is empty or does not exist!" && exit 1)
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
