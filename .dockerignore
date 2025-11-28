@@ -5,7 +5,8 @@
 **/.turbo
 **/.cache
 **/.vite
-**/dist
+# 注意：不排除 dist 目录，因为 Dockerfile 需要复制构建产物
+# **/dist
 **/build
 **/coverage
 **/test-results
