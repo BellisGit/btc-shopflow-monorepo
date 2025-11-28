@@ -64,6 +64,7 @@ import { useI18n } from '@btc/shared-core';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
 import { finishLoading } from '@/utils/loadingManager';
+import { getAppConfig, getAllDevPorts, getAllPrePorts } from '@configs/app-env.config';
 
 interface MicroApp {
   name: string;
@@ -90,6 +91,81 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const router = useRouter();
+
+/**
+ * 环境类型
+ */
+type EnvironmentType = 'development' | 'preview' | 'production';
+
+/**
+ * 检测当前环境类型
+ */
+const getEnvironmentType = (): EnvironmentType => {
+  if (typeof window === 'undefined') {
+    return import.meta.env.PROD ? 'production' : 'development';
+  }
+
+  const port = window.location.port || '';
+  const previewPorts = getAllPrePorts();
+  const devPorts = getAllDevPorts();
+
+  if (previewPorts.includes(port)) {
+    return 'preview';
+  }
+
+  if (devPorts.includes(port)) {
+    return 'development';
+  }
+
+  if (import.meta.env.PROD) {
+    return 'production';
+  }
+
+  return 'development';
+};
+
+/**
+ * 获取应用入口地址
+ */
+const getAppEntry = (appName: string): string => {
+  const envType = getEnvironmentType();
+  const appConfig = getAppConfig(`${appName}-app`);
+
+  if (!appConfig) {
+    console.warn(`[menu-drawer] 未找到应用配置: ${appName}-app`);
+    return `/${appName}/`;
+  }
+
+  switch (envType) {
+    case 'production':
+      // 生产环境：根据子域名判断使用子域名还是相对路径
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomainMap: Record<string, string> = {
+          'bellis.com.cn': 'system',
+          'logistics.bellis.com.cn': 'logistics',
+          'quality.bellis.com.cn': 'quality',
+          'production.bellis.com.cn': 'production',
+          'engineering.bellis.com.cn': 'engineering',
+          'finance.bellis.com.cn': 'finance',
+        };
+        
+        if (subdomainMap[hostname] === appName) {
+          const protocol = window.location.protocol;
+          return `${protocol}//${hostname}/`;
+        }
+      }
+      return `/${appName}/`;
+
+    case 'preview': {
+      return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+    }
+
+    case 'development':
+    default:
+      return `//${appConfig.devHost}:${appConfig.devPort}`;
+  }
+};
 
 // 根据当前路由判断当前应用（系统域是默认域）
 const currentApp = ref('system');
@@ -137,7 +213,7 @@ const fixedApplications: MicroApp[] = [
     name: 'docs',
     icon: 'tutorial',
     color: '#ec4899', // 粉色系，与系统域紫色区分
-    entry: '//localhost:8080/docs',
+    entry: getEnvironmentType() === 'production' ? '/docs/' : '//localhost:8080/docs',
     activeRule: '/docs',
     description: '文档中心 - 系统使用指南和API文档'
   },
@@ -148,43 +224,43 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
   'LOGISTICS': {
     icon: 'map',
     color: '#67c23a',
-    entry: '//localhost:8082',
+    entry: getAppEntry('logistics'),
     activeRule: '/logistics',
   },
   'ENGINEERING': {
     icon: 'design',
     color: '#e6a23c',
-    entry: '//localhost:8085',
+    entry: getAppEntry('engineering'),
     activeRule: '/engineering',
   },
   'QUALITY': {
     icon: 'approve',
     color: '#f56c6c',
-    entry: '//localhost:8084',
+    entry: getAppEntry('quality'),
     activeRule: '/quality',
   },
   'PRODUCTION': {
     icon: 'work',
     color: '#909399',
-    entry: '//localhost:8083',
+    entry: getAppEntry('production'),
     activeRule: '/production',
   },
   'FINANCE': {
     icon: 'amount-alt',
     color: '#1890ff',
-    entry: '//localhost:8086',
+    entry: getAppEntry('finance'),
     activeRule: '/finance',
   },
   'SYSTEM': {
     icon: 'user',
     color: '#722ed1',
-    entry: '//localhost:8081',
+    entry: getAppEntry('system'),
     activeRule: '/system',
   },
   'ADMIN': {
     icon: 'settings',
     color: '#13c2c2',
-    entry: '//localhost:8080',
+    entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
 };

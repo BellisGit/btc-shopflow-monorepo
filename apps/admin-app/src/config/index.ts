@@ -68,32 +68,13 @@ export const config = {
   },
 
   // 微前端配置
+  // 注意：此配置已迁移到 apps/admin-app/src/micro/apps.ts
+  // 这里保留是为了向后兼容，但实际使用的是 micro/apps.ts 中的配置
   microApp: {
     // 是否启用
     enabled: true,
-    // 子应用列表
-    apps: [
-      {
-        name: 'logistics',
-        entry: isDev ? '//localhost:8081' : '/logistics/',
-        activeRule: '/logistics',
-      },
-      {
-        name: 'engineering',
-        entry: isDev ? '//localhost:8082' : '/engineering/',
-        activeRule: '/engineering',
-      },
-      {
-        name: 'quality',
-        entry: isDev ? '//localhost:8083' : '/quality/',
-        activeRule: '/quality',
-      },
-      {
-        name: 'production',
-        entry: isDev ? '//localhost:8084' : '/production/',
-        activeRule: '/production',
-      },
-    ],
+    // 子应用列表（已废弃，使用 micro/apps.ts 中的配置）
+    apps: [],
   },
 };
 
