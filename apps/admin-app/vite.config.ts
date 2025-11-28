@@ -494,6 +494,7 @@ export default defineConfig({
       '@components': withSrc('src/components'),
       '@utils': withSrc('src/utils'),
       '@auth': withRoot('auth'),
+      '@configs': withRoot('configs'),
       '@btc/shared-core': withPackages('shared-core/src'),
       '@btc/shared-components': withPackages('shared-components/src'),
       '@btc/shared-utils': withPackages('shared-utils/src'),
