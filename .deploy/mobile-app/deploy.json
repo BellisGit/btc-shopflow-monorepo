@@ -1,0 +1,7 @@
+{
+  "app_name": "mobile-app",
+  "image_path": "/www/wwwroot/btc-shopflow-monorepo/tmp/docker-images/mobile-app.tar.gz",
+  "environment": "production",
+  "deployed_at": "2025-11-28T04:33:01Z",
+  "git_sha": "269c76a"
+}
