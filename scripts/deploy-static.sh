@@ -24,8 +24,30 @@ SERVER_USER="${SERVER_USER:-root}"
 SERVER_PORT="${SERVER_PORT:-22}"
 SSH_KEY="${SSH_KEY:-~/.ssh/id_rsa}"
 DEPLOY_CONFIG="${DEPLOY_CONFIG:-deploy.config.json}"
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
+
+# 自动获取 GITHUB_TOKEN（参考 build-and-push-local.sh 的逻辑）
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+if [ -z "$GITHUB_TOKEN" ]; then
+    # 尝试从 git credential 获取
+    if command -v git-credential-manager > /dev/null 2>&1; then
+        GITHUB_TOKEN=$(git credential fill <<< "protocol=https
+host=github.com
+" 2>/dev/null | grep "^password=" | cut -d'=' -f2 | tr -d '\r\n' || echo "")
+    fi
+    
+    # 尝试从 Windows 环境变量获取（PowerShell）
+    if [ -z "$GITHUB_TOKEN" ] && command -v powershell.exe > /dev/null 2>&1; then
+        PS_OUTPUT=$(powershell.exe -NoProfile -NonInteractive -Command "try { \$token = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User'); if (\$token) { Write-Output \$token } } catch { }" 2>&1)
+        GITHUB_TOKEN=$(echo "$PS_OUTPUT" | grep -v "^PS " | grep -v "^所在位置" | grep -v "^标记" | grep -v "^CategoryInfo" | grep -v "^FullyQualifiedErrorId" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | head -1)
+        if echo "$GITHUB_TOKEN" | grep -qiE "error|exception|无法|not found|不存在"; then
+            GITHUB_TOKEN=""
+        fi
+        if [ -z "${GITHUB_TOKEN// }" ]; then
+            GITHUB_TOKEN=""
+        fi
+    fi
+fi
 
 # 应用列表
 APPS=(
@@ -475,7 +497,24 @@ main() {
             fi
         else
             log_info "进入验证模式：只验证构建产物，不执行部署"
-            log_info "如需触发 GitHub Actions 工作流，请设置 GITHUB_TOKEN 环境变量"
+            log_info ""
+            if [ -z "$GITHUB_TOKEN" ]; then
+                log_warning "⚠️  未检测到 GITHUB_TOKEN，无法自动触发 GitHub Actions 工作流"
+                log_info ""
+                log_info "💡 提示：脚本已自动尝试从以下位置获取 GITHUB_TOKEN："
+                log_info "   - 环境变量 GITHUB_TOKEN"
+                log_info "   - Git 凭据管理器"
+                log_info "   - Windows 用户环境变量"
+                log_info ""
+                log_info "如果仍未找到，请设置 GITHUB_TOKEN 环境变量："
+                log_info "  PowerShell: \$env:GITHUB_TOKEN=\"your-token\""
+                log_info "  Git Bash: export GITHUB_TOKEN=your-token"
+                log_info ""
+                log_info "或者："
+                log_info "  - 在 GitHub 网页上手动触发："
+                log_info "    https://github.com/$GITHUB_REPO/actions/workflows/deploy-static.yml"
+                log_info "  - 推送到 master/main 分支（会自动触发）"
+            fi
         fi
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     else
