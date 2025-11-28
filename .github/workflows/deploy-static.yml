@@ -114,12 +114,27 @@ jobs:
             BUILD_ALL=false
           fi
           
+          # 将应用列表转换为 JSON 数组（用于 matrix）
+          APPS_JSON="["
+          FIRST=true
+          for app in $APPS; do
+            if [ "$FIRST" = true ]; then
+              APPS_JSON="$APPS_JSON\"$app\""
+              FIRST=false
+            else
+              APPS_JSON="$APPS_JSON,\"$app\""
+            fi
+          done
+          APPS_JSON="$APPS_JSON]"
+          
           echo "apps=$APPS" >> $GITHUB_OUTPUT
+          echo "apps_json=$APPS_JSON" >> $GITHUB_OUTPUT
           echo "build_all=$BUILD_ALL" >> $GITHUB_OUTPUT
           echo "skip_build=$SKIP_BUILD" >> $GITHUB_OUTPUT
           echo "📋 触发方式: ${{ github.event_name }}"
           echo "📋 将部署的应用: $APPS"
           echo "📋 跳过构建: $SKIP_BUILD"
+          echo "📋 Matrix JSON: $APPS_JSON"
       
       - name: Install dependencies
         if: steps.apps.outputs.skip_build != 'true'
@@ -148,29 +163,36 @@ jobs:
           pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
           pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
       
-      - name: Build applications
+      - name: Build applications (parallel)
         if: steps.apps.outputs.skip_build != 'true'
+        strategy:
+          fail-fast: false
+          matrix:
+            app: ${{ fromJson(steps.apps.outputs.apps_json) }}
         run: |
           set -e
-          APPS="${{ steps.apps.outputs.apps }}"
+          APP_NAME="${{ matrix.app }}"
+          echo "🔨 构建 $APP_NAME..."
           
-          for app in $APPS; do
-            echo "🔨 构建 $app..."
-            cd apps/$app
-            if [ ! -f "package.json" ]; then
-              echo "❌ 错误: $app/package.json 不存在"
-              exit 1
-            fi
-            pnpm run build
-            cd ../..
-            
-            # 验证构建产物
-            if [ ! -d "apps/$app/dist" ] || [ -z "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
-              echo "❌ 错误: $app/dist 目录不存在或为空"
-              exit 1
-            fi
-            echo "✅ $app 构建完成"
-          done
+          cd apps/$APP_NAME
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: $APP_NAME/package.json 不存在"
+            exit 1
+          fi
+          
+          pnpm run build
+          cd ../..
+          
+          # 验证构建产物
+          if [ ! -d "apps/$APP_NAME/dist" ] || [ -z "$(ls -A apps/$APP_NAME/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: $APP_NAME/dist 目录不存在或为空"
+            exit 1
+          fi
+          
+          echo "✅ $APP_NAME 构建完成"
+          echo "📦 构建产物统计:"
+          find apps/$APP_NAME/dist -type f | wc -l | xargs echo "  总文件数:"
+          du -sh apps/$APP_NAME/dist | awk '{print "  总大小: " $1}'
       
       - name: Setup SSH
         run: |
