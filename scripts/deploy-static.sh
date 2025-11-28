@@ -24,6 +24,8 @@ SERVER_USER="${SERVER_USER:-root}"
 SERVER_PORT="${SERVER_PORT:-22}"
 SSH_KEY="${SSH_KEY:-~/.ssh/id_rsa}"
 DEPLOY_CONFIG="${DEPLOY_CONFIG:-deploy.config.json}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
 
 # 应用列表
 APPS=(
@@ -359,6 +361,82 @@ deploy_app() {
     return 0
 }
 
+# 触发 GitHub Actions 工作流
+trigger_github_workflow() {
+    local app_input="$1"
+    
+    if [ -z "$GITHUB_TOKEN" ]; then
+        log_warning "GITHUB_TOKEN 未设置，无法触发 GitHub Actions 工作流"
+        log_info "如需触发工作流，请设置环境变量："
+        log_info "  export GITHUB_TOKEN=your-github-token"
+        log_info "获取 Token: https://github.com/settings/tokens"
+        return 1
+    fi
+    
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "🚀 触发 GitHub Actions 工作流"
+    log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    log_info "应用: $app_input"
+    log_info "工作流: Deploy Static Files"
+    log_info ""
+    
+    # 解析仓库信息
+    REPO_OWNER=$(echo "$GITHUB_REPO" | cut -d'/' -f1)
+    REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
+    
+    # 获取当前 Git SHA
+    GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
+    
+    log_info "发送 repository_dispatch 请求到 GitHub..."
+    
+    # 构建 payload
+    local payload_app="$app_input"
+    if [ "$app_input" = "all" ]; then
+        payload_app="all"
+    fi
+    
+    RESPONSE=$(curl -s -w "\n%{http_code}" \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        -H "Content-Type: application/json" \
+        "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/dispatches" \
+        -d "{
+            \"event_type\": \"deploy-static\",
+            \"client_payload\": {
+                \"app\": \"$payload_app\",
+                \"skip_build\": \"false\",
+                \"github_sha\": \"$GIT_SHA\"
+            }
+        }" 2>&1)
+    
+    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+    RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+    
+    if [ "$HTTP_CODE" -eq 204 ]; then
+        log_success "✅ GitHub Actions 工作流已触发"
+        log_info ""
+        log_info "📋 查看工作流状态:"
+        log_info "   https://github.com/$REPO_OWNER/$REPO_NAME/actions/workflows/deploy-static.yml"
+        return 0
+    else
+        log_error "❌ 触发工作流失败 (HTTP $HTTP_CODE)"
+        if [ -n "$RESPONSE_BODY" ]; then
+            log_warning "响应内容: $RESPONSE_BODY"
+        fi
+        
+        if [ "$HTTP_CODE" -eq 401 ]; then
+            log_error "🔴 GitHub Token 认证失败"
+            log_info "请检查 GITHUB_TOKEN 是否正确"
+        elif [ "$HTTP_CODE" -eq 404 ]; then
+            log_error "🔴 仓库或工作流不存在"
+            log_info "请检查 GITHUB_REPO 和工作流文件路径"
+        fi
+        return 1
+    fi
+}
+
 # 主函数
 main() {
     log_info "🚀 BTC ShopFlow 静态文件部署"
@@ -372,12 +450,33 @@ main() {
     
     check_requirements
     
-    # 检查服务器配置（如果失败，进入验证模式）
+    # 检查服务器配置（如果失败，进入验证模式或触发工作流）
     local can_deploy=true
     if ! check_server_config; then
         can_deploy=false
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        log_info "进入验证模式：只验证构建产物，不执行部署"
+        
+        # 如果提供了 GITHUB_TOKEN，尝试触发 GitHub Actions 工作流
+        if [ -n "$GITHUB_TOKEN" ]; then
+            log_info "检测到 GITHUB_TOKEN，将触发 GitHub Actions 工作流进行部署"
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            
+            # 确定要部署的应用
+            local app_to_trigger="all"
+            if [ "$DEPLOY_MODE" = "single" ] && [ -n "$TARGET_APP" ]; then
+                app_to_trigger="$TARGET_APP"
+            fi
+            
+            if trigger_github_workflow "$app_to_trigger"; then
+                log_success "工作流触发成功，部署将在 GitHub Actions 中执行"
+                exit 0
+            else
+                log_warning "工作流触发失败，将只验证构建产物"
+            fi
+        else
+            log_info "进入验证模式：只验证构建产物，不执行部署"
+            log_info "如需触发 GitHub Actions 工作流，请设置 GITHUB_TOKEN 环境变量"
+        fi
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     else
         read_deploy_config || true
