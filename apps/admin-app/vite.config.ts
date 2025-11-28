@@ -470,8 +470,14 @@ const ensureCssPlugin = (): Plugin => {
 };
 
 // 构建时输出 base 配置，用于调试
-// 生产构建使用相对路径，预览构建使用绝对路径
-const BASE_URL = isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/';
+// - 预览构建：使用绝对路径（http://localhost:4181/），用于本地预览测试
+// - 生产构建：根据部署方式选择 base 路径
+//   - 如果通过独立域名部署（admin.bellis.com.cn），使用根路径 '/'
+//   - 如果作为子应用部署在主应用的 /admin/ 路径下，使用 '/admin/'
+// 注意：admin.bellis.com.cn 是独立域名，应该使用根路径 '/'
+const BASE_URL = isPreviewBuild 
+  ? `http://${APP_HOST}:${APP_PORT}/` 
+  : '/'; // 生产环境使用根路径，因为 admin.bellis.com.cn 是独立域名
 console.log(`[admin-app vite.config] Base URL: ${BASE_URL}, APP_HOST: ${APP_HOST}, APP_PORT: ${APP_PORT}, isPreviewBuild: ${isPreviewBuild}`);
 
 export default defineConfig({

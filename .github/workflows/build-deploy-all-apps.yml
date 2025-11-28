@@ -224,7 +224,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build system-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -242,6 +275,34 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
       
+      - name: Verify Dockerfile and build context
+        run: |
+          echo "🔍 验证 Dockerfile 和构建上下文..."
+          echo "📋 检查 Dockerfile..."
+          if [ ! -f "Dockerfile" ]; then
+            echo "❌ 错误: Dockerfile 不存在"
+            exit 1
+          fi
+          echo "✅ Dockerfile 存在"
+          echo "📋 检查 Dockerfile 内容（前 10 行）..."
+          head -10 Dockerfile
+          echo ""
+          echo "📋 检查 docker/nginx.conf..."
+          if [ ! -f "docker/nginx.conf" ]; then
+            echo "❌ 错误: docker/nginx.conf 不存在"
+            exit 1
+          fi
+          echo "✅ docker/nginx.conf 存在"
+          echo ""
+          echo "📋 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ]; then
+            echo "❌ 错误: ${{ env.APP_DIR }}/dist 不存在"
+            exit 1
+          fi
+          echo "✅ ${{ env.APP_DIR }}/dist 存在"
+          echo "📦 dist 目录内容:"
+          ls -la ${{ env.APP_DIR }}/dist | head -10
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -257,7 +318,7 @@ jobs:
           cache-to: type=gha,mode=max
         env:
           DOCKER_BUILDKIT: 1
-
+      
       - name: Deploy system-app
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -572,7 +633,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build admin-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -920,7 +1014,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build logistics-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -1268,7 +1395,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build quality-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -1616,7 +1776,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build production-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -1964,7 +2157,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build engineering-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -2312,7 +2538,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build finance-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -2660,7 +2919,40 @@ jobs:
           echo "✅ 清理完成"
       
       - name: Build mobile-app
-        run: cd ${{ env.APP_DIR }} && pnpm run build
+        run: |
+          echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          cd ${{ env.APP_DIR }}
+          echo "📂 当前目录: $(pwd)"
+          echo "📋 检查 package.json..."
+          if [ ! -f "package.json" ]; then
+            echo "❌ 错误: package.json 不存在"
+            exit 1
+          fi
+          echo "🚀 执行构建命令: pnpm run build"
+          pnpm run build
+          echo "✅ 构建命令执行完成"
+          echo "📂 检查构建产物..."
+          if [ -d "dist" ]; then
+            echo "✅ dist 目录存在"
+            ls -la dist | head -10
+          else
+            echo "❌ 错误: dist 目录不存在"
+            exit 1
+          fi
+      
+      - name: Verify build artifacts
+        run: |
+          echo "🔍 验证构建产物..."
+          if [ ! -d "${{ env.APP_DIR }}/dist" ] || [ -z "$(ls -A ${{ env.APP_DIR }}/dist 2>/dev/null)" ]; then
+            echo "❌ 错误: ${{ env.APP_NAME }} 的 dist 目录不存在或为空"
+            echo "构建步骤可能失败了，请检查上面的构建日志"
+            ls -la ${{ env.APP_DIR }}/ || true
+            exit 1
+          else
+            echo "✅ 构建产物验证成功"
+            echo "📦 dist 目录内容:"
+            ls -la ${{ env.APP_DIR }}/dist | head -10
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

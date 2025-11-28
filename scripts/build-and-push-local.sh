@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 本地构建并推送 Docker 镜像到远程仓库，然后触发 GitHub Actions 工作流部署
-# 用于快速更新生产环境镜像
+# 本地构建应用并触发 GitHub Actions 工作流构建 Docker 镜像和部署
+# 镜像构建在 GitHub Actions 中完成，避免本地 Windows/WSL 路径问题
 
 set -e
 
@@ -17,13 +17,54 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
+# 如果脚本在 WSL 中运行，自动切换到 Windows Git Bash，避免 Linux 可选依赖缺失
+# 检测逻辑：只有在真正的 WSL 环境中才触发
+# 最可靠的检测方法：检查 /proc/version 文件是否存在且包含 "microsoft"
+# 如果 /proc/version 不存在，说明不在 WSL 中（可能是 Git Bash 或 PowerShell）
+IS_WSL=false
+
+# 检查 /proc/version 文件（WSL 特有）
+if [ -f "/proc/version" ] && [ -r "/proc/version" ]; then
+    # 文件存在，检查是否包含 WSL 标识
+    if grep -qi "microsoft\|WSL" /proc/version 2>/dev/null; then
+        IS_WSL=true
+    fi
+fi
+
+# 如果检测到 WSL 且未强制跳过，则切换到 Windows Git Bash
+if [ "$IS_WSL" = true ] && [ -z "$BTC_SHOPFLOW_FORCE_WSL" ]; then
+    # 尝试查找 Windows Git Bash
+    for candidate in "/mnt/c/Program Files/Git/bin/bash.exe" "/mnt/c/Program Files (x86)/Git/bin/bash.exe" "/c/Program Files/Git/bin/bash.exe" "/c/Program Files (x86)/Git/bin/bash.exe"; do
+        if [ -x "$candidate" ]; then
+            WIN_GIT_BASH="$candidate"
+            break
+        fi
+    done
+
+    if [ -n "$WIN_GIT_BASH" ] && command -v wslpath >/dev/null 2>&1; then
+        WIN_SCRIPT_PATH=$(wslpath -w "$0")
+        log_warning "检测到 WSL 环境，自动使用 Windows Git Bash 重新执行脚本，以复用 Windows node_modules"
+        exec "$WIN_GIT_BASH" "$WIN_SCRIPT_PATH" "$@"
+    else
+        log_warning "检测到 WSL 环境，但未找到 Git Bash。"
+        log_info ""
+        log_info "将在 WSL 环境中继续运行（使用 WSL 的 node_modules）。"
+        log_info "如果遇到依赖问题，请："
+        log_info "  1. 在 PowerShell 中使用 Git Bash 运行（如果已安装 Git Bash）"
+        log_info "  2. 或者设置环境变量跳过 WSL 检测："
+        log_info "     export BTC_SHOPFLOW_FORCE_WSL=1"
+        log_info "  3. 或者安装 Git Bash：https://git-scm.com/download/win"
+        log_info ""
+        # 继续运行，不退出
+    fi
+fi
+
 # 默认配置
 GITHUB_REPO="${GITHUB_REPO:-BellisGit/btc-shopflow-monorepo}"
 REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
 REGISTRY="ghcr.io"
 APP_NAME=""
 AUTO_DEPLOY=false
-NO_PUSH=false
 
 # 解析命令行参数
 while [[ $# -gt 0 ]]; do
@@ -32,20 +73,15 @@ while [[ $# -gt 0 ]]; do
             AUTO_DEPLOY=true
             shift
             ;;
-        --no-push)
-            NO_PUSH=true
-            shift
-            ;;
         --help|-h)
             echo "用法: $0 <app-name> [OPTIONS]"
             echo ""
             echo "选项:"
-            echo "  --auto-deploy    构建并推送后自动触发部署工作流"
-            echo "  --no-push        只构建，不推送镜像"
+            echo "  --auto-deploy    构建应用后自动触发 GitHub Actions 工作流构建镜像和部署"
             echo "  --help, -h        显示帮助信息"
             echo ""
             echo "环境变量:"
-            echo "  GITHUB_TOKEN     GitHub Personal Access Token（必需，用于推送镜像和触发工作流）"
+            echo "  GITHUB_TOKEN     GitHub Personal Access Token（必需，用于触发工作流）"
             echo "  GITHUB_REPO      GitHub 仓库（默认: BellisGit/btc-shopflow-monorepo）"
             echo ""
             echo "示例:"
@@ -75,68 +111,7 @@ if [ -z "$APP_NAME" ]; then
     exit 1
 fi
 
-# 检查本地 Docker（不需要 SSH，直接在本地构建）
-log_info "检查本地 Docker 环境..."
-
-# 检测 Docker 命令（支持多种环境）
-DOCKER_CMD=""
-
-# 按优先级尝试不同的检测方法
-# 方法 1: 直接尝试 docker 命令（适用于 PATH 中已配置的情况）
-if docker --version > /dev/null 2>&1; then
-    DOCKER_CMD="docker"
-# 方法 2: 尝试 docker.exe（Windows 环境，Git Bash）
-elif docker.exe --version > /dev/null 2>&1; then
-    DOCKER_CMD="docker.exe"
-# 方法 3: 尝试通过 cmd.exe 调用 docker（Windows/Git Bash 环境）
-elif cmd.exe /c docker --version > /dev/null 2>&1; then
-    DOCKER_CMD="cmd.exe /c docker"
-# 方法 4: 使用 command -v 检测（bash）
-elif command -v docker > /dev/null 2>&1; then
-    DOCKER_CMD="docker"
-# 方法 5: 使用 which 检测
-elif which docker > /dev/null 2>&1; then
-    DOCKER_CMD="docker"
-# 方法 6: 尝试 Windows 常见安装路径
-elif [ -f "/c/Program Files/Docker/Docker/resources/bin/docker.exe" ]; then
-    DOCKER_CMD="/c/Program Files/Docker/Docker/resources/bin/docker.exe"
-elif [ -f "/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe" ]; then
-    DOCKER_CMD="/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe"
-# 方法 7: 尝试通过 WSL 访问（如果安装了 WSL）
-elif command -v wsl > /dev/null 2>&1 && wsl docker --version > /dev/null 2>&1; then
-    DOCKER_CMD="wsl docker"
-fi
-
-if [ -z "$DOCKER_CMD" ]; then
-    log_error "Docker 未安装或未在 PATH 中"
-    log_info ""
-    log_info "请确保 Docker 已安装并正在运行:"
-    log_info "  Windows: 请安装 Docker Desktop - https://www.docker.com/products/docker-desktop"
-    log_info "  安装后请确保 Docker Desktop 正在运行（系统托盘中的 Docker 图标）"
-    log_info ""
-    log_info "验证 Docker 是否安装:"
-    log_info "  - 在 PowerShell 中运行: docker --version"
-    log_info "  - 在 Git Bash 中运行: cmd.exe /c docker --version"
-    log_info ""
-    log_info "如果已安装但无法找到，请确保 Docker Desktop 已添加到系统 PATH"
-    exit 1
-fi
-
-# 验证 Docker 是否正在运行
-log_info "验证 Docker 是否运行..."
-if ! $DOCKER_CMD info > /dev/null 2>&1; then
-    log_error "Docker 未运行或无法连接"
-    log_info ""
-    log_info "请启动 Docker Desktop:"
-    log_info "  - 在 Windows 开始菜单中搜索 'Docker Desktop' 并启动"
-    log_info "  - 等待 Docker Desktop 完全启动（系统托盘图标不再闪烁）"
-    log_info ""
-    log_info "验证 Docker 是否运行:"
-    log_info "  $DOCKER_CMD info"
-    exit 1
-fi
-
-log_success "本地 Docker 已就绪 (使用: $DOCKER_CMD)"
+# 检查是否在项目根目录
 
 # 检查是否在项目根目录
 if [ ! -f "Dockerfile" ]; then
@@ -225,73 +200,55 @@ fi
 # 获取当前 Git SHA（固定使用 7 位，确保与部署工作流一致）
 GIT_SHA=$(git rev-parse HEAD 2>/dev/null | cut -c1-7 || echo "latest")
 
-# 设置镜像标签
-IMAGE_TAG_LATEST="${REGISTRY}/${REPO_LOWER}/${APP_NAME}:latest"
-IMAGE_TAG_SHA="${REGISTRY}/${REPO_LOWER}/${APP_NAME}:${GIT_SHA}"
-
-log_info "📦 准备在本地构建镜像..."
-log_info "标签: $IMAGE_TAG_LATEST"
-log_info "标签: $IMAGE_TAG_SHA"
+log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+log_info "🚀 本地构建应用并触发 GitHub Actions"
+log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+log_info "应用: $APP_NAME"
+log_info "仓库: $GITHUB_REPO"
+log_info "Git SHA: $GIT_SHA"
 echo ""
 
-# 本地构建并推送镜像（不使用 SSH，直接在本地 Docker 中构建）
-log_info "📦 在本地构建 Docker 镜像..."
-log_info "这可能需要一些时间，请耐心等待..."
-echo ""
-
-# 登录到 GitHub Container Registry
-log_info "🔐 登录到 GitHub Container Registry..."
-echo "$GITHUB_TOKEN" | $DOCKER_CMD login ghcr.io -u "$(git config user.name 2>/dev/null || echo 'github-actions')" --password-stdin 2>/dev/null || {
-    log_error "登录失败，请检查 GITHUB_TOKEN 是否有效"
-    exit 1
-}
-log_success "登录成功"
-echo ""
-
-# 构建镜像（本地 Docker）
-export DOCKER_BUILDKIT=1
-
-log_info "开始构建镜像: $IMAGE_TAG_LATEST"
-if $DOCKER_CMD build \
-    --build-arg APP_DIR=apps/$APP_NAME \
-    --tag "$IMAGE_TAG_LATEST" \
-    --tag "$IMAGE_TAG_SHA" \
-    --file ./Dockerfile \
-    --progress=plain \
-    .; then
-    log_success "镜像构建成功"
+# 本地构建应用（Docker 镜像构建将在 GitHub Actions 中完成）
+log_info "📦 在本地构建应用..."
+log_info "执行: pnpm --filter $APP_NAME build"
+if pnpm --filter "$APP_NAME" build; then
+    log_success "应用构建成功"
 else
-    log_error "镜像构建失败"
+    log_error "应用构建失败"
     exit 1
 fi
 echo ""
 
-# 推送镜像（推送到 GHCR）
-if [ "$NO_PUSH" = false ]; then
-    log_info "📤 推送镜像到 $REGISTRY..."
-    if $DOCKER_CMD push "$IMAGE_TAG_LATEST" && $DOCKER_CMD push "$IMAGE_TAG_SHA"; then
-        log_success "镜像推送成功"
-    else
-        log_error "镜像推送失败"
-        exit 1
-    fi
-    echo ""
-else
-    log_warning "跳过推送（--no-push 选项）"
-    echo ""
+# 验证 dist 目录是否存在
+DIST_PATH="apps/$APP_NAME/dist"
+if [ ! -d "$DIST_PATH" ]; then
+    log_error "构建产物目录不存在: $DIST_PATH"
+    log_info "请确保应用构建成功"
+    exit 1
 fi
 
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_success "✅ 构建并推送完成！"
+log_success "✅ 应用构建完成！"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-log_info "📋 镜像信息:"
-log_info "  - $IMAGE_TAG_LATEST"
-log_info "  - $IMAGE_TAG_SHA"
+log_info "📋 构建信息:"
+log_info "  - 应用: $APP_NAME"
+log_info "  - 构建产物: $DIST_PATH"
+log_info "  - Git SHA: $GIT_SHA"
 echo ""
 
-# 自动触发部署
-if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
+# 提示用户提交代码
+log_info "💡 下一步："
+log_info "  1. 提交构建产物到 Git:"
+log_info "     git add apps/$APP_NAME/dist"
+log_info "     git commit -m \"build($APP_NAME): 构建应用\""
+log_info "     git push"
+log_info ""
+log_info "  2. 或者使用 --auto-deploy 选项自动触发工作流（需要先提交代码）"
+echo ""
+
+# 自动触发部署工作流
+if [ "$AUTO_DEPLOY" = true ]; then
     log_info "🚀 自动触发部署工作流..."
     
     # 获取仓库 owner 和 repo 名称
@@ -563,7 +520,9 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
     log_info ""
     
     # 使用 repository_dispatch 触发（所有应用统一使用）
+    # 注意：Docker 镜像构建将在 GitHub Actions 工作流中完成
     log_info "使用 repository_dispatch 触发 $TARGET_WORKFLOW 工作流..."
+    log_info "工作流将自动构建 Docker 镜像并部署"
     log_info "发送 API 请求到 GitHub..."
     
     REPO_DISPATCH_RESPONSE=$(curl -s -w "\n%{http_code}" \
@@ -728,7 +687,7 @@ if [ "$AUTO_DEPLOY" = true ] && [ "$NO_PUSH" = false ]; then
                     log_info "  - 工作流: $TARGET_WORKFLOW"
                     log_info "  - 环境: production"
                     log_info "  - SHA: $GIT_SHA"
-                    log_info "  - 镜像: $IMAGE_TAG_SHA"
+                    log_info "  - 镜像标签: $IMAGE_TAG_SHA（将在工作流中构建）"
                     log_info "  - 分支: master"
                     exit 0
                 fi
@@ -917,7 +876,13 @@ fi
 
 if [ "$AUTO_DEPLOY" = false ]; then
     log_info "🚀 下一步："
-    log_info "  1. 自动部署: 使用 --auto-deploy 选项"
-    log_info "  2. 手动触发: pnpm deploy:$APP_NAME"
+    log_info "  1. 提交代码到 GitHub:"
+    log_info "     git add apps/$APP_NAME/dist"
+    log_info "     git commit -m \"build($APP_NAME): 构建应用\""
+    log_info "     git push"
+    log_info ""
+    log_info "  2. GitHub Actions 将自动构建 Docker 镜像并部署"
+    log_info ""
+    log_info "  3. 或者使用 --auto-deploy 选项自动触发工作流（需要先提交代码）"
     echo ""
 fi
