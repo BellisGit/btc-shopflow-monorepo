@@ -60,6 +60,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT"
+
+# 清理所有应用的 EPS 构建产物，确保每次重新生成
+log_info "清理所有应用的 EPS 数据..."
+EPS_DIRS_FOUND=false
+while IFS= read -r -d '' eps_dir; do
+    EPS_DIRS_FOUND=true
+    rm -rf "$eps_dir"
+    log_info "已删除: $eps_dir"
+done < <(find apps -type d -path "*/build/eps" -print0 2>/dev/null)
+
+if [ "$EPS_DIRS_FOUND" = false ]; then
+    log_warning "未发现需要清理的 EPS 目录（apps/*/build/eps）"
+fi
         
         # 获取 GITHUB_TOKEN
 GITHUB_TOKEN=""

@@ -231,6 +231,15 @@ export default defineConfig({
     },
     // 确保 manifest 文件在开发环境中正确提供
     middlewareMode: false,
+    // 代理配置 - 将 /api 请求代理到后端服务器
+    proxy: {
+      '/api': {
+        target: 'https://10.80.9.76:8091',
+        changeOrigin: true,
+        secure: false, // 如果后端使用自签名证书，需要设置为 false
+        rewrite: (path) => path, // 保持路径不变
+      },
+    },
   },
   preview: {
     port: config.prePort,

@@ -12,12 +12,12 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/auth/phone-login',
-    name: 'PhoneLogin',
-    component: () => import('@/modules/auth/pages/PhoneLogin.vue'),
+    path: '/auth/register',
+    name: 'Register',
+    component: () => import('@/modules/auth/register/pages/Register.vue'),
     meta: {
       public: true,
-      title: '手机号登录',
+      title: '新用户注册',
     },
   },
   {
@@ -31,6 +31,22 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/base/pages/Home.vue'),
         meta: {
           title: '首页',
+        },
+      },
+      {
+        path: 'query',
+        name: 'Query',
+        component: () => import('@/modules/base/pages/Query.vue'),
+        meta: {
+          title: '查询',
+        },
+      },
+      {
+        path: 'scanner',
+        name: 'Scanner',
+        component: () => import('@/modules/inventory/pages/Scanner.vue'),
+        meta: {
+          title: '扫码',
         },
       },
       {
@@ -104,13 +120,6 @@ router.beforeEach((to, _from, next) => {
   ) {
     // 静态资源，直接放行，不进行认证检查
     // 注意：这不会阻止 Vite 提供文件，但如果请求进入了路由系统，至少不会重定向到登录页
-    try {
-      if ((import.meta as any).env?.DEV && pathWithoutQuery.startsWith('/manifest.webmanifest')) {
-        console.log('[Router] Manifest request detected, allowing:', pathWithoutQuery);
-      }
-    } catch (e) {
-      // 生产环境忽略调试日志
-    }
     next();
     return;
   }
@@ -125,22 +134,8 @@ router.beforeEach((to, _from, next) => {
 
   // 需要认证的页面
   if (authStore.isAuthenticated) {
-    try {
-      if ((import.meta as any).env?.DEV) {
-        console.log('[Router] Authenticated user, allowing access:', to.path);
-      }
-    } catch (e) {
-      // 生产环境忽略调试日志
-    }
     next();
   } else {
-    try {
-      if ((import.meta as any).env?.DEV) {
-        console.log('[Router] Unauthenticated user, redirecting to login:', to.fullPath);
-      }
-    } catch (e) {
-      // 生产环境忽略调试日志
-    }
     next({ name: 'Login', query: { redirect: to.fullPath } });
   }
 });

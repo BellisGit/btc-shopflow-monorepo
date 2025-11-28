@@ -215,6 +215,11 @@ export default defineConfig({
         // 这样浏览器会根据当前模块的位置解析，而不是根据页面 URL
         preserveModules: false,
         manualChunks(id) {
+          // 将 EPS 数据单独拆分，便于线上排查
+          if (id.includes('virtual:eps')) {
+            return 'eps-contract';
+          }
+
           // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {
             // 进一步分割大型库，减少 vendor chunk 大小

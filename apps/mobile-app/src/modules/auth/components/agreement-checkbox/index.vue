@@ -2,7 +2,7 @@
   <div class="agreement-checkbox">
     <Checkbox v-model="checked" @update:model-value="handleChange">
       <span class="agreement-checkbox__text">
-        登录代表您已同意<span class="agreement-checkbox__link" @click.stop="handleUserAgreement">《用户协议》</span>以及<span class="agreement-checkbox__link" @click.stop="handlePrivacyPolicy">《隐私政策》</span>
+        登录代表您已同意<span class="agreement-checkbox__link" @click.stop="handleUserAgreement">《服务协议》</span>以及<span class="agreement-checkbox__link" @click.stop="handlePrivacyPolicy">《拜里斯隐私保护指引》</span>
       </span>
     </Checkbox>
   </div>
@@ -47,19 +47,19 @@ const handleChange = (value: boolean) => {
 const handleUserAgreement = () => {
   showToast({
     type: 'loading',
-    message: '用户协议功能开发中...',
+    message: '服务协议功能开发中...',
     duration: 1500,
   });
-  // TODO: 打开用户协议页面
+  // TODO: 打开服务协议页面
 };
 
 const handlePrivacyPolicy = () => {
   showToast({
     type: 'loading',
-    message: '隐私政策功能开发中...',
+    message: '拜里斯隐私保护指引功能开发中...',
     duration: 1500,
   });
-  // TODO: 打开隐私政策页面
+  // TODO: 打开拜里斯隐私保护指引页面
 };
 </script>
 

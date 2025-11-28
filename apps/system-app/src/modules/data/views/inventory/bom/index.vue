@@ -22,7 +22,9 @@
         <BtcImportBtn :on-submit="handleImport" />
       </template>
       <template #actions>
-        <BtcExportBtn :filename="t('menu.inventory.dataSource.bom')" />
+        <el-button type="info" @click="exportBomTemplate">
+          {{ t('ui.export') }}
+        </el-button>
       </template>
     </BtcTableGroup>
   </div>
@@ -31,9 +33,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
+import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
 defineOptions({
@@ -55,7 +57,7 @@ const domainService = {
 };
 
 // 物料构成表服务（右侧表），使用后端API
-const bomService = service.system?.base?.inventoryBom;
+const bomService = service.system?.base?.bom;
 
 const wrappedBomService = {
   ...bomService,
@@ -74,17 +76,41 @@ const onDomainSelect = (domain: any) => {
 // 处理导入
 const handleImport = async (data: any, { done, close }: { done: () => void; close: () => void }) => {
   try {
-    // TODO: 调用导入接口
-    // const formData = new FormData();
-    // if (data.file) {
-    //   formData.append('file', data.file);
-    // }
-    // await service.system?.base?.inventoryBom?.import(formData);
+    const rows = (data?.list || data?.rows || []).map((row: Record<string, any>) => {
+      const { _index, ...rest } = row || {};
+      return rest;
+    });
+    if (!rows.length) {
+      const warnMessage = data?.filename
+        ? t('common.import.no_data_or_mapping')
+        : t('inventory.dataSource.bom.import.no_file');
+      message.warning(warnMessage);
+      done();
+      return;
+    }
+
+    const payload = rows.map((row: Record<string, any>) => ({
+      processId: row.processId,
+      checkNo: row.checkNo,
+      domainId: row.domainId,
+      parentNode: row.parentNode,
+      childNode: row.childNode,
+      childQty: row.childQty,
+      materialCode: row.materialCode,
+      materialName: row.materialName,
+      specification: row.specification,
+      unit: row.unit,
+      quantity: row.quantity,
+      remark: row.remark,
+    }));
+
+    await service.system?.base?.bom?.import?.(payload);
+
     message.success(t('inventory.dataSource.bom.import.success'));
-    // 刷新表格
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
+    console.error('[InventoryBom] import failed:', error);
     message.error(t('inventory.dataSource.bom.import.failed'));
     done();
   }
@@ -110,6 +136,14 @@ const bomFormItems = computed<FormItem[]>(() => [
   { prop: 'quantity', label: t('inventory.dataSource.bom.fields.quantity'), span: 12, component: { name: 'el-input-number', props: { min: 0, precision: 2 } } },
   { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
+
+const exportBomTemplate = () => {
+  exportTableToExcel({
+    columns: bomColumns.value,
+    data: [],
+    filename: `data_${t('menu.inventory.dataSource.bom')}`,
+  });
+};
 </script>
 
 <style lang="scss" scoped>

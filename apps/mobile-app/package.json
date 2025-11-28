@@ -7,7 +7,9 @@
     "dev": "vite --port 8091",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "powershell -ExecutionPolicy Bypass -File ./clear-vite-cache.ps1",
+    "clean:cache": "powershell -ExecutionPolicy Bypass -File ./clear-vite-cache.ps1"
   },
   "dependencies": {
     "@btc/shared-components": "workspace:*",

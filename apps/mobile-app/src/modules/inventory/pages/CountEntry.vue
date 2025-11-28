@@ -6,14 +6,12 @@
           v-model="form.materialCode"
           name="materialCode"
           label="物料编码"
-          placeholder="扫码或手动输入"
-          :rules="[{ required: true, message: '请填写物料编码' }]"
+          readonly
         />
         <Field
-          v-model="form.materialName"
-          name="materialName"
-          label="物料名称"
-          placeholder="自动填充"
+          v-model="form.storageLocation"
+          name="storageLocation"
+          label="仓位"
           readonly
         />
         <Field
@@ -23,24 +21,11 @@
           type="number"
           placeholder="请输入实际数量"
           :rules="[{ required: true, message: '请填写实际数量' }]"
-        />
-        <Field
-          v-model="form.storageLocation"
-          name="storageLocation"
-          label="仓位"
-          placeholder="请输入仓位"
-        />
-        <Field
-          v-model="form.remark"
-          name="remark"
-          label="备注"
-          type="textarea"
-          placeholder="请输入备注"
-          rows="3"
+          ref="qtyInputRef"
         />
       </CellGroup>
       <div style="margin: 16px">
-        <Button round block type="primary" native-type="submit">
+        <Button round block type="primary" native-type="submit" :loading="loading">
           提交
         </Button>
       </div>
@@ -49,16 +34,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   Form,
   CellGroup,
   Field,
   Button,
+  showToast,
 } from 'vant';
 import { db } from '@/db';
 import { useInventoryStore } from '@/stores/inventory';
+import { inventoryApi } from '@/services/inventory';
 
 defineOptions({
   name: 'BtcMobileInventoryEntry',
@@ -67,63 +54,82 @@ defineOptions({
 const route = useRoute();
 const router = useRouter();
 const inventoryStore = useInventoryStore();
+const qtyInputRef = ref();
+const loading = ref(false);
 
 const form = ref({
   materialCode: '',
-  materialName: '',
   actualQty: '',
   storageLocation: '',
-  remark: '',
 });
 
 onMounted(() => {
   const code = route.query.code as string;
   if (code) {
-    form.value.materialCode = code;
-    loadMaterialInfo(code);
+    try {
+      const data = JSON.parse(code);
+      if (data.partName) {
+        form.value.materialCode = data.partName;
+      }
+      if (data.position) {
+        form.value.storageLocation = data.position;
+      }
+      // 聚焦到数量输入框
+      nextTick(() => {
+        qtyInputRef.value?.focus();
+      });
+    } catch (e) {
+      showToast('二维码格式错误');
+      console.error('Failed to parse QR code:', e);
+    }
   }
 });
 
-async function loadMaterialInfo(code: string) {
-  // TODO: 从本地数据库或 API 加载物料信息
-  const item = await db.items.where('materialCode').equals(code).first();
-  if (item) {
-    form.value.materialName = item.materialName;
-  }
-}
-
 async function handleSubmit() {
-  try {
-    const session = inventoryStore.currentSession;
-    if (!session) {
-      // TODO: 提示选择或创建会话
-      return;
-    }
+  if (loading.value) return;
+  loading.value = true;
 
+  try {
+    // 调用后端接口提交
+    await inventoryApi.scan({
+      partName: form.value.materialCode,
+      position: form.value.storageLocation,
+      actualQty: Number(form.value.actualQty),
+    });
+
+    // 保存到本地数据库（可选，用于离线记录或历史记录）
+    const session = inventoryStore.currentSession;
     const count = {
-      sessionId: session.id!,
+      sessionId: session?.id || 'temp-session',
       materialCode: form.value.materialCode,
-      materialName: form.value.materialName,
       actualQty: Number(form.value.actualQty),
       storageLocation: form.value.storageLocation,
-      remark: form.value.remark,
       ts: Date.now(),
-      synced: false,
+      synced: true, // 既然已经 API 提交成功，标记为已同步
     };
 
     await db.counts.add(count);
-    
-    // TODO: 添加到待同步队列
-    await db.pending_ops.add({
-      type: 'count',
-      payload: count,
-      ts: Date.now(),
-      retries: 0,
+
+    showToast({
+      type: 'success',
+      message: '提交成功',
+      duration: 1000,
     });
 
-    router.back();
-  } catch (error) {
+    // 提交成功后返回扫码页面
+    setTimeout(() => {
+      router.replace({ name: 'Scanner' });
+    }, 500);
+  } catch (error: any) {
     console.error('[CountEntry] Failed to submit:', error);
+    const message = error?.message || '提交失败';
+    showToast({
+      type: 'fail',
+      message: message,
+      duration: 2000,
+    });
+  } finally {
+    loading.value = false;
   }
 }
 </script>

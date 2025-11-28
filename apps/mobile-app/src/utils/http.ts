@@ -13,17 +13,16 @@ function getDynamicBaseURL(): string {
     if (env?.VITE_API_BASE_URL) {
       return env.VITE_API_BASE_URL;
     }
-    
-    // 生产环境或非开发环境：直接使用生产环境后端
-    if (env?.PROD || !env?.DEV) {
-      return 'https://api.bellis.com.cn/api';
+    // 允许通过 VITE_DIRECT_API_BASE_URL 指向特定调试地址（需自行信任证书）
+    if (env?.VITE_DIRECT_API_BASE_URL) {
+      return env.VITE_DIRECT_API_BASE_URL;
     }
   } catch (e) {
-    // 如果 import.meta 不可用（生产环境构建后），直接使用生产环境后端
-    return 'https://api.bellis.com.cn/api';
+    // 运行时无法访问 import.meta 时（如真机 WebView），统一走 /api（由 Nginx 代理）
+    return '/api';
   }
-  
-  // 开发环境：使用相对路径（通过代理）
+
+  // 默认：全部走 /api，让 Nginx 处理真正的后端地址，避免浏览器证书错误
   return '/api';
 }
 
@@ -55,7 +54,7 @@ export class Http {
         const dynamicBaseURL = getDynamicBaseURL();
         config.baseURL = dynamicBaseURL;
         this.axiosInstance.defaults.baseURL = dynamicBaseURL;
-        
+
         // 从 cookie 或 localStorage 获取 token
         const cookieToken = getCookie('access_token');
         const authStore = useAuthStore();
@@ -107,7 +106,7 @@ export class Http {
     // 响应拦截器
     const onFulfilled = (response: any) => {
       // 检查是否是登录接口的响应
-      const isLoginResponse = response.config?.url?.includes('/login');
+      const isLoginResponse = response.config?.url?.includes('/login') || response.config?.url?.includes('/register');
 
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {
@@ -115,9 +114,18 @@ export class Http {
         const authStore = useAuthStore();
 
         // 从响应体中提取 token
+        // 支持多种字段名：access_token, accessToken, token
+        // 同时检查响应是否被包装在 data 字段中
         let tokenFromBody: string | null = null;
         if (originalResponseData) {
-          tokenFromBody = originalResponseData.token || originalResponseData.accessToken;
+          // 直接检查响应数据
+          tokenFromBody = originalResponseData.access_token || originalResponseData.accessToken || originalResponseData.token;
+
+          // 如果响应数据被包装在 data 字段中
+          if (!tokenFromBody && originalResponseData.data) {
+            const data = originalResponseData.data;
+            tokenFromBody = data.access_token || data.accessToken || data.token;
+          }
         }
 
         // 如果从响应体中找到了 token，立即保存
@@ -149,7 +157,7 @@ export class Http {
       if (error.response) {
         // 服务器返回了错误状态码
         const { status, data } = error.response;
-        
+
         // 401 未授权，清除 token
         if (status === 401) {
           const authStore = useAuthStore();

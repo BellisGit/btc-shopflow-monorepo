@@ -16,8 +16,9 @@ export interface LoginResponse {
     email?: string;
     [key: string]: any;
   };
-  token?: string;
-  accessToken?: string;
+  access_token?: string; // 后端返回的字段名（下划线）
+  accessToken?: string; // 驼峰命名
+  token?: string; // 通用 token 字段
   [key: string]: any;
 }
 
@@ -31,6 +32,15 @@ export interface SmsLoginRequest {
 }
 
 /**
+ * 注册请求参数
+ */
+export interface RegisterRequest {
+  username: string;
+  phone: string;
+  smsCode: string;
+}
+
+/**
  * 认证 API 基础路径
  */
 const baseUrl = '/system/auth';
@@ -41,7 +51,7 @@ const baseUrl = '/system/auth';
 export const authApi = {
   /**
    * 发送手机号验证码
-   * @param data 手机号和验证码类型
+   * @param data 手机号和验证码类型（'login' | 'register' | 'reset' 等）
    * @returns Promise<void>
    */
   sendSmsCode(data: { phone: string; smsType?: string }): Promise<void> {
@@ -55,6 +65,23 @@ export const authApi = {
    */
   loginBySms(data: SmsLoginRequest): Promise<LoginResponse> {
     return requestAdapter.post(`${baseUrl}/login/sms`, data, { notifySuccess: false });
+  },
+
+  /**
+   * 用户注册
+   * @param data 用户名、手机号和短信验证码
+   * @returns 注册响应（包含 token 和用户信息）
+   */
+  register(data: RegisterRequest): Promise<LoginResponse> {
+    return requestAdapter.post(`${baseUrl}/register`, data, { notifySuccess: false });
+  },
+
+  /**
+   * 退出登录
+   * @returns Promise<void>
+   */
+  logout(): Promise<void> {
+    return requestAdapter.get(`${baseUrl}/logout`);
   },
 };
 

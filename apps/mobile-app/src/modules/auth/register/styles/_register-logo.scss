@@ -1,0 +1,25 @@
+.register-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 60px;
+
+  &__wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  // 提示文字样式
+  &__text {
+    font-size: 20px; // 提高字号，增强可读性
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9); // 提高颜色透明度，更清晰
+    line-height: 1.6;
+    width: 100%; // 使用完整宽度
+    letter-spacing: 0.5px;
+  }
+}
+

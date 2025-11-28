@@ -38,10 +38,10 @@ export interface InventorySession {
 
 export interface Count {
   id?: number;
-  sessionId: number;
+  sessionId: number | string;
   baseId?: string;
   materialCode: string;
-  materialName: string;
+  materialName?: string;
   specification?: string;
   unit?: string;
   batchNo?: string;

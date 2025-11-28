@@ -22,7 +22,9 @@
         <BtcImportBtn :on-submit="handleImport" />
       </template>
       <template #actions>
-        <BtcExportBtn :filename="t('menu.inventory.dataSource.list')" />
+        <el-button type="info" @click="exportMaterialTemplate">
+          {{ t('ui.export') }}
+        </el-button>
       </template>
     </BtcTableGroup>
   </div>
@@ -31,9 +33,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
+import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
 defineOptions({
@@ -55,7 +57,7 @@ const domainService = {
 };
 
 // 物料信息表服务（右侧表），使用后端API
-const materialService = service.system?.base?.inventoryMaterial;
+const materialService = service.system?.base?.data;
 
 const wrappedMaterialService = {
   ...materialService,
@@ -74,17 +76,36 @@ const onDomainSelect = (domain: any) => {
 // 处理导入
 const handleImport = async (data: any, { done, close }: { done: () => void; close: () => void }) => {
   try {
-    // TODO: 调用导入接口
-    // const formData = new FormData();
-    // if (data.file) {
-    //   formData.append('file', data.file);
-    // }
-    // await service.system?.base?.inventoryMaterial?.import(formData);
+    const rows = (data?.list || data?.rows || []).map((row: Record<string, any>) => {
+      const { _index, ...rest } = row || {};
+      return rest;
+    });
+    if (!rows.length) {
+      const warnMessage = data?.filename
+        ? t('common.import.no_data_or_mapping')
+        : t('inventory.dataSource.list.import.no_file');
+      message.warning(warnMessage);
+      done();
+      return;
+    }
+
+    const payload = rows.map((row: Record<string, any>) => ({
+      materialCode: row.materialCode,
+      materialName: row.materialName,
+      specification: row.specification,
+      unit: row.unit,
+      category: row.category,
+      status: row.status,
+      remark: row.remark,
+    }));
+
+    await service.system?.base?.data?.import?.(payload);
+
     message.success(t('inventory.dataSource.list.import.success'));
-    // 刷新表格
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
+    console.error('[InventoryList] import failed:', error);
     message.error(t('inventory.dataSource.list.import.failed'));
     done();
   }
@@ -126,6 +147,14 @@ const materialFormItems = computed<FormItem[]>(() => [
   },
   { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
+
+const exportMaterialTemplate = () => {
+  exportTableToExcel({
+    columns: materialColumns.value,
+    data: [],
+    filename: `data_${t('menu.inventory.dataSource.list')}`,
+  });
+};
 </script>
 
 <style lang="scss" scoped>

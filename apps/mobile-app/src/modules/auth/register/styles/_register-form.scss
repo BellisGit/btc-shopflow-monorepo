@@ -1,0 +1,123 @@
+.register-form {
+  width: 100%;
+  max-width: 320px; // 与登录页表单宽度一致
+  margin: 0 auto;
+  
+  // 复用登录页输入框样式
+  &__field-wrapper {
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  &__field {
+    :deep(.van-cell) {
+      background: rgba(60, 60, 60, 0.8) !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 24px !important;
+      padding: 14px 20px !important;
+      min-height: 52px !important; // 统一所有输入框高度
+      height: 52px !important; // 固定高度，确保验证码输入框与其他一致
+      transition: all 0.3s ease;
+      color: #fff !important;
+      overflow: hidden !important;
+      display: flex !important;
+      align-items: center !important; // 垂直居中
+
+      &:focus-within {
+        background: rgba(70, 70, 70, 0.9) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.1) !important;
+      }
+    }
+
+    // 禁用状态
+    :deep(.van-field--disabled.van-cell) {
+      background: rgba(60, 60, 60, 0.6) !important;
+      border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    // 确保验证码输入框的按钮区域不影响高度
+    :deep(.van-field__button) {
+      display: flex;
+      align-items: center;
+    }
+
+    :deep(.van-field__label) {
+      color: #fff !important;
+      font-weight: 500;
+    }
+
+    :deep(.van-field__control) {
+      color: #fff !important;
+      height: auto !important; // 让输入框内容自适应
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+      }
+
+      &:disabled {
+        color: rgba(255, 255, 255, 0.7) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+      }
+    }
+  }
+
+  &__sms-button {
+    background: linear-gradient(135deg, #5C6BC0 0%, #3949AB 100%); // 改为蓝紫色渐变，与页面风格协调
+    border: none;
+    border-radius: 16px !important;
+    color: #fff;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    height: 32px !important; // 固定按钮高度，确保不影响输入框高度
+    padding: 0 12px !important;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #6C7BD0 0%, #4959BB 100%);
+      transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: linear-gradient(135deg, #5C6BC0 0%, #3949AB 100%);
+    }
+  }
+
+  &__submit-btn {
+    margin-top: 32px;
+    width: 100%; // 与输入框宽度一致
+    height: 50px;
+    border-radius: 12px !important;
+    background: #2196F3 !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: block;
+
+    &:hover:not(:disabled) {
+      background: #1976D2 !important;
+    }
+
+    &:active:not(:disabled) {
+      background: #1565C0 !important;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: #2196F3 !important;
+    }
+  }
+}
+
+
+

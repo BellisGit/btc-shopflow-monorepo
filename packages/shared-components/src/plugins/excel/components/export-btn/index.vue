@@ -137,7 +137,7 @@ const dataTimeRange = ref<{ min: string; max: string } | null>(null);
 
 // 获取数据的时间范围
 const fetchDataTimeRange = async () => {
-  if (!crud?.service) {
+  if (!crud?.service || typeof crud.service.page !== 'function') {
     return null;
   }
 

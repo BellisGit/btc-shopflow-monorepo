@@ -146,39 +146,18 @@ jobs:
             packages/*/build
           key: packages-build-${{ github.sha }}
 
-  # 步骤2: 每个应用独立构建和部署（并行执行，互不影响）
-  build-deploy-app:
-    name: Build & Deploy ${{ matrix.app }}
+  # 步骤2: 每个应用独立构建和部署（8个并行Job）
+  build-deploy-system-app:
+    name: Build & Deploy system-app
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: system-app
-            port: "30080"
-            container_name: btc-system-app
-          - app: admin-app
-            port: "30081"
-            container_name: btc-admin-app
-          - app: logistics-app
-            port: "30082"
-            container_name: btc-logistics-app
-          - app: quality-app
-            port: "30083"
-            container_name: btc-quality-app
-          - app: production-app
-            port: "30084"
-            container_name: btc-production-app
-          - app: engineering-app
-            port: "30085"
-            container_name: btc-engineering-app
-          - app: finance-app
-            port: "30086"
-            container_name: btc-finance-app
-          - app: mobile-app
-            port: "30091"
-            container_name: btc-mobile-app
+    env:
+      APP_NAME: system-app
+      APP_DIR: apps/system-app
+      APP_PORT: "30080"
+      CONTAINER_NAME: btc-system-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -239,13 +218,13 @@ jobs:
       
       - name: Clean build artifacts
         run: |
-          echo "🧹 清理 ${{ matrix.app }} 的构建产物..."
-          rm -rf apps/${{ matrix.app }}/dist
-          rm -rf apps/${{ matrix.app }}/build
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build ${{ matrix.app }}
-        run: cd apps/${{ matrix.app }} && pnpm run build
+      - name: Build system-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -253,7 +232,7 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ needs.detect-image-tag.outputs.registry }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ github.token }}
       
@@ -269,19 +248,19 @@ jobs:
           context: .
           file: ./Dockerfile
           build-args: |
-            APP_DIR=apps/${{ matrix.app }}
+            APP_DIR=${{ env.APP_DIR }}
           push: true
           tags: |
-            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:latest
-            ${{ needs.detect-image-tag.outputs.registry }}/${{ steps.tags.outputs.repository_lower }}/${{ matrix.app }}:${{ needs.detect-image-tag.outputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
         env:
           DOCKER_BUILDKIT: 1
-      
-      - name: Deploy ${{ matrix.app }}
+
+      - name: Deploy system-app
         uses: appleboy/ssh-action@v1.0.3
-        with:
+    with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER || 'root' }}
           key: ${{ secrets.SERVER_KEY }}
@@ -291,13 +270,12 @@ jobs:
           script: |
             set -e
             
-            APP_NAME="${{ matrix.app }}"
-            IMAGE_TAG="${{ needs.detect-image-tag.outputs.image_tag }}"
-            PORT="${{ matrix.port }}"
-            CONTAINER_NAME="${{ matrix.container_name }}"
-            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
             REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            REGISTRY="${{ needs.detect-image-tag.outputs.registry }}"
             IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
             
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -308,19 +286,16 @@ jobs:
             echo "Port: $PORT"
             echo ""
             
-            # 登录到 GHCR（带超时和重试机制）
             echo "🔐 Logging into container registry..."
             mkdir -p /tmp/.docker
             export DOCKER_CONFIG=/tmp/.docker
             
-            # 使用 GitHub Token 登录
             if [ -n "${{ secrets.SERVER_PAT }}" ]; then
               TOKEN="${{ secrets.SERVER_PAT }}"
             else
               TOKEN="${{ github.token }}"
             fi
             
-            # Docker 登录函数（带超时和重试）
             docker_login_with_timeout() {
               local registry=$1
               local username=$2
@@ -359,13 +334,11 @@ jobs:
               return 1
             }
             
-            # 执行登录
             if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
               echo "[ERROR] 无法登录到 $REGISTRY"
               exit 1
             fi
             
-            # 拉取镜像的函数（带超时和重试）
             pull_image_with_timeout() {
               local image=$1
               local timeout_seconds=${2:-300}
@@ -402,14 +375,11 @@ jobs:
               return 1
             }
             
-            # 强制拉取最新镜像（禁用缓存）
             echo "📥 Pulling Docker image from $REGISTRY..."
             echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
-
-            # 先尝试删除本地可能存在的旧镜像
             docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
             docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
-
+            
             if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
               echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
               if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
@@ -419,19 +389,16 @@ jobs:
               IMAGE_TAG="latest"
             fi
             
-            # 标记为本地镜像
             docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
             echo "✅ Image pulled and tagged successfully"
             
             echo "🔄 Updating container..."
             
-            # 停止并删除现有容器
             echo "📋 清理现有容器: $CONTAINER_NAME"
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
             docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
             docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
             
-            # 检查并停止占用端口的容器
             echo "🔍 检查端口 $PORT 占用情况..."
             PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
             if [ -n "$PORT_CONTAINERS" ]; then
@@ -444,7 +411,6 @@ jobs:
               done
             fi
             
-            # 等待端口释放
             echo "⏳ 等待端口 $PORT 释放..."
             for i in {1..10}; do
               ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
@@ -455,20 +421,17 @@ jobs:
               sleep 1
             done
             
-            # 检查并创建网络
             echo "🌐 检查 Docker 网络..."
             if ! docker network inspect btc-network >/dev/null 2>&1; then
               echo "📦 创建 Docker 网络: btc-network"
               docker network create btc-network || true
             fi
             
-            # 验证镜像是否存在
             if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
               echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
               exit 1
             fi
             
-            # 创建 docker-compose 配置
             COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
             {
               echo "version: '3.8'"
@@ -486,7 +449,6 @@ jobs:
               echo "    external: true"
             } > "$COMPOSE_FILE"
             
-            # 检测 docker-compose 命令
             DOCKER_COMPOSE_CMD=""
             if command -v docker-compose >/dev/null 2>&1; then
               DOCKER_COMPOSE_CMD="docker-compose"
@@ -497,7 +459,6 @@ jobs:
               exit 1
             fi
             
-            # 启动容器
             echo "🚀 启动新容器..."
             if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
               echo "[ERROR] 容器启动失败"
@@ -506,7 +467,2442 @@ jobs:
             
             sleep 5
             
-            # 验证容器状态
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-admin-app:
+    name: Build & Deploy admin-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: admin-app
+      APP_DIR: apps/admin-app
+      APP_PORT: "30081"
+      CONTAINER_NAME: btc-admin-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+    with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+    with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build admin-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy admin-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-logistics-app:
+    name: Build & Deploy logistics-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: logistics-app
+      APP_DIR: apps/logistics-app
+      APP_PORT: "30082"
+      CONTAINER_NAME: btc-logistics-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build logistics-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy logistics-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-quality-app:
+    name: Build & Deploy quality-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: quality-app
+      APP_DIR: apps/quality-app
+      APP_PORT: "30083"
+      CONTAINER_NAME: btc-quality-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build quality-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy quality-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-production-app:
+    name: Build & Deploy production-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: production-app
+      APP_DIR: apps/production-app
+      APP_PORT: "30084"
+      CONTAINER_NAME: btc-production-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build production-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy production-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-engineering-app:
+    name: Build & Deploy engineering-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: engineering-app
+      APP_DIR: apps/engineering-app
+      APP_PORT: "30085"
+      CONTAINER_NAME: btc-engineering-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build engineering-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy engineering-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-finance-app:
+    name: Build & Deploy finance-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: finance-app
+      APP_DIR: apps/finance-app
+      APP_PORT: "30086"
+      CONTAINER_NAME: btc-finance-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build finance-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy finance-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
+            echo "🔍 验证容器状态..."
+            CONTAINER_ID=""
+            MAX_WAIT=30
+            WAIT_INTERVAL=2
+            ELAPSED=0
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              CONTAINER_ID=$(docker ps --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | head -1 || echo "")
+              if [ -n "$CONTAINER_ID" ]; then
+                echo "✅ 容器正在运行"
+                break
+              fi
+              ELAPSED=$((ELAPSED + WAIT_INTERVAL))
+              sleep $WAIT_INTERVAL
+            done
+            
+            if [ -z "$CONTAINER_ID" ]; then
+              echo "[ERROR] 容器验证超时！"
+              exit 1
+            fi
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f || true
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "✅ Deployment completed!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  build-deploy-mobile-app:
+    name: Build & Deploy mobile-app
+    needs: [detect-image-tag, build-shared-deps]
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: mobile-app
+      APP_DIR: apps/mobile-app
+      APP_PORT: "30091"
+      CONTAINER_NAME: btc-mobile-app
+      IMAGE_TAG: ${{ needs.detect-image-tag.outputs.image_tag }}
+      REGISTRY: ${{ needs.detect-image-tag.outputs.registry }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline
+      
+      - name: Restore built packages cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            packages/*/dist
+            packages/*/build
+          key: packages-build-${{ github.sha }}
+          restore-keys: |
+            packages-build-
+      
+      - name: Build shared dependencies (fallback)
+        continue-on-error: true
+        run: |
+          echo "🔨 检查并构建共享依赖包（如果缓存未命中）..."
+          echo "📦 构建 @btc/vite-plugin..."
+          pnpm --filter @btc/vite-plugin run build --force || pnpm --filter @btc/vite-plugin run build || true
+          
+          echo "📦 构建 @btc/shared-utils..."
+          pnpm --filter @btc/shared-utils run build --force || pnpm --filter @btc/shared-utils run build || true
+          
+          echo "📦 构建 @btc/shared-core..."
+          pnpm --filter @btc/shared-core run build --force || pnpm --filter @btc/shared-core run build || true
+          
+          echo "📦 构建 @btc/shared-components..."
+          pnpm --filter @btc/shared-components run build --force || pnpm --filter @btc/shared-components run build || true
+          
+          echo "📦 构建 @btc/subapp-manifests..."
+          pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || true
+      
+      - name: Clean build artifacts
+        run: |
+          echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          rm -rf ${{ env.APP_DIR }}/dist
+          rm -rf ${{ env.APP_DIR }}/build
+          echo "✅ 清理完成"
+      
+      - name: Build mobile-app
+        run: cd ${{ env.APP_DIR }} && pnpm run build
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      
+      - name: Prepare Docker tags
+        id: tags
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repository_lower=$REPO_LOWER" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_DIR=${{ env.APP_DIR }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.tags.outputs.repository_lower }}/${{ env.APP_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILDKIT: 1
+      
+      - name: Deploy mobile-app
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: ${{ secrets.SERVER_PORT || '22' }}
+          timeout: 1800s
+          command_timeout: 20m
+          script: |
+            set -e
+            
+            APP_NAME="${{ env.APP_NAME }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            PORT="${{ env.APP_PORT }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME="$REGISTRY/$REPO_LOWER/$APP_NAME"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 Starting BTC ShopFlow Deployment"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "App: $APP_NAME"
+            echo "Image: $IMAGE_NAME:$IMAGE_TAG"
+            echo "Port: $PORT"
+            echo ""
+            
+            echo "🔐 Logging into container registry..."
+            mkdir -p /tmp/.docker
+            export DOCKER_CONFIG=/tmp/.docker
+            
+            if [ -n "${{ secrets.SERVER_PAT }}" ]; then
+              TOKEN="${{ secrets.SERVER_PAT }}"
+            else
+              TOKEN="${{ github.token }}"
+            fi
+            
+            docker_login_with_timeout() {
+              local registry=$1
+              local username=$2
+              local token=$3
+              local timeout_seconds=${4:-30}
+              local max_retries=${5:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试登录到 $registry (第 $retry_count/$max_retries 次)..."
+                
+                START_TIME=$(date +%s)
+                
+                if echo "$token" | timeout $timeout_seconds docker login "$registry" -u "$username" --password-stdin 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 登录成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  登录超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 登录失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 3 秒后重试..."
+                    sleep 3
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            if ! docker_login_with_timeout "$REGISTRY" "${{ github.actor }}" "$TOKEN" 30 3; then
+              echo "[ERROR] 无法登录到 $REGISTRY"
+              exit 1
+            fi
+            
+            pull_image_with_timeout() {
+              local image=$1
+              local timeout_seconds=${2:-300}
+              local max_retries=${3:-3}
+              local retry_count=0
+              
+              while [ $retry_count -lt $max_retries ]; do
+                retry_count=$((retry_count + 1))
+                echo "🔄 尝试拉取镜像 (第 $retry_count/$max_retries 次): $image"
+                
+                START_TIME=$(date +%s)
+                
+                if timeout $timeout_seconds docker pull "$image" 2>&1; then
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  echo "✅ 镜像拉取成功 (耗时: ${ELAPSED} 秒)"
+                  return 0
+                else
+                  EXIT_CODE=$?
+                  ELAPSED=$(($(date +%s) - START_TIME))
+                  
+                  if [ $EXIT_CODE -eq 124 ]; then
+                    echo "⏱️  拉取超时 (${timeout_seconds} 秒)"
+                  else
+                    echo "❌ 拉取失败 (退出码: $EXIT_CODE, 耗时: ${ELAPSED} 秒)"
+                  fi
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                    echo "⏳ 等待 10 秒后重试..."
+                    sleep 10
+                  fi
+                fi
+              done
+              
+              return 1
+            }
+            
+            echo "📥 Pulling Docker image from $REGISTRY..."
+            echo "🔄 强制拉取最新镜像: $IMAGE_NAME:$IMAGE_TAG"
+            docker rmi "$IMAGE_NAME:$IMAGE_TAG" 2>/dev/null || true
+            docker rmi "$IMAGE_NAME:latest" 2>/dev/null || true
+            
+            if ! pull_image_with_timeout "$IMAGE_NAME:$IMAGE_TAG" 300 3; then
+              echo "⚠️  无法拉取 $IMAGE_NAME:$IMAGE_TAG，尝试 latest 标签..."
+              if ! pull_image_with_timeout "$IMAGE_NAME:latest" 300 3; then
+                echo "[ERROR] 无法从 $REGISTRY 拉取镜像"
+                exit 1
+              fi
+              IMAGE_TAG="latest"
+            fi
+            
+            docker tag "$IMAGE_NAME:$IMAGE_TAG" "btc-shopflow/$APP_NAME:latest" 2>/dev/null || true
+            echo "✅ Image pulled and tagged successfully"
+            
+            echo "🔄 Updating container..."
+            
+            echo "📋 清理现有容器: $CONTAINER_NAME"
+            docker stop "$CONTAINER_NAME" 2>/dev/null || true
+            docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+            docker ps -a --filter "name=^${CONTAINER_NAME}$" --format "{{.ID}}" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+            
+            echo "🔍 检查端口 $PORT 占用情况..."
+            PORT_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | awk '{print $1}' || true)
+            if [ -n "$PORT_CONTAINERS" ]; then
+              echo "$PORT_CONTAINERS" | while read -r container; do
+                if [ -n "$container" ] && [ "$container" != "$CONTAINER_NAME" ]; then
+                  echo "🛑 停止容器: $container"
+                  docker stop "$container" 2>/dev/null || true
+                  docker rm -f "$container" 2>/dev/null || true
+                fi
+              done
+            fi
+            
+            echo "⏳ 等待端口 $PORT 释放..."
+            for i in {1..10}; do
+              ACTIVE_CONTAINERS=$(docker ps --format "{{.Names}}\t{{.Ports}}" | grep ":$PORT->" | wc -l || echo "0")
+              if [ "$ACTIVE_CONTAINERS" = "0" ]; then
+                echo "✅ 端口 $PORT 已释放"
+                break
+              fi
+              sleep 1
+            done
+            
+            echo "🌐 检查 Docker 网络..."
+            if ! docker network inspect btc-network >/dev/null 2>&1; then
+              echo "📦 创建 Docker 网络: btc-network"
+              docker network create btc-network || true
+            fi
+            
+            if ! docker images | grep -q "btc-shopflow/$APP_NAME.*latest"; then
+              echo "[ERROR] 镜像不存在: btc-shopflow/$APP_NAME:latest"
+              exit 1
+            fi
+            
+            COMPOSE_FILE="docker-compose.${APP_NAME}.yml"
+            {
+              echo "version: '3.8'"
+              echo "services:"
+              echo "  $APP_NAME:"
+              echo "    image: btc-shopflow/$APP_NAME:latest"
+              echo "    container_name: $CONTAINER_NAME"
+              echo "    ports:"
+              echo "      - \"$PORT:80\""
+              echo "    restart: unless-stopped"
+              echo "    networks:"
+              echo "      - btc-network"
+              echo "networks:"
+              echo "  btc-network:"
+              echo "    external: true"
+            } > "$COMPOSE_FILE"
+            
+            DOCKER_COMPOSE_CMD=""
+            if command -v docker-compose >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker-compose"
+            elif docker compose version >/dev/null 2>&1; then
+              DOCKER_COMPOSE_CMD="docker compose"
+            else
+              echo "[ERROR] 未找到 docker-compose 或 docker compose 命令"
+              exit 1
+            fi
+            
+            echo "🚀 启动新容器..."
+            if ! $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d; then
+              echo "[ERROR] 容器启动失败"
+              exit 1
+            fi
+            
+            sleep 5
+            
             echo "🔍 验证容器状态..."
             CONTAINER_ID=""
             MAX_WAIT=30
@@ -538,13 +2934,20 @@ jobs:
   # 步骤3: 总结成功和失败的应用
   summary:
     name: Summary
-    needs: [detect-image-tag, build-deploy-app]
+    needs: 
+      - detect-image-tag
+      - build-deploy-system-app
+      - build-deploy-admin-app
+      - build-deploy-logistics-app
+      - build-deploy-quality-app
+      - build-deploy-production-app
+      - build-deploy-engineering-app
+      - build-deploy-finance-app
+      - build-deploy-mobile-app
     if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      checks: read
-      actions: read
     outputs:
       successful_apps: ${{ steps.collect.outputs.successful_apps }}
       failed_apps: ${{ steps.collect.outputs.failed_apps }}
@@ -552,77 +2955,44 @@ jobs:
       success_count: ${{ steps.collect.outputs.success_count }}
       fail_count: ${{ steps.collect.outputs.fail_count }}
     steps:
-      - name: Install jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-      
       - name: Collect results
         id: collect
         run: |
-          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
           SUCCESSFUL_APPS=()
           FAILED_APPS=()
           
-          # 检查每个应用的构建和部署状态
-          # 由于使用了 matrix，每个应用都有独立的 job 实例
-          # 我们需要通过 GitHub API 来获取每个 matrix job 的结果
-          
           echo "🔍 开始收集各应用的构建和部署结果..."
           
-          # 使用 GitHub API 获取当前 workflow run 的 jobs
-          RUN_ID="${{ github.run_id }}"
-          REPO="${{ github.repository }}"
-          TOKEN="${{ github.token }}"
-          
-          # 获取所有 jobs（可能需要分页）
-          JOBS_JSON=$(curl -s -H "Authorization: token $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$REPO/actions/runs/$RUN_ID/jobs?per_page=100")
-          
-          # 检查 API 调用是否成功
-          if [ $? -ne 0 ] || [ -z "$JOBS_JSON" ]; then
-            echo "⚠️  无法从 GitHub API 获取 jobs 信息，使用简化逻辑..."
-            # 使用简化逻辑：如果整体 job 成功，假设所有应用都成功
-            OVERALL_RESULT="${{ needs.build-deploy-app.result }}"
-            if [ "$OVERALL_RESULT" = "success" ]; then
-              for app in "${APPS[@]}"; do
-                SUCCESSFUL_APPS+=("$app")
-                echo "✅ $app: 假设成功（整体状态: $OVERALL_RESULT）"
-              done
-            else
-              for app in "${APPS[@]}"; do
-                FAILED_APPS+=("$app")
-                echo "❌ $app: 假设失败（整体状态: $OVERALL_RESULT）"
-              done
+          # 直接读取每个job的结果
+          check_app() {
+            local app_name=$1
+            local job_result=$2
+            
+            if [ -z "$job_result" ]; then
+              job_result="unknown"
             fi
-          else
-            # 解析每个应用的状态
-            for app in "${APPS[@]}"; do
-              # 查找对应的 job（job 名称格式: "Build & Deploy {app}"）
-              JOB_NAME="Build & Deploy $app"
-              
-              # 从 JSON 中提取 job 状态
-              JOB_RESULT=$(echo "$JOBS_JSON" | jq -r --arg name "$JOB_NAME" '.jobs[] | select(.name == $name) | .conclusion' | head -1)
-              
-              if [ -z "$JOB_RESULT" ] || [ "$JOB_RESULT" = "null" ]; then
-                # 如果找不到 job，标记为未知
-                echo "⚠️  无法从 API 获取 $app 的状态"
-                JOB_RESULT="unknown"
-              fi
-              
-              echo "  $app: $JOB_RESULT"
-              
-              # 判断成功或失败
-              if [ "$JOB_RESULT" = "success" ]; then
-                SUCCESSFUL_APPS+=("$app")
-                echo "✅ $app: 构建和部署都成功"
-              else
-                FAILED_APPS+=("$app")
-                echo "❌ $app: 状态 = $JOB_RESULT"
-              fi
-            done
-          fi
+            
+            echo "  $app_name: $job_result"
+            
+            if [ "$job_result" = "success" ]; then
+              SUCCESSFUL_APPS+=("$app_name")
+              echo "✅ $app_name: 构建和部署都成功"
+            else
+              FAILED_APPS+=("$app_name")
+              echo "❌ $app_name: 状态 = $job_result"
+            fi
+          }
+          
+          check_app "system-app" "${{ needs.build-deploy-system-app.result }}"
+          check_app "admin-app" "${{ needs.build-deploy-admin-app.result }}"
+          check_app "logistics-app" "${{ needs.build-deploy-logistics-app.result }}"
+          check_app "quality-app" "${{ needs.build-deploy-quality-app.result }}"
+          check_app "production-app" "${{ needs.build-deploy-production-app.result }}"
+          check_app "engineering-app" "${{ needs.build-deploy-engineering-app.result }}"
+          check_app "finance-app" "${{ needs.build-deploy-finance-app.result }}"
+          check_app "mobile-app" "${{ needs.build-deploy-mobile-app.result }}"
+          
+          APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
           
           # 生成输出
           if [ ${#SUCCESSFUL_APPS[@]} -gt 0 ]; then

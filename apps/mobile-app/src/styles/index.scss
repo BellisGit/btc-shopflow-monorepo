@@ -1,10 +1,81 @@
 // 移动端全局样式
 // 注意：所有样式应使用全局样式文件，禁止内联或局部样式
 
+// 全局页面容器适配 - 所有页面都适用
+// 确保页面内容考虑浏览器地址栏、导航栏和安全区域
+// 注意：页面可以通过自己的样式覆盖这些默认值
+[class$="-page"] {
+  min-height: 100vh;
+  min-height: 100dvh; // 动态视口高度，适配移动端浏览器地址栏
+  
+  // 为安全区域留出空间
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+// Vant Toast 全局样式覆盖
+.van-toast {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+  
+  .van-toast__text {
+    color: #fff !important;
+  }
+  
+  .van-icon {
+    color: #fff !important;
+  }
+  
+  // 成功提示
+  &.van-toast--success {
+    .van-icon {
+      color: #07c160 !important;
+    }
+  }
+  
+  // 失败提示
+  &.van-toast--fail {
+    .van-icon {
+      color: #ee0a24 !important;
+    }
+  }
+}
+
+// 登录页面输入框圆角 - 全局强制覆盖
+.login-page {
+  .form-field-wrapper {
+    .van-cell {
+      border-radius: 24px !important;
+      overflow: hidden !important;
+    }
+  }
+}
+
+// 注册页面输入框圆角 - 全局强制覆盖
+.register-page {
+  .register-form__field-wrapper {
+    .van-cell {
+      border-radius: 24px !important;
+      overflow: hidden !important;
+    }
+  }
+  
+  // 注册页面导航栏 - 移除底部边框
+  .register-page__nav.van-hairline--bottom::after {
+    display: none !important;
+  }
+}
+
 .mobile-layout {
   display: flex;
   flex-direction: column;
   height: 100%;
+  
+  // 强制隐藏所有导航栏
+  :deep(.van-nav-bar) {
+    display: none !important;
+  }
 }
 
 .mobile-layout__content {
@@ -32,13 +103,35 @@
 
 .scanner-page {
   position: relative;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh; // 动态视口高度，适配移动端浏览器地址栏
+  height: 100vh;
+  height: 100dvh;
   background: #000;
+  overflow: hidden;
+  // 禁用页面缩放，只允许焦距调整
+  touch-action: pan-x pan-y;
+  // 防止双击缩放
+  -ms-touch-action: pan-x pan-y;
+  // 考虑安全区域
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  box-sizing: border-box;
 }
 
 .scanner-page__camera {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  // 考虑安全区域
+  top: env(safe-area-inset-top);
+  left: env(safe-area-inset-left);
+  width: calc(100% - env(safe-area-inset-left) - env(safe-area-inset-right));
+  height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 .scanner-page__camera video {
@@ -49,27 +142,137 @@
 
 .scanner-page__overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  // 考虑安全区域
+  top: env(safe-area-inset-top);
+  left: env(safe-area-inset-left);
+  right: env(safe-area-inset-right);
+  bottom: env(safe-area-inset-bottom);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+// 关闭按钮 - 带圆圈背景
+.scanner-page__close-btn {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  
+  &:active {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(0.95);
+  }
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #333;
+    stroke: #333;
+  }
 }
 
-.scanner-page__frame {
-  width: 250px;
-  height: 250px;
-  border: 2px solid #fff;
-  border-radius: 8px;
-}
-
-.scanner-page__actions {
+// 绿色扫描线（微信风格）- 限制在关闭按钮和手电筒之间
+.scanner-page__scan-line {
   position: absolute;
-  bottom: 32px;
-  left: 16px;
-  right: 16px;
+  left: 0;
+  // 从关闭按钮下方开始
+  top: calc(60px + env(safe-area-inset-top)); // 28px按钮 + 16px间距 + 16px间距
+  width: 100%;
+  height: 4px;
+  // 方向性渐变：上方更亮，下方较暗，显示从上到下的方向性
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 193, 96, 1) 0%,
+    #07c160 10%,
+    rgba(7, 193, 96, 0.9) 20%,
+    rgba(7, 193, 96, 0.7) 40%,
+    rgba(7, 193, 96, 0.5) 60%,
+    rgba(7, 193, 96, 0.3) 80%,
+    rgba(7, 193, 96, 0.1) 95%,
+    transparent 100%
+  );
+  // 上方更亮的阴影效果
+  box-shadow: 
+    0 -2px 8px rgba(7, 193, 96, 0.8),
+    0 0 12px rgba(7, 193, 96, 0.6),
+    0 2px 4px rgba(7, 193, 96, 0.4);
+  z-index: 10;
+  transform: translateY(0);
+  border-radius: 2px;
+}
+
+// 提示文字
+.scanner-page__hint {
+  margin-top: 40px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+// 手电筒控制
+.scanner-page__flashlight {
+  position: absolute;
+  // 底部居中，考虑安全区域，提高高度
+  bottom: calc(120px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.3s ease;
+  
+  &--blinking {
+    animation: flashlight-blink 0.5s ease-in-out infinite;
+  }
+}
+
+.scanner-page__flashlight-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  // 将深色图标转换为白色，并添加阴影
+  filter: 
+    brightness(0) invert(1) 
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  display: block;
+}
+
+.scanner-page__flashlight-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes flashlight-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .count-entry-page {

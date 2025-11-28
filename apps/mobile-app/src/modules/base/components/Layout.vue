@@ -1,44 +1,37 @@
 <template>
   <div class="mobile-layout">
-    <NavBar
-      v-if="showNavBar"
-      :title="navTitle"
-      left-arrow
-      @click-left="handleBack"
-    />
     <main class="mobile-layout__content">
       <router-view />
     </main>
+    <Tabbar v-if="showTabbar" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { NavBar } from 'vant';
+import { useRoute } from 'vue-router';
+import Tabbar from './Tabbar.vue';
 
 defineOptions({
   name: 'BtcMobileLayout',
 });
 
 const route = useRoute();
-const router = useRouter();
 
-const showNavBar = computed(() => {
-  return route.meta.showNavBar !== false && route.name !== 'Home';
+// 显示底部导航栏的页面：主页、查询
+const showTabbar = computed(() => {
+  const tabbarRoutes = ['Home', 'Query'];
+  return tabbarRoutes.includes(route.name as string) || route.path === '/';
 });
+</script>
 
-const navTitle = computed(() => {
-  return (route.meta.title as string) || '拜里斯科技';
-});
-
-function handleBack() {
-  if (window.history.length > 1) {
-    router.back();
-  } else {
-    router.push({ name: 'Home' });
+<style lang="scss" scoped>
+.mobile-layout {
+  // 确保没有顶部导航栏
+  :deep(.van-nav-bar) {
+    display: none !important;
   }
 }
-</script>
+</style>
 
 

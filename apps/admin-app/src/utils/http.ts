@@ -4,6 +4,7 @@ import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
 import { getCookie, deleteCookie } from './cookie';
 import { appStorage } from './app-storage';
+import { config } from '../config';
 
 /**
  * HTTP 请求工具 - 基于 axios，参考 cool-admin 的实现
@@ -13,8 +14,8 @@ export class Http {
   private axiosInstance: any;
   private retryManager: ReturnType<typeof createHttpRetry>;
 
-  constructor(baseURL = '') {
-    this.baseURL = baseURL;
+  constructor(baseURL = config.api.baseURL) {
+    this.baseURL = baseURL || config.api.baseURL;
 
     // 创建重试管理器
     this.retryManager = createHttpRetry(RETRY_CONFIGS.standard);
@@ -480,7 +481,7 @@ export class Http {
   }
 }
 
-export const http = new Http('');
+export const http = new Http(config.api.baseURL);
 
 
 
