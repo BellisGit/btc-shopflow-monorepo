@@ -225,25 +225,51 @@ jobs:
       
       - name: Build system-app
         run: |
+          set -e  # 任何命令失败立即退出
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
+          
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
+          
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            echo "📋 当前目录内容:"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
+          
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
+          
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
+          
+          if [ ! -d "dist" ]; then
             echo "❌ 错误: dist 目录不存在"
+            echo "📋 当前目录内容:"
+            ls -la
             exit 1
           fi
+          
+          if [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录为空"
+            exit 1
+          fi
+          
+          echo "✅ dist 目录存在且不为空"
+          echo "📦 dist 目录内容:"
+          ls -la dist | head -20
+          echo ""
+          echo "📊 dist 目录文件统计:"
+          find dist -type f | wc -l
+          echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -278,14 +304,15 @@ jobs:
       - name: Verify Dockerfile and build context
         run: |
           echo "🔍 验证 Dockerfile 和构建上下文..."
+          echo "📂 当前工作目录: $(pwd)"
           echo "📋 检查 Dockerfile..."
           if [ ! -f "Dockerfile" ]; then
             echo "❌ 错误: Dockerfile 不存在"
             exit 1
           fi
           echo "✅ Dockerfile 存在"
-          echo "📋 检查 Dockerfile 内容（前 10 行）..."
-          head -10 Dockerfile
+          echo "📋 检查 Dockerfile 内容（前 15 行）..."
+          head -15 Dockerfile
           echo ""
           echo "📋 检查 docker/nginx.conf..."
           if [ ! -f "docker/nginx.conf" ]; then
@@ -294,14 +321,32 @@ jobs:
           fi
           echo "✅ docker/nginx.conf 存在"
           echo ""
-          echo "📋 验证构建产物..."
-          if [ ! -d "${{ env.APP_DIR }}/dist" ]; then
-            echo "❌ 错误: ${{ env.APP_DIR }}/dist 不存在"
+          echo "📋 验证构建产物（关键检查）..."
+          DIST_PATH="${{ env.APP_DIR }}/dist"
+          echo "📂 检查路径: $DIST_PATH"
+          echo "📂 绝对路径: $(pwd)/$DIST_PATH"
+          
+          if [ ! -d "$DIST_PATH" ]; then
+            echo "❌ 错误: $DIST_PATH 目录不存在"
+            echo "📋 列出 ${{ env.APP_DIR }}/ 目录内容:"
+            ls -la ${{ env.APP_DIR }}/ || true
+            echo "📋 列出根目录内容:"
+            ls -la | head -20
             exit 1
           fi
-          echo "✅ ${{ env.APP_DIR }}/dist 存在"
+          
+          if [ -z "$(ls -A $DIST_PATH 2>/dev/null)" ]; then
+            echo "❌ 错误: $DIST_PATH 目录为空"
+            exit 1
+          fi
+          
+          echo "✅ $DIST_PATH 存在且不为空"
           echo "📦 dist 目录内容:"
-          ls -la ${{ env.APP_DIR }}/dist | head -10
+          ls -la $DIST_PATH | head -20
+          echo ""
+          echo "📊 dist 目录文件统计:"
+          find $DIST_PATH -type f | wc -l
+          echo "个文件"
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -634,25 +679,34 @@ jobs:
       
       - name: Build admin-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -1015,25 +1069,34 @@ jobs:
       
       - name: Build logistics-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -1396,25 +1459,34 @@ jobs:
       
       - name: Build quality-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -1777,25 +1849,34 @@ jobs:
       
       - name: Build production-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -2158,25 +2239,34 @@ jobs:
       
       - name: Build engineering-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -2539,25 +2629,34 @@ jobs:
       
       - name: Build finance-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
@@ -2920,25 +3019,34 @@ jobs:
       
       - name: Build mobile-app
         run: |
+          set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
+          echo "📂 工作目录: $(pwd)"
+          echo "📋 APP_DIR: ${{ env.APP_DIR }}"
           cd ${{ env.APP_DIR }}
-          echo "📂 当前目录: $(pwd)"
+          echo "📂 切换到目录: $(pwd)"
           echo "📋 检查 package.json..."
           if [ ! -f "package.json" ]; then
             echo "❌ 错误: package.json 不存在"
+            ls -la
             exit 1
           fi
+          echo "✅ package.json 存在"
           echo "🚀 执行构建命令: pnpm run build"
-          pnpm run build
+          if ! pnpm run build; then
+            echo "❌ 构建命令失败"
+            exit 1
+          fi
           echo "✅ 构建命令执行完成"
           echo "📂 检查构建产物..."
-          if [ -d "dist" ]; then
-            echo "✅ dist 目录存在"
-            ls -la dist | head -10
-          else
-            echo "❌ 错误: dist 目录不存在"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ 错误: dist 目录不存在或为空"
+            ls -la
             exit 1
           fi
+          echo "✅ dist 目录存在且不为空"
+          ls -la dist | head -20
+          find dist -type f | wc -l | xargs echo "个文件"
       
       - name: Verify build artifacts
         run: |
