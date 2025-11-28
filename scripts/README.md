@@ -6,10 +6,46 @@
 
 ### 🚀 主要部署脚本
 
-#### `deploy.sh` - **生产环境部署脚本**
+#### `deploy-static.sh` - **静态文件部署脚本（推荐）**
+**用途**: 将构建好的静态文件直接部署到宝塔面板，无需 Docker  
+**技术**: rsync/scp + Nginx  
+**特点**: 部署速度快，资源占用少，配置简单
+
+**使用方法**:
+```bash
+# 部署单个应用
+./scripts/deploy-static.sh --app admin-app
+
+# 部署所有应用
+./scripts/deploy-static.sh --all
+
+# 使用 pnpm 命令
+pnpm deploy:static:admin
+pnpm deploy:static:all
+```
+
+**功能**:
+- 自动验证构建产物
+- 创建部署备份
+- 增量同步文件（使用 rsync）
+- 自动设置文件权限
+- 支持单应用或批量部署
+- 自动重载 Nginx
+
+**环境变量**:
+```bash
+export SERVER_HOST="your-server-ip"
+export SERVER_USER="root"
+export SERVER_PORT="22"
+export SSH_KEY="~/.ssh/id_rsa"
+```
+
+详细文档请参考: [静态部署指南](../docs/STATIC_DEPLOYMENT.md)
+
+#### `deploy.sh` - **Docker 部署脚本**
 **用途**: 一键部署所有BTC ShopFlow应用到生产环境  
 **技术**: Docker + Docker Compose  
-**特点**: 稳定可靠，无网络依赖问题
+**特点**: 稳定可靠，环境一致
 
 **使用方法**:
 ```bash
@@ -55,12 +91,34 @@ chmod +x scripts/btc-maintenance.sh
 
 ## 🚀 快速部署指南
 
-### 前置条件
+### 方式一：静态文件部署（推荐，快速）
+
+**前置条件**:
+- 宝塔面板已安装
+- Nginx 已配置
+- SSH 密钥已配置
+
+**部署步骤**:
+```bash
+# 1. 构建应用
+pnpm --filter admin-app build
+
+# 2. 配置环境变量
+export SERVER_HOST="your-server-ip"
+export SERVER_USER="root"
+
+# 3. 部署
+pnpm deploy:static:admin
+```
+
+### 方式二：Docker 部署
+
+**前置条件**:
 - Linux服务器（CentOS/Ubuntu）
 - 已安装Docker
 - 已克隆项目到 `/www/wwwroot/btc-shopflow-monorepo`
 
-### 一键部署
+**部署步骤**:
 ```bash
 # 1. 进入项目目录
 cd /www/wwwroot/btc-shopflow-monorepo

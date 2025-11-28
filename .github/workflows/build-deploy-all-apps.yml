@@ -3495,3 +3495,41 @@ jobs:
             echo "- **仓库**: $REGISTRY_VAL"
             echo "- **Git SHA**: $GIT_SHA_VAL"
           } >> $GITHUB_STEP_SUMMARY
+
+  # 步骤4: 自动触发静态文件部署
+  trigger-static-deploy:
+    name: Trigger Static Files Deployment
+    needs: summary
+    if: needs.summary.outputs.success_count > 0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Trigger static deployment workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              console.log('🚀 触发静态文件部署工作流...');
+              
+              const response = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'deploy-static.yml',
+                ref: context.ref.replace('refs/heads/', ''),
+                inputs: {
+                  app: 'all',
+                  skip_build: 'true'
+                }
+              });
+              
+              console.log('✅ 静态文件部署工作流已触发');
+              console.log('📋 部署模式: 批量部署所有应用');
+              console.log('📋 构建: 已跳过（使用已有构建产物）');
+            } catch (error) {
+              console.error('❌ 触发静态文件部署失败:', error.message);
+              // 不抛出错误，避免影响主流程
+              console.log('⚠️ 静态部署触发失败，但不影响主构建流程');
+            }
