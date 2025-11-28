@@ -257,45 +257,92 @@ deploy_app() {
     log_info "构建产物目录: $dist_dir"
     log_info "部署目标路径: $deploy_path"
     
+    # SSH 连接参数（优化连接稳定性）
+    local ssh_opts="-i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+    
+    # 确保目标目录存在
+    log_info "确保目标目录存在..."
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+        "mkdir -p $deploy_path" || {
+        log_error "无法创建目标目录: $deploy_path"
+        return 1
+    }
+    
     # 在服务器上创建备份
     log_info "创建备份..."
     local backup_dir="/www/backups/$app_name/$(date +%Y%m%d_%H%M%S)"
-    ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
         "mkdir -p $backup_dir && \
-         if [ -d $deploy_path ]; then \
+         if [ -d $deploy_path ] && [ -n \"\$(ls -A $deploy_path 2>/dev/null)\" ]; then \
              cp -r $deploy_path/* $backup_dir/ 2>/dev/null || true; \
              echo 'Backup created: $backup_dir'; \
          else \
              echo 'No existing deployment to backup'; \
          fi" || log_warning "备份失败，继续部署"
     
-    # 使用 rsync 同步文件（推荐，支持增量同步）
+    # 检查服务器上是否有 rsync（更可靠的方法）
+    local use_rsync=false
     if command -v rsync &> /dev/null; then
+        # 检查服务器上是否也有 rsync
+        if ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" "command -v rsync" &>/dev/null; then
+            use_rsync=true
+        fi
+    fi
+    
+    # 同步文件
+    if [ "$use_rsync" = true ]; then
         log_info "使用 rsync 同步文件..."
-        rsync -avz --delete \
-            -e "ssh -i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no" \
+        if rsync -avz --delete \
+            -e "ssh $ssh_opts" \
             --exclude='*.map' \
             --exclude='.DS_Store' \
+            --timeout=300 \
             "$dist_dir/" \
-            "$SERVER_USER@$SERVER_HOST:$deploy_path/"
-    else
+            "$SERVER_USER@$SERVER_HOST:$deploy_path/"; then
+            log_success "文件同步成功"
+        else
+            log_error "rsync 同步失败，尝试使用 scp..."
+            use_rsync=false
+        fi
+    fi
+    
+    if [ "$use_rsync" = false ]; then
         # 使用 scp（较慢，但兼容性更好）
         log_info "使用 scp 同步文件..."
-        # 先删除远程目录内容
-        ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
-            "rm -rf $deploy_path/* $deploy_path/.* 2>/dev/null || true"
+        # 先删除远程目录内容（保留目录本身）
+        ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+            "rm -rf $deploy_path/* $deploy_path/.[!.]* 2>/dev/null || true"
         
-        # 上传文件
-        scp -i "$SSH_KEY" -P "$SERVER_PORT" -r "$dist_dir"/* \
-            "$SERVER_USER@$SERVER_HOST:$deploy_path/"
+        # 上传文件（使用 tar 压缩传输，更高效）
+        log_info "打包并上传文件..."
+        cd "$dist_dir" && tar czf - . | ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+            "cd $deploy_path && tar xzf -" || {
+            log_error "文件上传失败"
+            return 1
+        }
+        cd - > /dev/null
+    fi
+    
+    # 验证文件是否同步成功
+    log_info "验证文件同步..."
+    local local_count=$(find "$dist_dir" -type f | wc -l)
+    local remote_count=$(ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+        "find $deploy_path -type f 2>/dev/null | wc -l" || echo "0")
+    
+    if [ "$remote_count" -lt "$local_count" ]; then
+        log_warning "远程文件数量 ($remote_count) 少于本地 ($local_count)，但继续执行"
+    else
+        log_success "文件同步验证通过（本地: $local_count, 远程: $remote_count）"
     fi
     
     # 设置权限
     log_info "设置文件权限..."
-    ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
-        "chown -R www:www $deploy_path && \
-         chmod -R 755 $deploy_path && \
-         find $deploy_path -type f -exec chmod 644 {} \;"
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+        "chown -R www:www $deploy_path 2>/dev/null && \
+         chmod -R 755 $deploy_path 2>/dev/null && \
+         find $deploy_path -type f -exec chmod 644 {} \; 2>/dev/null" || {
+        log_warning "权限设置失败，但不影响部署"
+    }
     
     log_success "$app_name 部署完成"
     
@@ -371,8 +418,24 @@ main() {
         local temp_dir=$(mktemp -d)
         trap "rm -rf $temp_dir" EXIT
         
-        # 并行执行部署或验证
+        # 限制并发数（避免 SSH 连接过多导致连接被关闭）
+        local max_concurrent=4
+        
+        # 并行执行部署或验证（带并发限制）
         for app in "${APPS[@]}"; do
+            # 等待直到有可用的并发槽位
+            while [ ${#pids[@]} -ge $max_concurrent ]; do
+                sleep 0.5
+                # 检查已完成的进程并移除
+                local new_pids=()
+                for pid in "${pids[@]}"; do
+                    if kill -0 $pid 2>/dev/null; then
+                        new_pids+=($pid)
+                    fi
+                done
+                pids=("${new_pids[@]}")
+            done
+            
             local result_file="$temp_dir/${app}.result"
             (
                 if [ "$can_deploy" = true ]; then
@@ -397,7 +460,7 @@ main() {
         done
         
         # 等待所有后台进程完成
-        log_info "等待所有任务完成..."
+        log_info "等待所有任务完成（最大并发数: $max_concurrent）..."
         for pid in "${pids[@]}"; do
             wait $pid
         done
