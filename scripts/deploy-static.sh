@@ -150,17 +150,18 @@ check_server_config() {
 # 读取部署配置
 read_deploy_config() {
     if [ ! -f "$DEPLOY_CONFIG" ]; then
-        log_error "部署配置文件不存在: $DEPLOY_CONFIG"
-        log_info "请创建配置文件，参考: deploy.config.example.json"
-        exit 1
+        log_warning "部署配置文件不存在: $DEPLOY_CONFIG"
+        log_info "将使用默认部署路径（基于应用名称）"
+        log_info "如需自定义路径，请创建配置文件，参考: deploy.config.example.json"
+        return 1
     fi
     
     # 检查 jq 是否可用（用于解析 JSON）
     if command -v jq &> /dev/null; then
-        log_info "使用 jq 解析配置文件"
+        log_info "使用 jq 解析配置文件: $DEPLOY_CONFIG"
         return 0
     else
-        log_warning "jq 未安装，将使用简单的配置解析"
+        log_warning "jq 未安装，将使用默认部署路径"
         return 1
     fi
 }
@@ -298,10 +299,15 @@ deploy_app() {
     
     log_success "$app_name 部署完成"
     
-    # 可选：清理 Nginx 缓存（如果服务器支持）
-    log_info "清理 Nginx 缓存..."
-    ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
-        "nginx -s reload 2>/dev/null || systemctl reload nginx 2>/dev/null || true" || true
+    # 单个应用部署时立即重载 Nginx
+    # 批量部署时将在所有应用完成后统一重载（避免多次重载）
+    if [ "$DEPLOY_MODE" != "all" ]; then
+        log_info "重载 Nginx 配置..."
+        ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+            "nginx -s reload 2>/dev/null || systemctl reload nginx 2>/dev/null || true" || {
+            log_warning "Nginx 重载失败，但不影响部署结果"
+        }
+    fi
     
     return 0
 }
@@ -352,31 +358,79 @@ main() {
         
     elif [ "$DEPLOY_MODE" = "all" ]; then
         if [ "$can_deploy" = true ]; then
-            log_info "批量部署所有应用..."
+            log_info "批量并行部署所有应用..."
         else
             log_info "批量验证所有应用构建产物..."
         fi
         
         local failed_apps=()
+        local pids=()
+        local results=()
         
+        # 创建临时文件用于存储每个应用的结果
+        local temp_dir=$(mktemp -d)
+        trap "rm -rf $temp_dir" EXIT
+        
+        # 并行执行部署或验证
         for app in "${APPS[@]}"; do
-            if [ "$can_deploy" = true ]; then
-                if deploy_app "$app"; then
-                    log_success "$app 部署成功"
+            local result_file="$temp_dir/${app}.result"
+            (
+                if [ "$can_deploy" = true ]; then
+                    if deploy_app "$app"; then
+                        echo "success" > "$result_file"
+                        echo "$app 部署成功" >> "$result_file"
+                    else
+                        echo "failed" > "$result_file"
+                        echo "$app 部署失败" >> "$result_file"
+                    fi
                 else
-                    log_error "$app 部署失败"
+                    if verify_app_build "$app"; then
+                        echo "success" > "$result_file"
+                        echo "$app 验证成功" >> "$result_file"
+                    else
+                        echo "failed" > "$result_file"
+                        echo "$app 验证失败" >> "$result_file"
+                    fi
+                fi
+            ) &
+            pids+=($!)
+        done
+        
+        # 等待所有后台进程完成
+        log_info "等待所有任务完成..."
+        for pid in "${pids[@]}"; do
+            wait $pid
+        done
+        
+        # 收集结果
+        for app in "${APPS[@]}"; do
+            local result_file="$temp_dir/${app}.result"
+            if [ -f "$result_file" ]; then
+                local status=$(head -n1 "$result_file")
+                local message=$(tail -n+2 "$result_file")
+                
+                if [ "$status" = "success" ]; then
+                    log_success "$message"
+                else
+                    log_error "$message"
                     failed_apps+=("$app")
                 fi
             else
-                if verify_app_build "$app"; then
-                    log_success "$app 验证成功"
-                else
-                    log_error "$app 验证失败"
-                    failed_apps+=("$app")
-                fi
+                log_error "$app 执行异常（结果文件不存在）"
+                failed_apps+=("$app")
             fi
-            echo ""
         done
+        
+        # 所有部署完成后，统一重载 Nginx（仅在实际部署时）
+        if [ "$can_deploy" = true ] && [ ${#failed_apps[@]} -eq 0 ]; then
+            log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            log_info "重载 Nginx 配置..."
+            ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+                "nginx -s reload 2>/dev/null || systemctl reload nginx 2>/dev/null || true" || {
+                log_warning "Nginx 重载失败，但不影响部署结果"
+            }
+            log_success "Nginx 配置已重载"
+        fi
         
         # 汇总结果
         echo ""
