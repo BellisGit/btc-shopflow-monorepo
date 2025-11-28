@@ -44,6 +44,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   determine-apps:
@@ -247,6 +248,14 @@ jobs:
           echo "📦 构建产物统计:"
           find apps/$APP_NAME/dist -type f | wc -l | xargs echo "  总文件数:"
           du -sh apps/$APP_NAME/dist | awk '{print "  总大小: " $1}'
+      
+      - name: Upload build artifacts
+        if: steps.check_build.outputs.skipped != 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-${{ matrix.app }}
+          path: apps/${{ matrix.app }}/dist
+          retention-days: 1
 
   deploy:
     name: Deploy Static Files
@@ -267,6 +276,48 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        if: needs.determine-apps.outputs.skip_build != 'true'
+        uses: actions/download-artifact@v3
+        with:
+          pattern: dist-*
+          merge-multiple: false
+          path: artifacts
+      
+      - name: Move artifacts to correct location
+        if: needs.determine-apps.outputs.skip_build != 'true'
+        run: |
+          echo "📦 移动构建产物到正确位置..."
+          APPS="${{ needs.determine-apps.outputs.apps }}"
+          for app in $APPS; do
+            if [ -d "artifacts/dist-$app" ]; then
+              mkdir -p "apps/$app"
+              mv "artifacts/dist-$app" "apps/$app/dist"
+              echo "✅ $app: 构建产物已移动到 apps/$app/dist"
+            else
+              echo "❌ $app: 未找到构建产物 artifacts/dist-$app"
+              exit 1
+            fi
+          done
+          # 清理临时目录
+          rm -rf artifacts
+      
+      - name: Verify build artifacts
+        if: needs.determine-apps.outputs.skip_build != 'true'
+        run: |
+          echo "🔍 验证构建产物..."
+          APPS="${{ needs.determine-apps.outputs.apps }}"
+          for app in $APPS; do
+            if [ -d "apps/$app/dist" ] && [ -n "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
+              echo "✅ $app: 构建产物存在"
+              find apps/$app/dist -type f | wc -l | xargs echo "  文件数:"
+              du -sh apps/$app/dist | awk '{print "  大小: " $1}'
+            else
+              echo "❌ $app: 构建产物不存在或为空"
+              exit 1
+            fi
+          done
       
       - name: Setup SSH
         run: |
