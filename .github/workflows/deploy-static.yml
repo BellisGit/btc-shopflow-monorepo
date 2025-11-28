@@ -251,7 +251,7 @@ jobs:
       
       - name: Upload build artifacts
         if: steps.check_build.outputs.skipped != 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.app }}
           path: apps/${{ matrix.app }}/dist
@@ -279,7 +279,7 @@ jobs:
       
       - name: Download build artifacts
         if: needs.determine-apps.outputs.skip_build != 'true'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           pattern: dist-*
           merge-multiple: false
