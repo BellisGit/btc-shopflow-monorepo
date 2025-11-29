@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "sideEffects": [
+    "src/services/eps.ts",
+    "src/App.vue",
+    "**/*.vue",
+    "virtual:eps"
+  ],
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build && pnpm check:circular",
     "dev": "vite --port 8080",

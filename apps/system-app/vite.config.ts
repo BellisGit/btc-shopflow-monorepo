@@ -207,6 +207,19 @@ export default defineConfig({
     // 主应用不应该使用 external，所有依赖都应该被打包
     // external 配置仅用于子应用（微前端场景）
     rollupOptions: {
+      // 防止 tree-shaking 移除 virtual:eps 相关代码
+      treeshake: {
+        moduleSideEffects(id) {
+          // 保留 virtual:eps 虚拟模块和 EPS 服务文件的所有副作用
+          // 这样可以防止 tree-shaking 移除未直接访问的 EPS 服务属性
+          if (id.includes('virtual:eps') || id.includes('services/eps') || id.includes('/eps.ts')) {
+            return true;
+          }
+          return false;
+        },
+        // 保留所有属性访问（包括可选链），防止部分服务被移除
+        propertyReadSideEffects: true,
+      },
       output: {
         // 确保相对路径的 import 使用正确的 base URL
         // 这样在微前端场景下，资源路径会正确解析
@@ -215,7 +228,19 @@ export default defineConfig({
         // 这样浏览器会根据当前模块的位置解析，而不是根据页面 URL
         preserveModules: false,
         manualChunks(id) {
-          // 将 EPS 数据单独拆分，便于线上排查
+          // ========================================
+          // EPS 代码分割配置
+          // ========================================
+          // 将 EPS (Endpoint Service) 数据单独拆分，便于线上排查和调试
+          // 
+          // 说明：
+          // 1. virtual:eps 是虚拟模块，由 @btc/vite-plugin 的 epsPlugin 生成
+          // 2. 所有导入 virtual:eps 的模块（如 App.vue、services/eps.ts）会被打包到同一个 chunk
+          // 3. chunk 名称：eps-contract，最终生成文件：eps-contract-[hash].js
+          // 4. 如果构建产物中没有 eps-contract-*.js 文件，说明：
+          //    - EPS 数据未生成（检查 build/eps 目录）
+          //    - 或者 virtual:eps 未被正确导入
+          //    - 或者 EPS 数据为空（所有代码被 tree-shaking 移除）
           if (id.includes('virtual:eps')) {
             return 'eps-contract';
           }
