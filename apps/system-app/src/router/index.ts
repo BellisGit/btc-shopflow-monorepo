@@ -193,7 +193,27 @@ export function setupI18nTitleWatcher() {
 }
 
 // 路由前置守卫：处理 Loading 显示和侧边栏
-router.beforeEach((to, from) => {
+router.beforeEach((to, from, next) => {
+  // 子域名到路径映射
+  const subdomainToPathMap: Record<string, string> = {
+    'admin.bellis.com.cn': '/admin',
+    'logistics.bellis.com.cn': '/logistics',
+    'quality.bellis.com.cn': '/quality',
+    'production.bellis.com.cn': '/production',
+    'engineering.bellis.com.cn': '/engineering',
+    'finance.bellis.com.cn': '/finance',
+  };
+
+  // 检测子域名并自动跳转到对应路径
+  const hostname = window.location.hostname;
+  const targetPath = subdomainToPathMap[hostname];
+  
+  if (targetPath && to.path === '/') {
+    // 如果访问的是子域名根路径，自动跳转到对应的应用路径
+    next(targetPath + (window.location.search || '') + (window.location.hash || ''));
+    return;
+  }
+
   // 检查是否为文档相关路由（只支持 /docs 前缀）
   const isDocsRoute = to.path === '/docs' || to.path.startsWith('/docs/');
 
@@ -248,6 +268,9 @@ router.beforeEach((to, from) => {
       });
     }
   }
+
+  // 继续路由导航
+  next();
 });
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）
