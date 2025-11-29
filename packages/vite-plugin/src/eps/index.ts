@@ -171,13 +171,51 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
             return code;
           }
 
-          // 如果没有 serviceCode，回退到 JSON（但 service 会是空对象）
-          return `export default ${JSON.stringify(epsData)};`;
+          // 如果没有 serviceCode，也要导出 service 和 list（即使为空）
+          const serviceContent = epsData.serviceCode?.content || '{}';
+          const listData = JSON.stringify(epsData.list || []);
+          const isUpdate = epsData.isUpdate || false;
+          
+          const code = [
+            "import { createRequest } from '@btc/shared-core';",
+            "const request = createRequest(''); // namespace 已包含完整路径，不需要 baseURL",
+            "",
+            "// 生成的 service 对象",
+            `const serviceObj = ${serviceContent};`,
+            "",
+            "// 导出 service 和 list",
+            "export const service = serviceObj;",
+            `export const list = ${listData};`,
+            "export default {",
+            "  service: serviceObj,",
+            `  list: ${listData},`,
+            `  isUpdate: ${isUpdate}`,
+            "};"
+          ].join('\n');
+          
+          return code;
         } catch (err) {
           error(`加载 EPS 数据失败: ${err}`);
-          // 返回一个有效的默认结构
-          const defaultEps = { service: {}, list: [], isUpdate: false };
-          return `export default ${JSON.stringify(defaultEps)};`;
+          // 返回一个有效的默认结构，确保导出 service 和 list
+          const code = [
+            "import { createRequest } from '@btc/shared-core';",
+            "const request = createRequest('');",
+            "",
+            "// 默认空服务对象",
+            "const serviceObj = {};",
+            "const listData = [];",
+            "",
+            "// 导出 service 和 list",
+            "export const service = serviceObj;",
+            "export const list = listData;",
+            "export default {",
+            "  service: serviceObj,",
+            "  list: listData,",
+            "  isUpdate: false",
+            "};"
+          ].join('\n');
+          
+          return code;
         }
       }
 
