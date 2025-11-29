@@ -3,8 +3,9 @@ import { reactive, watch } from 'vue';
 
 // 获取浏览器信息
 function getBrowser() {
+  // 在微前端环境下，document.body 可能为 null，需要添加 null 检查
   // 使用 document.body.clientWidth，确保缩放时能正确检测
-  const clientWidth = document.body.clientWidth || document.documentElement.clientWidth;
+  const clientWidth = (document.body?.clientWidth) || document.documentElement?.clientWidth || window.innerWidth || 1920;
 
   // 屏幕信息
   let screen: 'xs' | 'sm' | 'md' | 'xl' | 'full' = 'full';
