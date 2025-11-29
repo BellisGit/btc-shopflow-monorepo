@@ -42,11 +42,37 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
 
     // 创建 pending 请求
     pendingRequest = (async () => {
+      // 构建模式下（production）直接使用本地文件，不尝试远程获取
+      const isBuildMode = process.env.NODE_ENV === 'production' || process.env.VITE_BUILD === 'true';
+      
+      if (isBuildMode) {
+        info('构建模式：直接使用本地 EPS 文件，跳过远程获取');
+        try {
+          // 直接从本地文件读取
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          
+          // 如果本地文件有数据，使用本地数据
+          if (result && result.list && result.list.length > 0) {
+            epsCache = result;
+            cacheTimestamp = Date.now();
+            info(`已从本地文件加载 EPS 数据，共 ${result.list.length} 个实体`);
+            return result;
+          } else {
+            info('本地 EPS 文件为空，将使用空服务对象');
+            return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
+          }
+        } catch (localErr) {
+          error(`从本地文件读取 EPS 数据失败: ${localErr}`);
+          return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
+        }
+      }
+      
+      // 开发模式下，先尝试远程获取，失败则回退到本地文件
       try {
         // 先获取远程数据
         const entities = await fetchEpsData(epsUrl, reqUrl);
 
-        // 如果远程获取的数据为空，尝试从本地文件读取（构建时可能无法访问远程服务）
+        // 如果远程获取的数据为空，尝试从本地文件读取
         if (!entities || entities.length === 0) {
           info('远程 EPS 数据为空，尝试从本地文件读取...');
           // 传入 undefined 作为 cachedData，让 createEps 从本地文件读取
@@ -55,7 +81,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
           // 如果本地文件也没有数据，返回空结构
           if (!result || !result.list || result.list.length === 0) {
             error('远程和本地 EPS 数据都为空，将使用空服务对象');
-            return { service: {}, list: [], isUpdate: false };
+            return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
           }
           
           // 更新缓存
@@ -92,7 +118,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         }
         
         // 如果本地文件也没有数据，返回空结构
-        return { service: {}, list: [], isUpdate: false };
+        return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
       }
     })();
 
@@ -175,7 +201,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
           const serviceContent = epsData.serviceCode?.content || '{}';
           const listData = JSON.stringify(epsData.list || []);
           const isUpdate = epsData.isUpdate || false;
-          
+
           const code = [
             "import { createRequest } from '@btc/shared-core';",
             "const request = createRequest(''); // namespace 已包含完整路径，不需要 baseURL",
@@ -192,7 +218,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
             `  isUpdate: ${isUpdate}`,
             "};"
           ].join('\n');
-          
+
           return code;
         } catch (err) {
           error(`加载 EPS 数据失败: ${err}`);
@@ -214,7 +240,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
             "  isUpdate: false",
             "};"
           ].join('\n');
-          
+
           return code;
         }
       }

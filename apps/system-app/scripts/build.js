@@ -7,7 +7,7 @@
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { existsSync, readdirSync, rmSync, mkdirSync, cpSync } from 'fs';
+import { existsSync, readdirSync, rmSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -64,53 +64,20 @@ try {
 
 const args = process.argv.slice(2); // 获取传递给脚本的参数
 
-// 如果是 build 命令，先清理 dist 和 build 目录（但保留 build/eps）
+// 如果是 build 命令，只清理 dist 目录，保留 build 目录（包含 EPS 数据）
 if (args[0] === 'build') {
   const appDir = resolve(__dirname, '..');
   const distDir = resolve(appDir, 'dist');
-  const buildDir = resolve(appDir, 'build');
   
   console.log('🧹 清理构建产物...');
   
-  // 清理 dist 目录
+  // 只清理 dist 目录，保留 build 目录（包含 EPS 数据）
   if (existsSync(distDir)) {
     rmSync(distDir, { recursive: true, force: true });
     console.log('✅ 已清理 dist 目录');
   }
   
-  // 清理 build 目录（但保留 build/eps）
-  if (existsSync(buildDir)) {
-    const epsDir = resolve(buildDir, 'eps');
-    const epsBackup = resolve(appDir, '.eps-backup');
-    
-    // 备份 eps 目录
-    if (existsSync(epsDir)) {
-      try {
-        cpSync(epsDir, epsBackup, { recursive: true });
-        console.log('📦 已备份 build/eps 目录');
-      } catch (e) {
-        console.warn('⚠️  备份 build/eps 失败，继续清理:', e.message);
-      }
-    }
-    
-    // 删除 build 目录
-    rmSync(buildDir, { recursive: true, force: true });
-    console.log('✅ 已清理 build 目录');
-    
-    // 恢复 eps 目录
-    if (existsSync(epsBackup)) {
-      try {
-        mkdirSync(buildDir, { recursive: true });
-        cpSync(epsBackup, epsDir, { recursive: true });
-        rmSync(epsBackup, { recursive: true, force: true });
-        console.log('📦 已恢复 build/eps 目录');
-      } catch (e) {
-        console.warn('⚠️  恢复 build/eps 失败:', e.message);
-      }
-    }
-  }
-  
-  console.log('✅ 清理完成\n');
+  console.log('✅ 清理完成（已保留 build/eps 目录）\n');
 }
 
 // 使用 node 运行 vite，避免 pnpm 设置过长的 NODE_PATH
