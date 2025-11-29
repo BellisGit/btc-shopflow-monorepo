@@ -223,7 +223,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/dist
           echo "✅ 清理完成（已保留 build 目录）"
       
-      - name: Build system-app
+      - name: Build
         run: |
           set -e  # 任何命令失败立即退出
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -364,7 +364,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy system-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -677,7 +677,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build admin-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -754,7 +754,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy admin-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -1067,7 +1067,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build logistics-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -1144,7 +1144,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy logistics-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -1457,7 +1457,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build quality-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -1534,7 +1534,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy quality-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -1847,7 +1847,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build production-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -1924,7 +1924,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy production-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -2237,7 +2237,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build engineering-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -2314,7 +2314,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy engineering-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -2627,7 +2627,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build finance-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -2704,7 +2704,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy finance-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -3017,7 +3017,7 @@ jobs:
           rm -rf ${{ env.APP_DIR }}/build
           echo "✅ 清理完成"
       
-      - name: Build mobile-app
+      - name: Build
         run: |
           set -e
           echo "🔨 开始构建 ${{ env.APP_NAME }}..."
@@ -3094,7 +3094,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
       
-      - name: Deploy mobile-app
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
