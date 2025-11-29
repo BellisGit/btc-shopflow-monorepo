@@ -61,13 +61,19 @@ export async function getData(
   state: EpsState,
   cachedData?: any
 ) {
-  if (cachedData && cachedData.list) {
+  // 如果提供了缓存数据且数据不为空，使用缓存数据
+  if (cachedData && cachedData.list && Array.isArray(cachedData.list) && cachedData.list.length > 0) {
+    console.log(`[eps] 使用缓存数据，共 ${cachedData.list.length} 个实体`);
     state.epsList = cachedData.list;
   } else {
-    const localData = await readFile(getEpsPath(outputDir, 'eps.json'), true);
+    // 否则尝试从本地文件读取
+    const epsJsonPath = getEpsPath(outputDir, 'eps.json');
+    console.log(`[eps] 尝试从本地文件读取: ${epsJsonPath}`);
+    const localData = await readFile(epsJsonPath, true);
 
     if (localData) {
       if (Array.isArray(localData)) {
+        console.log(`[eps] 从本地文件读取到 ${localData.length} 个实体（数组格式）`);
         state.epsList = localData;
       } else if (localData.data) {
         const entities: any[] = [];
@@ -81,11 +87,14 @@ export async function getData(
             });
           }
         });
+        console.log(`[eps] 从本地文件读取到 ${entities.length} 个实体（对象格式）`);
         state.epsList = entities;
       } else {
+        console.warn('[eps] 本地文件格式不正确，数据为空');
         state.epsList = [];
       }
     } else {
+      console.warn(`[eps] 本地文件不存在或为空: ${epsJsonPath}`);
       state.epsList = [];
     }
 

@@ -46,6 +46,25 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         // 先获取远程数据
         const entities = await fetchEpsData(epsUrl, reqUrl);
 
+        // 如果远程获取的数据为空，尝试从本地文件读取（构建时可能无法访问远程服务）
+        if (!entities || entities.length === 0) {
+          info('远程 EPS 数据为空，尝试从本地文件读取...');
+          // 传入 undefined 作为 cachedData，让 createEps 从本地文件读取
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          
+          // 如果本地文件也没有数据，返回空结构
+          if (!result || !result.list || result.list.length === 0) {
+            error('远程和本地 EPS 数据都为空，将使用空服务对象');
+            return { service: {}, list: [], isUpdate: false };
+          }
+          
+          // 更新缓存
+          epsCache = result;
+          cacheTimestamp = Date.now();
+          info('已从本地文件加载 EPS 数据');
+          return result;
+        }
+
         // 然后创建 EPS 服务
         const result = await createEps(epsUrl, reqUrl, outputDir, { list: entities });
 
@@ -56,7 +75,23 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         return result;
       } catch (err) {
         error(`获取 EPS 数据失败: ${err}`);
-        // 返回一个有效的默认结构
+        // 尝试从本地文件读取作为回退
+        try {
+          info('远程获取失败，尝试从本地文件读取...');
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          
+          // 如果本地文件有数据，使用本地数据
+          if (result && result.list && result.list.length > 0) {
+            epsCache = result;
+            cacheTimestamp = Date.now();
+            info('已从本地文件加载 EPS 数据');
+            return result;
+          }
+        } catch (localErr) {
+          error(`从本地文件读取 EPS 数据也失败: ${localErr}`);
+        }
+        
+        // 如果本地文件也没有数据，返回空结构
         return { service: {}, list: [], isUpdate: false };
       }
     })();

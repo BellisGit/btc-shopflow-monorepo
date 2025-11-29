@@ -219,9 +219,9 @@ jobs:
       - name: Clean build artifacts
         run: |
           echo "🧹 清理 ${{ env.APP_NAME }} 的构建产物..."
+          # 只清理 dist 目录，保留 build 目录（包含 EPS 数据）
           rm -rf ${{ env.APP_DIR }}/dist
-          rm -rf ${{ env.APP_DIR }}/build
-          echo "✅ 清理完成"
+          echo "✅ 清理完成（已保留 build 目录）"
       
       - name: Build system-app
         run: |
