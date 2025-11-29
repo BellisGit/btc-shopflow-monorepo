@@ -16,10 +16,10 @@ const appNameMap: Record<string, string> = {
   production: '生产应用',
 };
 
-export function registerManifestTabsForApp(appName: string) {
+export function registerManifestTabsForApp(appName: string): Promise<void> {
   const tabs = getManifestTabs(appName);
   if (!tabs.length) {
-    return;
+    return Promise.resolve();
   }
 
   const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
@@ -30,6 +30,7 @@ export function registerManifestTabsForApp(appName: string) {
   }));
 
   registerTabs(appName, normalizedTabs);
+  return Promise.resolve();
 }
 
 // 递归转换菜单项（支持任意深度）
@@ -90,7 +91,7 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
   return true;
 }
 
-export function registerManifestMenusForApp(appName: string) {
+export function registerManifestMenusForApp(appName: string): Promise<void> {
   const menus = getManifestMenus(appName);
   if (!menus.length) {
     // 如果菜单为空，且当前应用已经有菜单，则保留现有菜单，避免清空
@@ -98,10 +99,10 @@ export function registerManifestMenusForApp(appName: string) {
     const existingMenus = getMenusForApp(appName);
     if (existingMenus.length > 0) {
       // 保留现有菜单，不进行清空操作
-      return;
+      return Promise.resolve();
     }
     // 如果既没有新菜单，也没有现有菜单，则清空（正常情况）
-    return;
+    return Promise.resolve();
   }
 
   // 将 manifest 菜单格式转换为 MenuItem 格式（递归处理任意深度）
@@ -112,10 +113,11 @@ export function registerManifestMenusForApp(appName: string) {
   const existingMenus = getMenusForApp(appName);
   if (existingMenus.length > 0 && menusEqual(existingMenus, normalizedMenus)) {
     // 菜单内容相同，不需要更新，避免触发重新渲染
-    return;
+    return Promise.resolve();
   }
 
   registerMenus(appName, normalizedMenus);
+  return Promise.resolve();
 }
 
 /**

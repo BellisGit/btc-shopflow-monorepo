@@ -56,10 +56,10 @@ const appNameMap: Record<string, string> = {
   production: '生产应用',
 };
 
-export async function registerManifestTabsForApp(appName: string) {
+export async function registerManifestTabsForApp(appName: string): Promise<void> {
   const tabs = getManifestTabs(appName);
   if (!tabs.length) {
-    return;
+    return Promise.resolve();
   }
 
   // 动态导入避免循环依赖
@@ -73,6 +73,7 @@ export async function registerManifestTabsForApp(appName: string) {
   }));
 
   registerTabs(appName, normalizedTabs);
+  return Promise.resolve();
 }
 
 // 递归转换菜单项（支持任意深度）
@@ -145,10 +146,10 @@ export async function registerManifestMenusForApp(appName: string) {
     const existingMenus = getMenusForApp(appName);
     if (existingMenus.length > 0) {
       // 保留现有菜单，不进行清空操作
-      return;
+      return Promise.resolve();
     }
     // 如果既没有新菜单，也没有现有菜单，则清空（正常情况）
-    return;
+    return Promise.resolve();
   }
 
   // 将 manifest 菜单格式转换为 MenuItem 格式（递归处理任意深度）
@@ -164,7 +165,7 @@ export async function registerManifestMenusForApp(appName: string) {
   if (appName === 'admin') {
     // 管理域：如果菜单内容相同且不为空，则跳过更新，避免触发不必要的响应式更新
   if (existingMenus.length > 0 && menusEqual(existingMenus, normalizedMenus)) {
-    return;
+    return Promise.resolve();
     }
   }
 
@@ -172,6 +173,7 @@ export async function registerManifestMenusForApp(appName: string) {
   // 这样可以修复菜单在切换应用后消失的问题
   // 注意：即使菜单内容相同，也要重新注册，因为可能被 clearMenusExcept 清空了
   registerMenus(appName, normalizedMenus);
+  return Promise.resolve();
 }
 
 /**
