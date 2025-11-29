@@ -7,6 +7,10 @@ dist/
 .k8s-config
 .turbo/
 build/
+# 但保留 build/eps 目录中的 EPS 数据文件（构建时需要）
+!build/eps/
+!build/eps/eps.json
+!build/eps/eps.d.ts
 coverage/
 *.tsbuildinfo
 .turbo
