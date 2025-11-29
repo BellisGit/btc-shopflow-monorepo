@@ -2942,7 +2942,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-mobile-app:
-    name: Build & Deploy mobile-app
+    name: Deploy Mobile App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
