@@ -148,7 +148,7 @@ jobs:
 
   # 步骤2: 每个应用独立构建和部署（8个并行Job）
   build-deploy-system-app:
-    name: Build & Deploy system-app
+    name: Deploy System App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -602,7 +602,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-admin-app:
-    name: Build & Deploy admin-app
+    name: Deploy Admin App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -992,7 +992,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-logistics-app:
-    name: Build & Deploy logistics-app
+    name: Deploy Logistics App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -1382,7 +1382,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-quality-app:
-    name: Build & Deploy quality-app
+    name: Deploy Quality App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -1772,7 +1772,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-production-app:
-    name: Build & Deploy production-app
+    name: Deploy Production App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -2162,7 +2162,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-engineering-app:
-    name: Build & Deploy engineering-app
+    name: Deploy Engineering App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
@@ -2552,7 +2552,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   build-deploy-finance-app:
-    name: Build & Deploy finance-app
+    name: Deploy Finance App
     needs: [detect-image-tag, build-shared-deps]
     runs-on: ubuntu-latest
     env:
