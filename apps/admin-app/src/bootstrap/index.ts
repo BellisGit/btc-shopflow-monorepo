@@ -414,8 +414,23 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
   // 先挂载 Vue 应用，确保 DOM 已准备好
   context.app.mount(mountPoint);
 
+  setupRouteSync(context);
+  setupHostLocationBridge(context);
+  setupEventBridge(context);
+  ensureCleanUrl(context);
+  context.registerTabs(props);
+
+  // 独立运行时：初始化菜单和 tabbar
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    import('../micro/index').then(({ registerManifestMenusForApp, registerManifestTabsForApp }) => {
+      registerManifestTabsForApp('admin').catch(console.error);
+      registerManifestMenusForApp('admin').catch(console.error);
+    });
+  }
+
   // 路由初始化：在应用挂载后立即初始化路由，确保路由状态一致
   // 使用 router.isReady() 确保路由系统已准备好，然后使用 nextTick 确保 DOM 已更新
+  // 关键：在路由初始化完成后再调用 onReady，确保应用完全准备好
   context.router.isReady().then(() => {
     return import('vue').then(({ nextTick }) => {
       return new Promise<void>((resolve) => {
@@ -464,33 +479,22 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
         });
       });
     });
+  }).then(() => {
+    // 路由初始化完成后，调用 onReady 回调
+    if (props.onReady) {
+      props.onReady();
+    }
+
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
+    }
   }).catch((error) => {
     console.error('[admin-app] 路由准备失败:', error);
+    // 即使路由初始化失败，也要调用 onReady，确保 loading 状态被清除
+    if (props.onReady) {
+      props.onReady();
+    }
   });
-
-  setupRouteSync(context);
-  setupHostLocationBridge(context);
-  setupEventBridge(context);
-  ensureCleanUrl(context);
-  context.registerTabs(props);
-
-  // 独立运行时：初始化菜单和 tabbar
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-    import('../micro/index').then(({ registerManifestMenusForApp, registerManifestTabsForApp }) => {
-      registerManifestTabsForApp('admin').catch(console.error);
-      registerManifestMenusForApp('admin').catch(console.error);
-    });
-  }
-
-  // 关键：确保 onReady 回调被调用
-  // 直接调用 onReady，不延迟（与物流域保持一致）
-  if (props.onReady) {
-    props.onReady();
-  }
-
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
-  }
 };
 
 export const updateAdminApp = (context: AdminAppContext, props: QiankunProps) => {
