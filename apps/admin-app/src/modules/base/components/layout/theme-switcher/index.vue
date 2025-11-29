@@ -192,7 +192,9 @@ function handleCustomThemeClick() {
       color: customColor.value,
     };
     theme.setThemeColor(customColor.value, theme.isDark.value);
-    document.body.className = 'theme-custom';
+    if (document.body) {
+      document.body.className = 'theme-custom';
+    }
   }
 }
 
@@ -281,7 +283,9 @@ function handleColorPickerHide() {
     // 恢复主题状态（从保存的原始主题状态恢复）
     theme.currentTheme.value = { ...originalTheme.value };
     theme.setThemeColor(originalTheme.value.color, theme.isDark.value);
-    document.body.className = `theme-${originalTheme.value.name}`;
+    if (document.body) {
+      document.body.className = `theme-${originalTheme.value.name}`;
+    }
   }
 
   // 重置状态

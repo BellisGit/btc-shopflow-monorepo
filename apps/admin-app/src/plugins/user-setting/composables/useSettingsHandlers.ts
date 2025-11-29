@@ -34,6 +34,10 @@ export function useSettingsHandlers() {
     // 设置body类名
     setBodyClass: (className: string, add: boolean) => {
       const el = document.body;
+      if (!el) {
+        // 在微前端环境下，document.body 可能为 null
+        return;
+      }
       if (add) {
         el.setAttribute('class', className);
       } else {

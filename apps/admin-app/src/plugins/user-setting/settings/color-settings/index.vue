@@ -122,7 +122,9 @@ function handleCustomThemeClick() {
       color: customColor.value,
     };
     theme.setThemeColor(customColor.value, theme.isDark.value);
-    document.body.className = 'theme-custom';
+    if (document.body) {
+      document.body.className = 'theme-custom';
+    }
   }
 }
 
@@ -184,7 +186,9 @@ function handleColorPickerHide() {
     customColor.value = originalColor.value || '';
     theme.currentTheme.value = { ...originalTheme.value };
     theme.setThemeColor(originalTheme.value.color, theme.isDark.value);
-    document.body.className = `theme-${originalTheme.value.name}`;
+    if (document.body) {
+      document.body.className = `theme-${originalTheme.value.name}`;
+    }
   }
 
   originalColor.value = null;
