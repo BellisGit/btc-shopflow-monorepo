@@ -207,19 +207,9 @@ export default defineConfig({
     // 主应用不应该使用 external，所有依赖都应该被打包
     // external 配置仅用于子应用（微前端场景）
     rollupOptions: {
-      // 防止 tree-shaking 移除 virtual:eps 相关代码
-      treeshake: {
-        moduleSideEffects(id) {
-          // 保留 virtual:eps 虚拟模块和 EPS 服务文件的所有副作用
-          // 这样可以防止 tree-shaking 移除未直接访问的 EPS 服务属性
-          if (id.includes('virtual:eps') || id.includes('services/eps') || id.includes('/eps.ts')) {
-            return true;
-          }
-          return false;
-        },
-        // 保留所有属性访问（包括可选链），防止部分服务被移除
-        propertyReadSideEffects: true,
-      },
+      // 注意：不在这里配置 treeshake，使用 package.json 的 sideEffects 标记
+      // treeshake 配置可能会影响代码分割逻辑，导致某些 chunk 被合并
+      // package.json 中的 sideEffects 标记已经足够防止 EPS 模块被 tree-shaking 移除
       output: {
         // 确保相对路径的 import 使用正确的 base URL
         // 这样在微前端场景下，资源路径会正确解析
