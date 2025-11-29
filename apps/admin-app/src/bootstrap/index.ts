@@ -428,6 +428,30 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
     });
   }
 
+  // 超时保护：确保 loading 状态最终会被清除（5秒超时）
+  let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+  const maxLoadingTime = 5000; // 5秒超时
+  
+  const ensureLoadingCleared = () => {
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
+    }
+    // 确保 onReady 被调用，清除 loading 状态
+    if (props.onReady) {
+      props.onReady();
+    }
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
+    }
+  };
+
+  // 设置超时保护
+  loadingTimeout = setTimeout(() => {
+    console.warn('[admin-app] 路由初始化超时，强制清除 loading 状态');
+    ensureLoadingCleared();
+  }, maxLoadingTime);
+
   // 路由初始化：在应用挂载后立即初始化路由，确保路由状态一致
   // 使用 router.isReady() 确保路由系统已准备好，然后使用 nextTick 确保 DOM 已更新
   // 关键：在路由初始化完成后再调用 onReady，确保应用完全准备好
@@ -480,20 +504,20 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
       });
     });
   }).then(() => {
-    // 路由初始化完成后，调用 onReady 回调
-    if (props.onReady) {
-      props.onReady();
+    // 路由初始化完成后，清除超时保护并调用 onReady 回调
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
     }
-
-    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-      window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
-    }
+    ensureLoadingCleared();
   }).catch((error) => {
     console.error('[admin-app] 路由准备失败:', error);
-    // 即使路由初始化失败，也要调用 onReady，确保 loading 状态被清除
-    if (props.onReady) {
-      props.onReady();
+    // 即使路由初始化失败，也要清除超时保护并调用 onReady，确保 loading 状态被清除
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      loadingTimeout = null;
     }
+    ensureLoadingCleared();
   });
 };
 

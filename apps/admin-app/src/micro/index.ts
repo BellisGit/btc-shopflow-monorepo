@@ -328,11 +328,13 @@ export function setupQiankun() {
           container.style.removeProperty('opacity');
         }
 
-        // 如果子应用没有主动调用 onReady，这里兜底（延迟导入以避免循环依赖）
+        // 兜底机制：如果子应用没有主动调用 onReady，这里确保 loading 被清除
+        // 使用较短的延迟，确保在 onReady 之后执行（如果 onReady 被调用的话）
+        // 如果 onReady 没有被调用，这里会清除 loading
         setTimeout(async () => {
           const { finishLoading } = await import('../utils/loadingManager');
           finishLoading();
-        }, 100);
+        }, 200);
         return Promise.resolve();
       }],
 
