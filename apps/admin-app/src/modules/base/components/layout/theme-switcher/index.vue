@@ -225,7 +225,9 @@ function updateThemeColorPreview(color: string | null) {
     theme.currentTheme.value = newTheme;
     // 更新全局主题色
     theme.setThemeColor(color, theme.isDark.value);
-    document.body.className = 'theme-custom';
+    if (document.body) {
+      document.body.className = 'theme-custom';
+    }
   }
 }
 

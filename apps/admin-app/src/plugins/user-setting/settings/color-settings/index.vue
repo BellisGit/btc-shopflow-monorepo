@@ -143,7 +143,9 @@ function updateThemeColorPreview(color: string | null) {
     };
     theme.currentTheme.value = newTheme;
     theme.setThemeColor(color, theme.isDark.value);
-    document.body.className = 'theme-custom';
+    if (document.body) {
+      document.body.className = 'theme-custom';
+    }
   }
 }
 
