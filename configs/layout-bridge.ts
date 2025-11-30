@@ -67,7 +67,21 @@ export function registerManifestMenusForApp(appId: string) {
  * 解析应用 Logo 地址（会根据 baseUrl 自动适配）
  */
 export function resolveAppLogoUrl() {
-  return new URL('logo.png', import.meta.env.BASE_URL).href;
+  const defaultUrl =
+    typeof window !== 'undefined' && window.location?.origin
+      ? `${window.location.origin}/logo.png`
+      : '/logo.png';
+
+  const baseCandidate =
+    (import.meta as any)?.env?.BASE_URL ||
+    (typeof document !== 'undefined' ? document.baseURI : undefined) ||
+    defaultUrl;
+
+  try {
+    return new URL('logo.png', baseCandidate).href;
+  } catch {
+    return defaultUrl;
+  }
 }
 
 /**

@@ -14,13 +14,13 @@ let context: FinanceAppContext | null = null;
 const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 
-const render = (props: QiankunProps = {}) => {
+const render = async (props: QiankunProps = {}) => {
   if (context) {
     unmountFinanceApp(context);
     context = null;
   }
 
-  context = createFinanceApp(props);
+  context = await createFinanceApp(props);
   mountFinanceApp(context, props);
 };
 
@@ -32,7 +32,7 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  render(props);
+  await render(props);
 }
 
 async function unmount(props: QiankunProps = {}) {
@@ -68,5 +68,7 @@ if (shouldRunStandalone()) {
     });
   });
   
-  render();
+  render().catch((error) => {
+    console.error('[finance-app] 独立运行失败:', error);
+  });
 }

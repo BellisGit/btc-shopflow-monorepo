@@ -3,7 +3,16 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { resetPluginManager, usePluginManager } from '@btc/shared-core';
 import type { QiankunProps } from '@btc/shared-core';
+import {
+  registerAppEnvAccessors,
+  registerManifestMenusForApp,
+  createAppStorageBridge,
+  createDefaultDomainResolver,
+  resolveAppLogoUrl,
+  createSharedUserSettingPlugin,
+} from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 关键：在关闭样式隔离的情况下，需要直接 import 样式文件，确保样式被正确加载
@@ -49,7 +58,43 @@ const createTranslate = (context: FinanceAppContext) => {
   };
 };
 
+const FINANCE_APP_ID = 'finance';
 const FINANCE_BASE_PATH = '/finance';
+const sharedUserSettingPlugin = createSharedUserSettingPlugin();
+
+const setupStandaloneGlobals = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  registerAppEnvAccessors();
+  const win = window as any;
+  if (!win.__APP_STORAGE__) {
+    win.__APP_STORAGE__ = createAppStorageBridge(FINANCE_APP_ID);
+  }
+  if (!win.__APP_EPS_SERVICE__) {
+    win.__APP_EPS_SERVICE__ = {};
+  }
+  if (!win.__APP_GET_DOMAIN_LIST__) {
+    win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(FINANCE_APP_ID);
+  }
+  if (!win.__APP_FINISH_LOADING__) {
+    win.__APP_FINISH_LOADING__ = () => {};
+  }
+  if (!win.__APP_LOGOUT__) {
+    win.__APP_LOGOUT__ = () => {};
+  }
+  win.__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+  win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+};
+
+const setupStandalonePlugins = async (app: VueApp, router: Router) => {
+  resetPluginManager();
+  const pluginManager = usePluginManager({ debug: false });
+  pluginManager.setApp(app);
+  pluginManager.setRouter(router);
+  pluginManager.register(sharedUserSettingPlugin);
+  await pluginManager.install(sharedUserSettingPlugin.name);
+};
 
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 
@@ -280,7 +325,13 @@ const setupHostLocationBridge = (context: FinanceAppContext) => {
   handleRoutingEvent();
 };
 
-export const createFinanceApp = (props: QiankunProps = {}): FinanceAppContext => {
+export const createFinanceApp = async (props: QiankunProps = {}): Promise<FinanceAppContext> => {
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  if (isStandalone) {
+    setupStandaloneGlobals();
+    registerManifestMenusForApp(FINANCE_APP_ID);
+  }
+
   const app = createApp(App);
   // 先初始化 i18n，确保国际化文件已加载
   const i18n = setupI18n(app, props.locale || 'zh-CN');
@@ -288,6 +339,10 @@ export const createFinanceApp = (props: QiankunProps = {}): FinanceAppContext =>
   setupRouter(app, router);
   const pinia = setupStore(app);
   const theme = setupUI(app);
+
+  if (isStandalone) {
+    await setupStandalonePlugins(app, router);
+  }
 
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {
     const initialRoute = deriveInitialSubRoute();

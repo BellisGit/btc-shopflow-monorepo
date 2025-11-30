@@ -18,6 +18,10 @@
       "@btc-crud/*": ["../../packages/shared-components/src/crud/*"],
       "@assets": ["../../packages/shared-components/src/assets"],
       "@assets/*": ["../../packages/shared-components/src/assets/*"],
+      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
+      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"],
+      "@configs": ["../../configs"],
+      "@configs/*": ["../../configs/*"],
       "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
       "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
       "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
