@@ -16,3 +16,6 @@ export * from './number';
 export * from './form';
 export * from './hooks';
 export * from './http';
+
+// 微前端相关
+export * from './qiankun/load-layout-app';

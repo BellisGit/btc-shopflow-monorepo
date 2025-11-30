@@ -33,9 +33,10 @@
         window[LOADER_FLAG] = true;
         window.__USE_LAYOUT_APP__ = true;
 
-        // 使用本地安装的 qiankun（通过动态导入，会被 Vite 打包到应用中）
+        // 使用共享工具函数加载 layout-app（需要先安装 qiankun 依赖）
         // 这样可以避免 CDN 的 CORS 问题和网络问题
-        import('/src/utils/load-layout-app.ts')
+        // 注意：qiankun 需要在 logistics-app 的 package.json 中安装
+        import('../../packages/shared-utils/src/qiankun/load-layout-app.ts')
           .then(({ loadLayoutApp }) => {
             return loadLayoutApp();
           })
