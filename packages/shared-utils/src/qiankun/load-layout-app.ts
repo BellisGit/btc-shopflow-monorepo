@@ -49,7 +49,7 @@ export async function loadLayoutApp() {
         activeRule: () => true,
         // 添加 scriptType 和 getTemplate 配置，确保资源正确加载
         // @ts-expect-error - scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
-        scriptType: 'module' as const,
+        scriptType: 'module',
         getTemplate: function(tpl) {
           // 确保所有 script 标签都有 type="module"
           return tpl.replace(
