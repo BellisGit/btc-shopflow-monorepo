@@ -122,7 +122,14 @@ async function mount(props: any) {
     app.mount(container);
   }
 
-  // 启动 qiankun 并注册业务子应用
+  // 如果 layout-app 是被其他应用通过 qiankun 加载的，不应该再注册子应用
+  // 因为子应用已经在运行了（它加载了 layout-app）
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    console.log('[layout-app] 被其他应用加载，不注册子应用');
+    return;
+  }
+
+  // 只有在独立运行时才启动 qiankun 并注册业务子应用
   const hostname = window.location.hostname;
   const appName = getAppFromHostname(hostname);
 
