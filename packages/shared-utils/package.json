@@ -21,6 +21,9 @@
   "dependencies": {
     "dayjs": "^1.11.18"
   },
+  "peerDependencies": {
+    "qiankun": "^2.10.16"
+  },
   "devDependencies": {
     "vite": "^5.4.20",
     "typescript": "^5.9.3"
