@@ -22,7 +22,9 @@
   },
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
+    "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.0",
+    "nprogress": "^0.2.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.0",
