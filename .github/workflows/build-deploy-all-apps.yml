@@ -3392,6 +3392,7 @@ jobs:
           check_app "finance-app" "${{ needs.build-deploy-finance-app.result }}"
           check_app "mobile-app" "${{ needs.build-deploy-mobile-app.result }}"
           
+          # 注意：layout-app 使用静态文件部署，不在此 Docker 部署工作流中
           APPS=("system-app" "admin-app" "logistics-app" "quality-app" "production-app" "engineering-app" "finance-app" "mobile-app")
           
           # 生成输出
