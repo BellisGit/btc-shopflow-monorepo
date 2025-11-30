@@ -33,10 +33,26 @@
         window[LOADER_FLAG] = true;
         window.__USE_LAYOUT_APP__ = true;
 
-        // 加载 qiankun
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/qiankun@2.10.16/dist/umd/qiankun.min.js';
-        script.onload = function() {
+        // 加载 qiankun（使用多个 CDN 源作为备用）
+        const qiankunCDNs = [
+          'https://unpkg.com/qiankun@2.10.16/dist/umd/qiankun.min.js',
+          'https://cdn.jsdelivr.net/npm/qiankun@2.10.16/dist/umd/qiankun.min.js',
+          'https://cdn.bootcdn.net/ajax/libs/qiankun/2.10.16/umd/qiankun.min.js'
+        ];
+
+        let currentCDNIndex = 0;
+
+        function loadQiankun() {
+          if (currentCDNIndex >= qiankunCDNs.length) {
+            console.error('[logistics-app] 所有 CDN 源都加载失败，无法加载 qiankun');
+            return;
+          }
+
+          const script = document.createElement('script');
+          script.src = qiankunCDNs[currentCDNIndex];
+          script.crossOrigin = 'anonymous';
+
+          script.onload = function() {
           // 获取当前环境
           const isProd = window.location.hostname.includes('bellis.com.cn');
           const protocol = window.location.protocol;
@@ -141,10 +157,19 @@
 
           console.log('[logistics-app] qiankun 已启动');
         };
+
         script.onerror = function(error) {
-          console.error('[logistics-app] 加载 qiankun 失败:', error);
+          console.warn('[logistics-app] CDN 源加载失败:', qiankunCDNs[currentCDNIndex], error);
+          currentCDNIndex++;
+          // 尝试下一个 CDN 源
+          loadQiankun();
         };
+
         document.head.appendChild(script);
+        }
+
+        // 开始加载
+        loadQiankun();
       })();
     </script>
     <script type="module" src="/src/main.ts"></script>
