@@ -19,7 +19,7 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
-import { AppLayout } from '@btc/shared-components';
+import AppLayout from '@btc/shared-components/src/components/layout/app-layout/index.vue';
 import App from './App.vue';
 
 let app: VueApp | null = null;
