@@ -8,16 +8,17 @@ import {
   updateLogisticsApp,
 } from './bootstrap';
 import type { LogisticsAppContext } from './bootstrap';
+import { initLayoutApp } from './utils/init-layout-app';
 
 let context: LogisticsAppContext | null = null;
 
-const render = (props: QiankunProps = {}) => {
+const render = async (props: QiankunProps = {}) => {
   if (context) {
     unmountLogisticsApp(context);
     context = null;
   }
 
-  context = createLogisticsApp(props);
+  context = await createLogisticsApp(props);
   mountLogisticsApp(context, props);
 };
 
@@ -33,7 +34,7 @@ function bootstrap() {
 
 async function mount(props: QiankunProps) {
   try {
-  render(props);
+  await render(props);
   } catch (error) {
     console.error('[logistics-app] mount 失败:', error);
     throw error;
@@ -90,7 +91,17 @@ export const timeouts = {
   },
 };
 
+const shouldRunStandalone = () =>
+  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+
 // 独立运行（非 qiankun 环境）
-if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-  render();
+if (shouldRunStandalone()) {
+  // 如果需要加载 layout-app，先初始化
+  initLayoutApp().catch((error) => {
+    console.error('[logistics-app] 初始化 layout-app 失败:', error);
+  });
+  
+  render().catch((error) => {
+    console.error('[logistics-app] 独立运行失败:', error);
+  });
 }

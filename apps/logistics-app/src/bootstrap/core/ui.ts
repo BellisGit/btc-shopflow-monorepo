@@ -9,7 +9,37 @@ import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '../../styles/theme.scss';
 
+// Element Plus 国际化
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import en from 'element-plus/es/locale/lang/en';
+
 export type LogisticsThemePlugin = ReturnType<typeof createThemePlugin>;
+
+/**
+ * Element Plus 语言配置
+ */
+export const elementLocale = {
+  'zh-CN': zhCn,
+  'en-US': en
+};
+
+/**
+ * 获取当前语言设置
+ */
+export const getCurrentLocale = (): string => {
+  return localStorage.getItem('locale') || 'zh-CN';
+};
+
+/**
+ * 配置Element Plus
+ */
+export const setupElementPlus = (app: App) => {
+  const currentLocale = getCurrentLocale();
+
+  app.use(ElementPlus, {
+    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
+  });
+};
 
 // 缓存 themePlugin 实例，避免重复创建
 let themePluginInstance: LogisticsThemePlugin | null = null;
@@ -20,8 +50,10 @@ export const setupUI = (app: App) => {
     themePluginInstance = createThemePlugin();
   }
 
-  // ElementPlus 和 themePlugin 的注册是轻量级操作，不会阻塞
-  app.use(ElementPlus);
+  // 配置Element Plus（包含国际化）
+  setupElementPlus(app);
+  
+  // 配置 themePlugin
   app.use(themePluginInstance);
 
   return themePluginInstance;

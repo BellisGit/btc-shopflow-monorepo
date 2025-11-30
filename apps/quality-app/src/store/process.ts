@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { getActiveApp } from './tabRegistry';
 
 export interface ProcessItem {
   path: string;
@@ -12,6 +13,13 @@ export interface ProcessItem {
     process?: boolean;
   };
   active?: boolean;
+}
+
+/**
+ * 从路径获取当前应用名称
+ */
+export function getCurrentAppFromPath(path: string): string {
+  return getActiveApp(path);
 }
 
 /**

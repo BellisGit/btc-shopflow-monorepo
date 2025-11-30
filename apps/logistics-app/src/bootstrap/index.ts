@@ -19,6 +19,7 @@ import App from '../App.vue';
 import { createLogisticsRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
 import type { LogisticsI18nPlugin } from './core/i18n';
 import type { LogisticsThemePlugin } from './core/ui';
+import { elementLocale } from './core/ui';
 
 type CleanupListener = [event: string, handler: EventListener];
 
@@ -256,18 +257,31 @@ const setupRouteSync = (context: LogisticsAppContext) => {
 };
 
 const setupEventBridge = (context: LogisticsAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-    return;
-  }
-
+  // 语言切换监听器需要在所有环境下都运行（包括独立运行）
   const languageListener = ((event: Event) => {
     const custom = event as CustomEvent<{ locale: string }>;
     const newLocale = custom.detail?.locale as 'zh-CN' | 'en-US';
     if (newLocale && context.i18n?.i18n?.global) {
       context.i18n.i18n.global.locale.value = newLocale;
       context.registerTabs();
+      
+      // 更新 Element Plus 的 locale
+      const locale = elementLocale[newLocale];
+      if (locale && context.app?.config?.globalProperties?.$ELEMENT) {
+        context.app.config.globalProperties.$ELEMENT.locale = locale;
+      }
     }
   }) as EventListener;
+
+  // 只在 qiankun 环境下设置主题切换监听器
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // 独立运行时只监听语言切换事件
+    window.addEventListener('language-change', languageListener);
+    context.cleanup.listeners.push(['language-change', languageListener]);
+    return;
+  }
+
+  // qiankun 环境下监听所有事件
 
   const themeListener = ((event: Event) => {
     const custom = event as CustomEvent<{ color: string; dark: boolean }>;
@@ -323,7 +337,59 @@ const setupHostLocationBridge = (context: LogisticsAppContext) => {
   handleRoutingEvent();
 };
 
-export const createLogisticsApp = (props: QiankunProps = {}): LogisticsAppContext => {
+export const createLogisticsApp = async (props: QiankunProps = {}): Promise<LogisticsAppContext> => {
+  // 独立运行时：在创建路由之前设置全局函数供 AppLayout 使用
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  if (isStandalone) {
+    // 同步导入服务和存储（确保在路由创建前设置）
+    // 注意：这些导入必须在路由创建之前完成，因为 AppLayout 组件在渲染时就需要这些全局函数
+    try {
+      const { service } = await import('../services/eps');
+      (window as any).__APP_EPS_SERVICE__ = service;
+    } catch (e) {
+      console.warn('[logistics-app] Failed to load EPS service:', e);
+    }
+
+    try {
+      const { appStorage } = await import('../utils/app-storage');
+      (window as any).__APP_STORAGE__ = appStorage;
+    } catch (e) {
+      console.warn('[logistics-app] Failed to load app storage:', e);
+    }
+
+    try {
+      const domainModule = await import('../utils/domain-cache');
+      if (domainModule.getDomainList) {
+        (window as any).__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+      }
+    } catch (e) {
+      console.warn('[logistics-app] Failed to load domain cache:', e);
+    }
+
+    try {
+      const { finishLoading } = await import('../utils/loadingManager');
+      (window as any).__APP_FINISH_LOADING__ = finishLoading;
+    } catch (e) {
+      console.warn('[logistics-app] Failed to load loading manager:', e);
+    }
+
+    // 可选：退出登录函数（如果存在）
+    try {
+      const { useLogout } = await import('../composables/useLogout');
+      const { logout } = useLogout();
+      (window as any).__APP_LOGOUT__ = logout;
+    } catch (e) {
+      // useLogout 可能不存在，这是可选的
+      console.warn('[logistics-app] Logout composable not available (optional)');
+    }
+
+    // Logo URL
+    (window as any).__APP_GET_LOGO_URL__ = () => '/logo.png';
+    
+    // 文档搜索服务（如果需要）
+    (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+  }
+
   // 这些初始化操作都是轻量级的，不会阻塞
   // createApp、createRouter、createPinia 等都是同步的快速操作
   const app = createApp(App);
@@ -365,11 +431,9 @@ export const createLogisticsApp = (props: QiankunProps = {}): LogisticsAppContex
 export const mountLogisticsApp = (context: LogisticsAppContext, props: QiankunProps = {}) => {
   context.props = props;
 
-  const mountPoint =
-    (props.container && (props.container.querySelector('#app') || props.container)) ||
-    '#app';
+  const mountPoint = props.container ? props.container : document.querySelector('#app');
   if (!mountPoint) {
-    throw new Error('[logistics-app] 无法找到挂载节点 #app');
+    throw new Error('[logistics-app] 无法找到挂载节点');
   }
 
   context.app.mount(mountPoint);

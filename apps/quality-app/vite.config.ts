@@ -109,6 +109,7 @@ export default defineConfig(({ command, mode }) => {
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@configs': resolve(__dirname, '../../configs'),
       '@btc/shared-core': resolve(__dirname, '../../packages/shared-core/src'),
       '@btc/shared-components': resolve(__dirname, '../../packages/shared-components/src'),
       '@btc/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),

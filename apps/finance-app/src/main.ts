@@ -11,6 +11,9 @@ import type { FinanceAppContext } from './bootstrap';
 
 let context: FinanceAppContext | null = null;
 
+const shouldRunStandalone = () =>
+  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+
 const render = (props: QiankunProps = {}) => {
   if (context) {
     unmountFinanceApp(context);
@@ -57,6 +60,13 @@ renderWithQiankun({
 export default { bootstrap, mount, unmount };
 
 // 独立运行（非 qiankun 环境）
-if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+if (shouldRunStandalone()) {
+  // 如果需要加载 layout-app，先初始化
+  import('./utils/init-layout-app').then(({ initLayoutApp }) => {
+    initLayoutApp().catch((error) => {
+      console.error('[finance-app] 初始化 layout-app 失败:', error);
+    });
+  });
+  
   render();
 }

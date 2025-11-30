@@ -14,6 +14,7 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
+import { AppLayout } from '@btc/shared-components';
 import App from './App.vue';
 
 let app: VueApp | null = null;
@@ -43,8 +44,37 @@ function handleThemeChange(e: CustomEvent<{ color: string; dark: boolean }>) {
   }
 }
 
+const shouldRunStandalone = () =>
+  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+
 function render(props: QiankunProps = {}) {
   const { container } = props;
+
+  // 判断是否独立运行
+  const isStandalone = shouldRunStandalone();
+
+  // 基础路由（页面组件）
+  const pageRoutes = [
+    {
+      path: '/',
+      name: 'Home',
+      component: () => import('./views/Home.vue'),
+      meta: { isHome: true },
+    },
+  ];
+
+  // 根据运行模式返回不同的路由配置
+  // 独立运行时：使用 AppLayout 包裹所有路由
+  // qiankun 模式：直接返回页面路由（由主应用提供 Layout）
+  const routes = isStandalone
+    ? [
+        {
+          path: '/',
+          component: AppLayout, // Use AppLayout from shared package
+          children: pageRoutes,
+        },
+      ]
+    : pageRoutes;
 
   router = createRouter({
     // 在 qiankun 环境下使用 MemoryHistory，避免路由冲突
@@ -52,14 +82,7 @@ function render(props: QiankunProps = {}) {
       ? createMemoryHistory()
       : createWebHistory('/'),
     strict: true,
-    routes: [
-      {
-        path: '/',
-        name: 'Home',
-        component: () => import('./views/Home.vue'),
-        meta: { isHome: true },
-      },
-    ],
+    routes,
   });
 
   router.onError((error) => {
@@ -201,6 +224,13 @@ renderWithQiankun({
 export default { bootstrap, mount, unmount };
 
 // 独立运行（非 qiankun 环境）
-if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+if (shouldRunStandalone()) {
+  // 如果需要加载 layout-app，先初始化
+  import('./utils/init-layout-app').then(({ initLayoutApp }) => {
+    initLayoutApp().catch((error) => {
+      console.error('[engineering-app] 初始化 layout-app 失败:', error);
+    });
+  });
+  
   render();
 }

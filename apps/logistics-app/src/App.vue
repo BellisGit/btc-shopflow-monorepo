@@ -1,19 +1,23 @@
 <template>
-  <div :class="['logistics-app', { 'is-standalone': isStandalone }]">
+  <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
+  <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
+  <div v-if="!isStandalone" :class="['logistics-app']">
     <router-view v-slot="{ Component }">
       <transition name="slide-left" mode="out-in">
-        <div :key="viewKey" ref="contentRef" class="logistics-app__page">
-          <component :is="Component" />
-        </div>
+        <component :is="Component" :key="viewKey" />
       </transition>
     </router-view>
   </div>
+  <router-view v-else v-slot="{ Component }">
+    <transition name="slide-left" mode="out-in">
+      <component :is="Component" :key="viewKey" />
+    </transition>
+  </router-view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { provideContentHeight } from '@btc/shared-components';
 
 defineOptions({
   name: 'LogisticsApp',
@@ -22,8 +26,6 @@ defineOptions({
 const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const emitter = (window as any).__APP_EMITTER__;
-const contentRef = ref<HTMLElement | null>(null);
-const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
 
 // 刷新视图
 function refreshView() {
@@ -34,12 +36,6 @@ onMounted(() => {
   if (emitter) {
     emitter.on('subapp.refresh', refreshView);
   }
-  registerContentHeight(contentRef.value);
-  const handleWindowResize = () => emitContentResize();
-  window.addEventListener('resize', handleWindowResize);
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleWindowResize);
-  });
 });
 
 onUnmounted(() => {
@@ -47,14 +43,10 @@ onUnmounted(() => {
     emitter.off('subapp.refresh', refreshView);
   }
 });
-
-watch(contentRef, (el) => {
-  registerContentHeight(el ?? null);
-  emitContentResize();
-});
 </script>
 
 <style scoped>
+/* 只在 qiankun 模式下使用包装层样式 */
 .logistics-app {
   flex: 1;
   width: 100%;
@@ -65,24 +57,5 @@ watch(contentRef, (el) => {
   min-width: 0;
   box-sizing: border-box;
 }
-
-.logistics-app.is-standalone {
-  padding: 20px;
-}
-
-.logistics-app__page {
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.logistics-app__page > * {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 </style>
 

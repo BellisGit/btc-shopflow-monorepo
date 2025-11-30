@@ -26,6 +26,113 @@ const MAIN_APP_ORIGIN = MAIN_APP_CONFIG ? `http://${MAIN_APP_CONFIG.preHost}:${M
 // 判断是否为预览构建（用于本地预览测试）
 // 生产构建应该使用相对路径，让浏览器根据当前域名自动解析
 const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
+// 注意：由于主应用使用 scriptType: 'module' 加载子应用，所有子应用都应构建为 ES 模块格式
+// 与其他应用（admin-app, quality-app 等）保持一致，统一使用 ES 模块格式
+const enableUmdBuild = false; // 始终使用 ES 模块格式，与主应用的 scriptType: 'module' 配置一致
+
+const getManualChunkName = (id: string) => {
+  if (id.includes('element-plus') || id.includes('@element-plus')) {
+    return 'element-plus';
+  }
+
+  if (id.includes('src/') && !id.includes('node_modules')) {
+    if (id.includes('src/modules')) {
+      const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
+      if (moduleName && ['customs', 'home', 'procurement', 'warehouse'].includes(moduleName)) {
+        return `module-${moduleName}`;
+      }
+      return 'module-others';
+    }
+    if (id.includes('src/pages')) {
+      return 'app-pages';
+    }
+    if (id.includes('src/components')) {
+      return 'app-components';
+    }
+    if (id.includes('src/micro')) {
+      return 'app-micro';
+    }
+    if (id.includes('src/plugins')) {
+      return 'app-src';
+    }
+    if (id.includes('src/store')) {
+      return 'app-src';
+    }
+    if (id.includes('src/services')) {
+      return 'app-src';
+    }
+    if (id.includes('src/utils')) {
+      return 'app-src';
+    }
+    if (id.includes('src/composables')) {
+      return 'app-composables';
+    }
+    if (id.includes('src/bootstrap')) {
+      return 'app-src';
+    }
+    if (id.includes('src/config')) {
+      return 'app-src';
+    }
+    if (id.includes('src/router')) {
+      return 'app-router';
+    }
+    if (id.includes('src/i18n')) {
+      return 'app-i18n';
+    }
+    if (id.includes('src/assets')) {
+      return 'app-assets';
+    }
+    if (id.includes('src/types')) {
+      return 'app-src';
+    }
+    return 'app-src';
+  }
+
+  if (id.includes('@btc/shared-')) {
+    if (id.includes('@btc/shared-components')) {
+      return 'btc-components';
+    }
+    return 'btc-shared';
+  }
+
+  if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) {
+    return 'vue-vendor';
+  }
+
+  if (id.includes('node_modules/axios')) {
+    return 'utils-http';
+  }
+  if (id.includes('node_modules/@vueuse')) {
+    return 'utils-vueuse';
+  }
+  if (id.includes('node_modules/dayjs') || id.includes('node_modules/moment')) {
+    return 'utils-date';
+  }
+  if (id.includes('node_modules/lodash') || id.includes('node_modules/lodash-es')) {
+    return 'utils-lodash';
+  }
+
+  if (id.includes('node_modules')) {
+    if (id.includes('vue-i18n') || id.includes('@intlify')) {
+      return 'vue-i18n';
+    }
+    if (id.includes('xlsx')) {
+      return 'file-xlsx';
+    }
+    if (id.includes('file-saver')) {
+      return 'file-saver';
+    }
+    if (id.includes('qiankun')) {
+      return 'qiankun';
+    }
+    if (id.includes('echarts')) {
+      return 'lib-echarts';
+    }
+    return 'vendor';
+  }
+
+  return undefined;
+};
 
 // CORS 插件（支持 credentials）
 const corsPlugin = (): Plugin => {
@@ -109,11 +216,11 @@ const corsPlugin = (): Plugin => {
 };
 
 export default defineConfig({
-  // 关键：base 指向子应用本地预览的绝对路径（必须带末尾 /）
-  // 这样构建产物中的资源路径会基于这个 base URL
   // 关键：base 配置
-  // - 预览构建（VITE_PREVIEW=true）：使用绝对路径（http://localhost:4182/），用于本地预览测试
-  // - 生产构建：使用相对路径（/），让浏览器根据当前域名（admin.bellis.com.cn）自动解析
+  // - 预览构建（VITE_PREVIEW=true）：使用绝对路径，便于远程调试
+  // - 正式/生产构建：使用相对路径（/），让浏览器根据当前域名自动解析
+  //   当直接访问 logistics.bellis.com.cn 时，资源路径为 /assets/...，nginx 配置中的 /assets/ location 可以正确匹配
+  //   当主应用通过 /micro-apps/logistics/ 路径加载时，nginx 配置中的 /micro-apps/logistics/ location 会处理路径重写
   base: isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/',
   resolve: {
     alias: {
@@ -159,8 +266,31 @@ export default defineConfig({
       },
     }),
     qiankun('logistics', {
-      useDevMode: true,
+      // 仅在开发环境使用 devMode，生产构建输出 ES 模块，供 qiankun 以 module 方式加载
+      useDevMode: process.env.NODE_ENV === 'development',
     }),
+    // 确保构建后的 HTML 中的 script 标签有 type="module"
+    {
+      name: 'ensure-module-scripts',
+      transformIndexHtml(html) {
+        // 确保所有 script 标签都有 type="module"
+        return html.replace(
+          /<script(\s+[^>]*)?>/gi,
+          (match, attrs = '') => {
+            // 跳过内联脚本（没有 src 属性）
+            if (!match.includes('src=')) {
+              return match;
+            }
+            // 如果已经有 type 属性，替换为 module
+            if (attrs && attrs.includes('type=')) {
+              return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
+            }
+            // 如果没有 type 属性，添加 type="module"
+            return `<script type="module"${attrs}>`;
+          }
+        );
+      },
+    } as Plugin,
   ],
   server: {
     port: parseInt(appConfig.devPort, 10),
@@ -220,123 +350,13 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'es2020', // 兼容 ES 模块的最低目标
-    sourcemap: false, // 开发环境关闭 sourcemap，减少文件体积和加载时间
+    target: 'es2018', // 与 qiankun 兼容的最低目标
+    cssTarget: 'chrome61',
+    sourcemap: false,
     rollupOptions: {
       output: {
-        format: 'esm', // 明确指定输出格式为 ESM
-        manualChunks(id) {
-          // 重要：Element Plus 的匹配必须在最前面，确保所有 element-plus 相关代码都在同一个 chunk
-          // 避免 Vite 的自动代码分割将 element-plus 分割成多个 chunk（如 element-layout、element-data、element-feedback 等）
-          if (id.includes('element-plus') || id.includes('@element-plus')) {
-            return 'element-plus';
-          }
-
-          if (id.includes('src/') && !id.includes('node_modules')) {
-            if (id.includes('src/modules')) {
-              const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
-              if (moduleName && ['customs', 'home', 'procurement', 'warehouse'].includes(moduleName)) {
-                return `module-${moduleName}`;
-              }
-              return 'module-others';
-            }
-            if (id.includes('src/pages')) {
-              return 'app-pages';
-            }
-            if (id.includes('src/components')) {
-              return 'app-components';
-            }
-            if (id.includes('src/micro')) {
-              return 'app-micro';
-            }
-            if (id.includes('src/plugins')) {
-              // 插件与 bootstrap 有依赖关系（bootstrap 会扫描插件），合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/store')) {
-              // store 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/services')) {
-              // services 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/utils')) {
-              // utils 与 bootstrap 有依赖关系，合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/composables')) {
-              return 'app-composables';
-            }
-            if (id.includes('src/bootstrap')) {
-              // bootstrap 与多个模块有依赖关系，放在 app-src 中
-              return 'app-src';
-            }
-            if (id.includes('src/config')) {
-              // config 可能依赖 plugins，合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/router')) {
-              return 'app-router';
-            }
-            if (id.includes('src/i18n')) {
-              return 'app-i18n';
-            }
-            if (id.includes('src/assets')) {
-              return 'app-assets';
-            }
-            if (id.includes('src/types')) {
-              // types 通常很小，合并到 app-src 避免空 chunk
-              return 'app-src';
-            }
-            return 'app-src';
-          }
-
-          if (id.includes('@btc/shared-')) {
-            if (id.includes('@btc/shared-components')) {
-              return 'btc-components';
-            }
-            return 'btc-shared';
-          }
-
-          if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) {
-            return 'vue-vendor';
-          }
-
-          if (id.includes('node_modules/axios')) {
-            return 'utils-http';
-          }
-          if (id.includes('node_modules/@vueuse')) {
-            return 'utils-vueuse';
-          }
-          if (id.includes('node_modules/dayjs') || id.includes('node_modules/moment')) {
-            return 'utils-date';
-          }
-          if (id.includes('node_modules/lodash') || id.includes('node_modules/lodash-es')) {
-            return 'utils-lodash';
-          }
-
-          if (id.includes('node_modules')) {
-            if (id.includes('vue-i18n') || id.includes('@intlify')) {
-              return 'vue-i18n';
-            }
-            if (id.includes('xlsx')) {
-              return 'file-xlsx';
-            }
-            if (id.includes('file-saver')) {
-              return 'file-saver';
-            }
-            if (id.includes('qiankun')) {
-              return 'qiankun';
-            }
-            if (id.includes('echarts')) {
-              return 'lib-echarts';
-            }
-            return 'vendor';
-          }
-
-          return undefined;
-        },
+        format: 'esm', // 明确指定输出格式为 ESM，与主应用的 scriptType: 'module' 配置一致
+        manualChunks: getManualChunkName,
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',

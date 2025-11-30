@@ -8,42 +8,6 @@
   <body>
     <div id="layout-container"></div>
     <div id="app"></div>
-    <script>
-      (function () {
-        if (window.__POWERED_BY_QIANKUN__) {
-          return;
-        }
-
-        var shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
-        if (!shouldLoadLayout) {
-          return;
-        }
-
-        var LOADER_FLAG = '__layout_app_loader__';
-        if (window[LOADER_FLAG]) {
-          return;
-        }
-        window[LOADER_FLAG] = true;
-        window.__USE_LAYOUT_APP__ = true;
-
-        // 使用共享工具函数加载 layout-app（需要先安装 qiankun 依赖）
-        // 这样可以避免 CDN 的 CORS 问题和网络问题
-        // 注意：qiankun 需要在 quality-app 的 package.json 中安装
-        Promise.all([
-          import('qiankun'),
-          import('../../packages/shared-utils/src/qiankun/load-layout-app.ts')
-        ])
-          .then(([qiankun, { loadLayoutApp }]) => {
-            return loadLayoutApp({
-              registerMicroApps: qiankun.registerMicroApps,
-              start: qiankun.start
-            });
-          })
-          .catch((error) => {
-            console.error('[quality-app] 加载 layout-app 失败:', error);
-          });
-      })();
-    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

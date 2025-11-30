@@ -1,6 +1,9 @@
 import type { RouteRecordRaw } from 'vue-router';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { AppLayout } from '@btc/shared-components';
 
-export const logisticsRoutes: RouteRecordRaw[] = [
+// 基础路由（页面组件）
+const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'logistics-home',
@@ -75,6 +78,20 @@ export const logisticsRoutes: RouteRecordRaw[] = [
     redirect: '/warehouse/material/list',
     meta: {
       process: false,
+    },
+  },
+  {
+    path: '/warehouse/material/ticket',
+    name: 'logistics-warehouse-material-ticket',
+    component: () => import('../../modules/warehouse/views/material/ticket/index.vue'),
+    meta: {
+      labelKey: 'menu.logistics.warehouse.material.ticket',
+      breadcrumbs: [
+        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
+        { labelKey: 'menu.logistics.warehouse.material', icon: 'Files' },
+        { labelKey: 'menu.logistics.warehouse.material.ticket', icon: 'Tickets' },
+      ],
+      tabLabelKey: 'menu.logistics.warehouse.material.ticket',
     },
   },
   {
@@ -179,3 +196,22 @@ export const logisticsRoutes: RouteRecordRaw[] = [
   },
 ];
 
+// 独立运行时：使用 AppLayout 包裹所有路由
+// qiankun 模式：直接返回页面路由（由主应用提供 Layout）
+// 注意：在函数中动态检测 isStandalone，确保在运行时正确检测
+export const getLogisticsRoutes = (): RouteRecordRaw[] => {
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  const routes = isStandalone
+    ? [
+        {
+          path: '/',
+          component: AppLayout, // Use AppLayout from shared package
+          children: pageRoutes,
+        },
+      ]
+    : pageRoutes;
+  return routes;
+};
+
+// 为了向后兼容，也导出一个常量（在模块加载时检测）
+export const logisticsRoutes: RouteRecordRaw[] = getLogisticsRoutes();
