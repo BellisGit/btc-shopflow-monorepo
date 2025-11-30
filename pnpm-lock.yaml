@@ -299,6 +299,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
@@ -342,6 +345,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
@@ -470,6 +476,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
@@ -601,6 +610,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
@@ -650,6 +662,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
@@ -849,6 +864,9 @@ importers:
       dayjs:
         specifier: ^1.11.18
         version: 1.11.19
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
     devDependencies:
       typescript:
         specifier: ^5.9.3
