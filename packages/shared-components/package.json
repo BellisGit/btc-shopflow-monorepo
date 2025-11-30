@@ -30,12 +30,15 @@
   "devDependencies": {
     "@btc/shared-core": "workspace:*",
     "@btc/shared-utils": "workspace:*",
+    "@btc/subapp-manifests": "workspace:*",
     "@element-plus/icons-vue": "^2.3.2",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.0.0",
     "element-plus": "^2.11.5",
+    "pinia": "^2.0.0",
     "sass": "^1.93.2",
     "vite": "^5.0.0",
+    "vue-router": "^4.0.0",
     "vue-tsc": "^2.0.0"
   },
   "dependencies": {
