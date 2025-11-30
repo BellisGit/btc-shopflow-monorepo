@@ -16,13 +16,16 @@
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
     "@btc/shared-utils": "workspace:*",
+    "@btc/subapp-manifests": "workspace:*",
     "element-plus": "^2.8.10",
+    "nprogress": "^0.2.0",
     "pinia": "^3.0.3",
     "vue": "^3.4.0",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
+    "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",
