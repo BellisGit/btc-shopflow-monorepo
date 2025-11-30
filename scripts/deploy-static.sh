@@ -59,6 +59,7 @@ APPS=(
     "production-app"
     "engineering-app"
     "mobile-app"
+    "layout-app"
 )
 
 # 显示帮助信息
@@ -203,6 +204,7 @@ get_app_deploy_path() {
     fi
     
     # 默认路径（基于应用名称）
+    # 注意：子应用仍部署到各自的子域目录，Nginx 通过 alias 配置将 /micro-apps/<app>/ 映射到这些目录
     case $app_name in
         system-app)
             echo "/www/wwwroot/bellis.com.cn"
@@ -227,6 +229,9 @@ get_app_deploy_path() {
             ;;
         mobile-app)
             echo "/www/wwwroot/mobile.bellis.com.cn"
+            ;;
+        layout-app)
+            echo "/www/wwwroot/layout.bellis.com.cn"
             ;;
         *)
             log_warning "未知应用: $app_name，使用默认路径"
@@ -282,7 +287,8 @@ deploy_app() {
     log_info "部署目标路径: $deploy_path"
     
     # SSH 连接参数（优化连接稳定性）
-    local ssh_opts="-i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+    # 增加超时时间和重试机制，避免大文件传输时连接中断
+    local ssh_opts="-i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes -o Compression=yes"
     
     # 确保目标目录存在
     log_info "确保目标目录存在..."
@@ -338,13 +344,38 @@ deploy_app() {
             "rm -rf $deploy_path/* $deploy_path/.[!.]* 2>/dev/null || true"
         
         # 上传文件（使用 tar 压缩传输，更高效）
+        # 添加重试机制，最多重试 3 次
         log_info "打包并上传文件..."
-        cd "$dist_dir" && tar czf - . | ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-            "cd $deploy_path && tar xzf -" || {
-            log_error "文件上传失败"
+        local retry_count=0
+        local max_retries=3
+        local upload_success=false
+        
+        while [ $retry_count -lt $max_retries ]; do
+            if [ $retry_count -gt 0 ]; then
+                log_warning "第 $retry_count 次重试上传..."
+                sleep 2
+            fi
+            
+            # 保存当前目录
+            local original_dir=$(pwd)
+            
+            if cd "$dist_dir" && tar czf - . | ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+                "cd $deploy_path && tar xzf -" 2>&1; then
+                upload_success=true
+                cd "$original_dir" > /dev/null
+                break
+            else
+                retry_count=$((retry_count + 1))
+                log_warning "上传失败，已重试 $retry_count/$max_retries 次"
+                # 确保返回原目录
+                cd "$original_dir" > /dev/null 2>&1 || true
+            fi
+        done
+        
+        if [ "$upload_success" = false ]; then
+            log_error "文件上传失败（已重试 $max_retries 次）"
             return 1
-        }
-        cd - > /dev/null
+        fi
     fi
     
     # 验证文件是否同步成功
@@ -557,10 +588,14 @@ main() {
         trap "rm -rf $temp_dir" EXIT
         
         # 限制并发数（避免 SSH 连接过多导致连接被关闭）
-        local max_concurrent=4
+        # 减少并发数，避免大文件传输时连接中断
+        local max_concurrent=2
         
         # 并行执行部署或验证（带并发限制）
+        log_info "准备部署的应用列表: ${APPS[*]}"
+        log_info "应用总数: ${#APPS[@]}"
         for app in "${APPS[@]}"; do
+            log_info "开始处理应用: $app"
             # 等待直到有可用的并发槽位
             while [ ${#pids[@]} -ge $max_concurrent ]; do
                 sleep 0.5
@@ -576,6 +611,8 @@ main() {
             
             local result_file="$temp_dir/${app}.result"
             (
+                # 确保结果文件在子进程中创建
+                touch "$result_file" 2>/dev/null || true
                 if [ "$can_deploy" = true ]; then
                     if deploy_app "$app"; then
                         echo "success" > "$result_file"
@@ -594,7 +631,9 @@ main() {
                     fi
                 fi
             ) &
-            pids+=($!)
+            local pid=$!
+            pids+=($pid)
+            log_info "应用 $app 的部署任务已启动 (PID: $pid)"
         done
         
         # 等待所有后台进程完成
