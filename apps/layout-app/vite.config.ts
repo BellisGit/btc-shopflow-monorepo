@@ -136,6 +136,28 @@ export default defineConfig({
     qiankun('layout', {
       useDevMode: process.env.NODE_ENV === 'development',
     }),
+    // 确保构建后的 HTML 中的 script 标签有 type="module"（用于 qiankun 加载）
+    {
+      name: 'ensure-module-scripts',
+      transformIndexHtml(html) {
+        // 确保所有 script 标签都有 type="module"
+        return html.replace(
+          /<script(\s+[^>]*)?>/gi,
+          (match, attrs = '') => {
+            // 跳过内联脚本（没有 src 属性）
+            if (!match.includes('src=')) {
+              return match;
+            }
+            // 如果已经有 type 属性，替换为 module
+            if (attrs && attrs.includes('type=')) {
+              return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
+            }
+            // 如果没有 type 属性，添加 type="module"
+            return `<script type="module"${attrs}>`;
+          }
+        );
+      },
+    } as Plugin,
   ],
   server: {
     port: parseInt(config.devPort, 10),
@@ -168,11 +190,14 @@ export default defineConfig({
     target: 'es2018',
     cssTarget: 'chrome61',
     sourcemap: false,
+    // 禁用内联，确保资源文件独立
+    assetsInlineLimit: 0,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        format: 'umd',
-        name: 'layoutApp',
-        inlineDynamicImports: true,
+        // 使用 ES 模块格式，与其他应用保持一致，便于 qiankun 加载
+        format: 'es',
+        inlineDynamicImports: false,
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
