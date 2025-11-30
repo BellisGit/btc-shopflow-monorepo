@@ -107,7 +107,7 @@ const cardClass = computed(() => {
   }
 
   &__extra {
-    color: var(--el-text-color-regular);
+    // 不设置 color，让子元素（如状态图标）自己控制颜色
   }
 
   // 鍐呭鍖哄煙鏍峰紡

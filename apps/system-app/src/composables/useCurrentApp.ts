@@ -1,5 +1,27 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { getActiveApp } from '@/store/tabRegistry';
+
+/**
+ * 子域名到应用名称的映射
+ */
+const subdomainToAppMap: Record<string, string> = {
+  'admin.bellis.com.cn': 'admin',
+  'logistics.bellis.com.cn': 'logistics',
+  'quality.bellis.com.cn': 'quality',
+  'production.bellis.com.cn': 'production',
+  'engineering.bellis.com.cn': 'engineering',
+  'finance.bellis.com.cn': 'finance',
+};
+
+/**
+ * 根据子域名获取应用名称
+ */
+function getAppFromSubdomain(): string | null {
+  if (typeof window === 'undefined') return null;
+  const hostname = window.location.hostname;
+  return subdomainToAppMap[hostname] || null;
+}
 
 /**
  * 获取当前应用名称
@@ -9,26 +31,15 @@ export function useCurrentApp() {
   const currentApp = ref('system');
 
   const detectCurrentApp = () => {
-    const path = route.path;
-    if (path.startsWith('/admin')) {
-      // 管理域
-      currentApp.value = 'admin';
-    } else if (path.startsWith('/logistics')) {
-      currentApp.value = 'logistics';
-    } else if (path.startsWith('/engineering')) {
-      currentApp.value = 'engineering';
-    } else if (path.startsWith('/quality')) {
-      currentApp.value = 'quality';
-    } else if (path.startsWith('/production')) {
-      currentApp.value = 'production';
-    } else if (path.startsWith('/finance')) {
-      currentApp.value = 'finance';
-    } else if (path.startsWith('/docs')) {
-      currentApp.value = 'docs';
-    } else {
-      // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
-      currentApp.value = 'system';
+    // 首先检查子域名
+    const subdomainApp = getAppFromSubdomain();
+    if (subdomainApp) {
+      currentApp.value = subdomainApp;
+      return;
     }
+    
+    // 然后使用统一的 getActiveApp 函数
+    currentApp.value = getActiveApp(route.path);
   };
 
   watch(

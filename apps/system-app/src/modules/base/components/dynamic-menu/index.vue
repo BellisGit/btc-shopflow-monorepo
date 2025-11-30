@@ -234,6 +234,20 @@ watch(
 
 const isExternalLink = (value: string) => /^(https?:|mailto:|tel:)/.test(value);
 
+// 查找菜单项（递归查找）
+const findMenuItem = (items: any[], targetIndex: string): any | null => {
+  for (const item of items) {
+    if (item.index === targetIndex) {
+      return item;
+    }
+    if (item.children && item.children.length > 0) {
+      const found = findMenuItem(item.children, targetIndex);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 const linkHandler = (index: string) => {
   if (!index) return false;
 
@@ -251,6 +265,16 @@ const handleMenuSelect = (index: string) => {
 
     if (!currentApp.value) {
       throw new Error('动态菜单未找到所属应用');
+    }
+
+    // 查找对应的菜单项，检查是否有 externalUrl
+    const menuItem = findMenuItem(currentMenuItems.value, index);
+    
+    // 如果菜单项有 externalUrl，跳转到子域名（保留主应用布局）
+    if (menuItem?.externalUrl) {
+      // 使用 target="_self" 在当前窗口跳转，乾坤会自动识别并挂载子应用
+      window.location.href = menuItem.externalUrl;
+      return;
     }
 
     const normalizedIndex = index.startsWith('/') ? index : `/${index}`;

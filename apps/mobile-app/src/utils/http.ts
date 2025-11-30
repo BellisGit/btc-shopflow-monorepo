@@ -41,7 +41,7 @@ export class Http {
     // 注意：withCredentials 在请求拦截器中根据是否跨域动态设置
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
-      timeout: 30000,
+      timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时
     });
 
     // 强制设置 baseURL

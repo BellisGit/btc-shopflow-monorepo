@@ -160,11 +160,8 @@ const handleClick = (event: MouseEvent) => {
   &:focus-visible {
     border-color: var(--btc-table-button-color);
     background-color: color-mix(in srgb, var(--btc-table-button-color) 12%, transparent);
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--btc-table-button-color) 45%, transparent);
-    outline-offset: 2px;
+    box-shadow: none;
+    outline: none;
   }
 
   &:disabled,

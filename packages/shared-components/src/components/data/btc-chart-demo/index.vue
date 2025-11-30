@@ -168,7 +168,8 @@ const allCharts = computed<ChartItem[]>(() => [
     component: BtcLineChart,
     props: {
       data: executionTrendData.value,
-      'x-axis-data': executionTrendXAxis.value
+      'x-axis-data': executionTrendXAxis.value,
+      showTooltip: false
     }
   },
   {
@@ -177,7 +178,8 @@ const allCharts = computed<ChartItem[]>(() => [
     component: BtcBarChart,
     props: {
       data: responseTimeData.value,
-      'x-axis-data': responseTimeXAxis.value
+      'x-axis-data': responseTimeXAxis.value,
+      showTooltip: false
     }
   },
   {
@@ -185,7 +187,8 @@ const allCharts = computed<ChartItem[]>(() => [
     title: '饼图',
     component: BtcPieChart,
     props: {
-      data: typeDistributionData.value
+      data: typeDistributionData.value,
+      showTooltip: false
     }
   },
   {
@@ -194,7 +197,8 @@ const allCharts = computed<ChartItem[]>(() => [
     component: BtcHBarChart,
     props: {
       data: hBarChartData.value,
-      'y-axis-data': hBarChartYAxis.value
+      'y-axis-data': hBarChartYAxis.value,
+      showTooltip: false
     }
   },
   {
@@ -206,7 +210,8 @@ const allCharts = computed<ChartItem[]>(() => [
       data2: dualBarData2.value,
       'x-axis-data': dualBarXAxis.value,
       label1: '本月',
-      label2: '上月'
+      label2: '上月',
+      showTooltip: false
     }
   },
   {
@@ -214,7 +219,8 @@ const allCharts = computed<ChartItem[]>(() => [
     title: '环形图',
     component: BtcRingChart,
     props: {
-      data: ringChartData.value
+      data: ringChartData.value,
+      showTooltip: false
     }
   },
   {
@@ -223,7 +229,8 @@ const allCharts = computed<ChartItem[]>(() => [
     component: BtcRadarChart,
     props: {
       indicators: radarIndicators.value,
-      data: radarChartData.value
+      data: radarChartData.value,
+      showTooltip: false
     }
   },
   {
@@ -233,7 +240,8 @@ const allCharts = computed<ChartItem[]>(() => [
     props: {
       data: scatterChartData.value,
       'x-axis-name': 'X轴',
-      'y-axis-name': 'Y轴'
+      'y-axis-name': 'Y轴',
+      showTooltip: false
     }
   }
 ]);

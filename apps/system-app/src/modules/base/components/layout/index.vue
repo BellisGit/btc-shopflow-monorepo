@@ -66,7 +66,7 @@
         >
             <!-- 主应用路由出口 -->
             <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
-              <transition :name="pageTransitionName" mode="out-in">
+              <transition :name="pageTransitionName">
                 <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
                 <keep-alive v-else>
                   <component :is="Component" :key="route.fullPath" />
@@ -505,6 +505,7 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative; // 为过渡动画提供定位上下文
     }
 
     // 文档应用 iframe（占据内容区域完整尺寸）
@@ -606,15 +607,25 @@ onUnmounted(() => {
     .slide-bottom-enter-active {
       position: absolute;
       top: 0;
+      left: 0;
+      right: 0;
       width: 100%;
+      height: 100%;
       transition: all 0.25s ease-in-out 0.1s;
+      background-color: var(--el-bg-color);
+      z-index: 1;
     }
 
     .slide-bottom-leave-active {
       position: absolute;
       top: 0;
+      left: 0;
+      right: 0;
       width: 100%;
+      height: 100%;
       transition: all 0.25s ease-in-out;
+      background-color: var(--el-bg-color);
+      z-index: 0;
     }
 
     .slide-bottom-enter-to {

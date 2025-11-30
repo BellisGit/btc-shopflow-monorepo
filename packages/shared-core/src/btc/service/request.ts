@@ -154,7 +154,7 @@ export function createRequest(baseURL: string = ''): Request {
   // 创建 axios 实例
   const axiosInstance = axios.create({
     baseURL: finalBaseURL,
-    timeout: 30000,
+    timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时
     withCredentials: true, // 始终设置为 true，发送 cookie
   });
 

@@ -115,9 +115,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
     const item1 = menus1[i];
     const item2 = menus2[i];
 
+    // 比较所有字段，包括 externalUrl
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||
-        item1.icon !== item2.icon) {
+        item1.icon !== item2.icon ||
+        item1.externalUrl !== item2.externalUrl) {
       return false;
     }
 
@@ -159,19 +161,14 @@ export async function registerManifestMenusForApp(appName: string) {
   // 获取现有菜单
   const existingMenus = getMenusForApp(appName);
 
-  // 关键修复：对于通过 manifest 注册的应用（如物流域），必须强制重新注册
-  // 因为菜单可能被 clearMenusExcept 清空了，即使内容相同也要重新注册
-  // 只有管理域（admin）的菜单是从静态配置初始化的，如果内容相同且不为空，可以跳过更新
-  if (appName === 'admin') {
-    // 管理域：如果菜单内容相同且不为空，则跳过更新，避免触发不必要的响应式更新
+  // 如果菜单内容相同且不为空，则跳过更新，避免触发不必要的响应式更新
+  // 这样可以避免菜单在路由切换时不必要的刷新
   if (existingMenus.length > 0 && menusEqual(existingMenus, normalizedMenus)) {
     return Promise.resolve();
-    }
   }
 
-  // 其他应用（包括物流域、系统域等）：无论现有菜单是否为空，都强制重新注册
-  // 这样可以修复菜单在切换应用后消失的问题
-  // 注意：即使菜单内容相同，也要重新注册，因为可能被 clearMenusExcept 清空了
+  // 菜单内容不同或为空，需要重新注册
+  // 注意：即使菜单内容相同，如果现有菜单为空，也需要重新注册（可能被 clearMenusExcept 清空了）
   registerMenus(appName, normalizedMenus);
   return Promise.resolve();
 }
@@ -1097,11 +1094,11 @@ export function setupQiankun() {
   start({
     prefetch: false,
     sandbox: {
-      strictStyleIsolation: false,
-      experimentalStyleIsolation: false, // 关闭样式隔离：主应用和子应用样式共享
+      strictStyleIsolation: false, // 关闭严格样式隔离：需要共享样式（共享组件、主应用布局等）
+      experimentalStyleIsolation: true, // 开启实验性样式隔离：通过 CSS 作用域隔离样式，但不使用 Shadow DOM，允许共享样式
       loose: false,
     },
-    singular: true, // 单例模式：同时只能运行一个子应用（子应用之间不会同时存在，因此不需要额外隔离）
+    singular: false, // 关闭单例模式：支持跨子域部署，允许主应用同时管理多个子应用
     // 关键：在 importEntryOpts 中配置 getTemplate 和 fetch，修复资源路径
     // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {

@@ -269,17 +269,11 @@ html.dark [data-qiankun] .btc-table-button {
   --btc-table-button-color: var(--el-color-primary);
 }
 
-html.dark .btc-table-button:hover,
-html.dark .btc-table-button:focus-visible,
-html.dark #subapp-viewport .btc-table-button:hover,
-html.dark #subapp-viewport .btc-table-button:focus-visible,
-html.dark #subapp-viewport [data-qiankun] .btc-table-button:hover,
-html.dark #subapp-viewport [data-qiankun] .btc-table-button:focus-visible,
-html.dark [data-qiankun] .btc-table-button:hover,
-html.dark [data-qiankun] .btc-table-button:focus-visible {
-  border-color: var(--btc-table-button-color) !important;
-  background-color: color-mix(in srgb, var(--btc-table-button-color) 12%, transparent) !important;
-}
+/* 注意：移除了通用的 btc-table-button hover 样式，因为：
+   1. 在 minimal 模式下，应该使用 --btc-crud-icon-color 而不是 --btc-table-button-color
+   2. 组件自身的 scoped 样式已经处理了 hover 效果
+   3. 避免样式冲突和覆盖问题
+*/
 
 /* ========== btc-master-list 暗色主题样式 ========== */
 /* 确保 btc-master-list 在暗色模式下的激活样式和图标背景色正确 */
@@ -300,26 +294,20 @@ html.dark [data-qiankun] .btc-master-list__node-icon {
 /* ========== btc-crud 相关组件暗色主题样式 ========== */
 /* 确保 btc-crud 相关按钮和图标在暗色模式下的主题色和 hover 效果正确 */
 
-/* btc-crud-btn hover 样式 */
-html.dark .btc-crud-btn:hover,
-html.dark .btc-crud-btn:focus-visible,
-html.dark #subapp-viewport .btc-crud-btn:hover,
-html.dark #subapp-viewport .btc-crud-btn:focus-visible,
-html.dark #subapp-viewport [data-qiankun] .btc-crud-btn:hover,
-html.dark #subapp-viewport [data-qiankun] .btc-crud-btn:focus-visible,
-html.dark [data-qiankun] .btc-crud-btn:hover,
-html.dark [data-qiankun] .btc-crud-btn:focus-visible {
-  background-color: color-mix(in srgb, var(--btc-crud-btn-color) 12%, transparent) !important;
-  border-color: var(--btc-crud-btn-color) !important;
-}
+/* 注意：移除了 btc-crud-btn 的全局 hover 样式，因为：
+   1. 在 minimal 模式下，应该使用 index.scss 中的样式
+   2. 避免样式冲突和覆盖问题
+   3. 让组件自身的样式和 index.scss 中的样式自然工作
+*/
 
 /* btc-crud 中的 btc-table-button hover 样式（minimal 模式） */
+/* 注意：移除了 !important，让组件自身的样式和 index.scss 中的样式自然工作 */
 html.dark [data-button-style='minimal'] .btc-crud .btc-table-button:hover,
 html.dark #subapp-viewport [data-button-style='minimal'] .btc-crud .btc-table-button:hover,
 html.dark #subapp-viewport [data-qiankun] [data-button-style='minimal'] .btc-crud .btc-table-button:hover,
 html.dark [data-qiankun] [data-button-style='minimal'] .btc-crud .btc-table-button:hover {
-  border-color: var(--btc-crud-icon-color) !important;
-  background-color: color-mix(in srgb, var(--btc-crud-icon-color) 12%, transparent) !important;
+  border-color: var(--btc-crud-icon-color);
+  background-color: color-mix(in srgb, var(--btc-crud-icon-color) 12%, transparent);
 }
 
 /* btc-comm__icon hover 样式 */

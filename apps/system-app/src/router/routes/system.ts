@@ -49,6 +49,12 @@ export const systemRoutes: RouteRecordRaw[] = [
     meta: { titleKey: 'menu.inventory.dataSource.list' },
   },
   {
+    path: 'data/inventory/process',
+    name: 'DataInventoryProcess',
+    component: () => import('../../modules/data/views/inventory/process/index.vue'),
+    meta: { titleKey: 'menu.inventory.process' },
+  },
+  {
     path: 'data/inventory/check',
     name: 'DataInventoryCheck',
     component: () => import('../../modules/data/views/inventory/check/index.vue'),

@@ -35,13 +35,62 @@ setupI18n(app);
 try {
   const isDev = (import.meta as any).env?.DEV;
   if ('serviceWorker' in navigator && !isDev) {
-    registerSW({
+    const updateSW = registerSW({
       immediate: true,
       onRegisteredSW(swUrl, registration) {
         console.log('[PWA] Service Worker registered:', swUrl);
         if (registration) {
+          // 监听 Service Worker 更新
           registration.addEventListener('updatefound', () => {
             console.log('[PWA] Service Worker update found');
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 新版本已安装，但旧版本仍在运行
+                  console.log('[PWA] New Service Worker installed, waiting for activation');
+                  // 强制激活新版本（跳过等待）
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+          });
+
+          // 页面加载时立即检查更新（确保能及时检测到新版本）
+          registration.update().catch(err => {
+            console.warn('[PWA] Service Worker initial update check failed:', err);
+          });
+
+          // 定期检查更新（每5分钟，更频繁地检查）
+          setInterval(() => {
+            registration.update().catch(err => {
+              console.warn('[PWA] Service Worker update check failed:', err);
+            });
+          }, 5 * 60 * 1000); // 从30分钟改为5分钟
+
+          // 页面可见时检查更新
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+              registration.update().catch(err => {
+                console.warn('[PWA] Service Worker update check failed:', err);
+              });
+            }
+          });
+
+          // 页面聚焦时检查更新
+          window.addEventListener('focus', () => {
+            registration.update().catch(err => {
+              console.warn('[PWA] Service Worker update check failed:', err);
+            });
+          });
+
+          // 监听 Service Worker 控制器变化（新版本已激活）
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] Service Worker controller changed, reloading page');
+            // 延迟一下，确保新版本完全激活
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
           });
         }
       },
@@ -49,17 +98,69 @@ try {
         console.error('[PWA] Service Worker registration error:', error);
       },
     });
+
+    // 导出更新函数，供外部调用
+    (window as any).updateServiceWorker = updateSW;
   }
 } catch (e) {
   // 如果 import.meta 不可用（生产环境构建后），注册 Service Worker
   if ('serviceWorker' in navigator) {
-    registerSW({
+    const updateSW = registerSW({
       immediate: true,
       onRegisteredSW(swUrl, registration) {
         console.log('[PWA] Service Worker registered:', swUrl);
         if (registration) {
+          // 监听 Service Worker 更新
           registration.addEventListener('updatefound', () => {
             console.log('[PWA] Service Worker update found');
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 新版本已安装，但旧版本仍在运行
+                  console.log('[PWA] New Service Worker installed, waiting for activation');
+                  // 强制激活新版本（跳过等待）
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+          });
+
+          // 页面加载时立即检查更新（确保能及时检测到新版本）
+          registration.update().catch(err => {
+            console.warn('[PWA] Service Worker initial update check failed:', err);
+          });
+
+          // 定期检查更新（每5分钟，更频繁地检查）
+          setInterval(() => {
+            registration.update().catch(err => {
+              console.warn('[PWA] Service Worker update check failed:', err);
+            });
+          }, 5 * 60 * 1000); // 从30分钟改为5分钟
+
+          // 页面可见时检查更新
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+              registration.update().catch(err => {
+                console.warn('[PWA] Service Worker update check failed:', err);
+              });
+            }
+          });
+
+          // 页面聚焦时检查更新
+          window.addEventListener('focus', () => {
+            registration.update().catch(err => {
+              console.warn('[PWA] Service Worker update check failed:', err);
+            });
+          });
+
+          // 监听 Service Worker 控制器变化（新版本已激活）
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] Service Worker controller changed, reloading page');
+            // 延迟一下，确保新版本完全激活
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
           });
         }
       },
@@ -67,6 +168,9 @@ try {
         console.error('[PWA] Service Worker registration error:', error);
       },
     });
+
+    // 导出更新函数，供外部调用
+    (window as any).updateServiceWorker = updateSW;
   }
 }
 

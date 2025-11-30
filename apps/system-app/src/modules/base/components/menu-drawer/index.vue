@@ -65,6 +65,7 @@ import { BtcSvg } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
 import { getAppConfig } from '@configs/app-env.config';
+import { getActiveApp } from '@/store/tabRegistry';
 
 interface MicroApp {
   name: string;
@@ -99,25 +100,9 @@ const currentApp = ref('system');
 const loading = ref(false);
 
 const detectCurrentApp = () => {
+  // 使用统一的 getActiveApp 函数，确保子域名检测逻辑一致
   const path = window.location.pathname;
-  if (path.startsWith('/docs')) {
-    currentApp.value = 'docs';
-  } else if (path.startsWith('/logistics')) {
-    currentApp.value = 'logistics';
-  } else if (path.startsWith('/engineering')) {
-    currentApp.value = 'engineering';
-  } else if (path.startsWith('/quality')) {
-    currentApp.value = 'quality';
-  } else if (path.startsWith('/production')) {
-    currentApp.value = 'production';
-  } else if (path.startsWith('/finance')) {
-    currentApp.value = 'finance';
-  } else if (path.startsWith('/admin')) {
-    currentApp.value = 'admin';
-  } else {
-    // 系统域是默认域，负责全域系统用户处理日常事务的共享域
-    currentApp.value = 'system';
-  }
+  currentApp.value = getActiveApp(path);
 };
 
 onMounted(() => {

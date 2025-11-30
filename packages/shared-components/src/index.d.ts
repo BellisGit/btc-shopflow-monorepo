@@ -29,6 +29,7 @@ export { default as BtcColorPicker } from './components/form/btc-color-picker/in
 export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
 export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
+export { default as BtcDoubleGroup } from './components/data/btc-double-group/index.vue';
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
@@ -67,6 +68,7 @@ export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
+export type { DoubleGroupProps, DoubleGroupEmits, DoubleGroupExpose } from './components/data/btc-double-group/types';
 export type {
   TransferKey,
   TransferPanelProps,

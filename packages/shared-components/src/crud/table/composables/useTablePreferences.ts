@@ -29,7 +29,7 @@ const DEFAULT_STORAGE_KEY = 'default';
 function loadPreferences(key: string): PersistedPreferences {
   try {
     // 从统一的 settings 存储中读取表格偏好设置
-    const settings = storage.get<{ tablePreferences?: TablePreferencesStorage }>('settings') || {};
+    const settings = (storage.get('settings') as { tablePreferences?: TablePreferencesStorage } | null) || {};
     const allPreferences = settings.tablePreferences || {};
     return allPreferences[key] || {};
   } catch (error) {
@@ -41,7 +41,7 @@ function loadPreferences(key: string): PersistedPreferences {
 function persistPreferences(key: string, value: PersistedPreferences) {
   try {
     // 将表格偏好设置存储到统一的 settings 中
-    const settings = storage.get<{ tablePreferences?: TablePreferencesStorage }>('settings') || {};
+    const settings = (storage.get('settings') as { tablePreferences?: TablePreferencesStorage } | null) || {};
     const allPreferences = settings.tablePreferences || {};
     allPreferences[key] = value;
     settings.tablePreferences = allPreferences;

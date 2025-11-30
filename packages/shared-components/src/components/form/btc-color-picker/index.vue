@@ -62,13 +62,15 @@ defineOptions({
   name: 'BtcColorPicker'
 });
 
+type Placement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'left-start' | 'left-end' | 'right' | 'right-start' | 'right-end';
+
 interface BtcColorPickerProps {
   modelValue?: string | null;
   predefineColors?: string[];
   showAlpha?: boolean;
   placeholder?: string;
   popoverWidth?: number | string;
-  placement?: string;
+  placement?: Placement;
   teleported?: boolean;
   popperClass?: string;
   triggerSize?: 'large' | 'default' | 'small';

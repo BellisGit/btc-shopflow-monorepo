@@ -224,6 +224,26 @@ interface bom {
            */
           checkType?: any;
         
+          /**
+           * domainId
+           */
+          domainId?: any;
+        
+          /**
+           * parentNode
+           */
+          parentNode?: any;
+        
+          /**
+           * childNode
+           */
+          childNode?: any;
+        
+          /**
+           * checkType
+           */
+          checkType?: any;
+        
         /**
          * Any key-value pairs
          */
@@ -276,6 +296,26 @@ interface data {
            * 更新时间
            */
           updatedAt?: any;
+        
+          /**
+           * checkType
+           */
+          checkType?: any;
+        
+          /**
+           * partName
+           */
+          partName?: any;
+        
+          /**
+           * position
+           */
+          position?: any;
+        
+          /**
+           * domainId
+           */
+          domainId?: any;
         
           /**
            * checkType
@@ -379,14 +419,19 @@ interface check {
           endTime?: any;
         
           /**
-           * 盘点人ID
+           * 盘点人
            */
-          checkerId?: any;
+          checker?: any;
         
           /**
            * 备注
            */
           remark?: any;
+        
+          /**
+           * 剩余时长(秒)
+           */
+          remainingSeconds?: any;
         
           /**
            * 创建时间
@@ -471,6 +516,29 @@ interface diff {
            */
           createdAt?: any;
         
+          /**
+           * 页码
+           */
+          page?: any;
+        
+          /**
+           * 每页数量
+           */
+          size?: any;
+        
+          /**
+           * 关键词
+           */
+          keyword?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface ticket {
           /**
            * 页码
            */

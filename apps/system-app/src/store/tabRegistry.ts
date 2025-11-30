@@ -85,9 +85,37 @@ const registry: Record<string, Record<string, TabMeta>> = {
 };
 
 /**
- * 当前激活应用（根据路径前缀判断）
+ * 子域名到应用名称的映射
+ */
+const subdomainToAppMap: Record<string, string> = {
+  'admin.bellis.com.cn': 'admin',
+  'logistics.bellis.com.cn': 'logistics',
+  'quality.bellis.com.cn': 'quality',
+  'production.bellis.com.cn': 'production',
+  'engineering.bellis.com.cn': 'engineering',
+  'finance.bellis.com.cn': 'finance',
+};
+
+/**
+ * 根据子域名获取应用名称
+ */
+function getAppFromSubdomain(): string | null {
+  if (typeof window === 'undefined') return null;
+  const hostname = window.location.hostname;
+  return subdomainToAppMap[hostname] || null;
+}
+
+/**
+ * 当前激活应用（根据路径前缀和子域名判断）
  */
 export function getActiveApp(pathname: string): string {
+  // 首先检查子域名
+  const subdomainApp = getAppFromSubdomain();
+  if (subdomainApp) {
+    return subdomainApp;
+  }
+  
+  // 然后检查路径前缀
   if (pathname.startsWith('/admin')) return 'admin';
   if (pathname.startsWith('/logistics')) return 'logistics';
   if (pathname.startsWith('/engineering')) return 'engineering';

@@ -478,14 +478,14 @@ async function handleSubmit() {
 
     BtcMessage.success(t('org.user_role_assign.messages.bindSuccess'));
     closeDrawer();
-    
+
     // 只刷新右侧表格，不刷新左侧列表，避免重置选择
     if (tableGroupRef.value?.crudRef?.crud?.loadData) {
       await tableGroupRef.value.crudRef.crud.loadData();
     } else {
       // 如果无法只刷新右侧，则刷新整个表格并恢复选择
       await tableGroupRef.value?.refresh?.();
-      
+
       // 刷新后恢复左侧域的选择状态
       // 由于 BtcMasterList 的 refresh 会在 nextTick 中自动选中第一项，
       // 我们需要在更晚的时机恢复选择，确保覆盖默认选择
@@ -539,14 +539,14 @@ async function handleUnbind(row: any) {
     });
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
-    
+
     // 只刷新右侧表格，不刷新左侧列表，避免重置选择
     if (tableGroupRef.value?.crudRef?.crud?.loadData) {
       await tableGroupRef.value.crudRef.crud.loadData();
     } else {
       // 如果无法只刷新右侧，则刷新整个表格并恢复选择
       await tableGroupRef.value?.refresh?.();
-      
+
       // 刷新后恢复左侧域的选择状态
       if (currentDomain && currentDomainId && tableGroupRef.value?.viewGroupRef) {
         await nextTick();
@@ -603,14 +603,14 @@ async function handleMultiUnbind(rows: any[]) {
     await userRoleService?.unbindBatch?.(unbindList);
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
-    
+
     // 只刷新右侧表格，不刷新左侧列表，避免重置选择
     if (tableGroupRef.value?.crudRef?.crud?.loadData) {
       await tableGroupRef.value.crudRef.crud.loadData();
     } else {
       // 如果无法只刷新右侧，则刷新整个表格并恢复选择
       await tableGroupRef.value?.refresh?.();
-      
+
       // 刷新后恢复左侧域的选择状态
       if (currentDomain && currentDomainId && tableGroupRef.value?.viewGroupRef) {
         await nextTick();

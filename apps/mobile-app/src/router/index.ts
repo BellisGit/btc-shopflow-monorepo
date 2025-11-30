@@ -12,6 +12,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/login/sms',
+    name: 'LoginSms',
+    component: () => import('@/modules/auth/pages/LoginSms.vue'),
+    meta: {
+      public: true,
+      title: '短信验证码登录',
+    },
+  },
+  {
     path: '/auth/register',
     name: 'Register',
     component: () => import('@/modules/auth/register/pages/Register.vue'),

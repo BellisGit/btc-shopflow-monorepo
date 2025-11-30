@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 8091",
     "build": "vite build",
+    "build:clean": "pnpm clean:cache && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "clean": "powershell -ExecutionPolicy Bypass -File ./clear-vite-cache.ps1",

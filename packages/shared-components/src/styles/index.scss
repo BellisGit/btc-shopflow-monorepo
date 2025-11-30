@@ -190,9 +190,12 @@
 			color: var(--btc-crud-icon-color);
 		}
 
-		&:hover {
+		&:hover,
+		&:focus-visible {
 			border-color: var(--btc-crud-icon-color);
 			background-color: color-mix(in srgb, var(--btc-crud-icon-color) 12%, transparent);
+			box-shadow: none;
+			outline: none;
 		}
 
 		&.is-disabled {
@@ -230,7 +233,7 @@
 		min-width: 32px;
 		padding: 0 10px;
 		justify-content: center;
-		background-color: color-mix(in srgb, var(--btc-crud-btn-color) 6%, transparent) !important;
+		background-color: color-mix(in srgb, var(--btc-crud-btn-color) 6%, transparent);
 		border-width: 1px;
 		border-style: solid;
 		border-color: color-mix(in srgb, var(--btc-crud-btn-color) 35%, transparent);
@@ -260,14 +263,31 @@
 		&--default {
 			border-color: transparent;
 			color: var(--btc-crud-btn-color);
+			background-color: color-mix(in srgb, var(--btc-crud-btn-color) 6%, transparent);
 		}
 
 		&:hover,
 		&:focus-visible {
-			background-color: color-mix(in srgb, var(--btc-crud-btn-color) 12%, transparent);
-			border-color: var(--btc-crud-btn-color);
-			box-shadow: none;
-			outline: none;
+			background-color: color-mix(in srgb, var(--btc-crud-btn-color) 12%, transparent) !important;
+			border-color: var(--btc-crud-btn-color) !important;
+			box-shadow: none !important;
+			outline: none !important;
+		}
+
+		&--primary:hover,
+		&--primary:focus-visible,
+		&--success:hover,
+		&--success:focus-visible,
+		&--warning:hover,
+		&--warning:focus-visible,
+		&--danger:hover,
+		&--danger:focus-visible,
+		&--info:hover,
+		&--info:focus-visible,
+		&--default:hover,
+		&--default:focus-visible {
+			background-color: color-mix(in srgb, var(--btc-crud-btn-color) 12%, transparent) !important;
+			border-color: var(--btc-crud-btn-color) !important;
 		}
 	}
 
@@ -644,7 +664,12 @@
 					background-color: var(--el-button-bg-color) !important;
 				}
 			}
+
+		// 排除 btc-crud-btn，让它的样式自己处理，不被这里的样式覆盖
+		&:not(.btc-crud-btn):hover {
+			// Element Plus 默认的 hover 样式，不覆盖 btc-crud-btn
 		}
+	}
 	}
 
 	.btc-table-header__search {

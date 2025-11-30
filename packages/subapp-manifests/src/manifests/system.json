@@ -79,6 +79,18 @@
       ]
     },
     {
+      "path": "/data/inventory/process",
+      "labelKey": "menu.inventory.process",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.process"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.process", "icon": "Operation" }
+      ]
+    },
+    {
       "path": "/data/inventory/check",
       "labelKey": "menu.inventory.result",
       "tab": {
@@ -152,6 +164,7 @@
             { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list" }
           ]
         },
+        { "index": "/data/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
         { "index": "/data/inventory/check", "labelKey": "menu.inventory.result" }
       ]
     }

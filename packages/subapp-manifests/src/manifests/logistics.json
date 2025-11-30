@@ -83,6 +83,19 @@
       ]
     },
     {
+      "path": "/warehouse/material/ticket",
+      "labelKey": "menu.logistics.warehouse.material.ticket",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.warehouse.material.ticket"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
+        { "labelKey": "menu.logistics.warehouse.material", "icon": "Files" },
+        { "labelKey": "menu.logistics.warehouse.material.ticket", "icon": "Tickets" }
+      ]
+    },
+    {
       "path": "/warehouse/material/list",
       "labelKey": "menu.logistics.warehouse.material.list",
       "tab": {
@@ -196,6 +209,7 @@
           "index": "/logistics/warehouse/material",
           "labelKey": "menu.logistics.warehouse.material",
           "children": [
+            { "index": "/logistics/warehouse/material/ticket", "labelKey": "menu.logistics.warehouse.material.ticket" },
             { "index": "/logistics/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list" }
           ]
         }

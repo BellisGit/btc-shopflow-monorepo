@@ -4,6 +4,7 @@
  */
 
 import { requestAdapter } from '@/utils/requestAdapter';
+import type { NumberAuthConfigResponse, NumberAuthLoginRequest } from '@/types/numberAuth';
 
 /**
  * 登录响应类型
@@ -82,6 +83,20 @@ export const authApi = {
    */
   logout(): Promise<void> {
     return requestAdapter.get(`${baseUrl}/logout`);
+  },
+
+  /**
+   * 获取号码认证 SDK 所需的初始化参数
+   */
+  getNumberAuthConfig(): Promise<NumberAuthConfigResponse> {
+    return requestAdapter.get(`${baseUrl}/number-auth/config`, { notifySuccess: false });
+  },
+
+  /**
+   * 号码认证登录
+   */
+  loginByNumberAuth(data: NumberAuthLoginRequest): Promise<LoginResponse> {
+    return requestAdapter.post(`${baseUrl}/number-auth/login`, data, { notifySuccess: false });
   },
 };
 

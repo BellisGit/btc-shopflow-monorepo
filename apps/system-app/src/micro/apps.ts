@@ -52,22 +52,10 @@ const getEnvironmentType = (): EnvironmentType => {
 };
 
 /**
- * 获取主机地址
- */
-const getHost = (): string => {
-  if (typeof window === 'undefined') {
-    return 'localhost';
-  }
-  const hostname = window.location.hostname;
-  return hostname === '0.0.0.0' ? 'localhost' : hostname;
-};
-
-/**
  * 获取应用入口地址
  */
 const getAppEntry = (appName: string): string => {
   const envType = getEnvironmentType();
-  const host = getHost();
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {
@@ -77,27 +65,16 @@ const getAppEntry = (appName: string): string => {
 
   switch (envType) {
     case 'production':
-      // 生产环境：根据子域名判断使用子域名还是相对路径
-      // 如果当前访问的是子域名，使用子域名作为入口；否则使用相对路径
-      if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        const subdomainMap: Record<string, string> = {
-          'admin.bellis.com.cn': 'admin',
-          'logistics.bellis.com.cn': 'logistics',
-          'quality.bellis.com.cn': 'quality',
-          'production.bellis.com.cn': 'production',
-          'engineering.bellis.com.cn': 'engineering',
-          'finance.bellis.com.cn': 'finance',
-        };
-        
-        // 如果当前访问的是对应子应用的子域名，使用子域名作为入口
-        if (subdomainMap[hostname] === appName) {
-          const protocol = window.location.protocol;
-          return `${protocol}//${hostname}/`;
-        }
+      // 生产环境：使用子域名 + /micro-apps/<app>/ 作为入口，主应用跨域加载 UMD 资源
+      if (appConfig.prodHost) {
+        const protocol =
+          typeof window !== 'undefined' && window.location.protocol
+            ? window.location.protocol
+            : 'https:';
+        return `${protocol}//${appConfig.prodHost}/micro-apps/${appName}/`;
       }
-      // 否则使用相对路径，由 Nginx 反向代理
-      return `/${appName}/`;
+      // 如果没有配置 prodHost，回退到相对路径（由主域静态资源提供）
+      return `/micro-apps/${appName}/`;
 
     case 'preview': {
       // 预览环境：使用统一配置中的预览主机和端口
@@ -131,19 +108,41 @@ const getPathFromSubdomain = (hostname: string): string | null => {
   return subdomainToPathMap[hostname] || null;
 };
 
+/**
+ * 子域名到应用名称的映射
+ */
+const hostnameToAppMap: Record<string, string> = {
+  'admin.bellis.com.cn': 'admin',
+  'logistics.bellis.com.cn': 'logistics',
+  'quality.bellis.com.cn': 'quality',
+  'production.bellis.com.cn': 'production',
+  'engineering.bellis.com.cn': 'engineering',
+  'finance.bellis.com.cn': 'finance',
+};
+
+/**
+ * 根据 hostname 判断当前应该激活的子应用
+ */
+const getAppFromHostname = (hostname: string): string | null => {
+  return hostnameToAppMap[hostname] || null;
+};
+
 export const microApps: MicroAppConfig[] = [
   {
     name: 'admin',
     entry: getAppEntry('admin'),
     container: '#subapp-viewport',
     activeRule: (location) => {
-      // 支持路径匹配：/admin 开头
+      // 关键：如果当前访问的是子域名，直接激活（子域代理到主应用后，主应用根据 hostname 激活子应用）
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'admin') {
+        return true;
+      }
+      // 支持路径匹配：/admin 开头（主域访问时）
       if (location.pathname.startsWith('/admin')) {
         return true;
       }
-      // 支持子域名匹配：admin.bellis.com.cn
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/admin';
+      return false;
     },
     timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
@@ -152,11 +151,16 @@ export const microApps: MicroAppConfig[] = [
     entry: getAppEntry('logistics'),
     container: '#subapp-viewport',
     activeRule: (location) => {
+      // 关键：如果当前访问的是子域名，直接激活
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'logistics') {
+        return true;
+      }
+      // 支持路径匹配：/logistics 开头（主域访问时）
       if (location.pathname.startsWith('/logistics')) {
         return true;
       }
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/logistics';
+      return false;
     },
     timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
   },
@@ -165,11 +169,14 @@ export const microApps: MicroAppConfig[] = [
     entry: getAppEntry('engineering'),
     container: '#subapp-viewport',
     activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'engineering') {
+        return true;
+      }
       if (location.pathname.startsWith('/engineering')) {
         return true;
       }
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/engineering';
+      return false;
     },
     timeout: 10000,
   },
@@ -178,11 +185,14 @@ export const microApps: MicroAppConfig[] = [
     entry: getAppEntry('quality'),
     container: '#subapp-viewport',
     activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'quality') {
+        return true;
+      }
       if (location.pathname.startsWith('/quality')) {
         return true;
       }
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/quality';
+      return false;
     },
     timeout: 10000,
   },
@@ -191,11 +201,14 @@ export const microApps: MicroAppConfig[] = [
     entry: getAppEntry('production'),
     container: '#subapp-viewport',
     activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'production') {
+        return true;
+      }
       if (location.pathname.startsWith('/production')) {
         return true;
       }
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/production';
+      return false;
     },
     timeout: 10000,
   },
@@ -204,11 +217,14 @@ export const microApps: MicroAppConfig[] = [
     entry: getAppEntry('finance'),
     container: '#subapp-viewport',
     activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'finance') {
+        return true;
+      }
       if (location.pathname.startsWith('/finance')) {
         return true;
       }
-      const subdomainPath = getPathFromSubdomain(location.hostname);
-      return subdomainPath === '/finance';
+      return false;
     },
     timeout: 10000,
   },

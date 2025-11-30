@@ -130,6 +130,7 @@ export default defineConfig(({ command, mode }) => {
       '@charts-utils': resolve(__dirname, '../../packages/shared-components/src/charts/utils'),
       '@charts-composables': resolve(__dirname, '../../packages/shared-components/src/charts/composables'),
     },
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
   },
   plugins: [
     corsPlugin(), // 添加 CORS 插件，支持 credentials

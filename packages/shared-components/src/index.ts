@@ -49,6 +49,8 @@ export { default as BtcCard } from './components/basic/btc-card/index.vue';
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
+export { default as AppLayout } from './components/layout/app-layout/index.vue';
+export { default as AppSkeleton } from './components/basic/app-skeleton/index.vue';
 
 // Navigation 导航组件
 export { default as BtcTabs } from './components/navigation/btc-tabs/index.vue';
@@ -65,10 +67,15 @@ export { default as BtcUpload } from './components/form/btc-upload/index.vue';
 // Data 数据展示组件
 export { default as BtcMasterList } from './components/data/btc-master-list/index.vue';
 export { default as BtcTableGroup } from './components/data/btc-table-group/index.vue';
+export { default as BtcDoubleGroup } from './components/data/btc-double-group/index.vue';
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
 export { default as BtcChartDemo } from './components/data/btc-chart-demo/index.vue';
+
+// Process 流程组件
+export { default as BtcProcessCountdown } from './components/process/btc-process-countdown/index.vue';
+export { default as BtcProcessCard } from './components/process/btc-process-card/index.vue';
 
 // Feedback 反馈组件
 export { default as BtcDialog } from './common/dialog/index.vue';
@@ -116,16 +123,22 @@ export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
 export { CommonColumns } from './crud/table/utils/common-columns';
 export { useUpload } from './components/form/btc-upload/composables/useUpload';
 export { provideContentHeight, useContentHeight } from './composables/content-height';
+export { useBrowser } from './composables/useBrowser';
+export { useUser, type UserInfo } from './composables/useUser';
+export { useCurrentApp } from './composables/useCurrentApp';
+export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './store/process';
+export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
 
 // 导出类型
 export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-identity-verify/types';
 export type { SaveBindingApi } from './components/feedback/btc-binding-dialog/types';
-export type { TableColumn, OpButton } from './crud/table/types';
+export type { TableColumn, OpButton, OpConfig } from './crud/table/types';
 export type { FormItem, UpsertPlugin, UpsertProps } from './crud/upsert/types';
 export type { DialogProps } from './common/dialog/types';
 export type { BtcFormItem, BtcFormConfig, BtcFormProps } from './common/form/types';
 export type { BtcViewsTabsGroupConfig, TabViewConfig } from './components/data/btc-views-tabs-group/types';
 export type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './components/data/btc-table-group/types';
+export type { DoubleGroupProps, DoubleGroupEmits, DoubleGroupExpose } from './components/data/btc-double-group/types';
 export type {
   TransferKey,
   TransferPanelProps,
@@ -144,3 +157,8 @@ export type {
   IconButtonDropdownItem,
   IconButtonPopover
 } from './components/basic/btc-icon-button';
+export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
+export type {
+  ProcessManagementItem,
+  ProcessPauseRecord
+} from './components/process/types';

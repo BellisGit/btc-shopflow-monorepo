@@ -76,6 +76,7 @@
     "deploy:static:engineering": "bash scripts/deploy-static.sh --app engineering-app",
     "deploy:static:finance": "bash scripts/deploy-static.sh --app finance-app",
     "deploy:static:mobile": "bash scripts/deploy-static.sh --app mobile-app",
+    "build-deploy:static:all": "node scripts/build-deploy-static-all.js",
     "lint": "node scripts/turbo.js run lint",
     "lint:fix": "eslint \"packages/**/src/**/*.{ts,tsx,vue}\" --fix",
     "lint:docs": "node scripts/check-orphan-docs.js",

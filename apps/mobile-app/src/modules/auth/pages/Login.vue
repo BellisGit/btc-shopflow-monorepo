@@ -4,71 +4,64 @@
       <!-- Logo 和标题 -->
       <BtcLoginHeader />
 
-      <!-- 手机号登录表单 -->
+      <!-- 主登录区域 -->
       <div class="login-page__form">
-        <!-- 手机号输入 -->
-        <div class="form-field-wrapper">
-          <van-field
-            v-model="form.phone"
-            name="phone"
-            placeholder="请输入手机号"
-            type="tel"
-            maxlength="11"
-            :rules="phoneRules"
-            @focus="handleInputFocus"
-            @blur="handlePhoneBlur"
-            class="form-field"
-          />
-        </div>
-
-        <!-- 验证码输入 -->
-        <div class="form-field-wrapper">
-          <van-field
-            v-model="form.smsCode"
-            name="smsCode"
-            placeholder="请输入验证码"
-            type="number"
-            maxlength="6"
-            :rules="smsCodeRules"
-            :disabled="!hasSentSms"
-            @focus="handleInputFocus"
-            @blur="handleInputBlur"
-            class="form-field"
+        <!-- 初始按钮状态 -->
+        <template v-if="!showSmsForm">
+          <van-button
+            type="primary"
+            block
+            round
+            :loading="oneClickLoading"
+            @click="handleOneClickLogin"
+            class="login-page__submit-btn"
           >
-            <template #button>
-              <van-button
-                size="small"
-                type="primary"
-                :disabled="!canSendSms || countdown > 0"
-                :loading="sendingSms"
-                @click="handleSendSmsCode"
-                class="sms-button"
-              >
-                {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
-              </van-button>
-            </template>
-          </van-field>
-        </div>
+            本机号码一键登录
+          </van-button>
 
-        <!-- 登录按钮 -->
-        <van-button
-          type="primary"
-          block
-          round
-          :loading="loading"
-          @click="handleSubmit"
-          class="login-page__submit-btn"
-        >
-          立即登录
-        </van-button>
+          <van-button
+            type="primary"
+            block
+            round
+            plain
+            class="login-page__secondary-btn"
+            @click="showSmsForm = true"
+          >
+            其他手机号登录
+          </van-button>
+
+          <p v-if="!canUseOneClick" class="login-page__hint">
+            检测到当前网络环境可能无法使用一键登录，请使用其他手机号登录。
+          </p>
+        </template>
+
+        <!-- 验证码登录表单 -->
+        <template v-else>
+          <SmsLoginForm
+            :agreed="agreed"
+            @focus="showBottomActions = false"
+            @blur="handleFormBlur"
+          />
+
+          <van-button
+            type="default"
+            block
+            round
+            plain
+            class="login-page__back-btn"
+            @click="showSmsForm = false"
+          >
+            返回
+          </van-button>
+        </template>
       </div>
 
       <!-- 用户协议 -->
       <BtcAgreementCheckbox v-model="agreed" />
 
       <!-- 底部操作按钮 -->
-      <div 
-        v-show="showBottomActions" 
+      <div
+        v-show="showBottomActions"
         class="login-page__bottom-actions"
       >
         <button
@@ -86,7 +79,7 @@
       </div>
     </div>
 
-    <!-- 添加账号弹出菜单 -->
+    <!-- 更多登录方式弹出菜单 -->
     <van-popup
       v-model:show="showAccountMenu"
       position="bottom"
@@ -103,13 +96,13 @@
         <!-- 拖拽指示器区域 -->
         <div
           class="account-menu__drag-area"
-          @touchstart="handleTouchStart"
-          @touchmove="handleTouchMove"
-          @touchend="handleTouchEnd"
+          @touchstart="handleMenuTouchStart"
+          @touchmove="handleMenuTouchMove"
+          @touchend="handleMenuTouchEnd"
         >
           <div class="account-menu__drag-indicator"></div>
         </div>
-        <div class="account-menu__title">选择登录方式</div>
+        <div class="account-menu__title">更多登录方式</div>
         <div class="account-menu__options">
           <div
             class="account-menu__option"
@@ -148,13 +141,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Field, Button, Popup, Icon, showToast } from 'vant';
+import { Button, Popup, Icon, showToast } from 'vant';
 import BtcLoginHeader from '../components/login-header/index.vue';
 import BtcAgreementCheckbox from '../components/agreement-checkbox/index.vue';
-import { usePhoneLogin } from '../composables/usePhoneLogin';
-import { useSmsCode } from '../register/composables/useSmsCode';
+import SmsLoginForm from '../components/sms-login-form/index.vue';
+import { useNumberAuthLogin } from '../composables/useNumberAuthLogin';
 import '../styles/index.scss';
 
 defineOptions({
@@ -165,104 +158,23 @@ const router = useRouter();
 const route = useRoute();
 const agreed = ref(false);
 const showAccountMenu = ref(false);
+const showSmsForm = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
 const popupRef = ref<any>(null);
-const showBottomActions = ref(true); // 控制底部按钮显示
+const showBottomActions = ref(true);
 
-// 手机号登录相关
-const { loading, login } = usePhoneLogin();
+const { loading: oneClickLoading, login: triggerOneClick, supported: canUseOneClick } = useNumberAuthLogin();
 
-// 表单数据
-const form = reactive({
-  phone: '',
-  smsCode: '',
-});
-
-// 验证码逻辑
-const { countdown, sendingSms, hasSentSms, createCanSendSms, sendSmsCode, validatePhone } = useSmsCode('login');
-const canSendSms = createCanSendSms(() => form.phone);
-
-// 验证规则
-const phoneRules = [
-  { required: true, message: '请输入手机号' },
-  { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' },
-];
-
-const smsCodeRules = [
-  { required: true, message: '请输入验证码' },
-  { pattern: /^\d{6}$/, message: '验证码为6位数字' },
-];
-
-// 是否可以提交
-const canSubmit = computed(() => {
-  return /^1[3-9]\d{9}$/.test(form.phone) && /^\d{6}$/.test(form.smsCode);
-});
-
-// 输入框获得焦点 - 隐藏底部按钮
-const handleInputFocus = () => {
-  showBottomActions.value = false;
-};
-
-// 输入框失去焦点 - 显示底部按钮
-const handleInputBlur = () => {
-  // 延迟显示，避免点击按钮时闪烁
-  setTimeout(() => {
-    showBottomActions.value = true;
-  }, 200);
-};
-
-// 手机号失焦验证
-const handlePhoneBlur = () => {
-  validatePhone(form.phone);
-  handleInputBlur();
-};
-
-// 发送验证码
-const handleSendSmsCode = async () => {
-  await sendSmsCode(form.phone);
-};
-
-// 提交登录
-const handleSubmit = async () => {
-  // 验证手机号
-  if (!form.phone) {
+const handleOneClickLogin = () => {
+  if (!canUseOneClick.value) {
     showToast({
       type: 'fail',
-      message: '请输入手机号',
+      message: '请开启蜂窝网络后再试，或使用其他手机号登录',
       duration: 2000,
     });
     return;
   }
-  
-    if (!/^1[3-9]\d{9}$/.test(form.phone)) {
-      showToast({
-        type: 'fail',
-        message: '请输入正确的手机号',
-        duration: 2000,
-      });
-      return;
-    }
-  
-  // 验证验证码
-  if (!form.smsCode) {
-    showToast({
-      type: 'fail',
-      message: '请输入验证码',
-      duration: 2000,
-    });
-    return;
-  }
-  
-    if (!/^\d{6}$/.test(form.smsCode)) {
-      showToast({
-        type: 'fail',
-        message: '请输入6位数字验证码',
-        duration: 2000,
-      });
-      return;
-    }
-  
-  // 验证用户协议
+
   if (!agreed.value) {
     showToast({
       type: 'fail',
@@ -272,30 +184,23 @@ const handleSubmit = async () => {
     return;
   }
 
-  try {
-    await login(form.phone, form.smsCode);
-    // 登录成功后会跳转，这里不需要额外处理
-  } catch (error) {
-    // 错误已在 login 函数中处理
-  }
+  triggerOneClick();
 };
 
-// 触摸滑动相关状态
-const touchStartY = ref(0);
-const touchStartTime = ref(0);
-const isDragging = ref(false);
+const handleFormBlur = () => {
+  setTimeout(() => {
+    showBottomActions.value = true;
+  }, 200);
+};
 
-// 获取 popup 的 DOM 元素
+// 获取更多登录方式菜单的 popup 元素
 const getPopupElement = (): HTMLElement | null => {
-  // 尝试多种选择器方式
   let popupEl = document.querySelector('.account-menu-popup .van-popup') as HTMLElement;
   if (popupEl) return popupEl;
 
-  // 备用选择器：直接查找 van-popup
   popupEl = document.querySelector('.account-menu-popup[data-popup] .van-popup') as HTMLElement;
   if (popupEl) return popupEl;
 
-  // 查找包含 account-menu 的最近的 van-popup
   const menuEl = document.querySelector('.account-menu');
   if (menuEl) {
     let parent = menuEl.parentElement;
@@ -307,7 +212,6 @@ const getPopupElement = (): HTMLElement | null => {
     }
   }
 
-  // 最后备用：通过 ref 获取
   if (popupRef.value) {
     const el = (popupRef.value as any).$el || (popupRef.value as any).popupRef?.value?.$el;
     if (el) return el;
@@ -316,77 +220,61 @@ const getPopupElement = (): HTMLElement | null => {
   return null;
 };
 
-// 触摸开始
-const handleTouchStart = (e: TouchEvent) => {
-  touchStartY.value = e.touches[0].clientY;
-  touchStartTime.value = Date.now();
-  isDragging.value = true;
+// 更多登录方式菜单拖拽相关
+const menuTouchStartY = ref(0);
+const menuTouchStartTime = ref(0);
+const isMenuDragging = ref(false);
+
+const handleMenuTouchStart = (e: TouchEvent) => {
+  menuTouchStartY.value = e.touches[0].clientY;
+  menuTouchStartTime.value = Date.now();
+  isMenuDragging.value = true;
 };
 
-// 触摸移动
-const handleTouchMove = (e: TouchEvent) => {
-  if (!isDragging.value) return;
+const handleMenuTouchMove = (e: TouchEvent) => {
+  if (!isMenuDragging.value) return;
 
-  const currentY = e.touches[0].clientY;
-  const deltaY = currentY - touchStartY.value;
-
-  // 只允许向下滑动
+  const deltaY = e.touches[0].clientY - menuTouchStartY.value;
   if (deltaY > 0) {
     const popupEl = getPopupElement();
-
     if (popupEl) {
-      // 实时跟随手指位置移动整个 popup 容器
       popupEl.style.transform = `translateY(${deltaY}px)`;
-      popupEl.style.transition = 'none'; // 禁用过渡，实现即时跟随
+      popupEl.style.transition = 'none';
     }
-
-    // 防止页面滚动和默认行为
     e.preventDefault();
     e.stopPropagation();
   }
 };
 
-// 触摸结束
-const handleTouchEnd = (e: TouchEvent) => {
-  if (!isDragging.value) return;
+const handleMenuTouchEnd = (e: TouchEvent) => {
+  if (!isMenuDragging.value) return;
 
-  const touchEndY = e.changedTouches[0].clientY;
-  const deltaY = touchEndY - touchStartY.value;
-  const deltaTime = Date.now() - touchStartTime.value;
+  const deltaY = e.changedTouches[0].clientY - menuTouchStartY.value;
+  const deltaTime = Date.now() - menuTouchStartTime.value;
   const velocity = deltaTime > 0 ? Math.abs(deltaY) / deltaTime : 0;
-
   const popupEl = getPopupElement();
 
-  // 滑动阈值：超过 100px 或速度超过 0.5px/ms 时关闭
   const threshold = 100;
   const velocityThreshold = 0.5;
 
   if (deltaY > threshold || (deltaY > 50 && velocity > velocityThreshold)) {
-    // 满足关闭条件：平滑关闭菜单
     if (popupEl) {
-      // 添加关闭动画
       const menuHeight = popupEl.offsetHeight;
       popupEl.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
       popupEl.style.transform = `translateY(${menuHeight}px)`;
 
-      // 等待动画完成后再关闭
       setTimeout(() => {
         showAccountMenu.value = false;
-        // 重置样式
-        if (popupEl) {
-          popupEl.style.transform = '';
-          popupEl.style.transition = '';
-        }
+        popupEl.style.transform = '';
+        popupEl.style.transition = '';
       }, 300);
     } else {
       showAccountMenu.value = false;
     }
   } else if (popupEl) {
-    // 不满足关闭条件：平滑回弹到原位置
     popupEl.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
     popupEl.style.transform = '';
 
-    // 等待动画结束后清除 transition
     setTimeout(() => {
       const el = getPopupElement();
       if (el) {
@@ -395,15 +283,12 @@ const handleTouchEnd = (e: TouchEvent) => {
     }, 300);
   }
 
-  // 重置状态
-  isDragging.value = false;
-  touchStartY.value = 0;
+  isMenuDragging.value = false;
+  menuTouchStartY.value = 0;
 };
 
-// 监听菜单打开/关闭，重置样式
 watch(showAccountMenu, (visible) => {
   if (visible) {
-    // 菜单打开时，重置样式
     nextTick(() => {
       const popupEl = getPopupElement();
       if (popupEl) {
@@ -412,7 +297,6 @@ watch(showAccountMenu, (visible) => {
       }
     });
   } else {
-    // 菜单关闭时，确保样式被重置
     const popupEl = getPopupElement();
     if (popupEl) {
       popupEl.style.transform = '';
@@ -455,49 +339,63 @@ const handleRegister = () => {
 </script>
 
 <style lang="scss" scoped>
-// 强制覆盖输入框样式，确保深灰色背景和圆角生效
-.login-page {
-  // 覆盖 Vant 组件的 CSS 变量
-  --van-cell-background: rgba(60, 60, 60, 0.8);
-  --van-cell-text-color: #fff;
-  --van-field-label-color: #fff;
-  --van-field-input-text-color: #fff;
-  --van-field-placeholder-text-color: rgba(255, 255, 255, 0.5);
-  --van-field-input-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-field-disabled-text-color: rgba(255, 255, 255, 0.7);
-  --van-cell-border-radius: 24px;
+// 统一间距：Logo -> 表单 -> 协议
+.login-page__form {
+  margin-top: 24px !important; // Logo 到按钮区域的间距
+  margin-bottom: 24px !important; // 按钮区域到协议的间距
+}
 
-  :deep(.form-field-wrapper) {
-      .van-cell {
-        background: rgba(60, 60, 60, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 24px !important; // 圆角效果
-      padding: 14px 20px !important;
-        color: #fff !important;
-      overflow: hidden !important;
-      }
+// 移除协议组件的默认上边距，使用表单的下边距
+:deep(.agreement-checkbox) {
+  margin-top: 0 !important;
+}
 
-    .van-field--disabled.van-cell {
-          background: rgba(60, 60, 60, 0.6) !important;
-          border-color: rgba(255, 255, 255, 0.05) !important;
-    }
-    
-    .van-field__label {
-      color: #fff !important;
-    }
-    
-    .van-field__control {
-      color: #fff !important;
-      
-      &::placeholder {
-        color: rgba(255, 255, 255, 0.5) !important;
-      }
+// 移除第一个按钮的多余上边距
+.login-page__submit-btn {
+  margin-top: 0 !important;
+}
 
-      &:disabled {
-        color: rgba(255, 255, 255, 0.7) !important;
-        -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
-      }
-    }
+// 额外的按钮样式
+.login-page__secondary-btn {
+  margin-top: 12px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.2) !important;
   }
+}
+
+.login-page__back-btn {
+  margin-top: 16px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 15px;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+}
+
+.login-page__hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(255, 200, 200, 0.9);
+  text-align: center;
+  line-height: 1.5;
 }
 </style>

@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import Layout from '../../modules/base/components/layout/index.vue';
+import { AppLayout } from '@btc/shared-components';
 
 // 判断是否独立运行
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
@@ -198,13 +198,13 @@ const pageRoutes: RouteRecordRaw[] = [
 ];
 
 // 根据运行模式返回不同的路由配置
-// 独立运行时：使用 Layout 包裹所有路由
+// 独立运行时：使用 AppLayout 包裹所有路由
 // qiankun 模式：直接返回页面路由（由主应用提供 Layout）
 export const adminRoutes: RouteRecordRaw[] = isStandalone
   ? [
       {
         path: '/',
-        component: Layout,
+        component: AppLayout, // Use AppLayout from shared package
         children: pageRoutes,
       },
     ]

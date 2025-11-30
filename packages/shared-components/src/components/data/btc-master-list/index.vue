@@ -383,6 +383,7 @@ defineExpose({
   refresh,
   selectedItem,
   list, // 暴露列表数据供外部使用
+  treeRef, // 暴露 treeRef，供外部设置选中状态
   getKeyword() { return calculateKeyword(selectedItem.value); }
 });
 </script>

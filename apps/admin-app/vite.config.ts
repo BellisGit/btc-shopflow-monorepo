@@ -518,6 +518,7 @@ export default defineConfig({
       'element-plus/es': 'element-plus/es',
       'element-plus/dist': 'element-plus/dist',
     },
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [

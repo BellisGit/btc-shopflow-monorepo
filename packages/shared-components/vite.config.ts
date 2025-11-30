@@ -46,14 +46,17 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', '@btc/shared-utils'],
+      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', '@btc/shared-utils', '@btc/subapp-manifests'],
       output: {
         globals: {
           vue: 'Vue',
+          'vue-router': 'VueRouter',
+          'pinia': 'Pinia',
           'element-plus': 'ElementPlus',
           '@element-plus/icons-vue': 'ElementPlusIconsVue',
           '@btc/shared-core': 'BTCSharedCore',
           '@btc/shared-utils': 'BTCSharedUtils',
+          '@btc/subapp-manifests': 'BTCSubappManifests',
         },
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'style.css') {

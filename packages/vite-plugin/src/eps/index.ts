@@ -44,13 +44,13 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
     pendingRequest = (async () => {
       // 构建模式下（production）直接使用本地文件，不尝试远程获取
       const isBuildMode = process.env.NODE_ENV === 'production' || process.env.VITE_BUILD === 'true';
-      
+
       if (isBuildMode) {
         info('构建模式：直接使用本地 EPS 文件，跳过远程获取');
         try {
           // 直接从本地文件读取
           const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
-          
+
           // 如果本地文件有数据，使用本地数据
           if (result && result.list && result.list.length > 0) {
             epsCache = result;
@@ -66,7 +66,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
           return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
         }
       }
-      
+
       // 开发模式下，先尝试远程获取，失败则回退到本地文件
       try {
         // 先获取远程数据
@@ -77,13 +77,13 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
           info('远程 EPS 数据为空，尝试从本地文件读取...');
           // 传入 undefined 作为 cachedData，让 createEps 从本地文件读取
           const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
-          
+
           // 如果本地文件也没有数据，返回空结构
           if (!result || !result.list || result.list.length === 0) {
             error('远程和本地 EPS 数据都为空，将使用空服务对象');
             return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
           }
-          
+
           // 更新缓存
           epsCache = result;
           cacheTimestamp = Date.now();
@@ -105,7 +105,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         try {
           info('远程获取失败，尝试从本地文件读取...');
           const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
-          
+
           // 如果本地文件有数据，使用本地数据
           if (result && result.list && result.list.length > 0) {
             epsCache = result;
@@ -116,7 +116,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         } catch (localErr) {
           error(`从本地文件读取 EPS 数据也失败: ${localErr}`);
         }
-        
+
         // 如果本地文件也没有数据，返回空结构
         return { service: {}, list: [], isUpdate: false, serviceCode: { content: '{}', types: [] } };
       }

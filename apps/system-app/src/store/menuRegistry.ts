@@ -10,6 +10,9 @@ export type MenuItem = {
   title: string;
   icon?: string;
   children?: MenuItem[];
+  // 外链跳转：指向子应用的子域名完整地址（如 https://admin.bellis.com.cn）
+  // 如果设置了 externalUrl，点击菜单项时会跳转到该地址，同时保留主应用的布局
+  externalUrl?: string;
 };
 
 // 使用响应式对象存储菜单

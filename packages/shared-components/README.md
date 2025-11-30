@@ -52,6 +52,8 @@ import { BtcCrud, BtcForm, BtcDialog } from '@btc/shared-components';
   - 📄 [文档](./src/components/btc-cascader/README.md)
 - **BtcTableGroup** - 表格组组件，用于多表格场景
   - 📄 [文档](./src/components/btc-table-group/README.md)
+- **BtcDoubleGroup** - 双列分组组件，提供双左栏 + CRUD 联动
+  - 📄 [文档](./src/components/btc-double-group/README.md)
 - **BtcMessage** - 消息提示组件（全局 API）
   - 📄 [文档](./src/components/btc-message/README.md)
 - **BtcNotification** - 通知组件（全局 API）
@@ -120,6 +122,7 @@ import { CodePlugin, BtcCodeJson } from '@btc/shared-components';
 - [BtcGridGroup 文档](./src/common/grid-group/README.md) - 网格组组件
 - [BtcViewsTabsGroup 文档](./src/components/btc-views-tabs-group/README.md) - 视图标签组组件
 - [BtcTableGroup 文档](./src/components/btc-table-group/README.md) - 表格组组件
+- [BtcDoubleGroup 文档](./src/components/btc-double-group/README.md) - 双列分组组件
 - [BtcCascader 文档](./src/components/btc-cascader/README.md) - 级联选择器组件
 - [BtcMessage 文档](./src/components/btc-message/README.md) - 消息提示组件
 - [BtcNotification 文档](./src/components/btc-notification/README.md) - 通知组件

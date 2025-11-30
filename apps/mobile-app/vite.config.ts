@@ -94,6 +94,14 @@ export default defineConfig({
         ],
         navigateFallback: null,
         globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js'],
+        // 跳过等待，立即激活新版本（确保更新及时生效）
+        skipWaiting: true,
+        // 立即控制所有客户端（确保新版本立即生效）
+        clientsClaim: true,
+        // 清理旧缓存
+        cleanupOutdatedCaches: true,
+        // 使用 NetworkFirst 策略处理 HTML 文件，确保能获取最新版本
+        // 注意：这不会影响预缓存，只是运行时缓存策略
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./,
@@ -254,8 +262,13 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    // 确保每次构建都生成新的文件哈希，避免浏览器缓存旧版本
     rollupOptions: {
       output: {
+        // 使用内容哈希确保文件更新时文件名也会改变
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
           'vant-vendor': ['vant'],
@@ -263,6 +276,8 @@ export default defineConfig({
         },
       },
     },
+    // 清空输出目录，确保旧文件被删除
+    emptyOutDir: true,
   },
   css: {
     preprocessorOptions: {

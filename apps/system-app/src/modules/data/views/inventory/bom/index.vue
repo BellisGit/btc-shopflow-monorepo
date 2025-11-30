@@ -19,7 +19,7 @@
       @select="onDomainSelect"
     >
       <template #add-btn>
-        <BtcImportBtn :on-submit="handleImport" />
+        <BtcImportBtn :columns="bomColumns" :on-submit="handleImport" />
       </template>
       <template #actions>
         <el-button type="info" @click="exportBomTemplate">
@@ -37,6 +37,7 @@ import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
 import { service } from '@/services/eps';
+import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({
   name: 'BtcDataInventoryBom'
@@ -47,13 +48,9 @@ const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
 
-// 域服务配置 - 直接调用域列表的list API
+// 左侧域列表改为使用与汉堡菜单一致的 /domain/me 接口
 const domainService = {
-  list: (params?: any) => {
-    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
-    const finalParams = params || {};
-    return service.system?.iam?.domain?.list(finalParams);
-  }
+  list: () => service.admin?.iam?.domain?.me?.()
 };
 
 // 物料构成表服务（右侧表），使用后端API
@@ -61,6 +58,38 @@ const bomService = service.system?.base?.bom;
 
 const wrappedBomService = {
   ...bomService,
+  // 包装 page 方法，将左侧选中的域 ID 转换为 keyword.domainId
+  // EPS 层会自动根据 search 配置封装其他字段到 keyword 对象中
+  page: async (params: any) => {
+    const finalParams = { ...params };
+
+    // 处理 keyword 参数，将 ids 转换为 domainId
+    if (finalParams.keyword !== undefined && finalParams.keyword !== null) {
+      const keyword = finalParams.keyword;
+
+      // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+      if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
+        const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
+        // 取第一个 ID 作为 domainId
+        if (ids.length > 0 && ids[0] !== undefined && ids[0] !== null && ids[0] !== '') {
+          // 将 domainId 放在 keyword 对象中，保留其他字段
+          finalParams.keyword = { ...keyword, domainId: ids[0] };
+          // 删除 ids 字段
+          delete finalParams.keyword.ids;
+        } else {
+          // 如果没有有效的 ID，删除 ids 字段，保留其他字段
+          const { ids: _, ...rest } = keyword;
+          finalParams.keyword = rest;
+        }
+      } else if (typeof keyword === 'number' || (typeof keyword === 'string' && keyword !== '')) {
+        // 如果 keyword 直接是数字或字符串，转换为 domainId
+        finalParams.keyword = { domainId: keyword };
+      }
+    }
+
+    // EPS 层会自动根据 search 配置补充其他字段（如 parentNode, childNode, checkType 等）
+    return bomService?.page?.(finalParams);
+  },
   // 移除删除相关方法，因为不允许删除
   delete: undefined,
   deleteBatch: undefined,
@@ -73,8 +102,29 @@ const onDomainSelect = (domain: any) => {
   // 这里可以通过 tableGroupRef 来刷新右侧表格
 };
 
+const resolveSelectedDomainId = () => {
+  const domain = selectedDomain.value;
+  if (!domain) {
+    return null;
+  }
+
+  // me 接口返回的域数据通常包含 id/domainCode/name 等字段
+  // 优先使用实际的 domainId/id，其次才回退到 code/value
+  return (
+    domain.domainId ??
+    domain.id ??
+    domain.domainCode ??
+    domain.value ??
+    domain.code ??
+    null
+  );
+};
+
 // 处理导入
-const handleImport = async (data: any, { done, close }: { done: () => void; close: () => void }) => {
+const handleImport = async (
+  data: any,
+  { done, close }: { done: () => void; close: () => void }
+) => {
   try {
     const rows = (data?.list || data?.rows || []).map((row: Record<string, any>) => {
       const { _index, ...rest } = row || {};
@@ -89,52 +139,121 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       return;
     }
 
-    const payload = rows.map((row: Record<string, any>) => ({
+    const domainId = resolveSelectedDomainId();
+    if (!domainId) {
+      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域');
+      done();
+      return;
+    }
+
+    // BtcImportBtn 已经根据 columns 配置自动进行了列名映射（中文列名 -> 字段名）
+    // 所以这里直接使用映射后的字段名即可
+    const normalizedRows = rows.map((row: Record<string, any>) => ({
       processId: row.processId,
       checkNo: row.checkNo,
-      domainId: row.domainId,
+      domainId: row.domainId ?? domainId,
       parentNode: row.parentNode,
       childNode: row.childNode,
-      childQty: row.childQty,
-      materialCode: row.materialCode,
-      materialName: row.materialName,
-      specification: row.specification,
-      unit: row.unit,
-      quantity: row.quantity,
+      childQty: row.childQty ? Number(row.childQty) : undefined,
+      checkType: row.checkType,
       remark: row.remark,
     }));
 
-    await service.system?.base?.bom?.import?.(payload);
+    const payload = {
+      domainId,
+      list: normalizedRows,
+    };
+
+    const response = await service.system?.base?.bom?.import?.(payload);
+
+    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导入失败
+    if (response && typeof response === 'object' && 'code' in response) {
+      const code = (response as any).code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        const errorMsg = (response as any).msg || t('inventory.dataSource.bom.import.failed');
+        message.error(errorMsg);
+        done();
+        return;
+      }
+    }
 
     message.success(t('inventory.dataSource.bom.import.success'));
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
     console.error('[InventoryBom] import failed:', error);
-    message.error(t('inventory.dataSource.bom.import.failed'));
+    const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.dataSource.bom.import.failed');
+    message.error(errorMsg);
     done();
   }
 };
 
 // 物料构成表表格列（移除选择列和操作列）
+const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
+  value ? formatDateTime(value) : '--';
+
 const bomColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'materialCode', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'materialName', label: t('system.material.fields.materialName'), minWidth: 160 },
-  { prop: 'specification', label: t('system.material.fields.specification'), minWidth: 140 },
-  { prop: 'unit', label: t('system.material.fields.unit'), minWidth: 120 },
-  { prop: 'quantity', label: t('inventory.dataSource.bom.fields.quantity'), minWidth: 120 },
-  { prop: 'remark', label: t('system.inventory.base.fields.remark'), minWidth: 160 },
+  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.parentNode'), minWidth: 140, showOverflowTooltip: true },
+  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.childNode'), minWidth: 160, showOverflowTooltip: true },
+  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.childQty'), width: 120 },
+  { prop: 'checkType', label: t('inventory.dataSource.bom.fields.checkType'), minWidth: 140, showOverflowTooltip: true },
+  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
+  { prop: 'updatedAt', label: t('system.inventory.base.fields.updateAt'), width: 180, formatter: formatDateCell },
 ]);
 
 // 物料构成表表单
 const bomFormItems = computed<FormItem[]>(() => [
-  { prop: 'materialCode', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'materialName', label: t('system.material.fields.materialName'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'specification', label: t('system.material.fields.specification'), span: 12, component: { name: 'el-input' } },
-  { prop: 'unit', label: t('system.material.fields.unit'), span: 12, component: { name: 'el-input' } },
-  { prop: 'quantity', label: t('inventory.dataSource.bom.fields.quantity'), span: 12, component: { name: 'el-input-number', props: { min: 0, precision: 2 } } },
-  { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
+  {
+    prop: 'parentNode',
+    label: t('inventory.dataSource.bom.fields.parentNode'),
+    span: 12,
+    required: true,
+    component: { name: 'el-input', props: { maxlength: 120 } },
+  },
+  {
+    prop: 'childNode',
+    label: t('inventory.dataSource.bom.fields.childNode'),
+    span: 12,
+    required: true,
+    component: { name: 'el-input', props: { maxlength: 120 } },
+  },
+  {
+    prop: 'childQty',
+    label: t('inventory.dataSource.bom.fields.childQty'),
+    span: 12,
+    required: true,
+    component: { name: 'el-input-number', props: { min: 0, precision: 2 } },
+  },
+  {
+    prop: 'checkType',
+    label: t('inventory.dataSource.bom.fields.checkType'),
+    span: 12,
+    component: { name: 'el-input', props: { maxlength: 120 } },
+  },
+  {
+    prop: 'domainId',
+    label: t('inventory.dataSource.bom.fields.domainId'),
+    span: 12,
+    component: { name: 'el-input', props: { disabled: true } },
+    hook: {
+      onInit: (value: any, formData: Record<string, any>) => {
+        formData.domainId = resolveSelectedDomainId() ?? formData.domainId;
+      },
+    },
+  },
+  {
+    prop: 'processId',
+    label: t('inventory.dataSource.bom.fields.processId'),
+    span: 12,
+    component: { name: 'el-input', props: { maxlength: 120 } },
+  },
+  {
+    prop: 'checkNo',
+    label: t('inventory.dataSource.bom.fields.checkNo'),
+    span: 12,
+    component: { name: 'el-input', props: { maxlength: 120 } },
+  },
 ]);
 
 const exportBomTemplate = () => {

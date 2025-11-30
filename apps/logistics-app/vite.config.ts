@@ -242,6 +242,7 @@ export default defineConfig({
       '@charts-utils': resolve(__dirname, '../../packages/shared-components/src/charts/utils'),
       '@charts-composables': resolve(__dirname, '../../packages/shared-components/src/charts/composables'),
     },
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [
