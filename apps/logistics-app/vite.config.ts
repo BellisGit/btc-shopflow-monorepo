@@ -226,12 +226,14 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src'),
       '@services': resolve(__dirname, 'src/services'),
+      '@configs': resolve(__dirname, '../../configs'),
       '@btc/shared-core': resolve(__dirname, '../../packages/shared-core/src'),
       '@btc/shared-components': resolve(__dirname, '../../packages/shared-components/src'),
       '@btc/shared-utils': resolve(__dirname, '../../packages/shared-utils/src'),
       '@btc-common': resolve(__dirname, '../../packages/shared-components/src/common'),
       '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
+      '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, '../../packages/shared-components/src/charts/utils/css-var'),

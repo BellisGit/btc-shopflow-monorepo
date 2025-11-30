@@ -8,6 +8,10 @@
       "@btc/shared-core": ["../../packages/shared-core/src"],
       "@btc/shared-components": ["../../packages/shared-components/src"],
       "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
+      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"],
+      "@configs": ["../../configs"],
+      "@configs/*": ["../../configs/*"],
       "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
       "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
       "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]

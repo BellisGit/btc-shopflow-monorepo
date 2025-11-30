@@ -20,7 +20,9 @@
       "@layout/*": ["src/*"],
       "@system/*": ["../system-app/src/*"],
       "@/*": ["../system-app/src/*"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../../configs/*"],
+      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
+      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

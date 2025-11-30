@@ -293,6 +293,12 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../../packages/subapp-manifests
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
@@ -467,6 +473,12 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../../packages/subapp-manifests
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
       dayjs:
         specifier: ^1.11.18
         version: 1.11.19
@@ -604,6 +616,12 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../../packages/subapp-manifests
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
@@ -653,6 +671,9 @@ importers:
       '@btc/subapp-manifests':
         specifier: workspace:*
         version: link:../../packages/subapp-manifests
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)

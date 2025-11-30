@@ -4,6 +4,8 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+import { resetPluginManager, usePluginManager } from '@btc/shared-core';
+import { registerAppEnvAccessors, registerManifestMenusForApp, resolveAppLogoUrl } from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
@@ -16,6 +18,7 @@ import '../styles/global.scss';
 import '../styles/theme.scss';
 
 import App from '../App.vue';
+import { userSettingPlugin } from '../plugins/user-setting';
 import { createLogisticsRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
 import type { LogisticsI18nPlugin } from './core/i18n';
 import type { LogisticsThemePlugin } from './core/ui';
@@ -54,7 +57,72 @@ const createTranslate = (context: LogisticsAppContext) => {
   };
 };
 
+const LOGISTICS_APP_ID = 'logistics';
 const LOGISTICS_BASE_PATH = '/logistics';
+
+const setupStandalonePlugins = async (app: VueApp, router: Router) => {
+  resetPluginManager();
+  const pluginManager = usePluginManager({ debug: false });
+  pluginManager.setApp(app);
+  pluginManager.setRouter(router);
+  pluginManager.register(userSettingPlugin);
+  await pluginManager.install(userSettingPlugin.name);
+};
+
+const setupStandaloneGlobals = async () => {
+  registerAppEnvAccessors();
+
+  try {
+    const { service } = await import('../services/eps');
+    (window as any).__APP_EPS_SERVICE__ = service;
+  } catch (error) {
+    console.warn('[logistics-app] Failed to load EPS service:', error);
+    (window as any).__APP_EPS_SERVICE__ = {};
+  }
+
+  try {
+    const { appStorage } = await import('../utils/app-storage');
+    (window as any).__APP_STORAGE__ = appStorage;
+  } catch (error) {
+    console.warn('[logistics-app] Failed to load app storage:', error);
+    (window as any).__APP_STORAGE__ = {
+      user: {
+        getAvatar: () => null,
+        setAvatar: () => {},
+        getName: () => null,
+        setName: () => {},
+      },
+    };
+  }
+
+  try {
+    const domainModule = await import('../utils/domain-cache');
+    if (domainModule.getDomainList) {
+      (window as any).__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+    }
+  } catch (error) {
+    console.warn('[logistics-app] Failed to load domain cache:', error);
+  }
+
+  try {
+    const { finishLoading } = await import('../utils/loadingManager');
+    (window as any).__APP_FINISH_LOADING__ = finishLoading;
+  } catch (error) {
+    console.warn('[logistics-app] Failed to load loading manager:', error);
+    (window as any).__APP_FINISH_LOADING__ = () => {};
+  }
+
+  try {
+    const { useLogout } = await import('../composables/useLogout');
+    const { logout } = useLogout();
+    (window as any).__APP_LOGOUT__ = logout;
+  } catch (error) {
+    console.warn('[logistics-app] Logout composable not available (optional)');
+  }
+
+  (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+  (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+};
 
 const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 
@@ -341,53 +409,8 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   // 独立运行时：在创建路由之前设置全局函数供 AppLayout 使用
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   if (isStandalone) {
-    // 同步导入服务和存储（确保在路由创建前设置）
-    // 注意：这些导入必须在路由创建之前完成，因为 AppLayout 组件在渲染时就需要这些全局函数
-    try {
-      const { service } = await import('../services/eps');
-      (window as any).__APP_EPS_SERVICE__ = service;
-    } catch (e) {
-      console.warn('[logistics-app] Failed to load EPS service:', e);
-    }
-
-    try {
-      const { appStorage } = await import('../utils/app-storage');
-      (window as any).__APP_STORAGE__ = appStorage;
-    } catch (e) {
-      console.warn('[logistics-app] Failed to load app storage:', e);
-    }
-
-    try {
-      const domainModule = await import('../utils/domain-cache');
-      if (domainModule.getDomainList) {
-        (window as any).__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
-      }
-    } catch (e) {
-      console.warn('[logistics-app] Failed to load domain cache:', e);
-    }
-
-    try {
-      const { finishLoading } = await import('../utils/loadingManager');
-      (window as any).__APP_FINISH_LOADING__ = finishLoading;
-    } catch (e) {
-      console.warn('[logistics-app] Failed to load loading manager:', e);
-    }
-
-    // 可选：退出登录函数（如果存在）
-    try {
-      const { useLogout } = await import('../composables/useLogout');
-      const { logout } = useLogout();
-      (window as any).__APP_LOGOUT__ = logout;
-    } catch (e) {
-      // useLogout 可能不存在，这是可选的
-      console.warn('[logistics-app] Logout composable not available (optional)');
-    }
-
-    // Logo URL
-    (window as any).__APP_GET_LOGO_URL__ = () => '/logo.png';
-    
-    // 文档搜索服务（如果需要）
-    (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+    await setupStandaloneGlobals();
+    registerManifestMenusForApp(LOGISTICS_APP_ID);
   }
 
   // 这些初始化操作都是轻量级的，不会阻塞
@@ -398,6 +421,10 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   const pinia = setupStore(app);
   const theme = setupUI(app);
   const i18n = setupI18n(app, props.locale || 'zh-CN');
+
+  if (isStandalone) {
+    await setupStandalonePlugins(app, router);
+  }
 
   // 路由初始化使用 nextTick 避免阻塞，确保在下一个事件循环中执行
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {

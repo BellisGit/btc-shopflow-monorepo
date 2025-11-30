@@ -96,6 +96,7 @@ export default defineConfig({
       '@btc-common': resolve(__dirname, '../../packages/shared-components/src/common'),
       '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
+      '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
     },
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],

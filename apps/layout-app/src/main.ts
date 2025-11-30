@@ -3,6 +3,7 @@ import App from './App.vue';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { registerMicroApps, start } from 'qiankun';
 import { getAppConfig } from '@configs/app-env.config';
+import { registerAppEnvAccessors } from '@configs/layout-bridge';
 import { setupStore, setupRouter, setupUI, setupI18n, setupEps } from '@system/bootstrap/core';
 import { initSettingsConfig } from '@system/plugins/user-setting/composables/useSettingsState';
 import { appStorage } from '@system/utils/app-storage';
@@ -10,6 +11,8 @@ import 'virtual:svg-icons';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '@btc/shared-components/styles/index.scss';
+
+registerAppEnvAccessors();
 
 // 子域名到应用名称的映射
 const hostnameToAppMap: Record<string, string> = {

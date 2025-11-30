@@ -9,12 +9,13 @@ import 'virtual:svg-register';
 import 'virtual:svg-icons';
 import './styles/theme.scss';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { createI18nPlugin, createThemePlugin } from '@btc/shared-core';
+import { createI18nPlugin, createThemePlugin, resetPluginManager, usePluginManager } from '@btc/shared-core';
 import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
 import { AppLayout } from '@btc/shared-components';
+import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
 import App from './App.vue';
 
 let app: VueApp | null = null;
@@ -22,6 +23,9 @@ let router: Router | null = null;
 let i18nPlugin: ReturnType<typeof createI18nPlugin> | null = null;
 let themePlugin: ReturnType<typeof createThemePlugin> | null = null;
 let routerUnwatch: (() => void) | null = null; // 路由监听器清理函数
+
+const ENGINEERING_APP_ID = 'engineering';
+const sharedUserSettingPlugin = createSharedUserSettingPlugin();
 
 // 语言切换事件监听器
 function handleLanguageChange(e: CustomEvent<{ locale: string }>) {
@@ -47,11 +51,36 @@ function handleThemeChange(e: CustomEvent<{ color: string; dark: boolean }>) {
 const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 
-function render(props: QiankunProps = {}) {
+const setupStandaloneGlobals = () => {
+  registerAppEnvAccessors();
+  (window as any).__APP_STORAGE__ = createAppStorageBridge(ENGINEERING_APP_ID);
+  (window as any).__APP_EPS_SERVICE__ = {};
+  (window as any).__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(ENGINEERING_APP_ID);
+  (window as any).__APP_FINISH_LOADING__ = () => {};
+  (window as any).__APP_LOGOUT__ = () => {};
+  (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+  (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+};
+
+const setupStandalonePlugins = async (appInstance: VueApp, routerInstance: Router) => {
+  resetPluginManager();
+  const pluginManager = usePluginManager({ debug: false });
+  pluginManager.setApp(appInstance);
+  pluginManager.setRouter(routerInstance);
+  pluginManager.register(sharedUserSettingPlugin);
+  await pluginManager.install(sharedUserSettingPlugin.name);
+};
+
+async function render(props: QiankunProps = {}) {
   const { container } = props;
 
   // 判断是否独立运行
   const isStandalone = shouldRunStandalone();
+
+  if (isStandalone) {
+    setupStandaloneGlobals();
+    registerManifestMenusForApp(ENGINEERING_APP_ID);
+  }
 
   // 基础路由（页面组件）
   const pageRoutes = [
@@ -135,6 +164,10 @@ function render(props: QiankunProps = {}) {
   app.use(i18nPlugin);
   app.use(themePlugin);
 
+  if (isStandalone && router) {
+    await setupStandalonePlugins(app, router);
+  }
+
   const mountPoint = container ? container.querySelector('#app') : '#app';
   if (mountPoint) {
     app.mount(mountPoint);
@@ -173,7 +206,7 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  render(props);
+  await render(props);
 
   // 通知主应用：子应用已就绪
   if (props.onReady) {
@@ -232,5 +265,7 @@ if (shouldRunStandalone()) {
     });
   });
   
-  render();
+  render().catch((error) => {
+    console.error('[engineering-app] 独立运行失败:', error);
+  });
 }

@@ -14,12 +14,14 @@ import 'virtual:svg-icons';
 import './styles/global.scss';
 import './styles/theme.scss';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { createI18nPlugin, createThemePlugin } from '@btc/shared-core';
+import { createI18nPlugin, createThemePlugin, resetPluginManager, usePluginManager } from '@btc/shared-core';
 import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
 import { AppLayout } from '@btc/shared-components';
+import { registerAppEnvAccessors, registerManifestMenusForApp, resolveAppLogoUrl } from '@configs/layout-bridge';
+import { userSettingPlugin } from './plugins/user-setting';
 import App from './App.vue';
 
 let app: VueApp | null = null;
@@ -47,10 +49,70 @@ function handleThemeChange(e: CustomEvent<{ color: string; dark: boolean }>) {
   }
 }
 
+const QUALITY_APP_ID = 'quality';
+
 const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 
-function render(props: QiankunProps = {}) {
+const setupStandalonePlugins = async (appInstance: VueApp, routerInstance: Router) => {
+  resetPluginManager();
+  const pluginManager = usePluginManager({ debug: false });
+  pluginManager.setApp(appInstance);
+  pluginManager.setRouter(routerInstance);
+  pluginManager.register(userSettingPlugin);
+  await pluginManager.install(userSettingPlugin.name);
+};
+
+const setupStandaloneGlobals = async () => {
+  registerAppEnvAccessors();
+
+  await Promise.all([
+    import('./services/eps')
+      .then(({ service }) => {
+        (window as any).__APP_EPS_SERVICE__ = service;
+      })
+      .catch(() => {
+        console.warn('[quality-app] Failed to load EPS service');
+      }),
+    import('./utils/app-storage')
+      .then(({ appStorage }) => {
+        (window as any).__APP_STORAGE__ = appStorage;
+      })
+      .catch(() => {
+        console.warn('[quality-app] Failed to load app storage');
+      }),
+    import('./utils/domain-cache')
+      .then((module) => {
+        if (module.getDomainList) {
+          (window as any).__APP_GET_DOMAIN_LIST__ = module.getDomainList;
+        }
+      })
+      .catch(() => {
+        console.warn('[quality-app] Failed to load domain cache');
+      }),
+    import('./utils/loadingManager')
+      .then(({ finishLoading }) => {
+        (window as any).__APP_FINISH_LOADING__ = finishLoading;
+      })
+      .catch(() => {
+        console.warn('[quality-app] Failed to load loading manager');
+        (window as any).__APP_FINISH_LOADING__ = () => {};
+      }),
+    import('./composables/useLogout')
+      .then(({ useLogout }) => {
+        const { logout } = useLogout();
+        (window as any).__APP_LOGOUT__ = logout;
+      })
+      .catch(() => {
+        console.warn('[quality-app] Failed to load logout composable');
+      }),
+  ]);
+
+  (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+  (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+};
+
+async function render(props: QiankunProps = {}) {
   const { container } = props;
 
   // 判断是否独立运行
@@ -138,51 +200,10 @@ function render(props: QiankunProps = {}) {
   app.use(i18nPlugin);
   app.use(themePlugin);
 
-  // 独立运行时：设置全局函数供 AppLayout 使用
   if (isStandalone) {
-    // 同步导入服务和存储（确保在应用挂载前设置）
-    import('./services/eps').then(({ service }) => {
-      (window as any).__APP_EPS_SERVICE__ = service;
-    }).catch(() => {
-      console.warn('[quality-app] Failed to load EPS service');
-    });
-
-    import('./utils/app-storage').then(({ appStorage }) => {
-      (window as any).__APP_STORAGE__ = appStorage;
-    }).catch(() => {
-      console.warn('[quality-app] Failed to load app storage');
-    });
-
-    import('./utils/domain-cache').then((module) => {
-      if (module.getDomainList) {
-        (window as any).__APP_GET_DOMAIN_LIST__ = module.getDomainList;
-      }
-    }).catch(() => {
-      console.warn('[quality-app] Failed to load domain cache');
-    });
-
-    import('./utils/loadingManager').then(({ finishLoading }) => {
-      (window as any).__APP_FINISH_LOADING__ = finishLoading;
-    }).catch(() => {
-      console.warn('[quality-app] Failed to load loading manager');
-    });
-
-    // 可选：应用配置函数（这些函数在 AppLayout 中是可选的，如果不存在会使用默认值）
-    // 注意：quality-app 可能没有 configs/app-env.config.ts 文件，所以不导入
-    // AppLayout 的 menu-drawer 组件会检查这些函数是否存在，如果不存在会使用默认行为
-
-    import('./composables/useLogout').then(({ useLogout }) => {
-      const { logout } = useLogout();
-      (window as any).__APP_LOGOUT__ = logout;
-    }).catch(() => {
-      console.warn('[quality-app] Failed to load logout composable');
-    });
-
-    // Logo URL
-    (window as any).__APP_GET_LOGO_URL__ = () => '/logo.png';
-    
-    // 文档搜索服务（如果需要）
-    (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+    await setupStandaloneGlobals();
+    registerManifestMenusForApp(QUALITY_APP_ID);
+    await setupStandalonePlugins(app, router);
   }
 
   const mountPoint = container ? container.querySelector('#app') : '#app';
@@ -223,7 +244,7 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  render(props);
+  await render(props);
 
   // 通知主应用：子应用已就绪
   if (props.onReady) {

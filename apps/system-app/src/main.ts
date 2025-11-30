@@ -3,6 +3,7 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { service } from './services/eps';
 import { isDev } from './config';
+import { registerAppEnvAccessors } from '@configs/layout-bridge';
 
 // 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
 // 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
@@ -19,6 +20,8 @@ import '@btc/shared-components/styles/index.scss';
 // 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
 // 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
 import { BtcSvg } from '@btc/shared-components';
+
+registerAppEnvAccessors();
 
 const app = createApp(App);
 

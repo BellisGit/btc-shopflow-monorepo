@@ -16,6 +16,8 @@
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
     "@btc/shared-utils": "workspace:*",
+    "@btc/subapp-manifests": "workspace:*",
+    "@vueuse/core": "^13.9.0",
     "element-plus": "^2.8.10",
     "pinia": "^3.0.3",
     "qiankun": "^2.10.16",
