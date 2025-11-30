@@ -48,7 +48,8 @@ export async function loadLayoutApp() {
         container: '#layout-container',
         activeRule: () => true,
         // 添加 scriptType 和 getTemplate 配置，确保资源正确加载
-        scriptType: 'module',
+        // @ts-expect-error - scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
+        scriptType: 'module' as const,
         getTemplate: function(tpl) {
           // 确保所有 script 标签都有 type="module"
           return tpl.replace(
@@ -101,11 +102,8 @@ export async function loadLayoutApp() {
       experimentalStyleIsolation: true,
     },
     singular: false,
-    // 添加错误处理
-    errorHandler: function(error) {
-      console.error(`[${appName}-app] qiankun 错误:`, error);
-    },
     // 添加自定义 fetch 和 getTemplate 配置，确保跨域资源可以加载
+    // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {
       fetch: function(url, options) {
         console.log(`[${appName}-app] 加载资源:`, url);
