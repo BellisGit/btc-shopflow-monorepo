@@ -368,6 +368,88 @@ importers:
         specifier: ^1.8.27
         version: 1.8.27(typescript@5.9.3)
 
+  apps/layout-app:
+    dependencies:
+      '@btc/shared-components':
+        specifier: workspace:*
+        version: link:../../packages/shared-components
+      '@btc/shared-core':
+        specifier: workspace:*
+        version: link:../../packages/shared-core
+      '@btc/shared-utils':
+        specifier: workspace:*
+        version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../../packages/subapp-manifests
+      '@element-plus/icons-vue':
+        specifier: ^2.3.2
+        version: 2.3.2(vue@3.5.25)
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
+      axios:
+        specifier: ^1.12.2
+        version: 1.13.2
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
+      element-plus:
+        specifier: ^2.8.10
+        version: 2.11.8(vue@3.5.25)
+      mitt:
+        specifier: ^3.0.1
+        version: 3.0.1
+      nprogress:
+        specifier: ^0.2.0
+        version: 0.2.0
+      pinia:
+        specifier: ^3.0.3
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
+      qiankun:
+        specifier: ^2.10.16
+        version: 2.10.16
+      vue:
+        specifier: ^3.4.0
+        version: 3.5.25(typescript@5.9.3)
+      vue-echarts:
+        specifier: ^8.0.1
+        version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
+      vue-router:
+        specifier: ^4.5.0
+        version: 4.6.3(vue@3.5.25)
+    devDependencies:
+      '@btc/vite-plugin':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
+      '@vitejs/plugin-vue':
+        specifier: ^5.0.0
+        version: 5.2.4(vite@5.4.21)(vue@3.5.25)
+      sass:
+        specifier: ^1.93.2
+        version: 1.94.2
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      unocss:
+        specifier: ^66.5.2
+        version: 66.5.9(postcss@8.5.6)(vite@5.4.21)
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@24.10.1)(sass@1.94.2)
+      vite-plugin-qiankun:
+        specifier: ^1.0.15
+        version: 1.0.15(typescript@5.9.3)(vite@5.4.21)
+      vue-tsc:
+        specifier: ^1.8.27
+        version: 1.8.27(typescript@5.9.3)
+
   apps/logistics-app:
     dependencies:
       '@btc/shared-components':
@@ -398,9 +480,15 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@types/nprogress':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.21)(vue@3.5.25)
+      nprogress:
+        specifier: ^0.2.0
+        version: 0.2.0
       sass:
         specifier: ^1.93.2
         version: 1.94.2
@@ -550,9 +638,15 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../../packages/subapp-manifests
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      nprogress:
+        specifier: ^0.2.0
+        version: 0.2.0
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -566,6 +660,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@types/nprogress':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.21)(vue@3.5.25)
@@ -691,6 +788,9 @@ importers:
       '@btc/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
+      '@btc/subapp-manifests':
+        specifier: workspace:*
+        version: link:../subapp-manifests
       '@element-plus/icons-vue':
         specifier: ^2.3.2
         version: 2.3.2(vue@3.5.25)
@@ -703,12 +803,18 @@ importers:
       element-plus:
         specifier: ^2.11.5
         version: 2.11.8(vue@3.5.25)
+      pinia:
+        specifier: ^2.0.0
+        version: 2.3.1(typescript@5.9.3)(vue@3.5.25)
       sass:
         specifier: ^1.93.2
         version: 1.94.2
       vite:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@24.10.1)(sass@1.94.2)
+      vue-router:
+        specifier: ^4.0.0
+        version: 4.6.3(vue@3.5.25)
       vue-tsc:
         specifier: ^2.0.0
         version: 2.2.12(typescript@5.9.3)
@@ -2094,7 +2200,7 @@ packages:
     dependencies:
       '@babel/code-frame': 7.27.1
       '@babel/generator': 7.28.5
-      '@babel/parser': 7.27.7
+      '@babel/parser': 7.28.5
       '@babel/template': 7.27.2
       '@babel/types': 7.28.5
       debug: 4.4.3
@@ -3457,7 +3563,6 @@ packages:
     dependencies:
       '@intlify/message-compiler': 11.2.2
       '@intlify/shared': 11.2.2
-    dev: true
 
   /@intlify/message-compiler@11.2.2:
     resolution: {integrity: sha512-XS2p8Ff5JxWsKhgfld4/MRQzZRQ85drMMPhb7Co6Be4ZOgqJX1DzcZt0IFgGTycgqL8rkYNwgnD443Q+TapOoA==}
@@ -3465,7 +3570,6 @@ packages:
     dependencies:
       '@intlify/shared': 11.2.2
       source-map-js: 1.2.1
-    dev: true
 
   /@intlify/message-compiler@9.14.5:
     resolution: {integrity: sha512-IHzgEu61/YIpQV5Pc3aRWScDcnFKWvQA9kigcINcCBXN8mbW+vk9SK+lDxA6STzKQsVJxUPg9ACC52pKKo3SVQ==}
@@ -3478,7 +3582,6 @@ packages:
   /@intlify/shared@11.2.2:
     resolution: {integrity: sha512-OtCmyFpSXxNu/oET/aN6HtPCbZ01btXVd0f3w00YsHOb13Kverk1jzA2k47pAekM55qbUw421fvPF1yxZ+gicw==}
     engines: {node: '>= 16'}
-    dev: true
 
   /@intlify/shared@9.14.5:
     resolution: {integrity: sha512-9gB+E53BYuAEMhbCAxVgG38EZrk59sxBtv3jSizNL2hEWlgjBjAw1AwpLHtNaeda12pe6W20OGEa0TwuMSRbyQ==}
@@ -8726,7 +8829,6 @@ packages:
 
   /nprogress@0.2.0:
     resolution: {integrity: sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==}
-    dev: false
 
   /nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
@@ -9059,6 +9161,23 @@ packages:
     resolution: {integrity: sha512-eG2dWTVw5bzqGRztnHExczNxt5VGsE6OwTeCG3fdUf9KBsZzO3R5OIIIzWR+iZA0NtZ+RDVdaoE2dK1cn6jH4g==}
     engines: {node: '>=0.10'}
     hasBin: true
+    dev: true
+
+  /pinia@2.3.1(typescript@5.9.3)(vue@3.5.25):
+    resolution: {integrity: sha512-khUlZSwt9xXCaTbbxFYBKDc/bWAGWJjOgvxETwkTN7KRm66EeT1ZdZj6i2ceh9sP2Pzqsbc704r2yngBrxBVug==}
+    peerDependencies:
+      typescript: '>=4.4.4'
+      vue: ^2.7.0 || ^3.5.11
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      typescript: 5.9.3
+      vue: 3.5.25(typescript@5.9.3)
+      vue-demi: 0.14.10(vue@3.5.25)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
     dev: true
 
   /pinia@3.0.4(typescript@5.9.3)(vue@3.5.25):
@@ -11263,7 +11382,6 @@ packages:
       '@intlify/shared': 11.2.2
       '@vue/devtools-api': 6.6.4
       vue: 3.5.25(typescript@5.9.3)
-    dev: true
 
   /vue-router@4.6.3(vue@3.5.25):
     resolution: {integrity: sha512-ARBedLm9YlbvQomnmq91Os7ck6efydTSpRP3nuOKCvgJOHNrhRoJDSKtee8kcL1Vf7nz6U+PMBL+hTvR3bTVQg==}
@@ -11272,7 +11390,6 @@ packages:
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.25(typescript@5.9.3)
-    dev: false
 
   /vue-template-compiler@2.7.16:
     resolution: {integrity: sha512-AYbUWAJHLGGQM7+cNTELw+KsOG9nl2CnSv467WobS5Cv9uk3wFcnr1Etsz2sEIHEZvw1U+o9mRlEO6QbZvUPGQ==}
