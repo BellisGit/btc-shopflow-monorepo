@@ -28,9 +28,16 @@
 
         // 使用共享工具函数加载 layout-app（需要先安装 qiankun 依赖）
         // 这样可以避免 CDN 的 CORS 问题和网络问题
-        import('../../packages/shared-utils/src/qiankun/load-layout-app.ts')
-          .then(({ loadLayoutApp }) => {
-            return loadLayoutApp();
+        // 注意：qiankun 需要在 engineering-app 的 package.json 中安装
+        Promise.all([
+          import('qiankun'),
+          import('../../packages/shared-utils/src/qiankun/load-layout-app.ts')
+        ])
+          .then(([qiankun, { loadLayoutApp }]) => {
+            return loadLayoutApp({
+              registerMicroApps: qiankun.registerMicroApps,
+              start: qiankun.start
+            });
           })
           .catch((error) => {
             console.error('[engineering-app] 加载 layout-app 失败:', error);

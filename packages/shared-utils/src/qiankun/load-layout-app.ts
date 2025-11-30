@@ -3,26 +3,24 @@
  * 
  * 使用说明：
  * 1. 在应用的 package.json 中添加 qiankun 依赖：`"qiankun": "^2.10.16"`
- * 2. 在 index.html 中调用此函数
+ * 2. 在 index.html 中先导入 qiankun，然后调用此函数
  * 
  * @example
  * ```html
- * <script>
- *   import('/@btc/shared-utils/qiankun/load-layout-app').then(({ loadLayoutApp }) => {
- *     loadLayoutApp();
- *   });
+ * <script type="module">
+ *   import { registerMicroApps, start } from 'qiankun';
+ *   import { loadLayoutApp } from '@btc/shared-utils/qiankun/load-layout-app';
+ *   loadLayoutApp({ registerMicroApps, start });
  * </script>
  * ```
  */
 
 /**
  * 加载 layout-app
- * 注意：调用此函数前，需要确保已安装 qiankun 依赖
+ * @param qiankunAPI - qiankun 的 API 对象，包含 registerMicroApps 和 start 方法
  */
-export async function loadLayoutApp() {
-  // 动态导入 qiankun（会被 Vite 打包到应用中）
-  // 注意：qiankun 需要在调用此函数的应用中安装
-  const { registerMicroApps, start } = await import('qiankun');
+export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }) {
+  const { registerMicroApps, start } = qiankunAPI;
 
   // 获取当前环境
   const isProd = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
@@ -48,8 +46,8 @@ export async function loadLayoutApp() {
         container: '#layout-container',
         activeRule: () => true,
         // 添加 scriptType 和 getTemplate 配置，确保资源正确加载
-        // @ts-expect-error - scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
-        scriptType: 'module',
+        // 注意：scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
+        scriptType: 'module' as any,
         getTemplate: function(tpl) {
           // 确保所有 script 标签都有 type="module"
           return tpl.replace(
@@ -103,7 +101,7 @@ export async function loadLayoutApp() {
     },
     singular: false,
     // 添加自定义 fetch 和 getTemplate 配置，确保跨域资源可以加载
-    // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
+    // 注意：importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {
       fetch: function(url, options) {
         console.log(`[${appName}-app] 加载资源:`, url);
