@@ -6,7 +6,37 @@
     <title>生产应用 - BTC ShopFlow</title>
   </head>
   <body>
+    <div id="layout-container"></div>
     <div id="app"></div>
+    <script>
+      (function () {
+        if (window.__POWERED_BY_QIANKUN__) {
+          return;
+        }
+
+        var shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+        if (!shouldLoadLayout) {
+          return;
+        }
+
+        var LOADER_FLAG = '__layout_app_loader__';
+        if (window[LOADER_FLAG]) {
+          return;
+        }
+        window[LOADER_FLAG] = true;
+        window.__USE_LAYOUT_APP__ = true;
+
+        // 使用共享工具函数加载 layout-app（需要先安装 qiankun 依赖）
+        // 这样可以避免 CDN 的 CORS 问题和网络问题
+        import('../../packages/shared-utils/src/qiankun/load-layout-app.ts')
+          .then(({ loadLayoutApp }) => {
+            return loadLayoutApp();
+          })
+          .catch((error) => {
+            console.error('[production-app] 加载 layout-app 失败:', error);
+          });
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
