@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { storage } from '@btc/shared-utils';
+import { setBodyClassName } from '../utils/body-class';
 
 /**
  * 颜色混合工具函数
@@ -97,7 +98,7 @@ export function useTheme() {
     currentTheme.value = theme;
     setThemeColor(theme.color, isDark.value);
     storage.set('theme', theme);
-    document.body.className = `theme-${theme.name}`;
+    setBodyClassName(`theme-${theme.name}`);
   }
 
   /**
@@ -175,7 +176,7 @@ export function useTheme() {
     }
 
     setThemeColor(currentTheme.value.color, isDark.value);
-    document.body.className = `theme-${currentTheme.value.name}`;
+    setBodyClassName(`theme-${currentTheme.value.name}`);
   }
 
   // 初始化

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { storage } from '@btc/shared-utils';
 import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useTheme';
+import { setBodyClassName } from '../utils/body-class';
 
 /**
  * 主题 Store
@@ -74,7 +75,7 @@ export const useThemeStore = defineStore('theme', () => {
   function switchTheme(theme: ThemeConfig) {
     currentTheme.value = { ...theme };
     setThemeColor(theme.color, isDark.value);
-    document.body.className = `theme-${theme.name}`;
+    setBodyClassName(`theme-${theme.name}`);
 
     // 持久化到 localStorage
     storage.set('theme', currentTheme.value);
@@ -149,7 +150,7 @@ export const useThemeStore = defineStore('theme', () => {
 
     // useDark() 会自动处理 dark class，但我们需要应用主题色
     setThemeColor(currentTheme.value.color, isDark.value);
-    document.body.className = `theme-${currentTheme.value.name}`;
+    setBodyClassName(`theme-${currentTheme.value.name}`);
   }
 
   // 初始化主题

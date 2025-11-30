@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
 import { storage } from '@btc/shared-utils';
 import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
+import { setBodyClassName } from '../../utils/body-class';
 import { setThemeColor, syncThemeColorToSubApps } from './composables/useThemeColor';
 import { migrateThemeConfig } from './composables/useThemeMigration';
 import { createToggleDark } from './composables/useThemeToggle';
@@ -50,7 +51,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 初始化时应用主题色
   if (currentTheme.value?.color) {
     setThemeColor(currentTheme.value.color, isDark.value);
-    document.body.className = `theme-${currentTheme.value.name}`;
+    setBodyClassName(`theme-${currentTheme.value.name}`);
   }
 
   // 只从统一的 settings 存储中读取，不再读取旧的独立键
@@ -91,7 +92,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   function switchTheme(theme: ThemeConfig) {
     currentTheme.value = { ...theme };
     themeSetThemeColor(theme.color, isDark.value);
-    document.body.className = `theme-${theme.name}`;
+    setBodyClassName(`theme-${theme.name}`);
 
     // 持久化到统一的 settings 存储中
     const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
@@ -118,7 +119,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     themeSetThemeColor(color, isDark.value);
     
     // 更新 body 类名
-    document.body.className = 'theme-custom';
+    setBodyClassName('theme-custom');
 
     // 持久化到统一的 settings 存储中
     const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
@@ -179,7 +180,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
    */
   function initTheme() {
     themeSetThemeColor(currentTheme.value.color, isDark.value);
-    document.body.className = `theme-${currentTheme.value.name}`;
+    setBodyClassName(`theme-${currentTheme.value.name}`);
   }
 
   // 保存最新的 setThemeColor 函数引用

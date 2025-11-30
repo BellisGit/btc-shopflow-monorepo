@@ -63,25 +63,46 @@ export function registerManifestMenusForApp(appId: string) {
   registerMenus(appId, manifestMenus.map(normalizeMenuItem));
 }
 
+const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
+  if (!candidate) return null;
+  const trimmed = candidate.trim();
+  if (!trimmed) return null;
+
+  try {
+    const absolute = context ? new URL(trimmed, context) : new URL(trimmed);
+    return new URL('.', absolute).href;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * 解析应用 Logo 地址（会根据 baseUrl 自动适配）
  */
 export function resolveAppLogoUrl() {
-  const defaultUrl =
-    typeof window !== 'undefined' && window.location?.origin
-      ? `${window.location.origin}/logo.png`
-      : '/logo.png';
+  const windowOrigin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+  const documentBase = typeof document !== 'undefined' ? document.baseURI : undefined;
+  const context = windowOrigin || documentBase;
 
-  const baseCandidate =
-    (import.meta as any)?.env?.BASE_URL ||
-    (typeof document !== 'undefined' ? document.baseURI : undefined) ||
-    defaultUrl;
+  const defaultUrl = windowOrigin ? `${windowOrigin}/logo.png` : '/logo.png';
 
-  try {
-    return new URL('logo.png', baseCandidate).href;
-  } catch {
-    return defaultUrl;
+  const baseCandidates = [
+    (import.meta as any)?.env?.BASE_URL,
+    documentBase,
+    windowOrigin,
+  ];
+
+  for (const candidate of baseCandidates) {
+    const absoluteBase = normalizeBaseUrl(candidate, context);
+    if (!absoluteBase) continue;
+    try {
+      return new URL('logo.png', absoluteBase).href;
+    } catch {
+      continue;
+    }
   }
+
+  return defaultUrl;
 }
 
 /**

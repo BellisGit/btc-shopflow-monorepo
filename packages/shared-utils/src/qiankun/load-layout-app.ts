@@ -35,6 +35,36 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
     ? window.location.hostname.split('.')[0] || 'unknown'
     : 'unknown';
 
+  const getAssetsBase = (entry: string) => {
+    try {
+      const entryUrl = new URL(entry, typeof window !== 'undefined' ? window.location.href : 'https://bellis.com.cn');
+      return new URL('assets/', entryUrl).toString();
+    } catch (_error) {
+      return '/assets/';
+    }
+  };
+
+  const assetsBase = getAssetsBase(layoutEntry);
+
+  const ensureModuleScriptType = (tpl: string) =>
+    tpl.replace(
+      /<script(\s+[^>]*)?>/gi,
+      function (match, attrs) {
+        if (!attrs) attrs = '';
+        if (attrs.includes('type=')) {
+          return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
+        }
+        return '<script type="module"' + attrs + '>';
+      },
+    );
+
+  const rewriteAssetUrls = (tpl: string) =>
+    tpl
+      .replace(/(href|src)=["']\/assets\/([^"']+)["']/gi, (_match, attr, path) => `${attr}="${assetsBase}${path}"`)
+      .replace(/(import\(\s*['"])\/assets\//gi, `$1${assetsBase}`);
+
+  const transformTemplate = (tpl: string) => ensureModuleScriptType(rewriteAssetUrls(tpl));
+
   console.log(`[${appName}-app] 准备加载 layout-app，入口地址:`, layoutEntry);
 
   // 注册并启动 qiankun，仅挂载布局微应用
@@ -49,19 +79,7 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
         // 注意：scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
         scriptType: 'module' as any,
         getTemplate: function(tpl) {
-          // 确保所有 script 标签都有 type="module"
-          return tpl.replace(
-            /<script(\s+[^>]*)?>/gi,
-            function(match, attrs) {
-              if (!attrs) attrs = '';
-              // 如果已经有 type 属性，替换为 module
-              if (attrs.includes('type=')) {
-                return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
-              }
-              // 如果没有 type 属性，添加 type="module"
-              return '<script type="module"' + attrs + '>';
-            }
-          );
+          return transformTemplate(tpl);
         },
       }
     ],
@@ -69,30 +87,37 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
       beforeLoad: [
         (app) => {
           console.log(`[${appName}-app] 准备加载 layout-app:`, app.name, app.entry);
-        }
+        },
       ],
       beforeMount: [
         (app) => {
           console.log(`[${appName}-app] 准备挂载 layout-app:`, app.name);
-        }
+        },
       ],
       afterMount: [
         (app) => {
           console.log(`[${appName}-app] layout-app 挂载完成:`, app.name);
-        }
+        },
       ],
       beforeUnmount: [
         (app) => {
           console.log(`[${appName}-app] 准备卸载 layout-app:`, app.name);
-        }
+        },
       ],
       afterUnmount: [
         (app) => {
           console.log(`[${appName}-app] layout-app 卸载完成:`, app.name);
-        }
+        },
       ],
     }
   );
+
+  const boundFetch =
+    typeof window !== 'undefined' && typeof window.fetch === 'function'
+      ? window.fetch.bind(window)
+      : typeof fetch === 'function'
+        ? fetch
+        : null;
 
   start({
     sandbox: {
@@ -103,28 +128,23 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
     // 添加自定义 fetch 和 getTemplate 配置，确保跨域资源可以加载
     // 注意：importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
     importEntryOpts: {
-      fetch: function(url, options) {
+      fetch: function (url: RequestInfo | URL, options?: RequestInit) {
         console.log(`[${appName}-app] 加载资源:`, url);
-        return fetch(url, {
-          ...options,
+
+        const requestOptions: RequestInit = {
+          ...(options || {}),
           mode: 'cors',
           credentials: 'include',
-        });
+        };
+
+        if (boundFetch) {
+          return boundFetch(url, requestOptions);
+        }
+
+        throw new Error('[layout-app loader] 当前环境不支持 fetch，无法加载微应用资源');
       },
-      getTemplate: function(tpl) {
-        // 确保所有 script 标签都有 type="module"
-        return tpl.replace(
-          /<script(\s+[^>]*)?>/gi,
-          function(match, attrs) {
-            if (!attrs) attrs = '';
-            // 如果已经有 type 属性，替换为 module
-            if (attrs.includes('type=')) {
-              return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
-            }
-            // 如果没有 type 属性，添加 type="module"
-            return '<script type="module"' + attrs + '>';
-          }
-        );
+      getTemplate: function (tpl: string) {
+        return transformTemplate(tpl);
       },
     },
   });
