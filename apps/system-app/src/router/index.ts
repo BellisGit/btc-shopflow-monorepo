@@ -11,6 +11,8 @@ import { tSync } from '../i18n/getters';
 // import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micro/index';
 import { systemRoutes } from './routes/system';
+import { getCookie } from '../utils/cookie';
+import { appStorage } from '../utils/app-storage';
 
 const routes: RouteRecordRaw[] = [
   // 登录页面（不在 Layout 中）- 使用根目录 auth 包
@@ -192,8 +194,60 @@ export function setupI18nTitleWatcher() {
   });
 }
 
-// 路由前置守卫：处理 Loading 显示和侧边栏
+/**
+ * 检查用户是否已认证
+ * 注意：后端设置了 http-only cookie，前端无法直接读取
+ * 因此通过检查 localStorage 中的登录状态标记、token 和用户信息来判断
+ */
+function isAuthenticated(): boolean {
+  // 1. 检查登录状态标记（登录成功时设置）
+  const isLoggedIn = localStorage.getItem('is_logged_in') === 'true';
+  if (isLoggedIn) {
+    return true;
+  }
+
+  // 2. 检查 localStorage 中的 token
+  const storageToken = appStorage.auth.getToken();
+  if (storageToken) {
+    return true;
+  }
+
+  // 3. 检查用户信息是否存在
+  const userInfo = appStorage.user.get();
+  if (userInfo?.id) {
+    return true;
+  }
+
+  return false;
+}
+
+// 路由前置守卫：处理认证、Loading 显示和侧边栏
 router.beforeEach((to, from, next) => {
+  // 检查是否为公开页面（不需要认证）
+  const isPublicPage = to.meta?.public === true;
+  const isAuthenticatedUser = isAuthenticated();
+
+  // 如果是登录页且用户已认证，重定向到首页
+  if (to.path === '/login' && isAuthenticatedUser) {
+    const redirect = (to.query.redirect as string) || '/';
+    // 只取路径部分，忽略查询参数，避免循环重定向
+    const redirectPath = redirect.split('?')[0];
+    next(redirectPath);
+    return;
+  }
+
+  // 如果不是公开页面，检查认证状态
+  if (!isPublicPage) {
+    if (!isAuthenticatedUser) {
+      // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath },
+      });
+      return;
+    }
+  }
+
   // 检查是否为文档相关路由（只支持 /docs 前缀）
   const isDocsRoute = to.path === '/docs' || to.path.startsWith('/docs/');
 

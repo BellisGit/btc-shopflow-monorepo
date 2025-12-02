@@ -8,7 +8,9 @@
     
     <div class="home-page__content">
       <van-cell-group inset>
-        <van-cell title="手机号" :value="userPhone || '未绑定'" />
+        <van-cell title="用户名" :value="userInfo?.username || '未设置'" />
+        <van-cell title="手机号" :value="userInfo?.phone || '未绑定'" />
+        <van-cell v-if="userInfo?.email" title="邮箱" :value="userInfo.email" />
       </van-cell-group>
       
       <div class="home-page__actions">
@@ -21,11 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { CellGroup, Cell, Button, showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/services/auth';
+import type { UserProfile } from '@/services/auth';
 import logoUrl from '@/assets/images/logo.png';
 
 defineOptions({
@@ -35,8 +38,40 @@ defineOptions({
 const router = useRouter();
 const authStore = useAuthStore();
 const loading = ref(false);
+const loadingProfile = ref(false);
+const userInfo = ref<UserProfile | null>(null);
 
-const userPhone = computed(() => authStore.user?.phone);
+// 从 store 获取初始用户信息
+const initialUserInfo = computed(() => authStore.user);
+
+// 加载用户信息
+async function loadUserProfile() {
+  if (!authStore.isAuthenticated) {
+    return;
+  }
+
+  loadingProfile.value = true;
+  try {
+    const profile = await authApi.getProfile();
+    userInfo.value = profile;
+    // 更新 store 中的用户信息
+    authStore.setUser(profile);
+  } catch (error) {
+    console.error('Failed to load user profile:', error);
+    // 如果获取失败，使用 store 中的用户信息
+    userInfo.value = initialUserInfo.value;
+  } finally {
+    loadingProfile.value = false;
+  }
+}
+
+// 页面加载时获取用户信息
+onMounted(() => {
+  // 先使用 store 中的用户信息
+  userInfo.value = initialUserInfo.value;
+  // 然后从服务器获取最新信息
+  loadUserProfile();
+});
 
 async function handleLogout() {
   loading.value = true;

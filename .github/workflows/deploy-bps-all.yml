@@ -1,0 +1,169 @@
+name: Deploy with BPS All
+
+on:
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: '跳过构建步骤（仅部署已有产物）'
+        required: false
+        type: boolean
+        default: false
+  # 构建完成后自动触发（仅当构建成功时）
+  workflow_run:
+    workflows: ["Build-Deploy All Apps"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy All Apps (BPS)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Determine skip build flag
+        id: config
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            SKIP_BUILD="${{ inputs.skip_build }}"
+          else
+            # 构建完成后自动触发：跳过构建，使用已有产物
+            SKIP_BUILD="true"
+          fi
+          
+          echo "skip_build=$SKIP_BUILD" >> $GITHUB_OUTPUT
+          echo "📋 跳过构建: $SKIP_BUILD"
+      
+      # 从构建工作流下载构建产物（如果是从 workflow_run 触发）
+      - name: Download build artifacts from workflow run
+        if: github.event_name == 'workflow_run' && steps.config.outputs.skip_build == 'true'
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: 'dist-*'
+          path: artifacts
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          check_artifacts: false
+        continue-on-error: true
+      
+      - name: Extract and organize build artifacts
+        if: github.event_name == 'workflow_run' && steps.config.outputs.skip_build == 'true'
+        run: |
+          echo "📦 提取构建产物..."
+          
+          if [ -d "artifacts" ]; then
+            for artifact_dir in artifacts/dist-*; do
+              if [ -d "$artifact_dir" ]; then
+                APP_NAME=$(basename "$artifact_dir" | sed 's/^dist-//')
+                if [ -n "$APP_NAME" ]; then
+                  echo "  📦 提取 $APP_NAME 的构建产物..."
+                  mkdir -p "apps/$APP_NAME"
+                  cp -r "$artifact_dir" "apps/$APP_NAME/dist" || true
+                fi
+              fi
+            done
+            rm -rf artifacts
+          fi
+          
+          # 验证构建产物
+          echo ""
+          echo "📦 构建产物验证:"
+          for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app layout-app; do
+            if [ -d "apps/$app/dist" ] && [ "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
+              file_count=$(find "apps/$app/dist" -type f 2>/dev/null | wc -l)
+              size=$(du -sh "apps/$app/dist" 2>/dev/null | awk '{print $1}')
+              echo "  ✅ $app: $file_count 个文件, 大小: $size"
+            else
+              echo "  ❌ $app: 构建产物不存在"
+            fi
+          done
+        continue-on-error: true
+      
+      # 如果需要构建，先安装环境和构建
+      - name: Setup Node.js
+        if: steps.config.outputs.skip_build == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        if: steps.config.outputs.skip_build == 'false'
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        if: steps.config.outputs.skip_build == 'false'
+        run: |
+          pnpm install --frozen-lockfile
+      
+      - name: Build all apps
+        if: steps.config.outputs.skip_build == 'false'
+        run: |
+          # 构建 system-app 生成 EPS
+          pnpm build:system
+          # 复制 EPS 数据
+          node scripts/copy-eps-from-system.mjs
+          # 构建所有应用
+          pnpm build:all
+      
+      # 安装 sshpass 并设置 SSH 连接
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          sshpass -V
+      
+      - name: Setup SSH connection
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+          # 测试连接（使用密码认证）
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+                -o UserKnownHostsFile=/dev/null \
+                -o ConnectTimeout=30 \
+                -o ServerAliveInterval=60 \
+                -o ServerAliveCountMax=3 \
+                ${{ secrets.SERVER_USER || 'root' }}@${{ secrets.SERVER_HOST }} \
+            "echo 'SSH connection successful'" || {
+            echo "❌ SSH 连接测试失败"
+            exit 1
+          }
+      
+      # 执行部署（只部署，不构建）
+      - name: Run BPS All deployment
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+          REMOTE_BASE_PATH: ${{ secrets.REMOTE_BASE_PATH || '/www/wwwroot' }}
+        run: |
+          set -e
+          chmod +x scripts/bps-all.sh
+          
+          # 在工作流中，总是跳过构建（因为已经在前面步骤中完成）
+          ./scripts/bps-all.sh --skip-build
+      
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## 📋 部署总结" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **跳过构建**: ${{ steps.config.outputs.skip_build }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **服务器**: ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **状态**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

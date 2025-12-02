@@ -64,6 +64,7 @@ export { epsPlugin } from './eps';
 export { svgPlugin } from './svg';
 export { ctxPlugin } from './ctx';
 export { tagPlugin } from './tag';
+export { copyLogoPlugin } from './copy-logo';
 
 // 导出类型
 export * from './eps/types';

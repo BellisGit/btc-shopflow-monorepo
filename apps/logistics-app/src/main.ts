@@ -1,5 +1,7 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
+// 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
+import '@btc/shared-components/styles/dark-theme.css';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createLogisticsApp,

@@ -89,6 +89,24 @@ export class Http {
           config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
         }
 
+        // 生产环境：添加 x-forward-host 请求头为根域
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const port = window.location.port || '';
+          // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
+          const isProduction = hostname.includes('bellis.com.cn') &&
+                               !port.startsWith('41') &&
+                               port !== '5173' &&
+                               port !== '3000' &&
+                               hostname !== 'localhost' &&
+                               !hostname.startsWith('127.0.0.1') &&
+                               !hostname.startsWith('10.') &&
+                               !hostname.startsWith('192.168.');
+          if (isProduction) {
+            config.headers['x-forward-host'] = 'bellis.com.cn';
+          }
+        }
+
         const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');
         if (!isFormData) {
           config.headers['Content-Type'] = 'application/json';
@@ -105,12 +123,62 @@ export class Http {
 
     // 响应拦截器
     const onFulfilled = (response: any) => {
+      const originalResponseData = response.data;
+
+      // 处理标准的 API 响应格式：{ code, msg, data }
+      // 如果响应包含 code 字段，说明是标准格式
+      if (originalResponseData && typeof originalResponseData === 'object' && 'code' in originalResponseData) {
+        const { code, msg, data } = originalResponseData;
+
+        // 如果 code 不是 200，抛出错误
+        if (code !== 200) {
+          const errorMessage = msg || '请求失败';
+          return Promise.reject(new Error(errorMessage));
+        }
+
+        // code 为 200 时，返回 data 字段的内容
+        // 对于登录/注册接口，需要特殊处理 token 提取
+        const isLoginResponse = response.config?.url?.includes('/login') || response.config?.url?.includes('/register');
+        if (isLoginResponse) {
+          const authStore = useAuthStore();
+
+          // 从 data 中提取 token
+          let tokenFromBody: string | null = null;
+          if (data) {
+            tokenFromBody = data.access_token || data.accessToken || data.token;
+          }
+
+          // 如果从 data 中找到了 token，立即保存
+          if (tokenFromBody) {
+            // 保存到 authStore
+            authStore.setToken(tokenFromBody);
+
+            // 手动设置 cookie
+            const isHttps = window.location.protocol === 'https:';
+            setCookie('access_token', tokenFromBody, 7, {
+              sameSite: isHttps ? 'None' : undefined,
+              secure: isHttps,
+              path: '/',
+            });
+          } else {
+            // 如果 data 中没有 token，尝试从 cookie 读取
+            const cookieToken = getCookie('access_token');
+            if (cookieToken) {
+              authStore.setToken(cookieToken);
+            }
+          }
+        }
+
+        // 返回 data 字段的内容
+        return data;
+      }
+
+      // 如果不是标准格式，按原来的逻辑处理（向后兼容）
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login') || response.config?.url?.includes('/register');
 
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {
-        const originalResponseData = response.data;
         const authStore = useAuthStore();
 
         // 从响应体中提取 token
@@ -149,7 +217,7 @@ export class Http {
         }
       }
 
-      return response.data;
+      return originalResponseData;
     };
 
     const onRejected = async (error: any) => {

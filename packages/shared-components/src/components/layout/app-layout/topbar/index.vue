@@ -30,7 +30,7 @@
           backgroundColor: menuThemeConfig.background,
         }"
       >
-        <img :src="logoUrl" alt="BTC Logo" class="topbar__logo-img" />
+        <img :src="logoUrl" alt="BTC Logo" class="topbar__logo-img" @error="handleLogoError" />
         <h2
           class="topbar__logo-text"
           :style="{ color: menuThemeConfig.systemNameColor }"
@@ -112,6 +112,14 @@ defineEmits<{
 
 const { t } = useI18n();
 
+// 处理 Logo 加载错误
+const handleLogoError = (event: Event) => {
+  const img = event.target as HTMLImageElement;
+  console.warn('[Topbar] Logo image failed to load:', img.src);
+  // 如果加载失败，隐藏图片或使用占位符
+  img.style.display = 'none';
+};
+
 // Logo URL - 通过全局函数获取或使用默认值
 const logoUrl = computed(() => {
   const getLogoUrl = (window as any).__APP_GET_LOGO_URL__;
@@ -170,6 +178,7 @@ const menuThemeConfig = computed(() => {
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
 
   if (themeConfig) {
+    console.log('[Topbar] 使用菜单风格配置:', themeConfig);
     return {
       background: themeConfig.background,
       systemNameColor: themeConfig.systemNameColor,
@@ -178,6 +187,7 @@ const menuThemeConfig = computed(() => {
   }
 
   // 默认配置
+  console.log('[Topbar] 使用默认配置，theme:', theme, 'menuStyleList:', menuStyleList.value);
   return {
     background: '#FFFFFF',
     systemNameColor: 'var(--el-text-color-primary)',
@@ -240,12 +250,12 @@ onMounted(async () => {
 .topbar {
   height: 47px;
   min-height: 47px;
-  width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
+  width: 100%; // 明确设置宽度为 100%，确保延伸到最右侧
   background-color: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
   display: flex;
   align-items: center;
-  box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保边框包含在宽度内
+  box-sizing: border-box;
   flex-shrink: 0;
   overflow: visible; // 确保内容不被裁切
 
@@ -374,11 +384,6 @@ onMounted(async () => {
     overflow: hidden;
   }
 
-  // 深色菜单风格下的 logo 文字颜色
-  &__logo-content.is-dark-menu &__logo-text {
-    color: #BABBBD;
-  }
-
   // 左侧工具区（折叠按钮 + 搜索 + 顶部菜单）
   &__left {
     display: flex;
@@ -500,4 +505,36 @@ onMounted(async () => {
 }
 </style>
 
+<style lang="scss">
+/**
+ * 全局样式（非 scoped）
+ * 用于覆盖深色菜单风格下的 Logo 文字颜色
+ */
 
+// 深色菜单风格下的顶栏 logo 文字颜色
+.topbar.is-dark-menu {
+  .topbar__logo-content {
+    .topbar__logo-text {
+      color: #BABBBD !important;
+    }
+  }
+
+  // 品牌区域底部分隔线（logo 区域和搜索区域之间）与顶栏底部分隔线保持一致
+  .topbar__brand {
+    border-bottom-color: var(--el-border-color) !important;
+  }
+  
+  // Logo 内容区域背景色（深色菜单风格，与菜单背景一致）
+  .topbar__brand .topbar__logo-content {
+    // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+    html.dark & {
+      background-color: #0a0a0a !important;
+    }
+    
+    // 浅色系统主题下，使用深色菜单背景色
+    html:not(.dark) & {
+      background-color: #0a0a0a !important;
+    }
+  }
+}
+</style>

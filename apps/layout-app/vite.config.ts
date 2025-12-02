@@ -52,36 +52,14 @@ const corsPlugin = (): Plugin => {
   };
 };
 
-// 虚拟 EPS 服务插件（layout-app 不需要 EPS，提供空实现）
-const virtualEpsPlugin = (): Plugin => {
-  return {
-    name: 'virtual-eps-for-layout',
-    resolveId(id) {
-      // 拦截 @services/eps 的导入
-      if (id === '@services/eps') {
-        return id; // 返回虚拟模块 ID
-      }
-      return null;
-    },
-    load(id) {
-      // 为 @services/eps 提供空实现
-      if (id === '@services/eps') {
-        return `
-          // layout-app 不需要 EPS，提供空实现
-          export const service = {};
-          export const list = [];
-          export default service;
-        `;
-      }
-      return null;
-    },
-  };
-};
+// 注意：layout-app 现在使用真实的 EPS 数据（从 system-app 复制）
+// 不再需要虚拟 EPS 插件，EPS 数据会在构建时从 build/eps 目录读取
 
 export default defineConfig({
   base: '/',
-  // 配置 publicDir，指向 system-app 的 public 目录，以便访问 logo.png 等静态资源
-  publicDir: resolve(__dirname, '../system-app/public'),
+  // 配置 publicDir，指向共享组件库的 public 目录，以便访问 logo.png 等静态资源
+  // logo.png 从共享组件库复制，确保所有应用使用相同的 logo
+  publicDir: resolve(__dirname, '../../packages/shared-components/public'),
   resolve: {
     alias: {
       '@layout': resolve(__dirname, 'src'),
@@ -103,7 +81,6 @@ export default defineConfig({
   },
   plugins: [
     corsPlugin(),
-    virtualEpsPlugin(), // 提供空的 EPS 服务
     vue({
       script: {
         fs: {
@@ -119,6 +96,12 @@ export default defineConfig({
       type: 'admin',
       svg: {
         skipNames: ['base', 'icons'],
+      },
+      // 启用 EPS 插件，从 build/eps 目录读取复制的 EPS 数据
+      eps: {
+        enable: true,
+        dist: './build/eps',
+        api: '/api/login/eps/contract',
       },
     }),
     VueI18nPlugin({

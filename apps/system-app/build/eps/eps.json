@@ -4,6 +4,21 @@
 		"name": "test",
 		"api": [
 			{
+				"name": "513",
+				"method": "GET",
+				"path": "/513",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取领域失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "511",
 				"method": "GET",
 				"path": "/511",
@@ -19,21 +34,6 @@
 				}
 			},
 			{
-				"name": "510",
-				"method": "GET",
-				"path": "/510",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "方法参数校验异常",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "501",
 				"method": "GET",
 				"path": "/501",
@@ -43,6 +43,21 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "系统繁忙，请稍候再试",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "514",
+				"method": "GET",
+				"path": "/514",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端id失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -79,15 +94,60 @@
 				}
 			},
 			{
-				"name": "521",
+				"name": "515",
 				"method": "GET",
-				"path": "/521",
+				"path": "/515",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "初始密码错误",
+				"summary": "获取客户端密钥失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "516",
+				"method": "GET",
+				"path": "/516",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "连接keycloak失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "510",
+				"method": "GET",
+				"path": "/510",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "方法参数校验异常",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "524",
+				"method": "GET",
+				"path": "/524",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "账号已存在",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -109,15 +169,30 @@
 				}
 			},
 			{
-				"name": "520",
+				"name": "521",
 				"method": "GET",
-				"path": "/520",
+				"path": "/521",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
+				"summary": "初始密码错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "526",
+				"method": "GET",
+				"path": "/526",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "表单id过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -133,81 +208,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "参数不能为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "513",
-				"method": "GET",
-				"path": "/513",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "515",
-				"method": "GET",
-				"path": "/515",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端密钥失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "514",
-				"method": "GET",
-				"path": "/514",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端id失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "516",
-				"method": "GET",
-				"path": "/516",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "连接keycloak失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -244,36 +244,6 @@
 				}
 			},
 			{
-				"name": "526",
-				"method": "GET",
-				"path": "/526",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "表单id过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "529",
-				"method": "GET",
-				"path": "/529",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "邮箱不存在",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "528",
 				"method": "GET",
 				"path": "/528",
@@ -289,15 +259,45 @@
 				}
 			},
 			{
-				"name": "524",
+				"name": "518",
 				"method": "GET",
-				"path": "/524",
+				"path": "/518",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "账号已存在",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "520",
+				"method": "GET",
+				"path": "/520",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "没有该工号",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "529",
+				"method": "GET",
+				"path": "/529",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "邮箱不存在",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -1892,32 +1892,6 @@
 				}
 			},
 			{
-				"name": "update",
-				"method": "POST",
-				"path": "/update",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "编辑盘点基础表",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "start",
 				"method": "POST",
 				"path": "/start",
@@ -1944,15 +1918,15 @@
 				}
 			},
 			{
-				"name": "pause",
+				"name": "add",
 				"method": "POST",
-				"path": "/pause",
+				"path": "/add",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "暂停盘点",
+				"summary": "新增盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -1970,15 +1944,15 @@
 				}
 			},
 			{
-				"name": "recover",
+				"name": "update",
 				"method": "POST",
-				"path": "/recover",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "继续盘点",
+				"summary": "编辑盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2022,15 +1996,41 @@
 				}
 			},
 			{
-				"name": "add",
+				"name": "recover",
 				"method": "POST",
-				"path": "/add",
+				"path": "/recover",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "新增盘点基础表",
+				"summary": "继续盘点",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pause",
+				"method": "POST",
+				"path": "/pause",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "暂停盘点",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2528,6 +2528,32 @@
 				}
 			},
 			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:create",
+				"summary": "盘点票编辑",
+				"tag": "SysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "import",
 				"method": "POST",
 				"path": "/import",
@@ -2563,32 +2589,6 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_ticket:export",
 				"summary": "盘点票导出",
-				"tag": "SysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "update",
-				"method": "POST",
-				"path": "/update",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_ticket:create",
-				"summary": "盘点票编辑",
 				"tag": "SysCheckTicketController",
 				"dts": {
 					"parameters": [
@@ -3584,15 +3584,15 @@
 		"name": "deletelog",
 		"api": [
 			{
-				"name": "page",
+				"name": "restore",
 				"method": "POST",
-				"path": "/page",
+				"path": "/restore",
 				"module": "admin.log",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "login",
+				"auth": "permission",
 				"permission": "admin.log:sys_operation_log:create",
-				"summary": "分页查询删除操作日志",
+				"summary": "恢复数据",
 				"tag": "DeleteLogController",
 				"dts": {
 					"parameters": [
@@ -3610,15 +3610,15 @@
 				}
 			},
 			{
-				"name": "restore",
+				"name": "page",
 				"method": "POST",
-				"path": "/restore",
+				"path": "/page",
 				"module": "admin.log",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "permission",
+				"auth": "login",
 				"permission": "admin.log:sys_operation_log:create",
-				"summary": "恢复数据",
+				"summary": "分页查询删除操作日志",
 				"tag": "DeleteLogController",
 				"dts": {
 					"parameters": [
@@ -8515,15 +8515,15 @@
 				}
 			},
 			{
-				"name": "page",
+				"name": "unbind",
 				"method": "POST",
-				"path": "/page",
+				"path": "/unbind",
 				"module": "admin.iam",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "admin.iam:sys_user_role:create",
-				"summary": "查询用户角色信息",
+				"summary": "用户解绑角色",
 				"tag": "SysUserRoleController",
 				"dts": {
 					"parameters": [
@@ -8541,15 +8541,15 @@
 				}
 			},
 			{
-				"name": "unbind",
+				"name": "page",
 				"method": "POST",
-				"path": "/unbind",
+				"path": "/page",
 				"module": "admin.iam",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "admin.iam:sys_user_role:create",
-				"summary": "用户解绑角色",
+				"summary": "查询用户角色信息",
 				"tag": "SysUserRoleController",
 				"dts": {
 					"parameters": [
@@ -10171,6 +10171,21 @@
 				}
 			},
 			{
+				"name": "summary",
+				"method": "GET",
+				"path": "/summary",
+				"module": "finance.base",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "permission",
+				"permission": "finance.base:unknown:read",
+				"summary": "总结",
+				"tag": "SysFinanceController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
@@ -10194,21 +10209,6 @@
 							}
 						}
 					]
-				}
-			},
-			{
-				"name": "summary",
-				"method": "GET",
-				"path": "/summary",
-				"module": "finance.base",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "permission",
-				"permission": "finance.base:unknown:read",
-				"summary": "总结",
-				"tag": "SysFinanceController",
-				"dts": {
-					"parameters": []
 				}
 			},
 			{

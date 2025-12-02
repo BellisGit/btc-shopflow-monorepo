@@ -116,7 +116,7 @@ router.beforeEach((to, _from, next) => {
   // 特别注意：manifest.webmanifest 必须完全排除，否则会拦截 VitePWA 的 manifest 生成
   // 检查路径（去除查询参数和 hash）
   const pathWithoutQuery = to.path.split('?')[0];
-  
+
   if (
     pathWithoutQuery.startsWith('/icons/') ||
     pathWithoutQuery.startsWith('/assets/') ||
@@ -134,6 +134,15 @@ router.beforeEach((to, _from, next) => {
   }
 
   const authStore = useAuthStore();
+
+  // 如果用户已登录，访问登录页时重定向到首页或 redirect 参数指定的页面
+  if (to.meta.public && authStore.isAuthenticated) {
+    const redirect = (to.query.redirect as string) || '/home';
+    // 只取路径部分，忽略查询参数，避免循环重定向
+    const redirectPath = redirect.split('?')[0];
+    next(redirectPath);
+    return;
+  }
 
   // 公开页面（登录、注册、手机号登录等）直接放行
   if (to.meta.public) {

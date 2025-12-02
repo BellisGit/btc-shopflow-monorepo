@@ -54,7 +54,7 @@ const proxy: Record<string, string | ProxyOptions> = {
               
               let fixedCookie = cookie;
               
-              // 关键：移除 Domain 设置，让浏览器使用当前域名
+              // 关键：移除 Domain 设置，稍后会根据环境重新设置
               // 如果后端设置了 Domain=10.80.8.199 或其他值，会导致 JavaScript 无法读取
               fixedCookie = fixedCookie.replace(/;\s*Domain=[^;]+/gi, '');
               
@@ -81,6 +81,9 @@ const proxy: Record<string, string | ProxyOptions> = {
               const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
               const isIpAddress = /^\d+\.\d+\.\d+\.\d+/.test(host.split(':')[0]);
               
+              // 检测是否是生产环境（bellis.com.cn 域名）
+              const isProduction = host.includes('bellis.com.cn');
+              
               // 移除现有的 SameSite 设置
               fixedCookie = fixedCookie.replace(/;\s*SameSite=(Strict|Lax|None)/gi, '');
               
@@ -105,6 +108,12 @@ const proxy: Record<string, string | ProxyOptions> = {
               if (!isHttps && fixedCookie.includes('Secure')) {
                 fixedCookie = fixedCookie.replace(/;\s*Secure/gi, '');
               }
+              
+              // 生产环境：设置 domain 为 .bellis.com.cn 以支持跨子域名共享
+              if (isProduction) {
+                fixedCookie += '; Domain=.bellis.com.cn';
+              }
+              // 其他环境：不设置 domain，cookie 只在当前域名下有效
               
               return fixedCookie;
             });

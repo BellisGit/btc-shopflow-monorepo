@@ -191,43 +191,43 @@
   ],
   "menus": [
     {
-      "index": "/logistics/procurement",
+      "index": "/procurement",
       "labelKey": "menu.logistics.procurementModule",
       "icon": "svg:cart",
       "children": [
-        { "index": "/logistics/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary" },
-        { "index": "/logistics/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging" },
-        { "index": "/logistics/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier" }
+        { "index": "/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary" },
+        { "index": "/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging" },
+        { "index": "/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier" }
       ]
     },
     {
-      "index": "/logistics/warehouse",
+      "index": "/warehouse",
       "labelKey": "menu.logistics.warehouseModule",
       "icon": "svg:folder",
       "children": [
         {
-          "index": "/logistics/warehouse/material",
+          "index": "/warehouse/material",
           "labelKey": "menu.logistics.warehouse.material",
           "children": [
-            { "index": "/logistics/warehouse/material/ticket", "labelKey": "menu.logistics.warehouse.material.ticket" },
-            { "index": "/logistics/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list" }
+            { "index": "/warehouse/material/ticket", "labelKey": "menu.logistics.warehouse.material.ticket" },
+            { "index": "/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list" }
           ]
         }
       ]
     },
     {
-      "index": "/logistics/customs",
+      "index": "/customs",
       "labelKey": "menu.logistics.customsModule",
       "icon": "svg:map"
     },
     {
-      "index": "/logistics/config",
+      "index": "/config",
       "labelKey": "menu.logistics.config",
       "children": [
-        { "index": "/logistics/config/storage-location", "labelKey": "menu.logistics.config.storageLocation" },
-        { "index": "/logistics/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info" },
-        { "index": "/logistics/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail" },
-        { "index": "/logistics/warehouse/inventory/result", "labelKey": "menu.logistics.warehouse.inventory.result" }
+        { "index": "/config/storage-location", "labelKey": "menu.logistics.config.storageLocation" },
+        { "index": "/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info" },
+        { "index": "/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail" },
+        { "index": "/warehouse/inventory/result", "labelKey": "menu.logistics.warehouse.inventory.result" }
       ]
     }
   ]

@@ -2,9 +2,6 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
 
-// 判断是否独立运行
-const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
-
 // 基础路由（页面组件）
 const pageRoutes: RouteRecordRaw[] = [
   {
@@ -40,14 +37,24 @@ const pageRoutes: RouteRecordRaw[] = [
   },
 ];
 
-// 独立运行时：使用 AppLayout 包裹所有路由
-// qiankun 模式：直接返回页面路由（由主应用提供 Layout）
-export const financeRoutes: RouteRecordRaw[] = isStandalone
-  ? [
-      {
-        path: '/',
-        component: AppLayout, // Use AppLayout from shared package
-        children: pageRoutes,
-      },
-    ]
-  : pageRoutes;
+/**
+ * 获取路由配置
+ * - qiankun 模式：直接返回页面路由（由主应用提供 Layout）
+ * - 独立运行时：使用 AppLayout 包裹所有路由（与物流域保持一致）
+ */
+export const getFinanceRoutes = (): RouteRecordRaw[] => {
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  const routes = isStandalone
+    ? [
+        {
+          path: '/',
+          component: AppLayout, // Use AppLayout from shared package
+          children: pageRoutes,
+        },
+      ]
+    : pageRoutes;
+  return routes;
+};
+
+// 为了向后兼容，也导出一个常量（在模块加载时检测）
+export const financeRoutes: RouteRecordRaw[] = getFinanceRoutes();

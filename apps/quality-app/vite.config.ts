@@ -4,7 +4,7 @@ import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
 import type { Plugin } from 'vite';
-import { btc } from '@btc/vite-plugin';
+import { btc, copyLogoPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig } from '../../configs/vite-app-config';
 
 // 从统一配置中获取应用配置
@@ -106,6 +106,9 @@ export default defineConfig(({ command, mode }) => {
 
   return {
   base,
+  // 配置 publicDir，指向共享组件库的 public 目录，以便访问 logo.png 等静态资源
+  // logo.png 从共享组件库复制，确保所有应用使用相同的 logo
+  publicDir: resolve(__dirname, '../../packages/shared-components/public'),
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -142,6 +145,7 @@ export default defineConfig(({ command, mode }) => {
     btc({
       type: 'subapp',
     }),
+    copyLogoPlugin(), // 复制 logo.png 到 dist 目录
     qiankun('quality', {
       useDevMode: true,
     }),

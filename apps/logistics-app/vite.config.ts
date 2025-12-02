@@ -4,7 +4,7 @@ import qiankun from 'vite-plugin-qiankun';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'path';
 import type { Plugin } from 'vite';
-import { btc } from '@btc/vite-plugin';
+import { btc, copyLogoPlugin } from '@btc/vite-plugin';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
 import { proxy as mainProxy } from '../admin-app/src/config/proxy';
 import { getAppConfig } from '../../configs/app-env.config';
@@ -222,6 +222,9 @@ export default defineConfig({
   //   当直接访问 logistics.bellis.com.cn 时，资源路径为 /assets/...，nginx 配置中的 /assets/ location 可以正确匹配
   //   当主应用通过 /micro-apps/logistics/ 路径加载时，nginx 配置中的 /micro-apps/logistics/ location 会处理路径重写
   base: isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/',
+  // 配置 publicDir，指向共享组件库的 public 目录，以便访问 logo.png 等静态资源
+  // logo.png 从共享组件库复制，确保所有应用使用相同的 logo
+  publicDir: resolve(__dirname, '../../packages/shared-components/public'),
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -268,6 +271,7 @@ export default defineConfig({
         api: '/api/login/eps/contract',
       },
     }),
+    copyLogoPlugin(), // 复制 logo.png 到 dist 目录
     qiankun('logistics', {
       // 仅在开发环境使用 devMode，生产构建输出 ES 模块，供 qiankun 以 module 方式加载
       useDevMode: process.env.NODE_ENV === 'development',

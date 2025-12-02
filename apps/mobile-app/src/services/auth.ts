@@ -42,6 +42,17 @@ export interface RegisterRequest {
 }
 
 /**
+ * 用户个人信息响应类型
+ */
+export interface UserProfile {
+  id?: string;
+  username?: string;
+  phone?: string;
+  email?: string;
+  [key: string]: any;
+}
+
+/**
  * 认证 API 基础路径
  */
 const baseUrl = '/system/auth';
@@ -97,6 +108,23 @@ export const authApi = {
    */
   loginByNumberAuth(data: NumberAuthLoginRequest): Promise<LoginResponse> {
     return requestAdapter.post(`${baseUrl}/number-auth/login`, data, { notifySuccess: false });
+  },
+
+  /**
+   * 验证 spToken（阿里云一键登录）
+   * @param data 包含 spToken 的对象
+   * @returns 登录响应（包含 token 和用户信息）
+   */
+  verifySpToken(data: { spToken: string }): Promise<LoginResponse> {
+    return requestAdapter.post(`${baseUrl}/verify-token`, data, { notifySuccess: false });
+  },
+
+  /**
+   * 获取用户个人信息
+   * @returns 用户个人信息
+   */
+  getProfile(): Promise<UserProfile> {
+    return requestAdapter.get(`${baseUrl}/profile`, undefined, { notifySuccess: false });
   },
 };
 

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { authApi } from '@/services/auth';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null);
@@ -50,6 +51,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * 从服务器刷新用户信息
+   */
+  async function refreshUserInfo() {
+    try {
+      const profile = await authApi.getProfile();
+      setUser(profile);
+      return profile;
+    } catch (error) {
+      console.error('[Auth] Failed to refresh user info', error);
+      throw error;
+    }
+  }
+
   return {
     token,
     user,
@@ -59,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     init,
+    refreshUserInfo,
   };
 });
 

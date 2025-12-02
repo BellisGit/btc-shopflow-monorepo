@@ -15,6 +15,9 @@ import {
 } from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
+// 样式文件在模块加载时同步导入
+// Vite 会优化处理：开发环境按需加载，生产环境打包到单独 CSS 文件
+// 这些导入不会阻塞 JavaScript 执行
 // 关键：在关闭样式隔离的情况下，需要直接 import 样式文件，确保样式被正确加载
 // 虽然 global.scss 中也通过 @import 引入了，但直接 import 可以确保样式在模块加载时就被处理
 import '@btc/shared-components/styles/index.scss';

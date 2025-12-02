@@ -253,17 +253,15 @@ const handleMenuSelect = (index: string) => {
       throw new Error('动态菜单未找到所属应用');
     }
 
-    const normalizedIndex = index.startsWith('/') ? index : `/${index}`;
-    const fullPath = normalizedIndex;
-
     // 如果点击的是外链，直接打开新窗口
-    if (linkHandler(normalizedIndex)) {
+    if (linkHandler(index)) {
       return;
     }
 
-  // 确保使用绝对路径，避免相对路径拼接
-  const absolutePath = index.startsWith('/') ? index : `/${index}`;
-  router.push(absolutePath);
+    // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
+    // 所以这里直接使用 index，不需要再次规范化
+    const absolutePath = index.startsWith('/') ? index : `/${index}`;
+    router.push(absolutePath);
 };
 </script>
 

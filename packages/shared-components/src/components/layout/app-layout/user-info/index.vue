@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -137,18 +137,64 @@ const getDefaultLogoUrl = () => {
   return '/logo.png';
 };
 
+// 记录头像加载失败状态，避免无限循环
+// 使用 ref 确保是响应式的
+const avatarLoadError = ref(false);
+const errorHandled = ref(false); // 防止重复处理错误
+
 // 头像 URL（确保始终有值，避免空白）
 const avatarUrl = computed(() => {
   const url = userInfo.value?.avatar;
   const defaultLogo = getDefaultLogoUrl();
-  return url && url !== defaultLogo ? url : defaultLogo;
+  
+  // 如果头像加载失败，强制使用默认 Logo
+  if (avatarLoadError.value) {
+    return defaultLogo;
+  }
+  
+  return url && url !== defaultLogo && url !== '' ? url : defaultLogo;
 });
 
-// 头像加载失败处理
+// 头像加载失败处理 - 关键：阻止无限循环
 const handleAvatarError = (event: Event) => {
+  // 防止重复处理同一个错误
+  if (errorHandled.value) {
+    return;
+  }
+  
   const img = event.target as HTMLImageElement;
-  img.src = getDefaultLogoUrl();
+  const failedUrl = img.src;
+  
+  console.warn('[UserInfo] ❌ 头像加载失败:', failedUrl);
+  
+  // 标记已处理，防止重复触发
+  errorHandled.value = true;
+  
+  // 如果失败的是 logo.png，说明默认图片也不存在
+  if (failedUrl.includes('logo.png')) {
+    console.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
+    console.error('[UserInfo] 请检查文件是否存在于: public/logo.png');
+    console.error('[UserInfo] 当前完整 URL:', failedUrl);
+    console.error('[UserInfo] 当前域名:', window.location.origin);
+    // logo.png 失败就不再尝试了
+    return;
+  }
+  
+  // 标记头像加载失败，这会触发 computed 重新计算，切换到默认 Logo
+  avatarLoadError.value = true;
+  
+  console.log('[UserInfo] 已切换到默认 Logo');
 };
+
+// 监听头像 URL 变化，重置错误状态
+watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
+  // 当头像 URL 变化时（例如用户上传了新头像），重置错误状态
+  if (newAvatar !== oldAvatar && newAvatar) {
+    avatarLoadError.value = false;
+    errorHandled.value = false;
+    console.log('[UserInfo] 头像 URL 已更新，重置错误状态:', newAvatar);
+  }
+});
 
 // 初始化
 onMounted(async () => {

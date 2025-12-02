@@ -4,6 +4,8 @@ import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+// 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
+import '@btc/shared-components/styles/dark-theme.css';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 import 'virtual:svg-icons';
@@ -112,6 +114,29 @@ async function render(props: QiankunProps = {}) {
       : createWebHistory('/'),
     strict: true,
     routes,
+  });
+
+  // 路由守卫：在生产环境子域名下规范化路径
+  router.beforeEach((to, from, next) => {
+    // 只在独立运行（非 qiankun）且是生产环境子域名时处理
+    if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+      const hostname = window.location.hostname;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      if (isProductionSubdomain && hostname === 'engineering.bellis.com.cn' && to.path.startsWith('/engineering/')) {
+        const normalized = to.path.substring('/engineering'.length) || '/';
+        console.log(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        next({
+          path: normalized,
+          query: to.query,
+          hash: to.hash,
+          replace: true,
+        });
+        return;
+      }
+    }
+    
+    next();
   });
 
   router.onError((error) => {

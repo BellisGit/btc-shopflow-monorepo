@@ -18,8 +18,9 @@
 /**
  * 加载 layout-app
  * @param qiankunAPI - qiankun 的 API 对象，包含 registerMicroApps 和 start 方法
+ * @returns Promise，在 layout-app 挂载完成后 resolve
  */
-export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }) {
+export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }): Promise<void> {
   const { registerMicroApps, start } = qiankunAPI;
 
   // 获取当前环境
@@ -67,88 +68,115 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
 
   console.log(`[${appName}-app] 准备加载 layout-app，入口地址:`, layoutEntry);
 
-  // 注册并启动 qiankun，仅挂载布局微应用
-  registerMicroApps(
-    [
+  // 创建 Promise，等待 layout-app 挂载完成
+  return new Promise<void>((resolve, reject) => {
+    let layoutAppMounted = false;
+    let mountTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // 注册并启动 qiankun，仅挂载布局微应用
+    registerMicroApps(
+      [
+        {
+          name: 'layout-app',
+          entry: layoutEntry,
+          container: '#layout-container',
+          activeRule: () => true,
+          // 添加 scriptType 和 getTemplate 配置，确保资源正确加载
+          // 注意：scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
+          scriptType: 'module' as any,
+          getTemplate: function(tpl) {
+            return transformTemplate(tpl);
+          },
+        }
+      ],
       {
-        name: 'layout-app',
-        entry: layoutEntry,
-        container: '#layout-container',
-        activeRule: () => true,
-        // 添加 scriptType 和 getTemplate 配置，确保资源正确加载
-        // 注意：scriptType 和 getTemplate 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
-        scriptType: 'module' as any,
-        getTemplate: function(tpl) {
+        beforeLoad: [
+          (app) => {
+            console.log(`[${appName}-app] 准备加载 layout-app:`, app.name, app.entry);
+          },
+        ],
+        beforeMount: [
+          (app) => {
+            console.log(`[${appName}-app] 准备挂载 layout-app:`, app.name);
+          },
+        ],
+        afterMount: [
+          (app) => {
+            console.log(`[${appName}-app] layout-app 挂载完成:`, app.name);
+            if (!layoutAppMounted && app.name === 'layout-app') {
+              layoutAppMounted = true;
+              if (mountTimeout) {
+                clearTimeout(mountTimeout);
+                mountTimeout = null;
+              }
+              // 延迟一下，确保 layout-app 完全初始化
+              setTimeout(() => {
+                console.log(`[${appName}-app] layout-app 已完全初始化，可以继续初始化`);
+                resolve();
+              }, 200);
+            }
+          },
+        ],
+        beforeUnmount: [
+          (app) => {
+            console.log(`[${appName}-app] 准备卸载 layout-app:`, app.name);
+          },
+        ],
+        afterUnmount: [
+          (app) => {
+            console.log(`[${appName}-app] layout-app 卸载完成:`, app.name);
+          },
+        ],
+      }
+    );
+
+    const boundFetch =
+      typeof window !== 'undefined' && typeof window.fetch === 'function'
+        ? window.fetch.bind(window)
+        : typeof fetch === 'function'
+          ? fetch
+          : null;
+
+    start({
+      sandbox: {
+        strictStyleIsolation: false,
+        experimentalStyleIsolation: true,
+      },
+      singular: false,
+      // 添加自定义 fetch 和 getTemplate 配置，确保跨域资源可以加载
+      // 注意：importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
+      importEntryOpts: {
+        fetch: function (url: RequestInfo | URL, options?: RequestInit) {
+          console.log(`[${appName}-app] 加载资源:`, url);
+
+          const requestOptions: RequestInit = {
+            ...(options || {}),
+            mode: 'cors',
+            credentials: 'include',
+          };
+
+          if (boundFetch) {
+            return boundFetch(url, requestOptions);
+          }
+
+          throw new Error('[layout-app loader] 当前环境不支持 fetch，无法加载微应用资源');
+        },
+        getTemplate: function (tpl: string) {
           return transformTemplate(tpl);
         },
+      },
+    });
+
+    console.log(`[${appName}-app] qiankun 已启动，等待 layout-app 挂载...`);
+
+    // 设置超时，避免无限等待
+    mountTimeout = setTimeout(() => {
+      if (!layoutAppMounted) {
+        console.warn(`[${appName}-app] layout-app 挂载超时（5秒），继续初始化`);
+        layoutAppMounted = true;
+        resolve();
       }
-    ],
-    {
-      beforeLoad: [
-        (app) => {
-          console.log(`[${appName}-app] 准备加载 layout-app:`, app.name, app.entry);
-        },
-      ],
-      beforeMount: [
-        (app) => {
-          console.log(`[${appName}-app] 准备挂载 layout-app:`, app.name);
-        },
-      ],
-      afterMount: [
-        (app) => {
-          console.log(`[${appName}-app] layout-app 挂载完成:`, app.name);
-        },
-      ],
-      beforeUnmount: [
-        (app) => {
-          console.log(`[${appName}-app] 准备卸载 layout-app:`, app.name);
-        },
-      ],
-      afterUnmount: [
-        (app) => {
-          console.log(`[${appName}-app] layout-app 卸载完成:`, app.name);
-        },
-      ],
-    }
-  );
-
-  const boundFetch =
-    typeof window !== 'undefined' && typeof window.fetch === 'function'
-      ? window.fetch.bind(window)
-      : typeof fetch === 'function'
-        ? fetch
-        : null;
-
-  start({
-    sandbox: {
-      strictStyleIsolation: false,
-      experimentalStyleIsolation: true,
-    },
-    singular: false,
-    // 添加自定义 fetch 和 getTemplate 配置，确保跨域资源可以加载
-    // 注意：importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
-    importEntryOpts: {
-      fetch: function (url: RequestInfo | URL, options?: RequestInit) {
-        console.log(`[${appName}-app] 加载资源:`, url);
-
-        const requestOptions: RequestInit = {
-          ...(options || {}),
-          mode: 'cors',
-          credentials: 'include',
-        };
-
-        if (boundFetch) {
-          return boundFetch(url, requestOptions);
-        }
-
-        throw new Error('[layout-app loader] 当前环境不支持 fetch，无法加载微应用资源');
-      },
-      getTemplate: function (tpl: string) {
-        return transformTemplate(tpl);
-      },
-    },
+    }, 5000);
   });
-
-  console.log(`[${appName}-app] qiankun 已启动`);
 }
 

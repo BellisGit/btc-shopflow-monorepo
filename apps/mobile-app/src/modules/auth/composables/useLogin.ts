@@ -44,7 +44,9 @@ export function useLogin() {
       });
 
       const redirect = (route.query.redirect as string) || '/';
-      router.push(redirect);
+      // 只取路径部分，忽略查询参数，避免循环重定向
+      const redirectPath = redirect.split('?')[0];
+      router.push(redirectPath);
     } catch (error: any) {
       console.error('[Login] Failed:', error);
       errorMessage.value = error?.message || '登录失败，请检查用户名和密码';

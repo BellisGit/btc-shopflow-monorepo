@@ -24,3 +24,6 @@ coverage/
 node_modules/.vite/
 **/.vite/
 .vite/
+
+# 部署配置文件（包含敏感信息）
+scripts/deploy-config.sh

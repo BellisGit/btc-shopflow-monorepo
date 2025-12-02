@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { processURL } from '@btc/shared-core';
-import { getCookie, setCookie } from './cookie';
+import { getCookie, setCookie, getCookieDomain } from './cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -157,6 +157,7 @@ export class Http {
               sameSite: isHttps ? 'None' : undefined,
               secure: isHttps,
               path: '/',
+              domain: getCookieDomain(), // 生产环境支持跨子域名共享
             });
           }
         }
@@ -166,6 +167,24 @@ export class Http {
 
         // 统一使用 /api 代理，始终是同源请求，可以发送 X-Tenant-Id
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
+
+        // 生产环境：添加 x-forward-host 请求头为根域
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const port = window.location.port || '';
+          // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
+          const isProduction = hostname.includes('bellis.com.cn') && 
+                               !port.startsWith('41') && 
+                               port !== '5173' && 
+                               port !== '3000' &&
+                               hostname !== 'localhost' &&
+                               !hostname.startsWith('127.0.0.1') &&
+                               !hostname.startsWith('10.') &&
+                               !hostname.startsWith('192.168.');
+          if (isProduction) {
+            config.headers['x-forward-host'] = 'bellis.com.cn';
+          }
+        }
 
         const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');
         if (!isFormData) {
@@ -195,66 +214,78 @@ export class Http {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
 
-        // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
-        // 注意：在浏览器中，Set-Cookie 响应头可能无法直接访问（出于安全考虑）
-        // 但我们可以尝试从响应头中读取
-        const setCookieHeaders = response.headers?.['set-cookie'] || [];
-        if (setCookieHeaders.length > 0) {
-          // 查找包含 access_token 的 cookie
-          const accessTokenCookie = Array.isArray(setCookieHeaders)
-            ? setCookieHeaders.find((cookie: string) => cookie.includes('access_token'))
-            : setCookieHeaders.includes('access_token') ? setCookieHeaders : null;
+        // 检查响应是否成功（code: 200）
+        // 后端返回格式：{"code":200,"msg":"成功","total":0}
+        const isLoginSuccess = originalResponseData && 
+                               typeof originalResponseData === 'object' && 
+                               originalResponseData.code === 200;
 
-          if (accessTokenCookie) {
-            // 尝试从 cookie 字符串中提取 token 值（仅用于调试，实际可能是 HttpOnly）
-            const tokenMatch = typeof accessTokenCookie === 'string'
-              ? accessTokenCookie.match(/access_token=([^;]+)/)
-              : null;
-            if (tokenMatch && tokenMatch[1]) {
-              const extractedToken = tokenMatch[1];
-              // 保存到统一存储作为备份（即使 cookie 无法发送，也能用 Authorization header）
-              appStorage.auth.setToken(extractedToken);
+        if (isLoginSuccess) {
+          // 登录成功，设置登录状态标记（因为 http-only cookie 无法读取）
+          localStorage.setItem('is_logged_in', 'true');
+
+          // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
+          // 注意：在浏览器中，Set-Cookie 响应头可能无法直接访问（出于安全考虑）
+          // 但我们可以尝试从响应头中读取
+          const setCookieHeaders = response.headers?.['set-cookie'] || [];
+          if (setCookieHeaders.length > 0) {
+            // 查找包含 access_token 的 cookie
+            const accessTokenCookie = Array.isArray(setCookieHeaders)
+              ? setCookieHeaders.find((cookie: string) => cookie.includes('access_token'))
+              : setCookieHeaders.includes('access_token') ? setCookieHeaders : null;
+
+            if (accessTokenCookie) {
+              // 尝试从 cookie 字符串中提取 token 值（仅用于调试，实际可能是 HttpOnly）
+              const tokenMatch = typeof accessTokenCookie === 'string'
+                ? accessTokenCookie.match(/access_token=([^;]+)/)
+                : null;
+              if (tokenMatch && tokenMatch[1]) {
+                const extractedToken = tokenMatch[1];
+                // 保存到统一存储作为备份（即使 cookie 无法发送，也能用 Authorization header）
+                appStorage.auth.setToken(extractedToken);
+              }
             }
           }
-        }
 
-        // 立即从响应体中提取 token（代理已经添加到响应体中）
-        // 注意：originalResponseData 是 response.data，包含完整的响应结构
-        // result 是经过 responseInterceptor 处理后的数据，可能只包含 data 字段
-        let tokenFromBody: string | null = null;
+          // 立即从响应体中提取 token（代理已经添加到响应体中）
+          // 注意：originalResponseData 是 response.data，包含完整的响应结构
+          // result 是经过 responseInterceptor 处理后的数据，可能只包含 data 字段
+          let tokenFromBody: string | null = null;
 
-        // 优先检查原始响应数据（代理添加的 token 在这里）
-        if (originalResponseData) {
-          tokenFromBody = originalResponseData.token ||
-                        originalResponseData.accessToken;
-
-        }
-
-        // 如果原始响应数据中没有，检查拦截器处理后的结果
-        if (!tokenFromBody && result) {
-          // result 可能是处理后的数据，也可能还是完整的响应对象
-          if (typeof result === 'object' && result !== null) {
-            tokenFromBody = result.token ||
-                          result.accessToken;
+          // 优先检查原始响应数据（代理添加的 token 在这里）
+          if (originalResponseData) {
+            tokenFromBody = originalResponseData.token ||
+                          originalResponseData.accessToken;
 
           }
-        }
 
-        // 如果从响应体中找到了 token，立即保存
-        if (tokenFromBody) {
-          // 保存到 storage
-          appStorage.auth.setToken(tokenFromBody);
+          // 如果原始响应数据中没有，检查拦截器处理后的结果
+          if (!tokenFromBody && result) {
+            // result 可能是处理后的数据，也可能还是完整的响应对象
+            if (typeof result === 'object' && result !== null) {
+              tokenFromBody = result.token ||
+                            result.accessToken;
 
-          // 关键：手动设置 cookie（因为后端需要从 cookie 中读取 token）
-          const isHttps = window.location.protocol === 'https:';
+            }
+          }
 
-          // 在 IP 地址环境下，不设置 SameSite（让浏览器使用默认值）
-          // 在 HTTPS 环境下，使用 SameSite=None
-          setCookie('access_token', tokenFromBody, 7, {
-            sameSite: isHttps ? 'None' : undefined, // IP 地址 + HTTP：不设置 SameSite
-            secure: isHttps, // 仅在 HTTPS 时设置 Secure
-            path: '/',
-          });
+          // 如果从响应体中找到了 token，立即保存
+          if (tokenFromBody) {
+            // 保存到 storage
+            appStorage.auth.setToken(tokenFromBody);
+
+            // 关键：手动设置 cookie（因为后端需要从 cookie 中读取 token）
+            const isHttps = window.location.protocol === 'https:';
+
+            // 在 IP 地址环境下，不设置 SameSite（让浏览器使用默认值）
+            // 在 HTTPS 环境下，使用 SameSite=None
+            setCookie('access_token', tokenFromBody, 7, {
+              sameSite: isHttps ? 'None' : undefined, // IP 地址 + HTTP：不设置 SameSite
+              secure: isHttps, // 仅在 HTTPS 时设置 Secure
+              path: '/',
+              domain: getCookieDomain(), // 生产环境支持跨子域名共享
+            });
+          }
         }
       }
 

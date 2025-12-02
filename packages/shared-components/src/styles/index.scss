@@ -8,6 +8,37 @@
 // 注意：CSS 文件仍使用 @import，因为 @use 不支持 CSS 文件
 @import './dark-theme.css';
 
+// ==================== 菜单主题样式 ====================
+// 引入菜单主题样式（包含左侧菜单、顶栏、侧边栏等所有菜单相关样式）
+@import './menu-themes.scss';
+
+// 深色菜单风格下的顶栏样式（补充样式，确保顶栏 logo 文字颜色正确）
+.topbar.is-dark-menu {
+  .topbar__logo-content {
+    .topbar__logo-text {
+      color: #BABBBD !important;
+    }
+  }
+
+  // 品牌区域底部分隔线（logo 区域和搜索区域之间）与顶栏底部分隔线保持一致
+  .topbar__brand {
+    border-bottom-color: var(--el-border-color) !important;
+  }
+  
+  // Logo 内容区域背景色（深色菜单风格，与菜单背景一致）
+  .topbar__brand .topbar__logo-content {
+    // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+    html.dark & {
+      background-color: #0a0a0a !important;
+    }
+    
+    // 浅色系统主题下，使用深色菜单背景色
+    html:not(.dark) & {
+      background-color: #0a0a0a !important;
+    }
+  }
+}
+
 .btc-table-dict-cell {
 	display: inline-flex;
 	align-items: center;

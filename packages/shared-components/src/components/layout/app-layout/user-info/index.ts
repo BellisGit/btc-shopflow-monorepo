@@ -31,8 +31,9 @@ export function useUserInfo() {
   // 从个人信息服务获取的用户信息
   // 初始化时立即从缓存读取，避免闪烁
   const cachedUser = getUserInfo();
-  const cachedAvatar = appStorage.user.getAvatar();
-  const cachedName = appStorage.user.getName();
+  // 添加空值检查，避免 appStorage 为 null 时报错
+  const cachedAvatar = appStorage?.user?.getAvatar?.() || null;
+  const cachedName = appStorage?.user?.getName?.() || null;
 
   const profileUserInfo = ref<any>(
     (cachedAvatar || cachedName) ? {
@@ -73,8 +74,8 @@ export function useUserInfo() {
     } else {
       // 如果还没有 profileUserInfo，从缓存和 useUser 获取
       const currentUser = getUserInfo();
-      const cachedAvatar = appStorage.user.getAvatar();
-      const cachedName = appStorage.user.getName();
+      const cachedAvatar = appStorage?.user?.getAvatar?.() || null;
+      const cachedName = appStorage?.user?.getName?.() || null;
       profileUserInfo.value = {
         avatar: avatar || cachedAvatar || currentUser?.avatar || '/logo.png',
         name: name || cachedName || currentUser?.name || '',
@@ -140,20 +141,41 @@ export function useUserInfo() {
     };
   });
 
+  // 等待 EPS 服务可用（轮询方式，最多等待5秒）
+  const waitForEpsService = async (maxWaitTime = 5000, interval = 100): Promise<any> => {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWaitTime) {
+      const currentService = getEpsService();
+      if (currentService) {
+        return currentService;
+      }
+      await new Promise(resolve => setTimeout(resolve, interval));
+    }
+    return null;
+  };
+
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
-      if (!service) {
-        console.warn('[useUserInfo] EPS service not available');
-        return;
+      // 如果 service 不可用，等待它可用
+      let currentService = service;
+      if (!currentService) {
+        // 在子域环境下，layout-app 可能还在初始化，等待一下
+        currentService = await waitForEpsService(5000, 100);
+        if (!currentService) {
+          console.warn('[useUserInfo] EPS service not available after waiting');
+          return;
+        }
       }
       
-      const profileService = service.admin?.base?.profile;
+      const profileService = currentService.admin?.base?.profile;
       if (!profileService) {
+        console.warn('[useUserInfo] profileService not available');
         return;
       }
 
       if (!profileService.info) {
+        console.warn('[useUserInfo] profileService.info not available');
         return;
       }
 
@@ -174,6 +196,7 @@ export function useUserInfo() {
 
       // 获取脱敏信息（用于显示头像和基本信息）
       const data = await profileService.info();
+      
       if (data) {
         profileUserInfo.value = data;
 
@@ -200,10 +223,12 @@ export function useUserInfo() {
 
         // 初始化显示名称
         displayedName.value = data.name || data.realName || '';
+      } else {
+        console.warn('[useUserInfo] API 未返回数据');
       }
     } catch (error) {
       // 静默失败，不影响页面显示
-      console.warn('加载用户信息失败:', error);
+      console.error('[useUserInfo] 加载用户信息失败:', error);
     }
   };
 

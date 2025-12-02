@@ -72,10 +72,10 @@
   ],
   "menus": [
     {
-      "index": "/finance/inventory",
+      "index": "/inventory",
       "labelKey": "menu.finance.inventoryManagement",
       "children": [
-        { "index": "/finance/inventory/result", "labelKey": "menu.finance.inventoryManagement.result" }
+        { "index": "/inventory/result", "labelKey": "menu.finance.inventoryManagement.result" }
       ]
     }
   ]

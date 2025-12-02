@@ -1,5 +1,7 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
+// 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
+import '@btc/shared-components/styles/dark-theme.css';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createFinanceApp,
@@ -61,14 +63,24 @@ export default { bootstrap, mount, unmount };
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {
-  // 如果需要加载 layout-app，先初始化
-  import('./utils/init-layout-app').then(({ initLayoutApp }) => {
-    initLayoutApp().catch((error) => {
+  // 如果需要加载 layout-app，先等待初始化完成，然后再渲染 finance-app
+  (async () => {
+    try {
+      // 检查是否需要加载 layout-app
+      const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+      if (shouldLoadLayout) {
+        const { initLayoutApp } = await import('./utils/init-layout-app');
+        // 等待 layout-app 初始化完成
+        await initLayoutApp();
+      }
+    } catch (error) {
       console.error('[finance-app] 初始化 layout-app 失败:', error);
-    });
-  });
-  
-  render().catch((error) => {
+      // 即使 layout-app 初始化失败，也继续渲染 finance-app
+    }
+    
+    // layout-app 初始化完成后再渲染 finance-app
+    await render();
+  })().catch((error) => {
     console.error('[finance-app] 独立运行失败:', error);
   });
 }

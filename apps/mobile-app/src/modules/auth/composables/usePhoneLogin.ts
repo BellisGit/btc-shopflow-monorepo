@@ -125,14 +125,16 @@ export function usePhoneLogin() {
 
       // 跳转到首页或 redirect 页面
       const redirect = (route.query.redirect as string) || '/home';
+      // 只取路径部分，忽略查询参数，避免循环重定向
+      const redirectPath = redirect.split('?')[0];
 
       // 使用 replace 而不是 push，避免用户在登录页面的历史记录中
       // 使用 window.location 作为备选方案，确保跳转成功
       try {
-        await router.replace(redirect);
+        await router.replace(redirectPath);
       } catch (routerError) {
         // 如果路由跳转失败，使用 window.location 作为备选
-        window.location.href = redirect;
+        window.location.href = redirectPath;
       }
     } catch (error: any) {
       // 友好的错误提示

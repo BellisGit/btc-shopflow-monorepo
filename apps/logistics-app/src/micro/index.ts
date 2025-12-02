@@ -33,6 +33,70 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
   return Promise.resolve();
 }
 
+/**
+ * 规范化菜单路径：在开发环境下自动添加应用前缀，生产子域环境下移除应用前缀
+ * manifest 中的菜单路径已经移除了应用前缀，所以：
+ * - 开发环境（qiankun模式）：需要添加前缀 `/logistics/xxx`
+ * - 生产子域环境：移除应用前缀，保持原路径 `/xxx`
+ */
+function normalizeMenuPath(path: string, appName: string): string {
+  if (!path || !appName) return path;
+  
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  
+  // 检测是否在生产环境的子域名下
+  if (typeof window === 'undefined') {
+    // SSR 环境，保持原路径
+    return normalizedPath;
+  }
+  
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  if (isProductionSubdomain) {
+    // 生产环境子域名：检测具体的子域名应用
+    const subdomainMap: Record<string, string> = {
+      'admin.bellis.com.cn': 'admin',
+      'logistics.bellis.com.cn': 'logistics',
+      'quality.bellis.com.cn': 'quality',
+      'production.bellis.com.cn': 'production',
+      'engineering.bellis.com.cn': 'engineering',
+      'finance.bellis.com.cn': 'finance',
+    };
+    
+    const currentSubdomainApp = subdomainMap[hostname];
+    
+    // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
+    if (currentSubdomainApp && currentSubdomainApp === appName) {
+      const appPrefix = `/${appName}`;
+      if (normalizedPath === appPrefix) {
+        // 如果是应用根路径，返回 /
+        return '/';
+      } else if (normalizedPath.startsWith(`${appPrefix}/`)) {
+        // 移除应用前缀
+        return normalizedPath.substring(appPrefix.length);
+      }
+    }
+    
+    // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
+    return normalizedPath;
+  }
+
+  // 开发环境（qiankun模式）：需要添加应用前缀
+  // 如果路径已经是根路径，直接返回应用前缀
+  if (normalizedPath === '/') {
+    return `/${appName}`;
+  }
+  
+  // 如果路径已经包含应用前缀，不需要重复添加
+  if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
+    return normalizedPath;
+  }
+  
+  // 添加应用前缀
+  return `/${appName}${normalizedPath}`;
+}
+
 // 递归转换菜单项（支持任意深度）
 // 使用智能图标分配，确保同一域内图标不重复且语义匹配
 function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
@@ -49,14 +113,18 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
   
   // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
-  const convertToMenuItem = (item: any): MenuItem => ({
-    index: item.index,
-    title: item.labelKey ?? item.label ?? item.title ?? item.index,
-    icon: item.icon,
-    children: item.children && item.children.length > 0
-      ? item.children.map(convertToMenuItem)
-      : undefined,
-  });
+  // 在生产环境子域名下，自动移除应用前缀
+  const convertToMenuItem = (item: any): MenuItem => {
+    const normalizedIndex = normalizeMenuPath(item.index, appName);
+    return {
+      index: normalizedIndex,
+      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      icon: item.icon,
+      children: item.children && item.children.length > 0
+        ? item.children.map(convertToMenuItem)
+        : undefined,
+    };
+  };
   
   // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
   return itemsWithIcons.map(convertToMenuItem);

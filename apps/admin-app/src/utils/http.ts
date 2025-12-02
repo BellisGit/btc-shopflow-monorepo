@@ -61,6 +61,24 @@ export class Http {
         // 添加租户ID请求头
         config.headers['X-Tenant-Id'] = 'INTRA_1758330466';
 
+        // 生产环境：添加 x-forward-host 请求头为根域
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const port = window.location.port || '';
+          // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
+          const isProduction = hostname.includes('bellis.com.cn') && 
+                               !port.startsWith('41') && 
+                               port !== '5173' && 
+                               port !== '3000' &&
+                               hostname !== 'localhost' &&
+                               !hostname.startsWith('127.0.0.1') &&
+                               !hostname.startsWith('10.') &&
+                               !hostname.startsWith('192.168.');
+          if (isProduction) {
+            config.headers['x-forward-host'] = 'bellis.com.cn';
+          }
+        }
+
         // 如果是 FormData，不设置 Content-Type，让浏览器自动设置
         // 否则设置为 application/json
         const isFormData = config.data instanceof FormData || (config.data && config.data.constructor?.name === 'FormData');

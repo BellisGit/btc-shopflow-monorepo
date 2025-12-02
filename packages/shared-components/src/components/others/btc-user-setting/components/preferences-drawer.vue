@@ -1,10 +1,13 @@
 <template>
-  <el-drawer
-    v-model="visible"
-    :with-header="false"
-    size="380px"
-    append-to-body
-    :lock-scroll="false"
+  <teleport to="body">
+    <transition name="preferences-slide">
+      <section
+        v-if="visible"
+        ref="drawerRef"
+        class="user-preferences-panel"
+        role="dialog"
+        aria-modal="false"
+        aria-label="User preferences"
   >
     <div class="preferences-drawer">
       <!-- 头部关闭按钮 -->
@@ -34,11 +37,13 @@
       <!-- 基础设置 -->
       <BasicSettings />
     </div>
-  </el-drawer>
+      </section>
+    </transition>
+  </teleport>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import SettingHeader from './shared/SettingHeader.vue';
 import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
@@ -70,8 +75,39 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value),
 });
 
+const drawerRef = ref<HTMLElement | null>(null);
+
 const closeDrawer = () => {
   visible.value = false;
 };
+
+const handleGlobalClick = (event: MouseEvent) => {
+  if (!visible.value) {
+    return;
+  }
+  const drawerEl = drawerRef.value;
+  if (drawerEl && !drawerEl.contains(event.target as Node)) {
+    closeDrawer();
+  }
+};
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (!visible.value) {
+    return;
+  }
+  if (event.key === 'Escape') {
+    closeDrawer();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleGlobalClick);
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleGlobalClick);
+  document.removeEventListener('keydown', handleKeydown);
+});
 </script>
 

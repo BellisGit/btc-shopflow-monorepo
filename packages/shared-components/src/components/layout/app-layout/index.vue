@@ -427,6 +427,7 @@ onUnmounted(() => {
     transition: width 0.2s ease-in-out;
     overflow: hidden;
     box-sizing: border-box; // 使用 !important 覆盖全局 border-box，与系统域保持一致
+    border-right: 1px solid var(--el-border-color-extra-light);
 
     // 双栏菜单模式：宽度为 274px（与顶栏搜索框对齐）
     .menu-type-dual-menu & {

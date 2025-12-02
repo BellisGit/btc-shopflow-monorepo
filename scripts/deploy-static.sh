@@ -270,7 +270,7 @@ deploy_app() {
     local app_name=$1
     local app_dir="apps/$app_name"
     local dist_dir="$app_dir/dist"
-    local deploy_path=$(get_app_deploy_path "$app_name")
+    local deploy_base=$(get_app_deploy_path "$app_name")
     
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     log_info "部署应用: $app_name"
@@ -284,17 +284,30 @@ deploy_app() {
     fi
     
     log_info "构建产物目录: $dist_dir"
-    log_info "部署目标路径: $deploy_path"
+    log_info "部署目标路径: $deploy_base (直接部署到根目录)"
+    
+    # 检查并复制 EPS 数据到 dist 目录（如果存在）
+    local eps_dir="$app_dir/build/eps"
+    if [ -d "$eps_dir" ] && [ -n "$(ls -A "$eps_dir" 2>/dev/null)" ]; then
+        log_info "发现 EPS 数据，复制到 dist 目录..."
+        mkdir -p "$dist_dir/build/eps"
+        cp -r "$eps_dir"/* "$dist_dir/build/eps/" 2>/dev/null || {
+            log_warning "EPS 数据复制失败，继续部署"
+        }
+        log_success "EPS 数据已复制到构建产物"
+    else
+        log_warning "未找到 EPS 数据目录，跳过"
+    fi
     
     # SSH 连接参数（优化连接稳定性）
     # 增加超时时间和重试机制，避免大文件传输时连接中断
     local ssh_opts="-i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes -o Compression=yes"
     
     # 确保目标目录存在
-    log_info "确保目标目录存在..."
+    log_info "确保部署目录存在..."
     ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "mkdir -p $deploy_path" || {
-        log_error "无法创建目标目录: $deploy_path"
+        "mkdir -p $deploy_base" || {
+        log_error "无法创建目标目录: $deploy_base"
         return 1
     }
     
@@ -303,8 +316,8 @@ deploy_app() {
     local backup_dir="/www/backups/$app_name/$(date +%Y%m%d_%H%M%S)"
     ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
         "mkdir -p $backup_dir && \
-         if [ -d $deploy_path ] && [ -n \"\$(ls -A $deploy_path 2>/dev/null)\" ]; then \
-             cp -r $deploy_path/* $backup_dir/ 2>/dev/null || true; \
+         if [ -d $deploy_base ] && [ -n \"\$(ls -A $deploy_base 2>/dev/null | grep -v '^releases$' | grep -v '^current$')\" ]; then \
+             cp -r $deploy_base/* $backup_dir/ 2>/dev/null || true; \
              echo 'Backup created: $backup_dir'; \
          else \
              echo 'No existing deployment to backup'; \
@@ -319,16 +332,18 @@ deploy_app() {
         fi
     fi
     
-    # 同步文件
+    # 同步文件（直接部署到根目录，使用 --delete 删除旧文件）
     if [ "$use_rsync" = true ]; then
-        log_info "使用 rsync 同步文件..."
+        log_info "使用 rsync 同步文件（直接部署到根目录）..."
         if rsync -avz --delete \
             -e "ssh $ssh_opts" \
             --exclude='*.map' \
             --exclude='.DS_Store' \
+            --exclude='releases' \
+            --exclude='current' \
             --timeout=300 \
             "$dist_dir/" \
-            "$SERVER_USER@$SERVER_HOST:$deploy_path/"; then
+            "$SERVER_USER@$SERVER_HOST:$deploy_base/"; then
             log_success "文件同步成功"
         else
             log_error "rsync 同步失败，尝试使用 scp..."
@@ -339,9 +354,18 @@ deploy_app() {
     if [ "$use_rsync" = false ]; then
         # 使用 scp（较慢，但兼容性更好）
         log_info "使用 scp 同步文件..."
-        # 先删除远程目录内容（保留目录本身）
+        # 先清理旧文件（但保留 releases 和 current，如果存在）
+        log_info "清理目标目录中的旧文件（保留 releases 和 current 目录）..."
         ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-            "rm -rf $deploy_path/* $deploy_path/.[!.]* 2>/dev/null || true"
+            "cd $deploy_base && \
+             if [ -d releases ]; then mv releases releases.backup.$(date +%s); fi && \
+             if [ -L current ] || [ -d current ]; then mv current current.backup.$(date +%s); fi && \
+             rm -rf *.html *.js *.css assets icons build 2>/dev/null || true && \
+             find . -maxdepth 1 -type f -name '*.json' -o -name '*.txt' -o -name '*.ico' -o -name '*.png' -o -name '*.svg' | xargs rm -f 2>/dev/null || true && \
+             if [ -d releases.backup.* ]; then mv releases.backup.* releases; fi && \
+             if [ -d current.backup.* ] || [ -L current.backup.* ]; then mv current.backup.* current; fi" || {
+            log_warning "清理旧文件失败，继续部署"
+        }
         
         # 上传文件（使用 tar 压缩传输，更高效）
         # 添加重试机制，最多重试 3 次
@@ -360,7 +384,7 @@ deploy_app() {
             local original_dir=$(pwd)
             
             if cd "$dist_dir" && tar czf - . | ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-                "cd $deploy_path && tar xzf -" 2>&1; then
+                "cd $deploy_base && tar xzf -" 2>&1; then
                 upload_success=true
                 cd "$original_dir" > /dev/null
                 break
@@ -382,7 +406,7 @@ deploy_app() {
     log_info "验证文件同步..."
     local local_count=$(find "$dist_dir" -type f | wc -l)
     local remote_count=$(ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "find $deploy_path -type f 2>/dev/null | wc -l" || echo "0")
+        "find $deploy_base -type f -not -path '*/releases/*' -not -path '*/current/*' 2>/dev/null | wc -l" || echo "0")
     
     if [ "$remote_count" -lt "$local_count" ]; then
         log_warning "远程文件数量 ($remote_count) 少于本地 ($local_count)，但继续执行"
@@ -393,13 +417,13 @@ deploy_app() {
     # 设置权限
     log_info "设置文件权限..."
     ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "chown -R www:www $deploy_path 2>/dev/null && \
-         chmod -R 755 $deploy_path 2>/dev/null && \
-         find $deploy_path -type f -exec chmod 644 {} \; 2>/dev/null" || {
+        "chown -R www:www $deploy_base 2>/dev/null || true; \
+         find $deploy_base -type d -not -path '*/releases/*' -not -path '*/current/*' -exec chmod 755 {} \; 2>/dev/null || true; \
+         find $deploy_base -type f -not -path '*/releases/*' -not -path '*/current/*' -exec chmod 644 {} \; 2>/dev/null || true" || {
         log_warning "权限设置失败，但不影响部署"
     }
     
-    log_success "$app_name 部署完成"
+    log_success "$app_name 部署完成 -> $deploy_base (直接部署到根目录)"
     
     # 单个应用部署时立即重载 Nginx
     # 批量部署时将在所有应用完成后统一重载（避免多次重载）

@@ -72,12 +72,47 @@ const setupStandalonePlugins = async (app: VueApp, router: Router) => {
 const setupStandaloneGlobals = async () => {
   registerAppEnvAccessors();
 
-  try {
-    const { service } = await import('../services/eps');
-    (window as any).__APP_EPS_SERVICE__ = service;
-  } catch (error) {
-    console.warn('[logistics-app] Failed to load EPS service:', error);
-    (window as any).__APP_EPS_SERVICE__ = {};
+  // 优先使用全局共享的 EPS 服务（由 system-app 或其他应用提供）
+  // 只有在没有全局服务时，才加载本地的 EPS 服务
+  const getGlobalEpsService = () => {
+    const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+      return globalService;
+    }
+    return null;
+  };
+
+  // 先检查是否有全局服务
+  let globalService = getGlobalEpsService();
+  
+  if (!globalService) {
+    // 等待全局服务可用（最多等待 2 秒）
+    const waitForGlobalService = async (maxWait = 2000, interval = 100) => {
+      const startTime = Date.now();
+      while (Date.now() - startTime < maxWait) {
+        const service = getGlobalEpsService();
+        if (service) return service;
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      return null;
+    };
+    
+    globalService = await waitForGlobalService();
+  }
+
+  if (globalService) {
+    // 使用全局服务
+    (window as any).__APP_EPS_SERVICE__ = globalService;
+    console.log('[logistics-app] 使用全局共享的 EPS 服务');
+  } else {
+    // 没有全局服务，加载本地服务
+    try {
+      const { service } = await import('../services/eps');
+      (window as any).__APP_EPS_SERVICE__ = service;
+    } catch (error) {
+      console.warn('[logistics-app] Failed to load EPS service:', error);
+      (window as any).__APP_EPS_SERVICE__ = {};
+    }
   }
 
   try {

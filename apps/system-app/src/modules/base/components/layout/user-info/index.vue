@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -114,17 +114,53 @@ const {
   handleNameLeave
 } = useUserInfo();
 
+// 记录头像加载失败状态，避免无限循环
+const avatarLoadError = ref(false);
+const errorHandled = ref(false);
+
 // 头像 URL（确保始终有值，避免空白）
 const avatarUrl = computed(() => {
   const url = userInfo.value?.avatar;
-  return url && url !== '/logo.png' ? url : '/logo.png';
+  // 如果头像加载失败，强制使用默认 Logo
+  if (avatarLoadError.value) {
+    return '/logo.png';
+  }
+  return url && url !== '/logo.png' && url !== '' ? url : '/logo.png';
 });
 
-// 头像加载失败处理
+// 头像加载失败处理 - 阻止无限循环
 const handleAvatarError = (event: Event) => {
+  // 防止重复处理
+  if (errorHandled.value) {
+    return;
+  }
+  
   const img = event.target as HTMLImageElement;
-  img.src = '/logo.png';
+  const failedUrl = img.src;
+  
+  console.warn('[UserInfo] 头像加载失败:', failedUrl);
+  
+  // 标记已处理
+  errorHandled.value = true;
+  
+  // 如果失败的是 logo.png，不再重试
+  if (failedUrl.includes('logo.png')) {
+    console.error('[UserInfo] ❌ logo.png 文件加载失败！请检查: public/logo.png');
+    console.error('[UserInfo] URL:', failedUrl);
+    return;
+  }
+  
+  // 标记头像加载失败
+  avatarLoadError.value = true;
 };
+
+// 监听头像变化，重置错误状态
+watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
+  if (newAvatar !== oldAvatar && newAvatar) {
+    avatarLoadError.value = false;
+    errorHandled.value = false;
+  }
+});
 
 // 初始化
 onMounted(async () => {

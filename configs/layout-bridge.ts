@@ -23,12 +23,79 @@ const DEFAULT_DOMAIN_NAMES: Record<string, { code: string; name: string; host: s
   finance: { code: 'FINANCE', name: '财务域', host: 'finance.bellis.com.cn' },
 };
 
-const normalizeMenuItem = (item: any): MenuItem => ({
-  index: item.index,
-  title: item.labelKey ?? item.label ?? item.index,
-  icon: item.icon,
-  children: Array.isArray(item.children) ? item.children.map(normalizeMenuItem) : undefined,
-});
+/**
+ * 规范化菜单路径：在开发环境下自动添加应用前缀，生产子域环境下移除应用前缀
+ * manifest 中的菜单路径已经移除了应用前缀，所以：
+ * - 开发环境（qiankun模式）：需要添加前缀 `/${appName}/xxx`
+ * - 生产子域环境：移除应用前缀，保持原路径 `/xxx`
+ */
+function normalizeMenuPath(path: string, appName: string): string {
+  if (!path || !appName) return path;
+  
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  
+  // 检测是否在生产环境的子域名下
+  if (typeof window === 'undefined') {
+    // SSR 环境，保持原路径
+    return normalizedPath;
+  }
+  
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  if (isProductionSubdomain) {
+    // 生产环境子域名：检测具体的子域名应用
+    const subdomainMap: Record<string, string> = {
+      'admin.bellis.com.cn': 'admin',
+      'logistics.bellis.com.cn': 'logistics',
+      'quality.bellis.com.cn': 'quality',
+      'production.bellis.com.cn': 'production',
+      'engineering.bellis.com.cn': 'engineering',
+      'finance.bellis.com.cn': 'finance',
+    };
+    
+    const currentSubdomainApp = subdomainMap[hostname];
+    
+    // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
+    if (currentSubdomainApp && currentSubdomainApp === appName) {
+      const appPrefix = `/${appName}`;
+      if (normalizedPath === appPrefix) {
+        // 如果是应用根路径，返回 /
+        return '/';
+      } else if (normalizedPath.startsWith(`${appPrefix}/`)) {
+        // 移除应用前缀
+        return normalizedPath.substring(appPrefix.length);
+      }
+    }
+    
+    // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
+    return normalizedPath;
+  }
+
+  // 开发环境（qiankun模式）：需要添加应用前缀
+  // 如果路径已经是根路径，直接返回应用前缀
+  if (normalizedPath === '/') {
+    return `/${appName}`;
+  }
+  
+  // 如果路径已经包含应用前缀，不需要重复添加
+  if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
+    return normalizedPath;
+  }
+  
+  // 添加应用前缀
+  return `/${appName}${normalizedPath}`;
+}
+
+const normalizeMenuItem = (item: any, appName: string): MenuItem => {
+  const normalizedIndex = normalizeMenuPath(item.index, appName);
+  return {
+    index: normalizedIndex,
+    title: item.labelKey ?? item.label ?? normalizedIndex,
+    icon: item.icon,
+    children: Array.isArray(item.children) ? item.children.map(child => normalizeMenuItem(child, appName)) : undefined,
+  };
+};
 
 /**
  * 注册 AppLayout 运行时所需的环境配置访问器
@@ -60,7 +127,7 @@ export function registerAppEnvAccessors(target: Window = window) {
 export function registerManifestMenusForApp(appId: string) {
   const manifestMenus = getManifestMenus(appId);
   if (!manifestMenus?.length) return;
-  registerMenus(appId, manifestMenus.map(normalizeMenuItem));
+  registerMenus(appId, manifestMenus.map(item => normalizeMenuItem(item, appId)));
 }
 
 const normalizeBaseUrl = (candidate?: string | null, context?: string) => {

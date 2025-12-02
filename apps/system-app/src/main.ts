@@ -34,9 +34,12 @@ if (typeof BtcSvg !== 'undefined') {
   console.error('[BtcSvg] 组件导入失败，请检查 @btc/shared-components 构建');
 }
 
-// 将 service 暴露到全局，供共享组件使用
+// 将 service 暴露到全局，供共享组件和子应用使用
 if (typeof window !== 'undefined') {
   (window as any).__BTC_SERVICE__ = service;
+  // 暴露到全局，供所有子应用共享使用
+  (window as any).__APP_EPS_SERVICE__ = service;
+  (window as any).service = service; // 也设置到 window.service，保持兼容性
 }
 
 // 启动
