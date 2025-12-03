@@ -103,7 +103,6 @@ const setupStandaloneGlobals = async () => {
   if (globalService) {
     // 使用全局服务
     (window as any).__APP_EPS_SERVICE__ = globalService;
-    console.log('[logistics-app] 使用全局共享的 EPS 服务');
   } else {
     // 没有全局服务，加载本地服务
     try {
@@ -152,7 +151,7 @@ const setupStandaloneGlobals = async () => {
     const { logout } = useLogout();
     (window as any).__APP_LOGOUT__ = logout;
   } catch (error) {
-    console.warn('[logistics-app] Logout composable not available (optional)');
+    // Logout composable not available (optional)
   }
 
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();

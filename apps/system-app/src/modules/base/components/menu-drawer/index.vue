@@ -117,17 +117,8 @@ onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
 
-// 固定显示的应用配置（文档域始终显示，不受域列表影响）
-const fixedApplications: MicroApp[] = [
-  {
-    name: 'docs',
-    icon: 'tutorial',
-    color: '#ec4899', // 粉色系，与系统域紫色区分
-    entry: '//localhost:8080/docs',
-    activeRule: '/docs',
-    description: '文档中心 - 系统使用指南和API文档'
-  },
-];
+// 固定显示的应用配置（文档域不再默认显示）
+const fixedApplications: MicroApp[] = [];
 
 // 域到应用的映射配置（不包括管理域和文档域）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
@@ -187,20 +178,20 @@ const getDomainDisplayName = (app: MicroApp) => {
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 管理域（主应用）使用域数据中的管理域名称
+  // 管理域（主应用）使用域数据中的管理域类型
   if (app.name === 'admin') {
     const adminDomain = Array.from(domainDataMap.value.values())
       .find((domain: any) => domain.domainCode === 'ADMIN' || domain.name === '管理域');
-    if (adminDomain && adminDomain.name) {
-      return adminDomain.name;
+    if (adminDomain && adminDomain.domainType) {
+      return adminDomain.domainType;
     }
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 其他域使用对应的域名称
+  // 其他域使用对应的域类型
   const domain = domainDataMap.value.get(app.name.toUpperCase());
-  if (domain && domain.name) {
-    return domain.name;
+  if (domain && domain.domainType) {
+    return domain.domainType;
   }
 
   // 兜底使用国际化配置
@@ -305,9 +296,6 @@ const loadApplications = async () => {
           }
         });
 
-      // 4. 添加固定应用（文档域）
-      appList.push(...fixedApplications);
-
       applications.value = appList;
     } else {
       // 如果服务不可用，使用默认配置
@@ -319,8 +307,7 @@ const loadApplications = async () => {
           entry: '//localhost:8081',
           activeRule: '/',
           description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-        },
-        ...fixedApplications
+        }
       ];
       domainDataMap.value.clear();
     }
@@ -335,8 +322,7 @@ const loadApplications = async () => {
         entry: '//localhost:8081',
         activeRule: '/',
         description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-      },
-      ...fixedApplications
+      }
     ];
     domainDataMap.value.clear();
   } finally {

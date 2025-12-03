@@ -117,7 +117,6 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     (window as any).__APP_EPS_SERVICE__ = service;
     (window as any).service = service;
     (window as any).__BTC_SERVICE__ = service;
-    console.log('[layout-app] EPS 服务已重新暴露到全局');
   }
   
   // 暴露域列表获取函数，供 menu-drawer 组件使用
@@ -169,14 +168,10 @@ const ensureMicroAppsRegistered = () => {
     // 预览/开发环境：使用 URL 参数或默认加载 logistics-app
     if (appFromUrl) {
       targetApp = appFromUrl;
-      console.log('[layout-app] 从 URL 参数加载子应用:', targetApp);
     } else {
       // 默认加载 logistics-app（用于预览环境测试）
       targetApp = 'logistics';
-      console.log('[layout-app] 预览环境，默认加载子应用:', targetApp);
     }
-  } else {
-    console.log('[layout-app] 根据域名加载子应用:', targetApp);
   }
 
   // 只注册当前域名对应的子应用
@@ -193,16 +188,16 @@ const ensureMicroAppsRegistered = () => {
     subApps,
     {
       beforeLoad: [(app) => {
-        console.log('[layout-app] 准备加载子应用:', app.name);
         // 显示加载状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport) {
           viewport.setAttribute('data-qiankun-loading', 'true');
         }
       }],
-      beforeMount: [(app) => console.log('[layout-app] 准备挂载子应用:', app.name)],
+      beforeMount: [() => {
+        // 静默挂载
+      }],
       afterMount: [(app) => {
-        console.log('[layout-app] 子应用挂载完成:', app.name);
         // 移除加载状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport) {
@@ -231,9 +226,12 @@ function bootstrap() {
 }
 
 async function mount(props: any) {
-  const container = props?.container || document.querySelector('#layout-container');
+  // 关键：qiankun 会通过 props.container 传递容器元素
+  // 如果 props.container 不存在，使用 #app 作为容器（与其他应用保持一致）
+  const container = props?.container || document.querySelector('#app') as HTMLElement;
+  
   if (!container) {
-    throw new Error('布局容器不存在');
+    throw new Error('布局容器不存在，请确保页面中存在 #app 元素');
   }
 
   if (!app) {
@@ -246,7 +244,6 @@ async function mount(props: any) {
   // 如果 layout-app 是被其他应用通过 qiankun 加载的，不应该再注册子应用
   // 因为子应用已经在运行了（它加载了 layout-app）
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    console.log('[layout-app] 被其他应用加载，不注册子应用');
     return;
   }
 
@@ -274,7 +271,7 @@ export default { bootstrap, mount, unmount };
 // 独立运行（非 qiankun 环境）
 if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   (async () => {
-    const container = document.querySelector('#layout-container');
+    const container = document.querySelector('#app') as HTMLElement;
     if (container) {
       app = createApp(App);
       // 等待初始化完成（包括插件注册）

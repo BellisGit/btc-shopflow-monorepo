@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
 import { authApi } from '@/modules/api-services';
 import { useUser } from '@/composables/useUser';
-import { getCookie } from '@/utils/cookie';
+import { getCookie, setCookie, getCookieDomain } from '@/utils/cookie';
+import { appStorage } from '@/utils/app-storage';
 
 export function useSmsLogin() {
   const router = useRouter();
@@ -41,8 +42,9 @@ export function useSmsLogin() {
       // 所以这里不需要再检查响应格式，直接认为登录成功
       BtcMessage.success(t('登录成功'));
 
-      // 设置登录状态标记（因为 http-only cookie 无法读取）
-      localStorage.setItem('is_logged_in', 'true');
+      // 设置登录状态标记到统一的 settings 存储中
+      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      appStorage.settings.set({ ...currentSettings, is_logged_in: true });
 
       // 优先从响应体获取 token（如果后端返回）
       let token: string | null = null;
@@ -56,9 +58,19 @@ export function useSmsLogin() {
         token = response.data.accessToken;
       }
 
-      // 保存 token 到 localStorage（如果存在）
+      // 如果从响应体中找到了 token，设置到 cookie（不再保存到 localStorage）
       if (token) {
-        localStorage.setItem('token', token);
+        // 清理旧的 localStorage 键（迁移）
+        appStorage.auth.setToken(token);
+        
+        // 设置 cookie
+        const isHttps = window.location.protocol === 'https:';
+        setCookie('access_token', token, 7, {
+          sameSite: isHttps ? 'None' : undefined,
+          secure: isHttps,
+          path: '/',
+          domain: getCookieDomain(),
+        });
       }
 
       // 保存用户信息（如果响应中包含用户信息）

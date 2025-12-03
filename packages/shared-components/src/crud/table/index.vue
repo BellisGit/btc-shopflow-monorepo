@@ -354,9 +354,28 @@ interface ColumnOption {
   checked: boolean;
 }
 
+/**
+ * 判断字符串是否是国际化 key（而不是翻译后的值）
+ * 国际化 key 的格式：以字母开头，包含至少一个点，且点前后都有非空字符
+ */
+const isI18nKey = (str: string): boolean => {
+  if (!str.includes('.')) {
+    return false;
+  }
+  const parts = str.split('.');
+  if (parts.length < 2) {
+    return false;
+  }
+  const firstPart = parts[0].trim();
+  if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
+    return false;
+  }
+  return parts.every(part => part.trim().length > 0);
+};
+
 const resolveColumnLabel = (column: TableColumn, fallback: string) => {
   if (typeof column.label === 'string') {
-    return column.label.includes('.') ? t(column.label) : column.label;
+    return isI18nKey(column.label) ? t(column.label) : column.label;
   }
 
   if (column.prop) return column.prop;
@@ -477,6 +496,7 @@ const toolbarBinding = {
 const syncOperationWidth = () => {
   if (!crudLayout) return;
   const opColumn = visibleColumns.value.find((column) => column.type === 'op');
+  // 操作列的宽度已经在 useTableColumns 中增加了 gap，所以这里直接使用即可
   const widthCandidate =
     (opColumn && typeof opColumn.width === 'number' && opColumn.width > 0 && opColumn.width) ||
     (opColumn && typeof opColumn.minWidth === 'number' && opColumn.minWidth > 0 && opColumn.minWidth) ||

@@ -115,7 +115,6 @@ const { t } = useI18n();
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  console.warn('[Topbar] Logo image failed to load:', img.src);
   // 如果加载失败，隐藏图片或使用占位符
   img.style.display = 'none';
 };
@@ -178,7 +177,6 @@ const menuThemeConfig = computed(() => {
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
 
   if (themeConfig) {
-    console.log('[Topbar] 使用菜单风格配置:', themeConfig);
     return {
       background: themeConfig.background,
       systemNameColor: themeConfig.systemNameColor,
@@ -187,7 +185,6 @@ const menuThemeConfig = computed(() => {
   }
 
   // 默认配置
-  console.log('[Topbar] 使用默认配置，theme:', theme, 'menuStyleList:', menuStyleList.value);
   return {
     background: '#FFFFFF',
     systemNameColor: 'var(--el-text-color-primary)',
@@ -316,11 +313,25 @@ onMounted(async () => {
     background-color: var(--el-color-primary); // 主题色背景
     transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-    &:hover {
-      background-color: var(--el-color-primary-light-3); // 悬停时浅色主题色
+    // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--el-color-primary-light-3); // 悬停时浅色主题色
 
-      .hamburger-line {
-        background-color: #fff;
+        .hamburger-line {
+          background-color: #fff;
+        }
+      }
+    }
+
+    // 触摸设备使用 :active 样式（点击时显示反馈）
+    @media (hover: none) {
+      &:active {
+        background-color: var(--el-color-primary-light-3);
+
+        .hamburger-line {
+          background-color: #fff;
+        }
       }
     }
 
@@ -436,8 +447,18 @@ onMounted(async () => {
     padding: 5px 5px 5px 10px;
     border-radius: 6px;
 
-    &:hover {
-      background-color: var(--el-fill-color-light);
+    // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--el-fill-color-light);
+      }
+    }
+
+    // 触摸设备使用 :active 样式（点击时显示反馈）
+    @media (hover: none) {
+      &:active {
+        background-color: var(--el-fill-color-light);
+      }
     }
 
     &-name {

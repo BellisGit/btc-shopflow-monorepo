@@ -1,5 +1,6 @@
 @font-face {
   font-family: 'iconfont-sys'; /* Project id 3682552 */
+  font-display: swap; /* 优化字体加载：立即显示回退字体，字体加载完成后替换 */
   src:
     url('iconfont.woff2?t=1748252913866') format('woff2'),
     url('iconfont.woff?t=1748252913866') format('woff'),

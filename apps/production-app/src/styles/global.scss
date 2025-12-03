@@ -16,9 +16,12 @@ body {
 }
 
 #app {
-  width: 100%;
   height: 100%;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  // 当使用 layout-app 时，#app 挂载到 #subapp-viewport，由 layout-app 的样式控制宽度和布局
+  // 独立运行时，body 和 html 已经设置了 width: 100%，所以 #app 不需要额外设置
 }
 
 // Custom scrollbar (align with cool-admin)

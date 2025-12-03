@@ -16,7 +16,6 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
-import { AppLayout } from '@btc/shared-components';
 import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
 import App from './App.vue';
 
@@ -85,7 +84,8 @@ async function render(props: QiankunProps = {}) {
   }
 
   // 基础路由（页面组件）
-  const pageRoutes = [
+  // 独立运行时由 layout-app 提供布局，qiankun 模式由主应用提供布局
+  const routes = [
     {
       path: '/',
       name: 'Home',
@@ -93,19 +93,6 @@ async function render(props: QiankunProps = {}) {
       meta: { isHome: true },
     },
   ];
-
-  // 根据运行模式返回不同的路由配置
-  // 独立运行时：使用 AppLayout 包裹所有路由
-  // qiankun 模式：直接返回页面路由（由主应用提供 Layout）
-  const routes = isStandalone
-    ? [
-        {
-          path: '/',
-          component: AppLayout, // Use AppLayout from shared package
-          children: pageRoutes,
-        },
-      ]
-    : pageRoutes;
 
   router = createRouter({
     // 在 qiankun 环境下使用 MemoryHistory，避免路由冲突

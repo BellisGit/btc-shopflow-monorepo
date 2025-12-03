@@ -9,7 +9,11 @@
       <div class="dev-tools__content">
         <el-scrollbar>
           <div class="dev-tools__inner">
-            <component :is="components[activeTab]" />
+            <!-- 只有非操作类型的标签页才显示组件内容 -->
+            <component v-if="components[activeTab]" :is="components[activeTab]" />
+            <div v-else class="dev-tools__empty">
+              <p>点击菜单项进行操作</p>
+            </div>
           </div>
         </el-scrollbar>
       </div>
@@ -60,7 +64,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onClickOutside } from '@vueuse/core';
-import { Setting, Lightning, Switch } from '@element-plus/icons-vue';
+import { Setting, Lightning, Switch, Document, Monitor } from '@element-plus/icons-vue';
 import { isDev } from '@/config';
 import ApiSwitch from './ApiSwitch.vue';
 import EpsViewer from './EpsViewer.vue';
@@ -76,12 +80,38 @@ const tabList = [
     value: 'api',
     icon: Switch,
     tooltip: '环境切换 - 在开发环境（10.80.9.76:8115）和生产环境（api.bellis.com.cn）之间切换',
+    isAction: false, // 显示组件内容
   },
   {
     label: 'EPS',
     value: 'eps',
     icon: Lightning,
     tooltip: 'EPS - 查看所有后端 API 端点列表，支持搜索和浏览',
+    isAction: false, // 显示组件内容
+  },
+  {
+    label: '文档中心',
+    value: 'docs',
+    icon: Document,
+    tooltip: '文档中心 - 系统使用指南和API文档',
+    isAction: true, // 直接跳转
+    action: () => {
+      // 使用 window.location 跳转，避免依赖 Vue Router
+      window.location.href = '/docs';
+      visible.value = false;
+    },
+  },
+  {
+    label: '错误监控',
+    value: 'monitor',
+    icon: Monitor,
+    tooltip: '错误监控 - 实时查看所有应用的错误和警告',
+    isAction: true, // 直接跳转
+    action: () => {
+      // 使用 window.location 跳转，避免依赖 Vue Router
+      window.location.href = '/monitor';
+      visible.value = false;
+    },
   },
 ];
 
@@ -91,7 +121,14 @@ const panelRef = ref<HTMLElement | null>(null);
 const toggleRef = ref<HTMLElement | null>(null);
 
 function switchTab(tab: string) {
-  activeTab.value = tab;
+  const tabItem = tabList.find(item => item.value === tab);
+  if (tabItem?.isAction && tabItem.action) {
+    // 如果是操作项，执行操作（跳转）
+    tabItem.action();
+  } else {
+    // 否则切换标签页显示内容
+    activeTab.value = tab;
+  }
 }
 
 function toggle() {
@@ -147,6 +184,16 @@ onClickOutside(
     padding: 16px;
   }
 
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+    color: var(--el-text-color-secondary);
+    font-size: 14px;
+  }
+
   &__menu {
     border-left: 1px solid var(--el-border-color-extra-light);
     padding: 8px 0;
@@ -192,7 +239,7 @@ onClickOutside(
     z-index: 2001;
     border-radius: 50%;
     background-color: var(--el-color-primary);
-    border: 2px solid var(--el-text-color-regular);
+    border: none;
     cursor: pointer;
     height: 36px;
     width: 36px;
@@ -201,11 +248,12 @@ onClickOutside(
     justify-content: center;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
     transition: all 0.3s;
+    color: #fff;
 
     &:hover {
       background-color: var(--el-color-primary-light-3);
-      border-color: var(--el-text-color-secondary);
       transform: scale(1.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
 
     &.is-hide {
@@ -213,6 +261,32 @@ onClickOutside(
 
       &:hover {
         opacity: 1;
+      }
+    }
+  }
+
+  // 亮色模式下的特殊处理
+  html:not(.dark) & {
+    &__toggle {
+      // 亮色模式下使用更柔和的阴影，避免重影
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+      }
+    }
+  }
+
+  // 暗色模式下的特殊处理
+  html.dark & {
+    &__toggle {
+      // 暗色模式下可以添加边框以增强对比度
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       }
     }
   }

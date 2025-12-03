@@ -206,7 +206,9 @@ async function render(props: QiankunProps = {}) {
     await setupStandalonePlugins(app, router);
   }
 
-  const mountPoint = container ? container.querySelector('#app') : '#app';
+  // 关键：在 qiankun 模式下，直接使用 container（layout-app 传递的 #subapp-viewport）
+  // 在独立运行模式下，使用 #app
+  const mountPoint = container || document.querySelector('#app');
   if (mountPoint) {
     app.mount(mountPoint);
 

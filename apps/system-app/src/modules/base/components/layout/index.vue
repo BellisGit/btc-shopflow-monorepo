@@ -47,9 +47,9 @@
       <div class="app-layout__main">
         <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
         <div class="app-layout__header">
-          <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
+          <!-- Tabbar：使用 v-show 保持 DOM，子应用时隐藏 -->
           <Process
-            v-show="!isDocsApp"
+            v-show="isMainApp"
             :is-fullscreen="isFullscreen"
             @toggle-fullscreen="toggleFullscreen"
           />
@@ -65,7 +65,7 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
+            <router-view v-show="isMainApp" v-slot="{ Component, route }">
               <transition :name="pageTransitionName">
                 <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
                 <keep-alive v-else>
@@ -74,10 +74,8 @@
               </transition>
             </router-view>
 
-            <!-- 文档应用 iframe（全局缓存，v-show 控制显示/隐藏） -->
-            <DocsIframe :visible="isDocsApp" />
-
             <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
+            <!-- 文档中心和监控应用都是 qiankun 子应用，与其他子应用地位相同 -->
             <!-- 注意：容器必须始终在 DOM 中，这样骨架屏才能被找到 -->
             <!-- qiankun 会在容器内创建包装器，所以骨架屏需要放在容器外部，使用绝对定位覆盖 -->
             <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
@@ -111,7 +109,6 @@ import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
 import AppSkeleton from '@/components/AppSkeleton.vue';
-import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
@@ -207,16 +204,12 @@ const isMainApp = computed(() => {
       path.startsWith('/quality') || locationPath.startsWith('/quality') ||
       path.startsWith('/production') || locationPath.startsWith('/production') ||
       path.startsWith('/finance') || locationPath.startsWith('/finance') ||
-      path.startsWith('/docs') || locationPath.startsWith('/docs')) {
+      path.startsWith('/docs') || locationPath.startsWith('/docs') ||
+      path.startsWith('/monitor') || locationPath.startsWith('/monitor')) {
     return false;
   }
   // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
   return true;
-});
-
-// 判断是否为文档应用
-const isDocsApp = computed(() => {
-  return route.path === '/docs' || route.path.startsWith('/docs/');
 });
 
 // qiankun 加载状态（用于追踪容器是否应该强制显示）
@@ -230,9 +223,9 @@ const shouldShowSubAppViewport = computed(() => {
     // console.log('[Layout] shouldShowSubAppViewport: true (isQiankunLoading)');
     return true;
   }
-  // 正常情况：非主应用且非文档应用时显示
-  const result = !isMainApp.value && !isDocsApp.value;
-  // console.log('[Layout] shouldShowSubAppViewport:', result, `(isMainApp: ${isMainApp.value}, isDocsApp: ${isDocsApp.value})`);
+  // 正常情况：非主应用时显示（文档中心和监控应用都是 qiankun 子应用，与其他子应用地位相同）
+  const result = !isMainApp.value;
+  // console.log('[Layout] shouldShowSubAppViewport:', result, `(isMainApp: ${isMainApp.value})`);
   return result;
 });
 
@@ -508,14 +501,6 @@ onUnmounted(() => {
       position: relative; // 为过渡动画提供定位上下文
     }
 
-    // 文档应用 iframe（占据内容区域完整尺寸）
-    :deep(.docs-iframe-wrapper) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-
     // 子应用挂载点（占据内容区域完整尺寸）
     #subapp-viewport {
       position: static !important;
@@ -573,12 +558,6 @@ onUnmounted(() => {
       height: 0 !important;
       width: 0 !important;
       overflow: hidden !important;
-    }
-
-    // 文档 iframe 容器（覆盖默认样式，不需要 padding）
-    .docs-iframe-wrapper {
-      padding: 0 !important; // iframe内部的VitePress有自己的布局
-      overflow: hidden !important; // 容器不滚动，滚动由 iframe 内部处理
     }
 
     // 骨架屏（放在容器外部，使用绝对定位覆盖）

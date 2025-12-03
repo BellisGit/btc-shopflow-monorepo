@@ -5,6 +5,7 @@ export * from './date';
 export * from './format';
 export * from './validate';
 export * from './storage';
+export * from './storage/cross-domain';
 
 // 数据处理模块
 export * from './array';

@@ -13,6 +13,7 @@ import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micr
 import { systemRoutes } from './routes/system';
 import { getCookie } from '../utils/cookie';
 import { appStorage } from '../utils/app-storage';
+import { getTabsForNamespace } from '../store/tabRegistry';
 
 const routes: RouteRecordRaw[] = [
   // 登录页面（不在 Layout 中）- 使用根目录 auth 包
@@ -115,6 +116,26 @@ const routes: RouteRecordRaw[] = [
     component: Layout,
     meta: { title: 'Finance App', isSubApp: true },
   },
+  {
+    path: '/monitor',
+    component: Layout,
+    meta: { title: 'Monitor App', isHome: true, isSubApp: true },
+  },
+  {
+    path: '/monitor/:pathMatch(.*)+',
+    component: Layout,
+    meta: { title: 'Monitor App', isSubApp: true },
+  },
+  {
+    path: '/docs',
+    component: Layout,
+    meta: { title: 'Docs App', isHome: true, isSubApp: true },
+  },
+  {
+    path: '/docs/:pathMatch(.*)+',
+    component: Layout,
+    meta: { title: 'Docs App', isSubApp: true },
+  },
 ];
 
 // 创建 router 实例
@@ -197,22 +218,29 @@ export function setupI18nTitleWatcher() {
 /**
  * 检查用户是否已认证
  * 注意：后端设置了 http-only cookie，前端无法直接读取
- * 因此通过检查 localStorage 中的登录状态标记、token 和用户信息来判断
+ * 因此通过检查 cookie、localStorage 中的登录状态标记、token 和用户信息来判断
  */
 function isAuthenticated(): boolean {
-  // 1. 检查登录状态标记（登录成功时设置）
-  const isLoggedIn = localStorage.getItem('is_logged_in') === 'true';
+  // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
+  const cookieToken = getCookie('access_token');
+  if (cookieToken) {
+    return true;
+  }
+
+  // 2. 检查登录状态标记（从统一的 settings 存储中读取）
+  const settings = appStorage.settings.get() as Record<string, any> | null;
+  const isLoggedIn = settings?.is_logged_in === true;
   if (isLoggedIn) {
     return true;
   }
 
-  // 2. 检查 localStorage 中的 token
+  // 3. 检查 localStorage 中的 token
   const storageToken = appStorage.auth.getToken();
   if (storageToken) {
     return true;
   }
 
-  // 3. 检查用户信息是否存在
+  // 4. 检查用户信息是否存在
   const userInfo = appStorage.user.get();
   if (userInfo?.id) {
     return true;
@@ -221,8 +249,65 @@ function isAuthenticated(): boolean {
   return false;
 }
 
+/**
+ * 规范化路径：如果路径缺少应用前缀，尝试从 tabRegistry 中查找并添加前缀
+ * 例如：/test/api-test-center -> /admin/test/api-test-center
+ */
+function normalizeRoutePath(path: string): string | null {
+  // 如果路径已经有应用前缀，不需要规范化
+  const subAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance'];
+  if (subAppPrefixes.some(prefix => path.startsWith(prefix))) {
+    return null;
+  }
+
+  // 如果是系统域路径，不需要规范化
+  if (path === '/' || path === '/profile' || path.startsWith('/data') || path.startsWith('/login') || path.startsWith('/forget-password') || path.startsWith('/register')) {
+    return null;
+  }
+
+  // 遍历所有应用的 tabRegistry，查找匹配的路径
+  // 子应用列表
+  const subApps = ['admin', 'logistics', 'engineering', 'quality', 'production', 'finance'];
+  
+  for (const appName of subApps) {
+    try {
+      const tabs = getTabsForNamespace(appName);
+      for (const tab of tabs) {
+        // 移除应用前缀后比较
+        const appPrefix = `/${appName}`;
+        const pathWithoutPrefix = tab.path.startsWith(appPrefix) 
+          ? tab.path.substring(appPrefix.length) || '/'
+          : tab.path;
+        
+        // 如果路径匹配（去掉应用前缀后），返回完整路径
+        if (pathWithoutPrefix === path || pathWithoutPrefix === `${path}/`) {
+          console.log(`[Router] 规范化路径: ${path} -> ${tab.path} (应用: ${appName})`);
+          return tab.path;
+        }
+      }
+    } catch (error) {
+      // 如果某个应用的 tabRegistry 未加载，继续查找下一个
+      continue;
+    }
+  }
+
+  return null;
+}
+
 // 路由前置守卫：处理认证、Loading 显示和侧边栏
 router.beforeEach((to, from, next) => {
+  // 关键：路径规范化 - 确保子应用路径有正确的前缀
+  const normalizedPath = normalizeRoutePath(to.path);
+  if (normalizedPath) {
+    next({
+      path: normalizedPath,
+      query: to.query,
+      hash: to.hash,
+      replace: true,
+    });
+    return;
+  }
+
   // 检查是否为公开页面（不需要认证）
   const isPublicPage = to.meta?.public === true;
   const isAuthenticatedUser = isAuthenticated();
@@ -312,8 +397,8 @@ router.afterEach((to) => {
   // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
   // 使用统一的清理函数，自动清理所有图表组件
   try {
-    // 动态导入清理函数，避免在路由文件中直接导入导致循环依赖
-    import('@btc/shared-components').then(({ cleanupAllECharts }) => {
+    // 动态导入清理函数，使用具体路径避免与静态导入冲突
+    import('@btc/shared-components/charts/utils/cleanup').then(({ cleanupAllECharts }) => {
       cleanupAllECharts();
     }).catch(() => {
       // 如果导入失败，使用备用清理逻辑

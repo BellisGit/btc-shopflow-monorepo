@@ -1,0 +1,36 @@
+{
+  "app": {
+    "id": "monitor",
+    "basePath": "/monitor",
+    "nameKey": "menu.monitor.name"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "labelKey": "menu.monitor.overview",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": []
+    },
+    {
+      "path": "/error",
+      "labelKey": "menu.monitor.error",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.monitor.error"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.monitor.error", "icon": "Warning" }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "index": "/error",
+      "labelKey": "menu.monitor.error",
+      "icon": "svg:warning"
+    }
+  ]
+}
+

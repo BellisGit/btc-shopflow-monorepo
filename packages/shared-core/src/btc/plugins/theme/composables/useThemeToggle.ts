@@ -69,12 +69,14 @@ export function createToggleDark(
           };
           const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
           // 获取现有的 settings，更新主题相关字段
+          // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段（如 theme）
           const currentSettings = (storage.get('settings') as Record<string, any>) || {};
-          storage.set('settings', {
+          const updatedSettings = {
             ...currentSettings,
             systemThemeType: newTheme,
             systemThemeMode: newTheme
-          });
+          };
+          storage.set('settings', updatedSettings);
           // 清理旧的独立存储 key
           storage.remove('systemThemeType');
           storage.remove('systemThemeMode');

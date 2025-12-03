@@ -117,6 +117,7 @@ const columns = computed<TableColumn[]>(() => [
   { type: 'index', label: '序号', width: 60 },
   { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
   { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
+  { prop: 'domainType', label: t('platform.domains.domain_type'), width: 120 },
   {
     prop: 'tenantId',
     label: '租户名称',
@@ -130,6 +131,7 @@ const columns = computed<TableColumn[]>(() => [
 const formItems = computed<FormItem[]>(() => [
   { prop: 'name', label: t('platform.domain.name'), span: 12, required: true, component: { name: 'el-input' } },
   { prop: 'domainCode', label: t('platform.domain.code'), span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'domainType', label: t('platform.domains.domain_type'), span: 12, component: { name: 'el-input' } },
   {
     prop: 'tenantId',
     label: '租户名称',

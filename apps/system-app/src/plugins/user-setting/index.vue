@@ -5,7 +5,7 @@
       :config="{
         icon: 'theme',
         tooltip: t('common.tooltip.theme_settings'),
-        onClick: openDrawer
+        onClick: handlePreferencesClick
       }"
     />
 
@@ -20,7 +20,10 @@
   </div>
 
   <!-- 用户设置抽屉 -->
-  <BtcUserSettingDrawer v-model="drawerVisible" />
+  <BtcUserSettingDrawer 
+    :model-value="drawerVisible" 
+    @update:model-value="(val) => { drawerVisible = val; }"
+  />
 </template>
 
 <script setup lang="ts">
@@ -36,12 +39,18 @@ defineOptions({
 
 const { t } = useI18n();
 const userSetting = useUserSetting();
-const {
-  drawerVisible,
-  openDrawer,
-  handleDarkToggle,
-  theme,
-} = userSetting;
+// 直接使用 userSetting.drawerVisible，它本身就是一个 ref
+const drawerVisible = userSetting.drawerVisible;
+const openDrawer = userSetting.openDrawer;
+const handleDarkToggle = userSetting.handleDarkToggle;
+const theme = userSetting.theme;
+
+// 处理偏好设置按钮点击
+const handlePreferencesClick = (event?: MouseEvent) => {
+  if (openDrawer) {
+    openDrawer();
+  }
+};
 
 // 提供用户设置实例给子组件
 provide('userSetting', userSetting);

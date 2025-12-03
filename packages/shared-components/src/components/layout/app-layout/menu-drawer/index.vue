@@ -86,8 +86,7 @@ async function getDomainList(service: any) {
   if (getDomainListFn) {
     return await getDomainListFn(service);
   }
-  // 如果没有提供，返回空数组
-  console.warn('[menu-drawer] getDomainList function not available');
+  // 如果没有提供，返回空数组（静默处理，不输出警告）
   return [];
 }
 
@@ -105,9 +104,14 @@ function finishLoading() {
 function getAppConfig(appName: string) {
   const getAppConfigFn = (window as any).__APP_GET_APP_CONFIG__;
   if (getAppConfigFn) {
-    return getAppConfigFn(appName);
+    const config = getAppConfigFn(appName);
+    if (!config) {
+      // 静默处理，不输出警告
+      return null;
+    }
+    return config;
   }
-  console.warn(`[menu-drawer] getAppConfig function not available for ${appName}`);
+  // 静默处理，不输出警告
   return null;
 }
 
@@ -195,7 +199,7 @@ const getAppEntry = (appName: string): string => {
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {
-    console.warn(`[menu-drawer] 未找到应用配置: ${appName}-app`);
+    // 静默处理，使用默认路径
     return `/${appName}/`;
   }
 
@@ -320,17 +324,8 @@ onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
 
-// 固定显示的应用配置（文档域始终显示，不受域列表影响）
-const fixedApplications: MicroApp[] = [
-  {
-    name: 'docs',
-    icon: 'tutorial',
-    color: '#ec4899', // 粉色系，与系统域紫色区分
-    entry: getEnvironmentType() === 'production' ? '/docs/' : '//localhost:8080/docs',
-    activeRule: '/docs',
-    description: '文档中心 - 系统使用指南和API文档'
-  },
-];
+// 固定显示的应用配置（文档域不再默认显示）
+const fixedApplications: MicroApp[] = [];
 
 // 域到应用的映射配置（不包括管理域和文档域）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
@@ -390,20 +385,65 @@ const getDomainDisplayName = (app: MicroApp) => {
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 管理域（主应用）使用域数据中的管理域名称
-  if (app.name === 'admin') {
-    const adminDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) => domain.domainCode === 'ADMIN' || domain.name === '管理域');
-    if (adminDomain && adminDomain.name) {
-      return adminDomain.name;
+  // 系统域使用域数据中的系统域类型
+  if (app.name === 'system') {
+    const systemDomain = Array.from(domainDataMap.value.values())
+      .find((domain: any) => 
+        domain.domainCode === 'SYSTEM' || 
+        domain.name === '系统域' ||
+        domain.id === '17601901464201'
+      );
+    if (systemDomain && systemDomain.domainType) {
+      return systemDomain.domainType;
     }
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 其他域使用对应的域名称
-  const domain = domainDataMap.value.get(app.name.toUpperCase());
-  if (domain && domain.name) {
-    return domain.name;
+  // 管理域使用域数据中的管理域类型
+  if (app.name === 'admin') {
+    const adminDomain = Array.from(domainDataMap.value.values())
+      .find((domain: any) => 
+        domain.domainCode === 'ADMIN' || 
+        domain.name === '管理域' ||
+        domain.id === 'SDOM-9473'
+      );
+    if (adminDomain && adminDomain.domainType) {
+      return adminDomain.domainType;
+    }
+    return t(`micro_app.${app.name}.title`);
+  }
+
+  // 其他域使用对应的域类型
+  // 首先尝试使用 app.name 的大写形式作为 key
+  let domain = domainDataMap.value.get(app.name.toUpperCase());
+  
+  // 如果找不到，尝试从所有域中查找匹配的域
+  if (!domain) {
+    domain = Array.from(domainDataMap.value.values())
+      .find((d: any) => {
+        const domainCode = d.domainCode || d.id || d.name;
+        return domainCode && domainCode.toUpperCase() === app.name.toUpperCase();
+      });
+  }
+  
+  // 如果还是找不到，尝试使用其他可能的匹配方式
+  if (!domain) {
+    const domainNameMap: Record<string, string> = {
+      'logistics': '物流域',
+      'finance': '财务域',
+      'quality': '品质域',
+      'production': '生产域',
+      'engineering': '工程域',
+    };
+    const domainName = domainNameMap[app.name];
+    if (domainName) {
+      domain = Array.from(domainDataMap.value.values())
+        .find((d: any) => d.name === domainName);
+    }
+  }
+  
+  if (domain && domain.domainType) {
+    return domain.domainType;
   }
 
   // 兜底使用国际化配置
@@ -458,9 +498,27 @@ const loadApplications = async () => {
         const domainCode = domain.domainCode ||
           (domain.name === '系统域' ? 'SYSTEM' :
            domain.name === '管理域' ? 'ADMIN' :
+           domain.name === '物流域' ? 'LOGISTICS' :
+           domain.name === '财务域' ? 'FINANCE' :
+           domain.name === '品质域' ? 'QUALITY' :
+           domain.name === '生产域' ? 'PRODUCTION' :
+           domain.name === '工程域' ? 'ENGINEERING' :
            domain.id || domain.name);
         if (domainCode) {
+          // 使用 domainCode 作为主 key
           domainMap.set(domainCode, domain);
+          // 同时使用 domainCode 的大写形式作为 key（用于查找）
+          if (typeof domainCode === 'string') {
+            domainMap.set(domainCode.toUpperCase(), domain);
+          }
+          // 使用 domain.name 作为 key（用于中文名称查找）
+          if (domain.name) {
+            domainMap.set(domain.name, domain);
+          }
+          // 使用小写的 domainCode 作为 key（用于 app.name 查找）
+          if (typeof domainCode === 'string') {
+            domainMap.set(domainCode.toLowerCase(), domain);
+          }
         }
       });
 
@@ -534,9 +592,6 @@ const loadApplications = async () => {
           }
         });
 
-      // 4. 添加固定应用（文档域）
-      appList.push(...fixedApplications);
-
       applications.value = appList;
     } else {
       // 如果服务不可用，使用默认配置
@@ -548,8 +603,7 @@ const loadApplications = async () => {
           entry: '//localhost:8081',
           activeRule: '/',
           description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-        },
-        ...fixedApplications
+        }
       ];
       domainDataMap.value.clear();
     }
@@ -564,8 +618,7 @@ const loadApplications = async () => {
         entry: '//localhost:8081',
         activeRule: '/',
         description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-      },
-      ...fixedApplications
+      }
     ];
     domainDataMap.value.clear();
   } finally {

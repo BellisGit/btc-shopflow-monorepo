@@ -140,6 +140,10 @@ const setGap = (gap: number) => {
 
 watchEffect(() => {
   if (!crudRef.value) return;
+  // operationWidth 已经在 syncOperationWidth 中包含了 gap（操作列宽度 + 10px）
+  // 所以这里直接使用 operationWidth，不需要再加 gap
+  // 这样 .btc-crud-right-group 的宽度会包含 gap，确保内部元素之间有间距
+  // 同时操作列宽度也增加了 10px，确保搜索组件最右侧和操作列左侧对齐
   crudRef.value.style.setProperty('--btc-crud-op-width', `${operationWidth.value}px`);
   crudRef.value.style.setProperty('--btc-crud-search-width', `${searchWidth.value}px`);
   crudRef.value.style.setProperty('--btc-crud-trailing-width', `${trailingWidth.value}px`);

@@ -28,10 +28,14 @@ export function copyLogoPlugin(): Plugin {
           return;
         }
 
+        // 获取应用根目录
+        const root = viteConfig.root || process.cwd();
+        
         // 共享组件库的 logo.png 路径
+        // 从应用根目录（如 apps/logistics-app）到 packages/shared-components/public/logo.png
         const logoSourcePath = resolve(
-          __dirname,
-          '../../../shared-components/public/logo.png'
+          root,
+          '../../packages/shared-components/public/logo.png'
         );
         
         // 检查源文件是否存在
@@ -41,7 +45,6 @@ export function copyLogoPlugin(): Plugin {
         }
 
         // 获取构建输出目录（从 Vite 配置）
-        const root = viteConfig.root || process.cwd();
         const outDir = viteConfig.build.outDir || 'dist';
         const distDir = resolve(root, outDir);
 

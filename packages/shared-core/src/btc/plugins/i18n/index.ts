@@ -71,7 +71,17 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
     return loc;
   }
 
-  const currentLocale = normalizeLocale((storage.get('locale') as string) || options.locale || 'zh-CN');
+  // 优先从 cookie 读取 locale（与服务端保持一致），如果没有则使用默认值
+  let currentLocale: string;
+  if (typeof document !== 'undefined') {
+    const cookieLocale = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('locale='))
+      ?.split('=')[1];
+    currentLocale = normalizeLocale(cookieLocale || options.locale || 'zh-CN');
+  } else {
+    currentLocale = normalizeLocale(options.locale || 'zh-CN');
+  }
 
   // 初始化时也写 cookie（确保服务端能读到）
   if (typeof document !== 'undefined') {
@@ -130,9 +140,8 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       const { locale } = i18n.global;
       if (typeof locale !== 'string') {
         watch(() => locale.value, (newLocale: string) => {
-          storage.set('locale', newLocale);
-
-          // 同时写 cookie（供服务端读取，实现首帧标题正确）
+          // 只写 cookie，不再写入 localStorage（locale 只需要 cookie 供服务端读取）
+          // 前端读取 locale 从 cookie 或 i18n 实例中获取即可
           document.cookie = `locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
 
           // 触发自定义事件，通知浏览器标题等更新（同步）

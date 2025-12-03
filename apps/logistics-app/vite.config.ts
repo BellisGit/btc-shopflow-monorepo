@@ -35,7 +35,24 @@ const getManualChunkName = (id: string) => {
     return 'element-plus';
   }
 
+  // 处理 @btc/shared-utils/qiankun/load-layout-app 的动态导入冲突
+  // 确保它与静态导入的 @btc/shared-utils 放在同一个 chunk 中
+  if (id.includes('@btc/shared-utils/qiankun/load-layout-app') ||
+      id.includes('packages/shared-utils/src/qiankun/load-layout-app')) {
+    return 'btc-shared';
+  }
+
   if (id.includes('src/') && !id.includes('node_modules')) {
+    // 确保被动态导入和静态导入的模块放在同一个 chunk 中
+    // 使用更精确的路径匹配，包括完整路径和相对路径
+    if (id.includes('utils/app-storage') || 
+        id.includes('utils/app-storage/index') ||
+        id.includes('services/eps') ||
+        id.includes('services/eps.ts') ||
+        (id.includes('logistics-app') && (id.includes('utils/app-storage') || id.includes('services/eps')))) {
+      return 'app-src';
+    }
+
     if (id.includes('src/modules')) {
       const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
       if (moduleName && ['customs', 'home', 'procurement', 'warehouse'].includes(moduleName)) {
@@ -125,9 +142,7 @@ const getManualChunkName = (id: string) => {
     if (id.includes('qiankun')) {
       return 'qiankun';
     }
-    if (id.includes('echarts')) {
-      return 'lib-echarts';
-    }
+    // 注意：logistics-app 未使用 echarts，因此不创建 lib-echarts chunk
     return 'vendor';
   }
 
@@ -360,6 +375,8 @@ export default defineConfig({
     target: 'es2018', // 与 qiankun 兼容的最低目标
     cssTarget: 'chrome61',
     sourcemap: false,
+    // 提高 chunk 大小警告阈值，避免不必要的警告
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         format: 'esm', // 明确指定输出格式为 ESM，与主应用的 scriptType: 'module' 配置一致
@@ -368,8 +385,19 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
+      onwarn(warning, warn) {
+        // 过滤动态导入和静态导入冲突的警告，因为我们已经在 manualChunks 中确保它们在同一 chunk
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE' || 
+            (warning.message && warning.message.includes('dynamically imported') && warning.message.includes('statically imported'))) {
+          return;
+        }
+        // 过滤空 chunk 警告（某些 chunk 可能因为 tree-shaking 而变空，这是正常的）
+        if (warning.message && typeof warning.message === 'string' && warning.message.includes('Generated an empty chunk')) {
+          return;
+        }
+        warn(warning);
+      },
     },
-    chunkSizeWarningLimit: 2000, // 提高警告阈值，element-plus chunk 较大是正常的
   },
   optimizeDeps: {
     // 启用依赖预构建，加速开发环境模块加载

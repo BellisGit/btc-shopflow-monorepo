@@ -22,6 +22,7 @@
   "platform.domains.title": "Domain List",
   "platform.domains.domain_name": "Domain Name",
   "platform.domains.domain_code": "Domain Code",
+  "platform.domains.domain_type": "Domain Type",
   "platform.domains.description": "Description",
   "platform.domains.created_at": "Created Time",
   "platform.domains.updated_at": "Updated Time",

@@ -299,3 +299,4 @@ echo "=========================================="
 5. **SSL 连接测试输出：** `openssl s_client -connect mobile.bellis.com.cn:443 -showcerts < /dev/null`
 6. **端口监听状态：** `netstat -tlnp | grep 443`
 
+

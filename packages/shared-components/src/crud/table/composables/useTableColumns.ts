@@ -3,12 +3,68 @@ import type { TableProps } from '../types';
 import { autoFormatTableColumns } from '../utils/formatters';
 import { CommonColumns } from '../utils/common-columns';
 import { useI18n } from '@btc/shared-core';
+import { useCrudLayout, DEFAULT_CRUD_GAP } from '../../context/layout';
 
 /**
  * 表格列配置处理
  */
 export function useTableColumns(props: TableProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const crudLayout = useCrudLayout();
+  const gap = crudLayout?.gap?.value ?? DEFAULT_CRUD_GAP;
+
+  /**
+   * 将 prop 转换为首字母大写的显示文本
+   * 例如：deptCode -> Dept Code, parentId -> Parent Id, name -> Name
+   */
+  function formatPropToLabel(prop: string): string {
+    // 将驼峰命名转换为空格分隔的单词
+    const words = prop
+      .replace(/([A-Z])/g, ' $1') // 在大写字母前添加空格
+      .trim()
+      .split(/\s+/); // 按空格分割成单词数组
+    
+    // 将每个单词首字母大写
+    return words
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  /**
+   * 判断当前是否为中文环境
+   */
+  function isChineseLocale(): boolean {
+    const currentLocale = typeof locale === 'string' ? locale : locale.value;
+    return currentLocale?.startsWith('zh') ?? false;
+  }
+
+  /**
+   * 判断字符串是否是国际化 key（而不是翻译后的值）
+   * 国际化 key 的格式：以字母开头，包含至少一个点，且点前后都有非空字符
+   * 例如：'crud.table.index' 是 key，'No.' 不是 key
+   */
+  function isI18nKey(str: string): boolean {
+    // 必须是字符串且包含点
+    if (!str.includes('.')) {
+      return false;
+    }
+    
+    // 检查是否符合国际化 key 的格式：以字母开头，点前后都有非空字符
+    // 例如：'crud.table.index' ✓, 'No.' ✗, 'A.B' ✓, '.B' ✗, 'A.' ✗
+    const parts = str.split('.');
+    if (parts.length < 2) {
+      return false;
+    }
+    
+    // 第一部分必须以字母开头
+    const firstPart = parts[0].trim();
+    if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
+      return false;
+    }
+    
+    // 所有部分都不能为空
+    return parts.every(part => part.trim().length > 0);
+  }
 
   /**
    * 格式化字典值
@@ -106,16 +162,47 @@ export function useTableColumns(props: TableProps) {
         alwaysVisible: column.alwaysVisible ?? column.toggleable === false,
       };
 
-      // 处理操作列的国际化标签
-      if (column.type === 'op') {
-        if (column.label && typeof column.label === 'string') {
-          // 如果手动指定了label且是国际化key，进行翻译
-          if (column.label.includes('.')) {
+      // 处理列的国际化标签
+      // 优先处理特殊类型列（index、op）的国际化
+      if (column.type === 'index') {
+        // 序号列：如果 label 是国际化 key，翻译；否则使用默认的国际化标签
+        if (column.label && typeof column.label === 'string' && isI18nKey(column.label)) {
             config.label = t(column.label);
+        } else {
+          config.label = t('crud.table.index');
           }
-        } else if (!column.label) {
-          // 如果没有指定label，使用默认的国际化标签
+      } else if (column.type === 'op') {
+        // 操作列：如果 label 是国际化 key，翻译；否则使用默认的国际化标签
+        if (column.label && typeof column.label === 'string' && isI18nKey(column.label)) {
+          config.label = t(column.label);
+        } else {
           config.label = t('ui.table.operation');
+        }
+      } else if (column.label && typeof column.label === 'string') {
+        // 普通列：如果 label 是国际化 key，进行翻译
+        if (isI18nKey(column.label)) {
+          config.label = t(column.label);
+        } else {
+          // 如果 label 不包含 '.'（可能是硬编码的中文），根据语言环境自动切换
+          if (isChineseLocale()) {
+            // 中文环境：显示 label（硬编码的中文）
+            config.label = column.label;
+          } else if (column.prop) {
+            // 英文环境：显示 prop（首字母大写）
+            config.label = formatPropToLabel(column.prop);
+          } else {
+            // 没有 prop，保持原 label
+            config.label = column.label;
+          }
+        }
+      } else if (!column.label && column.prop) {
+        // 如果没有 label 但有 prop，根据语言环境显示
+        if (isChineseLocale()) {
+          // 中文环境：显示 prop（可能需要根据实际情况调整）
+          config.label = column.prop;
+        } else {
+          // 英文环境：显示 prop（首字母大写）
+          config.label = formatPropToLabel(column.prop);
         }
       }
 
@@ -127,6 +214,15 @@ export function useTableColumns(props: TableProps) {
       // 操作列默认固定在右侧（对齐 cool-admin）
       if (column.type === 'op' && column.fixed === undefined) {
         config.fixed = 'right';
+        // 操作列宽度需要增加 gap（10px），这样搜索组件最右侧才能和操作列左侧对齐
+        if (config.width && typeof config.width === 'number') {
+          config.width = config.width + gap;
+        } else if (config.minWidth && typeof config.minWidth === 'number') {
+          config.minWidth = config.minWidth + gap;
+        } else if (!config.width && !config.minWidth) {
+          // 如果没有设置宽度，使用默认宽度 + gap
+          config.width = 220 + gap;
+        }
       }
 
       // 智能列宽：非固定列自动转换为 minWidth 以实现灵活布局

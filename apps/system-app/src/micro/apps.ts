@@ -56,10 +56,12 @@ const getEnvironmentType = (): EnvironmentType => {
  */
 const getAppEntry = (appName: string): string => {
   const envType = getEnvironmentType();
-  const appConfig = getAppConfig(`${appName}-app`);
+  // docs-site-app 的特殊处理：appName 是 'docs'，但配置名称是 'docs-site-app'
+  const configAppName = appName === 'docs' ? 'docs-site-app' : `${appName}-app`;
+  const appConfig = getAppConfig(configAppName);
 
   if (!appConfig) {
-    console.warn(`[apps.ts] 未找到应用配置: ${appName}-app`);
+    console.warn(`[apps.ts] 未找到应用配置: ${configAppName}`);
     return `/${appName}/`;
   }
 
@@ -222,6 +224,32 @@ export const microApps: MicroAppConfig[] = [
         return true;
       }
       if (location.pathname.startsWith('/finance')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'monitor',
+    entry: getAppEntry('monitor'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      // 监控应用通过 /monitor 路径访问
+      if (location.pathname.startsWith('/monitor')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'docs',
+    entry: getAppEntry('docs'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      // 文档应用通过 /docs 路径访问
+      if (location.pathname.startsWith('/docs')) {
         return true;
       }
       return false;

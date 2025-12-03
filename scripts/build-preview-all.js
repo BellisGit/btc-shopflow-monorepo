@@ -39,7 +39,7 @@ buildProcess.on('close', (buildCode) => {
   console.log('构建成功，开始预览...');
 
   // 运行预览（turbo.js 已经处理了 NODE_PATH 问题）
-  const previewProcess = spawn('node', [turboScript, 'run', 'preview', '--concurrency=15'], {
+  const previewProcess = spawn('node', [turboScript, 'run', 'preview', '--concurrency=20'], {
     stdio: 'inherit',
     shell: false,
     cwd: path.join(__dirname, '..'),

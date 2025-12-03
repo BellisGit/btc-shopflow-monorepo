@@ -17,7 +17,7 @@ const config = getViteAppConfig('layout-app');
 const corsPlugin = (): Plugin => {
   const corsDevMiddleware = (req: any, res: any, next: any) => {
     const origin = req.headers.origin;
-    
+
     if (origin) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -30,7 +30,7 @@ const corsPlugin = (): Plugin => {
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Tenant-Id');
       res.setHeader('Access-Control-Allow-Private-Network', 'true');
     }
-    
+
     if (req.method === 'OPTIONS') {
       res.statusCode = 200;
       res.setHeader('Access-Control-Max-Age', '86400');
@@ -38,7 +38,7 @@ const corsPlugin = (): Plugin => {
       res.end();
       return;
     }
-    
+
     next();
   };
 
@@ -115,7 +115,7 @@ export default defineConfig({
       ],
       runtimeOnly: true,
     }),
-    createAutoImportConfig({ includeShared: true }),
+    createAutoImportConfig(),
     createComponentsConfig({ includeShared: true }),
     qiankun('layout', {
       useDevMode: process.env.NODE_ENV === 'development',
@@ -144,7 +144,7 @@ export default defineConfig({
     } as Plugin,
   ],
   server: {
-    port: parseInt(config.devPort, 10),
+    port: config.devPort,
     host: config.devHost,
     strictPort: true,
     open: false,
@@ -177,14 +177,95 @@ export default defineConfig({
     // 禁用内联，确保资源文件独立
     assetsInlineLimit: 0,
     cssCodeSplit: true,
+    // 提高 chunk 大小警告阈值，避免不必要的警告
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         // 使用 ES 模块格式，与其他应用保持一致，便于 qiankun 加载
         format: 'es',
         inlineDynamicImports: false,
+        manualChunks(id) {
+          // 重要：Element Plus 的匹配必须在最前面
+          if (id.includes('element-plus') || id.includes('@element-plus')) {
+            return 'element-plus';
+          }
+
+          // 处理 @btc/shared-components/charts/utils/cleanup
+          // 确保动态导入的 cleanup 工具与静态导入的 shared-components 放在同一个 chunk 中
+          if (id.includes('@btc/shared-components/charts/utils/cleanup') ||
+              id.includes('packages/shared-components/src/charts/utils/cleanup')) {
+            return 'btc-components';
+          }
+
+          // 处理 system-app 的代码（通过别名 @system 引用）
+          // 确保被动态导入和静态导入的模块在同一 chunk
+          if (id.includes('system-app/src/') || id.includes('@system') ||
+              (id.includes('apps/system-app') && id.includes('src/'))) {
+            if (id.includes('store/tabRegistry') ||
+                id.includes('store/process') ||
+                id.includes('store/menuRegistry') ||
+                id.includes('composables/useUser') ||
+                id.includes('services/eps') ||
+                id.includes('micro/manifests') ||
+                id.includes('utils/loadingManager')) {
+              return 'app-src';
+            }
+            return 'app-src';
+          }
+
+          // 处理 @configs 包（关键配置和工具函数）
+          if (id.includes('@configs')) {
+            return 'app-src';
+          }
+
+          // 处理业务代码分割（必须在 node_modules 之前，确保优先级）
+          if (id.includes('src/') && !id.includes('node_modules') && !id.includes('system-app')) {
+            // 关键：所有 src/ 代码必须合并到 app-src，确保 main.ts 和初始化相关的代码在一起
+            return 'app-src';
+          }
+
+          // 处理 @btc/shared- 包（共享包）
+          if (id.includes('@btc/shared-')) {
+            if (id.includes('@btc/shared-components')) {
+              return 'btc-components';
+            }
+            return 'btc-shared';
+          }
+
+          // 处理 node_modules 依赖，进行代码分割
+          if (id.includes('node_modules')) {
+            // 分割 Vue 相关依赖
+            if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n') && !id.includes('element-plus')) {
+              return 'vue-core';
+            }
+            if (id.includes('vue-router')) {
+              return 'vue-router';
+            }
+            // 分割 Pinia
+            if (id.includes('pinia')) {
+              return 'pinia';
+            }
+            // 其他 vendor 依赖
+            return 'vendor';
+          }
+
+          return undefined;
+        },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+      },
+      onwarn(warning, warn) {
+        // 过滤动态导入和静态导入冲突的警告，因为我们已经在 manualChunks 中确保它们在同一 chunk
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
+            (warning.message && warning.message.includes('dynamically imported') && warning.message.includes('statically imported'))) {
+          return;
+        }
+        // 过滤空 chunk 警告（某些 chunk 可能因为 tree-shaking 而变空，这是正常的）
+        if (warning.message && typeof warning.message === 'string' && warning.message.includes('Generated an empty chunk')) {
+          return;
+        }
+        warn(warning);
       },
     },
   },

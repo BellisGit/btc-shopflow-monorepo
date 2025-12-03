@@ -145,6 +145,7 @@ export default defineComponent({
       }, {
         default: () => {
           const content = [];
+          
           // 插槽
           if (e.component?.name?.startsWith('slot-')) {
             const slotName = e.component.name.replace('slot-', '');
@@ -164,8 +165,8 @@ export default defineComponent({
             });
           }
 
-          // 组件名称
-          if (e.component?.name) {
+            // 组件名称
+            if (e.component?.name) {
             const componentName = e.component.name;
             const Component = componentMap[componentName] || resolveComponent(componentName);
 
@@ -173,14 +174,44 @@ export default defineComponent({
             const baseProp = e.prop || `field-${index}`;
             const inputId = `${formUid}-${baseProp}-${index}`;
 
+            // 日期选择器和时间选择器：不传递 id 和 name（避免类型错误），使用隐藏 input 作为表单字段
+            const isDateOrTimePicker = componentName === 'el-date-picker' || componentName === 'el-time-picker';
+            
+            // 对于日期/时间选择器，先添加隐藏的 input 作为第一个子元素（用于可访问性，让 label 的 for 属性能找到它）
+            if (isDateOrTimePicker) {
+              content.push(h('input', {
+                id: inputId,
+                name: baseProp,
+                type: 'text',
+                style: { 
+                  position: 'absolute', 
+                  opacity: 0, 
+                  pointerEvents: 'none', 
+                  width: '1px', 
+                  height: '1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0
+                },
+                tabindex: -1,
+                'aria-hidden': 'true',
+                value: Array.isArray((form as Record<string, any>)[e.prop]) 
+                  ? (form as Record<string, any>)[e.prop].join(' - ') 
+                  : ((form as Record<string, any>)[e.prop] || ''),
+                readonly: true
+              }));
+            }
+            
             const componentProps = {
               modelValue: (form as Record<string, any>)[e.prop],
               'onUpdate:modelValue': (val: any) => {
                 (form as Record<string, any>)[e.prop] = val;
               },
               disabled: disabled.value || e.component.props?.disabled,
-              id: inputId,
-              name: baseProp,
+              ...(isDateOrTimePicker ? {} : { id: inputId, name: baseProp }), // 日期/时间选择器不添加 id 和 name
               ...e.component.props
             };
 
@@ -248,7 +279,7 @@ export default defineComponent({
 
             const result = h(Component, componentProps, Object.keys(componentSlots).length > 0 ? componentSlots : undefined);
 
-            // flex 控制：包装在 div 中
+            // flex 控制：包装在 div 中（隐藏 input 已在最开始添加到 content 中）
             if (e.flex === false) {
               content.push(h('div', {
                 class: 'btc-form-item__component',

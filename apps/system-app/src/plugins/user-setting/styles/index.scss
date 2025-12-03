@@ -8,7 +8,55 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
-  // 不设置 overflow，让内容自然流动，滚动由具体组件（如 btc-table）自己处理
+  overflow-y: auto;
+  overflow-x: hidden;
+  // 隐藏滚动条但保持滚动功能
+  scrollbar-width: none; // Firefox
+  &::-webkit-scrollbar {
+    width: 0; // Chrome/Safari
+    height: 0;
+  }
+}
+
+.user-preferences-panel {
+  position: fixed;
+  top: 47px; // 从顶栏下方开始（顶栏高度 47px）
+  right: 0;
+  width: 380px;
+  height: calc(100vh - 47px); // 高度减去顶栏高度
+  z-index: 999; // 高于遮罩层
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid var(--el-border-color-extra-light);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  overflow: hidden;
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+.preferences-slide-enter-active,
+.preferences-slide-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.preferences-slide-enter-from,
+.preferences-slide-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+html.dark {
+  .user-preferences-panel {
+    background: rgba(10, 10, 10, 0.9);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.5);
+  }
 }
 
 // 公共的设置框样式（用于菜单布局、菜单风格、主题风格）
@@ -142,6 +190,23 @@
       overflow: hidden;
       text-overflow: ellipsis; // 如果文本过长，显示省略号
       max-width: 100%;
+    }
+  }
+}
+
+// 移动端适配
+@media screen and (max-width: 480px) {
+  .preferences-drawer {
+    padding: 0 8px 20px;
+
+    .main-color-wrap {
+      .offset {
+        justify-content: center;
+
+        > div {
+          margin: 0 8px 8px 0;
+        }
+      }
     }
   }
 }

@@ -32,5 +32,5 @@ export declare function useThemePlugin(): ThemePlugin;
 /**
  * 导出主题配置类型
  */
-export type { ThemeConfig };
+export type { ThemeConfig } from '../../composables/useTheme';
 export { THEME_PRESETS };

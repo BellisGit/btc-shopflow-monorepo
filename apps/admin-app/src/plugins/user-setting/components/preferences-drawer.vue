@@ -1,45 +1,49 @@
 <template>
-  <el-drawer
-    v-model="visible"
-    :with-header="false"
-    size="380px"
-    append-to-body
-    :lock-scroll="false"
-    modal-class="user-preferences-modal"
-  >
-    <div class="preferences-drawer">
-      <!-- 头部关闭按钮 -->
-      <SettingHeader @close="closeDrawer" />
+  <teleport to="body">
+    <transition name="preferences-slide">
+      <section
+        v-if="visible"
+        ref="drawerRef"
+        class="user-preferences-panel"
+        role="dialog"
+        aria-modal="false"
+        aria-label="User preferences"
+      >
+        <div class="preferences-drawer">
+          <!-- 头部关闭按钮 -->
+          <SettingHeader @close="closeDrawer" />
 
-      <!-- 主题风格（切换深浅主题） -->
-      <ThemeStyleSettings />
+          <!-- 主题风格（切换深浅主题） -->
+          <ThemeStyleSettings />
 
-      <!-- 菜单布局 -->
-      <MenuLayoutSettings />
+          <!-- 菜单布局 -->
+          <MenuLayoutSettings />
 
-      <!-- 菜单风格 -->
-      <MenuStyleSettings />
+          <!-- 菜单风格 -->
+          <MenuStyleSettings />
 
-      <!-- 系统主题色 -->
-      <ColorSettings />
+          <!-- 系统主题色 -->
+          <ColorSettings />
 
-      <!-- 按钮风格 -->
-      <ButtonStyleSettings />
+          <!-- 按钮风格 -->
+          <ButtonStyleSettings />
 
-      <!-- 盒子样式 -->
-      <BoxStyleSettings />
+          <!-- 盒子样式 -->
+          <BoxStyleSettings />
 
-      <!-- 容器宽度 -->
-      <ContainerWidthSettings />
+          <!-- 容器宽度 -->
+          <ContainerWidthSettings />
 
-      <!-- 基础设置 -->
-      <BasicSettings />
-    </div>
-  </el-drawer>
+          <!-- 基础设置 -->
+          <BasicSettings />
+        </div>
+      </section>
+    </transition>
+  </teleport>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import SettingHeader from './shared/SettingHeader.vue';
 import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
@@ -71,8 +75,39 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value),
 });
 
+const drawerRef = ref<HTMLElement | null>(null);
+
 const closeDrawer = () => {
   visible.value = false;
 };
+
+const handleGlobalClick = (event: MouseEvent) => {
+  if (!visible.value) {
+    return;
+  }
+  const drawerEl = drawerRef.value;
+  if (drawerEl && !drawerEl.contains(event.target as Node)) {
+    closeDrawer();
+  }
+};
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (!visible.value) {
+    return;
+  }
+  if (event.key === 'Escape') {
+    closeDrawer();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleGlobalClick);
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleGlobalClick);
+  document.removeEventListener('keydown', handleKeydown);
+});
 </script>
 

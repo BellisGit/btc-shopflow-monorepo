@@ -1,16 +1,23 @@
-// 页面切换过渡动画样式（必须在文件开头）
+// ==================== @forward 规则（必须在文件最前面）====================
+// 页面切换过渡动画样式
 // 使用 @forward 确保样式被正确导出（兼容 @use 模块化）
 @forward './transitions.scss';
 
+// 菜单主题样式（包含左侧菜单、顶栏、侧边栏等所有菜单相关样式）
+// 使用 @forward 确保样式被正确导出（兼容 @use 模块化）
+@forward './menu-themes.scss';
+
+// ==================== @import 规则（用于 CSS 文件）====================
 // 暗色模式布局背景色样式（必须在文件开头，确保优先级）
 // 注意：在微前端环境下，SCSS 可能无法正确穿透样式隔离
 // 因此使用 CSS 文件而不是 SCSS，确保样式能够正确应用
-// 注意：CSS 文件仍使用 @import，因为 @use 不支持 CSS 文件
-@import './dark-theme.css';
-
-// ==================== 菜单主题样式 ====================
-// 引入菜单主题样式（包含左侧菜单、顶栏、侧边栏等所有菜单相关样式）
-@import './menu-themes.scss';
+// 
+// 重要：已从 index.scss 中移除 @import './dark-theme.css'
+// 原因：通过 @use 导入时，SCSS 编译器无法正确处理相对路径的 CSS 导入，导致构建后仍包含源码路径
+// 解决方案：各个应用应在 main.ts 中直接导入 dark-theme.css
+// 例如：import '@btc/shared-components/styles/dark-theme.css';
+//
+// @import url('./dark-theme.css');
 
 // 深色菜单风格下的顶栏样式（补充样式，确保顶栏 logo 文字颜色正确）
 .topbar.is-dark-menu {
@@ -455,7 +462,24 @@
   font-size: 12px;
 }
 
-.btc-crud-actions,
+// 基础样式：.btc-crud-actions 和 .btc-crud-right-group 共享
+.btc-crud-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--btc-crud-gap);
+	margin-left: auto;
+	flex: 0 0 var(--btc-crud-op-width, 220px);
+	width: var(--btc-crud-op-width, 220px);
+	min-width: 0;
+	justify-content: flex-end;
+	margin-bottom: 0;
+	
+	> .btc-export-btn,
+	> .btc-table-toolbar {
+		flex: 0 0 auto;
+	}
+}
+
 .btc-crud-right-group {
 	display: inline-flex;
 	align-items: center;
@@ -466,9 +490,28 @@
 	min-width: 0;
 	justify-content: flex-end;
 	margin-bottom: 0;
+
+	> .btc-search-key {
+		flex: 1 1 auto;
+		margin-left: 0;
+		width: auto;
+		max-width: none;
+
+		&.is-collapsible:not(.is-expanded) {
+			flex: 0 0 34px;
+			width: 34px;
+		}
+	}
+
 	> .btc-export-btn,
-	> .btc-table-toolbar {
+	> .btc-table-toolbar,
+	> .btc-table-toolbar-host {
 		flex: 0 0 auto;
+	}
+
+	> .btc-crud-toolbar-placeholder {
+		flex: 0 0 auto;
+		opacity: 0.6;
 	}
 }
 
@@ -596,37 +639,6 @@
 	}
 }
 
-.btc-crud-right-group {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--btc-crud-gap);
-	margin-left: auto;
-	flex: 0 0 var(--btc-crud-op-width, 220px);
-	width: var(--btc-crud-op-width, 220px);
-	min-width: 0;
-
-	> .btc-search-key {
-		flex: 1 1 auto;
-		margin-left: 0;
-		width: auto;
-		max-width: none;
-
-		&.is-collapsible:not(.is-expanded) {
-			flex: 0 0 34px;
-			width: 34px;
-		}
-	}
-
-	> .btc-export-btn,
-	> .btc-table-toolbar-host {
-		flex: 0 0 auto;
-	}
-
-	> .btc-crud-toolbar-placeholder {
-		flex: 0 0 auto;
-		opacity: 0.6;
-	}
-}
 
 .btc-table {
 	width: 100%;
@@ -1090,13 +1102,30 @@ ul.topbar__left {
     color: var(--btc-icon-color);
   }
 
-  &:hover {
-    border-color: var(--btc-icon-color);
-    @supports (background-color: color-mix(in srgb, red 50%, blue)) {
-      background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
+  // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+  // 触摸设备使用 :active 样式
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--btc-icon-color);
+      @supports (background-color: color-mix(in srgb, red 50%, blue)) {
+        background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
+      }
+      @supports not (background-color: color-mix(in srgb, red 50%, blue)) {
+        background-color: transparent;
+      }
     }
-    @supports not (background-color: color-mix(in srgb, red 50%, blue)) {
-      background-color: transparent;
+  }
+
+  // 触摸设备使用 :active 样式（点击时显示反馈）
+  @media (hover: none) {
+    &:active {
+      border-color: var(--btc-icon-color);
+      @supports (background-color: color-mix(in srgb, red 50%, blue)) {
+        background-color: color-mix(in srgb, var(--btc-icon-color) 12%, transparent);
+      }
+      @supports not (background-color: color-mix(in srgb, red 50%, blue)) {
+        background-color: transparent;
+      }
     }
   }
 

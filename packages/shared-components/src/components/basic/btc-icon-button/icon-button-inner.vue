@@ -6,6 +6,7 @@
       :content="tooltipText"
       placement="bottom"
       teleported
+      :trigger="isTouchDevice ? 'click' : 'hover'"
     >
       <div
         :class="buttonClasses"
@@ -45,9 +46,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import BtcSvg from '../../others/btc-svg/index.vue';
 import type { IconButtonConfig } from './types';
+
+// 检测是否为触摸设备
+const isTouchDevice = ref(false);
+
+onMounted(() => {
+  // 检测触摸设备：检查是否支持触摸事件，或者使用媒体查询检测指针类型
+  if (typeof window !== 'undefined') {
+    // 方法1：检查是否支持触摸事件
+    const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // 方法2：使用媒体查询检测指针类型（更准确）
+    const hasHoverSupport = window.matchMedia('(hover: hover)').matches;
+    
+    // 如果支持触摸但不支持 hover，则认为是触摸设备
+    isTouchDevice.value = hasTouchSupport && !hasHoverSupport;
+  }
+});
 
 const props = defineProps<{
   config: IconButtonConfig;

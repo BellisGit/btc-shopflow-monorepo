@@ -33,7 +33,7 @@
                   </el-tag>
                 </div>
                 <div class="app-card__description">
-                  {{ app.description || t(`micro_app.${app.name}.description`) }}
+                  {{ getDomainDescription(app) }}
                 </div>
               </div>
               <div class="app-card__action">
@@ -118,17 +118,8 @@ onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
 
-// 固定显示的应用配置（文档域始终显示，不受域列表影响）
-const fixedApplications: MicroApp[] = [
-  {
-    name: 'docs',
-    icon: 'tutorial',
-    color: '#ec4899', // 粉色系，与系统域紫色区分
-    entry: '//localhost:8080/docs',
-    activeRule: '/docs',
-    description: '文档中心 - 系统使用指南和API文档'
-  },
-];
+// 固定显示的应用配置（文档域不再默认显示）
+const fixedApplications: MicroApp[] = [];
 
 // 域到应用的映射配置（不包括管理域和文档域）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
@@ -181,6 +172,17 @@ const applications = ref<MicroApp[]>([]);
 // 存储域数据映射
 const domainDataMap = ref<Map<string, any>>(new Map());
 
+// 域代码到国际化键的映射
+const domainCodeToI18nKey: Record<string, string> = {
+  'SYSTEM': 'domain.type.system',
+  'ADMIN': 'domain.type.admin',
+  'QUALITY': 'domain.type.quality',
+  'ENGINEERING': 'domain.type.engineering',
+  'PRODUCTION': 'domain.type.production',
+  'LOGISTICS': 'domain.type.logistics',
+  'FINANCE': 'domain.type.finance',
+};
+
 // 获取域显示名称
 const getDomainDisplayName = (app: MicroApp) => {
   // 固定应用使用国际化配置
@@ -188,24 +190,42 @@ const getDomainDisplayName = (app: MicroApp) => {
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 管理域（主应用）使用域数据中的管理域名称
-  if (app.name === 'admin') {
-    const adminDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) => domain.domainCode === 'ADMIN' || domain.name === '管理域');
-    if (adminDomain && adminDomain.name) {
-      return adminDomain.name;
-    }
-    return t(`micro_app.${app.name}.title`);
+  // 获取域代码（从应用名称或域数据中）
+  let domainCode: string;
+
+  // 从域数据映射中查找
+  const domain = domainDataMap.value.get(app.name.toUpperCase());
+  if (domain) {
+    domainCode = domain.domainCode || app.name.toUpperCase();
+  } else {
+    domainCode = app.name.toUpperCase();
   }
 
-  // 其他域使用对应的域名称
-  const domain = domainDataMap.value.get(app.name.toUpperCase());
-  if (domain && domain.name) {
-    return domain.name;
+  // 使用国际化映射
+  const i18nKey = domainCodeToI18nKey[domainCode];
+  if (i18nKey) {
+    return t(i18nKey);
   }
 
   // 兜底使用国际化配置
   return t(`micro_app.${app.name}.title`);
+};
+
+// 获取域描述
+const getDomainDescription = (app: MicroApp) => {
+  // 固定应用使用国际化配置
+  if (app.name === 'docs') {
+    return t(`micro_app.${app.name}.description`);
+  }
+
+  // 优先使用国际化配置
+  const i18nKey = `micro_app.${app.name}.description`;
+  if (t(i18nKey) !== i18nKey) {
+    return t(i18nKey);
+  }
+
+  // 如果国际化配置不存在，使用后端返回的描述
+  return app.description || '';
 };
 
 // 从域列表服务获取域信息，构建应用列表
@@ -228,11 +248,20 @@ const loadApplications = async () => {
         // me 接口返回的域数据可能没有 domainCode，需要根据 name 或 id 推断
         // 或者使用 name 作为 key
         const domainCode = domain.domainCode ||
-          (domain.name === '系统域' ? 'SYSTEM' :
-           domain.name === '管理域' ? 'ADMIN' :
+          (domain.name === '系统域' || domain.name === 'System Domain' ? 'SYSTEM' :
+           domain.name === '管理域' || domain.name === 'Admin Domain' ? 'ADMIN' :
+           domain.name === '品质域' || domain.name === 'Quality Domain' ? 'QUALITY' :
+           domain.name === '工程域' || domain.name === 'Engineering Domain' ? 'ENGINEERING' :
+           domain.name === '生产域' || domain.name === 'Production Domain' ? 'PRODUCTION' :
+           domain.name === '物流域' || domain.name === 'Logistics Domain' ? 'LOGISTICS' :
+           domain.name === '财务域' || domain.name === 'Finance Domain' ? 'FINANCE' :
            domain.id || domain.name);
         if (domainCode) {
+          // 同时使用 domainCode 和 name 作为 key，确保能找到
           domainMap.set(domainCode, domain);
+          if (domain.name && domain.name !== domainCode) {
+            domainMap.set(domain.name, domain);
+          }
         }
       });
 
@@ -256,9 +285,7 @@ const loadApplications = async () => {
         color: '#722ed1',
         entry: '//localhost:8081',
         activeRule: '/',
-        description: systemDomain ?
-          (systemDomain.description || `${systemDomain.name} - 全域系统用户处理日常事务的共享域`) :
-          '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
+        description: systemDomain?.description || ''
       });
 
       // 2. 添加管理域应用
@@ -276,7 +303,7 @@ const loadApplications = async () => {
           color: '#13c2c2',
           entry: '//localhost:8080',
           activeRule: '/admin',
-          description: adminDomain.description || `${adminDomain.name} - 平台管理、组织架构、权限管理、导航管理`
+          description: adminDomain.description || ''
         });
       }
 
@@ -300,14 +327,11 @@ const loadApplications = async () => {
             const app = {
               name: domainCode.toLowerCase(), // 应用名称使用小写，用于路由匹配
               ...appConfig,
-              description: domain.description || `${domain.name} - 业务域应用`
+              description: domain.description || ''
             };
             appList.push(app);
           }
         });
-
-      // 4. 添加固定应用（文档域）
-      appList.push(...fixedApplications);
 
       applications.value = appList;
     } else {
@@ -319,9 +343,8 @@ const loadApplications = async () => {
           color: '#722ed1',
           entry: '//localhost:8081',
           activeRule: '/',
-          description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-        },
-        ...fixedApplications
+          description: ''
+        }
       ];
       domainDataMap.value.clear();
     }
@@ -335,9 +358,8 @@ const loadApplications = async () => {
         color: '#722ed1',
         entry: '//localhost:8081',
         activeRule: '/',
-        description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-      },
-      ...fixedApplications
+        description: ''
+      }
     ];
     domainDataMap.value.clear();
   } finally {
@@ -386,7 +408,8 @@ const handleSwitchApp = async (app: MicroApp) => {
     const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
     const appConfig = getAppConfig(mappedAppName);
     if (appConfig && appConfig.prodHost) {
-      // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
+      // 构建完整的 URL，直接跳转到子域名的根路径
+      // 注意：生产环境子域名是独立部署的，不需要路径前缀
       const protocol = window.location.protocol;
       const targetUrl = `${protocol}//${appConfig.prodHost}/`;
 
@@ -402,9 +425,13 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 
+  // 如果是切换到主应用（system），确保使用 replace 模式，避免历史记录堆积
+  const isSystemApp = app.name === 'system';
+  
   // 设置超时保护，确保 loading 状态最终会被清除
+  // 注意：超时时间应该大于 single-spa 的 bootstrap 超时时间（8秒），给应用足够的加载时间
   let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  const maxLoadingTime = 10000; // 10秒超时
+  const maxLoadingTime = 15000; // 15秒超时（比 bootstrap 的 8 秒更长，确保不会误报）
 
   // 监听 afterMount 事件，确保 loading 状态被清除
   const handleAfterMount = () => {
@@ -423,15 +450,30 @@ const handleSwitchApp = async (app: MicroApp) => {
     loadingTimeout = null;
   }, maxLoadingTime);
 
-  // 监听 afterMount 事件
-  window.addEventListener('qiankun:after-mount', handleAfterMount);
+  // 监听 afterMount 事件（仅当不是切换到主应用时，因为主应用不需要加载子应用）
+  if (!isSystemApp) {
+    window.addEventListener('qiankun:after-mount', handleAfterMount);
+  }
 
   try {
-  // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用
-  // 使用 nextTick 确保路由切换完成，容器准备好后再继续
-  await router.push(targetPath);
-  await nextTick();
-  detectCurrentApp();
+    // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用
+    // 切换到主应用时使用 replace，避免历史记录堆积
+    if (isSystemApp) {
+      await router.replace(targetPath);
+    } else {
+      await router.push(targetPath);
+    }
+    await nextTick();
+    detectCurrentApp();
+    
+    // 如果是切换到主应用，立即清除 loading 状态和超时
+    if (isSystemApp) {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
+      finishLoading();
+    }
   } catch (error) {
     // 如果路由切换失败，清除监听和超时，并强制清除 loading 状态
     if (loadingTimeout) {
@@ -439,7 +481,9 @@ const handleSwitchApp = async (app: MicroApp) => {
       loadingTimeout = null;
     }
     finishLoading(); // 强制清除 loading 状态
-    window.removeEventListener('qiankun:after-mount', handleAfterMount);
+    if (!isSystemApp) {
+      window.removeEventListener('qiankun:after-mount', handleAfterMount);
+    }
     console.error(`[MenuDrawer] 切换到应用 ${app.name} 失败:`, error);
   }
 };

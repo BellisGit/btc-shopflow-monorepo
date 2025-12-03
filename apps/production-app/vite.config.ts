@@ -204,6 +204,7 @@ export default defineConfig(({ command, mode }) => {
     cssCodeSplit: true, // 启用 CSS 代码分割
     cssMinify: true, // 压缩 CSS
     assetsInlineLimit: 0, // 禁止内联任何资源（确保 JS/CSS 都是独立文件）
+    chunkSizeWarningLimit: 2000, // 提高警告阈值，避免不必要的警告
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
@@ -226,6 +227,41 @@ export default defineConfig(({ command, mode }) => {
             return 'element-plus';
           }
 
+          // 处理业务代码分割（必须在 node_modules 之前，确保优先级）
+          if (id.includes('src/') && !id.includes('node_modules')) {
+            // 关键：router 必须合并到 app-src，避免循环依赖和加载顺序问题
+            if (id.includes('src/router')) {
+              return 'app-src';
+            }
+            // 关键：services、utils、bootstrap、config 等核心代码合并到 app-src
+            if (id.includes('src/services') || 
+                id.includes('src/utils') || 
+                id.includes('src/bootstrap') || 
+                id.includes('src/config') ||
+                id.includes('src/store') ||
+                id.includes('src/plugins')) {
+              return 'app-src';
+            }
+            // composables 可以单独分割
+            if (id.includes('src/composables')) {
+              return 'app-composables';
+            }
+            // i18n 可以单独分割
+            if (id.includes('src/i18n')) {
+              return 'app-i18n';
+            }
+            // 其他业务代码合并到 app-src
+            return 'app-src';
+          }
+
+          // 处理 @btc/shared- 包（共享包）
+          if (id.includes('@btc/shared-')) {
+            if (id.includes('@btc/shared-components')) {
+              return 'btc-components';
+            }
+            return 'btc-shared';
+          }
+
           // 处理 node_modules 依赖，进行代码分割
           if (id.includes('node_modules')) {
             // 分割 Vue 相关依赖
@@ -243,17 +279,13 @@ export default defineConfig(({ command, mode }) => {
             return 'vendor';
           }
 
-          // 处理业务代码分割
-          if (id.includes('src/') && !id.includes('node_modules')) {
-            // 可以根据需要进一步分割业务代码
-          }
+          return undefined;
         },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    chunkSizeWarningLimit: 500,
   },
   };
 });

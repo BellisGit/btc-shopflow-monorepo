@@ -40,7 +40,7 @@ const getDocsUrl = () => {
     return '/internal/archive';
   }
 
-  // 开发环境：优先使用环境变量，否则自动检测IP
+  // 开发环境：优先使用环境变量，否则从配置中获取
   const envUrl = import.meta.env.VITE_DOCS_URL;
   if (envUrl) {
     return envUrl;
@@ -50,13 +50,32 @@ const getDocsUrl = () => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
 
-  // 如果是localhost，尝试使用局域网IP
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // 使用当前页面的IP地址，确保与 VitePress base 配置一致
-    return `${protocol}//${window.location.hostname}:8085/`;
+  // 从配置中获取文档应用的端口（docs-site-app 的开发端口是 4172）
+  // 使用同步方式获取配置
+  let docsPort = '4172';
+  try {
+    // 尝试从全局配置中获取（如果已加载）
+    if ((window as any).__BTC_APP_CONFIGS__) {
+      const docsConfig = (window as any).__BTC_APP_CONFIGS__.find(
+        (config: any) => config.appName === 'docs-site-app'
+      );
+      if (docsConfig) {
+        docsPort = docsConfig.devPort;
+      }
+    } else {
+      // 如果全局配置未加载，尝试直接导入（仅在 system-app 中可用）
+      const { getAppConfig } = require('@configs/app-env.config');
+      const docsConfig = getAppConfig('docs-site-app');
+      if (docsConfig) {
+        docsPort = docsConfig.devPort;
+      }
+    }
+  } catch (e) {
+    // 如果获取失败，使用默认端口 4172（docs-site-app 的开发端口）
+    console.warn('[DocsIframe] 无法从配置获取端口，使用默认端口 4172');
   }
 
-  return `${protocol}//${hostname}:8085/`;
+  return `${protocol}//${hostname}:${docsPort}/`;
 };
 
 const baseUrl = getDocsUrl();

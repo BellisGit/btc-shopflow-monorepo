@@ -9,10 +9,16 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        'error-monitor/index': resolve(__dirname, 'src/error-monitor/index.ts'),
+      },
       name: 'BTCSharedUtils',
       formats: ['es', 'cjs'],
-      fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
+      fileName: (format, entryName) => {
+        const ext = format === 'es' ? 'mjs' : 'js';
+        return entryName === 'index' ? `index.${ext}` : `${entryName}.${ext}`;
+      },
     },
     rollupOptions: {
       // 不将 dayjs 设为 external，打包到库中，避免运行时 ES 模块导入问题

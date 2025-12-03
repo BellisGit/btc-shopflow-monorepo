@@ -205,6 +205,7 @@ export default defineConfig(({ command, mode }) => {
     cssCodeSplit: true, // 启用 CSS 代码分割
     cssMinify: true, // 压缩 CSS
     assetsInlineLimit: 0, // 禁止内联任何资源（确保 JS/CSS 都是独立文件）
+    chunkSizeWarningLimit: 2000, // 提高警告阈值，避免不必要的警告
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
@@ -254,7 +255,6 @@ export default defineConfig(({ command, mode }) => {
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    chunkSizeWarningLimit: 500,
   },
   };
 });

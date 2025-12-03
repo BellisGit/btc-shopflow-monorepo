@@ -13,7 +13,8 @@
  * 2. 根据域名判断并加载对应的子应用
  * 3. 不包含任何应用的 manifest 数据（子应用自己注册）
  */
-import { AppLayout } from '@btc/shared-components';
+// 直接从组件路径导入，避免通过 index.ts 重新导出导致的循环依赖警告
+import AppLayout from '@btc/shared-components/components/layout/app-layout/index.vue';
 </script>
 
 <style>

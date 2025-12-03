@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { globalMitt } from '@btc/shared-components/utils/mitt';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
@@ -127,6 +128,9 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
 
 const emit = defineEmits<TableGroupEmits>();
 
+// 国际化
+const { t } = useI18n();
+
 // 组件引用
 const viewGroupRef = ref<any>(null);
 const crudRef = ref<any>(null);
@@ -168,7 +172,7 @@ const tableColumns = computed(() => {
   if (props.showCreateTime) {
     timeColumns.push({
       prop: 'createdAt', // 固定使用后端字段名
-      label: '创建时间',
+      label: 'crud.table.created_at', // 使用国际化 key
       sortable: 'desc',
       minWidth: 170,
       fixed: 'right'
@@ -179,7 +183,7 @@ const tableColumns = computed(() => {
   if (props.showUpdateTime) {
     timeColumns.push({
       prop: 'updatedAt', // 固定使用后端字段名
-      label: '更新时间',
+      label: 'crud.table.updated_at', // 使用国际化 key
       sortable: 'desc',
       minWidth: 170,
       fixed: 'right'

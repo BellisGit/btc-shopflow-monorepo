@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./error-monitor": {
+      "types": "./dist/error-monitor/index.d.ts",
+      "import": "./dist/error-monitor/index.mjs",
+      "require": "./dist/error-monitor/index.js"
     }
   },
   "scripts": {

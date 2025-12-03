@@ -65,13 +65,29 @@ export function useLogin() {
       if (response) {
         BtcMessage.success(t('登录成功'));
 
-        // 保存 token
+        // 保存 token 到 cookie（不再保存到 localStorage）
         if (response.token) {
-          localStorage.setItem('token', response.token);
+          // 清理旧的 localStorage 键（迁移）
+          appStorage.auth.setToken(response.token);
           
-          // 如果有 refreshToken，也保存
+          // 设置 cookie
+          const { setCookie, getCookieDomain } = await import('@/utils/cookie');
+          const isHttps = window.location.protocol === 'https:';
+          setCookie('access_token', response.token, 7, {
+            sameSite: isHttps ? 'None' : undefined,
+            secure: isHttps,
+            path: '/',
+            domain: getCookieDomain(),
+          });
+          
+          // 如果有 refreshToken，保存到 cookie（不再保存到 localStorage）
           if (response.refreshToken) {
-            localStorage.setItem('refreshToken', response.refreshToken);
+            setCookie('refresh_token', response.refreshToken, 7, {
+              sameSite: isHttps ? 'None' : undefined,
+              secure: isHttps,
+              path: '/',
+              domain: getCookieDomain(),
+            });
           }
         }
 

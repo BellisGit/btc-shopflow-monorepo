@@ -59,12 +59,12 @@ export function useUserSetting() {
   });
 
   /**
-   * 打开抽屉
+   * 打开/关闭抽屉（切换）
    */
   function openDrawer() {
-    drawerVisible.value = true;
-    // 如果当前是自定义主题，同步自定义颜色
-    if (theme.currentTheme.value?.name === 'custom') {
+    drawerVisible.value = !drawerVisible.value;
+    // 如果打开抽屉且当前是自定义主题，同步自定义颜色
+    if (drawerVisible.value && theme.currentTheme.value?.name === 'custom') {
       customColor.value = theme.currentTheme.value.color;
     }
   }

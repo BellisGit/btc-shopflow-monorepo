@@ -5,6 +5,7 @@ import qualityManifestJson from "./manifests/quality.json" with { type: "json" }
 import engineeringManifestJson from "./manifests/engineering.json" with { type: "json" };
 import productionManifestJson from "./manifests/production.json" with { type: "json" };
 import financeManifestJson from "./manifests/finance.json" with { type: "json" };
+import monitorManifestJson from "./manifests/monitor.json" with { type: "json" };
 
 export interface SubAppManifestRoute {
   path: string;
@@ -153,4 +154,15 @@ registerManifest("finance", {
   routes: financeManifestJson.routes ?? [],
   menus: financeManifestJson.menus ?? [],
   raw: financeManifestJson,
+});
+
+registerManifest("monitor", {
+  app: {
+    id: monitorManifestJson.app?.id ?? "monitor",
+    basePath: monitorManifestJson.app?.basePath ?? "/monitor",
+    nameKey: monitorManifestJson.app?.nameKey,
+  },
+  routes: monitorManifestJson.routes ?? [],
+  menus: monitorManifestJson.menus ?? [],
+  raw: monitorManifestJson,
 });

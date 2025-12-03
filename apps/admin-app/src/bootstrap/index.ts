@@ -341,6 +341,19 @@ const setupHostLocationBridge = (context: AdminAppContext) => {
 };
 
 export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
+  // 独立运行时：从 Cookie 同步用户偏好设置到 localStorage（跨子域名共享）
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    try {
+      import('@btc/shared-utils').then(({ syncSettingsFromCookie }) => {
+        syncSettingsFromCookie();
+      }).catch(() => {
+        // 忽略导入失败
+      });
+    } catch (error) {
+      // 忽略同步失败
+    }
+  }
+
   const app = createApp(App);
   const router = createAdminRouter();
   setupRouter(app, router);
@@ -489,7 +502,43 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
             }
           } else {
             // 非 qiankun 环境，确保路由已初始化
-            if (context.router.currentRoute.value.matched.length === 0) {
+            // 关键：在子域名下，路径可能包含 /admin/ 前缀，需要规范化
+            const currentPath = context.router.currentRoute.value.path;
+            const hostname = window.location.hostname;
+            const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+            
+            // 规范化路径：在子域名下移除 /admin/ 前缀
+            let normalizedPath = currentPath;
+            if (isProductionSubdomain && hostname === 'admin.bellis.com.cn' && currentPath.startsWith('/admin/')) {
+              normalizedPath = currentPath.substring('/admin'.length) || '/';
+            }
+            
+            // 如果路径需要规范化，先导航到规范化后的路径
+            if (normalizedPath !== currentPath) {
+              console.log(`[admin-app] 非 qiankun 环境，规范化路径: ${currentPath} -> ${normalizedPath}`);
+              context.router.replace(normalizedPath).then(() => {
+                // 检查路由是否匹配成功
+                if (context.router.currentRoute.value.matched.length === 0) {
+                  console.warn('[admin-app] 非 qiankun 环境，路由未匹配，尝试使用默认路由 /');
+                  context.router.replace('/').catch((error) => {
+                    console.error('[admin-app] 使用默认路由失败:', error);
+                  }).finally(() => {
+                    resolve();
+                  });
+                } else {
+                  resolve();
+                }
+              }).catch((error) => {
+                console.error('[admin-app] 路由规范化失败:', error);
+                // 如果规范化失败，尝试使用默认路由
+                context.router.replace('/').catch((err) => {
+                  console.error('[admin-app] 使用默认路由也失败:', err);
+                }).finally(() => {
+                  resolve();
+                });
+              });
+            } else if (context.router.currentRoute.value.matched.length === 0) {
+              // 路径不需要规范化，但路由未匹配，尝试使用默认路由
               console.warn('[admin-app] 非 qiankun 环境，路由未匹配，尝试使用默认路由 /');
               context.router.replace('/').catch((error) => {
                 console.error('[admin-app] 使用默认路由失败:', error);

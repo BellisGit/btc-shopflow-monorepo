@@ -2,6 +2,37 @@
  * 统一的存储管理工具
  */
 
+import { getCookie, getCookieDomain, deleteCookie } from './cookie';
+import { syncSettingsToCookie, syncSettingsFromCookie, syncUserToCookie } from '@btc/shared-utils';
+import { storage } from '@btc/shared-utils';
+
+// 从 Cookie 读取设置
+const getSettingsFromCookie = (): Record<string, any> => {
+  const settingsCookie = getCookie('btc_settings');
+  if (settingsCookie) {
+    try {
+      return JSON.parse(decodeURIComponent(settingsCookie));
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
+// 从 Cookie 读取用户信息
+const getUserFromCookie = (): Record<string, any> | null => {
+  const userCookie = getCookie('btc_user');
+  if (userCookie) {
+    try {
+      return JSON.parse(decodeURIComponent(userCookie));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+// localStorage 辅助函数（用于向后兼容和清理旧数据）
 const getItem = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
@@ -22,89 +53,81 @@ const removeItem = (key: string): void => {
   try {
     localStorage.removeItem(key);
   } catch {
-    // 忽略存储错误
+    // 忽略删除错误
   }
 };
 
-// 获取所有设置
+// 获取所有设置（优先从 Cookie 读取，如果 Cookie 丢失则从 localStorage 恢复）
 const getAllSettings = (): Record<string, any> => {
-  const settingsStr = getItem('btc_settings');
-  if (settingsStr) {
-    try {
-      return JSON.parse(settingsStr);
-    } catch {
-      return {};
-    }
-  }
-  return {};
+  // 使用 storage.get('settings')，它会自动处理：
+  // 1. 优先从 Cookie 读取
+  // 2. 如果 Cookie 中没有，从 localStorage 恢复并重新设置到 Cookie
+  const settings = storage.get('settings') as Record<string, any> | null;
+  return settings || {};
 };
 
-// 保存所有设置
+// 保存所有设置（只写入 Cookie，不写入 localStorage）
 const setAllSettings = (settings: Record<string, any>): void => {
-  setItem('btc_settings', JSON.stringify(settings));
+  // 直接同步到 Cookie
+  syncSettingsToCookie(settings);
 };
 
-export const appStorage = {
-  /**
-   * 初始化存储管理器
-   */
-  init(version?: string): void {
-    // 初始化逻辑（如果需要）
-  },
-  auth: {
-    getToken: () => getItem('token') || getItem('access_token'),
-    setToken: (token: string) => {
-      setItem('token', token);
-      setItem('access_token', token);
-    },
-    removeToken: () => {
-      removeItem('token');
-      removeItem('access_token');
-    },
-    clear: () => {
-      removeItem('token');
-      removeItem('access_token');
-      removeItem('refreshToken');
-    },
-  },
-  user: {
+// 先定义 user 对象，以便在 auth 中引用
+const userStorage = {
     get: () => {
-      // 只从统一的 btc_user 中读取，不创建 user key
-      const userStr = getItem('btc_user');
-      // 向后兼容：如果 btc_user 不存在，尝试读取旧的 user key（但不创建新key）
-      if (!userStr) {
-        const oldUserStr = getItem('user');
+    // 优先从 Cookie 读取
+    const cookieUser = getUserFromCookie();
+    if (cookieUser) {
+      return cookieUser;
+    }
+    
+    // 如果 Cookie 中没有，尝试从 storage.get('user') 读取（它会从 Cookie 同步）
+    const storageUser = storage.get('user') as Record<string, any> | null;
+    if (storageUser) {
+      return storageUser;
+    }
+    
+    // 向后兼容：如果 Cookie 和 storage 都没有，尝试从 localStorage 读取旧的 user key（但不创建新key）
+    try {
+      const oldUserStr = localStorage.getItem('user');
         if (oldUserStr) {
-          // 迁移到统一存储（不创建新key）
           try {
             const oldUser = JSON.parse(oldUserStr);
-            setItem('btc_user', oldUserStr);
+          // 迁移到 Cookie（通过 storage.set）
+          storage.set('user', oldUser);
             return oldUser;
-          } catch {
-            return null;
-          }
-        }
-      }
-      if (userStr) {
-        try {
-          return JSON.parse(userStr);
         } catch {
           return null;
         }
       }
+    } catch {
+      // 忽略 localStorage 错误
+    }
+    
       return null;
     },
     set: (user: any) => {
-      // 只存储在统一的 btc_user 中，不创建 user key
-      setItem('btc_user', JSON.stringify(user));
+    // 使用 storage.set('user', ...) 确保同步到 Cookie
+    storage.set('user', user);
     },
     remove: () => {
-      // 只删除统一的 btc_user，不清除旧的 user key（用户自己清理）
+    // 删除 Cookie 中的用户信息
+    try {
+      const domain = getCookieDomain();
+      deleteCookie('btc_user', {
+        domain: domain,
+        path: '/',
+      });
+    } catch {
+      // 忽略错误
+    }
+    
+    // 同时清理 localStorage（向后兼容）
       removeItem('btc_user');
     },
     clear: () => {
-      // 只删除统一的 btc_user，不清除旧的 user key（用户自己清理）
-      removeItem('btc_user');
+    // 删除 Cookie 中的用户信息
+    this.remove();
     },
     /**
      * 获取头像（从统一的 btc_user 存储中获取）
@@ -187,7 +210,62 @@ export const appStorage = {
       this.set({ ...user, username });
       // 只存储在 btc_user 中，不创建独立的 username key
     },
+};
+
+export const appStorage = {
+  /**
+   * 初始化存储管理器
+   */
+  init(version?: string): void {
+    // 初始化逻辑（如果需要）
   },
+  auth: {
+    getToken: () => {
+      // 直接从 cookie 获取 access_token（不再从 localStorage 读取）
+      const cookieToken = getCookie('access_token');
+      if (cookieToken) {
+        return cookieToken;
+      }
+      // 向后兼容：如果 cookie 中没有，尝试从旧的 localStorage 键读取（用于迁移）
+      return getItem('token') || getItem('access_token');
+    },
+    setToken: (token: string) => {
+      // 不再保存到 localStorage，token 应该由后端通过 Set-Cookie 设置
+      // 这里只做向后兼容处理，清理旧的 localStorage 键
+      removeItem('token');
+      removeItem('access_token');
+      // 从 btc_user 中移除 token（不再存储）
+      const user = userStorage.get() || {};
+      if (user.token) {
+        delete user.token;
+        userStorage.set(user);
+      }
+    },
+    removeToken: () => {
+      // 清理旧的 localStorage 键
+      removeItem('token');
+      removeItem('access_token');
+      // 从 btc_user 中移除 token
+      const user = userStorage.get() || {};
+      if (user.token) {
+        delete user.token;
+        userStorage.set(user);
+      }
+    },
+    clear: () => {
+      // 清理旧的 localStorage 键
+      removeItem('token');
+      removeItem('access_token');
+      removeItem('refreshToken');
+      // 从 btc_user 中移除 token
+      const user = userStorage.get() || {};
+      if (user.token) {
+        delete user.token;
+        userStorage.set(user);
+      }
+    },
+  },
+  user: userStorage,
   settings: {
     get: (): Record<string, any> => {
       return getAllSettings();

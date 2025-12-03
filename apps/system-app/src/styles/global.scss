@@ -1,4 +1,5 @@
-@import '@btc/shared-components/styles/index.scss';
+// 使用 @use ... as * 确保样式被正确导入并应用到全局（兼容 @use 模块化）
+@use '@btc/shared-components/styles/index.scss' as *;
 
 // Global styles for test app
 

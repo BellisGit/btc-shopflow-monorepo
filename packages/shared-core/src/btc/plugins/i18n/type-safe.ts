@@ -50,6 +50,7 @@ export interface I18nKeyPath {
   'platform.domains.title': string;
   'platform.domains.domain_name': string;
   'platform.domains.domain_code': string;
+  'platform.domains.domain_type': string;
   'platform.domains.description': string;
   'platform.domains.created_at': string;
   'platform.domains.updated_at': string;
@@ -187,6 +188,7 @@ export function getAllI18nKeys(): (keyof I18nKeyPath)[] {
     'platform.domains.title',
     'platform.domains.domain_name',
     'platform.domains.domain_code',
+    'platform.domains.domain_type',
     'platform.domains.description',
     'platform.domains.created_at',
     'platform.domains.updated_at',

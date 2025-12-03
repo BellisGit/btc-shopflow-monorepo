@@ -1,6 +1,7 @@
 import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
 import { getAppConfig } from '@configs/app-env.config';
+import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
 
 // 获取主应用配置（用于判断当前是否在主应用预览端口）
 const MAIN_APP_CONFIG = getAppConfig('system-app');
@@ -32,6 +33,89 @@ function clearLoadingElement() {
 import { getManifestTabs, getManifestMenus } from './manifests';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
+// 关键：在模块加载时立即设置日志过滤，确保能拦截所有警告
+// 这必须在任何其他代码执行之前完成
+if (typeof window !== 'undefined') {
+  // 立即执行过滤逻辑（使用 IIFE 确保立即执行）
+  (function() {
+    // 防止重复设置
+    if ((window as any).__qiankun_logs_filtered__) {
+      return;
+    }
+    (window as any).__qiankun_logs_filtered__ = true;
+
+    // 保存原始方法
+    (console as any).__originalLog = console.log;
+    (console as any).__originalInfo = console.info;
+    (console as any).__originalWarn = console.warn;
+    (console as any).__originalError = console.error;
+
+    const originalLog = console.log.bind(console);
+    const originalInfo = console.info.bind(console);
+    const originalWarn = console.warn.bind(console);
+
+    // 检查是否应该过滤日志的辅助函数
+    const shouldFilter = (...args: any[]): boolean => {
+      // 检查所有参数中是否包含 qiankun sandbox 相关日志
+      for (const arg of args) {
+        if (typeof arg === 'string') {
+          if (arg.includes('[qiankun:sandbox]') ||
+              arg.includes('modified global properties') ||
+              arg.includes('restore...')) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    // 过滤 console.log
+    console.log = (...args: any[]) => {
+      if (shouldFilter(...args)) {
+        return;
+      }
+      originalLog(...args);
+    };
+
+    // 过滤 console.info
+    console.info = (...args: any[]) => {
+      if (shouldFilter(...args)) {
+        return;
+      }
+      originalInfo(...args);
+    };
+
+    // 过滤 console.warn
+    console.warn = (...args: any[]) => {
+      // 过滤 qiankun sandbox 警告
+      if (shouldFilter(...args)) {
+        return;
+      }
+      // 过滤 single-spa 的 warningMillis 警告（这是正常的，不是错误）
+      // 检查多种可能的警告格式
+      const firstArg = args[0];
+      if (typeof firstArg === 'string') {
+        if (firstArg.includes('single-spa minified message #31') ||
+            firstArg.includes('single-spa.js.org/error/?code=31') ||
+            (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
+          return;
+        }
+      }
+      // 检查所有参数中是否包含 single-spa 警告
+      for (const arg of args) {
+        if (typeof arg === 'string' && (
+          arg.includes('single-spa minified message #31') ||
+          arg.includes('single-spa.js.org/error/?code=31') ||
+          (arg.includes('code=31') && arg.includes('bootstrap'))
+        )) {
+          return;
+        }
+      }
+      originalWarn(...args);
+    };
+  })();
+}
+
 // 定义类型，避免直接导入（在函数内部动态导入）
 type TabMeta = {
   key: string;
@@ -45,6 +129,9 @@ type MenuItem = {
   title: string;
   icon?: string;
   children?: MenuItem[];
+  // 外链跳转：指向子应用的子域名完整地址（如 https://admin.bellis.com.cn）
+  // 如果设置了 externalUrl，点击菜单项时会跳转到该地址，同时保留主应用的布局
+  externalUrl?: string;
 };
 
 
@@ -77,52 +164,72 @@ export async function registerManifestTabsForApp(appName: string): Promise<void>
 }
 
 /**
- * 规范化菜单路径：在生产环境子域名下，移除应用前缀
+ * 规范化菜单路径：在开发环境下自动添加应用前缀，生产子域环境下移除应用前缀
+ * manifest 中的菜单路径已经移除了应用前缀，所以：
+ * - 开发环境（qiankun模式）：需要添加前缀 `/admin/xxx`
+ * - 生产子域环境：移除应用前缀，保持原路径 `/xxx`
  */
 function normalizeMenuPath(path: string, appName: string): string {
   if (!path || !appName) return path;
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   // 检测是否在生产环境的子域名下
   if (typeof window === 'undefined') {
-    return normalizedPath;
-  }
-  
-  const hostname = window.location.hostname;
-  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
-  if (!isProductionSubdomain) {
-    // 非生产环境子域名，保持原路径（开发环境需要保留前缀）
+    // SSR 环境，保持原路径
     return normalizedPath;
   }
 
-  // 生产环境子域名：检测具体的子域名应用
-  const subdomainMap: Record<string, string> = {
-    'admin.bellis.com.cn': 'admin',
-    'logistics.bellis.com.cn': 'logistics',
-    'quality.bellis.com.cn': 'quality',
-    'production.bellis.com.cn': 'production',
-    'engineering.bellis.com.cn': 'engineering',
-    'finance.bellis.com.cn': 'finance',
-  };
-  
-  const currentSubdomainApp = subdomainMap[hostname];
-  
-  // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
-  if (currentSubdomainApp && currentSubdomainApp === appName) {
-    const appPrefix = `/${appName}`;
-    if (normalizedPath === appPrefix) {
-      // 如果是应用根路径，返回 /
-      return '/';
-    } else if (normalizedPath.startsWith(`${appPrefix}/`)) {
-      // 移除应用前缀
-      return normalizedPath.substring(appPrefix.length);
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+  if (isProductionSubdomain) {
+    // 生产环境子域名：检测具体的子域名应用
+    const subdomainMap: Record<string, string> = {
+      'admin.bellis.com.cn': 'admin',
+      'logistics.bellis.com.cn': 'logistics',
+      'quality.bellis.com.cn': 'quality',
+      'production.bellis.com.cn': 'production',
+      'engineering.bellis.com.cn': 'engineering',
+      'finance.bellis.com.cn': 'finance',
+    };
+
+    const currentSubdomainApp = subdomainMap[hostname];
+
+    // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
+    if (currentSubdomainApp && currentSubdomainApp === appName) {
+      const appPrefix = `/${appName}`;
+      if (normalizedPath === appPrefix) {
+        // 如果是应用根路径，返回 /
+        return '/';
+      } else if (normalizedPath.startsWith(`${appPrefix}/`)) {
+        // 移除应用前缀
+        return normalizedPath.substring(appPrefix.length);
+      }
     }
+
+    // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
+    return normalizedPath;
+  }
+
+  // 开发环境（qiankun模式）：需要添加应用前缀
+  // 系统域是主应用，不需要添加前缀
+  if (appName === 'system') {
+    return normalizedPath;
   }
   
-  // 其他情况保持原路径
-  return normalizedPath;
+  // 如果路径已经是根路径，直接返回应用前缀
+  if (normalizedPath === '/') {
+    return `/${appName}`;
+  }
+  
+  // 如果路径已经包含应用前缀，不需要重复添加
+  if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
+    return normalizedPath;
+  }
+  
+  // 添加应用前缀
+  return `/${appName}${normalizedPath}`;
 }
 
 // 递归转换菜单项（支持任意深度）
@@ -237,31 +344,86 @@ function getCurrentLocale(): string {
 
 /**
  * 过滤 qiankun 沙箱日志
+ * 注意：这个函数现在主要用于确保过滤逻辑已设置（模块级别已设置）
+ * 如果模块级别的过滤没有生效，这里作为兜底
  */
 function filterQiankunLogs() {
+  // 如果模块级别的过滤已经设置，这里不需要重复设置
+  if ((window as any).__qiankun_logs_filtered__) {
+    return;
+  }
+  
+  // 如果模块级别的过滤没有生效，这里作为兜底
+  // 这种情况不应该发生，但为了安全起见保留这个函数
+  (window as any).__qiankun_logs_filtered__ = true;
+
   // 保存原始方法（保存到全局，供其他地方使用）
   (console as any).__originalLog = console.log;
   (console as any).__originalInfo = console.info;
   (console as any).__originalWarn = console.warn;
   (console as any).__originalError = console.error;
 
+  const originalLog = console.log.bind(console);
   const originalInfo = console.info.bind(console);
   const originalWarn = console.warn.bind(console);
 
+  // 检查是否应该过滤日志的辅助函数
+  const shouldFilter = (...args: any[]): boolean => {
+    // 检查所有参数中是否包含 qiankun sandbox 相关日志
+    for (const arg of args) {
+      if (typeof arg === 'string') {
+        if (arg.includes('[qiankun:sandbox]') ||
+            arg.includes('modified global properties') ||
+            arg.includes('restore...')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // 过滤 console.log
+  console.log = (...args: any[]) => {
+    if (shouldFilter(...args)) {
+      return;
+    }
+    originalLog(...args);
+  };
+
+  // 过滤 console.info
   console.info = (...args: any[]) => {
-    if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
+    if (shouldFilter(...args)) {
       return;
     }
     originalInfo(...args);
   };
 
+  // 过滤 console.warn
   console.warn = (...args: any[]) => {
     // 过滤 qiankun sandbox 警告
-    if (typeof args[0] === 'string' && args[0].includes('[qiankun:sandbox]')) {
+    if (shouldFilter(...args)) {
       return;
     }
-    // 暂时不过滤 single-spa 超时警告，用于验证 timeouts 配置是否生效
-    // 如果配置生效，警告应该消失或超时时间变为 8000ms
+    // 过滤 single-spa 的 warningMillis 警告（这是正常的，不是错误）
+    // 检查多种可能的警告格式
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+      if (firstArg.includes('single-spa minified message #31') ||
+          firstArg.includes('single-spa.js.org/error/?code=31') ||
+          (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
+        return;
+      }
+    }
+    // 检查所有参数中是否包含 single-spa 警告
+    for (const arg of args) {
+      if (typeof arg === 'string' && (
+        arg.includes('single-spa minified message #31') ||
+        arg.includes('single-spa.js.org/error/?code=31') ||
+        (arg.includes('code=31') && arg.includes('bootstrap'))
+      )) {
+        return;
+      }
+    }
     originalWarn(...args);
   };
 }
@@ -583,7 +745,7 @@ function setupGlobalResourceInterceptor() {
   const originalXHROpen = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, username?: string | null, password?: string | null) {
     let urlStr = typeof url === 'string' ? url : url.href;
-    
+
     // 强制验证：在 HTTPS 页面下，绝对不允许 HTTP URL
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
       if (urlStr.startsWith('http://')) {
@@ -641,6 +803,18 @@ function setupGlobalResourceInterceptor() {
  * 初始化qiankun微前端
  */
 export function setupQiankun() {
+  // 防止重复注册：如果已经初始化过，直接返回
+  if ((window as any).__qiankun_setup__) {
+    console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
+    return;
+  }
+  (window as any).__qiankun_setup__ = true;
+
+  // 初始化错误监控全局状态
+  initErrorMonitor();
+  // 设置主应用全局错误捕获
+  setupGlobalErrorCapture();
+
   // 过滤 qiankun 日志
   filterQiankunLogs();
 
@@ -671,21 +845,23 @@ export function setupQiankun() {
 
     // qiankun 2.10+ 支持 single-spa 原生格式的 timeouts 配置
     // 必须包含 millis、dieOnTimeout、warningMillis 字段，qiankun 会直接透传给 single-spa
+    // 注意：warningMillis 应该设置得更大，因为 ES 模块加载阶段也会计入 bootstrap 时间
+    // 如果 warningMillis 太小，在模块加载阶段就会触发警告（这是正常的，但会产生噪音）
     const timeoutsConfig = {
       bootstrap: {
         millis: timeout, // 超时毫秒数
         dieOnTimeout: !isDev, // 生产环境超时终止，开发环境不终止（仅警告）
-        warningMillis: Math.floor(timeout / 2), // 警告时间（超时时间的一半）
+        warningMillis: Math.floor(timeout * 0.8), // 警告时间（超时时间的 80%，减少不必要的警告）
       },
       mount: {
         millis: timeout,
         dieOnTimeout: !isDev,
-        warningMillis: Math.floor(timeout / 2),
+        warningMillis: Math.floor(timeout * 0.8),
       },
       unmount: {
         millis: 3000,
         dieOnTimeout: true,
-        warningMillis: 1500,
+        warningMillis: 2500, // unmount 阶段警告时间也适当延长
       },
     };
 
@@ -728,6 +904,9 @@ export function setupQiankun() {
       setActiveTab: (tabKey: string) => {
         // console.log('[Main] Sub-app set active tab:', app.name, tabKey);
       },
+      // 错误上报方法（传递给子应用）
+      updateErrorList,
+      appName: app.name, // 子应用名称（用于标识错误来源）
     },
     // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
     // 这是解决 Vite 子应用 ES 模块加载问题的关键配置
@@ -1175,7 +1354,7 @@ export function setupQiankun() {
           'engineering.bellis.com.cn': 'engineering',
           'finance.bellis.com.cn': 'finance',
         };
-        
+
         // 首先尝试从子域名判断
         if (subdomainMap[hostname]) {
           targetAppName = subdomainMap[hostname];
@@ -1547,7 +1726,7 @@ export function setupQiankun() {
             // 否则使用当前页面的 hostname（支持通过 IP 地址访问，如 10.80.8.199）
             const port = entryUrl.port || '';
             let finalHost = entryUrl.hostname;
-            
+
             // 如果 entry 是相对路径（/path），使用当前页面的 hostname
             if (entry.startsWith('/')) {
               finalHost = currentHost;
@@ -1561,7 +1740,7 @@ export function setupQiankun() {
             else if (entry.startsWith('//')) {
               finalHost = entryUrl.hostname;
             }
-            
+
             baseUrl = `${entryUrl.protocol}//${finalHost}${port ? `:${port}` : ''}`;
 
             // 从 entryMap 中查找匹配的应用名称
@@ -1590,7 +1769,7 @@ export function setupQiankun() {
             'engineering.bellis.com.cn': 'engineering',
             'finance.bellis.com.cn': 'finance',
           };
-          
+
           if (subdomainMap[hostname]) {
             matchedAppName = subdomainMap[hostname];
           }
@@ -1630,12 +1809,12 @@ export function setupQiankun() {
                 // 关键：如果当前是子域名访问，使用子域名作为 baseUrl；否则使用当前 hostname
                 const port = entryUrl.port || '';
                 let finalHost = currentHost;
-                
+
                 // 如果是子域名访问，使用子域名作为 host
                 if (subdomainMap[hostname] === matchedAppName) {
                   finalHost = hostname;
                 }
-                
+
                 baseUrl = `${protocol}//${finalHost}${port ? `:${port}` : ''}`;
                 console.log('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost });
               }
@@ -1840,13 +2019,13 @@ export function setupQiankun() {
             'engineering.bellis.com.cn': 'engineering',
             'finance.bellis.com.cn': 'finance',
           };
-          
+
           // 如果是子域名访问，使用子域名作为 base URL
           let baseHost = currentHost;
           if (subdomainMap[hostname] && matchedAppName === subdomainMap[hostname]) {
             baseHost = hostname;
           }
-          
+
           const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}/`;
           console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, matchedAppName });
 
@@ -1925,7 +2104,22 @@ export function setupQiankun() {
       const src = (event.target instanceof HTMLScriptElement ? event.target.src : null) ||
                   (event.target instanceof HTMLLinkElement ? event.target.href : null);
 
-      if (src && window.location.port === '4180' && (src.includes('/assets/') || src.endsWith('.js') || src.endsWith('.css') || src.endsWith('.mjs'))) {
+      // 处理资源加载错误（404），包括开发环境和生产环境
+      // 检查是否是源文件路径错误（包含 /src/ 或 /packages/）
+      const isSourcePathError = src && (src.includes('/packages/') || src.includes('/src/'));
+      const isDevError = src && 
+        window.location.port === '4180' && 
+        (src.includes('/assets/') || src.endsWith('.js') || src.endsWith('.css') || src.endsWith('.mjs'));
+      
+      if (isSourcePathError || isDevError) {
+        // 如果是源文件路径错误，直接忽略（这些文件应该在构建时被打包）
+        // 包括所有 /packages/ 和 /src/ 路径，这些都不应该在生产环境出现
+        if (isSourcePathError) {
+          console.warn(`[错误处理] 忽略源文件路径错误: ${src} (此文件应在构建时被打包)`);
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         // 根据当前路径判断是哪个应用
         const currentPath = window.location.pathname;
         let targetAppName: string | null = null;

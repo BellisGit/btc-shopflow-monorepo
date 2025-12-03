@@ -11,7 +11,7 @@ import { formatDateTimeFriendly } from '@btc/shared-utils';
 export function createCreatedAtColumn(): TableColumn {
   return {
     prop: 'createdAt',
-    label: '创建时间',
+    label: 'crud.table.created_at', // 使用国际化 key
     width: 180,
     sortable: true,
     toggleable: true,
@@ -27,7 +27,7 @@ export function createCreatedAtColumn(): TableColumn {
 export function createUpdatedAtColumn(): TableColumn {
   return {
     prop: 'updatedAt',
-    label: '更新时间',
+    label: 'crud.table.updated_at', // 使用国际化 key
     width: 180,
     sortable: true,
     toggleable: true,
@@ -63,11 +63,12 @@ export function createSelectionColumn(): TableColumn {
 }
 
 /**
- * 搴忓彿鍒楅厤缃? */
+ * 序号列配置
+ */
 export function createIndexColumn(): TableColumn {
   return {
     type: 'index',
-    label: '序号',
+    label: 'crud.table.index', // 使用国际化 key
     width: 60,
     toggleable: false,
     alwaysVisible: true,

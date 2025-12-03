@@ -22,6 +22,7 @@
   "platform.domains.title": "域列表",
   "platform.domains.domain_name": "域名称",
   "platform.domains.domain_code": "域编码",
+  "platform.domains.domain_type": "域类型",
   "platform.domains.description": "描述",
   "platform.domains.created_at": "创建时间",
   "platform.domains.updated_at": "更新时间",

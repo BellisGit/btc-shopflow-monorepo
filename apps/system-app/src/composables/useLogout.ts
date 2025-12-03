@@ -43,8 +43,12 @@ export function useLogout() {
       // 清除 cookie 中的 token
       deleteCookie('access_token');
       
-      // 清除登录状态标记
-      localStorage.removeItem('is_logged_in');
+      // 清除登录状态标记（从统一的 settings 存储中移除）
+      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      if (currentSettings.is_logged_in) {
+        delete currentSettings.is_logged_in;
+        appStorage.settings.set(currentSettings);
+      }
       
       // 清除所有认证相关数据（使用统一存储管理器）
       appStorage.auth.clear();
@@ -75,7 +79,12 @@ export function useLogout() {
 
       // 强制清除所有缓存
       deleteCookie('access_token');
-      localStorage.removeItem('is_logged_in');
+      // 清除登录状态标记（从统一的 settings 存储中移除）
+      const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+      if (currentSettings.is_logged_in) {
+        delete currentSettings.is_logged_in;
+        appStorage.settings.set(currentSettings);
+      }
       appStorage.auth.clear();
       appStorage.user.clear();
       clearUserInfo();

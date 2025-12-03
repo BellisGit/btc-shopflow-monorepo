@@ -39,14 +39,40 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   const migratedTheme = migrateThemeConfig();
 
   // 从统一的 settings 存储中读取主题配置
-  const settings = storage.get('settings') as Record<string, any> | null;
-  const savedTheme = settings?.theme as ThemeConfig | null;
+  // 注意：storage.get('settings') 现在从 Cookie 读取，如果没有数据会返回空对象 {}
+  const settings = (storage.get('settings') as Record<string, any>) || {};
+  const savedTheme = settings?.theme as ThemeConfig | null | undefined;
   
   // 优先使用 settings 中保存的主题，否则使用迁移后的主题
   const currentTheme = ref<ThemeConfig>(savedTheme || migratedTheme);
 
-  // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
-  const isDark = useDark();
+  // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到统一的 settings 存储中
+  // 配置 useDark 使用自定义存储键，避免创建 vueuse-color-scheme 键
+  const isDark = useDark({
+    storageKey: 'btc_color_scheme',
+    storage: {
+      getItem: (key: string) => {
+        // 从统一的 settings 存储中读取（从 Cookie 读取）
+        const settings = (storage.get('settings') as Record<string, any>) || {};
+        return settings?.colorScheme || null;
+      },
+      setItem: (key: string, value: string) => {
+        // 保存到统一的 settings 存储中（同步到 Cookie）
+        // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段（如 theme）
+        const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+        const updatedSettings = { ...currentSettings, colorScheme: value };
+        storage.set('settings', updatedSettings);
+      },
+      removeItem: (key: string) => {
+        // 从统一的 settings 存储中移除（同步到 Cookie）
+        const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+        if (currentSettings.colorScheme) {
+          delete currentSettings.colorScheme;
+          storage.set('settings', currentSettings);
+        }
+      },
+    },
+  });
 
   // 初始化时应用主题色
   if (currentTheme.value?.color) {
@@ -68,8 +94,10 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   function setButtonStyle(style: ButtonStyle) {
     if (buttonStyle.value === style) return; // 避免重复设置
     buttonStyle.value = style;
-    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
-    storage.set('settings', { ...currentSettings, buttonStyle: style });
+    // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段（如 theme）
+    const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+    const updatedSettings = { ...currentSettings, buttonStyle: style };
+    storage.set('settings', updatedSettings);
     applyButtonStyle(style);
   }
 
@@ -94,9 +122,11 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     themeSetThemeColor(theme.color, isDark.value);
     setBodyClassName(`theme-${theme.name}`);
 
-    // 持久化到统一的 settings 存储中
-    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
-    storage.set('settings', { ...currentSettings, theme: currentTheme.value });
+    // 持久化到统一的 settings 存储中（同步到 Cookie）
+    // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段
+    const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+    const updatedSettings = { ...currentSettings, theme: currentTheme.value };
+    storage.set('settings', updatedSettings);
   }
 
   /**
@@ -121,9 +151,11 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     // 更新 body 类名
     setBodyClassName('theme-custom');
 
-    // 持久化到统一的 settings 存储中
-    const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
-    storage.set('settings', { ...currentSettings, theme: currentTheme.value });
+    // 持久化到统一的 settings 存储中（同步到 Cookie）
+    // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段
+    const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+    const updatedSettings = { ...currentSettings, theme: currentTheme.value };
+    storage.set('settings', updatedSettings);
     
     console.log('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
   }

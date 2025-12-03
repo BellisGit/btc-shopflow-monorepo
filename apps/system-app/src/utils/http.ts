@@ -135,31 +135,14 @@ export class Http {
 
         this.axiosInstance.defaults.baseURL = config.baseURL;
 
-        // 优先从 cookie 获取 token（字段名：access_token），如果没有则从统一存储获取
+        // 直接从 cookie 获取 token（字段名：access_token）
         // 注意：HttpOnly cookie 无法通过 JavaScript 读取，但浏览器会自动在请求中发送
-        const cookieToken = getCookie('access_token');
-        const storageToken = appStorage.auth.getToken();
-        const token = cookieToken || storageToken || '';
-
+        const token = getCookie('access_token');
 
         // 如果有 token，设置 Authorization header
         // 即使 cookie 是 HttpOnly 的，浏览器也会自动发送 cookie，但设置 Authorization header 可以确保兼容性
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
-
-          // 关键：如果 cookie 不存在但 storage 中有 token，尝试重新设置 cookie
-          // 注意：浏览器不允许手动设置 Cookie 头（Refused to set unsafe header "Cookie"）
-          // 所以只能通过设置 cookie 来让浏览器自动发送
-          if (!cookieToken && storageToken) {
-            // 尝试重新设置 cookie（即使可能失败，也要尝试）
-            const isHttps = window.location.protocol === 'https:';
-            setCookie('access_token', storageToken, 7, {
-              sameSite: isHttps ? 'None' : undefined,
-              secure: isHttps,
-              path: '/',
-              domain: getCookieDomain(), // 生产环境支持跨子域名共享
-            });
-          }
         }
 
         // 始终设置 withCredentials 为 true，发送 cookie
@@ -221,33 +204,11 @@ export class Http {
                                originalResponseData.code === 200;
 
         if (isLoginSuccess) {
-          // 登录成功，设置登录状态标记（因为 http-only cookie 无法读取）
-          localStorage.setItem('is_logged_in', 'true');
+          // 登录成功，设置登录状态标记到统一的 settings 存储中
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
 
-          // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
-          // 注意：在浏览器中，Set-Cookie 响应头可能无法直接访问（出于安全考虑）
-          // 但我们可以尝试从响应头中读取
-          const setCookieHeaders = response.headers?.['set-cookie'] || [];
-          if (setCookieHeaders.length > 0) {
-            // 查找包含 access_token 的 cookie
-            const accessTokenCookie = Array.isArray(setCookieHeaders)
-              ? setCookieHeaders.find((cookie: string) => cookie.includes('access_token'))
-              : setCookieHeaders.includes('access_token') ? setCookieHeaders : null;
-
-            if (accessTokenCookie) {
-              // 尝试从 cookie 字符串中提取 token 值（仅用于调试，实际可能是 HttpOnly）
-              const tokenMatch = typeof accessTokenCookie === 'string'
-                ? accessTokenCookie.match(/access_token=([^;]+)/)
-                : null;
-              if (tokenMatch && tokenMatch[1]) {
-                const extractedToken = tokenMatch[1];
-                // 保存到统一存储作为备份（即使 cookie 无法发送，也能用 Authorization header）
-                appStorage.auth.setToken(extractedToken);
-              }
-            }
-          }
-
-          // 立即从响应体中提取 token（代理已经添加到响应体中）
+          // 从响应体中提取 token（代理已经添加到响应体中）
           // 注意：originalResponseData 是 response.data，包含完整的响应结构
           // result 是经过 responseInterceptor 处理后的数据，可能只包含 data 字段
           let tokenFromBody: string | null = null;
@@ -256,7 +217,6 @@ export class Http {
           if (originalResponseData) {
             tokenFromBody = originalResponseData.token ||
                           originalResponseData.accessToken;
-
           }
 
           // 如果原始响应数据中没有，检查拦截器处理后的结果
@@ -265,13 +225,12 @@ export class Http {
             if (typeof result === 'object' && result !== null) {
               tokenFromBody = result.token ||
                             result.accessToken;
-
             }
           }
 
-          // 如果从响应体中找到了 token，立即保存
+          // 如果从响应体中找到了 token，设置到 cookie（不再保存到 localStorage）
           if (tokenFromBody) {
-            // 保存到 storage
+            // 清理旧的 localStorage 键（迁移）
             appStorage.auth.setToken(tokenFromBody);
 
             // 关键：手动设置 cookie（因为后端需要从 cookie 中读取 token）

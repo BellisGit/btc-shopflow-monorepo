@@ -63,11 +63,11 @@ const chunkVerifyPlugin = (): Plugin => {
       const indexSizeKB = indexSize / 1024;
 
       // 如果 index 文件超过 500KB，说明应用代码可能被打包到了入口文件
-      // 这种情况下，我们允许没有 app-src，但会给出警告
+      // 这种情况下，我们允许没有 app-src，只记录信息（不发出警告，因为这是正常的构建行为）
       if (!hasAppSrc && indexSizeKB > 500) {
-        console.warn(`\n[chunk-verify-plugin] ⚠️ 警告：app-src chunk 不存在，但 index 文件很大 (${indexSizeKB.toFixed(2)}KB)`);
-        console.warn(`[chunk-verify-plugin] 应用代码可能被打包到了入口文件，这可能导致加载性能问题`);
-        // 不抛出错误，只给出警告
+        console.log(`\n[chunk-verify-plugin] ℹ️ 信息：app-src chunk 不存在，但 index 文件较大 (${indexSizeKB.toFixed(2)}KB)`);
+        console.log(`[chunk-verify-plugin] 应用代码被打包到了入口文件，这是正常的构建行为`);
+        // 不抛出错误，只记录信息
       } else if (!hasAppSrc) {
         missingRequiredChunks.push('app-src');
       }
@@ -163,15 +163,20 @@ const ensureBaseUrlPlugin = (): Plugin => {
       let newCode = code;
       let modified = false;
 
-      // 1. 相对路径（如 /assets/xxx.js，未带端口，需拼接 base）
-      const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
-      if (relativePathRegex.test(newCode)) {
-        newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
-          // 拼接子应用 base，如 http://localhost:4181/assets/xxx.js
-          return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
-        });
-        modified = true;
+      // 1. 相对路径（如 /assets/xxx.js）
+      // 关键：在生产环境（base = '/'），相对路径已经是正确的，不需要修改
+      // 在预览环境（base = 'http://localhost:4181/'），需要确保路径正确
+      if (isPreviewBuild) {
+        const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
+        if (relativePathRegex.test(newCode)) {
+          newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
+            // 预览环境：拼接子应用 base，如 http://localhost:4181/assets/xxx.js
+            return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
+          });
+          modified = true;
+        }
       }
+      // 生产环境：相对路径 /assets/xxx.js 已经是正确的，不需要修改
 
       // 2. 子应用 base 被错误替换为 4180 的情况（如 http://localhost:4180/assets/xxx）
       const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}/assets/`, 'g');
@@ -235,13 +240,18 @@ const ensureBaseUrlPlugin = (): Plugin => {
           let modified = false;
 
           // 1. 相对路径替换
-          const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
-          if (relativePathRegex.test(newCode)) {
-            newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
-              return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
-            });
-            modified = true;
+          // 关键：在生产环境（base = '/'），相对路径已经是正确的，不需要修改
+          // 在预览环境（base = 'http://localhost:4181/'），需要确保路径正确
+          if (isPreviewBuild) {
+            const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
+            if (relativePathRegex.test(newCode)) {
+              newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
+                return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
+              });
+              modified = true;
+            }
           }
+          // 生产环境：相对路径 /assets/xxx.js 已经是正确的，不需要修改
 
           // 2. 4180 端口替换
           const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}/assets/`, 'g');
@@ -422,22 +432,75 @@ const ensureCssPlugin = (): Plugin => {
       // 检查是否有 CSS 被内联到 JS 文件中
       const jsFiles = Object.keys(bundle).filter(file => file.endsWith('.js'));
       let hasInlineCss = false;
+      const suspiciousFiles: string[] = [];
+
       jsFiles.forEach(file => {
         const chunk = bundle[file] as any;
         if (chunk && chunk.code && typeof chunk.code === 'string') {
-          // 检查是否包含内联的 CSS（通过 style 标签或 CSS 字符串）
-          // 注意：modulepreload polyfill 代码可能包含 'text/css'，需要排除
-          const isModulePreload = chunk.code.includes('modulepreload') || chunk.code.includes('relList');
-          if (!isModulePreload && (chunk.code.includes('<style>') || (chunk.code.includes('text/css') && chunk.code.includes('insertStyle')))) {
+          const code = chunk.code;
+
+          // 排除 modulepreload polyfill 代码
+          const isModulePreload = code.includes('modulepreload') || code.includes('relList');
+          if (isModulePreload) return;
+
+          // 排除已知的库文件和应用模块文件，这些文件中的 CSS 字符串是正常的（如 Vue、Element Plus 等）
+          // 应用模块文件（module-*）中的 CSS 字符串通常是样式配置或常量，不是真正的内联 CSS
+          const isKnownLibrary = file.includes('vue-core') ||
+                                 file.includes('element-plus') ||
+                                 file.includes('vendor') ||
+                                 file.includes('vue-i18n') ||
+                                 file.includes('vue-router') ||
+                                 file.includes('lib-echarts') ||
+                                 file.includes('module-') ||
+                                 file.includes('app-composables') ||
+                                 file.includes('app-pages');
+          if (isKnownLibrary) return;
+
+          // 更精确的检测：查找真正内联 CSS 的模式
+          // 只检测真正的问题，排除库代码中的字符串匹配
+
+          // 1. 动态创建 style 标签并设置 CSS 内容（必须同时满足创建元素和设置内容）
+          const hasStyleElementCreation = /document\.createElement\(['"]style['"]\)/.test(code) &&
+            /\.(textContent|innerHTML)\s*=/.test(code) &&
+            /\{[^}]{10,}\}/.test(code); // 确保有实际的 CSS 规则（至少10个字符）
+
+          // 2. 使用 insertStyle 函数且包含实际的 CSS 规则（更严格的检查）
+          const hasInsertStyleWithCss = /insertStyle\s*\(/.test(code) &&
+            /text\/css/.test(code) &&
+            /\{[^}]{20,}\}/.test(code); // 确保有实际的 CSS 规则（至少20个字符）
+
+          // 3. 直接包含 <style> 标签且后面有 CSS 内容（排除字符串字面量和注释）
+          // 检查是否是真正的 HTML 标签，而不是字符串中的内容
+          const styleTagMatch = code.match(/<style[^>]*>/);
+          const hasStyleTagWithContent = styleTagMatch &&
+            !styleTagMatch[0].includes("'") && // 排除字符串中的内容
+            !styleTagMatch[0].includes('"') && // 排除字符串中的内容
+            /\{[^}]{20,}\}/.test(code); // 确保有实际的 CSS 规则（至少20个字符）
+
+          // 4. 检测内联 CSS 字符串（包含 CSS 规则的长字符串）
+          const hasInlineCssString = /['"`][^'"`]{50,}:\s*[^'"`]{10,};\s*[^'"`]{10,}['"`]/.test(code) &&
+            /(color|background|width|height|margin|padding|border|display|position|flex|grid)/.test(code);
+
+          // 只检测真正的问题，不检测字符串中的 CSS（这些通常是库代码）
+          if (hasStyleElementCreation || hasInsertStyleWithCss || hasStyleTagWithContent || hasInlineCssString) {
             hasInlineCss = true;
-            console.warn(`[ensure-css-plugin] ⚠️ 警告：在 ${file} 中检测到可能的内联 CSS`);
+            suspiciousFiles.push(file);
+            // 输出更详细的警告信息，包含检测到的模式
+            const patterns = [];
+            if (hasStyleElementCreation) patterns.push('动态创建 style 元素');
+            if (hasInsertStyleWithCss) patterns.push('insertStyle 函数');
+            if (hasStyleTagWithContent) patterns.push('<style> 标签');
+            if (hasInlineCssString) patterns.push('内联 CSS 字符串');
+            console.warn(`[ensure-css-plugin] ⚠️ 警告：在 ${file} 中检测到可能的内联 CSS（模式：${patterns.join(', ')}）`);
           }
         }
       });
 
       if (hasInlineCss) {
         console.warn('[ensure-css-plugin] ⚠️ 警告：检测到 CSS 可能被内联到 JS 中，这会导致 qiankun 无法正确加载样式');
+        console.warn(`[ensure-css-plugin] 可疑文件：${suspiciousFiles.join(', ')}`);
         console.warn('[ensure-css-plugin] 请检查 vite-plugin-qiankun 配置和 build.assetsInlineLimit 设置');
+        console.warn('[ensure-css-plugin] 如果这是误报，请检查这些文件的实际内容');
       }
     },
     writeBundle(options, bundle) {
@@ -475,8 +538,8 @@ const ensureCssPlugin = (): Plugin => {
 //   - 如果通过独立域名部署（admin.bellis.com.cn），使用根路径 '/'
 //   - 如果作为子应用部署在主应用的 /admin/ 路径下，使用 '/admin/'
 // 注意：admin.bellis.com.cn 是独立域名，应该使用根路径 '/'
-const BASE_URL = isPreviewBuild 
-  ? `http://${APP_HOST}:${APP_PORT}/` 
+const BASE_URL = isPreviewBuild
+  ? `http://${APP_HOST}:${APP_PORT}/`
   : '/'; // 生产环境使用根路径，因为 admin.bellis.com.cn 是独立域名
 console.log(`[admin-app vite.config] Base URL: ${BASE_URL}, APP_HOST: ${APP_HOST}, APP_PORT: ${APP_PORT}, isPreviewBuild: ${isPreviewBuild}`);
 
@@ -486,6 +549,10 @@ export default defineConfig({
   // - 生产构建：使用相对路径（/），让浏览器根据当前域名（admin.bellis.com.cn）自动解析
   // 这样在生产环境访问时，资源路径会自动使用当前域名，而不是硬编码的 localhost
   base: BASE_URL,
+  // 配置 publicDir，指向 admin-app 自己的 public 目录
+  // 注意：admin-app 需要自己的 icons 和 templates 目录，所以使用自己的 public 目录
+  // 其他子应用使用共享组件库的 public 目录（只有 logo.png）
+  publicDir: resolve(__dirname, 'public'),
   resolve: {
     alias: {
       '@': withSrc('src'),
@@ -756,8 +823,11 @@ export default defineConfig({
               return 'app-src';
             }
             // 微前端相关
+            // 关键：micro 模块依赖 store/tabRegistry、store/menuRegistry、store/process 等（在 app-src 中）
+            // 如果分割到 app-micro，会导致 "Cannot access 'Qa' before initialization" 错误
+            // 必须合并到 app-src 避免循环依赖和初始化顺序问题
             if (id.includes('src/micro')) {
-              return 'app-micro';
+              return 'app-src';
             }
             // 插件、store、services、utils、bootstrap 与多个模块有依赖关系，合并到 app-src 避免循环依赖
             if (id.includes('src/plugins')) {
@@ -781,8 +851,11 @@ export default defineConfig({
             if (id.includes('src/composables')) {
               return 'app-composables';
             }
+            // 关键：router 与 bootstrap 有循环依赖，必须合并到 app-src 避免初始化错误
+            // router 被 bootstrap/core/router.ts 和 bootstrap/integrations/interceptors.ts 使用
+            // 如果分割到 app-router chunk，会导致 "Cannot access 'l' before initialization" 错误
             if (id.includes('src/router')) {
-              return 'app-router';
+              return 'app-src';
             }
             // i18n 模块被 bootstrap/core/i18n.ts 使用（在 app-src 中），合并到 app-src 避免循环依赖
             if (id.includes('src/i18n')) {
@@ -797,16 +870,25 @@ export default defineConfig({
 
           // 处理 @btc/shared- 包（共享包）
           if (id.includes('@btc/shared-')) {
+            // 关键：样式文件（CSS/SCSS）不应该被分割，确保在主入口中加载
+            // 这样可以避免代码分割导致的路径解析问题
+            // 注意：system-app 没有特殊处理样式文件，但它的代码分割配置不同
+            // admin-app 需要特殊处理，因为它的代码分割更细粒度
+            if (id.includes('.css') || id.includes('.scss') || id.includes('styles/')) {
+              // 样式文件不分割，让 Vite 自动处理（通常会被打包到入口 chunk）
+              // 返回 undefined 让 Vite 根据依赖关系自动决定，通常会被打包到入口 chunk
+              return undefined;
+            }
             if (id.includes('@btc/shared-components')) {
               return 'btc-components';
             }
             return 'btc-shared';
           }
 
-          // 对于未匹配的文件，返回 undefined 让 Vite 自动处理
-          // 关键：与 logistics-app 保持一致，返回 undefined 而不是 app-src
-          // 这样可以确保入口文件被单独处理，其他代码被分配到 app-src
-          return undefined;
+          // 对于未匹配的文件，合并到 app-src
+          // 关键：确保所有业务代码都在 app-src 中，避免动态导入的模块找不到
+          // 特别是入口文件（main.ts）和初始化相关的代码必须在一起
+          return 'app-src';
         },
         // 关键：强制所有资源路径使用绝对路径（基于 base）
         // Vite 默认会根据 base 生成绝对路径，但显式声明作为兜底

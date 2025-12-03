@@ -43,13 +43,25 @@
 	// 	box-shadow: $auth-dark-shadow;
 	// }
 	
+	// 响应式设计 - 中等宽度屏幕（平板竖屏）优化
+	// 确保在中等宽度时，卡片有足够的右边距，避免右边框被截断
+	@media (min-width: #{$auth-mobile-breakpoint + 1px}) and (max-width: 1200px) {
+		right: max(20px, 3%); // 至少保持 20px 的右边距，或使用 3% 的百分比
+		max-width: calc(100vw - max(40px, 6%)); // 确保左右都有足够的间距
+	}
+	
 	// 响应式设计 - 窄屏幕优化
 	@media (max-width: $auth-mobile-breakpoint) {
-		width: 100%; // 窄屏幕下占据全宽
-		max-width: 100vw; // 移除最大宽度限制
+		width: min(95vw, $auth-card-width); // 窄屏幕下使用 95% 视口宽度，但不超过卡片原始宽度
+		max-width: min(95vw, $auth-card-width); // 限制最大宽度
 		height: auto; // 高度自适应
 		min-height: 500px; // 设置最小高度
-		margin: 20px; // 添加外边距避免贴边
+		margin: 20px auto; // 上下 20px，左右自动（居中）
+		position: relative;
+		left: auto; // 确保左侧自动
+		right: auto; // 确保右侧自动
+		top: auto;
+		transform: none;
 	}
 }
 

@@ -599,8 +599,18 @@ watch(
       cursor: pointer;
       color: var(--el-text-color-secondary);
 
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.1);
+      // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      // 触摸设备使用 :active 样式（点击时显示反馈）
+      @media (hover: none) {
+        &:active {
+          background-color: rgba(0, 0, 0, 0.1);
+        }
       }
     }
 
@@ -613,8 +623,18 @@ watch(
       margin-right: 0;
     }
 
-    &:hover:not(.active) {
-      background-color: var(--el-fill-color-light);
+    // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+    @media (hover: hover) {
+      &:hover:not(.active) {
+        background-color: var(--el-fill-color-light);
+      }
+    }
+
+    // 触摸设备使用 :active 样式（点击时显示反馈）
+    @media (hover: none) {
+      &:active:not(.active) {
+        background-color: var(--el-fill-color-light);
+      }
     }
 
     &.active {
@@ -624,19 +644,44 @@ watch(
 
       .close {
         color: #fff;
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.3) !important;
+        // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+        @media (hover: hover) {
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+          }
+        }
+        // 触摸设备使用 :active 样式（点击时显示反馈）
+        @media (hover: none) {
+          &:active {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+          }
         }
       }
     }
 
-    &:hover,
-    &.active {
-      .close {
-        margin-left: 10px;
-        margin-right: -2px;
-        width: 14px;
-        opacity: 1;
+    // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+    @media (hover: hover) {
+      &:hover,
+      &.active {
+        .close {
+          margin-left: 10px;
+          margin-right: -2px;
+          width: 14px;
+          opacity: 1;
+        }
+      }
+    }
+
+    // 触摸设备：active 状态也显示关闭按钮
+    @media (hover: none) {
+      &:active,
+      &.active {
+        .close {
+          margin-left: 10px;
+          margin-right: -2px;
+          width: 14px;
+          opacity: 1;
+        }
       }
     }
   }
@@ -693,11 +738,24 @@ watch(
         clip-path: inset(50% 50% 0 -10px);
       }
 
-      &:hover:not(.active) {
-        color: var(--el-text-color-regular) !important;
-        background-color: var(--el-fill-color-light) !important;
-        border-bottom: 1px solid var(--el-bg-color) !important;
-        border-radius: calc(var(--custom-radius) / 2.5 + 4px) !important;
+      // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+      @media (hover: hover) {
+        &:hover:not(.active) {
+          color: var(--el-text-color-regular) !important;
+          background-color: var(--el-fill-color-light) !important;
+          border-bottom: 1px solid var(--el-bg-color) !important;
+          border-radius: calc(var(--custom-radius) / 2.5 + 4px) !important;
+        }
+      }
+
+      // 触摸设备使用 :active 样式（点击时显示反馈）
+      @media (hover: none) {
+        &:active:not(.active) {
+          color: var(--el-text-color-regular) !important;
+          background-color: var(--el-fill-color-light) !important;
+          border-bottom: 1px solid var(--el-bg-color) !important;
+          border-radius: calc(var(--custom-radius) / 2.5 + 4px) !important;
+        }
       }
 
       &.active {
@@ -724,8 +782,18 @@ html.dark .app-process {
     border-color: var(--el-border-color) !important;
     background-color: var(--el-bg-color) !important;
 
-    &:hover:not(.active) {
-      background-color: var(--el-fill-color-light) !important;
+    // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+    @media (hover: hover) {
+      &:hover:not(.active) {
+        background-color: var(--el-fill-color-light) !important;
+      }
+    }
+
+    // 触摸设备使用 :active 样式（点击时显示反馈）
+    @media (hover: none) {
+      &:active:not(.active) {
+        background-color: var(--el-fill-color-light) !important;
+      }
     }
 
     &.active {
@@ -734,15 +802,33 @@ html.dark .app-process {
       color: #fff !important;
 
       .close {
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.3) !important;
+        // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+        @media (hover: hover) {
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+          }
+        }
+        // 触摸设备使用 :active 样式（点击时显示反馈）
+        @media (hover: none) {
+          &:active {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+          }
         }
       }
     }
 
     .close {
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.1) !important;
+      // 关键：只在支持 hover 的设备上应用 hover 样式（触摸设备不会触发）
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+      // 触摸设备使用 :active 样式（点击时显示反馈）
+      @media (hover: none) {
+        &:active {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
       }
     }
   }

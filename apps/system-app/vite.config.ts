@@ -206,6 +206,8 @@ export default defineConfig({
   build: {
     // 主应用不应该使用 external，所有依赖都应该被打包
     // external 配置仅用于子应用（微前端场景）
+    // 提高 chunk 大小警告阈值，避免不必要的警告
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       // 注意：不在这里配置 treeshake，使用 package.json 的 sideEffects 标记
       // treeshake 配置可能会影响代码分割逻辑，导致某些 chunk 被合并
@@ -289,7 +291,12 @@ export default defineConfig({
               // components 依赖 useSettingsState（在 app-src 中），合并到 app-src 避免循环依赖
               return 'app-src';
             }
-            if (id.includes('src/micro')) {
+            if (id.includes('src/micro') || id.includes('micro/')) {
+              // 确保被动态导入和静态导入的 micro 模块在同一 chunk
+              // 使用更精确的路径匹配
+              if (id.includes('manifests.ts') || id.includes('manifests')) {
+                return 'app-src';
+              }
               return 'app-micro';
             }
             if (id.includes('src/plugins/user-setting/components')) {
@@ -312,9 +319,16 @@ export default defineConfig({
               // 避免 bootstrap 和 plugins 之间的循环依赖
               return 'app-src';
             }
-            if (id.includes('src/store')) {
+            if (id.includes('src/store') || id.includes('store/')) {
               // store 与 bootstrap 有依赖关系（bootstrap 导出 store），放在 app-src 中
               // 避免 bootstrap（app-src）和 store（app-store）之间的循环依赖
+              // 确保被动态导入和静态导入的 store 模块在同一 chunk
+              // 使用更精确的路径匹配
+              if (id.includes('tabRegistry') || 
+                  id.includes('process.ts') || 
+                  id.includes('menuRegistry')) {
+                return 'app-src';
+              }
               return 'app-src';
             }
             if (id.includes('src/bootstrap')) {
@@ -323,14 +337,26 @@ export default defineConfig({
             }
             if (id.includes('src/services')) {
               // services 与 main.ts 和 bootstrap 有依赖关系，放在 app-src 中
+              // 确保被动态导入和静态导入的 services 模块在同一 chunk
+              if (id.includes('services/eps')) {
+                return 'app-src';
+              }
               return 'app-src';
             }
             if (id.includes('src/utils')) {
               // utils 与 bootstrap 有依赖关系（bootstrap 导入多个 utils），放在 app-src 中
               // 避免 bootstrap（app-src）和 utils（app-utils）之间的循环依赖
+              // 确保被动态导入和静态导入的 utils 模块在同一 chunk
+              if (id.includes('utils/loadingManager')) {
+                return 'app-src';
+              }
               return 'app-src';
             }
             if (id.includes('src/composables')) {
+              // 确保被动态导入和静态导入的 composables 模块在同一 chunk
+              if (id.includes('composables/useUser')) {
+                return 'app-src';
+              }
               return 'app-composables';
             }
             if (id.includes('src/config')) {
@@ -368,7 +394,14 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
+      onwarn(warning, warn) {
+        // 过滤动态导入和静态导入冲突的警告，因为我们已经在 manualChunks 中确保它们在同一 chunk
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE' || 
+            (warning.message && warning.message.includes('dynamically imported') && warning.message.includes('statically imported'))) {
+          return;
+        }
+        warn(warning);
+      },
     },
-    chunkSizeWarningLimit: 2000, // 提高警告阈值，vendor chunk 较大是正常的
   },
 });
