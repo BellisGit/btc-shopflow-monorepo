@@ -1948,6 +1948,8 @@ export default defineConfig({
       useDevMode: true,
     }),
     // 11. 兜底插件（路径修复、chunk 优化，在最后）
+    // 注意：fixChunkReferencesPlugin 需要在 generateBundle 阶段修复异常文件名
+    // 所以应该在 Rollup 写入文件之前执行，但不需要 enforce: 'pre'，因为它在 generateBundle 阶段就会修复
     fixChunkReferencesPlugin(), // 修复 chunk 之间的引用关系（轻量级，不修改第三方库）
     ensureBaseUrlPlugin(), // 恢复路径修复（确保 chunk 路径正确）
     optimizeChunksPlugin(), // 恢复空 chunk 处理（仅移除未被引用的空 chunk）
@@ -2044,7 +2046,7 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: false,
-    cssCodeSplit: true,
+    cssCodeSplit: false, // 禁用 CSS 代码分割，合并所有 CSS 到一个文件（与 system-app 一致，避免初始化顺序问题）
     cssMinify: true,
     minify: 'terser',
     terserOptions: {
@@ -2094,6 +2096,7 @@ export default defineConfig({
         format: 'esm',
         // 平衡方案：只拆分真正独立的大库，业务代码和 Vue 生态合并
         // 这样可以避免初始化顺序问题，同时控制文件大小
+        // fixChunkReferencesPlugin 会处理异常文件名（如末尾有连字符或下划线的情况）
         inlineDynamicImports: false,
         manualChunks(id) {
           // 0. EPS 服务单独打包（所有应用共享，必须在最前面）
@@ -2104,10 +2107,10 @@ export default defineConfig({
             return 'eps-service';
           }
 
-          // 1. 独立大库：ECharts（完全独立，无依赖问题）
+          // 1. 独立大库：ECharts（纯 echarts 和 zrender，不包含 vue-echarts）
+          // 注意：vue-echarts 依赖 Vue，需要和 Vue 一起打包到 vendor chunk
           if (id.includes('node_modules/echarts') ||
-              id.includes('node_modules/zrender') ||
-              id.includes('node_modules/vue-echarts')) {
+              id.includes('node_modules/zrender')) {
             return 'echarts-vendor';
           }
 
@@ -2119,8 +2122,30 @@ export default defineConfig({
             return 'lib-three';
           }
 
-          // 3. 所有其他代码（Vue生态 + Element Plus + 业务代码）合并到主文件
-          // 原因：Vue生态和业务代码之间有强依赖，拆分会导致初始化顺序问题
+          // 3. Vue 生态库 + 所有依赖 Vue 的第三方库 + 共享组件库
+          // 原因：这些库之间有强依赖关系，拆分会导致初始化顺序问题
+          // 例如：Element Plus 依赖 Vue 的 RefImpl，Vue Router 的 extend 需要在初始化时可用
+          // vue-echarts 依赖 Vue，需要和 Vue 一起打包
+          // 共享组件库也依赖 Vue 生态，需要确保在同一个 chunk 中
+          // 解决方案：合并到一个 vendor chunk，让 Rollup 自动处理内部依赖顺序
+          if (id.includes('node_modules/vue') ||
+              id.includes('node_modules/vue-router') ||
+              id.includes('node_modules/element-plus') ||
+              id.includes('node_modules/pinia') ||
+              id.includes('node_modules/@vueuse') ||
+              id.includes('node_modules/@element-plus') ||
+              id.includes('node_modules/vue-echarts') ||
+              id.includes('node_modules/dayjs') ||
+              id.includes('node_modules/lodash') ||
+              id.includes('node_modules/@vue') ||
+              id.includes('packages/shared-components') ||
+              id.includes('packages/shared-core') ||
+              id.includes('packages/shared-utils')) {
+            return 'vendor';
+          }
+
+          // 4. 所有其他业务代码合并到主文件
+          // 原因：业务代码之间有强依赖，拆分会导致初始化顺序问题
           // 解决方案：合并到一起，让 Rollup 自动处理内部依赖顺序
           return undefined; // 返回 undefined 表示合并到入口文件
         },
@@ -2132,6 +2157,8 @@ export default defineConfig({
         // 使用 Rollup 的 [hash] 占位符（基于内容计算，类似 Webpack 的 contenthash）
         // 注意：Rollup 不支持 [contenthash:8] 或长度限制，只能使用 [hash]
         // Rollup 的 [hash] 就是基于文件内容计算的，只有内容变化时哈希才变
+        // 注意：Rollup 的 [hash] 可能包含下划线（_）或末尾有连字符（-），这是 Rollup 的内部实现
+        // fixChunkReferencesPlugin 会在 generateBundle 阶段检测并修复这些异常文件名
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {

@@ -378,9 +378,9 @@ export class LifecycleManager {
       } else {
         // 尝试直接移除DOM元素
         const extendedInstance = message.messageInstance as any;
-        if (extendedInstance.messageContainer) {
+        if (extendedInstance?.messageContainer && typeof extendedInstance.messageContainer.remove === 'function') {
           extendedInstance.messageContainer.remove();
-        } else if (extendedInstance.$el) {
+        } else if (extendedInstance?.$el && typeof extendedInstance.$el.remove === 'function') {
           extendedInstance.$el.remove();
         }
       }

@@ -38,7 +38,8 @@ if (typeof BtcSvg !== 'undefined') {
 
 // 等待 EPS 服务加载完成后再暴露到全局
 // 因为 eps-service chunk 是动态导入的，需要等待它加载完成
-async function waitForEpsService(maxWaitTime = 5000, interval = 100): Promise<any> {
+// 优化：减少等待时间，使用渐进式轮询间隔，更快响应
+async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Promise<any> {
   const startTime = Date.now();
   
   // 首先尝试直接导入（如果 eps-service chunk 已经加载，这会立即返回）
@@ -52,10 +53,19 @@ async function waitForEpsService(maxWaitTime = 5000, interval = 100): Promise<an
     }
   } catch (error) {
     // 如果导入失败（chunk 还没加载），继续等待
-    console.log('[main.ts] EPS 服务 chunk 尚未加载，等待中...');
+    // 不打印日志，避免控制台噪音
   }
   
-  // 轮询检查服务是否已加载
+  // 检查全局是否已经有服务（可能已经被其他脚本加载）
+  const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+  if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+    return globalService;
+  }
+  
+  // 渐进式轮询：开始时使用较短的间隔，逐渐增加
+  let currentInterval = initialInterval;
+  let attemptCount = 0;
+  
   while (Date.now() - startTime < maxWaitTime) {
     try {
       // 再次尝试导入
@@ -75,7 +85,17 @@ async function waitForEpsService(maxWaitTime = 5000, interval = 100): Promise<an
       return globalService;
     }
     
-    await new Promise(resolve => setTimeout(resolve, interval));
+    // 渐进式增加轮询间隔：前几次使用短间隔，之后逐渐增加
+    attemptCount++;
+    if (attemptCount <= 5) {
+      currentInterval = initialInterval; // 前 5 次保持短间隔（50ms）
+    } else if (attemptCount <= 10) {
+      currentInterval = 100; // 接下来 5 次使用 100ms
+    } else {
+      currentInterval = 150; // 之后使用 150ms
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, currentInterval));
   }
   
   // 如果等待超时，尝试最后一次导入（作为兜底）
@@ -86,11 +106,11 @@ async function waitForEpsService(maxWaitTime = 5000, interval = 100): Promise<an
       return service;
     }
   } catch (error) {
-    console.warn('[main.ts] EPS 服务加载失败:', error);
+    // 静默处理，不打印错误
   }
   
-  // 返回空对象作为兜底
-  console.warn('[main.ts] EPS 服务加载超时，使用空对象');
+  // 返回空对象作为兜底，不阻塞应用启动
+  // 不打印警告，避免控制台噪音（EPS 服务可以在后台继续加载）
   return {};
 }
 
@@ -114,21 +134,18 @@ waitForEpsService().then((service) => {
 }).then(() => {
   app.mount('#app');
 
-    // 应用挂载后，立即关闭并移除所有 Loading 元素（如果存在）
-    // 注意：system-app 的 index.html 中没有 #Loading 元素，但子应用可能有
-    // 这里确保所有 Loading 元素都被移除，避免一直显示
+    // 应用挂载后，立即关闭并移除 Loading 元素
+    // 添加淡出动画，然后移除元素
     const loadingEl = document.getElementById('Loading');
     if (loadingEl) {
-      // 立即隐藏
-      loadingEl.style.display = 'none';
-      loadingEl.style.visibility = 'hidden';
-      loadingEl.style.opacity = '0';
-      // 延迟移除，确保动画完成
-    setTimeout(() => {
+      // 添加淡出类，触发 CSS 过渡动画
+      loadingEl.classList.add('is-hide');
+      // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
+      setTimeout(() => {
         if (loadingEl.parentNode) {
           loadingEl.parentNode.removeChild(loadingEl);
-      }
-      }, 100);
+        }
+      }, 350);
     }
 
     // 仅在开发环境注册开发工具组件

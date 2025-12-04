@@ -286,7 +286,7 @@ export const cleanupNotificationBadge = (notificationInstance: any) => {
   // 移除徽章DOM元素
   if (extendedInstance.badgeElement) {
     const badgeContainer = extendedInstance.badgeElement.parentElement;
-    if (badgeContainer) {
+    if (badgeContainer && typeof badgeContainer.remove === 'function') {
       badgeContainer.remove();
     }
     extendedInstance.badgeElement = null;

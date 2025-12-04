@@ -65,7 +65,7 @@ import { BtcSvg } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
 import { finishLoading } from '@/utils/loadingManager';
-import { getAppConfig } from '@configs/app-env.config';
+import { getAppConfig, getAllDevPorts, getAllPrePorts } from '@configs/app-env.config';
 import { getActiveApp } from '@/store/tabRegistry';
 
 interface MicroApp {
@@ -93,6 +93,81 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const router = useRouter();
+
+/**
+ * 环境类型
+ */
+type EnvironmentType = 'development' | 'preview' | 'production';
+
+/**
+ * 检测当前环境类型
+ */
+const getEnvironmentType = (): EnvironmentType => {
+  if (typeof window === 'undefined') {
+    return import.meta.env.PROD ? 'production' : 'development';
+  }
+
+  const port = window.location.port || '';
+  const previewPorts = getAllPrePorts();
+  const devPorts = getAllDevPorts();
+
+  if (previewPorts.includes(port)) {
+    return 'preview';
+  }
+
+  if (devPorts.includes(port)) {
+    return 'development';
+  }
+
+  if (import.meta.env.PROD) {
+    return 'production';
+  }
+
+  return 'development';
+};
+
+/**
+ * 获取应用入口地址
+ */
+const getAppEntry = (appName: string): string => {
+  const envType = getEnvironmentType();
+  const appConfig = getAppConfig(`${appName}-app`);
+
+  if (!appConfig) {
+    console.warn(`[menu-drawer] 未找到应用配置: ${appName}-app`);
+    return `/${appName}/`;
+  }
+
+  switch (envType) {
+    case 'production':
+      // 生产环境：根据子域名判断使用子域名还是相对路径
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const subdomainMap: Record<string, string> = {
+          'bellis.com.cn': 'system',
+          'logistics.bellis.com.cn': 'logistics',
+          'quality.bellis.com.cn': 'quality',
+          'production.bellis.com.cn': 'production',
+          'engineering.bellis.com.cn': 'engineering',
+          'finance.bellis.com.cn': 'finance',
+        };
+        
+        if (subdomainMap[hostname] === appName) {
+          const protocol = window.location.protocol;
+          return `${protocol}//${hostname}/`;
+        }
+      }
+      return `/${appName}/`;
+
+    case 'preview': {
+      return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+    }
+
+    case 'development':
+    default:
+      return `//${appConfig.devHost}:${appConfig.devPort}`;
+  }
+};
 
 // 根据当前路由判断当前应用（系统域是默认域）
 const currentApp = ref('system');
@@ -126,43 +201,43 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
   'LOGISTICS': {
     icon: 'map',
     color: '#67c23a',
-    entry: '//localhost:8082',
+    entry: getAppEntry('logistics'),
     activeRule: '/logistics',
   },
   'ENGINEERING': {
     icon: 'design',
     color: '#e6a23c',
-    entry: '//localhost:8085',
+    entry: getAppEntry('engineering'),
     activeRule: '/engineering',
   },
   'QUALITY': {
     icon: 'approve',
     color: '#f56c6c',
-    entry: '//localhost:8083',
+    entry: getAppEntry('quality'),
     activeRule: '/quality',
   },
   'PRODUCTION': {
     icon: 'work',
     color: '#909399',
-    entry: '//localhost:8084',
+    entry: getAppEntry('production'),
     activeRule: '/production',
   },
   'FINANCE': {
     icon: 'amount-alt',
     color: '#1890ff',
-    entry: '//localhost:8086',
+    entry: getAppEntry('finance'),
     activeRule: '/finance',
   },
   'SYSTEM': {
     icon: 'user',
     color: '#722ed1',
-    entry: '//localhost:8081',
+    entry: getAppEntry('system'),
     activeRule: '/system',
   },
   'ADMIN': {
     icon: 'settings',
     color: '#13c2c2',
-    entry: '//localhost:8080',
+    entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
 };
@@ -290,7 +365,7 @@ const loadApplications = async () => {
         name: 'system',
         icon: 'user',
         color: '#722ed1',
-        entry: '//localhost:8081',
+        entry: getAppEntry('system'),
         activeRule: '/',
         description: systemDomain?.description || ''
       });
@@ -308,7 +383,7 @@ const loadApplications = async () => {
           name: 'admin',
           icon: 'settings',
           color: '#13c2c2',
-          entry: '//localhost:8080',
+          entry: getAppEntry('admin'),
           activeRule: '/admin',
           description: adminDomain.description || ''
         });
@@ -348,7 +423,7 @@ const loadApplications = async () => {
           name: 'system',
           icon: 'user',
           color: '#722ed1',
-          entry: '//localhost:8081',
+          entry: getAppEntry('system'),
           activeRule: '/',
           description: ''
         }
@@ -363,7 +438,7 @@ const loadApplications = async () => {
         name: 'system',
         icon: 'user',
         color: '#722ed1',
-        entry: '//localhost:8081',
+        entry: getAppEntry('system'),
         activeRule: '/',
         description: ''
       }
@@ -435,12 +510,9 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 如果是切换到主应用（system），确保使用 replace 模式，避免历史记录堆积
   const isSystemApp = app.name === 'system';
   
-  // 设置超时保护，确保 loading 状态最终会被清除
-  // 注意：超时时间应该大于 single-spa 的 bootstrap 超时时间，给应用足够的加载时间
-  // 生产环境资源加载可能较慢，需要更长的超时时间
+  // 设置统一的超时保护（10 s），避免生产环境长时间白屏
   let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  const isDev = import.meta.env.DEV;
-  const maxLoadingTime = isDev ? 12000 : 20000; // 开发环境 12 秒，生产环境 20 秒（考虑网络延迟）
+  const maxLoadingTime = 10000; // 10 秒超时
 
   // 监听 afterMount 事件，确保 loading 状态被清除
   const handleAfterMount = () => {
@@ -448,6 +520,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       clearTimeout(loadingTimeout);
       loadingTimeout = null;
     }
+    finishLoading(); // 确保清除 loading 状态
     window.removeEventListener('qiankun:after-mount', handleAfterMount);
   };
 

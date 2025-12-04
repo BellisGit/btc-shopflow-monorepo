@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
-import { existsSync, readFileSync, rmSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, join, extname, basename } from 'path';
 import type { Plugin } from 'vite';
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
@@ -85,9 +85,9 @@ const chunkVerifyPlugin = (): Plugin => {
   };
 };
 
-// 将 public 目录中的图片文件打包到 assets 目录并添加哈希值
+// 将 public 目录中的图片文件打包到根目录并添加哈希值
 const publicImagesToAssetsPlugin = (): Plugin => {
-  const imageMap = new Map<string, string>(); // 原文件名 -> 带哈希的文件名
+  const imageMap = new Map<string, string>(); // 原文件名 -> 带哈希的文件名（不含路径）
   const emittedFiles = new Map<string, string>(); // 原文件名 -> emitFile 返回的 referenceId
   const publicImageFiles = new Map<string, string>(); // 原文件名 -> 文件路径
 
@@ -103,7 +103,7 @@ const publicImagesToAssetsPlugin = (): Plugin => {
       // 查找 public 目录中的所有图片文件
       const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico'];
       const files = readdirSync(publicDir);
-      
+
       for (const file of files) {
         const ext = extname(file).toLowerCase();
         if (imageExtensions.includes(ext)) {
@@ -113,95 +113,178 @@ const publicImagesToAssetsPlugin = (): Plugin => {
             // 记录文件路径，用于 resolveId
             publicImageFiles.set(`/${file}`, filePath);
             publicImageFiles.set(file, filePath);
-            
-            // 将文件作为资源导入，这样会被 Rollup 处理并添加到 assets 目录
-            // 使用 name 参数确保文件名正确，Rollup 会根据 assetFileNames 配置添加哈希值
+
+            // 将文件作为资源导入，这样会被 Rollup 处理并添加到根目录
+            // Rollup 会根据 assetFileNames 配置自动生成带哈希的文件名
+            const fileContent = readFileSync(filePath);
+            // 使用完整的文件名（含扩展名）作为 name，让 Rollup 正确提取 [ext]
+            // assetFileNames 配置中的 [name] 会使用这个值，[ext] 会从 name 中提取
             const referenceId = this.emitFile({
               type: 'asset',
-              name: basename(file, ext), // 基础名称（不含扩展名），Rollup 会自动添加哈希和扩展名
-              source: readFileSync(filePath),
+              name: file, // 使用完整文件名（含扩展名），让 Rollup 正确应用 assetFileNames 配置
+              source: fileContent,
             });
             emittedFiles.set(file, referenceId);
-            console.log(`[public-images-to-assets] 📦 将 ${file} 打包到 assets 目录 (referenceId: ${referenceId})`);
+            console.log(`[public-images-to-assets] 📦 将 ${file} 打包到根目录 (referenceId: ${referenceId})`);
           }
         }
       }
     },
-    // 解析 /logo.png 这样的路径，返回对应的文件路径
+    // 解析 /logo.png 这样的路径，返回对应的虚拟模块 ID
     resolveId(id) {
       // 检查是否是 public 目录中的图片文件（以 / 开头的绝对路径）
       if (id.startsWith('/') && publicImageFiles.has(id)) {
-        const filePath = publicImageFiles.get(id);
-        // 返回文件路径，让 Vite 将其作为资源处理
-        return filePath;
+        // 返回一个虚拟模块 ID，让 Vite 知道这是一个资源
+        return `\0public-image:${id}`;
       }
       return null;
     },
-    // 在生成 bundle 时，更新代码中的图片引用
-    renderChunk(code, chunk, options) {
-      // 在 generateBundle 阶段，imageMap 已经填充了映射关系
-      // 但此时我们还没有 imageMap，所以需要在 generateBundle 阶段处理
-      // 这里先不做处理，在 generateBundle 阶段统一处理
+    // 加载虚拟模块，返回资源 URL
+    load(id) {
+      if (id.startsWith('\0public-image:')) {
+        const originalPath = id.replace('\0public-image:', '');
+        const fileName = basename(originalPath);
+        // 查找对应的 referenceId
+        const referenceId = emittedFiles.get(fileName);
+        if (referenceId) {
+          // 返回一个导出资源 URL 的模块
+          // 使用 ?url 后缀让 Vite 将其作为资源处理
+          // 但这里我们不能直接使用 ?url，因为这是虚拟模块
+          // 所以我们需要在 generateBundle 阶段更新引用
+          // 这里先返回一个占位符，在 generateBundle 阶段会更新为带哈希的文件名
+          return `export default "/${fileName}";`;
+        }
+      }
       return null;
     },
     // 在生成 bundle 后，记录实际生成的文件名，并更新代码中的引用
     generateBundle(options, bundle) {
-      // 通过 this.getFileName 获取实际生成的文件名
+      // 检查 bundle 中是否有我们通过 emitFile 添加的资源
+      const bundleAssets = Object.entries(bundle).filter(([_, chunk]) => chunk.type === 'asset');
+      console.log(`[public-images-to-assets] 📋 bundle 中的资源文件数量: ${bundleAssets.length}`);
+
+      // 处理通过 emitFile 添加的资源，使用 Rollup 实际生成的文件名
+      console.log(`[public-images-to-assets] 🔍 开始处理 ${emittedFiles.size} 个已发出的文件`);
       for (const [originalFile, referenceId] of emittedFiles.entries()) {
         try {
+          // 使用 Rollup 的 getFileName 获取实际生成的文件名（包含 Rollup 计算的哈希）
           const actualFileName = this.getFileName(referenceId);
-          if (actualFileName) {
-            imageMap.set(originalFile, actualFileName.replace('assets/', ''));
-            console.log(`[public-images-to-assets] ✅ ${originalFile} -> ${actualFileName}`);
+
+          if (!actualFileName) {
+            console.warn(`[public-images-to-assets] ⚠️  无法获取 ${originalFile} 的文件名 (referenceId: ${referenceId})`);
+            continue;
           }
+
+          // 检查 bundle 中是否存在该文件
+          const assetChunk = bundle[actualFileName];
+          if (!assetChunk || assetChunk.type !== 'asset') {
+            console.warn(`[public-images-to-assets] ⚠️  在 bundle 中未找到 ${actualFileName} (原始文件: ${originalFile})`);
+            continue;
+          }
+
+          // 更新 imageMap（只保存文件名，不包含路径前缀）
+          // Rollup 已经根据 assetFileNames 配置生成了正确的文件名（包含哈希）
+          // 如果文件名包含 assets/ 前缀，移除它；否则直接使用
+          const fileNameWithoutPath = actualFileName.startsWith('assets/')
+            ? actualFileName.replace('assets/', '')
+            : actualFileName;
+          imageMap.set(originalFile, fileNameWithoutPath);
+          console.log(`[public-images-to-assets] ✅ ${originalFile} -> ${fileNameWithoutPath} (Rollup 生成的文件名)`);
         } catch (error) {
-          console.warn(`[public-images-to-assets] ⚠️  无法获取 ${originalFile} 的文件名:`, error);
+          console.warn(`[public-images-to-assets] ⚠️  处理 ${originalFile} 时出错:`, error);
         }
       }
-      
-      // 更新所有 chunk 代码中的图片引用
+
+      // 如果 imageMap 为空，说明 emitFile 没有成功
+      if (imageMap.size === 0) {
+        console.warn(`[public-images-to-assets] ⚠️  imageMap 为空，可能 emitFile 没有成功执行`);
+      } else {
+        console.log(`[public-images-to-assets] 📝 imageMap 内容:`, Array.from(imageMap.entries()).map(([k, v]) => `${k} -> ${v}`).join(', '));
+      }
+
+      // 更新所有 chunk 代码中的图片引用（包括 JS 和 CSS）
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'chunk' && chunk.code) {
           let modified = false;
           let newCode = chunk.code;
-          
+
           for (const [originalFile, hashedFile] of imageMap.entries()) {
             const originalPath = `/${originalFile}`;
-            const newPath = `/assets/${hashedFile}`;
-            
+            const newPath = `/${hashedFile}`; // 根目录路径，不带 assets/
+            const escapedPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
             // 匹配字符串字面量中的路径（包括单引号、双引号、模板字符串）
-            const regex = new RegExp(`(["'\`])${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(["'\`])`, 'g');
+            const stringPattern = new RegExp(`(["'\`])${escapedPath}(["'\`])`, 'g');
             if (newCode.includes(originalPath)) {
-              newCode = newCode.replace(regex, `$1${newPath}$2`);
+              newCode = newCode.replace(stringPattern, `$1${newPath}$2`);
               modified = true;
             }
           }
-          
+
           if (modified) {
             chunk.code = newCode;
             console.log(`[public-images-to-assets] 🔄 更新 ${fileName} 中的图片引用`);
           }
+        } else if (chunk.type === 'asset' && fileName.endsWith('.css') && chunk.source) {
+          // 处理 CSS 文件中的 URL 引用
+          let modified = false;
+          let newSource = typeof chunk.source === 'string' ? chunk.source : Buffer.from(chunk.source).toString('utf-8');
+
+          for (const [originalFile, hashedFile] of imageMap.entries()) {
+            const originalPath = `/${originalFile}`;
+            const newPath = `/${hashedFile}`; // 根目录路径，不带 assets/
+            const escapedPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // 匹配 CSS url() 格式
+            const urlPatterns = [
+              new RegExp(`url\\(${escapedPath}\\)`, 'g'),
+              new RegExp(`url\\(['"]${escapedPath}['"]\\)`, 'g'),
+            ];
+
+            for (const pattern of urlPatterns) {
+              if (pattern.test(newSource)) {
+                newSource = newSource.replace(pattern, (match) => {
+                  return match.replace(originalPath, newPath);
+                });
+                modified = true;
+                console.log(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的引用: ${originalPath} -> ${newPath}`);
+              }
+            }
+          }
+
+          if (modified) {
+            chunk.source = newSource;
+          }
         }
       }
     },
-    // 在写入文件后，更新 HTML 和代码中的引用
+    // 在写入文件后，更新 HTML 和代码中的引用，并移动文件到 assets 目录
     writeBundle(options) {
       if (imageMap.size === 0) {
         return;
       }
 
       const outputDir = options.dir || resolve(__dirname, 'dist');
+      const assetsDirPath = join(outputDir, 'assets');
+
+      // 确保 assets 目录存在
+      if (!existsSync(assetsDirPath)) {
+        mkdirSync(assetsDirPath, { recursive: true });
+      }
+
+      // 注意：文件移动将在 closeBundle 钩子中执行，确保在所有 writeBundle 执行完毕后进行
+
       const indexHtmlPath = join(outputDir, 'index.html');
-      
+
       if (existsSync(indexHtmlPath)) {
         let html = readFileSync(indexHtmlPath, 'utf-8');
         let modified = false;
 
-        // 更新 HTML 中的图片引用（如 /logo.png -> /assets/logo-hash.png）
+        // 更新 HTML 中的图片引用（如 /logo.png -> /logo-hash.png）
         for (const [originalFile, hashedFile] of imageMap.entries()) {
           const originalPath = `/${originalFile}`;
-          const newPath = `/assets/${hashedFile}`;
-          
+          const newPath = `/${hashedFile}`; // 根目录路径，不带 assets/
+
           if (html.includes(originalPath)) {
             html = html.replace(new RegExp(originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), newPath);
             modified = true;
@@ -227,18 +310,59 @@ const publicImagesToAssetsPlugin = (): Plugin => {
 
           for (const [originalFile, hashedFile] of imageMap.entries()) {
             const originalPath = `/${originalFile}`;
-            const newPath = `/assets/${hashedFile}`;
-            
-            if (content.includes(originalPath)) {
-              content = content.replace(new RegExp(originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), newPath);
-              modified = true;
-              console.log(`[public-images-to-assets] 🔄 更新 ${file} 中的引用: ${originalPath} -> ${newPath}`);
+            const newPath = `/${hashedFile}`; // 根目录路径，不带 assets/
+
+            // 匹配多种格式：
+            // 1. 字符串字面量："/logo.png" 或 '/logo.png' 或 `/logo.png`
+            // 2. CSS url()：url(/logo.png) 或 url("/logo.png") 或 url('/logo.png')
+            const escapedPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const patterns = [
+              // 字符串字面量（单引号、双引号、模板字符串）
+              new RegExp(`(["'\`])${escapedPath}(["'\`])`, 'g'),
+              // CSS url() 格式（无引号）
+              new RegExp(`url\\(${escapedPath}\\)`, 'g'),
+              // CSS url() 格式（单引号）
+              new RegExp(`url\\(['"]${escapedPath}['"]\\)`, 'g'),
+            ];
+
+            for (const pattern of patterns) {
+              if (pattern.test(content)) {
+                if (pattern.source.includes('url')) {
+                  // CSS url() 格式：保持 url() 结构
+                  content = content.replace(pattern, (match) => {
+                    return match.replace(originalPath, newPath);
+                  });
+                } else {
+                  // 字符串字面量格式
+                  content = content.replace(pattern, `$1${newPath}$2`);
+                }
+                modified = true;
+                console.log(`[public-images-to-assets] 🔄 更新 ${file} 中的引用: ${originalPath} -> ${newPath}`);
+              }
             }
           }
 
           if (modified) {
             writeFileSync(filePath, content, 'utf-8');
           }
+        }
+      }
+    },
+    // 在所有 writeBundle 执行完毕后，验证文件是否已正确生成
+    closeBundle() {
+      if (imageMap.size === 0) {
+        return;
+      }
+
+      const outputDir = resolve(__dirname, 'dist');
+
+      // 验证所有文件是否已正确生成到根目录
+      for (const [originalFile, hashedFile] of imageMap.entries()) {
+        const expectedPath = join(outputDir, hashedFile);
+        if (existsSync(expectedPath)) {
+          console.log(`[public-images-to-assets] ✅ 文件已正确生成: ${hashedFile}`);
+        } else {
+          console.warn(`[public-images-to-assets] ⚠️  文件不存在: ${hashedFile} (原始文件: ${originalFile})`);
         }
       }
     },
@@ -380,6 +504,70 @@ const corsPreflightPlugin = (): Plugin => {
   };
 };
 
+// 资源预加载插件：自动为关键资源添加 preload/modulepreload 提示
+const resourcePreloadPlugin = (): Plugin => {
+  const criticalResources: Array<{ href: string; as?: string; rel: string }> = [];
+
+  return {
+    name: 'resource-preload',
+    generateBundle(options, bundle) {
+      // 收集关键资源：主入口 JS、CSS、EPS 服务 chunk
+      const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js') || file.endsWith('.mjs'));
+      const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
+
+      // 主入口文件（index-*.js）
+      const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
+      if (indexChunk) {
+        criticalResources.push({
+          href: `/assets/${indexChunk}`,
+          rel: 'modulepreload',
+        });
+      }
+
+      // EPS 服务 chunk（关键依赖，需要提前加载）
+      const epsServiceChunk = jsChunks.find(jsChunk => jsChunk.includes('eps-service-'));
+      if (epsServiceChunk) {
+        criticalResources.push({
+          href: `/assets/${epsServiceChunk}`,
+          rel: 'modulepreload',
+        });
+      }
+
+      // CSS 文件（使用 preload，as="style"）
+      cssChunks.forEach(cssChunk => {
+        criticalResources.push({
+          href: `/assets/${cssChunk}`,
+          rel: 'preload',
+          as: 'style',
+        });
+      });
+    },
+    transformIndexHtml(html) {
+      // 在 </head> 之前注入预加载链接
+      if (criticalResources.length === 0) {
+        return html;
+      }
+
+      const preloadLinks = criticalResources
+        .map(resource => {
+          if (resource.rel === 'modulepreload') {
+            return `    <link rel="modulepreload" href="${resource.href}" />`;
+          } else {
+            return `    <link rel="preload" href="${resource.href}" as="${resource.as || 'script'}" />`;
+          }
+        })
+        .join('\n');
+
+      // 在 </head> 之前插入，确保尽早加载
+      if (html.includes('</head>')) {
+        return html.replace('</head>', `${preloadLinks}\n</head>`);
+      }
+
+      return html;
+    },
+  };
+};
+
 export default defineConfig({
   // 开启构建缓存，复用依赖的编译结果，提高构建速度并稳定哈希
   cacheDir: './node_modules/.vite-cache',
@@ -419,6 +607,7 @@ export default defineConfig({
     cleanDistPlugin(), // 0. 构建前清理 dist 目录（最前面）
     publicImagesToAssetsPlugin(), // 1. 将 public 目录中的图片打包到 assets 目录并添加哈希值
     corsPreflightPlugin(), // 2. CORS 插件（不干扰构建）
+    resourcePreloadPlugin(), // 3. 资源预加载插件（在构建时注入 preload 提示）
     vue({
       // 2. Vue 插件（核心构建插件）
       script: {
@@ -555,9 +744,9 @@ export default defineConfig({
         comments: false,
       },
     },
-    // 关键修改1：小资源内联（减少请求数，不影响大包拆分）
-    // 10KB以下的资源内联，避免小图标/小css拆成独立文件
-    assetsInlineLimit: 10 * 1024,
+    // 关键修改1：禁用资源内联，确保所有图片都作为独立文件输出（带哈希）
+    // 设置为 0 禁用内联，所有资源都会作为独立文件输出到 assets 目录
+    assetsInlineLimit: 0,
     outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
@@ -624,9 +813,17 @@ export default defineConfig({
           if (assetInfo.name?.endsWith('.css')) {
             return 'assets/[name]-[hash].css';
           }
-          // 图片和其他资源文件
-          // 确保所有资源文件都被正确命名和复制
-          return 'assets/[name]-[hash].[ext]';
+          // 图片和其他资源文件：放在根目录（不带 assets/ 前缀）
+          // 如果 name 包含扩展名，提取文件名（不含扩展名）
+          if (assetInfo.name && assetInfo.name.includes('.')) {
+            const ext = extname(assetInfo.name);
+            const nameWithoutExt = basename(assetInfo.name, ext);
+            // 使用占位符格式，让 Rollup 自动填充 [hash]
+            // 文件输出到根目录，格式：logo-[hash].png
+            return `${nameWithoutExt}-[hash]${ext}`;
+          }
+          // 兜底：使用默认格式（Rollup 会自动处理）
+          return '[name]-[hash].[ext]';
         },
       },
       external: [],

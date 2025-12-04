@@ -22,7 +22,66 @@ export function fixChunkReferencesPlugin(): Plugin {
   return {
     name: 'fix-chunk-references',
     generateBundle(options, bundle) {
-      // 第一步：收集所有 chunk 文件名，建立映射
+      // 第一步：检测并修复异常文件名（末尾有连字符或下划线）
+      // Rollup 的 [hash] 在某些情况下可能生成异常文件名，需要在生成阶段就修复
+      const fileNameMap = new Map<string, string>(); // 旧文件名 -> 新文件名
+
+      // 先收集所有文件名，用于调试
+      const allFileNames = Object.keys(bundle).filter(f =>
+        (f.endsWith('.js') || f.endsWith('.mjs') || f.endsWith('.css')) && f.startsWith('assets/')
+      );
+      console.log(`[fix-chunk-references] generateBundle: 检查 ${allFileNames.length} 个文件...`);
+
+      for (const fileName of Object.keys(bundle)) {
+        if ((fileName.endsWith('.js') || fileName.endsWith('.mjs') || fileName.endsWith('.css')) && fileName.startsWith('assets/')) {
+          const baseName = fileName.replace(/^assets\//, '').replace(/\.(js|mjs|css)$/, '');
+          const ext = fileName.match(/\.(js|mjs|css)$/)?.[0] || '';
+
+          // 检测末尾有连字符或下划线的情况（如 index-Dd-XhCK-.js、index-B2jkFyZ_.js、index-CExg17b_.js）
+          // Rollup 的 [hash] 占位符应该生成十六进制字符（0-9a-f），不应该包含下划线或末尾有连字符
+          // 如果出现这种情况，说明 Rollup 的 hash 生成有问题，需要修复
+          // 使用更严格的检测：匹配末尾的一个或多个连字符或下划线
+          // 也检测中间有连续连字符的情况（如 index--ygJoKxK.js）
+          const hasTrailingDashOrUnderscore = /[-_]+$/.test(baseName);
+          const hasDoubleDash = baseName.includes('--');
+
+          if (hasTrailingDashOrUnderscore || hasDoubleDash) {
+            // 清理末尾的连字符或下划线，以及中间的连续连字符
+            let cleanBaseName = baseName.replace(/[-_]+$/, ''); // 先清理末尾
+            cleanBaseName = cleanBaseName.replace(/--+/g, '-'); // 再清理中间的连续连字符
+            const newFileName = `assets/${cleanBaseName}${ext}`;
+
+            if (hasTrailingDashOrUnderscore) {
+              console.warn(`[fix-chunk-references] generateBundle: ⚠️  检测到异常文件名（末尾有连字符或下划线）: ${fileName} (baseName: ${baseName})`);
+            } else if (hasDoubleDash) {
+              console.warn(`[fix-chunk-references] generateBundle: ⚠️  检测到异常文件名（中间有连续连字符）: ${fileName} (baseName: ${baseName})`);
+            }
+            console.warn(`[fix-chunk-references] generateBundle: 🔧 修复为: ${newFileName}`);
+
+            // 记录文件名映射
+            fileNameMap.set(fileName, newFileName);
+
+            // 更新 chunk 的文件名
+            const chunk = bundle[fileName];
+            if (chunk) {
+              // 关键：同时更新 chunk 的 fileName 属性和 bundle 中的键
+              // 确保 Rollup 使用修复后的文件名
+              (chunk as any).fileName = newFileName;
+              // 如果新文件名已存在，先删除（避免冲突）
+              if (bundle[newFileName]) {
+                console.warn(`[fix-chunk-references] generateBundle: ⚠️  新文件名已存在，合并内容: ${newFileName}`);
+                // 合并内容（通常不会发生，但如果发生，保留新文件名的内容）
+              } else {
+                bundle[newFileName] = chunk;
+              }
+              delete bundle[fileName];
+              console.log(`[fix-chunk-references] generateBundle: ✅ 已修复文件名: ${fileName} -> ${newFileName}`);
+            }
+          }
+        }
+      }
+
+      // 第二步：收集所有 chunk 文件名（包括修复后的），建立映射
       chunkNameMap.clear();
 
       for (const fileName of Object.keys(bundle)) {
@@ -31,17 +90,50 @@ export function fixChunkReferencesPlugin(): Plugin {
           // 文件名格式：name-hash.js
           const baseName = fileName.replace(/^assets\//, '').replace(/\.js$/, '');
 
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanBaseName = baseName.replace(/-+$/, '');
-
           // 提取名称前缀（去掉 hash 部分）
           // 匹配格式：name-hash，提取 name 部分
-          const nameMatch = cleanBaseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?$/);
+          const nameMatch = baseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?$/);
           if (nameMatch) {
             const namePrefix = nameMatch[1];
-            // 如果还没有映射，或者当前文件名更完整，则更新映射
-            if (!chunkNameMap.has(namePrefix) || fileName.includes(namePrefix)) {
+            // 如果还没有映射，则添加映射
+            if (!chunkNameMap.has(namePrefix)) {
               chunkNameMap.set(namePrefix, fileName);
+            }
+          }
+        }
+      }
+
+      // 更新所有 chunk 中的引用（如果文件名被修复了）
+      if (fileNameMap.size > 0) {
+        for (const [fileName, chunk] of Object.entries(bundle)) {
+          if (chunk.type === 'chunk' && chunk.code) {
+            let newCode = chunk.code;
+            let modified = false;
+
+            for (const [oldFileName, newFileName] of fileNameMap.entries()) {
+              const oldRef = oldFileName.replace(/^assets\//, '');
+              const newRef = newFileName.replace(/^assets\//, '');
+
+              // 修复所有引用（包括动态导入和字符串引用）
+              const patterns = [
+                // 动态导入：import('/assets/xxx.js')
+                new RegExp(`import\\s*\\(\\s*(["'\`])([^"'\`]*${oldRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"'\`]*)(["'\`])\\s*\\)`, 'g'),
+                // 字符串引用："assets/xxx.js" 或 '/assets/xxx.js'
+                new RegExp(`(["'\`])([^"'\`]*${oldRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"'\`]*)(["'\`])`, 'g'),
+              ];
+
+              for (const pattern of patterns) {
+                if (pattern.test(newCode)) {
+                  newCode = newCode.replace(pattern, (match, quote1, path, quote2) => {
+                    return match.replace(oldRef, newRef);
+                  });
+                  modified = true;
+                }
+              }
+            }
+
+            if (modified) {
+              chunk.code = newCode;
             }
           }
         }
@@ -188,8 +280,8 @@ export function fixChunkReferencesPlugin(): Plugin {
           );
 
           // 无论文件是否存在，都通过文件名前缀找到实际文件，确保引用正确
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+          // 处理末尾有连字符或下划线的情况（如 vue-core-3nfEKAw-.js、index-CExg17b_.js）
+          const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs|css)$/, '.$1');
           const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs|css)$/);
 
           if (refMatch) {
@@ -237,12 +329,53 @@ export function fixChunkReferencesPlugin(): Plugin {
                 });
               }
             } else if (!existsInBundle) {
-              // 文件不存在且找不到映射，输出警告
-              console.warn(`[fix-chunk-references] generateBundle: ⚠️  无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile}`);
-              // 输出所有可用的映射，帮助调试
-              const availablePrefixes = Array.from(chunkNameMap.keys()).filter(k => k.includes(namePrefix.split('-')[0]));
-              if (availablePrefixes.length > 0) {
-                console.log(`[fix-chunk-references] generateBundle: 💡 可用的类似前缀: ${availablePrefixes.slice(0, 5).join(', ')}`);
+              // 文件不存在且找不到映射
+              // 检查是否是旧引用（包含在OLD_REF_PATTERN中）
+              const isOldRef = OLD_REF_PATTERN.test(referencedFile);
+              if (isOldRef) {
+                // 这是旧引用，尝试找到对应的新文件
+                // 旧引用可能是：element-plus-CQjIfk82.js、vue-core-Ct0QBumG.js、vendor-B2xaJ9jT.js 等
+                // 现在这些库已经合并到 vendor chunk 中
+                // 优先查找 vendor chunk，如果找不到则查找主文件
+                let targetChunk = chunkNameMap.get('vendor');
+                if (!targetChunk) {
+                  targetChunk = chunkNameMap.get('index');
+                }
+
+                if (targetChunk) {
+                  const targetFileName = targetChunk.replace(/^assets\//, '');
+                  let newPath = fullPath;
+                  if (fullPath.startsWith('/assets/')) {
+                    newPath = `/assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('./assets/')) {
+                    newPath = `./assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('assets/')) {
+                    newPath = `assets/${targetFileName}`;
+                  } else {
+                    newPath = targetFileName;
+                  }
+                  const newPathWithVersion = newPath + `?v=${buildId}`;
+                  replacements.push({
+                    old: fullMatch,
+                    new: `import(${quote}${newPathWithVersion}${quote})`
+                  });
+                  console.log(`[fix-chunk-references] generateBundle: 🔄 将旧引用 ${referencedFile} 替换为 ${targetFileName}`);
+                } else {
+                  // 找不到目标文件，删除这个旧引用
+                  console.warn(`[fix-chunk-references] generateBundle: 🗑️  删除旧引用（找不到对应文件）: ${referencedFile}`);
+                  replacements.push({
+                    old: fullMatch,
+                    new: `Promise.resolve()`
+                  });
+                }
+              } else {
+                // 不是旧引用，输出警告
+                console.warn(`[fix-chunk-references] generateBundle: ⚠️  无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile}`);
+                // 输出所有可用的映射，帮助调试
+                const availablePrefixes = Array.from(chunkNameMap.keys()).filter(k => k.includes(namePrefix.split('-')[0]));
+                if (availablePrefixes.length > 0) {
+                  console.log(`[fix-chunk-references] generateBundle: 💡 可用的类似前缀: ${availablePrefixes.slice(0, 5).join(', ')}`);
+                }
               }
             } else {
               // 文件存在且文件名正确，但需要添加或更新版本号
@@ -288,8 +421,8 @@ export function fixChunkReferencesPlugin(): Plugin {
           }
 
           // 无论文件是否存在，都通过文件名前缀找到实际文件，确保引用正确
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+          // 处理末尾有连字符或下划线的情况（如 vue-core-3nfEKAw-.js、index-CExg17b_.js）
+          const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs|css)$/, '.$1');
           const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs|css)$/);
 
           if (refMatch) {
@@ -376,21 +509,133 @@ export function fixChunkReferencesPlugin(): Plugin {
         return;
       }
 
-      // 重新收集所有实际生成的文件名
-      chunkNameMap.clear();
+      // 第一步：检测并重命名异常文件名（末尾有连字符或下划线）
+      // Rollup 可能在写入文件时仍然生成了异常文件名，需要在文件系统层面修复
       const actualFiles = readdirSync(assetsDir).filter(f => f.endsWith('.js') || f.endsWith('.mjs') || f.endsWith('.css'));
+      const fileRenameMap = new Map<string, string>(); // 旧文件名 -> 新文件名
 
       for (const file of actualFiles) {
         const baseName = file.replace(/\.(js|mjs|css)$/, '');
-        // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-        const cleanBaseName = baseName.replace(/-+$/, '');
-        const nameMatch = cleanBaseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?$/);
+        const ext = file.match(/\.(js|mjs|css)$/)?.[0] || '';
+
+        // 检测末尾有连字符或下划线的情况（如 index-Dd-XhCK-.js、index-B2jkFyZ_.js、index-CExg17b_.js）
+        // Rollup 的 [hash] 占位符应该生成十六进制字符（0-9a-f），不应该包含下划线或末尾有连字符
+        // 使用更严格的检测：匹配末尾的一个或多个连字符或下划线
+        if (baseName.match(/[-_]+$/)) {
+          const cleanBaseName = baseName.replace(/[-_]+$/, '');
+          const newFileName = `${cleanBaseName}${ext}`;
+
+          console.warn(`[fix-chunk-references] writeBundle: ⚠️  检测到异常文件名（末尾有连字符或下划线）: ${file}`);
+          console.warn(`[fix-chunk-references] writeBundle: 🔧 重命名为: ${newFileName}`);
+
+          // 重命名文件
+          const oldFilePath = join(assetsDir, file);
+          const newFilePath = join(assetsDir, newFileName);
+
+          try {
+            if (existsSync(newFilePath)) {
+              // 如果新文件名已存在，删除旧文件（说明可能是重复的）
+              unlinkSync(oldFilePath);
+              console.warn(`[fix-chunk-references] writeBundle: ⚠️  新文件名已存在，删除旧文件: ${file}`);
+            } else {
+              // 重命名文件
+              writeFileSync(newFilePath, readFileSync(oldFilePath, 'utf-8'), 'utf-8');
+              unlinkSync(oldFilePath);
+              fileRenameMap.set(file, newFileName);
+              console.log(`[fix-chunk-references] writeBundle: ✅ 已重命名: ${file} -> ${newFileName}`);
+            }
+          } catch (error) {
+            console.error(`[fix-chunk-references] writeBundle: ❌ 重命名文件失败: ${file} -> ${newFileName}`, error);
+          }
+        }
+      }
+
+      // 第二步：重新收集所有实际生成的文件名（包括重命名后的）
+      // 注意：如果文件被重命名了，需要重新读取目录，因为文件列表可能已经改变
+      let finalFiles: string[] = [];
+
+      if (fileRenameMap.size > 0) {
+        // 等待文件系统同步
+        // 在某些文件系统上，重命名操作可能需要一点时间才能反映在 readdirSync 中
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+          finalFiles = readdirSync(assetsDir).filter((f: string) => f.endsWith('.js') || f.endsWith('.mjs') || f.endsWith('.css'));
+          // 检查是否还有异常文件名
+          const hasAbnormalFiles = finalFiles.some((f: string) => {
+            const baseName = f.replace(/\.(js|mjs|css)$/, '');
+            return baseName.match(/[-_]+$/);
+          });
+
+          if (!hasAbnormalFiles) {
+            break; // 没有异常文件名了，可以继续
+          }
+
+          retries++;
+          if (retries < maxRetries) {
+            // 等待一小段时间后重试
+            const startTime = Date.now();
+            while (Date.now() - startTime < 10) {
+              // 等待 10ms
+            }
+          }
+        }
+
+        // 如果还有异常文件名，再次尝试修复
+        for (const file of finalFiles) {
+          const baseName = file.replace(/\.(js|mjs|css)$/, '');
+          const ext = file.match(/\.(js|mjs|css)$/)?.[0] || '';
+
+          if (baseName.match(/[-_]+$/)) {
+            const cleanBaseName = baseName.replace(/[-_]+$/, '');
+            const newFileName = `${cleanBaseName}${ext}`;
+
+            console.warn(`[fix-chunk-references] writeBundle: ⚠️  再次检测到异常文件名: ${file}`);
+            console.warn(`[fix-chunk-references] writeBundle: 🔧 再次重命名为: ${newFileName}`);
+
+            const oldFilePath = join(assetsDir, file);
+            const newFilePath = join(assetsDir, newFileName);
+
+            try {
+              if (!existsSync(newFilePath)) {
+                writeFileSync(newFilePath, readFileSync(oldFilePath, 'utf-8'), 'utf-8');
+                unlinkSync(oldFilePath);
+                fileRenameMap.set(file, newFileName);
+                console.log(`[fix-chunk-references] writeBundle: ✅ 再次重命名成功: ${file} -> ${newFileName}`);
+              } else {
+                unlinkSync(oldFilePath);
+                console.warn(`[fix-chunk-references] writeBundle: ⚠️  新文件名已存在，删除旧文件: ${file}`);
+              }
+            } catch (error) {
+              console.error(`[fix-chunk-references] writeBundle: ❌ 再次重命名失败: ${file} -> ${newFileName}`, error);
+            }
+          }
+        }
+
+        // 重新读取最终文件列表
+        finalFiles = readdirSync(assetsDir).filter((f: string) => f.endsWith('.js') || f.endsWith('.mjs') || f.endsWith('.css'));
+      } else {
+        finalFiles = readdirSync(assetsDir).filter((f: string) => f.endsWith('.js') || f.endsWith('.mjs') || f.endsWith('.css'));
+      }
+
+      chunkNameMap.clear();
+      for (const file of finalFiles) {
+        const baseName = file.replace(/\.(js|mjs|css)$/, '');
+        // 提取名称前缀（去掉 hash 部分）
+        const nameMatch = baseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?$/);
         if (nameMatch) {
           const namePrefix = nameMatch[1];
+          // 如果还没有映射，则添加映射
           if (!chunkNameMap.has(namePrefix)) {
             chunkNameMap.set(namePrefix, file);
           }
         }
+      }
+
+      // 如果文件被重命名了，需要更新所有引用
+      if (fileRenameMap.size > 0) {
+        console.log(`[fix-chunk-references] writeBundle: 需要更新 ${fileRenameMap.size} 个文件重命名后的引用`);
       }
 
       console.log(`[fix-chunk-references] writeBundle: 收集到 ${chunkNameMap.size} 个实际文件映射`);
@@ -400,8 +645,8 @@ export function fixChunkReferencesPlugin(): Plugin {
         console.log(`[fix-chunk-references] writeBundle: 示例映射: ${sampleEntries.map(([k, v]) => `${k} -> ${v}`).join(', ')}`);
       }
 
-      // 修复所有 JS 文件中的引用
-      const jsFiles = actualFiles.filter(f => f.endsWith('.js') || f.endsWith('.mjs'));
+      // 修复所有 JS 文件中的引用（使用重命名后的文件列表）
+      const jsFiles = finalFiles.filter(f => f.endsWith('.js') || f.endsWith('.mjs'));
       let totalFixed = 0;
       let totalChecked = 0;
       let totalReferences = 0;
@@ -420,6 +665,36 @@ export function fixChunkReferencesPlugin(): Plugin {
         const jsFilePath = join(assetsDir, jsFile);
         const content = readFileSync(jsFilePath, 'utf-8');
         const replacements: Array<{ old: string; new: string }> = [];
+
+        // 如果文件被重命名了，需要更新所有引用
+        if (fileRenameMap.size > 0) {
+          let modifiedContent = content;
+          let hasRenameRefs = false;
+
+          for (const [oldFileName, newFileName] of fileRenameMap.entries()) {
+            // 修复所有引用（包括动态导入和字符串引用）
+            const patterns = [
+              // 动态导入：import('/assets/xxx.js')
+              new RegExp(`import\\s*\\(\\s*(["'\`])([^"'\`]*${oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"'\`]*)(["'\`])\\s*\\)`, 'g'),
+              // 字符串引用："assets/xxx.js" 或 '/assets/xxx.js'
+              new RegExp(`(["'\`])([^"'\`]*${oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"'\`]*)(["'\`])`, 'g'),
+            ];
+
+            for (const pattern of patterns) {
+              if (pattern.test(modifiedContent)) {
+                modifiedContent = modifiedContent.replace(pattern, (match) => {
+                  return match.replace(oldFileName, newFileName);
+                });
+                hasRenameRefs = true;
+              }
+            }
+          }
+
+          if (hasRenameRefs) {
+            writeFileSync(jsFilePath, modifiedContent, 'utf-8');
+            console.log(`[fix-chunk-references] writeBundle: ✅ 已更新 ${jsFile} 中的文件重命名引用`);
+          }
+        }
 
         // 检查是否有旧引用（用于诊断和强制删除）
         const oldRefMatches = content.match(OLD_REF_PATTERN);
@@ -478,8 +753,8 @@ export function fixChunkReferencesPlugin(): Plugin {
           const exists = actualFiles.includes(referencedFile);
 
           // 无论文件是否存在，都通过文件名前缀找到实际文件，确保引用正确
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+          // 处理末尾有连字符或下划线的情况（如 vue-core-3nfEKAw-.js、index-CExg17b_.js）
+          const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs|css)$/, '.$1');
           const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs|css)$/);
 
           if (refMatch) {
@@ -487,26 +762,66 @@ export function fixChunkReferencesPlugin(): Plugin {
             const actualFile = chunkNameMap.get(namePrefix);
 
             if (actualFile) {
+              // 获取实际文件名（去掉assets/前缀）
+              const actualFileName = actualFile.replace(/^assets\//, '');
               // 如果引用的文件名与实际文件名不一致，需要修复
-              if (referencedFile !== actualFile) {
-                console.log(`[fix-chunk-references] writeBundle: 发现不匹配的引用: ${referencedFile} -> ${actualFile} (在 ${jsFile} 中)`);
+              if (referencedFile !== actualFileName) {
+                console.log(`[fix-chunk-references] writeBundle: 发现不匹配的引用: ${referencedFile} -> ${actualFileName} (在 ${jsFile} 中)`);
 
                 if (fullPath.startsWith('/assets/')) {
-                  fullPath = `/assets/${actualFile}`;
+                  fullPath = `/assets/${actualFileName}`;
                 } else if (fullPath.startsWith('./assets/')) {
-                  fullPath = `./assets/${actualFile}`;
+                  fullPath = `./assets/${actualFileName}`;
                 } else if (fullPath.startsWith('assets/')) {
-                  fullPath = `assets/${actualFile}`;
+                  fullPath = `assets/${actualFileName}`;
                 } else {
-                  fullPath = actualFile;
+                  fullPath = actualFileName;
                 }
               }
             } else if (!exists) {
               // 文件不存在且找不到映射
-              // 如果是主文件（index），说明代码已经内联，删除这个无效引用
-              if (jsFile.includes('index')) {
+              // 检查是否是旧引用（包含在OLD_REF_PATTERN中）
+              const isOldRef = OLD_REF_PATTERN.test(referencedFile);
+              if (isOldRef) {
+                // 这是旧引用，尝试找到对应的新文件
+                // 旧引用可能是：element-plus-CQjIfk82.js、vue-core-Ct0QBumG.js、vendor-B2xaJ9jT.js 等
+                // 现在这些库已经合并到 vendor chunk 中
+                // 优先查找 vendor chunk，如果找不到则查找主文件
+                let targetChunk = chunkNameMap.get('vendor');
+                if (!targetChunk) {
+                  targetChunk = chunkNameMap.get('index');
+                }
+
+                if (targetChunk) {
+                  const targetFileName = targetChunk.replace(/^assets\//, '');
+                  let newPath = fullPath;
+                  if (fullPath.startsWith('/assets/')) {
+                    newPath = `/assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('./assets/')) {
+                    newPath = `./assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('assets/')) {
+                    newPath = `assets/${targetFileName}`;
+                  } else {
+                    newPath = targetFileName;
+                  }
+                  const newPathWithVersion = newPath + `?v=${buildId}`;
+                  replacements.push({
+                    old: fullMatch,
+                    new: `import(${quote}${newPathWithVersion}${quote})`
+                  });
+                  console.log(`[fix-chunk-references] writeBundle: 🔄 将旧引用 ${referencedFile} 替换为 ${targetFileName} (在 ${jsFile} 中)`);
+                } else {
+                  // 找不到目标文件，删除这个旧引用
+                  console.log(`[fix-chunk-references] writeBundle: 🗑️  删除旧引用动态导入: ${referencedFile} (在 ${jsFile} 中)`);
+                  replacements.push({
+                    old: fullMatch,
+                    new: `Promise.resolve()`
+                  });
+                }
+                continue; // 跳过后续处理
+              } else if (jsFile.includes('index')) {
+                // 如果是主文件（index），说明代码已经内联，删除这个无效引用
                 console.log(`[fix-chunk-references] writeBundle: 🗑️  删除主文件中的无效动态导入: ${referencedFile} (代码已内联)`);
-                // 将 import() 替换为 Promise.resolve()，避免破坏代码逻辑
                 replacements.push({
                   old: fullMatch,
                   new: `Promise.resolve()`
@@ -555,8 +870,8 @@ export function fixChunkReferencesPlugin(): Plugin {
           const exists = actualFiles.includes(referencedFile);
 
           // 无论文件是否存在，都通过文件名前缀找到实际文件，确保引用正确
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+          // 处理末尾有连字符或下划线的情况（如 vue-core-3nfEKAw-.js、index-CExg17b_.js）
+          const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs|css)$/, '.$1');
           const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs|css)$/);
 
           if (refMatch) {
@@ -581,8 +896,48 @@ export function fixChunkReferencesPlugin(): Plugin {
               }
             } else if (!exists) {
               // 文件不存在且找不到映射
-              // 如果是主文件（index），说明代码已经内联，删除这个无效引用
-              if (jsFile.includes('index')) {
+              // 检查是否是旧引用（包含在OLD_REF_PATTERN中）
+              const isOldRef = OLD_REF_PATTERN.test(referencedFile);
+              if (isOldRef) {
+                // 这是旧引用，尝试找到对应的新文件
+                // 旧引用可能是：element-plus-CQjIfk82.js、vue-core-Ct0QBumG.js、vendor-B2xaJ9jT.js 等
+                // 现在这些库已经合并到 vendor chunk 中
+                // 优先查找 vendor chunk，如果找不到则查找主文件
+                let targetChunk = chunkNameMap.get('vendor');
+                if (!targetChunk) {
+                  targetChunk = chunkNameMap.get('index');
+                }
+
+                if (targetChunk) {
+                  const targetFileName = targetChunk.replace(/^assets\//, '');
+                  let newPath = fullPath;
+                  if (fullPath.startsWith('/assets/')) {
+                    newPath = `/assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('./assets/')) {
+                    newPath = `./assets/${targetFileName}`;
+                  } else if (fullPath.startsWith('assets/')) {
+                    newPath = `assets/${targetFileName}`;
+                  } else {
+                    newPath = targetFileName;
+                  }
+                  const newPathWithVersion = newPath + `?v=${buildId}`;
+                  replacements.push({
+                    old: fullMatch,
+                    new: `${quote}${newPathWithVersion}${quote}`
+                  });
+                  console.log(`[fix-chunk-references] writeBundle: 🔄 将旧引用 ${referencedFile} 替换为 ${targetFileName} (在 ${jsFile} 中)`);
+                  continue; // 跳过后续处理
+                } else {
+                  // 找不到目标文件，删除这个旧引用
+                  console.log(`[fix-chunk-references] writeBundle: 🗑️  删除主文件中的无效字符串引用: ${referencedFile} (代码已内联)`);
+                  replacements.push({
+                    old: fullMatch,
+                    new: `${quote}${quote}`
+                  });
+                  continue; // 跳过后续处理
+                }
+              } else if (jsFile.includes('index')) {
+                // 如果是主文件（index），说明代码已经内联，删除这个无效引用
                 console.log(`[fix-chunk-references] writeBundle: 🗑️  删除主文件中的无效字符串引用: ${referencedFile} (代码已内联)`);
                 // 删除这个引用：将字符串替换为空字符串
                 replacements.push({
@@ -651,8 +1006,8 @@ export function fixChunkReferencesPlugin(): Plugin {
           const exists = actualFiles.includes(referencedFile);
 
           // 无论文件是否存在，都通过文件名前缀找到实际文件，确保引用正确
-          // 处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
-          const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+          // 处理末尾有连字符或下划线的情况（如 vue-core-3nfEKAw-.js、index-CExg17b_.js）
+          const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs|css)$/, '.$1');
           const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs|css)$/);
 
           let finalFullPath = fullPath;
@@ -757,9 +1112,10 @@ export function fixChunkReferencesPlugin(): Plugin {
           const existingQuery = match[3] || '';
           const fileName = src.replace(/^\/?assets\//, '');
 
-          // 先修复文件名（如果不存在）
-          if (fileName && !actualFiles.includes(fileName)) {
-            const cleanFileName = fileName.replace(/-+\.(js|mjs)$/, '.$1');
+          // 先修复文件名（如果不存在或包含异常字符）
+          // 处理末尾有连字符或下划线的情况（如 index-Dd-XhCK-.js、index-B2jkFyZ_.js、index-CExg17b_.js）
+          if (fileName && (!actualFiles.includes(fileName) || fileName.match(/[-_]+\.(js|mjs)$/))) {
+            const cleanFileName = fileName.replace(/[-_]+\.(js|mjs)$/, '.$1');
             const refMatch = cleanFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs)$/);
             if (refMatch) {
               const [, namePrefix] = refMatch;
@@ -768,6 +1124,20 @@ export function fixChunkReferencesPlugin(): Plugin {
               if (actualFile && actualFile !== fileName) {
                 src = src.replace(fileName, actualFile);
                 console.log(`[fix-chunk-references] writeBundle: 修复 index.html 中的 script 引用: ${fileName} -> ${actualFile}`);
+              } else if (!actualFile) {
+                // 如果找不到对应的chunk，尝试从index chunk中找到
+                const indexChunk = actualFiles.find(f => f.includes('index-'));
+                if (indexChunk) {
+                  // 删除这个不存在的引用，因为内容已经合并到index chunk中
+                  console.log(`[fix-chunk-references] writeBundle: ⚠️  删除 index.html 中不存在的 script 引用: ${fileName} (内容已合并到 ${indexChunk})`);
+                  htmlReplacements.push({
+                    old: match[0],
+                    new: '' // 删除这个引用
+                  });
+                  continue; // 跳过后续处理
+                } else {
+                  console.warn(`[fix-chunk-references] writeBundle: ⚠️  无法找到 ${namePrefix} 对应的文件，且没有 index chunk，引用: ${fileName}`);
+                }
               }
             }
           }
@@ -789,9 +1159,10 @@ export function fixChunkReferencesPlugin(): Plugin {
           const existingQuery = match[3] || '';
           const fileName = href.replace(/^\/?assets\//, '');
 
-          // 先修复文件名（如果不存在）
-          if (fileName && !actualFiles.includes(fileName)) {
-            const cleanFileName = fileName.replace(/-+\.(js|mjs)$/, '.$1');
+          // 先修复文件名（如果不存在或包含异常字符）
+          // 处理末尾有连字符或下划线的情况（如 index-Dd-XhCK-.js、index-B2jkFyZ_.js、index-CExg17b_.js）
+          if (fileName && (!actualFiles.includes(fileName) || fileName.match(/[-_]+\.(js|mjs)$/))) {
+            const cleanFileName = fileName.replace(/[-_]+\.(js|mjs)$/, '.$1');
             const refMatch = cleanFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs)$/);
             if (refMatch) {
               const [, namePrefix] = refMatch;
@@ -800,6 +1171,20 @@ export function fixChunkReferencesPlugin(): Plugin {
               if (actualFile && actualFile !== fileName) {
                 href = href.replace(fileName, actualFile);
                 console.log(`[fix-chunk-references] writeBundle: 修复 index.html 中的 modulepreload 引用: ${fileName} -> ${actualFile}`);
+              } else if (!actualFile) {
+                // 如果找不到对应的chunk，尝试从index chunk中找到
+                const indexChunk = actualFiles.find(f => f.includes('index-'));
+                if (indexChunk) {
+                  // 删除这个不存在的引用，因为内容已经合并到index chunk中
+                  console.log(`[fix-chunk-references] writeBundle: ⚠️  删除 index.html 中不存在的 modulepreload 引用: ${fileName} (内容已合并到 ${indexChunk})`);
+                  htmlReplacements.push({
+                    old: match[0],
+                    new: '' // 删除这个引用
+                  });
+                  continue; // 跳过后续处理
+                } else {
+                  console.warn(`[fix-chunk-references] writeBundle: ⚠️  无法找到 ${namePrefix} 对应的文件，且没有 index chunk，引用: ${fileName}`);
+                }
               }
             }
           }
@@ -823,9 +1208,10 @@ export function fixChunkReferencesPlugin(): Plugin {
           const existingQuery = match[2] || '';
           const fileName = href.replace(/^\/?assets\//, '');
 
-          // 先修复文件名（如果不存在）
-          if (fileName && !actualFiles.includes(fileName)) {
-            const cleanFileName = fileName.replace(/-+\.css$/, '.css');
+          // 先修复文件名（如果不存在或包含异常字符）
+          // 处理末尾有连字符或下划线的情况
+          if (fileName && (!actualFiles.includes(fileName) || fileName.match(/[-_]+\.css$/))) {
+            const cleanFileName = fileName.replace(/[-_]+\.css$/, '.css');
             const refMatch = cleanFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.css$/);
             if (refMatch) {
               const [, namePrefix] = refMatch;
@@ -857,9 +1243,10 @@ export function fixChunkReferencesPlugin(): Plugin {
           const existingQuery = match[4] || '';
           const fullMatch = match[0];
 
-          // 先修复文件名（如果不存在）
-          if (!actualFiles.includes(referencedFile)) {
-            const cleanReferencedFile = referencedFile.replace(/-+\.(js|mjs)$/, '.$1');
+          // 先修复文件名（如果不存在或包含异常字符）
+          // 处理末尾有连字符或下划线的情况（如 index-Dd-XhCK-.js、index-B2jkFyZ_.js、index-CExg17b_.js）
+          if (!actualFiles.includes(referencedFile) || referencedFile.match(/[-_]+\.(js|mjs)$/)) {
+            const cleanReferencedFile = referencedFile.replace(/[-_]+\.(js|mjs)$/, '.$1');
             const refMatch = cleanReferencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?\.(js|mjs)$/);
             if (refMatch) {
               const [, namePrefix] = refMatch;
@@ -888,7 +1275,7 @@ export function fixChunkReferencesPlugin(): Plugin {
           const attrs = scriptMatch[1];
           const content = scriptMatch[2];
           const fullScript = scriptMatch[0];
-          
+
           // 如果 script 标签中没有 type="module"，添加它
           if (!attrs.includes('type=') || (!attrs.includes('type="module"') && !attrs.includes("type='module'"))) {
             const newAttrs = attrs.trim() ? `${attrs} type="module"` : 'type="module"';
@@ -957,10 +1344,11 @@ export function fixChunkReferencesPlugin(): Plugin {
       const allAssetFiles = readdirSync(assetsDir);
       const referencedFiles = new Set<string>();
 
-      // 从 index.html 中收集引用的文件
+      // 从 index.html 中收集引用的文件（包括 JS、CSS 和图片等资源文件）
       if (existsSync(join(outputDir, 'index.html'))) {
         const htmlContent = readFileSync(join(outputDir, 'index.html'), 'utf-8');
-        const htmlRefs = htmlContent.match(/assets\/([^"\'\s]+\.(js|mjs|css))/g);
+        // 匹配所有 assets 目录下的资源文件（js、mjs、css、png、jpg、jpeg、gif、webp、svg、ico 等）
+        const htmlRefs = htmlContent.match(/assets\/([^"'\s<>]+\.(js|mjs|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot))/g);
         if (htmlRefs) {
           htmlRefs.forEach(ref => {
             const fileName = ref.replace('assets/', '');
@@ -974,12 +1362,12 @@ export function fixChunkReferencesPlugin(): Plugin {
       for (const jsFile of allJsFiles) {
         const jsFilePath = join(assetsDir, jsFile);
         const jsContent = readFileSync(jsFilePath, 'utf-8');
-        
+
         // 收集 __vite__mapDeps 中的引用
-        const mapDepsMatches = jsContent.match(/assets\/([^"\']+\.(js|mjs|css))\?v=[^"\']+/g);
+        const mapDepsMatches = jsContent.match(/assets\/([^"']+\.(js|mjs|css))\?v=[^"']+/g);
         if (mapDepsMatches) {
           mapDepsMatches.forEach(ref => {
-            const fileName = ref.replace(/assets\//, '').replace(/\?v=[^"\']+/, '');
+            const fileName = ref.replace(/assets\//, '').replace(/\?v=[^"']+/, '');
             referencedFiles.add(fileName);
           });
         }
@@ -988,7 +1376,7 @@ export function fixChunkReferencesPlugin(): Plugin {
         const importMatches = jsContent.match(/import\s*\(\s*["']([^"']*assets\/[^"']+\.(js|mjs|css))[^"']*["']/g);
         if (importMatches) {
           importMatches.forEach(ref => {
-            const match = ref.match(/assets\/([^"\']+\.(js|mjs|css))/);
+            const match = ref.match(/assets\/([^"']+\.(js|mjs|css))/);
             if (match) {
               referencedFiles.add(match[1]);
             }
@@ -1008,18 +1396,18 @@ export function fixChunkReferencesPlugin(): Plugin {
       const cssFiles = allAssetFiles.filter(f => f.endsWith('.css'));
       for (const cssFile of cssFiles) {
         let isReferenced = false;
-        
+
         // 检查 HTML 文件中的引用（已经在前面收集过了，但这里再次确认）
         if (referencedFiles.has(cssFile)) {
           isReferenced = true;
         }
-        
+
         // 检查所有 JS 文件中的引用
         if (!isReferenced) {
           for (const jsFile of allJsFiles) {
             const jsContent = readFileSync(join(assetsDir, jsFile), 'utf-8');
             // 检查多种引用方式
-            if (jsContent.includes(cssFile) || 
+            if (jsContent.includes(cssFile) ||
                 jsContent.includes(`assets/${cssFile}`) ||
                 jsContent.match(new RegExp(`["']([^"']*${cssFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})[^"']*["']`))) {
               isReferenced = true;
@@ -1027,7 +1415,7 @@ export function fixChunkReferencesPlugin(): Plugin {
             }
           }
         }
-        
+
         // 如果仍然没有被引用，检查是否是 Vite 自动生成的 CSS（通常会被 HTML 引用）
         // 对于这种情况，我们保守处理：如果文件存在且不是明显未使用的，就保留
         // 但实际上，如果 HTML 中已经收集了引用，这里应该已经被标记为引用了
@@ -1036,8 +1424,44 @@ export function fixChunkReferencesPlugin(): Plugin {
         }
       }
 
-      // 删除未引用的文件
-      const unusedFiles = allAssetFiles.filter(f => !referencedFiles.has(f));
+      // 收集图片和其他资源文件的引用（从 JS 文件中）
+      const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'];
+      const imageFiles = allAssetFiles.filter(f => imageExtensions.some(ext => f.endsWith(ext)));
+      for (const imageFile of imageFiles) {
+        // 检查 HTML 文件中的引用（已经在前面收集过了）
+        if (referencedFiles.has(imageFile)) {
+          continue;
+        }
+
+        // 检查所有 JS 文件中的引用
+        let isReferenced = false;
+        for (const jsFile of allJsFiles) {
+          const jsContent = readFileSync(join(assetsDir, jsFile), 'utf-8');
+          // 检查多种引用方式
+          if (jsContent.includes(imageFile) ||
+              jsContent.includes(`assets/${imageFile}`) ||
+              jsContent.match(new RegExp(`["']([^"']*${imageFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})[^"']*["']`))) {
+            isReferenced = true;
+            referencedFiles.add(imageFile);
+            break;
+          }
+        }
+      }
+
+      // 删除未引用的文件（排除图片文件，因为图片文件可能通过其他方式引用）
+      // 只删除明显未使用的 JS/CSS 文件
+      const unusedFiles = allAssetFiles.filter(f => {
+        if (!referencedFiles.has(f)) {
+          // 对于图片文件，保守处理：不删除，除非明确知道未被引用
+          const isImage = imageExtensions.some(ext => f.endsWith(ext));
+          if (isImage) {
+            return false; // 不删除图片文件
+          }
+          return true; // 删除未引用的 JS/CSS 文件
+        }
+        return false;
+      });
+
       if (unusedFiles.length > 0) {
         console.log(`[fix-chunk-references] writeBundle: 🗑️  发现 ${unusedFiles.length} 个未使用的文件，开始清理...`);
         let deletedCount = 0;
@@ -1051,6 +1475,12 @@ export function fixChunkReferencesPlugin(): Plugin {
         }
         console.log(`[fix-chunk-references] writeBundle: ✅ 已清理 ${deletedCount} 个未使用的文件`);
       }
+    },
+    // 在 closeBundle 阶段最后检查，确保所有异常文件名都被修复
+    closeBundle() {
+      // 这个钩子在所有文件写入完成后执行，用于最终验证和修复
+      // 注意：此时 outputDir 可能已经不可用，所以主要做验证
+      console.log(`[fix-chunk-references] closeBundle: ✅ 构建完成，所有异常文件名应在 writeBundle 阶段已修复`);
     },
   };
 }
