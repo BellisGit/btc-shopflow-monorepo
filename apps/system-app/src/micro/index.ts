@@ -840,7 +840,8 @@ export function setupQiankun() {
   const appsWithProps = microApps.map(app => {
     // 根据环境设置合理的超时时间
     const isDev = import.meta.env.DEV;
-    const defaultTimeout = isDev ? 8000 : 5000; // 开发环境 8 秒，生产环境 5 秒
+    // 生产环境增加到 15 秒，考虑网络延迟和资源加载时间（chunk 文件可能较大）
+    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
     const timeout = app.timeout || defaultTimeout;
 
     // qiankun 2.10+ 支持 single-spa 原生格式的 timeouts 配置
@@ -1419,7 +1420,40 @@ export function setupQiankun() {
         }
 
         // 执行请求（可能已经修复了 URL）
-        let response = await fetch(url, options);
+        // 添加超时控制，生产环境资源加载可能较慢
+        const timeout = import.meta.env.DEV ? 10000 : 30000; // 开发环境 10 秒，生产环境 30 秒
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        let response: Response;
+        try {
+          response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          // 如果是超时错误，尝试重试一次
+          if (error.name === 'AbortError' && !options?.signal?.aborted) {
+            console.warn(`[qiankun] 资源加载超时，尝试重试: ${url}`);
+            const retryController = new AbortController();
+            const retryTimeoutId = setTimeout(() => retryController.abort(), timeout);
+            try {
+              response = await fetch(url, {
+                ...options,
+                signal: retryController.signal,
+              });
+              clearTimeout(retryTimeoutId);
+            } catch (retryError: any) {
+              clearTimeout(retryTimeoutId);
+              console.error(`[qiankun] 资源加载重试失败: ${url}`, retryError);
+              throw retryError;
+            }
+          } else {
+            throw error;
+          }
+        }
 
         // 如果是 HTML 请求（text/html），需要修复其中的资源路径
         const contentType = response.headers.get('content-type');

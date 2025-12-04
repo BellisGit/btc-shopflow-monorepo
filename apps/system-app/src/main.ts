@@ -1,7 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
-import { service } from './services/eps';
 import { isDev } from './config';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
 
@@ -37,18 +36,83 @@ if (typeof BtcSvg !== 'undefined') {
   console.error('[BtcSvg] 组件导入失败，请检查 @btc/shared-components 构建');
 }
 
-// 将 service 暴露到全局，供共享组件和子应用使用
-if (typeof window !== 'undefined') {
-  (window as any).__BTC_SERVICE__ = service;
-  // 暴露到全局，供所有子应用共享使用
-  (window as any).__APP_EPS_SERVICE__ = service;
-  (window as any).service = service; // 也设置到 window.service，保持兼容性
+// 等待 EPS 服务加载完成后再暴露到全局
+// 因为 eps-service chunk 是动态导入的，需要等待它加载完成
+async function waitForEpsService(maxWaitTime = 5000, interval = 100): Promise<any> {
+  const startTime = Date.now();
+  
+  // 首先尝试直接导入（如果 eps-service chunk 已经加载，这会立即返回）
+  try {
+    const epsModule = await import('./services/eps');
+    const service = epsModule.service || epsModule.default;
+    
+    // 检查服务是否有有效内容（不是空对象）
+    if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+      return service;
+    }
+  } catch (error) {
+    // 如果导入失败（chunk 还没加载），继续等待
+    console.log('[main.ts] EPS 服务 chunk 尚未加载，等待中...');
+  }
+  
+  // 轮询检查服务是否已加载
+  while (Date.now() - startTime < maxWaitTime) {
+    try {
+      // 再次尝试导入
+      const epsModule = await import('./services/eps');
+      const service = epsModule.service || epsModule.default;
+      
+      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+        return service;
+      }
+    } catch (error) {
+      // 继续等待
+    }
+    
+    // 检查全局是否已经有服务（可能已经被其他脚本加载）
+    const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+      return globalService;
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+  
+  // 如果等待超时，尝试最后一次导入（作为兜底）
+  try {
+    const epsModule = await import('./services/eps');
+    const service = epsModule.service || epsModule.default;
+    if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+      return service;
+    }
+  } catch (error) {
+    console.warn('[main.ts] EPS 服务加载失败:', error);
+  }
+  
+  // 返回空对象作为兜底
+  console.warn('[main.ts] EPS 服务加载超时，使用空对象');
+  return {};
 }
 
-// 启动
-bootstrap(app)
-  .then(() => {
-    app.mount('#app');
+
+// 启动（等待 EPS 服务加载完成后再启动应用）
+waitForEpsService().then((service) => {
+  if (typeof window !== 'undefined') {
+    (window as any).__BTC_SERVICE__ = service;
+    // 暴露到全局，供所有子应用共享使用
+    (window as any).__APP_EPS_SERVICE__ = service;
+    (window as any).service = service; // 也设置到 window.service，保持兼容性
+    if (Object.keys(service).length > 0) {
+      console.log('[main.ts] ✅ EPS 服务已暴露到全局，包含的模块:', Object.keys(service));
+    } else {
+      console.warn('[main.ts] ⚠️  EPS 服务为空对象，可能尚未加载完成');
+    }
+  }
+  
+  // EPS 服务加载完成后，再启动应用
+  return bootstrap(app);
+}).then(() => {
+  app.mount('#app');
 
     // 应用挂载后，立即关闭并移除所有 Loading 元素（如果存在）
     // 注意：system-app 的 index.html 中没有 #Loading 元素，但子应用可能有

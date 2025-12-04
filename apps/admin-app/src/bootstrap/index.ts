@@ -457,6 +457,13 @@ export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}
     if (qiankunWindow.__POWERED_BY_QIANKUN__) {
       window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
     }
+    // 独立运行时：直接隐藏 loading 元素
+    if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        loadingEl.classList.add('is-hide');
+      }
+    }
   };
 
   // 设置超时保护

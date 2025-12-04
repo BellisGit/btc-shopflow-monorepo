@@ -92,7 +92,7 @@ onMounted(() => {
 
 // 使用 EPS 域服务
 const wrappedDomainService = {
-  ...service.admin?.iam?.domain,
+  ...(service.admin?.iam?.domain || {}),
   delete: async (id: string | number) => {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 

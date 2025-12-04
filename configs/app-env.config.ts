@@ -93,7 +93,7 @@ export const APP_ENV_CONFIGS: AppEnvConfig[] = [
     devHost: '10.80.8.199',
     devPort: '8088',
     preHost: 'localhost',
-    prePort: '4188',
+    prePort: '4192',
     prodHost: 'layout.bellis.com.cn',
   },
   {

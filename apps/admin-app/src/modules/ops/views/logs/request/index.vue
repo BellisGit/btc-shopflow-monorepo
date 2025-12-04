@@ -75,7 +75,8 @@ defineOptions({
 });
 
 // 请求日志服务（打印可用方法）
-const rawRequestService = service.admin?.log?.request as any;
+// 确保 service 存在，避免 undefined 错误
+const rawRequestService = (service && service.admin?.log?.request) as any;
 // 包装：兜底提供 list 方法以避免卡在 loading（待确认真实分页方法名后再收敛）
 function normalizePageResult(res: any) {
   if (!res) return { list: [], total: 0 };
@@ -96,7 +97,7 @@ function normalizePageResult(res: any) {
 }
 
 const requestService = {
-  ...rawRequestService,
+  ...(rawRequestService || {}),
   async page(params: any) {
     const s = rawRequestService || {};
     try {

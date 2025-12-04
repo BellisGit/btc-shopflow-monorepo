@@ -59,7 +59,7 @@ function normalizePageResult(res: any) {
 }
 
 const auditService = {
-  ...rawAuditService,
+  ...(rawAuditService || {}),
   async page(params: any) {
     const s = rawAuditService || {};
     try {

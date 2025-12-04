@@ -162,6 +162,18 @@ export default defineConfig({
       ],
     },
   },
+  preview: {
+    port: config.prePort,
+    host: config.preHost,
+    strictPort: true,
+    open: false,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,OPTIONS',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {

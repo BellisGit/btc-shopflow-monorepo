@@ -120,6 +120,11 @@ export function useUserInfo() {
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
+      // 确保 service 存在，避免 undefined 错误
+      if (!service) {
+        console.warn('[useUserInfo] EPS service not available');
+        return;
+      }
       const profileService = service.admin?.base?.profile;
       if (!profileService) {
         return;

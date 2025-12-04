@@ -146,7 +146,7 @@ export const microApps: MicroAppConfig[] = [
       }
       return false;
     },
-    timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
+    timeout: import.meta.env.DEV ? 8000 : 15000, // 开发环境 8 秒，生产环境 15 秒（考虑网络延迟和资源加载时间）
   },
   {
     name: 'logistics',
@@ -164,7 +164,7 @@ export const microApps: MicroAppConfig[] = [
       }
       return false;
     },
-    timeout: import.meta.env.DEV ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
+    timeout: import.meta.env.DEV ? 8000 : 15000, // 开发环境 8 秒，生产环境 15 秒（考虑网络延迟和资源加载时间）
   },
   {
     name: 'engineering',

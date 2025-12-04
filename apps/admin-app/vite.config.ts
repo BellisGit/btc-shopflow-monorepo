@@ -10,7 +10,7 @@ import type { Plugin } from 'vite';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
 import { titleInjectPlugin } from './vite-plugin-title-inject';
 import { proxy } from './src/config/proxy';
-import { btc } from '@btc/vite-plugin';
+import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getAppConfig } from '../../configs/app-env.config';
 
 // 从统一配置中获取应用配置
@@ -65,35 +65,36 @@ const chunkVerifyPlugin = (): Plugin => {
       cssChunks.forEach(chunk => console.log(`  - ${chunk}`));
 
       // 检查核心 chunk 是否存在（避免关键依赖丢失）
-      // 注意：vue-vendor 可能被拆分为 vue-core、vue-router、pinia，所以检查这些
-      const requiredChunks = ['element-plus', 'vendor'];
-      const vueChunks = ['vue-core', 'vue-router', 'pinia', 'vue-vendor'];
-      const hasVueChunk = vueChunks.some(chunkName =>
-        jsChunks.some(jsChunk => jsChunk.includes(chunkName))
-      );
-      const missingRequiredChunks = requiredChunks.filter(chunkName =>
-        !jsChunks.some(jsChunk => jsChunk.includes(chunkName))
-      );
-
-      // 检查 app-src 是否存在，如果不存在但 index 文件很大，说明应用代码被打包到了入口文件
-      const hasAppSrc = jsChunks.some(jsChunk => jsChunk.includes('app-src'));
+      // 注意：现在使用平衡拆分策略，只拆分独立大库，业务代码合并到入口文件
       const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
       const indexSize = indexChunk ? (bundle[indexChunk] as any)?.code?.length || 0 : 0;
       const indexSizeKB = indexSize / 1024;
+      const indexSizeMB = indexSizeKB / 1024;
 
-      // 如果 index 文件超过 500KB，说明应用代码可能被打包到了入口文件
-      // 这种情况下，我们允许没有 app-src，只记录信息（不发出警告，因为这是正常的构建行为）
-      if (!hasAppSrc && indexSizeKB > 500) {
-        console.log(`\n[chunk-verify-plugin] ℹ️ 信息：app-src chunk 不存在，但 index 文件较大 (${indexSizeKB.toFixed(2)}KB)`);
-        console.log(`[chunk-verify-plugin] 应用代码被打包到了入口文件，这是正常的构建行为`);
-        // 不抛出错误，只记录信息
-      } else if (!hasAppSrc) {
-        missingRequiredChunks.push('app-src');
+      // 检查入口文件是否存在
+      const missingRequiredChunks: string[] = [];
+      if (!indexChunk) {
+        missingRequiredChunks.push('index');
       }
 
-      if (!hasVueChunk) {
-        missingRequiredChunks.push('vue-core/vue-router/pinia');
+      // 验证拆分后的 chunk 是否存在（可选检查，不强制）
+      const hasEpsService = jsChunks.some(jsChunk => jsChunk.includes('eps-service'));
+      const hasEchartsVendor = jsChunks.some(jsChunk => jsChunk.includes('echarts-vendor'));
+      const hasLibMonaco = jsChunks.some(jsChunk => jsChunk.includes('lib-monaco'));
+      const hasLibThree = jsChunks.some(jsChunk => jsChunk.includes('lib-three'));
+
+      // 验证构建结果
+      console.log(`\n[chunk-verify-plugin] 📦 构建情况（平衡拆分策略）：`);
+      if (indexChunk) {
+        console.log(`  ✅ index: 主文件（Vue生态 + Element Plus + 业务代码，体积~${indexSizeMB.toFixed(2)}MB 未压缩，gzip后~${(indexSizeMB * 0.3).toFixed(2)}MB）`);
+      } else {
+        console.log(`  ❌ 入口文件不存在`);
       }
+      if (hasEpsService) console.log(`  ✅ eps-service: EPS 服务（所有应用共享，单独打包）`);
+      if (hasEchartsVendor) console.log(`  ✅ echarts-vendor: ECharts + zrender（独立大库，无依赖问题）`);
+      if (hasLibMonaco) console.log(`  ✅ lib-monaco: Monaco Editor（独立大库）`);
+      if (hasLibThree) console.log(`  ✅ lib-three: Three.js（独立大库）`);
+      console.log(`  ℹ️  业务代码和 Vue 生态合并到主文件，避免初始化顺序问题`);
 
       if (missingRequiredChunks.length > 0) {
         console.error(`\n[chunk-verify-plugin] ❌ 缺失核心 chunk：`, missingRequiredChunks);
@@ -1372,6 +1373,8 @@ const fixDynamicImportHashPlugin = (): Plugin => {
   };
 };
 
+// fixChunkReferencesPlugin 已移动到 @btc/vite-plugin 共享包中
+
 // 确保动态导入使用正确的 base URL 插件
 const ensureBaseUrlPlugin = (): Plugin => {
   // 预览构建使用绝对路径，生产构建使用相对路径
@@ -1396,61 +1399,78 @@ const ensureBaseUrlPlugin = (): Plugin => {
       let newCode = code;
       let modified = false;
 
-      // 1. 相对路径（如 /assets/xxx.js）
+      // 1. 相对路径（如 /assets/xxx.js 或 /assets/xxx.js?v=xxx）
       // 关键：在生产环境（base = '/'），相对路径已经是正确的，不需要修改
       // 在预览环境（base = 'http://localhost:4181/'），需要确保路径正确
+      // 注意：必须保留查询参数（版本号），如 ?v=xxx
       if (isPreviewBuild) {
-        const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
+        const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)(\?[^"'`\s]*)?/g;
         if (relativePathRegex.test(newCode)) {
-          newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
-            // 预览环境：拼接子应用 base，如 http://localhost:4181/assets/xxx.js
-            return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
+          newCode = newCode.replace(relativePathRegex, (match, quote, path, query = '') => {
+            // 预览环境：拼接子应用 base，如 http://localhost:4181/assets/xxx.js?v=xxx
+            // 保留查询参数（版本号）
+            return `${quote}${baseUrl.replace(/\/$/, '')}${path}${query}`;
           });
           modified = true;
         }
       }
       // 生产环境：相对路径 /assets/xxx.js 已经是正确的，不需要修改
 
-      // 2. 子应用 base 被错误替换为 4180 的情况（如 http://localhost:4180/assets/xxx）
-      const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}/assets/`, 'g');
+      // 2. 子应用 base 被错误替换为 4180 的情况（如 http://localhost:4180/assets/xxx 或 http://localhost:4180/assets/xxx?v=xxx）
+      // 注意：必须保留查询参数（版本号）
+      const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortHttpRegex.test(newCode)) {
-        newCode = newCode.replace(wrongPortHttpRegex, `${baseUrl}assets/`);
+        newCode = newCode.replace(wrongPortHttpRegex, (match, path, query = '') => {
+          return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+        });
         modified = true;
       }
 
-      // 3. 协议相对路径（//localhost:4180/assets/xxx）
-      const wrongPortProtocolRegex = new RegExp(`//${APP_HOST}:${mainAppPort}/assets/`, 'g');
+      // 3. 协议相对路径（//localhost:4180/assets/xxx 或 //localhost:4180/assets/xxx?v=xxx）
+      // 注意：必须保留查询参数（版本号）
+      const wrongPortProtocolRegex = new RegExp(`//${APP_HOST}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortProtocolRegex.test(newCode)) {
-        newCode = newCode.replace(wrongPortProtocolRegex, `//${APP_HOST}:${APP_PORT}/assets/`);
+        newCode = newCode.replace(wrongPortProtocolRegex, (match, path, query = '') => {
+          return `//${APP_HOST}:${APP_PORT}${path}${query}`;
+        });
         modified = true;
       }
 
       // 4. 其他可能的错误端口格式（覆盖所有情况）
+      // 注意：必须保留查询参数（版本号）
       const patterns = [
         // 绝对路径，带协议
         {
-          regex: new RegExp(`(http://)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
-          replacement: `$1${APP_HOST}:${APP_PORT}$3`,
+          regex: new RegExp(`(http://)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+          replacement: (match: string, protocol: string, host: string, path: string, query: string = '') => {
+            return `${protocol}${APP_HOST}:${APP_PORT}${path}${query}`;
+          },
         },
         // 协议相对路径
         {
-          regex: new RegExp(`(//)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
-          replacement: `$1${APP_HOST}:${APP_PORT}$3`,
+          regex: new RegExp(`(//)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+          replacement: (match: string, protocol: string, host: string, path: string, query: string = '') => {
+            return `${protocol}${APP_HOST}:${APP_PORT}${path}${query}`;
+          },
         },
         // 字符串字面量中的路径
         {
-          regex: new RegExp(`(["'\`])(http://)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
-          replacement: `$1$2${APP_HOST}:${APP_PORT}$4`,
+          regex: new RegExp(`(["'\`])(http://)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+          replacement: (match: string, quote: string, protocol: string, host: string, path: string, query: string = '') => {
+            return `${quote}${protocol}${APP_HOST}:${APP_PORT}${path}${query}`;
+          },
         },
         {
-          regex: new RegExp(`(["'\`])(//)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
-          replacement: `$1$2${APP_HOST}:${APP_PORT}$4`,
+          regex: new RegExp(`(["'\`])(//)(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+          replacement: (match: string, quote: string, protocol: string, host: string, path: string, query: string = '') => {
+            return `${quote}${protocol}${APP_HOST}:${APP_PORT}${path}${query}`;
+          },
         },
       ];
 
       for (const pattern of patterns) {
         if (pattern.regex.test(newCode)) {
-          newCode = newCode.replace(pattern.regex, pattern.replacement);
+          newCode = newCode.replace(pattern.regex, pattern.replacement as any);
           modified = true;
         }
       }
@@ -1486,40 +1506,81 @@ const ensureBaseUrlPlugin = (): Plugin => {
           // 1. 相对路径替换
           // 关键：在生产环境（base = '/'），相对路径已经是正确的，不需要修改
           // 在预览环境（base = 'http://localhost:4181/'），需要确保路径正确
+          // 注意：必须保留查询参数（版本号），如 ?v=xxx
           if (isPreviewBuild) {
-            const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)/g;
+            const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)(\?[^"'`\s]*)?/g;
             if (relativePathRegex.test(newCode)) {
-              newCode = newCode.replace(relativePathRegex, (match, quote, path) => {
-                return `${quote}${baseUrl.replace(/\/$/, '')}${path}`;
+              newCode = newCode.replace(relativePathRegex, (match, quote, path, query = '') => {
+                // 保留查询参数（版本号）
+                return `${quote}${baseUrl.replace(/\/$/, '')}${path}${query}`;
               });
               modified = true;
             }
           }
           // 生产环境：相对路径 /assets/xxx.js 已经是正确的，不需要修改
 
-          // 2. 4180 端口替换
-          const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}/assets/`, 'g');
+          // 2. 4180 端口替换（保留查询参数）
+          const wrongPortHttpRegex = new RegExp(`http://${APP_HOST}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortHttpRegex.test(newCode)) {
-            newCode = newCode.replace(wrongPortHttpRegex, `${baseUrl}assets/`);
+            newCode = newCode.replace(wrongPortHttpRegex, (match, path, query = '') => {
+              return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+            });
             modified = true;
           }
 
-          // 3. 协议相对路径替换
-          const wrongPortProtocolRegex = new RegExp(`//${APP_HOST}:${mainAppPort}/assets/`, 'g');
+          // 3. 协议相对路径替换（保留查询参数）
+          const wrongPortProtocolRegex = new RegExp(`//${APP_HOST}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortProtocolRegex.test(newCode)) {
-            newCode = newCode.replace(wrongPortProtocolRegex, `//${APP_HOST}:${APP_PORT}/assets/`);
+            newCode = newCode.replace(wrongPortProtocolRegex, (match, path, query = '') => {
+              return `//${APP_HOST}:${APP_PORT}${path}${query}`;
+            });
             modified = true;
           }
 
-          // 4. 其他错误端口格式
+          // 4. 其他错误端口格式（保留查询参数）
           const patterns = [
+            {
+              regex: new RegExp(`http://(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+              replacement: (match: string, host: string, path: string, query: string = '') => {
+                return `http://${APP_HOST}:${APP_PORT}${path}${query}`;
+              },
+            },
+            {
+              regex: new RegExp(`//(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+              replacement: (match: string, host: string, path: string, query: string = '') => {
+                return `//${APP_HOST}:${APP_PORT}${path}${query}`;
+              },
+            },
+            {
+              regex: new RegExp(`(["'\`])http://(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+              replacement: (match: string, quote: string, host: string, path: string, query: string = '') => {
+                return `${quote}http://${APP_HOST}:${APP_PORT}${path}${query}`;
+              },
+            },
+            {
+              regex: new RegExp(`(["'\`])//(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g'),
+              replacement: (match: string, quote: string, host: string, path: string, query: string = '') => {
+                return `${quote}//${APP_HOST}:${APP_PORT}${path}${query}`;
+              },
+            },
+          ];
+
+          for (const pattern of patterns) {
+            if (pattern.regex.test(newCode)) {
+              newCode = newCode.replace(pattern.regex, pattern.replacement as any);
+              modified = true;
+            }
+          }
+
+          // 旧代码保留作为兜底（但不会保留查询参数，所以优先使用上面的新代码）
+          const oldPatterns = [
             new RegExp(`http://(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
             new RegExp(`//(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
             new RegExp(`(["'\`])http://(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
             new RegExp(`(["'\`])//(localhost|${APP_HOST}):${mainAppPort}(/[^"'\`\\s]*)`, 'g'),
           ];
 
-          for (const pattern of patterns) {
+          for (const pattern of oldPatterns) {
             if (pattern.test(newCode)) {
               newCode = newCode.replace(pattern, (match) => {
                 if (match.includes('http://')) {
@@ -1788,6 +1849,8 @@ const BASE_URL = isPreviewBuild
 console.log(`[admin-app vite.config] Base URL: ${BASE_URL}, APP_HOST: ${APP_HOST}, APP_PORT: ${APP_PORT}, isPreviewBuild: ${isPreviewBuild}`);
 
 export default defineConfig({
+  // 开启构建缓存，复用依赖的编译结果，提高构建速度并稳定哈希
+  cacheDir: './node_modules/.vite-cache',
   // 关键：base 配置
   // - 预览构建：使用绝对路径（http://localhost:4181/），用于本地预览测试
   // - 生产构建：使用相对路径（/），让浏览器根据当前域名（admin.bellis.com.cn）自动解析
@@ -1815,6 +1878,7 @@ export default defineConfig({
       '@btc-styles': withPackages('shared-components/src/styles'),
       '@btc-locales': withPackages('shared-components/src/locales'),
       '@assets': withPackages('shared-components/src/assets'),
+      '@btc-assets': withPackages('shared-components/src/assets'),
       '@plugins': withPackages('shared-components/src/plugins'),
       '@btc-utils': withPackages('shared-components/src/utils'),
       '@btc-crud': withPackages('shared-components/src/crud'),
@@ -1884,8 +1948,7 @@ export default defineConfig({
       useDevMode: true,
     }),
     // 11. 兜底插件（路径修复、chunk 优化，在最后）
-    forceNewHashPlugin(), // 强制生成新 hash（在 renderChunk 阶段添加构建 ID）
-    fixDynamicImportHashPlugin(), // 修复动态导入中的旧 hash 引用
+    fixChunkReferencesPlugin(), // 修复 chunk 之间的引用关系（轻量级，不修改第三方库）
     ensureBaseUrlPlugin(), // 恢复路径修复（确保 chunk 路径正确）
     optimizeChunksPlugin(), // 恢复空 chunk 处理（仅移除未被引用的空 chunk）
     chunkVerifyPlugin(), // 新增：chunk 验证插件
@@ -1979,219 +2042,112 @@ export default defineConfig({
     devSourcemap: false, // 生产环境关闭 CSS sourcemap
   },
   build: {
-    target: 'es2020', // 兼容 ES 模块的最低目标
-    sourcemap: false, // 开发环境关闭 sourcemap，减少文件体积和加载时间
-    // 确保构建时使用正确的 base 路径
-    // base 已在顶层配置，这里不需要重复设置
-    // 启用 CSS 代码分割，与主域保持一致，确保所有 CSS 都被正确提取
-    // 每个 chunk 的样式会被提取到对应的 CSS 文件中，确保样式完整
+    target: 'es2020',
+    sourcemap: false,
     cssCodeSplit: true,
-    // 确保 CSS 文件被正确输出和压缩
     cssMinify: true,
-    // 关键：禁用 JS 代码压缩，避免破坏 ECharts 等第三方库的内部代码
-    // 如果必须压缩，使用 terser 而不是 esbuild，因为 esbuild 可能破坏某些代码
-    minify: false,
-    // 关键：禁用代码压缩时，确保不会对第三方库进行任何转换
-    // 通过 rollupOptions 的 external 或 preserveModules 来保护第三方库
-    // 禁止内联任何资源（确保 JS/CSS 都是独立文件）
-    assetsInlineLimit: 0,
-    // 明确指定输出目录，确保 CSS 文件被正确输出
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        // 禁用可能导致初始化顺序问题的压缩选项
+        reduce_vars: false, // 禁用变量合并，避免 TDZ 问题
+        reduce_funcs: false, // 禁用函数合并，避免依赖问题
+        passes: 1, // 减少压缩次数，避免过度优化
+        // 禁用可能导致依赖问题的优化
+        collapse_vars: false, // 禁用变量折叠
+        dead_code: false, // 禁用死代码消除（可能误删）
+      },
+      mangle: {
+        // 禁用函数名压缩，避免压缩后找不到函数
+        // 注意：这会导致文件体积增大，但可以避免运行时错误
+        keep_fnames: true, // 保留函数名
+        keep_classnames: true, // 保留类名
+      },
+      format: {
+        // 保留注释，便于调试
+        comments: false,
+      },
+    },
+    // 关键修改1：小资源内联（减少请求数，不影响大包拆分）
+    // 10KB以下的资源内联，避免小图标/小css拆成独立文件
+    assetsInlineLimit: 10 * 1024,
     outDir: 'dist',
     assetsDir: 'assets',
-    // 构建前清空输出目录，确保不会残留旧文件
     emptyOutDir: true,
-    // 让 Vite 自动从 index.html 读取入口（与其他子应用一致）
     rollupOptions: {
-      // 禁用 Rollup 缓存，确保每次构建都重新生成所有 chunk
-      // 这可以避免旧的 chunk 引用没有被更新
-      cache: false,
-      // 关键：将 ECharts 相关模块外部化，避免 Rollup 处理它们
-      // 这样可以确保 ECharts 的内部代码不会被破坏
-      // 但注意：external 会导致 ECharts 不被打包，需要从 CDN 加载
-      // 暂时不使用 external，而是通过跳过处理来保护
-      // external: (id) => {
-      //   return id.includes('echarts') || id.includes('vue-echarts');
-      // },
-      // 抑制 Rollup 关于动态/静态导入冲突的警告（这些警告不影响功能）
+      // 关键修改2：移除Rollup手动cache（Vite自有缓存更稳定）
+      // cache: true,
+      // 强制按依赖顺序生成chunk，避免加载顺序混乱
+      preserveEntrySignatures: 'strict',
       onwarn(warning, warn) {
-        // 忽略动态导入和静态导入冲突的警告
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
             (warning.message && typeof warning.message === 'string' &&
              warning.message.includes('dynamically imported') &&
              warning.message.includes('statically imported'))) {
           return;
         }
-        // 其他警告正常显示
         warn(warning);
       },
       output: {
-        format: 'esm', // 明确指定输出格式为 ESM
-        inlineDynamicImports: false, // 禁用动态导入内联，确保 CSS 被提取
-        // 关键：确保 ECharts 相关 chunk 不被修改
-        // 通过 manualChunks 确保它们被正确分割，但不进行任何额外处理
+        format: 'esm',
+        // 平衡方案：只拆分真正独立的大库，业务代码和 Vue 生态合并
+        // 这样可以避免初始化顺序问题，同时控制文件大小
+        inlineDynamicImports: false,
         manualChunks(id) {
-          // 参考系统应用的配置，确保所有 chunk 正确生成
-          // 重要：Element Plus 的匹配必须在最前面，确保所有 element-plus 相关代码都在同一个 chunk
-          if (id.includes('element-plus') || id.includes('@element-plus')) {
-            return 'element-plus';
+          // 0. EPS 服务单独打包（所有应用共享，必须在最前面）
+          if (id.includes('virtual:eps') || 
+              id.includes('\\0virtual:eps') ||
+              id.includes('services/eps') ||
+              id.includes('services\\eps')) {
+            return 'eps-service';
           }
 
-          // 处理 node_modules 依赖，进行代码分割
-          if (id.includes('node_modules')) {
-            // 分割 Vue 相关依赖
-            if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n') && !id.includes('element-plus')) {
-              return 'vue-core';
-            }
-            if (id.includes('vue-router')) {
-              return 'vue-router';
-            }
-            // 分割 Pinia
-            if (id.includes('pinia')) {
-              return 'pinia';
-            }
-            // vue-i18n
-            if (id.includes('vue-i18n') || id.includes('@intlify')) {
-              return 'vue-i18n';
-            }
-            // 其他大型库
-            // 关键：ECharts 库对代码处理非常敏感，任何处理都可能破坏其内部代码
-            // 系统应用没有使用 forceNewHashPlugin 等插件，所以没有这个问题
-            // 为了保持与系统应用一致的行为，我们确保 ECharts 被正确分割，但不进行任何额外处理
-            if (id.includes('echarts')) {
-              return 'lib-echarts';
-            }
-            if (id.includes('monaco-editor')) {
-              return 'lib-monaco';
-            }
-            if (id.includes('three')) {
-              return 'lib-three';
-            }
-            // 其余 node_modules 依赖合并到 vendor
-            return 'vendor';
+          // 1. 独立大库：ECharts（完全独立，无依赖问题）
+          if (id.includes('node_modules/echarts') ||
+              id.includes('node_modules/zrender') ||
+              id.includes('node_modules/vue-echarts')) {
+            return 'echarts-vendor';
           }
 
-          // 处理应用源代码（src/ 目录）
-          // 参考系统应用的配置，进行细分的代码分割
-          if (id.includes('src/') && !id.includes('node_modules')) {
-            // 注意：不再将 src/plugins/echarts 强制放入 lib-echarts chunk
-            // 因为 ZRText 在 vendor chunk 中，强制放入 lib-echarts 可能导致依赖问题
-            // 让 src/plugins/echarts 按默认规则处理（进入 app-src 或其他 chunk）
-            // 模块分割
-            if (id.includes('src/modules')) {
-              const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
-              // 对大型模块创建单独的 chunk
-              if (moduleName && ['access', 'navigation', 'org', 'ops', 'platform', 'strategy', 'api-services'].includes(moduleName)) {
-                return `module-${moduleName}`;
-              }
-              return 'module-others';
-            }
-            // 页面文件
-            if (id.includes('src/pages')) {
-              return 'app-pages';
-            }
-            // 组件文件
-            // 关键：components 可能依赖 useSettingsState、store、utils 等（在 app-src 中），合并到 app-src 避免循环依赖
-            if (id.includes('src/components')) {
-              return 'app-src';
-            }
-            // 微前端相关
-            // 关键：micro 模块依赖 store/tabRegistry、store/menuRegistry、store/process 等（在 app-src 中）
-            // 如果分割到 app-micro，会导致 "Cannot access 'Qa' before initialization" 错误
-            // 必须合并到 app-src 避免循环依赖和初始化顺序问题
-            if (id.includes('src/micro')) {
-              return 'app-src';
-            }
-            // 插件、store、services、utils、bootstrap 与多个模块有依赖关系，合并到 app-src 避免循环依赖
-            // 注意：echarts 插件已经在上面单独处理，这里排除它
-            if (id.includes('src/plugins')) {
-              return 'app-src';
-            }
-            if (id.includes('src/store')) {
-              return 'app-src';
-            }
-            if (id.includes('src/services')) {
-              return 'app-src';
-            }
-            if (id.includes('src/utils')) {
-              return 'app-src';
-            }
-            if (id.includes('src/bootstrap')) {
-              return 'app-src';
-            }
-            if (id.includes('src/config')) {
-              return 'app-src';
-            }
-            if (id.includes('src/composables')) {
-              return 'app-composables';
-            }
-            // 关键：router 与 bootstrap 有循环依赖，必须合并到 app-src 避免初始化错误
-            // router 被 bootstrap/core/router.ts 和 bootstrap/integrations/interceptors.ts 使用
-            // 如果分割到 app-router chunk，会导致 "Cannot access 'l' before initialization" 错误
-            if (id.includes('src/router')) {
-              return 'app-src';
-            }
-            // i18n 模块被 bootstrap/core/i18n.ts 使用（在 app-src 中），合并到 app-src 避免循环依赖
-            if (id.includes('src/i18n')) {
-              return 'app-src';
-            }
-            if (id.includes('src/assets')) {
-              return 'app-assets';
-            }
-            // 其他 src 文件（包括 main.ts）统一合并到 app-src
-            return 'app-src';
+          // 2. 其他独立大库（完全独立）
+          if (id.includes('node_modules/monaco-editor')) {
+            return 'lib-monaco';
+          }
+          if (id.includes('node_modules/three')) {
+            return 'lib-three';
           }
 
-          // 处理 @btc/shared- 包（共享包）
-          if (id.includes('@btc/shared-')) {
-            // 关键：样式文件（CSS/SCSS）不应该被分割，确保在主入口中加载
-            // 这样可以避免代码分割导致的路径解析问题
-            // 注意：system-app 没有特殊处理样式文件，但它的代码分割配置不同
-            // admin-app 需要特殊处理，因为它的代码分割更细粒度
-            if (id.includes('.css') || id.includes('.scss') || id.includes('styles/')) {
-              // 样式文件不分割，让 Vite 自动处理（通常会被打包到入口 chunk）
-              // 返回 undefined 让 Vite 根据依赖关系自动决定，通常会被打包到入口 chunk
-              return undefined;
-            }
-            if (id.includes('@btc/shared-components')) {
-              return 'btc-components';
-            }
-            return 'btc-shared';
-          }
-
-          // 对于未匹配的文件，合并到 app-src
-          // 关键：确保所有业务代码都在 app-src 中，避免动态导入的模块找不到
-          // 特别是入口文件（main.ts）和初始化相关的代码必须在一起
-          return 'app-src';
+          // 3. 所有其他代码（Vue生态 + Element Plus + 业务代码）合并到主文件
+          // 原因：Vue生态和业务代码之间有强依赖，拆分会导致初始化顺序问题
+          // 解决方案：合并到一起，让 Rollup 自动处理内部依赖顺序
+          return undefined; // 返回 undefined 表示合并到入口文件
         },
-        // 关键：确保 chunk 之间的导入使用相对路径，而不是绝对路径
-        // 这样在 qiankun 环境下，资源路径会根据入口 HTML 的位置正确解析
         preserveModules: false,
-        // 关键：强制所有资源路径使用绝对路径（基于 base）
-        // Vite 默认会根据 base 生成绝对路径，但显式声明作为兜底
-        // 确保所有资源路径都包含子应用端口（4181），而非主应用端口（4180）
-        // 使用标准格式，时间戳由 forceNewHashPlugin 插件在 generateBundle 阶段添加
-        // 关键：使用函数形式的 chunkFileNames，确保即使 [hash] 为空也不会生成末尾连字符的文件名
-        // Rollup 的 chunkFileNames 函数接收 { name, facadeModuleId, isDynamicEntry, isEntry, type } 参数
-        // 但是，[hash] 占位符是由 Rollup 自动生成的，我们无法直接控制
-        // 如果 [hash] 为空，说明 Rollup 内部出现了问题，我们需要使用字符串模板来避免这个问题
-        // 实际上，Rollup 的 [hash] 应该总是有值的，如果为空，可能是 Rollup 的 bug
-        // 我们使用字符串模板，但添加一个检查，确保不会生成末尾连字符的文件名
+        // 确保模块按正确的顺序输出，避免初始化顺序问题
+        generatedCode: {
+          constBindings: false, // 不使用 const，避免 TDZ 问题
+        },
+        // 使用 Rollup 的 [hash] 占位符（基于内容计算，类似 Webpack 的 contenthash）
+        // 注意：Rollup 不支持 [contenthash:8] 或长度限制，只能使用 [hash]
+        // Rollup 的 [hash] 就是基于文件内容计算的，只有内容变化时哈希才变
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name?.endsWith('.css')) {
             return 'assets/[name]-[hash].css';
           }
-          // 其他资源（图片/字体）按原有规则输出
           return 'assets/[name]-[hash].[ext]';
         },
       },
-      // 确保第三方样式（如 Element Plus）不被 tree-shaking
       external: [],
-      // 关闭 tree-shaking（避免误删依赖 chunk）
-      // 子应用微前端场景，tree-shaking 收益极低，风险极高
+      // 关键修改5：禁用tree-shaking（避免循环依赖导致的初始化顺序问题）
+      // 原因：即使合并到同一chunk，tree-shaking可能改变模块初始化顺序，导致"Cannot access 'ut' before initialization"错误
+      // 解决方案：禁用tree-shaking，确保所有模块按原始顺序初始化
       treeshake: false,
     },
-    chunkSizeWarningLimit: 2000, // 提高警告阈值，element-plus chunk 较大是正常的
+    // 关键修改6：降低警告阈值（及时发现大包问题）
+    chunkSizeWarningLimit: 1000,
   },
 });

@@ -38,7 +38,8 @@ if (!globalService) {
 }
 
 // 使用全局服务（如果存在），否则使用本地服务
-const service = globalService || localService;
+// 确保 service 至少是一个空对象，避免 undefined 导致的错误
+const service = globalService || localService || {};
 const list = globalService ? ([] as any[]) : localList; // 全局服务可能没有 list，保持兼容性
 
 // 将服务暴露到全局，确保其他模块也能访问

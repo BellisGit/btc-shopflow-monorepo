@@ -65,6 +65,7 @@ export { svgPlugin } from './svg';
 export { ctxPlugin } from './ctx';
 export { tagPlugin } from './tag';
 export { copyLogoPlugin } from './copy-logo';
+export { fixChunkReferencesPlugin } from './fix-chunk-references';
 
 // 导出类型
 export * from './eps/types';

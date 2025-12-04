@@ -232,6 +232,13 @@ const getDomainDescription = (app: MicroApp) => {
 const loadApplications = async () => {
   loading.value = true;
   try {
+    // 确保 service 存在，避免 undefined 错误
+    if (!service) {
+      console.warn('[menu-drawer] EPS service not available');
+      applications.value = [...fixedApplications];
+      loading.value = false;
+      return;
+    }
     // 使用共享缓存获取域列表
     const response = await getDomainList(service);
 
@@ -429,9 +436,11 @@ const handleSwitchApp = async (app: MicroApp) => {
   const isSystemApp = app.name === 'system';
   
   // 设置超时保护，确保 loading 状态最终会被清除
-  // 注意：超时时间应该大于 single-spa 的 bootstrap 超时时间（8秒），给应用足够的加载时间
+  // 注意：超时时间应该大于 single-spa 的 bootstrap 超时时间，给应用足够的加载时间
+  // 生产环境资源加载可能较慢，需要更长的超时时间
   let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  const maxLoadingTime = 15000; // 15秒超时（比 bootstrap 的 8 秒更长，确保不会误报）
+  const isDev = import.meta.env.DEV;
+  const maxLoadingTime = isDev ? 12000 : 20000; // 开发环境 12 秒，生产环境 20 秒（考虑网络延迟）
 
   // 监听 afterMount 事件，确保 loading 状态被清除
   const handleAfterMount = () => {

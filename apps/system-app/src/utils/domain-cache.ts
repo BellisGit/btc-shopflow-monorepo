@@ -26,6 +26,11 @@ export async function getDomainList(service: any): Promise<any> {
   // 创建新请求
   pendingRequest = (async () => {
     try {
+      // 确保 service 存在，避免 undefined 错误
+      if (!service) {
+        console.warn('[getDomainList] EPS service not available');
+        return [];
+      }
       const response = await service.admin?.iam?.domain?.me();
       // 更新缓存
       domainListCache = { data: response, timestamp: Date.now() };
