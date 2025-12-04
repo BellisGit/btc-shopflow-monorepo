@@ -1,6 +1,11 @@
 /**
  * 清理构建缓存脚本
- * 在构建前自动清理 Vite 缓存和旧的构建输出
+ * 
+ * 注意：此脚本已被 `build-to-dist.mjs` 中的清理逻辑替代
+ * `build-to-dist.mjs` 提供了更完善的清理和自纠错机制
+ * 
+ * 此脚本保留用于 `prebuild:all` 钩子，但建议使用 `pnpm build-dist:all` 进行构建
+ * 该命令会自动清理所有缓存并确保构建产物可用
  */
 
 import { existsSync, rmSync } from 'node:fs';
@@ -23,6 +28,7 @@ const pathsToClean = [
   'apps/system-app/node_modules/.vite',
   'apps/layout-app/node_modules/.vite',
   'apps/docs-site-app/node_modules/.vite',
+  'apps/monitor-app/node_modules/.vite',
   
   // 应用的构建输出
   'apps/admin-app/dist',
@@ -35,6 +41,7 @@ const pathsToClean = [
   'apps/system-app/dist',
   'apps/layout-app/dist',
   'apps/docs-site-app/dist',
+  'apps/monitor-app/dist',
   
   // 应用的 Vite 缓存（根目录下的 .vite）
   'apps/admin-app/.vite',
@@ -47,6 +54,7 @@ const pathsToClean = [
   'apps/system-app/.vite',
   'apps/layout-app/.vite',
   'apps/docs-site-app/.vite',
+  'apps/monitor-app/.vite',
   
   // 包的 Vite 缓存
   'packages/shared-core/node_modules/.vite',

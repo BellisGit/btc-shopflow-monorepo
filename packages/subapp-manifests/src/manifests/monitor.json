@@ -14,22 +14,47 @@
       "breadcrumbs": []
     },
     {
-      "path": "/error",
+      "path": "/ops/error",
       "labelKey": "menu.monitor.error",
       "tab": {
         "enabled": true,
         "labelKey": "menu.monitor.error"
       },
       "breadcrumbs": [
+        { "labelKey": "menu.monitor.name", "icon": "Monitor" },
         { "labelKey": "menu.monitor.error", "icon": "Warning" }
+      ]
+    },
+    {
+      "path": "/ops/deployment-test",
+      "labelKey": "menu.monitor.deploymentTest",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.monitor.deploymentTest"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.monitor.name", "icon": "Monitor" },
+        { "labelKey": "menu.monitor.deploymentTest", "icon": "Setting" }
       ]
     }
   ],
   "menus": [
     {
-      "index": "/error",
-      "labelKey": "menu.monitor.error",
-      "icon": "svg:warning"
+      "index": "ops",
+      "labelKey": "menu.monitor.name",
+      "icon": "Monitor",
+      "children": [
+        {
+          "index": "/ops/error",
+          "labelKey": "menu.monitor.error",
+          "icon": "Warning"
+        },
+        {
+          "index": "/ops/deployment-test",
+          "labelKey": "menu.monitor.deploymentTest",
+          "icon": "Setting"
+        }
+      ]
     }
   ]
 }

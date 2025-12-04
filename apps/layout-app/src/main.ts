@@ -155,6 +155,7 @@ const ensureMicroAppsRegistered = () => {
     'production.bellis.com.cn': 'production',
     'engineering.bellis.com.cn': 'engineering',
     'finance.bellis.com.cn': 'finance',
+    'monitor.bellis.com.cn': 'monitor',
   };
 
   // 优先从 URL 参数获取要加载的应用（用于预览环境测试）

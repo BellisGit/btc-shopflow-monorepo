@@ -8,6 +8,7 @@
     "scripts": {
         "predev": "turbo run build --filter=@btc/vite-plugin",
         "dev": "vite",
+        "clean": "node scripts/clean.js",
         "build": "vite build",
         "preview": "vite preview",
         "mock": "node mock-server.js",

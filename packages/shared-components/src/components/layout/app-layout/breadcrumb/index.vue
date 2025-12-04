@@ -278,6 +278,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     '/quality',
     '/production',
     '/finance',
+    '/monitor',
   ]);
 
   if (homePaths.has(normalizedPath)) {

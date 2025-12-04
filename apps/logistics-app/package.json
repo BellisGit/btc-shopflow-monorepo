@@ -6,6 +6,7 @@
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
     "dev": "vite --port 8082",
+    "clean": "node scripts/clean.js",
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit --skipLibCheck"

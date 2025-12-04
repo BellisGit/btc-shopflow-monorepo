@@ -47,9 +47,9 @@
       <div class="app-layout__main">
         <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
         <div class="app-layout__header">
-          <!-- Tabbar：使用 v-show 保持 DOM，子应用时隐藏 -->
+          <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
           <Process
-            v-show="isMainApp"
+            v-show="!isDocsApp"
             :is-fullscreen="isFullscreen"
             @toggle-fullscreen="toggleFullscreen"
           />
@@ -212,6 +212,12 @@ const isMainApp = computed(() => {
   return true;
 });
 
+// 判断是否为文档应用
+const isDocsApp = computed(() => {
+  const path = route.path;
+  return path === '/docs' || path.startsWith('/docs/');
+});
+
 // qiankun 加载状态（用于追踪容器是否应该强制显示）
 const isQiankunLoading = ref(false);
 
@@ -242,7 +248,8 @@ const isHomePage = computed(() => {
          path === '/quality' ||
          path === '/production' ||
          path === '/finance' ||
-         path === '/docs';
+         path === '/docs' ||
+         path === '/monitor';
 });
 
 // 判断是否显示面包屑

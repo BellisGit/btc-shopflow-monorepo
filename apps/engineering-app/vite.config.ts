@@ -208,6 +208,8 @@ export default defineConfig(({ command, mode }) => {
     chunkSizeWarningLimit: 2000, // 提高警告阈值，避免不必要的警告
     outDir: 'dist',
     assetsDir: 'assets',
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
       // 抑制 Rollup 关于动态/静态导入冲突的警告
       onwarn(warning, warn) {

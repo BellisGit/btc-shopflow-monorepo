@@ -82,6 +82,8 @@ const registry: Record<string, Record<string, TabMeta>> = {
   quality: {},
   production: {},
   finance: {},
+  monitor: {},
+  docs: {},
 };
 
 /**
@@ -211,10 +213,30 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
     return null;
   }
 
-  // 所有子应用都从 manifest 查找
-  // 注意：由于循环依赖，manifest 函数是延迟加载的，这里只能返回 null
-  // 实际的 manifest 解析应该在异步上下文中进行（如 process.ts 中的动态导入）
-  if (app !== 'main') {
+  // 对于非 admin 和非 main 的应用，先检查 registry（可能已经通过 registerManifestTabsForApp 注册）
+  if (app !== 'main' && app !== 'system') {
+    // 先检查 registry 中是否已经注册了 tabs
+    const appDict = registry[app];
+    if (appDict) {
+      const key = extractKey(pathname, app);
+      if (appDict[key]) {
+        return appDict[key];
+      }
+    }
+    
+    // 如果 registry 中没有，返回 null（manifest 解析在 process.add 的异步逻辑中处理）
+    // 注意：由于循环依赖，manifest 函数是延迟加载的，这里只能返回 null
+    // 实际的 manifest 解析应该在异步上下文中进行（如 process.ts 中的动态导入）
+    return null;
+  }
+  
+  // system 应用从 registry 查找
+  if (app === 'system') {
+    const key = extractKey(pathname, app);
+    const appDict = registry[app];
+    if (appDict && appDict[key]) {
+      return appDict[key];
+    }
     return null;
   }
 

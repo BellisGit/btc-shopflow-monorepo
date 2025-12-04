@@ -4,6 +4,7 @@ import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import { resolve } from 'path';
 import type { Plugin } from 'vite';
+import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig } from '../../configs/vite-app-config';
 
 // 从统一配置中获取应用配置
@@ -71,6 +72,9 @@ export default defineConfig({
   plugins: [
     corsPlugin(),
     vue(),
+    btc({
+      type: 'subapp',
+    }),
     UnoCSS({
       configFile: resolve(__dirname, '../../uno.config.ts'),
     }),
@@ -135,6 +139,8 @@ export default defineConfig({
     assetsInlineLimit: 0,
     cssCodeSplit: true,
     chunkSizeWarningLimit: 2000,
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         format: 'es',

@@ -164,28 +164,73 @@ const handleClick = (event: MouseEvent) => {
     outline: none;
   }
 
+  // has-label 时的 hover 效果
+  &.has-label:hover,
+  &.has-label:focus-visible {
+    border-color: var(--btc-table-button-color);
+    background-color: color-mix(in srgb, var(--btc-table-button-color) 12%, transparent);
+    box-shadow: none;
+    outline: none;
+  }
+
+  // 按钮类型样式（需要在 is-disabled 之前定义，以便在禁用状态下也能使用）
+  &.is-primary {
+    --btc-table-button-color: var(--el-color-primary);
+  }
+
+  &.is-success {
+    --btc-table-button-color: var(--el-color-success);
+  }
+
+  &.is-warning {
+    --btc-table-button-color: var(--el-color-warning);
+  }
+
+  &.is-danger {
+    --btc-table-button-color: var(--el-color-danger);
+  }
+
+  &.is-info {
+    --btc-table-button-color: var(--el-color-info);
+  }
+
+  &.is-default {
+    --btc-table-button-color: var(--el-text-color-primary);
+  }
+
   &:disabled,
   &.is-disabled {
-    border-color: color-mix(in srgb, var(--el-border-color) 80%, transparent);
-    background-color: color-mix(in srgb, var(--el-border-color) 10%, transparent);
+    // 禁用状态下仍然使用按钮类型的颜色，只是降低透明度
+    border-color: color-mix(in srgb, var(--btc-table-button-color) 20%, transparent);
+    background-color: color-mix(in srgb, var(--btc-table-button-color) 3%, transparent);
     cursor: not-allowed;
     pointer-events: none;
 
     .btc-svg {
-      color: color-mix(in srgb, var(--el-text-color-secondary) 60%, transparent);
+      color: color-mix(in srgb, var(--btc-table-button-color) 40%, transparent);
+    }
+
+    .btc-table-button__label {
+      color: color-mix(in srgb, var(--btc-table-button-color) 50%, transparent);
     }
   }
 
   &.has-label {
-    padding: 0 12px;
-    min-width: 40px;
-    gap: 6px;
+    padding: 0 10px;
+    min-width: 32px;
+    gap: 4px;
+    width: auto;
+    height: 32px; // 与 btc-crud-btn 保持一致
+    // 完全匹配 btc-crud-btn 的样式
+    color: var(--btc-table-button-color); // 文字颜色与边框颜色一致
+    border-color: color-mix(in srgb, var(--btc-table-button-color) 35%, transparent);
+    background-color: color-mix(in srgb, var(--btc-table-button-color) 6%, transparent);
   }
 
   &__label {
-    font-size: 12px;
-    line-height: 16px;
-    color: inherit;
+    font-size: 14px; // 与 el-button 默认字体大小一致
+    line-height: 1; // 与 el-button 一致
+    color: var(--btc-table-button-color); // 文字颜色与按钮类型颜色一致
     white-space: nowrap;
   }
 

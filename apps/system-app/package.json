@@ -12,7 +12,6 @@
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build && pnpm check:circular",
     "dev": "vite --port 8080",
-    "prebuild": "pnpm check:circular",
     "build": "node scripts/build.js build",
     "preview": "node scripts/build.js preview",
     "type-check": "tsc --noEmit --skipLibCheck"

@@ -9,6 +9,24 @@ import { createAutoImportConfig, createComponentsConfig } from '../../configs/au
 import { proxy as mainProxy } from '../admin-app/src/config/proxy';
 import { getAppConfig } from '../../configs/app-env.config';
 
+// 插件：将构建产物中的绝对路径资源引用转换为相对路径
+// 这样在 qiankun 环境下，资源路径会根据 base 标签正确解析
+const relativeAssetsPlugin = (): Plugin => {
+  return {
+    name: 'relative-assets',
+    generateBundle(options, bundle) {
+      // 遍历所有生成的 chunk
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code) {
+          // 将绝对路径 /assets/ 替换为相对路径 ./assets/
+          // 这样在 qiankun 环境下，base 标签会让相对路径正确解析
+          chunk.code = chunk.code.replace(/(["'`])\/assets\/([^"'`\s]+)/g, '$1./assets/$2');
+        }
+      }
+    },
+  };
+};
+
 const proxy = mainProxy;
 
 // 从统一配置中获取应用配置
@@ -291,12 +309,19 @@ export default defineConfig({
       // 仅在开发环境使用 devMode，生产构建输出 ES 模块，供 qiankun 以 module 方式加载
       useDevMode: process.env.NODE_ENV === 'development',
     }),
-    // 确保构建后的 HTML 中的 script 标签有 type="module"
+    // 将构建产物中的绝对路径资源引用转换为相对路径
+    // 这样在 qiankun 环境下，资源路径会根据 base 标签正确解析
+    relativeAssetsPlugin(),
+    // 确保构建后的 HTML 中的 script 标签有 type="module"，并将绝对路径转换为相对路径
     {
       name: 'ensure-module-scripts',
       transformIndexHtml(html) {
+        // 将 HTML 中的绝对路径 /assets/ 转换为相对路径 ./assets/
+        // 这样在 qiankun 环境下，base 标签会让相对路径正确解析
+        let processedHtml = html.replace(/(href|src)=["']\/assets\/([^"']+)["']/gi, '$1="./assets/$2"');
+        
         // 确保所有 script 标签都有 type="module"
-        return html.replace(
+        processedHtml = processedHtml.replace(
           /<script(\s+[^>]*)?>/gi,
           (match, attrs = '') => {
             // 跳过内联脚本（没有 src 属性）
@@ -311,6 +336,8 @@ export default defineConfig({
             return `<script type="module"${attrs}>`;
           }
         );
+        
+        return processedHtml;
       },
     } as Plugin,
   ],
@@ -377,13 +404,20 @@ export default defineConfig({
     sourcemap: false,
     // 提高 chunk 大小警告阈值，避免不必要的警告
     chunkSizeWarningLimit: 2000,
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         format: 'esm', // 明确指定输出格式为 ESM，与主应用的 scriptType: 'module' 配置一致
         manualChunks: getManualChunkName,
+        // 使用相对路径，确保在 qiankun 环境下资源路径正确
+        // 当入口是 /micro-apps/logistics/index.html 时，资源路径 ./assets/... 会正确解析为 /micro-apps/logistics/assets/...
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+        // 关键：确保 chunk 之间的导入使用相对路径，而不是绝对路径
+        // 这样在 qiankun 环境下，资源路径会根据入口 HTML 的位置正确解析
+        preserveModules: false,
       },
       onwarn(warning, warn) {
         // 过滤动态导入和静态导入冲突的警告，因为我们已经在 manualChunks 中确保它们在同一 chunk

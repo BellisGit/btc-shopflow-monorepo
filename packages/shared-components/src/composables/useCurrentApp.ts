@@ -43,6 +43,8 @@ export function useCurrentApp() {
       currentApp.value = 'finance';
     } else if (path.startsWith('/docs')) {
       currentApp.value = 'docs';
+    } else if (path.startsWith('/monitor')) {
+      currentApp.value = 'monitor';
     } else {
       // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
       currentApp.value = 'system';

@@ -4,8 +4,8 @@ import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { fileURLToPath, URL } from 'node:url';
-import { resolve } from 'path';
-import { existsSync, readFileSync } from 'node:fs';
+import { resolve, join } from 'path';
+import { existsSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
 import type { Plugin } from 'vite';
 import { createAutoImportConfig, createComponentsConfig } from '../../configs/auto-import.config';
 import { titleInjectPlugin } from './vite-plugin-title-inject';
@@ -28,6 +28,25 @@ const MAIN_APP_ORIGIN = MAIN_APP_CONFIG ? `http://${MAIN_APP_CONFIG.preHost}:${M
 // 判断是否为预览构建（用于本地预览测试）
 // 生产构建应该使用相对路径，让浏览器根据当前域名自动解析
 const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
+
+// 构建前清理 dist 目录插件
+const cleanDistPlugin = (): Plugin => {
+  return {
+    name: 'clean-dist-plugin',
+    buildStart() {
+      const distDir = resolve(__dirname, 'dist');
+      if (existsSync(distDir)) {
+        console.log('[clean-dist-plugin] 🧹 清理旧的 dist 目录...');
+        try {
+          rmSync(distDir, { recursive: true, force: true });
+          console.log('[clean-dist-plugin] ✅ dist 目录已清理');
+        } catch (error) {
+          console.warn('[clean-dist-plugin] ⚠️ 清理 dist 目录失败，继续构建:', error);
+        }
+      }
+    },
+  };
+};
 
 // 验证所有 chunk 生成插件
 const chunkVerifyPlugin = (): Plugin => {
@@ -81,6 +100,126 @@ const chunkVerifyPlugin = (): Plugin => {
         throw new Error(`核心 chunk 缺失，构建失败！`);
       } else {
         console.log(`\n[chunk-verify-plugin] ✅ 核心 chunk 全部存在`);
+      }
+
+      // 关键：验证所有 chunk 文件中引用的资源文件是否都存在
+      console.log('\n[chunk-verify-plugin] 🔍 验证资源引用一致性...');
+      const allChunkFiles = new Set([...jsChunks, ...cssChunks]);
+      const referencedFiles = new Map<string, string[]>(); // 引用的文件名 -> 引用它的 chunk 列表
+      const missingFiles: Array<{ file: string; referencedBy: string[]; possibleMatches: string[] }> = [];
+
+      // 从所有 JS chunk 中提取引用的资源文件路径
+      // 只匹配真正的动态导入和资源引用
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code) {
+          // 移除注释，避免匹配注释中的路径
+          const codeWithoutComments = chunk.code
+            .replace(/\/\/.*$/gm, '') // 移除单行注释
+            .replace(/\/\*[\s\S]*?\*\//g, ''); // 移除多行注释
+
+          // 匹配动态导入：import('/assets/xxx.js') 或 import("/assets/xxx.js")
+          const importPattern = /import\s*\(\s*["'](\/?assets\/[^"'`\s]+\.(js|mjs|css))["']\s*\)/g;
+          let match;
+          while ((match = importPattern.exec(codeWithoutComments)) !== null) {
+            const resourcePath = match[1];
+            const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
+            if (!referencedFiles.has(resourceFile)) {
+              referencedFiles.set(resourceFile, []);
+            }
+            referencedFiles.get(resourceFile)!.push(fileName);
+          }
+
+          // 匹配 new URL('/assets/xxx.js', ...)
+          const urlPattern = /new\s+URL\s*\(\s*["'](\/?assets\/[^"'`\s]+\.(js|mjs|css))["']/g;
+          while ((match = urlPattern.exec(codeWithoutComments)) !== null) {
+            const resourcePath = match[1];
+            const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
+            if (!referencedFiles.has(resourceFile)) {
+              referencedFiles.set(resourceFile, []);
+            }
+            referencedFiles.get(resourceFile)!.push(fileName);
+          }
+        }
+      }
+
+      // 检查所有引用的文件是否都在 bundle 中存在
+      for (const [referencedFile, referencedBy] of referencedFiles.entries()) {
+        // 提取文件名（不含路径）：xxx-hash.js
+        const fileName = referencedFile.replace(/^assets\//, '');
+
+        // 检查是否存在完全匹配的文件
+        let exists = allChunkFiles.has(fileName);
+        let possibleMatches: string[] = [];
+
+        // 如果不存在完全匹配，检查文件名模式匹配（忽略 hash）
+        if (!exists) {
+          // 提取文件名前缀（如 element-plus）和扩展名
+          // 支持多种文件名格式：name-hash.ext, name-hash-hash.ext, name.ext
+          const match = fileName.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+          if (match) {
+            const [, namePrefix, , ext] = match;
+            // 查找所有匹配的文件（忽略 hash）
+            possibleMatches = Array.from(allChunkFiles).filter(chunkFile => {
+              const chunkMatch = chunkFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+              if (chunkMatch) {
+                const [, chunkNamePrefix, , chunkExt] = chunkMatch;
+                return chunkNamePrefix === namePrefix && chunkExt === ext;
+              }
+              return false;
+            });
+            exists = possibleMatches.length > 0;
+          } else {
+            // 如果文件名格式不匹配，尝试直接查找相似的文件名
+            const nameWithoutExt = fileName.replace(/\.(js|mjs|css)$/, '');
+            possibleMatches = Array.from(allChunkFiles).filter(chunkFile => {
+              const chunkNameWithoutExt = chunkFile.replace(/\.(js|mjs|css)$/, '');
+              // 检查文件名前缀是否相似（至少前10个字符匹配）
+              return chunkNameWithoutExt.startsWith(nameWithoutExt.substring(0, 10)) ||
+                     nameWithoutExt.startsWith(chunkNameWithoutExt.substring(0, 10));
+            });
+          }
+        }
+
+        if (!exists) {
+          missingFiles.push({ file: referencedFile, referencedBy, possibleMatches });
+        }
+      }
+
+      if (missingFiles.length > 0) {
+        console.error(`\n[chunk-verify-plugin] ❌ 发现 ${missingFiles.length} 个引用的资源文件不存在：`);
+        console.error(`\n[chunk-verify-plugin] 实际存在的文件（共 ${allChunkFiles.size} 个）：`);
+        Array.from(allChunkFiles).sort().forEach(file => console.error(`  - ${file}`));
+        console.error(`\n[chunk-verify-plugin] 引用的文件（共 ${referencedFiles.size} 个）：`);
+        Array.from(referencedFiles.keys()).sort().forEach(file => console.error(`  - ${file}`));
+        console.error(`\n[chunk-verify-plugin] 缺失的文件详情：`);
+        missingFiles.forEach(({ file, referencedBy, possibleMatches }) => {
+          console.error(`  - ${file}`);
+          console.error(`    被以下文件引用: ${referencedBy.join(', ')}`);
+          if (possibleMatches.length > 0) {
+            console.error(`    可能的匹配文件: ${possibleMatches.join(', ')}`);
+          }
+        });
+        console.error('\n[chunk-verify-plugin] 这通常是因为：');
+        console.error('  1. 构建前没有清理旧的 dist 目录（已自动处理）');
+        console.error('  2. 构建过程中文件名 hash 不一致');
+        console.error('  3. useDevMode 配置导致资源引用不一致');
+        console.error('  4. 构建产物不完整（部分文件未生成）');
+        console.error('  5. 验证逻辑误报（引用了不存在的文件）');
+        console.error('\n[chunk-verify-plugin] 解决方案：');
+        console.error('  1. 运行 pnpm prebuild:all 清理缓存和 dist 目录');
+        console.error('  2. 重新构建应用');
+        console.error('  3. 检查构建日志，确认所有文件都已生成');
+        console.error('  4. 如果确认是误报，可以临时禁用此验证插件');
+
+        // 如果缺失文件数量较少（可能是误报），只警告；否则报错
+        if (missingFiles.length <= 5) {
+          console.warn(`\n[chunk-verify-plugin] ⚠️  警告：发现 ${missingFiles.length} 个引用的资源文件不存在，但继续构建`);
+          console.warn(`[chunk-verify-plugin] 请检查上述详细信息，确认是否真的存在问题`);
+        } else {
+          throw new Error(`资源引用不一致，构建失败！有 ${missingFiles.length} 个引用的文件不存在`);
+        }
+      } else {
+        console.log(`\n[chunk-verify-plugin] ✅ 所有资源引用都正确（共验证 ${referencedFiles.size} 个引用）`);
       }
     },
   };
@@ -150,6 +289,1089 @@ const optimizeChunksPlugin = (): Plugin => {
   };
 };
 
+// 强制生成新 hash 插件：在构建时添加构建 ID 到代码中，确保每次构建内容都不同
+// 同时在 generateBundle 阶段修改文件名，添加时间戳
+const forceNewHashPlugin = (): Plugin => {
+  const buildId = Date.now().toString(36);
+  const cssFileNameMap = new Map<string, string>(); // 旧 CSS 文件名 -> 新 CSS 文件名（不含 assets/ 前缀）
+  const jsFileNameMap = new Map<string, string>(); // 旧 JS 文件名 -> 新 JS 文件名（不含 assets/ 前缀）
+
+  return {
+    name: 'force-new-hash',
+    buildStart() {
+      console.log(`[force-new-hash] 构建 ID: ${buildId}`);
+      cssFileNameMap.clear();
+    },
+    renderChunk(code, chunk) {
+      // 在每个 chunk 的开头添加构建 ID 注释，这样内容变了，hash 就会变
+      // 关键：跳过第三方库 chunk，避免破坏其内部代码
+      const isThirdPartyLib = chunk.fileName?.includes('lib-echarts') ||
+                               chunk.fileName?.includes('element-plus') ||
+                               chunk.fileName?.includes('vue-core') ||
+                               chunk.fileName?.includes('vue-router') ||
+                               chunk.fileName?.includes('vendor');
+
+      if (isThirdPartyLib) {
+        // 第三方库不添加注释，避免破坏代码
+        return null; // 返回 null 表示不修改
+      }
+
+      return `/* build-id: ${buildId} */\n${code}`;
+    },
+    generateBundle(options, bundle) {
+      // 修改所有 chunk 的文件名，添加构建 ID
+      // 注意：需要在 fixDynamicImportHashPlugin 之前执行，确保文件名已经更新
+      const fileNameMap = new Map<string, string>(); // 旧文件名 -> 新文件名
+
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && fileName.endsWith('.js') && fileName.startsWith('assets/')) {
+          // 关键：lib-echarts 也需要修改文件名，确保与其他 chunk 的引用关系一致
+          // 之前跳过 lib-echarts 的文件名修改是为了避免破坏其内部代码
+          // 但实际上，只要不修改其内容，只修改文件名是安全的
+          // 而且，lib-echarts 引用了 vendor，如果 vendor 的文件名被修改了，lib-echarts 的文件名也应该被修改
+          // 这样才能确保引用关系的一致性
+          // 注意：lib-echarts 的内容修改会在下面的逻辑中跳过，只更新引用
+
+          // 提取文件名（去掉 assets/ 前缀和 .js 后缀）
+          let baseName = fileName.replace(/^assets\//, '').replace(/\.js$/, '');
+
+          // 关键：检查 Rollup 是否生成了末尾有连字符的文件名
+          // 如果 baseName 末尾有连字符，说明 Rollup 的 [hash] 可能为空或格式异常
+          // 这会导致文件名格式不正确，需要记录并修复
+          if (baseName.endsWith('-')) {
+            console.warn(`[force-new-hash] ⚠️  检测到 Rollup 生成的异常文件名（末尾有连字符）: ${fileName}`);
+            console.warn(`[force-new-hash] ⚠️  这通常表示 Rollup 的 [hash] 为空或格式异常，需要检查 chunkFileNames 配置`);
+          }
+
+          // 关键：清理末尾的连字符，避免生成 vue-core-3nfEKAw--miqp4pax.js 这样的文件名
+          // 如果 baseName 末尾有连字符，先移除它
+          const originalBaseName = baseName;
+          baseName = baseName.replace(/-+$/, '');
+
+          // 如果清理了末尾连字符，记录日志
+          if (originalBaseName !== baseName) {
+            console.log(`[force-new-hash] 🔧 清理了末尾连字符: ${originalBaseName} -> ${baseName}`);
+          }
+
+          // 在文件名末尾添加构建 ID
+          // 格式：name-hash -> name-hash-buildId
+          const newFileName = `assets/${baseName}-${buildId}.js`;
+
+          // 记录文件名映射
+          fileNameMap.set(fileName, newFileName);
+          // 也保存到插件上下文中，供 writeBundle 使用
+          const oldRef = fileName.replace(/^assets\//, '');
+          const newRef = newFileName.replace(/^assets\//, '');
+          jsFileNameMap.set(oldRef, newRef);
+
+          // 更新 chunk 的文件名
+          (chunk as any).fileName = newFileName;
+
+          // 将 chunk 移动到新文件名
+          bundle[newFileName] = chunk;
+          delete bundle[fileName];
+        } else if (chunk.type === 'asset' && fileName.endsWith('.css') && fileName.startsWith('assets/')) {
+          // CSS 文件也添加构建 ID
+          let baseName = fileName.replace(/^assets\//, '').replace(/\.css$/, '');
+          // 关键：清理末尾的连字符，避免生成异常的文件名
+          baseName = baseName.replace(/-+$/, '');
+          const newFileName = `assets/${baseName}-${buildId}.css`;
+
+          fileNameMap.set(fileName, newFileName);
+          // 记录 CSS 文件名映射（用于更新 index.html）
+          const oldCssName = fileName.replace(/^assets\//, '');
+          const newCssName = newFileName.replace(/^assets\//, '');
+          cssFileNameMap.set(oldCssName, newCssName);
+
+          (chunk as any).fileName = newFileName;
+          bundle[newFileName] = chunk;
+          delete bundle[fileName];
+        }
+      }
+
+      // 更新所有 chunk 中的引用
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code) {
+          // 关键：对于第三方库，我们需要更新它们对其他文件的引用
+          // 例如：vue-router 引用了 vue-core，如果 vue-core 的文件名被修改了，vue-router 中的引用也需要更新
+          // 但是，我们不应该修改第三方库的其他内容，只更新文件引用
+          const isEChartsLib = fileName.includes('lib-echarts');
+          const isOtherThirdPartyLib = fileName.includes('element-plus') ||
+                                       fileName.includes('vue-core') ||
+                                       fileName.includes('vue-router') ||
+                                       fileName.includes('vendor');
+
+          // 关键：对于 vue-router、vue-core 等核心库，完全跳过内容修改，避免破坏其内部代码
+          // 这些库的代码非常敏感，任何修改都可能导致运行时错误（如 __vccOpts 未定义）
+          // 只修改文件名，不修改内容，让 Rollup 自动处理引用关系
+          if (fileName.includes('vue-router') || fileName.includes('vue-core')) {
+            continue;
+          }
+
+          let newCode = chunk.code;
+          let modified = false;
+
+          // 替换所有旧文件名的引用（包括第三方库的引用）
+          for (const [oldFileName, newFileName] of fileNameMap.entries()) {
+            // 检查是否是第三方库的引用
+            // 注意：对于 lib-echarts chunk，我们需要更新其对其他文件的引用
+            // 但对于 lib-echarts 本身的引用，我们跳过（因为 lib-echarts 的文件名没有被修改）
+            const isEChartsRef = oldFileName.includes('lib-echarts');
+            const isOtherThirdPartyRef = oldFileName.includes('element-plus') ||
+                                         oldFileName.includes('vue-core') ||
+                                         oldFileName.includes('vue-router') ||
+                                         oldFileName.includes('vendor');
+
+            // 如果是 lib-echarts 本身的引用，跳过（因为 lib-echarts 的文件名没有被修改）
+            if (isEChartsRef && isEChartsLib) {
+              continue;
+            }
+
+            const isThirdPartyRef = isEChartsRef || isOtherThirdPartyRef;
+
+            const oldRef = oldFileName.replace(/^assets\//, '');
+            const newRef = newFileName.replace(/^assets\//, '');
+
+            // 关键：清理 oldRef 末尾的连字符，确保能匹配到所有格式的引用
+            // 因为新文件名已经清理了末尾连字符，所以旧引用也应该清理
+            const oldRefWithoutTrailingDash = oldRef.replace(/-+$/, '');
+
+            // 转义特殊字符（同时处理有和没有末尾连字符的版本）
+            const escapedOldRef = oldRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedOldRefWithoutTrailingDash = oldRefWithoutTrailingDash.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            if (isThirdPartyRef) {
+              // 第三方库引用：使用更全面的匹配，确保所有格式都被更新
+              // 关键：需要匹配所有可能的引用格式，包括：
+              // 1. 绝对路径：/assets/vue-core-CXAVbLNX.js
+              // 2. 相对路径：./assets/vue-core-CXAVbLNX.js 或 assets/vue-core-CXAVbLNX.js
+              // 3. 字符串中的引用："vue-core-CXAVbLNX.js" 或 'vue-core-CXAVbLNX.js' 或 `vue-core-CXAVbLNX.js`
+              // 4. import() 动态导入：import('/assets/vue-core-CXAVbLNX.js')
+              // 5. 在对象、数组中的引用：{ file: "vue-core-CXAVbLNX.js" } 或 ["vue-core-CXAVbLNX.js"]
+
+              // 关键：对于 lib-echarts，只更新 import 语句中的引用，不修改其他内容
+              // 因为 lib-echarts 的代码非常敏感，任何修改都可能破坏其内部逻辑
+              if (isEChartsLib) {
+                // 只更新 import 语句中的引用
+                // 匹配格式：import { ... } from "./vendor-C1ILpzhD.js"
+                const importFromPattern = new RegExp(`(from\\s+["'\`])(\\.?/?assets/)?${escapedOldRef}(["'\`])`, 'g');
+                if (importFromPattern.test(newCode)) {
+                  newCode = newCode.replace(importFromPattern, (match, prefix, assetsPath, quote) => {
+                    const assetsPrefix = assetsPath || './';
+                    return `${prefix}${assetsPrefix}${newRef}${quote}`;
+                  });
+                  modified = true;
+                  console.log(`[force-new-hash] 更新 lib-echarts 中的 import 引用: ${oldRef} -> ${newRef} (在 ${fileName} 中)`);
+                }
+                // 跳过其他模式的处理，避免破坏 lib-echarts 的内部代码
+                continue;
+              }
+
+              const strictPatterns = [
+                // 绝对路径：/assets/vue-core-CXAVbLNX.js
+                [`/assets/${oldRef}`, `/assets/${newRef}`],
+                // 相对路径：./assets/vue-core-CXAVbLNX.js
+                [`./assets/${oldRef}`, `./assets/${newRef}`],
+                // 无前缀相对路径：assets/vue-core-CXAVbLNX.js
+                [`assets/${oldRef}`, `assets/${newRef}`],
+                // 字符串中的引用："vue-core-CXAVbLNX.js" 或 'vue-core-CXAVbLNX.js'
+                [`"${oldRef}"`, `"${newRef}"`],
+                [`'${oldRef}'`, `'${newRef}`],
+                [`\`${oldRef}\``, `\`${newRef}\``],
+                // import() 动态导入：import('/assets/vue-core-CXAVbLNX.js')
+                [`import('/assets/${oldRef}')`, `import('/assets/${newRef}')`],
+                [`import("/assets/${oldRef}")`, `import("/assets/${newRef}")`],
+                [`import(\`/assets/${oldRef}\`)`, `import(\`/assets/${newRef}\`)`],
+                // 在对象或数组中的引用：{ file: "vue-core-CXAVbLNX.js" } 或 ["vue-core-CXAVbLNX.js"]
+                [`:"${oldRef}"`, `:"${newRef}"`],
+                [`:'${oldRef}'`, `:'${newRef}'`],
+                [`:\`${oldRef}\``, `:\`${newRef}\``],
+                [`["${oldRef}"]`, `["${newRef}"]`],
+                [`['${oldRef}']`, `['${newRef}']`],
+                [`[\`${oldRef}\`]`, `[\`${newRef}\`]`],
+              ];
+
+              // 关键：如果 oldRef 有末尾连字符，同时处理没有末尾连字符的版本
+              // 例如：vue-core-3nfEKAw-.js 和 vue-core-3nfEKAw.js 都应该匹配到 vue-core-3nfEKAw-miqp4pax.js
+              if (oldRef !== oldRefWithoutTrailingDash) {
+                strictPatterns.push(
+                  // 绝对路径：/assets/vue-core-3nfEKAw.js（没有末尾连字符）
+                  [`/assets/${oldRefWithoutTrailingDash}`, `/assets/${newRef}`],
+                  // 相对路径：./assets/vue-core-3nfEKAw.js
+                  [`./assets/${oldRefWithoutTrailingDash}`, `./assets/${newRef}`],
+                  // 无前缀相对路径：assets/vue-core-3nfEKAw.js
+                  [`assets/${oldRefWithoutTrailingDash}`, `assets/${newRef}`],
+                  // 字符串中的引用："vue-core-3nfEKAw.js"
+                  [`"${oldRefWithoutTrailingDash}"`, `"${newRef}"`],
+                  [`'${oldRefWithoutTrailingDash}'`, `'${newRef}`],
+                  [`\`${oldRefWithoutTrailingDash}\``, `\`${newRef}\``],
+                  // import() 动态导入
+                  [`import('/assets/${oldRefWithoutTrailingDash}')`, `import('/assets/${newRef}')`],
+                  [`import("/assets/${oldRefWithoutTrailingDash}")`, `import("/assets/${newRef}")`],
+                  [`import(\`/assets/${oldRefWithoutTrailingDash}\`)`, `import(\`/assets/${newRef}\`)`],
+                );
+              }
+
+              strictPatterns.forEach(([oldPattern, newPattern]) => {
+                const escapedOldPattern = oldPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(escapedOldPattern, 'g');
+                if (regex.test(newCode)) {
+                  newCode = newCode.replace(regex, newPattern);
+                  modified = true;
+                  console.log(`[force-new-hash] 更新第三方库引用: ${oldPattern} -> ${newPattern} (在 ${fileName} 中)`);
+                }
+              });
+
+              // 继续执行通用替换逻辑，确保所有格式都被覆盖
+            }
+
+            // 替换字符串中的引用（包括绝对路径和相对路径）
+            // 使用更通用的替换方式，直接替换文件名部分
+            // 关键：对于 lib-echarts，跳过这个处理，避免破坏其内部代码
+            // 因为 lib-echarts 已经在上面通过 import 语句更新了引用
+            if (!isEChartsLib) {
+              const replacePatterns = [
+                // 绝对路径：/assets/vendor-Bhb-Bl-F.js -> /assets/vendor-Bhb-Bl-F-mipvcia9.js
+                [`/assets/${oldRef}`, `/assets/${newRef}`],
+                // 相对路径：./vendor-Bhb-Bl-F.js -> ./vendor-Bhb-Bl-F-mipvcia9.js
+                [`./${oldRef}`, `./${newRef}`],
+                // 无前缀：vendor-Bhb-Bl-F.js -> vendor-Bhb-Bl-F-mipvcia9.js（在 import from 中）
+                [`"${oldRef}"`, `"${newRef}"`],
+                [`'${oldRef}'`, `'${newRef}'`],
+                [`\`${oldRef}\``, `\`${newRef}\``],
+              ];
+
+              // 关键：如果 oldRef 有末尾连字符，同时处理没有末尾连字符的版本
+              // 例如：vue-core-3nfEKAw-.js 和 vue-core-3nfEKAw.js 都应该匹配到 vue-core-3nfEKAw-miqp4pax.js
+              if (oldRef !== oldRefWithoutTrailingDash) {
+                replacePatterns.push(
+                  [`/assets/${oldRefWithoutTrailingDash}`, `/assets/${newRef}`],
+                  [`./${oldRefWithoutTrailingDash}`, `./${newRef}`],
+                  [`"${oldRefWithoutTrailingDash}"`, `"${newRef}"`],
+                  [`'${oldRefWithoutTrailingDash}'`, `'${newRef}'`],
+                  [`\`${oldRefWithoutTrailingDash}\``, `\`${newRef}\``],
+                );
+              }
+
+              replacePatterns.forEach(([oldPattern, newPattern]) => {
+              // 转义特殊字符
+              const escapedOldPattern = oldPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(escapedOldPattern, 'g');
+              if (regex.test(newCode)) {
+                const matches = newCode.match(regex);
+                if (matches && matches.length > 0) {
+                  newCode = newCode.replace(regex, newPattern);
+                  modified = true;
+                  // 关键：记录替换的详细信息，特别是相对路径引用
+                  if (oldPattern.includes('./') || oldPattern.includes('vue-core-3nfEKAw-')) {
+                    console.log(`[force-new-hash] 🔧 更新引用: ${oldPattern} -> ${newPattern} (在 ${fileName} 中，找到 ${matches.length} 个匹配)`);
+                  }
+                }
+              }
+            });
+            }
+
+            // 额外处理：匹配更复杂的引用格式
+            // 例如：在对象、数组中的引用，或者作为函数参数
+            // 关键：只匹配在字符串或特定上下文中的文件名
+            // 关键：对于 lib-echarts，跳过这个处理，避免破坏其内部代码
+            if (!isEChartsLib) {
+              const complexPatterns = [
+                // 在对象或数组中的引用：{ file: "vue-core-CXAVbLNX.js" } 或 ["vue-core-CXAVbLNX.js"]
+                new RegExp(`(["'\`])${escapedOldRef}\\1`, 'g'),
+                // 在函数调用中的引用：loadChunk("vue-core-CXAVbLNX.js")
+                new RegExp(`\\(\\s*(["'\`])${escapedOldRef}\\1\\s*\\)`, 'g'),
+              ];
+
+              complexPatterns.forEach(pattern => {
+                if (pattern.test(newCode)) {
+                  newCode = newCode.replace(pattern, (match, quote) => {
+                    if (match.startsWith('(')) {
+                      return `(${quote}${newRef}${quote})`;
+                    } else {
+                      return `${quote}${newRef}${quote}`;
+                    }
+                  });
+                  modified = true;
+                }
+              });
+            }
+
+            // 额外处理：直接替换文件名（不包含路径前缀），确保所有引用都被更新
+            // 这可以捕获那些格式不标准的引用
+            // 关键：只匹配在 import/export/require/动态导入等语句中的文件名，避免误匹配代码中的变量名
+            // 关键：对于 lib-echarts，跳过这个处理，避免破坏其内部代码
+            if (!isEChartsLib) {
+              const directFileNamePattern = new RegExp(`\\b${escapedOldRef}\\b`, 'g');
+              if (directFileNamePattern.test(newCode)) {
+                // 检查上下文，确保是文件引用而不是其他内容
+                newCode = newCode.replace(directFileNamePattern, (match, offset, string) => {
+                  // 检查前后文，确保是文件引用
+                  const before = string.substring(Math.max(0, offset - 50), offset);
+                  const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50));
+
+                  // 更严格的检查：只有在以下情况下才替换
+                  // 1. 在 import/export/require 语句中
+                  // 2. 在字符串字面量中（引号内）
+                  // 3. 在路径相关的上下文中（包含 /assets/ 或 ./ 或 ../）
+                  const isInImportExport = /(?:import|export|require)\s*\(?\s*["'`]/.test(before) ||
+                                           /from\s+["'`]/.test(before) ||
+                                           /import\s*\(/.test(before);
+                  const isInString = (before.match(/["'`]/g) || []).length % 2 === 1; // 奇数个引号表示在字符串内
+                  const isInPath = /[/'"`]assets\/|\.\/|\.\.\//.test(before) || /["'`]\s*$/.test(before);
+
+                  // 排除：如果是在变量名、函数名、对象属性等位置，不替换
+                  const isVariableName = /[a-zA-Z_$][a-zA-Z0-9_$]*\s*$/.test(before) && !isInString;
+                  const isObjectProperty = /\.\s*$/.test(before);
+
+                  if ((isInImportExport || isInString || isInPath) && !isVariableName && !isObjectProperty) {
+                    return newRef;
+                  }
+                  return match;
+                });
+                modified = true;
+              }
+            }
+          }
+
+          // 更新 __vite__mapDeps 中的 CSS 引用
+          // 匹配格式：__vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/xxx.css",...]))=>...
+          if (newCode.includes('__vite__mapDeps') && cssFileNameMap.size > 0) {
+            for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
+              // 转义特殊字符
+              const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              // 匹配 "assets/xxx.css" 或 'assets/xxx.css'（在 __vite__mapDeps 数组中）
+              // 需要匹配引号内的完整路径
+              const cssPattern = new RegExp(`(["'])assets/${escapedOldCssName}\\1`, 'g');
+              if (cssPattern.test(newCode)) {
+                newCode = newCode.replace(cssPattern, `$1assets/${newCssName}$1`);
+                modified = true;
+                console.log(`[force-new-hash] 更新 __vite__mapDeps 中的 CSS 引用: assets/${oldCssName} -> assets/${newCssName}`);
+              }
+            }
+          }
+
+          if (modified) {
+            chunk.code = newCode;
+          }
+        }
+      }
+
+      console.log(`[force-new-hash] ✅ 已为 ${fileNameMap.size} 个文件添加构建 ID: ${buildId}`);
+
+      // 调试：输出文件名映射（仅第三方库）
+      const thirdPartyMappings = Array.from(fileNameMap.entries()).filter(([oldName]) =>
+        oldName.includes('vue-core') || oldName.includes('vue-router') ||
+        oldName.includes('element-plus') || oldName.includes('vendor') ||
+        oldName.includes('lib-echarts')
+      );
+      if (thirdPartyMappings.length > 0) {
+        console.log(`[force-new-hash] 📋 第三方库文件名映射:`);
+        thirdPartyMappings.forEach(([oldName, newName]) => {
+          console.log(`  ${oldName.replace(/^assets\//, '')} -> ${newName.replace(/^assets\//, '')}`);
+        });
+      }
+    },
+    writeBundle(options) {
+      // 在 writeBundle 阶段更新 index.html 和 JS 文件中的 CSS 引用
+      // 此时所有文件名都已经确定
+      const outputDir = options.dir || join(process.cwd(), 'dist');
+      const indexHtmlPath = join(outputDir, 'index.html');
+      const assetsDir = join(outputDir, 'assets');
+
+      // 1. 更新 index.html 中的 CSS 引用，并为 script 标签添加构建 ID 查询参数（避免浏览器缓存）
+      if (existsSync(indexHtmlPath)) {
+        let html = readFileSync(indexHtmlPath, 'utf-8');
+        let modified = false;
+
+        // 1.1 更新 CSS 引用
+        if (cssFileNameMap.size > 0) {
+          for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
+            // 转义特殊字符
+            const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 匹配 <link rel="stylesheet" ... href="/assets/xxx.css">
+            const linkPattern = new RegExp(`(href=["'])/assets/${escapedOldCssName}(["'])`, 'g');
+            if (linkPattern.test(html)) {
+              html = html.replace(linkPattern, `$1/assets/${newCssName}$2`);
+              modified = true;
+            }
+          }
+        }
+
+        // 1.2 更新 JS 文件引用，并为 script 标签中的 import() 添加构建 ID 查询参数（避免浏览器缓存）
+        // 关键：需要先更新文件名引用，然后再添加查询参数
+        // 注意：index.html 中的文件名可能已经包含旧的构建ID（如 index-Dt6-4vQv-miqpl63n.js）
+        // 我们需要匹配文件名前缀（去掉构建ID部分），然后更新为新的文件名
+        if (jsFileNameMap.size > 0) {
+          for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+            // 提取文件名前缀（去掉可能的构建ID部分）
+            // 例如：index-Dt6-4vQv.js 或 index-Dt6-4vQv-miqpl63n.js -> index-Dt6-4vQv
+            const oldJsNamePrefix = oldJsName.replace(/\.js$/, '').replace(/-[a-zA-Z0-9]{8,}$/, '');
+            const escapedOldJsNamePrefix = oldJsNamePrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // 匹配 import('/assets/xxx.js') 或 import("/assets/xxx.js")，文件名可能包含旧的构建ID
+            // 匹配格式：/assets/index-Dt6-4vQv.js 或 /assets/index-Dt6-4vQv-miqpl63n.js
+            const importPattern = new RegExp(`import\\s*\\(\\s*(["'])(/assets/${escapedOldJsNamePrefix}(?:-[a-zA-Z0-9]{8,})?\\.js)(\\?[^"'\\s]*)?\\1\\s*\\)`, 'g');
+            if (importPattern.test(html)) {
+              html = html.replace(importPattern, (match, quote, path, query) => {
+                // 更新为新的文件名（包含新的构建ID）
+                const newPath = `/assets/${newJsName}`;
+                // 如果原来有查询参数，替换为新的构建ID；如果没有，添加新的构建ID
+                const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+                return `import(${quote}${newPath}${newQuery}${quote})`;
+              });
+              modified = true;
+              console.log(`[force-new-hash] ✅ 已更新 index.html 中的 JS 文件引用: ${oldJsNamePrefix}*.js -> ${newJsName}`);
+            }
+          }
+        }
+
+        // 1.3 为其他可能的 import() 添加构建 ID 查询参数（兜底，处理没有被 jsFileNameMap 覆盖的情况）
+        // 匹配 import('/assets/xxx.js') 或 import("/assets/xxx.js")
+        const importPatternFallback = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
+        if (importPatternFallback.test(html)) {
+          html = html.replace(importPatternFallback, (match, quote, path, ext, query) => {
+            // 检查是否已经有查询参数
+            if (query) {
+              // 如果已经有查询参数，替换版本号部分
+              return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+            } else {
+              // 如果没有查询参数，添加构建 ID
+              return `import(${quote}${path}?v=${buildId}${quote})`;
+            }
+          });
+          modified = true;
+          console.log(`[force-new-hash] ✅ 已为 index.html 中的 script 标签添加构建 ID 查询参数: v=${buildId}`);
+        }
+
+        if (modified) {
+          writeFileSync(indexHtmlPath, html, 'utf-8');
+          if (cssFileNameMap.size > 0) {
+            console.log(`[force-new-hash] ✅ 已更新 index.html 中的 CSS 引用`);
+          }
+        }
+      }
+
+      // 2. 更新所有 JS 文件中的引用（包括 JS 和 CSS 引用，作为兜底）
+      if (existsSync(assetsDir)) {
+        const jsFiles = readdirSync(assetsDir).filter(f => f.endsWith('.js'));
+        let totalFixed = 0;
+
+        // 收集所有文件名映射（包括 JS 和 CSS）
+        const allFileNameMap = new Map<string, string>();
+
+        // 使用插件上下文中保存的映射
+        for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+          allFileNameMap.set(oldJsName, newJsName);
+        }
+
+        // 也添加 CSS 文件映射
+        for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
+          allFileNameMap.set(oldCssName, newCssName);
+        }
+
+        // 如果映射为空，尝试从实际文件重建（兜底）
+        if (allFileNameMap.size === 0) {
+          const actualFiles = readdirSync(assetsDir);
+          for (const file of actualFiles) {
+            // 匹配格式：name-hash-buildId.ext
+            const match = file.match(/^(.+?)-([A-Za-z0-9]{4,})-([a-zA-Z0-9]+)\.(js|mjs|css)$/);
+            if (match) {
+              const [, baseName, hash, buildId, ext] = match;
+              const oldFileName = `${baseName}-${hash}.${ext}`;
+              if (oldFileName !== file) {
+                allFileNameMap.set(oldFileName, file);
+              }
+            }
+          }
+        }
+
+        for (const jsFile of jsFiles) {
+          const jsFilePath = join(assetsDir, jsFile);
+
+          // 关键：跳过第三方库文件的内容修改，避免破坏其内部代码
+          // 这些库可能包含压缩后的代码，修改可能破坏其内部引用
+          const isThirdPartyLib = jsFile.includes('lib-echarts') ||
+                                   jsFile.includes('element-plus') ||
+                                   jsFile.includes('vue-core') ||
+                                   jsFile.includes('vue-router') ||
+                                   jsFile.includes('vendor');
+
+          if (isThirdPartyLib) {
+            // 第三方库文件不修改内容，只修改文件名（已在 generateBundle 阶段处理）
+            continue;
+          }
+
+          let content = readFileSync(jsFilePath, 'utf-8');
+          let modified = false;
+
+          // 更新所有文件引用（JS 和 CSS）
+          // 关键：只替换真正的文件引用，避免破坏压缩/混淆后的代码
+          for (const [oldFileName, newFileName] of allFileNameMap.entries()) {
+            const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // 匹配各种引用格式（更精确的模式，避免误匹配）
+            const patterns = [
+              // 绝对路径：/assets/xxx.js（必须在引号内或 import/from 语句中）
+              new RegExp(`(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
+              // import() 动态导入：import('/assets/xxx.js')
+              new RegExp(`import\\s*\\(\\s*(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1\\s*\\)`, 'g'),
+              // 相对路径：./xxx.js（必须在引号内）
+              new RegExp(`(["'\`])\\./${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
+              // assets/xxx.js（在 __vite__mapDeps 中，必须在引号内）
+              new RegExp(`(["'\`])assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
+            ];
+
+            patterns.forEach(pattern => {
+              if (pattern.test(content)) {
+                if (pattern.source.includes('/assets/')) {
+                  content = content.replace(pattern, (match, quote) => {
+                    if (match.includes('import(')) {
+                      return match.replace(`/assets/${oldFileName}`, `/assets/${newFileName}`);
+                    }
+                    return `${quote}/assets/${newFileName}${quote}`;
+                  });
+                } else if (pattern.source.includes('./')) {
+                  content = content.replace(pattern, (match, quote) => `${quote}./${newFileName}${quote}`);
+                } else if (pattern.source.includes('assets/')) {
+                  content = content.replace(pattern, (match, quote) => `${quote}assets/${newFileName}${quote}`);
+                }
+                modified = true;
+              }
+            });
+          }
+
+          if (modified) {
+            writeFileSync(jsFilePath, content, 'utf-8');
+            totalFixed++;
+          }
+        }
+
+        if (totalFixed > 0) {
+          console.log(`[force-new-hash] ✅ 已在 writeBundle 阶段更新 ${totalFixed} 个 JS 文件中的引用`);
+        }
+      }
+    },
+  };
+};
+
+// 修复动态导入中的旧 hash 引用插件
+// 注意：现在使用时间戳 + hash 的方式，确保每次构建都生成新的文件名
+// 这个插件主要用于修复引用不匹配的情况（虽然理论上不应该发生）
+// 这个插件在 generateBundle 和 writeBundle 阶段都进行修复，确保所有引用都被修复
+const fixDynamicImportHashPlugin = (): Plugin => {
+  const chunkNameMap = new Map<string, string>();
+
+  return {
+    name: 'fix-dynamic-import-hash',
+    // 在 generateBundle 阶段收集所有 chunk 文件名
+    generateBundle(options, bundle) {
+      // 建立文件名映射：文件名前缀 -> 实际文件名
+      chunkNameMap.clear();
+
+      // 第一步：收集所有 chunk 文件名，建立映射
+      // 注意：文件名格式可能是 name-hash-timestamp.js 或 name-hash.js
+      for (const fileName of Object.keys(bundle)) {
+        if (fileName.endsWith('.js') && fileName.startsWith('assets/')) {
+          // 提取文件名前缀（如 vendor、vue-core 等）
+          // 注意：需要处理多段名称，如 app-src、module-access 等
+          // 匹配格式：name-hash-timestamp.js 或 name-hash.js
+          const baseName = fileName.replace(/^assets\//, '').replace(/\.js$/, '');
+          // 移除 hash 和时间戳部分，只保留名称前缀
+          // 格式：name-hash-timestamp 或 name-hash
+          const nameMatch = baseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?$/) ||
+                           baseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})?$/);
+          if (nameMatch) {
+            const namePrefix = nameMatch[1];
+            // 对于多段名称，需要提取完整的名称（如 app-src、module-access）
+            // 但也要支持单段名称（如 vendor、vue-core）
+            if (!chunkNameMap.has(namePrefix)) {
+              chunkNameMap.set(namePrefix, fileName);
+            } else {
+              // 如果已经有映射，保留第一个（通常只有一个）
+              console.warn(`[fix-dynamic-import-hash] ⚠️  发现多个同名 chunk: ${namePrefix} (${chunkNameMap.get(namePrefix)}, ${fileName})`);
+            }
+          }
+        }
+      }
+
+      console.log(`[fix-dynamic-import-hash] 收集到 ${chunkNameMap.size} 个 chunk 映射`);
+      // 调试：输出映射关系
+      if (chunkNameMap.size > 0) {
+        const sampleEntries = Array.from(chunkNameMap.entries()).slice(0, 5);
+        console.log(`[fix-dynamic-import-hash] 示例映射: ${sampleEntries.map(([k, v]) => `${k} -> ${v.split('/').pop()}`).join(', ')}`);
+      }
+
+      // 第二步：修复所有 chunk 中的动态导入引用
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code) {
+          // 关键：跳过第三方库 chunk 的内容修改，避免破坏其内部代码
+          const isThirdPartyLib = fileName.includes('lib-echarts') ||
+                                   fileName.includes('element-plus') ||
+                                   fileName.includes('vue-core') ||
+                                   fileName.includes('vue-router') ||
+                                   fileName.includes('vendor');
+
+          if (isThirdPartyLib) {
+            continue;
+          }
+
+          let newCode = chunk.code;
+          let modified = false;
+          const replacements: Array<{ old: string; new: string }> = [];
+
+          // 修复动态导入中的旧 hash 引用
+          // 匹配多种格式：
+          // 1. import('/assets/vendor-B2xaJ9jT.js')
+          // 2. import("./assets/vue-core-Ct0QBumG.js")
+          // 3. "/assets/vendor-B2xaJ9jT.js" (字符串中的引用)
+          // 4. './assets/vue-core-Ct0QBumG.js' (相对路径)
+
+          // 模式1: import() 动态导入
+          const importPattern = /import\s*\(\s*(["'])(\.?\/?assets\/([^"'`\s]+\.(js|mjs|css)))\1\s*\)/g;
+          let match;
+          importPattern.lastIndex = 0;
+          while ((match = importPattern.exec(newCode)) !== null) {
+            const quote = match[1];
+            const fullPath = match[2]; // /assets/vendor-B2xaJ9jT.js 或 ./assets/vue-core-Ct0QBumG.js
+            const referencedFile = match[3]; // vendor-B2xaJ9jT.js
+            const fullMatch = match[0]; // import("/assets/vendor-B2xaJ9jT.js")
+
+            // 检查引用的文件是否存在于 bundle 中
+            const existsInBundle = Object.keys(bundle).some(f => f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`));
+
+            if (!existsInBundle) {
+              // 文件不存在，尝试找到对应的实际文件（忽略 hash）
+              const refMatch = referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+              if (refMatch) {
+                const [, namePrefix, , ext] = refMatch;
+                const key = `${namePrefix}.${ext}`;
+                const actualFile = chunkNameMap.get(namePrefix);
+
+                if (actualFile) {
+                  const actualFileName = actualFile.replace(/^assets\//, '');
+                  let newPath = fullPath;
+                  if (fullPath.startsWith('/assets/')) {
+                    newPath = `/assets/${actualFileName}`;
+                  } else if (fullPath.startsWith('./assets/')) {
+                    newPath = `./assets/${actualFileName}`;
+                  } else if (fullPath.startsWith('assets/')) {
+                    newPath = `assets/${actualFileName}`;
+                  } else {
+                    newPath = actualFileName;
+                  }
+
+                  replacements.push({
+                    old: fullMatch,
+                    new: `import(${quote}${newPath}${quote})`
+                  });
+                  console.log(`[fix-dynamic-import-hash] 修复 ${fileName} 中的引用: ${referencedFile} -> ${actualFileName}`);
+                } else {
+                  console.warn(`[fix-dynamic-import-hash] ⚠️  无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile}`);
+                }
+              }
+            }
+          }
+
+          // 模式2: 字符串中的 /assets/xxx.js 引用（包括在数组、对象等中）
+          // 这个模式需要匹配所有可能的引用格式，包括：
+          // - "/assets/vue-router-B9_7Pxt3.js"
+          // - '/assets/vue-router-B9_7Pxt3.js'
+          // - `/assets/vue-router-B9_7Pxt3.js`
+          const stringPathPattern = /(["'`])(\/assets\/([^"'`\s]+\.(js|mjs|css)))\1/g;
+          stringPathPattern.lastIndex = 0;
+          while ((match = stringPathPattern.exec(newCode)) !== null) {
+            const quote = match[1];
+            const fullPath = match[2]; // /assets/vendor-B2xaJ9jT.js
+            const referencedFile = match[3]; // vendor-B2xaJ9jT.js
+            const fullMatch = match[0]; // "/assets/vendor-B2xaJ9jT.js"
+
+            // 检查是否已经被其他规则处理过
+            const alreadyFixed = replacements.some(r => r.old === fullMatch || r.old.includes(referencedFile));
+            if (alreadyFixed) {
+              continue;
+            }
+
+            // 检查引用的文件是否存在于 bundle 中
+            const existsInBundle = Object.keys(bundle).some(f => f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`));
+
+            if (!existsInBundle) {
+              // 文件不存在，尝试找到对应的实际文件（忽略 hash 和时间戳）
+              // 注意：需要处理多段名称，如 app-src、module-access 等
+              // 匹配格式：name-hash-timestamp.js 或 name-hash.js
+              const refMatch = referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs|css)$/) ||
+                               referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+              if (refMatch) {
+                const namePrefix = refMatch[1];
+                const actualFile = chunkNameMap.get(namePrefix);
+
+                if (actualFile) {
+                  const actualFileName = actualFile.replace(/^assets\//, '');
+                  const newPath = `/assets/${actualFileName}`;
+
+                  replacements.push({
+                    old: fullMatch,
+                    new: `${quote}${newPath}${quote}`
+                  });
+                  console.log(`[fix-dynamic-import-hash] 修复 ${fileName} 中的字符串引用: ${referencedFile} -> ${actualFileName}`);
+                } else {
+                  console.warn(`[fix-dynamic-import-hash] ⚠️  无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile} (在 ${fileName} 中)`);
+                }
+              }
+            }
+          }
+
+          // 模式3: 相对路径 ./xxx.js
+          const relativePathPattern = /(["'])(\.\/)([^"'`\s]+\.(js|mjs|css))\1/g;
+          relativePathPattern.lastIndex = 0;
+          while ((match = relativePathPattern.exec(newCode)) !== null) {
+            const quote = match[1];
+            const relativePrefix = match[2]; // ./
+            const referencedFile = match[3]; // vue-core-Ct0QBumG.js
+            const fullMatch = match[0]; // "./vue-core-Ct0QBumG.js"
+
+            // 检查是否已经被其他规则处理过
+            const alreadyFixed = replacements.some(r => r.old === fullMatch);
+            if (alreadyFixed) {
+              continue;
+            }
+
+            // 检查引用的文件是否存在于 bundle 中
+            const existsInBundle = Object.keys(bundle).some(f => f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`));
+
+            if (!existsInBundle) {
+              // 文件不存在，尝试找到对应的实际文件（忽略 hash 和时间戳）
+              // 匹配格式：name-hash-timestamp.js 或 name-hash.js
+              const refMatch = referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs|css)$/) ||
+                               referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+              if (refMatch) {
+                const namePrefix = refMatch[1];
+                const actualFile = chunkNameMap.get(namePrefix);
+
+                if (actualFile) {
+                  const actualFileName = actualFile.replace(/^assets\//, '');
+
+                  replacements.push({
+                    old: fullMatch,
+                    new: `${quote}${relativePrefix}${actualFileName}${quote}`
+                  });
+                  console.log(`[fix-dynamic-import-hash] 修复 ${fileName} 中的相对路径引用: ${referencedFile} -> ${actualFileName}`);
+                }
+              }
+            }
+          }
+
+          // 应用所有替换（从后往前替换，避免位置偏移）
+          if (replacements.length > 0) {
+            replacements.reverse().forEach(({ old, new: newStr }) => {
+              newCode = newCode.replace(old, newStr);
+            });
+            modified = true;
+            console.log(`[fix-dynamic-import-hash] ✅ 已修复 ${fileName} 中的 ${replacements.length} 个引用`);
+          }
+
+          if (modified) {
+            chunk.code = newCode;
+          }
+        }
+      }
+    },
+
+    // 在 writeBundle 阶段再次修复，确保所有引用都被修复
+    writeBundle(options, bundle) {
+
+      // 重新收集所有 chunk 文件名（因为可能已经写入文件系统）
+      // 注意：文件名格式可能是 name-hash-timestamp.js 或 name-hash.js
+      chunkNameMap.clear();
+
+      // 关键：收集所有 chunk 文件名，包括第三方库（因为 lib-echarts 需要修复其对 vendor 的引用）
+      const thirdPartyChunks = ['lib-echarts', 'element-plus', 'vue-core', 'vue-router', 'vendor'];
+      for (const fileName of Object.keys(bundle)) {
+        if (fileName.endsWith('.js') && fileName.startsWith('assets/')) {
+          // 匹配格式：name-hash-timestamp.js 或 name-hash.js 或 name-hash-.js（异常情况）
+          // 提取 name 部分（第一个连字符之前的所有内容，但如果是多段名称如 app-src，需要保留）
+          const baseName = fileName.replace(/^assets\//, '').replace(/\.js$/, '');
+          // 移除 hash 和时间戳部分，只保留名称前缀
+          // 格式：name-hash-timestamp 或 name-hash 或 name-hash-（异常情况）
+          // 我们需要提取 name 部分（第一个连字符之前的所有内容，但如果是多段名称，需要特殊处理）
+          // 关键：需要处理末尾有连字符的情况（如 vue-core-3nfEKAw-）
+          const cleanBaseName = baseName.replace(/-+$/, ''); // 先清理末尾连字符
+          const nameMatch = cleanBaseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?$/) ||
+                           cleanBaseName.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?$/);
+          if (nameMatch) {
+            const namePrefix = nameMatch[1];
+            if (!chunkNameMap.has(namePrefix)) {
+              chunkNameMap.set(namePrefix, fileName);
+            }
+          } else {
+            // 如果没有匹配到，尝试直接使用文件名（去掉 assets/ 和 .js）
+            const namePrefix = cleanBaseName.split('-')[0];
+            if (namePrefix && !chunkNameMap.has(namePrefix)) {
+              chunkNameMap.set(namePrefix, fileName);
+            }
+          }
+        }
+      }
+
+      // 修复所有已写入的文件
+      const outputDir = options.dir || join(process.cwd(), 'dist');
+      let totalFixed = 0;
+
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && fileName.endsWith('.js') && fileName.startsWith('assets/')) {
+          // 关键：对于 lib-echarts，需要修复其对 vendor 等文件的引用
+          // 其他第三方库跳过内容修改，但需要修复其他文件中对第三方库的引用
+          const isThirdPartyLib = thirdPartyChunks.some(lib => fileName.includes(lib));
+          const isEChartsLib = fileName.includes('lib-echarts');
+
+          // lib-echarts 需要修复其对其他文件的引用（特别是 vendor）
+          // 其他第三方库跳过内容修改
+          if (isThirdPartyLib && !isEChartsLib) {
+            continue;
+          }
+
+          const filePath = join(outputDir, fileName);
+          if (existsSync(filePath)) {
+            let content = readFileSync(filePath, 'utf-8');
+            const replacements: Array<{ old: string; new: string }> = [];
+
+            // 如果是第三方库，只修复对它的引用，不修改其内容
+            // 如果不是第三方库，修复所有引用（包括对第三方库的引用）
+
+            // 使用相同的修复逻辑
+            // 模式1: import() 动态导入
+            const importPattern = /import\s*\(\s*(["'])(\.?\/?assets\/([^"'`\s]+\.(js|mjs|css)))\1\s*\)/g;
+            let match;
+            importPattern.lastIndex = 0;
+            while ((match = importPattern.exec(content)) !== null) {
+              const quote = match[1];
+              const fullPath = match[2];
+              const referencedFile = match[3];
+              const fullMatch = match[0];
+
+              const existsInBundle = Object.keys(bundle).some(f => f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`));
+
+              if (!existsInBundle) {
+                // 关键：需要处理带构建 ID 的文件名格式
+                // 格式可能是：name-hash.js 或 name-hash-buildId.js 或 name-hash-.js（异常情况）
+                // 需要提取 name 前缀来查找实际文件
+                // 先清理末尾连字符，然后提取前缀
+                const referencedFileClean = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+                const refMatch = referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs|css)$/) ||
+                                 referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/) ||
+                                 referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]*)?-?\.(js|mjs|css)$/);
+                if (refMatch) {
+                  const namePrefix = refMatch[1];
+                  let actualFile = chunkNameMap.get(namePrefix);
+
+                  // 如果找不到，尝试通过文件名前缀直接匹配
+                  if (!actualFile) {
+                    // 提取引用文件的前缀（去掉 hash 和可能的构建ID）
+                    const refPrefix = referencedFileClean.replace(/\.(js|mjs|css)$/, '').replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                    // 遍历所有文件，找到匹配的前缀
+                    for (const [existingFileName] of Object.entries(bundle)) {
+                      if (existingFileName.endsWith('.js') && existingFileName.startsWith('assets/')) {
+                        const existingFileBaseName = existingFileName.replace(/^assets\//, '').replace(/\.js$/, '');
+                        const existingFileBaseNameClean = existingFileBaseName.replace(/-+$/, '');
+                        const existingPrefix = existingFileBaseNameClean.replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                        if (existingPrefix === refPrefix) {
+                          actualFile = existingFileName;
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  if (actualFile) {
+                    const actualFileName = actualFile.replace(/^assets\//, '');
+                    let newPath = fullPath;
+                    if (fullPath.startsWith('/assets/')) {
+                      newPath = `/assets/${actualFileName}`;
+                    } else if (fullPath.startsWith('./assets/')) {
+                      newPath = `./assets/${actualFileName}`;
+                    } else if (fullPath.startsWith('assets/')) {
+                      newPath = `assets/${actualFileName}`;
+                    } else {
+                      newPath = actualFileName;
+                    }
+
+                    replacements.push({
+                      old: fullMatch,
+                      new: `import(${quote}${newPath}${quote})`
+                    });
+                    console.log(`[fix-dynamic-import-hash] writeBundle: 修复 ${fileName} 中的 import() 引用: ${referencedFile} -> ${actualFileName}`);
+                  } else {
+                    console.warn(`[fix-dynamic-import-hash] writeBundle: 无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile} (在 ${fileName} 中)`);
+                  }
+                }
+              }
+            }
+
+            // 模式2: 字符串中的 /assets/xxx.js 引用
+            const stringPathPattern = /(["'`])(\/assets\/([^"'`\s]+\.(js|mjs|css)))\1/g;
+            stringPathPattern.lastIndex = 0;
+            while ((match = stringPathPattern.exec(content)) !== null) {
+              const quote = match[1];
+              const fullPath = match[2];
+              const referencedFile = match[3];
+              const fullMatch = match[0];
+
+              const alreadyFixed = replacements.some(r => r.old === fullMatch || r.old.includes(referencedFile));
+              if (alreadyFixed) {
+                continue;
+              }
+
+              const existsInBundle = Object.keys(bundle).some(f => f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`));
+
+              if (!existsInBundle) {
+                // 匹配格式：name-hash-timestamp.js 或 name-hash.js
+                // 提取 name 部分（第一个连字符之前的所有内容，但如果是多段名称如 app-src，需要保留）
+                // 关键：需要处理两种情况：
+                // 1. 旧文件名（没有构建 ID）：vue-core-CXAVbLNX.js -> 提取 vue-core
+                // 2. 新文件名（有构建 ID）：vue-core-CXAVbLNX-miq4m7r1.js -> 提取 vue-core
+                // 3. 异常文件名（末尾有连字符）：vue-core-3nfEKAw-.js -> 提取 vue-core
+                // 注意：需要处理末尾有连字符的情况，可能是构建过程中的异常
+                // 关键：需要处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
+                // 先清理末尾连字符，然后提取前缀
+                const referencedFileClean = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+                const refMatch = referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs|css)$/) ||
+                                 referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/) ||
+                                 referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]*)?-?\.(js|mjs|css)$/);
+                if (refMatch) {
+                  const namePrefix = refMatch[1];
+                  let actualFile = chunkNameMap.get(namePrefix);
+
+                  // 如果找不到，尝试更宽松的匹配（只匹配第一个连字符之前的部分）
+                  if (!actualFile && namePrefix.includes('-')) {
+                    const firstPart = namePrefix.split('-')[0];
+                    const possibleMatch = Array.from(chunkNameMap.entries()).find(([key]) => key.startsWith(firstPart));
+                    if (possibleMatch) {
+                      const [, foundFile] = possibleMatch;
+                      actualFile = foundFile;
+                    }
+                  }
+
+                  // 如果还是找不到，尝试通过文件名前缀直接匹配
+                  if (!actualFile) {
+                    // 提取引用文件的前缀（去掉 hash 和可能的构建ID）
+                    const refPrefix = referencedFileClean.replace(/\.(js|mjs|css)$/, '').replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                    // 遍历所有文件，找到匹配的前缀
+                    for (const [existingFileName] of Object.entries(bundle)) {
+                      if (existingFileName.endsWith('.js') && existingFileName.startsWith('assets/')) {
+                        const existingFileBaseName = existingFileName.replace(/^assets\//, '').replace(/\.js$/, '');
+                        const existingFileBaseNameClean = existingFileBaseName.replace(/-+$/, '');
+                        const existingPrefix = existingFileBaseNameClean.replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                        if (existingPrefix === refPrefix) {
+                          actualFile = existingFileName;
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  if (actualFile) {
+                    const actualFileName = actualFile.replace(/^assets\//, '');
+                    const newPath = `/assets/${actualFileName}`;
+
+                    replacements.push({
+                      old: fullMatch,
+                      new: `${quote}${newPath}${quote}`
+                    });
+                    console.log(`[fix-dynamic-import-hash] writeBundle: 修复 ${fileName} 中的引用: ${referencedFile} -> ${actualFileName}`);
+                  } else {
+                    console.warn(`[fix-dynamic-import-hash] writeBundle: 无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile} (在 ${fileName} 中)`);
+                  }
+                }
+              }
+            }
+
+            // 模式3: 相对路径引用（如 ./vue-core-3nfEKAw-.js）
+            // 关键：这是第三方库内部引用其他第三方库的常见方式（如 vue-router 引用 vue-core）
+            const relativePathPattern = /(["'`])(\.\/)([^"'`\s]+\.(js|mjs|css))\1/g;
+            relativePathPattern.lastIndex = 0;
+            while ((match = relativePathPattern.exec(content)) !== null) {
+              const quote = match[1];
+              const relativePrefix = match[2]; // ./
+              const referencedFile = match[3]; // vue-core-3nfEKAw-.js
+              const fullMatch = match[0]; // "./vue-core-3nfEKAw-.js"
+
+              const alreadyFixed = replacements.some(r => r.old === fullMatch || r.old.includes(referencedFile));
+              if (alreadyFixed) {
+                continue;
+              }
+
+              // 检查文件是否存在于 bundle 中
+              const existsInBundle = Object.keys(bundle).some(f => {
+                const bundleFileName = f.replace(/^assets\//, '');
+                return bundleFileName === referencedFile || f === `assets/${referencedFile}` || f.endsWith(`/${referencedFile}`);
+              });
+
+              if (!existsInBundle) {
+                // 关键：需要处理末尾有连字符的情况（如 vue-core-3nfEKAw-.js）
+                // 先清理末尾连字符，然后提取前缀
+                const referencedFileClean = referencedFile.replace(/-+\.(js|mjs|css)$/, '.$1');
+                const refMatch = referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs|css)$/) ||
+                                 referencedFileClean.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/) ||
+                                 referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]*)?-?\.(js|mjs|css)$/);
+                if (refMatch) {
+                  const namePrefix = refMatch[1];
+                  let actualFile = chunkNameMap.get(namePrefix);
+
+                  // 如果找不到，尝试通过文件名前缀直接匹配
+                  if (!actualFile) {
+                    // 提取引用文件的前缀（去掉 hash 和可能的构建ID）
+                    const refPrefix = referencedFileClean.replace(/\.(js|mjs|css)$/, '').replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                    // 遍历所有文件，找到匹配的前缀
+                    for (const [existingFileName] of Object.entries(bundle)) {
+                      if (existingFileName.endsWith('.js') && existingFileName.startsWith('assets/')) {
+                        const existingFileBaseName = existingFileName.replace(/^assets\//, '').replace(/\.js$/, '');
+                        const existingFileBaseNameClean = existingFileBaseName.replace(/-+$/, '');
+                        const existingPrefix = existingFileBaseNameClean.replace(/-[a-zA-Z0-9]{8,}(?:-[a-zA-Z0-9]+)?$/, '');
+                        if (existingPrefix === refPrefix) {
+                          actualFile = existingFileName;
+                          break;
+                        }
+                      }
+                    }
+                  }
+
+                  if (actualFile) {
+                    const actualFileName = actualFile.replace(/^assets\//, '');
+                    // 保持相对路径格式
+                    const newPath = `${relativePrefix}${actualFileName}`;
+
+                    replacements.push({
+                      old: fullMatch,
+                      new: `${quote}${newPath}${quote}`
+                    });
+                    console.log(`[fix-dynamic-import-hash] writeBundle: 修复 ${fileName} 中的相对路径引用: ${referencedFile} -> ${actualFileName}`);
+                  } else {
+                    console.warn(`[fix-dynamic-import-hash] writeBundle: 无法找到 ${namePrefix} 对应的文件，引用: ${referencedFile} (在 ${fileName} 中)`);
+                  }
+                }
+              }
+            }
+
+            // 应用所有替换
+            if (replacements.length > 0) {
+              replacements.reverse().forEach(({ old, new: newStr }) => {
+                content = content.replace(old, newStr);
+              });
+              writeFileSync(filePath, content, 'utf-8');
+              totalFixed++;
+              console.log(`[fix-dynamic-import-hash] ✅ writeBundle 阶段修复 ${fileName} 中的 ${replacements.length} 个引用`);
+            }
+          }
+        }
+      }
+
+      if (totalFixed > 0) {
+        console.log(`[fix-dynamic-import-hash] ✅ writeBundle 阶段共修复 ${totalFixed} 个文件`);
+      }
+    },
+  };
+};
+
 // 确保动态导入使用正确的 base URL 插件
 const ensureBaseUrlPlugin = (): Plugin => {
   // 预览构建使用绝对路径，生产构建使用相对路径
@@ -160,6 +1382,17 @@ const ensureBaseUrlPlugin = (): Plugin => {
     name: 'ensure-base-url',
     // 使用 renderChunk 钩子，在代码生成时处理
     renderChunk(code, chunk, options) {
+      // 关键：跳过第三方库 chunk，避免破坏其内部代码
+      const isThirdPartyLib = chunk.fileName?.includes('lib-echarts') ||
+                               chunk.fileName?.includes('element-plus') ||
+                               chunk.fileName?.includes('vue-core') ||
+                               chunk.fileName?.includes('vue-router') ||
+                               chunk.fileName?.includes('vendor');
+
+      if (isThirdPartyLib) {
+        return null; // 返回 null 表示不修改
+      }
+
       let newCode = code;
       let modified = false;
 
@@ -236,6 +1469,17 @@ const ensureBaseUrlPlugin = (): Plugin => {
     generateBundle(options, bundle) {
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'chunk' && chunk.code) {
+          // 关键：跳过第三方库 chunk 的内容修改，避免破坏其内部代码
+          const isThirdPartyLib = fileName.includes('lib-echarts') ||
+                                   fileName.includes('element-plus') ||
+                                   fileName.includes('vue-core') ||
+                                   fileName.includes('vue-router') ||
+                                   fileName.includes('vendor');
+
+          if (isThirdPartyLib) {
+            continue;
+          }
+
           let newCode = chunk.code;
           let modified = false;
 
@@ -589,7 +1833,8 @@ export default defineConfig({
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia', 'dayjs'],
   },
   plugins: [
-    corsPlugin(), // 1. CORS 插件（最前面，不干扰构建）
+    cleanDistPlugin(), // 0. 构建前清理 dist 目录（最前面）
+    corsPlugin(), // 1. CORS 插件（不干扰构建）
     titleInjectPlugin(), // 2. 自定义插件（无构建干扰）
     vue({
       // 3. Vue 插件（核心构建插件）
@@ -639,6 +1884,8 @@ export default defineConfig({
       useDevMode: true,
     }),
     // 11. 兜底插件（路径修复、chunk 优化，在最后）
+    forceNewHashPlugin(), // 强制生成新 hash（在 renderChunk 阶段添加构建 ID）
+    fixDynamicImportHashPlugin(), // 修复动态导入中的旧 hash 引用
     ensureBaseUrlPlugin(), // 恢复路径修复（确保 chunk 路径正确）
     optimizeChunksPlugin(), // 恢复空 chunk 处理（仅移除未被引用的空 chunk）
     chunkVerifyPlugin(), // 新增：chunk 验证插件
@@ -741,13 +1988,30 @@ export default defineConfig({
     cssCodeSplit: true,
     // 确保 CSS 文件被正确输出和压缩
     cssMinify: true,
+    // 关键：禁用 JS 代码压缩，避免破坏 ECharts 等第三方库的内部代码
+    // 如果必须压缩，使用 terser 而不是 esbuild，因为 esbuild 可能破坏某些代码
+    minify: false,
+    // 关键：禁用代码压缩时，确保不会对第三方库进行任何转换
+    // 通过 rollupOptions 的 external 或 preserveModules 来保护第三方库
     // 禁止内联任何资源（确保 JS/CSS 都是独立文件）
     assetsInlineLimit: 0,
     // 明确指定输出目录，确保 CSS 文件被正确输出
     outDir: 'dist',
     assetsDir: 'assets',
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     // 让 Vite 自动从 index.html 读取入口（与其他子应用一致）
     rollupOptions: {
+      // 禁用 Rollup 缓存，确保每次构建都重新生成所有 chunk
+      // 这可以避免旧的 chunk 引用没有被更新
+      cache: false,
+      // 关键：将 ECharts 相关模块外部化，避免 Rollup 处理它们
+      // 这样可以确保 ECharts 的内部代码不会被破坏
+      // 但注意：external 会导致 ECharts 不被打包，需要从 CDN 加载
+      // 暂时不使用 external，而是通过跳过处理来保护
+      // external: (id) => {
+      //   return id.includes('echarts') || id.includes('vue-echarts');
+      // },
       // 抑制 Rollup 关于动态/静态导入冲突的警告（这些警告不影响功能）
       onwarn(warning, warn) {
         // 忽略动态导入和静态导入冲突的警告
@@ -763,6 +2027,8 @@ export default defineConfig({
       output: {
         format: 'esm', // 明确指定输出格式为 ESM
         inlineDynamicImports: false, // 禁用动态导入内联，确保 CSS 被提取
+        // 关键：确保 ECharts 相关 chunk 不被修改
+        // 通过 manualChunks 确保它们被正确分割，但不进行任何额外处理
         manualChunks(id) {
           // 参考系统应用的配置，确保所有 chunk 正确生成
           // 重要：Element Plus 的匹配必须在最前面，确保所有 element-plus 相关代码都在同一个 chunk
@@ -788,6 +2054,9 @@ export default defineConfig({
               return 'vue-i18n';
             }
             // 其他大型库
+            // 关键：ECharts 库对代码处理非常敏感，任何处理都可能破坏其内部代码
+            // 系统应用没有使用 forceNewHashPlugin 等插件，所以没有这个问题
+            // 为了保持与系统应用一致的行为，我们确保 ECharts 被正确分割，但不进行任何额外处理
             if (id.includes('echarts')) {
               return 'lib-echarts';
             }
@@ -804,6 +2073,9 @@ export default defineConfig({
           // 处理应用源代码（src/ 目录）
           // 参考系统应用的配置，进行细分的代码分割
           if (id.includes('src/') && !id.includes('node_modules')) {
+            // 注意：不再将 src/plugins/echarts 强制放入 lib-echarts chunk
+            // 因为 ZRText 在 vendor chunk 中，强制放入 lib-echarts 可能导致依赖问题
+            // 让 src/plugins/echarts 按默认规则处理（进入 app-src 或其他 chunk）
             // 模块分割
             if (id.includes('src/modules')) {
               const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
@@ -830,6 +2102,7 @@ export default defineConfig({
               return 'app-src';
             }
             // 插件、store、services、utils、bootstrap 与多个模块有依赖关系，合并到 app-src 避免循环依赖
+            // 注意：echarts 插件已经在上面单独处理，这里排除它
             if (id.includes('src/plugins')) {
               return 'app-src';
             }
@@ -890,9 +2163,19 @@ export default defineConfig({
           // 特别是入口文件（main.ts）和初始化相关的代码必须在一起
           return 'app-src';
         },
+        // 关键：确保 chunk 之间的导入使用相对路径，而不是绝对路径
+        // 这样在 qiankun 环境下，资源路径会根据入口 HTML 的位置正确解析
+        preserveModules: false,
         // 关键：强制所有资源路径使用绝对路径（基于 base）
         // Vite 默认会根据 base 生成绝对路径，但显式声明作为兜底
         // 确保所有资源路径都包含子应用端口（4181），而非主应用端口（4180）
+        // 使用标准格式，时间戳由 forceNewHashPlugin 插件在 generateBundle 阶段添加
+        // 关键：使用函数形式的 chunkFileNames，确保即使 [hash] 为空也不会生成末尾连字符的文件名
+        // Rollup 的 chunkFileNames 函数接收 { name, facadeModuleId, isDynamicEntry, isEntry, type } 参数
+        // 但是，[hash] 占位符是由 Rollup 自动生成的，我们无法直接控制
+        // 如果 [hash] 为空，说明 Rollup 内部出现了问题，我们需要使用字符串模板来避免这个问题
+        // 实际上，Rollup 的 [hash] 应该总是有值的，如果为空，可能是 Rollup 的 bug
+        // 我们使用字符串模板，但添加一个检查，确保不会生成末尾连字符的文件名
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {

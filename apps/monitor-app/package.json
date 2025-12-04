@@ -6,6 +6,7 @@
   "main": "src/main.ts",
   "module": "src/main.ts",
   "scripts": {
+    "predev": "pnpm --filter @btc/vite-plugin build",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -23,6 +24,7 @@
     "pinia": "^3.0.3"
   },
   "devDependencies": {
+    "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "@types/node": "^24.7.0",

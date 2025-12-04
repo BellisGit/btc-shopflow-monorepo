@@ -223,7 +223,12 @@ export default defineConfig(({ command, mode }) => {
     chunkSizeWarningLimit: 2000, // 提高警告阈值，避免不必要的警告
     outDir: 'dist',
     assetsDir: 'assets',
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
+      // 禁用 Rollup 缓存，确保每次构建都重新生成所有 chunk
+      // 这可以避免旧的 chunk 引用没有被更新
+      cache: false,
       // 抑制 Rollup 关于动态/静态导入冲突的警告
       onwarn(warning, warn) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
@@ -237,6 +242,9 @@ export default defineConfig(({ command, mode }) => {
       output: {
         format: 'esm', // 明确指定输出格式为 ESM
         inlineDynamicImports: false, // 禁用动态导入内联，确保 CSS 被提取
+        // 关键：确保 chunk 之间的导入使用相对路径，而不是绝对路径
+        // 这样在 qiankun 环境下，资源路径会根据入口 HTML 的位置正确解析
+        preserveModules: false,
         manualChunks(id) {
           // 重要：Element Plus 的匹配必须在最前面
           if (id.includes('element-plus') || id.includes('@element-plus')) {

@@ -1,20 +1,15 @@
-﻿# ͼ���ͼ���ļ� - ���� AI Agent ���Զ�ȡ��֧�ֵĸ�ʽ
-*.ico
+﻿*.ico
 *.webmanifest
 
-# �����͹�������
 node_modules/
-dist/
+# dist/  # 注释掉，允许查看构建产物
 .git/
 
-# ��־�ļ�
 *.log
 
-# ���ļ�
 package-lock.json
 pnpm-lock.yaml
 
-# �������ͻ����� AI �������ļ�
 *.map
 *.min.js
 *.min.css

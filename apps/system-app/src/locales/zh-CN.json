@@ -351,6 +351,7 @@
   "menu.monitor.name": "运维监控",
   "menu.monitor.overview": "监控概览",
   "menu.monitor.error": "错误监控",
+  "menu.monitor.deploymentTest": "部署测试",
   "process.load.failed": "加载流程列表失败",
   "process.auto.start.success": "流程 \"{name}\" 已自动开始",
   "process.auto.end.success": "流程 \"{name}\" 已自动结束",

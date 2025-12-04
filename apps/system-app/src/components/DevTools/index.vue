@@ -127,7 +127,7 @@ function switchTab(tab: string) {
     tabItem.action();
   } else {
     // 否则切换标签页显示内容
-    activeTab.value = tab;
+  activeTab.value = tab;
   }
 }
 

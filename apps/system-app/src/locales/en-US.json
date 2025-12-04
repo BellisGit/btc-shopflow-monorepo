@@ -350,6 +350,7 @@
   "menu.monitor.name": "Operations & Monitoring",
   "menu.monitor.overview": "Monitoring Overview",
   "menu.monitor.error": "Error Monitoring",
+  "menu.monitor.deploymentTest": "Deployment Test",
   "process.load.failed": "Failed to load process list",
   "process.auto.start.success": "Process \"{name}\" has automatically started",
   "process.auto.end.success": "Process \"{name}\" has automatically ended",

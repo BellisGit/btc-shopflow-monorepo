@@ -217,17 +217,17 @@ function normalizeMenuPath(path: string, appName: string): string {
   if (appName === 'system') {
     return normalizedPath;
   }
-  
+
   // 如果路径已经是根路径，直接返回应用前缀
   if (normalizedPath === '/') {
     return `/${appName}`;
   }
-  
+
   // 如果路径已经包含应用前缀，不需要重复添加
   if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
     return normalizedPath;
   }
-  
+
   // 添加应用前缀
   return `/${appName}${normalizedPath}`;
 }
@@ -352,7 +352,7 @@ function filterQiankunLogs() {
   if ((window as any).__qiankun_logs_filtered__) {
     return;
   }
-  
+
   // 如果模块级别的过滤没有生效，这里作为兜底
   // 这种情况不应该发生，但为了安全起见保留这个函数
   (window as any).__qiankun_logs_filtered__ = true;
@@ -2007,8 +2007,9 @@ export function setupQiankun() {
             }
           );
 
-          // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的端口
+          // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的路径
           // 这会影响动态导入的模块路径解析
+          // 如果入口是 /micro-apps/<app>/，base 应该设置为 /micro-apps/<app>/
           // 如果当前是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
           const hostname = window.location.hostname;
           const subdomainMap: Record<string, string> = {
@@ -2020,14 +2021,25 @@ export function setupQiankun() {
             'finance.bellis.com.cn': 'finance',
           };
 
-          // 如果是子域名访问，使用子域名作为 base URL
+          // 检查入口是否包含 /micro-apps/<app>/
+          let basePath = '/';
+          if (entry && entry.includes('/micro-apps/')) {
+            // 从入口路径中提取 /micro-apps/<app>/ 部分
+            const match = entry.match(/\/micro-apps\/([^/]+)\//);
+            if (match) {
+              basePath = `/micro-apps/${match[1]}/`;
+            }
+          }
+
+          // 如果是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
           let baseHost = currentHost;
           if (subdomainMap[hostname] && matchedAppName === subdomainMap[hostname]) {
             baseHost = hostname;
           }
 
-          const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}/`;
-          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, matchedAppName });
+          // 如果入口是 /micro-apps/<app>/，base 应该包含这个路径
+          const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}${basePath}`;
+          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, matchedAppName, basePath, entry });
 
           // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
           processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');
@@ -2107,10 +2119,10 @@ export function setupQiankun() {
       // 处理资源加载错误（404），包括开发环境和生产环境
       // 检查是否是源文件路径错误（包含 /src/ 或 /packages/）
       const isSourcePathError = src && (src.includes('/packages/') || src.includes('/src/'));
-      const isDevError = src && 
-        window.location.port === '4180' && 
+      const isDevError = src &&
+        window.location.port === '4180' &&
         (src.includes('/assets/') || src.endsWith('.js') || src.endsWith('.css') || src.endsWith('.mjs'));
-      
+
       if (isSourcePathError || isDevError) {
         // 如果是源文件路径错误，直接忽略（这些文件应该在构建时被打包）
         // 包括所有 /packages/ 和 /src/ 路径，这些都不应该在生产环境出现
@@ -2239,9 +2251,9 @@ export function listenSubAppRouteChange() {
         return;
       }
 
-    // 排除管理域（admin）和无效应用（main）
-    // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
-    if (app === 'admin' || app === 'main') {
+    // 排除无效应用（main）
+    // 所有其他应用（system, admin, logistics, engineering, quality, production, finance, monitor 等）都应该处理
+    if (app === 'main') {
       return;
     }
 

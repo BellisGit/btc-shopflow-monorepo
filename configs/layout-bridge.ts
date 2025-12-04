@@ -52,6 +52,7 @@ function normalizeMenuPath(path: string, appName: string): string {
       'production.bellis.com.cn': 'production',
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
+      'monitor.bellis.com.cn': 'monitor',
     };
     
     const currentSubdomainApp = subdomainMap[hostname];

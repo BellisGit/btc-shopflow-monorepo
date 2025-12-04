@@ -208,6 +208,8 @@ export default defineConfig({
     // external 配置仅用于子应用（微前端场景）
     // 提高 chunk 大小警告阈值，避免不必要的警告
     chunkSizeWarningLimit: 2000,
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
       // 注意：不在这里配置 treeshake，使用 package.json 的 sideEffects 标记
       // treeshake 配置可能会影响代码分割逻辑，导致某些 chunk 被合并
@@ -277,104 +279,19 @@ export default defineConfig({
           }
 
           if (id.includes('src/') && !id.includes('node_modules')) {
+            // 只对大的 modules 进行分包，小的模块合并到 app-src
             if (id.includes('src/modules')) {
               const moduleName = id.match(/src\/modules\/([^/]+)/)?.[1];
-              if (moduleName && ['api-services', 'base', 'customs', 'data', 'home', 'procurement', 'warehouse'].includes(moduleName)) {
+              // module-base 与 app-src 存在循环依赖，合并到 app-src 避免初始化顺序问题
+              // 只对真正大的业务模块进行分包，避免循环依赖导致的初始化错误
+              if (moduleName && ['api-services', 'customs', 'data', 'home', 'procurement', 'warehouse'].includes(moduleName)) {
                 return `module-${moduleName}`;
               }
-              return 'module-others';
-            }
-            if (id.includes('src/pages')) {
-              return 'app-pages';
-            }
-            if (id.includes('src/components')) {
-              // components 依赖 useSettingsState（在 app-src 中），合并到 app-src 避免循环依赖
+              // base 模块和其他小模块合并到 app-src，避免循环依赖和加载顺序问题
               return 'app-src';
             }
-            if (id.includes('src/micro') || id.includes('micro/')) {
-              // 确保被动态导入和静态导入的 micro 模块在同一 chunk
-              // 使用更精确的路径匹配
-              if (id.includes('manifests.ts') || id.includes('manifests')) {
-                return 'app-src';
-              }
-              return 'app-micro';
-            }
-            if (id.includes('src/plugins/user-setting/components')) {
-              // 将 user-setting 的组件放到 app-components，避免循环依赖
-              return 'app-components';
-            }
-            if (id.includes('src/plugins')) {
-              // system-app 有多个插件，可以进一步细分
-              // 注意：user-setting 插件与 store 之间存在依赖关系，
-              // 将它们放在 store 之后但在其他插件之前，避免循环依赖问题
-              if (id.includes('src/plugins/user-setting')) {
-                // user-setting 插件与 store 有依赖关系，但 bootstrap 也依赖它
-                // 将它们都放在 app-src 中，避免跨 chunk 循环依赖
-                return 'app-src';
-              }
-              if (id.includes('src/plugins/echarts')) {
-                return 'app-plugin-echarts';
-              }
-              // 其他插件与 bootstrap 有依赖关系（bootstrap 会扫描插件），放在 app-src 中
-              // 避免 bootstrap 和 plugins 之间的循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/store') || id.includes('store/')) {
-              // store 与 bootstrap 有依赖关系（bootstrap 导出 store），放在 app-src 中
-              // 避免 bootstrap（app-src）和 store（app-store）之间的循环依赖
-              // 确保被动态导入和静态导入的 store 模块在同一 chunk
-              // 使用更精确的路径匹配
-              if (id.includes('tabRegistry') || 
-                  id.includes('process.ts') || 
-                  id.includes('menuRegistry')) {
-                return 'app-src';
-              }
-              return 'app-src';
-            }
-            if (id.includes('src/bootstrap')) {
-              // bootstrap 与 main.ts、services 和 store 有依赖关系，放在 app-src 中
-              return 'app-src';
-            }
-            if (id.includes('src/services')) {
-              // services 与 main.ts 和 bootstrap 有依赖关系，放在 app-src 中
-              // 确保被动态导入和静态导入的 services 模块在同一 chunk
-              if (id.includes('services/eps')) {
-                return 'app-src';
-              }
-              return 'app-src';
-            }
-            if (id.includes('src/utils')) {
-              // utils 与 bootstrap 有依赖关系（bootstrap 导入多个 utils），放在 app-src 中
-              // 避免 bootstrap（app-src）和 utils（app-utils）之间的循环依赖
-              // 确保被动态导入和静态导入的 utils 模块在同一 chunk
-              if (id.includes('utils/loadingManager')) {
-                return 'app-src';
-              }
-              return 'app-src';
-            }
-            if (id.includes('src/composables')) {
-              // 确保被动态导入和静态导入的 composables 模块在同一 chunk
-              if (id.includes('composables/useUser')) {
-                return 'app-src';
-              }
-              return 'app-composables';
-            }
-            if (id.includes('src/config')) {
-              // config 依赖 plugins/user-setting/config/enums（在 app-src 中），合并到 app-src 避免循环依赖
-              return 'app-src';
-            }
-            if (id.includes('src/router')) {
-              return 'app-router';
-            }
-            if (id.includes('src/i18n')) {
-              return 'app-i18n';
-            }
-            if (id.includes('src/assets')) {
-              return 'app-assets';
-            }
-            // 移除 src/types 的单独 chunk
-            // types 目录中的文件通常很小，合并到 app-src 即可
-            // 避免生成空 chunk 警告
+            // 其他所有业务代码合并到 app-src，避免过细分割
+            // 这样可以避免小 chunk 导致的加载顺序问题和 Vue 组件初始化错误
             return 'app-src';
           }
 

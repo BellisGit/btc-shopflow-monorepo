@@ -335,6 +335,13 @@ deploy_app() {
     # 同步文件（直接部署到根目录，使用 --delete 删除旧文件）
     if [ "$use_rsync" = true ]; then
         log_info "使用 rsync 同步文件（直接部署到根目录）..."
+        # 关键：先清理目标目录的 assets，确保完全删除旧文件
+        log_info "清理目标目录的 assets（确保完全删除旧文件）..."
+        ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
+            "rm -rf $deploy_base/assets 2>/dev/null || true" || {
+            log_warning "清理 assets 目录失败，继续部署"
+        }
+        
         if rsync -avz --delete \
             -e "ssh $ssh_opts" \
             --exclude='*.map' \
@@ -355,13 +362,16 @@ deploy_app() {
         # 使用 scp（较慢，但兼容性更好）
         log_info "使用 scp 同步文件..."
         # 先清理旧文件（但保留 releases 和 current，如果存在）
+        # 关键：完全清理 assets 目录，避免新旧文件混在一起
         log_info "清理目标目录中的旧文件（保留 releases 和 current 目录）..."
         ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
             "cd $deploy_base && \
              if [ -d releases ]; then mv releases releases.backup.$(date +%s); fi && \
              if [ -L current ] || [ -d current ]; then mv current current.backup.$(date +%s); fi && \
              rm -rf *.html *.js *.css assets icons build 2>/dev/null || true && \
-             find . -maxdepth 1 -type f -name '*.json' -o -name '*.txt' -o -name '*.ico' -o -name '*.png' -o -name '*.svg' | xargs rm -f 2>/dev/null || true && \
+             # 确保 assets 目录被完全删除（避免残留旧文件）
+             [ -d assets ] && rm -rf assets || true && \
+             find . -maxdepth 1 -type f \( -name '*.json' -o -name '*.txt' -o -name '*.ico' -o -name '*.png' -o -name '*.svg' -o -name '*.webmanifest' \) -delete 2>/dev/null || true && \
              if [ -d releases.backup.* ]; then mv releases.backup.* releases; fi && \
              if [ -d current.backup.* ] || [ -L current.backup.* ]; then mv current.backup.* current; fi" || {
             log_warning "清理旧文件失败，继续部署"
@@ -702,6 +712,17 @@ main() {
         if [ ${#failed_apps[@]} -eq 0 ]; then
             if [ "$can_deploy" = true ]; then
                 log_success "所有应用部署成功！"
+                
+                # 部署成功后触发测试
+                if [ -f "$SCRIPT_DIR/trigger-deployment-test.sh" ]; then
+                    echo ""
+                    log_info "开始执行部署测试..."
+                    if bash "$SCRIPT_DIR/trigger-deployment-test.sh" "$TARGET_APP" || true; then
+                        log_success "部署测试完成"
+                    else
+                        log_warning "部署测试失败，但不影响部署结果"
+                    fi
+                fi
             else
                 log_success "所有应用构建产物验证通过！"
                 log_info "提示：在 GitHub Actions 中运行以执行实际部署"

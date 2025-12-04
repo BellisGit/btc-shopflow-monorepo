@@ -33,6 +33,7 @@ export function getCurrentAppFromPath(path: string): string {
   if (path.startsWith('/production')) return 'production';
   if (path.startsWith('/finance')) return 'finance';
   if (path.startsWith('/docs')) return 'docs';
+  if (path.startsWith('/monitor')) return 'monitor';
   return 'system';
 }
 

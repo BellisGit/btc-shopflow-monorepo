@@ -179,6 +179,8 @@ export default defineConfig({
     cssCodeSplit: true,
     // 提高 chunk 大小警告阈值，避免不必要的警告
     chunkSizeWarningLimit: 2000,
+    // 构建前清空输出目录，确保不会残留旧文件
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         // 使用 ES 模块格式，与其他应用保持一致，便于 qiankun 加载

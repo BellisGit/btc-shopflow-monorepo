@@ -214,7 +214,8 @@ const isMainApp = computed(() => {
       path.startsWith('/quality') ||
       path.startsWith('/production') ||
       path.startsWith('/finance') ||
-      path.startsWith('/docs')) {
+      path.startsWith('/docs') ||
+      path.startsWith('/monitor')) {
     return false;
   }
   // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
