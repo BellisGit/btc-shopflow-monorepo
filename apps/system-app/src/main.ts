@@ -4,7 +4,10 @@ import { bootstrap } from './bootstrap';
 import { isDev } from './config';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
 import { currentEnvironment, currentSubApp } from '@configs/unified-env-config';
-import { getMainApp } from '@configs/app-scanner';
+import { getMainApp, getAppBySubdomain } from '@configs/app-scanner';
+import { setAppBySubdomainFn } from '@btc/subapp-manifests';
+import { isMainApp } from '@configs/unified-env-config';
+import { setIsMainAppFn } from '@btc/shared-components/components/layout/app-layout/utils';
 
 // 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
 // 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
@@ -26,6 +29,12 @@ import '@btc/shared-components/styles/index.scss';
 import { BtcSvg } from '@btc/shared-components';
 
 registerAppEnvAccessors();
+
+// 注入 getAppBySubdomain 函数到 subapp-manifests
+setAppBySubdomainFn(getAppBySubdomain);
+
+// 注入 isMainApp 函数到 shared-components
+setIsMainAppFn(isMainApp);
 
 const app = createApp(App);
 

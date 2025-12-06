@@ -6,7 +6,6 @@ import engineeringManifestJson from "./manifests/engineering.json" with { type: 
 import productionManifestJson from "./manifests/production.json" with { type: "json" };
 import financeManifestJson from "./manifests/finance.json" with { type: "json" };
 import monitorManifestJson from "./manifests/monitor.json" with { type: "json" };
-import { getAppBySubdomain } from '@configs/app-scanner';
 
 export interface SubAppManifestRoute {
   path: string;
@@ -33,6 +32,32 @@ export function getManifest(app: string): SubAppManifest | undefined {
   return manifestRegistry[app];
 }
 
+// 懒加载 getAppBySubdomain，避免构建时依赖
+// 使用全局变量存储，在运行时由应用注入
+let getAppBySubdomainFn: ((hostname: string) => any) | null = null;
+
+/**
+ * 设置 getAppBySubdomain 函数（由应用在运行时注入）
+ * 应用应该在初始化时调用此函数来注入 getAppBySubdomain
+ */
+export function setAppBySubdomainFn(fn: (hostname: string) => any) {
+  getAppBySubdomainFn = fn;
+}
+
+function getAppBySubdomain(hostname: string): any {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  
+  // 如果函数已注入，使用它
+  if (getAppBySubdomainFn) {
+    return getAppBySubdomainFn(hostname);
+  }
+  
+  // 否则返回 undefined（应用需要调用 setAppBySubdomainFn 来注入函数）
+  return undefined;
+}
+
 export function getManifestRoute(app: string, fullPath: string): SubAppManifestRoute | undefined {
   const manifest = getManifest(app);
   if (!manifest) return undefined;
@@ -42,7 +67,7 @@ export function getManifestRoute(app: string, fullPath: string): SubAppManifestR
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
   
-  // 使用应用扫描器获取子域名应用（顶层导入）
+  // 使用应用扫描器获取子域名应用（懒加载）
   const appBySubdomain = getAppBySubdomain(hostname);
   const currentSubdomainApp = appBySubdomain?.id;
   

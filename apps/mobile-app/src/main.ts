@@ -13,19 +13,166 @@ import 'vant/lib/index.css';
 
 const app = createApp(App);
 
+// 全局错误处理 - 防止白屏
+app.config.errorHandler = (err, instance, info) => {
+  console.error('[Vue Error Handler]', err, info);
+  // 在移动端显示错误信息，避免白屏
+  if (typeof document !== 'undefined') {
+    const appEl = document.getElementById('app');
+    if (appEl && !appEl.querySelector('.error-display')) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-display';
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      `;
+      errorDiv.innerHTML = `
+        <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
+        <p style="color: #666; margin-bottom: 8px;">错误信息：${err?.message || '未知错误'}</p>
+        <p style="color: #999; font-size: 12px; margin-top: 16px;">请刷新页面重试，或联系技术支持</p>
+        <button onclick="window.location.reload()" style="
+          margin-top: 20px;
+          padding: 10px 20px;
+          background: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        ">刷新页面</button>
+      `;
+      appEl.appendChild(errorDiv);
+    }
+  }
+};
+
+// 全局未处理的 Promise 拒绝处理
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Unhandled Promise Rejection]', event.reason);
+  // 阻止默认的错误处理（避免在控制台显示）
+  event.preventDefault();
+  
+  // 在移动端显示错误信息
+  if (typeof document !== 'undefined') {
+    const appEl = document.getElementById('app');
+    if (appEl && !appEl.querySelector('.error-display')) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-display';
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      `;
+      const errorMsg = event.reason?.message || event.reason?.toString() || '未知错误';
+      errorDiv.innerHTML = `
+        <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
+        <p style="color: #666; margin-bottom: 8px;">错误信息：${errorMsg}</p>
+        <p style="color: #999; font-size: 12px; margin-top: 16px;">请刷新页面重试，或联系技术支持</p>
+        <button onclick="window.location.reload()" style="
+          margin-top: 20px;
+          padding: 10px 20px;
+          background: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        ">刷新页面</button>
+      `;
+      appEl.appendChild(errorDiv);
+    }
+  }
+});
+
+// 全局 JavaScript 错误处理
+window.addEventListener('error', (event) => {
+  console.error('[Global Error]', event.error || event.message);
+  
+  // 在移动端显示错误信息
+  if (typeof document !== 'undefined') {
+    const appEl = document.getElementById('app');
+    if (appEl && !appEl.querySelector('.error-display')) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-display';
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      `;
+      const errorMsg = event.error?.message || event.message || '未知错误';
+      errorDiv.innerHTML = `
+        <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
+        <p style="color: #666; margin-bottom: 8px;">错误信息：${errorMsg}</p>
+        <p style="color: #999; font-size: 12px; margin-top: 16px;">请刷新页面重试，或联系技术支持</p>
+        <button onclick="window.location.reload()" style="
+          margin-top: 20px;
+          padding: 10px 20px;
+          background: #1976d2;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        ">刷新页面</button>
+      `;
+      appEl.appendChild(errorDiv);
+    }
+  }
+});
+
 // Pinia
 const pinia = createPinia();
 app.use(pinia);
 
 // 初始化 auth store
-const authStore = useAuthStore();
-authStore.init();
+try {
+  const authStore = useAuthStore();
+  authStore.init();
+} catch (error) {
+  console.error('[Auth Store Init Error]', error);
+}
 
 // Router
-app.use(router);
+try {
+  app.use(router);
+} catch (error) {
+  console.error('[Router Error]', error);
+}
 
 // i18n
-setupI18n(app);
+try {
+  setupI18n(app);
+} catch (error) {
+  console.error('[i18n Setup Error]', error);
+}
 
 // PWA Service Worker
 // 在开发环境中，如果使用自签名证书，Service Worker 注册会失败
@@ -174,5 +321,45 @@ try {
   }
 }
 
-app.mount('#app');
+// 安全地挂载应用
+try {
+  app.mount('#app');
+} catch (error) {
+  console.error('[App Mount Error]', error);
+  // 如果挂载失败，显示错误信息
+  if (typeof document !== 'undefined') {
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: #fff;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        ">
+          <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
+          <p style="color: #666; margin-bottom: 8px;">错误信息：${error?.message || '未知错误'}</p>
+          <p style="color: #999; font-size: 12px; margin-top: 16px;">请刷新页面重试，或联系技术支持</p>
+          <button onclick="window.location.reload()" style="
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          ">刷新页面</button>
+        </div>
+      `;
+    }
+  }
+}
 

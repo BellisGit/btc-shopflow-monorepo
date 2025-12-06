@@ -5,11 +5,15 @@
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
+import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
+import { existsSync, readFileSync } from 'node:fs';
+import { createPathHelpers } from '../utils/path-helpers';
+
+// 使用 ESM 导入 VueI18nPlugin（Vite 配置文件支持 ESM）
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
-import { existsSync } from 'node:fs';
 import { createAutoImportConfig, createComponentsConfig } from '../../auto-import.config';
 import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
@@ -98,7 +102,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
 
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
-  const { createPathHelpers } = require('../utils/path-helpers');
+  // 使用导入的 createPathHelpers
   const { withRoot, withPackages } = createPathHelpers(appDir);
 
   // 布局应用固定使用根路径
@@ -125,7 +129,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       script: {
         fs: {
           fileExists: existsSync,
-          readFile: (file: string) => require('fs').readFileSync(file, 'utf-8'),
+          readFile: (file: string) => readFileSync(file, 'utf-8'),
         },
       },
     }),

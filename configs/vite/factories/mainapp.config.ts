@@ -4,11 +4,15 @@
  */
 
 import type { UserConfig, Plugin } from 'vite';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'path';
+import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import UnoCSS from 'unocss/vite';
+import { existsSync, readFileSync } from 'node:fs';
+import { createPathHelpers } from '../utils/path-helpers';
+
+// 使用 ESM 导入 VueI18nPlugin（Vite 配置文件支持 ESM）
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
-import { existsSync } from 'node:fs';
 import { createAutoImportConfig, createComponentsConfig } from '../../auto-import.config';
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
@@ -111,7 +115,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
 
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
-  const { createPathHelpers } = require('../utils/path-helpers');
+  // 使用导入的 createPathHelpers
   const { withRoot, withPackages } = createPathHelpers(appDir);
 
   // 判断是否为预览构建
@@ -136,7 +140,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       script: {
         fs: {
           fileExists: existsSync,
-          readFile: (file: string) => require('fs').readFileSync(file, 'utf-8'),
+          readFile: (file: string) => readFileSync(file, 'utf-8'),
         },
       },
     }),
@@ -167,11 +171,12 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     // 9. VueI18n 插件
     VueI18nPlugin({
       include: vueI18nOptions?.include || [
-        fileURLToPath(new URL('./src/{modules,plugins}/**/locales/**', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-components/src/locales/**', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-components/src/plugins/**/locales/**', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts', import.meta.url)),
+        resolve(appDir, 'src/locales/**'),
+        resolve(appDir, 'src/{modules,plugins}/**/locales/**'),
+        resolve(appDir, '../../packages/shared-components/src/locales/**'),
+        resolve(appDir, '../../packages/shared-components/src/plugins/**/locales/**'),
+        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts'),
+        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts'),
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),

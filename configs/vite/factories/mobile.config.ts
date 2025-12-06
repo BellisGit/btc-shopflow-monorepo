@@ -4,10 +4,14 @@
  */
 
 import type { UserConfig, Plugin } from 'vite';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'path';
+import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { createPathHelpers } from '../utils/path-helpers';
+
+// 使用 ESM 导入 VueI18nPlugin（Vite 配置文件支持 ESM）
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import Components from 'unplugin-vue-components/vite';
 import { VantResolver } from 'unplugin-vue-components/resolvers';
 import basicSsl from '@vitejs/plugin-basic-ssl';
@@ -96,7 +100,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
 
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
-  const { createPathHelpers } = require('../utils/path-helpers');
+  // 使用导入的 createPathHelpers
   const { withRoot, withPackages } = createPathHelpers(appDir);
 
   const baseUrl = '/';
@@ -140,9 +144,9 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     // 6. VueI18n 插件
     VueI18nPlugin({
       include: vueI18nOptions?.include || [
-        fileURLToPath(new URL('../../packages/shared-components/src/locales/**', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts', import.meta.url)),
-        fileURLToPath(new URL('../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts', import.meta.url)),
+        resolve(appDir, '../../packages/shared-components/src/locales/**'),
+        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts'),
+        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts'),
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),

@@ -108,6 +108,11 @@ export function useFormRenderer() {
                 ? itemRef.component.options
                 : [];
 
+              // 如果没有设置 placeholder，默认使用空字符串（而不是 "Select"）
+              if (props.placeholder === undefined) {
+                props.placeholder = '';
+              }
+
               return h(Component, {
                 ...props,
                 options: currentOptions,

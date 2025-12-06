@@ -22,7 +22,62 @@
     <title>拜里斯科技</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- 加载提示 -->
+      <div id="loading" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #666;
+      ">
+        <div style="text-align: center;">
+          <p>正在加载应用...</p>
+        </div>
+      </div>
+    </div>
+    <script>
+      // 全局错误捕获（在应用加载前）
+      window.addEventListener('error', function(e) {
+        console.error('[Pre-Load Error]', e.error || e.message, e.filename, e.lineno);
+        var app = document.getElementById('app');
+        if (app) {
+          var loading = document.getElementById('loading');
+          if (loading) loading.remove();
+          app.innerHTML = '<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif;"><h2 style="color: #ff4d4f; margin-bottom: 16px;">应用加载失败</h2><p style="color: #666; margin-bottom: 8px;">错误：' + (e.error?.message || e.message || '未知错误') + '</p><p style="color: #999; font-size: 12px; margin-top: 16px;">文件：' + (e.filename || '未知') + ':' + (e.lineno || '未知') + '</p><button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button></div>';
+        }
+      });
+      
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[Pre-Load Promise Rejection]', e.reason);
+        var app = document.getElementById('app');
+        if (app) {
+          var loading = document.getElementById('loading');
+          if (loading) loading.remove();
+          app.innerHTML = '<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif;"><h2 style="color: #ff4d4f; margin-bottom: 16px;">应用加载失败</h2><p style="color: #666; margin-bottom: 8px;">错误：' + (e.reason?.message || e.reason?.toString() || '未知错误') + '</p><button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button></div>';
+        }
+      });
+      
+      // 应用加载完成后移除加载提示
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var loading = document.getElementById('loading');
+          if (loading) {
+            loading.style.transition = 'opacity 0.3s';
+            loading.style.opacity = '0';
+            setTimeout(function() {
+              loading.remove();
+            }, 300);
+          }
+        }, 100);
+      });
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

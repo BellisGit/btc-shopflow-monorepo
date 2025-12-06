@@ -117,7 +117,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
+import { getIsMainAppFn } from './utils';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -180,10 +180,29 @@ const { browser, onScreenChange } = useBrowser();
 let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由（系统域路由）
-// 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
+// 使用依赖注入的函数，如果未注入则使用简单的判断逻辑
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-  return getIsMainApp(route.path, window.location.pathname, isStandalone);
+  const fn = getIsMainAppFn();
+  if (fn) {
+    return fn(route.path, window.location.pathname, isStandalone);
+  }
+  // 如果函数未注入，使用简单的判断逻辑（基于 qiankun 和路径）
+  if (isStandalone) {
+    const path = route.path || window.location.pathname || '';
+    // 登录相关页面不算主应用路由
+    if (path === '/login' || path === '/forget-password' || path === '/register') {
+      return false;
+    }
+    return true;
+  }
+  // 在 qiankun 环境下，简单判断：如果路径不是以已知子应用前缀开头，则认为是主应用
+  const path = route.path || window.location.pathname || '';
+  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+  if (knownSubAppPrefixes.some(prefix => path.startsWith(prefix))) {
+    return false;
+  }
+  return true;
 });
 
 // 判断是否为文档应用

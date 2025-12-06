@@ -77,8 +77,8 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
  * @returns publicDir 路径或 false
  */
 export function getPublicDir(appName: string, appDir: string): string | false {
-  // admin-app 使用自己的 public 目录
-  if (appName === 'admin-app') {
+  // admin-app 和 mobile-app 使用自己的 public 目录
+  if (appName === 'admin-app' || appName === 'mobile-app') {
     return resolve(appDir, 'public');
   }
   

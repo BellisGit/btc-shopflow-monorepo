@@ -176,6 +176,10 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
  * 获取当前配置方案（从 .env 读取，默认 default）
  */
 function getConfigScheme(): ConfigScheme {
+  // 防御性检查：在 Node.js 环境中，import.meta.env 可能未定义
+  if (typeof import.meta === 'undefined' || !import.meta.env) {
+    return 'default';
+  }
   return (import.meta.env.VITE_CONFIG_SCHEME as ConfigScheme) || 'default';
 }
 
@@ -184,7 +188,12 @@ function getConfigScheme(): ConfigScheme {
  */
 export function getEnvironment(): Environment {
   if (typeof window === 'undefined') {
-    return import.meta.env.PROD ? 'production' : 'development';
+    // 在 Node.js 环境中（如 Vite 配置文件），import.meta.env 可能未定义
+    // 使用防御性检查，提供后备方案
+    const prodFlag =
+      (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ??
+      (process.env.NODE_ENV === 'production');
+    return prodFlag ? 'production' : 'development';
   }
 
   const hostname = window.location.hostname;
@@ -202,7 +211,11 @@ export function getEnvironment(): Environment {
     return 'development';
   }
   
-  return import.meta.env.PROD ? 'production' : 'development';
+  // 浏览器环境：防御性地访问 import.meta.env
+  const prodFlag =
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ??
+    false;
+  return prodFlag ? 'production' : 'development';
 }
 
 /**
@@ -224,6 +237,11 @@ export function isMainApp(
 ): boolean {
   // 独立运行时
   if (isStandalone === undefined) {
+    // 防御性检查：在 Node.js 环境中，window 未定义
+    if (typeof window === 'undefined') {
+      // 在 Node.js 环境中（如 Vite 配置文件），默认返回 true（主应用）
+      return true;
+    }
     const qiankunWindow = (window as any).__POWERED_BY_QIANKUN__;
     isStandalone = !qiankunWindow;
   }

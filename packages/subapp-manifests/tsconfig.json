@@ -16,6 +16,10 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "baseUrl": "./",
+    "paths": {
+      "@configs": ["../../configs"],
+      "@configs/*": ["../../configs/*"]
+    },
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
