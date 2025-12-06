@@ -2,7 +2,7 @@
   <el-menu
     :key="menuKey"
     ref="menuRef"
-    :default-active="activeMenu"
+    :active="activeMenu"
     :default-openeds="defaultOpeneds"
     :collapse="isCollapse"
     :collapse-transition="false"
@@ -257,10 +257,47 @@ const handleMenuSelect = (index: string) => {
       return;
     }
 
+    // 关键：检查 index 是否为分组节点（只有 children 没有实际路由的节点）
+    // 分组节点的 index 通常是虚拟路径（如 "access-config"），在路由表中不存在
+    // 判断方法：在当前菜单树中查找匹配的菜单项，如果它有 children，说明是分组节点，不应该导航
+    const absolutePath = index.startsWith('/') ? index : `/${index}`;
+    
+    // 递归查找菜单项
+    const findMenuItem = (items: typeof currentMenuItems.value, targetIndex: string): typeof items[0] | null => {
+      for (const item of items) {
+        // 检查 index 是否匹配（支持带/和不带/的格式）
+        if (item.index === targetIndex || item.index === absolutePath) {
+          return item;
+        }
+        // 递归检查子菜单
+        if (item.children && item.children.length > 0) {
+          const found = findMenuItem(item.children, targetIndex);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const matchedItem = findMenuItem(currentMenuItems.value, index);
+    
+    // 如果找到的菜单项有 children，说明是分组节点，不应该导航
+    if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('[dynamic-menu] 跳过分组节点导航:', index, matchedItem);
+      }
+      return;
+    }
+
     // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
     // 所以这里直接使用 index，不需要再次规范化
-    const absolutePath = index.startsWith('/') ? index : `/${index}`;
-    router.push(absolutePath);
+    // 使用 catch 捕获路由跳转错误，避免未匹配路由时导致的问题
+    router.push(absolutePath).catch((err) => {
+      // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
+      // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
+      if (import.meta.env.DEV) {
+        console.warn('[dynamic-menu] 路由跳转失败:', absolutePath, err);
+      }
+    });
 };
 </script>
 

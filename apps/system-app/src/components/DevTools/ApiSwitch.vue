@@ -165,21 +165,22 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .api-switch {
-  padding: 10px;
+  padding: 20px;
   
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--el-border-color-lighter);
     
     h3 {
       margin: 0;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--el-text-color-primary);
+      letter-spacing: 0.5px;
     }
   }
   
@@ -192,19 +193,25 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
-  transition: all 0.3s;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1.5px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   
   &:hover {
     background-color: var(--el-fill-color-light);
+    border-color: var(--el-border-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
   
   &.is-active {
     border-color: var(--el-color-primary);
-    background-color: var(--el-color-primary-light-9);
+    background: linear-gradient(135deg, var(--el-color-primary-light-9) 0%, var(--el-color-primary-light-8) 100%);
+    box-shadow: 0 4px 16px rgba(var(--el-color-primary-rgb), 0.2);
+    transform: translateY(-2px);
   }
   
   &__info {

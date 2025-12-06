@@ -108,7 +108,7 @@ function deleteCookie(
  * 获取跨子域名共享的 cookie domain
  * 在生产环境下返回 .bellis.com.cn，开发环境也尝试设置 domain 以便测试
  */
-function getCookieDomain(): string | undefined {
+export function getCookieDomain(): string | undefined {
   if (typeof window === 'undefined') {
     return undefined;
   }

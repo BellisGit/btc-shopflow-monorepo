@@ -108,6 +108,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
+import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -174,46 +175,10 @@ const { browser, onScreenChange } = useBrowser();
 let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由（系统域路由）
-// 主应用就是系统域（默认域），处理所有非子应用的路径
-// 管理域（/admin/*）是子应用，不是主应用路由
-// 独立运行时：所有路由都是主应用路由（因为这是独立运行的管理域应用）
+// 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-  // 独立运行时，所有路由都是主应用路由
-  if (isStandalone) {
-    const path = route.path;
-    // 排除不需要 Layout 的页面
-    if (path === '/login' ||
-        path === '/forget-password' ||
-        path === '/register') {
-      return false;
-    }
-    return true;
-  }
-  
-  // qiankun 模式下的逻辑
-  const path = route.path;
-  // 排除不需要 Layout 的页面
-  if (path === '/login' ||
-      path === '/forget-password' ||
-      path === '/register') {
-    return false;
-  }
-  // 管理域是子应用，不是主应用
-  if (path.startsWith('/admin')) {
-    return false;
-  }
-  // 其他子应用路径
-  if (path.startsWith('/logistics') ||
-      path.startsWith('/engineering') ||
-      path.startsWith('/quality') ||
-      path.startsWith('/production') ||
-      path.startsWith('/finance') ||
-      path.startsWith('/docs')) {
-    return false;
-  }
-  // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
-  return true;
+  return getIsMainApp(route.path, window.location.pathname, isStandalone);
 });
 
 // 判断是否为文档应用

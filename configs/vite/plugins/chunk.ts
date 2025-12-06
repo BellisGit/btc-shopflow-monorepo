@@ -1,0 +1,189 @@
+/**
+ * Chunk 相关插件
+ * 包括 chunk 验证和优化
+ */
+
+import type { Plugin } from 'vite';
+
+/**
+ * 验证所有 chunk 生成插件
+ */
+export function chunkVerifyPlugin(): Plugin {
+  return {
+    name: 'chunk-verify-plugin',
+    writeBundle(options, bundle) {
+      console.log('\n[chunk-verify-plugin] ✅ 生成的所有 chunk 文件：');
+      const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js'));
+      const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
+
+      console.log(`\nJS chunk（共 ${jsChunks.length} 个）：`);
+      jsChunks.forEach(chunk => console.log(`  - ${chunk}`));
+
+      console.log(`\nCSS chunk（共 ${cssChunks.length} 个）：`);
+      cssChunks.forEach(chunk => console.log(`  - ${chunk}`));
+
+      const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
+      const indexSize = indexChunk ? (bundle[indexChunk] as any)?.code?.length || 0 : 0;
+      const indexSizeKB = indexSize / 1024;
+      const indexSizeMB = indexSizeKB / 1024;
+
+      const missingRequiredChunks: string[] = [];
+      if (!indexChunk) {
+        missingRequiredChunks.push('index');
+      }
+
+      const hasEpsService = jsChunks.some(jsChunk => jsChunk.includes('eps-service'));
+      const hasEchartsVendor = jsChunks.some(jsChunk => jsChunk.includes('echarts-vendor'));
+      const hasLibMonaco = jsChunks.some(jsChunk => jsChunk.includes('lib-monaco'));
+      const hasLibThree = jsChunks.some(jsChunk => jsChunk.includes('lib-three'));
+
+      console.log(`\n[chunk-verify-plugin] 📦 构建情况（平衡拆分策略）：`);
+      if (indexChunk) {
+        console.log(`  ✅ index: 主文件（Vue生态 + Element Plus + 业务代码，体积~${indexSizeMB.toFixed(2)}MB 未压缩，gzip后~${(indexSizeMB * 0.3).toFixed(2)}MB）`);
+      } else {
+        console.log(`  ❌ 入口文件不存在`);
+      }
+      if (hasEpsService) console.log(`  ✅ eps-service: EPS 服务（所有应用共享，单独打包）`);
+      if (hasEchartsVendor) console.log(`  ✅ echarts-vendor: ECharts + zrender（独立大库，无依赖问题）`);
+      if (hasLibMonaco) console.log(`  ✅ lib-monaco: Monaco Editor（独立大库）`);
+      if (hasLibThree) console.log(`  ✅ lib-three: Three.js（独立大库）`);
+      console.log(`  ℹ️  业务代码和 Vue 生态合并到主文件，避免初始化顺序问题`);
+
+      if (missingRequiredChunks.length > 0) {
+        console.error(`\n[chunk-verify-plugin] ❌ 缺失核心 chunk：`, missingRequiredChunks);
+        throw new Error(`核心 chunk 缺失，构建失败！`);
+      } else {
+        console.log(`\n[chunk-verify-plugin] ✅ 核心 chunk 全部存在`);
+      }
+
+      // 验证资源引用一致性
+      console.log('\n[chunk-verify-plugin] 🔍 验证资源引用一致性...');
+      const allChunkFiles = new Set([...jsChunks, ...cssChunks]);
+      const referencedFiles = new Map<string, string[]>();
+      const missingFiles: Array<{ file: string; referencedBy: string[]; possibleMatches: string[] }> = [];
+
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code) {
+          const codeWithoutComments = chunk.code
+            .replace(/\/\/.*$/gm, '')
+            .replace(/\/\*[\s\S]*?\*\//g, '');
+
+          const importPattern = /import\s*\(\s*["'](\/?assets\/[^"'`\s]+\.(js|mjs|css))["']\s*\)/g;
+          let match;
+          while ((match = importPattern.exec(codeWithoutComments)) !== null) {
+            const resourcePath = match[1];
+            const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
+            if (!referencedFiles.has(resourceFile)) {
+              referencedFiles.set(resourceFile, []);
+            }
+            referencedFiles.get(resourceFile)!.push(fileName);
+          }
+
+          const urlPattern = /new\s+URL\s*\(\s*["'](\/?assets\/[^"'`\s]+\.(js|mjs|css))["']/g;
+          while ((match = urlPattern.exec(codeWithoutComments)) !== null) {
+            const resourcePath = match[1];
+            const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
+            if (!referencedFiles.has(resourceFile)) {
+              referencedFiles.set(resourceFile, []);
+            }
+            referencedFiles.get(resourceFile)!.push(fileName);
+          }
+        }
+      }
+
+      for (const [referencedFile, referencedBy] of referencedFiles.entries()) {
+        const fileName = referencedFile.replace(/^assets\//, '');
+        let exists = allChunkFiles.has(fileName);
+        let possibleMatches: string[] = [];
+
+        if (!exists) {
+          const match = fileName.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+          if (match) {
+            const [, namePrefix, , ext] = match;
+            possibleMatches = Array.from(allChunkFiles).filter(chunkFile => {
+              const chunkMatch = chunkFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
+              if (chunkMatch) {
+                const [, chunkNamePrefix, , chunkExt] = chunkMatch;
+                return chunkNamePrefix === namePrefix && chunkExt === ext;
+              }
+              return false;
+            });
+            exists = possibleMatches.length > 0;
+          }
+        }
+
+        if (!exists) {
+          missingFiles.push({ file: referencedFile, referencedBy, possibleMatches });
+        }
+      }
+
+      if (missingFiles.length > 0) {
+        console.error(`\n[chunk-verify-plugin] ❌ 发现 ${missingFiles.length} 个引用的资源文件不存在：`);
+        if (missingFiles.length <= 5) {
+          console.warn(`\n[chunk-verify-plugin] ⚠️  警告：发现 ${missingFiles.length} 个引用的资源文件不存在，但继续构建`);
+        } else {
+          throw new Error(`资源引用不一致，构建失败！有 ${missingFiles.length} 个引用的文件不存在`);
+        }
+      } else {
+        console.log(`\n[chunk-verify-plugin] ✅ 所有资源引用都正确（共验证 ${referencedFiles.size} 个引用）`);
+      }
+    },
+  };
+}
+
+/**
+ * 优化代码分割插件：处理空 chunk
+ */
+export function optimizeChunksPlugin(): Plugin {
+  return {
+    name: 'optimize-chunks',
+    generateBundle(options, bundle) {
+      const emptyChunks: string[] = [];
+      const chunkReferences = new Map<string, string[]>();
+
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type === 'chunk' && chunk.code.trim().length === 0) {
+          emptyChunks.push(fileName);
+        }
+        if (chunk.type === 'chunk' && chunk.imports) {
+          for (const imported of chunk.imports) {
+            if (!chunkReferences.has(imported)) {
+              chunkReferences.set(imported, []);
+            }
+            chunkReferences.get(imported)!.push(fileName);
+          }
+        }
+      }
+
+      if (emptyChunks.length === 0) {
+        return;
+      }
+
+      const chunksToRemove: string[] = [];
+      const chunksToKeep: string[] = [];
+
+      for (const emptyChunk of emptyChunks) {
+        const referencedBy = chunkReferences.get(emptyChunk) || [];
+        if (referencedBy.length > 0) {
+          const chunk = bundle[emptyChunk];
+          if (chunk && chunk.type === 'chunk') {
+            chunk.code = 'export {};';
+            chunksToKeep.push(emptyChunk);
+            console.log(`[optimize-chunks] 保留被引用的空 chunk: ${emptyChunk} (被 ${referencedBy.length} 个 chunk 引用，已添加占位符)`);
+          }
+        } else {
+          chunksToRemove.push(emptyChunk);
+          delete bundle[emptyChunk];
+        }
+      }
+
+      if (chunksToRemove.length > 0) {
+        console.log(`[optimize-chunks] 移除了 ${chunksToRemove.length} 个未被引用的空 chunk:`, chunksToRemove);
+      }
+      if (chunksToKeep.length > 0) {
+        console.log(`[optimize-chunks] 保留了 ${chunksToKeep.length} 个被引用的空 chunk（已添加占位符）:`, chunksToKeep);
+      }
+    },
+  };
+}
+

@@ -52,8 +52,8 @@ export function useFormSubmit(
         submitting.value = false;
       };
 
-      // 克隆数据
-      let submitData = { ...formData.value };
+      // 克隆数据（formData 是 reactive，直接使用）
+      let submitData = { ...formData };
 
       // 处理 hook（提交转换）
       computedItems.value.forEach((item: any) => {
@@ -154,7 +154,10 @@ export function useFormSubmit(
    */
   const handleClosed = () => {
     formRef.value?.resetFields();
-    formData.value = {};
+    // 清空 reactive 对象的所有属性（不能直接赋值空对象）
+    Object.keys(formData).forEach((key) => {
+      delete formData[key];
+    });
     loadingData.value = false;
     closeAction = 'close';
     clearPlugins();

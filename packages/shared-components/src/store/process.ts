@@ -25,26 +25,28 @@ export interface ProcessItem {
  * 或者使用全局函数
  */
 export function getCurrentAppFromPath(path: string): string {
-  // 优先检查子域名（生产环境的关键识别方式）
+  // 优先检查子域名（生产环境的关键识别方式，使用应用扫描器）
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-      'monitor.bellis.com.cn': 'monitor',
-    };
+    // 使用同步导入（应用扫描器在构建时已经加载）
+    const { getAppBySubdomain } = require('@configs/app-scanner');
     
     // 关键：优先通过子域名识别应用（生产环境的主要方式）
-    if (subdomainMap[hostname]) {
-      return subdomainMap[hostname];
+    const appBySubdomain = getAppBySubdomain(hostname);
+    if (appBySubdomain) {
+      return appBySubdomain.id;
     }
   }
   
-  // 回退到路径匹配（开发环境或主域名访问时）
+  // 回退到路径匹配（开发环境或主域名访问时，使用应用扫描器）
+  const { getAppByPathPrefix } = require('@configs/app-scanner');
+  const pathPrefix = path.split('/')[1] ? `/${path.split('/')[1]}` : '/';
+  const appByPath = getAppByPathPrefix(pathPrefix);
+  if (appByPath) {
+    return appByPath.id;
+  }
+  
+  // 兼容旧代码的路径匹配（如果扫描器没有找到）
   if (path.startsWith('/admin')) return 'admin';
   if (path.startsWith('/logistics')) return 'logistics';
   if (path.startsWith('/engineering')) return 'engineering';
@@ -265,4 +267,5 @@ export const useProcessStore = defineStore('process', () => {
     syncPinned,
   };
 });
+
 

@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { envConfig } from '@configs/unified-env-config';
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -8,10 +9,10 @@ interface ProxyOptions {
   configure?: (proxy: any, options: any) => void;
 }
 
-// 开发环境代理目标：统一代理到开发后端
-// 开发环境：Vite 代理 /api 到 http://10.80.9.76:8115
+// 开发环境代理目标：从统一环境配置获取
+// 开发环境：Vite 代理 /api 到配置的后端地址
 // 生产环境：由 Nginx 代理，不需要 Vite 代理
-const backendTarget = 'http://10.80.9.76:8115';
+const backendTarget = envConfig.api.backendTarget || 'http://10.80.9.76:8115';
 
 const proxy: Record<string, string | ProxyOptions> = {
   '/api': {

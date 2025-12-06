@@ -32,16 +32,20 @@
             :rules="item.rules"
           >
             <slot :name="`item-${item.prop}`" :item="item" :form="formData" :mode="mode">
-              <!-- 使用 renderComponent 渲染组件 -->
-              <component
-                v-if="item.component"
-                :is="renderComponent(item, formData)"
-              />
+              <!-- 使用 renderComponent 渲染组件 - 直接渲染 VNode -->
+              <template v-if="item.component">
+                <component
+                  :is="renderComponent(item, formData)"
+                  :key="`${item.prop}-${index}`"
+                />
+              </template>
 
               <!-- 默认输入框 -->
+              <!-- 使用显式的 modelValue 和 onUpdate:modelValue，避免 ref + 动态属性的解包问题 -->
               <el-input
                 v-else
-                v-model="formData[item.prop]"
+                :model-value="formData[item.prop]"
+                @update:model-value="(val) => { formData[item.prop] = val; }"
                 :placeholder="`请输入${item.label}`"
               />
             </slot>
@@ -63,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted } from 'vue';
+import { inject, onMounted, onUnmounted, h } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcDialog from '../../common/dialog/index.vue';
 import type { UpsertProps } from './types';

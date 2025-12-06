@@ -65,28 +65,27 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <!-- 关键：使用 shouldShowMainApp 延迟切换显示状态，等待 transition 完成，避免在动画过程中操作 DOM -->
-            <div v-show="shouldShowMainApp" style="width: 100%; height: 100%;">
+            <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
+            <!-- 关键：添加 position: relative，确保 transition 的 position: absolute 不影响布局 -->
+            <div v-show="isMainApp && !isDocsApp" style="width: 100%; height: 100%; position: relative;">
               <router-view v-slot="{ Component, route }">
-                <!-- 关键：只在 isMainApp 为 true 且有 Component 时才渲染 transition 和组件 -->
-                <!-- 当条件不满足时，不渲染任何内容，避免 transition 在动画过程中被销毁 -->
-                <template v-if="isMainApp && !isDocsApp && Component">
-                  <transition :name="pageTransitionName" mode="out-in">
-                    <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
-                    <keep-alive v-else>
-                      <component :is="Component" :key="route.fullPath" />
-                    </keep-alive>
-                  </transition>
-                </template>
-                <!-- 生产环境调试：如果组件未加载，显示错误信息 -->
-                <div v-if="isProd && !Component && isMainApp" style="padding: 20px; color: red; border: 1px solid red;">
-                  <p>⚠️ 路由组件加载失败</p>
-                  <p>路径: {{ route.path }}</p>
-                  <p>完整路径: {{ route.fullPath }}</p>
-                  <p>匹配的路由数: {{ route.matched.length }}</p>
-                  <p>isMainApp: {{ isMainApp }}</p>
-                  <p>匹配的路由详情: {{ JSON.stringify(route.matched.map(m => ({ path: m.path, name: m.name })), null, 2) }}</p>
-                </div>
+                <!-- 关键：始终渲染 transition，避免在动画过程中被销毁 -->
+                <!-- 通过外层 v-show 控制显示，transition 内部直接渲染 Component（可能为 null） -->
+                <!-- 使用 mode="out-in" 确保先卸载后挂载，避免 DOM 操作冲突 -->
+                <transition :name="pageTransitionName" mode="out-in">
+                  <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
+                  <keep-alive v-else-if="Component">
+                    <component :is="Component" :key="route.fullPath" />
+                  </keep-alive>
+                  <div v-else style="padding: 20px; color: #999;">
+                    <p>⚠️ 路由组件未加载</p>
+                    <p>路径: {{ route.path }}</p>
+                    <p>完整路径: {{ route.fullPath }}</p>
+                    <p>匹配的路由数: {{ route.matched.length }}</p>
+                    <p>isMainApp: {{ isMainApp }}</p>
+                  </div>
+                </transition>
               </router-view>
             </div>
 
@@ -95,9 +94,10 @@
 
             <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
             <!-- 关键：使用 v-show 替代 v-else，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
             <div id="subapp-viewport" v-show="!isMainApp && !isDocsApp">
-              <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
-              <AppSkeleton v-if="isQiankunLoading" />
+              <!-- 骨架屏（放在 subapp-viewport 内部，使用 v-show 控制显示，避免销毁重建） -->
+              <AppSkeleton v-show="isQiankunLoading" />
             </div>
           </div>
         </div>
@@ -118,6 +118,7 @@ import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
+import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -198,42 +199,9 @@ const { browser, onScreenChange } = useBrowser();
 let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由（系统域路由）
-// system-app 是主应用，处理系统域路由（默认域）
-// 管理域（/admin/*）和其他业务域都是子应用
+// 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
 const isMainApp = computed(() => {
-  // 同时检查 Vue Router 的 path 和 window.location.pathname
-  // 因为路由同步可能导致两者不一致
-  const routerPath = route.path;
-  const locationPath = window.location.pathname;
-  const path = routerPath || locationPath;
-
-  // 排除不需要 Layout 的页面
-  if (path === '/login' ||
-      path === '/forget-password' ||
-      path === '/register') {
-    return false;
-  }
-  // 管理域是子应用，不是主应用
-  if (path.startsWith('/admin') || locationPath.startsWith('/admin')) {
-    return false;
-  }
-  // 其他子应用路径
-  if (path.startsWith('/logistics') || locationPath.startsWith('/logistics') ||
-      path.startsWith('/engineering') || locationPath.startsWith('/engineering') ||
-      path.startsWith('/quality') || locationPath.startsWith('/quality') ||
-      path.startsWith('/production') || locationPath.startsWith('/production') ||
-      path.startsWith('/finance') || locationPath.startsWith('/finance') ||
-      path.startsWith('/docs') || locationPath.startsWith('/docs') ||
-      path.startsWith('/monitor') || locationPath.startsWith('/monitor')) {
-    return false;
-  }
-  // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
-  const result = true;
-  // 生产环境调试：如果路径是根路径但显示为空，记录日志
-  if (import.meta.env.PROD && path === '/' && !route.matched.length) {
-    console.warn('[system-app Layout] 路由未匹配，path:', path, 'route.matched:', route.matched, 'locationPath:', locationPath);
-  }
-  return result;
+  return getIsMainApp(route.path, window.location.pathname, false);
 });
 
 // 判断是否为文档应用
@@ -245,26 +213,9 @@ const isDocsApp = computed(() => {
 // qiankun 加载状态（用于显示骨架屏）
 const isQiankunLoading = ref(false);
 
-// 主应用显示状态（延迟切换，等待 transition 完成）
-const shouldShowMainApp = ref(true);
-
-// 监听 isMainApp 变化，延迟切换显示状态，等待 transition 完成
-watch(
-  () => isMainApp.value && !isDocsApp.value,
-  (newValue) => {
-    if (newValue) {
-      // 切换到主应用时，立即显示
-      shouldShowMainApp.value = true;
-    } else {
-      // 切换到子应用时，延迟隐藏，等待 transition 完成
-      // transition 动画通常需要 250ms，我们等待 300ms 确保完成
-      setTimeout(() => {
-        shouldShowMainApp.value = false;
-      }, 300);
-    }
-  },
-  { immediate: true }
-);
+// 主应用显示状态（直接使用 isMainApp，不需要延迟切换）
+// 关键：使用 v-show 已经保证了 DOM 节点始终存在，不需要延迟切换
+// 延迟切换反而可能导致状态不一致，直接使用 isMainApp 即可
 
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
 let qiankunLoadingObserver: MutationObserver | null = null;
@@ -341,17 +292,13 @@ function refreshView() {
 }
 
 // qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
-// qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
-// 关键：使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
+// 关键：直接更新状态，不使用 nextTick，因为 AppSkeleton 已经使用 v-show 不会销毁 DOM
+// 使用 v-show 已经保证了 DOM 节点始终存在，不需要延迟更新
 const handleQiankunBeforeLoad = () => {
-  nextTick(() => {
-    isQiankunLoading.value = true;
-  });
+  isQiankunLoading.value = true;
 };
 const handleQiankunAfterMount = () => {
-  nextTick(() => {
-    isQiankunLoading.value = false;
-  });
+  isQiankunLoading.value = false;
   // 强制隐藏骨架屏，确保立即生效
   // nextTick(() => {
   //   const skeleton = document.getElementById('app-skeleton');

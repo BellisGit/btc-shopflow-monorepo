@@ -471,6 +471,12 @@ const handleSwitchApp = async (app: MicroApp) => {
       await router.push(targetPath);
       await nextTick();
       detectCurrentApp();
+      
+      // 发送应用切换事件
+      const emitter = (window as any).__APP_EMITTER__;
+      if (emitter) {
+        emitter.emit('app.switch', { appName: app.name, path: targetPath });
+      }
       return;
     }
 
@@ -547,6 +553,12 @@ const handleSwitchApp = async (app: MicroApp) => {
     }
     await nextTick();
     detectCurrentApp();
+    
+    // 发送应用切换事件
+    const emitter = (window as any).__APP_EMITTER__;
+    if (emitter) {
+      emitter.emit('app.switch', { appName: app.name, path: targetPath });
+    }
     
     // 如果是切换到主应用，立即清除 loading 状态和超时
     if (isSystemApp) {

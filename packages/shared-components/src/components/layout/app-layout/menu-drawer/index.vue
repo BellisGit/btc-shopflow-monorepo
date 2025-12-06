@@ -648,6 +648,12 @@ const handleSwitchApp = async (app: MicroApp) => {
       await router.push(targetPath);
       await nextTick();
       detectCurrentApp();
+      
+      // 发送应用切换事件
+      const emitter = (window as any).__APP_EMITTER__;
+      if (emitter) {
+        emitter.emit('app.switch', { appName: app.name, path: targetPath });
+      }
       return;
     }
 
@@ -713,6 +719,12 @@ const handleSwitchApp = async (app: MicroApp) => {
   await router.push(targetPath);
   await nextTick();
   detectCurrentApp();
+  
+  // 发送应用切换事件，通知其他组件（如 ApiSwitch）更新
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.emit('app.switch', { appName: app.name, path: targetPath });
+  }
   } catch (error) {
     // 如果路由切换失败，清除监听和超时，并强制清除 loading 状态
     if (loadingTimeout) {

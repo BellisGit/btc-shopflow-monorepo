@@ -91,13 +91,17 @@ export function useLogin() {
           }
         }
 
-        // 保存用户信息
+        // 保存用户信息（使用后端返回的准确数据）
         if (response.user) {
-          setUserInfo(response.user);
+          // 处理用户信息：删除 name 字段，将 name 的值赋给 username（使用后端权威值）
+          const userData = { ...response.user };
+          if (userData.name) {
+            userData.username = userData.name; // 使用后端返回的 name 作为 username
+            delete userData.name; // 删除 name 字段
+          }
+          // 使用 appStorage.user.set 确保同时更新 localStorage 和 cookie
+          appStorage.user.set(userData);
         }
-
-        // 保存用户名到统一存储（记住用户名）
-        appStorage.user.setUsername(form.username);
 
         // 使用 nextTick 确保状态更新后再跳转
         await nextTick();

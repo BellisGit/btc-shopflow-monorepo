@@ -167,19 +167,5 @@ export function setupGlobalErrorCapture() {
     }
     originalWarn.apply(console, args);
   };
-
-  const originalError = console.error;
-  console.error = function (...args: any[]) {
-    const message = argsToString(args);
-    // 过滤不需要监控的错误
-    if (!shouldIgnoreMessage(message)) {
-      updateErrorList({
-        type: 'console-error',
-        message,
-        source: 'main-app',
-      });
-    }
-    originalError.apply(console, args);
-  };
 }
 

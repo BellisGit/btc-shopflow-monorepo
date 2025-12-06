@@ -14,6 +14,7 @@ import { systemRoutes } from './routes/system';
 import { getCookie } from '../utils/cookie';
 import { appStorage } from '../utils/app-storage';
 import { getTabsForNamespace } from '../store/tabRegistry';
+import { getAppBySubdomain } from '@configs/app-scanner';
 
 const routes: RouteRecordRaw[] = [
   // 登录页面（不在 Layout 中）- 使用根目录 auth 包
@@ -352,16 +353,9 @@ router.beforeEach((to, from, next) => {
   // 子应用的认证应该由子应用自己处理（通过 layout-app 或子应用自己的路由守卫）
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  const subdomainMap: Record<string, string> = {
-    'admin.bellis.com.cn': 'admin',
-    'logistics.bellis.com.cn': 'logistics',
-    'quality.bellis.com.cn': 'quality',
-    'production.bellis.com.cn': 'production',
-    'engineering.bellis.com.cn': 'engineering',
-    'finance.bellis.com.cn': 'finance',
-    'monitor.bellis.com.cn': 'monitor',
-  };
-  const currentSubdomainApp = subdomainMap[hostname];
+  // 使用顶层导入的应用扫描器（app-scanner 在构建时已加载）
+  const appBySubdomain = getAppBySubdomain(hostname);
+  const currentSubdomainApp = appBySubdomain?.id;
   
   // 关键：在子域名环境下，如果是子应用域名，跳过 system-app 的认证检查
   // 因为子域名访问时，应该由 layout-app 或子应用自己处理认证

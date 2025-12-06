@@ -109,6 +109,7 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EmailVerifyForm: typeof import('./../../../packages/shared-components/src/components/feedback/btc-identity-verify/components/EmailVerifyForm.vue')['default']
+    EnvInfo: typeof import('./components/DevTools/EnvInfo.vue')['default']
     EpsViewer: typeof import('./components/DevTools/EpsViewer.vue')['default']
     Example: typeof import('./../../../packages/shared-components/src/components/others/btc-svg/example.vue')['default']
     GlobalSearch: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/global-search/index.vue')['default']

@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import { useFormRenderer } from '@btc-common/form/composables/useFormRenderer';
@@ -15,7 +15,8 @@ export function useFormData(props: UpsertProps) {
 
   // 表单实例
   const formRef = ref<FormInstance>();
-  const formData = ref<Record<string, any>>({});
+  // 使用 reactive 而不是 ref，确保动态属性绑定正常工作
+  const formData = reactive<Record<string, any>>({});
   const loadingData = ref(false);
 
   // 模式
@@ -42,7 +43,7 @@ export function useFormData(props: UpsertProps) {
       // 处理 hidden 属性
       if (resolved.hidden !== undefined) {
         if (typeof resolved.hidden === 'function') {
-          resolved._hidden = resolved.hidden({ scope: formData.value, mode: mode.value });
+          resolved._hidden = resolved.hidden({ scope: formData, mode: mode.value });
         } else {
           resolved._hidden = resolved.hidden;
         }
@@ -101,10 +102,25 @@ export function useFormData(props: UpsertProps) {
   const formRules = computed<FormRules>(() => {
     const rules: FormRules = {};
     computedItems.value.forEach((item) => {
+      if (!item.prop) return; // 跳过没有 prop 的项
+      
       if (item.rules) {
-        rules[item.prop] = item.rules;
+        // 如果已有规则，确保每个规则都有 trigger
+        const normalizedRules = Array.isArray(item.rules) ? item.rules : [item.rules];
+        rules[item.prop] = normalizedRules.map((rule: any) => {
+          // 如果规则没有 trigger，添加默认的 trigger
+          if (!rule.trigger) {
+            return { ...rule, trigger: ['blur', 'change'] };
+          }
+          return rule;
+        });
       } else if (item.required) {
-        rules[item.prop] = [{ required: true, message: `${t('common.validation.required_prefix')}${item.label}` }];
+        // 只有 required 时，添加完整的验证规则（包括 trigger）
+        rules[item.prop] = [{ 
+          required: true, 
+          message: `${t('common.validation.required_prefix')}${item.label}`,
+          trigger: ['blur', 'change']
+        }];
       }
     });
     return rules;

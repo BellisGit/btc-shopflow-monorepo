@@ -2,7 +2,7 @@
   <el-menu
     :key="menuKey"
     ref="menuRef"
-    :default-active="activeMenu"
+    :active="activeMenu"
     :default-openeds="defaultOpeneds"
     :collapse="isCollapse"
     :collapse-transition="false"
@@ -68,16 +68,13 @@ const currentMenuItems = computed(() => {
   // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
   const menus = menuRegistry.value[app] || [];
   
-  // 调试日志（始终输出，帮助排查问题）
-  console.log(`[dynamic-menu] 当前应用: ${app}, 菜单数量: ${menus.length}`, {
-    app,
-    menusCount: menus.length,
-    registryKeys: Object.keys(menuRegistry.value),
-    registryContent: Object.fromEntries(
-      Object.entries(menuRegistry.value).map(([k, v]) => [k, Array.isArray(v) ? v.length : 'not-array'])
-    ),
-    menus: menus.length > 0 ? menus : 'empty'
-  });
+  // 调试日志（仅在开发环境且菜单为空时输出，避免过多日志）
+  if (import.meta.env.DEV && menus.length === 0) {
+    console.log(`[dynamic-menu] 当前应用: ${app}, 菜单数量: 0`, {
+      app,
+      registryKeys: Object.keys(menuRegistry.value),
+    });
+  }
   
   return menus;
 });
@@ -86,12 +83,18 @@ const currentMenuItems = computed(() => {
 // 只在应用切换时更新菜单（通过 currentMenuItems computed 自动响应）
 
 // 只监听当前应用的菜单变化，避免深度监听整个注册表导致的不必要重新渲染
+// 关键：只在菜单数组引用真正变化时才更新 menuKey，避免路由变化时触发重绘
 watch(
   () => {
     const app = currentApp.value;
     return menuRegistry.value[app] || [];
   },
   (newMenus, oldMenus) => {
+    // 如果数组引用相同，说明是同一个数组，不需要重新渲染
+    if (newMenus === oldMenus) {
+      return;
+    }
+    
     // 只有当菜单数组引用发生变化时才更新（菜单内容变化由 registerManifestMenusForApp 中的 menusEqual 检查）
     // 如果数组长度或内容相同但引用不同，说明是重复注册，不需要重新渲染
     if (newMenus.length !== (oldMenus?.length || 0)) {
@@ -99,6 +102,7 @@ watch(
       menuKey.value++;
       return;
     }
+    
     // 菜单数量相同，检查是否真的是内容变化（通过比较第一个和最后一个菜单项的引用）
     // 如果引用相同，说明是同一个数组，不需要重新渲染
     if (newMenus.length > 0 && oldMenus && oldMenus.length > 0) {
@@ -112,7 +116,7 @@ watch(
       }
     } else if (newMenus.length === 0 && oldMenus && oldMenus.length > 0) {
       // 从有菜单变为无菜单，需要重新渲染
-    menuKey.value++;
+      menuKey.value++;
     } else if (newMenus.length > 0 && (!oldMenus || oldMenus.length === 0)) {
       // 从无菜单变为有菜单，需要重新渲染
       menuKey.value++;
@@ -298,10 +302,47 @@ const handleMenuSelect = (index: string) => {
       return;
     }
 
+    // 关键：检查 index 是否为分组节点（只有 children 没有实际路由的节点）
+    // 分组节点的 index 通常是虚拟路径（如 "access-config"），在路由表中不存在
+    // 判断方法：在当前菜单树中查找匹配的菜单项，如果它有 children，说明是分组节点，不应该导航
+    const absolutePath = index.startsWith('/') ? index : `/${index}`;
+    
+    // 递归查找菜单项
+    const findMenuItem = (items: typeof currentMenuItems.value, targetIndex: string): typeof items[0] | null => {
+      for (const item of items) {
+        // 检查 index 是否匹配（支持带/和不带/的格式）
+        if (item.index === targetIndex || item.index === absolutePath) {
+          return item;
+        }
+        // 递归检查子菜单
+        if (item.children && item.children.length > 0) {
+          const found = findMenuItem(item.children, targetIndex);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const matchedItem = findMenuItem(currentMenuItems.value, index);
+    
+    // 如果找到的菜单项有 children，说明是分组节点，不应该导航
+    if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('[dynamic-menu] 跳过分组节点导航:', index, matchedItem);
+      }
+      return;
+    }
+
     // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
     // 所以这里直接使用 index，不需要再次规范化
-  const absolutePath = index.startsWith('/') ? index : `/${index}`;
-  router.push(absolutePath);
+    // 使用 catch 捕获路由跳转错误，避免未匹配路由时导致的问题
+    router.push(absolutePath).catch((err) => {
+      // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
+      // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
+      if (import.meta.env.DEV) {
+        console.warn('[dynamic-menu] 路由跳转失败:', absolutePath, err);
+      }
+    });
 };
 </script>
 

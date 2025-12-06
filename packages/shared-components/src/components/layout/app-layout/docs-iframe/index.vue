@@ -34,6 +34,9 @@ const iframeCreated = ref(false); // 懒加载标记
 const iframeSrc = ref(''); // 动态 src
 const { locale } = useI18n();
 
+// 全局警告标记（使用 window 对象，避免模块重新加载时重置）
+const GLOBAL_WARN_KEY = '__BTC_DOCS_IFRAME_PORT_WARNED__';
+
 // 动态获取文档服务器地址
 const getDocsUrl = () => {
   if (!import.meta.env.DEV) {
@@ -53,19 +56,34 @@ const getDocsUrl = () => {
   // 从配置中获取文档应用的端口（docs-site-app 的开发端口是 4172）
   // 使用同步方式获取配置，避免异步问题
   let docsPort = '4172';
+  let shouldWarn = false;
+  
   try {
     // 尝试从全局配置中获取（如果已加载）
     if ((window as any).__BTC_APP_CONFIGS__) {
       const docsConfig = (window as any).__BTC_APP_CONFIGS__.find(
         (config: any) => config.appName === 'docs-site-app'
       );
-      if (docsConfig) {
+      if (docsConfig && docsConfig.devPort) {
         docsPort = docsConfig.devPort;
+      } else {
+        // 配置存在但没有找到 docs-site-app 的配置，可能需要警告
+        shouldWarn = true;
       }
+    } else {
+      // 配置未加载，可能需要警告
+      shouldWarn = true;
     }
   } catch (e) {
-    // 如果获取失败，使用默认端口 4172（docs-site-app 的开发端口）
-    console.warn('[DocsIframe] 无法从配置获取端口，使用默认端口 4172');
+    // 如果获取失败，可能需要警告
+    shouldWarn = true;
+  }
+
+  // 只在第一次且需要警告时输出（使用全局标记避免重复警告）
+  if (shouldWarn && !(window as any)[GLOBAL_WARN_KEY] && import.meta.env.DEV) {
+    (window as any)[GLOBAL_WARN_KEY] = true;
+    // 移除警告，因为使用默认端口是正常行为，不需要警告
+    // console.warn('[DocsIframe] 无法从配置获取端口，使用默认端口 4172');
   }
 
   return `${protocol}//${hostname}:${docsPort}/`;

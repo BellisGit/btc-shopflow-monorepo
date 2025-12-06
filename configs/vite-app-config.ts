@@ -3,6 +3,7 @@
  * 用于从统一配置中获取应用的环境变量
  */
 
+import { resolve } from 'path';
 import { getAppConfig, type AppEnvConfig } from './app-env.config';
 
 /**
@@ -34,5 +35,54 @@ export function getViteAppConfig(appName: string): {
     prodHost: appConfig.prodHost,
     mainAppOrigin,
   };
+}
+
+/**
+ * 获取应用类型
+ * @param appName 应用名称
+ * @returns 应用类型
+ */
+export function getAppType(appName: string): 'main' | 'sub' | 'layout' | 'mobile' {
+  if (appName === 'system-app') return 'main';
+  if (appName === 'layout-app') return 'layout';
+  if (appName === 'mobile-app') return 'mobile';
+  return 'sub'; // 其他都是子应用
+}
+
+/**
+ * 获取 base URL
+ * @param appName 应用名称
+ * @param isPreviewBuild 是否为预览构建
+ * @returns base URL
+ */
+export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): string {
+  const appConfig = getAppConfig(appName);
+  if (!appConfig) {
+    throw new Error(`未找到 ${appName} 的环境配置`);
+  }
+  
+  // 生产环境：使用相对路径（让浏览器根据域名自动解析）
+  if (!isPreviewBuild) {
+    return '/';
+  }
+  
+  // 预览构建：使用绝对路径
+  return `http://${appConfig.preHost}:${appConfig.prePort}/`;
+}
+
+/**
+ * 获取 publicDir 路径
+ * @param appName 应用名称
+ * @param appDir 应用根目录路径
+ * @returns publicDir 路径或 false
+ */
+export function getPublicDir(appName: string, appDir: string): string | false {
+  // admin-app 使用自己的 public 目录
+  if (appName === 'admin-app') {
+    return resolve(appDir, 'public');
+  }
+  
+  // 其他应用使用共享的 public 目录
+  return resolve(appDir, '../../packages/shared-components/public');
 }
 

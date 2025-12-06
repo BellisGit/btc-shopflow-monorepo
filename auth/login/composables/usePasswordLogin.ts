@@ -78,15 +78,18 @@ export function usePasswordLogin() {
         });
       }
 
-      // 保存用户信息（如果响应中包含用户信息）
-      if (response && response.user) {
-        setUserInfo(response.user);
-      } else if (response && response.data && response.data.user) {
-        setUserInfo(response.data.user);
+      // 保存用户信息（使用后端返回的准确数据）
+      const userData = response?.user || response?.data?.user;
+      if (userData) {
+        // 处理用户信息：删除 name 字段，将 name 的值赋给 username（使用后端权威值）
+        const processedUser = { ...userData };
+        if (processedUser.name) {
+          processedUser.username = processedUser.name; // 使用后端返回的 name 作为 username
+          delete processedUser.name; // 删除 name 字段
+        }
+        // 使用 appStorage.user.set 确保同时更新 localStorage 和 cookie
+        appStorage.user.set(processedUser);
       }
-
-      // 保存用户名到统一存储（记住用户名）
-      appStorage.user.setUsername(formData.username);
 
       // 等待状态更新，确保路由守卫能正确识别登录状态
       await new Promise(resolve => setTimeout(resolve, 100));

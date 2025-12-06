@@ -1,7 +1,7 @@
 ﻿/**
  * 本地存储工具类
  */
-import { syncSettingsToCookie, syncUserToCookie } from './cross-domain';
+import { syncSettingsToCookie, syncUserToCookie, getCookieDomain } from './cross-domain';
 
 class StorageUtil {
   private prefix: string;
@@ -21,7 +21,7 @@ class StorageUtil {
     // 允许的键：settings, user, locale, i18n 相关的缓存键
     const allowedKeys = ['settings', 'user', 'locale'];
     const isI18nKey = key.startsWith('i18n-') || key.startsWith('locale-');
-    
+
     if (!allowedKeys.includes(key) && !isI18nKey) {
       // 检查是否是应该统一存储的键
       const unifiedStorageKeys = [
@@ -55,17 +55,17 @@ class StorageUtil {
         'user_avatar', // 头像应该存储在 user.avatar 中
         'user_name', // 用户名应该存储在 user.name 中
       ];
-      
+
       if (unifiedStorageKeys.includes(key)) {
         console.error(`[Storage] 禁止创建独立的 ${key} 键！请使用统一的 settings 存储`);
         console.trace('调用堆栈：');
         return;
       }
     }
-    
-    // settings 和 user：写入 Cookie（主要存储），同时写入 localStorage（备份）
+
+    // settings 和 user：只写入 Cookie，不再写入 localStorage
     if (key === 'settings' || key === 'user') {
-      // 1. 写入 Cookie（主要存储）
+      // 写入 Cookie（唯一存储）
       try {
         if (key === 'settings' && typeof value === 'object' && value !== null) {
           syncSettingsToCookie(value as Record<string, any>);
@@ -75,21 +75,17 @@ class StorageUtil {
       } catch (error) {
         console.error('[Storage] 同步到 Cookie 失败:', error);
       }
-      
-      // 2. 同时写入 localStorage 作为备份（仅在 Cookie 丢失时使用）
+
+      // 清理旧的 localStorage 备份（如果存在）
       try {
-        const data = {
-          value,
-          expire: expire ? Date.now() + expire * 1000 : null,
-        };
-        localStorage.setItem(this.prefix + key, JSON.stringify(data));
+        localStorage.removeItem(this.prefix + key);
       } catch (error) {
-        // 忽略 localStorage 写入错误（可能是存储空间不足）
+        // 忽略清理错误
       }
-      
+
       return;
     }
-    
+
     // 其他键（如 locale、i18n 缓存）仍然写入 localStorage
     const data = {
       value,
@@ -109,12 +105,12 @@ class StorageUtil {
       if (typeof document === 'undefined') {
         return (key === 'settings' ? {} : null) as T;
       }
-      
+
       try {
         const cookieName = key === 'settings' ? 'btc_settings' : 'btc_user';
         const nameEQ = cookieName + '=';
         const ca = document.cookie.split(';');
-        
+
         for (let i = 0; i < ca.length; i++) {
           let c = ca[i];
           while (c.charAt(0) === ' ') {
@@ -137,7 +133,7 @@ class StorageUtil {
       } catch (error) {
         // 忽略错误
       }
-      
+
       // Cookie 中没有数据，尝试从 localStorage 恢复（备份机制）
       try {
         const backupKey = this.prefix + key;
@@ -151,7 +147,7 @@ class StorageUtil {
               localStorage.removeItem(backupKey);
               return (key === 'settings' ? {} : null) as T;
             }
-            
+
             // 从备份恢复：将数据重新设置到 Cookie
             const backupValue = backupData.value;
             if (backupValue && typeof backupValue === 'object') {
@@ -171,15 +167,15 @@ class StorageUtil {
       } catch (error) {
         // 忽略 localStorage 读取错误
       }
-      
+
       // 如果 Cookie 和备份都没有，对于 settings 返回空对象（而不是 null），这样后续代码可以正常工作
       if (key === 'settings') {
         return {} as T;
       }
-      
+
       return null;
     }
-    
+
     // 其他键从 localStorage 读取
     const str = localStorage.getItem(this.prefix + key);
     if (!str) {
@@ -203,6 +199,39 @@ class StorageUtil {
    * @param key 键
    */
   remove(key: string): void {
+    // settings 和 user：清除 Cookie，同时清理 localStorage 中的旧数据
+    if (key === 'settings' || key === 'user') {
+      if (typeof document === 'undefined') {
+        return;
+      }
+
+      try {
+        const cookieName = key === 'settings' ? 'btc_settings' : 'btc_user';
+        const domain = getCookieDomain();
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        const expires = '; expires=Thu, 01 Jan 1970 00:00:00 UTC';
+        let cookieString = `${cookieName}=${expires}; path=/`;
+
+        if (domain && !hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
+          cookieString += `; Domain=${domain}`;
+        }
+
+        document.cookie = cookieString;
+      } catch (error) {
+        console.error('[Storage] 清除 Cookie 失败:', error);
+      }
+
+      // 清理 localStorage 中的旧数据（向后兼容）
+      try {
+        localStorage.removeItem(this.prefix + key);
+      } catch (error) {
+        // 忽略错误
+      }
+
+      return;
+    }
+
+    // 其他键从 localStorage 删除
     localStorage.removeItem(this.prefix + key);
   }
 

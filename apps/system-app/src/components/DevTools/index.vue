@@ -43,7 +43,7 @@
 
     <!-- 悬浮按钮 -->
     <el-tooltip
-      v-if="isDev"
+      v-if="shouldShowDevTools"
       :content="visible ? '关闭开发工具' : '打开开发工具'"
       placement="left"
     >
@@ -62,19 +62,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onClickOutside } from '@vueuse/core';
-import { Setting, Lightning, Switch, Document, Monitor } from '@element-plus/icons-vue';
+import { Setting, Lightning, Switch, Document, Monitor, InfoFilled } from '@element-plus/icons-vue';
 import { isDev } from '@/config';
+import { getCookie } from '@/utils/cookie';
 import ApiSwitch from './ApiSwitch.vue';
 import EpsViewer from './EpsViewer.vue';
+import EnvInfo from './EnvInfo.vue';
+
+// 检查是否为允许在生产环境显示 DevTools 的用户
+function isAllowedUser(): boolean {
+  try {
+    const btcUser = getCookie('btc_user');
+    if (!btcUser) {
+      return false;
+    }
+    
+    // 尝试解码 cookie 值（可能是 URL 编码的）
+    let decodedValue: string;
+    try {
+      decodedValue = decodeURIComponent(btcUser);
+    } catch {
+      // 如果解码失败，直接使用原值
+      decodedValue = btcUser;
+    }
+    
+    const userInfo = JSON.parse(decodedValue);
+    // 只使用 name 字段（后端返回的权威数据），不区分大小写
+    // 不使用 username 字段（登录表单输入，可能不准确）
+    if (!userInfo?.name) {
+      return false;
+    }
+    
+    const userName = userInfo.name.toLowerCase();
+    return userName === 'moselu';
+  } catch (error) {
+    return false;
+  }
+}
+
+// 是否显示 DevTools（开发环境或允许的用户）
+const shouldShowDevTools = computed(() => isDev || isAllowedUser());
 
 const components: Record<string, any> = {
+  env: EnvInfo,
   api: ApiSwitch,
   eps: EpsViewer,
 };
 
 const tabList = [
+  {
+    label: '系统信息',
+    value: 'env',
+    icon: InfoFilled,
+    tooltip: '系统信息 - 查看当前运行环境和应用信息',
+    isAction: false, // 显示组件内容
+  },
   {
     label: '环境切换',
     value: 'api',
@@ -115,7 +159,7 @@ const tabList = [
   },
 ];
 
-const activeTab = ref('api');
+const activeTab = ref('env');
 const visible = ref(false);
 const panelRef = ref<HTMLElement | null>(null);
 const toggleRef = ref<HTMLElement | null>(null);

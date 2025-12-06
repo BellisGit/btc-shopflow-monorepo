@@ -65,24 +65,34 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <template v-if="isMainApp && !isDocsApp">
+            <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
+            <!-- 关键：添加 position: relative，确保 transition 的 position: absolute 不影响布局 -->
+            <div v-show="isMainApp && !isDocsApp" style="width: 100%; height: 100%; position: relative;">
               <router-view v-slot="{ Component, route }">
                 <transition :name="pageTransitionName" mode="out-in">
-                <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
-                <keep-alive v-else>
-                  <component :is="Component" :key="route.fullPath" />
-                </keep-alive>
-              </transition>
-            </router-view>
-            </template>
+                  <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
+                  <keep-alive v-else-if="Component">
+                    <component :is="Component" :key="route.fullPath" />
+                  </keep-alive>
+                  <div v-else style="padding: 20px; color: #999;">
+                    <p>⚠️ 路由组件未加载</p>
+                    <p>路径: {{ route.path }}</p>
+                    <p>完整路径: {{ route.fullPath }}</p>
+                    <p>匹配的路由数: {{ route.matched.length }}</p>
+                    <p>isMainApp: {{ isMainApp }}</p>
+                  </div>
+                </transition>
+              </router-view>
+            </div>
 
             <!-- 文档应用 iframe -->
-            <template v-if="isDocsApp">
-              <DocsIframe :visible="true" />
-            </template>
+            <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在 -->
+            <DocsIframe v-show="isDocsApp" :visible="isDocsApp" />
 
             <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
             <!-- 关键：使用 v-show 替代 v-else，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
             <div id="subapp-viewport" v-show="!isMainApp && !isDocsApp">
               <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
               <AppSkeleton v-if="isQiankunLoading" />
@@ -107,6 +117,7 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
+import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
@@ -169,66 +180,10 @@ const { browser, onScreenChange } = useBrowser();
 let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由（系统域路由）
-// 主应用就是系统域（默认域），处理所有非子应用的路径
-// 管理域（/admin/*）是子应用，不是主应用路由
-// 独立运行时：所有路由都是主应用路由（因为这是独立运行的管理域应用）
+// 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-    const path = route.path;
-  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
-
-    // 排除不需要 Layout 的页面
-    if (path === '/login' ||
-        path === '/forget-password' ||
-        path === '/register') {
-      return false;
-    }
-
-  // 独立运行时，所有路由都是主应用路由（除了登录等特殊页面）
-  if (isStandalone) {
-    return true;
-  }
-
-  // qiankun 模式下的逻辑
-  // 优先检查子域名（生产环境的关键识别方式）
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-      'monitor.bellis.com.cn': 'monitor',
-    };
-
-    // 关键：如果在生产环境子域名下，说明是子应用，不是主应用
-    if (subdomainMap[hostname]) {
-      return false; // 子应用，不是主应用
-    }
-  }
-
-  // 开发环境或主域名访问：通过路径判断
-  // 同时检查 route.path 和 location.pathname，确保判断准确
-  const actualPath = path || locationPath;
-
-  // 管理域是子应用，不是主应用
-  if (actualPath.startsWith('/admin') || path.startsWith('/admin') || locationPath.startsWith('/admin')) {
-    return false;
-  }
-  // 其他子应用路径
-  if (actualPath.startsWith('/logistics') || path.startsWith('/logistics') || locationPath.startsWith('/logistics') ||
-      actualPath.startsWith('/engineering') || path.startsWith('/engineering') || locationPath.startsWith('/engineering') ||
-      actualPath.startsWith('/quality') || path.startsWith('/quality') || locationPath.startsWith('/quality') ||
-      actualPath.startsWith('/production') || path.startsWith('/production') || locationPath.startsWith('/production') ||
-      actualPath.startsWith('/finance') || path.startsWith('/finance') || locationPath.startsWith('/finance') ||
-      actualPath.startsWith('/docs') || path.startsWith('/docs') || locationPath.startsWith('/docs') ||
-      actualPath.startsWith('/monitor') || path.startsWith('/monitor') || locationPath.startsWith('/monitor')) {
-    return false;
-  }
-  // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
-  return true;
+  return getIsMainApp(route.path, window.location.pathname, isStandalone);
 });
 
 // 判断是否为文档应用
@@ -444,7 +399,10 @@ onMounted(() => {
 watch(
   () => route.fullPath,
   async () => {
-    scheduleContentResize();
+    // 关键：移除路由变化时的 scheduleContentResize() 调用
+    // 路由切换时不应该触发内容区域尺寸重新计算，避免整个布局重新渲染
+    // 只有在真正需要时才调用 scheduleContentResize()（如侧边栏折叠、全屏切换等）
+
     // 路由切换时重新设置 MutationObserver（因为容器可能被 v-if 移除和重建）
     // 使用 nextTick 确保 DOM 更新完成后再设置观察器
     await nextTick();

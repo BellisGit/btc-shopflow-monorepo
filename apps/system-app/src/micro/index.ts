@@ -1,6 +1,7 @@
 import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
 import { getAppConfig } from '@configs/app-env.config';
+import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
 import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
 
 // 获取主应用配置（用于判断当前是否在主应用预览端口）
@@ -184,17 +185,9 @@ function normalizeMenuPath(path: string, appName: string): string {
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
   if (isProductionSubdomain) {
-    // 生产环境子域名：检测具体的子域名应用
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-    };
-
-    const currentSubdomainApp = subdomainMap[hostname];
+    // 生产环境子域名：使用应用扫描器获取子域名应用
+    const appBySubdomain = getAppBySubdomain(hostname);
+    const currentSubdomainApp = appBySubdomain?.id;
 
     // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
     if (currentSubdomainApp && currentSubdomainApp === appName) {
@@ -848,11 +841,12 @@ export function setupQiankun() {
     // 必须包含 millis、dieOnTimeout、warningMillis 字段，qiankun 会直接透传给 single-spa
     // 注意：warningMillis 应该设置得更大，因为 ES 模块加载阶段也会计入 bootstrap 时间
     // 如果 warningMillis 太小，在模块加载阶段就会触发警告（这是正常的，但会产生噪音）
+    // 关键：增加 bootstrap 超时时间，避免在容器检查和 DOM 操作时超时
     const timeoutsConfig = {
       bootstrap: {
-        millis: timeout, // 超时毫秒数
+        millis: timeout * 2, // 增加超时时间，确保容器检查和 DOM 操作有足够时间
         dieOnTimeout: !isDev, // 生产环境超时终止，开发环境不终止（仅警告）
-        warningMillis: Math.floor(timeout * 0.8), // 警告时间（超时时间的 80%，减少不必要的警告）
+        warningMillis: Math.floor(timeout * 1.5), // 警告时间也相应增加
       },
       mount: {
         millis: timeout,
@@ -1352,34 +1346,21 @@ export function setupQiankun() {
         const currentPath = window.location.pathname;
         let targetAppName: string | null = null;
 
-        // 根据当前路径或子域名判断是哪个应用
+        // 根据当前路径或子域名判断是哪个应用（使用应用扫描器）
         const hostname = window.location.hostname;
-        const subdomainMap: Record<string, string> = {
-          'admin.bellis.com.cn': 'admin',
-          'logistics.bellis.com.cn': 'logistics',
-          'quality.bellis.com.cn': 'quality',
-          'production.bellis.com.cn': 'production',
-          'engineering.bellis.com.cn': 'engineering',
-          'finance.bellis.com.cn': 'finance',
-        };
-
+        
         // 首先尝试从子域名判断
-        if (subdomainMap[hostname]) {
-          targetAppName = subdomainMap[hostname];
+        const appBySubdomain = getAppBySubdomain(hostname);
+        if (appBySubdomain) {
+          targetAppName = appBySubdomain.id;
         }
         // 如果子域名没有匹配，尝试从路径判断
-        else if (currentPath.startsWith('/admin')) {
-          targetAppName = 'admin';
-        } else if (currentPath.startsWith('/logistics')) {
-          targetAppName = 'logistics';
-        } else if (currentPath.startsWith('/engineering')) {
-          targetAppName = 'engineering';
-        } else if (currentPath.startsWith('/quality')) {
-          targetAppName = 'quality';
-        } else if (currentPath.startsWith('/production')) {
-          targetAppName = 'production';
-        } else if (currentPath.startsWith('/finance')) {
-          targetAppName = 'finance';
+        else {
+          const pathPrefix = currentPath.split('/')[1] ? `/${currentPath.split('/')[1]}` : '/';
+          const appByPath = getAppByPathPrefix(pathPrefix);
+          if (appByPath) {
+            targetAppName = appByPath.id;
+          }
         }
 
         // 如果当前在子应用路径下，且请求的 URL 包含错误的端口（主应用预览端口），需要修复
@@ -1840,32 +1821,18 @@ export function setupQiankun() {
           const hostname = window.location.hostname;
           let matchedAppName: string | null = null;
 
+          // 使用应用扫描器获取子域名和应用映射（顶层已导入）
           // 首先尝试从子域名判断
-          const subdomainMap: Record<string, string> = {
-            'admin.bellis.com.cn': 'admin',
-            'logistics.bellis.com.cn': 'logistics',
-            'quality.bellis.com.cn': 'quality',
-            'production.bellis.com.cn': 'production',
-            'engineering.bellis.com.cn': 'engineering',
-            'finance.bellis.com.cn': 'finance',
-          };
-
-          if (subdomainMap[hostname]) {
-            matchedAppName = subdomainMap[hostname];
+          const appBySubdomain = getAppBySubdomain(hostname);
+          if (appBySubdomain) {
+            matchedAppName = appBySubdomain.id;
           }
           // 如果子域名没有匹配，尝试从路径判断
-          else if (currentPath.startsWith('/admin')) {
-            matchedAppName = 'admin';
-          } else if (currentPath.startsWith('/logistics')) {
-            matchedAppName = 'logistics';
-          } else if (currentPath.startsWith('/engineering')) {
-            matchedAppName = 'engineering';
-          } else if (currentPath.startsWith('/quality')) {
-            matchedAppName = 'quality';
-          } else if (currentPath.startsWith('/production')) {
-            matchedAppName = 'production';
-          } else if (currentPath.startsWith('/finance')) {
-            matchedAppName = 'finance';
+          else {
+            const appByPath = getAppByPathPrefix(currentPath.split('/')[1] ? `/${currentPath.split('/')[1]}` : '/');
+            if (appByPath) {
+              matchedAppName = appByPath.id;
+            }
           }
 
           if (matchedAppName) {
@@ -1891,7 +1858,8 @@ export function setupQiankun() {
                 let finalHost = currentHost;
 
                 // 如果是子域名访问，使用子域名作为 host
-                if (subdomainMap[hostname] === matchedAppName) {
+                const appBySubdomain = getAppBySubdomain(hostname);
+                if (appBySubdomain && appBySubdomain.id === matchedAppName) {
                   finalHost = hostname;
                 }
 
@@ -2092,14 +2060,6 @@ export function setupQiankun() {
           // 如果入口是 /micro-apps/<app>/，base 应该设置为 /micro-apps/<app>/
           // 如果当前是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
           const hostname = window.location.hostname;
-          const subdomainMap: Record<string, string> = {
-            'admin.bellis.com.cn': 'admin',
-            'logistics.bellis.com.cn': 'logistics',
-            'quality.bellis.com.cn': 'quality',
-            'production.bellis.com.cn': 'production',
-            'engineering.bellis.com.cn': 'engineering',
-            'finance.bellis.com.cn': 'finance',
-          };
 
           // 检查入口是否包含 /micro-apps/<app>/
           let basePath = '/';
@@ -2113,7 +2073,8 @@ export function setupQiankun() {
 
           // 如果是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
           let baseHost = currentHost;
-          if (subdomainMap[hostname] && matchedAppName === subdomainMap[hostname]) {
+          const appBySubdomain = getAppBySubdomain(hostname);
+          if (appBySubdomain && appBySubdomain.id === matchedAppName) {
             baseHost = hostname;
           }
 

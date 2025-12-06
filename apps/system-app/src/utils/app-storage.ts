@@ -24,7 +24,13 @@ const getUserFromCookie = (): Record<string, any> | null => {
   const userCookie = getCookie('btc_user');
   if (userCookie) {
     try {
-      return JSON.parse(decodeURIComponent(userCookie));
+      const parsed = JSON.parse(decodeURIComponent(userCookie));
+      // 如果解析后的数据有 value 字段（说明是 localStorage 格式），提取 value
+      // 这可能是旧数据格式，需要兼容处理
+      if (parsed && typeof parsed === 'object' && 'value' in parsed && !('name' in parsed)) {
+        return parsed.value;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -107,8 +113,14 @@ const userStorage = {
       return null;
     },
     set: (user: any) => {
+    // 处理用户信息：删除 name 字段，将 name 的值赋给 username（使用后端权威值）
+    const processedUser = { ...user };
+    if (processedUser.name) {
+      processedUser.username = processedUser.name; // 使用后端返回的 name 作为 username
+      delete processedUser.name; // 删除 name 字段
+    }
     // 使用 storage.set('user', ...) 确保同步到 Cookie
-    storage.set('user', user);
+    storage.set('user', processedUser);
     },
     remove: () => {
     // 删除 Cookie 中的用户信息
@@ -158,29 +170,40 @@ const userStorage = {
     },
     /**
      * 获取用户名（从统一的 btc_user 存储中获取）
+     * 注意：从 username 字段读取，不再使用 name 字段
      */
     getName() {
       const user = this.get();
-      // 优先从统一的 btc_user 中获取
+      // 优先从统一的 btc_user 中获取 username
+      if (user?.username) {
+        return user.username;
+      }
+      // 向后兼容：如果只有 name 字段（旧数据），迁移到 username
       if (user?.name) {
-        return user.name;
+        const currentUser = { ...user };
+        currentUser.username = currentUser.name;
+        delete currentUser.name;
+        this.set(currentUser);
+        return currentUser.username;
       }
       // 兼容旧的独立存储（向后兼容，读取后迁移）
       const oldName = getItem('user_name');
       if (oldName) {
-        // 迁移到统一存储（不创建新key）
+        // 迁移到统一存储（不创建新key），存储为 username
         const currentUser = user || {};
-        this.set({ ...currentUser, name: oldName });
+        this.set({ ...currentUser, username: oldName });
         return oldName;
       }
       return null;
     },
     /**
      * 设置用户名（存储到统一的 btc_user 中，不创建独立的 user_name key）
+     * 注意：实际存储为 username 字段，不存储 name 字段
      */
     setName(name: string) {
       const user = this.get() || {};
-      this.set({ ...user, name });
+      // 存储为 username，不存储 name
+      this.set({ ...user, username: name });
       // 只存储在 btc_user 中，不创建独立的 user_name key
     },
     /**

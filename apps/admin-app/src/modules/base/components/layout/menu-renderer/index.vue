@@ -1,6 +1,9 @@
 ﻿<template>
   <template v-for="item in menuItems" :key="item.index">
     <!-- 有子菜单的情况 -->
+    <!-- 关键：Element Plus 的 el-sub-menu 要求必须有 index 属性 -->
+    <!-- 虽然分组节点在 manifest 中没有实际路由路径，但我们需要提供 index 用于菜单状态管理 -->
+    <!-- 在 handleMenuSelect 中会过滤掉分组节点的导航 -->
     <el-sub-menu
       v-if="item.children && item.children.length > 0"
       :index="item.index"

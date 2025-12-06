@@ -3,6 +3,8 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { isDev } from './config';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
+import { currentEnvironment, currentSubApp } from '@configs/unified-env-config';
+import { getMainApp } from '@configs/app-scanner';
 
 // 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
 // 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
@@ -27,11 +29,10 @@ registerAppEnvAccessors();
 
 const app = createApp(App);
 
-// 全局错误处理：捕获 Vue 组件更新时的错误
+// 全局错误处理：暂时移除日志打印，查看原生错误
 app.config.errorHandler = (err, instance, info) => {
-  // 正常处理所有错误，不再静默 DOM 操作错误
-  // 因为我们已经修复了根本原因（router-view 不再被销毁重建）
-  console.error('[Vue] 未处理的错误:', err, info);
+  // 暂时不打印错误，让原生错误显示
+  // 这样可以更清楚地看到错误的根本原因
 };
 
 // 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
@@ -140,11 +141,12 @@ waitForEpsService().then((service) => {
   if (router) {
     try {
       await router.isReady();
-      console.log('[system-app] 路由已就绪，准备挂载应用');
     } catch (error) {
       console.warn('[system-app] 路由就绪检查失败，继续挂载:', error);
     }
   }
+  
+  // 不再打印环境信息，改为在环境悬浮按钮中显示
   
   app.mount('#app');
   

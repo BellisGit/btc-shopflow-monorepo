@@ -6,6 +6,7 @@ import engineeringManifestJson from "./manifests/engineering.json" with { type: 
 import productionManifestJson from "./manifests/production.json" with { type: "json" };
 import financeManifestJson from "./manifests/finance.json" with { type: "json" };
 import monitorManifestJson from "./manifests/monitor.json" with { type: "json" };
+import { getAppBySubdomain } from '@configs/app-scanner';
 
 export interface SubAppManifestRoute {
   path: string;
@@ -41,17 +42,9 @@ export function getManifestRoute(app: string, fullPath: string): SubAppManifestR
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
   
-  const subdomainMap: Record<string, string> = {
-    'admin.bellis.com.cn': 'admin',
-    'logistics.bellis.com.cn': 'logistics',
-    'quality.bellis.com.cn': 'quality',
-    'production.bellis.com.cn': 'production',
-    'engineering.bellis.com.cn': 'engineering',
-    'finance.bellis.com.cn': 'finance',
-    'monitor.bellis.com.cn': 'monitor',
-  };
-  
-  const currentSubdomainApp = subdomainMap[hostname];
+  // 使用应用扫描器获取子域名应用（顶层导入）
+  const appBySubdomain = getAppBySubdomain(hostname);
+  const currentSubdomainApp = appBySubdomain?.id;
   
   // 如果在生产环境子域名下，且当前应用匹配子域名，路径应该是 / 或 /xxx（没有应用前缀）
   if (isProductionSubdomain && currentSubdomainApp === app) {

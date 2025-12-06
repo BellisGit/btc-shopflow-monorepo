@@ -5,6 +5,7 @@ import { registerMenus, type MenuItem } from '@btc/shared-components/store/menuR
 import { getManifestMenus, getManifestTabs } from '@btc/subapp-manifests';
 import { storage } from '@btc/shared-utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
+import { getAppBySubdomain } from './app-scanner';
 
 declare global {
   interface Window {
@@ -45,18 +46,9 @@ function normalizeMenuPath(path: string, appName: string): string {
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
   if (isProductionSubdomain) {
-    // 生产环境子域名：检测具体的子域名应用
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-      'monitor.bellis.com.cn': 'monitor',
-    };
-
-    const currentSubdomainApp = subdomainMap[hostname];
+    // 生产环境子域名：使用应用扫描器获取子域名应用
+    const appBySubdomain = getAppBySubdomain(hostname);
+    const currentSubdomainApp = appBySubdomain?.id;
 
     // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
     if (currentSubdomainApp && currentSubdomainApp === appName) {

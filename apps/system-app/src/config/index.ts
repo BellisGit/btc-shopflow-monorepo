@@ -4,6 +4,8 @@
  */
 
 import { appConfig } from './app';
+import { envConfig, currentEnvironment } from '@configs/unified-env-config';
+import { getAllSubAppConfigs } from '@configs/qiankun-config-center';
 
 // 是否开发模式
 export const isDev = (import.meta as any).env.DEV;
@@ -21,14 +23,10 @@ export const config = {
   // 应用配置
   app: appConfig,
 
-  // API 配置
+  // API 配置（从统一环境配置读取）
   api: {
-    // 基础路径：统一使用 /api，通过代理转发到后端
-    // 开发环境：Vite 代理 /api 到 http://10.80.9.76:8115
-    // 生产环境：Nginx 代理 /api 到 http://10.0.0.168:8115
-    baseURL: '/api',
-    // 请求超时时间
-    timeout: 30000,
+    baseURL: envConfig.api.baseURL,
+    timeout: envConfig.api.timeout,
   },
 
   // 国际化配置
@@ -67,34 +65,36 @@ export const config = {
     ],
   },
 
-  // 微前端配置
+  // 微前端配置（从配置中心获取）
   microApp: {
     // 是否启用
     enabled: true,
-    // 子应用列表
-    apps: [
-      {
-        name: 'logistics',
-        entry: isDev ? '//localhost:8082' : '/logistics/',
-        activeRule: '/logistics',
-      },
-      {
-        name: 'engineering',
-        entry: isDev ? '//localhost:8085' : '/engineering/',
-        activeRule: '/engineering',
-      },
-      {
-        name: 'quality',
-        entry: isDev ? '//localhost:8083' : '/quality/',
-        activeRule: '/quality',
-      },
-      {
-        name: 'production',
-        entry: isDev ? '//localhost:8084' : '/production/',
-        activeRule: '/production',
-      },
-    ],
+    // 子应用列表（从配置中心动态获取）
+    apps: getAllSubAppConfigs().map(app => ({
+      name: app.id,
+      pathPrefix: app.pathPrefix,
+      subdomain: app.subdomain,
+    })),
   },
+  
+  // 文档配置
+  docs: {
+    url: envConfig.docs.url,
+    port: envConfig.docs.port,
+  },
+  
+  // WebSocket 配置
+  ws: {
+    url: envConfig.ws.url,
+  },
+  
+  // 上传配置
+  upload: {
+    url: envConfig.upload.url,
+  },
+  
+  // 环境信息
+  environment: currentEnvironment,
 };
 
 export default config;

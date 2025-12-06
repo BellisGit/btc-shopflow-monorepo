@@ -1,7 +1,8 @@
 /**
  * BtcForm 渲染逻辑
+ * 完全参考 cool-admin 的实现方式
  */
-import { h, resolveComponent, unref, defineComponent } from 'vue';
+import { h, resolveComponent, unref, defineComponent, computed } from 'vue';
 import {
   ElInput, ElInputNumber, ElSelect, ElOption, ElRadioGroup, ElRadio,
   ElCheckboxGroup, ElCheckbox, ElSwitch, ElDatePicker, ElTimePicker,
@@ -37,278 +38,211 @@ export const componentMap: Record<string, any> = {
   'btc-upload': BtcUpload
 };
 
+// 组件定义缓存
+const componentCache = new Map<string, any>();
+
 export function useFormRenderer() {
-  // 渲染组件 - 返回函数组件而不是 VNode，确保插槽在正确的渲染上下文中被调用
+  // 渲染组件 - 完全参考 cool-admin 的方式
   function renderComponent(item: any, form: any) {
     const componentName = item.component?.name;
     if (!componentName) return null;
 
     const Component = componentMap[componentName] || resolveComponent(componentName);
-    const props = {
-      ...item.component?.props,
-      disabled: item.disabled,
-    };
 
-    // 处理特殊组件 - 返回函数组件
-    if (componentName === 'el-select') {
-      // 使用 defineComponent 定义组件，确保插槽在正确的渲染上下文中被调用
-      const itemRef = item;
-      const formRef = form;
-      const propName = item.prop;
-      
-      return defineComponent({
+    // 使用 item.prop + componentName 作为缓存 key，确保组件定义稳定
+    const cacheKey = `${item.prop || 'unknown'}_${componentName}`;
+
+    // 如果缓存中没有，创建新的组件定义
+    if (!componentCache.has(cacheKey)) {
+      const componentDef = defineComponent({
+        name: `FormItem_${cacheKey}`,
         setup() {
-          return () => {
-            // 在渲染时重新获取所有值，确保响应式追踪
-            const currentItem = unref(itemRef);
-            const currentForm = unref(formRef);
-            const currentOptions = currentItem?.component?.options || [];
-            
-            const slots = currentOptions.length > 0 ? {
-              default: () => {
-                return currentOptions.map((opt: any) => {
-                  const optValue = unref(opt?.value) ?? opt?.value;
-                  const optLabel = unref(opt?.label) ?? opt?.label;
-                  return h(ElOption, { key: optValue, label: optLabel, value: optValue });
-                });
-              }
-            } : undefined;
-            
-            return h(Component, {
-              modelValue: currentForm?.[propName],
-              'onUpdate:modelValue': (val: any) => { 
-                const formValue = unref(formRef);
-                if (formValue) {
-                  formValue[propName] = val;
-                }
-              },
-              ...props
-            }, slots);
-          };
-        }
-      });
-    }
+          // 在 setup 中捕获 form 和 item 的引用
+          const formRef = form;
+          const itemRef = item;
+          const prop = itemRef.prop;
 
-    if (componentName === 'el-radio-group') {
-      // 使用 defineComponent 定义组件
-      const itemRef = item;
-      const formRef = form;
-      const propName = item.prop;
-      
-      return defineComponent({
-        setup() {
-          return () => {
-            const currentItem = unref(itemRef);
-            const currentForm = unref(formRef);
-            const currentOptions = currentItem?.component?.options || [];
-            
-            const slots = currentOptions.length > 0 ? {
-              default: () => {
-                return currentOptions.map((opt: any) => {
-                  const optValue = unref(opt?.value) ?? opt?.value;
-                  const optLabel = unref(opt?.label) ?? opt?.label;
-                  return h(ElRadio, { key: optValue, value: optValue }, () => optLabel);
-                });
-              }
-            } : undefined;
-            
-            return h(Component, {
-              modelValue: currentForm?.[propName],
-              'onUpdate:modelValue': (val: any) => { 
-                const formValue = unref(formRef);
-                if (formValue) {
-                  formValue[propName] = val;
-                }
-              },
-              ...props
-            }, slots);
-          };
-        }
-      });
-    }
-
-    if (componentName === 'el-checkbox-group') {
-      // 使用 defineComponent 定义组件
-      const itemRef = item;
-      const formRef = form;
-      const propName = item.prop;
-      
-      return defineComponent({
-        setup() {
-          return () => {
-            const currentItem = unref(itemRef);
-            const currentForm = unref(formRef);
-            const currentOptions = currentItem?.component?.options || [];
-            
-            const slots = currentOptions.length > 0 ? {
-              default: () => {
-                return currentOptions.map((opt: any) => {
-                  const optValue = unref(opt?.value) ?? opt?.value;
-                  const optLabel = unref(opt?.label) ?? opt?.label;
-                  return h(ElCheckbox, { key: optValue, value: optValue }, () => optLabel);
-                });
-              }
-            } : undefined;
-            
-            return h(Component, {
-              modelValue: currentForm?.[propName],
-              'onUpdate:modelValue': (val: any) => { 
-                const formValue = unref(formRef);
-                if (formValue) {
-                  formValue[propName] = val;
-                }
-              },
-              ...props
-            }, slots);
-          };
-        }
-      });
-    }
-
-    if (componentName === 'el-cascader') {
-      // 返回函数组件
-      return () => {
-        // 处理 slots
-        const slots: any = {};
-        if (item.component?.slots) {
-          Object.keys(item.component.slots).forEach(slotName => {
-            slots[slotName] = item.component.slots[slotName];
-          });
-        }
-
-        // 提取 cascader 特有的 props
-        const cascaderProps = props.cascaderProps || {
-          checkStrictly: props.checkStrictly,
-          emitPath: props.emitPath,
-          multiple: props.multiple,
-          showPrefix: props.showPrefix,
-          showAllLevels: props.showAllLevels
-        };
-
-        return h(Component, {
-          modelValue: form[item.prop],
-          'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
-          options: item.component?.options || [],
-          props: cascaderProps,
-          ...props
-        }, slots);
-      };
-    }
-
-    if (componentName === 'el-tree-select') {
-      // 返回函数组件
-      return () => {
-        return h(Component, {
-          modelValue: form[item.prop],
-          'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
-          data: item.component?.options || [],
-          ...props
-        });
-      };
-    }
-
-    if (componentName === 'btc-cascader') {
-      // 返回函数组件
-      return () => {
-        return h(Component, {
-          modelValue: form[item.prop],
-          'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
-          options: item.component?.options || [],
-          ...props
-        });
-      };
-    }
-
-    if (componentName === 'btc-upload') {
-      // 返回函数组件
-      return () => {
-        // 处理 btc-upload 的特殊逻辑
-        // 尝试从组件实例获取 service（如果通过 provide 提供）
-        let uploadService = props.uploadService;
-        if (!uploadService && typeof window !== 'undefined') {
-          // 尝试从全局获取 service
-          uploadService = (window as any).__BTC_SERVICE__;
-        }
-
-        return h(Component, {
-          modelValue: form[item.prop],
-          'onUpdate:modelValue': (val: any) => { form[item.prop] = val; },
-          prop: item.prop,
-          uploadService,
-          ...props
-        });
-      };
-    }
-
-    if (componentName === 'el-descriptions') {
-      // 处理 el-descriptions 的特殊逻辑
-      // 标记这个组件不需要外层的 label
-      item._hideLabel = true;
-
-      // 返回函数组件，确保插槽在渲染函数内部被调用
-      return () => {
-        const slots = {
-          default: () => {
-            return h(ElDescriptionsItem, {
-              label: item.label,
-              style: { width: '100%' },
-              labelStyle: { width: '25%', textAlign: 'center' },
-              contentStyle: { width: '75%', textAlign: 'center' },
-              labelClassName: 'descriptions-label-center',
-              contentClassName: 'descriptions-content-center',
-              'class': 'descriptions-content-center'
-            }, () => form[item.prop] || '');
-          }
-        };
-
-        return h(Component, {
-          ...props,
-          style: { width: '100%' }
-        }, slots);
-      };
-    }
-
-    // 日期选择器和时间选择器特殊处理 - 完全过滤掉 id 和 name 属性（Element Plus 期望 id 是数组类型）
-    if (componentName === 'el-date-picker' || componentName === 'el-time-picker') {
-      const formRef = form;
-      const propName = item.prop;
-      return () => {
-        const currentForm = unref(formRef);
-        // 完全过滤掉 id 和 name 属性（避免 Element Plus 内部组件类型错误）
-        const { id, name, ...filteredProps } = props;
-        return h(Component, {
-          modelValue: currentForm?.[propName],
-          'onUpdate:modelValue': (val: any) => { 
-            const formValue = unref(formRef);
-            if (formValue) {
-              formValue[propName] = val;
+          // 使用 computed 来追踪 formRef.value，确保响应式追踪正确
+          // 关键：computed 的 getter 会在渲染函数中被调用，Vue 会正确追踪依赖
+          const scope = computed(() => {
+            const value = unref(formRef);
+            if (!value) {
+              return {};
             }
-          },
-          ...filteredProps
-        });
-      };
+            return value;
+          });
+
+          return () => {
+            // 获取表单数据（form 是 ref，需要 unref）- 完全参考 cool-admin
+            // 使用 computed 确保响应式追踪正确
+            const currentScope = scope.value;
+
+            // 确保 scope 存在
+            if (!currentScope) {
+              return null;
+            }
+
+            // 基础 props
+            const props: any = {
+              ...itemRef.component?.props,
+              disabled: itemRef.disabled,
+            };
+
+            // 添加双向绑定（完全参考 cool-admin 的实现）
+            // 关键：currentScope 是 formRef.value 的引用，直接使用它进行读写
+            // 这样既能正确显示值，又能确保表单验证时能读取到正确的值
+            if (currentScope && prop) {
+              // 从 currentScope[prop] 读取值（currentScope 是 formRef.value 的引用）
+              props.modelValue = currentScope[prop];
+              props['onUpdate:modelValue'] = function (val: any) {
+                // 直接修改 currentScope[prop]，就像 cool-admin 一样
+                // currentScope 是 formRef.value 的引用，修改它会触发响应式更新
+                currentScope[prop] = val;
+              };
+            }
+
+            // 处理特殊组件
+            if (componentName === 'el-select') {
+              // 使用 Element Plus 2.10.5+ 的 options prop
+              const currentOptions = Array.isArray(itemRef?.component?.options)
+                ? itemRef.component.options
+                : [];
+
+              return h(Component, {
+                ...props,
+                options: currentOptions,
+                props: itemRef?.component?.optionProps || {
+                  value: 'value',
+                  label: 'label',
+                  disabled: 'disabled'
+                }
+              });
+            }
+
+            if (componentName === 'el-radio-group') {
+              const currentOptions = itemRef?.component?.options || [];
+              const slots = currentOptions.length > 0 ? {
+                default: () => {
+                  return currentOptions.map((opt: any) => {
+                    const optValue = opt?.value ?? opt;
+                    const optLabel = opt?.label ?? optValue;
+                    return h(ElRadio, { key: optValue, value: optValue }, () => optLabel);
+                  });
+                }
+              } : undefined;
+
+              return h(Component, props, slots);
+            }
+
+            if (componentName === 'el-checkbox-group') {
+              const currentOptions = itemRef?.component?.options || [];
+              const slots = currentOptions.length > 0 ? {
+                default: () => {
+                  return currentOptions.map((opt: any) => {
+                    const optValue = opt?.value ?? opt;
+                    const optLabel = opt?.label ?? optValue;
+                    return h(ElCheckbox, { key: optValue, value: optValue }, () => optLabel);
+                  });
+                }
+              } : undefined;
+
+              return h(Component, props, slots);
+            }
+
+            if (componentName === 'el-cascader') {
+              const slots: any = {};
+              if (itemRef.component?.slots) {
+                Object.keys(itemRef.component.slots).forEach(slotName => {
+                  slots[slotName] = itemRef.component.slots[slotName];
+                });
+              }
+
+              const cascaderProps = props.cascaderProps || {
+                checkStrictly: props.checkStrictly,
+                emitPath: props.emitPath,
+                multiple: props.multiple,
+                showPrefix: props.showPrefix,
+                showAllLevels: props.showAllLevels
+              };
+
+              return h(Component, {
+                ...props,
+                options: itemRef.component?.options || [],
+                props: cascaderProps
+              }, slots);
+            }
+
+            if (componentName === 'el-tree-select') {
+              return h(Component, {
+                ...props,
+                data: itemRef.component?.options || []
+              });
+            }
+
+            if (componentName === 'btc-cascader') {
+              return h(Component, {
+                ...props,
+                options: itemRef.component?.options || []
+              });
+            }
+
+            if (componentName === 'btc-upload') {
+              let uploadService = props.uploadService;
+              if (!uploadService && typeof window !== 'undefined') {
+                uploadService = (window as any).__BTC_SERVICE__;
+              }
+
+              return h(Component, {
+                ...props,
+                prop: itemRef.prop,
+                uploadService
+              });
+            }
+
+            if (componentName === 'el-descriptions') {
+              itemRef._hideLabel = true;
+              const slots = {
+                default: () => {
+                  return h(ElDescriptionsItem, {
+                    label: itemRef.label,
+                    style: { width: '100%' },
+                    labelStyle: { width: '25%', textAlign: 'center' },
+                    contentStyle: { width: '75%', textAlign: 'center' },
+                    labelClassName: 'descriptions-label-center',
+                    contentClassName: 'descriptions-content-center',
+                    'class': 'descriptions-content-center'
+                  }, () => {
+                    const currentScope = scope.value;
+                    return currentScope?.[prop] || '';
+                  });
+                }
+              };
+
+              return h(Component, {
+                ...props,
+                style: { width: '100%' }
+              }, slots);
+            }
+
+            // 日期选择器和时间选择器特殊处理 - 过滤掉 id 和 name 属性
+            if (componentName === 'el-date-picker' || componentName === 'el-time-picker') {
+              const { id, name, ...filteredProps } = props;
+              return h(Component, filteredProps);
+            }
+
+            // 默认组件
+            return h(Component, props);
+          };
+        }
+      });
+
+      componentCache.set(cacheKey, componentDef);
     }
 
-    // 默认组件 - 返回函数组件
-    const formRef = form;
-    const propName = item.prop;
-    return () => {
-      const currentForm = unref(formRef);
-      return h(Component, {
-        modelValue: currentForm?.[propName],
-        'onUpdate:modelValue': (val: any) => { 
-          const formValue = unref(formRef);
-          if (formValue) {
-            formValue[propName] = val;
-          }
-        },
-        ...props
-      });
-    };
+    return componentCache.get(cacheKey);
   }
 
   return {
     renderComponent
   };
 }
-

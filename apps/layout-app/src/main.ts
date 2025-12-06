@@ -4,6 +4,8 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import { registerMicroApps, start } from 'qiankun';
 import { getAppConfig } from '@configs/app-env.config';
 import { registerAppEnvAccessors, resolveAppLogoUrl, registerManifestMenusForApp, registerManifestTabsForApp } from '@configs/layout-bridge';
+// 使用相对路径导入，避免 TypeScript 路径解析问题
+import { getAppBySubdomain } from '../../../configs/app-scanner';
 // layout-app 使用最小化配置，不加载 system-app 的路由（避免加载业务逻辑）
 import router from './router';
 import { setupStore, setupUI, setupI18n, setupEps } from '@system/bootstrap/core';
@@ -109,17 +111,8 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     // 关键：在 layout-app 挂载之前，根据当前域名提前注册菜单
     // 这样菜单组件渲染时就能读取到菜单数据
     const hostname = window.location.hostname;
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-      'monitor.bellis.com.cn': 'monitor',
-    };
-
-    const targetApp = subdomainMap[hostname];
+    const appBySubdomain = getAppBySubdomain(hostname);
+    const targetApp = appBySubdomain?.id;
     if (targetApp) {
       if (import.meta.env.DEV) {
         console.log(`[layout-app] 在初始化时提前注册菜单和 Tabs: ${targetApp}`);
@@ -178,24 +171,16 @@ const ensureMicroAppsRegistered = async () => {
     return;
   }
 
-  // 获取当前域名，判断应该加载哪个子应用
+  // 获取当前域名，判断应该加载哪个子应用（使用应用扫描器，顶层已导入）
   const hostname = window.location.hostname;
-  const subdomainMap: Record<string, string> = {
-    'admin.bellis.com.cn': 'admin',
-    'logistics.bellis.com.cn': 'logistics',
-    'quality.bellis.com.cn': 'quality',
-    'production.bellis.com.cn': 'production',
-    'engineering.bellis.com.cn': 'engineering',
-    'finance.bellis.com.cn': 'finance',
-    'monitor.bellis.com.cn': 'monitor',
-  };
 
   // 优先从 URL 参数获取要加载的应用（用于预览环境测试）
   const urlParams = new URLSearchParams(window.location.search);
   const appFromUrl = urlParams.get('app');
 
   // 从域名映射获取，如果不在生产环境域名中，则使用路径前缀判断（和汉堡菜单一样）
-  let targetApp = subdomainMap[hostname];
+  const appBySubdomain = getAppBySubdomain(hostname);
+  let targetApp = appBySubdomain?.id;
 
   if (!targetApp) {
     // 优先从 URL 参数获取要加载的应用（用于预览环境测试）
@@ -269,7 +254,7 @@ const ensureMicroAppsRegistered = async () => {
   // 开发/预览环境：注册所有子应用，使用动态 activeRule 根据路径判断应该激活哪个应用
   const subApps: any[] = [];
 
-  if (targetApp && (import.meta.env.PROD || subdomainMap[hostname])) {
+  if (targetApp && (import.meta.env.PROD || appBySubdomain)) {
     // 生产环境或子域名环境：只注册当前域名对应的子应用
     subApps.push({
       name: `${targetApp}-app`,

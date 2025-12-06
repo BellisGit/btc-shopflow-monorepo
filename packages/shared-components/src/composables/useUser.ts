@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { storage } from '@btc/shared-utils';
 
 /**
  * 用户信息接口
@@ -23,24 +24,14 @@ const userInfo = ref<UserInfo | null>(null);
  */
 export function useUser() {
   /**
-   * 获取用户信息（从统一的 btc_user 中读取，不创建 user key）
+   * 获取用户信息（从 Cookie 中读取，不再使用 localStorage）
    */
   const getUserInfo = (): UserInfo | null => {
     try {
-      // 优先从统一的 btc_user 中读取
-      const userStr = localStorage.getItem('btc_user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
+      // 从 Cookie 读取（通过 storage.get('user')）
+      const user = storage.get<UserInfo>('user');
+      if (user) {
         userInfo.value = user;
-        return user;
-      }
-      // 向后兼容：如果 btc_user 不存在，尝试读取旧的 user key（但不创建新key）
-      const oldUserStr = localStorage.getItem('user');
-      if (oldUserStr) {
-        const user = JSON.parse(oldUserStr);
-        userInfo.value = user;
-        // 迁移到统一存储（不创建新key）
-        localStorage.setItem('btc_user', oldUserStr);
         return user;
       }
     } catch (err) {
@@ -50,12 +41,12 @@ export function useUser() {
   };
 
   /**
-   * 设置用户信息（存储到统一的 btc_user 中，不创建 user key）
+   * 设置用户信息（存储到 Cookie，不再使用 localStorage）
    */
   const setUserInfo = (user: UserInfo) => {
     try {
-      // 只存储在统一的 btc_user 中，不创建 user key
-      localStorage.setItem('btc_user', JSON.stringify(user));
+      // 使用 storage.set('user', ...) 存储到 Cookie
+      storage.set('user', user);
       userInfo.value = user;
     } catch (err) {
       console.error('设置用户信息失败:', err);
@@ -63,11 +54,18 @@ export function useUser() {
   };
 
   /**
-   * 清除用户信息（只清除统一的 btc_user，不清除旧的 user key）
+   * 清除用户信息（清除 Cookie 和 localStorage 中的旧数据）
    */
   const clearUserInfo = () => {
-    // 只删除统一的 btc_user，不清除旧的 user key（用户自己清理）
-    localStorage.removeItem('btc_user');
+    // 使用 storage.remove('user') 清除 Cookie
+    storage.remove('user');
+    // 清理旧的 localStorage 数据（向后兼容）
+    try {
+      localStorage.removeItem('btc_user');
+      localStorage.removeItem('user');
+    } catch {
+      // 忽略错误
+    }
     userInfo.value = null;
   };
 
