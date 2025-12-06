@@ -2,9 +2,6 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
 
-// 判断是否独立运行
-const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
-
 // 基础路由（页面组件）
 const pageRoutes: RouteRecordRaw[] = [
   {
@@ -197,16 +194,67 @@ const pageRoutes: RouteRecordRaw[] = [
   },
 ];
 
-// 根据运行模式返回不同的路由配置
-// 独立运行时：使用 AppLayout 包裹所有路由
-// qiankun 模式：直接返回页面路由（由主应用提供 Layout）
-export const adminRoutes: RouteRecordRaw[] = isStandalone
-  ? [
+/**
+ * 获取路由配置
+ * - qiankun 模式：返回页面路由和公开路由（登录页等，由主应用提供 Layout）
+ * - 独立运行时：使用 AppLayout 包裹所有路由（与财务域保持一致）
+ */
+export const getAdminRoutes = (): RouteRecordRaw[] => {
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  
+  // 公开路由（登录页、忘记密码页、注册页）- 不需要 Layout
+  const publicRoutes: RouteRecordRaw[] = [
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@auth/login/index.vue'),
+      meta: {
+        public: true, // 公开页面，不需要认证
+        noLayout: true, // 不使用 Layout 布局
+        titleKey: 'auth.login'
+      }
+    },
+    {
+      path: '/forget-password',
+      name: 'ForgetPassword',
+      component: () => import('@auth/forget-password/index.vue'),
+      meta: {
+        public: true, // 公开页面，不需要认证
+        noLayout: true, // 不使用 Layout 布局
+        titleKey: 'auth.login.password.forgot'
+      }
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('@auth/register/index.vue'),
+      meta: {
+        public: true, // 公开页面，不需要认证
+        noLayout: true, // 不使用 Layout 布局
+        titleKey: 'auth.register'
+      }
+    },
+  ];
+  
+  if (isStandalone) {
+    // 独立运行时：使用 AppLayout 包裹所有路由
+    return [
+      ...publicRoutes, // 公开路由放在最前面，不需要 Layout
       {
         path: '/',
         component: AppLayout, // Use AppLayout from shared package
         children: pageRoutes,
       },
-    ]
-  : pageRoutes;
+    ];
+  } else {
+    // qiankun 模式：返回页面路由和公开路由（由主应用提供 Layout）
+    return [
+      ...publicRoutes, // 公开路由放在最前面
+      ...pageRoutes, // 业务路由
+    ];
+  }
+};
+
+// 为了向后兼容，保留 adminRoutes 导出（使用函数动态获取）
+export const adminRoutes = getAdminRoutes();
 

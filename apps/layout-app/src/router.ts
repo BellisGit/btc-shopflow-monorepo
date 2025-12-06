@@ -30,6 +30,42 @@ const router = createRouter({
   routes,
 });
 
+// 监听路由变化，只在跨应用切换时触发 qiankun 重新匹配
+// 关键：同一应用内的路由切换不应该触发 qiankun 重新匹配，避免误卸载应用
+
+// 根据路径获取应用前缀
+const getAppPrefix = (pathname: string): string => {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/logistics')) return 'logistics';
+  if (pathname.startsWith('/engineering')) return 'engineering';
+  if (pathname.startsWith('/quality')) return 'quality';
+  if (pathname.startsWith('/production')) return 'production';
+  if (pathname.startsWith('/finance')) return 'finance';
+  if (pathname.startsWith('/monitor')) return 'monitor';
+  return 'system';
+};
+
+// 初始化：获取当前路径的应用前缀
+let previousAppPrefix = getAppPrefix(window.location.pathname);
+
+router.afterEach((to) => {
+  const currentAppPrefix = getAppPrefix(to.path);
+  
+  // 只在跨应用切换时触发 qiankun 重新匹配
+  if (previousAppPrefix && previousAppPrefix !== currentAppPrefix) {
+    // 使用 nextTick 确保路由切换完成后再触发
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        // 触发 popstate 事件，让 qiankun 重新匹配路由
+        // qiankun 内部使用 single-spa，会监听 popstate 事件来重新匹配应用
+        window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+      });
+    });
+  }
+  
+  previousAppPrefix = currentAppPrefix;
+});
+
 // layout-app 不需要任何路由守卫
 // 所有业务逻辑由子应用处理
 

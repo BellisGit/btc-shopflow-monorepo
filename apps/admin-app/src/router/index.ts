@@ -5,7 +5,7 @@ import {
 } from 'vue-router';
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { adminRoutes } from './routes/admin';
+import { getAdminRoutes } from './routes/admin';
 import { getCookie } from '../utils/cookie';
 import { appStorage } from '../utils/app-storage';
 
@@ -36,12 +36,14 @@ function normalizePath(path: string): string {
 }
 
 export const createAdminRouter = (): Router => {
+  // 在创建路由时动态获取路由配置，确保 isStandalone 检测正确
+  const routes = getAdminRoutes();
   const router = createRouter({
     history: qiankunWindow.__POWERED_BY_QIANKUN__
       ? createMemoryHistory()
       : createWebHistory(),
     strict: true,
-    routes: adminRoutes,
+    routes,
   });
 
   // 检查用户是否已认证（独立运行时使用）
@@ -114,7 +116,8 @@ export const createAdminRouter = (): Router => {
       }
 
       // 如果已认证且访问登录页，重定向到首页
-      if (to.path === '/login' && isAuthenticated()) {
+      // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
+      if (to.path === '/login' && isAuthenticated() && !to.query.logout) {
         const redirect = (to.query.redirect as string) || '/';
         const redirectPath = redirect.split('?')[0];
         next(redirectPath);
@@ -132,4 +135,5 @@ export const createAdminRouter = (): Router => {
   return router;
 };
 
-export { adminRoutes };
+// 导出路由配置获取函数和路由常量
+export { getAdminRoutes, adminRoutes } from './routes/admin';

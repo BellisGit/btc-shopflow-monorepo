@@ -76,6 +76,7 @@ export default defineConfig({
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
       '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      '@btc-assets': resolve(__dirname, '../../packages/shared-components/src/assets'), // 添加 @btc-assets 别名，用于图片和图标资源导入
     },
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],
   },
@@ -117,8 +118,12 @@ export default defineConfig({
     }),
     createAutoImportConfig(),
     createComponentsConfig({ includeShared: true }),
+    // qiankun 插件（最后执行，不干扰其他插件的 chunk 生成）
     qiankun('layout', {
-      useDevMode: process.env.NODE_ENV === 'development',
+      // 关键：使用 useDevMode: true，与 system-app 和 admin-app 保持一致
+      // 虽然理论上生产环境应该关闭，但实际测试发现 useDevMode: false 会导致入口文件及其依赖被打包到 index 中
+      // 使用 useDevMode: true 可以确保代码正确拆分
+      useDevMode: true,
     }),
     // 确保构建后的 HTML 中的 script 标签有 type="module"（用于 qiankun 加载）
     {
@@ -183,96 +188,47 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2018',
-    cssTarget: 'chrome61',
+    target: 'es2020',
     sourcemap: false,
+    cssCodeSplit: false, // 禁用 CSS 代码分割，合并所有 CSS 到一个文件（与 system-app 和 admin-app 一致）
+    cssMinify: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        // 禁用可能导致初始化顺序问题的压缩选项
+        reduce_vars: false, // 禁用变量合并，避免 TDZ 问题
+        reduce_funcs: false, // 禁用函数合并，避免依赖问题
+        passes: 1, // 减少压缩次数，避免过度优化
+        // 禁用可能导致依赖问题的优化
+        collapse_vars: false, // 禁用变量折叠
+        dead_code: false, // 禁用死代码消除（可能误删）
+      },
+      mangle: {
+        // 禁用函数名压缩，避免压缩后找不到函数
+        keep_fnames: true, // 保留函数名
+        keep_classnames: true, // 保留类名
+      },
+      format: {
+        comments: false,
+      },
+    },
     // 禁用内联，确保资源文件独立
     assetsInlineLimit: 0,
-    cssCodeSplit: true,
-    // 提高 chunk 大小警告阈值，避免不必要的警告
-    chunkSizeWarningLimit: 2000,
+    outDir: 'dist',
+    assetsDir: 'assets',
     // 构建前清空输出目录，确保不会残留旧文件
     emptyOutDir: true,
     rollupOptions: {
-      output: {
-        // 使用 ES 模块格式，与其他应用保持一致，便于 qiankun 加载
-        format: 'es',
-        inlineDynamicImports: false,
-        manualChunks(id) {
-          // 重要：Element Plus 的匹配必须在最前面
-          if (id.includes('element-plus') || id.includes('@element-plus')) {
-            return 'element-plus';
-          }
-
-          // 处理 @btc/shared-components/charts/utils/cleanup
-          // 确保动态导入的 cleanup 工具与静态导入的 shared-components 放在同一个 chunk 中
-          if (id.includes('@btc/shared-components/charts/utils/cleanup') ||
-              id.includes('packages/shared-components/src/charts/utils/cleanup')) {
-            return 'btc-components';
-          }
-
-          // 处理 system-app 的代码（通过别名 @system 引用）
-          // 确保被动态导入和静态导入的模块在同一 chunk
-          if (id.includes('system-app/src/') || id.includes('@system') ||
-              (id.includes('apps/system-app') && id.includes('src/'))) {
-            if (id.includes('store/tabRegistry') ||
-                id.includes('store/process') ||
-                id.includes('store/menuRegistry') ||
-                id.includes('composables/useUser') ||
-                id.includes('services/eps') ||
-                id.includes('micro/manifests') ||
-                id.includes('utils/loadingManager')) {
-              return 'app-src';
-            }
-            return 'app-src';
-          }
-
-          // 处理 @configs 包（关键配置和工具函数）
-          if (id.includes('@configs')) {
-            return 'app-src';
-          }
-
-          // 处理业务代码分割（必须在 node_modules 之前，确保优先级）
-          if (id.includes('src/') && !id.includes('node_modules') && !id.includes('system-app')) {
-            // 关键：所有 src/ 代码必须合并到 app-src，确保 main.ts 和初始化相关的代码在一起
-            return 'app-src';
-          }
-
-          // 处理 @btc/shared- 包（共享包）
-          if (id.includes('@btc/shared-')) {
-            if (id.includes('@btc/shared-components')) {
-              return 'btc-components';
-            }
-            return 'btc-shared';
-          }
-
-          // 处理 node_modules 依赖，进行代码分割
-          if (id.includes('node_modules')) {
-            // 分割 Vue 相关依赖
-            if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n') && !id.includes('element-plus')) {
-              return 'vue-core';
-            }
-            if (id.includes('vue-router')) {
-              return 'vue-router';
-            }
-            // 分割 Pinia
-            if (id.includes('pinia')) {
-              return 'pinia';
-            }
-            // 其他 vendor 依赖
-            return 'vendor';
-          }
-
-          return undefined;
-        },
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-      },
+      // 强制按依赖顺序生成chunk，避免加载顺序混乱
+      preserveEntrySignatures: 'strict',
       onwarn(warning, warn) {
         // 过滤动态导入和静态导入冲突的警告，因为我们已经在 manualChunks 中确保它们在同一 chunk
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
-            (warning.message && warning.message.includes('dynamically imported') && warning.message.includes('statically imported'))) {
+            (warning.message && typeof warning.message === 'string' &&
+             warning.message.includes('dynamically imported') &&
+             warning.message.includes('statically imported'))) {
           return;
         }
         // 过滤空 chunk 警告（某些 chunk 可能因为 tree-shaking 而变空，这是正常的）
@@ -280,6 +236,87 @@ export default defineConfig({
           return;
         }
         warn(warning);
+      },
+      output: {
+        // 使用 ES 模块格式，与其他应用保持一致，便于 qiankun 加载
+        format: 'esm',
+        // 平衡方案：只拆分真正独立的大库，业务代码和 Vue 生态合并
+        // 这样可以避免初始化顺序问题，同时控制文件大小
+        inlineDynamicImports: false,
+        manualChunks(id) {
+          // 0. EPS 服务单独打包（所有应用共享，必须在最前面）
+          if (id.includes('virtual:eps') ||
+              id.includes('\\0virtual:eps') ||
+              id.includes('services/eps') ||
+              id.includes('services\\eps')) {
+            return 'eps-service';
+          }
+
+          // 0.5. 菜单相关代码单独打包（确保菜单代码独立，便于查找和加载）
+          // 包括：菜单注册表、菜单 manifest 数据、菜单注册函数
+          if (id.includes('packages/subapp-manifests') ||
+              id.includes('packages/shared-components/src/store/menuRegistry') ||
+              id.includes('configs/layout-bridge') ||
+              id.includes('@btc/subapp-manifests') ||
+              id.includes('@configs/layout-bridge')) {
+            return 'menu-registry';
+          }
+
+          // 1. 独立大库：ECharts（完全独立，无依赖问题）
+          if (id.includes('node_modules/echarts') ||
+              id.includes('node_modules/zrender') ||
+              id.includes('node_modules/vue-echarts')) {
+            return 'echarts-vendor';
+          }
+
+          // 2. 其他独立大库（完全独立）
+          if (id.includes('node_modules/monaco-editor')) {
+            return 'lib-monaco';
+          }
+          if (id.includes('node_modules/three')) {
+            return 'lib-three';
+          }
+
+          // 3. Vue 生态库 + 所有依赖 Vue 的第三方库 + 共享组件库
+          // 原因：这些库之间有强依赖关系，拆分会导致初始化顺序问题
+          // 解决方案：合并到一个 vendor chunk，让 Rollup 自动处理内部依赖顺序
+          if (id.includes('node_modules/vue') ||
+              id.includes('node_modules/vue-router') ||
+              id.includes('node_modules/element-plus') ||
+              id.includes('node_modules/pinia') ||
+              id.includes('node_modules/@vueuse') ||
+              id.includes('node_modules/@element-plus') ||
+              id.includes('node_modules/dayjs') ||
+              id.includes('node_modules/lodash') || // 匹配 lodash 和 lodash-es
+              id.includes('node_modules/@vue') ||
+              id.includes('packages/shared-components') ||
+              id.includes('packages/shared-core') ||
+              id.includes('packages/shared-utils')) {
+            return 'vendor';
+          }
+
+          // 4. 所有其他业务代码合并到主文件
+          // 原因：业务代码之间有强依赖，拆分会导致初始化顺序问题
+          // 解决方案：合并到一起，让 Rollup 自动处理内部依赖顺序
+          return undefined; // 返回 undefined 表示合并到入口文件
+        },
+        preserveModules: false,
+        // 确保模块按正确的顺序输出，避免初始化顺序问题
+        generatedCode: {
+          constBindings: false, // 不使用 const，避免 TDZ 问题
+        },
+        // 使用 Rollup 的 [hash] 占位符（基于内容计算，类似 Webpack 的 contenthash）
+        // 注意：Rollup 不支持 [contenthash:8] 或长度限制，只能使用 [hash]
+        // Rollup 的 [hash] 就是基于文件内容计算的，只有内容变化时哈希才变
+        // 关键：将所有资源文件放到 assets/layout/ 子目录，便于 Nginx 区分 layout-app 和子应用的资源
+        chunkFileNames: 'assets/layout/[name]-[hash].js',
+        entryFileNames: 'assets/layout/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.css')) {
+            return 'assets/layout/[name]-[hash].css';
+          }
+          return 'assets/layout/[name]-[hash].[ext]';
+        },
       },
     },
   },

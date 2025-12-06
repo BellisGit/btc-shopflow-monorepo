@@ -106,7 +106,7 @@ import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
-import AppSkeleton from '@/components/AppSkeleton.vue';
+// AppSkeleton 从共享组件库自动导入（通过 unplugin-vue-components）
 import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';

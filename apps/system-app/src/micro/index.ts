@@ -1095,11 +1095,24 @@ export function setupQiankun() {
                 const container = document.querySelector('#subapp-viewport') as HTMLElement;
 
             if (container && container.isConnected) {
-              // 容器存在且已挂载，立即处理
-                  container.style.setProperty('display', 'flex', 'important');
-                  container.style.setProperty('visibility', 'visible', 'important');
-                  container.style.setProperty('opacity', '1', 'important');
-                  container.setAttribute('data-qiankun-loading', 'true');
+              // 关键：使用 requestAnimationFrame 延迟 DOM 操作，避免与 Vue 的更新周期冲突
+              // 先触发事件，让 Layout 组件先更新状态，然后再操作 DOM
+              window.dispatchEvent(new CustomEvent('qiankun:before-load', {
+                detail: { appName: app.name }
+              }));
+
+              // 等待 Vue 更新完成后再操作 DOM
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  // 容器存在且已挂载，立即处理
+                  if (container && container.isConnected) {
+                    container.style.setProperty('display', 'flex', 'important');
+                    container.style.setProperty('visibility', 'visible', 'important');
+                    container.style.setProperty('opacity', '1', 'important');
+                    container.setAttribute('data-qiankun-loading', 'true');
+                  }
+                });
+              });
 
               // 清理其他应用的 tabs/menus（快速操作，无阻塞）
               // 动态导入避免循环依赖
@@ -1112,13 +1125,7 @@ export function setupQiankun() {
               await registerManifestMenusForApp(app.name);
               await registerManifestTabsForApp(app.name);
 
-              // 先触发事件，确保 Layout 组件的 isQiankunLoading 状态被更新
-              // 这样 shouldShowSubAppViewport 会返回 true，容器会显示，骨架屏会渲染
-                  window.dispatchEvent(new CustomEvent('qiankun:before-load', {
-                    detail: { appName: app.name }
-                  }));
-
-              // 等待 Vue 渲染完成后再调用 startLoading，确保骨架屏已经渲染到 DOM 中
+              // 等待 Vue 渲染完成后再 resolve，确保骨架屏已经渲染到 DOM 中
               // 使用 requestAnimationFrame 确保 DOM 更新完成
               requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
@@ -1727,6 +1734,45 @@ export function setupQiankun() {
 
         let processedTpl = tpl;
 
+        // 关键：先清理所有旧 chunk 引用（在修复路径之前）
+        // 这些是旧的 chunk hash，如果检测到这些引用，说明需要删除
+        const OLD_REF_PATTERN = /B2xaJ9jT|CQjIfk82|Ct0QBumG|B9_7Pxt3|C3806ap7|D-vcpc3r|COBg3Fmo|C-4vWSys|u6iSJWLT|Bob15k_M|DXiZfgDR|CK3kLuZf|B6Y4X6Zv|vga9bYFB|C5YyqyGj|5K5tXpWB|element-plus-CQjIfk82|vue-core-Ct0QBumG|vendor-B2xaJ9jT|vue-router-B9_7Pxt3|app-src-C3806ap7|app-src-COBg3Fmo|app-src-vga9bYFB|index-D-vcpc3r|index-C-4vWSys|index-u6iSJWLT|index-C5YyqyGj|index-5K5tXpWB/g;
+        
+        // 检查是否包含旧引用
+        if (OLD_REF_PATTERN.test(processedTpl)) {
+          OLD_REF_PATTERN.lastIndex = 0; // 重置正则表达式
+          const oldRefMatches = processedTpl.match(OLD_REF_PATTERN);
+          if (oldRefMatches && oldRefMatches.length > 0) {
+            console.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
+            
+            // 删除包含旧引用的 script 标签（更宽泛的匹配，包括所有可能的格式）
+            const oldHashList = OLD_REF_PATTERN.source.replace(/^\/|\/[gimuy]*$/g, '').split('|');
+            // 匹配所有包含旧 hash 的 script 标签，无论路径格式如何
+            const oldScriptPattern = new RegExp(`<script[^>]*src=["'][^"']*(${oldHashList.join('|')})[^"']*["'][^>]*>`, 'gi');
+            processedTpl = processedTpl.replace(oldScriptPattern, '');
+            
+            // 删除包含旧引用的 link 标签（modulepreload 和 stylesheet）
+            // 匹配所有包含旧 hash 的 link 标签，无论路径格式如何
+            const oldLinkPattern = new RegExp(`<link[^>]*(?:href|src)=["'][^"']*(${oldHashList.join('|')})[^"']*["'][^>]*>`, 'gi');
+            processedTpl = processedTpl.replace(oldLinkPattern, '');
+            
+            // 删除包含旧引用的 import() 动态导入（在 HTML 中）
+            const oldImportPattern = new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi');
+            processedTpl = processedTpl.replace(oldImportPattern, 'Promise.resolve()');
+            
+            // 额外清理：删除内联脚本中的旧引用（如果 HTML 中包含内联脚本）
+            // 匹配内联脚本中的动态导入：import('/assets/app-src-vga9bYFB.js')
+            const inlineScriptPattern = new RegExp(`(<script[^>]*>)([\\s\\S]*?)(import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)[\\s\\S]*?)(</script>)`, 'gi');
+            processedTpl = processedTpl.replace(inlineScriptPattern, (match, openTag, before, importStmt, oldHash, closeTag) => {
+              // 只删除包含旧引用的 import() 语句，保留其他代码
+              const cleanedImport = importStmt.replace(new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi'), 'Promise.resolve()');
+              return openTag + before + cleanedImport + closeTag;
+            });
+            
+            console.log(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
+          }
+        }
+
         // 尝试从 entry 参数获取，如果没有则从 entryMap 中查找匹配的应用
         let baseUrl = '';
         let matchedAppName: string | null = null;
@@ -2254,10 +2300,25 @@ export function setupQiankun() {
  * 监听子应用就绪事件
  */
 export function listenSubAppReady() {
-  window.addEventListener('subapp:ready', async () => {
+  window.addEventListener('subapp:ready', async (event: any) => {
+    const appName = event.detail?.name;
+    // console.log(`[qiankun] 子应用 ${appName} subapp:ready 事件触发`);
+    
     // 动态导入避免循环依赖
-    const { finishLoading } = await import('../utils/loadingManager');
-    finishLoading();
+    // const { finishLoading } = await import('../utils/loadingManager');
+    // finishLoading(); // 注释掉 loading
+    
+    // 关键：清除 loading 属性，确保 Layout 组件能正确更新状态
+    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (container && container.hasAttribute('data-qiankun-loading')) {
+      container.removeAttribute('data-qiankun-loading');
+      // console.log(`[qiankun] 子应用 ${appName} subapp:ready 清除 loading 属性`);
+    }
+    
+    // 触发 after-mount 事件，确保 Layout 组件更新状态
+    window.dispatchEvent(new CustomEvent('qiankun:after-mount', {
+      detail: { appName }
+    }));
   });
 }
 

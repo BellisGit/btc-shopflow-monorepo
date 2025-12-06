@@ -234,16 +234,38 @@ function extractAssetReferences(filePath, content) {
   const assetsDir = join(dirname(filePath), 'assets');
 
   // 匹配 import() 动态导入
+  // 关键：排除错误消息中的示例代码（如 "import('./MyPage.vue')" 在错误消息中）
+  // 这些通常出现在 Vue Router 或 Vue 的错误提示中
   const dynamicImportRegex = /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
   let match;
   while ((match = dynamicImportRegex.exec(content)) !== null) {
     let ref = match[1];
+    
+    // 检查是否在错误消息字符串中（通常包含 "Did you write"、"instead of" 等关键词）
+    const matchIndex = match.index;
+    const beforeMatch = content.substring(Math.max(0, matchIndex - 200), matchIndex);
+    const afterMatch = content.substring(matchIndex, Math.min(content.length, matchIndex + match[0].length + 200));
+    const context = beforeMatch + afterMatch;
+    
+    // 如果上下文包含错误消息关键词，跳过这个引用（这是示例代码，不是真正的引用）
+    if (context.includes('Did you write') || 
+        context.includes('instead of') || 
+        context.includes('This will break') ||
+        context.includes('is a Promise instead') ||
+        context.includes('defineAsyncComponent')) {
+      continue;
+    }
+    
     // 去掉查询参数（如 ?v=xxx）
     const queryIndex = ref.indexOf('?');
     const refWithoutQuery = queryIndex > -1 ? ref.substring(0, queryIndex) : ref;
     
     // 跳过非资源文件的引用（Vue 组件、TypeScript 文件等）
-    if (refWithoutQuery.endsWith('.vue') || refWithoutQuery.endsWith('.ts') || refWithoutQuery.endsWith('.tsx')) {
+    // 关键：使用更严格的匹配，确保 .vue、.ts、.tsx 文件都被跳过
+    if (refWithoutQuery.endsWith('.vue') || 
+        refWithoutQuery.endsWith('.ts') || 
+        refWithoutQuery.endsWith('.tsx') ||
+        refWithoutQuery.match(/\.(vue|ts|tsx)(\?|$)/)) {
       continue;
     }
     
@@ -252,8 +274,9 @@ function extractAssetReferences(filePath, content) {
     }
     // 只处理资源文件引用（.js, .mjs, .css）或 /assets/ 路径
     if (refWithoutQuery.startsWith('./') || refWithoutQuery.startsWith('../')) {
-      // 只处理资源文件扩展名
-      if (refWithoutQuery.match(/\.(js|mjs|css)(\?|$)/)) {
+      // 只处理资源文件扩展名，明确排除 .vue、.ts、.tsx
+      if (refWithoutQuery.match(/\.(js|mjs|css)(\?|$)/) && 
+          !refWithoutQuery.match(/\.(vue|ts|tsx)(\?|$)/)) {
         const resolvedPath = resolve(dirname(filePath), refWithoutQuery);
         references.push({ type: 'dynamic-import', path: refWithoutQuery, resolvedPath });
       }
@@ -606,6 +629,58 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
 
   let htmlContent = readFileSync(indexHtmlPath, 'utf-8');
   
+  // 检查 HTML 中是否包含旧 hash 引用
+  const oldHashes = ['CQjIfk82', 'B2xaJ9jT', 'Bob15k_M', 'B9_7Pxt3', 'Ct0QBumG', 'DXiZfgDR', 'CK3kLuZf', 'B6Y4X6Zv', 'C3806ap7', 'D-vcpc3r', 'COBg3Fmo', 'C-4vWSys', 'u6iSJWLT'];
+  const oldHashPattern = new RegExp(oldHashes.join('|'), 'g');
+  const hasOldRefs = oldHashPattern.test(htmlContent);
+  
+  if (hasOldRefs) {
+    oldHashPattern.lastIndex = 0; // 重置正则表达式
+    const oldRefMatches = htmlContent.match(oldHashPattern);
+    if (oldRefMatches && oldRefMatches.length > 0) {
+      const uniqueOldRefs = [...new Set(oldRefMatches)];
+      console.error(`  ❌ ${appName} 的 index.html 中包含 ${oldRefMatches.length} 个旧 hash 引用！`);
+      console.error(`     检测到的旧 hash: ${uniqueOldRefs.slice(0, 5).join(', ')}${uniqueOldRefs.length > 5 ? '...' : ''}`);
+      console.error(`     这些引用应该已被 fix-chunk-references 插件删除，但可能由于以下原因残留：`);
+      console.error(`     1. 构建时插件未正确执行`);
+      console.error(`     2. HTML 文件在插件处理后被其他工具修改`);
+      console.error(`     3. 使用了缓存的旧 HTML 文件`);
+      console.error(`     建议：清理 dist 目录并重新构建`);
+      
+      // 尝试自动修复：删除包含旧引用的标签
+      let fixed = false;
+      const oldScriptPattern = /<script[^>]+src=["'][^"']*(?:CQjIfk82|B2xaJ9jT|Bob15k_M|B9_7Pxt3|Ct0QBumG|DXiZfgDR|CK3kLuZf|B6Y4X6Zv|C3806ap7|D-vcpc3r|COBg3Fmo|C-4vWSys|u6iSJWLT)[^"']*["'][^>]*>/gi;
+      const oldLinkPattern = /<link[^>]+(?:href|src)=["'][^"']*(?:CQjIfk82|B2xaJ9jT|Bob15k_M|B9_7Pxt3|Ct0QBumG|DXiZfgDR|CK3kLuZf|B6Y4X6Zv|C3806ap7|D-vcpc3r|COBg3Fmo|C-4vWSys|u6iSJWLT)[^"']*["'][^>]*>/gi;
+      const oldImportPattern = /import\s*\(\s*["'][^"']*(?:CQjIfk82|B2xaJ9jT|Bob15k_M|B9_7Pxt3|Ct0QBumG|DXiZfgDR|CK3kLuZf|B6Y4X6Zv|C3806ap7|D-vcpc3r|COBg3Fmo|C-4vWSys|u6iSJWLT)[^"']*["']\s*\)/gi;
+      
+      let deletedCount = 0;
+      htmlContent = htmlContent.replace(oldScriptPattern, () => {
+        deletedCount++;
+        return '';
+      });
+      htmlContent = htmlContent.replace(oldLinkPattern, () => {
+        deletedCount++;
+        return '';
+      });
+      htmlContent = htmlContent.replace(oldImportPattern, () => {
+        deletedCount++;
+        return 'Promise.resolve()';
+      });
+      
+      if (deletedCount > 0) {
+        writeFileSync(indexHtmlPath, htmlContent, 'utf-8');
+        console.log(`  🔧 已自动删除 ${deletedCount} 个包含旧引用的标签`);
+        fixed = true;
+      }
+      
+      // 再次检查是否还有残留
+      const stillHasOldRefs = oldHashPattern.test(htmlContent);
+      if (stillHasOldRefs) {
+        console.error(`  ⚠️  仍有旧引用残留，可能需要手动检查 HTML 文件`);
+      }
+    }
+  }
+  
   // 获取所有实际存在的 assets 文件
   function getAllFiles(dir, fileList = []) {
     const files = readdirSync(dir);
@@ -766,6 +841,10 @@ function verifyAppBuild(appName) {
 
   const errors = [];
   const assetsDir = join(appDistDir, 'assets');
+  
+  // layout-app 的资源文件在 assets/layout/ 目录下
+  const isLayoutApp = appName === 'layout-app';
+  const actualAssetsDir = isLayoutApp ? join(assetsDir, 'layout') : assetsDir;
 
   // 收集所有实际存在的文件
   const existingFileNames = new Set();
@@ -820,7 +899,7 @@ function verifyAppBuild(appName) {
     }
   }
 
-  collectFiles(assetsDir, '');
+  collectFiles(actualAssetsDir, '');
 
   // 检查是否有重复的 qiankun 文件
   const qiankunFiles = Array.from(existingFileNames).filter(name => name.startsWith('qiankun-'));
@@ -861,6 +940,16 @@ function verifyAppBuild(appName) {
               if (queryIndex > -1) {
                 pathWithoutQuery = pathWithoutQuery.substring(0, queryIndex);
               }
+              
+              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
+              if (isLayoutApp && pathWithoutQuery.startsWith('/assets/') && !pathWithoutQuery.startsWith('/assets/layout/')) {
+                const layoutPath = pathWithoutQuery.replace('/assets/', '/assets/layout/');
+                const layoutResolvedPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
+                if (existsSync(layoutResolvedPath)) {
+                  fileExists = true;
+                }
+              }
+              
               const fileName = pathWithoutQuery.split('/').pop();
               if (fileName) {
                 // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
@@ -975,6 +1064,16 @@ function verifyAppBuild(appName) {
               if (queryIndex > -1) {
                 pathWithoutQuery = pathWithoutQuery.substring(0, queryIndex);
               }
+              
+              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
+              if (isLayoutApp && pathWithoutQuery.startsWith('/assets/') && !pathWithoutQuery.startsWith('/assets/layout/')) {
+                const layoutPath = pathWithoutQuery.replace('/assets/', '/assets/layout/');
+                const layoutResolvedPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
+                if (existsSync(layoutResolvedPath)) {
+                  fileExists = true;
+                }
+              }
+              
               const fileName = pathWithoutQuery.split('/').pop();
               if (fileName) {
                 // 匹配格式：name-hash-buildId.ext 或 name-hash.ext

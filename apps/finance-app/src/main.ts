@@ -62,25 +62,44 @@ renderWithQiankun({
 export default { bootstrap, mount, unmount };
 
 // 独立运行（非 qiankun 环境）
+// 注意：与 admin-app 和 logistics-app 保持一致
 if (shouldRunStandalone()) {
-  // 如果需要加载 layout-app，先等待初始化完成，然后再渲染 finance-app
-  (async () => {
-    try {
-      // 检查是否需要加载 layout-app
-      const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
-      if (shouldLoadLayout) {
-        const { initLayoutApp } = await import('./utils/init-layout-app');
-        // 等待 layout-app 初始化完成
-        await initLayoutApp();
-      }
-    } catch (error) {
-      console.error('[finance-app] 初始化 layout-app 失败:', error);
-      // 即使 layout-app 初始化失败，也继续渲染 finance-app
-    }
-    
-    // layout-app 初始化完成后再渲染 finance-app
-    await render();
-  })().catch((error) => {
-    console.error('[finance-app] 独立运行失败:', error);
-  });
+  // 检查是否需要加载 layout-app
+  const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+
+  if (shouldLoadLayout) {
+    // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
+    import('./utils/init-layout-app').then(({ initLayoutApp }) => {
+      initLayoutApp()
+        .then(() => {
+          // layout-app 加载成功，检查是否需要独立渲染
+          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+          if (!(window as any).__USE_LAYOUT_APP__) {
+            // layout-app 加载失败或不需要加载，独立渲染
+            render().catch((error) => {
+              console.error('[finance-app] 独立运行失败:', error);
+            });
+          }
+          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        })
+        .catch((error) => {
+          console.error('[finance-app] 初始化 layout-app 失败:', error);
+          // layout-app 加载失败，独立渲染
+          render().catch((error) => {
+            console.error('[finance-app] 独立运行失败:', error);
+          });
+        });
+    }).catch((error) => {
+      console.error('[finance-app] 导入 init-layout-app 失败:', error);
+      // 导入失败，直接渲染
+      render().catch((error) => {
+        console.error('[finance-app] 独立运行失败:', error);
+      });
+    });
+  } else {
+    // 不需要加载 layout-app（非生产环境），直接渲染
+    render().catch((error) => {
+      console.error('[finance-app] 独立运行失败:', error);
+    });
+  }
 }

@@ -13,7 +13,6 @@ if (typeof window !== 'undefined') {
   (window as any).__APP_EPS_SERVICE__ = service;
   (window as any).service = service; // 也设置到 window.service，保持兼容性
   (window as any).__BTC_SERVICE__ = service; // 也设置到 __BTC_SERVICE__，保持兼容性
-  console.log('[layout-app] EPS 服务已暴露到全局，包含的模块:', Object.keys(service));
 }
 
 export { service, list };

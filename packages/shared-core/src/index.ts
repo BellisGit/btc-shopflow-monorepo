@@ -22,9 +22,21 @@ export * from './types/common';
 export * from './types/crud';
 export * from './types/qiankun';
 export * from './utils/menu-icon-assigner';
+export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
 
-// 显式导出常用类型，确保 TypeScript 能够正确识别
-export type { UseCrudReturn } from './btc/crud';
-export type { ButtonStyle, ThemeConfig } from './btc/plugins/theme';
+// 显式导出常用类型和函数，确保 TypeScript 能够正确识别
+// 直接从类型定义文件导出，避免路径解析问题
+export type { UseCrudReturn } from './btc/crud/types';
+export type { ButtonStyle } from './btc/plugins/theme';
+export type { ThemeConfig } from './btc/composables/useTheme';
+export { useI18n } from './btc/plugins/i18n';
+export { useThemePlugin } from './btc/plugins/theme';
+export { exportTableToExcel } from './btc/plugins/excel';
+export { useCountdown } from './composables/useCountdown';
+export { useCrud } from './btc/crud';
+export { useSmsCode } from './composables/use-sms-code';
+export { usePluginManager } from './btc/plugins/manager';
+export { useBtcForm } from './composables/useBtcForm';
+export { useTabs, useAction, useElApi, usePlugins } from './composables/form-helpers';
 
 

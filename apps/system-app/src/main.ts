@@ -27,6 +27,13 @@ registerAppEnvAccessors();
 
 const app = createApp(App);
 
+// 全局错误处理：捕获 Vue 组件更新时的错误
+app.config.errorHandler = (err, instance, info) => {
+  // 正常处理所有错误，不再静默 DOM 操作错误
+  // 因为我们已经修复了根本原因（router-view 不再被销毁重建）
+  console.error('[Vue] 未处理的错误:', err, info);
+};
+
 // 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
 // 使用 typeof 确保组件被实际引用，避免被 tree-shake 掉
 if (typeof BtcSvg !== 'undefined') {
@@ -122,17 +129,42 @@ waitForEpsService().then((service) => {
     // 暴露到全局，供所有子应用共享使用
     (window as any).__APP_EPS_SERVICE__ = service;
     (window as any).service = service; // 也设置到 window.service，保持兼容性
-    if (Object.keys(service).length > 0) {
-      console.log('[main.ts] ✅ EPS 服务已暴露到全局，包含的模块:', Object.keys(service));
-    } else {
-      console.warn('[main.ts] ⚠️  EPS 服务为空对象，可能尚未加载完成');
-    }
   }
   
   // EPS 服务加载完成后，再启动应用
   return bootstrap(app);
-}).then(() => {
+}).then(async () => {
+  // 等待路由就绪后再挂载应用，确保路由正确匹配
+  // 从 bootstrap/core/router 导入 router 实例
+  const { router } = await import('./bootstrap/core/router');
+  if (router) {
+    try {
+      await router.isReady();
+      console.log('[system-app] 路由已就绪，准备挂载应用');
+    } catch (error) {
+      console.warn('[system-app] 路由就绪检查失败，继续挂载:', error);
+    }
+  }
+  
   app.mount('#app');
+  
+  // 挂载后检查路由匹配情况
+  if (import.meta.env.PROD && router) {
+    const currentRoute = router.currentRoute.value;
+    if (currentRoute.matched.length === 0) {
+      console.error('[system-app] ⚠️ 应用挂载后路由未匹配:', {
+        path: currentRoute.path,
+        fullPath: currentRoute.fullPath,
+        matched: currentRoute.matched,
+        location: window.location.href,
+      });
+    } else {
+      console.log('[system-app] ✅ 路由匹配成功:', {
+        path: currentRoute.path,
+        matched: currentRoute.matched.map(m => ({ path: m.path, name: m.name })),
+      });
+    }
+  }
 
     // 应用挂载后，立即关闭并移除 Loading 元素
     // 添加淡出动画，然后移除元素

@@ -91,6 +91,25 @@ const publicImagesToAssetsPlugin = (): Plugin => {
   const emittedFiles = new Map<string, string>(); // 原文件名 -> emitFile 返回的 referenceId
   const publicImageFiles = new Map<string, string>(); // 原文件名 -> 文件路径
 
+  // 辅助函数：检查 ID 是否是虚拟模块 ID（包含 null 字节）
+  const isVirtualModuleId = (id: string): boolean => {
+    return id.includes('\0') || id.includes('public-image:');
+  };
+
+  // 辅助函数：安全地从虚拟模块 ID 中提取原始路径
+  const extractOriginalPath = (id: string): string | null => {
+    if (!isVirtualModuleId(id)) {
+      return null;
+    }
+    // 安全地提取原始路径，移除虚拟模块前缀和 null 字节
+    const originalPath = id.replace(/\0public-image:/g, '').replace(/\0/g, '');
+    // 验证路径不包含 null 字节
+    if (originalPath.includes('\0')) {
+      return null;
+    }
+    return originalPath;
+  };
+
   return {
     name: 'public-images-to-assets',
     // 在构建开始时，将 public 目录中的图片文件作为资源导入
@@ -131,29 +150,49 @@ const publicImagesToAssetsPlugin = (): Plugin => {
       }
     },
     // 解析 /logo.png 这样的路径，返回对应的虚拟模块 ID
-    resolveId(id) {
+    resolveId(id, importer) {
+      // 关键：如果 id 已经包含 null 字节或虚拟模块前缀，说明已经被处理过
+      // 在开发环境中，某些插件可能会再次调用 resolveId，需要防止重复处理
+      if (isVirtualModuleId(id)) {
+        // 如果已经是我们的虚拟模块 ID，直接返回它（不要返回 null，否则会被其他插件处理）
+        if (id.startsWith('\0public-image:') || id.includes('\0public-image:')) {
+          return id;
+        }
+        return null;
+      }
+      
       // 检查是否是 public 目录中的图片文件（以 / 开头的绝对路径）
       if (id.startsWith('/') && publicImageFiles.has(id)) {
         // 返回一个虚拟模块 ID，让 Vite 知道这是一个资源
+        // 注意：虚拟模块 ID 中的 null 字节是 Vite 的标准做法，用于标识虚拟模块
         return `\0public-image:${id}`;
       }
       return null;
     },
     // 加载虚拟模块，返回资源 URL
     load(id) {
-      if (id.startsWith('\0public-image:')) {
-        const originalPath = id.replace('\0public-image:', '');
-        const fileName = basename(originalPath);
-        // 查找对应的 referenceId
-        const referenceId = emittedFiles.get(fileName);
-        if (referenceId) {
-          // 返回一个导出资源 URL 的模块
-          // 使用 ?url 后缀让 Vite 将其作为资源处理
-          // 但这里我们不能直接使用 ?url，因为这是虚拟模块
-          // 所以我们需要在 generateBundle 阶段更新引用
-          // 这里先返回一个占位符，在 generateBundle 阶段会更新为带哈希的文件名
-          return `export default "/${fileName}";`;
-        }
+      // 关键：检查是否是虚拟模块 ID，并正确处理 null 字节
+      if (!isVirtualModuleId(id)) {
+        return null;
+      }
+      
+      // 安全地提取原始路径
+      const originalPath = extractOriginalPath(id);
+      if (!originalPath) {
+        console.warn(`[public-images-to-assets] ⚠️  无法提取原始路径，跳过: ${id}`);
+        return null;
+      }
+      
+      const fileName = basename(originalPath);
+      // 查找对应的 referenceId
+      const referenceId = emittedFiles.get(fileName);
+      if (referenceId) {
+        // 返回一个导出资源 URL 的模块
+        // 使用 ?url 后缀让 Vite 将其作为资源处理
+        // 但这里我们不能直接使用 ?url，因为这是虚拟模块
+        // 所以我们需要在 generateBundle 阶段更新引用
+        // 这里先返回一个占位符，在 generateBundle 阶段会更新为带哈希的文件名
+        return `export default "/${fileName}";`;
       }
       return null;
     },
@@ -515,11 +554,23 @@ const resourcePreloadPlugin = (): Plugin => {
       const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js') || file.endsWith('.mjs'));
       const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
 
+      // 辅助函数：生成正确的资源路径
+      // 如果 chunk 文件名已经包含 assets/ 前缀，直接使用；否则添加 /assets/ 前缀
+      const getResourceHref = (chunkName: string): string => {
+        if (chunkName.startsWith('assets/')) {
+          // 已经包含 assets/ 前缀，直接使用
+          return `/${chunkName}`;
+        } else {
+          // 不包含 assets/ 前缀，添加 /assets/ 前缀
+          return `/assets/${chunkName}`;
+        }
+      };
+
       // 主入口文件（index-*.js）
       const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
       if (indexChunk) {
         criticalResources.push({
-          href: `/assets/${indexChunk}`,
+          href: getResourceHref(indexChunk),
           rel: 'modulepreload',
         });
       }
@@ -528,7 +579,7 @@ const resourcePreloadPlugin = (): Plugin => {
       const epsServiceChunk = jsChunks.find(jsChunk => jsChunk.includes('eps-service-'));
       if (epsServiceChunk) {
         criticalResources.push({
-          href: `/assets/${epsServiceChunk}`,
+          href: getResourceHref(epsServiceChunk),
           rel: 'modulepreload',
         });
       }
@@ -536,7 +587,7 @@ const resourcePreloadPlugin = (): Plugin => {
       // CSS 文件（使用 preload，as="style"）
       cssChunks.forEach(cssChunk => {
         criticalResources.push({
-          href: `/assets/${cssChunk}`,
+          href: getResourceHref(cssChunk),
           rel: 'preload',
           as: 'style',
         });
@@ -568,13 +619,18 @@ const resourcePreloadPlugin = (): Plugin => {
   };
 };
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  // 在开发环境中，使用 publicDir 直接处理静态资源
+  // 在构建环境中，禁用 publicDir，使用 publicImagesToAssetsPlugin 将图片打包到 assets 目录并添加哈希值
+  const isDev = command === 'serve';
+  
+  return {
   // 开启构建缓存，复用依赖的编译结果，提高构建速度并稳定哈希
   cacheDir: './node_modules/.vite-cache',
   base: '/', // 明确设置为根路径，不使用 /logistics/
-  // 禁用 publicDir 的自动复制，使用 publicImagesToAssetsPlugin 将图片打包到 assets 目录
-  // 这样所有图片文件都会添加哈希值，和 JS、CSS 文件一样的打包方式
-  publicDir: false,
+  // 开发环境：启用 publicDir，让 Vite 直接处理静态资源
+  // 构建环境：禁用 publicDir，使用插件添加哈希值
+  publicDir: isDev ? resolve(__dirname, 'public') : false,
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -605,15 +661,28 @@ export default defineConfig({
   },
   plugins: [
     cleanDistPlugin(), // 0. 构建前清理 dist 目录（最前面）
-    publicImagesToAssetsPlugin(), // 1. 将 public 目录中的图片打包到 assets 目录并添加哈希值
+    // 1. 只在构建环境中使用插件处理图片（开发环境使用 publicDir）
+    ...(isDev ? [] : [publicImagesToAssetsPlugin()]),
     corsPreflightPlugin(), // 2. CORS 插件（不干扰构建）
     resourcePreloadPlugin(), // 3. 资源预加载插件（在构建时注入 preload 提示）
     vue({
       // 2. Vue 插件（核心构建插件）
       script: {
         fs: {
-          fileExists: existsSync,
-          readFile: (file: string) => readFileSync(file, 'utf-8'),
+          fileExists: (file: string) => {
+            // 关键：如果路径包含 null 字节，说明是虚拟模块 ID，不应该作为文件路径处理
+            if (file.includes('\0') || file.includes('public-image:')) {
+              return false;
+            }
+            return existsSync(file);
+          },
+          readFile: (file: string) => {
+            // 关键：如果路径包含 null 字节，说明是虚拟模块 ID，不应该作为文件路径处理
+            if (file.includes('\0') || file.includes('public-image:')) {
+              throw new Error(`Cannot read virtual module as file: ${file}`);
+            }
+            return readFileSync(file, 'utf-8');
+          },
         },
       },
     }),
@@ -661,6 +730,13 @@ export default defineConfig({
     proxy,
     headers: {
       'Access-Control-Allow-Origin': '*',
+    },
+    hmr: {
+      protocol: 'ws',
+      host: config.devHost, // HMR WebSocket 需要使用配置的主机，浏览器无法连接 0.0.0.0
+      port: config.devPort,
+      clientPort: config.devPort, // 客户端连接的端口（与服务器端口相同）
+      overlay: false, // 关闭热更新错误浮层，减少开销
     },
     fs: {
       strict: false,
@@ -835,4 +911,5 @@ export default defineConfig({
     // 关键修改6：降低警告阈值（及时发现大包问题）
     chunkSizeWarningLimit: 1000,
   },
+  };
 });

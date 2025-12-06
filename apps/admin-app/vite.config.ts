@@ -40,8 +40,17 @@ const cleanDistPlugin = (): Plugin => {
         try {
           rmSync(distDir, { recursive: true, force: true });
           console.log('[clean-dist-plugin] ✅ dist 目录已清理');
-        } catch (error) {
-          console.warn('[clean-dist-plugin] ⚠️ 清理 dist 目录失败，继续构建:', error);
+        } catch (error: any) {
+          // Windows 上文件可能被占用（EBUSY），或者文件不存在（ENOENT）
+          // 这些情况都可以忽略，因为 Vite 的 build.emptyOutDir 会在构建时自动清理
+          if (error.code === 'EBUSY' || error.code === 'ENOENT') {
+            console.warn(`[clean-dist-plugin] ⚠️  清理失败（${error.code}），Vite 将在构建时自动清理输出目录`);
+          } else {
+            // 其他错误也警告但不中断构建
+            console.warn('[clean-dist-plugin] ⚠️  清理 dist 目录失败，继续构建:', error.message);
+            console.warn('[clean-dist-plugin] ℹ️  Vite 将在构建时自动清理输出目录（emptyOutDir: true）');
+          }
+          // 不抛出错误，让构建继续，Vite 的 emptyOutDir 会处理清理
         }
       }
     },
@@ -299,6 +308,7 @@ const forceNewHashPlugin = (): Plugin => {
 
   return {
     name: 'force-new-hash',
+    enforce: 'post', // 确保在所有其他插件（包括 qiankun）之后执行
     buildStart() {
       console.log(`[force-new-hash] 构建 ID: ${buildId}`);
       cssFileNameMap.clear();
@@ -479,10 +489,10 @@ const forceNewHashPlugin = (): Plugin => {
                 [`"${oldRef}"`, `"${newRef}"`],
                 [`'${oldRef}'`, `'${newRef}`],
                 [`\`${oldRef}\``, `\`${newRef}\``],
-                // import() 动态导入：import('/assets/vue-core-CXAVbLNX.js')
-                [`import('/assets/${oldRef}')`, `import('/assets/${newRef}')`],
-                [`import("/assets/${oldRef}")`, `import("/assets/${newRef}")`],
-                [`import(\`/assets/${oldRef}\`)`, `import(\`/assets/${newRef}\`)`],
+                // import() 动态导入：import('/assets/vue-core-CXAVbLNX.js') - 添加版本号
+                [`import('/assets/${oldRef}')`, `import('/assets/${newRef}?v=${buildId}')`],
+                [`import("/assets/${oldRef}")`, `import("/assets/${newRef}?v=${buildId}")`],
+                [`import(\`/assets/${oldRef}\`)`, `import(\`/assets/${newRef}?v=${buildId}\`)`],
                 // 在对象或数组中的引用：{ file: "vue-core-CXAVbLNX.js" } 或 ["vue-core-CXAVbLNX.js"]
                 [`:"${oldRef}"`, `:"${newRef}"`],
                 [`:'${oldRef}'`, `:'${newRef}'`],
@@ -507,9 +517,9 @@ const forceNewHashPlugin = (): Plugin => {
                   [`'${oldRefWithoutTrailingDash}'`, `'${newRef}`],
                   [`\`${oldRefWithoutTrailingDash}\``, `\`${newRef}\``],
                   // import() 动态导入
-                  [`import('/assets/${oldRefWithoutTrailingDash}')`, `import('/assets/${newRef}')`],
-                  [`import("/assets/${oldRefWithoutTrailingDash}")`, `import("/assets/${newRef}")`],
-                  [`import(\`/assets/${oldRefWithoutTrailingDash}\`)`, `import(\`/assets/${newRef}\`)`],
+                  [`import('/assets/${oldRefWithoutTrailingDash}')`, `import('/assets/${newRef}?v=${buildId}')`],
+                  [`import("/assets/${oldRefWithoutTrailingDash}")`, `import("/assets/${newRef}?v=${buildId}")`],
+                  [`import(\`/assets/${oldRefWithoutTrailingDash}\`)`, `import(\`/assets/${newRef}?v=${buildId}\`)`],
                 );
               }
 
@@ -596,6 +606,24 @@ const forceNewHashPlugin = (): Plugin => {
                   modified = true;
                 }
               });
+            }
+
+            // 额外处理：为所有 import('/assets/xxx.js') 格式的语句添加版本号（兜底）
+            // 匹配所有 import('/assets/xxx.js') 或 import("/assets/xxx.js") 格式，即使文件名不在映射中
+            const allImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
+            const originalCodeForImport = newCode;
+            newCode = newCode.replace(allImportPattern, (match, quote, path, ext, query) => {
+              // 检查是否已经有版本号查询参数
+              if (query && query.includes('v=')) {
+                // 如果已经有版本号，更新为新的构建ID
+                return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+              } else {
+                // 如果没有版本号，添加构建ID
+                return `import(${quote}${path}?v=${buildId}${quote})`;
+              }
+            });
+            if (newCode !== originalCodeForImport) {
+              modified = true;
             }
 
             // 额外处理：直接替换文件名（不包含路径前缀），确保所有引用都被更新
@@ -692,8 +720,9 @@ const forceNewHashPlugin = (): Plugin => {
             const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             // 匹配 <link rel="stylesheet" ... href="/assets/xxx.css">
             const linkPattern = new RegExp(`(href=["'])/assets/${escapedOldCssName}(["'])`, 'g');
-            if (linkPattern.test(html)) {
-              html = html.replace(linkPattern, `$1/assets/${newCssName}$2`);
+            const originalHtml = html;
+            html = html.replace(linkPattern, `$1/assets/${newCssName}$2`);
+            if (html !== originalHtml) {
               modified = true;
             }
           }
@@ -713,14 +742,15 @@ const forceNewHashPlugin = (): Plugin => {
             // 匹配 import('/assets/xxx.js') 或 import("/assets/xxx.js")，文件名可能包含旧的构建ID
             // 匹配格式：/assets/index-Dt6-4vQv.js 或 /assets/index-Dt6-4vQv-miqpl63n.js
             const importPattern = new RegExp(`import\\s*\\(\\s*(["'])(/assets/${escapedOldJsNamePrefix}(?:-[a-zA-Z0-9]{8,})?\\.js)(\\?[^"'\\s]*)?\\1\\s*\\)`, 'g');
-            if (importPattern.test(html)) {
-              html = html.replace(importPattern, (match, quote, path, query) => {
-                // 更新为新的文件名（包含新的构建ID）
-                const newPath = `/assets/${newJsName}`;
-                // 如果原来有查询参数，替换为新的构建ID；如果没有，添加新的构建ID
-                const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
-                return `import(${quote}${newPath}${newQuery}${quote})`;
-              });
+            const originalHtml = html;
+            html = html.replace(importPattern, (match, quote, path, query) => {
+              // 更新为新的文件名（包含新的构建ID）
+              const newPath = `/assets/${newJsName}`;
+              // 如果原来有查询参数，替换为新的构建ID；如果没有，添加新的构建ID
+              const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+              return `import(${quote}${newPath}${newQuery}${quote})`;
+            });
+            if (html !== originalHtml) {
               modified = true;
               console.log(`[force-new-hash] ✅ 已更新 index.html 中的 JS 文件引用: ${oldJsNamePrefix}*.js -> ${newJsName}`);
             }
@@ -730,17 +760,18 @@ const forceNewHashPlugin = (): Plugin => {
         // 1.3 为其他可能的 import() 添加构建 ID 查询参数（兜底，处理没有被 jsFileNameMap 覆盖的情况）
         // 匹配 import('/assets/xxx.js') 或 import("/assets/xxx.js")
         const importPatternFallback = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
-        if (importPatternFallback.test(html)) {
-          html = html.replace(importPatternFallback, (match, quote, path, ext, query) => {
-            // 检查是否已经有查询参数
-            if (query) {
-              // 如果已经有查询参数，替换版本号部分
-              return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
-            } else {
-              // 如果没有查询参数，添加构建 ID
-              return `import(${quote}${path}?v=${buildId}${quote})`;
-            }
-          });
+        const originalHtmlForFallback = html;
+        html = html.replace(importPatternFallback, (match, quote, path, ext, query) => {
+          // 检查是否已经有查询参数
+          if (query) {
+            // 如果已经有查询参数，替换版本号部分
+            return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+          } else {
+            // 如果没有查询参数，添加构建 ID
+            return `import(${quote}${path}?v=${buildId}${quote})`;
+          }
+        });
+        if (html !== originalHtmlForFallback) {
           modified = true;
           console.log(`[force-new-hash] ✅ 已为 index.html 中的 script 标签添加构建 ID 查询参数: v=${buildId}`);
         }
@@ -813,33 +844,87 @@ const forceNewHashPlugin = (): Plugin => {
 
             // 匹配各种引用格式（更精确的模式，避免误匹配）
             const patterns = [
+              // import() 动态导入：import('/assets/xxx.js') 或 import('/assets/xxx.js?v=xxx')
+              new RegExp(`import\\s*\\(\\s*(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])(\\?[^"'\\s]*)?\\1\\s*\\)`, 'g'),
               // 绝对路径：/assets/xxx.js（必须在引号内或 import/from 语句中）
-              new RegExp(`(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
-              // import() 动态导入：import('/assets/xxx.js')
-              new RegExp(`import\\s*\\(\\s*(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1\\s*\\)`, 'g'),
+              new RegExp(`(["'\`])/assets/${escapedOldFileName}(?![a-zA-Z0-9-])(\\?[^"'\\s]*)?\\1`, 'g'),
               // 相对路径：./xxx.js（必须在引号内）
-              new RegExp(`(["'\`])\\./${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
+              new RegExp(`(["'\`])\\./${escapedOldFileName}(?![a-zA-Z0-9-])(\\?[^"'\\s]*)?\\1`, 'g'),
               // assets/xxx.js（在 __vite__mapDeps 中，必须在引号内）
-              new RegExp(`(["'\`])assets/${escapedOldFileName}(?![a-zA-Z0-9-])\\1`, 'g'),
+              new RegExp(`(["'\`])assets/${escapedOldFileName}(?![a-zA-Z0-9-])(\\?[^"'\\s]*)?\\1`, 'g'),
             ];
 
             patterns.forEach(pattern => {
-              if (pattern.test(content)) {
-                if (pattern.source.includes('/assets/')) {
-                  content = content.replace(pattern, (match, quote) => {
-                    if (match.includes('import(')) {
-                      return match.replace(`/assets/${oldFileName}`, `/assets/${newFileName}`);
-                    }
-                    return `${quote}/assets/${newFileName}${quote}`;
-                  });
-                } else if (pattern.source.includes('./')) {
-                  content = content.replace(pattern, (match, quote) => `${quote}./${newFileName}${quote}`);
-                } else if (pattern.source.includes('assets/')) {
-                  content = content.replace(pattern, (match, quote) => `${quote}assets/${newFileName}${quote}`);
+              const originalContent = content;
+              if (pattern.source.includes('import\\s*\\(')) {
+                // 处理 import() 动态导入，添加版本号
+                content = content.replace(pattern, (match, quote, query) => {
+                  const newPath = `/assets/${newFileName}`;
+                  const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+                  return `import(${quote}${newPath}${newQuery}${quote})`;
+                });
+                if (content !== originalContent) {
+                  modified = true;
                 }
-                modified = true;
+              } else {
+                // 对于其他类型的引用（非 import()），如果是 JS 文件也添加版本号
+                if (newFileName.endsWith('.js') || newFileName.endsWith('.mjs')) {
+                  content = content.replace(pattern, (match, quote, query) => {
+                    let newPath: string;
+                    if (pattern.source.includes('/assets/')) {
+                      newPath = `/assets/${newFileName}`;
+                    } else if (pattern.source.includes('./')) {
+                      newPath = `./${newFileName}`;
+                    } else if (pattern.source.includes('assets/')) {
+                      newPath = `assets/${newFileName}`;
+                    } else {
+                      return match; // 不匹配，保持原样
+                    }
+                    const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+                    return `${quote}${newPath}${newQuery}${quote}`;
+                  });
+                  if (content !== originalContent) {
+                    modified = true;
+                  }
+                } else {
+                  // CSS 文件或其他文件，只更新文件名，不添加版本号
+                  content = content.replace(pattern, (match, quote, query) => {
+                    let newPath: string;
+                    if (pattern.source.includes('/assets/')) {
+                      newPath = `/assets/${newFileName}`;
+                    } else if (pattern.source.includes('./')) {
+                      newPath = `./${newFileName}`;
+                    } else if (pattern.source.includes('assets/')) {
+                      newPath = `assets/${newFileName}`;
+                    } else {
+                      return match;
+                    }
+                    return `${quote}${newPath}${quote}`;
+                  });
+                  if (content !== originalContent) {
+                    modified = true;
+                  }
+                }
               }
             });
+          }
+
+          // 3. 兜底：为所有 /assets/ 路径的 import() 语句添加版本号（即使文件名不在映射中）
+          // 匹配所有 import('/assets/xxx.js') 或 import("/assets/xxx.js") 格式
+          const fallbackImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
+          const originalContentForFallback = content;
+          content = content.replace(fallbackImportPattern, (match, quote, path, ext, query) => {
+            // 检查是否已经有版本号查询参数
+            if (query && query.includes('v=')) {
+              // 如果已经有版本号，更新为新的构建ID
+              return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+            } else {
+              // 如果没有版本号，添加构建ID
+              return `import(${quote}${path}?v=${buildId}${quote})`;
+            }
+          });
+          if (content !== originalContentForFallback) {
+            modified = true;
           }
 
           if (modified) {
@@ -1947,6 +2032,8 @@ export default defineConfig({
       // 使用 useDevMode: true 可以确保代码正确拆分到 app-src chunk
       useDevMode: true,
     }),
+    // 10.5. 强制生成新 hash 插件（必须在 qiankun 之后执行，在 index.html 中添加版本号）
+    forceNewHashPlugin(),
     // 11. 兜底插件（路径修复、chunk 优化，在最后）
     // 注意：fixChunkReferencesPlugin 需要在 generateBundle 阶段修复异常文件名
     // 所以应该在 Rollup 写入文件之前执行，但不需要 enforce: 'pre'，因为它在 generateBundle 阶段就会修复
@@ -2107,6 +2194,31 @@ export default defineConfig({
             return 'eps-service';
           }
 
+          // 0.5. 菜单相关代码单独打包（确保菜单代码独立，便于查找和加载）
+          // 关键：menuRegistry.ts 依赖 Vue，必须和 Vue 一起打包到 vendor chunk，不能单独打包
+          // 只将 manifest 数据和 layout-bridge 打包到 menu-registry chunk
+          if (id.includes('configs/layout-bridge') ||
+              id.includes('@configs/layout-bridge')) {
+            return 'menu-registry';
+          }
+          
+          // 处理 subapp-manifests：只包含当前应用（admin）的 manifest
+          if (id.includes('packages/subapp-manifests') || id.includes('@btc/subapp-manifests')) {
+            // 排除其他应用的 manifest JSON 文件
+            if (id.includes('manifests/finance.json') ||
+                id.includes('manifests/logistics.json') ||
+                id.includes('manifests/system.json') ||
+                id.includes('manifests/quality.json') ||
+                id.includes('manifests/engineering.json') ||
+                id.includes('manifests/production.json') ||
+                id.includes('manifests/monitor.json')) {
+              // 其他应用的 manifest，不打包到 menu-registry
+              return undefined;
+            }
+            // 只打包 admin 应用的 manifest 和共享代码
+            return 'menu-registry';
+          }
+
           // 1. 独立大库：ECharts（纯 echarts 和 zrender，不包含 vue-echarts）
           // 注意：vue-echarts 依赖 Vue，需要和 Vue 一起打包到 vendor chunk
           if (id.includes('node_modules/echarts') ||
@@ -2127,6 +2239,7 @@ export default defineConfig({
           // 例如：Element Plus 依赖 Vue 的 RefImpl，Vue Router 的 extend 需要在初始化时可用
           // vue-echarts 依赖 Vue，需要和 Vue 一起打包
           // 共享组件库也依赖 Vue 生态，需要确保在同一个 chunk 中
+          // menuRegistry.ts 依赖 Vue 的 ref，必须和 Vue 一起打包
           // 解决方案：合并到一个 vendor chunk，让 Rollup 自动处理内部依赖顺序
           if (id.includes('node_modules/vue') ||
               id.includes('node_modules/vue-router') ||
@@ -2136,11 +2249,18 @@ export default defineConfig({
               id.includes('node_modules/@element-plus') ||
               id.includes('node_modules/vue-echarts') ||
               id.includes('node_modules/dayjs') ||
-              id.includes('node_modules/lodash') ||
+              id.includes('node_modules/lodash') || // 匹配 lodash 和 lodash-es
               id.includes('node_modules/@vue') ||
               id.includes('packages/shared-components') ||
               id.includes('packages/shared-core') ||
               id.includes('packages/shared-utils')) {
+            return 'vendor';
+          }
+
+          // 关键：确保 vite-plugin 相关代码也被打包到 vendor，避免 lodash-es 依赖问题
+          // vite-plugin 是构建时插件，但它的代码可能被意外打包到运行时
+          // 如果被打包，确保它的依赖（lodash-es）也在同一个 chunk 中
+          if (id.includes('packages/vite-plugin') || id.includes('@btc/vite-plugin')) {
             return 'vendor';
           }
 
@@ -2168,7 +2288,11 @@ export default defineConfig({
           return 'assets/[name]-[hash].[ext]';
         },
       },
-      external: [],
+      external: [
+        // vite-plugin 是构建时插件，不应该被打包到运行时代码中
+        '@btc/vite-plugin',
+        /^@btc\/vite-plugin/,
+      ],
       // 关键修改5：禁用tree-shaking（避免循环依赖导致的初始化顺序问题）
       // 原因：即使合并到同一chunk，tree-shaking可能改变模块初始化顺序，导致"Cannot access 'ut' before initialization"错误
       // 解决方案：禁用tree-shaking，确保所有模块按原始顺序初始化

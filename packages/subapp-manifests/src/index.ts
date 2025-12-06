@@ -36,6 +36,31 @@ export function getManifestRoute(app: string, fullPath: string): SubAppManifestR
   const manifest = getManifest(app);
   if (!manifest) return undefined;
 
+  // 检测是否在生产环境的子域名下
+  // 在生产环境中，通过子域名访问时路径是 /，而不是 /finance
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  const subdomainMap: Record<string, string> = {
+    'admin.bellis.com.cn': 'admin',
+    'logistics.bellis.com.cn': 'logistics',
+    'quality.bellis.com.cn': 'quality',
+    'production.bellis.com.cn': 'production',
+    'engineering.bellis.com.cn': 'engineering',
+    'finance.bellis.com.cn': 'finance',
+    'monitor.bellis.com.cn': 'monitor',
+  };
+  
+  const currentSubdomainApp = subdomainMap[hostname];
+  
+  // 如果在生产环境子域名下，且当前应用匹配子域名，路径应该是 / 或 /xxx（没有应用前缀）
+  if (isProductionSubdomain && currentSubdomainApp === app) {
+    // 在生产环境子域名下，路径直接匹配（不需要 basePath 前缀）
+    const normalized = fullPath === '/' ? '/' : (fullPath.startsWith('/') ? fullPath : `/${fullPath}`);
+    return manifest.routes.find((route) => route.path === normalized);
+  }
+
+  // 开发环境或主域名访问：使用 basePath 匹配
   const basePath = manifest.app.basePath ?? `/${app}`;
   if (!fullPath.startsWith(basePath)) {
     return undefined;

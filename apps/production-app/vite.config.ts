@@ -120,6 +120,7 @@ export default defineConfig(({ command, mode }) => {
       '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@configs': resolve(__dirname, '../../configs'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      '@btc-assets': resolve(__dirname, '../../packages/shared-components/src/assets'), // 添加 @btc-assets 别名，用于图片和图标资源导入
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, '../../packages/shared-components/src/charts/utils/css-var'),
       '@charts-utils/color': resolve(__dirname, '../../packages/shared-components/src/charts/utils/color'),

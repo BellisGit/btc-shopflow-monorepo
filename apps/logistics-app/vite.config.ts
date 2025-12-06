@@ -274,6 +274,7 @@ export default defineConfig({
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
       '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      '@btc-assets': resolve(__dirname, '../../packages/shared-components/src/assets'), // 添加 @btc-assets 别名，用于图片和图标资源导入
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, '../../packages/shared-components/src/charts/utils/css-var'),
       '@charts-utils/color': resolve(__dirname, '../../packages/shared-components/src/charts/utils/color'),
@@ -469,6 +470,31 @@ export default defineConfig({
               id.includes('services/eps') ||
               id.includes('services\\eps')) {
             return 'eps-service';
+          }
+
+          // 0.5. 菜单相关代码单独打包（确保菜单代码独立，便于查找和加载）
+          // 关键：menuRegistry.ts 依赖 Vue，必须和 Vue 一起打包到 vendor chunk，不能单独打包
+          // 只将 manifest 数据和 layout-bridge 打包到 menu-registry chunk
+          if (id.includes('configs/layout-bridge') ||
+              id.includes('@configs/layout-bridge')) {
+            return 'menu-registry';
+          }
+          
+          // 处理 subapp-manifests：只包含当前应用（logistics）的 manifest
+          if (id.includes('packages/subapp-manifests') || id.includes('@btc/subapp-manifests')) {
+            // 排除其他应用的 manifest JSON 文件
+            if (id.includes('manifests/admin.json') ||
+                id.includes('manifests/finance.json') ||
+                id.includes('manifests/system.json') ||
+                id.includes('manifests/quality.json') ||
+                id.includes('manifests/engineering.json') ||
+                id.includes('manifests/production.json') ||
+                id.includes('manifests/monitor.json')) {
+              // 其他应用的 manifest，不打包到 menu-registry
+              return undefined;
+            }
+            // 只打包 logistics 应用的 manifest 和共享代码
+            return 'menu-registry';
           }
 
           // 1. 独立大库：ECharts（完全独立，无依赖问题）

@@ -82,7 +82,13 @@
                                                               ],
                                           "@charts-composables/*":  [
                                                                         "../../packages/shared-components/src/charts/composables/*"
-                                                                    ]
+                                                                    ],
+                                          "@configs":  [
+                                                           "../../configs"
+                                                       ],
+                                          "@configs/*":  [
+                                                             "../../configs/*"
+                                                         ]
                                       }
                         },
     "include":  [

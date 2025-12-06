@@ -445,6 +445,10 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   if (isStandalone) {
     await setupStandaloneGlobals();
     registerManifestMenusForApp(LOGISTICS_APP_ID);
+  } else {
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
+    // 这样 layout-app 才能显示 logistics-app 的菜单
+    registerManifestMenusForApp(LOGISTICS_APP_ID);
   }
 
   // 这些初始化操作都是轻量级的，不会阻塞
@@ -492,12 +496,50 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
 export const mountLogisticsApp = (context: LogisticsAppContext, props: QiankunProps = {}) => {
   context.props = props;
 
-  const mountPoint = props.container ? props.container : document.querySelector('#app');
+  // 查找挂载点：
+  // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
+  // - 独立运行模式下：使用 #app
+  let mountPoint: HTMLElement | null = null;
+  
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
+    if (props.container && props.container instanceof HTMLElement) {
+      mountPoint = props.container;
+    } else {
+      throw new Error('[logistics-app] qiankun 模式下未提供容器元素');
+    }
+  } else {
+    // 独立运行模式：使用 #app
+    const appElement = document.querySelector('#app') as HTMLElement;
+    if (!appElement) {
+      throw new Error('[logistics-app] 独立运行模式下未找到 #app 元素');
+    }
+    mountPoint = appElement;
+  }
+  
   if (!mountPoint) {
     throw new Error('[logistics-app] 无法找到挂载节点');
   }
 
   context.app.mount(mountPoint);
+
+  // 在 qiankun 环境下，等待路由就绪后再同步初始路由
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // 使用 nextTick 确保 Vue 应用已完全挂载
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        context.router.isReady().then(() => {
+          // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /logistics/xxx）
+          const initialRoute = deriveInitialSubRoute();
+          // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
+          if (context.router.currentRoute.value.matched.length === 0 || 
+              context.router.currentRoute.value.path !== initialRoute.split('?')[0].split('#')[0]) {
+            context.router.replace(initialRoute).catch(() => {});
+          }
+        });
+      });
+    });
+  }
 
   setupRouteSync(context);
   setupHostLocationBridge(context);

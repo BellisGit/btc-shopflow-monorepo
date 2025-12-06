@@ -129,6 +129,23 @@ const deriveInitialSubRoute = () => {
   }
 
   const { pathname, search, hash } = window.location;
+  
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'finance.bellis.com.cn';
+  
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /finance/xxx，需要去掉 /finance 前缀
+    if (pathname.startsWith(FINANCE_BASE_PATH)) {
+      const suffix = pathname.slice(FINANCE_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+  
+  // 路径前缀环境下（如 /finance/xxx）
   if (!pathname.startsWith(FINANCE_BASE_PATH)) {
     return '/';
   }
@@ -333,6 +350,10 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
   if (isStandalone) {
     setupStandaloneGlobals();
     registerManifestMenusForApp(FINANCE_APP_ID);
+  } else {
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
+    // 这样 layout-app 才能显示 finance-app 的菜单
+    registerManifestMenusForApp(FINANCE_APP_ID);
   }
 
   const app = createApp(App);
@@ -373,30 +394,48 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
 export const mountFinanceApp = (context: FinanceAppContext, props: QiankunProps = {}) => {
   context.props = props;
 
-  const mountPoint =
-    (props.container && (props.container.querySelector('#app') || props.container)) ||
-    '#app';
+  // 查找挂载点：
+  // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
+  // - 独立运行模式下：使用 #app
+  let mountPoint: HTMLElement | null = null;
+  
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
+    if (props.container && props.container instanceof HTMLElement) {
+      mountPoint = props.container;
+    } else {
+      throw new Error('[finance-app] qiankun 模式下未提供容器元素');
+    }
+  } else {
+    // 独立运行模式：使用 #app
+    const appElement = document.querySelector('#app') as HTMLElement;
+    if (!appElement) {
+      throw new Error('[finance-app] 独立运行模式下未找到 #app 元素');
+    }
+    mountPoint = appElement;
+  }
+  
   if (!mountPoint) {
-    throw new Error('[finance-app] 无法找到挂载节点 #app');
+    throw new Error('[finance-app] 无法找到挂载节点');
   }
 
   context.app.mount(mountPoint);
 
   // 在 qiankun 环境下，等待路由就绪后再同步初始路由
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    context.router.isReady().then(() => {
-      // 从浏览器 URL 提取子应用路由
-      const currentPath = window.location.pathname;
-      if (currentPath.startsWith('/finance')) {
-        const subRoute = currentPath.slice('/finance'.length) || '/';
-        // 如果当前路由不匹配，则同步到子应用路由
-        if (context.router.currentRoute.value.path !== subRoute) {
-          context.router.replace(subRoute).catch(() => {});
-        }
-      } else {
-        // 如果不是 /finance 路径，默认跳转到首页
-        context.router.replace('/').catch(() => {});
-      }
+    // 使用 nextTick 确保 Vue 应用已完全挂载
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        context.router.isReady().then(() => {
+          // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /finance/xxx）
+          const initialRoute = deriveInitialSubRoute();
+          // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
+          if (context.router.currentRoute.value.matched.length === 0 || 
+              context.router.currentRoute.value.path !== initialRoute.split('?')[0].split('#')[0]) {
+            context.router.replace(initialRoute).catch(() => {});
+          }
+        });
+      });
     });
   }
 

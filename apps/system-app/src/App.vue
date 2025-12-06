@@ -1,6 +1,13 @@
 <template>
   <div class="system-app">
-    <router-view />
+    <router-view v-slot="{ Component, route }">
+      <component v-if="Component" :is="Component" :key="route.fullPath" />
+      <div v-else-if="isProd" style="padding: 20px; color: red;">
+        <p>路由组件加载失败</p>
+        <p>路径: {{ route.path }}</p>
+        <p>匹配的路由: {{ route.matched.length }}</p>
+      </div>
+    </router-view>
     <RetryStatusIndicator />
   </div>
 </template>
@@ -11,6 +18,9 @@ import { initEpsData } from '@btc/shared-core';
 import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
 
 import epsData from 'virtual:eps';
+
+// 生产环境标志（用于模板）
+const isProd = import.meta.env.PROD;
 
 // 初始化 EPS 数据
 onMounted(() => {

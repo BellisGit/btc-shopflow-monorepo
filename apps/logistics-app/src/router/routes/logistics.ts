@@ -1,7 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-// 直接从组件路径导入，避免通过 index.ts 重新导出导致的循环依赖警告
-import AppLayout from '@btc/shared-components/components/layout/app-layout/index.vue';
+import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
 const pageRoutes: RouteRecordRaw[] = [

@@ -25,7 +25,26 @@ export interface ProcessItem {
  * 或者使用全局函数
  */
 export function getCurrentAppFromPath(path: string): string {
-  // 默认实现：从路径前缀判断
+  // 优先检查子域名（生产环境的关键识别方式）
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const subdomainMap: Record<string, string> = {
+      'admin.bellis.com.cn': 'admin',
+      'logistics.bellis.com.cn': 'logistics',
+      'quality.bellis.com.cn': 'quality',
+      'production.bellis.com.cn': 'production',
+      'engineering.bellis.com.cn': 'engineering',
+      'finance.bellis.com.cn': 'finance',
+      'monitor.bellis.com.cn': 'monitor',
+    };
+    
+    // 关键：优先通过子域名识别应用（生产环境的主要方式）
+    if (subdomainMap[hostname]) {
+      return subdomainMap[hostname];
+    }
+  }
+  
+  // 回退到路径匹配（开发环境或主域名访问时）
   if (path.startsWith('/admin')) return 'admin';
   if (path.startsWith('/logistics')) return 'logistics';
   if (path.startsWith('/engineering')) return 'engineering';

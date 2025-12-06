@@ -104,6 +104,14 @@ export async function bootstrap(app: App) {
   // 暴露 cleanupBadge 方法（生命周期管理器需要）
   (window as any).cleanupNotificationBadge = notificationHandler.cleanupBadge;
 
+  // 暴露 authApi 到全局，供所有子应用使用
+  // 使用动态导入避免循环依赖
+  import('../modules/api-services/auth').then(({ authApi }) => {
+    (window as any).__APP_AUTH_API__ = authApi;
+  }).catch((error) => {
+    console.warn('[bootstrap] Failed to expose authApi globally:', error);
+  });
+
   // 全局捕获未处理的Promise rejection，防止控制台打印错误
   window.addEventListener('unhandledrejection', (event) => {
     // 检查是否是HTTP错误

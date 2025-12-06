@@ -65,22 +65,27 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
-              <transition :name="pageTransitionName" mode="out-in">
+            <template v-if="isMainApp && !isDocsApp">
+              <router-view v-slot="{ Component, route }">
+                <transition :name="pageTransitionName" mode="out-in">
                 <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
                 <keep-alive v-else>
                   <component :is="Component" :key="route.fullPath" />
                 </keep-alive>
               </transition>
             </router-view>
+            </template>
 
-            <!-- 文档应用 iframe（全局缓存，v-show 控制显示/隐藏） -->
-            <DocsIframe :visible="isDocsApp" />
+            <!-- 文档应用 iframe -->
+            <template v-if="isDocsApp">
+              <DocsIframe :visible="true" />
+            </template>
 
-            <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
-              <!-- 骨架屏（挂载在这里，相对于内容区域定位） -->
-              <AppSkeleton />
+            <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
+            <!-- 关键：使用 v-show 替代 v-else，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <div id="subapp-viewport" v-show="!isMainApp && !isDocsApp">
+              <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
+              <AppSkeleton v-if="isQiankunLoading" />
             </div>
           </div>
         </div>
@@ -147,21 +152,6 @@ const isDarkMenuStyle = computed(() => {
   return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
 
-// 页面切换动画名称
-const pageTransitionName = computed(() => {
-  const path = route.path || '';
-  // 日志中心关闭过渡，避免尺寸变化引发观察链
-  // 禁用以下页面的动画：
-  // - /admin/ops/logs (日志中心主页)
-  // - /admin/ops/logs/operation (操作日志页面)
-  // - /admin/ops/logs/request (请求日志页面)
-  if (path.startsWith('/admin/ops/logs')) {
-    return '';
-  }
-  const transition = pageTransition.value || 'slide-left';
-  return transition || '';
-});
-
 // 监听页面切换动画变化
 function handlePageTransitionChange(event: CustomEvent) {
   // 动画名称会自动通过 computed 更新
@@ -184,38 +174,57 @@ let prevIsMini = browser.isMini;
 // 独立运行时：所有路由都是主应用路由（因为这是独立运行的管理域应用）
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-  // 独立运行时，所有路由都是主应用路由
-  if (isStandalone) {
     const path = route.path;
+  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
+
     // 排除不需要 Layout 的页面
     if (path === '/login' ||
         path === '/forget-password' ||
         path === '/register') {
       return false;
     }
+
+  // 独立运行时，所有路由都是主应用路由（除了登录等特殊页面）
+  if (isStandalone) {
     return true;
   }
-  
+
   // qiankun 模式下的逻辑
-  const path = route.path;
-  // 排除不需要 Layout 的页面
-  if (path === '/login' ||
-      path === '/forget-password' ||
-      path === '/register') {
-    return false;
+  // 优先检查子域名（生产环境的关键识别方式）
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const subdomainMap: Record<string, string> = {
+      'admin.bellis.com.cn': 'admin',
+      'logistics.bellis.com.cn': 'logistics',
+      'quality.bellis.com.cn': 'quality',
+      'production.bellis.com.cn': 'production',
+      'engineering.bellis.com.cn': 'engineering',
+      'finance.bellis.com.cn': 'finance',
+      'monitor.bellis.com.cn': 'monitor',
+    };
+
+    // 关键：如果在生产环境子域名下，说明是子应用，不是主应用
+    if (subdomainMap[hostname]) {
+      return false; // 子应用，不是主应用
+    }
   }
+
+  // 开发环境或主域名访问：通过路径判断
+  // 同时检查 route.path 和 location.pathname，确保判断准确
+  const actualPath = path || locationPath;
+
   // 管理域是子应用，不是主应用
-  if (path.startsWith('/admin')) {
+  if (actualPath.startsWith('/admin') || path.startsWith('/admin') || locationPath.startsWith('/admin')) {
     return false;
   }
   // 其他子应用路径
-  if (path.startsWith('/logistics') ||
-      path.startsWith('/engineering') ||
-      path.startsWith('/quality') ||
-      path.startsWith('/production') ||
-      path.startsWith('/finance') ||
-      path.startsWith('/docs') ||
-      path.startsWith('/monitor')) {
+  if (actualPath.startsWith('/logistics') || path.startsWith('/logistics') || locationPath.startsWith('/logistics') ||
+      actualPath.startsWith('/engineering') || path.startsWith('/engineering') || locationPath.startsWith('/engineering') ||
+      actualPath.startsWith('/quality') || path.startsWith('/quality') || locationPath.startsWith('/quality') ||
+      actualPath.startsWith('/production') || path.startsWith('/production') || locationPath.startsWith('/production') ||
+      actualPath.startsWith('/finance') || path.startsWith('/finance') || locationPath.startsWith('/finance') ||
+      actualPath.startsWith('/docs') || path.startsWith('/docs') || locationPath.startsWith('/docs') ||
+      actualPath.startsWith('/monitor') || path.startsWith('/monitor') || locationPath.startsWith('/monitor')) {
     return false;
   }
   // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
@@ -227,24 +236,38 @@ const isDocsApp = computed(() => {
   return route.path === '/docs' || route.path.startsWith('/docs/');
 });
 
-// qiankun 加载状态（用于追踪容器是否应该强制显示）
-const isQiankunLoading = ref(false);
+// 跟踪之前的 isMainApp 状态，用于检测跨应用切换
+const prevIsMainApp = ref(false);
 
-// 判断子应用容器是否应该显示
-// 当 qiankun 正在加载时，即使 isMainApp 为 true 也要显示
-// 独立运行时：不显示子应用容器（因为这是独立运行的应用本身）
-const shouldShowSubAppViewport = computed(() => {
-  // 独立运行时，不显示子应用容器
-  if (isStandalone) {
-    return false;
+// 页面切换动画名称（需要在 isMainApp 定义后）
+const pageTransitionName = computed(() => {
+  const path = route.path || '';
+
+  // 检测跨应用切换（从主应用切换到子应用，或反之）
+  const isCrossAppSwitch = prevIsMainApp.value !== isMainApp.value;
+  if (isCrossAppSwitch) {
+    // 跨应用切换时禁用动画，避免与 v-if 冲突
+    prevIsMainApp.value = isMainApp.value;
+    return '';
   }
-  // 如果 qiankun 正在加载，强制显示容器
-  if (isQiankunLoading.value) {
-    return true;
+
+  // 更新状态
+  prevIsMainApp.value = isMainApp.value;
+
+  // 日志中心关闭过渡，避免尺寸变化引发观察链
+  // 禁用以下页面的动画：
+  // - /admin/ops/logs (日志中心主页)
+  // - /admin/ops/logs/operation (操作日志页面)
+  // - /admin/ops/logs/request (请求日志页面)
+  if (path.startsWith('/admin/ops/logs')) {
+    return '';
   }
-  // 正常情况：非主应用且非文档应用时显示
-  return !isMainApp.value && !isDocsApp.value;
+  const transition = pageTransition.value || 'slide-left';
+  return transition || '';
 });
+
+// qiankun 加载状态（用于显示骨架屏）
+const isQiankunLoading = ref(false);
 
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
 let qiankunLoadingObserver: MutationObserver | null = null;
@@ -320,11 +343,75 @@ function refreshView() {
 }
 
 // qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
+// 关键：使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
 const handleQiankunBeforeLoad = () => {
-  isQiankunLoading.value = true;
+  nextTick(() => {
+    isQiankunLoading.value = true;
+  });
 };
 const handleQiankunAfterMount = () => {
-  isQiankunLoading.value = false;
+  nextTick(() => {
+    isQiankunLoading.value = false;
+  });
+};
+
+// 设置 MutationObserver（需要在路由切换时重新设置）
+const setupMutationObserver = () => {
+  // 先断开旧的观察器（如果存在）
+  if (qiankunLoadingObserver) {
+    qiankunLoadingObserver.disconnect();
+    qiankunLoadingObserver = null;
+  }
+
+  nextTick(() => {
+    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (container && container.isConnected) {
+      // 检查初始状态
+      const hasAttr = container.hasAttribute('data-qiankun-loading');
+      isQiankunLoading.value = hasAttr;
+
+      // 使用 MutationObserver 监听属性变化
+      // 关键：在回调中使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
+      qiankunLoadingObserver = new MutationObserver((mutations) => {
+        // 检查容器是否还在 DOM 中，避免在组件卸载时操作已移除的元素
+        if (!container.isConnected) {
+          qiankunLoadingObserver?.disconnect();
+          qiankunLoadingObserver = null;
+          return;
+        }
+
+        // 使用 nextTick 延迟更新，避免与 Vue 的更新周期冲突
+        nextTick(() => {
+          // 再次检查容器是否还在 DOM 中
+          if (!container.isConnected) {
+            return;
+          }
+
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
+              // 再次检查容器是否还在 DOM 中
+              if (container.isConnected) {
+                try {
+                  const hasAttr = container.hasAttribute('data-qiankun-loading');
+                  isQiankunLoading.value = hasAttr;
+                } catch (error) {
+                  // 捕获可能的 DOM 操作错误，避免影响应用运行
+                  if (import.meta.env.DEV) {
+                    console.warn('[Layout] MutationObserver 更新状态时出错（已忽略）:', error);
+                  }
+                }
+              }
+            }
+          });
+        });
+      });
+
+      qiankunLoadingObserver.observe(container, {
+        attributes: true,
+        attributeFilter: ['data-qiankun-loading'],
+      });
+    }
+  });
 };
 
 onMounted(() => {
@@ -345,36 +432,23 @@ onMounted(() => {
     scheduleContentResize();
   }, true); // immediate = true，立即执行一次，确保初始状态正确
 
-  // 监听 qiankun 加载状态（通过 DOM 属性）
-  nextTick(() => {
-    const container = document.querySelector('#subapp-viewport');
-    if (container) {
-      // 检查初始状态
-      isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
+  // 初始化 MutationObserver
+  setupMutationObserver();
 
-      // 使用 MutationObserver 监听属性变化
-      qiankunLoadingObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-            isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
-          }
-        });
-      });
-
-      qiankunLoadingObserver.observe(container, {
-        attributes: true,
-        attributeFilter: ['data-qiankun-loading'],
-      });
-    }
-  });
+  // 初始化 prevIsMainApp
+  prevIsMainApp.value = isMainApp.value;
 
   scheduleContentResize();
 });
 
 watch(
   () => route.fullPath,
-  () => {
+  async () => {
     scheduleContentResize();
+    // 路由切换时重新设置 MutationObserver（因为容器可能被 v-if 移除和重建）
+    // 使用 nextTick 确保 DOM 更新完成后再设置观察器
+    await nextTick();
+    setupMutationObserver();
   },
 );
 
@@ -418,16 +492,15 @@ onUnmounted(() => {
     flex: 1;
     height: calc(100vh - 47px); // 减去顶栏高度
     overflow: hidden;
-    // 移除 width 和 box-sizing，让 flex 布局自动计算宽度
   }
 
   &__sidebar {
-    width: 255px; // 使用 !important 确保宽度稳定
+    width: 255px;
     height: 100%;
     background-color: transparent; // 背景色由菜单风格控制
     transition: width 0.2s ease-in-out;
     overflow: hidden;
-    box-sizing: border-box; // 使用 !important 覆盖全局 border-box，与系统域保持一致
+    flex-shrink: 0; // 关键：防止侧边栏被压缩，与系统应用保持一致
     border-right: 1px solid var(--el-border-color-extra-light);
 
     // 双栏菜单模式：宽度为 274px（与顶栏搜索框对齐）
@@ -482,6 +555,17 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       min-height: 0;
+
+      // 确保 router-view 内部渲染的页面组件根元素占据完整高度
+      // 只对页面组件根元素设置 flex: 1，不会影响内部组件（如 btc-crud-row）
+      > * {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1; // 页面组件根元素需要占据完整高度
+      }
     }
 
     // 文档应用 iframe（占据内容区域完整尺寸）
@@ -498,6 +582,7 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
+      height: 100% !important; // 关键：确保高度为 100%
       flex: 1;
       min-height: 0;
       min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
@@ -527,6 +612,21 @@ onUnmounted(() => {
       width: 100%;
     }
 
+    // 当 layout-app 在 qiankun 包装容器内部时，确保 #subapp-viewport 正确显示
+    :deep([id^="__qiankun_microapp_wrapper"] #subapp-viewport) {
+      position: static !important;
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      height: 100% !important; // 关键：确保高度为 100%
+      flex: 1 !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      background-color: var(--el-bg-color) !important;
+    }
+
     :deep(#subapp-viewport > [data-qiankun] > *) {
       flex: 1;
       display: flex;
@@ -545,6 +645,7 @@ onUnmounted(() => {
       height: 100%;
       width: 100%;
     }
+
 
     :deep(qiankun-head) {
       display: none !important;
@@ -741,6 +842,38 @@ onUnmounted(() => {
       border-radius: 6px;
     }
   }
+}
+</style>
+
+<style lang="scss">
+/**
+ * 布局容器核心样式（非 scoped）
+ * 当 layout-app 作为 qiankun 子应用被加载到子应用的 #app 容器时，
+ * 需要非 scoped 样式确保布局样式能够正确应用，不受 qiankun 样式隔离影响
+ * 这些样式必须与系统域的布局样式完全一致
+ */
+.app-layout__body {
+  display: flex !important;
+  flex-direction: row !important; // 明确指定左右布局
+  flex: 1 !important;
+  height: calc(100vh - 47px) !important;
+  overflow: hidden !important;
+}
+
+.app-layout__sidebar {
+  width: 255px !important;
+  height: 100% !important;
+  flex-shrink: 0 !important; // 防止侧边栏被压缩
+  overflow: hidden !important;
+}
+
+.app-layout__main {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important; // 关键：必须设置高度为 100%，与系统域一致
+  overflow: hidden !important;
+  min-width: 0 !important; // 确保 flex 子元素可以收缩
 }
 </style>
 

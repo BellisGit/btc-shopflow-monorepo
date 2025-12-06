@@ -304,13 +304,22 @@ export function setupQiankun() {
                   container.style.setProperty('display', 'flex', 'important');
                   container.style.setProperty('visibility', 'visible', 'important');
                   container.style.setProperty('opacity', '1', 'important');
-                  // 添加标记，防止 Vue 的 v-show 覆盖
-                  container.setAttribute('data-qiankun-loading', 'true');
-
-                  // 触发自定义事件，通知 Layout 组件更新状态
-                  window.dispatchEvent(new CustomEvent('qiankun:before-load', {
-                    detail: { appName: app.name }
-                  }));
+                  
+                  // 关键：使用 Vue 的 nextTick 确保所有响应式更新完成后再设置属性
+                  // 避免在 Vue 组件更新期间操作 DOM 导致的冲突
+                  import('vue').then(({ nextTick }) => {
+                    nextTick(() => {
+                      // 添加标记，防止 Vue 的 v-show 覆盖
+                      // 此时 Vue 的更新周期已经完成，可以安全地操作 DOM
+                      container.setAttribute('data-qiankun-loading', 'true');
+                      
+                      // 触发自定义事件，通知 Layout 组件更新状态
+                      // 注意：Layout 组件已经不再监听这些事件，只是作为兼容保留
+                      window.dispatchEvent(new CustomEvent('qiankun:before-load', {
+                        detail: { appName: app.name }
+                      }));
+                    });
+                  });
 
                   // 再次确认容器可见（等待一个 tick 后检查）
                   setTimeout(() => {
@@ -363,14 +372,20 @@ export function setupQiankun() {
         }));
 
         // 清理加载标记
-        const container = document.querySelector('#subapp-viewport') as HTMLElement;
-        if (container) {
-          container.removeAttribute('data-qiankun-loading');
-          // 移除强制样式，让 Vue 的 v-show 正常控制
-          container.style.removeProperty('display');
-          container.style.removeProperty('visibility');
-          container.style.removeProperty('opacity');
-        }
+        // 关键：使用 Vue 的 nextTick 确保在 Vue 更新周期之后操作 DOM
+        import('vue').then(({ nextTick }) => {
+          nextTick(() => {
+            const container = document.querySelector('#subapp-viewport') as HTMLElement;
+            if (container) {
+              // 先移除属性，再移除样式，确保操作顺序正确
+              container.removeAttribute('data-qiankun-loading');
+              // 移除强制样式，让 CSS 正常控制
+              container.style.removeProperty('display');
+              container.style.removeProperty('visibility');
+              container.style.removeProperty('opacity');
+            }
+          });
+        });
 
         // 兜底机制：如果子应用没有主动调用 onReady，这里确保 loading 被清除
         // 使用较短的延迟，确保在 onReady 之后执行（如果 onReady 被调用的话）

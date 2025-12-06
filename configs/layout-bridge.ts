@@ -2,8 +2,9 @@ import type { Plugin } from '@btc/shared-core';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
 import { registerMenus, type MenuItem } from '@btc/shared-components/store/menuRegistry';
-import { getManifestMenus } from '@btc/subapp-manifests';
+import { getManifestMenus, getManifestTabs } from '@btc/subapp-manifests';
 import { storage } from '@btc/shared-utils';
+import { assignIconsToMenuTree } from '@btc/shared-core';
 
 declare global {
   interface Window {
@@ -31,18 +32,18 @@ const DEFAULT_DOMAIN_NAMES: Record<string, { code: string; name: string; host: s
  */
 function normalizeMenuPath(path: string, appName: string): string {
   if (!path || !appName) return path;
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   // 检测是否在生产环境的子域名下
   if (typeof window === 'undefined') {
     // SSR 环境，保持原路径
     return normalizedPath;
   }
-  
+
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (isProductionSubdomain) {
     // 生产环境子域名：检测具体的子域名应用
     const subdomainMap: Record<string, string> = {
@@ -54,9 +55,9 @@ function normalizeMenuPath(path: string, appName: string): string {
       'finance.bellis.com.cn': 'finance',
       'monitor.bellis.com.cn': 'monitor',
     };
-    
+
     const currentSubdomainApp = subdomainMap[hostname];
-    
+
     // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
     if (currentSubdomainApp && currentSubdomainApp === appName) {
       const appPrefix = `/${appName}`;
@@ -68,7 +69,7 @@ function normalizeMenuPath(path: string, appName: string): string {
         return normalizedPath.substring(appPrefix.length);
       }
     }
-    
+
     // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
     return normalizedPath;
   }
@@ -78,25 +79,49 @@ function normalizeMenuPath(path: string, appName: string): string {
   if (normalizedPath === '/') {
     return `/${appName}`;
   }
-  
+
   // 如果路径已经包含应用前缀，不需要重复添加
   if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
     return normalizedPath;
   }
-  
+
   // 添加应用前缀
   return `/${appName}${normalizedPath}`;
 }
 
-const normalizeMenuItem = (item: any, appName: string): MenuItem => {
-  const normalizedIndex = normalizeMenuPath(item.index, appName);
-  return {
-    index: normalizedIndex,
-    title: item.labelKey ?? item.label ?? normalizedIndex,
-    icon: item.icon,
-    children: Array.isArray(item.children) ? item.children.map(child => normalizeMenuItem(child, appName)) : undefined,
+// 递归转换菜单项（支持任意深度）
+// 使用智能图标分配，确保同一域内图标不重复且语义匹配
+function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
+  // 创建已使用图标集合（用于域内去重），如果已存在则复用
+  const iconSet = usedIcons || new Set<string>();
+
+  // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
+  const itemsWithLabelKey = items.map(item => ({
+    ...item,
+    labelKey: item.labelKey || item.title || item.label,
+  }));
+
+  // 使用智能图标分配工具（会递归处理所有子菜单）
+  const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
+
+  // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
+  const convertToMenuItem = (item: any): MenuItem & { labelKey?: string } => {
+    const normalizedIndex = normalizeMenuPath(item.index, appName);
+    return {
+      index: normalizedIndex,
+      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      icon: item.icon,
+      // 保存 labelKey 用于面包屑图标查找
+      labelKey: item.labelKey,
+      children: item.children && item.children.length > 0
+        ? item.children.map(convertToMenuItem)
+        : undefined,
+    };
   };
-};
+
+  // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
+  return itemsWithIcons.map(convertToMenuItem);
+}
 
 /**
  * 注册 AppLayout 运行时所需的环境配置访问器
@@ -127,8 +152,32 @@ export function registerAppEnvAccessors(target: Window = window) {
  */
 export function registerManifestMenusForApp(appId: string) {
   const manifestMenus = getManifestMenus(appId);
-  if (!manifestMenus?.length) return;
-  registerMenus(appId, manifestMenus.map(item => normalizeMenuItem(item, appId)));
+
+  if (!manifestMenus?.length) {
+    return;
+  }
+
+  // 使用 normalizeMenuItems 进行规范化，包含图标分配逻辑
+  const normalizedMenus = normalizeMenuItems(manifestMenus, appId);
+
+  registerMenus(appId, normalizedMenus);
+}
+
+/**
+ * 根据 manifest 注册当前应用的 Tabs（用于 tabbar 显示）
+ * 注意：tabbar 的标签是通过路由导航时自动添加到 processStore 的，
+ * 标签的文本通过 getManifestRoute 从 manifest 中获取，不需要单独的 tabRegistry
+ * 这个函数主要用于确保 manifest 数据已加载，实际标签文本由 tabbar 组件从 manifest 中读取
+ */
+export function registerManifestTabsForApp(appId: string) {
+  const manifestTabs = getManifestTabs(appId);
+
+  if (!manifestTabs?.length) {
+    return;
+  }
+
+  // tabbar 的标签文本通过 getManifestRoute 从 manifest 中获取，不需要单独的注册
+  // 这里只是确保 manifest 数据已加载
 }
 
 const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
@@ -145,32 +194,15 @@ const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
 };
 
 /**
- * 解析应用 Logo 地址（会根据 baseUrl 自动适配）
+ * 解析应用 Logo 地址（始终返回根路径，不依赖当前路由）
  */
 export function resolveAppLogoUrl() {
-  const windowOrigin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
-  const documentBase = typeof document !== 'undefined' ? document.baseURI : undefined;
-  const context = windowOrigin || documentBase;
-
-  const defaultUrl = windowOrigin ? `${windowOrigin}/logo.png` : '/logo.png';
-
-  const baseCandidates = [
-    (import.meta as any)?.env?.BASE_URL,
-    documentBase,
-    windowOrigin,
-  ];
-
-  for (const candidate of baseCandidates) {
-    const absoluteBase = normalizeBaseUrl(candidate, context);
-    if (!absoluteBase) continue;
-    try {
-      return new URL('logo.png', absoluteBase).href;
-    } catch {
-      continue;
-    }
+  // 始终使用根路径，不依赖 document.baseURI（避免受当前路由影响）
+  // 例如：当前路由是 /governance/files/... 时，不应该解析为 /governance/files/logo.png
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/logo.png`;
   }
-
-  return defaultUrl;
+  return '/logo.png';
 }
 
 /**

@@ -11,7 +11,7 @@
 // 暗色模式布局背景色样式（必须在文件开头，确保优先级）
 // 注意：在微前端环境下，SCSS 可能无法正确穿透样式隔离
 // 因此使用 CSS 文件而不是 SCSS，确保样式能够正确应用
-// 
+//
 // 重要：已从 index.scss 中移除 @import './dark-theme.css'
 // 原因：通过 @use 导入时，SCSS 编译器无法正确处理相对路径的 CSS 导入，导致构建后仍包含源码路径
 // 解决方案：各个应用应在 main.ts 中直接导入 dark-theme.css
@@ -31,14 +31,14 @@
   .topbar__brand {
     border-bottom-color: var(--el-border-color) !important;
   }
-  
+
   // Logo 内容区域背景色（深色菜单风格，与菜单背景一致）
   .topbar__brand .topbar__logo-content {
     // 深色系统主题下，使用 #0a0a0a 与内容区域一致
     html.dark & {
       background-color: #0a0a0a !important;
     }
-    
+
     // 浅色系统主题下，使用深色菜单背景色
     html:not(.dark) & {
       background-color: #0a0a0a !important;
@@ -53,11 +53,58 @@
 	line-height: 1.4;
 }
 
+// 页面内容容器样式 - 确保高度正确传递
+// 注意：所有通过 router-view 渲染的页面组件根元素都应该占据完整高度
+// 注意：使用更精确的选择器，避免匹配到 el-pagination（el-pagination 包含 -page）
+.btc-page-content,
+[class*="page-content"],
+[class*="PageContent"],
+[class$="-page"]:not(.el-pagination) {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+// 排除 el-pagination，防止被上面的全局样式影响
+.el-pagination {
+	flex-direction: row !important;
+}
+
+// 确保 router-view 内部的所有页面组件根元素占据完整高度
+// 这是全局样式，用于处理所有页面组件
+.app-layout__content > router-view > * {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	flex: 1; // 页面组件根元素需要占据完整高度
+}
+
+// 确保 btc-table-group 和 btc-views-group 能正确继承父容器高度
+.btc-table-group,
+.btc-views-tabs-group,
+.btc-views-group {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
 .btc-crud {
 	height: 100%;
 	overflow: hidden auto;
 	position: relative;
 	box-sizing: border-box;
+	// 注意：不使用 flex 布局，保持与 cool-admin 的 cl-crud 一致
+	// flex 布局会导致子元素被拉伸，影响分页组件的显示
+	// 表格高度由 useTableHeight 通过 JavaScript 动态计算
 
 	&.is-border {
 		border: 1px solid var(--el-border-color);
@@ -87,6 +134,8 @@
 	align-items: center;
 	row-gap: 10px;
 	column-gap: 10px;
+	// 注意：不使用 flex-grow 或 flex-shrink，保持内容高度
+	// 表格高度由 useTableHeight 通过 JavaScript 动态计算
 }
 
 .btc-crud-row > .btc-search-key {
@@ -473,7 +522,7 @@
 	min-width: 0;
 	justify-content: flex-end;
 	margin-bottom: 0;
-	
+
 	> .btc-export-btn,
 	> .btc-table-toolbar {
 		flex: 0 0 auto;
@@ -709,9 +758,7 @@
 			}
 
 		// 排除 btc-crud-btn，让它的样式自己处理，不被这里的样式覆盖
-		&:not(.btc-crud-btn):hover {
-			// Element Plus 默认的 hover 样式，不覆盖 btc-crud-btn
-		}
+		// &:not(.btc-crud-btn):hover 的样式由 Element Plus 默认处理，不需要覆盖
 	}
 	}
 
@@ -825,6 +872,14 @@
 	.btn-next,
 	.el-pager li {
 		border-radius: var(--el-border-radius-base);
+	}
+
+	// 确保 .el-pager (ul) 是水平排列的，防止被父容器的 flex 布局影响
+	.el-pager {
+		display: flex !important;
+		flex-direction: row !important;
+		align-items: center;
+		flex-wrap: nowrap !important;
 	}
 }
 
@@ -1063,7 +1118,7 @@ ul.topbar__left {
   margin: 0;
   padding: 0;
   list-style: none;
-  
+
   > li {
     margin: 0;
     padding: 0;

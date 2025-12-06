@@ -13,7 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ApiSwitch: typeof import('./components/DevTools/ApiSwitch.vue')['default']
     AppLayout: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/index.vue')['default']
-    AppSkeleton: typeof import('./components/AppSkeleton.vue')['default']
+    AppSkeleton: typeof import('./../../../packages/shared-components/src/components/basic/app-skeleton/index.vue')['default']
     BasicSettings: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/basic-settings/index.vue')['default']
     BoxStyle: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/box-style/index.vue')['default']
     Breadcrumb: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/breadcrumb/index.vue')['default']

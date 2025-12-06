@@ -229,6 +229,8 @@ export default defineConfig(({ command, mode }) => {
   // - 构建模式（vite build）：根据环境变量决定 base
   //   - 如果设置了 VITE_PREVIEW=true，使用绝对路径（http://localhost:4186/），用于本地预览测试
   //   - 否则使用相对路径（/），让浏览器根据当前域名（finance.bellis.com.cn）自动解析
+  //     注意：无论从 finance.bellis.com.cn/ 还是 finance.bellis.com.cn/micro-apps/finance/ 访问，资源路径都是 /assets/xxx.js
+  //     这会被解析为 finance.bellis.com.cn/assets/xxx.js，这是正确的
   // - 预览模式（vite preview）：使用已构建的产物，base 在构建时已确定
   const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
   const base = isPreviewBuild ? `http://${APP_HOST}:${APP_PORT}/` : '/';
@@ -251,6 +253,7 @@ export default defineConfig(({ command, mode }) => {
       '@btc/subapp-manifests': resolve(__dirname, '../../packages/subapp-manifests/src'),
       '@configs': resolve(__dirname, '../../configs'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      '@btc-assets': resolve(__dirname, '../../packages/shared-components/src/assets'), // 添加 @btc-assets 别名，用于图片和图标资源导入
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, '../../packages/shared-components/src/charts/utils/css-var'),
       '@charts-utils/color': resolve(__dirname, '../../packages/shared-components/src/charts/utils/color'),
@@ -312,6 +315,7 @@ export default defineConfig(({ command, mode }) => {
       protocol: 'ws',
       host: config.devHost, // HMR WebSocket 需要使用配置的主机，浏览器无法连接 0.0.0.0
       port: config.devPort,
+      clientPort: config.devPort, // 客户端连接的端口（与服务器端口相同）
       overlay: false, // 关闭热更新错误浮层，减少开销
     },
     fs: {
@@ -403,11 +407,36 @@ export default defineConfig(({ command, mode }) => {
         inlineDynamicImports: false,
         manualChunks(id) {
           // 0. EPS 服务单独打包（所有应用共享，必须在最前面）
-          if (id.includes('virtual:eps') || 
+          if (id.includes('virtual:eps') ||
               id.includes('\\0virtual:eps') ||
               id.includes('services/eps') ||
               id.includes('services\\eps')) {
             return 'eps-service';
+          }
+
+          // 0.5. 菜单相关代码单独打包（确保菜单代码独立，便于查找和加载）
+          // 关键：menuRegistry.ts 依赖 Vue，必须和 Vue 一起打包到 vendor chunk，不能单独打包
+          // 只将 manifest 数据和 layout-bridge 打包到 menu-registry chunk
+          if (id.includes('configs/layout-bridge') ||
+              id.includes('@configs/layout-bridge')) {
+            return 'menu-registry';
+          }
+          
+          // 处理 subapp-manifests：只包含当前应用（finance）的 manifest
+          if (id.includes('packages/subapp-manifests') || id.includes('@btc/subapp-manifests')) {
+            // 排除其他应用的 manifest JSON 文件
+            if (id.includes('manifests/admin.json') ||
+                id.includes('manifests/logistics.json') ||
+                id.includes('manifests/system.json') ||
+                id.includes('manifests/quality.json') ||
+                id.includes('manifests/engineering.json') ||
+                id.includes('manifests/production.json') ||
+                id.includes('manifests/monitor.json')) {
+              // 其他应用的 manifest，不打包到 menu-registry
+              return undefined;
+            }
+            // 只打包 finance 应用的 manifest 和共享代码
+            return 'menu-registry';
           }
 
           // 1. 独立大库：ECharts（完全独立，无依赖问题）

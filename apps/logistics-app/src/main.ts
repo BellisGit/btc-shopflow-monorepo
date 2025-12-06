@@ -98,12 +98,34 @@ const shouldRunStandalone = () =>
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {
-  // 如果需要加载 layout-app，先初始化
-  initLayoutApp().catch((error) => {
-    console.error('[logistics-app] 初始化 layout-app 失败:', error);
-  });
+  // 检查是否需要加载 layout-app
+  const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
   
-  render().catch((error) => {
-    console.error('[logistics-app] 独立运行失败:', error);
-  });
+  if (shouldLoadLayout) {
+    // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
+    initLayoutApp()
+      .then(() => {
+        // layout-app 加载成功，检查是否需要独立渲染
+        // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        if (!(window as any).__USE_LAYOUT_APP__) {
+          // layout-app 加载失败或不需要加载，独立渲染
+          render().catch((error) => {
+            console.error('[logistics-app] 独立运行失败:', error);
+          });
+        }
+        // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+      })
+      .catch((error) => {
+        console.error('[logistics-app] 初始化 layout-app 失败:', error);
+        // layout-app 加载失败，独立渲染
+        render().catch((err) => {
+          console.error('[logistics-app] 独立运行失败:', err);
+        });
+      });
+  } else {
+    // 不需要加载 layout-app（非生产环境），直接渲染
+    render().catch((error) => {
+      console.error('[logistics-app] 独立运行失败:', error);
+    });
+  }
 }

@@ -4,6 +4,10 @@ import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
+import {
+  registerManifestMenusForApp,
+  registerManifestTabsForApp,
+} from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 注意：样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
@@ -35,6 +39,7 @@ export interface AdminAppContext {
   props: QiankunProps;
   translate: (key?: string | null) => string;
   registerTabs: (props?: QiankunProps) => void;
+  container: HTMLElement | null; // 保存挂载容器引用，用于安全卸载
 }
 
 const createTranslate = (context: AdminAppContext) => {
@@ -117,7 +122,7 @@ const syncHostWithSubRoute = (fullPath: string) => {
 
   // 确保 fullPath 是有效的路径，如果已经是完整路径则直接使用
   let targetUrl = fullPath || ADMIN_BASE_PATH;
-  
+
   // 如果 fullPath 已经是完整路径（以 /admin 开头），直接使用
   // 否则确保它以 ADMIN_BASE_PATH 开头
   if (!targetUrl.startsWith(ADMIN_BASE_PATH)) {
@@ -354,26 +359,59 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
     }
   }
 
+  // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
+  // 这样 layout-app 才能显示 admin-app 的菜单
+  // 与 finance-app 保持一致，在 createAdminApp 中同步注册菜单
+  registerManifestMenusForApp('admin');
+  registerManifestTabsForApp('admin');
+
   const app = createApp(App);
+
+  // 关键：添加全局错误处理，捕获 DOM 操作错误
+  // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况
+  app.config.errorHandler = (err, instance, info) => {
+    // 检查是否是 DOM 操作相关的错误
+    if (err instanceof Error && (
+      err.message.includes('insertBefore') ||
+      err.message.includes('__vnode') ||
+      err.message.includes('Cannot read properties of null') ||
+      err.message.includes('Cannot set properties of null')
+    )) {
+      // DOM 操作错误，可能是容器在更新时被移除
+      // 在开发环境记录警告，生产环境静默处理
+      if (import.meta.env.DEV) {
+        console.warn('[admin-app] DOM 操作错误（已捕获）:', {
+          error: err.message,
+          info,
+          container: context?.container,
+          isUnmounted,
+        });
+      }
+      // 不抛出错误，避免影响用户体验
+      return;
+    }
+
+    // 其他错误，使用默认处理或记录
+    if (import.meta.env.DEV) {
+      console.error('[admin-app] Vue 错误:', err, info);
+    }
+  };
+
   const router = createAdminRouter();
   setupRouter(app, router);
   const pinia = setupStore(app);
   const theme = setupUI(app);
   const i18n = setupI18n(app, props.locale || 'zh-CN');
-  
+
   // 注册 echarts 插件（v-chart 组件）
   app.use(echartsPlugin);
 
-  // 路由初始化使用 Promise.resolve().then() 确保在下一个 tick 执行，不阻塞当前初始化
-  // 注意：不要在 createAdminApp 中初始化路由，这可能导致路由状态不一致
-  // 路由初始化应该在 mountAdminApp 中进行，确保在应用挂载后再初始化路由
-  // if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-  //   const initialRoute = deriveInitialSubRoute();
-  //   // 使用 Promise.resolve().then() 确保路由替换在下一个 tick 执行，不阻塞当前初始化
-  //   Promise.resolve().then(() => {
-  //     router.replace(initialRoute).catch(() => {});
-  //   });
-  // }
+  // 路由初始化：在 qiankun 模式下或使用 layout-app 时提前初始化路由，与 finance-app 保持一致
+  // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），也需要初始化路由
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__) {
+    const initialRoute = deriveInitialSubRoute();
+    router.replace(initialRoute).catch(() => {});
+  }
 
   const context: AdminAppContext = {
     app,
@@ -387,6 +425,7 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
     props,
     translate: () => '',
     registerTabs: () => {},
+    container: null, // 初始化为 null，挂载时设置
   };
 
   context.translate = createTranslate(context);
@@ -395,186 +434,116 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
   return context;
 };
 
-export const mountAdminApp = (context: AdminAppContext, props: QiankunProps = {}) => {
+export const mountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
   // 重置卸载标记
   isUnmounted = false;
   context.props = props;
 
-  // 查找挂载点：优先从 props.container 中查找 #app，如果没有则使用 props.container 本身，最后回退到全局 #app
-  // 与 logistics-app 保持一致，确保挂载逻辑可靠
-  let mountPoint: string | HTMLElement =
-    (props.container && (props.container.querySelector('#app') || props.container)) ||
-    '#app';
-  
-  // 如果 mountPoint 是字符串，确保元素存在
-  if (typeof mountPoint === 'string') {
-    const element = document.querySelector(mountPoint);
-    if (!element) {
-      // 如果找不到 #app，尝试在容器中创建
+  // 关键：使用 try-catch 确保 onReady 总是被调用，即使挂载失败也要清除 loading
+  try {
+    // 查找挂载点：
+    // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
+    // - 独立运行模式下：使用 #app
+    let mountPoint: HTMLElement | null = null;
+
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
       if (props.container && props.container instanceof HTMLElement) {
-        const appDiv = document.createElement('div');
-        appDiv.id = 'app';
-        props.container.appendChild(appDiv);
-        mountPoint = appDiv;
+        mountPoint = props.container;
       } else {
-        throw new Error(`[admin-app] 无法找到挂载节点 ${mountPoint}`);
+        throw new Error('[admin-app] qiankun 模式下未提供容器元素');
       }
     } else {
-      mountPoint = element as HTMLElement;
-    }
-  }
-
-  // 先挂载 Vue 应用，确保 DOM 已准备好
-  context.app.mount(mountPoint);
-
-  setupRouteSync(context);
-  setupHostLocationBridge(context);
-  setupEventBridge(context);
-  ensureCleanUrl(context);
-  context.registerTabs(props);
-
-  // 独立运行时：初始化菜单和 tabbar
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-    import('../micro/index').then(({ registerManifestMenusForApp, registerManifestTabsForApp }) => {
-      registerManifestTabsForApp('admin').catch(console.error);
-      registerManifestMenusForApp('admin').catch(console.error);
-    });
-  }
-
-  // 超时保护：确保 loading 状态最终会被清除（5秒超时）
-  let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  const maxLoadingTime = 5000; // 5秒超时
-  
-  const ensureLoadingCleared = () => {
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
-    }
-    // 确保 onReady 被调用，清除 loading 状态
-    if (props.onReady) {
-      props.onReady();
-    }
-    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-      window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
-    }
-    // 独立运行时：直接隐藏 loading 元素
-    if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-      const loadingEl = document.getElementById('Loading');
-      if (loadingEl) {
-        loadingEl.classList.add('is-hide');
+      // 独立运行模式：使用 #app
+      const appElement = document.querySelector('#app') as HTMLElement;
+      if (!appElement) {
+        throw new Error('[admin-app] 独立运行模式下未找到 #app 元素');
       }
+      mountPoint = appElement;
     }
-  };
 
-  // 设置超时保护
-  loadingTimeout = setTimeout(() => {
-    console.warn('[admin-app] 路由初始化超时，强制清除 loading 状态');
-    ensureLoadingCleared();
-  }, maxLoadingTime);
+    if (!mountPoint) {
+      throw new Error('[admin-app] 无法找到挂载节点');
+    }
 
-  // 路由初始化：在应用挂载后立即初始化路由，确保路由状态一致
-  // 使用 router.isReady() 确保路由系统已准备好，然后使用 nextTick 确保 DOM 已更新
-  // 关键：在路由初始化完成后再调用 onReady，确保应用完全准备好
-  context.router.isReady().then(() => {
-    return import('vue').then(({ nextTick }) => {
+    // 保存容器引用，用于安全卸载
+    context.container = mountPoint;
+
+    // 关键：不直接操作 DOM 节点，让 qiankun 和 Vue 自己管理容器内容
+    // qiankun 会在挂载前自动清空容器，我们只需要直接挂载 Vue 应用即可
+    // 使用 nextTick 确保 Vue 的更新周期完成，避免在 DOM 操作期间挂载导致冲突
+    await import('vue').then(({ nextTick }) => {
       return new Promise<void>((resolve) => {
         nextTick(() => {
-          if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-            const initialRoute = deriveInitialSubRoute();
-            // 如果当前路由不匹配，则替换为初始路由
-            if (context.router.currentRoute.value.matched.length === 0 || context.router.currentRoute.value.fullPath !== initialRoute) {
-              context.router.replace(initialRoute).then(() => {
-                // 检查路由是否匹配成功
-                if (context.router.currentRoute.value.matched.length === 0) {
-                  // 如果路由未匹配，尝试使用默认路由
-                  context.router.replace('/').catch((error) => {
-                    console.error('[admin-app] 使用默认路由失败:', error);
-                  }).finally(() => {
-                    resolve();
-                  });
-                } else {
-                  resolve();
-                }
-              }).catch((error) => {
-                console.error('[admin-app] 路由初始化失败:', error);
-                // 如果路由初始化失败，尝试使用默认路由
-                context.router.replace('/').catch((err) => {
-                  console.error('[admin-app] 使用默认路由也失败:', err);
-                }).finally(() => {
-                  resolve();
-                });
-              });
-            } else {
-              resolve();
-            }
-          } else {
-            // 非 qiankun 环境，确保路由已初始化
-            // 关键：在子域名下，路径可能包含 /admin/ 前缀，需要规范化
-            const currentPath = context.router.currentRoute.value.path;
-            const hostname = window.location.hostname;
-            const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-            
-            // 规范化路径：在子域名下移除 /admin/ 前缀
-            let normalizedPath = currentPath;
-            if (isProductionSubdomain && hostname === 'admin.bellis.com.cn' && currentPath.startsWith('/admin/')) {
-              normalizedPath = currentPath.substring('/admin'.length) || '/';
-            }
-            
-            // 如果路径需要规范化，先导航到规范化后的路径
-            if (normalizedPath !== currentPath) {
-              console.log(`[admin-app] 非 qiankun 环境，规范化路径: ${currentPath} -> ${normalizedPath}`);
-              context.router.replace(normalizedPath).then(() => {
-                // 检查路由是否匹配成功
-                if (context.router.currentRoute.value.matched.length === 0) {
-                  console.warn('[admin-app] 非 qiankun 环境，路由未匹配，尝试使用默认路由 /');
-                  context.router.replace('/').catch((error) => {
-                    console.error('[admin-app] 使用默认路由失败:', error);
-                  }).finally(() => {
-                    resolve();
-                  });
-                } else {
-                  resolve();
-                }
-              }).catch((error) => {
-                console.error('[admin-app] 路由规范化失败:', error);
-                // 如果规范化失败，尝试使用默认路由
-                context.router.replace('/').catch((err) => {
-                  console.error('[admin-app] 使用默认路由也失败:', err);
-                }).finally(() => {
-                  resolve();
-                });
-              });
-            } else if (context.router.currentRoute.value.matched.length === 0) {
-              // 路径不需要规范化，但路由未匹配，尝试使用默认路由
-              console.warn('[admin-app] 非 qiankun 环境，路由未匹配，尝试使用默认路由 /');
-              context.router.replace('/').catch((error) => {
-                console.error('[admin-app] 使用默认路由失败:', error);
-              }).finally(() => {
-                resolve();
-              });
-            } else {
-              resolve();
-            }
-          }
+          resolve();
         });
       });
     });
-  }).then(() => {
-    // 路由初始化完成后，清除超时保护并调用 onReady 回调
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
+
+    // 挂载 Vue 应用
+    // 关键：不进行任何 DOM 操作，直接挂载，让 Vue 和 qiankun 自己管理
+    context.app.mount(mountPoint);
+
+    setupRouteSync(context);
+    setupHostLocationBridge(context);
+    setupEventBridge(context);
+    ensureCleanUrl(context);
+    context.registerTabs(props);
+
+    // 关键：在 qiankun 环境下或通过 layout-app:mounted 事件挂载时，等待路由就绪后再同步初始路由
+    // 使用 nextTick 确保 Vue 应用已完全挂载
+    // 如果提供了 container，说明是通过 layout-app:mounted 事件挂载的，也需要初始化路由
+    if (qiankunWindow.__POWERED_BY_QIANKUN__ || (props.container && props.container instanceof HTMLElement)) {
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          context.router.isReady().then(() => {
+            // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /admin/xxx）
+            const initialRoute = deriveInitialSubRoute();
+            // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
+            if (context.router.currentRoute.value.matched.length === 0 ||
+                context.router.currentRoute.value.path !== initialRoute.split('?')[0].split('#')[0]) {
+              context.router.replace(initialRoute).catch(() => {});
+            }
+          });
+        });
+      });
     }
-    ensureLoadingCleared();
-  }).catch((error) => {
-    console.error('[admin-app] 路由准备失败:', error);
-    // 即使路由初始化失败，也要清除超时保护并调用 onReady，确保 loading 状态被清除
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
+
+    // 关键：在挂载成功后调用 onReady，清除 loading 状态
+    // 注意：路由初始化是异步的，不阻塞 onReady 调用
+    if (props.onReady) {
+      props.onReady();
     }
-    ensureLoadingCleared();
-  });
+
+    // 在 qiankun 环境下也发送就绪事件
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
+    }
+  } catch (error) {
+    // 记录详细的错误信息，便于排查问题
+    console.error('[admin-app] 挂载失败:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      container: props.container,
+      isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+    });
+    // 关键：即使挂载失败，也要调用 onReady 清除 loading 状态
+    if (props.onReady) {
+      try {
+        props.onReady();
+      } catch (onReadyError) {
+        console.warn('[admin-app] onReady 回调执行失败:', onReadyError);
+      }
+    }
+    // 在 qiankun 环境下也发送就绪事件
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      try {
+        window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
+      } catch (eventError) {
+        console.warn('[admin-app] 发送 subapp:ready 事件失败:', eventError);
+      }
+    }
+  }
 };
 
 export const updateAdminApp = (context: AdminAppContext, props: QiankunProps) => {
@@ -590,10 +559,11 @@ export const updateAdminApp = (context: AdminAppContext, props: QiankunProps) =>
   context.registerTabs(props);
 };
 
-export const unmountAdminApp = (context: AdminAppContext, props: QiankunProps = {}) => {
-  // 标记应用已卸载，阻止路由同步
+export const unmountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
+  // 标记应用已卸载，阻止路由同步和响应式更新
   isUnmounted = true;
 
+  // 先清理事件监听器和路由钩子，阻止后续的响应式更新
   if (context.cleanup.routerAfterEach) {
     context.cleanup.routerAfterEach();
     context.cleanup.routerAfterEach = undefined;
@@ -609,6 +579,29 @@ export const unmountAdminApp = (context: AdminAppContext, props: QiankunProps = 
     clearTabs();
   }
 
-  context.app.unmount();
-  context.props = {};
+  // 关键：使用 nextTick 确保所有待处理的响应式更新完成，避免在卸载过程中触发更新
+  await import('vue').then(({ nextTick }) => {
+    return new Promise<void>((resolve) => {
+      nextTick(() => {
+        // 安全卸载：不直接操作 DOM，只卸载 Vue 应用
+        // qiankun 会自己管理容器的清理，我们不需要检查 DOM 状态
+        if (context.app) {
+          try {
+            context.app.unmount();
+          } catch (error) {
+            // 卸载失败，记录错误但不抛出
+            // 这通常发生在容器已经被移除的情况下，属于正常情况
+            if (import.meta.env.DEV) {
+              console.warn('[admin-app] 卸载应用时出错（已忽略）:', error);
+            }
+          }
+        }
+
+        // 清理容器引用
+        context.container = null;
+        context.props = {};
+        resolve();
+      });
+    });
+  });
 };

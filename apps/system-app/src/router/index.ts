@@ -54,6 +54,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: Layout,
     children: systemRoutes,
+    meta: { isMainApp: true }, // 标记为主应用路由，便于调试
   },
   // 子应用路由占位（qiankun会接管，这里只需要Layout）
   {
@@ -145,6 +146,15 @@ const router = createRouter({
   strict: true,
 });
 
+// 路由错误处理
+router.onError((error) => {
+  console.error('[system-app] Router error:', error);
+  // 如果是组件加载失败，尝试重新加载
+  if (error.message && error.message.includes('Failed to fetch dynamically imported module')) {
+    console.warn('[system-app] Component load failed, page will be empty. Error:', error);
+  }
+});
+
 // 保存当前路由，用于语言切换时更新标题
 let currentRoute: RouteLocationNormalized | null = null;
 
@@ -221,26 +231,56 @@ export function setupI18nTitleWatcher() {
  * 因此通过检查 cookie、localStorage 中的登录状态标记、token 和用户信息来判断
  */
 function isAuthenticated(): boolean {
+  // 关键：在子域名环境下，即使无法读取 HttpOnly cookie，也应该尝试其他方式判断
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
   // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
+  // 注意：如果 cookie 是 HttpOnly 的，getCookie 无法读取，但浏览器会自动在请求中发送
+  // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该认为可能已认证（由后端验证）
   const cookieToken = getCookie('access_token');
   if (cookieToken) {
     return true;
   }
 
-  // 2. 检查登录状态标记（从统一的 settings 存储中读取）
+  // 2. 在子域名环境下，如果无法读取 cookie，尝试通过其他方式判断
+  // 如果 cookie 是 HttpOnly 的，前端无法读取，但浏览器会自动发送给后端
+  // 在这种情况下，我们应该假设可能已认证（由后端验证），而不是直接返回 false
+  if (isProductionSubdomain) {
+    // 在子域名环境下，检查是否有其他认证标记
+    // 如果有用户信息或登录状态标记，认为可能已认证
+    const userInfo = appStorage.user.get();
+    if (userInfo?.id) {
+      return true;
+    }
+    
+    const settings = appStorage.settings.get() as Record<string, any> | null;
+    const isLoggedIn = settings?.is_logged_in === true;
+    if (isLoggedIn) {
+      return true;
+    }
+    
+    // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该假设可能已认证
+    // 因为浏览器会自动发送 cookie 给后端，后端会验证
+    // 如果后端验证失败，会在响应中返回 401，由 HTTP 拦截器处理
+    // 这里返回 true，让请求继续，由后端验证
+    return true;
+  }
+
+  // 3. 检查登录状态标记（从统一的 settings 存储中读取）
   const settings = appStorage.settings.get() as Record<string, any> | null;
   const isLoggedIn = settings?.is_logged_in === true;
   if (isLoggedIn) {
     return true;
   }
 
-  // 3. 检查 localStorage 中的 token
+  // 4. 检查 localStorage 中的 token
   const storageToken = appStorage.auth.getToken();
   if (storageToken) {
     return true;
   }
 
-  // 4. 检查用户信息是否存在
+  // 5. 检查用户信息是否存在
   const userInfo = appStorage.user.get();
   if (userInfo?.id) {
     return true;
@@ -308,12 +348,51 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
+  // 关键：在子域名环境下，如果是子应用域名，不应该由 system-app 进行认证检查
+  // 子应用的认证应该由子应用自己处理（通过 layout-app 或子应用自己的路由守卫）
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  const subdomainMap: Record<string, string> = {
+    'admin.bellis.com.cn': 'admin',
+    'logistics.bellis.com.cn': 'logistics',
+    'quality.bellis.com.cn': 'quality',
+    'production.bellis.com.cn': 'production',
+    'engineering.bellis.com.cn': 'engineering',
+    'finance.bellis.com.cn': 'finance',
+    'monitor.bellis.com.cn': 'monitor',
+  };
+  const currentSubdomainApp = subdomainMap[hostname];
+  
+  // 关键：在子域名环境下，如果是子应用域名，跳过 system-app 的认证检查
+  // 因为子域名访问时，应该由 layout-app 或子应用自己处理认证
+  // 只有在主域名（bellis.com.cn）或开发环境下，system-app 才进行认证检查
+  if (isProductionSubdomain && currentSubdomainApp) {
+    // 子域名环境下，跳过 system-app 的认证检查，让子应用或 layout-app 处理
+    // 但是，如果是登录页等公开页面，仍然需要处理
+    const isPublicPage = to.meta?.public === true || 
+                         to.path === '/login' || 
+                         to.path === '/forget-password' || 
+                         to.path === '/register';
+    
+    if (isPublicPage) {
+      // 公开页面，直接放行
+      next();
+      return;
+    }
+    
+    // 非公开页面，在子域名环境下，应该由子应用或 layout-app 处理认证
+    // 这里直接放行，让子应用的路由守卫处理
+    next();
+    return;
+  }
+
   // 检查是否为公开页面（不需要认证）
   const isPublicPage = to.meta?.public === true;
   const isAuthenticatedUser = isAuthenticated();
 
   // 如果是登录页且用户已认证，重定向到首页
-  if (to.path === '/login' && isAuthenticatedUser) {
+  // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
+  if (to.path === '/login' && isAuthenticatedUser && !to.query.logout) {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
@@ -390,6 +469,30 @@ router.beforeEach((to, from, next) => {
 
   // 继续路由导航
   next();
+});
+
+// 路由守卫：调试路由匹配情况
+router.afterEach((to, from) => {
+  // 生产环境调试：如果路由未匹配，记录详细信息
+  if (import.meta.env.PROD && to.matched.length === 0) {
+    console.error('[system-app Router] 路由未匹配:', {
+      path: to.path,
+      fullPath: to.fullPath,
+      name: to.name,
+      matched: to.matched,
+      params: to.params,
+      query: to.query,
+      location: window.location.href,
+    });
+  }
+  
+  // 如果路由已匹配，记录匹配信息（仅在生产环境且是根路径时）
+  if (import.meta.env.PROD && to.path === '/' && to.matched.length > 0) {
+    console.log('[system-app Router] 路由匹配成功:', {
+      path: to.path,
+      matched: to.matched.map(m => ({ path: m.path, name: m.name, component: m.components })),
+    });
+  }
 });
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）

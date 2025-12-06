@@ -1,34 +1,26 @@
 <template>
-  <div :class="['admin-app', { 'is-standalone': isStandalone }]">
-    <div class="admin-app__container" ref="containerRef">
-      <router-view v-slot="{ Component, route }">
-        <transition name="slide-left" mode="out-in">
-          <div :key="route.fullPath" ref="contentRef" class="admin-app__page">
-            <component :is="Component" />
-          </div>
-        </transition>
-      </router-view>
-    </div>
+  <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
+  <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
+  <!-- 关键：始终渲染 router-view，使用包装层 div 的 class 绑定控制样式，避免使用 v-if/v-else 导致 DOM 节点销毁重建 -->
+  <div :class="['admin-app', { 'admin-app--standalone': isStandalone }]">
+    <router-view v-slot="{ Component }">
+      <component :is="Component" :key="viewKey" />
+    </router-view>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { provideContentHeight } from '@btc/shared-components';
 
 defineOptions({
   name: 'AdminApp',
 });
 
-const route = useRoute();
 const viewKey = ref(1);
-const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+// 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），也应该使用包装层样式
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 const emitter = (window as any).__APP_EMITTER__;
-const containerRef = ref<HTMLElement | null>(null);
-const contentRef = ref<HTMLElement | null>(null);
-const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
 
 // 刷新视图
 function refreshView() {
@@ -39,12 +31,6 @@ onMounted(() => {
   if (emitter) {
     emitter.on('subapp.refresh', refreshView);
   }
-  registerContentHeight(contentRef.value);
-  const handleWindowResize = () => emitContentResize();
-  window.addEventListener('resize', handleWindowResize);
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleWindowResize);
-  });
 });
 
 onUnmounted(() => {
@@ -52,14 +38,10 @@ onUnmounted(() => {
     emitter.off('subapp.refresh', refreshView);
   }
 });
-
-watch(contentRef, (el) => {
-  registerContentHeight(el ?? null);
-  emitContentResize();
-});
 </script>
 
 <style scoped>
+/* qiankun 模式下使用包装层样式 */
 .admin-app {
   flex: 1;
   width: 100%;
@@ -71,30 +53,11 @@ watch(contentRef, (el) => {
   box-sizing: border-box;
 }
 
-.admin-app.is-standalone {
-  padding: 20px;
-}
-
-.admin-app__container {
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-app__page {
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.admin-app__page > * {
-  flex: 1 1 auto;
-  min-width: 0;
+/* 独立运行模式下，包装层不应用样式，让 AppLayout 占据整个容器 */
+.admin-app--standalone {
+  flex: none;
+  width: auto;
+  height: auto;
+  display: block;
 }
 </style>

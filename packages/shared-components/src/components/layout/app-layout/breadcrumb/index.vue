@@ -53,8 +53,10 @@ function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined
   // 递归查找菜单项
   function findInMenuItems(items: any[]): string | undefined {
     for (const item of items) {
-      // 检查当前菜单项的 title 是否匹配 i18nKey
-      if (item.title === i18nKey && item.icon) {
+      // 优先通过 labelKey 匹配（菜单注册时保存的原始 i18n key）
+      // 如果 labelKey 不存在，则通过 title 匹配（兼容旧数据）
+      const matches = (item.labelKey === i18nKey) || (item.title === i18nKey);
+      if (matches && item.icon) {
         return item.icon;
       }
       // 递归查找子菜单

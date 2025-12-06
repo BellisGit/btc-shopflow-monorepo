@@ -25,14 +25,19 @@ import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 
 let context: AdminAppContext | null = null;
 
-const render = (props: QiankunProps = {}) => {
-  if (context) {
-    unmountAdminApp(context);
-    context = null;
-  }
+const render = async (props: QiankunProps = {}) => {
+  try {
+    if (context) {
+      await unmountAdminApp(context);
+      context = null;
+    }
 
-  context = createAdminApp(props);
-  mountAdminApp(context, props);
+    context = createAdminApp(props);
+    await mountAdminApp(context, props);
+  } catch (error) {
+    console.error('[admin-app] 渲染失败:', error);
+    throw error;
+  }
 };
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
@@ -43,29 +48,27 @@ function bootstrap() {
 
 async function mount(props: QiankunProps) {
   // 设置子应用错误捕获（如果主应用传递了错误上报方法）
-  if (props.updateErrorList && props.appName) {
-    setupSubAppErrorCapture({
-      updateErrorList: props.updateErrorList,
-      appName: props.appName,
-    });
-  }
-  
-  render(props);
-  // 使用 nextTick 确保 Vue 的渲染完成后再返回
-  await new Promise(resolve => {
-    // 使用 requestAnimationFrame 确保 DOM 更新完成
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        // console.log('[admin-app] mount 完成');
-        resolve(undefined);
+  // 关键：使用 try-catch 确保错误捕获设置失败不会阻塞应用挂载
+  try {
+    if (props.appName && typeof props.appName === 'string') {
+      setupSubAppErrorCapture({
+        updateErrorList: typeof props.updateErrorList === 'function'
+          ? (props.updateErrorList as (errorInfo: any) => void | Promise<void>)
+          : undefined,
+        appName: props.appName,
       });
-    });
-  });
+    }
+  } catch (error) {
+    // 错误捕获设置失败不影响应用运行，只记录警告
+    console.warn('[admin-app] 设置错误捕获失败:', error);
+  }
+
+  await render(props);
 }
 
 async function unmount(props: QiankunProps = {}) {
   if (context) {
-    unmountAdminApp(context, props);
+    await unmountAdminApp(context, props);
     context = null;
   }
 }
@@ -110,13 +113,47 @@ export const timeouts = {
 export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
-if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-  // 如果需要加载 layout-app，先初始化
-  import('./utils/init-layout-app').then(({ initLayoutApp }) => {
-    initLayoutApp().catch((error) => {
-      console.error('[admin-app] 初始化 layout-app 失败:', error);
+// 注意：与 logistics-app 保持一致，使用 shouldRunStandalone 检查
+const shouldRunStandalone = () =>
+  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+
+if (shouldRunStandalone()) {
+  // 检查是否需要加载 layout-app
+  const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+
+  if (shouldLoadLayout) {
+    // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
+    import('./utils/init-layout-app').then(({ initLayoutApp }) => {
+      initLayoutApp()
+        .then(() => {
+          // layout-app 加载成功，检查是否需要独立渲染
+          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+          if (!(window as any).__USE_LAYOUT_APP__) {
+            // layout-app 加载失败或不需要加载，独立渲染
+            render().catch((error) => {
+              console.error('[admin-app] 独立运行失败:', error);
+            });
+          }
+          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        })
+        .catch((error) => {
+          console.error('[admin-app] 初始化 layout-app 失败:', error);
+          // layout-app 加载失败，独立渲染
+          render().catch((err) => {
+            console.error('[admin-app] 独立运行失败:', err);
+          });
+        });
+    }).catch((error) => {
+      console.error('[admin-app] 导入 init-layout-app 失败:', error);
+      // 导入失败，直接渲染
+      render().catch((err) => {
+        console.error('[admin-app] 独立运行失败:', err);
+      });
     });
-  });
-  
-  render();
+  } else {
+    // 不需要加载 layout-app（非生产环境），直接渲染
+    render().catch((error) => {
+      console.error('[admin-app] 独立运行失败:', error);
+    });
+  }
 }

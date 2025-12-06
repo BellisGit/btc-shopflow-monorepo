@@ -1,4 +1,5 @@
 <template>
+  <div class="btc-table-group">
   <BtcViewGroup
     ref="viewGroupRef"
     :left-service="leftService"
@@ -66,6 +67,7 @@
       </BtcCrud>
     </template>
   </BtcViewGroup>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -333,8 +335,21 @@ defineExpose<TableGroupExpose>({
 </script>
 
 <style lang="scss" scoped>
+.btc-table-group {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 :deep(.btc-view-group) {
   height: 100%;
   width: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 </style>

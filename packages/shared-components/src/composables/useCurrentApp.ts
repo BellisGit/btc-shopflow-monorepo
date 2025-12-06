@@ -12,7 +12,7 @@ export function useCurrentApp() {
 
   const detectCurrentApp = () => {
     const path = route.path;
-    // 优先检查子域名
+    // 优先检查子域名（生产环境的关键识别方式）
     const hostname = window.location.hostname;
     const subdomainMap: Record<string, string> = {
       'admin.bellis.com.cn': 'admin',
@@ -21,14 +21,21 @@ export function useCurrentApp() {
       'production.bellis.com.cn': 'production',
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
+      'monitor.bellis.com.cn': 'monitor',
     };
     
+    // 关键：优先通过子域名识别应用（生产环境的主要方式）
+    // 在生产环境中，通过子域名访问时路径是 /，必须通过子域名识别
     if (subdomainMap[hostname]) {
-      currentApp.value = subdomainMap[hostname];
+      const detectedApp = subdomainMap[hostname];
+      console.log(`[useCurrentApp] 通过子域名识别应用: ${hostname} -> ${detectedApp}`);
+      currentApp.value = detectedApp;
       return;
     }
     
-    // 回退到路径匹配
+    console.log(`[useCurrentApp] 子域名未匹配，使用路径匹配: hostname=${hostname}, path=${path}`);
+    
+    // 回退到路径匹配（开发环境或主域名访问时）
     if (path.startsWith('/admin')) {
       currentApp.value = 'admin';
     } else if (path.startsWith('/logistics')) {

@@ -33,6 +33,67 @@ body,
   overflow: hidden;
 }
 
+/* 确保 #app 容器在挂载 layout-app 时有正确的 flex 布局 */
+#app:has([id^="__qiankun_microapp_wrapper"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+/* 确保 qiankun 包装容器（layout-app）有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* 确保 qiankun 包装容器内部的 #layout-app 有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] #layout-app {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* 确保 qiankun 包装容器内部的 #subapp-viewport 有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] #subapp-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+/* 隐藏 qiankun 包装器中的 layout-app HTML 模板中的多余元素 */
+/* layout-app 的 HTML 中有 #layout-container 和 #subapp-viewport，但这些不应该在 qiankun 环境下使用 */
+/* layout-app 挂载到 #app，真正的 #subapp-viewport 在 layout-app 的 Vue 组件内部 */
+#app [id^="__qiankun_microapp_wrapper"] #layout-container {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 隐藏 qiankun 包装器中 HTML 模板里的 #subapp-viewport（真正的 #subapp-viewport 在 layout-app 的 Vue 组件内部） */
+#app [id^="__qiankun_microapp_wrapper"] > #subapp-viewport {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
 *,
 :before,
 :after {

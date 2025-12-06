@@ -63,6 +63,7 @@ export default defineConfig({
       '@btc-components': resolve(__dirname, '../../packages/shared-components/src/components'),
       '@btc-crud': resolve(__dirname, '../../packages/shared-components/src/crud'),
       '@assets': resolve(__dirname, '../../packages/shared-components/src/assets'),
+      '@btc-assets': resolve(__dirname, '../../packages/shared-components/src/assets'), // 添加 @btc-assets 别名，用于图片和图标资源导入
     },
     dedupe: ['element-plus', '@element-plus/icons-vue', 'vue', 'vue-router', 'pinia'],
   },

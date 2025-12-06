@@ -100,6 +100,10 @@ function verifyAppBuild(appName) {
   const errors = [];
   const assetsDir = join(appDistDir, 'assets');
   
+  // layout-app 的资源文件在 assets/layout/ 目录下
+  const isLayoutApp = appName === 'layout-app';
+  const actualAssetsDir = isLayoutApp ? join(assetsDir, 'layout') : assetsDir;
+  
   // 读取所有 JS 文件
   const jsFiles = [];
   const htmlFiles = [];
@@ -166,7 +170,7 @@ function verifyAppBuild(appName) {
     }
   }
   
-  collectFiles(assetsDir, '');
+  collectFiles(actualAssetsDir, '');
   
   // 检查是否有重复的 qiankun 文件（不同 hash）
   // 如果有多个 qiankun 文件，说明可能有旧的构建产物残留
@@ -205,6 +209,22 @@ function verifyAppBuild(appName) {
             if (existsSync(assetPath)) {
               fileExists = true;
               actualFileName = relativeFromAssets.split(/[/\\]/).pop();
+            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
+              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
+              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
+              const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
+              if (existsSync(layoutAssetPath)) {
+                fileExists = true;
+                actualFileName = layoutPath.split(/[/\\]/).pop();
+              }
+            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
+              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
+              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
+              const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
+              if (existsSync(layoutAssetPath)) {
+                fileExists = true;
+                actualFileName = layoutPath.split(/[/\\]/).pop();
+              }
             } else {
               // 尝试通过文件名（忽略 hash）查找
               const fileName = relativeFromAssets.split(/[/\\]/).pop();
@@ -266,6 +286,13 @@ function verifyAppBuild(appName) {
             const assetPath = join(assetsDir, relativeFromAssets);
             if (existsSync(assetPath)) {
               fileExists = true;
+            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
+              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
+              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
+              const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
+              if (existsSync(layoutAssetPath)) {
+                fileExists = true;
+              }
             }
           }
         }

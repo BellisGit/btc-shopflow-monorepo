@@ -65,25 +65,40 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp" v-slot="{ Component, route }">
-              <transition :name="pageTransitionName">
-                <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
-                <keep-alive v-else>
-                  <component :is="Component" :key="route.fullPath" />
-                </keep-alive>
-              </transition>
-            </router-view>
-
-            <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
-            <!-- 文档中心和监控应用都是 qiankun 子应用，与其他子应用地位相同 -->
-            <!-- 注意：容器必须始终在 DOM 中，这样骨架屏才能被找到 -->
-            <!-- qiankun 会在容器内创建包装器，所以骨架屏需要放在容器外部，使用绝对定位覆盖 -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
-              <!-- qiankun 会在这里挂载子应用 -->
+            <!-- 关键：使用 shouldShowMainApp 延迟切换显示状态，等待 transition 完成，避免在动画过程中操作 DOM -->
+            <div v-show="shouldShowMainApp" style="width: 100%; height: 100%;">
+              <router-view v-slot="{ Component, route }">
+                <!-- 关键：只在 isMainApp 为 true 且有 Component 时才渲染 transition 和组件 -->
+                <!-- 当条件不满足时，不渲染任何内容，避免 transition 在动画过程中被销毁 -->
+                <template v-if="isMainApp && !isDocsApp && Component">
+                  <transition :name="pageTransitionName" mode="out-in">
+                    <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
+                    <keep-alive v-else>
+                      <component :is="Component" :key="route.fullPath" />
+                    </keep-alive>
+                  </transition>
+                </template>
+                <!-- 生产环境调试：如果组件未加载，显示错误信息 -->
+                <div v-if="isProd && !Component && isMainApp" style="padding: 20px; color: red; border: 1px solid red;">
+                  <p>⚠️ 路由组件加载失败</p>
+                  <p>路径: {{ route.path }}</p>
+                  <p>完整路径: {{ route.fullPath }}</p>
+                  <p>匹配的路由数: {{ route.matched.length }}</p>
+                  <p>isMainApp: {{ isMainApp }}</p>
+                  <p>匹配的路由详情: {{ JSON.stringify(route.matched.map(m => ({ path: m.path, name: m.name })), null, 2) }}</p>
+                </div>
+              </router-view>
             </div>
-            <!-- 骨架屏放在容器外部，使用绝对定位覆盖，确保在子应用之上 -->
-            <!-- 使用 v-show 而不是 v-if，确保始终在 DOM 中 -->
-            <AppSkeleton v-show="isQiankunLoading" class="app-layout__skeleton" />
+
+            <!-- 文档应用 iframe -->
+            <DocsIframe v-show="isDocsApp" :visible="isDocsApp" />
+
+            <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
+            <!-- 关键：使用 v-show 替代 v-else，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <div id="subapp-viewport" v-show="!isMainApp && !isDocsApp">
+              <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
+              <AppSkeleton v-if="isQiankunLoading" />
+            </div>
           </div>
         </div>
       </div>
@@ -108,7 +123,8 @@ import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
-import AppSkeleton from '@/components/AppSkeleton.vue';
+// AppSkeleton 从共享组件库自动导入（通过 unplugin-vue-components）
+import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
@@ -118,6 +134,9 @@ const emitter = mitt();
 
 // 将事件总线挂载到 window，供其他组件使用
 (window as any).__APP_EMITTER__ = emitter;
+
+// 生产环境标志（用于模板）
+const isProd = import.meta.env.PROD;
 
 const route = useRoute();
 const isCollapse = ref(false);
@@ -187,7 +206,7 @@ const isMainApp = computed(() => {
   const routerPath = route.path;
   const locationPath = window.location.pathname;
   const path = routerPath || locationPath;
-  
+
   // 排除不需要 Layout 的页面
   if (path === '/login' ||
       path === '/forget-password' ||
@@ -209,7 +228,12 @@ const isMainApp = computed(() => {
     return false;
   }
   // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
-  return true;
+  const result = true;
+  // 生产环境调试：如果路径是根路径但显示为空，记录日志
+  if (import.meta.env.PROD && path === '/' && !route.matched.length) {
+    console.warn('[system-app Layout] 路由未匹配，path:', path, 'route.matched:', route.matched, 'locationPath:', locationPath);
+  }
+  return result;
 });
 
 // 判断是否为文档应用
@@ -218,22 +242,29 @@ const isDocsApp = computed(() => {
   return path === '/docs' || path.startsWith('/docs/');
 });
 
-// qiankun 加载状态（用于追踪容器是否应该强制显示）
+// qiankun 加载状态（用于显示骨架屏）
 const isQiankunLoading = ref(false);
 
-// 判断子应用容器是否应该显示
-// 当 qiankun 正在加载时，即使 isMainApp 为 true 也要显示
-const shouldShowSubAppViewport = computed(() => {
-  // 如果 qiankun 正在加载，强制显示容器
-  if (isQiankunLoading.value) {
-    // console.log('[Layout] shouldShowSubAppViewport: true (isQiankunLoading)');
-    return true;
-  }
-  // 正常情况：非主应用时显示（文档中心和监控应用都是 qiankun 子应用，与其他子应用地位相同）
-  const result = !isMainApp.value;
-  // console.log('[Layout] shouldShowSubAppViewport:', result, `(isMainApp: ${isMainApp.value})`);
-  return result;
-});
+// 主应用显示状态（延迟切换，等待 transition 完成）
+const shouldShowMainApp = ref(true);
+
+// 监听 isMainApp 变化，延迟切换显示状态，等待 transition 完成
+watch(
+  () => isMainApp.value && !isDocsApp.value,
+  (newValue) => {
+    if (newValue) {
+      // 切换到主应用时，立即显示
+      shouldShowMainApp.value = true;
+    } else {
+      // 切换到子应用时，延迟隐藏，等待 transition 完成
+      // transition 动画通常需要 250ms，我们等待 300ms 确保完成
+      setTimeout(() => {
+        shouldShowMainApp.value = false;
+      }, 300);
+    }
+  },
+  { immediate: true }
+);
 
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
 let qiankunLoadingObserver: MutationObserver | null = null;
@@ -310,13 +341,17 @@ function refreshView() {
 }
 
 // qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
+// qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
+// 关键：使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
 const handleQiankunBeforeLoad = () => {
-  // console.log('[Layout] qiankun:before-load 事件触发，设置 isQiankunLoading = true');
-  isQiankunLoading.value = true;
+  nextTick(() => {
+    isQiankunLoading.value = true;
+  });
 };
 const handleQiankunAfterMount = () => {
-  // console.log('[Layout] qiankun:after-mount 事件触发，设置 isQiankunLoading = false');
-  isQiankunLoading.value = false;
+  nextTick(() => {
+    isQiankunLoading.value = false;
+  });
   // 强制隐藏骨架屏，确保立即生效
   // nextTick(() => {
   //   const skeleton = document.getElementById('app-skeleton');
@@ -357,13 +392,38 @@ onMounted(() => {
       // console.log('[Layout] 初始化 isQiankunLoading:', hasLoadingAttr);
 
       // 使用 MutationObserver 监听属性变化
+      // 关键：在回调中使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
       qiankunLoadingObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-            const hasAttr = container.hasAttribute('data-qiankun-loading');
-            // console.log('[Layout] MutationObserver 检测到 data-qiankun-loading 变化:', hasAttr);
-            isQiankunLoading.value = hasAttr;
+        // 检查容器是否还在 DOM 中，避免在组件卸载时操作已移除的元素
+        if (!container.isConnected) {
+          qiankunLoadingObserver?.disconnect();
+          qiankunLoadingObserver = null;
+          return;
+        }
+
+        // 使用 nextTick 延迟更新，避免与 Vue 的更新周期冲突
+        nextTick(() => {
+          // 再次检查容器是否还在 DOM 中
+          if (!container.isConnected) {
+            return;
           }
+
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
+              // 再次检查容器是否还在 DOM 中
+              if (container.isConnected) {
+                try {
+                  const hasAttr = container.hasAttribute('data-qiankun-loading');
+                  isQiankunLoading.value = hasAttr;
+                } catch (error) {
+                  // 捕获可能的 DOM 操作错误，避免影响应用运行
+                  if (import.meta.env.DEV) {
+                    console.warn('[Layout] MutationObserver 更新状态时出错（已忽略）:', error);
+                  }
+                }
+              }
+            }
+          });
         });
       });
 

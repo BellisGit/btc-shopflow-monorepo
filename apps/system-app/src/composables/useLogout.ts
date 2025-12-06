@@ -71,8 +71,12 @@ export function useLogout() {
       // 显示退出成功提示
       BtcMessage.success(t('common.logoutSuccess'));
 
-      // 跳转到登录页
-      router.push('/login');
+      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 使用 replace 而不是 push，避免在历史记录中留下退出前的页面
+      router.replace({
+        path: '/login',
+        query: { logout: '1' }
+      });
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
       console.error('Logout error:', error);
@@ -93,8 +97,11 @@ export function useLogout() {
         // 忽略错误
       });
 
-      // 跳转到登录页
-      router.push('/login');
+      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      router.replace({
+        path: '/login',
+        query: { logout: '1' }
+      });
     }
   };
 

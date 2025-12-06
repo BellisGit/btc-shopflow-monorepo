@@ -3,6 +3,27 @@
  */
 
 /**
+ * 获取跨子域名共享的 cookie domain
+ * 在生产环境下返回 .bellis.com.cn，其他环境返回 undefined（不设置 domain）
+ * @returns cookie domain 字符串或 undefined
+ */
+export function getCookieDomain(): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const hostname = window.location.hostname;
+  
+  // 生产环境：设置 domain 为 .bellis.com.cn 以支持跨子域名共享
+  if (hostname.includes('bellis.com.cn')) {
+    return '.bellis.com.cn';
+  }
+  
+  // 其他环境（开发、预览等）：不设置 domain，cookie 只在当前域名下有效
+  return undefined;
+}
+
+/**
  * 读取 cookie 值
  * @param name cookie 名称
  * @returns cookie 值，如果不存在则返回 null

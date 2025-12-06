@@ -64,19 +64,60 @@ const menuRegistry = getMenuRegistry();
 // 获取当前应用的菜单项（从注册表读取，响应式）
 const currentMenuItems = computed(() => {
   const app = currentApp.value;
-  const menus = getMenusForApp(app);
-  // 触发响应式更新
-  menuRegistry.value;
+  // 关键：直接访问 menuRegistry.value[app] 以确保响应式追踪
+  // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
+  const menus = menuRegistry.value[app] || [];
+  
+  // 调试日志（始终输出，帮助排查问题）
+  console.log(`[dynamic-menu] 当前应用: ${app}, 菜单数量: ${menus.length}`, {
+    app,
+    menusCount: menus.length,
+    registryKeys: Object.keys(menuRegistry.value),
+    registryContent: Object.fromEntries(
+      Object.entries(menuRegistry.value).map(([k, v]) => [k, Array.isArray(v) ? v.length : 'not-array'])
+    ),
+    menus: menus.length > 0 ? menus : 'empty'
+  });
+  
   return menus;
 });
 
-// 监听菜单注册表变化，强制重新渲染菜单
+// 菜单由 manifest 决定，是固定的，不需要监听变化重新渲染
+// 只在应用切换时更新菜单（通过 currentMenuItems computed 自动响应）
+
+// 只监听当前应用的菜单变化，避免深度监听整个注册表导致的不必要重新渲染
 watch(
-  () => menuRegistry.value[currentApp.value],
   () => {
-    menuKey.value++;
+    const app = currentApp.value;
+    return menuRegistry.value[app] || [];
   },
-  { deep: true }
+  (newMenus, oldMenus) => {
+    // 只有当菜单数组引用发生变化时才更新（菜单内容变化由 registerManifestMenusForApp 中的 menusEqual 检查）
+    // 如果数组长度或内容相同但引用不同，说明是重复注册，不需要重新渲染
+    if (newMenus.length !== (oldMenus?.length || 0)) {
+      // 菜单数量变化，需要重新渲染
+      menuKey.value++;
+      return;
+    }
+    // 菜单数量相同，检查是否真的是内容变化（通过比较第一个和最后一个菜单项的引用）
+    // 如果引用相同，说明是同一个数组，不需要重新渲染
+    if (newMenus.length > 0 && oldMenus && oldMenus.length > 0) {
+      const newFirst = newMenus[0];
+      const oldFirst = oldMenus[0];
+      const newLast = newMenus[newMenus.length - 1];
+      const oldLast = oldMenus[oldMenus.length - 1];
+      // 如果首尾项引用不同，说明是新的菜单数组，需要重新渲染
+      if (newFirst !== oldFirst || newLast !== oldLast) {
+        menuKey.value++;
+      }
+    } else if (newMenus.length === 0 && oldMenus && oldMenus.length > 0) {
+      // 从有菜单变为无菜单，需要重新渲染
+    menuKey.value++;
+    } else if (newMenus.length > 0 && (!oldMenus || oldMenus.length === 0)) {
+      // 从无菜单变为有菜单，需要重新渲染
+      menuKey.value++;
+    }
+  }
 );
 
 // 递归获取所有菜单项的 index（用于搜索匹配）

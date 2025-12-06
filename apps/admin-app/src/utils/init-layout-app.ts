@@ -31,6 +31,9 @@ export async function initLayoutApp() {
     });
   } catch (error) {
     console.error('[admin-app] 加载 layout-app 失败:', error);
+    // 关键：加载失败时清除标志，允许应用独立渲染
+    (window as any).__USE_LAYOUT_APP__ = false;
+    throw error; // 重新抛出错误，让调用者知道加载失败
   }
 }
 

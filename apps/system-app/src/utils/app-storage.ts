@@ -127,7 +127,7 @@ const userStorage = {
     },
     clear: () => {
     // 删除 Cookie 中的用户信息
-    this.remove();
+    userStorage.remove();
     },
     /**
      * 获取头像（从统一的 btc_user 存储中获取）

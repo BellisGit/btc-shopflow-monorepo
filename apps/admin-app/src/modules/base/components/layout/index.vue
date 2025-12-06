@@ -65,23 +65,29 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
-              <transition :name="pageTransitionName" mode="out-in">
+            <!-- 关键：使用 v-if 确保只在主应用路由时渲染，避免与子应用容器同时存在 -->
+            <template v-if="isMainApp && !isDocsApp">
+              <router-view v-slot="{ Component, route }">
+                <!-- 移除 transition，避免在 v-if 切换和 DOM 操作期间触发更新 -->
                 <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
                 <keep-alive v-else>
                   <component :is="Component" :key="route.fullPath" />
                 </keep-alive>
-              </transition>
-            </router-view>
+              </router-view>
+            </template>
 
-            <!-- 文档应用 iframe（全局缓存，v-show 控制显示/隐藏） -->
-            <DocsIframe :visible="isDocsApp" />
+            <!-- 文档应用 iframe -->
+            <template v-else-if="isDocsApp">
+              <DocsIframe :visible="true" />
+            </template>
 
-            <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
-              <!-- 骨架屏（挂载在这里，相对于内容区域定位） -->
-              <AppSkeleton />
-            </div>
+            <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
+            <template v-else>
+              <div id="subapp-viewport" data-subapp-container>
+                <!-- 骨架屏（通过 CSS 控制显示/隐藏，避免 Vue 响应式更新导致的 DOM 冲突） -->
+                <AppSkeleton class="subapp-skeleton" />
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -147,20 +153,9 @@ const isDarkMenuStyle = computed(() => {
   return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
 
-// 页面切换动画名称
-const pageTransitionName = computed(() => {
-  const path = route.path || '';
-  // 日志中心关闭过渡，避免尺寸变化引发观察链
-  // 禁用以下页面的动画：
-  // - /admin/ops/logs (日志中心主页)
-  // - /admin/ops/logs/operation (操作日志页面)
-  // - /admin/ops/logs/request (请求日志页面)
-  if (path.startsWith('/admin/ops/logs')) {
-    return '';
-  }
-  const transition = pageTransition.value || 'slide-left';
-  return transition || '';
-});
+// 跟踪之前的 isMainApp 状态，用于检测跨应用切换（需要在 isMainApp 定义之前声明）
+// 注意：初始值将在 isMainApp 定义后更新
+const prevIsMainApp = ref(false);
 
 // 监听页面切换动画变化
 function handlePageTransitionChange(event: CustomEvent) {
@@ -226,27 +221,50 @@ const isDocsApp = computed(() => {
   return route.path === '/docs' || route.path.startsWith('/docs/');
 });
 
-// qiankun 加载状态（用于追踪容器是否应该强制显示）
-const isQiankunLoading = ref(false);
+// 初始化 prevIsMainApp（在 isMainApp 定义后）
+prevIsMainApp.value = isMainApp.value;
 
-// 判断子应用容器是否应该显示
-// 当 qiankun 正在加载时，即使 isMainApp 为 true 也要显示
-// 独立运行时：不显示子应用容器（因为这是独立运行的应用本身）
-const shouldShowSubAppViewport = computed(() => {
-  // 独立运行时，不显示子应用容器
-  if (isStandalone) {
-    return false;
+// 使用 watch 来更新 prevIsMainApp，避免在 computed 中修改状态
+// 关键：使用 flush: 'post' 确保在 DOM 更新之后执行，避免与 DOM 操作冲突
+watch(
+  () => isMainApp.value,
+  (newValue) => {
+    // 使用 nextTick 延迟更新，确保 DOM 操作完成
+    nextTick(() => {
+      prevIsMainApp.value = newValue;
+    });
+  },
+  { immediate: true, flush: 'post' }
+);
+
+// 页面切换动画名称（需要在 isMainApp 定义后）
+// 注意：不再在 computed 中修改状态，改为只读取状态
+const pageTransitionName = computed(() => {
+  const path = route.path || '';
+
+  // 检测跨应用切换（从主应用切换到子应用，或反之）
+  // 注意：使用 prevIsMainApp.value 读取之前的值，但不在这里修改
+  const isCrossAppSwitch = prevIsMainApp.value !== isMainApp.value;
+  if (isCrossAppSwitch) {
+    // 跨应用切换时禁用动画，避免与 v-if 冲突
+    return '';
   }
-  // 如果 qiankun 正在加载，强制显示容器
-  if (isQiankunLoading.value) {
-    return true;
+
+  // 日志中心关闭过渡，避免尺寸变化引发观察链
+  // 禁用以下页面的动画：
+  // - /admin/ops/logs (日志中心主页)
+  // - /admin/ops/logs/operation (操作日志页面)
+  // - /admin/ops/logs/request (请求日志页面)
+  if (path.startsWith('/admin/ops/logs')) {
+    return '';
   }
-  // 正常情况：非主应用且非文档应用时显示
-  return !isMainApp.value && !isDocsApp.value;
+  const transition = pageTransition.value || 'slide-left';
+  return transition || '';
 });
 
-// 监听 qiankun 加载状态变化（通过 DOM 属性）
-let qiankunLoadingObserver: MutationObserver | null = null;
+// 注意：不再使用响应式状态来控制骨架屏的显示
+// 改为通过 CSS 和 DOM 属性来控制，避免 Vue 响应式更新导致的 DOM 操作冲突
+// 骨架屏会在 #subapp-viewport 有 data-qiankun-loading 属性时显示，否则隐藏
 
 // 判断是否是首页
 const isHomePage = computed(() => {
@@ -318,21 +336,13 @@ function refreshView() {
   scheduleContentResize();
 }
 
-// qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
-const handleQiankunBeforeLoad = () => {
-  isQiankunLoading.value = true;
-};
-const handleQiankunAfterMount = () => {
-  isQiankunLoading.value = false;
-};
+// 注意：不再使用 qiankun 事件监听器来更新 isQiankunLoading
+// 因为事件触发时容器可能还未渲染，导致 Vue 尝试更新不存在的 DOM 元素
+// 改为完全依赖 MutationObserver 来监听 DOM 属性的变化
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
   window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
-
-  // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
-  window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.addEventListener('qiankun:after-mount', handleQiankunAfterMount);
 
   // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
   onScreenChange(() => {
@@ -344,50 +354,23 @@ onMounted(() => {
     scheduleContentResize();
   }, true); // immediate = true，立即执行一次，确保初始状态正确
 
-  // 监听 qiankun 加载状态（通过 DOM 属性）
-  nextTick(() => {
-    const container = document.querySelector('#subapp-viewport');
-    if (container) {
-      // 检查初始状态
-      isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
-
-      // 使用 MutationObserver 监听属性变化
-      qiankunLoadingObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-            isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
-          }
-        });
-      });
-
-      qiankunLoadingObserver.observe(container, {
-        attributes: true,
-        attributeFilter: ['data-qiankun-loading'],
-      });
-    }
-  });
-
   scheduleContentResize();
 });
 
 watch(
   () => route.fullPath,
   () => {
-    scheduleContentResize();
+    // 使用 nextTick 确保在 DOM 更新之后执行，避免与 Qiankun 的 DOM 操作冲突
+    nextTick(() => {
+      scheduleContentResize();
+    });
   },
+  { flush: 'post' }
 );
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
   window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
-  window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
-
-  // 清理 MutationObserver
-  if (qiankunLoadingObserver) {
-    qiankunLoadingObserver.disconnect();
-    qiankunLoadingObserver = null;
-  }
 
   delete (window as any).__APP_EMITTER__;
 });
@@ -480,6 +463,16 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       min-height: 0;
+
+      // 确保 router-view 内部渲染的页面组件根元素占据完整高度
+      > * {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+      }
     }
 
     // 文档应用 iframe（占据内容区域完整尺寸）
@@ -492,16 +485,33 @@ onUnmounted(() => {
 
     // 子应用挂载点（占据内容区域完整尺寸）
     #subapp-viewport {
-      position: static !important;
+      position: relative !important; // 为骨架屏提供定位上下文，同时覆盖外部样式
       display: flex;
       flex-direction: column;
-      width: 100% !important; // 使用 !important 防止被覆盖，确保宽度稳定
+      width: 100% !important;
+      height: 100% !important; // 关键：确保高度为 100%
       flex: 1;
       min-height: 0;
-      min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
+      min-width: 0 !important;
       padding: 0 !important;
-      box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保宽度计算一致
+      box-sizing: border-box !important;
       background-color: var(--el-bg-color) !important;
+
+      // 骨架屏样式：默认隐藏，只在有 data-qiankun-loading 属性时显示
+      .subapp-skeleton {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+      }
+
+      // 当有加载标记时显示骨架屏（通过 CSS 控制，避免 Vue 响应式更新）
+      &[data-qiankun-loading] .subapp-skeleton {
+        display: block;
+      }
     }
 
     :deep(#subapp-viewport > [data-qiankun]) {
