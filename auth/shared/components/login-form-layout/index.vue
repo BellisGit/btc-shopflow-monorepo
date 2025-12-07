@@ -34,13 +34,12 @@ defineOptions({
   width: 100%;
   // 让父容器的 flex: 0.6 决定高度，然后内容自然撑开
 
-  // 表单容器：使用固定高度值，确保两种登录方式高度一致
+  // 表单容器：包含表单和按钮，使用固定高度值，确保两种登录方式高度一致
   .form-container {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 135px; // 固定高度值（手机号登录表单的总高度），确保两种登录方式高度一致
-    min-height: 135px; // 确保最小高度
+    min-height: 180px; // 增加高度以包含按钮（135px 表单 + 45px 按钮）
     flex-shrink: 0; // 不收缩，保持固定高度
     // 使用 flex 布局让表单项从顶部开始排列
     justify-content: flex-start;
@@ -61,6 +60,17 @@ defineOptions({
         flex-shrink: 0; // 表单项不收缩，保持原有高度
         // 移除 margin-bottom，使用 gap 来控制间距
         margin-bottom: 0;
+        
+        // 确保按钮表单项的按钮样式正确
+        &:last-child {
+          margin-top: 0; // 按钮表单项不需要额外的上边距
+          
+          .el-button {
+            width: 100%;
+            height: 45px; // 统一按钮高度
+            min-height: 45px; // 确保最小高度一致
+          }
+        }
       }
     }
   }
@@ -77,8 +87,8 @@ defineOptions({
 
   .button-container {
     width: 100%;
-    // 间距由父容器 bottom-section 的 gap: 16px 统一管理
-    // 由于 form-container 使用固定的百分比高度，按钮位置应该一致
+    // 按钮现在在表单内部，这个容器可能为空，但保留以保持布局一致性
+    // 如果 button 插槽有内容，则显示；否则为空，不影响布局
 
     :deep(.el-button) {
       width: 100%;

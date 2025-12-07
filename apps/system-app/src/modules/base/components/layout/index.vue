@@ -74,7 +74,13 @@
                 <!-- 通过外层 v-show 控制显示，transition 内部直接渲染 Component（可能为 null） -->
                 <!-- 使用 mode="out-in" 确保先卸载后挂载，避免 DOM 操作冲突 -->
                 <transition :name="pageTransitionName" mode="out-in">
-                  <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
+                  <!-- 关键：直接渲染 Component，让 Vue 处理组件加载和错误 -->
+                  <!-- 如果 Component 存在，尝试渲染它；如果出错，Vue 的错误处理器会捕获 -->
+                  <component
+                    v-if="Component && isOpsLogs"
+                    :is="Component"
+                    :key="route.fullPath"
+                  />
                   <keep-alive v-else-if="Component">
                     <component :is="Component" :key="route.fullPath" />
                   </keep-alive>
@@ -84,6 +90,9 @@
                     <p>完整路径: {{ route.fullPath }}</p>
                     <p>匹配的路由数: {{ route.matched.length }}</p>
                     <p>isMainApp: {{ isMainApp }}</p>
+                    <p>Component: {{ Component ? '存在' : '不存在' }}</p>
+                    <p v-if="Component">Component 类型: {{ typeof Component }}</p>
+                    <p v-if="Component && typeof Component === 'object'">Component keys: {{ Object.keys(Component).join(', ') }}</p>
                   </div>
                 </transition>
               </router-view>
@@ -138,7 +147,6 @@ const emitter = mitt();
 (window as any).__APP_EMITTER__ = emitter;
 
 // 生产环境标志（用于模板）
-const isProd = import.meta.env.PROD;
 
 const route = useRoute();
 const isCollapse = ref(false);
@@ -190,7 +198,6 @@ function handlePageTransitionChange(event: CustomEvent) {
 
 const isFullscreen = ref(false);
 const viewKey = ref(1); // 手动刷新时递增
-const routeKey = computed(() => route.fullPath); // 常规路由 key
 const isOpsLogs = computed(() => route.path.startsWith('/admin/ops/logs'));
 
 // 浏览器信息
@@ -204,17 +211,10 @@ let prevIsMini = browser.isMini;
 // 关键：让 isMainApp 函数自己判断是否为独立运行模式，不要硬编码
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-  const result = getIsMainApp(route.path, window.location.pathname, isStandalone);
-  // 调试信息：在生产环境下输出判断结果
-  if (import.meta.env.PROD && route.path === '/') {
-    console.log('[Layout Debug] isMainApp:', result, {
-      routePath: route.path,
-      locationPath: window.location.pathname,
-      isStandalone,
-      hostname: window.location.hostname,
-    });
-  }
-  return result;
+  // 关键：优先使用 window.location.pathname，因为它包含完整的路径
+  // route.path 在 qiankun 模式下可能只匹配到 /logistics，而不是完整的 /logistics/warehouse/inventory/info
+  const locationPath = window.location.pathname;
+  return getIsMainApp(locationPath, locationPath, isStandalone);
 });
 
 // 判断是否为文档应用
@@ -264,6 +264,8 @@ const showBreadcrumb = computed(() => {
   // 其他页面显示
   return true;
 });
+
+// 验证组件是否有效（防止 __vccOpts 错误）
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value;

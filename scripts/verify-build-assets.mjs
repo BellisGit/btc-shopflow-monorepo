@@ -157,14 +157,16 @@ function verifyAppBuild(appName) {
         existingFiles.add(relativeFromDist);
         
         // 提取文件名和 hash，建立映射
-        const match = entry.name.match(/^(.+?)-([A-Za-z0-9]{8,})\.(js|mjs|css)$/);
+        // 支持格式：name-hash.ext 或 name-hash-buildId.ext
+        // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
+        const match = entry.name.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
         if (match) {
-          const [, baseName, hash, ext] = match;
+          const [, baseName, hash, buildId, ext] = match;
           const key = `${baseName}.${ext}`;
           if (!fileHashMap.has(key)) {
             fileHashMap.set(key, []);
           }
-          fileHashMap.get(key).push({ hash, fullName: entry.name });
+          fileHashMap.get(key).push({ hash, buildId, fullName: entry.name });
         }
       }
     }
@@ -197,29 +199,25 @@ function verifyAppBuild(appName) {
         let fileExists = false;
         let actualFileName = null;
         
-        if (ref.resolvedPath) {
-          // 检查绝对路径
-          if (existsSync(ref.resolvedPath)) {
+        // 关键：去除查询参数（如 ?v=xxx 或 &v=xxx）
+        const pathWithoutQuery = ref.path.split('?')[0].split('&')[0];
+        const resolvedPathWithoutQuery = ref.resolvedPath ? ref.resolvedPath.split('?')[0].split('&')[0] : null;
+        
+        if (resolvedPathWithoutQuery) {
+          // 检查绝对路径（去除查询参数后）
+          if (existsSync(resolvedPathWithoutQuery)) {
             fileExists = true;
-            actualFileName = ref.resolvedPath.split(/[/\\]/).pop();
+            actualFileName = resolvedPathWithoutQuery.split(/[/\\]/).pop();
           } else {
-            // 检查相对路径（从 assets 目录开始）
-            const relativeFromAssets = ref.path.replace(/^\.\//, '').replace(/^\/assets\//, '');
+            // 检查相对路径（从 assets 目录开始，去除查询参数）
+            const relativeFromAssets = pathWithoutQuery.replace(/^\.\//, '').replace(/^\/assets\//, '');
             const assetPath = join(assetsDir, relativeFromAssets);
             if (existsSync(assetPath)) {
               fileExists = true;
               actualFileName = relativeFromAssets.split(/[/\\]/).pop();
-            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
+            } else if (isLayoutApp && pathWithoutQuery.startsWith('/assets/') && !pathWithoutQuery.startsWith('/assets/layout/')) {
               // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
-              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
-              const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
-              if (existsSync(layoutAssetPath)) {
-                fileExists = true;
-                actualFileName = layoutPath.split(/[/\\]/).pop();
-              }
-            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
-              // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
-              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
+              const layoutPath = pathWithoutQuery.replace('/assets/', '/assets/layout/');
               const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
               if (existsSync(layoutAssetPath)) {
                 fileExists = true;
@@ -275,23 +273,73 @@ function verifyAppBuild(appName) {
       for (const ref of references) {
         // 检查文件是否存在
         let fileExists = false;
+        let actualFileName = null;
         
-        if (ref.resolvedPath) {
-          // 检查绝对路径
-          if (existsSync(ref.resolvedPath)) {
+        // 关键：去除查询参数（如 ?v=xxx 或 &v=xxx）
+        const pathWithoutQuery = ref.path.split('?')[0].split('&')[0];
+        const resolvedPathWithoutQuery = ref.resolvedPath ? ref.resolvedPath.split('?')[0].split('&')[0] : null;
+        
+        if (resolvedPathWithoutQuery) {
+          // 检查绝对路径（去除查询参数后）
+          if (existsSync(resolvedPathWithoutQuery)) {
             fileExists = true;
+            actualFileName = resolvedPathWithoutQuery.split(/[/\\]/).pop();
           } else {
-            // 检查相对路径（从 assets 目录开始）
-            const relativeFromAssets = ref.path.replace(/^\.\//, '').replace(/^\/assets\//, '');
+            // 检查相对路径（从 assets 目录开始，去除查询参数）
+            const relativeFromAssets = pathWithoutQuery.replace(/^\.\//, '').replace(/^\/assets\//, '');
             const assetPath = join(assetsDir, relativeFromAssets);
             if (existsSync(assetPath)) {
               fileExists = true;
-            } else if (isLayoutApp && ref.path.startsWith('/assets/') && !ref.path.startsWith('/assets/layout/')) {
+              actualFileName = relativeFromAssets.split(/[/\\]/).pop();
+            } else if (isLayoutApp && pathWithoutQuery.startsWith('/assets/') && !pathWithoutQuery.startsWith('/assets/layout/')) {
               // layout-app 的特殊处理：如果引用路径是 /assets/xxx，也检查 /assets/layout/xxx
-              const layoutPath = ref.path.replace('/assets/', '/assets/layout/');
+              const layoutPath = pathWithoutQuery.replace('/assets/', '/assets/layout/');
               const layoutAssetPath = join(actualAssetsDir, layoutPath.replace('/assets/layout/', ''));
               if (existsSync(layoutAssetPath)) {
                 fileExists = true;
+                actualFileName = layoutPath.split(/[/\\]/).pop();
+              }
+            } else {
+              // 关键：尝试通过文件名（忽略 hash 和 buildId）查找匹配的文件
+              const fileName = relativeFromAssets.split(/[/\\]/).pop();
+              if (fileName) {
+                // 提取文件名（不含 hash 和 buildId）
+                // 支持格式：
+                // - name-hash.ext
+                // - name-hash-buildId.ext
+                // - name.ext (无 hash)
+                // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
+                // 注意：buildId 可能是任意长度的字母数字字符串（如 miv5f0sw）
+                const match = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+                if (match) {
+                  const [, baseName, hash, buildId, ext] = match;
+                  // 查找所有匹配的文件（通过文件名前缀和后缀）
+                  // 匹配规则：以 baseName- 开头，以 .ext 结尾
+                  for (const existingName of existingFileNames) {
+                    if (existingName.startsWith(`${baseName}-`) && existingName.endsWith(`.${ext}`)) {
+                      fileExists = true;
+                      actualFileName = existingName;
+                      break;
+                    }
+                  }
+                } else {
+                  // 如果正则匹配失败，尝试直接匹配文件名（可能是没有 hash 的文件）
+                  if (existingFileNames.has(fileName)) {
+                    fileExists = true;
+                    actualFileName = fileName;
+                  } else {
+                    // 尝试匹配不带扩展名的文件名（可能是文件名格式不同）
+                    const nameWithoutExt = fileName.replace(/\.(js|mjs|css)$/, '');
+                    for (const existingName of existingFileNames) {
+                      const existingNameWithoutExt = existingName.replace(/\.(js|mjs|css)$/, '');
+                      if (existingNameWithoutExt.startsWith(nameWithoutExt)) {
+                        fileExists = true;
+                        actualFileName = existingName;
+                        break;
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -302,6 +350,9 @@ function verifyAppBuild(appName) {
             file: htmlFile.relativePath,
             reference: ref.path,
             type: ref.type,
+            message: actualFileName 
+              ? `引用的文件不存在: ${ref.path}（实际文件可能是: ${actualFileName}）`
+              : `引用的文件不存在: ${ref.path}`,
           });
         }
       }

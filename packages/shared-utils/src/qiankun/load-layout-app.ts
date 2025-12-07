@@ -284,6 +284,19 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
   return new Promise<void>((resolve, reject) => {
     let layoutAppMounted = false;
     let mountTimeout: ReturnType<typeof setTimeout> | null = null;
+    let checkInterval: ReturnType<typeof setInterval> | null = null;
+
+    // 清理函数（定义在 Promise 回调中，可以访问所有变量）
+    const cleanup = () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+        checkInterval = null;
+      }
+      if (mountTimeout) {
+        clearTimeout(mountTimeout);
+        mountTimeout = null;
+      }
+    };
 
     // 确保 #app 容器存在
     const ensureAppContainer = () => {
@@ -296,29 +309,39 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
       }
       return appContainer;
     };
-    
+
     // 提前确保容器存在
     const appContainer = ensureAppContainer();
-    
+
     // 设置标志，告诉 layout-app 它应该挂载到 #app
     (window as any).__LAYOUT_APP_MOUNT_TARGET__ = '#app';
-    
+
+    console.log('[layout-app loader] 开始加载 layout-app，入口地址:', layoutEntry);
+
     // 先获取 layout-app 的 HTML，从中提取入口文件路径
     fetch(layoutEntry, {
       mode: 'cors',
       credentials: 'omit',
     })
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`获取 layout-app HTML 失败: HTTP ${response.status} ${response.statusText}`);
+        }
+        console.log('[layout-app loader] ✅ 成功获取 layout-app HTML');
+        return response.text();
+      })
       .then(html => {
         // 从 HTML 中提取入口文件路径
         // 开发环境：<script type="module" src="/src/main.ts"></script>
         // 生产环境：<script type="module" src="/assets/layout/index-[hash].js"></script>
         const scriptMatch = html.match(/<script[^>]*src=["']([^"']+)["'][^>]*>/i);
         if (!scriptMatch) {
-          throw new Error('无法从 layout-app 的 HTML 中提取入口文件路径');
+          throw new Error(`无法从 layout-app 的 HTML 中提取入口文件路径。HTML 长度: ${html.length} 字符`);
         }
-        
+
         let mainEntry = scriptMatch[1];
+        console.log('[layout-app loader] 从 HTML 中提取到入口文件路径:', mainEntry);
+
         // 如果是相对路径，转换为绝对路径
         if (mainEntry.startsWith('/')) {
           const entryUrl = new URL(layoutEntry);
@@ -327,62 +350,120 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
           const entryUrl = new URL(layoutEntry);
           mainEntry = `${entryUrl.origin}/${mainEntry}`;
         }
-        
+
+        console.log('[layout-app loader] 解析后的入口文件完整路径:', mainEntry);
+
+        // 关键：在加载入口脚本之前，先设置 <base> 标签，确保动态导入使用正确的 base URL
+        // 这样 layout-app 内部的动态导入（如 import('./xxx.js')）会基于 layout.bellis.com.cn 解析
+        const entryUrl = new URL(layoutEntry);
+        const baseHref = entryUrl.origin + '/';
+
+        // 检查是否已经存在 <base> 标签
+        let existingBase = document.querySelector('base');
+        if (existingBase) {
+          // 如果已存在，更新它的 href
+          existingBase.href = baseHref;
+        } else {
+          // 如果不存在，创建一个新的
+          const base = document.createElement('base');
+          base.href = baseHref;
+          // 插入到 <head> 的最前面，确保在其他资源标签之前
+          const head = document.head || document.getElementsByTagName('head')[0];
+          if (head.firstChild) {
+            head.insertBefore(base, head.firstChild);
+          } else {
+            head.appendChild(base);
+          }
+        }
+
+        console.log('[layout-app loader] 已设置 <base> 标签:', baseHref);
+
         // 创建 script 标签来加载 layout-app
         const script = document.createElement('script');
         script.type = 'module';
         script.src = mainEntry;
         script.crossOrigin = 'anonymous';
-        
+
         // 监听加载完成事件
         script.onload = () => {
+          console.log('[layout-app loader] ✅ layout-app 入口文件加载成功，等待挂载...');
+
           // layout-app 的入口文件已加载，等待它挂载完成
           // 监听 layout-app 的挂载事件
+          let checkCount = 0;
+          const maxChecks = 200; // 最多检查 10 秒（200 * 50ms）
+
           const checkLayoutApp = () => {
-            // 检查 #layout-app 是否存在，说明 layout-app 已经挂载
-            const layoutApp = document.querySelector('#layout-app');
-            if (layoutApp) {
+            checkCount++;
+
+            // 检查 #app 容器中是否有 layout-app 的内容（不仅仅是空容器）
+            const appContainer = document.querySelector('#app') as HTMLElement;
+            const hasLayoutContent = appContainer &&
+              (appContainer.children.length > 0 ||
+               appContainer.innerHTML.trim().length > 0 ||
+               document.querySelector('#layout-app') !== null ||
+               document.querySelector('#subapp-viewport') !== null);
+
+            if (hasLayoutContent) {
               if (!layoutAppMounted) {
                 layoutAppMounted = true;
-                if (mountTimeout) {
-                  clearTimeout(mountTimeout);
-                  mountTimeout = null;
-                }
-                
+                cleanup();
+
+                console.log('[layout-app loader] ✅ layout-app 挂载成功');
+
                 // 等待 layout-app 完全初始化
                 // layout-app 会自动注册并启动 qiankun 来加载子应用，不需要手动触发事件
                 setTimeout(() => {
                   resolve();
                 }, 200);
               }
-            } else {
-              // 继续检查
-              setTimeout(checkLayoutApp, 50);
+            } else if (checkCount >= maxChecks) {
+              // 超时，挂载失败
+              cleanup();
+
+              const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到挂载内容`;
+              console.error('[layout-app loader] ❌', errorMsg, {
+                appContainer: appContainer ? {
+                  exists: true,
+                  childrenCount: appContainer.children.length,
+                  innerHTMLLength: appContainer.innerHTML.trim().length,
+                } : { exists: false },
+              });
+              reject(new Error(errorMsg));
             }
+            // 否则继续检查（通过 setInterval）
           };
-          
-          // 开始检查
-          checkLayoutApp();
+
+          // 每 50ms 检查一次
+          checkInterval = setInterval(checkLayoutApp, 50);
         };
-        
+
         script.onerror = (error) => {
-          if (mountTimeout) {
-            clearTimeout(mountTimeout);
-            mountTimeout = null;
-          }
-          console.error('[layout-app loader] 加载 layout-app 入口文件失败:', error);
-          reject(new Error('加载 layout-app 入口文件失败'));
+          cleanup();
+
+          const errorMsg = `加载 layout-app 入口文件失败: ${mainEntry}`;
+          console.error('[layout-app loader] ❌', errorMsg, {
+            error,
+            entryUrl: mainEntry,
+            layoutEntry,
+          });
+          reject(new Error(errorMsg));
         };
-        
+
         // 添加到页面
         document.head.appendChild(script);
-        
+        console.log('[layout-app loader] 已添加 script 标签，开始加载入口文件...');
+
         // 设置超时，避免无限等待
+        // 关键：超时应该 reject，而不是 resolve
         mountTimeout = setTimeout(() => {
           if (!layoutAppMounted) {
             layoutAppMounted = true;
-            console.warn('[layout-app loader] 加载 layout-app 超时');
-            resolve(); // 仍然 resolve，避免阻塞
+            cleanup();
+
+            const errorMsg = `加载 layout-app 超时（${10000}ms），入口文件: ${mainEntry}`;
+            console.error('[layout-app loader] ❌', errorMsg);
+            reject(new Error(errorMsg));
           }
         }, 10000);
       })
@@ -391,8 +472,18 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
           clearTimeout(mountTimeout);
           mountTimeout = null;
         }
-        console.error('[layout-app loader] 获取 layout-app HTML 失败:', error);
-        reject(new Error('获取 layout-app HTML 失败'));
+
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMsg = `获取 layout-app HTML 失败: ${errorMessage}`;
+        console.error('[layout-app loader] ❌', errorMsg, {
+          layoutEntry,
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          } : error,
+        });
+        reject(new Error(errorMsg));
       });
   });
 }

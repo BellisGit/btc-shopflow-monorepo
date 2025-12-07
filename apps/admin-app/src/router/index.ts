@@ -58,28 +58,50 @@ export const createAdminRouter = (): Router => {
     }
 
     // 独立运行时：检查本地认证状态
+    // 关键：在子域名环境下，即使无法直接读取 HttpOnly cookie，也应该尝试其他方式判断
+    
     // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
+    // 注意：如果 cookie 是 HttpOnly 的，getCookie 无法读取，但浏览器会自动在请求中发送
     const cookieToken = getCookie('access_token');
     if (cookieToken) {
       return true;
     }
 
-    // 2. 检查 localStorage 中的 token
-    const storageToken = appStorage.auth.getToken();
-    if (storageToken) {
-      return true;
-    }
-
-    // 3. 检查用户信息是否存在
+    // 2. 检查用户信息是否存在（从 Cookie 或 localStorage 读取）
+    // 关键：使用 appStorage.user.get() 会优先从 Cookie 读取（跨子域名共享）
     const userInfo = appStorage.user.get();
     if (userInfo?.id) {
       return true;
     }
 
-    // 4. 检查登录状态标记
-    const isLoggedIn = localStorage.getItem('is_logged_in') === 'true';
+    // 3. 检查 localStorage 中的 token
+    const storageToken = appStorage.auth.getToken();
+    if (storageToken) {
+      return true;
+    }
+
+    // 4. 检查登录状态标记（从 settings 中读取，settings 也会优先从 Cookie 读取）
+    const settings = appStorage.settings.get() as Record<string, any> | null;
+    const isLoggedIn = settings?.is_logged_in === true;
     if (isLoggedIn) {
       return true;
+    }
+
+    // 5. 检查 localStorage 中的旧登录状态标记（向后兼容）
+    const legacyIsLoggedIn = localStorage.getItem('is_logged_in') === 'true';
+    if (legacyIsLoggedIn) {
+      return true;
+    }
+
+    // 6. 在子域名环境下，如果无法读取 cookie，尝试通过检查是否有其他认证相关的 cookie
+    // 例如检查是否有 session cookie 或其他认证标记
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+    if (isProductionSubdomain) {
+      // 在子域名环境下，如果 cookie 是 HttpOnly 的，前端无法读取
+      // 但可以通过检查是否有其他认证相关的标记来判断
+      // 如果都没有，说明可能未认证，返回 false 让路由守卫处理重定向
+      // 注意：这里不假设已认证，避免安全风险
     }
 
     return false;
@@ -101,13 +123,24 @@ export const createAdminRouter = (): Router => {
     }
 
     // 独立运行时：检查认证（排除登录页等公开页面）
-    if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // 关键：如果正在使用 layout-app（通过 qiankun 加载），由 layout-app 处理认证
+    // 此时不应该进行认证检查，避免在 layout-app 加载完成前误判为未认证
+    const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+    
+    if (!isUsingLayoutApp) {
       const isPublicPage = to.path === '/login' || 
                           to.path === '/forget-password' || 
                           to.path === '/register';
       
       if (!isPublicPage && !isAuthenticated()) {
         // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
+        console.warn('[admin-app] 未认证，重定向到登录页', {
+          path: to.path,
+          hasCookieToken: !!getCookie('access_token'),
+          hasStorageToken: !!appStorage.auth.getToken(),
+          hasUserInfo: !!appStorage.user.get()?.id,
+          hostname: window.location.hostname,
+        });
         next({
           path: '/login',
           query: { redirect: to.fullPath },
@@ -122,6 +155,16 @@ export const createAdminRouter = (): Router => {
         const redirectPath = redirect.split('?')[0];
         next(redirectPath);
         return;
+      }
+    } else {
+      // 在 layout-app 环境下，认证由 layout-app 处理
+      // 这里只记录日志，不进行认证检查
+      if (import.meta.env.DEV) {
+        console.log('[admin-app] 在 layout-app 环境下，跳过认证检查', {
+          path: to.path,
+          isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+          useLayoutApp: (window as any).__USE_LAYOUT_APP__,
+        });
       }
     }
     

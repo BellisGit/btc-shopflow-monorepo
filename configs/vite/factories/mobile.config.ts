@@ -283,15 +283,56 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    cssCodeSplit: false,
+    cssMinify: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        reduce_vars: false,
+        reduce_funcs: false,
+        passes: 1,
+        collapse_vars: false,
+        dead_code: false,
+      },
+      mangle: {
+        keep_fnames: true,
+        keep_classnames: true,
+      },
+      format: {
+        comments: false,
+      },
+    },
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'vant-vendor': ['vant'],
-          'utils-vendor': ['dexie', '@vueuse/core'],
+        // 关键：确保导出的名称不会被混淆
+        generatedCode: {
+          constBindings: false,
+        },
+        manualChunks: (id) => {
+          // 强制分离 Vue 相关依赖
+          if (id.includes('node_modules/vue/') || 
+              id.includes('node_modules/vue-router/') || 
+              id.includes('node_modules/pinia/')) {
+            return 'vue-vendor';
+          }
+          // 强制分离 Vant 相关依赖
+          if (id.includes('node_modules/vant/')) {
+            return 'vant-vendor';
+          }
+          // 强制分离工具库依赖
+          if (id.includes('node_modules/dexie/') || 
+              id.includes('node_modules/@vueuse/')) {
+            return 'utils-vendor';
+          }
+          // 其他 node_modules 依赖
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
         },
       },
     },

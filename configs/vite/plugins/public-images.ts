@@ -45,11 +45,11 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       for (const file of files) {
         const ext = extname(file).toLowerCase();
         if (imageExtensions.includes(ext)) {
-          // logo.png 需要特殊处理：保持在根目录，文件名不变，不使用哈希值
-          if (file === 'logo.png') {
-            console.log(`[public-images-to-assets] 📦 处理 logo.png，将复制到根目录（无哈希值）`);
-            // 记录 logo.png 的路径，在 writeBundle 阶段复制到根目录
-            publicImageFiles.set('logo.png', join(publicDir, 'logo.png'));
+          // 根目录图片需要特殊处理：保持在根目录，文件名不变，不使用哈希值
+          if (rootImageFiles.includes(file)) {
+            console.log(`[public-images-to-assets] 📦 处理 ${file}，将复制到根目录（无哈希值）`);
+            // 记录文件的路径，在 writeBundle 阶段复制到根目录
+            publicImageFiles.set(file, join(publicDir, file));
             continue;
           }
 

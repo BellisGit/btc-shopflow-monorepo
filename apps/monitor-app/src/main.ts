@@ -47,6 +47,16 @@ const normalizeToHostPath = (relativeFullPath: string) => {
     return normalizedRelative;
   }
 
+  // 检测是否在生产环境的子域名下
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  // 在生产环境子域名下，路径应该不带应用前缀（直接使用相对路径）
+  if (isProductionSubdomain) {
+    return normalizedRelative;
+  }
+
+  // 开发环境（qiankun模式）：添加应用前缀
   if (normalizedRelative === '/' || normalizedRelative === MONITOR_BASE_PATH) {
     return MONITOR_BASE_PATH;
   }
@@ -408,12 +418,34 @@ const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 
 if (shouldRunStandalone()) {
-  // 如果需要加载 layout-app，先初始化
-  initLayoutApp().catch((error) => {
+  // 检查是否需要加载 layout-app
+  const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+
+  if (shouldLoadLayout) {
+    // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
+    initLayoutApp()
+      .then(() => {
+        // layout-app 加载成功，检查是否需要独立渲染
+        // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        if (!(window as any).__USE_LAYOUT_APP__) {
+          // layout-app 加载失败或不需要加载，独立渲染
+          mount({}).catch((error) => {
+            console.error('[monitor-app] 独立运行失败:', error);
+          });
+        }
+        // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+      })
+      .catch((error) => {
     console.error('[monitor-app] 初始化 layout-app 失败:', error);
+        // layout-app 加载失败，独立渲染
+        mount({}).catch((err) => {
+          console.error('[monitor-app] 独立运行失败:', err);
+        });
   });
-  
+  } else {
+    // 不需要加载 layout-app（非生产环境），直接渲染
   mount({}).catch((error) => {
     console.error('[monitor-app] 独立运行失败:', error);
   });
+  }
 }

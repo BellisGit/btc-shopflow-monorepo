@@ -7,8 +7,12 @@
       'menu-type-top': menuType === 'top',
       'menu-type-top-left': menuType === 'top-left',
       'menu-type-dual-menu': menuType === 'dual-menu',
+      'is-using-layout-app': isUsingLayoutApp,
     }"
   >
+    <!-- 关键：在 layout-app 环境下，隐藏子应用自己的布局（顶栏、侧边栏等） -->
+    <!-- layout-app 会提供共享的布局，子应用只需要渲染内容区域 -->
+    <template v-if="!isUsingLayoutApp">
     <!-- 遮罩层（移动端使用） -->
     <div class="app-layout__mask" @click="handleMaskClick"></div>
 
@@ -23,14 +27,16 @@
         @open-drawer="openDrawer"
       />
     </div>
+    </template>
 
 
 
     <!-- 下方：左侧边栏 + 右侧内容 -->
     <div class="app-layout__body">
+      <!-- 关键：在 layout-app 环境下，隐藏子应用自己的侧边栏 -->
       <!-- 左侧边栏（左侧菜单、双栏菜单左侧、混合菜单左侧） -->
       <div
-        v-if="menuType === 'left' || menuType === 'dual-menu' || menuType === 'top-left'"
+        v-if="!isUsingLayoutApp && (menuType === 'left' || menuType === 'dual-menu' || menuType === 'top-left')"
         class="app-layout__sidebar"
         :class="{ 'has-dark-menu': isDarkMenuStyle }"
       >
@@ -92,8 +98,10 @@
         </div>
       </div>
 
-    <!-- 菜单抽屉 -->
+    <!-- 关键：在 layout-app 环境下，隐藏子应用自己的菜单抽屉 -->
+    <!-- layout-app 会提供共享的菜单抽屉 -->
     <MenuDrawer
+      v-if="!isUsingLayoutApp"
       v-model:visible="drawerVisible"
       :topbar-height="47"
     />
@@ -177,6 +185,10 @@ let prevIsMini = browser.isMini;
 // 判断是否为主应用路由（系统域路由）
 // 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+// 关键：判断是否正在使用 layout-app（通过 __USE_LAYOUT_APP__ 标志）
+const isUsingLayoutApp = computed(() => {
+  return !!(window as any).__USE_LAYOUT_APP__;
+});
 const isMainApp = computed(() => {
   return getIsMainApp(route.path, window.location.pathname, isStandalone);
 });

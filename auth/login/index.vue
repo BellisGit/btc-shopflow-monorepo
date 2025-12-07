@@ -23,6 +23,7 @@
     <!-- 账密登录表单 -->
     <BtcPasswordForm
       v-if="currentLoginMode === 'password'"
+      key="password-form"
       :loading="passwordLoading"
       @submit="handlePasswordSubmit"
     />
@@ -30,6 +31,7 @@
     <!-- 短信验证码登录表单 -->
     <BtcSmsForm
       v-if="currentLoginMode === 'sms'"
+      key="sms-form"
       :loading="smsLoading"
       @submit="handleSmsSubmit"
       @send-sms="handleSendSms"

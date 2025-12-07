@@ -1892,6 +1892,21 @@
 				}
 			},
 			{
+				"name": "pull",
+				"method": "GET",
+				"path": "/pull",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_base:read",
+				"summary": "拉取syspro数据",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "start",
 				"method": "POST",
 				"path": "/start",
@@ -1901,84 +1916,6 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:start",
 				"summary": "开始盘点",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "delete",
-				"method": "POST",
-				"path": "/delete",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "删除盘点基础表",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "recover",
-				"method": "POST",
-				"path": "/recover",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "继续盘点",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "pause",
-				"method": "POST",
-				"path": "/pause",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "暂停盘点",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2031,6 +1968,84 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
 				"summary": "新增盘点基础表",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pause",
+				"method": "POST",
+				"path": "/pause",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "暂停盘点",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "recover",
+				"method": "POST",
+				"path": "/recover",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "继续盘点",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "delete",
+				"method": "POST",
+				"path": "/delete",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "删除盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2528,6 +2543,32 @@
 				}
 			},
 			{
+				"name": "import",
+				"method": "POST",
+				"path": "/import",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "IMPORT",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:import",
+				"summary": "盘点票导入",
+				"tag": "SysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "update",
 				"method": "POST",
 				"path": "/update",
@@ -2563,32 +2604,6 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_ticket:export",
 				"summary": "盘点票导出",
-				"tag": "SysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "import",
-				"method": "POST",
-				"path": "/import",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "IMPORT",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_ticket:import",
-				"summary": "盘点票导入",
 				"tag": "SysCheckTicketController",
 				"dts": {
 					"parameters": [

@@ -3,6 +3,7 @@ import type { EChartsOption } from 'echarts';
 import type { LineChartProps } from '../../../types/line';
 import { createVerticalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
+import { getThemeColors } from '../../../utils/css-var';
 
 /**
  * 折线图 composable
@@ -13,9 +14,13 @@ export function useLineChart(
   themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    const textColor = isDark.value ? themeColors.dark.textColor : themeColors.textColor;
-    const borderColor = isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight;
-    const bgColor = isDark.value ? themeColors.dark.bgColorPage : themeColors.bgColor;
+    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
+    const currentThemeColors = typeof window !== 'undefined' 
+      ? getThemeColors()
+      : themeColors;
+    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
+    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
+    const bgColor = isDark.value ? currentThemeColors.dark.bgColorPage : currentThemeColors.bgColor;
     const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
 
     const option: EChartsOption = {
@@ -34,6 +39,7 @@ export function useLineChart(
         textStyle: {
           color: textColor
         },
+        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
         confine: true,
         appendToBody: true
       },
@@ -71,7 +77,7 @@ export function useLineChart(
         },
         emphasis: {
           iconStyle: {
-            borderColor: themeColors.primary
+            borderColor: currentThemeColors.primary
           }
         }
       },
@@ -90,7 +96,7 @@ export function useLineChart(
           }
         },
         axisLabel: {
-          color: isDark.value ? themeColors.dark.textColorSecondary : themeColors.textColorSecondary
+          color: textColor
         }
       },
       yAxis: {
@@ -107,7 +113,7 @@ export function useLineChart(
           }
         },
         axisLabel: {
-          color: isDark.value ? themeColors.dark.textColorSecondary : themeColors.textColorSecondary,
+          color: textColor,
           formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
         }
       },

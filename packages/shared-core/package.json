@@ -7,23 +7,23 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build && node scripts/ensure-types.mjs",
-    "postbuild": "node scripts/ensure-types.mjs",
+    "build": "vite build",
     "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
-    "vue": "^3.3.0",
+    "@vueuse/core": "^12.0.0 || ^13.0.0",
     "pinia": "^2.0.0 || ^3.0.0",
-    "@vueuse/core": "^12.0.0 || ^13.0.0"
+    "vue": "^3.3.0"
   },
   "dependencies": {
     "@btc/shared-utils": "workspace:^",
     "axios": "^1.12.2"
   },
   "devDependencies": {
-    "pinia": "^3.0.3",
     "@vueuse/core": "^13.9.0",
+    "pinia": "^3.0.3",
+    "typescript": "^5.9.3",
     "vite": "^5.4.20",
-    "typescript": "^5.9.3"
+    "vite-plugin-dts": "^4.5.4"
   }
 }

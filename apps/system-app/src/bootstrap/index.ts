@@ -12,6 +12,7 @@ import 'virtual:svg-register';
 
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
+import { resolveAppLogoUrl } from '@configs/layout-bridge';
 
 // 处理器模块
 import { createMessageHandler, initMessageManager, createNotificationHandler, initNotificationManager } from './handlers';
@@ -41,47 +42,8 @@ export async function bootstrap(app: App) {
   setupUI(app);         // UI框架配置
   setupI18n(app);       // 国际化配置
 
-  // 设置 loading 页面文本（在 i18n 初始化后）
-  // 注释掉 Loading 元素的文本设置，因为 system-app 的 index.html 中没有 #Loading 元素
-  // 如果存在 #Loading 元素（可能来自子应用），立即隐藏并移除它
-  setTimeout(() => {
-        const loading = document.getElementById('Loading');
-        if (loading) {
-      // 立即隐藏
-      loading.style.display = 'none';
-      loading.style.visibility = 'hidden';
-      loading.style.opacity = '0';
-      // 延迟移除
-      setTimeout(() => {
-        if (loading.parentNode) {
-          loading.parentNode.removeChild(loading);
-        }
-      }, 100);
-    }
-    // try {
-    //   const t = (app.config.globalProperties as any).$t;
-    //   if (t) {
-    //     const loading = document.getElementById('Loading');
-    //     if (loading) {
-    //       const nameEl = loading.querySelector('.preload__name');
-    //       const titleEl = loading.querySelector('.preload__title');
-    //       const subTitleEl = loading.querySelector('.preload__sub-title');
-
-    //       if (nameEl) {
-    //         nameEl.textContent = t('app.name') || '拜里斯车间管理系统';
-    //       }
-    //       if (titleEl) {
-    //         titleEl.textContent = t('app.loading.title') || '正在加载资源';
-    //       }
-    //       if (subTitleEl) {
-    //         subTitleEl.textContent = t('app.loading.subtitle') || '部分资源可能加载时间较长，请耐心等待';
-    //       }
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.warn('[i18n] Failed to set loading page text:', error);
-    // }
-  }, 0);
+  // 注意：Loading 元素的移除由 main.ts 统一处理
+  // 这里不再处理，避免与 main.ts 的逻辑冲突
 
   // 2. 集成模块初始化
   // 初始化设置配置（现在都在 app-src chunk 中，使用静态导入）
@@ -111,6 +73,9 @@ export async function bootstrap(app: App) {
   }).catch((error) => {
     console.warn('[bootstrap] Failed to expose authApi globally:', error);
   });
+
+  // 暴露 Logo URL 获取函数，保持与其他应用的一致性
+  (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
 
   // 全局捕获未处理的Promise rejection，防止控制台打印错误
   window.addEventListener('unhandledrejection', (event) => {

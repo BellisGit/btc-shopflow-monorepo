@@ -18,6 +18,7 @@ import { MenuThemeEnum, SystemThemeEnum } from '@system/plugins/user-setting/con
 // 导入 layout-app 自己的 EPS service 和域列表工具函数
 import { service } from './services/eps';
 import { getDomainList } from '@system/utils/domain-cache';
+import mitt from '@btc/shared-components/utils/mitt';
 import 'virtual:svg-icons';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
@@ -79,6 +80,25 @@ function ensureDefaultSettings() {
 }
 
 const initLayoutEnvironment = async (appInstance: VueApp) => {
+  // 关键：在初始化开始时就创建并设置事件总线，确保在 Vue 应用创建之前事件总线就已存在
+  // 这样子应用的 UserInfo 组件就能立即访问到事件总线
+  if (!(window as any).__APP_EMITTER__) {
+    const emitter = mitt();
+    (window as any).__APP_EMITTER__ = emitter;
+    if (import.meta.env.DEV) {
+      console.log('[layout-app] 已创建并设置全局事件总线 (__APP_EMITTER__)');
+    }
+    
+    // 关键：添加全局 window 事件监听器作为兜底方案，确保即使事件总线未正确初始化也能工作
+    // 监听 'open-preferences-drawer' 事件，直接触发 layout-app 的偏好设置抽屉
+    window.addEventListener('open-preferences-drawer', () => {
+      // 通过事件总线触发（如果存在）
+      if ((window as any).__APP_EMITTER__) {
+        (window as any).__APP_EMITTER__.emit('open-preferences-drawer');
+      }
+    });
+  }
+
   if (!settingsInitialized) {
     appStorage.init();
     ensureDefaultSettings();

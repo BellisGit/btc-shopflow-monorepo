@@ -150,9 +150,118 @@ const router = createRouter({
 // 路由错误处理
 router.onError((error) => {
   console.error('[system-app] Router error:', error);
-  // 如果是组件加载失败，尝试重新加载
+  console.error('[system-app] Router error details:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    currentRoute: router.currentRoute.value.path,
+  });
+  
+  // 如果是组件加载失败，尝试重新加载或重定向到登录页
   if (error.message && error.message.includes('Failed to fetch dynamically imported module')) {
     console.warn('[system-app] Component load failed, page will be empty. Error:', error);
+    // 记录失败的组件路径
+    const currentRoute = router.currentRoute.value;
+    if (currentRoute && currentRoute.matched.length > 0) {
+      const route = currentRoute.matched[currentRoute.matched.length - 1];
+      console.warn('[system-app] Failed component route:', {
+        path: route.path,
+        name: route.name,
+        component: route.components,
+      });
+      
+      // 关键：如果是登录页组件加载失败，尝试重定向到登录页（使用 replace 避免历史记录）
+      if (route.path === '/login' || currentRoute.path === '/login') {
+        console.warn('[system-app] 登录页组件加载失败，尝试重新加载登录页');
+        setTimeout(() => {
+          router.replace('/login').catch(() => {
+            // 如果重定向失败，至少移除 Loading 元素
+            const loadingEl = document.getElementById('Loading');
+            if (loadingEl) {
+              loadingEl.style.setProperty('display', 'none', 'important');
+            }
+          });
+        }, 100);
+        return;
+      }
+    }
+    
+    // 如果组件加载失败且不是登录页，尝试重定向到登录页
+    if (currentRoute && currentRoute.path !== '/login') {
+      console.warn('[system-app] 组件加载失败，重定向到登录页');
+      setTimeout(() => {
+        router.replace({
+          path: '/login',
+          query: { redirect: currentRoute.fullPath },
+        }).catch(() => {
+          // 如果重定向失败，至少移除 Loading 元素
+          const loadingEl = document.getElementById('Loading');
+          if (loadingEl) {
+            loadingEl.style.setProperty('display', 'none', 'important');
+          }
+        });
+      }, 100);
+    }
+    return;
+  }
+  
+  // 处理 __vccOpts 错误（Vue 组件未正确加载）
+  if (error.message && (error.message.includes('__vccOpts') || error.message.includes('Cannot read properties of undefined'))) {
+    console.warn('[system-app] Component definition error, component may not be properly loaded:', error);
+    // 记录当前路由信息
+    const currentRoute = router.currentRoute.value;
+    if (currentRoute && currentRoute.matched.length > 0) {
+      const route = currentRoute.matched[currentRoute.matched.length - 1];
+      console.warn('[system-app] Component error route info:', {
+        path: route.path,
+        name: route.name,
+        component: route.components,
+        componentType: typeof route.components?.default,
+      });
+    }
+    
+    // 如果是登录页组件错误，尝试重定向到登录页
+    if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some(m => m.path === '/login'))) {
+      console.warn('[system-app] 登录页组件错误，尝试重新加载登录页');
+      setTimeout(() => {
+        router.replace('/login').catch(() => {
+          const loadingEl = document.getElementById('Loading');
+          if (loadingEl) {
+            loadingEl.style.setProperty('display', 'none', 'important');
+          }
+        });
+      }, 100);
+      return;
+    }
+    
+    // 尝试重新加载当前路由
+    if (currentRoute && currentRoute.path) {
+      console.log('[system-app] Attempting to reload route:', currentRoute.path);
+      // 延迟重新加载，避免循环
+      setTimeout(() => {
+        router.replace(currentRoute.fullPath).catch(() => {
+          // 如果重新加载失败，重定向到登录页
+          if (currentRoute.path !== '/login') {
+            router.replace({
+              path: '/login',
+              query: { redirect: currentRoute.fullPath },
+            }).catch(() => {
+              const loadingEl = document.getElementById('Loading');
+              if (loadingEl) {
+                loadingEl.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+        });
+      }, 100);
+    }
+    return;
+  }
+  
+  // 处理 single-spa 相关错误
+  if (error.message && error.message.includes('single-spa')) {
+    console.warn('[system-app] Single-spa related error:', error);
+    return;
   }
 });
 
@@ -373,18 +482,28 @@ router.beforeEach((to, from, next) => {
   }
 
   // 检查是否为公开页面（不需要认证）
-  const isPublicPage = to.meta?.public === true;
+  // 关键：登录页、忘记密码页、注册页都是公开页面
+  const isPublicPage = to.meta?.public === true || 
+                       to.path === '/login' || 
+                       to.path === '/forget-password' || 
+                       to.path === '/register';
   
   // 关键：在主域名（bellis.com.cn）下，必须严格检查认证状态
   // 不能假设已认证，必须通过实际的认证标记来判断
   const isAuthenticatedUser = isAuthenticated();
   
-  console.log('[Router Guard]', {
-    path: to.path,
-    isPublicPage,
-    isAuthenticatedUser,
-    hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-  });
+  // 生产环境详细日志
+  if (import.meta.env.PROD) {
+    console.log('[Router Guard]', {
+      path: to.path,
+      fullPath: to.fullPath,
+      isPublicPage,
+      isAuthenticatedUser,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+      meta: to.meta,
+      matched: to.matched.length,
+    });
+  }
 
   // 如果是登录页且用户已认证，重定向到首页
   // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
@@ -392,7 +511,9 @@ router.beforeEach((to, from, next) => {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
-    console.log('[Router Guard] 已认证用户访问登录页，重定向到:', redirectPath);
+    if (import.meta.env.PROD) {
+      console.log('[Router Guard] 已认证用户访问登录页，重定向到:', redirectPath);
+    }
     next(redirectPath);
     return;
   }
@@ -401,7 +522,9 @@ router.beforeEach((to, from, next) => {
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
       // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
-      console.log('[Router Guard] 未认证，重定向到登录页，原始路径:', to.fullPath);
+      if (import.meta.env.PROD) {
+        console.log('[Router Guard] 未认证，重定向到登录页，原始路径:', to.fullPath);
+      }
       next({
         path: '/login',
         query: { redirect: to.fullPath },
@@ -473,7 +596,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to, from) => {
   // 生产环境调试：如果路由未匹配，记录详细信息
   if (import.meta.env.PROD && to.matched.length === 0) {
-    console.error('[system-app Router] 路由未匹配:', {
+    console.error('[system-app Router] ⚠️ 路由未匹配:', {
       path: to.path,
       fullPath: to.fullPath,
       name: to.name,
@@ -481,14 +604,42 @@ router.afterEach((to, from) => {
       params: to.params,
       query: to.query,
       location: window.location.href,
+      routes: routes.map(r => ({ path: r.path, name: r.name })),
     });
+    
+    // 关键：如果路由未匹配，尝试重定向到登录页（避免一直 loading）
+    // 但只对非公开页面进行重定向，避免循环
+    const isPublicPage = to.meta?.public === true || 
+                         to.path === '/login' || 
+                         to.path === '/forget-password' || 
+                         to.path === '/register';
+    
+    if (!isPublicPage && to.path !== '/login') {
+      console.warn('[system-app Router] 路由未匹配且非公开页面，重定向到登录页');
+      router.replace({
+        path: '/login',
+        query: { redirect: to.fullPath },
+      }).catch(err => {
+        console.error('[system-app Router] 重定向到登录页失败:', err);
+        // 如果重定向失败，至少移除 Loading 元素
+        const loadingEl = document.getElementById('Loading');
+        if (loadingEl) {
+          loadingEl.style.setProperty('display', 'none', 'important');
+        }
+      });
+    }
   }
   
-  // 如果路由已匹配，记录匹配信息（仅在生产环境且是根路径时）
-  if (import.meta.env.PROD && to.path === '/' && to.matched.length > 0) {
-    console.log('[system-app Router] 路由匹配成功:', {
+  // 如果路由已匹配，记录匹配信息（生产环境）
+  if (import.meta.env.PROD && to.matched.length > 0) {
+    console.log('[system-app Router] ✅ 路由匹配成功:', {
       path: to.path,
-      matched: to.matched.map(m => ({ path: m.path, name: m.name, component: m.components })),
+      fullPath: to.fullPath,
+      matched: to.matched.map(m => ({ 
+        path: m.path, 
+        name: m.name, 
+        component: m.components ? 'loaded' : 'missing'
+      })),
     });
   }
 });

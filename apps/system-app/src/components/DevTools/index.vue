@@ -89,15 +89,31 @@ function isAllowedUser(): boolean {
     }
     
     const userInfo = JSON.parse(decodedValue);
-    // 只使用 name 字段（后端返回的权威数据），不区分大小写
-    // 不使用 username 字段（登录表单输入，可能不准确）
-    if (!userInfo?.name) {
+    // 优先使用 username 字段（cookie 中实际存储的字段），如果没有则使用 name 字段
+    // 不区分大小写
+    const userName = (userInfo?.username || userInfo?.name || '').toLowerCase();
+    if (!userName) {
       return false;
     }
     
-    const userName = userInfo.name.toLowerCase();
-    return userName === 'moselu';
+    const isAllowed = userName === 'moselu';
+    
+    // 仅在开发环境或允许用户时输出调试信息
+    if (isDev || isAllowed) {
+      console.log('[DevTools] 用户检查:', {
+        userName,
+        isAllowed,
+        hasCookie: !!btcUser,
+        userInfoKeys: Object.keys(userInfo || {})
+      });
+    }
+    
+    return isAllowed;
   } catch (error) {
+    // 仅在开发环境输出错误信息
+    if (isDev) {
+      console.warn('[DevTools] 检查允许用户时出错:', error);
+    }
     return false;
   }
 }

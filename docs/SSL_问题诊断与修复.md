@@ -1,8 +1,26 @@
 # SSL 问题诊断与修复指南
 
-## ⚠️ 错误：Failed to communicate with the secure server - No secure protocol supported
+## ⚠️ 错误类型
+
+### 错误 1：Failed to communicate with the secure server - No secure protocol supported
 
 这个错误通常表示 SSL/TLS 握手失败，可能的原因包括：
+
+### 错误 2：ERR_CONNECTION_RESET（连接被重置）
+
+**问题现象：**
+- 部分移动端浏览器（如 QQ 浏览器、部分安卓/iOS 平板浏览器）访问 mobile 子应用时出现 `ERR_CONNECTION_RESET`
+- 某些浏览器（如小米浏览器）可以正常访问
+- 错误发生在 TLS/SSL 握手阶段
+
+**根本原因：**
+服务器的 TLS/SSL 配置过于严格，导致这些浏览器在握手阶段就被服务器重置连接：
+- 只启用了 TLS 1.2/1.3，使用 `ssl_ciphers HIGH:!aNULL:!MD5`，同时强制服务器优先选择密码套件（`ssl_prefer_server_ciphers on`）
+- 一些旧版或非主流浏览器（包括 QQ 浏览器及某些平板的内置浏览器）不支持 TLS 1.3，也不支持当前配置允许的密码套件
+- 在尝试 TLS 握手时直接被服务器重置，浏览器便显示 `ERR_CONNECTION_RESET`
+
+**解决方案：**
+使用更兼容的 SSL 配置（见下方"方案 B"），调整密码套件为兼容性更高的组合，并允许客户端选择密码套件。
 
 ### 1. 证书文件未在服务器上更新
 
@@ -102,9 +120,9 @@ nginx -V 2>&1 | grep -o with-openssl-[0-9.]
 ssl_protocols TLSv1.2;
 ```
 
-**方案 B：使用更兼容的 SSL 配置**
+**方案 B：使用更兼容的 SSL 配置（推荐用于移动端）**
 
-更新移动应用的 nginx 配置，使用更兼容的 SSL 设置：
+更新移动应用的 nginx 配置，使用更兼容的 SSL 设置。这组配置可以解决 ERR_CONNECTION_RESET 问题，支持更多移动端浏览器（QQ浏览器、平板浏览器等）：
 
 ```nginx
 server {
@@ -122,15 +140,37 @@ server {
     ssl_session_tickets  off;
     
     # 根据 nginx 版本选择协议
-    # 如果 nginx 版本较旧，只使用 TLSv1.2
+    # 如果 nginx 版本较旧不支持 TLS 1.3，可以只使用 TLSv1.2
     ssl_protocols TLSv1.2 TLSv1.3;
     
     # 更兼容的加密套件配置
+    # 这组套件覆盖了大部分移动端浏览器支持的密码算法，并允许客户端按需选择
     ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+    # 允许客户端选择密码套件，提高兼容性（特别是对旧版浏览器）
     ssl_prefer_server_ciphers off;
     
     # 其他配置...
 }
+```
+
+**关键改动说明：**
+- `ssl_ciphers`：使用明确的密码套件列表，覆盖更多移动端浏览器支持的算法
+- `ssl_prefer_server_ciphers off`：允许客户端选择密码套件，而不是强制服务器优先选择，提高对旧版浏览器的兼容性
+- 如果 nginx 版本较旧不支持 TLS 1.3，可以只使用 `ssl_protocols TLSv1.2;`
+
+**验证修复：**
+修改配置后，运行以下命令验证：
+```bash
+# 测试配置语法
+nginx -t
+
+# 重新加载配置
+nginx -s reload
+
+# 测试 TLS 1.2 握手
+openssl s_client -connect mobile.bellis.com.cn:443 -tls1_2
+
+# 在实际设备上测试（QQ浏览器、iPad等）
 ```
 
 ### 4. 防火墙或安全组问题

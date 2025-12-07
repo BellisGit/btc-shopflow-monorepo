@@ -1,7 +1,7 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off" name="password-login-form" @submit.prevent="handleSubmit">
         <!-- 隐藏的假输入框，用于欺骗浏览器自动填充 -->
         <input 
           id="fake-username" 
@@ -44,14 +44,17 @@
             @keyup.enter="(e) => handleEnterKey(e, e.target as HTMLElement)"
           />
         </el-form-item>
+        
+        <!-- 提交按钮放在表单内部 -->
+        <el-form-item>
+          <el-button type="primary" size="large" :loading="loading" native-type="submit">
+            {{ t('立即登录') }}
+          </el-button>
+        </el-form-item>
       </el-form>
     </template>
 
-    <template #button>
-      <el-button type="primary" size="large" :loading="loading" @click="handleSubmit">
-        {{ t('立即登录') }}
-      </el-button>
-    </template>
+    <!-- 按钮已移到表单内部，不再需要单独的 button 插槽 -->
 
     <template #extra>
       <div class="forgot-password-link">
@@ -145,11 +148,20 @@ defineExpose({
 <style lang="scss" scoped>
 .form {
   .el-form-item {
-    margin-bottom: 24px;
+    margin-bottom: 0; // 使用 gap 控制间距，不需要 margin-bottom
   }
 
   .el-input {
     width: 100%;
+  }
+  
+  // 确保按钮在表单内部时样式正确
+  .el-form-item:last-child {
+    margin-bottom: 0;
+    
+    .el-button {
+      width: 100%;
+    }
   }
 }
 

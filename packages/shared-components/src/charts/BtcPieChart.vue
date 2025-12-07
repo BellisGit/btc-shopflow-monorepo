@@ -1,17 +1,20 @@
 <template>
-  <div ref="chartContainerRef" class="btc-pie-chart">
+  <div ref="chartContainerRef" class="btc-pie-chart" :style="{ height: height, width: width }">
     <v-chart
+      v-if="isContainerReady"
       :option="chartOption"
+      :theme="chartTheme"
       :autoresize="autoresize"
-      :style="{ height: height, width: width }"
+      :style="{ width: '100%', height: '100%' }"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch, ref, onBeforeUnmount } from 'vue';
+import { computed, reactive, watch, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
+import { getThemeColors } from './utils/css-var';
 
 export interface PieChartDataItem {
   name: string;
@@ -46,12 +49,14 @@ const props = withDefaults(defineProps<PieChartProps>(), {
 });
 
 const isDark = useDark();
+const themeColors = getThemeColors();
+const chartTheme = computed(() => isDark.value ? 'btc-dark' : 'btc-light');
 
 const chartOption = reactive({
   title: {
     text: props.title || '',
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   tooltip: {
@@ -59,11 +64,15 @@ const chartOption = reactive({
     formatter: '{a} <br/>{b}: {c} ({d}%)',
     show: props.showTooltip,
     backgroundColor: computed(() => isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
-    borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed'),
+    borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight),
     borderWidth: 1,
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     },
+    extraCssText: computed(() => {
+      const color = isDark.value ? themeColors.dark.textColor : themeColors.textColor;
+      return `color: ${color}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`;
+    }),
     confine: true,
     appendToBody: true
   },
@@ -74,7 +83,7 @@ const chartOption = reactive({
                            props.legendPosition === 'top' ? '0%' :
                            props.legendPosition === 'left' ? '0%' : '0%',
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   toolbox: {
@@ -99,11 +108,11 @@ const chartOption = reactive({
       }
     },
     iconStyle: {
-      borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+      borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
     },
     emphasis: {
       iconStyle: {
-        borderColor: computed(() => isDark.value ? '#409eff' : '#409eff')
+        borderColor: themeColors.primary
       }
     }
   },
@@ -116,23 +125,27 @@ const chartOption = reactive({
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 6,
-        borderColor: computed(() => isDark.value ? '#1d1e1f' : '#fff'),
+        borderColor: computed(() => isDark.value ? themeColors.dark.bgColor : themeColors.bgColor),
         borderWidth: 2
       },
       label: {
         show: false,
-        position: 'center'
+        position: 'center',
+        color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
       },
       emphasis: {
         label: {
           show: true,
           fontSize: 20,
           fontWeight: 'bold',
-          color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+          color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
         }
       },
       labelLine: {
-        show: false
+        show: false,
+        lineStyle: {
+          color: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
+        }
       },
       data: [] as any[]
     }
@@ -167,6 +180,38 @@ function getDefaultColor(index: number): string {
 
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null);
+const isContainerReady = ref(false);
+
+// 检查容器尺寸
+const checkContainerSize = (): boolean => {
+  if (!chartContainerRef.value) {
+    return false;
+  }
+  const rect = chartContainerRef.value.getBoundingClientRect();
+  const hasSize = rect.width > 0 && rect.height > 0;
+  if (hasSize && !isContainerReady.value) {
+    isContainerReady.value = true;
+  }
+  return hasSize;
+};
+
+// 组件挂载后检查容器尺寸
+onMounted(() => {
+  nextTick(() => {
+    checkContainerSize();
+    if (!isContainerReady.value) {
+      const checkInterval = setInterval(() => {
+        if (checkContainerSize()) {
+          clearInterval(checkInterval);
+        }
+      }, 50);
+      // 最多等待 5 秒
+      setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 5000);
+    }
+  });
+});
 
 // 组件卸载时清理 tooltip、toolbox 和 ECharts 实例
 onBeforeUnmount(() => {

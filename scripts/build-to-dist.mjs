@@ -1272,6 +1272,22 @@ function copyAppDist(appName, domain) {
       recursive: true,
       force: true,
     });
+    
+    // 检查并复制 EPS 数据到 dist 目录（如果存在）
+    const epsDir = join(rootDir, 'apps', appName, 'build', 'eps');
+    if (existsSync(epsDir) && readdirSync(epsDir).length > 0) {
+      const targetEpsDir = join(targetDir, 'build', 'eps');
+      if (!existsSync(join(targetDir, 'build'))) {
+        const fs = require('fs');
+        fs.mkdirSync(join(targetDir, 'build'), { recursive: true });
+      }
+      cpSync(epsDir, targetEpsDir, {
+        recursive: true,
+        force: true,
+      });
+      console.log(`  ✅ EPS 数据已复制到 dist/${domain}/build/eps`);
+    }
+    
     console.log(`  ✅ ${appName} 产物已复制到 dist/${domain}\n`);
     return true;
   } catch (error) {

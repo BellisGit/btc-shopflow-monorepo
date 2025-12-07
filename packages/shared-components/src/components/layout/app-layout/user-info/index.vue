@@ -209,7 +209,59 @@ const handleCommand = (command: string) => {
       router.push('/profile');
       break;
     case 'settings':
-      router.push('/settings');
+      // 关键：在 layout-app 环境下，通过事件触发偏好设置抽屉
+      // 否则使用路由跳转（如果子应用有 /settings 路由）
+      const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+      if (isUsingLayoutApp) {
+        // 通过全局事件触发 layout-app 的偏好设置抽屉
+        const triggerPreferencesDrawer = () => {
+          const emitter = (window as any).__APP_EMITTER__;
+          if (emitter && typeof emitter.emit === 'function') {
+            emitter.emit('open-preferences-drawer');
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[UserInfo] 已通过事件总线触发 open-preferences-drawer 事件');
+            }
+          } else {
+            // 如果没有事件总线，尝试通过 window 事件
+            window.dispatchEvent(new CustomEvent('open-preferences-drawer'));
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[UserInfo] 事件总线不可用，已通过 window 事件触发 open-preferences-drawer');
+            }
+          }
+        };
+
+        // 立即尝试触发
+        triggerPreferencesDrawer();
+
+        // 关键：添加重试机制，如果事件总线在初始化时不存在，等待一段时间后重试
+        // 这可以解决生产环境中 layout-app 和子应用初始化时序问题
+        if (!(window as any).__APP_EMITTER__) {
+          let retryCount = 0;
+          const maxRetries = 5;
+          const retryInterval = 100; // 100ms
+
+          const retryTimer = setInterval(() => {
+            retryCount++;
+            if ((window as any).__APP_EMITTER__) {
+              clearInterval(retryTimer);
+              triggerPreferencesDrawer();
+              if (import.meta.env.DEV || import.meta.env.PROD) {
+                console.log(`[UserInfo] 重试成功（${retryCount}次），已触发 open-preferences-drawer 事件`);
+              }
+            } else if (retryCount >= maxRetries) {
+              clearInterval(retryTimer);
+              // 最后一次尝试使用 window 事件
+              window.dispatchEvent(new CustomEvent('open-preferences-drawer'));
+              if (import.meta.env.DEV || import.meta.env.PROD) {
+                console.warn(`[UserInfo] 重试 ${maxRetries} 次后事件总线仍不可用，已使用 window 事件作为兜底方案`);
+              }
+            }
+          }, retryInterval);
+        }
+      } else {
+        // 独立运行时，使用路由跳转
+        router.push('/settings');
+      }
       break;
     case 'logout':
       BtcConfirm(t('common.logoutConfirm'), t('common.warning'), {

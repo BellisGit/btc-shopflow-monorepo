@@ -138,10 +138,23 @@ async function render(props: QiankunProps = {}) {
         return;
       }
 
-      // 使用 window.location.pathname 获取完整路径，避免重复拼接
-      const currentPath = window.location.pathname;
-      // 确保路径以 /engineering 开头
-      const fullPath = currentPath.startsWith('/engineering') ? currentPath : `/engineering${to.path === '/' ? '' : to.path}`;
+      // 检测是否在生产环境的子域名下
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 规范化路径：生产环境子域名下不带应用前缀，开发环境带前缀
+      let fullPath: string;
+      if (isProductionSubdomain) {
+        // 生产环境子域名：直接使用相对路径
+        fullPath = to.fullPath || to.path || '/';
+        if (!fullPath.startsWith('/')) {
+          fullPath = `/${fullPath}`;
+        }
+      } else {
+        // 开发环境（qiankun模式）：添加应用前缀
+        const currentPath = window.location.pathname;
+        fullPath = currentPath.startsWith('/engineering') ? currentPath : `/engineering${to.path === '/' ? '' : to.path}`;
+      }
 
       window.dispatchEvent(new CustomEvent('subapp:route-change', {
         detail: {
@@ -270,14 +283,42 @@ export default { bootstrap, mount, unmount };
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {
-  // 如果需要加载 layout-app，先初始化
+  // 检查是否需要加载 layout-app
+  const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+
+  if (shouldLoadLayout) {
+    // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
   import('./utils/init-layout-app').then(({ initLayoutApp }) => {
-    initLayoutApp().catch((error) => {
+      initLayoutApp()
+        .then(() => {
+          // layout-app 加载成功，检查是否需要独立渲染
+          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+          if (!(window as any).__USE_LAYOUT_APP__) {
+            // layout-app 加载失败或不需要加载，独立渲染
+            render().catch((error) => {
+              console.error('[engineering-app] 独立运行失败:', error);
+            });
+          }
+          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        })
+        .catch((error) => {
       console.error('[engineering-app] 初始化 layout-app 失败:', error);
+          // layout-app 加载失败，独立渲染
+          render().catch((err) => {
+            console.error('[engineering-app] 独立运行失败:', err);
+          });
+        });
+    }).catch((error) => {
+      console.error('[engineering-app] 导入 init-layout-app 失败:', error);
+      // 导入失败，直接渲染
+      render().catch((err) => {
+        console.error('[engineering-app] 独立运行失败:', err);
     });
   });
-  
+  } else {
+    // 不需要加载 layout-app（非生产环境），直接渲染
   render().catch((error) => {
     console.error('[engineering-app] 独立运行失败:', error);
   });
+  }
 }

@@ -4,16 +4,15 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "skipLibCheck": true,
     "noEmitOnError": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@btc/shared-utils": ["./node_modules/@btc/shared-utils/dist/index.d.ts"]
+      "@btc/shared-utils": ["../shared-utils/dist"]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../shared-utils"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }
 

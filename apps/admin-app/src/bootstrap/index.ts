@@ -3,10 +3,16 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { resetPluginManager, usePluginManager } from '@btc/shared-core';
 import type { QiankunProps } from '@btc/shared-core';
 import {
+  registerAppEnvAccessors,
   registerManifestMenusForApp,
   registerManifestTabsForApp,
+  createAppStorageBridge,
+  createDefaultDomainResolver,
+  resolveAppLogoUrl,
+  createSharedUserSettingPlugin,
 } from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
@@ -70,6 +76,16 @@ const normalizeToHostPath = (relativeFullPath: string) => {
     return normalizedRelative;
   }
 
+  // 检测是否在生产环境的子域名下
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  // 在生产环境子域名下，路径应该不带应用前缀（直接使用相对路径）
+  if (isProductionSubdomain) {
+    return normalizedRelative;
+  }
+
+  // 开发环境（qiankun模式）：添加应用前缀
   if (normalizedRelative === '/' || normalizedRelative === ADMIN_BASE_PATH) {
     return ADMIN_BASE_PATH;
   }
@@ -345,25 +361,57 @@ const setupHostLocationBridge = (context: AdminAppContext) => {
   handleRoutingEvent();
 };
 
-export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
-  // 独立运行时：从 Cookie 同步用户偏好设置到 localStorage（跨子域名共享）
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
-    try {
-      import('@btc/shared-utils').then(({ syncSettingsFromCookie }) => {
-        syncSettingsFromCookie();
-      }).catch(() => {
-        // 忽略导入失败
-      });
-    } catch (error) {
-      // 忽略同步失败
-    }
-  }
+const ADMIN_APP_ID = 'admin';
+const sharedUserSettingPlugin = createSharedUserSettingPlugin();
 
-  // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
-  // 这样 layout-app 才能显示 admin-app 的菜单
-  // 与 finance-app 保持一致，在 createAdminApp 中同步注册菜单
-  registerManifestMenusForApp('admin');
-  registerManifestTabsForApp('admin');
+const setupStandaloneGlobals = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  registerAppEnvAccessors();
+  const win = window as any;
+  if (!win.__APP_STORAGE__) {
+    win.__APP_STORAGE__ = createAppStorageBridge(ADMIN_APP_ID);
+  }
+  if (!win.__APP_EPS_SERVICE__) {
+    win.__APP_EPS_SERVICE__ = {};
+  }
+  if (!win.__APP_GET_DOMAIN_LIST__) {
+    win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(ADMIN_APP_ID);
+  }
+  if (!win.__APP_FINISH_LOADING__) {
+    win.__APP_FINISH_LOADING__ = () => {};
+  }
+  if (!win.__APP_LOGOUT__) {
+    win.__APP_LOGOUT__ = () => {};
+  }
+  win.__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+  win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+};
+
+const setupStandalonePlugins = async (app: VueApp, router: Router) => {
+  resetPluginManager();
+  const pluginManager = usePluginManager({ debug: false });
+  pluginManager.setApp(app);
+  pluginManager.setRouter(router);
+  pluginManager.register(sharedUserSettingPlugin);
+  await pluginManager.install(sharedUserSettingPlugin.name);
+};
+
+export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  
+  if (isStandalone) {
+    setupStandaloneGlobals();
+    registerManifestMenusForApp(ADMIN_APP_ID);
+  } else {
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
+    // 这样 layout-app 才能显示 admin-app 的菜单
+    // 与 finance-app 保持一致，在 createAdminApp 中同步注册菜单
+    registerManifestMenusForApp(ADMIN_APP_ID);
+  }
+  
+  registerManifestTabsForApp(ADMIN_APP_ID);
 
   const app = createApp(App);
 
@@ -405,6 +453,14 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
 
   // 注册 echarts 插件（v-chart 组件）
   app.use(echartsPlugin);
+
+  // 关键：在独立运行时注册插件（与 finance-app 保持一致）
+  if (isStandalone) {
+    // 使用异步方式注册插件，避免阻塞应用创建
+    setupStandalonePlugins(app, router).catch((error) => {
+      console.error('[admin-app] 注册插件失败:', error);
+    });
+  }
 
   // 路由初始化：在 qiankun 模式下或使用 layout-app 时提前初始化路由，与 finance-app 保持一致
   // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），也需要初始化路由

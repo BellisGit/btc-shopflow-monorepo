@@ -10,7 +10,7 @@ import {
   updateLogisticsApp,
 } from './bootstrap';
 import type { LogisticsAppContext } from './bootstrap';
-import { initLayoutApp } from './utils/init-layout-app';
+// 移除静态导入，改为动态导入（与其他应用保持一致）
 
 let context: LogisticsAppContext | null = null;
 
@@ -103,6 +103,8 @@ if (shouldRunStandalone()) {
   
   if (shouldLoadLayout) {
     // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
+    // 使用动态导入，与其他应用保持一致
+    import('./utils/init-layout-app').then(({ initLayoutApp }) => {
     initLayoutApp()
       .then(() => {
         // layout-app 加载成功，检查是否需要独立渲染
@@ -118,6 +120,13 @@ if (shouldRunStandalone()) {
       .catch((error) => {
         console.error('[logistics-app] 初始化 layout-app 失败:', error);
         // layout-app 加载失败，独立渲染
+          render().catch((err) => {
+            console.error('[logistics-app] 独立运行失败:', err);
+          });
+        });
+    }).catch((error) => {
+      console.error('[logistics-app] 导入 init-layout-app 失败:', error);
+      // 导入失败，直接渲染
         render().catch((err) => {
           console.error('[logistics-app] 独立运行失败:', err);
         });

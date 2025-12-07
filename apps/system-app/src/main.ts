@@ -3,11 +3,10 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { isDev } from './config';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
-import { currentEnvironment, currentSubApp } from '@configs/unified-env-config';
-import { getMainApp, getAppBySubdomain } from '@configs/app-scanner';
+import { getAppBySubdomain } from '@configs/app-scanner';
 import { setAppBySubdomainFn } from '@btc/subapp-manifests';
 import { isMainApp } from '@configs/unified-env-config';
-import { setIsMainAppFn } from '@btc/shared-components/components/layout/app-layout/utils';
+// 动态导入避免构建时错误（延迟到运行时导入）
 
 // 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
 // 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
@@ -33,31 +32,22 @@ registerAppEnvAccessors();
 // 注入 getAppBySubdomain 函数到 subapp-manifests
 setAppBySubdomainFn(getAppBySubdomain);
 
-// 注入 isMainApp 函数到 shared-components
-setIsMainAppFn(isMainApp);
+// 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
+// @ts-expect-error - 动态导入路径，TypeScript 无法在编译时解析
+import('@btc/shared-components/components/layout/app-layout/utils').then(utils => {
+  utils.setIsMainAppFn(isMainApp);
+}).catch(() => {
+  // 静默处理导入失败，不影响应用启动
+  if (import.meta.env.DEV) {
+    console.warn('[system-app] 无法导入 setIsMainAppFn，跳过设置');
+  }
+});
 
 const app = createApp(App);
 
 // 全局错误处理：捕获并显示错误
-app.config.errorHandler = (err, instance, info) => {
+app.config.errorHandler = (err, _instance, info) => {
   console.error('[Vue Error Handler]', err, info);
-  // 在页面上显示错误信息，方便调试
-  if (import.meta.env.PROD) {
-    const appEl = document.getElementById('app');
-    if (appEl && !appEl.querySelector('.error-display')) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'error-display';
-      errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; z-index: 9999; overflow: auto;';
-      errorDiv.innerHTML = `
-        <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用加载错误</h2>
-        <p style="color: #666; margin-bottom: 8px;"><strong>错误信息：</strong>${err?.message || String(err)}</p>
-        <p style="color: #666; margin-bottom: 8px;"><strong>错误详情：</strong>${info || '未知'}</p>
-        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px;">${err?.stack || ''}</pre>
-        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button>
-      `;
-      appEl.appendChild(errorDiv);
-    }
-  }
 };
 
 // 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
@@ -74,12 +64,12 @@ if (typeof BtcSvg !== 'undefined') {
 // 优化：减少等待时间，使用渐进式轮询间隔，更快响应
 async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Promise<any> {
   const startTime = Date.now();
-  
+
   // 首先尝试直接导入（如果 eps-service chunk 已经加载，这会立即返回）
   try {
     const epsModule = await import('./services/eps');
     const service = epsModule.service || epsModule.default;
-    
+
     // 检查服务是否有有效内容（不是空对象）
     if (service && typeof service === 'object' && Object.keys(service).length > 0) {
       return service;
@@ -88,36 +78,36 @@ async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Prom
     // 如果导入失败（chunk 还没加载），继续等待
     // 不打印日志，避免控制台噪音
   }
-  
+
   // 检查全局是否已经有服务（可能已经被其他脚本加载）
   const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
   if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
     return globalService;
   }
-  
+
   // 渐进式轮询：开始时使用较短的间隔，逐渐增加
   let currentInterval = initialInterval;
   let attemptCount = 0;
-  
+
   while (Date.now() - startTime < maxWaitTime) {
     try {
       // 再次尝试导入
       const epsModule = await import('./services/eps');
       const service = epsModule.service || epsModule.default;
-      
+
       if (service && typeof service === 'object' && Object.keys(service).length > 0) {
         return service;
       }
     } catch (error) {
       // 继续等待
     }
-    
+
     // 检查全局是否已经有服务（可能已经被其他脚本加载）
     const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
     if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
       return globalService;
     }
-    
+
     // 渐进式增加轮询间隔：前几次使用短间隔，之后逐渐增加
     attemptCount++;
     if (attemptCount <= 5) {
@@ -127,10 +117,10 @@ async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Prom
     } else {
       currentInterval = 150; // 之后使用 150ms
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, currentInterval));
   }
-  
+
   // 如果等待超时，尝试最后一次导入（作为兜底）
   try {
     const epsModule = await import('./services/eps');
@@ -141,162 +131,174 @@ async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Prom
   } catch (error) {
     // 静默处理，不打印错误
   }
-  
+
   // 返回空对象作为兜底，不阻塞应用启动
   // 不打印警告，避免控制台噪音（EPS 服务可以在后台继续加载）
   return {};
 }
 
 
-// 在页面上显示启动状态的辅助函数（即使 console 被移除也能看到）
-function showStartupStatus(message: string, type: 'info' | 'error' = 'info') {
-  if (import.meta.env.PROD) {
-    const appEl = document.getElementById('app');
-    if (appEl && !appEl.querySelector('.startup-status')) {
-      const statusDiv = document.createElement('div');
-      statusDiv.className = 'startup-status';
-      statusDiv.style.cssText = 'position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 10px 15px; border-radius: 4px; font-size: 12px; z-index: 99999; font-family: monospace; max-width: 500px;';
-      appEl.appendChild(statusDiv);
-    }
-    const statusEl = appEl?.querySelector('.startup-status');
-    if (statusEl) {
-      const color = type === 'error' ? '#ff4d4f' : '#52c41a';
-      statusEl.innerHTML = `<span style="color: ${color};">[${new Date().toLocaleTimeString()}]</span> ${message}`;
-    }
-  }
-  if (type === 'error') {
-    console.error('[system-app]', message);
-  } else {
-    console.log('[system-app]', message);
+/**
+ * 移除 Loading 元素的统一函数
+ * 确保 Loading 元素被可靠地移除，避免页面一直显示 loading 状态
+ */
+function removeLoadingElement() {
+  const loadingEl = document.getElementById('Loading');
+  if (loadingEl) {
+    // 立即隐藏（使用内联样式确保优先级）
+    loadingEl.style.setProperty('display', 'none', 'important');
+    loadingEl.style.setProperty('visibility', 'hidden', 'important');
+    loadingEl.style.setProperty('opacity', '0', 'important');
+    loadingEl.style.setProperty('pointer-events', 'none', 'important');
+
+    // 添加淡出类（如果 CSS 中有定义）
+    loadingEl.classList.add('is-hide');
+
+    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
+    setTimeout(() => {
+      try {
+        if (loadingEl.parentNode) {
+          loadingEl.parentNode.removeChild(loadingEl);
+        } else if (loadingEl.isConnected) {
+          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
+          loadingEl.remove();
+        }
+      } catch (error) {
+        // 如果移除失败，至少确保元素被隐藏
+        loadingEl.style.setProperty('display', 'none', 'important');
+      }
+    }, 350);
   }
 }
 
+// 关键：添加超时机制，确保 Loading 元素最终会被移除
+// 即使应用启动失败或卡住，也要在超时后移除 Loading
+const LOADING_TIMEOUT = 10000; // 10 秒超时（缩短超时时间，更快响应）
+const loadingTimeoutId = setTimeout(() => {
+  removeLoadingElement();
+  // 超时后，尝试直接挂载应用（如果还没挂载）
+  const appEl = document.getElementById('app');
+  if (appEl && !appEl.querySelector('.system-app')) {
+    try {
+      app.mount('#app');
+    } catch (error) {
+      console.error('[system-app] 强制挂载失败:', error);
+    }
+  }
+}, LOADING_TIMEOUT);
+
 // 启动（等待 EPS 服务加载完成后再启动应用）
-showStartupStatus('开始启动流程...');
-waitForEpsService()
+// 关键：为整个启动流程添加超时保护
+const startupPromise = waitForEpsService()
   .then((service) => {
-    showStartupStatus('EPS 服务加载完成');
     if (typeof window !== 'undefined') {
       (window as any).__BTC_SERVICE__ = service;
       // 暴露到全局，供所有子应用共享使用
       (window as any).__APP_EPS_SERVICE__ = service;
       (window as any).service = service; // 也设置到 window.service，保持兼容性
     }
-    
+
     // EPS 服务加载完成后，再启动应用
-    showStartupStatus('开始执行 bootstrap...');
-    return bootstrap(app);
+    // 为 bootstrap 添加超时保护
+    const bootstrapPromise = bootstrap(app);
+    const bootstrapTimeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Bootstrap 超时（8秒）')), 8000);
+    });
+    return Promise.race([bootstrapPromise, bootstrapTimeout]);
   })
   .then(async () => {
-    showStartupStatus('Bootstrap 完成，准备挂载应用...');
   // 等待路由就绪后再挂载应用，确保路由正确匹配
   // 从 bootstrap/core/router 导入 router 实例
   const { router } = await import('./bootstrap/core/router');
   if (router) {
     try {
-      await router.isReady();
+      // 关键：添加超时机制，避免 router.isReady() 一直等待导致应用无法挂载
+      // 如果路由守卫有问题或路由匹配失败，超时后继续挂载，让路由守卫在挂载后执行
+      const routerReadyPromise = router.isReady();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('路由就绪超时')), 3000); // 缩短到3秒超时
+      });
+
+      await Promise.race([routerReadyPromise, timeoutPromise]);
     } catch (error) {
-      console.warn('[system-app] 路由就绪检查失败，继续挂载:', error);
+      // 路由就绪检查失败或超时，继续挂载
     }
   }
-  
-  // 不再打印环境信息，改为在环境悬浮按钮中显示
-  
+
   // 检查 #app 元素是否存在
   const appEl = document.getElementById('app');
   if (!appEl) {
-    showStartupStatus('❌ #app 元素不存在，无法挂载应用', 'error');
     throw new Error('#app 元素不存在');
   }
-  
-  showStartupStatus('开始挂载应用到 #app...');
+
   try {
     app.mount('#app');
-    showStartupStatus('✅ 应用挂载成功');
-    // 挂载成功后，延迟移除启动状态显示
-    setTimeout(() => {
-      const statusEl = document.querySelector('.startup-status');
-      if (statusEl) {
-        statusEl.remove();
-      }
-    }, 3000);
+
+    // 关键：应用挂载后，立即关闭并移除 Loading 元素（不等待任何其他操作）
+    // 这是最重要的步骤，确保用户能看到应用界面，而不是一直显示 loading
+    clearTimeout(loadingTimeoutId); // 清除超时定时器
+    removeLoadingElement();
+
+    // 关键：挂载后立即触发路由导航，确保路由守卫能够执行
+    // 如果当前路由未匹配或未认证，路由守卫会自动重定向到登录页
+    // 注意：Loading 元素已经移除，这里只是确保路由正确导航
+    // 使用 setTimeout 确保在下一个事件循环中执行，不阻塞 Loading 移除
+    if (router) {
+      setTimeout(async () => {
+        try {
+          // 检查当前路由是否已匹配
+          const currentRoute = router.currentRoute.value;
+          if (currentRoute.matched.length === 0) {
+            // 触发路由导航，让路由守卫处理重定向
+            try {
+              await router.push(currentRoute.fullPath);
+            } catch (navError) {
+              // 如果导航失败，直接重定向到登录页
+              try {
+                await router.replace('/login');
+              } catch (redirectError) {
+                console.error('[system-app] 重定向到登录页失败:', redirectError);
+              }
+            }
+          } else {
+            // 即使路由已匹配，也要确保路由守卫执行了认证检查
+            // 如果未认证，路由守卫会自动重定向到登录页
+            // 触发一次路由导航，确保路由守卫执行
+            try {
+              await router.push(currentRoute.fullPath);
+            } catch (error) {
+              // 忽略错误，路由守卫可能已经处理了
+            }
+          }
+        } catch (error) {
+          console.error('[system-app] 路由导航处理失败:', error);
+        }
+      }, 200);
+    }
   } catch (mountError) {
-    showStartupStatus(`❌ 应用挂载失败: ${mountError instanceof Error ? mountError.message : String(mountError)}`, 'error');
+    // 即使挂载失败，也要移除 Loading 元素
+    clearTimeout(loadingTimeoutId);
+    removeLoadingElement();
     throw mountError;
   }
-  
-  // 挂载后检查路由匹配情况
-  if (import.meta.env.PROD && router) {
-    const currentRoute = router.currentRoute.value;
-    if (currentRoute.matched.length === 0) {
-      const errorMsg = `⚠️ 应用挂载后路由未匹配: ${currentRoute.path}`;
-      showStartupStatus(errorMsg, 'error');
-      console.error('[system-app]', errorMsg, {
-        path: currentRoute.path,
-        fullPath: currentRoute.fullPath,
-        matched: currentRoute.matched,
-        location: window.location.href,
-      });
-    } else {
-      showStartupStatus(`✅ 路由匹配成功: ${currentRoute.path}`);
-      console.log('[system-app] ✅ 路由匹配成功:', {
-        path: currentRoute.path,
-        matched: currentRoute.matched.map(m => ({ path: m.path, name: m.name })),
-      });
-    }
-  }
 
-    // 应用挂载后，立即关闭并移除 Loading 元素
-    // 添加淡出动画，然后移除元素
-    const loadingEl = document.getElementById('Loading');
-    if (loadingEl) {
-      showStartupStatus('开始移除 Loading 元素...');
-      // 添加淡出类，触发 CSS 过渡动画
-      loadingEl.classList.add('is-hide');
-      // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
-      setTimeout(() => {
-        if (loadingEl.parentNode) {
-          loadingEl.parentNode.removeChild(loadingEl);
-          showStartupStatus('✅ Loading 元素已移除');
-        }
-      }, 350);
-    } else {
-      showStartupStatus('⚠️ 未找到 Loading 元素');
-    }
-
-    // 仅在开发环境注册开发工具组件
-    if (isDev) {
-      import('./components/DevTools/index.vue').then(({ default: DevTools }) => {
-        const devToolsApp = createApp(DevTools);
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        devToolsApp.mount(container);
-      }).catch(err => {
-        console.warn('开发工具加载失败:', err);
-      });
-    }
+    // 注册开发工具组件（在所有环境下都加载，由组件内部逻辑决定是否显示）
+    // 组件内部会检查：开发环境或允许的用户（如 moselu）才显示
+    import('./components/DevTools/index.vue').then(({ default: DevTools }) => {
+      const devToolsApp = createApp(DevTools);
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      devToolsApp.mount(container);
+    }).catch(err => {
+      console.warn('开发工具加载失败:', err);
+    });
   })
   .catch(err => {
-    const errorMsg = `❌ 应用启动失败: ${err?.message || String(err)}`;
-    showStartupStatus(errorMsg, 'error');
-    console.error('[system-app]', errorMsg, err);
-    // 在生产环境下，在页面上显示错误信息
-    if (import.meta.env.PROD) {
-      const appEl = document.getElementById('app');
-      if (appEl) {
-        // 移除启动状态显示
-        const statusEl = appEl.querySelector('.startup-status');
-        if (statusEl) {
-          statusEl.remove();
-        }
-        appEl.innerHTML = `
-          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; z-index: 9999; overflow: auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-            <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
-            <p style="color: #666; margin-bottom: 8px;"><strong>错误信息：</strong>${err?.message || String(err)}</p>
-            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; white-space: pre-wrap;">${err?.stack || err?.toString() || '未知错误'}</pre>
-            <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button>
-          </div>
-        `;
-      }
-    }
+    console.error('[system-app] 应用启动失败:', err);
+
+    // 清除超时定时器
+    clearTimeout(loadingTimeoutId);
+
+    // 关键：即使启动失败，也要移除 Loading 元素
+    removeLoadingElement();
   });

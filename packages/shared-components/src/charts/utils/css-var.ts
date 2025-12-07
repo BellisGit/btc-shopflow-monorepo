@@ -19,10 +19,15 @@ export function getCssVar(varName: string, element?: HTMLElement): string {
  * 获取主题颜色
  */
 export function getThemeColors() {
+  // 获取 CSS 变量值，如果获取不到则使用默认值
+  const textColorPrimary = getCssVar('--el-text-color-primary') || '#303133';
+  const textColorRegular = getCssVar('--el-text-color-regular') || '#606266';
+  
   return {
-    // 文本颜色
-    textColor: getCssVar('--el-text-color-primary') || '#303133',
-    textColorSecondary: getCssVar('--el-text-color-regular') || '#606266',
+    // 文本颜色 - 确保浅色主题下有足够的对比度
+    textColor: textColorPrimary,
+    // 次要文本颜色 - 在浅色主题下使用更深的颜色以确保可见性
+    textColorSecondary: textColorRegular || '#606266',
     textColorPlaceholder: getCssVar('--el-text-color-placeholder') || '#a8abb2',
     
     // 边框颜色
@@ -46,13 +51,13 @@ export function getThemeColors() {
     primaryLight8: getCssVar('--el-color-primary-light-8') || '#d9ecff',
     primaryLight9: getCssVar('--el-color-primary-light-9') || '#ecf5ff',
     
-    // 暗色模式下的颜色（通过 useDark 判断后使用）
+    // 暗色模式下的颜色（从 CSS 变量获取，如果没有则使用默认值）
     dark: {
-      textColor: '#f1f1f9',
-      textColorSecondary: '#a8abb2',
-      borderColor: '#4c4d4f',
-      bgColor: '#1d1e1f',
-      bgColorPage: '#000000'
+      textColor: getCssVar('--el-text-color-primary') || '#f1f1f9',
+      textColorSecondary: getCssVar('--el-text-color-regular') || '#a8abb2',
+      borderColor: getCssVar('--el-border-color') || '#4c4d4f',
+      bgColor: getCssVar('--el-bg-color') || '#1d1e1f',
+      bgColorPage: getCssVar('--el-bg-color-page') || '#000000'
     }
   };
 }

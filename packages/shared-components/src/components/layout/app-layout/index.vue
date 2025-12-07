@@ -106,6 +106,9 @@
       v-model:visible="drawerVisible"
       :topbar-height="47"
     />
+
+    <!-- 偏好设置抽屉（用于 layout-app 环境） -->
+    <BtcUserSettingDrawer v-model="preferencesDrawerVisible" />
   </div>
 </template>
 
@@ -127,17 +130,29 @@ import AppSkeleton from '@btc/shared-components/components/basic/app-skeleton/in
 import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
+import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
 import { provideContentHeight } from '@btc/shared-components/composables/content-height';
 
 // 创建事件总线
-const emitter = mitt();
-
-// 将事件总线挂载到 window，供其他组件使用
-(window as any).__APP_EMITTER__ = emitter;
+// 关键：如果全局事件总线已存在（由 layout-app 初始化时创建），则使用它；否则创建新的
+let emitter = (window as any).__APP_EMITTER__;
+if (!emitter) {
+  emitter = mitt();
+  // 将事件总线挂载到 window，供其他组件使用
+  (window as any).__APP_EMITTER__ = emitter;
+  if (import.meta.env.DEV) {
+    console.log('[AppLayout] 创建了新的事件总线并挂载到 window.__APP_EMITTER__');
+  }
+} else {
+  if (import.meta.env.DEV) {
+    console.log('[AppLayout] 使用已存在的全局事件总线 (window.__APP_EMITTER__)');
+  }
+}
 
 const route = useRoute();
 const isCollapse = ref(false);
 const drawerVisible = ref(false);
+const preferencesDrawerVisible = ref(false);
 const contentRef = ref<HTMLElement | null>(null);
 const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
 
@@ -389,8 +404,30 @@ const setupMutationObserver = () => {
 };
 
 onMounted(() => {
+  // 关键：再次确认事件总线已正确设置（防止在组件挂载时事件总线被覆盖）
+  if (!(window as any).__APP_EMITTER__) {
+    (window as any).__APP_EMITTER__ = emitter;
+    if (import.meta.env.DEV) {
+      console.log('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
+    }
+  }
+  
   emitter.on('view.refresh', refreshView);
+  // 关键：监听偏好设置抽屉打开事件（用于 layout-app 环境）
+  emitter.on('open-preferences-drawer', () => {
+    preferencesDrawerVisible.value = true;
+    if (import.meta.env.DEV) {
+      console.log('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
+    }
+  });
   window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  // 关键：监听全局偏好设置抽屉打开事件（用于跨应用通信）
+  window.addEventListener('open-preferences-drawer', () => {
+    preferencesDrawerVisible.value = true;
+    if (import.meta.env.DEV) {
+      console.log('[AppLayout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
+    }
+  });
 
   // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
   window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
@@ -431,7 +468,9 @@ watch(
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
+  emitter.off('open-preferences-drawer');
   window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  window.removeEventListener('open-preferences-drawer', () => {});
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
   window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
 

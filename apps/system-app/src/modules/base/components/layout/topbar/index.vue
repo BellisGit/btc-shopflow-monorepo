@@ -30,7 +30,12 @@
           backgroundColor: menuThemeConfig.background,
         }"
       >
-        <img src="/logo.png" alt="BTC Logo" class="topbar__logo-img" @error="handleLogoError" />
+        <img 
+          :src="logoUrl" 
+          alt="BTC Logo" 
+          class="topbar__logo-img" 
+          @error="handleLogoError" 
+        />
         <h2
           class="topbar__logo-text"
           :style="{ color: menuThemeConfig.systemNameColor }"
@@ -84,6 +89,7 @@ import { ref, onMounted, markRaw, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
+import { resolveAppLogoUrl } from '@configs/layout-bridge';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -112,6 +118,17 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+// Logo URL：使用 resolveAppLogoUrl 确保在微前端环境下正确解析路径
+const logoUrl = computed(() => {
+  const baseUrl = resolveAppLogoUrl();
+  // 开发环境：添加时间戳避免缓存（每小时更新一次）
+  if (import.meta.env.DEV) {
+    const hour = Math.floor(Date.now() / (1000 * 60 * 60));
+    return `${baseUrl}?t=${hour}`;
+  }
+  return baseUrl;
+});
 
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {

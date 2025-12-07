@@ -29,7 +29,7 @@ export function useUser() {
   const getUserInfo = (): UserInfo | null => {
     try {
       // 从 Cookie 读取（通过 storage.get('user')）
-      const user = storage.get<UserInfo>('user');
+      const user = storage.get('user') as UserInfo | null;
       if (user) {
         userInfo.value = user;
         return user;

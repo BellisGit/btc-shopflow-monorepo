@@ -1,7 +1,7 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" name="sms-login-form" @submit.prevent="handleSubmit">
         <el-form-item prop="phone">
           <el-input
             id="sms-phone"
@@ -20,6 +20,7 @@
                 :loading="sending"
                 @click="handleSendSmsCode"
                 class="sms-btn"
+                native-type="button"
               >
                 {{ countdown > 0 ? `${countdown}s` : t('获取验证码') }}
               </el-button>
@@ -34,20 +35,23 @@
             @complete="handleCodeComplete"
           />
         </el-form-item>
+        
+        <!-- 提交按钮放在表单内部 -->
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            :disabled="!form.smsCode || form.smsCode.length !== 6"
+            native-type="submit"
+          >
+            {{ t('立即登录') }}
+          </el-button>
+        </el-form-item>
       </el-form>
     </template>
 
-    <template #button>
-      <el-button
-        type="primary"
-        size="large"
-        :loading="loading"
-        :disabled="!form.smsCode || form.smsCode.length !== 6"
-        @click="handleSubmit"
-      >
-        {{ t('立即登录') }}
-      </el-button>
-    </template>
+    <!-- 按钮已移到表单内部，不再需要单独的 button 插槽 -->
   </BtcLoginFormLayout>
 </template>
 
@@ -192,11 +196,20 @@ defineExpose({
 <style lang="scss" scoped>
 .form {
   .el-form-item {
-    margin-bottom: 24px;
+    margin-bottom: 0; // 使用 gap 控制间距，不需要 margin-bottom
   }
 
   .el-input {
     width: 100%;
+  }
+  
+  // 确保按钮在表单内部时样式正确
+  .el-form-item:last-child {
+    margin-bottom: 0;
+    
+    .el-button {
+      width: 100%;
+    }
   }
 
   // 强制覆盖手机号输入框的自动填充背景，保持 Element Plus 默认样式

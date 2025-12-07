@@ -188,7 +188,54 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         );
       },
     } as Plugin,
-    // 11. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    // 11. 修复 layout-app HTML 中的资源路径（将 /assets/ 改为 /assets/layout/）
+    {
+      name: 'fix-layout-assets-path',
+      generateBundle(options, bundle) {
+        for (const [fileName, chunk] of Object.entries(bundle)) {
+          if (chunk.type === 'asset' && fileName === 'index.html') {
+            let htmlContent = chunk.source as string;
+            let modified = false;
+
+            // 修复 import() 动态导入中的路径
+            // 匹配格式：import('/assets/xxx.js') 或 import("/assets/xxx.js")
+            const importPattern = /(import\s*\(\s*['"])\/assets\/(?!layout\/)([^"']+)(['"]\s*\))/gi;
+            if (importPattern.test(htmlContent)) {
+              htmlContent = htmlContent.replace(importPattern, (match, prefix, path, suffix) => {
+                modified = true;
+                return `${prefix}/assets/layout/${path}${suffix}`;
+              });
+            }
+
+            // 修复 script 标签中的 src 属性
+            // 匹配格式：<script src="/assets/xxx.js">
+            const scriptPattern = /(<script[^>]*\s+src=["'])\/assets\/(?!layout\/)([^"']+)(["'][^>]*>)/gi;
+            if (scriptPattern.test(htmlContent)) {
+              htmlContent = htmlContent.replace(scriptPattern, (match, prefix, path, suffix) => {
+                modified = true;
+                return `${prefix}/assets/layout/${path}${suffix}`;
+              });
+            }
+
+            // 修复 link 标签中的 href 属性（CSS 文件等）
+            // 匹配格式：<link href="/assets/xxx.css">
+            const linkPattern = /(<link[^>]*\s+href=["'])\/assets\/(?!layout\/)([^"']+)(["'][^>]*>)/gi;
+            if (linkPattern.test(htmlContent)) {
+              htmlContent = htmlContent.replace(linkPattern, (match, prefix, path, suffix) => {
+                modified = true;
+                return `${prefix}/assets/layout/${path}${suffix}`;
+              });
+            }
+
+            if (modified) {
+              chunk.source = htmlContent;
+              console.log('[fix-layout-assets-path] ✅ 已修复 layout-app HTML 中的资源路径（/assets/ -> /assets/layout/）');
+            }
+          }
+        }
+      },
+    } as Plugin,
+    // 12. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
   ];
 

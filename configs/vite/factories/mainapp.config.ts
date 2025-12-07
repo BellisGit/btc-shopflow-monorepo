@@ -228,10 +228,17 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
         collapse_vars: false,
         dead_code: false,
       },
-      mangle: {
-        keep_fnames: true,
-        keep_classnames: true,
-      },
+      // 关键：对于 ES 模块，完全禁用 mangle 以避免导出名称被混淆
+      // 这可以防止 "does not provide an export named 'r'" 错误
+      // 虽然这会增加一些文件大小，但可以确保动态导入正常工作
+      mangle: false,
+      // 或者使用以下配置保留函数名和类名，但禁用变量名混淆：
+      // mangle: {
+      //   keep_fnames: true,
+      //   keep_classnames: true,
+      //   reserved: [],
+      //   properties: false,
+      // },
       format: {
         comments: false,
       },
@@ -328,9 +335,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 返回完整配置
-  // 关键：如果使用了 publicImagesToAssetsPlugin，在构建时应该禁用 publicDir
-  // 避免 Vite 自动复制 public 目录的文件到根目录（与插件处理的文件冲突）
-  const finalPublicDir = publicImagesToAssets && !isPreviewBuild ? false : publicDir;
+  // 注意：publicDir 的配置需要在 vite.config.ts 中根据 command 动态设置
+  // 这里始终启用 publicDir，开发环境直接使用，构建环境会在 vite.config.ts 中被覆盖
+  const finalPublicDir = publicDir;
   
   return {
     base: baseUrl,

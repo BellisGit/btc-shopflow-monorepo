@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted, onBeforeUnmount, type Ref } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, type Ref } from 'vue';
 import { useDark } from '@vueuse/core';
 import { useResizeObserver } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
@@ -70,6 +70,8 @@ export function useChart(
 
   // 使用 ResizeObserver 监听容器大小变化
   useResizeObserver(containerRef, () => {
+    // 检查容器尺寸，更新准备状态
+    checkContainerSize();
     handleResize();
   });
 
@@ -90,26 +92,61 @@ export function useChart(
     return chartInstance.value;
   };
 
+  // 检查容器是否准备好（有尺寸）
+  const isContainerReady = ref(false);
+  
+  // 检查容器尺寸
+  const checkContainerSize = (): boolean => {
+    if (!containerRef.value) {
+      return false;
+    }
+    const rect = containerRef.value.getBoundingClientRect();
+    const hasSize = rect.width > 0 && rect.height > 0;
+    if (hasSize && !isContainerReady.value) {
+      isContainerReady.value = true;
+    }
+    return hasSize;
+  };
+
   // 更新图表实例引用（在 v-chart 渲染后调用）
+  let retryCount = 0;
+  let checkIntervalId: number | null = null;
+  const MAX_RETRY_COUNT = 50; // 最多重试 50 次（5 秒）
+  
   const updateChartInstance = () => {
-    if (containerRef.value) {
-      try {
-        // 检查 DOM 是否有尺寸
-        const rect = containerRef.value.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
-          // DOM 还没有尺寸，延迟重试
-          setTimeout(() => {
-            updateChartInstance();
-          }, 100);
-          return;
+    if (!containerRef.value) {
+      return;
+    }
+    
+    // 检查容器是否有尺寸
+    if (!checkContainerSize()) {
+      retryCount++;
+      if (retryCount < MAX_RETRY_COUNT) {
+        // DOM 还没有尺寸，延迟重试
+        setTimeout(() => {
+          updateChartInstance();
+        }, 100);
+      } else {
+        // 超过最大重试次数，记录警告
+        if (import.meta.env.DEV) {
+          console.warn('[useChart] 容器尺寸检查超时，图表可能无法正常显示');
         }
-        
-        chartInstance.value = getInstanceByDom(containerRef.value);
-        if (chartInstance.value && props.autoresize) {
-          chartInstance.value.resize();
-        }
-      } catch (error) {
-        // 忽略错误
+      }
+      return;
+    }
+    
+    // 容器已有尺寸，重置重试计数
+    retryCount = 0;
+    
+    try {
+      chartInstance.value = getInstanceByDom(containerRef.value);
+      if (chartInstance.value && props.autoresize) {
+        chartInstance.value.resize();
+      }
+    } catch (error) {
+      // 忽略错误，可能图表还未初始化
+      if (import.meta.env.DEV) {
+        console.warn('[useChart] 获取图表实例失败:', error);
       }
     }
   };
@@ -167,24 +204,57 @@ export function useChart(
     if (resizeTimer) {
       cancelAnimationFrame(resizeTimer);
     }
+    if (checkIntervalId !== null) {
+      clearInterval(checkIntervalId);
+      checkIntervalId = null;
+    }
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', handleResize);
     }
   });
 
-  // 组件挂载后更新实例
+  // 组件挂载后检查容器尺寸
   onMounted(() => {
-    // 延迟获取实例，确保 v-chart 已渲染
-    setTimeout(() => {
-      updateChartInstance();
-    }, 100);
+    // 立即检查一次容器尺寸
+    nextTick(() => {
+      checkContainerSize();
+      // 如果容器还没有尺寸，启动检查循环
+      if (!isContainerReady.value) {
+        checkIntervalId = window.setInterval(() => {
+          if (checkContainerSize() || retryCount >= MAX_RETRY_COUNT) {
+            if (checkIntervalId !== null) {
+              clearInterval(checkIntervalId);
+              checkIntervalId = null;
+            }
+            if (isContainerReady.value) {
+              // 容器已准备好，延迟获取实例，确保 v-chart 已渲染
+              setTimeout(() => {
+                updateChartInstance();
+              }, 100);
+            }
+          }
+        }, 50); // 每 50ms 检查一次
+      } else {
+        // 容器已有尺寸，直接获取实例
+        setTimeout(() => {
+          updateChartInstance();
+        }, 100);
+      }
+    });
+  });
+
+  // 计算图表主题 - 使用自定义主题
+  const chartTheme = computed(() => {
+    return isDark.value ? 'btc-dark' : 'btc-light';
   });
 
   return {
     isDark,
     isEmpty,
     isLoading,
+    isContainerReady,
     chartOption,
+    chartTheme,
     chartInstance,
     getChartInstance,
     updateChartInstance,

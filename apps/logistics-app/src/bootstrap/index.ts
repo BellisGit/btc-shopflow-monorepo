@@ -170,6 +170,16 @@ const normalizeToHostPath = (relativeFullPath: string) => {
     return normalizedRelative;
   }
 
+  // 检测是否在生产环境的子域名下
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  
+  // 在生产环境子域名下，路径应该不带应用前缀（直接使用相对路径）
+  if (isProductionSubdomain) {
+    return normalizedRelative;
+  }
+
+  // 开发环境（qiankun模式）：添加应用前缀
   if (normalizedRelative === '/' || normalizedRelative === LOGISTICS_BASE_PATH) {
     return LOGISTICS_BASE_PATH;
   }

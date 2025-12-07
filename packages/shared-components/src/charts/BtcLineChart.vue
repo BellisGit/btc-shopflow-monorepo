@@ -1,17 +1,20 @@
 <template>
-  <div ref="chartContainerRef" class="btc-line-chart">
+  <div ref="chartContainerRef" class="btc-line-chart" :style="{ height: height, width: width }">
     <v-chart
+      v-if="isContainerReady"
       :option="chartOption"
+      :theme="chartTheme"
       :autoresize="autoresize"
-      :style="{ height: height, width: width }"
+      :style="{ width: '100%', height: '100%' }"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch, ref, onBeforeUnmount } from 'vue';
+import { computed, reactive, watch, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
+import { getThemeColors } from './utils/css-var';
 
 export interface LineChartData {
   name: string;
@@ -57,23 +60,29 @@ const props = withDefaults(defineProps<LineChartProps>(), {
 });
 
 const isDark = useDark();
+const themeColors = getThemeColors();
+const chartTheme = computed(() => isDark.value ? 'btc-dark' : 'btc-light');
 
 const chartOption = reactive({
   title: {
     text: props.title || '',
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   tooltip: {
     trigger: 'axis',
     show: props.showTooltip,
     backgroundColor: computed(() => isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
-    borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed'),
+    borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight),
     borderWidth: 1,
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     },
+    extraCssText: computed(() => {
+      const color = isDark.value ? themeColors.dark.textColor : themeColors.textColor;
+      return `color: ${color}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`;
+    }),
     confine: true,
     appendToBody: true
   },
@@ -82,7 +91,7 @@ const chartOption = reactive({
     top: '0%',
     left: 'center',
     textStyle: {
-      color: computed(() => isDark.value ? '#f1f1f9' : '#303133')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   toolbox: {
@@ -107,11 +116,11 @@ const chartOption = reactive({
       }
     },
     iconStyle: {
-      borderColor: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+      borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
     },
     emphasis: {
       iconStyle: {
-        borderColor: computed(() => isDark.value ? '#409eff' : '#409eff')
+        borderColor: themeColors.primary
       }
     }
   },
@@ -121,11 +130,11 @@ const chartOption = reactive({
     data: props.xAxisData,
     axisLine: {
       lineStyle: {
-        color: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+        color: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
       }
     },
     axisLabel: {
-      color: computed(() => isDark.value ? '#a8abb2' : '#606266')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   yAxis: {
@@ -138,11 +147,11 @@ const chartOption = reactive({
     },
     splitLine: {
       lineStyle: {
-        color: computed(() => isDark.value ? '#4c4d4f' : '#e4e7ed')
+        color: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
       }
     },
     axisLabel: {
-      color: computed(() => isDark.value ? '#a8abb2' : '#606266')
+      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
     }
   },
   series: [] as any[]
@@ -167,7 +176,7 @@ watch(() => [props.data, props.xAxisData, props.showLabel], () => {
       label: {
         show: props.showLabel,
         position: 'top',
-        color: computed(() => isDark.value ? '#f1f1f9' : '#303133'),
+        color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor),
         fontSize: 12
       }
     };
@@ -206,6 +215,38 @@ watch(() => props.title, (newTitle) => {
 
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null);
+const isContainerReady = ref(false);
+
+// 检查容器尺寸
+const checkContainerSize = (): boolean => {
+  if (!chartContainerRef.value) {
+    return false;
+  }
+  const rect = chartContainerRef.value.getBoundingClientRect();
+  const hasSize = rect.width > 0 && rect.height > 0;
+  if (hasSize && !isContainerReady.value) {
+    isContainerReady.value = true;
+  }
+  return hasSize;
+};
+
+// 组件挂载后检查容器尺寸
+onMounted(() => {
+  nextTick(() => {
+    checkContainerSize();
+    if (!isContainerReady.value) {
+      const checkInterval = setInterval(() => {
+        if (checkContainerSize()) {
+          clearInterval(checkInterval);
+        }
+      }, 50);
+      // 最多等待 5 秒
+      setTimeout(() => {
+        clearInterval(checkInterval);
+      }, 5000);
+    }
+  });
+});
 
 // 组件卸载时清理 tooltip、toolbox 和 ECharts 实例
 onBeforeUnmount(() => {

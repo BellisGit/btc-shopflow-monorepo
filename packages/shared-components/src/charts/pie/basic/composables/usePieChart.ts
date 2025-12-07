@@ -2,6 +2,7 @@ import { computed, type Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { PieChartProps } from '../../../types/pie';
 import { getColorByIndex } from '../../../utils/color';
+import { getThemeColors } from '../../../utils/css-var';
 
 /**
  * ?? composable
@@ -12,9 +13,13 @@ export function usePieChart(
   themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    const textColor = isDark.value ? themeColors.dark.textColor : themeColors.textColor;
-    const borderColor = isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight;
-    const bgColor = isDark.value ? themeColors.dark.bgColor : themeColors.bgColor;
+    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
+    const currentThemeColors = typeof window !== 'undefined' 
+      ? getThemeColors()
+      : themeColors;
+    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
+    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
+    const bgColor = isDark.value ? currentThemeColors.dark.bgColor : currentThemeColors.bgColor;
     const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
 
     const option: EChartsOption = {
@@ -34,6 +39,7 @@ export function usePieChart(
         textStyle: {
           color: textColor
         },
+        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
         confine: true,
         appendToBody: true
       },
@@ -71,7 +77,7 @@ export function usePieChart(
         },
         emphasis: {
           iconStyle: {
-            borderColor: themeColors.primary
+            borderColor: currentThemeColors.primary
           }
         }
       },
@@ -90,10 +96,15 @@ export function usePieChart(
           },
           label: {
             show: props.showLabel ?? false,
-            position: props.labelPosition || 'outside'
+            position: props.labelPosition || 'outside',
+            color: textColor,
+            fontSize: 12
           },
           labelLine: {
-            show: props.showLabelLine ?? true
+            show: props.showLabelLine ?? true,
+            lineStyle: {
+              color: borderColor
+            }
           },
           emphasis: {
             label: {

@@ -798,7 +798,10 @@ function setupGlobalResourceInterceptor() {
 export function setupQiankun() {
   // 防止重复注册：如果已经初始化过，直接返回
   if ((window as any).__qiankun_setup__) {
-    console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
+    // 只在开发环境显示警告，生产环境静默处理
+    if (import.meta.env.DEV) {
+      console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
+    }
     return;
   }
   (window as any).__qiankun_setup__ = true;
@@ -1348,7 +1351,7 @@ export function setupQiankun() {
 
         // 根据当前路径或子域名判断是哪个应用（使用应用扫描器）
         const hostname = window.location.hostname;
-        
+
         // 首先尝试从子域名判断
         const appBySubdomain = getAppBySubdomain(hostname);
         if (appBySubdomain) {
@@ -1412,7 +1415,7 @@ export function setupQiankun() {
         const timeout = import.meta.env.DEV ? 10000 : 30000; // 开发环境 10 秒，生产环境 30 秒
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
-        
+
         let response: Response;
         try {
           response = await fetch(url, {
@@ -1718,29 +1721,29 @@ export function setupQiankun() {
         // 关键：先清理所有旧 chunk 引用（在修复路径之前）
         // 这些是旧的 chunk hash，如果检测到这些引用，说明需要删除
         const OLD_REF_PATTERN = /B2xaJ9jT|CQjIfk82|Ct0QBumG|B9_7Pxt3|C3806ap7|D-vcpc3r|COBg3Fmo|C-4vWSys|u6iSJWLT|Bob15k_M|DXiZfgDR|CK3kLuZf|B6Y4X6Zv|vga9bYFB|C5YyqyGj|5K5tXpWB|element-plus-CQjIfk82|vue-core-Ct0QBumG|vendor-B2xaJ9jT|vue-router-B9_7Pxt3|app-src-C3806ap7|app-src-COBg3Fmo|app-src-vga9bYFB|index-D-vcpc3r|index-C-4vWSys|index-u6iSJWLT|index-C5YyqyGj|index-5K5tXpWB/g;
-        
+
         // 检查是否包含旧引用
         if (OLD_REF_PATTERN.test(processedTpl)) {
           OLD_REF_PATTERN.lastIndex = 0; // 重置正则表达式
           const oldRefMatches = processedTpl.match(OLD_REF_PATTERN);
           if (oldRefMatches && oldRefMatches.length > 0) {
             console.warn(`[getTemplate] 检测到 ${oldRefMatches.length} 个旧 chunk 引用，将强制删除:`, oldRefMatches.slice(0, 5).join(', '));
-            
+
             // 删除包含旧引用的 script 标签（更宽泛的匹配，包括所有可能的格式）
             const oldHashList = OLD_REF_PATTERN.source.replace(/^\/|\/[gimuy]*$/g, '').split('|');
             // 匹配所有包含旧 hash 的 script 标签，无论路径格式如何
             const oldScriptPattern = new RegExp(`<script[^>]*src=["'][^"']*(${oldHashList.join('|')})[^"']*["'][^>]*>`, 'gi');
             processedTpl = processedTpl.replace(oldScriptPattern, '');
-            
+
             // 删除包含旧引用的 link 标签（modulepreload 和 stylesheet）
             // 匹配所有包含旧 hash 的 link 标签，无论路径格式如何
             const oldLinkPattern = new RegExp(`<link[^>]*(?:href|src)=["'][^"']*(${oldHashList.join('|')})[^"']*["'][^>]*>`, 'gi');
             processedTpl = processedTpl.replace(oldLinkPattern, '');
-            
+
             // 删除包含旧引用的 import() 动态导入（在 HTML 中）
             const oldImportPattern = new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi');
             processedTpl = processedTpl.replace(oldImportPattern, 'Promise.resolve()');
-            
+
             // 额外清理：删除内联脚本中的旧引用（如果 HTML 中包含内联脚本）
             // 匹配内联脚本中的动态导入：import('/assets/app-src-vga9bYFB.js')
             const inlineScriptPattern = new RegExp(`(<script[^>]*>)([\\s\\S]*?)(import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)[\\s\\S]*?)(</script>)`, 'gi');
@@ -1749,7 +1752,7 @@ export function setupQiankun() {
               const cleanedImport = importStmt.replace(new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi'), 'Promise.resolve()');
               return openTag + before + cleanedImport + closeTag;
             });
-            
+
             console.log(`[getTemplate] ✅ 已清理所有旧 chunk 引用`);
           }
         }
@@ -2079,7 +2082,7 @@ export function setupQiankun() {
           // 这样当从主域名访问时（如 bellis.com.cn/production），base 会指向子域名（production.bellis.com.cn）
           // targetHost 已经从 baseUrl 中提取，如果 baseUrl 是子域名，targetHost 就是子域名
           let baseHost = targetHost || currentHost;
-          
+
           // 双重保险：如果 entry 是完整 URL，再次确认使用 entry 中的 hostname
           // 这样可以处理 entry 参数传递但 baseUrl 未正确设置的情况
           if (entry) {
@@ -2090,7 +2093,7 @@ export function setupQiankun() {
               } else if (entry.startsWith('//')) {
                 entryUrl = new URL(`${protocol}${entry}`);
               }
-              
+
               if (entryUrl) {
                 // 如果 entry 中的 hostname 与当前 hostname 不同，说明是跨域加载，使用 entry 的 hostname
                 if (entryUrl.hostname !== currentHost) {
@@ -2290,18 +2293,18 @@ export function listenSubAppReady() {
   window.addEventListener('subapp:ready', async (event: any) => {
     const appName = event.detail?.name;
     // console.log(`[qiankun] 子应用 ${appName} subapp:ready 事件触发`);
-    
+
     // 动态导入避免循环依赖
     // const { finishLoading } = await import('../utils/loadingManager');
     // finishLoading(); // 注释掉 loading
-    
+
     // 关键：清除 loading 属性，确保 Layout 组件能正确更新状态
     const container = document.querySelector('#subapp-viewport') as HTMLElement;
     if (container && container.hasAttribute('data-qiankun-loading')) {
       container.removeAttribute('data-qiankun-loading');
       // console.log(`[qiankun] 子应用 ${appName} subapp:ready 清除 loading 属性`);
     }
-    
+
     // 触发 after-mount 事件，确保 Layout 组件更新状态
     window.dispatchEvent(new CustomEvent('qiankun:after-mount', {
       detail: { appName }

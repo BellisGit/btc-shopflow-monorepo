@@ -16,24 +16,24 @@ export interface EnvironmentConfig {
     timeout: number;
     backendTarget?: string;
   };
-  
+
   // 微前端配置
   microApp: {
     baseURL: string;
     entryPrefix: string;
   };
-  
+
   // 文档配置
   docs: {
     url: string;
     port: string;
   };
-  
+
   // WebSocket 配置
   ws: {
     url: string;
   };
-  
+
   // 上传配置
   upload: {
     url: string;
@@ -198,19 +198,19 @@ export function getEnvironment(): Environment {
 
   const hostname = window.location.hostname;
   const port = window.location.port || '';
-  
+
   if (hostname.includes('bellis.com.cn')) {
     return 'production';
   }
-  
+
   if (getAllPrePorts().includes(port)) {
     return 'preview';
   }
-  
+
   if (getAllDevPorts().includes(port)) {
     return 'development';
   }
-  
+
   // 浏览器环境：防御性地访问 import.meta.env
   const prodFlag =
     (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ??
@@ -245,18 +245,51 @@ export function isMainApp(
     const qiankunWindow = (window as any).__POWERED_BY_QIANKUN__;
     isStandalone = !qiankunWindow;
   }
-  
+
+  const env = getEnvironment();
+  // 优先使用 locationPath（完整路径），如果没有则使用 routePath，最后使用 window.location.pathname
+  const path = locationPath || routePath || (typeof window !== 'undefined' ? window.location.pathname : '');
+
+  // 关键：在开发环境中，即使 isStandalone 为 true，也要检查路径是否匹配子应用
+  // 因为开发环境所有应用都使用同一个端口（8080），需要通过路径前缀判断
+  if (isStandalone && env === 'development') {
+    // 先检查是否是登录等公开页面
+    if (path === '/login' || path === '/forget-password' || path === '/register') {
+      return false;
+    }
+
+    // 检查路径是否匹配任何子应用的 pathPrefix
+    const apps = getAllApps();
+    for (const app of apps) {
+      if (app.type === 'sub' && app.enabled) {
+        const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+          ? app.pathPrefix.slice(0, -1)
+          : app.pathPrefix;
+        const normalizedPath = path.endsWith('/') && path !== '/'
+          ? path.slice(0, -1)
+          : path;
+
+        // 精确匹配或路径前缀匹配
+        if (normalizedPath === normalizedPathPrefix || normalizedPath.startsWith(normalizedPathPrefix + '/')) {
+          // 匹配到子应用，不是主应用
+          return false;
+        }
+      }
+    }
+
+    // 如果没有匹配到子应用，判断为主应用
+    return true;
+  }
+
+  // 非开发环境的独立运行模式（如预览/生产环境的独立运行）
   if (isStandalone) {
-    const path = routePath || locationPath || '';
     if (path === '/login' || path === '/forget-password' || path === '/register') {
       return false;
     }
     return true;
   }
 
-  const env = getEnvironment();
-  // 优先使用 routePath，如果没有则使用 locationPath，最后使用 window.location.pathname
-  const path = routePath || locationPath || (typeof window !== 'undefined' ? window.location.pathname : '');
+  // qiankun 模式下的判断（非独立运行）
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
   if (path === '/login' || path === '/forget-password' || path === '/register') {
@@ -273,25 +306,35 @@ export function isMainApp(
   }
 
   // 开发/预览环境：通过路径判断（基于应用身份配置）
+  // 关键：在开发环境中，所有应用都使用同一个端口（8080），所以只能通过路径前缀判断
+  // 主应用路径：/data/...、/profile 等
+  // 子应用路径：/logistics/...、/admin/... 等
   const apps = getAllApps();
-  
+
+  // 先检查是否是子应用路径（子应用的 pathPrefix 优先级更高）
   for (const app of apps) {
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠
-      const normalizedPathPrefix = app.pathPrefix.endsWith('/') 
-        ? app.pathPrefix.slice(0, -1) 
+      const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+        ? app.pathPrefix.slice(0, -1)
         : app.pathPrefix;
       const normalizedPath = path.endsWith('/') && path !== '/'
         ? path.slice(0, -1)
         : path;
-      
+
       // 精确匹配或路径前缀匹配
-      if (normalizedPath === normalizedPathPrefix || normalizedPath.startsWith(normalizedPathPrefix + '/')) {
+      // 例如：/logistics 或 /logistics/warehouse/inventory/info 都匹配物流应用
+      const isMatch = normalizedPath === normalizedPathPrefix || normalizedPath.startsWith(normalizedPathPrefix + '/');
+
+      if (isMatch) {
+        // 匹配到子应用，不是主应用
         return false;
       }
     }
   }
 
+  // 如果没有匹配到子应用，判断为主应用
+  // 主应用的 pathPrefix 是 '/'，所以所有不匹配子应用的路径都是主应用路径
   return true;
 }
 
@@ -315,8 +358,8 @@ export function getCurrentSubApp(): string | null {
   for (const app of apps) {
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠（与 isMainApp 使用相同的匹配逻辑）
-      const normalizedPathPrefix = app.pathPrefix.endsWith('/') 
-        ? app.pathPrefix.slice(0, -1) 
+      const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+        ? app.pathPrefix.slice(0, -1)
         : app.pathPrefix;
       const normalizedPath = path.endsWith('/') && path !== '/'
         ? path.slice(0, -1)
