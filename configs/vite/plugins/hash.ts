@@ -170,9 +170,14 @@ export function forceNewHashPlugin(): Plugin {
         if (cssFileNameMap.size > 0) {
           for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
             const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const linkPattern = new RegExp(`(href=["'])/assets/${escapedOldCssName}(["'])`, 'g');
+            // 更新 <link href> 标签中的 CSS 文件路径（包括查询参数）
+            const linkPattern = new RegExp(`(<link[^>]*\\s+href=["'])(/assets/${escapedOldCssName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml = html;
-            html = html.replace(linkPattern, `$1/assets/${newCssName}$2`);
+            html = html.replace(linkPattern, (match, prefix, path, query, suffix) => {
+              const newPath = `/assets/${newCssName}`;
+              const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+              return `${prefix}${newPath}${newQuery}${suffix}`;
+            });
             if (html !== originalHtml) {
               modified = true;
             }
@@ -183,6 +188,8 @@ export function forceNewHashPlugin(): Plugin {
           for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
             const oldJsNamePrefix = oldJsName.replace(/\.js$/, '').replace(/-[a-zA-Z0-9]{8,}$/, '');
             const escapedOldJsNamePrefix = oldJsNamePrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
+            // 1. 更新 import() 动态导入中的路径
             const importPattern = new RegExp(`import\\s*\\(\\s*(["'])(/assets/${escapedOldJsNamePrefix}(?:-[a-zA-Z0-9]{8,})?\\.js)(\\?[^"'\\s]*)?\\1\\s*\\)`, 'g');
             const originalHtml = html;
             html = html.replace(importPattern, (match, quote, path, query) => {
@@ -193,6 +200,26 @@ export function forceNewHashPlugin(): Plugin {
             if (html !== originalHtml) {
               modified = true;
             }
+            
+            // 2. 更新 <script src> 标签中的路径
+            const scriptPattern = new RegExp(`(<script[^>]*\\s+src=["'])(/assets/${escapedOldJsNamePrefix}(?:-[a-zA-Z0-9]{8,})?\\.js)(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
+            html = html.replace(scriptPattern, (match, prefix, path, query, suffix) => {
+              const newPath = `/assets/${newJsName}`;
+              const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+              return `${prefix}${newPath}${newQuery}${suffix}`;
+            });
+            
+            // 3. 更新 <link href> 标签中的路径（CSS 文件）
+            const linkPattern = new RegExp(`(<link[^>]*\\s+href=["'])(/assets/${escapedOldJsNamePrefix}(?:-[a-zA-Z0-9]{8,})?\\.(js|css|mjs))(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
+            html = html.replace(linkPattern, (match, prefix, path, ext, query, suffix) => {
+              // 只处理 JS 文件，CSS 文件由上面的 cssFileNameMap 处理
+              if (ext === 'js' || ext === 'mjs') {
+                const newPath = `/assets/${newJsName}`;
+                const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+                return `${prefix}${newPath}${newQuery}${suffix}`;
+              }
+              return match;
+            });
           }
         }
 

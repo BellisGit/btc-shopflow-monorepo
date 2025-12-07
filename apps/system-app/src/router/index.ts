@@ -244,30 +244,10 @@ function isAuthenticated(): boolean {
     return true;
   }
 
-  // 2. 在子域名环境下，如果无法读取 cookie，尝试通过其他方式判断
-  // 如果 cookie 是 HttpOnly 的，前端无法读取，但浏览器会自动发送给后端
-  // 在这种情况下，我们应该假设可能已认证（由后端验证），而不是直接返回 false
-  if (isProductionSubdomain) {
-    // 在子域名环境下，检查是否有其他认证标记
-    // 如果有用户信息或登录状态标记，认为可能已认证
-    const userInfo = appStorage.user.get();
-    if (userInfo?.id) {
-      return true;
-    }
-    
-    const settings = appStorage.settings.get() as Record<string, any> | null;
-    const isLoggedIn = settings?.is_logged_in === true;
-    if (isLoggedIn) {
-      return true;
-    }
-    
-    // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该假设可能已认证
-    // 因为浏览器会自动发送 cookie 给后端，后端会验证
-    // 如果后端验证失败，会在响应中返回 401，由 HTTP 拦截器处理
-    // 这里返回 true，让请求继续，由后端验证
-    return true;
-  }
-
+  // 2. 在主域名（bellis.com.cn）下，必须严格检查认证状态
+  // 不能假设已认证，必须通过实际的认证标记来判断
+  // 只有在子域名环境下，才允许通过其他方式判断（因为子应用的认证由子应用自己处理）
+  
   // 3. 检查登录状态标记（从统一的 settings 存储中读取）
   const settings = appStorage.settings.get() as Record<string, any> | null;
   const isLoggedIn = settings?.is_logged_in === true;
@@ -287,6 +267,18 @@ function isAuthenticated(): boolean {
     return true;
   }
 
+  // 6. 在子域名环境下，如果无法读取 cookie，尝试通过其他方式判断
+  // 如果 cookie 是 HttpOnly 的，前端无法读取，但浏览器会自动发送给后端
+  // 注意：这仅适用于子域名环境，主域名必须严格检查
+  if (isProductionSubdomain) {
+    // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该假设可能已认证
+    // 因为浏览器会自动发送 cookie 给后端，后端会验证
+    // 如果后端验证失败，会在响应中返回 401，由 HTTP 拦截器处理
+    // 这里返回 true，让请求继续，由后端验证
+    return true;
+  }
+
+  // 主域名下，如果没有找到任何认证标记，返回 false
   return false;
 }
 
@@ -382,7 +374,17 @@ router.beforeEach((to, from, next) => {
 
   // 检查是否为公开页面（不需要认证）
   const isPublicPage = to.meta?.public === true;
+  
+  // 关键：在主域名（bellis.com.cn）下，必须严格检查认证状态
+  // 不能假设已认证，必须通过实际的认证标记来判断
   const isAuthenticatedUser = isAuthenticated();
+  
+  console.log('[Router Guard]', {
+    path: to.path,
+    isPublicPage,
+    isAuthenticatedUser,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+  });
 
   // 如果是登录页且用户已认证，重定向到首页
   // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
@@ -390,6 +392,7 @@ router.beforeEach((to, from, next) => {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
+    console.log('[Router Guard] 已认证用户访问登录页，重定向到:', redirectPath);
     next(redirectPath);
     return;
   }
@@ -398,6 +401,7 @@ router.beforeEach((to, from, next) => {
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
       // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
+      console.log('[Router Guard] 未认证，重定向到登录页，原始路径:', to.fullPath);
       next({
         path: '/login',
         query: { redirect: to.fullPath },

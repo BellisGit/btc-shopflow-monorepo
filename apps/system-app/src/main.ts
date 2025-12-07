@@ -38,10 +38,26 @@ setIsMainAppFn(isMainApp);
 
 const app = createApp(App);
 
-// 全局错误处理：暂时移除日志打印，查看原生错误
+// 全局错误处理：捕获并显示错误
 app.config.errorHandler = (err, instance, info) => {
-  // 暂时不打印错误，让原生错误显示
-  // 这样可以更清楚地看到错误的根本原因
+  console.error('[Vue Error Handler]', err, info);
+  // 在页面上显示错误信息，方便调试
+  if (import.meta.env.PROD) {
+    const appEl = document.getElementById('app');
+    if (appEl && !appEl.querySelector('.error-display')) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-display';
+      errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; z-index: 9999; overflow: auto;';
+      errorDiv.innerHTML = `
+        <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用加载错误</h2>
+        <p style="color: #666; margin-bottom: 8px;"><strong>错误信息：</strong>${err?.message || String(err)}</p>
+        <p style="color: #666; margin-bottom: 8px;"><strong>错误详情：</strong>${info || '未知'}</p>
+        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px;">${err?.stack || ''}</pre>
+        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button>
+      `;
+      appEl.appendChild(errorDiv);
+    }
+  }
 };
 
 // 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
@@ -132,18 +148,47 @@ async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Prom
 }
 
 
-// 启动（等待 EPS 服务加载完成后再启动应用）
-waitForEpsService().then((service) => {
-  if (typeof window !== 'undefined') {
-    (window as any).__BTC_SERVICE__ = service;
-    // 暴露到全局，供所有子应用共享使用
-    (window as any).__APP_EPS_SERVICE__ = service;
-    (window as any).service = service; // 也设置到 window.service，保持兼容性
+// 在页面上显示启动状态的辅助函数（即使 console 被移除也能看到）
+function showStartupStatus(message: string, type: 'info' | 'error' = 'info') {
+  if (import.meta.env.PROD) {
+    const appEl = document.getElementById('app');
+    if (appEl && !appEl.querySelector('.startup-status')) {
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'startup-status';
+      statusDiv.style.cssText = 'position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 10px 15px; border-radius: 4px; font-size: 12px; z-index: 99999; font-family: monospace; max-width: 500px;';
+      appEl.appendChild(statusDiv);
+    }
+    const statusEl = appEl?.querySelector('.startup-status');
+    if (statusEl) {
+      const color = type === 'error' ? '#ff4d4f' : '#52c41a';
+      statusEl.innerHTML = `<span style="color: ${color};">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+    }
   }
-  
-  // EPS 服务加载完成后，再启动应用
-  return bootstrap(app);
-}).then(async () => {
+  if (type === 'error') {
+    console.error('[system-app]', message);
+  } else {
+    console.log('[system-app]', message);
+  }
+}
+
+// 启动（等待 EPS 服务加载完成后再启动应用）
+showStartupStatus('开始启动流程...');
+waitForEpsService()
+  .then((service) => {
+    showStartupStatus('EPS 服务加载完成');
+    if (typeof window !== 'undefined') {
+      (window as any).__BTC_SERVICE__ = service;
+      // 暴露到全局，供所有子应用共享使用
+      (window as any).__APP_EPS_SERVICE__ = service;
+      (window as any).service = service; // 也设置到 window.service，保持兼容性
+    }
+    
+    // EPS 服务加载完成后，再启动应用
+    showStartupStatus('开始执行 bootstrap...');
+    return bootstrap(app);
+  })
+  .then(async () => {
+    showStartupStatus('Bootstrap 完成，准备挂载应用...');
   // 等待路由就绪后再挂载应用，确保路由正确匹配
   // 从 bootstrap/core/router 导入 router 实例
   const { router } = await import('./bootstrap/core/router');
@@ -157,19 +202,43 @@ waitForEpsService().then((service) => {
   
   // 不再打印环境信息，改为在环境悬浮按钮中显示
   
-  app.mount('#app');
+  // 检查 #app 元素是否存在
+  const appEl = document.getElementById('app');
+  if (!appEl) {
+    showStartupStatus('❌ #app 元素不存在，无法挂载应用', 'error');
+    throw new Error('#app 元素不存在');
+  }
+  
+  showStartupStatus('开始挂载应用到 #app...');
+  try {
+    app.mount('#app');
+    showStartupStatus('✅ 应用挂载成功');
+    // 挂载成功后，延迟移除启动状态显示
+    setTimeout(() => {
+      const statusEl = document.querySelector('.startup-status');
+      if (statusEl) {
+        statusEl.remove();
+      }
+    }, 3000);
+  } catch (mountError) {
+    showStartupStatus(`❌ 应用挂载失败: ${mountError instanceof Error ? mountError.message : String(mountError)}`, 'error');
+    throw mountError;
+  }
   
   // 挂载后检查路由匹配情况
   if (import.meta.env.PROD && router) {
     const currentRoute = router.currentRoute.value;
     if (currentRoute.matched.length === 0) {
-      console.error('[system-app] ⚠️ 应用挂载后路由未匹配:', {
+      const errorMsg = `⚠️ 应用挂载后路由未匹配: ${currentRoute.path}`;
+      showStartupStatus(errorMsg, 'error');
+      console.error('[system-app]', errorMsg, {
         path: currentRoute.path,
         fullPath: currentRoute.fullPath,
         matched: currentRoute.matched,
         location: window.location.href,
       });
     } else {
+      showStartupStatus(`✅ 路由匹配成功: ${currentRoute.path}`);
       console.log('[system-app] ✅ 路由匹配成功:', {
         path: currentRoute.path,
         matched: currentRoute.matched.map(m => ({ path: m.path, name: m.name })),
@@ -181,14 +250,18 @@ waitForEpsService().then((service) => {
     // 添加淡出动画，然后移除元素
     const loadingEl = document.getElementById('Loading');
     if (loadingEl) {
+      showStartupStatus('开始移除 Loading 元素...');
       // 添加淡出类，触发 CSS 过渡动画
       loadingEl.classList.add('is-hide');
       // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
       setTimeout(() => {
         if (loadingEl.parentNode) {
           loadingEl.parentNode.removeChild(loadingEl);
+          showStartupStatus('✅ Loading 元素已移除');
         }
       }, 350);
+    } else {
+      showStartupStatus('⚠️ 未找到 Loading 元素');
     }
 
     // 仅在开发环境注册开发工具组件
@@ -204,5 +277,26 @@ waitForEpsService().then((service) => {
     }
   })
   .catch(err => {
-    // console.error('BTC Shopflow 启动失败', err);
+    const errorMsg = `❌ 应用启动失败: ${err?.message || String(err)}`;
+    showStartupStatus(errorMsg, 'error');
+    console.error('[system-app]', errorMsg, err);
+    // 在生产环境下，在页面上显示错误信息
+    if (import.meta.env.PROD) {
+      const appEl = document.getElementById('app');
+      if (appEl) {
+        // 移除启动状态显示
+        const statusEl = appEl.querySelector('.startup-status');
+        if (statusEl) {
+          statusEl.remove();
+        }
+        appEl.innerHTML = `
+          <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; z-index: 9999; overflow: auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+            <h2 style="color: #ff4d4f; margin-bottom: 16px;">应用启动失败</h2>
+            <p style="color: #666; margin-bottom: 8px;"><strong>错误信息：</strong>${err?.message || String(err)}</p>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; white-space: pre-wrap;">${err?.stack || err?.toString() || '未知错误'}</pre>
+            <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">刷新页面</button>
+          </div>
+        `;
+      }
+    }
   });

@@ -91,7 +91,7 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       microApp: {
         baseURL: 'https://bellis.com.cn',
-        entryPrefix: '/micro-apps',
+        entryPrefix: '', // 构建产物直接部署到子域名目录，没有 /micro-apps/ 层级
       },
       docs: {
         url: 'https://docs.bellis.com.cn',
@@ -156,7 +156,7 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       microApp: {
         baseURL: 'https://bellis.com.cn',
-        entryPrefix: '/micro-apps',
+        entryPrefix: '', // 构建产物直接部署到子域名目录，没有 /micro-apps/ 层级
       },
       docs: {
         url: 'https://docs.bellis.com.cn',
@@ -353,13 +353,14 @@ export function getSubAppEntry(appId: string): string {
 
   switch (env) {
     case 'production':
+      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名目录（没有 /micro-apps/ 层级）
       if (app.subdomain && appEnvConfig.prodHost) {
         const protocol = typeof window !== 'undefined' && window.location.protocol
           ? window.location.protocol
           : 'https:';
-        return `${protocol}//${appEnvConfig.prodHost}${envConfig.microApp.entryPrefix}/${appId}/`;
+        return `${protocol}//${appEnvConfig.prodHost}/`;
       }
-      return `${envConfig.microApp.entryPrefix}/${appId}/`;
+      return `/${appId}/`;
 
     case 'preview':
       return `http://${appEnvConfig.preHost}:${appEnvConfig.prePort}${envConfig.microApp.entryPrefix}`;

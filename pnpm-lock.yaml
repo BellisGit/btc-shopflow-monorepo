@@ -318,6 +318,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.21)(vue@3.5.25)
@@ -370,6 +373,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.21)(vue@3.5.25)
@@ -507,6 +513,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
       '@types/nprogress':
         specifier: ^0.2.3
         version: 0.2.3
@@ -708,6 +717,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
         version: 5.2.4(vite@5.4.21)(vue@3.5.25)
@@ -763,6 +775,9 @@ importers:
       '@btc/vite-plugin':
         specifier: workspace:*
         version: link:../../packages/vite-plugin
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^1.4.0
+        version: 1.6.0(vue-i18n@11.2.2)
       '@types/nprogress':
         specifier: ^0.2.3
         version: 0.2.3

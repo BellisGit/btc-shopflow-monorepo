@@ -18,7 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { corsPlugin } from '../plugins';
+import { corsPlugin, addVersionPlugin } from '../plugins';
 
 export interface LayoutAppViteConfigOptions {
   /**
@@ -188,6 +188,8 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         );
       },
     } as Plugin,
+    // 11. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    addVersionPlugin(),
   ];
 
   // 构建配置

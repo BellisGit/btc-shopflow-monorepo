@@ -63,7 +63,7 @@ export function copyLogoPlugin(): Plugin {
 
         // 复制文件
         copyFileSync(logoSourcePath, logoDestPath);
-        console.log(`[copy-logo] ✅ 已复制 logo.png 到: ${logoDestPath}`);
+        console.log(`[copy-logo] 已复制 logo.png 到: ${logoDestPath}`);
       } catch (error) {
         console.error('[copy-logo] 复制 logo.png 失败:', error);
       }

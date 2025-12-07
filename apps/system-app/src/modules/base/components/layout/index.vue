@@ -115,6 +115,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import mitt from 'mitt';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
@@ -200,8 +201,20 @@ let prevIsMini = browser.isMini;
 
 // 判断是否为主应用路由（系统域路由）
 // 使用统一的主应用判断逻辑，基于应用身份配置，无需硬编码
+// 关键：让 isMainApp 函数自己判断是否为独立运行模式，不要硬编码
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
-  return getIsMainApp(route.path, window.location.pathname, false);
+  const result = getIsMainApp(route.path, window.location.pathname, isStandalone);
+  // 调试信息：在生产环境下输出判断结果
+  if (import.meta.env.PROD && route.path === '/') {
+    console.log('[Layout Debug] isMainApp:', result, {
+      routePath: route.path,
+      locationPath: window.location.pathname,
+      isStandalone,
+      hostname: window.location.hostname,
+    });
+  }
+  return result;
 });
 
 // 判断是否为文档应用

@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
+    "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",

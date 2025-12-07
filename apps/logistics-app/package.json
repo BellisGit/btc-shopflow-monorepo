@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
+    "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.0",
     "nprogress": "^0.2.0",

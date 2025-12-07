@@ -18,6 +18,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
 import { btc } from '@btc/vite-plugin';
+import { addVersionPlugin } from '../plugins';
 
 export interface MobileAppViteConfigOptions {
   /**
@@ -109,9 +110,9 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   // 扩展别名配置（移动应用特有）
   const baseResolve = createBaseResolve(appDir, appName);
   const mobileAliases = {
-    '@modules': require('path').resolve(appDir, 'src/modules'),
-    '@db': require('path').resolve(appDir, 'src/db'),
-    '@pwa': require('path').resolve(appDir, 'src/pwa'),
+    '@modules': resolve(appDir, 'src/modules'),
+    '@db': resolve(appDir, 'src/db'),
+    '@pwa': resolve(appDir, 'src/pwa'),
   };
 
   // 构建插件列表
@@ -272,6 +273,8 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         });
       },
     } as Plugin,
+    // 9. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    addVersionPlugin(),
   ];
 
   // 构建配置

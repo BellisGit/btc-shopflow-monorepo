@@ -12,8 +12,17 @@ import UnoCSS from 'unocss/vite';
 import { existsSync, readFileSync } from 'node:fs';
 import { createPathHelpers } from '../utils/path-helpers';
 
-// 使用 ESM 导入 VueI18nPlugin（Vite 配置文件支持 ESM）
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+// 延迟加载 VueI18nPlugin，从应用目录解析
+// 使用函数内动态导入，确保从调用者的 node_modules 解析
+import { pathToFileURL } from 'node:url';
+function getVueI18nPlugin(appDir: string) {
+  // 使用 createRequire 从应用目录解析包
+  // 通过 file:// URL 创建正确的 require 上下文
+  const appDirUrl = pathToFileURL(resolve(appDir, 'package.json')).href;
+  const require = createRequire(appDirUrl);
+  const plugin = require('@intlify/unplugin-vue-i18n/vite');
+  return plugin.default || plugin;
+}
 import { createAutoImportConfig, createComponentsConfig } from '../../auto-import.config';
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getBaseUrl, getPublicDir } from '../../vite-app-config';
@@ -28,6 +37,7 @@ import {
   ensureBaseUrlPlugin,
   corsPlugin,
   ensureCssPlugin,
+  addVersionPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
 
@@ -178,7 +188,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       ...btcOptions,
     }),
     // 9. VueI18n 插件
-    VueI18nPlugin({
+    getVueI18nPlugin(appDir)({
       include: vueI18nOptions?.include || [
         resolve(appDir, 'src/locales/**'),
         resolve(appDir, 'src/{modules,plugins}/**/locales/**'),
@@ -201,9 +211,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     fixChunkReferencesPlugin(),
     // 15. 确保 base URL 插件
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
-    // 16. 优化 chunks 插件
+    // 16. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    addVersionPlugin(),
+    // 17. 优化 chunks 插件
     optimizeChunksPlugin(),
-    // 17. Chunk 验证插件
+    // 18. Chunk 验证插件
     chunkVerifyPlugin(),
   ];
 

@@ -8,3 +8,6 @@ export { forceNewHashPlugin, fixDynamicImportHashPlugin } from './hash';
 export { ensureBaseUrlPlugin } from './url';
 export { corsPlugin } from './cors';
 export { ensureCssPlugin } from './css';
+export { addVersionPlugin } from './version';
+export { publicImagesToAssetsPlugin } from './public-images';
+export { resourcePreloadPlugin } from './resource-preload';

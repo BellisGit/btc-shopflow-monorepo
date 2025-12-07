@@ -14,15 +14,8 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
   return {
     name: 'ensure-base-url',
     renderChunk(code, chunk, options) {
-      const isThirdPartyLib = chunk.fileName?.includes('lib-echarts') ||
-                               chunk.fileName?.includes('element-plus') ||
-                               chunk.fileName?.includes('vue-core') ||
-                               chunk.fileName?.includes('vue-router') ||
-                               chunk.fileName?.includes('vendor');
-
-      if (isThirdPartyLib) {
-        return null;
-      }
+      // 不再跳过 vendor 等第三方库，确保所有资源路径都正确
+      // 因为 vendor 等库中也可能包含动态导入的资源路径
 
       let newCode = code;
       let modified = false;
@@ -100,16 +93,7 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
     generateBundle(options, bundle) {
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'chunk' && chunk.code) {
-          const isThirdPartyLib = fileName.includes('lib-echarts') ||
-                                   fileName.includes('element-plus') ||
-                                   fileName.includes('vue-core') ||
-                                   fileName.includes('vue-router') ||
-                                   fileName.includes('vendor');
-
-          if (isThirdPartyLib) {
-            continue;
-          }
-
+          // 不再跳过 vendor 等第三方库，确保所有资源路径都正确
           let newCode = chunk.code;
           let modified = false;
 
@@ -142,6 +126,35 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
           if (modified) {
             chunk.code = newCode;
             console.log(`[ensure-base-url] 在 generateBundle 中修复了 ${fileName} 中的资源路径`);
+          }
+        } else if (chunk.type === 'asset' && fileName === 'index.html') {
+          // 处理 HTML 文件中的资源引用
+          let htmlContent = chunk.source as string;
+          let htmlModified = false;
+
+          // 修复 HTML 中的绝对路径资源引用（确保使用相对路径）
+          const htmlAssetRegex = /(href|src)=["'](\/assets\/[^"']+)(\?[^"']*)?["']/g;
+          if (htmlAssetRegex.test(htmlContent)) {
+            htmlContent = htmlContent.replace(htmlAssetRegex, (match, attr, path, query = '') => {
+              // 生产环境使用相对路径，确保资源能正确加载
+              return `${attr}="${path}${query}"`;
+            });
+            htmlModified = true;
+          }
+
+          // 修复 HTML 中根路径的图片引用（如 /logo.png）
+          const rootImageRegex = /(href|src)=["'](\/[^/][^"']*\.(png|jpg|jpeg|gif|svg|ico))(\?[^"']*)?["']/g;
+          if (rootImageRegex.test(htmlContent)) {
+            htmlContent = htmlContent.replace(rootImageRegex, (match, attr, path, ext, query = '') => {
+              // 确保根路径的图片使用相对路径
+              return `${attr}="${path}${query}"`;
+            });
+            htmlModified = true;
+          }
+
+          if (htmlModified) {
+            chunk.source = htmlContent;
+            console.log(`[ensure-base-url] 修复了 index.html 中的资源路径`);
           }
         }
       }

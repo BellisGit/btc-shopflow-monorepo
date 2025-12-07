@@ -61,13 +61,15 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
     throw new Error(`未找到 ${appName} 的环境配置`);
   }
   
-  // 生产环境：使用相对路径（让浏览器根据域名自动解析）
-  if (!isPreviewBuild) {
-    return '/';
+  // 预览构建：使用绝对路径
+  if (isPreviewBuild) {
+    return `http://${appConfig.preHost}:${appConfig.prePort}/`;
   }
   
-  // 预览构建：使用绝对路径
-  return `http://${appConfig.preHost}:${appConfig.prePort}/`;
+  // 生产环境：使用相对路径（让浏览器根据域名自动解析）
+  // 注意：子应用构建产物直接部署到子域名目录（如 production.bellis.com.cn），没有 /micro-apps/ 层级
+  // 当通过 /micro-apps/<app>/ 访问时，由 Nginx alias 映射到实际目录
+  return '/';
 }
 
 /**
@@ -77,8 +79,8 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
  * @returns publicDir 路径或 false
  */
 export function getPublicDir(appName: string, appDir: string): string | false {
-  // admin-app 和 mobile-app 使用自己的 public 目录
-  if (appName === 'admin-app' || appName === 'mobile-app') {
+  // admin-app、mobile-app 和 system-app 使用自己的 public 目录
+  if (appName === 'admin-app' || appName === 'mobile-app' || appName === 'system-app') {
     return resolve(appDir, 'public');
   }
   

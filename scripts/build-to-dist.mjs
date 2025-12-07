@@ -209,6 +209,7 @@ function buildApp(appName) {
       execSync('pnpm run build:system', {
         cwd: rootDir,
         stdio: 'inherit',
+        env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
       });
     } else {
       // 其他应用使用标准的构建命令
@@ -216,6 +217,7 @@ function buildApp(appName) {
       execSync(buildCmd, {
         cwd: rootDir,
         stdio: 'inherit',
+        env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
       });
     }
     console.log(`  ✅ ${appName} 构建完成\n`);
@@ -370,7 +372,8 @@ function verifyAndFixJsReferences(appDistDir, appName) {
   
   allFiles.forEach(({ name }) => {
     // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-    const match = name.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+    // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
+    const match = name.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
     if (match) {
       const [, cleanName, , , ext] = match;
       const key = `${cleanName}.${ext}`;
@@ -428,7 +431,7 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         if (!fileExists) {
           // 尝试通过文件名（忽略 hash 和 buildId）查找
           // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
           if (nameMatch) {
             const [, baseName, , , ext] = nameMatch;
             const key = `${baseName}.${ext}`;
@@ -469,7 +472,7 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         if (!fileExists) {
           // 尝试通过文件名（忽略 hash 和 buildId）查找
           // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
           if (nameMatch) {
             const [, baseName, , , ext] = nameMatch;
             const key = `${baseName}.${ext}`;
@@ -511,7 +514,7 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         if (!fileExists) {
           // 尝试通过文件名（忽略 hash 和 buildId）查找
           // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
           if (nameMatch) {
             const [, baseName, , , ext] = nameMatch;
             const key = `${baseName}.${ext}`;
@@ -549,7 +552,7 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         if (!fileExists) {
           // 尝试通过文件名（忽略 hash 和 buildId）查找
           // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
           if (nameMatch) {
             const [, baseName, , , ext] = nameMatch;
             const key = `${baseName}.${ext}`;
@@ -629,6 +632,30 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
 
   let htmlContent = readFileSync(indexHtmlPath, 'utf-8');
   
+  // 修复：移除 /micro-apps/<app>/ 前缀（构建产物直接部署到子域名目录，没有 micro-apps 层级）
+  // 将 /micro-apps/<app>/assets/... 改为 /assets/...
+  const appId = appName.replace('-app', '');
+  const escapedAppId = appId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const microAppsPrefix = `/micro-apps/${appId}/`;
+  
+  if (htmlContent.includes(microAppsPrefix)) {
+    let modified = false;
+    
+    // 修复所有包含 /micro-apps/<app>/ 的路径（href、src、import 等）
+    htmlContent = htmlContent.replace(
+      new RegExp(`/micro-apps/${escapedAppId}/`, 'g'),
+      () => {
+        modified = true;
+        return '/';
+      }
+    );
+    
+    if (modified) {
+      writeFileSync(indexHtmlPath, htmlContent, 'utf-8');
+      console.log(`  ✅ 已移除 index.html 中的 /micro-apps/${appId}/ 前缀`);
+    }
+  }
+  
   // 检查 HTML 中是否包含旧 hash 引用
   const oldHashes = ['CQjIfk82', 'B2xaJ9jT', 'Bob15k_M', 'B9_7Pxt3', 'Ct0QBumG', 'DXiZfgDR', 'CK3kLuZf', 'B6Y4X6Zv', 'C3806ap7', 'D-vcpc3r', 'COBg3Fmo', 'C-4vWSys', 'u6iSJWLT'];
   const oldHashPattern = new RegExp(oldHashes.join('|'), 'g');
@@ -701,7 +728,8 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
   const fileMap = new Map();
   actualFiles.forEach(actualFile => {
     // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-    const match = actualFile.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
+    // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
+    const match = actualFile.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
     if (match) {
       const [, name, , , ext] = match;
       const key = `${name}.${ext}`;
@@ -729,7 +757,8 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
     const fileName = pathWithoutQuery.split('/').pop();
     
     // 匹配格式：name-hash-buildId.ext 或 name-hash.ext，提取 name 和 ext
-    const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
+    // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
+    const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
     if (!nameMatch) {
       missing.push(pathWithoutQuery);
       continue;
@@ -792,7 +821,7 @@ function verifyAndCleanBuildArtifacts(appDistDir, appName) {
 
   files.forEach(file => {
     // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-    const match = file.name.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
+    const match = file.name.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
     if (match) {
       const [, name, , , ext] = match;
       const key = `${name}.${ext}`;
@@ -956,7 +985,7 @@ function verifyAppBuild(appName) {
                 // 关键：需要处理两种情况：
                 // 1. 旧文件名（没有构建 ID）：vue-core-CXAVbLNX.js -> 提取 vue-core
                 // 2. 新文件名（有构建 ID）：vue-core-CXAVbLNX-miq4m7r1.js -> 提取 vue-core
-                const match = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+                const match = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
                 if (match) {
                   const [, baseName, , , ext] = match;
                   const key = `${baseName}.${ext}`;
@@ -1080,7 +1109,7 @@ function verifyAppBuild(appName) {
                 // 关键：需要处理两种情况：
                 // 1. 旧文件名（没有构建 ID）：vue-core-CXAVbLNX.js -> 提取 vue-core
                 // 2. 新文件名（有构建 ID）：vue-core-CXAVbLNX-miq4m7r1.js -> 提取 vue-core
-                const match = fileName.match(/^(.+?)-([A-Za-z0-9]{8,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
+                const match = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
                 if (match) {
                   const [, baseName, , , ext] = match;
                   const key = `${baseName}.${ext}`;
@@ -1302,6 +1331,12 @@ function main() {
   console.log('🚀 开始构建所有应用并复制到 dist 目录...\n');
   console.log('='.repeat(60));
   console.log('');
+
+  // 生成全局构建时间戳（所有应用共享）
+  // 使用36进制编码，生成更短的版本号（包含字母和数字，如 l3k2j1h）
+  const buildTimestamp = Date.now().toString(36);
+  process.env.BTC_BUILD_TIMESTAMP = buildTimestamp;
+  console.log(`📅 全局构建时间戳: ${buildTimestamp}\n`);
 
   // 第一步：统一清理所有缓存和旧文件
   cleanAppDistDirs();

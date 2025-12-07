@@ -39,15 +39,15 @@ const getAppEntry = (appName: string): string => {
     return `/micro-apps/${appName}/`;
   }
 
-  // 生产环境：使用子域名 + /micro-apps/<app>/ 作为入口
+  // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名目录（没有 /micro-apps/ 层级）
   if (import.meta.env.PROD) {
     if (appConfig.prodHost) {
       const protocol = typeof window !== 'undefined' && window.location.protocol
         ? window.location.protocol
         : 'https:';
-      return `${protocol}//${appConfig.prodHost}/micro-apps/${appName}/`;
+      return `${protocol}//${appConfig.prodHost}/`;
     }
-    return `/micro-apps/${appName}/`;
+    return `/${appName}/`;
   }
 
   // 开发/预览环境：使用配置的端口

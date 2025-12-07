@@ -27,6 +27,9 @@ import {
   ensureBaseUrlPlugin,
   corsPlugin,
   ensureCssPlugin,
+  addVersionPlugin,
+  publicImagesToAssetsPlugin,
+  resourcePreloadPlugin,
 } from '../plugins';
 
 export interface MainAppViteConfigOptions {
@@ -92,6 +95,10 @@ export interface MainAppViteConfigOptions {
    * publicImagesToAssetsPlugin 配置（主应用特有）
    */
   publicImagesToAssets?: boolean;
+  /**
+   * 是否启用资源预加载插件
+   */
+  enableResourcePreload?: boolean;
 }
 
 /**
@@ -111,6 +118,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     btcOptions = {},
     vueI18nOptions,
     publicImagesToAssets = true,
+    enableResourcePreload = true,
   } = options;
 
   // 获取应用配置
@@ -133,9 +141,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. 自定义插件（在核心插件之前）
+    // 3. Public 图片资源处理插件（如果启用）
+    ...(publicImagesToAssets && !isPreviewBuild ? [publicImagesToAssetsPlugin(appDir)] : []),
+    // 4. 资源预加载插件（如果启用）
+    ...(enableResourcePreload !== false ? [resourcePreloadPlugin()] : []),
+    // 5. 自定义插件（在核心插件之前）
     ...customPlugins,
-    // 4. Vue 插件
+    // 6. Vue 插件
     vue({
       script: {
         fs: {
@@ -144,15 +156,15 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
         },
       },
     }),
-    // 5. 自动导入插件
+    // 7. 自动导入插件
     createAutoImportConfig(),
-    // 6. 组件自动注册插件
+    // 8. 组件自动注册插件
     createComponentsConfig({ includeShared: true }),
-    // 7. UnoCSS 插件
+    // 9. UnoCSS 插件
     UnoCSS({
       configFile: withRoot('uno.config.ts'),
     }),
-    // 8. BTC 业务插件
+    // 10. BTC 业务插件
     btc({
       type: 'admin' as any,
       proxy,
@@ -168,7 +180,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       },
       ...btcOptions,
     }),
-    // 9. VueI18n 插件
+    // 11. VueI18n 插件
     VueI18nPlugin({
       include: vueI18nOptions?.include || [
         resolve(appDir, 'src/locales/**'),
@@ -180,19 +192,21 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),
-    // 10. CSS 验证插件
+    // 12. CSS 验证插件
     ensureCssPlugin(),
-    // 11. 强制生成新 hash 插件
+    // 13. 强制生成新 hash 插件
     forceNewHashPlugin(),
-    // 12. 修复动态导入 hash 插件
+    // 14. 修复动态导入 hash 插件
     fixDynamicImportHashPlugin(),
-    // 13. 修复 chunk 引用插件
+    // 15. 修复 chunk 引用插件
     fixChunkReferencesPlugin(),
-    // 14. 确保 base URL 插件（主应用也需要，因为可能有子应用资源引用）
+    // 16. 确保 base URL 插件（主应用也需要，因为可能有子应用资源引用）
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
-    // 15. 优化 chunks 插件
+    // 17. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    addVersionPlugin(),
+    // 18. 优化 chunks 插件
     optimizeChunksPlugin(),
-    // 16. Chunk 验证插件
+    // 19. Chunk 验证插件
     chunkVerifyPlugin(),
   ];
 
@@ -205,7 +219,8 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        // 只移除 console.log，保留 console.error 和 console.warn，便于生产环境调试
+        drop_console: ['log'],
         drop_debugger: true,
         reduce_vars: false,
         reduce_funcs: false,
@@ -313,9 +328,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 返回完整配置
+  // 关键：如果使用了 publicImagesToAssetsPlugin，在构建时应该禁用 publicDir
+  // 避免 Vite 自动复制 public 目录的文件到根目录（与插件处理的文件冲突）
+  const finalPublicDir = publicImagesToAssets && !isPreviewBuild ? false : publicDir;
+  
   return {
     base: baseUrl,
-    publicDir,
+    publicDir: finalPublicDir,
     resolve: createBaseResolve(appDir, appName),
     plugins,
     esbuild: {

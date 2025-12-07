@@ -67,16 +67,16 @@ const getAppEntry = (appName: string): string => {
 
   switch (envType) {
     case 'production':
-      // 生产环境：使用子域名 + /micro-apps/<app>/ 作为入口，主应用跨域加载 UMD 资源
+      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名目录（没有 /micro-apps/ 层级）
       if (appConfig.prodHost) {
         const protocol =
           typeof window !== 'undefined' && window.location.protocol
             ? window.location.protocol
             : 'https:';
-        return `${protocol}//${appConfig.prodHost}/micro-apps/${appName}/`;
+        return `${protocol}//${appConfig.prodHost}/`;
       }
-      // 如果没有配置 prodHost，回退到相对路径（由主域静态资源提供）
-      return `/micro-apps/${appName}/`;
+      // 如果没有配置 prodHost，使用相对路径
+      return `/${appName}/`;
 
     case 'preview': {
       // 预览环境：使用统一配置中的预览主机和端口
