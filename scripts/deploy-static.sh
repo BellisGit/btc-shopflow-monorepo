@@ -204,7 +204,7 @@ get_app_deploy_path() {
     fi
     
     # 默认路径（基于应用名称）
-    # 注意：子应用仍部署到各自的子域目录，Nginx 通过 alias 配置将 /micro-apps/<app>/ 映射到这些目录
+    # 注意：子应用直接部署到各自的子域目录根路径
     case $app_name in
         system-app)
             echo "/www/wwwroot/bellis.com.cn"

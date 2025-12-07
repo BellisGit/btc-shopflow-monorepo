@@ -67,7 +67,7 @@ const getAppEntry = (appName: string): string => {
 
   switch (envType) {
     case 'production':
-      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名目录（没有 /micro-apps/ 层级）
+      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
       if (appConfig.prodHost) {
         const protocol =
           typeof window !== 'undefined' && window.location.protocol

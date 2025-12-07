@@ -222,7 +222,6 @@ console.log('');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('🔨 步骤 3: 构建所有应用（强制重新构建，不使用缓存）');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-// 构建阶段强制 VITE_PREVIEW=false，确保生产包走 /micro-apps/<app> 路径
 // 使用 --force 标志强制 turbo 重新构建所有应用，避免使用缓存
 // 特别针对移动端应用，使用 --no-cache 确保完全重新构建
 const turboScriptPath = path.join(repoRoot, 'scripts', 'turbo.js');

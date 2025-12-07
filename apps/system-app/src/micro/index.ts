@@ -1853,18 +1853,30 @@ export function setupQiankun() {
               }
 
               if (entryUrl) {
-                // 关键：如果当前是子域名访问，使用子域名作为 baseUrl；否则使用当前 hostname
+                // 关键：优先使用 appEntry 中的 hostname（可能是子域名），而不是当前页面的 hostname
+                // 这样当从主域名访问时（如 bellis.com.cn/production），baseUrl 会指向子域名（production.bellis.com.cn）
                 const port = entryUrl.port || '';
-                let finalHost = currentHost;
+                let finalHost = entryUrl.hostname; // 优先使用 entry 中的 hostname
 
-                // 如果是子域名访问，使用子域名作为 host
-                const appBySubdomain = getAppBySubdomain(hostname);
-                if (appBySubdomain && appBySubdomain.id === matchedAppName) {
-                  finalHost = hostname;
+                // 如果 entry 是相对路径（/path），使用当前 hostname
+                if (appEntry.startsWith('/')) {
+                  // 如果是子域名访问，使用子域名作为 host
+                  const appBySubdomain = getAppBySubdomain(hostname);
+                  if (appBySubdomain && appBySubdomain.id === matchedAppName) {
+                    finalHost = hostname;
+                  } else {
+                    finalHost = currentHost;
+                  }
+                }
+                // 如果 entry 是完整 URL 或协议相对路径，且 hostname 与当前 hostname 不同，说明是跨域加载
+                // 这种情况下，应该使用 entry 中的 hostname（子域名）
+                else if (entryUrl.hostname !== currentHost) {
+                  // 使用 entry 中的 hostname（子域名）
+                  finalHost = entryUrl.hostname;
                 }
 
                 baseUrl = `${protocol}//${finalHost}${port ? `:${port}` : ''}`;
-                console.log('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost });
+                console.log('[getTemplate] 从路径/子域名判断获取:', { matchedAppName, baseUrl, port, appEntry, hostname, finalHost, entryHostname: entryUrl.hostname, currentHost });
               }
             }
           }
@@ -2057,30 +2069,44 @@ export function setupQiankun() {
 
           // 关键：添加或更新 <base> 标签，确保所有相对路径都基于正确的路径
           // 这会影响动态导入的模块路径解析
-          // 如果入口是 /micro-apps/<app>/，base 应该设置为 /micro-apps/<app>/
-          // 如果当前是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
+          // 如果入口是子域名 URL，使用子域名作为 base URL；否则使用当前 hostname
           const hostname = window.location.hostname;
 
-          // 检查入口是否包含 /micro-apps/<app>/
+          // 构建产物直接部署到子域名根目录，base 路径始终是 /
           let basePath = '/';
-          if (entry && entry.includes('/micro-apps/')) {
-            // 从入口路径中提取 /micro-apps/<app>/ 部分
-            const match = entry.match(/\/micro-apps\/([^/]+)\//);
-            if (match) {
-              basePath = `/micro-apps/${match[1]}/`;
+
+          // 关键：优先使用 targetHost（从 baseUrl 中提取的子域名），而不是当前页面的 hostname
+          // 这样当从主域名访问时（如 bellis.com.cn/production），base 会指向子域名（production.bellis.com.cn）
+          // targetHost 已经从 baseUrl 中提取，如果 baseUrl 是子域名，targetHost 就是子域名
+          let baseHost = targetHost || currentHost;
+          
+          // 双重保险：如果 entry 是完整 URL，再次确认使用 entry 中的 hostname
+          // 这样可以处理 entry 参数传递但 baseUrl 未正确设置的情况
+          if (entry) {
+            try {
+              let entryUrl: URL | null = null;
+              if (entry.startsWith('http://') || entry.startsWith('https://')) {
+                entryUrl = new URL(entry);
+              } else if (entry.startsWith('//')) {
+                entryUrl = new URL(`${protocol}${entry}`);
+              }
+              
+              if (entryUrl) {
+                // 如果 entry 中的 hostname 与当前 hostname 不同，说明是跨域加载，使用 entry 的 hostname
+                if (entryUrl.hostname !== currentHost) {
+                  baseHost = entryUrl.hostname;
+                  console.log('[getTemplate] 从 entry 中提取 baseHost:', baseHost, 'entry:', entry);
+                }
+              }
+            } catch (e) {
+              // 解析失败，使用 targetHost
+              console.warn('[getTemplate] 解析 entry 失败，使用 targetHost:', targetHost, e);
             }
           }
 
-          // 如果是子域名访问，使用子域名作为 base URL；否则使用当前 hostname
-          let baseHost = currentHost;
-          const appBySubdomain = getAppBySubdomain(hostname);
-          if (appBySubdomain && appBySubdomain.id === matchedAppName) {
-            baseHost = hostname;
-          }
-
-          // 如果入口是 /micro-apps/<app>/，base 应该包含这个路径
+          // 构建产物直接部署到子域名根目录，base 路径始终是 /
           const baseHref = `${protocol}//${baseHost}${targetPort ? `:${targetPort}` : ''}${basePath}`;
-          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, matchedAppName, basePath, entry });
+          console.log('[getTemplate] 设置 base URL:', baseHref, { hostname, baseHost, targetHost, currentHost, matchedAppName, basePath, entry });
 
           // 先移除现有的 <base> 标签（如果有），确保使用正确的 base URL
           processedTpl = processedTpl.replace(/<base[^>]*>/gi, '');

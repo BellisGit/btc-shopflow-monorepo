@@ -67,8 +67,7 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
   }
   
   // 生产环境：使用相对路径（让浏览器根据域名自动解析）
-  // 注意：子应用构建产物直接部署到子域名目录（如 production.bellis.com.cn），没有 /micro-apps/ 层级
-  // 当通过 /micro-apps/<app>/ 访问时，由 Nginx alias 映射到实际目录
+  // 注意：子应用构建产物直接部署到子域名根目录（如 production.bellis.com.cn）
   return '/';
 }
 
