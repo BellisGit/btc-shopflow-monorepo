@@ -1,19 +1,24 @@
 <template>
-  <el-button :disabled="disabled" :type="type" @click="triggerFileSelect">
-    <BtcSvg name="import" :size="16" />
-    {{ t('common.button.import') }}
-  </el-button>
+  <div :data-export-filename="exportFilename" v-bind="$attrs">
+    <el-button
+      :disabled="disabled"
+      :type="type"
+      @click="triggerFileSelect"
+    >
+      <BtcSvg name="import" :size="16" />
+      {{ t('common.button.import') }}
+    </el-button>
 
-  <!-- 隐藏的文件输入元素 -->
-  <input
-    ref="fileInputRef"
-    type="file"
-    :accept="accept"
-    style="display: none"
-    @change="handleFileSelect"
-  />
+    <!-- 隐藏的文件输入元素 -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      :accept="accept"
+      style="display: none"
+      @change="handleFileSelect"
+    />
 
-  <BtcForm ref="formRef">
+    <BtcForm ref="formRef">
     <template #slot-upload>
       <div v-if="!upload.filename" class="upload">
         <div class="tips" v-if="template">
@@ -40,6 +45,9 @@
             <template #tip>
               <div class="el-upload__tip">
                 {{ t('common.upload.tip') }}
+                <span v-if="exportFilename" class="filename-tip">
+                  （建议文件名：{{ exportFilename }}.xlsx，不允许包含【SysPro、BOM表、括号】等内容）
+                </span>
               </div>
             </template>
           </el-upload>
@@ -142,7 +150,8 @@
         </div>
       </div>
     </template>
-  </BtcForm>
+    </BtcForm>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -158,50 +167,52 @@ import type { TableColumn } from '../table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 
+defineOptions({
+  name: 'BtcImportBtn',
+  inheritAttrs: false, // 彻底关闭自动属性继承，消除警告
+});
+
 const { t } = useI18n();
 
 // 从 CRUD 上下文获取数据
 const crud = inject<UseCrudReturn<any>>('btc-crud');
 const tableRefContext = inject<any>('btc-table-ref');
 
-const props = defineProps({
+interface BtcImportBtnProps {
   /** 表格列配置（可选，如果不提供则从 CRUD 上下文获取） */
-  columns: {
-    type: Array as PropType<TableColumn[]>,
-    default: () => []
-  },
+  columns?: TableColumn[];
   /** 验证规则（可选，如果不提供则从列配置自动生成） */
-  validationRules: {
-    type: Object,
-    default: () => ({})
-  },
-  onConfig: Function,
-  onSubmit: Function,
-  template: {
-    type: String,
-    default: ''
-  },
-  tips: String,
-  limitSize: {
-    type: Number,
-    default: 10
-  },
-  type: {
-    type: String as PropType<
-      'default' | 'success' | 'warning' | 'info' | 'text' | 'primary' | 'danger'
-    >,
-    default: 'success'
-  },
-  icon: String,
-  disabled: Boolean,
-  accept: {
-    type: String,
-    default:
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel,text/csv'
-  }
+  validationRules?: Record<string, any>;
+  onConfig?: Function;
+  onSubmit?: Function;
+  template?: string;
+  tips?: string;
+  limitSize?: number;
+  type?: 'default' | 'success' | 'warning' | 'info' | 'text' | 'primary' | 'danger';
+  icon?: string;
+  disabled?: boolean;
+  accept?: string;
+  /** 导出文件名（用于文件名匹配验证，严格校验格式） */
+  exportFilename?: string;
+  /** 禁止的文件名关键词（如SysPro、BOM表等） */
+  forbiddenKeywords?: string[];
+}
+
+const props = withDefaults(defineProps<BtcImportBtnProps>(), {
+  columns: () => [],
+  validationRules: () => ({}),
+  template: '',
+  tips: '',
+  limitSize: 10,
+  type: 'success',
+  icon: '',
+  disabled: false,
+  accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel,text/csv',
+  exportFilename: '',
+  forbiddenKeywords: () => ['SysPro', 'BOM表', '(', ')', '（', '）'], // 默认禁止的关键词
 });
 
-const emit = defineEmits(['change']);
+const emit = defineEmits(['change', 'validate-filename']);
 
 const formRef = ref();
 const fileInputRef = ref();
@@ -276,74 +287,92 @@ const columnMapping = computed(() => {
   return mapping;
 });
 
-// 分析文件名和CRUD实体的匹配度
+// 【核心增强】严格校验文件名格式
 const analyzeFileNameMatch = (filename: string) => {
-  if (!filename || !crud) {
-    return null;
+  if (!filename) {
+    return {
+      isValid: false,
+      matchScore: 0,
+      suggestions: [t('common.import.invalid_filename_empty') || '文件名不能为空'],
+      entityName: props.exportFilename || '数据',
+      fileName: ''
+    };
   }
 
-  // 获取当前CRUD实体的名称（从service或配置中推断）
-  const entityName = getEntityName();
-  if (!entityName) {
-    return null;
+  // 提取纯文件名（去掉扩展名 + 去除空格）
+  const fileNameRaw = filename.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+  const fileNameOriginal = filename.replace(/\.[^/.]+$/, '').trim();
+
+  // 1. 校验禁止关键词
+  const forbiddenKeywords = props.forbiddenKeywords.map(k => k.toLowerCase());
+  const hasForbiddenKeyword = forbiddenKeywords.some(keyword =>
+    fileNameRaw.includes(keyword.toLowerCase())
+  );
+  if (hasForbiddenKeyword) {
+    return {
+      isValid: false,
+      matchScore: 0,
+      suggestions: [
+        `文件名包含禁止关键词：${props.forbiddenKeywords.join('、')}`,
+        `建议文件名：${props.exportFilename}.xlsx`
+      ],
+      entityName: props.exportFilename || '数据',
+      fileName: fileNameOriginal
+    };
   }
 
-  // 提取文件名（去掉扩展名）
-  const fileName = filename.replace(/\.[^/.]+$/, '').toLowerCase();
-  const entityNameLower = entityName.toLowerCase();
-
-  // 计算匹配度
-  const suggestions: string[] = [];
+  // 2. 校验导出文件名匹配度（严格模式）
   let matchScore = 0;
+  let isValid = false;
+  const suggestions: string[] = [];
 
-  // 1. 完全匹配
-  if (fileName === entityNameLower) {
-    matchScore = 100;
-  }
-  // 2. 包含实体名
-  else if (fileName.includes(entityNameLower)) {
-    matchScore = 80;
-  }
-  // 3. 实体名包含文件名
-  else if (entityNameLower.includes(fileName)) {
-    matchScore = 60;
-  }
-  // 4. 部分匹配
-  else {
-    const commonWords = findCommonWords(fileName, entityNameLower);
-    if (commonWords.length > 0) {
-      matchScore = 40;
+  if (props.exportFilename) {
+    const exportFilenameLower = props.exportFilename.trim().toLowerCase();
+    // 完全匹配（忽略大小写）
+    if (fileNameRaw === exportFilenameLower) {
+      matchScore = 100;
+      isValid = true;
+    }
+    // 前缀匹配（允许少量后缀，如 _2025）
+    else if (fileNameRaw.startsWith(exportFilenameLower) &&
+             !fileNameRaw.replace(exportFilenameLower, '').match(/[^a-zA-Z0-9_]/)) {
+      matchScore = 80;
+      isValid = true;
+    }
+    // 不匹配
+    else {
+      matchScore = 0;
+      suggestions.push(`文件名应与导出模板名一致（${props.exportFilename}），或仅添加数字/下划线后缀（如 ${props.exportFilename}_2025）`);
+    }
+  } else {
+    // 无导出文件名时，沿用原有逻辑
+    const entityName = getEntityName();
+    const entityNameLower = entityName.toLowerCase();
+    if (fileNameRaw === entityNameLower) {
+      matchScore = 100;
+      isValid = true;
+    } else if (fileNameRaw.includes(entityNameLower)) {
+      matchScore = 60;
+      isValid = true;
     } else {
       matchScore = 0;
-    }
-  }
-
-  // 生成建议
-  if (matchScore < 60) {
-    suggestions.push(`建议文件名包含"${entityName}"，如：${entityName}_导入数据.xlsx`);
-
-    // 根据实体类型给出更具体的建议
-    if (entityName.includes('user') || entityName.includes('用户')) {
-      suggestions.push('用户数据导入建议使用：用户列表.xlsx、用户信息.xlsx');
-    } else if (entityName.includes('product') || entityName.includes('产品')) {
-      suggestions.push('产品数据导入建议使用：产品列表.xlsx、产品信息.xlsx');
-    } else if (entityName.includes('order') || entityName.includes('订单')) {
-      suggestions.push('订单数据导入建议使用：订单列表.xlsx、订单信息.xlsx');
+      suggestions.push(`建议文件名包含"${entityName}"，且不包含禁止关键词`);
     }
   }
 
   return {
+    isValid,
     matchScore,
     suggestions,
-    entityName,
-    fileName
+    entityName: props.exportFilename || getEntityName(),
+    fileName: fileNameOriginal
   };
 };
 
 // 获取实体名称
 const getEntityName = () => {
   if (!crud?.service) {
-    return null;
+    return '数据';
   }
 
   // 尝试从service的URL路径推断实体名
@@ -354,6 +383,9 @@ const getEntityName = () => {
   }
 
   // 尝试从service的方法名推断
+  if (crud.service.page && crud.service.page.toString().includes('ticket')) {
+    return '盘点票';
+  }
   if (crud.service.page && crud.service.page.toString().includes('user')) {
     return 'user';
   }
@@ -362,7 +394,7 @@ const getEntityName = () => {
   }
 
   // 默认返回通用名称
-  return 'data';
+  return '数据';
 };
 
 // 查找共同词汇
@@ -532,7 +564,19 @@ function handleFileSelect(event: Event) {
   const file = target.files?.[0];
 
   if (file) {
-    // 直接处理文件，不显示弹窗
+    // 先校验文件名
+    const fileNameCheck = analyzeFileNameMatch(file.name);
+    if (!fileNameCheck.isValid) {
+      BtcMessage.error(
+        `文件名校验失败：${fileNameCheck.suggestions.join('；')}`,
+        { duration: 8000, showClose: true }
+      );
+      target.value = ''; // 清空文件选择
+      emit('validate-filename', false);
+      return; // 终止上传
+    }
+
+    // 文件名校验通过，处理文件
     onUpload(file, null, {
       next: () => {
         // 在文件处理完成后调用onSubmit回调
@@ -546,6 +590,7 @@ function handleFileSelect(event: Event) {
             close: () => {}
           });
         }
+        emit('validate-filename', true);
       }
     });
   }
@@ -588,6 +633,17 @@ function open() {
           return BtcMessage.error(t('common.import.select_file'));
         }
 
+        // 二次校验文件名
+        const fileNameCheck = analyzeFileNameMatch(upload.filename);
+        if (!fileNameCheck.isValid) {
+          BtcMessage.error(
+            `文件名校验失败：${fileNameCheck.suggestions.join('；')}`,
+            { duration: 8000, showClose: true }
+          );
+          done();
+          return;
+        }
+
         if (props.onSubmit) {
           props.onSubmit({
             ...upload,
@@ -604,6 +660,16 @@ function open() {
 
 // 上传
 function onUpload(raw: File, _: any, { next }: any) {
+  // 前置校验文件名（防止绕过文件选择的校验）
+  const fileNameCheck = analyzeFileNameMatch(raw.name);
+  if (!fileNameCheck.isValid) {
+    BtcMessage.error(
+      `文件名校验失败：${fileNameCheck.suggestions.join('；')}`,
+      { duration: 8000, showClose: true }
+    );
+    return false;
+  }
+
   const reader = new FileReader();
   const ext = raw.name.split('.').pop()?.toLowerCase();
 
@@ -648,17 +714,12 @@ function onUpload(raw: File, _: any, { next }: any) {
     // 动态生成表头
     table.header = importableColumns.value.map((col: any) => col.label || col.prop);
 
-    // 分析文件名匹配度并给出建议
-    const fileNameAnalysis = analyzeFileNameMatch(raw.name);
-    if (fileNameAnalysis && fileNameAnalysis.matchScore < 60) {
-      // 显示文件名建议
+    // 文件名匹配度提示（仅低匹配度时显示）
+    if (fileNameCheck.matchScore < 80 && fileNameCheck.isValid) {
       setTimeout(() => {
         BtcMessage.warning(
-          `文件名"${fileNameAnalysis.fileName}"与当前实体"${fileNameAnalysis.entityName}"匹配度较低。\n${fileNameAnalysis.suggestions.join('\n')}`,
-          {
-            duration: 6000,
-            showClose: true
-          }
+          `文件名"${fileNameCheck.fileName}"匹配度较低，建议使用标准名称：${fileNameCheck.entityName}.xlsx`,
+          { duration: 6000, showClose: true }
         );
       }, 1000);
     }
@@ -682,9 +743,14 @@ function onUpload(raw: File, _: any, { next }: any) {
 
 // 下载模版
 function download() {
+  if (!props.template) {
+    BtcMessage.warning('暂无可用的导入模板');
+    return;
+  }
   const link = document.createElement('a');
   link.setAttribute('href', props.template);
-  link.setAttribute('download', '');
+  // 强制模板文件名与exportFilename一致
+  link.setAttribute('download', props.exportFilename ? `${props.exportFilename}.xlsx` : '导入模板.xlsx');
   link.click();
 }
 
@@ -693,7 +759,8 @@ defineExpose({
   clear,
   formRef,
   triggerFileSelect,
-  handleFileSelect
+  handleFileSelect,
+  analyzeFileNameMatch // 暴露校验方法，供父组件调用
 });
 </script>
 
@@ -732,5 +799,12 @@ defineExpose({
     justify-content: flex-end;
     margin-top: 10px;
   }
+}
+
+// 文件名提示样式
+.filename-tip {
+  color: var(--el-color-primary);
+  margin-left: 8px;
+  font-size: 12px;
 }
 </style>

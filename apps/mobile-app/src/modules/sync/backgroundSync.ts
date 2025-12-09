@@ -1,4 +1,5 @@
 import { db } from '@/db';
+import { getDeviceInfo } from '@/utils/device';
 
 // 获取 API baseURL（使用 try-catch 避免生产环境 import.meta 问题）
 function getApiBaseURL(): string {
@@ -12,6 +13,75 @@ function getApiBaseURL(): string {
 
 const API_BASE_URL = getApiBaseURL();
 
+// 轮询间隔（毫秒）
+const POLL_INTERVAL = 30 * 1000; // 30秒
+let pollTimer: number | null = null;
+
+/**
+ * 启动轮询同步（用于不支持Background Sync的设备，如iOS）
+ */
+function startPollingSync() {
+  if (pollTimer !== null) {
+    return; // 已经在轮询
+  }
+  
+  const deviceInfo = getDeviceInfo();
+  console.log('[BackgroundSync] Starting polling sync for', deviceInfo.brand, deviceInfo.browser);
+  
+  // 立即执行一次
+  processQueue().catch(err => {
+    console.warn('[BackgroundSync] Polling sync error:', err);
+  });
+  
+  // 设置定期轮询
+  pollTimer = setInterval(() => {
+    processQueue().catch(err => {
+      console.warn('[BackgroundSync] Polling sync error:', err);
+    });
+  }, POLL_INTERVAL) as unknown as number;
+}
+
+/**
+ * 停止轮询同步
+ */
+function stopPollingSync() {
+  if (pollTimer !== null) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+/**
+ * 使用页面可见性API触发同步（iOS降级方案）
+ */
+function setupVisibilitySync() {
+  const deviceInfo = getDeviceInfo();
+  
+  // iOS设备：使用页面可见性API作为降级方案
+  if (deviceInfo.isIOS || !deviceInfo.supportsBackgroundSync) {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        // 页面变为可见时，立即处理队列
+        processQueue().catch(err => {
+          console.warn('[BackgroundSync] Visibility sync error:', err);
+        });
+      }
+    });
+    
+    // 页面聚焦时也触发同步
+    window.addEventListener('focus', () => {
+      processQueue().catch(err => {
+        console.warn('[BackgroundSync] Focus sync error:', err);
+      });
+    });
+  }
+}
+
+// 初始化可见性同步
+if (typeof document !== 'undefined') {
+  setupVisibilitySync();
+}
+
 export async function enqueueOp(op: { type: string; payload: any }) {
   await db.pending_ops.add({
     type: op.type,
@@ -20,12 +90,34 @@ export async function enqueueOp(op: { type: string; payload: any }) {
     retries: 0,
   });
 
-  // 注册后台同步（如果支持）
-  if ('serviceWorker' in navigator && 'sync' in (self as any).registration) {
+  const deviceInfo = getDeviceInfo();
+  
+  // 如果支持Background Sync，使用原生API
+  if (deviceInfo.supportsBackgroundSync && 'serviceWorker' in navigator) {
     try {
-      await (self as any).registration.sync.register('sync-pending-ops');
+      const registration = await navigator.serviceWorker.ready;
+      if ('sync' in registration) {
+        await (registration as any).sync.register('sync-pending-ops');
+        console.log('[BackgroundSync] Background sync registered');
+        return;
+      }
     } catch (error) {
-      console.warn('[BackgroundSync] Failed to register sync:', error);
+      console.warn('[BackgroundSync] Failed to register background sync:', error);
+    }
+  }
+  
+  // 降级方案：使用轮询或立即处理（iOS和其他不支持Background Sync的设备）
+  if (deviceInfo.isIOS || !deviceInfo.supportsBackgroundSync) {
+    console.log('[BackgroundSync] Using fallback sync method for', deviceInfo.brand);
+    
+    // 启动轮询（如果尚未启动）
+    startPollingSync();
+    
+    // 立即尝试处理一次（如果网络可用）
+    if (navigator.onLine) {
+      processQueue().catch(err => {
+        console.warn('[BackgroundSync] Immediate sync error:', err);
+      });
     }
   }
 }

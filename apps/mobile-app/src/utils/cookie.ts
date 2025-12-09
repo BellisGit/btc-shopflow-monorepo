@@ -3,6 +3,27 @@
  */
 
 /**
+ * 获取 cookie 的 domain
+ * 对于 bellis.com.cn 及其子域名，使用 .bellis.com.cn 作为 domain
+ * 这样可以确保 cookie 在所有子域名之间共享
+ */
+function getCookieDomain(): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  
+  const hostname = window.location.hostname;
+  
+  // 如果是 bellis.com.cn 或其子域名，使用 .bellis.com.cn
+  if (hostname.includes('bellis.com.cn')) {
+    return '.bellis.com.cn';
+  }
+  
+  // 开发环境（localhost、127.0.0.1、内网IP）不设置 domain，使用默认值
+  return undefined;
+}
+
+/**
  * 读取 cookie 值
  * @param name cookie 名称
  * @returns cookie 值，如果不存在则返回 null
@@ -63,6 +84,9 @@ export function setCookie(
 
   const isHttps = window.location.protocol === 'https:';
   
+  // 确定 domain：优先使用 options.domain，否则使用自动检测的 domain
+  const domain = options?.domain ?? getCookieDomain();
+  
   if (options?.sameSite) {
     if (options.sameSite === 'None' && !isHttps) {
       // 不设置 SameSite，让浏览器使用默认值
@@ -77,8 +101,8 @@ export function setCookie(
     cookieString += '; Secure';
   }
 
-  if (options?.domain) {
-    cookieString += `; Domain=${options.domain}`;
+  if (domain) {
+    cookieString += `; Domain=${domain}`;
   }
 
   document.cookie = cookieString;

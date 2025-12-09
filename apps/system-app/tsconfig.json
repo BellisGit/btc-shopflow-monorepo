@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
+    "skipDefaultLibCheck": true,
     "paths": {
       "@/*": ["./src/*"],
       "@services": ["./src/services"],
@@ -25,6 +26,7 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
   "references": [
     { "path": "../../packages/shared-core" },
     { "path": "../../packages/shared-components" },

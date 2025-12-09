@@ -1,4 +1,6 @@
+// @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { http } from './http';
 

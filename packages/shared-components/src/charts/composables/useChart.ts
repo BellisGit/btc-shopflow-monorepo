@@ -4,6 +4,7 @@ import { useResizeObserver } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
 import type { EChartsOption } from 'echarts';
 import type { BaseChartProps } from '../types/base';
+import { registerEChartsThemes } from '../utils/theme';
 
 /**
  * 核心图表 composable
@@ -244,9 +245,61 @@ export function useChart(
   });
 
   // 计算图表主题 - 使用自定义主题
+  // 添加 key 确保主题变化时强制重新渲染 v-chart 组件
+  const chartThemeKey = ref(0);
   const chartTheme = computed(() => {
     return isDark.value ? 'btc-dark' : 'btc-light';
   });
+
+  // 监听主题变化，重新注册 ECharts 主题并强制重新渲染图表
+  watch(
+    () => isDark.value,
+    () => {
+      // 主题切换时，先销毁旧实例
+      if (chartInstance.value) {
+        try {
+          chartInstance.value.dispose();
+          chartInstance.value = null;
+        } catch (error) {
+          // 忽略错误
+        }
+      }
+      
+      // 使用多重延迟确保 CSS 变量已经更新（useDark 更新 dark 类是异步的）
+      // 1. 等待 DOM 更新
+      nextTick(() => {
+        // 2. 等待浏览器渲染
+        requestAnimationFrame(() => {
+          // 3. 等待 CSS 变量更新（给足够的时间让 useDark 更新 dark 类）
+          setTimeout(() => {
+            // 4. 再次等待浏览器重新计算样式
+            requestAnimationFrame(() => {
+              // 5. 重新注册 ECharts 主题（使用最新的 CSS 变量值）
+              registerEChartsThemes();
+              
+              // 6. 再次延迟，确保主题注册完成
+              setTimeout(() => {
+                // 更新 key 强制重新渲染 v-chart 组件
+                chartThemeKey.value++;
+                // 重置容器准备状态，强制重新初始化
+                isContainerReady.value = false;
+                // 延迟后重新检查容器并初始化
+                nextTick(() => {
+                  setTimeout(() => {
+                    checkContainerSize();
+                    if (isContainerReady.value) {
+                      updateChartInstance();
+                    }
+                  }, 100);
+                });
+              }, 150);
+            });
+          }, 200);
+        });
+      });
+    },
+    { flush: 'post' } // 在 DOM 更新后执行
+  );
 
   return {
     isDark,
@@ -255,6 +308,7 @@ export function useChart(
     isContainerReady,
     chartOption,
     chartTheme,
+    chartThemeKey,
     chartInstance,
     getChartInstance,
     updateChartInstance,

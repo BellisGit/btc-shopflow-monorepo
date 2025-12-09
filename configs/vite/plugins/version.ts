@@ -5,6 +5,7 @@
  */
 
 import type { Plugin } from 'vite';
+import type { OutputOptions, OutputBundle } from 'rollup';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,20 +54,21 @@ export function addVersionPlugin(): Plugin {
   const buildTimestamp = getBuildTimestamp();
 
   return {
+    // @ts-ignore - Vite Plugin 类型定义可能不完整，name 属性是标准属性
     name: 'add-version',
     apply: 'build',
     buildStart() {
       console.log(`[add-version] 构建时间戳版本号: ${buildTimestamp}`);
     },
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'asset' && fileName === 'index.html') {
-          let htmlContent = chunk.source as string;
+          let htmlContent = (chunk as any).source as string;
           let modified = false;
 
           // 为 script 标签的 src 属性添加版本号
           const scriptRegex = /(<script[^>]*\s+src=["'])([^"']+)(["'][^>]*>)/g;
-          htmlContent = htmlContent.replace(scriptRegex, (match, prefix, src, suffix) => {
+          htmlContent = htmlContent.replace(scriptRegex, (match: string, prefix: string, src: string, suffix: string) => {
             // 跳过已有版本号的资源（避免重复添加）
             if (src.includes('?v=') || src.includes('&v=')) {
               // 如果已有版本号，更新为当前构建时间戳
@@ -109,7 +111,7 @@ export function addVersionPlugin(): Plugin {
           });
 
           if (modified) {
-            chunk.source = htmlContent;
+            (chunk as any).source = htmlContent;
             console.log(`[add-version] 已为 index.html 中的资源引用添加版本号: v=${buildTimestamp}`);
           }
         }

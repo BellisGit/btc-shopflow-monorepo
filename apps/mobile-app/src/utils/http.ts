@@ -68,10 +68,14 @@ export class Http {
           // 如果 cookie 不存在但 storage 中有 token，尝试重新设置 cookie
           if (!cookieToken && storageToken) {
             const isHttps = window.location.protocol === 'https:';
+            const hostname = window.location.hostname;
+            // 对于生产环境，设置 domain 以便跨子域名共享 cookie
+            const domain = hostname.includes('bellis.com.cn') ? '.bellis.com.cn' : undefined;
             setCookie('access_token', storageToken, 7, {
               sameSite: isHttps ? 'None' : undefined,
               secure: isHttps,
               path: '/',
+              domain,
             });
           }
         }
@@ -155,10 +159,14 @@ export class Http {
 
             // 手动设置 cookie
             const isHttps = window.location.protocol === 'https:';
+            const hostname = window.location.hostname;
+            // 对于生产环境，设置 domain 以便跨子域名共享 cookie
+            const domain = hostname.includes('bellis.com.cn') ? '.bellis.com.cn' : undefined;
             setCookie('access_token', tokenFromBody, 7, {
               sameSite: isHttps ? 'None' : undefined,
               secure: isHttps,
               path: '/',
+              domain,
             });
           } else {
             // 如果 data 中没有 token，尝试从 cookie 读取
@@ -232,14 +240,33 @@ export class Http {
           authStore.logout();
         }
 
-        // 抛出错误，包含错误信息
-        const errorMessage = data?.message || data?.msg || error.message || '请求失败';
+        // 优先从响应数据中提取错误信息
+        // 后端可能返回标准格式：{ code, msg, data }
+        let errorMessage: string;
+        if (data && typeof data === 'object') {
+          // 如果响应数据是标准格式，优先使用 msg
+          if ('msg' in data && data.msg) {
+            errorMessage = data.msg;
+          } else if ('message' in data && data.message) {
+            errorMessage = data.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          } else {
+            errorMessage = '请求失败';
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = '请求失败';
+        }
+
         return Promise.reject(new Error(errorMessage));
       } else if (error.request) {
         // 请求已发出但没有收到响应
         return Promise.reject(new Error('网络错误，请检查网络连接'));
       } else {
-        // 其他错误
+        // 其他错误（包括从 onFulfilled 中抛出的业务逻辑错误）
+        // 这些错误已经包含了正确的错误信息（msg），直接返回
         return Promise.reject(error);
       }
     };

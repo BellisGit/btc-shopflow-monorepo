@@ -8,8 +8,7 @@
       :form-items="bomFormItems"
       :left-title="t('inventory.dataSource.domain')"
       :right-title="t('menu.inventory.dataSource.bom')"
-      :show-unassigned="true"
-      unassigned-label="未分配"
+      :show-unassigned="false"
       :enable-key-search="false"
       :left-size="'small'"
       :show-add-btn="false"
@@ -19,7 +18,11 @@
       @select="onDomainSelect"
     >
       <template #add-btn>
-        <BtcImportBtn :columns="bomColumns" :on-submit="handleImport" />
+        <BtcImportBtn 
+          :columns="bomColumns" 
+          :on-submit="handleImport"
+          :exportFilename="t('menu.inventory.dataSource.bom')"
+        />
       </template>
       <template #actions>
         <el-button type="info" @click="exportBomTemplate">
@@ -37,7 +40,6 @@ import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
 import { service } from '@/services/eps';
-import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({
   name: 'BtcDataInventoryBom'
@@ -48,9 +50,43 @@ const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
 
-// 左侧域列表改为使用与汉堡菜单一致的 /domain/me 接口
+// 左侧域列表使用物流域的仓位配置页面的 page 接口
 const domainService = {
-  list: () => service.admin?.iam?.domain?.me?.()
+  list: async () => {
+    try {
+      // 调用物流域仓位配置的 page 接口
+      const response = await service.logistics?.base?.position?.page?.({ page: 1, size: 1000 });
+      
+      // 处理响应数据
+      let data = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        data = response.data;
+      }
+      
+      const positionList = data?.list || [];
+      
+      // 从仓位数据中提取唯一的域信息（根据 domainId 和 name 去重）
+      const domainMap = new Map<string, any>();
+      positionList.forEach((item: any) => {
+        const domainId = item.domainId;
+        if (domainId && !domainMap.has(domainId)) {
+          domainMap.set(domainId, {
+            id: domainId,
+            domainId: domainId,
+            name: item.name || '',
+            domainCode: domainId,
+            value: domainId,
+          });
+        }
+      });
+      
+      // 返回域列表
+      return Array.from(domainMap.values());
+    } catch (error) {
+      console.error('[InventoryBom] Failed to load domains from position service:', error);
+      return [];
+    }
+  }
 };
 
 // 物料构成表服务（右侧表），使用后端API
@@ -167,10 +203,18 @@ const handleImport = async (
     const response = await service.system?.base?.bom?.import?.(payload);
 
     // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导入失败
-    if (response && typeof response === 'object' && 'code' in response) {
-      const code = (response as any).code;
+    // 注意：响应拦截器可能返回原始 response 对象（AxiosResponse）或业务数据
+    // 需要同时检查 response.data.code 和 response.code
+    let responseData: any = response;
+    if (response && typeof response === 'object' && 'data' in response) {
+      // 如果是 AxiosResponse 对象，提取 data
+      responseData = (response as any).data;
+    }
+
+    if (responseData && typeof responseData === 'object' && 'code' in responseData) {
+      const code = responseData.code;
       if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = (response as any).msg || t('inventory.dataSource.bom.import.failed');
+        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.bom.import.failed');
         message.error(errorMsg);
         done();
         return;
@@ -188,18 +232,19 @@ const handleImport = async (
   }
 };
 
-// 物料构成表表格列（移除选择列和操作列）
-const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
-  value ? formatDateTime(value) : '--';
-
+// 物料构成表表格列（移除选择列和操作列，不包含盘点类型）
 const bomColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.parentNode'), minWidth: 140, showOverflowTooltip: true },
-  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.childNode'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.childQty'), width: 120 },
-  { prop: 'checkType', label: t('inventory.dataSource.bom.fields.checkType'), minWidth: 140, showOverflowTooltip: true },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
-  { prop: 'updatedAt', label: t('system.inventory.base.fields.updateAt'), width: 180, formatter: formatDateCell },
+  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName'), minWidth: 140, showOverflowTooltip: true },
+  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName'), minWidth: 160, showOverflowTooltip: true },
+  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty'), width: 120 },
+]);
+
+// 导出用的列（不包含时间字段和盘点类型字段）
+const bomExportColumns = computed<TableColumn[]>(() => [
+  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName') },
+  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName') },
+  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty') },
 ]);
 
 // 物料构成表表单
@@ -257,10 +302,13 @@ const bomFormItems = computed<FormItem[]>(() => [
 ]);
 
 const exportBomTemplate = () => {
+  // 从 CRUD 获取当前表格数据，允许空表导出
+  const tableData = tableGroupRef.value?.crudRef?.tableData || tableGroupRef.value?.crudRef?.data || [];
+
   exportTableToExcel({
-    columns: bomColumns.value,
-    data: [],
-    filename: `data_${t('menu.inventory.dataSource.bom')}`,
+    columns: bomExportColumns.value,
+    data: tableData,
+    filename: `${t('menu.inventory.dataSource.bom')}`,
   });
 };
 </script>

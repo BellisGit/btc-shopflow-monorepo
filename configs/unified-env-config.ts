@@ -333,6 +333,30 @@ export function isMainApp(
     }
   }
 
+  // 关键：在 layout-app 环境下，如果路径是根路径 '/'，但实际 locationPath 是子应用路径，
+  // 需要再次检查 locationPath（因为 route.path 可能是 '/'，但 window.location.pathname 是子应用路径）
+  if (path === '/' && locationPath && locationPath !== '/') {
+    // 使用 locationPath 重新检查
+    const normalizedLocationPath = locationPath.endsWith('/') && locationPath !== '/'
+      ? locationPath.slice(0, -1)
+      : locationPath;
+    
+    for (const app of apps) {
+      if (app.type === 'sub' && app.enabled) {
+        const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+          ? app.pathPrefix.slice(0, -1)
+          : app.pathPrefix;
+        
+        const isMatch = normalizedLocationPath === normalizedPathPrefix || normalizedLocationPath.startsWith(normalizedPathPrefix + '/');
+        
+        if (isMatch) {
+          // 匹配到子应用，不是主应用
+          return false;
+        }
+      }
+    }
+  }
+
   // 如果没有匹配到子应用，判断为主应用
   // 主应用的 pathPrefix 是 '/'，所以所有不匹配子应用的路径都是主应用路径
   return true;
@@ -446,6 +470,9 @@ export function getSubAppActiveRule(appId: string): string | ((location: Locatio
 // 导出单例
 export const currentEnvironment = getEnvironment();
 export const envConfig = getEnvConfig();
-export const currentSubApp = getCurrentSubApp();
-export const isMainAppNow = isMainApp();
+
+// 注意：移除了 currentSubApp 和 isMainAppNow 的顶层导出
+// 因为它们会在模块加载时调用 getCurrentSubApp() 和 isMainApp()
+// 这些函数依赖 getAllApps()，可能导致初始化顺序问题
+// 请使用 getCurrentSubApp() 和 isMainApp() 函数来获取当前值
 

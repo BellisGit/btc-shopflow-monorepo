@@ -90,6 +90,9 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       return [];
     }
 
+    const normalizedPath = route.path.replace(/\/+$/, '') || '/';
+    const currentApp = getCurrentAppFromPath(normalizedPath);
+
     return entries
       .map((item) => {
         const key =
@@ -107,9 +110,12 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
         const label =
           translated && translated !== (key ?? rawLabel) ? translated : rawLabel;
 
+        // 优先使用配置中的图标，如果没有则从菜单注册表中查找
+        const menuIcon = key ? findMenuIconByI18nKey(key, currentApp) : undefined;
+
         return {
           label,
-          icon: item.icon,
+          icon: item.icon || menuIcon,
         };
       })
       .filter(Boolean) as BreadcrumbItem[];

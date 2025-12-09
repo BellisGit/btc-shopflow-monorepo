@@ -130,11 +130,11 @@ function handleTabStyleChange(event: CustomEvent) {
 
 onMounted(() => {
   // 监听标签页样式变化
-  window.addEventListener('tab-style-change', handleTabStyleChange as EventListener);
+  window.addEventListener('tab-style-change', handleTabStyleChange as (event: Event) => void);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('tab-style-change', handleTabStyleChange as EventListener);
+  window.removeEventListener('tab-style-change', handleTabStyleChange as (event: Event) => void);
 });
 
 const scrollerRef = ref();

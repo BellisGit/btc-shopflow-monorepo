@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, unref, type Ref, type MaybeRef } from 'vue';
+import { ref, computed, onMounted, onUnmounted, unref, type MaybeRef } from 'vue';
 
 export interface CountdownResult {
   days: number;

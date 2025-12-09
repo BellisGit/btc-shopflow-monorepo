@@ -4,6 +4,7 @@
  */
 
 import type { Plugin } from 'vite';
+import type { OutputOptions, OutputBundle } from 'rollup';
 
 /**
  * 确保 CSS 文件被正确打包的插件
@@ -11,7 +12,7 @@ import type { Plugin } from 'vite';
 export function ensureCssPlugin(): Plugin {
   return {
     name: 'ensure-css-plugin',
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const jsFiles = Object.keys(bundle).filter(file => file.endsWith('.js'));
       let hasInlineCss = false;
       const suspiciousFiles: string[] = [];
@@ -55,7 +56,7 @@ export function ensureCssPlugin(): Plugin {
           if (hasStyleElementCreation || hasInsertStyleWithCss || hasStyleTagWithContent || hasInlineCssString) {
             hasInlineCss = true;
             suspiciousFiles.push(file);
-            const patterns = [];
+            const patterns: string[] = [];
             if (hasStyleElementCreation) patterns.push('动态创建 style 元素');
             if (hasInsertStyleWithCss) patterns.push('insertStyle 函数');
             if (hasStyleTagWithContent) patterns.push('<style> 标签');
@@ -71,7 +72,7 @@ export function ensureCssPlugin(): Plugin {
         console.warn('[ensure-css-plugin] 请检查 vite-plugin-qiankun 配置和 build.assetsInlineLimit 设置');
       }
     },
-    writeBundle(options, bundle) {
+    writeBundle(_options: OutputOptions, bundle: OutputBundle) {
       const cssFiles = Object.keys(bundle).filter(file => file.endsWith('.css'));
       if (cssFiles.length === 0) {
         console.error('[ensure-css-plugin] ❌ 错误：构建产物中无 CSS 文件！');
@@ -94,6 +95,6 @@ export function ensureCssPlugin(): Plugin {
         });
       }
     },
-  };
+  } as Plugin;
 }
 

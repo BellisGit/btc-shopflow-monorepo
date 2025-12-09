@@ -51,19 +51,19 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   const isDark = useDark({
     storageKey: 'btc_color_scheme',
     storage: {
-      getItem: (key: string) => {
+      getItem: (_key: string) => {
         // 从统一的 settings 存储中读取（从 Cookie 读取）
         const settings = (storage.get('settings') as Record<string, any>) || {};
         return settings?.colorScheme || null;
       },
-      setItem: (key: string, value: string) => {
+      setItem: (_key: string, value: string) => {
         // 保存到统一的 settings 存储中（同步到 Cookie）
         // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段（如 theme）
         const currentSettings = (storage.get('settings') as Record<string, any>) || {};
         const updatedSettings = { ...currentSettings, colorScheme: value };
         storage.set('settings', updatedSettings);
       },
-      removeItem: (key: string) => {
+      removeItem: (_key: string) => {
         // 从统一的 settings 存储中移除（同步到 Cookie）
         const currentSettings = (storage.get('settings') as Record<string, any>) || {};
         if (currentSettings.colorScheme) {

@@ -5,6 +5,7 @@
  */
 
 import type { Plugin } from 'vite';
+import type { OutputOptions, OutputBundle } from 'rollup';
 import { resolve, join, extname, basename } from 'path';
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 
@@ -62,7 +63,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
             const fileContent = readFileSync(filePath);
             // 关键：Rollup 的 emitFile 会将文件放在 assetsDir（默认是 'assets'）
             // 我们不在 emitFile 时指定 fileName，让 Rollup 自动处理，然后在 generateBundle 中获取实际路径
-            const referenceId = this.emitFile({
+            const referenceId = (this as any).emitFile({
               type: 'asset',
               name: file, // 文件名（不含路径），Rollup 会自动添加哈希值并放在 assetsDir
               source: fileContent,
@@ -73,7 +74,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         }
       }
     },
-    resolveId(id, importer) {
+    resolveId(id: string, _importer: string | undefined): string | null | { id: string; external?: boolean } {
       if (isVirtualModuleId(id)) {
         if (id.startsWith('\0public-image:') || id.includes('\0public-image:')) {
           return id;
@@ -98,7 +99,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       }
       return null;
     },
-    load(id) {
+    load(id: string) {
       // 关键：处理根目录图片的加载
       // 如果 id 是实际文件路径（不是虚拟模块），直接返回文件内容
       for (const rootFile of rootImageFiles) {
@@ -139,14 +140,14 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
 
       return null;
     },
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const bundleAssets = Object.entries(bundle).filter(([_, chunk]) => chunk.type === 'asset');
       console.log(`[public-images-to-assets] 📋 bundle 中的资源文件数量: ${bundleAssets.length}`);
 
       console.log(`[public-images-to-assets] 🔍 开始处理 ${emittedFiles.size} 个已发出的文件`);
       for (const [originalFile, referenceId] of emittedFiles.entries()) {
         try {
-          const actualFileName = this.getFileName(referenceId);
+          const actualFileName = (this as any).getFileName(referenceId);
 
           if (!actualFileName) {
             console.warn(`[public-images-to-assets] ⚠️  无法获取 ${originalFile} 的文件名 (referenceId: ${referenceId})`);
@@ -249,7 +250,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
 
             for (const pattern of urlPatterns) {
               if (pattern.test(newSource)) {
-                newSource = newSource.replace(pattern, (match) => {
+                newSource = newSource.replace(pattern, (match: string) => {
                   // 保留查询参数（如果有）
                   const queryMatch = match.match(/(\?[^)]*)/);
                   const query = queryMatch ? queryMatch[1] : '';
@@ -267,7 +268,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         }
       }
     },
-    writeBundle(options) {
+    writeBundle(options: OutputOptions) {
       const outputDir = options.dir || resolve(appDir, 'dist');
 
       // 关键：复制根目录图片到根目录（不使用哈希值，保持原文件名）
@@ -386,7 +387,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                   });
                 } else {
                   // 对于字符串引用，也保留查询参数
-                  content = content.replace(pattern, (match, quote1, path, query, quote2) => {
+                  content = content.replace(pattern, (_match: string, quote1: string, _path: string, query: string, quote2: string) => {
                     return `${quote1}${newPath}${query || ''}${quote2}`;
                   });
                 }
@@ -429,6 +430,6 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
         }
       }
     },
-  };
+  } as Plugin;
 }
 

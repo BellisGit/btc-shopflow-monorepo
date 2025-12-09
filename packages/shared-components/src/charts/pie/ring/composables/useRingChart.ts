@@ -13,46 +13,33 @@ export function useRingChart(
   themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
+    // 每次构建时重新获取主题颜色，用于需要动态计算的颜色（如环形图边框）
     const currentThemeColors = typeof window !== 'undefined' 
       ? getThemeColors()
       : themeColors;
-    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
-    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
     const bgColor = isDark.value ? currentThemeColors.dark.bgColor : currentThemeColors.bgColor;
-    const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
 
     const innerRadius = props.innerRadius || (Array.isArray(props.radius) ? props.radius[0] : '40%');
     const outerRadius = props.outerRadius || (Array.isArray(props.radius) ? props.radius[1] : '70%');
 
     const option: EChartsOption = {
       title: {
-        text: props.title || '',
-        textStyle: {
-          color: textColor
-        }
+        text: props.title || ''
+        // textStyle.color 由 ECharts 主题处理
       },
       tooltip: {
         trigger: 'item',
         formatter: '{a} <br/>{b}: {c} ({d}%)',
         show: props.showTooltip ?? true,
-        backgroundColor: tooltipBg,
-        borderColor: borderColor,
-        borderWidth: 1,
-        textStyle: {
-          color: textColor
-        },
-        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
+        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
         confine: true,
         appendToBody: true
       },
       legend: {
         show: props.showLegend ?? true,
         orient: ['left', 'right'].includes(props.legendPosition || 'top') ? 'vertical' : 'horizontal',
-        [props.legendPosition || 'top']: '0%',
-        textStyle: {
-          color: textColor
-        }
+        [props.legendPosition || 'top']: '0%'
+        // textStyle.color 由 ECharts 主题处理
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -61,28 +48,21 @@ export function useRingChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '?????',
+            title: '保存为图片',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '????',
+            title: '数据视图',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '??'
-          }
-        },
-        iconStyle: {
-          borderColor: borderColor
-        },
-        emphasis: {
-          iconStyle: {
-            borderColor: currentThemeColors.primary
+            title: '还原'
           }
         }
+        // iconStyle.borderColor 由 ECharts 主题处理
       },
       series: [
         {
@@ -99,21 +79,19 @@ export function useRingChart(
           label: {
             show: props.showLabel ?? false,
             position: props.labelPosition || 'outside',
-            color: textColor,
             fontSize: 12
+            // color 由 ECharts 主题处理
           },
           labelLine: {
-            show: props.showLabelLine ?? true,
-            lineStyle: {
-              color: borderColor
-            }
+            show: props.showLabelLine ?? true
+            // lineStyle.color 由 ECharts 主题处理
           },
           emphasis: {
             label: {
               show: true,
               fontSize: 20,
-              fontWeight: 'bold',
-              color: textColor
+              fontWeight: 'bold'
+              // color 由 ECharts 主题处理
             }
           },
           data: props.data.map((item, index) => ({

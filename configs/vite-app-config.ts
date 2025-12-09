@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'path';
-import { getAppConfig, type AppEnvConfig } from './app-env.config';
+import { getAppConfig } from './app-env.config';
 
 /**
  * 获取应用配置（用于 vite.config.ts）

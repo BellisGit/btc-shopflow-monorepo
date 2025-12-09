@@ -1,31 +1,39 @@
 /**
- * 鏍煎紡鍖栨棩鏈? * @param date 鏃ユ湡瀵硅薄鎴栧瓧绗︿覆
- * @param format 鏍煎紡鍖栨ā鏉? * @returns 鏍煎紡鍖栧悗鐨勬棩鏈熷瓧绗︿覆
+ * 格式化日期
+ * @param date 日期对象或字符串
+ * @param format 格式化模板
+ * @returns 格式化后的日期字符串
  */
 export declare function formatDate(date: Date | string | number, format?: string): string;
 /**
- * 鏍煎紡鍖栨棩鏈熸椂闂? * @param date 鏃ユ湡瀵硅薄鎴栧瓧绗︿覆
- * @returns 鏍煎紡鍖栧悗鐨勬棩鏈熸椂闂村瓧绗︿覆
+ * 格式化日期时间
+ * @param date 日期对象或字符串
+ * @returns 格式化后的日期时间字符串
  */
 export declare function formatDateTime(date: Date | string | number): string;
 /**
- * 鏍煎紡鍖栨棩鏈熸椂闂达紙鐢ㄦ埛鍙嬪ソ鏍煎紡锛? * @param date 鏃ユ湡瀵硅薄鎴栧瓧绗︿覆
- * @returns 鏍煎紡鍖栧悗鐨勬棩鏈熸椂闂村瓧绗︿覆
+ * 格式化日期时间（用户友好格式）
+ * @param date 日期对象或字符串
+ * @returns 格式化后的日期时间字符串
  */
 export declare function formatDateTimeFriendly(date: Date | string | number | null | undefined): string;
 /**
- * 妫€鏌ユ槸鍚︿负鏃堕棿瀛楁
- * @param fieldName 瀛楁鍚? * @returns 鏄惁涓烘椂闂村瓧娈? */
+ * 检查是否为时间字段
+ * @param fieldName 字段名
+ * @returns 是否为时间字段
+ */
 export declare function isDateTimeField(fieldName: string): boolean;
 /**
- * 鑾峰彇鏃ユ湡鑼冨洿
- * @param type 鑼冨洿绫诲瀷
- * @returns [寮€濮嬫椂闂? 缁撴潫鏃堕棿]
+ * 获取日期范围
+ * @param type 范围类型
+ * @returns [开始时间, 结束时间]
  */
 export declare function getDateRange(type: 'today' | 'week' | 'month'): [string, string];
 /**
- * 璁＄畻鏃ユ湡宸? * @param date1 鏃ユ湡1
- * @param date2 鏃ユ湡2
- * @param unit 鍗曚綅
- * @returns 鏃ユ湡宸? */
+ * 计算日期差
+ * @param date1 日期1
+ * @param date2 日期2
+ * @param unit 单位
+ * @returns 日期差
+ */
 export declare function dateDiff(date1: Date | string, date2: Date | string, unit?: 'day' | 'hour' | 'minute'): number;

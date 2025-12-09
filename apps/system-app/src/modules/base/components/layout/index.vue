@@ -84,16 +84,6 @@
                   <keep-alive v-else-if="Component">
                     <component :is="Component" :key="route.fullPath" />
                   </keep-alive>
-                  <div v-else style="padding: 20px; color: #999;">
-                    <p>⚠️ 路由组件未加载</p>
-                    <p>路径: {{ route.path }}</p>
-                    <p>完整路径: {{ route.fullPath }}</p>
-                    <p>匹配的路由数: {{ route.matched.length }}</p>
-                    <p>isMainApp: {{ isMainApp }}</p>
-                    <p>Component: {{ Component ? '存在' : '不存在' }}</p>
-                    <p v-if="Component">Component 类型: {{ typeof Component }}</p>
-                    <p v-if="Component && typeof Component === 'object'">Component keys: {{ Object.keys(Component).join(', ') }}</p>
-                  </div>
                 </transition>
               </router-view>
             </div>
@@ -117,6 +107,9 @@
       v-model:visible="drawerVisible"
       :topbar-height="47"
     />
+
+    <!-- 偏好设置抽屉（用于 qiankun 模式下的子应用） -->
+    <BtcUserSettingDrawer v-model="preferencesDrawerVisible" />
   </div>
 </template>
 
@@ -139,6 +132,7 @@ import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
+import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
 
 // 创建事件总线
 const emitter = mitt();
@@ -151,6 +145,7 @@ const emitter = mitt();
 const route = useRoute();
 const isCollapse = ref(false);
 const drawerVisible = ref(false);
+const preferencesDrawerVisible = ref(false);
 const contentRef = ref<HTMLElement | null>(null);
 const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
 
@@ -211,6 +206,12 @@ let prevIsMini = browser.isMini;
 // 关键：让 isMainApp 函数自己判断是否为独立运行模式，不要硬编码
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const isMainApp = computed(() => {
+  // 关键：如果路由 meta 中明确标记为 isSubApp，直接返回 false（子应用）
+  // 这样可以避免在 qiankun 模式下，子应用路由被误判为主应用路由
+  if (route.meta?.isSubApp === true) {
+    return false;
+  }
+  
   // 关键：优先使用 window.location.pathname，因为它包含完整的路径
   // route.path 在 qiankun 模式下可能只匹配到 /logistics，而不是完整的 /logistics/warehouse/inventory/info
   const locationPath = window.location.pathname;
@@ -328,7 +329,21 @@ const handleQiankunAfterMount = () => {
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
-  window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  // 关键：监听偏好设置抽屉打开事件（用于 qiankun 模式下的子应用）
+  emitter.on('open-preferences-drawer', () => {
+    preferencesDrawerVisible.value = true;
+    if (import.meta.env.DEV) {
+      console.log('[Layout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
+    }
+  });
+  window.addEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
+  // 关键：监听全局偏好设置抽屉打开事件（用于跨应用通信）
+  window.addEventListener('open-preferences-drawer', () => {
+    preferencesDrawerVisible.value = true;
+    if (import.meta.env.DEV) {
+      console.log('[Layout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
+    }
+  });
 
   // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
   window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
@@ -408,7 +423,9 @@ watch(
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
-  window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  emitter.off('open-preferences-drawer');
+  window.removeEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
+  window.removeEventListener('open-preferences-drawer', () => {});
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
   window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
 

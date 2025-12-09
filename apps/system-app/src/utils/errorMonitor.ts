@@ -149,6 +149,10 @@ export function setupGlobalErrorCapture() {
     if (message.includes('Invalid prop: type check failed')) {
       return true;
     }
+    // 过滤 Vue 的 extraneous non-props attributes 警告（BtcImportBtn 的 exportFilename prop）
+    if (message.includes('Extraneous non-props attributes') && message.includes('exportFilename')) {
+      return true;
+    }
     return false;
   };
 

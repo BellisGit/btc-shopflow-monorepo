@@ -85,7 +85,7 @@ export function normalizePageParams(
 export function wrapServiceTree<T extends AnyRecord>(svc: T): T {
   const cache = new WeakMap<object, any>();
 
-  function wrapNode(node: any, parentNode?: any): any {
+  function wrapNode(node: any, _parentNode?: any): any {
     if (node === null || typeof node !== 'object') return node;
     if (cache.has(node)) return cache.get(node);
     const wrapped: AnyRecord = Array.isArray(node) ? [] : {};

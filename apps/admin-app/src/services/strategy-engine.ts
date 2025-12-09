@@ -536,10 +536,11 @@ export class StrategyExecutionEngine {
         }
         return { output: context };
 
-      case 'CALL_API':
+      case 'CALL_API': {
         // 模拟API调用
         const apiResult = await this.simulateApiCall(parameters);
         return { output: { ...context, apiResult } };
+      }
 
       case 'EXECUTE_SCRIPT':
         // 简单的脚本执行（实际项目中需要安全沙箱）

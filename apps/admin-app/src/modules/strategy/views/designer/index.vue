@@ -860,7 +860,9 @@ onMounted(async () => {
   // 重置缩放与位移
   try {
     resetZoom();
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
 });
 
 // 组件卸载

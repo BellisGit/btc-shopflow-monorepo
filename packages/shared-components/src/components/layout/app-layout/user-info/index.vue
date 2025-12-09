@@ -209,10 +209,12 @@ const handleCommand = (command: string) => {
       router.push('/profile');
       break;
     case 'settings':
-      // 关键：在 layout-app 环境下，通过事件触发偏好设置抽屉
+      // 关键：在 layout-app 环境或 qiankun 模式下，通过事件触发偏好设置抽屉
       // 否则使用路由跳转（如果子应用有 /settings 路由）
       const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
-      if (isUsingLayoutApp) {
+      const isQiankunMode = !!(window as any).__POWERED_BY_QIANKUN__;
+      const shouldUseEvent = isUsingLayoutApp || isQiankunMode;
+      if (shouldUseEvent) {
         // 通过全局事件触发 layout-app 的偏好设置抽屉
         const triggerPreferencesDrawer = () => {
           const emitter = (window as any).__APP_EMITTER__;

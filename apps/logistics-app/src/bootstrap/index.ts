@@ -5,7 +5,7 @@ import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
 import { resetPluginManager, usePluginManager } from '@btc/shared-core';
-import { registerAppEnvAccessors, registerManifestMenusForApp, resolveAppLogoUrl } from '@configs/layout-bridge';
+import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, resolveAppLogoUrl } from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
@@ -133,6 +133,9 @@ const setupStandaloneGlobals = async () => {
     const domainModule = await import('../utils/domain-cache');
     if (domainModule.getDomainList) {
       (window as any).__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+    }
+    if (domainModule.clearDomainCache) {
+      (window as any).__APP_CLEAR_DOMAIN_CACHE__ = domainModule.clearDomainCache;
     }
   } catch (error) {
     console.warn('[logistics-app] Failed to load domain cache:', error);
@@ -455,10 +458,12 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   if (isStandalone) {
     await setupStandaloneGlobals();
     registerManifestMenusForApp(LOGISTICS_APP_ID);
+    registerManifestTabsForApp(LOGISTICS_APP_ID);
   } else {
-    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
-    // 这样 layout-app 才能显示 logistics-app 的菜单
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单和 Tabs
+    // 这样 layout-app 才能显示 logistics-app 的菜单和 Tabs
     registerManifestMenusForApp(LOGISTICS_APP_ID);
+    registerManifestTabsForApp(LOGISTICS_APP_ID);
   }
 
   // 这些初始化操作都是轻量级的，不会阻塞

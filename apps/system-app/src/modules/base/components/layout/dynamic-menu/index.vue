@@ -26,7 +26,7 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
@@ -67,7 +67,7 @@ const currentMenuItems = computed(() => {
   const app = currentApp.value;
   const menus = getMenusForApp(app);
   // 触发响应式更新
-  menuRegistry.value;
+  void menuRegistry.value;
   return menus;
 });
 
@@ -212,9 +212,42 @@ const menuThemeConfig = computed(() => {
 watch(
   () => [menuThemeType?.value, isDark?.value],
   () => {
+    // 立即增加 menuKey 强制重新渲染菜单
     menuKey.value++;
-  }
+    // 使用 nextTick 确保 DOM 更新完成后再触发样式重新计算
+    nextTick(() => {
+      // 强制触发 Element Plus 菜单组件的样式重新计算
+      if (menuRef.value) {
+        const menuEl = menuRef.value.$el;
+        if (menuEl) {
+          // 强制浏览器重新计算菜单样式
+          void menuEl.offsetHeight;
+        }
+      }
+    });
+  },
+  { immediate: false }
 );
+
+// 监听主题切换事件，强制重新渲染菜单
+// 确保在主题切换后立即更新菜单样式
+const handleThemeChanged = () => {
+  menuKey.value++;
+  nextTick(() => {
+    if (menuRef.value) {
+      const menuEl = menuRef.value.$el;
+      if (menuEl) {
+        void menuEl.offsetHeight;
+      }
+    }
+  });
+};
+window.addEventListener('theme-changed', handleThemeChanged);
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('theme-changed', handleThemeChanged);
+});
 
 // 监听搜索关键词变化，强制重新渲染菜单以应用新的 defaultOpeneds
 watch(

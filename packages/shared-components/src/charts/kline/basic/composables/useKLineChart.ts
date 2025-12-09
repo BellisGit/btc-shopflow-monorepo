@@ -1,7 +1,7 @@
 import { type Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { KLineChartProps } from '../../../types/kline';
-import { getThemeColors } from '../../../utils/css-var';
+// import { getThemeColors } from '../../../utils/css-var'; // 未使用，但代码中实际使用了 themeColors
 
 /**
  * K?? composable
@@ -12,22 +12,14 @@ export function useKLineChart(
   themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
-    const currentThemeColors = typeof window !== 'undefined' 
-      ? getThemeColors()
-      : themeColors;
-    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
-    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
-    const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
     const upColor = props.upColor || '#ec0000';
     const downColor = props.downColor || '#00da3c';
+    const borderColor = isDark.value ? themeColors.dark.borderColor : themeColors.borderColor;
 
     const option: EChartsOption = {
       title: {
-        text: props.title || '',
-        textStyle: {
-          color: textColor
-        }
+        text: props.title || ''
+        // textStyle.color 由 ECharts 主题处理
       },
       tooltip: {
         trigger: 'axis',
@@ -35,17 +27,11 @@ export function useKLineChart(
           type: 'cross'
         },
         show: props.showTooltip ?? true,
-        backgroundColor: tooltipBg,
-        borderColor: borderColor,
-        borderWidth: 1,
-        textStyle: {
-          color: textColor
-        },
-        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
+        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
         formatter: (params: any) => {
           const data = params[0].data;
           if (Array.isArray(data)) {
-            return `??: ${params[0].name}<br/>??: ${data[0]}<br/>??: ${data[1]}<br/>??: ${data[2]}<br/>??: ${data[3]}`;
+            return `日期: ${params[0].name}<br/>开盘: ${data[0]}<br/>收盘: ${data[1]}<br/>最低: ${data[2]}<br/>最高: ${data[3]}`;
           }
           return '';
         },
@@ -56,10 +42,8 @@ export function useKLineChart(
         show: props.showLegend ?? true,
         top: '0%',
         left: 'center',
-        textStyle: {
-          color: textColor
-        },
-        data: ['K?', ...(props.showVolume ? ['???'] : [])]
+        data: ['K线', ...(props.showVolume ? ['成交量'] : [])]
+        // textStyle.color 由 ECharts 主题处理
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -68,28 +52,21 @@ export function useKLineChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '?????',
+            title: '保存为图片',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '????',
+            title: '数据视图',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '??'
-          }
-        },
-        iconStyle: {
-          borderColor: borderColor
-        },
-        emphasis: {
-          iconStyle: {
-            borderColor: currentThemeColors.primary
+            title: '还原'
           }
         }
+        // iconStyle.borderColor 由 ECharts 主题处理
       },
       grid: (props.showVolume ? [
         {
@@ -122,13 +99,9 @@ export function useKLineChart(
           scale: true,
           boundaryGap: false,
           gridIndex: 0,
-          axisLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          },
+          // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
           axisLabel: {
-            color: textColor
+            // color 由 ECharts 主题处理
           },
           splitLine: {
             show: false
@@ -163,13 +136,9 @@ export function useKLineChart(
           scale: true,
           boundaryGap: false,
           gridIndex: 0,
-          axisLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          },
+          // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
           axisLabel: {
-            color: textColor
+            // color 由 ECharts 主题处理
           },
           splitLine: {
             show: false
@@ -185,19 +154,11 @@ export function useKLineChart(
           splitArea: {
             show: true
           },
-          axisLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          },
+          // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
           axisLabel: {
-            color: textColor
+            // color 由 ECharts 主题处理
           },
-          splitLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          }
+          // splitLine.lineStyle.color 由 ECharts 主题处理
         },
         {
           scale: true,
@@ -222,19 +183,11 @@ export function useKLineChart(
           splitArea: {
             show: true
           },
-          axisLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          },
+          // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
           axisLabel: {
-            color: textColor
+            // color 由 ECharts 主题处理
           },
-          splitLine: {
-            lineStyle: {
-              color: borderColor
-            }
-          }
+          // splitLine.lineStyle.color 由 ECharts 主题处理
         }
       ],
       dataZoom: props.showVolume ? [

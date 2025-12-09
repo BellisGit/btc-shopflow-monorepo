@@ -1,7 +1,8 @@
 <template>
   <div class="test-center-page">
     <!-- 搜索栏 -->
-    <div class="search-section">
+    <BtcRow class="search-row">
+      <BtcFlex1 />
       <el-input
         v-model="searchKeyword"
         placeholder="搜索测试功能..."
@@ -13,7 +14,7 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-    </div>
+    </BtcRow>
 
     <!-- 测试实例卡片网格 -->
     <div class="test-grid">
@@ -76,7 +77,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw, shallowRef } from 'vue';
 import { Search } from '@element-plus/icons-vue';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcMessage, BtcRow, BtcFlex1 } from '@btc/shared-components';
 import { BtcDialog } from '@btc/shared-components';
 import {
   getAllTestInstanceConfigs,
@@ -179,22 +180,23 @@ onMounted(() => {
 .test-center-page {
   width: 100%;
   min-height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+  --card-min-width: 350px;
 }
 
-.search-section {
-  margin-bottom: 30px;
-  display: flex;
-  justify-content: center;
+.search-row {
+  margin-bottom: 10px;
+}
 
-  .search-input {
-    width: 400px;
-    max-width: 100%;
-  }
+.search-input {
+  width: var(--card-min-width);
+  max-width: 100%;
 }
 
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
   gap: 20px;
   width: 100%;
 }

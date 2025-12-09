@@ -67,7 +67,7 @@ const currentMenuItems = computed(() => {
   const app = currentApp.value;
   const menus = getMenusForApp(app);
   // 触发响应式更新
-  menuRegistry.value;
+  void menuRegistry.value;
   return menus;
 });
 

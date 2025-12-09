@@ -156,6 +156,9 @@ const requestService = {
       return { list: [], total: 0, page: pageNo, size: pageSize, success: false, rows: [], records: [], data: { list: [], total: 0, page: pageNo, size: pageSize } };
     }
     // 兜底：返回空数据，避免 loading 挂起
+    // 如果 try 块成功执行，这里不会被执行（已在 try 中 return）
+    // 但保留作为类型检查的兜底逻辑
+    // eslint-disable-next-line no-unreachable
     const pageNo = params?.page ?? 1;
     return { list: [], total: 0, page: pageNo, size: 0, success: true, rows: [], records: [], data: { list: [], total: 0, page: pageNo, size: 0 } };
   },
@@ -289,11 +292,15 @@ onMounted(async () => {
   try {
     tableRef.value?.calcMaxHeight?.();
     tableRef.value?.tableRef?.value?.doLayout?.();
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   // 触发全局 resize，驱动内部高度计算
   try {
     window.dispatchEvent(new Event('resize'));
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
 });
 
 // 页面再次激活（从另一个日志页切回）时，强制计算高度与布局
@@ -302,11 +309,15 @@ onActivated(async () => {
   try {
     tableRef.value?.calcMaxHeight?.();
     tableRef.value?.tableRef?.value?.doLayout?.();
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   // 触发全局 resize，驱动内部高度计算
   try {
     window.dispatchEvent(new Event('resize'));
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
 });
 // 保存天数
 async function saveKeepDays() {

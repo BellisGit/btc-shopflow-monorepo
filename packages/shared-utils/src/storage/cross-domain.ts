@@ -5,7 +5,9 @@
 
 /**
  * 读取 cookie 值
+ * 未使用，保留以备将来使用
  */
+/*
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') {
     return null;
@@ -26,10 +28,13 @@ function getCookie(name: string): string | null {
 
   return null;
 }
+*/
 
 /**
  * 设置 cookie
+ * 未使用，保留以备将来使用
  */
+/*
 function setCookie(
   name: string,
   value: string,
@@ -77,6 +82,7 @@ function setCookie(
 
   document.cookie = cookieString;
 }
+*/
 
 /**
  * 删除 cookie

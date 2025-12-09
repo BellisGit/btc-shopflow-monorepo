@@ -10,6 +10,7 @@
       "@btc/shared-core": ["../../packages/shared-core/src"],
       "@btc/shared-components": ["../../packages/shared-components/src"],
       "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
       "@btc-common": ["../../packages/shared-components/src/common"],
       "@btc-common/*": ["../../packages/shared-components/src/common/*"],
       "@btc-components": ["../../packages/shared-components/src/components"],
@@ -27,7 +28,8 @@
       "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
   "references": [
     { "path": "../../packages/shared-core" },
     { "path": "../../packages/shared-components" },

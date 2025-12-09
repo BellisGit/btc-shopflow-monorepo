@@ -22,11 +22,13 @@
       "@btc/shared-core": ["../../packages/shared-core/src"],
       "@btc/shared-components": ["../../packages/shared-components/src"],
       "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
       "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
       "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "../../configs/**/*.ts"],
+  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 

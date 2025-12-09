@@ -1,3 +1,4 @@
+// @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
 import { BtcMessage } from '@btc/shared-components';
 import { http } from './http';

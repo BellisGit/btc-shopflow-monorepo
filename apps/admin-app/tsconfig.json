@@ -96,8 +96,10 @@
                     "src/**/*.d.ts",
                     "src/**/*.tsx",
                     "src/**/*.vue",
-                    "src/env.d.ts"
+                    "src/env.d.ts",
+                    "../../configs/**/*.ts"
                 ],
+    "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
     "references":  [
                        {
                            "path":  "./tsconfig.node.json"

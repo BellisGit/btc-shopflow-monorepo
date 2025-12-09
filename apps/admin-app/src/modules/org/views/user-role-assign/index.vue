@@ -469,9 +469,9 @@ async function handleSubmit() {
 
   submitting.value = true;
   try {
-    // 批量绑定模式：使用 bind
+    // 批量绑定模式：使用 batchBind
     // 后端要求 roleId 和 userId 都为数组格式
-    await userRoleService?.bind?.({
+    await userRoleService?.batchBind?.({
       userId: selectedUserId.value,
       roleId: selectedRoleKeys.value,
     });
@@ -600,7 +600,7 @@ async function handleMultiUnbind(rows: any[]) {
       roleId: row.roleId,
     }));
 
-    await userRoleService?.unbindBatch?.(unbindList);
+    await userRoleService?.batchUnbind?.(unbindList);
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
 

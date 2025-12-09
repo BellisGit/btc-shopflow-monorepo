@@ -382,6 +382,44 @@ interface datasource {
       }
       
 
+interface bom {
+          /**
+           * 父节点
+           */
+          parentNode?: any;
+        
+          /**
+           * 子节点
+           */
+          childNode?: any;
+        
+          /**
+           * 子节点数量
+           */
+          childQty?: any;
+        
+          /**
+           * 页码
+           */
+          page?: any;
+        
+          /**
+           * 每页数量
+           */
+          size?: any;
+        
+          /**
+           * 关键词
+           */
+          keyword?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
 interface check {
           /**
            * 主键ID
@@ -441,7 +479,7 @@ interface check {
           /**
            * 更新时间
            */
-          updateAt?: any;
+          updatedAt?: any;
         
           /**
            * 删除时间
@@ -539,6 +577,49 @@ interface diff {
       
 
 interface ticket {
+          /**
+           * 页码
+           */
+          page?: any;
+        
+          /**
+           * 每页数量
+           */
+          size?: any;
+        
+          /**
+           * 关键词
+           */
+          keyword?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface data {
+          /**
+           * 库存代码
+           */
+          stockCode?: any;
+        
+          /**
+           * 仓库
+           */
+          warehouse?: any;
+        
+          /**
+           * 总数量
+           */
+          totalQty?: any;
+        
+          /**
+           * 单位成本
+           */
+          unitCost?: any;
+        
           /**
            * 页码
            */

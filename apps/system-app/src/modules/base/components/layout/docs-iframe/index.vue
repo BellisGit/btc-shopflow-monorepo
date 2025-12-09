@@ -70,6 +70,7 @@ const getDocsUrl = () => {
     } else {
       // 如果全局配置未加载，尝试直接导入（仅在 system-app 中可用）
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { getAppConfig } = require('@configs/app-env.config');
         const docsConfig = getAppConfig('docs-site-app');
         if (docsConfig && docsConfig.devPort) {

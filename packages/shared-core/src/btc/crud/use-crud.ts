@@ -334,22 +334,24 @@ export function useCrud<T = Record<string, unknown>>(
 
   /**
    * 打开详情弹窗（info 模式）
+   * 未使用，保留以备将来使用
    */
-  const handleInfo = (row: T) => {
-    currentRow.value = { ...row };
-    upsertMode.value = 'info';
-    upsertVisible.value = true;
-  };
+  // const handleInfo = (row: T) => {
+  //   currentRow.value = { ...row };
+  //   upsertMode.value = 'info';
+  //   upsertVisible.value = true;
+  // };
 
   /**
    * 打开追加弹窗（对应 cool-admin 的 rowAppend）
    * 追加模式：基于现有数据创建新数据
+   * 未使用，保留以备将来使用
    */
-  const handleAppend = (row?: T) => {
-    currentRow.value = row ? { ...row } : null;
-    upsertMode.value = 'add';
-    upsertVisible.value = true;
-  };
+  // const handleAppend = (row?: T) => {
+  //   currentRow.value = row ? { ...row } : null;
+  //   upsertMode.value = 'add';
+  //   upsertVisible.value = true;
+  // };
 
   /**
    * 打开详情弹窗（独立弹窗）

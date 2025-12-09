@@ -4,6 +4,7 @@
  */
 
 import type { Plugin } from 'vite';
+import type { ChunkInfo, OutputOptions, OutputBundle } from 'rollup';
 import { join, dirname } from 'path';
 import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -61,7 +62,7 @@ export function forceNewHashPlugin(): Plugin {
       cssFileNameMap.clear();
       jsFileNameMap.clear();
     },
-    renderChunk(code, chunk) {
+    renderChunk(code: string, chunk: ChunkInfo) {
       const isThirdPartyLib = chunk.fileName?.includes('lib-echarts') ||
                                chunk.fileName?.includes('element-plus') ||
                                chunk.fileName?.includes('vue-core') ||
@@ -74,7 +75,7 @@ export function forceNewHashPlugin(): Plugin {
 
       return `/* build-id: ${buildId} */\n${code}`;
     },
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const fileNameMap = new Map<string, string>();
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
@@ -114,7 +115,8 @@ export function forceNewHashPlugin(): Plugin {
 
       // 更新所有 chunk 中的引用
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code) {
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'chunk' && chunkAny.code) {
           const isThirdPartyLib = fileName.includes('lib-echarts') ||
                                    fileName.includes('element-plus') ||
                                    fileName.includes('vue-core') ||
@@ -125,7 +127,7 @@ export function forceNewHashPlugin(): Plugin {
             continue;
           }
 
-          let newCode = chunk.code;
+          let newCode = chunkAny.code;
           let modified = false;
 
           for (const [oldFileName, newFileName] of fileNameMap.entries()) {
@@ -133,8 +135,9 @@ export function forceNewHashPlugin(): Plugin {
             const newRef = newFileName.replace(/^assets\//, '');
             const oldRefWithoutTrailingDash = oldRef.replace(/-+$/, '');
 
-            const escapedOldRef = oldRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const escapedOldRefWithoutTrailingDash = oldRefWithoutTrailingDash.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 未使用的转义变量，保留以备将来使用
+            // const escapedOldRef = oldRef.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // const escapedOldRefWithoutTrailingDash = oldRefWithoutTrailingDash.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             const replacePatterns = [
               [`/assets/${oldRef}`, `/assets/${newRef}`],
@@ -171,7 +174,7 @@ export function forceNewHashPlugin(): Plugin {
 
             // 为所有 import() 添加版本号
             const allImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
-            newCode = newCode.replace(allImportPattern, (match, quote, path, ext, query) => {
+            newCode = newCode.replace(allImportPattern, (_match: string, quote: string, path: string, _ext: string, query: string) => {
               if (query && query.includes('v=')) {
                 return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
               } else {
@@ -193,7 +196,7 @@ export function forceNewHashPlugin(): Plugin {
           }
 
           if (modified) {
-            chunk.code = newCode;
+            chunkAny.code = newCode;
           }
         }
       }
@@ -201,8 +204,9 @@ export function forceNewHashPlugin(): Plugin {
       // 关键：在 generateBundle 阶段也更新 HTML 中的 CSS 引用
       // 这样可以在其他插件（如 addVersionPlugin）处理之前就更新文件名
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'asset' && fileName === 'index.html') {
-          let htmlContent = chunk.source as string;
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'asset' && fileName === 'index.html') {
+          let htmlContent = chunkAny.source as string;
           let htmlModified = false;
 
           if (cssFileNameMap.size > 0) {
@@ -219,7 +223,7 @@ export function forceNewHashPlugin(): Plugin {
               // 关键：同时匹配 /assets/ 和 ./assets/ 开头的路径
               const linkPattern = new RegExp(`(<link[^>]*\\s+href=["'])(\\.?/assets/${escapedOldCssName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
               const originalHtml = htmlContent;
-              htmlContent = htmlContent.replace(linkPattern, (match, prefix, path, query, suffix) => {
+              htmlContent = htmlContent.replace(linkPattern, (_match, prefix, path, query, suffix) => {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newCssName}`;
@@ -251,7 +255,7 @@ export function forceNewHashPlugin(): Plugin {
               // 1. 更新 <script src> 标签中的 JS 文件路径（包括查询参数）
               const scriptPattern = new RegExp(`(<script[^>]*\\s+src=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
               const originalHtml1 = htmlContent;
-              htmlContent = htmlContent.replace(scriptPattern, (match, prefix, path, query, suffix) => {
+              htmlContent = htmlContent.replace(scriptPattern, (_match, prefix, path, query, suffix) => {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -269,7 +273,7 @@ export function forceNewHashPlugin(): Plugin {
               // 匹配格式：import('./assets/xxx.js') 或 import('/assets/xxx.js')
               const importPattern = new RegExp(`(import\\s*\\(\\s*['"])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(['"]\\s*\\))`, 'g');
               const originalHtml2 = htmlContent;
-              htmlContent = htmlContent.replace(importPattern, (match, prefix, path, query, suffix) => {
+              htmlContent = htmlContent.replace(importPattern, (_match, prefix, path, query, suffix) => {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -287,7 +291,7 @@ export function forceNewHashPlugin(): Plugin {
               // 匹配格式：<link rel="modulepreload" href="/assets/xxx.js"> 或 <link rel="modulepreload" href="./assets/xxx.js">
               const modulepreloadPattern = new RegExp(`(<link[^>]*\\s+rel=["']modulepreload["'][^>]*\\s+href=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
               const originalHtml3 = htmlContent;
-              htmlContent = htmlContent.replace(modulepreloadPattern, (match, prefix, path, query, suffix) => {
+              htmlContent = htmlContent.replace(modulepreloadPattern, (_match, prefix, path, query, suffix) => {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -315,7 +319,7 @@ export function forceNewHashPlugin(): Plugin {
 
       console.log(`[force-new-hash] ✅ 已为 ${fileNameMap.size} 个文件添加构建 ID: ${buildId}`);
     },
-    writeBundle(options) {
+    writeBundle(options: OutputOptions) {
       const outputDir = options.dir || join(process.cwd(), 'dist');
       const indexHtmlPath = join(outputDir, 'index.html');
 
@@ -331,7 +335,7 @@ export function forceNewHashPlugin(): Plugin {
             // 注意：oldCssName 是文件名（不含路径），如 "style-Cot0_1aZ.css"
             const linkPattern = new RegExp(`(<link[^>]*\\s+href=["'])(\\.?/assets/${escapedOldCssName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml = html;
-            html = html.replace(linkPattern, (match, prefix, path, query, suffix) => {
+            html = html.replace(linkPattern, (_match, prefix, path, query, suffix) => {
               // 保持原有的路径前缀（/assets/ 或 ./assets/）
               const pathPrefix = path.startsWith('./') ? './' : '/';
               const newPath = `${pathPrefix}assets/${newCssName}`;
@@ -357,16 +361,18 @@ export function forceNewHashPlugin(): Plugin {
                 // 匹配任何包含 baseName 的 CSS 文件路径
                 const loosePattern = new RegExp(`(<link[^>]*\\s+href=["'])(\\.?/assets/${escapedBaseName}-[^"'\\s]+\\.css)(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
                 const originalHtml = html;
-                html = html.replace(loosePattern, (match, prefix, path, query, suffix) => {
+                let matchedPath = '';
+                html = html.replace(loosePattern, (_match, prefix, path, query, suffix) => {
                   // 保持原有的路径前缀（/assets/ 或 ./assets/）
                   const pathPrefix = path.startsWith('./') ? './' : '/';
                   const newPath = `${pathPrefix}assets/${newCssName}`;
                   const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
+                  matchedPath = path; // 保存匹配的路径用于日志
                   return `${prefix}${newPath}${newQuery}${suffix}`;
                 });
                 if (html !== originalHtml) {
                   modified = true;
-                  console.log(`[force-new-hash] 已通过模糊匹配更新 HTML 中的 CSS 引用: ${path} -> ${newCssName}`);
+                  console.log(`[force-new-hash] 已通过模糊匹配更新 HTML 中的 CSS 引用: ${matchedPath} -> ${newCssName}`);
                   break; // 只更新第一个匹配的，避免重复更新
                 }
               }
@@ -381,7 +387,7 @@ export function forceNewHashPlugin(): Plugin {
             // 1. 更新 import() 动态导入中的路径（同时匹配 /assets/ 和 ./assets/）
             const importPattern = new RegExp(`(import\\s*\\(\\s*['"])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(['"]\\s*\\))`, 'g');
             const originalHtml1 = html;
-            html = html.replace(importPattern, (match, prefix, path, query, suffix) => {
+            html = html.replace(importPattern, (_match, prefix, path, query, suffix) => {
               // 保持原有的路径前缀（/assets/ 或 ./assets/）
               const pathPrefix = path.startsWith('./') ? './' : '/';
               const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -397,7 +403,7 @@ export function forceNewHashPlugin(): Plugin {
             // 2. 更新 <script src> 标签中的路径（同时匹配 /assets/ 和 ./assets/）
             const scriptPattern = new RegExp(`(<script[^>]*\\s+src=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml2 = html;
-            html = html.replace(scriptPattern, (match, prefix, path, query, suffix) => {
+            html = html.replace(scriptPattern, (_match, prefix, path, query, suffix) => {
               // 保持原有的路径前缀（/assets/ 或 ./assets/）
               const pathPrefix = path.startsWith('./') ? './' : '/';
               const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -412,7 +418,7 @@ export function forceNewHashPlugin(): Plugin {
             // 3. 更新 <link rel="modulepreload"> 标签中的路径（同时匹配 /assets/ 和 ./assets/）
             const modulepreloadPattern = new RegExp(`(<link[^>]*\\s+rel=["']modulepreload["'][^>]*\\s+href=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml3 = html;
-            html = html.replace(modulepreloadPattern, (match, prefix, path, query, suffix) => {
+            html = html.replace(modulepreloadPattern, (_match, prefix, path, query, suffix) => {
               // 保持原有的路径前缀（/assets/ 或 ./assets/）
               const pathPrefix = path.startsWith('./') ? './' : '/';
               const newPath = `${pathPrefix}assets/${newJsName}`;
@@ -430,7 +436,7 @@ export function forceNewHashPlugin(): Plugin {
         // 备用方案：匹配所有 import() 语句（包括 /assets/ 和 ./assets/），但只更新版本号，不更新文件名
         // 注意：文件名更新应该已经在 generateBundle 阶段完成，这里只是确保版本号正确
         const importPatternFallback = /import\s*\(\s*(["'])(\.?\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
-        html = html.replace(importPatternFallback, (match, quote, path, ext, query) => {
+        html = html.replace(importPatternFallback, (_match, quote, path, _ext, query) => {
           if (query) {
             return `import(${quote}${path}${query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
           } else {
@@ -484,7 +490,7 @@ export function forceNewHashPlugin(): Plugin {
             patterns.forEach(pattern => {
               const originalContent = content;
               if (pattern.source.includes('import\\s*\\(')) {
-                content = content.replace(pattern, (match, quote, query) => {
+                content = content.replace(pattern, (_match, quote, query) => {
                   const newPath = `/assets/${newFileName}`;
                   const newQuery = query ? query.replace(/\?v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
                   return `import(${quote}${newPath}${newQuery}${quote})`;
@@ -512,7 +518,7 @@ export function forceNewHashPlugin(): Plugin {
                     modified = true;
                   }
                 } else {
-                  content = content.replace(pattern, (match, quote, query) => {
+                  content = content.replace(pattern, (match, quote, _query) => {
                     let newPath: string;
                     if (pattern.source.includes('/assets/')) {
                       newPath = `/assets/${newFileName}`;
@@ -534,7 +540,7 @@ export function forceNewHashPlugin(): Plugin {
           }
 
           const fallbackImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
-          content = content.replace(fallbackImportPattern, (match, quote, path, ext, query) => {
+          content = content.replace(fallbackImportPattern, (_match: string, quote: string, path: string, _ext: string, query: string) => {
             if (query && query.includes('v=')) {
               return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
             } else {
@@ -553,7 +559,7 @@ export function forceNewHashPlugin(): Plugin {
         }
       }
     },
-  };
+  } as Plugin;
 }
 
 /**
@@ -564,7 +570,7 @@ export function fixDynamicImportHashPlugin(): Plugin {
 
   return {
     name: 'fix-dynamic-import-hash',
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       chunkNameMap.clear();
 
       for (const fileName of Object.keys(bundle)) {
@@ -584,7 +590,8 @@ export function fixDynamicImportHashPlugin(): Plugin {
       console.log(`[fix-dynamic-import-hash] 收集到 ${chunkNameMap.size} 个 chunk 映射`);
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code) {
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'chunk' && chunkAny.code) {
           const isThirdPartyLib = fileName.includes('lib-echarts') ||
                                    fileName.includes('element-plus') ||
                                    fileName.includes('vue-core') ||
@@ -595,7 +602,7 @@ export function fixDynamicImportHashPlugin(): Plugin {
             continue;
           }
 
-          let newCode = chunk.code;
+          let newCode = chunkAny.code;
           let modified = false;
           const replacements: Array<{ old: string; new: string }> = [];
 
@@ -613,7 +620,7 @@ export function fixDynamicImportHashPlugin(): Plugin {
             if (!existsInBundle) {
               const refMatch = referencedFile.match(/^([^-]+(?:-[^-]+)*?)(?:-([a-zA-Z0-9]{8,}))?\.(js|mjs|css)$/);
               if (refMatch) {
-                const [, namePrefix, , ext] = refMatch;
+                const [, namePrefix] = refMatch;
                 const actualFile = chunkNameMap.get(namePrefix);
 
                 if (actualFile) {
@@ -642,7 +649,7 @@ export function fixDynamicImportHashPlugin(): Plugin {
           stringPathPattern.lastIndex = 0;
           while ((match = stringPathPattern.exec(newCode)) !== null) {
             const quote = match[1];
-            const fullPath = match[2];
+            // const fullPath = match[2]; // 未使用
             const referencedFile = match[3];
             const fullMatch = match[0];
 
@@ -681,12 +688,12 @@ export function fixDynamicImportHashPlugin(): Plugin {
           }
 
           if (modified) {
-            chunk.code = newCode;
+            chunkAny.code = newCode;
           }
         }
       }
     },
-    writeBundle(options, bundle) {
+    writeBundle(options: OutputOptions, bundle: OutputBundle) {
       const outputDir = options.dir || join(process.cwd(), 'dist');
       chunkNameMap.clear();
 
@@ -709,7 +716,8 @@ export function fixDynamicImportHashPlugin(): Plugin {
       const thirdPartyChunks = ['lib-echarts', 'element-plus', 'vue-core', 'vue-router', 'vendor'];
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && fileName.endsWith('.js') && fileName.startsWith('assets/')) {
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'chunk' && fileName.endsWith('.js') && fileName.startsWith('assets/')) {
           const isThirdPartyLib = thirdPartyChunks.some(lib => fileName.includes(lib));
           const isEChartsLib = fileName.includes('lib-echarts');
 
@@ -782,7 +790,7 @@ export function fixDynamicImportHashPlugin(): Plugin {
             stringPathPattern.lastIndex = 0;
             while ((match = stringPathPattern.exec(content)) !== null) {
               const quote = match[1];
-              const fullPath = match[2];
+              // const fullPath = match[2]; // 未使用
               const referencedFile = match[3];
               const fullMatch = match[0];
 
@@ -844,6 +852,6 @@ export function fixDynamicImportHashPlugin(): Plugin {
         console.log(`[fix-dynamic-import-hash] ✅ writeBundle 阶段共修复 ${totalFixed} 个文件`);
       }
     },
-  };
+  } as Plugin;
 }
 

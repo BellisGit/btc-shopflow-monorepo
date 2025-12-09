@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ApiSwitch: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/ApiSwitch.vue')['default']
     AppLayout: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/index.vue')['default']
     AppSkeleton: typeof import('./../../../packages/shared-components/src/components/basic/app-skeleton/index.vue')['default']
     BasicSettings: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/basic-settings/index.vue')['default']
@@ -27,6 +28,7 @@ declare module 'vue' {
     BtcContainer: typeof import('./../../../packages/shared-components/src/components/layout/btc-container/index.vue')['default']
     BtcCrud: typeof import('@btc/shared-components')['BtcCrud']
     BtcCrudActions: typeof import('@btc/shared-components')['BtcCrudActions']
+    BtcDevTools: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/index.vue')['default']
     BtcDialog: typeof import('@btc/shared-components')['BtcDialog']
     BtcDoubleGroup: typeof import('./../../../packages/shared-components/src/components/data/btc-double-group/index.vue')['default']
     BtcFlex1: typeof import('@btc/shared-components')['BtcFlex1']
@@ -89,6 +91,7 @@ declare module 'vue' {
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElPopover: typeof import('element-plus/es')['ElPopover']
     ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElResult: typeof import('element-plus/es')['ElResult']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSegmented: typeof import('element-plus/es')['ElSegmented']
@@ -105,6 +108,8 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EmailVerifyForm: typeof import('./../../../packages/shared-components/src/components/feedback/btc-identity-verify/components/EmailVerifyForm.vue')['default']
+    EnvInfo: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/EnvInfo.vue')['default']
+    EpsViewer: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/EpsViewer.vue')['default']
     Example: typeof import('./../../../packages/shared-components/src/components/others/btc-svg/example.vue')['default']
     GlobalSearch: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/global-search/index.vue')['default']
     IconButtonInner: typeof import('./../../../packages/shared-components/src/components/basic/btc-icon-button/icon-button-inner.vue')['default']

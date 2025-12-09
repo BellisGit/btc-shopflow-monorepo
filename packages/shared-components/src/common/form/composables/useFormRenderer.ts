@@ -88,6 +88,13 @@ export function useFormRenderer() {
               disabled: itemRef.disabled,
             };
 
+            // 为组件设置 id，确保 label 的 for 属性能正确关联
+            // Element Plus 的 el-form-item 会自动为 label 生成 for 属性，需要组件有对应的 id
+            if (prop) {
+              // 生成唯一的 id，使用 prop 作为基础，确保每个字段都有唯一的 id
+              props.id = `form-item-${prop}`;
+            }
+
             // 添加双向绑定（完全参考 cool-admin 的实现）
             // 关键：currentScope 是 formRef.value 的引用，直接使用它进行读写
             // 这样既能正确显示值，又能确保表单验证时能读取到正确的值

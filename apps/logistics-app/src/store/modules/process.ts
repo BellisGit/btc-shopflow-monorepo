@@ -5,6 +5,7 @@ export interface ProcessItem {
   path: string;
   fullPath: string;
   name?: string;
+  app?: string;
   meta: {
     label?: string;
     keepAlive?: boolean;

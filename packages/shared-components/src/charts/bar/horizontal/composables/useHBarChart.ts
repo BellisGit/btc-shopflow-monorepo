@@ -3,31 +3,21 @@ import type { EChartsOption } from 'echarts';
 import type { HBarChartProps } from '../../../types/bar';
 import { createHorizontalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
-import { getThemeColors } from '../../../utils/css-var';
+// import { getThemeColors } from '../../../utils/css-var'; // 未使用
 
 /**
  * ????? composable
  */
 export function useHBarChart(
   props: HBarChartProps,
-  isDark: Ref<boolean>,
-  themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  _isDark: Ref<boolean>,
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
-    const currentThemeColors = typeof window !== 'undefined' 
-      ? getThemeColors()
-      : themeColors;
-    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
-    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
-    const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
-
     const option: EChartsOption = {
       title: {
-        text: props.title || '',
-        textStyle: {
-          color: textColor
-        }
+        text: props.title || ''
+        // textStyle.color 由 ECharts 主题处理
       },
       tooltip: {
         trigger: 'axis',
@@ -35,23 +25,15 @@ export function useHBarChart(
           type: 'shadow'
         },
         show: props.showTooltip ?? true,
-        backgroundColor: tooltipBg,
-        borderColor: borderColor,
-        borderWidth: 1,
-        textStyle: {
-          color: textColor
-        },
-        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
+        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
         confine: true,
         appendToBody: true
       },
       legend: {
         show: props.showLegend ?? true,
         top: '0%',
-        left: 'center',
-        textStyle: {
-          color: textColor
-        }
+        left: 'center'
+        // textStyle.color 由 ECharts 主题处理
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -60,28 +42,21 @@ export function useHBarChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '?????',
+            title: '保存为图片',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '????',
+            title: '数据视图',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '??'
-          }
-        },
-        iconStyle: {
-          borderColor: borderColor
-        },
-        emphasis: {
-          iconStyle: {
-            borderColor: currentThemeColors.primary
+            title: '还原'
           }
         }
+        // iconStyle.borderColor 由 ECharts 主题处理
       },
       grid: props.grid || {
         left: '3%',
@@ -97,27 +72,16 @@ export function useHBarChart(
         axisTick: {
           show: false
         },
-        splitLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
+        // splitLine.lineStyle.color 由 ECharts 主题处理
         axisLabel: {
-          color: textColor,
           formatter: props.xAxisFormatter ? `{value}${props.xAxisFormatter}` : '{value}'
+          // color 由 ECharts 主题处理
         }
       },
       yAxis: {
         type: 'category',
-        data: props.yAxisData,
-        axisLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
-        axisLabel: {
-          color: textColor
-        }
+        data: props.yAxisData
+        // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
       },
       series: props.data.map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
@@ -130,8 +94,8 @@ export function useHBarChart(
           label: {
             show: props.showLabel ?? false,
             position: 'right',
-            color: textColor,
             fontSize: 12
+            // color 由 ECharts 主题处理
           }
         };
 

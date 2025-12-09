@@ -5,7 +5,6 @@
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
-import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
@@ -103,7 +102,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
   // 使用导入的 createPathHelpers
-  const { withRoot, withPackages } = createPathHelpers(appDir);
+  const { withRoot } = createPathHelpers(appDir);
 
   // 布局应用固定使用根路径
   const baseUrl = '/';
@@ -119,7 +118,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   };
 
   // 构建插件列表
-  const plugins: Plugin[] = [
+  const plugins: any[] = [
     // 1. CORS 插件
     corsPlugin(),
     // 2. 自定义插件
@@ -146,7 +145,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       },
       eps: {
         enable: true,
-        dist: './build/eps',
+        // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
+        // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
+        dist: resolve(appDir, 'build', 'eps'),
         api: '/api/login/eps/contract',
         ...btcOptions.eps,
       },
@@ -176,7 +177,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       transformIndexHtml(html) {
         return html.replace(
           /<script(\s+[^>]*)?>/gi,
-          (match, attrs = '') => {
+          (match: string, attrs: string = '') => {
             if (!match.includes('src=')) {
               return match;
             }
@@ -191,17 +192,18 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     // 11. 修复 layout-app HTML 中的资源路径（将 /assets/ 改为 /assets/layout/）
     {
       name: 'fix-layout-assets-path',
-      generateBundle(options, bundle) {
+      generateBundle(_options: any, bundle: Record<string, any>) {
         for (const [fileName, chunk] of Object.entries(bundle)) {
-          if (chunk.type === 'asset' && fileName === 'index.html') {
-            let htmlContent = chunk.source as string;
+          const chunkAny = chunk as any;
+          if (chunkAny.type === 'asset' && fileName === 'index.html') {
+            let htmlContent = chunkAny.source as string;
             let modified = false;
 
             // 修复 import() 动态导入中的路径
             // 匹配格式：import('/assets/xxx.js') 或 import("/assets/xxx.js")
             const importPattern = /(import\s*\(\s*['"])\/assets\/(?!layout\/)([^"']+)(['"]\s*\))/gi;
             if (importPattern.test(htmlContent)) {
-              htmlContent = htmlContent.replace(importPattern, (match, prefix, path, suffix) => {
+              htmlContent = htmlContent.replace(importPattern, (_match: string, prefix: string, path: string, suffix: string) => {
                 modified = true;
                 return `${prefix}/assets/layout/${path}${suffix}`;
               });
@@ -211,7 +213,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
             // 匹配格式：<script src="/assets/xxx.js">
             const scriptPattern = /(<script[^>]*\s+src=["'])\/assets\/(?!layout\/)([^"']+)(["'][^>]*>)/gi;
             if (scriptPattern.test(htmlContent)) {
-              htmlContent = htmlContent.replace(scriptPattern, (match, prefix, path, suffix) => {
+              htmlContent = htmlContent.replace(scriptPattern, (_match: string, prefix: string, path: string, suffix: string) => {
                 modified = true;
                 return `${prefix}/assets/layout/${path}${suffix}`;
               });
@@ -221,14 +223,14 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
             // 匹配格式：<link href="/assets/xxx.css">
             const linkPattern = /(<link[^>]*\s+href=["'])\/assets\/(?!layout\/)([^"']+)(["'][^>]*>)/gi;
             if (linkPattern.test(htmlContent)) {
-              htmlContent = htmlContent.replace(linkPattern, (match, prefix, path, suffix) => {
+              htmlContent = htmlContent.replace(linkPattern, (_match: string, prefix: string, path: string, suffix: string) => {
                 modified = true;
                 return `${prefix}/assets/layout/${path}${suffix}`;
               });
             }
 
             if (modified) {
-              chunk.source = htmlContent;
+              chunkAny.source = htmlContent;
               console.log('[fix-layout-assets-path] ✅ 已修复 layout-app HTML 中的资源路径（/assets/ -> /assets/layout/）');
             }
           }
@@ -270,7 +272,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     emptyOutDir: true,
     rollupOptions: {
       preserveEntrySignatures: 'strict',
-      onwarn(warning, warn) {
+      onwarn(warning: any, warn: (warning: any) => void) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE' ||
             (warning.message && typeof warning.message === 'string' &&
              warning.message.includes('dynamically imported') &&
@@ -285,7 +287,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       output: {
         format: 'esm',
         inlineDynamicImports: false,
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (id.includes('virtual:eps') ||
               id.includes('\\0virtual:eps') ||
               id.includes('services/eps') ||
@@ -333,7 +335,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         // 布局应用使用 assets/layout/ 前缀
         chunkFileNames: 'assets/layout/[name]-[hash].js',
         entryFileNames: 'assets/layout/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
+        assetFileNames: (assetInfo: any) => {
           if (assetInfo.name?.endsWith('.css')) {
             return 'assets/layout/[name]-[hash].css';
           }

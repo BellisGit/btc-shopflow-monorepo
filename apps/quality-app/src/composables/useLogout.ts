@@ -1,3 +1,4 @@
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -5,6 +6,16 @@ import { useUser } from './useUser';
 import { useProcessStore } from '@/store/process';
 import { deleteCookie } from '@/utils/cookie';
 import { appStorage } from '@/utils/app-storage';
+
+// 声明全局 authApi 接口
+declare global {
+  interface Window {
+    __APP_AUTH_API__?: {
+      logout: () => Promise<void>;
+      [key: string]: any;
+    };
+  }
+}
 
 /**
  * 退出登录 composable
@@ -20,14 +31,14 @@ export function useLogout() {
    */
   const logout = async () => {
     try {
-      // 调用后端 logout API（如果可用）
+      // 调用后端 logout API（通过全局 authApi，由 system-app 提供）
       // 注意：即使后端 API 失败，前端也要执行清理操作
-      // quality-app 可能没有 api-services 模块，所以这里不调用 logout API
-      // 如果需要调用 logout API，可以通过全局函数提供
       try {
-        const getLogoutApi = (window as any).__APP_LOGOUT_API__;
-        if (getLogoutApi && typeof getLogoutApi === 'function') {
-          await getLogoutApi();
+        const authApi = (window as any).__APP_AUTH_API__;
+        if (authApi?.logout) {
+          await authApi.logout();
+        } else {
+          console.warn('[useLogout] Auth API logout function not available globally.');
         }
       } catch (error: any) {
         // 后端 API 失败不影响前端清理

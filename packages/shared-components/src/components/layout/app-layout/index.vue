@@ -75,13 +75,6 @@
                   <keep-alive v-else-if="Component">
                     <component :is="Component" :key="route.fullPath" />
                   </keep-alive>
-                  <div v-else style="padding: 20px; color: #999;">
-                    <p>⚠️ 路由组件未加载</p>
-                    <p>路径: {{ route.path }}</p>
-                    <p>完整路径: {{ route.fullPath }}</p>
-                    <p>匹配的路由数: {{ route.matched.length }}</p>
-                    <p>isMainApp: {{ isMainApp }}</p>
-                  </div>
                 </transition>
               </router-view>
             </div>

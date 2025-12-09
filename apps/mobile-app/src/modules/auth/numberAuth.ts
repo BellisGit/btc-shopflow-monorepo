@@ -63,7 +63,7 @@ function injectScript(): Promise<void> {
     if (existing) {
       existing.addEventListener('load', () => resolve());
       existing.addEventListener('error', () => reject(new Error('号码认证 SDK 脚本加载失败')));
-      if (existing.readyState === 'complete') {
+      if ((existing as HTMLScriptElement & { readyState?: string }).readyState === 'complete') {
         resolve();
       }
       return;

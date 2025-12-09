@@ -227,7 +227,7 @@ const menuThemeConfig = computed(() => {
     // 深色系统主题下，菜单使用与内容区域一致的深色背景
     return {
       background: 'var(--el-bg-color)',
-      textColor: '#BABBBD',
+      textColor: '#FFFFFF',
       textActiveColor: '#FFFFFF',
     };
   }

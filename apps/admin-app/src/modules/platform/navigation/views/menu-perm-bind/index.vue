@@ -53,8 +53,8 @@ const selectedPermissions = ref<number[]>([]);
 const saving = ref(false);
 
 // Mock服务
-const menuService = service.admin（.iam（.sysmenu;
-const permissionService = service.admin（.iam（.syspermission;
+const menuService = service.admin.iam.sysmenu;
+const permissionService = service.admin.iam.syspermission;
 
 // 加载菜单信息
 const loadMenuInfo = async () => {

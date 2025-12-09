@@ -8,6 +8,7 @@ import type { QiankunProps } from '@btc/shared-core';
 import {
   registerAppEnvAccessors,
   registerManifestMenusForApp,
+  registerManifestTabsForApp,
   createAppStorageBridge,
   createDefaultDomainResolver,
   resolveAppLogoUrl,
@@ -360,10 +361,12 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
   if (isStandalone) {
     setupStandaloneGlobals();
     registerManifestMenusForApp(FINANCE_APP_ID);
+    registerManifestTabsForApp(FINANCE_APP_ID);
   } else {
-    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
-    // 这样 layout-app 才能显示 finance-app 的菜单
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单和 Tabs
+    // 这样 layout-app 才能显示 finance-app 的菜单和 Tabs
     registerManifestMenusForApp(FINANCE_APP_ID);
+    registerManifestTabsForApp(FINANCE_APP_ID);
   }
 
   const app = createApp(App);

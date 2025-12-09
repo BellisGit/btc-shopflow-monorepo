@@ -4,14 +4,16 @@
  */
 
 import type { Plugin } from 'vite';
+import type { OutputOptions, OutputBundle } from 'rollup';
 
 /**
  * 验证所有 chunk 生成插件
  */
 export function chunkVerifyPlugin(): Plugin {
   return {
+    // @ts-ignore - Vite Plugin 类型定义可能不完整，name 属性是标准属性
     name: 'chunk-verify-plugin',
-    writeBundle(options, bundle) {
+    writeBundle(_options: OutputOptions, bundle: OutputBundle) {
       console.log('\n[chunk-verify-plugin] ✅ 生成的所有 chunk 文件：');
       const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js'));
       const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
@@ -63,8 +65,9 @@ export function chunkVerifyPlugin(): Plugin {
       const missingFiles: Array<{ file: string; referencedBy: string[]; possibleMatches: string[] }> = [];
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code) {
-          const codeWithoutComments = chunk.code
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'chunk' && chunkAny.code) {
+          const codeWithoutComments = chunkAny.code
             .replace(/\/\/.*$/gm, '')
             .replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -137,16 +140,17 @@ export function chunkVerifyPlugin(): Plugin {
 export function optimizeChunksPlugin(): Plugin {
   return {
     name: 'optimize-chunks',
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const emptyChunks: string[] = [];
       const chunkReferences = new Map<string, string[]>();
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code.trim().length === 0) {
+        const chunkAny = chunk as any;
+        if (chunkAny.type === 'chunk' && chunkAny.code && chunkAny.code.trim().length === 0) {
           emptyChunks.push(fileName);
         }
-        if (chunk.type === 'chunk' && chunk.imports) {
-          for (const imported of chunk.imports) {
+        if (chunkAny.type === 'chunk' && chunkAny.imports) {
+          for (const imported of chunkAny.imports) {
             if (!chunkReferences.has(imported)) {
               chunkReferences.set(imported, []);
             }
@@ -184,6 +188,6 @@ export function optimizeChunksPlugin(): Plugin {
         console.log(`[optimize-chunks] 保留了 ${chunksToKeep.length} 个被引用的空 chunk（已添加占位符）:`, chunksToKeep);
       }
     },
-  };
+  } as Plugin;
 }
 

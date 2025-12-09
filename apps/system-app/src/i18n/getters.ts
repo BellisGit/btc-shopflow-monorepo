@@ -10,7 +10,8 @@ const getMessages = (): Record<string, any> => {
     try {
       // 使用动态导入，避免在模块顶层初始化
       // 注意：@intlify/unplugin-vue-i18n/messages 在构建时会被替换为实际的消息对象
-      // 这里使用 try-catch 确保即使导入失败也能正常工作
+      // 这里使用同步导入，因为 unplugin-vue-i18n 在构建时会处理
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const messagesModule = require('@intlify/unplugin-vue-i18n/messages');
       messagesCache = (messagesModule.default || messagesModule) as Record<string, any>;
     } catch {

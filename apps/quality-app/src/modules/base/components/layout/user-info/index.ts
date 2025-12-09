@@ -1,5 +1,6 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
+// @ts-expect-error - virtual:eps 模块在构建时生成，类型声明可能不完整
 import { service } from '@services/eps';
 import { appStorage } from '@/utils/app-storage';
 

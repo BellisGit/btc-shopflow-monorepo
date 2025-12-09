@@ -1,55 +1,36 @@
-import { computed, type Ref } from 'vue';
+import type { Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { LineChartProps } from '../../../types/line';
 import { createVerticalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
-import { getThemeColors } from '../../../utils/css-var';
+// import { getThemeColors } from '../../../utils/css-var'; // 未使用
 
 /**
  * 折线图 composable
  */
 export function useLineChart(
   props: LineChartProps,
-  isDark: Ref<boolean>,
-  themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  _isDark: Ref<boolean>,
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
-    const currentThemeColors = typeof window !== 'undefined' 
-      ? getThemeColors()
-      : themeColors;
-    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
-    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
-    const bgColor = isDark.value ? currentThemeColors.dark.bgColorPage : currentThemeColors.bgColor;
-    const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
-
     const option: EChartsOption = {
       title: {
-        text: props.title || '',
-        textStyle: {
-          color: textColor
-        }
+        text: props.title || ''
+        // textStyle.color 由 ECharts 主题处理
       },
       tooltip: {
         trigger: 'axis',
         show: props.showTooltip ?? true,
-        backgroundColor: tooltipBg,
-        borderColor: borderColor,
-        borderWidth: 1,
-        textStyle: {
-          color: textColor
-        },
-        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
+        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
         confine: true,
         appendToBody: true
       },
       legend: {
         show: props.showLegend ?? true,
         top: '0%',
-        left: 'center',
-        textStyle: {
-          color: textColor
-        }
+        left: 'center'
+        // textStyle.color 由 ECharts 主题处理
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -71,15 +52,8 @@ export function useLineChart(
             show: true,
             title: '还原'
           }
-        },
-        iconStyle: {
-          borderColor: borderColor
-        },
-        emphasis: {
-          iconStyle: {
-            borderColor: currentThemeColors.primary
-          }
         }
+        // iconStyle.borderColor 由 ECharts 主题处理
       },
       grid: props.grid || {
         left: '3%',
@@ -89,15 +63,8 @@ export function useLineChart(
       },
       xAxis: {
         type: 'category',
-        data: props.xAxisData,
-        axisLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
-        axisLabel: {
-          color: textColor
-        }
+        data: props.xAxisData
+        // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
       },
       yAxis: {
         type: 'value',
@@ -107,14 +74,10 @@ export function useLineChart(
         axisTick: {
           show: false
         },
-        splitLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
+        // splitLine.lineStyle.color 由 ECharts 主题处理
         axisLabel: {
-          color: textColor,
           formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
+          // color 由 ECharts 主题处理
         }
       },
       series: props.data.map((item, index) => {
@@ -136,8 +99,8 @@ export function useLineChart(
           label: {
             show: props.showLabel ?? false,
             position: 'top',
-            color: textColor,
             fontSize: 12
+            // color 由 ECharts 主题处理
           },
           animation: props.animation !== false,
           animationDuration: props.animationDuration ?? 1000

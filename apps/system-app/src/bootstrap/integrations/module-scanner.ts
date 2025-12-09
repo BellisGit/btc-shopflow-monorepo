@@ -115,6 +115,9 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
   const processedModules = new Set<string>();
 
   // 处理所有文件（包括懒加载的插件文件）
+  // 使用 Set 记录已处理的插件名称，避免重复注册
+  const processedPluginNames = new Set<string>();
+  
   for (const [filePath, moduleConfigOrLoader] of Object.entries(allFiles)) {
     try {
       const { type, name, fileName } = parseFilePath(filePath);
@@ -174,9 +177,15 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
           continue;
         }
 
-        plugins.push(pluginConfig);
-        processedModules.add(moduleKey);
+        // 检查插件是否已经注册过（避免重复注册）
+        if (processedPluginNames.has(pluginConfig.name)) {
+          console.warn(`[ModuleScanner] 跳过重复插件: ${pluginConfig.name} (已在 ${filePath} 中注册)`);
+          continue;
+        }
 
+        plugins.push(pluginConfig);
+        processedPluginNames.add(pluginConfig.name);
+        processedModules.add(moduleKey);
       }
 
     } catch (error) {

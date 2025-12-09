@@ -54,7 +54,7 @@
         "labelKey": "menu.finance.inventoryManagement"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.finance.inventoryManagement" }
+        { "labelKey": "menu.finance.inventoryManagement", "icon": "Box" }
       ]
     },
     {
@@ -65,8 +65,8 @@
         "labelKey": "menu.finance.inventoryManagement.result"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.finance.inventoryManagement" },
-        { "labelKey": "menu.finance.inventoryManagement.result" }
+        { "labelKey": "menu.finance.inventoryManagement", "icon": "Box" },
+        { "labelKey": "menu.finance.inventoryManagement.result", "icon": "List" }
       ]
     }
   ],

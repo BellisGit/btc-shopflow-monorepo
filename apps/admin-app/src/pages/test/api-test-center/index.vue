@@ -1,6 +1,6 @@
 <template>
   <div class="api-test-center">
-    <BtcRow>
+    <BtcRow class="search-row">
       <BtcFlex1 />
       <el-input
         v-model="searchKeyword"
@@ -79,8 +79,9 @@
         </el-table>
 
       <!-- 分页组件 -->
-      <BtcRow>
+      <BtcRow class="pagination-row">
         <BtcFlex1 />
+        <el-config-provider :locale="elLocale">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -89,6 +90,7 @@
           layout="total, sizes, prev, pager, next, jumper"
           background
         />
+        </el-config-provider>
       </BtcRow>
     </div>
   </div>
@@ -97,11 +99,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Search } from '@element-plus/icons-vue';
+import { ElConfigProvider } from 'element-plus';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import en from 'element-plus/es/locale/lang/en';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 import { service } from '@/services/eps';
 import eps from 'virtual:eps';
 
 const message = useMessage();
+const { locale } = useI18n();
+
+// Element Plus 国际化配置
+const elLocale = computed(() => {
+  const currentLocale = locale.value || 'zh-CN';
+  return currentLocale === 'zh-CN' ? zhCn : en;
+});
 
 // 搜索关键词
 const searchKeyword = ref('');
@@ -141,22 +154,36 @@ const testCases = ref<any[]>([]);
 function generateTestCases() {
   const cases = [];
 
-  // 从EPS数据中获取test服务的API信息
+  // 从EPS数据中获取admin.test模块的API信息
   if (eps?.list && Array.isArray(eps.list)) {
-    const testEntity = eps.list.find((entity: any) => entity.name === 'TestEntity');
+    // 查找moduleKey为'admin.test'的实体，或者module为'admin.test'的实体
+    const testEntity = eps.list.find((entity: any) => 
+      entity.moduleKey === 'admin.test' || 
+      entity.module === 'admin.test' ||
+      (entity.prefix && entity.prefix.includes('/api/system/test/'))
+    );
 
     if (testEntity && testEntity.api && Array.isArray(testEntity.api)) {
       testEntity.api.forEach((api: any) => {
-        // 从API路径中提取错误码
-        const codeMatch = api.path.match(/\/(\d+)$/);
-        const code = codeMatch ? parseInt(codeMatch[1]) : null;
+        // 从API的name字段提取错误码（如"510", "501", "511"）
+        // 或者从path中提取（如"/510"）
+        let code: number | null = null;
+        
+        // 优先从name字段提取（name是数字字符串）
+        if (api.name && /^\d+$/.test(api.name)) {
+          code = parseInt(api.name);
+        } else {
+          // 如果name不是数字，从path中提取
+          const codeMatch = api.path?.match(/\/(\d+)$/);
+          code = codeMatch ? parseInt(codeMatch[1]) : null;
+        }
 
         if (code && api.name) {
           cases.push({
             code: code,
             name: api.summary || api.name, // 使用summary作为标题，如果没有则使用name
             description: `测试${code}错误码处理`,
-            method: api.name,
+            method: api.name, // 使用API的name作为方法名（如"510", "501", "511"）
             loading: false,
             success: false,
             error: false,
@@ -303,11 +330,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.api-test-center {
+  padding: 10px;
+}
+
+.search-row {
+  margin-bottom: 10px;
+}
+
 .search-input {
-  width: 300px;
+  width: 240px;
 }
 
 .test-table {
-  margin-top: 20px;
+  margin-top: 0;
+}
+
+.pagination-row {
+  margin-top: 10px;
 }
 </style>

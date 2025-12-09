@@ -3,11 +3,18 @@
  * 生成移动应用的完整 Vite 配置（mobile-app）
  */
 
-import type { UserConfig, Plugin } from 'vite';
+import type { UserConfig, Plugin, ViteDevServer } from 'vite';
 import { resolve } from 'path';
-import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
-import { VitePWA } from 'vite-plugin-pwa';
+// @ts-ignore - vite-plugin-pwa 类型定义可能有问题，但运行时可用
+// vite-plugin-pwa v0.20.0 使用 CommonJS 导出，需要使用 createRequire
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const VitePWAModule = require('vite-plugin-pwa');
+// vite-plugin-pwa 可能导出为 { default: function } 或直接导出函数
+const VitePWA = (VitePWAModule.default && typeof VitePWAModule.default === 'function') 
+  ? VitePWAModule.default 
+  : (typeof VitePWAModule === 'function' ? VitePWAModule : VitePWAModule.VitePWA || VitePWAModule);
 import { createPathHelpers } from '../utils/path-helpers';
 
 // 使用 ESM 导入 VueI18nPlugin（Vite 配置文件支持 ESM）
@@ -116,7 +123,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   };
 
   // 构建插件列表
-  const plugins: Plugin[] = [
+  const plugins = [
     // 1. SSL 插件
     basicSsl(),
     // 2. 自定义插件
@@ -128,8 +135,8 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         propsDestructure: true,
       },
     }),
-    // 4. BTC 业务插件
-    btc({
+    // 4. BTC 业务插件（btc() 返回插件数组）
+    ...btc({
       type: 'mobile' as any,
       svg: {
         skipNames: ['base', 'icons'],
@@ -179,6 +186,8 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
               cacheName: 'api-cache',
               networkTimeoutSeconds: 10,
               cacheableResponse: { statuses: [0, 200] },
+              // iOS设备：更短的缓存时间，避免占用过多存储空间
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }, // 1天
             },
           },
           {
@@ -186,7 +195,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             handler: 'CacheFirst',
             options: {
               cacheName: 'icon-cache-v1',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7天
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -195,7 +204,16 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             handler: 'CacheFirst',
             options: {
               cacheName: 'image-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30天
+            },
+          },
+          // 静态资源缓存（JS、CSS等）
+          {
+            urlPattern: /\.(?:js|css|woff2|ttf|eot)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-resources-v1',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1年
             },
           },
         ],
@@ -218,7 +236,6 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         theme_color: '#1976d2',
         background_color: '#ffffff',
         display: 'standalone',
-        display_override: ['standalone', 'fullscreen', 'minimal-ui'],
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
@@ -227,19 +244,19 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             src: '/icons/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any',
+            purpose: 'any maskable',
           },
           {
             src: '/icons/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any',
+            purpose: 'any maskable',
           },
           {
             src: '/icons/android-chrome-1024x1024.png',
             sizes: '1024x1024',
             type: 'image/png',
-            purpose: 'any',
+            purpose: 'any maskable',
           },
           {
             src: '/icons/favicon-32x32.png',
@@ -253,12 +270,15 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             type: 'image/png',
             purpose: 'any',
           },
-          {
-            src: '/icons/apple-touch-icon.png',
-            type: 'image/png',
-            purpose: 'any',
-          },
         ],
+        // iOS特定配置
+        ios: {
+          'apple-mobile-web-app-capable': 'yes',
+          'apple-mobile-web-app-status-bar-style': 'black-translucent',
+          'apple-mobile-web-app-title': '拜里斯科技',
+        },
+        // 针对不同设备的显示模式
+        display_override: ['standalone', 'fullscreen', 'minimal-ui', 'browser'],
       },
       disableDevLogs: true,
       ...pwaOptions,
@@ -266,8 +286,8 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     // 8. manifest 中间件
     {
       name: 'manifest-middleware',
-      configureServer(server) {
-        server.middlewares.use('/manifest.webmanifest', (req, res, next) => {
+      configureServer(server: ViteDevServer) {
+        server.middlewares.use('/manifest.webmanifest', (_req: any, res: any, next: any) => {
           res.setHeader('Content-Type', 'application/manifest+json');
           next();
         });
@@ -296,10 +316,10 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         collapse_vars: false,
         dead_code: false,
       },
-      mangle: {
-        keep_fnames: true,
-        keep_classnames: true,
-      },
+      // 关键：对于 ES 模块，完全禁用 mangle 以避免导出名称被混淆
+      // 这可以防止 "does not provide an export named 'g'" 错误
+      // 虽然这会增加一些文件大小，但可以确保动态导入正常工作
+      mangle: false,
       format: {
         comments: false,
       },
@@ -313,7 +333,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         generatedCode: {
           constBindings: false,
         },
-        manualChunks: (id) => {
+        manualChunks: (id: string) => {
           // 强制分离 Vue 相关依赖
           if (id.includes('node_modules/vue/') || 
               id.includes('node_modules/vue-router/') || 
@@ -345,7 +365,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     port: appConfig.devPort,
     host: '0.0.0.0',
     strictPort: false,
-    https: true,
+    https: {},
     cors: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -375,7 +395,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     host: '0.0.0.0',
-    https: true,
+    https: {},
     headers: {
       'Access-Control-Allow-Origin': '*',
     },

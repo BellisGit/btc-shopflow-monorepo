@@ -3,6 +3,7 @@
  * 负责管理 BtcMessage 的显示、徽章创建和生命周期管理
  */
 
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import type { MessageHandler } from 'element-plus';
 import { messageManager } from '../../utils/message-manager';

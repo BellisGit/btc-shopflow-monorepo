@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { getCookie } from '@/utils/cookie';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -134,10 +135,20 @@ router.beforeEach((to, _from, next) => {
   }
 
   const authStore = useAuthStore();
+  
+  // 在路由守卫中，如果 store 中没有 token，但 cookie 中有 token，尝试同步
+  // 这可以处理从其他应用登录后，cookie 已经设置但 store 未初始化的情况
+  if (!authStore.isAuthenticated) {
+    const cookieToken = getCookie('access_token');
+    if (cookieToken) {
+      console.log('[Router] Token found in cookie, syncing to store');
+      authStore.setToken(cookieToken);
+    }
+  }
 
-  // 如果用户已登录，访问登录页时重定向到首页或 redirect 参数指定的页面
+  // 如果用户已登录，访问登录页时重定向到查询页面或 redirect 参数指定的页面
   if (to.meta.public && authStore.isAuthenticated) {
-    const redirect = (to.query.redirect as string) || '/home';
+    const redirect = (to.query.redirect as string) || '/query';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
     next(redirectPath);

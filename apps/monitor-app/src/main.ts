@@ -15,7 +15,8 @@ import { registerAppEnvAccessors, registerManifestMenusForApp } from '@configs/l
 import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports } from '@btc/shared-utils/error-monitor';
 import { createI18nPlugin } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale, DEFAULT_LOCALE, FALLBACK_LOCALE } from './i18n/getters';
-import { AppLayout } from '@btc/shared-components';
+// AppLayout 未使用，但保留导入以备将来使用
+// import { AppLayout } from '@btc/shared-components';
 import App from './App.vue';
 import { createMonitorRouter } from './router';
 import { getManifestTabs, getManifestRoute } from '@btc/subapp-manifests';
@@ -31,6 +32,7 @@ let i18nPlugin: ReturnType<typeof createI18nPlugin> | null = null;
 let unsubscribeCrossDomain: (() => void) | null = null;
 let routerAfterEach: (() => void) | null = null;
 let locationListeners: Array<[string, EventListener]> = [];
+let languageListener: EventListener | null = null;
 
 // 路由同步相关变量
 let syncingFromSubApp = false;
@@ -271,6 +273,22 @@ const registerTabs = (props?: QiankunProps) => {
   })));
 };
 
+// 设置事件桥接（语言切换和主题切换）
+const setupEventBridge = () => {
+  // 语言切换监听器需要在所有环境下都运行（包括独立运行）
+  languageListener = ((event: Event) => {
+    const custom = event as CustomEvent<{ locale: string }>;
+    const newLocale = custom.detail?.locale as 'zh-CN' | 'en-US';
+    if (newLocale && i18nPlugin?.i18n?.global) {
+      i18nPlugin.i18n.global.locale.value = newLocale;
+      // 重新注册 Tabbar，确保标签页标题也更新
+      registerTabs();
+    }
+  }) as EventListener;
+
+  window.addEventListener('language-change', languageListener);
+};
+
 function bootstrap() {
   return Promise.resolve();
 }
@@ -311,7 +329,7 @@ async function mount(_props: QiankunProps = {}) {
   // 设置错误捕获（监控应用自己的错误，不使用跨域上报）
   setupSubAppErrorCapture({
     updateErrorList,
-    appName: _props?.appName || MONITOR_APP_ID,
+    appName: (_props?.appName as string | undefined) || MONITOR_APP_ID,
     useCrossDomainReport: false, // 监控应用自己不需要跨域上报
   });
 
@@ -336,6 +354,9 @@ async function mount(_props: QiankunProps = {}) {
   // 设置路由同步和主机路由监听
   setupRouteSync();
   setupHostLocationBridge();
+
+  // 设置事件桥接（语言切换和主题切换）
+  setupEventBridge();
 
   // 注册 Tabbar
   registerTabs(_props);
@@ -379,6 +400,12 @@ async function unmount(_props: QiankunProps = {}) {
   });
   locationListeners = [];
 
+  // 取消语言切换监听
+  if (languageListener) {
+    window.removeEventListener('language-change', languageListener);
+    languageListener = null;
+  }
+
   // 取消跨域上报监听
   if (unsubscribeCrossDomain) {
     unsubscribeCrossDomain();
@@ -394,6 +421,7 @@ async function unmount(_props: QiankunProps = {}) {
     app.unmount();
     app = null;
     router = null;
+    i18nPlugin = null;
   }
 }
 

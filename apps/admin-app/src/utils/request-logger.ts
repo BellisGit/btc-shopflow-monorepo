@@ -123,6 +123,7 @@ class RequestLogQueue {
       // 如果队列有数据但未达到批量大小，且没有定时器在运行，启动定时器
       this.startTimer();
     } else if (this.queue.length > 0 && this.timer) {
+      // 定时器已在运行，无需操作
     }
   }
 
@@ -322,7 +323,7 @@ class RequestLogQueue {
           break;
         }
 
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           // 清理属性名，确保Java兼容
           const cleanKey = this.sanitizePropertyName(key);
           const value = obj[key];

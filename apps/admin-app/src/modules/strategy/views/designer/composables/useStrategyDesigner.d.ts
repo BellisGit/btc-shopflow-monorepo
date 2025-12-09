@@ -118,7 +118,7 @@ export declare function useStrategyDesigner(): {
     getNodeStyle: any;
     getNodeColor: any;
     getOutputConnectionClass: any;
-    getConnectionStyle: (_connection: StrategyConnection) => {};
+    getConnectionStyle: (_connection: StrategyConnection) => Record<string, never>;
     getConnectionColor: any;
     getConnectionClass: (_connection: StrategyConnection) => string;
 };

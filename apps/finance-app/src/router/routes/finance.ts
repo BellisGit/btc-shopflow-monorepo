@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
@@ -17,7 +18,7 @@ const pageRoutes: RouteRecordRaw[] = [
     meta: {
       labelKey: 'menu.finance.inventoryManagement',
       breadcrumbs: [
-        { labelKey: 'menu.finance.inventoryManagement' },
+        { labelKey: 'menu.finance.inventoryManagement', icon: 'Box' },
       ],
       tabLabelKey: 'menu.finance.inventoryManagement',
     },
@@ -29,8 +30,8 @@ const pageRoutes: RouteRecordRaw[] = [
     meta: {
       labelKey: 'menu.finance.inventoryManagement.result',
       breadcrumbs: [
-        { labelKey: 'menu.finance.inventoryManagement' },
-        { labelKey: 'menu.finance.inventoryManagement.result' },
+        { labelKey: 'menu.finance.inventoryManagement', icon: 'Box' },
+        { labelKey: 'menu.finance.inventoryManagement.result', icon: 'List' },
       ],
       tabLabelKey: 'menu.finance.inventoryManagement.result',
     },

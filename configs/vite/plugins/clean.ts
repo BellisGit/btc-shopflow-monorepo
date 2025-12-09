@@ -53,6 +53,6 @@ export function cleanDistPlugin(appDir: string): Plugin {
         }
       }
     },
-  };
+  } as Plugin;
 }
 

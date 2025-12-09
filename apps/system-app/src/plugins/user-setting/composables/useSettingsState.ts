@@ -10,6 +10,8 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
+// @ts-expect-error - 类型定义可能不完整，但运行时可用
+import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -185,6 +187,33 @@ function createSettingsState() {
         mediaQuery.addListener(handleThemeChange);
       }
     }
+    
+    // 监听主题切换事件（来自 toggleDark），同步更新 systemThemeType 和 menuThemeType
+    // 确保两种切换方式（toggleDark 和 switchThemeStyles）的状态一致
+    const handleThemeToggle = (event: CustomEvent) => {
+      const { theme, isDark } = event.detail;
+      if (theme && (theme === SystemThemeEnum.LIGHT || theme === SystemThemeEnum.DARK)) {
+        // 同步更新 systemThemeType，但不调用 switchThemeStyles 避免循环
+        systemThemeType.value = theme;
+        systemThemeMode.value = theme;
+        appStorage.settings.setItem('systemThemeType', theme);
+        appStorage.settings.setItem('systemThemeMode', theme);
+        
+        // 同步更新菜单风格：当系统主题切换为暗色时，如果当前菜单风格不是深色，则自动切换为深色
+        // 反之，当系统主题切换为浅色时，如果当前菜单风格是深色，则切换为设计风格
+        const targetIsDark = theme === SystemThemeEnum.DARK;
+        if (targetIsDark && menuThemeType.value !== MenuThemeEnum.DARK) {
+          // 切换为暗色菜单风格
+          menuThemeType.value = MenuThemeEnum.DARK;
+          appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DARK);
+        } else if (!targetIsDark && menuThemeType.value === MenuThemeEnum.DARK) {
+          // 切换回设计风格（优先使用设计风格）
+          menuThemeType.value = MenuThemeEnum.DESIGN;
+          appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DESIGN);
+        }
+      }
+    };
+    window.addEventListener('theme-toggle', handleThemeToggle as EventListener);
 
     // 2. 应用盒子模式
     document.documentElement.setAttribute('data-box-mode', boxBorderMode.value ? BoxStyleType.BORDER : BoxStyleType.SHADOW);
@@ -276,6 +305,18 @@ function createSettingsState() {
     appStorage.settings.setItem('systemThemeType', theme);
     appStorage.settings.setItem('systemThemeMode', theme);
 
+    // 同步更新菜单风格：当系统主题切换为暗色时，如果当前菜单风格不是深色，则自动切换为深色
+    // 反之，当系统主题切换为浅色时，如果当前菜单风格是深色，则切换为设计风格
+    if (targetIsDark && menuThemeType.value !== MenuThemeEnum.DARK) {
+      // 切换为暗色菜单风格
+      menuThemeType.value = MenuThemeEnum.DARK;
+      appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DARK);
+    } else if (!targetIsDark && menuThemeType.value === MenuThemeEnum.DARK) {
+      // 切换回设计风格（优先使用设计风格）
+      menuThemeType.value = MenuThemeEnum.DESIGN;
+      appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DESIGN);
+    }
+
     // 尝试获取主题插件实例
     let themePlugin: any = null;
     
@@ -308,14 +349,19 @@ function createSettingsState() {
       return;
     }
 
-    // 设置面板切换主题不需要动画，直接切换（参考 cool-admin-vue-8.x）
+    // 设置面板切换主题不需要动画，直接切换（参考 art-design-pro）
     disableTransitions();
 
     // 使用与 toggleDark 相同的逻辑：同步更新 isDark 状态
-    // useDark 会自动管理 html 元素的 dark 类
     themePlugin.isDark.value = targetIsDark;
 
-    // 同步更新主题颜色 CSS 变量（必须在 useDark 更新 dark 类之后）
+    // 参考 art-design-pro 的实现：直接设置 html 元素的 class 属性
+    // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
+    const htmlEl = document.getElementsByTagName('html')[0];
+    const className = targetIsDark ? 'dark' : '';
+    htmlEl.setAttribute('class', className);
+
+    // 同步更新主题颜色 CSS 变量（必须在设置 dark 类之后）
     // 这会让 Element Plus 的 CSS 变量立即更新
     if (themePlugin.setThemeColor && themePlugin.currentTheme?.value) {
       themePlugin.setThemeColor(
@@ -323,6 +369,24 @@ function createSettingsState() {
         targetIsDark
       );
     }
+
+    // 强制浏览器立即重新计算样式，确保 CSS 变量和选择器立即生效
+    // 访问 offsetHeight 会触发浏览器重新计算布局和样式
+    void htmlEl.offsetHeight;
+    
+    // 使用 nextTick 确保 Vue 响应式更新完成
+    nextTick(() => {
+      // 再次强制样式重新计算，确保所有 CSS 变量和选择器都已更新
+      void htmlEl.offsetHeight;
+      
+      // 重新注册 ECharts 主题（使用最新的 CSS 变量值）
+      registerEChartsThemes();
+      
+      // 触发自定义事件，通知组件强制更新
+      window.dispatchEvent(new CustomEvent('theme-changed', { 
+        detail: { isDark: targetIsDark, theme } 
+      }));
+    });
 
     // 同步更新设置状态（如果存在）
     try {
@@ -336,10 +400,6 @@ function createSettingsState() {
     } catch (e) {
       // 忽略错误
     }
-
-    // 强制浏览器立即重新计算样式（关键步骤）
-    const htmlEl = document.documentElement;
-    void htmlEl.offsetHeight;
 
     // 使用双重 requestAnimationFrame 确保在下一帧恢复过渡效果（参考 art-design-pro）
     requestAnimationFrame(() => {

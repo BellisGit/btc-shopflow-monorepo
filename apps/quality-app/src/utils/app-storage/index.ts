@@ -81,6 +81,7 @@ class AppStorageManager {
    * 用户信息存储
    */
   get user() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     return {
       /**
@@ -168,6 +169,7 @@ class AppStorageManager {
    * 应用设置存储
    */
   get settings() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     return {
       /**
@@ -228,6 +230,7 @@ class AppStorageManager {
    * 认证信息存储
    */
   get auth() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     return {
       /**

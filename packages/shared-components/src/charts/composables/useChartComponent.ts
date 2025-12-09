@@ -13,9 +13,9 @@ export function useChartComponent(
   props: BaseChartProps,
   buildOption: (isDark: Ref<boolean>, themeColors: ReturnType<typeof getThemeColors>) => EChartsOption | Ref<EChartsOption> | (() => EChartsOption)
 ) {
-  const themeColors = getThemeColors();
-  
+  // 每次构建 option 时都重新获取主题颜色，确保获取最新的 CSS 变量值
   const chart = useChart(containerRef, props, (isDark) => {
+    const themeColors = getThemeColors();
     const option = buildOption(isDark, themeColors);
     if (typeof option === 'function') {
       return option();

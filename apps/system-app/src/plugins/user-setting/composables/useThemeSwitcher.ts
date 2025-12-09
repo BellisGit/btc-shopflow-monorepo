@@ -5,6 +5,7 @@
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc-components/feedback/btc-message';
 
 /**

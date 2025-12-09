@@ -2,31 +2,21 @@ import { type Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { DualBarCompareChartProps } from '../../../types/bar';
 import { getColorByIndex } from '../../../utils/color';
-import { getThemeColors } from '../../../utils/css-var';
+// import { getThemeColors } from '../../../utils/css-var'; // 未使用
 
 /**
  * ???? composable
  */
 export function useDualBarCompareChart(
   props: DualBarCompareChartProps,
-  isDark: Ref<boolean>,
-  themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  _isDark: Ref<boolean>,
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
 ) {
   const buildOption = (): EChartsOption => {
-    // 每次构建时重新获取主题颜色，确保获取到最新的 CSS 变量值
-    const currentThemeColors = typeof window !== 'undefined' 
-      ? getThemeColors()
-      : themeColors;
-    const textColor = isDark.value ? currentThemeColors.dark.textColor : currentThemeColors.textColor;
-    const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
-    const tooltipBg = isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)';
-
     const option: EChartsOption = {
       title: {
-        text: props.title || '',
-        textStyle: {
-          color: textColor
-        }
+        text: props.title || ''
+        // textStyle.color 由 ECharts 主题处理
       },
       tooltip: {
         trigger: 'axis',
@@ -34,13 +24,7 @@ export function useDualBarCompareChart(
           type: 'shadow'
         },
         show: props.showTooltip ?? true,
-        backgroundColor: tooltipBg,
-        borderColor: borderColor,
-        borderWidth: 1,
-        textStyle: {
-          color: textColor
-        },
-        extraCssText: `color: ${textColor}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`,
+        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
         confine: true,
         appendToBody: true
       },
@@ -48,10 +32,8 @@ export function useDualBarCompareChart(
         show: props.showLegend ?? true,
         top: '0%',
         left: 'center',
-        textStyle: {
-          color: textColor
-        },
-        data: [props.label1 || '??1', props.label2 || '??2']
+        data: [props.label1 || '数据1', props.label2 || '数据2']
+        // textStyle.color 由 ECharts 主题处理
       },
       toolbox: {
         show: props.showToolbar ?? false,
@@ -60,28 +42,21 @@ export function useDualBarCompareChart(
         feature: {
           saveAsImage: {
             show: true,
-            title: '?????',
+            title: '保存为图片',
             type: 'png',
             pixelRatio: 2
           },
           dataView: {
             show: true,
-            title: '????',
+            title: '数据视图',
             readOnly: false
           },
           restore: {
             show: true,
-            title: '??'
-          }
-        },
-        iconStyle: {
-          borderColor: borderColor
-        },
-        emphasis: {
-          iconStyle: {
-            borderColor: currentThemeColors.primary
+            title: '还原'
           }
         }
+        // iconStyle.borderColor 由 ECharts 主题处理
       },
       grid: props.grid || {
         left: '3%',
@@ -91,15 +66,8 @@ export function useDualBarCompareChart(
       },
       xAxis: {
         type: 'category',
-        data: props.xAxisData,
-        axisLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
-        axisLabel: {
-          color: textColor
-        }
+        data: props.xAxisData
+        // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
       },
       yAxis: {
         type: 'value',
@@ -109,18 +77,14 @@ export function useDualBarCompareChart(
         axisTick: {
           show: false
         },
-        splitLine: {
-          lineStyle: {
-            color: borderColor
-          }
-        },
+        // splitLine.lineStyle.color 由 ECharts 主题处理
         axisLabel: {
-          color: textColor,
           formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
+          // color 由 ECharts 主题处理
         }
       },
       series: [
-        ...props.data1.map((item, index) => ({
+        ...props.data1.map((item) => ({
           name: props.label1 || '??1',
           type: 'bar' as const,
           data: item.data,
@@ -131,11 +95,11 @@ export function useDualBarCompareChart(
           label: {
             show: props.showLabel ?? false,
             position: 'top' as const,
-            color: textColor,
             fontSize: 12
+            // color 由 ECharts 主题处理
           }
         })),
-        ...props.data2.map((item, index) => ({
+        ...props.data2.map((item) => ({
           name: props.label2 || '??2',
           type: 'bar' as const,
           data: item.data,
@@ -146,8 +110,8 @@ export function useDualBarCompareChart(
           label: {
             show: props.showLabel ?? false,
             position: 'top' as const,
-            color: textColor,
             fontSize: 12
+            // color 由 ECharts 主题处理
           }
         }))
       ] as any

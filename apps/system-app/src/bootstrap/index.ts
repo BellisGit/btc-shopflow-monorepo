@@ -22,6 +22,7 @@ import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integr
 
 // 管理器实例
 import { notificationManager } from '../utils/notification-manager';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { appStorage } from '../utils/app-storage';
 // 用户设置（现在都在 app-src chunk 中，可以使用静态导入）
@@ -66,13 +67,15 @@ export async function bootstrap(app: App) {
   // 暴露 cleanupBadge 方法（生命周期管理器需要）
   (window as any).cleanupNotificationBadge = notificationHandler.cleanupBadge;
 
-  // 暴露 authApi 到全局，供所有子应用使用
-  // 使用动态导入避免循环依赖
-  import('../modules/api-services/auth').then(({ authApi }) => {
-    (window as any).__APP_AUTH_API__ = authApi;
-  }).catch((error) => {
-    console.warn('[bootstrap] Failed to expose authApi globally:', error);
-  });
+  // 暴露 authApi 到全局（已在 main.ts 中暴露，这里作为兜底确保暴露）
+  // 如果 main.ts 中的暴露失败，这里会再次尝试
+  if (typeof (window as any).__APP_AUTH_API__ === 'undefined') {
+    import('../modules/api-services/auth').then(({ authApi }) => {
+      (window as any).__APP_AUTH_API__ = authApi;
+    }).catch((error) => {
+      console.warn('[bootstrap] Failed to expose authApi globally:', error);
+    });
+  }
 
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();

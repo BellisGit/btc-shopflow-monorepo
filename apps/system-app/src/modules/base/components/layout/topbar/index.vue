@@ -24,6 +24,7 @@
       <!-- Logo + 标题（顶部菜单和双栏菜单模式下隐藏） -->
       <div
         v-if="props.menuType !== 'top' && props.menuType !== 'dual-menu'"
+        :key="`logo-${isDark?.value ? 'dark' : 'light'}-${menuThemeType?.value || 'design'}`"
         class="topbar__logo-content"
         :class="{ 'is-dark-menu': isDarkMenuStyle }"
         :style="{
@@ -39,7 +40,7 @@
         <h2
           class="topbar__logo-text"
           :style="{ color: menuThemeConfig.systemNameColor }"
-        >{{ t('app.title') }}</h2>
+        >{{ logoTitle }}</h2>
       </div>
     </div>
 
@@ -85,8 +86,9 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted, markRaw, computed } from 'vue';
+import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { resolveAppLogoUrl } from '@configs/layout-bridge';
@@ -94,6 +96,8 @@ import { useSettingsState } from '@/plugins/user-setting/composables/useSettings
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useBrowser } from '@/composables/useBrowser';
+import { getCurrentSubApp, isMainApp } from '@configs/unified-env-config';
+import { getAppById } from '@configs/app-scanner';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
@@ -118,6 +122,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const route = useRoute();
 
 // Logo URL：使用 resolveAppLogoUrl 确保在微前端环境下正确解析路径
 const logoUrl = computed(() => {
@@ -144,6 +149,50 @@ const { browser } = useBrowser();
 // 获取设置状态
 const { showGlobalSearch, menuThemeType, isDark } = useSettingsState();
 const { menuStyleList } = useSettingsConfig();
+
+// 响应式的路径和主机名，用于触发 computed 重新计算
+const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '');
+const currentHostname = ref(typeof window !== 'undefined' ? window.location.hostname : '');
+
+// Logo 标题：主应用显示"拜里斯科技"，子应用显示应用名称（如"物流模块"）
+const logoTitle = computed(() => {
+  // 使用响应式的路径和主机名，确保在应用切换时重新计算
+  // 这里仍然调用函数，但依赖响应式变量来触发重新计算
+  void currentPath.value;
+  void currentHostname.value;
+  void route.path; // 也依赖路由路径
+  
+  // 判断是否是主应用路由
+  const isMain = isMainApp();
+  
+  if (isMain) {
+    // 主应用：显示"拜里斯科技"
+    return t('app.title');
+  }
+  
+  // 子应用：获取当前应用信息
+  const currentSubAppId = getCurrentSubApp();
+  if (currentSubAppId) {
+    // 获取应用配置
+    const appConfig = getAppById(currentSubAppId);
+    if (appConfig) {
+      // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
+      const domainTypeKey = `domain.type.${currentSubAppId}`;
+      const domainTypeName = t(domainTypeKey);
+      
+      // 如果国际化值存在且不是 key 本身，则使用国际化值
+      if (domainTypeName && domainTypeName !== domainTypeKey) {
+        return domainTypeName;
+      }
+      
+      // 兜底使用应用配置中的 name
+      return appConfig.name;
+    }
+  }
+  
+  // 默认使用 app.title
+  return t('app.title');
+});
 
 // 判断是否为深色菜单风格（展示层逻辑）
 const isDarkMenuStyle = computed(() => {
@@ -227,7 +276,37 @@ const filteredToolbarComponents = computed(() => {
 });
 
 
-// 初始化工具栏组件和用户信息
+// 更新路径和主机名的函数
+const updateLocation = () => {
+  if (typeof window !== 'undefined') {
+    currentPath.value = window.location.pathname;
+    currentHostname.value = window.location.hostname;
+  }
+};
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    updateLocation();
+  },
+  { immediate: true }
+);
+
+// 监听主题切换事件，强制更新 logo 区域样式
+// 确保在主题切换后立即更新 logo 背景和文字颜色
+const handleThemeChanged = () => {
+  // 强制触发 Vue 响应式更新
+  // menuThemeConfig 是 computed，会自动响应 isDark 的变化
+  // 但为了确保立即更新，我们触发一次响应式更新
+  nextTick(() => {
+    // 访问 computed 值，确保重新计算
+    const _ = menuThemeConfig.value;
+    const __ = isDarkMenuStyle.value;
+  });
+};
+
+// 在组件挂载时添加事件监听器
 onMounted(async () => {
   // 加载工具栏组件
   try {
@@ -248,6 +327,61 @@ onMounted(async () => {
     console.error('Failed to get toolbar components:', error);
   }
 
+  // 添加主题切换事件监听器
+  window.addEventListener('theme-changed', handleThemeChanged);
+
+  // 监听应用切换事件，更新 Logo 标题
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.on('app.switch', updateLocation);
+  }
+
+  // 监听浏览器历史记录变化（popstate 事件）
+  window.addEventListener('popstate', updateLocation);
+
+  // 监听 pushState 和 replaceState（通过重写 history API）
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(history, args);
+    // 延迟更新，确保路径已变化
+    setTimeout(updateLocation, 0);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(history, args);
+    // 延迟更新，确保路径已变化
+    setTimeout(updateLocation, 0);
+  };
+
+  // 保存原始方法以便清理
+  (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__ = originalPushState;
+  (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__ = originalReplaceState;
+});
+
+// 组件卸载时移除监听器（必须在 setup 顶层调用）
+onUnmounted(() => {
+  window.removeEventListener('theme-changed', handleThemeChanged);
+
+  // 清理应用切换事件监听
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.off('app.switch', updateLocation);
+  }
+
+  // 清理浏览器历史记录监听
+  window.removeEventListener('popstate', updateLocation);
+
+  // 恢复原始的 history API
+  const originalPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
+  const originalReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
+  if (originalPushState) {
+    history.pushState = originalPushState;
+  }
+  if (originalReplaceState) {
+    history.replaceState = originalReplaceState;
+  }
 });
 
 </script>

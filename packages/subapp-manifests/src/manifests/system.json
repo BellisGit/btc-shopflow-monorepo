@@ -79,6 +79,19 @@
       ]
     },
     {
+      "path": "/data/inventory/ticket",
+      "labelKey": "menu.inventory.dataSource.ticket",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.dataSource.ticket"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.dataSource", "icon": "Files" },
+        { "labelKey": "menu.inventory.dataSource.ticket", "icon": "Tickets" }
+      ]
+    },
+    {
       "path": "/data/inventory/process",
       "labelKey": "menu.inventory.process",
       "tab": {
@@ -161,7 +174,8 @@
           "labelKey": "menu.inventory.dataSource",
           "children": [
             { "index": "/data/inventory/bom", "labelKey": "menu.inventory.dataSource.bom" },
-            { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list" }
+            { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list" },
+            { "index": "/data/inventory/ticket", "labelKey": "menu.inventory.dataSource.ticket" }
           ]
         },
         { "index": "/data/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },

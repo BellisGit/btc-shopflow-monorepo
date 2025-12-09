@@ -20,8 +20,8 @@
  * @param qiankunAPI - qiankun 的 API 对象，包含 registerMicroApps 和 start 方法
  * @returns Promise，在 layout-app 挂载完成后 resolve
  */
-export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }): Promise<void> {
-  const { registerMicroApps, start } = qiankunAPI;
+export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any }): Promise<void> {
+  // const { registerMicroApps, start } = qiankunAPI; // 未使用
 
   // 获取当前环境
   const isProd = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
@@ -33,6 +33,8 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
     : 'http://localhost:4188/';
 
 
+  // 未使用的函数，保留以备将来使用
+  /*
   const getAssetsBase = (entry: string) => {
     try {
       const entryUrl = new URL(entry, typeof window !== 'undefined' ? window.location.href : 'https://bellis.com.cn');
@@ -45,6 +47,8 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
 
   const assetsBase = getAssetsBase(layoutEntry);
 
+  // 未使用的函数，保留以备将来使用
+  /*
   const ensureModuleScriptType = (tpl: string) =>
     tpl.replace(
       /<script(\s+[^>]*)?>/gi,
@@ -72,40 +76,40 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
 
     // 重写 import() 动态导入中的资源路径（包括单引号和双引号）
     // 匹配格式：import('/assets/xxx.js') 或 import("/assets/xxx.js") 或 import('/assets/layout/xxx.js')
-    result = result.replace(/(import\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"]\s*\))/gi, (match, prefix, layoutPrefix, path, suffix) => {
+    result = result.replace(/(import\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"]\s*\))/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
       return `${prefix}${assetsBase}${path}${suffix}`;
     });
 
     // 重写 import 语句中的资源路径（包括相对路径和绝对路径）
     // 匹配格式：import xxx from '/assets/xxx.js'
-    result = result.replace(/(import\s+[^'"]*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (match, prefix, layoutPrefix, path, suffix) => {
+    result = result.replace(/(import\s+[^'"]*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
       return `${prefix}${assetsBase}${path}${suffix}`;
     });
 
     // 重写 new URL() 中的资源路径
     // 匹配格式：new URL('/assets/xxx.js', ...)
-    result = result.replace(/(new\s+URL\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (match, prefix, layoutPrefix, path, suffix) => {
+    result = result.replace(/(new\s+URL\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
       return `${prefix}${assetsBase}${path}${suffix}`;
     });
 
     // 重写 script 标签中的 src 属性（确保使用完整的 assetsBase URL）
     // 匹配格式：<script src="/assets/xxx.js">
-    result = result.replace(/(<script[^>]*\s+src=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (match, prefix, layoutPrefix, path, suffix) => {
+    result = result.replace(/(<script[^>]*\s+src=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
       return `${prefix}${assetsBase}${path}${suffix}`;
     });
 
     // 重写 link 标签中的 href 属性（CSS 文件等）
     // 匹配格式：<link href="/assets/xxx.css">
-    result = result.replace(/(<link[^>]*\s+href=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (match, prefix, layoutPrefix, path, suffix) => {
+    result = result.replace(/(<link[^>]*\s+href=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
       return `${prefix}${assetsBase}${path}${suffix}`;
     });
 
     // 额外处理：重写所有以 /assets/ 或 /assets/layout/ 开头的字符串（兜底，处理其他可能的格式）
     // 注意：这个替换必须在其他替换之后，避免重复替换
-    result = result.replace(/(['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (match, quote1, layoutPrefix, path, quote2) => {
+    result = result.replace(/(['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, quote1, _layoutPrefix, path, quote2) => {
       // 检查是否已经被替换过（如果路径已经是完整 URL，跳过）
       if (path.startsWith('http://') || path.startsWith('https://')) {
-        return match;
+        return _match;
       }
       return `${quote1}${assetsBase}${path}${quote2}`;
     });
@@ -274,8 +278,9 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
 
     return result;
   };
+  */
 
-  const transformTemplate = (tpl: string) => ensureModuleScriptType(rewriteAssetUrls(tpl));
+  // const transformTemplate = (tpl: string) => ensureModuleScriptType(rewriteAssetUrls(tpl)); // 未使用
 
   // 关键：layout-app 应该直接挂载到 #app，而不是通过 qiankun
   // 先获取 layout-app 的 HTML，然后从中提取入口文件路径，再直接加载入口文件
@@ -299,6 +304,8 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
     };
 
     // 确保 #app 容器存在
+    // 未使用，保留以备将来使用
+    /*
     const ensureAppContainer = () => {
       let appContainer = document.querySelector('#app') as HTMLElement;
       if (!appContainer) {
@@ -309,9 +316,10 @@ export function loadLayoutApp(qiankunAPI: { registerMicroApps: any; start: any }
       }
       return appContainer;
     };
+    */
 
     // 提前确保容器存在
-    const appContainer = ensureAppContainer();
+    // const appContainer = ensureAppContainer(); // 未使用
 
     // 设置标志，告诉 layout-app 它应该挂载到 #app
     (window as any).__LAYOUT_APP_MOUNT_TARGET__ = '#app';

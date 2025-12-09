@@ -7,13 +7,39 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#1976d2" />
+    <meta name="msapplication-TileColor" content="#1976d2" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
     <!-- 使用新的标准 meta 标签 -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <!-- 保留 apple-mobile-web-app-capable 以兼容旧版 iOS Safari（已弃用但仍有必要） -->
+    <!-- iOS特定优化 -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="拜里斯科技" />
+    <!-- iOS Safari全屏模式优化 -->
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <!-- 禁用iOS Safari的自动识别电话号码 -->
+    <meta name="format-detection" content="telephone=no" />
+    <!-- 禁用iOS Safari的自动识别邮箱 -->
+    <meta name="format-detection" content="email=no" />
+    <!-- 禁用iOS Safari的自动识别地址 -->
+    <meta name="format-detection" content="address=no" />
+    <!-- iOS图标（支持多种尺寸） -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180x180.png" />
+    <!-- Android Chrome特定优化 -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- 小米、华为、vivo等国产浏览器优化 -->
+    <meta name="x5-orientation" content="portrait" />
+    <meta name="x5-fullscreen" content="true" />
+    <meta name="x5-page-mode" content="app" />
     <!-- 添加版本号参数强制更新 manifest，避免浏览器缓存旧版本 -->
     <!-- 确保 manifest 文件的 MIME 类型正确 -->
     <!-- 注意：开发环境中，VitePWA 会自动生成 manifest，不需要版本号参数 -->

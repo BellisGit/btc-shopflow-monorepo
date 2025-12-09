@@ -132,7 +132,18 @@ const formItems = computed<FormItem[]>(() => [
     label: t('logistics.inventory.base.fields.checkStatus'),
     prop: 'checkStatus',
     span: 24,
-    component: { name: 'el-input', props: { maxlength: 60 } },
+    component: {
+      name: 'el-select',
+      props: {
+        clearable: true,
+        placeholder: t('common.pleaseSelect'),
+      },
+      options: [
+        { label: t('logistics.inventory.base.fields.checkStatus.notStarted'), value: 'notStarted' },
+        { label: t('logistics.inventory.base.fields.checkStatus.inProgress'), value: 'inProgress' },
+        { label: t('logistics.inventory.base.fields.checkStatus.completed'), value: 'completed' },
+      ],
+    },
   },
   {
     label: t('logistics.inventory.base.fields.startTime'),

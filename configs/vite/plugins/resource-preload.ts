@@ -4,13 +4,14 @@
  */
 
 import type { Plugin } from 'vite';
+import type { OutputOptions, OutputBundle } from 'rollup';
 
 export function resourcePreloadPlugin(): Plugin {
   const criticalResources: Array<{ href: string; as?: string; rel: string }> = [];
 
   return {
     name: 'resource-preload',
-    generateBundle(options, bundle) {
+    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       const jsChunks = Object.keys(bundle).filter(file => file.endsWith('.js') || file.endsWith('.mjs'));
       const cssChunks = Object.keys(bundle).filter(file => file.endsWith('.css'));
 
@@ -67,6 +68,6 @@ export function resourcePreloadPlugin(): Plugin {
 
       return html;
     },
-  };
+  } as Plugin;
 }
 

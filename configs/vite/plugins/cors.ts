@@ -3,7 +3,7 @@
  * 支持 credentials 的 CORS 中间件
  */
 
-import type { Plugin } from 'vite';
+import type { Plugin, ViteDevServer } from 'vite';
 
 /**
  * CORS 插件（支持 credentials）
@@ -76,7 +76,7 @@ export function corsPlugin(): Plugin {
   return {
     name: 'cors-with-credentials',
     enforce: 'pre',
-    configureServer(server) {
+    configureServer(server: ViteDevServer) {
       const stack = (server.middlewares as any).stack;
       if (Array.isArray(stack)) {
         const filteredStack = stack.filter((item: any) =>
@@ -90,7 +90,7 @@ export function corsPlugin(): Plugin {
         server.middlewares.use(corsDevMiddleware);
       }
     },
-    configurePreviewServer(server) {
+    configurePreviewServer(server: ViteDevServer) {
       const stack = (server.middlewares as any).stack;
       if (Array.isArray(stack)) {
         const filteredStack = stack.filter((item: any) =>
@@ -104,6 +104,6 @@ export function corsPlugin(): Plugin {
         server.middlewares.use(corsPreviewMiddleware);
       }
     },
-  };
+  } as Plugin;
 }
 

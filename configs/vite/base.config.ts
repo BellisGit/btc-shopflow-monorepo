@@ -12,7 +12,7 @@ import { createPathHelpers } from './utils/path-helpers';
  * @param appName 应用名称
  * @returns 别名配置对象
  */
-export function createBaseAliases(appDir: string, appName: string): Record<string, string> {
+export function createBaseAliases(appDir: string, _appName: string): Record<string, string> {
   const { withSrc, withPackages, withRoot, withConfigs } = createPathHelpers(appDir);
 
   return {

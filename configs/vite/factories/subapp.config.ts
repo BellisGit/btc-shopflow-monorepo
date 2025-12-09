@@ -146,6 +146,10 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   const mainAppConfig = getViteAppConfig('system-app');
   const mainAppPort = mainAppConfig.prePort.toString();
 
+  // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
+  // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
+  const epsOutputDir = resolve(appDir, 'build', 'eps');
+
   // 构建插件列表
   const plugins: Plugin[] = [
     // 1. 清理插件
@@ -178,7 +182,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       eps: {
         enable: true,
         dict: false,
-        dist: './build/eps',
+        dist: epsOutputDir,
         ...btcOptions.eps,
       },
       svg: {

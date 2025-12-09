@@ -79,7 +79,7 @@ export function setupSubAppErrorCapture(config: SubAppErrorCaptureConfig) {
   const safeStringify = (obj: any): string => {
     const seen = new WeakSet();
     try {
-      return JSON.stringify(obj, (key, value) => {
+      return JSON.stringify(obj, (_key, value) => {
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) {
             return '[Circular]';
@@ -154,6 +154,10 @@ export function setupSubAppErrorCapture(config: SubAppErrorCaptureConfig) {
     }
     // 过滤 Element Plus 的 prop 类型检查警告（开发环境警告）
     if (message.includes('Invalid prop: type check failed')) {
+      return true;
+    }
+    // 过滤 Vue 的 extraneous non-props attributes 警告（BtcImportBtn 的 exportFilename prop）
+    if (message.includes('Extraneous non-props attributes') && message.includes('exportFilename')) {
       return true;
     }
     return false;

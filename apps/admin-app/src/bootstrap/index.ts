@@ -538,6 +538,7 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
 
     // 挂载 Vue 应用
     // 关键：不进行任何 DOM 操作，直接挂载，让 Vue 和 qiankun 自己管理
+    // DevTools 会通过 shared-components 的自动挂载机制自动挂载
     context.app.mount(mountPoint);
 
     setupRouteSync(context);

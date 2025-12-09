@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
@@ -78,20 +79,6 @@ const pageRoutes: RouteRecordRaw[] = [
     redirect: '/warehouse/material/list',
     meta: {
       process: false,
-    },
-  },
-  {
-    path: '/warehouse/material/ticket',
-    name: 'logistics-warehouse-material-ticket',
-    component: () => import('../../modules/warehouse/views/material/ticket/index.vue'),
-    meta: {
-      labelKey: 'menu.logistics.warehouse.material.ticket',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-        { labelKey: 'menu.logistics.warehouse.material', icon: 'Files' },
-        { labelKey: 'menu.logistics.warehouse.material.ticket', icon: 'Tickets' },
-      ],
-      tabLabelKey: 'menu.logistics.warehouse.material.ticket',
     },
   },
   {

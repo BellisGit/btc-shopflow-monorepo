@@ -25,10 +25,13 @@ export function deepClone<T>(obj: T): T {
  * 判断是否为对象
  * @param item 项目
  * @returns 是否为对象
+ * 未使用，保留以备将来使用
  */
+/*
 function isObject(item: any): item is Record<string, any> {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
+*/
 
 /**
  * 获取对象属性值（支持路径）

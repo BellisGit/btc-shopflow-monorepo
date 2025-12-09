@@ -2,6 +2,7 @@
   <div ref="chartContainerRef" class="btc-scatter-chart" :style="chartStyle">
     <v-chart
       v-if="isContainerReady"
+      :key="chartThemeKey"
       :option="chartOption"
       :theme="chartTheme"
       :autoresize="autoresize"
@@ -46,7 +47,7 @@ const chart = useChartComponent(
   }
 );
 
-const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartTheme } = chart;
+const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartTheme, chartThemeKey } = chart;
 
 const handleChartReady = () => {
   updateChartInstance();

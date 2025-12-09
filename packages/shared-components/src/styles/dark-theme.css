@@ -146,8 +146,16 @@ html.dark #subapp-viewport [data-qiankun] .el-menu,
 html.dark [data-qiankun] .el-menu {
   --el-menu-bg-color: var(--el-bg-color);
   --el-menu-hover-bg-color: var(--el-fill-color-light);
-  --el-menu-text-color: var(--el-text-color-primary);
+  --el-menu-text-color: #FFFFFF;
   --el-menu-active-color: var(--el-color-primary);
+}
+
+/* 确保暗色系统主题下的深色菜单文字颜色为白色 */
+html.dark .el-menu-dark,
+html.dark #subapp-viewport .el-menu-dark,
+html.dark #subapp-viewport [data-qiankun] .el-menu-dark,
+html.dark [data-qiankun] .el-menu-dark {
+  --el-menu-text-color: #FFFFFF !important;
 }
 
 /* 优化下拉菜单 */

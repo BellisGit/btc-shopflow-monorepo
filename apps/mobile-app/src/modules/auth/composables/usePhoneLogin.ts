@@ -25,6 +25,8 @@ export function usePhoneLogin() {
         smsType: 'login'
       });
 
+      console.log('[PhoneLogin] Login response:', response);
+
       // 优先从响应体获取 token（如果后端返回）
       // 支持多种字段名：access_token, accessToken, token
       // 同时检查响应是否被包装在 data 字段中
@@ -33,26 +35,59 @@ export function usePhoneLogin() {
       // 检查响应本身
       if (response?.access_token) {
         token = response.access_token;
+        console.log('[PhoneLogin] Token found in response.access_token');
       } else if (response?.accessToken) {
         token = response.accessToken;
+        console.log('[PhoneLogin] Token found in response.accessToken');
       } else if (response?.token) {
         token = response.token;
+        console.log('[PhoneLogin] Token found in response.token');
       }
       // 检查响应是否被包装在 data 字段中
       else if (response?.data) {
         const data = response.data;
         if (data.access_token) {
           token = data.access_token;
+          console.log('[PhoneLogin] Token found in response.data.access_token');
         } else if (data.accessToken) {
           token = data.accessToken;
+          console.log('[PhoneLogin] Token found in response.data.accessToken');
         } else if (data.token) {
           token = data.token;
+          console.log('[PhoneLogin] Token found in response.data.token');
         }
       }
 
       // 如果响应体没有 token，尝试从 cookie 读取
       if (!token) {
+        // 先尝试立即读取
         token = getCookie('access_token');
+        if (token) {
+          console.log('[PhoneLogin] Token found in cookie immediately, length:', token.length);
+        } else {
+          // 调试：输出所有 cookie 以便排查问题
+          console.log('[PhoneLogin] No token in response body, checking cookie...');
+          console.log('[PhoneLogin] All cookies:', document.cookie);
+          console.log('[PhoneLogin] Current domain:', window.location.hostname);
+          console.log('[PhoneLogin] Current path:', window.location.pathname);
+          
+          // 尝试等待一小段时间，可能 cookie 是异步设置的
+          // 某些情况下，后端通过 Set-Cookie header 设置 cookie，但 JavaScript 读取可能有延迟
+          console.log('[PhoneLogin] Waiting 200ms for cookie to be set...');
+          await new Promise(resolve => setTimeout(resolve, 200));
+          token = getCookie('access_token');
+          if (token) {
+            console.log('[PhoneLogin] Token found in cookie after delay, length:', token.length);
+          } else {
+            console.log('[PhoneLogin] Still no token in cookie after delay');
+            // 再次尝试，等待更长时间
+            await new Promise(resolve => setTimeout(resolve, 300));
+            token = getCookie('access_token');
+            if (token) {
+              console.log('[PhoneLogin] Token found in cookie after longer delay, length:', token.length);
+            }
+          }
+        }
       }
 
       // 保存 token 到 authStore
@@ -67,6 +102,7 @@ export function usePhoneLogin() {
         }
 
         authStore.setToken(token);
+        console.log('[PhoneLogin] Token saved to store and localStorage');
 
         // 验证 token 是否成功保存
         const savedToken = localStorage.getItem('mobile_token');
@@ -74,7 +110,24 @@ export function usePhoneLogin() {
           throw new Error('Token 保存失败，请重试');
         }
       } else {
-        throw new Error('登录失败：未获取到访问令牌，请检查后端返回的数据格式');
+        // 如果仍然没有 token，检查响应拦截器是否已经处理了
+        // 响应拦截器可能已经将 token 保存到 store 中
+        const storeToken = authStore.token;
+        if (storeToken) {
+          console.log('[PhoneLogin] Token found in store (set by response interceptor)');
+          token = storeToken;
+        } else {
+          // 最后尝试：再次从 cookie 读取（可能响应拦截器已经设置了 cookie）
+          token = getCookie('access_token');
+          if (token) {
+            console.log('[PhoneLogin] Token found in cookie on final check');
+            authStore.setToken(token);
+          } else {
+            console.error('[PhoneLogin] No token found in response, cookie, or store');
+            console.error('[PhoneLogin] Response:', JSON.stringify(response, null, 2));
+            throw new Error('登录失败：未获取到访问令牌，请检查后端返回的数据格式');
+          }
+        }
       }
 
       // 保存用户信息（如果响应中包含用户信息）
@@ -123,8 +176,8 @@ export function usePhoneLogin() {
       // 等待一小段时间让 toast 显示，然后跳转
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // 跳转到首页或 redirect 页面
-      const redirect = (route.query.redirect as string) || '/home';
+      // 跳转到查询页面或 redirect 页面
+      const redirect = (route.query.redirect as string) || '/query';
       // 只取路径部分，忽略查询参数，避免循环重定向
       const redirectPath = redirect.split('?')[0];
 

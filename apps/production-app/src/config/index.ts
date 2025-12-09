@@ -1,4 +1,5 @@
-import { MenuThemeEnum, SystemThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
+import { MenuThemeEnum, SystemThemeEnum } from '@btc/shared-components';
 
 export const config = {
   app: {

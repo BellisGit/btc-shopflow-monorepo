@@ -307,7 +307,7 @@ const handleQiankunAfterMount = () => {
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
-  window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  window.addEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
 
   // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
   window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
@@ -358,7 +358,7 @@ watch(
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
-  window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  window.removeEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
   window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
 

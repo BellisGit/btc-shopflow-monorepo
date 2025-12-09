@@ -33,9 +33,19 @@ export async function autoDiscoverPlugins(app: App) {
   // 注册所有扫描到的插件
   for (const plugin of plugins) {
     try {
+      // 检查插件是否已注册，避免重复注册
+      if (pluginManager.has(plugin.name)) {
+        console.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
+        continue;
+      }
       pluginManager.register(plugin);
     } catch (error) {
-      console.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
+      // 如果是重复注册错误，只警告不报错
+      if (error instanceof Error && error.message.includes('already registered')) {
+        console.warn(`[PluginManager] 插件 "${plugin.name}" 已注册，跳过重复注册`);
+      } else {
+        console.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
+      }
     }
   }
 

@@ -7,7 +7,7 @@
  */
 
 import { ref, triggerRef, type Ref } from 'vue';
-import { assignIconsToMenuTree } from '@btc/shared-core';
+// import { assignIconsToMenuTree } from '@btc/shared-core'; // 未使用
 
 // 定义类型，避免直接导入
 export type MenuItem = {

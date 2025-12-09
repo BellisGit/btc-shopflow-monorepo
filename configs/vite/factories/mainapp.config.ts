@@ -5,7 +5,6 @@
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
-import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import UnoCSS from 'unocss/vite';
 import { existsSync, readFileSync } from 'node:fs';
@@ -135,8 +134,12 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   const mainAppConfig = getViteAppConfig('system-app');
   const mainAppPort = mainAppConfig.prePort.toString();
 
+  // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
+  // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
+  const epsOutputDir = resolve(appDir, 'build', 'eps');
+
   // 构建插件列表
-  const plugins: Plugin[] = [
+  const plugins: (Plugin | Plugin[])[] = [
     // 1. 清理插件
     cleanDistPlugin(appDir),
     // 2. CORS 插件
@@ -171,7 +174,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       eps: {
         enable: true,
         dict: false,
-        dist: './build/eps',
+        dist: epsOutputDir,
         ...btcOptions.eps,
       },
       svg: {
@@ -299,6 +302,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 优化依赖配置
+  // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
     include: [
       'vue',
@@ -306,10 +310,23 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       'pinia',
       'dayjs',
       'element-plus',
+      'element-plus/es',
+      'element-plus/es/locale/lang/zh-cn',
+      'element-plus/es/locale/lang/en',
+      'element-plus/es/components/cascader/style/css',
       '@element-plus/icons-vue',
       '@btc/shared-core',
       '@btc/shared-components',
       '@btc/shared-utils',
+      'vite-plugin-qiankun/dist/helper',
+      'qiankun',
+      'single-spa',
+      '@vueuse/core',
+      'vue-i18n',
+      'lodash-es',
+      'xlsx',
+      'chardet',
+      'echarts/core',
     ],
     exclude: [],
     force: false,

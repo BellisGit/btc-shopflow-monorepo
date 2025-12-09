@@ -118,6 +118,9 @@ const auditService = {
       const pageSize = params?.size ?? 0;
       return { list: [], total: 0, page: pageNo, size: pageSize, success: false, rows: [], records: [], data: { list: [], total: 0, page: pageNo, size: pageSize } };
     }
+    // 如果 try 块成功执行，这里不会被执行（已在 try 中 return）
+    // 但保留作为类型检查的兜底逻辑
+    // eslint-disable-next-line no-unreachable
     return { list: [], total: 0, page: params?.page ?? 1, size: 0, success: true };
   },
 };
@@ -209,11 +212,15 @@ onMounted(async () => {
   try {
     auditTableRef.value?.calcMaxHeight?.();
     auditTableRef.value?.tableRef?.value?.doLayout?.();
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   // 触发全局 resize，驱动内部高度计算
   try {
     window.dispatchEvent(new Event('resize'));
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   await nextTick();
   logTableSize('after-mount');
 });
@@ -224,10 +231,14 @@ onActivated(async () => {
   try {
     auditTableRef.value?.calcMaxHeight?.();
     auditTableRef.value?.tableRef?.value?.doLayout?.();
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   try {
     window.dispatchEvent(new Event('resize'));
-  } catch {}
+  } catch {
+    // 忽略错误，静默处理
+  }
   await nextTick();
   logTableSize('after-activate');
 });

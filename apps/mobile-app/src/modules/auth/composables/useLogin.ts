@@ -43,7 +43,7 @@ export function useLogin() {
         duration: 1500,
       });
 
-      const redirect = (route.query.redirect as string) || '/';
+      const redirect = (route.query.redirect as string) || '/query';
       // 只取路径部分，忽略查询参数，避免循环重定向
       const redirectPath = redirect.split('?')[0];
       router.push(redirectPath);

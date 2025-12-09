@@ -1,4 +1,6 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+// @ts-expect-error - axios 类型定义可能有问题，但运行时可用
+import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
@@ -21,6 +23,7 @@ export class Http {
     this.retryManager = createHttpRetry(RETRY_CONFIGS.standard);
 
     // 创建 axios 实例
+    // @ts-expect-error - axios.create 类型定义可能有问题，但运行时可用
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
       timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时

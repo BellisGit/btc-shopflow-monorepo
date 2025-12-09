@@ -1,4 +1,4 @@
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 import type { EpsState } from './state';
 import { mergeArrayBy, normalizePrefix } from './utils';
 

@@ -256,6 +256,7 @@ const domainCodeToI18nKey: Record<string, string> = {
   'PRODUCTION': 'domain.type.production',
   'LOGISTICS': 'domain.type.logistics',
   'FINANCE': 'domain.type.finance',
+  'MONITOR': 'domain.type.monitor',
 };
 
 // 获取域显示名称

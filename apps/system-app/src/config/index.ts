@@ -69,12 +69,14 @@ export const config = {
   microApp: {
     // 是否启用
     enabled: true,
-    // 子应用列表（从配置中心动态获取）
-    apps: getAllSubAppConfigs().map(app => ({
-      name: app.id,
-      pathPrefix: app.pathPrefix,
-      subdomain: app.subdomain,
-    })),
+    // 子应用列表（从配置中心动态获取，使用 getter 实现懒加载，避免初始化顺序问题）
+    get apps() {
+      return getAllSubAppConfigs().map(app => ({
+        name: app.id,
+        pathPrefix: app.pathPrefix,
+        subdomain: app.subdomain,
+      }));
+    },
   },
   
   // 文档配置

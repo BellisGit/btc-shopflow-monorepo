@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
 import { storage } from '@btc/shared-utils';
 import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useTheme';
@@ -99,6 +99,7 @@ export const useThemeStore = defineStore('theme', () => {
 
   /**
    * 切换暗黑模式（带动画）
+   * 参考 art-design-pro：使用 setAttribute 直接设置 html class，确保样式立即生效
    */
   function toggleDark(event?: MouseEvent) {
     const newDarkValue = !isDark.value;
@@ -107,7 +108,31 @@ export const useThemeStore = defineStore('theme', () => {
     if (event && (document as any).startViewTransition) {
       const transition = (document as any).startViewTransition(() => {
         isDark.value = newDarkValue;  // useDark() 会自动保存到 localStorage
+        
+        // 参考 art-design-pro：直接设置 html 元素的 class 属性
+        // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
+        const htmlEl = document.getElementsByTagName('html')[0];
+        const className = newDarkValue ? 'dark' : '';
+        htmlEl.setAttribute('class', className);
+        
+        // 先更新主题颜色 CSS 变量
         setThemeColor(currentTheme.value.color, isDark.value);
+        
+        // 强制浏览器立即重新计算样式
+        void htmlEl.offsetHeight;
+        
+        // 使用 nextTick 确保 Vue 响应式更新完成
+        import('vue').then(({ nextTick }) => {
+          nextTick(() => {
+            // 再次强制样式重新计算，确保所有 CSS 变量和选择器都已更新
+            void htmlEl.offsetHeight;
+            
+            // 触发自定义事件，通知组件强制更新
+            window.dispatchEvent(new CustomEvent('theme-changed', { 
+              detail: { isDark: newDarkValue } 
+            }));
+          });
+        });
       });
 
       transition.ready.then(() => {
@@ -139,7 +164,45 @@ export const useThemeStore = defineStore('theme', () => {
     } else {
       // 不支持动画，直接切换
       isDark.value = newDarkValue;  // useDark() 会自动保存到 localStorage
+      
+      // 参考 art-design-pro：直接设置 html 元素的 class 属性
+      // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
+      const htmlEl = document.getElementsByTagName('html')[0];
+      const className = newDarkValue ? 'dark' : '';
+      htmlEl.setAttribute('class', className);
+      
+      // 先更新主题颜色 CSS 变量
       setThemeColor(currentTheme.value.color, isDark.value);
+      
+      // 强制浏览器立即重新计算样式
+      void htmlEl.offsetHeight;
+      
+      // 使用 nextTick 确保 Vue 响应式更新完成
+      nextTick(() => {
+        // 再次强制样式重新计算，确保所有 CSS 变量和选择器都已更新
+        void htmlEl.offsetHeight;
+        
+        // 触发自定义事件，通知组件强制更新
+        window.dispatchEvent(new CustomEvent('theme-changed', { 
+          detail: { isDark: newDarkValue } 
+        }));
+      });
+    }
+    
+    // 触发主题切换事件，让 useSettingsState 同步更新 systemThemeType
+    // 使用 CustomEvent 避免直接依赖应用层代码
+    try {
+      const SystemThemeEnum = {
+        LIGHT: 'light',
+        DARK: 'dark',
+        AUTO: 'auto',
+      };
+      const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
+      window.dispatchEvent(new CustomEvent('theme-toggle', { 
+        detail: { theme: newTheme, isDark: newDarkValue } 
+      }));
+    } catch (e) {
+      // 忽略错误
     }
   }
 

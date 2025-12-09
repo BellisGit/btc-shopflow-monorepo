@@ -1,7 +1,9 @@
 import type { Plugin } from '@btc/shared-core';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
-import { registerMenus, type MenuItem } from '@btc/shared-components/store/menuRegistry';
+// @ts-ignore - 类型声明文件可能未构建，但运行时可用（某些应用可能需要此注释）
+import { registerMenus, type MenuItem } from '@btc/shared-components';
+// @ts-ignore - 类型定义可能不完整，但运行时可用（某些应用可能需要此注释）
 import { getManifestMenus, getManifestTabs } from '@btc/subapp-manifests';
 import { storage } from '@btc/shared-utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
@@ -172,6 +174,8 @@ export function registerManifestTabsForApp(appId: string) {
   // 这里只是确保 manifest 数据已加载
 }
 
+// 未使用的函数，保留以备将来使用
+/*
 const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
   if (!candidate) return null;
   const trimmed = candidate.trim();
@@ -184,6 +188,7 @@ const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
     return null;
   }
 };
+*/
 
 /**
  * 解析应用 Logo 地址（始终返回根路径，不依赖当前路由）

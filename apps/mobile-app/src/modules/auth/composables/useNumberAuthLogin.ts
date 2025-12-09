@@ -35,7 +35,7 @@ export function useNumberAuthLogin() {
   const redirectAfterLogin = async () => {
     await nextTick();
     await new Promise(resolve => setTimeout(resolve, 200));
-    const redirect = (route.query.redirect as string) || '/home';
+    const redirect = (route.query.redirect as string) || '/query';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
     try {

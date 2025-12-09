@@ -24,17 +24,18 @@
       <!-- Logo + 标题（顶部菜单和双栏菜单模式下隐藏） -->
       <div
         v-if="props.menuType !== 'top' && props.menuType !== 'dual-menu'"
+        :key="logoKey"
         class="topbar__logo-content"
-        :class="{ 'is-dark-menu': isDarkMenuStyle }"
-        :style="{
-          backgroundColor: menuThemeConfig.background,
+        :class="{ 
+          'is-dark-menu': isDarkMenuStyle,
+          'is-dark-theme': isDark,
         }"
       >
         <img :src="logoUrl" alt="BTC Logo" class="topbar__logo-img" @error="handleLogoError" />
         <h2
           class="topbar__logo-text"
           :style="{ color: menuThemeConfig.systemNameColor }"
-        >{{ t('app.title') }}</h2>
+        >{{ logoTitle }}</h2>
       </div>
     </div>
 
@@ -80,13 +81,16 @@ defineOptions({
   name: 'LayoutTopbar'
 });
 
-import { ref, onMounted, markRaw, computed } from 'vue';
+import { ref, onMounted, onUnmounted, markRaw, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
+import { getCurrentSubApp, isMainApp } from '@configs/unified-env-config';
+import { getAppById } from '@configs/app-scanner';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
@@ -111,6 +115,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const route = useRoute();
 
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
@@ -136,10 +141,90 @@ const { browser } = useBrowser();
 const { showGlobalSearch, menuThemeType, isDark } = useSettingsState();
 const { menuStyleList } = useSettingsConfig();
 
+// Logo 区域的 key，用于强制重新渲染
+const logoKey = ref(0);
+
+// 响应式的路径和主机名，用于触发 computed 重新计算
+const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '');
+const currentHostname = ref(typeof window !== 'undefined' ? window.location.hostname : '');
+
+// Logo 标题：主应用显示"拜里斯科技"，子应用显示应用名称（如"物流模块"）
+const logoTitle = computed(() => {
+  // 使用响应式的路径和主机名，确保在应用切换时重新计算
+  // 这里仍然调用函数，但依赖响应式变量来触发重新计算
+  void currentPath.value;
+  void currentHostname.value;
+  void route.path; // 也依赖路由路径
+  
+  // 判断是否是主应用
+  const isMain = isMainApp();
+  
+  if (isMain) {
+    // 主应用：显示"拜里斯科技"
+    return t('app.title');
+  }
+  
+  // 子应用：获取当前应用信息
+  const currentSubAppId = getCurrentSubApp();
+  if (currentSubAppId) {
+    // 获取应用配置
+    const appConfig = getAppById(currentSubAppId);
+    if (appConfig) {
+      // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
+      const domainTypeKey = `domain.type.${currentSubAppId}`;
+      const domainTypeName = t(domainTypeKey);
+      
+      // 如果国际化值存在且不是 key 本身，则使用国际化值
+      if (domainTypeName && domainTypeName !== domainTypeKey) {
+        return domainTypeName;
+      }
+      
+      // 兜底使用应用配置中的 name
+      return appConfig.name;
+    }
+  }
+  
+  // 默认使用 app.title
+  return t('app.title');
+});
+
 // 判断是否为深色菜单风格（展示层逻辑）
 const isDarkMenuStyle = computed(() => {
   return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
+
+// 更新路径和主机名的函数
+const updateLocation = () => {
+  if (typeof window !== 'undefined') {
+    currentPath.value = window.location.pathname;
+    currentHostname.value = window.location.hostname;
+    // 强制更新 logoKey 以触发重新渲染
+    nextTick(() => {
+      logoKey.value++;
+    });
+  }
+};
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    updateLocation();
+  },
+  { immediate: true }
+);
+
+// 监听主题变化，强制更新 Logo 区域
+watch(
+  () => [isDark?.value, menuThemeType?.value],
+  () => {
+    // 使用 nextTick 确保在 DOM 更新后强制重新渲染
+    nextTick(() => {
+      logoKey.value++;
+    });
+  },
+  { immediate: false }
+);
 
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
 const menuThemeConfig = computed(() => {
@@ -148,11 +233,11 @@ const menuThemeConfig = computed(() => {
 
   // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
   if (theme === MenuThemeEnum.DARK) {
-    // 深色系统主题下，使用 var(--el-bg-color) 与内容区域一致
+    // 深色系统主题下，使用 #0a0a0a 与内容区域一致
     if (isDark?.value === true) {
       return {
-        background: 'var(--el-bg-color)',
-        systemNameColor: '#BABBBD',
+        background: '#0a0a0a',
+        systemNameColor: '#FFFFFF',
         rightLineColor: '#EDEEF0',
       };
     }
@@ -167,8 +252,8 @@ const menuThemeConfig = computed(() => {
   // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
   if (isDark?.value === true) {
     return {
-      background: 'var(--el-bg-color)',
-      systemNameColor: '#BABBBD',
+      background: '#0a0a0a',
+      systemNameColor: '#FFFFFF',
       rightLineColor: '#EDEEF0',
     };
   }
@@ -239,6 +324,56 @@ onMounted(async () => {
     console.error('Failed to get toolbar components:', error);
   }
 
+  // 监听应用切换事件，更新 Logo 标题
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.on('app.switch', updateLocation);
+  }
+
+  // 监听浏览器历史记录变化（popstate 事件）
+  window.addEventListener('popstate', updateLocation);
+
+  // 监听 pushState 和 replaceState（通过重写 history API）
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(history, args);
+    // 延迟更新，确保路径已变化
+    setTimeout(updateLocation, 0);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(history, args);
+    // 延迟更新，确保路径已变化
+    setTimeout(updateLocation, 0);
+  };
+
+  // 保存原始方法以便清理
+  (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__ = originalPushState;
+  (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__ = originalReplaceState;
+});
+
+// 清理事件监听
+onUnmounted(() => {
+  // 清理应用切换事件监听
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.off('app.switch', updateLocation);
+  }
+
+  // 清理浏览器历史记录监听
+  window.removeEventListener('popstate', updateLocation);
+
+  // 恢复原始的 history API
+  const originalPushState = (window as any).__TOPBAR_ORIGINAL_PUSH_STATE__;
+  const originalReplaceState = (window as any).__TOPBAR_ORIGINAL_REPLACE_STATE__;
+  if (originalPushState) {
+    history.pushState = originalPushState;
+  }
+  if (originalReplaceState) {
+    history.replaceState = originalReplaceState;
+  }
 });
 
 </script>
@@ -376,7 +511,21 @@ onMounted(async () => {
     gap: 10px;
     overflow: hidden;
     transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    // 默认浅色背景（根据菜单风格配置）
+    background-color: #FFFFFF;
+    
+    // 暗色系统主题下强制使用深色背景
+    html.dark & {
+      background-color: #0a0a0a !important;
+    }
+    
+    // 深色菜单风格下（浅色系统主题）使用深色背景
+    &.is-dark-menu:not(.is-dark-theme) {
+      background-color: #0a0a0a !important;
+    }
   }
 
   &__logo-img {
@@ -536,7 +685,13 @@ onMounted(async () => {
 .topbar.is-dark-menu {
   .topbar__logo-content {
     .topbar__logo-text {
+      // 浅色系统主题下的深色菜单风格使用灰色
       color: #BABBBD !important;
+      
+      // 暗色系统主题下使用白色以提高对比度
+      html.dark & {
+        color: #FFFFFF !important;
+      }
     }
   }
 

@@ -5,7 +5,9 @@ import { microApps } from './apps';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from './manifests';
-import { useProcessStore, getCurrentAppFromPath } from '../store/process';
+import { useProcessStore, type ProcessItem } from '../store';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
+import { getCurrentAppFromPath } from '@btc/shared-components';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
 // 应用名称映射（用于显示友好的中文名称）
@@ -506,7 +508,7 @@ export function listenSubAppRouteChange() {
     if (meta?.isHome === true) {
       const process = useProcessStore();
       const app = getCurrentAppFromPath(path);
-      process.list.forEach(tab => {
+      process.list.forEach((tab: ProcessItem) => {
         if (tab.app === app) {
           tab.active = false;
         }

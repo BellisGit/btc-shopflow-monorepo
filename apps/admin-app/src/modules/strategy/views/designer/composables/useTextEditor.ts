@@ -210,7 +210,9 @@ export function useTextEditor(
       const sel = window.getSelection();
       sel?.removeAllRanges();
       sel?.addRange(range);
-    } catch {}
+    } catch {
+      // 忽略错误，静默处理
+    }
   }
 
   // 节点双击处理 - 进入文本编辑模式

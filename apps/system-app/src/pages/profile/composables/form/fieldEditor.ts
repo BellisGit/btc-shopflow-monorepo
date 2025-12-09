@@ -1,3 +1,4 @@
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import type { Ref } from 'vue';
 import type { PhoneSmsState } from './phoneVerification';

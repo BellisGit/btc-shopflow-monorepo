@@ -319,7 +319,7 @@ function refreshView() {
 
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
-  window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  window.addEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
 
   // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
   onScreenChange(() => {
@@ -347,7 +347,7 @@ watch(
 
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
-  window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  window.removeEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
 
   delete (window as any).__APP_EMITTER__;
 });

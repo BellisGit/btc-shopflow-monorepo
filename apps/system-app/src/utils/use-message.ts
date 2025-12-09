@@ -2,6 +2,7 @@
  * 消息管理器辅助函数
  * 提供统一的消息发送接口
  */
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 
 export function useMessage() {

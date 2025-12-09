@@ -156,7 +156,7 @@ router.onError((error) => {
     name: error.name,
     currentRoute: router.currentRoute.value.path,
   });
-  
+
   // 如果是组件加载失败，尝试重新加载或重定向到登录页
   if (error.message && error.message.includes('Failed to fetch dynamically imported module')) {
     console.warn('[system-app] Component load failed, page will be empty. Error:', error);
@@ -169,7 +169,7 @@ router.onError((error) => {
         name: route.name,
         component: route.components,
       });
-      
+
       // 关键：如果是登录页组件加载失败，尝试重定向到登录页（使用 replace 避免历史记录）
       if (route.path === '/login' || currentRoute.path === '/login') {
         console.warn('[system-app] 登录页组件加载失败，尝试重新加载登录页');
@@ -185,7 +185,7 @@ router.onError((error) => {
         return;
       }
     }
-    
+
     // 如果组件加载失败且不是登录页，尝试重定向到登录页
     if (currentRoute && currentRoute.path !== '/login') {
       console.warn('[system-app] 组件加载失败，重定向到登录页');
@@ -204,9 +204,9 @@ router.onError((error) => {
     }
     return;
   }
-  
+
   // 处理 __vccOpts 错误（Vue 组件未正确加载）
-  if (error.message && (error.message.includes('__vccOpts') || error.message.includes('Cannot read properties of undefined'))) {
+  if (error.message && (error.message.includes('__vccOpts') || error.message.includes('Cannot read properties of undefined') || error.message.includes("Cannot use 'in' operator"))) {
     console.warn('[system-app] Component definition error, component may not be properly loaded:', error);
     // 记录当前路由信息
     const currentRoute = router.currentRoute.value;
@@ -215,11 +215,11 @@ router.onError((error) => {
       console.warn('[system-app] Component error route info:', {
         path: route.path,
         name: route.name,
-        component: route.components,
-        componentType: typeof route.components?.default,
+        hasComponents: !!route.components,
+        componentKeys: route.components ? Object.keys(route.components) : [],
       });
     }
-    
+
     // 如果是登录页组件错误，尝试重定向到登录页
     if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some(m => m.path === '/login'))) {
       console.warn('[system-app] 登录页组件错误，尝试重新加载登录页');
@@ -233,7 +233,32 @@ router.onError((error) => {
       }, 100);
       return;
     }
-    
+
+    // 对于根路径 `/`，检查是否是 Layout 或子路由组件加载问题
+    if (currentRoute && currentRoute.path === '/') {
+      console.warn('[system-app] 根路径组件错误，检查 Layout 组件和子路由');
+      // 检查匹配的路由
+      if (currentRoute.matched.length > 0) {
+        const matchedRoute = currentRoute.matched[currentRoute.matched.length - 1];
+        console.warn('[system-app] 匹配的路由信息:', {
+          path: matchedRoute.path,
+          name: matchedRoute.name,
+          hasComponent: !!matchedRoute.components,
+          componentKeys: matchedRoute.components ? Object.keys(matchedRoute.components) : [],
+        });
+      }
+      // 尝试重新加载，但延迟更长时间，确保组件有时间加载
+      setTimeout(() => {
+        router.replace('/').catch(() => {
+          const loadingEl = document.getElementById('Loading');
+          if (loadingEl) {
+            loadingEl.style.setProperty('display', 'none', 'important');
+          }
+        });
+      }, 500);
+      return;
+    }
+
     // 尝试重新加载当前路由
     if (currentRoute && currentRoute.path) {
       console.log('[system-app] Attempting to reload route:', currentRoute.path);
@@ -257,7 +282,7 @@ router.onError((error) => {
     }
     return;
   }
-  
+
   // 处理 single-spa 相关错误
   if (error.message && error.message.includes('single-spa')) {
     console.warn('[system-app] Single-spa related error:', error);
@@ -344,7 +369,7 @@ function isAuthenticated(): boolean {
   // 关键：在子域名环境下，即使无法读取 HttpOnly cookie，也应该尝试其他方式判断
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
   // 注意：如果 cookie 是 HttpOnly 的，getCookie 无法读取，但浏览器会自动在请求中发送
   // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该认为可能已认证（由后端验证）
@@ -356,7 +381,7 @@ function isAuthenticated(): boolean {
   // 2. 在主域名（bellis.com.cn）下，必须严格检查认证状态
   // 不能假设已认证，必须通过实际的认证标记来判断
   // 只有在子域名环境下，才允许通过其他方式判断（因为子应用的认证由子应用自己处理）
-  
+
   // 3. 检查登录状态标记（从统一的 settings 存储中读取）
   const settings = appStorage.settings.get() as Record<string, any> | null;
   const isLoggedIn = settings?.is_logged_in === true;
@@ -410,17 +435,17 @@ function normalizeRoutePath(path: string): string | null {
   // 遍历所有应用的 tabRegistry，查找匹配的路径
   // 子应用列表
   const subApps = ['admin', 'logistics', 'engineering', 'quality', 'production', 'finance'];
-  
+
   for (const appName of subApps) {
     try {
       const tabs = getTabsForNamespace(appName);
       for (const tab of tabs) {
         // 移除应用前缀后比较
         const appPrefix = `/${appName}`;
-        const pathWithoutPrefix = tab.path.startsWith(appPrefix) 
+        const pathWithoutPrefix = tab.path.startsWith(appPrefix)
           ? tab.path.substring(appPrefix.length) || '/'
           : tab.path;
-        
+
         // 如果路径匹配（去掉应用前缀后），返回完整路径
         if (pathWithoutPrefix === path || pathWithoutPrefix === `${path}/`) {
           console.log(`[Router] 规范化路径: ${path} -> ${tab.path} (应用: ${appName})`);
@@ -457,41 +482,42 @@ router.beforeEach((to, from, next) => {
   // 使用顶层导入的应用扫描器（app-scanner 在构建时已加载）
   const appBySubdomain = getAppBySubdomain(hostname);
   const currentSubdomainApp = appBySubdomain?.id;
-  
+
   // 关键：在子域名环境下，如果是子应用域名，跳过 system-app 的认证检查
   // 因为子域名访问时，应该由 layout-app 或子应用自己处理认证
   // 只有在主域名（bellis.com.cn）或开发环境下，system-app 才进行认证检查
   if (isProductionSubdomain && currentSubdomainApp) {
     // 子域名环境下，跳过 system-app 的认证检查，让子应用或 layout-app 处理
     // 但是，如果是登录页等公开页面，仍然需要处理
-    const isPublicPage = to.meta?.public === true || 
-                         to.path === '/login' || 
-                         to.path === '/forget-password' || 
+    const isPublicPage = to.meta?.public === true ||
+                         to.path === '/login' ||
+                         to.path === '/forget-password' ||
                          to.path === '/register';
-    
+
     if (isPublicPage) {
       // 公开页面，直接放行
       next();
       return;
     }
-    
+
     // 非公开页面，在子域名环境下，应该由子应用或 layout-app 处理认证
     // 这里直接放行，让子应用的路由守卫处理
+    // 注意：不检查组件，因为组件可能还未加载，Vue Router 会在组件加载后检查
     next();
     return;
   }
 
   // 检查是否为公开页面（不需要认证）
   // 关键：登录页、忘记密码页、注册页都是公开页面
-  const isPublicPage = to.meta?.public === true || 
-                       to.path === '/login' || 
-                       to.path === '/forget-password' || 
+  const isPublicPage = to.meta?.public === true ||
+                       to.path === '/login' ||
+                       to.path === '/forget-password' ||
                        to.path === '/register';
-  
+
   // 关键：在主域名（bellis.com.cn）下，必须严格检查认证状态
   // 不能假设已认证，必须通过实际的认证标记来判断
   const isAuthenticatedUser = isAuthenticated();
-  
+
   // 生产环境详细日志
   if (import.meta.env.PROD) {
     console.log('[Router Guard]', {
@@ -502,7 +528,23 @@ router.beforeEach((to, from, next) => {
       hostname: typeof window !== 'undefined' ? window.location.hostname : '',
       meta: to.meta,
       matched: to.matched.length,
+      matchedRoutes: to.matched.map(m => ({ path: m.path, name: m.name })),
     });
+
+    // 关键：对于根路径 `/`，如果未匹配，记录详细信息
+    if (to.path === '/' && to.matched.length === 0) {
+      console.error('[Router Guard] ⚠️ 根路径未匹配！', {
+        path: to.path,
+        fullPath: to.fullPath,
+        isAuthenticatedUser,
+        routes: routes.filter(r => r.path === '/' || (r as any).path === '/').map(r => ({
+          path: r.path,
+          name: r.name,
+          hasComponent: !!r.component,
+          hasChildren: !!(r as any).children,
+        })),
+      });
+    }
   }
 
   // 如果是登录页且用户已认证，重定向到首页
@@ -524,12 +566,35 @@ router.beforeEach((to, from, next) => {
       // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
       if (import.meta.env.PROD) {
         console.log('[Router Guard] 未认证，重定向到登录页，原始路径:', to.fullPath);
+        console.log('[Router Guard] 认证检查详情:', {
+          cookieToken: getCookie('access_token') ? 'exists' : 'missing',
+          settings: appStorage.settings.get(),
+          storageToken: appStorage.auth.getToken() ? 'exists' : 'missing',
+          userInfo: appStorage.user.get(),
+        });
       }
+      // 关键：确保重定向到登录页
       next({
         path: '/login',
         query: { redirect: to.fullPath },
       });
       return;
+    }
+  }
+
+  // 关键：如果已认证但路由未匹配（特别是根路径 `/`），记录详细信息
+  if (isAuthenticatedUser && to.matched.length === 0 && to.path === '/') {
+    if (import.meta.env.PROD) {
+      console.error('[Router Guard] ⚠️ 已认证但根路径未匹配！', {
+        path: to.path,
+        isAuthenticatedUser,
+        matched: to.matched.length,
+        routes: routes.filter(r => r.path === '/').map(r => ({
+          path: r.path,
+          hasComponent: !!r.component,
+          hasChildren: !!(r as any).children,
+        })),
+      });
     }
   }
 
@@ -593,7 +658,7 @@ router.beforeEach((to, from, next) => {
 });
 
 // 路由守卫：调试路由匹配情况
-router.afterEach((to, from) => {
+router.afterEach((to) => {
   // 生产环境调试：如果路由未匹配，记录详细信息
   if (import.meta.env.PROD && to.matched.length === 0) {
     console.error('[system-app Router] ⚠️ 路由未匹配:', {
@@ -604,16 +669,49 @@ router.afterEach((to, from) => {
       params: to.params,
       query: to.query,
       location: window.location.href,
-      routes: routes.map(r => ({ path: r.path, name: r.name })),
+      routes: routes.map(r => ({ path: r.path, name: r.name, component: r.component ? 'defined' : 'missing' })),
     });
-    
+
+    // 关键：对于根路径 `/`，检查是否是 Layout 组件加载问题
+    if (to.path === '/') {
+      console.error('[system-app Router] ⚠️ 根路径未匹配！根路径应该匹配系统应用首页');
+      console.warn('[system-app Router] 根路径未匹配，检查 Layout 组件和子路由配置');
+      // 尝试重新匹配路由
+      const matchedRoutes = router.resolve('/');
+      if (matchedRoutes.matched.length > 0) {
+        console.log('[system-app Router] 重新匹配成功:', matchedRoutes.matched.map(m => ({
+          path: m.path,
+          name: m.name,
+          hasComponents: !!m.components,
+          componentKeys: m.components ? Object.keys(m.components) : [],
+        })));
+      } else {
+        console.error('[system-app Router] 根路径确实未匹配，可能是路由配置问题');
+        // 检查路由配置
+        const rootRoute = routes.find(r => r.path === '/');
+        if (rootRoute) {
+          console.error('[system-app Router] 根路由配置存在:', {
+            path: rootRoute.path,
+            hasComponent: !!rootRoute.component,
+            hasChildren: !!(rootRoute as any).children,
+            childrenCount: (rootRoute as any).children ? (rootRoute as any).children.length : 0,
+          });
+        } else {
+          console.error('[system-app Router] 根路由配置不存在！');
+        }
+      }
+      // 关键：根路径 `/` 不应该重定向到登录页，这是系统应用首页
+      // 如果未匹配，说明路由配置有问题，应该显示错误而不是重定向
+      return;
+    }
+
     // 关键：如果路由未匹配，尝试重定向到登录页（避免一直 loading）
     // 但只对非公开页面进行重定向，避免循环
-    const isPublicPage = to.meta?.public === true || 
-                         to.path === '/login' || 
-                         to.path === '/forget-password' || 
+    const isPublicPage = to.meta?.public === true ||
+                         to.path === '/login' ||
+                         to.path === '/forget-password' ||
                          to.path === '/register';
-    
+
     if (!isPublicPage && to.path !== '/login') {
       console.warn('[system-app Router] 路由未匹配且非公开页面，重定向到登录页');
       router.replace({
@@ -629,15 +727,15 @@ router.afterEach((to, from) => {
       });
     }
   }
-  
+
   // 如果路由已匹配，记录匹配信息（生产环境）
   if (import.meta.env.PROD && to.matched.length > 0) {
     console.log('[system-app Router] ✅ 路由匹配成功:', {
       path: to.path,
       fullPath: to.fullPath,
-      matched: to.matched.map(m => ({ 
-        path: m.path, 
-        name: m.name, 
+      matched: to.matched.map(m => ({
+        path: m.path,
+        name: m.name,
         component: m.components ? 'loaded' : 'missing'
       })),
     });
@@ -650,7 +748,8 @@ router.afterEach((to) => {
   // 使用统一的清理函数，自动清理所有图表组件
   try {
     // 动态导入清理函数，使用具体路径避免与静态导入冲突
-    import('@btc/shared-components/charts/utils/cleanup').then(({ cleanupAllECharts }) => {
+    // @ts-expect-error - 类型定义可能不完整，但运行时可用
+    import('@btc/shared-components/charts/utils/cleanup').then(({ cleanupAllECharts }: any) => {
       cleanupAllECharts();
     }).catch(() => {
       // 如果导入失败，使用备用清理逻辑

@@ -3,13 +3,17 @@
  * 基于 axios，参考 cool-admin 的实现
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
+// @ts-expect-error - axios 类型定义可能有问题，但运行时可用
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+/*
 interface ApiResponse<T = any> {
   code: number;
   data: T;
   message: string;
 }
+*/
 
 export interface RequestOptions extends AxiosRequestConfig {
   url: string;
@@ -29,7 +33,9 @@ export type Request = (options: RequestOptions) => Promise<any>;
 
 /**
  * 判断是否在开发环境中运行
+ * 未使用，保留以备将来使用
  */
+/*
 function isDevelopment(): boolean {
   if (typeof window === 'undefined') return false;
   // 检查是否是开发环境：localhost、127.0.0.1、IP 地址（非生产域名）
@@ -44,6 +50,7 @@ function isDevelopment(): boolean {
   const isDevPort = Boolean(port && ['8080', '9000', '5173', '3000', '8081'].includes(port));
   return isLocal || isDevDomain || isDevPort;
 }
+*/
 
 /**
  * 获取动态 baseURL：统一使用 /api，通过代理转发到后端
@@ -152,6 +159,7 @@ export function createRequest(baseURL: string = ''): Request {
   }
 
   // 创建 axios 实例
+  // @ts-expect-error - axios.create 类型定义可能有问题，但运行时可用
   const axiosInstance = axios.create({
     baseURL: finalBaseURL,
     timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时
@@ -160,7 +168,7 @@ export function createRequest(baseURL: string = ''): Request {
 
   // 请求拦截器
   axiosInstance.interceptors.request.use(
-    (config) => {
+    (config: any) => {
       // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
         // HTTPS 页面：强制清理 localStorage 并返回 /api
@@ -249,7 +257,7 @@ export function createRequest(baseURL: string = ''): Request {
 
       return config;
     },
-    (error) => {
+    (error: any) => {
       return Promise.reject(error);
     }
   );

@@ -28,6 +28,7 @@ declare module 'vue' {
     BtcContainer: typeof import('./../../../packages/shared-components/src/components/layout/btc-container/index.vue')['default']
     BtcCrud: typeof import('@btc/shared-components')['BtcCrud']
     BtcCrudActions: typeof import('@btc/shared-components')['BtcCrudActions']
+    BtcDevTools: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/index.vue')['default']
     BtcDialog: typeof import('@btc/shared-components')['BtcDialog']
     BtcDoubleGroup: typeof import('./../../../packages/shared-components/src/components/data/btc-double-group/index.vue')['default']
     BtcFileThumbnailCell: typeof import('./components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue')['default']

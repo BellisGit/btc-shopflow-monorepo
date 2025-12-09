@@ -10,7 +10,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
   const barCount = 20; // 频谱条数量（密集更有氛围）
   const minHeight = 3; // 极低起点
   const maxHeight = 50; // 极高峰值（强烈对比）
-  const radius = 42; // 头像半径（78px / 2 + 3px padding）
+  // const radius = 42; // 头像半径（78px / 2 + 3px padding）- 未使用
   
   // 炫彩渐变色板（基于原渐变色）
   const gradientColors = [

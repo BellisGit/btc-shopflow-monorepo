@@ -2,6 +2,7 @@
   <div ref="chartContainerRef" class="btc-bar-chart" :style="{ height: height, width: width }">
     <v-chart
       v-if="isContainerReady"
+      :key="chartThemeKey"
       :option="chartOption"
       :theme="chartTheme"
       :autoresize="autoresize"
@@ -15,6 +16,7 @@ import { computed, reactive, watch, ref, onMounted, onBeforeUnmount, nextTick } 
 import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
 import { getThemeColors } from './utils/css-var';
+import { registerEChartsThemes } from './utils/theme';
 
 export interface BarChartData {
   name: string;
@@ -60,39 +62,29 @@ const props = withDefaults(defineProps<BarChartProps>(), {
 });
 
 const isDark = useDark();
-const themeColors = getThemeColors();
+// 使用 computed 让 themeColors 响应式，每次访问时都重新获取最新的 CSS 变量值
+const themeColors = computed(() => getThemeColors());
 const chartTheme = computed(() => isDark.value ? 'btc-dark' : 'btc-light');
+// 添加 key 确保主题变化时强制重新渲染
+const chartThemeKey = ref(0);
 
 const chartOption = reactive({
   title: {
-    text: props.title || '',
-    textStyle: {
-      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
-    }
+    text: props.title || ''
+    // textStyle.color 由 ECharts 主题处理
   },
   tooltip: {
     trigger: 'axis',
     show: props.showTooltip,
-    backgroundColor: computed(() => isDark.value ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)'),
-    borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight),
-    borderWidth: 1,
-    textStyle: {
-      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
-    },
-    extraCssText: computed(() => {
-      const color = isDark.value ? themeColors.dark.textColor : themeColors.textColor;
-      return `color: ${color}; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);`;
-    }),
+    // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
     confine: true,
     appendToBody: true
   },
   legend: {
     show: props.showLegend,
     top: '0%',
-    left: 'center',
-    textStyle: {
-      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
-    }
+    left: 'center'
+    // textStyle.color 由 ECharts 主题处理
   },
   toolbox: {
     show: props.showToolbar,
@@ -114,28 +106,14 @@ const chartOption = reactive({
         show: true,
         title: '还原'
       }
-    },
-    iconStyle: {
-      borderColor: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
-    },
-    emphasis: {
-      iconStyle: {
-        borderColor: themeColors.primary
-      }
     }
+    // iconStyle.borderColor 由 ECharts 主题处理
   },
   grid: props.grid,
   xAxis: {
     type: 'category',
-    data: props.xAxisData,
-    axisLine: {
-      lineStyle: {
-        color: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
-      }
-    },
-    axisLabel: {
-      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor)
-    }
+    data: props.xAxisData
+    // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
   },
   yAxis: {
     type: 'value',
@@ -145,15 +123,11 @@ const chartOption = reactive({
     axisTick: {
       show: false
     },
-    splitLine: {
-      lineStyle: {
-        color: computed(() => isDark.value ? themeColors.dark.borderColor : themeColors.borderColorLight)
-      }
-    },
-      axisLabel: {
-        color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor),
-        formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
-      }
+    // splitLine.lineStyle.color 由 ECharts 主题处理
+    axisLabel: {
+      formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
+      // color 由 ECharts 主题处理
+    }
   },
   series: [] as any[]
 });
@@ -172,7 +146,7 @@ watch(() => [props.data, props.xAxisData, props.showLabel], () => {
     label: {
       show: props.showLabel,
       position: 'top',
-      color: computed(() => isDark.value ? themeColors.dark.textColor : themeColors.textColor),
+      color: computed(() => isDark.value ? themeColors.value.dark.textColor : themeColors.value.textColor),
       fontSize: 12
     }
   }));
@@ -182,6 +156,58 @@ watch(() => [props.data, props.xAxisData, props.showLabel], () => {
 watch(() => props.title, (newTitle) => {
   chartOption.title.text = newTitle || '';
 }, { immediate: true });
+
+// 监听主题变化，重新注册 ECharts 主题并强制重新渲染图表
+watch(
+  () => isDark.value,
+  () => {
+    // 主题切换时，先销毁旧实例
+    if (chartContainerRef.value) {
+      try {
+        const chartInstance = getInstanceByDom(chartContainerRef.value);
+        if (chartInstance) {
+          chartInstance.dispose();
+        }
+      } catch (error) {
+        // 忽略错误
+      }
+    }
+    
+    // 使用多重延迟确保 CSS 变量已经更新（useDark 更新 dark 类是异步的）
+    // 1. 等待 DOM 更新
+    nextTick(() => {
+      // 2. 等待浏览器渲染
+      requestAnimationFrame(() => {
+        // 3. 等待 CSS 变量更新（给足够的时间让 useDark 更新 dark 类）
+        setTimeout(() => {
+          // 4. 再次等待浏览器重新计算样式
+          requestAnimationFrame(() => {
+            // 5. 重新注册 ECharts 主题（使用最新的 CSS 变量值）
+            registerEChartsThemes();
+            
+            // 6. 再次延迟，确保主题注册完成
+            setTimeout(() => {
+              // 更新 key 强制重新渲染 v-chart 组件
+              chartThemeKey.value++;
+              // 重置容器准备状态，强制重新初始化
+              isContainerReady.value = false;
+              // 延迟后重新检查容器并初始化
+              nextTick(() => {
+                setTimeout(() => {
+                  checkContainerSize();
+                  if (isContainerReady.value) {
+                    // 图表会在 v-chart 重新渲染时自动初始化
+                  }
+                }, 100);
+              });
+            }, 150);
+          });
+        }, 200);
+      });
+    });
+  },
+  { flush: 'post' } // 在 DOM 更新后执行
+);
 
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null);

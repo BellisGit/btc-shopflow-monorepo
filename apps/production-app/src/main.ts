@@ -16,8 +16,9 @@ import type { App as VueApp } from 'vue';
 import type { Router } from 'vue-router';
 import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { AppLayout } from '@btc/shared-components';
-import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
+import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
 import App from './App.vue';
 
 let app: VueApp | null = null;
@@ -80,6 +81,7 @@ async function render(props: QiankunProps = {}) {
   if (isStandalone) {
     setupStandaloneGlobals();
     registerManifestMenusForApp(PRODUCTION_APP_ID);
+    registerManifestTabsForApp(PRODUCTION_APP_ID);
   }
 
   // 基础路由（页面组件）
@@ -204,28 +206,50 @@ async function render(props: QiankunProps = {}) {
     await setupStandalonePlugins(app, router);
   }
 
-  const mountPoint = container ? container.querySelector('#app') : '#app';
-  if (mountPoint) {
-    app.mount(mountPoint);
-
-    // 在 qiankun 环境下，同步初始路由
-    if (qiankunWindow.__POWERED_BY_QIANKUN__ && router) {
-      router.isReady().then(() => {
-        if (!router) return;
-        // 从浏览器 URL 提取子应用路由
-        const currentPath = window.location.pathname;
-        if (currentPath.startsWith('/production')) {
-          const subRoute = currentPath.slice('/production'.length) || '/';
-          // 如果当前路由不匹配，则同步到子应用路由
-          if (router.currentRoute.value.path !== subRoute) {
-            router.replace(subRoute).catch(() => {});
-          }
-        } else {
-          // 如果不是 /production 路径，默认跳转到首页
-          router.replace('/').catch(() => {});
-        }
-      });
+  // 查找挂载点：
+  // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
+  // - 独立运行模式下：使用 #app
+  let mountPoint: HTMLElement | null = null;
+  
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
+    if (container && container instanceof HTMLElement) {
+      mountPoint = container;
+    } else {
+      throw new Error('[production-app] qiankun 模式下未提供容器元素');
     }
+  } else {
+    // 独立运行模式：使用 #app
+    const appElement = document.querySelector('#app') as HTMLElement;
+    if (!appElement) {
+      throw new Error('[production-app] 独立运行模式下未找到 #app 元素');
+    }
+    mountPoint = appElement;
+  }
+  
+  if (!mountPoint) {
+    throw new Error('[production-app] 无法找到挂载节点');
+  }
+
+  app.mount(mountPoint);
+
+  // 在 qiankun 环境下，同步初始路由
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ && router) {
+    router.isReady().then(() => {
+      if (!router) return;
+      // 从浏览器 URL 提取子应用路由
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/production')) {
+        const subRoute = currentPath.slice('/production'.length) || '/';
+        // 如果当前路由不匹配，则同步到子应用路由
+        if (router.currentRoute.value.path !== subRoute) {
+          router.replace(subRoute).catch(() => {});
+        }
+      } else {
+        // 如果不是 /production 路径，默认跳转到首页
+        router.replace('/').catch(() => {});
+      }
+    });
   }
 
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {
@@ -291,6 +315,29 @@ renderWithQiankun({
 
 // 标准 ES 模块导出（qiankun 需要）
 export default { bootstrap, mount, unmount };
+
+// 导出 timeouts 配置，供 single-spa 使用
+// 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
+// 这里的配置作为 fallback，主应用配置为准
+// 优化后：开发环境 8 秒，生产环境 3-5 秒
+const isDev = import.meta.env.DEV;
+export const timeouts = {
+  bootstrap: {
+    millis: isDev ? 8000 : 3000, // 开发环境 8 秒，生产环境 3 秒
+    dieOnTimeout: !isDev, // 生产环境超时直接报错，快速发现问题
+    warningMillis: isDev ? 4000 : 1500, // 一半时间后开始警告
+  },
+  mount: {
+    millis: isDev ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
+    dieOnTimeout: !isDev,
+    warningMillis: isDev ? 4000 : 2500,
+  },
+  unmount: {
+    millis: 3000,
+    dieOnTimeout: false,
+    warningMillis: 1500,
+  },
+};
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {

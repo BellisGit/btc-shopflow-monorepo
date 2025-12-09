@@ -4,6 +4,7 @@
  */
 
 import { responseInterceptor, type MessageHandler, type ConfirmHandler, type RouterHandler } from '@btc/shared-utils';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { Router } from 'vue-router';
 

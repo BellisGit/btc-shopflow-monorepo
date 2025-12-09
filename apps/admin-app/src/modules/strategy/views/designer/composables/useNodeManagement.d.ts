@@ -48,7 +48,7 @@ export declare function useNodeManagement(canvasDimensions?: {
     clearNodes: () => void;
     generateId: () => string;
     getNodeColor: (type: NodeType) => string;
-    getNodeStyle: (node: StrategyNode) => {};
+    getNodeStyle: (node: StrategyNode) => Record<string, never>;
     getNodeIcon: (type: NodeType) => string;
     getOutputConnectionClass: (node: StrategyNode) => "" | "conditional";
     handleNodeMouseDown: (event: MouseEvent, node: StrategyNode, isEditingText?: boolean, canvasDimensions?: {

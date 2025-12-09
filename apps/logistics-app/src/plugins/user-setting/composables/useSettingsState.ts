@@ -9,6 +9,8 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
+import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -255,6 +257,18 @@ function createSettingsState() {
     appStorage.settings.setItem('systemThemeType', theme);
     appStorage.settings.setItem('systemThemeMode', theme);
 
+    // 同步更新菜单风格：当系统主题切换为暗色时，如果当前菜单风格不是深色，则自动切换为深色
+    // 反之，当系统主题切换为浅色时，如果当前菜单风格是深色，则切换为设计风格
+    if (targetIsDark && menuThemeType.value !== MenuThemeEnum.DARK) {
+      // 切换为暗色菜单风格
+      menuThemeType.value = MenuThemeEnum.DARK;
+      appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DARK);
+    } else if (!targetIsDark && menuThemeType.value === MenuThemeEnum.DARK) {
+      // 切换回设计风格（优先使用设计风格）
+      menuThemeType.value = MenuThemeEnum.DESIGN;
+      appStorage.settings.setItem('menuThemeType', MenuThemeEnum.DESIGN);
+    }
+
     // 尝试获取主题插件实例
     let themePlugin: any = null;
     
@@ -319,6 +333,11 @@ function createSettingsState() {
     // 强制浏览器立即重新计算样式（关键步骤）
     const htmlEl = document.documentElement;
     void htmlEl.offsetHeight;
+
+    // 使用 nextTick 确保 Vue 响应式更新完成，然后重新注册 ECharts 主题
+    nextTick(() => {
+      registerEChartsThemes();
+    });
 
     // 使用双重 requestAnimationFrame 确保在下一帧恢复过渡效果（参考 art-design-pro）
     requestAnimationFrame(() => {

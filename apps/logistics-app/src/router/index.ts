@@ -5,7 +5,7 @@ import {
 } from 'vue-router';
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { getLogisticsRoutes } from './routes/logistics';
+import { getLogisticsRoutes, logisticsRoutes } from './routes/logistics';
 
 /**
  * 规范化路径：在生产环境子域名下，移除应用前缀

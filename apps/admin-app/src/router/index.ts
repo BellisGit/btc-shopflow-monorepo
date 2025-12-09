@@ -158,14 +158,7 @@ export const createAdminRouter = (): Router => {
       }
     } else {
       // 在 layout-app 环境下，认证由 layout-app 处理
-      // 这里只记录日志，不进行认证检查
-      if (import.meta.env.DEV) {
-        console.log('[admin-app] 在 layout-app 环境下，跳过认证检查', {
-          path: to.path,
-          isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
-          useLayoutApp: (window as any).__USE_LAYOUT_APP__,
-        });
-      }
+      // 这里不进行认证检查
     }
     
     next();

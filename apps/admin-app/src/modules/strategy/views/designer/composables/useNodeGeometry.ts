@@ -123,22 +123,26 @@ export function useNodeGeometry(canvasDimensions: Ref<{ width: number; height: n
   // 计算箭头位置变换（直接传入位置参数，避免依赖node.position）
   const getArrowTransformByPos = (x: number, y: number, nodeType: string, width: number, height: number, direction: string) => {
     switch (direction) {
-      case 'top':
+      case 'top': {
         const topTargetX = x + width / 2;
         const topTargetY = y - 10;
         return `translate(${topTargetX - 60}, ${topTargetY + 10})`;
-      case 'right':
+      }
+      case 'right': {
         const rightTargetX = x + width + 10;
         const rightTargetY = y + height / 2;
         return `translate(${rightTargetX - 10}, ${rightTargetY - 30})`;
-      case 'bottom':
+      }
+      case 'bottom': {
         const bottomTargetX = x + width / 2;
         const bottomTargetY = y + height + 10;
         return `translate(${bottomTargetX - 60}, ${bottomTargetY - 10})`;
-      case 'left':
+      }
+      case 'left': {
         const leftTargetX = x - 10;
         const leftTargetY = y + height / 2;
         return `translate(${leftTargetX - 30}, ${leftTargetY - 30})`;
+      }
       default:
         return 'translate(0, 0)';
     }

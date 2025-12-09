@@ -1,22 +1,26 @@
-/**
- * 鏈湴瀛樺偍宸ュ叿绫? */
 declare class StorageUtil {
     private prefix;
     constructor(prefix?: string);
     /**
-     * 璁剧疆瀛樺偍
-     * @param key 閿?   * @param value 鍊?   * @param expire 杩囨湡鏃堕棿锛堢锛?   */
+     * 设置存储
+     * @param key 键
+     * @param value 值
+     * @param expire 过期时间（秒）
+     */
     set(key: string, value: unknown, expire?: number): void;
     /**
-     * 鑾峰彇瀛樺偍
-     * @param key 閿?   * @returns 鍊?   */
+     * 获取存储
+     * @param key 键
+     * @returns 值
+     */
     get<T = unknown>(key: string): T | null;
     /**
-     * 绉婚櫎瀛樺偍
-     * @param key 閿?   */
+     * 移除存储
+     * @param key 键
+     */
     remove(key: string): void;
     /**
-     * 娓呯┖瀛樺偍
+     * 清空存储
      */
     clear(): void;
 }

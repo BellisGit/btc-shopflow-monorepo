@@ -1,34 +1,25 @@
 <template>
   <div class="inventory-list-page">
-    <BtcDoubleGroup
-      ref="doubleGroupRef"
-      :primary-service="domainService"
-      :secondary-service="importTypeService"
+    <BtcTableGroup
+      ref="tableGroupRef"
+      :left-service="domainService"
       :right-service="wrappedMaterialService"
-      :table-columns="currentColumns"
+      :table-columns="materialColumns"
       :form-items="materialFormItems"
-      :primary-title="t('inventory.dataSource.domain')"
-      :secondary-title="t('inventory.dataSource.list.import.secondaryTitle')"
+      :left-title="t('inventory.dataSource.domain')"
       :right-title="t('menu.inventory.dataSource.list')"
-      :show-primary-unassigned="true"
-      primary-unassigned-label="未分配"
+      :show-unassigned="false"
+      :enable-key-search="false"
+      :show-search-key="false"
+      :left-size="'small'"
       :show-add-btn="false"
       :show-multi-delete-btn="false"
-      :show-search-key="false"
-      :show-toolbar="true"
-      secondary-keyword-strategy="ignore"
-      :left-column-width="160"
-      :column-gap="8"
-      @primary-select="onDomainSelect"
-      @secondary-select="onImportTypeSelect"
     >
-      <template #title="{ primary, secondary }">
-        {{ primary?.name || '未选择域' }} - {{ secondary?.name || currentImportLabel || '未选择导入类型' }}
-      </template>
       <template #add-btn>
         <BtcImportBtn
           :on-submit="handleImport"
-          :tips="t('inventory.dataSource.list.import.tipByType', { type: currentImportLabel })"
+          :tips="t('inventory.dataSource.list.import.tips')"
+          :exportFilename="t('menu.inventory.dataSource.list')"
         />
       </template>
       <template #actions>
@@ -36,17 +27,17 @@
           {{ t('ui.export') }}
         </el-button>
       </template>
-    </BtcDoubleGroup>
+    </BtcTableGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcDoubleGroup, BtcImportBtn } from '@btc/shared-components';
+import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
 defineOptions({
@@ -55,49 +46,47 @@ defineOptions({
 
 const { t } = useI18n();
 const message = useMessage();
-const doubleGroupRef = ref();
+const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
-const selectedImportType = ref('inventory-ticket');
-// 标记是否是页面首次加载，用于区分自动选择和用户选择
-// 注意：这个标记只在真正的页面首次加载时为 true，组件重新创建时不应该重置为 true
-const isInitialLoad = ref(true);
 
-// 监听 selectedImportType 的变化，在用户主动切换时，标记首次加载已完成
-watch(selectedImportType, (newVal, oldVal) => {
-  // 如果是从 undefined/null 变为有效值，说明是初始化，保持 isInitialLoad 为 true
-  // 如果是从一个有效值变为另一个有效值，说明是用户主动切换，标记首次加载已完成
-  if (oldVal && newVal && oldVal !== newVal) {
-    if (isInitialLoad.value) {
-      isInitialLoad.value = false;
+// 左侧域列表使用物流域的仓位配置页面的 page 接口
+const domainService = {
+  list: async () => {
+    try {
+      // 调用物流域仓位配置的 page 接口
+      const response = await service.logistics?.base?.position?.page?.({ page: 1, size: 1000 });
+      
+      // 处理响应数据
+      let data = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        data = response.data;
+      }
+      
+      const positionList = data?.list || [];
+      
+      // 从仓位数据中提取唯一的域信息（根据 domainId 和 name 去重）
+      const domainMap = new Map<string, any>();
+      positionList.forEach((item: any) => {
+        const domainId = item.domainId;
+        if (domainId && !domainMap.has(domainId)) {
+          domainMap.set(domainId, {
+            id: domainId,
+            domainId: domainId,
+            name: item.name || '',
+            domainCode: domainId,
+            value: domainId,
+          });
+        }
+      });
+      
+      // 返回域列表
+      return Array.from(domainMap.values());
+    } catch (error) {
+      console.error('[InventoryList] Failed to load domains from position service:', error);
+      return [];
     }
   }
-});
-
-// 左侧域列表改为使用与汉堡菜单一致的 /domain/me 接口
-const domainService = {
-  list: () => service.admin?.iam?.domain?.me?.()
 };
-
-const importTypeOptions = computed(() => [
-  { id: 'inventory-ticket', name: t('inventory.dataSource.list.importTabs.ticket') },
-  { id: 'inventory-checklist', name: t('inventory.dataSource.list.importTabs.checklist') },
-]);
-
-const importTypeService = {
-  list: async () => importTypeOptions.value.map(item => ({ ...item })),
-};
-
-watch(importTypeOptions, (options) => {
-  // 只有在选项列表不为空，且当前选中的类型不在选项中时，才重置
-  if (options && options.length > 0 && !options.find(option => option.id === selectedImportType.value)) {
-    selectedImportType.value = options[0]?.id ?? 'inventory-ticket';
-  }
-}, { immediate: false });
-
-const currentImportLabel = computed(() => {
-  const option = importTypeOptions.value.find(option => option.id === selectedImportType.value);
-  return option?.name ?? importTypeOptions.value[0]?.name ?? '';
-});
 
 const resolveSelectedDomainId = () => {
   const domain = selectedDomain.value;
@@ -151,64 +140,13 @@ const createWrappedService = (baseService: any) => {
   };
 };
 
-// 物料信息表服务（右侧表），根据导入类型动态切换
-const wrappedMaterialService = computed(() => {
-  const currentService = selectedImportType.value === 'inventory-ticket'
-    ? service.logistics?.warehouse?.ticket
-    : service.system?.base?.data;
-
-  const wrapped = createWrappedService(currentService);
-  // 添加服务标识，用于 BtcCrud 的 key
-  wrapped._serviceId = selectedImportType.value;
-  wrapped._originalService = currentService;
-
-  return wrapped;
-});
+// 物料信息表服务（右侧表），使用系统域的 data 服务
+const materialService = service.system?.base?.data;
+const wrappedMaterialService = createWrappedService(materialService);
 
 // 域选择处理
 const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
-};
-
-const onImportTypeSelect = (type: any) => {
-  // 如果 type 为 null 或 undefined，说明是重置操作，不处理
-  if (!type) {
-    return;
-  }
-
-  const newType = (type?.id ?? type);
-  // 确保 newType 是有效的导入类型
-  if (!newType || !importTypeOptions.value.find(option => option.id === newType)) {
-    return;
-  }
-
-  // 如果新类型与当前类型相同，则忽略
-  if (newType === selectedImportType.value) {
-    return;
-  }
-
-  // 如果是首次加载，且自动选择的是第一个选项
-  if (isInitialLoad.value) {
-    // 首次加载时，如果自动选择的是第一个选项，且与当前 selectedImportType 一致，则允许通过
-    if (newType === importTypeOptions.value[0]?.id && newType === selectedImportType.value) {
-      // 标记首次加载完成
-      isInitialLoad.value = false;
-      return;
-    }
-    // 首次加载时，如果自动选择的是第一个选项，但当前 selectedImportType 不是第一个，则忽略自动选择，保持当前类型
-    if (newType === importTypeOptions.value[0]?.id && selectedImportType.value !== importTypeOptions.value[0]?.id) {
-      // 标记首次加载完成，但不更新 selectedImportType
-      isInitialLoad.value = false;
-      return;
-    }
-  }
-
-  // 如果不是首次加载，且新类型与当前类型不一致，说明是用户主动选择，允许切换
-  selectedImportType.value = newType;
-
-  // 注意：不需要手动调用 refresh()，因为 BtcCrud 的 key 变化会重新创建组件
-  // 重新创建时，如果 autoLoad 为 true，会自动加载数据
-  // 如果 autoLoad 为 false，BtcDoubleGroup 会在合适的时机触发刷新
 };
 
 // 处理导入
@@ -234,48 +172,50 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       return;
     }
 
-    // 根据导入类型选择不同的服务和数据处理逻辑
-    if (selectedImportType.value === 'inventory-ticket') {
-      // 盘点票导入：使用物流域的 ticket 服务
-      const normalizedRows = rows.map((row: Record<string, any>) => ({
-        checkNo: row.checkNo,
-        partName: row.partName,
-        position: row.position,
-        checkType: row.checkType,
-        domainId: row.domainId ?? domainId,
-      }));
+    // 盘点清单导入：使用系统域的 data 服务
+    const normalizedRows = rows.map((row: Record<string, any>) => ({
+      partName: row.partName,
+      partQty: row.partQty ? Number(row.partQty) : undefined,
+      position: row.position,
+      checkType: row.checkType,
+      domainId: row.domainId ?? domainId,
+      processId: row.processId,
+    }));
 
-      const payload = {
-        domainId,
-        list: normalizedRows,
-      };
+    const payload = {
+      domainId,
+      list: normalizedRows,
+    };
 
-      await service.logistics?.warehouse?.ticket?.import?.(payload);
-    } else {
-      // 盘点清单导入：使用系统域的 data 服务
-      const normalizedRows = rows.map((row: Record<string, any>) => ({
-        partName: row.partName,
-        partQty: row.partQty ? Number(row.partQty) : undefined,
-        position: row.position,
-        checkType: row.checkType,
-        domainId: row.domainId ?? domainId,
-        processId: row.processId,
-      }));
+    const response = await service.system?.base?.data?.import?.(payload);
 
-      const payload = {
-        domainId,
-        list: normalizedRows,
-      };
+    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导入失败
+    // 注意：响应拦截器可能返回原始 response 对象（AxiosResponse）或业务数据
+    // 需要同时检查 response.data.code 和 response.code
+    let responseData: any = response;
+    if (response && typeof response === 'object' && 'data' in response) {
+      // 如果是 AxiosResponse 对象，提取 data
+      responseData = (response as any).data;
+    }
 
-      await service.system?.base?.data?.import?.(payload);
+    if (responseData && typeof responseData === 'object' && 'code' in responseData) {
+      const code = responseData.code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.list.import.failed');
+        message.error(errorMsg);
+        done();
+        return;
+      }
     }
 
     message.success(t('inventory.dataSource.list.import.success'));
-    doubleGroupRef.value?.crudRef?.refresh?.();
+    tableGroupRef.value?.crudRef?.refresh?.();
     close();
-  } catch (error) {
+  } catch (error: any) {
     console.error('[InventoryList] import failed:', error);
-    message.error(t('inventory.dataSource.list.import.failed'));
+    // 优先从错误对象中提取后端返回的 msg
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.dataSource.list.import.failed');
+    message.error(errorMsg);
     done();
   }
 };
@@ -293,39 +233,21 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
   }
 };
 
-// 盘点票表格列（不包含 checkNo 字段）
-const ticketColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'checkType', label: t('system.inventory.base.fields.checkType'), minWidth: 120 },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
-]);
-
-// 盘点清单表格列（对应 data 服务的字段，不包含 checkNo）
+// 盘点清单表格列（对应 data 服务的字段，不包含盘点类型）
 const materialColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
   { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
   { prop: 'partQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
   { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'checkType', label: t('system.inventory.base.fields.checkType'), minWidth: 120 },
   { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
 ]);
 
-// 根据导入类型动态切换表格列
-const currentColumns = computed<TableColumn[]>(() => {
-  try {
-    if (selectedImportType.value === 'inventory-ticket') {
-      return ticketColumns.value || [];
-    } else {
-      return materialColumns.value || [];
-    }
-  } catch (error) {
-    console.warn('[InventoryList] Error computing columns:', error);
-    // 返回默认的物料列作为后备
-    return materialColumns.value || [];
-  }
-});
+// 导出用的列（不包含时间字段和盘点类型字段）
+const materialExportColumns = computed<TableColumn[]>(() => [
+  { prop: 'partName', label: t('system.material.fields.materialCode') },
+  { prop: 'partQty', label: t('inventory.result.fields.actualQty') },
+  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
+]);
 
 // 物料信息表表单
 const materialFormItems = computed<FormItem[]>(() => [
@@ -353,21 +275,16 @@ const materialFormItems = computed<FormItem[]>(() => [
 ]);
 
 const exportMaterialTemplate = () => {
-  // 从 CRUD 获取当前表格数据
-  const tableData = doubleGroupRef.value?.crudRef?.tableData || doubleGroupRef.value?.crudRef?.data || [];
+  // 从 CRUD 获取当前表格数据，允许空表导出
+  const tableData = tableGroupRef.value?.crudRef?.tableData || tableGroupRef.value?.crudRef?.data || [];
 
-  if (!tableData || tableData.length === 0) {
-    message.warning(t('platform.common.no_data_to_export') || '暂无数据可导出');
-    return;
-  }
+  const filename = `${t('menu.inventory.dataSource.list')}`;
 
-  // 根据导入类型设置不同的文件名
-  const filename = selectedImportType.value === 'inventory-ticket'
-    ? `${t('inventory.dataSource.list.importTabs.ticket')}_${t('menu.inventory.dataSource.list')}`
-    : `${t('inventory.dataSource.list.importTabs.checklist')}_${t('menu.inventory.dataSource.list')}`;
+  // 确保只导出指定的列（不包含盘点类型）
+  const exportColumns = materialExportColumns.value.filter(col => col.prop !== 'checkType');
 
   exportTableToExcel({
-    columns: currentColumns.value,
+    columns: exportColumns,
     data: tableData,
     filename,
   });

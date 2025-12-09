@@ -25,6 +25,7 @@ import '@btc/shared-components/styles/dark-theme.css';
 import '@btc/shared-components/styles/index.scss';
 // 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
 // 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcSvg } from '@btc/shared-components';
 
 registerAppEnvAccessors();
@@ -190,12 +191,33 @@ const loadingTimeoutId = setTimeout(() => {
 // 启动（等待 EPS 服务加载完成后再启动应用）
 // 关键：为整个启动流程添加超时保护
 const startupPromise = waitForEpsService()
-  .then((service) => {
+  .then(async (service) => {
     if (typeof window !== 'undefined') {
       (window as any).__BTC_SERVICE__ = service;
       // 暴露到全局，供所有子应用共享使用
       (window as any).__APP_EPS_SERVICE__ = service;
       (window as any).service = service; // 也设置到 window.service，保持兼容性
+    }
+
+    // 暴露 authApi 到全局，供所有子应用使用（在 bootstrap 之前暴露，确保其他应用可以访问）
+    // 使用动态导入避免循环依赖，但使用 await 确保暴露完成
+    try {
+      const { authApi } = await import('./modules/api-services/auth');
+      if (authApi && typeof (window as any).__APP_AUTH_API__ === 'undefined') {
+        (window as any).__APP_AUTH_API__ = authApi;
+      }
+    } catch (error) {
+      console.warn('[system-app] Failed to expose authApi globally:', error);
+    }
+
+    // 暴露域列表缓存清除函数，供菜单抽屉使用
+    try {
+      const { clearDomainCache } = await import('./utils/domain-cache');
+      if (clearDomainCache && typeof (window as any).__APP_CLEAR_DOMAIN_CACHE__ === 'undefined') {
+        (window as any).__APP_CLEAR_DOMAIN_CACHE__ = clearDomainCache;
+      }
+    } catch (error) {
+      // 静默失败，不影响应用运行
     }
 
     // EPS 服务加载完成后，再启动应用
@@ -282,16 +304,33 @@ const startupPromise = waitForEpsService()
     throw mountError;
   }
 
-    // 注册开发工具组件（在所有环境下都加载，由组件内部逻辑决定是否显示）
-    // 组件内部会检查：开发环境或允许的用户（如 moselu）才显示
-    import('./components/DevTools/index.vue').then(({ default: DevTools }) => {
-      const devToolsApp = createApp(DevTools);
-      const container = document.createElement('div');
-      document.body.appendChild(container);
-      devToolsApp.mount(container);
-    }).catch(err => {
-      console.warn('开发工具加载失败:', err);
-    });
+    // 设置全局对象，供 DevTools 自动挂载机制使用
+    // DevTools 会通过 shared-components 的自动挂载机制自动挂载
+    (async () => {
+      try {
+        // 暴露 http 实例到全局，供 DevTools 使用
+        try {
+          const { http } = await import('./utils/http');
+          if (http && typeof (window as any).__APP_HTTP__ === 'undefined') {
+            (window as any).__APP_HTTP__ = http;
+          }
+        } catch (err) {
+          // http 实例可能还未加载，忽略错误
+        }
+
+        // 暴露 EPS list 到全局，供 DevTools 使用
+        try {
+          const epsModule = await import('./services/eps');
+          if (epsModule.list && typeof (window as any).__APP_EPS_LIST__ === 'undefined') {
+            (window as any).__APP_EPS_LIST__ = epsModule.list;
+          }
+        } catch (err) {
+          // EPS 服务可能还未加载，忽略错误
+        }
+      } catch (err) {
+        // 静默失败，不影响应用运行
+      }
+    })();
   })
   .catch(err => {
     console.error('[system-app] 应用启动失败:', err);

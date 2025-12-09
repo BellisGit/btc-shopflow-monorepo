@@ -80,7 +80,7 @@ export declare function createMockCrudService(_resource: string): {
         totalPage: number;
     }>;
     list: (_params?: any) => Promise<any[]>;
-    info: (_params: any) => Promise<{}>;
+    info: (_params: any) => Promise<Record<string, never>>;
     add: (_data: any) => Promise<void>;
     update: (_data: any) => Promise<void>;
     delete: (_ids: (string | number)[]) => Promise<void>;

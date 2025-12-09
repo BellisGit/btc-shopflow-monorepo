@@ -45,15 +45,25 @@ if (typeof window !== 'undefined') {
     }
     (window as any).__qiankun_logs_filtered__ = true;
 
-    // 保存原始方法
-    (console as any).__originalLog = console.log;
-    (console as any).__originalInfo = console.info;
-    (console as any).__originalWarn = console.warn;
-    (console as any).__originalError = console.error;
+    // 保存原始方法（如果还没有保存的话）
+    // 注意：setupGlobalErrorCapture() 可能已经替换了 console.warn，所以优先使用已保存的原始方法
+    if (!(console as any).__originalLog) {
+      (console as any).__originalLog = console.log;
+    }
+    if (!(console as any).__originalInfo) {
+      (console as any).__originalInfo = console.info;
+    }
+    if (!(console as any).__originalWarn) {
+      (console as any).__originalWarn = console.warn;
+    }
+    if (!(console as any).__originalError) {
+      (console as any).__originalError = console.error;
+    }
 
-    const originalLog = console.log.bind(console);
-    const originalInfo = console.info.bind(console);
-    const originalWarn = console.warn.bind(console);
+    // 使用已保存的原始方法，如果没有则使用当前的（可能是被其他代码替换过的）
+    const originalLog = ((console as any).__originalLog || console.log).bind(console);
+    const originalInfo = ((console as any).__originalInfo || console.info).bind(console);
+    const originalWarn = ((console as any).__originalWarn || console.warn).bind(console);
 
     // 检查是否应该过滤日志的辅助函数
     const shouldFilter = (...args: any[]): boolean => {
@@ -86,35 +96,39 @@ if (typeof window !== 'undefined') {
       originalInfo(...args);
     };
 
-    // 过滤 console.warn
-    console.warn = (...args: any[]) => {
-      // 过滤 qiankun sandbox 警告
-      if (shouldFilter(...args)) {
+  // 过滤 console.warn
+  console.warn = (...args: any[]) => {
+    // 过滤 qiankun sandbox 警告
+    if (shouldFilter(...args)) {
+      return;
+    }
+    // 过滤 single-spa 的 warningMillis 警告（这是正常的，不是错误）
+    // 检查多种可能的警告格式
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+      if (firstArg.includes('single-spa minified message #31') ||
+          firstArg.includes('single-spa.js.org/error/?code=31') ||
+          (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
         return;
       }
-      // 过滤 single-spa 的 warningMillis 警告（这是正常的，不是错误）
-      // 检查多种可能的警告格式
-      const firstArg = args[0];
-      if (typeof firstArg === 'string') {
-        if (firstArg.includes('single-spa minified message #31') ||
-            firstArg.includes('single-spa.js.org/error/?code=31') ||
-            (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
-          return;
-        }
+    }
+    // 检查所有参数中是否包含 single-spa 警告
+    for (const arg of args) {
+      if (typeof arg === 'string' && (
+        arg.includes('single-spa minified message #31') ||
+        arg.includes('single-spa.js.org/error/?code=31') ||
+        (arg.includes('code=31') && arg.includes('bootstrap'))
+      )) {
+        return;
       }
-      // 检查所有参数中是否包含 single-spa 警告
-      for (const arg of args) {
-        if (typeof arg === 'string' && (
-          arg.includes('single-spa minified message #31') ||
-          arg.includes('single-spa.js.org/error/?code=31') ||
-          (arg.includes('code=31') && arg.includes('bootstrap'))
-        )) {
-          return;
-        }
-      }
-      originalWarn(...args);
-    };
-  })();
+    }
+    // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
+    const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
+    if (typeof warnFn === 'function') {
+      warnFn.apply(console, args);
+    }
+  };
+})();
 }
 
 // 定义类型，避免直接导入（在函数内部动态导入）
@@ -351,14 +365,24 @@ function filterQiankunLogs() {
   (window as any).__qiankun_logs_filtered__ = true;
 
   // 保存原始方法（保存到全局，供其他地方使用）
-  (console as any).__originalLog = console.log;
-  (console as any).__originalInfo = console.info;
-  (console as any).__originalWarn = console.warn;
-  (console as any).__originalError = console.error;
+  // 注意：setupGlobalErrorCapture() 可能已经替换了 console.warn，所以优先使用已保存的原始方法
+  if (!(console as any).__originalLog) {
+    (console as any).__originalLog = console.log;
+  }
+  if (!(console as any).__originalInfo) {
+    (console as any).__originalInfo = console.info;
+  }
+  if (!(console as any).__originalWarn) {
+    (console as any).__originalWarn = console.warn;
+  }
+  if (!(console as any).__originalError) {
+    (console as any).__originalError = console.error;
+  }
 
-  const originalLog = console.log.bind(console);
-  const originalInfo = console.info.bind(console);
-  const originalWarn = console.warn.bind(console);
+  // 使用已保存的原始方法，如果没有则使用当前的（可能是被其他代码替换过的）
+  const originalLog = ((console as any).__originalLog || console.log).bind(console);
+  const originalInfo = ((console as any).__originalInfo || console.info).bind(console);
+  const originalWarn = ((console as any).__originalWarn || console.warn).bind(console);
 
   // 检查是否应该过滤日志的辅助函数
   const shouldFilter = (...args: any[]): boolean => {
@@ -417,7 +441,11 @@ function filterQiankunLogs() {
         return;
       }
     }
-    originalWarn(...args);
+    // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
+    const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
+    if (typeof warnFn === 'function') {
+      warnFn.apply(console, args);
+    }
   };
 }
 
@@ -864,8 +892,9 @@ export function setupQiankun() {
     };
 
     // 开发环境：打印应用配置，便于调试
-    if (import.meta.env.DEV) {
-    }
+    // if (import.meta.env.DEV) {
+    //   // 调试信息已移除
+    // }
 
 
     return {
@@ -2076,7 +2105,7 @@ export function setupQiankun() {
           const hostname = window.location.hostname;
 
           // 构建产物直接部署到子域名根目录，base 路径始终是 /
-          let basePath = '/';
+          const basePath = '/';
 
           // 关键：优先使用 targetHost（从 baseUrl 中提取的子域名），而不是当前页面的 hostname
           // 这样当从主域名访问时（如 bellis.com.cn/production），base 会指向子域名（production.bellis.com.cn）

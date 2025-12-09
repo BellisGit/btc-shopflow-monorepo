@@ -6,6 +6,10 @@ import './styles/index.scss';
 // 初始化全局事件系统
 import './utils/resize';
 
+// 自动挂载 DevTools（拦截 Vue App 的 mount 方法）
+import { setupAutoMountDevTools } from './utils/auto-mount-dev-tools';
+setupAutoMountDevTools();
+
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';
 import * as CodePlugin from './plugins/code';
@@ -89,6 +93,7 @@ export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/fee
 export { default as BtcSvg } from './components/others/btc-svg/index.vue';
 export { default as BtcViewGroup } from './common/view-group/index.vue';
 export { default as BtcSearch } from './components/others/btc-search/index.vue';
+export { default as BtcDevTools } from './components/others/btc-dev-tools/index.vue';
 
 // CRUD 组件（上下文系统）
 export { default as BtcCrud } from './crud/context/index.vue';
@@ -128,6 +133,11 @@ export { useUser, type UserInfo } from './composables/useUser';
 export { useCurrentApp } from './composables/useCurrentApp';
 export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
+export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';
+export { autoMountDevTools } from './utils/auto-mount-dev-tools';
+
+// 导出用户设置相关的枚举类型
+export * from './components/others/btc-user-setting/config/enums';
 
 // 导出类型
 export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-identity-verify/types';

@@ -1,8 +1,8 @@
-import { BtcMessage } from '@btc/shared-components';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
+import { BtcMessage, useProcessStore } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 // import { authApi } from '@/modules/api-services'; // Removed direct import
-import { useProcessStore } from '@btc/shared-components/store/process';
 import { deleteCookie } from '@/utils/cookie';
 import { appStorage } from '@/utils/app-storage';
 

@@ -12,7 +12,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, rmSync, cpSync, readdirSync, statSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, rmSync, cpSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -1273,19 +1273,13 @@ function copyAppDist(appName, domain) {
       force: true,
     });
     
-    // 检查并复制 EPS 数据到 dist 目录（如果存在）
-    const epsDir = join(rootDir, 'apps', appName, 'build', 'eps');
-    if (existsSync(epsDir) && readdirSync(epsDir).length > 0) {
-      const targetEpsDir = join(targetDir, 'build', 'eps');
-      if (!existsSync(join(targetDir, 'build'))) {
-        const fs = require('fs');
-        fs.mkdirSync(join(targetDir, 'build'), { recursive: true });
-      }
-      cpSync(epsDir, targetEpsDir, {
-        recursive: true,
-        force: true,
-      });
-      console.log(`  ✅ EPS 数据已复制到 dist/${domain}/build/eps`);
+    // 注意：EPS 数据（build/eps）不应该部署到生产环境
+    // 它只是开发时使用的，不应该出现在构建产物中
+    // 如果 dist 目录下有 build 目录（可能是构建时错误创建的），需要清理
+    const distBuildDir = join(targetDir, 'build');
+    if (existsSync(distBuildDir)) {
+      console.log(`  ⚠️  警告: 发现 dist/${domain}/build 目录，正在清理（EPS 数据不应部署到生产环境）`);
+      rmSync(distBuildDir, { recursive: true, force: true });
     }
     
     console.log(`  ✅ ${appName} 产物已复制到 dist/${domain}\n`);

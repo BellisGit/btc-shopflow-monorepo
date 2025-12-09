@@ -401,7 +401,7 @@ const simulateNodeExecution = async (node: StrategyNode, context: any): Promise<
         output: context
       };
 
-    case 'CONDITION':
+    case 'CONDITION': {
       // 模拟条件判断
       const conditionResult = Math.random() > 0.3; // 70% 成功率
       return {
@@ -412,8 +412,9 @@ const simulateNodeExecution = async (node: StrategyNode, context: any): Promise<
           conditionResult
         }
       };
+    }
 
-    case 'ACTION':
+    case 'ACTION': {
       // 模拟动作执行
       const actionSuccess = Math.random() > 0.1; // 90% 成功率
       return {
@@ -424,8 +425,9 @@ const simulateNodeExecution = async (node: StrategyNode, context: any): Promise<
           actionExecuted: actionSuccess
         }
       };
+    }
 
-    case 'DECISION':
+    case 'DECISION': {
       // 模拟决策
       const decisionResult = ['option1', 'option2', 'option3'][Math.floor(Math.random() * 3)];
       return {
@@ -433,9 +435,10 @@ const simulateNodeExecution = async (node: StrategyNode, context: any): Promise<
         duration,
         output: {
           ...context,
-          decision: decisionResult
+          decisionResult
         }
       };
+    }
 
     case 'GATEWAY':
       // 模拟网关

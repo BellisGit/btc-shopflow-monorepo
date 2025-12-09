@@ -57,7 +57,7 @@ defineOptions({
   name: 'LayoutMenuDrawer'
 });
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Check, Right, Loading } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
@@ -68,6 +68,7 @@ declare global {
   interface Window {
     __APP_EPS_SERVICE__?: any;
     __APP_GET_DOMAIN_LIST__?: (service: any) => Promise<any>;
+    __APP_CLEAR_DOMAIN_CACHE__?: () => void;
     __APP_FINISH_LOADING__?: () => void;
     __APP_GET_APP_CONFIG__?: (appName: string) => any;
     __APP_GET_ALL_DEV_PORTS__?: () => string[];
@@ -378,6 +379,18 @@ const applications = ref<MicroApp[]>([]);
 // 存储域数据映射
 const domainDataMap = ref<Map<string, any>>(new Map());
 
+// 域代码到国际化键的映射（用于显示名称）
+const domainCodeToI18nKey: Record<string, string> = {
+  'SYSTEM': 'domain.type.system',
+  'ADMIN': 'domain.type.admin',
+  'QUALITY': 'domain.type.quality',
+  'ENGINEERING': 'domain.type.engineering',
+  'PRODUCTION': 'domain.type.production',
+  'LOGISTICS': 'domain.type.logistics',
+  'FINANCE': 'domain.type.finance',
+  'MONITOR': 'domain.type.monitor',
+};
+
 // 获取域显示名称
 const getDomainDisplayName = (app: MicroApp) => {
   // 固定应用使用国际化配置
@@ -385,65 +398,71 @@ const getDomainDisplayName = (app: MicroApp) => {
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 系统域使用域数据中的系统域类型
+  // 优先使用国际化配置，确保名称一致性
+  // 首先尝试从域数据中获取 domainCode，然后使用国际化映射
+  let domainCode: string | undefined;
+
+  // 系统域
   if (app.name === 'system') {
     const systemDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) => 
-        domain.domainCode === 'SYSTEM' || 
+      .find((domain: any) =>
+        domain.domainCode === 'SYSTEM' ||
         domain.name === '系统域' ||
         domain.id === '17601901464201'
       );
-    if (systemDomain && systemDomain.domainType) {
-      return systemDomain.domainType;
-    }
-    return t(`micro_app.${app.name}.title`);
+    domainCode = systemDomain?.domainCode || 'SYSTEM';
   }
-
-  // 管理域使用域数据中的管理域类型
-  if (app.name === 'admin') {
+  // 管理域
+  else if (app.name === 'admin') {
     const adminDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) => 
-        domain.domainCode === 'ADMIN' || 
+      .find((domain: any) =>
+        domain.domainCode === 'ADMIN' ||
         domain.name === '管理域' ||
         domain.id === 'SDOM-9473'
       );
-    if (adminDomain && adminDomain.domainType) {
-      return adminDomain.domainType;
+    domainCode = adminDomain?.domainCode || 'ADMIN';
+  }
+  // 其他域
+  else {
+    // 首先尝试使用 app.name 的大写形式作为 key
+    let domain = domainDataMap.value.get(app.name.toUpperCase());
+
+    // 如果找不到，尝试从所有域中查找匹配的域
+    if (!domain) {
+      domain = Array.from(domainDataMap.value.values())
+        .find((d: any) => {
+          const code = d.domainCode || d.id || d.name;
+          return code && code.toUpperCase() === app.name.toUpperCase();
+        });
     }
-    return t(`micro_app.${app.name}.title`);
+
+    // 如果还是找不到，尝试使用其他可能的匹配方式
+    if (!domain) {
+      const domainNameMap: Record<string, string> = {
+        'logistics': '物流域',
+        'finance': '财务域',
+        'quality': '品质域',
+        'production': '生产域',
+        'engineering': '工程域',
+      };
+      const domainName = domainNameMap[app.name];
+      if (domainName) {
+        domain = Array.from(domainDataMap.value.values())
+          .find((d: any) => d.name === domainName);
+      }
+    }
+
+    domainCode = domain?.domainCode || app.name.toUpperCase();
   }
 
-  // 其他域使用对应的域类型
-  // 首先尝试使用 app.name 的大写形式作为 key
-  let domain = domainDataMap.value.get(app.name.toUpperCase());
-  
-  // 如果找不到，尝试从所有域中查找匹配的域
-  if (!domain) {
-    domain = Array.from(domainDataMap.value.values())
-      .find((d: any) => {
-        const domainCode = d.domainCode || d.id || d.name;
-        return domainCode && domainCode.toUpperCase() === app.name.toUpperCase();
-      });
-  }
-  
-  // 如果还是找不到，尝试使用其他可能的匹配方式
-  if (!domain) {
-    const domainNameMap: Record<string, string> = {
-      'logistics': '物流域',
-      'finance': '财务域',
-      'quality': '品质域',
-      'production': '生产域',
-      'engineering': '工程域',
-    };
-    const domainName = domainNameMap[app.name];
-    if (domainName) {
-      domain = Array.from(domainDataMap.value.values())
-        .find((d: any) => d.name === domainName);
+  // 使用国际化映射获取显示名称
+  const i18nKey = domainCodeToI18nKey[domainCode];
+  if (i18nKey) {
+    const i18nValue = t(i18nKey);
+    // 如果国际化值存在且不是 key 本身，则使用国际化值
+    if (i18nValue && i18nValue !== i18nKey) {
+      return i18nValue;
     }
-  }
-  
-  if (domain && domain.domainType) {
-    return domain.domainType;
   }
 
   // 兜底使用国际化配置
@@ -648,7 +667,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       await router.push(targetPath);
       await nextTick();
       detectCurrentApp();
-      
+
       // 发送应用切换事件
       const emitter = (window as any).__APP_EMITTER__;
       if (emitter) {
@@ -673,7 +692,13 @@ const handleSwitchApp = async (app: MicroApp) => {
     const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
     const appConfig = getAppConfig(mappedAppName);
     if (appConfig && appConfig.prodHost) {
-      // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
+      // 清除域列表缓存，确保子应用重新请求域列表
+      const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
+      if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
+        clearDomainCacheFn();
+      }
+
+      // 构建完整的 URL，直接跳转到子域名根路径（不添加任何参数）
       const protocol = window.location.protocol;
       const targetUrl = `${protocol}//${appConfig.prodHost}/`;
 
@@ -719,7 +744,7 @@ const handleSwitchApp = async (app: MicroApp) => {
   await router.push(targetPath);
   await nextTick();
   detectCurrentApp();
-  
+
   // 发送应用切换事件，通知其他组件（如 ApiSwitch）更新
   const emitter = (window as any).__APP_EMITTER__;
   if (emitter) {
@@ -756,6 +781,22 @@ const handleIframeClick = () => {
     handleClose();
   }
 };
+
+// 监听抽屉打开，重新加载应用列表（确保获取最新的域数据）
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      // 清除域列表缓存，确保获取最新数据
+      const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
+      if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
+        clearDomainCacheFn();
+      }
+      // 重新加载应用列表
+      loadApplications();
+    }
+  }
+);
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);

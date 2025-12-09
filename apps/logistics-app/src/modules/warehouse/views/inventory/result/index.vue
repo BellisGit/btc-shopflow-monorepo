@@ -99,10 +99,11 @@ import { computed, ref, onMounted, nextTick, inject } from 'vue';
 import { useI18n, type UseCrudReturn } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
-import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcDialog, BtcMessage, BtcSvg } from '@btc/shared-components';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcDialog, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
 import { service } from '@services/eps';
+import { useLogisticsInventoryExport } from './composables/useLogisticsInventoryExport';
 
 defineOptions({
   name: 'btc-logistics-warehouse-inventory-result',
@@ -124,91 +125,13 @@ const inventoryCheckService: CrudService<any> = createCrudServiceFromEps(
   service
 );
 
-// 获取EPS服务节点
-const getEpsServiceNode = (servicePath: string | string[]) => {
-  const pathArray = Array.isArray(servicePath) ? servicePath : servicePath.split('.');
-  let serviceNode: any = service;
-  for (const key of pathArray) {
-    if (!serviceNode || typeof serviceNode !== 'object') {
-      throw new Error(`EPS服务路径 ${servicePath} 不存在，无法找到 ${key}`);
-    }
-    serviceNode = serviceNode[key];
-  }
-  return serviceNode;
-};
+// 使用导出 composable
+const { handleExport: handleExportInternal } = useLogisticsInventoryExport();
 
-// 处理导出 - 使用EPS服务
+// 导出处理函数
 const handleExport = async () => {
-  // 优先从crudRef获取，如果没有则从inject获取
   const crudInstance = crudRef.value?.crud || injectedCrud;
-  
-  if (!crudInstance) {
-    BtcMessage.error('CRUD上下文不可用');
-    return;
-  }
-
-  try {
-    // 获取EPS服务节点
-    const serviceNode = getEpsServiceNode(['logistics', 'base', 'check']);
-    
-    // 检查export方法是否存在
-    if (!serviceNode || typeof serviceNode.export !== 'function') {
-      throw new Error('导出方法不存在');
-    }
-    
-    // 获取当前查询参数
-    const params = crudInstance.getParams();
-    
-    // 构建导出参数（根据EPS配置，没有fieldEq字段，只需要传递keyword）
-    const exportParams: any = {};
-    
-    // 如果有keyword，传递keyword
-    if (params.keyword) {
-      exportParams.keyword = params.keyword;
-    }
-    
-    // 调用EPS服务的export方法（GET请求，参数作为query参数）
-    const response = await serviceNode.export(exportParams);
-    
-    // 处理响应：EPS服务可能返回Blob、ArrayBuffer或其他格式
-    let blob: Blob;
-    
-    if (response instanceof Blob) {
-      blob = response;
-    } else if (response instanceof ArrayBuffer) {
-      blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    } else if (response && typeof response === 'object' && 'data' in response) {
-      // 如果响应被包装在data字段中
-      const data = response.data;
-      if (data instanceof Blob) {
-        blob = data;
-      } else if (data instanceof ArrayBuffer) {
-        blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      } else {
-        // 尝试将数据转换为Blob
-        blob = new Blob([JSON.stringify(data)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      }
-    } else {
-      // 其他情况，尝试直接转换为Blob
-      blob = new Blob([response as any], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    }
-    
-    // 创建下载链接
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    a.download = `${t('menu.logistics.warehouse.inventory.result')}_${timestamp}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    BtcMessage.success(t('platform.common.export_success'));
-  } catch (error: any) {
-    console.error('导出失败:', error);
-    BtcMessage.error(error.message || t('platform.common.export_failed'));
-  }
+  await handleExportInternal(crudInstance);
 };
 
 const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: any) => formatTableNumber(value);
