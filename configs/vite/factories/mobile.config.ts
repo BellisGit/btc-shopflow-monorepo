@@ -214,19 +214,19 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             src: '/icons/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: ['any', 'maskable'], // purpose 必须是数组
+            purpose: 'any maskable',
           },
           {
             src: '/icons/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: ['any', 'maskable'],
+            purpose: 'any maskable',
           },
           {
             src: '/icons/android-chrome-1024x1024.png',
             sizes: '1024x1024',
             type: 'image/png',
-            purpose: ['any', 'maskable'],
+            purpose: 'any maskable',
           },
           {
             src: '/icons/favicon-32x32.png',
@@ -257,25 +257,82 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         } : undefined,
       } : {}),
     }),
-    // 8. manifest 中间件
+    // 8. 开发环境 manifest 处理插件（直接生成正确的 manifest）
     {
-      name: 'manifest-middleware',
+      name: 'dev-manifest-plugin',
       configureServer(server: ViteDevServer) {
-        server.middlewares.use('/manifest.webmanifest', (_req: any, res: any, next: any) => {
+        server.middlewares.use('/manifest.webmanifest', (req: any, res: any, next: any) => {
+          // 直接返回正确的 manifest JSON，避免 VitePWA 插件生成错误格式
+          const manifest = {
+            name: '拜里斯科技',
+            short_name: '拜里斯科技',
+            lang: 'zh-CN',
+            description: '拜里斯科技移动应用',
+            theme_color: '#1976d2',
+            background_color: '#ffffff',
+            display: 'standalone',
+            orientation: 'portrait',
+            start_url: '/',
+            scope: '/',
+            icons: [
+              {
+                src: '/icons/android-chrome-192x192.png',
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'any maskable',
+              },
+              {
+                src: '/icons/android-chrome-512x512.png',
+                sizes: '512x512',
+                type: 'image/png',
+                purpose: 'any maskable',
+              },
+              {
+                src: '/icons/android-chrome-1024x1024.png',
+                sizes: '1024x1024',
+                type: 'image/png',
+                purpose: 'any maskable',
+              },
+              {
+                src: '/icons/favicon-32x32.png',
+                sizes: '32x32',
+                type: 'image/png',
+                purpose: 'any',
+              },
+              {
+                src: '/icons/favicon-16x16.png',
+                sizes: '16x16',
+                type: 'image/png',
+                purpose: 'any',
+              },
+            ],
+            display_override: ['standalone', 'fullscreen', 'minimal-ui', 'browser'],
+          };
+          
           res.setHeader('Content-Type', 'application/manifest+json');
-          next();
+          res.setHeader('Cache-Control', 'no-cache');
+          res.end(JSON.stringify(manifest, null, 2));
         });
       },
     } as Plugin,
-    // 8.5. 修复 manifest 文件插件（移除非标准字段，修复 purpose 格式）
+    // 9. 修复 manifest 文件插件（仅在构建时修复，移除非标准字段）
     {
       name: 'fix-manifest-plugin',
       closeBundle() {
-        // 在构建完成后修复 manifest 文件
+        // 构建环境：在构建完成后修复 manifest 文件
         const manifestPath = resolve(appDir, 'dist', 'manifest.webmanifest');
         if (existsSync(manifestPath)) {
           try {
-            const manifestContent = readFileSync(manifestPath, 'utf-8');
+            let manifestContent = readFileSync(manifestPath, 'utf-8');
+            // 移除 BOM（如果存在）
+            if (manifestContent.charCodeAt(0) === 0xFEFF) {
+              manifestContent = manifestContent.slice(1);
+            }
+            // 确保文件不为空
+            if (!manifestContent.trim()) {
+              console.warn('[fix-manifest-plugin] ⚠️ manifest 文件为空，跳过修复');
+              return;
+            }
             const manifest = JSON.parse(manifestContent);
             let modified = false;
             
@@ -285,12 +342,19 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
               modified = true;
             }
             
-            // 修复 purpose 字段：将字符串转换为数组
+            // 修复 purpose 字段：确保是字符串格式（空格分隔）
             if (manifest.icons && Array.isArray(manifest.icons)) {
               manifest.icons = manifest.icons.map((icon: any) => {
-                if (icon.purpose && typeof icon.purpose === 'string' && icon.purpose.includes(' ')) {
-                  icon.purpose = icon.purpose.split(' ');
-                  modified = true;
+                if (icon.purpose) {
+                  if (Array.isArray(icon.purpose)) {
+                    // 如果是数组，转换为空格分隔的字符串
+                    icon.purpose = icon.purpose.filter(Boolean).join(' ');
+                    modified = true;
+                  } else if (typeof icon.purpose !== 'string') {
+                    // 如果不是字符串也不是数组，设置为默认值
+                    icon.purpose = 'any';
+                    modified = true;
+                  }
                 }
                 return icon;
               });

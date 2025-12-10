@@ -276,7 +276,20 @@
 }
 
 .count-entry-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
   padding: 16px;
+  box-sizing: border-box;
+  
+  // 表单容器
+  :deep(.van-form) {
+    width: 100%;
+    max-width: 500px;
+  }
 }
 
 .sync-status-page {

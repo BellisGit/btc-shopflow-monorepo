@@ -7,7 +7,21 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null);
   const user = ref<any>(null);
 
-  const isAuthenticated = computed(() => !!token.value);
+  // 判断是否已认证
+  // 注意：如果 cookie 是 http-only，JavaScript 无法读取，但浏览器会自动在请求中发送
+  // 所以即使 token 为 null，如果有用户信息，也应该认为已登录（由后端验证 cookie）
+  const isAuthenticated = computed(() => {
+    // 如果有 token，肯定已登录
+    if (token.value) {
+      return true;
+    }
+    // 如果没有 token，但有用户信息，说明可能是 http-only cookie 的情况
+    // 这种情况下，浏览器会自动发送 cookie，由后端验证
+    if (user.value?.id) {
+      return true;
+    }
+    return false;
+  });
 
   function setToken(newToken: string | null) {
     token.value = newToken;
@@ -64,13 +78,11 @@ export const useAuthStore = defineStore('auth', () => {
     if (cookieToken) {
       token.value = cookieToken;
       localStorage.setItem('mobile_token', cookieToken);
-      console.log('[Auth] Token loaded from cookie');
     } else {
       // 如果 cookie 中没有，尝试从 localStorage 读取
       const storedToken = localStorage.getItem('mobile_token');
       if (storedToken) {
         token.value = storedToken;
-        console.log('[Auth] Token loaded from localStorage');
       }
     }
     

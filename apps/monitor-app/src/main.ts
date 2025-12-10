@@ -4,12 +4,20 @@ import ElementPlus from 'element-plus';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 import 'virtual:svg-icons';
+import 'virtual:uno.css';
 // Element Plus 样式
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+// 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
+// 关键：直接导入确保构建时被正确打包，避免代码分割导致的路径问题
 import '@btc/shared-components/styles/dark-theme.css';
+// 关键：直接导入共享组件样式，确保在生产环境构建时被正确打包
+// 虽然 global.scss 中已经通过 @use 导入，但直接导入可以确保样式在应用启动时就被处理
 import '@btc/shared-components/styles/index.scss';
-import 'virtual:uno.css';
+// 应用全局样式（global.scss 中已通过 @use 导入共享组件样式）
+// 注意：共享组件样式在 global.scss 中使用 @use 导入，确保构建时被正确合并
+import './styles/global.scss';
+import './styles/theme.scss';
 import type { QiankunProps } from '@btc/shared-core';
 import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl } from '@configs/layout-bridge';
 import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports } from '@btc/shared-utils/error-monitor';

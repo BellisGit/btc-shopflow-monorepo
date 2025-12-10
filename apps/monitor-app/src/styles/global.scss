@@ -1,0 +1,142 @@
+// 导入共享组件样式（必须在文件开头，确保优先级）
+// 使用 @use ... as * 确保样式被正确导入并应用到全局（兼容 @use 模块化）
+@use '@btc/shared-components/styles/index.scss' as *;
+
+// Global styles for monitor app
+
+// 自定义 CSS 变量（与 cool-admin 保持一致）
+:root {
+  --bg-color: var(--el-fill-color-lighter);
+}
+
+// 确保 body 和 html 有正确的背景色
+html,
+body {
+  background-color: var(--el-bg-color-page, #ffffff);
+  color: var(--el-text-color-primary, #303133);
+}
+
+// 暗色模式下的背景色
+html.dark,
+html.dark body {
+  background-color: var(--el-bg-color-page, #0a0a0a);
+  color: var(--el-text-color-primary, #e5eaf3);
+}
+
+// Reset default styles
+body {
+  margin: 0;
+  line-height: inherit;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 确保 #app 容器在挂载 layout-app 时有正确的 flex 布局 */
+#app:has([id^="__qiankun_microapp_wrapper"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+/* 确保 qiankun 包装容器（layout-app）有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* 确保 qiankun 包装容器内部的 #layout-app 有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] #layout-app {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* 确保 qiankun 包装容器内部的 #subapp-viewport 有正确的高度 */
+#app [id^="__qiankun_microapp_wrapper"] #subapp-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+}
+
+/* 隐藏 qiankun 包装器中的 layout-app HTML 模板中的多余元素 */
+#app [id^="__qiankun_microapp_wrapper"] #layout-container {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 隐藏 qiankun 包装器中 HTML 模板里的 #subapp-viewport（真正的 #subapp-viewport 在 layout-app 的 Vue 组件内部） */
+#app [id^="__qiankun_microapp_wrapper"] > #subapp-viewport {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+*,
+:before,
+:after {
+  border-width: 0;
+  border-style: solid;
+  border-color: #e5e7eb;
+}
+
+// 自定义圆角 CSS 变量
+:root {
+  --custom-radius: 0.25rem;
+}
+
+// Custom scrollbar (align with cool-admin)
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+

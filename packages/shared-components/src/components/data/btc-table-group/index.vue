@@ -11,6 +11,9 @@
     :enable-drag="enableDrag"
     :enable-key-search="enableKeySearch"
     :left-size="props.leftSize"
+    :id-field="idField"
+    :label-field="labelField"
+    :parent-field="parentField"
     :op="op"
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
@@ -34,7 +37,9 @@
             </slot>
           </div>
           <BtcFlex1 />
-          <BtcSearchKey v-if="props.showSearchKey" :placeholder="searchPlaceholder" />
+          <slot name="search">
+            <BtcSearchKey v-if="props.showSearchKey" :placeholder="searchPlaceholder" />
+          </slot>
           <BtcCrudActions v-if="props.showToolbar" :show-toolbar="props.op !== undefined">
             <template #default>
               <slot
@@ -259,6 +264,21 @@ function handleSelect(item: any, keyword: any) {
 function handleBeforeRefresh(params: Record<string, unknown>) {
   const viewGroup = viewGroupRef.value;
   const selectedKeyword = viewGroup?.selectedKeyword;
+  const selectedItem = viewGroup?.selectedItem;
+
+  // 获取现有的 keyword 对象（可能包含用户输入的搜索内容）
+  const existingKeyword = (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword))
+    ? { ...(params.keyword as Record<string, unknown>) }
+    : {};
+
+  // 如果选中项有 checkNo 字段，将 checkNo 合并到 keyword 对象中
+  if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+    (params as any).keyword = {
+      ...existingKeyword,
+      checkNo: selectedItem.checkNo
+    };
+    return params;
+  }
 
   // 只有当 selectedKeyword 有值时才注入 keyword 参数
   // 不传递 null 值
@@ -267,21 +287,26 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
     // - 对象：统一处理其中的 ids 字段为数组
     // - 其他：封装到 { ids: [...] }，统一为数组格式
     if (typeof selectedKeyword === 'object' && selectedKeyword !== null && !Array.isArray(selectedKeyword)) {
-      // 如果是对象，统一处理其中的 ids 字段为数组
+      // 如果是对象，统一处理其中的 ids 字段为数组，并合并到现有 keyword
       if ('ids' in selectedKeyword) {
         const normalizedIds = Array.isArray(selectedKeyword.ids) 
           ? selectedKeyword.ids 
           : (selectedKeyword.ids !== undefined && selectedKeyword.ids !== null && selectedKeyword.ids !== '' ? [selectedKeyword.ids] : []);
-        (params as any).keyword = { ...selectedKeyword, ids: normalizedIds };
+        (params as any).keyword = { ...existingKeyword, ...selectedKeyword, ids: normalizedIds };
       } else {
-        (params as any).keyword = selectedKeyword;
+        (params as any).keyword = { ...existingKeyword, ...selectedKeyword };
       }
     } else {
-      // 字符串或数组，统一转换为数组格式
+      // 字符串或数组，统一转换为数组格式，并合并到现有 keyword
       const normalizedIds = Array.isArray(selectedKeyword) 
         ? selectedKeyword 
         : (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '' ? [selectedKeyword] : []);
-      (params as any).keyword = { ids: normalizedIds };
+      (params as any).keyword = { ...existingKeyword, ids: normalizedIds };
+    }
+  } else {
+    // 如果没有 selectedKeyword，但已有 keyword 对象，保留现有的 keyword
+    if (Object.keys(existingKeyword).length > 0) {
+      (params as any).keyword = existingKeyword;
     }
   }
 

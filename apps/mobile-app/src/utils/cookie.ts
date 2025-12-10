@@ -43,6 +43,10 @@ export function getCookie(name: string): string | null {
     }
     if (c.indexOf(nameEQ) === 0) {
       const value = c.substring(nameEQ.length, c.length);
+      // 如果值是空字符串，也返回null，避免后续判断问题
+      if (value === '') {
+        return null;
+      }
       return value;
     }
   }

@@ -104,11 +104,21 @@ export function setupAutoMountDevTools() {
     }
   });
 
-  // 开始观察 body 的变化
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  // 开始观察 body 的变化（确保 body 存在）
+  const targetNode = document.body || document.documentElement;
+  if (targetNode && targetNode.nodeType === Node.ELEMENT_NODE) {
+    try {
+      observer.observe(targetNode, {
+        childList: true,
+        subtree: true,
+      });
+    } catch (error) {
+      // 如果观察失败，静默处理，使用定时器作为兜底
+      if (import.meta.env.DEV) {
+        console.warn('[DevTools] MutationObserver 观察失败，使用定时器作为兜底:', error);
+      }
+    }
+  }
 
   // 同时使用定时器作为兜底机制（每 500ms 检查一次，最多检查 10 秒）
   let checkCount = 0;

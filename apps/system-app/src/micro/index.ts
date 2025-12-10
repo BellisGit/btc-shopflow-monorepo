@@ -1440,8 +1440,8 @@ export function setupQiankun() {
         }
 
         // 执行请求（可能已经修复了 URL）
-        // 添加超时控制，生产环境资源加载可能较慢
-        const timeout = import.meta.env.DEV ? 10000 : 30000; // 开发环境 10 秒，生产环境 30 秒
+        // 添加超时控制，缩短超时时间以确保loading能及时显示
+        const timeout = import.meta.env.DEV ? 10000 : 8000; // 开发环境 10 秒，生产环境 15 秒（缩短超时时间，确保loading能及时显示）
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 

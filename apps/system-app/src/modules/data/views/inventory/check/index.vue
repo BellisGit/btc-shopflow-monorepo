@@ -15,8 +15,40 @@
       :left-size="'small'"
       :show-add-btn="false"
       :show-multi-delete-btn="false"
+      :show-search-key="false"
+      :label-field="'checkType'"
       @select="onCheckSelect"
-    />
+    >
+      <template #search>
+        <!-- 自定义搜索框：物料编码、仓位、盘点人 -->
+        <div class="custom-search-fields" style="display: flex; align-items: center; gap: 10px;">
+          <el-input
+            v-model="searchForm.partName"
+            :placeholder="t('system.material.fields.materialCode')"
+            clearable
+            style="width: 150px;"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
+          <el-input
+            v-model="searchForm.position"
+            :placeholder="t('inventory.result.fields.storageLocation')"
+            clearable
+            style="width: 150px;"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
+          <el-input
+            v-model="searchForm.checker"
+            :placeholder="t('system.inventory.base.fields.checkerId')"
+            clearable
+            style="width: 150px;"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </template>
+    </BtcTableGroup>
 
     <!-- 详情弹窗 -->
     <BtcDialog
@@ -58,8 +90,8 @@
 import { ref, computed } from 'vue';
 import { BtcConfirm } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { useI18n, normalizePageResponse } from '@btc/shared-core';
+import type { TableColumn, FormItem, UseCrudReturn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
@@ -74,37 +106,71 @@ const selectedCheck = ref<any>(null);
 const detailVisible = ref(false);
 const detailRow = ref<any>(null);
 
-// 盘点列表服务（左侧）- 使用示例数据
+// 搜索表单数据
+const searchForm = ref({
+  partName: '',
+  position: '',
+  checker: '',
+});
+
+// 操作按钮配置
+const opButtons = computed(() => [
+  {
+    label: t('common.button.detail'),
+    type: 'warning',
+    icon: 'info',
+    onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
+  },
+  'edit',
+]);
+
+// 盘点列表服务（左侧）- 使用后端接口
 const checkService = {
   list: async (params?: any) => {
-    // 示例数据：测试盘1，测试盘2，测试盘3，初盘，复盘，终盘
-    const mockData = [
-      { id: 1, name: '测试盘1', checkNo: 'CHECK001', checkType: '测试', status: '已完成' },
-      { id: 2, name: '测试盘2', checkNo: 'CHECK002', checkType: '测试', status: '已完成' },
-      { id: 3, name: '测试盘3', checkNo: 'CHECK003', checkType: '测试', status: '进行中' },
-      { id: 4, name: '初盘', checkNo: 'CHECK004', checkType: '初盘', status: '已完成' },
-      { id: 5, name: '复盘', checkNo: 'CHECK005', checkType: '复盘', status: '已完成' },
-      { id: 6, name: '终盘', checkNo: 'CHECK006', checkType: '终盘', status: '已完成' },
-    ];
-
-    // 模拟分页和搜索
-    let filteredData = [...mockData];
-    if (params?.keyword) {
-      const keyword = params.keyword.toLowerCase();
-      filteredData = mockData.filter(item =>
-        item.name.toLowerCase().includes(keyword) ||
-        item.checkNo.toLowerCase().includes(keyword)
-      );
+    const checkListService = service.logistics?.warehouse?.check?.list;
+    if (!checkListService) {
+      console.warn('[InventoryCheck] 盘点列表接口不存在');
+      return {
+        list: [],
+        pagination: {
+          total: 0,
+          page: params?.page || 1,
+          size: params?.size || 10,
+        }
+      };
     }
 
-    return {
-      list: filteredData,
-      pagination: {
-        total: filteredData.length,
-        page: 1,
-        size: 10,
+    try {
+      // 调用后端接口
+      const response = await checkListService(params || {});
+      
+      // 处理响应格式：后端返回 { code, msg, data } 格式
+      let data = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        // 如果响应包含 data 字段，使用 data 字段
+        data = response.data;
       }
-    };
+      
+      // 标准化响应格式
+      const page = params?.page || 1;
+      const size = params?.size || 10;
+      const normalized = normalizePageResponse(data, page, size);
+      
+      return {
+        list: normalized.list,
+        pagination: normalized.pagination,
+      };
+    } catch (error) {
+      console.error('[InventoryCheck] 获取盘点列表失败:', error);
+      return {
+        list: [],
+        pagination: {
+          total: 0,
+          page: params?.page || 1,
+          size: params?.size || 10,
+        }
+      };
+    }
   }
 };
 
@@ -141,16 +207,22 @@ const onCheckSelect = (check: any) => {
   // 这里可以通过 tableGroupRef 来刷新右侧表格
 };
 
-// 操作按钮配置
-const opButtons = computed(() => [
-  {
-    label: t('common.button.detail'),
-    type: 'warning',
-    icon: 'info',
-    onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
-  },
-  'edit',
-]);
+// 处理搜索
+const handleSearch = () => {
+  if (tableGroupRef.value?.crudRef?.crud) {
+    const crud = tableGroupRef.value.crudRef.crud as UseCrudReturn<any>;
+    // 设置搜索参数
+    crud.setParams({
+      keyword: {
+        partName: searchForm.value.partName || '',
+        position: searchForm.value.position || '',
+        checker: searchForm.value.checker || '',
+      }
+    });
+    // 刷新数据
+    crud.refresh();
+  }
+};
 
 // 处理详情按钮点击
 const handleDetail = (row: any) => {

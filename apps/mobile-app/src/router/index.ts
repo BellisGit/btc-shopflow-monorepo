@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('@/modules/base/components/Layout.vue'),
-    redirect: '/home',
+    redirect: '/query',
     children: [
       {
         path: 'home',
@@ -138,12 +138,15 @@ router.beforeEach((to, _from, next) => {
   
   // 在路由守卫中，如果 store 中没有 token，但 cookie 中有 token，尝试同步
   // 这可以处理从其他应用登录后，cookie 已经设置但 store 未初始化的情况
+  // 注意：如果 cookie 是 http-only，getCookie 无法读取，但浏览器会自动在请求中发送
+  // 所以即使无法读取 cookie，如果有用户信息，也应该认为已登录（由后端验证）
   if (!authStore.isAuthenticated) {
     const cookieToken = getCookie('access_token');
     if (cookieToken) {
-      console.log('[Router] Token found in cookie, syncing to store');
       authStore.setToken(cookieToken);
     }
+    // 如果无法读取 cookie（可能是 http-only），但有用户信息，也应该认为已登录
+    // 这种情况下，浏览器会自动发送 cookie，由后端验证
   }
 
   // 如果用户已登录，访问登录页时重定向到查询页面或 redirect 参数指定的页面

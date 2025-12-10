@@ -182,16 +182,6 @@ try {
   const isDev = (import.meta as any).env?.DEV;
   const deviceInfo = getDeviceInfo();
   
-  // 记录设备信息（用于调试和兼容性分析）
-  console.log('[App] Device Info:', {
-    os: deviceInfo.os,
-    brand: deviceInfo.brand,
-    browser: deviceInfo.browser,
-    browserVersion: deviceInfo.browserVersion,
-    supportsServiceWorker: deviceInfo.supportsServiceWorker,
-    isMobile: deviceInfo.isMobile,
-  });
-  
   // 检查浏览器兼容性（仅用于日志记录，不影响应用运行）
   // QQ 浏览器、某些国产浏览器可能不支持 Service Worker，但不影响基本功能
   const isUnsupportedBrowser = deviceInfo.browser === 'qq' || 
@@ -286,9 +276,7 @@ try {
     (window as any).updateServiceWorker = updateSW;
   } else {
     // Service Worker 未启用或不支持，但不影响应用运行
-    if (isDev) {
-      console.log('[PWA] Service Worker disabled (development mode or not needed)');
-    } else if (isUnsupportedBrowser) {
+    if (isUnsupportedBrowser) {
       console.log(`[PWA] Service Worker not supported on ${deviceInfo.browser} browser, app will work normally`);
     } else if (!deviceInfo.supportsServiceWorker) {
       console.log('[PWA] Service Worker not supported on this device, app will work normally');

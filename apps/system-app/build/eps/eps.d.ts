@@ -380,6 +380,26 @@ interface datasource {
            */
           deleted_at?: any;
         
+          /**
+           * checkNo
+           */
+          checkNo?: any;
+        
+          /**
+           * position
+           */
+          position?: any;
+        
+          /**
+           * checker
+           */
+          checker?: any;
+        
+          /**
+           * partName
+           */
+          partName?: any;
+        
         /**
          * Any key-value pairs
          */

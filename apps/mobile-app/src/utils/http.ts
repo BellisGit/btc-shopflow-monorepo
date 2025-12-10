@@ -171,7 +171,7 @@ export class Http {
           } else {
             // 如果 data 中没有 token，尝试从 cookie 读取
             const cookieToken = getCookie('access_token');
-            if (cookieToken) {
+            if (cookieToken && cookieToken.trim()) {
               authStore.setToken(cookieToken);
             }
           }
@@ -219,7 +219,7 @@ export class Http {
         } else {
           // 如果响应体没有 token，尝试从 cookie 读取
           const cookieToken = getCookie('access_token');
-          if (cookieToken) {
+          if (cookieToken && cookieToken.trim()) {
             authStore.setToken(cookieToken);
           }
         }
