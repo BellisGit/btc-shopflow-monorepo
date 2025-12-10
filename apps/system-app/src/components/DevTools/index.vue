@@ -168,8 +168,17 @@ const tabList = [
     tooltip: '错误监控 - 实时查看所有应用的错误和警告',
     isAction: true, // 直接跳转
     action: () => {
-      // 使用 window.location 跳转，避免依赖 Vue Router
-      window.location.href = '/monitor';
+      // 判断是否为生产环境
+      const hostname = window.location.hostname;
+      const isProduction = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 生产环境：跳转到子域名
+      // 开发环境：跳转到路径
+      const targetUrl = isProduction 
+        ? `${window.location.protocol}//monitor.bellis.com.cn`
+        : '/monitor';
+      
+      window.location.href = targetUrl;
       visible.value = false;
     },
   },

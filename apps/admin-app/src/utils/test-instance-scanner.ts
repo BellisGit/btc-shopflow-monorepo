@@ -80,6 +80,22 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
     icon: 'Document',
     tags: ['JSON', 'BtcCodeJson', '弹窗', '代码显示'],
     path: '/test/btc-code-json'
+  },
+  'test-grid-group': {
+    name: 'test-grid-group',
+    title: 'Grid Group 组件测试',
+    description: '测试 BtcGridGroup 组件，包含左侧、中间、右侧三个区域的布局',
+    icon: 'Grid',
+    tags: ['Grid', '布局', 'BtcGridGroup', '三栏布局'],
+    path: '/test/test-grid-group'
+  },
+  'inventory-ticket-print': {
+    name: 'inventory-ticket-print',
+    title: 'menu.test_features.inventory_ticket_print',
+    description: '盘点票打印功能，支持查看和打印盘点票列表',
+    icon: 'Printer',
+    tags: ['盘点票', '打印', '报表', '盘点'],
+    path: '/test/inventory-ticket-print'
   }
 };
 
@@ -88,7 +104,7 @@ export const TEST_INSTANCE_CONFIGS: Record<string, TestInstanceConfig> = {
  */
 export async function loadTestInstanceComponent(instanceName: string) {
   try {
-    const module = await import(`../pages/test/${instanceName}/index.vue`);
+    const module = await import(`../modules/test/views/${instanceName}/index.vue`);
     return module.default;
   } catch (error) {
     console.error(`Failed to load test instance: ${instanceName}`, error);

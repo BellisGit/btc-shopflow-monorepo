@@ -97,6 +97,7 @@ export { default as BtcDevTools } from './components/others/btc-dev-tools/index.
 
 // CRUD 组件（上下文系统）
 export { default as BtcCrud } from './crud/context/index.vue';
+export { IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY } from './crud/btc-import-btn/keys';
 export { default as BtcTable } from './crud/table/index.vue';
 // BtcUpsert 组件单独导出，避免循环依赖
 export { default as BtcUpsert } from './crud/upsert/index.vue';
@@ -120,6 +121,10 @@ export { ExcelPlugin, CodePlugin };
 // 为了向后兼容，直接导出插件中的组件
 export const { BtcExportBtn, BtcImportBtn } = ExcelPlugin;
 export const { BtcCodeJson } = CodePlugin;
+
+// 导入导出套装组件
+export { default as BtcImportExportGroup } from './crud/btc-import-export-group/index.vue';
+export type { BtcImportExportGroupProps } from './crud/btc-import-export-group/index.vue';
 
 // 常量导出
 export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';

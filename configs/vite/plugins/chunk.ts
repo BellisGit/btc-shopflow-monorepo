@@ -35,6 +35,7 @@ export function chunkVerifyPlugin(): Plugin {
       }
 
       const hasEpsService = jsChunks.some(jsChunk => jsChunk.includes('eps-service'));
+      const hasAuthApi = jsChunks.some(jsChunk => jsChunk.includes('auth-api'));
       const hasEchartsVendor = jsChunks.some(jsChunk => jsChunk.includes('echarts-vendor'));
       const hasLibMonaco = jsChunks.some(jsChunk => jsChunk.includes('lib-monaco'));
       const hasLibThree = jsChunks.some(jsChunk => jsChunk.includes('lib-three'));
@@ -46,6 +47,7 @@ export function chunkVerifyPlugin(): Plugin {
         console.log(`  ❌ 入口文件不存在`);
       }
       if (hasEpsService) console.log(`  ✅ eps-service: EPS 服务（所有应用共享，单独打包）`);
+      if (hasAuthApi) console.log(`  ✅ auth-api: Auth API（所有应用共享，单独打包，由 system-app 提供）`);
       if (hasEchartsVendor) console.log(`  ✅ echarts-vendor: ECharts + zrender（独立大库，无依赖问题）`);
       if (hasLibMonaco) console.log(`  ✅ lib-monaco: Monaco Editor（独立大库）`);
       if (hasLibThree) console.log(`  ✅ lib-three: Three.js（独立大库）`);

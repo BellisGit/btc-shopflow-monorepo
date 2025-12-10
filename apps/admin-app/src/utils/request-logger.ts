@@ -1,4 +1,5 @@
-import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
+// 注意：不在这里导入 createHttpRetry 和 RETRY_CONFIGS，改为动态导入
+// 避免在生产环境构建时 Vue 的 ref 还未初始化就被访问
 
 /**
  * 请求日志项
@@ -27,7 +28,7 @@ class RequestLogQueue {
   private isPaused = false; // 是否暂停发送
   private readonly QPS_LIMIT = 2; // 每秒最多发送2次请求
   private lastSendTime = 0; // 上次发送时间
-  private retryManager: ReturnType<typeof createHttpRetry>; // 重试管理器
+  private _retryManager: any = null; // 重试管理器（延迟初始化，使用 any 避免类型问题）
 
   // 需要过滤的接口路径（不记录这些接口的日志）
   private readonly FILTERED_PATHS = [
@@ -45,8 +46,20 @@ class RequestLogQueue {
   ];
 
   constructor() {
-    // 初始化重试管理器，使用日志专用的重试配置
-    this.retryManager = createHttpRetry(RETRY_CONFIGS.log);
+    // 不在构造函数中初始化 retryManager，延迟到第一次使用时初始化
+    // 避免在生产环境构建时 Vue 的 ref 还未初始化就被访问
+  }
+
+  /**
+   * 获取重试管理器（延迟初始化，使用动态导入）
+   */
+  private async getRetryManager() {
+    if (!this._retryManager) {
+      // 使用动态导入，确保 Vue 的 ref 已经可用
+      const { createHttpRetry, RETRY_CONFIGS } = await import('@/composables/useRetry');
+      this._retryManager = createHttpRetry(RETRY_CONFIGS.log);
+    }
+    return this._retryManager;
   }
 
   /**
@@ -151,8 +164,9 @@ class RequestLogQueue {
     }
 
     try {
-      // 使用重试机制发送日志
-      await this.retryManager.retryRequest(async () => {
+      // 使用重试机制发送日志（动态获取 retryManager）
+      const retryManager = await this.getRetryManager();
+      await retryManager.retryRequest(async () => {
         // 从全局获取 service（在 main.ts 中已设置），完全避免动态导入
         const service = typeof window !== 'undefined' ? (window as any).__BTC_SERVICE__ : null;
         
@@ -494,7 +508,7 @@ class RequestLogQueue {
       isServiceAvailable: this.isServiceAvailable,
       isPaused: this.isPaused,
       lastSendTime: this.lastSendTime,
-      retryManagerStatus: this.retryManager.getStatus()
+      retryManagerStatus: this._retryManager ? this._retryManager.getStatus() : null
     };
   }
 

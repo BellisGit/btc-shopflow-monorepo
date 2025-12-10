@@ -4,6 +4,8 @@ import sharedComponentsZh from '../../../../packages/shared-components/src/local
 import sharedComponentsEn from '../../../../packages/shared-components/src/locales/en-US.json';
 import zhCN from '../locales/zh-CN.json';
 import enUS from '../locales/en-US.json';
+import baseZhCN from '../modules/base/locales/zh-CN.json';
+import baseEnUS from '../modules/base/locales/en-US.json';
 
 // 优化：使用 Object.assign 的优化版本，避免多次合并
 const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => {
@@ -21,18 +23,66 @@ export const FALLBACK_LOCALE: SupportedLocale = 'zh-CN';
 type LocaleMessages = Record<'zh-CN' | 'en-US', Record<string, any>>;
 let cachedMessages: LocaleMessages | null = null;
 
+// 清除缓存（开发环境使用，确保获取最新消息）
+export const clearLocaleMessagesCache = () => {
+  cachedMessages = null;
+};
+
 export const getLocaleMessages = (): LocaleMessages => {
-  // 使用缓存，避免重复合并
-  if (cachedMessages) {
-    return cachedMessages;
+  // 开发环境：每次都重新合并，确保包含最新的国际化文件
+  // 生产环境：使用缓存以提高性能
+  if (import.meta.env.DEV || !cachedMessages) {
+    // 合并消息（每次都重新合并，确保包含最新的国际化文件）
+    // 合并顺序：sharedCore -> sharedComponents -> app locales -> base locales
+    // 后面的会覆盖前面的，所以 baseZhCN 会覆盖 sharedCoreZh 中的相同键
+    // 但两个文件都应该有相同的键，所以这应该没问题
+  
+  // 处理 sharedCore 的默认导出（TypeScript 文件使用 export default）
+  // Vite 在构建时会处理默认导出，但在开发环境中可能需要手动处理
+  const sharedCoreZhMessages = (sharedCoreZh as any)?.default ?? sharedCoreZh;
+  const sharedCoreEnMessages = (sharedCoreEn as any)?.default ?? sharedCoreEn;
+  
+  // 确保所有源都是对象
+  const zhCNMessages = mergeMessages(
+    sharedCoreZhMessages || {},
+    sharedComponentsZh as Record<string, any> || {},
+    zhCN || {},
+    baseZhCN || {}
+  );
+  const enUSMessages = mergeMessages(
+    sharedCoreEnMessages || {},
+    sharedComponentsEn as Record<string, any> || {},
+    enUS || {},
+    baseEnUS || {}
+  );
+  
+  // 开发环境调试：验证关键键是否存在
+  if (import.meta.env.DEV) {
+    const testKey = 'menu.test_features.inventory_ticket_print';
+    if (!zhCNMessages[testKey]) {
+      console.error(`[i18n] Key "${testKey}" not found in zhCNMessages after merge`);
+      console.log('Available keys containing "inventory_ticket":', Object.keys(zhCNMessages).filter(k => k.includes('inventory_ticket')));
+      console.log('baseZhCN has key?', testKey in baseZhCN);
+      console.log('sharedCoreZhMessages has key?', testKey in sharedCoreZhMessages);
+      console.log('sharedCoreZh type:', typeof sharedCoreZh, 'has default?', 'default' in (sharedCoreZh as any));
+    }
+    if (!enUSMessages[testKey]) {
+      console.error(`[i18n] Key "${testKey}" not found in enUSMessages after merge`);
+      console.log('Available keys containing "inventory_ticket":', Object.keys(enUSMessages).filter(k => k.includes('inventory_ticket')));
+      console.log('baseEnUS has key?', testKey in baseEnUS);
+      console.log('sharedCoreEnMessages has key?', testKey in sharedCoreEnMessages);
+      console.log('sharedCoreEn type:', typeof sharedCoreEn, 'has default?', 'default' in (sharedCoreEn as any));
+    }
   }
   
-  cachedMessages = {
-  'zh-CN': mergeMessages(sharedCoreZh, sharedComponentsZh as Record<string, any>, zhCN),
-  'en-US': mergeMessages(sharedCoreEn, sharedComponentsEn as Record<string, any>, enUS),
-  };
+    // 更新缓存（与物流域和财务域保持一致，只返回标准格式）
+    cachedMessages = {
+      'zh-CN': zhCNMessages,
+      'en-US': enUSMessages,
+    };
+  }
   
-  return cachedMessages;
+  return cachedMessages!;
 };
 
 export const normalizeLocale = (locale?: string) => {

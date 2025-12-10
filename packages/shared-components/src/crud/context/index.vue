@@ -28,6 +28,11 @@ import {
 } from './layout';
 import { useContentHeight } from '../../composables/content-height';
 
+defineOptions({
+  name: 'BtcCrud',
+  inheritAttrs: false,
+});
+
 /** 补回用于 registerTrailing 的可选参数类型 */
 interface RegisterOptions {
   immediate?: boolean;

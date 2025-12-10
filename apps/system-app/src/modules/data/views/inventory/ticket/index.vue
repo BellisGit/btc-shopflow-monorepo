@@ -17,18 +17,14 @@
       @select="onDomainSelect"
     >
       <template #add-btn>
-        <!-- 1. 明确传递exportFilename和禁止关键词，消除透传警告 -->
-        <!-- 2. 禁止关键词：SysPro、BOM表、括号等 -->
         <BtcImportBtn
           :on-submit="handleImport"
           :tips="t('inventory.dataSource.ticket.import.tips')"
-          :exportFilename="exportFilename"
-          :forbiddenKeywords="['SysPro', 'BOM表', '(', ')', '（', '）', '副本']"
-          @validate-filename="handleFilenameValidate"
         />
       </template>
       <template #actions>
-        <el-button type="info" @click="exportTicketTemplate">
+        <el-button type="info" @click="handleExport" :loading="exportLoading">
+          <BtcSvg name="export" class="mr-[5px]" />
           {{ t('ui.export') }}
         </el-button>
       </template>
@@ -37,13 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
+import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'BtcDataInventoryTicket'
@@ -53,29 +50,49 @@ const { t } = useI18n();
 const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
+const exportLoading = ref(false);
 
-// 统一导出/导入文件名（核心：确保导入校验的文件名与导出文件名完全一致）
+// 统一导出/导入文件名
 const exportFilename = computed(() => t('menu.inventory.dataSource.ticket'));
 
-// 左侧域列表使用物流域的仓位配置页面的 page 接口
+// 提供导入文件名匹配配置（与导出文件名一致）
+provide(IMPORT_FILENAME_KEY, exportFilename);
+provide(IMPORT_FORBIDDEN_KEYWORDS_KEY, ['SysPro', 'BOM表', '(', ')', '（', '）', '副本']);
+
+// 左侧域列表使用物流域的仓位配置的 me 接口
 const domainService = {
   list: async () => {
     try {
-      // 调用物流域仓位配置的 page 接口
-      const response = await service.logistics?.base?.position?.page?.({ page: 1, size: 1000 });
+      // 调用物流域仓位配置的 me 接口
+      const response = await service.logistics?.base?.position?.me?.();
 
-      // 处理响应数据
-      let data = response;
-      if (response && typeof response === 'object' && 'data' in response) {
-        data = response.data;
+      // 处理响应数据，支持多种数据结构
+      let list: any[] = [];
+      
+      if (Array.isArray(response)) {
+        // 直接返回数组
+        list = response;
+      } else if (response && typeof response === 'object') {
+        // 从 data 字段中提取
+        if ('data' in response) {
+          const data = response.data;
+          if (Array.isArray(data)) {
+            list = data;
+          } else if (data && typeof data === 'object') {
+            // 可能 data 内部还有 data 或 list 字段
+            list = Array.isArray(data.data) ? data.data : (Array.isArray(data.list) ? data.list : []);
+          }
+        } else if ('list' in response) {
+          list = Array.isArray(response.list) ? response.list : [];
+        }
       }
 
-      const positionList = data?.list || [];
-
-      // 从仓位数据中提取唯一的域信息（根据 domainId 和 name 去重）
+      // 处理域列表数据，兼容 domianId 和 domainId 两种字段名
       const domainMap = new Map<string, any>();
-      positionList.forEach((item: any) => {
-        const domainId = item.domainId;
+      list.forEach((item: any) => {
+        if (!item || typeof item !== 'object') return;
+        
+        const domainId = item.domianId || item.domainId; // 兼容拼写错误
         if (domainId && !domainMap.has(domainId)) {
           domainMap.set(domainId, {
             id: domainId,
@@ -155,14 +172,6 @@ const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
 };
 
-// 文件名校验回调（可选：父组件监听文件名校验结果）
-const handleFilenameValidate = (isValid: boolean) => {
-  if (!isValid) {
-    console.log('[InventoryTicket] 文件名校验失败');
-    // 可添加额外逻辑，如禁用提交按钮等
-  }
-};
-
 // 处理导入
 const handleImport = async (data: any, { done, close }: { done: () => void; close: () => void }) => {
   try {
@@ -192,7 +201,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       partName: row.partName,
       position: row.position,
       checkType: row.checkType,
-      domainId: row.domainId ?? domainId,
+      domainId: row.domianId || row.domainId || domainId, // 兼容拼写错误
     }));
 
     const payload = {
@@ -256,6 +265,46 @@ const ticketExportColumns = computed<TableColumn[]>(() => [
   { prop: 'position', label: t('inventory.result.fields.storageLocation') },
 ]);
 
+// 直接导出（不打开弹窗）
+const handleExport = async () => {
+  if (!wrappedTicketService?.page) {
+    BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
+    return;
+  }
+
+  exportLoading.value = true;
+
+  try {
+    // 获取当前筛选参数
+    const params = {
+      ...tableGroupRef.value?.crudRef?.getParams?.() || {},
+      page: 1,
+      size: 999999,
+      isExport: true,
+    };
+
+    // 获取所有数据
+    const response = await wrappedTicketService.page(params);
+    const exportData = response?.list || response?.data?.list || [];
+
+    // 执行导出（允许空表）
+    exportTableToExcel({
+      columns: ticketExportColumns.value,
+      data: exportData,
+      filename: exportFilename.value,
+      autoWidth: true,
+      bookType: 'xlsx',
+    });
+
+    BtcMessage.success(t('platform.common.export_success'));
+  } catch (error) {
+    console.error('[InventoryTicket] Export failed:', error);
+    BtcMessage.error(t('platform.common.export_failed'));
+  } finally {
+    exportLoading.value = false;
+  }
+};
+
 // 盘点票表单
 const ticketFormItems = computed<FormItem[]>(() => [
   { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' }, required: true },
@@ -264,17 +313,7 @@ const ticketFormItems = computed<FormItem[]>(() => [
   { prop: 'checkType', label: t('system.inventory.base.fields.checkType'), span: 12, component: { name: 'el-input' } },
 ]);
 
-// 导出模板：强制文件名与import的校验文件名一致
-const exportTicketTemplate = () => {
-  // 从 CRUD 获取当前表格数据，允许空表导出
-  const tableData = tableGroupRef.value?.crudRef?.tableData || tableGroupRef.value?.crudRef?.data || [];
-
-  exportTableToExcel({
-    columns: ticketExportColumns.value,
-    data: tableData,
-    filename: exportFilename.value, // 使用统一的文件名
-  });
-};
+// 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>
 
 <style lang="scss" scoped>

@@ -376,6 +376,18 @@
         { "labelKey": "menu.test_features", "icon": "Tools" },
         { "labelKey": "menu.test_features.api_test_center", "icon": "Document" }
       ]
+    },
+    {
+      "path": "/test/inventory-ticket-print",
+      "labelKey": "menu.test_features.inventory_ticket_print",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.test_features.inventory_ticket_print"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.test_features", "icon": "Tools" },
+        { "labelKey": "menu.test_features.inventory_ticket_print", "icon": "Printer" }
+      ]
     }
   ],
   "menus": [
@@ -486,7 +498,8 @@
       "labelKey": "menu.test_features",
       "children": [
         { "index": "/test/components", "labelKey": "menu.test_features.components" },
-        { "index": "/test/api-test-center", "labelKey": "menu.test_features.api_test_center" }
+        { "index": "/test/api-test-center", "labelKey": "menu.test_features.api_test_center" },
+        { "index": "/test/inventory-ticket-print", "labelKey": "menu.test_features.inventory_ticket_print" }
       ]
     }
   ]

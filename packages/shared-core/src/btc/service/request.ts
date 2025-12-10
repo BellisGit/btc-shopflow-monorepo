@@ -344,9 +344,20 @@ export function createRequest(baseURL: string = ''): Request {
 }
 
 /**
- * 默认的 request 实例
+ * 默认的 request 实例（延迟初始化，避免循环依赖和初始化顺序问题）
  */
-export const request = createRequest();
+let _requestInstance: Request | null = null;
+
+function getRequest(): Request {
+  if (!_requestInstance) {
+    _requestInstance = createRequest();
+  }
+  return _requestInstance;
+}
+
+export const request: Request = ((options: RequestOptions) => {
+  return getRequest()(options);
+}) as Request;
 
 /**
  * 创建带权限检查的 request 函数

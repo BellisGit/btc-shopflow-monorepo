@@ -90,11 +90,34 @@ async function handleSubmit() {
   loading.value = true;
 
   try {
-    // 调用后端接口提交
+    // 验证并转换数量值
+    const qtyValue = form.value.actualQty;
+    if (!qtyValue || qtyValue === '') {
+      showToast({
+        type: 'fail',
+        message: '请填写实际数量',
+        duration: 2000,
+      });
+      loading.value = false;
+      return;
+    }
+
+    const partQty = Number(qtyValue);
+    if (isNaN(partQty) || partQty <= 0) {
+      showToast({
+        type: 'fail',
+        message: '请输入有效的数量（大于0）',
+        duration: 2000,
+      });
+      loading.value = false;
+      return;
+    }
+
+    // 调用后端接口提交（使用 partQty 字段名，与后端API保持一致）
     await inventoryApi.scan({
       partName: form.value.materialCode,
       position: form.value.storageLocation,
-      actualQty: Number(form.value.actualQty),
+      partQty: partQty,
     });
 
     // 保存到本地数据库（可选，用于离线记录或历史记录）
@@ -102,7 +125,7 @@ async function handleSubmit() {
     const count = {
       sessionId: session?.id || 'temp-session',
       materialCode: form.value.materialCode,
-      actualQty: Number(form.value.actualQty),
+      actualQty: partQty, // 本地数据库使用 actualQty 字段
       storageLocation: form.value.storageLocation,
       ts: Date.now(),
       synced: true, // 既然已经 API 提交成功，标记为已同步

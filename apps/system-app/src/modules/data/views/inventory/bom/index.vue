@@ -18,14 +18,14 @@
       @select="onDomainSelect"
     >
       <template #add-btn>
-        <BtcImportBtn 
-          :columns="bomColumns" 
+        <BtcImportBtn
+          :columns="bomColumns"
           :on-submit="handleImport"
-          :exportFilename="t('menu.inventory.dataSource.bom')"
         />
       </template>
       <template #actions>
-        <el-button type="info" @click="exportBomTemplate">
+        <el-button type="info" @click="handleExport" :loading="exportLoading">
+          <BtcSvg name="export" class="mr-[5px]" />
           {{ t('ui.export') }}
         </el-button>
       </template>
@@ -34,12 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup, BtcImportBtn } from '@btc/shared-components';
+import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'BtcDataInventoryBom'
@@ -49,13 +50,21 @@ const { t } = useI18n();
 const message = useMessage();
 const tableGroupRef = ref();
 const selectedDomain = ref<any>(null);
+const exportLoading = ref(false);
 
-// 左侧域列表使用物流域的仓位配置页面的 page 接口
+// 统一导出/导入文件名
+const exportFilename = computed(() => t('menu.inventory.dataSource.bom'));
+
+// 提供导入文件名匹配配置（与导出文件名一致）
+provide(IMPORT_FILENAME_KEY, exportFilename);
+provide(IMPORT_FORBIDDEN_KEYWORDS_KEY, ['SysPro', 'BOM表', '(', ')', '（', '）']);
+
+// 左侧域列表使用物流域的仓位配置的 me 接口
 const domainService = {
   list: async () => {
     try {
-      // 调用物流域仓位配置的 page 接口
-      const response = await service.logistics?.base?.position?.page?.({ page: 1, size: 1000 });
+      // 调用物流域仓位配置的 me 接口
+      const response = await service.logistics?.base?.position?.me?.();
       
       // 处理响应数据
       let data = response;
@@ -63,25 +72,47 @@ const domainService = {
         data = response.data;
       }
       
-      const positionList = data?.list || [];
+      // me 接口可能直接返回数组，也可能返回包含 list 的对象
+      const list = Array.isArray(data) ? data : (data?.list || []);
       
-      // 从仓位数据中提取唯一的域信息（根据 domainId 和 name 去重）
-      const domainMap = new Map<string, any>();
-      positionList.forEach((item: any) => {
-        const domainId = item.domainId;
-        if (domainId && !domainMap.has(domainId)) {
-          domainMap.set(domainId, {
-            id: domainId,
-            domainId: domainId,
-            name: item.name || '',
-            domainCode: domainId,
-            value: domainId,
-          });
-        }
-      });
-      
-      // 返回域列表
-      return Array.from(domainMap.values());
+      // 判断返回的数据是域列表还是仓位列表
+      // 如果第一个元素有 domianId 或 domainId 字段，说明是域列表
+      const firstItem = list[0];
+      const isDomainList = firstItem && (firstItem.domianId || firstItem.domainId);
+
+      if (isDomainList) {
+        // 直接返回域列表，兼容 domianId 和 domainId 两种字段名
+        const domainMap = new Map<string, any>();
+        list.forEach((item: any) => {
+          const domainId = item.domianId || item.domainId; // 兼容拼写错误
+          if (domainId && !domainMap.has(domainId)) {
+            domainMap.set(domainId, {
+              id: domainId,
+              domainId: domainId,
+              name: item.name || '',
+              domainCode: domainId,
+              value: domainId,
+            });
+          }
+        });
+        return Array.from(domainMap.values());
+      } else {
+        // 从仓位数据中提取唯一的域信息（根据 domainId 和 name 去重）
+        const domainMap = new Map<string, any>();
+        list.forEach((item: any) => {
+          const domainId = item.domainId;
+          if (domainId && !domainMap.has(domainId)) {
+            domainMap.set(domainId, {
+              id: domainId,
+              domainId: domainId,
+              name: item.name || '',
+              domainCode: domainId,
+              value: domainId,
+            });
+          }
+        });
+        return Array.from(domainMap.values());
+      }
     } catch (error) {
       console.error('[InventoryBom] Failed to load domains from position service:', error);
       return [];
@@ -247,6 +278,46 @@ const bomExportColumns = computed<TableColumn[]>(() => [
   { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty') },
 ]);
 
+// 直接导出（不打开弹窗）
+const handleExport = async () => {
+  if (!wrappedBomService?.page) {
+    BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
+    return;
+  }
+
+  exportLoading.value = true;
+
+  try {
+    // 获取当前筛选参数
+    const params = {
+      ...tableGroupRef.value?.crudRef?.getParams?.() || {},
+      page: 1,
+      size: 999999,
+      isExport: true,
+    };
+
+    // 获取所有数据
+    const response = await wrappedBomService.page(params);
+    const exportData = response?.list || response?.data?.list || [];
+
+    // 执行导出（允许空表）
+    exportTableToExcel({
+      columns: bomExportColumns.value,
+      data: exportData,
+      filename: exportFilename.value,
+      autoWidth: true,
+      bookType: 'xlsx',
+    });
+
+    BtcMessage.success(t('platform.common.export_success'));
+  } catch (error) {
+    console.error('[InventoryBom] Export failed:', error);
+    BtcMessage.error(t('platform.common.export_failed'));
+  } finally {
+    exportLoading.value = false;
+  }
+};
+
 // 物料构成表表单
 const bomFormItems = computed<FormItem[]>(() => [
   {
@@ -301,16 +372,7 @@ const bomFormItems = computed<FormItem[]>(() => [
   },
 ]);
 
-const exportBomTemplate = () => {
-  // 从 CRUD 获取当前表格数据，允许空表导出
-  const tableData = tableGroupRef.value?.crudRef?.tableData || tableGroupRef.value?.crudRef?.data || [];
-
-  exportTableToExcel({
-    columns: bomExportColumns.value,
-    data: tableData,
-    filename: `${t('menu.inventory.dataSource.bom')}`,
-  });
-};
+// 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>
 
 <style lang="scss" scoped>

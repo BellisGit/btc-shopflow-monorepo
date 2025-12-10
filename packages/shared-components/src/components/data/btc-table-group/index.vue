@@ -91,6 +91,7 @@ import type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './types
 
 defineOptions({
   name: 'BtcTableGroup',
+  inheritAttrs: false,
   components: {
     BtcViewGroup,
     BtcCrud,

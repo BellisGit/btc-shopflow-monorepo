@@ -258,6 +258,155 @@ async function render(props: QiankunProps = {}) {
     window.addEventListener('language-change', handleLanguageChange as EventListener);
     window.addEventListener('theme-change', handleThemeChange as EventListener);
   }
+
+  // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
+  // 无论是独立运行还是 qiankun 模式，都需要设置
+  // 关键：创建一个独立的 logout 函数，不依赖 composable，避免在非 setup 上下文中调用
+  const createLogoutFunction = () => {
+    return async () => {
+      try {
+        // 调用后端 logout API（通过全局 authApi，由 system-app 提供）
+        try {
+          const authApi = (window as any).__APP_AUTH_API__;
+          if (authApi?.logout) {
+            await authApi.logout();
+          } else {
+            console.warn('[engineering-app] Auth API logout function not available globally.');
+          }
+        } catch (error: any) {
+          // 后端 API 失败不影响前端清理
+          console.warn('Logout API failed, but continue with frontend cleanup:', error);
+        }
+
+        // 清除 cookie 中的 token
+        document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        
+        // 清除登录状态标记（从统一的 settings 存储中移除）
+        const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+        if (appStorage) {
+          const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
+          if (currentSettings.is_logged_in) {
+            delete currentSettings.is_logged_in;
+            appStorage.settings?.set(currentSettings);
+          }
+          appStorage.auth?.clear();
+          appStorage.user?.clear();
+        }
+        
+        // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
+        localStorage.removeItem('is_logged_in');
+
+        // 清除用户状态（直接实现，不依赖 composable）
+        try {
+          const { storage } = await import('@btc/shared-utils');
+          storage.remove('user');
+          // 清理旧的 localStorage 数据（向后兼容）
+          localStorage.removeItem('btc_user');
+          localStorage.removeItem('user');
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 清除标签页（Process Store）
+        try {
+          const { useProcessStore } = await import('@btc/shared-components');
+          const processStore = useProcessStore();
+          processStore.clear();
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 显示退出成功提示
+        const { BtcMessage } = await import('@btc/shared-components');
+        const t = i18nPlugin?.i18n?.global?.t;
+        if (t) {
+          BtcMessage.success(t('common.logoutSuccess'));
+        }
+
+        // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+        // 判断是否在生产环境的子域名下
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+        
+        // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+        if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+          // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
+        } else {
+          // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+          if (router) {
+            router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        }
+      } catch (error: any) {
+        // 即使出现错误，也执行清理操作
+        console.error('Logout error:', error);
+
+        // 强制清除所有缓存
+        try {
+          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch (e) {
+          // 静默失败
+        }
+
+        try {
+          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+          if (appStorage) {
+            const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
+            if (currentSettings.is_logged_in) {
+              delete currentSettings.is_logged_in;
+              appStorage.settings?.set(currentSettings);
+            }
+            localStorage.removeItem('is_logged_in');
+            appStorage.auth?.clear();
+            appStorage.user?.clear();
+          }
+
+          const { storage } = await import('@btc/shared-utils');
+          storage.remove('user');
+          localStorage.removeItem('btc_user');
+          localStorage.removeItem('user');
+
+          const { useProcessStore } = await import('@btc/shared-components');
+          const processStore = useProcessStore();
+          processStore.clear();
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 跳转到登录页
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+        
+        if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
+        } else {
+          if (router) {
+            router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        }
+      }
+    };
+  };
+
+  // 设置退出登录函数
+  (window as any).__APP_LOGOUT__ = createLogoutFunction();
 }
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）

@@ -240,10 +240,10 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
         collapse_vars: false,
         dead_code: false,
       },
-      mangle: {
-        keep_fnames: true,
-        keep_classnames: true,
-      },
+      // 关键：对于 ES 模块，完全禁用 mangle 以避免导出名称被混淆
+      // 这可以防止 "does not provide an export named 'r'" 错误
+      // 虽然这会增加一些文件大小，但可以确保动态导入正常工作
+      mangle: false,
       format: {
         comments: false,
       },

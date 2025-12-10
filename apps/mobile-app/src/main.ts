@@ -175,22 +175,38 @@ try {
   console.error('[i18n Setup Error]', error);
 }
 
-// PWA Service Worker - 设备优化版本
-// 针对不同设备（iOS、Android各品牌）采用不同的更新策略
+// PWA Service Worker - 兼容性优化版本
+// 不需要离线功能，只保留基本的 manifest 支持
+// 在不支持 Service Worker 的浏览器上不影响应用运行
 try {
   const isDev = (import.meta as any).env?.DEV;
   const deviceInfo = getDeviceInfo();
   
-  // 记录设备信息
-  console.log('[PWA] Device Info:', {
+  // 记录设备信息（用于调试和兼容性分析）
+  console.log('[App] Device Info:', {
     os: deviceInfo.os,
     brand: deviceInfo.brand,
     browser: deviceInfo.browser,
+    browserVersion: deviceInfo.browserVersion,
     supportsServiceWorker: deviceInfo.supportsServiceWorker,
-    supportsBackgroundSync: deviceInfo.supportsBackgroundSync,
+    isMobile: deviceInfo.isMobile,
   });
   
-  if (deviceInfo.supportsServiceWorker && !isDev) {
+  // 检查浏览器兼容性（仅用于日志记录，不影响应用运行）
+  // QQ 浏览器、某些国产浏览器可能不支持 Service Worker，但不影响基本功能
+  const isUnsupportedBrowser = deviceInfo.browser === 'qq' || 
+                                deviceInfo.browser === 'unknown' ||
+                                !deviceInfo.supportsServiceWorker;
+  
+  // 记录兼容性信息（不显示警告，因为应用可以正常运行）
+  if (isUnsupportedBrowser) {
+    console.log(`[App] Running on ${deviceInfo.browser} browser (Service Worker not supported, but app will work normally)`);
+  }
+  
+  // 只在支持的浏览器上注册 Service Worker，且非开发环境
+  // 由于不需要离线功能，可以完全禁用 Service Worker
+  // 但保留 manifest 支持，以便应用可以添加到主屏幕
+  if (false && deviceInfo.supportsServiceWorker && !isDev && !isUnsupportedBrowser) {
     // 根据设备类型调整更新检查频率
     // iOS设备：更新检查频率较低（iOS对后台任务限制较严格）
     // Android设备：可以更频繁地检查更新
@@ -256,39 +272,35 @@ try {
             });
           });
 
-          // 监听 Service Worker 控制器变化（新版本已激活）
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('[PWA] Service Worker controller changed, reloading page');
-            // iOS设备：延迟刷新，避免打断用户操作
-            // Android设备：立即刷新
-            const reloadDelay = deviceInfo.isIOS ? 500 : 100;
-            setTimeout(() => {
-              window.location.reload();
-            }, reloadDelay);
-          });
+          // 注意：由于不需要离线功能，不监听 controllerchange 自动刷新
+          // 让用户手动刷新页面，避免打断用户操作
         }
       },
       onRegisterError(error) {
-        console.error('[PWA] Service Worker registration error:', error);
-        // 在iOS上，某些情况下Service Worker注册可能失败，但不影响基本功能
-        if (deviceInfo.isIOS) {
-          console.warn('[PWA] Service Worker registration failed on iOS, app will still work but offline features may be limited');
-        }
+        // Service Worker 注册失败不影响应用运行（不需要离线功能）
+        console.warn('[PWA] Service Worker registration failed, app will continue to work normally:', error);
       },
     });
 
     // 导出更新函数，供外部调用
     (window as any).updateServiceWorker = updateSW;
-  } else if (isDev) {
-    console.log('[PWA] Service Worker registration disabled in development mode');
-  } else if (!deviceInfo.supportsServiceWorker) {
-    console.warn('[PWA] Service Worker not supported on this device');
+  } else {
+    // Service Worker 未启用或不支持，但不影响应用运行
+    if (isDev) {
+      console.log('[PWA] Service Worker disabled (development mode or not needed)');
+    } else if (isUnsupportedBrowser) {
+      console.log(`[PWA] Service Worker not supported on ${deviceInfo.browser} browser, app will work normally`);
+    } else if (!deviceInfo.supportsServiceWorker) {
+      console.log('[PWA] Service Worker not supported on this device, app will work normally');
+    }
   }
 } catch (e) {
-  // 如果 import.meta 不可用（生产环境构建后），注册 Service Worker
+  // Service Worker 注册失败不影响应用运行
+  console.warn('[PWA] Service Worker registration error (non-blocking):', e);
   const deviceInfo = getDeviceInfo();
   
-  if (deviceInfo.supportsServiceWorker) {
+  // 由于不需要离线功能，完全禁用 Service Worker
+  if (false && deviceInfo.supportsServiceWorker) {
     const updateCheckInterval = deviceInfo.isIOS 
       ? 10 * 60 * 1000
       : deviceInfo.isAndroid && (deviceInfo.brand === 'Xiaomi' || deviceInfo.brand === 'Huawei' || deviceInfo.brand === 'Vivo')
@@ -343,20 +355,12 @@ try {
             });
           });
 
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('[PWA] Service Worker controller changed, reloading page');
-            const reloadDelay = deviceInfo.isIOS ? 500 : 100;
-            setTimeout(() => {
-              window.location.reload();
-            }, reloadDelay);
-          });
+          // 注意：由于不需要离线功能，不监听 controllerchange 自动刷新
         }
       },
       onRegisterError(error) {
-        console.error('[PWA] Service Worker registration error:', error);
-        if (deviceInfo.isIOS) {
-          console.warn('[PWA] Service Worker registration failed on iOS, app will still work but offline features may be limited');
-        }
+        // Service Worker 注册失败不影响应用运行
+        console.warn('[PWA] Service Worker registration failed, app will continue to work normally:', error);
       },
     });
 

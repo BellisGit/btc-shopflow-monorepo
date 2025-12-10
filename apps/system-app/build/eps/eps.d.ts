@@ -19,6 +19,11 @@ interface position {
           domainId?: any;
         
           /**
+           * 部门ID
+           */
+          deptId?: any;
+        
+          /**
            * 仓位
            */
           position?: any;
@@ -758,6 +763,14 @@ interface material {
            */
           keyword?: any;
         
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface checkTicket {
         /**
          * Any key-value pairs
          */

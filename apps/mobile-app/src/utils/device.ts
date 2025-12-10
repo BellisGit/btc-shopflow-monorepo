@@ -21,7 +21,7 @@ export interface DeviceInfo {
   /** 是否为Android设备 */
   isAndroid: boolean;
   /** 浏览器类型 */
-  browser: 'safari' | 'chrome' | 'firefox' | 'samsung' | 'miui' | 'huawei' | 'vivo' | 'oppo' | 'unknown';
+  browser: 'safari' | 'chrome' | 'firefox' | 'samsung' | 'miui' | 'huawei' | 'vivo' | 'oppo' | 'qq' | 'unknown';
   /** 浏览器版本 */
   browserVersion: string;
   /** 是否支持Service Worker */
@@ -97,14 +97,18 @@ export function detectDevice(): DeviceInfo {
       model = 'iPod';
     }
   } else if (isAndroid) {
-    // 检测Android设备品牌
-    if (/Xiaomi|Redmi|POCO|Mi\s/.test(ua)) {
+    // 检测Android设备品牌（优先检测 Honor，因为 Honor 可能包含 Huawei 字符串）
+    if (/Honor|HONOR/.test(ua)) {
+      brand = 'Honor';
+      const match = ua.match(/(?:Honor|HONOR)([^;)]+)/);
+      if (match) model = match[1].trim();
+    } else if (/Xiaomi|Redmi|POCO|Mi\s/.test(ua)) {
       brand = 'Xiaomi';
       const match = ua.match(/(?:Xiaomi|Redmi|POCO|Mi\s)([^;)]+)/);
       if (match) model = match[1].trim();
-    } else if (/Huawei|Honor/.test(ua)) {
+    } else if (/Huawei/.test(ua)) {
       brand = 'Huawei';
-      const match = ua.match(/(?:Huawei|Honor)([^;)]+)/);
+      const match = ua.match(/Huawei([^;)]+)/);
       if (match) model = match[1].trim();
     } else if (/vivo/.test(ua)) {
       brand = 'Vivo';
@@ -188,6 +192,19 @@ export function detectDevice(): DeviceInfo {
     const match = ua.match(/Firefox\/(\d+)/);
     if (match) {
       browserVersion = match[1];
+    }
+  } else if (/MQQBrowser|QQBrowser|QQ/.test(ua)) {
+    // 检测 QQ 浏览器（需要在 Chrome 检测之后，因为 QQ 浏览器可能伪装成 Chrome）
+    browser = 'qq';
+    const match = ua.match(/(?:MQQBrowser|QQBrowser)\/(\d+)/);
+    if (match) {
+      browserVersion = match[1];
+    } else {
+      // 尝试从版本号中提取
+      const versionMatch = ua.match(/Version\/(\d+)/);
+      if (versionMatch) {
+        browserVersion = versionMatch[1];
+      }
     }
   }
   

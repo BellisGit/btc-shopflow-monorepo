@@ -11,7 +11,7 @@ import '@btc/shared-components/styles/dark-theme.css';
 import '@btc/shared-components/styles/index.scss';
 import 'virtual:uno.css';
 import type { QiankunProps } from '@btc/shared-core';
-import { registerAppEnvAccessors, registerManifestMenusForApp } from '@configs/layout-bridge';
+import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl } from '@configs/layout-bridge';
 import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports } from '@btc/shared-utils/error-monitor';
 import { createI18nPlugin } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale, DEFAULT_LOCALE, FALLBACK_LOCALE } from './i18n/getters';
@@ -21,7 +21,7 @@ import App from './App.vue';
 import { createMonitorRouter } from './router';
 import { getManifestTabs, getManifestRoute } from '@btc/subapp-manifests';
 import type { Router } from 'vue-router';
-import { initLayoutApp } from './utils/init-layout-app';
+// 注意：initLayoutApp 改为动态导入，与其他应用保持一致
 
 const MONITOR_APP_ID = 'monitor';
 const MONITOR_BASE_PATH = '/monitor';
@@ -52,7 +52,7 @@ const normalizeToHostPath = (relativeFullPath: string) => {
   // 检测是否在生产环境的子域名下
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   // 在生产环境子域名下，路径应该不带应用前缀（直接使用相对路径）
   if (isProductionSubdomain) {
     return normalizedRelative;
@@ -73,11 +73,24 @@ const normalizeToHostPath = (relativeFullPath: string) => {
 
 // 从主机路径推导初始子路由
 const deriveInitialSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 检测是否在生产环境的子域名下或使用 layout-app
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+
+  // 如果不在 qiankun 模式且不在 layout-app 模式，返回根路径
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 在生产环境子域名下或使用 layout-app，路径直接使用（不带 /monitor 前缀）
+  if (isProductionSubdomain || isUsingLayoutApp) {
+    return `${pathname || '/'}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从 /monitor 前缀中提取
   if (!pathname.startsWith(MONITOR_BASE_PATH)) {
     return '/';
   }
@@ -92,7 +105,18 @@ const extractHostSubRoute = () => {
     return '/';
   }
 
+  // 检测是否在生产环境的子域名下
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
   const { pathname, search, hash } = window.location;
+
+  // 在生产环境子域名下，路径直接使用（不带 /monitor 前缀）
+  if (isProductionSubdomain) {
+    return `${pathname || '/'}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从 /monitor 前缀中提取
   if (!pathname.startsWith(MONITOR_BASE_PATH)) {
     return '/';
   }
@@ -107,16 +131,8 @@ const syncHostWithSubRoute = (fullPath: string) => {
     return;
   }
 
-  let targetUrl = fullPath || MONITOR_BASE_PATH;
-  
-  if (!targetUrl.startsWith(MONITOR_BASE_PATH)) {
-    if (targetUrl === '/' || targetUrl === '') {
-      targetUrl = MONITOR_BASE_PATH;
-    } else {
-      targetUrl = `${MONITOR_BASE_PATH}${targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`}`;
-    }
-  }
-
+  // 使用 normalizeToHostPath 规范化路径，它会自动处理生产环境子域名
+  const targetUrl = normalizeToHostPath(fullPath || '/');
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
   if (currentUrl === targetUrl) {
@@ -209,6 +225,7 @@ const sendRouteChangeEvent = (to: any) => {
 
 // 设置路由同步
 const setupRouteSync = () => {
+  // 只在 qiankun 模式下设置路由同步（layout-app 模式下不需要，因为已经是子域名）
   if (!qiankunWindow.__POWERED_BY_QIANKUN__ || !router) {
     return;
   }
@@ -301,9 +318,28 @@ async function mount(_props: QiankunProps = {}) {
   }
 
   // 独立运行时：设置全局函数供 AppLayout 使用
-  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），不应该设置这些全局函数
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
   if (isStandalone) {
     registerAppEnvAccessors();
+    const win = window as any;
+    if (!win.__APP_STORAGE__) {
+      win.__APP_STORAGE__ = createAppStorageBridge(MONITOR_APP_ID);
+    }
+    if (!win.__APP_EPS_SERVICE__) {
+      win.__APP_EPS_SERVICE__ = {};
+    }
+    if (!win.__APP_GET_DOMAIN_LIST__) {
+      win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(MONITOR_APP_ID);
+    }
+    if (!win.__APP_FINISH_LOADING__) {
+      win.__APP_FINISH_LOADING__ = () => {};
+    }
+    if (!win.__APP_LOGOUT__) {
+      win.__APP_LOGOUT__ = () => {};
+    }
+    win.__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+    win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
     registerManifestMenusForApp(MONITOR_APP_ID);
   }
 
@@ -339,17 +375,163 @@ async function mount(_props: QiankunProps = {}) {
     updateErrorList(errorInfo);
   });
 
-  // 路由初始化
-  if (qiankunWindow.__POWERED_BY_QIANKUN__ && router) {
+  app.mount(container);
+
+  // 路由初始化：在 qiankun 模式下或使用 layout-app 时提前初始化路由，与 admin-app 保持一致
+  // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），也需要初始化路由
+  if ((qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__) && router) {
     const initialRoute = deriveInitialSubRoute();
-    Promise.resolve().then(() => {
-      if (router) {
-        router.replace(initialRoute).catch(() => {});
-      }
-    });
+    router.replace(initialRoute).catch(() => {});
   }
 
-  app.mount(container);
+  // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
+  // 无论是独立运行还是 qiankun 模式，都需要设置
+  // 关键：创建一个独立的 logout 函数，不依赖 composable，避免在非 setup 上下文中调用
+  const createLogoutFunction = () => {
+    return async () => {
+      try {
+        // 调用后端 logout API（通过全局 authApi，由 system-app 提供）
+        try {
+          const authApi = (window as any).__APP_AUTH_API__;
+          if (authApi?.logout) {
+            await authApi.logout();
+          } else {
+            console.warn('[monitor-app] Auth API logout function not available globally.');
+          }
+        } catch (error: any) {
+          // 后端 API 失败不影响前端清理
+          console.warn('Logout API failed, but continue with frontend cleanup:', error);
+        }
+
+        // 清除 cookie 中的 token
+        document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+        // 清除登录状态标记（从统一的 settings 存储中移除）
+        const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+        if (appStorage) {
+          const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
+          if (currentSettings.is_logged_in) {
+            delete currentSettings.is_logged_in;
+            appStorage.settings?.set(currentSettings);
+          }
+          appStorage.auth?.clear();
+          appStorage.user?.clear();
+        }
+
+        // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
+        localStorage.removeItem('is_logged_in');
+
+        // 清除用户状态（直接实现，不依赖 composable）
+        try {
+          const { storage } = await import('@btc/shared-utils');
+          storage.remove('user');
+          // 清理旧的 localStorage 数据（向后兼容）
+          localStorage.removeItem('btc_user');
+          localStorage.removeItem('user');
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 清除标签页（Process Store）
+        try {
+          const { useProcessStore } = await import('@btc/shared-components');
+          const processStore = useProcessStore();
+          processStore.clear();
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 显示退出成功提示
+        const { BtcMessage } = await import('@btc/shared-components');
+        const t = i18nPlugin?.i18n?.global?.t;
+        if (t) {
+          BtcMessage.success(t('common.logoutSuccess'));
+        }
+
+        // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+        // 判断是否在生产环境的子域名下
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+        // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+        if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+          // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
+        } else {
+          // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+          if (router) {
+            router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        }
+      } catch (error: any) {
+        // 即使出现错误，也执行清理操作
+        console.error('Logout error:', error);
+
+        // 强制清除所有缓存
+        try {
+          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch (e) {
+          // 静默失败
+        }
+
+        try {
+          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+          if (appStorage) {
+            const currentSettings = (appStorage.settings?.get() as Record<string, any>) || {};
+            if (currentSettings.is_logged_in) {
+              delete currentSettings.is_logged_in;
+              appStorage.settings?.set(currentSettings);
+            }
+            localStorage.removeItem('is_logged_in');
+            appStorage.auth?.clear();
+            appStorage.user?.clear();
+          }
+
+          const { storage } = await import('@btc/shared-utils');
+          storage.remove('user');
+          localStorage.removeItem('btc_user');
+          localStorage.removeItem('user');
+
+          const { useProcessStore } = await import('@btc/shared-components');
+          const processStore = useProcessStore();
+          processStore.clear();
+        } catch (e) {
+          // 静默失败
+        }
+
+        // 跳转到登录页
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+        if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
+        } else {
+          if (router) {
+            router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        }
+      }
+    };
+  };
+
+  // 设置退出登录函数
+  (window as any).__APP_LOGOUT__ = createLogoutFunction();
 
   // 设置路由同步和主机路由监听
   setupRouteSync();
@@ -362,7 +544,8 @@ async function mount(_props: QiankunProps = {}) {
   registerTabs(_props);
 
   // 路由初始化完成后，如果当前路由不是首页，手动发送路由变化事件
-  if (qiankunWindow.__POWERED_BY_QIANKUN__ && router) {
+  // 在 qiankun 模式下或使用 layout-app 时都需要处理
+  if ((qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__) && router) {
     router.isReady().then(() => {
       if (!router) return;
       const currentRoute = router.currentRoute.value;
@@ -370,7 +553,10 @@ async function mount(_props: QiankunProps = {}) {
       if (currentRoute && !currentRoute.meta?.isHome) {
         const relativeFullPath = ensureLeadingSlash(currentRoute.fullPath || currentRoute.path || '');
         const fullPath = normalizeToHostPath(relativeFullPath);
-        syncHostWithSubRoute(fullPath);
+        // 只在 qiankun 模式下同步路由（layout-app 模式下不需要同步，因为已经是子域名）
+        if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+          syncHostWithSubRoute(fullPath);
+        }
         sendRouteChangeEvent(currentRoute);
       }
     });
@@ -416,7 +602,7 @@ async function unmount(_props: QiankunProps = {}) {
   if (_props?.clearTabs) {
     _props.clearTabs();
   }
-  
+
   if (app) {
     app.unmount();
     app = null;
@@ -451,29 +637,38 @@ if (shouldRunStandalone()) {
 
   if (shouldLoadLayout) {
     // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
-    initLayoutApp()
-      .then(() => {
-        // layout-app 加载成功，检查是否需要独立渲染
-        // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-        if (!(window as any).__USE_LAYOUT_APP__) {
-          // layout-app 加载失败或不需要加载，独立渲染
-          mount({}).catch((error) => {
-            console.error('[monitor-app] 独立运行失败:', error);
+    // 使用动态导入，与其他应用保持一致
+    import('./utils/init-layout-app').then(({ initLayoutApp }) => {
+      initLayoutApp()
+        .then(() => {
+          // layout-app 加载成功，检查是否需要独立渲染
+          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+          if (!(window as any).__USE_LAYOUT_APP__) {
+            // layout-app 加载失败或不需要加载，独立渲染
+            mount({}).catch((error) => {
+              console.error('[monitor-app] 独立运行失败:', error);
+            });
+          }
+          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
+        })
+        .catch((error) => {
+          console.error('[monitor-app] 初始化 layout-app 失败:', error);
+          // layout-app 加载失败，独立渲染
+          mount({}).catch((err) => {
+            console.error('[monitor-app] 独立运行失败:', err);
           });
-        }
-        // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-      })
-      .catch((error) => {
-    console.error('[monitor-app] 初始化 layout-app 失败:', error);
-        // layout-app 加载失败，独立渲染
-        mount({}).catch((err) => {
-          console.error('[monitor-app] 独立运行失败:', err);
         });
-  });
+    }).catch((error) => {
+      console.error('[monitor-app] 导入 init-layout-app 失败:', error);
+      // 导入失败，直接渲染
+      mount({}).catch((err) => {
+        console.error('[monitor-app] 独立运行失败:', err);
+      });
+    });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-  mount({}).catch((error) => {
-    console.error('[monitor-app] 独立运行失败:', error);
-  });
+    mount({}).catch((error) => {
+      console.error('[monitor-app] 独立运行失败:', error);
+    });
   }
 }

@@ -5,6 +5,7 @@
 
 import type { UserConfig, Plugin, ViteDevServer } from 'vite';
 import { resolve } from 'path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import vue from '@vitejs/plugin-vue';
 // @ts-ignore - vite-plugin-pwa 类型定义可能有问题，但运行时可用
 // vite-plugin-pwa v0.20.0 使用 CommonJS 导出，需要使用 createRequire
@@ -158,9 +159,12 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),
-    // 7. PWA 插件
+    // 7. PWA 插件（仅保留 manifest 支持，不需要离线功能）
+    // 移除 Service Worker 和离线缓存，确保在所有浏览器上都能正常运行
     VitePWA({
-      registerType: 'autoUpdate',
+      // 完全禁用 Service Worker 注册（不需要离线功能）
+      injectRegister: false,
+      registerType: 'manual', // 手动注册，实际上不会注册
       includeAssets: [
         'icons/android-chrome-192x192.png',
         'icons/android-chrome-512x512.png',
@@ -169,63 +173,29 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         'icons/favicon-16x16.png',
         'icons/apple-touch-icon.png',
       ],
-      workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'
-        ],
-        navigateFallback: null,
-        globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js'],
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\./,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              cacheableResponse: { statuses: [0, 200] },
-              // iOS设备：更短的缓存时间，避免占用过多存储空间
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }, // 1天
-            },
-          },
-          {
-            urlPattern: /\/icons\/.*\.(png|ico|svg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'icon-cache-v1',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7天
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30天
-            },
-          },
-          // 静态资源缓存（JS、CSS等）
-          {
-            urlPattern: /\.(?:js|css|woff2|ttf|eot)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-resources-v1',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1年
-            },
-          },
-        ],
-      },
-      useCredentials: false,
-      injectRegister: false,
+      // 使用 generateSW 策略，但配置为不生成 Service Worker
+      // 通过设置空的 globPatterns 和 runtimeCaching，尽可能减少生成的内容
       strategies: 'generateSW',
+      workbox: {
+        // 不缓存任何文件
+        globPatterns: [],
+        // 禁用所有缓存功能
+        runtimeCaching: [],
+        // 禁用导航回退
+        navigateFallback: null,
+        // 不跳过等待，不声明客户端
+        skipWaiting: false,
+        clientsClaim: false,
+        // 禁用清理过期缓存
+        cleanupOutdatedCaches: false,
+      },
+      // 设置一个自定义的 Service Worker 文件名（但实际上不会生成，因为 injectRegister: false）
       filename: 'sw.js',
+      // 不生成 Service Worker 文件（通过配置 workbox 为空实现）
+      // 开发环境禁用 Service Worker
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module',
-        navigateFallback: '/',
         suppressWarnings: true,
       },
       manifest: {
@@ -244,19 +214,19 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             src: '/icons/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: ['any', 'maskable'], // purpose 必须是数组
           },
           {
             src: '/icons/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: ['any', 'maskable'],
           },
           {
             src: '/icons/android-chrome-1024x1024.png',
             sizes: '1024x1024',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: ['any', 'maskable'],
           },
           {
             src: '/icons/favicon-32x32.png',
@@ -271,17 +241,21 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             purpose: 'any',
           },
         ],
-        // iOS特定配置
-        ios: {
-          'apple-mobile-web-app-capable': 'yes',
-          'apple-mobile-web-app-status-bar-style': 'black-translucent',
-          'apple-mobile-web-app-title': '拜里斯科技',
-        },
         // 针对不同设备的显示模式
         display_override: ['standalone', 'fullscreen', 'minimal-ui', 'browser'],
+        // 注意：iOS 特定配置（apple-mobile-web-app-*）应通过 HTML meta 标签设置，不在 manifest 中
+        // 这些配置已经在 index.html 中设置了
       },
       disableDevLogs: true,
-      ...pwaOptions,
+      // 确保不包含非标准的 ios 字段
+      // 如果 pwaOptions 中有 manifest，需要合并时排除 ios 字段
+      ...(pwaOptions ? {
+        ...pwaOptions,
+        manifest: pwaOptions.manifest ? {
+          ...pwaOptions.manifest,
+          ios: undefined, // 明确排除 ios 字段
+        } : undefined,
+      } : {}),
     }),
     // 8. manifest 中间件
     {
@@ -291,6 +265,46 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
           res.setHeader('Content-Type', 'application/manifest+json');
           next();
         });
+      },
+    } as Plugin,
+    // 8.5. 修复 manifest 文件插件（移除非标准字段，修复 purpose 格式）
+    {
+      name: 'fix-manifest-plugin',
+      closeBundle() {
+        // 在构建完成后修复 manifest 文件
+        const manifestPath = resolve(appDir, 'dist', 'manifest.webmanifest');
+        if (existsSync(manifestPath)) {
+          try {
+            const manifestContent = readFileSync(manifestPath, 'utf-8');
+            const manifest = JSON.parse(manifestContent);
+            let modified = false;
+            
+            // 移除非标准的 ios 字段
+            if (manifest.ios) {
+              delete manifest.ios;
+              modified = true;
+            }
+            
+            // 修复 purpose 字段：将字符串转换为数组
+            if (manifest.icons && Array.isArray(manifest.icons)) {
+              manifest.icons = manifest.icons.map((icon: any) => {
+                if (icon.purpose && typeof icon.purpose === 'string' && icon.purpose.includes(' ')) {
+                  icon.purpose = icon.purpose.split(' ');
+                  modified = true;
+                }
+                return icon;
+              });
+            }
+            
+            if (modified) {
+              const fixedContent = JSON.stringify(manifest, null, 2);
+              writeFileSync(manifestPath, fixedContent, 'utf-8');
+              console.log('[fix-manifest-plugin] ✅ 已修复 manifest.webmanifest（移除 ios 字段，修复 purpose 格式）');
+            }
+          } catch (error) {
+            console.warn('[fix-manifest-plugin] ⚠️ 修复 manifest 时出错:', error);
+          }
+        }
       },
     } as Plugin,
     // 9. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）

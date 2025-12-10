@@ -12,6 +12,11 @@
 <script setup lang="ts">
 import type { RowJustify, RowAlign } from 'element-plus';
 
+defineOptions({
+  name: 'BtcRow',
+  inheritAttrs: false,
+});
+
 interface BtcRowProps {
   justify?: typeof RowJustify[keyof typeof RowJustify];
   align?: typeof RowAlign[keyof typeof RowAlign];

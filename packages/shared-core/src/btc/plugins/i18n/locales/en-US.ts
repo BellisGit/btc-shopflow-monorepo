@@ -135,6 +135,7 @@ export default {
   'menu.test_features': 'Test Features',
   'menu.test_features.components': 'Components Test Center',
   'menu.test_features.api_test_center': 'API Test Center',
+  'menu.test_features.inventory_ticket_print': 'Inventory Ticket Print',
   'menu.test_features.crud': 'CRUD Test',
   'menu.test_features.svg': 'SVG Test',
   'menu.test_features.i18n': 'Internationalization Test',

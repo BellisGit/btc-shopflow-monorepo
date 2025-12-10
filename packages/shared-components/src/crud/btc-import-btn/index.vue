@@ -1,5 +1,5 @@
 <template>
-  <div :data-export-filename="exportFilename" v-bind="$attrs">
+  <div>
     <el-button
       :disabled="disabled"
       :type="type"
@@ -46,7 +46,7 @@
               <div class="el-upload__tip">
                 {{ t('common.upload.tip') }}
                 <span v-if="exportFilename" class="filename-tip">
-                  （建议文件名：{{ exportFilename }}.xlsx，不允许包含【SysPro、BOM表、括号】等内容）
+                  （建议文件名：{{ exportFilename }}.xlsx，不允许包含【{{ forbiddenKeywords.join('、') }}】等内容）
                 </span>
               </div>
             </template>
@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, inject, type PropType } from 'vue';
+import { ref, reactive, computed, inject, type PropType, type Ref, type ComputedRef } from 'vue';
 
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
@@ -166,6 +166,7 @@ import chardet from 'chardet';
 import type { TableColumn } from '../table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
+import { IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY } from './keys';
 
 defineOptions({
   name: 'BtcImportBtn',
@@ -192,10 +193,6 @@ interface BtcImportBtnProps {
   icon?: string;
   disabled?: boolean;
   accept?: string;
-  /** 导出文件名（用于文件名匹配验证，严格校验格式） */
-  exportFilename?: string;
-  /** 禁止的文件名关键词（如SysPro、BOM表等） */
-  forbiddenKeywords?: string[];
 }
 
 const props = withDefaults(defineProps<BtcImportBtnProps>(), {
@@ -208,11 +205,36 @@ const props = withDefaults(defineProps<BtcImportBtnProps>(), {
   icon: '',
   disabled: false,
   accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel,text/csv',
-  exportFilename: '',
-  forbiddenKeywords: () => ['SysPro', 'BOM表', '(', ')', '（', '）'], // 默认禁止的关键词
 });
 
-const emit = defineEmits(['change', 'validate-filename']);
+// 使用 provide/inject 获取导出文件名和禁止关键词（由父组件提供）
+const exportFilenameRef = inject<Ref<string> | ComputedRef<string> | string | undefined>(IMPORT_FILENAME_KEY, undefined);
+const forbiddenKeywordsRef = inject<Ref<string[]> | ComputedRef<string[]> | string[] | undefined>(
+  IMPORT_FORBIDDEN_KEYWORDS_KEY,
+  undefined
+);
+
+// 创建 computed 属性来安全访问值
+const exportFilename = computed(() => {
+  if (!exportFilenameRef) return undefined;
+  return typeof exportFilenameRef === 'object' && 'value' in exportFilenameRef
+    ? exportFilenameRef.value
+    : exportFilenameRef;
+});
+
+const forbiddenKeywords = computed(() => {
+  if (!forbiddenKeywordsRef) return ['SysPro', 'BOM表', '(', ')', '（', '）'];
+  return typeof forbiddenKeywordsRef === 'object' && 'value' in forbiddenKeywordsRef
+    ? forbiddenKeywordsRef.value
+    : forbiddenKeywordsRef;
+});
+
+
+const emit = defineEmits<{
+  'change': [data: any[]];
+  'validate-filename': [isValid: boolean];
+  'validateFilename': [isValid: boolean]; // 支持 camelCase 格式
+}>();
 
 const formRef = ref();
 const fileInputRef = ref();
@@ -294,7 +316,7 @@ const analyzeFileNameMatch = (filename: string) => {
       isValid: false,
       matchScore: 0,
       suggestions: [t('common.import.invalid_filename_empty') || '文件名不能为空'],
-      entityName: props.exportFilename || '数据',
+      entityName: exportFilename.value || '数据',
       fileName: ''
     };
   }
@@ -304,19 +326,21 @@ const analyzeFileNameMatch = (filename: string) => {
   const fileNameOriginal = filename.replace(/\.[^/.]+$/, '').trim();
 
   // 1. 校验禁止关键词
-  const forbiddenKeywords = props.forbiddenKeywords.map(k => k.toLowerCase());
-  const hasForbiddenKeyword = forbiddenKeywords.some(keyword =>
+  const currentForbiddenKeywords = forbiddenKeywords.value || [];
+  const forbiddenKeywordsLower = currentForbiddenKeywords.map(k => k.toLowerCase());
+  const hasForbiddenKeyword = forbiddenKeywordsLower.some(keyword =>
     fileNameRaw.includes(keyword.toLowerCase())
   );
   if (hasForbiddenKeyword) {
+    const currentExportFilename = exportFilename.value;
     return {
       isValid: false,
       matchScore: 0,
       suggestions: [
-        `文件名包含禁止关键词：${props.forbiddenKeywords.join('、')}`,
-        `建议文件名：${props.exportFilename}.xlsx`
+        `文件名包含禁止关键词：${currentForbiddenKeywords.join('、')}`,
+        currentExportFilename ? `建议文件名：${currentExportFilename}.xlsx` : '请使用正确的文件名'
       ],
-      entityName: props.exportFilename || '数据',
+      entityName: currentExportFilename || '数据',
       fileName: fileNameOriginal
     };
   }
@@ -326,8 +350,12 @@ const analyzeFileNameMatch = (filename: string) => {
   let isValid = false;
   const suggestions: string[] = [];
 
-  if (props.exportFilename) {
-    const exportFilenameLower = props.exportFilename.trim().toLowerCase();
+  // 检查 exportFilename 是否有值（排除空字符串）
+  const currentExportFilename = exportFilename.value;
+  const hasExportFilename = currentExportFilename && currentExportFilename.trim() !== '';
+
+  if (hasExportFilename) {
+    const exportFilenameLower = currentExportFilename.trim().toLowerCase();
     // 完全匹配（忽略大小写）
     if (fileNameRaw === exportFilenameLower) {
       matchScore = 100;
@@ -342,29 +370,20 @@ const analyzeFileNameMatch = (filename: string) => {
     // 不匹配
     else {
       matchScore = 0;
-      suggestions.push(`文件名应与导出模板名一致（${props.exportFilename}），或仅添加数字/下划线后缀（如 ${props.exportFilename}_2025）`);
+      suggestions.push(`文件名应与导出模板名一致（${currentExportFilename}），或仅添加数字/下划线后缀（如 ${currentExportFilename}_2025）`);
     }
   } else {
-    // 无导出文件名时，沿用原有逻辑
-    const entityName = getEntityName();
-    const entityNameLower = entityName.toLowerCase();
-    if (fileNameRaw === entityNameLower) {
-      matchScore = 100;
-      isValid = true;
-    } else if (fileNameRaw.includes(entityNameLower)) {
-      matchScore = 60;
-      isValid = true;
-    } else {
-      matchScore = 0;
-      suggestions.push(`建议文件名包含"${entityName}"，且不包含禁止关键词`);
-    }
+    // 无导出文件名时，放宽校验：只要不包含禁止关键词就允许
+    // 不再强制要求文件名包含特定实体名，避免提示"增加data开头"
+    isValid = true;
+    matchScore = 50; // 给予中等匹配度
   }
 
   return {
     isValid,
     matchScore,
     suggestions,
-    entityName: props.exportFilename || getEntityName(),
+    entityName: currentExportFilename || getEntityName(),
     fileName: fileNameOriginal
   };
 };
@@ -750,7 +769,8 @@ function download() {
   const link = document.createElement('a');
   link.setAttribute('href', props.template);
   // 强制模板文件名与exportFilename一致
-  link.setAttribute('download', props.exportFilename ? `${props.exportFilename}.xlsx` : '导入模板.xlsx');
+  const filename = exportFilename.value;
+  link.setAttribute('download', filename ? `${filename}.xlsx` : '导入模板.xlsx');
   link.click();
 }
 

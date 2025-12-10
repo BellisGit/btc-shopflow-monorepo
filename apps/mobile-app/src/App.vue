@@ -9,10 +9,10 @@ defineOptions({
 </script>
 
 <style>
-/* 共享组件样式 */
-@import '@btc-styles/index.scss';
 /* 移动端全局样式 */
 @import './styles/index.scss';
+/* 共享组件样式 */
+@use '@btc/shared-components/styles/index.scss' as *;
 
 html {
   /* 使用动态视口高度，适配移动端浏览器地址栏 */

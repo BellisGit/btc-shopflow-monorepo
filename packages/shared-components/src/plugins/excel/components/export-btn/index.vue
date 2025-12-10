@@ -36,6 +36,11 @@ import type { UseCrudReturn } from '@btc/shared-core';
 import { BtcMessage } from '@btc-components/feedback/btc-message';
 import { useCrudLayout } from '@btc-crud/context/layout';
 
+defineOptions({
+  name: 'BtcExportBtn',
+  inheritAttrs: false,
+});
+
 export interface Props {
   /** 表格列配置（可选，如果不提供则从 CRUD 上下文获取） */
   columns?: TableColumn[];

@@ -1,3 +1,8 @@
+// 导入共享组件样式（必须在文件开头，确保优先级）
+// 使用 @import 确保在构建时，SCSS 预处理器会将共享组件样式合并到 global.scss 中
+// 使用 @use ... as * 确保样式被正确导入并应用到全局（兼容 @use 模块化）
+@use '@btc/shared-components/styles/index.scss' as *;
+
 // Global styles for test app
 
 // 自定义 CSS 变量（与 cool-admin 保持一致）

@@ -292,6 +292,8 @@ function getTabLabel(item: ProcessItem) {
 
     // 测试功能
     '/test/components': 'menu.test_features.components',
+    '/test/inventory-ticket-print': 'menu.test_features.inventory_ticket_print',
+    '/admin/test/inventory-ticket-print': 'menu.test_features.inventory_ticket_print',
 
     // 文档中心
     '/docs': 'menu.docs_center',

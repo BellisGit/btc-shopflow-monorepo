@@ -87,10 +87,18 @@ declare global {
 }
 
 // 获取退出登录函数（从全局或应用提供）
+// 关键：每次调用时都重新获取，而不是在初始化时获取一次
+// 因为 __APP_LOGOUT__ 可能在组件初始化后才被设置
 function getLogoutFunction() {
-  return (window as any).__APP_LOGOUT__ || (() => {
-    console.warn('[user-info] Logout function not available');
-  });
+  const logoutFn = (window as any).__APP_LOGOUT__;
+  if (logoutFn && typeof logoutFn === 'function') {
+    return logoutFn;
+  }
+  // 生产环境可能无法显示日志，但保留错误日志用于调试
+  if (import.meta.env.DEV) {
+    console.error('[user-info] Logout function not available, __APP_LOGOUT__:', logoutFn);
+  }
+  return null;
 }
 import { User } from '@element-plus/icons-vue';
 import { useUserInfo } from './index';
@@ -101,9 +109,6 @@ defineOptions({
 
 const { t } = useI18n();
 const router = useRouter();
-
-// 获取退出登录函数（从全局或应用提供）
-const logout = getLogoutFunction();
 
 // 获取设置状态
 const { menuThemeType, isDark: isDarkTheme } = useSettingsState();
@@ -266,16 +271,60 @@ const handleCommand = (command: string) => {
       }
       break;
     case 'logout':
+      // 先检查退出登录函数是否可用
+      const logoutFn = getLogoutFunction();
+      
+      // 如果没有退出登录函数，直接执行兜底方案（不显示确认对话框，立即退出）
+      if (!logoutFn || typeof logoutFn !== 'function') {
+        // 即使没有退出登录函数，也直接执行退出逻辑
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+        
+        // 清除认证数据
+        try {
+          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+          if (appStorage) {
+            appStorage.auth?.clear();
+            appStorage.user?.clear();
+          }
+          // 清除 cookie
+          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch (e) {
+          // 静默失败
+        }
+        
+        if (isProductionSubdomain) {
+          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+        } else {
+          router.replace({
+            path: '/login',
+            query: { logout: '1' }
+          });
+        }
+        return;
+      }
+      
+      // 有退出登录函数，显示确认对话框
       BtcConfirm(t('common.logoutConfirm'), t('common.warning'), {
         confirmButtonText: t('common.button.confirm'),
         cancelButtonText: t('common.button.cancel'),
         type: 'warning'
       })
         .then(() => {
-          logout();
+          // 重新获取退出登录函数（确保获取最新）
+          const currentLogoutFn = getLogoutFunction();
+          if (currentLogoutFn && typeof currentLogoutFn === 'function') {
+            currentLogoutFn().catch((error: any) => {
+              // 生产环境可能无法显示日志，但保留错误处理
+              if (import.meta.env.DEV) {
+                console.error('[user-info] Logout failed:', error);
+              }
+            });
+          }
         })
         .catch(() => {
-          // 取消操作
+          // 取消操作，不做任何处理
         });
       break;
   }

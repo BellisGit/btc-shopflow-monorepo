@@ -68,8 +68,22 @@ export function useLogout() {
       // 显示退出成功提示
       BtcMessage.success(t('common.logoutSuccess'));
 
-      // 跳转到登录页
-      router.push('/login');
+      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 判断是否在生产环境的子域名下
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+      if (isProductionSubdomain) {
+        window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+      } else {
+        // 开发环境：使用路由跳转，添加 logout=1 参数
+        router.replace({
+          path: '/login',
+          query: { logout: '1' }
+        });
+      }
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
       console.error('Logout error:', error);
@@ -81,8 +95,22 @@ export function useLogout() {
       clearUserInfo();
       processStore.clear();
 
-      // 跳转到登录页
-      router.push('/login');
+      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 判断是否在生产环境的子域名下
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+      if (isProductionSubdomain) {
+        window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+      } else {
+        // 开发环境：使用路由跳转，添加 logout=1 参数
+        router.replace({
+          path: '/login',
+          query: { logout: '1' }
+        });
+      }
     }
   };
 

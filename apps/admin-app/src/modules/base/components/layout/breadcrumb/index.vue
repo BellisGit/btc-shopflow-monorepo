@@ -258,6 +258,10 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.test_features' },
       { i18nKey: 'menu.test_features.api_test_center' },
     ],
+    '/admin/test/inventory-ticket-print': [
+      { i18nKey: 'menu.test_features' },
+      { i18nKey: 'menu.test_features.inventory_ticket_print' },
+    ],
   };
 
   // 子应用的面包屑映射（暂时为空，待实现具体页面）

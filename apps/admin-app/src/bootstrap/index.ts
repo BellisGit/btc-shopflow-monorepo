@@ -547,6 +547,138 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
     ensureCleanUrl(context);
     context.registerTabs(props);
 
+    // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
+    // 无论是独立运行还是 qiankun 模式，都需要设置
+    // 关键：创建一个独立的 logout 函数，不依赖 composable，避免在非 setup 上下文中调用
+    const createLogoutFunction = (ctx: AdminAppContext) => {
+      return async () => {
+        try {
+          // 获取 authApi（优先使用全局的，如果没有则使用本地的）
+          const getAuthApi = async () => {
+            const globalAuthApi = (window as any).__APP_AUTH_API__;
+            if (globalAuthApi && typeof globalAuthApi.logout === 'function') {
+              return globalAuthApi;
+            }
+            const { authApi } = await import('../modules/api-services');
+            return authApi;
+          };
+
+          // 调用后端 logout API（优先使用全局 authApi）
+          // 注意：即使后端 API 失败，前端也要执行清理操作
+          try {
+            const authApi = await getAuthApi();
+            await authApi.logout();
+          } catch (error: any) {
+            // 后端 API 失败不影响前端清理
+            console.warn('Logout API failed, but continue with frontend cleanup:', error);
+          }
+
+          // 清除 cookie 中的 token
+          const { deleteCookie } = await import('../utils/cookie');
+          deleteCookie('access_token');
+          
+          // 清除登录状态标记（从统一的 settings 存储中移除）
+          const { appStorage } = await import('../utils/app-storage');
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          if (currentSettings.is_logged_in) {
+            delete currentSettings.is_logged_in;
+            appStorage.settings.set(currentSettings);
+          }
+          
+          // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
+          localStorage.removeItem('is_logged_in');
+          
+          // 清除所有认证相关数据（使用统一存储管理器）
+          appStorage.auth.clear();
+          appStorage.user.clear();
+
+          // 清除用户信息
+          localStorage.removeItem('user');
+
+          // 清除标签页（Process Store）
+          const { useProcessStore } = await import('../store/process');
+          const processStore = useProcessStore();
+          processStore.clear();
+
+          // 显示退出成功提示
+          const { BtcMessage } = await import('@btc/shared-components');
+          const t = ctx.i18n?.i18n?.global?.t;
+          if (t) {
+            BtcMessage.success(t('common.logoutSuccess'));
+          }
+
+          // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+          // 判断是否在生产环境的子域名下
+          const hostname = window.location.hostname;
+          const protocol = window.location.protocol;
+          const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+          
+          // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+          if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+            // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+            if (isProductionSubdomain) {
+              window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+            } else {
+              window.location.href = '/login?logout=1';
+            }
+          } else {
+            // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+            ctx.router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        } catch (error: any) {
+          // 即使出现错误，也执行清理操作
+          console.error('Logout error:', error);
+
+          // 强制清除所有缓存
+          try {
+            const { deleteCookie } = await import('../utils/cookie');
+            deleteCookie('access_token');
+          } catch {}
+
+          try {
+            const { appStorage } = await import('../utils/app-storage');
+            const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+            if (currentSettings.is_logged_in) {
+              delete currentSettings.is_logged_in;
+              appStorage.settings.set(currentSettings);
+            }
+            localStorage.removeItem('is_logged_in');
+            appStorage.auth.clear();
+            appStorage.user.clear();
+            localStorage.removeItem('user');
+
+            const { useProcessStore } = await import('../store/process');
+            const processStore = useProcessStore();
+            processStore.clear();
+          } catch {}
+
+          // 跳转到登录页
+          const hostname = window.location.hostname;
+          const protocol = window.location.protocol;
+          const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+          
+          if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+            if (isProductionSubdomain) {
+              window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+            } else {
+              window.location.href = '/login?logout=1';
+            }
+          } else {
+            ctx.router.replace({
+              path: '/login',
+              query: { logout: '1' }
+            });
+          }
+        }
+      };
+    };
+
+    // 设置退出登录函数
+    (window as any).__APP_LOGOUT__ = createLogoutFunction(context);
+
     // 关键：在 qiankun 环境下或通过 layout-app:mounted 事件挂载时，等待路由就绪后再同步初始路由
     // 使用 nextTick 确保 Vue 应用已完全挂载
     // 如果提供了 container，说明是通过 layout-app:mounted 事件挂载的，也需要初始化路由

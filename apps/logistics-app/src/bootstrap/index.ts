@@ -149,13 +149,9 @@ const setupStandaloneGlobals = async () => {
     (window as any).__APP_FINISH_LOADING__ = () => {};
   }
 
-  try {
-    const { useLogout } = await import('../composables/useLogout');
-    const { logout } = useLogout();
-    (window as any).__APP_LOGOUT__ = logout;
-  } catch (error) {
-    // Logout composable not available (optional)
-  }
+  // 注意：不在 setupStandaloneGlobals 中设置 __APP_LOGOUT__
+  // 因为 useLogout() 需要 Vue 应用上下文（useRouter、useI18n）
+  // 将在 mountLogisticsApp 中设置，此时应用已挂载，有完整的 Vue 上下文
 
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
   (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
@@ -508,7 +504,7 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   return context;
 };
 
-export const mountLogisticsApp = (context: LogisticsAppContext, props: QiankunProps = {}) => {
+export const mountLogisticsApp = async (context: LogisticsAppContext, props: QiankunProps = {}) => {
   context.props = props;
 
   // 查找挂载点：
@@ -561,6 +557,41 @@ export const mountLogisticsApp = (context: LogisticsAppContext, props: QiankunPr
   setupEventBridge(context);
   ensureCleanUrl(context);
   context.registerTabs(props);
+
+  // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
+  // 无论是独立运行还是 qiankun 模式，都需要设置
+  // 关键：覆盖 layout-app 设置的简单退出函数，使用子应用的完整退出逻辑
+  try {
+    const { useLogout } = await import('../composables/useLogout');
+    const { logout } = useLogout();
+    (window as any).__APP_LOGOUT__ = logout;
+  } catch (error) {
+    // 如果加载失败，且没有其他退出登录函数，设置一个兜底函数
+    if (!(window as any).__APP_LOGOUT__) {
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      (window as any).__APP_LOGOUT__ = async () => {
+        // 清除认证数据
+        try {
+          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+          if (appStorage) {
+            appStorage.auth?.clear();
+            appStorage.user?.clear();
+          }
+          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        } catch (e) {
+          // 静默失败
+        }
+        // 跳转到登录页
+        if (isProductionSubdomain) {
+          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+        } else {
+          window.location.href = '/login?logout=1';
+        }
+      };
+    }
+  }
 
   if (props.onReady) {
     props.onReady();

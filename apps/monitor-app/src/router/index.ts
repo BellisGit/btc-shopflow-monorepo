@@ -46,9 +46,32 @@ export const createMonitorRouter = (isStandalone: boolean = false): Router => {
   const router = createRouter({
     history: qiankunWindow.__POWERED_BY_QIANKUN__
       ? createMemoryHistory()
-      : createWebHistory('/monitor'),
+      : createWebHistory('/'),
     strict: true,
     routes,
+  });
+
+  // 路由守卫：在生产环境子域名下规范化路径
+  router.beforeEach((to, from, next) => {
+    // 只在独立运行（非 qiankun）且是生产环境子域名时处理
+    if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+      const hostname = window.location.hostname;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+      if (isProductionSubdomain && hostname === 'monitor.bellis.com.cn' && to.path.startsWith('/monitor/')) {
+        const normalized = to.path.substring('/monitor'.length) || '/';
+        console.log(`[Router Path Normalize] ${to.path} -> ${normalized} (subdomain: ${hostname})`);
+        next({
+          path: normalized,
+          query: to.query,
+          hash: to.hash,
+          replace: true,
+        });
+        return;
+      }
+    }
+
+    next();
   });
 
   router.onError((error) => {

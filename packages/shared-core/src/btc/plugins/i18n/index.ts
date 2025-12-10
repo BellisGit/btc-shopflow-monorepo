@@ -98,9 +98,17 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
     locale: currentLocale,
     fallbackLocale: [options.fallbackLocale || 'zh-CN', 'en-US'], // 回退链
     messages, // 直接使用传入的 messages（完全类似 cool-admin）
+    // 禁用 vue-i18n 的自动 fallback 警告（它会自动尝试短格式 zh, en）
+    fallbackWarn: false,
+    missingWarn: false,
     missing: (locale, key) => {
-      // 丢键时统一埋点/告警，而不是在组件里炸栈
-      console.warn(`[i18n] missing key "${key}" in locale ${locale}`);
+      // 自定义 missing 处理：只在开发环境且是标准格式 locale 时输出警告
+      if (import.meta.env.DEV) {
+        // 只在 locale 是标准格式（zh-CN, en-US）时输出警告，忽略短格式（zh, en）的 fallback
+        if (locale === 'zh-CN' || locale === 'en-US') {
+          console.warn(`[i18n] missing key "${key}" in locale ${locale}`);
+        }
+      }
     },
   });
 
@@ -177,8 +185,12 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
         });
       } else {
         // 不使用 API 时，直接合并应用自定义
+        // 注意：需要确保所有语言的消息都被正确合并，包括短格式（zh, en）
         Object.keys(customMessages).forEach((lang) => {
-          i18n.global.mergeLocaleMessage(lang, customMessages[lang]);
+          // 如果消息对象存在且不为空，则合并
+          if (customMessages[lang] && typeof customMessages[lang] === 'object') {
+            i18n.global.mergeLocaleMessage(lang, customMessages[lang]);
+          }
         });
       }
     },

@@ -1,3 +1,5 @@
+import { ref, readonly } from 'vue';
+
 /**
  * 指数退避重试机制
  */

@@ -101,7 +101,7 @@ function isAllowedUser(): boolean {
     if (!btcUser) {
       return false;
     }
-    
+
     // 尝试解码 cookie 值（可能是 URL 编码的）
     let decodedValue: string;
     try {
@@ -110,7 +110,7 @@ function isAllowedUser(): boolean {
       // 如果解码失败，直接使用原值
       decodedValue = btcUser;
     }
-    
+
     const userInfo = JSON.parse(decodedValue);
     // 优先使用 username 字段（cookie 中实际存储的字段），如果没有则使用 name 字段
     // 不区分大小写
@@ -118,9 +118,9 @@ function isAllowedUser(): boolean {
     if (!userName) {
       return false;
     }
-    
+
     const isAllowed = userName === 'moselu';
-    
+
     // 仅在开发环境或允许用户时输出调试信息
     if (isDev || isAllowed) {
       console.log('[DevTools] 用户检查:', {
@@ -130,7 +130,7 @@ function isAllowedUser(): boolean {
         userInfoKeys: Object.keys(userInfo || {})
       });
     }
-    
+
     return isAllowed;
   } catch (error) {
     // 仅在开发环境输出错误信息
@@ -191,8 +191,18 @@ const tabList = [
     tooltip: '错误监控 - 实时查看所有应用的错误和警告',
     isAction: true, // 直接跳转
     action: () => {
-      // 使用 window.location 跳转，避免依赖 Vue Router
-      window.location.href = '/monitor';
+      // 判断是否为生产环境
+      const hostname = window.location.hostname;
+      const isProduction = hostname.includes('bellis.com.cn');
+
+      // 生产环境：跳转到子域名（无论是主域名还是子域名，都跳转到 monitor.bellis.com.cn）
+      // 开发环境：跳转到路径
+      // 关键：跳转到子域名时，只跳转到根路径，不包含当前路径
+      const targetUrl = isProduction
+        ? `${window.location.protocol}//monitor.bellis.com.cn/`
+        : '/monitor';
+
+      window.location.href = targetUrl;
       visible.value = false;
     },
   },

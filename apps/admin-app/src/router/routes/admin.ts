@@ -7,7 +7,7 @@ const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'AdminHome',
-    component: () => import('../../pages/home/index.vue'),
+    component: () => import('../../modules/home/views/index.vue'),
     meta: { isHome: true, titleKey: 'menu.home' },
   },
   // 平台治理
@@ -183,14 +183,20 @@ const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/test/components',
     name: 'AdminTestComponents',
-    component: () => import('../../pages/test/components/index.vue'),
+    component: () => import('../../modules/test/views/components/index.vue'),
     meta: { titleKey: 'menu.test_features.components' },
   },
   {
     path: '/test/api-test-center',
     name: 'AdminApiTestCenter',
-    component: () => import('../../pages/test/api-test-center/index.vue'),
+    component: () => import('../../modules/test/views/api-test-center/index.vue'),
     meta: { titleKey: 'menu.test_features.api_test_center' },
+  },
+  {
+    path: '/test/inventory-ticket-print',
+    name: 'AdminInventoryTicketPrint',
+    component: () => import('../../modules/test/views/inventory-ticket-print/index.vue'),
+    meta: { titleKey: 'menu.test_features.inventory_ticket_print' },
   },
 ];
 

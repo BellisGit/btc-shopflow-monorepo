@@ -21,7 +21,7 @@ const render = async (props: QiankunProps = {}) => {
   }
 
   context = await createLogisticsApp(props);
-  mountLogisticsApp(context, props);
+  await mountLogisticsApp(context, props);
 };
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）

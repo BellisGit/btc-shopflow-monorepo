@@ -25,7 +25,7 @@ const render = async (props: QiankunProps = {}) => {
   }
 
   context = await createFinanceApp(props);
-  mountFinanceApp(context, props);
+  await mountFinanceApp(context, props);
 };
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）

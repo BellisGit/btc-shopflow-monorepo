@@ -88,19 +88,21 @@ export function useLogout() {
       BtcMessage.success(t('common.logoutSuccess'));
 
       // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
-      // 在 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
-      if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-        // qiankun 模式：跳转到主应用的登录页
+      // 判断是否在生产环境的子域名下
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
-        // 如果是子域名，跳转到主域名；否则保持当前域名
-        if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+      if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+        // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+        if (isProductionSubdomain) {
           window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
         } else {
           window.location.href = '/login?logout=1';
         }
       } else {
-        // 独立运行模式：使用路由跳转，添加 logout=1 参数
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
         router.replace({
           path: '/login',
           query: { logout: '1' }
@@ -129,19 +131,21 @@ export function useLogout() {
       processStore.clear();
 
       // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
-      // 在 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
-      if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-        // qiankun 模式：跳转到主应用的登录页
+      // 判断是否在生产环境的子域名下
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
-        // 如果是子域名，跳转到主域名；否则保持当前域名
-        if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
+      if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+        // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+        if (isProductionSubdomain) {
           window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
         } else {
           window.location.href = '/login?logout=1';
         }
       } else {
-        // 独立运行模式：使用路由跳转，添加 logout=1 参数
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
         router.replace({
           path: '/login',
           query: { logout: '1' }

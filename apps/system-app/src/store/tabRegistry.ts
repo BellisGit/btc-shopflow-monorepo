@@ -34,6 +34,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     // 测试功能
     'test-components': { key: 'test-components', title: '组件测试中心', path: '/admin/test/components', i18nKey: 'menu.test_features.components' },
     'test-api-test-center': { key: 'test-api-test-center', title: 'API测试中心', path: '/admin/test/api-test-center', i18nKey: 'menu.test_features.api_test_center' },
+    'test-inventory-ticket-print': { key: 'test-inventory-ticket-print', title: '盘点票打印', path: '/admin/test/inventory-ticket-print', i18nKey: 'menu.test_features.inventory_ticket_print' },
 
     // 平台治理
     'platform-domains': { key: 'platform-domains', title: 'Domains', path: '/admin/platform/domains', i18nKey: 'menu.platform.domains' },

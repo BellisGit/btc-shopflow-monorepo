@@ -31,6 +31,8 @@ const titles: Record<string, Record<string, string>> = {
     '/ops/audit': '操作日志',
     '/ops/baseline': '权限基线',
     '/ops/simulator': '策略模拟器',
+    '/test/inventory-ticket-print': '盘点票打印',
+    '/admin/test/inventory-ticket-print': '盘点票打印',
   },
   'en-US': {
     '/': 'Home',
@@ -55,6 +57,8 @@ const titles: Record<string, Record<string, string>> = {
     '/ops/audit': 'Audit Logs',
     '/ops/baseline': 'Permission Baseline',
     '/ops/simulator': 'Policy Simulator',
+    '/test/inventory-ticket-print': 'Inventory Ticket Print',
+    '/admin/test/inventory-ticket-print': 'Inventory Ticket Print',
   },
 };
 

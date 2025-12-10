@@ -285,58 +285,91 @@ function getTabLabel(item: ProcessItem) {
     return item.meta.title;
   }
 
-  // 路径到 i18n key 的映射
+  // 路径到 i18n key 的映射（支持带 /admin 前缀和不带前缀的路径）
   const pathToI18nKey: Record<string, string> = {
     // 个人中心
     '/profile': 'common.profile',
+    '/admin/profile': 'common.profile',
 
     // 测试功能
     '/test/components': 'menu.test_features.components',
+    '/admin/test/components': 'menu.test_features.components',
+    '/test/inventory-ticket-print': 'menu.test_features.inventory_ticket_print',
+    '/admin/test/inventory-ticket-print': 'menu.test_features.inventory_ticket_print',
 
     // 文档中心
     '/docs': 'menu.docs_center',
+    '/admin/docs': 'menu.docs_center',
 
     // 平台治理
     '/platform/domains': 'menu.platform.domains',
+    '/admin/platform/domains': 'menu.platform.domains',
     '/platform/modules': 'menu.platform.modules',
+    '/admin/platform/modules': 'menu.platform.modules',
     '/platform/plugins': 'menu.platform.plugins',
+    '/admin/platform/plugins': 'menu.platform.plugins',
 
     // 组织与账号
     '/org/tenants': 'menu.org.tenants',
+    '/admin/org/tenants': 'menu.org.tenants',
     '/org/departments': 'menu.org.departments',
+    '/admin/org/departments': 'menu.org.departments',
     '/org/users': 'menu.org.users',
+    '/admin/org/users': 'menu.org.users',
 
     // 访问控制
     '/access/resources': 'menu.access.resources',
+    '/admin/access/resources': 'menu.access.resources',
     '/access/actions': 'menu.access.actions',
+    '/admin/access/actions': 'menu.access.actions',
     '/access/permissions': 'menu.access.permissions',
+    '/admin/access/permissions': 'menu.access.permissions',
     '/access/roles': 'menu.access.roles',
+    '/admin/access/roles': 'menu.access.roles',
     '/access/perm-compose': 'menu.access.perm_compose',
+    '/admin/access/perm-compose': 'menu.access.perm_compose',
     '/org/users/users-roles': 'menu.access.user_role_bind',
+    '/admin/org/users/users-roles': 'menu.access.user_role_bind',
 
     // 导航与可见性
     '/navigation/menus': 'menu.navigation.menus',
+    '/admin/navigation/menus': 'menu.navigation.menus',
     '/navigation/menus/preview': 'menu.navigation.menu_preview',
+    '/admin/navigation/menus/preview': 'menu.navigation.menu_preview',
 
     // 数据管理
     '/data/files/list': 'menu.data.files.list',
+    '/admin/data/files/list': 'menu.data.files.list',
     '/data/files/templates': 'menu.data.files.templates',
+    '/admin/data/files/templates': 'menu.data.files.templates',
     '/data/files/preview': 'menu.data.files.preview',
+    '/admin/data/files/preview': 'menu.data.files.preview',
     '/data/inventory/check': 'menu.data.inventory',
+    '/admin/data/inventory/check': 'menu.data.inventory',
     '/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
+    '/admin/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
     '/data/recycle': 'menu.data.recycle',
+    '/admin/data/recycle': 'menu.data.recycle',
 
     // 运维与审计
     '/ops/logs/operation': 'menu.ops.operation_log',
+    '/admin/ops/logs/operation': 'menu.ops.operation_log',
     '/ops/logs/request': 'menu.ops.request_log',
+    '/admin/ops/logs/request': 'menu.ops.request_log',
     '/ops/api-list': 'menu.ops.api_list',
+    '/admin/ops/api-list': 'menu.ops.api_list',
     '/ops/baseline': 'menu.ops.baseline',
+    '/admin/ops/baseline': 'menu.ops.baseline',
     '/ops/simulator': 'menu.ops.simulator',
+    '/admin/ops/simulator': 'menu.ops.simulator',
 
     // 策略相关
     '/strategy/management': 'menu.strategy.management',
+    '/admin/strategy/management': 'menu.strategy.management',
     '/strategy/designer': 'menu.strategy.designer',
+    '/admin/strategy/designer': 'menu.strategy.designer',
     '/strategy/monitor': 'menu.strategy.monitor',
+    '/admin/strategy/monitor': 'menu.strategy.monitor',
 
     // 子应用路由（只保留首页）
     '/logistics': 'menu.logistics.overview',
@@ -345,14 +378,27 @@ function getTabLabel(item: ProcessItem) {
     '/production': 'menu.production.overview',
   };
 
-  const i18nKey = pathToI18nKey[item.path];
+  // 尝试直接匹配，如果失败则移除 /admin 前缀再匹配
+  let i18nKey = pathToI18nKey[item.path];
+  if (!i18nKey && item.path.startsWith('/admin/')) {
+    const pathWithoutPrefix = item.path.replace(/^\/admin/, '');
+    i18nKey = pathToI18nKey[pathWithoutPrefix] || pathToI18nKey[item.path];
+  }
 
   if (i18nKey) {
     return t(i18nKey);
   }
 
-  // 回退到原始标签
-  return item.meta?.label || item.name || item.path;
+  // 回退到原始标签（不尝试翻译路由 name，因为它不是国际化键）
+  if (item.meta?.label && typeof item.meta.label === 'string' && !item.meta.label.match(/^[A-Z]/)) {
+    // 如果 label 看起来像国际化键（不以大写字母开头），尝试翻译
+    const translated = t(item.meta.label);
+    if (translated && translated !== item.meta.label) {
+      return translated;
+    }
+  }
+  
+  return item.meta?.label || item.path;
 }
 
 // 返回上一页（在当前应用内）
