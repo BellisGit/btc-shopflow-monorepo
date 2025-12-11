@@ -1,4 +1,6 @@
 import { registerMicroApps, start } from 'qiankun';
+import { getActivePinia } from 'pinia';
+import { nextTick } from 'vue';
 import { microApps } from './apps';
 // 延迟导入 loadingManager 以避免循环依赖
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
@@ -43,18 +45,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
  */
 function normalizeMenuPath(path: string, appName: string): string {
   if (!path || !appName) return path;
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   // 检测是否在生产环境的子域名下
   if (typeof window === 'undefined') {
     // SSR 环境，保持原路径
     return normalizedPath;
   }
-  
+
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (isProductionSubdomain) {
     // 生产环境子域名：检测具体的子域名应用
     const subdomainMap: Record<string, string> = {
@@ -65,9 +67,9 @@ function normalizeMenuPath(path: string, appName: string): string {
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
     };
-    
+
     const currentSubdomainApp = subdomainMap[hostname];
-    
+
     // 如果在子域名环境下，且路径以应用前缀开头，移除前缀
     if (currentSubdomainApp && currentSubdomainApp === appName) {
       const appPrefix = `/${appName}`;
@@ -79,7 +81,7 @@ function normalizeMenuPath(path: string, appName: string): string {
         return normalizedPath.substring(appPrefix.length);
       }
     }
-    
+
     // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
     return normalizedPath;
   }
@@ -89,12 +91,12 @@ function normalizeMenuPath(path: string, appName: string): string {
   if (normalizedPath === '/') {
     return `/${appName}`;
   }
-  
+
   // 如果路径已经包含应用前缀，不需要重复添加
   if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
     return normalizedPath;
   }
-  
+
   // 添加应用前缀
   return `/${appName}${normalizedPath}`;
 }
@@ -104,16 +106,16 @@ function normalizeMenuPath(path: string, appName: string): string {
 function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
   // 创建已使用图标集合（用于域内去重），如果已存在则复用
   const iconSet = usedIcons || new Set<string>();
-  
+
   // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
   const itemsWithLabelKey = items.map(item => ({
     ...item,
     labelKey: item.labelKey || item.title || item.label,
   }));
-  
+
   // 使用智能图标分配工具（会递归处理所有子菜单）
   const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
-  
+
   // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
@@ -127,7 +129,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
         : undefined,
     };
   };
-  
+
   // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
   return itemsWithIcons.map(convertToMenuItem);
 }
@@ -504,39 +506,56 @@ export function listenSubAppRouteChange() {
     const customEvent = event as CustomEvent;
     const { path, fullPath, name, meta } = customEvent.detail;
 
-    // ? 如果是子应用首页，将该应用的所有标签设为未激活
-    if (meta?.isHome === true) {
+    // 确保在 Pinia 实例可用后再调用 store
+    // 使用 nextTick 确保在 Vue 应用已挂载后再调用
+    const handleRouteChange = () => {
+      // 检查 Pinia 是否可用
+      const pinia = getActivePinia();
+      if (!pinia) {
+        // 如果 Pinia 不可用，延迟重试
+        nextTick(() => {
+          handleRouteChange();
+        });
+        return;
+      }
+
+      // ? 如果是子应用首页，将该应用的所有标签设为未激活
+      if (meta?.isHome === true) {
+        const process = useProcessStore();
+        const app = getCurrentAppFromPath(path);
+        process.list.forEach((tab: ProcessItem) => {
+          if (tab.app === app) {
+            tab.active = false;
+          }
+        });
+        return;
+      }
+
+      // 使用统一的 getCurrentAppFromPath 来判断应用类型，更通用
       const process = useProcessStore();
       const app = getCurrentAppFromPath(path);
-      process.list.forEach((tab: ProcessItem) => {
-        if (tab.app === app) {
-          tab.active = false;
-        }
+
+      // 排除管理域（admin）和无效应用（main）
+      // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
+      if (app === 'admin' || app === 'main') {
+        return;
+      }
+
+      // 排除文档域（docs）
+      if (app === 'docs') {
+        return;
+      }
+
+      process.add({
+        path,
+        fullPath,
+        name,
+        meta,
       });
-      return;
-    }
+    };
 
-    // 使用统一的 getCurrentAppFromPath 来判断应用类型，更通用
-    const process = useProcessStore();
-    const app = getCurrentAppFromPath(path);
-
-    // 排除管理域（admin）和无效应用（main）
-    // 所有其他应用（system, logistics, engineering, quality, production, finance 等）都应该处理
-    if (app === 'admin' || app === 'main') {
-      return;
-    }
-
-    // 排除文档域（docs）
-    if (app === 'docs') {
-      return;
-    }
-
-    process.add({
-      path,
-      fullPath,
-      name,
-      meta,
-    });
+    // 使用 nextTick 确保在 Vue 应用已挂载后再调用
+    nextTick(handleRouteChange);
   });
 }
 

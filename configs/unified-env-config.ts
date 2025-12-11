@@ -203,12 +203,24 @@ export function getEnvironment(): Environment {
     return 'production';
   }
 
-  if (getAllPrePorts().includes(port)) {
-    return 'preview';
-  }
+  // 防御性检查：确保 getAllPrePorts 和 getAllDevPorts 可以安全调用
+  // 如果 APP_ENV_CONFIGS 还没有初始化，使用 try-catch 捕获错误
+  try {
+    const prePorts = getAllPrePorts();
+    if (prePorts.includes(port)) {
+      return 'preview';
+    }
 
-  if (getAllDevPorts().includes(port)) {
-    return 'development';
+    const devPorts = getAllDevPorts();
+    if (devPorts.includes(port)) {
+      return 'development';
+    }
+  } catch (error) {
+    // 如果 getAllPrePorts 或 getAllDevPorts 抛出错误（如 APP_ENV_CONFIGS 未初始化）
+    // 记录警告并继续使用其他方法判断环境
+    if (import.meta.env.DEV) {
+      console.warn('[unified-env-config] getAllPrePorts/getAllDevPorts 调用失败，使用备用方法判断环境:', error);
+    }
   }
 
   // 浏览器环境：防御性地访问 import.meta.env
@@ -467,9 +479,33 @@ export function getSubAppActiveRule(appId: string): string | ((location: Locatio
   };
 }
 
-// 导出单例
-export const currentEnvironment = getEnvironment();
-export const envConfig = getEnvConfig();
+// 导出单例（延迟初始化，避免循环依赖问题）
+// 注意：不要在模块顶层直接调用 getEnvironment()，因为它依赖 APP_ENV_CONFIGS
+// 如果 unified-env-config.ts 在 app-env.config.ts 之前加载，会导致初始化顺序问题
+// 使用 getter 函数延迟初始化，只在首次访问时计算
+let _currentEnvironment: Environment | null = null;
+let _envConfig: EnvironmentConfig | null = null;
+
+export function getCurrentEnvironment(): Environment {
+  if (_currentEnvironment === null) {
+    _currentEnvironment = getEnvironment();
+  }
+  return _currentEnvironment;
+}
+
+export function getCurrentEnvConfig(): EnvironmentConfig {
+  if (_envConfig === null) {
+    _envConfig = getEnvConfig();
+  }
+  return _envConfig;
+}
+
+// 为了向后兼容，保留导出，但使用延迟初始化的 getter
+// 注意：这些导出会在首次访问时计算，而不是在模块加载时
+// 如果代码在模块加载时立即访问这些导出，仍然可能导致初始化顺序问题
+// 建议使用 getCurrentEnvironment() 和 getCurrentEnvConfig() 函数代替
+export const currentEnvironment = getCurrentEnvironment();
+export const envConfig = getCurrentEnvConfig();
 
 // 注意：移除了 currentSubApp 和 isMainAppNow 的顶层导出
 // 因为它们会在模块加载时调用 getCurrentSubApp() 和 isMainApp()

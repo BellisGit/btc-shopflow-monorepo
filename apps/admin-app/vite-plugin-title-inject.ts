@@ -5,6 +5,12 @@
  * 效果：刷新时浏览器标签从第一帧就显示正确标题，无闪烁
  */
 import type { Plugin } from 'vite';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'path';
+
+// 应用名称（硬编码，因为构建时无法访问运行时 i18n）
+// 格式：应用名称 - BTC ShopFlow
+const appName = '管理应用';
 
 // 标题映射表（从 i18n 同步）
 const titles: Record<string, Record<string, string>> = {
@@ -105,10 +111,20 @@ export function titleInjectPlugin(): Plugin {
         // 使用保存的请求信息
         const locale = getLocaleFromCookie(requestCookie);
         const titleMap = titles[locale] || titles['zh-CN'];
-        const pageTitle = titleMap[requestPath] || 'BTC 车间流程管理系统';
+        const pageTitle = titleMap[requestPath];
+        
+        // 如果找到了页面标题，使用"页面标题 - 应用名称 - BTC ShopFlow"格式
+        // 如果没有找到，使用"应用名称 - BTC ShopFlow"格式
+        let finalTitle: string;
+        if (pageTitle) {
+          finalTitle = `${pageTitle} - ${appName} - BTC ShopFlow`;
+        } else {
+          // 默认标题：应用名称 - BTC ShopFlow
+          finalTitle = `${appName} - BTC ShopFlow`;
+        }
 
         // 替换占位符
-        return html.replace('__PAGE_TITLE__', pageTitle);
+        return html.replace('__PAGE_TITLE__', finalTitle);
       },
     },
   };

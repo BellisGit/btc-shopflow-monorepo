@@ -104,20 +104,47 @@ export function setupAutoMountDevTools() {
     }
   });
 
-  // 开始观察 body 的变化（确保 body 存在）
-  const targetNode = document.body || document.documentElement;
-  if (targetNode && targetNode.nodeType === Node.ELEMENT_NODE) {
-    try {
-      observer.observe(targetNode, {
-        childList: true,
-        subtree: true,
-      });
-    } catch (error) {
-      // 如果观察失败，静默处理，使用定时器作为兜底
-      if (import.meta.env.DEV) {
-        console.warn('[DevTools] MutationObserver 观察失败，使用定时器作为兜底:', error);
+  // 获取有效的观察目标节点
+  function getTargetNode(): Node | null {
+    // 优先使用 body，如果 body 不存在则使用 documentElement
+    const body = document.body;
+    const docElement = document.documentElement;
+    
+    // 严格检查：确保是有效的 Node 实例且是元素节点
+    if (body && body instanceof Node && body.nodeType === Node.ELEMENT_NODE) {
+      return body;
+    }
+    if (docElement && docElement instanceof Node && docElement.nodeType === Node.ELEMENT_NODE) {
+      return docElement;
+    }
+    
+    return null;
+  }
+
+  // 尝试设置观察器
+  function tryObserve() {
+    const targetNode = getTargetNode();
+    if (targetNode && observer) {
+      try {
+        observer.observe(targetNode, {
+          childList: true,
+          subtree: true,
+        });
+      } catch (error) {
+        // 如果观察失败，静默处理，使用定时器作为兜底
+        // 生产环境也静默处理，避免影响应用运行
+        observer = null;
       }
     }
+  }
+
+  // 如果 DOM 已经就绪，立即尝试观察
+  if (document.readyState === 'loading') {
+    // DOM 还未加载完成，等待 DOMContentLoaded 事件
+    document.addEventListener('DOMContentLoaded', tryObserve, { once: true });
+  } else {
+    // DOM 已经就绪，立即尝试观察
+    tryObserve();
   }
 
   // 同时使用定时器作为兜底机制（每 500ms 检查一次，最多检查 10 秒）

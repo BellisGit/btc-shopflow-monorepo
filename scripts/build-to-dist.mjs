@@ -32,6 +32,7 @@ const APP_DOMAIN_MAP = {
   'mobile-app': 'mobile.bellis.com.cn',
   'layout-app': 'layout.bellis.com.cn',
   'monitor-app': 'monitor.bellis.com.cn',
+  'docs-site-app': 'docs.bellis.com.cn',
 };
 
 // 应用构建顺序（system-app 应该先构建，因为其他应用可能依赖它）
@@ -46,6 +47,7 @@ const BUILD_ORDER = [
   'finance-app',
   'mobile-app',
   'monitor-app',
+  'docs-site-app',
 ];
 
 // 根目录的 dist 文件夹
@@ -220,6 +222,29 @@ function buildApp(appName) {
         env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
       });
     }
+    
+    // docs-site-app 特殊处理：VitePress 构建产物在 .vitepress/dist，需要复制到 dist
+    if (appName === 'docs-site-app') {
+      const vitepressDistDir = join(rootDir, 'apps', appName, '.vitepress', 'dist');
+      const targetDistDir = join(rootDir, 'apps', appName, 'dist');
+      
+      if (existsSync(vitepressDistDir)) {
+        console.log(`  📦 复制 VitePress 构建产物到 dist 目录...`);
+        // 如果目标目录已存在，先删除
+        if (existsSync(targetDistDir)) {
+          rmSync(targetDistDir, { recursive: true, force: true });
+        }
+        // 复制 .vitepress/dist 到 dist
+        cpSync(vitepressDistDir, targetDistDir, {
+          recursive: true,
+          force: true,
+        });
+        console.log(`  ✅ VitePress 构建产物已复制到 dist 目录`);
+      } else {
+        console.warn(`  ⚠️  警告: VitePress 构建产物目录不存在: ${vitepressDistDir}`);
+      }
+    }
+    
     console.log(`  ✅ ${appName} 构建完成\n`);
     return true;
   } catch (error) {
@@ -1159,6 +1184,23 @@ function verifyAndAutoFixApp(appName) {
   
   if (!existsSync(appDistDir)) {
     return { valid: false, fixed: false, errors: ['构建产物目录不存在'] };
+  }
+
+  // docs-site-app 使用 VitePress，构建产物结构不同，跳过复杂的验证
+  if (appName === 'docs-site-app') {
+    console.log(`  🔍 开始验证 ${appName}...`);
+    // 只做基本验证：检查 dist 目录是否存在且不为空
+    const files = readdirSync(appDistDir);
+    if (files.length === 0) {
+      return { valid: false, fixed: false, errors: ['构建产物目录为空'] };
+    }
+    // 检查是否有 index.html
+    const indexPath = join(appDistDir, 'index.html');
+    if (!existsSync(indexPath)) {
+      return { valid: false, fixed: false, errors: ['缺少 index.html'] };
+    }
+    console.log(`  ✅ ${appName} 验证通过（VitePress 构建产物）`);
+    return { valid: true, fixed: false, errors: [] };
   }
 
   console.log(`  🔍 开始验证和修复 ${appName}...`);

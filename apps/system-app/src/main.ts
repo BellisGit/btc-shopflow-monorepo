@@ -25,7 +25,6 @@ import '@btc/shared-components/styles/dark-theme.css';
 import '@btc/shared-components/styles/index.scss';
 // 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
 // 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcSvg } from '@btc/shared-components';
 
 registerAppEnvAccessors();
@@ -63,7 +62,8 @@ if (typeof BtcSvg !== 'undefined') {
 // 等待 EPS 服务加载完成后再暴露到全局
 // 因为 eps-service chunk 是动态导入的，需要等待它加载完成
 // 优化：减少等待时间，使用渐进式轮询间隔，更快响应
-async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Promise<any> {
+// 关键：如果 EPS 服务加载失败或超时，不阻塞应用启动，返回空对象
+async function waitForEpsService(maxWaitTime = 1000, initialInterval = 50): Promise<any> {
   const startTime = Date.now();
 
   // 首先尝试直接导入（如果 eps-service chunk 已经加载，这会立即返回）
@@ -135,7 +135,34 @@ async function waitForEpsService(maxWaitTime = 2000, initialInterval = 50): Prom
 
   // 返回空对象作为兜底，不阻塞应用启动
   // 不打印警告，避免控制台噪音（EPS 服务可以在后台继续加载）
+  // 关键：即使 EPS 服务未加载完成，也继续启动应用，EPS 服务可以在后台异步加载
   return {};
+}
+
+// 优化：在后台异步加载 EPS 服务，不阻塞应用启动
+// 这样即使 EPS 服务很大，也不会阻塞 DOMContentLoaded
+if (typeof window !== 'undefined') {
+  // 使用 requestIdleCallback 或 setTimeout 在后台加载 EPS 服务
+  const loadEpsServiceInBackground = () => {
+    import('./services/eps').then((epsModule) => {
+      const service = epsModule.service || epsModule.default;
+      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+        // 更新全局服务
+        (window as any).__BTC_SERVICE__ = service;
+        (window as any).__APP_EPS_SERVICE__ = service;
+        (window as any).service = service;
+      }
+    }).catch(() => {
+      // 静默失败，不影响应用运行
+    });
+  };
+
+  // 使用 requestIdleCallback 在浏览器空闲时加载，如果没有则使用 setTimeout
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(loadEpsServiceInBackground, { timeout: 2000 });
+  } else {
+    setTimeout(loadEpsServiceInBackground, 100);
+  }
 }
 
 
@@ -188,39 +215,43 @@ const loadingTimeoutId = setTimeout(() => {
   }
 }, LOADING_TIMEOUT);
 
-// 启动（等待 EPS 服务加载完成后再启动应用）
-// 关键：为整个启动流程添加超时保护
-const startupPromise = waitForEpsService()
-  .then(async (service) => {
-    if (typeof window !== 'undefined') {
-      (window as any).__BTC_SERVICE__ = service;
-      // 暴露到全局，供所有子应用共享使用
-      (window as any).__APP_EPS_SERVICE__ = service;
-      (window as any).service = service; // 也设置到 window.service，保持兼容性
-    }
+// 启动应用（优化：不等待 EPS 服务，立即启动应用）
+// 关键：EPS 服务已经在后台异步加载，不需要等待它完成
+// 这样可以更快地显示应用界面，提升用户体验
+const startupPromise = Promise.resolve()
+  .then(async () => {
+    // 尝试快速获取 EPS 服务（如果已经加载）
+    // 但不等待，立即继续启动流程
+    const quickEpsCheck = waitForEpsService(200, 20).catch(() => ({}));
+    quickEpsCheck.then((service) => {
+      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+        if (typeof window !== 'undefined') {
+          (window as any).__BTC_SERVICE__ = service;
+          (window as any).__APP_EPS_SERVICE__ = service;
+          (window as any).service = service;
+        }
+      }
+    });
 
-    // 暴露 authApi 到全局，供所有子应用使用（在 bootstrap 之前暴露，确保其他应用可以访问）
-    // 使用动态导入避免循环依赖，但使用 await 确保暴露完成
-    try {
-      const { authApi } = await import('./modules/api-services/auth');
+    // 暴露 authApi 到全局（异步加载，不阻塞启动）
+    import('./modules/api-services/auth').then(({ authApi }) => {
       if (authApi && typeof (window as any).__APP_AUTH_API__ === 'undefined') {
         (window as any).__APP_AUTH_API__ = authApi;
       }
-    } catch (error) {
-      console.warn('[system-app] Failed to expose authApi globally:', error);
-    }
+    }).catch(() => {
+      // 静默失败，不影响应用运行
+    });
 
-    // 暴露域列表缓存清除函数，供菜单抽屉使用
-    try {
-      const { clearDomainCache } = await import('./utils/domain-cache');
+    // 暴露域列表缓存清除函数（异步加载，不阻塞启动）
+    import('./utils/domain-cache').then(({ clearDomainCache }) => {
       if (clearDomainCache && typeof (window as any).__APP_CLEAR_DOMAIN_CACHE__ === 'undefined') {
         (window as any).__APP_CLEAR_DOMAIN_CACHE__ = clearDomainCache;
       }
-    } catch (error) {
+    }).catch(() => {
       // 静默失败，不影响应用运行
-    }
+    });
 
-    // EPS 服务加载完成后，再启动应用
+    // 立即启动应用，不等待 EPS 服务
     // 为 bootstrap 添加超时保护
     const bootstrapPromise = bootstrap(app);
     const bootstrapTimeout = new Promise((_, reject) => {
@@ -229,23 +260,8 @@ const startupPromise = waitForEpsService()
     return Promise.race([bootstrapPromise, bootstrapTimeout]);
   })
   .then(async () => {
-  // 等待路由就绪后再挂载应用，确保路由正确匹配
-  // 从 bootstrap/core/router 导入 router 实例
-  const { router } = await import('./bootstrap/core/router');
-  if (router) {
-    try {
-      // 关键：添加超时机制，避免 router.isReady() 一直等待导致应用无法挂载
-      // 如果路由守卫有问题或路由匹配失败，超时后继续挂载，让路由守卫在挂载后执行
-      const routerReadyPromise = router.isReady();
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('路由就绪超时')), 3000); // 缩短到3秒超时
-      });
-
-      await Promise.race([routerReadyPromise, timeoutPromise]);
-    } catch (error) {
-      // 路由就绪检查失败或超时，继续挂载
-    }
-  }
+  // 优化：不等待路由就绪，立即挂载应用
+  // 路由可以在应用挂载后异步初始化，不阻塞首次渲染
 
   // 检查 #app 元素是否存在
   const appEl = document.getElementById('app');
@@ -261,42 +277,55 @@ const startupPromise = waitForEpsService()
     clearTimeout(loadingTimeoutId); // 清除超时定时器
     removeLoadingElement();
 
-    // 关键：挂载后立即触发路由导航，确保路由守卫能够执行
+    // 关键：挂载后异步触发路由导航，确保路由守卫能够执行
     // 如果当前路由未匹配或未认证，路由守卫会自动重定向到登录页
     // 注意：Loading 元素已经移除，这里只是确保路由正确导航
-    // 使用 setTimeout 确保在下一个事件循环中执行，不阻塞 Loading 移除
-    if (router) {
-      setTimeout(async () => {
+    // 使用异步导入和 setTimeout 确保在下一个事件循环中执行，不阻塞 Loading 移除
+    setTimeout(async () => {
+      try {
+        // 异步获取 router 实例
+        const { router } = await import('./bootstrap/core/router');
+        if (!router) return;
+
+        // 快速检查路由是否就绪（最多等待 500ms）
         try {
-          // 检查当前路由是否已匹配
-          const currentRoute = router.currentRoute.value;
-          if (currentRoute.matched.length === 0) {
-            // 触发路由导航，让路由守卫处理重定向
+          const routerReadyPromise = router.isReady();
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('路由就绪超时')), 500);
+          });
+          await Promise.race([routerReadyPromise, timeoutPromise]);
+        } catch (error) {
+          // 路由就绪检查失败或超时，继续导航
+        }
+
+        // 检查当前路由是否已匹配
+        const currentRoute = router.currentRoute.value;
+        if (currentRoute.matched.length === 0) {
+          // 触发路由导航，让路由守卫处理重定向
+          try {
+            await router.push(currentRoute.fullPath);
+          } catch (navError) {
+            // 如果导航失败，直接重定向到登录页
             try {
-              await router.push(currentRoute.fullPath);
-            } catch (navError) {
-              // 如果导航失败，直接重定向到登录页
-              try {
-                await router.replace('/login');
-              } catch (redirectError) {
-                console.error('[system-app] 重定向到登录页失败:', redirectError);
-              }
-            }
-          } else {
-            // 即使路由已匹配，也要确保路由守卫执行了认证检查
-            // 如果未认证，路由守卫会自动重定向到登录页
-            // 触发一次路由导航，确保路由守卫执行
-            try {
-              await router.push(currentRoute.fullPath);
-            } catch (error) {
-              // 忽略错误，路由守卫可能已经处理了
+              await router.replace('/login');
+            } catch (redirectError) {
+              console.error('[system-app] 重定向到登录页失败:', redirectError);
             }
           }
-        } catch (error) {
-          console.error('[system-app] 路由导航处理失败:', error);
+        } else {
+          // 即使路由已匹配，也要确保路由守卫执行了认证检查
+          // 如果未认证，路由守卫会自动重定向到登录页
+          // 触发一次路由导航，确保路由守卫执行
+          try {
+            await router.push(currentRoute.fullPath);
+          } catch (error) {
+            // 忽略错误，路由守卫可能已经处理了
+          }
         }
-      }, 200);
-    }
+      } catch (error) {
+        console.error('[system-app] 路由导航处理失败:', error);
+      }
+    }, 200);
   } catch (mountError) {
     // 即使挂载失败，也要移除 Loading 元素
     clearTimeout(loadingTimeoutId);

@@ -26,7 +26,7 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
@@ -59,23 +59,44 @@ const menuRef = ref();
 const menuKey = ref(0); // 用于强制重新渲染菜单
 
 // 获取菜单注册表的响应式引用
-const menuRegistry = getMenuRegistry();
+// 关键：每次都从全局对象获取，确保使用最新的注册表实例
+const getMenuRegistryRef = () => {
+  if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+    return (window as any).__BTC_MENU_REGISTRY__;
+  }
+  return getMenuRegistry();
+};
 
 // 获取当前应用的菜单项（从注册表读取，响应式）
 const currentMenuItems = computed(() => {
   const app = currentApp.value;
-  // 关键：直接访问 menuRegistry.value[app] 以确保响应式追踪
+  // 关键：每次都从全局对象获取最新的注册表，确保使用正确的实例
+  const menuRegistry = getMenuRegistryRef();
+
+  // 确保注册表存在
+  if (!menuRegistry) {
+    if (import.meta.env.DEV) {
+      console.warn('[DynamicMenu] 菜单注册表不存在');
+    }
+    return [];
+  }
+
+  // 直接访问 menuRegistry.value[app] 以确保响应式追踪
   // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
   const menus = menuRegistry.value[app] || [];
-  
-  // 调试日志（仅在开发环境且菜单为空时输出，避免过多日志）
-  if (import.meta.env.DEV && menus.length === 0) {
-    console.log(`[dynamic-menu] 当前应用: ${app}, 菜单数量: 0`, {
+
+  // 生产环境也输出调试信息（仅在菜单为空时）
+  if (menus.length === 0) {
+    console.warn(`[DynamicMenu] 应用 ${app} 的菜单为空`, {
       app,
-      registryKeys: Object.keys(menuRegistry.value),
+      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+      path: route.path,
+      registryKeys: Object.keys(menuRegistry.value || {}),
+      registryHasApp: app in (menuRegistry.value || {}),
+      registryValue: menuRegistry.value,
     });
   }
-  
+
   return menus;
 });
 
@@ -87,14 +108,29 @@ const currentMenuItems = computed(() => {
 watch(
   () => {
     const app = currentApp.value;
-    return menuRegistry.value[app] || [];
+    const menuRegistry = getMenuRegistryRef();
+    const menus = menuRegistry?.value?.[app] || [];
+
+    // 生产环境也输出调试信息（仅在菜单为空时）
+    if (menus.length === 0) {
+      console.warn(`[DynamicMenu watch] 应用 ${app} 的菜单为空`, {
+        app,
+        hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+        path: route.path,
+        registryExists: !!menuRegistry,
+        registryValue: menuRegistry?.value,
+        registryKeys: menuRegistry ? Object.keys(menuRegistry.value || {}) : [],
+      });
+    }
+
+    return menus;
   },
   (newMenus, oldMenus) => {
     // 如果数组引用相同，说明是同一个数组，不需要重新渲染
     if (newMenus === oldMenus) {
       return;
     }
-    
+
     // 只有当菜单数组引用发生变化时才更新（菜单内容变化由 registerManifestMenusForApp 中的 menusEqual 检查）
     // 如果数组长度或内容相同但引用不同，说明是重复注册，不需要重新渲染
     if (newMenus.length !== (oldMenus?.length || 0)) {
@@ -102,7 +138,7 @@ watch(
       menuKey.value++;
       return;
     }
-    
+
     // 菜单数量相同，检查是否真的是内容变化（通过比较第一个和最后一个菜单项的引用）
     // 如果引用相同，说明是同一个数组，不需要重新渲染
     if (newMenus.length > 0 && oldMenus && oldMenus.length > 0) {
@@ -123,6 +159,45 @@ watch(
     }
   }
 );
+
+// 组件挂载时检查菜单是否已注册
+onMounted(() => {
+  const app = currentApp.value;
+  const menuRegistry = getMenuRegistryRef();
+  const menus = menuRegistry?.value?.[app] || [];
+
+  if (menus.length === 0) {
+    console.warn(`[DynamicMenu onMounted] 应用 ${app} 的菜单为空`, {
+      app,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+      path: route.path,
+      registryExists: !!menuRegistry,
+      registryKeys: menuRegistry ? Object.keys(menuRegistry.value || {}) : [],
+    });
+
+    // 尝试通过全局函数注册菜单（如果存在）
+    // 注意：菜单注册应该由应用启动时完成，这里只是作为后备
+    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+    if (typeof registerMenusFn === 'function') {
+      try {
+        registerMenusFn(app);
+        // 延迟检查，确保菜单已注册
+        setTimeout(() => {
+          const retryMenus = menuRegistry?.value?.[app] || [];
+          if (retryMenus.length > 0) {
+            console.log(`[DynamicMenu onMounted] 应用 ${app} 的菜单注册成功，共 ${retryMenus.length} 个顶级菜单项`);
+            menuKey.value++; // 强制重新渲染
+          }
+        }, 100);
+      } catch (error) {
+        console.error(`[DynamicMenu onMounted] 注册菜单失败:`, error);
+      }
+    }
+  } else {
+    // 生产环境也输出成功日志
+    console.log(`[DynamicMenu onMounted] 应用 ${app} 的菜单已存在，共 ${menus.length} 个顶级菜单项`);
+  }
+});
 
 // 递归获取所有菜单项的 index（用于搜索匹配）
 const getAllMenuIndexes = (items: any[]): string[] => {
@@ -201,13 +276,13 @@ const menuThemeClass = computed(() => {
   if (isDark?.value === true) {
     return 'el-menu-dark';
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的类名
   const theme = menuThemeType?.value;
   if (!theme) {
     return 'el-menu-design';
   }
-  
+
   // 直接比较枚举值，确保只返回一个类名
   switch (theme) {
     case MenuThemeEnum.DARK:
@@ -231,11 +306,11 @@ const menuThemeConfig = computed(() => {
       textActiveColor: '#FFFFFF',
     };
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
   const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
-  
+
   if (themeConfig) {
     return {
       background: themeConfig.background,
@@ -243,7 +318,7 @@ const menuThemeConfig = computed(() => {
       textActiveColor: themeConfig.textActiveColor,
     };
   }
-  
+
   // 默认配置
   return {
     background: '#FFFFFF',
@@ -306,7 +381,7 @@ const handleMenuSelect = (index: string) => {
     // 分组节点的 index 通常是虚拟路径（如 "access-config"），在路由表中不存在
     // 判断方法：在当前菜单树中查找匹配的菜单项，如果它有 children，说明是分组节点，不应该导航
     const absolutePath = index.startsWith('/') ? index : `/${index}`;
-    
+
     // 递归查找菜单项
     const findMenuItem = (items: typeof currentMenuItems.value, targetIndex: string): typeof items[0] | null => {
       for (const item of items) {
@@ -322,9 +397,9 @@ const handleMenuSelect = (index: string) => {
       }
       return null;
     };
-    
+
     const matchedItem = findMenuItem(currentMenuItems.value, index);
-    
+
     // 如果找到的菜单项有 children，说明是分组节点，不应该导航
     if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
       if (import.meta.env.DEV) {

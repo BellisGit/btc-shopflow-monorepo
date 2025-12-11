@@ -211,6 +211,19 @@ const setupRouteSync = (context: AdminAppContext) => {
   }
 
   context.cleanup.routerAfterEach = context.router.afterEach((to) => {
+    // 设置页面标题（生产环境后备方案，确保标题正确）
+    try {
+      const pageTitle = (to.meta?.title as string) || (to.meta?.titleKey as string) || '';
+      if (pageTitle) {
+        document.title = `${pageTitle} - 管理应用 - BTC ShopFlow`;
+      } else if (to.path === '/' || to.path === '/admin' || to.path === '/admin/') {
+        // 首页使用默认标题
+        document.title = '管理应用 - BTC ShopFlow';
+      }
+    } catch (error) {
+      // 忽略错误
+    }
+    
     // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
     try {
       import('@btc/shared-components/charts/utils/cleanup').then(({ cleanupAllECharts }) => {
@@ -403,11 +416,48 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
   
   if (isStandalone) {
     setupStandaloneGlobals();
+    // 关键：在独立运行模式下，确保菜单注册表已初始化
+    // 先初始化菜单注册表，再注册菜单，确保菜单在 AppLayout 渲染前已准备好
+    // 注意：createAdminApp 是同步函数，但菜单注册表初始化是异步的
+    // 这里使用立即执行的异步函数来初始化，不阻塞应用创建
+    (async () => {
+      try {
+        const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+        const registry = getMenuRegistry();
+        // 确保注册表已挂载到全局对象
+        if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+          (window as any).__BTC_MENU_REGISTRY__ = registry;
+        }
+      } catch (error) {
+        // 静默失败
+      }
+    })();
     registerManifestMenusForApp(ADMIN_APP_ID);
   } else {
-    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单
+    // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要初始化菜单注册表并注册菜单
     // 这样 layout-app 才能显示 admin-app 的菜单
-    // 与 finance-app 保持一致，在 createAdminApp 中同步注册菜单
+    // 确保菜单注册表已初始化，使用全局注册表实例
+    (async () => {
+      try {
+        // 优先使用已存在的全局注册表（layout-app 创建的）
+        if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+          // 全局注册表已存在，直接使用
+        } else {
+          // 如果全局不存在，创建新的并挂载到全局
+          const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+          const registry = getMenuRegistry();
+          if (typeof window !== 'undefined') {
+            (window as any).__BTC_MENU_REGISTRY__ = registry;
+          }
+        }
+        // 注册菜单
+        registerManifestMenusForApp(ADMIN_APP_ID);
+      } catch (error) {
+        // 静默失败，但尝试同步注册菜单作为后备
+        registerManifestMenusForApp(ADMIN_APP_ID);
+      }
+    })();
+    // 同步注册菜单（作为后备，确保菜单能够注册）
     registerManifestMenusForApp(ADMIN_APP_ID);
   }
   
@@ -426,22 +476,8 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
       err.message.includes('Cannot set properties of null')
     )) {
       // DOM 操作错误，可能是容器在更新时被移除
-      // 在开发环境记录警告，生产环境静默处理
-      if (import.meta.env.DEV) {
-        console.warn('[admin-app] DOM 操作错误（已捕获）:', {
-          error: err.message,
-          info,
-          container: context?.container,
-          isUnmounted,
-        });
-      }
       // 不抛出错误，避免影响用户体验
       return;
-    }
-
-    // 其他错误，使用默认处理或记录
-    if (import.meta.env.DEV) {
-      console.error('[admin-app] Vue 错误:', err, info);
     }
   };
 
@@ -457,8 +493,8 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
   // 关键：在独立运行时注册插件（与 finance-app 保持一致）
   if (isStandalone) {
     // 使用异步方式注册插件，避免阻塞应用创建
-    setupStandalonePlugins(app, router).catch((error) => {
-      console.error('[admin-app] 注册插件失败:', error);
+    setupStandalonePlugins(app, router).catch(() => {
+      // 注册插件失败，静默处理
     });
   }
 
@@ -507,19 +543,28 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
       if (props.container && props.container instanceof HTMLElement) {
         mountPoint = props.container;
       } else {
-        throw new Error('[admin-app] qiankun 模式下未提供容器元素');
+        // 尝试从 DOM 中查找 #subapp-viewport
+        const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+        if (viewport) {
+          mountPoint = viewport;
+        } else {
+          const errorMsg = '[admin-app] qiankun 模式下未提供容器元素，且 DOM 中未找到 #subapp-viewport';
+          throw new Error(errorMsg);
+        }
       }
     } else {
       // 独立运行模式：使用 #app
       const appElement = document.querySelector('#app') as HTMLElement;
       if (!appElement) {
-        throw new Error('[admin-app] 独立运行模式下未找到 #app 元素');
+        const errorMsg = '[admin-app] 独立运行模式下未找到 #app 元素';
+        throw new Error(errorMsg);
       }
       mountPoint = appElement;
     }
 
     if (!mountPoint) {
-      throw new Error('[admin-app] 无法找到挂载节点');
+      const errorMsg = '[admin-app] 无法找到挂载节点';
+      throw new Error(errorMsg);
     }
 
     // 保存容器引用，用于安全卸载
@@ -535,6 +580,44 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
         });
       });
     });
+
+    // 关键：在应用挂载前再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
+    // 这解决了生产环境子域名下独立运行时菜单为空的问题
+    // 必须在 app.mount 之前注册，确保 AppLayout 渲染时菜单已准备好
+    try {
+      // 确保菜单注册表已初始化，优先使用全局注册表（layout-app 创建的）
+      let registry: any;
+      if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+        // 使用已存在的全局注册表
+        registry = (window as any).__BTC_MENU_REGISTRY__;
+      } else {
+        // 如果全局不存在，创建新的并挂载到全局
+        const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+        registry = getMenuRegistry();
+        if (typeof window !== 'undefined') {
+          (window as any).__BTC_MENU_REGISTRY__ = registry;
+        }
+      }
+      
+      // 重新注册菜单，确保菜单数据已准备好
+      registerManifestMenusForApp(ADMIN_APP_ID);
+      
+      // 验证菜单是否已正确注册
+      const registeredMenus = registry?.value?.[ADMIN_APP_ID];
+      if (!registeredMenus || registeredMenus.length === 0) {
+        // 如果菜单为空，尝试再次注册
+        registerManifestMenusForApp(ADMIN_APP_ID);
+      }
+      
+      // 手动触发响应式更新，确保 Vue 能够检测到菜单变化
+      if (registry) {
+        const { triggerRef } = await import('vue');
+        triggerRef(registry);
+      }
+    } catch (error) {
+      // 静默失败，但尝试同步注册菜单作为后备
+      registerManifestMenusForApp(ADMIN_APP_ID);
+    }
 
     // 挂载 Vue 应用
     // 关键：不进行任何 DOM 操作，直接挂载，让 Vue 和 qiankun 自己管理
@@ -570,7 +653,6 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
             await authApi.logout();
           } catch (error: any) {
             // 后端 API 失败不影响前端清理
-            console.warn('Logout API failed, but continue with frontend cleanup:', error);
           }
 
           // 清除 cookie 中的 token
@@ -630,7 +712,6 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
           }
         } catch (error: any) {
           // 即使出现错误，也执行清理操作
-          console.error('Logout error:', error);
 
           // 强制清除所有缓存
           try {
@@ -709,19 +790,12 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
       window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
     }
   } catch (error) {
-    // 记录详细的错误信息，便于排查问题
-    console.error('[admin-app] 挂载失败:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      container: props.container,
-      isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
-    });
     // 关键：即使挂载失败，也要调用 onReady 清除 loading 状态
     if (props.onReady) {
       try {
         props.onReady();
       } catch (onReadyError) {
-        console.warn('[admin-app] onReady 回调执行失败:', onReadyError);
+        // onReady 回调执行失败，静默处理
       }
     }
     // 在 qiankun 环境下也发送就绪事件
@@ -729,7 +803,7 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
       try {
         window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'admin' } }));
       } catch (eventError) {
-        console.warn('[admin-app] 发送 subapp:ready 事件失败:', eventError);
+        // 发送 subapp:ready 事件失败，静默处理
       }
     }
   }
@@ -778,11 +852,8 @@ export const unmountAdminApp = async (context: AdminAppContext, props: QiankunPr
           try {
             context.app.unmount();
           } catch (error) {
-            // 卸载失败，记录错误但不抛出
+            // 卸载失败，静默处理
             // 这通常发生在容器已经被移除的情况下，属于正常情况
-            if (import.meta.env.DEV) {
-              console.warn('[admin-app] 卸载应用时出错（已忽略）:', error);
-            }
           }
         }
 

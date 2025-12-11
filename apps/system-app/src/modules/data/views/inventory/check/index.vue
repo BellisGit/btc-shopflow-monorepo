@@ -30,14 +30,22 @@
             @keyup.enter="handleSearch"
             @clear="handleSearch"
           />
-          <el-input
+          <el-select
             v-model="searchForm.position"
             :placeholder="t('inventory.result.fields.storageLocation')"
             clearable
+            filterable
             style="width: 150px;"
-            @keyup.enter="handleSearch"
+            @change="handleSearch"
             @clear="handleSearch"
-          />
+          >
+            <el-option
+              v-for="option in positionOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
           <el-input
             v-model="searchForm.checker"
             :placeholder="t('system.inventory.base.fields.checkerId')"
@@ -87,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, normalizePageResponse } from '@btc/shared-core';
@@ -112,6 +120,77 @@ const searchForm = ref({
   position: '',
   checker: '',
 });
+
+// 仓位选项列表
+const positionOptions = ref<{ label: string; value: string }[]>([]);
+const positionLoading = ref(false);
+
+// 加载仓位选项
+const loadPositionOptions = async () => {
+  positionLoading.value = true;
+  try {
+    // 调用物流子应用的仓位配置表的 page 服务
+    const pageService = service.logistics?.base?.position?.page;
+    if (!pageService) {
+      console.warn('[InventoryCheck] 仓位配置 page 服务不存在');
+      positionOptions.value = [];
+      return;
+    }
+
+    // 调用 page 接口获取所有仓位数据（不分页或获取足够多的数据）
+    const response = await pageService({ page: 1, size: 1000 });
+    
+    // 处理响应数据
+    let list: any[] = [];
+    if (Array.isArray(response)) {
+      list = response;
+    } else if (response && typeof response === 'object') {
+      if ('data' in response) {
+        const data = response.data;
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data && typeof data === 'object') {
+          list = Array.isArray(data.list) ? data.list : (Array.isArray(data.data) ? data.data : []);
+        }
+      } else if ('list' in response) {
+        list = Array.isArray(response.list) ? response.list : [];
+      }
+    }
+
+    // 提取仓位字段作为选项的 label 和 value
+    positionOptions.value = list
+      .map((item: any) => {
+        const position = item?.position;
+        if (!position) {
+          return null;
+        }
+        return {
+          label: String(position),
+          value: String(position),
+        };
+      })
+      .filter((item): item is { label: string; value: string } => item !== null);
+
+    // 去重（基于 value）
+    const uniqueMap = new Map<string, { label: string; value: string }>();
+    positionOptions.value.forEach(item => {
+      if (!uniqueMap.has(item.value)) {
+        uniqueMap.set(item.value, item);
+      }
+    });
+    positionOptions.value = Array.from(uniqueMap.values());
+    
+    // 对选项进行排序（按 label 字母顺序）
+    positionOptions.value.sort((a, b) => {
+      return a.label.localeCompare(b.label, 'zh-CN', { numeric: true, sensitivity: 'base' });
+    });
+  } catch (error) {
+    console.error('[InventoryCheck] 获取仓位选项失败:', error);
+    positionOptions.value = [];
+  } finally {
+    positionLoading.value = false;
+  }
+};
 
 // 操作按钮配置
 const opButtons = computed(() => [
@@ -249,7 +328,22 @@ const resultFormItems = computed<FormItem[]>(() => [
   { prop: 'partName', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
   { prop: 'partQty', label: t('inventory.result.fields.actualQty'), span: 12, component: { name: 'el-input-number' }, required: true },
   { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
+  {
+    prop: 'position',
+    label: t('inventory.result.fields.storageLocation'),
+    span: 12,
+    component: {
+      name: 'el-select',
+      props: {
+        filterable: true,
+        clearable: true,
+        loading: positionLoading.value,
+        placeholder: t('inventory.result.fields.storageLocation'),
+      },
+    },
+    // 直接使用 positionOptions.value，computed 会自动追踪变化
+    options: positionOptions.value,
+  },
   { prop: 'diffRate', label: t('inventory.result.fields.diffRate'), span: 12, component: { name: 'el-input' } },
   {
     prop: 'isDiff',
@@ -269,6 +363,11 @@ const resultFormItems = computed<FormItem[]>(() => [
   { prop: 'checkerId', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
   { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
+
+// 组件挂载时加载仓位选项
+onMounted(() => {
+  loadPositionOptions();
+});
 </script>
 
 <style lang="scss" scoped>

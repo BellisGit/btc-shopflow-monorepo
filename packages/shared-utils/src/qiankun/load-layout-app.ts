@@ -28,9 +28,17 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
   const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
 
   // 布局微应用入口
+  // 关键：修复双斜杠问题，确保 URL 格式正确
   const layoutEntry = isProd
     ? `${protocol}//layout.bellis.com.cn/`
     : 'http://localhost:4188/';
+  
+  console.log('[loadLayoutApp] 环境检测:', {
+    isProd,
+    protocol,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+    layoutEntry,
+  });
 
 
   // 未使用的函数，保留以备将来使用
@@ -303,6 +311,29 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
       }
     };
 
+    // 清理可能残留的 DOM 元素（如果加载失败）
+    const cleanupDom = () => {
+      // 清理可能添加的 script 标签
+      const scripts = document.querySelectorAll('script[src*="layout.bellis.com.cn"], script[src*="localhost:4188"]');
+      scripts.forEach(script => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
+      // 清理可能添加的 base 标签（仅清理我们添加的）
+      const base = document.querySelector('base[data-layout-app-base]');
+      if (base && base.parentNode) {
+        base.parentNode.removeChild(base);
+      }
+      // 清理 #app 容器中可能残留的 layout-app 内容
+      const appContainer = document.querySelector('#app');
+      if (appContainer) {
+        // 只清理 layout-app 相关的内容，保留其他内容
+        const layoutElements = appContainer.querySelectorAll('[data-layout-app]');
+        layoutElements.forEach(el => el.remove());
+      }
+    };
+
     // 确保 #app 容器存在
     // 未使用，保留以备将来使用
     /*
@@ -327,11 +358,18 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
     console.log('[layout-app loader] 开始加载 layout-app，入口地址:', layoutEntry);
 
     // 先获取 layout-app 的 HTML，从中提取入口文件路径
+    // 添加超时控制，避免长时间等待
+    const fetchTimeout = 5000; // 5秒超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), fetchTimeout);
+
     fetch(layoutEntry, {
       mode: 'cors',
       credentials: 'omit',
+      signal: controller.signal,
     })
       .then(response => {
+        clearTimeout(timeoutId);
         if (!response.ok) {
           throw new Error(`获取 layout-app HTML 失败: HTTP ${response.status} ${response.statusText}`);
         }
@@ -367,14 +405,16 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         const baseHref = entryUrl.origin + '/';
 
         // 检查是否已经存在 <base> 标签
-        let existingBase = document.querySelector('base');
+        let existingBase = document.querySelector('base[data-layout-app-base]') as HTMLBaseElement | null;
         if (existingBase) {
-          // 如果已存在，更新它的 href
+          // 如果已存在我们添加的 base 标签，更新它的 href
           existingBase.href = baseHref;
+          console.log('[layout-app loader] 已更新现有的 <base> 标签:', baseHref);
         } else {
           // 如果不存在，创建一个新的
           const base = document.createElement('base');
           base.href = baseHref;
+          base.setAttribute('data-layout-app-base', 'true'); // 标记为我们添加的
           // 插入到 <head> 的最前面，确保在其他资源标签之前
           const head = document.head || document.getElementsByTagName('head')[0];
           if (head.firstChild) {
@@ -382,6 +422,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           } else {
             head.appendChild(base);
           }
+          console.log('[layout-app loader] 已创建新的 <base> 标签:', baseHref);
         }
 
         console.log('[layout-app loader] 已设置 <base> 标签:', baseHref);
@@ -391,6 +432,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         script.type = 'module';
         script.src = mainEntry;
         script.crossOrigin = 'anonymous';
+        script.setAttribute('data-layout-app', 'true'); // 标记为我们添加的
 
         // 监听加载完成事件
         script.onload = () => {
@@ -399,7 +441,9 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           // layout-app 的入口文件已加载，等待它挂载完成
           // 监听 layout-app 的挂载事件
           let checkCount = 0;
-          const maxChecks = 200; // 最多检查 10 秒（200 * 50ms）
+          // 缩短超时时间：生产环境 5 秒（100 * 50ms），开发环境 10 秒（200 * 50ms）
+          const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
+          const maxChecks = isDev ? 200 : 100; // 开发环境 10 秒，生产环境 5 秒
 
           const checkLayoutApp = () => {
             checkCount++;
@@ -428,6 +472,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             } else if (checkCount >= maxChecks) {
               // 超时，挂载失败
               cleanup();
+              cleanupDom(); // 清理残留的 DOM
 
               const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到挂载内容`;
               console.error('[layout-app loader] ❌', errorMsg, {
@@ -435,7 +480,12 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
                   exists: true,
                   childrenCount: appContainer.children.length,
                   innerHTMLLength: appContainer.innerHTML.trim().length,
+                  innerHTML: appContainer.innerHTML.substring(0, 200), // 只显示前200字符
                 } : { exists: false },
+                layoutEntry,
+                mainEntry,
+                checkCount,
+                maxChecks,
               });
               reject(new Error(errorMsg));
             }
@@ -448,12 +498,16 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
         script.onerror = (error) => {
           cleanup();
+          cleanupDom(); // 清理残留的 DOM
 
           const errorMsg = `加载 layout-app 入口文件失败: ${mainEntry}`;
           console.error('[layout-app loader] ❌', errorMsg, {
             error,
             entryUrl: mainEntry,
             layoutEntry,
+            scriptSrc: script.src,
+            scriptType: script.type,
+            crossOrigin: script.crossOrigin,
           });
           reject(new Error(errorMsg));
         };
@@ -464,31 +518,47 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
         // 设置超时，避免无限等待
         // 关键：超时应该 reject，而不是 resolve
+        // 缩短超时时间：生产环境 8 秒，开发环境 15 秒
+        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
+        const totalTimeout = isDev ? 15000 : 8000;
         mountTimeout = setTimeout(() => {
           if (!layoutAppMounted) {
             layoutAppMounted = true;
             cleanup();
+            cleanupDom(); // 清理残留的 DOM
 
-            const errorMsg = `加载 layout-app 超时（${10000}ms），入口文件: ${mainEntry}`;
-            console.error('[layout-app loader] ❌', errorMsg);
+            const errorMsg = `加载 layout-app 超时（${totalTimeout}ms），入口文件: ${mainEntry}`;
+            console.error('[layout-app loader] ❌', errorMsg, {
+              layoutEntry,
+              mainEntry,
+              totalTimeout,
+              isDev,
+            });
             reject(new Error(errorMsg));
           }
-        }, 10000);
+        }, totalTimeout);
       })
       .catch(error => {
-        if (mountTimeout) {
-          clearTimeout(mountTimeout);
-          mountTimeout = null;
-        }
+        clearTimeout(timeoutId);
+        cleanup();
+        cleanupDom(); // 清理残留的 DOM
 
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorMsg = `获取 layout-app HTML 失败: ${errorMessage}`;
+        // 如果是 AbortError，说明是超时
+        const isTimeout = error instanceof Error && error.name === 'AbortError';
+        const errorMsg = isTimeout
+          ? `获取 layout-app HTML 超时（${fetchTimeout}ms）: ${layoutEntry}`
+          : `获取 layout-app HTML 失败: ${errorMessage}`;
         console.error('[layout-app loader] ❌', errorMsg, {
           layoutEntry,
+          isTimeout,
+          fetchTimeout,
+          protocol: typeof window !== 'undefined' ? window.location.protocol : 'unknown',
+          hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
           error: error instanceof Error ? {
             name: error.name,
             message: error.message,
-            stack: error.stack,
+            stack: error.stack?.substring(0, 500), // 只显示前500字符
           } : error,
         });
         reject(new Error(errorMsg));

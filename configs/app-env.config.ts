@@ -117,14 +117,40 @@ export function getAppConfig(appName: string): AppEnvConfig | undefined {
  * 获取所有开发端口列表
  */
 export function getAllDevPorts(): string[] {
-  return APP_ENV_CONFIGS.map((config) => config.devPort);
+  // 防御性检查：使用 try-catch 捕获可能的 TDZ (Temporal Dead Zone) 错误
+  // 如果 APP_ENV_CONFIGS 还没有初始化（由于循环依赖或模块加载顺序），返回空数组
+  try {
+    return APP_ENV_CONFIGS.map((config) => config.devPort);
+  } catch (error) {
+    if (error instanceof ReferenceError && error.message.includes('before initialization')) {
+      if (import.meta.env.DEV) {
+        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+      }
+      return [];
+    }
+    // 其他错误重新抛出
+    throw error;
+  }
 }
 
 /**
  * 获取所有预览端口列表
  */
 export function getAllPrePorts(): string[] {
-  return APP_ENV_CONFIGS.map((config) => config.prePort);
+  // 防御性检查：使用 try-catch 捕获可能的 TDZ (Temporal Dead Zone) 错误
+  // 如果 APP_ENV_CONFIGS 还没有初始化（由于循环依赖或模块加载顺序），返回空数组
+  try {
+    return APP_ENV_CONFIGS.map((config) => config.prePort);
+  } catch (error) {
+    if (error instanceof ReferenceError && error.message.includes('before initialization')) {
+      if (import.meta.env.DEV) {
+        console.warn('[app-env.config] APP_ENV_CONFIGS 未初始化（可能是循环依赖），返回空数组');
+      }
+      return [];
+    }
+    // 其他错误重新抛出
+    throw error;
+  }
 }
 
 /**

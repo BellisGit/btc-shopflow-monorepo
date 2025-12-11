@@ -13,19 +13,31 @@ const pageRoutes = [
     path: '/',
     name: 'Home',
     component: () => import('../views/Home.vue'),
-    meta: { isHome: true },
+    meta: { 
+      isHome: true,
+      titleKey: 'menu.monitor.overview',
+      tabLabelKey: 'menu.monitor.overview',
+    },
   },
   {
     path: '/ops/error',
     name: 'ErrorMonitor',
     component: () => import('../views/ErrorMonitor.vue'),
-    meta: { isHome: false },
+    meta: { 
+      isHome: false,
+      titleKey: 'menu.monitor.error',
+      tabLabelKey: 'menu.monitor.error',
+    },
   },
   {
     path: '/ops/deployment-test',
     name: 'DeploymentTest',
     component: () => import('../views/DeploymentTest.vue'),
-    meta: { isHome: false },
+    meta: { 
+      isHome: false,
+      titleKey: 'menu.monitor.deploymentTest',
+      tabLabelKey: 'menu.monitor.deploymentTest',
+    },
   },
 ];
 

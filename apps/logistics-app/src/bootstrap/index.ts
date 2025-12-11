@@ -453,6 +453,18 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   if (isStandalone) {
     await setupStandaloneGlobals();
+    // 关键：在独立运行模式下，确保菜单注册表已初始化
+    // 先初始化菜单注册表，再注册菜单，确保菜单在 AppLayout 渲染前已准备好
+    try {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      // 确保注册表已挂载到全局对象
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    } catch (error) {
+      // 静默失败
+    }
     registerManifestMenusForApp(LOGISTICS_APP_ID);
     registerManifestTabsForApp(LOGISTICS_APP_ID);
   } else {
@@ -532,7 +544,28 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
     throw new Error('[logistics-app] 无法找到挂载节点');
   }
 
-  context.app.mount(mountPoint);
+    // 关键：在应用挂载前再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
+    // 这解决了生产环境子域名下独立运行时菜单为空的问题
+    // 必须在 app.mount 之前注册，确保 AppLayout 渲染时菜单已准备好
+    try {
+      // 确保菜单注册表已初始化
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+        const registry = getMenuRegistry();
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+      // 重新注册菜单，确保菜单数据已准备好
+      registerManifestMenusForApp(LOGISTICS_APP_ID);
+      // 手动触发响应式更新，确保 Vue 能够检测到菜单变化
+      if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+        const { triggerRef } = await import('vue');
+        triggerRef((window as any).__BTC_MENU_REGISTRY__);
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
+    context.app.mount(mountPoint);
 
   // 在 qiankun 环境下，等待路由就绪后再同步初始路由
   if (qiankunWindow.__POWERED_BY_QIANKUN__) {

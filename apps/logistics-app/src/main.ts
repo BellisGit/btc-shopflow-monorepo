@@ -35,10 +35,22 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
+  console.log('[logistics-app] 开始挂载应用', {
+    isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+    hasContainer: !!props.container,
+    containerType: props.container?.constructor?.name,
+    containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
+  });
+  
   try {
-  await render(props);
+    await render(props);
+    console.log('[logistics-app] ✅ 应用挂载成功');
   } catch (error) {
-    console.error('[logistics-app] mount 失败:', error);
+    console.error('[logistics-app] ❌ mount 失败:', error, {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      props,
+    });
     throw error;
   }
 }

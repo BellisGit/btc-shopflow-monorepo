@@ -82,6 +82,21 @@ async function render(props: QiankunProps = {}) {
 
   if (isStandalone) {
     setupStandaloneGlobals();
+    // 关键：在独立运行模式下，确保菜单注册表已初始化
+    // 先初始化菜单注册表，再注册菜单，确保菜单在 AppLayout 渲染前已准备好
+    const initMenuRegistry = async () => {
+      try {
+        const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+        const registry = getMenuRegistry();
+        // 确保注册表已挂载到全局对象
+        if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+          (window as any).__BTC_MENU_REGISTRY__ = registry;
+        }
+      } catch (error) {
+        // 静默失败
+      }
+    };
+    await initMenuRegistry();
     registerManifestMenusForApp(ENGINEERING_APP_ID);
     registerManifestTabsForApp(ENGINEERING_APP_ID);
   }
@@ -231,6 +246,27 @@ async function render(props: QiankunProps = {}) {
   
   if (!mountPoint) {
     throw new Error('[engineering-app] 无法找到挂载节点');
+  }
+
+  // 关键：在应用挂载前再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
+  // 这解决了生产环境子域名下独立运行时菜单为空的问题
+  // 必须在 app.mount 之前注册，确保 AppLayout 渲染时菜单已准备好
+  try {
+    // 确保菜单注册表已初始化
+    if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      (window as any).__BTC_MENU_REGISTRY__ = registry;
+    }
+    // 重新注册菜单，确保菜单数据已准备好
+    registerManifestMenusForApp(ENGINEERING_APP_ID);
+    // 手动触发响应式更新，确保 Vue 能够检测到菜单变化
+    if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+      const { triggerRef } = await import('vue');
+      triggerRef((window as any).__BTC_MENU_REGISTRY__);
+    }
+  } catch (error) {
+    // 静默失败
   }
 
   app.mount(mountPoint);
@@ -417,13 +453,30 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  await render(props);
-
-  // 通知主应用：子应用已就绪
-  if (props.onReady) {
-    props.onReady();
+  console.log('[engineering-app] 开始挂载应用', {
+    isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+    hasContainer: !!props.container,
+    containerType: props.container?.constructor?.name,
+    containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
+  });
+  
+  try {
+    await render(props);
+    console.log('[engineering-app] ✅ 应用挂载成功');
+    
+    // 通知主应用：子应用已就绪
+    if (props.onReady) {
+      props.onReady();
+    }
+    window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'engineering' }}));
+  } catch (error) {
+    console.error('[engineering-app] ❌ mount 失败:', error, {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      props,
+    });
+    throw error;
   }
-  window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: 'engineering' }}));
 }
 
 async function update(props: QiankunProps) {

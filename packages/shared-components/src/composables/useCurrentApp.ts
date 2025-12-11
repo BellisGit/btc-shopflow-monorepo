@@ -13,7 +13,7 @@ export function useCurrentApp() {
   const detectCurrentApp = () => {
     const path = route.path;
     // 优先检查子域名（生产环境的关键识别方式）
-    const hostname = window.location.hostname;
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
     const subdomainMap: Record<string, string> = {
       'admin.bellis.com.cn': 'admin',
       'logistics.bellis.com.cn': 'logistics',
@@ -26,14 +26,32 @@ export function useCurrentApp() {
     
     // 关键：优先通过子域名识别应用（生产环境的主要方式）
     // 在生产环境中，通过子域名访问时路径是 /，必须通过子域名识别
-    if (subdomainMap[hostname]) {
+    if (hostname && subdomainMap[hostname]) {
       const detectedApp = subdomainMap[hostname];
-      console.log(`[useCurrentApp] 通过子域名识别应用: ${hostname} -> ${detectedApp}`);
+      // 仅在开发环境输出日志
+      if (import.meta.env.DEV) {
+        console.log(`[useCurrentApp] 通过子域名识别应用: ${hostname} -> ${detectedApp}`);
+      }
       currentApp.value = detectedApp;
       return;
     }
     
-    console.log(`[useCurrentApp] 子域名未匹配，使用路径匹配: hostname=${hostname}, path=${path}`);
+    // 检查是否使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志）
+    // 在使用 layout-app 时，也可能通过子域名访问
+    if ((window as any).__USE_LAYOUT_APP__ && hostname && subdomainMap[hostname]) {
+      const detectedApp = subdomainMap[hostname];
+      // 仅在开发环境输出日志
+      if (import.meta.env.DEV) {
+        console.log(`[useCurrentApp] 通过 layout-app 子域名识别应用: ${hostname} -> ${detectedApp}`);
+      }
+      currentApp.value = detectedApp;
+      return;
+    }
+    
+    // 仅在开发环境输出日志
+    if (import.meta.env.DEV) {
+      console.log(`[useCurrentApp] 子域名未匹配，使用路径匹配: hostname=${hostname}, path=${path}`);
+    }
     
     // 回退到路径匹配（开发环境或主域名访问时）
     if (path.startsWith('/admin')) {
@@ -65,6 +83,36 @@ export function useCurrentApp() {
     },
     { immediate: true }
   );
+
+  // 生产环境也显示应用识别信息（仅在开发环境）
+  if (import.meta.env.DEV) {
+    watch(
+      () => currentApp.value,
+      (newApp) => {
+        try {
+          if (typeof document !== 'undefined') {
+            const msg = `[应用识别] 当前应用: ${newApp}, 路径: ${route.path}, 域名: ${window.location.hostname}`;
+            let debugEl = document.getElementById('__current-app-debug__');
+            if (!debugEl) {
+              debugEl = document.createElement('div');
+              debugEl.id = '__current-app-debug__';
+              debugEl.style.cssText = 'position:fixed;top:170px;right:10px;background:purple;color:white;padding:10px;z-index:99999;font-size:12px;max-width:400px;word-break:break-all;';
+              document.body.appendChild(debugEl);
+            }
+            debugEl.textContent = msg;
+            setTimeout(() => {
+              if (debugEl && debugEl.parentNode) {
+                debugEl.parentNode.removeChild(debugEl);
+              }
+            }, 5000);
+          }
+        } catch (e) {
+          // 忽略错误
+        }
+      },
+      { immediate: true }
+    );
+  }
 
   return {
     currentApp,

@@ -26,7 +26,7 @@
         v-if="props.menuType !== 'top' && props.menuType !== 'dual-menu'"
         :key="logoKey"
         class="topbar__logo-content"
-        :class="{ 
+        :class="{
           'is-dark-menu': isDarkMenuStyle,
           'is-dark-theme': isDark,
         }"
@@ -47,7 +47,7 @@
         :config="{
           icon: () => isCollapse ? 'expand' : 'fold',
           tooltip: () => isCollapse ? t('common.tooltip.expand_sidebar') : t('common.tooltip.collapse_sidebar'),
-          onClick: () => $emit('toggle-sidebar')
+          onClick: handleToggleSidebar
         }"
       />
 
@@ -67,6 +67,10 @@
         <!-- 动态插件工具栏组件（按order排序，根据移动端/桌面端过滤） -->
         <li v-for="toolbarConfig in filteredToolbarComponents" :key="toolbarConfig.order">
           <component :is="toolbarConfig.component" />
+        </li>
+        <!-- 调试信息：如果工具栏为空，显示调试信息 -->
+        <li v-if="filteredToolbarComponents.length === 0" style="padding: 5px; color: red; font-size: 12px; background: yellow;">
+          [调试] 工具栏组件为空 (总数: {{ toolbarComponents.length }})
         </li>
       </ul>
 
@@ -108,7 +112,8 @@ const props = withDefaults(defineProps<Props>(), {
   menuType: 'left',
 });
 
-defineEmits<{
+// 获取 emit 函数
+const emit = defineEmits<{
   'toggle-sidebar': [];
   'toggle-drawer': [];
   'open-drawer': [];
@@ -116,6 +121,14 @@ defineEmits<{
 
 const { t } = useI18n();
 const route = useRoute();
+
+// 处理折叠按钮点击事件
+const handleToggleSidebar = () => {
+  emit('toggle-sidebar');
+};
+
+// 调试日志：组件初始化
+console.log('[Topbar] 组件开始初始化');
 
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
@@ -138,8 +151,51 @@ const logoUrl = computed(() => {
 const { browser } = useBrowser();
 
 // 获取设置状态
-const { showGlobalSearch, menuThemeType, isDark } = useSettingsState();
-const { menuStyleList } = useSettingsConfig();
+let showGlobalSearch: any;
+let menuThemeType: any;
+let isDark: any;
+let menuStyleList: any;
+
+try {
+  const settingsState = useSettingsState();
+  showGlobalSearch = settingsState.showGlobalSearch;
+  menuThemeType = settingsState.menuThemeType;
+  isDark = settingsState.isDark;
+  console.log('[Topbar] useSettingsState 成功:', {
+    showGlobalSearch: !!showGlobalSearch,
+    menuThemeType: menuThemeType?.value,
+    isDark: isDark?.value
+  });
+} catch (error) {
+  console.error('[Topbar] useSettingsState 失败:', error);
+  // 使用默认值
+  showGlobalSearch = ref(false);
+  menuThemeType = ref(null);
+  isDark = ref(false);
+}
+
+try {
+  const settingsConfig = useSettingsConfig();
+  menuStyleList = settingsConfig.menuStyleList;
+  console.log('[Topbar] useSettingsConfig 成功:', { menuStyleList: menuStyleList?.value?.length });
+} catch (error) {
+  console.error('[Topbar] useSettingsConfig 失败:', error);
+  menuStyleList = ref([]);
+}
+
+// 确保所有变量都有值
+if (!showGlobalSearch) {
+  showGlobalSearch = ref(false);
+}
+if (!menuThemeType) {
+  menuThemeType = ref(null);
+}
+if (!isDark) {
+  isDark = ref(false);
+}
+if (!menuStyleList) {
+  menuStyleList = ref([]);
+}
 
 // Logo 区域的 key，用于强制重新渲染
 const logoKey = ref(0);
@@ -150,42 +206,52 @@ const currentHostname = ref(typeof window !== 'undefined' ? window.location.host
 
 // Logo 标题：主应用显示"拜里斯科技"，子应用显示应用名称（如"物流模块"）
 const logoTitle = computed(() => {
-  // 使用响应式的路径和主机名，确保在应用切换时重新计算
-  // 这里仍然调用函数，但依赖响应式变量来触发重新计算
-  void currentPath.value;
-  void currentHostname.value;
-  void route.path; // 也依赖路由路径
-  
-  // 判断是否是主应用
-  const isMain = isMainApp();
-  
-  if (isMain) {
-    // 主应用：显示"拜里斯科技"
-    return t('app.title');
-  }
-  
-  // 子应用：获取当前应用信息
-  const currentSubAppId = getCurrentSubApp();
-  if (currentSubAppId) {
-    // 获取应用配置
-    const appConfig = getAppById(currentSubAppId);
-    if (appConfig) {
-      // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
-      const domainTypeKey = `domain.type.${currentSubAppId}`;
-      const domainTypeName = t(domainTypeKey);
-      
-      // 如果国际化值存在且不是 key 本身，则使用国际化值
-      if (domainTypeName && domainTypeName !== domainTypeKey) {
-        return domainTypeName;
+  try {
+    // 使用响应式的路径和主机名，确保在应用切换时重新计算
+    // 这里仍然调用函数，但依赖响应式变量来触发重新计算
+    void currentPath.value;
+    void currentHostname.value;
+    void route.path; // 也依赖路由路径
+
+    // 判断是否是主应用
+    const isMain = isMainApp();
+
+    if (isMain) {
+      // 主应用：显示"拜里斯科技"
+      return t('app.title');
+    }
+
+    // 子应用：获取当前应用信息
+    const currentSubAppId = getCurrentSubApp();
+    if (currentSubAppId) {
+      // 获取应用配置
+      const appConfig = getAppById(currentSubAppId);
+      if (appConfig) {
+        // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
+        const domainTypeKey = `domain.type.${currentSubAppId}`;
+        const domainTypeName = t(domainTypeKey);
+
+        // 如果国际化值存在且不是 key 本身，则使用国际化值
+        if (domainTypeName && domainTypeName !== domainTypeKey) {
+          return domainTypeName;
+        }
+
+        // 兜底使用应用配置中的 name
+        return appConfig.name;
       }
-      
-      // 兜底使用应用配置中的 name
-      return appConfig.name;
+    }
+
+    // 默认使用 app.title
+    return t('app.title');
+  } catch (error) {
+    // 如果出现任何错误（如 getCurrentSubApp 或 getAppById 抛出错误），使用默认标题
+    console.error('[Topbar] 计算 logoTitle 时出错:', error);
+    try {
+      return t('app.title');
+    } catch {
+      return '拜里斯科技';
     }
   }
-  
-  // 默认使用 app.title
-  return t('app.title');
 });
 
 // 判断是否为深色菜单风格（展示层逻辑）
@@ -286,7 +352,12 @@ const toolbarComponents = ref<any[]>([]);
 
 // 过滤后的工具栏组件（根据移动端/桌面端显示）
 const filteredToolbarComponents = computed(() => {
-  return toolbarComponents.value.filter(config => {
+  console.log('[Topbar] filteredToolbarComponents 计算:', {
+    'toolbarComponents.value.length': toolbarComponents.value.length,
+    'browser.isMini': browser.isMini,
+    'toolbarComponents': toolbarComponents.value.map(c => ({ name: c.name, order: c.order, pc: c.pc, h5: c.h5 }))
+  });
+  const filtered = toolbarComponents.value.filter(config => {
     // 与 cool-admin 完全一致的过滤逻辑
     if (browser.isMini) {
       // 移动端：使用 h5 属性，如果未定义则默认为 true
@@ -300,29 +371,79 @@ const filteredToolbarComponents = computed(() => {
       return shouldShow;
     }
   });
+  console.log('[Topbar] filteredToolbarComponents 结果:', filtered.length, '个');
+  return filtered;
 });
 
 
-// 初始化工具栏组件和用户信息
-onMounted(async () => {
-  // 加载工具栏组件
+// 加载工具栏组件的函数
+const loadToolbarComponents = async () => {
   try {
+    console.log('[Topbar] 开始获取工具栏组件');
+    console.log('[Topbar] pluginManager:', pluginManager);
     const toolbarConfigs = pluginManager.getToolbarComponents();
+    console.log('[Topbar] 工具栏组件配置:', toolbarConfigs);
+    console.log('[Topbar] 工具栏组件数量:', toolbarConfigs.length);
+
+    if (toolbarConfigs.length === 0) {
+      console.warn('[Topbar] 没有找到工具栏组件，可能是插件未安装');
+      return;
+    }
 
     for (const config of toolbarConfigs) {
       try {
+        console.log('[Topbar] 加载工具栏组件:', config.order);
         const component = await config.component();
         toolbarComponents.value.push({
           ...config,
           component: markRaw(component.default || component)
         });
+        console.log('[Topbar] 工具栏组件加载成功:', config.order);
       } catch (error) {
-        console.error('Failed to load toolbar component:', error);
+        console.error('[Topbar] Failed to load toolbar component:', config.order, error);
       }
     }
+    console.log('[Topbar] 工具栏组件加载完成，共', toolbarComponents.value.length, '个');
   } catch (error) {
-    console.error('Failed to get toolbar components:', error);
+    console.error('[Topbar] Failed to get toolbar components:', error);
   }
+};
+
+// 初始化工具栏组件和用户信息
+onMounted(async () => {
+  console.log('[Topbar] onMounted 开始执行');
+  console.log('[Topbar] props:', {
+    isCollapse: props.isCollapse,
+    drawerVisible: props.drawerVisible,
+    menuType: props.menuType
+  });
+
+  // 立即尝试加载工具栏组件
+  await loadToolbarComponents();
+
+  // 如果工具栏组件为空，监听插件安装事件
+  if (toolbarComponents.value.length === 0) {
+    console.log('[Topbar] 工具栏组件为空，等待插件安装...');
+    const emitter = (window as any).__APP_EMITTER__;
+    if (emitter) {
+      const onPluginsInstalled = async () => {
+        console.log('[Topbar] 收到插件安装事件，重新加载工具栏组件');
+        await loadToolbarComponents();
+        emitter.off('plugins-installed', onPluginsInstalled);
+      };
+      emitter.on('plugins-installed', onPluginsInstalled);
+
+      // 设置超时，避免无限等待
+      setTimeout(() => {
+        if (toolbarComponents.value.length === 0) {
+          console.warn('[Topbar] 等待插件安装超时，尝试重新加载工具栏组件');
+          loadToolbarComponents();
+        }
+      }, 2000);
+    }
+  }
+
+  console.log('[Topbar] onMounted 执行完成');
 
   // 监听应用切换事件，更新 Logo 标题
   const emitter = (window as any).__APP_EMITTER__;
@@ -513,15 +634,15 @@ onUnmounted(() => {
     transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                 visibility 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                 background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     // 默认浅色背景（根据菜单风格配置）
     background-color: #FFFFFF;
-    
+
     // 暗色系统主题下强制使用深色背景
     html.dark & {
       background-color: #0a0a0a !important;
     }
-    
+
     // 深色菜单风格下（浅色系统主题）使用深色背景
     &.is-dark-menu:not(.is-dark-theme) {
       background-color: #0a0a0a !important;
@@ -687,7 +808,7 @@ onUnmounted(() => {
     .topbar__logo-text {
       // 浅色系统主题下的深色菜单风格使用灰色
       color: #BABBBD !important;
-      
+
       // 暗色系统主题下使用白色以提高对比度
       html.dark & {
         color: #FFFFFF !important;
@@ -699,14 +820,14 @@ onUnmounted(() => {
   .topbar__brand {
     border-bottom-color: var(--el-border-color) !important;
   }
-  
+
   // Logo 内容区域背景色（深色菜单风格，与菜单背景一致）
   .topbar__brand .topbar__logo-content {
     // 深色系统主题下，使用 #0a0a0a 与内容区域一致
     html.dark & {
       background-color: #0a0a0a !important;
     }
-    
+
     // 浅色系统主题下，使用深色菜单背景色
     html:not(.dark) & {
       background-color: #0a0a0a !important;

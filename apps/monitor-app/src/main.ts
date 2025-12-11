@@ -11,17 +11,19 @@ import 'element-plus/theme-chalk/dark/css-vars.css';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 // 关键：直接导入确保构建时被正确打包，避免代码分割导致的路径问题
 import '@btc/shared-components/styles/dark-theme.css';
-// 关键：直接导入共享组件样式，确保在生产环境构建时被正确打包
-// 虽然 global.scss 中已经通过 @use 导入，但直接导入可以确保样式在应用启动时就被处理
+// 共享组件样式（必须在 global.scss 之前导入，确保构建时被正确打包）
+// 关键：虽然 global.scss 中也通过 @use 导入了，但直接 import 可以确保样式在模块加载时就被处理
+// 与 finance-app 保持一致，在入口文件中直接导入共享组件样式
 import '@btc/shared-components/styles/index.scss';
-// 应用全局样式（global.scss 中已通过 @use 导入共享组件样式）
-// 注意：共享组件样式在 global.scss 中使用 @use 导入，确保构建时被正确合并
+// 应用全局样式（global.scss 中已通过 @use 导入共享组件样式，但直接导入可以确保构建时被正确处理）
 import './styles/global.scss';
 import './styles/theme.scss';
+import './styles/nprogress.scss';
+import './styles/menu-themes.scss';
 import type { QiankunProps } from '@btc/shared-core';
-import { registerAppEnvAccessors, registerManifestMenusForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl } from '@configs/layout-bridge';
+import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
 import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports } from '@btc/shared-utils/error-monitor';
-import { createI18nPlugin } from '@btc/shared-core';
+import { createI18nPlugin, resetPluginManager, usePluginManager, createThemePlugin } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale, DEFAULT_LOCALE, FALLBACK_LOCALE } from './i18n/getters';
 // AppLayout 未使用，但保留导入以备将来使用
 // import { AppLayout } from '@btc/shared-components';
@@ -29,10 +31,24 @@ import App from './App.vue';
 import { createMonitorRouter } from './router';
 import { getManifestTabs, getManifestRoute } from '@btc/subapp-manifests';
 import type { Router } from 'vue-router';
+import { isMainApp } from '@configs/unified-env-config';
 // 注意：initLayoutApp 改为动态导入，与其他应用保持一致
+
+// 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
+// 关键：在独立运行时，monitor-app 应该被判断为子应用（不是主应用），这样 AppLayout 才会正常显示顶栏、菜单等
+// @ts-expect-error - 动态导入路径，TypeScript 无法在编译时解析
+import('@btc/shared-components/components/layout/app-layout/utils').then(utils => {
+  utils.setIsMainAppFn(isMainApp);
+}).catch(() => {
+  // 静默处理导入失败，不影响应用启动
+  if (import.meta.env.DEV) {
+    console.warn('[monitor-app] 无法导入 setIsMainAppFn，跳过设置');
+  }
+});
 
 const MONITOR_APP_ID = 'monitor';
 const MONITOR_BASE_PATH = '/monitor';
+const sharedUserSettingPlugin = createSharedUserSettingPlugin();
 
 let app: ReturnType<typeof createApp> | null = null;
 let router: Router | null = null;
@@ -194,8 +210,12 @@ const sendRouteChangeEvent = (to: any) => {
 
   // 从 manifest 获取路由信息
   const manifestRoute = getManifestRoute(MONITOR_APP_ID, fullPath);
-  const tabLabelKey = manifestRoute?.tab?.labelKey || manifestRoute?.labelKey;
-  const labelKey = manifestRoute?.labelKey;
+  // 优先从路由 meta 中获取 tabLabelKey，如果没有则从 manifest 获取
+  const tabLabelKey = (to.meta?.tabLabelKey as string | undefined)
+    || manifestRoute?.tab?.labelKey
+    || manifestRoute?.labelKey;
+  const labelKey = (to.meta?.titleKey as string | undefined)
+    || manifestRoute?.labelKey;
 
   const translate = getTranslate();
   const label = tabLabelKey ? translate(tabLabelKey) : (to.name as string || fullPath);
@@ -325,9 +345,27 @@ async function mount(_props: QiankunProps = {}) {
     throw new Error('监控应用容器不存在，请确保页面中存在 #app 元素');
   }
 
+  // 关键：在创建 Vue 应用之前注册菜单（确保菜单数据在 AppLayout 渲染前已准备好）
+  // 无论是独立运行还是 qiankun 模式，都需要注册菜单
+  // 在独立运行模式下，确保菜单注册表已初始化
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  if (isStandalone) {
+    try {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      // 确保注册表已挂载到全局对象
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    } catch (error) {
+      // 静默失败
+    }
+  }
+  registerManifestMenusForApp(MONITOR_APP_ID);
+  registerManifestTabsForApp(MONITOR_APP_ID);
+
   // 独立运行时：设置全局函数供 AppLayout 使用
   // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），不应该设置这些全局函数
-  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
   if (isStandalone) {
     registerAppEnvAccessors();
     const win = window as any;
@@ -348,11 +386,14 @@ async function mount(_props: QiankunProps = {}) {
     }
     win.__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
     win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
-    registerManifestMenusForApp(MONITOR_APP_ID);
   }
 
   // 创建 Vue 应用
   app = createApp(App);
+
+  // 设置主题插件（与 finance-app 保持一致，用于主题色和背景样式）
+  const themePlugin = createThemePlugin();
+  app.use(themePlugin);
 
   // 注册 Element Plus
   app.use(ElementPlus);
@@ -369,6 +410,32 @@ async function mount(_props: QiankunProps = {}) {
   // 创建路由
   router = createMonitorRouter(isStandalone);
   app.use(router);
+
+  // 关键：在独立运行时注册插件（与 finance-app 保持一致）
+  // 用户设置插件是 AppLayout 正常工作所必需的，负责管理菜单主题、主题切换等功能
+  // 重要：必须等待插件安装完成后再挂载应用，确保 AppLayout 能正确获取 menuType 等设置
+  if (isStandalone) {
+    const setupStandalonePlugins = async () => {
+      if (!app || !router) {
+        console.warn('[monitor-app] app 或 router 未初始化，无法注册插件');
+        return;
+      }
+      console.log('[monitor-app] 开始注册插件...');
+      resetPluginManager();
+      const pluginManager = usePluginManager({ debug: false });
+      pluginManager.setApp(app);
+      pluginManager.setRouter(router);
+      pluginManager.register(sharedUserSettingPlugin);
+      console.log('[monitor-app] 插件已注册，开始安装...');
+      await pluginManager.install(sharedUserSettingPlugin.name);
+      console.log('[monitor-app] 插件安装完成');
+    };
+
+    // 关键：等待插件安装完成（与 finance-app 保持一致）
+    await setupStandalonePlugins().catch((error) => {
+      console.error('[monitor-app] 注册插件失败:', error);
+    });
+  }
 
   // 设置错误捕获（监控应用自己的错误，不使用跨域上报）
   setupSubAppErrorCapture({

@@ -226,6 +226,7 @@ export class ResponseInterceptor {
     this.routerHandler = undefined;
   }
 
+
   /**
    * 设置消息处理器
    */
@@ -505,19 +506,20 @@ export class ResponseInterceptor {
 }
 
 // 创建全局实例
+// 注意：必须在所有便捷方法之前声明，确保在使用前已完全初始化
 export const responseInterceptor = new ResponseInterceptor();
 
-// 便捷方法
-export const handleApiResponse = <T>(
+// 便捷方法 - 使用函数内部访问，确保 responseInterceptor 已初始化
+export function handleApiResponse<T>(
   response: ApiResponse<T>
-): T | ApiResponse<T> | Promise<never> => {
+): T | ApiResponse<T> | Promise<never> {
   return responseInterceptor.handleSuccess(response);
-};
+}
 
-export const handleApiError = (error: { code: number; message: string }): Promise<never> => {
+export function handleApiError(error: { code: number; message: string }): Promise<never> {
   return responseInterceptor.handleError(error);
-};
+}
 
-export const handleNetworkError = (error: any): void => {
+export function handleNetworkError(error: any): void {
   responseInterceptor.handleNetworkError(error);
-};
+}

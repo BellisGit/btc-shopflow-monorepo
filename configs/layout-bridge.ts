@@ -2,9 +2,9 @@ import type { Plugin } from '@btc/shared-core';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
 // @ts-ignore - 类型声明文件可能未构建，但运行时可用（某些应用可能需要此注释）
-import { registerMenus, type MenuItem } from '@btc/shared-components';
+import { registerMenus, type MenuItem, getMenuRegistry } from '@btc/shared-components';
 // @ts-ignore - 类型定义可能不完整，但运行时可用（某些应用可能需要此注释）
-import { getManifestMenus, getManifestTabs } from '@btc/subapp-manifests';
+import { getManifestMenus, getManifestTabs, getManifest } from '@btc/subapp-manifests';
 import { storage } from '@btc/shared-utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { getAppBySubdomain } from './app-scanner';
@@ -145,16 +145,89 @@ export function registerAppEnvAccessors(target: Window = window) {
  * 根据 manifest 注册当前应用的菜单
  */
 export function registerManifestMenusForApp(appId: string) {
-  const manifestMenus = getManifestMenus(appId);
+  try {
+    // 关键：确保菜单注册表已初始化并挂载到全局
+    // 优先使用已存在的全局注册表（由 layout-app 创建），避免创建多个实例
+    // 在生产环境下，layout-app 先加载并创建注册表，子应用后加载应该使用同一个实例
+    let registry: any;
+    if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+      // 使用已存在的全局注册表（layout-app 创建的）
+      registry = (window as any).__BTC_MENU_REGISTRY__;
+    } else {
+      // 如果全局不存在，创建新的并挂载到全局
+      registry = getMenuRegistry();
+      if (typeof window !== 'undefined') {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    }
+    
+    // 先尝试通过 getManifestMenus 获取菜单
+    let manifestMenus = getManifestMenus(appId);
 
-  if (!manifestMenus?.length) {
-    return;
+    // 如果 getManifestMenus 返回空，尝试直接获取 manifest
+    if (!manifestMenus?.length) {
+      const manifest = getManifest(appId);
+      
+      if (!manifest) {
+        if (import.meta.env.DEV) {
+          console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 不存在`);
+        }
+        return;
+      }
+      
+      if (!manifest.menus || manifest.menus.length === 0) {
+        if (import.meta.env.DEV) {
+          console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 中没有菜单数据`);
+        }
+        return;
+      }
+      
+      // 直接使用 manifest.menus
+      manifestMenus = manifest.menus;
+    }
+
+    // 使用 normalizeMenuItems 进行规范化，包含图标分配逻辑
+    const normalizedMenus = normalizeMenuItems(manifestMenus, appId);
+
+    if (!normalizedMenus || normalizedMenus.length === 0) {
+      if (import.meta.env.DEV) {
+        console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单规范化后为空`);
+      }
+      return;
+    }
+
+    // 注册菜单
+    registerMenus(appId, normalizedMenus);
+    
+    // 验证菜单是否已正确注册
+    const registeredMenus = registry?.value?.[appId];
+    if (!registeredMenus || registeredMenus.length === 0) {
+      // 生产环境也输出警告，帮助调试
+      console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册后验证失败，菜单为空`, {
+        appId,
+        normalizedMenusLength: normalizedMenus.length,
+        registryExists: !!registry,
+        registryValue: registry?.value,
+        registryKeys: registry ? Object.keys(registry.value || {}) : [],
+      });
+      // 尝试再次注册
+      registerMenus(appId, normalizedMenus);
+      
+      // 再次验证
+      const retryMenus = registry?.value?.[appId];
+      if (retryMenus && retryMenus.length > 0) {
+        console.log(`[registerManifestMenusForApp] 应用 ${appId} 的菜单重试注册成功，共 ${retryMenus.length} 个顶级菜单项`);
+      } else {
+        console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
+      }
+    } else {
+      // 生产环境也输出成功日志
+      console.log(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册成功，共 ${registeredMenus.length} 个顶级菜单项`);
+    }
+  } catch (error) {
+    // 生产环境也输出错误信息，帮助调试
+    console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败:`, error);
   }
-
-  // 使用 normalizeMenuItems 进行规范化，包含图标分配逻辑
-  const normalizedMenus = normalizeMenuItems(manifestMenus, appId);
-
-  registerMenus(appId, normalizedMenus);
 }
 
 /**

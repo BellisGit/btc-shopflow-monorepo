@@ -179,8 +179,18 @@ const tabList = [
     tooltip: '文档中心 - 系统使用指南和API文档',
     isAction: true, // 直接跳转
     action: () => {
-      // 使用 window.location 跳转，避免依赖 Vue Router
-      window.location.href = '/docs';
+      // 判断是否为生产环境
+      const hostname = window.location.hostname;
+      const isProduction = hostname.includes('bellis.com.cn');
+
+      // 生产环境：跳转到子域名（无论是主域名还是子域名，都跳转到 docs.bellis.com.cn）
+      // 开发环境：跳转到路径
+      // 关键：跳转到子域名时，只跳转到根路径，不包含当前路径
+      const targetUrl = isProduction
+        ? `${window.location.protocol}//docs.bellis.com.cn/`
+        : '/docs';
+
+      window.location.href = targetUrl;
       visible.value = false;
     },
   },

@@ -8,8 +8,8 @@ import { useAuthStore } from './stores/auth';
 import { getDeviceInfo } from './utils/device';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
-// Vant 样式 - 全量导入（按需导入时样式会自动导入，但为了确保样式正常，也可以手动导入）
-// 如果使用按需导入，可以注释掉下面这行
+// Vant 样式 - 全量导入
+// 注意：如果使用按需导入（VantResolver），样式会自动导入，可以注释掉下面这行
 import 'vant/lib/index.css';
 
 const app = createApp(App);

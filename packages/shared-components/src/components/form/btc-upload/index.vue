@@ -216,28 +216,30 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 // 获取 service：优先使用 prop，其次 inject，最后尝试动态导入
-let service: any = props.uploadService;
+// 使用 inject 时提供默认值，避免在没有 provide 时出错
+const injectedService = inject('service', null);
 
-if (!service) {
-  try {
-    service = inject('service');
-  } catch (e) {
-    // inject 可能不存在
+// 按优先级获取 service（在 setup 上下文中执行，确保 inject 正常工作）
+const getService = () => {
+  // 1. 优先使用 prop
+  if (props.uploadService) {
+    return props.uploadService;
   }
-}
-
-// 如果仍然没有 service，尝试动态导入（仅在浏览器环境）
-if (!service && typeof window !== 'undefined') {
-  // 在运行时，尝试从应用级别获取 service
-  // 这需要主应用在 window 上暴露 service，或者通过其他方式
-  try {
-    // 尝试从全局变量获取（如果主应用设置了）
-    service = (window as any).__BTC_SERVICE__;
-  } catch (e) {
-    // 忽略错误
+  
+  // 2. 其次使用 inject
+  if (injectedService) {
+    return injectedService;
   }
-}
+  
+  // 3. 最后尝试从全局变量获取（仅在浏览器环境）
+  if (typeof window !== 'undefined') {
+    return (window as any).__BTC_SERVICE__;
+  }
+  
+  return null;
+};
 
+const service = getService();
 const uploadComposable = useUpload(service);
 const toUpload = uploadComposable.toUpload;
 const refs: Record<string, any> = {};

@@ -4,6 +4,8 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import { registerMicroApps, start } from 'qiankun';
 import { getAppConfig } from '@configs/app-env.config';
 import { registerAppEnvAccessors, resolveAppLogoUrl, registerManifestMenusForApp, registerManifestTabsForApp } from '@configs/layout-bridge';
+// 关键：延迟导入菜单注册表相关函数，避免循环依赖或导入错误导致白屏
+// import { getMenuRegistry } from '@btc/shared-components';
 // 使用相对路径导入，避免 TypeScript 路径解析问题
 import { getAppBySubdomain } from '../../../configs/app-scanner';
 // layout-app 使用最小化配置，不加载 system-app 的路由（避免加载业务逻辑）
@@ -18,7 +20,8 @@ import { MenuThemeEnum, SystemThemeEnum } from '@system/plugins/user-setting/con
 // 导入 layout-app 自己的 EPS service 和域列表工具函数
 import { service } from './services/eps';
 import { getDomainList } from '@system/utils/domain-cache';
-import mitt from '@btc/shared-components/utils/mitt';
+// 使用相对路径导入 mitt，避免 TypeScript 路径解析问题
+import mitt from '../../../packages/shared-components/src/utils/mitt';
 import 'virtual:svg-icons';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
@@ -32,29 +35,32 @@ registerAppEnvAccessors();
  * 获取应用入口地址
  */
 const getAppEntry = (appName: string): string => {
-  const appConfig = getAppConfig(`${appName}-app`);
+  const fullAppName = `${appName}-app`;
+  const appConfig = getAppConfig(fullAppName);
+
   if (!appConfig) {
-    if (import.meta.env.DEV) {
-      console.warn(`[layout-app] 未找到应用配置: ${appName}-app`);
-    }
-    return `/${appName}/`;
+    const fallbackUrl = `/${appName}/`;
+    return fallbackUrl;
   }
 
-      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
+  // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
   if (import.meta.env.PROD) {
     if (appConfig.prodHost) {
       const protocol = typeof window !== 'undefined' && window.location.protocol
         ? window.location.protocol
         : 'https:';
-      return `${protocol}//${appConfig.prodHost}/`;
+      const entryUrl = `${protocol}//${appConfig.prodHost}/`;
+      return entryUrl;
     }
-    return `/${appName}/`;
+    const fallbackUrl = `/${appName}/`;
+    return fallbackUrl;
   }
 
   // 开发/预览环境：使用配置的端口
   const port = window.location.port || appConfig.prePort;
   const host = window.location.hostname || appConfig.preHost;
-  return `//${host}:${port}`;
+  const entryUrl = `//${host}:${port}`;
+  return entryUrl;
 };
 
 let settingsInitialized = false;
@@ -85,10 +91,7 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
   if (!(window as any).__APP_EMITTER__) {
     const emitter = mitt();
     (window as any).__APP_EMITTER__ = emitter;
-    if (import.meta.env.DEV) {
-      console.log('[layout-app] 已创建并设置全局事件总线 (__APP_EMITTER__)');
-    }
-    
+
     // 关键：添加全局 window 事件监听器作为兜底方案，确保即使事件总线未正确初始化也能工作
     // 监听 'open-preferences-drawer' 事件，直接触发 layout-app 的偏好设置抽屉
     window.addEventListener('open-preferences-drawer', () => {
@@ -104,6 +107,36 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     ensureDefaultSettings();
     initSettingsConfig();
     settingsInitialized = true;
+
+    // 关键：在 layout-app 初始化时立即创建菜单注册表，确保菜单注册表已存在
+    // 这样后续的菜单注册就能正确工作
+    // 使用异步导入，但在注册菜单之前确保注册表已初始化
+    import('@btc/shared-components').then((module) => {
+      try {
+        if (module.getMenuRegistry) {
+          // 关键：优先使用已存在的全局注册表，确保与子应用使用同一个实例
+          if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+            // 使用已存在的全局注册表（可能由其他模块创建）
+            if (import.meta.env.DEV) {
+              console.log('[layout-app] 使用已存在的全局菜单注册表（早期初始化）');
+            }
+          } else {
+            // 如果全局不存在，创建新的并挂载到全局对象
+            const registry = module.getMenuRegistry();
+            if (typeof window !== 'undefined') {
+              (window as any).__BTC_MENU_REGISTRY__ = registry;
+            }
+            if (import.meta.env.DEV) {
+              console.log('[layout-app] 创建新的全局菜单注册表（早期初始化）');
+            }
+          }
+        }
+      } catch (error) {
+        // 静默失败
+      }
+    }).catch(() => {
+      // 静默失败
+    });
 
     // 将必要的对象暴露到全局，供 shared-components 使用
     (window as any).__APP_STORAGE__ = appStorage;
@@ -128,24 +161,90 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     // 暴露 Logo URL 获取函数
     (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
 
-    // 关键：在 layout-app 挂载之前，根据当前域名提前注册菜单
+    // 关键：在 layout-app 挂载之前，根据当前域名或路径提前注册菜单
     // 这样菜单组件渲染时就能读取到菜单数据
-    const hostname = window.location.hostname;
-    const appBySubdomain = getAppBySubdomain(hostname);
-    const targetApp = appBySubdomain?.id;
-    if (targetApp) {
-      if (import.meta.env.DEV) {
-        console.log(`[layout-app] 在初始化时提前注册菜单和 Tabs: ${targetApp}`);
-      }
+    // 使用异步导入确保菜单注册表已初始化，并等待注册完成
+    await import('@btc/shared-components').then(async (module) => {
       try {
-        registerManifestMenusForApp(targetApp);
-        registerManifestTabsForApp(targetApp);
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.warn(`[layout-app] 初始化时注册菜单/Tabs 失败 (${targetApp}):`, error);
+        if (module.getMenuRegistry) {
+          // 关键：优先使用已存在的全局注册表，确保与子应用使用同一个实例
+          let registry: any;
+          if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+            // 使用已存在的全局注册表（可能由其他模块创建）
+            registry = (window as any).__BTC_MENU_REGISTRY__;
+            if (import.meta.env.DEV) {
+              console.log('[layout-app] 使用已存在的全局菜单注册表');
+            }
+          } else {
+            // 如果全局不存在，创建新的并挂载到全局对象
+            registry = module.getMenuRegistry();
+            if (typeof window !== 'undefined') {
+              (window as any).__BTC_MENU_REGISTRY__ = registry;
+            }
+            if (import.meta.env.DEV) {
+              console.log('[layout-app] 创建新的全局菜单注册表');
+            }
+          }
+
+          // 现在注册表已初始化，可以注册菜单了
+          const hostname = window.location.hostname;
+          const appBySubdomain = getAppBySubdomain(hostname);
+          let targetApp = appBySubdomain?.id;
+
+          // 如果没有从子域名获取到应用，根据路径判断（开发/预览环境）
+          if (!targetApp) {
+            const pathname = window.location.pathname;
+            if (pathname.startsWith('/admin')) {
+              targetApp = 'admin';
+            } else if (pathname.startsWith('/logistics')) {
+              targetApp = 'logistics';
+            } else if (pathname.startsWith('/engineering')) {
+              targetApp = 'engineering';
+            } else if (pathname.startsWith('/quality')) {
+              targetApp = 'quality';
+            } else if (pathname.startsWith('/production')) {
+              targetApp = 'production';
+            } else if (pathname.startsWith('/finance')) {
+              targetApp = 'finance';
+            } else if (pathname.startsWith('/monitor')) {
+              targetApp = 'monitor';
+            } else {
+              // 默认注册 system 应用的菜单（系统域）
+              targetApp = 'system';
+            }
+          }
+
+          if (targetApp) {
+            // 同步注册菜单，确保在组件渲染之前完成
+            registerManifestMenusForApp(targetApp);
+            registerManifestTabsForApp(targetApp);
+
+            // 设置浏览器标题
+            try {
+              const { getManifest } = await import('@btc/subapp-manifests');
+              const manifest = getManifest(targetApp);
+              if (manifest?.app?.nameKey) {
+                // 如果有 nameKey，尝试从 i18n 获取翻译
+                const { tSync } = await import('@system/i18n/getters');
+                const appName = tSync(manifest.app.nameKey);
+                if (appName && appName !== manifest.app.nameKey) {
+                  document.title = appName;
+                } else if (manifest.app.nameKey) {
+                  // 如果翻译失败，使用 nameKey 作为后备
+                  document.title = manifest.app.nameKey;
+                }
+              }
+            } catch (e) {
+              // 静默失败
+            }
+          }
         }
+      } catch (error) {
+        // 静默失败
       }
-    }
+    }).catch(() => {
+      // 静默失败
+    });
   }
   setupEps(appInstance);
   setupStore(appInstance);
@@ -169,10 +268,8 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
   (window as any).__APP_GET_APP_CONFIG__ = getAppConfig;
 
   // 等待插件注册完成（必须在应用挂载之前完成）
-  await registerLayoutPlugins(appInstance).catch((error) => {
-    if (import.meta.env.DEV) {
-      console.error('[layout-app] 注册插件失败:', error);
-    }
+  await registerLayoutPlugins(appInstance).catch(() => {
+    // 静默失败
   });
 };
 
@@ -287,9 +384,6 @@ const ensureMicroAppsRegistered = async () => {
           setTimeout(() => {
             const viewport = document.querySelector('#subapp-viewport');
             if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
-              if (import.meta.env.DEV) {
-                console.warn(`[layout-app] 检测到 loading 状态仍然存在，强制清除`);
-              }
               viewport.removeAttribute('data-qiankun-loading');
             }
           }, 50);
@@ -323,9 +417,6 @@ const ensureMicroAppsRegistered = async () => {
             setTimeout(() => {
               const viewport = document.querySelector('#subapp-viewport');
               if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
-                if (import.meta.env.DEV) {
-                  console.warn(`[layout-app] 检测到 loading 状态仍然存在，强制清除`);
-                }
                 viewport.removeAttribute('data-qiankun-loading');
               }
             }, 50);
@@ -339,10 +430,6 @@ const ensureMicroAppsRegistered = async () => {
     subApps,
     {
       beforeLoad: [async (app: any) => {
-        if (import.meta.env.DEV) {
-          console.log(`[layout-app] 开始加载子应用: ${app.name}, 入口: ${app.entry}`);
-        }
-
         // 显示加载状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport) {
@@ -351,29 +438,27 @@ const ensureMicroAppsRegistered = async () => {
           (viewport as HTMLElement).style.setProperty('display', 'block', 'important');
           (viewport as HTMLElement).style.setProperty('visibility', 'visible', 'important');
           (viewport as HTMLElement).style.setProperty('opacity', '1', 'important');
-        } else if (import.meta.env.DEV) {
-          console.error(`[layout-app] 警告: 未找到 #subapp-viewport 容器`);
         }
 
         // 设置超时保护：生产环境15秒，开发环境30秒后自动清除 loading 状态
         loadingTimeout = setTimeout(() => {
-          if (import.meta.env.DEV) {
-            console.error(`[layout-app] 子应用加载超时: ${app.name} (超时时间: ${LOADING_TIMEOUT}ms)`);
-          }
           clearLoadingState();
         }, LOADING_TIMEOUT);
 
-        // 关键：在子应用加载之前提前注册菜单和 Tabs，确保 layout-app 渲染时菜单已经可用
-        // 从应用名称中提取应用ID（例如 'finance-app' -> 'finance'）
-        const appId = targetApp;
+        // 关键：在子应用加载之前尝试提前注册菜单和 Tabs
+        // 但从应用名称中提取应用ID（例如 'monitor-app' -> 'monitor'）
+        // 注意：此时 menu-registry chunk 可能还没有加载，所以这里可能会失败
+        // 真正的注册应该在 afterMount 中进行，当子应用的 JS 已经加载完成时
+        const appNameMatch = app.name?.match(/^(.+)-app$/);
+        const appId = appNameMatch ? appNameMatch[1] : targetApp;
         if (appId) {
           try {
+            // 尝试提前注册，但失败也不影响（会在 afterMount 中重试）
             registerManifestMenusForApp(appId);
             registerManifestTabsForApp(appId);
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn(`[layout-app] 提前注册菜单/Tabs 失败 (${appId}):`, error);
-            }
+            // 忽略错误，因为 menu-registry chunk 可能还没有加载
+            // 真正的注册会在 afterMount 中进行
           }
         }
       }],
@@ -381,8 +466,20 @@ const ensureMicroAppsRegistered = async () => {
         // 子应用准备挂载
       }],
       afterMount: [async (app: any) => {
-        if (import.meta.env.DEV) {
-          console.log(`[layout-app] 子应用挂载完成: ${app.name}`);
+        // 关键：确保 CSS 变量能够传递到子应用容器
+        // 在 qiankun 环境下，CSS 变量需要从父元素显式传递
+        const viewport = document.querySelector('#subapp-viewport');
+        if (viewport) {
+          const htmlElement = document.documentElement;
+          const computedStyle = getComputedStyle(htmlElement);
+
+          // 获取主应用的 CSS 变量值
+          const bgColorPage = computedStyle.getPropertyValue('--el-bg-color-page') || computedStyle.getPropertyValue('--el-bg-color') || '#0a0a0a';
+          const bgColor = computedStyle.getPropertyValue('--el-bg-color') || '#0a0a0a';
+
+          // 设置到子应用容器，确保子应用能够继承
+          (viewport as HTMLElement).style.setProperty('--el-bg-color-page', bgColorPage);
+          (viewport as HTMLElement).style.setProperty('--el-bg-color', bgColor);
         }
 
         // 关键：强制清除 loading 状态（兜底机制，即使 onReady 未被调用）
@@ -391,39 +488,83 @@ const ensureMicroAppsRegistered = async () => {
           clearLoadingState();
         }, 100);
 
-        // 关键：在子应用挂载后再次注册菜单和 Tabs，确保菜单在子应用加载后立即注册
-        // 从应用名称中提取应用ID（例如 'finance-app' -> 'finance'）
-        // 注意：这里需要从 app.name 中提取，因为 targetApp 可能不在作用域内
+        // 关键：在子应用挂载后注册菜单和 Tabs，确保子应用的 menu-registry chunk 已经加载
+        // 从应用名称中提取应用ID（例如 'monitor-app' -> 'monitor'）
         const appNameMatch = app.name?.match(/^(.+)-app$/);
-        const appId = appNameMatch ? appNameMatch[1] : targetApp;
+        const appId = appNameMatch ? appNameMatch[1] : null;
         if (appId) {
-          try {
-            // 延迟一小段时间，确保子应用的菜单 chunk 已经加载
-            setTimeout(() => {
+          // 关键：先检查菜单是否已注册且不为空，如果已注册则跳过重试
+          // 避免覆盖子应用自己注册的菜单
+          const menuRegistry = (window as any).__BTC_MENU_REGISTRY__;
+          const existingMenus = menuRegistry?.value?.[appId];
+          
+          if (existingMenus && existingMenus.length > 0) {
+            // 菜单已注册且不为空，跳过重试
+            if (import.meta.env.DEV) {
+              console.log(`[layout-app] 应用 ${appId} 的菜单已注册，跳过重试`);
+            }
+            return;
+          }
+
+          // 使用多次重试机制，确保菜单注册成功
+          // 因为子应用的 menu-registry chunk 可能还在加载中
+          let retryCount = 0;
+          const maxRetries = 15;
+          const retryDelay = 300;
+
+          const tryRegisterMenus = () => {
+            try {
+              // 再次检查菜单是否已注册（可能在重试期间被子应用注册了）
+              const currentRegistry = (window as any).__BTC_MENU_REGISTRY__;
+              const currentMenus = currentRegistry?.value?.[appId];
+              
+              if (currentMenus && currentMenus.length > 0) {
+                // 菜单已注册，停止重试
+                if (import.meta.env.DEV) {
+                  console.log(`[layout-app] 应用 ${appId} 的菜单已在重试期间注册，停止重试`);
+                }
+                return;
+              }
+
+              // 尝试注册菜单
               registerManifestMenusForApp(appId);
               registerManifestTabsForApp(appId);
-            }, 100);
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn(`[layout-app] 子应用挂载后注册菜单/Tabs 失败 (${appId}):`, error);
+
+              // 验证菜单是否已注册
+              const registeredMenus = currentRegistry?.value?.[appId];
+
+              if (registeredMenus && registeredMenus.length > 0) {
+                // 注册成功，停止重试
+                if (import.meta.env.DEV) {
+                  console.log(`[layout-app] 应用 ${appId} 的菜单注册成功，共 ${registeredMenus.length} 个顶级菜单项`);
+                }
+                return;
+              }
+
+              // 菜单仍为空，继续重试
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(tryRegisterMenus, retryDelay);
+              } else if (import.meta.env.DEV) {
+                console.warn(`[layout-app] 应用 ${appId} 的菜单注册失败，已达到最大重试次数`);
+              }
+            } catch (error) {
+              if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(tryRegisterMenus, retryDelay);
+              } else if (import.meta.env.DEV) {
+                console.error(`[layout-app] 应用 ${appId} 的菜单注册出错:`, error);
+              }
             }
-          }
+          };
+
+          setTimeout(tryRegisterMenus, 200);
         }
       }],
       // 关键：添加错误处理钩子，处理子应用加载失败的情况
       // 注意：qiankun 的类型定义可能不完整，使用类型断言
       onError: [
-        (error: Error, app: any) => {
-          // 生产环境只记录错误，不打印详细信息
-          if (import.meta.env.DEV) {
-            console.error(`[layout-app] 子应用加载失败: ${app?.name || 'unknown'}`, error);
-            console.error('[layout-app] 错误详情:', {
-              appName: app?.name,
-              entry: app?.entry,
-              error: error.message,
-              stack: error.stack,
-            });
-          }
+        () => {
           // 立即清除 loading 状态，避免一直卡在 loading
           clearLoadingState();
         },
@@ -434,9 +575,6 @@ const ensureMicroAppsRegistered = async () => {
   microAppsRegistered = true;
 
   if (!qiankunStarted) {
-    if (import.meta.env.DEV) {
-      console.log(`[layout-app] 启动 qiankun，注册了 ${subApps.length} 个子应用`);
-    }
     start({
       sandbox: {
         strictStyleIsolation: false,
@@ -532,9 +670,7 @@ const ensureMicroAppsRegistered = async () => {
               );
 
             } catch (error) {
-              if (import.meta.env.DEV) {
-                console.warn('[layout-app] 无法解析 entry URL，跳过 base 标签设置:', error);
-              }
+              // 静默失败
             }
           }
 
@@ -599,24 +735,13 @@ const ensureMicroAppsRegistered = async () => {
               singular: true,
             });
 
-            if (import.meta.env.DEV) {
-              console.log('[layout-app] 手动加载子应用:', appToLoad.name);
-            }
-
             // 监听子应用加载完成
             microApp.mountPromise.then(() => {
-              if (import.meta.env.DEV) {
-                console.log('[layout-app] 子应用手动加载完成');
-              }
-            }).catch((error) => {
-              if (import.meta.env.DEV) {
-                console.error('[layout-app] 子应用手动加载失败:', error);
-              }
+              // 加载完成
+            }).catch(() => {
+              // 加载失败，静默处理
             });
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn('[layout-app] 手动加载子应用失败，尝试触发路由匹配:', error);
-            }
             // 如果 loadMicroApp 失败，尝试触发路由匹配
             window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
           }
@@ -701,16 +826,6 @@ async function mount(props: any) {
         errorMessage.includes('subapp') ||
         errorSource.includes('micro-apps')
       ) {
-        if (import.meta.env.DEV) {
-          console.error('[layout-app] 检测到子应用相关错误:', {
-            message: errorMessage,
-            source: errorSource,
-            lineno: event.lineno,
-            colno: event.colno,
-            error: event.error,
-          });
-        }
-
         // 清除 loading 状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
@@ -734,10 +849,6 @@ async function mount(props: any) {
         errorMessage.includes('subapp') ||
         (reason?.stack && reason.stack.includes('micro-apps'))
       ) {
-        if (import.meta.env.DEV) {
-          console.error('[layout-app] 检测到子应用相关的未处理 Promise 拒绝:', reason);
-        }
-
         // 清除 loading 状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
@@ -783,8 +894,7 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
     if (mountTarget) {
       // 子应用环境：挂载到指定的容器（通常是 #app）
       container = document.querySelector(mountTarget) as HTMLElement;
-      if (!container && import.meta.env.DEV) {
-        console.warn(`[layout-app] 未找到指定的挂载容器 ${mountTarget}，尝试查找 #app`);
+      if (!container) {
         container = document.querySelector('#app') as HTMLElement;
       }
     } else {
@@ -802,8 +912,6 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       // 因为子应用（如 admin-app）需要通过 qiankun 自动加载到 #subapp-viewport
       // 当 layout-app 通过 loadLayoutApp 直接加载到 #app 时，也应该启动 qiankun
       ensureMicroAppsRegistered();
-    } else if (import.meta.env.DEV) {
-      console.error(`[layout-app] 未找到挂载容器（${mountTarget || '#layout-container'}），无法挂载应用`);
     }
   })();
 }

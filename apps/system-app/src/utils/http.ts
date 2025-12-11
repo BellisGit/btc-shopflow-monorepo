@@ -159,9 +159,9 @@ export class Http {
           const hostname = window.location.hostname;
           const port = window.location.port || '';
           // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
-          const isProduction = hostname.includes('bellis.com.cn') && 
-                               !port.startsWith('41') && 
-                               port !== '5173' && 
+          const isProduction = hostname.includes('bellis.com.cn') &&
+                               !port.startsWith('41') &&
+                               port !== '5173' &&
                                port !== '3000' &&
                                hostname !== 'localhost' &&
                                !hostname.startsWith('127.0.0.1') &&
@@ -187,6 +187,8 @@ export class Http {
     );
 
     // 响应拦截器
+    // 注意：如果出现 "Cannot access 'responseInterceptor' before initialization" 错误，
+    // 这是因为模块加载顺序问题。确保 @btc/shared-utils 在使用前已完全加载。
     const interceptor = responseInterceptor.createResponseInterceptor();
 
     const onFulfilled = (response: any) => {
@@ -202,8 +204,8 @@ export class Http {
 
         // 检查响应是否成功（code: 200）
         // 后端返回格式：{"code":200,"msg":"成功","total":0}
-        const isLoginSuccess = originalResponseData && 
-                               typeof originalResponseData === 'object' && 
+        const isLoginSuccess = originalResponseData &&
+                               typeof originalResponseData === 'object' &&
                                originalResponseData.code === 200;
 
         if (isLoginSuccess) {
@@ -392,7 +394,34 @@ function getInitialBaseURL(): string {
   return baseURL;
 }
 
-export const http = new Http(getInitialBaseURL());
+// 延迟初始化 http 实例，确保 responseInterceptor 已初始化
+// 使用 getter 函数延迟实例化，避免模块加载时的初始化顺序问题
+let _httpInstance: Http | null = null;
+
+function createHttpInstance(): Http {
+  if (!_httpInstance) {
+    _httpInstance = new Http(getInitialBaseURL());
+  }
+  return _httpInstance;
+}
+
+// 使用 getter 延迟初始化，确保 responseInterceptor 在使用前已初始化
+// 这可以解决打包工具代码分割导致的初始化顺序问题
+export const http = new Proxy({} as Http, {
+  get(_target, prop) {
+    const instance = createHttpInstance();
+    const value = (instance as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(instance);
+    }
+    return value;
+  },
+  set(_target, prop, value) {
+    const instance = createHttpInstance();
+    (instance as any)[prop] = value;
+    return true;
+  },
+});
 
 // 注意：HTTP URL 拦截逻辑已在 bootstrap/index.ts 中实现
 // 这里不需要重复拦截，因为 bootstrap 会在应用启动时最早执行

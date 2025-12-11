@@ -651,9 +651,6 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 关闭抽屉
-  handleClose();
-
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
 
@@ -661,6 +658,9 @@ const handleSwitchApp = async (app: MicroApp) => {
   if (isProduction) {
     // 文档应用特殊处理（文档应用可能没有独立的子域名）
     if (app.name === 'docs') {
+      // 立即关闭抽屉，不等待动画完成
+      handleClose();
+      
       // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
       // 这里先使用路径方式，如果需要可以后续配置
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
@@ -692,6 +692,9 @@ const handleSwitchApp = async (app: MicroApp) => {
     const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
     const appConfig = getAppConfig(mappedAppName);
     if (appConfig && appConfig.prodHost) {
+      // 立即关闭抽屉，不等待动画完成
+      handleClose();
+      
       // 清除域列表缓存，确保子应用重新请求域列表
       const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
       if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
@@ -737,6 +740,9 @@ const handleSwitchApp = async (app: MicroApp) => {
 
   // 监听 afterMount 事件
   window.addEventListener('qiankun:after-mount', handleAfterMount);
+
+  // 立即关闭抽屉，不等待动画完成，让路由切换可以立即开始
+  handleClose();
 
   try {
   // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用

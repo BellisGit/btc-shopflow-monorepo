@@ -11,3 +11,5 @@ export { ensureCssPlugin } from './css';
 export { addVersionPlugin } from './version';
 export { publicImagesToAssetsPlugin } from './public-images';
 export { resourcePreloadPlugin } from './resource-preload';
+export { resolveLogoPlugin } from './resolve-logo';
+export { copyIconsPlugin } from './copy-icons';

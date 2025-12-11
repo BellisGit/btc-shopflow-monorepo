@@ -120,3 +120,24 @@ html.dark,
   }
 }
 
+// 确保暗黑模式下的文本颜色正确
+.dark {
+  color-scheme: dark;
+}
+
+// ========== 关键：在文件末尾再次覆盖 CSS 变量，确保在预览服务器上也能生效 ==========
+// 在预览服务器上，样式可能被合并或压缩，导致加载顺序改变
+// 通过在文件末尾再次定义，确保覆盖样式在最后加载，优先级最高
+// 使用多个选择器组合，确保覆盖 Element Plus 的 dark/css-vars.css
+html.dark:root,
+html.dark,
+html.dark :root,
+html.dark html,
+html.dark body,
+html.dark #app,
+html.dark #subapp-viewport {
+  // 再次覆盖，确保在预览服务器上也能生效
+  --el-bg-color: #0a0a0a;
+  --el-bg-color-page: #0a0a0a;
+}
+

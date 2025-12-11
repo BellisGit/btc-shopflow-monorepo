@@ -23,6 +23,8 @@ export function resourcePreloadPlugin(): Plugin {
         }
       };
 
+      // 只预加载最关键的资源，避免阻塞 HTML 解析
+      // 1. 入口文件（必须预加载）
       const indexChunk = jsChunks.find(jsChunk => jsChunk.includes('index-'));
       if (indexChunk) {
         criticalResources.push({
@@ -31,21 +33,27 @@ export function resourcePreloadPlugin(): Plugin {
         });
       }
 
-      const epsServiceChunk = jsChunks.find(jsChunk => jsChunk.includes('eps-service-'));
-      if (epsServiceChunk) {
-        criticalResources.push({
-          href: getResourceHref(epsServiceChunk),
-          rel: 'modulepreload',
-        });
-      }
+      // 2. EPS 服务（关键依赖，但可以延迟加载）
+      // 注意：EPS 服务不是阻塞性的，可以延迟加载，所以不预加载
+      // 如果 EPS 服务很大，预加载可能会阻塞其他资源
+      // const epsServiceChunk = jsChunks.find(jsChunk => jsChunk.includes('eps-service-'));
+      // if (epsServiceChunk) {
+      //   criticalResources.push({
+      //     href: getResourceHref(epsServiceChunk),
+      //     rel: 'modulepreload',
+      //   });
+      // }
 
-      cssChunks.forEach(cssChunk => {
+      // 3. CSS 文件（必须预加载，但只预加载第一个，避免阻塞）
+      // 只预加载第一个 CSS 文件，其他 CSS 文件可以延迟加载
+      const firstCssChunk = cssChunks[0];
+      if (firstCssChunk) {
         criticalResources.push({
-          href: getResourceHref(cssChunk),
+          href: getResourceHref(firstCssChunk),
           rel: 'preload',
           as: 'style',
         });
-      });
+      }
     },
     transformIndexHtml(html) {
       if (criticalResources.length === 0) {

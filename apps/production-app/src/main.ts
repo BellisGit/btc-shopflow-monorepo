@@ -51,11 +51,83 @@ function handleThemeChange(e: CustomEvent<{ color: string; dark: boolean }>) {
 const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 
-const setupStandaloneGlobals = () => {
+const setupStandaloneGlobals = async () => {
   registerAppEnvAccessors();
-  (window as any).__APP_STORAGE__ = createAppStorageBridge(PRODUCTION_APP_ID);
-  (window as any).__APP_EPS_SERVICE__ = {};
-  (window as any).__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(PRODUCTION_APP_ID);
+
+  // 优先使用全局共享的 EPS 服务（由 system-app 或其他应用提供）
+  // 只有在没有全局服务时，才加载本地的 EPS 服务
+  const getGlobalEpsService = () => {
+    const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
+    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+      return globalService;
+    }
+    return null;
+  };
+
+  // 先检查是否有全局服务
+  let globalService = getGlobalEpsService();
+
+  if (!globalService) {
+    // 等待全局服务可用（最多等待 2 秒）
+    const waitForGlobalService = async (maxWait = 2000, interval = 100) => {
+      const startTime = Date.now();
+      while (Date.now() - startTime < maxWait) {
+        const service = getGlobalEpsService();
+        if (service) return service;
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      return null;
+    };
+
+    globalService = await waitForGlobalService();
+  }
+
+  if (globalService) {
+    // 使用全局服务
+    (window as any).__APP_EPS_SERVICE__ = globalService;
+  } else {
+    // 没有全局服务，加载本地服务
+    try {
+      const { service } = await import('./services/eps');
+      (window as any).__APP_EPS_SERVICE__ = service;
+    } catch (error) {
+      console.warn('[production-app] Failed to load EPS service:', error);
+      (window as any).__APP_EPS_SERVICE__ = {};
+    }
+  }
+
+  try {
+
+    (window as any).__APP_STORAGE__ = createAppStorageBridge(PRODUCTION_APP_ID);
+  } catch (error) {
+    console.warn('[production-app] Failed to load app storage:', error);
+    (window as any).__APP_STORAGE__ = {
+      user: {
+        getAvatar: () => null,
+        setAvatar: () => {},
+        getName: () => null,
+        setName: () => {},
+      },
+    };
+  }
+
+  try {
+    const domainModule = await import('./utils/domain-cache');
+    if (domainModule.getDomainList) {
+      (window as any).__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+    }
+    if (domainModule.clearDomainCache) {
+      (window as any).__APP_CLEAR_DOMAIN_CACHE__ = domainModule.clearDomainCache;
+      // 关键：在子应用初始化时清除域列表缓存，强制重新请求 me 接口
+      // 这确保子应用显示的应用列表标题是最新的
+      domainModule.clearDomainCache();
+    }
+  } catch (error) {
+    console.warn('[production-app] Failed to load domain cache:', error);
+    // 如果加载失败，使用默认解析器作为兜底
+    (window as any).__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(PRODUCTION_APP_ID);
+  }
+
   (window as any).__APP_FINISH_LOADING__ = () => {};
   (window as any).__APP_LOGOUT__ = () => {};
   (window as any).__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
@@ -78,7 +150,19 @@ async function render(props: QiankunProps = {}) {
   const isStandalone = shouldRunStandalone();
 
   if (isStandalone) {
-    setupStandaloneGlobals();
+    await setupStandaloneGlobals();
+    // 关键：在独立运行模式下，确保菜单注册表已初始化
+    // 先初始化菜单注册表，再注册菜单，确保菜单在 AppLayout 渲染前已准备好
+    try {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      // 确保注册表已挂载到全局对象
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    } catch (error) {
+      // 静默失败
+    }
     registerManifestMenusForApp(PRODUCTION_APP_ID);
     registerManifestTabsForApp(PRODUCTION_APP_ID);
   }
@@ -228,6 +312,27 @@ async function render(props: QiankunProps = {}) {
 
   if (!mountPoint) {
     throw new Error('[production-app] 无法找到挂载节点');
+  }
+
+  // 关键：在应用挂载前再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
+  // 这解决了生产环境子域名下独立运行时菜单为空的问题
+  // 必须在 app.mount 之前注册，确保 AppLayout 渲染时菜单已准备好
+  try {
+    // 确保菜单注册表已初始化
+    if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      (window as any).__BTC_MENU_REGISTRY__ = registry;
+    }
+    // 重新注册菜单，确保菜单数据已准备好
+    registerManifestMenusForApp(PRODUCTION_APP_ID);
+    // 手动触发响应式更新，确保 Vue 能够检测到菜单变化
+    if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+      const { triggerRef } = await import('vue');
+      triggerRef((window as any).__BTC_MENU_REGISTRY__);
+    }
+  } catch (error) {
+    // 静默失败
   }
 
   app.mount(mountPoint);

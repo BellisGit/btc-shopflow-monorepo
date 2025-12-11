@@ -2,11 +2,11 @@
   <div
     class="app-layout"
     :class="{
-      'is-collapse': isCollapse && menuType !== 'top' && menuType !== 'dual-menu',
+      'is-collapse': isCollapse && menuType?.value !== 'top' && menuType?.value !== 'dual-menu',
       'is-full': isFullscreen,
-      'menu-type-top': menuType === 'top',
-      'menu-type-top-left': menuType === 'top-left',
-      'menu-type-dual-menu': menuType === 'dual-menu',
+      'menu-type-top': menuType?.value === 'top',
+      'menu-type-top-left': menuType?.value === 'top-left',
+      'menu-type-dual-menu': menuType?.value === 'dual-menu',
     }"
   >
     <!-- 遮罩层（移动端使用） -->
@@ -15,9 +15,10 @@
     <!-- 顶栏（包含汉堡菜单、Logo、折叠按钮、搜索、主题、语言、用户） -->
     <div class="app-layout__topbar">
       <Topbar
+        v-if="menuType"
         :is-collapse="isCollapse"
         :drawer-visible="drawerVisible"
-        :menu-type="menuType"
+        :menu-type="menuType?.value || 'left'"
         @toggle-sidebar="toggleSidebar"
         @toggle-drawer="toggleDrawer"
         @open-drawer="openDrawer"
@@ -30,17 +31,17 @@
     <div class="app-layout__body">
       <!-- 左侧边栏（左侧菜单、双栏菜单左侧、混合菜单左侧） -->
       <div
-        v-if="menuType === 'left' || menuType === 'dual-menu' || menuType === 'top-left'"
+        v-if="shouldShowSidebar"
         class="app-layout__sidebar"
         :class="{ 'has-dark-menu': isDarkMenuStyle }"
       >
         <Sidebar
-          v-if="menuType === 'left'"
+          v-if="menuType?.value === 'left'"
           :is-collapse="isCollapse"
           :drawer-visible="drawerVisible"
         />
-        <DualMenu v-else-if="menuType === 'dual-menu'" />
-        <TopLeftSidebar v-else />
+        <DualMenu v-else-if="menuType?.value === 'dual-menu'" />
+        <TopLeftSidebar v-else-if="menuType?.value === 'top-left'" />
       </div>
 
       <!-- 右侧内容 -->
@@ -56,7 +57,7 @@
 
           <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
           <Breadcrumb
-            v-if="showBreadcrumb && showCrumbs"
+            v-if="showBreadcrumb && showCrumbs?.value !== false"
           />
         </div>
 
@@ -164,7 +165,72 @@ const scheduleContentResize = () => {
 };
 
 // 获取设置状态
-const { showCrumbs, pageTransition, menuType, menuThemeType, isDark } = useSettingsState();
+let showCrumbs: any;
+let pageTransition: any;
+let menuType: any;
+let menuThemeType: any;
+let isDark: any;
+
+try {
+  const settingsState = useSettingsState();
+  showCrumbs = settingsState.showCrumbs;
+  pageTransition = settingsState.pageTransition;
+  menuType = settingsState.menuType;
+  menuThemeType = settingsState.menuThemeType;
+  isDark = settingsState.isDark;
+  
+  // 关键：如果 menuType 为空或未定义，设置默认值为 'left'
+  // 检查 menuType.value 是否为有效值（'left', 'top', 'top-left', 'dual-menu'）
+  const validMenuTypes = ['left', 'top', 'top-left', 'dual-menu'];
+  const menuTypeValue = menuType?.value;
+  // 检查：menuType 不存在、值为空字符串、null、undefined，或者不在有效值列表中
+  if (!menuType || !menuTypeValue || menuTypeValue === '' || !validMenuTypes.includes(String(menuTypeValue))) {
+    // 如果 menuType 存在但值无效，直接修改其值；否则创建新的 ref
+    if (menuType && typeof menuType.value !== 'undefined') {
+      menuType.value = 'left';
+    } else {
+      menuType = ref('left');
+    }
+  }
+} catch (error) {
+  // 使用默认值
+  showCrumbs = ref(true);
+  pageTransition = ref('fade');
+  menuType = ref('left');
+  menuThemeType = ref(null);
+  isDark = ref(false);
+}
+
+// 防御性检查：确保 menuType 始终有有效值
+if (!menuType) {
+  menuType = ref('left');
+} else {
+  const menuTypeValue = menuType.value;
+  const validMenuTypes = ['left', 'top', 'top-left', 'dual-menu'];
+  // 如果值是空字符串、null、undefined 或不在有效值列表中，设置为 'left'
+  if (!menuTypeValue || menuTypeValue === '' || !validMenuTypes.includes(String(menuTypeValue))) {
+    menuType.value = 'left';
+  }
+}
+
+// 计算属性：判断是否应该显示侧边栏（使用计算属性确保响应式）
+const shouldShowSidebar = computed(() => {
+  const mt = menuType?.value;
+  // 如果 menuType.value 为空，强制使用 'left'
+  const finalMenuType = (!mt || mt === '' || mt === null || mt === undefined) ? 'left' : mt;
+  const valid = finalMenuType === 'left' || finalMenuType === 'dual-menu' || finalMenuType === 'top-left';
+  if (!valid) {
+    console.warn('[AppLayout] shouldShowSidebar: menuType 无效，强制设置为 left', {
+      '原始值': mt,
+      '最终值': finalMenuType
+    });
+    // 如果 menuType 存在但值无效，更新它
+    if (menuType) {
+      menuType.value = 'left';
+    }
+  }
+  return valid || finalMenuType === 'left';
+});
 
 // 判断是否为深色菜单风格
 const isDarkMenuStyle = computed(() => {
@@ -264,6 +330,7 @@ const isHomePage = computed(() => {
          path === '/quality' ||
          path === '/production' ||
          path === '/finance' ||
+         path === '/monitor' ||
          path === '/docs';
 });
 
@@ -597,7 +664,11 @@ onUnmounted(() => {
       min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
       padding: 0 !important;
       box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保宽度计算一致
-      background-color: var(--el-bg-color) !important;
+      background-color: var(--el-bg-color-page, var(--el-bg-color)) !important;
+      // 关键：确保 CSS 变量能够传递到子应用
+      // 在 qiankun 环境下，CSS 变量需要从父元素继承
+      --el-bg-color-page: var(--el-bg-color-page, var(--el-bg-color));
+      --el-bg-color: var(--el-bg-color);
     }
 
     :deep(#subapp-viewport > [data-qiankun]) {
@@ -883,6 +954,38 @@ onUnmounted(() => {
   height: 100% !important; // 关键：必须设置高度为 100%，与系统域一致
   overflow: hidden !important;
   min-width: 0 !important; // 确保 flex 子元素可以收缩
+}
+
+// 折叠状态样式（桌面端，> 768px）
+// 关键：使用 !important 确保在生产环境下优先级高于默认样式
+@media only screen and (min-width: 768px) {
+  .app-layout.is-collapse {
+    .app-layout__sidebar {
+      width: 64px !important;
+    }
+
+    .app-layout__main {
+      width: calc(100% - 64px) !important;
+    }
+
+    // 顶部菜单模式：折叠不影响
+    &.menu-type-top {
+      .app-layout__main {
+        width: 100% !important;
+      }
+    }
+
+    // 双栏菜单模式：折叠不影响（双栏菜单有自己的宽度，与顶栏搜索框对齐）
+    &.menu-type-dual-menu {
+      .app-layout__sidebar {
+        width: 274px !important;
+      }
+
+      .app-layout__main {
+        width: calc(100% - 274px) !important;
+      }
+    }
+  }
 }
 </style>
 

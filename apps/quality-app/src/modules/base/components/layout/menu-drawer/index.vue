@@ -440,9 +440,6 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 关闭抽屉
-  handleClose();
-
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 
@@ -469,6 +466,9 @@ const handleSwitchApp = async (app: MicroApp) => {
 
   // 监听 afterMount 事件
   window.addEventListener('qiankun:after-mount', handleAfterMount);
+
+  // 立即关闭抽屉，不等待动画完成，让路由切换可以立即开始
+  handleClose();
 
   try {
   // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用

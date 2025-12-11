@@ -140,6 +140,7 @@ export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './stor
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
 export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';
 export { autoMountDevTools } from './utils/auto-mount-dev-tools';
+export { default as mitt, globalMitt, Mitt } from './utils/mitt';
 
 // 导出用户设置相关的枚举类型
 export * from './components/others/btc-user-setting/config/enums';

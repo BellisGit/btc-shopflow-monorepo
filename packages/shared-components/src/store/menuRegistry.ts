@@ -62,7 +62,16 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
 }
 
 // 使用全局共享的菜单注册表
-const registry = getGlobalRegistry();
+// 关键：每次都从全局对象获取，确保所有模块使用同一个注册表实例
+function getRegistry(): Ref<Record<string, MenuItem[]>> {
+  // 关键：每次都从全局对象获取，而不是使用模块级缓存
+  // 这样可以确保 layout-app 和子应用使用同一个注册表实例
+  if (typeof window !== 'undefined' && (window as any)[GLOBAL_REGISTRY_KEY]) {
+    return (window as any)[GLOBAL_REGISTRY_KEY];
+  }
+  // 如果全局不存在，创建新的并挂载到全局
+  return getGlobalRegistry();
+}
 
 /**
  * 深度比较两个菜单数组是否相同
@@ -101,7 +110,21 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
  * 注册子应用的菜单
  */
 export function registerMenus(app: string, menus: MenuItem[]) {
-  const existingMenus = registry.value[app] || [];
+  // 关键：优先使用全局注册表（layout-app 创建的），确保所有模块使用同一个实例
+  let reg: Ref<Record<string, MenuItem[]>>;
+  if (typeof window !== 'undefined' && (window as any)[GLOBAL_REGISTRY_KEY]) {
+    // 使用已存在的全局注册表
+    reg = (window as any)[GLOBAL_REGISTRY_KEY];
+  } else {
+    // 如果全局不存在，获取或创建新的注册表
+    reg = getRegistry();
+    // 确保挂载到全局
+    if (typeof window !== 'undefined') {
+      (window as any)[GLOBAL_REGISTRY_KEY] = reg;
+    }
+  }
+  
+  const existingMenus = reg.value[app] || [];
   
   // 如果菜单内容相同，跳过更新，避免触发不必要的响应式更新
   if (existingMenus.length > 0 && menusEqual(existingMenus, menus)) {
@@ -109,18 +132,19 @@ export function registerMenus(app: string, menus: MenuItem[]) {
   }
   
   // 如果菜单内容不同或现有菜单为空，需要更新
-  registry.value[app] = menus;
+  reg.value[app] = menus;
   // 关键：手动触发响应式更新，确保 Vue 能够检测到全局对象的变化
-  triggerRef(registry);
+  triggerRef(reg);
 }
 
 /**
  * 清理子应用的菜单
  */
 export function clearMenus(app: string) {
-  if (registry.value[app]) {
-    registry.value[app] = [];
-    triggerRef(registry);
+  const reg = getRegistry();
+  if (reg.value[app]) {
+    reg.value[app] = [];
+    triggerRef(reg);
   }
 }
 
@@ -128,25 +152,27 @@ export function clearMenus(app: string) {
  * 清理除指定应用外的所有菜单
  */
 export function clearMenusExcept(app: string) {
-  Object.keys(registry.value).forEach(key => {
+  const reg = getRegistry();
+  Object.keys(reg.value).forEach(key => {
     if (key !== app) {
-      registry.value[key] = [];
+      reg.value[key] = [];
     }
   });
-  triggerRef(registry);
+  triggerRef(reg);
 }
 
 /**
  * 获取指定应用的菜单（响应式）
  */
 export function getMenusForApp(app: string): MenuItem[] {
-  return registry.value[app] || [];
+  const reg = getRegistry();
+  return reg.value[app] || [];
 }
 
 /**
  * 获取菜单注册表的响应式引用（用于在组件中监听变化）
  */
 export function getMenuRegistry(): Ref<Record<string, MenuItem[]>> {
-  return registry;
+  return getRegistry();
 }
 

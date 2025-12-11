@@ -38,6 +38,7 @@ import {
   corsPlugin,
   ensureCssPlugin,
   addVersionPlugin,
+  resolveLogoPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
 
@@ -140,7 +141,10 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 判断是否为预览构建
   const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
   const baseUrl = getBaseUrl(appName, isPreviewBuild);
-  const publicDir = getPublicDir(appName, appDir);
+  // 关键：子应用在构建时禁用 publicDir，避免打包图标等静态资源
+  // 图标等静态资源应该由 layout-app 统一管理
+  // 开发环境仍然需要 publicDir 来服务静态文件
+  const publicDir = isPreviewBuild ? getPublicDir(appName, appDir) : false;
 
   // 获取主应用配置
   const mainAppConfig = getViteAppConfig('system-app');
@@ -156,7 +160,9 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. 自定义插件（在核心插件之前）
+    // 3. Logo 路径解析插件（在自定义插件之前，确保 /logo.png 能被正确解析）
+    resolveLogoPlugin(appDir),
+    // 4. 自定义插件（在核心插件之前）
     ...customPlugins,
     // 4. Vue 插件
     vue({
@@ -239,13 +245,20 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
         passes: 1,
         collapse_vars: false,
         dead_code: false,
+        // 关键：禁用所有可能影响导出名称的压缩选项
+        // 确保导出名称不被压缩成单字母
+        // 注意：keep_fnames 和 keep_classnames 应该在 mangle 选项中，但这里也设置以确保兼容性
       },
       // 关键：对于 ES 模块，完全禁用 mangle 以避免导出名称被混淆
-      // 这可以防止 "does not provide an export named 'r'" 错误
+      // 这可以防止 "does not provide an export named 'c'" 错误
       // 虽然这会增加一些文件大小，但可以确保动态导入正常工作
+      // 注意：即使设置 mangle: { keep_fnames: true } 仍然可能混淆导出名称
+      // 因此完全禁用 mangle 是最安全的选择
       mangle: false,
       format: {
         comments: false,
+        // 确保导出名称格式正确
+        preserve_annotations: false,
       },
     },
     assetsInlineLimit: 10 * 1024,
