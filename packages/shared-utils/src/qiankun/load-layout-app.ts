@@ -32,7 +32,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
   const layoutEntry = isProd
     ? `${protocol}//layout.bellis.com.cn/`
     : 'http://localhost:4188/';
-  
+
   console.log('[loadLayoutApp] 环境检测:', {
     isProd,
     protocol,
@@ -40,261 +40,12 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
     layoutEntry,
   });
 
-
-  // 未使用的函数，保留以备将来使用
-  /*
-  const getAssetsBase = (entry: string) => {
-    try {
-      const entryUrl = new URL(entry, typeof window !== 'undefined' ? window.location.href : 'https://bellis.com.cn');
-      // 关键：layout-app 的资源现在在 assets/layout/ 子目录中
-      return new URL('assets/layout/', entryUrl).toString();
-    } catch (_error) {
-      return '/assets/layout/';
-    }
-  };
-
-  const assetsBase = getAssetsBase(layoutEntry);
-
-  // 未使用的函数，保留以备将来使用
-  /*
-  const ensureModuleScriptType = (tpl: string) =>
-    tpl.replace(
-      /<script(\s+[^>]*)?>/gi,
-      function (match, attrs) {
-        if (!attrs) attrs = '';
-        if (attrs.includes('type=')) {
-          return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
-        }
-        return '<script type="module"' + attrs + '>';
-      },
-    );
-
-  const rewriteAssetUrls = (tpl: string) => {
-    // 重写 HTML 属性中的资源路径（href 和 src）
-    // 匹配格式：href="/assets/xxx.js" 或 src="/assets/xxx.js"
-    // 注意：现在 layout-app 的资源在 /assets/layout/ 中，需要匹配这个路径
-    let result = tpl.replace(/(href|src)=["']\/assets\/(layout\/)?([^"']+)["']/gi, (_match, attr, layoutPrefix, path) => {
-      // 如果已经是 /assets/layout/ 路径，直接使用 assetsBase
-      if (layoutPrefix === 'layout/') {
-        return `${attr}="${assetsBase}${path}"`;
-      }
-      // 如果是 /assets/ 路径（没有 layout/ 前缀），添加 layout/ 前缀
-      return `${attr}="${assetsBase}${path}"`;
-    });
-
-    // 重写 import() 动态导入中的资源路径（包括单引号和双引号）
-    // 匹配格式：import('/assets/xxx.js') 或 import("/assets/xxx.js") 或 import('/assets/layout/xxx.js')
-    result = result.replace(/(import\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"]\s*\))/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
-      return `${prefix}${assetsBase}${path}${suffix}`;
-    });
-
-    // 重写 import 语句中的资源路径（包括相对路径和绝对路径）
-    // 匹配格式：import xxx from '/assets/xxx.js'
-    result = result.replace(/(import\s+[^'"]*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
-      return `${prefix}${assetsBase}${path}${suffix}`;
-    });
-
-    // 重写 new URL() 中的资源路径
-    // 匹配格式：new URL('/assets/xxx.js', ...)
-    result = result.replace(/(new\s+URL\s*\(\s*['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
-      return `${prefix}${assetsBase}${path}${suffix}`;
-    });
-
-    // 重写 script 标签中的 src 属性（确保使用完整的 assetsBase URL）
-    // 匹配格式：<script src="/assets/xxx.js">
-    result = result.replace(/(<script[^>]*\s+src=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
-      return `${prefix}${assetsBase}${path}${suffix}`;
-    });
-
-    // 重写 link 标签中的 href 属性（CSS 文件等）
-    // 匹配格式：<link href="/assets/xxx.css">
-    result = result.replace(/(<link[^>]*\s+href=["'])\/assets\/(layout\/)?([^"']+)(["'])/gi, (_match, prefix, _layoutPrefix, path, suffix) => {
-      return `${prefix}${assetsBase}${path}${suffix}`;
-    });
-
-    // 额外处理：重写所有以 /assets/ 或 /assets/layout/ 开头的字符串（兜底，处理其他可能的格式）
-    // 注意：这个替换必须在其他替换之后，避免重复替换
-    result = result.replace(/(['"])\/assets\/(layout\/)?([^"']+)(['"])/gi, (_match, quote1, _layoutPrefix, path, quote2) => {
-      // 检查是否已经被替换过（如果路径已经是完整 URL，跳过）
-      if (path.startsWith('http://') || path.startsWith('https://')) {
-        return _match;
-      }
-      return `${quote1}${assetsBase}${path}${quote2}`;
-    });
-
-    // 注入运行时修复代码，拦截动态导入和 fetch 请求
-    // 在第一个 script 标签之前注入修复代码
-    const interceptScript = `
-      <script type="module">
-        (function() {
-          const layoutAssetsBase = '${assetsBase}';
-          const currentHost = window.location.hostname;
-          const layoutHost = new URL(layoutAssetsBase).hostname;
-          const layoutOrigin = new URL(layoutAssetsBase).origin;
-
-          // 修复 URL 的辅助函数
-          function fixAssetUrl(url) {
-            if (typeof url !== 'string') return url;
-
-            // 如果 URL 是相对路径且指向 /assets/layout/，重写为 layout-app 的完整 URL
-            if (url.startsWith('/assets/layout/') || url.startsWith('./assets/layout/') || url.startsWith('../assets/layout/')) {
-              const normalizedPath = url.startsWith('/') ? url : url.replace(new RegExp('^[.][.]?/'), '/');
-              return layoutAssetsBase + normalizedPath.replace(new RegExp('^/assets/layout/'), '');
-            }
-            // 兼容旧的 /assets/ 路径（如果存在，自动添加 layout/ 前缀）
-            if (url.startsWith('/assets/') || url.startsWith('./assets/') || url.startsWith('../assets/')) {
-              const normalizedPath = url.startsWith('/') ? url : url.replace(new RegExp('^[.][.]?/'), '/');
-              // 如果路径不是 /assets/layout/，添加 layout/ 前缀
-              if (!normalizedPath.startsWith('/assets/layout/')) {
-                const pathWithoutPrefix = normalizedPath.replace(new RegExp('^/assets/'), '');
-                return layoutAssetsBase + pathWithoutPrefix;
-              }
-              return layoutAssetsBase + normalizedPath.replace(new RegExp('^/assets/layout/'), '');
-            }
-
-            // 如果 URL 已经是完整 URL 但指向错误的域名，修复它
-            if (url.startsWith('http://') || url.startsWith('https://')) {
-              try {
-                const urlObj = new URL(url);
-                // 如果 URL 指向当前域名但应该是 layout-app 的域名，修复它
-                if (urlObj.hostname === currentHost && urlObj.pathname.startsWith('/assets/') && currentHost !== layoutHost) {
-                  urlObj.hostname = layoutHost;
-                  // 确保路径是 /assets/layout/
-                  if (!urlObj.pathname.startsWith('/assets/layout/')) {
-                    urlObj.pathname = urlObj.pathname.replace('/assets/', '/assets/layout/');
-                  }
-                  return urlObj.toString();
-                }
-              } catch {}
-            }
-
-            return url;
-          }
-
-          // 拦截 fetch 请求，修复资源路径
-          const originalFetch = window.fetch;
-          window.fetch = function(url, ...args) {
-            const fixedUrl = fixAssetUrl(url);
-            return originalFetch.call(this, fixedUrl, ...args);
-          };
-
-          // 拦截动态 import() 调用
-          // 注意：无法直接重写 import()，但可以通过拦截错误来修复
-          // 或者使用 Proxy 拦截模块加载（如果支持）
-
-          // 重写 import.meta.resolve 来修复动态导入路径（如果支持）
-          if (typeof import.meta !== 'undefined' && import.meta.resolve) {
-            const originalResolve = import.meta.resolve;
-            import.meta.resolve = function(specifier, parent) {
-              const resolved = originalResolve.call(this, specifier, parent);
-              return fixAssetUrl(resolved);
-            };
-          }
-
-          // 拦截所有资源加载错误，自动修复并重试
-          // 这包括 script、link、img 等所有资源类型
-          const originalAddEventListener = EventTarget.prototype.addEventListener;
-          EventTarget.prototype.addEventListener = function(type, listener, options) {
-            if (type === 'error' && this instanceof HTMLScriptElement || this instanceof HTMLLinkElement) {
-              const wrappedListener = function(event) {
-                if (event.target && (event.target instanceof HTMLScriptElement || event.target instanceof HTMLLinkElement)) {
-                  const target = event.target;
-                  const src = (target instanceof HTMLScriptElement ? target.src : null) ||
-                              (target instanceof HTMLLinkElement ? target.href : null);
-
-                  if (src) {
-                    const fixedUrl = fixAssetUrl(src);
-                    if (fixedUrl !== src) {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      event.stopImmediatePropagation();
-
-                      // 重新加载资源
-                      if (target instanceof HTMLScriptElement) {
-                        const newScript = document.createElement('script');
-                        newScript.src = fixedUrl;
-                        newScript.type = 'module';
-                        newScript.crossOrigin = 'anonymous';
-                        target.parentNode?.replaceChild(newScript, target);
-                      } else if (target instanceof HTMLLinkElement) {
-                        const newLink = document.createElement('link');
-                        newLink.rel = target.rel || 'stylesheet';
-                        newLink.href = fixedUrl;
-                        newLink.crossOrigin = 'anonymous';
-                        if (target.type) {
-                          newLink.type = target.type;
-                        }
-                        target.parentNode?.replaceChild(newLink, target);
-                      }
-                      return false;
-                    }
-                  }
-                }
-                if (listener) {
-                  return listener.call(this, event);
-                }
-              };
-              return originalAddEventListener.call(this, type, wrappedListener, options);
-            }
-            return originalAddEventListener.call(this, type, listener, options);
-          };
-
-          // 拦截错误事件，自动修复资源加载错误
-          window.addEventListener('error', function(event) {
-            if (event.target && (event.target instanceof HTMLScriptElement || event.target instanceof HTMLLinkElement)) {
-              const target = event.target as HTMLScriptElement | HTMLLinkElement;
-              const src = (event.target instanceof HTMLScriptElement ? event.target.src : null) ||
-                          (event.target instanceof HTMLLinkElement ? event.target.href : null);
-
-              if (src) {
-                const fixedUrl = fixAssetUrl(src);
-                if (fixedUrl !== src) {
-                  // 阻止默认错误处理
-                  event.preventDefault();
-                  event.stopPropagation();
-
-                  // 重新加载资源
-                  if (target instanceof HTMLScriptElement) {
-                    const newScript = document.createElement('script');
-                    newScript.src = fixedUrl;
-                    newScript.type = 'module';
-                    target.parentNode?.replaceChild(newScript, target);
-                  } else if (target instanceof HTMLLinkElement) {
-                    const newLink = document.createElement('link');
-                    newLink.rel = target.rel || 'stylesheet';
-                    newLink.href = fixedUrl;
-                    if (target.type) {
-                      newLink.type = target.type;
-                    }
-                    target.parentNode?.replaceChild(newLink, target);
-                  }
-                }
-              }
-            }
-          }, true); // 使用捕获阶段，确保能拦截到错误
-        })();
-      </script>
-    `;
-
-    // 在 </head> 之前注入修复代码
-    if (result.includes('</head>')) {
-      result = result.replace('</head>', interceptScript + '</head>');
-    } else if (result.includes('<body')) {
-      // 如果没有 head 标签，在 body 之前注入
-      result = result.replace('<body', interceptScript + '<body');
-    }
-
-    return result;
-  };
-  */
-
-  // const transformTemplate = (tpl: string) => ensureModuleScriptType(rewriteAssetUrls(tpl)); // 未使用
-
   // 关键：layout-app 应该直接挂载到 #app，而不是通过 qiankun
   // 先获取 layout-app 的 HTML，然后从中提取入口文件路径，再直接加载入口文件
 
   // 创建 Promise，等待 layout-app 挂载完成
-  return new Promise<void>((resolve, reject) => {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise<void>(async (resolve, reject) => {
     let layoutAppMounted = false;
     let mountTimeout: ReturnType<typeof setTimeout> | null = null;
     let checkInterval: ReturnType<typeof setInterval> | null = null;
@@ -334,235 +85,509 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
       }
     };
 
-    // 确保 #app 容器存在
-    // 未使用，保留以备将来使用
-    /*
-    const ensureAppContainer = () => {
-      let appContainer = document.querySelector('#app') as HTMLElement;
-      if (!appContainer) {
-        // 如果 #app 不存在，创建一个
-        appContainer = document.createElement('div');
-        appContainer.id = 'app';
-        document.body.appendChild(appContainer);
-      }
-      return appContainer;
-    };
-    */
-
-    // 提前确保容器存在
-    // const appContainer = ensureAppContainer(); // 未使用
-
     // 设置标志，告诉 layout-app 它应该挂载到 #app
     (window as any).__LAYOUT_APP_MOUNT_TARGET__ = '#app';
 
-    console.log('[layout-app loader] 开始加载 layout-app，入口地址:', layoutEntry);
+    // 从 HTML 中获取所有 script 标签（包括 vendor、echarts-vendor 等依赖）
+    // 这样可以确保所有依赖的 chunk 都在入口文件之前加载完成，避免模块初始化顺序问题
+    const entryUrl = new URL(layoutEntry);
+    const htmlUrl = `${entryUrl.origin}/index.html`;
 
-    // 先获取 layout-app 的 HTML，从中提取入口文件路径
-    // 添加超时控制，避免长时间等待
-    const fetchTimeout = 5000; // 5秒超时
+    const fetchTimeout = 5000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), fetchTimeout);
 
-    fetch(layoutEntry, {
-      mode: 'cors',
-      credentials: 'omit',
-      signal: controller.signal,
-    })
-      .then(response => {
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-          throw new Error(`获取 layout-app HTML 失败: HTTP ${response.status} ${response.statusText}`);
+    let scriptUrls: string[] = [];
+
+    try {
+      const htmlResponse = await fetch(htmlUrl, {
+        mode: 'cors',
+        credentials: 'omit',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!htmlResponse.ok) {
+        throw new Error(`获取 layout-app HTML 失败: HTTP ${htmlResponse.status} ${htmlResponse.statusText}`);
+      }
+
+      const htmlText = await htmlResponse.text();
+
+      console.log('[loadLayoutApp] 开始解析 HTML，HTML 长度:', htmlText.length);
+
+      // 使用 DOM 解析器提取所有 script 标签（更可靠）
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      const scripts = Array.from(doc.querySelectorAll('script[src]'));
+
+      // 同时提取 modulepreload 标签中的资源（这些是预加载的依赖）
+      const modulepreloadLinks = Array.from(doc.querySelectorAll('link[rel="modulepreload"][href]'));
+
+      console.log(`[loadLayoutApp] 找到 ${scripts.length} 个 script 标签，${modulepreloadLinks.length} 个 modulepreload 标签`);
+
+      // 从 script 标签提取
+      const scriptUrlSet = new Set<string>();
+
+      scripts.forEach((script, index) => {
+        const src = script.getAttribute('src');
+        if (!src) {
+          console.warn(`[loadLayoutApp] script[${index}] 没有 src 属性`);
+          return;
         }
-        console.log('[layout-app loader] ✅ 成功获取 layout-app HTML');
-        return response.text();
-      })
-      .then(html => {
-        // 从 HTML 中提取入口文件路径
-        // 开发环境：<script type="module" src="/src/main.ts"></script>
-        // 生产环境：<script type="module" src="/assets/layout/index-[hash].js"></script>
-        const scriptMatch = html.match(/<script[^>]*src=["']([^"']+)["'][^>]*>/i);
-        if (!scriptMatch) {
-          throw new Error(`无法从 layout-app 的 HTML 中提取入口文件路径。HTML 长度: ${html.length} 字符`);
+
+        // 移除版本号查询参数
+        let cleanSrc = src.replace(/[?&]v=[^&'"]*/g, '');
+
+        // 转换为绝对路径
+        if (cleanSrc.startsWith('/')) {
+          cleanSrc = `${entryUrl.origin}${cleanSrc}`;
+        } else if (!cleanSrc.startsWith('http://') && !cleanSrc.startsWith('https://')) {
+          cleanSrc = `${entryUrl.origin}/${cleanSrc}`;
         }
 
-        let mainEntry = scriptMatch[1];
-        console.log('[layout-app loader] 从 HTML 中提取到入口文件路径:', mainEntry);
+        scriptUrlSet.add(cleanSrc);
+        console.log(`[loadLayoutApp] 从 script 标签提取: ${cleanSrc}`);
+      });
 
-        // 如果是相对路径，转换为绝对路径
-        if (mainEntry.startsWith('/')) {
-          const entryUrl = new URL(layoutEntry);
-          mainEntry = `${entryUrl.origin}${mainEntry}`;
-        } else if (!mainEntry.startsWith('http://') && !mainEntry.startsWith('https://')) {
-          const entryUrl = new URL(layoutEntry);
-          mainEntry = `${entryUrl.origin}/${mainEntry}`;
+      // 从 modulepreload 标签提取（这些通常是依赖 chunk）
+      modulepreloadLinks.forEach((link, index) => {
+        const href = link.getAttribute('href');
+        if (!href) {
+          console.warn(`[loadLayoutApp] modulepreload[${index}] 没有 href 属性`);
+          return;
         }
 
-        console.log('[layout-app loader] 解析后的入口文件完整路径:', mainEntry);
+        // 只处理 JS 文件
+        if (!href.endsWith('.js') && !href.endsWith('.mjs')) {
+          return;
+        }
 
-        // 关键：在加载入口脚本之前，先设置 <base> 标签，确保动态导入使用正确的 base URL
-        // 这样 layout-app 内部的动态导入（如 import('./xxx.js')）会基于 layout.bellis.com.cn 解析
-        const entryUrl = new URL(layoutEntry);
-        const baseHref = entryUrl.origin + '/';
+        // 移除版本号查询参数
+        let cleanHref = href.replace(/[?&]v=[^&'"]*/g, '');
 
-        // 检查是否已经存在 <base> 标签
-        let existingBase = document.querySelector('base[data-layout-app-base]') as HTMLBaseElement | null;
-        if (existingBase) {
-          // 如果已存在我们添加的 base 标签，更新它的 href
-          existingBase.href = baseHref;
-          console.log('[layout-app loader] 已更新现有的 <base> 标签:', baseHref);
-        } else {
-          // 如果不存在，创建一个新的
-          const base = document.createElement('base');
-          base.href = baseHref;
-          base.setAttribute('data-layout-app-base', 'true'); // 标记为我们添加的
-          // 插入到 <head> 的最前面，确保在其他资源标签之前
-          const head = document.head || document.getElementsByTagName('head')[0];
-          if (head.firstChild) {
-            head.insertBefore(base, head.firstChild);
-          } else {
-            head.appendChild(base);
+        // 转换为绝对路径
+        if (cleanHref.startsWith('/')) {
+          cleanHref = `${entryUrl.origin}${cleanHref}`;
+        } else if (!cleanHref.startsWith('http://') && !cleanHref.startsWith('https://')) {
+          cleanHref = `${entryUrl.origin}/${cleanHref}`;
+        }
+
+        scriptUrlSet.add(cleanHref);
+        console.log(`[loadLayoutApp] 从 modulepreload 标签提取: ${cleanHref}`);
+      });
+
+      scriptUrls = Array.from(scriptUrlSet);
+
+      // 如果 DOM 解析失败或没有找到任何脚本，尝试正则表达式作为回退
+      if (scriptUrls.length === 0) {
+        console.warn('[loadLayoutApp] DOM 解析未找到脚本，尝试正则表达式回退');
+        // 使用正则表达式提取所有 type="module" 的 script 标签
+        const scriptRegex = /<script[^>]*(?:type=["']module["'][^>]*src=["']([^"']+)["']|src=["']([^"']+)["'][^>]*type=["']module["'])[^>]*><\/script>/gi;
+        const matches = Array.from(htmlText.matchAll(scriptRegex));
+
+        scriptUrls = matches.map(match => {
+          let src = match[1] || match[2];
+          if (!src) return null;
+          src = src.replace(/[?&]v=[^&'"]*/g, '');
+          if (src.startsWith('/')) {
+            src = `${entryUrl.origin}${src}`;
+          } else if (!src.startsWith('http://') && !src.startsWith('https://')) {
+            src = `${entryUrl.origin}/${src}`;
           }
-          console.log('[layout-app loader] 已创建新的 <base> 标签:', baseHref);
+          console.log(`[loadLayoutApp] 正则回退提取到 script URL: ${src}`);
+          return src;
+        }).filter((url): url is string => url !== null);
+
+        // 如果仍然失败，尝试更宽松的匹配
+        if (scriptUrls.length === 0) {
+          console.warn('[loadLayoutApp] 正则匹配失败，尝试更宽松的匹配');
+          const looseScriptRegex = /<script[^>]+src=["']([^"']+\.js[^"']*)["'][^>]*>/gi;
+          const looseMatches = Array.from(htmlText.matchAll(looseScriptRegex));
+          scriptUrls = looseMatches.map(match => {
+            let src = match[1];
+            if (!src) return null;
+            src = src.replace(/[?&]v=[^&'"]*/g, '');
+            if (src.startsWith('/')) {
+              src = `${entryUrl.origin}${src}`;
+            } else if (!src.startsWith('http://') && !src.startsWith('https://')) {
+              src = `${entryUrl.origin}/${src}`;
+            }
+            console.log(`[loadLayoutApp] 宽松匹配提取到 script URL: ${src}`);
+            return src;
+          }).filter((url): url is string => url !== null);
+
+          // 也尝试匹配 modulepreload
+          const modulepreloadRegex = /<link[^>]+rel=["']modulepreload["'][^>]+href=["']([^"']+\.(js|mjs)[^"']*)["'][^>]*>/gi;
+          const preloadMatches = Array.from(htmlText.matchAll(modulepreloadRegex));
+          const preloadUrls = preloadMatches.map(match => {
+            let href = match[1];
+            if (!href) return null;
+            href = href.replace(/[?&]v=[^&'"]*/g, '');
+            if (href.startsWith('/')) {
+              href = `${entryUrl.origin}${href}`;
+            } else if (!href.startsWith('http://') && !href.startsWith('https://')) {
+              href = `${entryUrl.origin}/${href}`;
+            }
+            console.log(`[loadLayoutApp] 宽松匹配提取到 modulepreload URL: ${href}`);
+            return href;
+          }).filter((url): url is string => url !== null);
+
+          scriptUrls = [...scriptUrls, ...preloadUrls];
+          // 去重
+          scriptUrls = Array.from(new Set(scriptUrls));
         }
+      }
 
-        console.log('[layout-app loader] 已设置 <base> 标签:', baseHref);
+      console.log(`[loadLayoutApp] 总共提取到 ${scriptUrls.length} 个脚本 URL`);
 
-        // 创建 script 标签来加载 layout-app
+      // 关键：确保正确的加载顺序，避免模块初始化顺序问题
+      // 1. vendor 应该在 echarts-vendor 之前（vendor 包含 Vue 核心函数）
+      // 2. 其他依赖（如 menu-registry、eps-service、auth-api）应该在入口文件之前
+      // 3. 入口文件（index/main）应该最后加载
+      scriptUrls.sort((a, b) => {
+        const aFileName = a.substring(a.lastIndexOf('/') + 1);
+        const bFileName = b.substring(b.lastIndexOf('/') + 1);
+
+        // 确定文件类型优先级（数字越小，优先级越高）
+        const getPriority = (fileName: string): number => {
+          // 1. vendor（不包含 echarts）
+          if (fileName.includes('vendor-') && !fileName.includes('echarts-vendor')) return 1;
+          // 2. echarts-vendor
+          if (fileName.includes('echarts-vendor')) return 2;
+          // 3. 其他依赖（menu-registry、eps-service、auth-api 等）
+          if (fileName.includes('menu-registry') ||
+              fileName.includes('eps-service') ||
+              fileName.includes('auth-api')) return 3;
+          // 4. 入口文件（index、main）
+          if (fileName.includes('index-') || fileName.includes('main-')) return 4;
+          // 5. 其他未知文件
+          return 3;
+        };
+
+        const aPriority = getPriority(aFileName);
+        const bPriority = getPriority(bFileName);
+
+        return aPriority - bPriority;
+      });
+
+      console.log('[loadLayoutApp] 脚本加载顺序:', scriptUrls.map(url => url.substring(url.lastIndexOf('/') + 1)));
+
+      // 如果没有找到任何 script 标签，使用 manifest 作为回退
+      if (scriptUrls.length === 0) {
+        console.warn('[loadLayoutApp] 未找到 script 标签，尝试从 manifest.json 获取');
+        const manifestUrl = `${entryUrl.origin}/manifest.json`;
+        try {
+          const manifestResponse = await fetch(manifestUrl, {
+            mode: 'cors',
+            credentials: 'omit',
+          });
+
+          if (manifestResponse.ok) {
+            const manifest: Record<string, { file: string; src?: string; isEntry?: boolean }> = await manifestResponse.json();
+            console.log('[loadLayoutApp] manifest.json 内容:', manifest);
+
+            // 从 manifest 中提取所有 chunk 文件（包括依赖）
+            const manifestUrls: Array<{ url: string; priority: number }> = [];
+
+            console.log(`[loadLayoutApp] 开始从 manifest.json 提取文件，manifest 键数量: ${Object.keys(manifest).length}`);
+
+            for (const [key, entry] of Object.entries(manifest)) {
+              // 检查 entry 结构
+              if (!entry || typeof entry !== 'object') {
+                console.warn(`[loadLayoutApp] manifest 项格式不正确: ${key}`, entry);
+                continue;
+              }
+
+              if (!entry.file) {
+                console.warn(`[loadLayoutApp] manifest 项缺少 file 字段: ${key}`, entry);
+                continue;
+              }
+
+              if (!entry.file.endsWith('.js')) {
+                // 跳过非 JS 文件
+                continue;
+              }
+
+              let fileUrl = entry.file;
+
+              // 转换为绝对路径
+              if (fileUrl.startsWith('/')) {
+                fileUrl = `${entryUrl.origin}${fileUrl}`;
+              } else if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
+                // 如果路径不以 / 开头，添加 / 前缀
+                fileUrl = `${entryUrl.origin}/${fileUrl}`;
+              }
+
+              // 确定加载优先级
+              const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+              let priority = 999;
+              if (fileName.includes('vendor-') && !fileName.includes('echarts-vendor')) {
+                priority = 1;
+              } else if (fileName.includes('echarts-vendor')) {
+                priority = 2;
+              } else if (fileName.includes('menu-registry') ||
+                         fileName.includes('eps-service') ||
+                         fileName.includes('auth-api')) {
+                priority = 3;
+              } else if (entry.isEntry || fileName.includes('index-') || fileName.includes('main-')) {
+                priority = 4;
+              }
+
+              manifestUrls.push({ url: fileUrl, priority });
+              console.log(`[loadLayoutApp] 从 manifest.json 提取: ${fileUrl} (优先级: ${priority}, isEntry: ${entry.isEntry || false})`);
+            }
+
+            console.log(`[loadLayoutApp] 从 manifest.json 提取到 ${manifestUrls.length} 个文件`);
+
+            // 按优先级排序
+            manifestUrls.sort((a, b) => a.priority - b.priority);
+            scriptUrls = manifestUrls.map(item => item.url);
+
+            if (scriptUrls.length > 0) {
+              console.log(`[loadLayoutApp] ✅ 从 manifest.json 获取 ${scriptUrls.length} 个文件，文件列表:`, scriptUrls.map(url => url.substring(url.lastIndexOf('/') + 1)));
+            } else {
+              console.warn('[loadLayoutApp] ⚠️  manifest.json 中未找到任何 JS 文件');
+            }
+          } else {
+            console.warn(`[loadLayoutApp] 获取 manifest.json 失败: HTTP ${manifestResponse.status}`);
+          }
+        } catch (manifestError) {
+          console.error('[loadLayoutApp] 获取 manifest.json 时出错:', manifestError);
+        }
+      }
+
+      // 如果仍然没有找到，使用常见路径作为回退
+      if (scriptUrls.length === 0) {
+        scriptUrls = [`${entryUrl.origin}/assets/index.js`];
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error('[loadLayoutApp] 获取 HTML 失败:', error);
+      // 如果获取 HTML 失败，尝试从 manifest.json 获取
+      const manifestUrl = `${entryUrl.origin}/manifest.json`;
+      try {
+        const manifestResponse = await fetch(manifestUrl, {
+          mode: 'cors',
+          credentials: 'omit',
+        });
+
+        if (manifestResponse.ok) {
+          const manifest: Record<string, { file: string; src?: string; isEntry?: boolean }> = await manifestResponse.json();
+
+          // 从 manifest 中提取所有 chunk 文件（包括依赖）
+          const manifestUrls: Array<{ url: string; priority: number }> = [];
+
+          console.log(`[loadLayoutApp] 错误处理：开始从 manifest.json 提取文件，manifest 键数量: ${Object.keys(manifest).length}`);
+
+          for (const [key, entry] of Object.entries(manifest)) {
+            // 检查 entry 结构
+            if (!entry || typeof entry !== 'object') {
+              console.warn(`[loadLayoutApp] 错误处理：manifest 项格式不正确: ${key}`, entry);
+              continue;
+            }
+
+            if (!entry.file) {
+              console.warn(`[loadLayoutApp] 错误处理：manifest 项缺少 file 字段: ${key}`, entry);
+              continue;
+            }
+
+            if (!entry.file.endsWith('.js')) {
+              // 跳过非 JS 文件
+              continue;
+            }
+
+            let fileUrl = entry.file;
+
+            // 转换为绝对路径
+            if (fileUrl.startsWith('/')) {
+              fileUrl = `${entryUrl.origin}${fileUrl}`;
+            } else if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
+              // 如果路径不以 / 开头，添加 / 前缀
+              fileUrl = `${entryUrl.origin}/${fileUrl}`;
+            }
+
+            // 确定加载优先级
+            const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+            let priority = 999;
+            if (fileName.includes('vendor-') && !fileName.includes('echarts-vendor')) {
+              priority = 1;
+            } else if (fileName.includes('echarts-vendor')) {
+              priority = 2;
+            } else if (fileName.includes('menu-registry') ||
+                       fileName.includes('eps-service') ||
+                       fileName.includes('auth-api')) {
+              priority = 3;
+            } else if (entry.isEntry || fileName.includes('index-') || fileName.includes('main-')) {
+              priority = 4;
+            }
+
+            manifestUrls.push({ url: fileUrl, priority });
+            console.log(`[loadLayoutApp] 错误处理：从 manifest.json 提取: ${fileUrl} (优先级: ${priority}, isEntry: ${entry.isEntry || false})`);
+          }
+
+          console.log(`[loadLayoutApp] 错误处理：从 manifest.json 提取到 ${manifestUrls.length} 个文件`);
+
+          // 按优先级排序
+          manifestUrls.sort((a, b) => a.priority - b.priority);
+          scriptUrls = manifestUrls.map(item => item.url);
+
+          if (scriptUrls.length > 0) {
+            console.log(`[loadLayoutApp] ✅ 错误处理：从 manifest.json 回退获取 ${scriptUrls.length} 个文件，文件列表:`, scriptUrls.map(url => url.substring(url.lastIndexOf('/') + 1)));
+          } else {
+            // 最后回退到常见路径
+            scriptUrls = [`${entryUrl.origin}/assets/index.js`];
+            console.warn(`[loadLayoutApp] ⚠️  错误处理：manifest.json 为空，使用默认回退路径: ${scriptUrls[0]}`);
+          }
+        } else {
+          // 最后回退到常见路径
+          scriptUrls = [`${entryUrl.origin}/assets/index.js`];
+          console.warn(`[loadLayoutApp] manifest.json 获取失败，使用默认回退路径: ${scriptUrls[0]}`);
+        }
+      } catch (manifestError) {
+        // 最后回退到常见路径
+        scriptUrls = [`${entryUrl.origin}/assets/index.js`];
+        console.warn(`[loadLayoutApp] manifest.json 获取异常，使用默认回退路径: ${scriptUrls[0]}`, manifestError);
+      }
+    }
+
+    // 关键：在加载入口脚本之前，先设置 <base> 标签，确保动态导入使用正确的 base URL
+    // 这样 layout-app 内部的动态导入（如 import('./xxx.js')）会基于 layout.bellis.com.cn 解析
+    const baseHref = entryUrl.origin + '/';
+
+    // 检查是否已经存在 <base> 标签
+    const existingBase = document.querySelector('base[data-layout-app-base]') as HTMLBaseElement | null;
+    if (existingBase) {
+      // 如果已存在我们添加的 base 标签，更新它的 href
+      existingBase.href = baseHref;
+    } else {
+      // 如果不存在，创建一个新的
+      const base = document.createElement('base');
+      base.href = baseHref;
+      base.setAttribute('data-layout-app-base', 'true'); // 标记为我们添加的
+      // 插入到 <head> 的最前面，确保在其他资源标签之前
+      const head = document.head || document.getElementsByTagName('head')[0];
+      if (head.firstChild) {
+        head.insertBefore(base, head.firstChild);
+      } else {
+        head.appendChild(base);
+      }
+    }
+
+    // 使用 script 标签按顺序加载所有脚本（包括 vendor、echarts-vendor 等依赖）
+    // 这样可以确保所有依赖的 chunk 都在入口文件之前加载完成，避免模块初始化顺序问题
+    let loadedCount = 0;
+    let hasError = false;
+
+    const loadScript = (url: string, index: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.type = 'module';
-        script.src = mainEntry;
+        script.src = url;
         script.crossOrigin = 'anonymous';
-        script.setAttribute('data-layout-app', 'true'); // 标记为我们添加的
+        script.setAttribute('data-layout-app', 'true');
+        script.setAttribute('data-script-index', index.toString());
 
-        // 监听加载完成事件
         script.onload = () => {
-          console.log('[layout-app loader] ✅ layout-app 入口文件加载成功，等待挂载...');
-
-          // layout-app 的入口文件已加载，等待它挂载完成
-          // 监听 layout-app 的挂载事件
-          let checkCount = 0;
-          // 缩短超时时间：生产环境 5 秒（100 * 50ms），开发环境 10 秒（200 * 50ms）
-          const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
-          const maxChecks = isDev ? 200 : 100; // 开发环境 10 秒，生产环境 5 秒
-
-          const checkLayoutApp = () => {
-            checkCount++;
-
-            // 检查 #app 容器中是否有 layout-app 的内容（不仅仅是空容器）
-            const appContainer = document.querySelector('#app') as HTMLElement;
-            const hasLayoutContent = appContainer &&
-              (appContainer.children.length > 0 ||
-               appContainer.innerHTML.trim().length > 0 ||
-               document.querySelector('#layout-app') !== null ||
-               document.querySelector('#subapp-viewport') !== null);
-
-            if (hasLayoutContent) {
-              if (!layoutAppMounted) {
-                layoutAppMounted = true;
-                cleanup();
-
-                console.log('[layout-app loader] ✅ layout-app 挂载成功');
-
-                // 等待 layout-app 完全初始化
-                // layout-app 会自动注册并启动 qiankun 来加载子应用，不需要手动触发事件
-                setTimeout(() => {
-                  resolve();
-                }, 200);
-              }
-            } else if (checkCount >= maxChecks) {
-              // 超时，挂载失败
-              cleanup();
-              cleanupDom(); // 清理残留的 DOM
-
-              const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到挂载内容`;
-              console.error('[layout-app loader] ❌', errorMsg, {
-                appContainer: appContainer ? {
-                  exists: true,
-                  childrenCount: appContainer.children.length,
-                  innerHTMLLength: appContainer.innerHTML.trim().length,
-                  innerHTML: appContainer.innerHTML.substring(0, 200), // 只显示前200字符
-                } : { exists: false },
-                layoutEntry,
-                mainEntry,
-                checkCount,
-                maxChecks,
-              });
-              reject(new Error(errorMsg));
-            }
-            // 否则继续检查（通过 setInterval）
-          };
-
-          // 每 50ms 检查一次
-          checkInterval = setInterval(checkLayoutApp, 50);
+          loadedCount++;
+          resolve();
         };
 
         script.onerror = (error) => {
-          cleanup();
-          cleanupDom(); // 清理残留的 DOM
-
-          const errorMsg = `加载 layout-app 入口文件失败: ${mainEntry}`;
-          console.error('[layout-app loader] ❌', errorMsg, {
-            error,
-            entryUrl: mainEntry,
-            layoutEntry,
-            scriptSrc: script.src,
-            scriptType: script.type,
-            crossOrigin: script.crossOrigin,
-          });
-          reject(new Error(errorMsg));
+          hasError = true;
+          const errorDetails = {
+            url,
+            error: error instanceof Error ? error.message : String(error),
+            scriptIndex: index,
+            totalScripts: scriptUrls.length,
+          };
+          console.error('[loadLayoutApp] 脚本加载失败:', errorDetails);
+          reject(new Error(`加载 layout-app 脚本失败: ${url} (${errorDetails.error})`));
         };
 
-        // 添加到页面
         document.head.appendChild(script);
-        console.log('[layout-app loader] 已添加 script 标签，开始加载入口文件...');
+      });
+    };
 
-        // 设置超时，避免无限等待
-        // 关键：超时应该 reject，而不是 resolve
-        // 缩短超时时间：生产环境 8 秒，开发环境 15 秒
+    // 按顺序加载所有脚本
+    try {
+      for (let i = 0; i < scriptUrls.length; i++) {
+        await loadScript(scriptUrls[i], i);
+      }
+
+      // 所有脚本加载完成后，开始检查挂载状态
+      const startCheck = () => {
+        // layout-app 的所有脚本已加载，等待它挂载完成
+        let checkCount = 0;
+        // 缩短超时时间：生产环境 5 秒（100 * 50ms），开发环境 10 秒（200 * 50ms）
         const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
-        const totalTimeout = isDev ? 15000 : 8000;
-        mountTimeout = setTimeout(() => {
+        const maxChecks = isDev ? 200 : 100; // 开发环境 10 秒，生产环境 5 秒
+
+      const checkLayoutApp = () => {
+        checkCount++;
+
+        // 检查 #app 容器中是否有 layout-app 的内容（不仅仅是空容器）
+        const appContainer = document.querySelector('#app') as HTMLElement;
+        const hasLayoutContent = appContainer &&
+          (appContainer.children.length > 0 ||
+           appContainer.innerHTML.trim().length > 0 ||
+           document.querySelector('#layout-app') !== null ||
+           document.querySelector('#subapp-viewport') !== null);
+
+        if (hasLayoutContent) {
           if (!layoutAppMounted) {
             layoutAppMounted = true;
             cleanup();
-            cleanupDom(); // 清理残留的 DOM
 
-            const errorMsg = `加载 layout-app 超时（${totalTimeout}ms），入口文件: ${mainEntry}`;
-            console.error('[layout-app loader] ❌', errorMsg, {
-              layoutEntry,
-              mainEntry,
-              totalTimeout,
-              isDev,
-            });
-            reject(new Error(errorMsg));
+            // 等待 layout-app 完全初始化
+            // layout-app 会自动注册并启动 qiankun 来加载子应用，不需要手动触发事件
+            setTimeout(() => {
+              resolve();
+            }, 200);
           }
-        }, totalTimeout);
-      })
-      .catch(error => {
-        clearTimeout(timeoutId);
-        cleanup();
-        cleanupDom(); // 清理残留的 DOM
+        } else if (checkCount >= maxChecks) {
+          // 超时，挂载失败
+          cleanup();
+          cleanupDom(); // 清理残留的 DOM
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        // 如果是 AbortError，说明是超时
-        const isTimeout = error instanceof Error && error.name === 'AbortError';
-        const errorMsg = isTimeout
-          ? `获取 layout-app HTML 超时（${fetchTimeout}ms）: ${layoutEntry}`
-          : `获取 layout-app HTML 失败: ${errorMessage}`;
-        console.error('[layout-app loader] ❌', errorMsg, {
-          layoutEntry,
-          isTimeout,
-          fetchTimeout,
-          protocol: typeof window !== 'undefined' ? window.location.protocol : 'unknown',
-          hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
-          error: error instanceof Error ? {
-            name: error.name,
-            message: error.message,
-            stack: error.stack?.substring(0, 500), // 只显示前500字符
-          } : error,
-        });
-        reject(new Error(errorMsg));
-      });
+          const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到挂载内容`;
+          // layout-app 挂载超时（日志已移除）
+          reject(new Error(errorMsg));
+        }
+        // 否则继续检查（通过 setInterval）
+      };
+
+      // 每 50ms 检查一次
+      checkInterval = setInterval(checkLayoutApp, 50);
+
+      // 设置超时，避免无限等待
+      // 关键：超时应该 reject，而不是 resolve
+      // 缩短超时时间：生产环境 8 秒，开发环境 15 秒
+      const totalTimeout = isDev ? 15000 : 8000;
+      mountTimeout = setTimeout(() => {
+        if (!layoutAppMounted) {
+          layoutAppMounted = true;
+          cleanup();
+          cleanupDom(); // 清理残留的 DOM
+
+          const errorMsg = `加载 layout-app 超时（${totalTimeout}ms），已加载 ${scriptUrls.length} 个脚本`;
+          // 加载 layout-app 超时（日志已移除）
+          reject(new Error(errorMsg));
+        }
+      }, totalTimeout);
+      };
+
+      // 开始检查挂载状态
+      startCheck();
+    } catch (error) {
+      cleanup();
+      cleanupDom();
+      const errorMsg = error instanceof Error
+        ? `加载 layout-app 脚本失败: ${error.message}`
+        : `加载 layout-app 脚本失败: 未知错误`;
+      reject(new Error(errorMsg));
+      return;
+    }
   });
 }
 

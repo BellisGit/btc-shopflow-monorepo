@@ -13,7 +13,7 @@ import { createPathHelpers } from './utils/path-helpers';
  * @returns 别名配置对象
  */
 export function createBaseAliases(appDir: string, _appName: string): Record<string, string> {
-  const { withSrc, withPackages, withRoot, withConfigs } = createPathHelpers(appDir);
+  const { withSrc, withRoot, withConfigs, withPackages } = createPathHelpers(appDir);
 
   return {
     '@': withSrc('src'),
@@ -23,20 +23,23 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
     '@utils': withSrc('src/utils'),
     '@auth': withRoot('auth'),
     '@configs': withConfigs(''),
+    // @btc/* 包别名（用于 configs 目录中的文件，确保能正确解析）
+    // 注意：这些别名主要用于开发环境，构建时会从 node_modules 解析
     '@btc/shared-core': withPackages('shared-core/src'),
     '@btc/shared-components': withPackages('shared-components/src'),
     '@btc/shared-utils': withPackages('shared-utils/src'),
     '@btc/subapp-manifests': withPackages('subapp-manifests/src/index.ts'),
+    // shared-components 内部使用的别名（用于解析 shared-components 内部的导入）
     '@btc-common': withPackages('shared-components/src/common'),
     '@btc-components': withPackages('shared-components/src/components'),
+    '@btc-crud': withPackages('shared-components/src/crud'),
     '@btc-styles': withPackages('shared-components/src/styles'),
     '@btc-locales': withPackages('shared-components/src/locales'),
-    '@assets': withPackages('shared-components/src/assets'),
     '@btc-assets': withPackages('shared-components/src/assets'),
-    '@plugins': withPackages('shared-components/src/plugins'),
+    '@assets': withPackages('shared-components/src/assets'), // @assets 别名，用于图片资源导入
     '@btc-utils': withPackages('shared-components/src/utils'),
-    '@btc-crud': withPackages('shared-components/src/crud'),
-    // 图表相关别名（具体文件路径放在前面，确保优先匹配）
+    '@plugins': withPackages('shared-components/src/plugins'),
+    // 图表相关别名
     '@charts-utils/css-var': withPackages('shared-components/src/charts/utils/css-var'),
     '@charts-utils/color': withPackages('shared-components/src/charts/utils/color'),
     '@charts-utils/gradient': withPackages('shared-components/src/charts/utils/gradient'),

@@ -121,15 +121,6 @@ function isAllowedUser(): boolean {
 
     const isAllowed = userName === 'moselu';
 
-    // 仅在开发环境或允许用户时输出调试信息
-    if (isDev || isAllowed) {
-      console.log('[DevTools] 用户检查:', {
-        userName,
-        isAllowed,
-        hasCookie: !!btcUser,
-        userInfoKeys: Object.keys(userInfo || {})
-      });
-    }
 
     return isAllowed;
   } catch (error) {

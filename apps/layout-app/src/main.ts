@@ -497,7 +497,7 @@ const ensureMicroAppsRegistered = async () => {
           // 避免覆盖子应用自己注册的菜单
           const menuRegistry = (window as any).__BTC_MENU_REGISTRY__;
           const existingMenus = menuRegistry?.value?.[appId];
-          
+
           if (existingMenus && existingMenus.length > 0) {
             // 菜单已注册且不为空，跳过重试
             if (import.meta.env.DEV) {
@@ -517,7 +517,7 @@ const ensureMicroAppsRegistered = async () => {
               // 再次检查菜单是否已注册（可能在重试期间被子应用注册了）
               const currentRegistry = (window as any).__BTC_MENU_REGISTRY__;
               const currentMenus = currentRegistry?.value?.[appId];
-              
+
               if (currentMenus && currentMenus.length > 0) {
                 // 菜单已注册，停止重试
                 if (import.meta.env.DEV) {
@@ -582,6 +582,8 @@ const ensureMicroAppsRegistered = async () => {
       },
       singular: true, // 同一时间只运行一个子应用
       prefetch: false, // 禁用预加载，避免不必要的资源加载
+      // 注意：子应用的超时时间通过各应用导出的 timeouts 配置来设置
+      // single-spa 会自动读取子应用 default 导出中的 timeouts 配置
       // 关键：配置 importEntryOpts，确保正确处理子应用的 HTML 模板和资源路径
       // @ts-expect-error - importEntryOpts 在 qiankun 2.10.16 的类型定义中不存在，但实际可用
       importEntryOpts: {

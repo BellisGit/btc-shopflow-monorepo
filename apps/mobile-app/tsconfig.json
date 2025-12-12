@@ -24,20 +24,11 @@
       "@modules/*": ["src/modules/*"],
       "@db/*": ["src/db/*"],
       "@pwa/*": ["src/pwa/*"],
-      "@configs/*": ["../../configs/*"],
-      "@btc/shared-core": ["../../packages/shared-core/src"],
-      "@btc/shared-core/*": ["../../packages/shared-core/src/*"],
-      "@btc/shared-components": ["../../packages/shared-components/src"],
-      "@btc/shared-components/*": ["../../packages/shared-components/src/*"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
-      "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
-      "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
-      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
+      "@configs/*": ["../../configs/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts", "src/components.d.ts"],
-  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     {
       "path": "./tsconfig.node.json"

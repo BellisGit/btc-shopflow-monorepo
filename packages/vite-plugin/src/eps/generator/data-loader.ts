@@ -59,14 +59,25 @@ export async function getData(
   _reqUrl: string,
   outputDir: string,
   state: EpsState,
-  cachedData?: any
+  cachedData?: any,
+  sharedEpsDir?: string
 ) {
   // 如果提供了缓存数据且数据不为空，使用缓存数据
   if (cachedData && cachedData.list && Array.isArray(cachedData.list) && cachedData.list.length > 0) {
     state.epsList = cachedData.list;
   } else {
-    // 否则尝试从本地文件读取
-    const epsJsonPath = getEpsPath(outputDir, 'eps.json');
+    // 优先从共享目录读取 EPS 数据（如果指定）
+    let epsJsonPath = getEpsPath(outputDir, 'eps.json');
+    if (sharedEpsDir) {
+      const sharedEpsJsonPath = getEpsPath(sharedEpsDir, 'eps.json');
+      const sharedData = await readFile(sharedEpsJsonPath, true);
+      if (sharedData) {
+        // 如果共享数据存在，使用共享数据
+        epsJsonPath = sharedEpsJsonPath;
+      }
+    }
+    
+    // 尝试从本地文件读取
     const localData = await readFile(epsJsonPath, true);
 
     if (localData) {

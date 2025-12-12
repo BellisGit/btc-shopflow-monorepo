@@ -127,8 +127,6 @@ const handleToggleSidebar = () => {
   emit('toggle-sidebar');
 };
 
-// 调试日志：组件初始化
-console.log('[Topbar] 组件开始初始化');
 
 // 处理 Logo 加载错误
 const handleLogoError = (event: Event) => {
@@ -161,14 +159,11 @@ try {
   showGlobalSearch = settingsState.showGlobalSearch;
   menuThemeType = settingsState.menuThemeType;
   isDark = settingsState.isDark;
-  console.log('[Topbar] useSettingsState 成功:', {
-    showGlobalSearch: !!showGlobalSearch,
-    menuThemeType: menuThemeType?.value,
-    isDark: isDark?.value
-  });
 } catch (error) {
-  console.error('[Topbar] useSettingsState 失败:', error);
-  // 使用默认值
+  // 静默失败，使用默认值
+  if (import.meta.env.DEV) {
+    console.error('[Topbar] useSettingsState 失败:', error);
+  }
   showGlobalSearch = ref(false);
   menuThemeType = ref(null);
   isDark = ref(false);
@@ -177,7 +172,6 @@ try {
 try {
   const settingsConfig = useSettingsConfig();
   menuStyleList = settingsConfig.menuStyleList;
-  console.log('[Topbar] useSettingsConfig 成功:', { menuStyleList: menuStyleList?.value?.length });
 } catch (error) {
   console.error('[Topbar] useSettingsConfig 失败:', error);
   menuStyleList = ref([]);
@@ -352,11 +346,6 @@ const toolbarComponents = ref<any[]>([]);
 
 // 过滤后的工具栏组件（根据移动端/桌面端显示）
 const filteredToolbarComponents = computed(() => {
-  console.log('[Topbar] filteredToolbarComponents 计算:', {
-    'toolbarComponents.value.length': toolbarComponents.value.length,
-    'browser.isMini': browser.isMini,
-    'toolbarComponents': toolbarComponents.value.map(c => ({ name: c.name, order: c.order, pc: c.pc, h5: c.h5 }))
-  });
   const filtered = toolbarComponents.value.filter(config => {
     // 与 cool-admin 完全一致的过滤逻辑
     if (browser.isMini) {
@@ -371,7 +360,6 @@ const filteredToolbarComponents = computed(() => {
       return shouldShow;
     }
   });
-  console.log('[Topbar] filteredToolbarComponents 结果:', filtered.length, '个');
   return filtered;
 });
 
@@ -379,55 +367,38 @@ const filteredToolbarComponents = computed(() => {
 // 加载工具栏组件的函数
 const loadToolbarComponents = async () => {
   try {
-    console.log('[Topbar] 开始获取工具栏组件');
-    console.log('[Topbar] pluginManager:', pluginManager);
     const toolbarConfigs = pluginManager.getToolbarComponents();
-    console.log('[Topbar] 工具栏组件配置:', toolbarConfigs);
-    console.log('[Topbar] 工具栏组件数量:', toolbarConfigs.length);
 
     if (toolbarConfigs.length === 0) {
-      console.warn('[Topbar] 没有找到工具栏组件，可能是插件未安装');
       return;
     }
 
     for (const config of toolbarConfigs) {
       try {
-        console.log('[Topbar] 加载工具栏组件:', config.order);
         const component = await config.component();
         toolbarComponents.value.push({
           ...config,
           component: markRaw(component.default || component)
         });
-        console.log('[Topbar] 工具栏组件加载成功:', config.order);
       } catch (error) {
-        console.error('[Topbar] Failed to load toolbar component:', config.order, error);
+        // 静默失败
       }
     }
-    console.log('[Topbar] 工具栏组件加载完成，共', toolbarComponents.value.length, '个');
   } catch (error) {
-    console.error('[Topbar] Failed to get toolbar components:', error);
+    // 静默失败
   }
 };
 
 // 初始化工具栏组件和用户信息
 onMounted(async () => {
-  console.log('[Topbar] onMounted 开始执行');
-  console.log('[Topbar] props:', {
-    isCollapse: props.isCollapse,
-    drawerVisible: props.drawerVisible,
-    menuType: props.menuType
-  });
-
   // 立即尝试加载工具栏组件
   await loadToolbarComponents();
 
   // 如果工具栏组件为空，监听插件安装事件
   if (toolbarComponents.value.length === 0) {
-    console.log('[Topbar] 工具栏组件为空，等待插件安装...');
     const emitter = (window as any).__APP_EMITTER__;
     if (emitter) {
       const onPluginsInstalled = async () => {
-        console.log('[Topbar] 收到插件安装事件，重新加载工具栏组件');
         await loadToolbarComponents();
         emitter.off('plugins-installed', onPluginsInstalled);
       };
@@ -436,14 +407,11 @@ onMounted(async () => {
       // 设置超时，避免无限等待
       setTimeout(() => {
         if (toolbarComponents.value.length === 0) {
-          console.warn('[Topbar] 等待插件安装超时，尝试重新加载工具栏组件');
           loadToolbarComponents();
         }
       }, 2000);
     }
   }
-
-  console.log('[Topbar] onMounted 执行完成');
 
   // 监听应用切换事件，更新 Logo 标题
   const emitter = (window as any).__APP_EMITTER__;

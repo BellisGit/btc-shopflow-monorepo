@@ -5,25 +5,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@btc/shared-core": ["../../packages/shared-core/src"],
-      "@btc/shared-components": ["../../packages/shared-components/src"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
-      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
-      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"],
       "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"],
-      "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
-      "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
-      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
+      "@configs/*": ["../../configs/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts", "../../packages/subapp-manifests/src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
-  "references": [
-    { "path": "../../packages/shared-core" },
-    { "path": "../../packages/shared-components" },
-    { "path": "../../packages/shared-utils" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
 

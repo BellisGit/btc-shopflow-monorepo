@@ -132,7 +132,7 @@ import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
-import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
+import { BtcUserSettingDrawer } from '@btc/shared-components';
 
 // 创建事件总线
 const emitter = mitt();

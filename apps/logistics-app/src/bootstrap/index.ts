@@ -5,7 +5,7 @@ import type { Pinia } from 'pinia';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
 import { resetPluginManager, usePluginManager } from '@btc/shared-core';
-import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, resolveAppLogoUrl } from '@configs/layout-bridge';
+import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, resolveAppLogoUrl, registerMenuRegistrationFunction } from '@configs/layout-bridge';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
@@ -71,6 +71,7 @@ const setupStandalonePlugins = async (app: VueApp, router: Router) => {
 
 const setupStandaloneGlobals = async () => {
   registerAppEnvAccessors();
+  registerMenuRegistrationFunction();
 
   // 优先使用全局共享的 EPS 服务（由 system-app 或其他应用提供）
   // 只有在没有全局服务时，才加载本地的 EPS 服务
@@ -470,6 +471,17 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   } else {
     // 关键：在 qiankun 环境下（被 layout-app 加载时）也需要注册菜单和 Tabs
     // 这样 layout-app 才能显示 logistics-app 的菜单和 Tabs
+    // 确保菜单注册表已初始化（开发环境也需要）
+    try {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      // 确保注册表已挂载到全局对象
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    } catch (error) {
+      // 静默失败
+    }
     registerManifestMenusForApp(LOGISTICS_APP_ID);
     registerManifestTabsForApp(LOGISTICS_APP_ID);
   }
@@ -556,10 +568,19 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
       }
       // 重新注册菜单，确保菜单数据已准备好
       registerManifestMenusForApp(LOGISTICS_APP_ID);
-      // 手动触发响应式更新，确保 Vue 能够检测到菜单变化
-      if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
-        const { triggerRef } = await import('vue');
-        triggerRef((window as any).__BTC_MENU_REGISTRY__);
+      // 注意：不在应用挂载前使用 triggerRef，避免在非 Vue 上下文中触发响应式更新
+      // 菜单注册表的变化会在应用挂载后自动被 Vue 的响应式系统检测到
+      
+      // 验证菜单是否已正确注册
+      const registry = (window as any).__BTC_MENU_REGISTRY__;
+      if (registry && registry.value) {
+        const registeredMenus = registry.value[LOGISTICS_APP_ID] || [];
+        if (registeredMenus.length === 0) {
+          // 如果菜单仍然为空，再次尝试注册
+          registerManifestMenusForApp(LOGISTICS_APP_ID);
+          // 在应用挂载后触发响应式更新，避免在非 Vue 上下文中使用 triggerRef
+          // triggerRef(registry);
+        }
       }
     } catch (error) {
       // 静默失败
@@ -594,37 +615,44 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
   // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
   // 无论是独立运行还是 qiankun 模式，都需要设置
   // 关键：覆盖 layout-app 设置的简单退出函数，使用子应用的完整退出逻辑
-  try {
-    const { useLogout } = await import('../composables/useLogout');
-    const { logout } = useLogout();
-    (window as any).__APP_LOGOUT__ = logout;
-  } catch (error) {
-    // 如果加载失败，且没有其他退出登录函数，设置一个兜底函数
-    if (!(window as any).__APP_LOGOUT__) {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  // 注意：必须在 Vue 应用上下文中调用 useLogout，确保依赖注入系统可用
+  // 使用延迟加载的方式，将 useLogout 的调用包装在一个函数中，只在真正需要时才调用
+  import('vue').then(({ nextTick }) => {
+    nextTick(() => {
+      // 关键：不立即调用 useLogout()，而是创建一个包装函数，在真正需要时才调用
+      // 这样确保在调用时 Vue 应用上下文已经准备好
       (window as any).__APP_LOGOUT__ = async () => {
-        // 清除认证数据
         try {
-          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
-          if (appStorage) {
-            appStorage.auth?.clear();
-            appStorage.user?.clear();
+          // 动态导入并调用 useLogout，此时 Vue 应用已挂载，上下文可用
+          const { useLogout } = await import('../composables/useLogout');
+          const { logout } = useLogout();
+          await logout();
+        } catch (error) {
+          // 如果加载失败，使用兜底逻辑
+          console.warn('[logistics-app] useLogout failed, using fallback:', error);
+          try {
+            const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+            if (appStorage) {
+              appStorage.auth?.clear();
+              appStorage.user?.clear();
+            }
+            document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          } catch (e) {
+            // 静默失败
           }
-          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        } catch (e) {
-          // 静默失败
-        }
-        // 跳转到登录页
-        if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
-        } else {
-          window.location.href = '/login?logout=1';
+          // 跳转到登录页
+          const hostname = window.location.hostname;
+          const protocol = window.location.protocol;
+          const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
         }
       };
-    }
-  }
+    });
+  });
 
   if (props.onReady) {
     props.onReady();

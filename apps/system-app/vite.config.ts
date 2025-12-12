@@ -1,6 +1,7 @@
 import { defineConfig, type ConfigEnv } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { createMainAppViteConfig } from '../../configs/vite/factories/mainapp.config';
+import { copyIconsPlugin } from '../../configs/vite/plugins';
 import { proxy } from './src/config/proxy';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
@@ -13,6 +14,10 @@ export default defineConfig(({ command, mode }: ConfigEnv) => {
     publicImagesToAssets: true,
     // 启用资源预加载插件（默认启用）
     enableResourcePreload: true,
+    customPlugins: [
+      // 关键：system-app 需要复制 icons 目录，因为 index.html 引用了 /icons/ 路径
+      copyIconsPlugin(appDir),
+    ],
     customServer: { proxy },
     proxy,
   });

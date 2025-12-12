@@ -94,6 +94,8 @@ export { default as BtcSvg } from './components/others/btc-svg/index.vue';
 export { default as BtcViewGroup } from './common/view-group/index.vue';
 export { default as BtcSearch } from './components/others/btc-search/index.vue';
 export { default as BtcDevTools } from './components/others/btc-dev-tools/index.vue';
+// 用户设置组件
+export { BtcUserSettingDrawer } from './components/others/btc-user-setting';
 
 // CRUD 组件（上下文系统）
 export { default as BtcCrud } from './crud/context/index.vue';
@@ -141,6 +143,8 @@ export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuReg
 export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';
 export { autoMountDevTools } from './utils/auto-mount-dev-tools';
 export { default as mitt, globalMitt, Mitt } from './utils/mitt';
+// 导出 app-layout 工具函数
+export { setIsMainAppFn, getIsMainAppFn } from './components/layout/app-layout/utils';
 
 // 导出用户设置相关的枚举类型
 export * from './components/others/btc-user-setting/config/enums';

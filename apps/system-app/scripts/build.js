@@ -73,8 +73,35 @@ if (args[0] === 'build') {
   
   // 只清理 dist 目录，保留 build 目录（包含 EPS 数据）
   if (existsSync(distDir)) {
-    rmSync(distDir, { recursive: true, force: true });
-    console.log('✅ 已清理 dist 目录');
+    // 添加重试机制，处理 Windows 上的文件锁定问题
+    let retries = 3;
+    let success = false;
+    
+    while (retries > 0 && !success) {
+      try {
+        rmSync(distDir, { recursive: true, force: true });
+        success = true;
+        console.log('✅ 已清理 dist 目录');
+      } catch (error) {
+        retries--;
+        if (error.code === 'EBUSY' || error.code === 'ENOTEMPTY') {
+          if (retries > 0) {
+            console.log(`⚠️  目录被占用，等待 500ms 后重试... (剩余 ${retries} 次)`);
+            // 同步等待 500ms
+            const start = Date.now();
+            while (Date.now() - start < 500) {
+              // 忙等待
+            }
+          } else {
+            console.warn('⚠️  无法清理 dist 目录（可能被其他程序占用），继续构建...');
+            console.warn('   提示：请关闭可能占用文件的程序（如文件资源管理器、编辑器等）');
+            success = true; // 继续构建，不阻塞
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
   }
   
   console.log('✅ 清理完成（已保留 build/eps 目录）\n');

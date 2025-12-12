@@ -23,6 +23,9 @@ export * from './types/crud';
 export * from './types/qiankun';
 export * from './utils/menu-icon-assigner';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
+export * from './eps';
+export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
+export type { EpsServiceData } from './eps';
 
 // 显式导出常用类型和函数，确保 TypeScript 能够正确识别
 // 直接从类型定义文件导出，避免路径解析问题

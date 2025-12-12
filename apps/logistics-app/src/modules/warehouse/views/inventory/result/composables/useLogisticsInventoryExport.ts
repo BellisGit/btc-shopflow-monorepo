@@ -25,36 +25,36 @@ function createSummarySheet(dataList: any[], XLSX: any) {
   const currentYear = new Date().getFullYear();
   const summarySheetName = `Summary ${currentYear}`;
 
-  // Summary表头结构：两级表头
+  // Summary表头结构：固定格式，使用英文表头（与财务应用保持一致）
   const summaryHeader1 = [
-    '库存编码',
-    '单位成本',
-    '系统ST',
-    '系统QC',
-    '系统WF',
-    '系统ST-SM',
-    '系统IQC',
-    '系统NG',
-    '系统NS',
-    '系统RWF',
-    '系统FG',
-    '系统RFG',
-    '系统WF-FG',
-    '系统合计',
-    'BTC ST',
-    'BTC QC',
-    'BTC WF',
-    'BTC ST-SM',
-    'BTC IQC',
-    'BTC NG',
-    'BTC NS',
-    'BTC RWF',
-    'BTC FG',
-    'BTC RFG',
-    'BTC WF-FG',
-    'BTC合计',
-    '差异',
-    '差异成本'
+    'StockCode',
+    'UnitCost',
+    'SYS_ST',
+    'SYS_QC',
+    'SYS_WF',
+    'SYS_ST_SM',
+    'SYS_IQC',
+    'SYS_NG',
+    'SYS_NS',
+    'SYS_RWF',
+    'SYS_FG',
+    'SYS_RFG',
+    'SYS_WF_FG',
+    'SYS_Total',
+    'BTC_ST',
+    'BTC_QC',
+    'BTC_WF',
+    'BTC_ST_SM',
+    'BTC_IQC',
+    'BTC_NG',
+    'BTC_NS',
+    'BTC_RWF',
+    'BTC_FG',
+    'BTC_RFG',
+    'BTC_WF_FG',
+    'BTC_Total',
+    'Variance',
+    'VarianceCost'
   ];
 
   // 构建Summary数据行
@@ -90,7 +90,7 @@ function createSummarySheet(dataList: any[], XLSX: any) {
   ]);
 
   // 添加Total行
-  const totalRow: any[] = ['合计', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const totalRow: any[] = ['Total', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   // 计算各列的合计
   for (let colIndex = 1; colIndex < summaryHeader1.length; colIndex++) {
     totalRow[colIndex] = summaryRows.reduce((acc, row) => acc + (Number(row[colIndex]) || 0), 0);
@@ -149,7 +149,7 @@ function createTop10Sheet(topDataObj: {
   varianceBottom?: any[];
   priceBottom?: any[];
 }, XLSX: any) {
-  const topHeader = ['序号', '库存编码', '系统数量', 'BTC数量', '差异', '总价值'];
+  const topHeader = ['id', 'StockCode', 'SysQty', 'BTCQty', 'Variance', 'TotalValu'];
 
   // 格式化Top数据
   const formatTopRow = (item: any, index: number) => [
@@ -164,29 +164,29 @@ function createTop10Sheet(topDataObj: {
   // 构建Top 10 sheet数据
   const topSheetData: any[][] = [];
 
-  // 1. 差异数量 Top10 增益 (varianceTop)
-  topSheetData.push(['差异数量 Top10 增益']);
+  // 1. Qty Top10 Gain (varianceTop)
+  topSheetData.push(['Qty Top10 Gain']);
   topSheetData.push(topHeader);
   const varianceTopRows = (topDataObj.varianceTop || []).map((item: any, idx: number) => formatTopRow(item, idx));
   topSheetData.push(...varianceTopRows);
   topSheetData.push([]);
 
-  // 2. 差异数量 Top10 损失 (varianceBottom)
-  topSheetData.push(['差异数量 Top10 损失']);
+  // 2. Qty Top10 Loss (varianceBottom)
+  topSheetData.push(['Qty Top10 Loss']);
   topSheetData.push(topHeader);
   const varianceBottomRows = (topDataObj.varianceBottom || []).map((item: any, idx: number) => formatTopRow(item, idx));
   topSheetData.push(...varianceBottomRows);
   topSheetData.push([]);
 
-  // 3. 价格 Top10 增益 (priceTop)
-  topSheetData.push(['价格 Top10 增益']);
+  // 3. Value Top Gain (priceTop)
+  topSheetData.push(['Value Top Gain']);
   topSheetData.push(topHeader);
   const priceTopRows = (topDataObj.priceTop || []).map((item: any, idx: number) => formatTopRow(item, idx));
   topSheetData.push(...priceTopRows);
   topSheetData.push([]);
 
-  // 4. 价格 Top10 损失 (priceBottom)
-  topSheetData.push(['价格 Top10 损失']);
+  // 4. Value Top Loss (priceBottom)
+  topSheetData.push(['Value Top Loss']);
   topSheetData.push(topHeader);
   const priceBottomRows = (topDataObj.priceBottom || []).map((item: any, idx: number) => formatTopRow(item, idx));
   topSheetData.push(...priceBottomRows);
@@ -236,7 +236,7 @@ export function useLogisticsInventoryExport() {
 
       // 构建导出参数
       const exportParams: any = {};
-      
+
       // 如果有keyword，传递keyword
       if (params.keyword) {
         exportParams.keyword = params.keyword;

@@ -453,16 +453,8 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  console.log('[engineering-app] 开始挂载应用', {
-    isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
-    hasContainer: !!props.container,
-    containerType: props.container?.constructor?.name,
-    containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
-  });
-  
   try {
     await render(props);
-    console.log('[engineering-app] ✅ 应用挂载成功');
     
     // 通知主应用：子应用已就绪
     if (props.onReady) {

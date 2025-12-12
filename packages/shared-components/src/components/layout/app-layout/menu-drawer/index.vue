@@ -91,13 +91,34 @@ async function getDomainList(service: any) {
   return [];
 }
 
+// 开始加载（立即显示 loading，避免白屏）
+function startLoading() {
+  // 立即设置 loading 状态，确保在路由切换前就显示 loading
+  const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+  if (viewport) {
+    viewport.setAttribute('data-qiankun-loading', 'true');
+    // 确保容器可见
+    viewport.style.setProperty('display', 'flex', 'important');
+    viewport.style.setProperty('visibility', 'visible', 'important');
+    viewport.style.setProperty('opacity', '1', 'important');
+    // 触发自定义事件，通知 Layout 组件立即更新状态
+    window.dispatchEvent(new CustomEvent('qiankun:before-load', {
+      detail: { appName: 'switching' }
+    }));
+  }
+}
+
 // 完成加载（从全局或应用提供）
 function finishLoading() {
   const finishLoadingFn = (window as any).__APP_FINISH_LOADING__;
   if (finishLoadingFn) {
     finishLoadingFn();
   } else {
-    console.warn('[menu-drawer] finishLoading function not available');
+    // 如果没有全局函数，直接清除 loading 状态
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      viewport.removeAttribute('data-qiankun-loading');
+    }
   }
 }
 
@@ -717,6 +738,10 @@ const handleSwitchApp = async (app: MicroApp) => {
   // 确保使用绝对路径
   const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
 
+  // 关键：立即显示 loading，避免白屏
+  // 在路由切换前就显示 loading，确保用户看到加载状态而不是白屏
+  startLoading();
+
   // 设置超时保护，确保 loading 状态最终会被清除
   let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
   const maxLoadingTime = 10000; // 10秒超时
@@ -727,6 +752,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       clearTimeout(loadingTimeout);
       loadingTimeout = null;
     }
+    finishLoading(); // 清除 loading 状态
     window.removeEventListener('qiankun:after-mount', handleAfterMount);
   };
 

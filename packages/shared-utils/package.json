@@ -2,9 +2,17 @@
   "name": "@btc/shared-utils",
   "version": "1.0.0",
   "type": "module",
+  "description": "BTC ShopFlow 共享工具库",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,6 +23,11 @@
       "types": "./dist/error-monitor/index.d.ts",
       "import": "./dist/error-monitor/index.mjs",
       "require": "./dist/error-monitor/index.js"
+    },
+    "./qiankun/load-layout-app": {
+      "types": "./dist/qiankun/load-layout-app.d.ts",
+      "import": "./dist/qiankun/load-layout-app.mjs",
+      "require": "./dist/qiankun/load-layout-app.js"
     }
   },
   "scripts": {

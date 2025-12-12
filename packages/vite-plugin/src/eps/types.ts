@@ -1,78 +1,85 @@
 ﻿/**
- * EPS 鎻掍欢绫诲瀷瀹氫箟
- * 鍙傝€?cool-admin 鐨勫畬鏁寸被鍨嬩綋绯? */
+ * EPS 插件类型定义
+ * 参考 cool-admin 的完整类型体系
+ */
 
 export interface EpsColumn {
   /**
-   * 灞炴€у悕
+   * 属性名
    */
   propertyName: string;
   /**
-   * 瀛楁娉ㄩ噴
+   * 字段注释
    */
   comment?: string;
   /**
-   * 瀛楁绫诲瀷
+   * 字段类型
    */
   type: string;
   /**
-   * 鏄惁鍙┖
+   * 是否可为空
    */
   nullable?: boolean;
   /**
-   * 瀛楁婧愶紙鏁版嵁搴撳瓧娈靛悕锛?   */
+   * 字段源（数据库字段名）
+   */
   source?: string;
   /**
-   * 瀛楀吀绫诲瀷
+   * 字典类型
    */
   dict?: string[];
   /**
-   * 榛樿鍊?   */
+   * 默认值
+   */
   defaultValue?: any;
   /**
-   * 鏈€澶ч暱搴?   */
+   * 最大长度
+   */
   maxLength?: number;
   /**
-   * 鏈€灏忓€?   */
+   * 最小值
+   */
   minValue?: number;
   /**
-   * 鏈€澶у€?   */
+   * 最大值
+   */
   maxValue?: number;
 }
 
 export interface EpsSearch {
   /**
-   * 绮剧‘鍖归厤瀛楁
+   * 精确匹配字段
    */
   fieldEq: EpsColumn[];
   /**
-   * 妯＄硦鍖归厤瀛楁
+   * 模糊匹配字段
    */
   fieldLike: EpsColumn[];
   /**
-   * 鍏抽敭璇嶅尮閰嶅瓧娈?   */
+   * 关键词匹配字段
+   */
   keyWordLikeFields: EpsColumn[];
 }
 
 export interface EpsApi {
   /**
-   * API 鍚嶇О
+   * API 名称
    */
   name: string;
   /**
-   * HTTP 鏂规硶
+   * HTTP 方法
    */
   method: string;
   /**
-   * API 璺緞
+   * API 路径
    */
   path: string;
   /**
-   * API 鎻忚堪
+   * API 描述
    */
   summary?: string;
   /**
-   * 绫诲瀷瀹氫箟
+   * 类型定义
    */
   dts?: {
     parameters?: Array<{
@@ -86,31 +93,31 @@ export interface EpsApi {
 
 export interface EpsEntity {
   /**
-   * API 鍓嶇紑璺緞
+   * API 前缀路径
    */
   prefix: string;
   /**
-   * 瀹炰綋鍚嶇О
+   * 实体名称
    */
   name: string;
   /**
-   * API 鍒楄〃
+   * API 列表
    */
   api: EpsApi[];
   /**
-   * 瀹炰綋瀛楁
+   * 实体字段
    */
   columns?: EpsColumn[];
   /**
-   * 鍒嗛〉鏌ヨ瀛楁
+   * 分页查询字段
    */
   pageColumns?: EpsColumn[];
   /**
-   * 鎼滅储閰嶇疆
+   * 搜索配置
    */
   search?: EpsSearch;
   /**
-   * 鍒嗛〉鏌ヨ鎿嶄綔閰嶇疆
+   * 分页查询操作配置
    */
   pageQueryOp?: {
     fieldEq?: string[] | Array<{ field: string; value?: any }>;
@@ -118,11 +125,11 @@ export interface EpsEntity {
     keyWordLikeFields?: string[] | Array<{ field: string; value?: any }>;
   };
   /**
-   * 鍛藉悕绌洪棿
+   * 命名空间
    */
   namespace?: string;
   /**
-   * 鏉冮檺閰嶇疆
+   * 权限配置
    */
   permission?: Record<string, string>;
 }
@@ -133,54 +140,65 @@ export interface EpsData {
 
 export interface TypeMapping {
   /**
-   * 娴嬭瘯鏉′欢
+   * 测试条件
    */
   test?: string[];
   /**
-   * 鐩爣绫诲瀷
+   * 目标类型
    */
   type: string;
   /**
-   * 鑷畾涔夋槧灏勫嚱鏁?   */
+   * 自定义映射函数
+   */
   custom?: (params: { propertyName: string; type: string }) => string | null;
 }
 
 export interface EpsConfig {
   /**
-   * 鏄惁鍚敤
+   * 是否启用
    */
   enable: boolean;
   /**
-   * EPS API URL锛岀┖瀛楃涓茶〃绀轰娇鐢ㄦ湰鍦?Mock
+   * EPS API URL，空字符串表示使用本地Mock
    */
   api?: string;
   /**
-   * 杈撳嚭鐩綍
+   * 输出目录
    */
   dist?: string;
   /**
-   * 绫诲瀷鏄犲皠閰嶇疆
+   * 类型映射配置
    */
   mapping?: TypeMapping[];
   /**
-   * 鏄惁鐢熸垚瀛楀吀绫诲瀷
+   * 是否生成字典类型
    */
   dict?: boolean;
+  /**
+   * 共享的 EPS 数据源目录（用于从 system-app 读取 EPS 数据）
+   * 如果指定，将优先从此目录读取 EPS 数据，而不是从当前应用的 dist 读取
+   */
+  sharedEpsDir?: string;
 }
 
 export interface EpsPluginOptions {
   /**
-   * EPS 鍏冩暟鎹?URL
+   * EPS 元数据 URL
    */
   epsUrl: string;
   /**
-   * 杈撳嚭鐩綍
+   * 输出目录
    */
   outputDir?: string;
   /**
-   * 鏄惁鐩戝惉鍙樺寲
+   * 是否监听变化
    */
   watch?: boolean;
+  /**
+   * 共享的 EPS 数据源目录（用于从 system-app 读取 EPS 数据）
+   * 如果指定，将优先从此目录读取 EPS 数据，而不是从当前应用的 outputDir 读取
+   */
+  sharedEpsDir?: string;
 }
 
 export interface ServiceTree {
@@ -190,4 +208,3 @@ export interface ServiceTree {
   search?: EpsSearch;
   request?: any;
 }
-

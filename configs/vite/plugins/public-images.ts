@@ -41,9 +41,17 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       }
 
       const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico'];
+      // 排除 favicon.ico，统一使用 logo.png 作为 favicon
+      const excludedFiles = ['favicon.ico'];
       const files = readdirSync(publicDir);
 
       for (const file of files) {
+        // 跳过排除的文件
+        if (excludedFiles.includes(file)) {
+          console.log(`[public-images-to-assets] ⏭️  跳过 ${file}（统一使用 logo.png 作为 favicon）`);
+          continue;
+        }
+        
         const ext = extname(file).toLowerCase();
         if (imageExtensions.includes(ext)) {
           // 根目录图片需要特殊处理：保持在根目录，文件名不变，不使用哈希值

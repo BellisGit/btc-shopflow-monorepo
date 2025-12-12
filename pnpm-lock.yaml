@@ -118,16 +118,16 @@ importers:
   apps/admin-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@element-plus/icons-vue':
         specifier: ^2.3.2
@@ -188,7 +188,7 @@ importers:
         version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -236,13 +236,13 @@ importers:
   apps/docs-site-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@element-plus/icons-vue':
         specifier: ^2.3.1
@@ -294,23 +294,32 @@ importers:
   apps/engineering-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -320,12 +329,21 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-echarts:
+        specifier: ^8.0.1
+        version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -349,23 +367,32 @@ importers:
   apps/finance-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -375,12 +402,21 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-echarts:
+        specifier: ^8.0.1
+        version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -404,16 +440,16 @@ importers:
   apps/layout-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@element-plus/icons-vue':
         specifier: ^2.3.2
@@ -456,7 +492,7 @@ importers:
         version: 4.6.3(vue@3.5.25)
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -486,26 +522,32 @@ importers:
   apps/logistics-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
       dayjs:
         specifier: ^1.11.18
         version: 1.11.19
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -515,12 +557,18 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -550,13 +598,13 @@ importers:
   apps/mobile-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@capacitor/core':
         specifier: ^6.0.0
@@ -587,7 +635,7 @@ importers:
         version: 7.4.0
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -632,20 +680,32 @@ importers:
   apps/monitor-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
+      '@btc/subapp-manifests':
+        specifier: ^0.0.1
+        version: link:../../packages/subapp-manifests
       '@element-plus/icons-vue':
         specifier: ^2.3.2
         version: 2.3.2(vue@3.5.25)
+      '@vueuse/core':
+        specifier: ^13.9.0
+        version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
       element-plus:
         specifier: ^2.11.5
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -655,12 +715,18 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -693,23 +759,32 @@ importers:
   apps/production-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.25)
@@ -719,12 +794,21 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-echarts:
+        specifier: ^8.0.1
+        version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -748,23 +832,29 @@ importers:
   apps/quality-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.25)
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       nprogress:
         specifier: ^0.2.0
         version: 0.2.0
@@ -777,12 +867,18 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -809,16 +905,16 @@ importers:
   apps/system-app:
     dependencies:
       '@btc/shared-components':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-components
       '@btc/shared-core':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-core
       '@btc/shared-utils':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/shared-utils
       '@btc/subapp-manifests':
-        specifier: workspace:*
+        specifier: ^0.0.1
         version: link:../../packages/subapp-manifests
       '@element-plus/icons-vue':
         specifier: ^2.3.2
@@ -829,12 +925,18 @@ importers:
       axios:
         specifier: ^1.12.2
         version: 1.13.2
+      chardet:
+        specifier: ^2.1.0
+        version: 2.1.1
       echarts:
         specifier: ^6.0.0
         version: 6.0.0
       element-plus:
         specifier: ^2.8.10
         version: 2.11.8(vue@3.5.25)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
@@ -853,12 +955,18 @@ importers:
       vue-echarts:
         specifier: ^8.0.1
         version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
+      vue-i18n:
+        specifier: ^11.0.0
+        version: 11.2.2(vue@3.5.25)
       vue-router:
         specifier: ^4.5.0
         version: 4.6.3(vue@3.5.25)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@btc/vite-plugin':
-        specifier: workspace:*
+        specifier: ^1.0.0
         version: link:../../packages/vite-plugin
       '@intlify/unplugin-vue-i18n':
         specifier: ^1.4.0
@@ -949,7 +1057,7 @@ importers:
   packages/shared-core:
     dependencies:
       '@btc/shared-utils':
-        specifier: workspace:^
+        specifier: ^1.0.0
         version: link:../shared-utils
       axios:
         specifier: ^1.12.2

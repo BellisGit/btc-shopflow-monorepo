@@ -33,9 +33,8 @@ registerAppEnvAccessors();
 setAppBySubdomainFn(getAppBySubdomain);
 
 // 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
-// @ts-expect-error - 动态导入路径，TypeScript 无法在编译时解析
-import('@btc/shared-components/components/layout/app-layout/utils').then(utils => {
-  utils.setIsMainAppFn(isMainApp);
+import('@btc/shared-components').then(sharedComponents => {
+  sharedComponents.setIsMainAppFn(isMainApp);
 }).catch(() => {
   // 静默处理导入失败，不影响应用启动
   if (import.meta.env.DEV) {

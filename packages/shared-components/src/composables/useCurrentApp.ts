@@ -84,6 +84,23 @@ export function useCurrentApp() {
     { immediate: true }
   );
 
+  // 在生产环境子域名下，也需要监听 hostname 的变化
+  // 因为路径可能是 /，必须通过子域名识别
+  if (typeof window !== 'undefined') {
+    // 立即执行一次检测
+    detectCurrentApp();
+    
+    // 监听 hostname 变化（虽然通常不会变化，但作为保险）
+    const originalHostname = window.location.hostname;
+    const checkHostname = () => {
+      if (window.location.hostname !== originalHostname) {
+        detectCurrentApp();
+      }
+    };
+    // 使用 MutationObserver 监听 location 变化（虽然不直接支持，但可以通过其他方式）
+    // 或者使用 setInterval 定期检查（不推荐，但作为后备）
+  }
+
   // 生产环境也显示应用识别信息（仅在开发环境）
   if (import.meta.env.DEV) {
     watch(

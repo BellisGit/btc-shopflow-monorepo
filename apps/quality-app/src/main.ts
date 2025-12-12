@@ -305,37 +305,44 @@ async function render(props: QiankunProps = {}) {
   // 设置退出登录函数（在应用挂载后设置，确保 router 和 i18n 已初始化）
   // 无论是独立运行还是 qiankun 模式，都需要设置
   // 关键：覆盖 layout-app 设置的简单退出函数，使用子应用的完整退出逻辑
-  try {
-    const { useLogout } = await import('./composables/useLogout');
-    const { logout } = useLogout();
-    (window as any).__APP_LOGOUT__ = logout;
-  } catch (error) {
-    // 如果加载失败，且没有其他退出登录函数，设置一个兜底函数
-    if (!(window as any).__APP_LOGOUT__) {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+  // 注意：必须在 Vue 应用上下文中调用 useLogout，确保依赖注入系统可用
+  // 使用延迟加载的方式，将 useLogout 的调用包装在一个函数中，只在真正需要时才调用
+  import('vue').then(({ nextTick }) => {
+    nextTick(() => {
+      // 关键：不立即调用 useLogout()，而是创建一个包装函数，在真正需要时才调用
+      // 这样确保在调用时 Vue 应用上下文已经准备好
       (window as any).__APP_LOGOUT__ = async () => {
-        // 清除认证数据
         try {
-          const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
-          if (appStorage) {
-            appStorage.auth?.clear();
-            appStorage.user?.clear();
+          // 动态导入并调用 useLogout，此时 Vue 应用已挂载，上下文可用
+          const { useLogout } = await import('./composables/useLogout');
+          const { logout } = useLogout();
+          await logout();
+        } catch (error) {
+          // 如果加载失败，使用兜底逻辑
+          console.warn('[quality-app] useLogout failed, using fallback:', error);
+          try {
+            const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+            if (appStorage) {
+              appStorage.auth?.clear();
+              appStorage.user?.clear();
+            }
+            document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          } catch (e) {
+            // 静默失败
           }
-          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        } catch (e) {
-          // 静默失败
-        }
-        // 跳转到登录页
-        if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
-        } else {
-          window.location.href = '/login?logout=1';
+          // 跳转到登录页
+          const hostname = window.location.hostname;
+          const protocol = window.location.protocol;
+          const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+          if (isProductionSubdomain) {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = '/login?logout=1';
+          }
         }
       };
-    }
-  }
+    });
+  });
 }
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
@@ -385,21 +392,11 @@ async function unmount(props: QiankunProps = {}) {
   themePlugin = null;
 }
 
-// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
-renderWithQiankun({
-  bootstrap,
-  mount,
-  update,
-  unmount,
-});
-
-// 标准 ES 模块导出（qiankun 需要）
-export default { bootstrap, mount, unmount };
-
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
 // 这里的配置作为 fallback，主应用配置为准
 // 优化后：开发环境 8 秒，生产环境 3-5 秒
+// 关键：必须在 export default 之前声明，避免 TDZ (Temporal Dead Zone) 错误
 const isDev = import.meta.env.DEV;
 export const timeouts = {
   bootstrap: {
@@ -418,6 +415,18 @@ export const timeouts = {
     warningMillis: 1500,
   },
 };
+
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+renderWithQiankun({
+  bootstrap,
+  mount,
+  update,
+  unmount,
+});
+
+// 标准 ES 模块导出（qiankun 需要）
+// 关键：将 timeouts 也添加到 default 导出中，确保 single-spa 能够读取
+export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {

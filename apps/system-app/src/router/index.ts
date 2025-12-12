@@ -149,30 +149,20 @@ const router = createRouter({
 
 // 路由错误处理
 router.onError((error) => {
-  console.error('[system-app] Router error:', error);
-  console.error('[system-app] Router error details:', {
-    message: error.message,
-    stack: error.stack,
-    name: error.name,
-    currentRoute: router.currentRoute.value.path,
-  });
+  // Router error 日志已移除
 
   // 如果是组件加载失败，尝试重新加载或重定向到登录页
   if (error.message && error.message.includes('Failed to fetch dynamically imported module')) {
-    console.warn('[system-app] Component load failed, page will be empty. Error:', error);
+    // Component load failed 日志已移除
     // 记录失败的组件路径
     const currentRoute = router.currentRoute.value;
     if (currentRoute && currentRoute.matched.length > 0) {
       const route = currentRoute.matched[currentRoute.matched.length - 1];
-      console.warn('[system-app] Failed component route:', {
-        path: route.path,
-        name: route.name,
-        component: route.components,
-      });
+      // Failed component route 日志已移除
 
       // 关键：如果是登录页组件加载失败，尝试重定向到登录页（使用 replace 避免历史记录）
       if (route.path === '/login' || currentRoute.path === '/login') {
-        console.warn('[system-app] 登录页组件加载失败，尝试重新加载登录页');
+        // 登录页组件加载失败 日志已移除
         setTimeout(() => {
           router.replace('/login').catch(() => {
             // 如果重定向失败，至少移除 Loading 元素
@@ -188,7 +178,7 @@ router.onError((error) => {
 
     // 如果组件加载失败且不是登录页，尝试重定向到登录页
     if (currentRoute && currentRoute.path !== '/login') {
-      console.warn('[system-app] 组件加载失败，重定向到登录页');
+      // 组件加载失败 日志已移除
       setTimeout(() => {
         router.replace({
           path: '/login',
@@ -207,22 +197,17 @@ router.onError((error) => {
 
   // 处理 __vccOpts 错误（Vue 组件未正确加载）
   if (error.message && (error.message.includes('__vccOpts') || error.message.includes('Cannot read properties of undefined') || error.message.includes("Cannot use 'in' operator"))) {
-    console.warn('[system-app] Component definition error, component may not be properly loaded:', error);
+    // Component definition error 日志已移除
     // 记录当前路由信息
     const currentRoute = router.currentRoute.value;
     if (currentRoute && currentRoute.matched.length > 0) {
       const route = currentRoute.matched[currentRoute.matched.length - 1];
-      console.warn('[system-app] Component error route info:', {
-        path: route.path,
-        name: route.name,
-        hasComponents: !!route.components,
-        componentKeys: route.components ? Object.keys(route.components) : [],
-      });
+      // Component error route info 日志已移除
     }
 
     // 如果是登录页组件错误，尝试重定向到登录页
     if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some(m => m.path === '/login'))) {
-      console.warn('[system-app] 登录页组件错误，尝试重新加载登录页');
+      // 登录页组件错误 日志已移除
       setTimeout(() => {
         router.replace('/login').catch(() => {
           const loadingEl = document.getElementById('Loading');
@@ -236,17 +221,7 @@ router.onError((error) => {
 
     // 对于根路径 `/`，检查是否是 Layout 或子路由组件加载问题
     if (currentRoute && currentRoute.path === '/') {
-      console.warn('[system-app] 根路径组件错误，检查 Layout 组件和子路由');
-      // 检查匹配的路由
-      if (currentRoute.matched.length > 0) {
-        const matchedRoute = currentRoute.matched[currentRoute.matched.length - 1];
-        console.warn('[system-app] 匹配的路由信息:', {
-          path: matchedRoute.path,
-          name: matchedRoute.name,
-          hasComponent: !!matchedRoute.components,
-          componentKeys: matchedRoute.components ? Object.keys(matchedRoute.components) : [],
-        });
-      }
+      // 根路径组件错误（日志已移除）
       // 尝试重新加载，但延迟更长时间，确保组件有时间加载
       setTimeout(() => {
         router.replace('/').catch(() => {
@@ -261,7 +236,7 @@ router.onError((error) => {
 
     // 尝试重新加载当前路由
     if (currentRoute && currentRoute.path) {
-      console.log('[system-app] Attempting to reload route:', currentRoute.path);
+      // Attempting to reload route 日志已移除
       // 延迟重新加载，避免循环
       setTimeout(() => {
         router.replace(currentRoute.fullPath).catch(() => {
@@ -285,7 +260,7 @@ router.onError((error) => {
 
   // 处理 single-spa 相关错误
   if (error.message && error.message.includes('single-spa')) {
-    console.warn('[system-app] Single-spa related error:', error);
+    // Single-spa related error 日志已移除
     return;
   }
 });
@@ -448,7 +423,7 @@ function normalizeRoutePath(path: string): string | null {
 
         // 如果路径匹配（去掉应用前缀后），返回完整路径
         if (pathWithoutPrefix === path || pathWithoutPrefix === `${path}/`) {
-          console.log(`[Router] 规范化路径: ${path} -> ${tab.path} (应用: ${appName})`);
+          // 规范化路径日志已移除
           return tab.path;
         }
       }
@@ -518,44 +493,12 @@ router.beforeEach((to, from, next) => {
   // 不能假设已认证，必须通过实际的认证标记来判断
   const isAuthenticatedUser = isAuthenticated();
 
-  // 生产环境详细日志
-  if (import.meta.env.PROD) {
-    console.log('[Router Guard]', {
-      path: to.path,
-      fullPath: to.fullPath,
-      isPublicPage,
-      isAuthenticatedUser,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-      meta: to.meta,
-      matched: to.matched.length,
-      matchedRoutes: to.matched.map(m => ({ path: m.path, name: m.name })),
-    });
-
-    // 关键：对于根路径 `/`，如果未匹配，记录详细信息
-    if (to.path === '/' && to.matched.length === 0) {
-      console.error('[Router Guard] ⚠️ 根路径未匹配！', {
-        path: to.path,
-        fullPath: to.fullPath,
-        isAuthenticatedUser,
-        routes: routes.filter(r => r.path === '/' || (r as any).path === '/').map(r => ({
-          path: r.path,
-          name: r.name,
-          hasComponent: !!r.component,
-          hasChildren: !!(r as any).children,
-        })),
-      });
-    }
-  }
-
   // 如果是登录页且用户已认证，重定向到首页
   // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
   if (to.path === '/login' && isAuthenticatedUser && !to.query.logout) {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
-    if (import.meta.env.PROD) {
-      console.log('[Router Guard] 已认证用户访问登录页，重定向到:', redirectPath);
-    }
     next(redirectPath);
     return;
   }
@@ -564,15 +507,6 @@ router.beforeEach((to, from, next) => {
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
       // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
-      if (import.meta.env.PROD) {
-        console.log('[Router Guard] 未认证，重定向到登录页，原始路径:', to.fullPath);
-        console.log('[Router Guard] 认证检查详情:', {
-          cookieToken: getCookie('access_token') ? 'exists' : 'missing',
-          settings: appStorage.settings.get(),
-          storageToken: appStorage.auth.getToken() ? 'exists' : 'missing',
-          userInfo: appStorage.user.get(),
-        });
-      }
       // 关键：确保重定向到登录页
       next({
         path: '/login',
@@ -585,16 +519,7 @@ router.beforeEach((to, from, next) => {
   // 关键：如果已认证但路由未匹配（特别是根路径 `/`），记录详细信息
   if (isAuthenticatedUser && to.matched.length === 0 && to.path === '/') {
     if (import.meta.env.PROD) {
-      console.error('[Router Guard] ⚠️ 已认证但根路径未匹配！', {
-        path: to.path,
-        isAuthenticatedUser,
-        matched: to.matched.length,
-        routes: routes.filter(r => r.path === '/').map(r => ({
-          path: r.path,
-          hasComponent: !!r.component,
-          hasChildren: !!(r as any).children,
-        })),
-      });
+      // 已认证但根路径未匹配（日志已移除）
     }
   }
 
@@ -659,45 +584,23 @@ router.beforeEach((to, from, next) => {
 
 // 路由守卫：调试路由匹配情况
 router.afterEach((to) => {
-  // 生产环境调试：如果路由未匹配，记录详细信息
+  // 生产环境调试日志已移除
   if (import.meta.env.PROD && to.matched.length === 0) {
-    console.error('[system-app Router] ⚠️ 路由未匹配:', {
-      path: to.path,
-      fullPath: to.fullPath,
-      name: to.name,
-      matched: to.matched,
-      params: to.params,
-      query: to.query,
-      location: window.location.href,
-      routes: routes.map(r => ({ path: r.path, name: r.name, component: r.component ? 'defined' : 'missing' })),
-    });
-
     // 关键：对于根路径 `/`，检查是否是 Layout 组件加载问题
     if (to.path === '/') {
-      console.error('[system-app Router] ⚠️ 根路径未匹配！根路径应该匹配系统应用首页');
-      console.warn('[system-app Router] 根路径未匹配，检查 Layout 组件和子路由配置');
+      // 根路径未匹配（日志已移除）
       // 尝试重新匹配路由
       const matchedRoutes = router.resolve('/');
       if (matchedRoutes.matched.length > 0) {
-        console.log('[system-app Router] 重新匹配成功:', matchedRoutes.matched.map(m => ({
-          path: m.path,
-          name: m.name,
-          hasComponents: !!m.components,
-          componentKeys: m.components ? Object.keys(m.components) : [],
-        })));
+        // 重新匹配成功（日志已移除）
       } else {
-        console.error('[system-app Router] 根路径确实未匹配，可能是路由配置问题');
+        // 根路径确实未匹配（日志已移除）
         // 检查路由配置
         const rootRoute = routes.find(r => r.path === '/');
         if (rootRoute) {
-          console.error('[system-app Router] 根路由配置存在:', {
-            path: rootRoute.path,
-            hasComponent: !!rootRoute.component,
-            hasChildren: !!(rootRoute as any).children,
-            childrenCount: (rootRoute as any).children ? (rootRoute as any).children.length : 0,
-          });
+          // 根路由配置存在（日志已移除）
         } else {
-          console.error('[system-app Router] 根路由配置不存在！');
+          // 根路由配置不存在（日志已移除）
         }
       }
       // 关键：根路径 `/` 不应该重定向到登录页，这是系统应用首页
@@ -713,12 +616,12 @@ router.afterEach((to) => {
                          to.path === '/register';
 
     if (!isPublicPage && to.path !== '/login') {
-      console.warn('[system-app Router] 路由未匹配且非公开页面，重定向到登录页');
+      // 路由未匹配且非公开页面，重定向到登录页（日志已移除）
       router.replace({
         path: '/login',
         query: { redirect: to.fullPath },
       }).catch(err => {
-        console.error('[system-app Router] 重定向到登录页失败:', err);
+        // 重定向到登录页失败（日志已移除）
         // 如果重定向失败，至少移除 Loading 元素
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {
@@ -728,18 +631,7 @@ router.afterEach((to) => {
     }
   }
 
-  // 如果路由已匹配，记录匹配信息（生产环境）
-  if (import.meta.env.PROD && to.matched.length > 0) {
-    console.log('[system-app Router] ✅ 路由匹配成功:', {
-      path: to.path,
-      fullPath: to.fullPath,
-      matched: to.matched.map(m => ({
-        path: m.path,
-        name: m.name,
-        component: m.components ? 'loaded' : 'missing'
-      })),
-    });
-  }
+  // 路由匹配信息日志已移除
 });
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）

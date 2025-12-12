@@ -35,16 +35,8 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  console.log('[logistics-app] 开始挂载应用', {
-    isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
-    hasContainer: !!props.container,
-    containerType: props.container?.constructor?.name,
-    containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
-  });
-  
   try {
     await render(props);
-    console.log('[logistics-app] ✅ 应用挂载成功');
   } catch (error) {
     console.error('[logistics-app] ❌ mount 失败:', error, {
       errorMessage: error instanceof Error ? error.message : String(error),
@@ -67,25 +59,11 @@ async function unmount(props: QiankunProps = {}) {
   }
 }
 
-// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
-renderWithQiankun({
-  bootstrap,
-  mount,
-  async update(props: QiankunProps) {
-    if (context) {
-      updateLogisticsApp(context, props);
-    }
-  },
-  unmount,
-});
-
-// 标准 ES 模块导出（qiankun 需要）
-export default { bootstrap, mount, unmount };
-
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
 // 这里的配置作为 fallback，主应用配置为准
 // 优化后：开发环境 8 秒，生产环境 3-5 秒
+// 关键：必须在 export default 之前声明，避免 TDZ (Temporal Dead Zone) 错误
 const isDev = import.meta.env.DEV;
 export const timeouts = {
   bootstrap: {
@@ -104,6 +82,22 @@ export const timeouts = {
     warningMillis: 1500,
   },
 };
+
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+renderWithQiankun({
+  bootstrap,
+  mount,
+  async update(props: QiankunProps) {
+    if (context) {
+      updateLogisticsApp(context, props);
+    }
+  },
+  unmount,
+});
+
+// 标准 ES 模块导出（qiankun 需要）
+// 关键：将 timeouts 也添加到 default 导出中，确保 single-spa 能够读取
+export default { bootstrap, mount, unmount, timeouts };
 
 const shouldRunStandalone = () =>
   !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;

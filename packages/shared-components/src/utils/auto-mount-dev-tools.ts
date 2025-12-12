@@ -1,11 +1,44 @@
 /**
  * 自动挂载 DevTools 的辅助函数
  * 通过监听 DOM 变化，在所有应用挂载后自动挂载 DevTools
+ * 注意：只在主应用（admin-app/system-app）中启用，子应用不显示 DevTools
  */
 
 let devToolsMounted = false;
 let observer: MutationObserver | null = null;
 let checkTimer: number | null = null;
+
+/**
+ * 检查是否为主应用
+ */
+function isMainApp(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
+
+  // 检查是否是主应用的子域名
+  if (hostname === 'admin.bellis.com.cn' || hostname === 'bellis.com.cn') {
+    // 如果是主域名或 admin 子域名，且路径不是子应用路径，则为主应用
+    if (!pathname.startsWith('/logistics') && 
+        !pathname.startsWith('/engineering') && 
+        !pathname.startsWith('/quality') && 
+        !pathname.startsWith('/production') && 
+        !pathname.startsWith('/finance') && 
+        !pathname.startsWith('/monitor')) {
+      return true;
+    }
+  }
+
+  // 开发环境：检查路径
+  if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/data')) {
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * 自动挂载 DevTools（从全局对象获取依赖）
@@ -72,10 +105,16 @@ function checkAppMounted() {
 /**
  * 设置自动挂载 DevTools
  * 通过监听 DOM 变化和定时检查，在应用挂载后自动挂载 DevTools
+ * 注意：只在主应用中启用，子应用不显示 DevTools
  */
 export function setupAutoMountDevTools() {
   // 只在浏览器环境中执行
   if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  // 只在主应用中启用 DevTools
+  if (!isMainApp()) {
     return;
   }
 

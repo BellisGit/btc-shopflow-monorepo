@@ -2,9 +2,17 @@
   "name": "@btc/shared-components",
   "version": "1.0.0",
   "type": "module",
+  "description": "BTC ShopFlow 共享组件库",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,7 +20,21 @@
       "require": "./dist/index.js"
     },
     "./dist/style.css": "./dist/style.css",
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./styles/dark-theme.css": "./dist/styles/dark-theme.css",
+    "./styles/index.scss": "./src/styles/index.scss",
+    "./store/menuRegistry": {
+      "types": "./src/store/menuRegistry.ts",
+      "import": "./src/store/menuRegistry.ts"
+    },
+    "./components/layout/app-layout/utils": {
+      "types": "./src/components/layout/app-layout/utils.ts",
+      "import": "./src/components/layout/app-layout/utils.ts"
+    },
+    "./charts/utils": {
+      "types": "./src/charts/utils/index.ts",
+      "import": "./src/charts/utils/index.ts"
+    }
   },
   "scripts": {
     "dev": "vite build --watch",
@@ -21,8 +43,9 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
+    "@btc/shared-core": "^1.0.0",
+    "@btc/shared-utils": "^1.0.0",
+    "@btc/subapp-manifests": "^0.0.1",
     "@element-plus/icons-vue": "^2.0.0",
     "element-plus": "^2.0.0",
     "vue": "^3.3.0"

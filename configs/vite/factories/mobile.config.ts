@@ -151,11 +151,12 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
       dts: 'src/components.d.ts',
     }),
     // 6. VueI18n 插件
+    // 注意：mobile-app 没有 locale 文件，使用空配置避免构建错误
+    // 如果将来需要 i18n 支持，可以创建 locales 目录并添加 JSON 文件
     VueI18nPlugin({
       include: vueI18nOptions?.include || [
-        resolve(appDir, '../../packages/shared-components/src/locales/**'),
-        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts'),
-        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts'),
+        // 即使没有文件，也指定一个路径模式，避免插件报错
+        resolve(appDir, 'src/locales/**'),
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),
@@ -453,8 +454,6 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
       strict: false,
       allow: [
         withRoot('.'),
-        withPackages('.'),
-        withPackages('shared-components/src'),
       ],
     },
     proxy: {

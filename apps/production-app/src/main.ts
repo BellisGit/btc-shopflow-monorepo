@@ -558,21 +558,11 @@ async function unmount(props: QiankunProps = {}) {
   themePlugin = null;
 }
 
-// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
-renderWithQiankun({
-  bootstrap,
-  mount,
-  update,
-  unmount,
-});
-
-// 标准 ES 模块导出（qiankun 需要）
-export default { bootstrap, mount, unmount };
-
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
 // 这里的配置作为 fallback，主应用配置为准
 // 优化后：开发环境 8 秒，生产环境 3-5 秒
+// 关键：必须在 export default 之前声明，避免 TDZ (Temporal Dead Zone) 错误
 const isDev = import.meta.env.DEV;
 export const timeouts = {
   bootstrap: {
@@ -591,6 +581,18 @@ export const timeouts = {
     warningMillis: 1500,
   },
 };
+
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+renderWithQiankun({
+  bootstrap,
+  mount,
+  update,
+  unmount,
+});
+
+// 标准 ES 模块导出（qiankun 需要）
+// 关键：将 timeouts 也添加到 default 导出中，确保 single-spa 能够读取
+export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
 if (shouldRunStandalone()) {

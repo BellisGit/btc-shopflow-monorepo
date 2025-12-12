@@ -60,8 +60,29 @@ renderWithQiankun({
   unmount,
 });
 
+// 导出 timeouts 配置，供 single-spa 使用
+const isDev = import.meta.env.DEV;
+export const timeouts = {
+  bootstrap: {
+    millis: isDev ? 8000 : 3000, // 开发环境 8 秒，生产环境 3 秒
+    dieOnTimeout: !isDev, // 生产环境超时直接报错，快速发现问题
+    warningMillis: isDev ? 4000 : 1500, // 一半时间后开始警告
+  },
+  mount: {
+    millis: isDev ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
+    dieOnTimeout: !isDev,
+    warningMillis: isDev ? 4000 : 2500,
+  },
+  unmount: {
+    millis: 3000,
+    dieOnTimeout: false,
+    warningMillis: 1500,
+  },
+};
+
 // 标准 ES 模块导出（qiankun 需要）
-export default { bootstrap, mount, unmount };
+// 关键：将 timeouts 也添加到 default 导出中，确保 single-spa 能够读取
+export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
 // 注意：与 admin-app 和 logistics-app 保持一致

@@ -7,33 +7,11 @@
       "@/*": ["./src/*"],
       "@services": ["./src/services"],
       "@services/*": ["./src/services/*"],
-      "@btc/shared-core": ["../../packages/shared-core/src"],
-      "@btc/shared-components": ["../../packages/shared-components/src"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
-      "@btc-common": ["../../packages/shared-components/src/common"],
-      "@btc-common/*": ["../../packages/shared-components/src/common/*"],
-      "@btc-components": ["../../packages/shared-components/src/components"],
-      "@btc-components/*": ["../../packages/shared-components/src/components/*"],
-      "@btc-crud": ["../../packages/shared-components/src/crud"],
-      "@btc-crud/*": ["../../packages/shared-components/src/crud/*"],
-      "@assets": ["../../packages/shared-components/src/assets"],
-      "@assets/*": ["../../packages/shared-components/src/assets/*"],
-      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src/index.ts"],
-      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"],
       "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"],
-      "@charts-types/*": ["../../packages/shared-components/src/charts/types/*"],
-      "@charts-utils/*": ["../../packages/shared-components/src/charts/utils/*"],
-      "@charts-composables/*": ["../../packages/shared-components/src/charts/composables/*"]
+      "@configs/*": ["../../configs/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts", "../../packages/subapp-manifests/src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
-  "references": [
-    { "path": "../../packages/shared-core" },
-    { "path": "../../packages/shared-components" },
-    { "path": "../../packages/shared-utils" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
 

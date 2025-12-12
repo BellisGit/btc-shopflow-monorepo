@@ -12,11 +12,12 @@ export async function createEps(
   epsUrl: string,
   reqUrl: string,
   outputDir: string,
-  cachedData?: any
+  cachedData?: any,
+  sharedEpsDir?: string
 ) {
   createDir(getEpsPath(outputDir), true);
 
-  await getData(epsUrl, reqUrl, outputDir, epsState, cachedData);
+  await getData(epsUrl, reqUrl, outputDir, epsState, cachedData, sharedEpsDir);
 
   // 如果 EPS 数据为空，返回空的服务对象（不抛出错误，允许构建继续）
   if (!epsState.epsList || epsState.epsList.length === 0) {

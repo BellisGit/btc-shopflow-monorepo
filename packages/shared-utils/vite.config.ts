@@ -12,6 +12,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         'error-monitor/index': resolve(__dirname, 'src/error-monitor/index.ts'),
+        'qiankun/load-layout-app': resolve(__dirname, 'src/qiankun/load-layout-app.ts'),
       },
       name: 'BTCSharedUtils',
       formats: ['es', 'cjs'],

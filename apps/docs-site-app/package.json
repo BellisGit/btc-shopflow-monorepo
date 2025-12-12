@@ -16,9 +16,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@btc/shared-components": "workspace:*",
-    "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
+    "@btc/shared-components": "^1.0.0",
+    "@btc/shared-core": "^1.0.0",
+    "@btc/shared-utils": "^1.0.0",
     "@element-plus/icons-vue": "^2.3.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",

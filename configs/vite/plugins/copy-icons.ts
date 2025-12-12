@@ -6,7 +6,7 @@
 
 import type { Plugin, ResolvedConfig } from 'vite';
 import { resolve, dirname } from 'path';
-import { existsSync, copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync, unlinkSync } from 'node:fs';
 
 export function copyIconsPlugin(appDir: string): Plugin {
   let viteConfig: ResolvedConfig | null = null;
@@ -60,16 +60,15 @@ export function copyIconsPlugin(appDir: string): Plugin {
           }
         }
         
-        // 检查并复制 favicon.ico（如果存在）
-        const faviconSource = resolve(root, 'public/favicon.ico');
-        const faviconDest = resolve(iconsDestDir, 'favicon.ico');
-        if (existsSync(faviconSource)) {
-          copyFileSync(faviconSource, faviconDest);
-        } else {
-          // 如果不存在，使用 favicon-32x32.png 作为 favicon.ico（简单方案）
-          const favicon32Source = resolve(iconsSourceDir, 'favicon-32x32.png');
-          if (existsSync(favicon32Source)) {
-            copyFileSync(favicon32Source, faviconDest);
+        // 不再复制 favicon.ico，统一使用 logo.png 作为 favicon
+        // 如果构建产物中存在 favicon.ico，删除它（可能是 Vite 的 publicDir 复制的）
+        const faviconDest = resolve(distDir, 'favicon.ico');
+        if (existsSync(faviconDest)) {
+          try {
+            unlinkSync(faviconDest);
+            console.log(`[copy-icons] 已删除不需要的 favicon.ico: ${faviconDest}`);
+          } catch (error) {
+            // 静默失败
           }
         }
         

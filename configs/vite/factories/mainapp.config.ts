@@ -188,10 +188,6 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       include: vueI18nOptions?.include || [
         resolve(appDir, 'src/locales/**'),
         resolve(appDir, 'src/{modules,plugins}/**/locales/**'),
-        resolve(appDir, '../../packages/shared-components/src/locales/**'),
-        resolve(appDir, '../../packages/shared-components/src/plugins/**/locales/**'),
-        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN.ts'),
-        resolve(appDir, '../../packages/shared-core/src/btc/plugins/i18n/locales/en-US.ts'),
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),
@@ -219,8 +215,10 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     sourcemap: false,
     cssCodeSplit: false,
     cssMinify: true,
-    minify: 'terser',
-    terserOptions: {
+    // 关键：禁用代码压缩，避免 Terser 压缩导致的对象属性分隔符丢失问题
+    minify: false,
+    // terserOptions 已禁用，保留配置以备将来使用
+    /* terserOptions: {
       compress: {
         // 只移除 console.log，保留 console.error 和 console.warn，便于生产环境调试
         drop_console: ['log'],
@@ -230,26 +228,53 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
         passes: 1,
         collapse_vars: false,
         dead_code: false,
+        // 关键：禁用可能导致对象属性分隔符丢失的优化
+        sequences: false, // 禁用序列优化，避免语句被错误合并
+        join_vars: false, // 禁用变量连接，避免变量声明被错误合并
+        // 关键：禁用不安全的优化，避免数字字面量和字符串被错误处理
+        unsafe: false,
+        unsafe_comps: false,
+        unsafe_math: false,
+        unsafe_methods: false,
+        unsafe_proto: false,
+        unsafe_regexp: false,
+        unsafe_undefined: false,
+        // 关键：禁用可能导致对象属性分隔符丢失的优化
+        keep_infinity: true, // 保留 Infinity，避免数字被错误处理
+        // 关键：禁用对象属性优化，确保对象属性之间有正确的逗号分隔符
+        properties: false, // 禁用对象属性优化，防止属性被错误合并
+        // 关键：禁用表达式优化，确保字符串和数字不会被错误连接
+        evaluate: false, // 禁用表达式求值，防止字符串和数字被错误处理
+        // 关键：禁用纯函数优化，防止对象字面量被错误处理
+        pure_funcs: [], // 不将任何函数视为纯函数，防止对象字面量被错误优化
+        // 关键：禁用副作用优化，确保对象字面量格式正确
+        side_effects: false, // 不禁用副作用，确保对象字面量格式正确
       },
-      // 关键：对于 ES 模块，完全禁用 mangle 以避免导出名称被混淆
-      // 这可以防止 "does not provide an export named 'r'" 错误
-      // 虽然这会增加一些文件大小，但可以确保动态导入正常工作
-      mangle: false,
-      // 或者使用以下配置保留函数名和类名，但禁用变量名混淆：
-      // mangle: {
-      //   keep_fnames: true,
-      //   keep_classnames: true,
-      //   reserved: [],
-      //   properties: false,
-      // },
+      // 关键：保留函数名和类名，但禁用变量名混淆
+      // 这样可以防止导出名称被混淆，同时允许基本的压缩优化
+      mangle: {
+        keep_fnames: true,
+        keep_classnames: true,
+      },
+
       format: {
         comments: false,
+        // 关键：确保代码格式正确，避免数字字面量被错误处理
+        preserve_annotations: false,
+        // 确保数字字面量格式正确
+        ascii_only: false, // 允许非 ASCII 字符，避免数字被错误编码
+        beautify: false, // 不美化代码，保持压缩后的格式
+        // 关键：确保对象属性之间有正确的分隔符
+        semicolons: true, // 使用分号，确保语句正确分隔
+        // 关键：确保对象字面量格式正确
+        wrap_iife: false, // 不包装立即执行函数
+        wrap_func_args: false, // 不包装函数参数
       },
-    },
+    }, */
     assetsInlineLimit: 10 * 1024,
     outDir: 'dist',
     assetsDir: 'assets',
-    emptyOutDir: true,
+    emptyOutDir: false,
     rollupOptions: createRollupConfig(appName.replace('-app', '')),
     chunkSizeWarningLimit: 1000,
     ...customBuild,
@@ -277,8 +302,6 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       strict: false,
       allow: [
         withRoot('.'),
-        withPackages('.'),
-        withPackages('shared-components/src'),
       ],
       cachedChecks: true,
     },
@@ -303,12 +326,15 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
 
   // 优化依赖配置
   // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
+  // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
+  const appCacheDir = resolve(appDir, 'node_modules/.vite');
+  
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
     include: [
+      // 核心依赖：所有应用都安装的依赖
       'vue',
       'vue-router',
       'pinia',
-      'dayjs',
       'element-plus',
       'element-plus/es',
       'element-plus/es/locale/lang/zh-cn',
@@ -320,16 +346,26 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       '@btc/shared-utils',
       'vite-plugin-qiankun/dist/helper',
       'qiankun',
-      'single-spa',
       '@vueuse/core',
-      'vue-i18n',
+      // 关键：这些依赖现在已经在所有应用的 package.json 中声明
+      // 通过 @btc/shared-components 间接使用，但需要在应用中显式声明以便 Vite 正确解析
       'lodash-es',
-      'xlsx',
       'chardet',
+      'xlsx',
+      'vue-i18n',
+      // 关键：echarts 相关依赖需要被预构建
+      // system-app 和部分子应用使用了 echarts
       'echarts/core',
+      'echarts',
+      'vue-echarts',
     ],
     exclude: [],
     force: false,
+    // 关键：指定需要扫描的入口文件，确保扫描到 @btc/shared-components 内部的依赖
+    entries: [
+      resolve(appDir, 'src/main.ts'),
+      resolve(appDir, '../../packages/shared-components/src/index.ts'),
+    ],
     esbuildOptions: {
       plugins: [],
     },
@@ -342,9 +378,6 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       scss: {
         api: 'modern-compiler',
         silenceDeprecations: ['legacy-js-api', 'import'],
-        includePaths: [
-          withPackages('shared-components/src/styles'),
-        ],
       },
     },
     devSourcemap: false,
@@ -355,10 +388,12 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 注意：publicDir 的配置需要在 vite.config.ts 中根据 command 动态设置
   // 这里始终启用 publicDir，开发环境直接使用，构建环境会在 vite.config.ts 中被覆盖
   const finalPublicDir = publicDir;
-  
+
   return {
     base: baseUrl,
     publicDir: finalPublicDir,
+    // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
+    cacheDir: appCacheDir,
     resolve: createBaseResolve(appDir, appName),
     plugins,
     esbuild: {

@@ -45,6 +45,7 @@ export function btc(options: Partial<BtcPluginConfig> & { proxy?: any } = {}) {
         epsUrl: config.eps?.api || '/api/login/eps/contract',
         outputDir: config.eps?.dist || 'build/eps',
         reqUrl: config.reqUrl || '',
+        sharedEpsDir: config.eps?.sharedEpsDir,
       })
     );
   }

@@ -11,10 +11,10 @@
     "type-check": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {
-    "@btc/shared-components": "workspace:*",
-    "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
-    "@btc/subapp-manifests": "workspace:*",
+    "@btc/shared-components": "^1.0.0",
+    "@btc/shared-core": "^1.0.0",
+    "@btc/shared-utils": "^1.0.0",
+    "@btc/subapp-manifests": "^0.0.1",
     "@element-plus/icons-vue": "^2.3.2",
     "@vueuse/core": "^13.9.0",
     "axios": "^1.12.2",
@@ -30,7 +30,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@btc/vite-plugin": "workspace:*",
+    "@btc/vite-plugin": "^1.0.0",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.93.2",

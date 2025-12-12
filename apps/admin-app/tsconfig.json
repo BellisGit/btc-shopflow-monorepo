@@ -41,48 +41,6 @@
                                           "@utils/*":  [
                                                            "src/utils/*"
                                                        ],
-                                          "@btc-components/*":  [
-                                                                    "../../packages/shared-components/src/components/*"
-                                                                ],
-                                          "@btc/shared-core":  [
-                                                                   "../../packages/shared-core/src"
-                                                               ],
-                                          "@btc/shared-core/*":  [
-                                                                     "../../packages/shared-core/src/*"
-                                                                 ],
-                                          "@btc/shared-components":  [
-                                                                         "../../packages/shared-components/src"
-                                                                     ],
-                                          "@btc/shared-components/*":  [
-                                                                           "../../packages/shared-components/src/*"
-                                                                       ],
-                                          "@btc/shared-utils":  [
-                                                                    "../../packages/shared-utils/src"
-                                                                ],
-                                          "@btc/shared-utils/*":  [
-                                                                      "../../packages/shared-utils/src/*"
-                                                                  ],
-                                          "@assets":  [
-                                                          "../../packages/shared-components/src/assets"
-                                                      ],
-                                          "@assets/*":  [
-                                                            "../../packages/shared-components/src/assets/*"
-                                                        ],
-                                          "@btc/subapp-manifests":  [
-                                                                        "../../packages/subapp-manifests/dist/index.js"
-                                                                    ],
-                                          "@btc/subapp-manifests/*":  [
-                                                                          "../../packages/subapp-manifests/dist/*"
-                                                                      ],
-                                          "@charts-types/*":  [
-                                                                   "../../packages/shared-components/src/charts/types/*"
-                                                               ],
-                                          "@charts-utils/*":  [
-                                                                  "../../packages/shared-components/src/charts/utils/*"
-                                                              ],
-                                          "@charts-composables/*":  [
-                                                                        "../../packages/shared-components/src/charts/composables/*"
-                                                                    ],
                                           "@configs":  [
                                                            "../../configs"
                                                        ],
@@ -99,7 +57,7 @@
                     "src/env.d.ts",
                     "../../configs/**/*.ts"
                 ],
-    "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/*.d.ts"],
+    "exclude": ["node_modules", "dist"],
     "references":  [
                        {
                            "path":  "./tsconfig.node.json"

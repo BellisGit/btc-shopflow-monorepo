@@ -17,11 +17,8 @@ export const appConfig = {
   // 系统版本
   version: '1.0.0',
 
-  // Logo 路径
+  // Logo 路径（同时用作 favicon）
   logo: '/logo.png',
-
-  // Favicon 路径
-  favicon: '/favicon.ico',
 
   // 公司/组织信息
   company: {

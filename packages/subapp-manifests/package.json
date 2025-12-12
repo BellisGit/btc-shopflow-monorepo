@@ -2,10 +2,17 @@
   "name": "@btc/subapp-manifests",
   "version": "0.0.1",
   "type": "module",
-  "private": true,
+  "description": "BTC ShopFlow 子应用清单配置",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",

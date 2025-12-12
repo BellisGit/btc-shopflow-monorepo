@@ -2,6 +2,28 @@
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
+import { copyFileSync, mkdirSync } from 'fs';
+import type { Plugin } from 'vite';
+
+// 复制 dark-theme.css 到 dist 目录的插件
+function copyDarkThemePlugin(): Plugin {
+  return {
+    name: 'copy-dark-theme',
+    writeBundle() {
+      const srcFile = resolve(__dirname, 'src/styles/dark-theme.css');
+      const distDir = resolve(__dirname, 'dist/styles');
+      const distFile = resolve(distDir, 'dark-theme.css');
+      
+      try {
+        mkdirSync(distDir, { recursive: true });
+        copyFileSync(srcFile, distFile);
+        console.log('[copy-dark-theme] ✓ 已复制 dark-theme.css 到 dist/styles/');
+      } catch (error) {
+        console.error('[copy-dark-theme] ✗ 复制失败:', error);
+      }
+    },
+  };
+}
 
 export default defineConfig({
   resolve: {
@@ -31,7 +53,8 @@ export default defineConfig({
     },
   },
   plugins: [
-    vue()
+    vue(),
+    copyDarkThemePlugin(),
   ],
   css: {
     preprocessorOptions: {

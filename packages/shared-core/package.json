@@ -2,9 +2,17 @@
   "name": "@btc/shared-core",
   "version": "1.0.0",
   "type": "module",
+  "description": "BTC ShopFlow 共享核心库，主要是逻辑层面共享（区别于组件共享）",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "registry": "http://localhost:4873"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",
@@ -13,10 +21,10 @@
   "peerDependencies": {
     "@vueuse/core": "^12.0.0 || ^13.0.0",
     "pinia": "^2.0.0 || ^3.0.0",
-    "vue": "^3.3.0"
+    "vue": "^3.3.0",
+    "@btc/shared-utils": "^1.0.0"
   },
   "dependencies": {
-    "@btc/shared-utils": "workspace:^",
     "axios": "^1.12.2"
   },
   "devDependencies": {

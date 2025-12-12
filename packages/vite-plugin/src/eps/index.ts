@@ -7,7 +7,7 @@ import { info, error } from './utils';
  * EPS Vite 插件（支持虚拟模块和热更新）
  */
 export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plugin {
-  const { epsUrl = '', outputDir = 'build/eps', watch = true, reqUrl = '' } = options;
+  const { epsUrl = '', outputDir = 'build/eps', watch = true, reqUrl = '', sharedEpsDir } = options;
 
   // 虚拟模块 ID 列表
   const virtualModuleIds: string[] = [
@@ -48,8 +48,8 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
       if (isBuildMode) {
         info('构建模式：直接使用本地 EPS 文件，跳过远程获取');
         try {
-          // 直接从本地文件读取
-          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          // 直接从本地文件读取（优先从共享目录读取）
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined, sharedEpsDir);
 
           // 如果本地文件有数据，使用本地数据
           if (result && result.list && result.list.length > 0) {
@@ -75,8 +75,8 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         // 如果远程获取的数据为空，尝试从本地文件读取
         if (!entities || entities.length === 0) {
           info('远程 EPS 数据为空，尝试从本地文件读取...');
-          // 传入 undefined 作为 cachedData，让 createEps 从本地文件读取
-          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          // 传入 undefined 作为 cachedData，让 createEps 从本地文件读取（优先从共享目录读取）
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined, sharedEpsDir);
 
           // 如果本地文件也没有数据，返回空结构
           if (!result || !result.list || result.list.length === 0) {
@@ -92,7 +92,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         }
 
         // 然后创建 EPS 服务
-        const result = await createEps(epsUrl, reqUrl, outputDir, { list: entities });
+        const result = await createEps(epsUrl, reqUrl, outputDir, { list: entities }, sharedEpsDir);
 
         // 更新缓存
         epsCache = result;
@@ -104,7 +104,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         // 尝试从本地文件读取作为回退
         try {
           info('远程获取失败，尝试从本地文件读取...');
-          const result = await createEps(epsUrl, reqUrl, outputDir, undefined);
+          const result = await createEps(epsUrl, reqUrl, outputDir, undefined, sharedEpsDir);
 
           // 如果本地文件有数据，使用本地数据
           if (result && result.list && result.list.length > 0) {
@@ -275,7 +275,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         epsCache = null;
         cacheTimestamp = 0;
 
-        createEps(epsUrl, reqUrl, outputDir).then((data) => {
+        createEps(epsUrl, reqUrl, outputDir, undefined, sharedEpsDir).then((data) => {
           if (data.isUpdate) {
             // 更新缓存
             epsCache = data;

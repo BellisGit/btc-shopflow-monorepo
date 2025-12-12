@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { service } from '@services/eps';
-import { BtcAvatar } from '@btc/shared-components/components/basic/btc-avatar';
+import { BtcAvatar } from '@btc/shared-components';
 import ProfileInfoItem from './ProfileInfoItem.vue';
 
 defineOptions({

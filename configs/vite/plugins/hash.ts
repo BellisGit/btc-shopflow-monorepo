@@ -53,6 +53,8 @@ export function forceNewHashPlugin(): Plugin {
   const buildId = getBuildTimestamp();
   const cssFileNameMap = new Map<string, string>();
   const jsFileNameMap = new Map<string, string>();
+  // 基础名称到新文件名的映射（例如：'menu-registry' -> 'menu-registry-B-483hvG-mj2mtu46.js'）
+  const baseNameToFileNameMap = new Map<string, string>();
 
   return {
     name: 'force-new-hash',
@@ -61,6 +63,7 @@ export function forceNewHashPlugin(): Plugin {
       console.log(`[force-new-hash] 构建 ID: ${buildId}`);
       cssFileNameMap.clear();
       jsFileNameMap.clear();
+      baseNameToFileNameMap.clear();
     },
     renderChunk(code: string, chunk: ChunkInfo) {
       const isThirdPartyLib = chunk.fileName?.includes('lib-echarts') ||
@@ -92,6 +95,17 @@ export function forceNewHashPlugin(): Plugin {
           const newRef = newFileName.replace(/^assets\//, '');
           jsFileNameMap.set(oldRef, newRef);
 
+          // 提取基础名称（去掉所有 hash 段），用于前缀匹配
+          const baseNameMatch = baseName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?$/) ||
+                               baseName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})$/);
+          if (baseNameMatch) {
+            const baseNameOnly = baseNameMatch[1];
+            // 如果已经有映射，使用第一个找到的（通常应该是同一个文件的不同版本）
+            if (!baseNameToFileNameMap.has(baseNameOnly)) {
+              baseNameToFileNameMap.set(baseNameOnly, newRef);
+            }
+          }
+
           (chunk as any).fileName = newFileName;
           bundle[newFileName] = chunk;
           delete bundle[fileName];
@@ -104,7 +118,7 @@ export function forceNewHashPlugin(): Plugin {
           const oldCssName = fileName.replace(/^assets\//, '');
           const newCssName = newFileName.replace(/^assets\//, '');
           cssFileNameMap.set(oldCssName, newCssName);
-          
+
           console.log(`[force-new-hash] CSS 文件映射: ${oldCssName} -> ${newCssName}`);
 
           (chunk as any).fileName = newFileName;
@@ -117,12 +131,14 @@ export function forceNewHashPlugin(): Plugin {
       for (const [fileName, chunk] of Object.entries(bundle)) {
         const chunkAny = chunk as any;
         if (chunkAny.type === 'chunk' && chunkAny.code) {
+          // 注意：对于 layout-app，vendor、menu-registry 等 chunk 也需要更新引用
+          // 只有真正的第三方库（如 element-plus、vue-core）才跳过更新
           const isThirdPartyLib = fileName.includes('lib-echarts') ||
                                    fileName.includes('element-plus') ||
                                    fileName.includes('vue-core') ||
-                                   fileName.includes('vue-router') ||
-                                   fileName.includes('vendor');
+                                   fileName.includes('vue-router');
 
+          // 只跳过真正的第三方库，vendor、menu-registry 等需要更新
           if (isThirdPartyLib && (fileName.includes('vue-router') || fileName.includes('vue-core'))) {
             continue;
           }
@@ -130,6 +146,75 @@ export function forceNewHashPlugin(): Plugin {
           let newCode = chunkAny.code;
           let modified = false;
 
+          // 关键：先更新 __vite__mapDeps 中的引用，避免被 replacePatterns 错误匹配
+          // 更新 __vite__mapDeps 中的 JS 引用
+          // __vite__mapDeps 可能包含多种格式：
+          // 1. "assets/vendor-BS0iDuyq.js" (字符串格式)
+          // 2. 'assets/vendor-BS0iDuyq.js' (单引号格式)
+          // 3. `assets/vendor-BS0iDuyq.js` (模板字符串格式)
+          // 4. 可能还有不带引号的格式
+          if (newCode.includes('__vite__mapDeps') && jsFileNameMap.size > 0) {
+            for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+              const escapedOldJsName = oldJsName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              // 匹配多种引号格式
+              const jsPatterns = [
+                new RegExp(`(["'])assets/${escapedOldJsName}\\1`, 'g'), // 双引号或单引号
+                new RegExp(`(\`)assets/${escapedOldJsName}\\1`, 'g'), // 模板字符串
+                new RegExp(`(\\b)assets/${escapedOldJsName}(\\b)`, 'g'), // 不带引号（单词边界）
+              ];
+
+              for (const pattern of jsPatterns) {
+                if (pattern.test(newCode)) {
+                  // 重新创建 pattern 用于替换（因为 test 会改变 lastIndex）
+                  const replacePattern = new RegExp(pattern.source, 'g');
+                  newCode = newCode.replace(replacePattern, (match: string, quote1?: string, quote2?: string) => {
+                    // 根据匹配的引号类型返回相应的替换
+                    if (quote1 === '"' || quote1 === "'") {
+                      return `${quote1}assets/${newJsName}${quote1}`;
+                    } else if (quote1 === '`') {
+                      return `\`assets/${newJsName}\``;
+                    } else {
+                      // 不带引号的情况
+                      return `assets/${newJsName}`;
+                    }
+                  });
+                  modified = true;
+                }
+              }
+            }
+          }
+
+          // 更新 __vite__mapDeps 中的 CSS 引用
+          if (newCode.includes('__vite__mapDeps') && cssFileNameMap.size > 0) {
+            for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
+              const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              // 匹配多种引号格式
+              const cssPatterns = [
+                new RegExp(`(["'])assets/${escapedOldCssName}\\1`, 'g'), // 双引号或单引号
+                new RegExp(`(\`)assets/${escapedOldCssName}\\1`, 'g'), // 模板字符串
+                new RegExp(`(\\b)assets/${escapedOldCssName}(\\b)`, 'g'), // 不带引号（单词边界）
+              ];
+
+              for (const pattern of cssPatterns) {
+                if (pattern.test(newCode)) {
+                  // 重新创建 pattern 用于替换
+                  const replacePattern = new RegExp(pattern.source, 'g');
+                  newCode = newCode.replace(replacePattern, (match: string, quote1?: string, quote2?: string) => {
+                    if (quote1 === '"' || quote1 === "'") {
+                      return `${quote1}assets/${newCssName}${quote1}`;
+                    } else if (quote1 === '`') {
+                      return `\`assets/${newCssName}\``;
+                    } else {
+                      return `assets/${newCssName}`;
+                    }
+                  });
+                  modified = true;
+                }
+              }
+            }
+          }
+
+          // 然后更新其他引用（不包括 __vite__mapDeps，因为已经处理过了）
           for (const [oldFileName, newFileName] of fileNameMap.entries()) {
             const oldRef = oldFileName.replace(/^assets\//, '');
             const newRef = newFileName.replace(/^assets\//, '');
@@ -142,12 +227,18 @@ export function forceNewHashPlugin(): Plugin {
             const replacePatterns = [
               [`/assets/${oldRef}`, `/assets/${newRef}`],
               [`./${oldRef}`, `./${newRef}`],
+              // 注意：不包含 "assets/xxx" 格式，因为这是 __vite__mapDeps 的格式，已经处理过了
+              // 只处理不带 assets/ 前缀的引用
               [`"${oldRef}"`, `"${newRef}"`],
               [`'${oldRef}'`, `'${newRef}'`],
               [`\`${oldRef}\``, `\`${newRef}\``],
               [`import('/assets/${oldRef}')`, `import('/assets/${newRef}?v=${buildId}')`],
               [`import("/assets/${oldRef}")`, `import("/assets/${newRef}?v=${buildId}")`],
               [`import(\`/assets/${oldRef}\`)`, `import(\`/assets/${newRef}?v=${buildId}\`)`],
+              // 处理相对路径的 import()
+              [`import('./${oldRef}')`, `import('./${newRef}?v=${buildId}')`],
+              [`import("./${oldRef}")`, `import("./${newRef}?v=${buildId}")`],
+              [`import(\`./${oldRef}\`)`, `import(\`./${newRef}?v=${buildId}\`)`],
             ];
 
             if (oldRef !== oldRefWithoutTrailingDash) {
@@ -160,6 +251,10 @@ export function forceNewHashPlugin(): Plugin {
                 [`import('/assets/${oldRefWithoutTrailingDash}')`, `import('/assets/${newRef}?v=${buildId}')`],
                 [`import("/assets/${oldRefWithoutTrailingDash}")`, `import("/assets/${newRef}?v=${buildId}")`],
                 [`import(\`/assets/${oldRefWithoutTrailingDash}\`)`, `import(\`/assets/${newRef}?v=${buildId}\`)`],
+                // 处理相对路径的 import()
+                [`import('./${oldRefWithoutTrailingDash}')`, `import('./${newRef}?v=${buildId}')`],
+                [`import("./${oldRefWithoutTrailingDash}")`, `import("./${newRef}?v=${buildId}")`],
+                [`import(\`./${oldRefWithoutTrailingDash}\`)`, `import(\`./${newRef}?v=${buildId}\`)`],
               );
             }
 
@@ -172,31 +267,154 @@ export function forceNewHashPlugin(): Plugin {
               }
             });
 
-            // 为所有 import() 添加版本号
-            const allImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
-            newCode = newCode.replace(allImportPattern, (_match: string, quote: string, path: string, _ext: string, query: string) => {
-              if (query && query.includes('v=')) {
-                return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+            // 为所有 import() 添加版本号（包括相对路径和绝对路径）
+            // 匹配格式：import('./xxx.js') 或 import('/assets/xxx.js')
+            // 注意：这里需要先检查路径是否已经被更新，避免重复更新
+            const allImportPattern = /import\s*\(\s*(["'`])(\.?\/?assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
+            newCode = newCode.replace(allImportPattern, (match: string, quote: string, path: string, _ext: string, query: string) => {
+              // 检查路径是否已经被更新（包含 buildId）
+              if (path.includes(`-${buildId}.`)) {
+                // 已经更新，只更新查询参数
+                if (query && query.includes('v=')) {
+                  return `import(${quote}${path}${query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+                } else if (!query) {
+                  return `import(${quote}${path}?v=${buildId}${quote})`;
+                }
+                return match;
+              }
+
+              // 从路径中提取文件名（去掉路径前缀）
+              const pathFileName = path.replace(/^\.?\/?assets\//, '');
+
+              // 检查是否需要更新路径（在 fileNameMap 中查找）
+              // 需要精确匹配文件名，或匹配文件名的一部分（去掉 hash 后的基础名称）
+              let updatedPath = path;
+              let pathWasUpdated = false;
+
+              // 首先尝试精确匹配完整文件名
+              for (const [oldFileName, newFileName] of fileNameMap.entries()) {
+                const oldRef = oldFileName.replace(/^assets\//, '');
+                if (pathFileName === oldRef) {
+                  const newRef = newFileName.replace(/^assets\//, '');
+                  const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                  updatedPath = `${pathPrefix}${newRef}`;
+                  pathWasUpdated = true;
+                  break;
+                }
+              }
+
+              // 如果精确匹配失败，尝试匹配文件名的基础部分
+              // 需要支持多种格式：
+              // 1. vendor-DQhF5YTo-miv5f0sw.js -> vendor（多个 hash 段）
+              // 2. menu-registry-fu7YjIYj.js -> menu-registry（单个 hash 段）
+              // 3. eps-service-DLIQb69j.js -> eps-service
+              if (!pathWasUpdated) {
+                // 尝试匹配文件名的基础部分（去掉所有 hash 段）
+                // hash 段通常是 8 个或更多字符的字母数字组合
+                const baseNameMatch = pathFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs)$/) ||
+                                      pathFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.(js|mjs)$/);
+
+                if (baseNameMatch) {
+                  const baseName = baseNameMatch[1];
+                  // 首先尝试使用基础名称映射表（更快速）
+                  const mappedFileName = baseNameToFileNameMap.get(baseName);
+                  if (mappedFileName) {
+                    const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                    updatedPath = `${pathPrefix}${mappedFileName}`;
+                    pathWasUpdated = true;
+                  } else {
+                    // 回退到在 fileNameMap 中查找匹配的基础名称
+                    for (const [oldFileName, newFileName] of fileNameMap.entries()) {
+                      const oldRef = oldFileName.replace(/^assets\//, '');
+                      // 也尝试匹配旧文件名的基础部分
+                      const oldBaseNameMatch = oldRef.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs)$/) ||
+                                               oldRef.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.(js|mjs)$/);
+
+                      if (oldBaseNameMatch && oldBaseNameMatch[1] === baseName) {
+                        const newRef = newFileName.replace(/^assets\//, '');
+                        const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                        updatedPath = `${pathPrefix}${newRef}`;
+                        pathWasUpdated = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+
+                // 如果基础名称匹配也失败，尝试更宽松的匹配（前缀匹配）
+                if (!pathWasUpdated) {
+                  const prefixMatch = pathFileName.match(/^([^-]+(?:-[^-]+)*?)-/);
+                  if (prefixMatch) {
+                    const prefix = prefixMatch[1];
+                    // 首先尝试使用基础名称映射表
+                    const mappedFileName = baseNameToFileNameMap.get(prefix);
+                    if (mappedFileName) {
+                      const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                      updatedPath = `${pathPrefix}${mappedFileName}`;
+                      pathWasUpdated = true;
+                    } else {
+                      // 回退到在 fileNameMap 中查找
+                      for (const [oldFileName, newFileName] of fileNameMap.entries()) {
+                        const oldRef = oldFileName.replace(/^assets\//, '');
+                        const oldPrefixMatch = oldRef.match(/^([^-]+(?:-[^-]+)*?)-/);
+                        if (oldPrefixMatch && oldPrefixMatch[1] === prefix) {
+                          const newRef = newFileName.replace(/^assets\//, '');
+                          const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                          updatedPath = `${pathPrefix}${newRef}`;
+                          pathWasUpdated = true;
+                          break;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              // 如果文件名已经包含 buildId，就不需要查询参数中的版本号
+              // 因为文件名本身已经包含了版本信息，nginx 可以根据文件名正确路由
+              if (pathWasUpdated) {
+                // 路径已更新，文件名包含 buildId，移除查询参数中的版本号
+                const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+                return `import(${quote}${updatedPath}${cleanQuery}${quote})`;
               } else {
-                return `import(${quote}${path}?v=${buildId}${quote})`;
+                // 路径未更新，但文件名可能已经包含 buildId，检查一下
+                if (path.includes(`-${buildId}.`)) {
+                  // 文件名已包含 buildId，移除查询参数
+                  const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+                  return `import(${quote}${path}${cleanQuery}${quote})`;
+                } else {
+                  // 文件名不包含 buildId，保留查询参数作为备用
+                  if (query && query.includes('v=')) {
+                    return `import(${quote}${path}${query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+                  } else {
+                    return `import(${quote}${path}?v=${buildId}${quote})`;
+                  }
+                }
               }
             });
           }
 
-          // 更新 __vite__mapDeps 中的 CSS 引用
-          if (newCode.includes('__vite__mapDeps') && cssFileNameMap.size > 0) {
-            for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
-              const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const cssPattern = new RegExp(`(["'])assets/${escapedOldCssName}\\1`, 'g');
-              if (cssPattern.test(newCode)) {
-                newCode = newCode.replace(cssPattern, `$1assets/${newCssName}$1`);
-                modified = true;
-              }
-            }
-          }
-
           if (modified) {
             chunkAny.code = newCode;
+            console.log(`[force-new-hash] ✅ 已更新 ${fileName} 中的引用`);
+          }
+
+          // 检查是否还有未更新的动态导入（用于调试入口文件）
+          if (fileName.includes('index-') || fileName.includes('main-')) {
+            const remainingImports = newCode.match(/import\s*\(\s*(["'`])(\.?\/?assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g);
+            if (remainingImports) {
+              const unresolvedImports = remainingImports.filter((imp: string) => {
+                const pathMatch = imp.match(/["'](\.?\/?assets\/[^"'`]+)/);
+                if (pathMatch) {
+                  const path = pathMatch[1];
+                  return !path.includes(`-${buildId}.`);
+                }
+                return false;
+              });
+              if (unresolvedImports.length > 0) {
+                console.warn(`[force-new-hash] ⚠️  ${fileName} 中仍有 ${unresolvedImports.length} 个未更新的动态导入:`, unresolvedImports.slice(0, 5));
+              }
+            }
           }
         }
       }
@@ -216,7 +434,7 @@ export function forceNewHashPlugin(): Plugin {
             if (cssRefs) {
               console.log(`[force-new-hash] HTML 中的 CSS 引用:`, cssRefs);
             }
-            
+
             for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
               const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
               // 更新 <link href> 标签中的 CSS 文件路径（包括查询参数）
@@ -248,10 +466,10 @@ export function forceNewHashPlugin(): Plugin {
             if (importRefs) {
               console.log(`[force-new-hash] HTML 中的 import() 引用:`, importRefs);
             }
-            
+
             for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
               const escapedOldJsName = oldJsName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              
+
               // 1. 更新 <script src> 标签中的 JS 文件路径（包括查询参数）
               const scriptPattern = new RegExp(`(<script[^>]*\\s+src=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
               const originalHtml1 = htmlContent;
@@ -259,16 +477,16 @@ export function forceNewHashPlugin(): Plugin {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
-                // 如果已有查询参数，更新版本号；否则添加版本号
-                const newQuery = query ? query.replace(/[?&]v=[^&'"]*/g, `?v=${buildId}`) : `?v=${buildId}`;
-                console.log(`[force-new-hash] 匹配到 <script src> 引用: ${path}${query || ''} -> ${newPath}${newQuery}`);
-                return `${prefix}${newPath}${newQuery}${suffix}`;
+                // 文件名已包含 buildId，移除查询参数中的版本号
+                const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+                console.log(`[force-new-hash] 匹配到 <script src> 引用: ${path}${query || ''} -> ${newPath}${cleanQuery || ''}`);
+                return `${prefix}${newPath}${cleanQuery}${suffix}`;
               });
               if (htmlContent !== originalHtml1) {
                 htmlModified = true;
                 console.log(`[force-new-hash] ✅ 已更新 <script src> 引用: ${oldJsName} -> ${newJsName}`);
               }
-              
+
               // 2. 更新 import() 动态导入语句中的 JS 文件路径（包括查询参数）
               // 匹配格式：import('./assets/xxx.js') 或 import('/assets/xxx.js')
               const importPattern = new RegExp(`(import\\s*\\(\\s*['"])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(['"]\\s*\\))`, 'g');
@@ -277,16 +495,16 @@ export function forceNewHashPlugin(): Plugin {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
-                // 如果已有查询参数，更新版本号；否则添加版本号
-                const newQuery = query ? query.replace(/[?&]v=[^&'"]*/g, `?v=${buildId}`) : `?v=${buildId}`;
-                console.log(`[force-new-hash] 匹配到 import() 引用: ${path}${query || ''} -> ${newPath}${newQuery}`);
-                return `${prefix}${newPath}${newQuery}${suffix}`;
+                // 文件名已包含 buildId，移除查询参数中的版本号
+                const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+                console.log(`[force-new-hash] 匹配到 import() 引用: ${path}${query || ''} -> ${newPath}${cleanQuery || ''}`);
+                return `${prefix}${newPath}${cleanQuery}${suffix}`;
               });
               if (htmlContent !== originalHtml2) {
                 htmlModified = true;
                 console.log(`[force-new-hash] ✅ 已更新 import() 引用: ${oldJsName} -> ${newJsName}`);
               }
-              
+
               // 3. 更新 <link rel="modulepreload"> 标签中的 JS 文件路径（包括查询参数）
               // 匹配格式：<link rel="modulepreload" href="/assets/xxx.js"> 或 <link rel="modulepreload" href="./assets/xxx.js">
               const modulepreloadPattern = new RegExp(`(<link[^>]*\\s+rel=["']modulepreload["'][^>]*\\s+href=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
@@ -295,17 +513,17 @@ export function forceNewHashPlugin(): Plugin {
                 // 保持原有的路径前缀（/assets/ 或 ./assets/）
                 const pathPrefix = path.startsWith('./') ? './' : '/';
                 const newPath = `${pathPrefix}assets/${newJsName}`;
-                // 如果已有查询参数，更新版本号；否则添加版本号
-                const newQuery = query ? query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`) : `?v=${buildId}`;
-                console.log(`[force-new-hash] 匹配到 <link rel="modulepreload"> 引用: ${path}${query || ''} -> ${newPath}${newQuery}`);
-                return `${prefix}${newPath}${newQuery}${suffix}`;
+                // 文件名已包含 buildId，移除查询参数中的版本号
+                const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+                console.log(`[force-new-hash] 匹配到 <link rel="modulepreload"> 引用: ${path}${query || ''} -> ${newPath}${cleanQuery || ''}`);
+                return `${prefix}${newPath}${cleanQuery}${suffix}`;
               });
               if (htmlContent !== originalHtml3) {
                 htmlModified = true;
                 console.log(`[force-new-hash] ✅ 已更新 <link rel="modulepreload"> 引用: ${oldJsName} -> ${newJsName}`);
               }
             }
-            
+
             if (htmlModified) {
               console.log(`[force-new-hash] ✅ 已在 generateBundle 阶段更新 HTML 中的 JS 引用`);
             }
@@ -347,7 +565,7 @@ export function forceNewHashPlugin(): Plugin {
               console.log(`[force-new-hash] 已更新 HTML 中的 CSS 引用: ${oldCssName} -> ${newCssName}`);
             }
           }
-          
+
           // 关键：如果 cssFileNameMap 有数据但 HTML 没有被修改，说明匹配失败
           // 可能是 HTML 中的路径格式与预期不符，尝试更宽松的匹配
           if (!modified && cssFileNameMap.size > 0) {
@@ -383,7 +601,7 @@ export function forceNewHashPlugin(): Plugin {
         if (jsFileNameMap.size > 0) {
           for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
             const escapedOldJsName = oldJsName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            
+
             // 1. 更新 import() 动态导入中的路径（同时匹配 /assets/ 和 ./assets/）
             const importPattern = new RegExp(`(import\\s*\\(\\s*['"])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(['"]\\s*\\))`, 'g');
             const originalHtml1 = html;
@@ -399,7 +617,7 @@ export function forceNewHashPlugin(): Plugin {
               modified = true;
               console.log(`[force-new-hash] ✅ writeBundle 阶段已更新 import() 引用: ${oldJsName} -> ${newJsName}`);
             }
-            
+
             // 2. 更新 <script src> 标签中的路径（同时匹配 /assets/ 和 ./assets/）
             const scriptPattern = new RegExp(`(<script[^>]*\\s+src=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml2 = html;
@@ -414,7 +632,7 @@ export function forceNewHashPlugin(): Plugin {
               modified = true;
               console.log(`[force-new-hash] ✅ writeBundle 阶段已更新 <script src> 引用: ${oldJsName} -> ${newJsName}`);
             }
-            
+
             // 3. 更新 <link rel="modulepreload"> 标签中的路径（同时匹配 /assets/ 和 ./assets/）
             const modulepreloadPattern = new RegExp(`(<link[^>]*\\s+rel=["']modulepreload["'][^>]*\\s+href=["'])(\\.?/assets/${escapedOldJsName})(\\?[^"'\\s]*)?(["'][^>]*>)`, 'g');
             const originalHtml3 = html;
@@ -464,11 +682,12 @@ export function forceNewHashPlugin(): Plugin {
         }
 
         for (const jsFile of jsFiles) {
+          // 注意：对于 layout-app，vendor、menu-registry 等 chunk 也需要更新引用
+          // 只有真正的第三方库（如 element-plus、vue-core）才跳过更新
           const isThirdPartyLib = jsFile.includes('lib-echarts') ||
                                    jsFile.includes('element-plus') ||
                                    jsFile.includes('vue-core') ||
-                                   jsFile.includes('vue-router') ||
-                                   jsFile.includes('vendor');
+                                   jsFile.includes('vue-router');
 
           if (isThirdPartyLib) {
             continue;
@@ -539,12 +758,152 @@ export function forceNewHashPlugin(): Plugin {
             });
           }
 
-          const fallbackImportPattern = /import\s*\(\s*(["'])(\/assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
+          // 更新 __vite__mapDeps 中的引用（在 writeBundle 阶段也需要更新）
+          if (content.includes('__vite__mapDeps') && jsFileNameMap.size > 0) {
+            for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+              const escapedOldJsName = oldJsName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const jsPatterns = [
+                new RegExp(`(["'])assets/${escapedOldJsName}\\1`, 'g'),
+                new RegExp(`(\`)assets/${escapedOldJsName}\\1`, 'g'),
+                new RegExp(`(\\b)assets/${escapedOldJsName}(\\b)`, 'g'),
+              ];
+
+              for (const pattern of jsPatterns) {
+                if (pattern.test(content)) {
+                  const replacePattern = new RegExp(pattern.source, 'g');
+                  content = content.replace(replacePattern, (match: string, quote1?: string, quote2?: string) => {
+                    if (quote1 === '"' || quote1 === "'") {
+                      return `${quote1}assets/${newJsName}${quote1}`;
+                    } else if (quote1 === '`') {
+                      return `\`assets/${newJsName}\``;
+                    } else {
+                      return `assets/${newJsName}`;
+                    }
+                  });
+                  modified = true;
+                }
+              }
+            }
+          }
+
+          if (content.includes('__vite__mapDeps') && cssFileNameMap.size > 0) {
+            for (const [oldCssName, newCssName] of cssFileNameMap.entries()) {
+              const escapedOldCssName = oldCssName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const cssPatterns = [
+                new RegExp(`(["'])assets/${escapedOldCssName}\\1`, 'g'),
+                new RegExp(`(\`)assets/${escapedOldCssName}\\1`, 'g'),
+                new RegExp(`(\\b)assets/${escapedOldCssName}(\\b)`, 'g'),
+              ];
+
+              for (const pattern of cssPatterns) {
+                if (pattern.test(content)) {
+                  const replacePattern = new RegExp(pattern.source, 'g');
+                  content = content.replace(replacePattern, (match: string, quote1?: string, quote2?: string) => {
+                    if (quote1 === '"' || quote1 === "'") {
+                      return `${quote1}assets/${newCssName}${quote1}`;
+                    } else if (quote1 === '`') {
+                      return `\`assets/${newCssName}\``;
+                    } else {
+                      return `assets/${newCssName}`;
+                    }
+                  });
+                  modified = true;
+                }
+              }
+            }
+          }
+
+          // 改进的动态导入路径更新逻辑（与 generateBundle 阶段保持一致）
+          const fallbackImportPattern = /import\s*\(\s*(["'`])(\.?\/?assets\/[^"'`\s]+\.(js|mjs))(\?[^"'`\s]*)?\1\s*\)/g;
           content = content.replace(fallbackImportPattern, (_match: string, quote: string, path: string, _ext: string, query: string) => {
-            if (query && query.includes('v=')) {
-              return `import(${quote}${path}${query.replace(/\?v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+            // 检查路径是否已经被更新
+            if (path.includes(`-${buildId}.`)) {
+              if (query && query.includes('v=')) {
+                return `import(${quote}${path}${query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+              } else if (!query) {
+                return `import(${quote}${path}?v=${buildId}${quote})`;
+              }
+              return _match;
+            }
+
+            // 从路径中提取文件名（去掉路径前缀）
+            const pathFileName = path.replace(/^\.?\/?assets\//, '');
+
+            // 检查是否需要更新路径（在 jsFileNameMap 中查找）
+            let updatedPath = path;
+            let pathWasUpdated = false;
+
+            // 首先尝试精确匹配完整文件名
+            for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+              if (pathFileName === oldJsName) {
+                const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                updatedPath = `${pathPrefix}${newJsName}`;
+                pathWasUpdated = true;
+                break;
+              }
+            }
+
+            // 如果精确匹配失败，尝试匹配文件名的基础部分（去掉所有 hash）
+            if (!pathWasUpdated) {
+              // 尝试匹配文件名的基础部分（去掉所有 hash 段）
+              const baseNameMatch = pathFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs)$/) ||
+                                    pathFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.(js|mjs)$/);
+
+              if (baseNameMatch) {
+                const baseName = baseNameMatch[1];
+                // 在 jsFileNameMap 中查找匹配的基础名称
+                for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+                  // 也尝试匹配旧文件名的基础部分
+                  const oldBaseNameMatch = oldJsName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.(js|mjs)$/) ||
+                                           oldJsName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.(js|mjs)$/);
+
+                  if (oldBaseNameMatch && oldBaseNameMatch[1] === baseName) {
+                    const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                    updatedPath = `${pathPrefix}${newJsName}`;
+                    pathWasUpdated = true;
+                    console.log(`[force-new-hash] writeBundle 阶段通过基础名称匹配更新导入路径: ${pathFileName} (基础: ${baseName}) -> ${newJsName}`);
+                    break;
+                  }
+                }
+              }
+
+              // 如果基础名称匹配也失败，尝试更宽松的匹配（前缀匹配）
+              if (!pathWasUpdated) {
+                const prefixMatch = pathFileName.match(/^([^-]+(?:-[^-]+)*?)-/);
+                if (prefixMatch) {
+                  const prefix = prefixMatch[1];
+                  // 在 jsFileNameMap 中查找以相同前缀开头的文件
+                  for (const [oldJsName, newJsName] of jsFileNameMap.entries()) {
+                    const oldPrefixMatch = oldJsName.match(/^([^-]+(?:-[^-]+)*?)-/);
+                    if (oldPrefixMatch && oldPrefixMatch[1] === prefix) {
+                      const pathPrefix = path.startsWith('./') ? './assets/' : '/assets/';
+                      updatedPath = `${pathPrefix}${newJsName}`;
+                      pathWasUpdated = true;
+                      console.log(`[force-new-hash] writeBundle 阶段通过前缀匹配更新导入路径: ${pathFileName} (前缀: ${prefix}) -> ${newJsName}`);
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+
+            // 如果路径已更新，记录日志
+            if (pathWasUpdated && path !== updatedPath) {
+              console.log(`[force-new-hash] writeBundle 阶段更新动态导入路径: ${path} -> ${updatedPath}`);
+            }
+
+            // 如果文件名已经包含 buildId，就不需要查询参数中的版本号
+            if (pathWasUpdated || updatedPath.includes(`-${buildId}.`)) {
+              // 路径已更新或文件名包含 buildId，移除查询参数中的版本号
+              const cleanQuery = query ? query.replace(/[?&]v=[^&'"]*/g, '') : '';
+              return `import(${quote}${updatedPath}${cleanQuery}${quote})`;
             } else {
-              return `import(${quote}${path}?v=${buildId}${quote})`;
+              // 文件名不包含 buildId，保留查询参数
+              if (query && query.includes('v=')) {
+                return `import(${quote}${updatedPath}${query.replace(/[?&]v=[^&'"]*/, `?v=${buildId}`)}${quote})`;
+              } else {
+                return `import(${quote}${updatedPath}?v=${buildId}${quote})`;
+              }
             }
           });
 

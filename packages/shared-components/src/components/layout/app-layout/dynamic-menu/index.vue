@@ -85,16 +85,21 @@ const currentMenuItems = computed(() => {
   // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
   const menus = menuRegistry.value[app] || [];
 
-  // 生产环境也输出调试信息（仅在菜单为空时）
+  // 如果菜单为空，尝试通过全局函数注册菜单（作为后备机制）
   if (menus.length === 0) {
-    console.warn(`[DynamicMenu] 应用 ${app} 的菜单为空`, {
-      app,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-      path: route.path,
-      registryKeys: Object.keys(menuRegistry.value || {}),
-      registryHasApp: app in (menuRegistry.value || {}),
-      registryValue: menuRegistry.value,
-    });
+    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+    if (typeof registerMenusFn === 'function') {
+      try {
+        registerMenusFn(app);
+        // 重新获取菜单（注册后可能已更新）
+        const retryMenus = menuRegistry.value[app] || [];
+        if (retryMenus.length > 0) {
+          return retryMenus;
+        }
+      } catch (error) {
+        // 静默失败
+      }
+    }
   }
 
   return menus;
@@ -103,6 +108,26 @@ const currentMenuItems = computed(() => {
 // 菜单由 manifest 决定，是固定的，不需要监听变化重新渲染
 // 只在应用切换时更新菜单（通过 currentMenuItems computed 自动响应）
 
+// 监听 currentApp 的变化，确保应用切换时菜单也更新
+watch(
+  () => currentApp.value,
+  (newApp, oldApp) => {
+    if (newApp !== oldApp) {
+      // 应用切换时，尝试注册新应用的菜单
+      const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+      if (typeof registerMenusFn === 'function') {
+        try {
+          registerMenusFn(newApp);
+        } catch (error) {
+          // 静默失败
+        }
+      }
+      // 强制重新渲染菜单
+      menuKey.value++;
+    }
+  }
+);
+
 // 只监听当前应用的菜单变化，避免深度监听整个注册表导致的不必要重新渲染
 // 关键：只在菜单数组引用真正变化时才更新 menuKey，避免路由变化时触发重绘
 watch(
@@ -110,18 +135,6 @@ watch(
     const app = currentApp.value;
     const menuRegistry = getMenuRegistryRef();
     const menus = menuRegistry?.value?.[app] || [];
-
-    // 生产环境也输出调试信息（仅在菜单为空时）
-    if (menus.length === 0) {
-      console.warn(`[DynamicMenu watch] 应用 ${app} 的菜单为空`, {
-        app,
-        hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-        path: route.path,
-        registryExists: !!menuRegistry,
-        registryValue: menuRegistry?.value,
-        registryKeys: menuRegistry ? Object.keys(menuRegistry.value || {}) : [],
-      });
-    }
 
     return menus;
   },
@@ -162,41 +175,49 @@ watch(
 
 // 组件挂载时检查菜单是否已注册
 onMounted(() => {
-  const app = currentApp.value;
-  const menuRegistry = getMenuRegistryRef();
-  const menus = menuRegistry?.value?.[app] || [];
+  const checkAndRetryMenu = () => {
+    const app = currentApp.value;
+    const menuRegistry = getMenuRegistryRef();
+    const menus = menuRegistry?.value?.[app] || [];
 
-  if (menus.length === 0) {
-    console.warn(`[DynamicMenu onMounted] 应用 ${app} 的菜单为空`, {
-      app,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-      path: route.path,
-      registryExists: !!menuRegistry,
-      registryKeys: menuRegistry ? Object.keys(menuRegistry.value || {}) : [],
-    });
-
-    // 尝试通过全局函数注册菜单（如果存在）
-    // 注意：菜单注册应该由应用启动时完成，这里只是作为后备
-    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
-    if (typeof registerMenusFn === 'function') {
-      try {
-        registerMenusFn(app);
-        // 延迟检查，确保菜单已注册
-        setTimeout(() => {
-          const retryMenus = menuRegistry?.value?.[app] || [];
-          if (retryMenus.length > 0) {
-            console.log(`[DynamicMenu onMounted] 应用 ${app} 的菜单注册成功，共 ${retryMenus.length} 个顶级菜单项`);
-            menuKey.value++; // 强制重新渲染
-          }
-        }, 100);
-      } catch (error) {
-        console.error(`[DynamicMenu onMounted] 注册菜单失败:`, error);
+    if (menus.length === 0) {
+      // 尝试通过全局函数注册菜单（如果存在）
+      // 注意：菜单注册应该由应用启动时完成，这里只是作为后备
+      const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+      if (typeof registerMenusFn === 'function') {
+        try {
+          registerMenusFn(app);
+        } catch (error) {
+          // 静默失败
+        }
       }
+      
+      // 延迟检查，确保菜单已注册（最多重试 20 次，每次 100ms，总共 2 秒）
+      let retryCount = 0;
+      const maxRetries = 20;
+      const checkInterval = setInterval(() => {
+        retryCount++;
+        const retryMenus = menuRegistry?.value?.[app] || [];
+        if (retryMenus.length > 0) {
+          clearInterval(checkInterval);
+          menuKey.value++; // 强制重新渲染
+        } else if (retryCount >= maxRetries) {
+          clearInterval(checkInterval);
+        }
+      }, 100);
+    } else {
+      // 菜单已存在，确保 menuKey 已更新
+      menuKey.value++;
     }
-  } else {
-    // 生产环境也输出成功日志
-    console.log(`[DynamicMenu onMounted] 应用 ${app} 的菜单已存在，共 ${menus.length} 个顶级菜单项`);
-  }
+  };
+  
+  // 立即检查一次
+  checkAndRetryMenu();
+  
+  // 延迟检查，确保菜单注册完成（菜单注册可能在组件挂载之后）
+  setTimeout(checkAndRetryMenu, 200);
+  setTimeout(checkAndRetryMenu, 500);
+  setTimeout(checkAndRetryMenu, 1000);
 });
 
 // 递归获取所有菜单项的 index（用于搜索匹配）

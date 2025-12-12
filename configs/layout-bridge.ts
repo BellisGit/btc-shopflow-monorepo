@@ -121,6 +121,15 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
  * 注册 AppLayout 运行时所需的环境配置访问器
  * 在独立运行的子应用中调用一次即可
  */
+/**
+ * 注册全局菜单注册函数，供菜单组件使用
+ */
+export function registerMenuRegistrationFunction(target: Window = window) {
+  if (typeof target !== 'undefined') {
+    target.__REGISTER_MENUS_FOR_APP__ = registerManifestMenusForApp;
+  }
+}
+
 export function registerAppEnvAccessors(target: Window = window) {
   const win = target as typeof window & {
     __APP_GET_APP_CONFIG__?: (appName: string) => AppEnvConfig | undefined;
@@ -176,9 +185,6 @@ export function registerManifestMenusForApp(appId: string) {
       }
       
       if (!manifest.menus || manifest.menus.length === 0) {
-        if (import.meta.env.DEV) {
-          console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 中没有菜单数据`);
-        }
         return;
       }
       
@@ -216,13 +222,11 @@ export function registerManifestMenusForApp(appId: string) {
       // 再次验证
       const retryMenus = registry?.value?.[appId];
       if (retryMenus && retryMenus.length > 0) {
-        console.log(`[registerManifestMenusForApp] 应用 ${appId} 的菜单重试注册成功，共 ${retryMenus.length} 个顶级菜单项`);
       } else {
         console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
       }
     } else {
       // 生产环境也输出成功日志
-      console.log(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册成功，共 ${registeredMenus.length} 个顶级菜单项`);
     }
   } catch (error) {
     // 生产环境也输出错误信息，帮助调试

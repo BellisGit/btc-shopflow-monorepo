@@ -1,36 +1,30 @@
 /**
  * 设置面板图片资源配置
+ * 
+ * 注意：这些图片文件可能不存在，使用空字符串作为占位符
+ * 如果图片不存在，界面会显示占位符，不会影响功能
+ * 如果需要使用图片，请从 system-app 复制相应的图片文件
  */
-
-import lightTheme from '@assets/images/settings/theme_styles/light.png';
-import darkTheme from '@assets/images/settings/theme_styles/dark.png';
-import systemTheme from '@assets/images/settings/theme_styles/system.png';
-import verticalLayout from '@assets/images/settings/menu_layouts/vertical.png';
-import horizontalLayout from '@assets/images/settings/menu_layouts/horizontal.png';
-import mixedLayout from '@assets/images/settings/menu_layouts/mixed.png';
-import dualColumnLayout from '@assets/images/settings/menu_layouts/dual_column.png';
-import designStyle from '@assets/images/settings/menu_styles/design.png';
-import darkStyle from '@assets/images/settings/menu_styles/dark.png';
-import lightStyle from '@assets/images/settings/menu_styles/light.png';
 
 /**
  * 配置设置中心图片
+ * 使用空字符串作为占位符，避免构建时文件不存在导致失败
  */
 export const configImages = {
   themeStyles: {
-    light: lightTheme,
-    dark: darkTheme,
-    system: systemTheme,
+    light: '', // 占位符：如果图片存在，请取消注释并导入
+    dark: '', // 占位符：如果图片存在，请取消注释并导入
+    system: '', // 占位符：如果图片存在，请取消注释并导入
   },
   menuLayouts: {
-    vertical: verticalLayout,
-    horizontal: horizontalLayout,
-    mixed: mixedLayout,
-    dualColumn: dualColumnLayout,
+    vertical: '', // 占位符：如果图片存在，请取消注释并导入
+    horizontal: '', // 占位符：如果图片存在，请取消注释并导入
+    mixed: '', // 占位符：如果图片存在，请取消注释并导入
+    dualColumn: '', // 占位符：如果图片存在，请取消注释并导入
   },
   menuStyles: {
-    design: designStyle,
-    dark: darkStyle,
-    light: lightStyle,
+    design: '', // 占位符：如果图片存在，请取消注释并导入
+    dark: '', // 占位符：如果图片存在，请取消注释并导入
+    light: '', // 占位符：如果图片存在，请取消注释并导入
   },
 };
