@@ -1,5 +1,6 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { createApp } from 'vue';
+import { createPinia, setActivePinia } from 'pinia';
 import ElementPlus from 'element-plus';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
@@ -426,6 +427,13 @@ async function mount(_props: QiankunProps = {}) {
 
   // 创建 Vue 应用
   app = createApp(App);
+
+  // 关键：安装 Pinia（必须在任何 useStore 调用之前）
+  // 生产环境报错 `Cannot read properties of undefined (reading '_s')` 通常是 activePinia 未初始化导致
+  const pinia = createPinia();
+  app.use(pinia);
+  // 兜底：确保在非组件上下文中也能获取到 activePinia（例如某些 util/composable 在 setup 之外调用 store）
+  setActivePinia(pinia);
 
   // 设置主题插件（与 finance-app 保持一致，用于主题色和背景样式）
   const themePlugin = createThemePlugin();
