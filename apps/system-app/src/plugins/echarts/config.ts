@@ -29,27 +29,60 @@ import {
   ToolboxComponent
 } from 'echarts/components';
 
-// 注册必要的组件
-use([
-  CanvasRenderer,
-  BarChart,
-  LineChart,
-  PieChart,
-  RadarChart,
-  ScatterChart,
-  CandlestickChart,
-  GridComponent,
-  TooltipComponent,
-  TitleComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkLineComponent,
-  MarkPointComponent,
-  ToolboxComponent
-]);
+/**
+ * 注册 ECharts 必要的组件（全局只注册一次）
+ *
+ * 背景：layout-app、system-app、子应用可能共享同一份 echarts 依赖，
+ * 重复调用 use([...]) 会触发 ECharts 内部断言（registerInternalOptionCreator）。
+ */
+const GLOBAL_ECHARTS_USE_FLAG = '__BTC_ECHARTS_USE_REGISTERED__';
+let localEchartsUseRegistered = false;
+
+function registerEChartsOnce() {
+  const canUseWindow = typeof window !== 'undefined';
+  const w = canUseWindow ? (window as any) : null;
+
+  if (w && w[GLOBAL_ECHARTS_USE_FLAG]) {
+    return;
+  }
+  if (!w && localEchartsUseRegistered) {
+    return;
+  }
+
+  try {
+    use([
+      CanvasRenderer,
+      BarChart,
+      LineChart,
+      PieChart,
+      RadarChart,
+      ScatterChart,
+      CandlestickChart,
+      GridComponent,
+      TooltipComponent,
+      TitleComponent,
+      LegendComponent,
+      DataZoomComponent,
+      MarkLineComponent,
+      MarkPointComponent,
+      ToolboxComponent,
+    ]);
+  } catch (error) {
+    // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
+    if (import.meta.env.DEV) {
+      console.warn('[system-app][echarts] ECharts use() register failed (ignored):', error);
+    }
+  } finally {
+    if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;
+    localEchartsUseRegistered = true;
+  }
+}
 
 export default {
   install(app: App) {
+    // 先确保 ECharts 组件已注册（且全局只注册一次）
+    registerEChartsOnce();
+
     // 检查是否已经注册，避免重复注册
     if (!app.config.globalProperties.$_vueEchartsInstalled) {
       // 全局注册 v-chart 组件
