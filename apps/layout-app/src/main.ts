@@ -167,6 +167,37 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
         (window as any).__APP_EMITTER__.emit('open-preferences-drawer');
       }
     });
+
+    // 关键：监听子应用的路由变化事件，更新标题/Tab/面包屑
+    // 子应用通过 window.dispatchEvent(new CustomEvent('subapp:route-change', {detail: {...}})) 上报路由 meta
+    window.addEventListener('subapp:route-change', ((event: CustomEvent) => {
+      const detail = event.detail;
+      if (!detail || typeof detail !== 'object') {
+        return;
+      }
+
+      // 更新 document.title（如果子应用提供了 meta.labelKey）
+      if (detail.meta?.labelKey && typeof detail.meta.labelKey === 'string') {
+        // 使用全局 i18n 实例更新标题（如果存在）
+        try {
+          const i18n = (window as any).__APP_I18N__;
+          if (i18n && typeof i18n.global?.t === 'function') {
+            const title = i18n.global.t(detail.meta.labelKey);
+            if (title && title !== detail.meta.labelKey) {
+              document.title = title;
+            }
+          }
+        } catch (error) {
+          // 静默失败
+        }
+      }
+
+      // Tab 和面包屑的更新由 AppLayout 组件通过菜单注册表和路由变化自动处理
+      // 这里只负责标题更新，确保 layout-app 作为壳应用时能正确显示子应用的标题
+      if (import.meta.env.DEV) {
+        console.log('[layout-app] 收到子应用路由变化事件:', detail);
+      }
+    }) as EventListener);
   }
 
   if (!settingsInitialized) {
