@@ -21,12 +21,11 @@ import {
   cleanDistPlugin,
   chunkVerifyPlugin,
   optimizeChunksPlugin,
-  forceNewHashPlugin,
-  fixDynamicImportHashPlugin,
   ensureBaseUrlPlugin,
   corsPlugin,
   ensureCssPlugin,
   addVersionPlugin,
+  replaceIconsWithCdnPlugin,
   publicImagesToAssetsPlugin,
   resourcePreloadPlugin,
 } from '../plugins';
@@ -193,16 +192,14 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     }),
     // 12. CSS 验证插件
     ensureCssPlugin(),
-    // 13. 强制生成新 hash 插件
-    forceNewHashPlugin(),
-    // 14. 修复动态导入 hash 插件
-    fixDynamicImportHashPlugin(),
-    // 15. 修复 chunk 引用插件
+    // 13. 修复 chunk 引用插件
     fixChunkReferencesPlugin(),
     // 16. 确保 base URL 插件（主应用也需要，因为可能有子应用资源引用）
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 17. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
+    // 17.5. 替换图标路径为 CDN URL（生产环境）
+    replaceIconsWithCdnPlugin(),
     // 18. 优化 chunks 插件
     optimizeChunksPlugin(),
     // 19. Chunk 验证插件

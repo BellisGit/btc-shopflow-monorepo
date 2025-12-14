@@ -31,6 +31,8 @@ export const userSettingPlugin: Plugin = {
   }
 };
 
-// 导出组件和 composables（主组件通过动态导入使用）
-export { default as BtcUserSettingDrawer } from './components/preferences-drawer.vue';
-export * from './composables';
+// 注意：不要在这里导出任何 .vue 组件或 composables。
+// 原因：主应用/容器的 ModuleScanner 会在启动时扫描并导入 /src/plugins/*/index.ts，
+// 若这里 re-export 组件/组合式，会导致扫描阶段就执行大量依赖（甚至触发断言/循环依赖），从而出现：
+// [ModuleScanner] 解析插件失败: /src/plugins/user-setting/index.ts
+// 组件请在插件内部通过动态导入使用（toolbar.component 已是动态导入）。

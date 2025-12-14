@@ -300,16 +300,29 @@ const startupPromise = Promise.resolve()
         // 检查当前路由是否已匹配
         const currentRoute = router.currentRoute.value;
         if (currentRoute.matched.length === 0) {
-          // 触发路由导航，让路由守卫处理重定向
-          try {
-            await router.push(currentRoute.fullPath);
-          } catch (navError) {
-            // 如果导航失败，直接重定向到登录页
+          // 关键：先检查认证状态，只有未认证时才重定向到登录页
+          // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
+          const { isAuthenticated } = await import('./router/index');
+          const isAuth = isAuthenticated();
+          
+          if (!isAuth) {
+            // 未认证，直接重定向到登录页，避免触发 router.push 导致组件守卫提取错误
             try {
-              await router.replace('/login');
-            } catch (redirectError) {
-              console.error('[system-app] 重定向到登录页失败:', redirectError);
+              // 使用 router.replace 而不是 router.push，避免触发组件守卫提取
+              await router.replace({
+                path: '/login',
+                query: { redirect: currentRoute.fullPath },
+              });
+            } catch (navError) {
+              // 如果路由导航失败，使用 window.location 作为回退
+              console.warn('[system-app] 路由导航失败，使用 window.location:', navError);
+              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
             }
+          } else {
+            // 已认证但路由未匹配，可能是子应用路由或无效路由
+            // 不要触发 router.push，避免 Vue Router 尝试提取 undefined 组件的守卫
+            // 直接让应用正常显示（可能显示 Layout 或子应用挂载点）
+            // 路由守卫已经处理了这种情况，不需要再次导航
           }
         } else {
           // 即使路由已匹配，也要确保路由守卫执行了认证检查
@@ -319,6 +332,7 @@ const startupPromise = Promise.resolve()
             await router.push(currentRoute.fullPath);
           } catch (error) {
             // 忽略错误，路由守卫可能已经处理了
+            // 如果是组件守卫提取错误，已经在全局错误处理器中处理了
           }
         }
       } catch (error) {

@@ -339,10 +339,46 @@ function bootstrap() {
 }
 
 async function mount(_props: QiankunProps = {}) {
-  const container = _props?.container || document.querySelector('#app') as HTMLElement;
+  // 查找挂载点：
+  // - 优先使用 props.container（无论是否 qiankun，只要提供了 container 就使用）
+  // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
+  // - 否则：使用 #app（独立运行模式）
+  let container: HTMLElement | null = null;
+  
+  // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
+  if (_props.container && _props.container instanceof HTMLElement) {
+    container = _props.container;
+  } else if ((window as any).__USE_LAYOUT_APP__) {
+    // 使用 layout-app：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      container = viewport;
+    } else {
+      throw new Error('[monitor-app] 使用 layout-app 但未找到 #subapp-viewport 元素');
+    }
+  } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      container = viewport;
+    } else {
+      const appElement = document.querySelector('#app') as HTMLElement;
+      if (appElement) {
+        container = appElement;
+      } else {
+        throw new Error('[monitor-app] qiankun 模式下未找到容器元素');
+      }
+    }
+  } else {
+    // 独立运行模式：使用 #app
+    const appElement = document.querySelector('#app') as HTMLElement;
+    if (appElement) {
+      container = appElement;
+    }
+  }
 
   if (!container) {
-    throw new Error('监控应用容器不存在，请确保页面中存在 #app 元素');
+    throw new Error('监控应用容器不存在，请确保页面中存在 #app 或 #subapp-viewport 元素');
   }
 
   // 关键：在创建 Vue 应用之前注册菜单（确保菜单数据在 AppLayout 渲染前已准备好）
@@ -717,14 +753,41 @@ if (shouldRunStandalone()) {
       initLayoutApp()
         .then(() => {
           // layout-app 加载成功，检查是否需要独立渲染
-          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-          if (!(window as any).__USE_LAYOUT_APP__) {
+          if ((window as any).__USE_LAYOUT_APP__) {
+            // 关键：layout-app 已加载，子应用应该主动挂载到 layout-app 的 #subapp-viewport
+            // 而不是等待 layout-app 通过 qiankun 加载（避免二次加载导致 DOM 操作冲突）
+            const waitForViewport = (retries = 40): Promise<HTMLElement | null> => {
+              return new Promise((resolve) => {
+                const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
+                if (viewport) {
+                  resolve(viewport);
+                } else if (retries > 0) {
+                  setTimeout(() => resolve(waitForViewport(retries - 1)), 50);
+                } else {
+                  resolve(null);
+                }
+              });
+            };
+            
+            waitForViewport().then((viewport) => {
+              if (viewport) {
+                // 挂载到 layout-app 的 #subapp-viewport
+                mount({ container: viewport } as any).catch((error) => {
+                  console.error('[monitor-app] 挂载到 layout-app 失败:', error);
+                });
+              } else {
+                console.error('[monitor-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                mount({}).catch((error) => {
+                  console.error('[monitor-app] 独立运行失败:', error);
+                });
+              }
+            });
+          } else {
             // layout-app 加载失败或不需要加载，独立渲染
             mount({}).catch((error) => {
               console.error('[monitor-app] 独立运行失败:', error);
             });
           }
-          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
         })
         .catch((error) => {
           console.error('[monitor-app] 初始化 layout-app 失败:', error);

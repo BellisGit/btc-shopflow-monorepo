@@ -210,18 +210,24 @@ const setupRouteSync = (context: AdminAppContext) => {
     return;
   }
 
-  context.cleanup.routerAfterEach = context.router.afterEach((to) => {
-    // 设置页面标题（生产环境后备方案，确保标题正确）
+  context.cleanup.routerAfterEach = context.router.afterEach(async (to) => {
+    // 设置浏览器标题：管理模块 - BTC ShopFlow（不使用页面标题）
     try {
-      const pageTitle = (to.meta?.title as string) || (to.meta?.titleKey as string) || '';
-      if (pageTitle) {
-        document.title = `${pageTitle} - 管理应用 - BTC ShopFlow`;
-      } else if (to.path === '/' || to.path === '/admin' || to.path === '/admin/') {
-        // 首页使用默认标题
-        document.title = '管理应用 - BTC ShopFlow';
+      // 使用 domain.type.admin 国际化键获取"管理模块"
+      // 使用 context.translate 函数，它已经通过 context.i18n 获取翻译
+      const moduleNameKey = 'domain.type.admin';
+      let moduleName = context.translate(moduleNameKey);
+      
+      // 如果国际化加载失败，使用默认值
+      if (moduleName === moduleNameKey || !moduleName) {
+        moduleName = '管理模块';
       }
+      
+      // 设置标题：管理模块 - BTC ShopFlow
+      document.title = `${moduleName} - BTC ShopFlow`;
     } catch (error) {
-      // 忽略错误
+      // 如果出错，使用默认标题
+      document.title = '管理模块 - BTC ShopFlow';
     }
     
     // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
@@ -467,19 +473,66 @@ export const createAdminApp = (props: QiankunProps = {}): AdminAppContext => {
 
   // 关键：添加全局错误处理，捕获 DOM 操作错误
   // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况
-  app.config.errorHandler = (err, instance, info) => {
+  app.config.errorHandler = (err, _instance, info) => {
     // 检查是否是 DOM 操作相关的错误
-    if (err instanceof Error && (
-      err.message.includes('insertBefore') ||
-      err.message.includes('__vnode') ||
-      err.message.includes('Cannot read properties of null') ||
-      err.message.includes('Cannot set properties of null')
-    )) {
-      // DOM 操作错误，可能是容器在更新时被移除
-      // 不抛出错误，避免影响用户体验
+    const errMessage = err instanceof Error ? err.message : String(err);
+    if (errMessage.includes('insertBefore') ||
+        errMessage.includes('processCommentNode') ||
+        errMessage.includes('patch') ||
+        errMessage.includes('__vnode') ||
+        errMessage.includes('Cannot read properties of null') ||
+        errMessage.includes('Cannot set properties of null') ||
+        errMessage.includes('reading \'insertBefore\'') ||
+        errMessage.includes('reading \'emitsOptions\'') ||
+        (errMessage.includes('TypeError') && errMessage.includes('null'))) {
+      // DOM 操作错误，可能是容器在更新时被移除或组件正在卸载
+      // 静默处理，避免影响用户体验
+      // 这些错误通常在子应用切换或卸载时发生，属于正常现象
       return;
     }
+
+    // 其他错误正常处理（可以记录日志或上报）
+    if (import.meta.env.DEV) {
+      console.error('[admin-app] Vue 错误:', err, info);
+    }
   };
+
+  // 关键：添加全局 window.error 监听器，捕获 Vue errorHandler 无法捕获的底层错误
+  // 这些错误通常发生在 Vue 的 patch 过程中，DOM 节点已被移除
+  if (typeof window !== 'undefined') {
+    const originalErrorHandler = window.onerror;
+    window.addEventListener('error', (event) => {
+      const errorMessage = event.message || '';
+      const errorStack = event.error?.stack || '';
+      
+      // 检查是否是 DOM 操作相关的错误
+      if (
+        errorMessage.includes('insertBefore') ||
+        errorMessage.includes('processCommentNode') ||
+        errorMessage.includes('patch') ||
+        errorMessage.includes('Cannot read properties of null') ||
+        errorMessage.includes('Cannot set properties of null') ||
+        errorMessage.includes('reading \'insertBefore\'') ||
+        errorMessage.includes('reading \'emitsOptions\'') ||
+        errorStack.includes('insertBefore') ||
+        errorStack.includes('processCommentNode')
+      ) {
+        // DOM 操作错误，静默处理
+        event.preventDefault();
+        event.stopPropagation();
+        if (import.meta.env.DEV) {
+          console.warn('[admin-app] 全局错误监听器捕获到 DOM 操作错误:', errorMessage);
+        }
+        return true; // 阻止默认错误处理
+      }
+      
+      // 其他错误继续使用原始处理
+      if (originalErrorHandler) {
+        return originalErrorHandler.call(window, event.message, event.filename, event.lineno, event.colno, event.error);
+      }
+      return false;
+    }, true); // 使用捕获阶段，确保能捕获所有错误
+  }
 
   const router = createAdminRouter();
   setupRouter(app, router);
@@ -534,23 +587,31 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
   // 关键：使用 try-catch 确保 onReady 总是被调用，即使挂载失败也要清除 loading
   try {
     // 查找挂载点：
-    // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
-    // - 独立运行模式下：使用 #app
+    // - 优先使用 props.container（无论是否 qiankun，只要提供了 container 就使用）
+    // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
+    // - 否则：使用 #app（独立运行模式）
     let mountPoint: HTMLElement | null = null;
 
-    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-      // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
-      if (props.container && props.container instanceof HTMLElement) {
-        mountPoint = props.container;
+    // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
+    if (props.container && props.container instanceof HTMLElement) {
+      mountPoint = props.container;
+    } else if ((window as any).__USE_LAYOUT_APP__) {
+      // 使用 layout-app：尝试查找 #subapp-viewport
+      const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+      if (viewport) {
+        mountPoint = viewport;
       } else {
-        // 尝试从 DOM 中查找 #subapp-viewport
-        const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-        if (viewport) {
-          mountPoint = viewport;
-        } else {
-          const errorMsg = '[admin-app] qiankun 模式下未提供容器元素，且 DOM 中未找到 #subapp-viewport';
-          throw new Error(errorMsg);
-        }
+        const errorMsg = '[admin-app] 使用 layout-app 但未找到 #subapp-viewport 元素';
+        throw new Error(errorMsg);
+      }
+    } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
+      const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+      if (viewport) {
+        mountPoint = viewport;
+      } else {
+        const errorMsg = '[admin-app] qiankun 模式下未提供容器元素，且 DOM 中未找到 #subapp-viewport';
+        throw new Error(errorMsg);
       }
     } else {
       // 独立运行模式：使用 #app

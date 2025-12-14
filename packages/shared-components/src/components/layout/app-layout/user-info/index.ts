@@ -25,7 +25,6 @@ export function useUserInfo() {
   const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
   
   // 获取应用特定的依赖
-  const service = getEpsService();
   const appStorage = getAppStorage();
 
   // 从个人信息服务获取的用户信息
@@ -141,12 +140,17 @@ export function useUserInfo() {
     };
   });
 
-  // 等待 EPS 服务可用（轮询方式，最多等待5秒）
-  const waitForEpsService = async (maxWaitTime = 5000, interval = 100): Promise<any> => {
+  // 等待 EPS 服务可用（轮询方式，最多等待 5 秒）
+  // 注意：某些子应用会先把 __APP_EPS_SERVICE__ 初始化为 {}（占位），这时不能视为“服务可用”。
+  const waitForEpsService = async (
+    maxWaitTime = 5000,
+    interval = 100,
+    predicate: (service: any) => boolean = (s) => !!s && !(typeof s === 'object' && Object.keys(s).length === 0),
+  ): Promise<any> => {
     const startTime = Date.now();
     while (Date.now() - startTime < maxWaitTime) {
       const currentService = getEpsService();
-      if (currentService) {
+      if (predicate(currentService)) {
         return currentService;
       }
       await new Promise(resolve => setTimeout(resolve, interval));
@@ -157,12 +161,13 @@ export function useUserInfo() {
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
-      // 如果 service 不可用，等待它可用
-      let currentService = service;
-      if (!currentService) {
-        // 在子域环境下，layout-app 可能还在初始化，等待一下
-        currentService = await waitForEpsService(5000, 100);
-        if (!currentService) {
+      // 如果 EPS service 尚未就绪（含 {} 占位），等待它就绪
+      let currentService = getEpsService();
+      const isProfileReady = (s: any) => !!s?.admin?.base?.profile?.info;
+      if (!isProfileReady(currentService)) {
+        // 在子域/嵌入环境下，layout-app 可能还在初始化，等待一下
+        currentService = await waitForEpsService(5000, 100, isProfileReady);
+        if (!isProfileReady(currentService)) {
           console.warn('[useUserInfo] EPS service not available after waiting');
           return;
         }

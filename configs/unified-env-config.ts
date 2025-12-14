@@ -38,6 +38,11 @@ export interface EnvironmentConfig {
   upload: {
     url: string;
   };
+
+  // CDN 配置
+  cdn: {
+    staticAssetsUrl: string;
+  };
 }
 
 // 配置方案：类似 Element Plus 主题
@@ -83,6 +88,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       upload: {
         url: '/api/upload',
       },
+      cdn: {
+        staticAssetsUrl: '',
+      },
     },
     production: {
       api: {
@@ -102,6 +110,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       upload: {
         url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
       },
     },
   },
@@ -128,6 +139,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       upload: {
         url: '/api/upload',
       },
+      cdn: {
+        staticAssetsUrl: '',
+      },
     },
     preview: {
       api: {
@@ -148,6 +162,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       upload: {
         url: '/api/upload',
       },
+      cdn: {
+        staticAssetsUrl: '',
+      },
     },
     production: {
       api: {
@@ -167,6 +184,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       },
       upload: {
         url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
       },
     },
   },
@@ -236,7 +256,35 @@ export function getEnvironment(): Environment {
 export function getEnvConfig(): EnvironmentConfig {
   const scheme = getConfigScheme();
   const env = getEnvironment();
-  return configSchemes[scheme][env];
+  const config = configSchemes[scheme][env];
+  
+  // 支持通过环境变量覆盖 CDN URL
+  // 在浏览器环境中，可以通过 VITE_CDN_STATIC_ASSETS_URL 覆盖
+  // 在 Node.js 环境中（如 Vite 配置），可以通过 CDN_STATIC_ASSETS_URL 覆盖
+  if (config.cdn?.staticAssetsUrl) {
+    let envCdnUrl: string | undefined;
+    
+    if (typeof window !== 'undefined') {
+      // 浏览器环境：从 import.meta.env 读取
+      if (typeof import.meta !== 'undefined' && import.meta.env) {
+        envCdnUrl = import.meta.env.VITE_CDN_STATIC_ASSETS_URL;
+      }
+    } else {
+      // Node.js 环境：从 process.env 读取
+      envCdnUrl = process.env.CDN_STATIC_ASSETS_URL || process.env.VITE_CDN_STATIC_ASSETS_URL;
+    }
+    
+    if (envCdnUrl) {
+      return {
+        ...config,
+        cdn: {
+          staticAssetsUrl: envCdnUrl,
+        },
+      };
+    }
+  }
+  
+  return config;
 }
 
 /**

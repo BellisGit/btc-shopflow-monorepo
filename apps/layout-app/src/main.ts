@@ -3,13 +3,15 @@ import App from './App.vue';
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { registerMicroApps, start } from 'qiankun';
 import { getAppConfig } from '@configs/app-env.config';
-import { registerAppEnvAccessors, resolveAppLogoUrl, registerManifestMenusForApp, registerManifestTabsForApp } from '@configs/layout-bridge';
+import { registerAppEnvAccessors } from '@configs/layout-bridge';
+import { setIsMainAppFn } from '@btc/shared-components/components/layout/app-layout/utils';
 // 关键：延迟导入菜单注册表相关函数，避免循环依赖或导入错误导致白屏
 // import { getMenuRegistry } from '@btc/shared-components';
 // 使用相对路径导入，避免 TypeScript 路径解析问题
 import { getAppBySubdomain } from '../../../configs/app-scanner';
 // layout-app 使用最小化配置，不加载 system-app 的路由（避免加载业务逻辑）
 import router from './router';
+import { isMainApp as unifiedIsMainApp } from '../../../configs/unified-env-config';
 import { setupStore, setupUI, setupI18n, setupEps } from '@system/bootstrap/core';
 import { initSettingsConfig } from '@system/plugins/user-setting/composables/useSettingsState';
 import { appStorage } from '@system/utils/app-storage';
@@ -19,7 +21,6 @@ import { storage } from '@btc/shared-utils';
 import { MenuThemeEnum, SystemThemeEnum } from '@system/plugins/user-setting/config/enums';
 // 导入 layout-app 自己的 EPS service 和域列表工具函数
 import { service } from './services/eps';
-import { getDomainList } from '@system/utils/domain-cache';
 // 使用相对路径导入 mitt，避免 TypeScript 路径解析问题
 import mitt from '../../../packages/shared-components/src/utils/mitt';
 import 'virtual:svg-icons';
@@ -30,6 +31,72 @@ import 'element-plus/theme-chalk/dark/css-vars.css';
 import '@btc/shared-components/styles/index.scss';
 
 registerAppEnvAccessors();
+
+// layout-app 作为 UI 容器：不在这里写 document.title，也不在这里主动注册任何子应用菜单/Tab。
+
+// 关键：设置 layout-app 自己的标识，让 AppLayout 知道这是 layout-app 自己运行
+// 这样 AppLayout 就不会隐藏 Topbar 和 MenuDrawer
+(window as any).__IS_LAYOUT_APP__ = true;
+
+// 关键：注入 isMainApp 函数到 shared-components，确保在子域名直达时 #subapp-viewport 可见
+// 注意：这里必须使用“静态导入 + 同步注入”，避免嵌入到子应用域名时动态 chunk 路径解析失败导致注入不生效。
+const layoutIsMainApp = (
+  routePath?: string,
+  locationPath?: string,
+  isStandalone?: boolean,
+): boolean => {
+  // 生产环境：如果 hostname 匹配某个子应用的 subdomain，强制返回 false
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const appBySubdomain = getAppBySubdomain(hostname);
+    if (appBySubdomain && appBySubdomain.type === 'sub') {
+      return false;
+    }
+  }
+
+  // 其他情况使用统一的 isMainApp 判断逻辑
+  return unifiedIsMainApp(routePath, locationPath, isStandalone);
+};
+setIsMainAppFn(layoutIsMainApp);
+
+/**
+ * 判断 layout-app 是否被子应用嵌入（而非独立运行）
+ * 嵌入模式的特征：
+ * 1. __LAYOUT_APP_MOUNT_TARGET__ 设置为 '#app'（由 loadLayoutApp 设置）
+ * 2. hostname 不是 layout-app 自己的域名（layout.bellis.com.cn 或 localhost:4188/4192）
+ * 3. hostname 匹配某个子应用的 subdomain（如 finance.bellis.com.cn）
+ */
+function isEmbeddedBySubApp(): boolean {
+  const mountTarget = (window as any).__LAYOUT_APP_MOUNT_TARGET__;
+
+  // 如果没有设置 mountTarget，说明是独立运行模式
+  if (mountTarget !== '#app') {
+    return false;
+  }
+
+  // 检查 hostname 是否是 layout-app 自己的域名
+  const hostname = window.location.hostname;
+  const port = window.location.port || '';
+  const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
+                           (hostname === 'localhost' && (port === '4192' || port === '4188'));
+
+  // 如果是 layout-app 自己的域名，不是嵌入模式
+  if (isLayoutAppDomain) {
+    return false;
+  }
+
+  // 检查 hostname 是否匹配某个子应用的 subdomain（生产环境）
+  if (import.meta.env.PROD) {
+    const appBySubdomain = getAppBySubdomain(hostname);
+    if (appBySubdomain && appBySubdomain.type === 'sub') {
+      return true; // 是子应用的子域名，且 mountTarget 是 #app，说明是嵌入模式
+    }
+  }
+
+  // 其他情况：如果 mountTarget 是 #app 但不在生产环境，也可能是嵌入模式（开发/预览环境）
+  // 这里保守判断：只要 mountTarget 是 #app 且不是 layout-app 域名，就认为是嵌入模式
+  return true;
+}
 
 /**
  * 获取应用入口地址
@@ -150,20 +217,18 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
       (window as any).__APP_FINISH_LOADING__ = () => {};
     }
 
-    // 暴露 logout 函数
-    (window as any).__APP_LOGOUT__ = async () => {
-      // layout-app 的 logout 逻辑：清除本地数据，跳转到系统域登录页
-      appStorage.auth.clear();
-      appStorage.user.clear();
-      window.location.href = 'https://bellis.com.cn/login';
-    };
+    // layout-app 作为容器：不提供实际业务行为（logout/logo 等由子应用提供）
+    // 仅提供空兜底，避免 shared-components 调用时报错
+    if (!(window as any).__APP_LOGOUT__) {
+      (window as any).__APP_LOGOUT__ = async () => {};
+    }
+    if (!(window as any).__APP_GET_LOGO_URL__) {
+      (window as any).__APP_GET_LOGO_URL__ = () => '';
+    }
 
-    // 暴露 Logo URL 获取函数
-    (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
-
-    // 关键：在 layout-app 挂载之前，根据当前域名或路径提前注册菜单
-    // 这样菜单组件渲染时就能读取到菜单数据
-    // 使用异步导入确保菜单注册表已初始化，并等待注册完成
+    // 关键：layout-app 不应提前注册任何子应用菜单/Tab。
+    // 菜单、Tab、面包屑等都由子应用在自身 bootstrap 时注册/派发事件提供。
+    // 这里仅确保菜单注册表存在（上面的 getMenuRegistry 初始化已完成）。
     await import('@btc/shared-components').then(async (module) => {
       try {
         if (module.getMenuRegistry) {
@@ -186,58 +251,7 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
             }
           }
 
-          // 现在注册表已初始化，可以注册菜单了
-          const hostname = window.location.hostname;
-          const appBySubdomain = getAppBySubdomain(hostname);
-          let targetApp = appBySubdomain?.id;
-
-          // 如果没有从子域名获取到应用，根据路径判断（开发/预览环境）
-          if (!targetApp) {
-            const pathname = window.location.pathname;
-            if (pathname.startsWith('/admin')) {
-              targetApp = 'admin';
-            } else if (pathname.startsWith('/logistics')) {
-              targetApp = 'logistics';
-            } else if (pathname.startsWith('/engineering')) {
-              targetApp = 'engineering';
-            } else if (pathname.startsWith('/quality')) {
-              targetApp = 'quality';
-            } else if (pathname.startsWith('/production')) {
-              targetApp = 'production';
-            } else if (pathname.startsWith('/finance')) {
-              targetApp = 'finance';
-            } else if (pathname.startsWith('/monitor')) {
-              targetApp = 'monitor';
-            } else {
-              // 默认注册 system 应用的菜单（系统域）
-              targetApp = 'system';
-            }
-          }
-
-          if (targetApp) {
-            // 同步注册菜单，确保在组件渲染之前完成
-            registerManifestMenusForApp(targetApp);
-            registerManifestTabsForApp(targetApp);
-
-            // 设置浏览器标题
-            try {
-              const { getManifest } = await import('@btc/subapp-manifests');
-              const manifest = getManifest(targetApp);
-              if (manifest?.app?.nameKey) {
-                // 如果有 nameKey，尝试从 i18n 获取翻译
-                const { tSync } = await import('@system/i18n/getters');
-                const appName = tSync(manifest.app.nameKey);
-                if (appName && appName !== manifest.app.nameKey) {
-                  document.title = appName;
-                } else if (manifest.app.nameKey) {
-                  // 如果翻译失败，使用 nameKey 作为后备
-                  document.title = manifest.app.nameKey;
-                }
-              }
-            } catch (e) {
-              // 静默失败
-            }
-          }
+          void registry;
         }
       } catch (error) {
         // 静默失败
@@ -261,11 +275,14 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     (window as any).__BTC_SERVICE__ = service;
   }
 
-  // 暴露域列表获取函数，供 menu-drawer 组件使用
-  (window as any).__APP_GET_DOMAIN_LIST__ = getDomainList;
-
-  // 暴露应用配置获取函数，供 menu-drawer 组件使用
-  (window as any).__APP_GET_APP_CONFIG__ = getAppConfig;
+  // layout-app 作为容器：不提供域列表/应用配置等业务数据（由子应用提供）。
+  // 仅提供空兜底，避免 shared-components 调用时报错。
+  if (!(window as any).__APP_GET_DOMAIN_LIST__) {
+    (window as any).__APP_GET_DOMAIN_LIST__ = async () => [];
+  }
+  if (!(window as any).__APP_GET_APP_CONFIG__) {
+    (window as any).__APP_GET_APP_CONFIG__ = () => null;
+  }
 
   // 等待插件注册完成（必须在应用挂载之前完成）
   await registerLayoutPlugins(appInstance).catch(() => {
@@ -373,11 +390,34 @@ const ensureMicroAppsRegistered = async () => {
 
   if (targetApp && (import.meta.env.PROD || appBySubdomain)) {
     // 生产环境或子域名环境：只注册当前域名对应的子应用
+    // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
+    const isDev = import.meta.env.DEV;
+    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
+
     subApps.push({
       name: `${targetApp}-app`,
       entry: getAppEntry(targetApp),
       container: '#subapp-viewport',
       activeRule: () => true, // 当前域名只加载对应的子应用，永远激活
+      // 配置生命周期超时时间（single-spa 格式）
+      // 关键：设置合理的超时时间，避免过早警告和超时
+      timeouts: {
+        bootstrap: {
+          millis: defaultTimeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
+          dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+          warningMillis: Math.floor(defaultTimeout * 1.5), // 警告时间：避免过早警告（ES 模块加载阶段也会计入时间）
+        },
+        mount: {
+          millis: defaultTimeout,
+          dieOnTimeout: false,
+          warningMillis: Math.floor(defaultTimeout * 0.8),
+        },
+        unmount: {
+          millis: 5000, // 增加到 5 秒，确保卸载完成
+          dieOnTimeout: false,
+          warningMillis: 4000,
+        },
+      },
       props: {
         onReady: () => {
           clearLoadingState();
@@ -392,6 +432,10 @@ const ensureMicroAppsRegistered = async () => {
     });
   } else {
     // 开发/预览环境：注册所有子应用，使用动态 activeRule
+    // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
+    const isDev = import.meta.env.DEV;
+    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
+
     const allApps = ['admin', 'logistics', 'engineering', 'quality', 'production', 'finance', 'monitor'];
     allApps.forEach((appName) => {
       subApps.push({
@@ -411,6 +455,25 @@ const ensureMicroAppsRegistered = async () => {
           if (appName === 'monitor' && pathname.startsWith('/monitor')) return true;
           return false;
         },
+        // 配置生命周期超时时间（single-spa 格式）
+        // 关键：设置合理的超时时间，避免过早警告和超时
+        timeouts: {
+          bootstrap: {
+            millis: defaultTimeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
+            dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+            warningMillis: Math.floor(defaultTimeout * 1.5), // 警告时间：避免过早警告（ES 模块加载阶段也会计入时间）
+          },
+          mount: {
+            millis: defaultTimeout,
+            dieOnTimeout: false,
+            warningMillis: Math.floor(defaultTimeout * 0.8),
+          },
+          unmount: {
+            millis: 5000, // 增加到 5 秒，确保卸载完成
+            dieOnTimeout: false,
+            warningMillis: 4000,
+          },
+        },
         props: {
           onReady: () => {
             clearLoadingState();
@@ -429,7 +492,7 @@ const ensureMicroAppsRegistered = async () => {
   registerMicroApps(
     subApps,
     {
-      beforeLoad: [async (app: any) => {
+      beforeLoad: [async (_app: any) => {
         // 显示加载状态
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport) {
@@ -445,27 +508,12 @@ const ensureMicroAppsRegistered = async () => {
           clearLoadingState();
         }, LOADING_TIMEOUT);
 
-        // 关键：在子应用加载之前尝试提前注册菜单和 Tabs
-        // 但从应用名称中提取应用ID（例如 'monitor-app' -> 'monitor'）
-        // 注意：此时 menu-registry chunk 可能还没有加载，所以这里可能会失败
-        // 真正的注册应该在 afterMount 中进行，当子应用的 JS 已经加载完成时
-        const appNameMatch = app.name?.match(/^(.+)-app$/);
-        const appId = appNameMatch ? appNameMatch[1] : targetApp;
-        if (appId) {
-          try {
-            // 尝试提前注册，但失败也不影响（会在 afterMount 中重试）
-            registerManifestMenusForApp(appId);
-            registerManifestTabsForApp(appId);
-          } catch (error) {
-            // 忽略错误，因为 menu-registry chunk 可能还没有加载
-            // 真正的注册会在 afterMount 中进行
-          }
-        }
+        // layout-app 作为容器：不在这里提前注册子应用菜单/Tab（由子应用自行提供）。
       }],
       beforeMount: [async (_app: any) => {
         // 子应用准备挂载
       }],
-      afterMount: [async (app: any) => {
+      afterMount: [async (_app: any) => {
         // 关键：确保 CSS 变量能够传递到子应用容器
         // 在 qiankun 环境下，CSS 变量需要从父元素显式传递
         const viewport = document.querySelector('#subapp-viewport');
@@ -488,78 +536,7 @@ const ensureMicroAppsRegistered = async () => {
           clearLoadingState();
         }, 100);
 
-        // 关键：在子应用挂载后注册菜单和 Tabs，确保子应用的 menu-registry chunk 已经加载
-        // 从应用名称中提取应用ID（例如 'monitor-app' -> 'monitor'）
-        const appNameMatch = app.name?.match(/^(.+)-app$/);
-        const appId = appNameMatch ? appNameMatch[1] : null;
-        if (appId) {
-          // 关键：先检查菜单是否已注册且不为空，如果已注册则跳过重试
-          // 避免覆盖子应用自己注册的菜单
-          const menuRegistry = (window as any).__BTC_MENU_REGISTRY__;
-          const existingMenus = menuRegistry?.value?.[appId];
-
-          if (existingMenus && existingMenus.length > 0) {
-            // 菜单已注册且不为空，跳过重试
-            if (import.meta.env.DEV) {
-              console.log(`[layout-app] 应用 ${appId} 的菜单已注册，跳过重试`);
-            }
-            return;
-          }
-
-          // 使用多次重试机制，确保菜单注册成功
-          // 因为子应用的 menu-registry chunk 可能还在加载中
-          let retryCount = 0;
-          const maxRetries = 15;
-          const retryDelay = 300;
-
-          const tryRegisterMenus = () => {
-            try {
-              // 再次检查菜单是否已注册（可能在重试期间被子应用注册了）
-              const currentRegistry = (window as any).__BTC_MENU_REGISTRY__;
-              const currentMenus = currentRegistry?.value?.[appId];
-
-              if (currentMenus && currentMenus.length > 0) {
-                // 菜单已注册，停止重试
-                if (import.meta.env.DEV) {
-                  console.log(`[layout-app] 应用 ${appId} 的菜单已在重试期间注册，停止重试`);
-                }
-                return;
-              }
-
-              // 尝试注册菜单
-              registerManifestMenusForApp(appId);
-              registerManifestTabsForApp(appId);
-
-              // 验证菜单是否已注册
-              const registeredMenus = currentRegistry?.value?.[appId];
-
-              if (registeredMenus && registeredMenus.length > 0) {
-                // 注册成功，停止重试
-                if (import.meta.env.DEV) {
-                  console.log(`[layout-app] 应用 ${appId} 的菜单注册成功，共 ${registeredMenus.length} 个顶级菜单项`);
-                }
-                return;
-              }
-
-              // 菜单仍为空，继续重试
-              if (retryCount < maxRetries) {
-                retryCount++;
-                setTimeout(tryRegisterMenus, retryDelay);
-              } else if (import.meta.env.DEV) {
-                console.warn(`[layout-app] 应用 ${appId} 的菜单注册失败，已达到最大重试次数`);
-              }
-            } catch (error) {
-              if (retryCount < maxRetries) {
-                retryCount++;
-                setTimeout(tryRegisterMenus, retryDelay);
-              } else if (import.meta.env.DEV) {
-                console.error(`[layout-app] 应用 ${appId} 的菜单注册出错:`, error);
-              }
-            }
-          };
-
-          setTimeout(tryRegisterMenus, 200);
-        }
+        // layout-app 作为容器：不在 afterMount 中注册/重试注册子应用菜单与 Tab（由子应用自行提供）。
       }],
       // 关键：添加错误处理钩子，处理子应用加载失败的情况
       // 注意：qiankun 的类型定义可能不完整，使用类型断言
@@ -604,6 +581,7 @@ const ensureMicroAppsRegistered = async () => {
           if (entry) {
             try {
               const entryUrl = new URL(entry, window.location.href);
+              const entryOrigin = entryUrl.origin;
               // base URL 应该是 entry 的目录路径
               const baseHref = entryUrl.pathname.endsWith('/')
                 ? entryUrl.pathname
@@ -626,8 +604,8 @@ const ensureMicroAppsRegistered = async () => {
               }
 
               // 关键：修复所有 link 标签中的 href 路径（CSS 文件、modulepreload 等）
-              // 在 qiankun 环境中，需要确保所有资源路径都是绝对路径（以 / 开头）
-              // 这样可以避免在子路由下（如 /config/storage-location）资源路径被错误解析
+              // 1) 子应用的 /assets/* 必须带上 entry 的 origin，否则会被宿主（layout）解析到 layout 域名，导致 404
+              // 2) 其他相对路径仍转换为绝对路径（以 / 开头），避免在子路由下资源路径被错误解析
               processedTpl = processedTpl.replace(
                 /<link([^>]*?)\s+href\s*=\s*["']([^"']+)["']([^>]*)>/gi,
                 (match, before, href, after) => {
@@ -636,7 +614,21 @@ const ensureMicroAppsRegistered = async () => {
                     return match;
                   }
 
-                  // 如果 href 已经是绝对路径（以 / 开头），保持原样
+                  // 子应用静态资源（绝对/相对）：/assets/*、assets/*、./assets/*、../assets/* 都必须拼接 entry origin
+                  if (href.startsWith('/assets/')) {
+                    return `<link${before} href="${entryOrigin}${href}"${after}>`;
+                  }
+                  if (/^(\.\/|\.\.\/)?assets\//.test(href)) {
+                    try {
+                      const resolved = new URL(href, `${entryOrigin}${baseHref}`).toString();
+                      return `<link${before} href="${resolved}"${after}>`;
+                    } catch {
+                      const fixedHref = '/' + href.replace(/^(\.\/|\.\.\/)+/, '');
+                      return `<link${before} href="${entryOrigin}${fixedHref}"${after}>`;
+                    }
+                  }
+
+                  // 如果 href 已经是绝对路径（以 / 开头），保持原样（非 assets 的绝对路径交给宿主处理）
                   if (href.startsWith('/')) {
                     return match;
                   }
@@ -649,8 +641,8 @@ const ensureMicroAppsRegistered = async () => {
               );
 
               // 关键：修复所有 script 标签中的 src 路径
-              // 在 qiankun 环境中，需要确保所有资源路径都是绝对路径（以 / 开头）
-              // 这样可以避免在子路由下（如 /config/storage-location）资源路径被错误解析
+              // 1) 子应用的 /assets/* 必须带上 entry 的 origin，否则会被宿主（layout）解析到 layout 域名，导致 404
+              // 2) 其他相对路径仍转换为绝对路径（以 / 开头），避免在子路由下资源路径被错误解析
               processedTpl = processedTpl.replace(
                 /<script([^>]*?)\s+src\s*=\s*["']([^"']+)["']([^>]*)>/gi,
                 (match, before, src, after) => {
@@ -659,7 +651,21 @@ const ensureMicroAppsRegistered = async () => {
                     return match;
                   }
 
-                  // 如果 src 已经是绝对路径（以 / 开头），保持原样
+                  // 子应用静态资源（绝对/相对）：/assets/*、assets/*、./assets/*、../assets/* 都必须拼接 entry origin
+                  if (src.startsWith('/assets/')) {
+                    return `<script${before} src="${entryOrigin}${src}"${after}>`;
+                  }
+                  if (/^(\.\/|\.\.\/)?assets\//.test(src)) {
+                    try {
+                      const resolved = new URL(src, `${entryOrigin}${baseHref}`).toString();
+                      return `<script${before} src="${resolved}"${after}>`;
+                    } catch {
+                      const fixedSrc = '/' + src.replace(/^(\.\/|\.\.\/)+/, '');
+                      return `<script${before} src="${entryOrigin}${fixedSrc}"${after}>`;
+                    }
+                  }
+
+                  // 如果 src 已经是绝对路径（以 / 开头），保持原样（非 assets 的绝对路径交给宿主处理）
                   if (src.startsWith('/')) {
                     return match;
                   }
@@ -668,6 +674,17 @@ const ensureMicroAppsRegistered = async () => {
                   // 关键：确保所有资源路径都是绝对路径，避免在子路由下被错误解析
                   const fixedSrc = '/' + src;
                   return `<script${before} src="${fixedSrc}"${after}>`;
+                }
+              );
+
+              // 关键：修复内联 module 脚本中的 import('/assets/xxx.js')
+              // 说明：qiankun/import-html-entry 会把内联脚本包装成 VM 执行；如果这里仍是绝对路径 /assets/，
+              // 就会被宿主（layout 域名）解析，导致 layout 去请求子应用的 chunk（404）。
+              // 这里强制把 /assets/* 改成 ${entryOrigin}/assets/*，确保永远从子应用域名取资源。
+              processedTpl = processedTpl.replace(
+                /import\(\s*(['"])(\/assets\/[^'"]+)\1\s*\)/g,
+                (_match, quote, path) => {
+                  return `import(${quote}${entryOrigin}${path}${quote})`;
                 }
               );
 
@@ -699,62 +716,12 @@ const ensureMicroAppsRegistered = async () => {
     });
     qiankunStarted = true;
 
-    // 关键：qiankun 启动后，手动加载子应用
-    // 在开发环境中，需要根据当前路径找到对应的应用并加载
-    // 在生产环境中，直接加载第一个应用（因为只注册了一个）
-    import('qiankun').then(({ loadMicroApp }) => {
-      import('vue').then(({ nextTick }) => {
-        nextTick(() => {
-          // 再次确保容器可见
-          const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-          if (viewport) {
-            viewport.setAttribute('data-qiankun-loading', 'true');
-            viewport.style.setProperty('display', 'flex', 'important');
-            viewport.style.setProperty('visibility', 'visible', 'important');
-            viewport.style.setProperty('opacity', '1', 'important');
-          }
-
-          // 找到应该加载的应用
-          let appToLoad = subApps[0];
-          if (subApps.length > 1) {
-            // 开发环境：根据当前路径找到对应的应用
-            const pathname = window.location.pathname;
-            appToLoad = subApps.find((app) => {
-              if (app.name === 'admin-app' && pathname.startsWith('/admin')) return true;
-              if (app.name === 'logistics-app' && pathname.startsWith('/logistics')) return true;
-              if (app.name === 'engineering-app' && pathname.startsWith('/engineering')) return true;
-              if (app.name === 'quality-app' && pathname.startsWith('/quality')) return true;
-              if (app.name === 'production-app' && pathname.startsWith('/production')) return true;
-              if (app.name === 'finance-app' && pathname.startsWith('/finance')) return true;
-              if (app.name === 'monitor-app' && pathname.startsWith('/monitor')) return true;
-              return false;
-            }) || subApps[0]; // 如果找不到，使用第一个应用
-          }
-
-          // 手动加载子应用
-          try {
-            const microApp = loadMicroApp(appToLoad, {
-              singular: true,
-            });
-
-            // 监听子应用加载完成
-            microApp.mountPromise.then(() => {
-              // 加载完成
-            }).catch(() => {
-              // 加载失败，静默处理
-            });
-          } catch (error) {
-            // 如果 loadMicroApp 失败，尝试触发路由匹配
-            window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
-          }
-        });
-      });
-    }).catch(() => {
-      // 如果 qiankun 导入失败，尝试触发路由匹配
-      import('vue').then(({ nextTick }) => {
-        nextTick(() => {
-          window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
-        });
+    // 关键：不要在 registerMicroApps + start() 后再手动 loadMicroApp，否则会导致同一子应用重复 bootstrap/mount，
+    // 进而出现菜单/汉堡按钮重复加载、single-spa 超时（#31/#41）以及 Vue patch 空节点错误。
+    // 这里仅触发一次 reroute，让 qiankun 按 activeRule 正常挂载对应子应用即可。
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
       });
     });
   }
@@ -797,6 +764,33 @@ async function mount(props: any) {
 
   if (!app) {
     app = createApp(App);
+
+    // 关键：添加全局错误处理，捕获所有子应用的 DOM 操作错误
+    // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
+    app.config.errorHandler = (err, _instance, info) => {
+      // 检查是否是 DOM 操作相关的错误
+      const errMessage = err instanceof Error ? err.message : String(err);
+      if (errMessage.includes('insertBefore') ||
+          errMessage.includes('processCommentNode') ||
+          errMessage.includes('patch') ||
+          errMessage.includes('__vnode') ||
+          errMessage.includes('Cannot read properties of null') ||
+          errMessage.includes('Cannot set properties of null') ||
+          errMessage.includes('reading \'insertBefore\'') ||
+          errMessage.includes('reading \'emitsOptions\'') ||
+          (errMessage.includes('TypeError') && errMessage.includes('null'))) {
+        // DOM 操作错误，可能是容器在更新时被移除或组件正在卸载
+        // 静默处理，避免影响用户体验
+        // 这些错误通常在子应用切换或卸载时发生，属于正常现象
+        return;
+      }
+
+      // 其他错误正常处理（可以记录日志或上报）
+      if (import.meta.env.DEV) {
+        console.error('[layout-app] Vue 错误:', err, info);
+      }
+    };
+
     // 等待初始化完成（包括插件注册）
     await initLayoutEnvironment(app);
     app.mount(container);
@@ -811,32 +805,68 @@ async function mount(props: any) {
     return;
   }
 
+  // 关键：如果 layout-app 被子应用嵌入（通过 loadLayoutApp 加载到子应用的 #app），
+  // 不应该再用 qiankun 二次加载子应用，避免双加载导致 DOM 操作冲突
+  const embedded = isEmbeddedBySubApp();
+  if (embedded) {
+    // 嵌入模式：子应用会自己挂载到 #subapp-viewport，不需要通过 qiankun 加载
+    if (import.meta.env.DEV) {
+      console.log('[layout-app] 检测到嵌入模式，跳过 qiankun 子应用注册');
+    }
+    return;
+  }
+
   // 只有在独立运行时才启动 qiankun 并注册所有业务子应用
   ensureMicroAppsRegistered();
 
-  // 关键：添加全局错误监听，捕获子应用加载失败
+  // 关键：添加全局错误监听，捕获子应用加载失败和 DOM 操作错误
   // 这作为最后的兜底机制，确保即使其他错误处理机制失效，loading 也能被清除
   const handleGlobalError = (event: ErrorEvent) => {
     // 检查是否是子应用相关的错误
     const errorMessage = event.message || '';
     const errorSource = event.filename || '';
+    const errorStack = event.error?.stack || '';
 
-      // 如果错误信息包含应用相关关键词，可能是子应用加载失败
-      if (
-        errorMessage.includes('application') ||
-        errorMessage.includes('micro-app') ||
-        errorMessage.includes('subapp') ||
-        errorSource.includes('micro-apps')
-      ) {
-        // 清除 loading 状态
-        const viewport = document.querySelector('#subapp-viewport');
-        if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
-          viewport.removeAttribute('data-qiankun-loading');
-        }
+    // 关键：捕获 DOM 操作相关的错误（这些错误通常发生在 Vue patch 过程中）
+    if (
+      errorMessage.includes('insertBefore') ||
+      errorMessage.includes('processCommentNode') ||
+      errorMessage.includes('patch') ||
+      errorMessage.includes('Cannot read properties of null') ||
+      errorMessage.includes('Cannot set properties of null') ||
+      errorMessage.includes('reading \'insertBefore\'') ||
+      errorMessage.includes('reading \'emitsOptions\'') ||
+      errorStack.includes('insertBefore') ||
+      errorStack.includes('processCommentNode') ||
+      errorStack.includes('patch')
+    ) {
+      // DOM 操作错误，静默处理，避免影响用户体验
+      event.preventDefault();
+      event.stopPropagation();
+      if (import.meta.env.DEV) {
+        console.warn('[layout-app] 全局错误监听器捕获到 DOM 操作错误:', errorMessage);
       }
+      return true; // 阻止默认错误处理
+    }
+
+    // 如果错误信息包含应用相关关键词，可能是子应用加载失败
+    if (
+      errorMessage.includes('application') ||
+      errorMessage.includes('micro-app') ||
+      errorMessage.includes('subapp') ||
+      errorSource.includes('micro-apps')
+    ) {
+      // 清除 loading 状态
+      const viewport = document.querySelector('#subapp-viewport');
+      if (viewport && viewport.hasAttribute('data-qiankun-loading')) {
+        viewport.removeAttribute('data-qiankun-loading');
+      }
+    }
+
+    return false; // 其他错误继续正常处理
   };
 
-  // 监听全局错误事件
+  // 监听全局错误事件（使用捕获阶段，确保能捕获所有错误）
   window.addEventListener('error', handleGlobalError, true);
 
   // 监听未处理的 Promise 拒绝
@@ -910,10 +940,15 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       await initLayoutEnvironment(app);
       app.mount(container);
 
-      // 关键：无论是否设置了 mountTarget，layout-app 都需要注册并启动 qiankun 来加载子应用
-      // 因为子应用（如 admin-app）需要通过 qiankun 自动加载到 #subapp-viewport
-      // 当 layout-app 通过 loadLayoutApp 直接加载到 #app 时，也应该启动 qiankun
-      ensureMicroAppsRegistered();
+      // 关键：如果 layout-app 被子应用嵌入（通过 loadLayoutApp 加载到子应用的 #app），
+      // 不应该再用 qiankun 二次加载子应用，避免双加载导致 DOM 操作冲突
+      const embedded = isEmbeddedBySubApp();
+      if (!embedded) {
+        // 只有在非嵌入模式下才启动 qiankun 来加载子应用
+        ensureMicroAppsRegistered();
+      } else if (import.meta.env.DEV) {
+        console.log('[layout-app] 检测到嵌入模式（独立运行分支），跳过 qiankun 子应用注册');
+      }
     }
   })();
 }

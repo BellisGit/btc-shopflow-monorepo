@@ -271,6 +271,8 @@ deploy_app() {
     local app_dir="apps/$app_name"
     local dist_dir="$app_dir/dist"
     local deploy_base=$(get_app_deploy_path "$app_name")
+    local release_name=""
+    local git_short_sha=""
     
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     log_info "部署应用: $app_name"
@@ -284,7 +286,8 @@ deploy_app() {
     fi
     
     log_info "构建产物目录: $dist_dir"
-    log_info "部署目标路径: $deploy_base (直接部署到根目录)"
+    log_info "部署目标路径: $deploy_base"
+    log_info "部署模式: releases/current（原子切换，避免生产环境出现 assets 404 窗口）"
     
     # 检查并复制 EPS 数据到 dist 目录（如果存在）
     local eps_dir="$app_dir/build/eps"
@@ -303,25 +306,46 @@ deploy_app() {
     # 增加超时时间和重试机制，避免大文件传输时连接中断
     local ssh_opts="-i $SSH_KEY -p $SERVER_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes -o Compression=yes"
     
-    # 确保目标目录存在
-    log_info "确保部署目录存在..."
-    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "mkdir -p $deploy_base" || {
-        log_error "无法创建目标目录: $deploy_base"
+    # 生成 release 名称（时间戳 + git 短 SHA，可选）
+    git_short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+    if [ -n "$git_short_sha" ]; then
+        release_name="$(date +%Y%m%d_%H%M%S)-$git_short_sha"
+    else
+        release_name="$(date +%Y%m%d_%H%M%S)"
+    fi
+    local remote_release_dir="$deploy_base/releases/$release_name"
+
+    # 预备 releases/current 结构（如果服务器尚未迁移，自动初始化一次）
+    log_info "确保 releases/current 结构存在（必要时自动初始化）..."
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" "bash -lc '
+        set -e
+        mkdir -p \"$deploy_base\"
+        mkdir -p \"$deploy_base/releases\"
+
+        if [ ! -L \"$deploy_base/current\" ]; then
+          ts=\"init-$(date +%Y%m%d_%H%M%S)\"
+          mkdir -p \"$deploy_base/releases/$ts\"
+          # 将现有文件迁移到 init release（排除 releases/current）
+          shopt -s dotglob nullglob
+          for item in \"$deploy_base\"/*; do
+            base=\$(basename \"\$item\")
+            if [ \"\$base\" != \"releases\" ] && [ \"\$base\" != \"current\" ]; then
+              mv \"\$item\" \"$deploy_base/releases/$ts/\" 2>/dev/null || true
+            fi
+          done
+          ln -sfn \"releases/$ts\" \"$deploy_base/current\"
+        fi
+      '" || {
+      log_error "无法准备 releases/current 结构: $deploy_base"
         return 1
     }
     
-    # 在服务器上创建备份
-    log_info "创建备份..."
-    local backup_dir="/www/backups/$app_name/$(date +%Y%m%d_%H%M%S)"
-    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "mkdir -p $backup_dir && \
-         if [ -d $deploy_base ] && [ -n \"\$(ls -A $deploy_base 2>/dev/null | grep -v '^releases$' | grep -v '^current$')\" ]; then \
-             cp -r $deploy_base/* $backup_dir/ 2>/dev/null || true; \
-             echo 'Backup created: $backup_dir'; \
-         else \
-             echo 'No existing deployment to backup'; \
-         fi" || log_warning "备份失败，继续部署"
+    # 创建新的 release 目录
+    log_info "创建 release: $remote_release_dir"
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" "mkdir -p \"$remote_release_dir\"" || {
+      log_error "无法创建 release 目录: $remote_release_dir"
+      return 1
+    }
     
     # 检查服务器上是否有 rsync（更可靠的方法）
     local use_rsync=false
@@ -332,16 +356,9 @@ deploy_app() {
         fi
     fi
     
-    # 同步文件（直接部署到根目录，使用 --delete 删除旧文件）
+    # 同步文件到 release 目录（先上传完毕，再切换 current，避免中途 404）
     if [ "$use_rsync" = true ]; then
-        log_info "使用 rsync 同步文件（直接部署到根目录）..."
-        # 关键：先清理目标目录的 assets，确保完全删除旧文件
-        log_info "清理目标目录的 assets（确保完全删除旧文件）..."
-        ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-            "rm -rf $deploy_base/assets 2>/dev/null || true" || {
-            log_warning "清理 assets 目录失败，继续部署"
-        }
-        
+        log_info "使用 rsync 同步文件到 release 目录..."
         if rsync -avz --delete \
             -e "ssh $ssh_opts" \
             --exclude='*.map' \
@@ -350,7 +367,7 @@ deploy_app() {
             --exclude='current' \
             --timeout=300 \
             "$dist_dir/" \
-            "$SERVER_USER@$SERVER_HOST:$deploy_base/"; then
+            "$SERVER_USER@$SERVER_HOST:$remote_release_dir/"; then
             log_success "文件同步成功"
         else
             log_error "rsync 同步失败，尝试使用 scp..."
@@ -359,27 +376,9 @@ deploy_app() {
     fi
     
     if [ "$use_rsync" = false ]; then
-        # 使用 scp（较慢，但兼容性更好）
-        log_info "使用 scp 同步文件..."
-        # 先清理旧文件（但保留 releases 和 current，如果存在）
-        # 关键：完全清理 assets 目录，避免新旧文件混在一起
-        log_info "清理目标目录中的旧文件（保留 releases 和 current 目录）..."
-        ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-            "cd $deploy_base && \
-             if [ -d releases ]; then mv releases releases.backup.$(date +%s); fi && \
-             if [ -L current ] || [ -d current ]; then mv current current.backup.$(date +%s); fi && \
-             rm -rf *.html *.js *.css assets icons build 2>/dev/null || true && \
-             # 确保 assets 目录被完全删除（避免残留旧文件）
-             [ -d assets ] && rm -rf assets || true && \
-             find . -maxdepth 1 -type f \( -name '*.json' -o -name '*.txt' -o -name '*.ico' -o -name '*.png' -o -name '*.svg' -o -name '*.webmanifest' \) -delete 2>/dev/null || true && \
-             if [ -d releases.backup.* ]; then mv releases.backup.* releases; fi && \
-             if [ -d current.backup.* ] || [ -L current.backup.* ]; then mv current.backup.* current; fi" || {
-            log_warning "清理旧文件失败，继续部署"
-        }
-        
-        # 上传文件（使用 tar 压缩传输，更高效）
+        # 使用 tar+ssh 上传（较慢，但兼容性更好）
         # 添加重试机制，最多重试 3 次
-        log_info "打包并上传文件..."
+        log_info "打包并上传文件到 release 目录..."
         local retry_count=0
         local max_retries=3
         local upload_success=false
@@ -394,7 +393,7 @@ deploy_app() {
             local original_dir=$(pwd)
             
             if cd "$dist_dir" && tar czf - . | ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-                "cd $deploy_base && tar xzf -" 2>&1; then
+                "cd \"$remote_release_dir\" && tar xzf -" 2>&1; then
                 upload_success=true
                 cd "$original_dir" > /dev/null
                 break
@@ -412,28 +411,44 @@ deploy_app() {
         fi
     fi
     
-    # 验证文件是否同步成功
-    log_info "验证文件同步..."
-    local local_count=$(find "$dist_dir" -type f | wc -l)
-    local remote_count=$(ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "find $deploy_base -type f -not -path '*/releases/*' -not -path '*/current/*' 2>/dev/null | wc -l" || echo "0")
-    
-    if [ "$remote_count" -lt "$local_count" ]; then
-        log_warning "远程文件数量 ($remote_count) 少于本地 ($local_count)，但继续执行"
-    else
-        log_success "文件同步验证通过（本地: $local_count, 远程: $remote_count）"
-    fi
+    # 验证 release 目录关键文件存在（避免切换后白屏）
+    log_info "验证 release 产物完整性..."
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" "bash -lc '
+      set -e
+      test -f \"$remote_release_dir/index.html\"
+      # layout-app 必须有 assets/layout（共享资源）
+      if [ \"$app_name\" = \"layout-app\" ]; then
+        test -d \"$remote_release_dir/assets/layout\"
+      else
+        test -d \"$remote_release_dir/assets\"
+      fi
+    '" || {
+      log_error "release 验证失败：关键文件缺失（不会切换 current）"
+      return 1
+    }
+
+    # 原子切换 current
+    log_info "切换 current -> releases/$release_name"
+    ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" "bash -lc '
+      set -e
+      cd \"$deploy_base\"
+      ln -sfn \"releases/$release_name\" current
+    '" || {
+      log_error "切换 current 失败"
+      return 1
+    }
     
     # 设置权限
     log_info "设置文件权限..."
     ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" \
-        "chown -R www:www $deploy_base 2>/dev/null || true; \
-         find $deploy_base -type d -not -path '*/releases/*' -not -path '*/current/*' -exec chmod 755 {} \; 2>/dev/null || true; \
-         find $deploy_base -type f -not -path '*/releases/*' -not -path '*/current/*' -exec chmod 644 {} \; 2>/dev/null || true" || {
+        "chown -R www:www \"$deploy_base/releases/$release_name\" 2>/dev/null || true; \
+         chown -h www:www \"$deploy_base/current\" 2>/dev/null || true; \
+         find \"$deploy_base/releases/$release_name\" -type d -exec chmod 755 {} \; 2>/dev/null || true; \
+         find \"$deploy_base/releases/$release_name\" -type f -exec chmod 644 {} \; 2>/dev/null || true" || {
         log_warning "权限设置失败，但不影响部署"
     }
     
-    log_success "$app_name 部署完成 -> $deploy_base (直接部署到根目录)"
+    log_success "$app_name 部署完成 -> $deploy_base/current (release: $release_name)"
     
     # 单个应用部署时立即重载 Nginx
     # 批量部署时将在所有应用完成后统一重载（避免多次重载）

@@ -395,7 +395,17 @@ const handleSwitchApp = async (app: MicroApp) => {
 };
 
 const handleClose = () => {
-  emit('update:visible', false);
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      emit('update:visible', false);
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[MenuDrawer] handleClose error:', error);
+      }
+    }
+  });
 };
 
 const handleClickOutside = (event: MouseEvent) => {

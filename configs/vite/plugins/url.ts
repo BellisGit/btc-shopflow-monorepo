@@ -5,12 +5,74 @@
 
 import type { Plugin } from 'vite';
 import type { ChunkInfo, OutputOptions, OutputBundle } from 'rollup';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve as resolvePath, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+function getBuildTimestampForQuery(): string {
+  // 优先使用全量构建脚本注入的时间戳（与 addVersionPlugin 保持一致）
+  if (process.env.BTC_BUILD_TIMESTAMP) {
+    return process.env.BTC_BUILD_TIMESTAMP;
+  }
+  // 其次读取 .build-timestamp（与 addVersionPlugin 的实现一致）
+  const timestampFile = resolvePath(__dirname, '../../../.build-timestamp');
+  if (existsSync(timestampFile)) {
+    try {
+      const ts = readFileSync(timestampFile, 'utf-8').trim();
+      if (ts) return ts;
+    } catch {
+      // ignore
+    }
+  }
+  // 最后兜底：生成一个（不写回文件，避免副作用）
+  return Date.now().toString(36);
+}
 
 /**
  * 确保 base URL 插件
  */
 export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: number, mainAppPort: string): Plugin {
   const isPreviewBuild = baseUrl.startsWith('http');
+  const qiankunIndexImportRegex = /import\((['"])\/assets\/(index|main)-([^'"]+)\1\)/g;
+  const buildTimestamp = getBuildTimestampForQuery();
+  const qiankunIndexImportInHtmlRegex = /import\(\s*(['"])(\/assets\/(index|main)-[^'"]+)\1\s*\)/g;
+
+  /**
+   * 修复 vite-plugin-qiankun 生成的包装器里使用绝对路径 import('/assets/index-xxx.js') 的问题：
+   * - 在 qiankun 沙箱里，这会按“宿主 origin”解析，导致子应用入口 chunk 被错误请求到 layout 域名
+   * - 这里改为：优先使用 qiankun 注入的 __INJECTED_PUBLIC_PATH_BY_QIANKUN__（通常为子应用 origin），否则回退到 window.location.origin
+   */
+  function patchQiankunIndexImports(code: string): { code: string; modified: boolean } {
+    if (!qiankunIndexImportRegex.test(code)) {
+      return { code, modified: false };
+    }
+    qiankunIndexImportRegex.lastIndex = 0;
+
+    const helperName = '__btcQiankunAssetOrigin';
+    const tsName = '__btcBuildV';
+    const helperDecl =
+      `const ${helperName}=(()=>{try{const p=window&&window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;` +
+      `if(p&&typeof p==='string'){const s=p.replace(/\\/$/,'');` +
+      `if(s.startsWith('http')||s.startsWith('//'))return s;` +
+      `return (window.location&&window.location.origin?window.location.origin:'')+s;}` +
+      `}catch{}return (window.location&&window.location.origin)?window.location.origin:'';})();`;
+    const tsDecl = `const ${tsName}='${buildTimestamp}';`;
+
+    let newCode = code.replace(qiankunIndexImportRegex, (_m, _q, _kind, rest) => {
+      // rest: "xxxx.js" 里的余下部分（hash + .js）
+      // 关键：追加 ?v= 构建时间戳，避免宿主/浏览器/CDN 复用旧入口脚本导致持续请求旧 chunk
+      return `import(/* @vite-ignore */ (${helperName} + '/assets/${_kind}-${rest}' + '?v=' + ${tsName}))`;
+    });
+
+    if (!newCode.includes(helperDecl)) {
+      // 尽量少侵入：只在需要时插入 helper，一次即可
+      newCode = `${tsDecl}\n${helperDecl}\n${newCode}`;
+    }
+    return { code: newCode, modified: true };
+  }
 
   return {
     name: 'ensure-base-url',
@@ -20,6 +82,15 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
 
       let newCode = code;
       let modified = false;
+
+      // 关键：修复 qiankun 包装器的绝对 /assets/index-xxx.js 动态导入（跨域宿主会 404）
+      {
+        const patched = patchQiankunIndexImports(newCode);
+        if (patched.modified) {
+          newCode = patched.code;
+          modified = true;
+        }
+      }
 
       if (isPreviewBuild) {
         const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)(\?[^"'`\s]*)?/g;
@@ -98,6 +169,15 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
           let newCode = chunk.code;
           let modified = false;
 
+          // 关键：修复 qiankun 包装器的绝对 /assets/index-xxx.js 动态导入（跨域宿主会 404）
+          {
+            const patched = patchQiankunIndexImports(newCode);
+            if (patched.modified) {
+              newCode = patched.code;
+              modified = true;
+            }
+          }
+
           if (isPreviewBuild) {
             const relativePathRegex = /(["'`])(\/assets\/[^"'`\s]+)(\?[^"'`\s]*)?/g;
             if (relativePathRegex.test(newCode)) {
@@ -146,6 +226,22 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
               console.log(`[ensure-base-url] 修复相对路径: ${path} -> ${absolutePath}`);
               return `${attr}="${absolutePath}${query}"`;
             });
+          }
+
+          // 关键：修复 vite-plugin-qiankun 注入到 index.html 内联脚本中的 import('/assets/index-xxx.js')
+          // 说明：qiankun 会把该内联脚本 eval 成 VM 执行；如果仍是 /assets/ 绝对路径，就会按宿主域名解析（导致 layout 域名 404）。
+          // 这里改为：优先用 __INJECTED_PUBLIC_PATH_BY_QIANKUN__（子应用 publicPath/origin），并追加 ?v= 构建时间戳，避免缓存旧入口。
+          if (qiankunIndexImportInHtmlRegex.test(htmlContent)) {
+            qiankunIndexImportInHtmlRegex.lastIndex = 0;
+            const originExpr =
+              `((typeof __INJECTED_PUBLIC_PATH_BY_QIANKUN__!=='undefined'&&__INJECTED_PUBLIC_PATH_BY_QIANKUN__)` +
+              `?new URL(__INJECTED_PUBLIC_PATH_BY_QIANKUN__,(typeof location!=='undefined'&&location.origin)||'').origin` +
+              `:((typeof location!=='undefined'&&location.origin)||''))`;
+            htmlContent = htmlContent.replace(qiankunIndexImportInHtmlRegex, (_m, _q, absPath) => {
+              htmlModified = true;
+              return `import(/* @vite-ignore */ (${originExpr} + '${absPath}' + '?v=${buildTimestamp}'))`;
+            });
+            console.log(`[ensure-base-url] 修复 index.html 内联 import(/assets/index-*.js) 并追加 v=${buildTimestamp}`);
           }
 
           // 如果出现根目录的资源路径（如 /index.js），说明配置有问题，记录警告

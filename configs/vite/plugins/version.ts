@@ -5,7 +5,6 @@
  */
 
 import type { Plugin } from 'vite';
-import type { OutputOptions, OutputBundle } from 'rollup';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,62 +59,77 @@ export function addVersionPlugin(): Plugin {
     buildStart() {
       console.log(`[add-version] 构建时间戳版本号: ${buildTimestamp}`);
     },
-    generateBundle(_options: OutputOptions, bundle: OutputBundle) {
-      for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'asset' && fileName === 'index.html') {
-          let htmlContent = (chunk as any).source as string;
-          let modified = false;
+    // 关键：使用 transformIndexHtml（Vite 内部是在后置阶段生成/写入 index.html，generateBundle 很容易拿不到最终 HTML）
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        let newHtml = html;
+        let modified = false;
 
-          // 为 script 标签的 src 属性添加版本号
-          const scriptRegex = /(<script[^>]*\s+src=["'])([^"']+)(["'][^>]*>)/g;
-          htmlContent = htmlContent.replace(scriptRegex, (match: string, prefix: string, src: string, suffix: string) => {
-            // 跳过已有版本号的资源（避免重复添加）
+        // 1) 为 <script src> 添加/更新 v
+        newHtml = newHtml.replace(
+          /(<script[^>]*\s+src=["'])([^"']+)(["'][^>]*>)/g,
+          (match: string, prefix: string, src: string, suffix: string) => {
             if (src.includes('?v=') || src.includes('&v=')) {
-              // 如果已有版本号，更新为当前构建时间戳
-              const updatedSrc = src.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
-              if (updatedSrc !== src) {
+              const updated = src.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
+              if (updated !== src) {
                 modified = true;
-                return `${prefix}${updatedSrc}${suffix}`;
+                return `${prefix}${updated}${suffix}`;
               }
               return match;
             }
-            // 只为 /assets/ 路径的资源添加版本号
             if (src.startsWith('/assets/') || src.startsWith('./assets/')) {
               modified = true;
-              const separator = src.includes('?') ? '&' : '?';
-              return `${prefix}${src}${separator}v=${buildTimestamp}${suffix}`;
+              const sep = src.includes('?') ? '&' : '?';
+              return `${prefix}${src}${sep}v=${buildTimestamp}${suffix}`;
             }
             return match;
-          });
+          },
+        );
 
-          // 为 link 标签的 href 属性添加版本号
-          const linkRegex = /(<link[^>]*\s+href=["'])([^"']+)(["'][^>]*>)/g;
-          htmlContent = htmlContent.replace(linkRegex, (match, prefix, href, suffix) => {
-            // 跳过已有版本号的资源（避免重复添加）
+        // 2) 为 <link href> 添加/更新 v
+        newHtml = newHtml.replace(
+          /(<link[^>]*\s+href=["'])([^"']+)(["'][^>]*>)/g,
+          (match: string, prefix: string, href: string, suffix: string) => {
             if (href.includes('?v=') || href.includes('&v=')) {
-              // 如果已有版本号，更新为当前构建时间戳
-              const updatedHref = href.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
-              if (updatedHref !== href) {
+              const updated = href.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
+              if (updated !== href) {
                 modified = true;
-                return `${prefix}${updatedHref}${suffix}`;
+                return `${prefix}${updated}${suffix}`;
               }
               return match;
             }
-            // 只为 /assets/ 路径的资源添加版本号
             if (href.startsWith('/assets/') || href.startsWith('./assets/')) {
               modified = true;
-              const separator = href.includes('?') ? '&' : '?';
-              return `${prefix}${href}${separator}v=${buildTimestamp}${suffix}`;
+              const sep = href.includes('?') ? '&' : '?';
+              return `${prefix}${href}${sep}v=${buildTimestamp}${suffix}`;
             }
             return match;
-          });
+          },
+        );
 
-          if (modified) {
-            (chunk as any).source = htmlContent;
-            console.log(`[add-version] 已为 index.html 中的资源引用添加版本号: v=${buildTimestamp}`);
-          }
+        // 3) 关键：修复 qiankun 注入的内联 import('/assets/index-xxx.js')，避免被宿主域名解析
+        // 同时追加 v，避免缓存旧入口导致持续请求旧 chunk
+        // 关键：在 qiankun sandbox 中更可靠的写法是直接读全局变量 __INJECTED_PUBLIC_PATH_BY_QIANKUN__
+        // 而不是 window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__（window 可能被 proxy 重写/不包含 location）。
+        const originExpr =
+          `((typeof __INJECTED_PUBLIC_PATH_BY_QIANKUN__!=='undefined'&&__INJECTED_PUBLIC_PATH_BY_QIANKUN__)` +
+          `?new URL(__INJECTED_PUBLIC_PATH_BY_QIANKUN__,(typeof location!=='undefined'&&location.origin)||'').origin` +
+          `:((typeof location!=='undefined'&&location.origin)||''))`;
+        newHtml = newHtml.replace(
+          /import\(\s*(['"])(\/assets\/(index|main)-[^'"]+)\1\s*\)/g,
+          (_m: string, _q: string, absPath: string) => {
+            modified = true;
+            return `import(/* @vite-ignore */ (${originExpr} + '${absPath}' + '?v=${buildTimestamp}'))`;
+          },
+        );
+
+        if (modified) {
+          console.log(`[add-version] 已为 index.html 中的资源引用添加版本号: v=${buildTimestamp}`);
+          return newHtml;
         }
-      }
+        return html;
+      },
     },
   };
 }

@@ -315,16 +315,22 @@ onMounted(async () => {
     for (const config of toolbarConfigs) {
       try {
         const component = await config.component();
+        const componentInstance = component.default || component;
+        
         toolbarComponents.value.push({
           ...config,
-          component: markRaw(component.default || component)
+          component: markRaw(componentInstance)
         });
       } catch (error) {
-        console.error('Failed to load toolbar component:', error);
+        if (import.meta.env.DEV) {
+          console.warn('[Topbar] 加载工具栏组件失败:', error);
+        }
       }
     }
   } catch (error) {
-    console.error('Failed to get toolbar components:', error);
+    if (import.meta.env.DEV) {
+      console.warn('[Topbar] 获取工具栏组件配置失败:', error);
+    }
   }
 
   // 添加主题切换事件监听器

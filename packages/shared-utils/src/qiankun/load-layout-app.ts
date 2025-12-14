@@ -621,10 +621,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
                 fileUrl = `${entryUrl.origin}/${fileUrl}`;
               }
 
-              // #region agent log H-LAYOUT-PATH
-              fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-LAYOUT-PATH',location:'packages/shared-utils/src/qiankun/load-layout-app.ts:extractFiles',message:'manifest entry -> script url',data:{key,entryFile:entry.file,originalFileUrl,adjustedForDup,finalUrl:fileUrl},timestamp:Date.now()})}).catch(()=>{});
-              // #endregion agent log H-LAYOUT-PATH
-
               const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
               let priority = 999;
               if (fileName.includes('vendor-') && !fileName.includes('echarts-vendor')) {
@@ -659,10 +655,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             // 按优先级排序
             manifestUrls.sort((a, b) => a.priority - b.priority);
             scriptUrls = manifestUrls.map(item => item.url);
-
-            // #region agent log H-LAYOUT-SCRIPTS
-            fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-LAYOUT-SCRIPTS',location:'packages/shared-utils/src/qiankun/load-layout-app.ts:manifest-fallback',message:'final scriptUrls (fallback)',data:{count:scriptUrls.length,first:scriptUrls.slice(0,5)},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion agent log H-LAYOUT-SCRIPTS
 
             // 静默处理
           } else {
@@ -718,15 +710,13 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             } else if (fileUrl.includes('assets/layout/assets/layout/')) {
               fileUrl = fileUrl.replace(/assets\/layout\/assets\/layout\//g, 'assets/layout/');
             }
-            // 关键：确保 layout-app 的资源路径包含 /assets/layout/
-            // 如果路径是 /assets/index-xxx.js 或 assets/index-xxx.js，需要转换为 /assets/layout/index-xxx.js
+            // 关键：layout-app 的所有 JS 产物都在 /assets/layout/ 下（避免与子应用 /assets/ 冲突）
+            // 不依赖 Nginx rewrite：这里直接把 manifest 中的 /assets/*.js 规范化为 /assets/layout/*.js
             if (fileUrl.includes('/assets/') && !fileUrl.includes('/assets/layout/')) {
-              // 检查是否是 layout-app 的资源（通过文件名判断，如 index-xxx.js, vendor-xxx.js 等）
-              const fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-              // 如果是入口文件或 vendor 文件，且路径是 /assets/xxx.js，转换为 /assets/layout/xxx.js
-              if (fileName.includes('index-') || fileName.includes('main-') || fileName.includes('vendor-') || fileName.includes('menu-registry')) {
-                fileUrl = fileUrl.replace(/\/assets\/([^/]+\.js)$/, '/assets/layout/$1');
-              }
+              fileUrl = fileUrl.replace(/\/assets\/([^/]+\.js)$/, '/assets/layout/$1');
+            }
+            if (fileUrl.startsWith('assets/') && !fileUrl.startsWith('assets/layout/')) {
+              fileUrl = fileUrl.replace(/^assets\/([^/]+\.js)$/, 'assets/layout/$1');
             }
             if (fileUrl.startsWith('/')) {
               fileUrl = `${entryUrl.origin}${fileUrl}`;
@@ -835,9 +825,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
         script.onerror = (error) => {
           hasError = true;
-          // #region agent log H-LAYOUT-LOAD
-          fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-LAYOUT-LOAD',location:'packages/shared-utils/src/qiankun/load-layout-app.ts:loadScript',message:'script onerror',data:{url,index,total:scriptUrls.length,errorType:typeof error},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion agent log H-LAYOUT-LOAD
           const errorDetails = {
             url,
             error: error instanceof Error ? error.message : String(error),
@@ -1318,33 +1305,38 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
           // 如果之前没有被识别为 layout-app 的资源，但现在返回 404，尝试修复路径和域名
           if (!isLayoutAsset && url.includes('/assets/') && (url.endsWith('.js') || url.endsWith('.mjs'))) {
-            // 关键：检查 manifest 中是否有这个文件，如果有，说明是 layout-app 的资源
-            let shouldFix = false;
+            // 子应用入口文件：绝对不能被重写到 layout 域名（否则会出现 layout 请求子应用 chunk 的 404）
+            const isSubAppEntryFile = fileName.startsWith('index-') || fileName.startsWith('main-');
 
-            if (cachedManifest) {
-              // 检查 manifest 中是否有这个文件
-              const existsInManifest = Object.values(cachedManifest).some(entry => {
-                if (entry.file) {
-                  const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
-                  return entryFileName === fileName;
-                }
-                return false;
-              });
-              if (existsInManifest) {
-                shouldFix = true;
-              }
-            }
-
-            // 关键：只有共享资源（vendor、echarts-vendor、menu-registry）才应该从 layout-app 加载
-            // 子应用的主入口文件（index-xxx.js、main-xxx.js）应该从子应用自己的域名加载
+            // 关键：只有共享资源才允许从 layout-app 加载
             const isSharedResource = fileName.includes('vendor-') ||
                                     fileName.includes('echarts-vendor') ||
                                     fileName.includes('menu-registry') ||
                                     fileName.includes('eps-service') ||
                                     fileName.includes('auth-api');
 
-            // 如果 manifest 中有这个文件，或者是共享资源，且路径是 /assets/xxx.js（没有 /layout/），尝试修复
-            if ((shouldFix || isSharedResource) && (!url.includes('/assets/layout/') && url.includes('/assets/'))) {
+            // 关键：不要仅凭“manifest 中存在同名文件”就把请求重写到 layout
+            // 因为 layout-app 的 manifest 里也可能存在 index-*.js 等同名 chunk，会误伤子应用入口 chunk。
+            // 这里只允许对 layout-app 的 /assets/layout/ 下的文件做 manifest 兜底，且排除子应用入口文件。
+            let shouldFix = false;
+            if (cachedManifest && !isSubAppEntryFile) {
+              for (const entry of Object.values(cachedManifest)) {
+                if (entry.file) {
+                  const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
+                  if (entryFileName === fileName) {
+                    // 只接受 layout-app 自己的 assets/layout/ 资源作为修复目标
+                    if (entry.file.includes('assets/layout/')) {
+                      shouldFix = true;
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+
+            // 只有共享资源（或明确在 layout manifest 的 assets/layout 下）才尝试修复到 layout
+            // 且必须排除子应用入口文件（index-xxx.js、main-xxx.js）
+            if (!isSubAppEntryFile && (shouldFix || isSharedResource) && (!url.includes('/assets/layout/') && url.includes('/assets/'))) {
               // 尝试修复路径：/assets/xxx.js -> /assets/layout/xxx.js
               // 同时修复域名：子应用域名 -> layout-app 域名
               let retryUrl = url;
@@ -1501,38 +1493,35 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
       const startCheck = () => {
         // layout-app 的所有脚本已加载，等待它挂载完成
         let checkCount = 0;
-        // 缩短超时时间：生产环境 5 秒（100 * 50ms），开发环境 10 秒（200 * 50ms）
+        // 等待挂载完成：
+        // 关键：必须等到 #subapp-viewport 出现才算“可用”，否则子应用会因为找不到容器而挂载失败，
+        // 表现为：子应用先独立渲染，几秒后 layout-app 覆盖标题/壳子，但内容区空白。
         const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
-        const maxChecks = isDev ? 200 : 100; // 开发环境 10 秒，生产环境 5 秒
+        // 生产环境网络/缓存抖动更明显，等待更久一些更稳
+        const maxChecks = isDev ? 300 : 300; // 50ms * 300 = 15s
 
       const checkLayoutApp = () => {
         checkCount++;
 
-        // 检查 #app 容器中是否有 layout-app 的内容（不仅仅是空容器）
-        const appContainer = document.querySelector('#app') as HTMLElement;
-        const hasLayoutContent = appContainer &&
-          (appContainer.children.length > 0 ||
-           appContainer.innerHTML.trim().length > 0 ||
-           document.querySelector('#layout-app') !== null ||
-           document.querySelector('#subapp-viewport') !== null);
+        // 关键：以 #subapp-viewport 作为“layout-app 已可用”的硬条件
+        // 仅仅检测到 #app 有内容/有 #layout-app 容器是不够的（此时 viewport 可能尚未创建）
+        const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
+        const hasLayoutContent = !!viewport;
 
         if (hasLayoutContent) {
           if (!layoutAppMounted) {
             layoutAppMounted = true;
             cleanup();
 
-            // 等待 layout-app 完全初始化
-            // layout-app 会自动注册并启动 qiankun 来加载子应用，不需要手动触发事件
-            setTimeout(() => {
-              resolve();
-            }, 200);
+            // 微延迟：给 layout-app 完成首屏渲染/样式初始化一点时间
+            setTimeout(() => resolve(), 50);
           }
         } else if (checkCount >= maxChecks) {
           // 超时，挂载失败
           cleanup();
           cleanupDom(); // 清理残留的 DOM
 
-          const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到挂载内容`;
+          const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到 #subapp-viewport`;
           // layout-app 挂载超时（日志已移除）
           reject(new Error(errorMsg));
         }
@@ -1544,15 +1533,15 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
       // 设置超时，避免无限等待
       // 关键：超时应该 reject，而不是 resolve
-      // 缩短超时时间：生产环境 8 秒，开发环境 15 秒
-      const totalTimeout = isDev ? 15000 : 8000;
+      // 生产环境等待更久一些，避免脚本加载/首屏渲染稍慢时误判失败（导致空白壳子）
+      const totalTimeout = isDev ? 20000 : 20000;
       mountTimeout = setTimeout(() => {
         if (!layoutAppMounted) {
           layoutAppMounted = true;
           cleanup();
           cleanupDom(); // 清理残留的 DOM
 
-          const errorMsg = `加载 layout-app 超时（${totalTimeout}ms），已加载 ${scriptUrls.length} 个脚本`;
+          const errorMsg = `加载 layout-app 超时（${totalTimeout}ms），已加载 ${scriptUrls.length} 个脚本，但仍未检测到 #subapp-viewport`;
           // 加载 layout-app 超时（日志已移除）
           reject(new Error(errorMsg));
         }

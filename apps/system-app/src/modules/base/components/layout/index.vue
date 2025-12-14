@@ -274,15 +274,35 @@ const toggleSidebar = () => {
 };
 
 const toggleDrawer = () => {
-  drawerVisible.value = !drawerVisible.value;
-  scheduleContentResize();
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      drawerVisible.value = !drawerVisible.value;
+      scheduleContentResize();
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[Layout] toggleDrawer error:', error);
+      }
+    }
+  });
 };
 
 const openDrawer = () => {
-  if (!drawerVisible.value) {
-    drawerVisible.value = true;
-  }
-  scheduleContentResize();
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      if (!drawerVisible.value) {
+        drawerVisible.value = true;
+      }
+      scheduleContentResize();
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[Layout] openDrawer error:', error);
+      }
+    }
+  });
 };
 
 const toggleFullscreen = () => {

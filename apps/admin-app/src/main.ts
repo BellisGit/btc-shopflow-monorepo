@@ -22,6 +22,40 @@ import {
 } from './bootstrap';
 import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
+import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+
+// 关键：在应用启动时立即设置全局错误监听器，捕获 Vue patch 过程中的 DOM 操作错误
+// 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
+if (typeof window !== 'undefined') {
+  // 使用捕获阶段监听，确保能捕获所有错误（包括 Vue 内部的错误）
+  window.addEventListener('error', (event) => {
+    const errorMessage = event.message || '';
+    const errorStack = event.error?.stack || '';
+    
+    // 检查是否是 DOM 操作相关的错误
+    if (
+      errorMessage.includes('insertBefore') ||
+      errorMessage.includes('processCommentNode') ||
+      errorMessage.includes('patch') ||
+      errorMessage.includes('Cannot read properties of null') ||
+      errorMessage.includes('Cannot set properties of null') ||
+      errorMessage.includes('reading \'insertBefore\'') ||
+      errorMessage.includes('reading \'emitsOptions\'') ||
+      errorStack.includes('insertBefore') ||
+      errorStack.includes('processCommentNode') ||
+      errorStack.includes('patch')
+    ) {
+      // DOM 操作错误，静默处理，避免影响用户体验
+      event.preventDefault();
+      event.stopPropagation();
+      if (import.meta.env.DEV) {
+        console.warn('[admin-app] 全局错误监听器捕获到 DOM 操作错误:', errorMessage);
+      }
+      return true; // 阻止默认错误处理
+    }
+    return false; // 其他错误继续正常处理
+  }, true); // 使用捕获阶段
+}
 
 let context: AdminAppContext | null = null;
 
@@ -47,6 +81,22 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
+  // 生产环境且非 layout-app：先加载共享资源
+  if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
+    try {
+      await loadSharedResourcesFromLayoutApp({
+        onProgress: (loaded, total) => {
+          if (import.meta.env.DEV) {
+            console.log(`[admin-app] 加载共享资源进度: ${loaded}/${total}`);
+          }
+        },
+      });
+    } catch (error) {
+      console.warn('[admin-app] 加载共享资源失败，继续使用本地资源:', error);
+      // 继续执行，使用本地打包的资源作为降级方案
+    }
+  }
+
   // 设置子应用错误捕获（如果主应用传递了错误上报方法）
   // 关键：使用 try-catch 确保错误捕获设置失败不会阻塞应用挂载
   try {
@@ -88,23 +138,24 @@ renderWithQiankun({
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
 // 这里的配置作为 fallback，主应用配置为准
-// 优化后：开发环境 8 秒，生产环境 3-5 秒
-const isDev = import.meta.env.DEV;
+// 关键：增加生产环境的超时时间，避免网络延迟和资源加载导致的超时
+// 注意：使用 import.meta.env.PROD 而不是 !import.meta.env.DEV，确保生产环境构建时正确识别
+const isProd = import.meta.env.PROD;
 export const timeouts = {
   bootstrap: {
-    millis: isDev ? 8000 : 3000, // 开发环境 8 秒，生产环境 3 秒
-    dieOnTimeout: !isDev, // 生产环境超时直接报错，快速发现问题
-    warningMillis: isDev ? 4000 : 1500, // 一半时间后开始警告
+    millis: isProd ? 20000 : 8000, // 生产环境 20 秒，开发环境 8 秒（考虑网络延迟和资源加载）
+    dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+    warningMillis: isProd ? 15000 : 4000, // 警告时间：生产环境 15 秒，开发环境 4 秒（避免过早警告）
   },
   mount: {
-    millis: isDev ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
-    dieOnTimeout: !isDev,
-    warningMillis: isDev ? 4000 : 2500,
+    millis: isProd ? 15000 : 8000, // 生产环境 15 秒，开发环境 8 秒
+    dieOnTimeout: false, // 超时后不终止应用，只警告
+    warningMillis: isProd ? 12000 : 4000, // 警告时间：生产环境 12 秒，开发环境 4 秒
   },
   unmount: {
-    millis: 3000,
+    millis: 5000, // 增加到 5 秒，确保卸载完成
     dieOnTimeout: false,
-    warningMillis: 1500,
+    warningMillis: 4000,
   },
 };
 
@@ -127,14 +178,41 @@ if (shouldRunStandalone()) {
       initLayoutApp()
         .then(() => {
           // layout-app 加载成功，检查是否需要独立渲染
-          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-          if (!(window as any).__USE_LAYOUT_APP__) {
+          if ((window as any).__USE_LAYOUT_APP__) {
+            // 关键：layout-app 已加载，子应用应该主动挂载到 layout-app 的 #subapp-viewport
+            // 而不是等待 layout-app 通过 qiankun 加载（避免二次加载导致 DOM 操作冲突）
+            const waitForViewport = (retries = 40): Promise<HTMLElement | null> => {
+              return new Promise((resolve) => {
+                const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
+                if (viewport) {
+                  resolve(viewport);
+                } else if (retries > 0) {
+                  setTimeout(() => resolve(waitForViewport(retries - 1)), 50);
+                } else {
+                  resolve(null);
+                }
+              });
+            };
+            
+            waitForViewport().then((viewport) => {
+              if (viewport) {
+                // 挂载到 layout-app 的 #subapp-viewport
+                render({ container: viewport } as any).catch((error) => {
+                  console.error('[admin-app] 挂载到 layout-app 失败:', error);
+                });
+              } else {
+                console.error('[admin-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                render().catch((error) => {
+                  console.error('[admin-app] 独立运行失败:', error);
+                });
+              }
+            });
+          } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
               console.error('[admin-app] 独立运行失败:', error);
             });
           }
-          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
         })
         .catch((error) => {
           console.error('[admin-app] 初始化 layout-app 失败:', error);

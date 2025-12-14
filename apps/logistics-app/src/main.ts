@@ -10,6 +10,7 @@ import {
   updateLogisticsApp,
 } from './bootstrap';
 import type { LogisticsAppContext } from './bootstrap';
+import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 // 移除静态导入，改为动态导入（与其他应用保持一致）
 
 let context: LogisticsAppContext | null = null;
@@ -35,6 +36,22 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
+  // 生产环境且非 layout-app：先加载共享资源
+  if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
+    try {
+      await loadSharedResourcesFromLayoutApp({
+        onProgress: (loaded, total) => {
+          if (import.meta.env.DEV) {
+            console.log(`[logistics-app] 加载共享资源进度: ${loaded}/${total}`);
+          }
+        },
+      });
+    } catch (error) {
+      console.warn('[logistics-app] 加载共享资源失败，继续使用本地资源:', error);
+      // 继续执行，使用本地打包的资源作为降级方案
+    }
+  }
+
   try {
     await render(props);
   } catch (error) {
@@ -64,22 +81,24 @@ async function unmount(props: QiankunProps = {}) {
 // 这里的配置作为 fallback，主应用配置为准
 // 优化后：开发环境 8 秒，生产环境 3-5 秒
 // 关键：必须在 export default 之前声明，避免 TDZ (Temporal Dead Zone) 错误
-const isDev = import.meta.env.DEV;
+// 关键：增加生产环境的超时时间，避免网络延迟和资源加载导致的超时
+// 注意：使用 import.meta.env.PROD 明确判定生产环境，避免构建产物环境判断异常导致 warningMillis=4000
+const isProd = import.meta.env.PROD;
 export const timeouts = {
   bootstrap: {
-    millis: isDev ? 8000 : 3000, // 开发环境 8 秒，生产环境 3 秒
-    dieOnTimeout: !isDev, // 生产环境超时直接报错，快速发现问题
-    warningMillis: isDev ? 4000 : 1500, // 一半时间后开始警告
+    millis: isProd ? 20000 : 8000, // 生产环境 20 秒，开发环境 8 秒（考虑网络延迟和资源加载）
+    dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+    warningMillis: isProd ? 15000 : 4000, // 警告时间：生产环境 15 秒，开发环境 4 秒（避免过早警告）
   },
   mount: {
-    millis: isDev ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
-    dieOnTimeout: !isDev,
-    warningMillis: isDev ? 4000 : 2500,
+    millis: isProd ? 15000 : 8000, // 生产环境 15 秒，开发环境 8 秒
+    dieOnTimeout: false, // 超时后不终止应用，只警告
+    warningMillis: isProd ? 12000 : 4000, // 警告时间：生产环境 12 秒，开发环境 4 秒
   },
   unmount: {
-    millis: 3000,
+    millis: 5000, // 增加到 5 秒，确保卸载完成
     dieOnTimeout: false,
-    warningMillis: 1500,
+    warningMillis: 4000,
   },
 };
 
@@ -114,14 +133,41 @@ if (shouldRunStandalone()) {
     initLayoutApp()
       .then(() => {
         // layout-app 加载成功，检查是否需要独立渲染
-        // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-        if (!(window as any).__USE_LAYOUT_APP__) {
+        if ((window as any).__USE_LAYOUT_APP__) {
+          // 关键：layout-app 已加载，子应用应该主动挂载到 layout-app 的 #subapp-viewport
+          // 而不是等待 layout-app 通过 qiankun 加载（避免二次加载导致 DOM 操作冲突）
+          const waitForViewport = (retries = 40): Promise<HTMLElement | null> => {
+            return new Promise((resolve) => {
+              const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
+              if (viewport) {
+                resolve(viewport);
+              } else if (retries > 0) {
+                setTimeout(() => resolve(waitForViewport(retries - 1)), 50);
+              } else {
+                resolve(null);
+              }
+            });
+          };
+          
+          waitForViewport().then((viewport) => {
+            if (viewport) {
+              // 挂载到 layout-app 的 #subapp-viewport
+              render({ container: viewport } as any).catch((error) => {
+                console.error('[logistics-app] 挂载到 layout-app 失败:', error);
+              });
+            } else {
+              console.error('[logistics-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+              render().catch((error) => {
+                console.error('[logistics-app] 独立运行失败:', error);
+              });
+            }
+          });
+        } else {
           // layout-app 加载失败或不需要加载，独立渲染
           render().catch((error) => {
             console.error('[logistics-app] 独立运行失败:', error);
           });
         }
-        // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
       })
       .catch((error) => {
         console.error('[logistics-app] 初始化 layout-app 失败:', error);

@@ -197,6 +197,12 @@ function prepareDistDir() {
     console.log('  🗑️  清理现有的 dist 目录...');
     rmSync(ROOT_DIST_DIR, { recursive: true, force: true });
   }
+  // 确保根目录 dist 存在（避免后续 copy 依赖 cpSync 的隐式行为）
+  try {
+    mkdirSync(ROOT_DIST_DIR, { recursive: true });
+  } catch (error) {
+    // 忽略：后续 copy 时仍会再次尝试创建
+  }
   console.log('  ✅ dist 目录已准备就绪\n');
 }
 
@@ -206,22 +212,14 @@ function prepareDistDir() {
 function buildApp(appName) {
   console.log(`🔨 构建应用: ${appName}...`);
   try {
-    // system-app 使用特殊的构建命令
-    if (appName === 'system-app') {
-      execSync('pnpm run build:system', {
-        cwd: rootDir,
+    // 关键：强制在应用目录执行构建，避免 pnpm --filter 在某些环境下未切到包目录，
+    // 导致 dist 输出位置不确定（进而 copy 阶段找不到 apps/<app>/dist）。
+    const appDir = join(rootDir, 'apps', appName);
+    execSync('pnpm build', {
+      cwd: appDir,
         stdio: 'inherit',
         env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
       });
-    } else {
-      // 其他应用使用标准的构建命令
-      const buildCmd = `pnpm --filter ${appName} build`;
-      execSync(buildCmd, {
-        cwd: rootDir,
-        stdio: 'inherit',
-        env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
-      });
-    }
     
     // docs-site-app 特殊处理：VitePress 构建产物在 .vitepress/dist，需要复制到 dist
     if (appName === 'docs-site-app') {
@@ -243,6 +241,14 @@ function buildApp(appName) {
       } else {
         console.warn(`  ⚠️  警告: VitePress 构建产物目录不存在: ${vitepressDistDir}`);
       }
+    }
+    
+    // 构建完成后强校验 dist 目录是否存在（防止“命令成功但产物路径不对”）
+    const appDistDir = join(rootDir, 'apps', appName, 'dist');
+    if (!existsSync(appDistDir)) {
+      console.error(`  ❌ ${appName} 构建命令执行成功，但未找到构建产物目录: ${appDistDir}`);
+      console.error(`     这通常表示构建产物输出到了其他位置（cwd/root/outDir 异常）。请检查该应用的 Vite root/outDir 配置。`);
+      return false;
     }
     
     console.log(`  ✅ ${appName} 构建完成\n`);
@@ -392,21 +398,20 @@ function verifyAndFixJsReferences(appDistDir, appName) {
 
   const allFiles = getAllFiles(assetsDir);
   
-  // 建立文件映射（忽略 hash）
-  const fileMap = new Map(); // cleanName.ext -> actualFileName
-  
-  allFiles.forEach(({ name }) => {
-    // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-    // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
-    const match = name.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
-    if (match) {
-      const [, cleanName, , , ext] = match;
-      const key = `${cleanName}.${ext}`;
-      if (!fileMap.has(key) || name > fileMap.get(key)) {
-        fileMap.set(key, name);
+  // 关键：不要用 “cleanName.ext” 做映射（index-xxxx.js 会大量冲突）
+  // 只在“缺文件”时做安全替换：寻找同前缀（包含原 hash）的文件（通常只是 buildId 变化）。
+  function findBySamePrefix(fileName) {
+    const extMatch = fileName.match(/\.(js|mjs|css)$/);
+    const ext = extMatch ? extMatch[1] : null;
+    if (!ext) return null;
+    const fileNameWithoutExt = fileName.replace(/\.(js|mjs|css)$/, '');
+    const candidates = allFiles
+      .map(f => f.name)
+      .filter(n => n !== fileName && n.startsWith(fileNameWithoutExt + '-') && n.endsWith('.' + ext));
+    if (candidates.length === 0) return null;
+    candidates.sort();
+    return candidates[candidates.length - 1];
       }
-    }
-  });
 
   let totalFixed = 0;
   const missing = [];
@@ -454,15 +459,8 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         // 检查文件是否存在
         const fileExists = allFiles.some(f => f.name === fileName);
         if (!fileExists) {
-          // 尝试通过文件名（忽略 hash 和 buildId）查找
-          // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
-          if (nameMatch) {
-            const [, baseName, , , ext] = nameMatch;
-            const key = `${baseName}.${ext}`;
-            const actualFile = fileMap.get(key);
-            
-            if (actualFile && actualFile !== fileName) {
+          const actualFile = findBySamePrefix(fileName);
+          if (actualFile) {
               const newPath = `/assets/${actualFile}`;
               replacements.push({
                 old: fullMatch,
@@ -470,7 +468,6 @@ function verifyAndFixJsReferences(appDistDir, appName) {
                 description: `${fileName} -> ${actualFile}`
               });
               modified = true;
-            }
           }
         }
       }
@@ -495,15 +492,8 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         // 检查文件是否存在
         const fileExists = allFiles.some(f => f.name === fileName);
         if (!fileExists) {
-          // 尝试通过文件名（忽略 hash 和 buildId）查找
-          // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
-          if (nameMatch) {
-            const [, baseName, , , ext] = nameMatch;
-            const key = `${baseName}.${ext}`;
-            const actualFile = fileMap.get(key);
-            
-            if (actualFile && actualFile !== fileName) {
+          const actualFile = findBySamePrefix(fileName);
+          if (actualFile) {
               const newPath = `/assets/${actualFile}`;
               replacements.push({
                 old: fullMatch,
@@ -511,10 +501,6 @@ function verifyAndFixJsReferences(appDistDir, appName) {
                 description: `${fileName} -> ${actualFile}`
               });
               modified = true;
-            } else if (!actualFile) {
-              // 如果找不到对应的文件，记录警告
-              console.warn(`    ⚠️  ${fileName} 无法找到对应的文件（baseName: ${baseName}）`);
-            }
           }
         }
       }
@@ -537,22 +523,14 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         // 检查文件是否存在
         const fileExists = allFiles.some(f => f.name === fileName);
         if (!fileExists) {
-          // 尝试通过文件名（忽略 hash 和 buildId）查找
-          // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
-          if (nameMatch) {
-            const [, baseName, , , ext] = nameMatch;
-            const key = `${baseName}.${ext}`;
-            const actualFile = fileMap.get(key);
-            
-            if (actualFile && actualFile !== fileName) {
+          const actualFile = findBySamePrefix(fileName);
+          if (actualFile) {
               replacements.push({
                 old: fullMatch,
                 new: `${quote}${relativePrefix}${actualFile}${quote}`,
                 description: `${fileName} -> ${actualFile}`
               });
               modified = true;
-            }
           }
         }
       }
@@ -575,15 +553,8 @@ function verifyAndFixJsReferences(appDistDir, appName) {
         // 检查文件是否存在
         const fileExists = allFiles.some(f => f.name === fileName);
         if (!fileExists) {
-          // 尝试通过文件名（忽略 hash 和 buildId）查找
-          // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-          const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|mjs|css)$/);
-          if (nameMatch) {
-            const [, baseName, , , ext] = nameMatch;
-            const key = `${baseName}.${ext}`;
-            const actualFile = fileMap.get(key);
-            
-            if (actualFile && actualFile !== fileName) {
+          const actualFile = findBySamePrefix(fileName);
+          if (actualFile) {
               const newPath = `assets/${actualFile}`;
               replacements.push({
                 old: fullMatch,
@@ -591,7 +562,6 @@ function verifyAndFixJsReferences(appDistDir, appName) {
                 description: `${fileName} -> ${actualFile}`
               });
               modified = true;
-            }
           }
         }
       }
@@ -725,20 +695,18 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
 
   const actualFiles = new Set(getAllFiles(assetsDir));
   
-  // 建立文件名映射（忽略 hash 和 buildId）
-  const fileMap = new Map();
-  actualFiles.forEach(actualFile => {
-    // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
-    // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
-    const match = actualFile.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
-    if (match) {
-      const [, name, , , ext] = match;
-      const key = `${name}.${ext}`;
-      if (!fileMap.has(key) || actualFile > fileMap.get(key)) {
-        fileMap.set(key, actualFile);
+  // 关键：不要用 “name.ext” 建映射（index-xxxx.js 会大量冲突）
+  // 只在缺文件时，按同前缀（包含原 hash）查找 buildId 变体。
+  function findBySamePrefix(fileName) {
+    const extMatch = fileName.match(/\.(js|mjs|css)$/);
+    const ext = extMatch ? extMatch[1] : null;
+    if (!ext) return null;
+    const fileNameWithoutExt = fileName.replace(/\.(js|mjs|css)$/, '');
+    const candidates = Array.from(actualFiles).filter(n => n !== fileName && n.startsWith(fileNameWithoutExt + '-') && n.endsWith('.' + ext));
+    if (candidates.length === 0) return null;
+    candidates.sort();
+    return candidates[candidates.length - 1];
       }
-    }
-  });
 
   // 提取并修复 index.html 中的引用
   // 匹配 src/href 属性和 import() 动态导入
@@ -761,12 +729,19 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
     // 支持短 hash（至少4个字符）和长 hash（8个字符以上）
     const nameMatch = fileName.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
     if (!nameMatch) {
+      // 兼容非 hash 的稳定入口文件（如 assets/index.js）
+      // 只要实际文件存在，就视为有效引用，不需要修复
+      if (fileName && actualFiles.has(fileName)) {
+        continue;
+      }
       missing.push(pathWithoutQuery);
       continue;
     }
-    const [, cleanName, , , ext] = nameMatch;
-    const key = `${cleanName}.${ext}`;
-    const actualFile = fileMap.get(key);
+    // 只在缺文件时做替换：优先找同前缀文件（通常只是 buildId 变化）
+    let actualFile = null;
+    if (fileName && !actualFiles.has(fileName)) {
+      actualFile = findBySamePrefix(fileName);
+    }
     
     if (actualFile) {
       const actualPath = `/assets/${actualFile}`;
@@ -777,7 +752,7 @@ function verifyAndFixIndexHtml(appDistDir, appName) {
       if (fullPath !== finalPath) {
         replacements.push({ old: fullPath, new: finalPath, match: match[0] });
       }
-    } else {
+    } else if (fileName && !actualFiles.has(fileName)) {
       missing.push(pathWithoutQuery);
     }
   }
@@ -824,8 +799,11 @@ function verifyAndCleanBuildArtifacts(appDistDir, appName) {
     // 匹配格式：name-hash-buildId.ext 或 name-hash.ext
     const match = file.name.match(/^(.+?)-([A-Za-z0-9]{4,})(?:-([a-zA-Z0-9]+))?\.(js|css|mjs)$/);
     if (match) {
-      const [, name, , , ext] = match;
-      const key = `${name}.${ext}`;
+      const [, name, hash, , ext] = match;
+      // 关键：不能只用 name.ext 当去重 key（例如大量路由 chunk 都叫 index-xxxx.js）
+      // 否则会把不同 hash 的合法 chunk 当成重复文件删除，导致运行时 import/export 不匹配。
+      // 正确做法：只在“同 name + 同 hash（可能仅 buildId 不同）”时认为是重复。
+      const key = `${name}-${hash}.${ext}`;
       if (!fileNames.has(key)) {
         fileNames.set(key, []);
       }
@@ -872,9 +850,10 @@ function verifyAppBuild(appName) {
   const errors = [];
   const assetsDir = join(appDistDir, 'assets');
   
-  // layout-app 的资源文件在 assets/layout/ 目录下
+  // layout-app 的资源文件在 assets/ 目录下（构建时输出到 assets/，部署时可能需要移动到 assets/layout/）
+  // 验证时检查 assets/ 目录，因为构建产物在 assets/ 目录下
   const isLayoutApp = appName === 'layout-app';
-  const actualAssetsDir = isLayoutApp ? join(assetsDir, 'layout') : assetsDir;
+  const actualAssetsDir = assetsDir; // 始终检查 assets/ 目录，因为构建产物在这里
 
   // 收集所有实际存在的文件
   const existingFileNames = new Set();
@@ -1296,13 +1275,18 @@ function buildAndVerifyApp(appName, retryCount = 0) {
  */
 function copyAppDist(appName, domain) {
   const appDistDir = join(rootDir, 'apps', appName, 'dist');
+  const targetDir = join(ROOT_DIST_DIR, domain);
   
   if (!existsSync(appDistDir)) {
-    console.error(`  ⚠️  警告: ${appName} 的构建产物目录不存在`);
+    // 兼容：某些构建流程可能会直接将产物输出到根 dist/<domain>（例如自定义脚本/配置）
+    // 如果目标目录已经存在且包含 index.html，则视为“已复制/已就位”，避免误判为失败。
+    if (existsSync(targetDir) && existsSync(join(targetDir, 'index.html'))) {
+      console.log(`  ✅ ${appName} 产物已直接输出到 dist/${domain}（跳过复制）\n`);
+      return true;
+    }
+    console.error(`  ⚠️  警告: ${appName} 的构建产物目录不存在（apps/${appName}/dist）`);
     return false;
   }
-
-  const targetDir = join(ROOT_DIST_DIR, domain);
 
   if (existsSync(targetDir)) {
     rmSync(targetDir, { recursive: true, force: true });
@@ -1398,45 +1382,33 @@ function main() {
   }
 
   // 第三步：逐个构建、验证和修复每个应用
-  // 关键：每个应用构建后立即验证和修复，而不是一次性构建所有应用
+  // 关键：每个应用构建后立即验证和修复，并立刻复制到 dist/<domain>
+  // 这样可以避免“后续构建/清理导致 apps/<app>/dist 被删除”，最终 copy 阶段找不到产物的问题（Windows 上尤其常见）
   console.log('\n' + '='.repeat(60));
-  console.log('📋 逐个构建、验证和修复应用...');
+  console.log('📋 逐个构建、验证、修复，并复制到 dist 目录...');
   console.log('='.repeat(60));
 
   for (const appName of BUILD_ORDER) {
     if (!APP_DOMAIN_MAP[appName]) {
       continue;
     }
+    const domain = APP_DOMAIN_MAP[appName];
 
     const result = buildAndVerifyApp(appName);
     
     if (result.success && result.valid) {
       results.built.push(appName);
+      // 立即复制到 dist/<domain>
+      const copyOk = copyAppDist(appName, domain);
+      if (copyOk) {
+        results.copied.push(appName);
+      } else {
+        results.copyFailed.push(appName);
+      }
     } else {
       results.failed.push(appName);
       if (result.errors) {
         results.validationErrors.push({ app: appName, errors: result.errors });
-      }
-    }
-  }
-
-  // 第四步：复制验证通过的应用到 dist 目录
-  console.log('\n' + '='.repeat(60));
-  console.log('📋 复制构建产物到 dist 目录...');
-  console.log('='.repeat(60));
-
-  for (const appName of BUILD_ORDER) {
-    const domain = APP_DOMAIN_MAP[appName];
-    if (!domain) {
-      continue;
-    }
-
-    if (results.built.includes(appName)) {
-      const success = copyAppDist(appName, domain);
-      if (success) {
-        results.copied.push(appName);
-      } else {
-        results.copyFailed.push(appName);
       }
     }
   }

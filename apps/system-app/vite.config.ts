@@ -15,8 +15,8 @@ export default defineConfig(({ command, mode }: ConfigEnv) => {
     // 启用资源预加载插件（默认启用）
     enableResourcePreload: true,
     customPlugins: [
-      // 关键：system-app 需要复制 icons 目录，因为 index.html 引用了 /icons/ 路径
-      copyIconsPlugin(appDir),
+      // 移除：不再需要复制 icons 目录，统一使用 CDN
+      // copyIconsPlugin(appDir),
     ],
     customServer: { proxy },
     proxy,

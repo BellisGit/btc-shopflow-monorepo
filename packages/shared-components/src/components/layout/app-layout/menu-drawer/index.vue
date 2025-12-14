@@ -1,7 +1,9 @@
 ﻿<template>
   <teleport to="body">
+    <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+    <!-- 保证在子应用切换时，menu-drawer 的 DOM 不被销毁，避免 insertBefore 等报错 -->
     <transition name="drawer-slide">
-      <div v-if="visible" class="menu-drawer">
+      <div v-show="visible" class="menu-drawer">
         <div class="menu-drawer__header">
           <h3>{{ t('app_center.title') }}</h3>
           <span class="menu-drawer__subtitle">{{ t('app_center.subtitle') }}</span>
@@ -794,11 +796,53 @@ const handleSwitchApp = async (app: MicroApp) => {
   }
 };
 
+// 辅助函数：检查是否应该处理抽屉事件
+const shouldHandleDrawerEvent = (): boolean => {
+  const isLayoutAppSelf = !!(window as any).__IS_LAYOUT_APP__;
+  if (isLayoutAppSelf) {
+    return true;
+  }
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const port = window.location.port || '';
+    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' || 
+                             (hostname === 'localhost' && (port === '4192' || port === '4188'));
+    if (isLayoutAppDomain) {
+      return true;
+    }
+  }
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return false;
+  }
+  return true;
+};
+
 const handleClose = () => {
-  emit('update:visible', false);
+  // 关键：检查是否应该处理抽屉关闭事件
+  if (!shouldHandleDrawerEvent()) {
+    return;
+  }
+
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      emit('update:visible', false);
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[MenuDrawer] handleClose error:', error);
+      }
+    }
+  });
 };
 
 const handleClickOutside = (event: MouseEvent) => {
+  // 关键：检查是否应该处理点击外部关闭事件
+  if (!shouldHandleDrawerEvent()) {
+    return;
+  }
+
   if (!props.visible) return;
 
   const drawer = document.querySelector('.menu-drawer');
@@ -809,6 +853,11 @@ const handleClickOutside = (event: MouseEvent) => {
 
 // 监听 iframe 内部点击（由 DocsIframe 转发）
 const handleIframeClick = () => {
+  // 关键：检查是否应该处理 iframe 点击关闭事件
+  if (!shouldHandleDrawerEvent()) {
+    return;
+  }
+
   if (props.visible) {
     handleClose();
   }
@@ -856,6 +905,12 @@ onUnmounted(() => {
   z-index: 999;
   display: flex;
   flex-direction: column;
+  
+  // 关键：当通过 v-show 隐藏时，确保元素不可见且不占用空间
+  // v-show="false" 会自动设置 display: none，这里只是确保样式正确
+  &[style*="display: none"] {
+    pointer-events: none;
+  }
 
   &__header {
     padding: 20px;

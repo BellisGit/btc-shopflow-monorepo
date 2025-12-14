@@ -413,6 +413,7 @@
   "domain.type.logistics": "Logistics Module",
   "domain.type.finance": "Finance Module",
   "domain.type.monitor": "Monitor Module",
+  "domain.type.docs": "Docs Module",
   "theme.title": "Preferences",
   "theme.presets": "Preset Themes",
   "theme.custom_color": "Custom Color",

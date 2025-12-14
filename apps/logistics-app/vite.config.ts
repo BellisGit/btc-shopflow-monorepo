@@ -10,7 +10,8 @@ export default defineConfig(
     appDir: fileURLToPath(new URL('.', import.meta.url)),
     qiankunName: 'logistics',
     customPlugins: [
-      copyLogoPlugin(),
+      // 移除：不再需要复制 logo.png，统一使用 CDN
+      // copyLogoPlugin(),
     ],
     customServer: { proxy: mainProxy },
     proxy: mainProxy,

@@ -19,7 +19,9 @@ defineOptions({
 
 <style lang="scss" scoped>
 .app-skeleton {
-  display: none;
+  // 关键：骨架屏组件被渲染出来时就应该可见（显示/隐藏由父组件 v-if/v-show 控制）
+  // 之前这里写成 display: none 会导致无论如何都显示不出来，从而在切换子应用时出现白屏。
+  display: flex;
   position: absolute;
   top: 0;
   left: 0;

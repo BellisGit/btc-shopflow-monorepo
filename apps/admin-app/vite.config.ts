@@ -12,8 +12,8 @@ export default defineConfig(
     qiankunName: 'admin',
     customPlugins: [
       titleInjectPlugin(),
-      // 关键：admin-app 需要复制 icons 目录，因为它有图标展示的内容
-      copyIconsPlugin(fileURLToPath(new URL('.', import.meta.url))),
+      // 移除：不再需要复制 icons 目录，统一使用 CDN
+      // copyIconsPlugin(fileURLToPath(new URL('.', import.meta.url))),
     ],
     customServer: { proxy },
     proxy,

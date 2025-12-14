@@ -13,8 +13,8 @@
       <div
         class="topbar__hamburger"
         :class="{ 'is-active': drawerVisible }"
-        @click.stop="$emit('toggle-drawer')"
-        @mouseenter="$emit('open-drawer')"
+        @click.stop="safeEmit('toggle-drawer')"
+        @mouseenter="safeEmit('open-drawer')"
       >
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
@@ -68,10 +68,6 @@
         <li v-for="toolbarConfig in filteredToolbarComponents" :key="toolbarConfig.order">
           <component :is="toolbarConfig.component" />
         </li>
-        <!-- 调试信息：如果工具栏为空，显示调试信息 -->
-        <li v-if="filteredToolbarComponents.length === 0" style="padding: 5px; color: red; font-size: 12px; background: yellow;">
-          [调试] 工具栏组件为空 (总数: {{ toolbarComponents.length }})
-        </li>
       </ul>
 
       <!-- 用户信息 -->
@@ -122,9 +118,98 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const route = useRoute();
 
+// 组件挂载状态标志
+let isMounted = true;
+
+// 辅助函数：检查是否应该处理抽屉事件
+// 返回 true 表示应该处理，false 表示不应该处理（由 layout-app 处理）
+const shouldHandleDrawerEvent = (): boolean => {
+  // 如果当前是 layout-app 自己，应该处理（因为 layout-app 需要自己的抽屉功能）
+  const isLayoutAppSelf = !!(window as any).__IS_LAYOUT_APP__;
+  if (isLayoutAppSelf) {
+    return true;
+  }
+  // 检查 hostname 是否是 layout-app 的域名
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const port = window.location.port || '';
+    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' || 
+                             (hostname === 'localhost' && (port === '4192' || port === '4188'));
+    if (isLayoutAppDomain) {
+      return true; // layout-app 自己的域名，应该处理
+    }
+  }
+  // 如果是子应用在使用 layout-app（通过 __USE_LAYOUT_APP__ 标志），不应该处理
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return false; // 子应用在使用 layout-app，不处理抽屉事件
+  }
+  return true; // 其他情况（独立运行），应该处理
+};
+
 // 处理折叠按钮点击事件
 const handleToggleSidebar = () => {
   emit('toggle-sidebar');
+};
+
+// 安全的 emit 函数，用于在可能卸载的情况下安全地触发事件
+// 在生产环境中，当组件正在卸载时，mouseenter 事件可能仍然触发，导致 emit 失败
+const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
+  // 关键：检查是否应该处理抽屉事件
+  if (!shouldHandleDrawerEvent()) {
+    return; // 不应该处理，直接返回
+  }
+
+  // 检查组件是否仍然挂载
+  if (!isMounted) {
+    return;
+  }
+
+  // 关键：检查 DOM 容器是否存在，避免在容器被销毁后操作 DOM
+  // 在微前端环境中，子应用卸载时容器可能已被移除
+  try {
+    const appContainer = document.querySelector('#app');
+    if (!appContainer || !appContainer.isConnected) {
+      // 容器不存在或已从 DOM 中移除，不触发事件
+      return;
+    }
+  } catch (error) {
+    // 检查容器时出错，不触发事件
+    return;
+  }
+
+  // 使用 nextTick 确保在 Vue 更新周期中安全地 emit
+  nextTick(() => {
+    // 再次检查组件是否仍然挂载（可能在 nextTick 期间卸载）
+    if (!isMounted) {
+      return;
+    }
+
+    // 再次检查容器是否存在
+    try {
+      const appContainer = document.querySelector('#app');
+      if (!appContainer || !appContainer.isConnected) {
+        return;
+      }
+    } catch (error) {
+      return;
+    }
+
+    try {
+      // 使用类型断言来帮助 TypeScript 正确推断类型
+      if (eventName === 'toggle-drawer') {
+        emit('toggle-drawer');
+      } else if (eventName === 'open-drawer') {
+        emit('open-drawer');
+      }
+    } catch (error) {
+      // 静默处理错误，避免在生产环境中报错
+      // 这通常发生在组件正在卸载时 emit 事件
+      if (import.meta.env.DEV) {
+        console.warn(`[Topbar] emit ${eventName} 失败:`, error);
+      }
+    }
+  });
 };
 
 
@@ -375,17 +460,34 @@ const loadToolbarComponents = async () => {
 
     for (const config of toolbarConfigs) {
       try {
+        // 关键：验证 toolbar 配置的 component 是否是一个函数（动态导入）
+        // 如果 component 不是函数，说明配置错误，不应该作为工具栏组件
+        if (typeof config.component !== 'function') {
+          if (import.meta.env.DEV) {
+            console.warn('[Topbar] 跳过无效的工具栏配置（component 不是函数）:', config);
+          }
+          continue;
+        }
+
         const component = await config.component();
+        const componentInstance = component.default || component;
+        
         toolbarComponents.value.push({
           ...config,
-          component: markRaw(component.default || component)
+          component: markRaw(componentInstance)
         });
       } catch (error) {
         // 静默失败
+        if (import.meta.env.DEV) {
+          console.warn('[Topbar] 加载工具栏组件失败:', error);
+        }
       }
     }
   } catch (error) {
     // 静默失败
+    if (import.meta.env.DEV) {
+      console.warn('[Topbar] 获取工具栏组件配置失败:', error);
+    }
   }
 };
 
@@ -445,6 +547,9 @@ onMounted(async () => {
 
 // 清理事件监听
 onUnmounted(() => {
+  // 标记组件已卸载
+  isMounted = false;
+
   // 清理应用切换事件监听
   const emitter = (window as any).__APP_EMITTER__;
   if (emitter) {

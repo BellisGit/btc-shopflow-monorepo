@@ -280,15 +280,47 @@ const toggleSidebar = () => {
 };
 
 const toggleDrawer = () => {
-  drawerVisible.value = !drawerVisible.value;
-  scheduleContentResize();
+  // 关键：如果正在使用 layout-app，不要处理抽屉事件（layout-app 会处理）
+  // 这可以避免在 qiankun 模式下卸载时触发已卸载组件的更新
+  if (isUsingLayoutApp.value) {
+    return;
+  }
+  
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      drawerVisible.value = !drawerVisible.value;
+      scheduleContentResize();
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[Layout] toggleDrawer error:', error);
+      }
+    }
+  });
 };
 
 const openDrawer = () => {
-  if (!drawerVisible.value) {
-    drawerVisible.value = true;
+  // 关键：如果正在使用 layout-app，不要处理抽屉事件（layout-app 会处理）
+  // 这可以避免在 qiankun 模式下卸载时触发已卸载组件的更新
+  if (isUsingLayoutApp.value) {
+    return;
   }
-  scheduleContentResize();
+  
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      if (!drawerVisible.value) {
+        drawerVisible.value = true;
+      }
+      scheduleContentResize();
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[Layout] openDrawer error:', error);
+      }
+    }
+  });
 };
 
 const toggleFullscreen = () => {
@@ -350,6 +382,16 @@ onUnmounted(() => {
   window.removeEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
 
   delete (window as any).__APP_EMITTER__;
+  
+  // 关键：在卸载时重置 drawerVisible，避免响应式更新触发已卸载组件的更新
+  // 使用 nextTick 确保在卸载完成前不会触发更新
+  nextTick(() => {
+    try {
+      drawerVisible.value = false;
+    } catch (error) {
+      // 静默处理，卸载时可能已经无法访问响应式对象
+    }
+  });
 });
 </script>
 

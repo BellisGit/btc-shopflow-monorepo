@@ -489,10 +489,33 @@ const handleSwitchApp = async (app: MicroApp) => {
 };
 
 const handleClose = () => {
-  emit('update:visible', false);
+  // 关键：如果正在使用 layout-app，不要处理抽屉关闭事件（layout-app 会处理）
+  // 这可以避免在 layout-app 环境下触发已卸载组件的更新
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return;
+  }
+
+  // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
+  nextTick(() => {
+    try {
+      emit('update:visible', false);
+    } catch (error) {
+      // 静默处理错误，避免在子应用环境中抛出异常
+      if (import.meta.env.DEV) {
+        console.warn('[MenuDrawer] handleClose error:', error);
+      }
+    }
+  });
 };
 
 const handleClickOutside = (event: MouseEvent) => {
+  // 关键：如果正在使用 layout-app，不要处理点击外部关闭事件
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return;
+  }
+
   if (!props.visible) return;
 
   const drawer = document.querySelector('.menu-drawer');
@@ -503,6 +526,12 @@ const handleClickOutside = (event: MouseEvent) => {
 
 // 监听 iframe 内部点击（由 DocsIframe 转发）
 const handleIframeClick = () => {
+  // 关键：如果正在使用 layout-app，不要处理 iframe 点击关闭事件
+  const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return;
+  }
+
   if (props.visible) {
     handleClose();
   }

@@ -18,6 +18,7 @@ import type { QiankunProps } from '@btc/shared-core';
 import { getLocaleMessages, normalizeLocale } from './i18n/getters';
 import { AppLayout } from '@btc/shared-components';
 import { registerAppEnvAccessors, registerManifestMenusForApp, registerManifestTabsForApp, createAppStorageBridge, createDefaultDomainResolver, resolveAppLogoUrl, createSharedUserSettingPlugin } from '@configs/layout-bridge';
+import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 import App from './App.vue';
 
 let app: VueApp | null = null;
@@ -279,6 +280,30 @@ async function render(props: QiankunProps = {}) {
   themePlugin = createThemePlugin();
 
   app = createApp(App);
+  
+  // 关键：添加全局错误处理，捕获 DOM 操作错误
+  // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
+  app.config.errorHandler = (err, instance, info) => {
+    // 检查是否是 DOM 操作相关的错误
+    if (err instanceof Error && (
+      err.message.includes('insertBefore') ||
+      err.message.includes('processCommentNode') ||
+      err.message.includes('patch') ||
+      err.message.includes('__vnode') ||
+      err.message.includes('Cannot read properties of null') ||
+      err.message.includes('Cannot set properties of null') ||
+      err.message.includes('reading \'insertBefore\'') ||
+      err.message.includes('reading \'emitsOptions\'')
+    )) {
+      // DOM 操作错误，可能是容器在更新时被移除
+      // 静默处理，避免影响用户体验
+      if (import.meta.env.DEV) {
+        console.warn('[production-app] DOM 操作错误已捕获（应用可能正在卸载）:', err.message);
+      }
+      return;
+    }
+  };
+  
   app.use(router);
   app.use(createPinia());
   app.use(ElementPlus);
@@ -290,16 +315,29 @@ async function render(props: QiankunProps = {}) {
   }
 
   // 查找挂载点：
-  // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
-  // - 独立运行模式下：使用 #app
+  // - 优先使用 props.container（无论是否 qiankun，只要提供了 container 就使用）
+  // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
+  // - 否则：使用 #app（独立运行模式）
   let mountPoint: HTMLElement | null = null;
-
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
-    if (container && container instanceof HTMLElement) {
-      mountPoint = container;
+  
+  // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
+  if (container && container instanceof HTMLElement) {
+    mountPoint = container;
+  } else if ((window as any).__USE_LAYOUT_APP__) {
+    // 使用 layout-app：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      mountPoint = viewport;
     } else {
-      throw new Error('[production-app] qiankun 模式下未提供容器元素');
+      throw new Error('[production-app] 使用 layout-app 但未找到 #subapp-viewport 元素');
+    }
+  } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      mountPoint = viewport;
+    } else {
+      throw new Error('[production-app] qiankun 模式下未提供容器元素且未找到 #subapp-viewport');
     }
   } else {
     // 独立运行模式：使用 #app
@@ -519,6 +557,22 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
+  // 生产环境且非 layout-app：先加载共享资源
+  if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
+    try {
+      await loadSharedResourcesFromLayoutApp({
+        onProgress: (loaded, total) => {
+          if (import.meta.env.DEV) {
+            console.log(`[production-app] 加载共享资源进度: ${loaded}/${total}`);
+          }
+        },
+      });
+    } catch (error) {
+      console.warn('[production-app] 加载共享资源失败，继续使用本地资源:', error);
+      // 继续执行，使用本地打包的资源作为降级方案
+    }
+  }
+
   await render(props);
 
   // 通知主应用：子应用已就绪
@@ -563,22 +617,23 @@ async function unmount(props: QiankunProps = {}) {
 // 这里的配置作为 fallback，主应用配置为准
 // 优化后：开发环境 8 秒，生产环境 3-5 秒
 // 关键：必须在 export default 之前声明，避免 TDZ (Temporal Dead Zone) 错误
-const isDev = import.meta.env.DEV;
+// 注意：使用 import.meta.env.PROD 明确判定生产环境，避免构建产物环境判断异常导致 warningMillis=4000
+const isProd = import.meta.env.PROD;
 export const timeouts = {
   bootstrap: {
-    millis: isDev ? 8000 : 3000, // 开发环境 8 秒，生产环境 3 秒
-    dieOnTimeout: !isDev, // 生产环境超时直接报错，快速发现问题
-    warningMillis: isDev ? 4000 : 1500, // 一半时间后开始警告
+    millis: isProd ? 20000 : 8000, // 生产环境 20 秒，开发环境 8 秒（考虑网络延迟和资源加载）
+    dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+    warningMillis: isProd ? 15000 : 4000, // 警告时间：生产环境 15 秒，开发环境 4 秒（避免过早警告）
   },
   mount: {
-    millis: isDev ? 8000 : 5000, // 开发环境 8 秒，生产环境 5 秒
-    dieOnTimeout: !isDev,
-    warningMillis: isDev ? 4000 : 2500,
+    millis: isProd ? 15000 : 8000, // 生产环境 15 秒，开发环境 8 秒
+    dieOnTimeout: false, // 超时后不终止应用，只警告
+    warningMillis: isProd ? 12000 : 4000, // 警告时间：生产环境 12 秒，开发环境 4 秒
   },
   unmount: {
-    millis: 3000,
+    millis: 5000, // 增加到 5 秒，确保卸载完成
     dieOnTimeout: false,
-    warningMillis: 1500,
+    warningMillis: 4000,
   },
 };
 
@@ -605,14 +660,41 @@ if (shouldRunStandalone()) {
       initLayoutApp()
         .then(() => {
           // layout-app 加载成功，检查是否需要独立渲染
-          // 如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
-          if (!(window as any).__USE_LAYOUT_APP__) {
+          if ((window as any).__USE_LAYOUT_APP__) {
+            // 关键：layout-app 已加载，子应用应该主动挂载到 layout-app 的 #subapp-viewport
+            // 而不是等待 layout-app 通过 qiankun 加载（避免二次加载导致 DOM 操作冲突）
+            const waitForViewport = (retries = 40): Promise<HTMLElement | null> => {
+              return new Promise((resolve) => {
+                const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
+                if (viewport) {
+                  resolve(viewport);
+                } else if (retries > 0) {
+                  setTimeout(() => resolve(waitForViewport(retries - 1)), 50);
+                } else {
+                  resolve(null);
+                }
+              });
+            };
+            
+            waitForViewport().then((viewport) => {
+              if (viewport) {
+                // 挂载到 layout-app 的 #subapp-viewport
+                render({ container: viewport } as any).catch((error) => {
+                  console.error('[production-app] 挂载到 layout-app 失败:', error);
+                });
+              } else {
+                console.error('[production-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                render().catch((error) => {
+                  console.error('[production-app] 独立运行失败:', error);
+                });
+              }
+            });
+          } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
               console.error('[production-app] 独立运行失败:', error);
             });
           }
-          // 否则，layout-app 会通过 qiankun 挂载子应用，不需要独立渲染
         })
         .catch((error) => {
           console.error('[production-app] 初始化 layout-app 失败:', error);

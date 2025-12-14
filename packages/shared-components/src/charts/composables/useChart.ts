@@ -71,9 +71,14 @@ export function useChart(
 
   // 使用 ResizeObserver 监听容器大小变化
   useResizeObserver(containerRef, () => {
-    // 检查容器尺寸，更新准备状态
-    checkContainerSize();
+    // 容器存在即允许渲染（不强依赖尺寸），避免 v-if 永远为 false 导致图表不渲染
+    markContainerMounted();
     handleResize();
+
+    // 尺寸变化后，如果实例还没拿到，尝试更新一次
+    if (!chartInstance.value) {
+      updateChartInstance();
+    }
   });
 
   // 监听窗口大小变化
@@ -95,6 +100,23 @@ export function useChart(
 
   // 检查容器是否准备好（有尺寸）
   const isContainerReady = ref(false);
+
+  // 标记容器已挂载（不强依赖尺寸）
+  // 在微前端/Tab 容器中，首次渲染时 getBoundingClientRect 可能长期为 0，
+  // 如果用“有尺寸”作为 v-if 条件，会导致 <v-chart> 永远不渲染（DOM 中只剩 <!--v-if-->）。
+  // 这里将“准备好”定义为：容器节点已存在且已挂载到 DOM；尺寸为 0 时仅延迟实例获取与 resize。
+  const markContainerMounted = (): boolean => {
+    if (!containerRef.value) {
+      return false;
+    }
+    const el = containerRef.value;
+    // isConnected 在现代浏览器可用；fallback 到 document.contains
+    const mounted = (el as any).isConnected === true || document.body.contains(el);
+    if (mounted && !isContainerReady.value) {
+      isContainerReady.value = true;
+    }
+    return mounted;
+  };
   
   // 检查容器尺寸
   const checkContainerSize = (): boolean => {
@@ -103,9 +125,7 @@ export function useChart(
     }
     const rect = containerRef.value.getBoundingClientRect();
     const hasSize = rect.width > 0 && rect.height > 0;
-    if (hasSize && !isContainerReady.value) {
-      isContainerReady.value = true;
-    }
+    // 仅作为“是否可安全初始化/resize”的判断，不再用尺寸来决定是否渲染 v-chart
     return hasSize;
   };
 
@@ -218,11 +238,13 @@ export function useChart(
   onMounted(() => {
     // 立即检查一次容器尺寸
     nextTick(() => {
-      checkContainerSize();
+      // 先确保 v-chart 可渲染
+      markContainerMounted();
       // 如果容器还没有尺寸，启动检查循环
       if (!isContainerReady.value) {
         checkIntervalId = window.setInterval(() => {
-          if (checkContainerSize() || retryCount >= MAX_RETRY_COUNT) {
+          // 容器只要挂载就允许渲染；实例获取仍取决于是否有尺寸
+          if (markContainerMounted() || retryCount >= MAX_RETRY_COUNT) {
             if (checkIntervalId !== null) {
               clearInterval(checkIntervalId);
               checkIntervalId = null;
@@ -286,7 +308,8 @@ export function useChart(
                 // 延迟后重新检查容器并初始化
                 nextTick(() => {
                   setTimeout(() => {
-                    checkContainerSize();
+                    // 主题切换后先允许渲染，再尝试拿实例
+                    markContainerMounted();
                     if (isContainerReady.value) {
                       updateChartInstance();
                     }

@@ -147,8 +147,16 @@ export class PluginManager {
       }
 
       // 4. 注册工具栏组件
+      // 关键：验证 toolbar.component 必须是一个函数（动态导入函数）
+      // 如果 component 不是函数，说明配置错误，不应该注册为工具栏组件
       if (plugin.toolbar) {
-        this.toolbarComponents.push(plugin.toolbar);
+        if (typeof plugin.toolbar.component === 'function') {
+          this.toolbarComponents.push(plugin.toolbar);
+        } else {
+          if (this.options.debug) {
+            console.warn(`[PluginManager] 插件 "${name}" 的 toolbar.component 不是函数，跳过工具栏注册`);
+          }
+        }
       }
 
       // 5. 注册布局组件

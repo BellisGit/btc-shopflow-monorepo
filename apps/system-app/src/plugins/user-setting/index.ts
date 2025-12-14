@@ -1,5 +1,6 @@
 import type { Plugin } from '@btc/shared-core';
 import { definePluginConfig } from '@btc/shared-core';
+import UserSettingToolbar from './index.vue';
 
 /**
  * 用户设置插件
@@ -27,15 +28,7 @@ export const userSettingPlugin: Plugin = {
     order: 5, // 在消息插件之后
     pc: true,
     h5: false, // 移动端隐藏
-    component: () => import('./index.vue')
+    // 关键：system-app 生产环境将该核心工具栏静态打包，避免动态 chunk 缓存不一致导致按钮缺失
+    component: () => Promise.resolve({ default: UserSettingToolbar } as any),
   }
 };
-
-// 导出组件（主组件通过动态导入使用）
-export { default as BtcUserSettingDrawer } from './components/preferences-drawer.vue';
-
-// 移除立即导出 composables，避免在模块加载时触发循环依赖
-// composables 应该通过动态导入使用，例如：
-// const { useSettingsState } = await import('./composables/useSettingsState');
-// 或者从 '@btc/shared-core' 等共享包中导入
-// export * from './composables';

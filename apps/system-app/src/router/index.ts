@@ -164,13 +164,29 @@ router.onError((error) => {
       if (route.path === '/login' || currentRoute.path === '/login') {
         // 登录页组件加载失败 日志已移除
         setTimeout(() => {
-          router.replace('/login').catch(() => {
-            // 如果重定向失败，至少移除 Loading 元素
+          try {
+            // 先检查登录页路由是否存在
+            const loginRoute = router.resolve('/login');
+            if (loginRoute && loginRoute.matched.length > 0) {
+              router.replace('/login').catch(() => {
+                // 如果 router.replace 失败，使用 window.location
+                window.location.href = '/login';
+              });
+            } else {
+              // 如果登录页路由不存在，直接使用 window.location
+              window.location.href = '/login';
+            }
+          } catch (error) {
+            // 如果路由解析失败，使用 window.location 作为回退
+            console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
+            window.location.href = '/login';
+          } finally {
+            // 无论成功与否，都移除 Loading 元素
             const loadingEl = document.getElementById('Loading');
             if (loadingEl) {
               loadingEl.style.setProperty('display', 'none', 'important');
             }
-          });
+          }
         }, 100);
         return;
       }
@@ -180,16 +196,32 @@ router.onError((error) => {
     if (currentRoute && currentRoute.path !== '/login') {
       // 组件加载失败 日志已移除
       setTimeout(() => {
-        router.replace({
-          path: '/login',
-          query: { redirect: currentRoute.fullPath },
-        }).catch(() => {
-          // 如果重定向失败，至少移除 Loading 元素
+        try {
+          // 先检查登录页路由是否存在
+          const loginRoute = router.resolve('/login');
+          if (loginRoute && loginRoute.matched.length > 0) {
+            router.replace({
+              path: '/login',
+              query: { redirect: currentRoute.fullPath },
+            }).catch(() => {
+              // 如果 router.replace 失败，使用 window.location
+              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+            });
+          } else {
+            // 如果登录页路由不存在，直接使用 window.location
+            window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+          }
+        } catch (error) {
+          // 如果路由解析失败，使用 window.location 作为回退
+          console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
+          window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+        } finally {
+          // 无论成功与否，都移除 Loading 元素
           const loadingEl = document.getElementById('Loading');
           if (loadingEl) {
             loadingEl.style.setProperty('display', 'none', 'important');
           }
-        });
+        }
       }, 100);
     }
     return;
@@ -200,6 +232,20 @@ router.onError((error) => {
     // Component definition error 日志已移除
     // 记录当前路由信息
     const currentRoute = router.currentRoute.value;
+    
+    // 关键：如果路由未匹配，说明是路由配置问题，不应该尝试重新加载组件
+    // 这种情况下，Vue Router 尝试提取 undefined 组件的守卫，导致错误
+    if (currentRoute && currentRoute.matched.length === 0) {
+      // 路由未匹配，可能是子应用路由或无效路由
+      // 不要尝试重新加载，让应用正常显示（可能显示 Layout 或子应用挂载点）
+      // 移除 Loading 元素
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        loadingEl.style.setProperty('display', 'none', 'important');
+      }
+      return;
+    }
+    
     if (currentRoute && currentRoute.matched.length > 0) {
       const route = currentRoute.matched[currentRoute.matched.length - 1];
       // Component error route info 日志已移除
@@ -209,12 +255,29 @@ router.onError((error) => {
     if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some(m => m.path === '/login'))) {
       // 登录页组件错误 日志已移除
       setTimeout(() => {
-        router.replace('/login').catch(() => {
+        try {
+          // 先检查登录页路由是否存在
+          const loginRoute = router.resolve('/login');
+          if (loginRoute && loginRoute.matched.length > 0) {
+            router.replace('/login').catch(() => {
+              // 如果 router.replace 失败，使用 window.location
+              window.location.href = '/login';
+            });
+          } else {
+            // 如果登录页路由不存在，直接使用 window.location
+            window.location.href = '/login';
+          }
+        } catch (error) {
+          // 如果路由解析失败，使用 window.location 作为回退
+          console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
+          window.location.href = '/login';
+        } finally {
+          // 无论成功与否，都移除 Loading 元素
           const loadingEl = document.getElementById('Loading');
           if (loadingEl) {
             loadingEl.style.setProperty('display', 'none', 'important');
           }
-        });
+        }
       }, 100);
       return;
     }
@@ -269,46 +332,50 @@ router.onError((error) => {
 let currentRoute: RouteLocationNormalized | null = null;
 
 /**
+ * 生成完整的浏览器标题
+ * 格式：主模块 - BTC ShopFlow（系统主应用统一格式，不使用页面标题）
+ */
+function formatDocumentTitle(): string {
+  // 使用 domain.type.system 国际化键获取"主模块"
+  const moduleName = tSync('domain.type.system');
+  const appShortName = config.app.shortName;
+  
+  // 如果国际化加载失败，使用默认值
+  if (moduleName === 'domain.type.system') {
+    return `主模块 - ${appShortName}`;
+  }
+  
+  return `${moduleName} - ${appShortName}`;
+}
+
+/**
  * 更新浏览器标题（同步，无闪烁）
- * 使用 meta.titleKey 作为单一事实来源
+ * 系统主应用统一使用：主模块 - BTC ShopFlow（不使用页面标题）
  */
 function updateDocumentTitle(to: RouteLocationNormalized) {
   currentRoute = to;
 
-  const titleKey = to.meta?.titleKey as string | undefined;
+  // 系统主应用统一使用"主模块 - BTC ShopFlow"格式，不使用页面标题
+  document.title = formatDocumentTitle();
+  
+  // 如果国际化还没加载完成，延迟重试以确保标题正确
+  const moduleName = tSync('domain.type.system');
+  if (moduleName === 'domain.type.system') {
+    const retryTranslation = (attempt: number = 1) => {
+      if (attempt > 5) return; // 最多重试5次
 
-  if (titleKey) {
-    // 同步获取国际化标题
-    const translatedTitle = tSync(titleKey);
+      setTimeout(() => {
+        const retryModuleName = tSync('domain.type.system');
+        if (retryModuleName !== 'domain.type.system') {
+          document.title = formatDocumentTitle();
+        } else {
+          // 继续重试
+          retryTranslation(attempt + 1);
+        }
+      }, attempt * 100); // 递增延迟：100ms, 200ms, 300ms, 400ms, 500ms
+    };
 
-    // 如果返回的是键值本身，说明国际化还没加载完成，延迟重试
-    if (translatedTitle === titleKey) {
-      // 先设置默认标题，避免显示 key
-      document.title = config.app.name;
-
-      // 多次重试翻译，确保国际化加载完成
-      const retryTranslation = (attempt: number = 1) => {
-        if (attempt > 5) return; // 最多重试5次
-
-        setTimeout(() => {
-          const retryTitle = tSync(titleKey);
-          if (retryTitle !== titleKey) {
-            document.title = retryTitle;
-          } else {
-            // 继续重试
-            retryTranslation(attempt + 1);
-          }
-        }, attempt * 100); // 递增延迟：100ms, 200ms, 300ms, 400ms, 500ms
-      };
-
-      retryTranslation();
-    } else {
-      // 翻译成功，直接设置标题
-      document.title = translatedTitle;
-    }
-  } else {
-    // 回退到系统名称
-    document.title = config.app.name;
+    retryTranslation();
   }
 }
 
@@ -340,7 +407,7 @@ export function setupI18nTitleWatcher() {
  * 注意：后端设置了 http-only cookie，前端无法直接读取
  * 因此通过检查 cookie、localStorage 中的登录状态标记、token 和用户信息来判断
  */
-function isAuthenticated(): boolean {
+export function isAuthenticated(): boolean {
   // 关键：在子域名环境下，即使无法读取 HttpOnly cookie，也应该尝试其他方式判断
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
@@ -507,20 +574,52 @@ router.beforeEach((to, from, next) => {
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
       // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
-      // 关键：确保重定向到登录页
+      // 关键：确保重定向到登录页，并添加错误处理
+      try {
+        // 先检查登录页路由是否存在
+        const loginRoute = router.resolve('/login');
+        if (loginRoute && loginRoute.matched.length > 0) {
+          next({
+            path: '/login',
+            query: { redirect: to.fullPath },
+          });
+        } else {
+          // 如果登录页路由不存在，使用 window.location 重定向
+          window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+        }
+      } catch (error) {
+        // 如果路由解析失败，使用 window.location 作为回退
+        console.error('[system-app] 路由重定向失败，使用 window.location:', error);
+        window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+      }
+      return;
+    }
+  }
+
+  // 关键：如果路由未匹配，需要特殊处理，避免 Vue Router 尝试提取 undefined 组件的守卫
+  if (to.matched.length === 0) {
+    // 对于根路径 `/`，应该总是匹配到 Layout 组件，如果未匹配说明路由配置有问题
+    if (to.path === '/') {
+      // 根路径未匹配，直接放行让 Layout 组件处理（Layout 组件应该始终存在）
+      next();
+      return;
+    }
+
+    // 其他未匹配的路由，根据认证状态处理
+    if (!isAuthenticatedUser) {
+      // 未认证，重定向到登录页
       next({
         path: '/login',
         query: { redirect: to.fullPath },
       });
       return;
     }
-  }
 
-  // 关键：如果已认证但路由未匹配（特别是根路径 `/`），记录详细信息
-  if (isAuthenticatedUser && to.matched.length === 0 && to.path === '/') {
-    if (import.meta.env.PROD) {
-      // 已认证但根路径未匹配（日志已移除）
-    }
+    // 已认证但路由未匹配，可能是子应用路由或无效路由
+    // 直接放行，让应用正常显示（可能显示 Layout 或子应用挂载点）
+    // 注意：不要在这里尝试访问组件，因为组件可能是 undefined
+    next();
+    return;
   }
 
   // 检查是否为文档相关路由（只支持 /docs 前缀）
@@ -616,18 +715,49 @@ router.afterEach((to) => {
                          to.path === '/register';
 
     if (!isPublicPage && to.path !== '/login') {
-      // 路由未匹配且非公开页面，重定向到登录页（日志已移除）
-      router.replace({
-        path: '/login',
-        query: { redirect: to.fullPath },
-      }).catch(err => {
-        // 重定向到登录页失败（日志已移除）
-        // 如果重定向失败，至少移除 Loading 元素
+      // 关键：先检查认证状态，只有未认证时才重定向到登录页
+      // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
+      const isAuth = isAuthenticated();
+      
+      if (!isAuth) {
+        // 未认证，重定向到登录页
+        try {
+          // 先检查登录页路由是否存在
+          const loginRoute = router.resolve('/login');
+          if (loginRoute && loginRoute.matched.length > 0) {
+            router.replace({
+              path: '/login',
+              query: { redirect: to.fullPath },
+            }).catch(err => {
+              // 重定向到登录页失败（日志已移除）
+              // 如果重定向失败，使用 window.location 作为回退
+              console.error('[system-app] router.replace 失败，使用 window.location:', err);
+              window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+            });
+          } else {
+            // 如果登录页路由不存在，直接使用 window.location
+            window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+          }
+        } catch (error) {
+          // 如果路由解析失败，使用 window.location 作为回退
+          console.error('[system-app] 路由解析失败，使用 window.location:', error);
+          window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+        } finally {
+          // 无论成功与否，都移除 Loading 元素
+          const loadingEl = document.getElementById('Loading');
+          if (loadingEl) {
+            loadingEl.style.setProperty('display', 'none', 'important');
+          }
+        }
+      } else {
+        // 已认证但路由未匹配，可能是路由配置问题
+        // 不应该重定向到登录页，而是移除 Loading 元素，让应用正常显示（可能显示 404）
+        console.warn('[system-app] 已认证但路由未匹配，可能是路由配置问题:', to.fullPath);
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {
           loadingEl.style.setProperty('display', 'none', 'important');
         }
-      });
+      }
     }
   }
 

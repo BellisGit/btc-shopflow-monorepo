@@ -4,6 +4,8 @@ dist/
 *.log
 .env.local
 .env.*.local
+.env.oss
+.env.oss.local
 .k8s-config
 .turbo/
 build/
@@ -24,6 +26,10 @@ coverage/
 node_modules/.vite/
 **/.vite/
 .vite/
+
+# Vite 临时产物（Vite 运行时生成的 timestamp 配置快照，不应提交）
+**/*.timestamp-*.mjs
+**/*.timestamp-*.js
 
 # 部署配置文件（包含敏感信息）
 scripts/deploy-config.sh

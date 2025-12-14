@@ -8,6 +8,7 @@ import { getManifestMenus, getManifestTabs, getManifest } from '@btc/subapp-mani
 import { storage } from '@btc/shared-utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { getAppBySubdomain } from './app-scanner';
+import { getEnvConfig } from './unified-env-config';
 
 declare global {
   interface Window {
@@ -269,10 +270,26 @@ const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
 
 /**
  * 解析应用 Logo 地址（始终返回根路径，不依赖当前路由）
+ * 生产环境使用 CDN，开发/预览环境使用本地路径
  */
 export function resolveAppLogoUrl() {
   // 始终使用根路径，不依赖 document.baseURI（避免受当前路由影响）
   // 例如：当前路由是 /governance/files/... 时，不应该解析为 /governance/files/logo.png
+  
+  // 获取环境配置
+  try {
+    const envConfig = getEnvConfig();
+    
+    // 生产环境且配置了 CDN URL，使用 CDN
+    if (envConfig.cdn?.staticAssetsUrl) {
+      const cdnUrl = envConfig.cdn.staticAssetsUrl.replace(/\/$/, '');
+      return `${cdnUrl}/logo.png`;
+    }
+  } catch (error) {
+    // 如果获取配置失败，继续使用本地路径
+  }
+  
+  // 开发/预览环境或未配置 CDN：使用本地路径
   if (typeof window !== 'undefined' && window.location?.origin) {
     return `${window.location.origin}/logo.png`;
   }

@@ -17,7 +17,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { cleanDistPlugin, corsPlugin, addVersionPlugin, forceNewHashPlugin } from '../plugins';
+import { cleanDistPlugin, corsPlugin, addVersionPlugin } from '../plugins';
 
 export interface LayoutAppViteConfigOptions {
   /**
@@ -190,11 +190,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         );
       },
     } as Plugin,
-    // 12. 强制生成新 hash 插件（在文件名中添加时间戳，确保 HTML 和 manifest 中的文件名一致）
-    forceNewHashPlugin(),
-    // 13. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
+    // 12. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
-    // 14. 构建后清理插件：删除 .vite 目录（Vite 缓存目录不应出现在构建产物中）
+    // 15. 构建后清理插件：删除 .vite 目录（Vite 缓存目录不应出现在构建产物中）
     {
       name: 'clean-vite-dir-plugin',
       closeBundle() {
@@ -209,20 +207,23 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         }
       },
     } as Plugin,
-    // 15. 确保 manifest.json 生成插件（包含所有 chunk，不仅仅是入口文件）
+    // 16. 确保 manifest.json 生成插件（包含所有 chunk，不仅仅是入口文件）
     {
       name: 'ensure-manifest-plugin',
       writeBundle(_options: any, bundle: Record<string, any>) {
         // 从 bundle 中提取所有 chunk 信息
-        const manifest: Record<string, { file: string; src?: string; isEntry?: boolean }> = {};
-        const allChunks: Array<{ key: string; file: string; isEntry: boolean; priority: number }> = [];
+        const manifest: Record<string, { file: string; src?: string; isEntry?: boolean; imports?: string[] }> = {};
+        const allChunks: Array<{ key: string; file: string; isEntry: boolean; priority: number; imports?: string[] }> = [];
+        // 创建文件名到 key 的映射，用于查找 imports
+        const fileNameToKeyMap = new Map<string, string>();
 
-        // 构建 manifest 对象（包含所有 chunk）
+        // 第一遍遍历：收集所有 chunk 信息
         for (const [fileName, chunk] of Object.entries(bundle)) {
           if (chunk.type === 'chunk' && fileName.endsWith('.js')) {
             // 查找对应的源文件路径
             const sourceFile = (chunk as any).facadeModuleId || (chunk as any).moduleIds?.[0] || fileName;
-            let relativeSource = fileName.replace(/^assets\//, ''); // 使用文件名作为默认 key
+            // 支持 assets/ 和 assets/layout/ 路径
+            let relativeSource = fileName.replace(/^assets\/(layout\/)?/, ''); // 使用文件名作为默认 key（去掉 assets/ 或 assets/layout/ 前缀）
 
             if (sourceFile && typeof sourceFile === 'string') {
               // 尝试从源文件路径中提取相对路径
@@ -230,8 +231,8 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
               if (srcPath.startsWith('src/')) {
                 relativeSource = srcPath;
               } else {
-                // 如果无法提取相对路径，使用文件名作为 key
-                relativeSource = fileName.replace(/^assets\//, '').replace(/\.js$/, '');
+                // 如果无法提取相对路径，使用文件名作为 key（去掉 assets/ 或 assets/layout/ 前缀）
+                relativeSource = fileName.replace(/^assets\/(layout\/)?/, '').replace(/\.js$/, '');
               }
             }
 
@@ -254,11 +255,28 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
               priority = 4; // 入口文件最后加载
             }
 
+            // 提取 imports（依赖的 chunk 文件名）
+            const imports: string[] = [];
+            const chunkImports = (chunk as any).imports;
+            if (chunkImports && Array.isArray(chunkImports)) {
+              for (const importFileName of chunkImports) {
+                if (importFileName && typeof importFileName === 'string' && importFileName.endsWith('.js')) {
+                  imports.push(importFileName);
+                }
+              }
+            }
+            // 调试：输出 imports 信息
+            if (imports.length > 0) {
+              console.log(`[ensure-manifest-plugin] ${fileName} 的 imports:`, imports);
+            }
+
+            fileNameToKeyMap.set(fileName, relativeSource);
             allChunks.push({
               key: relativeSource,
               file: fileName,
               isEntry,
               priority,
+              imports,
             });
           }
         }
@@ -266,12 +284,108 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         // 按优先级排序
         allChunks.sort((a, b) => a.priority - b.priority);
 
-        // 构建最终的 manifest 对象
+        // 构建最终的 manifest 对象，将 imports 中的文件名转换为对应的 key
+        // 注意：imports 中的文件名可能是旧的（在 generateBundle 阶段生成的），
+        // 需要通过基础名称匹配来找到新的文件名
         allChunks.forEach(chunk => {
+          const importKeys: string[] = [];
+          if (chunk.imports && chunk.imports.length > 0) {
+            for (const importFileName of chunk.imports) {
+              // 先尝试直接匹配（如果文件名已经是新的）
+              let importKey = fileNameToKeyMap.get(importFileName);
+
+              // 如果直接匹配失败，尝试通过基础名称匹配（去掉 hash 和 buildId）
+              if (!importKey) {
+                // 匹配多种文件名格式：
+                // 1. name-X-xxx.js (特殊格式，如 menu-registry-B-483hvG.js，优先匹配)
+                // 2. name-hash-buildId.js (多个 hash 段，hash 至少 8 个字符)
+                // 3. name-hash.js (单个 hash 段，hash 至少 8 个字符)
+                // 4. name-xxx.js (简单格式，xxx 可能是短 hash)
+                let baseName: string | null = null;
+
+                // 优先尝试匹配特殊格式（如 menu-registry-B-483hvG.js）
+                // 格式：基础名称-单个字符-多个字符.js
+                // 注意：483hvG 只有 6 个字符，所以不能要求至少 8 个字符
+                const specialHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9])-([a-zA-Z0-9]{4,})\.js$/);
+                if (specialHashMatch) {
+                  baseName = specialHashMatch[1];
+                } else {
+                  // 尝试匹配标准格式（多个 hash 段）
+                  const multiHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.js$/);
+                  if (multiHashMatch) {
+                    baseName = multiHashMatch[1];
+                  } else {
+                    // 尝试匹配单个 hash 段（至少 8 个字符）
+                    const singleHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.js$/);
+                    if (singleHashMatch) {
+                      baseName = singleHashMatch[1];
+                    } else {
+                      // 尝试匹配简单格式（提取基础名称，去掉最后一个 hash 段）
+                      const simpleMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]+)\.js$/);
+                      if (simpleMatch) {
+                        baseName = simpleMatch[1];
+                      }
+                    }
+                  }
+                }
+
+                if (baseName) {
+                  // 在所有 chunk 中查找匹配的基础名称
+                  for (const [actualFileName, actualKey] of fileNameToKeyMap.entries()) {
+                    // 匹配实际文件名格式（可能包含时间戳）
+                    let actualBaseName: string | null = null;
+
+                    // 先尝试匹配特殊格式（如 menu-registry-B-483hvG-mj2mtu46.js）
+                    // 格式：基础名称-单个字符-多个字符-时间戳.js
+                    const actualSpecialHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9])-([a-zA-Z0-9]{4,})(?:-[a-zA-Z0-9]+)?\.js$/);
+                    if (actualSpecialHashMatch) {
+                      actualBaseName = actualSpecialHashMatch[1];
+                    } else {
+                      const actualMultiHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.js$/);
+                      if (actualMultiHashMatch) {
+                        actualBaseName = actualMultiHashMatch[1];
+                      } else {
+                        const actualSingleHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.js$/);
+                        if (actualSingleHashMatch) {
+                          actualBaseName = actualSingleHashMatch[1];
+                        } else {
+                          const actualSimpleMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]+)(?:-[a-zA-Z0-9]+)?\.js$/);
+                          if (actualSimpleMatch) {
+                            actualBaseName = actualSimpleMatch[1];
+                          }
+                        }
+                      }
+                    }
+
+                    if (actualBaseName && actualBaseName === baseName) {
+                      importKey = actualKey;
+                      console.log(`[ensure-manifest-plugin] 通过基础名称匹配找到 imports: ${importFileName} -> ${actualFileName} (key: ${actualKey})`);
+                      break;
+                    }
+                  }
+
+                  // 如果仍然没有找到，输出调试信息
+                  if (!importKey) {
+                    console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName} (基础名称: ${baseName})`);
+                  }
+                } else {
+                  console.warn(`[ensure-manifest-plugin] ⚠️  无法解析文件名格式: ${importFileName}`);
+                }
+              }
+
+              if (importKey) {
+                importKeys.push(importKey);
+              } else {
+                console.warn(`[ensure-manifest-plugin] ⚠️  无法找到 imports 对应的文件: ${importFileName}`);
+              }
+            }
+          }
+
           manifest[chunk.key] = {
             file: chunk.file,
             src: chunk.key,
             isEntry: chunk.isEntry,
+            ...(importKeys.length > 0 ? { imports: importKeys } : {}),
           };
         });
 
@@ -384,14 +498,16 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         generatedCode: {
           constBindings: false,
         },
-        // 布局应用使用标准的 assets/ 目录，不需要单独的 layout 子目录
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
+        // 布局应用使用 assets/layout/ 目录，与子应用的 assets/ 目录区分开
+        chunkFileNames: 'assets/layout/[name]-[hash].js',
+        // 关键：layout-app 入口文件使用稳定文件名，避免旧 index.html/旧引用导致的 index-xxx.js 404
+        // 配合 Nginx：assets/layout/index.js 设置 no-cache；其余 hash 文件 immutable
+        entryFileNames: 'assets/layout/[name].js',
         assetFileNames: (assetInfo: any) => {
           if (assetInfo.name?.endsWith('.css')) {
-            return 'assets/[name]-[hash].css';
+            return 'assets/layout/[name]-[hash].css';
           }
-          return 'assets/[name]-[hash].[ext]';
+          return 'assets/layout/[name]-[hash].[ext]';
         },
       },
     },

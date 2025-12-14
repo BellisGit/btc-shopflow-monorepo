@@ -32,12 +32,11 @@ import {
   cleanDistPlugin,
   chunkVerifyPlugin,
   optimizeChunksPlugin,
-  forceNewHashPlugin,
-  fixDynamicImportHashPlugin,
   ensureBaseUrlPlugin,
   corsPlugin,
   ensureCssPlugin,
   addVersionPlugin,
+  replaceIconsWithCdnPlugin,
   resolveLogoPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
@@ -214,16 +213,14 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     ensureCssPlugin(),
     // 11. Qiankun 插件
     qiankun(qiankunName, qiankunOptions),
-    // 12. 强制生成新 hash 插件
-    forceNewHashPlugin(),
-    // 13. 修复动态导入 hash 插件
-    fixDynamicImportHashPlugin(),
-    // 14. 修复 chunk 引用插件
+    // 12. 修复 chunk 引用插件
     fixChunkReferencesPlugin(),
     // 15. 确保 base URL 插件
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 16. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
+    // 16.5. 替换图标路径为 CDN URL（生产环境）
+    replaceIconsWithCdnPlugin(),
     // 17. 优化 chunks 插件
     optimizeChunksPlugin(),
     // 18. Chunk 验证插件
@@ -418,13 +415,28 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   };
 
   // 返回完整配置
+  const baseResolve = createBaseResolve(appDir, appName);
+  // 关键：生产/预览构建时，子应用不再使用本地 virtual:eps（由 layout-app 提供共享 EPS 服务）
+  // 这样可以避免子应用入口产生对自身 eps-service-xxx.js 的引用，导致共享不生效或 404。
+  const shouldUseSharedEps = (process.env.NODE_ENV === 'production') || isPreviewBuild;
+  const sharedEpsStub = resolve(appDir, '../../configs/vite/stubs/virtual-eps-empty.ts');
+  const finalResolve = shouldUseSharedEps
+    ? {
+        ...baseResolve,
+        alias: {
+          ...(baseResolve?.alias as any),
+          'virtual:eps': sharedEpsStub,
+        },
+      }
+    : baseResolve;
+
   return {
     base: baseUrl,
     publicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
     cacheDir: appCacheDir,
-    resolve: createBaseResolve(appDir, appName),
+    resolve: finalResolve,
     plugins,
     esbuild: {
       charset: 'utf8',

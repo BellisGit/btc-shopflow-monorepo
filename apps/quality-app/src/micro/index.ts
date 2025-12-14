@@ -247,19 +247,26 @@ export function setupQiankun() {
       );
     },
     // 配置生命周期超时时间（single-spa 格式）
-    // 如果应用配置中有 timeout，使用它，否则使用默认值 10 秒
+    // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
+    const isDev = import.meta.env.DEV;
+    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
+    const timeout = app.timeout || defaultTimeout;
+    
     timeouts: {
       bootstrap: {
-        millis: app.timeout || 10000,
-        dieOnTimeout: false, // 超时后不终止应用，只警告
+        millis: timeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
+        dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+        warningMillis: Math.floor(timeout * 1.5), // 警告时间：避免过早警告（ES 模块加载阶段也会计入时间）
       },
       mount: {
-        millis: app.timeout || 10000,
+        millis: timeout,
         dieOnTimeout: false,
+        warningMillis: Math.floor(timeout * 0.8),
       },
       unmount: {
-        millis: app.timeout || 10000,
+        millis: 5000, // 增加到 5 秒，确保卸载完成
         dieOnTimeout: false,
+        warningMillis: 4000,
       },
     },
   }));

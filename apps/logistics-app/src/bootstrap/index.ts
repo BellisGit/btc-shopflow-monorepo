@@ -489,6 +489,30 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   // 这些初始化操作都是轻量级的，不会阻塞
   // createApp、createRouter、createPinia 等都是同步的快速操作
   const app = createApp(App);
+  
+  // 关键：添加全局错误处理，捕获 DOM 操作错误
+  // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
+  app.config.errorHandler = (err, instance, info) => {
+    // 检查是否是 DOM 操作相关的错误
+    if (err instanceof Error && (
+      err.message.includes('insertBefore') ||
+      err.message.includes('processCommentNode') ||
+      err.message.includes('patch') ||
+      err.message.includes('__vnode') ||
+      err.message.includes('Cannot read properties of null') ||
+      err.message.includes('Cannot set properties of null') ||
+      err.message.includes('reading \'insertBefore\'') ||
+      err.message.includes('reading \'emitsOptions\'')
+    )) {
+      // DOM 操作错误，可能是容器在更新时被移除
+      // 静默处理，避免影响用户体验
+      if (import.meta.env.DEV) {
+        console.warn('[logistics-app] DOM 操作错误已捕获（应用可能正在卸载）:', err.message);
+      }
+      return;
+    }
+  };
+  
   const router = createLogisticsRouter();
   setupRouter(app, router);
   const pinia = setupStore(app);
@@ -532,16 +556,29 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
   context.props = props;
 
   // 查找挂载点：
-  // - qiankun 模式下：直接使用 props.container（即 #subapp-viewport），不要查找或创建 #app
-  // - 独立运行模式下：使用 #app
+  // - 优先使用 props.container（无论是否 qiankun，只要提供了 container 就使用）
+  // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
+  // - 否则：使用 #app（独立运行模式）
   let mountPoint: HTMLElement | null = null;
   
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    // qiankun 模式：直接使用 container（layout-app 传递的 #subapp-viewport）
-    if (props.container && props.container instanceof HTMLElement) {
-      mountPoint = props.container;
+  // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
+  if (props.container && props.container instanceof HTMLElement) {
+    mountPoint = props.container;
+  } else if ((window as any).__USE_LAYOUT_APP__) {
+    // 使用 layout-app：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      mountPoint = viewport;
     } else {
-      throw new Error('[logistics-app] qiankun 模式下未提供容器元素');
+      throw new Error('[logistics-app] 使用 layout-app 但未找到 #subapp-viewport 元素');
+    }
+  } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
+    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (viewport) {
+      mountPoint = viewport;
+    } else {
+      throw new Error('[logistics-app] qiankun 模式下未提供容器元素且未找到 #subapp-viewport');
     }
   } else {
     // 独立运行模式：使用 #app

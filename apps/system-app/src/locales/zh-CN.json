@@ -414,6 +414,7 @@
   "domain.type.logistics": "物流模块",
   "domain.type.finance": "财务模块",
   "domain.type.monitor": "监控模块",
+  "domain.type.docs": "文档模块",
   "theme.title": "偏好设置",
   "theme.presets": "预设主题",
   "theme.custom_color": "自定义颜色",

@@ -20,3 +20,6 @@ export * from './http';
 
 // 微前端相关
 export * from './qiankun/load-layout-app';
+
+// CDN 资源加载
+export * from './cdn/load-shared-resources';
