@@ -39,6 +39,13 @@ const GLOBAL_ECHARTS_USE_FLAG = '__BTC_ECHARTS_USE_REGISTERED__';
 let localEchartsUseRegistered = false;
 
 function registerEChartsOnce() {
+  // 关键：在 qiankun 沙箱里 window 可能是 proxy（各子应用各一份），
+  // 但如果 echarts/core 是共享单例，那么把 flag 挂到 use 函数上才能真正“全局只执行一次”。
+  const useFnAny = use as any;
+  if (useFnAny && useFnAny[GLOBAL_ECHARTS_USE_FLAG]) {
+    return;
+  }
+
   const canUseWindow = typeof window !== 'undefined';
   const w = canUseWindow ? (window as any) : null;
 
@@ -75,6 +82,7 @@ function registerEChartsOnce() {
   } finally {
     if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;
     localEchartsUseRegistered = true;
+    if (useFnAny) useFnAny[GLOBAL_ECHARTS_USE_FLAG] = true;
   }
 }
 
