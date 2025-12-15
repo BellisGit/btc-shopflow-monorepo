@@ -53,7 +53,7 @@ export function addVersionPlugin(): Plugin {
   const buildTimestamp = getBuildTimestamp();
 
   return {
-    // @ts-ignore - Vite Plugin 类型定义可能不完整，name 属性是标准属性
+    // @ts-expect-error - Vite Plugin 类型定义可能不完整，name 属性是标准属性
     name: 'add-version',
     apply: 'build',
     buildStart() {
@@ -67,9 +67,26 @@ export function addVersionPlugin(): Plugin {
         let modified = false;
 
         // 1) 为 <script src> 添加/更新 v
+        //
+        // 关键：不要给 ESM module script（type="module"）追加 ?v
+        // 否则同一个模块会同时以「带 v」和「不带 v」（静态 import 生成的 URL）两套 URL 被加载，
+        // 在微前端/重复加载入口脚本场景下会导致模块执行两次，从而触发类似 ECharts 的重复注册断言。
         newHtml = newHtml.replace(
           /(<script[^>]*\s+src=["'])([^"']+)(["'][^>]*>)/g,
           (match: string, prefix: string, src: string, suffix: string) => {
+            const isModuleScript = /type\s*=\s*["']module["']/i.test(match);
+            const isAssets = src.startsWith('/assets/') || src.startsWith('./assets/');
+
+            // 对 module script：强制移除 v，保证 URL 与打包产物内部 import 保持一致
+            if (isModuleScript && isAssets) {
+              const cleaned = src.replace(/[?&]v=[^&'"]*/g, '').replace(/\?&/, '?').replace(/[?&]$/, '');
+              if (cleaned !== src) {
+                modified = true;
+                return `${prefix}${cleaned}${suffix}`;
+              }
+              return match;
+            }
+
             if (src.includes('?v=') || src.includes('&v=')) {
               const updated = src.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
               if (updated !== src) {
@@ -78,7 +95,7 @@ export function addVersionPlugin(): Plugin {
               }
               return match;
             }
-            if (src.startsWith('/assets/') || src.startsWith('./assets/')) {
+            if (isAssets) {
               modified = true;
               const sep = src.includes('?') ? '&' : '?';
               return `${prefix}${src}${sep}v=${buildTimestamp}${suffix}`;
@@ -88,9 +105,24 @@ export function addVersionPlugin(): Plugin {
         );
 
         // 2) 为 <link href> 添加/更新 v
+        //
+        // 同上：modulepreload 属于 ESM 依赖图的一部分，追加 ?v 会让预加载 URL 与 import URL 不一致，
+        // 造成重复请求甚至重复执行（在某些 loader 场景下）。
         newHtml = newHtml.replace(
           /(<link[^>]*\s+href=["'])([^"']+)(["'][^>]*>)/g,
           (match: string, prefix: string, href: string, suffix: string) => {
+            const isModulePreload = /\srel\s*=\s*["']modulepreload["']/i.test(match);
+            const isAssets = href.startsWith('/assets/') || href.startsWith('./assets/');
+
+            if (isModulePreload && isAssets) {
+              const cleaned = href.replace(/[?&]v=[^&'"]*/g, '').replace(/\?&/, '?').replace(/[?&]$/, '');
+              if (cleaned !== href) {
+                modified = true;
+                return `${prefix}${cleaned}${suffix}`;
+              }
+              return match;
+            }
+
             if (href.includes('?v=') || href.includes('&v=')) {
               const updated = href.replace(/[?&]v=[^&'"]*/g, `?v=${buildTimestamp}`);
               if (updated !== href) {
@@ -99,7 +131,7 @@ export function addVersionPlugin(): Plugin {
               }
               return match;
             }
-            if (href.startsWith('/assets/') || href.startsWith('./assets/')) {
+            if (isAssets) {
               modified = true;
               const sep = href.includes('?') ? '&' : '?';
               return `${prefix}${href}${sep}v=${buildTimestamp}${suffix}`;
@@ -109,7 +141,7 @@ export function addVersionPlugin(): Plugin {
         );
 
         // 3) 关键：修复 qiankun 注入的内联 import('/assets/index-xxx.js')，避免被宿主域名解析
-        // 同时追加 v，避免缓存旧入口导致持续请求旧 chunk
+        // 注意：这里也不要追加 ?v，避免形成「带 v / 不带 v」两套入口 URL，导致入口模块被重复执行。
         // 关键：在 qiankun sandbox 中更可靠的写法是直接读全局变量 __INJECTED_PUBLIC_PATH_BY_QIANKUN__
         // 而不是 window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__（window 可能被 proxy 重写/不包含 location）。
         const originExpr =
@@ -120,7 +152,7 @@ export function addVersionPlugin(): Plugin {
           /import\(\s*(['"])(\/assets\/(index|main)-[^'"]+)\1\s*\)/g,
           (_m: string, _q: string, absPath: string) => {
             modified = true;
-            return `import(/* @vite-ignore */ (${originExpr} + '${absPath}' + '?v=${buildTimestamp}'))`;
+            return `import(/* @vite-ignore */ (${originExpr} + '${absPath}'))`;
           },
         );
 
