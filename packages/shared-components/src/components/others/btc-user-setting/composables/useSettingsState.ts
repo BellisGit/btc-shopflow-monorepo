@@ -10,6 +10,15 @@ import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
  * 璁剧疆鐘舵€佺鐞嗙粍鍚堝紡鍑芥暟
  */
 export function useSettingsState() {
+  // 关键：该组合式函数会被多个组件重复调用（偏好抽屉 / AppLayout / Topbar 等）
+  // 如果每次调用都创建一份新的 ref，会导致“切换菜单布局只写入 storage，但页面不响应”
+  // 因此这里做全局单例缓存，确保同一应用内共享同一份响应式状态
+  const globalKey = '__BTC_SETTINGS_STATE__';
+  const globalAny = globalThis as any;
+  if (globalAny && globalAny[globalKey]) {
+    return globalAny[globalKey];
+  }
+
   // 首先获取统一的 settings 存储
   const getSettings = (): Record<string, any> => (storage.get('settings') as Record<string, any> | null) ?? {};
   const initialSettings = getSettings();
@@ -350,7 +359,7 @@ export function useSettingsState() {
     return systemThemeType.value === SystemThemeEnum.DARK;
   });
 
-  return {
+  const api = {
     menuType,
     menuOpenWidth,
     menuOpen,
@@ -399,6 +408,13 @@ export function useSettingsState() {
     setMenuOpenWidth,
     toggleGlobalSearch,
   };
+
+  // 缓存到全局，保证后续调用共享同一份状态
+  if (globalAny) {
+    globalAny[globalKey] = api;
+  }
+
+  return api;
 }
 
 

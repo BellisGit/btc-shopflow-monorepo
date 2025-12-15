@@ -184,9 +184,25 @@ export const useProcessStore = defineStore('process', () => {
       data.meta = {};
     }
 
+    // 关键：如果没有提供 app 字段，自动根据 path 或 fullPath 推断
+    if (!data.app) {
+      // 优先使用 fullPath（完整路径，如 /finance/inventory/result）
+      // 如果没有 fullPath，使用 path
+      const pathToCheck = data.fullPath || data.path;
+      data.app = getCurrentAppFromPath(pathToCheck);
+    }
+
     // 如果不是首页且允许显示标签
     if (!data.meta?.isHome && data.meta?.process !== false) {
-      const index = list.value.findIndex((e) => e.path === data.path);
+      // 关键：使用 fullPath 或 path 来查找已存在的标签
+      // 在 layout-app 环境下，fullPath 可能是完整路径（如 /finance/inventory/result）
+      // 而 path 可能是子应用内部路径（如 /inventory/result）
+      const index = list.value.findIndex((e) => 
+        e.fullPath === data.fullPath || 
+        e.path === data.path ||
+        (data.fullPath && e.fullPath === data.fullPath) ||
+        (data.path && e.path === data.path)
+      );
 
       if (index < 0) {
         // 添加新标签

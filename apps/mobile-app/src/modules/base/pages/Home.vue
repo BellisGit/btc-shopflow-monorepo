@@ -2,7 +2,7 @@
   <div class="home-page">
     <div class="home-page__header">
       <div class="home-page__avatar">
-        <img :src="logoUrl" alt="Logo" />
+        <img :src="avatarUrl" alt="头像" @error="handleAvatarError" />
       </div>
     </div>
     
@@ -40,9 +40,23 @@ const authStore = useAuthStore();
 const loading = ref(false);
 const loadingProfile = ref(false);
 const userInfo = ref<UserProfile | null>(null);
+const avatarError = ref(false); // 头像加载错误标志
 
 // 从 store 获取初始用户信息
 const initialUserInfo = computed(() => authStore.user);
+
+// 计算头像URL，优先使用用户头像，失败时回退到默认logo
+const avatarUrl = computed(() => {
+  if (avatarError.value || !userInfo.value?.avatar) {
+    return logoUrl;
+  }
+  return userInfo.value.avatar;
+});
+
+// 处理头像加载错误
+function handleAvatarError() {
+  avatarError.value = true;
+}
 
 // 加载用户信息
 async function loadUserProfile() {
@@ -51,6 +65,7 @@ async function loadUserProfile() {
   }
 
   loadingProfile.value = true;
+  avatarError.value = false; // 重置头像错误状态
   try {
     const profile = await authApi.getProfile();
     userInfo.value = profile;

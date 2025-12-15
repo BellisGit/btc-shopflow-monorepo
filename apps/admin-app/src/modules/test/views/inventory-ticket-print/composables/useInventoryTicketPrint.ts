@@ -437,14 +437,17 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
           @media print {
             @page {
               size: auto;
+              margin: 0;
             }
             body {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
               padding: 0;
-              display: grid;
-              justify-content: center; /* 水平居中 */
-              align-items: center; /* 垂直居中 */
+              margin: 0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: flex-start;
             }
           }
           .parent {
@@ -455,8 +458,11 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             align-items: center;
             justify-content: flex-start;
             margin-top: 0;
+            margin-bottom: 0;
             padding-top: 0;
             box-sizing: border-box;
+            page-break-after: always; /* 每个票据后强制分页 */
+            page-break-inside: avoid; /* 防止内容被分页分割 */
           }
 
           .child {
@@ -470,6 +476,7 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             margin: 0;
             box-sizing: border-box;
             flex-shrink: 0;
+            page-break-inside: avoid; /* 防止内容被分页分割 */
           }
           .child:last-child {
             border-bottom: none;
@@ -487,6 +494,7 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             overflow: visible;
             margin: 0 auto;
             border-bottom: 1px dashed #000;
+            page-break-inside: avoid; /* 防止二维码区域被分页分割 */
           }
           .barcode canvas {
             width: 90px !important;

@@ -8,6 +8,7 @@
         placeholder="请输入用户名"
         maxlength="20"
         :rules="usernameRules"
+        left-icon="user-o"
         class="register-form__field"
       />
     </div>
@@ -21,6 +22,7 @@
         type="tel"
         maxlength="11"
         :rules="phoneRules"
+        left-icon="phone-o"
         @blur="handlePhoneBlur"
         class="register-form__field"
       />
@@ -36,6 +38,7 @@
         maxlength="6"
         :rules="smsCodeRules"
         :disabled="!hasSentSms"
+        left-icon="shield-o"
         class="register-form__field"
       >
         <template #button>

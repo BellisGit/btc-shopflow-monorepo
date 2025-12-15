@@ -156,50 +156,7 @@ body,
 // 通用图标按钮样式已移至 @btc/shared-components/src/styles/index.scss
 // 不再在此处重复定义
 
-.btc-icon-button--breath {
-  --btc-breath-color: var(--el-color-primary);
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: var(--btc-breath-color);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 30%, transparent);
-    animation: btc-breathe 1.5s ease-in-out infinite;
-  }
-}
-
-.btc-icon-button--breath--warning::after {
-  --btc-breath-color: var(--el-color-danger);
-  animation: none;
-  opacity: 1;
-  transform: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 35%, transparent);
-}
-
-.btc-icon-button--breath--success::after {
-  --btc-breath-color: var(--el-color-success);
-}
-
-@keyframes btc-breathe {
-  0% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-}
+// 呼吸灯样式已下沉到 @btc/shared-components/styles/index.scss，避免仅部分应用生效
 
 // 文档模式：隐藏左侧边栏、tabbar、顶栏部分元素，只保留汉堡菜单和搜索框
 body.docs-mode {

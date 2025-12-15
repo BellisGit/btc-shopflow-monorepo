@@ -41,10 +41,19 @@ const pageRoutes: RouteRecordRaw[] = [
 /**
  * 获取路由配置
  * - qiankun 模式：直接返回页面路由（由主应用提供 Layout）
+ * - layout-app 模式：直接返回页面路由（由 layout-app 提供 Layout）
  * - 独立运行时：使用 AppLayout 包裹所有路由（与物流域保持一致）
  */
 export const getFinanceRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  
+  // 如果使用 layout-app，直接返回页面路由（layout-app 会提供布局）
+  if (isUsingLayoutApp) {
+    return pageRoutes;
+  }
+  
+  // 独立运行且不使用 layout-app：使用 AppLayout 包裹所有路由
   const routes = isStandalone
     ? [
         {

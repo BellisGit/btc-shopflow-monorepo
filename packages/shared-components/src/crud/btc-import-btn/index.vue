@@ -376,7 +376,7 @@ const analyzeFileNameMatch = (filename: string) => {
     // 无导出文件名时，放宽校验：只要不包含禁止关键词就允许
     // 不再强制要求文件名包含特定实体名，避免提示"增加data开头"
     isValid = true;
-    matchScore = 50; // 给予中等匹配度
+    matchScore = 100; // 设置为满分，避免显示匹配度警告
   }
 
   return {
@@ -733,8 +733,10 @@ function onUpload(raw: File, _: any, { next }: any) {
     // 动态生成表头
     table.header = importableColumns.value.map((col: any) => col.label || col.prop);
 
-    // 文件名匹配度提示（仅低匹配度时显示）
-    if (fileNameCheck.matchScore < 80 && fileNameCheck.isValid) {
+    // 文件名匹配度提示（仅低匹配度时显示，且必须提供了 exportFilename 才提示）
+    // 如果没有提供 exportFilename，说明不强制要求文件名匹配，不应该显示警告
+    const hasExportFilename = exportFilename.value && exportFilename.value.trim() !== '';
+    if (hasExportFilename && fileNameCheck.matchScore < 80 && fileNameCheck.isValid) {
       setTimeout(() => {
         BtcMessage.warning(
           `文件名"${fileNameCheck.fileName}"匹配度较低，建议使用标准名称：${fileNameCheck.entityName}.xlsx`,

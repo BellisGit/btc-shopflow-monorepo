@@ -33,6 +33,7 @@ const mapCheckStatus = (checkStatus?: string): 'pending' | 'running' | 'paused' 
     'paused': 'paused',
     '已暂停': 'paused',
     '暂停': 'paused',
+    '暂停中': 'paused',
     'completed': 'completed',
     '已完成': 'completed',
     '已结束': 'completed',
@@ -104,6 +105,20 @@ export function useInventoryProcess() {
     return result;
   });
 
+  // 刷新单个流程的状态（通过 status API）
+  const refreshProcessStatus = async (processId: string | number): Promise<string | undefined> => {
+    try {
+      const statusResponse = await service.logistics?.warehouse?.check?.status?.({ id: processId });
+      // status API 可能返回状态字符串或包含状态的对象
+      return typeof statusResponse === 'string'
+        ? statusResponse
+        : statusResponse?.status || statusResponse?.checkStatus || statusResponse?.data?.status || statusResponse?.data?.checkStatus;
+    } catch (error) {
+      console.error(`[InventoryProcess] Failed to refresh status for process ${processId}:`, error);
+      return undefined;
+    }
+  };
+
   // 加载流程列表
   const loadProcesses = async () => {
     try {
@@ -117,6 +132,17 @@ export function useInventoryProcess() {
       let list: any[] = [];
       if (Array.isArray(response)) {
         list = response;
+      } else if (response?.data) {
+        // 处理 { code: 200, data: [...] } 格式
+        if (Array.isArray(response.data)) {
+          list = response.data;
+        } else if (response.data?.list) {
+          list = response.data.list;
+        } else if (response.data?.records) {
+          list = response.data.records;
+        } else if (response.data && typeof response.data === 'object') {
+          list = [response.data];
+        }
       } else if (response?.list) {
         list = response.list;
       } else if (response?.records) {
@@ -126,27 +152,11 @@ export function useInventoryProcess() {
         list = [response];
       }
 
-      // 为每个流程项获取状态
-      let mappedList = await Promise.all(
-        list.map(async (item) => {
-          let statusValue: string | undefined;
-          if (item.id) {
-            try {
-              // 通过 status API 获取状态，传递 id 字段对象
-              const statusResponse = await service.logistics?.warehouse?.check?.status?.({ id: item.id });
-              // status API 可能返回状态字符串或包含状态的对象
-              statusValue = typeof statusResponse === 'string'
-                ? statusResponse
-                : statusResponse?.status || statusResponse?.checkStatus || statusResponse?.data?.status || statusResponse?.data?.checkStatus;
-            } catch (error) {
-              console.error(`[InventoryProcess] Failed to get status for item ${item.id}:`, error);
-              // 如果获取状态失败，使用默认状态
-              statusValue = undefined;
-            }
-          }
-          return mapToProcessItem(item, statusValue);
-        })
-      );
+      // 直接使用 info API 返回的 checkStatus，不需要额外调用 status API
+      let mappedList = list.map((item) => {
+        // 直接使用 item.checkStatus
+        return mapToProcessItem(item, item.checkStatus);
+      });
 
       // 前端过滤：按搜索关键词
       if (searchKeyword.value) {
@@ -200,8 +210,22 @@ export function useInventoryProcess() {
       // 调用 API：开始盘点
       await service.logistics?.warehouse?.check?.start?.({ id: process.id });
 
-      // 重新加载数据以获取最新状态
-      await loadProcesses();
+      // 通过 status API 刷新单个流程的状态
+      const newStatus = await refreshProcessStatus(process.id);
+      if (newStatus) {
+        const index = processes.value.findIndex((p) => p.id === process.id);
+        if (index !== -1) {
+          const mappedStatus = mapCheckStatus(newStatus);
+          const currentProcess = processes.value[index];
+          // 更新状态和实际开始时间
+          processes.value[index] = {
+            ...currentProcess,
+            status: mappedStatus,
+            actualStartTime: currentProcess.scheduledStartTime, // 使用计划开始时间作为实际开始时间
+          };
+        }
+      }
+
       message.success(t('process.start.success', { name: process.name }) || `流程 "${process.name}" 已开始`);
     } catch (error) {
       console.error('[InventoryProcess] Start failed:', error);
@@ -224,8 +248,19 @@ export function useInventoryProcess() {
       // 调用 API：暂停盘点
       await service.logistics?.warehouse?.check?.pause?.({ id: process.id, reason });
 
-      // 重新加载数据以获取最新状态
-      await loadProcesses();
+      // 通过 status API 刷新单个流程的状态
+      const newStatus = await refreshProcessStatus(process.id);
+      if (newStatus) {
+        const index = processes.value.findIndex((p) => p.id === process.id);
+        if (index !== -1) {
+          const mappedStatus = mapCheckStatus(newStatus);
+          processes.value[index] = {
+            ...processes.value[index],
+            status: mappedStatus,
+          };
+        }
+      }
+
       message.success(t('process.pause.success', { name: process.name }) || `流程 "${process.name}" 已暂停`);
     } catch (error) {
       console.error('[InventoryProcess] Pause failed:', error);
@@ -248,8 +283,19 @@ export function useInventoryProcess() {
       // 调用 API：继续盘点
       await service.logistics?.warehouse?.check?.recover?.({ id: process.id });
 
-      // 重新加载数据以获取最新状态
-      await loadProcesses();
+      // 通过 status API 刷新单个流程的状态
+      const newStatus = await refreshProcessStatus(process.id);
+      if (newStatus) {
+        const index = processes.value.findIndex((p) => p.id === process.id);
+        if (index !== -1) {
+          const mappedStatus = mapCheckStatus(newStatus);
+          processes.value[index] = {
+            ...processes.value[index],
+            status: mappedStatus,
+          };
+        }
+      }
+
       message.success(t('process.resume.success', { name: process.name }) || `流程 "${process.name}" 已恢复`);
     } catch (error) {
       console.error('[InventoryProcess] Resume failed:', error);
@@ -277,8 +323,22 @@ export function useInventoryProcess() {
       // 调用 API：结束盘点
       await service.logistics?.warehouse?.check?.finish?.({ id: process.id });
 
-      // 重新加载数据以获取最新状态
-      await loadProcesses();
+      // 通过 status API 刷新单个流程的状态
+      const newStatus = await refreshProcessStatus(process.id);
+      if (newStatus) {
+        const index = processes.value.findIndex((p) => p.id === process.id);
+        if (index !== -1) {
+          const mappedStatus = mapCheckStatus(newStatus);
+          const currentProcess = processes.value[index];
+          // 更新状态和实际结束时间
+          processes.value[index] = {
+            ...currentProcess,
+            status: mappedStatus,
+            actualEndTime: currentProcess.scheduledEndTime, // 使用计划结束时间作为实际结束时间
+          };
+        }
+      }
+
       message.success(t('process.end.success', { name: process.name }) || `流程 "${process.name}" 已结束`);
     } catch (error) {
       console.error('[InventoryProcess] End failed:', error);

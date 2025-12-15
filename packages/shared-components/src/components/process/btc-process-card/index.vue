@@ -20,8 +20,8 @@
       </div>
     </template>
     <template #extra>
-      <el-icon 
-        class="btc-process-card__status-icon" 
+      <el-icon
+        class="btc-process-card__status-icon"
         :class="`btc-process-card__status-icon--${process.status}`"
       >
         <component :is="getStatusIcon(process.status)" />
@@ -209,7 +209,7 @@ const getStatusLabel = (status: string) => {
   const map: Record<string, string> = {
     pending: '待开始',
     running: '进行中',
-    paused: '已暂停',
+    paused: '暂停中',
     completed: '已结束',
   };
   return map[status] || status;
@@ -234,7 +234,7 @@ const calculateProgress = (process: ProcessManagementItem) => {
   ) {
     return 0;
   }
-  
+
   const now = new Date().getTime();
   const start = new Date(process.scheduledStartTime).getTime();
   const end = new Date(process.scheduledEndTime).getTime();
@@ -242,10 +242,10 @@ const calculateProgress = (process: ProcessManagementItem) => {
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
     return 0;
   }
-  
+
   if (now >= end) return 100;
   if (now <= actualStart) return 0;
-  
+
   const total = end - start;
   const elapsed = now - actualStart;
   return Math.min(100, Math.round((elapsed / total) * 100));
@@ -330,7 +330,7 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
   height: 100%;
   display: flex;
   flex-direction: column;
-  
+
   :deep(.btc-card__header) {
     padding: 12px 16px;
     flex-shrink: 0;
@@ -338,7 +338,7 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     align-items: center;
     justify-content: space-between;
   }
-  
+
   :deep(.btc-card__body) {
     padding: 0;
     flex: 1;
@@ -365,40 +365,40 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     align-items: center;
     text-align: center;
   }
-  
+
   :deep(.btc-card__footer) {
     padding: 12px 16px;
     flex-shrink: 0;
     border-top: 1px solid var(--el-border-color-lighter);
   }
-  
+
   &__header-left {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  
+
   &__name {
     margin: 0;
     font-size: 16px;
     font-weight: 600;
   }
-  
+
   &__status-icon {
     font-size: 24px;
-    
+
     // 通过 :deep() 穿透到 SVG 元素，直接设置 fill 颜色
     :deep(svg) {
       fill: currentColor;
     }
-    
+
     &--pending {
       color: var(--el-color-primary) !important;
       :deep(svg) {
         fill: var(--el-color-primary) !important;
       }
     }
-    
+
     &--running {
       color: var(--el-color-success) !important;
       animation: btc-process-rotate 2s linear infinite;
@@ -406,14 +406,14 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
         fill: var(--el-color-success) !important;
       }
     }
-    
+
     &--paused {
       color: var(--el-color-warning) !important;
       :deep(svg) {
         fill: var(--el-color-warning) !important;
       }
     }
-    
+
     &--completed {
       color: var(--el-color-danger) !important;
       :deep(svg) {
@@ -421,7 +421,7 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
       }
     }
   }
-  
+
   &__description {
     display: flex;
     align-items: center;
@@ -432,20 +432,20 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     margin-bottom: 4px;
     width: 100%;
   }
-  
+
   &__description-icon {
     font-size: 18px;
     color: var(--el-color-primary);
     flex-shrink: 0;
   }
-  
+
   &__description-text {
     font-size: 16px;
     line-height: 1.6;
     color: var(--el-text-color-primary);
     word-break: break-word;
   }
-  
+
   &__time-info {
     display: flex;
     flex-direction: column;
@@ -453,7 +453,7 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     width: 100%;
     align-items: center;
   }
-  
+
   &__time-item {
     display: flex;
     align-items: center;
@@ -464,30 +464,30 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     padding: 2px 0;
     width: 100%;
   }
-  
+
   &__time-icon {
     font-size: 17px;
     color: var(--el-color-primary);
     flex-shrink: 0;
   }
-  
+
   &__time-label {
     color: var(--el-text-color-secondary);
     flex-shrink: 0;
   }
-  
+
   &__time-value {
     color: var(--el-text-color-primary);
     font-weight: 500;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 15px;
   }
-  
+
   &__progress {
     margin-top: 0;
     width: 100%;
   }
-  
+
   &__progress-label {
     display: flex;
     justify-content: center;
@@ -497,14 +497,14 @@ const detailButtonConfig = computed<BtcTableButtonConfig>(() => ({
     font-weight: 500;
     color: var(--el-text-color-regular);
   }
-  
+
   &__progress-percent {
     font-weight: 600;
     color: var(--el-color-primary);
     font-size: 15px;
     margin-left: 8px;
   }
-  
+
   &__actions {
     display: flex;
     gap: 8px;

@@ -9,13 +9,212 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>生产应用 - BTC ShopFlow</title>
     <style>
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
+      /* 统一的首屏 Loading 样式 */
+      html,
+      body,
+      #app,
+      #layout-container {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      * {
+        -webkit-font-smoothing: antialiased;
+        font-family:
+          'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+      }
+
+      #Loading {
+        display: flex;
+        flex-direction: column;
+        letter-spacing: 1px;
+        background-color: #ffffff;
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        z-index: 9999;
+        transition: all 0.3s ease-in;
+        opacity: 1;
+        pointer-events: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #Loading {
+          background-color: #000000;
+        }
+      }
+
+      #Loading.is-hide {
+        opacity: 0;
+      }
+
+      .preload__container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        width: 100%;
+        user-select: none;
+        -webkit-user-select: none;
+        flex-grow: 1;
+      }
+
+      .preload__name {
+        font-size: 30px;
+        color: #303133;
+        letter-spacing: 5px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        min-height: 50px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .preload__name {
+          color: #ffffff;
+        }
+      }
+
+      .preload__title {
+        color: #606266;
+        font-size: 14px;
+        margin: 30px 0 20px 0;
+        min-height: 20px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .preload__title {
+          color: #ffffff;
+        }
+      }
+
+      .preload__sub-title {
+        color: #909399;
+        font-size: 12px;
+        min-height: 20px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .preload__sub-title {
+          color: #ababab;
+        }
+      }
+
+      .preload__name,
+      .preload__title,
+      .preload__sub-title {
+        animation: s 0.5s ease-in;
+      }
+
+      @keyframes s {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .preload__loading {
+        height: 44px;
+        width: 44px;
+        border-radius: 30px;
+        border: 7px solid currentColor;
+        border-bottom-color: #ffffff;
+        position: relative;
+        animation:
+          r 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
+          bc 2s infinite ease-in;
+        transform: rotate(0deg);
+        box-sizing: border-box;
+        color: #409eff;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .preload__loading {
+          border-bottom-color: #000000;
+          color: #409eff;
+        }
+      }
+
+      @keyframes r {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .preload__loading::after,
+      .preload__loading::before {
+        content: '';
+        display: inline-block;
+        position: absolute;
+        bottom: -2px;
+        height: 7px;
+        width: 7px;
+        border-radius: 10px;
+        background-color: currentColor;
+      }
+
+      .preload__loading::after {
+        left: -1px;
+      }
+
+      .preload__loading::before {
+        right: -1px;
+      }
+
+      @keyframes bc {
+        0% {
+          color: #409eff;
+        }
+        25% {
+          color: #67c23a;
+        }
+        50% {
+          color: #e6a23c;
+        }
+        75% {
+          color: #f56c6c;
+        }
+        100% {
+          color: #409eff;
+        }
       }
     </style>
+    <script>
+      // 检查是否有导航标记，如果有则显示 Loading
+      (function() {
+        try {
+          const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
+          if (shouldShowLoading) {
+            // 立即创建 Loading 元素，避免闪烁
+            document.addEventListener('DOMContentLoaded', function() {
+              const loadingEl = document.getElementById('Loading');
+              if (loadingEl) {
+                loadingEl.style.display = 'flex';
+              }
+            });
+          }
+        } catch (e) {
+          // 静默失败
+        }
+      })();
+    </script>
   </head>
   <body>
+    <div id="Loading">
+      <div class="preload__container">
+        <div class="preload__name">拜里斯科技</div>
+        <div class="preload__loading"></div>
+        <div class="preload__title">正在加载资源</div>
+        <div class="preload__sub-title">部分资源可能加载时间较长，请耐心等待</div>
+      </div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

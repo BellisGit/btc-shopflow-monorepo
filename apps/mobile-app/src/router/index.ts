@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import { getCookie } from '@/utils/cookie';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -28,6 +26,15 @@ const routes: RouteRecordRaw[] = [
     meta: {
       public: true,
       title: '新用户注册',
+    },
+  },
+  {
+    path: '/auth/phone-author',
+    name: 'PhoneAuthor',
+    component: () => import('@/modules/auth/pages/PhoneAuthor.vue'),
+    meta: {
+      public: true,
+      title: '授权登录',
     },
   },
   {
@@ -134,42 +141,18 @@ router.beforeEach((to, _from, next) => {
     return;
   }
 
-  const authStore = useAuthStore();
-  
-  // 在路由守卫中，如果 store 中没有 token，但 cookie 中有 token，尝试同步
-  // 这可以处理从其他应用登录后，cookie 已经设置但 store 未初始化的情况
-  // 注意：如果 cookie 是 http-only，getCookie 无法读取，但浏览器会自动在请求中发送
-  // 所以即使无法读取 cookie，如果有用户信息，也应该认为已登录（由后端验证）
-  if (!authStore.isAuthenticated) {
-    const cookieToken = getCookie('access_token');
-    if (cookieToken) {
-      authStore.setToken(cookieToken);
-    }
-    // 如果无法读取 cookie（可能是 http-only），但有用户信息，也应该认为已登录
-    // 这种情况下，浏览器会自动发送 cookie，由后端验证
-  }
-
-  // 如果用户已登录，访问登录页时重定向到查询页面或 redirect 参数指定的页面
-  if (to.meta.public && authStore.isAuthenticated) {
-    const redirect = (to.query.redirect as string) || '/query';
-    // 只取路径部分，忽略查询参数，避免循环重定向
-    const redirectPath = redirect.split('?')[0];
-    next(redirectPath);
-    return;
-  }
-
+  // 后端使用 httpOnly cookie 进行认证，前端无法读取
+  // 所有页面都直接放行，由后端 API 来验证 cookie
+  // 如果 API 返回 401，HTTP 拦截器会处理跳转到登录页
   // 公开页面（登录、注册、手机号登录等）直接放行
   if (to.meta.public) {
     next();
     return;
   }
 
-  // 需要认证的页面
-  if (authStore.isAuthenticated) {
-    next();
-  } else {
-    next({ name: 'Login', query: { redirect: to.fullPath } });
-  }
+  // 需要认证的页面也直接放行，由后端 API 验证
+  // 如果后端返回 401，HTTP 拦截器会处理
+  next();
 });
 
 export default router;

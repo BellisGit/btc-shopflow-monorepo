@@ -66,7 +66,7 @@ const FINANCE_APP_ID = 'finance';
 const FINANCE_BASE_PATH = '/finance';
 const sharedUserSettingPlugin = createSharedUserSettingPlugin();
 
-const setupStandaloneGlobals = () => {
+const setupStandaloneGlobals = async () => {
   if (typeof window === 'undefined') {
     return;
   }
@@ -78,8 +78,22 @@ const setupStandaloneGlobals = () => {
   if (!win.__APP_EPS_SERVICE__) {
     win.__APP_EPS_SERVICE__ = {};
   }
-  if (!win.__APP_GET_DOMAIN_LIST__) {
-    win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(FINANCE_APP_ID);
+  // 关键：使用 domain-cache 模块，确保汉堡菜单应用列表能够调用 me 接口
+  // 而不是使用 createDefaultDomainResolver（只返回默认域列表）
+  try {
+    const domainModule = await import('../utils/domain-cache');
+    if (domainModule.getDomainList) {
+      win.__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+    }
+    if (domainModule.clearDomainCache) {
+      win.__APP_CLEAR_DOMAIN_CACHE__ = domainModule.clearDomainCache;
+    }
+  } catch (error) {
+    console.warn('[finance-app] Failed to load domain cache:', error);
+    // 如果加载失败，使用默认解析器作为兜底
+    if (!win.__APP_GET_DOMAIN_LIST__) {
+      win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(FINANCE_APP_ID);
+    }
   }
   if (!win.__APP_FINISH_LOADING__) {
     win.__APP_FINISH_LOADING__ = () => {};
@@ -114,7 +128,7 @@ const normalizeToHostPath = (relativeFullPath: string) => {
   // 检测是否在生产环境的子域名下
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   // 在生产环境子域名下，路径应该不带应用前缀（直接使用相对路径）
   if (isProductionSubdomain) {
     return normalizedRelative;
@@ -134,16 +148,21 @@ const normalizeToHostPath = (relativeFullPath: string) => {
 };
 
 const deriveInitialSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下（__USE_LAYOUT_APP__ 为 true），也需要初始化路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
+
+  // 如果不是 qiankun 且不是 layout-app，返回默认路由
+  if (!isQiankun && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
-  
+
   // 检查是否在子域名环境下（生产环境）
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname === 'finance.bellis.com.cn';
-  
+
   // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
   if (isProductionSubdomain) {
     // 如果路径是 /finance/xxx，需要去掉 /finance 前缀
@@ -154,7 +173,7 @@ const deriveInitialSubRoute = () => {
     // 否则直接使用当前路径
     return `${pathname}${search}${hash}`;
   }
-  
+
   // 路径前缀环境下（如 /finance/xxx）
   if (!pathname.startsWith(FINANCE_BASE_PATH)) {
     return '/';
@@ -165,11 +184,30 @@ const deriveInitialSubRoute = () => {
 };
 
 const extractHostSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要提取主机路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'finance.bellis.com.cn';
+
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /finance/xxx，需要去掉 /finance 前缀
+    if (pathname.startsWith(FINANCE_BASE_PATH)) {
+      const suffix = pathname.slice(FINANCE_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+
+  // 路径前缀环境下（如 /finance/xxx）
   if (!pathname.startsWith(FINANCE_BASE_PATH)) {
     return '/';
   }
@@ -188,7 +226,7 @@ const syncHostWithSubRoute = (fullPath: string) => {
 
   // 确保 fullPath 是有效的路径，如果已经是完整路径则直接使用
   let targetUrl = fullPath || FINANCE_BASE_PATH;
-  
+
   // 如果 fullPath 已经是完整路径（以 /finance 开头），直接使用
   // 否则确保它以 FINANCE_BASE_PATH 开头
   if (!targetUrl.startsWith(FINANCE_BASE_PATH)) {
@@ -211,7 +249,9 @@ const syncHostWithSubRoute = (fullPath: string) => {
 };
 
 const syncSubRouteWithHost = (context: FinanceAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -233,7 +273,9 @@ const syncSubRouteWithHost = (context: FinanceAppContext) => {
 
 
 const setupRouteSync = (context: FinanceAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要设置路由同步
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -335,7 +377,9 @@ const ensureCleanUrl = (context: FinanceAppContext) => {
 };
 
 const setupHostLocationBridge = (context: FinanceAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要设置路由同步
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -348,9 +392,16 @@ const setupHostLocationBridge = (context: FinanceAppContext) => {
     syncSubRouteWithHost(context);
   };
 
-  window.addEventListener('single-spa:routing-event', handleRoutingEvent);
+  // qiankun 环境下监听 single-spa 事件
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    window.addEventListener('single-spa:routing-event', handleRoutingEvent);
+    context.cleanup.listeners.push(['single-spa:routing-event', handleRoutingEvent]);
+  }
+
+  // layout-app 和 qiankun 环境下都需要监听 popstate 事件
+  // layout-app 的 router.afterEach 会触发 popstate 事件
   window.addEventListener('popstate', handleRoutingEvent);
-  context.cleanup.listeners.push(['single-spa:routing-event', handleRoutingEvent], ['popstate', handleRoutingEvent]);
+  context.cleanup.listeners.push(['popstate', handleRoutingEvent]);
 
   handleRoutingEvent();
 };
@@ -358,7 +409,7 @@ const setupHostLocationBridge = (context: FinanceAppContext) => {
 export const createFinanceApp = async (props: QiankunProps = {}): Promise<FinanceAppContext> => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   if (isStandalone) {
-    setupStandaloneGlobals();
+    await setupStandaloneGlobals();
     // 关键：在独立运行模式下，确保菜单注册表已初始化
     // 先初始化菜单注册表，再注册菜单，确保菜单在 AppLayout 渲染前已准备好
     try {
@@ -381,7 +432,7 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
   }
 
   const app = createApp(App);
-  
+
   // 关键：添加全局错误处理，捕获 DOM 操作错误
   // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
   app.config.errorHandler = (err, instance, info) => {
@@ -403,8 +454,26 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
       }
       return;
     }
+
+    // 其他错误必须输出，否则会导致“页面空白但无报错”难以排查
+    try {
+      (window as any).__BTC_SUBAPP_LAST_ERROR__ = { err, info, time: Date.now() };
+    } catch (e) {
+      // 静默失败
+    }
+    console.error('[finance-app] Vue errorHandler 捕获到错误:', err, { info, instance });
   };
-  
+
+  // 同理：warn 也至少在控制台可见（生产环境默认可能被忽略）
+  app.config.warnHandler = (msg, instance, trace) => {
+    try {
+      (window as any).__BTC_SUBAPP_LAST_WARN__ = { msg, trace, time: Date.now() };
+    } catch (e) {
+      // 静默失败
+    }
+    console.warn('[finance-app] Vue warn:', msg, { trace, instance });
+  };
+
   // 先初始化 i18n，确保国际化文件已加载
   const i18n = setupI18n(app, props.locale || 'zh-CN');
   const router = createFinanceRouter();
@@ -416,8 +485,18 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
     await setupStandalonePlugins(app, router);
   }
 
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 qiankun 或 layout-app 环境下，都需要初始化路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute();
+    if (import.meta.env.DEV || import.meta.env.PROD) {
+      console.log('[finance-app] 初始化路由', {
+        initialRoute,
+        isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+        isUsingLayoutApp,
+        pathname: window.location.pathname
+      });
+    }
     router.replace(initialRoute).catch(() => {});
   }
 
@@ -447,17 +526,36 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
   // - 否则：如果 __USE_LAYOUT_APP__ 为 true，尝试查找 #subapp-viewport
   // - 否则：使用 #app（独立运行模式）
   let mountPoint: HTMLElement | null = null;
-  
+
   // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
   if (props.container && props.container instanceof HTMLElement) {
     mountPoint = props.container;
+    if (import.meta.env.DEV || import.meta.env.PROD) {
+      console.log('[finance-app] 使用 props.container 作为挂载点', {
+        container: props.container,
+        id: props.container.id,
+        isSubappViewport: props.container.id === 'subapp-viewport'
+      });
+    }
   } else if ((window as any).__USE_LAYOUT_APP__) {
     // 使用 layout-app：尝试查找 #subapp-viewport
     const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
     if (viewport) {
       mountPoint = viewport;
+      if (import.meta.env.DEV || import.meta.env.PROD) {
+        console.log('[finance-app] 使用 #subapp-viewport 作为挂载点', {
+          viewport: viewport,
+          id: viewport.id
+        });
+      }
     } else {
-      throw new Error('[finance-app] 使用 layout-app 但未找到 #subapp-viewport 元素');
+      const errorMsg = '[finance-app] 使用 layout-app 但未找到 #subapp-viewport 元素';
+      console.error(errorMsg, {
+        __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
+        documentBody: document.body,
+        appElement: document.querySelector('#app')
+      });
+      throw new Error(errorMsg);
     }
   } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
     // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
@@ -475,7 +573,7 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
     }
     mountPoint = appElement;
   }
-  
+
   if (!mountPoint) {
     throw new Error('[finance-app] 无法找到挂载节点');
   }
@@ -490,18 +588,53 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
     // 静默失败
   }
 
-  // 在 qiankun 环境下，等待路由就绪后再同步初始路由
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 在 qiankun 或 layout-app 环境下，等待路由就绪后再同步初始路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     // 使用 nextTick 确保 Vue 应用已完全挂载
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
         context.router.isReady().then(() => {
           // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /finance/xxx）
           const initialRoute = deriveInitialSubRoute();
+          const currentRoute = context.router.currentRoute.value;
           // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
-          if (context.router.currentRoute.value.matched.length === 0 || 
-              context.router.currentRoute.value.path !== initialRoute.split('?')[0].split('#')[0]) {
-            context.router.replace(initialRoute).catch(() => {});
+          if (currentRoute.matched.length === 0 ||
+              currentRoute.path !== initialRoute.split('?')[0].split('#')[0]) {
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[finance-app] 同步初始路由', {
+                currentRoute: currentRoute.path,
+                currentRouteFullPath: currentRoute.fullPath,
+                initialRoute,
+                matched: currentRoute.matched.length,
+                matchedRoutes: currentRoute.matched.map(m => m.path),
+                allRoutes: context.router.getRoutes().map(r => ({ path: r.path, name: r.name }))
+              });
+            }
+            context.router.replace(initialRoute).then(() => {
+              if (import.meta.env.DEV || import.meta.env.PROD) {
+                const newRoute = context.router.currentRoute.value;
+                console.log('[finance-app] 路由替换成功', {
+                  newRoute: newRoute.path,
+                  newRouteFullPath: newRoute.fullPath,
+                  matched: newRoute.matched.length,
+                  matchedRoutes: newRoute.matched.map(m => ({ path: m.path, name: m.name, components: Object.keys(m.components || {}) })),
+                  component: newRoute.matched[0]?.components?.default
+                });
+              }
+            }).catch((error) => {
+              console.error('[finance-app] 路由替换失败:', error);
+            });
+          } else {
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[finance-app] 路由已匹配，无需同步', {
+                currentRoute: currentRoute.path,
+                currentRouteFullPath: currentRoute.fullPath,
+                matched: currentRoute.matched.length,
+                matchedRoutes: currentRoute.matched.map(m => ({ path: m.path, name: m.name, components: Object.keys(m.components || {}) })),
+                component: currentRoute.matched[0]?.components?.default
+              });
+            }
           }
         });
       });
@@ -534,7 +667,7 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
         // 清除 cookie 中的 token
         const { deleteCookie } = await import('../utils/cookie');
         deleteCookie('access_token');
-        
+
         // 清除登录状态标记（从统一的 settings 存储中移除）
         const getAppStorage = () => {
           return (window as any).__APP_STORAGE__ || (window as any).appStorage;
@@ -549,12 +682,13 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
           appStorage.auth?.clear();
           appStorage.user?.clear();
         }
-        
+
         // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
         localStorage.removeItem('is_logged_in');
 
         // 清除用户状态（直接实现，不依赖 composable）
         try {
+          // @ts-expect-error - 类型声明文件可能未构建，但运行时可用
           const { storage } = await import('@btc/shared-utils');
           storage.remove('user');
           // 清理旧的 localStorage 数据（向后兼容）
@@ -566,6 +700,7 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
 
         // 清除标签页（Process Store）
         try {
+          // @ts-expect-error - 类型声明文件可能未构建，但运行时可用
           const { useProcessStore } = await import('@btc/shared-components');
           const processStore = useProcessStore();
           processStore.clear();
@@ -574,6 +709,7 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
         }
 
         // 显示退出成功提示
+        // @ts-expect-error - 类型声明文件可能未构建，但运行时可用
         const { BtcMessage } = await import('@btc/shared-components');
         const t = ctx.i18n?.i18n?.global?.t;
         if (t) {
@@ -585,7 +721,7 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
         const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-        
+
         // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
         if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
           // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
@@ -609,7 +745,9 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
         try {
           const { deleteCookie } = await import('../utils/cookie');
           deleteCookie('access_token');
-        } catch {}
+        } catch (e) {
+          // 静默失败
+        }
 
         try {
           const getAppStorage = () => {
@@ -628,22 +766,26 @@ export const mountFinanceApp = async (context: FinanceAppContext, props: Qiankun
           }
 
           // 清除用户状态（直接实现，不依赖 composable）
+          // @ts-expect-error - 类型声明文件可能未构建，但运行时可用
           const { storage } = await import('@btc/shared-utils');
           storage.remove('user');
           // 清理旧的 localStorage 数据（向后兼容）
           localStorage.removeItem('btc_user');
           localStorage.removeItem('user');
 
+          // @ts-expect-error - 类型声明文件可能未构建，但运行时可用
           const { useProcessStore } = await import('@btc/shared-components');
           const processStore = useProcessStore();
           processStore.clear();
-        } catch {}
+        } catch (e) {
+          // 静默失败
+        }
 
         // 跳转到登录页
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
         const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-        
+
         if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
           if (isProductionSubdomain) {
             window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;

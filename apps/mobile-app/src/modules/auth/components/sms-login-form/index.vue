@@ -1,34 +1,36 @@
 <template>
   <div class="sms-login-form">
-    <!-- 手机号输入 -->
-    <div class="form-field-wrapper">
-      <van-field
-        v-model="form.phone"
-        name="phone"
-        placeholder="请输入手机号"
-        type="tel"
-        maxlength="11"
-        :rules="phoneRules"
-        @focus="handleInputFocus"
-        @blur="handlePhoneBlur"
-        class="form-field"
-      />
-    </div>
+        <!-- 手机号输入 -->
+        <div class="form-field-wrapper">
+          <van-field
+            v-model="form.phone"
+            name="phone"
+            placeholder="请输入手机号"
+            type="tel"
+            maxlength="11"
+            :rules="phoneRules"
+            left-icon="phone-o"
+            @focus="handleInputFocus"
+            @blur="handlePhoneBlur"
+            class="form-field"
+          />
+        </div>
 
-    <!-- 验证码输入 -->
-    <div class="form-field-wrapper">
-      <van-field
-        v-model="form.smsCode"
-        name="smsCode"
-        placeholder="请输入验证码"
-        type="number"
-        maxlength="6"
-        :rules="smsCodeRules"
-        :disabled="!hasSentSms"
-        @focus="handleInputFocus"
-        @blur="handleInputBlur"
-        class="form-field"
-      >
+        <!-- 验证码输入 -->
+        <div class="form-field-wrapper">
+          <van-field
+            v-model="form.smsCode"
+            name="smsCode"
+            placeholder="请输入验证码"
+            type="number"
+            maxlength="6"
+            :rules="smsCodeRules"
+            :disabled="!hasSentSms"
+            left-icon="shield-o"
+            @focus="handleInputFocus"
+            @blur="handleInputBlur"
+            class="form-field"
+          >
         <template #button>
           <van-button
             size="small"
@@ -197,6 +199,24 @@ const handleSubmit = async () => {
       &:disabled {
         color: rgba(255, 255, 255, 0.7) !important;
         -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+      }
+    }
+
+    // 优化左侧图标样式，确保清晰可见
+    .van-field__left-icon {
+      color: rgba(255, 255, 255, 0.8) !important;
+      font-size: 20px !important;
+      margin-right: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      
+      // 使用 SVG 图标时确保清晰度
+      svg {
+        width: 20px !important;
+        height: 20px !important;
+        fill: currentColor !important;
       }
     }
   }

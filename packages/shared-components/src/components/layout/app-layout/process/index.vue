@@ -150,7 +150,30 @@ const filteredTabs = computed(() => {
 // 当前激活标签的索引
 const currentTabIndex = computed(() => {
   const currentPath = route.path;
-  return filteredTabs.value.findIndex((tab) => tab.path === currentPath);
+  const currentApp = getCurrentAppFromPath(route.path);
+  // 关键：在 layout-app 环境下，需要同时匹配 fullPath 和 path
+  // 因为 layout-app 的路由路径可能是完整路径（如 /finance/inventory/result）
+  // 而标签的 path 可能是子应用内部路径（如 /inventory/result）
+  // 标签的 fullPath 可能是完整路径（如 /finance/inventory/result）
+  return filteredTabs.value.findIndex((tab) => {
+    // 优先匹配 fullPath（完整路径）
+    if (tab.fullPath && (tab.fullPath === currentPath || currentPath === tab.fullPath)) {
+      return true;
+    }
+    // 回退到匹配 path（子应用内部路径）
+    if (tab.path === currentPath || currentPath === tab.path) {
+      return true;
+    }
+    // 在 layout-app 环境下，如果 currentPath 包含应用前缀，尝试去掉前缀后匹配
+    const isLayoutApp = typeof window !== 'undefined' && !!(window as any).__IS_LAYOUT_APP__;
+    if (isLayoutApp && currentApp && currentPath.startsWith(`/${currentApp}`)) {
+      const subAppPath = currentPath.slice(`/${currentApp}`.length) || '/';
+      if (tab.path === subAppPath || tab.fullPath === currentPath) {
+        return true;
+      }
+    }
+    return false;
+  });
 });
 
 // 当前激活标签
@@ -387,6 +410,21 @@ function toRefresh() {
 // 回到当前应用首页
 function toHome() {
   const currentApp = getCurrentAppFromPath(route.path);
+  
+  // 关键：财务应用在生产环境子域名（finance.bellis.com.cn）时，首页应该回到子域名根路径
+  // 即 https://finance.bellis.com.cn/ ，而不是主域名的 /finance
+  if (currentApp === 'finance' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const isProductionSubdomain = hostname !== 'bellis.com.cn' && hostname.endsWith('bellis.com.cn');
+    
+    if (isProductionSubdomain) {
+      // 生产环境子域名：回到当前子域名根路径
+      window.location.href = `${protocol}//${hostname}/`;
+      return;
+    }
+  }
+  
   const appHomes: Record<string, string> = {
     system: '/', // 系统域首页
     admin: '/admin', // 管理域首页
@@ -550,7 +588,8 @@ watch(
   border-bottom: 1px solid var(--el-border-color-extra-light);
 
   &__op {
-    display: flex;
+    display: flex !important; // 使用 !important 确保优先级，防止被全局样式覆盖
+    flex-direction: row !important; // 明确指定横向排列，防止被全局样式覆盖
     align-items: center;
     list-style: none;
     margin: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响

@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportTableToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -55,8 +55,8 @@ const exportLoading = ref(false);
 // 统一导出/导入文件名
 const exportFilename = computed(() => t('menu.inventory.dataSource.bom'));
 
-// 提供导入文件名匹配配置（与导出文件名一致）
-provide(IMPORT_FILENAME_KEY, exportFilename);
+// 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
+// provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
 provide(IMPORT_FORBIDDEN_KEYWORDS_KEY, ['SysPro', 'BOM表', '(', ')', '（', '）']);
 
 // 左侧域列表使用物流域的仓位配置的 me 接口
@@ -278,9 +278,9 @@ const bomExportColumns = computed<TableColumn[]>(() => [
   { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty') },
 ]);
 
-// 直接导出（不打开弹窗）
+// 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
-  if (!wrappedBomService?.page) {
+  if (!service.system?.base?.bom?.export) {
     BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
     return;
   }
@@ -289,30 +289,57 @@ const handleExport = async () => {
 
   try {
     // 获取当前筛选参数
-    const params = {
-      ...tableGroupRef.value?.crudRef?.getParams?.() || {},
-      page: 1,
-      size: 999999,
-      isExport: true,
+    const params = tableGroupRef.value?.crudRef?.getParams?.() || {};
+    
+    // 获取当前选中的域 ID
+    const domainId = resolveSelectedDomainId();
+    
+    // 构建导出参数（与导入保持一致）
+    const exportParams = {
+      domainId,
+      keyword: params.keyword || {},
+      ...params,
     };
 
-    // 获取所有数据
-    const response = await wrappedBomService.page(params);
-    const exportData = response?.list || response?.data?.list || [];
-
-    // 执行导出（允许空表）
-    exportTableToExcel({
-      columns: bomExportColumns.value,
-      data: exportData,
-      filename: exportFilename.value,
+    // 调用后端导出接口，返回 JSON 数据
+    const response = await service.system.base.bom.export(exportParams);
+    
+    // 处理响应数据
+    let dataList: any[] = [];
+    if (response && typeof response === 'object') {
+      if ('data' in response && Array.isArray(response.data)) {
+        dataList = response.data;
+      } else if (Array.isArray(response)) {
+        dataList = response;
+      }
+    }
+    
+    // 准备导出数据（即使为空也生成 Excel，只有表头）
+    const exportColumns = bomExportColumns.value;
+    const header = exportColumns.map(col => col.label || col.prop);
+    const data = dataList && dataList.length > 0 
+      ? dataList.map(item => {
+          return exportColumns.map(col => {
+            const value = item[col.prop];
+            return value ?? '';
+          });
+        })
+      : []; // 空数据时，data 为空数组，只保留表头
+    
+    // 使用 exportJsonToExcel 生成并下载 Excel 文件
+    exportJsonToExcel({
+      header,
+      data,
+      filename: exportFilename.value || '物料构成',
       autoWidth: true,
       bookType: 'xlsx',
     });
-
+    
     BtcMessage.success(t('platform.common.export_success'));
-  } catch (error) {
+  } catch (error: any) {
     console.error('[InventoryBom] Export failed:', error);
-    BtcMessage.error(t('platform.common.export_failed'));
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
+    BtcMessage.error(errorMsg);
   } finally {
     exportLoading.value = false;
   }

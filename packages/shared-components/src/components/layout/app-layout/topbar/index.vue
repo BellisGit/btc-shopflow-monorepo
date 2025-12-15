@@ -89,8 +89,9 @@ import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
-import { getCurrentSubApp, isMainApp } from '@configs/unified-env-config';
+import { getCurrentSubApp } from '@configs/unified-env-config';
 import { getAppById } from '@configs/app-scanner';
+import { getIsMainAppFn } from '../utils';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
@@ -220,15 +221,32 @@ const handleLogoError = (event: Event) => {
   img.style.display = 'none';
 };
 
-// Logo URL - 通过全局函数获取或使用默认值
-const logoUrl = computed(() => {
+// Logo URL - 使用 ref 而不是 computed，避免响应式依赖导致频繁重新计算
+// 只在组件挂载时或应用切换时更新一次
+const logoUrl = ref<string>('/logo.png');
+
+// 更新 Logo URL 的函数（只在必要时调用）
+const updateLogoUrl = () => {
   const getLogoUrl = (window as any).__APP_GET_LOGO_URL__;
   if (getLogoUrl) {
-    return getLogoUrl();
+    try {
+      const url = getLogoUrl();
+      if (url && url !== logoUrl.value) {
+        logoUrl.value = url;
+      }
+    } catch (error) {
+      // 如果获取失败，使用默认值
+      if (logoUrl.value !== '/logo.png') {
+        logoUrl.value = '/logo.png';
+      }
+    }
+  } else {
+    // 如果没有提供函数，使用默认值
+    if (logoUrl.value !== '/logo.png') {
+      logoUrl.value = '/logo.png';
+    }
   }
-  // 默认值
-  return '/logo.png';
-});
+};
 
 // 浏览器信息
 const { browser } = useBrowser();
@@ -292,8 +310,11 @@ const logoTitle = computed(() => {
     void currentHostname.value;
     void route.path; // 也依赖路由路径
 
-    // 判断是否是主应用
-    const isMain = isMainApp();
+    // 判断是否是主应用（使用注入的函数，确保在 layout-app 环境下正确判断）
+    const isMainAppFn = getIsMainAppFn();
+    const isMain = isMainAppFn 
+      ? isMainAppFn(route.path, window.location.pathname, !(window as any).__POWERED_BY_QIANKUN__)
+      : false; // 如果没有注入函数，默认返回 false（子应用）
 
     if (isMain) {
       // 主应用：显示"拜里斯科技"
@@ -343,10 +364,8 @@ const updateLocation = () => {
   if (typeof window !== 'undefined') {
     currentPath.value = window.location.pathname;
     currentHostname.value = window.location.hostname;
-    // 强制更新 logoKey 以触发重新渲染
-    nextTick(() => {
-      logoKey.value++;
-    });
+    // 注意：不再更新 logoKey，避免 Logo 图片不断重新加载
+    // Logo URL 只在应用切换时更新（通过 updateLogoUrl）
   }
 };
 
@@ -359,11 +378,12 @@ watch(
   { immediate: true }
 );
 
-// 监听主题变化，强制更新 Logo 区域
+// 监听主题变化，强制更新 Logo 区域（但不更新 Logo URL，避免频繁请求）
 watch(
   () => [isDark?.value, menuThemeType?.value],
   () => {
     // 使用 nextTick 确保在 DOM 更新后强制重新渲染
+    // 注意：只更新 logoKey 以触发重新渲染，不更新 logoUrl，避免频繁请求
     nextTick(() => {
       logoKey.value++;
     });
@@ -493,6 +513,9 @@ const loadToolbarComponents = async () => {
 
 // 初始化工具栏组件和用户信息
 onMounted(async () => {
+  // 初始化 Logo URL（只调用一次）
+  updateLogoUrl();
+
   // 立即尝试加载工具栏组件
   await loadToolbarComponents();
 
@@ -515,10 +538,13 @@ onMounted(async () => {
     }
   }
 
-  // 监听应用切换事件，更新 Logo 标题
+  // 监听应用切换事件，更新 Logo 标题和 URL
   const emitter = (window as any).__APP_EMITTER__;
   if (emitter) {
-    emitter.on('app.switch', updateLocation);
+    emitter.on('app.switch', () => {
+      updateLocation();
+      updateLogoUrl(); // 应用切换时更新 Logo URL
+    });
   }
 
   // 监听浏览器历史记录变化（popstate 事件）

@@ -7,6 +7,93 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+/**
+ * 显示 Loading（如果尚未显示）
+ */
+function showLoading() {
+  try {
+    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    if (shouldShowLoading) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        loadingEl.style.setProperty('display', 'flex', 'important');
+        loadingEl.style.setProperty('visibility', 'visible', 'important');
+        loadingEl.style.setProperty('opacity', '1', 'important');
+        loadingEl.classList.remove('is-hide');
+      }
+    }
+  } catch (e) {
+    // 静默失败
+  }
+}
+
+/**
+ * 获取当前子应用的 appId
+ */
+function getCurrentAppId(): string {
+  const hostname = window.location.hostname;
+  const subdomainMap: Record<string, string> = {
+    'admin.bellis.com.cn': 'admin',
+    'logistics.bellis.com.cn': 'logistics',
+    'engineering.bellis.com.cn': 'engineering',
+    'quality.bellis.com.cn': 'quality',
+    'production.bellis.com.cn': 'production',
+    'finance.bellis.com.cn': 'finance',
+    'monitor.bellis.com.cn': 'monitor',
+  };
+  if (subdomainMap[hostname]) {
+    return subdomainMap[hostname];
+  }
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/logistics')) return 'logistics';
+  if (pathname.startsWith('/engineering')) return 'engineering';
+  if (pathname.startsWith('/quality')) return 'quality';
+  if (pathname.startsWith('/production')) return 'production';
+  if (pathname.startsWith('/finance')) return 'finance';
+  if (pathname.startsWith('/monitor')) return 'monitor';
+  return 'monitor';
+}
+
+/**
+ * 在加载 layout-app 之前，从 manifest 注入当前子应用的配置
+ */
+async function injectAppConfigFromManifest(appId: string) {
+  try {
+    const [
+      { registerManifestMenusForApp, resolveAppLogoUrl, registerAppEnvAccessors },
+      { getMenuRegistry },
+      { getManifest }
+    ] = await Promise.all([
+      import('@configs/layout-bridge'),
+      import('@btc/shared-components/store/menuRegistry'),
+      import('@btc/subapp-manifests')
+    ]);
+    let registry = getMenuRegistry();
+    if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+      (window as any).__BTC_MENU_REGISTRY__ = registry;
+    } else if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
+      registry = (window as any).__BTC_MENU_REGISTRY__;
+    }
+    registerAppEnvAccessors();
+    (window as any).__REGISTER_MENUS_FOR_APP__ = registerManifestMenusForApp;
+    registerManifestMenusForApp(appId);
+    (window as any).__APP_GET_LOGO_URL__ = resolveAppLogoUrl;
+    const manifest = getManifest(appId);
+    if (manifest && manifest.name) {
+      (window as any).__CURRENT_APP_MANIFEST__ = manifest;
+    }
+    if (import.meta.env.DEV) {
+      console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
+        hasMenus: registry?.value?.[appId]?.length > 0,
+        hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
+      });
+    }
+  } catch (error) {
+    console.warn(`[initLayoutApp] 从 manifest 注入配置失败:`, error);
+  }
+}
+
 export async function initLayoutApp() {
   if (window.__POWERED_BY_QIANKUN__) {
     return;
@@ -23,8 +110,9 @@ export async function initLayoutApp() {
   }
   (window as any)[LOADER_FLAG] = true;
 
-  // 关键：先不设置 __USE_LAYOUT_APP__ 标志，只在成功加载后再设置
-  // 这样如果加载失败，子应用可以立即回退到独立渲染模式
+  showLoading();
+  const currentAppId = getCurrentAppId();
+  await injectAppConfigFromManifest(currentAppId);
 
   try {
     const [qiankun, { loadLayoutApp }] = await Promise.all([
@@ -32,14 +120,11 @@ export async function initLayoutApp() {
       import('@btc/shared-utils/qiankun/load-layout-app')
     ]);
 
-    // 加载 layout-app（包括挂载到 DOM）
     await loadLayoutApp({
       registerMicroApps: qiankun.registerMicroApps,
       start: qiankun.start
     });
 
-    // 关键：只有在成功加载并挂载后才设置标志
-    // 此时 layout-app 已经挂载，子应用不需要独立渲染
     (window as any).__USE_LAYOUT_APP__ = true;
   } catch (error) {
     // 任何错误都要清除标志，确保子应用可以独立渲染

@@ -115,6 +115,12 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
     // 设置标志，告诉 layout-app 它应该挂载到 #app
     (window as any).__LAYOUT_APP_MOUNT_TARGET__ = '#app';
+    // 关键：设置 __IS_LAYOUT_APP__ 标志，让 AppLayout 知道这是 layout-app 自己运行
+    // 这样 AppLayout 就会显示 sidebar 和 topbar（而不是隐藏它们）
+    (window as any).__IS_LAYOUT_APP__ = true;
+    // 关键：设置 __USE_LAYOUT_APP__ 标志，让子应用知道正在使用 layout-app
+    // 这样子应用就不会渲染自己的 AppLayout，而是直接渲染页面内容
+    (window as any).__USE_LAYOUT_APP__ = true;
 
     // 从 HTML 中获取所有 script 标签（包括 vendor、echarts-vendor 等依赖）
     // 这样可以确保所有依赖的 chunk 都在入口文件之前加载完成，避免模块初始化顺序问题
@@ -579,6 +585,9 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             mode: 'cors',
             credentials: 'omit',
             cache: 'no-store', // 禁用缓存，确保获取最新版本
+            }).catch(() => {
+              // manifest.json 不存在时静默失败，不影响应用加载
+              return { ok: false } as Response;
           });
 
           if (manifestResponse.ok) {
@@ -679,6 +688,9 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           mode: 'cors',
           credentials: 'omit',
           cache: 'no-store', // 禁用缓存，确保获取最新版本
+        }).catch(() => {
+          // manifest.json 不存在时静默失败，不影响应用加载
+          return { ok: false } as Response;
         });
 
         if (manifestResponse.ok) {

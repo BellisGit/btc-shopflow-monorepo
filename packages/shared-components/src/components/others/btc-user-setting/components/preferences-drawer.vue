@@ -1,5 +1,9 @@
 <template>
-  <teleport to="body">
+  <!--
+    关键：在微前端（qiankun）样式隔离场景下，Teleport 到 body 可能导致样式无法命中（选择器被自动加上容器作用域）。
+    因此优先挂载到 layout-app 根容器内，保证样式正常；不存在时再回退到 body。
+  -->
+  <teleport :to="teleportTarget">
     <transition name="preferences-slide">
       <section
         v-if="visible"
@@ -76,6 +80,7 @@ const visible = computed({
 });
 
 const drawerRef = ref<HTMLElement | null>(null);
+const teleportTarget = ref<string>('body');
 
 const closeDrawer = () => {
   visible.value = false;
@@ -101,6 +106,19 @@ const handleKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(() => {
+  // 关键：优先挂载到 layout-app 容器中，避免 qiankun 样式隔离导致样式丢失
+  try {
+    if (typeof document !== 'undefined') {
+      if (document.querySelector('#layout-app')) {
+        teleportTarget.value = '#layout-app';
+      } else if (document.querySelector('#app')) {
+        teleportTarget.value = '#app';
+      }
+    }
+  } catch {
+    teleportTarget.value = 'body';
+  }
+
   document.addEventListener('click', handleGlobalClick);
   document.addEventListener('keydown', handleKeydown);
 });

@@ -1,4 +1,4 @@
-import { type App } from 'vue';
+import { type App, h } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
 import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
@@ -37,25 +37,22 @@ import {
 const GLOBAL_ECHARTS_USE_FLAG = '__BTC_ECHARTS_USE_REGISTERED__';
 let localEchartsUseRegistered = false;
 
+/**
+ * 在微前端场景下，可能出现“上层应用设置过标记但没有正确注册 renderer”。
+ * 因此即使看到 flag，也要再尝试一次 use([...])，并用 try/catch 兜底。
+ */
 function registerEChartsOnce() {
-  // 关键：在 qiankun 沙箱里 window 可能是 proxy（各子应用各一份），
-  // 但如果 echarts/core 是共享单例，那么把 flag 挂到 use 函数上才能真正“全局只执行一次”。
   const useFnAny = use as any;
-  if (useFnAny && useFnAny[GLOBAL_ECHARTS_USE_FLAG]) {
-    return;
-  }
-
   const canUseWindow = typeof window !== 'undefined';
   const w = canUseWindow ? (window as any) : null;
 
-  if (w && w[GLOBAL_ECHARTS_USE_FLAG]) {
-    return;
-  }
-  if (!w && localEchartsUseRegistered) {
-    return;
-  }
+  const alreadyMarked =
+    localEchartsUseRegistered ||
+    (useFnAny && useFnAny[GLOBAL_ECHARTS_USE_FLAG]) ||
+    (w && w[GLOBAL_ECHARTS_USE_FLAG]);
 
   try {
+    // 即使已标记也再尝试注册一次，防止 renderer 未被真正注册导致 “Renderer 'undefined'”。
     use([
       CanvasRenderer,
       BarChart,
@@ -75,8 +72,7 @@ function registerEChartsOnce() {
     ]);
   } catch (error) {
     // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
-    // 仅输出警告，避免生产环境大量噪音
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV && !alreadyMarked) {
       console.warn('[admin-app][echarts] ECharts use() register failed (ignored):', error);
     }
   } finally {
@@ -93,8 +89,21 @@ export default {
 
     // 检查是否已经注册，避免重复注册
     if (!app.config.globalProperties.$_vueEchartsInstalled) {
+      // 创建一个包装组件，自动添加 renderer="canvas" 属性
+      // 这样可以确保在使用按需导入的 ECharts 时，始终有正确的 renderer
+      const VChartWrapper = {
+        name: 'VChartWrapper',
+        setup(props: any, { attrs, slots }: any) {
+          return () => h(VueECharts, {
+            ...attrs,
+            ...props,
+            renderer: attrs.renderer || props.renderer || 'canvas'
+          }, slots);
+        }
+      };
+      
       // 全局注册 v-chart 组件
-      app.component('v-chart', VueECharts);
+      app.component('v-chart', VChartWrapper);
       app.config.globalProperties.$_vueEchartsInstalled = true;
 
       // 在应用启动后注册自定义主题，确保 CSS 变量已经正确设置

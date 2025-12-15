@@ -203,10 +203,12 @@ const pageRoutes: RouteRecordRaw[] = [
 /**
  * 获取路由配置
  * - qiankun 模式：返回页面路由和公开路由（登录页等，由主应用提供 Layout）
+ * - layout-app 模式：返回页面路由和公开路由（由 layout-app 提供 Layout）
  * - 独立运行时：使用 AppLayout 包裹所有路由（与财务域保持一致）
  */
 export const getAdminRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   
   // 公开路由（登录页、忘记密码页、注册页）- 不需要 Layout
   const publicRoutes: RouteRecordRaw[] = [
@@ -241,6 +243,14 @@ export const getAdminRoutes = (): RouteRecordRaw[] => {
       }
     },
   ];
+  
+  // 如果使用 layout-app，直接返回页面路由和公开路由（layout-app 会提供布局）
+  if (isUsingLayoutApp) {
+    return [
+      ...publicRoutes, // 公开路由放在最前面
+      ...pageRoutes, // 业务路由
+    ];
+  }
   
   if (isStandalone) {
     // 独立运行时：使用 AppLayout 包裹所有路由

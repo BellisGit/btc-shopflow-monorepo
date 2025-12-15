@@ -40,7 +40,7 @@
           <el-option label="全部" value="" />
           <el-option label="待开始" value="pending" />
           <el-option label="进行中" value="running" />
-          <el-option label="已暂停" value="paused" />
+          <el-option label="暂停中" value="paused" />
           <el-option label="已结束" value="completed" />
         </el-select>
       </div>

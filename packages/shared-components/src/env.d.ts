@@ -7,3 +7,15 @@ declare module '*.vue' {
   export default component;
 }
 
+declare global {
+  interface Window {
+    __USE_LAYOUT_APP__?: boolean;
+    __IS_LAYOUT_APP__?: boolean;
+    __MENU_TYPE_DEBUG_LOGGED__?: boolean;
+    __SIDEBAR_DEBUG_LOGGED__?: boolean;
+    __LAYOUT_APP_DEBUG_LOGGED__?: boolean;
+    __SIDEBAR_NOT_RENDERED_LOGGED__?: boolean;
+    __APP_EMITTER__?: any;
+  }
+}
+

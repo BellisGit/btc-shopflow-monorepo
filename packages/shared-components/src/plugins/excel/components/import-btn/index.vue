@@ -692,19 +692,21 @@ function onUpload(raw: File, _: any, { next }: any) {
     table.header = importableColumns.value.map((col: any) => col.label || col.prop);
 
     // 分析文件名匹配度并给出建议
-    const fileNameAnalysis = analyzeFileNameMatch(raw.name);
-    if (fileNameAnalysis && fileNameAnalysis.matchScore < 60) {
-      // 显示文件名建议
-      setTimeout(() => {
-        BtcMessage.warning(
-          `文件名"${fileNameAnalysis.fileName}"与当前实体"${fileNameAnalysis.entityName}"匹配度较低。\n${fileNameAnalysis.suggestions.join('\n')}`,
-          {
-            duration: 6000,
-            showClose: true
-          }
-        );
-      }, 1000);
-    }
+    // 注意：不显示文件名匹配度警告，允许使用任意文件名（只要不包含禁止关键词）
+    // 如果需要文件名匹配，应该使用 crud/btc-import-btn 组件，它支持 IMPORT_FILENAME_KEY
+    // const fileNameAnalysis = analyzeFileNameMatch(raw.name);
+    // if (fileNameAnalysis && fileNameAnalysis.matchScore < 60) {
+    //   // 显示文件名建议
+    //   setTimeout(() => {
+    //     BtcMessage.warning(
+    //       `文件名"${fileNameAnalysis.fileName}"与当前实体"${fileNameAnalysis.entityName}"匹配度较低。\n${fileNameAnalysis.suggestions.join('\n')}`,
+    //       {
+    //         duration: 6000,
+    //         showClose: true
+    //       }
+    //     );
+    //   }, 1000);
+    // }
 
     emit('change', validatedData);
 

@@ -36,18 +36,28 @@
     <div class="app-layout__body">
       <!-- 关键：在 layout-app 环境下，隐藏子应用自己的侧边栏 -->
       <!-- 左侧边栏（左侧菜单、双栏菜单左侧、混合菜单左侧） -->
+      <!-- 调试信息：在开发环境或首次渲染时显示 -->
+      <template v-if="isDev && (!isUsingLayoutApp || !shouldShowSidebar)">
+        <div style="position: fixed; top: 0; left: 0; z-index: 9999; background: yellow; padding: 10px; font-size: 12px;">
+          <div>isUsingLayoutApp: {{ isUsingLayoutApp }}</div>
+          <div>shouldShowSidebar: {{ shouldShowSidebar }}</div>
+          <div>menuType: {{ menuType?.value }}</div>
+          <div>__USE_LAYOUT_APP__: {{ useLayoutAppFlag }}</div>
+          <div>__IS_LAYOUT_APP__: {{ isLayoutAppFlag }}</div>
+        </div>
+      </template>
       <div
         v-if="!isUsingLayoutApp && shouldShowSidebar"
         class="app-layout__sidebar"
         :class="{ 'has-dark-menu': isDarkMenuStyle }"
       >
         <Sidebar
-          v-if="menuType?.value === 'left'"
+          v-if="currentMenuType === 'left'"
           :is-collapse="isCollapse"
           :drawer-visible="drawerVisible"
         />
-        <DualMenu v-else-if="menuType?.value === 'dual-menu'" />
-        <TopLeftSidebar v-else-if="menuType?.value === 'top-left'" />
+        <DualMenu v-else-if="currentMenuType === 'dual-menu'" />
+        <TopLeftSidebar v-else-if="currentMenuType === 'top-left'" />
       </div>
 
       <!-- 右侧内容 -->
@@ -121,7 +131,7 @@ import mitt from '@btc/shared-components/utils/mitt';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
+import { MenuThemeEnum, MenuTypeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
 import { getIsMainAppFn } from './utils';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
@@ -134,6 +144,14 @@ import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
 import { provideContentHeight } from '@btc/shared-components/composables/content-height';
+
+// 开发环境标志（在模板中使用）
+const isDev = import.meta.env.DEV;
+
+// Window 对象引用（在模板中使用）
+const windowObj = typeof window !== 'undefined' ? (window as any) : null;
+const useLayoutAppFlag = windowObj ? windowObj.__USE_LAYOUT_APP__ : false;
+const isLayoutAppFlag = windowObj ? windowObj.__IS_LAYOUT_APP__ : false;
 
 // 创建事件总线
 // 关键：如果全局事件总线已存在（由 layout-app 初始化时创建），则使用它；否则创建新的
@@ -179,65 +197,100 @@ let menuType: any;
 let menuThemeType: any;
 let isDark: any;
 
+// 关键：先初始化 menuType 为默认值，确保始终有值
+menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
+
 try {
   const settingsState = useSettingsState();
   showCrumbs = settingsState.showCrumbs;
   pageTransition = settingsState.pageTransition;
+  // 关键：如果 settingsState.menuType 存在且有效，使用它；否则保持默认值
+  if (settingsState.menuType) {
+    const validMenuTypes = [MenuTypeEnum.LEFT, MenuTypeEnum.TOP, MenuTypeEnum.TOP_LEFT, MenuTypeEnum.DUAL_MENU];
+    const menuTypeValue = settingsState.menuType?.value;
+    if (menuTypeValue && validMenuTypes.includes(menuTypeValue)) {
   menuType = settingsState.menuType;
+    } else {
+      // 如果值无效，更新为 MenuTypeEnum.LEFT
+      if (typeof settingsState.menuType.value !== 'undefined') {
+        settingsState.menuType.value = MenuTypeEnum.LEFT;
+        menuType = settingsState.menuType;
+    }
+      // 否则保持使用默认的 ref(MenuTypeEnum.LEFT)
+  }
+  }
   menuThemeType = settingsState.menuThemeType;
   isDark = settingsState.isDark;
-  
-  // 关键：如果 menuType 为空或未定义，设置默认值为 'left'
-  // 检查 menuType.value 是否为有效值（'left', 'top', 'top-left', 'dual-menu'）
-  const validMenuTypes = ['left', 'top', 'top-left', 'dual-menu'];
-  const menuTypeValue = menuType?.value;
-  // 检查：menuType 不存在、值为空字符串、null、undefined，或者不在有效值列表中
-  if (!menuType || !menuTypeValue || menuTypeValue === '' || !validMenuTypes.includes(String(menuTypeValue))) {
-    // 如果 menuType 存在但值无效，直接修改其值；否则创建新的 ref
-    if (menuType && typeof menuType.value !== 'undefined') {
-      menuType.value = 'left';
-    } else {
-      menuType = ref('left');
-    }
-  }
 } catch (error) {
   // 使用默认值
+  console.warn('[AppLayout] useSettingsState 初始化失败，使用默认值', error);
   showCrumbs = ref(true);
   pageTransition = ref('fade');
-  menuType = ref('left');
+  // menuType 已经在上面初始化为 ref('left')，不需要重新赋值
   menuThemeType = ref(null);
   isDark = ref(false);
 }
 
 // 防御性检查：确保 menuType 始终有有效值
 if (!menuType) {
-  menuType = ref('left');
+  menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
 } else {
   const menuTypeValue = menuType.value;
-  const validMenuTypes = ['left', 'top', 'top-left', 'dual-menu'];
-  // 如果值是空字符串、null、undefined 或不在有效值列表中，设置为 'left'
-  if (!menuTypeValue || menuTypeValue === '' || !validMenuTypes.includes(String(menuTypeValue))) {
-    menuType.value = 'left';
+  const validMenuTypes = [MenuTypeEnum.LEFT, MenuTypeEnum.TOP, MenuTypeEnum.TOP_LEFT, MenuTypeEnum.DUAL_MENU];
+  // 如果值不在有效值列表中，设置为 MenuTypeEnum.LEFT
+  if (!menuTypeValue || !validMenuTypes.includes(menuTypeValue)) {
+    menuType.value = MenuTypeEnum.LEFT;
   }
 }
 
-// 计算属性：判断是否应该显示侧边栏（使用计算属性确保响应式）
-const shouldShowSidebar = computed(() => {
+// 最终验证：确保 menuType 是一个有效的 ref
+if (typeof menuType.value === 'undefined') {
+  console.error('[AppLayout] menuType 最终验证失败，强制设置为 ref(MenuTypeEnum.LEFT)');
+  menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
+}
+
+// 计算属性：获取当前菜单类型（简化模板访问）
+const currentMenuType = computed(() => {
   const mt = menuType?.value;
-  // 如果 menuType.value 为空，强制使用 'left'
-  const finalMenuType = (!mt || mt === '' || mt === null || mt === undefined) ? 'left' : mt;
-  const valid = finalMenuType === 'left' || finalMenuType === 'dual-menu' || finalMenuType === 'top-left';
-  if (!valid) {
-    console.warn('[AppLayout] shouldShowSidebar: menuType 无效，强制设置为 left', {
-      '原始值': mt,
-      '最终值': finalMenuType
+  return mt || 'left';
+});
+
+const VALID_MENU_TYPES = [
+  MenuTypeEnum.LEFT,
+  MenuTypeEnum.TOP,
+  MenuTypeEnum.TOP_LEFT,
+  MenuTypeEnum.DUAL_MENU,
+] as const;
+
+// 关键：menuType 的值校验/兜底放到 watch 中，避免 computed 中“写状态”导致抖动与不可预期联动
+watch(
+  () => menuType?.value,
+  (val) => {
+    if (!menuType) return;
+    if (!val || !VALID_MENU_TYPES.includes(val as any)) {
+      menuType.value = MenuTypeEnum.LEFT;
+    }
+  },
+  { immediate: true },
+);
+
+// 计算属性：判断是否应该显示侧边栏（纯函数，无副作用）
+// - left / dual-menu / top-left：有侧边栏
+// - top：无侧边栏（顶部菜单在 Topbar 内渲染）
+const shouldShowSidebar = computed(() => {
+  const mt = currentMenuType.value;
+  const result = mt === 'left' || mt === 'dual-menu' || mt === 'top-left';
+  if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__SIDEBAR_DEBUG_LOGGED__)) {
+    console.log('[AppLayout] shouldShowSidebar 计算结果:', {
+      menuType: mt,
+      result,
+      isUsingLayoutApp: isUsingLayoutApp.value,
     });
-    // 如果 menuType 存在但值无效，更新它
-    if (menuType) {
-      menuType.value = 'left';
+    if (typeof window !== 'undefined') {
+      (window as any).__SIDEBAR_DEBUG_LOGGED__ = true;
     }
   }
-  return valid || finalMenuType === 'left';
+  return result;
 });
 
 // 判断是否为深色菜单风格
@@ -268,8 +321,14 @@ const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 // 但是，如果当前是 layout-app 自己运行，应该返回 false（因为 layout-app 需要渲染自己的 Topbar/MenuDrawer）
 const isUsingLayoutApp = computed(() => {
   // 如果当前是 layout-app 自己，返回 false
-  const isLayoutAppSelf = !!(window as any).__IS_LAYOUT_APP__;
+  const isLayoutAppSelf = typeof window !== 'undefined' ? !!(window as any).__IS_LAYOUT_APP__ : false;
   if (isLayoutAppSelf) {
+    if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_APP_DEBUG_LOGGED__)) {
+      console.log('[AppLayout] isUsingLayoutApp: 检测到 layout-app 自己运行，返回 false');
+      if (typeof window !== 'undefined') {
+        (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
+      }
+    }
     return false;
   }
   // 检查 hostname 是否是 layout-app 的域名
@@ -281,10 +340,27 @@ const isUsingLayoutApp = computed(() => {
     // 开发环境：localhost:4188
     if (hostname === 'layout.bellis.com.cn' || 
         (hostname === 'localhost' && (port === '4192' || port === '4188'))) {
+      if (import.meta.env.DEV || !(window as any).__LAYOUT_APP_DEBUG_LOGGED__) {
+        console.log('[AppLayout] isUsingLayoutApp: 检测到 layout-app 域名，返回 false', { hostname, port });
+        (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
+      }
       return false; // layout-app 自己运行时，不应该隐藏 Topbar/MenuDrawer
     }
   }
-  return !!(window as any).__USE_LAYOUT_APP__;
+  const useLayoutApp = typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false;
+  if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_APP_DEBUG_LOGGED__)) {
+    console.log('[AppLayout] isUsingLayoutApp: 检查结果', {
+      __USE_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__USE_LAYOUT_APP__ : undefined,
+      __IS_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__IS_LAYOUT_APP__ : undefined,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+      port: typeof window !== 'undefined' ? window.location.port : '',
+      result: useLayoutApp
+    });
+    if (typeof window !== 'undefined') {
+      (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
+    }
+  }
+  return useLayoutApp;
 });
 const isMainApp = computed(() => {
   const fn = getIsMainAppFn();
@@ -523,6 +599,43 @@ onMounted(() => {
     }
   });
   window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
+  // 关键：偏好设置（子应用环境）切换菜单布局/菜单风格时，需要让 layout-app 立即响应
+  // useSettingsHandlers 会派发 window 事件，这里作为兜底消费，避免“写入了 settings，但左侧菜单不切换”
+  const handleMenuLayoutChange = ((event: Event) => {
+    try {
+      const custom = event as CustomEvent<{ layout?: MenuTypeEnum }>;
+      const nextLayout = custom.detail?.layout;
+      if (!nextLayout) return;
+      const validMenuTypes = [MenuTypeEnum.LEFT, MenuTypeEnum.TOP, MenuTypeEnum.TOP_LEFT, MenuTypeEnum.DUAL_MENU];
+      if (!validMenuTypes.includes(nextLayout)) return;
+      if (menuType?.value !== nextLayout) {
+        menuType.value = nextLayout;
+        scheduleContentResize();
+      }
+    } catch {
+      // 静默失败
+    }
+  }) as EventListener;
+
+  const handleMenuStyleChange = ((event: Event) => {
+    try {
+      const custom = event as CustomEvent<{ style?: MenuThemeEnum }>;
+      const nextStyle = custom.detail?.style;
+      if (!nextStyle) return;
+      if (menuThemeType?.value !== nextStyle) {
+        menuThemeType.value = nextStyle;
+      }
+    } catch {
+      // 静默失败
+    }
+  }) as EventListener;
+
+  window.addEventListener('menu-layout-change', handleMenuLayoutChange);
+  window.addEventListener('menu-style-change', handleMenuStyleChange);
+
+  // 保存引用，卸载时移除
+  (window as any).__BTC_APP_LAYOUT_MENU_LAYOUT_CHANGE__ = handleMenuLayoutChange;
+  (window as any).__BTC_APP_LAYOUT_MENU_STYLE_CHANGE__ = handleMenuStyleChange;
   // 关键：监听全局偏好设置抽屉打开事件（用于跨应用通信）
   window.addEventListener('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
@@ -547,6 +660,29 @@ onMounted(() => {
 
   // 初始化 MutationObserver
   setupMutationObserver();
+
+  // 监听 sidebar 渲染状态，输出调试信息（构建产物中也输出）
+  watch(
+    [() => isUsingLayoutApp.value, () => shouldShowSidebar.value, () => menuType?.value],
+    ([isUsing, shouldShow, menuTypeValue]) => {
+      const shouldRender = !isUsing && shouldShow;
+      if (!shouldRender && typeof window !== 'undefined' && !(window as any).__SIDEBAR_NOT_RENDERED_LOGGED__) {
+        console.warn('[AppLayout] Sidebar 未渲染', {
+          isUsingLayoutApp: isUsing,
+          shouldShowSidebar: shouldShow,
+          menuType: menuTypeValue,
+          __USE_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__USE_LAYOUT_APP__ : undefined,
+          __IS_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__IS_LAYOUT_APP__ : undefined,
+          hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+          port: typeof window !== 'undefined' ? window.location.port : ''
+        });
+        if (typeof window !== 'undefined') {
+          (window as any).__SIDEBAR_NOT_RENDERED_LOGGED__ = true;
+        }
+      }
+    },
+    { immediate: true }
+  );
 
   // 初始化 prevIsMainApp
   prevIsMainApp.value = isMainApp.value;
@@ -575,6 +711,17 @@ onUnmounted(() => {
   window.removeEventListener('open-preferences-drawer', () => {});
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
   window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
+  // 清理偏好设置事件监听
+  const menuLayoutListener = (window as any).__BTC_APP_LAYOUT_MENU_LAYOUT_CHANGE__;
+  const menuStyleListener = (window as any).__BTC_APP_LAYOUT_MENU_STYLE_CHANGE__;
+  if (menuLayoutListener) {
+    window.removeEventListener('menu-layout-change', menuLayoutListener);
+    delete (window as any).__BTC_APP_LAYOUT_MENU_LAYOUT_CHANGE__;
+  }
+  if (menuStyleListener) {
+    window.removeEventListener('menu-style-change', menuStyleListener);
+    delete (window as any).__BTC_APP_LAYOUT_MENU_STYLE_CHANGE__;
+  }
 
   // 清理 MutationObserver
   if (qiankunLoadingObserver) {

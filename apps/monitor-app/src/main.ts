@@ -70,7 +70,9 @@ const ensureLeadingSlash = (value: string) => (value.startsWith('/') ? value : `
 const normalizeToHostPath = (relativeFullPath: string) => {
   const normalizedRelative = relativeFullPath === '' ? '/' : ensureLeadingSlash(relativeFullPath);
 
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要处理路径
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return normalizedRelative;
   }
 
@@ -124,9 +126,54 @@ const deriveInitialSubRoute = () => {
   return `${ensureLeadingSlash(suffix)}${search}${hash}`;
 };
 
+/**
+ * 移除 Loading 元素
+ */
+function removeLoadingElement() {
+  const loadingEl = document.getElementById('Loading');
+  if (loadingEl) {
+    // 立即隐藏（使用内联样式确保优先级）
+    loadingEl.style.setProperty('display', 'none', 'important');
+    loadingEl.style.setProperty('visibility', 'hidden', 'important');
+    loadingEl.style.setProperty('opacity', '0', 'important');
+    loadingEl.style.setProperty('pointer-events', 'none', 'important');
+
+    // 添加淡出类（如果 CSS 中有定义）
+    loadingEl.classList.add('is-hide');
+
+    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
+    setTimeout(() => {
+      try {
+        if (loadingEl.parentNode) {
+          loadingEl.parentNode.removeChild(loadingEl);
+        } else if (loadingEl.isConnected) {
+          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
+          loadingEl.remove();
+        }
+      } catch (error) {
+        // 如果移除失败，至少确保元素被隐藏
+        loadingEl.style.setProperty('display', 'none', 'important');
+      }
+    }, 350);
+  }
+}
+
+/**
+ * 清理导航标记
+ */
+function clearNavigationFlag() {
+  try {
+    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+  } catch (e) {
+    // 静默失败（某些浏览器可能禁用 sessionStorage）
+  }
+}
+
 // 从主机路径提取子路由
 const extractHostSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要提取主机路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return '/';
   }
 
@@ -136,8 +183,8 @@ const extractHostSubRoute = () => {
 
   const { pathname, search, hash } = window.location;
 
-  // 在生产环境子域名下，路径直接使用（不带 /monitor 前缀）
-  if (isProductionSubdomain) {
+  // 在生产环境子域名下或使用 layout-app，路径直接使用（不带 /monitor 前缀）
+  if (isProductionSubdomain || isUsingLayoutApp) {
     return `${pathname || '/'}${search}${hash}`;
   }
 
@@ -152,7 +199,9 @@ const extractHostSubRoute = () => {
 
 // 同步子应用路由到主机路由
 const syncHostWithSubRoute = (fullPath: string) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__ || syncingFromHost) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if ((!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) || syncingFromHost) {
     return;
   }
 
@@ -170,7 +219,9 @@ const syncHostWithSubRoute = (fullPath: string) => {
 
 // 同步主机路由到子应用路由
 const syncSubRouteWithHost = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__ || !router) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if ((!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) || !router) {
     return;
   }
 
@@ -277,7 +328,9 @@ const setupRouteSync = () => {
 
 // 设置主机路由监听
 const setupHostLocationBridge = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -495,6 +548,10 @@ async function mount(_props: QiankunProps = {}) {
   });
 
   app.mount(container);
+  
+  // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+  removeLoadingElement();
+  clearNavigationFlag();
 
   // 路由初始化：在 qiankun 模式下或使用 layout-app 时提前初始化路由，与 admin-app 保持一致
   // 如果使用了 layout-app（通过 __USE_LAYOUT_APP__ 标志），也需要初始化路由

@@ -1191,6 +1191,59 @@ ul.topbar__left {
   }
 }
 
+// =========================
+// 通知/消息图标：呼吸灯（全局）
+// =========================
+// 说明：
+// - 之前该样式仅存在于 system-app/admin-app 的 global.scss，其他子应用（layout-app 模式）不会加载，导致生产环境不生效
+// - 这里下沉到 shared-components 全局样式，保证所有应用一致生效
+.btc-icon-button--breath {
+  --btc-breath-color: var(--el-color-primary);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--btc-breath-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 30%, transparent);
+    animation: btc-breathe 1.5s ease-in-out infinite;
+  }
+}
+
+// 通知：红色常亮（warning 命名沿用历史）
+.btc-icon-button--breath--warning::after {
+  --btc-breath-color: var(--el-color-danger);
+  animation: none;
+  opacity: 1;
+  transform: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btc-breath-color) 35%, transparent);
+}
+
+// 消息：绿色呼吸
+.btc-icon-button--breath--success::after {
+  --btc-breath-color: var(--el-color-success);
+}
+
+@keyframes btc-breathe {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
 // 覆盖 Element Plus Drawer 的默认 padding
 .el-drawer__body {
 	padding: 0 !important;
@@ -1228,5 +1281,22 @@ ul.topbar__left {
 	display: flex;
 	align-items: center;
 	gap: 10px; // 两个按钮之间的间距，与顶栏插件间距保持一致
+}
+
+// =========================
+// Sidebar Menu（避免右侧双边框）
+// =========================
+// 侧边栏容器本身已经有 border-right 作为分割线（.app-layout__sidebar）
+// Element Plus 的 el-menu 默认也会带 border-right，二者叠加会看起来像“多了一条右侧边框线”
+.app-layout__sidebar {
+  .el-menu {
+    border-right: none !important;
+  }
+  .el-menu--vertical {
+    border-right: none !important;
+  }
+  .sidebar__menu {
+    border-right: none !important;
+  }
 }
 

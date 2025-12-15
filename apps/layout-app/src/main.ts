@@ -39,23 +39,49 @@ registerAppEnvAccessors();
 (window as any).__IS_LAYOUT_APP__ = true;
 
 // 关键：注入 isMainApp 函数到 shared-components，确保在子域名直达时 #subapp-viewport 可见
-// 注意：这里必须使用“静态导入 + 同步注入”，避免嵌入到子应用域名时动态 chunk 路径解析失败导致注入不生效。
+// 注意：这里必须使用"静态导入 + 同步注入"，避免嵌入到子应用域名时动态 chunk 路径解析失败导致注入不生效。
 const layoutIsMainApp = (
   routePath?: string,
   locationPath?: string,
   isStandalone?: boolean,
 ): boolean => {
-  // 生产环境：如果 hostname 匹配某个子应用的 subdomain，强制返回 false
-  if (import.meta.env.PROD && typeof window !== 'undefined') {
+  // 关键：如果 hostname 匹配某个子应用的 subdomain，强制返回 false（生产环境和预览环境都需要检查）
+  // 在生产环境中，通过子域名访问时路径是 /，必须通过子域名识别
+  if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const appBySubdomain = getAppBySubdomain(hostname);
     if (appBySubdomain && appBySubdomain.type === 'sub') {
+      // 是子应用的子域名，返回 false（不是主应用）
+      if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__)) {
+        console.log('[layout-app] layoutIsMainApp: 检测到子应用子域名，返回 false', {
+          hostname,
+          appId: appBySubdomain.id,
+          appType: appBySubdomain.type,
+          routePath,
+          locationPath
+        });
+        if (typeof window !== 'undefined') {
+          (window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__ = true;
+        }
+      }
       return false;
     }
   }
 
   // 其他情况使用统一的 isMainApp 判断逻辑
-  return unifiedIsMainApp(routePath, locationPath, isStandalone);
+  const result = unifiedIsMainApp(routePath, locationPath, isStandalone);
+  if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__)) {
+    console.log('[layout-app] layoutIsMainApp: 使用统一判断逻辑', {
+      routePath,
+      locationPath,
+      isStandalone,
+      result
+    });
+    if (typeof window !== 'undefined') {
+      (window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__ = true;
+    }
+  }
+  return result;
 };
 setIsMainAppFn(layoutIsMainApp);
 
@@ -67,6 +93,11 @@ setIsMainAppFn(layoutIsMainApp);
  * 3. hostname 匹配某个子应用的 subdomain（如 finance.bellis.com.cn）
  */
 function isEmbeddedBySubApp(): boolean {
+  // 最高优先级：子应用显式声明嵌入模式（由各子应用的 initLayoutApp 设置）
+  if (typeof window !== 'undefined' && (window as any).__BTC_LAYOUT_APP_EMBEDDED_BY_SUBAPP__) {
+    return true;
+  }
+
   const mountTarget = (window as any).__LAYOUT_APP_MOUNT_TARGET__;
 
   // 如果没有设置 mountTarget，说明是独立运行模式
@@ -192,8 +223,44 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
         }
       }
 
-      // Tab 和面包屑的更新由 AppLayout 组件通过菜单注册表和路由变化自动处理
-      // 这里只负责标题更新，确保 layout-app 作为壳应用时能正确显示子应用的标题
+      // 关键：更新 Tab 和面包屑（通过 Process Store）
+      // 动态导入避免循环依赖
+      (async () => {
+        try {
+          const { useProcessStore, getCurrentAppFromPath } = await import('@btc/shared-components');
+          const process = useProcessStore();
+          const app = getCurrentAppFromPath(detail.path);
+
+          // 如果是子应用首页，将该应用的所有标签设为未激活
+          if (detail.meta?.isHome === true) {
+            process.list.forEach((tab: any) => {
+              if (tab.app === app) {
+                tab.active = false;
+              }
+            });
+            return;
+          }
+
+          // 排除无效应用（main）和文档域（docs）
+          if (app === 'main' || app === 'docs') {
+            return;
+          }
+
+          // 添加标签到 Process Store
+          process.add({
+            path: detail.path,
+            fullPath: detail.fullPath,
+            name: detail.name,
+            meta: detail.meta,
+          });
+        } catch (error) {
+          // 静默失败，避免影响其他功能
+          if (import.meta.env.DEV) {
+            console.warn('[layout-app] 处理子应用路由变化事件失败:', error);
+          }
+        }
+      })();
+
       if (import.meta.env.DEV) {
         console.log('[layout-app] 收到子应用路由变化事件:', detail);
       }
@@ -205,36 +272,6 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     ensureDefaultSettings();
     initSettingsConfig();
     settingsInitialized = true;
-
-    // 关键：在 layout-app 初始化时立即创建菜单注册表，确保菜单注册表已存在
-    // 这样后续的菜单注册就能正确工作
-    // 使用异步导入，但在注册菜单之前确保注册表已初始化
-    import('@btc/shared-components').then((module) => {
-      try {
-        if (module.getMenuRegistry) {
-          // 关键：优先使用已存在的全局注册表，确保与子应用使用同一个实例
-          if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
-            // 使用已存在的全局注册表（可能由其他模块创建）
-            if (import.meta.env.DEV) {
-              console.log('[layout-app] 使用已存在的全局菜单注册表（早期初始化）');
-            }
-          } else {
-            // 如果全局不存在，创建新的并挂载到全局对象
-            const registry = module.getMenuRegistry();
-            if (typeof window !== 'undefined') {
-              (window as any).__BTC_MENU_REGISTRY__ = registry;
-            }
-            if (import.meta.env.DEV) {
-              console.log('[layout-app] 创建新的全局菜单注册表（早期初始化）');
-            }
-          }
-        }
-      } catch (error) {
-        // 静默失败
-      }
-    }).catch(() => {
-      // 静默失败
-    });
 
     // 将必要的对象暴露到全局，供 shared-components 使用
     (window as any).__APP_STORAGE__ = appStorage;
@@ -257,9 +294,11 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
       (window as any).__APP_GET_LOGO_URL__ = () => '';
     }
 
+    // 关键：在 layout-app 初始化时同步创建菜单注册表，确保菜单注册表在组件渲染前已存在
+    // 这样后续的菜单注册就能正确工作
     // 关键：layout-app 不应提前注册任何子应用菜单/Tab。
     // 菜单、Tab、面包屑等都由子应用在自身 bootstrap 时注册/派发事件提供。
-    // 这里仅确保菜单注册表存在（上面的 getMenuRegistry 初始化已完成）。
+    // 这里仅确保菜单注册表存在，必须在组件渲染前完成初始化
     await import('@btc/shared-components').then(async (module) => {
       try {
         if (module.getMenuRegistry) {
@@ -282,13 +321,20 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
             }
           }
 
-          void registry;
+          // 确保注册表已正确初始化
+          if (registry && registry.value) {
+            // 验证注册表结构
+            const keys = Object.keys(registry.value);
+            if (import.meta.env.DEV) {
+              console.log('[layout-app] 菜单注册表已初始化，应用列表:', keys);
+            }
+          }
         }
       } catch (error) {
-        // 静默失败
+        console.error('[layout-app] 菜单注册表初始化失败:', error);
       }
-    }).catch(() => {
-      // 静默失败
+    }).catch((error) => {
+      console.error('[layout-app] 菜单注册表初始化失败:', error);
     });
   }
   setupEps(appInstance);
@@ -956,9 +1002,28 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
 
     if (mountTarget) {
       // 子应用环境：挂载到指定的容器（通常是 #app）
+      // 关键：必须严格使用 mountTarget，不能回退到 #layout-container
+      // 如果 mountTarget 是 '#app'，必须挂载到 #app，即使 #layout-container 存在
       container = document.querySelector(mountTarget) as HTMLElement;
       if (!container) {
+        // 如果指定的容器不存在，尝试查找 #app（兜底）
         container = document.querySelector('#app') as HTMLElement;
+        if (container && import.meta.env.DEV) {
+          console.warn(`[layout-app] 挂载目标 ${mountTarget} 不存在，回退到 #app`);
+        }
+      }
+      // 关键：验证容器 ID，确保挂载位置正确
+      if (container && mountTarget === '#app' && container.id !== 'app') {
+        // 如果 mountTarget 是 '#app' 但找到的容器不是 #app，这是错误的
+        const correctContainer = document.querySelector('#app') as HTMLElement;
+        if (correctContainer && document.body.contains(correctContainer)) {
+          container = correctContainer;
+          if (import.meta.env.DEV) {
+            console.warn('[layout-app] 修正挂载容器：从错误的容器改为 #app');
+          }
+        } else {
+          throw new Error(`[layout-app] 挂载目标 ${mountTarget} 不存在，且无法找到 #app 容器`);
+        }
       }
     } else {
       // 独立运行环境：挂载到 #layout-container
@@ -980,6 +1045,8 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       } else if (import.meta.env.DEV) {
         console.log('[layout-app] 检测到嵌入模式（独立运行分支），跳过 qiankun 子应用注册');
       }
+    } else {
+      throw new Error('[layout-app] 无法找到挂载容器');
     }
   })();
 }

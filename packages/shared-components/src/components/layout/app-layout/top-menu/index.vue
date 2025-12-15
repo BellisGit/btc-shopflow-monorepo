@@ -21,7 +21,7 @@ defineOptions({
   name: 'LayoutTopMenu',
 });
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
@@ -40,6 +40,57 @@ const activeMenu = ref(route.path);
 // 获取当前应用的菜单项（从 menuRegistry 获取）
 const currentMenuItems = computed(() => {
   return getMenusForApp(currentApp.value);
+});
+
+// 关键：顶部菜单模式下 Sidebar/DynamicMenu 可能不挂载，不能依赖其 onMounted 去触发“菜单注册兜底”
+// 因此 TopMenu 自己也需要做一次 ensure，避免出现“布局切换为顶部/混合后顶部菜单为空”
+onMounted(() => {
+  let retrying = false;
+
+  const ensureMenusForCurrentApp = () => {
+    const app = currentApp.value;
+    const menus = getMenusForApp(app) || [];
+    if (menus.length > 0) return true;
+
+    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+    if (typeof registerMenusFn === 'function') {
+      try {
+        registerMenusFn(app);
+      } catch (_e) {
+        // 静默失败
+      }
+    }
+
+    // 如果仍为空，做一次轻量重试（最多 3 秒）
+    if (!retrying) {
+      retrying = true;
+      let retryCount = 0;
+      const maxRetries = 30;
+      const timer = window.setInterval(() => {
+        retryCount++;
+        const retryMenus = getMenusForApp(app) || [];
+        if (retryMenus.length > 0) {
+          window.clearInterval(timer);
+          retrying = false;
+        } else if (retryCount >= maxRetries) {
+          window.clearInterval(timer);
+          retrying = false;
+        }
+      }, 100);
+    }
+
+    return false;
+  };
+
+  ensureMenusForCurrentApp();
+
+  // 应用切换时也做一次 ensure（例如从系统域切到财务域）
+  watch(
+    () => currentApp.value,
+    () => {
+      ensureMenusForCurrentApp();
+    }
+  );
 });
 
 watch(

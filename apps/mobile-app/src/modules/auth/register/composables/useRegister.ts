@@ -2,13 +2,20 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { authApi, type RegisterRequest } from '@/services/auth';
+import { useAuthStore } from '@/stores/auth';
 
 /**
  * 注册相关逻辑
  */
+function extractTokenFromResponse(response: any): string | null {
+  if (!response) return null;
+  return response.access_token || response.accessToken || response.token || null;
+}
+
 export function useRegister() {
   const router = useRouter();
   const route = useRoute();
+  const authStore = useAuthStore();
   const loading = ref(false);
 
   /**
@@ -20,18 +27,37 @@ export function useRegister() {
     loading.value = true;
 
     try {
-      await authApi.register(data);
+      const registerResult = await authApi.register(data);
+
+      // 提取 token
+      const token = extractTokenFromResponse(registerResult);
+      if (token) {
+        // 保存 token 到 store
+        authStore.setToken(token);
+        authStore.setUser(registerResult.user || null);
+      }
 
       showToast({
         type: 'success',
         message: '注册成功',
-        duration: 2000,
+        duration: 1500,
       });
 
-      // 注册成功后跳转到登录页
-      setTimeout(() => {
-        router.push({ name: 'Login', query: route.query });
-      }, 1500);
+      // 注册成功后，跳转到授权页面
+      if (token) {
+        // 等待 toast 显示后再执行跳转
+        setTimeout(async () => {
+          await router.push({
+            name: 'PhoneAuthor',
+            query: route.query,
+          });
+        }, 1500);
+      } else {
+        // 没有 token，跳转到登录页
+        setTimeout(() => {
+          router.push({ name: 'Login', query: route.query });
+        }, 1500);
+      }
     } catch (error: any) {
       // 友好的错误提示
       let friendlyMessage = '注册失败，请稍后重试';

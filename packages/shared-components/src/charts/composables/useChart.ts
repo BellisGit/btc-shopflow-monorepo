@@ -101,10 +101,8 @@ export function useChart(
   // 检查容器是否准备好（有尺寸）
   const isContainerReady = ref(false);
 
-  // 标记容器已挂载（不强依赖尺寸）
-  // 在微前端/Tab 容器中，首次渲染时 getBoundingClientRect 可能长期为 0，
-  // 如果用“有尺寸”作为 v-if 条件，会导致 <v-chart> 永远不渲染（DOM 中只剩 <!--v-if-->）。
-  // 这里将“准备好”定义为：容器节点已存在且已挂载到 DOM；尺寸为 0 时仅延迟实例获取与 resize。
+  // 标记容器已挂载并且有尺寸
+  // 只有当容器已挂载且 width/height > 0 时，才让 <v-chart> 渲染，避免 ECharts 以 0 尺寸初始化报错
   const markContainerMounted = (): boolean => {
     if (!containerRef.value) {
       return false;
@@ -112,10 +110,11 @@ export function useChart(
     const el = containerRef.value;
     // isConnected 在现代浏览器可用；fallback 到 document.contains
     const mounted = (el as any).isConnected === true || document.body.contains(el);
-    if (mounted && !isContainerReady.value) {
+    const hasSize = checkContainerSize();
+    if (mounted && hasSize && !isContainerReady.value) {
       isContainerReady.value = true;
     }
-    return mounted;
+    return mounted && hasSize;
   };
   
   // 检查容器尺寸

@@ -7,6 +7,21 @@
 
 import { wrapServiceTree } from '../btc/service';
 
+function deepMergeObjects<T extends Record<string, any>>(base: T, patch: T): T {
+  if (!base) return patch;
+  if (!patch) return base;
+  const out: any = Array.isArray(base) ? [...base] : { ...base };
+  for (const k of Object.keys(patch)) {
+    const bv = (base as any)[k];
+    const pv = (patch as any)[k];
+    out[k] =
+      pv && typeof pv === 'object' && !Array.isArray(pv) && bv && typeof bv === 'object' && !Array.isArray(bv)
+        ? deepMergeObjects(bv, pv)
+        : (bv ?? pv);
+  }
+  return out as T;
+}
+
 /**
  * EPS 服务数据接口
  */
@@ -67,8 +82,22 @@ export function loadEpsService(epsModule?: any): { service: any; list: any[] } {
   // 优先使用全局共享的 EPS 服务（由 system-app 或 layout-app 提供）
   const globalService = getGlobalEpsService();
   
+  // 如果存在全局服务，但同时也有本地 epsModule，则做“补全合并”
+  // 目的：layout-app 提供的全局 EPS 可能不包含某些子应用模块（如 finance.base.financeResult），
+  // 这会导致子应用页面在 setup 阶段直接 throw 并空白。
+  if (globalService && epsModule) {
+    const local = createEpsService(epsModule);
+    const mergedService = deepMergeObjects(globalService, local.service);
+    if (typeof window !== 'undefined') {
+      // 回写到全局，供后续模块/组件复用（不覆盖已有节点，仅补全缺失）
+      (window as any).__APP_EPS_SERVICE__ = mergedService;
+      (window as any).service = mergedService;
+      (window as any).__BTC_SERVICE__ = mergedService;
+    }
+    return { service: mergedService, list: local.list };
+  }
+
   if (globalService) {
-    // 使用全局服务
     return {
       service: globalService,
       list: [], // 全局服务可能没有 list，保持兼容性

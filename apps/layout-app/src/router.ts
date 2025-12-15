@@ -51,16 +51,30 @@ let previousAppPrefix = getAppPrefix(window.location.pathname);
 router.afterEach((to) => {
   const currentAppPrefix = getAppPrefix(to.path);
   
-  // 只在跨应用切换时触发 qiankun 重新匹配
-  if (previousAppPrefix && previousAppPrefix !== currentAppPrefix) {
-    // 使用 nextTick 确保路由切换完成后再触发
+  // 关键：如果 layout-app 被子应用嵌入（__BTC_LAYOUT_APP_EMBEDDED_BY_SUBAPP__ 为 true），
+  // 每次路由变化都触发 popstate，让子应用能够同步路由并立即渲染内容
+  const isEmbeddedBySubApp = typeof window !== 'undefined' && !!(window as any).__BTC_LAYOUT_APP_EMBEDDED_BY_SUBAPP__;
+  
+  if (isEmbeddedBySubApp) {
+    // 嵌入模式：每次路由变化都触发 popstate，确保子应用能收到路由同步信号
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
-        // 触发 popstate 事件，让 qiankun 重新匹配路由
-        // qiankun 内部使用 single-spa，会监听 popstate 事件来重新匹配应用
+        // 触发 popstate 事件，让子应用的 setupHostLocationBridge 能够同步路由
         window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
       });
     });
+  } else {
+    // 独立运行模式：只在跨应用切换时触发 qiankun 重新匹配
+    if (previousAppPrefix && previousAppPrefix !== currentAppPrefix) {
+      // 使用 nextTick 确保路由切换完成后再触发
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          // 触发 popstate 事件，让 qiankun 重新匹配路由
+          // qiankun 内部使用 single-spa，会监听 popstate 事件来重新匹配应用
+          window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+        });
+      });
+    }
   }
   
   previousAppPrefix = currentAppPrefix;

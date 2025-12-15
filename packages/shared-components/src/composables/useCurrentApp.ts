@@ -14,6 +14,8 @@ export function useCurrentApp() {
     const path = route.path;
     // 优先检查子域名（生产环境的关键识别方式）
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+    
     const subdomainMap: Record<string, string> = {
       'admin.bellis.com.cn': 'admin',
       'logistics.bellis.com.cn': 'logistics',
@@ -22,6 +24,18 @@ export function useCurrentApp() {
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
       'monitor.bellis.com.cn': 'monitor',
+    };
+    
+    // 预览环境端口映射（根据 app-env.config.ts 中的配置）
+    const portMap: Record<string, string> = {
+      '4180': 'system',   // system-app 预览端口
+      '4181': 'admin',    // admin-app 预览端口
+      '4182': 'logistics', // logistics-app 预览端口
+      '4183': 'quality',  // quality-app 预览端口
+      '4184': 'production', // production-app 预览端口
+      '4185': 'engineering', // engineering-app 预览端口
+      '4186': 'finance',  // finance-app 预览端口
+      '4189': 'monitor',  // monitor-app 预览端口
     };
     
     // 关键：优先通过子域名识别应用（生产环境的主要方式）
@@ -48,9 +62,24 @@ export function useCurrentApp() {
       return;
     }
     
+    // 关键：在预览环境中，通过端口识别应用（当路径为 / 且无法通过子域名识别时）
+    // 这解决了预览环境中通过 IP + 端口访问时无法识别应用的问题
+    if (port && portMap[port] && path === '/') {
+      const detectedApp = portMap[port];
+      if (import.meta.env.DEV || import.meta.env.PROD) {
+        console.log(`[useCurrentApp] 通过端口识别应用: ${port} -> ${detectedApp}`, {
+          hostname,
+          port,
+          path
+        });
+      }
+      currentApp.value = detectedApp;
+      return;
+    }
+    
     // 仅在开发环境输出日志
     if (import.meta.env.DEV) {
-      console.log(`[useCurrentApp] 子域名未匹配，使用路径匹配: hostname=${hostname}, path=${path}`);
+      console.log(`[useCurrentApp] 子域名和端口未匹配，使用路径匹配: hostname=${hostname}, port=${port}, path=${path}`);
     }
     
     // 回退到路径匹配（开发环境或主域名访问时）

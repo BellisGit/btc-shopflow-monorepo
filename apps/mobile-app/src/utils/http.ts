@@ -55,37 +55,52 @@ export class Http {
         config.baseURL = dynamicBaseURL;
         this.axiosInstance.defaults.baseURL = dynamicBaseURL;
 
-        // 从 cookie 或 localStorage 获取 token
-        const cookieToken = getCookie('access_token');
-        const authStore = useAuthStore();
-        const storageToken = authStore.token;
-        const token = cookieToken || storageToken || '';
+        // 检查是否是一键登录相关的接口（不需要携带cookie和token）
+        const url = config.url || '';
+        const isNumberAuthEndpoint = 
+          url.includes('/system/auth/getAuthToken') ||
+          url.includes('/system/auth/getPhoneWithToken');
 
-        // 如果有 token，设置 Authorization header
-        if (token) {
-          config.headers['Authorization'] = `Bearer ${token}`;
+        if (!isNumberAuthEndpoint) {
+          // 从 cookie 或 localStorage 获取 token
+          const cookieToken = getCookie('access_token');
+          const authStore = useAuthStore();
+          const storageToken = authStore.token;
+          const token = cookieToken || storageToken || '';
 
-          // 如果 cookie 不存在但 storage 中有 token，尝试重新设置 cookie
-          if (!cookieToken && storageToken) {
-            const isHttps = window.location.protocol === 'https:';
-            const hostname = window.location.hostname;
-            // 对于生产环境，设置 domain 以便跨子域名共享 cookie
-            const domain = hostname.includes('bellis.com.cn') ? '.bellis.com.cn' : undefined;
-            setCookie('access_token', storageToken, 7, {
-              sameSite: isHttps ? 'None' : undefined,
-              secure: isHttps,
-              path: '/',
-              domain,
-            });
+          // 如果有 token，设置 Authorization header
+          if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+
+            // 如果 cookie 不存在但 storage 中有 token，尝试重新设置 cookie
+            if (!cookieToken && storageToken) {
+              const isHttps = window.location.protocol === 'https:';
+              const hostname = window.location.hostname;
+              // 对于生产环境，设置 domain 以便跨子域名共享 cookie
+              const domain = hostname.includes('bellis.com.cn') ? '.bellis.com.cn' : undefined;
+              setCookie('access_token', storageToken, 7, {
+                sameSite: isHttps ? 'None' : undefined,
+                secure: isHttps,
+                path: '/',
+                domain,
+              });
+            }
           }
+        } else {
+          // 一键登录接口：不添加 Authorization header
+          delete config.headers['Authorization'];
         }
 
         // 根据 baseURL 是否为跨域请求，动态设置 withCredentials
+        // 注意：只有一键登录接口不携带cookie，其他接口都应该携带cookie
         const isCrossOrigin = dynamicBaseURL && (dynamicBaseURL.startsWith('http://') || dynamicBaseURL.startsWith('https://'));
-        if (isCrossOrigin) {
-          // 跨域请求：不设置 withCredentials，避免 CORS 错误
+        if (isNumberAuthEndpoint) {
+          // 一键登录接口：不设置 withCredentials，避免携带cookie
           config.withCredentials = false;
-          // 跨域请求不发送 X-Tenant-Id（服务器可能不允许此请求头）
+        } else if (isCrossOrigin) {
+          // 跨域请求：根据实际情况决定是否携带cookie
+          // 如果后端支持CORS withCredentials，可以设置为true
+          config.withCredentials = true;
         } else {
           // 同源请求（通过代理）：使用 withCredentials 发送 cookie
           config.withCredentials = true;
@@ -234,10 +249,21 @@ export class Http {
         // 服务器返回了错误状态码
         const { status, data } = error.response;
 
-        // 401 未授权，清除 token
+        // 401 未授权，清除 token 并跳转到登录页
         if (status === 401) {
           const authStore = useAuthStore();
           authStore.logout();
+          
+          // 跳转到登录页（排除登录和注册接口本身）
+          const url = error.config?.url || '';
+          const isAuthEndpoint = url.includes('/login') || url.includes('/register') || url.includes('/auth/');
+          if (!isAuthEndpoint) {
+            // 使用动态导入避免循环依赖
+            import('@/router').then(({ default: router }) => {
+              const currentPath = router.currentRoute.value.fullPath;
+              router.push({ name: 'Login', query: { redirect: currentPath } });
+            });
+          }
         }
 
         // 优先从响应数据中提取错误信息

@@ -728,6 +728,13 @@ const handleSwitchApp = async (app: MicroApp) => {
       const protocol = window.location.protocol;
       const targetUrl = `${protocol}//${appConfig.prodHost}/`;
 
+      // 关键：在跳转到子域名前，设置 sessionStorage 标记，让目标页立即显示 Loading
+      try {
+        sessionStorage.setItem('__BTC_NAV_LOADING__', '1');
+      } catch (e) {
+        // 静默失败（某些浏览器可能禁用 sessionStorage）
+      }
+
       // 使用 window.location.href 跳转到子域名
       window.location.href = targetUrl;
       return;

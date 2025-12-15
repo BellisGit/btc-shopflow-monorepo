@@ -99,6 +99,8 @@ const handleSearchFocus = () => {
   display: flex;
   flex-direction: column;
   background-color: transparent;
+  // 关键：允许子元素（菜单）在 flex 中正确计算剩余高度
+  min-height: 0;
 
   // 搜索框基础样式
   &__search {
@@ -109,6 +111,7 @@ const handleSearchFocus = () => {
     display: flex;
     align-items: center;
     background-color: transparent;
+    flex-shrink: 0;
     // 确保边框不会因为子元素而变粗
     position: relative;
 

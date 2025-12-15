@@ -36,3 +36,14 @@ declare module '@configs/app-scanner' {
   export function getAppBySubdomain(subdomain: string): AppIdentity | undefined;
 }
 
+declare module '@configs/layout-bridge' {
+  export function registerManifestMenusForApp(app: string): void;
+  export function registerManifestTabsForApp(app: string): void;
+  export function registerAppEnvAccessors(): void;
+  export function createAppStorageBridge(): void;
+  export function createDefaultDomainResolver(): void;
+  export function resolveAppLogoUrl(): string;
+  export function createSharedUserSettingPlugin(): any;
+  export function registerMenuRegistrationFunction(fn: (app: string) => void): void;
+}
+

@@ -49,6 +49,7 @@ export interface UserProfile {
   username?: string;
   phone?: string;
   email?: string;
+  avatar?: string; // 用户头像URL
   [key: string]: any;
 }
 
@@ -104,6 +105,17 @@ export const authApi = {
   },
 
   /**
+   * 获取阿里云号码认证所需的 accessToken 和 jwtToken
+   * @returns 包含 accessToken 和 jwtToken 的响应
+   */
+  getAuthToken(): Promise<{ accessToken: string; jwtToken: string }> {
+    // 使用 phone-auth.ts 中的独立实例，确保不携带 cookie
+    return import('@/utils/phone-auth').then((module) => {
+      return module.getAuthTokens();
+    });
+  },
+
+  /**
    * 号码认证登录
    */
   loginByNumberAuth(data: NumberAuthLoginRequest): Promise<LoginResponse> {
@@ -117,6 +129,18 @@ export const authApi = {
    */
   verifySpToken(data: { spToken: string }): Promise<LoginResponse> {
     return requestAdapter.post(`${baseUrl}/verify-token`, data, { notifySuccess: false });
+  },
+
+  /**
+   * 通过 spToken 获取手机号并完成登录（阿里云一键登录）
+   * @param data 包含 spToken 的对象
+   * @returns 登录响应（包含 token 和用户信息）
+   */
+  getPhoneWithToken(data: { spToken: string }): Promise<LoginResponse> {
+    // 使用 phone-auth.ts 中的独立实例，确保不携带 cookie
+    return import('@/utils/phone-auth').then((module) => {
+      return module.getPhoneWithToken(data.spToken);
+    });
   },
 
   /**

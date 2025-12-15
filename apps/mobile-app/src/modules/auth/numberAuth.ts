@@ -14,13 +14,42 @@ export interface NumberAuthSdkResult {
   payload: any;
 }
 
+/**
+ * 授权页配置选项
+ */
+export interface AuthPageOption {
+  style?: {
+    zIndex?: number;
+  };
+  logoImg?: string;
+  title?: string;
+  loginBtnText?: string;
+  protocolList?: Array<{
+    name: string;
+    url: string;
+  }>;
+  [key: string]: any;
+}
+
 declare global {
   interface Window {
     // 阿里云统一SDK（优先使用）
     PhoneNumberServer?: {
       checkLoginAvailable?: (options: {
+        accessToken: string;
+        jwtToken: string;
         success: (res: any) => void;
         fail: (err: any) => void;
+      }) => void;
+      getLoginToken?: (options: {
+        authPageOption?: AuthPageOption;
+        timeout?: number;
+        success: (res: { spToken?: string; pToken?: string; [key: string]: any }) => void;
+        error: (err: any) => void;
+        watch?: (status: any, data: any) => void;
+        protocolPageWatch?: (status: any, data: any) => void;
+        previewPrivacyWatch?: (status: any, data: any) => void;
+        privacyAlertWatch?: (status: any, data: any) => void;
       }) => void;
       GetAuthToken: (options: {
         Url: string;
@@ -29,6 +58,7 @@ declare global {
         success: (res: { TokenInfo?: { AccessToken?: string; JwtToken?: string }; AccessToken?: string; JwtToken?: string; [key: string]: any }) => void;
         fail: (err: any) => void;
       }) => void;
+      closeLoginPage?: () => void;
       [key: string]: any; // 允许其他方法
     };
     // 运营商SDK（兼容旧版本）
@@ -151,159 +181,17 @@ export function getDefaultMethod(vendor: NumberAuthVendor): NumberAuthMethod {
   return 'getTokenInfo';
 }
 
+// 注意：旧的错误实现逻辑已删除
+// 现在应该使用 utils/phone-auth.ts 中的实现（getPhoneNumberServer + getAuthTokens + checkLoginAvailable + getLoginToken）
+// 该文件仅保留一些基础工具函数和类型定义
+
 /**
- * 使用阿里云统一SDK进行号码认证
+ * 检测是否使用阿里云统一SDK（工具函数，供其他模块使用）
  */
-async function callAliyunSdk(): Promise<NumberAuthSdkResult> {
-  const aliyunSdk = window.PhoneNumberServer;
-  if (!aliyunSdk) {
-    throw new Error('未检测到阿里云号码认证 SDK');
+export function isAliyunSdkAvailable(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
   }
-
-  return new Promise((resolve, reject) => {
-    // 检查 GetAuthToken 方法是否存在
-    if (typeof aliyunSdk.GetAuthToken !== 'function') {
-      reject(new Error('阿里云SDK未提供 GetAuthToken 方法，请检查SDK版本'));
-      return;
-    }
-
-    // 获取当前页面的 URL 和 Origin
-    const currentUrl = window.location.href;
-    const currentOrigin = window.location.origin;
-    
-    // SceneCode 可以从环境变量获取，如果没有则使用默认值
-    // 可以通过 VITE_NUMBER_AUTH_SCENE_CODE 环境变量配置
-    const sceneCode = (import.meta.env.VITE_NUMBER_AUTH_SCENE_CODE as string) || 'FC220000012320102';
-
-    // 构建 GetAuthToken 的参数
-    const getAuthTokenParams: any = {
-      Url: currentUrl,
-      Origin: currentOrigin,
-      SceneCode: sceneCode,
-      success: (res: any) => {
-        // 阿里云SDK返回AccessToken或JwtToken，需要映射为spToken
-        // 优先使用AccessToken，如果没有则使用JwtToken
-        // 处理嵌套的TokenInfo对象
-        const tokenInfo = res.TokenInfo || res.tokenInfo || res;
-        const spToken = res.spToken 
-          || tokenInfo.AccessToken 
-          || tokenInfo.accessToken 
-          || res.AccessToken 
-          || res.accessToken 
-          || tokenInfo.JwtToken 
-          || tokenInfo.jwtToken 
-          || res.JwtToken 
-          || res.jwtToken 
-          || res.token;
-        
-        if (!spToken) {
-          reject(new Error('未能从SDK响应中获取token，响应数据：' + JSON.stringify(res)));
-          return;
-        }
-        
-        resolve({
-          vendor: 'CM', // 占位值，实际由后端通过阿里云SDK验证
-          method: 'getTokenInfo', // 占位值
-          payload: {
-            spToken,
-            ...res,
-          },
-        });
-      },
-      fail: (err: any) => {
-        const message = err?.msg || err?.message || err?.errorMessage || '获取登录token失败';
-        reject(new Error(message));
-      },
-    };
-
-    // 如果存在 checkLoginAvailable 方法，先检查登录是否可用
-    if (typeof aliyunSdk.checkLoginAvailable === 'function') {
-      aliyunSdk.checkLoginAvailable({
-        success: () => {
-          // 获取登录token，传递必要的参数
-          aliyunSdk.GetAuthToken(getAuthTokenParams);
-        },
-        fail: (err: any) => {
-          const message = err?.msg || err?.message || err?.errorMessage || '号码认证不可用';
-          reject(new Error(message));
-        },
-      });
-    } else {
-      // 如果不存在 checkLoginAvailable，直接调用 GetAuthToken
-      aliyunSdk.GetAuthToken(getAuthTokenParams);
-    }
-  });
-}
-
-export async function callNumberAuthSdk(payload: NumberAuthSdkPayload): Promise<NumberAuthSdkResult> {
-  await ensureNumberAuthSdkLoaded();
-
-  // 优先使用阿里云统一SDK
-  if (isAliyunSdkAvailable()) {
-    return callAliyunSdk();
-  }
-
-  // 兼容旧版本：使用运营商SDK
-  const { vendor, method, data, extraOptions } = payload;
-
-  return new Promise((resolve, reject) => {
-    const success = (res: any) => {
-      resolve({ vendor, method, payload: res });
-    };
-
-    const error = (err: any) => {
-      const message = err?.msg || err?.message || '号码认证失败';
-      reject(new Error(message));
-    };
-
-    const baseOptions = {
-      ...(extraOptions || {}),
-      data,
-      success,
-      error,
-    };
-
-    try {
-      if (vendor === 'CM') {
-        const cmSdk = window.YDRZAuthLogin;
-        if (!cmSdk) {
-          throw new Error('未检测到中国移动一键登录 SDK');
-        }
-        if (method === 'authGetToken') {
-          cmSdk.authGetToken(baseOptions);
-        } else {
-          cmSdk.getTokenInfo(baseOptions);
-        }
-        return;
-      }
-
-      if (vendor === 'CU') {
-        const cuSdk = window.LTRZ;
-        if (!cuSdk) {
-          throw new Error('未检测到中国联通一键登录 SDK');
-        }
-        cuSdk.getTokenInfo(baseOptions);
-        return;
-      }
-
-      if (vendor === 'CT') {
-        const ctSdk = window.fjs;
-        if (!ctSdk) {
-          throw new Error('未检测到中国电信一键登录 SDK');
-        }
-        ctSdk.getAccessCode({
-          ...(extraOptions || {}),
-          ...data,
-          success,
-          error,
-        });
-        return;
-      }
-
-      throw new Error('不支持的运营商类型');
-    } catch (err: any) {
-      reject(err instanceof Error ? err : new Error(err?.message || '号码认证调用失败'));
-    }
-  });
+  return !!window.PhoneNumberServer;
 }
 

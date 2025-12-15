@@ -27,7 +27,7 @@ html.dark body {
 // Reset default styles
 html,
 body {
-  margin: 0;
+  margin: 0 !important; // 使用 !important 确保覆盖浏览器默认样式
   padding: 0;
   width: 100%;
   height: 100%;

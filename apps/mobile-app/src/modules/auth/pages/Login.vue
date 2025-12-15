@@ -399,3 +399,20 @@ const handleRegister = () => {
   line-height: 1.5;
 }
 </style>
+
+<style>
+/* 确保阿里云授权页能够正确覆盖登录页面 */
+[id*="aliyun"],
+[class*="aliyun"],
+[id*="numberAuth"],
+[class*="numberAuth"],
+[class*="auth-page"],
+[id*="auth-page"],
+.dialog-type-container {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+.page-type-container .submit-btn {
+  background: rgb(22, 93, 224);
+}
+</style>

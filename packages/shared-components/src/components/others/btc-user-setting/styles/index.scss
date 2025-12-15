@@ -9,7 +9,18 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
-  // 不设置 overflow，让滚动由 .el-drawer__body 处理（全局样式已配置）
+  // 关键：这是自定义的偏好设置抽屉（不是 Element Plus Drawer）
+  // 需要在这里提供滚动容器，否则内容超出时无法滚动（生产环境子应用问题）
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  // 隐藏滚动条但保持滚动能力
+  scrollbar-width: none; // Firefox
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
 }
 
 // 公共的设置框样式（用于菜单布局、菜单风格、主题风格）
@@ -75,10 +86,11 @@
 
 .user-preferences-panel {
   position: fixed;
-  top: 0;
+  // 与顶栏对齐（47px + 1px 边框），避免遮挡顶栏
+  top: 48px;
   right: 0;
   width: 380px;
-  height: 100vh;
+  height: calc(100vh - 48px);
   z-index: 2022;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.15);

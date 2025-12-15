@@ -72,7 +72,9 @@ const getCurrentHostPath = () =>
 const normalizeToHostPath = (relativeFullPath: string) => {
   const normalizedRelative = relativeFullPath === '' ? '/' : ensureLeadingSlash(relativeFullPath);
 
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要处理路径
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return normalizedRelative;
   }
 
@@ -99,11 +101,33 @@ const normalizeToHostPath = (relativeFullPath: string) => {
 };
 
 const deriveInitialSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下（__USE_LAYOUT_APP__ 为 true），也需要初始化路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
+
+  // 如果不是 qiankun 且不是 layout-app，返回默认路由
+  if (!isQiankun && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'admin.bellis.com.cn';
+
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /admin/xxx，需要去掉 /admin 前缀
+    if (pathname.startsWith(ADMIN_BASE_PATH)) {
+      const suffix = pathname.slice(ADMIN_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从完整路径中提取子应用路由
   if (!pathname.startsWith(ADMIN_BASE_PATH)) {
     return '/';
   }
@@ -113,11 +137,30 @@ const deriveInitialSubRoute = () => {
 };
 
 const extractHostSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要提取主机路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'admin.bellis.com.cn';
+
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /admin/xxx，需要去掉 /admin 前缀
+    if (pathname.startsWith(ADMIN_BASE_PATH)) {
+      const suffix = pathname.slice(ADMIN_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从完整路径中提取子应用路由
   if (!pathname.startsWith(ADMIN_BASE_PATH)) {
     return '/';
   }
@@ -131,8 +174,10 @@ let syncingFromHost = false;
 let isUnmounted = false; // 标记应用是否已卸载
 
 const syncHostWithSubRoute = (fullPath: string) => {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   // 如果应用已卸载，不再同步路由
-  if (isUnmounted || !qiankunWindow.__POWERED_BY_QIANKUN__ || syncingFromHost) {
+  if (isUnmounted || ((!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) || syncingFromHost)) {
     return;
   }
 
@@ -161,8 +206,10 @@ const syncHostWithSubRoute = (fullPath: string) => {
 };
 
 const syncSubRouteWithHost = (context: AdminAppContext) => {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   // 如果应用已卸载，不再同步路由
-  if (isUnmounted || !qiankunWindow.__POWERED_BY_QIANKUN__) {
+  if (isUnmounted || (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp)) {
     return;
   }
 
@@ -360,7 +407,9 @@ const ensureCleanUrl = (context: AdminAppContext) => {
 };
 
 const setupHostLocationBridge = (context: AdminAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 

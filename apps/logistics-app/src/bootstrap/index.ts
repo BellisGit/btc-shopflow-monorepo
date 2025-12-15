@@ -166,7 +166,9 @@ const getCurrentHostPath = () =>
 const normalizeToHostPath = (relativeFullPath: string) => {
   const normalizedRelative = relativeFullPath === '' ? '/' : ensureLeadingSlash(relativeFullPath);
 
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要处理路径
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return normalizedRelative;
   }
 
@@ -193,11 +195,33 @@ const normalizeToHostPath = (relativeFullPath: string) => {
 };
 
 const deriveInitialSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下（__USE_LAYOUT_APP__ 为 true），也需要初始化路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
+
+  // 如果不是 qiankun 且不是 layout-app，返回默认路由
+  if (!isQiankun && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'logistics.bellis.com.cn';
+
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /logistics/xxx，需要去掉 /logistics 前缀
+    if (pathname.startsWith(LOGISTICS_BASE_PATH)) {
+      const suffix = pathname.slice(LOGISTICS_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从完整路径中提取子应用路由
   if (!pathname.startsWith(LOGISTICS_BASE_PATH)) {
     return '/';
   }
@@ -207,11 +231,30 @@ const deriveInitialSubRoute = () => {
 };
 
 const extractHostSubRoute = () => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要提取主机路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return '/';
   }
 
   const { pathname, search, hash } = window.location;
+
+  // 检查是否在子域名环境下（生产环境）
+  const hostname = window.location.hostname;
+  const isProductionSubdomain = hostname === 'logistics.bellis.com.cn';
+
+  // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
+  if (isProductionSubdomain) {
+    // 如果路径是 /logistics/xxx，需要去掉 /logistics 前缀
+    if (pathname.startsWith(LOGISTICS_BASE_PATH)) {
+      const suffix = pathname.slice(LOGISTICS_BASE_PATH.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径
+    return `${pathname}${search}${hash}`;
+  }
+
+  // 开发环境（qiankun模式）：需要从完整路径中提取子应用路由
   if (!pathname.startsWith(LOGISTICS_BASE_PATH)) {
     return '/';
   }
@@ -224,6 +267,15 @@ let syncingFromSubApp = false;
 let syncingFromHost = false;
 
 const syncHostWithSubRoute = (fullPath: string) => {
+  // 关键：在 layout-app 环境下（子域名环境），不应该修改 URL
+  // 因为子域名环境下路径应该直接是子应用路由（如 / 或 /xxx），不需要添加 /logistics 前缀
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    // layout-app 环境下（子域名环境），不修改 URL，避免路由循环
+    return;
+  }
+
+  // 只在 qiankun 环境下同步路由到主机
   if (!qiankunWindow.__POWERED_BY_QIANKUN__ || syncingFromHost) {
     return;
   }
@@ -253,7 +305,9 @@ const syncHostWithSubRoute = (fullPath: string) => {
 };
 
 const syncSubRouteWithHost = (context: LogisticsAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -313,7 +367,9 @@ const createRegisterTabs = (context: LogisticsAppContext) => {
 };
 
 const setupRouteSync = (context: LogisticsAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要设置路由同步
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -429,7 +485,9 @@ const ensureCleanUrl = (context: LogisticsAppContext) => {
 };
 
 const setupHostLocationBridge = (context: LogisticsAppContext) => {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要同步路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -625,18 +683,87 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
 
     context.app.mount(mountPoint);
 
-  // 在 qiankun 环境下，等待路由就绪后再同步初始路由
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+  // 必须在应用挂载后立即移除，确保用户能看到内容而不是一直显示 Loading
+  try {
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.classList.add('is-hide');
+      // 延迟移除，确保动画完成
+      setTimeout(() => {
+        try {
+          if (loadingEl.parentNode) {
+            loadingEl.parentNode.removeChild(loadingEl);
+          } else if (loadingEl.isConnected) {
+            loadingEl.remove();
+          }
+        } catch (error) {
+          loadingEl.style.setProperty('display', 'none', 'important');
+        }
+      }, 350);
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 清理导航标记
+  try {
+    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+  } catch (e) {
+    // 静默失败
+  }
+
+  // 在 qiankun 或 layout-app 环境下，等待路由就绪后再同步初始路由
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     // 使用 nextTick 确保 Vue 应用已完全挂载
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
         context.router.isReady().then(() => {
           // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /logistics/xxx）
           const initialRoute = deriveInitialSubRoute();
+          const currentRoute = context.router.currentRoute.value;
           // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
-          if (context.router.currentRoute.value.matched.length === 0 || 
-              context.router.currentRoute.value.path !== initialRoute.split('?')[0].split('#')[0]) {
-            context.router.replace(initialRoute).catch(() => {});
+          if (currentRoute.matched.length === 0 || 
+              currentRoute.path !== initialRoute.split('?')[0].split('#')[0]) {
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[logistics-app] 同步初始路由', {
+                currentRoute: currentRoute.path,
+                currentRouteFullPath: currentRoute.fullPath,
+                initialRoute,
+                matched: currentRoute.matched.length,
+                matchedRoutes: currentRoute.matched.map(m => m.path),
+                allRoutes: context.router.getRoutes().map(r => ({ path: r.path, name: r.name }))
+              });
+            }
+            context.router.replace(initialRoute).then(() => {
+              if (import.meta.env.DEV || import.meta.env.PROD) {
+                const newRoute = context.router.currentRoute.value;
+                console.log('[logistics-app] 路由替换成功', {
+                  newRoute: newRoute.path,
+                  newRouteFullPath: newRoute.fullPath,
+                  matched: newRoute.matched.length,
+                  matchedRoutes: newRoute.matched.map(m => ({ path: m.path, name: m.name, components: Object.keys(m.components || {}) })),
+                  component: newRoute.matched[0]?.components?.default
+                });
+              }
+            }).catch((error) => {
+              console.error('[logistics-app] 路由替换失败:', error);
+            });
+          } else {
+            if (import.meta.env.DEV || import.meta.env.PROD) {
+              console.log('[logistics-app] 路由已匹配，无需同步', {
+                currentRoute: currentRoute.path,
+                currentRouteFullPath: currentRoute.fullPath,
+                matched: currentRoute.matched.length,
+                matchedRoutes: currentRoute.matched.map(m => ({ path: m.path, name: m.name, components: Object.keys(m.components || {}) })),
+                component: currentRoute.matched[0]?.components?.default
+              });
+            }
           }
         });
       });

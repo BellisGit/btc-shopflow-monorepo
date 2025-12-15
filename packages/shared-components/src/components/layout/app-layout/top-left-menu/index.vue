@@ -21,7 +21,7 @@ defineOptions({
   name: 'LayoutTopLeftMenu',
 });
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
@@ -40,6 +40,54 @@ const activeMenu = ref(route.path);
 // 获取当前应用的菜单项（从 menuRegistry 获取）
 const allMenuItems = computed(() => {
   return getMenusForApp(currentApp.value);
+});
+
+// 关键：混合菜单模式下侧边栏菜单可能延迟或不挂载，顶部一级菜单需要自行兜底触发菜单注册
+onMounted(() => {
+  let retrying = false;
+
+  const ensureMenusForCurrentApp = () => {
+    const app = currentApp.value;
+    const menus = getMenusForApp(app) || [];
+    if (menus.length > 0) return true;
+
+    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+    if (typeof registerMenusFn === 'function') {
+      try {
+        registerMenusFn(app);
+      } catch (_e) {
+        // 静默失败
+      }
+    }
+
+    if (!retrying) {
+      retrying = true;
+      let retryCount = 0;
+      const maxRetries = 30;
+      const timer = window.setInterval(() => {
+        retryCount++;
+        const retryMenus = getMenusForApp(app) || [];
+        if (retryMenus.length > 0) {
+          window.clearInterval(timer);
+          retrying = false;
+        } else if (retryCount >= maxRetries) {
+          window.clearInterval(timer);
+          retrying = false;
+        }
+      }, 100);
+    }
+
+    return false;
+  };
+
+  ensureMenusForCurrentApp();
+
+  watch(
+    () => currentApp.value,
+    () => {
+      ensureMenusForCurrentApp();
+    }
+  );
 });
 
 // 只显示一级菜单（混合菜单的顶部只显示一级）

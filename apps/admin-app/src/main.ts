@@ -68,11 +68,61 @@ const render = async (props: QiankunProps = {}) => {
 
     context = createAdminApp(props);
     await mountAdminApp(context, props);
+    
+    // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    removeLoadingElement();
+    clearNavigationFlag();
   } catch (error) {
     console.error('[admin-app] 渲染失败:', error);
+    // 即使挂载失败，也要移除 Loading
+    removeLoadingElement();
+    clearNavigationFlag();
     throw error;
   }
 };
+
+/**
+ * 移除 Loading 元素
+ */
+function removeLoadingElement() {
+  const loadingEl = document.getElementById('Loading');
+  if (loadingEl) {
+    // 立即隐藏（使用内联样式确保优先级）
+    loadingEl.style.setProperty('display', 'none', 'important');
+    loadingEl.style.setProperty('visibility', 'hidden', 'important');
+    loadingEl.style.setProperty('opacity', '0', 'important');
+    loadingEl.style.setProperty('pointer-events', 'none', 'important');
+
+    // 添加淡出类（如果 CSS 中有定义）
+    loadingEl.classList.add('is-hide');
+
+    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
+    setTimeout(() => {
+      try {
+        if (loadingEl.parentNode) {
+          loadingEl.parentNode.removeChild(loadingEl);
+        } else if (loadingEl.isConnected) {
+          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
+          loadingEl.remove();
+        }
+      } catch (error) {
+        // 如果移除失败，至少确保元素被隐藏
+        loadingEl.style.setProperty('display', 'none', 'important');
+      }
+    }, 350);
+  }
+}
+
+/**
+ * 清理导航标记
+ */
+function clearNavigationFlag() {
+  try {
+    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+  } catch (e) {
+    // 静默失败（某些浏览器可能禁用 sessionStorage）
+  }
+}
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
