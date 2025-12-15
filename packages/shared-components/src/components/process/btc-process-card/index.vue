@@ -50,12 +50,16 @@
           <div class="btc-process-card__time-item">
             <el-icon class="btc-process-card__time-icon"><Clock /></el-icon>
             <span class="btc-process-card__time-label">计划开始：</span>
-            <span class="btc-process-card__time-value">{{ formatDateTime(process.scheduledStartTime) }}</span>
+            <span class="btc-process-card__time-value">
+              {{ process.scheduledStartTime ? formatDateTime(process.scheduledStartTime) : '-' }}
+            </span>
           </div>
           <div class="btc-process-card__time-item">
             <el-icon class="btc-process-card__time-icon"><Timer /></el-icon>
             <span class="btc-process-card__time-label">计划结束：</span>
-            <span class="btc-process-card__time-value">{{ formatDateTime(process.scheduledEndTime) }}</span>
+            <span class="btc-process-card__time-value">
+              {{ process.scheduledEndTime ? formatDateTime(process.scheduledEndTime) : '-' }}
+            </span>
           </div>
           <div v-if="process.actualStartTime" class="btc-process-card__time-item">
             <el-icon class="btc-process-card__time-icon"><Clock /></el-icon>
@@ -222,7 +226,12 @@ const getStatusIcon = (status: string) => {
 };
 
 const calculateProgress = (process: ProcessManagementItem) => {
-  if (process.status !== 'running' || !process.actualStartTime) {
+  if (
+    process.status !== 'running' ||
+    !process.actualStartTime ||
+    !process.scheduledStartTime ||
+    !process.scheduledEndTime
+  ) {
     return 0;
   }
   
@@ -230,6 +239,9 @@ const calculateProgress = (process: ProcessManagementItem) => {
   const start = new Date(process.scheduledStartTime).getTime();
   const end = new Date(process.scheduledEndTime).getTime();
   const actualStart = new Date(process.actualStartTime).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return 0;
+  }
   
   if (now >= end) return 100;
   if (now <= actualStart) return 0;

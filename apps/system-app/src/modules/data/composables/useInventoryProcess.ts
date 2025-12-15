@@ -44,8 +44,10 @@ const mapCheckStatus = (checkStatus?: string): 'pending' | 'running' | 'paused' 
 
 // 将 API 数据转换为 ProcessManagementItem
 const mapToProcessItem = (item: CheckBaseItem, statusValue?: string): ProcessManagementItem => {
-  const scheduledStartTime = item.startTime ? new Date(item.startTime) : new Date();
-  const scheduledEndTime = item.endTime ? new Date(item.endTime) : new Date();
+  // 注意：后端未提供 startTime/endTime 时，不要强行赋值（否则会出现“计划开始/结束=当前时间”的误导）
+  // 以 checkStatus 为准：没有时间就展示为空，组件自行处理显示为 '-'。
+  const scheduledStartTime = item.startTime ? new Date(item.startTime) : undefined;
+  const scheduledEndTime = item.endTime ? new Date(item.endTime) : undefined;
 
   // 使用通过 status API 获取的状态
   const status = mapCheckStatus(statusValue);

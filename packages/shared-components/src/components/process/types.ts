@@ -8,8 +8,11 @@ export interface ProcessManagementItem {
   id: string;
   name: string;
   status: 'pending' | 'running' | 'paused' | 'completed';
-  scheduledStartTime: Date | string | number;
-  scheduledEndTime: Date | string | number;
+  /**
+   * 计划开始/结束时间：后端未提供时允许为空（以 status/checkStatus 为准，不强行赋默认值）
+   */
+  scheduledStartTime?: Date | string | number;
+  scheduledEndTime?: Date | string | number;
   actualStartTime?: Date | string | number;
   actualEndTime?: Date | string | number;
   pauseHistory?: ProcessPauseRecord[];
