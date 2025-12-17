@@ -6,10 +6,31 @@
     "paths": {
       "@/*": ["./src/*"],
       "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../../configs/*"],
+      "@btc/shared-core": ["../../packages/shared-core/src"],
+      "@btc/shared-core/*": ["../../packages/shared-core/src/*"],
+      "@btc/shared-components": ["../../packages/shared-components/src"],
+      "@btc/shared-components/*": ["../../packages/shared-components/src/*"],
+      "@btc/shared-utils": ["../../packages/shared-utils/src"],
+      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*"],
+      "@btc/subapp-manifests": ["../../packages/subapp-manifests/src"],
+      "@btc/subapp-manifests/*": ["../../packages/subapp-manifests/src/*"],
+      "@btc-components/*": ["../../packages/shared-components/src/components/*"],
+      "@btc-common/*": ["../../packages/shared-components/src/common/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.tsx",
+    "../../configs/**/*.ts",
+    "../../apps/monitor-app/src/app.ts",
+    "../../types/**/*.d.ts",
+    "../../packages/**/src/**/*",
+    "../../packages/**/src/**/*.vue",
+    "../../packages/**/src/**/*.d.ts",
+    "src/**/*.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
 

@@ -14,8 +14,8 @@
     "composite": false,
     "jsx": "preserve",
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
@@ -25,8 +25,8 @@
       "@configs/*": ["../../configs/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "../../configs/**/*.ts"],
-  "exclude": ["node_modules", "dist", "vite.config.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "../../configs/**/*.ts", "../../types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "vite.config.ts", "../../configs/**/*.d.ts"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

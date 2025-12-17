@@ -1,9 +1,14 @@
 import type { Plugin } from '@btc/shared-core';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
-// @ts-ignore - 类型声明文件可能未构建，但运行时可用（某些应用可能需要此注释）
-import { registerMenus, type MenuItem, getMenuRegistry } from '@btc/shared-components';
-// @ts-ignore - 类型定义可能不完整，但运行时可用（某些应用可能需要此注释）
+import { registerMenus, getMenuRegistry } from '@btc/shared-components';
+// MenuItem 类型定义（从 shared-components 复制，因为类型导出在 dist 中可能不可用）
+type MenuItem = {
+  index: string;
+  title: string;
+  icon?: string;
+  children?: MenuItem[];
+};
 import { getManifestMenus, getManifestTabs, getManifest } from '@btc/subapp-manifests';
 import { storage } from '@btc/shared-utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
@@ -15,6 +20,7 @@ declare global {
     __APP_GET_APP_CONFIG__?: (appName: string) => AppEnvConfig | undefined;
     __APP_GET_ALL_DEV_PORTS__?: () => string[];
     __APP_GET_ALL_PRE_PORTS__?: () => string[];
+    __REGISTER_MENUS_FOR_APP__?: (appId: string) => void;
   }
 }
 
@@ -170,25 +176,25 @@ export function registerManifestMenusForApp(appId: string) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;
       }
     }
-    
+
     // 先尝试通过 getManifestMenus 获取菜单
     let manifestMenus = getManifestMenus(appId);
 
     // 如果 getManifestMenus 返回空，尝试直接获取 manifest
     if (!manifestMenus?.length) {
       const manifest = getManifest(appId);
-      
+
       if (!manifest) {
         if (import.meta.env.DEV) {
           console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 不存在`);
         }
         return;
       }
-      
+
       if (!manifest.menus || manifest.menus.length === 0) {
         return;
       }
-      
+
       // 直接使用 manifest.menus
       manifestMenus = manifest.menus;
     }
@@ -205,7 +211,7 @@ export function registerManifestMenusForApp(appId: string) {
 
     // 注册菜单
     registerMenus(appId, normalizedMenus);
-    
+
     // 验证菜单是否已正确注册
     const registeredMenus = registry?.value?.[appId];
     if (!registeredMenus || registeredMenus.length === 0) {
@@ -219,10 +225,11 @@ export function registerManifestMenusForApp(appId: string) {
       });
       // 尝试再次注册
       registerMenus(appId, normalizedMenus);
-      
+
       // 再次验证
       const retryMenus = registry?.value?.[appId];
       if (retryMenus && retryMenus.length > 0) {
+        // 菜单注册成功，无需操作
       } else {
         console.error(`[registerManifestMenusForApp] 应用 ${appId} 的菜单注册失败，即使重试后仍为空`);
       }
@@ -275,11 +282,11 @@ const normalizeBaseUrl = (candidate?: string | null, context?: string) => {
 export function resolveAppLogoUrl() {
   // 始终使用根路径，不依赖 document.baseURI（避免受当前路由影响）
   // 例如：当前路由是 /governance/files/... 时，不应该解析为 /governance/files/logo.png
-  
+
   // 获取环境配置
   try {
     const envConfig = getEnvConfig();
-    
+
     // 生产环境且配置了 CDN URL，使用 CDN
     if (envConfig.cdn?.staticAssetsUrl) {
       const cdnUrl = envConfig.cdn.staticAssetsUrl.replace(/\/$/, '');
@@ -288,7 +295,7 @@ export function resolveAppLogoUrl() {
   } catch (error) {
     // 如果获取配置失败，继续使用本地路径
   }
-  
+
   // 开发/预览环境或未配置 CDN：使用本地路径
   if (typeof window !== 'undefined' && window.location?.origin) {
     return `${window.location.origin}/logo.png`;
@@ -358,6 +365,91 @@ export function createDefaultDomainResolver(appId: string) {
   }));
 
   return async () => domains;
+}
+
+/**
+ * 统一注入域列表获取函数（所有子应用必须调用）
+ * 优先使用 domain-cache 模块（调用 me 接口获取真实域列表），
+ * 如果加载失败则使用默认解析器作为兜底
+ *
+ * @param appId 应用 ID（如 'finance', 'admin'）
+ * @param domainCachePathOrModule domain-cache 模块的路径字符串，或者已经导入的模块对象
+ * @param target 目标 window 对象，默认为全局 window
+ */
+export async function injectDomainListResolver(
+  appId: string,
+  domainCachePathOrModule: string | { getDomainList?: any; clearDomainCache?: any } = './utils/domain-cache',
+  target: Window = window
+): Promise<void> {
+  const win = target as any;
+
+  // 如果已经注入过，检查是否需要替换
+  if (win.__APP_GET_DOMAIN_LIST__ && typeof win.__APP_GET_DOMAIN_LIST__ === 'function') {
+    const funcStr = win.__APP_GET_DOMAIN_LIST__.toString().replace(/\s+/g, ' ');
+    // 检查是否是默认解析器（通过函数名或行为判断）
+    const isDefaultResolver = funcStr.includes('DEFAULT_DOMAIN_NAMES');
+    // 检查是否是 layout-app 设置的空函数（只返回空数组的函数）
+    // layout-app 设置的是: async () => [] 或 () => []
+    // 注意：函数转换后的字符串可能是 "async()=>[]" 或 "()=>[]" 或包含 "return[]" 等
+    const isEmptyResolver =
+      (funcStr.includes('=>[]') || funcStr.includes('=> []')) ||
+      (funcStr.includes('return[]') && !funcStr.includes('service') && !funcStr.includes('getDomainList'));
+
+    if (!isDefaultResolver && !isEmptyResolver) {
+      // 已经是 domain-cache 或其他有效解析器，不需要重新注入
+      return;
+    }
+    // 如果是默认解析器或空解析器，继续执行下面的逻辑进行替换
+  }
+
+  // 关键：优先使用 domain-cache 模块，确保汉堡菜单应用列表能够调用 me 接口
+  // 而不是使用 createDefaultDomainResolver（只返回默认域列表）
+  let domainModule: any = null;
+
+  // 如果传入的是模块对象，直接使用
+  if (typeof domainCachePathOrModule === 'object' && domainCachePathOrModule !== null) {
+    domainModule = domainCachePathOrModule;
+  } else {
+    // 如果是路径字符串，尝试动态导入
+    const domainCachePath = domainCachePathOrModule as string;
+    try {
+      // 首先尝试使用传入的路径（可能是别名路径，如 '@utils/domain-cache'）
+      domainModule = await import(/* @vite-ignore */ domainCachePath);
+    } catch (error) {
+      // 如果别名路径失败（生产环境下常见），使用默认解析器作为兜底
+      // 注意：在生产环境下，相对路径的动态导入也会失败，因为构建后的路径不存在
+      // 应该在调用方静态导入 domain-cache 模块后传递模块对象，而不是路径字符串
+      if (import.meta.env.DEV) {
+        console.warn(`[${appId}-app] Failed to load domain cache from path "${domainCachePath}". In production, dynamic imports of source paths will fail. Please pass the pre-imported module object instead. Using default resolver.`);
+      }
+
+      // 如果加载失败，使用默认解析器作为兜底
+      if (!win.__APP_GET_DOMAIN_LIST__) {
+        win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(appId);
+      }
+      return;
+    }
+  }
+
+  if (!domainModule || (!domainModule.getDomainList && !domainModule.clearDomainCache)) {
+    console.warn(`[${appId}-app] Domain cache module is invalid or missing required functions.`);
+    // 如果模块无效，使用默认解析器作为兜底
+    if (!win.__APP_GET_DOMAIN_LIST__) {
+      win.__APP_GET_DOMAIN_LIST__ = createDefaultDomainResolver(appId);
+    }
+    return;
+  }
+
+  // 成功加载模块后，设置函数
+  if (domainModule.getDomainList) {
+    win.__APP_GET_DOMAIN_LIST__ = domainModule.getDomainList;
+  }
+  if (domainModule.clearDomainCache) {
+    win.__APP_CLEAR_DOMAIN_CACHE__ = domainModule.clearDomainCache;
+    // 关键：在子应用初始化时清除域列表缓存，强制重新请求 me 接口
+    // 这确保子应用显示的应用列表标题是最新的
+    domainModule.clearDomainCache();
+  }
 }
 
 /**

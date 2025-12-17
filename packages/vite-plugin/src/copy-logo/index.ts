@@ -68,5 +68,5 @@ export function copyLogoPlugin(): Plugin {
         console.error('[copy-logo] 复制 logo.png 失败:', error);
       }
     },
-  };
+  } as unknown as Plugin;
 }

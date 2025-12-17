@@ -14,7 +14,7 @@
     <!-- 摄像头画面区域 -->
     <div class="scanner-page__content">
       <div ref="scanContainerRef" id="html5-qrcode-container" class="scanner-page__camera"></div>
-      
+
       <!-- 扫描框 -->
       <div class="scanner-page__scan-frame">
         <div class="scanner-page__scan-corner scanner-page__scan-corner--top-left"></div>
@@ -32,10 +32,9 @@
 
     <!-- 底部操作栏 -->
     <div class="scanner-page__footer">
-      <div 
-        v-if="showFlashlight" 
+      <!-- 始终显示手电筒按钮，让用户可以手动控制 -->
+      <div
         class="scanner-page__flashlight"
-        :class="{ 'scanner-page__flashlight--blinking': isBlinking }"
         @click="toggleFlashlight"
       >
         <img :src="flashlightIcon" class="scanner-page__flashlight-icon" alt="手电筒" />
@@ -51,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-env browser */
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast, showDialog, Loading } from 'vant';
@@ -64,14 +64,9 @@ const router = useRouter();
 const scanContainerRef = ref<HTMLDivElement | null>(null);
 const loading = ref(false);
 const scanning = ref(false);
-const showFlashlight = ref(false);
 const isFlashlightOn = ref(false);
-const isBlinking = ref(false);
 let html5QrCode: any = null;
 let stream: MediaStream | null = null;
-let flashlightBlinkTimeout: number | null = null;
-const LIGHT_THRESHOLD = 50; // 光线阈值（0-255，低于此值显示手电筒）
-const LIGHT_CHECK_INTERVAL = 5000; // 光线检测间隔（毫秒）- 增加到5秒，减少内存累积
 
 // 尽量在不影响兼容性的前提下，优化相机轨道（安卓收益更明显）
 const tryOptimizeVideoTrack = async () => {
@@ -85,6 +80,7 @@ const tryOptimizeVideoTrack = async () => {
     const videoTrack = mediaStream?.getVideoTracks?.()?.[0];
     if (!videoTrack || typeof videoTrack.getCapabilities !== 'function') return;
 
+    // eslint-disable-next-line no-undef
     const capabilities = videoTrack.getCapabilities() as MediaTrackCapabilities & {
       focusMode?: string[];
       exposureMode?: string[];
@@ -105,6 +101,7 @@ const tryOptimizeVideoTrack = async () => {
       advanced.push({ whiteBalanceMode: 'continuous' });
     }
 
+    // eslint-disable-next-line no-undef
     const constraints: MediaTrackConstraints = {
       // 分辨率提高一点能提升识别度；用 ideal 避免强制失败
       width: { ideal: 1280 },
@@ -123,18 +120,18 @@ const tryOptimizeVideoTrack = async () => {
 // 启动摄像头和扫码功能
 const startCamera = async () => {
   loading.value = true;
-  
+
   try {
     if (!scanContainerRef.value) {
       throw new Error('扫描容器未找到');
     }
 
     // 动态导入 html5-qrcode 库
-    // @ts-ignore
+    // @ts-expect-error - html5-qrcode 库的类型定义可能不完整
     const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
-    
+
     // 创建 Html5Qrcode 实例 - 指定支持的格式以提升性能
-    // @ts-ignore - 忽略类型检查，因为 formatsToSupport 是有效的配置选项
+    // @ts-expect-error - 忽略类型检查，因为 formatsToSupport 是有效的配置选项
     html5QrCode = new Html5Qrcode(scanContainerRef.value.id, {
       // 指定支持的格式：减少解码器工作量（安卓端尤其明显）
       // 只支持二维码，提升性能
@@ -142,7 +139,7 @@ const startCamera = async () => {
         Html5QrcodeSupportedFormats.QR_CODE, // 只扫描二维码
       ]
     });
-    
+
     // 配置扫码选项 - 优化识别度和CPU占用，避免长时间运行后卡顿
     const config = {
       fps: 8, // 进一步降低到 8 fps，减少CPU占用和内存累积
@@ -184,11 +181,10 @@ const startCamera = async () => {
     // 不 await，避免影响首帧速度
     tryOptimizeVideoTrack();
 
-    // 开始光线检测（降低频率，避免内存累积）
-    // 延迟启动，避免影响首帧性能
-    setTimeout(() => {
-      startLightCheck();
-    }, 2000); // 2秒后启动光线检测
+    // 禁用光线检测，避免 Canvas 操作导致的内存累积和卡顿
+    // Canvas 操作会抢占主线程资源，导致解码延迟
+    // 用户可以通过手动点击手电筒按钮来开启闪光灯
+    // startLightCheck();
 
     scanning.value = true;
     loading.value = false;
@@ -201,7 +197,7 @@ const startCamera = async () => {
       message: error.message,
       stack: error.stack
     });
-    
+
     let errorMessage = '无法访问摄像头';
     if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
       errorMessage = '摄像头权限被拒绝，请在浏览器设置中允许访问摄像头';
@@ -212,7 +208,7 @@ const startCamera = async () => {
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
+
     showDialog({
       title: '摄像头启动失败',
       message: errorMessage,
@@ -229,21 +225,21 @@ const onScanSuccess = (decodedText: string, decodedResult: any) => {
   if (!scanning.value) {
     return;
   }
-  
+
   // 验证识别结果的有效性
   if (!decodedText || decodedText.trim().length === 0) {
     // 如果识别结果为空，继续扫描
     return;
   }
-  
+
   // 立即停止扫描，避免重复识别
   scanning.value = false;
-  
+
   // 异步停止扫描，不阻塞页面跳转
   stopScan().catch(() => {
     // 忽略停止扫描的错误，确保页面跳转不受影响
   });
-  
+
   // 立即跳转，实现自动捕捉效果
   router.push({
     name: 'InventoryEntry',
@@ -272,9 +268,9 @@ const stopScan = async () => {
       console.error('停止扫码失败:', error);
     }
   }
-  
+
   html5QrCode = null;
-  
+
   // 停止所有媒体流
   if (stream) {
     stream.getTracks().forEach((track) => {
@@ -302,25 +298,20 @@ const toggleFlashlight = async () => {
 
     const mediaStream = videoElement.srcObject as MediaStream;
     const videoTrack = mediaStream.getVideoTracks()[0];
-    
+
     if (!videoTrack) {
       showToast('未找到视频轨道');
       return;
     }
 
     // 检查是否支持闪光灯
+    // eslint-disable-next-line no-undef
     const capabilities = videoTrack.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
     if (capabilities.torch) {
       await videoTrack.applyConstraints({
         advanced: [{ torch: !isFlashlightOn.value } as any]
       });
       isFlashlightOn.value = !isFlashlightOn.value;
-      stopBlinking(); // 打开手电筒后停止闪烁
-      
-      // 如果关闭手电筒，重新检测光线
-      if (!isFlashlightOn.value) {
-        checkLightLevel();
-      }
     } else {
       showToast('当前设备不支持闪光灯');
     }
@@ -330,144 +321,9 @@ const toggleFlashlight = async () => {
   }
 };
 
-// 开始光线检测 - 优化为更低的频率，避免内存累积
-let lightCheckInterval: number | null = null;
-let canvas: HTMLCanvasElement | null = null;
-let canvasContext: CanvasRenderingContext2D | null = null;
-let isCheckingLight = false; // 防止重复执行
-
-function initLightDetection() {
-  canvas = document.createElement('canvas');
-  canvasContext = canvas.getContext('2d', { 
-    willReadFrequently: false, // 改为 false，减少内存占用
-    alpha: false, // 不需要透明度，可以提升性能
-    desynchronized: true // 启用异步渲染，减少阻塞
-  });
-}
-
-function startLightCheck() {
-  initLightDetection();
-  // 增加检测间隔，减少 Canvas 操作频率，避免内存累积
-  lightCheckInterval = window.setInterval(() => {
-    if (!isCheckingLight) {
-      checkLightLevel();
-    }
-  }, LIGHT_CHECK_INTERVAL * 2); // 增加到6秒一次
-}
-
-// 检测光线亮度（优化版本，减少性能消耗和内存累积）
-function checkLightLevel() {
-  const videoElement = scanContainerRef.value?.querySelector('video') as HTMLVideoElement;
-  if (!videoElement || !canvas || !canvasContext || isCheckingLight) return;
-  
-  isCheckingLight = true;
-  
-  try {
-    if (videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) {
-      isCheckingLight = false;
-      return;
-    }
-    
-    // 使用较小的采样尺寸以提升性能（移动端优化）
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const sampleScale = isMobile ? 0.15 : 0.2; // 进一步减小采样区域
-    
-    // 设置 Canvas 尺寸（使用较小的尺寸以减少内存和计算）
-    const videoWidth = videoElement.videoWidth;
-    const videoHeight = videoElement.videoHeight;
-    if (videoWidth === 0 || videoHeight === 0) {
-      isCheckingLight = false;
-      return;
-    }
-    
-    const maxCanvasSize = isMobile ? 150 : 300; // 进一步减小 canvas 尺寸
-    const scale = Math.min(maxCanvasSize / videoWidth, maxCanvasSize / videoHeight, 1);
-    
-    // 只在尺寸变化时重置 canvas，避免频繁创建
-    if (canvas.width !== Math.floor(videoWidth * scale) || canvas.height !== Math.floor(videoHeight * scale)) {
-      canvas.width = Math.floor(videoWidth * scale);
-      canvas.height = Math.floor(videoHeight * scale);
-    }
-    
-    // 绘制视频帧到 Canvas（缩小的尺寸）
-    canvasContext.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    
-    // 获取图像数据（采样中心区域，使用更小的采样尺寸）
-    const sampleSize = Math.min(canvas.width, canvas.height) * sampleScale;
-    const startX = Math.floor((canvas.width - sampleSize) / 2);
-    const startY = Math.floor((canvas.height - sampleSize) / 2);
-    const sampleWidth = Math.floor(sampleSize);
-    const sampleHeight = Math.floor(sampleSize);
-    
-    const imageData = canvasContext.getImageData(
-      startX,
-      startY,
-      sampleWidth,
-      sampleHeight
-    );
-    
-    // 计算平均亮度（使用更大的步进，减少计算量）
-    let totalBrightness = 0;
-    const data = imageData.data;
-    const step = isMobile ? 32 : 16; // 进一步增大步进，跳过更多像素
-    let pixelCount = 0;
-    
-    // 同步处理，但使用较小的计算量
-    for (let i = 0; i < data.length; i += step * 4) {
-      // RGB 转亮度（使用加权平均）
-      const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-      totalBrightness += brightness;
-      pixelCount++;
-    }
-    
-    if (pixelCount > 0) {
-      const avgBrightness = totalBrightness / pixelCount;
-      
-      // 根据亮度决定是否显示手电筒
-      if (avgBrightness < LIGHT_THRESHOLD) {
-        if (!showFlashlight.value) {
-          showFlashlight.value = true;
-          // 开始闪烁动画（2秒）
-          startBlinking();
-        }
-      } else {
-        if (showFlashlight.value && !isFlashlightOn.value) {
-          showFlashlight.value = false;
-          stopBlinking();
-        }
-      }
-    }
-    
-    // 释放标志
-    isCheckingLight = false;
-  } catch (error) {
-    // 忽略错误，继续检测
-    isCheckingLight = false;
-  }
-}
-
-// 开始闪烁动画
-function startBlinking() {
-  isBlinking.value = true;
-  
-  // 2秒后停止闪烁
-  if (flashlightBlinkTimeout) {
-    clearTimeout(flashlightBlinkTimeout);
-  }
-  flashlightBlinkTimeout = window.setTimeout(() => {
-    isBlinking.value = false;
-    flashlightBlinkTimeout = null;
-  }, 2000);
-}
-
-// 停止闪烁动画
-function stopBlinking() {
-  isBlinking.value = false;
-  if (flashlightBlinkTimeout) {
-    clearTimeout(flashlightBlinkTimeout);
-    flashlightBlinkTimeout = null;
-  }
-}
+// 光线检测已完全禁用，避免 Canvas 操作导致的内存累积和卡顿
+// Canvas 操作会抢占主线程资源，导致解码延迟
+// 用户可以通过手动点击手电筒按钮来开启闪光灯
 
 // 关闭扫码页面
 const handleClose = () => {
@@ -494,37 +350,11 @@ onMounted(() => {
 
 // 组件卸载时停止摄像头
 onBeforeUnmount(() => {
-  // 停止光线检测
-  if (lightCheckInterval) {
-    clearInterval(lightCheckInterval);
-    lightCheckInterval = null;
-  }
-  
-  // 停止闪烁动画
-  if (flashlightBlinkTimeout) {
-    clearTimeout(flashlightBlinkTimeout);
-    flashlightBlinkTimeout = null;
-  }
-  
-  // 清理 Canvas，释放内存
-  if (canvasContext) {
-    canvasContext.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
-    canvasContext = null;
-  }
-  if (canvas) {
-    canvas.width = 0;
-    canvas.height = 0;
-    canvas = null;
-  }
-  
-  // 重置检测标志
-  isCheckingLight = false;
-  
   // 关闭手电筒
   if (isFlashlightOn.value) {
     toggleFlashlight();
   }
-  
+
   stopScan();
 });
 </script>
@@ -604,20 +434,20 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   position: relative;
-  
+
   :deep(video) {
     width: 100%;
     height: 100%;
     object-fit: cover;
     background: #000000;
   }
-  
+
   // html5-qrcode 会在容器内创建自己的元素，我们需要保留它们用于扫描
   // 但是可以隐藏默认的扫描框，使用我们自定义的扫描框
   :deep(#qr-shaded-region) {
     display: none !important;
   }
-  
+
   // 确保扫描区域可见
   :deep(#html5-qrcode-container__dashboard) {
     display: none !important;
@@ -640,28 +470,28 @@ onBeforeUnmount(() => {
   width: 30px;
   height: 30px;
   border: 3px solid #1976d2;
-  
+
   &--top-left {
     top: -3px;
     left: -3px;
     border-right: none;
     border-bottom: none;
   }
-  
+
   &--top-right {
     top: -3px;
     right: -3px;
     border-left: none;
     border-bottom: none;
   }
-  
+
   &--bottom-left {
     bottom: -3px;
     left: -3px;
     border-right: none;
     border-top: none;
   }
-  
+
   &--bottom-right {
     bottom: -3px;
     right: -3px;
@@ -739,19 +569,6 @@ onBeforeUnmount(() => {
 
   &:active {
     background: rgba(255, 255, 255, 0.1);
-  }
-
-  &--blinking {
-    animation: flashlight-blink 1s ease-in-out infinite;
-  }
-}
-
-@keyframes flashlight-blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
   }
 }
 

@@ -195,17 +195,17 @@
           <div class="detail-header">
             <h3>{{ getAppLabel(selectedResult.appName) }}</h3>
             <el-tag
-              :type="selectedResult.status === 'success' ? 'success' : 'danger'"
+              :type="selectedResult.success ? 'success' : 'danger'"
               size="large"
             >
-              {{ selectedResult.status === 'success' ? t('monitor.deploymentTest.results.passed') : t('monitor.deploymentTest.results.failed') }}
+              {{ selectedResult.success ? t('monitor.deploymentTest.results.passed') : t('monitor.deploymentTest.results.failed') }}
             </el-tag>
           </div>
 
           <el-descriptions :column="2" border class="detail-descriptions">
             <el-descriptions-item :label="t('monitor.deploymentTest.details.domain')">
-              <el-link :href="`https://${selectedResult.domain}`" target="_blank" type="primary">
-                {{ selectedResult.domain }}
+              <el-link :href="`https://${selectedResult.config.domain}`" target="_blank" type="primary">
+                {{ selectedResult.config.domain }}
               </el-link>
             </el-descriptions-item>
             <el-descriptions-item :label="t('monitor.deploymentTest.details.duration')">
@@ -287,18 +287,37 @@ const progressPercentage = ref(0);
 const progressStatus = ref<'success' | 'exception' | 'warning' | ''>('');
 
 // 测试结果
-const testResults = ref<Array<{
+interface TestError {
+  type: string;
+  message: string;
+}
+
+interface TestResult {
+  appName: string;
+  config: {
+    domain: string;
+    description: string;
+  };
+  startTime: string;
+  success: boolean;
+  errors?: TestError[];
+  duration: number;
+}
+
+interface TestResultRow {
   appName: string;
   domain: string;
   status: 'success' | 'failed';
   duration: number;
   errorCount: number;
-  errors?: any[];
-}>>([]);
+  errors?: TestError[];
+}
+
+const testResults = ref<TestResultRow[]>([]);
 
 // 详情对话框
 const detailDialogVisible = ref(false);
-const selectedResult = ref<any>(null);
+const selectedResult = ref<TestResult | null>(null);
 
 // 测试摘要
 const testSummary = computed(() => {
@@ -398,9 +417,9 @@ const startTest = async () => {
     // 轮询测试状态
     console.log('[DeploymentTest] 开始轮询测试状态...');
     await pollTestStatus(testId);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[DeploymentTest] 启动测试失败:', error);
-    ElMessage.error(error.message || t('monitor.deploymentTest.errors.startFailed'));
+    ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.startFailed'));
     testing.value = false;
   }
 };
@@ -453,7 +472,7 @@ const pollTestStatus = async (testId: string) => {
 
         // 获取测试结果
         const results = await getDeploymentTestReport(testId);
-        testResults.value = results.apps ? Object.entries(results.apps).map(([appName, result]: [string, any]) => ({
+        testResults.value = results.apps ? Object.entries(results.apps).map(([appName, result]: [string, TestResult]) => ({
           appName,
           domain: result.config?.domain || '',
           status: result.success ? 'success' : 'failed',
@@ -495,11 +514,11 @@ const pollTestStatus = async (testId: string) => {
         testing.value = false;
         ElMessage.error(status.error || t('monitor.deploymentTest.errors.testFailed'));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('检查测试状态失败:', error);
       cleanup();
       testing.value = false;
-      ElMessage.error(error.message || t('monitor.deploymentTest.errors.statusCheckFailed'));
+      ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.statusCheckFailed'));
     }
   };
 
@@ -530,18 +549,30 @@ const stopTest = async () => {
 };
 
 // 查看详情
-const viewDetails = (row: any) => {
-  selectedResult.value = row;
+const viewDetails = (row: TestResultRow) => {
+  // 将TestResultRow转换为TestResult格式
+  const testResult: TestResult = {
+    appName: row.appName,
+    config: {
+      domain: row.domain,
+      description: '',
+    },
+    startTime: new Date().toISOString(),
+    success: row.status === 'success',
+    errors: row.errors || [],
+    duration: row.duration,
+  };
+  selectedResult.value = testResult;
   detailDialogVisible.value = true;
 };
 
 // 下载报告
-const downloadReport = async (_row: any) => {
+const downloadReport = async (_row: TestResultRow) => {
   try {
     // 这里应该调用API获取报告并下载
     ElMessage.info(t('monitor.deploymentTest.downloadStarted'));
-  } catch (error: any) {
-    ElMessage.error(error.message || t('monitor.deploymentTest.errors.downloadFailed'));
+  } catch (error: unknown) {
+    ElMessage.error(error instanceof Error ? error.message : t('monitor.deploymentTest.errors.downloadFailed'));
   }
 };
 

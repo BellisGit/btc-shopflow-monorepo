@@ -18,6 +18,42 @@
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
   >
+    <template #right-op>
+      <!-- 如果配置了 rightOpFields，则根据配置渲染搜索字段；否则使用插槽内容 -->
+      <div v-if="rightOpFieldsList.length > 0" class="custom-search-fields" style="display: flex; align-items: center; gap: 10px;">
+        <template v-for="(field, index) in rightOpFieldsList" :key="index">
+            <el-input
+              v-if="field.type === 'input'"
+              :model-value="props.rightOpFieldsValue?.[field.prop]"
+              @update:model-value="(val: any) => handleRightOpFieldChange(field.prop, val)"
+              :placeholder="field.placeholder"
+              clearable
+              :style="{ width: field.width || '150px' }"
+              @keyup.enter="handleRightOpSearch(field)"
+              @clear="handleRightOpSearch(field)"
+            />
+            <el-select
+              v-else-if="field.type === 'select'"
+              :model-value="props.rightOpFieldsValue?.[field.prop]"
+              @update:model-value="(val: any) => handleRightOpFieldChange(field.prop, val)"
+              :placeholder="field.placeholder"
+              clearable
+              filterable
+              :loading="field.loading"
+              :style="{ width: field.width || '100px' }"
+              @change="handleRightOpSearch(field)"
+              @clear="handleRightOpSearch(field)"
+            >
+              <el-option
+                v-for="option in field.options || []"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </template>
+        </div>
+    </template>
     <template #right="{ selected, keyword, leftData, rightData }">
       <BtcCrud
         ref="crudRef"
@@ -78,7 +114,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { globalMitt } from '@btc/shared-components/utils/mitt';
+import { globalMitt } from '@btc/shared-components';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
@@ -131,6 +167,8 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   showMultiDeleteBtn: true, // 默认显示批量删除按钮
   showSearchKey: true, // 默认显示搜索框
   showToolbar: true, // 默认显示右侧工具栏按钮
+  rightOpFields: undefined, // 右侧操作栏搜索字段配置
+  rightOpFieldsValue: undefined, // 右侧操作栏搜索字段的值
 });
 
 
@@ -142,6 +180,13 @@ const { t } = useI18n();
 // 组件引用
 const viewGroupRef = ref<any>(null);
 const crudRef = ref<any>(null);
+
+// 右侧操作栏搜索字段（从 props 中提取，确保响应式追踪）
+// TypeScript 类型已限制最多3个，这里直接返回
+const rightOpFieldsList = computed(() => {
+  return props.rightOpFields || [];
+});
+
 const { emit: emitContentResize } = useContentHeight();
 
 const scheduleContentResize = () => {
@@ -172,10 +217,10 @@ const tableColumns = computed(() => {
   // 查找操作列的位置
   const opColumnIndex = filteredColumns.findIndex(col => col.type === 'op');
   const hasOpColumn = opColumnIndex !== -1;
-  
+
   // 准备要插入的时间列
   const timeColumns: any[] = [];
-  
+
   // 添加创建时间列（如果启用）
   if (props.showCreateTime) {
     timeColumns.push({
@@ -212,7 +257,7 @@ const tableColumns = computed(() => {
     // 根据按钮数量动态设置宽度：1个按钮126px（116+10，保证工具栏宽度），2个按钮220px（默认），3个及以上按钮300px
     const opWidth = buttonCount === 1 ? 126 : buttonCount === 2 ? 220 : 300;
     const opMinWidth = buttonCount === 1 ? 126 : 200;
-    
+
     filteredColumns.push({
       type: 'op',
       minWidth: opMinWidth, // 最小宽度，确保有足够空间显示按钮和间距
@@ -289,8 +334,8 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
     if (typeof selectedKeyword === 'object' && selectedKeyword !== null && !Array.isArray(selectedKeyword)) {
       // 如果是对象，统一处理其中的 ids 字段为数组，并合并到现有 keyword
       if ('ids' in selectedKeyword) {
-        const normalizedIds = Array.isArray(selectedKeyword.ids) 
-          ? selectedKeyword.ids 
+        const normalizedIds = Array.isArray(selectedKeyword.ids)
+          ? selectedKeyword.ids
           : (selectedKeyword.ids !== undefined && selectedKeyword.ids !== null && selectedKeyword.ids !== '' ? [selectedKeyword.ids] : []);
         (params as any).keyword = { ...existingKeyword, ...selectedKeyword, ids: normalizedIds };
       } else {
@@ -298,8 +343,8 @@ function handleBeforeRefresh(params: Record<string, unknown>) {
       }
     } else {
       // 字符串或数组，统一转换为数组格式，并合并到现有 keyword
-      const normalizedIds = Array.isArray(selectedKeyword) 
-        ? selectedKeyword 
+      const normalizedIds = Array.isArray(selectedKeyword)
+        ? selectedKeyword
         : (selectedKeyword !== undefined && selectedKeyword !== null && selectedKeyword !== '' ? [selectedKeyword] : []);
       (params as any).keyword = { ...existingKeyword, ids: normalizedIds };
     }
@@ -318,6 +363,24 @@ function handleLeftDataLoaded(data: any[]) {
   leftListData.value = data;
   emit('load', data);
   scheduleContentResize();
+}
+
+// 处理右侧操作栏搜索字段值变化
+function handleRightOpFieldChange(prop: string, value: any) {
+  const newValue = { ...(props.rightOpFieldsValue || {}), [prop]: value };
+  emit('update:rightOpFieldsValue', newValue);
+}
+
+// 处理右侧操作栏搜索
+function handleRightOpSearch(field: any) {
+  // 如果字段有自定义搜索回调，使用自定义回调；否则触发搜索事件，由父组件处理刷新
+  if (field.onSearch) {
+    field.onSearch();
+  } else {
+    emit('right-op-search', field);
+    // 注意：不在这里默认刷新，让父组件通过监听 right-op-search 事件来决定是否刷新
+    // 这样可以避免重复刷新（如果父组件在事件处理中已经调用了 refresh）
+  }
 }
 
 // 表单提交 - 自动注入选中的 ID

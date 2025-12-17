@@ -1,7 +1,6 @@
 import { type App } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
-// @ts-expect-error - 类型定义可能不完整，但运行时可用
 import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
 
 // 导入 ECharts 核心模块

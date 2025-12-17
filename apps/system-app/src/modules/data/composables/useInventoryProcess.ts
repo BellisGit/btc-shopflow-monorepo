@@ -1,6 +1,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
+// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import type { ProcessManagementItem } from '@btc/shared-components';
 import { service } from '@/services/eps';
 
@@ -213,7 +214,7 @@ export function useInventoryProcess() {
       // 通过 status API 刷新单个流程的状态
       const newStatus = await refreshProcessStatus(process.id);
       if (newStatus) {
-        const index = processes.value.findIndex((p) => p.id === process.id);
+        const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           const currentProcess = processes.value[index];
@@ -251,7 +252,7 @@ export function useInventoryProcess() {
       // 通过 status API 刷新单个流程的状态
       const newStatus = await refreshProcessStatus(process.id);
       if (newStatus) {
-        const index = processes.value.findIndex((p) => p.id === process.id);
+        const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           processes.value[index] = {
@@ -286,7 +287,7 @@ export function useInventoryProcess() {
       // 通过 status API 刷新单个流程的状态
       const newStatus = await refreshProcessStatus(process.id);
       if (newStatus) {
-        const index = processes.value.findIndex((p) => p.id === process.id);
+        const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           processes.value[index] = {
@@ -326,7 +327,7 @@ export function useInventoryProcess() {
       // 通过 status API 刷新单个流程的状态
       const newStatus = await refreshProcessStatus(process.id);
       if (newStatus) {
-        const index = processes.value.findIndex((p) => p.id === process.id);
+        const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           const currentProcess = processes.value[index];

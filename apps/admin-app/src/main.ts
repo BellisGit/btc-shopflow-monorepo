@@ -31,7 +31,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
     const errorMessage = event.message || '';
     const errorStack = event.error?.stack || '';
-    
+
     // 检查是否是 DOM 操作相关的错误
     if (
       errorMessage.includes('insertBefore') ||
@@ -66,9 +66,9 @@ const render = async (props: QiankunProps = {}) => {
       context = null;
     }
 
-    context = createAdminApp(props);
+    context = await createAdminApp(props);
     await mountAdminApp(context, props);
-    
+
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
     removeLoadingElement();
     clearNavigationFlag();
@@ -243,7 +243,7 @@ if (shouldRunStandalone()) {
                 }
               });
             };
-            
+
             waitForViewport().then((viewport) => {
               if (viewport) {
                 // 挂载到 layout-app 的 #subapp-viewport

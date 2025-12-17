@@ -120,7 +120,7 @@ export declare class PluginManager {
     /**
      * 获取插件的 qiankun 配置
      */
-    getQiankunConfig(name: string): import("./types").QiankunConfig | undefined;
+    getQiankunConfig(name: string): import("./types").QiankunConfig;
     /**
      * 获取所有共享给子应用的插件
      */
@@ -147,7 +147,7 @@ export declare class PluginManager {
      * @param name 插件名称
      * @returns 插件元数据
      */
-    getPluginMetadata(name: string): import("./types").PluginMetadata | undefined;
+    getPluginMetadata(name: string): import("./types").PluginMetadata;
     /**
      * 按作者筛选插件
      * @param author 作者名称
@@ -183,13 +183,13 @@ export declare class PluginManager {
      */
     getPluginsInfo(): {
         name: string;
-        config: import("./types").PluginMetadata | undefined;
-        version: string | undefined;
-        author: string | undefined;
-        description: string | undefined;
-        status: PluginStatus | undefined;
-        installedAt: Date | undefined;
-        error: Error | undefined;
+        config: import("./types").PluginMetadata;
+        version: string;
+        author: string;
+        description: string;
+        status: PluginStatus;
+        installedAt: Date;
+        error: Error;
         hasApi: boolean;
         hasComponents: boolean;
         hasDirectives: boolean;

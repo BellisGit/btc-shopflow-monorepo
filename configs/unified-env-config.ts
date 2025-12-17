@@ -68,6 +68,9 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
       upload: {
         url: '/api/upload',
       },
+      cdn: {
+        staticAssetsUrl: '',
+      },
     },
     preview: {
       api: {
@@ -257,13 +260,13 @@ export function getEnvConfig(): EnvironmentConfig {
   const scheme = getConfigScheme();
   const env = getEnvironment();
   const config = configSchemes[scheme][env];
-  
+
   // 支持通过环境变量覆盖 CDN URL
   // 在浏览器环境中，可以通过 VITE_CDN_STATIC_ASSETS_URL 覆盖
   // 在 Node.js 环境中（如 Vite 配置），可以通过 CDN_STATIC_ASSETS_URL 覆盖
   if (config.cdn?.staticAssetsUrl) {
     let envCdnUrl: string | undefined;
-    
+
     if (typeof window !== 'undefined') {
       // 浏览器环境：从 import.meta.env 读取
       if (typeof import.meta !== 'undefined' && import.meta.env) {
@@ -273,7 +276,7 @@ export function getEnvConfig(): EnvironmentConfig {
       // Node.js 环境：从 process.env 读取
       envCdnUrl = process.env.CDN_STATIC_ASSETS_URL || process.env.VITE_CDN_STATIC_ASSETS_URL;
     }
-    
+
     if (envCdnUrl) {
       return {
         ...config,
@@ -283,7 +286,7 @@ export function getEnvConfig(): EnvironmentConfig {
       };
     }
   }
-  
+
   return config;
 }
 
@@ -400,15 +403,15 @@ export function isMainApp(
     const normalizedLocationPath = locationPath.endsWith('/') && locationPath !== '/'
       ? locationPath.slice(0, -1)
       : locationPath;
-    
+
     for (const app of apps) {
       if (app.type === 'sub' && app.enabled) {
         const normalizedPathPrefix = app.pathPrefix.endsWith('/')
           ? app.pathPrefix.slice(0, -1)
           : app.pathPrefix;
-        
+
         const isMatch = normalizedLocationPath === normalizedPathPrefix || normalizedLocationPath.startsWith(normalizedPathPrefix + '/');
-        
+
         if (isMatch) {
           // 匹配到子应用，不是主应用
           return false;

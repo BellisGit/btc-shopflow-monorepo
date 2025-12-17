@@ -112,7 +112,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
-import { globalMitt } from '@btc/shared-components/utils/mitt';
+import { globalMitt } from '@btc/shared-components';
 import { useContentHeight } from '@btc/shared-components/composables/content-height';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
@@ -358,10 +358,10 @@ const previousServiceId = ref<string | undefined>(undefined);
 watch(
   () => props.rightService,
   (newService) => {
-    const newServiceId = typeof newService === 'object' && newService !== null 
+    const newServiceId = typeof newService === 'object' && newService !== null
       ? (newService as any)._serviceId || 'unknown'
       : String(newService);
-    
+
     // 如果服务 ID 变化，标记需要刷新
     if (previousServiceId.value !== undefined && previousServiceId.value !== newServiceId) {
       // 服务已变化，等待组件重新创建后刷新
@@ -373,7 +373,7 @@ watch(
         });
       });
     }
-    
+
     previousServiceId.value = newServiceId;
   },
   { immediate: true }
@@ -385,12 +385,12 @@ function refreshRight() {
     clearTimeout(refreshTimer);
     refreshTimer = null;
   }
-  
+
   // 如果正在刷新，跳过
   if (isRefreshing.value) {
     return;
   }
-  
+
   // 设置防抖延迟，避免短时间内多次调用
   refreshTimer = setTimeout(() => {
     if (isRefreshing.value) {
@@ -435,13 +435,13 @@ function handleSecondarySelect(item: any, keyword: any) {
   }
   emit('secondary-select', item, keyword);
   emit('select', item || selectedPrimary.value, selectedKeyword.value);
-  
+
   // 检查服务是否变化，如果服务没有变化，才触发刷新
   // 如果服务变化，watch 会处理刷新，避免重复调用
-  const currentServiceId = typeof props.rightService === 'object' && props.rightService !== null 
+  const currentServiceId = typeof props.rightService === 'object' && props.rightService !== null
     ? (props.rightService as any)._serviceId || 'unknown'
     : String(props.rightService);
-  
+
   if (previousServiceId.value === currentServiceId) {
     // 服务没有变化，正常触发刷新
     refreshRight();

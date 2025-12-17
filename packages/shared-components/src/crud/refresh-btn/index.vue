@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <BtcTableButton
     class="btc-crud-action-icon"
     v-if="isMinimal"
@@ -8,7 +8,7 @@
     v-else
     v-bind="$attrs"
     class="btc-crud-btn"
-    @click="crud.handleRefresh"
+    @click="crud?.handleRefresh?.()"
   >
     <BtcSvg class="btc-crud-btn__icon" name="refresh" />
     <span class="btc-crud-btn__text">
@@ -32,7 +32,15 @@ export interface Props {
 const props = defineProps<Props>();
 
 const { t } = useI18n();
-const theme = useThemePlugin();
+// 安全地获取主题插件，避免在插件未初始化时出错
+let theme: ReturnType<typeof useThemePlugin> | null = null;
+try {
+  theme = useThemePlugin();
+} catch (error) {
+  // 如果主题插件未初始化，使用默认配置
+  console.warn('[BtcRefreshBtn] Theme plugin not available:', error);
+}
+
 const attrs = useAttrs();
 
 const crud = inject<UseCrudReturn<any>>('btc-crud');
@@ -42,7 +50,7 @@ if (!crud) {
 }
 
 const buttonLabel = computed(() => props.text || t('crud.button.refresh'));
-const isMinimal = computed(() => theme.buttonStyle?.value === 'minimal');
+const isMinimal = computed(() => theme?.buttonStyle?.value === 'minimal');
 
 const isDisabled = computed(() => {
   const value = attrs.disabled;

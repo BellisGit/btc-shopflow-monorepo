@@ -3,7 +3,7 @@
  * 生产环境使用 CDN，开发/预览环境保持本地路径
  */
 
-import type { Plugin } from 'vite';
+import type { Plugin, ResolvedConfig } from 'vite';
 import { getEnvConfig } from '../../unified-env-config';
 
 export function replaceIconsWithCdnPlugin(): Plugin {
@@ -14,7 +14,7 @@ export function replaceIconsWithCdnPlugin(): Plugin {
     name: 'replace-icons-with-cdn',
     apply: 'build', // 只在构建时执行
 
-    configResolved(config) {
+    configResolved(config: ResolvedConfig) {
       isProductionBuild = !!config.isProduction;
     },
 
@@ -23,17 +23,17 @@ export function replaceIconsWithCdnPlugin(): Plugin {
       if (!isProductionBuild) {
         return html;
       }
-      
+
       try {
         // 获取环境配置
         const envConfig = getEnvConfig();
         const cdnUrl = envConfig.cdn?.staticAssetsUrl;
-        
+
         if (!cdnUrl) {
           // 未配置 CDN，保持原样
           return html;
         }
-        
+
         const cdnBase = cdnUrl.replace(/\/$/, '');
 
         // 关键：仅当 CDN 上确实存在 logo.png 时才替换
@@ -46,10 +46,10 @@ export function replaceIconsWithCdnPlugin(): Plugin {
             cachedLogoCdnOk = false;
           }
         }
-        
+
         // 替换图标路径
         let newHtml = html;
-        
+
         // 替换 /logo.png
         if (cachedLogoCdnOk) {
           newHtml = newHtml.replace(
@@ -57,7 +57,7 @@ export function replaceIconsWithCdnPlugin(): Plugin {
             `href="${cdnBase}/logo.png"`
           );
         }
-        
+
         // 替换 /icons/ 路径
         newHtml = newHtml.replace(
           /href=["']\/icons\/([^"']+)["']/g,
@@ -71,7 +71,7 @@ export function replaceIconsWithCdnPlugin(): Plugin {
             return `href="${cdnBase}/icons/${iconFile}"`;
           }
         );
-        
+
         return newHtml;
       } catch (error) {
         // 如果获取配置失败，保持原样
@@ -79,6 +79,6 @@ export function replaceIconsWithCdnPlugin(): Plugin {
         return html;
       }
     },
-  };
+  } as Plugin;
 }
 

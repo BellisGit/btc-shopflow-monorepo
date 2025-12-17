@@ -5,20 +5,20 @@
  */
 
 import type { Plugin, ResolvedConfig } from 'vite';
-import { resolve, dirname } from 'path';
+import { resolve } from 'path';
 import { existsSync, copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync, unlinkSync } from 'node:fs';
 
 export function copyIconsPlugin(appDir: string): Plugin {
   let viteConfig: ResolvedConfig | null = null;
-  
+
   return {
     name: 'copy-icons',
     apply: 'build', // 只在构建时执行
-    
+
     configResolved(config: ResolvedConfig) {
       viteConfig = config;
     },
-    
+
     closeBundle() {
       try {
         if (!viteConfig) {
@@ -27,7 +27,7 @@ export function copyIconsPlugin(appDir: string): Plugin {
 
         const root = viteConfig.root || appDir;
         const iconsSourceDir = resolve(root, 'public/icons');
-        
+
         // 检查源目录是否存在
         if (!existsSync(iconsSourceDir)) {
           return; // 如果源目录不存在，静默跳过
@@ -36,13 +36,13 @@ export function copyIconsPlugin(appDir: string): Plugin {
         // 获取构建输出目录
         const outDir = viteConfig.build.outDir || 'dist';
         const distDir = resolve(root, outDir);
-        
+
         if (!existsSync(distDir)) {
           return; // 如果输出目录不存在，跳过
         }
 
         const iconsDestDir = resolve(distDir, 'icons');
-        
+
         // 确保目标目录存在
         if (!existsSync(iconsDestDir)) {
           mkdirSync(iconsDestDir, { recursive: true });
@@ -53,13 +53,13 @@ export function copyIconsPlugin(appDir: string): Plugin {
         for (const file of files) {
           const sourcePath = resolve(iconsSourceDir, file);
           const destPath = resolve(iconsDestDir, file);
-          
+
           const stats = statSync(sourcePath);
           if (stats.isFile()) {
             copyFileSync(sourcePath, destPath);
           }
         }
-        
+
         // 不再复制 favicon.ico，统一使用 logo.png 作为 favicon
         // 如果构建产物中存在 favicon.ico，删除它（可能是 Vite 的 publicDir 复制的）
         const faviconDest = resolve(distDir, 'favicon.ico');
@@ -71,7 +71,7 @@ export function copyIconsPlugin(appDir: string): Plugin {
             // 静默失败
           }
         }
-        
+
         // 检查并复制 site.webmanifest（如果存在）
         const manifestSource = resolve(root, 'public/icons/site.webmanifest');
         const manifestDest = resolve(iconsDestDir, 'site.webmanifest');
@@ -118,13 +118,13 @@ export function copyIconsPlugin(appDir: string): Plugin {
             writeFileSync(manifestDest, JSON.stringify(manifest, null, 2), 'utf-8');
           }
         }
-        
+
         console.log(`[copy-icons] 已复制 icons 目录到: ${iconsDestDir}`);
       } catch (error) {
         // 静默失败，避免阻塞构建
         console.warn('[copy-icons] 复制 icons 目录失败:', error);
       }
     },
-  };
+  } as Plugin;
 }
 

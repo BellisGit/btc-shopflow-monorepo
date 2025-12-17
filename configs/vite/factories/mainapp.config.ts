@@ -122,7 +122,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
   // 使用导入的 createPathHelpers
-  const { withRoot, withPackages } = createPathHelpers(appDir);
+  const { withRoot } = createPathHelpers(appDir);
 
   // 判断是否为预览构建
   const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
@@ -272,7 +272,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: false,
-    rollupOptions: createRollupConfig(appName.replace('-app', '')),
+    // 关键：system-app 作为主应用，也需要打包 single-spa 和 qiankun
+    // 不将它们标记为 external，确保它们被打包到构建产物中
+    rollupOptions: {
+      ...createRollupConfig(appName.replace('-app', ''), {
+        externalSingleSpa: false, // 主应用需要打包 single-spa 和 qiankun
+      }),
+    },
     chunkSizeWarningLimit: 1000,
     ...customBuild,
   };

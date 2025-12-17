@@ -1,4 +1,4 @@
-﻿import adminManifestJson from "./manifests/admin.json" with { type: "json" };
+import adminManifestJson from "./manifests/admin.json" with { type: "json" };
 import logisticsManifestJson from "./manifests/logistics.json" with { type: "json" };
 import systemManifestJson from "./manifests/system.json" with { type: "json" };
 import qualityManifestJson from "./manifests/quality.json" with { type: "json" };
@@ -12,7 +12,7 @@ export interface SubAppManifestRoute {
   path: string;
   labelKey?: string;
   label?: string;
-  tab?: { enabled?: boolean; labelKey?: string; label?: string };
+  tab?: { enabled?: boolean; labelKey?: string; label?: string; icon?: string };
   breadcrumbs?: Array<{ labelKey?: string; label?: string; icon?: string }>;
 }
 

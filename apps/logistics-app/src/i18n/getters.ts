@@ -1,5 +1,7 @@
 // 使用动态导入避免同步加载大量 JSON 文件，优化初始化性能
+// @ts-ignore TS6307 - 共享核心 locale 文件不在当前项目的文件列表中，但运行时可用
 import sharedCoreZh from '../../../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN';
+// @ts-ignore TS6307 - 共享核心 locale 文件不在当前项目的文件列表中，但运行时可用
 import sharedCoreEn from '../../../../packages/shared-core/src/btc/plugins/i18n/locales/en-US';
 import sharedComponentsZh from '../../../../packages/shared-components/src/locales/zh-CN.json';
 import sharedComponentsEn from '../../../../packages/shared-components/src/locales/en-US.json';
@@ -27,12 +29,12 @@ export const getLocaleMessages = (): LocaleMessages => {
   if (cachedMessages) {
     return cachedMessages;
   }
-  
+
   cachedMessages = {
   'zh-CN': mergeMessages(sharedCoreZh, sharedComponentsZh as Record<string, any>, zhCN),
   'en-US': mergeMessages(sharedCoreEn, sharedComponentsEn as Record<string, any>, enUS),
   };
-  
+
   return cachedMessages;
 };
 

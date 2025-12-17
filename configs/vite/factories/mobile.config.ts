@@ -7,14 +7,13 @@ import type { UserConfig, Plugin, ViteDevServer } from 'vite';
 import { resolve } from 'path';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import vue from '@vitejs/plugin-vue';
-// @ts-ignore - vite-plugin-pwa 类型定义可能有问题，但运行时可用
 // vite-plugin-pwa v0.20.0 使用 CommonJS 导出，需要使用 createRequire
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const VitePWAModule = require('vite-plugin-pwa');
 // vite-plugin-pwa 可能导出为 { default: function } 或直接导出函数
-const VitePWA = (VitePWAModule.default && typeof VitePWAModule.default === 'function') 
-  ? VitePWAModule.default 
+const VitePWA = (VitePWAModule.default && typeof VitePWAModule.default === 'function')
+  ? VitePWAModule.default
   : (typeof VitePWAModule === 'function' ? VitePWAModule : VitePWAModule.VitePWA || VitePWAModule);
 import { createPathHelpers } from '../utils/path-helpers';
 
@@ -110,7 +109,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
   // 使用导入的 createPathHelpers
-  const { withRoot, withPackages } = createPathHelpers(appDir);
+  const { withRoot } = createPathHelpers(appDir);
 
   const baseUrl = '/';
   const publicDir = getPublicDir(appName, appDir);
@@ -262,7 +261,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     {
       name: 'dev-manifest-plugin',
       configureServer(server: ViteDevServer) {
-        server.middlewares.use('/manifest.webmanifest', (req: any, res: any, next: any) => {
+        server.middlewares.use('/manifest.webmanifest', (_req: any, res: any, _next: any) => {
           // 直接返回正确的 manifest JSON，避免 VitePWA 插件生成错误格式
           const manifest = {
             name: '拜里斯科技',
@@ -309,7 +308,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             ],
             display_override: ['standalone', 'fullscreen', 'minimal-ui', 'browser'],
           };
-          
+
           res.setHeader('Content-Type', 'application/manifest+json');
           res.setHeader('Cache-Control', 'no-cache');
           res.end(JSON.stringify(manifest, null, 2));
@@ -336,13 +335,13 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             }
             const manifest = JSON.parse(manifestContent);
             let modified = false;
-            
+
             // 移除非标准的 ios 字段
             if (manifest.ios) {
               delete manifest.ios;
               modified = true;
             }
-            
+
             // 修复 purpose 字段：确保是字符串格式（空格分隔）
             if (manifest.icons && Array.isArray(manifest.icons)) {
               manifest.icons = manifest.icons.map((icon: any) => {
@@ -360,7 +359,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
                 return icon;
               });
             }
-            
+
             if (modified) {
               const fixedContent = JSON.stringify(manifest, null, 2);
               writeFileSync(manifestPath, fixedContent, 'utf-8');
@@ -414,8 +413,8 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
         },
         manualChunks: (id: string) => {
           // 强制分离 Vue 相关依赖
-          if (id.includes('node_modules/vue/') || 
-              id.includes('node_modules/vue-router/') || 
+          if (id.includes('node_modules/vue/') ||
+              id.includes('node_modules/vue-router/') ||
               id.includes('node_modules/pinia/')) {
             return 'vue-vendor';
           }
@@ -424,7 +423,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
             return 'vant-vendor';
           }
           // 强制分离工具库依赖
-          if (id.includes('node_modules/dexie/') || 
+          if (id.includes('node_modules/dexie/') ||
               id.includes('node_modules/@vueuse/')) {
             return 'utils-vendor';
           }

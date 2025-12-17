@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <teleport to="body">
     <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
     <!-- 保证在子应用切换时，menu-drawer 的 DOM 不被销毁，避免 insertBefore 等报错 -->
@@ -66,17 +66,7 @@ import { useI18n } from '@btc/shared-core';
 
 // 通过全局函数获取应用特定的依赖
 // 这些函数需要由使用共享布局的应用提供
-declare global {
-  interface Window {
-    __APP_EPS_SERVICE__?: any;
-    __APP_GET_DOMAIN_LIST__?: (service: any) => Promise<any>;
-    __APP_CLEAR_DOMAIN_CACHE__?: () => void;
-    __APP_FINISH_LOADING__?: () => void;
-    __APP_GET_APP_CONFIG__?: (appName: string) => any;
-    __APP_GET_ALL_DEV_PORTS__?: () => string[];
-    __APP_GET_ALL_PRE_PORTS__?: () => string[];
-  }
-}
+// Window 接口扩展已在 layout-bridge.ts 中定义，此处不再重复声明以避免类型冲突
 
 // 获取 EPS 服务（从全局或应用提供）
 function getEpsService() {
@@ -489,7 +479,7 @@ const getDomainDisplayName = (app: MicroApp) => {
   }
 
   // 兜底使用国际化配置
-  return t(`micro_app.${app.name}.title`);
+  return t(`micro_app.${app.name || 'unknown'}.title`);
 };
 
 // 等待 EPS 服务可用（轮询方式，最多等待5秒）
@@ -683,7 +673,7 @@ const handleSwitchApp = async (app: MicroApp) => {
     if (app.name === 'docs') {
       // 立即关闭抽屉，不等待动画完成
       handleClose();
-      
+
       // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
       // 这里先使用路径方式，如果需要可以后续配置
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
@@ -717,7 +707,7 @@ const handleSwitchApp = async (app: MicroApp) => {
     if (appConfig && appConfig.prodHost) {
       // 立即关闭抽屉，不等待动画完成
       handleClose();
-      
+
       // 清除域列表缓存，确保子应用重新请求域列表
       const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
       if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
@@ -812,7 +802,7 @@ const shouldHandleDrawerEvent = (): boolean => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' || 
+    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
                              (hostname === 'localhost' && (port === '4192' || port === '4188'));
     if (isLayoutAppDomain) {
       return true;
@@ -912,7 +902,7 @@ onUnmounted(() => {
   z-index: 999;
   display: flex;
   flex-direction: column;
-  
+
   // 关键：当通过 v-show 隐藏时，确保元素不可见且不占用空间
   // v-show="false" 会自动设置 display: none，这里只是确保样式正确
   &[style*="display: none"] {

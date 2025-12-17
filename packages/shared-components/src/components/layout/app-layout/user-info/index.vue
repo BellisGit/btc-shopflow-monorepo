@@ -20,7 +20,7 @@
         >|</span>
       </span>
       <div class="user-info__avatar-box user-info__avatar-box--small">
-        <img 
+        <img
           :src="avatarUrl"
           :alt="userInfo.name || '用户头像'"
           class="user-info__avatar-img-small"
@@ -151,12 +151,12 @@ const errorHandled = ref(false); // 防止重复处理错误
 const avatarUrl = computed(() => {
   const url = userInfo.value?.avatar;
   const defaultLogo = getDefaultLogoUrl();
-  
+
   // 如果头像加载失败，强制使用默认 Logo
   if (avatarLoadError.value) {
     return defaultLogo;
   }
-  
+
   return url && url !== defaultLogo && url !== '' ? url : defaultLogo;
 });
 
@@ -166,15 +166,15 @@ const handleAvatarError = (event: Event) => {
   if (errorHandled.value) {
     return;
   }
-  
+
   const img = event.target as HTMLImageElement;
   const failedUrl = img.src;
-  
+
   console.warn('[UserInfo] ❌ 头像加载失败:', failedUrl);
-  
+
   // 标记已处理，防止重复触发
   errorHandled.value = true;
-  
+
   // 如果失败的是 logo.png，说明默认图片也不存在
   if (failedUrl.includes('logo.png')) {
     console.error('[UserInfo] ❌❌❌ CRITICAL: logo.png 文件加载失败！');
@@ -184,10 +184,10 @@ const handleAvatarError = (event: Event) => {
     // logo.png 失败就不再尝试了
     return;
   }
-  
+
   // 标记头像加载失败，这会触发 computed 重新计算，切换到默认 Logo
   avatarLoadError.value = true;
-  
+
   console.log('[UserInfo] 已切换到默认 Logo');
 };
 
@@ -213,7 +213,7 @@ const handleCommand = (command: string) => {
       // 个人信息页面属于系统域（主应用），直接使用 router.push
       router.push('/profile');
       break;
-    case 'settings':
+    case 'settings': {
       // 关键：在 layout-app 环境或 qiankun 模式下，通过事件触发偏好设置抽屉
       // 否则使用路由跳转（如果子应用有 /settings 路由）
       const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
@@ -270,17 +270,18 @@ const handleCommand = (command: string) => {
         router.push('/settings');
       }
       break;
-    case 'logout':
+    }
+    case 'logout': {
       // 先检查退出登录函数是否可用
       const logoutFn = getLogoutFunction();
-      
+
       // 如果没有退出登录函数，直接执行兜底方案（不显示确认对话框，立即退出）
       if (!logoutFn || typeof logoutFn !== 'function') {
         // 即使没有退出登录函数，也直接执行退出逻辑
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
         const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-        
+
         // 清除认证数据
         try {
           const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
@@ -293,7 +294,7 @@ const handleCommand = (command: string) => {
         } catch (e) {
           // 静默失败
         }
-        
+
         if (isProductionSubdomain) {
           window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
         } else {
@@ -304,7 +305,7 @@ const handleCommand = (command: string) => {
         }
         return;
       }
-      
+
       // 有退出登录函数，显示确认对话框
       BtcConfirm(t('common.logoutConfirm'), t('common.warning'), {
         confirmButtonText: t('common.button.confirm'),
@@ -327,6 +328,7 @@ const handleCommand = (command: string) => {
           // 取消操作，不做任何处理
         });
       break;
+    }
   }
 };
 </script>

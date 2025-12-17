@@ -16,7 +16,7 @@ export async function fetchEpsData(epsUrl: string, reqUrl: string) {
   }
 
   try {
-    const response = await axios.get(finalUrl, {
+    const response = await (axios as any).get(finalUrl, {
       timeout: 5000
     });
 

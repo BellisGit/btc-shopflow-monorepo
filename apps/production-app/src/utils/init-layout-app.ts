@@ -1,7 +1,7 @@
 /**
  * 初始化 layout-app 加载
  * 仅在独立运行且需要加载 layout-app 时调用
- * 
+ *
  * 关键设计：
  * 1. 只在成功加载 layout-app 后才设置 __USE_LAYOUT_APP__ 标志
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
@@ -80,7 +80,7 @@ async function injectAppConfigFromManifest(appId: string) {
     registerManifestMenusForApp(appId);
     (window as any).__APP_GET_LOGO_URL__ = resolveAppLogoUrl;
     const manifest = getManifest(appId);
-    if (manifest && manifest.name) {
+    if (manifest && 'name' in manifest && manifest.name) {
       (window as any).__CURRENT_APP_MANIFEST__ = manifest;
     }
     if (import.meta.env.DEV) {
@@ -133,15 +133,10 @@ export async function initLayoutApp() {
     // 关键：确保在 loadLayoutApp 成功后设置标志
     // loadLayoutApp 内部也会设置，但这里再次确保设置
     (window as any).__USE_LAYOUT_APP__ = true;
-    
-    // 调试日志
-    if (import.meta.env.DEV || import.meta.env.PROD) {
-      console.log('[production-app] layout-app 加载成功，设置 __USE_LAYOUT_APP__ = true');
-    }
   } catch (error) {
     // 任何错误都要清除标志，确保子应用可以独立渲染
     (window as any).__USE_LAYOUT_APP__ = false;
-    
+
     // 清理可能残留的 layout-app 相关标志和 DOM 内容
     // 移除可能添加的 script 标签（layout-app 的入口文件）
     const scripts = document.querySelectorAll('script[data-layout-app], script[src*="layout.bellis.com.cn"], script[src*="localhost:4188"]');
@@ -150,23 +145,24 @@ export async function initLayoutApp() {
         script.parentNode.removeChild(script);
       }
     });
-    
+
     // 清理可能添加的 base 标签（如果是为了 layout-app 添加的）
     const baseTags = document.querySelectorAll('base[data-layout-app-base], base');
     baseTags.forEach(base => {
+      const baseElement = base as HTMLBaseElement;
       // 如果 base 标签有 data-layout-app-base 属性，或者指向 layout-app 的域名，移除它
-      if (base.hasAttribute('data-layout-app-base') || 
-          (base.href && (base.href.includes('layout.bellis.com.cn') || base.href.includes('localhost:4188')))) {
-        if (base.parentNode) {
-          base.parentNode.removeChild(base);
+      if (baseElement.hasAttribute('data-layout-app-base') ||
+          (baseElement.href && (baseElement.href.includes('layout.bellis.com.cn') || baseElement.href.includes('localhost:4188')))) {
+        if (baseElement.parentNode) {
+          baseElement.parentNode.removeChild(baseElement);
         }
       }
     });
-    
+
     // 清理 #app 容器中可能残留的内容（如果 layout-app 部分加载但挂载失败）
     const appContainer = document.querySelector('#app');
     if (appContainer) {
-      const hasLayoutContent = appContainer.querySelector('#subapp-viewport') || 
+      const hasLayoutContent = appContainer.querySelector('#subapp-viewport') ||
                                appContainer.querySelector('#layout-app') ||
                                appContainer.querySelector('[data-layout-app]');
       if (hasLayoutContent || appContainer.children.length > 0) {
@@ -174,7 +170,7 @@ export async function initLayoutApp() {
         appContainer.innerHTML = '';
       }
     }
-    
+
     // 关键：抛出错误，让调用者知道加载失败，触发回退逻辑
     throw error;
   }

@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import { BtcViewGroup, BtcFlex1, BtcRow, BtcTable, BtcCrud, BtcPagination } from '@btc/shared-components';
 import { ElConfigProvider } from 'element-plus';
@@ -100,7 +100,10 @@ const elLocale = computed(() => {
 const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
   pagination.value.page = 1;
-  loadTicketData();
+  // 使用 nextTick 确保 selectedDomain 已更新且 crudRef 已初始化
+  nextTick(() => {
+    loadTicketData();
+  });
 };
 
 // 仓位搜索处理

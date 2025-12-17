@@ -32,11 +32,25 @@ export function useInventoryTicketPrint(
 
   // 加载盘点票数据（通过 crud 刷新）
   const loadTicketData = async () => {
+    // 如果没有选中域，不加载数据
+    if (!selectedDomain.value) {
+      return;
+    }
+
     // 优先使用 crud.loadData，如果没有则使用 refresh
     if (crudRef.value?.crud?.loadData) {
       await crudRef.value.crud.loadData();
     } else if (crudRef.value?.refresh) {
       await crudRef.value.refresh();
+    } else {
+      // 如果 crud 还没有初始化，延迟重试
+      setTimeout(() => {
+        if (crudRef.value?.crud?.loadData) {
+          crudRef.value.crud.loadData();
+        } else if (crudRef.value?.refresh) {
+          crudRef.value.refresh();
+        }
+      }, 100);
     }
   };
 
@@ -224,14 +238,14 @@ export function useInventoryTicketPrint(
 
               // 生成正方形二维码（使用 canvas）- 确保 width 和 height 一致，避免信息丢失
               // 生产域和非生产域使用相同的二维码尺寸
-              const qrSize = 90;
+              const qrSize = 80; // 80px，约等于21.2mm
               // 先设置 canvas 尺寸和样式，再生成二维码（避免清除已绘制的内容）
               canvasElement.width = qrSize;
               canvasElement.height = qrSize;
               canvasElement.style.setProperty('display', 'block', 'important');
               canvasElement.style.setProperty('margin', '0', 'important');
-              canvasElement.style.setProperty('width', `${qrSize}px`, 'important');
-              canvasElement.style.setProperty('height', `${qrSize}px`, 'important');
+              canvasElement.style.setProperty('width', '21.2mm', 'important');
+              canvasElement.style.setProperty('height', '21.2mm', 'important');
               canvasElement.style.setProperty('margin-left', 'auto', 'important');
               canvasElement.style.setProperty('margin-right', 'auto', 'important');
               canvasElement.style.setProperty('margin-top', '0', 'important');
@@ -252,7 +266,7 @@ export function useInventoryTicketPrint(
               if (titleDiv) {
                 titleDiv.style.setProperty('margin-top', '5px', 'important');
                 titleDiv.style.setProperty('margin-bottom', '0', 'important');
-                titleDiv.style.setProperty('font-size', '12px', 'important');
+                titleDiv.style.setProperty('font-size', '10px', 'important');
                 titleDiv.style.setProperty('text-align', 'center', 'important');
               }
             }
@@ -301,7 +315,7 @@ function buildPrintContent(list: any[], useProductionScan: boolean): string {
             <div class="barcode">
               <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
                 <canvas id="${qrId}"></canvas>
-                <div style="margin-top: 5px; font-size: 12px; text-align: center;">${displayText}</div>
+                <div style="margin-top: 5px; font-size: 10px; text-align: center;">${displayText}</div>
               </div>
             </div>
 
@@ -309,7 +323,7 @@ function buildPrintContent(list: any[], useProductionScan: boolean): string {
             <div class="child">
               <div class="t-child">
                 <div class="t-title">
-                  <div>抽${displayText}</div>
+                  <div>抽盘${displayText}</div>
                 </div>
                 <div class="t-line">
                   <div>机</div>
@@ -328,7 +342,7 @@ function buildPrintContent(list: any[], useProductionScan: boolean): string {
             <div class="child">
               <div class="t-child">
                 <div class="t-title">
-                  <div>复${displayText}</div>
+                  <div>复盘${displayText}</div>
                 </div>
                 <div class="t-line">
                   <div>机</div>
@@ -346,7 +360,7 @@ function buildPrintContent(list: any[], useProductionScan: boolean): string {
             <div class="child">
               <div class="t-child">
                 <div class="t-title">
-                  <div>初${displayText}</div>
+                  <div>初盘${displayText}</div>
                 </div>
                 <div class="t-line">
                   <div>机</div>
@@ -370,7 +384,7 @@ function buildPrintContent(list: any[], useProductionScan: boolean): string {
             <div class="barcode">
               <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
                 <canvas id="${qrId}"></canvas>
-                <div style="margin-top: 5px; font-size: 12px; text-align: center;">${displayText}</div>
+                <div style="margin-top: 5px; font-size: 10px; text-align: center;">${displayText}</div>
               </div>
             </div>
 
@@ -471,7 +485,6 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            border-bottom: 1px dashed #000;
             padding: 0;
             margin: 0;
             box-sizing: border-box;
@@ -486,21 +499,20 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             width: 70mm;
             height: 35mm;
             display: flex;
-            padding-top: 0;
+            padding-top: 5mm;
             padding-bottom: 0;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
             overflow: visible;
             margin: 0 auto;
-            border-bottom: 1px dashed #000;
             page-break-inside: avoid; /* 防止二维码区域被分页分割 */
           }
           .barcode canvas {
-            width: 90px !important;
-            height: 90px !important;
-            max-width: 90px !important;
-            max-height: 90px !important;
+            width: 21.2mm !important;
+            height: 21.2mm !important;
+            max-width: 21.2mm !important;
+            max-height: 21.2mm !important;
             aspect-ratio: 1 / 1;
             object-fit: contain;
             display: block;
@@ -528,6 +540,8 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             justify-content: center;
             margin-top: 0;
             margin-bottom: 0;
+            font-weight: bold;
+            font-size: 13px;
           }
 
           /* 控制内容部分的样式 */
@@ -551,6 +565,19 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             margin-bottom: 0;
             text-align: center;
             justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+          }
+
+          /* 所有文字元素加粗 */
+          .t-line > div {
+            font-weight: bold;
+            font-size: 12px;
+          }
+
+          .t-title > div {
+            font-weight: bold;
+            font-size: 13px;
           }
           .t-line:first-of-type {
             margin-top: 0;
@@ -607,7 +634,6 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            border-bottom: 1px dashed #000;
             padding-top: 8mm;
             padding-bottom: 0;
             box-sizing: border-box;
@@ -627,13 +653,12 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             box-sizing: border-box;
             overflow: visible;
             margin: 0 auto;
-            border-bottom: 1px dashed #000;
           }
           .barcode canvas {
-            width: 90px !important;
-            height: 90px !important;
-            max-width: 90px !important;
-            max-height: 90px !important;
+            width: 21.2mm !important;
+            height: 21.2mm !important;
+            max-width: 21.2mm !important;
+            max-height: 21.2mm !important;
             aspect-ratio: 1 / 1;
             object-fit: contain;
             display: block;
@@ -661,6 +686,8 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             justify-content: center;
             margin-top: 0;
             margin-bottom: 0;
+            font-weight: bold;
+            font-size: 13px;
           }
 
           /* 控制内容部分的样式 */
@@ -671,7 +698,7 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             align-items: stretch;
             width: 100%;
             margin-top: 0;
-            margin-bottom: 0;
+            margin-bottom: -4mm;
             padding: 0;
           }
 
@@ -679,10 +706,23 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
           .t-line {
             display: flex;
             flex-direction: row;
-            margin-top: 3mm;
+            margin-top: 6mm;
             margin-bottom: 0;
             text-align: center;
             justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+          }
+
+          /* 所有文字元素加粗 */
+          .t-line > div {
+            font-weight: bold;
+            font-size: 12px;
+          }
+
+          .t-title > div {
+            font-weight: bold;
+            font-size: 13px;
           }
         </style>
       </head>

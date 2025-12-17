@@ -992,8 +992,13 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
               // 路径已经是正确的，直接使用
               fixedUrl = url;
             }
+          } else if (url.startsWith('/assets/layout/')) {
+            // 关键：/assets/layout/ 路径是 layout-app 专用的，无论 base 标签是否存在，都应该转换为 layout-app 的 origin
+            // 因为子应用的资源在 /assets/ 目录下，不在 /assets/layout/ 目录下
+            fixedUrl = `${entryUrl.origin}${url}`;
           } else if (url.startsWith('/assets/') && !url.startsWith('/assets/layout/')) {
-            // 关键：只有当 base 标签存在时，才认为这是 layout-app 的资源（需要修复）
+            // /assets/ 路径（不是 /assets/layout/）可能是子应用的资源
+            // 只有当 base 标签存在时，才认为是 layout-app 的资源（需要修复）
             // 如果 base 标签不存在，这可能是子应用的资源，不应该修复
             if (baseTag !== null) {
               // 将 /assets/xxx.js 转换为 /assets/layout/xxx.js
@@ -1002,15 +1007,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             } else {
               // base 标签不存在，这可能是子应用的资源，不应该修复
               // 直接使用原始 URL，不进行修复
-              fixedUrl = url;
-            }
-          } else if (url.startsWith('/assets/')) {
-            // 已经是 /assets/layout/，只需要转换为正确的 origin
-            // 关键：只有当 base 标签存在时，才转换为 layout-app 的 origin
-            if (baseTag !== null) {
-              fixedUrl = `${entryUrl.origin}${url}`;
-            } else {
-              // base 标签不存在，这可能是子应用的资源，不应该修复
               fixedUrl = url;
             }
           } else if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
@@ -1293,7 +1289,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
             // 子应用的主入口文件，不应该被修复为 layout-app 的资源，直接返回 404 响应
             return response;
           }
-          
+
           // 关键：如果当前请求的域名是 layout-app 的域名，但文件是子应用的主入口文件（即使之前被识别为 layout-app 的资源），
           // 说明路径被错误地指向了 layout-app，应该尝试从子应用自己的域名加载
           if (isSubAppEntryFile && isLayoutAsset && isLayoutDomain && (url.startsWith('http://') || url.startsWith('https://'))) {

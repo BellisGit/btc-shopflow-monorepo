@@ -42,7 +42,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   // 注意：storage.get('settings') 现在从 Cookie 读取，如果没有数据会返回空对象 {}
   const settings = (storage.get('settings') as Record<string, any>) || {};
   const savedTheme = settings?.theme as ThemeConfig | null | undefined;
-  
+
   // 优先使用 settings 中保存的主题，否则使用迁移后的主题
   const currentTheme = ref<ThemeConfig>(savedTheme || migratedTheme);
 
@@ -137,17 +137,17 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
       console.warn('[Theme] updateThemeColor: color is empty');
       return;
     }
-    
+
     currentTheme.value = {
       ...currentTheme.value,
       name: 'custom',
       label: 'theme.presets.custom',
       color: color,
     };
-    
+
     // 立即应用主题色到 CSS 变量
     themeSetThemeColor(color, isDark.value);
-    
+
     // 更新 body 类名
     setBodyClassName('theme-custom');
 
@@ -156,7 +156,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     const currentSettings = (storage.get('settings') as Record<string, any>) || {};
     const updatedSettings = { ...currentSettings, theme: currentTheme.value };
     storage.set('settings', updatedSettings);
-    
+
     console.log('[Theme] updateThemeColor applied:', { color, isDark: isDark.value });
   }
 
@@ -166,8 +166,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   function changeDark(el: Element, isDarkValue: boolean, cb: () => void) {
     // 如果浏览器支持 View Transition API，使用动画
     if ((document as any).startViewTransition) {
-      // @ts-ignore
-      const transition = document.startViewTransition(() => {
+      const transition = (document as any).startViewTransition(() => {
         cb();
       });
 
@@ -183,7 +182,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
           `circle(0 at ${x}px ${y}px)`,
           `circle(${endRadius}px at ${x}px ${y}px)`
         ];
-        
+
         document.documentElement.animate(
           {
             clipPath: isDarkValue ? clipPath.reverse() : clipPath
@@ -296,16 +295,25 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
  * 组合式 API：使用主题插件
  */
 export function useThemePlugin(): ThemePlugin {
+  // 如果实例不存在，尝试从全局对象获取（可能在 layout-app 环境下从其他应用共享）
   if (!themePluginInstance) {
-    throw new Error('Theme plugin not installed. Please call createThemePlugin() first.');
+    const globalTheme = (typeof window !== 'undefined' && (window as any).__THEME_PLUGIN__) ||
+                        (typeof globalThis !== 'undefined' && (globalThis as any).__THEME_PLUGIN__);
+    if (globalTheme) {
+      themePluginInstance = globalTheme;
+    } else {
+      throw new Error('Theme plugin not installed. Please call createThemePlugin() first.');
+    }
   }
+  // 确保 themePluginInstance 不为 null（此时已经初始化或从全局获取）
+  const instance = themePluginInstance as ThemePlugin;
   // 确保 THEME_PRESETS 是最新的
-  themePluginInstance.THEME_PRESETS = THEME_PRESETS;
+  instance.THEME_PRESETS = THEME_PRESETS;
   // 动态绑定最新的 setThemeColor 函数，确保热更新时使用最新版本
   if (latestSetThemeColor) {
-    themePluginInstance.setThemeColor = latestSetThemeColor;
+    instance.setThemeColor = latestSetThemeColor;
   }
-  return themePluginInstance;
+  return instance;
 }
 
 /**

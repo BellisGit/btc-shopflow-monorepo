@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="showWorkTab" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
@@ -44,6 +44,20 @@
             @click="onTap(item, index)"
             @contextmenu.stop.prevent="openContextMenu($event, item, index)"
           >
+            <!-- 图标 -->
+            <el-icon
+              v-if="getTabIcon(item) && !isSvgIcon(getTabIcon(item)) && ElementPlusIconsVue[getTabIcon(item) as keyof typeof ElementPlusIconsVue]"
+              :size="14"
+              class="tab-icon"
+            >
+              <component :is="ElementPlusIconsVue[getTabIcon(item) as keyof typeof ElementPlusIconsVue]" />
+            </el-icon>
+            <btc-svg
+              v-else-if="isSvgIcon(getTabIcon(item))"
+              :name="getSvgIconName(getTabIcon(item))"
+              :size="14"
+              class="tab-icon"
+            />
             <span class="label" :title="getTabLabel(item)">
               {{ getTabLabel(item) }}
             </span>
@@ -97,6 +111,45 @@ import type { ProcessItem } from '@btc/shared-components/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@btc/shared-components/store/process';
 import { getManifestRoute } from '@btc/subapp-manifests';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+
+// 判断是否为SVG图标
+function isSvgIcon(iconName?: string): boolean {
+  return iconName?.startsWith('svg:') ?? false;
+}
+
+// 获取SVG图标名称（移除 svg: 前缀）
+function getSvgIconName(iconName?: string): string {
+  return iconName?.replace(/^svg:/, '') || '';
+}
+
+// 从菜单注册表中查找菜单项的图标
+function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined {
+  const menus = getMenusForApp(app);
+
+  // 递归查找菜单项
+  function findInMenuItems(items: any[]): string | undefined {
+    for (const item of items) {
+      // 优先通过 labelKey 匹配（菜单注册时保存的原始 i18n key）
+      // 如果 labelKey 不存在，则通过 title 匹配（兼容旧数据）
+      const matches = (item.labelKey === i18nKey) || (item.title === i18nKey);
+      if (matches && item.icon) {
+        return item.icon;
+      }
+      // 递归查找子菜单
+      if (item.children && item.children.length > 0) {
+        const found = findInMenuItems(item.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  return findInMenuItems(menus);
+}
 
 interface Props {
   isFullscreen?: boolean;
@@ -130,10 +183,12 @@ function handleTabStyleChange(event: CustomEvent) {
 
 onMounted(() => {
   // 监听标签页样式变化
+  // eslint-disable-next-line no-undef
   window.addEventListener('tab-style-change', handleTabStyleChange as EventListener);
 });
 
 onUnmounted(() => {
+  // eslint-disable-next-line no-undef
   window.removeEventListener('tab-style-change', handleTabStyleChange as EventListener);
 });
 
@@ -310,6 +365,9 @@ function getTabLabel(item: ProcessItem) {
 
   // 路径到 i18n key 的映射
   const pathToI18nKey: Record<string, string> = {
+    // 404 页面
+    '/404': 'common.page_not_found',
+
     // 个人中心
     '/profile': 'common.profile',
 
@@ -378,6 +436,56 @@ function getTabLabel(item: ProcessItem) {
   return item.meta?.label || item.name || item.path;
 }
 
+// 获取标签图标
+function getTabIcon(item: ProcessItem): string | undefined {
+  const app = getCurrentAppFromPath(item.path);
+  const manifestRoute = getManifestRoute(app, item.path);
+
+  // 优先从 manifest 的 tab 配置中获取图标
+  if (manifestRoute?.tab?.icon) {
+    return manifestRoute.tab.icon;
+  }
+
+  // 从 manifest 的 breadcrumbs 中获取最后一个面包屑的图标（当前页面图标）
+  if (manifestRoute?.breadcrumbs && manifestRoute.breadcrumbs.length > 0) {
+    const lastBreadcrumb = manifestRoute.breadcrumbs[manifestRoute.breadcrumbs.length - 1];
+    if (lastBreadcrumb.icon) {
+      return lastBreadcrumb.icon;
+    }
+  }
+
+  // 从 meta.breadcrumbs 中获取最后一个面包屑的图标
+  if (item.meta?.breadcrumbs && Array.isArray(item.meta.breadcrumbs) && item.meta.breadcrumbs.length > 0) {
+    const lastBreadcrumb = item.meta.breadcrumbs[item.meta.breadcrumbs.length - 1];
+    if (lastBreadcrumb.icon) {
+      return lastBreadcrumb.icon;
+    }
+  }
+
+  // 从菜单注册表中查找图标
+  const appForMenu = getCurrentAppFromPath(item.path);
+  const metaLabelKey =
+    typeof item.meta?.labelKey === 'string' && item.meta.labelKey.length > 0
+      ? item.meta.labelKey
+      : typeof item.meta?.hostLabelKey === 'string'
+      ? item.meta.hostLabelKey
+      : undefined;
+
+  if (metaLabelKey) {
+    const menuIcon = findMenuIconByI18nKey(metaLabelKey, appForMenu);
+    if (menuIcon) {
+      return menuIcon;
+    }
+  }
+
+  // 路径到图标的映射
+  const pathToIcon: Record<string, string> = {
+    '/404': 'svg:404',
+  };
+
+  return pathToIcon[item.path];
+}
+
 // 返回上一页（在当前应用内）
 function toBack() {
   const currentApp = getCurrentAppFromPath(route.path);
@@ -410,21 +518,21 @@ function toRefresh() {
 // 回到当前应用首页
 function toHome() {
   const currentApp = getCurrentAppFromPath(route.path);
-  
+
   // 关键：财务应用在生产环境子域名（finance.bellis.com.cn）时，首页应该回到子域名根路径
   // 即 https://finance.bellis.com.cn/ ，而不是主域名的 /finance
   if (currentApp === 'finance' && typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
     const isProductionSubdomain = hostname !== 'bellis.com.cn' && hostname.endsWith('bellis.com.cn');
-    
+
     if (isProductionSubdomain) {
       // 生产环境子域名：回到当前子域名根路径
       window.location.href = `${protocol}//${hostname}/`;
       return;
     }
   }
-  
+
   const appHomes: Record<string, string> = {
     system: '/', // 系统域首页
     admin: '/admin', // 管理域首页
@@ -654,6 +762,15 @@ watch(
           background-color: rgba(0, 0, 0, 0.1);
         }
       }
+    }
+
+    .tab-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 6px;
+      color: inherit;
     }
 
     .label {

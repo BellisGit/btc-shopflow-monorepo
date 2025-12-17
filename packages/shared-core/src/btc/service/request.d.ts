@@ -2,7 +2,7 @@
  * 统一 HTTP 请求函数
  * 基于 axios，参考 cool-admin 的实现
  */
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 export interface RequestOptions extends AxiosRequestConfig {
     url: string;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'PATCH';
@@ -17,15 +17,16 @@ export interface RequestOptions extends AxiosRequestConfig {
  * 请求函数类型定义
  */
 export type Request = (options: RequestOptions) => Promise<any>;
+export declare function processURL(baseURL: string, url: string): {
+    url: string;
+    baseURL: string;
+};
 /**
  * 创建统一的 request 函数
- * @param baseURL 基础 URL
+ * @param baseURL 基础 URL（如果为空字符串或未提供，则使用动态 baseURL）
  * @returns Request 函数
  */
 export declare function createRequest(baseURL?: string): Request;
-/**
- * 默认的 request 实例
- */
 export declare const request: Request;
 /**
  * 创建带权限检查的 request 函数

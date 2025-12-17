@@ -157,19 +157,14 @@ interface check {
           deletedAt?: any;
         
           /**
-           * 页码
+           * materialCode
            */
-          page?: any;
+          materialCode?: any;
         
           /**
-           * 每页数量
+           * position
            */
-          size?: any;
-        
-          /**
-           * 关键词
-           */
-          keyword?: any;
+          position?: any;
         
         /**
          * Any key-value pairs
@@ -424,19 +419,14 @@ interface bom {
           childQty?: any;
         
           /**
-           * 页码
+           * parentNode
            */
-          page?: any;
+          parentNode?: any;
         
           /**
-           * 每页数量
+           * childNode
            */
-          size?: any;
-        
-          /**
-           * 关键词
-           */
-          keyword?: any;
+          childNode?: any;
         
         /**
          * Any key-value pairs
@@ -512,19 +502,24 @@ interface check {
           deletedAt?: any;
         
           /**
-           * 页码
+           * checkNo
            */
-          page?: any;
+          checkNo?: any;
         
           /**
-           * 每页数量
+           * checkType
            */
-          size?: any;
+          checkType?: any;
         
           /**
-           * 关键词
+           * checkStatus
            */
-          keyword?: any;
+          checkStatus?: any;
+        
+          /**
+           * checker
+           */
+          checker?: any;
         
         /**
          * Any key-value pairs
@@ -540,14 +535,24 @@ interface diff {
           id?: any;
         
           /**
-           * 盘点任务ID
+           * 盘点流程ID
            */
-          inventoryCheckId?: any;
+          checkNo?: any;
         
           /**
            * 物料编码
            */
           materialCode?: any;
+        
+          /**
+           * 仓位
+           */
+          position?: any;
+        
+          /**
+           * 差异数量
+           */
+          diffQty?: any;
         
           /**
            * 差异原因
@@ -580,19 +585,29 @@ interface diff {
           createdAt?: any;
         
           /**
-           * 页码
+           * bookQty
            */
-          page?: any;
+          bookQty?: any;
         
           /**
-           * 每页数量
+           * actualQty
            */
-          size?: any;
+          actualQty?: any;
         
           /**
-           * 关键词
+           * checkNo
            */
-          keyword?: any;
+          checkNo?: any;
+        
+          /**
+           * position
+           */
+          position?: any;
+        
+          /**
+           * materialCode
+           */
+          materialCode?: any;
         
         /**
          * Any key-value pairs
@@ -603,19 +618,19 @@ interface diff {
 
 interface ticket {
           /**
-           * 页码
+           * domainId
            */
-          page?: any;
+          domainId?: any;
         
           /**
-           * 每页数量
+           * position
            */
-          size?: any;
+          position?: any;
         
           /**
-           * 关键词
+           * partName
            */
-          keyword?: any;
+          partName?: any;
         
         /**
          * Any key-value pairs
@@ -646,19 +661,14 @@ interface data {
           unitCost?: any;
         
           /**
-           * 页码
+           * stockCode
            */
-          page?: any;
+          stockCode?: any;
         
           /**
-           * 每页数量
+           * warehouse
            */
-          size?: any;
-        
-          /**
-           * 关键词
-           */
-          keyword?: any;
+          warehouse?: any;
         
         /**
          * Any key-value pairs

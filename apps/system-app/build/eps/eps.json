@@ -4,81 +4,6 @@
 		"name": "test",
 		"api": [
 			{
-				"name": "510",
-				"method": "GET",
-				"path": "/510",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "方法参数校验异常",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "511",
-				"method": "GET",
-				"path": "/511",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "登录失败，未获取到令牌",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "513",
-				"method": "GET",
-				"path": "/513",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "512",
-				"method": "GET",
-				"path": "/512",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "keycloak客户端地址错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "514",
-				"method": "GET",
-				"path": "/514",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端id失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "500",
 				"method": "GET",
 				"path": "/500",
@@ -109,30 +34,15 @@
 				}
 			},
 			{
-				"name": "523",
+				"name": "520",
 				"method": "GET",
-				"path": "/523",
+				"path": "/520",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "数据错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "515",
-				"method": "GET",
-				"path": "/515",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端密钥失败",
+				"summary": "没有该工号",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -154,90 +64,15 @@
 				}
 			},
 			{
-				"name": "522",
+				"name": "513",
 				"method": "GET",
-				"path": "/522",
+				"path": "/513",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "参数不能为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "520",
-				"method": "GET",
-				"path": "/520",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "524",
-				"method": "GET",
-				"path": "/524",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "账号已存在",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "526",
-				"method": "GET",
-				"path": "/526",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "表单id过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "516",
-				"method": "GET",
-				"path": "/516",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "连接keycloak失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
+				"summary": "获取领域失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -259,15 +94,120 @@
 				}
 			},
 			{
-				"name": "527",
+				"name": "511",
 				"method": "GET",
-				"path": "/527",
+				"path": "/511",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "手机号不存在",
+				"summary": "登录失败，未获取到令牌",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "514",
+				"method": "GET",
+				"path": "/514",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端id失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "516",
+				"method": "GET",
+				"path": "/516",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "连接keycloak失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "515",
+				"method": "GET",
+				"path": "/515",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端密钥失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "518",
+				"method": "GET",
+				"path": "/518",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "512",
+				"method": "GET",
+				"path": "/512",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "keycloak客户端地址错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "523",
+				"method": "GET",
+				"path": "/523",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "数据错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "522",
+				"method": "GET",
+				"path": "/522",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "参数不能为空",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -289,6 +229,36 @@
 				}
 			},
 			{
+				"name": "524",
+				"method": "GET",
+				"path": "/524",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "账号已存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "527",
+				"method": "GET",
+				"path": "/527",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "手机号不存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "529",
 				"method": "GET",
 				"path": "/529",
@@ -298,6 +268,36 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "邮箱不存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "526",
+				"method": "GET",
+				"path": "/526",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "表单id过期",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "510",
+				"method": "GET",
+				"path": "/510",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "方法参数校验异常",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -831,43 +831,65 @@
 		],
 		"pageColumns": [
 			{
-				"comment": "页码",
+				"comment": "",
 				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
-			},
-			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
-				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
+				"propertyName": "materialCode",
+				"source": "",
 				"type": "string",
 				"dict": null,
-				"defaultValue": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
 				"extensions": null
 			}
 		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "materialCode",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "物料编码",
+					"nullable": true,
+					"propertyName": "materialCode",
+					"source": "material_code",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "position",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -957,15 +979,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "import",
 				"method": "POST",
-				"path": "/export",
+				"path": "/import",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "IMPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:export",
-				"summary": "导出bom表",
+				"permission": "system.base:sys_btc_bom:import",
+				"summary": "导入bom表",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -983,15 +1005,15 @@
 				}
 			},
 			{
-				"name": "import",
+				"name": "export",
 				"method": "POST",
-				"path": "/import",
+				"path": "/export",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "IMPORT",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:import",
-				"summary": "导入bom表",
+				"permission": "system.base:sys_btc_bom:export",
+				"summary": "导出bom表",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -1309,15 +1331,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "import",
 				"method": "POST",
-				"path": "/export",
+				"path": "/import",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "IMPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_data:export",
-				"summary": "导出数据表",
+				"permission": "system.base:sys_btc_data:import",
+				"summary": "导入数据表",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1335,15 +1357,15 @@
 				}
 			},
 			{
-				"name": "import",
+				"name": "export",
 				"method": "POST",
-				"path": "/import",
+				"path": "/export",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "IMPORT",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_data:import",
-				"summary": "导入数据表",
+				"permission": "system.base:sys_btc_data:export",
+				"summary": "导出数据表",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1599,6 +1621,32 @@
 							"description": "arg0",
 							"name": "body:arg0",
 							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "system.base:sys_data_source:export",
+				"summary": "导出数据源",
+				"tag": "SysDataSourceController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -1907,43 +1955,65 @@
 		],
 		"pageColumns": [
 			{
-				"comment": "页码",
+				"comment": "",
 				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
-			},
-			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
-				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
+				"propertyName": "parentNode",
+				"source": "",
 				"type": "string",
 				"dict": null,
-				"defaultValue": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "childNode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
 				"extensions": null
 			}
 		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "parentNode",
+					"value": ""
+				},
+				{
+					"field": "childNode",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "父节点",
+					"nullable": true,
+					"propertyName": "parentNode",
+					"source": "parent_node",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "子节点",
+					"nullable": true,
+					"propertyName": "childNode",
+					"source": "child_node",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -2115,15 +2185,15 @@
 				}
 			},
 			{
-				"name": "add",
+				"name": "update",
 				"method": "POST",
-				"path": "/add",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "新增盘点基础表",
+				"summary": "编辑盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2167,15 +2237,15 @@
 				}
 			},
 			{
-				"name": "update",
+				"name": "add",
 				"method": "POST",
-				"path": "/update",
+				"path": "/add",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "编辑盘点基础表",
+				"summary": "新增盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2379,43 +2449,113 @@
 		],
 		"pageColumns": [
 			{
-				"comment": "页码",
+				"comment": "",
 				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
-			},
-			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
-				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
+				"propertyName": "checkNo",
+				"source": "",
 				"type": "string",
 				"dict": null,
-				"defaultValue": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkType",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkStatus",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checker",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
 				"extensions": null
 			}
 		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				},
+				{
+					"field": "checkType",
+					"value": ""
+				},
+				{
+					"field": "checkStatus",
+					"value": ""
+				},
+				{
+					"field": "checker",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "盘点编号",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点类型",
+					"nullable": true,
+					"propertyName": "checkType",
+					"source": "check_type",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点状态",
+					"nullable": true,
+					"propertyName": "checkStatus",
+					"source": "check_status",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "盘点人",
+					"nullable": true,
+					"propertyName": "checker",
+					"source": "checker",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -2427,74 +2567,22 @@
 		"name": "diff",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "新增",
-				"tag": "SysCheckDiffController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "update",
-				"method": "PUT",
+				"method": "POST",
 				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_diff:update",
-				"summary": "根据ID更新",
-				"tag": "SysCheckDiffController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "list",
-				"method": "POST",
-				"path": "/list",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "login",
+				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "查询列表",
+				"summary": "编辑盘点差异记录",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
 						{
 							"description": "arg0",
 							"name": "body:arg0",
-							"required": false,
+							"required": true,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -2505,21 +2593,21 @@
 				}
 			},
 			{
-				"name": "delete",
-				"method": "DELETE",
-				"path": "/delete/{id}",
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "DELETE",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_diff:delete",
-				"summary": "根据ID删除",
+				"permission": "logistics.warehouse:sys_check_diff:export",
+				"summary": "exportDiff",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
 						{
-							"description": "id",
-							"name": "path:id",
+							"description": "arg0",
+							"name": "body:arg0",
 							"required": true,
 							"schema": {
 								"type": "object",
@@ -2539,14 +2627,14 @@
 				"action": "CREATE",
 				"auth": "login",
 				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "分页查询",
+				"summary": "分页接口",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
 						{
 							"description": "arg0",
 							"name": "body:arg0",
-							"required": false,
+							"required": true,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -2569,11 +2657,11 @@
 				"extensions": null
 			},
 			{
-				"comment": "盘点任务ID",
+				"comment": "盘点流程ID",
 				"nullable": true,
-				"propertyName": "inventoryCheckId",
-				"source": "inventory_check_id",
-				"type": "bigint",
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
 				"dict": [],
 				"defaultValue": null,
 				"extensions": null
@@ -2584,6 +2672,26 @@
 				"propertyName": "materialCode",
 				"source": "material_code",
 				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "仓位",
+				"nullable": true,
+				"propertyName": "position",
+				"source": "position",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "差异数量",
+				"nullable": true,
+				"propertyName": "diffQty",
+				"source": "diff_qty",
+				"type": "decimal",
 				"dict": [],
 				"defaultValue": null,
 				"extensions": null
@@ -2647,47 +2755,113 @@
 				"dict": [],
 				"defaultValue": null,
 				"extensions": null
-			}
-		],
-		"pageColumns": [
-			{
-				"comment": "页码",
-				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
 			},
 			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
+				"comment": "bookQty",
 				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
-				"type": "string",
-				"dict": null,
+				"propertyName": "bookQty",
+				"source": "book_qty",
+				"type": "decimal",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "actualQty",
+				"nullable": true,
+				"propertyName": "actualQty",
+				"source": "actual_qty",
+				"type": "decimal",
+				"dict": [],
 				"defaultValue": null,
 				"extensions": null
 			}
 		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "materialCode",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				},
+				{
+					"field": "materialCode",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "盘点流程ID",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "仓位",
+					"nullable": true,
+					"propertyName": "position",
+					"source": "position",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "物料编码",
+					"nullable": true,
+					"propertyName": "materialCode",
+					"source": "material_code",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -2806,43 +2980,89 @@
 		"columns": [],
 		"pageColumns": [
 			{
-				"comment": "页码",
+				"comment": "",
 				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
-			},
-			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
-				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
+				"propertyName": "domainId",
+				"source": "",
 				"type": "string",
 				"dict": null,
-				"defaultValue": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "position",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "partName",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
 				"extensions": null
 			}
 		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "domainId",
+					"value": ""
+				},
+				{
+					"field": "position",
+					"value": ""
+				},
+				{
+					"field": "partName",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "domainId",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "position",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				},
+				{
+					"comment": "",
+					"nullable": false,
+					"propertyName": "partName",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -2924,43 +3144,65 @@
 		],
 		"pageColumns": [
 			{
-				"comment": "页码",
+				"comment": "",
 				"nullable": false,
-				"propertyName": "page",
-				"source": "page",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 1,
-				"extensions": null
-			},
-			{
-				"comment": "每页数量",
-				"nullable": false,
-				"propertyName": "size",
-				"source": "size",
-				"type": "number",
-				"dict": null,
-				"defaultValue": 20,
-				"extensions": null
-			},
-			{
-				"comment": "关键词",
-				"nullable": true,
-				"propertyName": "keyword",
-				"source": "keyword",
+				"propertyName": "stockCode",
+				"source": "",
 				"type": "string",
 				"dict": null,
-				"defaultValue": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "warehouse",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
 				"extensions": null
 			}
 		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "stockCode",
+					"value": ""
+				},
+				{
+					"field": "warehouse",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "库存代码",
+					"nullable": true,
+					"propertyName": "stockCode",
+					"source": "stock_code",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				},
+				{
+					"comment": "仓库",
+					"nullable": true,
+					"propertyName": "warehouse",
+					"source": "warehouse",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
@@ -3354,32 +3596,6 @@
 		"name": "checkTicket",
 		"api": [
 			{
-				"name": "info",
-				"method": "POST",
-				"path": "/info",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_check_ticket:create",
-				"summary": "盘点票查询打印",
-				"tag": "BaseSysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "print",
 				"method": "POST",
 				"path": "/print",
@@ -3398,6 +3614,32 @@
 							"required": true,
 							"schema": {
 								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "info",
+				"method": "POST",
+				"path": "/info",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_check_ticket:create",
+				"summary": "盘点票查询打印",
+				"tag": "BaseSysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
 								"format": null,
 								"items": null
 							}

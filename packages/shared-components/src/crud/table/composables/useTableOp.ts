@@ -1,8 +1,8 @@
-﻿import { nextTick, ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { TableColumn, OpButton, TableProps } from '../types';
-import { globalMitt } from '@btc/shared-components/utils/mitt';
+import { globalMitt } from '@btc/shared-components';
 
 /**
  * 鎿嶄綔鍒楀鐞?+ 鍒楁帶鍒? */

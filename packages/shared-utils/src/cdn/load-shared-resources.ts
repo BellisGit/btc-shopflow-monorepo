@@ -1,11 +1,11 @@
 /**
  * 从 layout-app 加载共享资源
- * 
+ *
  * 共享资源包括：
  * - vendor: Vue 生态库 + 共享组件库
  * - echarts-vendor: ECharts 相关库
  * - menu-registry: 菜单注册表
- * 
+ *
  * 使用说明：
  * 1. 在生产环境，非 layout-app 应用需要先加载共享资源
  * 2. 开发环境仍然使用本地打包的资源，不加载共享资源
@@ -80,17 +80,17 @@ async function getResourceFromManifest(
     }
 
     const manifest = await response.json();
-    
+
     // #region agent log H-MANIFEST
     fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-MANIFEST',location:'packages/shared-utils/src/cdn/load-shared-resources.ts:getResourceFromManifest',message:'manifest parsed',data:{manifestKeysCount:Object.keys(manifest||{}).length,resourceName},timestamp:Date.now()})}).catch(()=>{});
     // #endregion agent log H-MANIFEST
-    
+
     // 查找匹配的资源文件
     // manifest 格式：{ "vendor-xxx.js": { file: "assets/layout/vendor-xxx.js", ... }, ... }
     for (const [key, value] of Object.entries(manifest)) {
       const entry = value as { file?: string; src?: string };
       const fileName = entry.file || entry.src || key;
-      
+
       // 匹配资源名称（vendor、echarts-vendor、menu-registry）
       if (fileName.includes(resourceName) && fileName.endsWith('.js')) {
         // 返回完整的 URL
@@ -158,7 +158,7 @@ function loadScript(url: string): Promise<void> {
 
 /**
  * 从 layout-app 加载共享资源
- * 
+ *
  * @param options 加载选项
  * @param options.resources 要加载的资源列表，默认为 ['vendor', 'echarts-vendor', 'menu-registry']
  * @param options.onProgress 进度回调，参数为 (loaded, total)
@@ -169,18 +169,21 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
   onProgress?: (loaded: number, total: number) => void;
 }): Promise<void> {
   // layout-app 本身不需要加载共享资源
-  if (typeof window !== 'undefined' && (window as any).__IS_LAYOUT_APP__) {
-    return;
+  // 如果使用了 layout-app（__USE_LAYOUT_APP__ 为 true），也不需要加载，因为 layout-app 已经提供了这些资源
+  if (typeof window !== 'undefined') {
+    if ((window as any).__IS_LAYOUT_APP__ || (window as any).__USE_LAYOUT_APP__) {
+      return;
+    }
   }
 
   const layoutAppBase = getLayoutAppBase();
-  
+
   // 开发环境：不加载共享资源，使用本地打包的资源
   // 通过 hostname 判断：localhost 或非生产域名都是开发环境
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    const isDev = hostname === 'localhost' || 
-                  hostname === '127.0.0.1' || 
+    const isDev = hostname === 'localhost' ||
+                  hostname === '127.0.0.1' ||
                   !hostname.includes('bellis.com.cn');
     if (isDev) {
       return;
@@ -188,8 +191,8 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
   } else {
     // 服务端环境：尝试使用 import.meta.env（如果可用）
     try {
-      const isDev = typeof import.meta !== 'undefined' && 
-                    import.meta.env && 
+      const isDev = typeof import.meta !== 'undefined' &&
+                    import.meta.env &&
                     (import.meta.env as any).DEV === true;
       if (isDev) {
         return;
@@ -199,7 +202,7 @@ export async function loadSharedResourcesFromLayoutApp(options?: {
     }
   }
   const resources = options?.resources || ['vendor', 'echarts-vendor', 'menu-registry'];
-  
+
   let loaded = 0;
   const total = resources.length;
 
@@ -251,7 +254,7 @@ export function areSharedResourcesLoaded(): boolean {
   }
 
   // 检查是否已经加载了 vendor（Vue 应该已经可用）
-  return typeof (window as any).Vue !== 'undefined' || 
+  return typeof (window as any).Vue !== 'undefined' ||
          document.querySelector('script[src*="vendor"]') !== null;
 }
 

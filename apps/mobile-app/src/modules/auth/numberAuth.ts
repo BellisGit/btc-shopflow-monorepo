@@ -185,13 +185,3 @@ export function getDefaultMethod(vendor: NumberAuthVendor): NumberAuthMethod {
 // 现在应该使用 utils/phone-auth.ts 中的实现（getPhoneNumberServer + getAuthTokens + checkLoginAvailable + getLoginToken）
 // 该文件仅保留一些基础工具函数和类型定义
 
-/**
- * 检测是否使用阿里云统一SDK（工具函数，供其他模块使用）
- */
-export function isAliyunSdkAvailable(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  return !!window.PhoneNumberServer;
-}
-

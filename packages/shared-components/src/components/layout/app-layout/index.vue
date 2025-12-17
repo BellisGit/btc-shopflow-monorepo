@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     class="app-layout"
     :class="{
@@ -127,7 +127,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import mitt from '@btc/shared-components/utils/mitt';
+import { mitt } from '@btc/shared-components';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '@btc/shared-components/composables/useBrowser';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
@@ -280,16 +280,6 @@ watch(
 const shouldShowSidebar = computed(() => {
   const mt = currentMenuType.value;
   const result = mt === 'left' || mt === 'dual-menu' || mt === 'top-left';
-  if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__SIDEBAR_DEBUG_LOGGED__)) {
-    console.log('[AppLayout] shouldShowSidebar 计算结果:', {
-      menuType: mt,
-      result,
-      isUsingLayoutApp: isUsingLayoutApp.value,
-    });
-    if (typeof window !== 'undefined') {
-      (window as any).__SIDEBAR_DEBUG_LOGGED__ = true;
-    }
-  }
   return result;
 });
 
@@ -323,12 +313,6 @@ const isUsingLayoutApp = computed(() => {
   // 如果当前是 layout-app 自己，返回 false
   const isLayoutAppSelf = typeof window !== 'undefined' ? !!(window as any).__IS_LAYOUT_APP__ : false;
   if (isLayoutAppSelf) {
-    if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_APP_DEBUG_LOGGED__)) {
-      console.log('[AppLayout] isUsingLayoutApp: 检测到 layout-app 自己运行，返回 false');
-      if (typeof window !== 'undefined') {
-        (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
-      }
-    }
     return false;
   }
   // 检查 hostname 是否是 layout-app 的域名
@@ -338,38 +322,28 @@ const isUsingLayoutApp = computed(() => {
     // 生产环境：layout.bellis.com.cn
     // 预览环境：localhost:4192
     // 开发环境：localhost:4188
-    if (hostname === 'layout.bellis.com.cn' || 
+    if (hostname === 'layout.bellis.com.cn' ||
         (hostname === 'localhost' && (port === '4192' || port === '4188'))) {
-      if (import.meta.env.DEV || !(window as any).__LAYOUT_APP_DEBUG_LOGGED__) {
-        console.log('[AppLayout] isUsingLayoutApp: 检测到 layout-app 域名，返回 false', { hostname, port });
-        (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
-      }
       return false; // layout-app 自己运行时，不应该隐藏 Topbar/MenuDrawer
     }
   }
   const useLayoutApp = typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false;
-  if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_APP_DEBUG_LOGGED__)) {
-    console.log('[AppLayout] isUsingLayoutApp: 检查结果', {
-      __USE_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__USE_LAYOUT_APP__ : undefined,
-      __IS_LAYOUT_APP__: typeof window !== 'undefined' ? (window as any).__IS_LAYOUT_APP__ : undefined,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-      port: typeof window !== 'undefined' ? window.location.port : '',
-      result: useLayoutApp
-    });
-    if (typeof window !== 'undefined') {
-      (window as any).__LAYOUT_APP_DEBUG_LOGGED__ = true;
-    }
-  }
   return useLayoutApp;
 });
 const isMainApp = computed(() => {
+  const path = route.path || window.location.pathname || '';
+
+  // 404页面应该显示在主应用路由视图中
+  if (path === '/404') {
+    return true;
+  }
+
   const fn = getIsMainAppFn();
   if (fn) {
     return fn(route.path, window.location.pathname, isStandalone);
   }
   // 如果函数未注入，使用简单的判断逻辑（基于 qiankun 和路径）
   if (isStandalone) {
-    const path = route.path || window.location.pathname || '';
     // 登录相关页面不算主应用路由
     if (path === '/login' || path === '/forget-password' || path === '/register') {
       return false;
@@ -377,7 +351,6 @@ const isMainApp = computed(() => {
     return true;
   }
   // 在 qiankun 环境下，简单判断：如果路径不是以已知子应用前缀开头，则认为是主应用
-  const path = route.path || window.location.pathname || '';
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
   if (knownSubAppPrefixes.some(prefix => path.startsWith(prefix))) {
     return false;
@@ -469,7 +442,7 @@ const toggleDrawer = () => {
   if (isUsingLayoutApp.value) {
     return;
   }
-  
+
   drawerVisible.value = !drawerVisible.value;
   scheduleContentResize();
 };
@@ -480,7 +453,7 @@ const openDrawer = () => {
   if (isUsingLayoutApp.value) {
     return;
   }
-  
+
   if (!drawerVisible.value) {
     drawerVisible.value = true;
   }
@@ -589,7 +562,7 @@ onMounted(() => {
       console.log('[AppLayout] onMounted: 重新设置事件总线到 window.__APP_EMITTER__');
     }
   }
-  
+
   emitter.on('view.refresh', refreshView);
   // 关键：监听偏好设置抽屉打开事件（用于 layout-app 环境）
   emitter.on('open-preferences-drawer', () => {
@@ -598,6 +571,7 @@ onMounted(() => {
       console.log('[AppLayout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
     }
   });
+  // eslint-disable-next-line no-undef
   window.addEventListener('page-transition-change', handlePageTransitionChange as EventListener);
   // 关键：偏好设置（子应用环境）切换菜单布局/菜单风格时，需要让 layout-app 立即响应
   // useSettingsHandlers 会派发 window 事件，这里作为兜底消费，避免“写入了 settings，但左侧菜单不切换”
@@ -615,6 +589,7 @@ onMounted(() => {
     } catch {
       // 静默失败
     }
+  // eslint-disable-next-line no-undef
   }) as EventListener;
 
   const handleMenuStyleChange = ((event: Event) => {
@@ -628,6 +603,7 @@ onMounted(() => {
     } catch {
       // 静默失败
     }
+  // eslint-disable-next-line no-undef
   }) as EventListener;
 
   window.addEventListener('menu-layout-change', handleMenuLayoutChange);
@@ -707,6 +683,7 @@ watch(
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
   emitter.off('open-preferences-drawer');
+  // eslint-disable-next-line no-undef
   window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
   window.removeEventListener('open-preferences-drawer', () => {});
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
@@ -777,10 +754,12 @@ onUnmounted(() => {
     overflow: hidden;
     flex-shrink: 0; // 关键：防止侧边栏被压缩，与系统应用保持一致
     border-right: 1px solid var(--el-border-color-extra-light);
+    box-sizing: border-box; // 关键：确保 border 包含在宽度内，避免双栏菜单超出
 
-    // 双栏菜单模式：宽度为 274px（与顶栏搜索框对齐）
+    // 双栏菜单模式：宽度为 255px（与单列菜单宽度一致，保持设计统一）
+    // 搜索框宽度会相应调整以匹配双栏菜单宽度
     .menu-type-dual-menu & {
-      width: 274px;
+      width: 255px;
     }
   }
 
@@ -1028,13 +1007,13 @@ onUnmounted(() => {
       }
     }
 
-    // 双栏菜单模式：折叠不影响（双栏菜单有自己的宽度，与顶栏搜索框对齐）
+    // 双栏菜单模式：宽度与单列菜单一致（255px）
     &.menu-type-dual-menu {
       .app-layout__sidebar {
-        width: 274px;
+        width: 255px;
       }
       .app-layout__main {
-        width: calc(100% - 274px);
+        width: calc(100% - 255px);
       }
     }
   }
@@ -1140,7 +1119,6 @@ onUnmounted(() => {
 }
 
 .app-layout__sidebar {
-  width: 255px !important;
   height: 100% !important;
   flex-shrink: 0 !important; // 防止侧边栏被压缩
   overflow: hidden !important;
@@ -1174,14 +1152,10 @@ onUnmounted(() => {
       }
     }
 
-    // 双栏菜单模式：折叠不影响（双栏菜单有自己的宽度，与顶栏搜索框对齐）
+    // 双栏菜单模式：宽度与单列菜单一致（255px）
     &.menu-type-dual-menu {
-      .app-layout__sidebar {
-        width: 274px !important;
-      }
-
       .app-layout__main {
-        width: calc(100% - 274px) !important;
+        width: calc(100% - 255px) !important;
       }
     }
   }

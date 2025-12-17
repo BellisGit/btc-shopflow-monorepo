@@ -6,7 +6,7 @@
 
 declare module '@configs/unified-env-config' {
   export type Environment = 'development' | 'preview' | 'production';
-  
+
   export function getEnvironment(): Environment;
   export function getCurrentSubApp(): string | null;
   export function isMainApp(
@@ -27,7 +27,7 @@ declare module '@configs/app-scanner' {
     enabled: boolean;
     version?: string;
   }
-  
+
   export function getAllApps(): AppIdentity[];
   export function getAppById(id: string): AppIdentity | undefined;
   export function getMainApp(): AppIdentity | undefined;
@@ -40,8 +40,13 @@ declare module '@configs/layout-bridge' {
   export function registerManifestMenusForApp(app: string): void;
   export function registerManifestTabsForApp(app: string): void;
   export function registerAppEnvAccessors(): void;
-  export function createAppStorageBridge(): void;
+  export function createAppStorageBridge(namespace?: string): any;
   export function createDefaultDomainResolver(): void;
+  export function injectDomainListResolver(
+    appId: string,
+    domainCachePathOrModule?: string | { getDomainList?: any; clearDomainCache?: any },
+    target?: Window
+  ): Promise<void>;
   export function resolveAppLogoUrl(): string;
   export function createSharedUserSettingPlugin(): any;
   export function registerMenuRegistrationFunction(fn: (app: string) => void): void;

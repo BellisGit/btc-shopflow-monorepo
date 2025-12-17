@@ -46,7 +46,7 @@ numberAuthAxios.interceptors.request.use(
     // 确保 baseURL 是根路径
     config.baseURL = '/';
     numberAuthAxios.defaults.baseURL = '/';
-    
+
     // 删除可能存在的 Authorization header
     delete config.headers['Authorization'];
     // 确保不携带 cookie
@@ -146,11 +146,17 @@ export interface AuthTokenResponse {
 export const getAuthTokens = async (): Promise<AuthTokenResponse> => {
   try {
     // 使用独立的 axios 实例，确保不携带 cookie
-    const response = await numberAuthAxios.post<{
+    // 注意：响应拦截器返回 response.data，所以这里的 response 已经是响应体数据
+    // 使用类型断言，因为响应拦截器已经返回了 response.data
+    const response = (await numberAuthAxios.post<{
       code: number;
       msg: string;
       data: AuthTokenResponse;
-    }>('/api/system/auth/getAuthToken', {});
+    }>('/api/system/auth/getAuthToken', {})) as unknown as {
+      code: number;
+      msg: string;
+      data: AuthTokenResponse;
+    };
 
     if (response.code === 200 && response.data) {
       // 验证返回的数据是否有效

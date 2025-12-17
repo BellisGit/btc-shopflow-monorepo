@@ -33,7 +33,7 @@ import type { BtcTableButtonConfig } from '@btc-components/basic/btc-table-butto
 import type { TableColumn } from '@btc-crud/table/types';
 import type { BtcFormItem } from '@btc-common/form/types';
 import type { UseCrudReturn } from '@btc/shared-core';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 import { useCrudLayout } from '@btc-crud/context/layout';
 
 defineOptions({

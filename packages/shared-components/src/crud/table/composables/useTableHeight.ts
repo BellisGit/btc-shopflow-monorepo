@@ -1,7 +1,7 @@
 import { debounce, last } from 'lodash-es';
 import { nextTick, onActivated, onBeforeUnmount, onMounted, ref, Ref } from 'vue';
-import { addClass, removeClass } from '@btc/shared-components/utils/dom';
-import { globalMitt } from '@btc/shared-components/utils/mitt';
+import { addClass, removeClass } from '../../../utils/dom';
+import { globalMitt } from '../../../utils/mitt';
 import type { TableProps } from '../types';
 
 export function useTableHeight(props: TableProps, tableRef: Ref) {
@@ -36,7 +36,7 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
 
         // 查找合适的容器：优先查找 .page，其次查找 btc-transfer-panel 或 btc-transfer-drawer__panel-body
         let containerEl: HTMLElement | null = null;
-        
+
         // 向上查找 .page 容器
         let parent: HTMLElement | null = crudEl.parentElement;
         while (parent) {
@@ -106,11 +106,11 @@ export function useTableHeight(props: TableProps, tableRef: Ref) {
 
         if (props.autoHeight) {
           const available = containerEl.clientHeight - h;
-          
+
           // 如果用户设置了 maxHeight，使用该值作为上限
           if (props.maxHeight) {
             const maxAllowed = typeof props.maxHeight === 'number' ? props.maxHeight : parseInt(String(props.maxHeight), 10);
-            
+
             if (available > 100) {
               // 可用高度足够时，使用可用高度和用户设置的上限中的较小值
               maxHeight.value = Math.min(available, maxAllowed);

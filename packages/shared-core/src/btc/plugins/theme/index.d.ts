@@ -5,6 +5,7 @@ import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
 /**
  * 主题插件实例
  */
+export type ButtonStyle = 'default' | 'minimal';
 export interface ThemePlugin {
     currentTheme: ReturnType<typeof ref<ThemeConfig>>;
     isDark: ReturnType<typeof useDark>;
@@ -18,7 +19,6 @@ export interface ThemePlugin {
     buttonStyle: ReturnType<typeof ref<ButtonStyle>>;
     setButtonStyle: (style: ButtonStyle) => void;
 }
-export type ButtonStyle = 'default' | 'minimal';
 /**
  * 创建主题插件
  */

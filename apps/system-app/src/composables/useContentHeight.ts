@@ -1,7 +1,5 @@
 export {
-  // @ts-ignore TS6305 - 类型声明文件可能未构建，但运行时可用
   provideContentHeight,
-  // @ts-ignore TS6305 - 类型声明文件可能未构建，但运行时可用
   useContentHeight,
 } from '@btc/shared-components';
 

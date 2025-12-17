@@ -45,7 +45,7 @@
               <el-input
                 v-else
                 :model-value="formData[item.prop]"
-                @update:model-value="(val) => { formData[item.prop] = val; }"
+                @update:model-value="(val: any) => { formData[item.prop] = val; }"
                 :placeholder="`请输入${item.label}`"
               />
             </slot>

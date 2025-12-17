@@ -6,23 +6,23 @@ export interface FormPlugin {
     onSubmit?: (data: any, ctx: any) => any | Promise<any>;
     onClose?: (done: () => void, ctx: any) => void;
 }
-export declare function usePlugins(enablePlugin: boolean | undefined, { visible }: {
+export declare function usePlugins(enablePlugin: boolean, { visible }: {
     visible: any;
 }): {
-    plugins: globalThis.Ref<{
+    plugins: import("vue").Ref<{
         name: string;
         value?: any;
-        created?: ((options: any, ctx: any) => void) | undefined;
-        onOpen?: ((options: any, ctx: any) => void | Promise<void>) | undefined;
-        onSubmit?: ((data: any, ctx: any) => any | Promise<any>) | undefined;
-        onClose?: ((done: () => void, ctx: any) => void) | undefined;
+        created?: (options: any, ctx: any) => void;
+        onOpen?: (options: any, ctx: any) => void | Promise<void>;
+        onSubmit?: (data: any, ctx: any) => any | Promise<any>;
+        onClose?: (done: () => void, ctx: any) => void;
     }[], FormPlugin[] | {
         name: string;
         value?: any;
-        created?: ((options: any, ctx: any) => void) | undefined;
-        onOpen?: ((options: any, ctx: any) => void | Promise<void>) | undefined;
-        onSubmit?: ((data: any, ctx: any) => any | Promise<any>) | undefined;
-        onClose?: ((done: () => void, ctx: any) => void) | undefined;
+        created?: (options: any, ctx: any) => void;
+        onOpen?: (options: any, ctx: any) => void | Promise<void>;
+        onSubmit?: (data: any, ctx: any) => any | Promise<any>;
+        onClose?: (done: () => void, ctx: any) => void;
     }[]>;
     use: (plugin: FormPlugin) => void;
     clear: () => void;

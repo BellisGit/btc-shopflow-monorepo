@@ -60,6 +60,7 @@ export declare const BtcCodeJson: import("vue").DefineComponent<object, object, 
 export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
 export { CommonColumns } from './crud/table/utils/common-columns';
 export { useUpload } from './components/form/btc-upload/composables/useUpload';
+export { addClass, removeClass } from './utils/dom';
 export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-identity-verify/types';
 export type { SaveBindingApi } from './components/feedback/btc-binding-dialog/types';
 export type { TableColumn, OpButton } from './crud/table/types';
@@ -83,3 +84,14 @@ export type { BtcContainerProps } from './components/layout/btc-container/types'
 export type { BtcGridGroupProps } from './components/layout/btc-grid-group/types';
 export type { IconButtonConfig, IconButtonDropdown, IconButtonDropdownItem, IconButtonPopover } from './components/basic/btc-icon-button';
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
+// 显式导出函数和枚举
+export { useCurrentApp } from './composables/useCurrentApp';
+export { useProcessStore, getCurrentAppFromPath } from './store/process';
+export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry } from './store/menuRegistry';
+export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';
+export { autoMountDevTools } from './utils/auto-mount-dev-tools';
+export { default as mitt, globalMitt, Mitt } from './utils/mitt';
+export { setIsMainAppFn, getIsMainAppFn } from './components/layout/app-layout/utils';
+export * from './components/others/btc-user-setting/config/enums';
+export type { MenuItem } from './store/menuRegistry';
+export type { ProcessItem } from './store/process';

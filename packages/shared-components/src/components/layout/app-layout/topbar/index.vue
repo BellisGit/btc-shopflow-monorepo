@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="topbar" :class="{ 'is-dark-menu': isDarkMenuStyle }">
     <!-- 左侧：汉堡菜单 + Logo 区域（与侧边栏宽度一致） -->
       <div
@@ -134,7 +134,7 @@ const shouldHandleDrawerEvent = (): boolean => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' || 
+    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
                              (hostname === 'localhost' && (port === '4192' || port === '4188'));
     if (isLayoutAppDomain) {
       return true; // layout-app 自己的域名，应该处理
@@ -312,7 +312,7 @@ const logoTitle = computed(() => {
 
     // 判断是否是主应用（使用注入的函数，确保在 layout-app 环境下正确判断）
     const isMainAppFn = getIsMainAppFn();
-    const isMain = isMainAppFn 
+    const isMain = isMainAppFn
       ? isMainAppFn(route.path, window.location.pathname, !(window as any).__POWERED_BY_QIANKUN__)
       : false; // 如果没有注入函数，默认返回 false（子应用）
 
@@ -424,7 +424,7 @@ const menuThemeConfig = computed(() => {
   }
 
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const themeConfig = menuStyleList.value.find(item => item.theme === theme);
+  const themeConfig = menuStyleList.value.find((item: any) => item.theme === theme);
 
   if (themeConfig) {
     return {
@@ -491,7 +491,7 @@ const loadToolbarComponents = async () => {
 
         const component = await config.component();
         const componentInstance = component.default || component;
-        
+
         toolbarComponents.value.push({
           ...config,
           component: markRaw(componentInstance)

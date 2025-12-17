@@ -35,7 +35,7 @@ defineOptions({
   name: 'LayoutTopLeftSidebar',
 });
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
@@ -53,25 +53,49 @@ const activeMenu = ref(route.path);
 const searchKeyword = ref('');
 const menuRef = ref();
 const menuKey = ref(0);
+const selectedFirstLevel = ref<string>('');
 
 // 获取当前应用的菜单项（从 menuRegistry 获取）
 const allMenuItems = computed(() => {
   return getMenusForApp(currentApp.value);
 });
 
-// 根据当前路由找到对应的一级菜单，显示其子菜单
+// 一级菜单项（只显示有子菜单的项）
+const firstLevelMenuItems = computed(() => {
+  return allMenuItems.value.filter(item => item.children && item.children.length > 0);
+});
+
+// 根据选中的一级菜单或当前路由找到对应的一级菜单，显示其子菜单
 const currentSubMenuItems = computed(() => {
-  const path = route.path;
-  
-  // 查找匹配的一级菜单
-  for (const item of allMenuItems.value) {
-    if (item.index && path.startsWith(item.index)) {
-      return item.children || [];
+  // 优先使用 selectedFirstLevel（当顶栏菜单切换时）
+  if (selectedFirstLevel.value) {
+    const item = firstLevelMenuItems.value.find(item => item.index === selectedFirstLevel.value);
+    if (item?.children) {
+      return item.children;
     }
   }
-  
+
+  // 否则根据当前路由找到对应的一级菜单（使用最长匹配原则）
+  const path = route.path;
+  let matchedItem: typeof firstLevelMenuItems.value[0] | null = null;
+  let maxMatchLength = 0;
+
+  for (const item of firstLevelMenuItems.value) {
+    if (item.index) {
+      const itemPath = item.index.startsWith('/') ? item.index : `/${item.index}`;
+      if (path.startsWith(itemPath) && itemPath.length > maxMatchLength) {
+        matchedItem = item;
+        maxMatchLength = itemPath.length;
+      }
+    }
+  }
+
+  if (matchedItem?.children) {
+    return matchedItem.children;
+  }
+
   // 如果没有匹配的，返回第一个有子菜单的项的子菜单
-  const firstWithChildren = allMenuItems.value.find(item => item.children && item.children.length > 0);
+  const firstWithChildren = firstLevelMenuItems.value[0];
   return firstWithChildren?.children || [];
 });
 
@@ -89,18 +113,59 @@ watch(
   }
 );
 
+// 处理顶部菜单选择事件
+const handleTopLeftMenuSelect = (payload: { firstLevelIndex: string }) => {
+  if (payload.firstLevelIndex) {
+    selectedFirstLevel.value = payload.firstLevelIndex;
+    // 强制重新渲染菜单，确保子菜单立即切换
+    menuKey.value++;
+  }
+};
+
 watch(
   () => route.path,
   (newPath) => {
     activeMenu.value = newPath;
+
+    // 根据当前路由更新选中的一级菜单（使用最长匹配原则，找到最精确的匹配）
+    let matchedItem: typeof firstLevelMenuItems.value[0] | null = null;
+    let maxMatchLength = 0;
+
+    for (const item of firstLevelMenuItems.value) {
+      if (item.index) {
+        const itemPath = item.index.startsWith('/') ? item.index : `/${item.index}`;
+        if (newPath.startsWith(itemPath) && itemPath.length > maxMatchLength) {
+          matchedItem = item;
+          maxMatchLength = itemPath.length;
+        }
+      }
+    }
+
+    if (matchedItem && matchedItem.index) {
+      selectedFirstLevel.value = matchedItem.index;
+      // 强制重新渲染菜单，确保子菜单切换
+      menuKey.value++;
+    }
   },
   { immediate: true }
 );
 
-const handleMenuSelect = (index: string) => {
-  if (import.meta.env.DEV) {
-    console.log('[main-app] top-left-sidebar select', { index, currentApp: currentApp.value });
+// 监听顶部菜单选择事件
+onMounted(() => {
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.on('top-left-menu.select', handleTopLeftMenuSelect);
   }
+});
+
+onUnmounted(() => {
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter) {
+    emitter.off('top-left-menu.select', handleTopLeftMenuSelect);
+  }
+});
+
+const handleMenuSelect = (index: string) => {
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
   router.push(absolutePath);
 };

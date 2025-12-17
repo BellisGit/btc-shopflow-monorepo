@@ -22,7 +22,6 @@ import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integr
 
 // 管理器实例
 import { notificationManager } from '../utils/notification-manager';
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { appStorage } from '../utils/app-storage';
 // 用户设置（现在都在 app-src chunk 中，可以使用静态导入）

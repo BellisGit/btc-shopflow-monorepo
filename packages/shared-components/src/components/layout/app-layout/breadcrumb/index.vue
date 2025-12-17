@@ -3,8 +3,16 @@
     <el-breadcrumb separator="|">
       <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
         <span class="breadcrumb-item">
+          <!-- SVG 图标 -->
+          <btc-svg
+            v-if="item.icon && isSvgIcon(item.icon)"
+            :name="getSvgName(item.icon)"
+            :size="14"
+            class="breadcrumb-icon"
+          />
+          <!-- Element Plus 图标 -->
           <el-icon
-            v-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]"
+            v-else-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]"
             :size="14"
             class="breadcrumb-icon"
           >
@@ -29,6 +37,16 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@btc/shared-components/store/process';
 import { getManifestRoute } from '@btc/subapp-manifests';
 import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+
+// 判断是否为SVG图标
+function isSvgIcon(iconName?: string): boolean {
+  return iconName?.startsWith('svg:') ?? false;
+}
+
+// 获取SVG图标名称（移除 svg: 前缀）
+function getSvgName(iconName?: string): string {
+  return iconName?.replace(/^svg:/, '') || '';
+}
 
 const route = useRoute();
 const { t } = useI18n();
@@ -112,10 +130,13 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
         // 优先使用配置中的图标，如果没有则从菜单注册表中查找
         const menuIcon = key ? findMenuIconByI18nKey(key, currentApp) : undefined;
+        
+        // 确保图标正确传递：优先使用配置中的图标
+        const icon = item.icon || menuIcon;
 
         return {
           label,
-          icon: item.icon || menuIcon,
+          icon,
         };
       })
       .filter(Boolean) as BreadcrumbItem[];
@@ -270,7 +291,11 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
   // 子应用的面包屑映射（暂时为空，待实现具体页面）
   const subAppBreadcrumbs: Record<string, Record<string, BreadcrumbConfig[]>> = {
-    system: {},
+    system: {
+      '/404': [
+        { i18nKey: 'common.page_not_found', icon: 'svg:404' },
+      ],
+    },
     logistics: {},
     engineering: {},
     quality: {},
@@ -305,11 +330,11 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
   // 转换为带翻译的面包屑，并从菜单注册表中获取图标
   return breadcrumbData.map((item) => {
-    // 优先使用菜单注册表中的图标，如果没有则使用配置中的图标
+    // 优先使用配置中的图标，如果没有则从菜单注册表中查找
     const menuIcon = findMenuIconByI18nKey(item.i18nKey, currentApp);
     return {
       label: t(item.i18nKey),
-      icon: menuIcon || item.icon,
+      icon: item.icon || menuIcon,
     };
   });
 });

@@ -169,7 +169,7 @@ import * as XLSX from 'xlsx';
 import chardet from 'chardet';
 import type { TableColumn } from '@btc-crud/table/types';
 import type { UseCrudReturn } from '@btc/shared-core';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
 const theme = useThemePlugin();
@@ -665,7 +665,7 @@ function onUpload(raw: File, _: any, { next }: any) {
 
     let json: any[] = [];
     for (const sheet in workbook.Sheets) {
-      if (workbook.Sheets.hasOwnProperty(sheet)) {
+      if (Object.prototype.hasOwnProperty.call(workbook.Sheets, sheet)) {
         const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], {
           raw: false,
           dateNF: 'yyyy-mm-dd',

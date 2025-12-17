@@ -1,4 +1,4 @@
-﻿import { defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
@@ -13,6 +13,7 @@ export default defineConfig({
         index: resolve(__dirname, 'src/index.ts'),
         'error-monitor/index': resolve(__dirname, 'src/error-monitor/index.ts'),
         'qiankun/load-layout-app': resolve(__dirname, 'src/qiankun/load-layout-app.ts'),
+        'cookie/index': resolve(__dirname, 'src/cookie/index.ts'),
       },
       name: 'BTCSharedUtils',
       formats: ['es', 'cjs'],

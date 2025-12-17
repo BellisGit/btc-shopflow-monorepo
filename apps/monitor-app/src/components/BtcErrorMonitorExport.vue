@@ -42,7 +42,7 @@ const formRef = ref();
 const getAllErrors = (): FormattedError[] => {
   try {
     const allErrors: FormattedError[] = [];
-    
+
     // 从 localStorage 读取所有日期的错误
     const storageKey = 'btc_error';
     const stored = localStorage.getItem(storageKey);
@@ -56,7 +56,7 @@ const getAllErrors = (): FormattedError[] => {
         });
       }
     }
-    
+
     // 合并当前内存中的错误（去重）
     const currentErrors = getErrorListSync();
     const existingIds = new Set(allErrors.map((e) => e.id));
@@ -65,7 +65,7 @@ const getAllErrors = (): FormattedError[] => {
         allErrors.push(error);
       }
     });
-    
+
     return allErrors.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
   } catch (error) {
     console.warn('[ErrorMonitorExport] 获取错误数据失败:', error);
@@ -109,7 +109,7 @@ const exportColumns = computed(() => [
 // 表单配置
 const formItems = computed<BtcFormItem[]>(() => {
   const dataTimeRange = getDataTimeRange();
-  
+
   return [
     // 日期范围选择
     {
@@ -215,8 +215,16 @@ const normalizeSource = (source: string): string => {
   return source.replace(/-app$/, '');
 };
 
+interface FormData {
+  dateRange?: string;
+  customDateRange?: [Date | string, Date | string] | null;
+  source?: string;
+  type?: string;
+  checked?: string[];
+}
+
 // 过滤数据
-const filterErrors = (formData: any): FormattedError[] => {
+const filterErrors = (formData: FormData): FormattedError[] => {
   let filtered = getAllErrors();
 
   // 按日期范围过滤
@@ -283,10 +291,10 @@ const filterErrors = (formData: any): FormattedError[] => {
 // 打开导出对话框
 const open = () => {
   const dataTimeRange = getDataTimeRange();
-  
+
   // 默认选中所有列
   const defaultChecked = exportColumns.value.map((col) => col.prop);
-  
+
   // 设置默认表单数据（使用当前过滤条件）
   const defaultForm = {
     dateRange: 'all',
@@ -312,8 +320,14 @@ const open = () => {
   });
 };
 
+interface SubmitCallbacks {
+  done: () => void;
+  close: () => void;
+}
+
 // 处理导出提交
-const handleSubmit = async (data: any, { done, close }: any) => {
+const handleSubmit = async (data: FormData, callbacks: SubmitCallbacks) => {
+  const { done, close } = callbacks;
   // 验证列选择
   if (!data.checked || data.checked.length === 0) {
     BtcMessage.warning(t('platform.common.please_select_at_least_one_column'));
@@ -359,34 +373,34 @@ const handleSubmit = async (data: any, { done, close }: any) => {
     }
 
     // 过滤选中的列
-    const selectedColumns = exportColumns.value.filter((col) => data.checked.includes(col.prop));
+    const selectedColumns = exportColumns.value.filter((col) => data.checked?.includes(col.prop));
 
     // 准备导出数据
     const exportData = filteredErrors.map((error) => {
-      const row: any = {};
-      
-      if (data.checked.includes('time')) {
+      const row: Record<string, string> = {};
+
+      if (data.checked?.includes('time')) {
         row.time = error.time;
       }
-      if (data.checked.includes('type')) {
+      if (data.checked?.includes('type')) {
         row.type = error.isWarning ? t('monitor.type.warning') : t('monitor.type.error');
       }
-      if (data.checked.includes('source')) {
+      if (data.checked?.includes('source')) {
         row.source = props.getAppDisplayName(error.source);
       }
-      if (data.checked.includes('errorType')) {
+      if (data.checked?.includes('errorType')) {
         row.errorType = props.getErrorTypeDisplayName(error.type);
       }
-      if (data.checked.includes('message')) {
+      if (data.checked?.includes('message')) {
         row.message = error.message;
       }
-      if (data.checked.includes('url')) {
+      if (data.checked?.includes('url')) {
         row.url = error.url || '-';
       }
-      if (data.checked.includes('stack')) {
+      if (data.checked?.includes('stack')) {
         row.stack = error.stack || '-';
       }
-      
+
       return row;
     });
 

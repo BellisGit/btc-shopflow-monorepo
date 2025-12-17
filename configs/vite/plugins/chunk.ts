@@ -11,7 +11,6 @@ import type { OutputOptions, OutputBundle } from 'rollup';
  */
 export function chunkVerifyPlugin(): Plugin {
   return {
-    // @ts-ignore - Vite Plugin 类型定义可能不完整，name 属性是标准属性
     name: 'chunk-verify-plugin',
     writeBundle(_options: OutputOptions, bundle: OutputBundle) {
       console.log('\n[chunk-verify-plugin] ✅ 生成的所有 chunk 文件：');
@@ -133,7 +132,7 @@ export function chunkVerifyPlugin(): Plugin {
         console.log(`\n[chunk-verify-plugin] ✅ 所有资源引用都正确（共验证 ${referencedFiles.size} 个引用）`);
       }
     },
-  };
+  } as Plugin;
 }
 
 /**
@@ -172,8 +171,8 @@ export function optimizeChunksPlugin(): Plugin {
         const referencedBy = chunkReferences.get(emptyChunk) || [];
         if (referencedBy.length > 0) {
           const chunk = bundle[emptyChunk];
-          if (chunk && chunk.type === 'chunk') {
-            chunk.code = 'export {};';
+          if (chunk && (chunk as any).type === 'chunk') {
+            (chunk as any).code = 'export {}';
             chunksToKeep.push(emptyChunk);
             console.log(`[optimize-chunks] 保留被引用的空 chunk: ${emptyChunk} (被 ${referencedBy.length} 个 chunk 引用，已添加占位符)`);
           }

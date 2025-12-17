@@ -5,27 +5,59 @@
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 用户设置组合式函数
  */
 export function useUserSetting() {
   const { t } = useI18n();
-  const theme = useThemePlugin();
+  // 安全地获取主题插件
+  let theme: ReturnType<typeof useThemePlugin> | null = null;
+  try {
+    theme = useThemePlugin();
+  } catch (error) {
+    // 如果主题插件未初始化，尝试从全局获取
+    theme = (globalThis as any).__THEME_PLUGIN__ || (typeof window !== 'undefined' && (window as any).__THEME_PLUGIN__) || null;
+    if (!theme) {
+      console.warn('[useUserSetting] Theme plugin not available');
+      // 如果主题插件不可用，返回一个基本的功能对象，避免后续代码报错
+      return {
+        drawerVisible: ref(false),
+        openDrawer: () => {},
+        closeDrawer: () => {},
+        confirm: () => {},
+        cancel: () => {},
+        customColor: ref(''),
+        allThemes: computed(() => []),
+        currentThemeColor: computed(() => ''),
+        selectTheme: () => {},
+        selectColor: () => {},
+        toggleDark: () => {},
+      };
+    }
+  }
+
+  // 确保 theme 不为 null（TypeScript 类型检查）
+  if (!theme) {
+    throw new Error('[useUserSetting] Theme plugin is required');
+  }
+
+  // 非空断言：经过上面的检查后，theme 一定不为 null
+  const themePlugin = theme as NonNullable<typeof theme>;
 
   const drawerVisible = ref(false);
-  
+
   // 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为空字符串
-  const savedCustomColor = theme.currentTheme.value?.name === 'custom'
-    ? theme.currentTheme.value.color
+  const savedCustomColor = themePlugin.currentTheme.value?.name === 'custom'
+    ? themePlugin.currentTheme.value.color
     : '';
   const customColor = ref(savedCustomColor);
-  
+
   // 保存打开弹窗时的原始颜色值和主题状态，用于关闭时恢复
   const originalColor = ref<string | null>(null);
   const originalTheme = ref<ThemeConfig | null>(null);
-  
+
   // 标记是否已确认（确认后关闭弹窗时不再恢复）
   const isConfirmed = ref(false);
 
@@ -38,12 +70,12 @@ export function useUserSetting() {
 
   // 合并所有主题，自定义主题放在最后
   const allThemes = computed(() => {
-    const currentCustomColor = theme.currentTheme.value?.name === 'custom'
-      ? theme.currentTheme.value.color
+    const currentCustomColor = themePlugin.currentTheme.value?.name === 'custom'
+      ? themePlugin.currentTheme.value.color
       : customColor.value || '#409eff'; // 仅用于显示
 
     return [
-      ...theme.THEME_PRESETS,
+      ...themePlugin.THEME_PRESETS,
       {
         ...customTheme.value,
         color: currentCustomColor,
@@ -52,7 +84,7 @@ export function useUserSetting() {
   });
 
   // 监听主题变化，同步自定义颜色（仅当是自定义主题时才更新）
-  watch(() => theme.currentTheme.value, (newTheme) => {
+  watch(() => themePlugin.currentTheme.value, (newTheme) => {
     if (newTheme && newTheme.name === 'custom') {
       customColor.value = newTheme.color;
     }
@@ -64,8 +96,8 @@ export function useUserSetting() {
   function openDrawer() {
     drawerVisible.value = true;
     // 如果当前是自定义主题，同步自定义颜色
-    if (theme.currentTheme.value?.name === 'custom') {
-      customColor.value = theme.currentTheme.value.color;
+    if (themePlugin.currentTheme.value?.name === 'custom') {
+      customColor.value = themePlugin.currentTheme.value.color;
     }
   }
 
@@ -74,8 +106,8 @@ export function useUserSetting() {
    * 如果当前是自定义主题，显示主题颜色；否则返回空字符串（显示彩虹渐变）
    */
   const customColorDisplay = computed(() => {
-    if (theme.currentTheme.value?.name === 'custom') {
-      return theme.currentTheme.value.color || '';
+    if (themePlugin.currentTheme.value?.name === 'custom') {
+      return themePlugin.currentTheme.value.color || '';
     }
     return '';
   });
@@ -84,7 +116,7 @@ export function useUserSetting() {
    * 判断是否是当前主题
    */
   function isCurrentTheme(themeConfig: ThemeConfig): boolean {
-    const current = theme.currentTheme.value;
+    const current = themePlugin.currentTheme.value;
     if (!current) return false;
 
     if (themeConfig.name === 'custom') {
@@ -100,23 +132,22 @@ export function useUserSetting() {
   function handleCustomThemeClick() {
     // 保存打开时的原始颜色值和主题状态
     originalColor.value = customColor.value || null;
-    originalTheme.value = theme.currentTheme.value ? { ...theme.currentTheme.value } : null;
-    isConfirmed.value = false;
+  originalTheme.value = themePlugin.currentTheme.value ? { ...themePlugin.currentTheme.value } : null;
 
     // 确保如果有当前主题颜色，同步到 customColor（用于显示在输入框中）
-    if (theme.currentTheme.value?.name === 'custom' && theme.currentTheme.value.color) {
-      customColor.value = theme.currentTheme.value.color;
+    if (themePlugin.currentTheme.value?.name === 'custom' && themePlugin.currentTheme.value.color) {
+      customColor.value = themePlugin.currentTheme.value.color;
       originalColor.value = customColor.value;
     }
 
     // 如果当前有自定义颜色，临时切换到自定义主题（用于预览）
     if (customColor.value) {
-      theme.currentTheme.value = {
+      themePlugin.currentTheme.value = {
         name: 'custom',
         label: 'theme.presets.custom',
         color: customColor.value,
       };
-      theme.setThemeColor(customColor.value, theme.isDark.value);
+      themePlugin.setThemeColor(customColor.value, themePlugin.isDark.value);
       document.body.className = 'theme-custom';
     }
   }
@@ -126,7 +157,7 @@ export function useUserSetting() {
    */
   function handleThemeClick(themeConfig: ThemeConfig) {
     // 点击预设主题，直接切换（不改变 customColor）
-    theme.switchTheme(themeConfig);
+    themePlugin.switchTheme(themeConfig);
     BtcMessage.success(`${t('theme.switched')}: ${t(themeConfig.label)}`);
   }
 
@@ -142,9 +173,9 @@ export function useUserSetting() {
         color: color,
       };
       // 直接替换整个 ref 的值以触发响应式更新
-      theme.currentTheme.value = newTheme;
+      themePlugin.currentTheme.value = newTheme;
       // 更新全局主题色
-      theme.setThemeColor(color, theme.isDark.value);
+      themePlugin.setThemeColor(color, themePlugin.isDark.value);
       document.body.className = 'theme-custom';
     }
   }
@@ -163,7 +194,7 @@ export function useUserSetting() {
   function handleClearColor() {
     customColor.value = '';
     // 清空时恢复彩虹渐变（将主题颜色设为空）
-    theme.currentTheme.value = {
+    themePlugin.currentTheme.value = {
       name: 'custom',
       label: 'theme.presets.custom',
       color: '',
@@ -188,7 +219,7 @@ export function useUserSetting() {
         label: 'theme.presets.custom',
         color: color,
       };
-      theme.switchTheme(customThemeConfig);
+      themePlugin.switchTheme(customThemeConfig);
       BtcMessage.success(`${t('theme.switched')}: ${t('theme.presets.custom')}`);
     }
 
@@ -214,8 +245,8 @@ export function useUserSetting() {
       customColor.value = originalColor.value || '';
 
       // 恢复主题状态（从保存的原始主题状态恢复）
-      theme.currentTheme.value = { ...originalTheme.value };
-      theme.setThemeColor(originalTheme.value.color, theme.isDark.value);
+      themePlugin.currentTheme.value = { ...originalTheme.value };
+      themePlugin.setThemeColor(originalTheme.value.color, themePlugin.isDark.value);
       document.body.className = `theme-${originalTheme.value.name}`;
     }
 
@@ -229,7 +260,7 @@ export function useUserSetting() {
    * 处理暗黑模式切换
    */
   function handleDarkToggle(event?: MouseEvent) {
-    theme.toggleDark(event);
+    themePlugin.toggleDark(event);
   }
 
   return {
@@ -247,7 +278,7 @@ export function useUserSetting() {
     handleActiveColorChange,
     handleColorPickerHide,
     handleDarkToggle,
-    theme,
+    theme: themePlugin,
   } as const;
 }
 

@@ -38,6 +38,7 @@
       "@charts-utils/*": ["src/charts/utils/*"],
       "@charts-composables/*": ["src/charts/composables/*"],
       "@btc/shared-utils": ["../shared-utils/dist"],
+      "@btc/shared-utils/*": ["../shared-utils/dist/*"],
       "@btc/shared-core": ["../shared-core/dist"]
     }
   },

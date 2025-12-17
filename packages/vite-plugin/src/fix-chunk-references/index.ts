@@ -15,21 +15,22 @@ export function fixChunkReferencesPlugin(): Plugin {
   return {
     name: 'fix-chunk-references',
     // 只在 generateBundle 阶段清理旧引用，不修改文件名
-    generateBundle(options, bundle) {
+    generateBundle(options: any, bundle: Record<string, any>) {
       let totalCleanups = 0;
       
-      for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type !== 'chunk' || !chunk.code) {
+      for (const [fileName, chunk] of Object.entries(bundle as Record<string, any>)) {
+        const c: any = chunk;
+        if (c.type !== 'chunk' || !c.code) {
           continue;
         }
 
         // 检查是否包含旧引用
-        if (!OLD_REF_PATTERN.test(chunk.code)) {
+        if (!OLD_REF_PATTERN.test(c.code)) {
           continue;
         }
 
         OLD_REF_PATTERN.lastIndex = 0; // 重置正则表达式
-        let newCode = chunk.code;
+        let newCode = c.code;
         let modified = false;
         const oldHashList = OLD_REF_PATTERN.source.replace(/^\/|\/[gimuy]*$/g, '').split('|');
         const escapedOldHashes = oldHashList.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -38,7 +39,7 @@ export function fixChunkReferencesPlugin(): Plugin {
         if (newCode.includes('__vite__mapDeps')) {
           const mapDepsPattern = new RegExp(`(["'])([^"']*(${escapedOldHashes})[^"']*)(["'])`, 'g');
           const beforeLength = newCode.length;
-          newCode = newCode.replace(mapDepsPattern, (match, quote1, path, oldHash, quote2) => {
+          newCode = newCode.replace(mapDepsPattern, (match: any, quote1: any, path: any, oldHash: any, quote2: any) => {
             // 检查是否在 __vite__mapDeps 上下文中
             const beforeMatch = newCode.substring(Math.max(0, newCode.indexOf(match) - 100), newCode.indexOf(match));
             if (beforeMatch.includes('__vite__mapDeps') || beforeMatch.includes('m.f')) {
@@ -71,7 +72,7 @@ export function fixChunkReferencesPlugin(): Plugin {
         const stringPattern = new RegExp(`(["'\`])([^"'\`]*(?:assets/|/assets/)[^"'\`]*(${escapedOldHashes})[^"'\`]*\\.(js|mjs|css)(\\?[^"'\`]*)?)(["'\`])`, 'g');
         if (stringPattern.test(newCode)) {
           stringPattern.lastIndex = 0;
-          newCode = newCode.replace(stringPattern, (match, quote1, path, oldHash, ext, query, quote2) => {
+          newCode = newCode.replace(stringPattern, (match: any, quote1: any, path: any, oldHash: any, ext: any, query: any, quote2: any) => {
             modified = true;
             return quote1 + quote2; // 替换为空字符串
           });
@@ -95,5 +96,5 @@ export function fixChunkReferencesPlugin(): Plugin {
         console.log(`[fix-chunk-references] 共清理了 ${totalCleanups} 个文件中的旧引用`);
       }
     },
-  };
+  } as unknown as Plugin;
 }

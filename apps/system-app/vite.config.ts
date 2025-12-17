@@ -1,7 +1,7 @@
 import { defineConfig, type ConfigEnv } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { createMainAppViteConfig } from '../../configs/vite/factories/mainapp.config';
-import { copyIconsPlugin } from '../../configs/vite/plugins';
+import { copyIconsPlugin, dutyStaticPlugin } from '../../configs/vite/plugins';
 import { proxy } from './src/config/proxy';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
@@ -17,6 +17,8 @@ export default defineConfig(({ command, mode }: ConfigEnv) => {
     customPlugins: [
       // 移除：不再需要复制 icons 目录，统一使用 CDN
       // copyIconsPlugin(appDir),
+      // 添加 duty 静态文件插件，在开发服务器层面处理 /duty/ 路径
+      dutyStaticPlugin(appDir),
     ],
     customServer: { proxy },
     proxy,

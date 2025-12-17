@@ -41,18 +41,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
  */
 function normalizeMenuPath(path: string, appName: string): string {
   if (!path || !appName) return path;
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   // 检测是否在生产环境的子域名下
   if (typeof window === 'undefined') {
     // SSR 环境，保持原路径
     return normalizedPath;
   }
-  
+
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (isProductionSubdomain) {
     // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
     return normalizedPath;
@@ -63,12 +63,12 @@ function normalizeMenuPath(path: string, appName: string): string {
   if (normalizedPath === '/') {
     return `/${appName}`;
   }
-  
+
   // 如果路径已经包含应用前缀，不需要重复添加
   if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
     return normalizedPath;
   }
-  
+
   // 添加应用前缀
   return `/${appName}${normalizedPath}`;
 }
@@ -78,16 +78,16 @@ function normalizeMenuPath(path: string, appName: string): string {
 function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
   // 创建已使用图标集合（用于域内去重），如果已存在则复用
   const iconSet = usedIcons || new Set<string>();
-  
+
   // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
   const itemsWithLabelKey = items.map(item => ({
     ...item,
     labelKey: item.labelKey || item.title || item.label,
   }));
-  
+
   // 使用智能图标分配工具（会递归处理所有子菜单）
   const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
-  
+
   // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
@@ -101,7 +101,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
       : undefined,
     };
   };
-  
+
   // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
   return itemsWithIcons.map(convertToMenuItem);
 }
@@ -248,11 +248,12 @@ export function setupQiankun() {
     },
     // 配置生命周期超时时间（single-spa 格式）
     // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
-    const isDev = import.meta.env.DEV;
-    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
-    const timeout = app.timeout || defaultTimeout;
-    
-    timeouts: {
+    get timeouts() {
+      const isDev = import.meta.env.DEV;
+      const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
+      const timeout = app.timeout || defaultTimeout;
+
+      return {
       bootstrap: {
         millis: timeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
         dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
@@ -268,6 +269,7 @@ export function setupQiankun() {
         dieOnTimeout: false,
         warningMillis: 4000,
       },
+      };
     },
   }));
 

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-menu
     :key="menuRenderKey"
     ref="menuRef"
@@ -81,16 +81,10 @@ const menuRef = ref();
 const menuKey = ref(0); // 用于强制重新渲染菜单
 const isInitialMount = ref(true); // 标记是否是首次挂载
 
-// 关键：只在菜单数据变化时更新 key，不在路由变化时更新 key，避免菜单重绘
-// 之前包含 activeMenu 是为了解决刷新后菜单激活状态丢失的问题，但会导致每次路由变化都重绘菜单
-// 现在改为：只在首次挂载时包含 activeMenu（解决刷新后激活状态丢失），之后不再包含（避免路由变化时重绘）
+// 关键：只在菜单数据变化时更新 key，不在路由变化时更新 key，避免菜单重绘闪烁
+// Element Plus 的 default-active 只在初始化时生效，但我们可以通过 watch 和 menuRef 来手动更新激活状态
 const menuRenderKey = computed(() => {
-  const isLayoutApp = typeof window !== 'undefined' && !!(window as any).__IS_LAYOUT_APP__;
-  // 只在 layout-app 环境下且是首次挂载时，包含 activeMenu 以确保刷新后能正确激活
-  if (isLayoutApp && isInitialMount.value) {
-    return `${menuKey.value}:${activeMenu.value}`;
-  }
-  // 之后不再包含 activeMenu，避免路由变化时菜单重绘
+  // 只包含 menuKey，避免 activeMenu 变化时导致菜单重新渲染
   return String(menuKey.value);
 });
 
@@ -160,33 +154,12 @@ const currentMenuItems = computed(() => {
     }
   }
 
-  // 调试信息：输出当前应用和菜单状态
-  if (import.meta.env.DEV || !(window as any)[`__MENU_DEBUG_${app}__`]) {
-    console.log(`[DynamicMenu] 当前应用: ${app}`, {
-      menusLength: menus.length,
-      menus: menus,
-      registryKeys: Object.keys(menuRegistry.value || {}),
-      registrySystem: menuRegistry.value?.['system']?.length || 0,
-      registrySystemMenus: menuRegistry.value?.['system'],
-      registryAdmin: menuRegistry.value?.['admin']?.length || 0,
-      allMenus: Object.keys(menuRegistry.value || {}).reduce((acc, key) => {
-        acc[key] = (menuRegistry.value?.[key] || []).length;
-        return acc;
-      }, {} as Record<string, number>),
-      menuRegistryValue: menuRegistry.value
-    });
-    (window as any)[`__MENU_DEBUG_${app}__`] = true;
-  }
 
   // 如果菜单为空，尝试通过全局函数注册菜单（作为后备机制）
   if (menus.length === 0) {
     const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
     if (typeof registerMenusFn === 'function') {
       try {
-        if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_ATTEMPTED_${app}__`]) {
-          console.log(`[DynamicMenu] 尝试注册菜单: ${app}`);
-          (window as any)[`__MENU_REGISTER_ATTEMPTED_${app}__`] = true;
-        }
         registerMenusFn(app);
         // 重新获取菜单（注册后可能已更新）
         const retryMenus = menuRegistry.value[app] || [];
@@ -195,15 +168,6 @@ const currentMenuItems = computed(() => {
             console.log(`[DynamicMenu] 菜单注册成功: ${app}`, retryMenus.length);
           }
           return retryMenus;
-        } else {
-          if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_FAILED_${app}__`]) {
-            console.warn(`[DynamicMenu] 菜单注册后仍为空: ${app}`, {
-              registry: menuRegistry.value,
-              allApps: Object.keys(menuRegistry.value || {}),
-              __REGISTER_MENUS_FOR_APP__: typeof registerMenusFn
-            });
-            (window as any)[`__MENU_REGISTER_FAILED_${app}__`] = true;
-          }
         }
       } catch (error) {
         if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_ERROR_${app}__`]) {
@@ -393,7 +357,7 @@ onMounted(() => {
 
   // 立即检查一次
   const ok = checkAndRetryMenu();
-  
+
   // 关键：在首次挂载完成后，将 isInitialMount 设置为 false
   // 这样之后的路由变化就不会通过 key 强制重建菜单，而是通过 watch activeMenu 来更新激活状态
   import('vue').then(({ nextTick }) => {
@@ -539,52 +503,23 @@ watch(
   { immediate: true },
 );
 
-// 关键：监听 activeMenu 变化，通过 menuRef 直接更新激活状态，而不是通过 key 强制重建
-// 这样可以避免每次路由变化时菜单重绘
+// 关键：监听 activeMenu 变化，使用 Element Plus 的内部状态来更新激活状态
+// 通过访问 menuRef 的内部状态来更新，避免重新渲染整个菜单
 watch(
   () => activeMenu.value,
-  (newActiveMenu, oldActiveMenu) => {
-    // 首次挂载时，isInitialMount 会在 onMounted 后设置为 false
-    // 之后的路由变化，通过这个 watch 来更新激活状态，而不是通过 key 强制重建
-    if (isInitialMount.value || !oldActiveMenu) {
-      return; // 首次挂载时，通过 key 包含 activeMenu 来确保激活，这里不需要额外处理
-    }
-    
-    // 非首次挂载时，通过 menuRef 直接更新激活状态
+  (newActiveMenu) => {
+    // 使用 nextTick 确保菜单组件已渲染
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
         try {
           const inst: any = menuRef.value;
-          if (inst && inst.$el) {
-            // 通过 DOM 操作更新激活状态
-            const normalizedPath = normalizeActivePath(newActiveMenu);
-            
-            // 移除旧的激活状态
-            const oldActiveItems = inst.$el.querySelectorAll('.el-menu-item.is-active, .el-sub-menu.is-active');
-            oldActiveItems.forEach((item: HTMLElement) => {
-              item.classList.remove('is-active');
-            });
-            
-            // 设置新的激活状态
-            // Element Plus 的菜单项通过 index 属性匹配
-            const menuItems = inst.$el.querySelectorAll('.el-menu-item, .el-sub-menu');
-            menuItems.forEach((item: HTMLElement) => {
-              // 尝试从多个可能的属性中获取 index
-              const index = item.getAttribute('data-index') || 
-                          item.getAttribute('index') ||
-                          (item as any).__index__ ||
-                          (item.querySelector('[data-menu-index]')?.getAttribute('data-menu-index'));
-              
-              if (index && normalizeActivePath(index) === normalizedPath) {
-                item.classList.add('is-active');
-              }
-            });
+          // Element Plus 的 el-menu 内部使用 activeIndex 来管理激活状态
+          // 直接设置内部状态可以避免重新渲染
+          if (inst && inst.activeIndex !== undefined) {
+            inst.activeIndex = newActiveMenu;
           }
         } catch (error) {
-          // 静默失败，如果无法通过 ref 更新，Element Plus 的 default-active 应该能够响应式更新
-          if (import.meta.env.DEV) {
-            console.warn('[DynamicMenu] 更新菜单激活状态失败:', error);
-          }
+          // 静默失败
         }
       });
     });
@@ -801,6 +736,7 @@ onMounted(() => {
 
       // 使用统一的更新函数
       updateActiveMenu(detail.path);
+    // eslint-disable-next-line no-undef
     }) as EventListener;
 
     window.addEventListener('subapp:route-change', handleSubAppRouteChange);
@@ -868,6 +804,10 @@ const handleMenuSelect = (index: string) => {
       }
       return;
     }
+
+    // 关键：立即更新菜单激活状态，避免等待路由变化后才更新
+    // 这确保了菜单选择后立即显示激活状态
+    activeMenu.value = normalizeActivePath(absolutePath);
 
     // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
     // 所以这里直接使用 index，不需要再次规范化

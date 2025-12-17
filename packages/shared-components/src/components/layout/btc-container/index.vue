@@ -1,5 +1,5 @@
 <template>
-  <el-scrollbar 
+  <el-scrollbar
     :class="containerClass"
     :style="containerStyle"
     @mouseenter="handleMouseEnter"
@@ -106,12 +106,12 @@ const handleScroll = () => {
   if (!isScrolling.value) {
     isScrolling.value = true;
   }
-  
+
   // 清除之前的定时器
   if (scrollTimer) {
     clearTimeout(scrollTimer);
   }
-  
+
   // 滚动停止后延迟隐藏滚动条
   scrollTimer = setTimeout(() => {
     isScrolling.value = false;
@@ -163,12 +163,36 @@ const containerStyle = computed(() => {
 .btc-container {
   width: 100%;
   height: 100%;
+  // 确保容器使用 flex 布局，能够自适应填充父容器
+  // 如果父容器是 flex 布局，使用 flex: 1 自适应；否则使用 height: 100%
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   // Element Plus 滚动条内部包装器样式
+  :deep(.el-scrollbar) {
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
   :deep(.el-scrollbar__wrap) {
     overflow-x: hidden;
     // 预留滚动条空间，避免布局抖动
     scrollbar-gutter: stable;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  :deep(.el-scrollbar__view) {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   // 滚动条视图内容区域
@@ -177,12 +201,15 @@ const containerStyle = computed(() => {
     display: grid;
     gap: var(--btc-container-gap);
     width: 100%;
+    height: 100%;
     min-height: 100%;
 
     // 默认桌面端布局：使用计算出的列数和行数
     grid-template-columns: repeat(var(--btc-container-cols), 1fr);
-    // 使用 auto 行高，让内容自然流动，保持图表容器完整性
-    grid-auto-rows: auto;
+    // 使用 1fr 行高，让行高填充可用空间，确保图表能够充分利用空间
+    grid-auto-rows: 1fr;
+    // 确保内容区域至少填充父容器
+    align-content: start;
 
     // 响应式断点：中等屏幕及以下强制单列布局
     @media (max-width: 1200px) {
@@ -203,12 +230,12 @@ const containerStyle = computed(() => {
       gap: calc(var(--btc-container-gap) * 0.8); // 进一步减少间距
     }
 
-    // 确保子元素填满网格项，但保持自身高度（参考 art-design-pro）
+    // 确保子元素填满网格项
     > * {
       width: 100%;
+      height: 100%; // 让子元素填充网格行的高度
       min-width: 0; // 防止内容溢出
       box-sizing: border-box; // 确保边框包含在尺寸内
-      // 不设置 height: 100%，让子元素保持自身高度，确保图表容器完整性
     }
   }
 

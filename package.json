@@ -204,7 +204,10 @@
     "tsc:layout": "node scripts/commands/type-check.mjs layout",
     "tsc:mobile": "node scripts/commands/type-check.mjs mobile",
     "tsc:docs": "node scripts/commands/type-check.mjs docs",
-    "clean": "node scripts/turbo.js run clean && rm -rf node_modules"
+    "ts-error-stats": "node scripts/commands/ts-error-stats.mjs",
+    "ts-error-reports": "node scripts/generate-ts-error-reports.mjs",
+    "clean": "node scripts/turbo.js run clean && rm -rf node_modules",
+    "clean:vite": "node scripts/clean-vite-cache.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

@@ -3,8 +3,8 @@ export declare function useTabs({ config, Form }: {
     config: BtcFormConfig;
     Form: any;
 }): {
-    active: globalThis.Ref<string | undefined, string | undefined>;
-    list: globalThis.ComputedRef<any>;
+    active: import("vue").Ref<string, string>;
+    list: import("vue").ComputedRef<any>;
     isLoaded: (value: any) => any;
     onLoad: (value: any) => void;
     get: () => any;

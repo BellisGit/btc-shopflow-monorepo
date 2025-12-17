@@ -95,7 +95,7 @@ export function useIdentityVerify(options: IdentityVerifyOptions) {
     onSuccess: () => {
       BtcMessage.success('验证码已发送');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       BtcMessage.error(error.message || '发送验证码失败');
     }
   });

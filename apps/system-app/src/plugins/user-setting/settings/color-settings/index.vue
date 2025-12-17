@@ -50,7 +50,7 @@ import { Check } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 import '../../settings/color-settings/styles/index.scss';
 import type { ThemeConfig } from '@btc/shared-core';
 

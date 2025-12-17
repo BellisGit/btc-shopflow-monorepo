@@ -18,6 +18,13 @@
         overflow: hidden;
       }
 
+      /* 关键：在 CSS 加载前就覆盖浏览器默认的 body margin: 8px */
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
       * {
         -webkit-font-smoothing: antialiased;
         font-family:

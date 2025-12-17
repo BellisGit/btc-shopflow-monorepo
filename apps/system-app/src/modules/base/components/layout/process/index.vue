@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="showWorkTab" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
@@ -324,7 +324,7 @@ function getTabLabel(item: ProcessItem) {
     '/data/files/list': 'menu.data.files.list',
     '/data/files/templates': 'menu.data.files.templates',
     '/data/files/preview': 'menu.data.files.preview',
-    '/data/inventory/check': 'menu.data.inventory',
+    '/inventory/check': 'menu.inventory.result',
     '/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
     '/data/recycle': 'menu.data.recycle',
 

@@ -18,43 +18,15 @@
       :show-search-key="false"
       :label-field="'checkType'"
       @select="onCheckSelect"
+      :right-op-fields="rightOpFields"
+      v-model:right-op-fields-value="searchForm"
+      @right-op-search="handleSearch"
     >
-      <template #search>
-        <!-- 自定义搜索框：物料编码、仓位、盘点人 -->
-        <div class="custom-search-fields" style="display: flex; align-items: center; gap: 10px;">
-          <el-input
-            v-model="searchForm.partName"
-            :placeholder="t('system.material.fields.materialCode')"
-            clearable
-            style="width: 150px;"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          />
-          <el-select
-            v-model="searchForm.position"
-            :placeholder="t('inventory.result.fields.storageLocation')"
-            clearable
-            filterable
-            style="width: 150px;"
-            @change="handleSearch"
-            @clear="handleSearch"
-          >
-            <el-option
-              v-for="option in positionOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-          <el-input
-            v-model="searchForm.checker"
-            :placeholder="t('system.inventory.base.fields.checkerId')"
-            clearable
-            style="width: 150px;"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
+      <template #actions>
+        <el-button type="info" @click="handleExport" :loading="exportLoading">
+          <BtcSvg name="export" class="mr-[5px]" />
+          {{ t('ui.export') }}
+        </el-button>
       </template>
     </BtcTableGroup>
 
@@ -96,12 +68,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, normalizePageResponse } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel } from '@btc/shared-core';
 import type { TableColumn, FormItem, UseCrudReturn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
 import { service } from '@/services/eps';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'BtcDataInventoryCheck'
@@ -125,6 +98,9 @@ const searchForm = ref({
 const positionOptions = ref<{ label: string; value: string }[]>([]);
 const positionLoading = ref(false);
 
+// 导出加载状态
+const exportLoading = ref(false);
+
 // 加载仓位选项
 const loadPositionOptions = async () => {
   positionLoading.value = true;
@@ -139,7 +115,7 @@ const loadPositionOptions = async () => {
 
     // 调用 page 接口获取所有仓位数据（不分页或获取足够多的数据）
     const response = await pageService({ page: 1, size: 1000 });
-    
+
     // 处理响应数据
     let list: any[] = [];
     if (Array.isArray(response)) {
@@ -179,7 +155,7 @@ const loadPositionOptions = async () => {
       }
     });
     positionOptions.value = Array.from(uniqueMap.values());
-    
+
     // 对选项进行排序（按 label 字母顺序）
     positionOptions.value.sort((a, b) => {
       return a.label.localeCompare(b.label, 'zh-CN', { numeric: true, sensitivity: 'base' });
@@ -222,19 +198,19 @@ const checkService = {
     try {
       // 调用后端接口
       const response = await checkListService(params || {});
-      
+
       // 处理响应格式：后端返回 { code, msg, data } 格式
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
         // 如果响应包含 data 字段，使用 data 字段
         data = response.data;
       }
-      
+
       // 标准化响应格式
       const page = params?.page || 1;
       const size = params?.size || 10;
       const normalized = normalizePageResponse(data, page, size);
-      
+
       return {
         list: normalized.list,
         pagination: normalized.pagination,
@@ -286,6 +262,30 @@ const onCheckSelect = (check: any) => {
   // 这里可以通过 tableGroupRef 来刷新右侧表格
 };
 
+// 右侧操作栏搜索字段配置
+const rightOpFields = computed(() => [
+  {
+    type: 'input' as const,
+    prop: 'partName',
+    placeholder: t('system.material.fields.materialCode'),
+    width: '150px',
+  },
+  {
+    type: 'select' as const,
+    prop: 'position',
+    placeholder: t('inventory.result.fields.storageLocation'),
+    width: '100px',
+    options: positionOptions.value,
+    loading: positionLoading.value,
+  },
+  {
+    type: 'input' as const,
+    prop: 'checker',
+    placeholder: t('system.inventory.base.fields.checkerId'),
+    width: '150px',
+  },
+]);
+
 // 处理搜索
 const handleSearch = () => {
   if (tableGroupRef.value?.crudRef?.crud) {
@@ -307,6 +307,104 @@ const handleSearch = () => {
 const handleDetail = (row: any) => {
   detailRow.value = row;
   detailVisible.value = true;
+};
+
+// 导出用的列配置
+const resultExportColumns = computed<TableColumn[]>(() => [
+  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo') },
+  { prop: 'partName', label: t('system.material.fields.materialCode') },
+  { prop: 'partQty', label: t('inventory.result.fields.actualQty') },
+  { prop: 'checker', label: t('system.inventory.base.fields.checkerId') },
+  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
+  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt') },
+]);
+
+// 导出功能
+const handleExport = async () => {
+  if (!resultService?.export) {
+    BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
+    return;
+  }
+
+  exportLoading.value = true;
+
+  try {
+    // 获取当前筛选参数（用于获取 page、size 等分页参数）
+    const params = tableGroupRef.value?.crudRef?.getParams?.() || {};
+
+    // 直接从 viewGroupRef 读取当前选中的项
+    // selectedItem 是一个响应式 ref，存储在组件实例的内存中
+    // 当用户切换盘点项目时，selectedItem.value 会立即更新（同步操作）
+    // 这个值会一直保存在内存中，直到组件销毁，所以不需要 localStorage
+    const viewGroup = tableGroupRef.value?.viewGroupRef;
+    const selectedItem = viewGroup?.selectedItem;
+
+    // 手动构建 keyword 对象，确保包含 checkNo 和搜索条件
+    const keyword: Record<string, any> = {
+      partName: searchForm.value.partName || '',
+      position: searchForm.value.position || '',
+      checker: searchForm.value.checker || '',
+    };
+
+    // 如果选中了盘点项，添加 checkNo 到 keyword
+    // selectedItem 是响应式的，会一直保存当前选中的项，不需要等待异步操作
+    if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+      keyword.checkNo = selectedItem.checkNo;
+    }
+
+    // 如果 params.keyword 中还有其他字段，也合并进来
+    if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
+      Object.assign(keyword, params.keyword);
+    }
+
+    // 构建导出参数
+    const exportParams = {
+      ...params,
+      keyword,
+    };
+
+    // 调用后端导出接口
+    const response = await resultService.export(exportParams);
+
+    // 处理响应数据
+    let dataList: any[] = [];
+    if (response && typeof response === 'object') {
+      if ('data' in response && Array.isArray(response.data)) {
+        dataList = response.data;
+      } else if (Array.isArray(response)) {
+        dataList = response;
+      }
+    }
+
+    // 准备导出数据（即使为空也生成 Excel，只有表头）
+    const exportColumns = resultExportColumns.value;
+    const header = exportColumns.map(col => col.label || col.prop);
+    const data = dataList && dataList.length > 0
+      ? dataList.map(item => {
+          return exportColumns.map(col => {
+            const value = item[col.prop];
+            return value ?? '';
+          });
+        })
+      : []; // 空数据时，data 为空数组，只保留表头
+
+    // 使用 exportJsonToExcel 生成并下载 Excel 文件
+    exportJsonToExcel({
+      header,
+      data,
+      filename: t('inventory.result.title') || '实盘数据',
+      autoWidth: true,
+      bookType: 'xlsx',
+    });
+
+    BtcMessage.success(t('platform.common.export_success'));
+  } catch (error: any) {
+    console.error('[InventoryCheck] Export failed:', error);
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
+    BtcMessage.error(errorMsg);
+  } finally {
+    exportLoading.value = false;
+  }
 };
 
 // 盘点结果表格列（根据新的data-source API字段）

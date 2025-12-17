@@ -164,9 +164,10 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
     },
     generateBundle(_options: OutputOptions, bundle: OutputBundle) {
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code) {
+        const c: any = chunk;
+        if (c.type === 'chunk' && c.code) {
           // 不再跳过 vendor 等第三方库，确保所有资源路径都正确
-          let newCode = chunk.code;
+          let newCode = c.code;
           let modified = false;
 
           // 关键：修复 qiankun 包装器的绝对 /assets/index-xxx.js 动态导入（跨域宿主会 404）
@@ -208,12 +209,12 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
             (chunk as any).code = newCode;
             console.log(`[ensure-base-url] 在 generateBundle 中修复了 ${fileName} 中的资源路径`);
           }
-        } else if (chunk.type === 'asset' && fileName === 'index.html') {
+        } else if (c.type === 'asset' && fileName === 'index.html') {
           // 处理 HTML 文件中的资源引用
           // 注意：如果 Vite 配置正确（base: '/', assetsDir: 'assets', rollupOptions.output.chunkFileNames: 'assets/[name]-[hash].js'），
           // Vite 应该自动生成正确的路径，不需要修复。
           // 这里只处理预览构建时的端口修复，以及修复相对路径。
-          let htmlContent = (chunk as any).source as string;
+          let htmlContent = ((c as any).source) as string;
           let htmlModified = false;
 
           // 修复相对路径 ./assets/ 为绝对路径 /assets/（如果出现）

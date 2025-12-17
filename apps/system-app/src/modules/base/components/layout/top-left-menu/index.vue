@@ -37,14 +37,14 @@ const { uniqueOpened } = useSettingsState();
 
 const activeMenu = ref(route.path);
 
-// 获取当前应用的菜单项（从 menuRegistry 获取）
-const allMenuItems = computed(() => {
+// 完整的菜单项（用于查找子菜单）
+const allMenuItemsWithChildren = computed(() => {
   return getMenusForApp(currentApp.value);
 });
 
-// 只显示一级菜单（混合菜单的顶部只显示一级）
+// 只显示一级菜单（混合菜单的顶部只显示一级，移除子菜单信息以便 MenuRenderer 只渲染一级）
 const firstLevelMenuItems = computed(() => {
-  return allMenuItems.value.map(item => ({
+  return allMenuItemsWithChildren.value.map(item => ({
     ...item,
     children: undefined, // 移除子菜单，只显示一级
   }));
@@ -58,12 +58,58 @@ watch(
   { immediate: true }
 );
 
-const handleMenuSelect = (index: string) => {
-  if (import.meta.env.DEV) {
-    console.log('[main-app] top-left-menu select', { index, currentApp: currentApp.value });
+// 递归查找第一个可见的叶子节点菜单
+const findFirstLeafMenu = (items: typeof allMenuItemsWithChildren.value): typeof allMenuItemsWithChildren.value[0] | null => {
+  for (const item of items) {
+    // 跳过隐藏的菜单项
+    if (item.hidden) {
+      continue;
+    }
+    // 如果有子菜单，递归查找
+    if (item.children && item.children.length > 0) {
+      const found = findFirstLeafMenu(item.children);
+      if (found) {
+        return found;
+      }
+    } else {
+      // 没有子菜单，返回当前项
+      return item;
+    }
   }
+  return null;
+};
+
+const handleMenuSelect = (index: string) => {
+  // 查找对应的一级菜单项（使用完整的菜单数据，包含 children）
+  const menuItem = allMenuItemsWithChildren.value.find(item => item.index === index);
+
+  // 立即通知 TopLeftSidebar 更新选中的一级菜单（通过事件总线）
+  const emitter = (window as any).__APP_EMITTER__;
+  if (emitter && index) {
+    emitter.emit('top-left-menu.select', { firstLevelIndex: index });
+  }
+
+  // 如果找到菜单项且有子菜单，跳转到第一个子菜单（参考 art-design-pro 的实现）
+  if (menuItem && menuItem.children && menuItem.children.length > 0) {
+    const firstChild = findFirstLeafMenu(menuItem.children);
+    if (firstChild && firstChild.index) {
+      const absolutePath = firstChild.index.startsWith('/') ? firstChild.index : `/${firstChild.index}`;
+      router.push(absolutePath).catch((err) => {
+        if (import.meta.env.DEV) {
+          console.warn('[top-left-menu] 跳转到第一个子菜单失败:', absolutePath, err);
+        }
+      });
+      return;
+    }
+  }
+
+  // 否则直接跳转到当前路径
   const absolutePath = index.startsWith('/') ? index : `/${index}`;
-  router.push(absolutePath);
+  router.push(absolutePath).catch((err) => {
+    if (import.meta.env.DEV) {
+      console.warn('[top-left-menu] 跳转失败:', absolutePath, err);
+    }
+  });
 };
 </script>
 

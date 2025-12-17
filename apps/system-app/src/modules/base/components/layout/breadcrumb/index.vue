@@ -1,10 +1,18 @@
-﻿<template>
+<template>
   <div class="app-breadcrumb">
     <el-breadcrumb separator="|">
       <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
         <span class="breadcrumb-item">
+          <!-- SVG 图标 -->
+          <btc-svg
+            v-if="item.icon && isSvgIcon(item.icon)"
+            :name="getSvgName(item.icon)"
+            :size="14"
+            class="breadcrumb-icon"
+          />
+          <!-- Element Plus 图标 -->
           <el-icon
-            v-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]"
+            v-else-if="item.icon && ElementPlusIconsVue[item.icon as keyof typeof ElementPlusIconsVue]"
             :size="14"
             class="breadcrumb-icon"
           >
@@ -46,10 +54,20 @@ interface BreadcrumbConfig {
   icon?: string;
 }
 
+// 判断是否为SVG图标
+function isSvgIcon(iconName?: string): boolean {
+  return iconName?.startsWith('svg:') ?? false;
+}
+
+// 获取SVG图标名称（移除 svg: 前缀）
+function getSvgName(iconName?: string): string {
+  return iconName?.replace(/^svg:/, '') || '';
+}
+
 // 从菜单注册表中查找菜单项的图标
 function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined {
   const menus = getMenusForApp(app);
-  
+
   // 递归查找菜单项
   function findInMenuItems(items: any[]): string | undefined {
     for (const item of items) {
@@ -67,7 +85,7 @@ function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined
     }
     return undefined;
   }
-  
+
   return findInMenuItems(menus);
 }
 

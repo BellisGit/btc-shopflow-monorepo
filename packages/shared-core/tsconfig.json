@@ -21,7 +21,13 @@
     "declaration": true,
     "baseUrl": ".",
     "paths": {
-      "@btc/shared-utils": ["../shared-utils/src"]
+      "@btc/shared-utils": ["../shared-utils/src"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*"],
+      "@configs/*": ["../../configs/*"],
+      "@btc/shared-components": ["../shared-components/src"],
+      "@btc/shared-components/*": ["../shared-components/src/*"],
+      "@btc/shared-components/store/menuRegistry": ["../shared-components/src/store/menuRegistry"],
+      "@btc/shared-components/charts/utils": ["../shared-components/src/charts/utils"]
     }
   },
   "include": ["src"],

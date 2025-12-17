@@ -1,19 +1,27 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "composite": false,
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": false,
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
       "@btc-common/*": ["src/common/*"],
@@ -29,10 +37,14 @@
       "@charts/*": ["src/charts/*"],
       "@charts-types/*": ["src/charts/types/*"],
       "@charts-utils/*": ["src/charts/utils/*"],
-      "@charts-composables/*": ["src/charts/composables/*"]
+      "@charts-composables/*": ["src/charts/composables/*"],
+      "@btc/shared-utils": ["../shared-utils/src"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*"],
+      "@btc/shared-core": ["../shared-core/src"],
+      "@btc/subapp-manifests": ["../subapp-manifests/src"],
+      "@configs/*": ["../../configs/*"]
     }
   },
   "include": ["src", "src/**/*.json", "src/types/**/*.d.ts", "src/env.d.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs", "../../apps"]
 }
-

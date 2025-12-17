@@ -13,9 +13,16 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
  */
 export function useSettingsConfig() {
   const { t } = useI18n();
-  const theme = useThemePlugin();
+  // 安全地获取主题插件
+  let theme: ReturnType<typeof useThemePlugin> | null = null;
+  try {
+    theme = useThemePlugin();
+  } catch (error) {
+    // 如果主题插件未初始化，尝试从全局获取
+    theme = (globalThis as any).__THEME_PLUGIN__ || (typeof window !== 'undefined' && (window as any).__THEME_PLUGIN__) || null;
+  }
   const buttonStyleOptions = computed(() => {
-    const currentStyle = theme.buttonStyle?.value || 'default';
+    const currentStyle = theme?.buttonStyle?.value || 'default';
     return [
       {
         value: 'default' as ButtonStyle,
@@ -115,11 +122,11 @@ export function useSettingsConfig() {
 
   // 系统主题色选项（从预设主题中获取，排除自定义主题）
   const mainColors = computed(() => {
-    const presets = theme.THEME_PRESETS || [];
+    const presets = theme?.THEME_PRESETS || [];
     // 从预设主题中提取颜色，过滤掉空值
     return presets
-      .map((preset) => preset.color)
-      .filter((color) => color != null && color !== '');
+      .map((preset: any) => preset.color)
+      .filter((color: any) => color != null && color !== '');
   });
 
   // 容器宽度选项

@@ -1,10 +1,19 @@
-﻿/// <reference types="vite/client" />
+/// <reference types="vite/client" />
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const component: DefineComponent<object, object, any>;
   export default component;
+}
+
+declare module 'vue-router' {
+  export type Router = any;
+  export function createRouter(...args: any[]): Router;
+  export function createWebHistory(...args: any[]): any;
+  export function createMemoryHistory(...args: any[]): any;
+  export function useRoute(): any;
+  export function useRouter(): Router;
 }
 
 declare global {

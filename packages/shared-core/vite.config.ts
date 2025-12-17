@@ -1,9 +1,15 @@
-﻿import { defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   logLevel: 'error', // 只显示错误，抑制警告
+  resolve: {
+    alias: {
+      '@configs': resolve(__dirname, '../../configs'),
+      '@btc/shared-components': resolve(__dirname, '../shared-components/src'),
+    },
+  },
   plugins: [
     dts({
       include: ['src/**/*.ts', 'src/**/*.d.ts'],
@@ -30,7 +36,19 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'axios', 'vue-i18n', '@btc/shared-utils', 'pinia', '@vueuse/core'],
+      external: [
+        'vue',
+        'axios',
+        'vue-i18n',
+        '@btc/shared-utils',
+        /^@btc\/shared-utils\/.*/,
+        'pinia',
+        '@vueuse/core',
+        '@configs/layout-bridge',
+        /^@configs\/.*/,
+        '@btc/shared-components',
+        /^@btc\/shared-components\/.*/,
+      ],
       output: {
         globals: {
           vue: 'Vue',

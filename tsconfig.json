@@ -20,7 +20,9 @@
     "paths": {
       "@btc/shared-utils": ["packages/shared-utils/src"],
       "@btc/shared-components": ["packages/shared-components/src"],
-      "@btc/shared-core": ["packages/shared-core/src"]
+      "@btc/shared-core": ["packages/shared-core/src"],
+      "@btc/vite-plugin": ["packages/vite-plugin/src"],
+      "@btc/subapp-manifests": ["packages/subapp-manifests/src"]
     }
   },
   "exclude": ["node_modules", "dist", "**/dist"]

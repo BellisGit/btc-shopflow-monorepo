@@ -13,7 +13,7 @@ const pageRoutes = [
     path: '/',
     name: 'Home',
     component: () => import('../views/Home.vue'),
-    meta: { 
+    meta: {
       isHome: true,
       titleKey: 'menu.monitor.overview',
       tabLabelKey: 'menu.monitor.overview',
@@ -23,7 +23,7 @@ const pageRoutes = [
     path: '/ops/error',
     name: 'ErrorMonitor',
     component: () => import('../views/ErrorMonitor.vue'),
-    meta: { 
+    meta: {
       isHome: false,
       titleKey: 'menu.monitor.error',
       tabLabelKey: 'menu.monitor.error',
@@ -33,7 +33,7 @@ const pageRoutes = [
     path: '/ops/deployment-test',
     name: 'DeploymentTest',
     component: () => import('../views/DeploymentTest.vue'),
-    meta: { 
+    meta: {
       isHome: false,
       titleKey: 'menu.monitor.deploymentTest',
       tabLabelKey: 'menu.monitor.deploymentTest',
@@ -42,10 +42,12 @@ const pageRoutes = [
 ];
 
 export const createMonitorRouter = (isStandalone: boolean = false): Router => {
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
   // 根据运行模式返回不同的路由配置
-  // 独立运行时：使用 AppLayout 包裹所有路由
-  // qiankun 模式：直接返回页面路由（由主应用提供 Layout）
-  const routes = isStandalone
+  // 独立运行且未使用 layout-app 时：使用 AppLayout 包裹所有路由
+  // qiankun 模式或 layout-app 模式：直接返回页面路由（由主应用或 layout-app 提供 Layout）
+  const routes = isStandalone && !isUsingLayoutApp
     ? [
         {
           path: '/',
@@ -64,7 +66,7 @@ export const createMonitorRouter = (isStandalone: boolean = false): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to, from, next) => {
+  router.beforeEach((to, _from, next) => {
     // 只在独立运行（非 qiankun）且是生产环境子域名时处理
     if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       const hostname = window.location.hostname;

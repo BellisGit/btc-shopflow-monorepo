@@ -1,4 +1,3 @@
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -18,7 +17,7 @@ export function useLogout() {
   const { clearUserInfo } = useUser();
   // 延迟获取 processStore，避免循环依赖
   let processStore: ReturnType<typeof import('@/store/process').useProcessStore> | null = null;
-  
+
   const getProcessStore = async () => {
     if (!processStore) {
       const { useProcessStore } = await import('@/store/process');
@@ -43,14 +42,14 @@ export function useLogout() {
 
       // 清除 cookie 中的 token
       deleteCookie('access_token');
-      
+
       // 清除登录状态标记（从统一的 settings 存储中移除）
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
       if (currentSettings.is_logged_in) {
         delete currentSettings.is_logged_in;
         appStorage.settings.set(currentSettings);
       }
-      
+
       // 清除所有认证相关数据（使用统一存储管理器）
       appStorage.auth.clear();
       appStorage.user.clear();

@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
@@ -47,12 +46,12 @@ const pageRoutes: RouteRecordRaw[] = [
 export const getFinanceRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
-  
+
   // 如果使用 layout-app，直接返回页面路由（layout-app 会提供布局）
   if (isUsingLayoutApp) {
     return pageRoutes;
   }
-  
+
   // 独立运行且不使用 layout-app：使用 AppLayout 包裹所有路由
   const routes = isStandalone
     ? [

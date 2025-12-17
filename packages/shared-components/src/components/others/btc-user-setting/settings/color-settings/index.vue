@@ -49,15 +49,27 @@ import { Check } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 import '../../settings/color-settings/styles/index.scss';
 import type { ThemeConfig } from '@btc/shared-core';
 
 const { t } = useI18n();
-const theme = useThemePlugin();
+// 安全地获取主题插件
+let theme: ReturnType<typeof useThemePlugin> | null = null;
+try {
+  theme = useThemePlugin();
+} catch (error) {
+  // 如果主题插件未初始化，尝试从全局获取
+  theme = (globalThis as any).__THEME_PLUGIN__ || (typeof window !== 'undefined' && (window as any).__THEME_PLUGIN__) || null;
+}
+
+// 如果主题插件不可用，组件无法正常工作
+if (!theme) {
+  console.warn('[ColorSettings] Theme plugin not available');
+}
 
 // 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为空字符串
-const savedCustomColor = theme.currentTheme.value?.name === 'custom'
+const savedCustomColor = theme?.currentTheme?.value?.name === 'custom'
   ? theme.currentTheme.value.color
   : '';
 const customColor = ref(savedCustomColor);
@@ -70,11 +82,12 @@ const isConfirmed = ref(false);
 
 // 获取预设主题列表
 const themePresets = computed(() => {
-  return theme.THEME_PRESETS || [];
+  return theme?.THEME_PRESETS || [];
 });
 
 // 判断是否是当前预设主题
 function isCurrentPreset(preset: ThemeConfig): boolean {
+  if (!theme) return false;
   const current = theme.currentTheme.value;
   if (!current || !preset) return false;
   return preset.name === current.name || preset.color === current.color;
@@ -82,12 +95,12 @@ function isCurrentPreset(preset: ThemeConfig): boolean {
 
 // 判断是否是自定义主题
 const isCustomTheme = computed(() => {
-  return theme.currentTheme.value?.name === 'custom';
+  return theme?.currentTheme?.value?.name === 'custom';
 });
 
 // 获取自定义颜色的显示值
 const customColorDisplay = computed(() => {
-  if (theme.currentTheme.value?.name === 'custom') {
+  if (theme?.currentTheme?.value?.name === 'custom') {
     return theme.currentTheme.value.color || '';
   }
   return '';
@@ -95,13 +108,14 @@ const customColorDisplay = computed(() => {
 
 // 处理预设主题点击
 function handlePresetClick(preset: ThemeConfig) {
-  if (!preset) return;
+  if (!preset || !theme) return;
   theme.switchTheme(preset);
   BtcMessage.success(`${t('theme.switched')}: ${t(preset.label)}`);
 }
 
 // 处理自定义主题点击（颜色选择器打开时）
 function handleCustomThemeClick() {
+  if (!theme) return;
   // 保存打开时的原始颜色值和主题状态
   originalColor.value = customColor.value || null;
   originalTheme.value = theme.currentTheme.value ? { ...theme.currentTheme.value } : null;
@@ -132,6 +146,7 @@ function handleColorChange(color: string | null) {
 
 // 统一的主题颜色预览更新函数
 function updateThemeColorPreview(color: string | null) {
+  if (!theme) return;
   if (color !== null && color !== undefined && color !== '') {
     const newTheme: ThemeConfig = {
       name: 'custom',
@@ -146,6 +161,7 @@ function updateThemeColorPreview(color: string | null) {
 
 // 处理清空颜色
 function handleClearColor() {
+  if (!theme) return;
   customColor.value = '';
   theme.currentTheme.value = {
     name: 'custom',
@@ -156,6 +172,7 @@ function handleClearColor() {
 
 // 处理确认颜色
 function handleConfirmColor(color: string | null) {
+  if (!theme) return;
   isConfirmed.value = true;
   customColor.value = color || '';
 
@@ -179,6 +196,7 @@ function handleActiveColorChange(color: string | null) {
 
 // 处理颜色选择器关闭
 function handleColorPickerHide() {
+  if (!theme) return;
   if (!isConfirmed.value && originalTheme.value) {
     customColor.value = originalColor.value || '';
     theme.currentTheme.value = { ...originalTheme.value };
@@ -192,7 +210,7 @@ function handleColorPickerHide() {
 }
 
 // 监听主题变化，同步自定义颜色
-watch(() => theme.currentTheme.value, (newTheme) => {
+watch(() => theme?.currentTheme?.value, (newTheme) => {
   if (newTheme && newTheme.name === 'custom') {
     customColor.value = newTheme.color;
   }

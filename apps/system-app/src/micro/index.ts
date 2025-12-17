@@ -167,7 +167,7 @@ export async function registerManifestTabsForApp(appName: string): Promise<void>
   // 动态导入避免循环依赖
   const { registerTabs } = await import('../store/tabRegistry');
 
-  const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
+  const normalizedTabs: TabMeta[] = tabs.map((tab: any) => ({
     key: tab.key,
     title: tab.labelKey ?? tab.label ?? tab.path,
     path: tab.path,

@@ -2,6 +2,17 @@
  * BtcTableGroup 类型定义
  */
 
+// 右侧操作栏搜索字段配置项
+export interface RightOpField {
+  type: 'input' | 'select'; // 字段类型：输入框或选择框
+  prop: string; // 字段名（用于绑定值和传递给后端）
+  placeholder?: string; // 占位符
+  width?: string; // 宽度，输入框默认 '150px'，选择框默认 '100px'
+  options?: Array<{ label: string; value: any }>; // 选择框选项（仅当 type 为 'select' 时使用）
+  loading?: boolean; // 选择框加载状态（仅当 type 为 'select' 时使用）
+  onSearch?: () => void; // 搜索触发回调（可选，如果不提供则使用默认的搜索逻辑）
+}
+
 export interface TableGroupProps {
   // 左侧服务（Master List）
   leftService: any;
@@ -42,6 +53,15 @@ export interface TableGroupProps {
   leftSize?: 'default' | 'small' | 'middle'; // 左侧宽度类型：default（300px）、small（150px）或 middle（225px）
   upsertWidth?: string | number;
   searchPlaceholder?: string;
+
+  // 右侧操作栏搜索字段配置（最多3个，硬性限制）
+  rightOpFields?:
+    | [RightOpField]
+    | [RightOpField, RightOpField]
+    | [RightOpField, RightOpField, RightOpField]
+    | undefined;
+  // 右侧操作栏搜索字段的值（v-model）
+  rightOpFieldsValue?: Record<string, any>;
 }
 
 export interface TableGroupEmits {
@@ -50,6 +70,8 @@ export interface TableGroupEmits {
   (event: 'refresh', params?: any): void;
   (event: 'form-submit', data: any, formEvent: { close: () => void; done: () => void; next: (data: any) => Promise<any>; defaultPrevented: boolean }): void;
   (event: 'load', data: any[]): void;
+  (event: 'update:rightOpFieldsValue', value: Record<string, any>): void;
+  (event: 'right-op-search', field: any): void;
 }
 
 export interface TableGroupExpose {

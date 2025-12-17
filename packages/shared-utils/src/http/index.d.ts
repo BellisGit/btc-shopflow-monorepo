@@ -69,9 +69,9 @@ export declare class ResponseInterceptor {
     };
 }
 export declare const responseInterceptor: ResponseInterceptor;
-export declare const handleApiResponse: <T>(response: ApiResponse<T>) => T | ApiResponse<T> | Promise<never>;
-export declare const handleApiError: (error: {
+export declare function handleApiResponse<T>(response: ApiResponse<T>): T | ApiResponse<T> | Promise<never>;
+export declare function handleApiError(error: {
     code: number;
     message: string;
-}) => Promise<never>;
-export declare const handleNetworkError: (error: any) => void;
+}): Promise<never>;
+export declare function handleNetworkError(error: any): void;

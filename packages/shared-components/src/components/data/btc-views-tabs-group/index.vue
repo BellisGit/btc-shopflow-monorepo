@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue';
-import { globalMitt } from '@btc/shared-components/utils/mitt';
+import { globalMitt } from '@btc/shared-components';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
@@ -234,10 +234,10 @@ const handleBeforeRefresh = (params: any) => {
       } else {
         ids = selectedItem.value.id;
       }
-      
+
       // 统一将 ids 转换为数组
       const normalizedIds = Array.isArray(ids) ? ids : (ids !== undefined && ids !== null && ids !== '' ? [ids] : []);
-      
+
       // 如果 keyword 已经是对象，合并 ids；否则创建新对象
       if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
         params.keyword = { ...params.keyword, ids: normalizedIds };

@@ -14,11 +14,18 @@ html.dark body,
 html.dark #app {
   // Element Plus 组件背景色使用 #0a0a0a
   --el-bg-color: #0a0a0a;
-  // Element Plus 页面背景色也使用 #0a0a0a（确保与组件背景色一致）
-  --el-bg-color-page: #0a0a0a;
+  // Element Plus 页面背景色使用 #141414（较浅的深色背景，作为整体背景）
+  --el-bg-color-page: #141414;
+}
+
+// body/html 整体背景使用较浅的深色背景 #141414
+html.dark body,
+html.dark html {
+  background-color: #141414 !important;
 }
 
 html.dark {
+  // 所有布局成员使用更深的背景 #0a0a0a，在较浅的 body 背景上形成对比
   // 顶栏背景色
   .app-layout__topbar,
   .topbar {
@@ -36,7 +43,7 @@ html.dark {
     background-color: #0a0a0a !important;
   }
 
-  // 内容区域背景色（确保切换应用时不被覆盖）
+  // 内容区域背景色
   // 使用更高优先级的选择器，确保覆盖子应用可能设置的样式
   .app-layout__content,
   .app-layout__main .app-layout__content {
@@ -48,13 +55,13 @@ html.dark {
     background-color: #0a0a0a !important;
   }
 
-  // 侧边栏容器背景色（深色系统主题下）
+  // 侧边栏容器背景色
   .app-layout__sidebar,
   .app-layout__sidebar.has-dark-menu {
     background-color: #0a0a0a !important;
   }
 
-  // 深色菜单风格在深色系统主题下，背景色必须和内容区域一致（使用 #0a0a0a）
+  // 深色菜单风格在深色系统主题下，背景色使用更深的背景 #0a0a0a（与侧边栏一致）
   .el-menu-dark {
     background-color: #0a0a0a !important;
 

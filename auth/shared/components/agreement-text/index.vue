@@ -1,15 +1,15 @@
 <template>
   <div class="agreement-text">
-    <el-checkbox 
+    <el-checkbox
       id="agreement-checkbox"
       name="agreement"
-      v-model="agreed" 
+      v-model="agreed"
       size="small"
       @change="handleAgreementChange"
     >
       <span class="agreement-content">
         {{ t('未注册手机验证后自动登录，注册即代表同意') }}
-        <a href="#" class="agreement-link" @click.prevent="openAgreement">{{ t('《拜里斯科技软件协议》') }}</a>
+        <a href="/duty/agreement.html" target="_blank" rel="noopener noreferrer" class="agreement-link">{{ t('《拜里斯科技软件协议》') }}</a>
       </span>
     </el-checkbox>
   </div>
@@ -43,12 +43,6 @@ watch(agreed, (newValue) => {
   emit('agreementChange', newValue);
 });
 
-// 打开协议详情
-const openAgreement = () => {
-  // 这里可以打开协议详情弹窗或跳转到协议页面
-  console.log('打开协议详情');
-};
-
 // 暴露方法供父组件调用
 defineExpose({
   agreed,
@@ -69,17 +63,17 @@ defineExpose({
   :deep(.el-checkbox) {
     align-items: flex-start;
     display: flex;
-    
+
     .el-checkbox__input {
       margin-top: 0;
       align-self: flex-start;
       flex-shrink: 0;
-      
+
       .el-checkbox__inner {
         margin-top: 3px;
       }
     }
-    
+
     .el-checkbox__label {
       font-size: 12px;
       line-height: 1.6;
@@ -113,10 +107,10 @@ html.dark {
     .agreement-content {
       color: var(--el-text-color-placeholder);
     }
-    
+
     .agreement-link {
       color: var(--el-color-primary);
-      
+
       &:hover {
         color: var(--el-color-primary-light-3);
       }

@@ -1,5 +1,3 @@
-// @btc/shared-core 入口文件
-
 export * from './btc';
 export * from './btc/plugins';
 export * from './btc/plugins/i18n';
@@ -18,20 +16,22 @@ export * from './composables/form-helpers';
 export * from './composables/use-sms-code';
 export * from './composables/use-email-code';
 export * from './composables/useCountdown';
+export * from './composables/subapp-lifecycle';
 export * from './types/common';
 export * from './types/crud';
 export * from './types/qiankun';
 export * from './utils/menu-icon-assigner';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
-
-// 显式导出常用类型和函数，确保 TypeScript 能够正确识别
-// 直接从类型定义文件导出，避免路径解析问题
-export type { UseCrudReturn } from './btc/crud/types';
+export * from './eps';
+export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
+export type { EpsServiceData } from './eps';
+export type { UseCrudReturn, CrudService } from './btc/crud/types';
 export type { ButtonStyle } from './btc/plugins/theme';
 export type { ThemeConfig } from './btc/composables/useTheme';
-export { useI18n } from './btc/plugins/i18n';
-export { useThemePlugin } from './btc/plugins/theme';
-export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
+export type { QiankunProps } from './types/qiankun';
+export type { Plugin } from './btc/plugins/manager/types';
+export { useI18n, createI18nPlugin } from './btc/plugins/i18n';
+export { useThemePlugin, createThemePlugin } from './btc/plugins/theme';
 export { exportTableToExcel } from './btc/plugins/excel';
 export { useCountdown } from './composables/useCountdown';
 export { useCrud } from './btc/crud';
@@ -39,3 +39,12 @@ export { useSmsCode } from './composables/use-sms-code';
 export { usePluginManager } from './btc/plugins/manager';
 export { useBtcForm } from './composables/useBtcForm';
 export { useTabs, useAction, useElApi, usePlugins } from './composables/form-helpers';
+export { useThemeStore } from './btc/store/theme';
+export { createCrudServiceFromEps } from './btc/service/eps-utils';
+// 显式导出 subapp-lifecycle 模块的所有函数和类型
+export { setupSubAppGlobals } from './composables/subapp-lifecycle/useSubAppGlobals';
+export { createSubApp, mountSubApp, unmountSubApp, updateSubApp, setupStandalonePlugins } from './composables/subapp-lifecycle/useSubAppLifecycle';
+export { setupRouteSync, setupHostLocationBridge, ensureCleanUrl } from './composables/subapp-lifecycle/useSubAppRouteSync';
+export { setupEventBridge } from './composables/subapp-lifecycle/useSubAppEventBridge';
+export { createLogoutFunction } from './composables/subapp-lifecycle/useSubAppLogout';
+export type { SubAppContext, SubAppOptions } from './composables/subapp-lifecycle/types';

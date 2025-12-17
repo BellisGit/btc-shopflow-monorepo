@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="btc-upload__wrap" :class="[customClass]">
     <div
       class="btc-upload"
@@ -125,7 +125,7 @@ import { inject } from 'vue';
 import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcUpload'
@@ -225,17 +225,17 @@ const getService = () => {
   if (props.uploadService) {
     return props.uploadService;
   }
-  
+
   // 2. 其次使用 inject
   if (injectedService) {
     return injectedService;
   }
-  
+
   // 3. 最后尝试从全局变量获取（仅在浏览器环境）
   if (typeof window !== 'undefined') {
     return (window as any).__BTC_SERVICE__;
   }
-  
+
   return null;
 };
 
@@ -471,7 +471,7 @@ async function httpRequest(req: any, item?: UploadItem) {
 
   // 保存 item 引用，避免在异步操作中丢失
   const currentItem = item;
-  
+
   if (!currentItem) {
     return false;
   }

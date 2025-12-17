@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import { Setting, Lightning, Switch, Document, Monitor, InfoFilled } from '@element-plus/icons-vue';
 import ApiSwitch from './ApiSwitch.vue';
@@ -94,8 +94,11 @@ function getCookie(name: string): string | null {
 // 检查是否为开发环境
 const isDev = import.meta.env.DEV;
 
+// 使用 ref 缓存允许用户的状态，确保显示稳定
+const isAllowedUser = ref(false);
+
 // 检查是否为允许在生产环境显示 DevTools 的用户
-function isAllowedUser(): boolean {
+function checkAllowedUser(): boolean {
   try {
     const btcUser = getCookie('btc_user');
     if (!btcUser) {
@@ -119,10 +122,8 @@ function isAllowedUser(): boolean {
       return false;
     }
 
-    const isAllowed = userName === 'moselu';
-
-
-    return isAllowed;
+    // 检查用户名是否为 moselu（不区分大小写）
+    return userName === 'moselu';
   } catch (error) {
     // 仅在开发环境输出错误信息
     if (isDev) {
@@ -132,8 +133,29 @@ function isAllowedUser(): boolean {
   }
 }
 
-// 是否显示 DevTools（开发环境或允许的用户）
-const shouldShowDevTools = computed(() => isDev || isAllowedUser());
+// 在组件挂载时检查一次，并缓存结果
+onMounted(() => {
+  const isAllowed = checkAllowedUser();
+  isAllowedUser.value = isAllowed;
+  console.log('[DevTools] 组件挂载，isAllowedUser:', isAllowed, 'isDev:', isDev);
+});
+
+// 是否显示 DevTools
+// 1. 如果是 moselu 用户，无论主应用还是子应用，无论开发环境还是生产环境，都显示
+// 2. 开发环境下，始终显示
+// 3. 生产环境下，仅允许的用户显示
+const shouldShowDevTools = computed(() => {
+  // moselu 用户：始终显示（无论环境、无论主应用还是子应用）
+  if (isAllowedUser.value) {
+    return true;
+  }
+  // 开发环境：始终显示
+  if (isDev) {
+    return true;
+  }
+  // 生产环境：仅允许的用户显示（已经在上面检查过了）
+  return false;
+});
 
 const components: Record<string, any> = {
   env: EnvInfo,
@@ -340,14 +362,14 @@ onClickOutside(
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: none;
     transition: all 0.3s;
     color: #fff;
 
     &:hover {
       background-color: var(--el-color-primary-light-3);
       transform: scale(1.1);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: none;
     }
 
     &.is-hide {
@@ -355,32 +377,6 @@ onClickOutside(
 
       &:hover {
         opacity: 1;
-      }
-    }
-  }
-
-  // 亮色模式下的特殊处理
-  html:not(.dark) & {
-    &__toggle {
-      // 亮色模式下使用更柔和的阴影，避免重影
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-
-      &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-      }
-    }
-  }
-
-  // 暗色模式下的特殊处理
-  html.dark & {
-    &__toggle {
-      // 暗色模式下可以添加边框以增强对比度
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-
-      &:hover {
-        border-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       }
     }
   }

@@ -1,4 +1,3 @@
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -47,7 +46,7 @@ export function useLogout() {
 
       // 清除 cookie 中的 token
       deleteCookie('access_token');
-      
+
       // 清除所有认证相关数据（使用统一存储管理器）
       appStorage.auth.clear();
       appStorage.user.clear();
@@ -73,7 +72,7 @@ export function useLogout() {
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-      
+
       // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain) {
         window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
@@ -100,7 +99,7 @@ export function useLogout() {
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-      
+
       // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain) {
         window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;

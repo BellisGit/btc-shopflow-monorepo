@@ -8,7 +8,6 @@ import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
 import { getManifestTabs, getManifestMenus } from './manifests';
 import { useProcessStore, type ProcessItem } from '../store';
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { getCurrentAppFromPath } from '@btc/shared-components';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
@@ -276,11 +275,12 @@ export function setupQiankun() {
     },
     // 配置生命周期超时时间（single-spa 格式）
     // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
-    const isDev = import.meta.env.DEV;
-    const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
-    const timeout = app.timeout || defaultTimeout;
-    
-    timeouts: {
+    get timeouts() {
+      const isDev = import.meta.env.DEV;
+      const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
+      const timeout = app.timeout || defaultTimeout;
+
+      return {
       bootstrap: {
         millis: timeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
         dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
@@ -296,6 +296,7 @@ export function setupQiankun() {
         dieOnTimeout: false,
         warningMillis: 4000,
       },
+      };
     },
   }));
 

@@ -259,10 +259,17 @@ const visibleCharts = computed(() => {
 .btc-chart-demo {
   width: 100%;
   height: 100%;
+  // 确保容器使用 flex 布局，能够自适应填充父容器
+  // 如果父容器是 flex 布局，使用 flex: 1 自适应；否则使用 height: 100%
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   :deep(.btc-container) {
     flex: 1;
     min-height: 0;
+    height: 100%;
     align-content: start;
     grid-auto-flow: row;
   }
@@ -276,6 +283,7 @@ const visibleCharts = computed(() => {
     flex-direction: column;
     flex-shrink: 0;
     min-height: 0;
+    height: 100%; // 让图表项填充网格行的高度
 
     h4 {
       margin: 0 0 8px 0;

@@ -41,18 +41,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
  */
 function normalizeMenuPath(path: string, appName: string): string {
   if (!path || !appName) return path;
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+
   // 检测是否在生产环境的子域名下
   if (typeof window === 'undefined') {
     // SSR 环境，保持原路径
     return normalizedPath;
   }
-  
+
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (isProductionSubdomain) {
     // 生产环境子域名：保持原路径（manifest 中已经没有前缀了）
     return normalizedPath;
@@ -63,12 +63,12 @@ function normalizeMenuPath(path: string, appName: string): string {
   if (normalizedPath === '/') {
     return `/${appName}`;
   }
-  
+
   // 如果路径已经包含应用前缀，不需要重复添加
   if (normalizedPath.startsWith(`/${appName}/`) || normalizedPath === `/${appName}`) {
     return normalizedPath;
   }
-  
+
   // 添加应用前缀
   return `/${appName}${normalizedPath}`;
 }
@@ -78,16 +78,16 @@ function normalizeMenuPath(path: string, appName: string): string {
 function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<string>): MenuItem[] {
   // 创建已使用图标集合（用于域内去重），如果已存在则复用
   const iconSet = usedIcons || new Set<string>();
-  
+
   // 将 title 字段映射到 labelKey 字段，以便图标分配工具使用
   const itemsWithLabelKey = items.map(item => ({
     ...item,
     labelKey: item.labelKey || item.title || item.label,
   }));
-  
+
   // 使用智能图标分配工具（会递归处理所有子菜单）
   const itemsWithIcons = assignIconsToMenuTree(itemsWithLabelKey, iconSet);
-  
+
   // 递归转换函数，将 assignIconsToMenuTree 返回的结构转换为 MenuItem 格式
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
@@ -101,7 +101,7 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
       : undefined,
     };
   };
-  
+
   // 转换为 MenuItem 格式（不需要再次调用 assignIconsToMenuTree，因为已经处理了所有层级）
   return itemsWithIcons.map(convertToMenuItem);
 }
@@ -212,64 +212,66 @@ export function setupQiankun() {
   const currentLocale = getCurrentLocale();
 
   // 注册子应用，传递当前语言和 Tab 管理回调
-  const appsWithProps = microApps.map(app => ({
-    ...app,
-    props: {
-      locale: currentLocale,
-      onReady: async () => {
-        // 子应用加载完成（延迟导入以避免循环依赖）
-        const { finishLoading } = await import('../utils/loadingManager');
-        finishLoading();
-      },
-      // Tab 管理 API
-      registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
-      clearTabs: () => clearTabs(app.name),
-      setActiveTab: (tabKey: string) => {
-        console.log('[Main] Sub-app set active tab:', app.name, tabKey);
-      },
-    },
-    // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
-    // 这是解决 Vite 子应用 ES 模块加载问题的关键配置
-    scriptType: 'module' as const,
-    // 自定义 getTemplate：修改 HTML 模板，确保所有 script 标签都有 type="module"
-    getTemplate: (tpl: string) => {
-      // 使用正则表达式匹配所有 script 标签，确保它们都有 type="module"
-      return tpl.replace(
-        /<script(\s+[^>]*)?>/gi,
-        (match, attrs = '') => {
-          // 如果已经有 type 属性，替换为 module
-          if (attrs.includes('type=')) {
-            return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
-          }
-          // 如果没有 type 属性，添加 type="module"
-          return `<script type="module"${attrs}>`;
-        }
-      );
-    },
+  const appsWithProps = microApps.map(app => {
     // 配置生命周期超时时间（single-spa 格式）
     // 关键：根据环境设置合理的超时时间，避免生产环境因网络延迟导致超时
     const isDev = import.meta.env.DEV;
     const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
     const timeout = app.timeout || defaultTimeout;
-    
-    timeouts: {
-      bootstrap: {
-        millis: timeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
-        dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
-        warningMillis: Math.floor(timeout * 1.5), // 警告时间：避免过早警告（ES 模块加载阶段也会计入时间）
+
+    return {
+      ...app,
+      props: {
+        locale: currentLocale,
+        onReady: async () => {
+          // 子应用加载完成（延迟导入以避免循环依赖）
+          const { finishLoading } = await import('../utils/loadingManager');
+          finishLoading();
+        },
+        // Tab 管理 API
+        registerTabs: (tabs: TabMeta[]) => registerTabs(app.name, tabs),
+        clearTabs: () => clearTabs(app.name),
+        setActiveTab: (tabKey: string) => {
+          console.log('[Main] Sub-app set active tab:', app.name, tabKey);
+        },
       },
-      mount: {
-        millis: timeout,
-        dieOnTimeout: false,
-        warningMillis: Math.floor(timeout * 0.8),
+      // 核心配置：指定脚本类型为 module，让 qiankun 以 ES 模块方式加载子应用脚本
+      // 这是解决 Vite 子应用 ES 模块加载问题的关键配置
+      scriptType: 'module' as const,
+      // 自定义 getTemplate：修改 HTML 模板，确保所有 script 标签都有 type="module"
+      getTemplate: (tpl: string) => {
+        // 使用正则表达式匹配所有 script 标签，确保它们都有 type="module"
+        return tpl.replace(
+          /<script(\s+[^>]*)?>/gi,
+          (match, attrs = '') => {
+            // 如果已经有 type 属性，替换为 module
+            if (attrs.includes('type=')) {
+              return match.replace(/type=["']?[^"'\s>]+["']?/i, 'type="module"');
+            }
+            // 如果没有 type 属性，添加 type="module"
+            return `<script type="module"${attrs}>`;
+          }
+        );
       },
-      unmount: {
-        millis: 5000, // 增加到 5 秒，确保卸载完成
-        dieOnTimeout: false,
-        warningMillis: 4000,
+      timeouts: {
+        bootstrap: {
+          millis: timeout * 2, // bootstrap 阶段需要更多时间（包括模块加载）
+          dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+          warningMillis: Math.floor(timeout * 1.5), // 警告时间：避免过早警告（ES 模块加载阶段也会计入时间）
+        },
+        mount: {
+          millis: timeout,
+          dieOnTimeout: false,
+          warningMillis: Math.floor(timeout * 0.8),
+        },
+        unmount: {
+          millis: 5000, // 增加到 5 秒，确保卸载完成
+          dieOnTimeout: false,
+          warningMillis: 4000,
+        },
       },
-    },
-  }));
+    };
+  });
 
   registerMicroApps(
     appsWithProps,
@@ -311,7 +313,7 @@ export function setupQiankun() {
                   container.style.setProperty('display', 'flex', 'important');
                   container.style.setProperty('visibility', 'visible', 'important');
                   container.style.setProperty('opacity', '1', 'important');
-                  
+
                   // 关键：使用 Vue 的 nextTick 确保所有响应式更新完成后再设置属性
                   // 避免在 Vue 组件更新期间操作 DOM 导致的冲突
                   import('vue').then(({ nextTick }) => {
@@ -319,7 +321,7 @@ export function setupQiankun() {
                       // 添加标记，防止 Vue 的 v-show 覆盖
                       // 此时 Vue 的更新周期已经完成，可以安全地操作 DOM
                       container.setAttribute('data-qiankun-loading', 'true');
-                      
+
                       // 触发自定义事件，通知 Layout 组件更新状态
                       // 注意：Layout 组件已经不再监听这些事件，只是作为兼容保留
                       window.dispatchEvent(new CustomEvent('qiankun:before-load', {

@@ -53,7 +53,6 @@ export function addVersionPlugin(): Plugin {
   const buildTimestamp = getBuildTimestamp();
 
   return {
-    // @ts-expect-error - Vite Plugin 类型定义可能不完整，name 属性是标准属性
     name: 'add-version',
     apply: 'build',
     buildStart() {
@@ -163,6 +162,6 @@ export function addVersionPlugin(): Plugin {
         return html;
       },
     },
-  };
+  } as Plugin;
 }
 

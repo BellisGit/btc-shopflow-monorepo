@@ -268,7 +268,7 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
     },
 
     // 热更新处理
-    handleHotUpdate({ file, server }) {
+    handleHotUpdate({ file, server }: { file: string; server: ViteDevServer }) {
       // 文件修改时触发
       if (!['eps.json', 'eps.d.ts'].some((e) => file.includes(e))) {
         // 清除缓存，强制重新获取数据
@@ -291,5 +291,5 @@ export function epsPlugin(options: EpsPluginOptions & { reqUrl?: string }): Plug
         });
       }
     },
-  };
+  } as unknown as Plugin;
 }

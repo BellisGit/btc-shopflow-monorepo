@@ -148,5 +148,5 @@ export function tagPlugin(): Plugin {
 
       return null;
     },
-  };
+  } as unknown as Plugin;
 }

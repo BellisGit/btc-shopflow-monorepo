@@ -1,0 +1,352 @@
+﻿node : turbo 2.6.1
+所在位置 C:\Users\mlu\AppData\Local\Temp\ps-script-f64d4dd8-3408-4fa3-8aea-8c7432da9d77.ps1:87 字符: 61
++ ... -shopflow-monorepo; node scripts/turbo.js run type-check 2>&1 | Out-F ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (turbo 2.6.1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+鈥?Packages in scope: @btc/mobile-app, @btc/shared-components, @btc/shared-core, @btc/shared-utils, @btc/subapp-manifests, @btc/vite-plugin, admin-app, docs-site-app, engineering-app, finance-app, layout-app, logistics-app, monitor-app, production-app, quality-app, system-app
+鈥?Running type-check in 16 packages
+鈥?Remote caching disabled
+@btc/shared-core:type-check: cache miss, executing dfda9450e811ba07
+quality-app:type-check: cache miss, executing 7f1c2364acb6b7c7
+@btc/mobile-app:type-check: cache hit, replaying logs 8f3bc26d016ed77a
+@btc/mobile-app:type-check: 
+@btc/mobile-app:type-check: > @btc/mobile-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\mobile-app
+@btc/mobile-app:type-check: > tsc --noEmit
+@btc/mobile-app:type-check: 
+@btc/shared-components:type-check: cache miss, executing 589e7a64a579ee60
+@btc/vite-plugin:type-check: cache hit, replaying logs 68393af6bb1a4609
+@btc/vite-plugin:type-check: 
+@btc/vite-plugin:type-check: > @btc/vite-plugin@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\vite-plugin
+@btc/vite-plugin:type-check: > tsc --noEmit
+@btc/vite-plugin:type-check: 
+layout-app:type-check: cache miss, executing d65e0e2812df9c93
+docs-site-app:type-check: cache hit, replaying logs 71eb1b761ebb71b4
+docs-site-app:type-check: 
+docs-site-app:type-check: > docs-site-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\docs-site-app
+docs-site-app:type-check: > tsc --noEmit
+docs-site-app:type-check: 
+admin-app:type-check: cache miss, executing 11497be09ba6e0b5
+system-app:type-check: cache miss, executing 198b2929ca0eeb86
+production-app:type-check: cache miss, executing 80d7b2b340982f50
+@btc/shared-utils:type-check: cache hit, replaying logs af371045625511d7
+@btc/shared-utils:type-check: 
+@btc/shared-utils:type-check: > @btc/shared-utils@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-utils
+@btc/shared-utils:type-check: > tsc --noEmit
+@btc/shared-utils:type-check: 
+finance-app:type-check: cache miss, executing 6c671f11cdbf9fdf
+monitor-app:type-check: cache hit, replaying logs edc376c162569543
+monitor-app:type-check: 
+monitor-app:type-check: > monitor-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app
+monitor-app:type-check: > tsc --noEmit
+monitor-app:type-check: 
+logistics-app:type-check: cache miss, executing b457e93e8c35e29c
+engineering-app:type-check: cache hit, replaying logs a83c1a7c6d14bffc
+engineering-app:type-check: 
+engineering-app:type-check: > engineering-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\engineering-app
+engineering-app:type-check: > tsc --noEmit --skipLibCheck
+engineering-app:type-check: 
+@btc/shared-core:type-check: 
+@btc/shared-core:type-check: > @btc/shared-core@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-core
+@btc/shared-core:type-check: > tsc --noEmit --project tsconfig.type-check.json
+@btc/shared-core:type-check: 
+quality-app:type-check: 
+quality-app:type-check: > quality-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\quality-app
+quality-app:type-check: > tsc --noEmit --skipLibCheck
+quality-app:type-check: 
+system-app:type-check: 
+system-app:type-check: > system-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\system-app
+system-app:type-check: > tsc --noEmit --skipLibCheck
+system-app:type-check: 
+@btc/shared-components:type-check: 
+@btc/shared-components:type-check: > @btc/shared-components@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components
+@btc/shared-components:type-check: > vue-tsc --noEmit
+@btc/shared-components:type-check: 
+logistics-app:type-check: 
+logistics-app:type-check: > logistics-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\logistics-app
+logistics-app:type-check: > tsc --noEmit --skipLibCheck
+logistics-app:type-check: 
+admin-app:type-check: 
+admin-app:type-check: > admin-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\admin-app
+admin-app:type-check: > tsc --noEmit
+admin-app:type-check: 
+finance-app:type-check: 
+finance-app:type-check: > finance-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\finance-app
+finance-app:type-check: > tsc --noEmit --skipLibCheck
+finance-app:type-check: 
+production-app:type-check: 
+production-app:type-check: > production-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\production-app
+production-app:type-check: > tsc --noEmit --skipLibCheck
+production-app:type-check: 
+layout-app:type-check: 
+layout-app:type-check: > layout-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app
+layout-app:type-check: > tsc --noEmit --skipLibCheck
+layout-app:type-check: 
+system-app:type-check: ../../packages/shared-components/dist/index-rr6aforU.cjs(139,30308): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+system-app:type-check: ../../packages/shared-components/dist/index.js(1,97): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-rr6aforU.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+system-app:type-check:   The file is in the program because:
+system-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index.js'
+system-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs'
+system-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs'
+system-app:type-check: ../../packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs(1,12862): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+logistics-app:type-check: ../../packages/shared-components/dist/index-rr6aforU.cjs(139,30308): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+logistics-app:type-check: ../../packages/shared-components/dist/index.js(1,97): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-rr6aforU.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+logistics-app:type-check:   The file is in the program because:
+logistics-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index.js'
+logistics-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs'
+logistics-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs'
+logistics-app:type-check: ../../packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs(1,12862): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+quality-app:type-check: ../../packages/shared-components/dist/index-rr6aforU.cjs(139,30308): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+quality-app:type-check: ../../packages/shared-components/dist/index.js(1,97): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-rr6aforU.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+quality-app:type-check:   The file is in the program because:
+quality-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index.js'
+quality-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs'
+quality-app:type-check:     Imported via "./index-rr6aforU.cjs" from file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs'
+quality-app:type-check: ../../packages/shared-components/dist/layout-bridge-Dy5HPjD1.cjs(1,12862): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-components/dist/index-C62-CEez.cjs' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+system-app:type-check: 鈥塃LIFECYCLE鈥?Command failed with exit code 1.
+logistics-app:type-check: 鈥塃LIFECYCLE鈥?Command failed with exit code 1.
+quality-app:type-check: 鈥塃LIFECYCLE鈥?Command failed with exit code 1.
+layout-app:type-check: src/main.ts(2,17): error TS2307: Cannot find module './App.vue' or its corresponding type declarations.
+layout-app:type-check: src/router.ts(17,29): error TS2307: Cannot find module './pages/404/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/bootstrap/core/i18n.ts(11,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'sharedLocalesZhCN'.
+layout-app:type-check: ../system-app/src/bootstrap/core/i18n.ts(11,29): error TS2305: Module '"@btc/shared-components"' has no exported member 'sharedLocalesEnUS'.
+layout-app:type-check: ../system-app/src/micro/apps.ts(109,7): error TS6133: 'getPathFromSubdomain' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/micro/index.ts(931,22): error TS6133: 'tabKey' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/micro/index.ts(1181,15): error TS6133: 'appName' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/micro/index.ts(1374,60): error TS6133: 'args' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/micro/index.ts(1779,71): error TS6133: 'match' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/micro/index.ts(1779,107): error TS6133: 'oldHash' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/plugins/user-setting/composables/useSettingsState.ts(12,1): error TS6133: 'storage' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/plugins/user-setting/composables/useSettingsState.ts(193,22): error TS6133: 'isDark' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/plugins/user-setting/composables/useSettingsState.ts(392,13): error TS6133: 'SystemThemeEnum' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/router/index.ts(7,20): error TS2307: Cannot find module '../modules/base/components/layout/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/index.ts(24,29): error TS2307: Cannot find module '@auth/login/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/index.ts(35,29): error TS2307: Cannot find module '@auth/forget-password/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/index.ts(46,29): error TS2307: Cannot find module '@auth/register/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/index.ts(157,33): error TS2307: Cannot find module '../pages/404/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/index.ts(171,23): error TS6133: 'from' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/router/index.ts(305,13): error TS6133: 'route' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(7,29): error TS2307: Cannot find module '../../modules/home/views/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(14,29): error TS2307: Cannot find module '../../pages/profile/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(24,29): error TS2307: Cannot find module '../../modules/data/views/files/list/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(30,29): error TS2307: Cannot find module '../../modules/data/views/files/template/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(36,29): error TS2307: Cannot find module '../../modules/data/views/files/preview/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(42,29): error TS2307: Cannot find module '../../modules/data/views/inventory/bom/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(48,29): error TS2307: Cannot find module '../../modules/data/views/inventory/list/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(54,29): error TS2307: Cannot find module '../../modules/data/views/inventory/ticket/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(60,29): error TS2307: Cannot find module '../../modules/data/views/inventory/process/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(66,29): error TS2307: Cannot find module '../../modules/data/views/inventory/check/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(76,29): error TS2307: Cannot find module '../../modules/data/views/dictionary/file-categories/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/router/routes/system.ts(82,29): error TS2307: Cannot find module '../../modules/data/views/recycle/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../system-app/src/store/tabRegistry.ts(12,16): error TS6133: 'loadManifestFunctions' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/store/tabRegistry.ts(187,19): error TS6133: 'registryKey' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(6,10): error TS2305: Module '"@btc/shared-utils"' has no exported member 'syncSettingsToCookie'.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(6,32): error TS2305: Module '"@btc/shared-utils"' has no exported member 'syncSettingsFromCookie'.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(6,32): error TS6133: 'syncSettingsFromCookie' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(6,56): error TS2305: Module '"@btc/shared-utils"' has no exported member 'syncUserToCookie'.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(6,56): error TS6133: 'syncUserToCookie' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(10,7): error TS6133: 'getSettingsFromCookie' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(50,7): error TS6133: 'setItem' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(242,8): error TS6133: 'version' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/app-storage.ts(255,16): error TS6133: 'token' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/errorMonitor.ts(4,3): error TS6133: 'setupSubAppErrorCapture' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/errorMonitor.ts(75,35): error TS6133: 'key' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/loadingManager.ts(103,30): error TS6133: 'appName' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/loadingManager.ts(138,47): error TS6133: 'error' is declared but its value is never read.
+layout-app:type-check: ../system-app/src/utils/use-message.ts(5,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcMessage'.
+layout-app:type-check: ../../configs/layout-bridge.ts(1,29): error TS2307: Cannot find module '@btc/shared-core' or its corresponding type declarations.
+layout-app:type-check: ../../configs/layout-bridge.ts(12,64): error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+layout-app:type-check: ../../configs/layout-bridge.ts(14,39): error TS2307: Cannot find module '@btc/shared-core' or its corresponding type declarations.
+layout-app:type-check: ../../configs/layout-bridge.ts(468,31): error TS2307: Cannot find module '@btc/shared-components/components/others/btc-user-setting/index.vue' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/build/rollup.config.ts(6,85): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/layout.config.ts(15,27): error TS2307: Cannot find module '@intlify/unplugin-vue-i18n/vite' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/layout.config.ts(17,21): error TS2307: Cannot find module '@btc/vite-plugin' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/mainapp.config.ts(14,27): error TS2307: Cannot find module '@intlify/unplugin-vue-i18n/vite' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/mainapp.config.ts(16,47): error TS2307: Cannot find module '@btc/vite-plugin' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/mobile.config.ts(21,27): error TS2307: Cannot find module '@intlify/unplugin-vue-i18n/vite' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/mobile.config.ts(24,22): error TS2307: Cannot find module '@vitejs/plugin-basic-ssl' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/mobile.config.ts(27,21): error TS2307: Cannot find module '@btc/vite-plugin' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/factories/subapp.config.ts(27,47): error TS2307: Cannot find module '@btc/vite-plugin' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/chunk.ts(7,50): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/chunk.ts(14,5): error TS2578: Unused '@ts-expect-error' directive.
+layout-app:type-check: ../../configs/vite/plugins/css.ts(7,50): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/duty-static.ts(64,10): error TS2352: Conversion of type '{ name: string; enforce: "pre"; configResolved(this: void, config: Readonly<Omit<UserConfig, "worker" | "css" | "plugins" | "assetsInclude" | "optimizeDeps" | "build"> & { configFile: string | undefined; ... 27 more ...; webSocketToken: string; } & PluginHookUtils>): void; configureServer(this: void, server: ViteDev...' to type 'Plugin<any>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+layout-app:type-check:   Types of property 'configurePreviewServer' are incompatible.
+layout-app:type-check:     Type '(this: void, server: ViteDevServer) => void' is not comparable to type 'ObjectHook<PreviewServerHook> | undefined'.
+layout-app:type-check:       Type '(this: void, server: ViteDevServer) => void' is not comparable to type 'PreviewServerHook'.
+layout-app:type-check:         Types of parameters 'server' and 'server' are incompatible.
+layout-app:type-check:           Type 'PreviewServer' is missing the following properties from type 'ViteDevServer': watcher, ws, hot, pluginContainer, and 14 more.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(8,50): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(152,74): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(188,13): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(188,39): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(190,25): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(206,13): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(209,20): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(209,75): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(211,34): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(211,62): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(211,89): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/public-images.ts(274,13): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/resource-preload.ts(7,50): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/url.ts(7,61): error TS2307: Cannot find module 'rollup' or its corresponding type declarations.
+layout-app:type-check: ../../configs/vite/plugins/url.ts(167,13): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/url.ts(167,39): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/url.ts(169,25): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/url.ts(211,20): error TS18046: 'chunk' is of type 'unknown'.
+layout-app:type-check: ../../configs/vite/plugins/version.ts(56,5): error TS2578: Unused '@ts-expect-error' directive.
+@btc/shared-core:type-check: ../../configs/app-env.config.ts(126,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/app-env.config.ts(146,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(1,29): error TS2307: Cannot find module '@btc/shared-core' or its corresponding type declarations.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(12,64): error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(14,39): error TS2307: Cannot find module '@btc/shared-core' or its corresponding type declarations.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(188,25): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(206,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(422,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/layout-bridge.ts(468,31): error TS2307: Cannot find module '@btc/shared-components/components/others/btc-user-setting/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(203,58): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(206,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(217,58): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(217,77): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(244,21): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(251,56): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(251,75): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(272,61): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../../configs/unified-env-config.ts(273,33): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/bar/basic/index.ts(1,40): error TS2307: Cannot find module './components/BtcBarChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/bar/dual-compare/index.ts(1,51): error TS2307: Cannot find module './components/BtcDualBarCompareChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/bar/horizontal/index.ts(1,41): error TS2307: Cannot find module './components/BtcHBarChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/composables/useChart.ts(398,27): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/composables/useChart.ts(446,37): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/composables/useChart.ts(463,29): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/composables/useChart.ts(475,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/composables/useChart.ts(682,27): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/charts/kline/basic/index.ts(1,42): error TS2307: Cannot find module './components/BtcKLineChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/line/basic/index.ts(1,41): error TS2307: Cannot find module './components/BtcLineChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/pie/basic/index.ts(1,40): error TS2307: Cannot find module './components/BtcPieChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/pie/ring/index.ts(1,41): error TS2307: Cannot find module './components/BtcRingChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/radar/basic/index.ts(1,42): error TS2307: Cannot find module './components/BtcRadarChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/charts/scatter/basic/index.ts(1,44): error TS2307: Cannot find module './components/BtcScatterChart.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/basic/btc-avatar/index.ts(1,23): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/basic/btc-icon-button/index.ts(1,42): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/feedback/btc-binding-dialog/index.ts(1,45): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/feedback/btc-identity-verify/index.ts(1,46): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/feedback/btc-message/index.ts(3,48): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/feedback/btc-notification/index.ts(3,53): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(8,28): error TS2307: Cannot find module '@btc-components/feedback/btc-message' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(96,9): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(97,27): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(116,21): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(132,27): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(132,59): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(136,9): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(136,56): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(137,27): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(143,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(148,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(148,46): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(158,5): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(174,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(176,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(176,34): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(195,5): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(220,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(246,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(247,7): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(247,54): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/composables/useThemeSwitcher.ts(261,5): error TS18047: 'theme' is possibly 'null'.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(5,24): error TS2307: Cannot find module '@btc-assets/images/settings/theme_styles/light.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(6,23): error TS2307: Cannot find module '@btc-assets/images/settings/theme_styles/dark.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(7,25): error TS2307: Cannot find module '@btc-assets/images/settings/theme_styles/system.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(8,28): error TS2307: Cannot find module '@btc-assets/images/settings/menu_layouts/vertical.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(9,30): error TS2307: Cannot find module '@btc-assets/images/settings/menu_layouts/horizontal.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(10,25): error TS2307: Cannot find module '@btc-assets/images/settings/menu_layouts/mixed.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(11,30): error TS2307: Cannot find module '@btc-assets/images/settings/menu_layouts/dual_column.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(12,25): error TS2307: Cannot find module '@btc-assets/images/settings/menu_styles/design.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(13,23): error TS2307: Cannot find module '@btc-assets/images/settings/menu_styles/dark.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/config/images.ts(14,24): error TS2307: Cannot find module '@btc-assets/images/settings/menu_styles/light.png' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/index.ts(5,28): error TS2307: Cannot find module './index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/components/others/btc-user-setting/index.ts(6,34): error TS2307: Cannot find module './components/preferences-drawer.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(46,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(58,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(69,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(69,46): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(81,21): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/composables/useCurrentApp.ts(134,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(47,38): error TS2307: Cannot find module './components/basic/btc-button/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(49,43): error TS2307: Cannot find module './components/basic/btc-table-button/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(51,36): error TS2307: Cannot find module './components/basic/btc-card/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(54,41): error TS2307: Cannot find module './components/layout/btc-container/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(55,41): error TS2307: Cannot find module './components/layout/btc-grid-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(56,38): error TS2307: Cannot find module './components/layout/app-layout/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(57,40): error TS2307: Cannot find module './components/basic/app-skeleton/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(60,36): error TS2307: Cannot find module './components/navigation/btc-tabs/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(61,40): error TS2307: Cannot find module './components/navigation/btc-cascader/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(64,36): error TS2307: Cannot find module './common/form/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(65,40): error TS2307: Cannot find module './common/form/components/form-card.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(66,40): error TS2307: Cannot find module './common/form/components/form-tabs.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(67,44): error TS2307: Cannot find module './components/form/btc-select-button/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(68,43): error TS2307: Cannot find module './components/form/btc-color-picker/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(69,38): error TS2307: Cannot find module './components/form/btc-upload/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(72,42): error TS2307: Cannot find module './components/data/btc-master-list/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(73,42): error TS2307: Cannot find module './components/data/btc-table-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(74,43): error TS2307: Cannot find module './components/data/btc-double-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(75,46): error TS2307: Cannot find module './components/data/btc-views-tabs-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(76,45): error TS2307: Cannot find module './components/data/btc-transfer-panel/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(77,46): error TS2307: Cannot find module './components/data/btc-transfer-drawer/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(78,41): error TS2307: Cannot find module './components/data/btc-chart-demo/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(81,48): error TS2307: Cannot find module './components/process/btc-process-countdown/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(82,43): error TS2307: Cannot find module './components/process/btc-process-card/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(85,38): error TS2307: Cannot find module './common/dialog/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(93,35): error TS2307: Cannot find module './components/others/btc-svg/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(94,41): error TS2307: Cannot find module './common/view-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(95,38): error TS2307: Cannot find module './components/others/btc-search/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(96,40): error TS2307: Cannot find module './components/others/btc-dev-tools/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(101,36): error TS2307: Cannot find module './crud/context/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(103,37): error TS2307: Cannot find module './crud/table/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(105,38): error TS2307: Cannot find module './crud/upsert/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(106,42): error TS2307: Cannot find module './crud/pagination/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(107,38): error TS2307: Cannot find module './crud/add-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(108,42): error TS2307: Cannot find module './crud/refresh-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(109,46): error TS2307: Cannot find module './crud/multi-delete-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(110,46): error TS2307: Cannot find module './crud/multi-unbind-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(111,47): error TS2307: Cannot find module './crud/bind-transfer-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(112,35): error TS2307: Cannot find module './crud/row/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(113,37): error TS2307: Cannot find module './crud/flex1/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(114,41): error TS2307: Cannot find module './crud/search-key/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(115,43): error TS2307: Cannot find module './crud/actions/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(116,44): error TS2307: Cannot find module './crud/toolbar/inline.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(118,39): error TS2307: Cannot find module './crud/menu-exp/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(128,49): error TS2307: Cannot find module './crud/btc-import-export-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/index.ts(129,48): error TS2307: Cannot find module './crud/btc-import-export-group/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/plugins/code/index.ts(2,40): error TS2307: Cannot find module './components/code-json/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/plugins/excel/index.ts(2,41): error TS2307: Cannot find module './components/export-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/plugins/excel/index.ts(3,41): error TS2307: Cannot find module './components/import-btn/index.vue' or its corresponding type declarations.
+@btc/shared-core:type-check: ../shared-components/src/utils/auto-mount-dev-tools.ts(78,21): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: src/btc/plugins/i18n/index.ts(106,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: src/btc/plugins/theme/index.ts(169,7): error TS2578: Unused '@ts-expect-error' directive.
+@btc/shared-core:type-check: src/btc/plugins/theme/index.ts(310,3): error TS18047: 'themePluginInstance' is possibly 'null'.
+@btc/shared-core:type-check: src/btc/plugins/theme/index.ts(313,5): error TS18047: 'themePluginInstance' is possibly 'null'.
+@btc/shared-core:type-check: src/btc/plugins/theme/index.ts(315,3): error TS2322: Type 'ThemePlugin | null' is not assignable to type 'ThemePlugin'.
+@btc/shared-core:type-check:   Type 'null' is not assignable to type 'ThemePlugin'.
+@btc/shared-core:type-check: src/btc/service/request.ts(7,1): error TS2578: Unused '@ts-expect-error' directive.
+@btc/shared-core:type-check: src/btc/service/request.ts(162,3): error TS2578: Unused '@ts-expect-error' directive.
+@btc/shared-core:type-check: src/composables/subapp-lifecycle/types.ts(2,29): error TS2307: Cannot find module 'vue-router' or its corresponding type declarations.
+@btc/shared-core:type-check: src/composables/subapp-lifecycle/useSubAppLifecycle.ts(49,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: src/composables/subapp-lifecycle/useSubAppRouteSync.ts(89,63): error TS7006: Parameter 'to' implicitly has an 'any' type.
+@btc/shared-core:type-check: ../shared-utils/src/cdn/load-shared-resources.ts(195,33): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+@btc/shared-core:type-check: ../shared-utils/src/cdn/load-shared-resources.ts(196,34): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+layout-app:type-check: 鈥塃LIFECYCLE鈥?Command failed with exit code 2.
+system-app:type-check: ERROR: command finished with error: command (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-mono
+repo\apps\system-app) C:\Users\mlu\AppData\Local\pnpm\pnpm.CMD run type-check exited (1)
+system-app#type-check: command (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\system-app) C:\Users\mlu\A
+ppData\Local\pnpm\pnpm.CMD run type-check exited (1)
+
+ Tasks:    6 successful, 15 total
+Cached:    6 cached, 15 total
+  Time:    6.398s 
+Failed:    system-app#type-check
+
+ ERROR  run failed: command  exited (1)

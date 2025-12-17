@@ -184,8 +184,8 @@ interface BtcImportBtnProps {
   columns?: TableColumn[];
   /** 验证规则（可选，如果不提供则从列配置自动生成） */
   validationRules?: Record<string, any>;
-  onConfig?: Function;
-  onSubmit?: Function;
+  onConfig?: (...args: any[]) => any;
+  onSubmit?: (...args: any[]) => any;
   template?: string;
   tips?: string;
   limitSize?: number;
@@ -707,7 +707,7 @@ function onUpload(raw: File, _: any, { next }: any) {
 
     let json: any[] = [];
     for (const sheet in workbook.Sheets) {
-      if (workbook.Sheets.hasOwnProperty(sheet)) {
+      if (Object.prototype.hasOwnProperty.call(workbook.Sheets, sheet)) {
         const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], {
           raw: false,
           dateNF: 'yyyy-mm-dd',

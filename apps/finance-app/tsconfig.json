@@ -11,7 +11,7 @@
       "@configs/*": ["../../configs/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.tsx", "../../configs/**/*.ts", "../../packages/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
 

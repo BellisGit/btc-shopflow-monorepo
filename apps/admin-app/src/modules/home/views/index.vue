@@ -372,6 +372,57 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  // 确保容器链条有明确高度，让图表能够正常渲染
+  :deep(.btc-chart-demo) {
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+  }
+
+  :deep(.btc-container) {
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+
+    // 确保 el-scrollbar 及其内部元素填充高度
+    .el-scrollbar {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .el-scrollbar__wrap {
+      height: 100%;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .el-scrollbar__view {
+      height: 100%;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  // 确保 btc-container__content 填充高度
+  :deep(.btc-container__content) {
+    height: 100%;
+    min-height: 100%;
+    // 使用 1fr 让行高填充可用空间，确保图表项能够充分利用空间
+    grid-auto-rows: 1fr;
+    // 确保内容区域至少填充父容器
+    align-content: start;
+  }
+
+  :deep(.chart-item) {
+    min-height: 300px;
+    height: 100%; // 让图表项填充网格行的高度
+    // 确保图表项内部使用 flex 布局，让图表组件填充剩余空间
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 // 暗色模式样式（使用 :deep() 确保样式能够穿透 scoped）

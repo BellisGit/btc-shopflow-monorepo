@@ -1,4 +1,4 @@
-﻿// @btc/shared-components 入口文件
+// @btc/shared-components 入口文件
 
 // 导入全局样式
 import './styles/index.scss';
@@ -126,7 +126,7 @@ export const { BtcCodeJson } = CodePlugin;
 
 // 导入导出套装组件
 export { default as BtcImportExportGroup } from './crud/btc-import-export-group/index.vue';
-export type { BtcImportExportGroupProps } from './crud/btc-import-export-group/index.vue';
+export type { BtcImportExportGroupProps } from './crud/btc-import-export-group/types';
 
 // 常量导出
 export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
@@ -134,7 +134,8 @@ export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
 // 导出工具函数
 export { CommonColumns } from './crud/table/utils/common-columns';
 export { useUpload } from './components/form/btc-upload/composables/useUpload';
-export { provideContentHeight, useContentHeight } from './composables/content-height';
+export { addClass, removeClass } from './utils/dom';
+export { provideContentHeight, useContentHeight, type ContentHeightContext } from './composables/content-height';
 export { useBrowser } from './composables/useBrowser';
 export { useUser, type UserInfo } from './composables/useUser';
 export { useCurrentApp } from './composables/useCurrentApp';

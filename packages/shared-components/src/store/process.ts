@@ -9,6 +9,7 @@ export interface ProcessItem {
   meta: {
     label?: string;
     labelKey?: string;
+    titleKey?: string;
     hostLabelKey?: string;
     title?: string;
     breadcrumbs?: any[];

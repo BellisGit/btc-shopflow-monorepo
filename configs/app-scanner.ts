@@ -7,28 +7,29 @@ import type { AppIdentity } from './app-identity.types';
 
 // 手动导入所有应用的 app.ts 文件
 // 由于 import.meta.glob 在跨应用目录时可能无法正常工作，改为手动导入
-// 使用类型断言避免 TS6307 错误（这些文件不在当前项目的文件列表中）
-// @ts-ignore - 这些导入在构建时可用，但类型检查时可能不在文件列表中
+// 注意：这些导入在某些应用的类型检查中可能不在文件列表中，但运行时可用
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import adminAppIdentity from '../apps/admin-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import logisticsAppIdentity from '../apps/logistics-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import qualityAppIdentity from '../apps/quality-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import productionAppIdentity from '../apps/production-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import engineeringAppIdentity from '../apps/engineering-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import financeAppIdentity from '../apps/finance-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import monitorAppIdentity from '../apps/monitor-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import systemAppIdentity from '../apps/system-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import layoutAppIdentity from '../apps/layout-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import docsSiteAppIdentity from '../apps/docs-site-app/src/app';
-// @ts-ignore
+// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import mobileAppIdentity from '../apps/mobile-app/src/app';
 
 // 将所有应用配置组织成对象，模拟 glob 的结果
@@ -79,32 +80,32 @@ function validateAppIdentity(identity: any, appName: string): identity is AppIde
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：不是对象`);
     return false;
   }
-  
+
   if (!identity.id || typeof identity.id !== 'string') {
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 id`);
     return false;
   }
-  
+
   if (!identity.name || typeof identity.name !== 'string') {
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 name`);
     return false;
   }
-  
+
   if (!identity.pathPrefix || typeof identity.pathPrefix !== 'string') {
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 pathPrefix`);
     return false;
   }
-  
+
   if (!identity.type || !['main', 'sub', 'layout', 'docs'].includes(identity.type)) {
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：type 必须是 main、sub、layout 或 docs`);
     return false;
   }
-  
+
   if (typeof identity.enabled !== 'boolean') {
     console.warn(`[app-scanner] 应用 ${appName} 的配置无效：enabled 必须是布尔值`);
     return false;
   }
-  
+
   return true;
 }
 
@@ -113,33 +114,33 @@ function validateAppIdentity(identity: any, appName: string): identity is AppIde
  */
 export function scanAndRegisterApps(): Map<string, AppIdentity> {
   appRegistry.clear();
-  
+
   for (const [filePath, appConfigWrapper] of Object.entries(appFiles)) {
     try {
       // 从包装对象中提取实际的配置对象
       const appConfig = appConfigWrapper.default;
       const appName = extractAppName(filePath);
-      
+
       if (!appName) {
         continue;
       }
-      
+
       if (!validateAppIdentity(appConfig, appName)) {
         continue;
       }
-      
+
       // 确保 id 与 appName 一致（如果配置中的 id 不同，使用 appName）
       const identity: AppIdentity = {
         ...appConfig,
         id: appConfig.id || appName,
       };
-      
+
       appRegistry.set(identity.id, identity);
     } catch (error) {
       console.error(`[app-scanner] ❌ 扫描应用配置失败: ${filePath}`, error);
     }
   }
-  
+
   return appRegistry;
 }
 

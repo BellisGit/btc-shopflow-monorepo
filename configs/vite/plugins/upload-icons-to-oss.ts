@@ -3,7 +3,7 @@
  * 在生产构建完成后，自动上传图标文件到 OSS（基于文件指纹的增量上传）
  */
 
-import type { Plugin } from 'vite';
+import type { Plugin, ResolvedConfig } from 'vite';
 import { spawn } from 'child_process';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -52,7 +52,7 @@ export function uploadIconsToOssPlugin(): Plugin {
     name: 'upload-icons-to-oss',
     apply: 'build', // 只在构建时执行
 
-    configResolved(config) {
+    configResolved(config: ResolvedConfig) {
       // Vite 的 isProduction 是最可靠的判断（避免 NODE_ENV / DEV 等环境变量在 CI 中不一致）
       isProductionBuild = !!config.isProduction;
     },
@@ -109,6 +109,6 @@ export function uploadIconsToOssPlugin(): Plugin {
         });
       });
     },
-  };
+  } as Plugin;
 }
 

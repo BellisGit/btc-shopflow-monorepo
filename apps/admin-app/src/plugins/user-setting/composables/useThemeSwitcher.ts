@@ -5,7 +5,7 @@
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin, type ThemeConfig } from '@btc/shared-core';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 用户设置组合式函数
@@ -15,17 +15,17 @@ export function useUserSetting() {
   const theme = useThemePlugin();
 
   const drawerVisible = ref(false);
-  
+
   // 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为空字符串
   const savedCustomColor = theme.currentTheme.value?.name === 'custom'
     ? theme.currentTheme.value.color
     : '';
   const customColor = ref(savedCustomColor);
-  
+
   // 保存打开弹窗时的原始颜色值和主题状态，用于关闭时恢复
   const originalColor = ref<string | null>(null);
   const originalTheme = ref<ThemeConfig | null>(null);
-  
+
   // 标记是否已确认（确认后关闭弹窗时不再恢复）
   const isConfirmed = ref(false);
 

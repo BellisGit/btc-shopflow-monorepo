@@ -16,8 +16,8 @@ export declare const THEME_PRESETS: ThemeConfig[];
  * 主题管理 Hook
  */
 export declare function useTheme(): {
-    isDark: globalThis.Ref<boolean, boolean>;
-    currentTheme: globalThis.Ref<{
+    isDark: import("vue").Ref<boolean, boolean>;
+    currentTheme: import("vue").Ref<{
         name: string;
         label: string;
         color: string;

@@ -38,11 +38,8 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       font-size: $menu-font-size !important;
     }
 
-    &.is-active {
-      .el-icon {
-        color: var(--el-color-primary) !important;
-      }
-    }
+    // 删除激活状态下的图标颜色设置，让图标颜色自然继承文字颜色
+    // 这样可以避免双栏菜单第二列激活时图标颜色与背景色融为一体的问题
   }
 
   // 右侧箭头

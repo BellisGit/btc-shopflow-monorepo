@@ -1,8 +1,8 @@
-﻿import { ref } from 'vue';
+import { ref } from 'vue';
 import { formHook } from '@btc/shared-utils';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcMessage } from '@btc/shared-components';
 
 /**
  * 表单提交逻辑

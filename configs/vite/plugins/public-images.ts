@@ -149,7 +149,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       return null;
     },
     generateBundle(_options: OutputOptions, bundle: OutputBundle) {
-      const bundleAssets = Object.entries(bundle).filter(([_, chunk]) => chunk.type === 'asset');
+      const bundleAssets = Object.entries(bundle).filter(([_, chunk]) => (chunk as any).type === 'asset');
       console.log(`[public-images-to-assets] 📋 bundle 中的资源文件数量: ${bundleAssets.length}`);
 
       console.log(`[public-images-to-assets] 🔍 开始处理 ${emittedFiles.size} 个已发出的文件`);
@@ -185,9 +185,10 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       }
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
-        if (chunk.type === 'chunk' && chunk.code) {
+        const c: any = chunk;
+        if (c.type === 'chunk' && c.code) {
           let modified = false;
-          let newCode = chunk.code;
+          let newCode = c.code;
 
           for (const [originalFile, hashedFile] of imageMap.entries()) {
             const originalPath = `/${originalFile}`;
@@ -203,12 +204,12 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           }
 
           if (modified) {
-            chunk.code = newCode;
+            c.code = newCode;
             console.log(`[public-images-to-assets] 🔄 更新 ${fileName} 中的图片引用`);
           }
-        } else if (chunk.type === 'asset' && fileName.endsWith('.css') && chunk.source) {
+        } else if (c.type === 'asset' && fileName.endsWith('.css') && (c as any).source) {
           let modified = false;
-          let newSource = typeof chunk.source === 'string' ? chunk.source : Buffer.from(chunk.source).toString('utf-8');
+          let newSource = typeof (c as any).source === 'string' ? (c as any).source : Buffer.from((c as any).source).toString('utf-8');
 
           // 首先处理根目录图片：替换为根目录路径
           for (const rootFile of rootImageFiles) {
@@ -271,7 +272,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           }
 
           if (modified) {
-            chunk.source = newSource;
+            (c as any).source = newSource;
           }
         }
       }

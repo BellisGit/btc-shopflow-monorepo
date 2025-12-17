@@ -18,7 +18,7 @@ function normalizePath(path: string): string {
 
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (!isProductionSubdomain) {
     return path; // 非生产环境子域名，保持原路径
   }
@@ -36,7 +36,7 @@ function normalizePath(path: string): string {
 export const createFinanceRouter = (): Router => {
   // 动态获取路由配置，确保在运行时正确检测是否使用 layout-app
   const routes = getFinanceRoutes();
-  
+
   const router = createRouter({
     history: qiankunWindow.__POWERED_BY_QIANKUN__
       ? createMemoryHistory()
@@ -46,9 +46,9 @@ export const createFinanceRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to, from, next) => {
+  router.beforeEach((to: any, from: any, next: any) => {
     const normalizedPath = normalizePath(to.path);
-    
+
     if (normalizedPath !== to.path) {
       // 路径需要规范化，重定向到规范化后的路径
       next({
@@ -59,11 +59,11 @@ export const createFinanceRouter = (): Router => {
       });
       return;
     }
-    
+
     next();
   });
 
-  router.onError((error) => {
+  router.onError((error: any) => {
     console.warn('[finance-app] Router error:', error);
   });
 

@@ -11,7 +11,7 @@ import {
 } from './bootstrap';
 import type { LogisticsAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
-// 移除静态导入，改为动态导入（与其他应用保持一致）
+import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
 
 let context: LogisticsAppContext | null = null;
 
@@ -24,7 +24,7 @@ const render = async (props: QiankunProps = {}) => {
 
     context = await createLogisticsApp(props);
     await mountLogisticsApp(context, props);
-    
+
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
     removeLoadingElement();
     clearNavigationFlag();
@@ -35,49 +35,6 @@ const render = async (props: QiankunProps = {}) => {
     throw error;
   }
 };
-
-/**
- * 移除 Loading 元素
- */
-function removeLoadingElement() {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏（使用内联样式确保优先级）
-    loadingEl.style.setProperty('display', 'none', 'important');
-    loadingEl.style.setProperty('visibility', 'hidden', 'important');
-    loadingEl.style.setProperty('opacity', '0', 'important');
-    loadingEl.style.setProperty('pointer-events', 'none', 'important');
-
-    // 添加淡出类（如果 CSS 中有定义）
-    loadingEl.classList.add('is-hide');
-
-    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
-    setTimeout(() => {
-      try {
-        if (loadingEl.parentNode) {
-          loadingEl.parentNode.removeChild(loadingEl);
-        } else if (loadingEl.isConnected) {
-          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
-          loadingEl.remove();
-        }
-      } catch (error) {
-        // 如果移除失败，至少确保元素被隐藏
-        loadingEl.style.setProperty('display', 'none', 'important');
-      }
-    }, 350);
-  }
-}
-
-/**
- * 清理导航标记
- */
-function clearNavigationFlag() {
-  try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
-  } catch (e) {
-    // 静默失败（某些浏览器可能禁用 sessionStorage）
-  }
-}
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，只做无阻塞初始化，不做任何耗时操作
@@ -94,7 +51,7 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded, total) => {
+        onProgress: (loaded: number, total: number) => {
           if (import.meta.env.DEV) {
             console.log(`[logistics-app] 加载共享资源进度: ${loaded}/${total}`);
           }
@@ -121,7 +78,7 @@ async function mount(props: QiankunProps) {
 async function unmount(props: QiankunProps = {}) {
   try {
   if (context) {
-    unmountLogisticsApp(context, props);
+    await unmountLogisticsApp(context, props);
     context = null;
     }
   } catch (error) {
@@ -194,7 +151,7 @@ const shouldRunStandalone = () => {
 if (shouldRunStandalone()) {
   // 检查是否需要加载 layout-app
   const shouldLoadLayout = /\.bellis\.com\.cn$/i.test(window.location.hostname);
-  
+
   if (shouldLoadLayout) {
     // 需要加载 layout-app，先初始化，等待完成后再决定是否渲染
     // 使用动态导入，与其他应用保持一致
@@ -217,25 +174,11 @@ if (shouldRunStandalone()) {
               }
             });
           };
-          
+
           waitForViewport().then((viewport) => {
             if (viewport) {
               // 挂载到 layout-app 的 #subapp-viewport
-              if (import.meta.env.DEV || import.meta.env.PROD) {
-                console.log('[logistics-app] 找到 #subapp-viewport，准备挂载子应用', {
-                  viewport: viewport,
-                  viewportId: viewport.id,
-                  viewportChildren: viewport.children.length,
-                  isSubappViewport: viewport.id === 'subapp-viewport'
-                });
-              }
               render({ container: viewport } as any).then(() => {
-                if (import.meta.env.DEV || import.meta.env.PROD) {
-                  console.log('[logistics-app] 子应用挂载成功', {
-                    viewport: viewport,
-                    viewportChildren: viewport.children.length
-                  });
-                }
               }).catch((error) => {
                 console.error('[logistics-app] 挂载到 layout-app 失败:', error);
               });

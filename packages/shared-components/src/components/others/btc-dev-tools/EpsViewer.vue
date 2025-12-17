@@ -2,10 +2,10 @@
   <div class="eps-viewer">
     <div class="eps-viewer__top">
       <el-tooltip content="刷新 EPS 数据">
-        <el-button 
-          circle 
-          size="small" 
-          :icon="Refresh" 
+        <el-button
+          circle
+          size="small"
+          :icon="Refresh"
           @click="reload"
           :loading="reloading"
         />
@@ -50,26 +50,26 @@
         <div class="eps-viewer__tree-node">
           <span class="eps-viewer__node-label">{{ node.label }}</span>
           <div class="eps-viewer__node-tags">
-            <el-tag 
-              v-if="data.method" 
-              size="small" 
+            <el-tag
+              v-if="data.method"
+              size="small"
               :type="getMethodType(data.method)"
               class="eps-viewer__method-tag"
             >
               {{ data.method.toUpperCase() }}
             </el-tag>
-            <el-tag 
-              v-if="data.path" 
-              size="small" 
+            <el-tag
+              v-if="data.path"
+              size="small"
               class="eps-viewer__path-tag"
               :title="data.path"
             >
               {{ formatPath(data.path) }}
             </el-tag>
-            <el-tag 
-              v-if="data.summary" 
-              size="small" 
-              type="info" 
+            <el-tag
+              v-if="data.summary"
+              size="small"
+              type="info"
               class="eps-viewer__summary-tag"
               :title="data.summary"
             >
@@ -101,7 +101,7 @@ function getEpsService(): { service: any; list: any[] } {
   // 尝试从全局对象获取
   const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).__BTC_SERVICE__ || (window as any).service;
   const globalList = (window as any).__APP_EPS_LIST__ || (window as any).__BTC_EPS_LIST__;
-  
+
   return {
     service: globalService || {},
     list: globalList || []
@@ -148,10 +148,10 @@ function buildTree() {
 
       const currentPath = [...parentPath, key];
       const pathKey = currentPath.join('.');
-      
+
       // 查找对应的 EPS 信息
       const apiInfo = apiMap.get(pathKey);
-      
+
       const nodeIdStr = `node-${nodeId++}`;
       const node: TreeNode = {
         id: nodeIdStr,
@@ -185,7 +185,7 @@ function buildTree() {
       } else if (typeof value === 'object' && value !== null) {
         // 递归处理子对象
         traverse(value, currentPath, node);
-        
+
         // 如果没有子节点，移除空的 children
         if (node.children && node.children.length === 0) {
           node.children = undefined;
@@ -211,14 +211,14 @@ function buildTree() {
   }
 
   traverse(service);
-  
+
   return result;
 }
 
 // 创建 API 映射表：路径 -> API 信息
 function createApiMap(): Map<string, any> {
   const map = new Map<string, any>();
-  
+
   if (!list || !Array.isArray(list)) {
     return map;
   }
@@ -230,35 +230,35 @@ function createApiMap(): Map<string, any> {
     }
 
     const prefix = entity.prefix || '';
-    const prefixParts = prefix.split('/').filter(p => p && p !== 'api');
-    
+    const prefixParts = prefix.split('/').filter((p: any) => p && p !== 'api');
+
     // 遍历该实体的所有 API
     for (const api of entity.api) {
       if (!api.path) continue;
-      
-      const apiPath = api.path.replace(/^\//, '').split('/').filter(p => p);
-      
+
+      const apiPath = api.path.replace(/^\//, '').split('/').filter((p: any) => p);
+
       // 尝试匹配 service 路径
       // service 路径格式可能是：sys.user.list
       // 对应的 prefix 可能是：/api/sys/user
       // API path 可能是：/list
-      
+
       // 构建完整路径
       const fullPathParts = [...prefixParts, ...apiPath];
-      
+
       // 生成可能的路径组合
       const possiblePaths = [];
-      
+
       // 方式1：直接组合
       possiblePaths.push(fullPathParts.join('.'));
-      
+
       // 方式2：去掉最后一个作为方法名
       if (fullPathParts.length > 1) {
         const moduleParts = fullPathParts.slice(0, -1);
         const methodName = fullPathParts[fullPathParts.length - 1];
         possiblePaths.push([...moduleParts, methodName].join('.'));
       }
-      
+
       // 将 API 信息存储到映射中
       for (const pathKey of possiblePaths) {
         if (pathKey) {
@@ -278,14 +278,14 @@ function createApiMap(): Map<string, any> {
 
 function filterNode(value: string, data: TreeNode) {
   if (!value) return true;
-  
+
   const searchText = value.toLowerCase();
   const label = (data.label || '').toLowerCase();
   const summary = (data.summary || '').toLowerCase();
   const path = (data.path || '').toLowerCase();
-  
-  return label.includes(searchText) || 
-         summary.includes(searchText) || 
+
+  return label.includes(searchText) ||
+         summary.includes(searchText) ||
          path.includes(searchText);
 }
 
@@ -299,14 +299,14 @@ function onKeywordChange(value: string) {
 
 async function reload() {
   reloading.value = true;
-  
+
   try {
     // 尝试刷新 EPS 数据
     // 注意：实际的刷新可能需要重新加载页面或调用后端接口
     // 这里我们先提示用户刷新页面
-    
+
     ElMessage.info('正在刷新 EPS 数据，页面将自动刷新...');
-    
+
     // 延迟刷新，给用户看到消息
     setTimeout(() => {
       window.location.reload();
@@ -366,7 +366,7 @@ onMounted(() => {
 
   &__search {
     flex: 1;
-    
+
     :deep(.el-input__wrapper) {
       height: 32px;
       border-radius: 6px;
@@ -423,7 +423,7 @@ onMounted(() => {
     border-radius: 4px;
     height: 32px;
     padding: 0 8px;
-    
+
     &:hover {
       background-color: var(--el-fill-color-light);
     }

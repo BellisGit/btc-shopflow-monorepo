@@ -14,6 +14,7 @@ function safeLog(message: string) {
     console.log(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
+    // eslint-disable-next-line no-control-regex
     console.log(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
@@ -26,6 +27,7 @@ function safeWarn(message: string) {
     console.warn(message);
   } catch (error) {
     // 如果输出失败（可能是编码问题），使用纯文本输出
+    // eslint-disable-next-line no-control-regex
     console.warn(message.replace(/[^\x00-\x7F]/g, ''));
   }
 }
@@ -41,11 +43,11 @@ export function cleanDistPlugin(appDir: string): Plugin {
       const distDir = resolve(appDir, 'dist');
       if (existsSync(distDir)) {
         safeLog('[clean-dist-plugin] 清理旧的 dist 目录...');
-        
+
         // 添加重试机制，处理 Windows 上的文件锁定问题
         let retries = 5; // 增加重试次数
         let success = false;
-        
+
         while (retries > 0 && !success) {
           try {
             rmSync(distDir, { recursive: true, force: true });

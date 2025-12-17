@@ -62,7 +62,7 @@ export async function createCtx(): Promise<CtxData> {
 
       for (const path of possiblePaths) {
         try {
-          const res = await axios.get(config.reqUrl + path, {
+          const res = await (axios as any).get(config.reqUrl + path, {
             timeout: 3000,
           });
 
@@ -124,5 +124,5 @@ export function ctxPlugin(): Plugin {
         return `export default ${JSON.stringify(ctxData, null, 2)}`;
       }
     },
-  };
+  } as Plugin; 
 }

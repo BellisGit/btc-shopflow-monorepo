@@ -62,7 +62,7 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('[Unhandled Promise Rejection]', event.reason);
   // 阻止默认的错误处理（避免在控制台显示）
   event.preventDefault();
-  
+
   // 在移动端显示错误信息
   if (typeof document !== 'undefined') {
     const appEl = document.getElementById('app');
@@ -107,7 +107,7 @@ window.addEventListener('unhandledrejection', (event) => {
 // 全局 JavaScript 错误处理
 window.addEventListener('error', (event) => {
   console.error('[Global Error]', event.error || event.message);
-  
+
   // 在移动端显示错误信息
   if (typeof document !== 'undefined') {
     const appEl = document.getElementById('app');
@@ -181,179 +181,26 @@ try {
 try {
   const isDev = (import.meta as any).env?.DEV;
   const deviceInfo = getDeviceInfo();
-  
+
   // 检查浏览器兼容性（仅用于日志记录，不影响应用运行）
   // QQ 浏览器、某些国产浏览器可能不支持 Service Worker，但不影响基本功能
-  const isUnsupportedBrowser = deviceInfo.browser === 'qq' || 
+  const isUnsupportedBrowser = deviceInfo.browser === 'qq' ||
                                 deviceInfo.browser === 'unknown' ||
                                 !deviceInfo.supportsServiceWorker;
-  
+
   // 记录兼容性信息（不显示警告，因为应用可以正常运行）
   if (isUnsupportedBrowser) {
     console.log(`[App] Running on ${deviceInfo.browser} browser (Service Worker not supported, but app will work normally)`);
   }
-  
+
   // 只在支持的浏览器上注册 Service Worker，且非开发环境
   // 由于不需要离线功能，可以完全禁用 Service Worker
   // 但保留 manifest 支持，以便应用可以添加到主屏幕
-  if (false && deviceInfo.supportsServiceWorker && !isDev && !isUnsupportedBrowser) {
-    // 根据设备类型调整更新检查频率
-    // iOS设备：更新检查频率较低（iOS对后台任务限制较严格）
-    // Android设备：可以更频繁地检查更新
-    const updateCheckInterval = deviceInfo.isIOS 
-      ? 10 * 60 * 1000  // iOS: 10分钟
-      : deviceInfo.isAndroid && (deviceInfo.brand === 'Xiaomi' || deviceInfo.brand === 'Huawei' || deviceInfo.brand === 'Vivo')
-      ? 3 * 60 * 1000   // 国产Android: 3分钟（这些设备通常有更积极的电池优化）
-      : 5 * 60 * 1000;  // 其他Android: 5分钟
-    
-    const updateSW = registerSW({
-      immediate: true,
-      onRegisteredSW(swUrl, registration) {
-        console.log('[PWA] Service Worker registered:', swUrl, `(${deviceInfo.brand} ${deviceInfo.browser})`);
-        if (registration) {
-          // 监听 Service Worker 更新
-          registration.addEventListener('updatefound', () => {
-            console.log('[PWA] Service Worker update found');
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[PWA] New Service Worker installed, waiting for activation');
-                  // iOS设备：延迟激活，避免频繁刷新影响用户体验
-                  // Android设备：立即激活
-                  if (deviceInfo.isIOS) {
-                    // iOS上延迟激活，给用户一些时间完成当前操作
-                    setTimeout(() => {
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    }, 2000);
-                  } else {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                }
-              });
-            }
-          });
-
-          // 页面加载时立即检查更新
-          registration.update().catch(err => {
-            console.warn('[PWA] Service Worker initial update check failed:', err);
-          });
-
-          // 定期检查更新（根据设备类型调整频率）
-          setInterval(() => {
-            registration.update().catch(err => {
-              console.warn('[PWA] Service Worker update check failed:', err);
-            });
-          }, updateCheckInterval);
-
-          // 页面可见时检查更新（iOS特别重要，因为iOS对后台任务限制严格）
-          document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-              registration.update().catch(err => {
-                console.warn('[PWA] Service Worker update check failed:', err);
-              });
-            }
-          });
-
-          // 页面聚焦时检查更新
-          window.addEventListener('focus', () => {
-            registration.update().catch(err => {
-              console.warn('[PWA] Service Worker update check failed:', err);
-            });
-          });
-
-          // 注意：由于不需要离线功能，不监听 controllerchange 自动刷新
-          // 让用户手动刷新页面，避免打断用户操作
-        }
-      },
-      onRegisterError(error) {
-        // Service Worker 注册失败不影响应用运行（不需要离线功能）
-        console.warn('[PWA] Service Worker registration failed, app will continue to work normally:', error);
-      },
-    });
-
-    // 导出更新函数，供外部调用
-    (window as any).updateServiceWorker = updateSW;
-  } else {
-    // Service Worker 未启用或不支持，但不影响应用运行
-    if (isUnsupportedBrowser) {
-      console.log(`[PWA] Service Worker not supported on ${deviceInfo.browser} browser, app will work normally`);
-    } else if (!deviceInfo.supportsServiceWorker) {
-      console.log('[PWA] Service Worker not supported on this device, app will work normally');
-    }
-  }
+  // Service Worker 功能已禁用（代码已移除以避免常量条件 lint 错误）
 } catch (e) {
   // Service Worker 注册失败不影响应用运行
   console.warn('[PWA] Service Worker registration error (non-blocking):', e);
-  const deviceInfo = getDeviceInfo();
-  
-  // 由于不需要离线功能，完全禁用 Service Worker
-  if (false && deviceInfo.supportsServiceWorker) {
-    const updateCheckInterval = deviceInfo.isIOS 
-      ? 10 * 60 * 1000
-      : deviceInfo.isAndroid && (deviceInfo.brand === 'Xiaomi' || deviceInfo.brand === 'Huawei' || deviceInfo.brand === 'Vivo')
-      ? 3 * 60 * 1000
-      : 5 * 60 * 1000;
-    
-    const updateSW = registerSW({
-      immediate: true,
-      onRegisteredSW(swUrl, registration) {
-        console.log('[PWA] Service Worker registered:', swUrl, `(${deviceInfo.brand} ${deviceInfo.browser})`);
-        if (registration) {
-          registration.addEventListener('updatefound', () => {
-            console.log('[PWA] Service Worker update found');
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[PWA] New Service Worker installed, waiting for activation');
-                  if (deviceInfo.isIOS) {
-                    setTimeout(() => {
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    }, 2000);
-                  } else {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  }
-                }
-              });
-            }
-          });
-
-          registration.update().catch(err => {
-            console.warn('[PWA] Service Worker initial update check failed:', err);
-          });
-
-          setInterval(() => {
-            registration.update().catch(err => {
-              console.warn('[PWA] Service Worker update check failed:', err);
-            });
-          }, updateCheckInterval);
-
-          document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-              registration.update().catch(err => {
-                console.warn('[PWA] Service Worker update check failed:', err);
-              });
-            }
-          });
-
-          window.addEventListener('focus', () => {
-            registration.update().catch(err => {
-              console.warn('[PWA] Service Worker update check failed:', err);
-            });
-          });
-
-          // 注意：由于不需要离线功能，不监听 controllerchange 自动刷新
-        }
-      },
-      onRegisterError(error) {
-        // Service Worker 注册失败不影响应用运行
-        console.warn('[PWA] Service Worker registration failed, app will continue to work normally:', error);
-      },
-    });
-
-    (window as any).updateServiceWorker = updateSW;
-  }
+  // Service Worker 功能已禁用（代码已移除以避免常量条件 lint 错误）
 }
 
 // 安全地挂载应用

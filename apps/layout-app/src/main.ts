@@ -52,18 +52,6 @@ const layoutIsMainApp = (
     const appBySubdomain = getAppBySubdomain(hostname);
     if (appBySubdomain && appBySubdomain.type === 'sub') {
       // 是子应用的子域名，返回 false（不是主应用）
-      if (import.meta.env.DEV || (typeof window !== 'undefined' && !(window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__)) {
-        console.log('[layout-app] layoutIsMainApp: 检测到子应用子域名，返回 false', {
-          hostname,
-          appId: appBySubdomain.id,
-          appType: appBySubdomain.type,
-          routePath,
-          locationPath
-        });
-        if (typeof window !== 'undefined') {
-          (window as any).__LAYOUT_IS_MAIN_APP_DEBUG_LOGGED__ = true;
-        }
-      }
       return false;
     }
   }
@@ -618,9 +606,29 @@ const ensureMicroAppsRegistered = async () => {
       // 关键：添加错误处理钩子，处理子应用加载失败的情况
       // 注意：qiankun 的类型定义可能不完整，使用类型断言
       onError: [
-        () => {
-          // 立即清除 loading 状态，避免一直卡在 loading
+        async (error: any, app: any) => {
+          // 子应用加载失败：立即清除 loading 状态
           clearLoadingState();
+          console.error(`[layout-app] 子应用 ${app?.name} 加载失败:`, error);
+
+          // 设置全局状态，标记加载失败
+          (window as any).__LAYOUT_APP_QIANKUN_LOAD_FAILED__ = true;
+
+          // 延迟检查，如果3秒后子应用仍未加载成功，显示404
+          setTimeout(() => {
+            const viewport = document.querySelector('#subapp-viewport');
+            const hasContent = viewport && viewport.children.length > 0;
+            const currentPath = window.location.pathname;
+
+            // 检查是否是子应用路由
+            const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+            const isSubAppRoute = knownSubAppPrefixes.some(prefix => currentPath.startsWith(prefix));
+
+            if (isSubAppRoute && !hasContent && currentPath !== '/404') {
+              // 重定向到404页面
+              router.push('/404');
+            }
+          }, 3000);
         },
       ],
     } as any, // 类型断言：qiankun 实际支持 onError，但类型定义可能不完整

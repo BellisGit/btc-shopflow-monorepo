@@ -138,6 +138,61 @@ const routes: RouteRecordRaw[] = [
     component: Layout,
     meta: { title: 'Docs App', isSubApp: true },
   },
+  // 404 页面（必须在最后，作为 catchAll 路由）
+  {
+    path: '/404',
+    name: 'NotFound404',
+    component: Layout,
+    meta: {
+      titleKey: 'common.page_not_found',
+      public: true, // 404 页面是公开的，不需要认证
+      breadcrumbs: [
+        { labelKey: 'common.page_not_found', icon: 'svg:404' },
+      ],
+    },
+    children: [
+      {
+        path: '',
+        name: 'NotFound404Page',
+        component: () => import('../pages/404/index.vue'),
+        meta: {
+          titleKey: 'common.page_not_found',
+          breadcrumbs: [
+            { labelKey: 'common.page_not_found', icon: 'svg:404' },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: Layout, // 需要 component 以满足类型要求，但 beforeEnter 会处理重定向
+    beforeEnter: (to, from, next) => {
+      // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
+      // 这些页面应该由服务器直接提供，完全绕过 Vue Router
+      if (to.path.startsWith('/duty/')) {
+        // 使用 next(false) 取消 Vue Router 的导航，让浏览器直接请求静态文件
+        next(false);
+        return;
+      }
+
+      // 检查是否已登录
+      const isAuthenticatedUser = isAuthenticated();
+
+      // 如果未登录，重定向到登录页
+      if (!isAuthenticatedUser) {
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath },
+        });
+        return;
+      }
+
+      // 已登录但路由未匹配，重定向到 404 页面
+      next('/404');
+    },
+  },
 ];
 
 // 创建 router 实例
@@ -232,7 +287,7 @@ router.onError((error) => {
     // Component definition error 日志已移除
     // 记录当前路由信息
     const currentRoute = router.currentRoute.value;
-    
+
     // 关键：如果路由未匹配，说明是路由配置问题，不应该尝试重新加载组件
     // 这种情况下，Vue Router 尝试提取 undefined 组件的守卫，导致错误
     if (currentRoute && currentRoute.matched.length === 0) {
@@ -245,7 +300,7 @@ router.onError((error) => {
       }
       return;
     }
-    
+
     if (currentRoute && currentRoute.matched.length > 0) {
       const route = currentRoute.matched[currentRoute.matched.length - 1];
       // Component error route info 日志已移除
@@ -339,12 +394,12 @@ function formatDocumentTitle(): string {
   // 使用 domain.type.system 国际化键获取"主模块"
   const moduleName = tSync('domain.type.system');
   const appShortName = config.app.shortName;
-  
+
   // 如果国际化加载失败，使用默认值
   if (moduleName === 'domain.type.system') {
     return `主模块 - ${appShortName}`;
   }
-  
+
   return `${moduleName} - ${appShortName}`;
 }
 
@@ -357,7 +412,7 @@ function updateDocumentTitle(to: RouteLocationNormalized) {
 
   // 系统主应用统一使用"主模块 - BTC ShopFlow"格式，不使用页面标题
   document.title = formatDocumentTitle();
-  
+
   // 如果国际化还没加载完成，延迟重试以确保标题正确
   const moduleName = tSync('domain.type.system');
   if (moduleName === 'domain.type.system') {
@@ -505,6 +560,14 @@ function normalizeRoutePath(path: string): string | null {
 
 // 路由前置守卫：处理认证、Loading 显示和侧边栏
 router.beforeEach((to, from, next) => {
+  // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
+  // 这些页面应该由服务器直接提供，完全绕过 Vue Router
+  if (to.path.startsWith('/duty/')) {
+    // 使用 next(false) 取消 Vue Router 的导航，让浏览器直接请求静态文件
+    next(false);
+    return;
+  }
+
   // 关键：路径规范化 - 确保子应用路径有正确的前缀
   const normalizedPath = normalizeRoutePath(to.path);
   if (normalizedPath) {
@@ -550,11 +613,12 @@ router.beforeEach((to, from, next) => {
   }
 
   // 检查是否为公开页面（不需要认证）
-  // 关键：登录页、忘记密码页、注册页都是公开页面
+  // 关键：登录页、忘记密码页、注册页、duty下的页面都是公开页面
   const isPublicPage = to.meta?.public === true ||
                        to.path === '/login' ||
                        to.path === '/forget-password' ||
-                       to.path === '/register';
+                       to.path === '/register' ||
+                       to.path.startsWith('/duty/');
 
   // 关键：在主域名（bellis.com.cn）下，必须严格检查认证状态
   // 不能假设已认证，必须通过实际的认证标记来判断
@@ -562,7 +626,8 @@ router.beforeEach((to, from, next) => {
 
   // 如果是登录页且用户已认证，重定向到首页
   // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
-  if (to.path === '/login' && isAuthenticatedUser && !to.query.logout) {
+  // 或者如果查询参数中有 from=duty，说明是从 duty 页面返回的，也应该允许访问登录页
+  if (to.path === '/login' && isAuthenticatedUser && !to.query.logout && !to.query.from) {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
     const redirectPath = redirect.split('?')[0];
@@ -605,6 +670,17 @@ router.beforeEach((to, from, next) => {
       return;
     }
 
+    // 检查是否是公开页面（登录、注册、忘记密码）或 duty 下的页面，这些页面不应该重定向到404
+    const publicPages = ['/login', '/register', '/forget-password'];
+    const isPublicPage = publicPages.includes(to.path);
+    const isDutyPage = to.path.startsWith('/duty/');
+
+    if (isPublicPage || isDutyPage) {
+      // 公开页面或 duty 下的页面，直接放行（这些是静态HTML页面，不需要路由匹配）
+      next();
+      return;
+    }
+
     // 其他未匹配的路由，根据认证状态处理
     if (!isAuthenticatedUser) {
       // 未认证，重定向到登录页
@@ -616,9 +692,19 @@ router.beforeEach((to, from, next) => {
     }
 
     // 已认证但路由未匹配，可能是子应用路由或无效路由
-    // 直接放行，让应用正常显示（可能显示 Layout 或子应用挂载点）
-    // 注意：不要在这里尝试访问组件，因为组件可能是 undefined
+    // 关键：检查是否是子应用路由前缀，如果是则放行（让子应用处理）
+    // 否则重定向到 404 页面
+    const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+    const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
+
+    if (isSubAppRoute) {
+      // 子应用路由，直接放行，让子应用处理
     next();
+      return;
+    }
+
+    // 主应用路由未匹配，重定向到 404 页面
+    next('/404');
     return;
   }
 
@@ -712,13 +798,14 @@ router.afterEach((to) => {
     const isPublicPage = to.meta?.public === true ||
                          to.path === '/login' ||
                          to.path === '/forget-password' ||
-                         to.path === '/register';
+                         to.path === '/register' ||
+                         to.path.startsWith('/duty/');
 
     if (!isPublicPage && to.path !== '/login') {
       // 关键：先检查认证状态，只有未认证时才重定向到登录页
       // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
       const isAuth = isAuthenticated();
-      
+
       if (!isAuth) {
         // 未认证，重定向到登录页
         try {
@@ -867,11 +954,16 @@ router.afterEach((to) => {
   // 再次确认：只添加系统域的路由（不是子应用）
   if (currentApp === 'system') {
     // 系统域路由，添加到标签页
+    // 将路由的 titleKey 转换为 labelKey，以便 tabbar 正确显示
+    const meta = { ...to.meta } as any;
+    if (meta.titleKey && !meta.labelKey) {
+      meta.labelKey = meta.titleKey;
+    }
   process.add({
     path: to.path,
     fullPath: to.fullPath,
     name: to.name as string,
-    meta: to.meta as any,
+      meta,
       });
     }
     // 其他子应用路由，不添加到标签页

@@ -219,7 +219,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
 
         // 第一遍遍历：收集所有 chunk 信息
         for (const [fileName, chunk] of Object.entries(bundle)) {
-          if (chunk.type === 'chunk' && fileName.endsWith('.js')) {
+          if ((chunk as any).type === 'chunk' && fileName.endsWith('.js')) {
             // 查找对应的源文件路径
             const sourceFile = (chunk as any).facadeModuleId || (chunk as any).moduleIds?.[0] || fileName;
             // 支持 assets/ 和 assets/layout/ 路径
@@ -391,7 +391,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
 
         // 如果没有找到任何 chunk，使用回退逻辑
         if (Object.keys(manifest).length === 0) {
-          const firstChunk = Object.entries(bundle).find(([_, chunk]) => chunk.type === 'chunk');
+          const firstChunk = Object.entries(bundle).find(([_, chunk]) => (chunk as any).type === 'chunk');
           if (firstChunk) {
             manifest['src/main.ts'] = {
               file: firstChunk[0],
@@ -445,6 +445,14 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         }
         warn(warning);
       },
+      // 关键：layout-app 作为主应用，需要打包 single-spa 和 qiankun
+      // 不将它们标记为 external，确保它们被打包到构建产物中
+      external: [
+        // vite-plugin 是构建时插件，不应该被打包到运行时代码中
+        '@btc/vite-plugin',
+        /^@btc\/vite-plugin/,
+        // 注意：single-spa 和 qiankun 不在这里，它们会被打包
+      ],
       output: {
         format: 'esm',
         inlineDynamicImports: false,

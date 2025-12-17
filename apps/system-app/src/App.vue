@@ -5,20 +5,12 @@
       <!-- 如果路由标记为 noLayout（如登录页），使用 key 强制重新创建组件 -->
       <!-- 否则不使用 key，让 Vue 复用 Layout 组件实例，避免顶栏、侧边栏、标签栏等固定元素重新渲染 -->
       <!-- 关键：对于主应用路由（如登录页），直接渲染 Component，让 Vue 处理 -->
-      <!-- 如果 Component 存在，尝试渲染它；如果出错，Vue 的错误处理器会捕获 -->
+      <!-- 如果 Component 不存在，Vue Router 会自动处理并显示404页面 -->
       <component
         v-if="Component"
         :is="Component"
         :key="route.meta?.noLayout ? route.fullPath : undefined"
       />
-      <div v-else style="padding: 20px; color: #999;">
-        <p>⚠️ 路由组件未加载</p>
-        <p>路径: {{ route.path }}</p>
-        <p>匹配的路由: {{ route.matched.length }}</p>
-        <p>Component: {{ Component ? '存在' : '不存在' }}</p>
-        <p v-if="Component">Component 类型: {{ typeof Component }}</p>
-        <p v-if="Component && typeof Component === 'object'">Component keys: {{ Object.keys(Component).join(', ') }}</p>
-      </div>
     </router-view>
     <RetryStatusIndicator />
   </div>

@@ -10,7 +10,6 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 import { storage } from '@btc/shared-utils';
-// @ts-expect-error - 类型定义可能不完整，但运行时可用
 import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
 
 // 单例状态实例
@@ -43,14 +42,14 @@ function createSettingsState() {
       ? (storedSystemThemeType as SystemThemeEnum)
       : (defaultSetting.default.defaultSystemThemeType as SystemThemeEnum)
   );
-  
+
   const storedSystemThemeMode = appStorage.settings.getItem('systemThemeMode');
   const systemThemeMode = ref<SystemThemeEnum>(
     storedSystemThemeMode && Object.values(SystemThemeEnum).includes(storedSystemThemeMode as SystemThemeEnum)
       ? (storedSystemThemeMode as SystemThemeEnum)
       : systemThemeType.value
   );
-  
+
   // 如果使用的是默认值且存储中没有值，保存默认值到存储
   if (!storedSystemThemeType || !Object.values(SystemThemeEnum).includes(storedSystemThemeType as SystemThemeEnum)) {
     appStorage.settings.setItem('systemThemeType', systemThemeType.value);
@@ -58,21 +57,21 @@ function createSettingsState() {
   if (!storedSystemThemeMode || !Object.values(SystemThemeEnum).includes(storedSystemThemeMode as SystemThemeEnum)) {
     appStorage.settings.setItem('systemThemeMode', systemThemeMode.value);
   }
-  
+
   // 菜单风格设置 - 从存储读取或使用默认值
   // 如果存储中没有值，使用默认值；如果存储的值无效，也使用默认值
   const storedMenuTheme = appStorage.settings.getItem('menuThemeType');
   const validMenuTheme = storedMenuTheme && Object.values(MenuThemeEnum).includes(storedMenuTheme as MenuThemeEnum)
     ? (storedMenuTheme as MenuThemeEnum)
     : defaultSetting.default.defaultMenuTheme;
-  
+
   const menuThemeType = ref<MenuThemeEnum>(validMenuTheme);
-  
+
   // 如果使用的是默认值且存储中没有值，保存默认值到存储
   if (!storedMenuTheme || !Object.values(MenuThemeEnum).includes(storedMenuTheme as MenuThemeEnum)) {
     appStorage.settings.setItem('menuThemeType', validMenuTheme);
   }
-  
+
   const systemThemeColor = ref<string>(appStorage.settings.getItem('systemThemeColor') || defaultSetting.default.defaultSystemThemeColor);
 
   // 界面显示设置
@@ -149,7 +148,7 @@ function createSettingsState() {
     const htmlEl = document.documentElement;
     // 先清除所有可能的主题类，确保干净的状态
     htmlEl.classList.remove('dark');
-    
+
     if (systemThemeType.value === SystemThemeEnum.DARK) {
       htmlEl.classList.add('dark');
     } else if (systemThemeType.value === SystemThemeEnum.LIGHT) {
@@ -168,7 +167,7 @@ function createSettingsState() {
 
   // 延迟应用设置，避免在模块加载时立即执行（导致循环依赖）
   // 这些代码会在首次调用 useSettingsState() 时执行（通过初始化函数）
-  
+
   // 初始化函数：应用所有设置到 DOM
   const applyInitialSettings = () => {
     // 1. 应用系统主题（应用到 DOM）- 确保在页面加载时立即应用
@@ -187,7 +186,7 @@ function createSettingsState() {
         mediaQuery.addListener(handleThemeChange);
       }
     }
-    
+
     // 监听主题切换事件（来自 toggleDark），同步更新 systemThemeType 和 menuThemeType
     // 确保两种切换方式（toggleDark 和 switchThemeStyles）的状态一致
     const handleThemeToggle = (event: CustomEvent) => {
@@ -198,7 +197,7 @@ function createSettingsState() {
         systemThemeMode.value = theme;
         appStorage.settings.setItem('systemThemeType', theme);
         appStorage.settings.setItem('systemThemeMode', theme);
-        
+
         // 同步更新菜单风格：当系统主题切换为暗色时，如果当前菜单风格不是深色，则自动切换为深色
         // 反之，当系统主题切换为浅色时，如果当前菜单风格是深色，则切换为设计风格
         const targetIsDark = theme === SystemThemeEnum.DARK;
@@ -226,10 +225,10 @@ function createSettingsState() {
     // 4. 应用自定义圆角
     document.documentElement.style.setProperty('--custom-radius', `${customRadius.value}rem`);
   };
-  
+
   // 标记是否已初始化
   let settingsApplied = false;
-  
+
   // 在首次访问时应用初始设置（延迟执行，避免在模块加载时立即执行）
   const ensureInitialSettingsApplied = () => {
     if (!settingsApplied && typeof window !== 'undefined' && typeof document !== 'undefined') {
@@ -259,9 +258,9 @@ function createSettingsState() {
     if (menuThemeType.value === theme) {
       return;
     }
-    
+
     menuThemeType.value = theme;
-    
+
     // 检查存储中的值是否已经相同，避免不必要的更新
     const currentSettings = appStorage.settings.get();
     if (currentSettings.menuThemeType !== theme) {
@@ -296,7 +295,7 @@ function createSettingsState() {
    */
   function switchThemeStyles(theme: SystemThemeEnum) {
     // 计算目标暗色模式状态
-    const targetIsDark = theme === SystemThemeEnum.DARK || 
+    const targetIsDark = theme === SystemThemeEnum.DARK ||
       (theme === SystemThemeEnum.AUTO && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     // 先更新设置状态（同步执行，避免响应式延迟）
@@ -319,10 +318,10 @@ function createSettingsState() {
 
     // 尝试获取主题插件实例
     let themePlugin: any = null;
-    
+
     // 优先尝试从 window 获取（同步方式）
     themePlugin = (window as any).__THEME_PLUGIN__ || (globalThis as any).__THEME_PLUGIN__;
-    
+
     // 如果从 window 获取失败，尝试使用静态导入的 useThemePlugin
     if (!themePlugin || !themePlugin.isDark) {
       try {
@@ -337,7 +336,7 @@ function createSettingsState() {
         return;
       }
     }
-    
+
     // 如果仍然获取不到主题插件，直接应用 DOM 变化
     if (!themePlugin || !themePlugin.isDark) {
       applySystemTheme();
@@ -373,18 +372,18 @@ function createSettingsState() {
     // 强制浏览器立即重新计算样式，确保 CSS 变量和选择器立即生效
     // 访问 offsetHeight 会触发浏览器重新计算布局和样式
     void htmlEl.offsetHeight;
-    
+
     // 使用 nextTick 确保 Vue 响应式更新完成
     nextTick(() => {
       // 再次强制样式重新计算，确保所有 CSS 变量和选择器都已更新
       void htmlEl.offsetHeight;
-      
+
       // 重新注册 ECharts 主题（使用最新的 CSS 变量值）
       registerEChartsThemes();
-      
+
       // 触发自定义事件，通知组件强制更新
-      window.dispatchEvent(new CustomEvent('theme-changed', { 
-        detail: { isDark: targetIsDark, theme } 
+      window.dispatchEvent(new CustomEvent('theme-changed', {
+        detail: { isDark: targetIsDark, theme }
       }));
     });
 

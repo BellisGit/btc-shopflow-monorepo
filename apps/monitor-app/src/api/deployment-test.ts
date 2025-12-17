@@ -15,6 +15,12 @@ export interface TestStatus {
   error?: string;
 }
 
+export interface TestError {
+  type: string;
+  message: string;
+  url?: string;
+}
+
 export interface TestResult {
   appName: string;
   config: {
@@ -22,10 +28,10 @@ export interface TestResult {
     description: string;
   };
   startTime: string;
-  accessibility?: any;
-  references?: any;
+  accessibility?: Record<string, unknown>;
+  references?: string[];
   success: boolean;
-  errors: any[];
+  errors: TestError[];
   duration: number;
 }
 
@@ -59,11 +65,11 @@ async function startLocalTest(config: TestConfig): Promise<string> {
   // 生成测试ID
   const testId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   console.log('[deployment-test API] 生成测试ID:', testId);
-  
+
   // 在后台执行测试
   console.log('[deployment-test API] 启动后台测试执行...');
   executeTestInBackground(testId, config);
-  
+
   return testId;
 }
 
@@ -121,7 +127,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
 
         console.log(`[deployment-test API] 测试应用: ${appName}`);
         const appConfig = deployConfig.apps?.[appName];
-        
+
         if (!appConfig) {
           results.apps[appName] = {
             appName,
@@ -167,19 +173,26 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
       localStorage.setItem(testResultsKey, JSON.stringify(results));
 
       console.log('[deployment-test API] 测试完成:', results);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[deployment-test API] 测试执行失败:', error);
       status.status = 'failed';
-      status.error = error.message;
+      status.error = error instanceof Error ? error.message : String(error);
       localStorage.setItem(testStatusKey, JSON.stringify(status));
     }
   }, 100); // 100ms 后开始执行，确保状态能被轮询捕获
 }
 
+export interface DeployConfig {
+  apps: Record<string, {
+    domain: string;
+    description: string;
+  }>;
+}
+
 /**
  * 加载部署配置
  */
-async function loadDeployConfig(): Promise<any> {
+async function loadDeployConfig(): Promise<DeployConfig> {
   try {
     // 尝试从 /deploy.config.json 加载配置
     const response = await fetch('/deploy.config.json');
@@ -205,11 +218,16 @@ async function loadDeployConfig(): Promise<any> {
   }
 }
 
+export interface AppConfig {
+  domain: string;
+  description: string;
+}
+
 /**
  * 测试单个应用
  */
-async function testApp(appName: string, appConfig: any, timeout: number, baseUrl?: string): Promise<{ success: boolean; errors: any[] }> {
-  const errors: any[] = [];
+async function testApp(appName: string, appConfig: AppConfig, timeout: number, baseUrl?: string): Promise<{ success: boolean; errors: TestError[] }> {
+  const errors: TestError[] = [];
   const domain = appConfig.domain;
   const homepageUrl = baseUrl || `https://${domain}`;
 
@@ -217,7 +235,7 @@ async function testApp(appName: string, appConfig: any, timeout: number, baseUrl
     // 1. 测试首页可访问性
     console.log(`[deployment-test API] 测试 ${appName} 首页可访问性: ${homepageUrl}`);
     const homePageTest = await testHttpRequest(homepageUrl, timeout);
-    
+
     if (!homePageTest.success) {
       errors.push({
         type: 'accessibility',
@@ -231,12 +249,12 @@ async function testApp(appName: string, appConfig: any, timeout: number, baseUrl
     if (homePageTest.content) {
       console.log(`[deployment-test API] 测试 ${appName} 资源引用完整性`);
       const assetReferences = extractAssetReferencesFromHtml(homePageTest.content);
-      
+
       // 测试前10个关键资源
       for (const ref of assetReferences.slice(0, 10)) {
         const assetUrl = ref.startsWith('http') ? ref : `${homepageUrl}${ref.startsWith('/') ? '' : '/'}${ref}`;
         const assetResult = await testHttpRequest(assetUrl, timeout);
-        
+
         if (!assetResult.success) {
           errors.push({
             type: 'asset_not_found',
@@ -248,10 +266,10 @@ async function testApp(appName: string, appConfig: any, timeout: number, baseUrl
     }
 
     return { success: errors.length === 0, errors };
-  } catch (error: any) {
+  } catch (error: unknown) {
     errors.push({
       type: 'test_error',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
     return { success: false, errors };
   }
@@ -288,8 +306,8 @@ async function testHttpRequest(url: string, timeout: number): Promise<{ success:
       statusText: response.statusText,
       content,
     };
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       return {
         success: false,
         status: 0,
@@ -299,7 +317,7 @@ async function testHttpRequest(url: string, timeout: number): Promise<{ success:
     return {
       success: false,
       status: 0,
-      statusText: error.message || '请求失败',
+      statusText: error instanceof Error ? error.message : '请求失败',
     };
   }
 }
@@ -309,7 +327,7 @@ async function testHttpRequest(url: string, timeout: number): Promise<{ success:
  */
 function extractAssetReferencesFromHtml(htmlContent: string): string[] {
   const references: string[] = [];
-  
+
   // 提取 script src
   const scriptRegex = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
   let match;
@@ -337,7 +355,7 @@ function extractAssetReferencesFromHtml(htmlContent: string): string[] {
  */
 export async function getTestStatus(testId: string): Promise<TestStatus> {
   console.log('[deployment-test API] 获取测试状态，testId:', testId);
-  
+
   // 如果testId为undefined或空，直接返回错误状态
   if (!testId) {
     console.warn('[deployment-test API] testId为空，返回失败状态');
@@ -346,13 +364,13 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
       error: '测试ID无效',
     };
   }
-  
+
   // 直接从localStorage读取状态（前端实现）
   const statusKey = `deployment-test-${testId}`;
   const statusJson = localStorage.getItem(statusKey);
-  
+
   console.log('[deployment-test API] localStorage key:', statusKey, 'value:', statusJson);
-  
+
   if (!statusJson) {
     console.warn('[deployment-test API] 测试状态不存在');
     return {
@@ -374,7 +392,7 @@ export async function getTestReport(testId: string): Promise<TestReport> {
   console.log('[deployment-test API] 获取测试报告，testId:', testId);
   const resultsKey = `deployment-test-results-${testId}`;
   const resultsJson = localStorage.getItem(resultsKey);
-  
+
   if (!resultsJson) {
     throw new Error('测试报告不存在');
   }
@@ -392,7 +410,7 @@ export async function stopTest(testId: string): Promise<void> {
   console.log('[deployment-test API] 停止测试，testId:', testId);
   const statusKey = `deployment-test-${testId}`;
   const statusJson = localStorage.getItem(statusKey);
-  
+
   if (statusJson) {
     const status: TestStatus = JSON.parse(statusJson);
     status.status = 'failed';
@@ -406,15 +424,15 @@ export async function stopTest(testId: string): Promise<void> {
  */
 export async function downloadReport(testId: string, format: 'html' | 'json' | 'markdown' = 'html'): Promise<void> {
   console.log('[deployment-test API] 下载测试报告，testId:', testId, 'format:', format);
-  
+
   // 从localStorage获取报告
   const report = await getTestReport(testId);
-  
+
   // 根据格式生成内容
   let content = '';
   let mimeType = 'text/plain';
   let extension = 'txt';
-  
+
   if (format === 'json') {
     content = JSON.stringify(report, null, 2);
     mimeType = 'application/json';
@@ -444,7 +462,7 @@ export async function downloadReport(testId: string, format: 'html' | 'json' | '
     <p>通过: ${report.summary.passed}</p>
     <p>失败: ${report.summary.failed}</p>
   </div>
-  ${Object.entries(report.apps).map(([appName, result]: [string, any]) => `
+  ${Object.entries(report.apps).map(([appName, result]: [string, TestResult]) => `
     <div class="app-result ${result.success ? 'success' : 'failed'}">
       <h2>${appName}</h2>
       <p>状态: ${result.success ? '通过' : '失败'}</p>
@@ -452,7 +470,7 @@ export async function downloadReport(testId: string, format: 'html' | 'json' | '
       ${result.errors && result.errors.length > 0 ? `
         <div>
           <h3>错误列表:</h3>
-          ${result.errors.map((error: any) => `<div class="error">${error.message || error}</div>`).join('')}
+          ${result.errors.map((error: TestError) => `<div class="error">${error.message || String(error)}</div>`).join('')}
         </div>
       ` : ''}
     </div>
@@ -471,19 +489,19 @@ export async function downloadReport(testId: string, format: 'html' | 'json' | '
 
 ## 详细结果
 
-${Object.entries(report.apps).map(([appName, result]: [string, any]) => `
+${Object.entries(report.apps).map(([appName, result]: [string, TestResult]) => `
 ### ${appName}
 - 状态: ${result.success ? '✅ 通过' : '❌ 失败'}
 - 耗时: ${result.duration}ms
 ${result.errors && result.errors.length > 0 ? `
 - 错误:
-${result.errors.map((error: any) => `  - ${error.message || error}`).join('\n')}
+${result.errors.map((error: TestError) => `  - ${error.message || String(error)}`).join('\n')}
 ` : ''}
 `).join('\n')}
 `;
     extension = 'md';
   }
-  
+
   // 创建下载链接
   const blob = new Blob([content], { type: mimeType });
   const url = window.URL.createObjectURL(blob);

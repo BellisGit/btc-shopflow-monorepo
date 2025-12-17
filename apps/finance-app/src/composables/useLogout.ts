@@ -1,8 +1,7 @@
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import { BtcMessage } from '@btc/shared-components';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useUser } from '@btc/shared-components/composables/useUser';
+import { useUser } from '@btc/shared-components';
 import { useProcessStore } from '@btc/shared-components';
 import { deleteCookie } from '@/utils/cookie';
 // finance-app 没有本地的 app-storage，使用全局的
@@ -50,7 +49,7 @@ export function useLogout() {
 
       // 清除 cookie 中的 token
       deleteCookie('access_token');
-      
+
       // 清除登录状态标记（从统一的 settings 存储中移除）
       const appStorage = getAppStorage();
       if (appStorage) {
@@ -62,7 +61,7 @@ export function useLogout() {
         appStorage.auth?.clear();
         appStorage.user?.clear();
       }
-      
+
       // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
       localStorage.removeItem('is_logged_in');
 
@@ -87,7 +86,7 @@ export function useLogout() {
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-      
+
       // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain) {
         window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
@@ -104,7 +103,7 @@ export function useLogout() {
 
       // 强制清除所有缓存
       deleteCookie('access_token');
-      
+
       // 清除登录状态标记（从统一的 settings 存储中移除）
       const appStorage = getAppStorage();
       if (appStorage) {
@@ -116,7 +115,7 @@ export function useLogout() {
         appStorage.auth?.clear();
         appStorage.user?.clear();
       }
-      
+
       // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
       localStorage.removeItem('is_logged_in');
       clearUserInfo();
@@ -127,7 +126,7 @@ export function useLogout() {
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-      
+
       // 在生产环境子域名下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain) {
         window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;

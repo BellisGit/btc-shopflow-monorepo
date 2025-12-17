@@ -4,8 +4,7 @@
 // import { nextTick } from 'vue'; // 不再需要
 
 //  // 不再直接使用，让响应拦截器统一处理
-import { BtcConfirm } from '@btc-components/feedback/btc-message-box';
-import { BtcMessage } from '@btc-components/feedback/btc-message';
+import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ViewGroupOptions, ViewGroupItem } from '../types';
 
 export function useViewGroupActions(

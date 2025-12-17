@@ -135,7 +135,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 获取应用配置
   const appConfig = getViteAppConfig(appName);
   // 使用导入的 createPathHelpers
-  const { withRoot, withPackages } = createPathHelpers(appDir);
+  const { withRoot } = createPathHelpers(appDir);
 
   // 判断是否为预览构建
   const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
@@ -152,7 +152,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
   // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
   const epsOutputDir = resolve(appDir, 'build', 'eps');
-  
+
   // 共享的 EPS 数据源目录（从 system-app 读取）
   // 子应用优先从 system-app 的 build/eps 读取 EPS 数据，实现真正的共享
   const sharedEpsDir = resolve(appDir, '../../apps/system-app/build/eps');
@@ -343,11 +343,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
   // 当切换应用时，如果发现新的依赖没有被预构建，Vite 会触发依赖优化并重新加载页面
   // 通过在 include 中预先包含这些依赖，可以避免这个问题
-  // 
+  //
   // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
   // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
   const appCacheDir = resolve(appDir, 'node_modules/.vite');
-  
+
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
     include: [
       // 核心依赖：所有应用都安装的依赖

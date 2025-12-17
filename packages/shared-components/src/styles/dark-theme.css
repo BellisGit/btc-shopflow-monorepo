@@ -12,8 +12,8 @@ html.dark body,
 html.dark #app {
   /* Element Plus 组件背景色使用 #0a0a0a */
   --el-bg-color: #0a0a0a;
-  /* Element Plus 页面背景色也使用 #0a0a0a（确保与组件背景色一致） */
-  --el-bg-color-page: #0a0a0a;
+  /* Element Plus 页面背景色使用 #141414（较浅的深色背景，作为整体背景） */
+  --el-bg-color-page: #141414;
   /* Element Plus 其他关键 CSS 变量 */
   --el-text-color-primary: #e5eaf3;
   --el-text-color-regular: #cfd3dc;
@@ -33,18 +33,19 @@ html.dark #app {
   --el-fill-color-blank: transparent;
 }
 
+/* body/html 整体背景使用较浅的深色背景 #141414 */
+html.dark body,
+html.dark html {
+  background-color: #141414 !important;
+}
+
 /* ========== 关键：确保主题色 CSS 变量传递到子应用 ========== */
 /* 在微前端环境下，CSS 变量需要从主应用传递到子应用容器 */
 /* 确保 #subapp-viewport 和 [data-qiankun] 能够继承主应用的主题色变量 */
 /* 注意：这些变量会通过 JavaScript 动态设置，这里只是作为 fallback */
-#subapp-viewport,
-#subapp-viewport [data-qiankun],
-[data-qiankun] {
-  /* 继承主应用的所有主题色变量（从 html 元素继承） */
-  /* 如果主应用通过 JavaScript 设置了这些变量，子应用会自动继承 */
-  /* 这里不需要显式设置，因为 CSS 变量是继承的 */
-}
+/* CSS 变量会自动从 html 元素继承，不需要显式设置 */
 
+/* 所有布局成员使用更深的背景 #0a0a0a，在较浅的 body 背景上形成对比 */
 html.dark .app-layout__topbar,
 html.dark .topbar {
   background-color: #0a0a0a !important;
@@ -214,6 +215,12 @@ html.dark #subapp-viewport [data-qiankun] .el-tooltip__popper,
 html.dark [data-qiankun] .el-tooltip__popper {
   --el-tooltip-bg-color: var(--el-bg-color);
   background-color: var(--el-bg-color) !important;
+}
+
+/* 移除开发者工具悬浮按钮的阴影 */
+.el-tooltip__trigger .dev-tools__toggle,
+.dev-tools__toggle {
+  box-shadow: none !important;
 }
 
 html.dark .el-select-dropdown,

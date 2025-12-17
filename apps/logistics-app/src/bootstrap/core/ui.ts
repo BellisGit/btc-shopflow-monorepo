@@ -13,6 +13,9 @@ import '../../styles/theme.scss';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
 
+// ECharts 插件
+import EChartsPlugin from '../../plugins/echarts';
+
 export type LogisticsThemePlugin = ReturnType<typeof createThemePlugin>;
 
 /**
@@ -52,9 +55,12 @@ export const setupUI = (app: App) => {
 
   // 配置Element Plus（包含国际化）
   setupElementPlus(app);
-  
+
   // 配置 themePlugin
   app.use(themePluginInstance);
+
+  // 配置ECharts
+  app.use(EChartsPlugin);
 
   return themePluginInstance;
 };

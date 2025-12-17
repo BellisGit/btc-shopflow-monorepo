@@ -3,9 +3,7 @@
  * 基于 axios，参考 cool-admin 的实现
  */
 
-import axios from 'axios';
-// @ts-expect-error - axios 类型定义可能有问题，但运行时可用
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 
 /*
 interface ApiResponse<T = any> {
@@ -159,7 +157,6 @@ export function createRequest(baseURL: string = ''): Request {
   }
 
   // 创建 axios 实例
-  // @ts-expect-error - axios.create 类型定义可能有问题，但运行时可用
   const axiosInstance = axios.create({
     baseURL: finalBaseURL,
     timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时
@@ -227,9 +224,9 @@ export function createRequest(baseURL: string = ''): Request {
         const hostname = window.location.hostname;
         const port = window.location.port || '';
         // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
-        const isProduction = hostname.includes('bellis.com.cn') && 
-                             !port.startsWith('41') && 
-                             port !== '5173' && 
+        const isProduction = hostname.includes('bellis.com.cn') &&
+                             !port.startsWith('41') &&
+                             port !== '5173' &&
                              port !== '3000' &&
                              hostname !== 'localhost' &&
                              !hostname.startsWith('127.0.0.1') &&

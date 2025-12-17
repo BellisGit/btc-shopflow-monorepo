@@ -53,7 +53,7 @@
       ]
     },
     {
-      "path": "/data/inventory/bom",
+      "path": "/inventory/dataSource/bom",
       "labelKey": "menu.inventory.dataSource.bom",
       "tab": {
         "enabled": true,
@@ -66,7 +66,7 @@
       ]
     },
     {
-      "path": "/data/inventory/list",
+      "path": "/inventory/dataSource/list",
       "labelKey": "menu.inventory.dataSource.list",
       "tab": {
         "enabled": true,
@@ -79,7 +79,7 @@
       ]
     },
     {
-      "path": "/data/inventory/ticket",
+      "path": "/inventory/dataSource/ticket",
       "labelKey": "menu.inventory.dataSource.ticket",
       "tab": {
         "enabled": true,
@@ -92,7 +92,7 @@
       ]
     },
     {
-      "path": "/data/inventory/process",
+      "path": "/inventory/process",
       "labelKey": "menu.inventory.process",
       "tab": {
         "enabled": true,
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "path": "/data/inventory/check",
+      "path": "/inventory/check",
       "labelKey": "menu.inventory.result",
       "tab": {
         "enabled": true,
@@ -166,20 +166,21 @@
       ]
     },
     {
-      "index": "inventory",
+      "index": "/inventory",
       "labelKey": "menu.inventory",
+      "icon": "Odometer",
       "children": [
         {
           "index": "inventory-dataSource",
           "labelKey": "menu.inventory.dataSource",
           "children": [
-            { "index": "/data/inventory/bom", "labelKey": "menu.inventory.dataSource.bom" },
-            { "index": "/data/inventory/list", "labelKey": "menu.inventory.dataSource.list" },
-            { "index": "/data/inventory/ticket", "labelKey": "menu.inventory.dataSource.ticket" }
+            { "index": "/inventory/dataSource/bom", "labelKey": "menu.inventory.dataSource.bom" },
+            { "index": "/inventory/dataSource/list", "labelKey": "menu.inventory.dataSource.list" },
+            { "index": "/inventory/dataSource/ticket", "labelKey": "menu.inventory.dataSource.ticket" }
           ]
         },
-        { "index": "/data/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
-        { "index": "/data/inventory/check", "labelKey": "menu.inventory.result" }
+        { "index": "/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
+        { "index": "/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" }
       ]
     }
   ]
