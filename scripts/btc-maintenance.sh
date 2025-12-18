@@ -118,9 +118,9 @@ if [ -d "/www/wwwroot/btc-shopflow-monorepo" ]; then
     cd /www/wwwroot/btc-shopflow-monorepo
     
     # 检查是否有新的提交
-    git fetch origin master >> "$LOG_FILE" 2>&1
+    git fetch origin develop >> "$LOG_FILE" 2>&1
     LOCAL=$(git rev-parse HEAD)
-    REMOTE=$(git rev-parse origin/master)
+    REMOTE=$(git rev-parse origin/develop)
     
     if [ "$LOCAL" != "$REMOTE" ]; then
         log "📦 发现新版本，建议更新"

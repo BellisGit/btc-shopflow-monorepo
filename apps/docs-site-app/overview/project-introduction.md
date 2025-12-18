@@ -81,7 +81,7 @@ btc-shopflow-monorepo/
 ## ✨ 最近更新
 
 - 统一使用 `repository_dispatch` 触发部署工作流
-- 默认分支已设置为 `master`
+- 默认分支已设置为 `develop`
 - 完善了 GitHub Actions CI/CD 工作流
 - 支持本地构建并自动触发远程部署
 
@@ -210,7 +210,7 @@ pnpm deploy:all
 
 ### 默认分支
 
-- **`master`** - **主分支**：默认分支，用于开发和部署
+- **`develop`** - **开发分支**：默认分支，用于开发和部署
   - 所有开发和部署都在此分支进行
   - 包含最新的稳定代码
   - GitHub Actions 工作流基于此分支运行
@@ -218,11 +218,12 @@ pnpm deploy:all
 ### 工作流程
 
 ```
-master (开发/部署) → 测试验证 → 生产部署
+develop (开发) → release/* (测试) → main (生产)
 ```
 
-1. **日常开发**：所有开发工作都在 `master` 分支进行
-2. **测试验证**：在 `master` 分支完成测试和代码审查
+1. **日常开发**：所有开发工作都在 `develop` 分支进行
+2. **发布准备**：从 `develop` 创建 `release/*` 分支进行测试和修复
+3. **生产部署**：测试通过后合并到 `main` 分支并打标签
 3. **自动部署**：通过 `pnpm build-deploy:*` 命令自动触发部署
 
 ## 🔧 开发指南

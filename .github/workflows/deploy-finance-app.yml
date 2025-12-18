@@ -2,7 +2,7 @@ name: Deploy Finance App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/finance-app/**'
   repository_dispatch:

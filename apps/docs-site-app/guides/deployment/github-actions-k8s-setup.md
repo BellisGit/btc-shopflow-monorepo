@@ -28,7 +28,7 @@ sidebar_group: deployment
 - ✅ **自动检测私有仓库**：如果设置了 `PRIVATE_REGISTRY`，自动使用
 - ✅ **自动判断认证**：如果未设置用户名和密码，自动尝试匿名访问（适用于不需要认证的私有仓库）
 
-**只需推送代码到 `master` 分支即可自动触发！**
+**只需推送代码到 `develop` 分支即可自动触发！**
 
 ## 📋 目录
 
@@ -47,7 +47,7 @@ sidebar_group: deployment
 **适用于大多数场景（同一开发者，使用 GHCR）**：
 
 1. **无需任何配置**
-2. 推送代码到 `master` 分支
+2. 推送代码到 `develop` 分支
 3. GitHub Actions 自动：
    - 检测变更的应用
    - 构建并推送到 GHCR
@@ -231,7 +231,7 @@ PRIVATE_REGISTRY_PASSWORD: mydockerhubtoken
 
 ### 步骤 3: 验证配置
 
-1. 推送代码到 `master` 分支
+1. 推送代码到 `develop` 分支
 2. 查看 GitHub Actions 页面
 3. 检查工作流是否成功运行
 4. 查看构建日志，确认镜像推送成功

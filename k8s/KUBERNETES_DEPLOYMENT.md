@@ -171,7 +171,7 @@ CPU 阈值: 70%
 
 ```yaml
 触发条件:
-- Push to main/master: 自动部署到生产环境
+- Push to main/develop: 自动部署到生产环境
 - Pull Request: 部署到开发环境进行测试
 
 部署流程:
@@ -566,7 +566,7 @@ tar -czf /www/backup/btc-shopflow-$(date +%Y%m%d).tar.gz /www/wwwroot/btc-shopfl
 ```bash
 # 更新代码
 cd /www/wwwroot/btc-shopflow-monorepo
-git pull origin master
+git pull origin develop
 
 # 重新构建镜像
 ./scripts/build-all.sh

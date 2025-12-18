@@ -2,7 +2,7 @@ name: Deploy Admin App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/admin-app/**'
   repository_dispatch:

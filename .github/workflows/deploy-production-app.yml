@@ -2,7 +2,7 @@ name: Deploy Production App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/production-app/**'
   repository_dispatch:

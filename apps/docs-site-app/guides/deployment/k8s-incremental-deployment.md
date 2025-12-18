@@ -259,7 +259,7 @@ GitHub Actions 会自动检测变更并执行增量构建和部署，**无需手
    - `K8S_TOKEN`: K8s 访问令牌
    - `K8S_NAMESPACE`: K8s 命名空间（默认：`btc-shopflow`）
 
-2. **自动触发**：推送代码到 `master` 分支，GitHub Actions 会自动：
+2. **自动触发**：推送代码到 `develop` 分支，GitHub Actions 会自动：
    - 检测变更的应用
    - 仅构建变更的应用
    - 推送到配置的镜像仓库
@@ -296,7 +296,7 @@ pnpm build:k8s
 pnpm deploy:k8s --apps system-app,admin-app
 
 # 指定对比基准（相对于特定提交）
-pnpm build-deploy:k8s --base origin/master
+pnpm build-deploy:k8s --base origin/develop
 
 # 使用命令行参数覆盖配置
 pnpm build-deploy:k8s --registry 192.168.1.100:5000 --namespace my-namespace

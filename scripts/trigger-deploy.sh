@@ -201,7 +201,7 @@ log_info "触发部署工作流..."
 # 构建请求体
 PAYLOAD=$(cat <<EOF
 {
-  "ref": "master",
+  "ref": "develop",
   "inputs": {
     "apps": "$APPS",
     "environment": "$ENVIRONMENT",

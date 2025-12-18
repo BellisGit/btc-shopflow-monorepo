@@ -2,7 +2,7 @@ name: Deploy Engineering App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/engineering-app/**'
   repository_dispatch:

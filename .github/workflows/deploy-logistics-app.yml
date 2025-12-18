@@ -2,7 +2,7 @@ name: Deploy Logistics App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/logistics-app/**'
   repository_dispatch:

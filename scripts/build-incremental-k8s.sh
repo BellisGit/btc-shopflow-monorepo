@@ -60,7 +60,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "示例:"
             echo "  $0 --registry 192.168.1.100:5000"
-            echo "  $0 --registry 192.168.1.100:5000 --base origin/master"
+            echo "  $0 --registry 192.168.1.100:5000 --base origin/develop"
             echo "  $0 --registry 192.168.1.100:5000 --all"
             exit 0
             ;;

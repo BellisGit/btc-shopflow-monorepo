@@ -2,7 +2,7 @@ name: Deploy Quality App
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/quality-app/**'
   repository_dispatch:

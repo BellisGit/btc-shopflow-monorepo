@@ -9,7 +9,7 @@ name: Deploy System App
 # - 不会影响其他应用的部署
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
     paths:
       - '.deploy/system-app/**'
   repository_dispatch:

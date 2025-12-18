@@ -593,7 +593,7 @@ main() {
                 log_info "或者："
                 log_info "  - 在 GitHub 网页上手动触发："
                 log_info "    https://github.com/$GITHUB_REPO/actions/workflows/deploy-static.yml"
-                log_info "  - 推送到 master/main 分支（会自动触发）"
+                log_info "  - 推送到 develop/main 分支（会自动触发）"
             fi
         fi
         log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

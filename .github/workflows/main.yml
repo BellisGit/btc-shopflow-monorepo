@@ -51,7 +51,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: workflowFile,
-              ref: 'master',
+              ref: 'develop',
             });
             
             console.log(`✅ Successfully triggered ${workflowFile}`);

@@ -174,7 +174,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: 'deploy-all-apps.yml',
-                ref: 'master',
+                ref: 'develop',
                 inputs: {}
               });
               console.log('✅ 全量部署工作流已触发');

@@ -669,7 +669,7 @@ if [ $COMMIT_EXIT_CODE -ne 0 ]; then
         log_info "配置完成后，请手动提交部署标记文件:"
         log_info "  git add $DEPLOY_INFO_FILE"
         log_info "  git commit -m 'chore: trigger deployment for $APP_NAME'"
-        log_info "  git push origin master"
+        log_info "  git push origin develop"
         exit 1
     else
         log_error "⚠️  Git 提交失败"
@@ -681,7 +681,7 @@ if [ $COMMIT_EXIT_CODE -ne 0 ]; then
         log_info "请手动提交部署标记文件:"
         log_info "  git add $DEPLOY_INFO_FILE"
         log_info "  git commit -m 'chore: trigger deployment for $APP_NAME'"
-        log_info "  git push origin master"
+        log_info "  git push origin develop"
         exit 1
     fi
 fi
@@ -774,7 +774,7 @@ fi
 
 # 尝试推送
 log_info "尝试推送到 GitHub..."
-PUSH_OUTPUT=$(git push origin master 2>&1)
+PUSH_OUTPUT=$(git push origin develop 2>&1)
 PUSH_EXIT_CODE=$?
 
 if [ $PUSH_EXIT_CODE -eq 0 ]; then
@@ -806,13 +806,13 @@ else
         log_info ""
         log_info "或者暂时切换回 HTTPS（需要输入一次凭据）:"
         log_info "  git remote set-url origin https://github.com/$GITHUB_REPO.git"
-        log_info "  git push origin master"
+        log_info "  git push origin develop"
         exit 1
     elif echo "$PUSH_OUTPUT" | grep -qiE "Authentication failed|Invalid username|password|token|Username for"; then
         log_warning "⚠️  Git 推送需要认证"
         log_info ""
         log_info "💡 Git Credential Manager 已配置，请手动运行一次推送以保存凭据:"
-        log_info "  git push origin master"
+        log_info "  git push origin develop"
         log_info ""
         log_info "输入一次用户名和密码后，凭据会被自动保存，后续无需再输入"
         exit 1
@@ -822,7 +822,7 @@ else
             log_info "  $line"
         done
         log_info ""
-        log_info "请手动推送: git push origin master"
+        log_info "请手动推送: git push origin develop"
         exit 1
     fi
 fi

@@ -688,7 +688,7 @@ if [ "$AUTO_DEPLOY" = true ]; then
                     log_info "  - 环境: production"
                     log_info "  - SHA: $GIT_SHA"
                     log_info "  - 镜像标签: $IMAGE_TAG_SHA（将在工作流中构建）"
-                    log_info "  - 分支: master"
+                    log_info "  - 分支: develop"
                     exit 0
                 fi
             fi
@@ -736,7 +736,7 @@ if [ "$AUTO_DEPLOY" = true ]; then
             -H "Content-Type: application/json" \
             "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
             -d "{
-                \"ref\": \"master\"
+                \"ref\": \"develop\"
             }" 2>&1)
         
         HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -756,7 +756,7 @@ if [ "$AUTO_DEPLOY" = true ]; then
                 -H "Content-Type: application/json" \
                 "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/actions/workflows/$WORKFLOW_IDENTIFIER/dispatches" \
                 -d "{
-                    \"ref\": \"master\"
+                    \"ref\": \"develop\"
                 }" 2>&1)
             
             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -774,7 +774,7 @@ if [ "$AUTO_DEPLOY" = true ]; then
         log_info "  - 工作流: $WORKFLOW_FILE"
         log_info "  - 环境: production"
         log_info "  - SHA: $GIT_SHA"
-        log_info "  - 分支: master"
+        log_info "  - 分支: develop"
     else
         log_error "⚠️  触发部署工作流失败 (HTTP $HTTP_CODE)"
         if [ -n "$RESPONSE_BODY" ]; then
@@ -783,12 +783,12 @@ if [ "$AUTO_DEPLOY" = true ]; then
         log_info ""
         
         if [ "$HTTP_CODE" -eq 404 ]; then
-            log_error "❌ 工作流未找到: $WORKFLOW_FILE 可能不在 master 分支上"
+            log_error "❌ 工作流未找到: $WORKFLOW_FILE 可能不在 develop 分支上"
             log_info ""
             log_info "💡 解决方案:"
-            log_info "  1. 确保 .github/workflows/$WORKFLOW_FILE 文件存在于 master 分支"
+            log_info "  1. 确保 .github/workflows/$WORKFLOW_FILE 文件存在于 develop 分支"
             log_info "  2. 检查工作流文件路径是否正确"
-            log_info "  3. 确保工作流文件已提交并推送到 master 分支"
+            log_info "  3. 确保工作流文件已提交并推送到 develop 分支"
             log_info "  4. 检查工作流文件名是否正确（应该是 deploy-${APP_NAME}.yml）"
         elif [ "$HTTP_CODE" -eq 401 ]; then
             log_error "❌ 认证失败: Token 无效或已过期"
@@ -810,13 +810,13 @@ if [ "$AUTO_DEPLOY" = true ]; then
             log_info ""
             log_info "💡 可能的原因:"
             log_info "  - 工作流文件语法错误"
-            log_info "  - 工作流文件不在 master 分支上"
+            log_info "  - 工作流文件不在 develop 分支上"
             log_info "  - GitHub API 临时问题"
             log_info ""
             log_info "💡 解决方案:"
             log_info "  1. 手动在 GitHub 上触发工作流测试"
             log_info "  2. 检查工作流文件: .github/workflows/deploy-only.yml"
-            log_info "  3. 确保工作流文件已提交到 master 分支"
+            log_info "  3. 确保工作流文件已提交到 develop 分支"
         fi
         exit 1
     fi

@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Micro--Frontend-qiankun-FF6B6B?style=flat" alt="Micro Frontend" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat" alt="License" />
-  <img src="https://img.shields.io/badge/Branch-master-blue?style=flat&logo=git" alt="Master Branch" />
+  <img src="https://img.shields.io/badge/Branch-develop-blue?style=flat&logo=git" alt="Develop Branch" />
 </div>
 
 > 🌐 **多语言版本**: [English](./README_EN.md) | [简体中文](./README_ZH.md)
@@ -54,6 +54,8 @@ btc-shopflow-monorepo/
 │   ├── quality-app/               # 品质应用
 │   ├── engineering-app/           # 工程应用
 │   ├── finance-app/               # 财务应用
+│   ├── monitor-app/               # 监控应用
+│   ├── layout-app/                # 布局应用
 │   ├── mobile-app/                # 移动应用
 │   └── docs-site-app/             # 文档站点
 ├── packages/                       # 共享包
@@ -65,20 +67,29 @@ btc-shopflow-monorepo/
 ├── scripts/                        # 脚本目录
 │   ├── build-and-push-local.sh    # 本地构建并推送镜像
 │   ├── deploy-app-local.sh        # 本地部署脚本
-│   └── trigger-deploy.sh          # 触发部署脚本
+│   ├── trigger-deploy.sh          # 触发部署脚本
+│   ├── build-deploy-incremental-k8s.sh  # K8s 增量部署脚本
+│   └── generate-lint-error-reports.mjs  # 生成 lint 错误报告
 ├── .github/workflows/              # GitHub Actions 工作流
 │   ├── deploy-system-app.yml       # 系统应用部署工作流
 │   ├── deploy-only.yml             # 通用部署工作流
-│   └── deploy-app-reusable.yml    # 可复用部署工作流
+│   ├── deploy-app-reusable.yml    # 可复用部署工作流
+│   └── build-all-apps.yml         # 构建所有应用工作流
+├── configs/                        # 配置文件
+│   ├── app-scanner.ts             # 应用扫描器
+│   └── unified-env-config.ts     # 统一环境配置
 └── implementation-docs/           # 实现文档
 ```
 
-## ✨ 最近更新
+## ✨ 最近更新 (v1.0.0)
 
-- 统一使用 `repository_dispatch` 触发部署工作流
-- 默认分支已设置为 `master`
-- 完善了 GitHub Actions CI/CD 工作流
-- 支持本地构建并自动触发远程部署
+- ✅ **分支策略优化**：从 `master` 迁移到 `develop` 作为开发分支，建立 `main`（生产）、`develop`（开发）、`release/*`（发布）三分支体系
+- ✅ **系统域流程确认功能**：实现流程确认功能，支持状态标签渲染和操作列确认按钮
+- ✅ **统一使用 `repository_dispatch` 触发部署工作流**：优化 CI/CD 流程
+- ✅ **完善了 GitHub Actions CI/CD 工作流**：支持多应用独立部署
+- ✅ **支持本地构建并自动触发远程部署**：简化部署流程
+- ✅ **EPS 系统优化**：自动生成类型定义和服务方法
+- ✅ **组件库增强**：新增 BtcTableGroup、BtcMasterList 等复合组件
 
 ## 🚀 快速开始
 
@@ -149,6 +160,11 @@ pnpm build-deploy:mobile
 
 # 部署所有应用
 pnpm deploy:all
+
+# Kubernetes 部署（增量部署）
+pnpm build-deploy:k8s              # 自动检测变更的应用
+pnpm build-deploy:k8s:all          # 部署所有应用
+pnpm build-deploy:k8s:system       # 部署特定应用
 ```
 
 ### 部署流程
@@ -203,22 +219,35 @@ pnpm deploy:all
 
 ## 🌿 分支策略
 
-### 默认分支
+### 分支说明
 
-- **`master`** - **主分支**：默认分支，用于开发和部署
-  - 所有开发和部署都在此分支进行
-  - 包含最新的稳定代码
+- **`develop`** - **开发分支**：默认分支，核心代码源
+  - 所有日常开发工作都在此分支进行
+  - 包含最新的开发代码，会频繁提交
   - GitHub Actions 工作流基于此分支运行
+  - 作为其他分支的代码源
+
+- **`main`** - **生产分支**：稳定代码，用于生产环境
+  - 只包含经过测试验证的稳定代码
+  - 从 `release/*` 分支合并而来
+  - 每个版本都会打标签（如 v1.0.0）
+
+- **`release/*`** - **发布分支**：准备发布的版本分支
+  - 从 `develop` 分支创建（如 `release/v1.1.0`）
+  - 用于版本测试、修复和准备
+  - 最接近生产版本的代码，但会有多个版本分支
+  - 测试通过后合并到 `main` 并打标签
 
 ### 工作流程
 
 ```
-master (开发/部署) → 测试验证 → 生产部署
+develop (开发) → release/* (测试) → main (生产)
 ```
 
-1. **日常开发**：所有开发工作都在 `master` 分支进行
-2. **测试验证**：在 `master` 分支完成测试和代码审查
-3. **自动部署**：通过 `pnpm build-deploy:*` 命令自动触发部署
+1. **日常开发**：所有开发工作都在 `develop` 分支进行，频繁提交代码
+2. **发布准备**：从 `develop` 创建 `release/v1.x.x` 分支进行测试和修复
+3. **生产部署**：测试通过后合并到 `main` 分支并打版本标签（如 v1.0.0）
+4. **自动部署**：通过 `pnpm build-deploy:*` 命令自动触发部署
 
 ## 🔧 开发指南
 
@@ -316,7 +345,7 @@ pnpm test:ci
 
 1. **repository_dispatch**: 通过 API 触发（推荐，由本地脚本自动触发）
 2. **workflow_dispatch**: 手动触发（GitHub 网页界面）
-3. **push**: 推送到特定路径触发（仅 system-app）
+3. **push**: 推送到 `develop` 分支的特定路径触发（如 `.deploy/system-app/**`）
 
 ### 部署流程
 
@@ -327,18 +356,29 @@ pnpm test:ci
 
 ## 📚 文档
 
-- [架构设计文档](./docs/cool-admin-vue-架构设计文档.md)
-- [实现文档](./implementation-docs/)
+- [架构设计文档](./implementation-docs/)
 - [组件文档](./apps/docs-site-app/)
 - [部署文档](./apps/docs-site-app/guides/deployment/)
+  - [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
+  - [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
+  - [静态部署](./apps/docs-site-app/guides/deployment/static-deployment.md)
+  - [子域名代理配置](./apps/docs-site-app/guides/deployment/nginx-subdomain-proxy.md)
 
 ## 🤝 贡献指南
 
 1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+2. 从 `develop` 分支创建功能分支 (`git checkout -b feature/AmazingFeature develop`)
 3. 提交更改 (`git commit -m 'feat: add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
+5. 创建 Pull Request 到 `develop` 分支
+
+### 版本发布流程
+
+1. **创建 Release 分支**：从 `develop` 创建 `release/v1.x.x` 分支
+2. **测试和修复**：在 release 分支上进行测试和 bug 修复
+3. **合并到 main**：测试通过后合并到 `main` 分支
+4. **打标签**：在 `main` 分支上打版本标签（如 `v1.0.0`）
+5. **推送标签**：将标签推送到远程仓库
 
 ## 📄 许可证
 

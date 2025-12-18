@@ -37,7 +37,7 @@
 ## 编辑/提交/审查策略（对 AI 的具体规则）
 - 变更流程：修改后运行 `pnpm lint`, `pnpm type-check`, `pnpm test:ci`（或子集）并附上可复现的本地运行步骤到 PR 描述。
 - 不破坏 CI：若变更影响构建或部署脚本（`scripts/*.sh`、`.github/workflows/`），必须在 PR 中标注风险并提供回滚/测试步骤。
-- 分支与合并：主分支为 `master`（此仓库以 `master` 为默认分支）。
+- 分支与合并：主分支为 `develop`（此仓库以 `develop` 为默认分支），生产分支为 `main`，发布分支为 `release/*`。
 
 ## 有助于定位代码的目录或文件（快速 lookup）
 - 架构与说明：`README.md`, `implementation-docs/`，`apps/docs-site-app/`
