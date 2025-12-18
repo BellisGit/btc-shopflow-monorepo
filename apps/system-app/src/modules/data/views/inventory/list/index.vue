@@ -306,10 +306,10 @@ const handleExport = async () => {
   try {
     // 获取当前筛选参数
     const params = tableGroupRef.value?.crudRef?.getParams?.() || {};
-    
+
     // 获取当前选中的域 ID
     const domainId = resolveSelectedDomainId();
-    
+
     // 构建导出参数（与导入保持一致）
     const exportParams = {
       domainId,
@@ -319,29 +319,45 @@ const handleExport = async () => {
 
     // 调用后端导出接口，返回 JSON 数据
     const response = await service.system.base.data.export(exportParams);
-    
-    // 处理响应数据
+
+    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导出失败
+    if (response && typeof response === 'object' && 'code' in response) {
+      const code = response.code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        // 导出失败，显示错误信息，不生成文件
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败';
+        BtcMessage.error(errorMsg);
+        return;
+      }
+    }
+
+    // 处理响应数据：只有当 code 为 200 且 data 为数组时才允许导出
     let dataList: any[] = [];
     if (response && typeof response === 'object') {
       if ('data' in response && Array.isArray(response.data)) {
         dataList = response.data;
       } else if (Array.isArray(response)) {
         dataList = response;
+      } else if ('data' in response && !Array.isArray(response.data)) {
+        // data 存在但不是数组，说明导出失败
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败：数据格式不正确';
+        BtcMessage.error(errorMsg);
+        return;
       }
     }
-    
+
     // 准备导出数据（即使为空也生成 Excel，只有表头）
     const exportColumns = materialExportColumns.value;
-    const header = exportColumns.map(col => col.label || col.prop);
-    const data = dataList && dataList.length > 0 
+    const header = exportColumns.map(col => col.label || col.prop || '');
+    const data = dataList && dataList.length > 0
       ? dataList.map(item => {
           return exportColumns.map(col => {
-            const value = item[col.prop];
+            const value = col.prop ? item[col.prop] : undefined;
             return value ?? '';
           });
         })
       : []; // 空数据时，data 为空数组，只保留表头
-    
+
     // 使用 exportJsonToExcel 生成并下载 Excel 文件
     exportJsonToExcel({
       header,
@@ -350,7 +366,7 @@ const handleExport = async () => {
       autoWidth: true,
       bookType: 'xlsx',
     });
-    
+
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
     console.error('[InventoryList] Export failed:', error);

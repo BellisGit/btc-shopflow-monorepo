@@ -174,6 +174,17 @@ const opButtons = computed(() => [
     label: t('common.button.edit'),
     type: 'primary',
     icon: 'Edit',
+    onClick: ({ scope }: { scope: any }) => {
+      const row = scope?.row;
+      if (!row) {
+        return;
+      }
+      // 获取 crud 实例并调用编辑功能
+      const crudInstance = crudRef.value?.crud;
+      if (crudInstance?.handleEdit) {
+        crudInstance.handleEdit(row);
+      }
+    },
   },
 ]);
 

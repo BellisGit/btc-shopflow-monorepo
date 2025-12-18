@@ -413,21 +413,57 @@
 	--btc-crud-op-width: 220px;
 }
 
-// 修复固定列 z-index 问题：确保固定右侧列（操作列）的 z-index 高于固定左侧列
-// 当同时有固定左侧列和固定右侧列时，操作列会被遮挡，需要提高右侧列的 z-index
-// 注意：不要设置 position: relative，因为固定列需要 position: absolute 才能正常工作
-// 使用更高的 z-index 值（100），确保即使在生产环境构建后，Element Plus 的默认样式也不会覆盖
-.el-table__fixed-right,
-.el-table__fixed-right-patch {
-  z-index: 100 !important; // 提高 z-index，确保操作列在最上层，避免被固定左侧列遮挡
+// 修复固定列层级遮挡问题（全局样式兜底方案）
+// 核心问题：固定列背景透明 + 层级关系不正确 + 中间滚动区域层级过高
+// 解决：设置明确的层级关系（右侧列101 > 左侧列100 > 滚动区域1）+ 背景色 + 定位属性
+.el-table {
+  // 1. 固定右侧列（操作列）- 最高层级
+  .el-table__fixed-right {
+    position: absolute !important;
+    z-index: 101 !important;
+    background-color: var(--el-bg-color) !important; // 关键：设置背景色，避免透明穿透
+  }
+
+  .el-table__fixed-right-patch {
+    z-index: 101 !important;
+    background-color: var(--el-bg-color) !important;
+  }
+
+  .el-table__fixed-right-header,
+  .el-table__fixed-right-body {
+    z-index: 101 !important;
+    background-color: var(--el-bg-color) !important;
+  }
+
+  // 2. 固定左侧列 - 层级低于右侧列
+  .el-table__fixed-left {
+    position: absolute !important;
+    z-index: 100 !important;
+    background-color: var(--el-bg-color) !important; // 关键：设置背景色，避免透明穿透
+  }
+
+  .el-table__fixed-left-patch {
+    z-index: 100 !important;
+    background-color: var(--el-bg-color) !important;
+  }
+
+  .el-table__fixed-left-header,
+  .el-table__fixed-left-body {
+    z-index: 100 !important;
+    background-color: var(--el-bg-color) !important;
+  }
+
+  // 3. 中间滚动区域 - 最低层级，确保在固定列下方
+  .el-table__inner {
+    .el-table__header-wrapper,
+    .el-table__body-wrapper {
+      position: relative !important; // 补全定位，确保 z-index 生效
+      z-index: 1 !important; // 低于所有固定列，确保从固定列下方滚动
+    }
+  }
 }
 
-// 确保固定左侧列的 z-index 低于操作列
-.el-table__fixed-left,
-.el-table__fixed-left-patch {
-  z-index: 3 !important;
-}
-
+// 修复固定列边框（右侧列的左边框）
 .el-table__fixed-right::before,
 .el-table__fixed-right-patch::before {
   content: '';
@@ -438,7 +474,7 @@
   width: 1px;
   background-color: var(--el-border-color);
   pointer-events: none;
-  z-index: 1;
+  z-index: 102 !important; // 边框在最上层
 }
 
 .el-table__fixed-right .el-table__cell,
@@ -1307,5 +1343,12 @@ ul.topbar__left {
   .sidebar__menu {
     border-right: none !important;
   }
+}
+
+// =========================
+// Theme Brand Red Body Background
+// =========================
+body.theme-brand-red {
+  background-color: var(--el-bg-color-page);
 }
 

@@ -144,6 +144,7 @@ import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
 import { provideContentHeight } from '@btc/shared-components/composables/content-height';
+import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
 
 // 开发环境标志（在模板中使用）
 const isDev = import.meta.env.DEV;
@@ -399,27 +400,87 @@ const isQiankunLoading = ref(false);
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
 let qiankunLoadingObserver: MutationObserver | null = null;
 
-// 判断是否是首页
+// 判断是否是首页（使用全局配置）
 const isHomePage = computed(() => {
   const path = route.path;
-  return path === '/' ||
-         path === '/admin' ||
-         path === '/logistics' ||
-         path === '/engineering' ||
-         path === '/quality' ||
-         path === '/production' ||
-         path === '/finance' ||
-         path === '/monitor' ||
-         path === '/docs';
+
+  // 检查路由 meta 中的 isHome 标记
+  if (route.meta?.isHome === true) {
+    return true;
+  }
+
+  // 检查是否是系统应用首页（主应用）
+  if (path === '/' && isMainApp.value) {
+    return true;
+  }
+
+  // 生产环境子域名判断：路径为 / 且当前应用是子应用
+  if (path === '/' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const appBySubdomain = getAppBySubdomain(hostname);
+    // 如果通过子域名识别到子应用，则认为是首页
+    if (appBySubdomain && appBySubdomain.type === 'sub') {
+      return true;
+    }
+  }
+
+  // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
+  const subApps = getSubApps();
+  for (const app of subApps) {
+    const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+      ? app.pathPrefix.slice(0, -1)
+      : app.pathPrefix;
+    const normalizedPath = path.endsWith('/') && path !== '/'
+      ? path.slice(0, -1)
+      : path;
+
+    // 精确匹配 pathPrefix 认为是首页
+    if (normalizedPath === normalizedPathPrefix) {
+      return true;
+    }
+  }
+
+  return false;
 });
 
-// 判断是否显示面包屑
+// 判断是否显示面包屑区域（使用全局配置，所有应用首页都不显示）
 const showBreadcrumb = computed(() => {
   const path = route.path;
 
-  // 任意应用首页不显示
-  if (isHomePage.value) {
+  // 如果路由 meta 中标记为首页，不显示面包屑区域
+  if (route.meta?.isHome === true) {
     return false;
+  }
+
+  // 检查是否是主应用首页（系统应用）
+  if (path === '/' && isMainApp.value) {
+    return false;
+  }
+
+  // 生产环境子域名判断：路径为 / 且当前应用是子应用
+  if (path === '/' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const appBySubdomain = getAppBySubdomain(hostname);
+    // 如果通过子域名识别到子应用，则不显示面包屑区域
+    if (appBySubdomain && appBySubdomain.type === 'sub') {
+      return false;
+    }
+  }
+
+  // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
+  const subApps = getSubApps();
+  for (const app of subApps) {
+    const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+      ? app.pathPrefix.slice(0, -1)
+      : app.pathPrefix;
+    const normalizedPath = path.endsWith('/') && path !== '/'
+      ? path.slice(0, -1)
+      : path;
+
+    // 精确匹配 pathPrefix 不显示面包屑区域
+    if (normalizedPath === normalizedPathPrefix) {
+      return false;
+    }
   }
 
   // 个人中心页面不显示面包屑（孤立页面）
@@ -427,7 +488,7 @@ const showBreadcrumb = computed(() => {
     return false;
   }
 
-  // 其他页面显示
+  // 其他页面显示面包屑区域
   return true;
 });
 
@@ -801,6 +862,11 @@ onUnmounted(() => {
     position: relative;
     background-color: var(--el-bg-color);
     min-height: 0;
+
+    // 当不显示面包屑时，内容区域会自动占据 app-layout__main 的剩余高度
+    // 由于 app-layout__main 使用 flex 布局，app-layout__content 使用 flex: 1
+    // 当 app-layout__header 高度减少时（面包屑不显示），app-layout__content 会自动占据更多空间
+    // 不需要额外的样式调整，flex 布局会自动处理
 
 
     // 主应用路由视图（占据内容区域完整尺寸）

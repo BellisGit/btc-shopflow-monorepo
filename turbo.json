@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["tsconfig.json", ".eslintrc.js", ".prettierrc"],
   "tasks": {
@@ -14,7 +14,7 @@
       "outputs": []
     },
     "preview": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "cache": false,
       "persistent": true,
       "outputs": []

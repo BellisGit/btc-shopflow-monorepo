@@ -596,6 +596,7 @@ onUnmounted(() => {
   padding: 10px;
   min-height: 0;
   gap: 10px;
+  background-color: var(--el-bg-color);
 }
 
 .config-toolbar {

@@ -113,6 +113,7 @@ import { getManifestRoute } from '@btc/subapp-manifests';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { getAppById } from '@configs/app-scanner';
 
 // 判断是否为SVG图标
 function isSvgIcon(iconName?: string): boolean {
@@ -515,36 +516,36 @@ function toRefresh() {
   }
 }
 
-// 回到当前应用首页
+// 回到当前应用首页（使用全局配置，包含所有子应用）
 function toHome() {
   const currentApp = getCurrentAppFromPath(route.path);
+  const app = getAppById(currentApp);
 
-  // 关键：财务应用在生产环境子域名（finance.bellis.com.cn）时，首页应该回到子域名根路径
-  // 即 https://finance.bellis.com.cn/ ，而不是主域名的 /finance
-  if (currentApp === 'finance' && typeof window !== 'undefined') {
+  // 判断目标路径：
+  // - 生产环境子域名：跳转到 /（子域名本身就是应用的根路径）
+  // - 开发/预览环境主域名：子应用跳转到 pathPrefix（如 /logistics），主应用跳转到 /
+  let targetPath = '/';
+
+  if (app && app.type === 'sub' && typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const isProductionSubdomain = hostname !== 'bellis.com.cn' && hostname.endsWith('bellis.com.cn');
+    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
-    if (isProductionSubdomain) {
-      // 生产环境子域名：回到当前子域名根路径
-      window.location.href = `${protocol}//${hostname}/`;
-      return;
+    if (isProductionSubdomain && app.subdomain && hostname === app.subdomain) {
+      // 生产环境子域名：首页是 /
+      targetPath = '/';
+    } else if (app.pathPrefix) {
+      // 开发/预览环境主域名：子应用首页是 pathPrefix
+      targetPath = app.pathPrefix;
     }
+  } else if (app && app.type === 'main') {
+    // 主应用：首页是 /
+    targetPath = '/';
   }
 
-  const appHomes: Record<string, string> = {
-    system: '/', // 系统域首页
-    admin: '/admin', // 管理域首页
-    logistics: '/logistics',
-    engineering: '/engineering',
-    quality: '/quality',
-    production: '/production',
-    finance: '/finance',
-    monitor: '/monitor', // 监控应用首页
-  };
-
-  router.push(appHomes[currentApp] || '/');
+  // 仅当不在首页时执行跳转，避免无效操作
+  if (route.path !== targetPath) {
+    router.push(targetPath);
+  }
 }
 
 // 调整滚动位置
@@ -696,13 +697,17 @@ watch(
   border-bottom: 1px solid var(--el-border-color-extra-light);
 
   &__op {
-    display: flex !important; // 使用 !important 确保优先级，防止被全局样式覆盖
-    flex-direction: row !important; // 明确指定横向排列，防止被全局样式覆盖
+    display: flex;
     align-items: center;
     list-style: none;
     margin: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
     padding: 0 !important; // 使用 !important 确保优先级，防止浏览器默认样式影响
     gap: 5px !important; // 使用 gap 统一间距，使用 !important 确保优先级
+
+    li {
+      display: flex;
+      flex-wrap: wrap;
+    }
   }
 
   &__container {
@@ -843,6 +848,12 @@ watch(
         }
       }
     }
+  }
+
+  // 标签页风格：tab-default
+  &.tab-default {
+    display: flex;
+    align-items: center;
   }
 
   // 标签页风格：tab-card

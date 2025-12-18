@@ -37,6 +37,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@btc/shared-components/store/process';
 import { getManifestRoute } from '@btc/subapp-manifests';
 import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
 
 // 判断是否为SVG图标
 function isSvgIcon(iconName?: string): boolean {
@@ -93,7 +94,39 @@ function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined
 
 // 根据路由生成面包屑（应用隔离）
 const breadcrumbList = computed<BreadcrumbItem[]>(() => {
+  // 如果路由 meta 中标记为首页，不显示面包屑
+  if (route.meta?.isHome === true) {
+    return [];
+  }
+
   const normalizedPath = route.path.replace(/\/+$/, '') || '/';
+
+  // 生产环境子域名判断：路径为 / 且当前应用是子应用（双重保险，即使 showBreadcrumb 判断失败也能保证不显示内容）
+  if (normalizedPath === '/' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const appBySubdomain = getAppBySubdomain(hostname);
+    // 如果通过子域名识别到子应用，则不显示面包屑
+    if (appBySubdomain && appBySubdomain.type === 'sub') {
+      return [];
+    }
+  }
+
+  // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
+  const subApps = getSubApps();
+  for (const app of subApps) {
+    const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+      ? app.pathPrefix.slice(0, -1)
+      : app.pathPrefix;
+    const normalizedPathForCheck = normalizedPath.endsWith('/') && normalizedPath !== '/'
+      ? normalizedPath.slice(0, -1)
+      : normalizedPath;
+
+    // 精确匹配 pathPrefix 不显示面包屑
+    if (normalizedPathForCheck === normalizedPathPrefix) {
+      return [];
+    }
+  }
+
   const currentApp = getCurrentAppFromPath(normalizedPath);
 
   const currentTab =
@@ -302,15 +335,37 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     quality: {},
     production: {},
     finance: {},
+    monitor: {
+      '/': [
+        { i18nKey: 'menu.monitor.overview' },
+      ],
+      '/ops/error': [
+        { i18nKey: 'menu.monitor.name' },
+        { i18nKey: 'menu.monitor.error' },
+      ],
+      '/ops/deployment-test': [
+        { i18nKey: 'menu.monitor.name' },
+        { i18nKey: 'menu.monitor.deploymentTest' },
+      ],
+    },
   };
 
+  // 如果路由 meta 中标记为首页，不显示面包屑（已在开头检查，这里保留兼容逻辑）
+  // 系统应用和管理应用的首页不显示面包屑
   const homePaths = new Set([
     '/',
     '/admin',
   ]);
 
+  // 特殊处理：系统应用（system）和管理应用（admin）的首页不显示面包屑
   if (homePaths.has(normalizedPath)) {
-    return [];
+    // 如果是系统应用或管理应用的首页，不显示面包屑
+    if (normalizedPath === '/' && currentApp === 'system') {
+      return [];
+    }
+    if (normalizedPath === '/admin' && currentApp === 'admin') {
+      return [];
+    }
   }
 
   // 获取面包屑数据
@@ -321,10 +376,37 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   if (currentApp === 'admin') {
     breadcrumbData = adminAppBreadcrumbs[normalizedPath];
   } else if (currentApp && subAppBreadcrumbs[currentApp]) {
+    // 先尝试直接匹配
     breadcrumbData = subAppBreadcrumbs[currentApp][normalizedPath];
+
+    // 如果直接匹配失败，尝试移除应用前缀（处理主域名访问的情况，如 /monitor/ops/error -> /ops/error）
+    if (!breadcrumbData && normalizedPath.startsWith(`/${currentApp}/`)) {
+      const pathWithoutPrefix = normalizedPath.substring(`/${currentApp}`.length) || '/';
+      breadcrumbData = subAppBreadcrumbs[currentApp][pathWithoutPrefix];
+    }
+
+    // 如果仍然没有匹配到，尝试在所有子应用中查找（处理子域名访问的情况，如 monitor.bellis.com.cn/ops/error）
+    if (!breadcrumbData) {
+      for (const [appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
+        if (appBreadcrumbs[normalizedPath]) {
+          breadcrumbData = appBreadcrumbs[normalizedPath];
+          break;
+        }
+      }
+    }
   } else {
-    // 如果无法识别应用，尝试使用 admin 应用的面包屑配置（作为后备方案）
-    breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+    // 如果无法识别应用，先尝试在所有子应用中查找
+    for (const [appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
+      if (appBreadcrumbs[normalizedPath]) {
+        breadcrumbData = appBreadcrumbs[normalizedPath];
+        break;
+      }
+    }
+
+    // 如果仍然没有匹配到，尝试使用 admin 应用的面包屑配置（作为后备方案）
+    if (!breadcrumbData) {
+      breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+    }
   }
 
   if (!breadcrumbData) {

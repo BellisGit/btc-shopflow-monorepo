@@ -8,7 +8,8 @@
 }
 
 // 全局设置 --el-bg-color，确保子应用加载时就能使用正确的背景色
-// 覆盖 Element Plus 默认的 #141414，统一使用 #0a0a0a
+// 注意：--el-bg-color-page 应该保持为 #141414（较浅的深色背景），以实现双重背景效果
+// 只有 --el-bg-color（组件背景）使用 #0a0a0a（较深的深色背景）
 // 注意：CSS 变量不支持 !important，但可以通过选择器优先级覆盖
 // 使用 html.dark:root 选择器（比 :root 优先级更高）确保覆盖 Element Plus 的样式
 // 在预览服务器上，确保样式优先级足够高，能够覆盖 Element Plus 的 dark/css-vars.css
@@ -17,7 +18,8 @@ html.dark,
 html.dark :root,
 html.dark html {
   --el-bg-color: #0a0a0a;
-  --el-bg-color-page: #0a0a0a;
+  // 保持 --el-bg-color-page 为 #141414，实现双重背景效果（外层较浅，内层较深）
+  // --el-bg-color-page: #141414; // 由 dark-theme.css 统一设置，这里不覆盖
 }
 
 // 暗黑模式样式
@@ -27,8 +29,8 @@ html.dark,
 .dark {
   // Element Plus 组件背景色使用 #0a0a0a
   --el-bg-color: #0a0a0a;
-  // Element Plus 页面背景色也使用 #0a0a0a（确保与组件背景色一致）
-  --el-bg-color-page: #0a0a0a;
+  // Element Plus 页面背景色保持为 #141414（较浅的深色背景），实现双重背景效果
+  // --el-bg-color-page: #141414; // 由 dark-theme.css 统一设置，这里不覆盖
 
   // View Transition 遮罩层 z-index 设置（参考 cool-admin-vue-8.x）
   // 当切换到暗黑模式时，旧视图（亮色）需要在上层显示
@@ -138,6 +140,7 @@ html.dark #app,
 html.dark #subapp-viewport {
   // 再次覆盖，确保在预览服务器上也能生效
   --el-bg-color: #0a0a0a;
-  --el-bg-color-page: #0a0a0a;
+  // 保持 --el-bg-color-page 为 #141414，实现双重背景效果（外层较浅，内层较深）
+  // --el-bg-color-page: #141414; // 由 dark-theme.css 统一设置，这里不覆盖
 }
 

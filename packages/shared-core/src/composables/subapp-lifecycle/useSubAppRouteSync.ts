@@ -130,6 +130,12 @@ export function setupRouteSync(context: SubAppContext, appId: string, basePath: 
     if (!syncingFromHost) {
       syncHostWithSubRoute(fullPath, basePath, context);
     }
+
+    // 关键：如果是首页（meta.isHome === true），不触发路由变化事件，避免添加 tab
+    if (to.meta?.isHome === true) {
+      return;
+    }
+
     // 优先使用 tabLabelKey，如果没有则使用 titleKey（admin-app 使用 titleKey）
     const tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
     const tabLabel =

@@ -1,49 +1,53 @@
 <template>
   <div class="error-monitor-page">
     <div class="error-monitor-container">
-      <!-- Toolbar -->
-      <BtcRow class="error-monitor-toolbar">
-        <BtcFlex1 />
-        <el-button @click="clearError" type="danger">{{ t('monitor.clear') }}</el-button>
-        <el-select v-model="cleanupPeriod" style="width: 130px;" @change="handleCleanupPeriodChange">
-          <el-option :label="t('monitor.cleanup.today')" value="today" />
-          <el-option :label="t('monitor.cleanup.3days')" value="3days" />
-          <el-option :label="t('monitor.cleanup.7days')" value="7days" />
-          <el-option :label="t('monitor.cleanup.30days')" value="30days" />
-          <el-option :label="t('monitor.cleanup.never')" value="never" />
-        </el-select>
-        <el-select v-model="filterSource" style="width: 150px;">
-          <el-option :label="t('monitor.filter.allSources')" value="all" />
-          <el-option :label="t('micro_app.main.title')" value="main-app" />
-          <el-option :label="t('micro_app.admin.title')" value="admin" />
-          <el-option :label="t('micro_app.logistics.title')" value="logistics" />
-          <el-option :label="t('micro_app.quality.title')" value="quality" />
-          <el-option :label="t('micro_app.production.title')" value="production" />
-          <el-option :label="t('micro_app.engineering.title')" value="engineering" />
-          <el-option :label="t('micro_app.finance.title')" value="finance" />
-        </el-select>
-        <el-select v-model="filterType" style="width: 120px;">
-          <el-option :label="t('monitor.filter.allTypes')" value="all" />
-          <el-option :label="t('monitor.filter.onlyError')" value="error" />
-          <el-option :label="t('monitor.filter.onlyWarn')" value="warn" />
-        </el-select>
-        <BtcErrorMonitorExport
-          :filter-source="filterSource"
-          :filter-type="filterType"
-          :get-app-display-name="getAppDisplayName"
-          :get-error-type-display-name="getErrorTypeDisplayName"
-        />
-      </BtcRow>
+      <BtcCrud :service="emptyService" :auto-load="false" padding="0">
+        <!-- Toolbar -->
+        <BtcRow class="error-monitor-toolbar">
+          <BtcFlex1 />
+          <el-button @click="clearError" type="danger">{{ t('monitor.clear') }}</el-button>
+          <el-select v-model="cleanupPeriod" style="width: 130px;" @change="handleCleanupPeriodChange">
+            <el-option :label="t('monitor.cleanup.today')" value="today" />
+            <el-option :label="t('monitor.cleanup.3days')" value="3days" />
+            <el-option :label="t('monitor.cleanup.7days')" value="7days" />
+            <el-option :label="t('monitor.cleanup.30days')" value="30days" />
+            <el-option :label="t('monitor.cleanup.never')" value="never" />
+          </el-select>
+          <el-select v-model="filterSource" style="width: 150px;">
+            <el-option :label="t('monitor.filter.allSources')" value="all" />
+            <el-option :label="t('micro_app.main.title')" value="main-app" />
+            <el-option :label="t('micro_app.admin.title')" value="admin" />
+            <el-option :label="t('micro_app.logistics.title')" value="logistics" />
+            <el-option :label="t('micro_app.quality.title')" value="quality" />
+            <el-option :label="t('micro_app.production.title')" value="production" />
+            <el-option :label="t('micro_app.engineering.title')" value="engineering" />
+            <el-option :label="t('micro_app.finance.title')" value="finance" />
+          </el-select>
+          <el-select v-model="filterType" style="width: 120px;">
+            <el-option :label="t('monitor.filter.allTypes')" value="all" />
+            <el-option :label="t('monitor.filter.onlyError')" value="error" />
+            <el-option :label="t('monitor.filter.onlyWarn')" value="warn" />
+          </el-select>
+          <BtcErrorMonitorExport
+            :filter-source="filterSource"
+            :filter-type="filterType"
+            :get-app-display-name="getAppDisplayName"
+            :get-error-type-display-name="getErrorTypeDisplayName"
+          />
+        </BtcRow>
 
-      <!-- Table -->
-      <div class="error-monitor-table">
-        <BtcErrorMonitor
-          ref="errorMonitorRef"
-          :filter-source="filterSource"
-          :filter-type="filterType"
-          @clear="clearError"
-        />
-      </div>
+        <!-- Table -->
+        <BtcRow>
+          <div class="error-monitor-table">
+            <BtcErrorMonitor
+              ref="errorMonitorRef"
+              :filter-source="filterSource"
+              :filter-type="filterType"
+              @clear="clearError"
+            />
+          </div>
+        </BtcRow>
+      </BtcCrud>
     </div>
   </div>
 </template>
@@ -51,12 +55,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { clearErrorList, getErrorListSync, onErrorListUpdate, setCleanupPeriod, type CleanupPeriod } from '@btc/shared-utils/error-monitor';
-import { BtcRow, BtcFlex1 } from '@btc/shared-components';
+import { BtcCrud, BtcRow, BtcFlex1 } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import BtcErrorMonitor from '../components/BtcErrorMonitor.vue';
 import BtcErrorMonitorExport from '../components/BtcErrorMonitorExport.vue';
 
 const { t } = useI18n();
+
+// 创建一个空的服务用于 BtcCrud（不需要实际功能，只是为了获得正确的间距）
+const emptyService = {
+  page: async () => ({ list: [], total: 0 }),
+  add: async () => ({}),
+  update: async () => ({}),
+  delete: async () => ({}),
+};
 
 // 表格引用
 const errorMonitorRef = ref<InstanceType<typeof BtcErrorMonitor>>();
@@ -109,11 +121,11 @@ const getStoredCleanupPeriod = (): CleanupPeriod => {
     const stored = localStorage.getItem('btc_error');
     if (stored) {
       const data = JSON.parse(stored);
-      if (data.cleanupPeriod && 
-          (data.cleanupPeriod === 'today' || 
-           data.cleanupPeriod === '3days' || 
-           data.cleanupPeriod === '7days' || 
-           data.cleanupPeriod === '30days' || 
+      if (data.cleanupPeriod &&
+          (data.cleanupPeriod === 'today' ||
+           data.cleanupPeriod === '3days' ||
+           data.cleanupPeriod === '7days' ||
+           data.cleanupPeriod === '30days' ||
            data.cleanupPeriod === 'never')) {
         return data.cleanupPeriod;
       }
@@ -183,10 +195,10 @@ onUnmounted(() => {
   flex-direction: column;
   padding: 10px;
   min-height: 0;
+  background-color: var(--el-bg-color);
 }
 
 .error-monitor-toolbar {
-  margin-bottom: 10px;
   flex-shrink: 0;
 }
 
