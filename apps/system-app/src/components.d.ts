@@ -11,7 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    ApiSwitch: typeof import('./components/DevTools/ApiSwitch.vue')['default']
+    ApiSwitch: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/ApiSwitch.vue')['default']
     AppLayout: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/index.vue')['default']
     AppSkeleton: typeof import('./../../../packages/shared-components/src/components/basic/app-skeleton/index.vue')['default']
     BasicSettings: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/basic-settings/index.vue')['default']
@@ -61,7 +61,6 @@ declare module 'vue' {
     ButtonStyle: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/button-style/index.vue')['default']
     ColorSettings: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/color-settings/index.vue')['default']
     ContainerWidth: typeof import('./../../../packages/shared-components/src/components/others/btc-user-setting/settings/container-width/index.vue')['default']
-    DevTools: typeof import('./components/DevTools/index.vue')['default']
     DocsIframe: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/docs-iframe/index.vue')['default']
     DualMenu: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/dual-menu/index.vue')['default']
     DynamicMenu: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/dynamic-menu/index.vue')['default']
@@ -110,8 +109,8 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EmailVerifyForm: typeof import('./../../../packages/shared-components/src/components/feedback/btc-identity-verify/components/EmailVerifyForm.vue')['default']
-    EnvInfo: typeof import('./components/DevTools/EnvInfo.vue')['default']
-    EpsViewer: typeof import('./components/DevTools/EpsViewer.vue')['default']
+    EnvInfo: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/EnvInfo.vue')['default']
+    EpsViewer: typeof import('./../../../packages/shared-components/src/components/others/btc-dev-tools/EpsViewer.vue')['default']
     Example: typeof import('./../../../packages/shared-components/src/components/others/btc-svg/example.vue')['default']
     GlobalSearch: typeof import('./../../../packages/shared-components/src/components/layout/app-layout/global-search/index.vue')['default']
     IconButtonInner: typeof import('./../../../packages/shared-components/src/components/basic/btc-icon-button/icon-button-inner.vue')['default']

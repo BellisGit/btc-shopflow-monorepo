@@ -1348,9 +1348,51 @@ function buildAllPackages() {
 }
 
 /**
+ * 复制单个应用到 dist 目录
+ */
+function copySingleAppToDist(appName) {
+  if (!APP_DOMAIN_MAP[appName]) {
+    console.error(`❌ 未知的应用名称: ${appName}`);
+    console.error(`   支持的应用: ${Object.keys(APP_DOMAIN_MAP).join(', ')}`);
+    process.exit(1);
+  }
+
+  const domain = APP_DOMAIN_MAP[appName];
+  const appDistDir = join(rootDir, 'apps', appName, 'dist');
+  
+  if (!existsSync(appDistDir)) {
+    console.error(`❌ ${appName} 的构建产物目录不存在: ${appDistDir}`);
+    console.error(`   请先运行: pnpm build:${appName.replace('-app', '')}`);
+    process.exit(1);
+  }
+
+  // 确保 dist 目录存在
+  if (!existsSync(ROOT_DIST_DIR)) {
+    mkdirSync(ROOT_DIST_DIR, { recursive: true });
+  }
+
+  const success = copyAppDist(appName, domain);
+  if (success) {
+    console.log(`✅ ${appName} 已复制到 dist/${domain}`);
+  } else {
+    console.error(`❌ ${appName} 复制失败`);
+    process.exit(1);
+  }
+}
+
+/**
  * 主函数
  */
 function main() {
+  // 检查是否指定了单个应用
+  const args = process.argv.slice(2);
+  const appIndex = args.indexOf('--app');
+  if (appIndex !== -1 && args[appIndex + 1]) {
+    const appName = args[appIndex + 1];
+    copySingleAppToDist(appName);
+    return;
+  }
+
   console.log('🚀 开始构建所有应用并复制到 dist 目录...\n');
   console.log('='.repeat(60));
   console.log('');

@@ -109,7 +109,7 @@ let unsubscribe: (() => void) | null = null;
 
 onMounted(() => {
   loadErrorList();
-  
+
   // 监听错误列表更新事件
   unsubscribe = onErrorListUpdate((newErrorList) => {
     errorList.value = newErrorList || [];
@@ -132,6 +132,7 @@ onUnmounted(() => {
   height: 100%;
   padding: 24px;
   box-sizing: border-box;
+  background-color: var(--el-bg-color);
 }
 
 .monitor-home__intro {

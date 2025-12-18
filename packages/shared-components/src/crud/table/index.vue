@@ -637,37 +637,69 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-// Element Plus 原生支持列宽调整，无需额外样式
-</style>
-
-<style lang="scss">
-// 修复固定列时操作列被遮挡的问题
-// Element Plus 固定列的默认 z-index：
-// - 固定左侧列：z-index: 3
-// - 固定右侧列：z-index: 3
-// 当同时有固定左侧列和固定右侧列时，需要确保固定右侧列（包含操作列）的 z-index 更高
-// 提高 z-index 值以确保在生产环境中也能正确显示（避免被其他列遮挡）
-// 修复固定列 z-index 问题（组件级别的样式，与全局样式配合使用）
-// 使用更具体的选择器确保样式优先级足够高
+// 修复固定列层级遮挡问题
+// 核心问题：样式穿透、选择器权重、层级上下文、背景色透明
 .btc-table {
-  // 确保固定右侧列（包含操作列）的 z-index 高于固定左侧列
-  // 使用更高的 z-index 值（100），确保即使在生产环境构建后也能正确显示
-  .el-table__fixed-right {
-    z-index: 100 !important;
-  }
+  // 使用 :deep() 穿透 scoped 样式隔离，确保样式作用到 el-table 内部 DOM
+  :deep(.el-table) {
+    // 1. 固定右侧列（操作列）- 最高层级
+    .el-table__fixed-right {
+      position: absolute !important; // 确保定位生效
+      z-index: 101 !important; // 高于左侧列，确保在最上层
+      background-color: var(--el-bg-color) !important; // 关键：设置背景色，避免透明穿透
+    }
 
-  // 确保固定右侧列的补丁（用于遮住滚动条）也使用正确的 z-index
-  .el-table__fixed-right-patch {
-    z-index: 100 !important;
-  }
+    .el-table__fixed-right-patch {
+      z-index: 101 !important;
+      background-color: var(--el-bg-color) !important;
+    }
 
-  // 确保固定左侧列的 z-index 低于操作列
-  .el-table__fixed-left {
-    z-index: 3 !important;
-  }
+    .el-table__fixed-right-header,
+    .el-table__fixed-right-body {
+      z-index: 101 !important;
+      background-color: var(--el-bg-color) !important;
+    }
 
-  .el-table__fixed-left-patch {
-    z-index: 3 !important;
+    // 2. 固定左侧列 - 层级低于右侧列
+    .el-table__fixed-left {
+      position: absolute !important; // 确保定位生效
+      z-index: 100 !important; // 低于右侧列，但高于滚动区域
+      background-color: var(--el-bg-color) !important; // 关键：设置背景色，避免透明穿透
+    }
+
+    .el-table__fixed-left-patch {
+      z-index: 100 !important;
+      background-color: var(--el-bg-color) !important;
+    }
+
+    .el-table__fixed-left-header,
+    .el-table__fixed-left-body {
+      z-index: 100 !important;
+      background-color: var(--el-bg-color) !important;
+    }
+
+    // 3. 中间滚动区域 - 最低层级，确保在固定列下方
+    .el-table__inner {
+      .el-table__header-wrapper,
+      .el-table__body-wrapper {
+        position: relative !important; // 补全定位，确保 z-index 生效
+        z-index: 1 !important; // 低于所有固定列，确保从固定列下方滚动
+      }
+    }
+
+    // 4. 修复固定列边框（右侧列的左边框）
+    .el-table__fixed-right::before,
+    .el-table__fixed-right-patch::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -1px;
+      width: 1px;
+      background-color: var(--el-border-color);
+      pointer-events: none;
+      z-index: 102 !important; // 边框在最上层
+    }
   }
 }
 </style>

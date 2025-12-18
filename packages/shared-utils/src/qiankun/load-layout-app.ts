@@ -932,22 +932,21 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           } else {
             // 如果域名不是 layout-app，但路径是 /assets/xxx.js，可能是 layout-app 的资源被错误请求
             // 这种情况通常发生在子应用尝试加载 layout-app 的资源时
-            // 关键：只有当 base 标签存在时，才认为是 layout-app 的资源（需要修复）
-            if (url.includes('/assets/') && (url.endsWith('.js') || url.endsWith('.mjs')) && baseTag !== null) {
+            // 关键：只有当 base 标签存在且 manifest 中有这个文件时，才认为是 layout-app 的资源（需要修复）
+            // 注意：如果域名不是 layout-app，且 manifest 中没有这个文件，这应该是子应用的资源，不应该拦截
+            if (url.includes('/assets/') && (url.endsWith('.js') || url.endsWith('.mjs')) && baseTag !== null && cachedManifest) {
               // 检查是否可能是 layout-app 的资源（通过 manifest 验证）
               // 如果 manifest 中有这个文件，说明是 layout-app 的资源
-              if (cachedManifest) {
-                const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
-                const existsInManifest = Object.values(cachedManifest).some(entry => {
-                  if (entry.file) {
-                    const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
-                    return entryFileName === fileName;
-                  }
-                  return false;
-                });
-                if (existsInManifest) {
-                  isLayoutAsset = true;
+              const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+              const existsInManifest = Object.values(cachedManifest).some(entry => {
+                if (entry.file) {
+                  const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
+                  return entryFileName === fileName;
                 }
+                return false;
+              });
+              if (existsInManifest) {
+                isLayoutAsset = true;
               }
             }
           }
@@ -956,16 +955,47 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           isLayoutAsset = true;
         } else if (url.startsWith('/assets/') && !url.startsWith('/assets/layout/')) {
           // 绝对路径 /assets/xxx.js（没有 /layout/）
-          // 关键：这可能是子应用的资源，只有当 base 标签存在时才可能是 layout-app 的资源（需要修复）
-          // 如果 base 标签不存在，这应该是子应用的资源，不应该拦截
-          isLayoutAsset = baseTag !== null;
+          // 关键：这可能是子应用的资源，不应该被拦截
+          // 只有当通过 manifest 验证确认是 layout-app 的资源时，才认为是 layout-app 的资源
+          // 注意：子应用的资源在 /assets/ 目录下，layout-app 的资源在 /assets/layout/ 目录下
+          // 如果 URL 是相对路径 /assets/xxx.js，且不是 layout-app 的域名，这应该是子应用的资源
+          if (baseTag !== null && cachedManifest) {
+            // 只有当 base 标签存在且 manifest 中有这个文件时，才认为是 layout-app 的资源
+            const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+            const existsInManifest = Object.values(cachedManifest).some(entry => {
+              if (entry.file) {
+                const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
+                return entryFileName === fileName;
+              }
+              return false;
+            });
+            isLayoutAsset = existsInManifest;
+          } else {
+            // 如果没有 base 标签或 manifest，这应该是子应用的资源，不应该拦截
+            isLayoutAsset = false;
+          }
         } else if (url.startsWith('assets/layout/') || url.startsWith('./assets/layout/')) {
           // 相对路径 assets/layout/xxx.js，肯定是 layout-app 的资源
           isLayoutAsset = true;
         } else if ((url.startsWith('assets/') || url.startsWith('./assets/')) && !url.includes('layout/')) {
           // 相对路径 assets/xxx.js（没有 layout/）
-          // 关键：只有当 base 标签存在时，才可能是 layout-app 的资源（需要修复）
-          isLayoutAsset = baseTag !== null;
+          // 关键：这可能是子应用的资源，不应该被拦截
+          // 只有当通过 manifest 验证确认是 layout-app 的资源时，才认为是 layout-app 的资源
+          if (baseTag !== null && cachedManifest) {
+            // 只有当 base 标签存在且 manifest 中有这个文件时，才认为是 layout-app 的资源
+            const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+            const existsInManifest = Object.values(cachedManifest).some(entry => {
+              if (entry.file) {
+                const entryFileName = entry.file.substring(entry.file.lastIndexOf('/') + 1);
+                return entryFileName === fileName;
+              }
+              return false;
+            });
+            isLayoutAsset = existsInManifest;
+          } else {
+            // 如果没有 base 标签或 manifest，这应该是子应用的资源，不应该拦截
+            isLayoutAsset = false;
+          }
         }
 
 

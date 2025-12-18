@@ -109,21 +109,17 @@ pnpm install
 ### 开发模式
 
 ```bash
-# 启动所有应用开发服务器
+# 启动默认应用开发服务器（使用 apps.config.json 中的 defaultDevApps）
 pnpm dev
 
-# 或启动所有应用（包含依赖构建）
+# 启动所有应用开发服务器
 pnpm dev:all
 
-# 启动特定应用
-pnpm dev:system      # 系统应用
-pnpm dev:admin       # 管理应用
-pnpm dev:logistics   # 物流应用
-pnpm dev:production  # 生产应用
-pnpm dev:quality     # 品质应用
-pnpm dev:engineering # 工程应用
-pnpm dev:finance     # 财务应用
-pnpm dev:docs        # 文档站点
+# 启动特定应用（使用参数化脚本）
+pnpm dev:app --app=system-app    # 系统应用
+pnpm dev:app --app=admin-app     # 管理应用
+pnpm dev:app --app=logistics-app # 物流应用
+# ... 其他应用类似
 ```
 
 ### 构建项目
@@ -132,11 +128,27 @@ pnpm dev:docs        # 文档站点
 # 构建所有应用
 pnpm build:all
 
-# 构建特定应用
-pnpm build:system
-pnpm build:admin
-pnpm build:logistics
+# 构建特定应用（使用参数化脚本）
+pnpm build:app --app=system-app
+pnpm build:app --app=admin-app
+pnpm build:app --app=logistics-app
 # ... 其他应用类似
+```
+
+### 预览构建结果
+
+```bash
+# 预览所有应用
+pnpm preview:all
+
+# 预览特定应用
+pnpm preview:app --app=system-app
+
+# 构建并预览（单个应用）
+pnpm build-preview:app --app=system-app
+
+# 构建并预览（所有应用）
+pnpm build-preview:all
 ```
 
 ## 🚢 部署
@@ -146,25 +158,26 @@ pnpm build:logistics
 项目支持在本地构建 Docker 镜像并自动触发 GitHub Actions 进行远程部署：
 
 ```bash
-# 构建并部署系统应用
-pnpm build-deploy:system
-
-# 构建并部署其他应用
-pnpm build-deploy:admin
-pnpm build-deploy:logistics
-pnpm build-deploy:quality
-pnpm build-deploy:production
-pnpm build-deploy:engineering
-pnpm build-deploy:finance
-pnpm build-deploy:mobile
+# 构建并部署应用（使用参数化脚本）
+pnpm build-deploy:app --app=system-app
+pnpm build-deploy:app --app=admin-app
+pnpm build-deploy:app --app=logistics-app
+# ... 其他应用类似
 
 # 部署所有应用
 pnpm deploy:all
 
+# 部署特定应用
+pnpm deploy:app --app=system-app
+
+# 部署静态资源
+pnpm deploy:static:app --app=system-app
+pnpm deploy:static:all
+
 # Kubernetes 部署（增量部署）
 pnpm build-deploy:k8s              # 自动检测变更的应用
 pnpm build-deploy:k8s:all          # 部署所有应用
-pnpm build-deploy:k8s:system       # 部署特定应用
+pnpm build-deploy:k8s:app --app=system-app  # 部署特定应用
 ```
 
 ### 部署流程
@@ -256,14 +269,23 @@ develop (开发) → release/* (测试) → main (生产)
 项目使用 ESLint + Prettier 进行代码格式化，使用 Commitlint 规范提交信息。
 
 ```bash
-# 代码检查
+# 代码检查（所有应用）
 pnpm lint
+
+# 代码检查（特定应用）
+pnpm lint:app --app=system-app
+
+# 自动修复代码问题
+pnpm lint:fix --app=system-app
 
 # 代码格式化
 pnpm format
 
-# 类型检查
+# 类型检查（所有应用）
 pnpm type-check
+
+# 类型检查（特定应用）
+pnpm type-check:app --app=system-app
 
 # 检查循环依赖
 pnpm check:circular
@@ -358,6 +380,8 @@ pnpm test:ci
 
 - [架构设计文档](./implementation-docs/)
 - [组件文档](./apps/docs-site-app/)
+- [脚本使用指南](./docs/SCRIPTS_USAGE.md)
+- [版本发布指南](./docs/VERSION_RELEASE_GUIDE.md)
 - [部署文档](./apps/docs-site-app/guides/deployment/)
   - [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
   - [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
@@ -374,11 +398,31 @@ pnpm test:ci
 
 ### 版本发布流程
 
+#### 使用自动化脚本（推荐）
+
+```bash
+# 发布新版本（例如 1.0.0）
+pnpm release 1.0.0
+```
+
+脚本会自动执行完整的 Git Flow 流程：
+1. 从 `develop` 创建 `release/v1.x.x` 分支
+2. 在 release 分支进行发布准备（修复bug、更新版本号等）
+3. 合并 release 到 `main` 分支并打标签
+4. 合并 release 回 `develop` 分支
+5. 删除临时 release 分支
+6. 推送所有更改到远程
+
+#### 手动发布流程
+
 1. **创建 Release 分支**：从 `develop` 创建 `release/v1.x.x` 分支
 2. **测试和修复**：在 release 分支上进行测试和 bug 修复
 3. **合并到 main**：测试通过后合并到 `main` 分支
 4. **打标签**：在 `main` 分支上打版本标签（如 `v1.0.0`）
-5. **推送标签**：将标签推送到远程仓库
+5. **合并回 develop**：将 release 分支合并回 `develop`
+6. **推送标签**：将标签和分支推送到远程仓库
+
+详细说明请参考：[版本发布指南](./docs/VERSION_RELEASE_GUIDE.md)
 
 ## 📄 许可证
 

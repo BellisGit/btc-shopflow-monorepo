@@ -66,6 +66,12 @@
           <span class="error-time">{{ row.time }}</span>
         </template>
       </el-table-column>
+
+      <template #empty>
+        <div class="error-table__empty">
+          <el-empty :image-size="100" description="暂无数据" />
+        </div>
+      </template>
     </el-table>
 
     <div class="error-pagination">
@@ -287,6 +293,13 @@ defineExpose({
   .el-table__body-wrapper {
     max-height: 100%;
   }
+}
+
+.error-table__empty {
+  padding: 40px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .error-pagination {

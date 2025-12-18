@@ -28,9 +28,10 @@ body {
 }
 
 // 暗色模式下的背景色
+// 注意：body 应该使用较浅的深色背景 #141414，实现双重背景效果
 html.dark,
 html.dark body {
-  background-color: var(--el-bg-color-page, #0a0a0a);
+  background-color: var(--el-bg-color-page, #141414);
   color: var(--el-text-color-primary, #e5eaf3);
 }
 

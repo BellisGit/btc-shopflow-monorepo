@@ -274,6 +274,12 @@ const detectCurrentApp = () => {
     'finance.bellis.com.cn': 'finance',
   };
 
+  // 监控应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
+  if (isProductionSubdomain && hostname === 'monitor.bellis.com.cn') {
+    currentApp.value = 'monitor';
+    return;
+  }
+
   // 如果在生产环境子域名下，直接通过 hostname 判断
   if (isProductionSubdomain && subdomainMap[hostname]) {
     currentApp.value = subdomainMap[hostname];
@@ -283,6 +289,11 @@ const detectCurrentApp = () => {
   // 如果在生产环境主域名下，通过路径前缀判断
   if (isProduction && hostname === 'bellis.com.cn') {
     const path = window.location.pathname;
+    // 监控应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
+    if (path.startsWith('/monitor')) {
+      currentApp.value = 'monitor';
+      return;
+    }
     if (path.startsWith('/docs')) {
       currentApp.value = 'docs';
     } else if (path.startsWith('/logistics')) {
@@ -306,6 +317,11 @@ const detectCurrentApp = () => {
 
   // 开发/预览环境：通过路径前缀判断
   const path = window.location.pathname;
+  // 监控应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
+  if (path.startsWith('/monitor')) {
+    currentApp.value = 'monitor';
+    return;
+  }
   if (path.startsWith('/docs')) {
     currentApp.value = 'docs';
   } else if (path.startsWith('/logistics')) {
