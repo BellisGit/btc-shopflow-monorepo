@@ -3,7 +3,15 @@
  * 基于 axios，参考 cool-admin 的实现
  */
 
-import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios from 'axios';
+// axios 1.x 类型导入：直接使用 any 类型作为临时解决方案
+// 注意：axios 1.12.2 的类型导出在不同 TypeScript 配置下可能表现不同
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AxiosResponse = any;
+
+// 定义 AxiosRequestConfig 类型，使用 any 作为兜底
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AxiosRequestConfig = any;
 
 /*
 interface ApiResponse<T = any> {
@@ -13,7 +21,7 @@ interface ApiResponse<T = any> {
 }
 */
 
-export interface RequestOptions extends AxiosRequestConfig {
+export interface RequestOptions {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'PATCH';
   data?: any;
@@ -157,7 +165,7 @@ export function createRequest(baseURL: string = ''): Request {
   }
 
   // 创建 axios 实例
-  const axiosInstance = axios.create({
+  const axiosInstance = (axios as any).create({
     baseURL: finalBaseURL,
     timeout: 120000, // 增加到 120 秒（2分钟），避免长时间请求超时
     withCredentials: true, // 始终设置为 true，发送 cookie
@@ -324,7 +332,7 @@ export function createRequest(baseURL: string = ''): Request {
       method,
       data,
       params,
-      headers,
+      headers: headers || {},
       timeout,
       // 如果提供了自定义 baseURL，传递给拦截器处理
       baseURL: customBaseURL,

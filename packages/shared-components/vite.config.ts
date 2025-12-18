@@ -1,5 +1,6 @@
-﻿import { defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import dts from 'vite-plugin-dts';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
@@ -13,7 +14,7 @@ function copyDarkThemePlugin(): Plugin {
       const srcFile = resolve(__dirname, 'src/styles/dark-theme.css');
       const distDir = resolve(__dirname, 'dist/styles');
       const distFile = resolve(distDir, 'dark-theme.css');
-      
+
       try {
         mkdirSync(distDir, { recursive: true });
         copyFileSync(srcFile, distFile);
@@ -22,7 +23,7 @@ function copyDarkThemePlugin(): Plugin {
         console.error('[copy-dark-theme] ✗ 复制失败:', error);
       }
     },
-  };
+  } as Plugin;
 }
 
 export default defineConfig({
@@ -55,6 +56,18 @@ export default defineConfig({
   plugins: [
     vue(),
     copyDarkThemePlugin(),
+    dts({
+      include: ['src/**/*.ts', 'src/**/*.vue'],
+      exclude: ['src/**/*.d.ts', 'node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts'],
+      outDir: resolve(__dirname, 'dist'),
+      root: __dirname,
+      copyDtsFiles: false, // 不复制 .d.ts 文件，只从 .ts 文件生成
+      insertTypesEntry: true,
+      skipDiagnostics: true,
+      logLevel: 'silent',
+      tsconfigPath: resolve(__dirname, 'tsconfig.build.json'),
+      rollupTypes: false, // 禁用 rollupTypes，避免路径解析错误
+    }),
   ],
   css: {
     preprocessorOptions: {
@@ -85,7 +98,7 @@ export default defineConfig({
           '@btc/shared-utils': 'BTCSharedUtils',
           '@btc/subapp-manifests': 'BTCSubappManifests',
         },
-        assetFileNames: (assetInfo) => {
+        assetFileNames: (assetInfo: { name?: string }) => {
           if (assetInfo.name === 'style.css') {
             return 'style.css';
           }

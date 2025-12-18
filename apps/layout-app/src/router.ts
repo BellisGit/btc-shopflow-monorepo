@@ -61,7 +61,7 @@ if (typeof window !== 'undefined') {
 }
 
 // 路由守卫：处理未匹配的路由，在qiankun加载失败时显示404
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
   // 404页面直接放行
   if (to.path === '/404') {
     next();
@@ -101,7 +101,7 @@ router.beforeEach((to, _from, next) => {
   next();
 });
 
-router.afterEach((to) => {
+router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   // 跳过404页面
   if (to.path === '/404') {
     return;

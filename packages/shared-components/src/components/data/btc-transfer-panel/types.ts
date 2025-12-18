@@ -1,5 +1,5 @@
 import type { ComputedRef } from 'vue';
-import type { CrudService } from '@btc/shared-core/src/btc/crud';
+import type { CrudService } from '@btc/shared-core';
 
 export type TransferKey = string | number;
 

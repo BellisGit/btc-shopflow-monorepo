@@ -1,7 +1,6 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
 import type { ProcessManagementItem } from '@btc/shared-components';
 import { service } from '@/services/eps';
 

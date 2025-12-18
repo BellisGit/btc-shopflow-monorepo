@@ -22,11 +22,13 @@
       "@layout/*": ["src/*"],
       "@system/*": ["../system-app/src/*"],
       "@/*": ["../system-app/src/*"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../../configs/*"],
+      "@btc/shared-utils": ["../../packages/shared-utils/dist"],
+      "@btc/shared-utils/*": ["../../packages/shared-utils/dist/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "../../configs/**/*.ts", "../../types/**/*.d.ts"],
-  "exclude": ["node_modules", "dist", "vite.config.ts", "../../configs/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "vite.config.ts", "../../configs/**/*.d.ts", "../../packages/**/dist", "../../packages/**/dist/**"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

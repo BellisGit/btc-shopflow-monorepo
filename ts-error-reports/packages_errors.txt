@@ -1,0 +1,69 @@
+============================================================
+共享包 - TypeScript 类型错误合并报告
+============================================================
+
+生成时间: 2025/12/18 14:05:52
+涉及包数: 5
+总错误数: 0
+
+按包统计:
+------------------------------------------------------------
+  @btc/shared-components        : 0 个错误
+  @btc/shared-core              : 0 个错误
+  @btc/shared-utils             : 0 个错误
+  @btc/subapp-manifests         : 0 个错误
+  @btc/vite-plugin              : 0 个错误
+
+✅ 所有共享包均未发现类型错误
+
+============================================================
+各包完整输出:
+============================================================
+
+
+============================================================
+@btc/shared-components 完整输出:
+============================================================
+
+
+> @btc/shared-components@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components
+> vue-tsc --noEmit --project tsconfig.type-check.json
+
+
+
+============================================================
+@btc/shared-core 完整输出:
+============================================================
+
+
+> @btc/shared-core@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-core
+> tsc --noEmit --project tsconfig.type-check.json
+
+
+
+============================================================
+@btc/shared-utils 完整输出:
+============================================================
+
+
+> @btc/shared-utils@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-utils
+> tsc --noEmit
+
+
+
+============================================================
+@btc/subapp-manifests 完整输出:
+============================================================
+
+None of the selected packages has a "type-check" script
+
+
+============================================================
+@btc/vite-plugin 完整输出:
+============================================================
+
+
+> @btc/vite-plugin@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\vite-plugin
+> tsc --noEmit
+
+

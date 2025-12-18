@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="docs-iframe-wrapper" :class="{ 'is-hidden': !isVisible }">
     <iframe
       v-if="iframeCreated"
@@ -40,7 +40,7 @@ const GLOBAL_WARN_KEY = '__BTC_DOCS_IFRAME_PORT_WARNED__';
 // 动态获取文档服务器地址
 const getDocsUrl = () => {
   if (!import.meta.env.DEV) {
-    return '/internal/archive';
+    return '/';
   }
 
   // 开发环境：优先使用环境变量，否则从配置中获取
@@ -57,7 +57,7 @@ const getDocsUrl = () => {
   // 使用同步方式获取配置，避免异步问题
   let docsPort = '4172';
   let shouldWarn = false;
-  
+
   try {
     // 尝试从全局配置中获取（如果已加载）
     if ((window as any).__BTC_APP_CONFIGS__) {

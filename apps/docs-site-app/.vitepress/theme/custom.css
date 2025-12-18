@@ -1,23 +1,7 @@
 /* VitePress 自定义样式 */
 /* 注意：滚动由外部 el-scrollbar 处理，无需自定义滚动条样式 */
 
-/* 完全移除 VitePress 主题切换器（包括占据的空间） */
-.VPNavBar .VPNavBarAppearance {
-  display: none !important;
-}
-
-/* 强制覆盖VitePress的暗黑主题切换逻辑 */
-.VPNavBarAppearance,
-.VPSwitchAppearance {
-  display: none !important;
-}
-
-/* 隐藏所有与主题切换器相关的分割线 */
-.VPNavBar .content-body > .divider:last-of-type,
-.VPNavBarExtra .appearance,
-.VPMenu .appearance {
-  display: none !important;
-}
+/* 主题切换器已启用，允许文档应用独立控制主题 */
 
 /* 隐藏 VitePress 内置搜索框（搜索由主应用全局搜索提供） */
 .VPNavBar .VPNavBarSearch,
@@ -191,5 +175,33 @@ body {
 
   /* 导航栏背景 */
   --vp-nav-bg-color: var(--el-bg-color);
+}
+
+/* 自定义logo图标样式 - 返回系统应用 */
+.btc-logo-icon {
+  width: 24px;
+  height: 24px;
+  background-image: url('/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.btc-logo-icon rect,
+.btc-logo-icon circle {
+  display: none;
+}
+
+/* 确保logo图标在导航栏中正确显示 */
+.VPNavBarSocial .btc-logo-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.VPNavBarSocial .btc-logo-icon:hover {
+  opacity: 1;
 }
 

@@ -4,6 +4,36 @@
 		"name": "test",
 		"api": [
 			{
+				"name": "511",
+				"method": "GET",
+				"path": "/511",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "登录失败，未获取到令牌",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "512",
+				"method": "GET",
+				"path": "/512",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "keycloak客户端地址错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "500",
 				"method": "GET",
 				"path": "/500",
@@ -34,36 +64,6 @@
 				}
 			},
 			{
-				"name": "520",
-				"method": "GET",
-				"path": "/520",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "517",
-				"method": "GET",
-				"path": "/517",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "身份令牌已过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "513",
 				"method": "GET",
 				"path": "/513",
@@ -73,36 +73,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "521",
-				"method": "GET",
-				"path": "/521",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "初始密码错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "511",
-				"method": "GET",
-				"path": "/511",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "登录失败，未获取到令牌",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -139,6 +109,21 @@
 				}
 			},
 			{
+				"name": "517",
+				"method": "GET",
+				"path": "/517",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "身份令牌已过期",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "515",
 				"method": "GET",
 				"path": "/515",
@@ -148,81 +133,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "获取客户端密钥失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "512",
-				"method": "GET",
-				"path": "/512",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "keycloak客户端地址错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "523",
-				"method": "GET",
-				"path": "/523",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "数据错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "522",
-				"method": "GET",
-				"path": "/522",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "参数不能为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "528",
-				"method": "GET",
-				"path": "/528",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "验证码已过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -244,15 +154,105 @@
 				}
 			},
 			{
-				"name": "527",
+				"name": "526",
 				"method": "GET",
-				"path": "/527",
+				"path": "/526",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "手机号不存在",
+				"summary": "表单id过期",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "518",
+				"method": "GET",
+				"path": "/518",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "522",
+				"method": "GET",
+				"path": "/522",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "参数不能为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "523",
+				"method": "GET",
+				"path": "/523",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "数据错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "521",
+				"method": "GET",
+				"path": "/521",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "初始密码错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "520",
+				"method": "GET",
+				"path": "/520",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "没有该工号",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "528",
+				"method": "GET",
+				"path": "/528",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "验证码已过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -274,15 +274,15 @@
 				}
 			},
 			{
-				"name": "526",
+				"name": "527",
 				"method": "GET",
-				"path": "/526",
+				"path": "/527",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "表单id过期",
+				"summary": "手机号不存在",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -979,15 +979,15 @@
 				}
 			},
 			{
-				"name": "import",
+				"name": "export",
 				"method": "POST",
-				"path": "/import",
+				"path": "/export",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "IMPORT",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:import",
-				"summary": "导入bom表",
+				"permission": "system.base:sys_btc_bom:export",
+				"summary": "导出bom表",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -1005,15 +1005,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "import",
 				"method": "POST",
-				"path": "/export",
+				"path": "/import",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "IMPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:export",
-				"summary": "导出bom表",
+				"permission": "system.base:sys_btc_bom:import",
+				"summary": "导入bom表",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -1331,15 +1331,15 @@
 				}
 			},
 			{
-				"name": "import",
+				"name": "export",
 				"method": "POST",
-				"path": "/import",
+				"path": "/export",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "IMPORT",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_data:import",
-				"summary": "导入数据表",
+				"permission": "system.base:sys_btc_data:export",
+				"summary": "导出数据表",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1357,15 +1357,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "import",
 				"method": "POST",
-				"path": "/export",
+				"path": "/import",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "IMPORT",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_data:export",
-				"summary": "导出数据表",
+				"permission": "system.base:sys_btc_data:import",
+				"summary": "导入数据表",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1599,6 +1599,204 @@
 		},
 		"moduleKey": "system.base",
 		"namespace": "/api/system/base/data"
+	},
+	{
+		"prefix": "/api/system/base/approval",
+		"name": "approval",
+		"api": [
+			{
+				"name": "confirm",
+				"method": "POST",
+				"path": "/confirm",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "system.base:sys_approval:create",
+				"summary": "编辑",
+				"tag": "SysApprovalController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "revoke",
+				"method": "POST",
+				"path": "/revoke",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "system.base:sys_approval:create",
+				"summary": "撤销确认",
+				"tag": "SysApprovalController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "system.base:sys_approval:create",
+				"summary": "分页查询",
+				"tag": "SysApprovalController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "域ID",
+				"nullable": true,
+				"propertyName": "domainId",
+				"source": "domain_id",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "盘点编号",
+				"nullable": true,
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "状态",
+				"nullable": true,
+				"propertyName": "status",
+				"source": "status",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "确认人",
+				"nullable": true,
+				"propertyName": "confirmer",
+				"source": "confirmer",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "确认时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "name",
+				"nullable": true,
+				"propertyName": "name",
+				"source": "name",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "盘点编号",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "system.base",
+		"namespace": "/api/system/base/approval"
 	},
 	{
 		"prefix": "/api/system/base/data-source",
@@ -2159,15 +2357,15 @@
 				}
 			},
 			{
-				"name": "start",
+				"name": "update",
 				"method": "POST",
-				"path": "/start",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "START",
+				"action": "CREATE",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:start",
-				"summary": "开始盘点",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "编辑盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2185,15 +2383,15 @@
 				}
 			},
 			{
-				"name": "update",
+				"name": "add",
 				"method": "POST",
-				"path": "/update",
+				"path": "/add",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "编辑盘点基础表",
+				"summary": "新增盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2237,15 +2435,15 @@
 				}
 			},
 			{
-				"name": "add",
+				"name": "start",
 				"method": "POST",
-				"path": "/add",
+				"path": "/start",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "CREATE",
+				"action": "START",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "新增盘点基础表",
+				"permission": "logistics.warehouse:sys_check_base:start",
+				"summary": "开始盘点",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2593,15 +2791,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "page",
 				"method": "POST",
-				"path": "/export",
+				"path": "/page",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "EXPORT",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_diff:export",
-				"summary": "exportDiff",
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_diff:create",
+				"summary": "分页接口",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
@@ -2619,15 +2817,15 @@
 				}
 			},
 			{
-				"name": "page",
+				"name": "export",
 				"method": "POST",
-				"path": "/page",
+				"path": "/export",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "分页接口",
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_diff:export",
+				"summary": "exportDiff",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
@@ -2869,6 +3067,234 @@
 		"namespace": "/api/logistics/warehouse/diff"
 	},
 	{
+		"prefix": "/api/logistics/warehouse/sub-process",
+		"name": "subProcess",
+		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "selectPage",
+				"tag": "SysCheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "insertSubProcess",
+				"tag": "SysCheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_sub_process:create",
+				"summary": "editSubProcess",
+				"tag": "SysCheckSubProcessController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"columns": [
+			{
+				"comment": "主键ID",
+				"nullable": true,
+				"propertyName": "id",
+				"source": "id",
+				"type": "bigint",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "子流程编码",
+				"nullable": true,
+				"propertyName": "subProcessNo",
+				"source": "sub_process_no",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "主流程编号",
+				"nullable": true,
+				"propertyName": "checkNo",
+				"source": "check_no",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "流程状态",
+				"nullable": true,
+				"propertyName": "checkStatus",
+				"source": "check_status",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "开始时间",
+				"nullable": true,
+				"propertyName": "startTime",
+				"source": "start_time",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "结束时间",
+				"nullable": true,
+				"propertyName": "endTime",
+				"source": "end_time",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "剩余时间",
+				"nullable": true,
+				"propertyName": "remainingSeconds",
+				"source": "remaining_seconds",
+				"type": "bigint",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "父级流程",
+				"nullable": true,
+				"propertyName": "parentProcessNo",
+				"source": "parent_process_no",
+				"type": "varchar",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "创建时间",
+				"nullable": true,
+				"propertyName": "createdAt",
+				"source": "created_at",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "更新时间",
+				"nullable": true,
+				"propertyName": "updatedAt",
+				"source": "updated_at",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			}
+		],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "checkNo",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
+		"pageQueryOp": {
+			"fieldEq": [
+				{
+					"field": "checkNo",
+					"value": ""
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": [
+				""
+			]
+		},
+		"search": {
+			"fieldEq": [
+				{
+					"comment": "主流程编号",
+					"nullable": true,
+					"propertyName": "checkNo",
+					"source": "check_no",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
+			"fieldLike": [],
+			"keyWordLikeFields": []
+		},
+		"moduleKey": "logistics.warehouse",
+		"namespace": "/api/logistics/warehouse/sub-process"
+	},
+	{
 		"prefix": "/api/logistics/warehouse/ticket",
 		"name": "ticket",
 		"api": [
@@ -2899,15 +3325,15 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "update",
 				"method": "POST",
-				"path": "/export",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "CREATE",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_ticket:export",
-				"summary": "盘点票导出",
+				"permission": "logistics.warehouse:sys_ticket:create",
+				"summary": "盘点票编辑",
 				"tag": "SysCheckTicketController",
 				"dts": {
 					"parameters": [
@@ -2925,15 +3351,15 @@
 				}
 			},
 			{
-				"name": "update",
+				"name": "export",
 				"method": "POST",
-				"path": "/update",
+				"path": "/export",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "CREATE",
+				"action": "EXPORT",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_ticket:create",
-				"summary": "盘点票编辑",
+				"permission": "logistics.warehouse:sys_ticket:export",
+				"summary": "盘点票导出",
 				"tag": "SysCheckTicketController",
 				"dts": {
 					"parameters": [
@@ -3596,32 +4022,6 @@
 		"name": "checkTicket",
 		"api": [
 			{
-				"name": "print",
-				"method": "POST",
-				"path": "/print",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_check_ticket:create",
-				"summary": "savePrint",
-				"tag": "BaseSysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "info",
 				"method": "POST",
 				"path": "/info",
@@ -3640,6 +4040,32 @@
 							"required": true,
 							"schema": {
 								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "print",
+				"method": "POST",
+				"path": "/print",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_check_ticket:create",
+				"summary": "savePrint",
+				"tag": "BaseSysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -8465,32 +8891,6 @@
 				}
 			},
 			{
-				"name": "batch",
-				"method": "POST",
-				"path": "/delete/batch",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
-				"summary": "批量删除",
-				"tag": "SysTenantController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "like",
 				"method": "POST",
 				"path": "/tenant/like",
@@ -8509,6 +8909,32 @@
 							"required": true,
 							"schema": {
 								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "batch",
+				"method": "POST",
+				"path": "/delete/batch",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:tenant:create",
+				"summary": "批量删除",
+				"tag": "SysTenantController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -9170,32 +9596,6 @@
 				}
 			},
 			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
-				"summary": "查询用户角色信息",
-				"tag": "SysUserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "batchUnbind",
 				"method": "POST",
 				"path": "/batchUnbind",
@@ -9231,6 +9631,32 @@
 				"auth": "permission",
 				"permission": "admin.iam:sys_user_role:update",
 				"summary": "修改绑定角色",
+				"tag": "SysUserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:sys_user_role:create",
+				"summary": "查询用户角色信息",
 				"tag": "SysUserRoleController",
 				"dts": {
 					"parameters": [

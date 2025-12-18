@@ -68,9 +68,13 @@ export const createEngineeringApp = async (props: QiankunProps = {}): Promise<En
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
-    registerManifestMenusForApp(ENGINEERING_APP_ID);
-    registerManifestTabsForApp(ENGINEERING_APP_ID);
+    const layoutBridgeModule = await import('@configs/layout-bridge');
+    const layoutBridge = layoutBridgeModule as unknown as {
+      registerManifestMenusForApp: (appId: string) => void;
+      registerManifestTabsForApp: (appId: string) => void;
+    };
+    layoutBridge.registerManifestMenusForApp(ENGINEERING_APP_ID);
+    layoutBridge.registerManifestTabsForApp(ENGINEERING_APP_ID);
   }
 
   // 使用标准化的 createSubApp

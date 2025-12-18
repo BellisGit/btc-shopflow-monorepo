@@ -1,7 +1,7 @@
 /**
  * 初始化 layout-app 加载
  * 仅在独立运行且需要加载 layout-app 时调用
- * 
+ *
  * 关键设计：
  * 1. 只在成功加载 layout-app 后才设置 __USE_LAYOUT_APP__ 标志
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
@@ -76,7 +76,7 @@ function clearNavigationFlag() {
  */
 function getCurrentAppId(): string {
   const hostname = window.location.hostname;
-  
+
   // 从子域名映射获取
   const subdomainMap: Record<string, string> = {
     'admin.bellis.com.cn': 'admin',
@@ -87,11 +87,11 @@ function getCurrentAppId(): string {
     'finance.bellis.com.cn': 'finance',
     'monitor.bellis.com.cn': 'monitor',
   };
-  
+
   if (subdomainMap[hostname]) {
     return subdomainMap[hostname];
   }
-  
+
   // 从路径前缀获取
   const pathname = window.location.pathname;
   if (pathname.startsWith('/admin')) {
@@ -109,7 +109,7 @@ function getCurrentAppId(): string {
   } else if (pathname.startsWith('/monitor')) {
     return 'monitor';
   }
-  
+
   // 默认返回 admin（用于当前文件所在的 admin-app）
   return 'admin';
 }
@@ -129,7 +129,7 @@ async function injectAppConfigFromManifest(appId: string) {
       import('@btc/shared-components/store/menuRegistry'),
       import('@btc/subapp-manifests')
     ]);
-    
+
     // 1. 确保菜单注册表已初始化
     let registry = getMenuRegistry();
     if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
@@ -137,26 +137,26 @@ async function injectAppConfigFromManifest(appId: string) {
     } else if (typeof window !== 'undefined' && (window as any).__BTC_MENU_REGISTRY__) {
       registry = (window as any).__BTC_MENU_REGISTRY__;
     }
-    
+
     // 2. 注册应用环境访问器
     registerAppEnvAccessors();
-    
+
     // 3. 设置菜单注册函数（供 layout-app 使用）
     (window as any).__REGISTER_MENUS_FOR_APP__ = registerManifestMenusForApp;
-    
+
     // 4. 从 manifest 注册当前应用的菜单（在 layout-app 加载前就注册好）
     registerManifestMenusForApp(appId);
-    
+
     // 5. 设置 Logo URL 获取函数（使用 resolveAppLogoUrl）
     (window as any).__APP_GET_LOGO_URL__ = resolveAppLogoUrl;
-    
+
     // 6. 设置应用配置获取函数（如果需要）
     const manifest = getManifest(appId);
-    if (manifest && manifest.name) {
+    if (manifest && manifest.app?.id) {
       // 可以设置其他配置，比如应用名称等
       (window as any).__CURRENT_APP_MANIFEST__ = manifest;
     }
-    
+
     if (import.meta.env.DEV) {
       console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
         hasMenus: registry?.value?.[appId]?.length > 0,
@@ -187,7 +187,7 @@ export async function initLayoutApp() {
 
   // 关键：在加载 layout-app 之前，显式显示 Loading
   showLoading();
-  
+
   // 关键：在加载 layout-app 之前，先从 manifest 注入当前子应用的配置
   const currentAppId = getCurrentAppId();
   await injectAppConfigFromManifest(currentAppId);
@@ -210,18 +210,18 @@ export async function initLayoutApp() {
     // 关键：只有在成功加载并挂载后才设置标志
     // 此时 layout-app 已经挂载，子应用不需要独立渲染
     (window as any).__USE_LAYOUT_APP__ = true;
-    
+
     // 加载成功后，Loading 会在子应用挂载时由子应用清理，这里不清理
     // 但清理导航标记（如果存在）
     clearNavigationFlag();
   } catch (error) {
     // 任何错误都要清除标志，确保子应用可以独立渲染
     (window as any).__USE_LAYOUT_APP__ = false;
-    
+
     // 加载失败时，移除 Loading 并清理标记
     removeLoadingElement();
     clearNavigationFlag();
-    
+
     // 清理可能残留的 layout-app 相关标志和 DOM 内容
     // 移除可能添加的 script 标签（layout-app 的入口文件）
     const scripts = document.querySelectorAll('script[data-layout-app], script[src*="layout.bellis.com.cn"], script[src*="localhost:4188"]');
@@ -230,23 +230,24 @@ export async function initLayoutApp() {
         script.parentNode.removeChild(script);
       }
     });
-    
+
     // 清理可能添加的 base 标签（如果是为了 layout-app 添加的）
     const baseTags = document.querySelectorAll('base[data-layout-app-base], base');
     baseTags.forEach(base => {
+      const baseElement = base as HTMLBaseElement;
       // 如果 base 标签有 data-layout-app-base 属性，或者指向 layout-app 的域名，移除它
-      if (base.hasAttribute('data-layout-app-base') || 
-          (base.href && (base.href.includes('layout.bellis.com.cn') || base.href.includes('localhost:4188')))) {
-        if (base.parentNode) {
-          base.parentNode.removeChild(base);
+      if (baseElement.hasAttribute('data-layout-app-base') ||
+          (baseElement.href && (baseElement.href.includes('layout.bellis.com.cn') || baseElement.href.includes('localhost:4188')))) {
+        if (baseElement.parentNode) {
+          baseElement.parentNode.removeChild(baseElement);
         }
       }
     });
-    
+
     // 清理 #app 容器中可能残留的内容（如果 layout-app 部分加载但挂载失败）
     const appContainer = document.querySelector('#app');
     if (appContainer) {
-      const hasLayoutContent = appContainer.querySelector('#subapp-viewport') || 
+      const hasLayoutContent = appContainer.querySelector('#subapp-viewport') ||
                                appContainer.querySelector('#layout-app') ||
                                appContainer.querySelector('[data-layout-app]');
       if (hasLayoutContent || appContainer.children.length > 0) {
@@ -254,7 +255,7 @@ export async function initLayoutApp() {
         appContainer.innerHTML = '';
       }
     }
-    
+
     // 关键：抛出错误，让调用者知道加载失败，触发回退逻辑
     throw error;
   }

@@ -1,4 +1,4 @@
-import { computed } from 'vue';
+import { computed, toValue } from 'vue';
 import type { TableProps } from '../types';
 import { autoFormatTableColumns } from '../utils/formatters';
 import { CommonColumns } from '../utils/common-columns';
@@ -23,7 +23,7 @@ export function useTableColumns(props: TableProps) {
       .replace(/([A-Z])/g, ' $1') // 在大写字母前添加空格
       .trim()
       .split(/\s+/); // 按空格分割成单词数组
-    
+
     // 将每个单词首字母大写
     return words
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -48,20 +48,20 @@ export function useTableColumns(props: TableProps) {
     if (!str.includes('.')) {
       return false;
     }
-    
+
     // 检查是否符合国际化 key 的格式：以字母开头，点前后都有非空字符
     // 例如：'crud.table.index' ✓, 'No.' ✗, 'A.B' ✓, '.B' ✗, 'A.' ✗
     const parts = str.split('.');
     if (parts.length < 2) {
       return false;
     }
-    
+
     // 第一部分必须以字母开头
     const firstPart = parts[0].trim();
     if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
       return false;
     }
-    
+
     // 所有部分都不能为空
     return parts.every(part => part.trim().length > 0);
   }
@@ -137,8 +137,8 @@ export function useTableColumns(props: TableProps) {
 
     // 自动添加操作列（如果不存在且 props.op 不为 undefined）
     if (!hasOpColumn && props.op !== undefined) {
-      // 从 props.op 获取按钮配置
-      const opButtons = props.op?.buttons ?? ['edit', 'delete'];
+      // 从 props.op 获取按钮配置，支持 computed ref
+      const opButtons = toValue(props.op?.buttons) ?? ['edit', 'delete'];
       enhancedColumns.push(CommonColumns.operation(opButtons));
     }
 

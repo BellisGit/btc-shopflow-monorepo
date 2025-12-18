@@ -812,7 +812,7 @@ const handleMenuSelect = (index: string) => {
     // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
     // 所以这里直接使用 index，不需要再次规范化
     // 使用 catch 捕获路由跳转错误，避免未匹配路由时导致的问题
-    router.push(absolutePath).catch((err) => {
+    router.push(absolutePath).catch((err: unknown) => {
       // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
       // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
       if (import.meta.env.DEV) {

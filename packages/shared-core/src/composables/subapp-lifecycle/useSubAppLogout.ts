@@ -55,7 +55,7 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
 
       // 清除标签页（Process Store）
       try {
-        const sharedComponents = await import('@btc/shared-components');
+        const sharedComponents = await import('@btc/shared-components') as typeof import('@btc/shared-components');
         const { useProcessStore } = sharedComponents;
         const processStore = useProcessStore();
         processStore.clear();
@@ -64,7 +64,7 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
       }
 
       // 显示退出成功提示
-      const sharedComponents = await import('@btc/shared-components');
+      const sharedComponents = await import('@btc/shared-components') as typeof import('@btc/shared-components');
       const { BtcMessage } = sharedComponents;
       const t = context.i18n?.i18n?.global?.t;
       if (t) {
@@ -125,7 +125,7 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
         localStorage.removeItem('btc_user');
         localStorage.removeItem('user');
 
-        const sharedComponents = await import('@btc/shared-components');
+        const sharedComponents = await import('@btc/shared-components') as typeof import('@btc/shared-components');
         const { useProcessStore } = sharedComponents;
         const processStore = useProcessStore();
         processStore.clear();

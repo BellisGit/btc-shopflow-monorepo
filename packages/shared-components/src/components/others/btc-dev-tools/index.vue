@@ -137,7 +137,6 @@ function checkAllowedUser(): boolean {
 onMounted(() => {
   const isAllowed = checkAllowedUser();
   isAllowedUser.value = isAllowed;
-  console.log('[DevTools] 组件挂载，isAllowedUser:', isAllowed, 'isDev:', isDev);
 });
 
 // 是否显示 DevTools

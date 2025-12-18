@@ -56,6 +56,7 @@ export type OpButton =
   | 'edit'       // 编辑
   | 'delete'     // 删除
   | 'info'       // 查看
+  | 'detail'     // 详情
   | `slot-${string}`  // 插槽
   | {
       label: string;

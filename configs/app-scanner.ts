@@ -7,29 +7,16 @@ import type { AppIdentity } from './app-identity.types';
 
 // 手动导入所有应用的 app.ts 文件
 // 由于 import.meta.glob 在跨应用目录时可能无法正常工作，改为手动导入
-// 注意：这些导入在某些应用的类型检查中可能不在文件列表中，但运行时可用
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import adminAppIdentity from '../apps/admin-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import logisticsAppIdentity from '../apps/logistics-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import qualityAppIdentity from '../apps/quality-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import productionAppIdentity from '../apps/production-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import engineeringAppIdentity from '../apps/engineering-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import financeAppIdentity from '../apps/finance-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import monitorAppIdentity from '../apps/monitor-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import systemAppIdentity from '../apps/system-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import layoutAppIdentity from '../apps/layout-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import docsSiteAppIdentity from '../apps/docs-site-app/src/app';
-// @ts-ignore TS6307 - 文件不在当前项目的文件列表中，但运行时可用
 import mobileAppIdentity from '../apps/mobile-app/src/app';
 
 // 将所有应用配置组织成对象，模拟 glob 的结果

@@ -17,7 +17,7 @@ export function listenSubAppRouteChange(appId: string): void {
     const { path, fullPath, name, meta } = customEvent.detail;
 
     // 动态导入避免循环依赖
-    const sharedComponents = await import('@btc/shared-components');
+    const sharedComponents = await import('@btc/shared-components') as typeof import('@btc/shared-components');
     const { useProcessStore } = sharedComponents;
     const processStore = useProcessStore();
     const app = getCurrentAppFromPath(path);

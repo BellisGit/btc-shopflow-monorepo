@@ -5,7 +5,14 @@
   "description": "BTC ShopFlow 共享核心库，主要是逻辑层面共享（区别于组件共享）",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./src/index.d.ts",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "publishConfig": {
     "registry": "http://localhost:4873"
   },

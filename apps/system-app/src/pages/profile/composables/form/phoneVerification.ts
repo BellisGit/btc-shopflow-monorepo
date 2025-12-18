@@ -23,7 +23,7 @@ export function usePhoneVerification() {
     onSuccess: () => {
       BtcMessage.success('验证码已发送');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       BtcMessage.error(error.message || '发送验证码失败');
     }
   });

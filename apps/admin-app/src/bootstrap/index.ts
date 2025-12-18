@@ -12,7 +12,6 @@ import {
   updateSubApp,
   setupRouteSync,
   setupHostLocationBridge,
-  setupEventBridge,
   ensureCleanUrl,
   type SubAppContext,
   type SubAppOptions,
@@ -31,22 +30,56 @@ const ADMIN_APP_ID = 'admin';
 const ADMIN_BASE_PATH = '/admin';
 const ADMIN_DOMAIN_CACHE_PATH = '@utils/domain-cache';
 
-// 自定义 setupStandaloneGlobals（admin-app 使用标准的 setupSubAppGlobals 逻辑）
+// 自定义 setupStandaloneGlobals（仿照 logistics-app 的方式，确保 EPS 服务正确初始化）
 const setupAdminGlobals = async () => {
   const { registerAppEnvAccessors, createAppStorageBridge, resolveAppLogoUrl, injectDomainListResolver } = await import('@configs/layout-bridge');
 
   registerAppEnvAccessors();
   const win = window as any;
 
-  // 关键：不要在这里手动处理 EPS 服务！
-  // EPS 服务应该由 services/eps.ts 中的 loadEpsService 自动处理
-  // loadEpsService 会自动优先使用全局服务，如果没有则使用本地服务，并正确合并两者
-  // 在 setupStore 中导入 services/eps.ts 可以确保 EPS 服务在正确的时机被初始化
-  // 注意：不要设置空对象，让 loadEpsService 能够正确判断全局服务是否存在
+  // 优先使用全局共享的 EPS 服务（由 system-app 或 layout-app 提供）
+  // 注意：本地服务的加载由 services/eps.ts 在被需要时自然导入，由 loadEpsService 处理
+  const getGlobalEpsService = () => {
+    const globalService = win.__APP_EPS_SERVICE__ || win.service || win.__BTC_SERVICE__;
+    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
+      return globalService;
+    }
+    return null;
+  };
+
+  // 先检查是否有全局服务
+  let globalService = getGlobalEpsService();
+
+  if (!globalService) {
+    // 等待全局服务可用（最多等待 3 秒，与 setupSubAppGlobals 一致）
+    const waitForGlobalService = async (maxWait = 3000, interval = 100) => {
+      const startTime = Date.now();
+      while (Date.now() - startTime < maxWait) {
+        const service = getGlobalEpsService();
+        if (service) return service;
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      return null;
+    };
+
+    globalService = await waitForGlobalService();
+  }
+
+  if (globalService) {
+    // 使用全局服务
+    win.__APP_EPS_SERVICE__ = globalService;
+    win.service = globalService;
+    win.__BTC_SERVICE__ = globalService;
+  }
+  // 注意：如果没有全局服务，不在这里加载本地服务
+  // 因为如果此时加载 services/eps.ts，loadEpsService 可能返回本地服务并缓存
+  // 即使后来全局服务准备好了，services/eps.ts 已经执行过了，不会重新检查
+  // 本地服务的加载由 services/eps.ts 在被需要时自然导入，由 loadEpsService 处理
 
   if (!win.__APP_STORAGE__) {
     win.__APP_STORAGE__ = createAppStorageBridge(ADMIN_APP_ID);
   }
+
   // 关键：使用统一的域列表注入函数，确保汉堡菜单应用列表能够调用 me 接口
   // 在生产环境下，别名路径可能无法动态导入，所以先静态导入模块
   try {
@@ -56,11 +89,28 @@ const setupAdminGlobals = async () => {
     // 如果静态导入失败，尝试使用路径字符串（可能在某些环境下工作）
     await injectDomainListResolver(ADMIN_APP_ID, ADMIN_DOMAIN_CACHE_PATH);
   }
+
   if (!win.__APP_FINISH_LOADING__) {
     win.__APP_FINISH_LOADING__ = () => {};
   }
   win.__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
   win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
+
+  // 关键：在独立运行模式下，确保菜单注册表已初始化
+  try {
+    const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+    const registry = getMenuRegistry();
+    if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+      (window as any).__BTC_MENU_REGISTRY__ = registry;
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 注册菜单和 Tabs（无论是否独立运行都需要注册）
+  const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+  registerManifestMenusForApp(ADMIN_APP_ID);
+  registerManifestTabsForApp(ADMIN_APP_ID);
 };
 
 // 自定义 setupStandalonePlugins（admin-app 使用 sharedUserSettingPlugin 和 echartsPlugin）
@@ -105,24 +155,50 @@ const createRegisterTabs = (context: AdminAppContext) => {
 };
 
 // 自定义 setupEventBridge（admin-app 需要语言切换时调用 registerTabs）
+// 仿照 logistics-app 的方式，确保在所有环境下都能正确响应语言切换
 const setupAdminEventBridge = (context: AdminAppContext) => {
-  // 使用标准化的 setupEventBridge
-  setupEventBridge(context);
-
-  // 添加语言切换时调用 registerTabs 的逻辑
+  // 语言切换监听器需要在所有环境下都运行（包括独立运行和 layout-app）
   const languageListener = ((event: Event) => {
     const custom = event as CustomEvent<{ locale: string }>;
     const newLocale = custom.detail?.locale as 'zh-CN' | 'en-US';
     if (newLocale && context.i18n?.i18n?.global) {
+      // 更新 i18n locale
+      context.i18n.i18n.global.locale.value = newLocale;
+      // 调用 registerTabs 更新 tabbar
       context.registerTabs();
     }
   }) as EventListener;
 
-  // 只在 qiankun 环境下添加额外的语言监听器
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要监听事件
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+  // 只在 qiankun 环境下设置主题切换监听器
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // 独立运行或 layout-app 环境：只监听语言切换事件
     window.addEventListener('language-change', languageListener);
     context.cleanup.listeners.push(['language-change', languageListener]);
+    return;
   }
+
+  // qiankun 环境下监听所有事件（语言和主题）
+  const themeListener = ((event: Event) => {
+    const custom = event as CustomEvent<{ color: string; dark: boolean }>;
+    const detail = custom.detail;
+    if (detail && context.theme?.theme) {
+      // 检查当前颜色是否已经相同，避免不必要的调用和递归
+      const currentColor = context.theme.theme.currentTheme.value?.color;
+      const currentDark = context.theme.theme.isDark.value;
+      // 只有当颜色或暗黑模式不同时才更新
+      if (currentColor !== detail.color || currentDark !== detail.dark) {
+        context.theme.theme.setThemeColor(detail.color, detail.dark);
+      }
+    }
+  }) as EventListener;
+
+  window.addEventListener('language-change', languageListener);
+  window.addEventListener('theme-change', themeListener);
+
+  context.cleanup.listeners.push(['language-change', languageListener], ['theme-change', themeListener]);
 };
 
 // 自定义 logout 函数（admin-app 有特殊的 authApi 获取逻辑）
@@ -265,22 +341,9 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
 
-  // 独立运行或 layout-app 环境下都需要设置全局函数
+  // 独立运行或 layout-app 环境下都需要设置全局函数（包括 EPS 服务初始化）
   if (isStandalone || isUsingLayoutApp) {
     await setupAdminGlobals();
-    // 关键：在独立运行模式下，确保菜单注册表已初始化
-    try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
-      const registry = getMenuRegistry();
-      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
-        (window as any).__BTC_MENU_REGISTRY__ = registry;
-      }
-    } catch (error) {
-      // 静默失败
-    }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
-    registerManifestMenusForApp(ADMIN_APP_ID);
-    registerManifestTabsForApp(ADMIN_APP_ID);
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
     try {
@@ -298,46 +361,8 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
   }
 
   // 使用标准化的 createSubApp
+  // 注意：EPS 服务已在 setupSubAppGlobals 中正确初始化，无需再次处理
   const context = await createSubApp(subAppOptions, props) as AdminAppContext;
-
-  // 关键：在 createSubApp 之后，确保 EPS 服务已正确加载
-  // 在 layout-app 环境下，全局服务可能还没准备好，需要等待并重新加载
-  if (isUsingLayoutApp) {
-    try {
-      // 等待全局服务准备好（最多等待 3 秒）
-      const waitForGlobalService = async (maxWait = 3000, interval = 100) => {
-        const startTime = Date.now();
-        while (Date.now() - startTime < maxWait) {
-          const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
-          if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
-            return globalService;
-          }
-          await new Promise(resolve => setTimeout(resolve, interval));
-        }
-        return null;
-      };
-
-      // 等待全局服务
-      const globalService = await waitForGlobalService();
-
-      if (globalService) {
-        // 如果有全局服务，重新加载 EPS 服务以合并本地模块
-        const { loadEpsService } = await import('@btc/shared-core');
-        const epsModule = await import('virtual:eps').catch(() => null);
-        const { service } = loadEpsService(epsModule?.default || epsModule || undefined);
-
-        const win = window as any;
-        // 确保全局变量已设置，供其他模块使用
-        if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-          win.__APP_EPS_SERVICE__ = service;
-          win.service = service;
-          win.__BTC_SERVICE__ = service;
-        }
-      }
-    } catch (error) {
-      console.warn('[admin-app] 重新加载 EPS 服务失败:', error);
-    }
-  }
 
   // 关键：在 qiankun 模式下也需要注册 echarts 插件（v-chart 组件）
   // 因为 setupPlugins 只在独立运行模式下被调用

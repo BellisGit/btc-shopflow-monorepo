@@ -1068,6 +1068,9 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@24.10.1)(sass@1.94.2)
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(@types/node@24.10.1)(typescript@5.9.3)(vite@5.4.21)
       vue-router:
         specifier: ^4.0.0
         version: 4.6.3(vue@3.5.25)
@@ -1102,6 +1105,9 @@ importers:
       vite-plugin-dts:
         specifier: ^4.5.4
         version: 4.5.4(@types/node@24.10.1)(typescript@5.9.3)(vite@5.4.21)
+      vue-router:
+        specifier: ^4.0.0
+        version: 4.6.3(vue@3.5.25)
 
   packages/shared-utils:
     dependencies:

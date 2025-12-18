@@ -203,7 +203,7 @@ const router = createRouter({
 });
 
 // 路由错误处理
-router.onError((error) => {
+router.onError((error: Error) => {
   // Router error 日志已移除
 
   // 如果是组件加载失败，尝试重新加载或重定向到登录页
@@ -307,7 +307,7 @@ router.onError((error) => {
     }
 
     // 如果是登录页组件错误，尝试重定向到登录页
-    if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some(m => m.path === '/login'))) {
+    if (currentRoute && (currentRoute.path === '/login' || currentRoute.matched.some((m: import('vue-router').RouteRecordNormalized) => m.path === '/login'))) {
       // 登录页组件错误 日志已移除
       setTimeout(() => {
         try {
@@ -559,7 +559,7 @@ function normalizeRoutePath(path: string): string | null {
 }
 
 // 路由前置守卫：处理认证、Loading 显示和侧边栏
-router.beforeEach((to, from, next) => {
+router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
   // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
   // 这些页面应该由服务器直接提供，完全绕过 Vue Router
   if (to.path.startsWith('/duty/')) {
@@ -768,7 +768,7 @@ router.beforeEach((to, from, next) => {
 });
 
 // 路由守卫：调试路由匹配情况
-router.afterEach((to) => {
+router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   // 生产环境调试日志已移除
   if (import.meta.env.PROD && to.matched.length === 0) {
     // 关键：对于根路径 `/`，检查是否是 Layout 组件加载问题
@@ -815,7 +815,7 @@ router.afterEach((to) => {
             router.replace({
               path: '/login',
               query: { redirect: to.fullPath },
-            }).catch(err => {
+            }).catch((err: Error) => {
               // 重定向到登录页失败（日志已移除）
               // 如果重定向失败，使用 window.location 作为回退
               console.error('[system-app] router.replace 失败，使用 window.location:', err);
@@ -852,7 +852,7 @@ router.afterEach((to) => {
 });
 
 // 路由守卫：自动添加标签到 Tabbar（仅主应用路由）
-router.afterEach((to) => {
+router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
   // 使用统一的清理函数，自动清理所有图表组件
   try {

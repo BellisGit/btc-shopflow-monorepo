@@ -5,7 +5,7 @@
   "description": "BTC ShopFlow 共享工具库",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "registry": "http://localhost:4873"
   },
@@ -15,7 +15,7 @@
   ],
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./src/index.ts",
       "require": "./dist/index.js"
     },

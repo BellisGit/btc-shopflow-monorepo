@@ -26,7 +26,7 @@ import {
   type SubAppContext,
   type SubAppOptions,
 } from '@btc/shared-core';
-import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports } from '@btc/shared-utils/error-monitor';
+import { setupSubAppErrorCapture, updateErrorList, listenForErrorReports, type ErrorInfo } from '@btc/shared-utils/error-monitor';
 
 import App from '../App.vue';
 import { createMonitorRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
@@ -49,7 +49,7 @@ const setupMonitorPlugins = async (app: VueApp, router: Router, isStandalone: bo
 
   // 监听来自其他子应用的跨域错误上报
   // 注意：取消订阅函数存储但不返回，因为 setupPlugins 的返回类型是 Promise<void>
-  listenForErrorReports((errorInfo) => {
+  listenForErrorReports((errorInfo: ErrorInfo) => {
     // 接收到跨域上报的错误，存储到本地
     updateErrorList(errorInfo);
   });
@@ -69,7 +69,7 @@ const subAppOptions: SubAppOptions = {
   createRouter: () => createMonitorRouter(false), // 默认非独立运行，mountSubApp 中会根据实际情况调整
   // setupRouter 类型定义只接受 2 个参数，但实际实现需要 isStandalone
   // 在 createMonitorApp 中会覆盖这个设置
-  setupRouter: (app, router) => setupRouter(app, router, false),
+  setupRouter: (app: VueApp, router?: Router) => setupRouter(app, router, false),
   setupStore,
   setupI18n,
   setupUI,

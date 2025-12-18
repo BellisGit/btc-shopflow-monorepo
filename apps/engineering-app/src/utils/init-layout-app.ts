@@ -121,7 +121,7 @@ async function injectAppConfigFromManifest(appId: string) {
   try {
     // 动态导入必要的模块
     const [
-      { registerManifestMenusForApp, resolveAppLogoUrl, registerAppEnvAccessors },
+      layoutBridgeModule,
       { getMenuRegistry },
       { getManifest }
     ] = await Promise.all([
@@ -129,6 +129,14 @@ async function injectAppConfigFromManifest(appId: string) {
       import('@btc/shared-components/store/menuRegistry'),
       import('@btc/subapp-manifests')
     ]);
+
+    // 从 layoutBridge 中解构出需要的函数（使用类型断言）
+    const layoutBridge = layoutBridgeModule as unknown as {
+      registerManifestMenusForApp: (appId: string) => void;
+      resolveAppLogoUrl: () => string | undefined;
+      registerAppEnvAccessors: (target?: Window) => void;
+    };
+    const { registerManifestMenusForApp, resolveAppLogoUrl, registerAppEnvAccessors } = layoutBridge;
 
     // 1. 确保菜单注册表已初始化
     let registry = getMenuRegistry();

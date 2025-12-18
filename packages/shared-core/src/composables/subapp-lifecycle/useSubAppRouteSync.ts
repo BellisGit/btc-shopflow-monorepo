@@ -130,7 +130,8 @@ export function setupRouteSync(context: SubAppContext, appId: string, basePath: 
     if (!syncingFromHost) {
       syncHostWithSubRoute(fullPath, basePath, context);
     }
-    const tabLabelKey = to.meta?.tabLabelKey as string | undefined;
+    // 优先使用 tabLabelKey，如果没有则使用 titleKey（admin-app 使用 titleKey）
+    const tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
     const tabLabel =
       tabLabelKey ??
       (to.meta?.tabLabel as string | undefined) ??
@@ -151,10 +152,9 @@ export function setupRouteSync(context: SubAppContext, appId: string, basePath: 
     ) {
       if (typeof to.meta?.labelKey === 'string' && to.meta.labelKey.length > 0) {
         metaPayload.labelKey = to.meta.labelKey;
-      } else if (
-        typeof tabLabelKey === 'string' &&
-        tabLabelKey.startsWith('menu.')
-      ) {
+      } else if (typeof tabLabelKey === 'string' && tabLabelKey.length > 0) {
+        // 如果 tabLabelKey 看起来像 i18n key（包含点号，如 'menu.xxx'），则使用它作为 labelKey
+        // 这样可以支持所有应用的 i18n key（menu.*, logistics.*, finance.* 等）
         metaPayload.labelKey = tabLabelKey;
       }
     }

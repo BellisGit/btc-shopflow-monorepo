@@ -243,7 +243,10 @@ export function updateSubApp(
   };
 
   if (props.locale && context.i18n?.i18n?.global) {
-    context.i18n.i18n.global.locale.value = props.locale as 'zh-CN' | 'en-US';
+    const locale = context.i18n.i18n.global.locale;
+    if (locale && typeof locale === 'object' && 'value' in locale) {
+      (locale as { value: string }).value = props.locale as 'zh-CN' | 'en-US';
+    }
   }
 }
 

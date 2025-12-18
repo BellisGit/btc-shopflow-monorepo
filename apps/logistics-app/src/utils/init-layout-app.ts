@@ -196,10 +196,13 @@ export async function initLayoutApp() {
   // 这样如果加载失败，子应用可以立即回退到独立渲染模式
 
   try {
-    const [qiankun, { loadLayoutApp }] = await Promise.all([
-      import('qiankun'),
-      import('@btc/shared-utils/qiankun/load-layout-app')
-    ]);
+    // 关键：子应用在独立运行时需要加载 layout-app，这时需要 qiankun
+    // 注意：构建配置已修改，qiankun 不再被 external，会被打包到构建产物中
+    // 因此，动态导入应该能够成功
+    const qiankunModule = await import('qiankun');
+    const { registerMicroApps, start } = qiankunModule;
+
+    const { loadLayoutApp } = await import('@btc/shared-utils/qiankun/load-layout-app');
 
     // 关键：必须在加载 layout-app 脚本之前就声明"嵌入模式"
     // 否则 layout-app 入口脚本执行时读不到该标志，会继续 register/start qiankun，从而二次加载并挂载当前子应用（single-spa #41/#1、内容区空白）。
@@ -207,8 +210,8 @@ export async function initLayoutApp() {
     (window as any).__BTC_EMBEDDED_SUBAPP_ID__ = currentAppId;
 
     await loadLayoutApp({
-      registerMicroApps: qiankun.registerMicroApps,
-      start: qiankun.start
+      registerMicroApps,
+      start
     });
 
     // 关键：确保在 loadLayoutApp 成功后设置标志

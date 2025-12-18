@@ -116,6 +116,18 @@
       ]
     },
     {
+      "path": "/inventory/confirm",
+      "labelKey": "menu.inventory.confirm",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.confirm"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.confirm", "icon": "Check" }
+      ]
+    },
+    {
       "path": "/data/dictionary/file-categories",
       "labelKey": "menu.data.dictionary.file_categories",
       "tab": {
@@ -180,7 +192,8 @@
           ]
         },
         { "index": "/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
-        { "index": "/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" }
+        { "index": "/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" },
+        { "index": "/inventory/confirm", "labelKey": "menu.inventory.confirm", "icon": "Check" }
       ]
     }
   ]

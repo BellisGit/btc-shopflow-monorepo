@@ -1,4 +1,5 @@
 export * from './date';
+export { formatDateTimeFriendly, formatDate, formatDateTime, isDateTimeField, getDateRange, dateDiff } from './date';
 export * from './format';
 export * from './validate';
 export * from './storage';

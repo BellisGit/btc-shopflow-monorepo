@@ -22,18 +22,18 @@ export interface UserStorage {
 export interface AppSettingsStorage {
   // 用户界面设置
   avatarRockStyle?: boolean;
-  
+
   // 菜单设置
   menuType?: string;
   menuOpenWidth?: number;
   menuOpen?: boolean;
   menuThemeType?: string;
-  
+
   // 主题设置
   systemThemeType?: string;
   systemThemeMode?: string;
   systemThemeColor?: string;
-  
+
   // 界面显示设置
   showMenuButton?: boolean;
   showFastEnter?: boolean;
@@ -45,7 +45,7 @@ export interface AppSettingsStorage {
   showNprogress?: boolean;
   colorWeak?: boolean;
   watermarkVisible?: boolean;
-  
+
   // 其他设置
   containerWidth?: string;
   boxBorderMode?: boolean;
@@ -54,7 +54,7 @@ export interface AppSettingsStorage {
   pageTransition?: string;
   customRadius?: string;
   buttonStyle?: string;
-  
+
   [key: string]: any;
 }
 
@@ -64,10 +64,10 @@ export interface AppSettingsStorage {
 export const STORAGE_KEYS = {
   // 用户信息（统一存储）
   USER: 'btc_user',
-  
+
   // 应用设置（统一存储）
   SETTINGS: 'btc_settings',
-  
+
   // 其他独立键（保持向后兼容）
   TOKEN: 'token',
   LOCALE: 'locale',
@@ -87,7 +87,7 @@ export const userStorage = {
    * 获取用户信息
    */
   get(): UserStorage | null {
-    return storage.get<UserStorage>('user') || null;
+    return (storage.get as <T>(key: string) => T | null)<UserStorage>('user') || null;
   },
 
   /**
@@ -111,7 +111,7 @@ export const userStorage = {
    */
   setAvatar(avatar: string): void {
     this.set({ avatar });
-    
+
     // 预加载头像图片到浏览器缓存（每次设置头像时预加载，避免刷新时重新加载）
     if (avatar && avatar !== '/logo.png' && typeof window !== 'undefined') {
       const img = new Image();
@@ -151,7 +151,7 @@ export const settingsStorage = {
    * 获取所有设置
    */
   get(): AppSettingsStorage {
-    return storage.get<AppSettingsStorage>('settings') || {};
+    return (storage.get as <T>(key: string) => T | null)<AppSettingsStorage>('settings') || {};
   },
 
   /**

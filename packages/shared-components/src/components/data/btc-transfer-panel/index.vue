@@ -142,7 +142,7 @@ import BtcSearchKey from '@btc-crud/search-key/index.vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcIconButton from '@btc-components/basic/btc-icon-button/index.vue';
 import { useI18n } from '@btc/shared-core';
-import type { CrudService } from '@btc/shared-core/src/btc/crud';
+import type { CrudService } from '@btc/shared-core';
 import type { IconButtonConfig } from '@btc-components/basic/btc-icon-button/types';
 import type {
   TransferKey,
@@ -454,7 +454,7 @@ function syncSelectionFromModel(autoReset = true) {
   const keySet = selectedKeySet.value;
   const mapCopy: Record<string, any> = { ...selectedRecordMap.value };
 
-  rows.forEach((row) => {
+  rows.forEach((row: any) => {
     const key = resolveRowKey(row);
     if (!key || !keySet.has(key)) return;
     table.toggleRowSelection(row, true);
@@ -472,8 +472,8 @@ function applySelectionChange(rows: any[]) {
   if (!crud) return;
 
   const pageRows = crud.tableData.value ?? [];
-  const pageKeySet = new Set<string>(pageRows.map((row) => resolveRowKey(row)));
-  const selectedPageKeys = new Set<string>(rows.map((row) => resolveRowKey(row)));
+  const pageKeySet = new Set<string>(pageRows.map((row: any) => resolveRowKey(row)));
+  const selectedPageKeys = new Set<string>(rows.map((row: any) => resolveRowKey(row)));
 
   const newSet = new Set(selectedKeySet.value);
   const mapCopy: Record<string, any> = { ...selectedRecordMap.value };
@@ -508,7 +508,7 @@ function captureCurrentRows() {
   const rows = crud.tableData.value ?? [];
   if (!rows.length) return;
   const mapCopy: Record<string, any> = { ...selectedRecordMap.value };
-  rows.forEach((row) => {
+  rows.forEach((row: any) => {
     const key = resolveRowKey(row);
     if (!key || !selectedKeySet.value.has(key)) return;
     mapCopy[key] = row;
@@ -554,7 +554,7 @@ function handleRemove(key: TransferKey) {
 
   const mapCopy = { ...selectedRecordMap.value };
   const currentRows = crud?.tableData.value ?? [];
-  const targetRow = currentRows.find((row) => resolveRowKey(row) === keyStr);
+  const targetRow = currentRows.find((row: any) => resolveRowKey(row) === keyStr);
   const removedItem = mapCopy[keyStr] ?? targetRow ?? null;
   delete mapCopy[keyStr];
   selectedRecordMap.value = mapCopy;

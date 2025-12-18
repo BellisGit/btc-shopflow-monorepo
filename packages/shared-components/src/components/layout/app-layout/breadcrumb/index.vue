@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="app-breadcrumb">
     <el-breadcrumb separator="|">
       <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
@@ -67,7 +67,7 @@ interface BreadcrumbConfig {
 // 从菜单注册表中查找菜单项的图标
 function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined {
   const menus = getMenusForApp(app);
-  
+
   // 递归查找菜单项
   function findInMenuItems(items: any[]): string | undefined {
     for (const item of items) {
@@ -87,7 +87,7 @@ function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined
     }
     return undefined;
   }
-  
+
   return findInMenuItems(menus);
 }
 
@@ -130,7 +130,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
         // 优先使用配置中的图标，如果没有则从菜单注册表中查找
         const menuIcon = key ? findMenuIconByI18nKey(key, currentApp) : undefined;
-        
+
         // 确保图标正确传递：优先使用配置中的图标
         const icon = item.icon || menuIcon;
 
@@ -158,68 +158,69 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
   // 管理域的路径映射（完整层级结构）
   // 注意：图标将从菜单注册表中自动获取，这里只保留 i18nKey
+  // 生产环境下路径没有 /admin 前缀（如 /platform/domains 而不是 /admin/platform/domains）
   const adminAppBreadcrumbs: Record<string, BreadcrumbConfig[]> = {
     // 平台治理
-    '/admin/platform/domains': [
+    '/platform/domains': [
       { i18nKey: 'menu.platform' },
       { i18nKey: 'menu.platform.domains' },
     ],
-    '/admin/platform/modules': [
+    '/platform/modules': [
       { i18nKey: 'menu.platform' },
       { i18nKey: 'menu.platform.modules' },
     ],
-    '/admin/platform/plugins': [
+    '/platform/plugins': [
       { i18nKey: 'menu.platform' },
       { i18nKey: 'menu.platform.plugins' },
     ],
 
     // 组织与账号
-    '/admin/org/tenants': [
+    '/org/tenants': [
       { i18nKey: 'menu.org' },
       { i18nKey: 'menu.org.tenants' },
     ],
-    '/admin/org/departments': [
+    '/org/departments': [
       { i18nKey: 'menu.org' },
       { i18nKey: 'menu.org.departments' },
     ],
-    '/admin/org/users': [
+    '/org/users': [
       { i18nKey: 'menu.org' },
       { i18nKey: 'menu.org.users' },
     ],
 
     // 访问控制
-    '/admin/access/resources': [
+    '/access/resources': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.config' },
       { i18nKey: 'menu.access.resources' },
     ],
-    '/admin/access/actions': [
+    '/access/actions': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.config' },
       { i18nKey: 'menu.access.actions' },
     ],
-    '/admin/access/permissions': [
+    '/access/permissions': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.config' },
       { i18nKey: 'menu.access.permissions' },
     ],
-    '/admin/access/roles': [
+    '/access/roles': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.config' },
       { i18nKey: 'menu.access.roles' },
     ],
-    '/admin/access/perm-compose': [
+    '/access/perm-compose': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.relations' },
       { i18nKey: 'menu.access.perm_compose' },
     ],
-    '/admin/org/users/:id/roles': [
+    '/org/users/:id/roles': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.relations' },
       { i18nKey: 'menu.access.user_assign' },
       { i18nKey: 'menu.access.user_role_bind' },
     ],
-    '/admin/org/users/users-roles': [
+    '/org/users/users-roles': [
       { i18nKey: 'menu.access' },
       { i18nKey: 'menu.access.relations' },
       { i18nKey: 'menu.access.user_assign' },
@@ -227,63 +228,63 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     ],
 
     // 导航与可见性
-    '/admin/navigation/menus': [
+    '/navigation/menus': [
       { i18nKey: 'menu.navigation' },
       { i18nKey: 'menu.navigation.menus' },
     ],
-    '/admin/navigation/menus/preview': [
+    '/navigation/menus/preview': [
       { i18nKey: 'menu.navigation' },
       { i18nKey: 'menu.navigation.menu_preview' },
     ],
 
     // 运维与审计
-    '/admin/ops/logs/operation': [
+    '/ops/logs/operation': [
       { i18nKey: 'menu.ops' },
       { i18nKey: 'menu.ops.logs' },
       { i18nKey: 'menu.ops.operation_log' },
     ],
-    '/admin/ops/logs/request': [
+    '/ops/logs/request': [
       { i18nKey: 'menu.ops' },
       { i18nKey: 'menu.ops.logs' },
       { i18nKey: 'menu.ops.request_log' },
     ],
-    '/admin/ops/baseline': [
+    '/ops/baseline': [
       { i18nKey: 'menu.ops' },
       { i18nKey: 'menu.ops.baseline' },
     ],
-    '/admin/ops/api-list': [
+    '/ops/api-list': [
       { i18nKey: 'menu.ops' },
       { i18nKey: 'menu.ops.api_list' },
     ],
-    '/admin/ops/simulator': [
+    '/ops/simulator': [
       { i18nKey: 'menu.ops' },
       { i18nKey: 'menu.ops.simulator' },
     ],
     // 策略相关
-    '/admin/strategy/management': [
+    '/strategy/management': [
       { i18nKey: 'menu.strategy' },
       { i18nKey: 'menu.strategy.management' },
     ],
-    '/admin/strategy/designer': [
+    '/strategy/designer': [
       { i18nKey: 'menu.strategy' },
       { i18nKey: 'menu.strategy.designer' },
     ],
-    '/admin/strategy/monitor': [
+    '/strategy/monitor': [
       { i18nKey: 'menu.strategy' },
       { i18nKey: 'menu.strategy.monitor' },
     ],
     // 数据治理
-    '/admin/governance/files/templates': [
+    '/governance/files/templates': [
       { i18nKey: 'menu.governance' },
       { i18nKey: 'menu.data.files' },
       { i18nKey: 'menu.data.files.templates' },
     ],
     // 测试功能（图标将从菜单注册表中获取）
-    '/admin/test/components': [
+    '/test/components': [
       { i18nKey: 'menu.test_features' },
       { i18nKey: 'menu.test_features.components' },
     ],
-    '/admin/test/api-test-center': [
+    '/test/api-test-center': [
       { i18nKey: 'menu.test_features' },
       { i18nKey: 'menu.test_features.api_test_center' },
     ],
@@ -306,12 +307,6 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   const homePaths = new Set([
     '/',
     '/admin',
-    '/logistics',
-    '/engineering',
-    '/quality',
-    '/production',
-    '/finance',
-    '/monitor',
   ]);
 
   if (homePaths.has(normalizedPath)) {
@@ -319,10 +314,18 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 
   // 获取面包屑数据
-  const breadcrumbData =
-    currentApp === 'admin'
-      ? adminAppBreadcrumbs[normalizedPath]
-      : subAppBreadcrumbs[currentApp]?.[normalizedPath];
+  // 生产环境下路径没有 /admin 前缀（如 /platform/domains），直接匹配
+  let breadcrumbData: BreadcrumbConfig[] | undefined;
+
+  // 优先使用识别到的应用类型
+  if (currentApp === 'admin') {
+    breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+  } else if (currentApp && subAppBreadcrumbs[currentApp]) {
+    breadcrumbData = subAppBreadcrumbs[currentApp][normalizedPath];
+  } else {
+    // 如果无法识别应用，尝试使用 admin 应用的面包屑配置（作为后备方案）
+    breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+  }
 
   if (!breadcrumbData) {
     return [];

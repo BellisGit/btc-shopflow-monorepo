@@ -9,7 +9,7 @@ export default defineConfig({
   title: '拜里斯文档库',
   description: 'BTC 车间管理系统开发文档库',
 
-  base: process.env.NODE_ENV === 'production' ? '/internal/archive/' : '/',
+  base: '/',
   lang: 'zh-CN',
 
   lastUpdated: true,
@@ -20,39 +20,36 @@ export default defineConfig({
   // 确保路由状态保持
   ignoreDeadLinks: true, // 忽略死链接，避免路由错误
 
-  // 外观设置 - 嵌入模式禁用外观切换，避免内联脚本注入
-  appearance: false, // 完全禁用VitePress的外观切换，避免内联脚本"秒变黑"
+  // 外观设置 - 启用主题切换，允许文档应用独立控制主题
+  appearance: true,
 
-  // 添加超早期脚本，在首屏前执行主题设置
+  // 添加超早期脚本，在首屏前执行主题设置（可选：如果是在iframe中，可以同步主应用主题）
   head: [
+    // 显式设置 favicon，使用绝对路径避免受 iframe base URL 影响
+    ['link', { rel: 'icon', type: 'image/png', href: '/logo.png' }],
     ['script', {},
 `(function(){
   try {
-    // 优先读取parent-theme，如果没有则默认浅色主题
-    var parentTheme = localStorage.getItem('parent-theme');
-    var vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+    // 如果是在iframe中，尝试从主应用同步主题（可选）
+    // 如果不在iframe中，让VitePress自己处理主题
+    if (window.parent !== window) {
+      var parentTheme = localStorage.getItem('parent-theme');
+      var vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+      var isDark = false;
 
-    var isDark = false;
+      if (parentTheme) {
+        isDark = parentTheme === 'dark';
+      } else if (vueuseTheme) {
+        isDark = vueuseTheme === 'auto';
+      }
 
-    // 如果有parent-theme，直接使用
-    if (parentTheme) {
-      isDark = parentTheme === 'dark';
-    } else if (vueuseTheme) {
-      // 如果没有parent-theme，但有vueuse-color-scheme，则根据它判断
-      // vueuse-color-scheme为'auto'时表示暗色主题，'light'时表示浅色主题
-      isDark = vueuseTheme === 'auto';
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.style.setProperty('color-scheme', 'dark');
+      }
     }
-
-    // 应用主题
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.documentElement.style.setProperty('color-scheme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.documentElement.style.setProperty('color-scheme', 'light');
-    }
+    // 如果不在iframe中，让VitePress的appearance配置自己处理主题
   } catch(e) {
     console.error('[Early Script] Error:', e);
   }
@@ -122,7 +119,14 @@ export default defineConfig({
 
     // 社交媒体链接（可选）
     socialLinks: [
-      // 可以添加GitHub等链接
+      // 返回系统应用的logo图标
+      {
+        icon: {
+          svg: '<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="btc-logo-icon"><title>返回系统应用</title></svg>'
+        },
+        link: 'https://bellis.com.cn',
+        ariaLabel: '返回系统应用'
+      }
     ],
 
     // 返回顶部按钮配置
@@ -147,6 +151,9 @@ export default defineConfig({
     plugins: [
       exportSearchIndexPlugin() // 导出搜索索引给主应用
     ],
+
+    // 确保 public 目录被正确处理
+    publicDir: 'public',
 
     resolve: {
       alias: {
@@ -187,13 +194,5 @@ export default defineConfig({
         host: 'localhost', // 改为 localhost，避免 0.0.0.0 的问题
       },
     },
-    
-    // 预览服务器配置（注意：VitePress 的预览端口需要通过命令行参数设置）
-    // preview: {
-    //   port: getViteAppConfig('docs-site-app').prePort,
-    //   host: '0.0.0.0',
-    //   strictPort: true,
-    //   cors: true,
-    // }
   }
 });

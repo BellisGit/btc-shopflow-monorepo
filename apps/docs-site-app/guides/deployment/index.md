@@ -1,10 +1,10 @@
-﻿---
+---
 title: 文档中心部署指南
 type: guide
 project: deployment
 owner: dev-team
 created: '2025-10-13'
-updated: '2025-10-14'
+updated: '2025-01-27'
 publish: true
 tags:
 - guides
@@ -15,148 +15,64 @@ sidebar_order: 1
 sidebar_group: guides
 ---
 
-# 文档中心部署指南
+# 部署指南
 
-## 问题说明
+本部分包含了所有部署相关的文档，涵盖 Docker 部署、静态文件部署、K8s 部署、Nginx 配置等。
 
-当前文档中心在访问时遇到以下问题：
-- 无法从外部网络访问 `http://10.80.8.199:8080`
-- 文档站点无法正常加载
-- 需要解决网络访问和部署配置问题
+## 部署文档列表
 
-## 解决方案
+### 基础部署
+- **[CORS配置](./cors-config.md)** - 跨域资源共享配置说明
+- **[静态部署](./static-deployment.md)** - 静态文件部署到宝塔面板
+- **[反向代理架构](./reverse-proxy-architecture.md)** - 容器反向代理架构说明
 
-### 1. 网络访问配置
+### 容器化部署
+- **[K8s增量部署](./k8s-incremental-deployment.md)** - Kubernetes 增量构建和部署指南
+- **[GitHub Actions K8s配置](./github-actions-k8s-setup.md)** - GitHub Actions 自动部署到 K8s
 
-#### 1.1 检查防火墙设置
+### 网络配置
+- **[Nginx子域名代理](./nginx-subdomain-proxy.md)** - Nginx 子域名反向代理配置
+- **[子域名布局集成](./subdomain-layout-integration.md)** - 子域名访问时使用主应用 Layout
 
-确保防火墙允许以下端口：
-- `8080` - 主应用端口
-- `8085` - 文档站点端口
-- `8086` - VitePress HMR端口
+### 包管理
+- **[包发布](./publish-packages.md)** - 发布共享组件库到 Verdaccio
+- **[Verdaccio快速开始](./quick-start-verdaccio.md)** - Verdaccio 私有仓库快速开始指南
 
-#### 1.2 网络接口绑定
+### 其他配置
+- **[EPS共享方案](./eps-sharing-solution.md)** - EPS 服务共享方案
+- **[图标CDN配置](./icons-cdn-setup.md)** - 图标文件 CDN 配置说明
 
-确保应用绑定到正确的网络接口：
-```bash
-# 主应用
-npm run dev -- --host 0.0.0.0 --port 8080
+## 快速导航
 
-# 文档站点
-npm run dev -- --host 0.0.0.0 --port 8085
-```
+### 开发环境部署
+1. 查看 [快速开始指南](../getting-started.md) 了解开发环境配置
+2. 参考 [静态部署](./static-deployment.md) 进行本地测试部署
 
-### 2. 部署环境配置
+### 生产环境部署
+1. **Docker部署**：参考 [K8s增量部署](./k8s-incremental-deployment.md) 或 [反向代理架构](./reverse-proxy-architecture.md)
+2. **静态部署**：参考 [静态部署](./static-deployment.md)
+3. **Nginx配置**：参考 [Nginx子域名代理](./nginx-subdomain-proxy.md)
 
-#### 2.1 开发环境
+### CI/CD 部署
+1. 配置 GitHub Actions：参考 [GitHub Actions K8s配置](./github-actions-k8s-setup.md)
+2. 设置 Secrets 和变量
+3. 推送代码自动触发部署
 
-```bash
-# 启动主应用
-cd btc-shopflow-monorepo/apps/admin-app
-npm run dev
+## 部署方式对比
 
-# 启动文档站点
-cd btc-shopflow-monorepo/apps/docs-site
-npm run dev
-```
+| 部署方式 | 适用场景 | 优点 | 缺点 |
+|---------|---------|------|------|
+| **Docker部署** | 生产环境、需要环境一致性 | 环境一致、易于扩展 | 资源占用较高 |
+| **静态部署** | 纯前端应用、快速部署 | 部署快速、资源占用低 | 依赖服务器环境 |
+| **K8s部署** | 大规模生产环境 | 自动扩展、滚动更新 | 配置复杂 |
 
-#### 2.2 生产环境
+## 相关文档
 
-```bash
-# 构建文档站点
-cd btc-shopflow-monorepo/apps/docs-site
-npm run build
-
-# 部署到静态服务器
-npm run preview
-```
-
-### 3. VitePress 配置
-
-#### 3.1 服务器配置
-
-```typescript
-// .vitepress/config.ts
-export default defineConfig({
-  vite: {
-    server: {
-      port: 8085,
-      host: '0.0.0.0',
-      strictPort: true,
-      cors: true,
-      hmr: {
-        port: 8086,
-        host: 'localhost'
-      }
-    }
-  }
-})
-```
-
-#### 3.2 路由配置
-
-```typescript
-// 确保 cleanUrls 和 trailingSlash 设置正确
-export default defineConfig({
-  cleanUrls: true,
-  trailingSlash: false,
-  ignoreDeadLinks: true
-})
-```
-
-## 部署步骤
-
-### 步骤1: 环境准备
-
-1. 确保 Node.js 版本 >= 18
-2. 安装依赖: `pnpm install`
-3. 检查端口占用情况
-
-### 步骤2: 启动服务
-
-```bash
-# 开发环境
-pnpm dev
-
-# 生产环境
-pnpm build && pnpm preview
-```
-
-### 步骤3: 验证部署
-
-1. 访问主应用: `http://10.80.8.199:8080`
-2. 访问文档中心: `http://10.80.8.199:8080/docs`
-3. 验证文档站点: `http://10.80.8.199:8085`
-
-## 故障排除
-
-### 常见问题
-
-**问题1**: 端口被占用
-- **解决方案**: 使用 `netstat -ano | findstr :8080` 查找占用进程并终止
-
-**问题2**: 跨域问题
-- **解决方案**: 确保 CORS 配置正确
-
-**问题3**: 静态资源加载失败
-- **解决方案**: 检查 publicPath 和 base 配置
-
-## 监控和维护
-
-### 日志监控
-
-- 应用日志: 检查控制台输出
-- 错误日志: 监控错误信息
-- 访问日志: 跟踪用户访问
-
-### 性能优化
-
-- 启用 Gzip 压缩
-- 配置缓存策略
-- 优化静态资源
+- [应用概览](../apps-overview.md) - 了解各应用的端口和配置
+- [项目介绍](../overview/project-introduction.md) - 了解项目整体架构
+- [开发指南](../getting-started.md) - 开发环境配置
 
 ---
 
-**部署状态**: 测试中
+**最后更新**: 2025-01-27
 **维护团队**: 开发团队
-**最后更新**: 2025-10-14

@@ -182,7 +182,9 @@ export function registerManifestMenusForApp(appName: string): Promise<void> {
 
   // 获取现有菜单，如果内容相同则不更新，避免触发不必要的响应式更新
   const existingMenus = getMenusForApp(appName);
-  if (existingMenus.length > 0 && menusEqual(existingMenus, normalizedMenus)) {
+  // 开发环境下总是更新菜单，确保菜单配置变更能及时生效
+  const isDev = import.meta.env.DEV;
+  if (!isDev && existingMenus.length > 0 && menusEqual(existingMenus, normalizedMenus)) {
     // 菜单内容相同，不需要更新，避免触发重新渲染
     return Promise.resolve();
   }

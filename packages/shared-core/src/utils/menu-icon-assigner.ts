@@ -99,6 +99,7 @@ export const AVAILABLE_SVG_ICONS = [
   'cart',
   'folder',
   'map',
+  'odometer',
 ] as const;
 
 // 语义关键词到图标的映射表

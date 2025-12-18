@@ -159,10 +159,10 @@ const handleMenuSelect = (index: string) => {
   if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
     const firstChild = findFirstLeafMenu(matchedItem.children);
     if (firstChild && firstChild.index) {
-      const firstChildPath = firstChild.index.startsWith('/') 
-        ? firstChild.index 
+      const firstChildPath = firstChild.index.startsWith('/')
+        ? firstChild.index
         : `/${firstChild.index}`;
-      router.push(firstChildPath).catch((err) => {
+      router.push(firstChildPath).catch((err: unknown) => {
         if (import.meta.env.DEV) {
           console.warn('[top-left-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
         }
@@ -172,7 +172,7 @@ const handleMenuSelect = (index: string) => {
   }
 
   // 如果没有子菜单或找不到第一个子菜单，直接跳转到当前路径
-  router.push(absolutePath).catch((err) => {
+  router.push(absolutePath).catch((err: unknown) => {
     if (import.meta.env.DEV) {
       console.warn('[top-left-menu] 路由跳转失败:', absolutePath, err);
     }

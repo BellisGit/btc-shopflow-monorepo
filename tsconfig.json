@@ -1,4 +1,4 @@
-﻿{
+{
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
@@ -18,11 +18,16 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@btc/shared-utils": ["packages/shared-utils/src"],
-      "@btc/shared-components": ["packages/shared-components/src"],
-      "@btc/shared-core": ["packages/shared-core/src"],
-      "@btc/vite-plugin": ["packages/vite-plugin/src"],
-      "@btc/subapp-manifests": ["packages/subapp-manifests/src"]
+      "@btc/shared-core": ["packages/shared-core/dist"],
+      "@btc/shared-core/*": ["packages/shared-core/dist/*"],
+      "@btc/shared-components": ["packages/shared-components/dist"],
+      "@btc/shared-components/*": ["packages/shared-components/dist/*"],
+      "@btc/shared-utils": ["packages/shared-utils/dist"],
+      "@btc/shared-utils/*": ["packages/shared-utils/dist/*"],
+      "@btc/vite-plugin": ["packages/vite-plugin/dist"],
+      "@btc/vite-plugin/*": ["packages/vite-plugin/dist/*"],
+      "@btc/subapp-manifests": ["packages/subapp-manifests/dist"],
+      "@btc/subapp-manifests/*": ["packages/subapp-manifests/dist/*"]
     }
   },
   "exclude": ["node_modules", "dist", "**/dist"]

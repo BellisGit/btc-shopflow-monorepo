@@ -2,8 +2,7 @@
  * 统一 HTTP 请求函数
  * 基于 axios，参考 cool-admin 的实现
  */
-import type { AxiosRequestConfig } from 'axios';
-export interface RequestOptions extends AxiosRequestConfig {
+export interface RequestOptions {
     url: string;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'PATCH';
     data?: any;

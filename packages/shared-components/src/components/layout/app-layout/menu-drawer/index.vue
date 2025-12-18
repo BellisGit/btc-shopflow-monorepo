@@ -469,7 +469,7 @@ const getDomainDisplayName = (app: MicroApp) => {
   }
 
   // 使用国际化映射获取显示名称
-  const i18nKey = domainCodeToI18nKey[domainCode];
+  const i18nKey = domainCode ? domainCodeToI18nKey[domainCode] : undefined;
   if (i18nKey) {
     const i18nValue = t(i18nKey);
     // 如果国际化值存在且不是 key 本身，则使用国际化值

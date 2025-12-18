@@ -6,7 +6,9 @@ import type { SubAppContext } from './types';
  * 监听语言切换、主题切换等事件
  */
 export function setupEventBridge(context: SubAppContext): void {
-  if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 关键：在 layout-app 环境下也需要设置事件桥接
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
 
@@ -14,7 +16,10 @@ export function setupEventBridge(context: SubAppContext): void {
     const custom = event as CustomEvent<{ locale: string }>;
     const newLocale = custom.detail?.locale as 'zh-CN' | 'en-US';
     if (newLocale && context.i18n?.i18n?.global) {
-      context.i18n.i18n.global.locale.value = newLocale;
+      const locale = context.i18n.i18n.global.locale;
+      if (locale && typeof locale === 'object' && 'value' in locale) {
+        (locale as { value: string }).value = newLocale;
+      }
     }
   }) as EventListener;
 

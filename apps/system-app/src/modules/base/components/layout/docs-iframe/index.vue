@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="docs-iframe-wrapper" :class="{ 'is-hidden': !isVisible }">
     <iframe
       v-if="iframeCreated"
@@ -37,7 +37,7 @@ const { locale } = useI18n();
 // 动态获取文档服务器地址
 const getDocsUrl = () => {
   if (!import.meta.env.DEV) {
-    return '/internal/archive';
+    return '/';
   }
 
   // 开发环境：优先使用环境变量，否则从配置中获取

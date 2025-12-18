@@ -32,6 +32,15 @@ import { elementLocale } from './core/ui';
 // 扩展 SubAppContext 以包含 registerTabs
 export interface LogisticsAppContext extends SubAppContext {
   registerTabs: (props?: QiankunProps) => void;
+  // 显式声明继承的属性，确保 TypeScript 正确识别
+  app: SubAppContext['app'];
+  router: SubAppContext['router'];
+  pinia: SubAppContext['pinia'];
+  i18n: SubAppContext['i18n'];
+  theme: SubAppContext['theme'];
+  cleanup: SubAppContext['cleanup'];
+  props: SubAppContext['props'];
+  translate: SubAppContext['translate'];
 }
 
 const LOGISTICS_APP_ID = 'logistics';
@@ -167,10 +176,10 @@ const createRegisterTabs = (context: LogisticsAppContext) => {
         i18nKey: 'menu.logistics.customsModule',
       },
       {
-        key: 'config',
-        title: translate('logistics.menu.config'),
-        path: '/logistics/config',
-        i18nKey: 'menu.logistics.config',
+        key: 'inventory',
+        title: translate('logistics.menu.inventoryManagement'),
+        path: '/logistics/inventory',
+        i18nKey: 'menu.logistics.inventoryManagement',
       },
     ]);
   };

@@ -118,8 +118,8 @@ export function useSettingsConfig() {
     const presets = theme.THEME_PRESETS || [];
     // 从预设主题中提取颜色，过滤掉空值
     return presets
-      .map((preset) => preset.color)
-      .filter((color) => color != null && color !== '');
+      .map((preset: { color: string }) => preset.color)
+      .filter((color: string) => color != null && color !== '');
   });
 
   // 容器宽度选项

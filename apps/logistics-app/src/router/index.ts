@@ -18,7 +18,7 @@ function normalizePath(path: string): string {
 
   const hostname = window.location.hostname;
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   if (!isProductionSubdomain) {
     return path; // 非生产环境子域名，保持原路径
   }
@@ -45,9 +45,9 @@ export const createLogisticsRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to, from, next) => {
+    router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
     const normalizedPath = normalizePath(to.path);
-    
+
     if (normalizedPath !== to.path) {
       // 路径需要规范化，重定向到规范化后的路径
       next({
@@ -58,11 +58,11 @@ export const createLogisticsRouter = (): Router => {
       });
       return;
     }
-    
+
     next();
   });
 
-  router.onError((error) => {
+  router.onError((error: Error) => {
     console.warn('[logistics-app] Router error:', error);
   });
 

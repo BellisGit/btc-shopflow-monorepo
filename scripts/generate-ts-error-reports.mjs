@@ -58,7 +58,7 @@ function cleanOutputDirectory() {
     return;
   }
 
-  console.log('🧹 正在清理旧日志文件...\n');
+  console.log('🧹 正在清理旧报告文件...\n');
   
   try {
     const files = readdirSync(outputDir);
@@ -68,7 +68,7 @@ function cleanOutputDirectory() {
       const filePath = join(outputDir, file);
       try {
         const stats = statSync(filePath);
-        if (stats.isFile() && (file.endsWith('.log') || file.endsWith('.md'))) {
+        if (stats.isFile() && (file.endsWith('.txt') || file.endsWith('.md'))) {
           unlinkSync(filePath);
           cleanedCount++;
         }
@@ -87,6 +87,59 @@ function cleanOutputDirectory() {
     mkdirSync(outputDir, { recursive: true });
     console.log('ℹ️  输出目录不存在，已创建\n');
   }
+}
+
+/**
+ * 执行构建共享包命令
+ */
+function buildSharedPackages() {
+  return new Promise((resolve, reject) => {
+    const command = 'pnpm';
+    const args = ['run', 'build:share'];
+    
+    console.log('🔨 正在构建共享包（确保类型定义文件最新）...\n');
+    
+    const child = spawn(command, args, {
+      cwd: rootDir,
+      shell: true,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+      const text = data.toString();
+      stdout += text;
+      // 实时输出构建信息
+      process.stdout.write(text);
+    });
+
+    child.stderr.on('data', (data) => {
+      const text = data.toString();
+      stderr += text;
+      // 实时输出错误信息
+      process.stderr.write(text);
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('\n✅ 共享包构建完成\n');
+        resolve();
+      } else {
+        console.error('\n❌ 共享包构建失败，但继续执行类型检查...\n');
+        // 即使构建失败也继续，因为可能已经有旧的构建产物
+        resolve();
+      }
+    });
+
+    child.on('error', (error) => {
+      console.error(`\n❌ 执行构建命令时出错: ${error.message}`);
+      console.error('继续执行类型检查...\n');
+      // 即使出错也继续
+      resolve();
+    });
+  });
 }
 
 /**
@@ -265,7 +318,7 @@ function parseErrors(output, appName) {
 function generateReport(result, errors, isPackage = false) {
   const appName = result.appName;
   const fileName = appName.replace('@btc/', '').replace(/-/g, '_');
-  const reportPath = join(outputDir, `${fileName}_errors.log`);
+  const reportPath = join(outputDir, `${fileName}_errors.txt`);
   
   let report = `============================================================\n`;
   report += `${appName} - TypeScript 类型错误报告\n`;
@@ -337,7 +390,7 @@ function generateReport(result, errors, isPackage = false) {
  * 生成共享包的合并报告
  */
 function generatePackagesReport(packageResults) {
-  const reportPath = join(outputDir, 'packages_errors.log');
+  const reportPath = join(outputDir, 'packages_errors.txt');
   
   // 合并所有错误
   const allErrors = [];
@@ -530,26 +583,177 @@ function generateSummaryReport(results) {
   const sortedCodes = Object.entries(allErrorCodes)
     .sort((a, b) => b[1] - a[1]);
   
-  summary += `| 错误代码 | 总数 | 说明 |\n`;
-  summary += `|---------|------|------|\n`;
+  summary += `| 错误代码 | 总数 | 官方含义 |\n`;
+  summary += `|---------|------|----------|\n`;
   
+  // TypeScript 错误代码官方含义（参考: https://www.typescriptlang.org/docs/handbook/error-codes.html）
   const errorCodeDescriptions = {
+    'TS2305': '模块/命名空间中不存在指定的导出成员',
+    'TS2614': '模块无默认导出，或导入的命名空间对象无此导出成员',
     'TS2307': '无法找到模块或其类型声明',
-    'TS6307': '文件未在项目文件列表中',
-    'TS2322': '类型不匹配',
-    'TS2339': '属性不存在',
+    'TS2339': '对象上不存在该属性/方法',
+    'TS7006': '变量隐式具有 any 类型',
+    'TS2353': '不能将类型 X 分配给类型 Y（类型不匹配）',
+    'TS6307': '文件未在 tsconfig.json 的项目文件列表中',
     'TS2578': '未使用的 @ts-expect-error 指令',
+    'TS6059': '文件不在项目根目录中，项目文件列表仅包含根目录文件',
+    'TS2322': '类型不匹配',
     'TS18047': '可能为 null',
-    'TS7006': '隐式 any 类型',
     'TS6133': '未使用的变量',
     'TS2741': '缺少必需属性',
     'TS2352': '类型转换错误'
   };
   
   sortedCodes.forEach(([code, count]) => {
-    const desc = errorCodeDescriptions[code] || '未知错误';
-    summary += `| ${code} | ${count} | ${desc} |\n`;
+    const desc = errorCodeDescriptions[code];
+    if (!desc) {
+      // 对于未知的错误代码，提供查找链接而不是标注"未知错误"
+      summary += `| ${code} | ${count} | [查看官方文档](https://www.typescriptlang.org/docs/handbook/error-codes.html) |\n`;
+    } else {
+      summary += `| ${code} | ${count} | ${desc} |\n`;
+    }
   });
+  
+  // 添加详细说明章节
+  summary += `\n## 错误代码详细说明与解决方案\n\n`;
+  summary += `> 参考: [TypeScript 错误代码官方文档](https://www.typescriptlang.org/docs/handbook/error-codes.html)\n\n`;
+  
+  // 根据用户提供的表格生成详细说明
+  const errorCodeDetails = {
+    'TS2305': {
+      meaning: '模块/命名空间中不存在指定的导出成员（如导入了未导出的变量/类型/函数）',
+      commonCauses: [
+        '导入成员名称拼写/大小写错误',
+        '模块导出语法错误（默认/命名导出混淆）',
+        '第三方库类型声明缺失导出成员'
+      ],
+      solutions: [
+        '核对模块实际导出的成员名（如 `export const fn` 而非 `export default fn`）',
+        '为第三方库补全 `.d.ts` 声明',
+        '检查导入路径是否指向正确模块'
+      ]
+    },
+    'TS2614': {
+      meaning: '模块无默认导出，或导入的命名空间对象无此导出成员（如 `import X from \'xxx\'` 但模块仅命名导出）',
+      commonCauses: [
+        '导入方式与导出方式不匹配（默认导入 ↔ 命名导出）',
+        '类型声明未正确描述导出类型'
+      ],
+      solutions: [
+        '修正导入语法（`import { X } from \'xxx\'` 替代 `import X from \'xxx\'`）',
+        '补全模块默认导出声明（`declare module \'xxx\' { export default fn }`）'
+      ]
+    },
+    'TS2307': {
+      meaning: '无法找到模块或其类型声明',
+      commonCauses: [
+        '模块路径错误（相对/绝对路径写错）',
+        '第三方库无 `@types/xxx` 类型包',
+        '文件不在 `tsconfig.json` 的 `include` 范围内'
+      ],
+      solutions: [
+        '校验路径（如 `./utils` 而非 `utils`）',
+        '安装对应类型包（`npm i @types/lodash -D`）',
+        '调整 `tsconfig.include` 为 `["src/**/*"]`'
+      ]
+    },
+    'TS2339': {
+      meaning: '对象上不存在该属性/方法',
+      commonCauses: [
+        '属性名拼写错误',
+        '类型定义缺失该属性',
+        '对象为 `null/undefined` 时访问属性'
+      ],
+      solutions: [
+        '核对属性名（如 `user.name` 而非 `user.nam`）',
+        '扩展类型接口（`interface User { newProp: string }`）',
+        '非空断言（`obj!.prop`）或空值检查'
+      ]
+    },
+    'TS7006': {
+      meaning: '变量隐式具有 `any` 类型（未显式声明类型，且 TS 无法自动推断）',
+      commonCauses: [
+        '变量未声明类型且无初始值',
+        '函数参数未标注类型',
+        '`tsconfig` 关闭 `noImplicitAny` 但代码未适配'
+      ],
+      solutions: [
+        '显式声明类型（`let num: number;`）',
+        '为函数参数加类型（`function fn(x: string) {}`）',
+        '临时用 `@ts-expect-error`（标注修复TODO）'
+      ]
+    },
+    'TS2353': {
+      meaning: '不能将类型 X 分配给类型 Y（重载参数不匹配/只读属性赋值/联合类型赋值错误）',
+      commonCauses: [
+        '重载函数调用参数类型不匹配',
+        '给 `readonly` 属性赋值',
+        '联合类型赋值未收窄'
+      ],
+      solutions: [
+        '核对重载函数的参数类型',
+        '移除只读属性的赋值操作',
+        '类型断言临时解决（`x as Y`，优先调整类型设计）'
+      ]
+    },
+    'TS6307': {
+      meaning: '文件未在 `tsconfig.json` 的项目文件列表中',
+      commonCauses: [
+        '文件路径不在 `include` 范围内',
+        '文件被 `exclude` 字段排除',
+        '`files` 字段未显式包含该文件'
+      ],
+      solutions: [
+        '调整 `include` 覆盖目标文件（`["src/**/*", "types/**/*"]`）',
+        '检查 `exclude` 是否误排除（如排除了 `src/utils`）'
+      ]
+    },
+    'TS2578': {
+      meaning: '未使用的 `@ts-expect-error` 指令（注释标注了该指令，但当前行无类型错误）',
+      commonCauses: [
+        '修复代码错误后未删除注释',
+        '`@ts-expect-error` 标注行本身无错误'
+      ],
+      solutions: [
+        '立即删除无错误行的 `@ts-expect-error`',
+        '核对标注行是否真的无错误（避免注释残留）'
+      ]
+    },
+    'TS6059': {
+      meaning: '文件不在项目根目录中，项目文件列表仅包含根目录文件',
+      commonCauses: [
+        '文件路径超出 `tsconfig.rootDir` 配置范围',
+        '`rootDir` 配置错误'
+      ],
+      solutions: [
+        '调整 `rootDir` 为源码根目录（`"rootDir": "./src"`）',
+        '将文件移入 `rootDir` 范围内',
+        '显式在 `files` 中添加该文件'
+      ]
+    }
+  };
+  
+  // 生成详细说明（仅针对当前报告中出现的错误代码）
+  const codesWithDetails = sortedCodes
+    .filter(([code]) => errorCodeDetails[code])
+    .map(([code]) => code);
+  
+  if (codesWithDetails.length > 0) {
+    codesWithDetails.forEach(code => {
+      const details = errorCodeDetails[code];
+      summary += `### ${code}\n\n`;
+      summary += `**官方含义**: ${details.meaning}\n\n`;
+      summary += `**高频触发原因**:\n`;
+      details.commonCauses.forEach(cause => {
+        summary += `- ${cause}\n`;
+      });
+      summary += `\n**针对性解决方案**:\n`;
+      details.solutions.forEach(solution => {
+        summary += `- ${solution}\n`;
+      });
+      summary += `\n`;
+    });
+  }
   
   writeFileSync(summaryPath, summary, 'utf-8');
   console.log(`\n✅ 汇总报告已保存: ${summaryPath}`);
@@ -564,6 +768,9 @@ async function main() {
 
   // 清理旧日志文件
   cleanOutputDirectory();
+
+  // 构建共享包，确保类型定义文件最新
+  await buildSharedPackages();
 
   const results = [];
   const packageResults = [];
@@ -611,7 +818,7 @@ async function main() {
   console.log(`\n✅ 所有报告生成完成！`);
   console.log(`📁 报告位置: ${outputDir}`);
   console.log(`   - 应用报告: 每个应用单独一个文件`);
-  console.log(`   - 共享包报告: packages_errors.log (合并)`);
+  console.log(`   - 共享包报告: packages_errors.txt (合并)`);
 }
 
 main().catch(console.error);

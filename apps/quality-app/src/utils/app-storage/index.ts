@@ -88,7 +88,7 @@ class AppStorageManager {
        * 获取用户信息
        */
       get(): UserStorage | null {
-        return storage.get<UserStorage>(APP_STORAGE_KEYS.USER) || null;
+        return (storage.get as <T>(key: string) => T | null)<UserStorage>(APP_STORAGE_KEYS.USER) || null;
       },
 
       /**
@@ -176,7 +176,7 @@ class AppStorageManager {
        * 获取所有设置
        */
       get(): AppSettingsStorage {
-        return storage.get<AppSettingsStorage>(APP_STORAGE_KEYS.SETTINGS) || {};
+        return (storage.get as <T>(key: string) => T | null)<AppSettingsStorage>(APP_STORAGE_KEYS.SETTINGS) || {};
       },
 
       /**

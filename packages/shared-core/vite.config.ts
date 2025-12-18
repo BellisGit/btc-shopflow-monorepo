@@ -12,20 +12,24 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      include: ['src/**/*.ts', 'src/**/*.d.ts'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts', 'node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts'],
       outDir: 'dist',
       // 保留目录结构
-      copyDtsFiles: true,
+      copyDtsFiles: false, // 不复制 .d.ts 文件，只从 .ts 文件生成
       // 生成类型声明文件后，插入类型引用路径
       insertTypesEntry: true,
       // 跳过类型检查，避免 rootDir 限制问题
+      // @ts-ignore - skipDiagnostics 在较新版本的 vite-plugin-dts 中可用
       skipDiagnostics: true,
       // 静默模式，不显示诊断信息
       logLevel: 'silent',
       // 使用单独的 tsconfig 文件
       tsconfigPath: './tsconfig.build.json',
-      // 排除外部依赖的类型检查
-      exclude: ['node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts'],
+      // 禁用 rollupTypes，避免 API Extractor 错误
+      rollupTypes: false,
+      // 生成统一的类型声明文件到 dist 根目录
+      bundledPackages: [],
     }),
   ],
   build: {

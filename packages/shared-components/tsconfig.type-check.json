@@ -1,0 +1,32 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "skipLibCheck": true,
+    "paths": {
+      "@btc-common/*": ["src/common/*"],
+      "@btc-components/*": ["src/components/*"],
+      "@btc-crud/*": ["src/crud/*"],
+      "@btc-styles/*": ["src/styles/*"],
+      "@btc-locales/*": ["src/locales/*"],
+      "@assets/*": ["src/assets/*"],
+      "@plugins/*": ["src/plugins/*"],
+      "@utils/*": ["src/utils/*"],
+      "@btc/shared-components": ["src/index.ts"],
+      "@btc/shared-components/*": ["src/*"],
+      "@charts/*": ["src/charts/*"],
+      "@charts-types/*": ["src/charts/types/*"],
+      "@charts-utils/*": ["src/charts/utils/*"],
+      "@charts-composables/*": ["src/charts/composables/*"],
+      "@btc/shared-core": ["../shared-core/dist"],
+      "@btc/shared-core/*": ["../shared-core/dist/*"],
+      "@btc/shared-utils": ["../shared-utils/src"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*"],
+      "@btc/subapp-manifests": ["../subapp-manifests/dist"],
+      "@btc/subapp-manifests/*": ["../subapp-manifests/dist/*"],
+      "@configs/*": ["../../configs/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "../../configs"]
+}

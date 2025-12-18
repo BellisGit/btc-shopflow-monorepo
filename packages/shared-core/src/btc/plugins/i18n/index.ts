@@ -146,8 +146,9 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
 
       // 监听语言切换并持久化
       const { locale } = i18n.global;
-      if (typeof locale !== 'string') {
-        watch(() => locale.value, (newLocale: string) => {
+      // 当 legacy: false 时，locale 是一个 Ref<string>
+      if (locale && typeof locale === 'object' && 'value' in locale) {
+        watch(() => (locale as { value: string }).value, (newLocale: string) => {
           // 只写 cookie，不再写入 localStorage（locale 只需要 cookie 供服务端读取）
           // 前端读取 locale 从 cookie 或 i18n 实例中获取即可
           document.cookie = `locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;

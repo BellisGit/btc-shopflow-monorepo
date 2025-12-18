@@ -1,0 +1,58 @@
+============================================================
+layout-app - ESLint 错误报告
+============================================================
+
+生成时间: 2025/12/18 14:19:37
+总错误数: 2
+
+按严重程度分类:
+------------------------------------------------------------
+  error   : 2 个
+  warning : 0 个
+
+按规则分类:
+------------------------------------------------------------
+  unknown                                 : 2 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
+  错误数: 2
+    [ERROR] unknown - 行 3:36 - The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
+    [ERROR] unknown - 行 3:40 - The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
+  位置: 3:36
+  严重程度: error
+  规则: unknown
+  消息: The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
+
+错误 #2
+  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
+  位置: 3:40
+  严重程度: error
+  规则: unknown
+  消息: The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
+
+============================================================
+完整输出:
+============================================================
+
+
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
+  3:36  error  The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
+  3:40  error  The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
+
+✖ 2 problems (2 errors, 0 warnings)
+

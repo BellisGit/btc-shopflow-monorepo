@@ -413,10 +413,19 @@
 	--btc-crud-op-width: 220px;
 }
 
+// 修复固定列 z-index 问题：确保固定右侧列（操作列）的 z-index 高于固定左侧列
+// 当同时有固定左侧列和固定右侧列时，操作列会被遮挡，需要提高右侧列的 z-index
+// 注意：不要设置 position: relative，因为固定列需要 position: absolute 才能正常工作
+// 使用更高的 z-index 值（100），确保即使在生产环境构建后，Element Plus 的默认样式也不会覆盖
 .el-table__fixed-right,
 .el-table__fixed-right-patch {
-  position: relative;
-  overflow: visible !important;
+  z-index: 100 !important; // 提高 z-index，确保操作列在最上层，避免被固定左侧列遮挡
+}
+
+// 确保固定左侧列的 z-index 低于操作列
+.el-table__fixed-left,
+.el-table__fixed-left-patch {
+  z-index: 3 !important;
 }
 
 .el-table__fixed-right::before,

@@ -66,7 +66,7 @@ export const createMonitorRouter = (isStandalone: boolean = false): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to, _from, next) => {
+  router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
     // 只在独立运行（非 qiankun）且是生产环境子域名时处理
     if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       const hostname = window.location.hostname;
@@ -88,7 +88,7 @@ export const createMonitorRouter = (isStandalone: boolean = false): Router => {
     next();
   });
 
-  router.onError((error) => {
+  router.onError((error: Error) => {
     console.warn('[monitor-app] Router error:', error);
   });
 

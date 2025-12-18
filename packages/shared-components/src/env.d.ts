@@ -9,6 +9,8 @@ declare module '*.vue' {
 
 declare module 'vue-router' {
   export type Router = any;
+  export type RouteLocationNormalized = any;
+  export type NavigationGuardNext = any;
   export function createRouter(...args: any[]): Router;
   export function createWebHistory(...args: any[]): any;
   export function createMemoryHistory(...args: any[]): any;

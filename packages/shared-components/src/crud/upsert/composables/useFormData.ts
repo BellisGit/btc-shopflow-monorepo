@@ -1,7 +1,7 @@
 import { ref, computed, reactive } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
-import { useFormRenderer } from '@btc-common/form/composables/useFormRenderer';
+import { useFormRenderer } from '@btc/shared-components';
 import type { FormItem, UpsertProps, UpsertMode } from '../types';
 
 /**
@@ -103,7 +103,7 @@ export function useFormData(props: UpsertProps) {
     const rules: FormRules = {};
     computedItems.value.forEach((item) => {
       if (!item.prop) return; // 跳过没有 prop 的项
-      
+
       if (item.rules) {
         // 如果已有规则，确保每个规则都有 trigger
         const normalizedRules = Array.isArray(item.rules) ? item.rules : [item.rules];
@@ -116,8 +116,8 @@ export function useFormData(props: UpsertProps) {
         });
       } else if (item.required) {
         // 只有 required 时，添加完整的验证规则（包括 trigger）
-        rules[item.prop] = [{ 
-          required: true, 
+        rules[item.prop] = [{
+          required: true,
           message: `${t('common.validation.required_prefix')}${item.label}`,
           trigger: ['blur', 'change']
         }];

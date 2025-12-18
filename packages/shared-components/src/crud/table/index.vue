@@ -3,8 +3,8 @@
     ref="tableRef"
     class="btc-table"
     :key="rebuildKey"
-    :data="crud.tableData.value"
-    :loading="crud.loading.value"
+    :data="crud?.tableData?.value || []"
+    :loading="crud?.loading?.value || false"
       :height="height || undefined"
     :max-height="autoHeight ? (autoMaxHeight && autoMaxHeight > 0 ? autoMaxHeight : (maxHeight ?? undefined)) : (maxHeight || undefined)"
     :row-key="rowKey || 'username'"
@@ -17,7 +17,7 @@
     highlight-current-row
     fit
       v-bind="tableAttrs"
-    @selection-change="crud.handleSelectionChange"
+    @selection-change="crud?.handleSelectionChange"
     @sort-change="onSortChange"
     @row-contextmenu="onRowContextMenu"
     style="width: 100%"
@@ -34,7 +34,7 @@
         <template #op-slot="{ scope, column: opColumn }">
         <div class="btc-table-op">
           <slot name="op-buttons" v-bind="scope">
-            <template v-for="(btn, btnIndex) in getOpButtons(opColumn, scope)" :key="btnIndex">
+            <template v-for="(btn, btnIndex) in getOpButtons(opColumn, scope || {})" :key="btnIndex">
               <slot
                 v-if="typeof btn === 'string' && btn.startsWith('slot-')"
                 :name="btn"
@@ -51,7 +51,7 @@
                   text
                   class="btc-crud-btn btc-crud-op-btn"
                   :type="getButtonType(btn)"
-                  @click="handleOpClick(btn, scope.row)"
+                  @click="handleOpClick(btn, scope.row, emit as any)"
                 >
                   <BtcSvg
                     v-if="getButtonIcon(btn)"
@@ -149,7 +149,7 @@ const props = withDefaults(defineProps<TableProps>(), {
   toolbar: true,
 });
 
-const emit = defineEmits(['selection-change', 'sort-change']);
+const emit = defineEmits(['selection-change', 'sort-change', 'detail-click']);
 
 const attrs = useAttrs();
 
@@ -553,7 +553,7 @@ const getStringOpButtonConfig = (btn: string, scope: any): BtcTableButtonConfig 
     tooltip: () => text,
     ariaLabel: text,
     type: (getButtonType(btn) as BtcTableButtonConfig['type']) ?? 'default',
-    onClick: () => handleOpClick(btn, scope.row),
+    onClick: () => handleOpClick(btn, scope.row, emit as any),
   };
 };
 
@@ -584,14 +584,14 @@ const scheduleAutoHeight = () => {
 };
 
 watch(
-  () => crud.tableData.value.length,
+  () => crud?.tableData?.value?.length ?? 0,
   () => {
     scheduleAutoHeight();
   },
 );
 
 watch(
-  () => crud.loading.value,
+  () => crud?.loading?.value ?? false,
   (loading) => {
     if (!loading) {
       scheduleAutoHeight();
@@ -638,4 +638,36 @@ defineExpose({
 
 <style lang="scss" scoped>
 // Element Plus 原生支持列宽调整，无需额外样式
+</style>
+
+<style lang="scss">
+// 修复固定列时操作列被遮挡的问题
+// Element Plus 固定列的默认 z-index：
+// - 固定左侧列：z-index: 3
+// - 固定右侧列：z-index: 3
+// 当同时有固定左侧列和固定右侧列时，需要确保固定右侧列（包含操作列）的 z-index 更高
+// 提高 z-index 值以确保在生产环境中也能正确显示（避免被其他列遮挡）
+// 修复固定列 z-index 问题（组件级别的样式，与全局样式配合使用）
+// 使用更具体的选择器确保样式优先级足够高
+.btc-table {
+  // 确保固定右侧列（包含操作列）的 z-index 高于固定左侧列
+  // 使用更高的 z-index 值（100），确保即使在生产环境构建后也能正确显示
+  .el-table__fixed-right {
+    z-index: 100 !important;
+  }
+
+  // 确保固定右侧列的补丁（用于遮住滚动条）也使用正确的 z-index
+  .el-table__fixed-right-patch {
+    z-index: 100 !important;
+  }
+
+  // 确保固定左侧列的 z-index 低于操作列
+  .el-table__fixed-left {
+    z-index: 3 !important;
+  }
+
+  .el-table__fixed-left-patch {
+    z-index: 3 !important;
+  }
+}
 </style>

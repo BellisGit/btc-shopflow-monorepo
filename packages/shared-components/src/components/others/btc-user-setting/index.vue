@@ -12,7 +12,7 @@
     <!-- 暗黑模式切换 -->
     <BtcIconButton
       :config="{
-        icon: () => theme.isDark.value ? 'light' : 'dark',
+        icon: () => theme?.isDark.value ? 'light' : 'dark',
         tooltip: t('common.tooltip.toggle_dark'),
         onClick: handleDarkToggle
       }"

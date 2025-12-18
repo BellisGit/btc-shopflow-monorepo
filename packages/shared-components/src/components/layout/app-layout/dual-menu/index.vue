@@ -16,10 +16,10 @@
               :offset="25"
               :disabled="showText"
             >
-              <div 
-                class="dual-menu__item" 
-                :style="{ 
-                  margin: showText ? '5px' : '15px', 
+              <div
+                class="dual-menu__item"
+                :style="{
+                  margin: showText ? '5px' : '15px',
                   height: showText ? '60px' : '34px',
                   width: showText ? 'auto' : '34px'
                 }"
@@ -80,7 +80,7 @@ defineOptions({
 });
 
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type RouteLocationNormalized, type NavigationGuardNext } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
@@ -446,10 +446,10 @@ const handleFirstLevelClick = (item: any, event?: Event) => {
     if (item.children && item.children.length > 0) {
       const firstChild = findFirstLeafMenu(item.children);
       if (firstChild && firstChild.index) {
-        const firstChildPath = firstChild.index.startsWith('/') 
-          ? firstChild.index 
+        const firstChildPath = firstChild.index.startsWith('/')
+          ? firstChild.index
           : `/${firstChild.index}`;
-        
+
         originalConsoleLog('[dual-menu] 找到第一个子菜单，准备跳转:', {
           firstChildIndex: firstChild.index,
           firstChildPath,
@@ -462,7 +462,7 @@ const handleFirstLevelClick = (item: any, event?: Event) => {
         }, 100);
 
         // 跳转到第一个子菜单
-        router.push(firstChildPath).catch((err) => {
+        router.push(firstChildPath).catch((err: unknown) => {
           // 路由跳转失败，静默处理（可能是路由不存在，但不应该影响菜单切换）
           if (import.meta.env.DEV) {
             console.warn('[dual-menu] 跳转到第一个子菜单失败:', firstChildPath, err);
@@ -493,7 +493,7 @@ const handleFirstLevelClick = (item: any, event?: Event) => {
 
   selectedFirstLevel.value = item.index || '';
   menuKey.value++;
-  
+
   // 关键：确保 activeMenu 不是一级菜单的 index
   // 如果当前 activeMenu 是一级菜单的 index，清空它，避免 el-menu 自动触发 @select 事件
   if (activeMenu.value === itemPath) {
@@ -538,7 +538,7 @@ watch(
       // 如果是一级菜单的路径，清空 activeMenu，避免 el-menu 自动触发 @select 事件
       activeMenu.value = '';
     }
-    
+
     // 根据当前路由更新选中的一级菜单
     for (const item of firstLevelMenuItems.value) {
       if (item.index && newPath.startsWith(item.index)) {
@@ -631,7 +631,7 @@ const handleMenuSelect = (index: string) => {
   }
 
   // 使用 catch 捕获路由跳转错误，避免未匹配路由时导致的问题
-  router.push(absolutePath).catch((err) => {
+  router.push(absolutePath).catch((err: unknown) => {
     // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
     if (import.meta.env.DEV) {
       console.warn('[dual-menu] 路由跳转失败:', absolutePath, err);
@@ -662,7 +662,7 @@ watch(
       // 注册路由拦截器，阻止一级菜单的路由跳转
       // 关键：使用 router.beforeEach 注册，这会返回一个取消函数
       // 路由拦截器是栈结构，后注册的先执行，所以我们的拦截器会在其他拦截器之前执行
-      routeGuardUnregister = router.beforeEach((to, from, next) => {
+      routeGuardUnregister = router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
         originalConsoleLog('[dual-menu] ===== 路由拦截器被调用 =====', {
           to: to.path,
           from: from.path,
@@ -838,7 +838,7 @@ onUnmounted(() => {
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    
+
     :deep(.el-input) {
       width: 100%;
     }
@@ -889,13 +889,13 @@ onUnmounted(() => {
       &.is-active {
         background-color: var(--el-color-primary) !important;
         color: #fff !important;
-        
+
         // 关键：覆盖全局样式，确保激活状态下图标颜色是白色，而不是主题色
         // 防止 .app-layout__sidebar .el-menu-item.is-active .el-icon 的全局样式影响双栏菜单
         .el-icon {
           color: #fff !important;
         }
-        
+
         .el-icon svg {
           fill: #fff !important;
           color: #fff !important;
@@ -919,7 +919,7 @@ onUnmounted(() => {
       opacity: 1 !important;
       // 不设置 color，让它自然继承父元素的文字颜色（参考第一列的做法）
     }
-    
+
     // 确保 SVG 图标也显示，并且颜色继承（使用 currentColor）
     :deep(.el-icon svg) {
       display: block !important;

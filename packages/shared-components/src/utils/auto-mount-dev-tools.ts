@@ -38,7 +38,6 @@ function getCookie(name: string): string | null {
 function isMoseluUser(): boolean {
   try {
     const btcUser = getCookie('btc_user');
-    console.log('[DevTools] 检查 moselu 用户 - btc_user cookie:', btcUser ? '存在' : '不存在');
     if (!btcUser) {
       return false;
     }
@@ -53,11 +52,9 @@ function isMoseluUser(): boolean {
     }
 
     const userInfo = JSON.parse(decodedValue);
-    console.log('[DevTools] 解析用户信息:', userInfo);
     // 优先使用 username 字段，不区分大小写
     const userName = (userInfo?.username || userInfo?.name || '').toLowerCase();
     const isMoselu = userName === 'moselu';
-    console.log('[DevTools] 用户名:', userName, '是否为 moselu:', isMoselu);
 
     return isMoselu;
   } catch (error) {
@@ -124,20 +121,15 @@ function isMainApp(): boolean {
 async function mountDevToolsOnce() {
   // 只挂载一次，避免重复挂载
   if (devToolsMounted) {
-    console.log('[DevTools] 已挂载，跳过重复挂载');
     return;
   }
 
-  console.log('[DevTools] 开始挂载 DevTools...');
-
   try {
     const { mountDevTools } = await import('./mount-dev-tools');
-    console.log('[DevTools] 已导入 mountDevTools');
 
     // 从全局对象获取 http 实例和 EPS list（可能已经被其他应用设置）
     const httpInstance = (window as any).__APP_HTTP__;
     const epsList = (window as any).__APP_EPS_LIST__ || [];
-    console.log('[DevTools] httpInstance:', httpInstance ? '存在' : '不存在', 'epsList 长度:', epsList.length);
 
     // 挂载 DevTools（即使没有 http 和 EPS，DevTools 也能正常工作）
     await mountDevTools({
@@ -146,7 +138,6 @@ async function mountDevToolsOnce() {
     });
 
     devToolsMounted = true;
-    console.log('[DevTools] 挂载成功');
 
     // 挂载成功后，清理观察器和定时器
     if (observer) {
@@ -177,12 +168,10 @@ function checkAppMounted() {
   // 如果任何一个容器有内容，说明应用已挂载
   for (const { selector, element } of containers) {
     if (element && element.children.length > 0) {
-      console.log('[DevTools] 检测到应用已挂载，容器:', selector, '子元素数量:', element.children.length);
       return true;
     }
   }
 
-  console.log('[DevTools] 未检测到应用已挂载');
   return false;
 }
 
@@ -192,11 +181,8 @@ function checkAppMounted() {
  * 注意：只在主应用中启用，子应用不显示 DevTools
  */
 export function setupAutoMountDevTools() {
-  console.log('[DevTools] setupAutoMountDevTools 被调用');
-
   // 只在浏览器环境中执行
   if (typeof window === 'undefined' || typeof document === 'undefined') {
-    console.log('[DevTools] 非浏览器环境，退出');
     return;
   }
 
@@ -205,29 +191,23 @@ export function setupAutoMountDevTools() {
   const isMoselu = isMoseluUser();
   const isMain = isMainApp();
   const shouldEnable = isMoselu || isMain;
-  console.log('[DevTools] isMoseluUser:', isMoselu, 'isMainApp:', isMain, 'shouldEnable:', shouldEnable);
 
   if (!shouldEnable) {
-    console.log('[DevTools] 不满足挂载条件，退出');
     return;
   }
 
   // 检查是否已经设置过
   if ((window as any).__DEVTOOLS_AUTO_MOUNT_SETUP__) {
-    console.log('[DevTools] 已设置过，退出');
     return;
   }
 
   // 标记已设置
   (window as any).__DEVTOOLS_AUTO_MOUNT_SETUP__ = true;
-  console.log('[DevTools] 标记已设置，开始初始化挂载流程');
 
   // 立即尝试挂载（如果应用已经挂载）
   const appMounted = checkAppMounted();
-  console.log('[DevTools] 应用是否已挂载:', appMounted);
 
   if (appMounted) {
-    console.log('[DevTools] 应用已挂载，立即挂载 DevTools');
     mountDevToolsOnce().catch((err) => {
       console.error('[DevTools] 立即挂载失败:', err);
     });

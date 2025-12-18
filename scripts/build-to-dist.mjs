@@ -236,6 +236,19 @@ function buildApp(appName) {
           force: true,
         });
         console.log(`  ✅ VitePress 构建产物已复制到 dist 目录`);
+        
+        // 确保 logo.png 存在于构建输出目录
+        const logoSourcePath = join(rootDir, 'apps', appName, 'public', 'logo.png');
+        const logoDestPath = join(targetDistDir, 'logo.png');
+        if (existsSync(logoSourcePath)) {
+          if (!existsSync(logoDestPath)) {
+            console.log(`  📦 复制 logo.png 到构建输出目录...`);
+            cpSync(logoSourcePath, logoDestPath);
+            console.log(`  ✅ logo.png 已复制到构建输出目录`);
+          }
+        } else {
+          console.warn(`  ⚠️  警告: logo.png 源文件不存在: ${logoSourcePath}`);
+        }
       } else {
         console.warn(`  ⚠️  警告: VitePress 构建产物目录不存在: ${vitepressDistDir}`);
       }

@@ -67,6 +67,12 @@ export const systemRoutes: RouteRecordRaw[] = [
     meta: { titleKey: 'menu.inventory.result' },
   },
   {
+    path: 'inventory/confirm',
+    name: 'InventoryConfirm',
+    component: () => import('../../modules/data/views/inventory/confirm/index.vue'),
+    meta: { titleKey: 'menu.inventory.confirm' },
+  },
+  {
     path: 'data/dictionary',
     redirect: 'data/dictionary/file-categories',
   },

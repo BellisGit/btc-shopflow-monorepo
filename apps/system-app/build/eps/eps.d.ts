@@ -329,6 +329,54 @@ interface data {
       }
       
 
+interface approval {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 域ID
+           */
+          domainId?: any;
+        
+          /**
+           * 盘点编号
+           */
+          checkNo?: any;
+        
+          /**
+           * 状态
+           */
+          status?: any;
+        
+          /**
+           * 确认人
+           */
+          confirmer?: any;
+        
+          /**
+           * 确认时间
+           */
+          createdAt?: any;
+        
+          /**
+           * name
+           */
+          name?: any;
+        
+          /**
+           * checkNo
+           */
+          checkNo?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
 interface datasource {
           /**
            * 主键ID
@@ -608,6 +656,69 @@ interface diff {
            * materialCode
            */
           materialCode?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface subProcess {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 子流程编码
+           */
+          subProcessNo?: any;
+        
+          /**
+           * 主流程编号
+           */
+          checkNo?: any;
+        
+          /**
+           * 流程状态
+           */
+          checkStatus?: any;
+        
+          /**
+           * 开始时间
+           */
+          startTime?: any;
+        
+          /**
+           * 结束时间
+           */
+          endTime?: any;
+        
+          /**
+           * 剩余时间
+           */
+          remainingSeconds?: any;
+        
+          /**
+           * 父级流程
+           */
+          parentProcessNo?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+          /**
+           * checkNo
+           */
+          checkNo?: any;
         
         /**
          * Any key-value pairs

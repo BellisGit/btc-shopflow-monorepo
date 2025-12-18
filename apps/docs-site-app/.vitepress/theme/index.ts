@@ -23,7 +23,7 @@ let currentTheme: boolean | null = null;
 let isApplyingTheme = false;
 let lastAppliedTheme: boolean | null = null;
 
-// 初始化主题状态（VitePress已禁用appearance，不会注入内联脚本）
+// 初始化主题状态 - 让VitePress自己管理主题，只在iframe中时可选同步主应用主题
 if (typeof window !== 'undefined') {
   // 保存当前路由状态
   const currentPath = window.location.pathname;
@@ -31,41 +31,34 @@ if (typeof window !== 'undefined') {
     localStorage.setItem('vitepress-last-path', currentPath);
   }
 
-  // 只清理主题相关的localStorage，保留路由状态
-  localStorage.removeItem('vitepress-theme-appearance');
-  localStorage.removeItem('vitepress-theme');
-  localStorage.removeItem('vitepress-theme-color-scheme');
-  localStorage.removeItem('isDark');
+  // 如果是在iframe中，可选地从主应用同步主题（不强制）
+  // 如果不在iframe中，让VitePress的appearance配置自己处理主题
+  if (window.parent !== window) {
+    // 在iframe中：尝试从主应用同步主题（可选）
+    const parentTheme = localStorage.getItem('parent-theme');
+    const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
 
-  // 从localStorage读取主题状态
-  const parentTheme = localStorage.getItem('parent-theme');
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+    let isDark = false;
+    if (parentTheme) {
+      isDark = parentTheme === 'dark';
+    } else if (vueuseTheme) {
+      isDark = vueuseTheme === 'auto';
+    }
 
-  // 初始化主题
-
-  let isDark = false;
-
-  // 优先使用parent-theme
-  if (parentTheme) {
-    isDark = parentTheme === 'dark';
-  } else if (vueuseTheme) {
-    // 如果没有parent-theme，使用vueuse-color-scheme
-    isDark = vueuseTheme === 'auto';
-  } else {
-    // 默认浅色主题
-    isDark = false;
+    // 只在有主应用主题时才应用，否则让VitePress自己处理
+    if (parentTheme || vueuseTheme) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.style.setProperty('color-scheme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.style.setProperty('color-scheme', 'light');
+      }
+    }
   }
-
-  // 应用主题
-  if (isDark) {
-    document.documentElement.classList.add('dark');
-    document.documentElement.setAttribute('data-theme', 'dark');
-    document.documentElement.style.setProperty('color-scheme', 'dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.documentElement.style.setProperty('color-scheme', 'light');
-  }
+  // 如果不在iframe中，让VitePress的appearance配置自己处理主题
 }
 
 // 完全控制主题应用
@@ -99,14 +92,11 @@ function applyTheme(isDark: boolean) {
     html.style.setProperty('color-scheme', 'light');
   }
 
-  // 清理VitePress的存储，使用自定义key落盘，保留路由状态
-  localStorage.removeItem('vitepress-theme-appearance');
-  localStorage.removeItem('vitepress-theme');
-  localStorage.removeItem('vitepress-theme-color-scheme');
-  localStorage.removeItem('isDark');
-
-  // 落盘到自定义key，为下次刷新做准备
-  localStorage.setItem('parent-theme', isDark ? 'dark' : 'light'); // 确保iframe中没有isDark
+  // 让VitePress自己管理主题存储，不再强制清理或覆盖
+  // 如果是在iframe中，可选地保存到parent-theme（但不强制）
+  if (window.parent !== window) {
+    localStorage.setItem('parent-theme', isDark ? 'dark' : 'light');
+  }
 
   // 更新所有可能的主题相关元素
   setTimeout(() => {
@@ -225,92 +215,31 @@ export default {
               }, 500);
             }
 
-            // 再次确保清理所有主题相关的localStorage，保留路由状态
-            localStorage.removeItem('vitepress-theme-appearance');
-            localStorage.removeItem('vitepress-theme');
-            localStorage.removeItem('vitepress-theme-color-scheme');
-            localStorage.removeItem('isDark');
-
-            // 强制移除dark类，确保不是暗黑主题
-            document.documentElement.classList.remove('dark');
-            document.documentElement.classList.add('light');
-
-
-            // 等待主应用同步主题状态，默认浅色主题
-            const isDark = false; // 默认浅色主题，等待主应用同步
-
-            // 立即应用浅色主题
-            currentTheme = null;
-            applyTheme(isDark);
+            // 让VitePress自己管理主题，不再强制清理或应用主题
+            // 如果是在iframe中，可选地从主应用同步主题（但不强制覆盖VitePress的设置）
 
             // 注册 Element Plus
             app.use(ElementPlus);
 
-        // 监听来自主应用的消息
-        window.addEventListener('message', (event) => {
-          if (event.data?.type === 'host:theme') {
-            const { value } = event.data;
-            const isDark = value === 'dark';
-            // 重置状态，强制应用
-            currentTheme = null;
-            applyTheme(isDark);
-          } else if (event.data?.type === 'update-parent-theme') {
-            // 接收主应用的parent-theme更新
-            const { value } = event.data;
-            localStorage.setItem('parent-theme', value);
-
-            // 立即应用主题（不重复应用）
-            const isDark = value === 'dark';
-            if (lastAppliedTheme !== isDark) {
-              applyTheme(isDark);
+        // 监听来自主应用的消息（仅在iframe中时，可选地同步主题，但不强制覆盖VitePress的设置）
+        if (window.parent !== window) {
+          window.addEventListener('message', (event) => {
+            if (event.data?.type === 'host:theme') {
+              // 可选：在iframe中时，可以同步主应用主题，但不强制
+              // 让用户通过VitePress的主题切换器独立控制
+              const { value } = event.data;
+              const isDark = value === 'dark';
+              // 只在用户没有手动切换过VitePress主题时才同步
+              // 这里可以选择性地同步，或者完全让VitePress独立控制
+            } else if (event.data?.type === 'btc-navigate') {
+              // 接收主应用的导航指令（保留但不使用，让 VitePress 自己处理路由）
+              // VitePress 有完美的原生路由系统，我们不需要干扰它
             }
-          } else if (event.data?.type === 'update-vueuse-theme') {
-            // 接收主应用的VueUse主题状态
-            const { value } = event.data;
-            localStorage.setItem('vueuse-color-scheme', value);
+          });
+        }
 
-            // 只有在没有parent-theme时才根据VueUse主题应用
-            const parentTheme = localStorage.getItem('parent-theme');
-            if (!parentTheme) {
-              const isDark = value === 'auto';
-              if (lastAppliedTheme !== isDark) {
-                applyTheme(isDark);
-              }
-            }
-          } else if (event.data?.type === 'btc-navigate') {
-            // 接收主应用的导航指令（保留但不使用，让 VitePress 自己处理路由）
-            // VitePress 有完美的原生路由系统，我们不需要干扰它
-          }
-        });
-
-            // 监听 storage 事件（跨标签页同步）
-            window.addEventListener('storage', (e) => {
-              if (e.key === 'isDark') {
-                const isDark = e.newValue ? JSON.parse(e.newValue) : false;
-                // 清理iframe的localStorage，确保不会干扰，保留路由状态
-                localStorage.removeItem('isDark');
-                currentTheme = null;
-                applyTheme(isDark);
-              }
-            });
-
-            // VitePress主题切换按钮已被禁用，不需要拦截
-
-            // 页面加载完成后，清理localStorage并等待主应用同步
-            setTimeout(() => {
-              // 只清理主题相关的localStorage，保留路由状态
-              localStorage.removeItem('isDark');
-              localStorage.removeItem('vitepress-theme-appearance');
-              localStorage.removeItem('vitepress-theme');
-              localStorage.removeItem('vitepress-theme-color-scheme');
-
-              // 通知主应用iframe已准备好，请求主题同步
-              if (window.parent !== window) {
-                window.parent.postMessage({
-                  type: 'vitepress-iframe-ready'
-                }, '*');
-              }
-            }, 1000);
+            // 让VitePress自己处理主题切换，不再强制同步或清理
+            // VitePress的主题切换器现在可以正常工作
 
         // 通知父页面：VitePress 已准备好
         if (window.parent !== window) {

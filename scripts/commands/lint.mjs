@@ -50,13 +50,20 @@ if (!appName) {
     command.push('--max-warnings', '0');
   }
   
+  const action = fix ? '修复' : '检查';
+  console.log(`\n🔍 正在${action}所有应用和包的代码...\n`);
+  
   try {
     execSync(command.join(' '), { 
       stdio: 'inherit',
       cwd: rootDir,
       shell: true
     });
+    // 如果执行成功，显示成功消息
+    console.log(`\n✅ 代码${action}完成，未发现任何问题！\n`);
   } catch (error) {
+    // 错误信息已经在 stdio: 'inherit' 模式下显示了
+    console.log(`\n❌ 代码${action}发现问题，请查看上面的错误信息。\n`);
     process.exit(error.status || 1);
   }
 } else {

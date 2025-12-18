@@ -1,4 +1,4 @@
-﻿---
+---
 title: 网络访问测试
 type: guide
 project: network
@@ -33,7 +33,7 @@ sidebar_group: guides
 ```javascript
 const getDocsUrl = () => {
 if (!import.meta.env.DEV) {
-return '/internal/archive';
+return '/';
 }
 
 // 优先使用环境变量

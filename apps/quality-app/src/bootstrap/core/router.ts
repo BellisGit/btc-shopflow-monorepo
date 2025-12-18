@@ -43,7 +43,7 @@ export const createQualityRouter = (): Router => {
     routes,
   });
 
-  router.onError((error) => {
+  router.onError((error: Error) => {
     console.warn('[quality-app] Router error:', error);
   });
 

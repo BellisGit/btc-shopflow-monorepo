@@ -19,7 +19,6 @@
     "jsxImportSource": "vue",
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "baseUrl": ".",
     "paths": {
@@ -37,13 +36,15 @@
       "@charts-types/*": ["src/charts/types/*"],
       "@charts-utils/*": ["src/charts/utils/*"],
       "@charts-composables/*": ["src/charts/composables/*"],
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"],
-      "@btc/shared-core": ["../shared-core/dist"]
+      "@btc/shared-core": ["../shared-core/src"],
+      "@btc/shared-core/*": ["../shared-core/src/*"],
+      "@btc/shared-utils": ["../shared-utils/src"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*"],
+      "@configs/*": ["../../configs/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.json"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "../../configs"],
   "references": [
     { "path": "../shared-utils" },
     { "path": "../shared-core" }

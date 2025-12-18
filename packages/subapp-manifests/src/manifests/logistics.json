@@ -96,41 +96,6 @@
       ]
     },
     {
-      "path": "/warehouse/inventory",
-      "labelKey": "menu.logistics.warehouse.inventory",
-      "tab": {
-        "enabled": false
-      },
-      "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouseModule", "icon": "FolderOpened" },
-        { "labelKey": "menu.logistics.warehouse.inventory", "icon": "Odometer" }
-      ]
-    },
-    {
-      "path": "/warehouse/inventory/info",
-      "labelKey": "menu.logistics.warehouse.inventory.info",
-      "tab": {
-        "enabled": true,
-        "labelKey": "menu.logistics.warehouse.inventory.info"
-      },
-      "breadcrumbs": [
-        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.warehouse.inventory.info", "icon": "Document" }
-      ]
-    },
-    {
-      "path": "/warehouse/inventory/detail",
-      "labelKey": "menu.logistics.warehouse.inventory.detail",
-      "tab": {
-        "enabled": true,
-        "labelKey": "menu.logistics.warehouse.inventory.detail"
-      },
-      "breadcrumbs": [
-        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.warehouse.inventory.detail", "icon": "Histogram" }
-      ]
-    },
-    {
       "path": "/customs",
       "labelKey": "menu.logistics.customsModule",
       "tab": {
@@ -142,37 +107,61 @@
       ]
     },
     {
-      "path": "/config",
-      "labelKey": "menu.logistics.config",
+      "path": "/inventory",
+      "labelKey": "menu.logistics.inventoryManagement",
       "tab": {
         "enabled": false
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.config", "icon": "Setting" }
+        { "labelKey": "menu.logistics.inventoryManagement", "icon": "Odometer" }
       ]
     },
     {
-      "path": "/warehouse/inventory/result",
-      "labelKey": "menu.logistics.warehouse.inventory.result",
+      "path": "/inventory/storage-location",
+      "labelKey": "menu.logistics.inventoryManagement.storageLocation",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.warehouse.inventory.result"
+        "labelKey": "menu.logistics.inventoryManagement.storageLocation"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.config", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.warehouse.inventory.result", "icon": "List" }
+        { "labelKey": "menu.logistics.inventoryManagement", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.inventoryManagement.storageLocation", "icon": "Location" }
       ]
     },
     {
-      "path": "/config/storage-location",
-      "labelKey": "menu.logistics.config.storageLocation",
+      "path": "/inventory/info",
+      "labelKey": "menu.logistics.inventoryManagement.info",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.config.storageLocation"
+        "labelKey": "menu.logistics.inventoryManagement.info"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.config", "icon": "Setting" },
-        { "labelKey": "menu.logistics.config.storageLocation", "icon": "Box" }
+        { "labelKey": "menu.logistics.inventoryManagement", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.inventoryManagement.info", "icon": "Document" }
+      ]
+    },
+    {
+      "path": "/inventory/detail",
+      "labelKey": "menu.logistics.inventoryManagement.detail",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.inventoryManagement.detail"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.inventoryManagement", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.inventoryManagement.detail", "icon": "Histogram" }
+      ]
+    },
+    {
+      "path": "/inventory/result",
+      "labelKey": "menu.logistics.inventoryManagement.result",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.logistics.inventoryManagement.result"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.logistics.inventoryManagement", "icon": "Odometer" },
+        { "labelKey": "menu.logistics.inventoryManagement.result", "icon": "List" }
       ]
     }
   ],
@@ -192,13 +181,7 @@
       "labelKey": "menu.logistics.warehouseModule",
       "icon": "svg:folder",
       "children": [
-        {
-          "index": "/warehouse/material",
-          "labelKey": "menu.logistics.warehouse.material",
-          "children": [
-            { "index": "/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material.list" }
-          ]
-        }
+        { "index": "/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material" }
       ]
     },
     {
@@ -207,13 +190,14 @@
       "icon": "svg:map"
     },
     {
-      "index": "/config",
-      "labelKey": "menu.logistics.config",
+      "index": "/inventory",
+      "labelKey": "menu.logistics.inventoryManagement",
+      "icon": "Setting",
       "children": [
-        { "index": "/config/storage-location", "labelKey": "menu.logistics.config.storageLocation" },
-        { "index": "/warehouse/inventory/info", "labelKey": "menu.logistics.warehouse.inventory.info" },
-        { "index": "/warehouse/inventory/detail", "labelKey": "menu.logistics.warehouse.inventory.detail" },
-        { "index": "/warehouse/inventory/result", "labelKey": "menu.logistics.warehouse.inventory.result" }
+        { "index": "/inventory/storage-location", "labelKey": "menu.logistics.inventoryManagement.storageLocation" },
+        { "index": "/inventory/info", "labelKey": "menu.logistics.inventoryManagement.info" },
+        { "index": "/inventory/detail", "labelKey": "menu.logistics.inventoryManagement.detail" },
+        { "index": "/inventory/result", "labelKey": "menu.logistics.inventoryManagement.result" }
       ]
     }
   ]
