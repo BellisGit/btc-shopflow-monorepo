@@ -2698,6 +2698,11 @@ interface financeresult {
            */
           position?: any;
         
+          /**
+           * checkNo
+           */
+          checkNo?: any;
+        
         /**
          * Any key-value pairs
          */

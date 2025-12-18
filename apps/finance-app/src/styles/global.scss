@@ -122,13 +122,4 @@ qiankun-head {
   overflow: hidden !important;
 }
 
-.el-table__fixed-right,
-.el-table__fixed-right-patch {
-  border-left: 1px solid var(--el-border-color) !important;
-}
-
-.el-table__fixed-right .el-table__cell,
-.el-table__fixed-right-patch .el-table__cell {
-  border-left: 1px solid var(--el-border-color) !important;
-}
 

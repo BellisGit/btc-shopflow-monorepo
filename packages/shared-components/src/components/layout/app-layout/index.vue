@@ -912,7 +912,7 @@ onUnmounted(() => {
       // 关键：确保 CSS 变量能够传递到子应用
       // 在 qiankun 环境下，CSS 变量需要从父元素继承
       --el-bg-color-page: var(--el-bg-color-page, var(--el-bg-color));
-      --el-bg-color: var(--el-bg-color);
+
     }
 
     :deep(#subapp-viewport > [data-qiankun]) {
