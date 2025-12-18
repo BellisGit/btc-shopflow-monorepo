@@ -162,6 +162,7 @@
   "inventory.confirm.success": "确认成功",
   "inventory.confirm.failed": "确认失败",
   "inventory.confirm.selectCheckFirst": "请先选择左侧流程",
+  "inventory.confirm.idNotFound": "数据ID不存在",
   "inventory.confirm.serviceNotFound": "确认接口不存在",
   "inventory.confirm.fields.checkNo": "盘点编号",
   "inventory.confirm.fields.name": "名称",

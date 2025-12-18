@@ -331,7 +331,7 @@ interface data {
 
 interface approval {
           /**
-           * 主键ID
+           * 序号
            */
           id?: any;
         

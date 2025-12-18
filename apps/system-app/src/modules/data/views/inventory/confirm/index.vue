@@ -177,18 +177,21 @@ const handleConfirm = async (row: any) => {
     return;
   }
 
-  // 使用该行的 checkNo，如果没有则使用左侧选中的 checkNo
-  const checkNo = row?.checkNo || selectedCheck.value?.checkNo;
+  // 获取该行的 id
+  const id = row?.id;
 
-  if (!checkNo) {
-    BtcMessage.warning(t('inventory.confirm.selectCheckFirst') || '请先选择左侧流程');
+  if (!id) {
+    BtcMessage.warning(t('inventory.confirm.idNotFound') || '数据ID不存在');
     return;
   }
+
+  // 获取 checkNo 用于显示（如果有）
+  const checkNo = row?.checkNo || selectedCheck.value?.checkNo;
 
   try {
     // 二次确认对话框
     await BtcConfirm(
-      t('inventory.confirm.confirmMessage') || `确定要确认流程 ${checkNo} 吗？`,
+      t('inventory.confirm.confirmMessage') || `确定要确认流程 ${checkNo || id} 吗？`,
       t('inventory.confirm.confirmTitle') || '确认',
       {
         confirmButtonText: t('common.button.confirm') || '确定',
@@ -204,18 +207,31 @@ const handleConfirm = async (row: any) => {
       return;
     }
 
-    // 传递 checkNo
-    const response = await confirmService({ checkNo });
+    // 传递 id
+    const response = await confirmService({ id });
 
     // 处理响应
-    if (response && (response.code === 2000 || response.code === 200 || response.code === 1000)) {
+    // 响应拦截器在成功时会返回 data 字段，而不是整个响应对象
+    // 如果接口调用成功（没有抛出异常），说明操作成功
+    // 检查响应：如果有 code 字段，检查是否为成功状态码；如果没有 code 字段，说明拦截器已处理，直接认为成功
+    if (response && typeof response === 'object' && 'code' in response) {
+      // 如果响应包含 code 字段，检查状态码
+      if (response.code === 2000 || response.code === 200 || response.code === 1000) {
+        BtcMessage.success(response.msg || t('inventory.confirm.success') || '确认成功');
+        // 刷新右侧表格
+        if (tableGroupRef.value?.crudRef) {
+          tableGroupRef.value.crudRef.refresh();
+        }
+      } else {
+        BtcMessage.error(response.msg || t('inventory.confirm.failed') || '确认失败');
+      }
+    } else {
+      // 响应拦截器已处理，如果没有抛出异常，说明操作成功
       BtcMessage.success(t('inventory.confirm.success') || '确认成功');
       // 刷新右侧表格
       if (tableGroupRef.value?.crudRef) {
         tableGroupRef.value.crudRef.refresh();
       }
-    } else {
-      BtcMessage.error(response?.msg || t('inventory.confirm.failed') || '确认失败');
     }
   } catch (error: any) {
     // 用户取消操作
