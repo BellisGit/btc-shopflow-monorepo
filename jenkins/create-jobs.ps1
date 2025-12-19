@@ -232,14 +232,52 @@ function Create-Job {
     
     try {
         # 使用 Jenkins CLI 创建 Job
-        $result = java -jar $jenkinsCliPath -s $JenkinsUrl create-job $JobName < $tempFile 2>&1
+        # 方法：使用 Get-Content 读取文件并通过管道传递给 Java 进程
+        $jobConfigContent = Get-Content $tempFile -Raw
         
-        if ($LASTEXITCODE -eq 0) {
+        # 创建进程启动信息
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = "java"
+        $psi.Arguments = "-jar `"$jenkinsCliPath`" -s `"$JenkinsUrl`" create-job `"$JobName`""
+        $psi.UseShellExecute = $false
+        $psi.RedirectStandardInput = $true
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.CreateNoWindow = $true
+        
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $psi
+        
+        # 启动进程
+        $process.Start() | Out-Null
+        
+        # 写入标准输入
+        $process.StandardInput.Write($jobConfigContent)
+        $process.StandardInput.Close()
+        
+        # 读取输出
+        $output = $process.StandardOutput.ReadToEnd()
+        $error = $process.StandardError.ReadToEnd()
+        
+        # 等待进程结束
+        $process.WaitForExit()
+        $exitCode = $process.ExitCode
+        
+        # 清理进程
+        $process.Dispose()
+        
+        if ($exitCode -eq 0) {
             Write-Success "Job '$JobName' 创建成功"
             Write-Host "   访问: $JenkinsUrl/job/$JobName" -ForegroundColor Cyan
             return $true
         } else {
-            Write-Error "Job '$JobName' 创建失败: $result"
+            Write-Error "Job '$JobName' 创建失败 (退出码: $exitCode)"
+            if ($error) {
+                Write-Host "错误信息: $error" -ForegroundColor Red
+            }
+            if ($output) {
+                Write-Host "输出信息: $output" -ForegroundColor Yellow
+            }
             return $false
         }
     } catch {
