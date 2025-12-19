@@ -1,4 +1,4 @@
-﻿{
+{
   "app.title": "财务管理系统",
   "app.description": "财务管理、会计核算、成本控制",
   "app.welcome": "欢迎使用财务管理系统",
@@ -16,6 +16,7 @@
   "common.all": "全部",
   "common.please.select": "请选择",
   "common.please.input": "请输入",
+  "common.not_selected": "未选择",
   "common.button.save": "保存",
   "common.button.cancel": "取消",
   "common.button.confirm": "确定",
@@ -89,7 +90,9 @@
   "finance.inventory.result.fields.actualQty": "实际数量",
   "finance.inventory.result.fields.diffQty": "差异数量",
   "finance.inventory.result.fields.varianceCost": "差异金额",
-  "finance.inventory.result.detail.title": "盘点结果详情"
+  "finance.inventory.result.detail.title": "盘点结果详情",
+  "finance.inventory.result.search_placeholder": "搜索盘点结果",
+  "inventory.check.list": "盘点列表"
 }
 
 

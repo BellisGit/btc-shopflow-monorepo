@@ -42,7 +42,7 @@ export class Http {
         const cookieToken = getCookie('access_token');
         const storageToken = appStorage.auth.getToken();
         const token = cookieToken || storageToken || '';
-        
+
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
@@ -53,7 +53,7 @@ export class Http {
             });
           }
         }
-        
+
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -69,9 +69,9 @@ export class Http {
           const hostname = window.location.hostname;
           const port = window.location.port || '';
           // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
-          const isProduction = hostname.includes('bellis.com.cn') && 
-                               !port.startsWith('41') && 
-                               port !== '5173' && 
+          const isProduction = hostname.includes('bellis.com.cn') &&
+                               !port.startsWith('41') &&
+                               port !== '5173' &&
                                port !== '3000' &&
                                hostname !== 'localhost' &&
                                !hostname.startsWith('127.0.0.1') &&
@@ -111,20 +111,20 @@ export class Http {
     const onFulfilled = (response: any) => {
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login');
-      
+
       this.recordRequestLog(response, 'success');
       const result = interceptor.onFulfilled(response);
-      
+
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
-        
+
         // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
         const setCookieHeaders = response.headers?.getSetCookie?.() || [];
         if (setCookieHeaders.length > 0) {
           // 查找包含 access_token 的 cookie
-          const accessTokenCookie = setCookieHeaders.find((cookie: string) => 
+          const accessTokenCookie = setCookieHeaders.find((cookie: string) =>
             cookie.includes('access_token')
           );
           if (accessTokenCookie) {
@@ -137,38 +137,38 @@ export class Http {
             }
           }
         }
-        
+
         // 延迟检查 cookie（等待浏览器设置完成）
         setTimeout(() => {
           const token = getCookie('access_token') || appStorage.auth.getToken();
           if (!token) {
             // 尝试从原始响应数据中提取 token（可能在不同层级）
             let tokenValue: string | null = null;
-            
+
             // 检查原始响应数据
             if (originalResponseData) {
-              tokenValue = originalResponseData.token || 
+              tokenValue = originalResponseData.token ||
                           originalResponseData.accessToken ||
                           originalResponseData.data?.token ||
                           originalResponseData.data?.accessToken ||
                           originalResponseData.data?.data?.token;
             }
-            
+
             // 检查拦截器处理后的结果
             if (!tokenValue && result) {
-              tokenValue = result.token || 
+              tokenValue = result.token ||
                           result.accessToken ||
                           result.data?.token ||
                           result.data?.accessToken;
             }
-            
+
             if (tokenValue) {
               appStorage.auth.setToken(tokenValue);
             }
           }
         }, 100);
       }
-      
+
       return result;
     };
 
@@ -239,7 +239,7 @@ export class Http {
   private recordRequestLog(response: any, status: 'success' | 'failed') {
     try {
       const config = response?.config || {};
-      
+
       // 检查用户是否已登录，未登录时不记录日志
       const token = getCookie('access_token') || appStorage.auth.getToken() || '';
       if (!token) {
@@ -278,7 +278,7 @@ export class Http {
         '/api/system/log/sys/request/update',
         '/api/system/log/sys/operation/update'
       ];
-      
+
       if (filteredPaths.some(path => url.includes(path))) {
         return; // 跳过这些接口的日志记录
       }

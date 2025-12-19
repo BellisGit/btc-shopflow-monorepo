@@ -68,6 +68,11 @@ export function initResponseInterceptor(router: Router) {
   responseInterceptor.setMessageHandler(messageHandler);
   responseInterceptor.setConfirmHandler(confirmHandler);
   responseInterceptor.setRouterHandler(routerHandler);
+
+  // 将响应拦截器暴露到全局，供 EPS 服务的响应拦截器使用
+  if (typeof window !== 'undefined') {
+    (window as any).__BTC_RESPONSE_INTERCEPTOR__ = responseInterceptor;
+  }
 }
 
 /**

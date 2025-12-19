@@ -120,6 +120,17 @@ const emit = defineEmits<{
   'load': [data: any[]];
 }>();
 
+// 定义插槽类型
+defineSlots<{
+  left?: () => any;
+  'left-op'?: () => any;
+  right?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
+  'right-op'?: () => any;
+  title?: (props: { selected?: any }) => any;
+  item?: (props: { item: any; selected?: any; index: number }) => any;
+  'item-name'?: (props: { item: any; selected?: any; index: number }) => any;
+}>();
+
 // 国际化
 const { t } = useI18n();
 

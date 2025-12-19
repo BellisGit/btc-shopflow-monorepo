@@ -1,4 +1,4 @@
-﻿{
+{
   "app.title": "Finance Management System",
   "app.description": "Finance management, accounting, cost control",
   "app.welcome": "Welcome to Finance Management System",
@@ -16,6 +16,7 @@
   "common.all": "All",
   "common.please.select": "Please select",
   "common.please.input": "Please input",
+  "common.not_selected": "Not Selected",
   "common.button.save": "Save",
   "common.button.cancel": "Cancel",
   "common.button.confirm": "OK",
@@ -89,7 +90,9 @@
   "finance.inventory.result.fields.actualQty": "Actual Quantity",
   "finance.inventory.result.fields.diffQty": "Difference Quantity",
   "finance.inventory.result.fields.varianceCost": "Variance Cost",
-  "finance.inventory.result.detail.title": "Inventory Result Details"
+  "finance.inventory.result.detail.title": "Inventory Result Details",
+  "finance.inventory.result.search_placeholder": "Search inventory results",
+  "inventory.check.list": "Check List"
 }
 
 

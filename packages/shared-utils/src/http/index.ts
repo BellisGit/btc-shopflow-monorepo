@@ -328,6 +328,23 @@ export class ResponseInterceptor {
   handleError(error: { code: number; message: string }): Promise<never> {
     const { code, message } = error;
 
+    // 特殊处理：当 code 为 501 且消息为"系统繁忙，请稍候再试"时，显示自定义消息
+    if (code === 501 && message === '系统繁忙，请稍候再试') {
+      if (this.messageHandler) {
+        this.messageHandler.error('数据暂时无法获取，请联系管理员Jarvis');
+      } else {
+        // 如果 messageHandler 未设置，尝试使用全局消息处理器
+        const globalMessageHandler = (window as any).__APP_MESSAGE_HANDLER__;
+        if (globalMessageHandler && globalMessageHandler.error) {
+          globalMessageHandler.error('数据暂时无法获取，请联系管理员Jarvis');
+        } else {
+          // 最后的兜底：使用 console.error
+          console.error('数据暂时无法获取，请联系管理员Jarvis');
+        }
+      }
+      return Promise.reject(error);
+    }
+
     // 获取状态码配置
     const config = STATUS_CODE_CONFIG[code];
 
@@ -483,6 +500,7 @@ export class ResponseInterceptor {
 
         // 调用 handleSuccess 处理 response.data（业务响应数据）
         // handleSuccess 会提取出 data.data（实际业务数据）
+        // 注意：handleSuccess 可能返回 Promise.reject，这会被 axios 正确处理
         const result = this.handleSuccess(data);
 
         // 确保返回处理后的数据（response.data 经过 handleSuccess 处理后的结果）

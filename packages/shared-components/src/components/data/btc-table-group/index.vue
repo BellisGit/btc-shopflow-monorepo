@@ -171,6 +171,13 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   rightOpFieldsValue: undefined, // 右侧操作栏搜索字段的值
 });
 
+// 定义插槽类型
+defineSlots<{
+  actions?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
+  'add-btn'?: () => any;
+  'multi-delete-btn'?: () => any;
+  search?: () => any;
+}>();
 
 const emit = defineEmits<TableGroupEmits>();
 

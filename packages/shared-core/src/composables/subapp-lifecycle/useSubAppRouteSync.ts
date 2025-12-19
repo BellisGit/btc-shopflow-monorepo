@@ -77,6 +77,72 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
 }
 
 /**
+ * 触发路由变化事件（提取为独立函数，便于复用）
+ */
+function triggerRouteChangeEvent(
+  to: any,
+  context: SubAppContext,
+  basePath: string
+): void {
+  // 如果应用已卸载，不再同步路由
+  if (context.isUnmounted) {
+    return;
+  }
+
+  const relativeFullPath = ensureLeadingSlash(to.fullPath || to.path || '');
+  const fullPath = normalizeToHostPath(relativeFullPath, basePath);
+
+  // 关键：如果是首页（meta.isHome === true），不触发路由变化事件，避免添加 tab
+  if (to.meta?.isHome === true) {
+    return;
+  }
+
+  // 优先使用 tabLabelKey，如果没有则使用 titleKey（admin-app 使用 titleKey）
+  const tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
+  const tabLabel =
+    tabLabelKey ??
+    (to.meta?.tabLabel as string | undefined) ??
+    (to.meta?.title as string | undefined) ??
+    (to.name as string | undefined) ??
+    fullPath;
+
+  const label = tabLabelKey ? context.translate(tabLabelKey) : tabLabel;
+
+  const metaPayload = {
+    ...to.meta,
+    label,
+  } as Record<string, any>;
+
+  if (
+    typeof metaPayload.labelKey !== 'string' ||
+    metaPayload.labelKey.length === 0
+  ) {
+    if (typeof to.meta?.labelKey === 'string' && to.meta.labelKey.length > 0) {
+      metaPayload.labelKey = to.meta.labelKey;
+    } else if (typeof tabLabelKey === 'string' && tabLabelKey.length > 0) {
+      // 如果 tabLabelKey 看起来像 i18n key（包含点号，如 'menu.xxx'），则使用它作为 labelKey
+      // 这样可以支持所有应用的 i18n key（menu.*, logistics.*, finance.* 等）
+      metaPayload.labelKey = tabLabelKey;
+    }
+  }
+
+  if (!metaPayload.breadcrumbs && Array.isArray(to.meta?.breadcrumbs)) {
+    metaPayload.breadcrumbs = to.meta.breadcrumbs;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('subapp:route-change', {
+      detail: {
+        path: fullPath,
+        fullPath,
+        name: to.name,
+        meta: metaPayload,
+      },
+    }),
+  );
+}
+
+/**
  * 设置路由同步监听（标准化模板）
  */
 export function setupRouteSync(context: SubAppContext, appId: string, basePath: string): void {
@@ -131,54 +197,25 @@ export function setupRouteSync(context: SubAppContext, appId: string, basePath: 
       syncHostWithSubRoute(fullPath, basePath, context);
     }
 
-    // 关键：如果是首页（meta.isHome === true），不触发路由变化事件，避免添加 tab
-    if (to.meta?.isHome === true) {
-      return;
-    }
+    // 触发路由变化事件
+    triggerRouteChangeEvent(to, context, basePath);
+  });
 
-    // 优先使用 tabLabelKey，如果没有则使用 titleKey（admin-app 使用 titleKey）
-    const tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
-    const tabLabel =
-      tabLabelKey ??
-      (to.meta?.tabLabel as string | undefined) ??
-      (to.meta?.title as string | undefined) ??
-      (to.name as string | undefined) ??
-      fullPath;
-
-    const label = tabLabelKey ? context.translate(tabLabelKey) : tabLabel;
-
-    const metaPayload = {
-      ...to.meta,
-      label,
-    } as Record<string, any>;
-
-    if (
-      typeof metaPayload.labelKey !== 'string' ||
-      metaPayload.labelKey.length === 0
-    ) {
-      if (typeof to.meta?.labelKey === 'string' && to.meta.labelKey.length > 0) {
-        metaPayload.labelKey = to.meta.labelKey;
-      } else if (typeof tabLabelKey === 'string' && tabLabelKey.length > 0) {
-        // 如果 tabLabelKey 看起来像 i18n key（包含点号，如 'menu.xxx'），则使用它作为 labelKey
-        // 这样可以支持所有应用的 i18n key（menu.*, logistics.*, finance.* 等）
-        metaPayload.labelKey = tabLabelKey;
-      }
-    }
-
-    if (!metaPayload.breadcrumbs && Array.isArray(to.meta?.breadcrumbs)) {
-      metaPayload.breadcrumbs = to.meta.breadcrumbs;
-    }
-
-    window.dispatchEvent(
-      new CustomEvent('subapp:route-change', {
-        detail: {
-          path: fullPath,
-          fullPath,
-          name: to.name,
-          meta: metaPayload,
-        },
-      }),
-    );
+  // 关键：页面刷新时，主动触发一次当前路由的路由变化事件，确保标签页能够恢复
+  // 等待路由就绪后再触发，确保路由信息完整
+  context.router.isReady().then(() => {
+    // 使用 nextTick 确保路由已经完全初始化
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        const currentRoute = context.router.currentRoute.value;
+        // 只有当路由已匹配时才触发事件（避免在路由未匹配时触发）
+        if (currentRoute.matched.length > 0) {
+          triggerRouteChangeEvent(currentRoute, context, basePath);
+        }
+      });
+    });
+  }).catch(() => {
+    // 如果路由就绪失败，静默处理
   });
 }
 

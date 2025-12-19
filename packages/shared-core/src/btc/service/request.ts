@@ -13,14 +13,6 @@ type AxiosResponse = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AxiosRequestConfig = any;
 
-/*
-interface ApiResponse<T = any> {
-  code: number;
-  data: T;
-  message: string;
-}
-*/
-
 export interface RequestOptions {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'PATCH';
@@ -281,6 +273,47 @@ export function createRequest(baseURL: string = ''): Request {
       if (responseData && typeof responseData === 'object' && responseData.code !== undefined) {
         const { code, data, msg } = responseData;
 
+        // 特殊处理：当 code 为 501 且消息为"系统繁忙，请稍候再试"时，显示自定义消息
+        if (code === 501 && msg === '系统繁忙，请稍候再试') {
+          // 立即显示错误消息（同步方式，确保消息能够立即显示）
+          const errorMessage = '数据暂时无法获取，请联系管理员Jarvis';
+
+          // 优先尝试使用全局的响应拦截器（如果已初始化）
+          const responseInterceptor = (window as any).__BTC_RESPONSE_INTERCEPTOR__;
+          if (responseInterceptor && responseInterceptor.handleError) {
+            responseInterceptor.handleError({ code, message: msg });
+          } else {
+            // 如果响应拦截器不可用，尝试使用全局消息处理器
+            const messageHandler = (window as any).__APP_MESSAGE_HANDLER__;
+            if (messageHandler && messageHandler.error) {
+              messageHandler.error(errorMessage);
+            } else {
+              // 尝试使用 BtcMessage（物流应用使用的消息组件）
+              const BtcMessage = (window as any).BtcMessage;
+              if (BtcMessage && BtcMessage.error) {
+                BtcMessage.error(errorMessage);
+              } else {
+                // 最后的兜底：使用 console.error 并尝试动态导入响应拦截器
+                console.error(errorMessage);
+                import('@btc/shared-utils/http').then((module) => {
+                  const { responseInterceptor: ri } = module;
+                  if (ri && ri.handleError) {
+                    ri.handleError({ code, message: msg });
+                  }
+                }).catch(() => {
+                  // 导入失败，已经通过 console.error 输出了
+                });
+              }
+            }
+          }
+          // 返回 rejected Promise，让调用方知道这是错误
+          const error = new Error(msg || errorMessage);
+          (error as any).code = code;
+          (error as any).data = data;
+          (error as any).response = response;
+          return Promise.reject(error);
+        }
+
         // 成功响应（code: 200, 1000, 2000）
         if (code === 1000 || code === 2000) {
           // 返回 data 字段
@@ -314,10 +347,40 @@ export function createRequest(baseURL: string = ''): Request {
       return response;
     },
     (error: any) => {
-      // 网络错误或 HTTP 错误 - 输出错误信息用于调试
-      console.error('[Request] 请求错误:', error);
-      // 返回一个已解决的Promise，避免未处理的Promise rejection
-      return Promise.resolve();
+
+      // 检查是否是业务错误（包含 code 字段）
+      if (error && typeof error === 'object' && error.code !== undefined) {
+        const { code, message, msg } = error;
+        const errorMsg = message || msg || '请求失败';
+
+        // 特殊处理：当 code 为 501 且消息为"系统繁忙，请稍候再试"时，显示自定义消息
+        if (code === 501 && (msg === '系统繁忙，请稍候再试' || message === '系统繁忙，请稍候再试')) {
+          const errorMessage = '数据暂时无法获取，请联系管理员Jarvis';
+
+          // 优先尝试使用全局的响应拦截器（如果已初始化）
+          const responseInterceptor = (window as any).__BTC_RESPONSE_INTERCEPTOR__;
+          if (responseInterceptor && responseInterceptor.handleError) {
+            responseInterceptor.handleError({ code, message: errorMsg });
+          } else {
+            // 如果响应拦截器不可用，尝试使用全局消息处理器
+            const messageHandler = (window as any).__APP_MESSAGE_HANDLER__;
+            if (messageHandler && messageHandler.error) {
+              messageHandler.error(errorMessage);
+            } else {
+              // 尝试使用 BtcMessage（物流应用使用的消息组件）
+              const BtcMessage = (window as any).BtcMessage;
+              if (BtcMessage && BtcMessage.error) {
+                BtcMessage.error(errorMessage);
+              } else {
+                console.error('[EPS Request]', errorMessage);
+              }
+            }
+          }
+        }
+      }
+
+      // 返回 rejected Promise，让调用方能够处理错误
+      return Promise.reject(error);
     }
   );
 
@@ -342,7 +405,7 @@ export function createRequest(baseURL: string = ''): Request {
       const response = await axiosInstance.request(config);
       return response;
     } catch (error) {
-      console.error('[Request] 请求失败:', error);
+      // 错误已经在响应拦截器中处理，这里直接抛出，不打印日志
       throw error;
     }
   };

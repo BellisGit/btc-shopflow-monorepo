@@ -473,7 +473,7 @@ function createTop10Sheet(topDataObj: {
 export function useFinanceInventoryExport() {
   const { t } = useI18n();
 
-  const handleExport = async (crudInstance: UseCrudReturn<any> | undefined) => {
+  const handleExport = async (crudInstance: UseCrudReturn<any> | undefined, checkType?: string) => {
     if (!crudInstance) {
       BtcMessage.error('CRUD上下文不可用');
       return;
@@ -483,39 +483,45 @@ export function useFinanceInventoryExport() {
       // 获取EPS服务节点
       const serviceNode = getEpsServiceNode('finance.base.financeResult');
 
-      if (!serviceNode || typeof serviceNode.export !== 'function') {
-        throw new Error('导出方法不存在');
+      if (!serviceNode || typeof serviceNode.result !== 'function') {
+        throw new Error('Result方法不存在');
+      }
+
+      if (!serviceNode.summary || typeof serviceNode.summary !== 'function') {
+        throw new Error('Summary方法不存在');
+      }
+
+      if (!serviceNode.top || typeof serviceNode.top !== 'function') {
+        throw new Error('Top方法不存在');
       }
 
       // 获取当前查询参数
       const params = crudInstance.getParams();
 
-      // 构建导出参数
+      // 构建导出参数，使用keyword对象传递参数（包含checkNo）
       const exportParams: any = {};
       if (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword)) {
-        const keyword = params.keyword as Record<string, any>;
-        if (keyword.materialCode !== undefined && keyword.materialCode !== '') {
-          exportParams.materialCode = keyword.materialCode;
-        }
-        if (keyword.position !== undefined && keyword.position !== '') {
-          exportParams.position = keyword.position;
-        }
+        // 传递完整的keyword对象，包含checkNo、materialCode、position等
+        exportParams.keyword = { ...params.keyword };
+      } else {
+        // 如果没有keyword，初始化为空对象
+        exportParams.keyword = {};
       }
 
       // 并行调用三个接口获取数据
-      const [exportResponse, summaryResponse, topResponse] = await Promise.all([
-        serviceNode.export(exportParams),
-        serviceNode.summary(),
-        serviceNode.top(),
+      const [resultResponse, summaryResponse, topResponse] = await Promise.all([
+        serviceNode.result(exportParams),
+        serviceNode.summary(exportParams),
+        serviceNode.top(exportParams),
       ]);
 
-      // 处理 export 接口响应
+      // 处理 result 接口响应
       let dataList: any[] = [];
-      if (exportResponse && typeof exportResponse === 'object') {
-        if ('data' in exportResponse && Array.isArray(exportResponse.data)) {
-          dataList = exportResponse.data;
-        } else if (Array.isArray(exportResponse)) {
-          dataList = exportResponse;
+      if (resultResponse && typeof resultResponse === 'object') {
+        if ('data' in resultResponse && Array.isArray(resultResponse.data)) {
+          dataList = resultResponse.data;
+        } else if (Array.isArray(resultResponse)) {
+          dataList = resultResponse;
         }
       }
 
@@ -591,7 +597,9 @@ export function useFinanceInventoryExport() {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
-      const filename = `${t('menu.finance.inventoryManagement.result')}_${timestamp}.xlsx`;
+      // 如果有checkType，使用checkType作为文件名前缀，否则使用默认的国际化文本
+      const filenamePrefix = checkType ? `${checkType}财务结果` : t('menu.finance.inventoryManagement.result');
+      const filename = `${filenamePrefix}_${timestamp}.xlsx`;
 
       saveAs(blob, filename);
 

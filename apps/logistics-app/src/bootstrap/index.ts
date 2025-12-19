@@ -230,11 +230,21 @@ const setupLogisticsRouteSync = (context: LogisticsAppContext) => {
     window.history.pushState(window.history.state, '', targetUrl);
   };
 
-  context.cleanup.routerAfterEach = context.router.afterEach((to: any) => {
+  // 触发路由变化事件的辅助函数
+  const triggerRouteChangeEvent = (to: any) => {
+    // 如果应用已卸载，不再同步路由
+    if (context.isUnmounted) {
+      return;
+    }
+
     const relativeFullPath = ensureLeadingSlash(to.fullPath || to.path || '');
     const fullPath = normalizeToHostPath(relativeFullPath, LOGISTICS_BASE_PATH);
 
-    syncHostWithSubRoute(fullPath);
+    // 关键：如果是首页（meta.isHome === true），不触发路由变化事件，避免添加 tab
+    if (to.meta?.isHome === true) {
+      return;
+    }
+
     const tabLabelKey = to.meta?.tabLabelKey as string | undefined;
     const tabLabel =
       tabLabelKey ??
@@ -278,6 +288,31 @@ const setupLogisticsRouteSync = (context: LogisticsAppContext) => {
         },
       }),
     );
+  };
+
+  context.cleanup.routerAfterEach = context.router.afterEach((to: any) => {
+    const relativeFullPath = ensureLeadingSlash(to.fullPath || to.path || '');
+    const fullPath = normalizeToHostPath(relativeFullPath, LOGISTICS_BASE_PATH);
+
+    syncHostWithSubRoute(fullPath);
+    triggerRouteChangeEvent(to);
+  });
+
+  // 关键：页面刷新时，主动触发一次当前路由的路由变化事件，确保标签页能够恢复
+  // 等待路由就绪后再触发，确保路由信息完整
+  context.router.isReady().then(() => {
+    // 使用 nextTick 确保路由已经完全初始化
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        const currentRoute = context.router.currentRoute.value;
+        // 只有当路由已匹配时才触发事件（避免在路由未匹配时触发）
+        if (currentRoute.matched.length > 0) {
+          triggerRouteChangeEvent(currentRoute);
+        }
+      });
+    });
+  }).catch(() => {
+    // 如果路由就绪失败，静默处理
   });
 };
 

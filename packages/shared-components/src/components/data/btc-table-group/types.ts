@@ -79,3 +79,11 @@ export interface TableGroupExpose {
   crudRef: any;
   refresh: (params?: any) => Promise<void>;
 }
+
+// 插槽类型定义
+export interface TableGroupSlots {
+  actions?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
+  'add-btn'?: () => any;
+  'multi-delete-btn'?: () => any;
+  search?: () => any;
+}
