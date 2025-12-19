@@ -266,16 +266,16 @@ const handleImport = async (
 // 物料构成表表格列（移除选择列和操作列，不包含盘点类型）
 const bomColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName'), minWidth: 140, showOverflowTooltip: true },
   { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty'), width: 120 },
+  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialCodeName'), minWidth: 140, showOverflowTooltip: true },
+  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentTotalQty'), width: 120 },
 ]);
 
 // 导出用的列（不包含时间字段和盘点类型字段）
 const bomExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName') },
   { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName') },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty') },
+  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialCodeName') },
+  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentTotalQty') },
 ]);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）

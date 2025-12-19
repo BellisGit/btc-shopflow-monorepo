@@ -275,7 +275,7 @@ const visibleCharts = computed(() => {
   }
 
   .chart-item {
-    background: var(--el-bg-color-page);
+    background: var(--el-bg-color);
     border: 1px solid var(--el-border-color-light);
     border-radius: 6px;
     padding: 10px;

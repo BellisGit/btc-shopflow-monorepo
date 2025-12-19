@@ -89,21 +89,10 @@ function createSummarySheet(dataList: any[], XLSX: any) {
     item.varianceCost || 0
   ]);
 
-  // 添加Total行（28列：StockCode + 27个数据列）
-  const totalRow: any[] = ['Total'];
-  // 初始化所有列为0
-  for (let i = 0; i < 27; i++) {
-    totalRow.push(0);
-  }
-  // 计算各列的合计
-  for (let colIndex = 1; colIndex < summaryHeader1.length; colIndex++) {
-    totalRow[colIndex] = summaryRows.reduce((acc, row) => acc + (Number(row[colIndex]) || 0), 0);
-  }
-
+  // 后端已经汇总，不需要前端再添加Total行
   const summarySheetData = [
     summaryHeader1,
-    ...summaryRows,
-    totalRow
+    ...summaryRows
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(summarySheetData);

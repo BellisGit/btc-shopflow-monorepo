@@ -1,22 +1,25 @@
-# Jenkins 批量创建 Jobs 脚本
-# 使用方法：
-# 1. 确保 Jenkins 已启动并可以访问
-# 2. 在 PowerShell 中运行：.\jenkins\create-jobs.ps1
-# 3. 或者指定 Jenkins URL：.\jenkins\create-jobs.ps1 -JenkinsUrl "http://localhost:8080"
+# Jenkins Batch Job Creation Script
+# Usage:
+# 1. Make sure Jenkins is running and accessible
+# 2. Run in PowerShell: .\jenkins\create-jobs.ps1
+# 3. Or specify Jenkins URL: .\jenkins\create-jobs.ps1 -JenkinsUrl "http://localhost:9000"
+# 4. If authentication is required: .\jenkins\create-jobs.ps1 -JenkinsUser "username" -JenkinsPassword "password"
 
 param(
-    [string]$JenkinsUrl = "http://localhost:8080",
+    [string]$JenkinsUrl = "http://localhost:9000",
     [string]$GitRepoUrl = "https://github.com/BellisGit/btc-shopflow-monorepo.git",
-    [string]$Branch = "develop"
+    [string]$Branch = "develop",
+    [string]$JenkinsUser = "",
+    [string]$JenkinsPassword = ""
 )
 
-# 颜色输出
+# Color output functions
 function Write-Info { Write-Host "[INFO] $args" -ForegroundColor Blue }
 function Write-Success { Write-Host "[SUCCESS] $args" -ForegroundColor Green }
 function Write-Warning { Write-Host "[WARNING] $args" -ForegroundColor Yellow }
 function Write-Error { Write-Host "[ERROR] $args" -ForegroundColor Red }
 
-# 应用列表
+# Application list
 $apps = @(
     "system-app",
     "admin-app",
@@ -28,27 +31,20 @@ $apps = @(
     "mobile-app"
 )
 
-Write-Info "开始创建 Jenkins Jobs..."
+Write-Info "Starting to create Jenkins Jobs..."
 Write-Info "Jenkins URL: $JenkinsUrl"
-Write-Info "Git 仓库: $GitRepoUrl"
-Write-Info "分支: $Branch"
+Write-Info "Git Repository: $GitRepoUrl"
+Write-Info "Branch: $Branch"
+if ($JenkinsUser) {
+    Write-Info "Jenkins User: $JenkinsUser"
+}
+Write-Host ""
+Write-Host "Note: You can use either 'localhost' or IP address (e.g., http://10.80.8.199:9000)" -ForegroundColor Cyan
 Write-Host ""
 
-# 检查 Jenkins CLI
-$jenkinsCliPath = "jenkins-cli.jar"
-if (-not (Test-Path $jenkinsCliPath)) {
-    Write-Info "下载 Jenkins CLI..."
-    try {
-        $cliUrl = "$JenkinsUrl/jnlpJars/jenkins-cli.jar"
-        Invoke-WebRequest -Uri $cliUrl -OutFile $jenkinsCliPath
-        Write-Success "Jenkins CLI 下载完成"
-    } catch {
-        Write-Error "下载 Jenkins CLI 失败: $_"
-        exit 1
-    }
-}
+# Note: We use Jenkins REST API instead of CLI, so no need to download CLI
 
-# 创建单个应用 Job 的配置 XML
+# Create single application Job configuration XML
 function Create-SingleAppJobConfig {
     param(
         [string]$AppName,
@@ -61,49 +57,49 @@ function Create-SingleAppJobConfig {
     $xml = @"
 <?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.42">
-  <description>BTC ShopFlow - 部署 $AppName</description>
+  <description>BTC ShopFlow - Deploy $AppName</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>APP_NAME</name>
-          <description>应用名称（自动从 Job 名称获取）</description>
+          <description>Application name (auto-extracted from Job name)</description>
           <defaultValue>$AppName</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_HOST</name>
-          <description>服务器地址</description>
+          <description>Server address</description>
           <defaultValue>47.112.31.96</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_USER</name>
-          <description>服务器用户名</description>
+          <description>Server username</description>
           <defaultValue>root</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_PORT</name>
-          <description>SSH 端口</description>
+          <description>SSH port</description>
           <defaultValue>22</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SSH_KEY_PATH</name>
-          <description>SSH 私钥路径（在 Jenkins 服务器上的路径）</description>
+          <description>SSH private key path (path on Jenkins server)</description>
           <defaultValue>/var/jenkins_home/.ssh/id_rsa</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>SKIP_TESTS</name>
-          <description>是否跳过测试（加快构建速度）</description>
+          <description>Skip tests (speed up build)</description>
           <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>CLEAN_BUILD</name>
-          <description>是否清理构建缓存（强制重新构建）</description>
+          <description>Clean build cache (force rebuild)</description>
           <defaultValue>false</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
@@ -137,7 +133,7 @@ function Create-SingleAppJobConfig {
     return $xml
 }
 
-# 创建全量部署 Job 的配置 XML
+# Create all applications deployment Job configuration XML
 function Create-AllAppsJobConfig {
     param(
         [string]$RepoUrl,
@@ -147,43 +143,43 @@ function Create-AllAppsJobConfig {
     $xml = @"
 <?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.42">
-  <description>BTC ShopFlow - 全量部署所有应用</description>
+  <description>BTC ShopFlow - Deploy All Applications</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_HOST</name>
-          <description>服务器地址</description>
+          <description>Server address</description>
           <defaultValue>47.112.31.96</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_USER</name>
-          <description>服务器用户名</description>
+          <description>Server username</description>
           <defaultValue>root</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SERVER_PORT</name>
-          <description>SSH 端口</description>
+          <description>SSH port</description>
           <defaultValue>22</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>SSH_KEY_PATH</name>
-          <description>SSH 私钥路径（在 Jenkins 服务器上的路径）</description>
+          <description>SSH private key path (path on Jenkins server)</description>
           <defaultValue>/var/jenkins_home/.ssh/id_rsa</defaultValue>
           <trim>false</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>SKIP_TESTS</name>
-          <description>是否跳过测试（加快构建速度）</description>
+          <description>Skip tests (speed up build)</description>
           <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>CLEAN_BUILD</name>
-          <description>是否清理构建缓存（强制重新构建）</description>
+          <description>Clean build cache (force rebuild)</description>
           <defaultValue>false</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
@@ -217,108 +213,183 @@ function Create-AllAppsJobConfig {
     return $xml
 }
 
-# 创建 Job
+# Create Job using Jenkins REST API
 function Create-Job {
     param(
         [string]$JobName,
         [string]$JobConfig
     )
     
-    Write-Info "创建 Job: $JobName"
-    
-    # 将配置保存到临时文件
-    $tempFile = [System.IO.Path]::GetTempFileName()
-    $JobConfig | Out-File -FilePath $tempFile -Encoding UTF8
+    Write-Info "Creating Job: $JobName"
     
     try {
-        # 使用 Jenkins CLI 创建 Job
-        # 方法：使用 Get-Content 读取文件并通过管道传递给 Java 进程
-        $jobConfigContent = Get-Content $tempFile -Raw
+        # Prepare headers with authentication
+        $headers = @{
+            "Content-Type" = "application/xml"
+        }
+        if ($JenkinsUser -and $JenkinsPassword) {
+            $pair = "$($JenkinsUser):$($JenkinsPassword)"
+            $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+            $base64 = [System.Convert]::ToBase64String($bytes)
+            $headers["Authorization"] = "Basic $base64"
+        }
         
-        # 创建进程启动信息
-        $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = "java"
-        $psi.Arguments = "-jar `"$jenkinsCliPath`" -s `"$JenkinsUrl`" create-job `"$JobName`""
-        $psi.UseShellExecute = $false
-        $psi.RedirectStandardInput = $true
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
-        $psi.CreateNoWindow = $true
+        # Get CSRF token (Jenkins security feature)
+        try {
+            $crumbUrl = "$JenkinsUrl/crumbIssuer/api/json"
+            $crumbResponse = Invoke-WebRequest -Uri $crumbUrl -Headers $headers -UseBasicParsing -ErrorAction SilentlyContinue
+            if ($crumbResponse.StatusCode -eq 200) {
+                $crumbData = $crumbResponse.Content | ConvertFrom-Json
+                if ($crumbData.crumbRequestField -and $crumbData.crumb) {
+                    $headers[$crumbData.crumbRequestField] = $crumbData.crumb
+                    Write-Info "CSRF token obtained successfully"
+                }
+            }
+        } catch {
+            # CSRF might not be enabled, continue without it
+            Write-Warning "Could not get CSRF token, continuing without it..."
+        }
         
-        $process = New-Object System.Diagnostics.Process
-        $process.StartInfo = $psi
+        # Use Jenkins REST API to create Job
+        # URL encode the job name
+        $encodedJobName = [System.Uri]::EscapeDataString($JobName)
+        $jobUrl = "$JenkinsUrl/createItem?name=$encodedJobName"
         
-        # 启动进程
-        $process.Start() | Out-Null
-        
-        # 写入标准输入
-        $process.StandardInput.Write($jobConfigContent)
-        $process.StandardInput.Close()
-        
-        # 读取输出
-        $output = $process.StandardOutput.ReadToEnd()
-        $error = $process.StandardError.ReadToEnd()
-        
-        # 等待进程结束
-        $process.WaitForExit()
-        $exitCode = $process.ExitCode
-        
-        # 清理进程
-        $process.Dispose()
-        
-        if ($exitCode -eq 0) {
-            Write-Success "Job '$JobName' 创建成功"
-            Write-Host "   访问: $JenkinsUrl/job/$JobName" -ForegroundColor Cyan
+        try {
+            # Use -Body parameter directly (PowerShell will handle encoding)
+            $response = Invoke-WebRequest -Uri $jobUrl -Method Post -Body $JobConfig -Headers $headers -UseBasicParsing -ContentType "application/xml; charset=utf-8" -ErrorAction Stop
+            Write-Success "Job '$JobName' created successfully"
+            Write-Host "   Access: $JenkinsUrl/job/$JobName" -ForegroundColor Cyan
             return $true
-        } else {
-            Write-Error "Job '$JobName' 创建失败 (退出码: $exitCode)"
-            if ($error) {
-                Write-Host "错误信息: $error" -ForegroundColor Red
+        } catch {
+            $statusCode = $null
+            if ($_.Exception.Response) {
+                $statusCode = [int]$_.Exception.Response.StatusCode
             }
-            if ($output) {
-                Write-Host "输出信息: $output" -ForegroundColor Yellow
+            
+            if ($statusCode -eq 400) {
+                # Job might already exist, try to update it
+                Write-Warning "Job '$JobName' might already exist, attempting to update..."
+                $updateUrl = "$JenkinsUrl/job/$JobName/config.xml"
+                try {
+                    $updateResponse = Invoke-WebRequest -Uri $updateUrl -Method Post -Body $JobConfig -Headers $headers -UseBasicParsing -ContentType "application/xml" -ErrorAction Stop
+                    Write-Success "Job '$JobName' updated successfully"
+                    Write-Host "   Access: $JenkinsUrl/job/$JobName" -ForegroundColor Cyan
+                    return $true
+                } catch {
+                    Write-Error "Failed to update Job '$JobName': $_"
+                    return $false
+                }
+            } elseif ($statusCode -eq 403) {
+                Write-Error "Job '$JobName' creation failed: Permission denied (HTTP 403)"
+                Write-Warning "The user '$JenkinsUser' does not have permission to create Jobs via API."
+                Write-Host ""
+                Write-Host "   CRITICAL: Check Authorization Strategy first!" -ForegroundColor Red
+                Write-Host "   ========================================" -ForegroundColor Yellow
+                Write-Host "   1. Go to: Manage Jenkins -> Security -> Authorization" -ForegroundColor Yellow
+                Write-Host "   2. MUST select: 'Matrix-based security' (NOT 'Logged-in users can do anything')" -ForegroundColor Yellow
+                Write-Host "   3. Add user '$JenkinsUser' to the permission matrix" -ForegroundColor Yellow
+                Write-Host "   4. Check permissions for '$JenkinsUser':" -ForegroundColor Yellow
+                Write-Host "      - Overall -> Administer (recommended)" -ForegroundColor Cyan
+                Write-Host "      OR at minimum:" -ForegroundColor Cyan
+                Write-Host "      - Overall -> Read" -ForegroundColor Cyan
+                Write-Host "      - Job -> Create" -ForegroundColor Cyan
+                Write-Host "      - Job -> Configure" -ForegroundColor Cyan
+                Write-Host "      - Job -> Read" -ForegroundColor Cyan
+                Write-Host "   5. Scroll to bottom and click 'Save' (not just 'Apply')" -ForegroundColor Yellow
+                Write-Host "   6. Sign out and sign back in" -ForegroundColor Yellow
+                Write-Host "   7. Wait 10-15 seconds for changes to take effect" -ForegroundColor Yellow
+                Write-Host "   ========================================" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "   See: .\jenkins\verify-authorization-strategy.md for detailed guide" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "   Alternative: Use an administrator account" -ForegroundColor Yellow
+                Write-Host "      .\jenkins\create-jobs.ps1 -JenkinsUser 'admin' -JenkinsPassword 'admin-password'" -ForegroundColor Yellow
+                return $false
+            } else {
+                Write-Error "Job '$JobName' creation failed (HTTP $statusCode)"
+                if ($_.Exception.Message) {
+                    Write-Host "Error message: $($_.Exception.Message)" -ForegroundColor Red
+                }
+                return $false
             }
-            return $false
         }
     } catch {
-        Write-Error "创建 Job '$JobName' 时出错: $_"
-        return $false
-    } finally {
-        # 清理临时文件
-        if (Test-Path $tempFile) {
-            Remove-Item $tempFile -Force
+        Write-Error "Error creating Job '$JobName': $_"
+        if ($_.Exception.Message) {
+            Write-Host "Exception details: $($_.Exception.Message)" -ForegroundColor Red
         }
+        return $false
     }
 }
 
-# 检查 Job 是否已存在
+# Check if Job exists (using Jenkins REST API)
 function Job-Exists {
     param([string]$JobName)
     
-    $result = java -jar $jenkinsCliPath -s $JenkinsUrl get-job $JobName 2>&1
-    return $LASTEXITCODE -eq 0
+    try {
+        $jobUrl = "$JenkinsUrl/job/$JobName/api/json"
+        $headers = @{}
+        if ($JenkinsUser -and $JenkinsPassword) {
+            $pair = "$($JenkinsUser):$($JenkinsPassword)"
+            $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+            $base64 = [System.Convert]::ToBase64String($bytes)
+            $headers["Authorization"] = "Basic $base64"
+        }
+        $response = Invoke-WebRequest -Uri $jobUrl -UseBasicParsing -TimeoutSec 5 -Headers $headers -ErrorAction Stop
+        return $true
+    }
+    catch {
+        return $false
+    }
 }
 
-# 主流程
+# Main process
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Jenkins Jobs 批量创建工具" -ForegroundColor Cyan
+Write-Host "Jenkins Jobs Batch Creation Tool" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 检查 Jenkins 连接
-Write-Info "检查 Jenkins 连接..."
+# Check Jenkins connection
+Write-Info "Checking Jenkins connection..."
 try {
-    $response = Invoke-WebRequest -Uri "$JenkinsUrl/api/json" -UseBasicParsing -TimeoutSec 5
-    Write-Success "Jenkins 连接成功"
+    $headers = @{}
+    if ($JenkinsUser -and $JenkinsPassword) {
+        $pair = "$($JenkinsUser):$($JenkinsPassword)"
+        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+        $base64 = [System.Convert]::ToBase64String($bytes)
+        $headers["Authorization"] = "Basic $base64"
+    }
+    
+    $response = Invoke-WebRequest -Uri "$JenkinsUrl/api/json" -UseBasicParsing -TimeoutSec 5 -Headers $headers
+    Write-Success "Jenkins connection successful"
 } catch {
-    Write-Error "无法连接到 Jenkins: $_"
-    Write-Warning "请确保 Jenkins 已启动，并且 URL 正确"
+    $statusCode = $null
+    if ($_.Exception.Response) {
+        $statusCode = [int]$_.Exception.Response.StatusCode
+    } elseif ($_.Exception.Message -match "403" -or $_.Exception.Message -match "Forbidden") {
+        $statusCode = 403
+    }
+    
+    if ($statusCode -eq 403 -or $statusCode -eq 401) {
+        Write-Error "Jenkins requires authentication (HTTP $statusCode)"
+        if (-not ($JenkinsUser -and $JenkinsPassword)) {
+            Write-Warning "Please run the script with the following parameters:"
+            Write-Host "  .\jenkins\create-jobs.ps1 -JenkinsUser 'your-username' -JenkinsPassword 'your-password'" -ForegroundColor Yellow
+        } else {
+            Write-Warning "The provided username or password may be incorrect, please check"
+            Write-Host "  Attempted user: $JenkinsUser" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Error "Unable to connect to Jenkins: $_"
+        Write-Warning "Please ensure Jenkins is started and the URL is correct (current: $JenkinsUrl)"
+    }
     exit 1
 }
 
 Write-Host ""
 
-# 创建单个应用的 Jobs
+# Create Jobs for individual applications
 $successCount = 0
 $failCount = 0
 
@@ -326,7 +397,7 @@ foreach ($app in $apps) {
     $jobName = "btc-shopflow-deploy-$app"
     
     if (Job-Exists $jobName) {
-        Write-Warning "Job '$jobName' 已存在，跳过"
+        Write-Warning "Job '$jobName' already exists, skipping"
         continue
     }
     
@@ -339,12 +410,12 @@ foreach ($app in $apps) {
     Write-Host ""
 }
 
-# 创建全量部署 Job
+# Create all applications deployment Job
 Write-Host "----------------------------------------" -ForegroundColor Cyan
 $allJobName = "btc-shopflow-deploy-all"
 
 if (Job-Exists $allJobName) {
-    Write-Warning "Job '$allJobName' 已存在，跳过"
+    Write-Warning "Job '$allJobName' already exists, skipping"
 } else {
     $config = Create-AllAppsJobConfig -RepoUrl $GitRepoUrl -BranchName $Branch
     if (Create-Job -JobName $allJobName -JobConfig $config) {
@@ -356,12 +427,12 @@ if (Job-Exists $allJobName) {
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "创建完成" -ForegroundColor Cyan
+Write-Host "Creation Complete" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Success "成功创建: $successCount 个 Jobs"
+Write-Success "Successfully created: $successCount Jobs"
 if ($failCount -gt 0) {
-    Write-Error "失败: $failCount 个 Jobs"
+    Write-Error "Failed: $failCount Jobs"
 }
 Write-Host ""
-Write-Info "访问 Jenkins: $JenkinsUrl"
-Write-Info "所有 Jobs 列表: $JenkinsUrl/view/all/"
+Write-Info "Access Jenkins: $JenkinsUrl"
+Write-Info "All Jobs list: $JenkinsUrl/view/all/"

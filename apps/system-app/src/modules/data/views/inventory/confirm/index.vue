@@ -94,11 +94,7 @@ const approvalService = {
     if (!approvalPageService) {
       return {
         list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
+        total: 0
       };
     }
 
@@ -118,19 +114,16 @@ const approvalService = {
       const size = params?.size || 10;
       const normalized = normalizePageResponse(data, page, size);
 
+      // BtcTableGroup 期望返回 { list, total } 格式，而不是 { list, pagination }
       return {
         list: normalized.list,
-        pagination: normalized.pagination,
+        total: normalized.total,
       };
     } catch (error) {
       console.error('[InventoryConfirm] 获取流程确认列表失败:', error);
       return {
         list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
+        total: 0
       };
     }
   },

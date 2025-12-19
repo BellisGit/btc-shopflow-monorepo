@@ -17,6 +17,7 @@
       :show-multi-delete-btn="false"
       :show-search-key="false"
       :label-field="'checkType'"
+      :show-create-time="false"
       @select="onCheckSelect"
       :right-op-fields="rightOpFields"
       v-model:right-op-fields-value="searchForm"
@@ -56,12 +57,9 @@
           {{ detailRow?.position || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :label="t('system.inventory.base.fields.createdAt')">
-          {{ detailRow?.createdAt || '-' }}
+          {{ formatDateTimeFriendly(detailRow?.createdAt) }}
         </el-descriptions-item>
       </el-descriptions>
-      <template #footer>
-        <el-button @click="detailVisible = false">{{ t('common.button.close') }}</el-button>
-      </template>
     </BtcDialog>
   </div>
 </template>
@@ -71,6 +69,7 @@ import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n, normalizePageResponse, exportJsonToExcel } from '@btc/shared-core';
+import { formatDateTimeFriendly } from '@btc/shared-utils';
 import type { TableColumn, FormItem, UseCrudReturn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -411,55 +410,66 @@ const handleExport = async () => {
 const resultColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), minWidth: 140 },
   { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
   { prop: 'partQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
   { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), minWidth: 120 },
   { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), minWidth: 180 },
 ]);
 
 // 盘点结果表单（根据新的data-source API字段）
 const resultFormItems = computed<FormItem[]>(() => [
-  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' } },
-  { prop: 'processId', label: '流程ID', span: 12, component: { name: 'el-input' } },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'partQty', label: t('inventory.result.fields.actualQty'), span: 12, component: { name: 'el-input-number' }, required: true },
-  { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
+  // 物料编码 - 只读
+  {
+    prop: 'partName',
+    label: t('system.material.fields.materialCode'),
+    span: 12,
+    component: {
+      name: 'el-input',
+      props: {
+        readonly: true
+      }
+    },
+    required: true
+  },
+  // 实际数量 - 可编辑
+  {
+    prop: 'partQty',
+    label: t('inventory.result.fields.actualQty'),
+    span: 12,
+    component: {
+      name: 'el-input',
+      props: {
+        type: 'number'
+      }
+    },
+    required: true
+  },
+  // 盘点人 - 只读
+  {
+    prop: 'checker',
+    label: t('system.inventory.base.fields.checkerId'),
+    span: 12,
+    component: {
+      name: 'el-input',
+      props: {
+        readonly: true
+      }
+    },
+    required: true
+  },
+  // 仓位 - 只读
   {
     prop: 'position',
     label: t('inventory.result.fields.storageLocation'),
     span: 12,
     component: {
-      name: 'el-select',
+      name: 'el-input',
       props: {
-        filterable: true,
-        clearable: true,
-        loading: positionLoading.value,
-        placeholder: t('inventory.result.fields.storageLocation'),
-      },
+        readonly: true
+      }
     },
-    // 直接使用 positionOptions.value，computed 会自动追踪变化
-    options: positionOptions.value,
+    required: true
   },
-  { prop: 'diffRate', label: t('inventory.result.fields.diffRate'), span: 12, component: { name: 'el-input' } },
-  {
-    prop: 'isDiff',
-    label: t('inventory.result.fields.isDiff'),
-    span: 12,
-    component: {
-      name: 'el-select',
-      props: {
-        placeholder: t('inventory.result.fields.isDiff_placeholder'),
-      },
-    },
-    options: [
-      { label: t('common.yes'), value: 1 },
-      { label: t('common.no'), value: 0 },
-    ],
-  },
-  { prop: 'checkerId', label: t('system.inventory.base.fields.checkerId'), span: 12, component: { name: 'el-input' } },
-  { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
 ]);
 
 // 组件挂载时加载仓位选项

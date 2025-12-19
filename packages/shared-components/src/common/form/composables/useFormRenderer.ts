@@ -86,6 +86,8 @@ export function useFormRenderer() {
             const props: any = {
               ...itemRef.component?.props,
               disabled: itemRef.disabled,
+              // 支持 readonly 属性（从 component.props 中获取，如果没有则从 itemRef 顶层获取）
+              readonly: itemRef.component?.props?.readonly ?? itemRef.readonly,
             };
 
             // 为组件设置 id，确保 label 的 for 属性能正确关联

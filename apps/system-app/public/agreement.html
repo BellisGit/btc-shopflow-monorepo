@@ -301,6 +301,10 @@
           history.pushState({ page: fileName }, '', '/duty/' + fileName);
         }
 
+        // 切换协议时立即滚动到顶部
+        window.scrollTo(0, 0);
+        $('.privacy-main-container').scrollTop(0);
+
         $.ajax({
           url: '/duty/' + fileName,
           type: 'GET',
@@ -348,8 +352,9 @@
         // 将新内容放入动画容器（注意：content已经包含了main标签内的内容）
         $('.privacy-appendContainer').html('<main><div id="aboutToShow">' + content + '</div></main>');
 
-        // 滚动到顶部
+        // 滚动到顶部：同时滚动窗口和内容容器
         window.scrollTo(0, 0);
+        $('.privacy-main-container').scrollTop(0);
 
         // 开始动画
         $('.privacy-appendContainer').css({
@@ -385,6 +390,10 @@
             "opacity": "0",
             "transform": "translateY(30%)"
           });
+
+          // 确保在内容替换后也滚动到顶部
+          window.scrollTo(0, 0);
+          $('.privacy-main-container').scrollTop(0);
         });
       }
 

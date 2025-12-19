@@ -209,6 +209,9 @@ const wrappedFinanceInventoryService = {
 const handleBeforeRefresh = (params: Record<string, unknown>) => {
   const selectedItem = tableGroupRef.value?.selectedItem;
 
+  // 确保保留所有原始参数（包括 page 和 size）
+  const finalParams = { ...params };
+
   // 获取现有的 keyword 对象（可能包含用户输入的搜索内容）
   const existingKeyword = (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword))
     ? { ...(params.keyword as Record<string, unknown>) }
@@ -216,19 +219,16 @@ const handleBeforeRefresh = (params: Record<string, unknown>) => {
 
   // 如果选中项有 checkNo 字段，将 checkNo 合并到 keyword 对象中
   if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
-    (params as any).keyword = {
+    finalParams.keyword = {
       ...existingKeyword,
       checkNo: selectedItem.checkNo
     };
-    return params;
+  } else if (Object.keys(existingKeyword).length > 0) {
+    // 如果没有 selectedKeyword，但已有 keyword 对象，保留现有的 keyword
+    finalParams.keyword = existingKeyword;
   }
 
-  // 如果没有 selectedKeyword，但已有 keyword 对象，保留现有的 keyword
-  if (Object.keys(existingKeyword).length > 0) {
-    (params as any).keyword = existingKeyword;
-  }
-
-  return params;
+  return finalParams;
 };
 
 // 盘点选择处理

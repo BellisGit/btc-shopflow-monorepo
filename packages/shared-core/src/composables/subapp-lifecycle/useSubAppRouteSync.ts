@@ -211,7 +211,7 @@ export function setupRouteSync(context: SubAppContext, appId: string, basePath: 
         // 只有当路由已匹配时才触发事件（避免在路由未匹配时触发）
         if (currentRoute.matched.length > 0) {
           triggerRouteChangeEvent(currentRoute, context, basePath);
-        }
+    }
       });
     });
   }).catch(() => {

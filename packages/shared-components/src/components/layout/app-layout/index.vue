@@ -908,11 +908,6 @@ onUnmounted(() => {
       min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
       padding: 0 !important;
       box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保宽度计算一致
-      background-color: var(--el-bg-color-page, var(--el-bg-color)) !important;
-      // 关键：确保 CSS 变量能够传递到子应用
-      // 在 qiankun 环境下，CSS 变量需要从父元素继承
-      --el-bg-color-page: var(--el-bg-color-page, var(--el-bg-color));
-      --el-bg-color: var(--el-bg-color);
     }
 
     :deep(#subapp-viewport > [data-qiankun]) {
