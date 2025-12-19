@@ -1,4 +1,4 @@
-﻿{
+{
   "ui.button.save": "Save",
   "ui.button.cancel": "Cancel",
   "ui.button.confirm": "OK",
@@ -464,6 +464,8 @@
   "app_center.title": "App Center",
   "app_center.subtitle": "Manage and access all applications",
   "app_center.current": "Current App",
+  "app_center.search_placeholder": "Search apps...",
+  "app_center.no_results": "No matching apps found",
   "auth.login.title": "Login",
   "auth.register.title": "Register",
   "auth.forget_password.title": "Forgot Password",

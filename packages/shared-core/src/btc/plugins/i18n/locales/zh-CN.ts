@@ -189,6 +189,8 @@ export default {
   'app_center.title': '应用中心',
   'app_center.subtitle': '选择要访问的应用',
   'app_center.current': '当前应用',
+  'app_center.search_placeholder': '搜索应用...',
+  'app_center.no_results': '未找到匹配的应用',
   'app_center.message.current_app': '当前应用：{app}',
   'app_center.message.switching': '正在切换到 {app}...',
   'micro_app.main.title': '主应用',

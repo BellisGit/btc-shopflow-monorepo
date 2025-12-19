@@ -1,4 +1,4 @@
-﻿{
+{
   "ui.button.save": "保存",
   "ui.button.cancel": "取消",
   "ui.button.confirm": "确定",
@@ -465,6 +465,8 @@
   "app_center.title": "应用中心",
   "app_center.subtitle": "管理和访问所有应用",
   "app_center.current": "当前应用",
+  "app_center.search_placeholder": "搜索应用...",
+  "app_center.no_results": "未找到匹配的应用",
   "auth.login.title": "登录",
   "auth.register.title": "注册",
   "auth.forget_password.title": "忘记密码",

@@ -417,6 +417,8 @@
   "app_center.title": "应用中心",
   "app_center.subtitle": "切换不同的业务模块",
   "app_center.current": "当前",
+  "app_center.search_placeholder": "搜索应用...",
+  "app_center.no_results": "未找到匹配的应用",
   "micro_app.system.title": "系统域",
   "micro_app.system.description": "系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务",
   "micro_app.admin.title": "管理域",

@@ -194,18 +194,38 @@
       }
     </style>
     <script>
-      // 检查是否有导航标记，如果有则显示 Loading
+      // 关键：在页面加载时立即检查导航标记，立即显示 Loading，避免白屏
       (function() {
         try {
           const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
           if (shouldShowLoading) {
-            // 立即创建 Loading 元素，避免闪烁
-            document.addEventListener('DOMContentLoaded', function() {
-              const loadingEl = document.getElementById('Loading');
+            // 使用内联样式立即显示 Loading，不等待 DOMContentLoaded
+            // 在 head 中直接写入样式，确保在 body 解析前就设置好
+            var style = document.createElement('style');
+            style.textContent = '#Loading { display: flex !important; visibility: visible !important; opacity: 1 !important; }';
+            document.head.appendChild(style);
+
+            // 同时监听 DOMContentLoaded，确保 Loading 元素存在后立即显示
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', function() {
+                var loadingEl = document.getElementById('Loading');
+                if (loadingEl) {
+                  loadingEl.style.display = 'flex';
+                  loadingEl.style.visibility = 'visible';
+                  loadingEl.style.opacity = '1';
+                  loadingEl.classList.remove('is-hide');
+                }
+              });
+            } else {
+              // 如果 DOM 已经加载完成，立即显示
+              var loadingEl = document.getElementById('Loading');
               if (loadingEl) {
                 loadingEl.style.display = 'flex';
+                loadingEl.style.visibility = 'visible';
+                loadingEl.style.opacity = '1';
+                loadingEl.classList.remove('is-hide');
               }
-            });
+            }
           }
         } catch (e) {
           // 静默失败

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * English language pack
  */
 export default {
@@ -189,6 +189,8 @@ export default {
   'app_center.title': 'App Center',
   'app_center.subtitle': 'Select an app to access',
   'app_center.current': 'Current App',
+  'app_center.search_placeholder': 'Search apps...',
+  'app_center.no_results': 'No matching apps found',
   'app_center.message.current_app': 'Current app: {app}',
   'app_center.message.switching': 'Switching to {app}...',
   'micro_app.main.title': 'Main App',

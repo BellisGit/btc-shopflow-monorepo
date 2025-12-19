@@ -1,10 +1,26 @@
-﻿<template>
+<template>
   <teleport to="body">
     <transition name="drawer-slide">
       <div v-if="visible" class="menu-drawer">
         <div class="menu-drawer__header">
-          <h3>{{ t('app_center.title') }}</h3>
-          <span class="menu-drawer__subtitle">{{ t('app_center.subtitle') }}</span>
+          <div class="menu-drawer__header-top">
+            <h3>{{ t('app_center.title') }}</h3>
+            <span class="menu-drawer__subtitle">{{ t('app_center.subtitle') }}</span>
+          </div>
+          <div class="menu-drawer__search">
+            <el-input
+              v-model="searchKeyword"
+              :placeholder="t('app_center.search_placeholder')"
+              clearable
+              size="small"
+            >
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
+          </div>
         </div>
 
         <div class="menu-drawer__content">
@@ -14,37 +30,79 @@
             </el-icon>
             <span>{{ t('common.loading') }}...</span>
           </div>
-          <div v-else class="app-list">
-            <div
-              v-for="app in applications"
-              :key="app.name"
-              class="app-card"
-              :class="{ 'is-active': app.name === currentApp }"
-              @click="handleSwitchApp(app)"
-            >
-              <div class="app-card__icon" :style="{ backgroundColor: app.color }">
-                <btc-svg :name="app.icon" :size="32" />
-              </div>
-              <div class="app-card__info">
-                <div class="app-card__title">
-                  {{ getDomainDisplayName(app) }}
-                  <el-tag v-if="app.name === currentApp" size="small" type="success">
-                    {{ t('app_center.current') }}
-                  </el-tag>
-                </div>
-                <div class="app-card__description">
-                  {{ app.description || t(`micro_app.${app.name}.description`) }}
-                </div>
-              </div>
-              <div class="app-card__action">
-                <el-icon v-if="app.name === currentApp" color="#67c23a">
-                  <Check />
-                </el-icon>
-                <el-icon v-else>
-                  <Right />
-                </el-icon>
-              </div>
+          <div v-else-if="filteredApplications.length > 0" class="app-list">
+            <div class="app-list__column">
+              <template
+                v-for="(app, index) in filteredApplications.filter((_, i) => i % 2 === 0)"
+                :key="app.name"
+              >
+                <el-tooltip
+                  :content="app.description || t(`micro_app.${app.name}.description`)"
+                  placement="right"
+                  :show-after="300"
+                  trigger="hover"
+                >
+                  <div
+                    class="app-card"
+                    :class="{ 'is-active': app.name === currentApp }"
+                    @click="handleSwitchApp(app)"
+                  >
+                    <div class="app-card__icon" :style="{ backgroundColor: app.color }">
+                      <btc-svg :name="app.icon" :size="22" />
+                    </div>
+                    <div class="app-card__info">
+                      <div class="app-card__title">
+                        {{ getDomainDisplayName(app) }}
+                      </div>
+                    </div>
+                    <div class="app-card__action" v-if="app.name === currentApp">
+                      <el-icon color="#67c23a">
+                        <Check />
+                      </el-icon>
+                    </div>
+                  </div>
+                </el-tooltip>
+              </template>
             </div>
+            <div class="app-list__column">
+              <template
+                v-for="(app, index) in filteredApplications.filter((_, i) => i % 2 === 1)"
+                :key="app.name"
+              >
+                <el-tooltip
+                  :content="app.description || t(`micro_app.${app.name}.description`)"
+                  placement="right"
+                  :show-after="300"
+                  trigger="hover"
+                >
+                  <div
+                    class="app-card"
+                    :class="{ 'is-active': app.name === currentApp }"
+                    @click="handleSwitchApp(app)"
+                  >
+                    <div class="app-card__icon" :style="{ backgroundColor: app.color }">
+                      <btc-svg :name="app.icon" :size="22" />
+                    </div>
+                    <div class="app-card__info">
+                      <div class="app-card__title">
+                        {{ getDomainDisplayName(app) }}
+                      </div>
+                    </div>
+                    <div class="app-card__action" v-if="app.name === currentApp">
+                      <el-icon color="#67c23a">
+                        <Check />
+                      </el-icon>
+                    </div>
+                  </div>
+                </el-tooltip>
+              </template>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <el-icon class="empty-state__icon">
+              <Search />
+            </el-icon>
+            <p class="empty-state__text">{{ t('app_center.no_results') }}</p>
           </div>
         </div>
       </div>
@@ -57,9 +115,9 @@ defineOptions({
   name: 'LayoutMenuDrawer'
 });
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { Check, Right, Loading } from '@element-plus/icons-vue';
+import { Check, Loading, Search } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import { BtcSvg } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -168,8 +226,24 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
 
 const applications = ref<MicroApp[]>([]);
 
+// 搜索关键词
+const searchKeyword = ref('');
+
 // 存储域数据映射
 const domainDataMap = ref<Map<string, any>>(new Map());
+
+// 过滤后的应用列表
+const filteredApplications = computed(() => {
+  if (!searchKeyword.value.trim()) {
+    return applications.value;
+  }
+  const keyword = searchKeyword.value.toLowerCase().trim();
+  return applications.value.filter((app) => {
+    const displayName = getDomainDisplayName(app).toLowerCase();
+    const description = (app.description || t(`micro_app.${app.name}.description`) || '').toLowerCase();
+    return displayName.includes(keyword) || description.includes(keyword);
+  });
+});
 
 // 获取域显示名称
 const getDomainDisplayName = (app: MicroApp) => {
@@ -207,8 +281,8 @@ const loadApplications = async () => {
 
     // me 接口返回的数据结构：{ code: 200, msg: "...", data: [...] }
     // 兼容处理：支持 response.data（me接口）、response.list（list接口）、直接数组
-    const domainList = Array.isArray(response) 
-      ? response 
+    const domainList = Array.isArray(response)
+      ? response
       : (response?.data || response?.list || []);
 
     if (Array.isArray(domainList) && domainList.length > 0) {
@@ -217,9 +291,9 @@ const loadApplications = async () => {
       domainList.forEach((domain: any) => {
         // me 接口返回的域数据可能没有 domainCode，需要根据 name 或 id 推断
         // 或者使用 name 作为 key
-        const domainCode = domain.domainCode || 
-          (domain.name === '系统域' ? 'SYSTEM' : 
-           domain.name === '管理域' ? 'ADMIN' : 
+        const domainCode = domain.domainCode ||
+          (domain.name === '系统域' ? 'SYSTEM' :
+           domain.name === '管理域' ? 'ADMIN' :
            domain.id || domain.name);
         if (domainCode) {
           domainMap.set(domainCode, domain);
@@ -234,8 +308,8 @@ const loadApplications = async () => {
 
       // 1. 添加主应用（系统域 - 默认域）
       const systemDomain = Array.from(domainMap.values())
-        .find((domain: any) => 
-          domain.domainCode === 'SYSTEM' || 
+        .find((domain: any) =>
+          domain.domainCode === 'SYSTEM' ||
           domain.name === '系统域' ||
           domain.id === '17601901464201'
         );
@@ -253,8 +327,8 @@ const loadApplications = async () => {
 
       // 2. 添加管理域应用
       const adminDomain = Array.from(domainMap.values())
-        .find((domain: any) => 
-          domain.domainCode === 'ADMIN' || 
+        .find((domain: any) =>
+          domain.domainCode === 'ADMIN' ||
           domain.name === '管理域' ||
           domain.id === 'SDOM-9473'
         );
@@ -341,7 +415,7 @@ const handleSwitchApp = async (app: MicroApp) => {
 
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = window.location.hostname.includes('bellis.com.cn');
-  
+
   // 生产环境：使用子域名跳转
   if (isProduction) {
     // 文档应用特殊处理（文档应用可能没有独立的子域名）
@@ -374,7 +448,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
       const protocol = window.location.protocol;
       const targetUrl = `${protocol}//${appConfig.prodHost}/`;
-      
+
       // 使用 window.location.href 跳转到子域名
       window.location.href = targetUrl;
       return;
@@ -440,9 +514,7 @@ onUnmounted(() => {
   position: fixed;
   top: 48px;
   left: 0;
-  width: 25%;
-  min-width: 320px;
-  max-width: 450px;
+  width: 255px;
   height: calc(100vh - 48px);
   background-color: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color-extra-light);
@@ -452,13 +524,17 @@ onUnmounted(() => {
   flex-direction: column;
 
   &__header {
-    padding: 20px;
+    padding: 16px;
     border-bottom: 1px solid var(--el-border-color-extra-light);
     background-color: var(--el-bg-color);
+  }
+
+  &__header-top {
+    margin-bottom: 12px;
 
     h3 {
-      margin: 0 0 8px 0;
-      font-size: 18px;
+      margin: 0 0 6px 0;
+      font-size: 16px;
       font-weight: 600;
       color: var(--el-text-color-primary);
     }
@@ -469,11 +545,25 @@ onUnmounted(() => {
     color: var(--el-text-color-secondary);
   }
 
+  &__search {
+    :deep(.el-input__wrapper) {
+      box-shadow: 0 0 0 1px var(--el-border-color) inset;
+    }
+
+    :deep(.el-input__wrapper:hover) {
+      box-shadow: 0 0 0 1px var(--el-border-color-hover) inset;
+    }
+
+    :deep(.el-input__wrapper.is-focus) {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+    }
+  }
+
   &__content {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px;
+    padding: 10px;
     background-color: var(--el-bg-color);
   }
 }
@@ -498,26 +588,54 @@ onUnmounted(() => {
 
 .app-list {
   display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding: 2px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.app-list__column {
+  flex: 1 1 calc(50% - 5px);
+  display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 响应式优化 - 小屏幕下恢复单列 */
+@media (max-width: 768px) {
+  .app-list {
+    flex-direction: column;
+  }
+
+  .app-list__column {
+    width: 100%;
+  }
 }
 
 .app-card {
+  position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 6px;
+  min-height: 64px;
   background-color: var(--el-fill-color-blank);
   border: 1px solid var(--el-border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     border-color: var(--el-color-primary);
     background-color: var(--el-fill-color-light);
-    transform: translateX(4px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
   }
 
   &.is-active {
@@ -526,68 +644,81 @@ onUnmounted(() => {
 
     .app-card__icon {
       box-shadow: 0 4px 12px rgba(103, 194, 58, 0.2);
+      transform: scale(1.05);
     }
   }
 
   &__icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     color: #fff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   &__info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden; // 防止文字溢出到勾选标记区域
   }
 
   &__title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--el-text-color-primary);
-    margin-bottom: 4px;
-
-    .el-tag {
-      font-size: 12px;
-    }
-  }
-
-  &__description {
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
+    line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    // 不需要 padding-right，勾选标记是绝对定位的，不会影响文字布局
   }
 
   &__action {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-    font-size: 20px;
-    color: var(--el-text-color-secondary);
-    transition: color 0.3s;
-  }
-
-  &:hover &__action {
-    color: var(--el-color-primary);
-  }
-
-  &.is-active &__action {
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    font-size: 8px;
     color: var(--el-color-success);
+    background-color: var(--el-color-success-light-9);
+    border: 1px solid var(--el-color-success);
+    border-radius: 50%;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0.5px rgba(103, 194, 58, 0.06);
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--el-text-color-secondary);
+  gap: 12px;
+
+  &__icon {
+    font-size: 32px;
+    color: var(--el-text-color-placeholder);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
   }
 }
 

@@ -399,6 +399,8 @@
   "app_center.title": "App Center",
   "app_center.subtitle": "Switch between different business modules",
   "app_center.current": "Current",
+  "app_center.search_placeholder": "Search apps...",
+  "app_center.no_results": "No matching apps found",
   "micro_app.system.title": "System Domain",
   "micro_app.system.description": "Shared domain for system users to handle daily affairs, can handle business that does not require specific domain distinction",
   "micro_app.admin.title": "Admin Domain",

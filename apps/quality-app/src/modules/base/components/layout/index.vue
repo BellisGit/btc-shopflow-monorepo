@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     class="app-layout"
     :class="{
@@ -92,13 +92,7 @@
         </div>
       </div>
 
-    <!-- 关键：在 layout-app 环境下，隐藏子应用自己的菜单抽屉 -->
-    <!-- layout-app 会提供共享的菜单抽屉 -->
-    <MenuDrawer
-      v-if="!isUsingLayoutApp"
-      v-model:visible="drawerVisible"
-      :topbar-height="47"
-    />
+    <!-- 菜单抽屉由 layout-app 提供，子应用不需要自己的 menu-drawer -->
   </div>
 </template>
 
@@ -115,7 +109,6 @@ import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
-import MenuDrawer from './menu-drawer/index.vue';
 import AppSkeleton from '@/components/AppSkeleton.vue';
 import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
@@ -267,7 +260,7 @@ const toggleDrawer = () => {
   if (isUsingLayoutApp.value) {
     return;
   }
-  
+
   // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
   nextTick(() => {
     try {
@@ -288,7 +281,7 @@ const openDrawer = () => {
   if (isUsingLayoutApp.value) {
     return;
   }
-  
+
   // 使用 nextTick 延迟状态更新，避免在子应用环境中访问已被销毁的组件实例
   nextTick(() => {
     try {
@@ -399,7 +392,7 @@ onUnmounted(() => {
   }
 
   delete (window as any).__APP_EMITTER__;
-  
+
   // 关键：在卸载时重置 drawerVisible，避免响应式更新触发已卸载组件的更新
   // 使用 nextTick 确保在卸载完成前不会触发更新
   nextTick(() => {
