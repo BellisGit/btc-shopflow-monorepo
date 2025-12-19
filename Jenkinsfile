@@ -56,7 +56,7 @@ pipeline {
         string(
             name: 'SSH_KEY_PATH',
             defaultValue: '/var/jenkins_home/.ssh/id_rsa',
-            description: 'SSH 私钥路径（在 Jenkins 服务器上的路径）'
+            description: 'SSH 私钥路径（在 Jenkins 服务器上的路径，Windows 上部署阶段会被跳过）'
         )
         // 是否跳过测试
         booleanParam(
@@ -79,13 +79,24 @@ pipeline {
                     echo "📦 检出代码..."
                     checkout scm
                     // 显示 Git 信息
-                    sh '''
-                        echo "Git 信息:"
-                        echo "  分支: $(git branch --show-current)"
-                        echo "  提交: $(git rev-parse --short HEAD)"
-                        echo "  作者: $(git log -1 --pretty=format:'%an <%ae>')"
-                        echo "  消息: $(git log -1 --pretty=format:'%s')"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            echo "Git 信息:"
+                            echo "  分支: $(git branch --show-current)"
+                            echo "  提交: $(git rev-parse --short HEAD)"
+                            echo "  作者: $(git log -1 --pretty=format:'%an <%ae>')"
+                            echo "  消息: $(git log -1 --pretty=format:'%s')"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            echo Git 信息:
+                            for /f "delims=" %%i in ('git branch --show-current') do echo   分支: %%i
+                            for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo   提交: %%i
+                            for /f "delims=" %%i in ('git log -1 --pretty=format:"%%an ^<%%ae^>"') do echo   作者: %%i
+                            for /f "delims=" %%i in ('git log -1 --pretty=format:"%%s"') do echo   消息: %%i
+                        '''
+                    }
                 }
             }
         }
@@ -95,25 +106,46 @@ pipeline {
                 script {
                     echo "🔧 设置构建环境..."
                     // 安装 Node.js
-                    sh '''
-                        if command -v nvm &> /dev/null; then
-                            source ~/.nvm/nvm.sh
-                            nvm install ${NODE_VERSION}
-                            nvm use ${NODE_VERSION}
-                        elif command -v node &> /dev/null; then
-                            echo "Node.js 已安装: $(node --version)"
-                        else
-                            echo "错误: 未找到 Node.js，请安装 Node.js ${NODE_VERSION}"
-                            exit 1
-                        fi
-                        
-                        # 安装 pnpm
-                        if ! command -v pnpm &> /dev/null; then
-                            echo "安装 pnpm ${PNPM_VERSION}..."
-                            npm install -g pnpm@${PNPM_VERSION}
-                        fi
-                        echo "pnpm 版本: $(pnpm --version)"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            if command -v nvm &> /dev/null; then
+                                source ~/.nvm/nvm.sh
+                                nvm install ${NODE_VERSION}
+                                nvm use ${NODE_VERSION}
+                            elif command -v node &> /dev/null; then
+                                echo "Node.js 已安装: $(node --version)"
+                            else
+                                echo "错误: 未找到 Node.js，请安装 Node.js ${NODE_VERSION}"
+                                exit 1
+                            fi
+                            
+                            # 安装 pnpm
+                            if ! command -v pnpm &> /dev/null; then
+                                echo "安装 pnpm ${PNPM_VERSION}..."
+                                npm install -g pnpm@${PNPM_VERSION}
+                            fi
+                            echo "pnpm 版本: $(pnpm --version)"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            where node >nul 2>&1
+                            if %errorlevel% neq 0 (
+                                echo 错误: 未找到 Node.js，请安装 Node.js %NODE_VERSION%
+                                exit /b 1
+                            )
+                            echo Node.js 已安装:
+                            node --version
+                            
+                            where pnpm >nul 2>&1
+                            if %errorlevel% neq 0 (
+                                echo 安装 pnpm %PNPM_VERSION%...
+                                call npm install -g pnpm@%PNPM_VERSION%
+                            )
+                            echo pnpm 版本:
+                            pnpm --version
+                        '''
+                    }
                 }
             }
         }
@@ -122,11 +154,19 @@ pipeline {
             steps {
                 script {
                     echo "📚 安装依赖..."
-                    sh '''
-                        # 清理并安装依赖
-                        pnpm install --frozen-lockfile
-                        echo "✅ 依赖安装完成"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            # 清理并安装依赖
+                            pnpm install --frozen-lockfile
+                            echo "✅ 依赖安装完成"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            call pnpm install --frozen-lockfile
+                            echo ✅ 依赖安装完成
+                        '''
+                    }
                 }
             }
         }
@@ -138,13 +178,24 @@ pipeline {
             steps {
                 script {
                     echo "🔍 代码检查..."
-                    sh '''
-                        echo "运行 ESLint..."
-                        pnpm lint || echo "⚠️ Lint 检查失败，但继续构建"
-                        
-                        echo "运行 TypeScript 类型检查..."
-                        pnpm type-check || echo "⚠️ 类型检查失败，但继续构建"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            echo "运行 ESLint..."
+                            pnpm lint || echo "⚠️ Lint 检查失败，但继续构建"
+                            
+                            echo "运行 TypeScript 类型检查..."
+                            pnpm type-check || echo "⚠️ 类型检查失败，但继续构建"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            echo 运行 ESLint...
+                            call pnpm lint || echo ⚠️ Lint 检查失败，但继续构建
+                            
+                            echo 运行 TypeScript 类型检查...
+                            call pnpm type-check || echo ⚠️ 类型检查失败，但继续构建
+                        '''
+                    }
                 }
             }
         }
@@ -156,10 +207,18 @@ pipeline {
             steps {
                 script {
                     echo "🧪 运行测试..."
-                    sh '''
-                        echo "运行单元测试..."
-                        pnpm test:unit || echo "⚠️ 单元测试失败，但继续构建"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            echo "运行单元测试..."
+                            pnpm test:unit || echo "⚠️ 单元测试失败，但继续构建"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            echo 运行单元测试...
+                            call pnpm test:unit || echo ⚠️ 单元测试失败，但继续构建
+                        '''
+                    }
                 }
             }
         }
@@ -171,33 +230,62 @@ pipeline {
                     def appName = params.APP_NAME
                     def cleanFlag = params.CLEAN_BUILD ? '--force --no-cache' : ''
                     
-                    if (appName == 'all') {
-                        // 构建所有应用
-                        sh '''
-                            echo "构建所有应用..."
-                            # 先构建共享包
-                            pnpm --filter @btc/vite-plugin run build || true
-                            pnpm --filter @btc/shared-utils run build || true
-                            pnpm --filter @btc/shared-core run build || true
-                            pnpm --filter @btc/shared-components run build || true
-                            pnpm --filter @btc/subapp-manifests run build || true
-                            
-                            # 构建所有应用
-                            pnpm build:all
-                            echo "✅ 所有应用构建完成"
-                        '''
+                    if (isUnix()) {
+                        if (appName == 'all') {
+                            // 构建所有应用
+                            sh '''
+                                echo "构建所有应用..."
+                                # 先构建共享包
+                                pnpm --filter @btc/vite-plugin run build || true
+                                pnpm --filter @btc/shared-utils run build || true
+                                pnpm --filter @btc/shared-core run build || true
+                                pnpm --filter @btc/shared-components run build || true
+                                pnpm --filter @btc/subapp-manifests run build || true
+                                
+                                # 构建所有应用
+                                pnpm build:all
+                                echo "✅ 所有应用构建完成"
+                            '''
+                        } else {
+                            // 构建单个应用
+                            sh """
+                                echo "构建应用: ${appName}..."
+                                # 先构建共享包（如果不存在）
+                                pnpm --filter @btc/shared-core run build || true
+                                pnpm --filter @btc/shared-components run build || true
+                                
+                                # 构建指定应用
+                                pnpm --filter ${appName} run build
+                                echo "✅ ${appName} 构建完成"
+                            """
+                        }
                     } else {
-                        // 构建单个应用
-                        sh """
-                            echo "构建应用: ${appName}..."
-                            # 先构建共享包（如果不存在）
-                            pnpm --filter @btc/shared-core run build || true
-                            pnpm --filter @btc/shared-components run build || true
-                            
-                            # 构建指定应用
-                            pnpm --filter ${appName} run build
-                            echo "✅ ${appName} 构建完成"
-                        """
+                        if (appName == 'all') {
+                            // 构建所有应用
+                            bat '''
+                                @echo off
+                                echo 构建所有应用...
+                                call pnpm --filter @btc/vite-plugin run build || echo.
+                                call pnpm --filter @btc/shared-utils run build || echo.
+                                call pnpm --filter @btc/shared-core run build || echo.
+                                call pnpm --filter @btc/shared-components run build || echo.
+                                call pnpm --filter @btc/subapp-manifests run build || echo.
+                                
+                                call pnpm build:all
+                                echo ✅ 所有应用构建完成
+                            '''
+                        } else {
+                            // 构建单个应用
+                            bat """
+                                @echo off
+                                echo 构建应用: ${appName}...
+                                call pnpm --filter @btc/shared-core run build || echo.
+                                call pnpm --filter @btc/shared-components run build || echo.
+                                
+                                call pnpm --filter ${appName} run build
+                                echo ✅ ${appName} 构建完成
+                            """
+                        }
                     }
                 }
             }
@@ -209,35 +297,78 @@ pipeline {
                     echo "✅ 验证构建产物..."
                     def appName = params.APP_NAME
                     
-                    if (appName == 'all') {
-                        sh '''
-                            echo "验证所有应用的构建产物..."
-                            for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app; do
-                                if [ -d "apps/$app/dist" ] && [ -n "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
-                                    echo "✅ $app: 构建产物存在"
-                                    du -sh apps/$app/dist | awk '{print "  大小: " $1}'
+                    if (isUnix()) {
+                        if (appName == 'all') {
+                            sh '''
+                                echo "验证所有应用的构建产物..."
+                                for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app; do
+                                    if [ -d "apps/$app/dist" ] && [ -n "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
+                                        echo "✅ $app: 构建产物存在"
+                                        du -sh apps/$app/dist | awk '{print "  大小: " $1}'
+                                    else
+                                        echo "❌ $app: 构建产物不存在或为空"
+                                        exit 1
+                                    fi
+                                done
+                            '''
+                        } else {
+                            sh """
+                                if [ -d "apps/${appName}/dist" ] && [ -n "\$(ls -A apps/${appName}/dist 2>/dev/null)" ]; then
+                                    echo "✅ ${appName}: 构建产物验证通过"
+                                    du -sh apps/${appName}/dist | awk '{print "大小: " \$1}'
                                 else
-                                    echo "❌ $app: 构建产物不存在或为空"
+                                    echo "❌ ${appName}: 构建产物不存在或为空"
                                     exit 1
                                 fi
-                            done
-                        '''
+                            """
+                        }
                     } else {
-                        sh """
-                            if [ -d "apps/${appName}/dist" ] && [ -n "\$(ls -A apps/${appName}/dist 2>/dev/null)" ]; then
-                                echo "✅ ${appName}: 构建产物验证通过"
-                                du -sh apps/${appName}/dist | awk '{print "大小: " \$1}'
-                            else
-                                echo "❌ ${appName}: 构建产物不存在或为空"
-                                exit 1
-                            fi
-                        """
+                        if (appName == 'all') {
+                            bat '''
+                                @echo off
+                                echo 验证所有应用的构建产物...
+                                for %%a in (system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app) do (
+                                    if exist "apps\%%a\dist" (
+                                        dir /b "apps\%%a\dist" >nul 2>&1
+                                        if !errorlevel! equ 0 (
+                                            echo ✅ %%a: 构建产物存在
+                                            for /f "tokens=3" %%b in ('dir /s "apps\%%a\dist" ^| find "File(s)"') do echo    大小: %%b
+                                        ) else (
+                                            echo ❌ %%a: 构建产物为空
+                                            exit /b 1
+                                        )
+                                    ) else (
+                                        echo ❌ %%a: 构建产物不存在
+                                        exit /b 1
+                                    )
+                                )
+                            '''
+                        } else {
+                            bat """
+                                @echo off
+                                if exist "apps\\${appName}\\dist" (
+                                    dir /b "apps\\${appName}\\dist" >nul 2>&1
+                                    if !errorlevel! equ 0 (
+                                        echo ✅ ${appName}: 构建产物验证通过
+                                    ) else (
+                                        echo ❌ ${appName}: 构建产物为空
+                                        exit /b 1
+                                    )
+                                ) else (
+                                    echo ❌ ${appName}: 构建产物不存在
+                                    exit /b 1
+                                )
+                            """
+                        }
                     }
                 }
             }
         }
         
         stage('Deploy') {
+            when {
+                expression { isUnix() }
+            }
             steps {
                 script {
                     echo "🚀 部署到服务器..."
@@ -319,15 +450,36 @@ pipeline {
             }
         }
         
+        stage('Deploy (Windows Skip)') {
+            when {
+                expression { !isUnix() }
+            }
+            steps {
+                script {
+                    echo "⚠️ 部署阶段在 Windows 上跳过"
+                    echo "💡 提示: 部署脚本需要 bash 环境，请在 Linux/Unix 服务器上运行 Jenkins 以执行部署"
+                    echo "📦 构建产物已生成，可以手动部署或使用其他部署工具"
+                }
+            }
+        }
+        
         stage('Post-Deploy Verification') {
             steps {
                 script {
                     echo "🔍 部署后验证..."
                     // 可以添加健康检查
-                    sh '''
-                        echo "部署完成，可以进行人工验证"
-                        echo "或添加自动化健康检查脚本"
-                    '''
+                    if (isUnix()) {
+                        sh '''
+                            echo "部署完成，可以进行人工验证"
+                            echo "或添加自动化健康检查脚本"
+                        '''
+                    } else {
+                        bat '''
+                            @echo off
+                            echo 部署完成，可以进行人工验证
+                            echo 或添加自动化健康检查脚本
+                        '''
+                    }
                 }
             }
         }
