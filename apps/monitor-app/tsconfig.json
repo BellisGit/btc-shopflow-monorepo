@@ -23,6 +23,7 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "../../configs/**/*.ts",
+    "../../packages/shared-core/src/btc/plugins/i18n/locales/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", "../../packages/**/dist", "../../packages/**/dist/**"],
   "references": [{ "path": "./tsconfig.node.json" }]

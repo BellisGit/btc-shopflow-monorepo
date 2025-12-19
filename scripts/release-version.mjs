@@ -17,9 +17,11 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -272,8 +274,22 @@ async function main() {
     }
 
     log(`创建标签 ${tagName}...`, 'yellow');
-    execInteractive(`git tag -a ${tagName} -m "${finalTagMessage}"`);
-    log(`✅ 已创建标签 ${tagName}`, 'green');
+    // 使用临时文件传递 tag message，避免 Windows PowerShell 编码问题
+    const tempFile = join(tmpdir(), `git-tag-message-${randomBytes(8).toString('hex')}.txt`);
+    try {
+      // 将 tag message 写入临时文件（UTF-8 编码，无 BOM）
+      writeFileSync(tempFile, finalTagMessage, { encoding: 'utf-8' });
+      // 使用 -F 参数从文件读取 message，避免 shell 编码问题
+      execInteractive(`git tag -a ${tagName} -F "${tempFile}"`);
+      log(`✅ 已创建标签 ${tagName}`, 'green');
+    } finally {
+      // 清理临时文件
+      try {
+        unlinkSync(tempFile);
+      } catch (e) {
+        // 忽略删除失败
+      }
+    }
 
     // 步骤 8: 合并 release 回 develop
     log('\n📋 步骤 8: 合并回 develop 分支...', 'cyan');

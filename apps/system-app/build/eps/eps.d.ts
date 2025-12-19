@@ -727,29 +727,6 @@ interface subProcess {
       }
       
 
-interface ticket {
-          /**
-           * domainId
-           */
-          domainId?: any;
-        
-          /**
-           * position
-           */
-          position?: any;
-        
-          /**
-           * partName
-           */
-          partName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
 interface data {
           /**
            * 库存代码
@@ -2697,6 +2674,11 @@ interface financeresult {
            * position
            */
           position?: any;
+        
+          /**
+           * checkNo
+           */
+          checkNo?: any;
         
         /**
          * Any key-value pairs

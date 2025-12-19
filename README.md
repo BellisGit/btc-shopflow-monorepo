@@ -378,13 +378,22 @@ pnpm test:ci
 
 ## 📚 文档
 
+### 部署文档
+
+- [Jenkins 配置指南](./docs/JENKINS_SETUP.md) - Jenkins 自动化部署完整配置
+- [Jenkins 快速开始](./jenkins/quick-start.md) - 5 分钟快速配置 Jenkins
+- [Jenkins Credentials 配置](./jenkins/credentials-setup.md) - 凭证配置详细说明
+- [静态部署指南](./docs/STATIC_DEPLOYMENT.md) - 静态文件部署说明
+- [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md) - Kubernetes 部署指南
+- [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md) - GitHub Actions K8s 配置
+
+### 开发文档
+
 - [架构设计文档](./implementation-docs/)
 - [组件文档](./apps/docs-site-app/)
 - [脚本使用指南](./docs/SCRIPTS_USAGE.md)
 - [版本发布指南](./docs/VERSION_RELEASE_GUIDE.md)
 - [部署文档](./apps/docs-site-app/guides/deployment/)
-  - [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
-  - [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
   - [静态部署](./apps/docs-site-app/guides/deployment/static-deployment.md)
   - [子域名代理配置](./apps/docs-site-app/guides/deployment/nginx-subdomain-proxy.md)
 

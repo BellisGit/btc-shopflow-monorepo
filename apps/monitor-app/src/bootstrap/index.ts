@@ -131,7 +131,7 @@ export const createMonitorApp = async (props: QiankunProps = {}): Promise<Monito
   // 使用标准化的 createSubApp，但需要传入 isStandalone 给 setupRouter
   const context = await createSubApp({
     ...subAppOptions,
-    setupRouter: (app: VueApp, router: Router) => setupRouter(app, router, isStandalone),
+    setupRouter: (app: VueApp, router?: Router) => setupRouter(app, router, isStandalone),
   }, props);
 
   return context;

@@ -7,6 +7,7 @@ import type { AppIdentity } from './app-identity.types';
 
 // 手动导入所有应用的 app.ts 文件
 // 由于 import.meta.glob 在跨应用目录时可能无法正常工作，改为手动导入
+// 注意：这些文件可能不在各个应用的 tsconfig.json 的 include 范围内，但运行时可用
 import adminAppIdentity from '../apps/admin-app/src/app';
 import logisticsAppIdentity from '../apps/logistics-app/src/app';
 import qualityAppIdentity from '../apps/quality-app/src/app';
