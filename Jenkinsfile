@@ -133,7 +133,7 @@ pipeline {
         
         stage('Lint & Type Check') {
             when {
-                not { params.SKIP_TESTS }
+                expression { !params.SKIP_TESTS }
             }
             steps {
                 script {
@@ -151,7 +151,7 @@ pipeline {
         
         stage('Test') {
             when {
-                not { params.SKIP_TESTS }
+                expression { !params.SKIP_TESTS }
             }
             steps {
                 script {
