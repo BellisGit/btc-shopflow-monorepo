@@ -106,40 +106,55 @@ function buildControllers(payload: Record<string, any>): ApiControllerNode[] {
     return [];
   }
 
+  // api-docs.json 的 data 是一个对象，key 是控制器的完整类名（className），value 是控制器对象
+  // 需要将对象转换为数组进行处理
   const controllers = Array.isArray(payload) ? payload : Object.values(payload);
+
   return controllers.map((controller: any) => {
-    const simpleName = controller?.simpleName || controller?.className || '';
+    // 从控制器对象中提取信息
+    const className = controller?.className || '';
+    const simpleName = controller?.simpleName || className.split('.').pop() || className;
     const tags: string[] = Array.isArray(controller?.tags) ? controller.tags : [];
-    const tagsText = tags.join(' / ');
+    const tagsText = tags.length > 0 ? tags.join(' / ') : '';
     const apis = Array.isArray(controller?.apis) ? controller.apis : [];
 
+    // 处理每个 API
     const apiRecords: ApiListRecord[] = apis.map((api: any) => {
       const description = api?.description || {};
+      // api-docs.json 中 description 包含 summary 和 description 字段
+      const summary = description?.summary || '';
+      const descriptionText = description?.description || '';
+      // 合并 summary 和 description 作为接口说明
+      const fullDescription = summary && descriptionText
+        ? `${summary}\n${descriptionText}`
+        : (summary || descriptionText || '');
+
       const method = normalizeValue(api?.httpMethods).toUpperCase();
       const paths = normalizeValue(api?.paths);
       const parameters = Array.isArray(api?.parameters) ? api.parameters : [];
 
       return {
         controller: simpleName,
-        className: controller?.className || simpleName,
+        className: className || simpleName,
         tags,
         tagsText,
         methodName: api?.methodName || '',
         httpMethods: method,
         paths,
-        description: description?.value || '',
-        notes: description?.notes || '',
+        description: fullDescription,
+        notes: descriptionText || '', // 使用 description 字段作为备注
         parameters,
       };
     });
 
+    // 显示名称：优先使用 tags，其次使用 simpleName
     const displayName = tagsText || simpleName;
 
     return {
-      id: controller?.className || simpleName,
+      id: className || simpleName,
       label: displayName,
       name: displayName,
-      className: controller?.className || simpleName,
+      className: className || simpleName,
       simpleName,
       tags,
       apis: apiRecords,

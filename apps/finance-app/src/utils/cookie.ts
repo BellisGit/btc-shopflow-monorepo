@@ -53,40 +53,48 @@ export function setCookie(name: string, value: string, days: number = 7, domain?
 
 /**
  * 删除 cookie
- * @param name cookie 名称
- * @param domain cookie 域名，默认为当前域名
  */
-export function deleteCookie(name: string, domain?: string): void {
+export function deleteCookie(
+  name: string,
+  options?: {
+    domain?: string;
+    path?: string;
+  }
+): void {
   if (typeof document === 'undefined') {
     return;
   }
 
-  const domainPart = domain ? `; domain=${domain}` : '';
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domainPart}`;
+  const path = options?.path || '/';
+  const domain = options?.domain;
+
+  let cookieString = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+
+  if (domain) {
+    cookieString += `; Domain=${domain}`;
+  }
+
+  document.cookie = cookieString;
 }
 
 /**
- * 获取 cookie 域名
- * @returns cookie 域名
+ * 获取跨子域名共享的 cookie domain
+ * 在生产环境下返回 .bellis.com.cn，其他环境返回 undefined（不设置 domain）
+ * @returns cookie domain 字符串或 undefined
  */
-export function getCookieDomain(): string {
+export function getCookieDomain(): string | undefined {
   if (typeof window === 'undefined') {
-    return '';
+    return undefined;
   }
 
   const hostname = window.location.hostname;
-  
-  // 如果是 localhost 或 IP 地址，返回空字符串（使用当前域名）
-  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-    return '';
+
+  // 生产环境：设置 domain 为 .bellis.com.cn 以支持跨子域名共享
+  if (hostname.includes('bellis.com.cn')) {
+    return '.bellis.com.cn';
   }
 
-  // 如果是子域名（如 admin.bellis.com.cn），返回主域名（bellis.com.cn）
-  const parts = hostname.split('.');
-  if (parts.length > 2) {
-    return '.' + parts.slice(-2).join('.');
-  }
-
-  return '.' + hostname;
+  // 其他环境（开发、预览等）：不设置 domain，cookie 只在当前域名下有效
+  return undefined;
 }
 

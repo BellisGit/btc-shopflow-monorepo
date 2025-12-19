@@ -310,11 +310,16 @@ const handleExport = async () => {
     // 获取当前选中的域 ID
     const domainId = resolveSelectedDomainId();
 
-    // 构建导出参数（与导入保持一致）
+    // 构建导出参数：将 domainId 放在 keyword 对象内部
     const exportParams = {
-      domainId,
-      keyword: params.keyword || {},
-      ...params,
+      keyword: {
+        ...(params.keyword || {}),
+        domainId,
+      },
+      page: params.page,
+      size: params.size,
+      order: params.order,
+      sort: params.sort,
     };
 
     // 调用后端导出接口，返回 JSON 数据
