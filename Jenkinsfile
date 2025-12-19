@@ -228,62 +228,39 @@ pipeline {
                 script {
                     echo "🔨 构建应用..."
                     def appName = params.APP_NAME
-                    def cleanFlag = params.CLEAN_BUILD ? '--force --no-cache' : ''
                     
                     if (isUnix()) {
                         if (appName == 'all') {
-                            // 构建所有应用
+                            // 构建所有应用并复制到 dist 目录
                             sh '''
-                                echo "构建所有应用..."
-                                # 先构建共享包
-                                pnpm --filter @btc/vite-plugin run build || true
-                                pnpm --filter @btc/shared-utils run build || true
-                                pnpm --filter @btc/shared-core run build || true
-                                pnpm --filter @btc/shared-components run build || true
-                                pnpm --filter @btc/subapp-manifests run build || true
-                                
-                                # 构建所有应用
-                                pnpm build:all
-                                echo "✅ 所有应用构建完成"
+                                echo "构建所有应用并复制到 dist 目录..."
+                                pnpm build-dist:all
+                                echo "✅ 所有应用构建完成，产物在 dist 目录"
                             '''
                         } else {
                             // 构建单个应用
                             sh """
                                 echo "构建应用: ${appName}..."
-                                # 先构建共享包（如果不存在）
-                                pnpm --filter @btc/shared-core run build || true
-                                pnpm --filter @btc/shared-components run build || true
-                                
-                                # 构建指定应用
-                                pnpm --filter ${appName} run build
-                                echo "✅ ${appName} 构建完成"
+                                pnpm build-dist:${appName}
+                                echo "✅ ${appName} 构建完成，产物在 dist/${appName} 目录"
                             """
                         }
                     } else {
                         if (appName == 'all') {
-                            // 构建所有应用
+                            // 构建所有应用并复制到 dist 目录
                             bat '''
                                 @echo off
-                                echo 构建所有应用...
-                                call pnpm --filter @btc/vite-plugin run build || echo.
-                                call pnpm --filter @btc/shared-utils run build || echo.
-                                call pnpm --filter @btc/shared-core run build || echo.
-                                call pnpm --filter @btc/shared-components run build || echo.
-                                call pnpm --filter @btc/subapp-manifests run build || echo.
-                                
-                                call pnpm build:all
-                                echo ✅ 所有应用构建完成
+                                echo 构建所有应用并复制到 dist 目录...
+                                call pnpm build-dist:all
+                                echo ✅ 所有应用构建完成，产物在 dist 目录
                             '''
                         } else {
                             // 构建单个应用
                             bat """
                                 @echo off
                                 echo 构建应用: ${appName}...
-                                call pnpm --filter @btc/shared-core run build || echo.
-                                call pnpm --filter @btc/shared-components run build || echo.
-                                
-                                call pnpm --filter ${appName} run build
-                                echo ✅ ${appName} 构建完成
+                                call pnpm build-dist:${appName}
+                                echo ✅ ${appName} 构建完成，产物在 dist\\${appName} 目录
                             """
                         }
                     }
@@ -300,22 +277,27 @@ pipeline {
                     if (isUnix()) {
                         if (appName == 'all') {
                             sh '''
-                                echo "验证所有应用的构建产物..."
-                                for app in system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app; do
-                                    if [ -d "apps/$app/dist" ] && [ -n "$(ls -A apps/$app/dist 2>/dev/null)" ]; then
-                                        echo "✅ $app: 构建产物存在"
-                                        du -sh apps/$app/dist | awk '{print "  大小: " $1}'
-                                    else
-                                        echo "❌ $app: 构建产物不存在或为空"
-                                        exit 1
-                                    fi
-                                done
+                                echo "验证 dist 目录下的构建产物..."
+                                if [ -d "dist" ] && [ -n "$(ls -A dist 2>/dev/null)" ]; then
+                                    echo "✅ dist 目录存在且不为空"
+                                    echo "应用列表:"
+                                    ls -1 dist/ | while read app; do
+                                        if [ -d "dist/$app" ] && [ -n "$(ls -A dist/$app 2>/dev/null)" ]; then
+                                            echo "  ✅ $app: $(du -sh dist/$app | awk '{print $1}')"
+                                        else
+                                            echo "  ❌ $app: 目录为空"
+                                        fi
+                                    done
+                                else
+                                    echo "❌ dist 目录不存在或为空"
+                                    exit 1
+                                fi
                             '''
                         } else {
                             sh """
-                                if [ -d "apps/${appName}/dist" ] && [ -n "\$(ls -A apps/${appName}/dist 2>/dev/null)" ]; then
+                                if [ -d "dist/${appName}" ] && [ -n "\$(ls -A dist/${appName} 2>/dev/null)" ]; then
                                     echo "✅ ${appName}: 构建产物验证通过"
-                                    du -sh apps/${appName}/dist | awk '{print "大小: " \$1}'
+                                    du -sh dist/${appName} | awk '{print "大小: " \$1}'
                                 else
                                     echo "❌ ${appName}: 构建产物不存在或为空"
                                     exit 1
@@ -326,28 +308,33 @@ pipeline {
                         if (appName == 'all') {
                             bat '''
                                 @echo off
-                                echo 验证所有应用的构建产物...
-                                for %%a in (system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app) do (
-                                    if exist "apps\%%a\dist" (
-                                        dir /b "apps\%%a\dist" >nul 2>&1
-                                        if !errorlevel! equ 0 (
-                                            echo ✅ %%a: 构建产物存在
-                                            for /f "tokens=3" %%b in ('dir /s "apps\%%a\dist" ^| find "File(s)"') do echo    大小: %%b
-                                        ) else (
-                                            echo ❌ %%a: 构建产物为空
-                                            exit /b 1
+                                echo 验证 dist 目录下的构建产物...
+                                if exist "dist" (
+                                    dir /b "dist" >nul 2>&1
+                                    if !errorlevel! equ 0 (
+                                        echo ✅ dist 目录存在且不为空
+                                        echo 应用列表:
+                                        for /d %%a in (dist\*) do (
+                                            if exist "%%a" (
+                                                echo   ✅ %%~na: 存在
+                                            ) else (
+                                                echo   ❌ %%~na: 目录为空
+                                            )
                                         )
                                     ) else (
-                                        echo ❌ %%a: 构建产物不存在
+                                        echo ❌ dist 目录为空
                                         exit /b 1
                                     )
+                                ) else (
+                                    echo ❌ dist 目录不存在
+                                    exit /b 1
                                 )
                             '''
                         } else {
                             bat """
                                 @echo off
-                                if exist "apps\\${appName}\\dist" (
-                                    dir /b "apps\\${appName}\\dist" >nul 2>&1
+                                if exist "dist\\${appName}" (
+                                    dir /b "dist\\${appName}" >nul 2>&1
                                     if !errorlevel! equ 0 (
                                         echo ✅ ${appName}: 构建产物验证通过
                                     ) else (
@@ -366,9 +353,6 @@ pipeline {
         }
         
         stage('Deploy') {
-            when {
-                expression { isUnix() }
-            }
             steps {
                 script {
                     echo "🚀 部署到服务器..."
@@ -380,85 +364,142 @@ pipeline {
                     def serverPort = params.SERVER_PORT
                     def sshKeyPath = params.SSH_KEY_PATH
                     
-                    sh """
-                        echo "🚀 部署配置:"
-                        echo "  服务器: ${serverUser}@${serverHost}:${serverPort}"
-                        echo "  SSH 密钥: ${sshKeyPath}"
-                        echo "  应用: ${appName}"
-                        
-                        # 检查 SSH 密钥是否存在
-                        if [ ! -f "${sshKeyPath}" ]; then
-                            echo "❌ SSH 密钥文件不存在: ${sshKeyPath}"
-                            echo "💡 请确保 SSH 密钥已放置在 Jenkins 服务器上，或修改 SSH_KEY_PATH 参数"
-                            exit 1
-                        fi
-                        
-                        # 设置权限
-                        chmod 600 "${sshKeyPath}" || true
-                        
-                        # 设置环境变量供部署脚本使用
-                        export SERVER_HOST="${serverHost}"
-                        export SERVER_USER="${serverUser}"
-                        export SERVER_PORT="${serverPort}"
-                        export SSH_KEY="${sshKeyPath}"
-                        
-                        # 测试 SSH 连接
-                        echo "测试 SSH 连接..."
-                        if ssh -i "${sshKeyPath}" -p "${serverPort}" \
-                            -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
-                            "${serverUser}@${serverHost}" "echo 'SSH connection successful'" 2>&1; then
-                            echo "✅ SSH 连接成功"
-                        else
-                            echo "❌ SSH 连接失败，请检查："
-                            echo "  1. SSH 密钥路径是否正确: ${sshKeyPath}"
-                            echo "  2. 服务器地址是否正确: ${serverHost}"
-                            echo "  3. 用户名是否正确: ${serverUser}"
-                            echo "  4. 端口是否正确: ${serverPort}"
-                            exit 1
-                        fi
-                    """
-                    
-                    // 执行部署
-                    if (appName == 'all') {
+                    if (isUnix()) {
                         sh """
-                            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                            echo "部署所有应用..."
-                            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                            echo "🚀 部署配置:"
+                            echo "  服务器: ${serverUser}@${serverHost}:${serverPort}"
+                            echo "  SSH 密钥: ${sshKeyPath}"
+                            echo "  应用: ${appName}"
                             
+                            # 检查 SSH 密钥是否存在
+                            if [ ! -f "${sshKeyPath}" ]; then
+                                echo "❌ SSH 密钥文件不存在: ${sshKeyPath}"
+                                echo "💡 请确保 SSH 密钥已放置在 Jenkins 服务器上，或修改 SSH_KEY_PATH 参数"
+                                exit 1
+                            fi
+                            
+                            # 设置权限
+                            chmod 600 "${sshKeyPath}" || true
+                            
+                            # 设置环境变量供部署脚本使用
                             export SERVER_HOST="${serverHost}"
                             export SERVER_USER="${serverUser}"
                             export SERVER_PORT="${serverPort}"
                             export SSH_KEY="${sshKeyPath}"
                             
-                            bash scripts/deploy-static.sh --all
+                            # 测试 SSH 连接
+                            echo "测试 SSH 连接..."
+                            if ssh -i "${sshKeyPath}" -p "${serverPort}" \
+                                -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                                "${serverUser}@${serverHost}" "echo 'SSH connection successful'" 2>&1; then
+                                echo "✅ SSH 连接成功"
+                            else
+                                echo "❌ SSH 连接失败，请检查："
+                                echo "  1. SSH 密钥路径是否正确: ${sshKeyPath}"
+                                echo "  2. 服务器地址是否正确: ${serverHost}"
+                                echo "  3. 用户名是否正确: ${serverUser}"
+                                echo "  4. 端口是否正确: ${serverPort}"
+                                exit 1
+                            fi
                         """
+                        
+                        // 执行部署
+                        if (appName == 'all') {
+                            sh """
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                echo "部署所有应用..."
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                
+                                export SERVER_HOST="${serverHost}"
+                                export SERVER_USER="${serverUser}"
+                                export SERVER_PORT="${serverPort}"
+                                export SSH_KEY="${sshKeyPath}"
+                                
+                                bash scripts/deploy-static.sh --all
+                            """
+                        } else {
+                            sh """
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                echo "部署应用: ${appName}..."
+                                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                                
+                                export SERVER_HOST="${serverHost}"
+                                export SERVER_USER="${serverUser}"
+                                export SERVER_PORT="${serverPort}"
+                                export SSH_KEY="${sshKeyPath}"
+                                
+                                bash scripts/deploy-static.sh --app ${appName}
+                            """
+                        }
                     } else {
-                        sh """
-                            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                            echo "部署应用: ${appName}..."
-                            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                        // Windows 上使用 PowerShell 或 Git Bash
+                        bat """
+                            @echo off
+                            echo 🚀 部署配置:
+                            echo   服务器: ${serverUser}@${serverHost}:${serverPort}
+                            echo   SSH 密钥: ${sshKeyPath}
+                            echo   应用: ${appName}
                             
-                            export SERVER_HOST="${serverHost}"
-                            export SERVER_USER="${serverUser}"
-                            export SERVER_PORT="${serverPort}"
-                            export SSH_KEY="${sshKeyPath}"
+                            REM 检查 SSH 密钥是否存在
+                            if not exist "${sshKeyPath}" (
+                                echo ❌ SSH 密钥文件不存在: ${sshKeyPath}
+                                echo 💡 请确保 SSH 密钥已放置在 Jenkins 服务器上，或修改 SSH_KEY_PATH 参数
+                                exit /b 1
+                            )
                             
-                            bash scripts/deploy-static.sh --app ${appName}
+                            REM 设置环境变量
+                            set SERVER_HOST=${serverHost}
+                            set SERVER_USER=${serverUser}
+                            set SERVER_PORT=${serverPort}
+                            set SSH_KEY=${sshKeyPath}
+                            
+                            REM 测试 SSH 连接（使用 Git Bash 或 OpenSSH）
+                            echo 测试 SSH 连接...
+                            where bash >nul 2>&1
+                            if !errorlevel! equ 0 (
+                                REM 使用 Git Bash
+                                bash -c "ssh -i '${sshKeyPath}' -p ${serverPort} -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${serverUser}@${serverHost} 'echo SSH connection successful'" 2>&1
+                                if !errorlevel! equ 0 (
+                                    echo ✅ SSH 连接成功
+                                ) else (
+                                    echo ❌ SSH 连接失败
+                                    exit /b 1
+                                )
+                            ) else (
+                                REM 使用 OpenSSH（Windows 10+）
+                                ssh -i "${sshKeyPath}" -p ${serverPort} -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${serverUser}@${serverHost} "echo SSH connection successful" 2>&1
+                                if !errorlevel! equ 0 (
+                                    echo ✅ SSH 连接成功
+                                ) else (
+                                    echo ❌ SSH 连接失败，请检查配置
+                                    exit /b 1
+                                )
+                            )
+                            
+                            REM 执行部署（使用 Git Bash 执行部署脚本）
+                            echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                            if "${appName}"=="all" (
+                                echo 部署所有应用...
+                            ) else (
+                                echo 部署应用: ${appName}...
+                            )
+                            echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                            
+                            where bash >nul 2>&1
+                            if !errorlevel! equ 0 (
+                                REM 使用 Git Bash
+                                if "${appName}"=="all" (
+                                    bash -c "export SERVER_HOST='${serverHost}' SERVER_USER='${serverUser}' SERVER_PORT='${serverPort}' SSH_KEY='${sshKeyPath}' && bash scripts/deploy-static.sh --all"
+                                ) else (
+                                    bash -c "export SERVER_HOST='${serverHost}' SERVER_USER='${serverUser}' SERVER_PORT='${serverPort}' SSH_KEY='${sshKeyPath}' && bash scripts/deploy-static.sh --app ${appName}"
+                                )
+                            ) else (
+                                echo ❌ 未找到 bash，无法执行部署脚本
+                                echo 💡 请安装 Git for Windows 或使用 Linux/Unix 服务器运行 Jenkins
+                                exit /b 1
+                            )
                         """
                     }
-                }
-            }
-        }
-        
-        stage('Deploy (Windows Skip)') {
-            when {
-                expression { !isUnix() }
-            }
-            steps {
-                script {
-                    echo "⚠️ 部署阶段在 Windows 上跳过"
-                    echo "💡 提示: 部署脚本需要 bash 环境，请在 Linux/Unix 服务器上运行 Jenkins 以执行部署"
-                    echo "📦 构建产物已生成，可以手动部署或使用其他部署工具"
                 }
             }
         }
