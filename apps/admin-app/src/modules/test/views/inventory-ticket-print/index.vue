@@ -53,7 +53,8 @@ import { ElConfigProvider } from 'element-plus';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
 import { useTicketService } from './composables/useTicketService';
-import { useInventoryTicketPrint } from './composables/useInventoryTicketPrint';
+import { useProductionInventoryTicketPrint } from './composables/useProductionInventoryTicketPrint';
+import { useNonProductionInventoryTicketPrint } from './composables/useNonProductionInventoryTicketPrint';
 import BtcInventoryTicketPrintToolbar from './components/BtcInventoryTicketPrintToolbar.vue';
 import './styles/index.scss';
 
@@ -78,17 +79,46 @@ const {
   domainService,
 } = useTicketService();
 
-// 使用打印相关的 composable
-const {
-  loadTicketData,
-  handlePrint,
-} = useInventoryTicketPrint(
+// 判断是否为生产域
+const isProductionDomain = computed(() => {
+  if (!selectedDomain.value) return false;
+  const name = selectedDomain.value.name || '';
+  return name === '生产域';
+});
+
+// 根据域类型使用不同的打印 composable
+const productionPrint = useProductionInventoryTicketPrint(
   selectedDomain,
   positionFilter,
   ticketList,
   crudRef,
   printContentRef
 );
+
+const nonProductionPrint = useNonProductionInventoryTicketPrint(
+  selectedDomain,
+  positionFilter,
+  ticketList,
+  crudRef,
+  printContentRef
+);
+
+// 根据域类型选择对应的打印方法
+const loadTicketData = () => {
+  if (isProductionDomain.value) {
+    return productionPrint.loadTicketData();
+  } else {
+    return nonProductionPrint.loadTicketData();
+  }
+};
+
+const handlePrint = () => {
+  if (isProductionDomain.value) {
+    return productionPrint.handlePrint();
+  } else {
+    return nonProductionPrint.handlePrint();
+  }
+};
 
 // Element Plus 国际化
 const elLocale = computed(() => {
