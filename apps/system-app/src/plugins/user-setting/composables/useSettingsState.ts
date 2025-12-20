@@ -370,8 +370,11 @@ function createSettingsState() {
       });
     }
 
-    // 使用 nextTick 确保 Vue 响应式更新完成
-    nextTick(() => {
+    // 使用双重 requestAnimationFrame 确保 CSS 变量已更新，然后重新注册 ECharts 主题
+    // 第一帧：等待 DOM 更新和 CSS 变量更新
+    requestAnimationFrame(() => {
+      // 第二帧：确保 CSS 变量已完全更新
+      requestAnimationFrame(() => {
       // 重新注册 ECharts 主题（使用最新的 CSS 变量值）
       registerEChartsThemes();
 
@@ -379,6 +382,7 @@ function createSettingsState() {
       window.dispatchEvent(new CustomEvent('theme-changed', {
         detail: { isDark: targetIsDark, theme }
       }));
+      });
     });
 
     // 同步更新设置状态（如果存在）

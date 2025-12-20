@@ -27,6 +27,12 @@ export interface KLineChartProps extends BaseChartProps, InteractionProps {
   grid?: GridConfig;
   /** 是否显示成交量 */
   showVolume?: boolean;
+  /** 是否显示数据缩放控件 */
+  showDataZoom?: boolean;
+  /** 数据缩放初始开始位置 */
+  dataZoomStart?: number;
+  /** 数据缩放初始结束位置 */
+  dataZoomEnd?: number;
   /** 上涨颜色 */
   upColor?: string;
   /** 下跌颜色 */

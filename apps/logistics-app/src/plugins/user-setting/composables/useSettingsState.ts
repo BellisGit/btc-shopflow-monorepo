@@ -333,9 +333,13 @@ function createSettingsState() {
     const htmlEl = document.documentElement;
     void htmlEl.offsetHeight;
 
-    // 使用 nextTick 确保 Vue 响应式更新完成，然后重新注册 ECharts 主题
-    nextTick(() => {
+    // 使用双重 requestAnimationFrame 确保 CSS 变量已更新，然后重新注册 ECharts 主题
+    // 第一帧：等待 DOM 更新和 CSS 变量更新
+    requestAnimationFrame(() => {
+      // 第二帧：确保 CSS 变量已完全更新
+      requestAnimationFrame(() => {
       registerEChartsThemes();
+      });
     });
 
     // 使用双重 requestAnimationFrame 确保在下一帧恢复过渡效果（参考 art-design-pro）

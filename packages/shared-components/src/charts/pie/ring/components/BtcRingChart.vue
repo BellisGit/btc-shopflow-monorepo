@@ -4,7 +4,6 @@
       v-if="isContainerReady"
       :key="chartThemeKey"
       :option="chartOption"
-      :theme="chartTheme"
       :autoresize="autoresize"
       :style="{ width: '100%', height: '100%' }"
       @ready="handleChartReady"
@@ -40,8 +39,8 @@ const themeColors = getThemeColors();
 const chart = useChartComponent(
   chartContainerRef,
   props,
-  (isDark) => {
-    const { buildOption } = useRingChart(props, isDark, themeColors);
+  (isDark, themeColors, styleHelpers) => {
+    const { buildOption } = useRingChart(props, isDark, themeColors, styleHelpers);
     return buildOption();
   }
 );

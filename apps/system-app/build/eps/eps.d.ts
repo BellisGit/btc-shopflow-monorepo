@@ -2318,19 +2318,19 @@ interface userrole {
           roleName?: any;
         
           /**
-           * username
+           * userId
            */
-          username?: any;
-        
-          /**
-           * roleId
-           */
-          roleId?: any;
+          userId?: any;
         
           /**
            * domainId
            */
           domainId?: any;
+        
+          /**
+           * roleName
+           */
+          roleName?: any;
         
         /**
          * Any key-value pairs

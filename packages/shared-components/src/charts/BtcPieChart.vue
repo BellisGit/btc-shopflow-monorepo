@@ -4,7 +4,6 @@
       v-if="isContainerReady"
       :key="chartThemeKey"
       :option="chartOption"
-      :theme="chartTheme"
       :autoresize="autoresize"
       :style="{ width: '100%', height: '100%' }"
     />
@@ -12,11 +11,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { computed, watch, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
-import { getThemeColors } from './utils/css-var';
-import { registerEChartsThemes } from './utils/theme';
+import { useChart } from './composables/useChart';
+import type { BaseChartProps } from './types/base';
 
 export interface PieChartDataItem {
   name: string;
@@ -50,36 +49,53 @@ const props = withDefaults(defineProps<PieChartProps>(), {
   legendPosition: 'top'
 });
 
+// 创建一个 useChart 实例来获取样式函数
+const chartContainerRefForStyles = ref<HTMLElement | null>(null);
+const chartForStyles = useChart(
+  chartContainerRefForStyles,
+  {} as BaseChartProps,
+  () => ({}) // 临时 buildOption，我们只需要样式函数
+);
+const {
+  getTooltipStyle,
+  getLegendStyle,
+  getTitleStyle
+} = chartForStyles;
+
 const isDark = useDark();
-// 使用 computed 让 themeColors 响应式，每次访问时都重新获取最新的 CSS 变量值
-const themeColors = computed(() => getThemeColors());
-const chartTheme = computed(() => isDark.value ? 'btc-dark' : 'btc-light');
-// 添加 key 确保主题变化时强制重新渲染
+// 添加 key 确保主题变化时强制重新渲染（保留用于初始化）
 const chartThemeKey = ref(0);
 
-const chartOption = reactive({
+// 默认颜色配置
+const defaultColors = [
+  '#409eff', '#67c23a', '#e6a23c', '#f56c6c',
+  '#909399', '#c71585', '#ff6347', '#40e0d0'
+];
+
+function getDefaultColor(index: number): string {
+  return defaultColors[index % defaultColors.length];
+}
+
+// 使用 computed 让 chartOption 响应式，当 isDark 变化时会自动重新计算
+const chartOption = computed(() => {
+  // 使用固定的灰色值，在浅色和深色主题下都能看到（参考 art-design-pro）
+  const textColor = '#999';
+  const bgColor = isDark.value ? '#1d1e1f' : '#ffffff';
+
+  return {
   title: {
-    text: props.title || ''
-    // textStyle.color 由 ECharts 主题处理
+      text: props.title || '',
+      ...getTitleStyle()
   },
-  tooltip: {
-    trigger: 'item',
+    tooltip: props.showTooltip ? {
+      ...getTooltipStyle('item'),
     formatter: '{a} <br/>{b}: {c} ({d}%)',
-    show: props.showTooltip,
-    // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
     confine: true,
     appendToBody: true
-  },
-  legend: {
-    show: props.showLegend,
-    orient: ['left', 'right'].includes(props.legendPosition) ? 'vertical' : 'horizontal',
-    [props.legendPosition]: props.legendPosition === 'bottom' ? '0%' :
-                           props.legendPosition === 'top' ? '0%' :
-                           props.legendPosition === 'left' ? '0%' : '0%'
-    // textStyle.color 由 ECharts 主题处理
-  },
-  toolbox: {
-    show: props.showToolbar,
+    } : undefined,
+    legend: props.showLegend ? getLegendStyle(props.legendPosition) : undefined,
+    toolbox: props.showToolbar ? {
+      show: true,
     right: '10px',
     top: '10px',
     feature: {
@@ -99,8 +115,7 @@ const chartOption = reactive({
         title: '还原'
       }
     }
-    // iconStyle.borderColor 由 ECharts 主题处理
-  },
+    } : undefined,
   series: [
     {
       name: '数据',
@@ -110,108 +125,67 @@ const chartOption = reactive({
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 6,
-        borderColor: computed(() => isDark.value ? themeColors.value.dark.bgColor : themeColors.value.bgColor),
+          borderColor: bgColor,
         borderWidth: 2
       },
       label: {
         show: false,
         position: 'center',
-        color: computed(() => isDark.value ? themeColors.value.dark.textColor : themeColors.value.textColor)
+          color: textColor
       },
       emphasis: {
         label: {
           show: true,
           fontSize: 20,
-          fontWeight: 'bold'
-          // color 由 ECharts 主题处理
+            fontWeight: 'bold',
+            color: textColor
         }
       },
       labelLine: {
-        show: false
-        // lineStyle.color 由 ECharts 主题处理
+          show: false,
+          lineStyle: {
+            color: textColor
+          }
       },
-      data: [] as any[]
-    }
-  ]
-});
-
-// 监听数据变化，更新图表
-watch(() => props.data, (newData) => {
-  chartOption.series[0].data = newData.map((item, index) => ({
+        data: props.data.map((item, index) => ({
     name: item.name,
     value: item.value,
     itemStyle: {
       color: item.color || getDefaultColor(index)
     }
-  }));
-}, { immediate: true });
+        }))
+      }
+    ]
+  };
+});
 
-// 监听标题变化
-watch(() => props.title, (newTitle) => {
-  chartOption.title.text = newTitle || '';
-}, { immediate: true });
-
-// 监听主题变化，重新注册 ECharts 主题并强制重新渲染图表
+// 监听主题变化，更新图表（参考 art-design-pro 的实现方式）
 watch(
   () => isDark.value,
   () => {
-    // 主题切换时，先销毁旧实例
     if (chartContainerRef.value) {
-      try {
-        const chartInstance = getInstanceByDom(chartContainerRef.value);
-        if (chartInstance) {
-          chartInstance.dispose();
-        }
-      } catch (error) {
-        // 忽略错误
-      }
-    }
-    
-    // 使用多重延迟确保 CSS 变量已经更新（useDark 更新 dark 类是异步的）
-    // 1. 等待 DOM 更新
-    nextTick(() => {
-      // 2. 等待浏览器渲染
+      // 使用 requestAnimationFrame 优化主题更新
       requestAnimationFrame(() => {
-        // 3. 等待 CSS 变量更新（给足够的时间让 useDark 更新 dark 类）
-        setTimeout(() => {
-          // 4. 再次等待浏览器重新计算样式
-          requestAnimationFrame(() => {
-            // 5. 重新注册 ECharts 主题（使用最新的 CSS 变量值）
-            registerEChartsThemes();
-            
-            // 6. 再次延迟，确保主题注册完成
-            setTimeout(() => {
-              // 更新 key 强制重新渲染 v-chart 组件
-              chartThemeKey.value++;
-              // 重置容器准备状态，强制重新初始化
-              isContainerReady.value = false;
-              // 延迟后重新检查容器并初始化
-              nextTick(() => {
-                setTimeout(() => {
-                  checkContainerSize();
-                  if (isContainerReady.value) {
-                    // 图表会在 v-chart 重新渲染时自动初始化
-                  }
-                }, 100);
+              if (chartContainerRef.value) {
+                try {
+                  const chartInstance = getInstanceByDom(chartContainerRef.value);
+                  if (chartInstance) {
+              // 获取最新的图表选项（computed 会自动重新计算）
+              const newOption = chartOption.value;
+              // 使用 notMerge: true 完全替换选项，确保颜色配置被正确应用
+              chartInstance.setOption(newOption, {
+                notMerge: true,
+                lazyUpdate: false
               });
-            }, 150);
+                  }
+                } catch (error) {
+            console.error('[BtcPieChart] 更新图表失败:', error);
+          }
+        }
           });
-        }, 200);
-      });
-    });
-  },
-  { flush: 'post' } // 在 DOM 更新后执行
+    }
+  }
 );
-
-// 默认颜色配置
-const defaultColors = [
-  '#409eff', '#67c23a', '#e6a23c', '#f56c6c',
-  '#909399', '#c71585', '#ff6347', '#40e0d0'
-];
-
-function getDefaultColor(index: number): string {
-  return defaultColors[index % defaultColors.length];
-}
 
 // 图表容器引用
 const chartContainerRef = ref<HTMLElement | null>(null);
@@ -265,7 +239,7 @@ onBeforeUnmount(() => {
       // 忽略错误，可能图表已经销毁
     }
   }
-  
+
   // 清理 body 中残留的 tooltip DOM
   const tooltipElements = document.querySelectorAll('.echarts-tooltip');
   tooltipElements.forEach(el => {
@@ -273,7 +247,7 @@ onBeforeUnmount(() => {
       el.parentNode.removeChild(el);
     }
   });
-  
+
   // 清理 body 中残留的 toolbox 相关 DOM（数据视图弹窗等）
   const toolboxElements = document.querySelectorAll('.echarts-toolbox, .echarts-data-view');
   toolboxElements.forEach(el => {

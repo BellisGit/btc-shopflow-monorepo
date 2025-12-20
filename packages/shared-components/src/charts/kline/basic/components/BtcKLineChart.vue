@@ -4,7 +4,6 @@
       v-if="isContainerReady"
       :key="chartThemeKey"
       :option="chartOption"
-      :theme="chartTheme"
       :autoresize="autoresize"
       :style="{ width: '100%', height: '100%' }"
       @ready="handleChartReady"
@@ -33,6 +32,9 @@ const props = withDefaults(defineProps<KLineChartProps>(), {
   showTooltip: true,
   showToolbar: false,
   showVolume: false,
+  showDataZoom: true,
+  dataZoomStart: 0,
+  dataZoomEnd: 100,
   upColor: '#ec0000',
   downColor: '#00da3c'
 });
@@ -43,8 +45,8 @@ const themeColors = getThemeColors();
 const chart = useChartComponent(
   chartContainerRef,
   props,
-  (isDark) => {
-    const { buildOption } = useKLineChart(props, isDark, themeColors);
+  (isDark, themeColors, styleHelpers) => {
+    const { buildOption } = useKLineChart(props, isDark, themeColors, styleHelpers);
     return buildOption();
   }
 );

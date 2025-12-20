@@ -3,37 +3,34 @@ import type { EChartsOption } from 'echarts';
 import type { LineChartProps } from '../../../types/line';
 import { createVerticalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
-// import { getThemeColors } from '../../../utils/css-var'; // 未使用
+import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
 
 /**
  * 折线图 composable
  */
 export function useLineChart(
   props: LineChartProps,
-  _isDark: Ref<boolean>,
-  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  isDark: Ref<boolean>,
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
+  styleHelpers: ChartStyleHelpers
 ) {
   const buildOption = (): EChartsOption => {
+    // 使用固定的灰色值，在浅色和深色主题下都能看到（参考 art-design-pro）
+    const textColor = '#999';
+
     const option: EChartsOption = {
       title: {
-        text: props.title || ''
-        // textStyle.color 由 ECharts 主题处理
+        text: props.title || '',
+        ...styleHelpers.getTitleStyle()
       },
-      tooltip: {
-        trigger: 'axis',
-        show: props.showTooltip ?? true,
-        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
+      tooltip: props.showTooltip ?? true ? {
+        ...styleHelpers.getTooltipStyle('axis'),
         confine: true,
         appendToBody: true
-      },
-      legend: {
-        show: props.showLegend ?? true,
-        top: '0%',
-        left: 'center'
-        // textStyle.color 由 ECharts 主题处理
-      },
-      toolbox: {
-        show: props.showToolbar ?? false,
+      } : undefined,
+      legend: props.showLegend ?? true ? styleHelpers.getLegendStyle('top') : undefined,
+      toolbox: props.showToolbar ?? false ? {
+        show: true,
         right: '10px',
         top: '10px',
         feature: {
@@ -53,8 +50,7 @@ export function useLineChart(
             title: '还原'
           }
         }
-        // iconStyle.borderColor 由 ECharts 主题处理
-      },
+      } : undefined,
       grid: props.grid || {
         left: '3%',
         right: '4%',
@@ -63,8 +59,9 @@ export function useLineChart(
       },
       xAxis: {
         type: 'category',
-        data: props.xAxisData
-        // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
+        data: props.xAxisData,
+        axisLabel: styleHelpers.getAxisLabelStyle(true),
+        ...styleHelpers.getAxisLineStyle(true)
       },
       yAxis: {
         type: 'value',
@@ -74,11 +71,11 @@ export function useLineChart(
         axisTick: {
           show: false
         },
-        // splitLine.lineStyle.color 由 ECharts 主题处理
         axisLabel: {
+          ...styleHelpers.getAxisLabelStyle(true),
           formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
-          // color 由 ECharts 主题处理
-        }
+        },
+        ...styleHelpers.getSplitLineStyle(true)
       },
       series: props.data.map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
@@ -98,6 +95,7 @@ export function useLineChart(
           symbolSize: 6,
           label: {
             show: props.showLabel ?? false,
+            color: textColor,
             position: 'top',
             fontSize: 12
             // color 由 ECharts 主题处理

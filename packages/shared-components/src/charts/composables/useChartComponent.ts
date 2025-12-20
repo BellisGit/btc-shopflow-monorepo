@@ -5,18 +5,37 @@ import { useChart } from './useChart';
 import { getThemeColors } from '../utils/css-var';
 
 /**
+ * 样式辅助函数类型
+ */
+export type ChartStyleHelpers = {
+  getAxisLabelStyle: (show?: boolean, fontSize?: number) => any;
+  getAxisLineStyle: (show?: boolean) => any;
+  getSplitLineStyle: (show?: boolean) => any;
+  getTooltipStyle: (trigger?: 'item' | 'axis', customOptions?: any) => any;
+  getLegendStyle: (position?: 'bottom' | 'top' | 'left' | 'right', customOptions?: any) => any;
+  getTitleStyle: (customOptions?: any) => any;
+};
+
+/**
  * 组件抽象 composable
  * 简化图表组件的开发
  */
 export function useChartComponent(
   containerRef: Ref<HTMLElement | null>,
   props: BaseChartProps,
-  buildOption: (isDark: Ref<boolean>, themeColors: ReturnType<typeof getThemeColors>) => EChartsOption | Ref<EChartsOption> | (() => EChartsOption)
+  buildOption: (
+    isDark: Ref<boolean>,
+    themeColors: ReturnType<typeof getThemeColors>,
+    styleHelpers: ChartStyleHelpers
+  ) => EChartsOption | Ref<EChartsOption> | (() => EChartsOption)
 ) {
-  // 每次构建 option 时都重新获取主题颜色，确保获取最新的 CSS 变量值
-  const chart = useChart(containerRef, props, (isDark) => {
+  // useChart 现在会将样式函数作为第二个参数传递给 buildOption
+  // 我们需要创建一个包装函数来适配新的签名
+  const chart = useChart(containerRef, props, (isDark, styleHelpers) => {
     const themeColors = getThemeColors();
-    const option = buildOption(isDark, themeColors);
+    // buildOption 需要接收 styleHelpers，但 useChartComponent 的 buildOption 签名不同
+    // 我们需要创建一个适配器
+    const option = buildOption(isDark, themeColors, styleHelpers!);
     if (typeof option === 'function') {
       return option();
     }
@@ -24,10 +43,15 @@ export function useChartComponent(
   });
 
   // 计算样式
-  const chartStyle = computed(() => ({
-    height: props.height || '300px',
-    width: props.width || '100%'
-  }));
+  // 在 flex 布局中，需要同时设置 height 和 min-height 以确保高度正确计算
+  const chartStyle = computed(() => {
+    const height = props.height || '300px';
+    return {
+      height: height,
+      minHeight: height, // 在 flex 布局中，min-height 可以确保高度不被压缩
+      width: props.width || '100%'
+    };
+  });
 
   return {
     ...chart,
