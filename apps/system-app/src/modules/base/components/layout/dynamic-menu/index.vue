@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-menu
     :key="menuKey"
     ref="menuRef"
@@ -157,13 +157,13 @@ const menuThemeClass = computed(() => {
   if (isDark?.value === true) {
     return 'el-menu-dark';
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的类名
   const theme = menuThemeType?.value;
   if (!theme) {
     return 'el-menu-design';
   }
-  
+
   // 直接比较枚举值，确保只返回一个类名
   switch (theme) {
     case MenuThemeEnum.DARK:
@@ -179,7 +179,11 @@ const menuThemeClass = computed(() => {
 // 菜单主题配置 - 类似 art-design-pro 的 getMenuTheme
 const menuThemeConfig = computed(() => {
   // 深色系统主题下，菜单背景必须和内容区域一致（都使用 var(--el-bg-color)）
-  if (isDark?.value === true) {
+  // 关键：同时检查 isDark 和 menuThemeType，确保在主题切换时能正确响应
+  const isSystemDark = isDark?.value === true;
+  const isMenuDark = menuThemeType?.value === MenuThemeEnum.DARK;
+
+  if (isSystemDark || isMenuDark) {
     // 深色系统主题下，菜单使用与内容区域一致的深色背景
     return {
       background: 'var(--el-bg-color)',
@@ -187,11 +191,11 @@ const menuThemeConfig = computed(() => {
       textActiveColor: '#FFFFFF',
     };
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
   const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
-  
+
   if (themeConfig) {
     return {
       background: themeConfig.background,
@@ -199,7 +203,7 @@ const menuThemeConfig = computed(() => {
       textActiveColor: themeConfig.textActiveColor,
     };
   }
-  
+
   // 默认配置
   return {
     background: '#FFFFFF',

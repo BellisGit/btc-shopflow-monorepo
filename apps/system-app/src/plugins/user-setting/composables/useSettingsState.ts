@@ -229,11 +229,14 @@ function createSettingsState() {
   // 标记是否已初始化
   let settingsApplied = false;
 
-  // 在首次访问时应用初始设置（延迟执行，避免在模块加载时立即执行）
+  // 在首次访问时应用初始设置
+  // 关键：立即应用系统主题，避免水合问题（在 Vue 组件渲染前就应用正确的主题类）
   const ensureInitialSettingsApplied = () => {
     if (!settingsApplied && typeof window !== 'undefined' && typeof document !== 'undefined') {
       settingsApplied = true;
-      // 使用 nextTick 确保在 Vue 应用初始化之后执行
+      // 立即应用系统主题，确保在 Vue 组件渲染前就应用正确的主题类
+      applySystemTheme();
+      // 其他设置可以在 nextTick 中应用
       nextTick(() => {
         applyInitialSettings();
       });
@@ -348,40 +351,31 @@ function createSettingsState() {
       return;
     }
 
-    // 设置面板切换主题不需要动画，直接切换（参考 art-design-pro）
+    // 设置面板切换主题不需要动画，直接切换（参考 cool-admin）
     disableTransitions();
 
-    // 使用与 toggleDark 相同的逻辑：同步更新 isDark 状态
+    // 关键：只更新 isDark.value，让 useDark 自动管理 HTML class
+    // 然后调用统一的 setTheme 函数（完全按照 cool-admin 的方式）
     themePlugin.isDark.value = targetIsDark;
 
-    // 参考 art-design-pro 的实现：直接设置 html 元素的 class 属性
-    // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
-    const htmlEl = document.getElementsByTagName('html')[0];
-    const className = targetIsDark ? 'dark' : '';
-    htmlEl.setAttribute('class', className);
-
-    // 同步更新主题颜色 CSS 变量（必须在设置 dark 类之后）
-    // 这会让 Element Plus 的 CSS 变量立即更新
-    if (themePlugin.setThemeColor && themePlugin.currentTheme?.value) {
-      themePlugin.setThemeColor(
-        themePlugin.currentTheme.value.color,
-        targetIsDark
-      );
+    if (themePlugin.setTheme && themePlugin.currentTheme?.value) {
+      themePlugin.setTheme({
+        color: themePlugin.currentTheme.value.color,
+        dark: targetIsDark
+      });
+    } else {
+      console.warn('[useSettingsState] 无法更新主题', {
+        hasSetTheme: !!themePlugin.setTheme,
+        hasCurrentTheme: !!themePlugin.currentTheme?.value
+      });
     }
-
-    // 强制浏览器立即重新计算样式，确保 CSS 变量和选择器立即生效
-    // 访问 offsetHeight 会触发浏览器重新计算布局和样式
-    void htmlEl.offsetHeight;
 
     // 使用 nextTick 确保 Vue 响应式更新完成
     nextTick(() => {
-      // 再次强制样式重新计算，确保所有 CSS 变量和选择器都已更新
-      void htmlEl.offsetHeight;
-
       // 重新注册 ECharts 主题（使用最新的 CSS 变量值）
       registerEChartsThemes();
 
-      // 触发自定义事件，通知组件强制更新
+      // 触发自定义事件，通知组件更新
       window.dispatchEvent(new CustomEvent('theme-changed', {
         detail: { isDark: targetIsDark, theme }
       }));

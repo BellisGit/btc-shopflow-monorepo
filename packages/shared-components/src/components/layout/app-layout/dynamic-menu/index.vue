@@ -26,9 +26,9 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, useThemePlugin } from '@btc/shared-core';
 import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
 import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
 import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
@@ -49,8 +49,12 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { currentApp } = useCurrentApp();
-const { uniqueOpened, menuThemeType, isDark } = useSettingsState();
+const { uniqueOpened, menuThemeType } = useSettingsState();
 const { menuStyleList } = useSettingsConfig();
+// 关键：从 useThemePlugin 获取 isDark，直接响应主题切换按钮的变化
+// 这样可以避免通过 systemThemeType 间接判断导致的时序问题
+const theme = useThemePlugin();
+const isDark = theme.isDark;
 
 // 关键：Element Plus 的 default-active 在部分情况下不会响应后续变更
 // 刷新/直达时，优先用 location.pathname 作为初始值，并通过 key 包含 activeMenu 强制重建
@@ -555,7 +559,11 @@ const menuThemeClass = computed(() => {
 // 菜单主题配置 - 类似 art-design-pro 的 getMenuTheme
 const menuThemeConfig = computed(() => {
   // 深色系统主题下，菜单背景必须和内容区域一致（都使用 var(--el-bg-color)）
-  if (isDark?.value === true) {
+  // 关键：同时检查 isDark 和 menuThemeType，确保在主题切换时能正确响应
+  const isSystemDark = isDark?.value === true;
+  const isMenuDark = menuThemeType?.value === MenuThemeEnum.DARK;
+
+  if (isSystemDark || isMenuDark) {
     // 深色系统主题下，菜单使用与内容区域一致的深色背景
     return {
       background: 'var(--el-bg-color)',
@@ -565,8 +573,8 @@ const menuThemeConfig = computed(() => {
   }
 
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
-  const themeConfig = menuStyleList.value.find(item => item.theme === theme);
+  const menuTheme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  const themeConfig = menuStyleList.value.find(item => item.theme === menuTheme);
 
   if (themeConfig) {
     return {
@@ -589,6 +597,51 @@ watch(
   () => [menuThemeType?.value, isDark?.value],
   () => {
     menuKey.value++;
+  }
+);
+
+// 强制更新菜单 CSS 变量的辅助函数
+const updateMenuCSSVariables = (newConfig: typeof menuThemeConfig.value) => {
+  if (!menuRef.value) return;
+
+  const menuEl = menuRef.value.$el as HTMLElement;
+  if (!menuEl) return;
+
+  // 关键：使用双重 requestAnimationFrame 确保在浏览器渲染之后设置
+  // 这样可以确保在全局 CSS 规则应用之后再设置内联样式
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 强制更新 Element Plus 的 CSS 变量
+      // 注意：CSS 变量不支持 !important，但内联样式的优先级通常高于外部样式表
+      // 通过延迟设置确保在全局样式之后应用
+      menuEl.style.setProperty('--el-menu-text-color', newConfig.textColor);
+      menuEl.style.setProperty('--el-menu-active-text-color', newConfig.textActiveColor);
+      menuEl.style.setProperty('--el-menu-hover-text-color', newConfig.textColor);
+
+    });
+  });
+};
+
+// 监听 menuThemeConfig 变化，确保 Element Plus 的 CSS 变量立即更新
+watch(
+  () => menuThemeConfig.value,
+  (newConfig) => {
+    // 使用 nextTick 确保 DOM 更新完成后再强制更新 CSS 变量
+    nextTick(() => {
+      updateMenuCSSVariables(newConfig);
+    });
+  },
+  { immediate: true, deep: true }
+);
+
+// 监听 HTML dark 类变化，确保在主题切换时重新设置 CSS 变量
+// 因为全局 CSS 规则可能在主题切换后重新应用
+watch(
+  () => document.documentElement.classList.contains('dark'),
+  () => {
+    nextTick(() => {
+      updateMenuCSSVariables(menuThemeConfig.value);
+    });
   }
 );
 

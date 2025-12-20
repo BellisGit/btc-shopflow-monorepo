@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <!-- 偏好设置按钮 -->
   <BtcIconButton
     :config="{
@@ -295,19 +295,37 @@ function handleColorPickerHide() {
 }
 
 function handleDarkToggle(event?: MouseEvent) {
+  console.log('[ThemeSwitcher] handleDarkToggle 被调用', {
+    hasEvent: !!event,
+    currentIsDark: theme?.isDark?.value,
+    timestamp: new Date().toISOString()
+  });
+
   if (!event) {
     // 如果没有事件，直接调用（不带动画）
     if (theme?.toggleDark) {
+      console.log('[ThemeSwitcher] 无事件，直接调用 toggleDark');
       theme.toggleDark();
     }
     return;
   }
-  
+
   if (!theme || !theme.toggleDark) {
+    console.warn('[ThemeSwitcher] theme 或 toggleDark 不存在', { theme: !!theme, toggleDark: !!theme?.toggleDark });
     return;
   }
-  
+
+  console.log('[ThemeSwitcher] 调用 theme.toggleDark(event)');
   theme.toggleDark(event);
+
+  // 延迟检查状态变化
+  setTimeout(() => {
+    console.log('[ThemeSwitcher] toggleDark 执行后状态', {
+      isDark: theme?.isDark?.value,
+      htmlHasDark: document.documentElement.classList.contains('dark'),
+      timestamp: new Date().toISOString()
+    });
+  }, 100);
 }
 </script>
 

@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
 import { useI18n, normalizePageResponse } from '@btc/shared-core';
 import { formatTableNumber } from '@btc/shared-utils';
 import { BtcSvg, BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
@@ -234,11 +234,42 @@ const handleBeforeRefresh = (params: Record<string, unknown>) => {
 // 盘点选择处理
 const onCheckSelect = (check: any) => {
   selectedCheck.value = check;
-  // 刷新右侧表格
-  if (crudRef.value) {
-    crudRef.value.refresh();
-  }
+  // 刷新右侧表格 - 使用 nextTick 确保 crudRef 已准备好
+  nextTick(() => {
+    if (crudRef.value && !isUnmounted) {
+      crudRef.value.refresh();
+    } else if (!isUnmounted) {
+      // 如果 nextTick 后还是没有引用，再延迟一点
+      setTimeout(() => {
+        if (crudRef.value && !isUnmounted) {
+          crudRef.value.refresh();
+        }
+      }, 100);
+    }
+  });
 };
+
+// 页面挂载时，检查是否有选中的项，如果有则自动加载数据
+onMounted(() => {
+  // 延迟检查，确保 BtcViewGroup 已经加载完成并可能已经选中了第一项
+  nextTick(() => {
+    if (isUnmounted) return;
+
+    // 检查是否有选中的盘点项
+    const selectedItem = tableGroupRef.value?.selectedItem;
+    if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo && crudRef.value) {
+      // 如果有选中的项，自动加载数据
+      crudRef.value.refresh();
+    } else if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+      // 如果选中了项但 crudRef 还没准备好，再延迟一点
+      setTimeout(() => {
+        if (crudRef.value && !isUnmounted) {
+          crudRef.value.refresh();
+        }
+      }, 200);
+    }
+  });
+});
 
 // 导出处理函数
 const handleExport = async () => {

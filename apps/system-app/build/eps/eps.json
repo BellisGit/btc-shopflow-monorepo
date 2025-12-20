@@ -19,21 +19,6 @@
 				}
 			},
 			{
-				"name": "513",
-				"method": "GET",
-				"path": "/513",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "500",
 				"method": "GET",
 				"path": "/500",
@@ -43,51 +28,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "操作失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "514",
-				"method": "GET",
-				"path": "/514",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端id失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "501",
-				"method": "GET",
-				"path": "/501",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "系统繁忙，请稍候再试",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "512",
-				"method": "GET",
-				"path": "/512",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "keycloak客户端地址错误",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -109,75 +49,15 @@
 				}
 			},
 			{
-				"name": "524",
+				"name": "515",
 				"method": "GET",
-				"path": "/524",
+				"path": "/515",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "账号已存在",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "520",
-				"method": "GET",
-				"path": "/520",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "523",
-				"method": "GET",
-				"path": "/523",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "数据错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "521",
-				"method": "GET",
-				"path": "/521",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "初始密码错误",
+				"summary": "获取客户端密钥失败",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -199,6 +79,81 @@
 				}
 			},
 			{
+				"name": "501",
+				"method": "GET",
+				"path": "/501",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "系统繁忙，请稍候再试",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "518",
+				"method": "GET",
+				"path": "/518",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "513",
+				"method": "GET",
+				"path": "/513",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取领域失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "512",
+				"method": "GET",
+				"path": "/512",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "keycloak客户端地址错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "514",
+				"method": "GET",
+				"path": "/514",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端id失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "517",
 				"method": "GET",
 				"path": "/517",
@@ -214,15 +169,45 @@
 				}
 			},
 			{
-				"name": "515",
+				"name": "524",
 				"method": "GET",
-				"path": "/515",
+				"path": "/524",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "获取客户端密钥失败",
+				"summary": "账号已存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "520",
+				"method": "GET",
+				"path": "/520",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "没有该工号",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "521",
+				"method": "GET",
+				"path": "/521",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "初始密码错误",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -244,15 +229,15 @@
 				}
 			},
 			{
-				"name": "527",
+				"name": "523",
 				"method": "GET",
-				"path": "/527",
+				"path": "/523",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "手机号不存在",
+				"summary": "数据错误",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -274,21 +259,6 @@
 				}
 			},
 			{
-				"name": "528",
-				"method": "GET",
-				"path": "/528",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "验证码已过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "529",
 				"method": "GET",
 				"path": "/529",
@@ -298,6 +268,36 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "邮箱不存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "527",
+				"method": "GET",
+				"path": "/527",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "手机号不存在",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "528",
+				"method": "GET",
+				"path": "/528",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "验证码已过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -923,58 +923,6 @@
 		"name": "bom",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:create",
-				"summary": "新增",
-				"tag": "SysBtcBomController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "update",
-				"method": "PUT",
-				"path": "/update",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:update",
-				"summary": "根据ID更新",
-				"tag": "SysBtcBomController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
@@ -984,6 +932,32 @@
 				"auth": "login",
 				"permission": "system.base:sys_btc_bom:create",
 				"summary": "分页查询",
+				"tag": "SysBtcBomController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_bom:export",
+				"summary": "导出bom表",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -1027,15 +1001,41 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "add",
 				"method": "POST",
-				"path": "/export",
+				"path": "/add",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "CREATE",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_bom:export",
-				"summary": "导出bom表",
+				"permission": "system.base:sys_btc_bom:create",
+				"summary": "新增",
+				"tag": "SysBtcBomController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "PUT",
+				"path": "/update",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_bom:update",
+				"summary": "根据ID更新",
 				"tag": "SysBtcBomController",
 				"dts": {
 					"parameters": [
@@ -1275,58 +1275,6 @@
 		"name": "data",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_data:create",
-				"summary": "新增",
-				"tag": "SysBtcDataController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "update",
-				"method": "PUT",
-				"path": "/update",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "system.base:sys_btc_data:update",
-				"summary": "根据ID更新",
-				"tag": "SysBtcDataController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
@@ -1336,6 +1284,32 @@
 				"auth": "login",
 				"permission": "system.base:sys_btc_data:create",
 				"summary": "分页查询",
+				"tag": "SysBtcDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "export",
+				"method": "POST",
+				"path": "/export",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "EXPORT",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_data:export",
+				"summary": "导出数据表",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1379,15 +1353,41 @@
 				}
 			},
 			{
-				"name": "export",
+				"name": "add",
 				"method": "POST",
-				"path": "/export",
+				"path": "/add",
 				"module": "system.base",
 				"ignoreToken": false,
-				"action": "EXPORT",
+				"action": "CREATE",
 				"auth": "permission",
-				"permission": "system.base:sys_btc_data:export",
-				"summary": "导出数据表",
+				"permission": "system.base:sys_btc_data:create",
+				"summary": "新增",
+				"tag": "SysBtcDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "PUT",
+				"path": "/update",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "system.base:sys_btc_data:update",
+				"summary": "根据ID更新",
 				"tag": "SysBtcDataController",
 				"dts": {
 					"parameters": [
@@ -1825,6 +1825,32 @@
 		"name": "data-source",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "system.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "system.base:sys_data_source:create",
+				"summary": "分页查询",
+				"tag": "SysDataSourceController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "update",
 				"method": "PUT",
 				"path": "/update",
@@ -1860,32 +1886,6 @@
 				"auth": "permission",
 				"permission": "system.base:sys_data_source:export",
 				"summary": "导出数据源",
-				"tag": "SysDataSourceController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "system.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "system.base:sys_data_source:create",
-				"summary": "分页查询",
 				"tag": "SysDataSourceController",
 				"dts": {
 					"parameters": [
@@ -2364,56 +2364,15 @@
 				}
 			},
 			{
-				"name": "pull",
-				"method": "GET",
-				"path": "/pull",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "logistics.warehouse:sys_check_base:read",
-				"summary": "拉取syspro数据",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "start",
+				"name": "recover",
 				"method": "POST",
-				"path": "/start",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "START",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:start",
-				"summary": "开始盘点",
-				"tag": "SysCheckBaseController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
+				"path": "/recover",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "新增盘点基础表",
+				"summary": "继续盘点",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2457,41 +2416,30 @@
 				}
 			},
 			{
-				"name": "update",
-				"method": "POST",
-				"path": "/update",
+				"name": "pull",
+				"method": "GET",
+				"path": "/pull",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "编辑盘点基础表",
+				"action": "READ",
+				"auth": "login",
+				"permission": "logistics.warehouse:sys_check_base:read",
+				"summary": "拉取syspro数据",
 				"tag": "SysCheckBaseController",
 				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
+					"parameters": []
 				}
 			},
 			{
-				"name": "recover",
+				"name": "start",
 				"method": "POST",
-				"path": "/recover",
+				"path": "/start",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
-				"action": "CREATE",
+				"action": "START",
 				"auth": "permission",
-				"permission": "logistics.warehouse:sys_check_base:create",
-				"summary": "继续盘点",
+				"permission": "logistics.warehouse:sys_check_base:start",
+				"summary": "开始盘点",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2518,6 +2466,58 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_base:create",
 				"summary": "删除盘点基础表",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "编辑盘点基础表",
+				"tag": "SysCheckBaseController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_check_base:create",
+				"summary": "新增盘点基础表",
 				"tag": "SysCheckBaseController",
 				"dts": {
 					"parameters": [
@@ -2787,15 +2787,15 @@
 		"name": "diff",
 		"api": [
 			{
-				"name": "page",
+				"name": "update",
 				"method": "POST",
-				"path": "/page",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "login",
+				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "分页接口",
+				"summary": "编辑盘点差异记录",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
@@ -2839,15 +2839,15 @@
 				}
 			},
 			{
-				"name": "update",
+				"name": "page",
 				"method": "POST",
-				"path": "/update",
+				"path": "/page",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "permission",
+				"auth": "login",
 				"permission": "logistics.warehouse:sys_check_diff:create",
-				"summary": "编辑盘点差异记录",
+				"summary": "分页接口",
 				"tag": "SysCheckDiffController",
 				"dts": {
 					"parameters": [
@@ -3119,15 +3119,15 @@
 				}
 			},
 			{
-				"name": "add",
+				"name": "update",
 				"method": "POST",
-				"path": "/add",
+				"path": "/update",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_sub_process:create",
-				"summary": "insertSubProcess",
+				"summary": "editSubProcess",
 				"tag": "SysCheckSubProcessController",
 				"dts": {
 					"parameters": [
@@ -3145,15 +3145,15 @@
 				}
 			},
 			{
-				"name": "update",
+				"name": "add",
 				"method": "POST",
-				"path": "/update",
+				"path": "/add",
 				"module": "logistics.warehouse",
 				"ignoreToken": false,
 				"action": "CREATE",
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_check_sub_process:create",
-				"summary": "editSubProcess",
+				"summary": "insertSubProcess",
 				"tag": "SysCheckSubProcessController",
 				"dts": {
 					"parameters": [
@@ -3347,32 +3347,6 @@
 				}
 			},
 			{
-				"name": "update",
-				"method": "POST",
-				"path": "/update",
-				"module": "logistics.warehouse",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "logistics.warehouse:sys_ticket:create",
-				"summary": "盘点票编辑",
-				"tag": "SysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "import",
 				"method": "POST",
 				"path": "/import",
@@ -3408,6 +3382,32 @@
 				"auth": "permission",
 				"permission": "logistics.warehouse:sys_ticket:export",
 				"summary": "盘点票导出",
+				"tag": "SysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "update",
+				"method": "POST",
+				"path": "/update",
+				"module": "logistics.warehouse",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "logistics.warehouse:sys_ticket:create",
+				"summary": "盘点票编辑",
 				"tag": "SysCheckTicketController",
 				"dts": {
 					"parameters": [
@@ -4044,32 +4044,6 @@
 		"name": "checkTicket",
 		"api": [
 			{
-				"name": "print",
-				"method": "POST",
-				"path": "/print",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_check_ticket:create",
-				"summary": "savePrint",
-				"tag": "BaseSysCheckTicketController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "info",
 				"method": "POST",
 				"path": "/info",
@@ -4088,6 +4062,32 @@
 							"required": true,
 							"schema": {
 								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "print",
+				"method": "POST",
+				"path": "/print",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_check_ticket:create",
+				"summary": "savePrint",
+				"tag": "BaseSysCheckTicketController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -4115,6 +4115,32 @@
 		"prefix": "/api/system/base/profile",
 		"name": "profile",
 		"api": [
+			{
+				"name": "password",
+				"method": "PUT",
+				"path": "/update/password",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "admin.base:sys_user_profile:update",
+				"summary": "修改初始密码",
+				"tag": "BaseUserController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
 			{
 				"name": "update",
 				"method": "POST",
@@ -4177,32 +4203,6 @@
 				"auth": "permission",
 				"permission": "admin.base:sys_user_profile:create",
 				"summary": "获取邮箱或手机号的脱敏数据",
-				"tag": "BaseUserController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "password",
-				"method": "PUT",
-				"path": "/update/password",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.base:sys_user_profile:update",
-				"summary": "修改初始密码",
 				"tag": "BaseUserController",
 				"dts": {
 					"parameters": [
@@ -4365,6 +4365,32 @@
 		"name": "email",
 		"api": [
 			{
+				"name": "send",
+				"method": "POST",
+				"path": "/send",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:unknown:create",
+				"summary": "发送邮箱验证码",
+				"tag": "EmailController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "update",
 				"method": "PUT",
 				"path": "/update",
@@ -4441,32 +4467,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "send",
-				"method": "POST",
-				"path": "/send",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:unknown:create",
-				"summary": "发送邮箱验证码",
-				"tag": "EmailController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
 			}
 		],
 		"columns": [],
@@ -4512,6 +4512,32 @@
 		"prefix": "/api/system/base/phone",
 		"name": "phone",
 		"api": [
+			{
+				"name": "send",
+				"method": "POST",
+				"path": "/send",
+				"module": "admin.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.base:unknown:create",
+				"summary": "发送手机号验证码",
+				"tag": "PhoneController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
 			{
 				"name": "update",
 				"method": "PUT",
@@ -4574,32 +4600,6 @@
 				"auth": "permission",
 				"permission": "admin.base:unknown:create",
 				"summary": "校验邮箱或者手机号验证码",
-				"tag": "PhoneController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "send",
-				"method": "POST",
-				"path": "/send",
-				"module": "admin.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.base:unknown:create",
-				"summary": "发送手机号验证码",
 				"tag": "PhoneController",
 				"dts": {
 					"parameters": [
@@ -5020,6 +5020,32 @@
 		"name": "config",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.log",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.log:sys_log_config:create",
+				"summary": "分页查询",
+				"tag": "SysLogConfigController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -5084,32 +5110,6 @@
 				"tag": "SysLogConfigController",
 				"dts": {
 					"parameters": []
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.log",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.log:sys_log_config:create",
-				"summary": "分页查询",
-				"tag": "SysLogConfigController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
 				}
 			}
 		],
@@ -5521,32 +5521,6 @@
 		"name": "request",
 		"api": [
 			{
-				"name": "update",
-				"method": "POST",
-				"path": "/update",
-				"module": "admin.log",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.log:request_log:create",
-				"summary": "保存请求日志",
-				"tag": "SysRequestLogController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
@@ -5570,6 +5544,21 @@
 							}
 						}
 					]
+				}
+			},
+			{
+				"name": "getkep",
+				"method": "POST",
+				"path": "/getkep",
+				"module": "admin.log",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.log:request_log:create",
+				"summary": "获取日志配置",
+				"tag": "SysRequestLogController",
+				"dts": {
+					"parameters": []
 				}
 			},
 			{
@@ -5599,18 +5588,29 @@
 				}
 			},
 			{
-				"name": "getkep",
+				"name": "update",
 				"method": "POST",
-				"path": "/getkep",
+				"path": "/update",
 				"module": "admin.log",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "login",
+				"auth": "permission",
 				"permission": "admin.log:request_log:create",
-				"summary": "获取日志配置",
+				"summary": "保存请求日志",
 				"tag": "SysRequestLogController",
 				"dts": {
-					"parameters": []
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
 				}
 			}
 		],
@@ -5725,6 +5725,32 @@
 		"name": "action",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:action:create",
+				"summary": "分页查询",
+				"tag": "SysActionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -5819,32 +5845,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:action:create",
-				"summary": "分页查询",
-				"tag": "SysActionController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -6293,6 +6293,32 @@
 		"name": "domain",
 		"api": [
 			{
+				"name": "batch",
+				"method": "POST",
+				"path": "/delete/batch",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:domain:create",
+				"summary": "批量删除",
+				"tag": "SysDomainController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -6412,24 +6438,24 @@
 				}
 			},
 			{
-				"name": "batch",
+				"name": "page",
 				"method": "POST",
-				"path": "/delete/batch",
+				"path": "/page",
 				"module": "admin.iam",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "permission",
+				"auth": "login",
 				"permission": "admin.iam:domain:create",
-				"summary": "批量删除",
+				"summary": "分页查询",
 				"tag": "SysDomainController",
 				"dts": {
 					"parameters": [
 						{
 							"description": "arg0",
 							"name": "body:arg0",
-							"required": true,
+							"required": false,
 							"schema": {
-								"type": "array",
+								"type": "object",
 								"format": null,
 								"items": null
 							}
@@ -6480,32 +6506,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:domain:create",
-				"summary": "分页查询",
-				"tag": "SysDomainController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -6653,6 +6653,32 @@
 				}
 			},
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:menu:create",
+				"summary": "分页查询",
+				"tag": "SysMenuController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -6747,32 +6773,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:menu:create",
-				"summary": "分页查询",
-				"tag": "SysMenuController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -6994,58 +6994,6 @@
 		"name": "module",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:module:create",
-				"summary": "异步新增",
-				"tag": "SysModuleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:module:create",
-				"summary": "异步新增",
-				"tag": "SysModuleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "batch",
 				"method": "POST",
 				"path": "/delete/batch",
@@ -7064,6 +7012,84 @@
 							"required": true,
 							"schema": {
 								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:module:create",
+				"summary": "异步新增",
+				"tag": "SysModuleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:module:create",
+				"summary": "异步新增",
+				"tag": "SysModuleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:module:create",
+				"summary": "分页查询",
+				"tag": "SysModuleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
 								"format": null,
 								"items": null
 							}
@@ -7140,32 +7166,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:module:create",
-				"summary": "分页查询",
-				"tag": "SysModuleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -7333,6 +7333,32 @@
 				}
 			},
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:permission:create",
+				"summary": "分页查询",
+				"tag": "SysPermissionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -7427,32 +7453,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:permission:create",
-				"summary": "分页查询",
-				"tag": "SysPermissionController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -7604,6 +7604,32 @@
 		"name": "plugin",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:plugin:create",
+				"summary": "分页查询",
+				"tag": "SysPluginController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -7698,32 +7724,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:plugin:create",
-				"summary": "分页查询",
-				"tag": "SysPluginController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -7961,6 +7961,32 @@
 				}
 			},
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:resource:create",
+				"summary": "分页查询",
+				"tag": "SysResourceController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -8055,32 +8081,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:resource:create",
-				"summary": "分页查询",
-				"tag": "SysResourceController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -8650,6 +8650,32 @@
 		"name": "role-permission",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:unknown:create",
+				"summary": "分页查询",
+				"tag": "SysRolePermissionController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -8752,32 +8778,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:unknown:create",
-				"summary": "分页查询",
-				"tag": "SysRolePermissionController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
 			}
 		],
 		"columns": [
@@ -8861,58 +8861,6 @@
 		"name": "tenant",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
-				"summary": "异步新增租户",
-				"tag": "SysTenantController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:tenant:create",
-				"summary": "异步新增租户",
-				"tag": "SysTenantController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "batch",
 				"method": "POST",
 				"path": "/delete/batch",
@@ -8955,6 +8903,84 @@
 							"description": "arg0",
 							"name": "body:arg0",
 							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:tenant:create",
+				"summary": "异步新增租户",
+				"tag": "SysTenantController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "add",
+				"method": "POST",
+				"path": "/add",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:tenant:create",
+				"summary": "异步新增租户",
+				"tag": "SysTenantController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.iam:tenant:create",
+				"summary": "分页查询",
+				"tag": "SysTenantController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -9033,32 +9059,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.iam:tenant:create",
-				"summary": "分页查询",
-				"tag": "SysTenantController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -9180,6 +9180,58 @@
 		"name": "user",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:user:create",
+				"summary": "分页查询",
+				"tag": "SysUserController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "batch",
+				"method": "POST",
+				"path": "/delete/batch",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:user:create",
+				"summary": "批量删除",
+				"tag": "SysUserController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "update",
 				"method": "POST",
 				"path": "/update",
@@ -9276,58 +9328,6 @@
 							"required": true,
 							"schema": {
 								"type": "string",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:user:create",
-				"summary": "分页查询",
-				"tag": "SysUserController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "batch",
-				"method": "POST",
-				"path": "/delete/batch",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:user:create",
-				"summary": "批量删除",
-				"tag": "SysUserController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -9540,6 +9540,84 @@
 		"name": "user-role",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:sys_user_role:create",
+				"summary": "查询用户角色信息",
+				"tag": "SysUserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "batchUnbind",
+				"method": "POST",
+				"path": "/batchUnbind",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:sys_user_role:create",
+				"summary": "批量解绑角色",
+				"tag": "SysUserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "modifyBind",
+				"method": "PUT",
+				"path": "/modifyBind",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "UPDATE",
+				"auth": "permission",
+				"permission": "admin.iam:sys_user_role:update",
+				"summary": "修改绑定角色",
+				"tag": "SysUserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "unbind",
 				"method": "POST",
 				"path": "/unbind",
@@ -9610,84 +9688,6 @@
 							"required": true,
 							"schema": {
 								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
-				"summary": "查询用户角色信息",
-				"tag": "SysUserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "modifyBind",
-				"method": "PUT",
-				"path": "/modifyBind",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:update",
-				"summary": "修改绑定角色",
-				"tag": "SysUserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "batchUnbind",
-				"method": "POST",
-				"path": "/batchUnbind",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
-				"summary": "批量解绑角色",
-				"tag": "SysUserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -9782,7 +9782,17 @@
 			{
 				"comment": "",
 				"nullable": false,
-				"propertyName": "userId",
+				"propertyName": "username",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			},
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "roleId",
 				"source": "",
 				"type": "string",
 				"dict": null,
@@ -9798,22 +9808,16 @@
 				"dict": null,
 				"defaultValue": "",
 				"extensions": null
-			},
-			{
-				"comment": "",
-				"nullable": false,
-				"propertyName": "roleName",
-				"source": "",
-				"type": "string",
-				"dict": null,
-				"defaultValue": "",
-				"extensions": null
 			}
 		],
 		"pageQueryOp": {
 			"fieldEq": [
 				{
-					"field": "userId",
+					"field": "username",
+					"value": ""
+				},
+				{
+					"field": "roleId",
 					"value": ""
 				},
 				{
@@ -9821,12 +9825,7 @@
 					"value": ""
 				}
 			],
-			"fieldLike": [
-				{
-					"field": "roleName",
-					"value": ""
-				}
-			],
+			"fieldLike": [],
 			"keyWordLikeFields": [
 				""
 			]
@@ -9834,10 +9833,20 @@
 		"search": {
 			"fieldEq": [
 				{
-					"comment": "用户id",
+					"comment": "",
+					"nullable": false,
+					"propertyName": "username",
+					"source": "",
+					"type": "string",
+					"dict": null,
+					"defaultValue": "",
+					"extensions": null
+				},
+				{
+					"comment": "角色id",
 					"nullable": true,
-					"propertyName": "userId",
-					"source": "user_id",
+					"propertyName": "roleId",
+					"source": "role_id",
 					"type": "varchar",
 					"dict": [],
 					"defaultValue": null,
@@ -9854,18 +9863,7 @@
 					"extensions": null
 				}
 			],
-			"fieldLike": [
-				{
-					"comment": "roleName",
-					"nullable": true,
-					"propertyName": "roleName",
-					"source": "role_name",
-					"type": "varchar",
-					"dict": [],
-					"defaultValue": null,
-					"extensions": null
-				}
-			],
+			"fieldLike": [],
 			"keyWordLikeFields": []
 		},
 		"moduleKey": "admin.iam",
@@ -9875,6 +9873,32 @@
 		"prefix": "/api/system/dict/info",
 		"name": "info",
 		"api": [
+			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.dict",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.dict:dict-info:create",
+				"summary": "分页查询",
+				"tag": "SysDictInfoController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
 			{
 				"name": "add",
 				"method": "POST",
@@ -9970,32 +9994,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.dict:dict-info:create",
-				"summary": "分页查询",
-				"tag": "SysDictInfoController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -10147,6 +10145,32 @@
 		"name": "item",
 		"api": [
 			{
+				"name": "page",
+				"method": "POST",
+				"path": "/page",
+				"module": "admin.dict",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.dict:dict-item:create",
+				"summary": "分页查询",
+				"tag": "SysDictItemController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": false,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
 				"name": "add",
 				"method": "POST",
 				"path": "/add",
@@ -10241,32 +10265,6 @@
 							"description": "id",
 							"name": "path:id",
 							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "page",
-				"method": "POST",
-				"path": "/page",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.dict:dict-item:create",
-				"summary": "分页查询",
-				"tag": "SysDictItemController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -11233,32 +11231,6 @@
 		"name": "finance-result",
 		"api": [
 			{
-				"name": "result",
-				"method": "POST",
-				"path": "/result",
-				"module": "finance.base",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "finance.base:unknown:create",
-				"summary": "导出结果数据",
-				"tag": "SysFinanceController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "summary",
 				"method": "POST",
 				"path": "/summary",
@@ -11320,6 +11292,32 @@
 				"auth": "permission",
 				"permission": "finance.base:unknown:create",
 				"summary": "财务差异TOP",
+				"tag": "SysFinanceController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "result",
+				"method": "POST",
+				"path": "/result",
+				"module": "finance.base",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "finance.base:unknown:create",
+				"summary": "导出结果数据",
 				"tag": "SysFinanceController",
 				"dts": {
 					"parameters": [

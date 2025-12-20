@@ -391,6 +391,25 @@ watch(
   { immediate: false }
 );
 
+// 监听 menuThemeConfig 变化，确保样式立即更新
+watch(
+  () => menuThemeConfig.value,
+  (newConfig) => {
+    // 使用 nextTick 确保 DOM 更新完成后再强制更新样式
+    nextTick(() => {
+      // 强制更新所有使用 menuThemeConfig 的元素的样式
+      const logoContentEls = document.querySelectorAll('.topbar__logo-content');
+      logoContentEls.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl) {
+          htmlEl.style.setProperty('background-color', newConfig.background);
+        }
+      });
+    });
+  },
+  { immediate: true, deep: true }
+);
+
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
 const menuThemeConfig = computed(() => {
   // 优先判断菜单风格类型（不受系统主题影响）

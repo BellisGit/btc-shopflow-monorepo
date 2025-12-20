@@ -229,6 +229,14 @@ export function useUserSetting() {
    * 处理暗黑模式切换
    */
   function handleDarkToggle(event?: MouseEvent) {
+    if (!theme || !theme.toggleDark) {
+      console.warn('[useThemeSwitcher] theme 或 toggleDark 不存在', {
+        theme: !!theme,
+        toggleDark: !!theme?.toggleDark
+      });
+      return;
+    }
+
     theme.toggleDark(event);
   }
 

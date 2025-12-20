@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-menu
     :key="menuKey"
     ref="menuRef"
@@ -156,13 +156,13 @@ const menuThemeClass = computed(() => {
   if (isDark?.value === true) {
     return 'el-menu-dark';
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的类名
   const theme = menuThemeType?.value;
   if (!theme) {
     return 'el-menu-design';
   }
-  
+
   // 直接比较枚举值，确保只返回一个类名
   switch (theme) {
     case MenuThemeEnum.DARK:
@@ -178,7 +178,11 @@ const menuThemeClass = computed(() => {
 // 菜单主题配置 - 类似 art-design-pro 的 getMenuTheme
 const menuThemeConfig = computed(() => {
   // 深色系统主题下，菜单背景必须和内容区域一致（都使用 var(--el-bg-color)）
-  if (isDark?.value === true) {
+  // 关键：同时检查 isDark 和 menuThemeType，确保在主题切换时能正确响应
+  const isSystemDark = isDark?.value === true;
+  const isMenuDark = menuThemeType?.value === MenuThemeEnum.DARK;
+
+  if (isSystemDark || isMenuDark) {
     // 深色系统主题下，菜单使用与内容区域一致的深色背景
     return {
       background: 'var(--el-bg-color)',
@@ -186,11 +190,11 @@ const menuThemeConfig = computed(() => {
       textActiveColor: '#FFFFFF',
     };
   }
-  
+
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
   const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
   const themeConfig = menuStyleList.value.find(item => item.theme === theme);
-  
+
   if (themeConfig) {
     return {
       background: themeConfig.background,
@@ -198,7 +202,7 @@ const menuThemeConfig = computed(() => {
       textActiveColor: themeConfig.textActiveColor,
     };
   }
-  
+
   // 默认配置
   return {
     background: '#FFFFFF',
@@ -261,7 +265,7 @@ const handleMenuSelect = (index: string) => {
     // 分组节点的 index 通常是虚拟路径（如 "access-config"），在路由表中不存在
     // 判断方法：在当前菜单树中查找匹配的菜单项，如果它有 children，说明是分组节点，不应该导航
     const absolutePath = index.startsWith('/') ? index : `/${index}`;
-    
+
     // 递归查找菜单项
     const findMenuItem = (items: typeof currentMenuItems.value, targetIndex: string): typeof items[0] | null => {
       for (const item of items) {
@@ -277,9 +281,9 @@ const handleMenuSelect = (index: string) => {
       }
       return null;
     };
-    
+
     const matchedItem = findMenuItem(currentMenuItems.value, index);
-    
+
     // 如果找到的菜单项有 children，说明是分组节点，不应该导航
     if (matchedItem && matchedItem.children && matchedItem.children.length > 0) {
       if (import.meta.env.DEV) {

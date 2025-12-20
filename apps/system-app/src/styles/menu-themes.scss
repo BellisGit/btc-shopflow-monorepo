@@ -112,7 +112,8 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       margin-left: 8px !important;
       margin-right: 8px !important;
       border-radius: 6px !important;
-      color: #BABBBD !important;
+      // 移除硬编码颜色，使用 Element Plus 的 --el-menu-text-color CSS 变量
+      // 颜色由 dynamic-menu 组件的 text-color prop 控制
       display: flex;
       align-items: center;
       gap: 12px;
@@ -120,25 +121,25 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       .el-icon {
         margin-left: -4px !important;
         margin-right: 0 !important;
-        color: #BABBBD !important;
-      }
-
-      span {
-        color: #BABBBD !important;
+        // 移除硬编码颜色，图标颜色继承文字颜色或使用 CSS 变量
       }
     }
 
     // 选中颜色
     .el-menu-item.is-active {
       background-color: var(--el-color-primary-light-1) !important;
-      color: #fff !important;
+      // 使用 Element Plus 的 --el-menu-active-text-color CSS 变量
+      // 颜色由 dynamic-menu 组件的 active-text-color prop 控制
+      color: var(--el-menu-active-text-color) !important;
 
       .el-icon {
-        color: #fff !important;
+        // 图标颜色继承选中状态的文字颜色
+        color: var(--el-menu-active-text-color) !important;
       }
 
       span {
-        color: #fff !important;
+        // 文字颜色使用选中状态的 CSS 变量
+        color: var(--el-menu-active-text-color) !important;
       }
     }
 
@@ -148,9 +149,9 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
       background: #0f1015 !important;
     }
 
-    // 右侧箭头
+    // 右侧箭头颜色使用 Element Plus 的 CSS 变量
     .el-sub-menu__icon-arrow {
-      color: #BABBBD !important;
+      color: var(--el-menu-text-color) !important;
     }
   }
 
@@ -232,14 +233,14 @@ $hover-bg-color: rgba(var(--el-fill-color-rgb, 241, 241, 244), 0.8); // 鼠标�
   .topbar__brand {
     // 品牌区域底部分隔线（logo 区域和搜索区域之间）与顶栏底部分隔线保持一致
     border-bottom-color: var(--el-border-color) !important;
-    
+
     // Logo 内容区域背景色（深色菜单风格，与菜单背景一致）
     .topbar__logo-content {
       // 深色系统主题下，使用 #0a0a0a 与内容区域一致
       html.dark & {
         background-color: #0a0a0a !important;
       }
-      
+
       // 浅色系统主题下，使用深色菜单背景色
       html:not(.dark) & {
         background-color: #0a0a0a !important;

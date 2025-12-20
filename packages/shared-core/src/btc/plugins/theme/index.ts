@@ -19,6 +19,7 @@ export interface ThemePlugin {
   color: ReturnType<typeof computed<string>>;
   THEME_PRESETS: typeof THEME_PRESETS;
   switchTheme: (theme: ThemeConfig) => void;
+  setTheme: (options: { color?: string; name?: string; dark?: boolean }) => void;
   toggleDark: (event?: MouseEvent) => void;
   changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
   setThemeColor: (color: string, dark: boolean) => void;
@@ -130,6 +131,42 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
   }
 
   /**
+   * 统一的主题设置函数（参考 cool-admin 的实现）
+   * 这是主题切换的唯一入口，完全依赖 useDark 自动管理 HTML class
+   */
+  function setTheme({ color, name, dark }: { color?: string; name?: string; dark?: boolean }) {
+    // 如果 dark !== undefined，直接设置 isDark.value（让 useDark 自动管理 HTML class）
+    if (dark !== undefined) {
+      isDark.value = dark;
+    }
+
+    // 如果 color 存在，更新主题色（使用当前的 isDark.value）
+    if (color) {
+      themeSetThemeColor(color, isDark.value);
+      // 更新 currentTheme
+      currentTheme.value = {
+        ...currentTheme.value,
+        color: color,
+      };
+    }
+
+    // 如果 name 存在，设置 body class
+    if (name) {
+      setBodyClassName(`theme-${name}`);
+      // 更新 currentTheme
+      currentTheme.value = {
+        ...currentTheme.value,
+        name: name,
+      };
+    }
+
+    // 持久化到统一的 settings 存储中（同步到 Cookie）
+    const currentSettings = (storage.get('settings') as Record<string, any>) || {};
+    const updatedSettings = { ...currentSettings, theme: currentTheme.value };
+    storage.set('settings', updatedSettings);
+  }
+
+  /**
    * 更新主题颜色
    */
   function updateThemeColor(color: string) {
@@ -203,8 +240,8 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     }
   }
 
-  // 使用 composable 创建 toggleDark 函数（传入 changeDark 方法）
-  const toggleDark = createToggleDark(isDark, currentTheme, changeDark);
+  // 使用 composable 创建 toggleDark 函数（传入 changeDark 方法和 setTheme 函数）
+  const toggleDark = createToggleDark(isDark, currentTheme, setTheme, changeDark);
 
   /**
    * 初始化主题
@@ -224,6 +261,7 @@ export function createThemePlugin(): Plugin & { theme: ThemePlugin } {
     color,
     THEME_PRESETS,
     switchTheme,
+    setTheme,
     toggleDark,
     changeDark,
     setThemeColor: themeSetThemeColor,

@@ -138,14 +138,28 @@ html.dark {
   }
 
   // 优化菜单在暗黑模式下的显示
-  .el-menu,
-  #subapp-viewport .el-menu,
-  #subapp-viewport [data-qiankun] .el-menu,
-  [data-qiankun] .el-menu {
+  // 关键：对于 sidebar__menu，不设置 --el-menu-text-color，让菜单组件自己控制文本颜色
+  // 这样可以避免覆盖 dynamic-menu 组件通过内联样式设置的文本颜色
+  .el-menu:not(.sidebar__menu),
+  #subapp-viewport .el-menu:not(.sidebar__menu),
+  #subapp-viewport [data-qiankun] .el-menu:not(.sidebar__menu),
+  [data-qiankun] .el-menu:not(.sidebar__menu) {
     --el-menu-bg-color: var(--el-bg-color);
     --el-menu-hover-bg-color: var(--el-fill-color-light);
     --el-menu-text-color: var(--el-text-color-primary);
     --el-menu-active-color: var(--el-color-primary);
+  }
+
+  // 对于 sidebar__menu，只设置背景色和激活色，不设置文本颜色
+  // 让 dynamic-menu 组件通过内联样式控制文本颜色
+  .sidebar__menu.el-menu,
+  #subapp-viewport .sidebar__menu.el-menu,
+  #subapp-viewport [data-qiankun] .sidebar__menu.el-menu,
+  [data-qiankun] .sidebar__menu.el-menu {
+    --el-menu-bg-color: var(--el-bg-color);
+    --el-menu-hover-bg-color: var(--el-fill-color-light);
+    --el-menu-active-color: var(--el-color-primary);
+    // 不设置 --el-menu-text-color，让组件自己控制
   }
 
   // 优化下拉菜单

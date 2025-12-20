@@ -226,6 +226,70 @@
 				}
 			})();
 		</script>
+		<script>
+			// 关键：在页面加载时立即应用主题类，避免水合不匹配
+			// 必须在 JavaScript 执行前就应用，确保 Vue 组件渲染时主题类已存在
+			(function() {
+				try {
+					// 读取 Cookie 中的设置
+					function getCookie(name) {
+						const nameEQ = name + '=';
+						const ca = document.cookie.split(';');
+						for (let i = 0; i < ca.length; i++) {
+							let c = ca[i];
+							while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+							if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+						}
+						return null;
+					}
+
+					const settingsCookie = getCookie('btc_settings');
+					if (settingsCookie) {
+						try {
+							const settings = JSON.parse(decodeURIComponent(settingsCookie));
+							const systemThemeType = settings?.systemThemeType;
+							const htmlEl = document.documentElement;
+
+							if (systemThemeType === 'dark') {
+								htmlEl.classList.add('dark');
+							} else if (systemThemeType === 'light') {
+								htmlEl.classList.remove('dark');
+							} else if (systemThemeType === 'auto' || !systemThemeType) {
+								// AUTO 模式或未设置：跟随系统偏好
+								const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+								if (prefersDark) {
+									htmlEl.classList.add('dark');
+								} else {
+									htmlEl.classList.remove('dark');
+								}
+							}
+						} catch (e) {
+							// 如果解析失败，使用系统偏好
+							const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+							if (prefersDark) {
+								document.documentElement.classList.add('dark');
+							}
+						}
+					} else {
+						// 如果没有 Cookie，使用系统偏好
+						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+						if (prefersDark) {
+							document.documentElement.classList.add('dark');
+						}
+					}
+				} catch (e) {
+					// 静默失败，使用系统偏好作为兜底
+					try {
+						const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+						if (prefersDark) {
+							document.documentElement.classList.add('dark');
+						}
+					} catch (e2) {
+						// 完全失败，不做任何操作
+					}
+				}
+			})();
+		</script>
 	</head>
 
 	<body>
