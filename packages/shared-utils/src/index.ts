@@ -19,6 +19,11 @@ export * from './number';
 export * from './form';
 export * from './hooks';
 export * from './http';
+
+// Composables
+export * from './composables/usePageTransition';
+// 显式导出 usePageTransition，确保被正确导出
+export { usePageTransition } from './composables/usePageTransition';
 // 显式导出 http 模块的类型，确保类型被正确导出
 export type { MessageHandler, ConfirmHandler, RouterHandler, ApiResponse } from './http';
 

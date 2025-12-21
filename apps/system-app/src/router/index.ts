@@ -119,14 +119,14 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Finance App', isSubApp: true },
   },
   {
-    path: '/monitor',
+    path: '/operations',
     component: Layout,
-    meta: { title: 'Monitor App', isHome: true, isSubApp: true },
+    meta: { title: 'Operations App', isHome: true, isSubApp: true },
   },
   {
-    path: '/monitor/:pathMatch(.*)+',
+    path: '/operations/:pathMatch(.*)+',
     component: Layout,
-    meta: { title: 'Monitor App', isSubApp: true },
+    meta: { title: 'Operations App', isSubApp: true },
   },
   {
     path: '/docs',
@@ -694,7 +694,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
     // 已认证但路由未匹配，可能是子应用路由或无效路由
     // 关键：检查是否是子应用路由前缀，如果是则放行（让子应用处理）
     // 否则重定向到 404 页面
-    const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+    const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs'];
     const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
 
     if (isSubAppRoute) {

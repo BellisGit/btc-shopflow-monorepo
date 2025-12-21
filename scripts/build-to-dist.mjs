@@ -30,7 +30,7 @@ const APP_DOMAIN_MAP = {
   'engineering-app': 'engineering.bellis.com.cn',
   'finance-app': 'finance.bellis.com.cn',
   'layout-app': 'layout.bellis.com.cn',
-  'monitor-app': 'monitor.bellis.com.cn',
+  'operations-app': 'operations.bellis.com.cn',
   'docs-site-app': 'docs.bellis.com.cn',
 };
 
@@ -44,7 +44,7 @@ const BUILD_ORDER = [
   'production-app',
   'engineering-app',
   'finance-app',
-  'monitor-app',
+  'operations-app',
   'docs-site-app',
 ];
 

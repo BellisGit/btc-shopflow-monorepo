@@ -50,10 +50,12 @@
     "dayjs": "^1.11.18"
   },
   "peerDependencies": {
-    "qiankun": "^2.10.16"
+    "qiankun": "^2.10.16",
+    "vue": "^3.0.0"
   },
   "devDependencies": {
     "vite": "^5.4.20",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vue": "^3.0.0"
   }
 }

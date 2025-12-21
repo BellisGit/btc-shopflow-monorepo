@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<RingChartProps>(), {
   width: '100%',
   autoresize: true,
   radius: () => ['40%', '70%'],
-  center: () => ['50%', '50%'],
+  // center 不设置默认值，让 useRingChart 根据图例位置动态计算
   showLegend: true,
   showTooltip: true,
   showToolbar: false,

@@ -16,13 +16,45 @@ export function useRingChart(
 ) {
   const buildOption = (): EChartsOption => {
     // 每次构建时重新获取主题颜色，用于需要动态计算的颜色（如环形图边框）
-    const currentThemeColors = typeof window !== 'undefined' 
+    const currentThemeColors = typeof window !== 'undefined'
       ? getThemeColors()
       : themeColors;
     const bgColor = isDark.value ? currentThemeColors.dark.bgColor : currentThemeColors.bgColor;
 
     const innerRadius = props.innerRadius || (Array.isArray(props.radius) ? props.radius[0] : '40%');
     const outerRadius = props.outerRadius || (Array.isArray(props.radius) ? props.radius[1] : '70%');
+
+    // 根据图例位置动态调整圆心位置，避免遮住图例
+    const getCenterPosition = (): [string, string] => {
+      // 如果用户手动指定了 center，则使用用户指定的值
+      if (props.center && Array.isArray(props.center) && props.center.length === 2) {
+        return props.center;
+      }
+
+      // 如果没有显示图例，使用默认居中位置
+      if (!(props.showLegend ?? true)) {
+        return ['50%', '50%'];
+      }
+
+      // 根据图例位置调整圆心
+      const legendPosition = props.legendPosition || 'top';
+      switch (legendPosition) {
+        case 'bottom':
+          // 图例在底部，圆心向上移动更多，避免遮住图例
+          return ['50%', '40%'];
+        case 'top':
+          // 图例在顶部，圆心向下移动
+          return ['50%', '60%'];
+        case 'left':
+          // 图例在左侧，圆心向右移动
+          return ['60%', '50%'];
+        case 'right':
+          // 图例在右侧，圆心向左移动
+          return ['40%', '50%'];
+        default:
+          return ['50%', '50%'];
+      }
+    };
 
     const option: EChartsOption = {
       title: {
@@ -61,10 +93,10 @@ export function useRingChart(
       },
       series: [
         {
-          name: '??',
+          name: props.title || '',
           type: 'pie',
           radius: [innerRadius, outerRadius],
-          center: props.center || ['50%', '50%'],
+          center: getCenterPosition(),
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 6,

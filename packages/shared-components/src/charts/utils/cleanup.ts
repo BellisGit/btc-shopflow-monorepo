@@ -7,18 +7,57 @@ import { getInstanceByDom } from 'echarts/core';
 /**
  * 清理所有 ECharts 实例和相关的 DOM 元素
  * 包括 tooltip、toolbox、数据视图弹窗等
- * 
+ *
  * 注意：此函数会清理所有 ECharts 实例，包括当前页面正在使用的图表
  * 通常应该在路由切换时调用，而不是在组件卸载时调用
  */
 export function cleanupAllECharts() {
   // 1. 清理 body 中残留的 tooltip DOM（这些是 appendToBody 的元素）
-  const tooltipElements = document.querySelectorAll('.echarts-tooltip');
-  tooltipElements.forEach((el) => {
-    if (el.parentNode === document.body) {
-      el.parentNode.removeChild(el);
+  // 使用更全面的选择器，包括所有可能的 tooltip 类名
+  const tooltipSelectors = [
+    '.echarts-tooltip',
+    '[class*="echarts-tooltip"]',
+    '[id*="echarts-tooltip"]'
+  ];
+
+  tooltipSelectors.forEach((selector) => {
+    try {
+      const tooltipElements = document.querySelectorAll(selector);
+      tooltipElements.forEach((el) => {
+        if (el.parentNode === document.body) {
+          el.remove();
+        }
+      });
+    } catch (error) {
+      // 忽略选择器错误
     }
   });
+
+  // 额外清理：遍历 body 的所有子元素，查找可能的 tooltip 元素
+  // 通过检查元素特征（position: absolute/fixed, 高 z-index, 包含 tooltip 相关类名）来判断
+  try {
+    const bodyChildren = Array.from(document.body.children);
+    bodyChildren.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        const style = window.getComputedStyle(el);
+        const className = el.className || '';
+        const id = el.id || '';
+        const isTooltipLike =
+          (style.position === 'absolute' || style.position === 'fixed') &&
+          (parseInt(style.zIndex) > 1000 ||
+           className.includes('tooltip') ||
+           id.includes('tooltip') ||
+           className.includes('echarts') ||
+           id.includes('echarts'));
+
+        if (isTooltipLike && el.parentNode === document.body) {
+          el.remove();
+        }
+      }
+    });
+  } catch (error) {
+    // 忽略错误
+  }
 
   // 2. 清理 body 中残留的 toolbox 相关 DOM（数据视图弹窗等）
   // 这些元素通常是通过 appendToBody 添加到 body 的
@@ -39,7 +78,7 @@ export function cleanupAllECharts() {
       el.parentNode.removeChild(el);
     }
   });
-  
+
   // 注意：不主动销毁所有 ECharts 实例，因为：
   // 1. 组件卸载时会自动调用 dispose（通过 useChart composable）
   // 2. 主动销毁可能会影响当前页面正在使用的图表
@@ -52,7 +91,7 @@ export function cleanupAllECharts() {
  */
 export function cleanupEChartsInContainer(container: HTMLElement | Document) {
   const chartContainers = container.querySelectorAll('[data-echarts], .echarts-container, [class*="echarts"]');
-  
+
   chartContainers.forEach((chartContainer) => {
     if (chartContainer instanceof HTMLElement) {
       try {

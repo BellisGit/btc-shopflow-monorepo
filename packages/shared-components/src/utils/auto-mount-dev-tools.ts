@@ -83,7 +83,7 @@ function isMainApp(): boolean {
                         pathname.startsWith('/quality') ||
                         pathname.startsWith('/production') ||
                         pathname.startsWith('/finance') ||
-                        pathname.startsWith('/monitor');
+                        pathname.startsWith('/operations');
 
     // 开发环境：如果是本地地址或开发服务器地址，且不是子应用路径，则为主应用
     if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('10.80.8.199')) && !isSubAppPath) {
@@ -107,7 +107,7 @@ function isMainApp(): boolean {
         !pathname.startsWith('/quality') &&
         !pathname.startsWith('/production') &&
         !pathname.startsWith('/finance') &&
-        !pathname.startsWith('/monitor')) {
+        !pathname.startsWith('/operations')) {
       return true;
     }
   }

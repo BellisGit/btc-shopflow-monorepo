@@ -335,17 +335,17 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     quality: {},
     production: {},
     finance: {},
-    monitor: {
+    operations: {
       '/': [
-        { i18nKey: 'menu.monitor.overview' },
+        { i18nKey: 'menu.operations.overview' },
       ],
       '/ops/error': [
-        { i18nKey: 'menu.monitor.name' },
-        { i18nKey: 'menu.monitor.error' },
+        { i18nKey: 'menu.operations.name' },
+        { i18nKey: 'menu.operations.error' },
       ],
       '/ops/deployment-test': [
-        { i18nKey: 'menu.monitor.name' },
-        { i18nKey: 'menu.monitor.deploymentTest' },
+        { i18nKey: 'menu.operations.name' },
+        { i18nKey: 'menu.operations.deploymentTest' },
       ],
     },
   };
@@ -379,13 +379,13 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     // 先尝试直接匹配
     breadcrumbData = subAppBreadcrumbs[currentApp][normalizedPath];
 
-    // 如果直接匹配失败，尝试移除应用前缀（处理主域名访问的情况，如 /monitor/ops/error -> /ops/error）
+    // 如果直接匹配失败，尝试移除应用前缀（处理主域名访问的情况，如 /operations/ops/error -> /ops/error）
     if (!breadcrumbData && normalizedPath.startsWith(`/${currentApp}/`)) {
       const pathWithoutPrefix = normalizedPath.substring(`/${currentApp}`.length) || '/';
       breadcrumbData = subAppBreadcrumbs[currentApp][pathWithoutPrefix];
     }
 
-    // 如果仍然没有匹配到，尝试在所有子应用中查找（处理子域名访问的情况，如 monitor.bellis.com.cn/ops/error）
+    // 如果仍然没有匹配到，尝试在所有子应用中查找（处理子域名访问的情况，如 operations.bellis.com.cn/ops/error）
     if (!breadcrumbData) {
       for (const [appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
         if (appBreadcrumbs[normalizedPath]) {

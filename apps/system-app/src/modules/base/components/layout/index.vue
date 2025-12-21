@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     class="app-layout"
     :class="{
@@ -211,7 +211,7 @@ const isMainApp = computed(() => {
   if (route.meta?.isSubApp === true) {
     return false;
   }
-  
+
   // 关键：优先使用 window.location.pathname，因为它包含完整的路径
   // route.path 在 qiankun 模式下可能只匹配到 /logistics，而不是完整的 /logistics/warehouse/inventory/info
   const locationPath = window.location.pathname;
@@ -245,7 +245,7 @@ const isHomePage = computed(() => {
          path === '/production' ||
          path === '/finance' ||
          path === '/docs' ||
-         path === '/monitor';
+         path === '/operations';
 });
 
 // 判断是否显示面包屑

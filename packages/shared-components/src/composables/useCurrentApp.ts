@@ -23,7 +23,7 @@ export function useCurrentApp() {
       'production.bellis.com.cn': 'production',
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
-      'monitor.bellis.com.cn': 'monitor',
+      'operations.bellis.com.cn': 'operations',
     };
 
     // 预览环境端口映射（根据 app-env.config.ts 中的配置）
@@ -35,7 +35,7 @@ export function useCurrentApp() {
       '4184': 'production', // production-app 预览端口
       '4185': 'engineering', // engineering-app 预览端口
       '4186': 'finance',  // finance-app 预览端口
-      '4189': 'monitor',  // monitor-app 预览端口
+      '4189': 'operations',  // operations-app 预览端口
     };
 
     // 关键：优先通过子域名识别应用（生产环境的主要方式）
@@ -77,8 +77,8 @@ export function useCurrentApp() {
       currentApp.value = 'finance';
     } else if (path.startsWith('/docs')) {
       currentApp.value = 'docs';
-    } else if (path.startsWith('/monitor')) {
-      currentApp.value = 'monitor';
+    } else if (path.startsWith('/operations')) {
+      currentApp.value = 'operations';
     } else {
       // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
       currentApp.value = 'system';

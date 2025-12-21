@@ -379,6 +379,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       'echarts/core',
       'echarts',
       'vue-echarts',
+      // 关键：lunr 和 file-saver 在切换应用时可能被首次加载，需要预构建避免触发重新加载
+      // lunr 用于全局搜索功能（在 shared-components 中）
+      'lunr',
+      // file-saver 用于导出功能（在 shared-core 和部分应用中）
+      'file-saver',
     ],
     // 排除不应该被优化的依赖
     // 注意：exclude 使用包名或文件路径模式
@@ -393,8 +398,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       // 应用的入口文件
       resolve(appDir, 'src/main.ts'),
       // 关键：显式包含 @btc/shared-components 的入口文件，确保其依赖被扫描
-      // 这样 lodash-es, chardet, echarts 等依赖就能在启动时被识别
+      // 这样 lodash-es, chardet, echarts, lunr 等依赖就能在启动时被识别
       resolve(appDir, '../../packages/shared-components/src/index.ts'),
+      // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
+      // 这样 file-saver 等依赖就能在启动时被识别
+      resolve(appDir, '../../packages/shared-core/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],

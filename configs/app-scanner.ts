@@ -14,7 +14,7 @@ import qualityAppIdentity from '../apps/quality-app/src/app';
 import productionAppIdentity from '../apps/production-app/src/app';
 import engineeringAppIdentity from '../apps/engineering-app/src/app';
 import financeAppIdentity from '../apps/finance-app/src/app';
-import monitorAppIdentity from '../apps/monitor-app/src/app';
+import operationsAppIdentity from '../apps/operations-app/src/app';
 import systemAppIdentity from '../apps/system-app/src/app';
 import layoutAppIdentity from '../apps/layout-app/src/app';
 import docsSiteAppIdentity from '../apps/docs-site-app/src/app';
@@ -29,7 +29,7 @@ const appFiles: Record<string, { default: AppIdentity }> = {
   '../apps/production-app/src/app': { default: productionAppIdentity },
   '../apps/engineering-app/src/app': { default: engineeringAppIdentity },
   '../apps/finance-app/src/app': { default: financeAppIdentity },
-  '../apps/monitor-app/src/app': { default: monitorAppIdentity },
+  '../apps/operations-app/src/app': { default: operationsAppIdentity },
   '../apps/system-app/src/app': { default: systemAppIdentity },
   '../apps/layout-app/src/app': { default: layoutAppIdentity },
   '../apps/docs-site-app/src/app': { default: docsSiteAppIdentity },

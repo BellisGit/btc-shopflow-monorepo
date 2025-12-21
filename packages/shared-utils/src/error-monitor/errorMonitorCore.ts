@@ -33,11 +33,11 @@ const CLEANUP_PERIOD_DAYS: Record<CleanupPeriod, number> = {
 function getCleanupPeriod(): CleanupPeriod {
   try {
     const storageData = loadStorageData();
-    if (storageData.cleanupPeriod && 
-        (storageData.cleanupPeriod === 'today' || 
-         storageData.cleanupPeriod === '3days' || 
-         storageData.cleanupPeriod === '7days' || 
-         storageData.cleanupPeriod === '30days' || 
+    if (storageData.cleanupPeriod &&
+        (storageData.cleanupPeriod === 'today' ||
+         storageData.cleanupPeriod === '3days' ||
+         storageData.cleanupPeriod === '7days' ||
+         storageData.cleanupPeriod === '30days' ||
          storageData.cleanupPeriod === 'never')) {
       return storageData.cleanupPeriod;
     }
@@ -223,7 +223,7 @@ function clearYesterdayErrors(): void {
     const month = String(yesterday.getMonth() + 1).padStart(2, '0');
     const day = String(yesterday.getDate()).padStart(2, '0');
     const yesterdayKey = `${year}-${month}-${day}`;
-    
+
     if (storageData.errors[yesterdayKey]) {
       delete storageData.errors[yesterdayKey];
       saveStorageData(storageData);
@@ -253,10 +253,10 @@ function setupMidnightCleanup(): void {
   window.__BTC_ERROR_MONITOR_CLEANUP_TIMER__ = window.setTimeout(() => {
     // 清除过期的错误数据（根据清理周期）
     clearExpiredErrors();
-    
+
     // 切换到新日期（如果应用还在运行）
     checkAndSwitchDateIfNeeded();
-    
+
     // 递归设置下一次清除
     setupMidnightCleanup();
   }, msUntilMidnight);
@@ -363,15 +363,15 @@ export function updateErrorList(errorInfo: ErrorInfo) {
 
     if (!isDuplicate) {
       const newErrorList = [...errorList, formattedError];
-      // 最多保留 200 条，避免内存溢出
-      if (newErrorList.length > 200) {
+      // 最多保留 1000 条，避免内存溢出（已有保留时间限制）
+      if (newErrorList.length > 1000) {
         newErrorList.shift();
       }
       window.__BTC_ERROR_LIST__ = newErrorList;
-      
+
       // 保存到 localStorage
       saveTodayErrorsToStorage(newErrorList);
-      
+
       // 通过 CustomEvent 通知所有监听者
       window.dispatchEvent(
         new CustomEvent(ERROR_MONITOR_EVENT, {
@@ -391,10 +391,10 @@ export function updateErrorList(errorInfo: ErrorInfo) {
 export function clearErrorList() {
   try {
     window.__BTC_ERROR_LIST__ = [];
-    
+
     // 清除 localStorage 中的当天数据
     saveTodayErrorsToStorage([]);
-    
+
     // 通过 CustomEvent 通知所有监听者
     window.dispatchEvent(
       new CustomEvent(ERROR_MONITOR_CLEAR_EVENT, {
@@ -422,13 +422,13 @@ export function onErrorListUpdate(callback: (errorList: FormattedError[]) => voi
     const customEvent = event as CustomEvent<{ errorList: FormattedError[] }>;
     callback(customEvent.detail.errorList);
   };
-  
+
   window.addEventListener(ERROR_MONITOR_EVENT, handler);
   window.addEventListener(ERROR_MONITOR_CLEAR_EVENT, handler);
-  
+
   // 立即执行一次，获取当前状态
   callback(getErrorList());
-  
+
   // 返回取消监听的函数
   return () => {
     window.removeEventListener(ERROR_MONITOR_EVENT, handler);

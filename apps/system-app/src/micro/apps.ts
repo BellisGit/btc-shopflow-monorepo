@@ -231,12 +231,12 @@ export const microApps: MicroAppConfig[] = [
     timeout: 10000,
   },
   {
-    name: 'monitor',
-    entry: getAppEntry('monitor'),
+    name: 'operations',
+    entry: getAppEntry('operations'),
     container: '#subapp-viewport',
     activeRule: (location) => {
-      // 监控应用通过 /monitor 路径访问
-      if (location.pathname.startsWith('/monitor')) {
+      // 运维应用通过 /operations 路径访问
+      if (location.pathname.startsWith('/operations')) {
         return true;
       }
       return false;

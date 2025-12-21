@@ -1,6 +1,6 @@
 /**
  * 菜单注册表（主应用主导，命名空间化）
- * 
+ *
  * 关键：在微前端环境中，layout-app 和子应用是不同的构建产物，
  * 它们各自有独立的菜单注册表实例。为了确保菜单能够正确共享，
  * 需要通过全局对象（window）共享同一个注册表实例。
@@ -28,7 +28,7 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
       const existingRegistry = (window as any)[GLOBAL_REGISTRY_KEY];
       return existingRegistry;
     }
-    
+
     // 创建新的注册表并挂载到全局对象
     const registry: Ref<Record<string, MenuItem[]>> = ref({
       // 所有应用的菜单在进入时通过 manifest 注册
@@ -40,13 +40,13 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
       production: [],
       finance: [],
       docs: [],
-      monitor: [],
+      operations: [],
     });
-    
+
     (window as any)[GLOBAL_REGISTRY_KEY] = registry;
     return registry;
   }
-  
+
   // SSR 环境或非浏览器环境，创建本地注册表
   return ref({
     admin: [],
@@ -57,7 +57,7 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
     production: [],
     finance: [],
     docs: [],
-    monitor: [],
+    operations: [],
   });
 }
 
@@ -123,14 +123,14 @@ export function registerMenus(app: string, menus: MenuItem[]) {
       (window as any)[GLOBAL_REGISTRY_KEY] = reg;
     }
   }
-  
+
   const existingMenus = reg.value[app] || [];
-  
+
   // 如果菜单内容相同，跳过更新，避免触发不必要的响应式更新
   if (existingMenus.length > 0 && menusEqual(existingMenus, menus)) {
     return;
   }
-  
+
   // 如果菜单内容不同或现有菜单为空，需要更新
   reg.value[app] = menus;
   // 关键：手动触发响应式更新，确保 Vue 能够检测到全局对象的变化

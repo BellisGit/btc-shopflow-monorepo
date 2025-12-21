@@ -12,6 +12,8 @@ export interface SearchDataItem {
   path: string;
   breadcrumb?: string;
   app?: string;
+  score?: number; // 相关性分数（来自 lunr）
+  hasChildren?: boolean; // 是否有子菜单（用于区分父级菜单和实际路由）
 }
 
 /**
@@ -242,7 +244,11 @@ export function useSearchIndex(searchData: Ref<SearchDataItem[]>) {
     for (const result of results) {
       const item = dataMap.get(result.ref);
       if (item) {
-        items.push(item);
+        // 保留相关性分数
+        items.push({
+          ...item,
+          score: result.score
+        });
       }
     }
 

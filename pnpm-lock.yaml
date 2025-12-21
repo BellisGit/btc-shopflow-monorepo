@@ -689,7 +689,7 @@ importers:
         specifier: ^7.1.0
         version: 7.4.0
 
-  apps/monitor-app:
+  apps/operations-app:
     dependencies:
       '@btc/shared-components':
         specifier: ^1.0.0
@@ -1133,6 +1133,9 @@ importers:
       vite:
         specifier: ^5.4.20
         version: 5.4.21(@types/node@24.10.1)(sass@1.94.2)
+      vue:
+        specifier: ^3.0.0
+        version: 3.5.25(typescript@5.9.3)
 
   packages/subapp-manifests:
     devDependencies:

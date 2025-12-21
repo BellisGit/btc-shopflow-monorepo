@@ -352,7 +352,7 @@ const isMainApp = computed(() => {
     return true;
   }
   // 在 qiankun 环境下，简单判断：如果路径不是以已知子应用前缀开头，则认为是主应用
-  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs'];
   if (knownSubAppPrefixes.some(prefix => path.startsWith(prefix))) {
     return false;
   }

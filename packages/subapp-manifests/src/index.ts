@@ -5,7 +5,7 @@ import qualityManifestJson from "./manifests/quality.json" with { type: "json" }
 import engineeringManifestJson from "./manifests/engineering.json" with { type: "json" };
 import productionManifestJson from "./manifests/production.json" with { type: "json" };
 import financeManifestJson from "./manifests/finance.json" with { type: "json" };
-import monitorManifestJson from "./manifests/monitor.json" with { type: "json" };
+import operationsManifestJson from "./manifests/operations.json" with { type: "json" };
 import docsManifestJson from "./manifests/docs.json" with { type: "json" };
 
 export interface SubAppManifestRoute {
@@ -49,12 +49,12 @@ function getAppBySubdomain(hostname: string): any {
   if (typeof window === 'undefined') {
     return undefined;
   }
-  
+
   // 如果函数已注入，使用它
   if (getAppBySubdomainFn) {
     return getAppBySubdomainFn(hostname);
   }
-  
+
   // 否则返回 undefined（应用需要调用 setAppBySubdomainFn 来注入函数）
   return undefined;
 }
@@ -67,11 +67,11 @@ export function getManifestRoute(app: string, fullPath: string): SubAppManifestR
   // 在生产环境中，通过子域名访问时路径是 /，而不是 /finance
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
+
   // 使用应用扫描器获取子域名应用（懒加载）
   const appBySubdomain = getAppBySubdomain(hostname);
   const currentSubdomainApp = appBySubdomain?.id;
-  
+
   // 如果在生产环境子域名下，且当前应用匹配子域名，路径应该是 / 或 /xxx（没有应用前缀）
   if (isProductionSubdomain && currentSubdomainApp === app) {
     // 在生产环境子域名下，路径直接匹配（不需要 basePath 前缀）
@@ -200,15 +200,15 @@ registerManifest("finance", {
   raw: financeManifestJson,
 });
 
-registerManifest("monitor", {
+registerManifest("operations", {
   app: {
-    id: monitorManifestJson.app?.id ?? "monitor",
-    basePath: monitorManifestJson.app?.basePath ?? "/monitor",
-    nameKey: monitorManifestJson.app?.nameKey,
+    id: operationsManifestJson.app?.id ?? "operations",
+    basePath: operationsManifestJson.app?.basePath ?? "/operations",
+    nameKey: operationsManifestJson.app?.nameKey,
   },
-  routes: monitorManifestJson.routes ?? [],
-  menus: monitorManifestJson.menus ?? [],
-  raw: monitorManifestJson,
+  routes: operationsManifestJson.routes ?? [],
+  menus: operationsManifestJson.menus ?? [],
+  raw: operationsManifestJson,
 });
 
 registerManifest("docs", {

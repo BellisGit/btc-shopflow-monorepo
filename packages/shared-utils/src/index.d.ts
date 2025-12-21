@@ -11,5 +11,6 @@ export * from './number';
 export * from './form';
 export * from './hooks';
 export * from './http';
+export * from './composables/usePageTransition';
 export * from './qiankun/load-layout-app';
 export * from './cdn/load-shared-resources';

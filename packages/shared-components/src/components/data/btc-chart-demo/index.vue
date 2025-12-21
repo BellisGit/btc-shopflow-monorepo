@@ -12,6 +12,7 @@
             :data="singleBarData"
             :x-axis-data="xAxisData"
             :show-legend="true"
+            :show-tooltip="false"
             legend-position="right"
             height="16rem"
           />
@@ -43,6 +44,7 @@
             :data="stackBarData"
             :x-axis-data="stackXAxisData"
             :show-legend="true"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -57,6 +59,7 @@
           <BtcLineChart
             :data="lineChartData1"
             :x-axis-data="lineChartXAxis1"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -71,6 +74,7 @@
           <BtcLineChart
             :data="lineChartData2"
             :x-axis-data="lineChartXAxis2"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -86,6 +90,7 @@
             :data="multiLineData"
             :x-axis-data="multiLineXAxis"
             :show-legend="true"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -100,6 +105,7 @@
           <BtcHBarChart
             :data="hBarChartData1"
             :y-axis-data="hBarChartYAxis1"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -115,6 +121,7 @@
             :data="hBarChartData2"
             :y-axis-data="hBarChartYAxis2"
             :show-legend="true"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -130,6 +137,7 @@
             :data="hBarChartStackData"
             :y-axis-data="hBarChartStackYAxis"
             :show-legend="true"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -144,6 +152,7 @@
           <BtcRingChart
             :data="ringChartData1"
             :radius="['54%', '70%']"
+            :show-tooltip="false"
             legend-position="bottom"
             height="16rem"
           />
@@ -160,6 +169,7 @@
             :data="ringChartData2"
             :radius="['54%', '70%']"
             :show-legend="true"
+            :show-tooltip="false"
             legend-position="bottom"
             height="16rem"
           />
@@ -176,6 +186,7 @@
             :data="pieChartData"
             :radius="['0%', '70%']"
             :show-legend="true"
+            :show-tooltip="false"
             legend-position="right"
             height="16rem"
           />
@@ -190,6 +201,7 @@
           </div>
           <BtcScatterChart
             :data="scatterChartData"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -204,6 +216,7 @@
           <BtcRadarChart
             :indicators="radarIndicators"
             :data="radarChartData"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -219,6 +232,7 @@
             :data="klineChartData"
             :show-volume="false"
             :show-data-zoom="false"
+            :show-tooltip="false"
             height="16rem"
           />
         </div>
@@ -234,6 +248,7 @@
             :data1="dualBarData1"
             :data2="dualBarData2"
             :x-axis-data="dualBarXAxis"
+            :show-tooltip="false"
             label1="男性年龄分布"
             label2="女性年龄分布"
             height="16rem"
@@ -526,14 +541,12 @@ const dualBarXAxis = ref<string[]>([
   }
 
   .card {
-    padding: 10px;
     background-color: var(--el-bg-color);
     border-radius: var(--custom-radius, var(--el-border-radius-base, 0.25rem));
     border: 1px solid var(--el-border-color-light);
     box-sizing: border-box;
 
     .card-header {
-      padding-bottom: 15px;
 
       span {
         font-size: 16px;

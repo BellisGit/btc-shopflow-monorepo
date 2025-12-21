@@ -3,13 +3,13 @@
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['quality-app']">
     <router-view v-slot="{ Component }">
-      <transition name="slide-left" mode="out-in">
+      <transition :name="pageTransition" mode="out-in">
         <component :is="Component" :key="viewKey" />
       </transition>
     </router-view>
   </div>
   <router-view v-else v-slot="{ Component }">
-    <transition name="slide-left" mode="out-in">
+    <transition :name="pageTransition" mode="out-in">
       <component :is="Component" :key="viewKey" />
     </transition>
   </router-view>
@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { usePageTransition } from '@btc/shared-utils';
 
 defineOptions({
   name: 'QualityApp',
@@ -26,6 +27,7 @@ defineOptions({
 const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const emitter = (window as any).__APP_EMITTER__;
+const { pageTransition } = usePageTransition();
 
 // 刷新视图
 function refreshView() {

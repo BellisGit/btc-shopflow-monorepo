@@ -32,7 +32,7 @@ export function getCurrentAppFromPath(path: string): string {
   if (path.startsWith('/production')) return 'production';
   if (path.startsWith('/finance')) return 'finance';
   if (path.startsWith('/docs')) return 'docs';
-  if (path.startsWith('/monitor')) return 'monitor';
+  if (path.startsWith('/operations')) return 'operations';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }
@@ -164,9 +164,9 @@ export const useProcessStore = defineStore('process', () => {
    */
   function add(data: ProcessItem) {
     // 跳过个人信息页面和认证页面（不在菜单中，不需要添加到标签页）
-    if (data.path === '/profile' || 
-        data.path === '/login' || 
-        data.path === '/register' || 
+    if (data.path === '/profile' ||
+        data.path === '/login' ||
+        data.path === '/register' ||
         data.path === '/forget-password') {
       return;
     }
@@ -238,13 +238,13 @@ export const useProcessStore = defineStore('process', () => {
         // 首先尝试从 registry 解析（admin 应用）
         const { resolveTabMeta } = await import('./tabRegistry');
         let tabMeta = resolveTabMeta(data.path);
-        
+
         // 如果 registry 解析失败，尝试从 manifest 解析（监控应用和其他子应用）
         if (!tabMeta && app !== 'system' && app !== 'admin') {
           try {
             const { getManifestRoute, getManifest } = await import('@btc/subapp-manifests');
             const manifestRoute = getManifestRoute(app, data.fullPath || data.path);
-            
+
             if (manifestRoute && manifestRoute.tab?.enabled !== false) {
               const manifest = getManifest(app);
               if (manifest) {
@@ -252,7 +252,7 @@ export const useProcessStore = defineStore('process', () => {
                 const routePath = manifestRoute.path;
                 const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
                 const manifestKey = routePath.replace(/^\//, "") || "home";
-                
+
                 tabMeta = {
                   key: manifestKey,
                   title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
@@ -265,7 +265,7 @@ export const useProcessStore = defineStore('process', () => {
             console.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
           }
         }
-        
+
         if (tabMeta) {
           // 更新标签的 meta 信息
           const index = list.value.findIndex((e) => e.fullPath === data.fullPath);

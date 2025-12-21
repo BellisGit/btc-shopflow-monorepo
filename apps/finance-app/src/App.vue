@@ -1,14 +1,23 @@
 <template>
   <!-- 嵌入 layout-app / qiankun 时需要外层容器样式；独立运行时无需强制包裹 -->
   <div v-if="!isStandalone" class="finance-app">
-    <router-view :key="viewKey" />
+    <router-view v-slot="{ Component }">
+      <transition :name="pageTransition" mode="out-in">
+        <component :is="Component" :key="viewKey" />
+      </transition>
+    </router-view>
   </div>
-  <router-view v-else :key="viewKey" />
+  <router-view v-else v-slot="{ Component }">
+    <transition :name="pageTransition" mode="out-in">
+      <component :is="Component" :key="viewKey" />
+    </transition>
+  </router-view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { usePageTransition } from '@btc/shared-utils';
 
 defineOptions({
   name: 'FinanceApp',
@@ -19,6 +28,7 @@ const viewKey = ref(1);
 // 这样会使用包装层样式，确保正确渲染
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 const emitter = (window as any).__APP_EMITTER__;
+const { pageTransition } = usePageTransition();
 
 // 刷新视图
 function refreshView() {

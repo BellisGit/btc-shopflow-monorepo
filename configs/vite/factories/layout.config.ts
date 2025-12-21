@@ -599,6 +599,11 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       'vue-echarts',
       'mitt',
       'nprogress',
+      // 关键：lunr 和 file-saver 在切换应用时可能被首次加载，需要预构建避免触发重新加载
+      // lunr 用于全局搜索功能（在 shared-components 中）
+      'lunr',
+      // file-saver 用于导出功能（在 shared-core 和部分应用中）
+      'file-saver',
       // 注意：以下依赖不是所有应用都直接安装，它们通过 @btc/shared-components 间接使用
       // Vite 会在运行时自动发现并优化这些依赖，不需要在 include 中显式声明
     ],
@@ -607,6 +612,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     entries: [
       resolve(appDir, 'src/main.ts'),
       resolve(appDir, '../../packages/shared-components/src/index.ts'),
+      // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
+      // 这样 file-saver 等依赖就能在启动时被识别
+      resolve(appDir, '../../packages/shared-core/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],

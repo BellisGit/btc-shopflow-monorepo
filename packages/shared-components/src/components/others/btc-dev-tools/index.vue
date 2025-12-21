@@ -214,22 +214,22 @@ const tabList = [
     },
   },
   {
-    label: '错误监控',
-    value: 'monitor',
+    label: '运维应用',
+    value: 'operations',
     icon: Monitor,
-    tooltip: '错误监控 - 实时查看所有应用的错误和警告',
+    tooltip: '运维应用 - 实时查看所有应用的错误和警告',
     isAction: true, // 直接跳转
     action: () => {
       // 判断是否为生产环境
       const hostname = window.location.hostname;
       const isProduction = hostname.includes('bellis.com.cn');
 
-      // 生产环境：跳转到子域名（无论是主域名还是子域名，都跳转到 monitor.bellis.com.cn）
+      // 生产环境：跳转到子域名（无论是主域名还是子域名，都跳转到 operations.bellis.com.cn）
       // 开发环境：跳转到路径
       // 关键：跳转到子域名时，只跳转到根路径，不包含当前路径
       const targetUrl = isProduction
-        ? `${window.location.protocol}//monitor.bellis.com.cn/`
-        : '/monitor';
+        ? `${window.location.protocol}//operations.bellis.com.cn/`
+        : '/operations';
 
       window.location.href = targetUrl;
       visible.value = false;

@@ -331,7 +331,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
   // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
   const appCacheDir = resolve(appDir, 'node_modules/.vite');
-  
+
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
     include: [
       // 核心依赖：所有应用都安装的依赖
@@ -361,6 +361,11 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       'echarts/core',
       'echarts',
       'vue-echarts',
+      // 关键：lunr 和 file-saver 在切换应用时可能被首次加载，需要预构建避免触发重新加载
+      // lunr 用于全局搜索功能（在 shared-components 中）
+      'lunr',
+      // file-saver 用于导出功能（在 shared-core 和部分应用中）
+      'file-saver',
     ],
     exclude: [],
     force: false,
@@ -368,6 +373,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     entries: [
       resolve(appDir, 'src/main.ts'),
       resolve(appDir, '../../packages/shared-components/src/index.ts'),
+      // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
+      // 这样 file-saver 等依赖就能在启动时被识别
+      resolve(appDir, '../../packages/shared-core/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],

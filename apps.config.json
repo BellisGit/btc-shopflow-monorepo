@@ -52,11 +52,11 @@
       "packageName": "production-app"
     },
     {
-      "id": "monitor",
-      "name": "monitor-app",
-      "displayName": "监控应用",
+      "id": "operations",
+      "name": "operations-app",
+      "displayName": "运维应用",
       "category": "business",
-      "packageName": "monitor-app"
+      "packageName": "operations-app"
     },
     {
       "id": "layout",
@@ -103,6 +103,6 @@
     "quality",
     "production",
     "docs",
-    "monitor"
+    "operations"
   ]
 }

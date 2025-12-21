@@ -117,7 +117,7 @@ export function getActiveApp(pathname: string): string {
   if (subdomainApp) {
     return subdomainApp;
   }
-  
+
   // 然后检查路径前缀
   if (pathname.startsWith('/admin')) return 'admin';
   if (pathname.startsWith('/logistics')) return 'logistics';
@@ -126,7 +126,7 @@ export function getActiveApp(pathname: string): string {
   if (pathname.startsWith('/production')) return 'production';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/docs')) return 'docs';
-  if (pathname.startsWith('/monitor')) return 'monitor';
+  if (pathname.startsWith('/operations')) return 'operations';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }
@@ -159,9 +159,9 @@ function extractKey(pathname: string, app: string): string {
  */
 export function resolveTabMeta(pathname: string): TabMeta | null {
   // 个人信息页面和认证页面不在菜单中，不需要 TabMeta
-  if (pathname === '/profile' || 
-      pathname === '/login' || 
-      pathname === '/register' || 
+  if (pathname === '/profile' ||
+      pathname === '/login' ||
+      pathname === '/register' ||
       pathname === '/forget-password') {
     return null;
   }
@@ -175,14 +175,14 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
     if (appDict && appDict[key]) {
       return appDict[key];
     }
-    
+
     // 如果精确匹配失败，尝试匹配动态路由
     // 例如：/admin/org/departments/123/roles -> org-departments-123-roles
     // 应该匹配：org-dept-role-bind（对应路径 /admin/org/departments/:id/roles）
     if (appDict) {
       // 移除路径中的数字参数，然后尝试匹配
       const pathWithoutNumbers = key.replace(/-\d+-/g, '-').replace(/-\d+$/g, '').replace(/^\d+-/g, '');
-      
+
       // 尝试匹配所有 registry key，查找路径模式匹配的
       for (const [registryKey, tabMeta] of Object.entries(appDict)) {
         // 如果 registry key 对应的路径模式与当前路径匹配
@@ -190,27 +190,27 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         // 提取路径模式：org-departments-:id-roles -> org-departments-roles（移除 :id）
         const registryPath = tabMeta.path.replace(/\/admin/, '').replace(/^\//, '').replace(/\/:id\//g, '/').replace(/\/:id$/g, '').replace(/\//g, '-');
         const currentPathPattern = pathWithoutNumbers;
-        
+
         // 如果路径模式匹配（忽略参数位置）
-        if (registryPath === currentPathPattern || 
+        if (registryPath === currentPathPattern ||
             (registryPath.includes('dept') && currentPathPattern.includes('departments')) ||
             (registryPath.includes('role') && currentPathPattern.includes('roles'))) {
           // 进一步验证：检查关键路径段是否匹配
           const registrySegments = registryPath.split('-').filter(s => s.length > 2);
           const currentSegments = currentPathPattern.split('-').filter(s => s.length > 2);
-          
+
           // 如果关键段匹配度足够高，返回该 tabMeta
-          const matchCount = registrySegments.filter(regSeg => 
+          const matchCount = registrySegments.filter(regSeg =>
             currentSegments.some(curSeg => regSeg.includes(curSeg) || curSeg.includes(regSeg))
           ).length;
-          
+
           if (matchCount >= Math.min(registrySegments.length, currentSegments.length) * 0.6) {
             return tabMeta;
           }
         }
       }
     }
-    
+
     return null;
   }
 
@@ -224,13 +224,13 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         return appDict[key];
       }
     }
-    
+
     // 如果 registry 中没有，返回 null（manifest 解析在 process.add 的异步逻辑中处理）
     // 注意：由于循环依赖，manifest 函数是延迟加载的，这里只能返回 null
     // 实际的 manifest 解析应该在异步上下文中进行（如 process.ts 中的动态导入）
     return null;
   }
-  
+
   // system 应用从 registry 查找
   if (app === 'system') {
     const key = extractKey(pathname, app);
