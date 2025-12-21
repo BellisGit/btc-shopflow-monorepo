@@ -16,7 +16,7 @@ export function useRadarChart(
 ) {
   const buildOption = (): EChartsOption => {
     // 每次构建时重新获取主题颜色，用于需要动态计算的颜色（如雷达图分割区域）
-    const currentThemeColors = typeof window !== 'undefined'
+    const currentThemeColors = typeof window !== 'undefined' 
       ? getThemeColors()
       : themeColors;
     const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
@@ -85,7 +85,7 @@ export function useRadarChart(
       },
       series: (props.data || []).map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
-
+        
         return {
           name: item.name,
           type: 'radar',

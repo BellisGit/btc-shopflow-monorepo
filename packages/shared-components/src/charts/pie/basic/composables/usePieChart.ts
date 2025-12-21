@@ -16,7 +16,7 @@ export function usePieChart(
 ) {
   const buildOption = (): EChartsOption => {
     // 每次构建时重新获取主题颜色，用于需要动态计算的颜色（如饼图边框）
-    const currentThemeColors = typeof window !== 'undefined'
+    const currentThemeColors = typeof window !== 'undefined' 
       ? getThemeColors()
       : themeColors;
     const bgColor = isDark.value ? currentThemeColors.dark.bgColor : currentThemeColors.bgColor;

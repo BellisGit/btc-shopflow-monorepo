@@ -395,19 +395,23 @@ watch(
 watch(
   () => menuThemeConfig.value,
   (newConfig) => {
+    // 确保 newConfig 存在且有效
+    if (!newConfig || !newConfig.background) {
+      return;
+    }
     // 使用 nextTick 确保 DOM 更新完成后再强制更新样式
     nextTick(() => {
       // 强制更新所有使用 menuThemeConfig 的元素的样式
       const logoContentEls = document.querySelectorAll('.topbar__logo-content');
       logoContentEls.forEach((el) => {
         const htmlEl = el as HTMLElement;
-        if (htmlEl) {
+        if (htmlEl && newConfig.background) {
           htmlEl.style.setProperty('background-color', newConfig.background);
         }
       });
     });
   },
-  { immediate: true, deep: true }
+  { immediate: false, deep: true }
 );
 
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）

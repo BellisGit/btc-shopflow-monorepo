@@ -58,14 +58,38 @@ if (typeof window !== 'undefined') {
 }
 
 let context: AdminAppContext | null = null;
+let isRendering = false; // 防止并发渲染
 
 const render = async (props: QiankunProps = {}) => {
-  try {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
     if (context) {
-      await unmountAdminApp(context);
-      context = null;
+      return;
+    }
+  }
+
+  isRendering = true;
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountAdminApp(context);
+      } catch (error) {
+        // 卸载失败不影响后续流程，但记录错误
+        if (import.meta.env.DEV) {
+          console.warn('[admin-app] 卸载前一个实例失败:', error);
+        }
+      } finally {
+        context = null;
+      }
     }
 
+    // 创建新实例
     context = await createAdminApp(props);
     await mountAdminApp(context, props);
 
@@ -74,10 +98,13 @@ const render = async (props: QiankunProps = {}) => {
     clearNavigationFlag();
   } catch (error) {
     console.error('[admin-app] 渲染失败:', error);
-    // 即使挂载失败，也要移除 Loading
+    // 即使挂载失败，也要移除 Loading 并清理 context
     removeLoadingElement();
     clearNavigationFlag();
+    context = null;
     throw error;
+  } finally {
+    isRendering = false;
   }
 };
 
@@ -126,7 +153,11 @@ function clearNavigationFlag() {
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
+// 关键：bootstrap 阶段不做任何初始化工作，所有初始化都在 mount 阶段完成
+// 这样可以避免在应用切换时出现竞态条件
 function bootstrap() {
+  // 确保 context 状态被重置（防止应用切换时的状态残留）
+  // 注意：这里不清理 context，因为可能还在使用，真正的清理在 unmount 中完成
   return Promise.resolve();
 }
 
@@ -167,9 +198,22 @@ async function mount(props: QiankunProps) {
 }
 
 async function unmount(props: QiankunProps = {}) {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   if (context) {
-    await unmountAdminApp(context, props);
-    context = null;
+    try {
+      await unmountAdminApp(context, props);
+    } catch (error) {
+      // 卸载失败不影响后续流程
+      if (import.meta.env.DEV) {
+        console.warn('[admin-app] 卸载失败:', error);
+      }
+    } finally {
+      context = null;
+    }
   }
 }
 

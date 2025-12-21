@@ -64,6 +64,7 @@ if (typeof window !== 'undefined') {
     const originalLog = ((console as any).__originalLog || console.log).bind(console);
     const originalInfo = ((console as any).__originalInfo || console.info).bind(console);
     const originalWarn = ((console as any).__originalWarn || console.warn).bind(console);
+    const originalError = ((console as any).__originalError || console.error).bind(console);
 
     // 检查是否应该过滤日志的辅助函数
     const shouldFilter = (...args: any[]): boolean => {
@@ -126,6 +127,38 @@ if (typeof window !== 'undefined') {
     const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
     if (typeof warnFn === 'function') {
       warnFn.apply(console, args);
+    }
+  };
+
+  // 过滤 console.error（single-spa 错误代码 31 通过 error 输出）
+  console.error = (...args: any[]) => {
+    // 过滤 qiankun sandbox 错误
+    if (shouldFilter(...args)) {
+      return;
+    }
+    // 过滤 single-spa 的错误代码 31（bootstrap 相关错误）
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+      if (firstArg.includes('single-spa minified message #31') ||
+          firstArg.includes('single-spa.js.org/error/?code=31') ||
+          (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
+        return;
+      }
+    }
+    // 检查所有参数中是否包含 single-spa 错误
+    for (const arg of args) {
+      if (typeof arg === 'string' && (
+        arg.includes('single-spa minified message #31') ||
+        arg.includes('single-spa.js.org/error/?code=31') ||
+        (arg.includes('code=31') && arg.includes('bootstrap'))
+      )) {
+        return;
+      }
+    }
+    // 使用保存的原始方法，如果不存在则使用当前 console.error（可能是被其他代码替换过的）
+    const errorFn = originalError || (console as any).__originalError || console.error;
+    if (typeof errorFn === 'function') {
+      errorFn.apply(console, args);
     }
   };
 })();
@@ -383,6 +416,7 @@ function filterQiankunLogs() {
   const originalLog = ((console as any).__originalLog || console.log).bind(console);
   const originalInfo = ((console as any).__originalInfo || console.info).bind(console);
   const originalWarn = ((console as any).__originalWarn || console.warn).bind(console);
+  const originalError = ((console as any).__originalError || console.error).bind(console);
 
   // 检查是否应该过滤日志的辅助函数
   const shouldFilter = (...args: any[]): boolean => {
@@ -876,7 +910,7 @@ export function setupQiankun() {
     const timeoutsConfig = {
       bootstrap: {
         millis: timeout * 2, // 增加超时时间，确保容器检查和 DOM 操作有足够时间
-        dieOnTimeout: !isDev, // 生产环境超时终止，开发环境不终止（仅警告）
+        dieOnTimeout: false, // 超时后不终止应用，只警告（避免应用切换时的竞态条件导致应用无法加载）
         warningMillis: Math.floor(timeout * 1.5), // 警告时间也相应增加
       },
       mount: {

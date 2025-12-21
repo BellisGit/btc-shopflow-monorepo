@@ -80,7 +80,7 @@ export function useHBarChart(
       },
       series: props.data.map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
-
+        
         const seriesConfig: any = {
           name: item.name,
           type: 'bar',

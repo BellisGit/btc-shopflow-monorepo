@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="topbar" :class="{ 'is-dark-menu': isDarkMenuStyle }">
     <!-- 左侧：汉堡菜单 + Logo 区域（与侧边栏宽度一致） -->
       <div
@@ -27,13 +27,13 @@
         class="topbar__logo-content"
         :class="{ 'is-dark-menu': isDarkMenuStyle }"
         :style="{
-          backgroundColor: menuThemeConfig.background,
+          backgroundColor: menuThemeConfig?.background || '#FFFFFF',
         }"
       >
         <img src="/logo.png" alt="BTC Logo" class="topbar__logo-img" />
         <h2
           class="topbar__logo-text"
-          :style="{ color: menuThemeConfig.systemNameColor }"
+          :style="{ color: menuThemeConfig?.systemNameColor || '#29343D' }"
         >{{ t('app.title') }}</h2>
       </div>
     </div>
@@ -87,7 +87,8 @@ import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '@/plugins/user-setting/composables';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useBrowser } from '@/composables/useBrowser';
-import GlobalSearch from '../global-search/index.vue';
+// 使用共享组件中的全局搜索（已集成 lunr.js 和动态菜单数据）
+import GlobalSearch from '@btc/shared-components/components/layout/app-layout/global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
 import UserInfo from '../user-info/index.vue';

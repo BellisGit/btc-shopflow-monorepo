@@ -712,6 +712,9 @@ importers:
       chardet:
         specifier: ^2.1.0
         version: 2.1.1
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       element-plus:
         specifier: ^2.11.5
         version: 2.11.8(vue@3.5.25)
@@ -727,6 +730,9 @@ importers:
       vue:
         specifier: ^3.4.0
         version: 3.5.25(typescript@5.9.3)
+      vue-echarts:
+        specifier: ^8.0.1
+        version: 8.0.1(echarts@6.0.0)(vue@3.5.25)
       vue-i18n:
         specifier: ^11.0.0
         version: 11.2.2(vue@3.5.25)
@@ -1031,6 +1037,9 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      lunr:
+        specifier: ^2.3.9
+        version: 2.3.9
       vue:
         specifier: ^3.3.0
         version: 3.5.25(typescript@5.9.3)
@@ -9139,6 +9148,10 @@ packages:
     dependencies:
       yallist: 4.0.0
     dev: true
+
+  /lunr@2.3.9:
+    resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
+    dev: false
 
   /lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}

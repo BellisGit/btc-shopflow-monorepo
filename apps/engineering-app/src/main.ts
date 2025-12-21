@@ -28,24 +28,53 @@ const shouldRunStandalone = () => {
   return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 };
 
-const render = async (props: QiankunProps = {}) => {
-      try {
-    if (context) {
-      unmountEngineeringApp(context);
-      context = null;
-      }
+let isRendering = false; // 防止并发渲染
 
+const render = async (props: QiankunProps = {}) => {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
+    if (context) {
+      return;
+    }
+  }
+
+  isRendering = true;
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountEngineeringApp(context);
+      } catch (error) {
+        // 卸载失败不影响后续流程，但记录错误
+        if (import.meta.env.DEV) {
+          console.warn('[engineering-app] 卸载前一个实例失败:', error);
+        }
+      } finally {
+        context = null;
+      }
+    }
+
+    // 创建新实例
     context = await createEngineeringApp(props);
     await mountEngineeringApp(context, props);
 
-  // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
-  removeLoadingElement();
-  clearNavigationFlag();
-  } catch (error) {
-    // 即使挂载失败，也要移除 Loading
+    // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
     removeLoadingElement();
     clearNavigationFlag();
+  } catch (error) {
+    console.error('[engineering-app] 渲染失败:', error);
+    // 即使挂载失败，也要移除 Loading 并清理 context
+    removeLoadingElement();
+    clearNavigationFlag();
+    context = null;
     throw error;
+  } finally {
+    isRendering = false;
   }
 };
 
@@ -77,9 +106,22 @@ async function mount(props: QiankunProps) {
 }
 
 async function unmount(props: QiankunProps = {}) {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   if (context) {
-    await unmountEngineeringApp(context, props);
-    context = null;
+    try {
+      await unmountEngineeringApp(context, props);
+    } catch (error) {
+      // 卸载失败不影响后续流程
+      if (import.meta.env.DEV) {
+        console.warn('[engineering-app] 卸载失败:', error);
+      }
+    } finally {
+      context = null;
+    }
   }
 }
 

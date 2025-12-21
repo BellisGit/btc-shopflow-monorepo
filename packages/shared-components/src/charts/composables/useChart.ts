@@ -272,24 +272,24 @@ export function useChart(
     resizeObserverFrameId = requestAnimationFrame(() => {
       resizeObserverFrameId = null;
 
-      // 当容器尺寸变化时，检查是否可以允许渲染
-      const hadSize = isContainerReady.value;
-      markContainerMounted();
+    // 当容器尺寸变化时，检查是否可以允许渲染
+    const hadSize = isContainerReady.value;
+    markContainerMounted();
 
-      // 如果容器刚获得尺寸（从无尺寸变为有尺寸），需要初始化图表实例
-      if (!hadSize && isContainerReady.value && !chartInstance.value) {
-        // 延迟一下，确保DOM已更新
-        nextTick(() => {
-          setTimeout(() => {
-            updateChartInstance();
-          }, 50);
-        });
-      }
+    // 如果容器刚获得尺寸（从无尺寸变为有尺寸），需要初始化图表实例
+    if (!hadSize && isContainerReady.value && !chartInstance.value) {
+      // 延迟一下，确保DOM已更新
+      nextTick(() => {
+        setTimeout(() => {
+          updateChartInstance();
+        }, 50);
+      });
+    }
 
-      // 如果图表实例已存在，调用resize
-      if (chartInstance.value) {
-        handleResize();
-      }
+    // 如果图表实例已存在，调用resize
+    if (chartInstance.value) {
+      handleResize();
+    }
     });
   });
 
@@ -641,25 +641,25 @@ export function useChart(
     try {
       chartInstance.value = getInstanceByDom(containerRef.value);
       if (chartInstance.value && containerRef.value) {
-        // 容器有尺寸，可以安全地调用resize
-        if (props.autoresize) {
-          // 使用requestAnimationFrame确保浏览器已完成布局
-          requestAnimationFrame(() => {
-            if (chartInstance.value && containerRef.value) {
-              // 再次检查尺寸，确保仍然有效
-              const currentWidth = containerRef.value.clientWidth;
-              const currentHeight = containerRef.value.clientHeight;
-              if (currentWidth > 10 && currentHeight > 10) {
-                try {
-                  chartInstance.value.resize();
-                } catch (error) {
-                  if (import.meta.env.DEV) {
-                    console.warn('[useChart] resize失败:', error);
+          // 容器有尺寸，可以安全地调用resize
+          if (props.autoresize) {
+            // 使用requestAnimationFrame确保浏览器已完成布局
+            requestAnimationFrame(() => {
+              if (chartInstance.value && containerRef.value) {
+                // 再次检查尺寸，确保仍然有效
+                const currentWidth = containerRef.value.clientWidth;
+                const currentHeight = containerRef.value.clientHeight;
+                if (currentWidth > 10 && currentHeight > 10) {
+                  try {
+                    chartInstance.value.resize();
+                  } catch (error) {
+                    if (import.meta.env.DEV) {
+                      console.warn('[useChart] resize失败:', error);
+                    }
                   }
                 }
               }
-            }
-          });
+            });
         }
       }
     } catch (error) {
@@ -754,7 +754,7 @@ export function useChart(
       nextTick(() => {
         nextTick(() => {
           // 先确保 v-chart 可渲染
-          const mounted = markContainerMounted();
+        const mounted = markContainerMounted();
 
         // 如果容器还没准备好，启动检查循环
         if (!isContainerReady.value) {

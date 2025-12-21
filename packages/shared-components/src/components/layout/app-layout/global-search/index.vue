@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="global-search">
     <!-- 搜索触发器 -->
     <div
@@ -252,6 +252,10 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { Star, Search, Clock } from '@element-plus/icons-vue';
+import { getMenuRegistry, type MenuItem } from '@btc/shared-components/store/menuRegistry';
+import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
+import { useSearchIndex, type SearchDataItem as SearchDataItemType } from './useSearchIndex';
+
 // DocSearchResult 类型定义
 interface DocSearchResult {
   title: string;
@@ -260,82 +264,340 @@ interface DocSearchResult {
   [key: string]: any;
 }
 
+// 使用 useSearchIndex 中定义的 SearchDataItem 类型
+type SearchDataItem = SearchDataItemType;
+
 const router = useRouter();
 const { t } = useI18n();
+const { currentApp } = useCurrentApp();
 
 const inputRef = ref();
 const searchKeyword = ref('');
 const isModalOpen = ref(false);
 const selectedIndex = ref(0);
 
-// 搜索数据源
-const searchData = ref([
-  // 平台治理
-  { id: 'm1', type: 'menu', title: '域列表', path: '/platform/domains', breadcrumb: '平台治理' },
-  { id: 'm2', type: 'menu', title: '模块列表', path: '/platform/modules', breadcrumb: '平台治理' },
-  { id: 'm3', type: 'menu', title: '插件列表', path: '/platform/plugins', breadcrumb: '平台治理' },
+// 扁平化菜单树，提取所有可搜索的菜单项
+function flattenMenuItems(
+  items: MenuItem[],
+  parentBreadcrumb: string[] = [],
+  app: string = '',
+  basePath: string = '',
+  translateFn?: (key: string) => string
+): SearchDataItem[] {
+  const result: SearchDataItem[] = [];
+  let itemIndex = 0;
 
-  // 组织与账号
-  { id: 'm4', type: 'menu', title: '租户列表', path: '/org/tenants', breadcrumb: '组织与账号' },
-  { id: 'm5', type: 'menu', title: '部门列表', path: '/org/departments', breadcrumb: '组织与账号' },
-  { id: 'm6', type: 'menu', title: '用户列表', path: '/org/users', breadcrumb: '组织与账号' },
-  { id: 'm7', type: 'menu', title: '部门列表', path: '/org/departments', breadcrumb: '组织与账号' },
-  { id: 'm8', type: 'menu', title: '租户列表', path: '/org/tenants', breadcrumb: '组织与账号' },
-  { id: 'm9', type: 'menu', title: '部门角色分配', path: '/org/departments/:id/roles', breadcrumb: '组织与账号' },
-  { id: 'm12', type: 'menu', title: '角色绑定', path: '/org/users/users-roles', breadcrumb: '访问控制 · 用户分配' },
+  for (const item of items) {
+    // 处理标题：菜单项中的 title 都是国际化key，需要翻译
+    // 参考 menu-renderer 的实现：直接使用 t(item.title) 翻译
+    let displayTitle = item.title;
 
-  // 导航与可见性
-  { id: 'm13', type: 'menu', title: '菜单列表', path: '/navigation/menus', breadcrumb: '导航与可见性' },
-  { id: 'm14', type: 'menu', title: '菜单预览', path: '/navigation/menus/preview', breadcrumb: '导航与可见性' },
+    if (translateFn && item.title) {
+      try {
+        // 直接翻译，就像 menu-renderer 中那样
+        const translated = translateFn(item.title);
 
+        // 检查翻译结果：如果翻译成功，结果应该与key不同
+        if (translated && translated !== item.title) {
+          displayTitle = translated;
+        } else {
+          // 如果翻译返回的还是key，可能的原因：
+          // 1. 翻译文件中没有这个key
+          // 2. 翻译函数还没有完全初始化
+          // 3. key格式不正确
 
-  // 策略中心
-  { id: 'm19', type: 'menu', title: '策略管理', path: '/strategy/management', breadcrumb: '策略中心' },
-  { id: 'm20', type: 'menu', title: '策略编排', path: '/strategy/designer', breadcrumb: '策略中心' },
-  { id: 'm21', type: 'menu', title: '策略监控', path: '/strategy/monitor', breadcrumb: '策略中心' },
+          // 尝试去掉 menu. 前缀后再翻译（某些key可能没有 menu. 前缀）
+          if (item.title.startsWith('menu.')) {
+            const keyWithoutPrefix = item.title.replace(/^menu\./, '');
+            try {
+              const retryTranslated = translateFn(keyWithoutPrefix);
+              if (retryTranslated && retryTranslated !== keyWithoutPrefix) {
+                displayTitle = retryTranslated;
+              } else {
+                // 如果还是失败，使用原始key作为兜底（虽然不理想，但至少不会崩溃）
+                displayTitle = item.title;
+              }
+            } catch {
+              // 忽略错误，使用原始key作为兜底
+              displayTitle = item.title;
+            }
+          } else {
+            // 如果key不是以 menu. 开头，但翻译失败，使用原始key
+            displayTitle = item.title;
+          }
+        }
+      } catch (error) {
+        // 如果翻译抛出异常，使用原始key作为兜底
+        displayTitle = item.title;
+      }
+    }
 
-  // 运维与审计
-  { id: 'm22', type: 'menu', title: '操作日志', path: '/ops/logs/operation', breadcrumb: '运维与审计' },
-  { id: 'm23', type: 'menu', title: '请求日志', path: '/ops/logs/request', breadcrumb: '运维与审计' },
-  { id: 'm24', type: 'menu', title: '接口列表', path: '/ops/api-list', breadcrumb: '运维与审计' },
-  { id: 'm25', type: 'menu', title: '权限基线', path: '/ops/baseline', breadcrumb: '运维与审计' },
-  { id: 'm26', type: 'menu', title: '策略模拟器', path: '/ops/simulator', breadcrumb: '运维与审计' },
+    // 构建面包屑
+    const breadcrumbParts = parentBreadcrumb.length > 0
+      ? [...parentBreadcrumb, displayTitle]
+      : [displayTitle];
+    const breadcrumb = breadcrumbParts.length > 1
+      ? breadcrumbParts.slice(0, -1).join(' · ')
+      : undefined;
 
-  // 测试功能
-  { id: 'm27', type: 'menu', title: 'CRUD测试', path: '/test/crud', breadcrumb: '测试功能' },
-  { id: 'm28', type: 'menu', title: 'SVG插件测试', path: '/test/svg-plugin', breadcrumb: '测试功能' },
-  { id: 'm29', type: 'menu', title: '国际化测试', path: '/test/i18n', breadcrumb: '测试功能' },
-  { id: 'm30', type: 'menu', title: '状态切换按钮', path: '/test/select-button', breadcrumb: '测试功能' },
+    // 构建完整路径
+    let fullPath = item.index;
+    if (!fullPath.startsWith('/')) {
+      // 如果路径不是以 / 开头，需要根据应用添加前缀
+      if (app === 'admin' && !fullPath.startsWith('/admin')) {
+        fullPath = `/admin${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+      } else if (app !== 'system' && app !== 'admin' && !fullPath.startsWith(`/${app}`)) {
+        fullPath = `/${app}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+      } else if (!fullPath.startsWith('/')) {
+        fullPath = `/${fullPath}`;
+      }
+    }
 
-  // 页面
-  { id: 'p1', type: 'page', title: '首页', path: '/', breadcrumb: '主应用' },
-  { id: 'p2', type: 'page', title: 'menu.logistics.procurementModule', path: '/logistics/procurement', breadcrumb: '物流应用' },
-  { id: 'p3', type: 'page', title: 'menu.logistics.warehouse', path: '/logistics/warehouse', breadcrumb: '物流应用' },
-  { id: 'p4', type: 'page', title: 'menu.logistics.customs', path: '/logistics/customs', breadcrumb: '物流应用' },
-  { id: 'p3', type: 'page', title: '工程概览', path: '/engineering', breadcrumb: '工程应用' },
-  { id: 'p4', type: 'page', title: '品质概览', path: '/quality', breadcrumb: '品质应用' },
-  { id: 'p5', type: 'page', title: '生产概览', path: '/production', breadcrumb: '生产应用' },
-]);
+    // 如果菜单项有标题且有有效路径，则添加到搜索结果
+    if (displayTitle && fullPath && fullPath !== '/') {
+      result.push({
+        id: `menu-${app}-${item.index}-${itemIndex++}`,
+        type: 'menu',
+        title: displayTitle,
+        path: fullPath,
+        breadcrumb,
+        app,
+      });
+    }
+
+    // 递归处理子菜单
+    if (item.children && item.children.length > 0) {
+      const childBreadcrumb = displayTitle
+        ? [...parentBreadcrumb, displayTitle]
+        : parentBreadcrumb;
+      const childResults = flattenMenuItems(
+        item.children,
+        childBreadcrumb,
+        app,
+        fullPath,
+        translateFn
+      );
+      result.push(...childResults);
+    }
+  }
+
+  return result;
+}
+
+// 从路由获取页面数据
+function getRoutesData(): SearchDataItem[] {
+  const routes = router.getRoutes();
+  const result: SearchDataItem[] = [];
+  let routeIndex = 0;
+
+  for (const route of routes) {
+    // 跳过隐藏的路由、公开路由和没有 meta 的路由
+    if (
+      route.meta?.isHide ||
+      route.meta?.public ||
+      !route.meta?.title &&
+      !route.meta?.titleKey
+    ) {
+      continue;
+    }
+
+    // 获取标题
+    const title = route.meta?.title
+      ? String(route.meta.title)
+      : route.meta?.titleKey
+      ? t(route.meta.titleKey as string)
+      : route.name
+      ? String(route.name)
+      : route.path;
+
+    // 获取面包屑（从 meta.breadcrumbs 或 meta.label）
+    const breadcrumb = route.meta?.breadcrumbs
+      ? Array.isArray(route.meta.breadcrumbs)
+        ? route.meta.breadcrumbs.map((b: any) =>
+            b.labelKey ? t(b.labelKey) : b.label || ''
+          ).filter(Boolean).join(' · ')
+        : undefined
+      : route.meta?.label
+      ? String(route.meta.label)
+      : undefined;
+
+    // 确定应用
+    let app = 'system';
+    if (route.path.startsWith('/admin')) app = 'admin';
+    else if (route.path.startsWith('/logistics')) app = 'logistics';
+    else if (route.path.startsWith('/engineering')) app = 'engineering';
+    else if (route.path.startsWith('/quality')) app = 'quality';
+    else if (route.path.startsWith('/production')) app = 'production';
+    else if (route.path.startsWith('/finance')) app = 'finance';
+    else if (route.path.startsWith('/monitor')) app = 'monitor';
+    else if (route.path.startsWith('/docs')) app = 'docs';
+
+    result.push({
+      id: `route-${app}-${routeIndex++}`,
+      type: 'page',
+      title,
+      path: route.path,
+      breadcrumb,
+      app,
+    });
+  }
+
+  return result;
+}
+
+// 构建搜索数据的函数（可复用）
+function buildSearchData(): SearchDataItem[] {
+  const result: SearchDataItem[] = [];
+
+  try {
+    // 1. 从菜单注册表获取所有应用的菜单
+    const menuRegistry = getMenuRegistry();
+    // 关键：访问整个注册表对象，建立完整的响应式依赖
+    const registryValue = menuRegistry.value;
+    const allApps = ['admin', 'system', 'logistics', 'engineering', 'quality', 'production', 'finance', 'monitor', 'docs'];
+
+    for (const app of allApps) {
+      const menus = registryValue[app] || [];
+
+      if (menus.length > 0) {
+        // 确保传递翻译函数
+        const flattenedMenus = flattenMenuItems(menus, [], app, '', t);
+        result.push(...flattenedMenus);
+      } else {
+        // 如果某个应用的菜单为空，尝试主动注册
+        if (typeof window !== 'undefined') {
+          const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+          if (typeof registerMenusFn === 'function') {
+            try {
+              registerMenusFn(app);
+              // 重新获取菜单（从响应式对象中获取最新值）
+              const retryMenus = menuRegistry.value[app] || [];
+              if (retryMenus.length > 0) {
+                const flattenedMenus = flattenMenuItems(retryMenus, [], app, '', t);
+                result.push(...flattenedMenus);
+              }
+            } catch (error) {
+              // 静默失败
+            }
+          }
+        }
+      }
+    }
+
+    // 2. 从路由获取页面数据（补充菜单中没有的路由）
+    const routesData = getRoutesData();
+
+    // 去重：如果路由路径已在菜单数据中，则跳过
+    const menuPaths = new Set(result.map(item => item.path));
+    for (const routeItem of routesData) {
+      if (!menuPaths.has(routeItem.path)) {
+        result.push(routeItem);
+      }
+    }
+  } catch (error) {
+    console.error('[GlobalSearch] 构建搜索数据失败:', error);
+  }
+
+  return result;
+}
+
+// 动态构建搜索数据源（响应式）
+const searchData = computed<SearchDataItem[]>(() => {
+  // 关键：访问整个菜单注册表，建立完整的响应式依赖
+  const menuRegistry = getMenuRegistry();
+  // 访问注册表的所有应用，确保响应式追踪
+  void menuRegistry.value.admin;
+  void menuRegistry.value.system;
+  void menuRegistry.value.logistics;
+  void menuRegistry.value.engineering;
+  void menuRegistry.value.quality;
+  void menuRegistry.value.production;
+  void menuRegistry.value.finance;
+  void menuRegistry.value.monitor;
+  void menuRegistry.value.docs;
+
+  const data = buildSearchData();
+  return data;
+});
+
+// 监听菜单注册表的变化，确保菜单注册后搜索数据能更新
+const menuRegistry = getMenuRegistry();
+watch(
+  () => menuRegistry.value,
+  () => {
+    // 菜单注册表变化时，computed 会自动重新计算
+    // 这里只是确保响应式追踪
+  },
+  { deep: true }
+);
+
+// 构建搜索索引（使用 lunr.js）
+const { searchIndex, search: searchWithLunr, mapResultsToItems, createDataMap } = useSearchIndex(searchData);
+
+// 监听索引构建
+watch(searchIndex, () => {
+  // 索引变化时自动更新
+}, { immediate: true });
+
+// 创建数据映射表（用于快速查找）
+const dataMap = computed(() => {
+  const map = createDataMap(searchData.value);
+  return map;
+});
+
+// 简单搜索函数（兜底方案，当索引构建失败时使用）
+function simpleSearch(items: SearchDataItem[], keyword: string): SearchDataItem[] {
+  const lowerKeyword = keyword.toLowerCase().trim();
+  return items.filter(item => {
+    // 1. 匹配翻译后的标题
+    if (item.title.toLowerCase().includes(lowerKeyword)) {
+      return true;
+    }
+
+    // 2. 如果原始标题存在，尝试翻译并匹配
+    if (item.originalTitle) {
+      if (item.originalTitle.includes('.') || item.originalTitle.startsWith('menu.')) {
+        try {
+          const translated = t(item.originalTitle);
+          if (translated && translated !== item.originalTitle && translated.toLowerCase().includes(lowerKeyword)) {
+            return true;
+          }
+        } catch {
+          // 忽略翻译错误
+        }
+      }
+
+      if (item.originalTitle !== item.title && item.originalTitle.toLowerCase().includes(lowerKeyword)) {
+        return true;
+      }
+    }
+
+    // 3. 匹配面包屑
+    if (item.breadcrumb && item.breadcrumb.toLowerCase().includes(lowerKeyword)) {
+      return true;
+    }
+
+    // 4. 匹配路径
+    const pathWithoutParams = item.path.split('?')[0].split(':')[0];
+    const pathSegments = pathWithoutParams.split('/').filter(Boolean);
+    for (const segment of pathSegments) {
+      if (segment.toLowerCase().includes(lowerKeyword)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
 
 // 最近搜索（从 localStorage 读取）
 const recentSearches = ref<string[]>([]);
 
 // 快捷访问（包含文档）
-const quickAccess = computed(() => [
-  { id: 'q1', type: 'page', title: '首页', path: '/' },
-  { id: 'q2', type: 'menu', title: 'CRUD测试', path: '/test/crud' },
-  { id: 'q3', type: 'menu', title: '用户列表', path: '/org/users' },
-  { id: 'q4', type: 'doc', title: '组件文档', path: '/components/', breadcrumb: '文档中心' },
-]);
+const quickAccess = computed<SearchDataItem[]>(() => [] as SearchDataItem[]);
 
 // 推荐搜索词（空状态时显示）
-const suggestedKeywords = ref([
-  '用户',
-  '权限',
-  'CRUD',
-  '组件',
-  '文档',
-]);
+const suggestedKeywords = ref([]);
 
 // 搜索结果状态
 const searchResults = ref<any[]>([]);
@@ -343,7 +605,7 @@ const isSearching = ref(false);
 
 // 监听搜索关键词变化，异步搜索
 watch(searchKeyword, async (keyword) => {
-  if (!keyword.trim()) {
+  if (!keyword || !keyword.trim()) {
     searchResults.value = [];
     return;
   }
@@ -352,31 +614,52 @@ watch(searchKeyword, async (keyword) => {
   const lowerKeyword = keyword.toLowerCase().trim();
 
   try {
-    // 搜索菜单（同步）
-    const menuResults = searchData.value
-      .filter(item =>
-        item.title.toLowerCase().includes(lowerKeyword) ||
-        (item.breadcrumb && item.breadcrumb.toLowerCase().includes(lowerKeyword))
-      );
+    let menuResults: SearchDataItem[] = [];
+
+    // 检查是否为中文搜索
+    const isChineseSearch = /[\u4e00-\u9fff]/.test(keyword);
+
+    // 混合搜索策略：
+    // - 中文搜索：直接使用 simpleSearch（lunr 对中文支持有限）
+    // - 英文搜索：优先使用 lunr（性能更好）
+    if (isChineseSearch) {
+      // 中文搜索：直接使用简单搜索
+      menuResults = simpleSearch(searchData.value, keyword);
+    } else if (searchIndex.value) {
+      // 英文搜索：使用 lunr
+      try {
+        // 使用 lunr 进行搜索
+        const lunrResults = searchWithLunr(keyword);
+
+        // 将 lunr 搜索结果映射回原始的 SearchDataItem
+        menuResults = mapResultsToItems(lunrResults, dataMap.value);
+
+        // 如果 lunr 没有结果，降级到简单搜索（兜底）
+        if (menuResults.length === 0) {
+          menuResults = simpleSearch(searchData.value, keyword);
+        }
+      } catch (error) {
+        menuResults = simpleSearch(searchData.value, keyword);
+      }
+    } else {
+      // 索引不可用时使用简单搜索
+      menuResults = simpleSearch(searchData.value, keyword);
+    }
 
     // 搜索文档（异步）
     // 通过全局函数获取文档搜索服务
     const getDocsSearchService = (window as any).__APP_GET_DOCS_SEARCH_SERVICE__;
-    const docResults = getDocsSearchService 
+    const docResults = getDocsSearchService
       ? await getDocsSearchService(lowerKeyword)
       : [];
 
     // 合并结果并添加全局索引
+    // 注意：lunr 搜索结果已经按相关性排序，不需要再次排序
     const allResults = [...menuResults, ...docResults];
     searchResults.value = allResults.map((item, index) => ({ ...item, globalIndex: index }));
   } catch (_error) {
-    console.error('[GlobalSearch] Search failed:', _error);
-    // 搜索失败时仍然显示菜单结果
-    const menuResults = searchData.value
-      .filter(item =>
-        item.title.toLowerCase().includes(lowerKeyword) ||
-        (item.breadcrumb && item.breadcrumb.toLowerCase().includes(lowerKeyword))
-      );
+    // 搜索失败时仍然显示菜单结果（使用简单搜索）
+    const menuResults = simpleSearch(searchData.value, keyword);
     searchResults.value = menuResults.map((item, index) => ({ ...item, globalIndex: index }));
   } finally {
     isSearching.value = false;
@@ -419,6 +702,22 @@ const openModal = () => {
   isModalOpen.value = true;
   selectedIndex.value = 0;
   searchKeyword.value = '';
+
+  // 打开搜索弹窗时，尝试注册所有应用的菜单（确保菜单已加载）
+  if (typeof window !== 'undefined') {
+    const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
+    if (typeof registerMenusFn === 'function') {
+      const allApps = ['admin', 'system', 'logistics', 'engineering', 'quality', 'production', 'finance', 'monitor', 'docs'];
+      for (const app of allApps) {
+        try {
+          registerMenusFn(app);
+        } catch (error) {
+          // 静默失败
+        }
+      }
+    }
+  }
+
   nextTick(() => {
     inputRef.value?.focus();
   });
@@ -497,12 +796,37 @@ const handleDocNavigation = (doc: DocSearchResult) => {
   }
 };
 
-// 高亮关键词
+// 高亮关键词（同时处理国际化key的翻译）
 const highlightKeyword = (text: string) => {
-  if (!searchKeyword.value.trim()) return text;
+  // 如果文本看起来像国际化key，尝试翻译
+  let displayText = text;
+  if (text && (text.includes('.') || text.startsWith('menu.'))) {
+    try {
+      const translated = t(text);
+      if (translated && translated !== text) {
+        displayText = translated;
+      } else if (text.startsWith('menu.')) {
+        // 尝试去掉 menu. 前缀
+        const keyWithoutPrefix = text.replace(/^menu\./, '');
+        try {
+          const retryTranslated = t(keyWithoutPrefix);
+          if (retryTranslated && retryTranslated !== keyWithoutPrefix) {
+            displayText = retryTranslated;
+          }
+        } catch {
+          // 忽略错误
+        }
+      }
+    } catch {
+      // 忽略错误，使用原始文本
+    }
+  }
+
+  // 高亮关键词
+  if (!searchKeyword.value.trim()) return displayText;
   const keyword = searchKeyword.value.trim();
   const regex = new RegExp(`(${keyword})`, 'gi');
-  return text.replace(regex, '<mark>$1</mark>');
+  return displayText.replace(regex, '<mark>$1</mark>');
 };
 
 // 添加到最近搜索
@@ -819,11 +1143,6 @@ onUnmounted(() => {
       color: var(--el-color-primary);
     }
 
-    // 不改变整个标题的颜色，让 mark 保持原样
-    // .result-hit__title {
-    //   color: var(--el-color-primary);
-    // }
-
     .result-hit__action {
       color: var(--el-color-primary);
     }
@@ -903,9 +1222,6 @@ onUnmounted(() => {
     }
   }
 
-  &__select-icon {
-    // 进入箭头图标
-  }
 }
 
 /* 空状态 */

@@ -237,8 +237,8 @@
             label1="男性年龄分布"
             label2="女性年龄分布"
             height="16rem"
-          />
-        </div>
+        />
+      </div>
       </ElCol>
       </ElRow>
     </div>
@@ -513,7 +513,7 @@ const dualBarXAxis = ref<string[]>([
 
     &::-webkit-scrollbar-track {
       background: transparent;
-    }
+  }
 
     &::-webkit-scrollbar-thumb {
       background: var(--el-border-color);
@@ -538,7 +538,7 @@ const dualBarXAxis = ref<string[]>([
       span {
         font-size: 16px;
         font-weight: 500;
-        color: var(--el-text-color-primary);
+      color: var(--el-text-color-primary);
       }
     }
 

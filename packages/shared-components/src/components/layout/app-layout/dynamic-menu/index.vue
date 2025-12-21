@@ -8,8 +8,8 @@
     :collapse-transition="false"
     :unique-opened="uniqueOpened"
     :class="[menuThemeClass, 'sidebar__menu']"
-    :text-color="menuThemeConfig.textColor"
-    :active-text-color="menuThemeConfig.textActiveColor"
+    :text-color="menuThemeConfig?.textColor"
+    :active-text-color="menuThemeConfig?.textActiveColor"
     @select="handleMenuSelect"
   >
     <!-- 使用配置文件动态渲染菜单 -->
@@ -626,12 +626,16 @@ const updateMenuCSSVariables = (newConfig: typeof menuThemeConfig.value) => {
 watch(
   () => menuThemeConfig.value,
   (newConfig) => {
+    // 确保 newConfig 存在且有效
+    if (!newConfig || !newConfig.background) {
+      return;
+    }
     // 使用 nextTick 确保 DOM 更新完成后再强制更新 CSS 变量
     nextTick(() => {
       updateMenuCSSVariables(newConfig);
     });
   },
-  { immediate: true, deep: true }
+  { immediate: false, deep: true }
 );
 
 // 监听 HTML dark 类变化，确保在主题切换时重新设置 CSS 变量
@@ -640,7 +644,10 @@ watch(
   () => document.documentElement.classList.contains('dark'),
   () => {
     nextTick(() => {
+      // 确保 menuThemeConfig 已初始化
+      if (menuThemeConfig.value && menuThemeConfig.value.background) {
       updateMenuCSSVariables(menuThemeConfig.value);
+      }
     });
   }
 );
