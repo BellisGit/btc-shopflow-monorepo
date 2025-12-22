@@ -43,6 +43,9 @@ export function getActiveApp(pathname: string): string {
   if (pathname.startsWith('/production')) return 'production';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/docs')) return 'docs';
+  if (pathname.startsWith('/operations')) return 'operations';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/personnel')) return 'personnel';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }

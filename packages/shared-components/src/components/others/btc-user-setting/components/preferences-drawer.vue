@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import SettingHeader from './shared/SettingHeader.vue';
 import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
@@ -80,7 +80,7 @@ const visible = computed({
 });
 
 const drawerRef = ref<HTMLElement | null>(null);
-const teleportTarget = ref<string>('body');
+const teleportTarget = ref<string | HTMLElement>('body');
 
 const closeDrawer = () => {
   visible.value = false;
@@ -90,8 +90,26 @@ const handleGlobalClick = (event: MouseEvent) => {
   if (!visible.value) {
     return;
   }
+
   const drawerEl = drawerRef.value;
-  if (drawerEl && !drawerEl.contains(event.target as Node)) {
+  if (!drawerEl) {
+    return;
+  }
+
+  // 检查点击是否在抽屉内部
+  const isClickInside = drawerEl.contains(event.target as Node);
+
+  // 检查点击是否来自偏好设置按钮（避免点击按钮时立即关闭）
+  const target = event.target as HTMLElement;
+  const isFromButton = target.closest('.btc-user-setting-toolbar') ||
+                       target.closest('.btc-icon-button') ||
+                       target.closest('[data-preference-button]');
+
+  if (isFromButton) {
+    return;
+  }
+
+  if (!isClickInside) {
     closeDrawer();
   }
 };
@@ -105,26 +123,48 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
-onMounted(() => {
+const resolveTeleportTarget = (): string | HTMLElement => {
   // 关键：优先挂载到 layout-app 容器中，避免 qiankun 样式隔离导致样式丢失
+  // 使用 nextTick 确保 DOM 已经准备好
   try {
     if (typeof document !== 'undefined') {
-      if (document.querySelector('#layout-app')) {
-        teleportTarget.value = '#layout-app';
-      } else if (document.querySelector('#app')) {
-        teleportTarget.value = '#app';
+      const layoutApp = document.querySelector('#layout-app');
+      if (layoutApp) {
+        return layoutApp as HTMLElement;
+      }
+      const app = document.querySelector('#app');
+      if (app) {
+        return app as HTMLElement;
+      }
+      // 确保 body 存在
+      if (document.body) {
+        return 'body';
       }
     }
-  } catch {
-    teleportTarget.value = 'body';
+  } catch (error) {
+    // 静默失败，回退到 body
   }
+  // 默认回退到 body
+  return 'body';
+};
 
-  document.addEventListener('click', handleGlobalClick);
-  document.addEventListener('keydown', handleKeydown);
+onMounted(() => {
+  // 使用 nextTick 确保 DOM 已经准备好，避免 teleport 目标不存在导致错误
+  nextTick(() => {
+    const target = resolveTeleportTarget();
+    teleportTarget.value = target;
+
+    // 延迟添加点击监听器，避免打开抽屉时的点击事件立即触发关闭
+    // 使用 setTimeout 确保点击事件已经处理完毕
+    setTimeout(() => {
+      document.addEventListener('click', handleGlobalClick, true); // 使用捕获阶段
+      document.addEventListener('keydown', handleKeydown);
+    }, 100);
+  });
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleGlobalClick);
+  document.removeEventListener('click', handleGlobalClick, true);
   document.removeEventListener('keydown', handleKeydown);
 });
 </script>

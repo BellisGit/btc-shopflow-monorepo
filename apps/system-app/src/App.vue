@@ -1,5 +1,7 @@
 <template>
   <div class="system-app">
+    <!-- 关键：DevTools 放在 router-view 外层，确保路由切换时不卸载 -->
+    <BtcDevTools />
     <router-view v-slot="{ Component, route }">
       <!-- 关键：根据路由的 noLayout 标记决定是否使用 key -->
       <!-- 如果路由标记为 noLayout（如登录页），使用 key 强制重新创建组件 -->
@@ -19,6 +21,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { initEpsData } from '@btc/shared-core';
+import { BtcDevTools } from '@btc/shared-components';
 import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
 
 import epsData from 'virtual:eps';

@@ -84,8 +84,40 @@ const crud = useCrud({
   ...props.options,
 });
 
+// 关键：确保 crud 实例有效
+if (!crud) {
+  const error = new Error('[BtcCrud] useCrud returned undefined or null');
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+    service: props.service,
+    options: props.options,
+    timestamp: new Date().toISOString(),
+  });
+  throw error;
+}
+
+// 确保 crud.handleAdd 是函数
+if (typeof crud.handleAdd !== 'function') {
+  const error = new Error('[BtcCrud] crud.handleAdd is not a function');
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+    crud,
+    handleAdd: crud.handleAdd,
+    crudKeys: Object.keys(crud),
+    timestamp: new Date().toISOString(),
+  });
+  throw error;
+}
+
 // 提供给子组件
 provide('btc-crud', crud);
+
+// 开发环境下验证 provide 是否成功
+if (import.meta.env.DEV) {
+  console.log('[BtcCrud] provide btc-crud context:', {
+    hasCrud: !!crud,
+    hasHandleAdd: typeof crud.handleAdd === 'function',
+    crudKeys: Object.keys(crud),
+  });
+}
 
 // 检测分页组件的存在
 function checkPagination() {

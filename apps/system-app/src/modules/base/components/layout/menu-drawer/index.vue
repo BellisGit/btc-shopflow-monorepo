@@ -298,6 +298,24 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
     entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
+  'OPERATIONS': {
+    icon: 'monitor',
+    color: '#52c41a',
+    entry: getAppEntry('operations'),
+    activeRule: '/operations',
+  },
+  'DASHBOARD': {
+    icon: 'trend',
+    color: '#ff6b9d',
+    entry: getAppEntry('dashboard'),
+    activeRule: '/dashboard',
+  },
+  'PERSONNEL': {
+    icon: 'team',
+    color: '#ffc107',
+    entry: getAppEntry('personnel'),
+    activeRule: '/personnel',
+  },
 };
 
 const applications = ref<MicroApp[]>([]);
@@ -331,6 +349,8 @@ const domainCodeToI18nKey: Record<string, string> = {
   'LOGISTICS': 'domain.type.logistics',
   'FINANCE': 'domain.type.finance',
   'OPERATIONS': 'domain.type.operations',
+  'DASHBOARD': 'domain.type.dashboard',
+  'PERSONNEL': 'domain.type.personnel',
 };
 
 // 获取域显示名称
@@ -340,21 +360,23 @@ const getDomainDisplayName = (app: MicroApp) => {
     return t(`micro_app.${app.name}.title`);
   }
 
-  // 获取域代码（从应用名称或域数据中）
-  let domainCode: string;
-
   // 从域数据映射中查找
   const domain = domainDataMap.value.get(app.name.toUpperCase());
-  if (domain) {
-    domainCode = domain.domainCode || app.name.toUpperCase();
-  } else {
-    domainCode = app.name.toUpperCase();
+
+  // 优先使用后端返回的 domainType
+  if (domain && domain.domainType) {
+    return domain.domainType;
   }
 
-  // 使用国际化映射
+  // 如果后端没有返回 domainType，使用国际化映射
+  const domainCode = domain?.domainCode || app.name.toUpperCase();
   const i18nKey = domainCodeToI18nKey[domainCode];
   if (i18nKey) {
-    return t(i18nKey);
+    const i18nValue = t(i18nKey);
+    // 如果国际化值存在且不是 key 本身，则使用国际化值
+    if (i18nValue && i18nValue !== i18nKey) {
+      return i18nValue;
+    }
   }
 
   // 兜底使用国际化配置
@@ -406,6 +428,9 @@ const loadApplications = async () => {
         // 或者使用 name 作为 key
         const domainCode = domain.domainCode ||
           (domain.name === '系统域' || domain.name === 'System Domain' ? 'SYSTEM' :
+           domain.name === '运维域' ? 'OPERATIONS' :
+           domain.name === '看板域' ? 'DASHBOARD' :
+           domain.name === '人事域' ? 'PERSONNEL' :
            domain.name === '管理域' || domain.name === 'Admin Domain' ? 'ADMIN' :
            domain.name === '品质域' || domain.name === 'Quality Domain' ? 'QUALITY' :
            domain.name === '工程域' || domain.name === 'Engineering Domain' ? 'ENGINEERING' :

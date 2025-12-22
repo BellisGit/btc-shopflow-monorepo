@@ -7,6 +7,8 @@ import productionManifestJson from "./manifests/production.json" with { type: "j
 import financeManifestJson from "./manifests/finance.json" with { type: "json" };
 import operationsManifestJson from "./manifests/operations.json" with { type: "json" };
 import docsManifestJson from "./manifests/docs.json" with { type: "json" };
+import dashboardManifestJson from "./manifests/dashboard.json" with { type: "json" };
+import personnelManifestJson from "./manifests/personnel.json" with { type: "json" };
 
 export interface SubAppManifestRoute {
   path: string;
@@ -220,4 +222,26 @@ registerManifest("docs", {
   routes: docsManifestJson.routes ?? [],
   menus: docsManifestJson.menus ?? [],
   raw: docsManifestJson,
+});
+
+registerManifest("dashboard", {
+  app: {
+    id: dashboardManifestJson.app?.id ?? "dashboard",
+    basePath: dashboardManifestJson.app?.basePath ?? "/dashboard",
+    nameKey: dashboardManifestJson.app?.nameKey,
+  },
+  routes: dashboardManifestJson.routes ?? [],
+  menus: dashboardManifestJson.menus ?? [],
+  raw: dashboardManifestJson,
+});
+
+registerManifest("personnel", {
+  app: {
+    id: personnelManifestJson.app?.id ?? "personnel",
+    basePath: personnelManifestJson.app?.basePath ?? "/personnel",
+    nameKey: personnelManifestJson.app?.nameKey,
+  },
+  routes: personnelManifestJson.routes ?? [],
+  menus: personnelManifestJson.menus ?? [],
+  raw: personnelManifestJson,
 });

@@ -56,8 +56,8 @@ const getEnvironmentType = (): EnvironmentType => {
  */
 const getAppEntry = (appName: string): string => {
   const envType = getEnvironmentType();
-  // docs-site-app 的特殊处理：appName 是 'docs'，但配置名称是 'docs-site-app'
-  const configAppName = appName === 'docs' ? 'docs-site-app' : `${appName}-app`;
+  // docs-app 的特殊处理：appName 是 'docs'，但配置名称是 'docs-app'
+  const configAppName = appName === 'docs' ? 'docs-app' : `${appName}-app`;
   const appConfig = getAppConfig(configAppName);
 
   if (!appConfig) {
@@ -101,6 +101,8 @@ const subdomainToPathMap: Record<string, string> = {
   'production.bellis.com.cn': '/production',
   'engineering.bellis.com.cn': '/engineering',
   'finance.bellis.com.cn': '/finance',
+  'dashboard.bellis.com.cn': '/dashboard',
+  'personnel.bellis.com.cn': '/personnel',
 };
 
 /**
@@ -120,6 +122,8 @@ const hostnameToAppMap: Record<string, string> = {
   'production.bellis.com.cn': 'production',
   'engineering.bellis.com.cn': 'engineering',
   'finance.bellis.com.cn': 'finance',
+  'dashboard.bellis.com.cn': 'dashboard',
+  'personnel.bellis.com.cn': 'personnel',
 };
 
 /**
@@ -250,6 +254,40 @@ export const microApps: MicroAppConfig[] = [
     activeRule: (location) => {
       // 文档应用通过 /docs 路径访问
       if (location.pathname.startsWith('/docs')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'dashboard',
+    entry: getAppEntry('dashboard'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'dashboard') {
+        return true;
+      }
+      // 图表应用通过 /dashboard 路径访问
+      if (location.pathname.startsWith('/dashboard')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'personnel',
+    entry: getAppEntry('personnel'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'personnel') {
+        return true;
+      }
+      // 人事应用通过 /personnel 路径访问
+      if (location.pathname.startsWith('/personnel')) {
         return true;
       }
       return false;

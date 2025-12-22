@@ -62,7 +62,7 @@ function formatResultRow(item: any): any[] {
     item.sysStSmValue || 0,
     // SysproTotal (需要计算，应该是所有sys value的总和)
     (item.sysFgValue || 0) + (item.sysWfFgValue || 0) + (item.sysRfgValue || 0) + (item.sysNgValue || 0) + (item.sysNsValue || 0) + (item.sysQcValue || 0) + (item.sysStValue || 0) + (item.sysWfValue || 0) + (item.sysIqcValue || 0) + (item.sysRwfValue || 0) + (item.sysStSmValue || 0),
-    '', '', // 2个空列（在SysproTotal和BTC_FG之间）
+    '', // 空列（在SysproTotal和BTC_FG之间）
     // Actual Value (按照用户提供的顺序：BTC_FG, BTC_WF_FG, BTC_RFG, BTC_NG, BTC_NS, BTC_QC, BTC_ST, BTC_WF, BTC_IQC, BTC_RWF, BTC_ST_SM, BTC_Total)
     item.btcFgValue || 0,
     item.btcWfFgValue || 0,
@@ -76,7 +76,7 @@ function formatResultRow(item: any): any[] {
     item.btcRwfValue || 0,
     item.btcStSmValue || 0,
     item.btcTotalValue || 0,
-    '', '', // 2个空列（在BTC_Total和第二个FG之间）
+    '', // 空列（在BTC_Total和第二个FG之间）
     // Value Var. (按照用户提供的顺序：FG, WF_FG, RFG, NG, NS, QC, ST, WF, IQC, RWF, ST_SM, Total)
     item.fgVar || 0,
     item.wfFgVar || 0,
@@ -115,10 +115,10 @@ function createResultSheet(dataList: any[], XLSX: any) {
     'FG', 'WF_FG', 'RFG', 'NG', 'NS', 'QC', 'ST', 'WF', 'IQC', 'RWF', 'ST_SM',
     // SysproTotal
     'SysproTotal',
-    '', '', // 2个空列（在SysproTotal和BTC_FG之间）
+    '', // 空列（在SysproTotal和BTC_FG之间）
     // Actual Value (按照用户提供的顺序)
     'BTC_FG', 'BTC_WF_FG', 'BTC_RFG', 'BTC_NG', 'BTC_NS', 'BTC_QC', 'BTC_ST', 'BTC_WF', 'BTC_IQC', 'BTC_RWF', 'BTC_ST_SM', 'BTC_Total',
-    '', '', // 2个空列（在BTC_Total和第二个FG之间）
+    '', // 空列（在BTC_Total和第二个FG之间）
     // Value Var. (按照用户提供的顺序)
     'FG', 'WF_FG', 'RFG', 'NG', 'NS', 'QC', 'ST', 'WF', 'IQC', 'RWF', 'ST_SM', 'Total'
   ];
@@ -152,18 +152,16 @@ function createResultSheet(dataList: any[], XLSX: any) {
   }
   // SysproTotal (列40)
   header1.push('');
-  // 2个空列（列41-42）
+  // 空列（列41）
   header1.push('');
-  header1.push('');
-  // Actual Value (合并列43-54)
+  // Actual Value (合并列42-53)
   header1.push('Actual Value');
   for (let i = 1; i < 12; i++) {
     header1.push('');
   }
-  // 2个空列（列55-56）
+  // 空列（列54）
   header1.push('');
-  header1.push('');
-  // Value Var. (合并列57-68)
+  // Value Var. (合并列55-66)
   header1.push('Value Var.');
   for (let i = 1; i < 12; i++) {
     header1.push('');
@@ -184,9 +182,9 @@ function createResultSheet(dataList: any[], XLSX: any) {
     { wch: 15 }, // VarianceCost
     ...Array(11).fill({ wch: 15 }), // Syspro value (11列)
     { wch: 15 }, // SysproTotal
-    { wch: 3 }, { wch: 3 }, // 2个空列
+    { wch: 3 },  // 空列
     ...Array(12).fill({ wch: 15 }), // Actual Value (12列)
-    { wch: 3 }, { wch: 3 }, // 2个空列
+    { wch: 3 },  // 空列
     ...Array(12).fill({ wch: 15 }), // Value Var. (12列)
   ];
   ws['!cols'] = colWidths;
@@ -199,10 +197,10 @@ function createResultSheet(dataList: any[], XLSX: any) {
   ws['!merges'].push({ s: { r: 0, c: 14 }, e: { r: 0, c: 25 } });
   // Syspro value (合并列29-39，行0)
   ws['!merges'].push({ s: { r: 0, c: 29 }, e: { r: 0, c: 39 } });
-  // Actual Value (合并列43-54，行0)
-  ws['!merges'].push({ s: { r: 0, c: 43 }, e: { r: 0, c: 54 } });
-  // Value Var. (合并列57-68，行0)
-  ws['!merges'].push({ s: { r: 0, c: 57 }, e: { r: 0, c: 68 } });
+  // Actual Value (合并列42-53，行0)
+  ws['!merges'].push({ s: { r: 0, c: 42 }, e: { r: 0, c: 53 } });
+  // Value Var. (合并列55-66，行0)
+  ws['!merges'].push({ s: { r: 0, c: 55 }, e: { r: 0, c: 66 } });
 
   return ws;
 }

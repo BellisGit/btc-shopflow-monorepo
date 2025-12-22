@@ -79,6 +79,10 @@ export async function bootstrap(app: App) {
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
 
+  // 注意：DevTools 不再在这里挂载
+  // 改为统一在 layout-app 中挂载，避免重复挂载
+  // layout-app 是主应用，所有子应用都会通过它加载，因此只需要在 layout-app 中挂载一次即可
+
   // 全局捕获未处理的Promise rejection，防止控制台打印错误
   window.addEventListener('unhandledrejection', (event) => {
     // 检查是否是HTTP错误

@@ -11,7 +11,7 @@
 | production-app | 8084 | 8084 | `apps/production-app/vite.config.ts` | 生产应用 |
 | engineering-app | 8085 | 8085 | `apps/engineering-app/vite.config.ts` | 工程应用 |
 | finance-app | 8086 | 8086 | `apps/finance-app/vite.config.ts` | 财务应用 |
-| docs-site-app | 8087 | 8088 | `apps/docs-site-app/.vitepress/config.ts` | 文档站点（VitePress） |
+| docs-app | 8087 | 8088 | `apps/docs-app/.vitepress/config.ts` | 文档站点（VitePress） |
 | mobile-app | 8091 | - | `apps/mobile-app/vite.config.ts` | 移动应用 |
 
 ## 端口冲突检查
@@ -25,8 +25,8 @@
 - 8084: production-app
 - 8085: engineering-app
 - 8086: finance-app
-- 8087: docs-site-app (主端口)
-- 8088: docs-site-app (HMR端口)
+- 8087: docs-app (主端口)
+- 8088: docs-app (HMR端口)
 - 8091: mobile-app
 
 ### ⚠️ 注意事项
@@ -35,13 +35,13 @@
    - 所有应用的端口都统一配置在各自的 `vite.config.ts` 中
    - `package.json` 中的 `dev` 脚本不再硬编码端口参数，使用配置文件中的端口
 
-2. **docs-site-app 使用两个端口**：
+2. **docs-app 使用两个端口**：
    - 主服务器端口: 8087
    - HMR 端口: 8088 (避免与主端口冲突)
 
 3. **端口范围**：
    - 应用端口范围: 8080-8087, 8091
-   - HMR 端口: 与主端口相同（docs-site-app 除外，使用 8088）
+   - HMR 端口: 与主端口相同（docs-app 除外，使用 8088）
 
 ## Docker 部署端口映射
 
@@ -53,7 +53,7 @@
 - production-app: 8084:80
 - engineering-app: 8085:80
 - finance-app: 8086:80
-- docs-site-app: 8087:80
+- docs-app: 8087:80
 - mobile-app: 8091:80
 
 ✅ **已与开发环境端口完全一致**

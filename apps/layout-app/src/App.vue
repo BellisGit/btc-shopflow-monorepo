@@ -1,5 +1,9 @@
 <template>
   <div id="layout-app">
+    <!-- 关键：DevTools 放在 AppLayout 外层，确保路由切换时不卸载 -->
+    <!-- 开发环境：所有应用都显示（通过 layout-app 显示给子应用） -->
+    <!-- 生产环境：也通过 layout-app 显示 -->
+    <BtcDevTools />
     <AppLayout />
   </div>
 </template>
@@ -7,7 +11,7 @@
 <script setup lang="ts">
 /**
  * layout-app: 子应用的布局容器应用
- * 
+ *
  * 作用：
  * 1. 当通过子域名直接访问时（如 logistics.bellis.com.cn），提供主应用布局
  * 2. 根据域名判断并加载对应的子应用
@@ -15,6 +19,7 @@
  */
 // 直接从组件路径导入，避免通过 index.ts 重新导出导致的循环依赖警告
 import AppLayout from '@btc/shared-components/components/layout/app-layout/index.vue';
+import { BtcDevTools } from '@btc/shared-components';
 </script>
 
 <style>

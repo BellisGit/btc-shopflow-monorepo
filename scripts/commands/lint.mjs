@@ -34,7 +34,7 @@ if (!appName) {
     monitor: 'apps/monitor-app/src/**/*.{ts,tsx,vue}',
     layout: 'apps/layout-app/src/**/*.{ts,tsx,vue}',
     mobile: 'apps/mobile-app/src/**/*.{ts,tsx,vue}',
-    docs: 'apps/docs-site-app/src/**/*.{ts,tsx,vue}',
+    docs: 'apps/docs-app/src/**/*.{ts,tsx,vue}',
   };
   
   const patterns = [

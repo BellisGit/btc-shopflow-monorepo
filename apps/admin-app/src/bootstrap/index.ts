@@ -1,7 +1,11 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
-// 注意：样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
-// 这里不再重复导入，避免样式重复
+// 样式文件在模块加载时同步导入
+// 关键：显式导入 shared-components 样式，确保 BtcDialog 等组件的样式在生产环境下正确加载
+// 虽然 global.scss 中也通过 @use 导入了，但在 bootstrap 中显式导入可以确保样式加载顺序正确
+import '@btc/shared-components/styles/index.scss';
+// 注意：其他样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
+// 这里只导入 shared-components 样式，避免样式重复
 
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';

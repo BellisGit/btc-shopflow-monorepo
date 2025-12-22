@@ -12,7 +12,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, rmSync, cpSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, rmSync, cpSync, readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -31,7 +31,9 @@ const APP_DOMAIN_MAP = {
   'finance-app': 'finance.bellis.com.cn',
   'layout-app': 'layout.bellis.com.cn',
   'operations-app': 'operations.bellis.com.cn',
-  'docs-site-app': 'docs.bellis.com.cn',
+  'dashboard-app': 'dashboard.bellis.com.cn',
+  'personnel-app': 'personnel.bellis.com.cn',
+  'docs-app': 'docs.bellis.com.cn',
 };
 
 // 应用构建顺序（system-app 应该先构建，因为其他应用可能依赖它）
@@ -45,7 +47,9 @@ const BUILD_ORDER = [
   'engineering-app',
   'finance-app',
   'operations-app',
-  'docs-site-app',
+  'dashboard-app',
+  'personnel-app',
+  'docs-app',
 ];
 
 // 根目录的 dist 文件夹
@@ -205,6 +209,24 @@ function prepareDistDir() {
 }
 
 /**
+ * 清理构建过程中生成的临时文件
+ */
+function cleanBuildTempFiles() {
+  console.log('🧹 清理构建临时文件...');
+  const buildTimestampFile = join(rootDir, '.build-timestamp');
+  if (existsSync(buildTimestampFile)) {
+    try {
+      unlinkSync(buildTimestampFile);
+      console.log('  ✅ 已清理 .build-timestamp 临时文件\n');
+    } catch (error) {
+      console.warn('  ⚠️  清理 .build-timestamp 失败:', error.message, '\n');
+    }
+  } else {
+    console.log('  ℹ️  .build-timestamp 文件不存在\n');
+  }
+}
+
+/**
  * 构建单个应用
  */
 function buildApp(appName) {
@@ -219,8 +241,8 @@ function buildApp(appName) {
         env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
       });
     
-    // docs-site-app 特殊处理：VitePress 构建产物在 .vitepress/dist，需要复制到 dist
-    if (appName === 'docs-site-app') {
+    // docs-app 特殊处理：VitePress 构建产物在 .vitepress/dist，需要复制到 dist
+    if (appName === 'docs-app') {
       const vitepressDistDir = join(rootDir, 'apps', appName, '.vitepress', 'dist');
       const targetDistDir = join(rootDir, 'apps', appName, 'dist');
       
@@ -1176,8 +1198,8 @@ function verifyAndAutoFixApp(appName) {
     return { valid: false, fixed: false, errors: ['构建产物目录不存在'] };
   }
 
-  // docs-site-app 使用 VitePress，构建产物结构不同，跳过复杂的验证
-  if (appName === 'docs-site-app') {
+  // docs-app 使用 VitePress，构建产物结构不同，跳过复杂的验证
+  if (appName === 'docs-app') {
     console.log(`  🔍 开始验证 ${appName}...`);
     // 只做基本验证：检查 dist 目录是否存在且不为空
     const files = readdirSync(appDistDir);
@@ -1374,6 +1396,8 @@ function copySingleAppToDist(appName) {
   const success = copyAppDist(appName, domain);
   if (success) {
     console.log(`✅ ${appName} 已复制到 dist/${domain}`);
+    // 清理构建临时文件
+    cleanBuildTempFiles();
   } else {
     console.error(`❌ ${appName} 复制失败`);
     process.exit(1);
@@ -1502,6 +1526,9 @@ function main() {
   }
 
   console.log('✅ 所有应用构建、验证和复制完成！\n');
+
+  // 清理构建过程中生成的临时文件
+  cleanBuildTempFiles();
 }
 
 // 运行主函数

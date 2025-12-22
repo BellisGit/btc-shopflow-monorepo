@@ -2,27 +2,30 @@
 engineering-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/20 21:32:45
-总错误数: 9
+生成时间: 2025/12/22 10:16:44
+总错误数: 12
 
 按错误代码分类:
 ------------------------------------------------------------
-  TS6307    : 9 个
+  TS6307    : 12 个
 
 按文件分类:
 ------------------------------------------------------------
 
 文件: ../../configs/app-scanner.ts
-  错误数: 9
+  错误数: 12
     [TS6307] 行 11:30 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/admin-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 12:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 13:32 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 14:35 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/production-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 16:32 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+    [TS6307] 行 17:35 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 18:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 19:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 20:33 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-site-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+    [TS6307] 行 20:29 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
     [TS6307] 行 21:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+    [TS6307] 行 22:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+    [TS6307] 行 23:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 
 详细错误列表:
 ------------------------------------------------------------
@@ -59,27 +62,45 @@ engineering-app - TypeScript 类型错误报告
 
 错误 #6
   文件: ../../configs/app-scanner.ts
+  位置: 17:35
+  代码: TS6307
+  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+
+错误 #7
+  文件: ../../configs/app-scanner.ts
   位置: 18:31
   代码: TS6307
   消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 
-错误 #7
+错误 #8
   文件: ../../configs/app-scanner.ts
   位置: 19:31
   代码: TS6307
   消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 
-错误 #8
-  文件: ../../configs/app-scanner.ts
-  位置: 20:33
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-site-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-
 错误 #9
+  文件: ../../configs/app-scanner.ts
+  位置: 20:29
+  代码: TS6307
+  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+
+错误 #10
   文件: ../../configs/app-scanner.ts
   位置: 21:31
   代码: TS6307
   消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+
+错误 #11
+  文件: ../../configs/app-scanner.ts
+  位置: 22:34
+  代码: TS6307
+  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+
+错误 #12
+  文件: ../../configs/app-scanner.ts
+  位置: 23:34
+  代码: TS6307
+  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 
 ============================================================
 完整输出:
@@ -94,10 +115,13 @@ engineering-app - TypeScript 类型错误报告
 ../../configs/app-scanner.ts(13,32): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 ../../configs/app-scanner.ts(14,35): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/production-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 ../../configs/app-scanner.ts(16,32): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+../../configs/app-scanner.ts(17,35): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 ../../configs/app-scanner.ts(18,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 ../../configs/app-scanner.ts(19,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(20,33): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-site-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+../../configs/app-scanner.ts(20,29): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 ../../configs/app-scanner.ts(21,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+../../configs/app-scanner.ts(22,34): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+../../configs/app-scanner.ts(23,34): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
 C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\engineering-app:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  engineering-app@1.0.0 type-check: `tsc --noEmit --skipLibCheck`
 Exit status 2

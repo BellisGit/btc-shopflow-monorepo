@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-management">
     <!-- 策略列表 -->
     <BtcCrud ref="crudRef" :service="wrappedService" :on-before-refresh="onBeforeRefresh" class="strategy-crud">
@@ -197,7 +197,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
 import type { TableColumn, FormItem } from '@btc/shared-components';

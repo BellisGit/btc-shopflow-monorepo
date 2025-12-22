@@ -40,7 +40,7 @@
 - 分支与合并：主分支为 `develop`（此仓库以 `develop` 为默认分支），生产分支为 `main`，发布分支为 `release/*`。
 
 ## 有助于定位代码的目录或文件（快速 lookup）
-- 架构与说明：`README.md`, `implementation-docs/`，`apps/docs-site-app/`
+- 架构与说明：`README.md`, `implementation-docs/`，`apps/docs-app/`
 - 全局脚本：`scripts/`（构建/部署/verify/test）
 - CI 工作流：`.github/workflows/`（部署流程和 repository_dispatch handler）
 - 包配置：`packages/*`（`shared-components`, `shared-core`, `shared-utils`, `vite-plugin`）

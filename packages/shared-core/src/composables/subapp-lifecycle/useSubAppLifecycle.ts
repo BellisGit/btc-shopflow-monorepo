@@ -52,6 +52,23 @@ function setupErrorHandlers(app: VueApp, appId: string): void {
       return;
     }
 
+    // 关键：CRUD 组件相关的错误不应该被静默处理
+    // 这些错误通常表示组件配置问题，需要立即修复
+    if (err instanceof Error && (
+      err.message.includes('Must be used inside') ||
+      err.message.includes('BtcAddBtn') ||
+      err.message.includes('BtcMultiDeleteBtn') ||
+      err.message.includes('BtcRefreshBtn') ||
+      err.message.includes('BtcUpsert') ||
+      err.message.includes('BtcTable') ||
+      err.message.includes('BtcPagination') ||
+      err.message.includes('BtcCrud')
+    )) {
+      // CRUD 组件错误，必须输出，帮助排查问题
+      console.error(`[${appId}-app] CRUD 组件错误（必须修复）:`, err.message, { info, instance });
+      // 继续执行，不阻止错误传播
+    }
+
     // 其他错误必须输出，否则会导致"页面空白但无报错"难以排查
     try {
       (window as any).__BTC_SUBAPP_LAST_ERROR__ = { err, info, time: Date.now() };

@@ -1,4 +1,4 @@
-﻿{
+{
   "app.title": "BTC SaaS",
   "app.name": "Bellis Workshop Management System",
   "app.slogan": "Bellis Technology: Intelligent Currency Verification, Secure Storage, Brilliance with You!",
@@ -195,6 +195,11 @@
   "inventory.ticket.print.load_failed": "Failed to load data",
   "inventory.ticket.print.content_unavailable": "Print content unavailable",
   "inventory.ticket.print.window_error": "Unable to open print window, please check browser popup settings",
+  "inventory.ticket.print.select_range": "Select Print Range",
+  "inventory.ticket.print.start_index": "Start Index",
+  "inventory.ticket.print.end_index": "End Index",
+  "inventory.ticket.print.to": "to",
+  "inventory.ticket.print.range_hint": "Total {total} records, please enter the range to print (e.g., 1-50)",
   "inventory.dataSource.domain": "Domain List",
   "inventory.dataSource.domain.selectRequired": "Please select a domain on the left first",
   "recycle.batch_restore": "Batch Restore",

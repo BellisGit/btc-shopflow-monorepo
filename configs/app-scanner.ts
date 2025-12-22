@@ -17,8 +17,10 @@ import financeAppIdentity from '../apps/finance-app/src/app';
 import operationsAppIdentity from '../apps/operations-app/src/app';
 import systemAppIdentity from '../apps/system-app/src/app';
 import layoutAppIdentity from '../apps/layout-app/src/app';
-import docsSiteAppIdentity from '../apps/docs-site-app/src/app';
+import docsAppIdentity from '../apps/docs-app/src/app';
 import mobileAppIdentity from '../apps/mobile-app/src/app';
+import dashboardAppIdentity from '../apps/dashboard-app/src/app';
+import personnelAppIdentity from '../apps/personnel-app/src/app';
 
 // 将所有应用配置组织成对象，模拟 glob 的结果
 // 注意：直接导入的默认导出就是配置对象本身，需要包装成 { default: ... } 格式
@@ -32,8 +34,10 @@ const appFiles: Record<string, { default: AppIdentity }> = {
   '../apps/operations-app/src/app': { default: operationsAppIdentity },
   '../apps/system-app/src/app': { default: systemAppIdentity },
   '../apps/layout-app/src/app': { default: layoutAppIdentity },
-  '../apps/docs-site-app/src/app': { default: docsSiteAppIdentity },
+  '../apps/docs-app/src/app': { default: docsAppIdentity },
   '../apps/mobile-app/src/app': { default: mobileAppIdentity },
+  '../apps/dashboard-app/src/app': { default: dashboardAppIdentity },
+  '../apps/personnel-app/src/app': { default: personnelAppIdentity },
 };
 
 /**
@@ -54,7 +58,7 @@ let isInitialized = false;
  */
 function extractAppName(filePath: string): string {
   // 从路径 apps/admin-app/src/app.ts 提取 admin
-  // 从路径 apps/docs-site-app/src/app.ts 提取 docs-site
+  // 从路径 apps/docs-app/src/app.ts 提取 docs
   // 匹配 apps/ 和 -app/ 之间的所有内容（包括连字符）
   const match = filePath.match(/apps\/(.+?)-app\//);
   return match ? match[1] : '';

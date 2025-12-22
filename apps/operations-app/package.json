@@ -7,7 +7,7 @@
   "module": "src/main.ts",
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
-    "dev": "vite",
+    "dev": "vite --port 8087",
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"

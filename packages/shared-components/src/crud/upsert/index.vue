@@ -1,6 +1,7 @@
 <template>
   <BtcDialog
-    v-model="crud.upsertVisible.value"
+    :model-value="upsertVisibleValue"
+    @update:model-value="handleModelValueUpdate"
     :title="title"
     :width="width"
     :padding="dialogPadding"
@@ -67,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, h } from 'vue';
+import { inject, onMounted, onUnmounted, h, watch, computed, unref, toRef } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcDialog from '../../common/dialog/index.vue';
 import type { UpsertProps } from './types';
@@ -84,6 +85,73 @@ const crud = inject<UseCrudReturn<any>>('btc-crud');
 
 if (!crud) {
   throw new Error('[BtcUpsert] Must be used inside <BtcCrud>');
+}
+
+// 关键：直接使用 crud.upsertVisible，确保响应式追踪正确
+// 使用 toRef 确保能够正确追踪 ref 对象内部的变化
+// 这样即使值相同，Vue 也能检测到 ref 对象本身的变化
+const upsertVisibleValue = computed({
+  get: () => {
+    const value = unref(crud.upsertVisible);
+    // 生产环境日志
+    if (import.meta.env.PROD) {
+      console.log('[BtcUpsert] upsertVisibleValue getter', {
+        value,
+        isRef: crud.upsertVisible instanceof Object && 'value' in crud.upsertVisible,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return value;
+  },
+  set: (val: boolean) => {
+    // 生产环境日志
+    if (import.meta.env.PROD) {
+      console.log('[BtcUpsert] upsertVisibleValue setter', {
+        newValue: val,
+        oldValue: unref(crud.upsertVisible),
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
+      crud.upsertVisible.value = val;
+    }
+  },
+});
+
+// 关键：处理 modelValue 更新，确保能够正确传递到 crud.upsertVisible
+function handleModelValueUpdate(val: boolean) {
+  // 生产环境日志
+  if (import.meta.env.PROD) {
+    console.log('[BtcUpsert] handleModelValueUpdate', {
+      newValue: val,
+      oldValue: unref(crud.upsertVisible),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // 更新 crud.upsertVisible
+  if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
+    crud.upsertVisible.value = val;
+  }
+}
+
+// 生产环境日志：监听 upsertVisible 变化
+if (import.meta.env.PROD) {
+  watch(
+    () => crud.upsertVisible,
+    (newVal, oldVal) => {
+      const newValue = newVal?.value ?? newVal;
+      const oldValue = oldVal?.value ?? oldVal;
+      console.log('[BtcUpsert] upsertVisible 变化', {
+        oldValue,
+        newValue,
+        isRef: newVal instanceof Object && 'value' in newVal,
+        refType: typeof newVal,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    { immediate: true, deep: true }
+  );
 }
 
 // 表单数据管理
@@ -125,7 +193,8 @@ const { submitting, handleSubmit, handleCancel, handleClosed } = useFormSubmit(
 // 键盘事件处理
 const handleKeydown = (event: KeyboardEvent) => {
   // 只有在弹窗打开且不是禁用状态时才处理 Enter 键
-  if (crud.upsertVisible.value && !isDisabled.value && event.key === 'Enter') {
+  const isVisible = upsertVisibleValue.value;
+  if (isVisible && !isDisabled.value && event.key === 'Enter') {
     // 防止在文本输入框中触发（如 textarea）
     const target = event.target as HTMLElement;
     if (target.tagName === 'TEXTAREA') {

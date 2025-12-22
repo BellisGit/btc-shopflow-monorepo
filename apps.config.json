@@ -74,10 +74,10 @@
     },
     {
       "id": "docs",
-      "name": "docs-site-app",
+      "name": "docs-app",
       "displayName": "文档站点",
       "category": "tool",
-      "packageName": "docs-site-app"
+      "packageName": "docs-app"
     }
   ],
   "categories": {

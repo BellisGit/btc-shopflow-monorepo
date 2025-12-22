@@ -27,7 +27,7 @@ const pathsToClean = [
   'apps/mobile-app/node_modules/.vite',
   'apps/system-app/node_modules/.vite',
   'apps/layout-app/node_modules/.vite',
-  'apps/docs-site-app/node_modules/.vite',
+  'apps/docs-app/node_modules/.vite',
   'apps/monitor-app/node_modules/.vite',
   
   // 应用的构建输出
@@ -40,7 +40,7 @@ const pathsToClean = [
   'apps/mobile-app/dist',
   'apps/system-app/dist',
   'apps/layout-app/dist',
-  'apps/docs-site-app/dist',
+  'apps/docs-app/dist',
   'apps/monitor-app/dist',
   
   // 应用的 Vite 缓存（根目录下的 .vite）
@@ -53,7 +53,7 @@ const pathsToClean = [
   'apps/mobile-app/.vite',
   'apps/system-app/.vite',
   'apps/layout-app/.vite',
-  'apps/docs-site-app/.vite',
+  'apps/docs-app/.vite',
   'apps/monitor-app/.vite',
   
   // 包的 Vite 缓存

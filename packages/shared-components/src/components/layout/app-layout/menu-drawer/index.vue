@@ -352,6 +352,10 @@ const detectCurrentApp = () => {
       currentApp.value = 'operations';
       return;
     }
+    if (path.startsWith('/dashboard')) {
+      currentApp.value = 'dashboard';
+      return;
+    }
     if (path.startsWith('/docs')) {
       currentApp.value = 'docs';
     } else if (path.startsWith('/logistics')) {
@@ -378,6 +382,14 @@ const detectCurrentApp = () => {
   // 运维应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
   if (path.startsWith('/operations')) {
     currentApp.value = 'operations';
+    return;
+  }
+  if (path.startsWith('/dashboard')) {
+    currentApp.value = 'dashboard';
+    return;
+  }
+  if (path.startsWith('/personnel')) {
+    currentApp.value = 'personnel';
     return;
   }
   if (path.startsWith('/docs')) {
@@ -459,6 +471,24 @@ const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> =
     entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
+  'OPERATIONS': {
+    icon: 'monitor',
+    color: '#52c41a',
+    entry: getAppEntry('operations'),
+    activeRule: '/operations',
+  },
+  'DASHBOARD': {
+    icon: 'trend',
+    color: '#ff6b9d',
+    entry: getAppEntry('dashboard'),
+    activeRule: '/dashboard',
+  },
+  'PERSONNEL': {
+    icon: 'team',
+    color: '#ffc107',
+    entry: getAppEntry('personnel'),
+    activeRule: '/personnel',
+  },
 };
 
 const applications = ref<MicroApp[]>([]);
@@ -492,6 +522,8 @@ const domainCodeToI18nKey: Record<string, string> = {
   'LOGISTICS': 'domain.type.logistics',
   'FINANCE': 'domain.type.finance',
   'OPERATIONS': 'domain.type.operations',
+  'DASHBOARD': 'domain.type.dashboard',
+  'PERSONNEL': 'domain.type.personnel',
 };
 
 // 获取域显示名称
@@ -513,6 +545,10 @@ const getDomainDisplayName = (app: MicroApp) => {
         domain.name === '系统域' ||
         domain.id === '17601901464201'
       );
+    // 优先使用后端返回的 domainType
+    if (systemDomain && systemDomain.domainType) {
+      return systemDomain.domainType;
+    }
     domainCode = systemDomain?.domainCode || 'SYSTEM';
   }
   // 管理域
@@ -523,6 +559,10 @@ const getDomainDisplayName = (app: MicroApp) => {
         domain.name === '管理域' ||
         domain.id === 'SDOM-9473'
       );
+    // 优先使用后端返回的 domainType
+    if (adminDomain && adminDomain.domainType) {
+      return adminDomain.domainType;
+    }
     domainCode = adminDomain?.domainCode || 'ADMIN';
   }
   // 其他域
@@ -547,6 +587,9 @@ const getDomainDisplayName = (app: MicroApp) => {
         'quality': '品质域',
         'production': '生产域',
         'engineering': '工程域',
+        'operations': '运维域',
+        'dashboard': '看板域',
+        'personnel': '人事域',
       };
       const domainName = domainNameMap[app.name];
       if (domainName) {
@@ -555,10 +598,15 @@ const getDomainDisplayName = (app: MicroApp) => {
       }
     }
 
+    // 优先使用后端返回的 domainType
+    if (domain && domain.domainType) {
+      return domain.domainType;
+    }
+
     domainCode = domain?.domainCode || app.name.toUpperCase();
   }
 
-  // 使用国际化映射获取显示名称
+  // 如果后端没有返回 domainType，使用国际化映射获取显示名称
   const i18nKey = domainCode ? domainCodeToI18nKey[domainCode] : undefined;
   if (i18nKey) {
     const i18nValue = t(i18nKey);
@@ -625,6 +673,9 @@ const loadApplications = async () => {
            domain.name === '品质域' ? 'QUALITY' :
            domain.name === '生产域' ? 'PRODUCTION' :
            domain.name === '工程域' ? 'ENGINEERING' :
+           domain.name === '运维域' ? 'OPERATIONS' :
+           domain.name === '看板域' ? 'DASHBOARD' :
+           domain.name === '人事域' ? 'PERSONNEL' :
            domain.id || domain.name);
         if (domainCode) {
           // 使用 domainCode 作为主 key
@@ -790,7 +841,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       'production': 'production-app',
       'finance': 'finance-app',
       'mobile': 'mobile-app',
-      'docs': 'docs-site-app', // 文档应用使用 docs-site-app
+      'docs': 'docs-app', // 文档应用使用 docs-app
     };
     const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
     const appConfig = getAppConfig(mappedAppName);

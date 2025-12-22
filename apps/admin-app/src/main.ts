@@ -1,11 +1,10 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
 import 'virtual:uno.css';
-// Element Plus 样式
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 // 关键：直接导入确保构建时被正确打包，避免代码分割导致的路径问题
+// 注意：移除 Element Plus 基础样式导入，与物流应用保持一致，避免样式冲突
+// Element Plus 样式应该由共享组件库统一管理
 import '@btc/shared-components/styles/dark-theme.css';
 // 应用全局样式（global.scss 中已通过 @use 导入共享组件样式）
 // 注意：共享组件样式在 global.scss 中使用 @use 导入，确保构建时被正确合并
@@ -23,6 +22,9 @@ import {
 import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+// 注意：不再暴露 configImages 到全局，让共享组件直接使用默认配置
+// 共享组件的默认配置会从 @btc-assets 导入图片，这些图片在 layout-app 的构建产物中
+// 共享组件的 fixImagePath 函数会自动修复路径，确保在子应用中也能正确加载
 
 // 关键：在应用启动时立即设置全局错误监听器，捕获 Vue patch 过程中的 DOM 操作错误
 // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
@@ -31,6 +33,34 @@ if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
     const errorMessage = event.message || '';
     const errorStack = event.error?.stack || '';
+
+    // 关键：CRUD 组件相关的错误不应该被静默处理
+    // 这些错误通常表示组件配置问题，需要立即修复
+    if (
+      errorMessage.includes('Must be used inside') ||
+      errorMessage.includes('BtcAddBtn') ||
+      errorMessage.includes('BtcMultiDeleteBtn') ||
+      errorMessage.includes('BtcRefreshBtn') ||
+      errorMessage.includes('BtcUpsert') ||
+      errorMessage.includes('BtcTable') ||
+      errorMessage.includes('BtcPagination') ||
+      errorMessage.includes('BtcCrud') ||
+      errorStack.includes('BtcAddBtn') ||
+      errorStack.includes('BtcMultiDeleteBtn') ||
+      errorStack.includes('BtcRefreshBtn') ||
+      errorStack.includes('BtcUpsert') ||
+      errorStack.includes('BtcTable') ||
+      errorStack.includes('BtcPagination') ||
+      errorStack.includes('BtcCrud')
+    ) {
+      // CRUD 组件错误，必须输出，帮助排查问题
+      console.error('[admin-app] CRUD 组件错误（必须修复）:', errorMessage, {
+        error: event.error,
+        stack: errorStack,
+      });
+      // 不阻止错误传播，让错误正常显示
+      return false;
+    }
 
     // 检查是否是 DOM 操作相关的错误
     if (

@@ -1,0 +1,18 @@
+{
+  "app": {
+    "id": "personnel",
+    "basePath": "/personnel",
+    "nameKey": "micro_app.personnel.title"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "labelKey": "micro_app.personnel.title",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": []
+    }
+  ],
+  "menus": []
+}

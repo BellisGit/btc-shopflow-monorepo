@@ -25,7 +25,7 @@ const apps = [
   'monitor-app',
   'layout-app',
   'mobile-app',
-  'docs-site-app',
+  'docs-app',
 ];
 
 // 共享包列表（合并为一个日志文件）

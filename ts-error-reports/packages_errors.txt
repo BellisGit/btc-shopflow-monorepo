@@ -2,19 +2,107 @@
 共享包 - TypeScript 类型错误合并报告
 ============================================================
 
-生成时间: 2025/12/20 21:33:31
+生成时间: 2025/12/22 10:17:33
 涉及包数: 5
-总错误数: 0
+总错误数: 9
 
 按包统计:
 ------------------------------------------------------------
-  @btc/shared-components        : 0 个错误
+  @btc/shared-components        : 9 个错误
   @btc/shared-core              : 0 个错误
   @btc/shared-utils             : 0 个错误
   @btc/subapp-manifests         : 0 个错误
   @btc/vite-plugin              : 0 个错误
 
-✅ 所有共享包均未发现类型错误
+按错误代码分类:
+------------------------------------------------------------
+  TS2683    : 7 个
+  TS2345    : 1 个
+  TS7016    : 1 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  错误数: 8
+    [TS7016] 行 2:18 - error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+    [TS2683] 行 99:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 102:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 106:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 109:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 112:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 115:9 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+    [TS2683] 行 119:11 - error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/global-search/index.vue
+  错误数: 1
+    [TS2345] 行 396:9 - error TS2345: Argument of type 'MenuItem[] | undefined' is not assignable to parameter of type 'MenuItem[]'.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/index.vue
+  位置: 396:9
+  代码: TS2345
+  消息: error TS2345: Argument of type 'MenuItem[] | undefined' is not assignable to parameter of type 'MenuItem[]'.
+
+错误 #2
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 2:18
+  代码: TS7016
+  消息: error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+
+错误 #3
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 99:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #4
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 102:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #5
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 106:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #6
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 109:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #7
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 112:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #8
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 115:9
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+
+错误 #9
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 119:11
+  代码: TS2683
+  消息: error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
 
 ============================================================
 各包完整输出:
@@ -29,6 +117,20 @@
 > @btc/shared-components@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components
 > vue-tsc --noEmit --project tsconfig.type-check.json
 
+src/components/layout/app-layout/global-search/index.vue(396,9): error TS2345: Argument of type 'MenuItem[] | undefined' is not assignable to parameter of type 'MenuItem[]'.
+  Type 'undefined' is not assignable to type 'MenuItem[]'.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(2,18): error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/lunr` if it exists or add a new declaration (.d.ts) file containing `declare module 'lunr';`
+src/components/layout/app-layout/global-search/useSearchIndex.ts(99,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(102,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(106,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(109,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(112,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(115,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/components/layout/app-layout/global-search/useSearchIndex.ts(119,11): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @btc/shared-components@1.0.0 type-check: `vue-tsc --noEmit --project tsconfig.type-check.json`
+Exit status 2
 
 
 ============================================================

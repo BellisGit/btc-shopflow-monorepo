@@ -54,8 +54,8 @@ function findAllViteCaches() {
         description: `应用 ${appName} (.vite)`
       });
       
-      // docs-site-app 的特殊缓存
-      if (appName === 'docs-site-app') {
+      // docs-app 的特殊缓存
+      if (appName === 'docs-app') {
         // .vitepress/cache
         caches.push({
           path: join(appsDir, appName, '.vitepress', 'cache'),

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="baseline-page">
     <BtcCrud ref="crudRef" :service="baselineService">
       <BtcRow>
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { createMockCrudService } from '@utils/http';

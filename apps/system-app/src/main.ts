@@ -304,7 +304,7 @@ const startupPromise = Promise.resolve()
           // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
           const { isAuthenticated } = await import('./router/index');
           const isAuth = isAuthenticated();
-          
+
           if (!isAuth) {
             // 未认证，直接重定向到登录页，避免触发 router.push 导致组件守卫提取错误
             try {
@@ -346,31 +346,40 @@ const startupPromise = Promise.resolve()
     throw mountError;
   }
 
-    // 设置全局对象，供 DevTools 自动挂载机制使用
-    // DevTools 会通过 shared-components 的自动挂载机制自动挂载
+    // 设置全局对象，并挂载 DevTools
     (async () => {
       try {
         // 暴露 http 实例到全局，供 DevTools 使用
+        let httpInstance: any;
         try {
           const { http } = await import('./utils/http');
           if (http && typeof (window as any).__APP_HTTP__ === 'undefined') {
             (window as any).__APP_HTTP__ = http;
+            httpInstance = http;
           }
         } catch (err) {
           // http 实例可能还未加载，忽略错误
         }
 
         // 暴露 EPS list 到全局，供 DevTools 使用
+        let epsList: any[] = [];
         try {
           const epsModule = await import('./services/eps');
           if (epsModule.list && typeof (window as any).__APP_EPS_LIST__ === 'undefined') {
             (window as any).__APP_EPS_LIST__ = epsModule.list;
+            epsList = epsModule.list;
           }
         } catch (err) {
           // EPS 服务可能还未加载，忽略错误
         }
+
+        // 注意：DevTools 现在直接在 App.vue 中使用，不再需要在这里挂载
+        // 这样可以确保 DevTools 在路由切换时不会卸载
       } catch (err) {
         // 静默失败，不影响应用运行
+        if (import.meta.env.DEV) {
+          console.warn('[system-app] DevTools 相关设置失败:', err);
+        }
       }
     })();
   })

@@ -93,15 +93,32 @@ export function useTableOp(crud: UseCrudReturn<any>, tableProps: TableProps) {
    * @param emit 事件发射函数（可选）
    */
   const handleOpClick = (btn: string, row: any, emit?: (event: string, ...args: any[]) => void) => {
+    if (!crud) {
+      console.error('[useTableOp] crud is not available');
+      return;
+    }
+
     switch (btn) {
       case 'edit':
-        crud.handleEdit(row);
+        if (typeof crud.handleEdit === 'function') {
+          crud.handleEdit(row);
+        } else {
+          console.error('[useTableOp] crud.handleEdit is not available');
+        }
         break;
       case 'delete':
-        crud.handleDelete(row);
+        if (typeof crud.handleDelete === 'function') {
+          crud.handleDelete(row);
+        } else {
+          console.error('[useTableOp] crud.handleDelete is not available');
+        }
         break;
       case 'info':
-        crud.handleView(row);
+        if (typeof crud.handleView === 'function') {
+          crud.handleView(row);
+        } else {
+          console.error('[useTableOp] crud.handleView is not available');
+        }
         break;
       case 'detail':
         // 触发 detail-click 事件，让使用侧处理详情按钮点击

@@ -122,6 +122,8 @@ export function useFormRenderer() {
                 props.placeholder = '';
               }
 
+              // 确保 el-select 内部的输入元素有正确的 id
+              // Element Plus 的 el-select 会将 id 传递给内部的 el-input
               return h(Component, {
                 ...props,
                 options: currentOptions,
@@ -238,11 +240,19 @@ export function useFormRenderer() {
               }, slots);
             }
 
-            // 日期选择器和时间选择器特殊处理 - 过滤掉 id 和 name 属性
+            // 日期选择器和时间选择器特殊处理
+            // 这些组件内部可能不包含标准的 input 元素，所以 Element Plus 的 el-form-item 生成的 for 属性可能无法匹配
+            // 为了修复警告，我们保留 id，让 Element Plus 尝试匹配，如果不行，至少不会报错
             if (componentName === 'el-date-picker' || componentName === 'el-time-picker') {
-              const { id, name, ...filteredProps } = props;
+              // 保留 id，但过滤掉 name（某些组件可能不支持 name）
+              const { name, ...filteredProps } = props;
               return h(Component, filteredProps);
             }
+
+            // 对于 el-radio-group 和 el-checkbox-group，这些组件内部不包含标准的 input 元素
+            // Element Plus 的 el-form-item 生成的 for 属性可能无法匹配
+            // 但我们已经为这些组件设置了 id，Element Plus 会尝试匹配内部的 radio/checkbox 元素
+            // 如果匹配失败，这是正常的，因为这些组件使用不同的结构
 
             // 默认组件
             return h(Component, props);

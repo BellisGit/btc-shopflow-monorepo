@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 璁剧疆鐘舵€佺鐞? * 浣跨敤 localStorage 鎸佷箙鍖栬缃姸鎬? */
 
 import { ref, computed } from 'vue';
@@ -13,8 +13,16 @@ export function useSettingsState() {
   // 关键：该组合式函数会被多个组件重复调用（偏好抽屉 / AppLayout / Topbar 等）
   // 如果每次调用都创建一份新的 ref，会导致“切换菜单布局只写入 storage，但页面不响应”
   // 因此这里做全局单例缓存，确保同一应用内共享同一份响应式状态
-  const globalKey = '__BTC_SETTINGS_STATE__';
+  // 优先使用应用的 useSettingsState（如果存在），确保状态同步
+  // 某些应用（如 system-app）有自己的 useSettingsState 实现，需要优先使用
   const globalAny = globalThis as any;
+  const appSettingsStateModule = globalAny?.__USE_SETTINGS_STATE_MODULE__;
+  if (appSettingsStateModule?.useSettingsState && typeof appSettingsStateModule.useSettingsState === 'function') {
+    return appSettingsStateModule.useSettingsState();
+  }
+
+  // 如果没有应用的实现，使用共享组件的全局单例
+  const globalKey = '__BTC_SETTINGS_STATE__';
   if (globalAny && globalAny[globalKey]) {
     return globalAny[globalKey];
   }
@@ -118,7 +126,7 @@ export function useSettingsState() {
     if (menuThemeType.value === theme) {
       return;
     }
-    
+
     menuThemeType.value = theme;
     const settings = getSettings();
     // 检查存储中的值是否已经相同，避免不必要的更新
@@ -130,37 +138,42 @@ export function useSettingsState() {
   }
 
   /**
-   * 鍒囨崲涓婚椋庢牸
+   * 切换主题风格
    */
   function switchThemeStyles(theme: SystemThemeEnum) {
     systemThemeType.value = theme;
     systemThemeMode.value = theme;
-    // 浣跨敤缁熶竴鐨?settings 瀛樺偍锛岃€屼笉鏄崟鐙殑 systemThemeType 鍜?systemThemeMode
+
+    // 使用统一的 settings 存储，而不是单独的 systemThemeType 和 systemThemeMode
     const currentSettings = (storage.get('settings') as Record<string, any> | null) ?? {};
     storage.set('settings', {
       ...currentSettings,
       systemThemeType: theme,
       systemThemeMode: theme
     });
-    // 娓呯悊鏃х殑鐙珛瀛樺偍 key
+    // 清理旧的独立存储 key
     storage.remove('systemThemeType');
     storage.remove('systemThemeMode');
 
-    // 搴旂敤鍒?DOM
-    const htmlEl = document.documentElement;
-    if (theme === SystemThemeEnum.DARK) {
-      htmlEl.classList.add('dark');
-    } else if (theme === SystemThemeEnum.LIGHT) {
-      htmlEl.classList.remove('dark');
-    } else {
-      // AUTO - 璺熼殢绯荤粺
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        htmlEl.classList.add('dark');
-      } else {
-        htmlEl.classList.remove('dark');
-      }
-    }
+    // 应用 DOM 变化 - 使用 nextTick 确保 Vue 响应式更新完成后再操作 DOM，避免水合问题
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        const htmlEl = document.documentElement;
+        if (theme === SystemThemeEnum.DARK) {
+          htmlEl.classList.add('dark');
+        } else if (theme === SystemThemeEnum.LIGHT) {
+          htmlEl.classList.remove('dark');
+        } else {
+          // AUTO - 跟随系统
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (prefersDark) {
+            htmlEl.classList.add('dark');
+          } else {
+            htmlEl.classList.remove('dark');
+          }
+        }
+      });
+    });
   }
 
   /**

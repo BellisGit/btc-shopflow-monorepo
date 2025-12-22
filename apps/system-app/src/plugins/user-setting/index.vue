@@ -5,7 +5,7 @@
       :config="{
         icon: 'theme',
         tooltip: t('common.tooltip.theme_settings'),
-        onClick: handlePreferencesClick
+        onClick: openDrawer
       }"
     />
 
@@ -20,10 +20,7 @@
   </div>
 
   <!-- 用户设置抽屉 -->
-  <BtcUserSettingDrawer 
-    :model-value="drawerVisible" 
-    @update:model-value="(val) => { drawerVisible = val; }"
-  />
+  <BtcUserSettingDrawer v-model="drawerVisible" />
 </template>
 
 <script setup lang="ts">
@@ -31,7 +28,7 @@ import { provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcIconButton } from '@btc/shared-components';
 import { useUserSetting } from './composables/useThemeSwitcher';
-import BtcUserSettingDrawer from './components/preferences-drawer.vue';
+import { BtcUserSettingDrawer } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcUserSetting'
@@ -39,18 +36,12 @@ defineOptions({
 
 const { t } = useI18n();
 const userSetting = useUserSetting();
-// 直接使用 userSetting.drawerVisible，它本身就是一个 ref
-const drawerVisible = userSetting.drawerVisible;
-const openDrawer = userSetting.openDrawer;
-const handleDarkToggle = userSetting.handleDarkToggle;
-const theme = userSetting.theme;
-
-// 处理偏好设置按钮点击
-const handlePreferencesClick = (event?: MouseEvent) => {
-  if (openDrawer) {
-    openDrawer();
-  }
-};
+const {
+  drawerVisible,
+  openDrawer,
+  handleDarkToggle,
+  theme,
+} = userSetting;
 
 // 提供用户设置实例给子组件
 provide('userSetting', userSetting);

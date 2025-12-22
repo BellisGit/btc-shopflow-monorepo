@@ -115,7 +115,7 @@ kubectl apply -f hpa.yaml -n btc-shopflow
 | production-app | 8084 | production.bellis.com.cn | 生产应用 |
 | engineering-app | 8085 | engineering.bellis.com.cn | 工程应用 |
 | finance-app | 8086 | finance.bellis.com.cn | 财务应用 |
-| docs-site-app | 8087 | docs.bellis.com.cn | 文档站点 |
+| docs-app | 8087 | docs.bellis.com.cn | 文档站点 |
 | mobile-app | 8091 | mobile.bellis.com.cn | 移动应用 |
 
 ### 资源配置

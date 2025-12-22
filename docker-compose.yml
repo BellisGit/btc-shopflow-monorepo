@@ -90,14 +90,14 @@ services:
       - "8083:80"
     restart: unless-stopped
 
-  docs-site-app:
+  docs-app:
     build:
       context: .
       dockerfile: ./Dockerfile
       args:
-        APP_DIR: apps/docs-site-app
-    image: btc-shopflow/docs-site-app:latest
-    container_name: btc-docs-site-app
+        APP_DIR: apps/docs-app
+    image: btc-shopflow/docs-app:latest
+    container_name: btc-docs-app
     ports:
       - "8087:80"
     restart: unless-stopped

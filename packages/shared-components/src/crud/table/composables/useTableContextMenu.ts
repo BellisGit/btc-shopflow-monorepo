@@ -123,22 +123,41 @@ export function useTableContextMenu(crud: UseCrudReturn<any>, props: TableProps,
   function handleMenuClick(item: any) {
     const row = currentRow.value;
 
+    if (!crud) {
+      console.error('[useTableContextMenu] crud is not available');
+      return;
+    }
+
     switch (item.value) {
       case 'refresh':
-        crud.loadData();
+        if (typeof crud.loadData === 'function') {
+          crud.loadData();
+        }
         break;
       case 'check':
         // 切换选中状态
         tableRef.value?.toggleRowSelection(row);
         break;
       case 'edit':
-        crud.handleEdit(row);
+        if (typeof crud.handleEdit === 'function') {
+          crud.handleEdit(row);
+        } else {
+          console.error('[useTableContextMenu] crud.handleEdit is not available');
+        }
         break;
       case 'delete':
-        crud.handleDelete(row);
+        if (typeof crud.handleDelete === 'function') {
+          crud.handleDelete(row);
+        } else {
+          console.error('[useTableContextMenu] crud.handleDelete is not available');
+        }
         break;
       case 'info':
-        crud.handleView(row);
+        if (typeof crud.handleView === 'function') {
+          crud.handleView(row);
+        } else {
+          console.error('[useTableContextMenu] crud.handleView is not available');
+        }
         break;
       case 'order-asc':
       case 'order-desc':

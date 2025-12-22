@@ -40,8 +40,24 @@ export function cleanupAllECharts() {
     bodyChildren.forEach((el) => {
       if (el instanceof HTMLElement) {
         const style = window.getComputedStyle(el);
-        const className = el.className || '';
+        // 安全地获取 className，处理 string 和 DOMTokenList 两种情况
+        const className = String(el.className || '');
         const id = el.id || '';
+        const dataset = el.dataset || {};
+
+        // 关键修复：排除 DevTools 相关元素，避免误删
+        // 检查 class 名称、id 和 data 属性
+        const isDevToolsElement =
+          (className && (className.includes('dev-tools') || className.includes('dev_tools'))) ||
+          (id && id.includes('dev-tools')) ||
+          dataset.devToolsInstance !== undefined ||
+          el.hasAttribute('data-dev-tools-instance');
+
+        // 如果是指定的 DevTools 元素，跳过清理
+        if (isDevToolsElement) {
+          return;
+        }
+
         const isTooltipLike =
           (style.position === 'absolute' || style.position === 'fixed') &&
           (parseInt(style.zIndex) > 1000 ||

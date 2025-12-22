@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <BtcCrud ref="crudRef" :service="wrappedService">
       <BtcRow>
         <div class="btc-crud-primary-actions">
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm } from '@btc/shared-components';
+import { BtcConfirm, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';

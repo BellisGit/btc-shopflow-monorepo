@@ -6,9 +6,11 @@ import './styles/index.scss';
 // 初始化全局事件系统
 import './utils/resize';
 
-// 自动挂载 DevTools（拦截 Vue App 的 mount 方法）
-import { setupAutoMountDevTools } from './utils/auto-mount-dev-tools';
-setupAutoMountDevTools();
+// 注意：DevTools 不再在这里自动挂载
+// 改为在应用级别的 bootstrap 中挂载：
+// - layout-app: 在 initLayoutEnvironment 中挂载（供子应用使用）
+// - system-app: 在 bootstrap 中挂载（供主应用使用）
+// 这样可以避免多个应用重复挂载导致的问题
 
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';

@@ -102,18 +102,31 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
         }
       }
 
-      const wrongPortHttpRegex = new RegExp(`http://${appHost}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
+      // 关键：修复错误的端口（主应用端口 -> 当前应用端口）
+      // 匹配 http://localhost:4180/assets/xxx 或 http://10.80.8.199:4180/assets/xxx
+      const wrongPortHttpRegex = new RegExp(`http://(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortHttpRegex.test(newCode)) {
-        newCode = newCode.replace(wrongPortHttpRegex, (_match, path, query = '') => {
-          return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+        newCode = newCode.replace(wrongPortHttpRegex, (_match, host, path, query = '') => {
+          // 预览构建：使用 baseUrl（包含完整 URL）
+          if (isPreviewBuild) {
+            return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+          }
+          // 开发构建：使用当前应用端口
+          return `http://${host}:${appPort}${path}${query}`;
         });
         modified = true;
       }
 
-      const wrongPortProtocolRegex = new RegExp(`//${appHost}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
+      // 匹配 //localhost:4180/assets/xxx 或 //10.80.8.199:4180/assets/xxx
+      const wrongPortProtocolRegex = new RegExp(`//(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
       if (wrongPortProtocolRegex.test(newCode)) {
-        newCode = newCode.replace(wrongPortProtocolRegex, (_match, path, query = '') => {
-          return `//${appHost}:${appPort}${path}${query}`;
+        newCode = newCode.replace(wrongPortProtocolRegex, (_match, host, path, query = '') => {
+          // 预览构建：使用 baseUrl（包含完整 URL）
+          if (isPreviewBuild) {
+            return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+          }
+          // 开发构建：使用当前应用端口
+          return `//${host}:${appPort}${path}${query}`;
         });
         modified = true;
       }
@@ -189,18 +202,31 @@ export function ensureBaseUrlPlugin(baseUrl: string, appHost: string, appPort: n
             }
           }
 
-          const wrongPortHttpRegex = new RegExp(`http://${appHost}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
+          // 关键：修复错误的端口（主应用端口 -> 当前应用端口）
+          // 匹配 http://localhost:4180/assets/xxx 或 http://10.80.8.199:4180/assets/xxx
+          const wrongPortHttpRegex = new RegExp(`http://(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortHttpRegex.test(newCode)) {
-            newCode = newCode.replace(wrongPortHttpRegex, (_match: string, path: string, query: string = '') => {
-              return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+            newCode = newCode.replace(wrongPortHttpRegex, (_match: string, host: string, path: string, query: string = '') => {
+              // 预览构建：使用 baseUrl（包含完整 URL）
+              if (isPreviewBuild) {
+                return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+              }
+              // 开发构建：使用当前应用端口
+              return `http://${host}:${appPort}${path}${query}`;
             });
             modified = true;
           }
 
-          const wrongPortProtocolRegex = new RegExp(`//${appHost}:${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
+          // 匹配 //localhost:4180/assets/xxx 或 //10.80.8.199:4180/assets/xxx
+          const wrongPortProtocolRegex = new RegExp(`//(${appHost}|localhost):${mainAppPort}(/assets/[^"'\`\\s]+)(\\?[^"'\`\\s]*)?`, 'g');
           if (wrongPortProtocolRegex.test(newCode)) {
-            newCode = newCode.replace(wrongPortProtocolRegex, (_match: string, path: string, query: string = '') => {
-              return `//${appHost}:${appPort}${path}${query}`;
+            newCode = newCode.replace(wrongPortProtocolRegex, (_match: string, host: string, path: string, query: string = '') => {
+              // 预览构建：使用 baseUrl（包含完整 URL）
+              if (isPreviewBuild) {
+                return `${baseUrl.replace(/\/$/, '')}${path}${query}`;
+              }
+              // 开发构建：使用当前应用端口
+              return `//${host}:${appPort}${path}${query}`;
             });
             modified = true;
           }

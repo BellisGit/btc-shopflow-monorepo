@@ -58,7 +58,6 @@ function isMoseluUser(): boolean {
 
     return isMoselu;
   } catch (error) {
-    console.warn('[DevTools] 检查 moselu 用户时出错:', error);
     return false;
   }
 }
@@ -83,7 +82,9 @@ function isMainApp(): boolean {
                         pathname.startsWith('/quality') ||
                         pathname.startsWith('/production') ||
                         pathname.startsWith('/finance') ||
-                        pathname.startsWith('/operations');
+                        pathname.startsWith('/operations') ||
+                        pathname.startsWith('/dashboard') ||
+                        pathname.startsWith('/personnel');
 
     // 开发环境：如果是本地地址或开发服务器地址，且不是子应用路径，则为主应用
     if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('10.80.8.199')) && !isSubAppPath) {
@@ -107,7 +108,9 @@ function isMainApp(): boolean {
         !pathname.startsWith('/quality') &&
         !pathname.startsWith('/production') &&
         !pathname.startsWith('/finance') &&
-        !pathname.startsWith('/operations')) {
+        !pathname.startsWith('/operations') &&
+        !pathname.startsWith('/dashboard') &&
+        !pathname.startsWith('/personnel')) {
       return true;
     }
   }
@@ -119,6 +122,17 @@ function isMainApp(): boolean {
  * 自动挂载 DevTools（从全局对象获取依赖）
  */
 async function mountDevToolsOnce() {
+  // 关键：使用全局标志，防止跨模块实例重复挂载
+  if (typeof window !== 'undefined') {
+    if ((window as any).__DEVTOOLS_MOUNTED__) {
+      // 检查 DOM 元素是否还存在
+      const existingContainer = document.querySelector('[data-dev-tools-container]');
+      if (existingContainer) {
+        return;
+      }
+    }
+  }
+
   // 只挂载一次，避免重复挂载
   if (devToolsMounted) {
     return;
@@ -150,7 +164,6 @@ async function mountDevToolsOnce() {
     }
   } catch (err) {
     // 静默失败，不影响应用运行
-    console.error('[DevTools] 自动挂载失败:', err);
   }
 }
 
@@ -196,7 +209,7 @@ export function setupAutoMountDevTools() {
     return;
   }
 
-  // 检查是否已经设置过
+  // 检查是否已经设置过（使用全局标志，防止跨模块实例重复设置）
   if ((window as any).__DEVTOOLS_AUTO_MOUNT_SETUP__) {
     return;
   }
@@ -209,7 +222,7 @@ export function setupAutoMountDevTools() {
 
   if (appMounted) {
     mountDevToolsOnce().catch((err) => {
-      console.error('[DevTools] 立即挂载失败:', err);
+      // 立即挂载失败
     });
     return;
   }

@@ -30,11 +30,11 @@ const registry: Record<string, Record<string, TabMeta>> = {
 export function getActiveApp(pathname: string): string {
   const hostname = window.location.hostname;
   const subdomainApp = getAppFromSubdomain(hostname);
-  
+
   if (subdomainApp) {
     return subdomainApp;
   }
-  
+
   // 如果没有子域名匹配，则回退到路径匹配
   if (pathname.startsWith('/admin')) return 'admin';
   if (pathname.startsWith('/logistics')) return 'logistics';
@@ -43,6 +43,9 @@ export function getActiveApp(pathname: string): string {
   if (pathname.startsWith('/production')) return 'production';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/docs')) return 'docs';
+  if (pathname.startsWith('/operations')) return 'operations';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/personnel')) return 'personnel';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }
@@ -84,7 +87,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
   // 所有子应用都从 manifest 查找
   if (app !== 'system' && app !== 'admin') {
     const manifestRoute = getManifestRoute(app, pathname);
-    
+
     if (manifestRoute && manifestRoute.tab?.enabled !== false) {
       // 从 manifest 构建 TabMeta
       const manifest = getManifest(app);
@@ -93,7 +96,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         const routePath = manifestRoute.path;
         const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
         const manifestKey = routePath.replace(/^\//, "") || "home";
-        
+
         return {
           key: manifestKey,
           title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
@@ -102,7 +105,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         };
       }
     }
-    
+
     // 如果从 manifest 查不到，返回 null
     return null;
   }

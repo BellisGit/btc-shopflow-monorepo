@@ -1,4 +1,4 @@
-﻿{
+{
   "app.title": "拜里斯科技",
   "app.name": "拜里斯车间管理系统",
   "app.slogan": "拜里斯：智慧验币・安全储存，因你而精彩！",
@@ -195,6 +195,11 @@
   "inventory.ticket.print.load_failed": "加载数据失败",
   "inventory.ticket.print.content_unavailable": "打印内容不可用",
   "inventory.ticket.print.window_error": "无法打开打印窗口，请检查浏览器弹窗设置",
+  "inventory.ticket.print.select_range": "选择打印范围",
+  "inventory.ticket.print.start_index": "起始序号",
+  "inventory.ticket.print.end_index": "结束序号",
+  "inventory.ticket.print.to": "至",
+  "inventory.ticket.print.range_hint": "共 {total} 条数据，请输入要打印的范围（如：1-50）",
   "inventory.dataSource.domain": "域列表",
   "inventory.dataSource.domain.selectRequired": "请先选择左侧域",
   "recycle.batch_restore": "批量恢复",

@@ -48,6 +48,9 @@ const getAppPrefix = (pathname: string): string => {
   if (pathname.startsWith('/production')) return 'production';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/monitor')) return 'monitor';
+  if (pathname.startsWith('/operations')) return 'operations';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/personnel')) return 'personnel';
   return 'system';
 };
 
@@ -87,7 +90,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
   }
 
   // 检查是否是已知的子应用路径前缀
-  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs'];
+  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/monitor', '/docs', '/operations', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
 
   if (isSubAppRoute) {

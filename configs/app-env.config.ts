@@ -81,7 +81,7 @@ export const APP_ENV_CONFIGS: AppEnvConfig[] = [
     prodHost: 'mobile.bellis.com.cn',
   },
   {
-    appName: 'docs-site-app',
+    appName: 'docs-app',
     devHost: 'localhost',
     devPort: '4172',
     preHost: 'localhost',
@@ -89,20 +89,36 @@ export const APP_ENV_CONFIGS: AppEnvConfig[] = [
     prodHost: 'docs.bellis.com.cn',
   },
   {
+    appName: 'operations-app',
+    devHost: '10.80.8.199',
+    devPort: '8087',
+    preHost: 'localhost',
+    prePort: '4187',
+    prodHost: 'operations.bellis.com.cn',
+  },
+  {
     appName: 'layout-app',
     devHost: '10.80.8.199',
     devPort: '8088',
     preHost: 'localhost',
-    prePort: '4192',
+    prePort: '4188',
     prodHost: 'layout.bellis.com.cn',
   },
   {
-    appName: 'operations-app',
+    appName: 'dashboard-app',
     devHost: '10.80.8.199',
     devPort: '8089',
     preHost: 'localhost',
     prePort: '4189',
-    prodHost: 'operations.bellis.com.cn',
+    prodHost: 'dashboard.bellis.com.cn',
+  },
+  {
+    appName: 'personnel-app',
+    devHost: '10.80.8.199',
+    devPort: '8090',
+    preHost: 'localhost',
+    prePort: '4190',
+    prodHost: 'personnel.bellis.com.cn',
   },
 ];
 

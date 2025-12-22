@@ -43,8 +43,8 @@ export function useProductionInventoryTicketPrint(
     }
   };
 
-  // 打印所有数据
-  const handlePrint = async () => {
+  // 打印数据（支持范围选择）
+  const handlePrint = async (range?: { start: number; end: number }) => {
     if (!printContentRef.value) {
       BtcMessage.warning(t('inventory.ticket.print.content_unavailable'));
       return;
@@ -97,6 +97,13 @@ export function useProductionInventoryTicketPrint(
         } else if (response.data && typeof response.data === 'object' && 'list' in response.data) {
           list = response.data.list || [];
         }
+      }
+
+      // 如果指定了范围，则只打印范围内的数据
+      if (range && range.start && range.end) {
+        const start = Math.max(0, range.start - 1); // 转换为数组索引（从0开始）
+        const end = Math.min(list.length, range.end);
+        list = list.slice(start, end);
       }
 
       // 创建隐藏的 iframe 用于打印预览（不打开新标签页）

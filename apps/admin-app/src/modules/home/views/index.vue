@@ -95,6 +95,18 @@ const domainAppMapping: Record<string, { icon: string; color: string }> = {
     icon: 'settings',
     color: '#13c2c2',
   },
+  'OPERATIONS': {
+    icon: 'monitor',
+    color: '#52c41a',
+  },
+  'DASHBOARD': {
+    icon: 'trend',
+    color: '#ff6b9d',
+  },
+  'PERSONNEL': {
+    icon: 'team',
+    color: '#ffc107',
+  },
 };
 
 // 加载状态
@@ -171,7 +183,10 @@ const goToModule = (domainCode: string) => {
     'ENGINEERING': '/engineering',
     'QUALITY': '/quality',
     'PRODUCTION': '/production',
-    'FINANCE': '/finance'
+    'FINANCE': '/finance',
+    'OPERATIONS': '/operations',
+    'DASHBOARD': '/dashboard',
+    'PERSONNEL': '/personnel'
   };
 
   const targetPath = domainPathMap[domainCode] || `/${domainCode.toLowerCase()}`;

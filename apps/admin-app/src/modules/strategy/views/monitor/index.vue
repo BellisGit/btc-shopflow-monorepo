@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-monitor">
     <!-- 策略详情视图 -->
     <div class="strategy-details">
@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';

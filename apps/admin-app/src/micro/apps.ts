@@ -132,7 +132,10 @@ export const microApps: MicroAppConfig[] = [
              !path.startsWith('/quality') &&
              !path.startsWith('/production') &&
              !path.startsWith('/finance') &&
-             !path.startsWith('/docs');
+             !path.startsWith('/docs') &&
+             !path.startsWith('/operations') &&
+             !path.startsWith('/dashboard') &&
+             !path.startsWith('/personnel');
     },
     // 增加生命周期超时时间到 10 秒，避免警告
     timeout: 10000,

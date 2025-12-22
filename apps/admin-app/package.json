@@ -7,7 +7,7 @@
     "module": "src/main.ts",
     "scripts": {
         "predev": "turbo run build --filter=@btc/vite-plugin",
-        "dev": "vite",
+        "dev": "vite --port 8081",
         "clean": "node scripts/clean.js",
         "build": "vite build",
         "preview": "vite preview",

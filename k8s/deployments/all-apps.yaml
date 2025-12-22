@@ -278,7 +278,7 @@ spec:
     spec:
       containers:
       - name: docs-app
-        image: btc-shopflow/docs-site-app:latest
+        image: btc-shopflow/docs-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80

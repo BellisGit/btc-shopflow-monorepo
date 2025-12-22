@@ -12,5 +12,7 @@ export * from './form';
 export * from './hooks';
 export * from './http';
 export * from './composables/usePageTransition';
+// 显式导出 usePageTransition，确保被正确导出
+export { usePageTransition } from './composables/usePageTransition';
 export * from './qiankun/load-layout-app';
 export * from './cdn/load-shared-resources';

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <BtcCrud
     ref="crudRef"
     :service="wrappedDepartmentService"
@@ -42,11 +42,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { BtcConfirm } from '@btc/shared-components';
+import { BtcConfirm, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn, CommonColumns } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { CommonColumns } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 const { t } = useI18n();

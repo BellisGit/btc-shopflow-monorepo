@@ -42,6 +42,14 @@
         </div>
       </template>
     </BtcViewGroup>
+
+    <!-- 打印范围选择对话框 -->
+    <PrintRangeDialog
+      v-model="showPrintRangeDialog"
+      :total-count="totalTicketCount"
+      :default-range="defaultPrintRange"
+      @confirm="handlePrintRangeConfirm"
+    />
   </div>
 </template>
 
@@ -56,6 +64,8 @@ import { useTicketService } from './composables/useTicketService';
 import { useProductionInventoryTicketPrint } from './composables/useProductionInventoryTicketPrint';
 import { useNonProductionInventoryTicketPrint } from './composables/useNonProductionInventoryTicketPrint';
 import BtcInventoryTicketPrintToolbar from './components/BtcInventoryTicketPrintToolbar.vue';
+import PrintRangeDialog from './components/PrintRangeDialog.vue';
+import { BtcMessage } from '@btc/shared-components';
 import './styles/index.scss';
 
 defineOptions({
@@ -66,6 +76,52 @@ const { t, locale } = useI18n();
 const viewGroupRef = ref();
 const crudRef = ref();
 const printContentRef = ref<HTMLElement>();
+const showPrintRangeDialog = ref(false);
+const printRange = ref<{ start: number; end: number } | null>(null);
+// 记录上次打印的结束位置，用于下次自动递增
+const lastPrintEndIndex = ref(0);
+// 默认范围大小
+const DEFAULT_RANGE_SIZE = 50;
+
+// 从分页组件获取总数（使用computed监听变化）
+const totalTicketCount = computed(() => {
+  return crudRef.value?.crud?.pagination?.total || 0;
+});
+
+// 计算默认打印范围
+const defaultPrintRange = computed(() => {
+  const total = totalTicketCount.value;
+  if (total === 0) {
+    return { start: 1, end: 1 };
+  }
+
+  // 如果上次打印的结束位置为0（首次打印），从1开始
+  if (lastPrintEndIndex.value === 0) {
+    return {
+      start: 1,
+      end: Math.min(DEFAULT_RANGE_SIZE, total)
+    };
+  }
+
+  // 下次打印从上次结束+1开始
+  const nextStart = lastPrintEndIndex.value + 1;
+
+  // 如果已经超过总数，重置为1-50
+  if (nextStart > total) {
+    return {
+      start: 1,
+      end: Math.min(DEFAULT_RANGE_SIZE, total)
+    };
+  }
+
+  // 计算结束位置（自动+50）
+  const nextEnd = Math.min(nextStart + DEFAULT_RANGE_SIZE - 1, total);
+
+  return {
+    start: nextStart,
+    end: nextEnd
+  };
+});
 
 // 使用 ticket service composable
 const {
@@ -112,11 +168,45 @@ const loadTicketData = () => {
   }
 };
 
-const handlePrint = () => {
+// 处理打印按钮点击 - 先显示范围选择对话框
+const handlePrint = async () => {
+  try {
+    if (!selectedDomain.value) {
+      BtcMessage.warning(t('inventory.dataSource.domain.selectRequired'));
+      return;
+    }
+
+    // 先确保数据已加载，这样分页信息才会更新
+    await loadTicketData();
+
+    // 等待分页信息更新（使用nextTick确保crud已更新）
+    await nextTick();
+
+    // 从分页组件获取总数（分页组件有汇总逻辑）
+    const total = crudRef.value?.crud?.pagination?.total || 0;
+
+    if (total > 0) {
+      // 显示对话框，总数会通过computed自动获取
+      showPrintRangeDialog.value = true;
+    } else {
+      BtcMessage.warning('没有可打印的数据');
+    }
+  } catch (error) {
+    console.error('[InventoryTicketPrint] Failed to load data:', error);
+    BtcMessage.error(t('inventory.ticket.print.load_failed'));
+  }
+};
+
+// 处理打印范围确认
+const handlePrintRangeConfirm = (range: { start: number; end: number }) => {
+  printRange.value = range;
+  // 记录本次打印的结束位置，用于下次自动递增
+  lastPrintEndIndex.value = range.end;
+  // 调用实际的打印函数
   if (isProductionDomain.value) {
-    return productionPrint.handlePrint();
+    productionPrint.handlePrint(range);
   } else {
-    return nonProductionPrint.handlePrint();
+    nonProductionPrint.handlePrint(range);
   }
 };
 
@@ -130,6 +220,8 @@ const elLocale = computed(() => {
 const onDomainSelect = (domain: any) => {
   selectedDomain.value = domain;
   pagination.value.page = 1;
+  // 切换域时，重置打印范围
+  lastPrintEndIndex.value = 0;
   // 使用 nextTick 确保 selectedDomain 已更新且 crudRef 已初始化
   nextTick(() => {
     loadTicketData();
@@ -139,12 +231,16 @@ const onDomainSelect = (domain: any) => {
 // 仓位搜索处理
 const handlePositionSearch = () => {
   pagination.value.page = 1;
+  // 搜索时，重置打印范围
+  lastPrintEndIndex.value = 0;
   loadTicketData();
 };
 
 // 仓位清空处理
 const handlePositionClear = () => {
   pagination.value.page = 1;
+  // 清空时，重置打印范围
+  lastPrintEndIndex.value = 0;
   loadTicketData();
 };
 

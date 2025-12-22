@@ -26,7 +26,7 @@ declare -A APP_DOMAIN_MAP=(
     ["layout-app"]="layout.bellis.com.cn"
     ["mobile-app"]="mobile.bellis.com.cn"
     ["monitor-app"]="monitor.bellis.com.cn"
-    ["docs-site-app"]="docs.bellis.com.cn"
+    ["docs-app"]="docs.bellis.com.cn"
 )
 
 # 获取构建产物目录（兼容两条链路）：

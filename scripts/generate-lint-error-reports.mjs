@@ -25,7 +25,7 @@ const apps = [
   { name: 'monitor', packageName: 'monitor-app', pattern: 'apps/monitor-app/src/**/*.{ts,tsx,vue}' },
   { name: 'layout', packageName: 'layout-app', pattern: 'apps/layout-app/src/**/*.{ts,tsx,vue}' },
   { name: 'mobile', packageName: 'mobile-app', pattern: 'apps/mobile-app/src/**/*.{ts,tsx,vue}' },
-  { name: 'docs', packageName: 'docs-site-app', pattern: 'apps/docs-site-app/src/**/*.{ts,tsx,vue}' },
+  { name: 'docs', packageName: 'docs-app', pattern: 'apps/docs-app/src/**/*.{ts,tsx,vue}' },
 ];
 
 // 共享包列表（合并为一个日志文件）

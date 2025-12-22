@@ -318,9 +318,29 @@ export function useCrud<T = Record<string, unknown>>(
    * 打开新增弹窗
    */
   const handleAdd = () => {
+    // 生产环境日志：记录 handleAdd 调用
+    if (import.meta.env.PROD) {
+      console.log('[useCrud] handleAdd() 被调用', {
+        upsertVisibleBefore: upsertVisible.value,
+        upsertModeBefore: upsertMode.value,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     currentRow.value = null;
     upsertMode.value = 'add';
     upsertVisible.value = true;
+
+    // 生产环境日志：记录设置后的状态
+    if (import.meta.env.PROD) {
+      console.log('[useCrud] handleAdd() 设置完成', {
+        upsertVisibleAfter: upsertVisible.value,
+        upsertModeAfter: upsertMode.value,
+        isRef: upsertVisible instanceof Object && 'value' in upsertVisible,
+        refType: typeof upsertVisible,
+        timestamp: new Date().toISOString(),
+      });
+    }
   };
 
   /**

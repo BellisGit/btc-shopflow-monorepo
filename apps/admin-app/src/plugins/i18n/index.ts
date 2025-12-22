@@ -27,6 +27,6 @@ export const i18nPlugin: Plugin = {
     order: 2, // GitHub之后
     pc: true,
     h5: true,
-    component: () => import('../../modules/base/components/layout/locale-switcher/index.vue')
+    component: () => import('@btc/shared-components/components/layout/app-layout/locale-switcher/index.vue')
   }
 };

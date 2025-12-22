@@ -34,7 +34,7 @@
         <img :src="logoUrl" alt="BTC Logo" class="topbar__logo-img" @error="handleLogoError" />
         <h2
           class="topbar__logo-text"
-          :style="{ color: menuThemeConfig.systemNameColor }"
+          :style="{ color: menuThemeConfig?.systemNameColor || 'var(--el-text-color-primary)' }"
         >{{ logoTitle }}</h2>
       </div>
     </div>
@@ -391,30 +391,8 @@ watch(
   { immediate: false }
 );
 
-// 监听 menuThemeConfig 变化，确保样式立即更新
-watch(
-  () => menuThemeConfig.value,
-  (newConfig) => {
-    // 确保 newConfig 存在且有效
-    if (!newConfig || !newConfig.background) {
-      return;
-    }
-    // 使用 nextTick 确保 DOM 更新完成后再强制更新样式
-    nextTick(() => {
-      // 强制更新所有使用 menuThemeConfig 的元素的样式
-      const logoContentEls = document.querySelectorAll('.topbar__logo-content');
-      logoContentEls.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        if (htmlEl && newConfig.background) {
-          htmlEl.style.setProperty('background-color', newConfig.background);
-        }
-      });
-    });
-  },
-  { immediate: false, deep: true }
-);
-
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
+// 关键：必须在 watch 之前定义，避免"在初始化之前访问"的错误
 const menuThemeConfig = computed(() => {
   // 优先判断菜单风格类型（不受系统主题影响）
   const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
@@ -464,6 +442,30 @@ const menuThemeConfig = computed(() => {
     rightLineColor: '#EDEEF0',
   };
 });
+
+// 监听 menuThemeConfig 变化，确保样式立即更新
+// 关键：必须在 menuThemeConfig 定义之后才能使用
+watch(
+  () => menuThemeConfig.value,
+  (newConfig) => {
+    // 确保 newConfig 存在且有效
+    if (!newConfig || !newConfig.background) {
+      return;
+    }
+    // 使用 nextTick 确保 DOM 更新完成后再强制更新样式
+    nextTick(() => {
+      // 强制更新所有使用 menuThemeConfig 的元素的样式
+      const logoContentEls = document.querySelectorAll('.topbar__logo-content');
+      logoContentEls.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl && newConfig.background) {
+          htmlEl.style.setProperty('background-color', newConfig.background);
+        }
+      });
+    });
+  },
+  { immediate: false, deep: true }
+);
 
 // 插件管理器
 const pluginManager = usePluginManager();

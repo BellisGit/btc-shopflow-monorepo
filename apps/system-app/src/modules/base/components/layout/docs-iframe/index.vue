@@ -50,7 +50,7 @@ const getDocsUrl = () => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
 
-  // 从配置中获取文档应用的端口（docs-site-app 的开发端口是 4172）
+  // 从配置中获取文档应用的端口（docs-app 的开发端口是 4172）
   // 使用同步方式获取配置
   let docsPort = '4172';
   let shouldWarn = false;
@@ -59,12 +59,12 @@ const getDocsUrl = () => {
     // 尝试从全局配置中获取（如果已加载）
     if ((window as any).__BTC_APP_CONFIGS__) {
       const docsConfig = (window as any).__BTC_APP_CONFIGS__.find(
-        (config: any) => config.appName === 'docs-site-app'
+        (config: any) => config.appName === 'docs-app'
       );
       if (docsConfig && docsConfig.devPort) {
         docsPort = docsConfig.devPort;
       } else {
-        // 配置存在但没有找到 docs-site-app 的配置
+        // 配置存在但没有找到 docs-app 的配置
         shouldWarn = true;
       }
     } else {
@@ -72,7 +72,7 @@ const getDocsUrl = () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { getAppConfig } = require('@configs/app-env.config');
-        const docsConfig = getAppConfig('docs-site-app');
+        const docsConfig = getAppConfig('docs-app');
         if (docsConfig && docsConfig.devPort) {
           docsPort = docsConfig.devPort;
         } else {

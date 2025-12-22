@@ -172,6 +172,10 @@ function ensureDefaultSettings() {
 }
 
 const initLayoutEnvironment = async (appInstance: VueApp) => {
+  if (import.meta.env.DEV) {
+    console.log('[layout-app] initLayoutEnvironment 开始执行');
+  }
+
   // 关键：在初始化开始时就创建并设置事件总线，确保在 Vue 应用创建之前事件总线就已存在
   // 这样子应用的 UserInfo 组件就能立即访问到事件总线
   if (!(window as any).__APP_EMITTER__) {
@@ -353,6 +357,9 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
   await registerLayoutPlugins(appInstance).catch(() => {
     // 静默失败
   });
+
+  // 注意：DevTools 现在直接在 App.vue 中使用，不再需要在这里挂载
+  // 这样可以确保 DevTools 在路由切换时不会卸载
 };
 
 let app: ReturnType<typeof createApp> | null = null;
@@ -501,7 +508,7 @@ const ensureMicroAppsRegistered = async () => {
     const isDev = import.meta.env.DEV;
     const defaultTimeout = isDev ? 8000 : 15000; // 开发环境 8 秒，生产环境 15 秒
 
-    const allApps = ['admin', 'logistics', 'engineering', 'quality', 'production', 'finance', 'monitor'];
+    const allApps = ['admin', 'logistics', 'engineering', 'quality', 'production', 'finance', 'monitor', 'operations', 'dashboard', 'personnel'];
     allApps.forEach((appName) => {
       subApps.push({
         name: `${appName}-app`,
@@ -518,6 +525,9 @@ const ensureMicroAppsRegistered = async () => {
           if (appName === 'production' && pathname.startsWith('/production')) return true;
           if (appName === 'finance' && pathname.startsWith('/finance')) return true;
           if (appName === 'monitor' && pathname.startsWith('/monitor')) return true;
+          if (appName === 'operations' && pathname.startsWith('/operations')) return true;
+          if (appName === 'dashboard' && pathname.startsWith('/dashboard')) return true;
+          if (appName === 'personnel' && pathname.startsWith('/personnel')) return true;
           return false;
         },
         // 配置生命周期超时时间（single-spa 格式）

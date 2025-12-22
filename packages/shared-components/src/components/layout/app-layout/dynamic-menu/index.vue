@@ -139,24 +139,7 @@ const currentMenuItems = computed(() => {
   // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
   const menus = menuRegistry.value[app] || [];
 
-  // 关键调试：如果当前应用的菜单为空，但注册表中有其他应用的菜单，输出详细信息
-  if (menus.length === 0 && menuRegistry.value) {
-    const allAppsWithMenus = Object.keys(menuRegistry.value).filter(key => (menuRegistry.value[key] || []).length > 0);
-    if (allAppsWithMenus.length > 0 && !(window as any)[`__MENU_MISMATCH_${app}__`]) {
-      console.warn(`[DynamicMenu] 当前应用 ${app} 的菜单为空，但注册表中有其他应用的菜单:`, {
-        currentApp: app,
-        currentAppMenus: menus.length,
-        appsWithMenus: allAppsWithMenus,
-        allMenusCount: Object.keys(menuRegistry.value).reduce((acc, key) => {
-          acc[key] = (menuRegistry.value[key] || []).length;
-          return acc;
-        }, {} as Record<string, number>),
-        systemMenus: menuRegistry.value['system'],
-        registryValue: menuRegistry.value
-      });
-      (window as any)[`__MENU_MISMATCH_${app}__`] = true;
-    }
-  }
+  // 允许菜单为空，这是正常的（某些应用可能没有菜单）
 
 
   // 如果菜单为空，尝试通过全局函数注册菜单（作为后备机制）
@@ -600,8 +583,15 @@ watch(
   }
 );
 
+// 菜单主题配置类型
+type MenuThemeConfig = {
+  background: string;
+  textColor: string;
+  textActiveColor: string;
+};
+
 // 强制更新菜单 CSS 变量的辅助函数
-const updateMenuCSSVariables = (newConfig: typeof menuThemeConfig.value) => {
+const updateMenuCSSVariables = (newConfig: MenuThemeConfig) => {
   if (!menuRef.value) return;
 
   const menuEl = menuRef.value.$el as HTMLElement;

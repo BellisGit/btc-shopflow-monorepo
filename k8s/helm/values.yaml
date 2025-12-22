@@ -137,7 +137,7 @@ apps:
 
   docs:
     enabled: true
-    name: docs-site-app
+    name: docs-app
     port: 8087
     replicas: 1
     resources:

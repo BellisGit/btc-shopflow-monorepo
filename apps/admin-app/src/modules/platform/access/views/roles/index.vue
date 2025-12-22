@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="role-list">
     <BtcCrud ref="crudRef" :service="roleService">
       <BtcRow>
@@ -25,14 +25,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import { useMessage } from '@/utils/use-message';
+import { BtcConfirm, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
-const message = useMessage();
 const crudRef = ref();
 
 const roleService = {
@@ -41,17 +39,15 @@ const roleService = {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 单个删除：直接传递 ID
+    // 注意：成功消息由 BtcCrud 的 onSuccess 回调统一处理，不需要在这里手动调用
     await service.admin?.iam?.role?.delete(id);
-
-    message.success(t('crud.message.delete_success'));
   },
   deleteBatch: async (ids: (string | number)[]) => {
     await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
 
     // 批量删除：调用 deleteBatch 方法，传递 ID 数组
+    // 注意：成功消息由 BtcCrud 的 onSuccess 回调统一处理，不需要在这里手动调用
     await service.admin?.iam?.role?.deleteBatch(ids);
-
-    message.success(t('crud.message.delete_success'));
   },
 };
 

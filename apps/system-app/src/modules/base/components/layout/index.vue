@@ -166,6 +166,24 @@ const scheduleContentResize = () => {
 // 获取设置状态
 const { showCrumbs, pageTransition, menuType, menuThemeType, isDark } = useSettingsState();
 
+// 监听菜单布局变化事件
+const handleMenuLayoutChange = ((event: Event) => {
+  try {
+    const custom = event as CustomEvent<{ layout?: any }>;
+    const nextLayout = custom.detail?.layout;
+    if (!nextLayout) return;
+    if (menuType?.value !== nextLayout) {
+      menuType.value = nextLayout;
+    }
+  } catch (error) {
+    // 静默失败
+  }
+}) as EventListener;
+
+onMounted(() => {
+  window.addEventListener('menu-layout-change', handleMenuLayoutChange);
+});
+
 // 判断是否为深色菜单风格
 const isDarkMenuStyle = computed(() => {
   return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
@@ -245,7 +263,9 @@ const isHomePage = computed(() => {
          path === '/production' ||
          path === '/finance' ||
          path === '/docs' ||
-         path === '/operations';
+         path === '/operations' ||
+         path === '/dashboard' ||
+         path === '/personnel';
 });
 
 // 判断是否显示面包屑
@@ -352,17 +372,11 @@ onMounted(() => {
   // 关键：监听偏好设置抽屉打开事件（用于 qiankun 模式下的子应用）
   emitter.on('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
-    if (import.meta.env.DEV) {
-      console.log('[Layout] 收到 open-preferences-drawer 事件，打开偏好设置抽屉');
-    }
   });
   window.addEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
   // 关键：监听全局偏好设置抽屉打开事件（用于跨应用通信）
   window.addEventListener('open-preferences-drawer', () => {
     preferencesDrawerVisible.value = true;
-    if (import.meta.env.DEV) {
-      console.log('[Layout] 收到 window open-preferences-drawer 事件，打开偏好设置抽屉');
-    }
   });
 
   // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
@@ -448,6 +462,7 @@ onUnmounted(() => {
   window.removeEventListener('open-preferences-drawer', () => {});
   window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
   window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
+  window.removeEventListener('menu-layout-change', handleMenuLayoutChange);
 
   // 清理 MutationObserver
   if (qiankunLoadingObserver) {
