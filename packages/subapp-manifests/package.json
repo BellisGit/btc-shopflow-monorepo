@@ -24,8 +24,8 @@
     "prepare": "node ../../scripts/run-without-env.js tsup src/index.ts --format esm --dts --clean"
   },
   "devDependencies": {
+    "element-plus": "2.13.0",
     "tsup": "^7.3.0",
     "typescript": "^5.3.3"
   }
 }
-

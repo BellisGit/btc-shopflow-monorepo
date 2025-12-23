@@ -1,7 +1,7 @@
 <template>
   <div class="btc-code-json">
-    <!-- 弹窗模式 -->
-    <el-popover
+    <!-- 弹窗模式 - 暂时禁用，避免 getBoundingClientRect 错误 -->
+    <!-- <el-popover
       v-if="popover"
       :width="popoverWidth"
       :trigger="popoverTrigger"
@@ -25,7 +25,29 @@
       <div class="json-content">
         <pre class="json-text">{{ formattedJson }}</pre>
       </div>
-    </el-popover>
+    </el-popover> -->
+    <!-- 临时替代方案：使用 el-dialog -->
+    <template v-if="popover">
+      <el-button
+        type="primary"
+        text
+        size="small"
+        class="json-trigger"
+        @click="dialogVisible = true"
+      >
+        <BtcSvg name="view" :size="14" />
+        查看JSON
+      </el-button>
+      <el-dialog
+        v-model="dialogVisible"
+        title="JSON 数据"
+        :width="typeof popoverWidth === 'number' ? `${popoverWidth}px` : popoverWidth"
+      >
+        <div class="json-content">
+          <pre class="json-text">{{ formattedJson }}</pre>
+        </div>
+      </el-dialog>
+    </template>
 
     <!-- 直接显示模式 -->
     <div v-else class="json-display">
@@ -35,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { computed, useAttrs, ref } from 'vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
@@ -68,6 +90,8 @@ const props = withDefaults(defineProps<Props>(), {
   format: true,
   maxLength: 200
 });
+
+const dialogVisible = ref(false);
 
 // 过滤掉不应该传递给 el-popover 的属性
 const filteredAttrs = computed(() => {

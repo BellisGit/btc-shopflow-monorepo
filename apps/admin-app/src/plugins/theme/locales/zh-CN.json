@@ -1,4 +1,4 @@
-﻿{
+{
   "切换主题": "切换主题",
   "暗黑模式": "暗黑模式",
   "明亮模式": "明亮模式",
@@ -12,7 +12,6 @@
   "theme.presets.green": "绿色",
   "theme.presets.purple": "紫色",
   "theme.presets.orange": "橙色",
-  "theme.presets.pink": "粉色",
   "theme.presets.mint": "薄荷绿",
   "theme.presets.custom": "自定义"
 }

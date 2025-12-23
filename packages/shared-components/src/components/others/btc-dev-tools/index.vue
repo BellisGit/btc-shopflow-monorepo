@@ -2,6 +2,7 @@
   <Teleport to="body" :disabled="false">
     <!-- 开发工具面板 -->
     <div
+      v-show="shouldShowDevTools"
       ref="panelRef"
       class="dev-tools"
       :class="{ 'is-open': visible }"
@@ -21,6 +22,19 @@
 
       <!-- 菜单栏 -->
       <div class="dev-tools__menu">
+        <!-- 切换按钮（集成在菜单中） -->
+        <div
+          ref="toggleRef"
+          class="dev-tools__menu-item dev-tools__toggle"
+          :title="visible ? '关闭开发工具' : '打开开发工具'"
+          @click="toggle"
+        >
+          <el-icon :size="visible ? 18 : 16">
+            <Setting />
+          </el-icon>
+        </div>
+
+        <!-- 其他菜单项 -->
         <el-tooltip
           v-for="item in tabList"
           :key="item.value"
@@ -40,23 +54,6 @@
           </div>
         </el-tooltip>
       </div>
-    </div>
-
-    <!-- 悬浮按钮 -->
-    <!-- 关键：使用 v-show 而不是 v-if，避免组件被销毁重建 -->
-    <div
-      v-show="shouldShowDevTools"
-      ref="toggleRef"
-      class="dev-tools__toggle"
-      :class="{ 'is-hide': visible }"
-      :title="visible ? '关闭开发工具' : '打开开发工具'"
-      :data-dev-tools-instance="instanceId"
-      @click="toggle"
-      style="border: 2px solid #fff !important;"
-    >
-      <el-icon :size="16" style="color: #fff !important;">
-        <Setting />
-      </el-icon>
     </div>
   </Teleport>
 </template>
@@ -417,15 +414,13 @@ function toggle() {
 }
 
 // 点击外部区域自动关闭面板
+// 注意：切换按钮现在在面板内部，所以不需要 ignore
 onClickOutside(
   panelRef,
   () => {
     if (visible.value) {
       visible.value = false;
     }
-  },
-  {
-    ignore: [toggleRef], // 忽略悬浮按钮，点击按钮时不会关闭
   }
 );
 </script>
@@ -435,24 +430,89 @@ onClickOutside(
   position: fixed;
   bottom: 10px;
   right: 10px;
-  background-color: var(--el-bg-color);
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-light);
-  transition: all 0.3s;
-  height: 400px;
-  width: 600px;
-  max-width: calc(100vw - 20px);
-  max-height: calc(100vh - 20px);
-  display: flex;
-  color: var(--el-text-color-primary);
   z-index: 2000;
-  opacity: 0;
-  transform: translate(calc(100% + 10px), 0);
+  transition: all 0.3s;
 
+  // 关闭状态：只显示悬浮按钮
+  &:not(.is-open) {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .dev-tools__content {
+      display: none;
+    }
+
+    .dev-tools__menu {
+      border: none;
+      padding: 0;
+      width: 36px;
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dev-tools__menu-item:not(.dev-tools__toggle) {
+      display: none;
+    }
+
+    .dev-tools__toggle {
+      border-radius: 50%;
+      background-color: var(--el-color-primary, #409eff);
+      border: 2px solid #fff;
+      cursor: pointer;
+      height: 36px;
+      width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      margin: 0;
+      color: #fff;
+
+      &:hover {
+        background-color: var(--el-color-primary-light-3);
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  // 打开状态：显示完整面板
   &.is-open {
-    transform: translate(0, 0);
-    opacity: 1;
+    background-color: var(--el-bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--el-border-color-light);
+    height: 400px;
+    width: 600px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    display: flex;
+    color: var(--el-text-color-primary);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+    .dev-tools__content {
+      display: block;
+    }
+
+    .dev-tools__toggle {
+      border-radius: 8px;
+      background-color: transparent;
+      border: none;
+      height: 34px;
+      width: 34px;
+      margin: 5px 0 0 0;
+      box-shadow: none;
+      color: var(--el-text-color-secondary);
+
+      &:hover {
+        background-color: var(--el-fill-color-light);
+        color: var(--el-text-color-primary);
+        transform: scale(1);
+      }
+    }
   }
 
   &__content {
@@ -510,42 +570,6 @@ onClickOutside(
     &.is-active {
       background-color: var(--el-fill-color-light);
       color: var(--el-color-primary);
-    }
-  }
-
-  &__toggle {
-    position: fixed !important;
-    right: 17px !important;
-    bottom: 17px !important;
-    z-index: 99999 !important; // 提高 z-index，确保在最上层
-    border-radius: 50%;
-    background-color: var(--el-color-primary, #409eff) !important;
-    border: none !important;
-    cursor: pointer !important;
-    height: 36px !important;
-    width: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; // 添加阴影，确保可见
-    transition: all 0.3s;
-    color: #fff !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important; // 确保可以点击
-
-    &:hover {
-      background-color: var(--el-color-primary-light-3);
-      transform: scale(1.1);
-      box-shadow: none;
-    }
-
-    &.is-hide {
-      opacity: 0.6 !important;
-
-      &:hover {
-        opacity: 1 !important;
-      }
     }
   }
 }

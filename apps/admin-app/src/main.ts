@@ -1,17 +1,10 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
-import 'virtual:uno.css';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
-// 关键：直接导入确保构建时被正确打包，避免代码分割导致的路径问题
-// 注意：移除 Element Plus 基础样式导入，与物流应用保持一致，避免样式冲突
-// Element Plus 样式应该由共享组件库统一管理
 import '@btc/shared-components/styles/dark-theme.css';
-// 应用全局样式（global.scss 中已通过 @use 导入共享组件样式）
-// 注意：共享组件样式在 global.scss 中使用 @use 导入，确保构建时被正确合并
-import './styles/global.scss';
-import './styles/theme.scss';
-import './styles/nprogress.scss';
-import './styles/menu-themes.scss';
+// 应用全局样式（已在 bootstrap/index.ts 中导入，这里不再重复导入）
+// import './styles/global.scss';
+// import './styles/theme.scss';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createAdminApp,
@@ -22,6 +15,7 @@ import {
 import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
 // 注意：不再暴露 configImages 到全局，让共享组件直接使用默认配置
 // 共享组件的默认配置会从 @btc-assets 导入图片，这些图片在 layout-app 的构建产物中
 // 共享组件的 fixImagePath 函数会自动修复路径，确保在子应用中也能正确加载
@@ -138,48 +132,6 @@ const render = async (props: QiankunProps = {}) => {
   }
 };
 
-/**
- * 移除 Loading 元素
- */
-function removeLoadingElement() {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏（使用内联样式确保优先级）
-    loadingEl.style.setProperty('display', 'none', 'important');
-    loadingEl.style.setProperty('visibility', 'hidden', 'important');
-    loadingEl.style.setProperty('opacity', '0', 'important');
-    loadingEl.style.setProperty('pointer-events', 'none', 'important');
-
-    // 添加淡出类（如果 CSS 中有定义）
-    loadingEl.classList.add('is-hide');
-
-    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
-    setTimeout(() => {
-      try {
-        if (loadingEl.parentNode) {
-          loadingEl.parentNode.removeChild(loadingEl);
-        } else if (loadingEl.isConnected) {
-          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
-          loadingEl.remove();
-        }
-      } catch (error) {
-        // 如果移除失败，至少确保元素被隐藏
-        loadingEl.style.setProperty('display', 'none', 'important');
-      }
-    }, 350);
-  }
-}
-
-/**
- * 清理导航标记
- */
-function clearNavigationFlag() {
-  try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
-  } catch (e) {
-    // 静默失败（某些浏览器可能禁用 sessionStorage）
-  }
-}
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
@@ -192,20 +144,20 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
-  // 生产环境且非 layout-app：先加载共享资源
+  // 关键优化：将共享资源加载改为后台异步执行，不阻塞应用挂载
+  // 应用可以立即挂载，共享资源在后台加载，如果加载失败会使用本地资源作为降级方案
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
-    try {
-      await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded, total) => {
-          if (import.meta.env.DEV) {
-            console.log(`[admin-app] 加载共享资源进度: ${loaded}/${total}`);
-          }
-        },
-      });
-    } catch (error) {
+    // 不 await，让它在后台执行
+    loadSharedResourcesFromLayoutApp({
+      onProgress: (loaded, total) => {
+        if (import.meta.env.DEV) {
+          console.log(`[admin-app] 加载共享资源进度: ${loaded}/${total}`);
+        }
+      },
+    }).catch((error) => {
       console.warn('[admin-app] 加载共享资源失败，继续使用本地资源:', error);
-      // 继续执行，使用本地打包的资源作为降级方案
-    }
+      // 静默失败，不影响应用运行
+    });
   }
 
   // 设置子应用错误捕获（如果主应用传递了错误上报方法）
@@ -248,6 +200,10 @@ async function unmount(props: QiankunProps = {}) {
 }
 
 // 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+// 关键：只在 qiankun 环境下注册生命周期。
+// renderWithQiankun 在非 qiankun 环境会自动调用 mount，导致"子应用独立先挂载一次 + 加载 layout-app 后又手动挂载一次"的双挂载，
+// 进而引发内容区空白以及 single-spa #41/#1 等问题。
+if (qiankunWindow.__POWERED_BY_QIANKUN__) {
 renderWithQiankun({
   bootstrap,
   mount,
@@ -258,6 +214,7 @@ renderWithQiankun({
   },
   unmount,
 });
+}
 
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
@@ -288,9 +245,18 @@ export const timeouts = {
 export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
-// 注意：与 logistics-app 保持一致，使用 shouldRunStandalone 检查
-const shouldRunStandalone = () =>
-  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+const shouldRunStandalone = () => {
+  // 关键：如果 hostname 匹配生产环境域名，即使 __USE_LAYOUT_APP__ 还未设置，也不应该立即独立运行
+  // 应该等待 initLayoutApp 完成后再决定
+  const isProductionDomain = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+  if (isProductionDomain) {
+    // 生产环境域名：如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 已加载，不应该独立运行
+    // 如果还未设置，也不应该立即独立运行，应该等待 initLayoutApp
+    return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  }
+  // 非生产环境：正常判断
+  return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+};
 
 if (shouldRunStandalone()) {
   // 检查是否需要加载 layout-app

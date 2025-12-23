@@ -15,3 +15,4 @@ export { copyIconsPlugin } from './copy-icons';
 export { uploadIconsToOssPlugin } from './upload-icons-to-oss';
 export { replaceIconsWithCdnPlugin } from './replace-icons-with-cdn';
 export { dutyStaticPlugin } from './duty-static';
+export { uploadCdnPlugin } from './upload-cdn';

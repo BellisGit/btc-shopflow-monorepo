@@ -75,7 +75,7 @@
     "@btc/shared-utils": "^1.0.0",
     "@btc/subapp-manifests": "^0.0.1",
     "@element-plus/icons-vue": "^2.0.0",
-    "element-plus": "^2.0.0",
+    "element-plus": "^2.13.0",
     "vue": "^3.3.0"
   },
   "devDependencies": {
@@ -85,7 +85,8 @@
     "@element-plus/icons-vue": "^2.3.2",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.0.0",
-    "element-plus": "^2.11.5",
+    "@vitejs/plugin-vue-jsx": "^4.1.1",
+    "element-plus": "^2.13.0",
     "pinia": "^2.0.0",
     "sass": "^1.93.2",
     "vite": "^5.0.0",

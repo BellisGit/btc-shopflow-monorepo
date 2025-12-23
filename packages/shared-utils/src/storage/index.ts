@@ -236,6 +236,51 @@ class StorageUtil {
   }
 
   /**
+   * 获取所有存储数据（类似 cool-admin 的 storage.info()）
+   * 用于一次性获取所有缓存数据，提高性能
+   */
+  info(): Record<string, any> {
+    const data: Record<string, any> = {};
+
+    try {
+      // 遍历 localStorage 中所有以 prefix 开头的键
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.prefix)) {
+          const actualKey = key.substring(this.prefix.length);
+          // 跳过 settings 和 user（它们存储在 Cookie 中）
+          if (actualKey !== 'settings' && actualKey !== 'user') {
+            const value = this.get(actualKey);
+            if (value !== null) {
+              data[actualKey] = value;
+            }
+          }
+        }
+      }
+
+      // 从 Cookie 中读取 settings 和 user
+      if (typeof document !== 'undefined') {
+        try {
+          const settings = this.get('settings');
+          if (settings) {
+            data['settings'] = settings;
+          }
+          const user = this.get('user');
+          if (user) {
+            data['user'] = user;
+          }
+        } catch (error) {
+          // 忽略 Cookie 读取错误
+        }
+      }
+    } catch (error) {
+      console.warn('[Storage] 获取所有数据失败:', error);
+    }
+
+    return data;
+  }
+
+  /**
    * 清空存储
    */
   clear(): void {

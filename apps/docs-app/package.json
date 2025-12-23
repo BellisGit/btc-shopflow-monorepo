@@ -22,12 +22,12 @@
     "@element-plus/icons-vue": "^2.3.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "element-plus": "^2.8.10",
     "gray-matter": "^4.0.3",
     "vue": "^3.4.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
+    "element-plus": "^2.13.0",
     "execa": "^9.5.2",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",

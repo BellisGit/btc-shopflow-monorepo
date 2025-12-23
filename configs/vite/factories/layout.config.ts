@@ -7,6 +7,7 @@ import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import { createPathHelpers } from '../utils/path-helpers';
@@ -17,7 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { cleanDistPlugin, corsPlugin, addVersionPlugin } from '../plugins';
+import { cleanDistPlugin, corsPlugin, addVersionPlugin, uploadCdnPlugin } from '../plugins';
 
 export interface LayoutAppViteConfigOptions {
   /**
@@ -134,6 +135,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         },
       },
     }),
+    // 4.5. Vue JSX 插件（支持 TSX 文件中的 JSX 语法）
+    // 关键：与 cool-admin 保持一致，使用默认配置，让插件自动处理所有 JSX/TSX 文件
+    vueJsx(),
     // 5. UnoCSS 插件
     UnoCSS({
       configFile: withRoot('uno.config.ts'),
@@ -411,6 +415,10 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         }
       },
     } as Plugin,
+    // 17. CDN 上传插件（仅在生产构建且启用时）
+    ...(process.env.ENABLE_CDN_UPLOAD === 'true' && process.env.VITE_PREVIEW !== 'true'
+      ? [uploadCdnPlugin(appName, appDir)]
+      : []),
   ];
 
   // 构建配置
@@ -586,7 +594,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       'element-plus/es/locale/lang/en',
       '@element-plus/icons-vue',
       '@btc/shared-core',
-      '@btc/shared-components',
+      // 注意：@btc/shared-components 已从 include 中移除，因为它包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // '@btc/shared-components',
       '@btc/shared-utils',
       '@btc/subapp-manifests',
       'vite-plugin-qiankun/dist/helper',
@@ -599,25 +609,36 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       'vue-echarts',
       'mitt',
       'nprogress',
-      // 关键：lunr 和 file-saver 在切换应用时可能被首次加载，需要预构建避免触发重新加载
-      // lunr 用于全局搜索功能（在 shared-components 中）
-      'lunr',
-      // file-saver 用于导出功能（在 shared-core 和部分应用中）
-      'file-saver',
+      // 注意：lunr 和 file-saver 不是所有应用都安装，不应该在 include 中强制声明
+      // 如果应用安装了这些依赖，Vite 会在扫描 entries 时自动发现并优化
+      // 'lunr', // 只在 shared-components 中使用，不是所有应用都安装
+      // 'file-saver', // 只在部分应用中使用，不是所有应用都安装
       // 注意：以下依赖不是所有应用都直接安装，它们通过 @btc/shared-components 间接使用
       // Vite 会在运行时自动发现并优化这些依赖，不需要在 include 中显式声明
     ],
-    exclude: [],
+    exclude: [
+      // 关键：@configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 注意：exclude 只支持字符串模式，不支持正则表达式
+      '@configs/layout-bridge',
+      // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // 这样可以避免 JSX 解析问题
+      '@btc/shared-components',
+    ],
     force: false,
+    // 注意：不再包含 shared-components/src/index.ts，因为它包含 TSX 文件，应该在运行时直接处理
     entries: [
       resolve(appDir, 'src/main.ts'),
-      resolve(appDir, '../../packages/shared-components/src/index.ts'),
       // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
       // 这样 file-saver 等依赖就能在启动时被识别
       resolve(appDir, '../../packages/shared-core/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],
+      // 关键：确保依赖预构建时也使用 Vue 的 JSX 转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
     },
   };
 
@@ -635,6 +656,14 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       },
     },
     plugins,
+    esbuild: {
+      charset: 'utf8',
+      // 关键：确保 esbuild 正确处理 JSX，使用 Vue 的 h 函数而不是 React.createElement
+      // 这样即使 esbuild 处理某些 JSX 文件，也会使用正确的转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
+    },
     server: serverConfig,
     preview: previewConfig,
     css: cssConfig,

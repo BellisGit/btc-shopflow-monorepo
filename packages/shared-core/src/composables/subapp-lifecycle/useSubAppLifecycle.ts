@@ -130,12 +130,9 @@ export async function createSubApp(
     await setupPlugins(app, router);
   }
 
-  // 关键：在 qiankun 或 layout-app 环境下，都需要初始化路由
-  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
-  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
-    const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
-    router.replace(initialRoute).catch(() => {});
-  }
+  // 关键优化：不在 createSubApp 中立即触发路由导航
+  // 路由导航应该在应用挂载后立即触发，确保路由能够立即开始工作
+  // 这样路由组件可以立即开始加载，与其他区域同步出现
 
   const context: SubAppContext = {
     app,
@@ -209,42 +206,53 @@ export async function mountSubApp(
     throw new Error(`[${options.appId}-app] 无法找到挂载节点`);
   }
 
+  // 关键优化：立即挂载应用，不等待任何异步操作
+  // 这样应用可以立即显示，提升用户体验
   context.app.mount(mountPoint);
 
-  // 关键：在应用挂载后再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
-  // 这解决了生产环境子域名下独立运行时菜单为空的问题
-  try {
-    const { registerManifestMenusForApp } = await import('@configs/layout-bridge');
-    registerManifestMenusForApp(options.appId);
-  } catch (error) {
-    // 静默失败
-  }
-
-  // 在 qiankun 或 layout-app 环境下，等待路由就绪后再同步初始路由
+  // 关键优化：应用挂载后立即触发路由导航（类似 cool-admin 的做法）
+  // 在 qiankun 或 layout-app 环境下，立即触发路由导航，不等待任何异步操作
+  // 这样路由组件可以立即开始加载，与其他区域同步出现
+  // 注意：独立运行模式下，Vue Router 会自动根据当前 URL 匹配路由，无需手动触发
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
-    // 使用 nextTick 确保 Vue 应用已完全挂载
-    const { nextTick } = await import('vue');
-    await nextTick();
-    await context.router.isReady();
-
-    // 使用统一的初始路由推导函数，支持子域名环境（路径为 /）和路径前缀环境（路径为 /finance/xxx）
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
-    const currentRoute = context.router.currentRoute.value;
-    // 如果当前路由不匹配或没有匹配的路由，则同步到子应用路由
-    if (currentRoute.matched.length === 0 ||
-        currentRoute.path !== initialRoute.split('?')[0].split('#')[0]) {
-      await context.router.replace(initialRoute).catch(() => {});
+    // 立即触发路由导航，直接调用不延迟
+    // 应用已经挂载，路由可以立即开始工作，不需要 setTimeout
+    context.router.replace(initialRoute).catch(() => {});
+  }
+
+  // 关键优化：将后续操作改为后台异步执行，不阻塞应用挂载和路由导航
+  // 应用已经挂载，路由已经开始导航，这些操作可以在后台完成
+  (async () => {
+    try {
+      // 在应用挂载后再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
+      // 这解决了生产环境子域名下独立运行时菜单为空的问题
+      try {
+        const { registerManifestMenusForApp } = await import('@configs/layout-bridge');
+        registerManifestMenusForApp(options.appId);
+      } catch (error) {
+        // 静默失败
+      }
+
+      // 在路由准备好后调用 onReady 回调（但不阻塞路由导航）
+      // 路由导航已经在应用挂载后立即触发，这里只需要等待路由准备好后调用回调
+      context.router.isReady().then(() => {
+        if (props.onReady) {
+          props.onReady();
+        }
+
+        if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+          window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: options.appId } }));
+        }
+      }).catch(() => {
+        // 静默失败
+      });
+    } catch (error) {
+      // 静默失败，不影响应用运行
+      console.warn(`[${options.appId}-app] mountSubApp 后续操作失败:`, error);
     }
-  }
-
-  if (props.onReady) {
-    props.onReady();
-  }
-
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    window.dispatchEvent(new CustomEvent('subapp:ready', { detail: { name: options.appId } }));
-  }
+  })();
 }
 
 /**

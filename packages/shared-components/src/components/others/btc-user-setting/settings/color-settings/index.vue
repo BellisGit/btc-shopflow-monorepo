@@ -18,7 +18,7 @@
         <!-- 自定义颜色选择器 -->
         <BtcColorPicker
           v-model="customColor"
-          :teleported="false"
+          :teleported="true"
           @show="handleCustomThemeClick"
           @hide="handleColorPickerHide"
           @change="handleColorChange"
@@ -48,8 +48,7 @@ import { computed, ref, watch } from 'vue';
 import { Check } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
-import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
-import { BtcMessage } from '@btc/shared-components';
+import { BtcColorPicker, BtcMessage } from '@btc/shared-components';
 import '../../settings/color-settings/styles/index.scss';
 import type { ThemeConfig } from '@btc/shared-core';
 
@@ -68,11 +67,12 @@ if (!theme) {
   console.warn('[ColorSettings] Theme plugin not available');
 }
 
-// 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为空字符串
+// 初始化自定义颜色：如果是自定义主题则使用自定义颜色，否则为 null
+// 注意：BtcColorPicker 需要有效的颜色值，不能是空字符串
 const savedCustomColor = theme?.currentTheme?.value?.name === 'custom'
-  ? theme.currentTheme.value.color
-  : '';
-const customColor = ref(savedCustomColor);
+  ? (theme.currentTheme.value.color || null)
+  : null;
+const customColor = ref<string | null>(savedCustomColor);
 
 // 保存打开弹窗时的原始颜色值和主题状态，用于关闭时恢复
 const originalColor = ref<string | null>(null);
@@ -125,6 +125,9 @@ function handleCustomThemeClick() {
   if (theme.currentTheme.value?.name === 'custom' && theme.currentTheme.value.color) {
     customColor.value = theme.currentTheme.value.color;
     originalColor.value = customColor.value;
+  } else if (!customColor.value) {
+    // 如果没有自定义颜色，设置为 null（BtcColorPicker 内部会使用默认颜色 #409EFF）
+    customColor.value = null;
   }
 
   // 如果当前有自定义颜色，临时切换到自定义主题（用于预览）

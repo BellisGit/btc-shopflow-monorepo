@@ -61,12 +61,12 @@ declare const _default: {
     'theme.buttonStyles.minimal': string;
     'theme.presets.brand_red': string;
     'theme.presets.brand_gray': string;
-    'theme.presets.blue': string;
+    'theme.presets.lake_blue': string;
     'theme.presets.green': string;
     'theme.presets.purple': string;
     'theme.presets.orange': string;
-    'theme.presets.pink': string;
     'theme.presets.mint': string;
+    'theme.presets.blue': string;
     'theme.presets.custom': string;
     'menu.home': string;
     'common.menu.dashboard': string;

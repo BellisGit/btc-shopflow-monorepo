@@ -14,10 +14,14 @@
           <BtcInventoryTicketPrintToolbar
             v-model:position-filter="positionFilter"
             :position-placeholder="positionPlaceholder"
+            v-model:material-code-filter="materialCodeFilter"
+            :material-code-placeholder="materialCodePlaceholder"
             :on-refresh="handleRefresh"
             :on-print="handlePrint"
             :on-position-search="handlePositionSearch"
             :on-position-clear="handlePositionClear"
+            :on-material-code-search="handleMaterialCodeSearch"
+            :on-material-code-clear="handleMaterialCodeClear"
           />
 
           <BtcCrud ref="crudRef" :service="ticketService" :auto-load="false">
@@ -128,8 +132,10 @@ const {
   ticketList,
   selectedDomain,
   positionFilter,
+  materialCodeFilter,
   pagination,
   positionPlaceholder,
+  materialCodePlaceholder,
   tableColumns,
   ticketService,
   domainService,
@@ -146,6 +152,7 @@ const isProductionDomain = computed(() => {
 const productionPrint = useProductionInventoryTicketPrint(
   selectedDomain,
   positionFilter,
+  materialCodeFilter,
   ticketList,
   crudRef,
   printContentRef
@@ -154,6 +161,7 @@ const productionPrint = useProductionInventoryTicketPrint(
 const nonProductionPrint = useNonProductionInventoryTicketPrint(
   selectedDomain,
   positionFilter,
+  materialCodeFilter,
   ticketList,
   crudRef,
   printContentRef
@@ -238,6 +246,22 @@ const handlePositionSearch = () => {
 
 // 仓位清空处理
 const handlePositionClear = () => {
+  pagination.value.page = 1;
+  // 清空时，重置打印范围
+  lastPrintEndIndex.value = 0;
+  loadTicketData();
+};
+
+// 物料编码搜索处理
+const handleMaterialCodeSearch = () => {
+  pagination.value.page = 1;
+  // 搜索时，重置打印范围
+  lastPrintEndIndex.value = 0;
+  loadTicketData();
+};
+
+// 物料编码清空处理
+const handleMaterialCodeClear = () => {
   pagination.value.page = 1;
   // 清空时，重置打印范围
   lastPrintEndIndex.value = 0;

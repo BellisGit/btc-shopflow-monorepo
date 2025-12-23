@@ -88,6 +88,36 @@ export const createOperationsRouter = (isStandalone: boolean = false): Router =>
     next();
   });
 
+  // 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
+  // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
+  // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
+  let loadingClosed = false;
+  router.beforeResolve(() => {
+    if (!loadingClosed) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        // 关键：立即隐藏并移除 loading，确保与 cool-admin 一致的性能
+        // 使用内联样式确保优先级，立即隐藏
+        loadingEl.style.setProperty('display', 'none', 'important');
+        loadingEl.style.setProperty('visibility', 'hidden', 'important');
+        loadingEl.style.setProperty('opacity', '0', 'important');
+        loadingEl.style.setProperty('pointer-events', 'none', 'important');
+        loadingEl.classList.add('is-hide');
+        
+        // 延迟移除 DOM 元素（不影响显示，只是清理）
+        setTimeout(() => {
+          try {
+            loadingEl.remove();
+          } catch {
+            // 忽略移除错误
+          }
+        }, 350);
+        
+        loadingClosed = true;
+      }
+    }
+  });
+
   router.onError((error: Error) => {
     console.warn('[operations-app] Router error:', error);
   });

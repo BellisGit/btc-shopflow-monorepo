@@ -15,6 +15,12 @@ declare class StorageUtil {
      */
     get<T = unknown>(key: string): T | null;
     /**
+     * 获取所有存储数据（类似 cool-admin 的 storage.info()）
+     * 用于一次性获取所有缓存数据，提高性能
+     * @returns 所有存储数据的对象
+     */
+    info(): Record<string, any>;
+    /**
      * 移除存储
      * @param key 键
      */

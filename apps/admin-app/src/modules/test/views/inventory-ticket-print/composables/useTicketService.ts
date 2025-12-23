@@ -13,6 +13,7 @@ export function useTicketService() {
   const ticketList = ref<any[]>([]);
   const selectedDomain = ref<any>(null);
   const positionFilter = ref('');
+  const materialCodeFilter = ref('');
   const pagination = ref({
     page: 1,
     size: 20,
@@ -24,6 +25,12 @@ export function useTicketService() {
     const prefix = t('common.validation.required_prefix');
     const storageLocation = t('inventory.result.fields.storageLocation');
     return `${prefix}${storageLocation}`;
+  });
+
+  // 物料编码输入框 placeholder
+  const materialCodePlaceholder = computed(() => {
+    const materialCode = t('system.material.fields.materialCode');
+    return t('inventory.ticket.print.material_code_placeholder', { materialCode });
   });
 
   // 表格列配置
@@ -75,6 +82,15 @@ export function useTicketService() {
           } else if (response.data && typeof response.data === 'object' && 'list' in response.data) {
             list = response.data.list || [];
           }
+        }
+
+        // 前端筛选：根据物料编码进行模糊匹配（后端不支持，需要在前端筛选）
+        if (materialCodeFilter.value?.trim()) {
+          const filterText = materialCodeFilter.value.trim().toLowerCase();
+          list = list.filter((item: any) => {
+            const partName = (item.partName || '').toLowerCase();
+            return partName.includes(filterText);
+          });
         }
 
         // 前端分页处理
@@ -149,8 +165,10 @@ export function useTicketService() {
     ticketList,
     selectedDomain,
     positionFilter,
+    materialCodeFilter,
     pagination,
     positionPlaceholder,
+    materialCodePlaceholder,
     tableColumns,
     ticketService,
     domainService,

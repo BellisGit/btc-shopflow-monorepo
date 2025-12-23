@@ -200,6 +200,7 @@
   "inventory.ticket.print.end_index": "结束序号",
   "inventory.ticket.print.to": "至",
   "inventory.ticket.print.range_hint": "共 {total} 条数据，请输入要打印的范围（如：1-50）",
+  "inventory.ticket.print.material_code_placeholder": "请输入{materialCode}",
   "inventory.dataSource.domain": "域列表",
   "inventory.dataSource.domain.selectRequired": "请先选择左侧域",
   "recycle.batch_restore": "批量恢复",

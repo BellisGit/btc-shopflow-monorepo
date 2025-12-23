@@ -110,15 +110,6 @@ if (typeof crud.handleAdd !== 'function') {
 // 提供给子组件
 provide('btc-crud', crud);
 
-// 开发环境下验证 provide 是否成功
-if (import.meta.env.DEV) {
-  console.log('[BtcCrud] provide btc-crud context:', {
-    hasCrud: !!crud,
-    hasHandleAdd: typeof crud.handleAdd === 'function',
-    crudKeys: Object.keys(crud),
-  });
-}
-
 // 检测分页组件的存在
 function checkPagination() {
   if (!crudRef.value) return;

@@ -54,8 +54,9 @@
     "vue": "^3.0.0"
   },
   "devDependencies": {
-    "vite": "^5.4.20",
+    "element-plus": "2.13.0",
     "typescript": "^5.9.3",
+    "vite": "^5.4.20",
     "vue": "^3.0.0"
   }
 }

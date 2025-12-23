@@ -200,6 +200,7 @@
   "inventory.ticket.print.end_index": "End Index",
   "inventory.ticket.print.to": "to",
   "inventory.ticket.print.range_hint": "Total {total} records, please enter the range to print (e.g., 1-50)",
+  "inventory.ticket.print.material_code_placeholder": "Enter {materialCode}",
   "inventory.dataSource.domain": "Domain List",
   "inventory.dataSource.domain.selectRequired": "Please select a domain on the left first",
   "recycle.batch_restore": "Batch Restore",

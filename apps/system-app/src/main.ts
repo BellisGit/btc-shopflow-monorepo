@@ -1,7 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
-import { isDev } from './config';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
 import { getAppBySubdomain } from '@configs/app-scanner';
 import { setAppBySubdomainFn } from '@btc/subapp-manifests';
@@ -200,18 +199,33 @@ function removeLoadingElement() {
 
 // 关键：添加超时机制，确保 Loading 元素最终会被移除
 // 即使应用启动失败或卡住，也要在超时后移除 Loading
-const LOADING_TIMEOUT = 10000; // 10 秒超时（缩短超时时间，更快响应）
-const loadingTimeoutId = setTimeout(() => {
-  removeLoadingElement();
-  // 超时后，尝试直接挂载应用（如果还没挂载）
-  const appEl = document.getElementById('app');
-  if (appEl && !appEl.querySelector('.system-app')) {
-    try {
-      app.mount('#app');
-    } catch (error) {
-      console.error('[system-app] 强制挂载失败:', error);
-    }
+// 参考 cool-admin：但需要给应用足够的启动时间（3秒）
+const LOADING_TIMEOUT = 3000; // 3 秒超时（给应用足够的启动时间）
+let loadingTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let isAppMounted = false; // 跟踪应用是否已挂载
+
+// 确保loading一定会被关闭的兜底函数
+const ensureLoadingRemoved = () => {
+  const loadingEl = document.getElementById('Loading');
+  if (loadingEl) {
+    // 立即隐藏（使用内联样式确保优先级）
+    loadingEl.style.setProperty('display', 'none', 'important');
+    loadingEl.style.setProperty('visibility', 'hidden', 'important');
+    loadingEl.style.setProperty('opacity', '0', 'important');
+    loadingEl.style.setProperty('pointer-events', 'none', 'important');
+    loadingEl.classList.add('is-hide');
   }
+};
+
+// 设置超时定时器
+loadingTimeoutId = setTimeout(() => {
+  console.warn('[system-app] Loading 超时（5秒），强制关闭');
+  ensureLoadingRemoved();
+  removeLoadingElement();
+  // 关键：超时后只关闭 loading，不尝试强制挂载
+  // 因为正常流程会处理挂载，强制挂载可能导致重复挂载错误
+  // 如果应用真的卡住了，至少用户能看到页面（即使没有内容）
+  loadingTimeoutId = null;
 }, LOADING_TIMEOUT);
 
 // 启动应用（优化：不等待 EPS 服务，立即启动应用）
@@ -269,18 +283,33 @@ const startupPromise = Promise.resolve()
   }
 
   try {
-    app.mount('#app');
+    // 关键：检查应用是否已经挂载，避免重复挂载
+    if (isAppMounted) {
+      console.warn('[system-app] 应用已经挂载，跳过重复挂载');
+    } else {
+      app.mount('#app');
+      isAppMounted = true; // 标记应用已挂载
+    }
 
     // 关键：应用挂载后，立即关闭并移除 Loading 元素（不等待任何其他操作）
-    // 这是最重要的步骤，确保用户能看到应用界面，而不是一直显示 loading
-    clearTimeout(loadingTimeoutId); // 清除超时定时器
-    removeLoadingElement();
+    // 参考 cool-admin：在路由 beforeResolve 中已经关闭了 loading，这里作为兜底
+    // 如果路由 beforeResolve 还没执行，这里确保 loading 被关闭
+    if (loadingTimeoutId) {
+      clearTimeout(loadingTimeoutId); // 清除超时定时器
+      loadingTimeoutId = null;
+    }
+    // 检查 loading 是否已经被关闭（通过检查 is-hide 类）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl && !loadingEl.classList.contains('is-hide')) {
+      ensureLoadingRemoved(); // 立即隐藏loading
+      removeLoadingElement(); // 延迟移除loading元素
+    }
 
-    // 关键：挂载后异步触发路由导航，确保路由守卫能够执行
-    // 如果当前路由未匹配或未认证，路由守卫会自动重定向到登录页
-    // 注意：Loading 元素已经移除，这里只是确保路由正确导航
-    // 使用异步导入和 setTimeout 确保在下一个事件循环中执行，不阻塞 Loading 移除
-    setTimeout(async () => {
+    // 关键：立即触发路由导航，不延迟（参考 cool-admin）
+    // Loading 已经在 router.beforeResolve 中关闭，这里立即导航确保路由正确
+    // 使用 nextTick 确保在下一个事件循环中执行，但不延迟太久
+    import('vue').then(({ nextTick }) => {
+      nextTick(async () => {
       try {
         // 异步获取 router 实例
         const { router } = await import('./bootstrap/core/router');
@@ -338,11 +367,16 @@ const startupPromise = Promise.resolve()
       } catch (error) {
         console.error('[system-app] 路由导航处理失败:', error);
       }
-    }, 200);
+      });
+    });
   } catch (mountError) {
     // 即使挂载失败，也要移除 Loading 元素
-    clearTimeout(loadingTimeoutId);
-    removeLoadingElement();
+    if (loadingTimeoutId) {
+      clearTimeout(loadingTimeoutId);
+      loadingTimeoutId = null;
+    }
+    ensureLoadingRemoved(); // 立即隐藏loading
+    removeLoadingElement(); // 延迟移除loading元素
     throw mountError;
   }
 
@@ -387,8 +421,12 @@ const startupPromise = Promise.resolve()
     console.error('[system-app] 应用启动失败:', err);
 
     // 清除超时定时器
-    clearTimeout(loadingTimeoutId);
+    if (loadingTimeoutId) {
+      clearTimeout(loadingTimeoutId);
+      loadingTimeoutId = null;
+    }
 
     // 关键：即使启动失败，也要移除 Loading 元素
-    removeLoadingElement();
+    ensureLoadingRemoved(); // 立即隐藏loading
+    removeLoadingElement(); // 延迟移除loading元素
   });

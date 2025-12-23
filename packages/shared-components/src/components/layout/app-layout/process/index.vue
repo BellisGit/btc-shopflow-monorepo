@@ -1,5 +1,8 @@
 <template>
-  <div v-if="showWorkTab" class="app-process" :class="tabStyleClass">
+  <!-- 关键优化：使用 v-show 而不是 v-if，确保组件立即渲染，避免等待 storage 读取导致的延迟 -->
+  <!-- 这样即使 showWorkTab 初始值未确定，组件也会立即渲染，只是隐藏 -->
+  <!-- 当 showWorkTab 从 storage 读取完成后，组件会立即显示，不会出现 2 秒延迟 -->
+  <div v-show="showWorkTab" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
       <li>
@@ -103,7 +106,7 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -172,7 +175,30 @@ const { t } = useI18n();
 const processStore = useProcessStore();
 
 // 获取设置状态
-const { showWorkTab, tabStyle } = useSettingsState();
+// 关键优化：确保 showWorkTab 有默认值 true，避免等待 useSettingsState() 初始化导致的延迟
+// 先创建默认值，确保组件立即显示，然后从 useSettingsState() 获取实际值
+const showWorkTab = ref<boolean>(true); // 默认显示，确保组件立即渲染
+const tabStyle = ref<string>('tab-default'); // 默认样式
+
+// 异步获取实际设置值（不阻塞渲染）
+try {
+  const settingsState = useSettingsState();
+  // 关键：立即同步实际值，确保响应式更新
+  showWorkTab.value = settingsState.showWorkTab.value ?? true;
+  tabStyle.value = settingsState.tabStyle.value ?? 'tab-default';
+  
+  // 监听设置变化，确保用户切换设置时能响应
+  watch(settingsState.showWorkTab, (val) => {
+    showWorkTab.value = val ?? true;
+  }, { immediate: true });
+  
+  watch(settingsState.tabStyle, (val) => {
+    tabStyle.value = val ?? 'tab-default';
+  }, { immediate: true });
+} catch (error) {
+  // 如果 useSettingsState() 初始化失败，使用默认值（已经设置）
+  console.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
+}
 
 // 标签页样式类
 const tabStyleClass = computed(() => tabStyle.value || 'tab-default');

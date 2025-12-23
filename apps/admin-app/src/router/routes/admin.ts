@@ -209,7 +209,7 @@ const pageRoutes: RouteRecordRaw[] = [
 export const getAdminRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
-  
+
   // 公开路由（登录页、忘记密码页、注册页）- 不需要 Layout
   const publicRoutes: RouteRecordRaw[] = [
     {
@@ -243,7 +243,7 @@ export const getAdminRoutes = (): RouteRecordRaw[] => {
       }
     },
   ];
-  
+
   // 如果使用 layout-app，直接返回页面路由和公开路由（layout-app 会提供布局）
   if (isUsingLayoutApp) {
     return [
@@ -251,24 +251,22 @@ export const getAdminRoutes = (): RouteRecordRaw[] => {
       ...pageRoutes, // 业务路由
     ];
   }
-  
-  if (isStandalone) {
-    // 独立运行时：使用 AppLayout 包裹所有路由
-    return [
-      ...publicRoutes, // 公开路由放在最前面，不需要 Layout
-      {
-        path: '/',
-        component: AppLayout, // Use AppLayout from shared package
-        children: pageRoutes,
-      },
-    ];
-  } else {
-    // qiankun 模式：返回页面路由和公开路由（由主应用提供 Layout）
-    return [
-      ...publicRoutes, // 公开路由放在最前面
-      ...pageRoutes, // 业务路由
-    ];
-  }
+
+  // 独立运行且不使用 layout-app：使用 AppLayout 包裹所有路由
+  const routes = isStandalone
+    ? [
+        ...publicRoutes, // 公开路由放在最前面，不需要 Layout
+        {
+          path: '/',
+          component: AppLayout, // Use AppLayout from shared package
+          children: pageRoutes,
+        },
+      ]
+    : [
+        ...publicRoutes, // 公开路由放在最前面
+        ...pageRoutes, // 业务路由（qiankun 模式，由主应用提供 Layout）
+      ];
+  return routes;
 };
 
 // 为了向后兼容，保留 adminRoutes 导出（使用函数动态获取）

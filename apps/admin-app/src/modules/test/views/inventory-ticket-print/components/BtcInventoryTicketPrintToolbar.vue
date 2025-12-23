@@ -17,6 +17,24 @@
 
     <btc-flex1 />
 
+    <!-- 物料编码筛选 -->
+    <div class="material-code-filter">
+      <el-input
+        :model-value="materialCodeFilter"
+        :placeholder="materialCodePlaceholder"
+        clearable
+        size="default"
+        style="width: 200px;"
+        @update:model-value="(val: string) => $emit('update:materialCodeFilter', val)"
+        @clear="onMaterialCodeClear"
+        @keyup.enter="onMaterialCodeSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+
     <!-- 仓位筛选 -->
     <div class="position-filter">
       <el-input
@@ -69,19 +87,26 @@ defineOptions({
 interface Props {
   positionFilter: string;
   positionPlaceholder: string;
+  materialCodeFilter: string;
+  materialCodePlaceholder: string;
   onRefresh: () => void;
   onPrint: () => void;
   onPositionSearch: () => void;
   onPositionClear: () => void;
+  onMaterialCodeSearch: () => void;
+  onMaterialCodeClear: () => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   positionFilter: '',
   positionPlaceholder: '',
+  materialCodeFilter: '',
+  materialCodePlaceholder: '',
 });
 
 const emit = defineEmits<{
   'update:positionFilter': [value: string];
+  'update:materialCodeFilter': [value: string];
 }>();
 
 const { t } = useI18n();
@@ -124,6 +149,14 @@ const onPositionSearch = () => {
 const onPositionClear = () => {
   props.onPositionClear?.();
 };
+
+const onMaterialCodeSearch = () => {
+  props.onMaterialCodeSearch?.();
+};
+
+const onMaterialCodeClear = () => {
+  props.onMaterialCodeClear?.();
+};
 </script>
 
 <style lang="scss" scoped>
@@ -135,7 +168,8 @@ const onPositionClear = () => {
   margin-bottom: 10px;
 }
 
-.position-filter {
+.position-filter,
+.material-code-filter {
   display: flex;
   align-items: center;
 

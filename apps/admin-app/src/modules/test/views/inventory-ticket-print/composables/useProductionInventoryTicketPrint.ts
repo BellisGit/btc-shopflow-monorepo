@@ -12,6 +12,7 @@ import type { Ref } from 'vue';
 export function useProductionInventoryTicketPrint(
   selectedDomain: Ref<any>,
   positionFilter: Ref<string>,
+  materialCodeFilter: Ref<string>,
   ticketList: Ref<any[]>,
   crudRef: Ref<any>,
   printContentRef: Ref<HTMLElement | undefined>
@@ -99,6 +100,15 @@ export function useProductionInventoryTicketPrint(
         }
       }
 
+      // 前端筛选：根据物料编码进行模糊匹配（后端不支持，需要在前端筛选）
+      if (materialCodeFilter.value?.trim()) {
+        const filterText = materialCodeFilter.value.trim().toLowerCase();
+        list = list.filter((item: any) => {
+          const partName = (item.partName || '').toLowerCase();
+          return partName.includes(filterText);
+        });
+      }
+
       // 如果指定了范围，则只打印范围内的数据
       if (range && range.start && range.end) {
         const start = Math.max(0, range.start - 1); // 转换为数组索引（从0开始）
@@ -154,13 +164,50 @@ export function useProductionInventoryTicketPrint(
 
       // 标记是否已调用print接口，避免重复调用
       let printApiCalled = false;
+      // 标记是否真正开始打印（beforeprint事件触发）
+      let printStarted = false;
+      // 记录beforeprint触发的时间戳
+      let beforePrintTime = 0;
+      // 最小打印时间（毫秒），如果beforeprint和afterprint之间的时间太短，可能是用户快速取消了
+      const MIN_PRINT_TIME = 100;
 
       // 清理函数：移除事件监听器和 iframe
       let cleanup: (() => void) | null = null;
 
+      // 监听打印开始事件
+      const handleBeforePrint = () => {
+        printStarted = true;
+        beforePrintTime = Date.now();
+      };
+
       // 监听打印完成事件，调用后端print接口
+      // 只有在真正开始打印（beforeprint触发）后，才在afterprint时调用API
       const handleAfterPrint = async () => {
-        if (printApiCalled) return;
+        // 如果没有开始打印（用户取消了），不调用API
+        if (!printStarted) {
+          if (cleanup) {
+            cleanup();
+          }
+          return;
+        }
+
+        // 如果beforeprint和afterprint之间的时间太短（小于100ms），可能是用户快速取消了
+        // 注意：这只是一个启发式检查，不能完全保证准确性
+        const printDuration = Date.now() - beforePrintTime;
+        if (printDuration < MIN_PRINT_TIME) {
+          console.log('[ProductionInventoryTicketPrint] Print dialog closed too quickly, likely cancelled');
+          if (cleanup) {
+            cleanup();
+          }
+          return;
+        }
+
+        if (printApiCalled) {
+          if (cleanup) {
+            cleanup();
+          }
+          return;
+        }
         printApiCalled = true;
 
         try {
@@ -185,15 +232,19 @@ export function useProductionInventoryTicketPrint(
 
       // 定义清理函数
       cleanup = () => {
+        window.removeEventListener('beforeprint', handleBeforePrint);
         window.removeEventListener('afterprint', handleAfterPrint);
+        printWindow.removeEventListener('beforeprint', handleBeforePrint);
         printWindow.removeEventListener('afterprint', handleAfterPrint);
         if (printIframe.parentNode) {
           document.body.removeChild(printIframe);
         }
       };
 
-      // 在主窗口和打印窗口都监听afterprint事件
+      // 在主窗口和打印窗口都监听beforeprint和afterprint事件
+      window.addEventListener('beforeprint', handleBeforePrint);
       window.addEventListener('afterprint', handleAfterPrint);
+      printWindow.addEventListener('beforeprint', handleBeforePrint);
       printWindow.addEventListener('afterprint', handleAfterPrint);
 
       // 延迟生成二维码

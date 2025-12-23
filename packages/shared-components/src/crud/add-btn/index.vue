@@ -112,32 +112,9 @@ const handleAddClick = (event?: MouseEvent) => {
     throw new Error(errorMsg);
   }
 
-  // 生产环境日志：记录按钮点击
-  if (import.meta.env.PROD) {
-    console.log('[BtcAddBtn] 点击新增按钮', {
-      hasCrud: !!crud,
-      hasHandleAdd: typeof crud.handleAdd === 'function',
-      upsertVisibleBefore: crud.upsertVisible?.value,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
   try {
     crud.handleAdd();
-
-    // 生产环境日志：记录调用后的状态
-    if (import.meta.env.PROD) {
-      console.log('[BtcAddBtn] crud.handleAdd() 调用完成', {
-        upsertVisibleAfter: crud.upsertVisible?.value,
-        timestamp: new Date().toISOString(),
-      });
-    }
   } catch (error) {
-    console.error('[BtcAddBtn] Error calling crud.handleAdd:', error, {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString(),
-    });
     // 重新抛出错误，确保错误可见
     throw error;
   }

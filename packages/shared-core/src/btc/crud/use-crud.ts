@@ -318,29 +318,9 @@ export function useCrud<T = Record<string, unknown>>(
    * 打开新增弹窗
    */
   const handleAdd = () => {
-    // 生产环境日志：记录 handleAdd 调用
-    if (import.meta.env.PROD) {
-      console.log('[useCrud] handleAdd() 被调用', {
-        upsertVisibleBefore: upsertVisible.value,
-        upsertModeBefore: upsertMode.value,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     currentRow.value = null;
     upsertMode.value = 'add';
     upsertVisible.value = true;
-
-    // 生产环境日志：记录设置后的状态
-    if (import.meta.env.PROD) {
-      console.log('[useCrud] handleAdd() 设置完成', {
-        upsertVisibleAfter: upsertVisible.value,
-        upsertModeAfter: upsertMode.value,
-        isRef: upsertVisible instanceof Object && 'value' in upsertVisible,
-        refType: typeof upsertVisible,
-        timestamp: new Date().toISOString(),
-      });
-    }
   };
 
   /**
@@ -405,8 +385,9 @@ export function useCrud<T = Record<string, unknown>>(
   const handleDelete = async (row: T & { id: number | string }) => {
     // 检查 row 是否有有效的 id
     if (!row || row.id === undefined || row.id === null) {
-      console.error('删除失败：行数据缺少有效的 id 字段', row);
-      onError?.(new Error('删除失败：缺少有效的 id 字段'));
+      const errorMsg = '删除失败：行数据缺少有效的 id 字段';
+      console.error('[useCrud]', errorMsg, row);
+      onError?.(new Error(errorMsg));
       return;
     }
 
@@ -425,7 +406,7 @@ export function useCrud<T = Record<string, unknown>>(
       onAfterDelete?.();
       loadData();
     } catch (error) {
-      console.error('删除操作失败:', error);
+      console.error('[useCrud] Delete operation failed:', error);
       onError?.(error);
     }
   };
@@ -435,7 +416,9 @@ export function useCrud<T = Record<string, unknown>>(
    */
   const handleMultiDelete = async () => {
     if (selection.value.length === 0) {
-      onError?.(new Error('请选择要删除的数据'));
+      const errorMsg = '请选择要删除的数据';
+      console.warn('[useCrud]', errorMsg);
+      onError?.(new Error(errorMsg));
       return;
     }
 
@@ -456,6 +439,7 @@ export function useCrud<T = Record<string, unknown>>(
       clearSelection();
       loadData();
     } catch (error) {
+      console.error('[useCrud] Multi-delete operation failed:', error);
       onError?.(error);
     }
   };

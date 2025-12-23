@@ -20,9 +20,13 @@ export const useThemeStore = defineStore('theme', () => {
     const oldLabels = ['Default', 'Green', 'Purple', 'Orange', 'Pink', 'Mint', 'Custom'];
     if (oldLabels.includes(savedTheme.label)) {
       // 根据颜色匹配对应的新主题配置
+      // 如果匹配到已删除的主题（如 pink），则回退到默认主题
       const matchedPreset = THEME_PRESETS.find(preset => preset.color === savedTheme.color);
       if (matchedPreset) {
         migratedTheme = matchedPreset;
+      } else if (savedTheme.name === 'pink' || savedTheme.color === '#FF69B4') {
+        // 粉色主题已删除，回退到默认主题
+        migratedTheme = THEME_PRESETS[0];
       } else if (savedTheme.name === 'custom') {
         // 自定义主题
         migratedTheme = {

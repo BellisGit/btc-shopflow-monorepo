@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BtcDialog Props
  */
 export interface DialogProps {
@@ -30,7 +30,7 @@ export interface DialogProps {
   hideHeader?: boolean;
 
   // 关闭前
-  beforeClose?: () => void | Promise<void>;
+  beforeClose?: (done: () => void) => void | Promise<void>;
 
   // 鏄惁闇€瑕佹粴鍔ㄦ潯
   scrollbar?: boolean;
@@ -40,6 +40,12 @@ export interface DialogProps {
 
   // 是否居中
   alignCenter?: boolean;
+
+  // 是否挂载到 body（在微前端环境中建议设置为 false）
+  appendToBody?: boolean;
+
+  // 挂载到指定选择器或元素（Element Plus 2.4.3+ 支持，优先级高于 appendToBody）
+  appendTo?: string | HTMLElement;
 }
 
 /**

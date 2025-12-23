@@ -182,7 +182,7 @@ import {
   type VerifyEmailCodeFn
 } from '../btc-identity-verify/composables/useIdentityVerify';
 import type { SaveBindingApi } from './types';
-import BtcDialog from '@btc-common/dialog/index.vue';
+import BtcDialog from '@btc-common/dialog/index';
 import type { Component } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 

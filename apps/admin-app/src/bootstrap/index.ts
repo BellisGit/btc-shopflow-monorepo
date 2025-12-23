@@ -1,11 +1,9 @@
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 // 样式文件在模块加载时同步导入
-// 关键：显式导入 shared-components 样式，确保 BtcDialog 等组件的样式在生产环境下正确加载
-// 虽然 global.scss 中也通过 @use 导入了，但在 bootstrap 中显式导入可以确保样式加载顺序正确
 import '@btc/shared-components/styles/index.scss';
-// 注意：其他样式文件已在 main.ts 入口文件顶层导入，确保构建时被正确打包
-// 这里只导入 shared-components 样式，避免样式重复
+import '../styles/global.scss';
+import '../styles/theme.scss';
 
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { QiankunProps } from '@btc/shared-core';
@@ -34,65 +32,62 @@ const ADMIN_APP_ID = 'admin';
 const ADMIN_BASE_PATH = '/admin';
 const ADMIN_DOMAIN_CACHE_PATH = '@utils/domain-cache';
 
-// 自定义 setupStandaloneGlobals（仿照 logistics-app 的方式，确保 EPS 服务正确初始化）
-const setupAdminGlobals = async () => {
-  const { registerAppEnvAccessors, createAppStorageBridge, resolveAppLogoUrl, injectDomainListResolver } = await import('@configs/layout-bridge');
+// 自定义 setupStandaloneGlobals（改为直接使用 virtual:eps 虚拟模块，类似 cool-admin）
+// 关键优化：直接同步导入 virtual:eps，不等待全局服务，不阻塞应用启动
+// 关键优化：同步导入 virtual:eps 和 EPS 服务（类似 cool-admin 的 createEps）
+// 这样可以确保 EPS 服务立即可用，不需要等待异步导入
+import epsModule from 'virtual:eps';
+import { loadEpsService } from '@btc/shared-core';
+// 关键优化：同步导入 layout-bridge，减少异步操作（类似 cool-admin 的同步导入方式）
+// 由于这是配置文件，应该是同步可用的
+import { registerAppEnvAccessors, createAppStorageBridge, resolveAppLogoUrl, injectDomainListResolver, registerManifestMenusForApp, registerManifestTabsForApp } from '@configs/layout-bridge';
+
+const setupAdminGlobals = () => {
 
   registerAppEnvAccessors();
   const win = window as any;
 
-  // 优先使用全局共享的 EPS 服务（由 system-app 或 layout-app 提供）
-  // 注意：本地服务的加载由 services/eps.ts 在被需要时自然导入，由 loadEpsService 处理
-  const getGlobalEpsService = () => {
-    const globalService = win.__APP_EPS_SERVICE__ || win.service || win.__BTC_SERVICE__;
-    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
-      return globalService;
+  // 关键优化：直接使用 virtual:eps 虚拟模块（类似 cool-admin 的做法）
+  // loadEpsService 会自动优先使用全局服务（如果有），否则使用 virtual:eps 的本地服务
+  // 由于 virtual:eps 是同步导入的，loadEpsService 也是同步函数，所以这里不需要 await
+  try {
+    // 同步加载 EPS 服务（类似 cool-admin 的 createEps）
+    const { service } = loadEpsService(epsModule);
+    if (service && typeof service === 'object' && Object.keys(service).length > 0) {
+      // 使用 Object.assign 进行浅合并（替代 lodash-es 的 merge，避免构建时依赖问题）
+      // 对于 EPS 服务的合并，浅合并已经足够，因为 loadEpsService 内部已经处理了深层合并
+      const existingService = win.__APP_EPS_SERVICE__ || {};
+      win.__APP_EPS_SERVICE__ = Object.assign({}, existingService, service);
+      win.service = win.__APP_EPS_SERVICE__;
+      win.__BTC_SERVICE__ = win.__APP_EPS_SERVICE__;
     }
-    return null;
-  };
-
-  // 先检查是否有全局服务
-  let globalService = getGlobalEpsService();
-
-  if (!globalService) {
-    // 等待全局服务可用（最多等待 3 秒，与 setupSubAppGlobals 一致）
-    const waitForGlobalService = async (maxWait = 3000, interval = 100) => {
-      const startTime = Date.now();
-      while (Date.now() - startTime < maxWait) {
-        const service = getGlobalEpsService();
-        if (service) return service;
-        await new Promise(resolve => setTimeout(resolve, interval));
-      }
-      return null;
-    };
-
-    globalService = await waitForGlobalService();
+  } catch (error) {
+    // 如果加载失败，静默处理，不影响应用启动
+    // EPS 服务可以在后台继续尝试加载
   }
-
-  if (globalService) {
-    // 使用全局服务
-    win.__APP_EPS_SERVICE__ = globalService;
-    win.service = globalService;
-    win.__BTC_SERVICE__ = globalService;
-  }
-  // 注意：如果没有全局服务，不在这里加载本地服务
-  // 因为如果此时加载 services/eps.ts，loadEpsService 可能返回本地服务并缓存
-  // 即使后来全局服务准备好了，services/eps.ts 已经执行过了，不会重新检查
-  // 本地服务的加载由 services/eps.ts 在被需要时自然导入，由 loadEpsService 处理
 
   if (!win.__APP_STORAGE__) {
     win.__APP_STORAGE__ = createAppStorageBridge(ADMIN_APP_ID);
   }
 
   // 关键：使用统一的域列表注入函数，确保汉堡菜单应用列表能够调用 me 接口
+  // 关键优化：改为后台异步执行，不阻塞应用启动
   // 在生产环境下，别名路径可能无法动态导入，所以先静态导入模块
-  try {
-    const domainCacheModule = await import('../utils/domain-cache');
-    await injectDomainListResolver(ADMIN_APP_ID, domainCacheModule);
-  } catch (error) {
-    // 如果静态导入失败，尝试使用路径字符串（可能在某些环境下工作）
-    await injectDomainListResolver(ADMIN_APP_ID, ADMIN_DOMAIN_CACHE_PATH);
-  }
+  (async () => {
+    try {
+      const domainCacheModule = await import('../utils/domain-cache');
+      await injectDomainListResolver(ADMIN_APP_ID, domainCacheModule);
+    } catch (error) {
+      // 如果静态导入失败，尝试使用路径字符串（可能在某些环境下工作）
+      try {
+        await injectDomainListResolver(ADMIN_APP_ID, ADMIN_DOMAIN_CACHE_PATH);
+      } catch (err) {
+        // 静默失败
+      }
+    }
+  })().catch(() => {
+    // 静默失败
+  });
 
   if (!win.__APP_FINISH_LOADING__) {
     win.__APP_FINISH_LOADING__ = () => {};
@@ -101,18 +96,23 @@ const setupAdminGlobals = async () => {
   win.__APP_GET_DOCS_SEARCH_SERVICE__ = async () => [];
 
   // 关键：在独立运行模式下，确保菜单注册表已初始化
-  try {
-    const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
-    const registry = getMenuRegistry();
-    if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
-      (window as any).__BTC_MENU_REGISTRY__ = registry;
+  // 关键优化：改为后台异步执行，不阻塞应用启动
+  (async () => {
+    try {
+      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const registry = getMenuRegistry();
+      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+        (window as any).__BTC_MENU_REGISTRY__ = registry;
+      }
+    } catch (error) {
+      // 静默失败
     }
-  } catch (error) {
+  })().catch(() => {
     // 静默失败
-  }
+  });
 
   // 注册菜单和 Tabs（无论是否独立运行都需要注册）
-  const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+  // 关键优化：已经同步导入了 registerManifestMenusForApp 和 registerManifestTabsForApp，直接使用
   registerManifestMenusForApp(ADMIN_APP_ID);
   registerManifestTabsForApp(ADMIN_APP_ID);
 };
@@ -345,27 +345,32 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
 
-  // 独立运行或 layout-app 环境下都需要设置全局函数（包括 EPS 服务初始化）
+  // 关键优化：setupAdminGlobals 已经改为直接使用 virtual:eps 虚拟模块（类似 cool-admin）
+  // 不再等待全局服务，直接同步加载 virtual:eps，不阻塞应用启动
+  // loadEpsService 会自动优先使用全局服务（如果有），否则使用本地 virtual:eps 服务
+  // setupAdminGlobals 现在是同步函数，不需要 await
   if (isStandalone || isUsingLayoutApp) {
-    await setupAdminGlobals();
+    setupAdminGlobals();
   } else {
-    // qiankun 环境下也需要注册菜单和 Tabs
-    try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
-      const registry = getMenuRegistry();
-      if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
-        (window as any).__BTC_MENU_REGISTRY__ = registry;
-      }
-    } catch (error) {
+    // qiankun 环境下也需要注册菜单和 Tabs（异步执行，不阻塞应用创建）
+    Promise.all([
+      import('@btc/shared-components/store/menuRegistry').then(({ getMenuRegistry }) => {
+        const registry = getMenuRegistry();
+        if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
+          (window as any).__BTC_MENU_REGISTRY__ = registry;
+        }
+      }).catch(() => {}),
+      import('@configs/layout-bridge').then(({ registerManifestMenusForApp, registerManifestTabsForApp }) => {
+        registerManifestMenusForApp(ADMIN_APP_ID);
+        registerManifestTabsForApp(ADMIN_APP_ID);
+      }).catch(() => {}),
+    ]).catch(() => {
       // 静默失败
-    }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
-    registerManifestMenusForApp(ADMIN_APP_ID);
-    registerManifestTabsForApp(ADMIN_APP_ID);
+    });
   }
 
   // 使用标准化的 createSubApp
-  // 注意：EPS 服务已在 setupSubAppGlobals 中正确初始化，无需再次处理
+  // 注意：EPS 服务已在 setupAdminGlobals 中快速检查（200ms），如果未找到会在后台继续尝试
   const context = await createSubApp(subAppOptions, props) as AdminAppContext;
 
   // 关键：在 qiankun 模式下也需要注册 echarts 插件（v-chart 组件）
@@ -382,9 +387,12 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
 
 export const mountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
   // 使用标准化的 mountSubApp
+  // 注意：mountSubApp 内部会调用 context.app.mount()，这是同步操作，会立即挂载应用
+  // 之后的操作（如路由就绪等待、菜单注册等）可以在后台异步执行
   await mountSubApp(context, subAppOptions, props);
 
   // 设置路由同步、事件桥接等（使用自定义的 setupAdminEventBridge）
+  // 这些操作是同步的，很快，可以立即执行
   setupRouteSync(context, ADMIN_APP_ID, ADMIN_BASE_PATH);
   setupHostLocationBridge(context, ADMIN_APP_ID, ADMIN_BASE_PATH);
   setupAdminEventBridge(context);

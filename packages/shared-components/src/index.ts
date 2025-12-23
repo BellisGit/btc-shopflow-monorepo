@@ -84,7 +84,7 @@ export { default as BtcProcessCountdown } from './components/process/btc-process
 export { default as BtcProcessCard } from './components/process/btc-process-card/index.vue';
 
 // Feedback 反馈组件
-export { default as BtcDialog } from './common/dialog/index.vue';
+export { default as BtcDialog } from './common/dialog/index';
 export { BtcMessage } from './components/feedback/btc-message';
 export { BtcNotification } from './components/feedback/btc-notification';
 export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
@@ -186,3 +186,10 @@ export type {
   ProcessManagementItem,
   ProcessPauseRecord
 } from './components/process/types';
+
+// 关键：预加载可能在运行时动态导入的依赖，确保 Vite 在启动时就能扫描并预构建它们
+// 这样可以避免在运行时触发依赖优化导致页面重新加载
+// 注意：这些导入不会被实际执行（因为只导入类型/接口），但会被 Vite 的依赖扫描器识别
+// 使用副作用导入确保这些模块被加载
+import './components/layout/app-layout/global-search/useSearchIndex';
+import './plugins/excel/components/import-btn/index.vue';

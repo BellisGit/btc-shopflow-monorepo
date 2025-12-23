@@ -7,6 +7,7 @@
     :padding="dialogPadding"
     v-bind="dialogProps"
     @closed="handleClosed"
+    ref="dialogRef"
   >
     <el-form
       ref="formRef"
@@ -43,8 +44,10 @@
 
               <!-- 默认输入框 -->
               <!-- 使用显式的 modelValue 和 onUpdate:modelValue，避免 ref + 动态属性的解包问题 -->
+              <!-- 为 el-input 添加 id，确保 label 的 for 属性能正确匹配 -->
               <el-input
                 v-else
+                :id="item.prop ? `form-item-${item.prop}` : undefined"
                 :model-value="formData[item.prop]"
                 @update:model-value="(val: any) => { formData[item.prop] = val; }"
                 :placeholder="`请输入${item.label}`"
@@ -68,9 +71,9 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, h, watch, computed, unref, toRef } from 'vue';
+import { inject, onMounted, onUnmounted, h, watch, computed, unref, toRef, ref } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
-import BtcDialog from '../../common/dialog/index.vue';
+import BtcDialog from '../../common/dialog/index';
 import type { UpsertProps } from './types';
 import { useFormData, useFormInit, useFormSubmit, usePlugins } from './composables';
 
@@ -92,26 +95,9 @@ if (!crud) {
 // 这样即使值相同，Vue 也能检测到 ref 对象本身的变化
 const upsertVisibleValue = computed({
   get: () => {
-    const value = unref(crud.upsertVisible);
-    // 生产环境日志
-    if (import.meta.env.PROD) {
-      console.log('[BtcUpsert] upsertVisibleValue getter', {
-        value,
-        isRef: crud.upsertVisible instanceof Object && 'value' in crud.upsertVisible,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    return value;
+    return unref(crud.upsertVisible);
   },
   set: (val: boolean) => {
-    // 生产环境日志
-    if (import.meta.env.PROD) {
-      console.log('[BtcUpsert] upsertVisibleValue setter', {
-        newValue: val,
-        oldValue: unref(crud.upsertVisible),
-        timestamp: new Date().toISOString(),
-      });
-    }
     if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
       crud.upsertVisible.value = val;
     }
@@ -120,38 +106,10 @@ const upsertVisibleValue = computed({
 
 // 关键：处理 modelValue 更新，确保能够正确传递到 crud.upsertVisible
 function handleModelValueUpdate(val: boolean) {
-  // 生产环境日志
-  if (import.meta.env.PROD) {
-    console.log('[BtcUpsert] handleModelValueUpdate', {
-      newValue: val,
-      oldValue: unref(crud.upsertVisible),
-      timestamp: new Date().toISOString(),
-    });
-  }
-
   // 更新 crud.upsertVisible
   if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
     crud.upsertVisible.value = val;
   }
-}
-
-// 生产环境日志：监听 upsertVisible 变化
-if (import.meta.env.PROD) {
-  watch(
-    () => crud.upsertVisible,
-    (newVal, oldVal) => {
-      const newValue = newVal?.value ?? newVal;
-      const oldValue = oldVal?.value ?? oldVal;
-      console.log('[BtcUpsert] upsertVisible 变化', {
-        oldValue,
-        newValue,
-        isRef: newVal instanceof Object && 'value' in newVal,
-        refType: typeof newVal,
-        timestamp: new Date().toISOString(),
-      });
-    },
-    { immediate: true, deep: true }
-  );
 }
 
 // 表单数据管理

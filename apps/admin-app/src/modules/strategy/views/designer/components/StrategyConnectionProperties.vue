@@ -36,12 +36,14 @@
 
       <btc-config-form :model="styleForm" label-width="60px" size="small">
         <btc-config-form-item label="线条颜色" prop="strokeColor">
-          <el-color-picker
+          <!-- 暂时禁用 el-color-picker，避免 getBoundingClientRect 错误 -->
+          <!-- <el-color-picker
             v-model="styleForm.strokeColor"
             @change="updateStyle"
             :teleported="false"
             style="width: 100%"
-          />
+          /> -->
+          <el-input v-model="styleForm.strokeColor" placeholder="请输入颜色值，如 #ff0000" />
         </btc-config-form-item>
 
         <btc-config-form-item label="线条宽度" prop="strokeWidth">

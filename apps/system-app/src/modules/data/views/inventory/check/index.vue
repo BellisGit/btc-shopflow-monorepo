@@ -36,6 +36,7 @@
       v-model="detailVisible"
       :title="t('inventory.result.detail.title')"
       width="800px"
+      :append-to-body="true"
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item :label="t('system.inventory.base.fields.checkNo')">

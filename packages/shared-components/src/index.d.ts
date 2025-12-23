@@ -35,7 +35,7 @@ export { default as BtcDoubleGroup } from './components/data/btc-double-group/in
 export { default as BtcViewsTabsGroup } from './components/data/btc-views-tabs-group/index.vue';
 export { default as BtcTransferPanel } from './components/data/btc-transfer-panel/index.vue';
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
-export { default as BtcDialog } from './common/dialog/index.vue';
+export { default as BtcDialog } from './common/dialog/index';
 export { BtcMessage } from './components/feedback/btc-message';
 export { BtcNotification } from './components/feedback/btc-notification';
 export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';

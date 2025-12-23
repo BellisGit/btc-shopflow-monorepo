@@ -17,10 +17,10 @@
         >
           <div
             class="locale-switcher__item"
-            :class="{ active: locale === lang.value }"
+            :class="{ active: locale.value === lang.value }"
           >
             <span class="locale-switcher__item-label">{{ lang.label }}</span>
-            <span v-if="locale === lang.value" class="locale-switcher__item-dot"></span>
+            <span v-if="locale.value === lang.value" class="locale-switcher__item-dot"></span>
           </div>
         </el-dropdown-item>
       </el-dropdown-menu>

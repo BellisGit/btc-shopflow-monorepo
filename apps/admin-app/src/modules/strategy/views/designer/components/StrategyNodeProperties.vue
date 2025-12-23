@@ -60,22 +60,26 @@
         </btc-config-form-item>
 
         <btc-config-form-item label="背景色" prop="backgroundColor">
-          <el-color-picker
+          <!-- 暂时禁用 el-color-picker，避免 getBoundingClientRect 错误 -->
+          <!-- <el-color-picker
             v-model="styleForm.backgroundColor"
             @change="updateStyle"
             show-alpha
             :teleported="false"
             style="width: 100%"
-          />
+          /> -->
+          <el-input v-model="styleForm.backgroundColor" placeholder="请输入颜色值，如 #ff0000" />
         </btc-config-form-item>
 
         <btc-config-form-item label="边框色" prop="borderColor">
-          <el-color-picker
+          <!-- 暂时禁用 el-color-picker，避免 getBoundingClientRect 错误 -->
+          <!-- <el-color-picker
             v-model="styleForm.borderColor"
             @change="updateStyle"
             :teleported="false"
             style="width: 100%"
-          />
+          /> -->
+          <el-input v-model="styleForm.borderColor" placeholder="请输入颜色值，如 #ff0000" />
         </btc-config-form-item>
       </btc-config-form>
     </div>

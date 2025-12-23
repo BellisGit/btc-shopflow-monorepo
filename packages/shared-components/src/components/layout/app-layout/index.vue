@@ -64,9 +64,8 @@
       <div class="app-layout__main">
         <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
         <div class="app-layout__header">
-          <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
+          <!-- Tabbar -->
           <Process
-            v-show="!isDocsApp"
             :is-fullscreen="isFullscreen"
             @toggle-fullscreen="toggleFullscreen"
           />
@@ -81,11 +80,14 @@
           class="app-layout__content"
           ref="contentRef"
         >
-            <!-- 主应用路由出口 -->
-            <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
-            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
+            <!-- 关键优化：直接挂载路由视图，不需要判断 isMainApp 和 isDocsApp（类似 cool-admin 的做法） -->
+            <!-- 主应用和子应用有非常明显的路径差异，可以通过路由自动区分 -->
+            <!-- 文档应用已经迁移为单独的子应用和子域名，不需要在此判断 -->
+            <!-- 关键：在 layout-app 环境下（包括 layout-app 自己运行），隐藏主应用路由视图，只显示子应用 -->
+            <!-- layout-app 的路由都是空组件，应该只显示 #subapp-viewport -->
+            <!-- 关键：如果 #subapp-viewport 有内容，也不应该显示主应用路由视图 -->
             <!-- 关键：添加 position: relative，确保 transition 的 position: absolute 不影响布局 -->
-            <div v-show="isMainApp && !isDocsApp" style="width: 100%; height: 100%; position: relative;">
+            <div v-if="shouldShowMainAppRouterView" style="width: 100%; height: 100%; position: relative;">
               <router-view v-slot="{ Component, route }">
                 <transition :name="pageTransitionName" mode="out-in">
                   <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
@@ -96,14 +98,14 @@
               </router-view>
             </div>
 
-            <!-- 文档应用 iframe -->
-            <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在 -->
-            <DocsIframe v-show="isDocsApp" :visible="isDocsApp" />
-
-            <!-- 子应用挂载点（非主应用且非文档应用时显示，只有子应用才会使用） -->
-            <!-- 关键：使用 v-show 替代 v-else，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
+            <!-- 子应用挂载点（qiankun 模式或 layout-app 模式使用，保持 DOM 节点始终存在） -->
+            <!-- 关键优化：始终存在 DOM 节点（避免销毁重建），在 qiankun 模式或 layout-app 模式下显示 -->
             <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
-            <div id="subapp-viewport" v-show="!isMainApp && !isDocsApp">
+            <div
+              id="subapp-viewport"
+              ref="subappViewportRef"
+              :style="{ display: shouldShowSubAppViewport ? 'flex' : 'none' }"
+            >
               <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
               <AppSkeleton v-if="isQiankunLoading" />
             </div>
@@ -139,7 +141,6 @@ import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
 import AppSkeleton from '@btc/shared-components/components/basic/app-skeleton/index.vue';
-import DocsIframe from './docs-iframe/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
@@ -308,25 +309,33 @@ let prevIsMini = browser.isMini;
 // 判断是否为主应用路由（系统域路由）
 // 使用依赖注入的函数，如果未注入则使用简单的判断逻辑
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+
+// 关键：判断是否是 layout-app 自己运行
+const isLayoutAppSelf = computed(() => {
+  if (typeof window === 'undefined') return false;
+  // 检查 __IS_LAYOUT_APP__ 标志
+  if ((window as any).__IS_LAYOUT_APP__) {
+    return true;
+  }
+  // 检查 hostname 是否是 layout-app 的域名
+  const hostname = window.location.hostname;
+  const port = window.location.port || '';
+  // 生产环境：layout.bellis.com.cn
+  // 预览环境：localhost:4192
+  // 开发环境：localhost:4188
+  if (hostname === 'layout.bellis.com.cn' ||
+      (hostname === 'localhost' && (port === '4192' || port === '4188'))) {
+    return true;
+  }
+  return false;
+});
+
 // 关键：判断是否正在使用 layout-app（通过 __USE_LAYOUT_APP__ 标志）
 // 但是，如果当前是 layout-app 自己运行，应该返回 false（因为 layout-app 需要渲染自己的 Topbar/MenuDrawer）
 const isUsingLayoutApp = computed(() => {
   // 如果当前是 layout-app 自己，返回 false
-  const isLayoutAppSelf = typeof window !== 'undefined' ? !!(window as any).__IS_LAYOUT_APP__ : false;
-  if (isLayoutAppSelf) {
+  if (isLayoutAppSelf.value) {
     return false;
-  }
-  // 检查 hostname 是否是 layout-app 的域名
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const port = window.location.port || '';
-    // 生产环境：layout.bellis.com.cn
-    // 预览环境：localhost:4192
-    // 开发环境：localhost:4188
-    if (hostname === 'layout.bellis.com.cn' ||
-        (hostname === 'localhost' && (port === '4192' || port === '4188'))) {
-      return false; // layout-app 自己运行时，不应该隐藏 Topbar/MenuDrawer
-    }
   }
   const useLayoutApp = typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false;
   return useLayoutApp;
@@ -357,11 +366,6 @@ const isMainApp = computed(() => {
     return false;
   }
   return true;
-});
-
-// 判断是否为文档应用
-const isDocsApp = computed(() => {
-  return route.path === '/docs' || route.path.startsWith('/docs/');
 });
 
 // 跟踪之前的 isMainApp 状态，用于检测跨应用切换
@@ -396,9 +400,75 @@ const pageTransitionName = computed(() => {
 
 // qiankun 加载状态（用于显示骨架屏）
 const isQiankunLoading = ref(false);
+const subappViewportRef = ref<HTMLElement | null>(null);
+
+// 判断子应用容器是否应该显示
+// 关键：在 layout-app 环境下（包括 layout-app 自己运行），强制显示 #subapp-viewport
+// 只要 #subapp-viewport 有内容，就应该显示
+const shouldShowSubAppViewport = computed(() => {
+  // qiankun 模式下始终显示
+  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+    return true;
+  }
+  // layout-app 模式下强制显示
+  if (isUsingLayoutApp.value) {
+    return true;
+  }
+  // 如果是 layout-app 自己运行，强制显示
+  if (isLayoutAppSelf.value) {
+    return true;
+  }
+  // 关键：如果 #subapp-viewport 有内容（子应用已挂载），也应该显示
+  // 这样可以处理 layout-app 环境下，__USE_LAYOUT_APP__ 标志设置延迟的情况
+  if (subappViewportRef.value && subappViewportRef.value.children.length > 0) {
+    return true;
+  }
+  // 关键：如果 #subapp-viewport 应该显示（通过内联样式检查），也应该显示
+  // 这样可以处理 layout-app 环境下，内容已挂载但标志设置延迟的情况
+  if (subappViewportRef.value) {
+    const computedStyle = window.getComputedStyle(subappViewportRef.value);
+    if (computedStyle.display !== 'none' && computedStyle.display !== '') {
+      return true;
+    }
+  }
+  return false;
+});
+
+// 判断是否应该显示主应用路由视图
+// 关键：在 layout-app 环境下（包括 layout-app 自己运行），强制隐藏主应用路由视图
+// 只要 #subapp-viewport 有内容或应该显示，就不应该显示主应用路由视图
+const shouldShowMainAppRouterView = computed(() => {
+  // 如果正在使用 layout-app，不显示主应用路由视图
+  if (isUsingLayoutApp.value) {
+    return false;
+  }
+  // 如果是 layout-app 自己运行，不显示主应用路由视图（layout-app 的路由都是空组件）
+  if (isLayoutAppSelf.value) {
+    return false;
+  }
+  // 关键：如果 #subapp-viewport 有内容（子应用已挂载），也不应该显示主应用路由视图
+  // 这样可以处理 layout-app 环境下，__USE_LAYOUT_APP__ 标志设置延迟的情况
+  if (subappViewportRef.value && subappViewportRef.value.children.length > 0) {
+    return false;
+  }
+  // 关键：如果 #subapp-viewport 应该显示，就不应该显示主应用路由视图
+  if (shouldShowSubAppViewport.value) {
+    return false;
+  }
+  // 关键：如果 #subapp-viewport 通过内联样式显示（display: flex !important），也不应该显示主应用路由视图
+  if (subappViewportRef.value) {
+    const computedStyle = window.getComputedStyle(subappViewportRef.value);
+    if (computedStyle.display !== 'none' && computedStyle.display !== '') {
+      return false;
+    }
+  }
+  return true;
+});
 
 // 监听 qiankun 加载状态变化（通过 DOM 属性）
 let qiankunLoadingObserver: MutationObserver | null = null;
+// 监听 #subapp-viewport 内容变化
+let subappContentObserver: MutationObserver | null = null;
 
 // 判断是否是首页（使用全局配置）
 const isHomePage = computed(() => {
@@ -556,6 +626,25 @@ const handleQiankunAfterMount = () => {
   });
 };
 
+// 关键：监听 #subapp-viewport 的内容变化，确保有内容时显示容器并隐藏主应用路由视图
+// 这样可以处理 layout-app 环境下，内容已挂载但容器被隐藏的问题
+const checkSubAppViewportContent = () => {
+  nextTick(() => {
+    const viewport = subappViewportRef.value || document.querySelector('#subapp-viewport') as HTMLElement | null;
+    if (viewport && viewport.children.length > 0) {
+      // 如果 #subapp-viewport 有内容，强制显示（通过设置内联样式）
+      // 这样可以覆盖之前的 display: none
+      viewport.style.setProperty('display', 'flex', 'important');
+
+      // 关键：同时隐藏主应用路由视图的 div（如果存在）
+      const routerViewWrapper = viewport.parentElement?.querySelector('div[style*="width: 100%"][style*="height: 100%"][style*="position: relative"]') as HTMLElement | null;
+      if (routerViewWrapper && routerViewWrapper !== viewport) {
+        routerViewWrapper.style.setProperty('display', 'none', 'important');
+      }
+    }
+  });
+};
+
 // 设置 MutationObserver（需要在路由切换时重新设置）
 const setupMutationObserver = () => {
   // 先断开旧的观察器（如果存在）
@@ -698,6 +787,23 @@ onMounted(() => {
   // 初始化 MutationObserver
   setupMutationObserver();
 
+  // 初始检查
+  checkSubAppViewportContent();
+
+  // 使用 MutationObserver 监听 #subapp-viewport 的内容变化
+  nextTick(() => {
+    const viewport = subappViewportRef.value || document.querySelector('#subapp-viewport') as HTMLElement | null;
+    if (viewport) {
+      subappContentObserver = new MutationObserver(() => {
+        checkSubAppViewportContent();
+      });
+      subappContentObserver.observe(viewport, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  });
+
   // 监听 sidebar 渲染状态，输出调试信息（构建产物中也输出）
   watch(
     [() => isUsingLayoutApp.value, () => shouldShowSidebar.value, () => menuType?.value],
@@ -738,7 +844,23 @@ watch(
     // 使用 nextTick 确保 DOM 更新完成后再设置观察器
     await nextTick();
     setupMutationObserver();
+    // 检查 #subapp-viewport 内容
+    checkSubAppViewportContent();
   },
+);
+
+// 关键：监听 __USE_LAYOUT_APP__ 标志的变化，确保标志设置后立即显示 #subapp-viewport
+watch(
+  () => typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false,
+  (useLayoutApp) => {
+    if (useLayoutApp) {
+      // 标志设置后，立即检查并显示 #subapp-viewport
+      nextTick(() => {
+        checkSubAppViewportContent();
+      });
+    }
+  },
+  { immediate: true }
 );
 
 onUnmounted(() => {
@@ -765,6 +887,11 @@ onUnmounted(() => {
   if (qiankunLoadingObserver) {
     qiankunLoadingObserver.disconnect();
     qiankunLoadingObserver = null;
+  }
+  // 清理 subapp-viewport 内容观察器
+  if (subappContentObserver) {
+    subappContentObserver.disconnect();
+    subappContentObserver = null;
   }
 
   // 关键：在卸载时重置 drawerVisible，避免响应式更新触发已卸载组件的更新

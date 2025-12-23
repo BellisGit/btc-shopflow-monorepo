@@ -53,15 +53,24 @@ export function cleanupAllECharts() {
           dataset.devToolsInstance !== undefined ||
           el.hasAttribute('data-dev-tools-instance');
 
-        // 如果是指定的 DevTools 元素，跳过清理
-        if (isDevToolsElement) {
+        // 关键修复：排除 Element Plus 的弹窗 overlay，避免误删
+        // el-overlay 是 Element Plus 弹窗的遮罩层，不应该被清理
+        const isElementPlusOverlay =
+          className.includes('el-overlay') ||
+          className.includes('el-modal-dialog') ||
+          id.includes('el-overlay') ||
+          id.includes('el-modal-dialog');
+
+        // 如果是指定的 DevTools 或 Element Plus 弹窗元素，跳过清理
+        if (isDevToolsElement || isElementPlusOverlay) {
           return;
         }
 
+        // 关键修复：只清理明确包含 echarts 或 tooltip 相关类名的元素
+        // 不能仅凭 position 和 z-index 就删除，避免误删其他组件（如弹窗）
         const isTooltipLike =
           (style.position === 'absolute' || style.position === 'fixed') &&
-          (parseInt(style.zIndex) > 1000 ||
-           className.includes('tooltip') ||
+          (className.includes('tooltip') ||
            id.includes('tooltip') ||
            className.includes('echarts') ||
            id.includes('echarts'));

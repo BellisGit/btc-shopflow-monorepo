@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import dts from 'vite-plugin-dts';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
@@ -52,12 +53,15 @@ export default defineConfig({
       '@charts-utils': resolve(__dirname, 'src/charts/utils'),
       '@charts-composables': resolve(__dirname, 'src/charts/composables'),
     },
+    // 关键：确保 Vite 能够正确解析 .tsx 和 .jsx 文件
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
   },
   plugins: [
     vue(),
+    vueJsx(),
     copyDarkThemePlugin(),
     dts({
-      include: ['src/**/*.ts', 'src/**/*.vue'],
+      include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.vue'],
       exclude: ['src/**/*.d.ts', 'node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts'],
       outDir: resolve(__dirname, 'dist'),
       root: __dirname,
@@ -76,6 +80,13 @@ export default defineConfig({
         silenceDeprecations: ['legacy-js-api', 'import']
       }
     }
+  },
+  // 关键：确保 esbuild 正确处理 JSX，使用 Vue 的 h 函数而不是 React.createElement
+  // 这样即使 esbuild 处理某些 JSX 文件，也会使用正确的转换方式
+  esbuild: {
+    jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+    jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+    jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
   },
   logLevel: 'error', // 鍙樉绀洪敊璇紝鎶戝埗璀﹀憡
   build: {
