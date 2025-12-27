@@ -33,9 +33,9 @@ const allFiles = { ...moduleFiles, ...pluginFiles, ...pluginIndexFiles };
  */
 function parseFilePath(filePath: string): { type: string; name: string; fileName: string } {
   const parts = filePath.split('/');
-  const type = parts[2]; // modules 或 plugins
-  const name = parts[3]; // 模块名
-  const fileName = parts[parts.length - 1]; // 文件名
+  const type = parts[2] || ''; // modules 或 plugins
+  const name = parts[3] || ''; // 模块名
+  const fileName = parts[parts.length - 1] || ''; // 文件名
 
   return { type, name, fileName };
 }
@@ -75,12 +75,14 @@ function convertToPluginConfig(config: any, name: string): Plugin {
     pages: config.pages || [],
 
     // 转换工具栏配置
-    toolbar: config.toolbar ? {
-      order: config.toolbar.order || 0,
-      pc: config.toolbar.pc !== false,
-      h5: config.toolbar.h5 !== false,
-      component: config.toolbar.component
-    } : undefined,
+    ...(config.toolbar ? {
+      toolbar: {
+        order: config.toolbar.order || 0,
+        pc: config.toolbar.pc !== false,
+        h5: config.toolbar.h5 !== false,
+        component: config.toolbar.component
+      }
+    } : {}),
 
     // 转换布局配置
     layout: config.layout ? {

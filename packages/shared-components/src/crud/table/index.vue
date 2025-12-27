@@ -3,7 +3,7 @@
     ref="tableRef"
     class="btc-table"
     :key="rebuildKey"
-    :data="crud?.tableData?.value || []"
+    :data="crud?.tableData?.value ?? []"
     :loading="crud?.loading?.value || false"
       :height="height || undefined"
     :max-height="autoHeight ? (autoMaxHeight && autoMaxHeight > 0 ? autoMaxHeight : (maxHeight ?? undefined)) : (maxHeight || undefined)"

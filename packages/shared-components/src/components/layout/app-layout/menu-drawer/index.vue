@@ -805,133 +805,66 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
+  // 立即关闭抽屉
+  handleClose();
+
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
+
+  let targetUrl: string;
 
   // 生产环境：使用子域名跳转
   if (isProduction) {
     // 文档应用特殊处理（文档应用可能没有独立的子域名）
     if (app.name === 'docs') {
-      // 立即关闭抽屉，不等待动画完成
-      handleClose();
-
       // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
       // 这里先使用路径方式，如果需要可以后续配置
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-      await router.push(targetPath);
-      await nextTick();
-      detectCurrentApp();
-
-      // 发送应用切换事件
-      const emitter = (window as any).__APP_EMITTER__;
-      if (emitter) {
-        emitter.emit('app.switch', { appName: app.name, path: targetPath });
-      }
-      return;
-    }
-
-    // 根据应用名称获取生产环境域名配置
-    // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
-    const appNameMapping: Record<string, string> = {
-      'system': 'system-app',
-      'admin': 'admin-app',
-      'logistics': 'logistics-app',
-      'engineering': 'engineering-app',
-      'quality': 'quality-app',
-      'production': 'production-app',
-      'finance': 'finance-app',
-      'mobile': 'mobile-app',
-      'docs': 'docs-app', // 文档应用使用 docs-app
-    };
-    const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
-    const appConfig = getAppConfig(mappedAppName);
-    if (appConfig && appConfig.prodHost) {
-      // 立即关闭抽屉，不等待动画完成
-      handleClose();
-
-      // 清除域列表缓存，确保子应用重新请求域列表
-      const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
-      if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
-        clearDomainCacheFn();
-      }
-
-      // 构建完整的 URL，直接跳转到子域名根路径（不添加任何参数）
       const protocol = window.location.protocol;
-      const targetUrl = `${protocol}//${appConfig.prodHost}/`;
-
-      // 关键：在跳转到子域名前，设置 sessionStorage 标记，让目标页立即显示 Loading
-      try {
-        sessionStorage.setItem('__BTC_NAV_LOADING__', '1');
-      } catch (e) {
-        // 静默失败（某些浏览器可能禁用 sessionStorage）
-      }
-
-      // 使用 window.location.href 跳转到子域名
-      window.location.href = targetUrl;
-      return;
+      const hostname = window.location.hostname;
+      targetUrl = `${protocol}//${hostname}${targetPath}`;
     } else {
-      console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+      // 根据应用名称获取生产环境域名配置
+      // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
+      const appNameMapping: Record<string, string> = {
+        'system': 'system-app',
+        'admin': 'admin-app',
+        'logistics': 'logistics-app',
+        'engineering': 'engineering-app',
+        'quality': 'quality-app',
+        'production': 'production-app',
+        'finance': 'finance-app',
+        'mobile': 'mobile-app',
+        'docs': 'docs-app', // 文档应用使用 docs-app
+      };
+      const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
+      const appConfig = getAppConfig(mappedAppName);
+      if (appConfig && appConfig.prodHost) {
+        // 构建完整的 URL，直接跳转到子域名根路径（不添加任何参数）
+        const protocol = window.location.protocol;
+        targetUrl = `${protocol}//${appConfig.prodHost}/`;
+      } else {
+        console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+        const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        targetUrl = `${protocol}//${hostname}${targetPath}`;
+      }
     }
+  } else {
+    // 开发/预览环境：基于主应用 URL 拼接路径
+    const envType = getEnvironmentType();
+    const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+    
+    // 开发环境和预览环境都使用当前主应用的 URL + 路径前缀
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    targetUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`;
   }
 
-  // 开发/预览环境：使用路径方式切换（原有逻辑）
-  // 确保使用绝对路径
-  const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-
-  // 关键：立即显示 loading，避免白屏
-  // 在路由切换前就显示 loading，确保用户看到加载状态而不是白屏
-  startLoading();
-
-  // 设置超时保护，确保 loading 状态最终会被清除
-  let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  const maxLoadingTime = 10000; // 10秒超时
-
-  // 监听 afterMount 事件，确保 loading 状态被清除
-  const handleAfterMount = () => {
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
-    }
-    finishLoading(); // 清除 loading 状态
-    window.removeEventListener('qiankun:after-mount', handleAfterMount);
-  };
-
-  // 设置超时保护
-  loadingTimeout = setTimeout(() => {
-    console.warn(`[MenuDrawer] 应用 ${app.name} 加载超时，强制清除 loading 状态`);
-    finishLoading(); // 强制清除 loading 状态
-    window.removeEventListener('qiankun:after-mount', handleAfterMount);
-    loadingTimeout = null;
-  }, maxLoadingTime);
-
-  // 监听 afterMount 事件
-  window.addEventListener('qiankun:after-mount', handleAfterMount);
-
-  // 立即关闭抽屉，不等待动画完成，让路由切换可以立即开始
-  handleClose();
-
-  try {
-  // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用
-  // 使用 nextTick 确保路由切换完成，容器准备好后再继续
-  await router.push(targetPath);
-  await nextTick();
-  detectCurrentApp();
-
-  // 发送应用切换事件，通知其他组件（如 ApiSwitch）更新
-  const emitter = (window as any).__APP_EMITTER__;
-  if (emitter) {
-    emitter.emit('app.switch', { appName: app.name, path: targetPath });
-  }
-  } catch (error) {
-    // 如果路由切换失败，清除监听和超时，并强制清除 loading 状态
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      loadingTimeout = null;
-    }
-    finishLoading(); // 强制清除 loading 状态
-    window.removeEventListener('qiankun:after-mount', handleAfterMount);
-    console.error(`[MenuDrawer] 切换到应用 ${app.name} 失败:`, error);
-  }
+  // 使用 window.open 在新标签页打开
+  window.open(targetUrl, '_blank');
 };
 
 // 辅助函数：检查是否应该处理抽屉事件

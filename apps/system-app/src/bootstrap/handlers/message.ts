@@ -229,7 +229,7 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
   pendingMessages.set(pendingKey, {
     messageInstance,
     message,
-    badgeCount,
+    ...(badgeCount !== undefined && { badgeCount }),
     messageId
   });
 

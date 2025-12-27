@@ -16,3 +16,7 @@ export { uploadIconsToOssPlugin } from './upload-icons-to-oss';
 export { replaceIconsWithCdnPlugin } from './replace-icons-with-cdn';
 export { dutyStaticPlugin } from './duty-static';
 export { uploadCdnPlugin } from './upload-cdn';
+export { cdnAssetsPlugin } from './cdn-assets';
+export { cdnImportPlugin } from './cdn-import';
+// 已移除 dynamicImportCdnPlugin 导出，该插件会导致 Blob URL 上下文中的模块解析失败
+// 如果需要，可以直接从 './dynamic-import-cdn' 导入

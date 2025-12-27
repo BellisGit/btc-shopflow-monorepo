@@ -80,14 +80,11 @@
           class="app-layout__content"
           ref="contentRef"
         >
-            <!-- 关键优化：直接挂载路由视图，不需要判断 isMainApp 和 isDocsApp（类似 cool-admin 的做法） -->
-            <!-- 主应用和子应用有非常明显的路径差异，可以通过路由自动区分 -->
-            <!-- 文档应用已经迁移为单独的子应用和子域名，不需要在此判断 -->
-            <!-- 关键：在 layout-app 环境下（包括 layout-app 自己运行），隐藏主应用路由视图，只显示子应用 -->
-            <!-- layout-app 的路由都是空组件，应该只显示 #subapp-viewport -->
-            <!-- 关键：如果 #subapp-viewport 有内容，也不应该显示主应用路由视图 -->
-            <!-- 关键：添加 position: relative，确保 transition 的 position: absolute 不影响布局 -->
-            <div v-if="shouldShowMainAppRouterView" style="width: 100%; height: 100%; position: relative;">
+            <!-- 主应用路由视图 -->
+            <div 
+              v-if="mountState.showMainApp"
+              class="content-mount content-mount--main-app"
+            >
               <router-view v-slot="{ Component, route }">
                 <transition :name="pageTransitionName" mode="out-in">
                   <component v-if="Component && isOpsLogs" :is="Component" :key="route.fullPath" />
@@ -98,16 +95,13 @@
               </router-view>
             </div>
 
-            <!-- 子应用挂载点（qiankun 模式或 layout-app 模式使用，保持 DOM 节点始终存在） -->
-            <!-- 关键优化：始终存在 DOM 节点（避免销毁重建），在 qiankun 模式或 layout-app 模式下显示 -->
-            <!-- 保证微应用的 DOM 不被销毁，避免 insertBefore 等报错 -->
+            <!-- 子应用挂载点 -->
             <div
+              v-if="mountState.showSubApp"
               id="subapp-viewport"
-              ref="subappViewportRef"
-              :style="{ display: shouldShowSubAppViewport ? 'flex' : 'none' }"
+              :ref="(el) => mountState.subappViewportRef.value = el as HTMLElement | null"
+              class="content-mount content-mount--sub-app"
             >
-              <!-- 骨架屏（放在 subapp-viewport 内部，只在加载时显示，子应用挂载后隐藏） -->
-              <AppSkeleton v-if="isQiankunLoading" />
             </div>
           </div>
         </div>
@@ -131,20 +125,19 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { mitt } from '@btc/shared-components';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { useBrowser } from '@btc/shared-components/composables/useBrowser';
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum, MenuTypeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { getIsMainAppFn } from './utils';
+import { useBrowser } from '../../../composables/useBrowser';
+import { useSettingsState } from '../../others/btc-user-setting/composables';
+import { MenuThemeEnum, MenuTypeEnum } from '../../others/btc-user-setting/config/enums';
+import { useContentMount } from '@btc/shared-core';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
 import MenuDrawer from './menu-drawer/index.vue';
-import AppSkeleton from '@btc/shared-components/components/basic/app-skeleton/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
-import BtcUserSettingDrawer from '@btc/shared-components/components/others/btc-user-setting/components/preferences-drawer.vue';
-import { provideContentHeight } from '@btc/shared-components/composables/content-height';
+import BtcUserSettingDrawer from '../../others/btc-user-setting/components/preferences-drawer.vue';
+import { provideContentHeight } from '../../../composables/content-height';
 import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
 
 // 开发环境标志（在模板中使用）
@@ -177,6 +170,9 @@ const drawerVisible = ref(false);
 const preferencesDrawerVisible = ref(false);
 const contentRef = ref<HTMLElement | null>(null);
 const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
+
+// 使用统一的内容挂载状态管理
+const mountState = useContentMount();
 
 watch(
   () => contentRef.value,
@@ -306,10 +302,6 @@ const { browser, onScreenChange } = useBrowser();
 // 跟踪之前的 isMini 状态，只在真正切换移动端/桌面端时才改变折叠状态
 let prevIsMini = browser.isMini;
 
-// 判断是否为主应用路由（系统域路由）
-// 使用依赖注入的函数，如果未注入则使用简单的判断逻辑
-const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
-
 // 关键：判断是否是 layout-app 自己运行
 const isLayoutAppSelf = computed(() => {
   if (typeof window === 'undefined') return false;
@@ -340,32 +332,10 @@ const isUsingLayoutApp = computed(() => {
   const useLayoutApp = typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false;
   return useLayoutApp;
 });
+
+// 判断是否为主应用（用于其他逻辑，如刷新视图、面包屑等）
 const isMainApp = computed(() => {
-  const path = route.path || window.location.pathname || '';
-
-  // 404页面应该显示在主应用路由视图中
-  if (path === '/404') {
-    return true;
-  }
-
-  const fn = getIsMainAppFn();
-  if (fn) {
-    return fn(route.path, window.location.pathname, isStandalone);
-  }
-  // 如果函数未注入，使用简单的判断逻辑（基于 qiankun 和路径）
-  if (isStandalone) {
-    // 登录相关页面不算主应用路由
-    if (path === '/login' || path === '/forget-password' || path === '/register') {
-      return false;
-    }
-    return true;
-  }
-  // 在 qiankun 环境下，简单判断：如果路径不是以已知子应用前缀开头，则认为是主应用
-  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs'];
-  if (knownSubAppPrefixes.some(prefix => path.startsWith(prefix))) {
-    return false;
-  }
-  return true;
+  return mountState.type.value === 'main-app';
 });
 
 // 跟踪之前的 isMainApp 状态，用于检测跨应用切换
@@ -398,76 +368,7 @@ const pageTransitionName = computed(() => {
   return transition || '';
 });
 
-// qiankun 加载状态（用于显示骨架屏）
-const isQiankunLoading = ref(false);
-const subappViewportRef = ref<HTMLElement | null>(null);
-
-// 判断子应用容器是否应该显示
-// 关键：在 layout-app 环境下（包括 layout-app 自己运行），强制显示 #subapp-viewport
-// 只要 #subapp-viewport 有内容，就应该显示
-const shouldShowSubAppViewport = computed(() => {
-  // qiankun 模式下始终显示
-  if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    return true;
-  }
-  // layout-app 模式下强制显示
-  if (isUsingLayoutApp.value) {
-    return true;
-  }
-  // 如果是 layout-app 自己运行，强制显示
-  if (isLayoutAppSelf.value) {
-    return true;
-  }
-  // 关键：如果 #subapp-viewport 有内容（子应用已挂载），也应该显示
-  // 这样可以处理 layout-app 环境下，__USE_LAYOUT_APP__ 标志设置延迟的情况
-  if (subappViewportRef.value && subappViewportRef.value.children.length > 0) {
-    return true;
-  }
-  // 关键：如果 #subapp-viewport 应该显示（通过内联样式检查），也应该显示
-  // 这样可以处理 layout-app 环境下，内容已挂载但标志设置延迟的情况
-  if (subappViewportRef.value) {
-    const computedStyle = window.getComputedStyle(subappViewportRef.value);
-    if (computedStyle.display !== 'none' && computedStyle.display !== '') {
-      return true;
-    }
-  }
-  return false;
-});
-
-// 判断是否应该显示主应用路由视图
-// 关键：在 layout-app 环境下（包括 layout-app 自己运行），强制隐藏主应用路由视图
-// 只要 #subapp-viewport 有内容或应该显示，就不应该显示主应用路由视图
-const shouldShowMainAppRouterView = computed(() => {
-  // 如果正在使用 layout-app，不显示主应用路由视图
-  if (isUsingLayoutApp.value) {
-    return false;
-  }
-  // 如果是 layout-app 自己运行，不显示主应用路由视图（layout-app 的路由都是空组件）
-  if (isLayoutAppSelf.value) {
-    return false;
-  }
-  // 关键：如果 #subapp-viewport 有内容（子应用已挂载），也不应该显示主应用路由视图
-  // 这样可以处理 layout-app 环境下，__USE_LAYOUT_APP__ 标志设置延迟的情况
-  if (subappViewportRef.value && subappViewportRef.value.children.length > 0) {
-    return false;
-  }
-  // 关键：如果 #subapp-viewport 应该显示，就不应该显示主应用路由视图
-  if (shouldShowSubAppViewport.value) {
-    return false;
-  }
-  // 关键：如果 #subapp-viewport 通过内联样式显示（display: flex !important），也不应该显示主应用路由视图
-  if (subappViewportRef.value) {
-    const computedStyle = window.getComputedStyle(subappViewportRef.value);
-    if (computedStyle.display !== 'none' && computedStyle.display !== '') {
-      return false;
-    }
-  }
-  return true;
-});
-
-// 监听 qiankun 加载状态变化（通过 DOM 属性）
-let qiankunLoadingObserver: MutationObserver | null = null;
-// 监听 #subapp-viewport 内容变化
+// 监听 #subapp-viewport 内容变化（用于触发重新计算）
 let subappContentObserver: MutationObserver | null = null;
 
 // 判断是否是首页（使用全局配置）
@@ -613,92 +514,27 @@ function refreshView() {
   scheduleContentResize();
 }
 
-// qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
-// 关键：使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
-const handleQiankunBeforeLoad = () => {
-  nextTick(() => {
-    isQiankunLoading.value = true;
-  });
-};
-const handleQiankunAfterMount = () => {
-  nextTick(() => {
-    isQiankunLoading.value = false;
-  });
-};
-
-// 关键：监听 #subapp-viewport 的内容变化，确保有内容时显示容器并隐藏主应用路由视图
-// 这样可以处理 layout-app 环境下，内容已挂载但容器被隐藏的问题
-const checkSubAppViewportContent = () => {
-  nextTick(() => {
-    const viewport = subappViewportRef.value || document.querySelector('#subapp-viewport') as HTMLElement | null;
-    if (viewport && viewport.children.length > 0) {
-      // 如果 #subapp-viewport 有内容，强制显示（通过设置内联样式）
-      // 这样可以覆盖之前的 display: none
-      viewport.style.setProperty('display', 'flex', 'important');
-
-      // 关键：同时隐藏主应用路由视图的 div（如果存在）
-      const routerViewWrapper = viewport.parentElement?.querySelector('div[style*="width: 100%"][style*="height: 100%"][style*="position: relative"]') as HTMLElement | null;
-      if (routerViewWrapper && routerViewWrapper !== viewport) {
-        routerViewWrapper.style.setProperty('display', 'none', 'important');
-      }
-    }
-  });
-};
-
-// 设置 MutationObserver（需要在路由切换时重新设置）
+// 设置 MutationObserver（监听子应用挂载点内容变化，触发重新计算）
 const setupMutationObserver = () => {
   // 先断开旧的观察器（如果存在）
-  if (qiankunLoadingObserver) {
-    qiankunLoadingObserver.disconnect();
-    qiankunLoadingObserver = null;
+  if (subappContentObserver) {
+    subappContentObserver.disconnect();
+    subappContentObserver = null;
   }
 
   nextTick(() => {
-    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    const container = mountState.subappViewportRef.value;
     if (container && container.isConnected) {
-      // 检查初始状态
-      const hasAttr = container.hasAttribute('data-qiankun-loading');
-      isQiankunLoading.value = hasAttr;
-
-      // 使用 MutationObserver 监听属性变化
-      // 关键：在回调中使用 nextTick 延迟更新，避免在 Vue 更新周期中直接修改响应式状态导致 DOM 操作冲突
-      qiankunLoadingObserver = new MutationObserver((mutations) => {
-        // 检查容器是否还在 DOM 中，避免在组件卸载时操作已移除的元素
-        if (!container.isConnected) {
-          qiankunLoadingObserver?.disconnect();
-          qiankunLoadingObserver = null;
-          return;
-        }
-
-        // 使用 nextTick 延迟更新，避免与 Vue 的更新周期冲突
-        nextTick(() => {
-          // 再次检查容器是否还在 DOM 中
-          if (!container.isConnected) {
-            return;
-          }
-
-          mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-              // 再次检查容器是否还在 DOM 中
-              if (container.isConnected) {
-                try {
-                  const hasAttr = container.hasAttribute('data-qiankun-loading');
-                  isQiankunLoading.value = hasAttr;
-                } catch (error) {
-                  // 捕获可能的 DOM 操作错误，避免影响应用运行
-                  if (import.meta.env.DEV) {
-                    console.warn('[Layout] MutationObserver 更新状态时出错（已忽略）:', error);
-                  }
-                }
-              }
-            }
-          });
-        });
+      // 使用 MutationObserver 监听子应用挂载点内容变化
+      subappContentObserver = new MutationObserver(() => {
+        // 内容变化时，触发重新计算（通过访问 computed 属性）
+        // 这会让 useContentMount 中的 type 重新计算
+        void mountState.type.value;
       });
 
-      qiankunLoadingObserver.observe(container, {
-        attributes: true,
-        attributeFilter: ['data-qiankun-loading'],
+      subappContentObserver.observe(container, {
+        childList: true,
+        subtree: true,
       });
     }
   });
@@ -770,10 +606,6 @@ onMounted(() => {
     }
   });
 
-  // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
-  window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.addEventListener('qiankun:after-mount', handleQiankunAfterMount);
-
   // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
   onScreenChange(() => {
     // 只在 isMini 状态真正改变时才更新折叠状态（从桌面端切换到移动端，或反之）
@@ -784,25 +616,8 @@ onMounted(() => {
     scheduleContentResize();
   }, true); // immediate = true，立即执行一次，确保初始状态正确
 
-  // 初始化 MutationObserver
+  // 设置 MutationObserver 监听子应用挂载点内容变化
   setupMutationObserver();
-
-  // 初始检查
-  checkSubAppViewportContent();
-
-  // 使用 MutationObserver 监听 #subapp-viewport 的内容变化
-  nextTick(() => {
-    const viewport = subappViewportRef.value || document.querySelector('#subapp-viewport') as HTMLElement | null;
-    if (viewport) {
-      subappContentObserver = new MutationObserver(() => {
-        checkSubAppViewportContent();
-      });
-      subappContentObserver.observe(viewport, {
-        childList: true,
-        subtree: true,
-      });
-    }
-  });
 
   // 监听 sidebar 渲染状态，输出调试信息（构建产物中也输出）
   watch(
@@ -840,27 +655,11 @@ watch(
     // 路由切换时不应该触发内容区域尺寸重新计算，避免整个布局重新渲染
     // 只有在真正需要时才调用 scheduleContentResize()（如侧边栏折叠、全屏切换等）
 
-    // 路由切换时重新设置 MutationObserver（因为容器可能被 v-if 移除和重建）
+    // 路由切换时重新设置 MutationObserver（因为容器可能被 v-show 隐藏和显示）
     // 使用 nextTick 确保 DOM 更新完成后再设置观察器
     await nextTick();
     setupMutationObserver();
-    // 检查 #subapp-viewport 内容
-    checkSubAppViewportContent();
   },
-);
-
-// 关键：监听 __USE_LAYOUT_APP__ 标志的变化，确保标志设置后立即显示 #subapp-viewport
-watch(
-  () => typeof window !== 'undefined' ? !!(window as any).__USE_LAYOUT_APP__ : false,
-  (useLayoutApp) => {
-    if (useLayoutApp) {
-      // 标志设置后，立即检查并显示 #subapp-viewport
-      nextTick(() => {
-        checkSubAppViewportContent();
-      });
-    }
-  },
-  { immediate: true }
 );
 
 onUnmounted(() => {
@@ -869,8 +668,6 @@ onUnmounted(() => {
   // eslint-disable-next-line no-undef
   window.removeEventListener('page-transition-change', handlePageTransitionChange as EventListener);
   window.removeEventListener('open-preferences-drawer', () => {});
-  window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
   // 清理偏好设置事件监听
   const menuLayoutListener = (window as any).__BTC_APP_LAYOUT_MENU_LAYOUT_CHANGE__;
   const menuStyleListener = (window as any).__BTC_APP_LAYOUT_MENU_STYLE_CHANGE__;
@@ -883,11 +680,6 @@ onUnmounted(() => {
     delete (window as any).__BTC_APP_LAYOUT_MENU_STYLE_CHANGE__;
   }
 
-  // 清理 MutationObserver
-  if (qiankunLoadingObserver) {
-    qiankunLoadingObserver.disconnect();
-    qiankunLoadingObserver = null;
-  }
   // 清理 subapp-viewport 内容观察器
   if (subappContentObserver) {
     subappContentObserver.disconnect();
@@ -996,6 +788,14 @@ onUnmounted(() => {
     // 不需要额外的样式调整，flex 布局会自动处理
 
 
+    // 主应用路由视图容器（占据内容区域完整尺寸）
+    // 注意：display 通过 :style 绑定控制，这里不设置
+    > .main-app-router-view {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
     // 主应用路由视图（占据内容区域完整尺寸）
     :deep(> router-view) {
       flex: 1;
@@ -1071,6 +871,33 @@ onUnmounted(() => {
       padding: 0 !important;
       box-sizing: border-box !important;
       background-color: var(--el-bg-color) !important;
+    }
+
+    // 关键：处理直接挂载到 #subapp-viewport 的子应用根元素（layout-app 模式下）
+    // 当子应用直接挂载时，根元素（如 .quality-home）直接作为 #subapp-viewport 的子元素
+    // 需要确保这些直接子元素有正确的高度
+    // 注意：排除 qiankun 包装器，因为它们有自己的样式规则
+    :deep(#subapp-viewport > *:not([data-qiankun]):not([id^="__qiankun_microapp_wrapper"])) {
+      flex: 1;
+      display: flex !important; // 使用 !important 确保样式优先级高于子应用的 scoped 样式
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    // 关键：确保子应用根元素的直接子元素（如 .strategy-charts）也能正确填充高度
+    // 当父元素是 flex column 时，子元素需要设置 min-height: 0 才能正确收缩
+    // 使用更具体的选择器，确保样式优先级高于子应用的 scoped 样式
+    :deep(#subapp-viewport > *:not([data-qiankun]):not([id^="__qiankun_microapp_wrapper"]) > *) {
+      // 关键：确保 flex 子元素能够正确填充高度
+      // 如果子元素在子应用的 scoped 样式中设置了 flex: 1，这里确保它有正确的 min-height
+      // 这样可以避免 flex 子元素高度为 0 的问题
+      min-height: 0;
+      // 如果子元素没有设置 flex 属性，默认让它能够填充可用空间
+      // 但如果子应用已经设置了 flex: 1，这个不会覆盖它，只是确保 flex-basis 正确
+      flex-basis: auto;
     }
 
     :deep(#subapp-viewport > [data-qiankun] > *) {
@@ -1349,4 +1176,5 @@ onUnmounted(() => {
   }
 }
 </style>
+
 

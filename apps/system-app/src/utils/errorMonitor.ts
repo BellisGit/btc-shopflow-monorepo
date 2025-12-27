@@ -1,7 +1,6 @@
 import {
   initErrorMonitor as initErrorMonitorCore,
   updateErrorList as updateErrorListCore,
-  setupSubAppErrorCapture,
   type ErrorInfo,
 } from '@btc/shared-utils/error-monitor';
 
@@ -50,8 +49,8 @@ export function setupGlobalErrorCapture() {
       source: 'main-app',
       stack: error?.stack || '',
       url: source || window.location.href,
-      lineno,
-      colno,
+      ...(lineno !== undefined && { lineno }),
+      ...(colno !== undefined && { colno }),
     });
     // 返回 false 以允许默认的错误处理
     return false;
@@ -72,7 +71,7 @@ export function setupGlobalErrorCapture() {
   const safeStringify = (obj: any): string => {
     const seen = new WeakSet();
     try {
-      return JSON.stringify(obj, (key, value) => {
+      return JSON.stringify(obj, (_key, value) => {
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) {
             return '[Circular]';

@@ -2,7 +2,7 @@
  * 认证相关 API 服务
  * 提供登录、注册、密码重置等认证相关的 API 调用方法
  */
-import type { LoginResponse, CaptchaResponse, HealthCheckResponse, VerifyCodeRequest, LoginRequest, SmsLoginRequest, RegisterRequest, ResetPasswordRequest, LogoutBatchRequest } from '../types';
+import type { LoginResponse, CaptchaResponse, UserCheckResponse, VerifyCodeRequest, LoginRequest, SmsLoginRequest, RegisterRequest, ResetPasswordRequest, LogoutBatchRequest } from '../types';
 /**
  * 认证 API 服务对象
  * 使用对象方法的形式，提供所有认证相关的 API 调用
@@ -37,10 +37,10 @@ export declare const authApi: {
         smsType?: string;
     }): Promise<void>;
     /**
-     * 健康检查
-     * @returns 健康状态信息
+     * 用户检查（检查用户登录状态，不属于 EPS 请求）
+     * @returns 用户状态信息
      */
-    healthCheck(): Promise<HealthCheckResponse>;
+    userCheck(): Promise<UserCheckResponse>;
     /**
      * 登录（账号密码）
      * @param data 登录信息（用户名、密码、验证码等）

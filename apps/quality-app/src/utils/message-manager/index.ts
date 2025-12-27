@@ -88,7 +88,7 @@ export class MessageManager {
   /**
    * 从队列中移除消息
    */
-  private removeMessageFromQueue(messageId: string): void {
+  private _removeMessageFromQueue(messageId: string): void {
     // 从普通队列中移除
     this.normalQueue.removeMessage(messageId);
     // 从错误队列中移除
@@ -129,7 +129,7 @@ export class MessageManager {
   /**
    * 检查消息实例是否有效
    */
-  private isMessageInstanceValid(messageInstance: any): boolean {
+  private _isMessageInstanceValid(messageInstance: any): boolean {
     try {
       if (!messageInstance) {
         return false;
@@ -172,7 +172,7 @@ export class MessageManager {
   /**
    * 重新创建消息
    */
-  private recreateMessage(message: any): void {
+  private _recreateMessage(message: any): void {
     // 从显示中的消息集合移除
     this.displayingMessages.delete(message.id);
 
@@ -188,7 +188,7 @@ export class MessageManager {
   /**
    * 重新显示消息
    */
-  private reDisplayMessage(message: any): void {
+  private _reDisplayMessage(message: any): void {
     // 从显示中的消息集合移除
     this.displayingMessages.delete(message.id);
 
@@ -294,7 +294,7 @@ export class MessageManager {
   /**
    * 清理消息（已废弃，现在由生命周期管理器处理）
    */
-  private cleanupMessage(messageId: string): void {
+  private _cleanupMessage(messageId: string): void {
     // 这个方法现在主要用于紧急清理
     this.displayingMessages.delete(messageId);
     this.badgeManager.stopCountdownAnimation(messageId);

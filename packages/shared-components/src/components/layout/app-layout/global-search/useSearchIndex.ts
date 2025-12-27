@@ -40,6 +40,7 @@ function chineseTokenizer(token: string | null | undefined): lunr.Token[] {
 
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
+    if (!char) continue;
     const charCode = char.charCodeAt(0);
 
     // 判断是否为中文字符（包括中文标点）
@@ -56,7 +57,7 @@ function chineseTokenizer(token: string | null | undefined): lunr.Token[] {
         currentToken = '';
       }
       tokens.push(new lunr.Token(char));
-    } else if (/[\w\u00c0-\u024f\u1e00-\u1eff]/.test(char)) {
+    } else if (char && /[\w\u00c0-\u024f\u1e00-\u1eff]/.test(char)) {
       // 英文字母或带重音的字母：累积到当前 token
       currentToken += char;
     } else {
@@ -94,7 +95,7 @@ export function useSearchIndex(searchData: Ref<SearchDataItem[]>) {
       }
 
       // 构建 lunr 索引
-      const index = lunr(function() {
+      const index = lunr(function(this: lunr.Builder) {
         // 设置自定义分词器（支持中文）
         this.tokenizer = chineseTokenizer;
 

@@ -109,7 +109,7 @@
                     </div>
                     <ul role="listbox" class="result-section__list">
                       <li
-                        v-for="(item, itemIndex) in typeGroup.items"
+                        v-for="item in typeGroup.items"
                         :key="item.id"
                         role="option"
                         :aria-selected="selectedIndex === item.globalIndex"
@@ -266,8 +266,8 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { Star, Search, Clock } from '@element-plus/icons-vue';
-import { type MenuItem } from '@btc/shared-components/store/menuRegistry';
-import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
+import { type MenuItem } from '../../../../store/menuRegistry';
+import { useCurrentApp } from '../../../../composables/useCurrentApp';
 import { useSearchIndex, type SearchDataItem as SearchDataItemType } from './useSearchIndex';
 import { getManifestMenus } from '@btc/subapp-manifests';
 
@@ -284,7 +284,7 @@ type SearchDataItem = SearchDataItemType;
 
 const router = useRouter();
 const { t } = useI18n();
-const { currentApp } = useCurrentApp();
+// const { currentApp } = useCurrentApp(); // 未使用
 
 // 应用显示顺序（优先级）
 const appOrder = ['system', 'admin', 'logistics', 'engineering', 'quality', 'production', 'finance', 'operations', 'docs'];
@@ -312,7 +312,7 @@ function flattenMenuItems(
   items: MenuItem[],
   parentBreadcrumb: string[] = [],
   app: string = '',
-  basePath: string = '',
+  _basePath: string = '',
   translateFn?: (key: string) => string
 ): SearchDataItem[] {
   const result: SearchDataItem[] = [];
@@ -393,7 +393,7 @@ function flattenMenuItems(
         ? [...parentBreadcrumb, displayTitle]
         : parentBreadcrumb;
       const childResults = flattenMenuItems(
-        item.children,
+        item.children ?? [],
         childBreadcrumb,
         app,
         fullPath,
@@ -410,7 +410,7 @@ function flattenMenuItems(
           title: displayTitle,
           originalTitle: item.title, // 保存原始标题（国际化key），用于搜索匹配
           path: fullPath,
-          breadcrumb,
+          ...(breadcrumb !== undefined && { breadcrumb }),
           app,
           hasChildren: false, // 叶子节点没有子菜单
         });
@@ -620,8 +620,9 @@ function simpleSearch(items: SearchDataItem[], keyword: string): SearchDataItem[
     }
 
     // 4. 匹配路径（score = 1）
-    if (!matched) {
-      const pathWithoutParams = item.path.split('?')[0].split(':')[0];
+    if (!matched && item.path) {
+      const pathWithoutParams = item.path.split('?')[0]?.split(':')[0];
+      if (!pathWithoutParams) return 0;
       const pathSegments = pathWithoutParams.split('/').filter(Boolean);
       for (const segment of pathSegments) {
         const segmentToMatch = isChinese ? segment : segment.toLowerCase();
@@ -671,8 +672,8 @@ watch(searchKeyword, async (keyword) => {
   try {
     let menuResults: SearchDataItem[] = [];
 
-    // 检查是否为中文搜索
-    const isChineseSearch = /[\u4e00-\u9fff]/.test(keyword);
+    // 检查是否为中文搜索（未使用，但保留用于未来扩展）
+    // const isChineseSearch = /[\u4e00-\u9fff]/.test(keyword);
 
     // 混合搜索策略：
     // - 优先使用 lunr 索引（支持中文和英文，性能更好）

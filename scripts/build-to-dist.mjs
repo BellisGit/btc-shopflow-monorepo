@@ -52,8 +52,11 @@ const BUILD_ORDER = [
   'docs-app',
 ];
 
-// 根目录的 dist 文件夹
-const ROOT_DIST_DIR = join(rootDir, 'dist');
+// 根目录的 dist 文件夹（根据 BUILD_OUT_DIR 环境变量决定）
+const getRootDistDir = () => {
+  const outputDir = process.env.BUILD_OUT_DIR || 'dist';
+  return join(rootDir, outputDir);
+};
 
 // 最大重试次数
 const MAX_RETRIES = 2;
@@ -194,18 +197,20 @@ function cleanPackagesCache() {
  * 清理并创建根目录的 dist 文件夹
  */
 function prepareDistDir() {
-  console.log('📁 准备根目录的 dist 目录...');
-  if (existsSync(ROOT_DIST_DIR)) {
-    console.log('  🗑️  清理现有的 dist 目录...');
-    rmSync(ROOT_DIST_DIR, { recursive: true, force: true });
+  const rootDistDir = getRootDistDir();
+  const outputDirName = process.env.BUILD_OUT_DIR || 'dist';
+  console.log(`📁 准备根目录的 ${outputDirName} 目录...`);
+  if (existsSync(rootDistDir)) {
+    console.log(`  🗑️  清理现有的 ${outputDirName} 目录...`);
+    rmSync(rootDistDir, { recursive: true, force: true });
   }
-  // 确保根目录 dist 存在（避免后续 copy 依赖 cpSync 的隐式行为）
+  // 确保根目录 dist/dist-cdn 存在（避免后续 copy 依赖 cpSync 的隐式行为）
   try {
-    mkdirSync(ROOT_DIST_DIR, { recursive: true });
+    mkdirSync(rootDistDir, { recursive: true });
   } catch (error) {
     // 忽略：后续 copy 时仍会再次尝试创建
   }
-  console.log('  ✅ dist 目录已准备就绪\n');
+  console.log(`  ✅ ${outputDirName} 目录已准备就绪\n`);
 }
 
 /**
@@ -238,7 +243,12 @@ function buildApp(appName) {
     execSync('pnpm build', {
       cwd: appDir,
         stdio: 'inherit',
-        env: { ...process.env, BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP },
+        env: { 
+          ...process.env, 
+          BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP,
+          ENABLE_CDN_ACCELERATION: 'false',
+          ENABLE_CDN_UPLOAD: 'false',
+        },
       });
     
     // docs-app 特殊处理：VitePress 构建产物在 .vitepress/dist，需要复制到 dist
@@ -276,8 +286,10 @@ function buildApp(appName) {
       }
     }
     
-    // 构建完成后强校验 dist 目录是否存在（防止“命令成功但产物路径不对”）
-    const appDistDir = join(rootDir, 'apps', appName, 'dist');
+    // 构建完成后强校验 dist 目录是否存在（防止"命令成功但产物路径不对"）
+    // 注意：根据 BUILD_OUT_DIR 环境变量决定检查哪个目录
+    const outputDir = process.env.BUILD_OUT_DIR || 'dist';
+    const appDistDir = join(rootDir, 'apps', appName, outputDir);
     if (!existsSync(appDistDir)) {
       console.error(`  ❌ ${appName} 构建命令执行成功，但未找到构建产物目录: ${appDistDir}`);
       console.error(`     这通常表示构建产物输出到了其他位置（cwd/root/outDir 异常）。请检查该应用的 Vite root/outDir 配置。`);
@@ -1307,17 +1319,20 @@ function buildAndVerifyApp(appName, retryCount = 0) {
  * 复制应用构建产物到 dist 目录
  */
 function copyAppDist(appName, domain) {
-  const appDistDir = join(rootDir, 'apps', appName, 'dist');
-  const targetDir = join(ROOT_DIST_DIR, domain);
+  // 支持动态输出目录（根据 BUILD_OUT_DIR 环境变量）
+  const outputDir = process.env.BUILD_OUT_DIR || 'dist';
+  const appDistDir = join(rootDir, 'apps', appName, outputDir);
+  const rootDistDir = getRootDistDir();
+  const targetDir = join(rootDistDir, domain);
   
   if (!existsSync(appDistDir)) {
-    // 兼容：某些构建流程可能会直接将产物输出到根 dist/<domain>（例如自定义脚本/配置）
-    // 如果目标目录已经存在且包含 index.html，则视为“已复制/已就位”，避免误判为失败。
+    // 兼容：某些构建流程可能会直接将产物输出到根 dist/dist-cdn/<domain>（例如自定义脚本/配置）
+    // 如果目标目录已经存在且包含 index.html，则视为"已复制/已就位"，避免误判为失败。
     if (existsSync(targetDir) && existsSync(join(targetDir, 'index.html'))) {
-      console.log(`  ✅ ${appName} 产物已直接输出到 dist/${domain}（跳过复制）\n`);
+      console.log(`  ✅ ${appName} 产物已直接输出到 ${outputDir}/${domain}（跳过复制）\n`);
       return true;
     }
-    console.error(`  ⚠️  警告: ${appName} 的构建产物目录不存在（apps/${appName}/dist）`);
+    console.error(`  ⚠️  警告: ${appName} 的构建产物目录不存在（apps/${appName}/${outputDir}）`);
     return false;
   }
 
@@ -1325,7 +1340,8 @@ function copyAppDist(appName, domain) {
     rmSync(targetDir, { recursive: true, force: true });
   }
 
-  console.log(`  📦 复制 ${appName} 产物到 dist/${domain}...`);
+  const outputDirName = process.env.BUILD_OUT_DIR || 'dist';
+  console.log(`  📦 复制 ${appName} 产物到 ${outputDirName}/${domain}...`);
   try {
     cpSync(appDistDir, targetDir, {
       recursive: true,
@@ -1341,7 +1357,8 @@ function copyAppDist(appName, domain) {
       rmSync(distBuildDir, { recursive: true, force: true });
     }
     
-    console.log(`  ✅ ${appName} 产物已复制到 dist/${domain}\n`);
+    const outputDirName = process.env.BUILD_OUT_DIR || 'dist';
+    console.log(`  ✅ ${appName} 产物已复制到 ${outputDirName}/${domain}\n`);
     return true;
   } catch (error) {
     console.error(`  ❌ 复制 ${appName} 产物失败:`, error.message);
@@ -1360,6 +1377,11 @@ function buildAllPackages() {
     execSync(`node ${turboScript} run build --force --no-cache`, {
       cwd: rootDir,
       stdio: 'inherit',
+      env: {
+        ...process.env,
+        ENABLE_CDN_ACCELERATION: 'false',
+        ENABLE_CDN_UPLOAD: 'false',
+      },
     });
     console.log('  ✅ 所有包和应用构建完成\n');
     return true;
@@ -1380,7 +1402,9 @@ function copySingleAppToDist(appName) {
   }
 
   const domain = APP_DOMAIN_MAP[appName];
-  const appDistDir = join(rootDir, 'apps', appName, 'dist');
+  // 支持动态输出目录（根据 BUILD_OUT_DIR 环境变量）
+  const outputDir = process.env.BUILD_OUT_DIR || 'dist';
+  const appDistDir = join(rootDir, 'apps', appName, outputDir);
   
   if (!existsSync(appDistDir)) {
     console.error(`❌ ${appName} 的构建产物目录不存在: ${appDistDir}`);
@@ -1388,9 +1412,10 @@ function copySingleAppToDist(appName) {
     process.exit(1);
   }
 
-  // 确保 dist 目录存在
-  if (!existsSync(ROOT_DIST_DIR)) {
-    mkdirSync(ROOT_DIST_DIR, { recursive: true });
+  // 确保 dist/dist-cdn 目录存在
+  const rootDistDir = getRootDistDir();
+  if (!existsSync(rootDistDir)) {
+    mkdirSync(rootDistDir, { recursive: true });
   }
 
   const success = copyAppDist(appName, domain);
@@ -1451,6 +1476,11 @@ function main() {
     execSync(`node ${turboScript} run build --force --no-cache --filter=@btc/vite-plugin --filter=@btc/shared-utils --filter=@btc/shared-core --filter=@btc/shared-components --filter=@btc/subapp-manifests`, {
       cwd: rootDir,
       stdio: 'inherit',
+      env: {
+        ...process.env,
+        ENABLE_CDN_ACCELERATION: 'false',
+        ENABLE_CDN_UPLOAD: 'false',
+      },
     });
     console.log('  ✅ 共享包构建完成\n');
   } catch (error) {
@@ -1517,7 +1547,9 @@ function main() {
     });
   }
   console.log('\n' + '='.repeat(60));
-  console.log(`\n📁 所有产物已复制到: ${ROOT_DIST_DIR}\n`);
+  const rootDistDir = getRootDistDir();
+  const outputDirName = process.env.BUILD_OUT_DIR || 'dist';
+  console.log(`\n📁 所有产物已复制到: ${outputDirName} (${rootDistDir})\n`);
 
   // 如果有失败，退出码为 1
   if (results.failed.length > 0 || results.copyFailed.length > 0 || results.validationErrors.length > 0) {

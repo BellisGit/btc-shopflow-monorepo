@@ -2,10 +2,69 @@
 layout-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/22 10:17:01
-总错误数: 0
+生成时间: 2025/12/24 19:45:35
+总错误数: 5
 
-✅ 未发现类型错误
+按错误代码分类:
+------------------------------------------------------------
+  TS2305    : 4 个
+  TS2353    : 1 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: src/main.ts
+  错误数: 1
+    [TS2305] 行 7:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'setIsMainAppFn'.
+
+文件: ../system-app/src/micro/index.ts
+  错误数: 1
+    [TS2353] 行 1156:7 - error TS2353: Object literal may only specify known properties, and 'excludeAssetFilter' does not exist in type 'FrameworkLifeCycles<{ locale: string; onReady: () => void; registerTabs: (tabs: TabMeta[]) => Promise<void>; clearTabs: () => Promise<void>; setActiveTab: (_tabKey: string) => void; updateErrorList: (errorInfo: ErrorInfo) => void; appName: string; }>'.
+
+文件: ../system-app/src/plugins/echarts/config.ts
+  错误数: 1
+    [TS2305] 行 4:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+文件: ../system-app/src/plugins/user-setting/composables/useSettingsState.ts
+  错误数: 1
+    [TS2305] 行 12:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+文件: ../system-app/src/utils/domain-cache.ts
+  错误数: 1
+    [TS2305] 行 9:22 - error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcNotification'.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  文件: src/main.ts
+  位置: 7:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'setIsMainAppFn'.
+
+错误 #2
+  文件: ../system-app/src/micro/index.ts
+  位置: 1156:7
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'excludeAssetFilter' does not exist in type 'FrameworkLifeCycles<{ locale: string; onReady: () => void; registerTabs: (tabs: TabMeta[]) => Promise<void>; clearTabs: () => Promise<void>; setActiveTab: (_tabKey: string) => void; updateErrorList: (errorInfo: ErrorInfo) => void; appName: string; }>'.
+
+错误 #3
+  文件: ../system-app/src/plugins/echarts/config.ts
+  位置: 4:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+错误 #4
+  文件: ../system-app/src/plugins/user-setting/composables/useSettingsState.ts
+  位置: 12:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+错误 #5
+  文件: ../system-app/src/utils/domain-cache.ts
+  位置: 9:22
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcNotification'.
 
 ============================================================
 完整输出:
@@ -15,3 +74,11 @@ layout-app - TypeScript 类型错误报告
 > layout-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app
 > tsc --noEmit --skipLibCheck
 
+src/main.ts(7,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'setIsMainAppFn'.
+../system-app/src/micro/index.ts(1156,7): error TS2353: Object literal may only specify known properties, and 'excludeAssetFilter' does not exist in type 'FrameworkLifeCycles<{ locale: string; onReady: () => void; registerTabs: (tabs: TabMeta[]) => Promise<void>; clearTabs: () => Promise<void>; setActiveTab: (_tabKey: string) => void; updateErrorList: (errorInfo: ErrorInfo) => void; appName: string; }>'.
+../system-app/src/plugins/echarts/config.ts(4,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+../system-app/src/plugins/user-setting/composables/useSettingsState.ts(12,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+../system-app/src/utils/domain-cache.ts(9,22): error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcNotification'.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  layout-app@1.0.0 type-check: `tsc --noEmit --skipLibCheck`
+Exit status 2

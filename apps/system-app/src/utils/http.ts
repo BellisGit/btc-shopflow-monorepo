@@ -213,6 +213,30 @@ export class Http {
           const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
           appStorage.settings.set({ ...currentSettings, is_logged_in: true });
 
+          // 关键：登录成功后，清除 sessionStorage 中的旧轮询状态
+          // 这样启动轮询时会立即调用一次 user-check，获取最新的剩余时间
+          if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            try {
+              sessionStorage.removeItem('__btc_user_check_polling_state');
+            } catch (error) {
+              // 静默失败，不影响登录流程
+            }
+          }
+
+          // 启动全局用户检查轮询
+          try {
+            import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
+              startUserCheckPolling();
+            }).catch((error) => {
+              // 如果导入失败，静默处理
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to start user check polling after login:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
           // 从响应体中提取 token（代理已经添加到响应体中）
           // 注意：originalResponseData 是 response.data，包含完整的响应结构
           // result 是经过 responseInterceptor 处理后的数据，可能只包含 data 字段
@@ -243,11 +267,12 @@ export class Http {
 
             // 在 IP 地址环境下，不设置 SameSite（让浏览器使用默认值）
             // 在 HTTPS 环境下，使用 SameSite=None
+            const domain = getCookieDomain();
             setCookie('access_token', tokenFromBody, 7, {
-              sameSite: isHttps ? 'None' : undefined, // IP 地址 + HTTP：不设置 SameSite
+              ...(isHttps && { sameSite: 'None' as const }), // IP 地址 + HTTP：不设置 SameSite
               secure: isHttps, // 仅在 HTTPS 时设置 Secure
               path: '/',
-              domain: getCookieDomain(), // 生产环境支持跨子域名共享
+              ...(domain !== undefined && { domain }), // 生产环境支持跨子域名共享
             });
           }
         }

@@ -25,7 +25,9 @@ defineOptions({
 });
 
 const viewKey = ref(1);
-const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
+// 关键：在 layout-app 环境下，isStandalone 应该是 false
+// 这样会使用包装层（.logistics-app），确保样式正确应用
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 const emitter = (window as any).__APP_EMITTER__;
 const { pageTransition } = usePageTransition();
 

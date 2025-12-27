@@ -218,7 +218,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         const importMatches = scriptContent.matchAll(/import\s*\(\s*['"]([^'"]+)['"]\s*\)/g);
         for (const match of importMatches) {
           const importPath = match[1];
-          if (!importPath.endsWith('.js') && !importPath.endsWith('.mjs')) {
+          if (!importPath || (!importPath.endsWith('.js') && !importPath.endsWith('.mjs'))) {
             continue;
           }
 
@@ -623,7 +623,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
               } else if (fileUrl.includes('assets/layout/assets/layout/')) {
                 fileUrl = fileUrl.replace(/assets\/layout\/assets\/layout\//g, 'assets/layout/');
               }
-              const adjustedForDup = fileUrl !== originalFileUrl;
+              // const adjustedForDup = fileUrl !== originalFileUrl; // 未使用
               if (fileUrl.startsWith('/')) {
                 fileUrl = `${entryUrl.origin}${fileUrl}`;
               } else if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
@@ -819,7 +819,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
     // 使用 script 标签按顺序加载所有脚本（包括 vendor、echarts-vendor 等依赖）
     // 这样可以确保所有依赖的 chunk 都在入口文件之前加载完成，避免模块初始化顺序问题
     let loadedCount = 0;
-    let hasError = false;
+    // let hasError = false; // 未使用
 
     const loadScript = (url: string, index: number): Promise<void> => {
       return new Promise((resolve, reject) => {
@@ -836,7 +836,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         };
 
         script.onerror = (error) => {
-          hasError = true;
           const errorDetails = {
             url,
             error: error instanceof Error ? error.message : String(error),
@@ -1058,7 +1057,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         if (isLayoutAsset && cachedManifest) {
           // 关键：使用修复后的 URL 来提取文件名，而不是原始 URL
           // 因为 fixedUrl 可能已经被修复为 /assets/layout/xxx.js
-          const fileName = fixedUrl.substring(fixedUrl.lastIndexOf('/') + 1).split('?')[0];
+          const fileName = fixedUrl.substring(fixedUrl.lastIndexOf('/') + 1).split('?')[0] ?? '';
 
 
           // 检查这个文件名是否在 manifest.json 中
@@ -1084,23 +1083,23 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
             // 优先尝试匹配特殊格式（如 menu-registry-B-483hvG.js），支持下划线
             const specialHashMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9_])-([a-zA-Z0-9_]{4,})\.(js|mjs)$/);
-            if (specialHashMatch) {
-              baseName = specialHashMatch[1];
+            if (specialHashMatch && specialHashMatch[1]) {
+              baseName = specialHashMatch[1] ?? null;
             } else {
               // 尝试匹配标准格式（多个 hash 段），支持下划线
               const multiHashMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9_]{8,})+(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-              if (multiHashMatch) {
-                baseName = multiHashMatch[1];
+              if (multiHashMatch && multiHashMatch[1]) {
+                baseName = multiHashMatch[1] ?? null;
               } else {
                 // 尝试匹配单个 hash 段（至少 8 个字符），支持下划线
                 const singleHashMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]{8,})\.(js|mjs)$/);
-                if (singleHashMatch) {
-                  baseName = singleHashMatch[1];
+                if (singleHashMatch && singleHashMatch[1]) {
+                  baseName = singleHashMatch[1] ?? null;
                 } else {
                   // 尝试匹配简单格式（提取基础名称，去掉最后一个 hash 段），支持下划线
                   const simpleMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]+)\.(js|mjs)$/);
-                  if (simpleMatch) {
-                    baseName = simpleMatch[1];
+                  if (simpleMatch && simpleMatch[1]) {
+                    baseName = simpleMatch[1] ?? null;
                   }
                 }
               }
@@ -1117,20 +1116,20 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
                   // 匹配 manifest 中的文件名格式（支持多种格式），支持下划线
                   const entrySpecialHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9_])-([a-zA-Z0-9_]{4,})(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                  if (entrySpecialHashMatch) {
-                    entryBaseName = entrySpecialHashMatch[1];
+                  if (entrySpecialHashMatch && entrySpecialHashMatch[1]) {
+                    entryBaseName = entrySpecialHashMatch[1] ?? null;
                   } else {
                     const entryMultiHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9_]{8,})+(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                    if (entryMultiHashMatch) {
-                      entryBaseName = entryMultiHashMatch[1];
+                    if (entryMultiHashMatch && entryMultiHashMatch[1]) {
+                      entryBaseName = entryMultiHashMatch[1] ?? null;
                     } else {
                       const entrySingleHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]{8,})\.(js|mjs)$/);
-                      if (entrySingleHashMatch) {
-                        entryBaseName = entrySingleHashMatch[1];
+                      if (entrySingleHashMatch && entrySingleHashMatch[1]) {
+                        entryBaseName = entrySingleHashMatch[1] ?? null;
                       } else {
                         const entrySimpleMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]+)(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                        if (entrySimpleMatch) {
-                          entryBaseName = entrySimpleMatch[1];
+                        if (entrySimpleMatch && entrySimpleMatch[1]) {
+                          entryBaseName = entrySimpleMatch[1] ?? null;
                         }
                       }
                     }
@@ -1205,7 +1204,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
                     for (let i = parts.length - 1; i >= 0; i--) {
                       const part = parts[i];
                       // 如果这个部分看起来像 hash（长度 >= 4 且全是字母数字）
-                      if (part.length >= 4 && /^[A-Za-z0-9_]+$/.test(part)) {
+                      if (part && part.length >= 4 && /^[A-Za-z0-9_]+$/.test(part)) {
                         if (i > 0) {
                           const baseParts = parts.slice(0, i);
                           if (baseParts.length > 0) {
@@ -1283,7 +1282,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         const requestUrl = (isLayoutAsset && fixedUrl !== url) ? fixedUrl : url;
 
         const fetchArgs: [RequestInfo | URL, RequestInit?] = (isLayoutAsset && requestUrl !== url)
-          ? [requestUrl, args[1] as RequestInit | undefined]
+          ? (args[1] !== undefined ? [requestUrl, args[1] as RequestInit] : [requestUrl])
           : args as [RequestInfo | URL, RequestInit?];
         const response = await originalFetch.apply(this, fetchArgs);
 
@@ -1294,7 +1293,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         if ((isLayoutAsset || (url.includes('/assets/') && (url.endsWith('.js') || url.endsWith('.mjs')))) && !response.ok && response.status === 404) {
           // 关键：检查是否是子应用的主入口文件（index-xxx.js 或 main-xxx.js）
           // 这些文件应该从子应用自己的域名加载，不应该被修复为 layout-app 的资源
-          const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+          const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0] ?? '';
           const isSubAppEntryFile = fileName.startsWith('index-') || fileName.startsWith('main-');
 
           // 如果是子应用的主入口文件，且不在 layout-app 的 manifest 中，不应该修复
@@ -1408,29 +1407,29 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
           // 从失败 URL 中提取基础文件名（去掉 hash 和 buildId）
           // 注意：fileName 已经在上面声明过了，这里使用 requestUrl 重新提取（因为 requestUrl 可能是修复后的 URL）
-          const failedFileName = requestUrl.substring(requestUrl.lastIndexOf('/') + 1).split('?')[0];
+          const failedFileName = requestUrl.substring(requestUrl.lastIndexOf('/') + 1).split('?')[0] ?? '';
           // 匹配多种格式，提取基础名称
           let baseName: string | null = null;
 
           // 优先尝试匹配特殊格式（如 menu-registry-B-483hvG.js），支持下划线
           const specialHashMatch = failedFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9_])-([a-zA-Z0-9_]{4,})\.(js|mjs)$/);
-          if (specialHashMatch) {
-            baseName = specialHashMatch[1];
+          if (specialHashMatch && specialHashMatch[1]) {
+            baseName = specialHashMatch[1] ?? null;
           } else {
             // 尝试匹配标准格式（多个 hash 段），支持下划线
             const multiHashMatch = failedFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9_]{8,})+(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-            if (multiHashMatch) {
-              baseName = multiHashMatch[1];
+            if (multiHashMatch && multiHashMatch[1]) {
+              baseName = multiHashMatch[1] ?? null;
             } else {
               // 尝试匹配单个 hash 段（至少 8 个字符），支持下划线
               const singleHashMatch = failedFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]{8,})\.(js|mjs)$/);
-              if (singleHashMatch) {
-                baseName = singleHashMatch[1];
+              if (singleHashMatch && singleHashMatch[1]) {
+                baseName = singleHashMatch[1] ?? null;
               } else {
                 // 尝试匹配简单格式（提取基础名称，去掉最后一个 hash 段），支持下划线
                 const simpleMatch = failedFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]+)\.(js|mjs)$/);
-                if (simpleMatch) {
-                  baseName = simpleMatch[1];
+                if (simpleMatch && simpleMatch[1]) {
+                  baseName = simpleMatch[1] ?? null;
                 }
               }
             }
@@ -1446,20 +1445,20 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
                 // 匹配 manifest 中的文件名格式（支持多种格式），支持下划线
                 const entrySpecialHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9_])-([a-zA-Z0-9_]{4,})(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                if (entrySpecialHashMatch) {
-                  entryBaseName = entrySpecialHashMatch[1];
+                if (entrySpecialHashMatch && entrySpecialHashMatch[1]) {
+                  entryBaseName = entrySpecialHashMatch[1] ?? null;
                 } else {
                   const entryMultiHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9_]{8,})+(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                  if (entryMultiHashMatch) {
-                    entryBaseName = entryMultiHashMatch[1];
+                  if (entryMultiHashMatch && entryMultiHashMatch[1]) {
+                    entryBaseName = entryMultiHashMatch[1] ?? null;
                   } else {
                     const entrySingleHashMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]{8,})\.(js|mjs)$/);
-                    if (entrySingleHashMatch) {
-                      entryBaseName = entrySingleHashMatch[1];
+                    if (entrySingleHashMatch && entrySingleHashMatch[1]) {
+                      entryBaseName = entrySingleHashMatch[1] ?? null;
                     } else {
                       const entrySimpleMatch = entryFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9_]+)(?:-[a-zA-Z0-9_]+)?\.(js|mjs)$/);
-                      if (entrySimpleMatch) {
-                        entryBaseName = entrySimpleMatch[1];
+                      if (entrySimpleMatch && entrySimpleMatch[1]) {
+                        entryBaseName = entrySimpleMatch[1] ?? null;
                       }
                     }
                   }
@@ -1475,7 +1474,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
                   if (correctUrl !== requestUrl && correctUrl !== url) {
                     // 重试加载正确的文件
-                    const retryFetchArgs: [RequestInfo | URL, RequestInit?] = [correctUrl, args[1] as RequestInit | undefined];
+                    const retryFetchArgs: [RequestInfo | URL, RequestInit?] = (args[1] !== undefined ? [correctUrl, args[1] as RequestInit] : [correctUrl]);
                     const retryResponse = await originalFetch.apply(this, retryFetchArgs);
                     if (retryResponse.ok) {
                       return retryResponse;
@@ -1502,7 +1501,10 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
 
     try {
       for (let i = 0; i < scriptUrls.length; i++) {
-        await loadScript(scriptUrls[i], i);
+        const scriptUrl = scriptUrls[i];
+        if (scriptUrl) {
+          await loadScript(scriptUrl, i);
+        }
       }
 
       // 如果之前没有设置兜底机制（因为 manifest.json 还未加载），现在设置
@@ -1541,18 +1543,64 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
       const checkLayoutApp = () => {
         checkCount++;
 
-        // 关键：以 #subapp-viewport 作为“layout-app 已可用”的硬条件
+        // 关键：以 #subapp-viewport 作为"layout-app 已可用"的硬条件
         // 仅仅检测到 #app 有内容/有 #layout-app 容器是不够的（此时 viewport 可能尚未创建）
         const viewport = document.querySelector('#subapp-viewport') as HTMLElement | null;
         const hasLayoutContent = !!viewport;
 
         if (hasLayoutContent) {
-          if (!layoutAppMounted) {
+          // 关键：不仅检查容器是否存在，还要确保容器可见且 layout-app 的 Vue 应用已渲染完成
+          const isVisible = viewport && viewport.isConnected;
+          let isReady = false;
+          
+          if (isVisible) {
+            // 检查容器的可见性
+            const computedStyle = window.getComputedStyle(viewport);
+            const isDisplayed = computedStyle.display !== 'none' && 
+                               computedStyle.visibility !== 'hidden' && 
+                               computedStyle.opacity !== '0';
+            
+            // 如果容器不可见，强制显示（确保 layout-app 渲染完成后容器是可见的）
+            if (!isDisplayed) {
+              viewport.style.setProperty('display', 'flex', 'important');
+              viewport.style.setProperty('flex-direction', 'column', 'important');
+              viewport.style.setProperty('visibility', 'visible', 'important');
+              viewport.style.setProperty('opacity', '1', 'important');
+            }
+            
+            // 关键：等待 Vue 应用完成渲染
+            // 通过检查容器是否真的准备好（至少等待几个渲染周期）
+            // 如果是第一次检测到容器存在，再等待几个周期确保 Vue 完全渲染
+            if (checkCount >= 3) {
+              // 至少检查 3 次（150ms）后才认为容器就绪，确保 Vue 应用已完全渲染
+              isReady = true;
+            }
+          }
+
+          if (isReady && !layoutAppMounted) {
             layoutAppMounted = true;
             cleanup();
 
-            // 微延迟：给 layout-app 完成首屏渲染/样式初始化一点时间
-            setTimeout(() => resolve(), 50);
+            // 关键：使用 requestAnimationFrame 等待 Vue 完成最终渲染
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  // 最终确认容器可见性
+                  if (viewport) {
+                    const finalStyle = window.getComputedStyle(viewport);
+                    if (finalStyle.display === 'none' || finalStyle.visibility === 'hidden' || finalStyle.opacity === '0') {
+                      viewport.style.setProperty('display', 'flex', 'important');
+                      viewport.style.setProperty('flex-direction', 'column', 'important');
+                      viewport.style.setProperty('visibility', 'visible', 'important');
+                      viewport.style.setProperty('opacity', '1', 'important');
+                    }
+                    
+                  }
+                  
+                  resolve();
+                });
+              });
+            });
           }
         } else if (checkCount >= maxChecks) {
           // 超时，挂载失败
@@ -1560,7 +1608,17 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
           cleanupDom(); // 清理残留的 DOM
 
           const errorMsg = `layout-app 挂载超时（已等待 ${maxChecks * 50}ms），未检测到 #subapp-viewport`;
-          // layout-app 挂载超时（日志已移除）
+          // 生产环境下输出诊断信息
+          if (!isDev && typeof window !== 'undefined') {
+            console.warn('[loadLayoutApp] layout-app 挂载超时', {
+              checkCount,
+              maxChecks,
+              viewportExists: !!document.querySelector('#subapp-viewport'),
+              appElement: !!document.querySelector('#app'),
+              isUsingLayoutApp: !!(window as any).__USE_LAYOUT_APP__,
+              isLayoutApp: !!(window as any).__IS_LAYOUT_APP__,
+            });
+          }
           reject(new Error(errorMsg));
         }
         // 否则继续检查（通过 setInterval）

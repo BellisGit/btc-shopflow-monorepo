@@ -158,6 +158,17 @@ const routes: RouteRecordRaw[] = [
     component: Layout,
     meta: { title: 'Personnel App', isSubApp: true },
   },
+  {
+    path: '/mobile',
+    component: Layout,
+    meta: { title: 'Mobile App', isHome: true, isSubApp: true },
+  },
+  {
+    path: '/mobile/:pathMatch(.*)+',
+    component: Layout,
+    meta: { title: 'Mobile App', isSubApp: true },
+  },
+  // 注意：/home 路径不在这里配置路由，由代理处理（proxy.ts）
   // 404 页面（必须在最后，作为 catchAll 路由）
   {
     path: '/404',
@@ -188,11 +199,19 @@ const routes: RouteRecordRaw[] = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: Layout, // 需要 component 以满足类型要求，但 beforeEnter 会处理重定向
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (to, _from, next) => {
       // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
       // 这些页面应该由服务器直接提供，完全绕过 Vue Router
       if (to.path.startsWith('/duty/')) {
         // 使用 next(false) 取消 Vue Router 的导航，让浏览器直接请求静态文件
+        next(false);
+        return;
+      }
+
+      // 检查是否是 home-app 的页面（由代理处理，完全绕过 Vue Router）
+      // 在 beforeEnter 中，直接取消导航，让代理处理
+      if (to.path.startsWith('/home')) {
+        // 使用 next(false) 取消 Vue Router 的导航，让代理处理请求
         next(false);
         return;
       }
@@ -236,7 +255,7 @@ router.onError((error: Error) => {
       // Failed component route 日志已移除
 
       // 关键：如果是登录页组件加载失败，尝试重定向到登录页（使用 replace 避免历史记录）
-      if (route.path === '/login' || currentRoute.path === '/login') {
+      if (route && (route.path === '/login' || currentRoute.path === '/login')) {
         // 登录页组件加载失败 日志已移除
         setTimeout(() => {
           try {
@@ -322,7 +341,7 @@ router.onError((error: Error) => {
     }
 
     if (currentRoute && currentRoute.matched.length > 0) {
-      const route = currentRoute.matched[currentRoute.matched.length - 1];
+      // const route = currentRoute.matched[currentRoute.matched.length - 1];
       // Component error route info 日志已移除
     }
 
@@ -618,6 +637,14 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
     return;
   }
 
+  // 检查是否是 home-app 的页面（由代理处理，完全绕过 Vue Router）
+  if (to.path.startsWith('/home')) {
+    // 使用 next(false) 取消 Vue Router 的导航，让代理处理请求
+    // 注意：代理应该在服务器层面处理，不应该进入 Vue Router
+    next(false);
+    return;
+  }
+
   // 关键：路径规范化 - 确保子应用路径有正确的前缀
   const normalizedPath = normalizeRoutePath(to.path);
   if (normalizedPath) {
@@ -680,7 +707,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
   if (to.path === '/login' && isAuthenticatedUser && !to.query.logout && !to.query.from) {
     const redirect = (to.query.redirect as string) || '/';
     // 只取路径部分，忽略查询参数，避免循环重定向
-    const redirectPath = redirect.split('?')[0];
+    const redirectPath = redirect.split('?')[0] || '/';
     next(redirectPath);
     return;
   }
@@ -720,13 +747,20 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
       return;
     }
 
-    // 检查是否是公开页面（登录、注册、忘记密码）或 duty 下的页面，这些页面不应该重定向到404
+    // 检查是否是公开页面（登录、注册、忘记密码）或 duty 下的页面，或 home-app 的页面
     const publicPages = ['/login', '/register', '/forget-password'];
     const isPublicPage = publicPages.includes(to.path);
     const isDutyPage = to.path.startsWith('/duty/');
+    const isHomePage = to.path.startsWith('/home');
+
+    if (isHomePage) {
+      // home-app 的页面由代理处理，使用 next(false) 取消 Vue Router 的导航，让代理处理请求
+      next(false);
+      return;
+    }
 
     if (isPublicPage || isDutyPage) {
-      // 公开页面或 duty 下的页面，直接放行（这些是静态HTML页面，不需要路由匹配）
+      // 公开页面、duty 下的页面，直接放行（这些是静态HTML页面，不需要路由匹配）
       next();
       return;
     }
@@ -744,6 +778,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
     // 已认证但路由未匹配，可能是子应用路由或无效路由
     // 关键：检查是否是子应用路由前缀，如果是则放行（让子应用处理）
     // 否则重定向到 404 页面
+    // 注意：/home 不应该在这里处理，因为已经在前面使用 next(false) 处理了
     const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
     const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
 
@@ -756,61 +791,6 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
     // 主应用路由未匹配，重定向到 404 页面
     next('/404');
     return;
-  }
-
-  // 检查是否为文档相关路由（只支持 /docs 前缀）
-  const isDocsRoute = to.path === '/docs' || to.path.startsWith('/docs/');
-
-  if (isDocsRoute) {
-    // 检查 iframe 是否已经加载完成（通过全局状态）
-    const docsIframeLoaded = (window as any).__DOCS_IFRAME_LOADED__ || false;
-
-    if (docsIframeLoaded) {
-      // iframe 已加载，瞬间切换（禁用过渡动画）
-      document.body.classList.add('docs-mode-instant'); // 禁用动画的类
-      document.body.classList.add('docs-mode');
-
-      // 下一帧移除 instant 类，恢复正常动画（为下次切换准备）
-      requestAnimationFrame(() => {
-        document.body.classList.remove('docs-mode-instant');
-      });
-    } else {
-      // iframe 未加载，显示 Loading（带动画）
-      const el = document.getElementById('Loading');
-      if (el) {
-        // 更新文字
-        const titleEl = el.querySelector('.preload__title');
-        if (titleEl) {
-          titleEl.textContent = '正在加载资源';
-        }
-
-        const subtitleEl = el.querySelector('.preload__sub-title');
-        if (subtitleEl) {
-          subtitleEl.textContent = '部分资源可能加载时间较长，请耐心等待';
-        }
-
-        // 显示 Loading
-        el.classList.remove('is-hide');
-      }
-    }
-  }
-
-  // 如果从文档中心离开，移除 docs-mode 类
-  const wasDocsRoute = from.path === '/docs' || from.path.startsWith('/docs/');
-
-  if (wasDocsRoute && !isDocsRoute) {
-    const docsIframeLoaded = (window as any).__DOCS_IFRAME_LOADED__ || false;
-
-    if (docsIframeLoaded) {
-      // iframe 已加载，瞬间切换（禁用过渡动画）
-      document.body.classList.add('docs-mode-instant'); // 禁用动画的类
-      document.body.classList.remove('docs-mode');
-
-      // 下一帧移除 instant 类，恢复正常动画
-      requestAnimationFrame(() => {
-        document.body.classList.remove('docs-mode-instant');
-      });
-    }
   }
 
   // 继续路由导航
@@ -906,9 +886,8 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   // 清理所有 ECharts 实例和相关的 DOM 元素（tooltip、toolbox 等），防止页面切换时残留
   // 使用统一的清理函数，自动清理所有图表组件
   try {
-    // 动态导入清理函数，使用具体路径避免与静态导入冲突
-    // @ts-expect-error - 类型定义可能不完整，但运行时可用
-    import('@btc/shared-components/charts/utils/cleanup').then(({ cleanupAllECharts }: any) => {
+    // 动态导入清理函数，从主入口导入
+    import('@btc/shared-components').then(({ cleanupAllECharts }: any) => {
       cleanupAllECharts();
     }).catch(() => {
       // 如果导入失败，使用备用清理逻辑

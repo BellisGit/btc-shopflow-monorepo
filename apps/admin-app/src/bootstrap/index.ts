@@ -99,7 +99,7 @@ const setupAdminGlobals = () => {
   // 关键优化：改为后台异步执行，不阻塞应用启动
   (async () => {
     try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const { getMenuRegistry } = await import('@btc/shared-components');
       const registry = getMenuRegistry();
       if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;
@@ -354,7 +354,7 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs（异步执行，不阻塞应用创建）
     Promise.all([
-      import('@btc/shared-components/store/menuRegistry').then(({ getMenuRegistry }) => {
+      import('@btc/shared-components').then(({ getMenuRegistry }) => {
         const registry = getMenuRegistry();
         if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
           (window as any).__BTC_MENU_REGISTRY__ = registry;
@@ -386,10 +386,29 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
 };
 
 export const mountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
+  // 开发环境：调试信息
+  if (import.meta.env.DEV) {
+    console.log('[admin-app] mountAdminApp 被调用', {
+      props,
+      container: props.container,
+      containerType: typeof props.container,
+      containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
+    });
+  }
+
   // 使用标准化的 mountSubApp
   // 注意：mountSubApp 内部会调用 context.app.mount()，这是同步操作，会立即挂载应用
   // 之后的操作（如路由就绪等待、菜单注册等）可以在后台异步执行
   await mountSubApp(context, subAppOptions, props);
+  
+  // 开发环境：挂载后检查
+  if (import.meta.env.DEV) {
+    console.log('[admin-app] mountAdminApp 完成', {
+      context,
+      app: context.app,
+      router: context.router,
+    });
+  }
 
   // 设置路由同步、事件桥接等（使用自定义的 setupAdminEventBridge）
   // 这些操作是同步的，很快，可以立即执行

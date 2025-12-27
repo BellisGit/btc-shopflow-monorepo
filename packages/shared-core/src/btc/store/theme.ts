@@ -43,7 +43,7 @@ export const useThemeStore = defineStore('theme', () => {
     }
   }
 
-  const currentTheme = ref<ThemeConfig>(migratedTheme);
+  const currentTheme = ref<ThemeConfig>(migratedTheme ?? THEME_PRESETS[0]!);
 
   // 使用 VueUse 的 useDark，自动管理暗黑模式并持久化到 localStorage
   const isDark = useDark();
@@ -126,6 +126,7 @@ export const useThemeStore = defineStore('theme', () => {
         // 参考 art-design-pro：直接设置 html 元素的 class 属性
         // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
         const htmlEl = document.getElementsByTagName('html')[0];
+        if (!htmlEl) return;
         const className = newDarkValue ? 'dark' : '';
         console.log('[ThemeStore] 设置 html class (动画模式)', {
           className,
@@ -223,6 +224,7 @@ export const useThemeStore = defineStore('theme', () => {
       // 参考 art-design-pro：直接设置 html 元素的 class 属性
       // 使用 setAttribute 完全替换 class，确保所有 CSS 选择器立即生效
       const htmlEl = document.getElementsByTagName('html')[0];
+      if (!htmlEl) return;
       const className = newDarkValue ? 'dark' : '';
       console.log('[ThemeStore] 设置 html class (无动画模式)', {
         className,

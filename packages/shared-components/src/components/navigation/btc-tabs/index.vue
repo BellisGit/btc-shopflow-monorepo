@@ -110,7 +110,7 @@ const setActiveTab = async (tabName: string | number) => {
   const tabIndex = props.tabs.findIndex(tab => (tab.name || props.tabs.indexOf(tab)) === tabName);
   const tab = props.tabs[tabIndex];
 
-  if (tab?.disabled) return;
+  if (tab?.disabled || !tab) return;
 
   activeTab.value = tabName;
   emit('update:modelValue', tabName);

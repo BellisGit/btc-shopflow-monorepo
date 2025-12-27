@@ -1,33 +1,21 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
     "composite": true,
     "outDir": "./dist",
     "declaration": true,
     "baseUrl": ".",
     "paths": {
       "@configs/*": ["../../configs/*"],
-      "@btc/shared-components": ["../shared-components/src"],
-      "@btc/shared-components/*": ["../shared-components/src/*"],
-      "@btc/shared-utils": ["../shared-utils/src"],
-      "@btc/shared-utils/*": ["../shared-utils/src/*"]
+      "@btc/shared-components": ["../shared-components/dist"],
+      "@btc/shared-components/*": ["../shared-components/dist/*"],
+      "@btc/shared-utils": ["../shared-utils/dist"],
+      "@btc/shared-utils/*": ["../shared-utils/dist/*"]
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../shared-utils" }
+  ]
 }

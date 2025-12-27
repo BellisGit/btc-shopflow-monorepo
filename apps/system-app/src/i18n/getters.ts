@@ -69,6 +69,7 @@ export function tSync(key: string): string {
         const cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
           let c = cookies[i];
+          if (!c) continue;
           while (c.charAt(0) === ' ') {
             c = c.substring(1, c.length);
           }

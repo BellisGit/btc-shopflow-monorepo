@@ -28,7 +28,7 @@ export class NotificationQueue {
       id: notificationId,
       type,
       content,
-      title,
+      ...(title !== undefined && { title }),
       count: 1,
       priority: NOTIFICATION_PRIORITIES[type],
       duration: this.calculateDuration(content, 1),

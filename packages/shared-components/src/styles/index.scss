@@ -7,6 +7,9 @@
 // 使用 @forward 确保样式被正确导出（兼容 @use 模块化）
 @forward './menu-themes.scss';
 
+// 全局响应式布局样式（已禁用，避免影响全局样式）
+// @forward './responsive-layout.scss';
+
 // ==================== @import 规则（用于 CSS 文件）====================
 // 暗色模式布局背景色样式（必须在文件开头，确保优先级）
 // 注意：在微前端环境下，SCSS 可能无法正确穿透样式隔离
@@ -1350,5 +1353,32 @@ ul.topbar__left {
 // =========================
 body.theme-brand-red {
   background-color: var(--el-bg-color-page);
+}
+
+// =========================
+// 内容挂载容器样式（统一管理主应用和子应用的显示/隐藏）
+// =========================
+.content-mount {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  
+  &--main-app {
+    display: block;
+  }
+  
+  &--sub-app {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  &--loading {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  &--hidden {
+    display: none !important;
+  }
 }
 

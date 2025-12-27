@@ -232,7 +232,7 @@ await codeApi.sendEmailCode({
 | 方法 | 说明 | 参数类型 | 返回类型 |
 |------|------|---------|---------|
 | `getCaptcha()` | 获取图片验证码 | `{ height?, width?, color? }` | `CaptchaResponse` |
-| `healthCheck()` | 健康检查 | - | `HealthCheckResponse` |
+| `userCheck()` | 用户检查（检查用户登录状态，不属于 EPS 请求） | - | `UserCheckResponse` |
 | `login()` | 账号密码登录 | `LoginRequest` | `LoginResponse` |
 | `loginBySms()` | 手机号登录 | `SmsLoginRequest` | `LoginResponse` |
 | `logout()` | 退出登录 | - | `Promise<void>` |

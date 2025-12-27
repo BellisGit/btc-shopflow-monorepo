@@ -1,10 +1,8 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, type Ref } from 'vue';
-import { useDark } from '@vueuse/core';
 import { useResizeObserver } from '@vueuse/core';
 import { getInstanceByDom } from 'echarts/core';
 import type { EChartsOption } from 'echarts';
 import type { BaseChartProps } from '../types/base';
-import { registerEChartsThemes } from '../utils/theme';
 
 /**
  * 核心图表 composable
@@ -264,7 +262,7 @@ export function useChart(
   // 使用 ResizeObserver 监听容器大小变化
   // 使用 requestAnimationFrame 避免 ResizeObserver 循环警告
   let resizeObserverFrameId: number | null = null;
-  useResizeObserver(containerRef, () => {
+  useResizeObserver(containerRef as any, () => {
     // 使用 requestAnimationFrame 延迟处理，避免 ResizeObserver 循环警告
     if (resizeObserverFrameId) {
       cancelAnimationFrame(resizeObserverFrameId);
@@ -383,7 +381,7 @@ export function useChart(
   };
 
   // 检查容器是否在qiankun子应用挂载点内且有父元素尺寸
-  const hasParentSize = (): boolean => {
+  const _hasParentSize = (): boolean => {
     if (!containerRef.value) {
       return false;
     }
@@ -754,7 +752,7 @@ export function useChart(
       nextTick(() => {
         nextTick(() => {
           // 先确保 v-chart 可渲染
-        const mounted = markContainerMounted();
+        markContainerMounted();
 
         // 如果容器还没准备好，启动检查循环
         if (!isContainerReady.value) {
@@ -765,7 +763,7 @@ export function useChart(
           checkIntervalId = window.setInterval(() => {
             checkCount++;
             // 尝试标记容器为已挂载（在子应用环境中，这会使用更宽松的条件）
-            const nowMounted = markContainerMounted();
+            markContainerMounted();
 
             // 如果容器已准备好，或者达到最大检查次数
             if (isContainerReady.value || checkCount >= maxCheckCount) {

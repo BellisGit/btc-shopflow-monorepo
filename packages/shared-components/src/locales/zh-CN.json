@@ -511,6 +511,7 @@
   "auth.message.sms_code_sent": "验证码已发送",
   "auth.message.sms_code_send_failed": "发送验证码失败",
   "auth.message.agreement_required": "请先同意用户协议",
+  "auth.message.agreement_auto_checked": "请先勾选协议，已为您自动勾选，请再次点击登录",
   "auth.message.phone_required_for_sms": "请输入手机号",
   "auth.message.phone_format_error": "请输入正确的手机号",
   "notice.title": "通知",

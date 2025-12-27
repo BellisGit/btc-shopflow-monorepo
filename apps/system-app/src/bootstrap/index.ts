@@ -10,6 +10,9 @@ import type { App } from 'vue';
 // SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
 import 'virtual:svg-register';
 
+// 资源加载器初始化（必须在应用启动前初始化）
+import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-core';
+
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
 import { resolveAppLogoUrl } from '@configs/layout-bridge';
@@ -32,7 +35,11 @@ import { initSettingsConfig } from '../plugins/user-setting/composables/useSetti
  * 负责初始化所有核心功能模块
  */
 export async function bootstrap(app: App) {
-  // 0. 初始化存储管理器（必须在最前面）
+  // 0. 初始化资源加载器和动态导入拦截器（必须在最前面）
+  initResourceLoader();
+  initDynamicImportInterceptor();
+  
+  // 0.1. 初始化存储管理器
   appStorage.init();
 
   // 1. 核心模块初始化
@@ -78,6 +85,26 @@ export async function bootstrap(app: App) {
 
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
+
+  // 关键：启动全局用户检查轮询（使用新的全局实现）
+  // 在应用启动后异步启动，不阻塞应用初始化
+  if (typeof window !== 'undefined') {
+    // 延迟启动，确保 EPS 服务已加载
+    setTimeout(() => {
+      try {
+        import('@btc/shared-core/composables/user-check').then(({ startUserCheckPollingIfLoggedIn }) => {
+          // 检查是否已登录，如果已登录则启动轮询
+          startUserCheckPollingIfLoggedIn();
+        }).catch((error) => {
+          if (import.meta.env.DEV) {
+            console.warn('[bootstrap] Failed to start user check polling:', error);
+          }
+        });
+      } catch (error) {
+        // 静默失败
+      }
+    }, 500); // 延迟 500ms，确保 EPS 服务已加载
+  }
 
   // 注意：DevTools 不再在这里挂载
   // 改为统一在 layout-app 中挂载，避免重复挂载
@@ -149,6 +176,26 @@ export async function bootstrap(app: App) {
   // 注意：index.html 中已经设置了 HTTP URL 拦截，这里只需要添加错误处理
   const currentFetch = window.fetch;
   window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+    // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
+    // 这确保 EPS 请求和其他 API 请求不会被影响
+    let url: string;
+    if (typeof input === 'string') {
+      url = input;
+    } else if (input instanceof URL) {
+      url = input.href;
+    } else {
+      url = input.url;
+    }
+    
+    // 检查多种形式的 API URL：
+    // - /api/... (相对路径)
+    // - http://host/api/... (完整 URL)
+    // - https://host/api/... (完整 URL)
+    if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
+      // API 请求直接放行，不添加额外的错误处理
+      return currentFetch.call(this, input, init);
+    }
+    
     // 调用当前的 fetch（index.html 中设置的拦截器）
     return currentFetch.call(this, input, init).catch((error) => {
       // 如果是网络错误，静默处理

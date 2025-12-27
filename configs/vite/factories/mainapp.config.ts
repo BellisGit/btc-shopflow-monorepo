@@ -30,6 +30,8 @@ import {
   publicImagesToAssetsPlugin,
   resourcePreloadPlugin,
   uploadCdnPlugin,
+  cdnAssetsPlugin,
+  cdnImportPlugin,
 } from '../plugins';
 
 export interface MainAppViteConfigOptions {
@@ -203,7 +205,19 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 17. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
-    // 17.5. 替换图标路径为 CDN URL（生产环境）
+    // 17.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
+    cdnAssetsPlugin({
+      appName,
+      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 17.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
+    // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
+    cdnImportPlugin({
+      appName,
+      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 17.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
     // 18. 优化 chunks 插件
     optimizeChunksPlugin(),
@@ -278,13 +292,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       },
     }, */
     assetsInlineLimit: 10 * 1024,
-    outDir: 'dist',
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     emptyOutDir: false,
     // 关键：system-app 作为主应用，也需要打包 single-spa 和 qiankun
     // 不将它们标记为 external，确保它们被打包到构建产物中
     rollupOptions: {
-      ...createRollupConfig(appName.replace('-app', ''), {
+      ...createRollupConfig(appName, {
         externalSingleSpa: false, // 主应用需要打包 single-spa 和 qiankun
       }),
     },

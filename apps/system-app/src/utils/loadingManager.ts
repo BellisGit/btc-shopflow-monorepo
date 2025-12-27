@@ -100,7 +100,7 @@ export function clearDelayHint() {
 /**
  * 开始加载应用
  */
-export function startLoading(appName: string) {
+export function startLoading(_appName: string) {
   // console.log('[loadingManager] startLoading 被调用，appName:', appName);
   // NProgress.start(); // 注释掉 loading
   // showSkeleton(); // 注释掉 loading
@@ -135,7 +135,7 @@ export function finishLoading() {
 /**
  * 加载失败
  */
-export function loadingError(appName: string, error?: Error) {
+export function loadingError(appName: string, _error?: Error) {
   NProgress.done();
   hideSkeleton();
   clearDelayHint();

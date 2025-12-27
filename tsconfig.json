@@ -30,5 +30,12 @@
       "@btc/subapp-manifests/*": ["packages/subapp-manifests/dist/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "**/dist"]
+  "exclude": ["node_modules", "dist", "**/dist"],
+  "references": [
+    { "path": "./packages/shared-utils" },
+    { "path": "./packages/shared-core" },
+    { "path": "./packages/shared-components" },
+    { "path": "./packages/vite-plugin" },
+    { "path": "./packages/subapp-manifests" }
+  ]
 }

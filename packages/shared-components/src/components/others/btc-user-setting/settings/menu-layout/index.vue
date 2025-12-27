@@ -1,5 +1,5 @@
 <template>
-  <div v-if="width > 1000">
+  <div v-if="width.value > 1000">
     <SectionTitle :title="t('setting.menuType.title') || 'Menu Layout'" />
     <div class="setting-box-wrap">
       <div

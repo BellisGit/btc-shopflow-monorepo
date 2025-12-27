@@ -25,8 +25,15 @@ import '@btc/shared-components/styles/index.scss';
 // 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
 // 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
 import { BtcSvg } from '@btc/shared-components';
+// 移除可能残留的布局类
+if (typeof document !== 'undefined') {
+  document.documentElement.classList.remove('col-mobile', 'col-tablet', 'col-desktop');
+}
 
 registerAppEnvAccessors();
+
+// 初始化全局响应式布局断点监听（已禁用，避免影响全局样式）
+// initGlobalBreakpoints();
 
 // 注入 getAppBySubdomain 函数到 subapp-manifests
 setAppBySubdomainFn(getAppBySubdomain);
@@ -384,24 +391,21 @@ const startupPromise = Promise.resolve()
     (async () => {
       try {
         // 暴露 http 实例到全局，供 DevTools 使用
-        let httpInstance: any;
         try {
           const { http } = await import('./utils/http');
           if (http && typeof (window as any).__APP_HTTP__ === 'undefined') {
             (window as any).__APP_HTTP__ = http;
-            httpInstance = http;
           }
         } catch (err) {
           // http 实例可能还未加载，忽略错误
         }
 
         // 暴露 EPS list 到全局，供 DevTools 使用
-        let epsList: any[] = [];
         try {
           const epsModule = await import('./services/eps');
           if (epsModule.list && typeof (window as any).__APP_EPS_LIST__ === 'undefined') {
             (window as any).__APP_EPS_LIST__ = epsModule.list;
-            epsList = epsModule.list;
+            // epsList = epsModule.list;
           }
         } catch (err) {
           // EPS 服务可能还未加载，忽略错误

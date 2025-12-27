@@ -28,7 +28,8 @@ function runTurboDev(apps = null) {
     }
   }
   
-  args.push('--concurrency=20');
+  // 设置并发数为 30，基于 14 核 20 线程 CPU 优化（当前有 22 个工作空间）
+  args.push('--concurrency=30');
 
   console.log(`🚀 启动开发服务器...`);
   if (apps && apps.length > 0) {

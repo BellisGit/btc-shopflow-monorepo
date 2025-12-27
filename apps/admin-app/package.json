@@ -17,10 +17,10 @@
         "test:integration": "vitest --config vitest.integration.config.ts --run"
     },
     "dependencies": {
-        "@btc/shared-components": "^1.0.0",
-        "@btc/shared-core": "^1.0.0",
-        "@btc/shared-utils": "^1.0.0",
-        "@btc/subapp-manifests": "^0.0.1",
+        "@btc/shared-components": "workspace:*",
+        "@btc/shared-core": "workspace:*",
+        "@btc/shared-utils": "workspace:*",
+        "@btc/subapp-manifests": "workspace:*",
         "@element-plus/icons-vue": "^2.3.2",
         "@types/nprogress": "^0.2.3",
         "@vueuse/core": "^13.9.0",
@@ -41,7 +41,7 @@
         "xlsx": "^0.18.5"
     },
     "devDependencies": {
-        "@btc/vite-plugin": "^1.0.0",
+        "@btc/vite-plugin": "workspace:*",
         "@intlify/unplugin-vue-i18n": "^1.4.0",
         "@testing-library/jest-dom": "^6.4.2",
         "@testing-library/vue": "^8.1.0",

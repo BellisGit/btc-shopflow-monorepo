@@ -37,7 +37,6 @@ const props = withDefaults(defineProps<DualBarCompareChartProps>(), {
 });
 
 const chartContainerRef = ref<HTMLElement | null>(null);
-const themeColors = getThemeColors();
 
 const chart = useChartComponent(
   chartContainerRef,
@@ -48,7 +47,7 @@ const chart = useChartComponent(
   }
 );
 
-const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartTheme, chartThemeKey } = chart;
+const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartThemeKey } = chart;
 
 const handleChartReady = () => {
   updateChartInstance();

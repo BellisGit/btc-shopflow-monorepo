@@ -15,7 +15,7 @@ export function fixChunkReferencesPlugin(): Plugin {
   return {
     name: 'fix-chunk-references',
     // 只在 generateBundle 阶段清理旧引用，不修改文件名
-    generateBundle(options: any, bundle: Record<string, any>) {
+    generateBundle(_options: any, bundle: Record<string, any>) {
       let totalCleanups = 0;
       
       for (const [fileName, chunk] of Object.entries(bundle as Record<string, any>)) {
@@ -38,8 +38,8 @@ export function fixChunkReferencesPlugin(): Plugin {
         // 1. 清理 __vite__mapDeps 数组中的旧引用
         if (newCode.includes('__vite__mapDeps')) {
           const mapDepsPattern = new RegExp(`(["'])([^"']*(${escapedOldHashes})[^"']*)(["'])`, 'g');
-          const beforeLength = newCode.length;
-          newCode = newCode.replace(mapDepsPattern, (match: any, quote1: any, path: any, oldHash: any, quote2: any) => {
+          // const beforeLength = newCode.length; // 未使用
+          newCode = newCode.replace(mapDepsPattern, (match: any, quote1: any, _path: any, _oldHash: any, quote2: any) => {
             // 检查是否在 __vite__mapDeps 上下文中
             const beforeMatch = newCode.substring(Math.max(0, newCode.indexOf(match) - 100), newCode.indexOf(match));
             if (beforeMatch.includes('__vite__mapDeps') || beforeMatch.includes('m.f')) {
@@ -72,7 +72,7 @@ export function fixChunkReferencesPlugin(): Plugin {
         const stringPattern = new RegExp(`(["'\`])([^"'\`]*(?:assets/|/assets/)[^"'\`]*(${escapedOldHashes})[^"'\`]*\\.(js|mjs|css)(\\?[^"'\`]*)?)(["'\`])`, 'g');
         if (stringPattern.test(newCode)) {
           stringPattern.lastIndex = 0;
-          newCode = newCode.replace(stringPattern, (match: any, quote1: any, path: any, oldHash: any, ext: any, query: any, quote2: any) => {
+          newCode = newCode.replace(stringPattern, (_match: any, quote1: any, _path: any, _oldHash: any, _ext: any, _query: any, quote2: any) => {
             modified = true;
             return quote1 + quote2; // 替换为空字符串
           });

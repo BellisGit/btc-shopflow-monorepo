@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, h, watch, computed, unref, toRef, ref } from 'vue';
+import { inject, onMounted, onUnmounted, computed, unref, ref } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcDialog from '../../common/dialog/index';
 import type { UpsertProps } from './types';
@@ -90,16 +90,19 @@ if (!crud) {
   throw new Error('[BtcUpsert] Must be used inside <BtcCrud>');
 }
 
+// TypeScript 类型守卫：确保 crud 不为 undefined
+const crudRef = crud!;
+
 // 关键：直接使用 crud.upsertVisible，确保响应式追踪正确
 // 使用 toRef 确保能够正确追踪 ref 对象内部的变化
 // 这样即使值相同，Vue 也能检测到 ref 对象本身的变化
 const upsertVisibleValue = computed({
   get: () => {
-    return unref(crud.upsertVisible);
+    return unref(crudRef.upsertVisible);
   },
   set: (val: boolean) => {
-    if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
-      crud.upsertVisible.value = val;
+    if (crudRef.upsertVisible && typeof crudRef.upsertVisible === 'object' && 'value' in crudRef.upsertVisible) {
+      crudRef.upsertVisible.value = val;
     }
   },
 });
@@ -107,8 +110,8 @@ const upsertVisibleValue = computed({
 // 关键：处理 modelValue 更新，确保能够正确传递到 crud.upsertVisible
 function handleModelValueUpdate(val: boolean) {
   // 更新 crud.upsertVisible
-  if (crud.upsertVisible && typeof crud.upsertVisible === 'object' && 'value' in crud.upsertVisible) {
-    crud.upsertVisible.value = val;
+  if (crudRef.upsertVisible && typeof crudRef.upsertVisible === 'object' && 'value' in crudRef.upsertVisible) {
+    crudRef.upsertVisible.value = val;
   }
 }
 
@@ -130,20 +133,26 @@ const {
   cancelText,
   submitText,
   title,
-  getComponentProps,
   renderComponent,
 } = formDataContext;
+// getComponentProps 未使用，已移除
 
 // 插件系统
-const pluginContext = usePlugins(props);
+// 修复 TS2379: 使用类型断言处理 exactOptionalPropertyTypes
+const pluginContext = usePlugins(props as any);
 
 // 表单初始化
-const { initFormData, append } = useFormInit(props, crud, formDataContext, pluginContext);
+const { initFormData, append } = useFormInit(
+  props as any,
+  crudRef,
+  formDataContext,
+  pluginContext
+);
 
 // 表单提交
 const { submitting, handleSubmit, handleCancel, handleClosed } = useFormSubmit(
-  props,
-  crud,
+  props as any,
+  crudRef,
   formDataContext,
   pluginContext
 );

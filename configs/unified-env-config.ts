@@ -433,10 +433,14 @@ export function getCurrentSubApp(): string | null {
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
-  // 生产环境：通过子域名判断
+  // 生产环境：通过子域名判断（优先级最高）
   if (env === 'production' && hostname) {
     const app = getAllApps().find(a => a.subdomain === hostname);
-    return app?.id || null;
+    if (app && app.type === 'sub' && app.enabled) {
+      return app.id;
+    }
+    // 生产环境如果不是子域名，则不是子应用
+    return null;
   }
 
   // 开发/预览环境：通过路径判断（与 isMainApp 使用相同的匹配逻辑）
@@ -459,6 +463,9 @@ export function getCurrentSubApp(): string | null {
     }
   }
 
+  // 如果没有匹配到任何子应用，返回 null
+  // 注意：不再先调用 isMainApp() 来判断，因为 isMainApp() 的逻辑可能在不同环境下有差异
+  // 直接通过路径匹配来判断更可靠
   return null;
 }
 

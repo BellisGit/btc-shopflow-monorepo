@@ -94,6 +94,14 @@ export function usePasswordLogin() {
       // 等待状态更新，确保路由守卫能正确识别登录状态
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      // 启动用户检查轮询
+      try {
+        const { startUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
+        startUserCheckPolling();
+      } catch (error) {
+        console.warn('[usePasswordLogin] Failed to start user check polling:', error);
+      }
+
       // 跳转到首页或 redirect 页面
       const redirect = (route.query.redirect as string) || '/';
       // 只取路径部分，忽略查询参数，避免循环重定向

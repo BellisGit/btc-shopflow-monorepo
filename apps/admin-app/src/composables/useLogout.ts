@@ -44,6 +44,17 @@ export function useLogout() {
    */
   const logout = async () => {
     try {
+      // 停止全局用户检查轮询
+      try {
+        const { stopUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
+        stopUserCheckPolling();
+      } catch (error) {
+        // 如果导入失败，静默处理
+        if (import.meta.env.DEV) {
+          console.warn('Failed to stop global user check polling on logout:', error);
+        }
+      }
+
       // 调用后端 logout API（优先使用全局 authApi）
       // 注意：即使后端 API 失败，前端也要执行清理操作
       try {

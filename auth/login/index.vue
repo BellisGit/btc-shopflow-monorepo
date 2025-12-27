@@ -56,8 +56,6 @@
     />
       </div>
     </div>
-
-    <BtcAuthFooter />
   </BtcAuthLayout>
 </template>
 
@@ -67,7 +65,6 @@ import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
-import BtcAuthFooter from '../shared/components/auth-footer/index.vue';
 import BtcQrToggleBtn from '../shared/components/qr-toggle-btn/index.vue';
 import BtcLoginTabs from '../shared/components/login-tabs/index.vue';
 import BtcPasswordForm from './password-form/index.vue';
@@ -127,7 +124,13 @@ const handleAgreementChange = (agreed: boolean) => {
 // 检查协议同意状态
 const checkAgreement = (): boolean => {
   if (!isAgreed.value) {
-    BtcMessage.warning(t('auth.message.agreement_required'));
+    // 自动勾选协议，提升用户体验
+    if (agreementRef.value) {
+      agreementRef.value.checkAgreement();
+    }
+    // 显示一条提示，同时提醒需要勾选和已自动勾选（使用 success 类型，绿色更明显）
+    BtcMessage.success(t('auth.message.agreement_auto_checked'));
+    // 返回 false，需要用户再次点击登录
     return false;
   }
   return true;

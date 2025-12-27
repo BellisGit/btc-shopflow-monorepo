@@ -124,18 +124,104 @@ async function getResourceFromManifest(
 }
 
 /**
+ * 规范化 URL，提取路径部分（用于去重检查）
+ */
+function normalizeUrlForCheck(url: string): string {
+  try {
+    // 如果是完整 URL，提取路径部分
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const urlObj = new URL(url);
+      return urlObj.pathname;
+    }
+    // 如果是绝对路径，直接返回
+    if (url.startsWith('/')) {
+      return url;
+    }
+    // 相对路径，转换为绝对路径
+    if (typeof window !== 'undefined') {
+      const urlObj = new URL(url, window.location.origin);
+      return urlObj.pathname;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+/**
  * 动态加载 JavaScript 模块
  */
-function loadScript(url: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // 检查是否已经加载过
-    const existingScript = document.querySelector(`script[src="${url}"]`);
-    if (existingScript) {
+async function loadScript(url: string): Promise<void> {
+  // 规范化 URL 用于去重检查
+  const normalizedPath = normalizeUrlForCheck(url);
+  
+  // 检查是否已经加载过（使用规范化后的路径检查）
+  // 检查所有 script 标签，比较路径部分
+  const existingScripts = document.querySelectorAll('script[src]');
+  for (const script of existingScripts) {
+    const src = script.getAttribute('src');
+    if (src && normalizeUrlForCheck(src) === normalizedPath) {
       // 如果已经加载，直接 resolve
-      resolve();
       return;
     }
+  }
 
+  // 检查是否是静态资源路径，如果是则使用资源加载器
+  const isStaticAsset = url.includes('/assets/') || url.includes('/assets/layout/');
+  
+  if (isStaticAsset && typeof window !== 'undefined') {
+    try {
+      // 使用资源加载器加载资源（会自动降级：CDN -> OSS -> 本地）
+      const resourceLoader = (window as any).__BTC_RESOURCE_LOADER__;
+      if (resourceLoader) {
+        const config = (window as any).__BTC_CDN_CONFIG__;
+        const appName = config?.appName || 'unknown-app';
+        
+        // 关键：对于模块脚本，必须使用 src 属性而不是 textContent
+        // 因为 ES 模块的相对路径解析基于模块的 URL，而不是页面 URL
+        // 如果使用 textContent，模块没有明确的 URL，相对路径会被错误解析为基于当前页面 URL
+        
+        // 规范化 URL，提取路径部分
+        const normalizedPath = normalizeUrlForCheck(url);
+        
+        // 生成 CDN URL（资源加载器会处理降级，但这里我们需要一个明确的 URL 用于 src）
+        const cdnDomain = config?.cdnDomain || 'https://all.bellis.com.cn';
+        let moduleUrl = url;
+        if (normalizedPath.includes('/assets/layout/')) {
+          moduleUrl = `${cdnDomain}/layout-app${normalizedPath}`;
+        } else if (normalizedPath.includes('/assets/')) {
+          moduleUrl = `${cdnDomain}/${appName}${normalizedPath}`;
+        }
+        
+        // 创建脚本标签，使用 src 属性（确保模块有正确的 URL）
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = moduleUrl; // 关键：使用 src 而不是 textContent
+        script.async = true;
+        
+        return new Promise((resolve, reject) => {
+          script.onload = () => {
+            resolve();
+          };
+          
+          script.onerror = () => {
+            // #region agent log H-LOAD
+            fetch('http://127.0.0.1:7242/ingest/65fa8800-1c21-477b-9578-515737111923',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H-LOAD',location:'packages/shared-utils/src/cdn/load-shared-resources.ts:loadScript',message:'script load error',data:{url,moduleUrl},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion agent log H-LOAD
+            reject(new Error(`Failed to load shared resource: ${url}`));
+          };
+          
+          document.head.appendChild(script);
+        });
+      }
+    } catch (error) {
+      // 资源加载器失败，回退到原来的方式
+      console.warn(`[load-shared-resources] 资源加载器失败，回退到直接加载: ${url}`, error);
+    }
+  }
+  
+  // 非静态资源或资源加载器不可用，使用原来的方式
+  return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.type = 'module';
     script.src = url;

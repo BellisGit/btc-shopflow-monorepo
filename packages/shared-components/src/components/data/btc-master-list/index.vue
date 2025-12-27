@@ -99,10 +99,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, defineComponent, h } from 'vue';
+import { ref, computed, onMounted, nextTick, defineComponent } from 'vue';
 
 import { useI18n } from '@btc/shared-core';
-import { Check, Close, Refresh, MoreFilled, Search } from '@element-plus/icons-vue';
+import { Check, Close, MoreFilled, Search } from '@element-plus/icons-vue';
+// Refresh 未使用
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { BtcMessage } from '@btc/shared-components';
 
@@ -359,7 +360,7 @@ function allowDrop(_: any, dropNode: any) {
 }
 
 // 右键菜单
-function onContextMenu(event: any, data?: any, node?: any) {
+function onContextMenu(_event: any, _data?: any, _node?: any) {
   // 这里可以集成右键菜单组件
 }
 

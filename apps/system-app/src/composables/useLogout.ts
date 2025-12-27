@@ -31,6 +31,29 @@ export function useLogout() {
    */
   const logout = async () => {
     try {
+      // 关键：停止 user-check 轮询，清除 sessionStorage 中的状态
+      // 使用动态导入避免循环依赖
+      try {
+        const { stopDynamicPolling } = await import('@/utils/domain-cache');
+        stopDynamicPolling(true);
+      } catch (error) {
+        // 如果导入失败，静默处理（可能 domain-cache 还未加载）
+        if (import.meta.env.DEV) {
+          console.warn('Failed to stop user-check polling on logout:', error);
+        }
+      }
+
+      // 停止全局用户检查轮询
+      try {
+        const { stopUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
+        stopUserCheckPolling();
+      } catch (error) {
+        // 如果导入失败，静默处理
+        if (import.meta.env.DEV) {
+          console.warn('Failed to stop global user check polling on logout:', error);
+        }
+      }
+
       // 调用后端 logout API
       // 注意：即使后端 API 失败，前端也要执行清理操作
       try {
@@ -80,6 +103,14 @@ export function useLogout() {
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
       console.error('Logout error:', error);
+
+      // 关键：停止 user-check 轮询，清除 sessionStorage 中的状态
+      try {
+        const { stopDynamicPolling } = await import('@/utils/domain-cache');
+        stopDynamicPolling(true);
+      } catch (importError) {
+        // 如果导入失败，静默处理
+      }
 
       // 强制清除所有缓存
       deleteCookie('access_token');

@@ -78,6 +78,13 @@
       "displayName": "文档站点",
       "category": "tool",
       "packageName": "docs-app"
+    },
+    {
+      "id": "home",
+      "name": "home-app",
+      "displayName": "公司首页",
+      "category": "public",
+      "packageName": "home-app"
     }
   ],
   "categories": {
@@ -103,6 +110,7 @@
     "quality",
     "production",
     "docs",
-    "operations"
+    "operations",
+    "home"
   ]
 }

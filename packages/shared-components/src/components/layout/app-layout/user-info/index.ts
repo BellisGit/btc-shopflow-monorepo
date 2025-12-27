@@ -1,5 +1,5 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useUser } from '@btc/shared-components/composables/useUser';
+import { useUser } from '../../../../composables/useUser';
 
 // 通过全局函数获取应用特定的依赖
 // 这些函数需要由使用共享布局的应用提供
@@ -161,6 +161,13 @@ export function useUserInfo() {
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
+      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+      const appStorage = getAppStorage();
+      const user = appStorage?.user?.get?.();
+      if (!user) {
+        return;
+      }
+
       // 如果 EPS service 尚未就绪（含 {} 占位），等待它就绪
       let currentService = getEpsService();
       const isProfileReady = (s: any) => !!s?.admin?.base?.profile?.info;

@@ -34,9 +34,9 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
-import { useProcessStore, getCurrentAppFromPath } from '@btc/shared-components/store/process';
+import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
 import { getManifestRoute } from '@btc/subapp-manifests';
-import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { getMenusForApp } from '../../../../store/menuRegistry';
 import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
 
 // 判断是否为SVG图标

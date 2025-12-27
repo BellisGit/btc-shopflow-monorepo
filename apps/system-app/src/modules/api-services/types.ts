@@ -27,11 +27,29 @@ export interface CaptchaResponse {
 }
 
 /**
- * 健康检查响应类型
+ * 用户检查响应类型
  */
-export interface HealthCheckResponse {
-  status: string;
-  timestamp?: number;
+export interface UserCheckResponse {
+  /**
+   * 用户状态：valid（凭证有效）、expired（已过期）、soon_expire（即将过期）、unauthorized（未授权）
+   */
+  status: 'valid' | 'expired' | 'soon_expire' | 'unauthorized';
+  /**
+   * 服务端UTC当前时间（ISO 8601格式，如：2025-12-19T14:20:00Z）
+   */
+  serverCurrentTime: string;
+  /**
+   * 当前用户凭证的过期时间（ISO 8601格式，如：2025-12-19T14:30:00Z）
+   */
+  credentialExpireTime: string;
+  /**
+   * 剩余过期时间（秒）
+   */
+  remainingTime: number;
+  /**
+   * 详细信息描述
+   */
+  details: string;
   [key: string]: any;
 }
 

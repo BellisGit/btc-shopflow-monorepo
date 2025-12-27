@@ -322,7 +322,7 @@ function createSummarySheet(summaryData: any[], XLSX: any) {
     'Amount (USD)', '', ''
   ];
   const summaryHeader2 = [
-    'WH',
+    'Warehouse',
     'SYSPRO', 'Actual', 'Var.',
     '', // 空列（在Var.和Syspro之间）
     'Syspro', 'Actual', 'Var.'
@@ -356,8 +356,7 @@ function createSummarySheet(summaryData: any[], XLSX: any) {
   if (!ws['!merges']) ws['!merges'] = [];
   ws['!merges'].push(
     { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }, // Quantity合并B5:D5
-    { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }, // Amount合并F5:H5
-    { s: { r: 4, c: 0 }, e: { r: 5, c: 0 } }  // WH合并A5:A6
+    { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }  // Amount合并F5:H5
   );
 
   return { ws, sheetName: summarySheetName };

@@ -10,11 +10,7 @@
     :unassigned-label="unassignedLabel"
     :enable-drag="enableDrag"
     :enable-key-search="enableKeySearch"
-    :left-size="props.leftSize"
-    :id-field="idField"
-    :label-field="labelField"
-    :parent-field="parentField"
-    :op="op"
+    v-bind="viewGroupBindProps"
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
   >
@@ -74,16 +70,16 @@
           </div>
           <BtcFlex1 />
           <slot name="search">
-            <BtcSearchKey v-if="props.showSearchKey" :placeholder="searchPlaceholder" />
+            <BtcSearchKey v-if="props.showSearchKey" v-bind="searchPlaceholder ? { placeholder: searchPlaceholder } : {}" />
           </slot>
           <BtcCrudActions v-if="props.showToolbar" :show-toolbar="props.op !== undefined">
             <template #default>
               <slot
                 name="actions"
-                :selected="selected"
-                :keyword="keyword"
-                :left-data="leftData"
-                :right-data="rightData"
+                :selected="selected ?? undefined"
+                :keyword="keyword ?? undefined"
+                :left-data="leftData ?? undefined"
+                :right-data="rightData ?? undefined"
               />
             </template>
           </BtcCrudActions>
@@ -91,7 +87,7 @@
         <BtcRow>
           <BtcTable
             :columns="tableColumns"
-            :op="op"
+            v-bind="op ? { op } : {}"
             :disable-auto-created-at="disableAutoCreatedAt"
             border
           />
@@ -102,8 +98,10 @@
         </BtcRow>
         <BtcUpsert
           :items="computedFormItems"
-          :width="upsertWidth"
-          :on-submit="handleFormSubmit"
+          v-bind="{
+            ...(upsertWidth !== undefined && { width: upsertWidth }),
+            ...(handleFormSubmit && { 'on-submit': handleFormSubmit }),
+          }"
         />
       </BtcCrud>
     </template>
@@ -127,7 +125,7 @@ import BtcFlex1 from '@btc-crud/flex1/index.vue';
 import BtcSearchKey from '@btc-crud/search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import BtcCrudActions from '@btc-crud/actions/index.vue';
-import { useContentHeight } from '@btc/shared-components/composables/content-height';
+import { useContentHeight } from '../../../composables/content-height';
 import type { TableGroupProps, TableGroupEmits, TableGroupExpose } from './types';
 
 defineOptions({
@@ -182,7 +180,7 @@ defineSlots<{
 const emit = defineEmits<TableGroupEmits>();
 
 // 国际化
-const { t } = useI18n();
+// const { t } = useI18n(); // 未使用
 
 // 组件引用
 const viewGroupRef = ref<any>(null);
@@ -203,6 +201,35 @@ const scheduleContentResize = () => {
 };
 
 const disableAutoCreatedAt = computed(() => !props.showCreateTime);
+
+// BtcViewGroup 的绑定属性
+const viewGroupBindProps = computed(() => {
+  const bindProps: Record<string, any> = {};
+  
+  if (props.leftSize) {
+    bindProps['left-size'] = props.leftSize;
+  }
+  if (props.leftWidth !== undefined) {
+    bindProps['left-width'] = props.leftWidth;
+  }
+  if (props.rightOpFieldsValue !== undefined) {
+    bindProps['right-op-fields-value'] = props.rightOpFieldsValue;
+  }
+  if (props.op) {
+    bindProps.op = props.op;
+  }
+  if (props.idField !== undefined) {
+    bindProps['id-field'] = props.idField;
+  }
+  if (props.labelField !== undefined) {
+    bindProps['label-field'] = props.labelField;
+  }
+  if (props.parentField !== undefined) {
+    bindProps['parent-field'] = props.parentField;
+  }
+  
+  return bindProps;
+});
 
 // 左侧列表数据（用于表单中的级联选择）
 const leftListData = ref<any[]>([]);

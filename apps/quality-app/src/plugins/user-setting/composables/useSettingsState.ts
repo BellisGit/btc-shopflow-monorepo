@@ -8,9 +8,8 @@ import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { storage } from '@btc/shared-utils';
-// @ts-expect-error - 类型声明文件可能未构建，但运行时可用
-import { registerEChartsThemes } from '@btc/shared-components/charts/utils/theme';
+// import { storage } from '@btc/shared-utils'; // 未使用
+import { registerEChartsThemes } from '@btc/shared-components';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -319,11 +318,7 @@ function createSettingsState() {
 
     // 同步更新设置状态（如果存在）
     try {
-      const SystemThemeEnum = {
-        LIGHT: 'light',
-        DARK: 'dark',
-        AUTO: 'auto',
-      };
+      // 局部变量已移除，使用导入的 SystemThemeEnum
       appStorage.settings.setItem('systemThemeType', theme);
       appStorage.settings.setItem('systemThemeMode', theme);
     } catch (e) {

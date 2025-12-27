@@ -9,7 +9,7 @@ import { setupQiankun, listenSubAppReady, listenSubAppRouteChange } from '../../
 /**
  * 设置微前端应用
  */
-export const setupMicroApps = async (app: App) => {
+export const setupMicroApps = async (_app: App) => {
   // 设置qiankun
   setupQiankun();
 

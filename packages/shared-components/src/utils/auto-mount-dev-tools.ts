@@ -21,6 +21,7 @@ function getCookie(name: string): string | null {
 
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
+    if (!c) continue;
     while (c.charAt(0) === ' ') {
       c = c.substring(1, c.length);
     }
@@ -179,7 +180,7 @@ function checkAppMounted() {
   ];
 
   // 如果任何一个容器有内容，说明应用已挂载
-  for (const { selector, element } of containers) {
+  for (const { element } of containers) {
     if (element && element.children.length > 0) {
       return true;
     }
@@ -221,7 +222,7 @@ export function setupAutoMountDevTools() {
   const appMounted = checkAppMounted();
 
   if (appMounted) {
-    mountDevToolsOnce().catch((err) => {
+    mountDevToolsOnce().catch(() => {
       // 立即挂载失败
     });
     return;

@@ -63,9 +63,9 @@ class AppStorageManager {
   /**
    * 初始化存储管理器
    */
-  init(version?: string) {
-    if (version) {
-      this.version = version;
+  init(_version?: string) {
+    if (_version) {
+      this.version = _version;
     }
     // 不再执行迁移逻辑，从源头禁止创建独立键
   }
@@ -243,10 +243,10 @@ class AppStorageManager {
       /**
        * 设置 token
        */
-      setToken(token: string): void {
+      setToken(_token: string): void {
         const oldToken = this.getToken();
-        localStorage.setItem(APP_STORAGE_KEYS.TOKEN, token);
-        self.notifyListeners(APP_STORAGE_KEYS.TOKEN, token, oldToken);
+        localStorage.setItem(APP_STORAGE_KEYS.TOKEN, _token);
+        self.notifyListeners(APP_STORAGE_KEYS.TOKEN, _token, oldToken);
       },
 
       /**

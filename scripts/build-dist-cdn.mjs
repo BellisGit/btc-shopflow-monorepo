@@ -40,11 +40,14 @@ if (isAll) {
 // 设置环境变量
 const env = {
   ...process.env,
+  ENABLE_CDN_ACCELERATION: 'true',
   ENABLE_CDN_UPLOAD: 'true',
+  BUILD_OUT_DIR: 'dist-cdn',
 };
 
 console.log('🚀 开始构建并上传到 CDN...');
-console.log(`   环境变量: ENABLE_CDN_UPLOAD=true`);
+console.log(`   环境变量: ENABLE_CDN_ACCELERATION=true, ENABLE_CDN_UPLOAD=true, BUILD_OUT_DIR=dist-cdn`);
+console.log(`   输出目录: dist-cdn`);
 if (isAll) {
   console.log(`   目标: 所有应用`);
 } else {

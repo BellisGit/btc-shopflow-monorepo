@@ -66,7 +66,7 @@ async function injectAppConfigFromManifest(appId: string) {
       { getManifest }
     ] = await Promise.all([
       import('@configs/layout-bridge'),
-      import('@btc/shared-components/store/menuRegistry'),
+      import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
     let registry = getMenuRegistry();

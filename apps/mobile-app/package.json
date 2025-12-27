@@ -13,9 +13,9 @@
     "clean:cache": "powershell -ExecutionPolicy Bypass -File ./clear-vite-cache.ps1"
   },
   "dependencies": {
-    "@btc/shared-components": "^1.0.0",
-    "@btc/shared-core": "^1.0.0",
-    "@btc/shared-utils": "^1.0.0",
+    "@btc/shared-components": "workspace:*",
+    "@btc/shared-core": "workspace:*",
+    "@btc/shared-utils": "workspace:*",
     "@capacitor/core": "^6.0.0",
     "@vueuse/core": "^13.9.0",
     "axios": "^1.12.2",
@@ -28,7 +28,7 @@
     "workbox-window": "^7.1.0"
   },
   "devDependencies": {
-    "@btc/vite-plugin": "^1.0.0",
+    "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-vue": "^5.0.0",

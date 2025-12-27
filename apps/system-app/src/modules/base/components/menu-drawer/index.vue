@@ -122,7 +122,7 @@ import { useI18n } from '@btc/shared-core';
 import { BtcSvg } from '@btc/shared-components';
 import { service } from '@/services/eps';
 import { getDomainList } from '@/utils/domain-cache';
-import { getAppConfig } from '@configs/app-env.config';
+import { getAppConfig, getAllDevPorts, getAllPrePorts } from '@configs/app-env.config';
 import { getActiveApp } from '@/store/tabRegistry';
 
 interface MicroApp {
@@ -161,6 +161,38 @@ const detectCurrentApp = () => {
   // 使用统一的 getActiveApp 函数，确保子域名检测逻辑一致
   const path = window.location.pathname;
   currentApp.value = getActiveApp(path);
+};
+
+/**
+ * 环境类型
+ */
+type EnvironmentType = 'development' | 'preview' | 'production';
+
+/**
+ * 检测当前环境类型
+ */
+const getEnvironmentType = (): EnvironmentType => {
+  if (typeof window === 'undefined') {
+    return import.meta.env.PROD ? 'production' : 'development';
+  }
+
+  const port = window.location.port || '';
+  const previewPorts = getAllPrePorts();
+  const devPorts = getAllDevPorts();
+
+  if (previewPorts.includes(port)) {
+    return 'preview';
+  }
+
+  if (devPorts.includes(port)) {
+    return 'development';
+  }
+
+  if (import.meta.env.PROD) {
+    return 'production';
+  }
+
+  return 'development';
 };
 
 onMounted(() => {
@@ -410,11 +442,13 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 关闭抽屉
+  // 立即关闭抽屉
   handleClose();
 
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = window.location.hostname.includes('bellis.com.cn');
+
+  let targetUrl: string;
 
   // 生产环境：使用子域名跳转
   if (isProduction) {
@@ -423,49 +457,51 @@ const handleSwitchApp = async (app: MicroApp) => {
       // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
       // 这里先使用路径方式，如果需要可以后续配置
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-      await router.push(targetPath);
-      await nextTick();
-      detectCurrentApp();
-      return;
-    }
-
-    // 根据应用名称获取生产环境域名配置
-    // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
-    const appNameMapping: Record<string, string> = {
-      'system': 'system-app',
-      'admin': 'admin-app',
-      'logistics': 'logistics-app',
-      'engineering': 'engineering-app',
-      'quality': 'quality-app',
-      'production': 'production-app',
-      'finance': 'finance-app',
-      'mobile': 'mobile-app',
-      'docs': 'docs-app', // 文档应用可能没有配置，但先加上
-    };
-    const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
-    const appConfig = getAppConfig(mappedAppName);
-    if (appConfig && appConfig.prodHost) {
-      // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
       const protocol = window.location.protocol;
-      const targetUrl = `${protocol}//${appConfig.prodHost}/`;
-
-      // 使用 window.location.href 跳转到子域名
-      window.location.href = targetUrl;
-      return;
+      const hostname = window.location.hostname;
+      targetUrl = `${protocol}//${hostname}${targetPath}`;
     } else {
-      console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+      // 根据应用名称获取生产环境域名配置
+      // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
+      const appNameMapping: Record<string, string> = {
+        'system': 'system-app',
+        'admin': 'admin-app',
+        'logistics': 'logistics-app',
+        'engineering': 'engineering-app',
+        'quality': 'quality-app',
+        'production': 'production-app',
+        'finance': 'finance-app',
+        'mobile': 'mobile-app',
+        'docs': 'docs-app', // 文档应用可能没有配置，但先加上
+      };
+      const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
+      const appConfig = getAppConfig(mappedAppName);
+      if (appConfig && appConfig.prodHost) {
+        // 构建完整的 URL，直接跳转到子域名的根路径，不拼接任何后缀
+        const protocol = window.location.protocol;
+        targetUrl = `${protocol}//${appConfig.prodHost}/`;
+      } else {
+        console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
+        const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        targetUrl = `${protocol}//${hostname}${targetPath}`;
+      }
     }
+  } else {
+    // 开发/预览环境：基于主应用 URL 拼接路径
+    const envType = getEnvironmentType();
+    const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+    
+    // 开发环境和预览环境都使用当前主应用的 URL + 路径前缀
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    targetUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`;
   }
 
-  // 开发/预览环境：使用路径方式切换（原有逻辑）
-  // 确保使用绝对路径
-  const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-
-  // 使用主应用的 router.push，Qiankun 会自动卸载当前子应用并加载目标子应用
-  // 使用 nextTick 确保路由切换完成，容器准备好后再继续
-  await router.push(targetPath);
-  await nextTick();
-  detectCurrentApp();
+  // 使用 window.open 在新标签页打开
+  window.open(targetUrl, '_blank');
 };
 
 const handleClose = () => {

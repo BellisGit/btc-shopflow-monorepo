@@ -83,7 +83,8 @@ const proxy: Record<string, string | ProxyOptions> = {
               // 检测是否是 localhost（开发服务器）还是 IP 地址（预览服务器）
               const host = req.headers.host || '';
               const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-              const isIpAddress = /^\d+\.\d+\.\d+\.\d+/.test(host.split(':')[0]);
+              const hostPart = host.split(':')[0];
+              const isIpAddress = hostPart ? /^\d+\.\d+\.\d+\.\d+/.test(hostPart) : false;
 
               // 检测是否是生产环境（bellis.com.cn 域名）
               const isProduction = host.includes('bellis.com.cn');
@@ -213,6 +214,13 @@ const proxy: Record<string, string | ProxyOptions> = {
         }
       });
     },
+  },
+  // 代理 home-app 到开发服务器（Vue SPA）
+  '/home': {
+    target: 'http://10.80.8.199:8095',
+    changeOrigin: true,
+    secure: false,
+    rewrite: (path: string) => path.replace(/^\/home/, ''),
   },
 };
 

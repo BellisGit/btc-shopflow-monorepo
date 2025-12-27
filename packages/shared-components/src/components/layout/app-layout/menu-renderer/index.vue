@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { defineComponent } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import type { MenuItem } from '@btc/shared-components/store/menuRegistry';
+import type { MenuItem } from '../../../../store/menuRegistry';
 import { BtcSvg } from '@btc/shared-components';
 import {
   Lock,

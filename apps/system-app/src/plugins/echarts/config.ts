@@ -1,7 +1,7 @@
 import { type App } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
-import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
+import { registerEChartsThemes } from '@btc/shared-components';
 
 // 导入 ECharts 核心模块
 import {

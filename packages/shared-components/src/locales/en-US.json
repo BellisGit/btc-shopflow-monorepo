@@ -510,6 +510,7 @@
   "auth.message.sms_code_sent": "Verification code sent",
   "auth.message.sms_code_send_failed": "Failed to send verification code",
   "auth.message.agreement_required": "Please agree to the user agreement first",
+  "auth.message.agreement_auto_checked": "Please check the agreement first, it has been automatically checked for you, please click login again",
   "auth.message.phone_required_for_sms": "Please enter phone number",
   "auth.message.phone_format_error": "Please enter a valid phone number",
   "notice.title": "Notifications",

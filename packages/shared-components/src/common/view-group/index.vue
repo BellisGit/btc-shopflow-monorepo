@@ -65,10 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, inject, useSlots, nextTick, provide } from 'vue';
+import { ref, computed, watch, useSlots, nextTick, provide } from 'vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
-import type { ViewGroupOptions } from './types';
 import { useViewGroupData, useViewGroupActions } from './composables';
 import { useI18n } from '@btc/shared-core';
 import { useContentHeight } from '../../composables/content-height';
@@ -81,13 +80,13 @@ defineOptions({
   }
 });
 
-// Helper function
-function isEmpty(value: any): boolean {
-  if (value == null) return true;
-  if (Array.isArray(value) || typeof value === 'string') return value.length === 0;
-  if (typeof value === 'object') return Object.keys(value).length === 0;
-  return false;
-}
+// Helper function (currently unused, but may be needed in the future)
+// function isEmpty(value: any): boolean {
+//   if (value == null) return true;
+//   if (Array.isArray(value) || typeof value === 'string') return value.length === 0;
+//   if (typeof value === 'object') return Object.keys(value).length === 0;
+//   return false;
+// }
 
 const props = withDefaults(defineProps<{
   leftService?: any; // 左侧服务（可选）
@@ -134,7 +133,7 @@ defineSlots<{
 // 国际化
 const { t } = useI18n();
 
-const slots = useSlots();
+// const slots = useSlots(); // 未使用
 
 // 响应式数据
 const selectedItem = ref<any>(null);
@@ -166,7 +165,7 @@ const viewGroupStyle = computed(() => {
   };
 });
 
-const { height: contentHeight, emit: emitContentResize } = useContentHeight();
+const { emit: emitContentResize } = useContentHeight();
 
 const scheduleContentResize = () => {
   nextTick(() => {
@@ -245,10 +244,10 @@ function handleLeftLoad(data: any[]) {
   scheduleContentResize();
 }
 
-// 处理左侧加载完成
-function handleLeftLoadComplete(_data: any[]) {
-  // 左侧数据加载完成，不需要额外处理
-}
+// 处理左侧加载完成（当前未使用）
+// function handleLeftLoadComplete(_data: any[]) {
+//   // 左侧数据加载完成，不需要额外处理
+// }
 
 // 收起、展开
 function expand(value?: boolean) {

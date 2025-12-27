@@ -34,11 +34,17 @@ export { useSmsCode } from './composables/use-sms-code';
 export { usePluginManager } from './btc/plugins/manager';
 export { useBtcForm } from './composables/useBtcForm';
 export { useTabs, useAction, useElApi, usePlugins } from './composables/form-helpers';
+export { useContentMount } from './composables/useContentMount';
+export type { ContentMountType, ContentMountState } from './composables/useContentMount';
+export { startUserCheckPolling, stopUserCheckPolling, getUserCheckData, startUserCheckPollingIfLoggedIn } from './composables/user-check';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
 export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
 export type { EpsServiceData } from './eps';
+export { initResourceLoader, loadResource, getResourceLoaderConfig, clearResourceLoaderCache, setupImageFallback, getCssUrlFallback } from './btc/utils/resource-loader';
+export type { ResourceLoaderOptions } from './btc/utils/resource-loader';
+export { initDynamicImportInterceptor, loadModule, clearModuleCache, getModuleCacheInfo } from './btc/utils/dynamic-import-interceptor';
 
 // ========== 其他导出（使用 export *，但关键导出已在上方显式声明）==========
 export * from './btc';
@@ -59,6 +65,8 @@ export * from './composables/form-helpers';
 export * from './composables/use-sms-code';
 export * from './composables/use-email-code';
 export * from './composables/useCountdown';
+export * from './composables/user-check';
+export * from './composables/useContentMount';
 export * from './types/common';
 export * from './types/crud';
 export * from './utils/menu-icon-assigner';

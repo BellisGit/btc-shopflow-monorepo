@@ -342,8 +342,6 @@
 	// 	}
 	// }
 	
-	// 响应式设计 - 移动端调整边距
-	@media (max-width: 768px) {
-		padding: 20px; // 移动端：统一 20px 边距
-	}
+	// 响应式样式已移至 _responsive.scss，使用全局布局类系统
+	// 移动端边距由 .col-mobile 处理
 }

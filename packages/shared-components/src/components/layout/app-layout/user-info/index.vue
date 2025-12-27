@@ -75,9 +75,9 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 // useMessage 不再需要，直接使用 BtcMessage
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { useUser } from '@btc/shared-components/composables/useUser';
+import { useSettingsState } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
+import { useUser } from '../../../../composables/useUser';
 
 // 通过全局函数获取应用特定的依赖
 declare global {

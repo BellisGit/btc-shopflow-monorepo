@@ -82,9 +82,9 @@ defineOptions({
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter, type RouteLocationNormalized, type NavigationGuardNext } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
-import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { useSettingsState } from '../../../others/btc-user-setting/composables';
+import { useCurrentApp } from '../../../../composables/useCurrentApp';
+import { getMenusForApp } from '../../../../store/menuRegistry';
 import { Expand, Fold } from '@element-plus/icons-vue';
 import MenuRenderer from '../menu-renderer/index.vue';
 import {

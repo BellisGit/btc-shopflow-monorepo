@@ -30,8 +30,8 @@ defineOptions({
 import DynamicMenu from '../dynamic-menu/index.vue';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
+import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
 
 const { t } = useI18n();
 const { menuThemeType, isDark } = useSettingsState();

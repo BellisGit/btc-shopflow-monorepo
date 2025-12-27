@@ -49,7 +49,7 @@ async function buildAndPreview(apps) {
     await runCommand('run', ['build', ...filterArgs], '构建应用');
     
     // 步骤 2: 预览
-    await runCommand('run', ['preview', ...filterArgs, '--concurrency=20'], '启动预览服务器');
+    await runCommand('run', ['preview', ...filterArgs, '--concurrency=25'], '启动预览服务器');
     
     console.log('\n✅ 构建预览完成！');
   } catch (error) {

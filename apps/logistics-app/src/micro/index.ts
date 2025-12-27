@@ -143,6 +143,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
     const item1 = menus1[i];
     const item2 = menus2[i];
 
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
+
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||
         item1.icon !== item2.icon) {
@@ -490,7 +495,7 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch && appMatch[1] ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
     }

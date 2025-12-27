@@ -4,7 +4,7 @@ import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie, deleteCookie } from './cookie';
+import { getCookie } from './cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -394,7 +394,7 @@ export class Http {
 
 
     try {
-      const result = interceptor.onFulfilled(mockResponse);
+      // const result = interceptor.onFulfilled(mockResponse); // 未使用
     } catch (error) {
       console.error('Interceptor error:', error);
     }

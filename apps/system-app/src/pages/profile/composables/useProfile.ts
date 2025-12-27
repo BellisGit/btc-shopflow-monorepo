@@ -32,6 +32,13 @@ export function useProfile() {
       };
     }
 
+    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+    const user = appStorage.user.get();
+    if (!user) {
+      BtcMessage.warning('请先登录');
+      return;
+    }
+
     loading.value = true;
     try {
       // 根据 prefix: admin/base/profile，服务路径应该是 admin.base.profile

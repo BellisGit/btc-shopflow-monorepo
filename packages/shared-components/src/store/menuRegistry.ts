@@ -195,6 +195,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
     const item1 = menus1[i];
     const item2 = menus2[i];
 
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
+
     // 比较所有字段
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||

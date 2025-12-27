@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { ProcessManagementItem } from '@btc/shared-components';
@@ -64,16 +64,17 @@ const mapToProcessItem = (item: CheckBaseItem, statusValue?: string): ProcessMan
   const actualStartTime = hasActualStart ? scheduledStartTime : undefined;
   const actualEndTime = hasActualEnd ? scheduledEndTime : undefined;
 
-  return {
+  const result: ProcessManagementItem = {
     id: String(item.id || ''),
     name: item.remark || item.checkNo || `盘点-${item.id}`, // 优先使用 remark 作为流程标题
     status,
-    scheduledStartTime,
-    scheduledEndTime,
-    actualStartTime,
-    actualEndTime,
-    description: item.remark,
+    ...(scheduledStartTime !== undefined && { scheduledStartTime }),
+    ...(scheduledEndTime !== undefined && { scheduledEndTime }),
+    ...(actualStartTime !== undefined && { actualStartTime }),
+    ...(actualEndTime !== undefined && { actualEndTime }),
+    ...(item.remark !== undefined && { description: item.remark }),
   };
+  return result;
 };
 
 export function useInventoryProcess() {
@@ -217,11 +218,13 @@ export function useInventoryProcess() {
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           const currentProcess = processes.value[index];
+          if (!currentProcess) return;
           // 更新状态和实际开始时间
+          const scheduledStartTime = currentProcess.scheduledStartTime;
           processes.value[index] = {
             ...currentProcess,
             status: mappedStatus,
-            actualStartTime: currentProcess.scheduledStartTime, // 使用计划开始时间作为实际开始时间
+            ...(scheduledStartTime !== undefined && { actualStartTime: scheduledStartTime }), // 使用计划开始时间作为实际开始时间
           };
         }
       }
@@ -254,10 +257,13 @@ export function useInventoryProcess() {
         const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
-          processes.value[index] = {
-            ...processes.value[index],
-            status: mappedStatus,
-          };
+          const currentProcess = processes.value[index];
+          if (currentProcess) {
+            processes.value[index] = {
+              ...currentProcess,
+              status: mappedStatus,
+            };
+          }
         }
       }
 
@@ -289,10 +295,13 @@ export function useInventoryProcess() {
         const index = processes.value.findIndex((p: ProcessManagementItem) => p.id === process.id);
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
-          processes.value[index] = {
-            ...processes.value[index],
-            status: mappedStatus,
-          };
+          const currentProcess = processes.value[index];
+          if (currentProcess) {
+            processes.value[index] = {
+              ...currentProcess,
+              status: mappedStatus,
+            };
+          }
         }
       }
 
@@ -330,11 +339,13 @@ export function useInventoryProcess() {
         if (index !== -1) {
           const mappedStatus = mapCheckStatus(newStatus);
           const currentProcess = processes.value[index];
+          if (!currentProcess) return;
           // 更新状态和实际结束时间
+          const scheduledEndTime = currentProcess.scheduledEndTime;
           processes.value[index] = {
             ...currentProcess,
             status: mappedStatus,
-            actualEndTime: currentProcess.scheduledEndTime, // 使用计划结束时间作为实际结束时间
+            ...(scheduledEndTime !== undefined && { actualEndTime: scheduledEndTime }), // 使用计划结束时间作为实际结束时间
           };
         }
       }

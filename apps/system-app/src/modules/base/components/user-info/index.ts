@@ -117,9 +117,28 @@ export function useUserInfo() {
     };
   });
 
+  // 全局请求锁，避免多个组件同时调用 info 接口
+  let profileInfoRequest: Promise<any> | null = null;
+  let profileInfoCache: { data: any; timestamp: number } | null = null;
+  const PROFILE_INFO_CACHE_DURATION = 5 * 1000; // 缓存5秒
+
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
+      // 关键：如果当前在登录页面，不调用 info 接口
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/login' || currentPath.startsWith('/login?')) {
+          return;
+        }
+      }
+
+      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+      const user = appStorage.user.get();
+      if (!user) {
+        return;
+      }
+
       const profileService = service.admin?.base?.profile;
       if (!profileService) {
         return;
@@ -144,33 +163,75 @@ export function useUserInfo() {
         }
       }
 
-      // 获取脱敏信息（用于显示头像和基本信息）
-      const data = await profileService.info();
-      if (data) {
-        profileUserInfo.value = data;
-
-        // 更新统一存储（头像和用户名）
-        if (data.avatar) {
-          appStorage.user.setAvatar(data.avatar);
+      // 检查缓存是否有效
+      const now = Date.now();
+      if (profileInfoCache && (now - profileInfoCache.timestamp) < PROFILE_INFO_CACHE_DURATION) {
+        // 使用缓存数据
+        if (profileInfoCache.data) {
+          profileUserInfo.value = profileInfoCache.data;
+          // 更新显示名称
+          displayedName.value = profileInfoCache.data.name || profileInfoCache.data.realName || '';
+          // 更新存储
+          if (profileInfoCache.data.avatar) {
+            appStorage.user.setAvatar(profileInfoCache.data.avatar);
+          }
+          if (profileInfoCache.data.name) {
+            appStorage.user.setName(profileInfoCache.data.name);
+          }
         }
-        if (data.name) {
-          appStorage.user.setName(data.name);
-        }
-
-        // 同时更新 useUser 中的信息，保持一致性
-        const currentUser = getUserInfo();
-        if (currentUser) {
-          setUserInfo({
-            ...currentUser,
-            name: data.name || currentUser.name,
-            position: data.position || currentUser.position,
-            avatar: data.avatar || currentUser.avatar,
-          });
-        }
-
-        // 初始化显示名称
-        displayedName.value = data.name || data.realName || '';
+        return;
       }
+
+      // 如果已经有请求在进行，等待该请求完成
+      if (profileInfoRequest) {
+        await profileInfoRequest;
+        return;
+      }
+
+      // 创建新请求（立即执行异步函数）
+      profileInfoRequest = (async () => {
+        try {
+          // 获取脱敏信息（用于显示头像和基本信息）
+          const data = await profileService.info();
+          if (data) {
+            profileUserInfo.value = data;
+
+            // 更新统一存储（头像和用户名）
+            if (data.avatar) {
+              appStorage.user.setAvatar(data.avatar);
+            }
+            if (data.name) {
+              appStorage.user.setName(data.name);
+            }
+
+            // 同时更新 useUser 中的信息，保持一致性
+            const currentUser = getUserInfo();
+            if (currentUser) {
+              setUserInfo({
+                ...currentUser,
+                name: data.name || currentUser.name,
+                position: data.position || currentUser.position,
+                avatar: data.avatar || currentUser.avatar,
+              });
+            }
+
+            // 初始化显示名称
+            displayedName.value = data.name || data.realName || '';
+
+            // 更新缓存
+            profileInfoCache = {
+              data,
+              timestamp: Date.now(),
+            };
+          }
+        } catch (error) {
+          // 静默失败，不影响页面显示
+          console.warn('加载用户信息失败:', error);
+        } finally {
+          // 清除请求锁
+          profileInfoRequest = null;
+        }
+      })();
     } catch (error) {
       // 静默失败，不影响页面显示
       console.warn('加载用户信息失败:', error);
@@ -248,4 +309,3 @@ export function useUserInfo() {
     handleNameLeave
   };
 }
-

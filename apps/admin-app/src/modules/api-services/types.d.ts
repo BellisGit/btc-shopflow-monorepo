@@ -24,9 +24,9 @@ export interface CaptchaResponse {
     data: string;
 }
 /**
- * 健康检查响应类型
+ * 用户检查响应类型
  */
-export interface HealthCheckResponse {
+export interface UserCheckResponse {
     status: string;
     timestamp?: number;
     [key: string]: any;

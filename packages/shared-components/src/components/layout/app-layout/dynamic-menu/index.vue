@@ -29,10 +29,10 @@ defineOptions({
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
-import { getMenuRegistry } from '@btc/shared-components/store/menuRegistry';
+import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
+import { useCurrentApp } from '../../../../composables/useCurrentApp';
+import { getMenuRegistry } from '../../../../store/menuRegistry';
 import MenuRenderer from '../menu-renderer/index.vue';
 
 interface Props {
@@ -72,8 +72,8 @@ const getInitialActiveMenu = () => {
 
 const normalizeActivePath = (value: string) => {
   const raw = (value || '/').trim();
-  const noHash = raw.split('#')[0];
-  const noQuery = noHash.split('?')[0];
+  const noHash = raw.split('#')[0] ?? raw;
+  const noQuery = noHash.split('?')[0] ?? noHash;
   const ensured = noQuery.startsWith('/') ? noQuery : `/${noQuery}`;
   return ensured === '' ? '/' : ensured;
 };
@@ -385,6 +385,7 @@ const defaultOpeneds = computed(() => {
   // 关键：无搜索时，默认展开当前激活菜单的父级（解决刷新后菜单立刻收起/激活丢失的问题）
   const resolveOpenedsByActive = (items: any[], activePath: string): string[] => {
     const normalizedActive = normalizeActivePath(activePath || '/');
+    if (!normalizedActive) return [];
     const parents: string[] = [];
 
     const dfs = (nodes: any[], parentIndexes: string[]): boolean => {
@@ -685,6 +686,7 @@ onMounted(() => {
       // 从子应用的路由路径中提取子应用内部路径
       // path 可能是完整路径（如 /finance/inventory/result）或子应用内部路径（如 /inventory/result）
       let subAppPath = normalizeActivePath(path);
+      if (!subAppPath) return;
 
       // 如果路径包含应用前缀，去掉前缀
       const app = currentApp.value;
@@ -692,6 +694,7 @@ onMounted(() => {
         subAppPath = subAppPath.slice(`/${app}`.length) || '/';
       }
       subAppPath = normalizeActivePath(subAppPath);
+      if (!subAppPath) return;
 
       // 更新菜单激活状态
       activeMenu.value = subAppPath;
@@ -722,6 +725,7 @@ onMounted(() => {
 
       // 优先从 window.location 获取路径（更准确，不受路由初始化时机影响）
       const locationPath = normalizeActivePath(window.location.pathname);
+      if (!locationPath) return;
       let subAppPath = locationPath;
 
       // 检查是否在子域名环境下（生产环境）
@@ -753,11 +757,14 @@ onMounted(() => {
       }
 
       // 确保路径以 / 开头
-      if (!subAppPath.startsWith('/')) {
-        subAppPath = `/${subAppPath}`;
+      if (!subAppPath || !subAppPath.startsWith('/')) {
+        subAppPath = subAppPath ? `/${subAppPath}` : '/';
       }
 
-      updateActiveMenu(normalizeActivePath(subAppPath));
+      const normalizedPath = normalizeActivePath(subAppPath);
+      if (normalizedPath) {
+        updateActiveMenu(normalizedPath);
+      }
     };
 
     // 立即初始化一次（处理刷新浏览器的情况）

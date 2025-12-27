@@ -5,10 +5,12 @@
         <BtcMasterList
           ref="primaryListRef"
           :service="primaryService"
-          :title="primaryTitle"
-          :show-unassigned="showPrimaryUnassigned"
-          :unassigned-label="primaryUnassignedLabel"
-          :enable-key-search="enablePrimarySearch"
+          v-bind="{
+            ...(primaryTitle !== undefined && { title: primaryTitle }),
+            ...(showPrimaryUnassigned !== undefined && { 'show-unassigned': showPrimaryUnassigned }),
+            ...(primaryUnassignedLabel !== undefined && { 'unassigned-label': primaryUnassignedLabel }),
+            ...(enablePrimarySearch !== undefined && { 'enable-key-search': enablePrimarySearch }),
+          }"
           :drag="false"
           hide-expand-icon
           @select="handlePrimarySelect"
@@ -19,10 +21,12 @@
         <BtcMasterList
           ref="secondaryListRef"
           :service="secondaryServiceProxy"
-          :title="secondaryTitle"
-          :show-unassigned="showSecondaryUnassigned"
-          :unassigned-label="secondaryUnassignedLabel"
-          :enable-key-search="enableSecondarySearch"
+          v-bind="{
+            ...(secondaryTitle !== undefined && { title: secondaryTitle }),
+            ...(showSecondaryUnassigned !== undefined && { 'show-unassigned': showSecondaryUnassigned }),
+            ...(secondaryUnassignedLabel !== undefined && { 'unassigned-label': secondaryUnassignedLabel }),
+            ...(enableSecondarySearch !== undefined && { 'enable-key-search': enableSecondarySearch }),
+          }"
           :drag="false"
           hide-expand-icon
           @select="handleSecondarySelect"
@@ -70,7 +74,7 @@
             </slot>
           </div>
           <BtcFlex1 />
-          <BtcSearchKey v-if="showSearchKey" :placeholder="searchPlaceholder" />
+          <BtcSearchKey v-if="showSearchKey" v-bind="searchPlaceholder !== undefined ? { placeholder: searchPlaceholder } : {}" />
           <BtcCrudActions v-if="showToolbar" :show-toolbar="op !== undefined">
             <template #default>
               <slot
@@ -88,7 +92,7 @@
         <BtcRow>
           <BtcTable
             :columns="tableColumns"
-            :op="op"
+            v-bind="op !== undefined ? { op } : {}"
             :disable-auto-created-at="disableAutoCreatedAt"
             border
           />
@@ -101,7 +105,7 @@
 
         <BtcUpsert
           :items="computedFormItems"
-          :width="upsertWidth"
+          v-bind="upsertWidth !== undefined ? { width: upsertWidth } : {}"
           :on-submit="handleFormSubmit"
         />
       </BtcCrud>
@@ -113,7 +117,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
 import { globalMitt } from '@btc/shared-components';
-import { useContentHeight } from '@btc/shared-components/composables/content-height';
+import { useContentHeight } from '../../../composables/content-height';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';

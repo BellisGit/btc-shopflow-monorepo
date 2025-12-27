@@ -82,6 +82,7 @@ function getCookie(name: string): string | null {
 
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
+    if (!c) continue;
     while (c.charAt(0) === ' ') {
       c = c.substring(1, c.length);
     }
@@ -100,6 +101,14 @@ const isDev = import.meta.env.DEV;
 // 从个人信息接口获取用户信息，而不是从 cookie
 async function checkAllowedUser(): Promise<boolean> {
   try {
+    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+    const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+    const user = appStorage?.user?.get?.();
+    if (!user) {
+      // 没有用户信息，直接返回 false，不调用接口
+      return false;
+    }
+
     // 尝试从接口获取用户信息
     const service = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
     if (!service?.admin?.base?.profile?.info) {
@@ -199,24 +208,24 @@ onMounted(async () => {
             const toggleInRemoved = element.classList?.contains('dev-tools__toggle') ||
                                    !!element.querySelector('.dev-tools__toggle');
             if (toggleInRemoved) {
-              // 获取被移除节点的详细信息
-              const removedNodeInfo = {
-                tagName: element.tagName,
-                className: element.className,
-                id: element.id,
-                dataset: element.dataset,
-                outerHTML: element.outerHTML?.substring(0, 200), // 限制长度
-              };
+              // 获取被移除节点的详细信息（用于调试，但当前未使用）
+              // const removedNodeInfo = {
+              //   tagName: element.tagName,
+              //   className: element.className,
+              //   id: element.id,
+              //   dataset: element.dataset,
+              //   outerHTML: element.outerHTML?.substring(0, 200), // 限制长度
+              // };
 
-              // 获取父节点的信息
-              const parentInfo = mutation.target ? {
-                tagName: (mutation.target as HTMLElement).tagName,
-                className: (mutation.target as HTMLElement).className,
-                id: (mutation.target as HTMLElement).id,
-              } : null;
+              // 获取父节点的信息（用于调试，但当前未使用）
+              // const parentInfo = mutation.target ? {
+              //   tagName: (mutation.target as HTMLElement).tagName,
+              //   className: (mutation.target as HTMLElement).className,
+              //   id: (mutation.target as HTMLElement).id,
+              // } : null;
 
-              // 检查是否有 Vue 的标记
-              const vueInstance = (element as any).__vueParentComponent;
+              // 检查是否有 Vue 的标记（用于调试，但当前未使用）
+              // const vueInstance = (element as any).__vueParentComponent;
             }
           }
         });
@@ -416,7 +425,7 @@ function toggle() {
 // 点击外部区域自动关闭面板
 // 注意：切换按钮现在在面板内部，所以不需要 ignore
 onClickOutside(
-  panelRef,
+  panelRef as any,
   () => {
     if (visible.value) {
       visible.value = false;

@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, nextTick } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { resetPluginManager, usePluginManager } from '../../btc/plugins/manager';
@@ -153,6 +153,133 @@ export async function createSubApp(
 }
 
 /**
+ * 等待容器元素就绪（支持字符串选择器或 HTMLElement）
+ */
+async function waitForContainer(
+  container: HTMLElement | string | null | undefined,
+  maxRetries: number = 40,
+  retryDelay: number = 50,
+  parentElement?: HTMLElement
+): Promise<HTMLElement | null> {
+  // 如果已经是 HTMLElement 且已连接，检查可见性并返回
+  if (container && container instanceof HTMLElement && container.isConnected) {
+    // 确保容器可见
+    const computedStyle = window.getComputedStyle(container);
+    if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+      container.style.setProperty('display', 'flex', 'important');
+      container.style.setProperty('flex-direction', 'column', 'important');
+      container.style.setProperty('visibility', 'visible', 'important');
+      container.style.setProperty('opacity', '1', 'important');
+    }
+    return container;
+  }
+
+  // 如果是字符串选择器，尝试查找
+  if (typeof container === 'string') {
+    // 如果指定了父元素，在父元素内查找
+    const element = parentElement 
+      ? (parentElement.querySelector(container) as HTMLElement)
+      : (document.querySelector(container) as HTMLElement);
+    if (element && element.isConnected) {
+      // 确保容器可见
+      const computedStyle = window.getComputedStyle(element);
+      if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+        element.style.setProperty('display', 'flex', 'important');
+        element.style.setProperty('flex-direction', 'column', 'important');
+        element.style.setProperty('visibility', 'visible', 'important');
+        element.style.setProperty('opacity', '1', 'important');
+      }
+      return element;
+    }
+  }
+
+  // 如果容器不存在或未连接，尝试等待
+  const selector = typeof container === 'string' ? container : '#subapp-viewport';
+  
+  return new Promise((resolve) => {
+    let retryCount = 0;
+    
+    const checkContainer = async () => {
+      // 如果指定了父元素，在父元素内查找
+      const element = parentElement
+        ? (parentElement.querySelector(selector) as HTMLElement)
+        : (document.querySelector(selector) as HTMLElement);
+      if (element && element.isConnected) {
+        // 关键：确保容器可见，如果被隐藏则强制显示
+        const computedStyle = window.getComputedStyle(element);
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+          // 强制显示容器（与 app-layout 的样式定义一致）
+          element.style.setProperty('display', 'flex', 'important');
+          element.style.setProperty('flex-direction', 'column', 'important');
+          element.style.setProperty('visibility', 'visible', 'important');
+          element.style.setProperty('opacity', '1', 'important');
+        }
+        
+        // 关键：如果是 #subapp-viewport，确保 layout-app 的 Vue 应用已经渲染完成
+        // 通过等待多个 requestAnimationFrame 来确保 Vue 的响应式更新完成
+        if (selector === '#subapp-viewport' || (typeof container === 'string' && container === '#subapp-viewport')) {
+          // 等待 Vue 应用完全渲染
+          await new Promise<void>((resolveRAF) => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  resolveRAF();
+                });
+              });
+            });
+          });
+          
+          // 再次检查容器是否可见（Vue 渲染后可能会改变样式）
+          const finalComputedStyle = window.getComputedStyle(element);
+          if (finalComputedStyle.display === 'none' || finalComputedStyle.visibility === 'hidden' || finalComputedStyle.opacity === '0') {
+            // 再次强制显示
+            element.style.setProperty('display', 'flex', 'important');
+            element.style.setProperty('flex-direction', 'column', 'important');
+            element.style.setProperty('visibility', 'visible', 'important');
+            element.style.setProperty('opacity', '1', 'important');
+          }
+          
+          // 生产环境下输出诊断信息
+          if (import.meta.env.PROD && typeof window !== 'undefined') {
+            const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
+            const isLayoutApp = !!(window as any).__IS_LAYOUT_APP__;
+            console.warn('[waitForContainer] 容器准备就绪', {
+              selector,
+              isUsingLayoutApp,
+              isLayoutApp,
+              display: finalComputedStyle.display,
+              visibility: finalComputedStyle.visibility,
+              opacity: finalComputedStyle.opacity,
+              hasChildren: element.children.length,
+            });
+          }
+        }
+        
+        resolve(element);
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(checkContainer, retryDelay);
+      } else {
+        // 超时后输出诊断信息
+        if (import.meta.env.PROD && typeof window !== 'undefined') {
+          console.warn('[waitForContainer] 容器查找超时', {
+            selector,
+            retryCount,
+            maxRetries,
+            isUsingLayoutApp: !!(window as any).__USE_LAYOUT_APP__,
+            isLayoutApp: !!(window as any).__IS_LAYOUT_APP__,
+            elementExists: !!document.querySelector(selector),
+          });
+        }
+        resolve(null);
+      }
+    };
+    
+    checkContainer();
+  });
+}
+
+/**
  * 挂载子应用（标准化模板）
  */
 export async function mountSubApp(
@@ -169,46 +296,172 @@ export async function mountSubApp(
   let mountPoint: HTMLElement | null = null;
 
   // 关键：优先使用 props.container（无论是 qiankun 模式还是嵌入 layout-app 模式）
-  if (props.container && props.container instanceof HTMLElement) {
-    mountPoint = props.container;
-  } else if ((window as any).__USE_LAYOUT_APP__) {
-    // 使用 layout-app：尝试查找 #subapp-viewport
-    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-    if (viewport) {
-      mountPoint = viewport;
+  // 支持 HTMLElement 或字符串选择器
+  // 重要：确保子应用挂载到 #subapp-viewport 容器下，而不是其他位置
+  if (props.container) {
+    if (props.container instanceof HTMLElement) {
+      // 关键：验证容器是否是 #subapp-viewport 元素
+      // 如果 qiankun 传递的不是 #subapp-viewport，需要查找正确的容器
+      const isSubappViewport = props.container.id === 'subapp-viewport';
+      
+      if (isSubappViewport) {
+        // 容器就是 #subapp-viewport，检查是否已连接到 DOM 且可见
+        if (props.container.isConnected) {
+          // 关键：在生产环境独立运行模式下，即使容器已连接，也要确保容器已准备好
+          // 使用 requestAnimationFrame 确保 Vue 渲染完成
+          await new Promise(resolve => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                resolve(undefined);
+              });
+            });
+          });
+          mountPoint = props.container;
+        } else {
+          // 容器存在但未连接，等待它连接
+          mountPoint = await waitForContainer(props.container, 80, 50);
+        }
+      } else {
+        // 容器不是 #subapp-viewport，可能是 qiankun 包装器
+        // 关键：在 qiankun 模式下，如果传递的是包装器，应该查找包装器内部的 #app 元素
+        if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+          // qiankun 模式：查找包装器内部的 #app 元素
+          const appElement = props.container.querySelector('#app') as HTMLElement;
+          if (appElement) {
+            mountPoint = appElement;
+          } else {
+            // 如果包装器内没有 #app，等待它出现（qiankun 可能还在加载 HTML）
+            mountPoint = await waitForContainer('#app', 80, 50, props.container);
+            if (!mountPoint) {
+              // 如果还是找不到，回退到使用传递的容器
+              if (props.container.isConnected) {
+                await new Promise(resolve => {
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                      resolve(undefined);
+                    });
+                  });
+                });
+                mountPoint = props.container;
+              } else {
+                mountPoint = await waitForContainer(props.container, 80, 50);
+              }
+            }
+          }
+        } else {
+          // 非 qiankun 模式：查找 #subapp-viewport 元素
+          const viewport = await waitForContainer('#subapp-viewport', 80, 50);
+          if (viewport) {
+            mountPoint = viewport;
+          } else {
+            // 如果找不到 #subapp-viewport，回退到使用传递的容器（兼容性处理）
+            if (props.container.isConnected) {
+              await new Promise(resolve => {
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    resolve(undefined);
+                  });
+                });
+              });
+              mountPoint = props.container;
+            } else {
+              mountPoint = await waitForContainer(props.container, 80, 50);
+            }
+          }
+        }
+      }
+    } else if (typeof props.container === 'string') {
+      // qiankun 可能传递字符串选择器，需要查找
+      // 如果是 '#subapp-viewport'，直接使用；否则查找 #subapp-viewport
+      if (props.container === '#subapp-viewport') {
+        mountPoint = await waitForContainer('#subapp-viewport', 80, 50);
+      } else {
+        // 传递的选择器不是 #subapp-viewport，优先查找 #subapp-viewport
+        const viewport = await waitForContainer('#subapp-viewport', 80, 50);
+        if (viewport) {
+          mountPoint = viewport;
+        } else {
+          // 如果找不到 #subapp-viewport，使用传递的选择器（兼容性处理）
+          mountPoint = await waitForContainer(props.container, 80, 50);
+        }
+      }
+    }
+  }
+
+  // 如果 props.container 不存在或查找失败，尝试其他方式
+  if (!mountPoint) {
+    // 关键：在生产环境子域名下，优先尝试查找 #subapp-viewport（无论是否设置了 __USE_LAYOUT_APP__）
+    // 因为 layout-app 可能已经加载，但 __USE_LAYOUT_APP__ 标志可能还没设置
+    const isProductionSubdomain = typeof window !== 'undefined' && 
+      import.meta.env.PROD &&
+      window.location.hostname.includes('bellis.com.cn') && 
+      window.location.hostname !== 'bellis.com.cn';
+    
+    if (isProductionSubdomain || (window as any).__USE_LAYOUT_APP__) {
+      // 使用 layout-app：尝试查找 #subapp-viewport
+      mountPoint = await waitForContainer('#subapp-viewport', 80, 50); // 增加重试次数和延迟
+      if (!mountPoint) {
+        const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
+        console.error(errorMsg, {
+          __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
+          isProductionSubdomain,
+          hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+          documentBody: typeof document !== 'undefined' ? document.body : null,
+          appElement: typeof document !== 'undefined' ? document.querySelector('#app') : null,
+          viewportElement: typeof document !== 'undefined' ? document.querySelector('#subapp-viewport') : null,
+        });
+        throw new Error(errorMsg);
+      }
+    } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
+      mountPoint = await waitForContainer('#subapp-viewport', 80, 50);
+      if (!mountPoint) {
+        throw new Error(`[${options.appId}-app] qiankun 模式下未提供容器元素且未找到 #subapp-viewport`);
+      }
     } else {
-      const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
-      console.error(errorMsg, {
-        __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
-        documentBody: document.body,
-        appElement: document.querySelector('#app')
-      });
-      throw new Error(errorMsg);
+      // 独立运行模式：使用 #app
+      mountPoint = await waitForContainer('#app');
+      if (!mountPoint) {
+        throw new Error(`[${options.appId}-app] 独立运行模式下未找到 #app 元素`);
+      }
     }
-  } else if (qiankunWindow.__POWERED_BY_QIANKUN__) {
-    // qiankun 模式但未提供 container：尝试查找 #subapp-viewport
-    const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-    if (viewport) {
-      mountPoint = viewport;
-    } else {
-      throw new Error(`[${options.appId}-app] qiankun 模式下未提供容器元素且未找到 #subapp-viewport`);
-    }
-  } else {
-    // 独立运行模式：使用 #app
-    const appElement = document.querySelector('#app') as HTMLElement;
-    if (!appElement) {
-      throw new Error(`[${options.appId}-app] 独立运行模式下未找到 #app 元素`);
-    }
-    mountPoint = appElement;
   }
 
   if (!mountPoint) {
     throw new Error(`[${options.appId}-app] 无法找到挂载节点`);
   }
+  
+  // 关键：再次确认容器已连接到 DOM 且已准备好
+  if (!mountPoint.isConnected) {
+    mountPoint = await waitForContainer(mountPoint, 80, 50);
+    if (!mountPoint || !mountPoint.isConnected) {
+      throw new Error(`[${options.appId}-app] 挂载容器未连接到 DOM`);
+    }
+  }
+  
+  // 关键：确保容器已准备好（使用 requestAnimationFrame 确保 Vue 渲染完成）
+  await new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resolve(undefined);
+      });
+    });
+  });
+
+  // 关键：确保容器可见（如果容器被 v-show 隐藏，强制显示）
+  // 因为 qiankun 需要容器可见才能正确挂载
+  const computedStyle = window.getComputedStyle(mountPoint);
+  if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+    // 临时强制显示容器，确保 qiankun 能够正确挂载
+    mountPoint.style.setProperty('display', 'flex', 'important');
+    mountPoint.style.setProperty('visibility', 'visible', 'important');
+  }
 
   // 关键优化：立即挂载应用，不等待任何异步操作
   // 这样应用可以立即显示，提升用户体验
+  
   context.app.mount(mountPoint);
+  
 
   // 关键优化：应用挂载后立即触发路由导航（类似 cool-admin 的做法）
   // 在 qiankun 或 layout-app 环境下，立即触发路由导航，不等待任何异步操作
@@ -217,9 +470,17 @@ export async function mountSubApp(
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
+    
     // 立即触发路由导航，直接调用不延迟
     // 应用已经挂载，路由可以立即开始工作，不需要 setTimeout
-    context.router.replace(initialRoute).catch(() => {});
+    context.router.replace(initialRoute).catch((error) => {
+      // 路由导航失败时输出错误信息
+      console.error(`[${options.appId}-app] 路由导航失败:`, error, {
+        initialRoute,
+        currentPath: window.location.pathname,
+        routerReady: context.router.isReady ? 'pending' : 'unknown',
+      });
+    });
   }
 
   // 关键优化：将后续操作改为后台异步执行，不阻塞应用挂载和路由导航
@@ -233,6 +494,14 @@ export async function mountSubApp(
         registerManifestMenusForApp(options.appId);
       } catch (error) {
         // 静默失败
+      }
+
+      // 检查并启动用户检查轮询（如果已登录且尚未启动）
+      try {
+        const { startUserCheckPollingIfLoggedIn } = await import('../user-check');
+        startUserCheckPollingIfLoggedIn();
+      } catch (error) {
+        // 静默失败，不影响应用运行
       }
 
       // 在路由准备好后调用 onReady 回调（但不阻塞路由导航）
@@ -250,7 +519,6 @@ export async function mountSubApp(
       });
     } catch (error) {
       // 静默失败，不影响应用运行
-      console.warn(`[${options.appId}-app] mountSubApp 后续操作失败:`, error);
     }
   })();
 }

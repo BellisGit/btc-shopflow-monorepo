@@ -26,6 +26,9 @@ const apps = [
   'layout-app',
   'mobile-app',
   'docs-app',
+  'personnel-app',  // 人事应用
+  'dashboard-app',  // 看板应用
+  'operations-app', // 运营应用
 ];
 
 // 共享包列表（合并为一个日志文件）

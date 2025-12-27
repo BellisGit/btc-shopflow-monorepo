@@ -80,13 +80,51 @@ export function createEpsService(epsModule: any): { service: any; list: any[] } 
  */
 export function loadEpsService(epsModule?: any): { service: any; list: any[] } {
   // 优先使用全局共享的 EPS 服务（由 system-app 或 layout-app 提供）
-  const globalService = getGlobalEpsService();
+  let globalService = getGlobalEpsService();
   
-  // 如果存在全局服务，但同时也有本地 epsModule，则做“补全合并”
+  // 关键：在生产环境子域名下，如果本地 epsModule 是空 stub 且全局服务不存在，
+  // 需要等待全局服务（最多等待 2 秒，使用同步轮询）
+  if (typeof window !== 'undefined' && import.meta.env.PROD && epsModule) {
+    const hostname = window.location.hostname;
+    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+    
+    // 检查是否是空 stub
+    const isEmptyStub = !epsModule.service || Object.keys(epsModule.service || {}).length === 0;
+    
+    if (isProductionSubdomain && isEmptyStub && !globalService) {
+      // 同步等待全局服务（最多等待 2 秒）
+      const maxWait = 2000;
+      const interval = 50;
+      const startTime = Date.now();
+      
+      while (Date.now() - startTime < maxWait) {
+        globalService = getGlobalEpsService();
+        if (globalService) {
+          break;
+        }
+        
+        // 同步等待（阻塞，但时间很短）
+        const endTime = Date.now() + interval;
+        while (Date.now() < endTime) {
+          // 空循环等待
+        }
+      }
+    }
+  }
+  
+  // 如果存在全局服务，但同时也有本地 epsModule，则做"补全合并"
   // 目的：layout-app 提供的全局 EPS 可能不包含某些子应用模块（如 finance.base.financeResult），
   // 这会导致子应用页面在 setup 阶段直接 throw 并空白。
   if (globalService && epsModule) {
     const local = createEpsService(epsModule);
+    // 如果本地是空 stub，直接使用全局服务
+    if (!local.service || Object.keys(local.service).length === 0) {
+      return {
+        service: globalService,
+        list: [], // 全局服务可能没有 list，保持兼容性
+      };
+    }
+    
     const mergedService = deepMergeObjects(globalService, local.service);
     if (typeof window !== 'undefined') {
       // 回写到全局，供后续模块/组件复用（不覆盖已有节点，仅补全缺失）

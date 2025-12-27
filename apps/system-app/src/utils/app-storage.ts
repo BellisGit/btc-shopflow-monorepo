@@ -3,21 +3,21 @@
  */
 
 import { getCookie, getCookieDomain, deleteCookie } from './cookie';
-import { syncSettingsToCookie, syncSettingsFromCookie, syncUserToCookie } from '@btc/shared-utils';
-import { storage } from '@btc/shared-utils';
+import { syncSettingsToCookie } from '@btc/shared-utils';
 
-// 从 Cookie 读取设置
-const getSettingsFromCookie = (): Record<string, any> => {
-  const settingsCookie = getCookie('btc_settings');
-  if (settingsCookie) {
-    try {
-      return JSON.parse(decodeURIComponent(settingsCookie));
-    } catch {
-      return {};
-    }
-  }
-  return {};
-};
+// 从 Cookie 读取设置（当前未使用）
+// 从 Cookie 读取设置（当前未使用）
+// const getSettingsFromCookie = (): Record<string, any> => {
+//   const settingsCookie = getCookie('btc_settings');
+//   if (settingsCookie) {
+//     try {
+//       return JSON.parse(decodeURIComponent(settingsCookie));
+//     } catch {
+//       return {};
+//     }
+//   }
+//   return {};
+// };
 
 // 从 Cookie 读取用户信息
 const getUserFromCookie = (): Record<string, any> | null => {
@@ -47,13 +47,13 @@ const getItem = (key: string): string | null => {
   }
 };
 
-const setItem = (key: string, value: string): void => {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // 忽略存储错误
-  }
-};
+// const setItem = (key: string, value: string): void => { // 未使用
+//   try {
+//     localStorage.setItem(key, value);
+//   } catch {
+//     // 忽略存储错误
+//   }
+// };
 
 const removeItem = (key: string): void => {
   try {
@@ -126,10 +126,16 @@ const userStorage = {
     // 删除 Cookie 中的用户信息
     try {
       const domain = getCookieDomain();
-      deleteCookie('btc_user', {
-        domain: domain,
-        path: '/',
-      });
+      if (domain !== undefined) {
+        deleteCookie('btc_user', {
+          domain: domain,
+          path: '/',
+        });
+      } else {
+        deleteCookie('btc_user', {
+          path: '/',
+        });
+      }
     } catch {
       // 忽略错误
     }
@@ -252,7 +258,7 @@ export const appStorage = {
       // 向后兼容：如果 cookie 中没有，尝试从旧的 localStorage 键读取（用于迁移）
       return getItem('token') || getItem('access_token');
     },
-    setToken: (token: string) => {
+    setToken: (_token: string) => {
       // 不再保存到 localStorage，token 应该由后端通过 Set-Cookie 设置
       // 这里只做向后兼容处理，清理旧的 localStorage 键
       removeItem('token');

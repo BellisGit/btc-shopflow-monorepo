@@ -43,8 +43,8 @@ export function useProfileForm(
     emailUpdateCountdown,
     emailUpdateSending,
     resetEmailUpdateCountdown,
-    onRequestVerify,
-    onSetVerifyCallback
+    ...(onRequestVerify !== undefined && { onRequestVerify }),
+    ...(onSetVerifyCallback !== undefined && { onSetVerifyCallback })
   });
 
   const { handleEditAvatar } = useAvatarEditor({

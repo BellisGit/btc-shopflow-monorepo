@@ -1,5 +1,270 @@
 // Entity interface definitions
-    interface test {
+    interface dictdata {
+          /**
+           * 序号
+           */
+          id?: any;
+        
+          /**
+           * 字典数据ID
+           */
+          dictDataId?: any;
+        
+          /**
+           * 字典类型编码
+           */
+          dictTypeCode?: any;
+        
+          /**
+           * 字典值
+           */
+          dictValue?: any;
+        
+          /**
+           * 字典标签
+           */
+          dictLabel?: any;
+        
+          /**
+           * 排序
+           */
+          sortOrder?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface info {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 字典编码
+           */
+          dictCode?: any;
+        
+          /**
+           * 字典名称
+           */
+          dictName?: any;
+        
+          /**
+           * 实体类名
+           */
+          entityClass?: any;
+        
+          /**
+           * 字段名称
+           */
+          fieldName?: any;
+        
+          /**
+           * 租户ID
+           */
+          tenantId?: any;
+        
+          /**
+           * 域ID
+           */
+          domainId?: any;
+        
+          /**
+           * 备注
+           */
+          remark?: any;
+        
+          /**
+           * 创建人
+           */
+          createdBy?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 最后修改时间
+           */
+          updatedAt?: any;
+        
+          /**
+           * 删除时间
+           */
+          deletedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface item {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 字典字段标识
+           */
+          fieldName?: any;
+        
+          /**
+           * 字典值
+           */
+          itemValue?: any;
+        
+          /**
+           * 字典标签
+           */
+          itemLabel?: any;
+        
+          /**
+           * 备注
+           */
+          remark?: any;
+        
+          /**
+           * 创建人
+           */
+          createdBy?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 最后修改时间
+           */
+          updatedAt?: any;
+        
+          /**
+           * 删除时间
+           */
+          deletedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface dicttype {
+          /**
+           * 序号
+           */
+          id?: any;
+        
+          /**
+           * 字典类型ID
+           */
+          dictTypeId?: any;
+        
+          /**
+           * 字典类型编码
+           */
+          dictTypeCode?: any;
+        
+          /**
+           * 字典类型名称
+           */
+          dictTypeName?: any;
+        
+          /**
+           * 备注
+           */
+          remark?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface entitydictmapping {
+          /**
+           * 序号
+           */
+          id?: any;
+        
+          /**
+           * 关联ID
+           */
+          mappingId?: any;
+        
+          /**
+           * 实体类名
+           */
+          entityClass?: any;
+        
+          /**
+           * 字典类型编码
+           */
+          dictTypeCode?: any;
+        
+          /**
+           * 字段名称
+           */
+          fieldName?: any;
+        
+          /**
+           * 继承自
+           */
+          inheritFrom?: any;
+        
+          /**
+           * 排序
+           */
+          sortOrder?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface test {
         /**
          * Any key-value pairs
          */
@@ -603,9 +868,14 @@ interface diff {
           diffQty?: any;
         
           /**
-           * 差异原因
+           * 账面数量
            */
-          diffReason?: any;
+          bookQty?: any;
+        
+          /**
+           * 实际数量
+           */
+          btcQty?: any;
         
           /**
            * 处理人
@@ -631,11 +901,6 @@ interface diff {
            * 创建时间
            */
           createdAt?: any;
-        
-          /**
-           * bookQty
-           */
-          bookQty?: any;
         
           /**
            * actualQty
@@ -2331,127 +2596,6 @@ interface userrole {
            * roleName
            */
           roleName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface info {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 字典编码
-           */
-          dictCode?: any;
-        
-          /**
-           * 字典名称
-           */
-          dictName?: any;
-        
-          /**
-           * 实体类名
-           */
-          entityClass?: any;
-        
-          /**
-           * 字段名称
-           */
-          fieldName?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 最后修改时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface item {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 字典字段标识
-           */
-          fieldName?: any;
-        
-          /**
-           * 字典值
-           */
-          itemValue?: any;
-        
-          /**
-           * 字典标签
-           */
-          itemLabel?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 最后修改时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
         
         /**
          * Any key-value pairs

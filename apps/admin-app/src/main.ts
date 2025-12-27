@@ -114,8 +114,17 @@ const render = async (props: QiankunProps = {}) => {
     }
 
     // 创建新实例
+    if (import.meta.env.DEV) {
+      console.log('[admin-app] render: 开始创建应用实例', { props });
+    }
     context = await createAdminApp(props);
+    if (import.meta.env.DEV) {
+      console.log('[admin-app] render: 应用实例创建完成，开始挂载', { context, props });
+    }
     await mountAdminApp(context, props);
+    if (import.meta.env.DEV) {
+      console.log('[admin-app] render: 应用挂载完成');
+    }
 
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
     removeLoadingElement();
@@ -144,6 +153,17 @@ function bootstrap() {
 }
 
 async function mount(props: QiankunProps) {
+  // 开发环境：调试信息
+  if (import.meta.env.DEV) {
+    console.log('[admin-app] qiankun mount 钩子被调用', {
+      props,
+      container: props.container,
+      containerType: typeof props.container,
+      containerId: props.container instanceof HTMLElement ? props.container.id : 'N/A',
+      isQiankun: qiankunWindow.__POWERED_BY_QIANKUN__,
+    });
+  }
+
   // 关键优化：将共享资源加载改为后台异步执行，不阻塞应用挂载
   // 应用可以立即挂载，共享资源在后台加载，如果加载失败会使用本地资源作为降级方案
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {

@@ -101,7 +101,7 @@ export const createMonitorApp = async (props: QiankunProps = {}): Promise<Monito
     });
     // 关键：在独立运行模式下，确保菜单注册表已初始化
     try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const { getMenuRegistry } = await import('@btc/shared-components');
       const registry = getMenuRegistry();
       if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;
@@ -115,7 +115,7 @@ export const createMonitorApp = async (props: QiankunProps = {}): Promise<Monito
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
     try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const { getMenuRegistry } = await import('@btc/shared-components');
       const registry = getMenuRegistry();
       if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;

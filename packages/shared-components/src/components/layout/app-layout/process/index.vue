@@ -106,16 +106,17 @@ defineOptions({
   name: 'LayoutProcess',
 });
 
-import { ref, watch, computed, onMounted, onUnmounted, type Ref } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import type { ProcessItem } from '@btc/shared-components/store/process';
-import { useProcessStore, getCurrentAppFromPath } from '@btc/shared-components/store/process';
+import { BtcConfirm } from '@btc/shared-components';
+// BtcMessage 未使用
+import type { ProcessItem } from '../../../../store/process';
+import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
 import { getManifestRoute } from '@btc/subapp-manifests';
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
+import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
-import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { getMenusForApp } from '../../../../store/menuRegistry';
 import { getAppById } from '@configs/app-scanner';
 
 // 判断是否为SVG图标
@@ -204,7 +205,7 @@ try {
 const tabStyleClass = computed(() => tabStyle.value || 'tab-default');
 
 // 监听标签页样式变化
-function handleTabStyleChange(event: CustomEvent) {
+function handleTabStyleChange(_event: CustomEvent) {
   // 样式类会自动通过 computed 更新
 }
 
@@ -476,7 +477,7 @@ function getTabIcon(item: ProcessItem): string | undefined {
   // 从 manifest 的 breadcrumbs 中获取最后一个面包屑的图标（当前页面图标）
   if (manifestRoute?.breadcrumbs && manifestRoute.breadcrumbs.length > 0) {
     const lastBreadcrumb = manifestRoute.breadcrumbs[manifestRoute.breadcrumbs.length - 1];
-    if (lastBreadcrumb.icon) {
+    if (lastBreadcrumb && lastBreadcrumb.icon) {
       return lastBreadcrumb.icon;
     }
   }
@@ -600,6 +601,7 @@ function onTap(item: any, index: number) {
 // 删除标签
 function onDel(index: number) {
   const item = filteredTabs.value[index];
+  if (!item) return;
 
   // 在原始列表中找到并删除
   const globalIndex = processStore.list.findIndex((t) => t.fullPath === item.fullPath);
@@ -675,7 +677,7 @@ function handleTabCommand(command: string) {
 }
 
 // 右键菜单
-function openContextMenu(e: MouseEvent, item: ProcessItem, _index: number) {
+function openContextMenu(_e: MouseEvent, item: ProcessItem, _index: number) {
   const isCurrentTab = item.path === route.path;
 
   BtcConfirm(t('common.tip'), {

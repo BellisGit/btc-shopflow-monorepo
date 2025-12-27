@@ -105,6 +105,14 @@ export function useLogin() {
 
         // 使用 nextTick 确保状态更新后再跳转
         await nextTick();
+
+        // 启动用户检查轮询
+        try {
+          const { startUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
+          startUserCheckPolling();
+        } catch (error) {
+          console.warn('[useLogin] Failed to start user check polling:', error);
+        }
         router.push('/');
       } else {
         BtcMessage.error(t('登录失败'));

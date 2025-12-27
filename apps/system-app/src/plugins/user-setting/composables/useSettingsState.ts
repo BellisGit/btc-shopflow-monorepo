@@ -9,8 +9,7 @@ import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxSt
 // 现在都在 app-src chunk 中，可以使用静态导入
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { storage } from '@btc/shared-utils';
-import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
+import { registerEChartsThemes } from '@btc/shared-components';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -190,7 +189,7 @@ function createSettingsState() {
     // 监听主题切换事件（来自 toggleDark），同步更新 systemThemeType 和 menuThemeType
     // 确保两种切换方式（toggleDark 和 switchThemeStyles）的状态一致
     const handleThemeToggle = (event: CustomEvent) => {
-      const { theme, isDark } = event.detail;
+      const { theme } = event.detail;
       if (theme && (theme === SystemThemeEnum.LIGHT || theme === SystemThemeEnum.DARK)) {
         // 同步更新 systemThemeType，但不调用 switchThemeStyles 避免循环
         systemThemeType.value = theme;
@@ -387,11 +386,11 @@ function createSettingsState() {
 
     // 同步更新设置状态（如果存在）
     try {
-      const SystemThemeEnum = {
-        LIGHT: 'light',
-        DARK: 'dark',
-        AUTO: 'auto',
-      };
+      // const SystemThemeEnum = {
+      //   LIGHT: 'light',
+      //   DARK: 'dark',
+      //   AUTO: 'auto',
+      // };
       appStorage.settings.setItem('systemThemeType', theme);
       appStorage.settings.setItem('systemThemeMode', theme);
     } catch (e) {

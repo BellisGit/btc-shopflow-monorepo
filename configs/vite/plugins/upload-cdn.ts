@@ -50,7 +50,7 @@ function tryLoadOssCredsFromWindowsCredentialManager(): void {
  * @param appName 应用名称（如 'system-app'）
  * @param appDir 应用目录
  */
-export function uploadCdnPlugin(appName: string, appDir: string): Plugin {
+export function uploadCdnPlugin(appName: string, _appDir: string): Plugin {
   let isProductionBuild = false;
 
   return {

@@ -18,7 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { cleanDistPlugin, corsPlugin, addVersionPlugin, uploadCdnPlugin } from '../plugins';
+import { cleanDistPlugin, corsPlugin, addVersionPlugin, uploadCdnPlugin, cdnAssetsPlugin } from '../plugins';
 
 export interface LayoutAppViteConfigOptions {
   /**
@@ -196,6 +196,11 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     } as Plugin,
     // 12. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
+    // 12.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    cdnAssetsPlugin({
+      appName,
+      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
     // 15. 构建后清理插件：删除 .vite 目录（Vite 缓存目录不应出现在构建产物中）
     {
       name: 'clean-vite-dir-plugin',
@@ -311,23 +316,23 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
                 // 格式：基础名称-单个字符-多个字符.js
                 // 注意：483hvG 只有 6 个字符，所以不能要求至少 8 个字符
                 const specialHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9])-([a-zA-Z0-9]{4,})\.js$/);
-                if (specialHashMatch) {
-                  baseName = specialHashMatch[1];
+                if (specialHashMatch && specialHashMatch[1]) {
+                  baseName = specialHashMatch[1] ?? null;
                 } else {
                   // 尝试匹配标准格式（多个 hash 段）
                   const multiHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.js$/);
-                  if (multiHashMatch) {
-                    baseName = multiHashMatch[1];
+                  if (multiHashMatch && multiHashMatch[1]) {
+                    baseName = multiHashMatch[1] ?? null;
                   } else {
                     // 尝试匹配单个 hash 段（至少 8 个字符）
                     const singleHashMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.js$/);
-                    if (singleHashMatch) {
-                      baseName = singleHashMatch[1];
+                    if (singleHashMatch && singleHashMatch[1]) {
+                      baseName = singleHashMatch[1] ?? null;
                     } else {
                       // 尝试匹配简单格式（提取基础名称，去掉最后一个 hash 段）
                       const simpleMatch = importFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]+)\.js$/);
-                      if (simpleMatch) {
-                        baseName = simpleMatch[1];
+                      if (simpleMatch && simpleMatch[1]) {
+                        baseName = simpleMatch[1] ?? null;
                       }
                     }
                   }
@@ -342,20 +347,20 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
                     // 先尝试匹配特殊格式（如 menu-registry-B-483hvG-mj2mtu46.js）
                     // 格式：基础名称-单个字符-多个字符-时间戳.js
                     const actualSpecialHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([A-Za-z0-9])-([a-zA-Z0-9]{4,})(?:-[a-zA-Z0-9]+)?\.js$/);
-                    if (actualSpecialHashMatch) {
-                      actualBaseName = actualSpecialHashMatch[1];
+                    if (actualSpecialHashMatch && actualSpecialHashMatch[1]) {
+                      actualBaseName = actualSpecialHashMatch[1] ?? null;
                     } else {
                       const actualMultiHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)(?:-[a-zA-Z0-9]{8,})+(?:-[a-zA-Z0-9]+)?\.js$/);
-                      if (actualMultiHashMatch) {
-                        actualBaseName = actualMultiHashMatch[1];
+                      if (actualMultiHashMatch && actualMultiHashMatch[1]) {
+                        actualBaseName = actualMultiHashMatch[1] ?? null;
                       } else {
                         const actualSingleHashMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]{8,})\.js$/);
-                        if (actualSingleHashMatch) {
-                          actualBaseName = actualSingleHashMatch[1];
+                        if (actualSingleHashMatch && actualSingleHashMatch[1]) {
+                          actualBaseName = actualSingleHashMatch[1] ?? null;
                         } else {
                           const actualSimpleMatch = actualFileName.match(/^([^-]+(?:-[^-]+)*?)-([a-zA-Z0-9]+)(?:-[a-zA-Z0-9]+)?\.js$/);
-                          if (actualSimpleMatch) {
-                            actualBaseName = actualSimpleMatch[1];
+                          if (actualSimpleMatch && actualSimpleMatch[1]) {
+                            actualBaseName = actualSimpleMatch[1] ?? null;
                           }
                         }
                       }
@@ -430,7 +435,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     // 关键：禁用代码压缩，避免 Terser 压缩导致的对象属性分隔符丢失问题
     minify: false,
     assetsInlineLimit: 0,
-    outDir: 'dist',
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     // 关键：启用 manifest 文件生成，用于动态加载入口文件
     manifest: true,

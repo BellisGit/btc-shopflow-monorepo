@@ -3,8 +3,6 @@ import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 import '@btc/shared-components/styles/dark-theme.css';
 import type { QiankunProps } from '@btc/shared-core';
-// 关键：在 main.ts 中也导入 registerManifestTabsForApp，确保在 qiankun 环境下模块能正确加载
-import { registerManifestTabsForApp } from '@configs/layout-bridge';
 import {
   createFinanceApp,
   mountFinanceApp,
@@ -203,13 +201,36 @@ if (shouldRunStandalone()) {
 
             waitForViewport().then((viewport) => {
               if (viewport) {
+                // 生产环境下输出诊断信息
+                if (import.meta.env.PROD) {
+                  const computedStyle = window.getComputedStyle(viewport);
+                  console.warn('[finance-app] 找到 #subapp-viewport，准备挂载', {
+                    viewportExists: !!viewport,
+                    isConnected: viewport.isConnected,
+                    display: computedStyle.display,
+                    visibility: computedStyle.visibility,
+                    opacity: computedStyle.opacity,
+                    hasChildren: viewport.children.length,
+                  });
+                }
+                
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
+                  if (import.meta.env.PROD) {
+                    console.warn('[finance-app] 成功挂载到 layout-app');
+                  }
                 }).catch((error) => {
                   console.error('[finance-app] 挂载到 layout-app 失败:', error);
                 });
               } else {
                 console.error('[finance-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                if (import.meta.env.PROD) {
+                  console.warn('[finance-app] 诊断信息', {
+                    viewportElement: document.querySelector('#subapp-viewport'),
+                    isUsingLayoutApp: !!(window as any).__USE_LAYOUT_APP__,
+                    isLayoutApp: !!(window as any).__IS_LAYOUT_APP__,
+                  });
+                }
                 render().catch((error) => {
                   console.error('[finance-app] 独立运行失败:', error);
                 });

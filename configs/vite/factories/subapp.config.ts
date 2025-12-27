@@ -40,6 +40,8 @@ import {
   replaceIconsWithCdnPlugin,
   resolveLogoPlugin,
   uploadCdnPlugin,
+  cdnAssetsPlugin,
+  cdnImportPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
 
@@ -224,7 +226,19 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 16. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
-    // 16.5. 替换图标路径为 CDN URL（生产环境）
+    // 16.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
+    cdnAssetsPlugin({
+      appName,
+      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 16.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
+    // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
+    cdnImportPlugin({
+      appName,
+      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 16.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
     // 17. 优化 chunks 插件
     optimizeChunksPlugin(),
@@ -292,14 +306,14 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       },
     }, */
     assetsInlineLimit: 10 * 1024,
-    outDir: 'dist',
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     // 关键：禁用 Vite 的自动清理，因为我们已经有 cleanDistPlugin 在构建前清理
     // 这样可以避免 Windows 上的文件锁定问题（EBUSY）
     // cleanDistPlugin 已经有重试机制（5次，递增等待时间），如果清理失败会继续构建
     // 注意：如果清理失败，旧的构建产物不会被删除，可能导致重复文件
     emptyOutDir: false,
-    rollupOptions: createRollupConfig(appName.replace('-app', '')),
+    rollupOptions: createRollupConfig(appName),
     chunkSizeWarningLimit: 1000,
     ...customBuild,
   };

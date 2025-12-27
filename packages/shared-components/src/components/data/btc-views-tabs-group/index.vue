@@ -58,7 +58,7 @@ import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import type { BtcViewsTabsGroupConfig } from './types';
-import { useContentHeight } from '@btc/shared-components/composables/content-height';
+import { useContentHeight } from '../../../composables/content-height';
 
 defineOptions({
   name: 'BtcViewsTabsGroup'

@@ -1,5 +1,5 @@
 import { debounce, last } from 'lodash-es';
-import { nextTick, onActivated, onBeforeUnmount, onMounted, ref, Ref } from 'vue';
+import { nextTick, onActivated, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import { addClass, removeClass } from '../../../utils/dom';
 import { globalMitt } from '../../../utils/mitt';
 import type { TableProps } from '../types';

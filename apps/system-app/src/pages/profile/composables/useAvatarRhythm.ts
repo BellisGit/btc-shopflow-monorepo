@@ -10,7 +10,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
   const barCount = 20; // 频谱条数量（密集更有氛围）
   const minHeight = 3; // 极低起点
   const maxHeight = 50; // 极高峰值（强烈对比）
-  const radius = 42; // 头像半径（78px / 2 + 3px padding）
+  // const radius = 42; // 头像半径（78px / 2 + 3px padding）
 
   // 炫彩渐变色板（基于原渐变色）
   const gradientColors = [
@@ -122,6 +122,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
 
     bars.forEach((bar, index) => {
       const angle = baseAngles[index];
+      if (angle === undefined) return;
 
       // 摇滚律动：70%概率低，30%概率爆发到峰值（模拟鼓点）
       const isPeak = Math.random() > 0.7;
@@ -180,6 +181,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
   function triggerBurst() {
     bars.forEach((bar, index) => {
       const angle = baseAngles[index];
+      if (angle === undefined) return;
       const hue = (angle + 135) % 360;
 
       // 超峰值爆发

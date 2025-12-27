@@ -11,11 +11,12 @@
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
 
-    // 明确保持原有定位不变
-    position: absolute !important;
-    right: 5% !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    // 明确保持原有定位不变（响应式样式会通过更高优先级覆盖这些样式）
+    // 这里作为基础样式，确保在没有响应式布局类时也能正常显示
+    position: absolute;
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%);
 
     // 移除原有边框，使用伪元素创建双层渐变边框
     border: none !important;

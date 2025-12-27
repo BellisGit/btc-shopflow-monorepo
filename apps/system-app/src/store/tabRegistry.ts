@@ -9,7 +9,7 @@
 let getManifestRoute: any = null;
 let getManifest: any = null;
 
-async function loadManifestFunctions() {
+async function _loadManifestFunctions() {
   if (!getManifestRoute || !getManifest) {
     const manifestModule = await import('@/micro/manifests');
     getManifestRoute = manifestModule.getManifestRoute;
@@ -186,7 +186,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
       const pathWithoutNumbers = key.replace(/-\d+-/g, '-').replace(/-\d+$/g, '').replace(/^\d+-/g, '');
 
       // 尝试匹配所有 registry key，查找路径模式匹配的
-      for (const [registryKey, tabMeta] of Object.entries(appDict)) {
+      for (const [, tabMeta] of Object.entries(appDict)) {
         // 如果 registry key 对应的路径模式与当前路径匹配
         // 例如：org-dept-role-bind 的路径是 /admin/org/departments/:id/roles
         // 提取路径模式：org-departments-:id-roles -> org-departments-roles（移除 :id）
@@ -246,7 +246,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
   // main 命名空间可以兜底（兼容旧逻辑）
   const key = extractKey(pathname, app);
   const mainDict = registry.main;
-  if (mainDict[key]) {
+  if (mainDict && mainDict[key]) {
     return mainDict[key];
   }
 
@@ -262,9 +262,12 @@ export function registerTabs(app: string, tabs: TabMeta[]) {
     registry[app] = {};
   }
 
-  tabs.forEach(tab => {
-    registry[app][tab.key] = tab;
-  });
+  const appRegistry = registry[app];
+  if (appRegistry) {
+    tabs.forEach(tab => {
+      appRegistry[tab.key] = tab;
+    });
+  }
 }
 
 /**

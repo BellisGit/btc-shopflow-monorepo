@@ -22,47 +22,7 @@
     "./dist/style.css": "./dist/style.css",
     "./style.css": "./dist/style.css",
     "./styles/dark-theme.css": "./dist/styles/dark-theme.css",
-    "./styles/index.scss": "./src/styles/index.scss",
-    "./store/menuRegistry": {
-      "types": "./src/store/menuRegistry.ts",
-      "import": "./src/store/menuRegistry.ts"
-    },
-    "./components/layout/app-layout/utils": {
-      "types": "./src/components/layout/app-layout/utils.ts",
-      "import": "./src/components/layout/app-layout/utils.ts"
-    },
-    "./charts/utils": {
-      "types": "./src/charts/utils/index.ts",
-      "import": "./src/charts/utils/index.ts"
-    },
-    "./composables/content-height": {
-      "types": "./src/composables/content-height.ts",
-      "import": "./src/composables/content-height.ts"
-    },
-    "./composables/useUser": {
-      "types": "./src/composables/useUser.ts",
-      "import": "./src/composables/useUser.ts"
-    },
-    "./store/process": {
-      "types": "./src/store/process.ts",
-      "import": "./src/store/process.ts"
-    },
-    "./components/others/btc-user-setting/composables": {
-      "types": "./src/components/others/btc-user-setting/composables/index.ts",
-      "import": "./src/components/others/btc-user-setting/composables/index.ts"
-    },
-    "./components/others/btc-user-setting/config/enums": {
-      "types": "./src/components/others/btc-user-setting/config/enums.ts",
-      "import": "./src/components/others/btc-user-setting/config/enums.ts"
-    },
-    "./composables/useCurrentApp": {
-      "types": "./src/composables/useCurrentApp.ts",
-      "import": "./src/composables/useCurrentApp.ts"
-    },
-    "./composables/useBrowser": {
-      "types": "./src/composables/useBrowser.ts",
-      "import": "./src/composables/useBrowser.ts"
-    }
+    "./styles/index.scss": "./src/styles/index.scss"
   },
   "scripts": {
     "dev": "vite build --watch",

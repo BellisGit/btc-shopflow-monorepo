@@ -120,6 +120,12 @@ export function useUserInfo() {
   // 加载用户信息（从个人信息服务）
   const loadProfileInfo = async () => {
     try {
+      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+      const user = appStorage.user.get();
+      if (!user) {
+        return;
+      }
+
       // 确保 service 存在，避免 undefined 错误
       if (!service) {
         console.warn('[useUserInfo] EPS service not available');

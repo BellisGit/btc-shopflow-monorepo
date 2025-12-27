@@ -315,6 +315,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
     const item1 = menus1[i];
     const item2 = menus2[i];
 
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
+
     // 比较所有字段，包括 externalUrl
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||
@@ -508,6 +513,16 @@ if (typeof window !== 'undefined') {
         url = input.url;
       }
 
+      // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
+      // 这确保 EPS 请求和其他 API 请求不会被影响
+      // 检查多种形式的 API URL：
+      // - /api/... (相对路径)
+      // - http://host/api/... (完整 URL)
+      // - https://host/api/... (完整 URL)
+      if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
+        return originalFetch.call(this, input as any, init);
+      }
+
       // 判断是否是资源文件
       const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
 
@@ -602,6 +617,7 @@ if (typeof window !== 'undefined') {
       }
 
       // 默认行为：先执行原始请求
+      // 注意：对于非资源文件的请求（如 API 请求），应该已经在上面的检查中被放行了
       return originalFetch.call(this, input as any, init).then(async (response) => {
         // 如果响应是 HTML（说明可能是 404 页面），且请求的是 JavaScript 文件，尝试修复并重试
         const contentType = response.headers.get('content-type');
@@ -700,6 +716,16 @@ function setupGlobalResourceInterceptor() {
       url = input.href;
     } else {
       url = input.url;
+    }
+
+    // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
+    // 这确保 EPS 请求和其他 API 请求不会被影响
+    // 检查多种形式的 API URL：
+    // - /api/... (相对路径)
+    // - http://host/api/... (完整 URL)
+    // - https://host/api/... (完整 URL)
+    if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
+      return originalFetch.call(this, input as any, init);
     }
 
     // 关键：在主应用预览端口下，检查所有资源请求
@@ -962,7 +988,7 @@ export function setupQiankun() {
         const { clearTabs: clearTabsFn } = await import('../store/tabRegistry');
         clearTabsFn(app.name);
       },
-      setActiveTab: (tabKey: string) => {
+      setActiveTab: (_tabKey: string) => {
         // console.log('[Main] Sub-app set active tab:', app.name, tabKey);
       },
       // 错误上报方法（传递给子应用）
@@ -1125,6 +1151,18 @@ export function setupQiankun() {
   registerMicroApps(
     appsWithProps,
     {
+      // 关键：配置资源过滤函数，允许加载 CDN 上的 CSS 文件
+      // qiankun 默认会过滤外部资源，需要明确允许 CDN 资源
+      excludeAssetFilter: (assetUrl: string) => {
+        // 允许加载 CDN 上的资源（CSS、JS 等）
+        // all.bellis.com.cn 是 CDN 域名
+        if (assetUrl.includes('all.bellis.com.cn') || assetUrl.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+          return true; // 返回 true 表示不过滤，允许加载
+        }
+        // 默认行为：同源资源不过滤，外部资源过滤
+        // 这里返回 false 让 qiankun 使用默认过滤逻辑
+        return false;
+      },
       // 应用加载前（每次应用加载时都会调用，包括重复加载）
       beforeLoad: [(app) => {
         const appName = appNameMap[app.name] || app.name;
@@ -1152,27 +1190,34 @@ export function setupQiankun() {
           const retryDelay = 50; // 每次重试间隔 50ms
 
           const ensureContainer = async () => {
-                const container = document.querySelector('#subapp-viewport') as HTMLElement;
+            let container = document.querySelector('#subapp-viewport') as HTMLElement;
 
-            if (container && container.isConnected) {
-              // 关键：使用 requestAnimationFrame 延迟 DOM 操作，避免与 Vue 的更新周期冲突
-              // 先触发事件，让 Layout 组件先更新状态，然后再操作 DOM
+            // 如果容器不存在，先触发事件让 Layout 组件创建容器
+            if (!container || !container.isConnected) {
+              // 关键：触发事件，让 Layout 组件先更新状态，创建容器
               window.dispatchEvent(new CustomEvent('qiankun:before-load', {
                 detail: { appName: app.name }
               }));
 
-              // 等待 Vue 更新完成后再操作 DOM
-              requestAnimationFrame(() => {
+              // 等待 Vue 更新完成，容器被创建
+              await new Promise(resolve => {
                 requestAnimationFrame(() => {
-                  // 容器存在且已挂载，立即处理
-                  if (container && container.isConnected) {
-                    container.style.setProperty('display', 'flex', 'important');
-                    container.style.setProperty('visibility', 'visible', 'important');
-                    container.style.setProperty('opacity', '1', 'important');
-                    container.setAttribute('data-qiankun-loading', 'true');
-                  }
+                  requestAnimationFrame(() => {
+                    resolve(undefined);
+                  });
                 });
               });
+
+              // 重新查找容器
+              container = document.querySelector('#subapp-viewport') as HTMLElement;
+            }
+
+            if (container && container.isConnected) {
+              // 容器存在且已挂载，立即处理
+              container.style.setProperty('display', 'flex', 'important');
+              container.style.setProperty('visibility', 'visible', 'important');
+              container.style.setProperty('opacity', '1', 'important');
+              container.setAttribute('data-qiankun-loading', 'true');
 
               // 清理其他应用的 tabs/menus（快速操作，无阻塞）
               // 动态导入避免循环依赖
@@ -1212,7 +1257,7 @@ export function setupQiankun() {
       // 应用挂载前（在 mount 之前调用，作为 beforeLoad 的兜底）
       // 如果 beforeLoad 被跳过（应用已加载过），这里确保 loading 状态被正确设置
       beforeMount: [async (_app) => {
-        const appName = appNameMap[_app.name] || _app.name;
+        // const appName = appNameMap[_app.name] || _app.name; // 未使用
         // console.log(`[qiankun] 子应用 ${_app.name} beforeMount 钩子被触发`);
 
         // 检查容器是否有 data-qiankun-loading 属性
@@ -1405,7 +1450,7 @@ export function setupQiankun() {
       scriptType: 'module', // 全局强制 module 类型，双重保险
       // 自定义 fetch：拦截所有请求，包括 HTML 和资源文件
       // 这是修复资源路径的关键：在获取 HTML 时就修复其中的资源路径
-      fetch: async (url: string, options?: RequestInit, ...args: any[]) => {
+      fetch: async (url: string, options?: RequestInit, ..._args: any[]) => {
 
         // 关键：在发送请求前，先检查 URL 是否需要修复
         // 这可以避免请求错误的端口，导致服务器返回 HTML（404 页面）
@@ -1810,7 +1855,7 @@ export function setupQiankun() {
             // 额外清理：删除内联脚本中的旧引用（如果 HTML 中包含内联脚本）
             // 匹配内联脚本中的动态导入：import('/assets/app-src-vga9bYFB.js')
             const inlineScriptPattern = new RegExp(`(<script[^>]*>)([\\s\\S]*?)(import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)[\\s\\S]*?)(</script>)`, 'gi');
-            processedTpl = processedTpl.replace(inlineScriptPattern, (match, openTag, before, importStmt, oldHash, closeTag) => {
+            processedTpl = processedTpl.replace(inlineScriptPattern, (_match, openTag, before, importStmt, _oldHash, closeTag) => {
               // 只删除包含旧引用的 import() 语句，保留其他代码
               const cleanedImport = importStmt.replace(new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi'), 'Promise.resolve()');
               return openTag + before + cleanedImport + closeTag;
@@ -1951,7 +1996,7 @@ export function setupQiankun() {
         // 如果还是没有找到，尝试从 HTML 中的资源路径推断
         if (!baseUrl) {
           const resourceMatch = tpl.match(/(?:src|href)=["']([^"']+)/);
-          if (resourceMatch) {
+          if (resourceMatch && resourceMatch[1]) {
             const resourceUrl = resourceMatch[1];
             // 如果是绝对路径，提取基础 URL
             if (resourceUrl.startsWith('http://') || resourceUrl.startsWith('https://')) {
@@ -2237,7 +2282,7 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch && appMatch[1] ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
       // 动态导入避免循环依赖
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);

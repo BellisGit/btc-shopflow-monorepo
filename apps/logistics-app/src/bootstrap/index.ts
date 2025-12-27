@@ -386,7 +386,7 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
     await setupLogisticsGlobals();
     // 关键：在独立运行模式下，确保菜单注册表已初始化
     try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const { getMenuRegistry } = await import('@btc/shared-components');
       const registry = getMenuRegistry();
       if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;
@@ -400,7 +400,7 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
     try {
-      const { getMenuRegistry } = await import('@btc/shared-components/store/menuRegistry');
+      const { getMenuRegistry } = await import('@btc/shared-components');
       const registry = getMenuRegistry();
       if (typeof window !== 'undefined' && !(window as any).__BTC_MENU_REGISTRY__) {
         (window as any).__BTC_MENU_REGISTRY__ = registry;

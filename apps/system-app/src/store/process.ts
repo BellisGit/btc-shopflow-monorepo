@@ -224,8 +224,11 @@ export const useProcessStore = defineStore('process', () => {
         list.value.push(newTab);
       } else {
         // 更新已存在的标签
-        list.value[index].active = true;
-        list.value[index].meta = buildMeta(list.value[index].meta);
+        const existingTab = list.value[index];
+        if (existingTab) {
+          existingTab.active = true;
+          existingTab.meta = buildMeta(existingTab.meta);
+        }
       }
     }
 
@@ -253,11 +256,12 @@ export const useProcessStore = defineStore('process', () => {
                 const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
                 const manifestKey = routePath.replace(/^\//, "") || "home";
 
+                const i18nKey = manifestRoute.tab?.labelKey ?? manifestRoute.labelKey;
                 tabMeta = {
                   key: manifestKey,
                   title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
                   path: fullPath,
-                  i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
+                  ...(i18nKey !== undefined && { i18nKey }),
                 };
               }
             }
@@ -270,11 +274,14 @@ export const useProcessStore = defineStore('process', () => {
           // 更新标签的 meta 信息
           const index = list.value.findIndex((e) => e.fullPath === data.fullPath);
           if (index >= 0) {
-            list.value[index].meta = {
-              ...list.value[index].meta,
-              ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
-              ...(tabMeta.title ? { title: tabMeta.title } : {}),
-            };
+            const existingTab = list.value[index];
+            if (existingTab) {
+              existingTab.meta = {
+                ...existingTab.meta,
+                ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
+                ...(tabMeta.title ? { title: tabMeta.title } : {}),
+              };
+            }
           }
         }
       } catch (error) {

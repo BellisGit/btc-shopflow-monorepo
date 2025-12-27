@@ -55,7 +55,6 @@ export const initGlobalNotificationObserver = () => {
                   const titleText = notificationTitle.textContent?.trim();
 
                   // 遍历待处理通知，找到匹配的（优先匹配最新的通知）
-                  let _matched = false;
                   const pendingEntries = Array.from(pendingNotifications.entries()).reverse(); // 从最新的开始匹配
 
                   for (const [key, pending] of pendingEntries) {
@@ -71,7 +70,6 @@ export const initGlobalNotificationObserver = () => {
 
                       // 从待处理列表中移除
                       pendingNotifications.delete(key);
-                      _matched = true;
                       break;
                     }
                   }
@@ -205,12 +203,12 @@ export const handleNotification = (
 
   // 使用原生 ElNotification 弹出通知
   const notificationInstance = ElNotification[type]({
-    title: title,
-    message: message,
+    title: title as any,
+    message: message as any,
     duration: 4500, // 4.5秒，由生命周期管理器控制
     showClose: true, // 显示关闭按钮
     dangerouslyUseHTMLString: false // 确保不会因为HTML内容导致问题
-  });
+  } as any);
   (notificationInstance as ExtendedNotificationInstance).notificationId = notificationId;
 
   // 将通知添加到待处理列表
@@ -219,7 +217,7 @@ export const handleNotification = (
     notificationInstance,
     title,
     message,
-    badgeCount,
+    ...(badgeCount !== undefined && { badgeCount }),
     notificationId
   });
 

@@ -70,18 +70,19 @@ class BtcMessageManager {
   ): MessageHandler {
 
     // 使用 Element Plus 原生功能创建消息，完全手动控制生命周期
+    // 使用类型断言解决 Element Plus 类型定义问题
     const messageInstance = ElMessage({
-      message: content,
-      type: type,
-      duration: 0, // 手动控制生命周期
-      showClose: false, // BtcMessage 不需要关闭按钮
-      dangerouslyUseHTMLString: options.dangerouslyUseHTMLString,
-      grouping: false, // 手动管理，不使用自动合并
-      repeatNum: 1, // 初始值
-      onClose: () => {
+      message: content as any,
+      type: type as any,
+      duration: 0 as any, // 手动控制生命周期
+      showClose: false as any, // BtcMessage 不需要关闭按钮
+      dangerouslyUseHTMLString: options.dangerouslyUseHTMLString as any,
+      grouping: false as any, // 手动管理，不使用自动合并
+      repeatNum: 1 as any, // 初始值
+      onClose: (() => {
         // 清理状态
         this.handleMessageClose(key);
-      },
+      }) as any,
     });
 
     const messageState: MessageState = {

@@ -80,7 +80,6 @@ const props = withDefaults(defineProps<BtcColorPickerProps>(), {
   placeholder: '选择颜色',
   teleported: false,
   popperClass: '',
-  popperStyle: undefined,
   triggerSize: 'default',
   triggerType: 'default',
   immediate: false,

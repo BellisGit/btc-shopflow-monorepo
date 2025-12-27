@@ -7,7 +7,7 @@ import { requestAdapter } from '@/utils/requestAdapter';
 import type {
   LoginResponse,
   CaptchaResponse,
-  HealthCheckResponse,
+  UserCheckResponse,
   VerifyCodeRequest,
   LoginRequest,
   SmsLoginRequest,
@@ -54,11 +54,11 @@ export const authApi = {
   },
 
   /**
-   * 健康检查
-   * @returns 健康状态信息
+   * 用户检查（检查用户登录状态，不属于 EPS 请求）
+   * @returns 用户状态信息
    */
-  healthCheck(): Promise<HealthCheckResponse> {
-    return requestAdapter.get(`${baseUrl}/health`);
+  userCheck(): Promise<UserCheckResponse> {
+    return requestAdapter.get(`${baseUrl}/user-check`);
   },
 
   /**

@@ -190,19 +190,33 @@ function getAllFiles(dir, baseDir = dir) {
  * 上传应用构建产物
  */
 async function uploadApp(client, appName) {
-  // 确定构建产物目录
-  let distDir = resolve(projectRoot, 'apps', appName, 'dist');
+  // 支持 dist 和 dist-cdn 两种输出目录
+  // 优先检查 dist-cdn（CDN构建模式），如果不存在则使用 dist（本地构建模式）
+  let distDir = resolve(projectRoot, 'apps', appName, 'dist-cdn');
+  let distType = 'dist-cdn';
   
-  // docs-app 特殊处理：VitePress 构建产物在 .vitepress/dist
+  // docs-app 特殊处理：VitePress 构建产物在 .vitepress/dist 或 .vitepress/dist-cdn
   if (appName === 'docs-app') {
+    const vitepressDistCdn = resolve(projectRoot, 'apps', appName, '.vitepress', 'dist-cdn');
     const vitepressDist = resolve(projectRoot, 'apps', appName, '.vitepress', 'dist');
-    if (existsSync(vitepressDist)) {
+    if (existsSync(vitepressDistCdn)) {
+      distDir = vitepressDistCdn;
+      distType = 'dist-cdn';
+    } else if (existsSync(vitepressDist)) {
       distDir = vitepressDist;
+      distType = 'dist';
+    }
+  } else {
+    // 其他应用：优先使用 dist-cdn，如果不存在则回退到 dist
+    if (!existsSync(distDir)) {
+      distDir = resolve(projectRoot, 'apps', appName, 'dist');
+      distType = 'dist';
     }
   }
   
   if (!existsSync(distDir)) {
-    console.error(`❌ 错误：${appName} 的构建产物目录不存在: ${distDir}`);
+    console.error(`❌ 错误：${appName} 的构建产物目录不存在`);
+    console.error(`   已检查: apps/${appName}/dist-cdn 和 apps/${appName}/dist`);
     console.error(`   请先执行构建: pnpm build:${appName.replace('-app', '')}`);
     return { success: false, uploaded: 0, skipped: 0, total: 0 };
   }

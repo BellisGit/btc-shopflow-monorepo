@@ -2,105 +2,1171 @@
 finance-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/22 10:16:39
-总错误数: 12
+生成时间: 2025/12/24 19:45:07
+总错误数: 132
 
 按错误代码分类:
 ------------------------------------------------------------
-  TS6307    : 12 个
+  TS6133    : 32 个
+  TS2614    : 27 个
+  TS2345    : 17 个
+  TS2322    : 12 个
+  TS18048   : 9 个
+  TS2538    : 8 个
+  TS2375    : 6 个
+  TS2379    : 5 个
+  TS2412    : 5 个
+  TS2305    : 3 个
+  TS2769    : 3 个
+  TS2532    : 3 个
+  TS6196    : 1 个
+  TS7016    : 1 个
 
 按文件分类:
 ------------------------------------------------------------
 
+文件: src/bootstrap/index.ts
+  错误数: 14
+    [TS2614] 行 9:15 - error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
+    [TS2614] 行 11:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'setupSubAppGlobals'. Did you mean to use 'import setupSubAppGlobals from "@btc/shared-core"' instead?
+    [TS2614] 行 12:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'createSubApp'. Did you mean to use 'import createSubApp from "@btc/shared-core"' instead?
+    [TS2614] 行 13:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'mountSubApp'. Did you mean to use 'import mountSubApp from "@btc/shared-core"' instead?
+    [TS2614] 行 14:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'unmountSubApp'. Did you mean to use 'import unmountSubApp from "@btc/shared-core"' instead?
+    [TS2614] 行 15:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'updateSubApp'. Did you mean to use 'import updateSubApp from "@btc/shared-core"' instead?
+    [TS2614] 行 16:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'setupRouteSync'. Did you mean to use 'import setupRouteSync from "@btc/shared-core"' instead?
+    [TS2614] 行 17:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'setupHostLocationBridge'. Did you mean to use 'import setupHostLocationBridge from "@btc/shared-core"' instead?
+    [TS2614] 行 18:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'setupEventBridge'. Did you mean to use 'import setupEventBridge from "@btc/shared-core"' instead?
+    [TS2614] 行 19:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'ensureCleanUrl'. Did you mean to use 'import ensureCleanUrl from "@btc/shared-core"' instead?
+    [TS2614] 行 20:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'setupStandalonePlugins'. Did you mean to use 'import setupStandalonePlugins from "@btc/shared-core"' instead?
+    [TS2614] 行 21:3 - error TS2614: Module '"@btc/shared-core"' has no exported member 'createLogoutFunction'. Did you mean to use 'import createLogoutFunction from "@btc/shared-core"' instead?
+    [TS2614] 行 22:8 - error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppContext'. Did you mean to use 'import SubAppContext from "@btc/shared-core"' instead?
+    [TS2614] 行 23:8 - error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppOptions'. Did you mean to use 'import SubAppOptions from "@btc/shared-core"' instead?
+
+文件: src/utils/app-storage.ts
+  错误数: 7
+    [TS6133] 行 6:32 - error TS6133: 'syncSettingsFromCookie' is declared but its value is never read.
+    [TS6133] 行 6:56 - error TS6133: 'syncUserToCookie' is declared but its value is never read.
+    [TS6133] 行 10:7 - error TS6133: 'getSettingsFromCookie' is declared but its value is never read.
+    [TS6133] 行 50:7 - error TS6133: 'setItem' is declared but its value is never read.
+    [TS2379] 行 129:32 - error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    [TS6133] 行 242:8 - error TS6133: 'version' is declared but its value is never read.
+    [TS6133] 行 255:16 - error TS6133: 'token' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  错误数: 5
+    [TS2614] 行 2:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'useBtcForm'. Did you mean to use 'import useBtcForm from "@btc/shared-core"' instead?
+    [TS2614] 行 2:22 - error TS2614: Module '"@btc/shared-core"' has no exported member 'useTabs'. Did you mean to use 'import useTabs from "@btc/shared-core"' instead?
+    [TS2614] 行 2:31 - error TS2614: Module '"@btc/shared-core"' has no exported member 'useAction'. Did you mean to use 'import useAction from "@btc/shared-core"' instead?
+    [TS2614] 行 2:42 - error TS2614: Module '"@btc/shared-core"' has no exported member 'useElApi'. Did you mean to use 'import useElApi from "@btc/shared-core"' instead?
+    [TS2614] 行 2:52 - error TS2614: Module '"@btc/shared-core"' has no exported member 'usePlugins'. Did you mean to use 'import usePlugins from "@btc/shared-core"' instead?
+
+文件: ../../packages/shared-components/src/charts/utils/color.ts
+  错误数: 4
+    [TS2345] 行 12:21 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 13:21 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 14:21 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2322] 行 97:3 - error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+
+文件: ../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts
+  错误数: 4
+    [TS18048] 行 164:20 - error TS18048: 'angle' is possibly 'undefined'.
+    [TS18048] 行 190:56 - error TS18048: 'angle' is possibly 'undefined'.
+    [TS18048] 行 203:20 - error TS18048: 'angle' is possibly 'undefined'.
+    [TS18048] 行 223:31 - error TS18048: 'currentAngle' is possibly 'undefined'.
+
+文件: ../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts
+  错误数: 4
+    [TS18048] 行 185:13 - error TS18048: 'key' is possibly 'undefined'.
+    [TS2538] 行 186:17 - error TS2538: Type 'undefined' cannot be used as an index type.
+    [TS2538] 行 188:25 - error TS2538: Type 'undefined' cannot be used as an index type.
+    [TS2538] 行 191:13 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+文件: ../../packages/shared-components/src/charts/utils/css-var.ts
+  错误数: 3
+    [TS2345] 行 28:22 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 29:22 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 30:22 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+文件: ../../packages/shared-components/src/charts/utils/theme.ts
+  错误数: 3
+    [TS2345] 行 19:22 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 19:50 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 19:78 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+文件: ../../packages/shared-components/src/common/form/composables/useFormItems.ts
+  错误数: 3
+    [TS2538] 行 52:14 - error TS2538: Type 'undefined' cannot be used as an index type.
+    [TS2538] 行 53:11 - error TS2538: Type 'undefined' cannot be used as an index type.
+    [TS2538] 行 56:22 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts
+  错误数: 3
+    [TS2345] 行 27:24 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 28:24 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 29:24 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts
+  错误数: 3
+    [TS2532] 行 65:23 - error TS2532: Object is possibly 'undefined'.
+    [TS2532] 行 66:22 - error TS2532: Object is possibly 'undefined'.
+    [TS6133] 行 148:56 - error TS6133: 'appId' is declared but its value is never read.
+
+文件: ../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts
+  错误数: 3
+    [TS2345] 行 181:31 - error-monitor/errorMonitorCore.ts(181,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 182:32 - error-monitor/errorMonitorCore.ts(182,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS2345] 行 183:30 - error-monitor/errorMonitorCore.ts(183,30): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+文件: ../../packages/shared-utils/src/http/index.ts
+  错误数: 3
+    [TS2412] 行 224:5 - error TS2412: Type 'undefined' is not assignable to type 'MessageHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+    [TS2412] 行 225:5 - error TS2412: Type 'undefined' is not assignable to type 'ConfirmHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+    [TS2412] 行 226:5 - error TS2412: Type 'undefined' is not assignable to type 'RouterHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+文件: ../../packages/shared-utils/src/qiankun/load-layout-app.ts
+  错误数: 3
+    [TS6133] 行 619:21 - error TS6133: 'originalFileUrl' is declared but its value is never read.
+    [TS18048] 行 884:37 - error TS18048: 'fileName' is possibly 'undefined'.
+    [TS18048] 行 884:70 - error TS18048: 'fileName' is possibly 'undefined'.
+
+文件: src/modules/inventory/views/result/composables/useFinanceInventoryExport.ts
+  错误数: 2
+    [TS6133] 行 1:1 - error TS6133: 'ref' is declared but its value is never read.
+    [TS6133] 行 12:9 - error TS6133: 'variancePercent' is declared but its value is never read.
+
+文件: src/modules/inventory/views/result/composables/useFinanceInventoryService.ts
+  错误数: 2
+    [TS2614] 行 1:15 - error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+    [TS2614] 行 2:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'createCrudServiceFromEps'. Did you mean to use 'import createCrudServiceFromEps from "@btc/shared-core"' instead?
+
+文件: ../../configs/vite/plugins/public-images.ts
+  错误数: 2
+    [TS2769] 行 266:82 - error TS2769: No overload matches this call.
+    [TS2769] 行 395:84 - error TS2769: No overload matches this call.
+
+文件: ../../packages/shared-components/src/charts/kline/basic/composables/useKLineChart.ts
+  错误数: 2
+    [TS6133] 行 4:1 - error TS6133: 'getThemeColors' is declared but its value is never read.
+    [TS2375] 行 21:11 - error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: boolean; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; }; ... 4 more ...; series: any; }' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-components/src/charts/line/basic/composables/useLineChart.ts
+  错误数: 2
+    [TS6133] 行 13:3 - error TS6133: 'isDark' is declared but its value is never read.
+    [TS2375] 行 21:11 - error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: true; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; } | undefined; grid: GridConfig; xAxis: any; yAxis: any...' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-components/src/common/form/composables/useFormItemActions.ts
+  错误数: 2
+    [TS2538] 行 43:25 - error TS2538: Type 'undefined' cannot be used as an index type.
+    [TS2538] 行 46:14 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+文件: ../../packages/shared-components/src/components/feedback/btc-notification/notification-manager.ts
+  错误数: 2
+    [TS2322] 行 80:7 - error TS2322: Type 'number' is not assignable to type 'EpPropFinalized<NumberConstructor, unknown, unknown, 4500, boolean>'.
+    [TS2322] 行 81:7 - error TS2322: Type 'boolean' is not assignable to type 'EpPropFinalized<BooleanConstructor, unknown, unknown, true, boolean>'.
+
+文件: ../../packages/shared-components/src/crud/upsert/composables/usePlugins.ts
+  错误数: 2
+    [TS18048] 行 67:15 - error TS18048: 'p' is possibly 'undefined'.
+    [TS18048] 行 68:13 - error TS18048: 'p' is possibly 'undefined'.
+
+文件: ../../packages/shared-components/src/utils/mount-dev-tools.ts
+  错误数: 2
+    [TS6133] 行 14:28 - error TS6133: 'data' is declared but its value is never read.
+    [TS6133] 行 48:19 - error TS6133: 'err' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/btc/utils/resource-loader.ts
+  错误数: 2
+    [TS6133] 行 486:11 - error TS6133: 'isModule' is declared but its value is never read.
+    [TS6133] 行 600:36 - error TS6133: 'options' is declared but its value is never read.
+
+文件: ../../packages/shared-utils/src/array/index.ts
+  错误数: 2
+    [TS2322] 行 137:6 - error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+    [TS2322] 行 137:17 - error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+
+文件: ../../packages/shared-utils/src/storage/cross-domain.ts
+  错误数: 2
+    [TS2379] 行 263:39 - error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    [TS2379] 行 269:35 - error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: src/bootstrap/core/i18n.ts
+  错误数: 1
+    [TS2614] 行 2:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'createI18nPlugin'. Did you mean to use 'import createI18nPlugin from "@btc/shared-core"' instead?
+
+文件: src/bootstrap/core/ui.ts
+  错误数: 1
+    [TS2614] 行 3:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'createThemePlugin'. Did you mean to use 'import createThemePlugin from "@btc/shared-core"' instead?
+
+文件: src/main.ts
+  错误数: 1
+    [TS2614] 行 5:15 - error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
+
+文件: src/plugins/echarts/config.ts
+  错误数: 1
+    [TS2305] 行 4:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+文件: src/router/index.ts
+  错误数: 1
+    [TS6133] 行 49:31 - error TS6133: 'from' is declared but its value is never read.
+
+文件: src/services/eps.ts
+  错误数: 1
+    [TS2614] 行 2:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'loadEpsService'. Did you mean to use 'import loadEpsService from "@btc/shared-core"' instead?
+
+文件: src/store/index.ts
+  错误数: 1
+    [TS2614] 行 2:10 - error TS2614: Module '"@btc/shared-core"' has no exported member 'useThemeStore'. Did you mean to use 'import useThemeStore from "@btc/shared-core"' instead?
+
 文件: ../../configs/app-scanner.ts
-  错误数: 12
-    [TS6307] 行 11:30 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/admin-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 12:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 13:32 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 14:35 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/production-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 15:36 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 17:35 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 18:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 19:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 20:29 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 21:31 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 22:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-    [TS6307] 行 23:34 - error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  错误数: 1
+    [TS2322] 行 64:18 - error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+
+文件: ../../configs/vite/build/rollup.config.ts
+  错误数: 1
+    [TS6133] 行 38:9 - error TS6133: 'externalSingleSpa' is declared but its value is never read.
+
+文件: ../../configs/vite/factories/mainapp.config.ts
+  错误数: 1
+    [TS2375] 行 439:3 - error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | undefined; plugins: (Plugin<...> | Plugin<...>[])[]; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../configs/vite/factories/subapp.config.ts
+  错误数: 1
+    [TS2375] 行 472:3 - error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | { alias: any; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; } | undefined; ... 6 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../configs/vite/plugins/duty-static.ts
+  错误数: 1
+    [TS2322] 行 120:9 - error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+
+文件: ../../configs/vite/plugins/dynamic-import-cdn.ts
+  错误数: 1
+    [TS6133] 行 114:15 - error TS6133: 'isLayoutResource' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/charts/bar/basic/composables/useBarChart.ts
+  错误数: 1
+    [TS6133] 行 13:3 - error TS6133: 'isDark' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/charts/bar/dual-compare/composables/useDualBarCompareChart.ts
+  错误数: 1
+    [TS6133] 行 12:3 - error TS6133: 'isDark' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/charts/bar/horizontal/composables/useHBarChart.ts
+  错误数: 1
+    [TS6133] 行 13:3 - error TS6133: 'isDark' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/charts/composables/useChart.ts
+  错误数: 1
+    [TS6133] 行 384:9 - error TS6133: '_hasParentSize' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/charts/radar/basic/composables/useRadarChart.ts
+  错误数: 1
+    [TS2322] 行 86:7 - error TS2322: Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }[]' is not assignable to type 'SeriesOption | SeriesOption[]'.
+
+文件: ../../packages/shared-components/src/charts/scatter/basic/composables/useScatterChart.ts
+  错误数: 1
+    [TS6133] 行 12:3 - error TS6133: 'isDark' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/common/dialog/index.tsx
+  错误数: 1
+    [TS6133] 行 1:27 - error TS6133: 'h' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/common/view-group/composables/useViewGroupActions.ts
+  错误数: 1
+    [TS2305] 行 7:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcConfirm'.
+
+文件: ../../packages/shared-components/src/components/data/btc-transfer-drawer/types.ts
+  错误数: 1
+    [TS6196] 行 1:48 - error TS6196: 'SelectedItemDisplay' is declared but never used.
+
+文件: ../../packages/shared-components/src/components/data/btc-transfer-panel/types.ts
+  错误数: 1
+    [TS2614] 行 2:15 - error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+
+文件: ../../packages/shared-components/src/components/layout/app-layout/global-search/useSearchIndex.ts
+  错误数: 1
+    [TS7016] 行 2:18 - error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+
+文件: ../../packages/shared-components/src/composables/useCurrentApp.ts
+  错误数: 1
+    [TS6133] 行 104:11 - error TS6133: 'checkHostname' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/crud/table/composables/useTableColumns.ts
+  错误数: 1
+    [TS2532] 行 60:23 - error TS2532: Object is possibly 'undefined'.
+
+文件: ../../packages/shared-components/src/crud/table/composables/useTableSort.ts
+  错误数: 1
+    [TS6133] 行 87:23 - error TS6133: 'prop' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/crud/upsert/composables/useFormData.ts
+  错误数: 1
+    [TS2305] 行 4:10 - error TS2305: Module '"@btc/shared-components"' has no exported member 'useFormRenderer'.
+
+文件: ../../packages/shared-components/src/utils/mitt.ts
+  错误数: 1
+    [TS2412] 行 131:5 - error TS2412: Type 'number | undefined' is not assignable to type 'number' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+文件: ../../packages/shared-core/src/btc/composables/useTheme.ts
+  错误数: 1
+    [TS2345] 行 67:5 - error TS2345: Argument of type 'ThemeConfig | undefined' is not assignable to parameter of type 'ThemeConfig'.
+
+文件: ../../packages/shared-core/src/btc/plugins/i18n/type-safe.ts
+  错误数: 1
+    [TS2345] 行 139:35 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+文件: ../../packages/shared-core/src/btc/plugins/manager/config-helper.ts
+  错误数: 1
+    [TS2379] 行 68:29 - error TS2379: Argument of type '{ label: string; description: string; author: string; version: string; updateTime: string | undefined; category: string; tags: string[]; }' is not assignable to parameter of type 'PluginMetadata' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-core/src/btc/plugins/manager/resource-loader.ts
+  错误数: 1
+    [TS2322] 行 120:20 - error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+
+文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeMigration.ts
+  错误数: 1
+    [TS2322] 行 68:3 - error TS2322: Type 'ThemeConfig | undefined' is not assignable to type 'ThemeConfig'.
+
+文件: ../../packages/shared-core/src/btc/utils/dynamic-import-interceptor.ts
+  错误数: 1
+    [TS2375] 行 202:9 - error TS2375: Type '{ appName: string; timeout: number | undefined; cdnDomain: string | undefined; ossDomain: string | undefined; }' is not assignable to type 'ResourceLoaderOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-core/src/composables/form-helpers/action.ts
+  错误数: 1
+    [TS6133] 行 3:43 - error TS6133: 'Form' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppGlobals.ts
+  错误数: 1
+    [TS6133] 行 22:18 - error TS6133: 'basePath' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  错误数: 1
+    [TS2412] 行 493:5 - error TS2412: Type 'undefined' is not assignable to type '() => void' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts
+  错误数: 1
+    [TS6133] 行 7:62 - error TS6133: 'appId' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppTabbar.ts
+  错误数: 1
+    [TS6133] 行 14:41 - error TS6133: 'appId' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/utils/menu-icon-assigner.ts
+  错误数: 1
+    [TS2322] 行 351:3 - error TS2322: Type '{ icon: string; children: { index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[] | undefined; index: string; labelKey?: string; label?: string; }[]' is not assignable to type '{ index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[]'.
+
+文件: ../../packages/shared-utils/src/eps/load-global-eps.ts
+  错误数: 1
+    [TS6133] 行 39:11 - error TS6133: 'epsServiceUrl' is declared but its value is never read.
+
+文件: ../../packages/shared-utils/src/error-monitor/formatError.ts
+  错误数: 1
+    [TS2375] 行 35:3 - error-monitor/formatError.ts(35,3): error TS2375: Type '{ id: string; type: string; message: string; source: string; stack: string; url: string; time: string; isWarning: boolean; lineno: number | undefined; colno: number | undefined; }' is not assignable to type 'FormattedError' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-utils/src/error-monitor/subappErrorCapture.ts
+  错误数: 1
+    [TS2379] 行 36:17 - error-monitor/subappErrorCapture.ts(36,17): error TS2379: Argument of type '{ type: string; message: string; source: string; stack: string; url: string; lineno: number | undefined; colno: number | undefined; }' is not assignable to parameter of type 'ErrorInfo' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../packages/shared-utils/src/string/index.ts
+  错误数: 1
+    [TS2769] 行 82:44 - error TS2769: No overload matches this call.
+
+文件: ../../packages/subapp-manifests/src/index.ts
+  错误数: 1
+    [TS2322] 行 103:3 - error TS2322: Type '{ key: string; path: string; labelKey: string | undefined; label: string | undefined; }[]' is not assignable to type '{ key: string; path: string; labelKey?: string; label?: string; }[]'.
 
 详细错误列表:
 ------------------------------------------------------------
 
 错误 #1
-  文件: ../../configs/app-scanner.ts
-  位置: 11:30
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/admin-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/core/i18n.ts
+  位置: 2:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'createI18nPlugin'. Did you mean to use 'import createI18nPlugin from "@btc/shared-core"' instead?
 
 错误 #2
-  文件: ../../configs/app-scanner.ts
-  位置: 12:34
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/core/ui.ts
+  位置: 3:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'createThemePlugin'. Did you mean to use 'import createThemePlugin from "@btc/shared-core"' instead?
 
 错误 #3
-  文件: ../../configs/app-scanner.ts
-  位置: 13:32
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 9:15
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
 
 错误 #4
-  文件: ../../configs/app-scanner.ts
-  位置: 14:35
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/production-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 11:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'setupSubAppGlobals'. Did you mean to use 'import setupSubAppGlobals from "@btc/shared-core"' instead?
 
 错误 #5
-  文件: ../../configs/app-scanner.ts
-  位置: 15:36
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 12:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'createSubApp'. Did you mean to use 'import createSubApp from "@btc/shared-core"' instead?
 
 错误 #6
-  文件: ../../configs/app-scanner.ts
-  位置: 17:35
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 13:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'mountSubApp'. Did you mean to use 'import mountSubApp from "@btc/shared-core"' instead?
 
 错误 #7
-  文件: ../../configs/app-scanner.ts
-  位置: 18:31
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 14:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'unmountSubApp'. Did you mean to use 'import unmountSubApp from "@btc/shared-core"' instead?
 
 错误 #8
-  文件: ../../configs/app-scanner.ts
-  位置: 19:31
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 15:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'updateSubApp'. Did you mean to use 'import updateSubApp from "@btc/shared-core"' instead?
 
 错误 #9
-  文件: ../../configs/app-scanner.ts
-  位置: 20:29
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 16:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'setupRouteSync'. Did you mean to use 'import setupRouteSync from "@btc/shared-core"' instead?
 
 错误 #10
-  文件: ../../configs/app-scanner.ts
-  位置: 21:31
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 17:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'setupHostLocationBridge'. Did you mean to use 'import setupHostLocationBridge from "@btc/shared-core"' instead?
 
 错误 #11
-  文件: ../../configs/app-scanner.ts
-  位置: 22:34
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  文件: src/bootstrap/index.ts
+  位置: 18:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'setupEventBridge'. Did you mean to use 'import setupEventBridge from "@btc/shared-core"' instead?
 
 错误 #12
+  文件: src/bootstrap/index.ts
+  位置: 19:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'ensureCleanUrl'. Did you mean to use 'import ensureCleanUrl from "@btc/shared-core"' instead?
+
+错误 #13
+  文件: src/bootstrap/index.ts
+  位置: 20:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'setupStandalonePlugins'. Did you mean to use 'import setupStandalonePlugins from "@btc/shared-core"' instead?
+
+错误 #14
+  文件: src/bootstrap/index.ts
+  位置: 21:3
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'createLogoutFunction'. Did you mean to use 'import createLogoutFunction from "@btc/shared-core"' instead?
+
+错误 #15
+  文件: src/bootstrap/index.ts
+  位置: 22:8
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppContext'. Did you mean to use 'import SubAppContext from "@btc/shared-core"' instead?
+
+错误 #16
+  文件: src/bootstrap/index.ts
+  位置: 23:8
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppOptions'. Did you mean to use 'import SubAppOptions from "@btc/shared-core"' instead?
+
+错误 #17
+  文件: src/main.ts
+  位置: 5:15
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
+
+错误 #18
+  文件: src/modules/inventory/views/result/composables/useFinanceInventoryExport.ts
+  位置: 1:1
+  代码: TS6133
+  消息: error TS6133: 'ref' is declared but its value is never read.
+
+错误 #19
+  文件: src/modules/inventory/views/result/composables/useFinanceInventoryExport.ts
+  位置: 12:9
+  代码: TS6133
+  消息: error TS6133: 'variancePercent' is declared but its value is never read.
+
+错误 #20
+  文件: src/modules/inventory/views/result/composables/useFinanceInventoryService.ts
+  位置: 1:15
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+
+错误 #21
+  文件: src/modules/inventory/views/result/composables/useFinanceInventoryService.ts
+  位置: 2:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'createCrudServiceFromEps'. Did you mean to use 'import createCrudServiceFromEps from "@btc/shared-core"' instead?
+
+错误 #22
+  文件: src/plugins/echarts/config.ts
+  位置: 4:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+
+错误 #23
+  文件: src/router/index.ts
+  位置: 49:31
+  代码: TS6133
+  消息: error TS6133: 'from' is declared but its value is never read.
+
+错误 #24
+  文件: src/services/eps.ts
+  位置: 2:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'loadEpsService'. Did you mean to use 'import loadEpsService from "@btc/shared-core"' instead?
+
+错误 #25
+  文件: src/store/index.ts
+  位置: 2:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'useThemeStore'. Did you mean to use 'import useThemeStore from "@btc/shared-core"' instead?
+
+错误 #26
+  文件: src/utils/app-storage.ts
+  位置: 6:32
+  代码: TS6133
+  消息: error TS6133: 'syncSettingsFromCookie' is declared but its value is never read.
+
+错误 #27
+  文件: src/utils/app-storage.ts
+  位置: 6:56
+  代码: TS6133
+  消息: error TS6133: 'syncUserToCookie' is declared but its value is never read.
+
+错误 #28
+  文件: src/utils/app-storage.ts
+  位置: 10:7
+  代码: TS6133
+  消息: error TS6133: 'getSettingsFromCookie' is declared but its value is never read.
+
+错误 #29
+  文件: src/utils/app-storage.ts
+  位置: 50:7
+  代码: TS6133
+  消息: error TS6133: 'setItem' is declared but its value is never read.
+
+错误 #30
+  文件: src/utils/app-storage.ts
+  位置: 129:32
+  代码: TS2379
+  消息: error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #31
+  文件: src/utils/app-storage.ts
+  位置: 242:8
+  代码: TS6133
+  消息: error TS6133: 'version' is declared but its value is never read.
+
+错误 #32
+  文件: src/utils/app-storage.ts
+  位置: 255:16
+  代码: TS6133
+  消息: error TS6133: 'token' is declared but its value is never read.
+
+错误 #33
   文件: ../../configs/app-scanner.ts
-  位置: 23:34
-  代码: TS6307
-  消息: error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+  位置: 64:18
+  代码: TS2322
+  消息: error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+
+错误 #34
+  文件: ../../configs/vite/build/rollup.config.ts
+  位置: 38:9
+  代码: TS6133
+  消息: error TS6133: 'externalSingleSpa' is declared but its value is never read.
+
+错误 #35
+  文件: ../../configs/vite/factories/mainapp.config.ts
+  位置: 439:3
+  代码: TS2375
+  消息: error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | undefined; plugins: (Plugin<...> | Plugin<...>[])[]; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #36
+  文件: ../../configs/vite/factories/subapp.config.ts
+  位置: 472:3
+  代码: TS2375
+  消息: error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | { alias: any; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; } | undefined; ... 6 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #37
+  文件: ../../configs/vite/plugins/duty-static.ts
+  位置: 120:9
+  代码: TS2322
+  消息: error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+
+错误 #38
+  文件: ../../configs/vite/plugins/dynamic-import-cdn.ts
+  位置: 114:15
+  代码: TS6133
+  消息: error TS6133: 'isLayoutResource' is declared but its value is never read.
+
+错误 #39
+  文件: ../../configs/vite/plugins/public-images.ts
+  位置: 266:82
+  代码: TS2769
+  消息: error TS2769: No overload matches this call.
+
+错误 #40
+  文件: ../../configs/vite/plugins/public-images.ts
+  位置: 395:84
+  代码: TS2769
+  消息: error TS2769: No overload matches this call.
+
+错误 #41
+  文件: ../../packages/shared-components/src/charts/bar/basic/composables/useBarChart.ts
+  位置: 13:3
+  代码: TS6133
+  消息: error TS6133: 'isDark' is declared but its value is never read.
+
+错误 #42
+  文件: ../../packages/shared-components/src/charts/bar/dual-compare/composables/useDualBarCompareChart.ts
+  位置: 12:3
+  代码: TS6133
+  消息: error TS6133: 'isDark' is declared but its value is never read.
+
+错误 #43
+  文件: ../../packages/shared-components/src/charts/bar/horizontal/composables/useHBarChart.ts
+  位置: 13:3
+  代码: TS6133
+  消息: error TS6133: 'isDark' is declared but its value is never read.
+
+错误 #44
+  文件: ../../packages/shared-components/src/charts/composables/useChart.ts
+  位置: 384:9
+  代码: TS6133
+  消息: error TS6133: '_hasParentSize' is declared but its value is never read.
+
+错误 #45
+  文件: ../../packages/shared-components/src/charts/kline/basic/composables/useKLineChart.ts
+  位置: 4:1
+  代码: TS6133
+  消息: error TS6133: 'getThemeColors' is declared but its value is never read.
+
+错误 #46
+  文件: ../../packages/shared-components/src/charts/kline/basic/composables/useKLineChart.ts
+  位置: 21:11
+  代码: TS2375
+  消息: error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: boolean; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; }; ... 4 more ...; series: any; }' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #47
+  文件: ../../packages/shared-components/src/charts/line/basic/composables/useLineChart.ts
+  位置: 13:3
+  代码: TS6133
+  消息: error TS6133: 'isDark' is declared but its value is never read.
+
+错误 #48
+  文件: ../../packages/shared-components/src/charts/line/basic/composables/useLineChart.ts
+  位置: 21:11
+  代码: TS2375
+  消息: error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: true; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; } | undefined; grid: GridConfig; xAxis: any; yAxis: any...' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #49
+  文件: ../../packages/shared-components/src/charts/radar/basic/composables/useRadarChart.ts
+  位置: 86:7
+  代码: TS2322
+  消息: error TS2322: Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }[]' is not assignable to type 'SeriesOption | SeriesOption[]'.
+
+错误 #50
+  文件: ../../packages/shared-components/src/charts/scatter/basic/composables/useScatterChart.ts
+  位置: 12:3
+  代码: TS6133
+  消息: error TS6133: 'isDark' is declared but its value is never read.
+
+错误 #51
+  文件: ../../packages/shared-components/src/charts/utils/color.ts
+  位置: 12:21
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #52
+  文件: ../../packages/shared-components/src/charts/utils/color.ts
+  位置: 13:21
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #53
+  文件: ../../packages/shared-components/src/charts/utils/color.ts
+  位置: 14:21
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #54
+  文件: ../../packages/shared-components/src/charts/utils/color.ts
+  位置: 97:3
+  代码: TS2322
+  消息: error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+
+错误 #55
+  文件: ../../packages/shared-components/src/charts/utils/css-var.ts
+  位置: 28:22
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #56
+  文件: ../../packages/shared-components/src/charts/utils/css-var.ts
+  位置: 29:22
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #57
+  文件: ../../packages/shared-components/src/charts/utils/css-var.ts
+  位置: 30:22
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #58
+  文件: ../../packages/shared-components/src/charts/utils/theme.ts
+  位置: 19:22
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #59
+  文件: ../../packages/shared-components/src/charts/utils/theme.ts
+  位置: 19:50
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #60
+  文件: ../../packages/shared-components/src/charts/utils/theme.ts
+  位置: 19:78
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #61
+  文件: ../../packages/shared-components/src/common/dialog/index.tsx
+  位置: 1:27
+  代码: TS6133
+  消息: error TS6133: 'h' is declared but its value is never read.
+
+错误 #62
+  文件: ../../packages/shared-components/src/common/form/composables/useFormItemActions.ts
+  位置: 43:25
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #63
+  文件: ../../packages/shared-components/src/common/form/composables/useFormItemActions.ts
+  位置: 46:14
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #64
+  文件: ../../packages/shared-components/src/common/form/composables/useFormItems.ts
+  位置: 52:14
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #65
+  文件: ../../packages/shared-components/src/common/form/composables/useFormItems.ts
+  位置: 53:11
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #66
+  文件: ../../packages/shared-components/src/common/form/composables/useFormItems.ts
+  位置: 56:22
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #67
+  文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  位置: 2:10
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'useBtcForm'. Did you mean to use 'import useBtcForm from "@btc/shared-core"' instead?
+
+错误 #68
+  文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  位置: 2:22
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'useTabs'. Did you mean to use 'import useTabs from "@btc/shared-core"' instead?
+
+错误 #69
+  文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  位置: 2:31
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'useAction'. Did you mean to use 'import useAction from "@btc/shared-core"' instead?
+
+错误 #70
+  文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  位置: 2:42
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'useElApi'. Did you mean to use 'import useElApi from "@btc/shared-core"' instead?
+
+错误 #71
+  文件: ../../packages/shared-components/src/common/form/composables/useFormSetup.ts
+  位置: 2:52
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'usePlugins'. Did you mean to use 'import usePlugins from "@btc/shared-core"' instead?
+
+错误 #72
+  文件: ../../packages/shared-components/src/common/view-group/composables/useViewGroupActions.ts
+  位置: 7:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcConfirm'.
+
+错误 #73
+  文件: ../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts
+  位置: 164:20
+  代码: TS18048
+  消息: error TS18048: 'angle' is possibly 'undefined'.
+
+错误 #74
+  文件: ../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts
+  位置: 190:56
+  代码: TS18048
+  消息: error TS18048: 'angle' is possibly 'undefined'.
+
+错误 #75
+  文件: ../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts
+  位置: 203:20
+  代码: TS18048
+  消息: error TS18048: 'angle' is possibly 'undefined'.
+
+错误 #76
+  文件: ../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts
+  位置: 223:31
+  代码: TS18048
+  消息: error TS18048: 'currentAngle' is possibly 'undefined'.
+
+错误 #77
+  文件: ../../packages/shared-components/src/components/data/btc-transfer-drawer/types.ts
+  位置: 1:48
+  代码: TS6196
+  消息: error TS6196: 'SelectedItemDisplay' is declared but never used.
+
+错误 #78
+  文件: ../../packages/shared-components/src/components/data/btc-transfer-panel/types.ts
+  位置: 2:15
+  代码: TS2614
+  消息: error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+
+错误 #79
+  文件: ../../packages/shared-components/src/components/feedback/btc-notification/notification-manager.ts
+  位置: 80:7
+  代码: TS2322
+  消息: error TS2322: Type 'number' is not assignable to type 'EpPropFinalized<NumberConstructor, unknown, unknown, 4500, boolean>'.
+
+错误 #80
+  文件: ../../packages/shared-components/src/components/feedback/btc-notification/notification-manager.ts
+  位置: 81:7
+  代码: TS2322
+  消息: error TS2322: Type 'boolean' is not assignable to type 'EpPropFinalized<BooleanConstructor, unknown, unknown, true, boolean>'.
+
+错误 #81
+  文件: ../../packages/shared-components/src/components/layout/app-layout/global-search/useSearchIndex.ts
+  位置: 2:18
+  代码: TS7016
+  消息: error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+
+错误 #82
+  文件: ../../packages/shared-components/src/composables/useCurrentApp.ts
+  位置: 104:11
+  代码: TS6133
+  消息: error TS6133: 'checkHostname' is declared but its value is never read.
+
+错误 #83
+  文件: ../../packages/shared-components/src/crud/table/composables/useTableColumns.ts
+  位置: 60:23
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #84
+  文件: ../../packages/shared-components/src/crud/table/composables/useTableSort.ts
+  位置: 87:23
+  代码: TS6133
+  消息: error TS6133: 'prop' is declared but its value is never read.
+
+错误 #85
+  文件: ../../packages/shared-components/src/crud/upsert/composables/useFormData.ts
+  位置: 4:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-components"' has no exported member 'useFormRenderer'.
+
+错误 #86
+  文件: ../../packages/shared-components/src/crud/upsert/composables/usePlugins.ts
+  位置: 67:15
+  代码: TS18048
+  消息: error TS18048: 'p' is possibly 'undefined'.
+
+错误 #87
+  文件: ../../packages/shared-components/src/crud/upsert/composables/usePlugins.ts
+  位置: 68:13
+  代码: TS18048
+  消息: error TS18048: 'p' is possibly 'undefined'.
+
+错误 #88
+  文件: ../../packages/shared-components/src/utils/mitt.ts
+  位置: 131:5
+  代码: TS2412
+  消息: error TS2412: Type 'number | undefined' is not assignable to type 'number' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+错误 #89
+  文件: ../../packages/shared-components/src/utils/mount-dev-tools.ts
+  位置: 14:28
+  代码: TS6133
+  消息: error TS6133: 'data' is declared but its value is never read.
+
+错误 #90
+  文件: ../../packages/shared-components/src/utils/mount-dev-tools.ts
+  位置: 48:19
+  代码: TS6133
+  消息: error TS6133: 'err' is declared but its value is never read.
+
+错误 #91
+  文件: ../../packages/shared-core/src/btc/composables/useTheme.ts
+  位置: 67:5
+  代码: TS2345
+  消息: error TS2345: Argument of type 'ThemeConfig | undefined' is not assignable to parameter of type 'ThemeConfig'.
+
+错误 #92
+  文件: ../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts
+  位置: 185:13
+  代码: TS18048
+  消息: error TS18048: 'key' is possibly 'undefined'.
+
+错误 #93
+  文件: ../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts
+  位置: 186:17
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #94
+  文件: ../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts
+  位置: 188:25
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #95
+  文件: ../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts
+  位置: 191:13
+  代码: TS2538
+  消息: error TS2538: Type 'undefined' cannot be used as an index type.
+
+错误 #96
+  文件: ../../packages/shared-core/src/btc/plugins/i18n/type-safe.ts
+  位置: 139:35
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #97
+  文件: ../../packages/shared-core/src/btc/plugins/manager/config-helper.ts
+  位置: 68:29
+  代码: TS2379
+  消息: error TS2379: Argument of type '{ label: string; description: string; author: string; version: string; updateTime: string | undefined; category: string; tags: string[]; }' is not assignable to parameter of type 'PluginMetadata' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #98
+  文件: ../../packages/shared-core/src/btc/plugins/manager/resource-loader.ts
+  位置: 120:20
+  代码: TS2322
+  消息: error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+
+错误 #99
+  文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts
+  位置: 27:24
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #100
+  文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts
+  位置: 28:24
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #101
+  文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts
+  位置: 29:24
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #102
+  文件: ../../packages/shared-core/src/btc/plugins/theme/composables/useThemeMigration.ts
+  位置: 68:3
+  代码: TS2322
+  消息: error TS2322: Type 'ThemeConfig | undefined' is not assignable to type 'ThemeConfig'.
+
+错误 #103
+  文件: ../../packages/shared-core/src/btc/utils/dynamic-import-interceptor.ts
+  位置: 202:9
+  代码: TS2375
+  消息: error TS2375: Type '{ appName: string; timeout: number | undefined; cdnDomain: string | undefined; ossDomain: string | undefined; }' is not assignable to type 'ResourceLoaderOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #104
+  文件: ../../packages/shared-core/src/btc/utils/resource-loader.ts
+  位置: 486:11
+  代码: TS6133
+  消息: error TS6133: 'isModule' is declared but its value is never read.
+
+错误 #105
+  文件: ../../packages/shared-core/src/btc/utils/resource-loader.ts
+  位置: 600:36
+  代码: TS6133
+  消息: error TS6133: 'options' is declared but its value is never read.
+
+错误 #106
+  文件: ../../packages/shared-core/src/composables/form-helpers/action.ts
+  位置: 3:43
+  代码: TS6133
+  消息: error TS6133: 'Form' is declared but its value is never read.
+
+错误 #107
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppGlobals.ts
+  位置: 22:18
+  代码: TS6133
+  消息: error TS6133: 'basePath' is declared but its value is never read.
+
+错误 #108
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  位置: 493:5
+  代码: TS2412
+  消息: error TS2412: Type 'undefined' is not assignable to type '() => void' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+错误 #109
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts
+  位置: 7:62
+  代码: TS6133
+  消息: error TS6133: 'appId' is declared but its value is never read.
+
+错误 #110
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts
+  位置: 65:23
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #111
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts
+  位置: 66:22
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #112
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts
+  位置: 148:56
+  代码: TS6133
+  消息: error TS6133: 'appId' is declared but its value is never read.
+
+错误 #113
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppTabbar.ts
+  位置: 14:41
+  代码: TS6133
+  消息: error TS6133: 'appId' is declared but its value is never read.
+
+错误 #114
+  文件: ../../packages/shared-core/src/utils/menu-icon-assigner.ts
+  位置: 351:3
+  代码: TS2322
+  消息: error TS2322: Type '{ icon: string; children: { index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[] | undefined; index: string; labelKey?: string; label?: string; }[]' is not assignable to type '{ index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[]'.
+
+错误 #115
+  文件: ../../packages/shared-utils/src/array/index.ts
+  位置: 137:6
+  代码: TS2322
+  消息: error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+
+错误 #116
+  文件: ../../packages/shared-utils/src/array/index.ts
+  位置: 137:17
+  代码: TS2322
+  消息: error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+
+错误 #117
+  文件: ../../packages/shared-utils/src/eps/load-global-eps.ts
+  位置: 39:11
+  代码: TS6133
+  消息: error TS6133: 'epsServiceUrl' is declared but its value is never read.
+
+错误 #118
+  文件: ../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts
+  位置: 181:31
+  代码: TS2345
+  消息: error-monitor/errorMonitorCore.ts(181,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #119
+  文件: ../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts
+  位置: 182:32
+  代码: TS2345
+  消息: error-monitor/errorMonitorCore.ts(182,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #120
+  文件: ../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts
+  位置: 183:30
+  代码: TS2345
+  消息: error-monitor/errorMonitorCore.ts(183,30): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #121
+  文件: ../../packages/shared-utils/src/error-monitor/formatError.ts
+  位置: 35:3
+  代码: TS2375
+  消息: error-monitor/formatError.ts(35,3): error TS2375: Type '{ id: string; type: string; message: string; source: string; stack: string; url: string; time: string; isWarning: boolean; lineno: number | undefined; colno: number | undefined; }' is not assignable to type 'FormattedError' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #122
+  文件: ../../packages/shared-utils/src/error-monitor/subappErrorCapture.ts
+  位置: 36:17
+  代码: TS2379
+  消息: error-monitor/subappErrorCapture.ts(36,17): error TS2379: Argument of type '{ type: string; message: string; source: string; stack: string; url: string; lineno: number | undefined; colno: number | undefined; }' is not assignable to parameter of type 'ErrorInfo' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #123
+  文件: ../../packages/shared-utils/src/http/index.ts
+  位置: 224:5
+  代码: TS2412
+  消息: error TS2412: Type 'undefined' is not assignable to type 'MessageHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+错误 #124
+  文件: ../../packages/shared-utils/src/http/index.ts
+  位置: 225:5
+  代码: TS2412
+  消息: error TS2412: Type 'undefined' is not assignable to type 'ConfirmHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+错误 #125
+  文件: ../../packages/shared-utils/src/http/index.ts
+  位置: 226:5
+  代码: TS2412
+  消息: error TS2412: Type 'undefined' is not assignable to type 'RouterHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+错误 #126
+  文件: ../../packages/shared-utils/src/qiankun/load-layout-app.ts
+  位置: 619:21
+  代码: TS6133
+  消息: error TS6133: 'originalFileUrl' is declared but its value is never read.
+
+错误 #127
+  文件: ../../packages/shared-utils/src/qiankun/load-layout-app.ts
+  位置: 884:37
+  代码: TS18048
+  消息: error TS18048: 'fileName' is possibly 'undefined'.
+
+错误 #128
+  文件: ../../packages/shared-utils/src/qiankun/load-layout-app.ts
+  位置: 884:70
+  代码: TS18048
+  消息: error TS18048: 'fileName' is possibly 'undefined'.
+
+错误 #129
+  文件: ../../packages/shared-utils/src/storage/cross-domain.ts
+  位置: 263:39
+  代码: TS2379
+  消息: error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #130
+  文件: ../../packages/shared-utils/src/storage/cross-domain.ts
+  位置: 269:35
+  代码: TS2379
+  消息: error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #131
+  文件: ../../packages/shared-utils/src/string/index.ts
+  位置: 82:44
+  代码: TS2769
+  消息: error TS2769: No overload matches this call.
+
+错误 #132
+  文件: ../../packages/subapp-manifests/src/index.ts
+  位置: 103:3
+  代码: TS2322
+  消息: error TS2322: Type '{ key: string; path: string; labelKey: string | undefined; label: string | undefined; }[]' is not assignable to type '{ key: string; path: string; labelKey?: string; label?: string; }[]'.
 
 ============================================================
 完整输出:
@@ -110,18 +1176,228 @@ finance-app - TypeScript 类型错误报告
 > finance-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\finance-app
 > tsc --noEmit --skipLibCheck
 
-../../configs/app-scanner.ts(11,30): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/admin-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(12,34): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/logistics-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(13,32): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/quality-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(14,35): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/production-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(15,36): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/engineering-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(17,35): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/operations-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(18,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/system-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(19,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/layout-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(20,29): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/docs-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(21,31): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/mobile-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(22,34): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/dashboard-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
-../../configs/app-scanner.ts(23,34): error TS6307: File 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/personnel-app/src/app.ts' is not listed within the file list of project 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/apps/finance-app/tsconfig.json'. Projects must list all files or use an 'include' pattern.
+src/bootstrap/core/i18n.ts(2,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'createI18nPlugin'. Did you mean to use 'import createI18nPlugin from "@btc/shared-core"' instead?
+src/bootstrap/core/ui.ts(3,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'createThemePlugin'. Did you mean to use 'import createThemePlugin from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(9,15): error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(11,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'setupSubAppGlobals'. Did you mean to use 'import setupSubAppGlobals from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(12,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'createSubApp'. Did you mean to use 'import createSubApp from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(13,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'mountSubApp'. Did you mean to use 'import mountSubApp from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(14,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'unmountSubApp'. Did you mean to use 'import unmountSubApp from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(15,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'updateSubApp'. Did you mean to use 'import updateSubApp from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(16,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'setupRouteSync'. Did you mean to use 'import setupRouteSync from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(17,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'setupHostLocationBridge'. Did you mean to use 'import setupHostLocationBridge from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(18,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'setupEventBridge'. Did you mean to use 'import setupEventBridge from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(19,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'ensureCleanUrl'. Did you mean to use 'import ensureCleanUrl from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(20,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'setupStandalonePlugins'. Did you mean to use 'import setupStandalonePlugins from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(21,3): error TS2614: Module '"@btc/shared-core"' has no exported member 'createLogoutFunction'. Did you mean to use 'import createLogoutFunction from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(22,8): error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppContext'. Did you mean to use 'import SubAppContext from "@btc/shared-core"' instead?
+src/bootstrap/index.ts(23,8): error TS2614: Module '"@btc/shared-core"' has no exported member 'SubAppOptions'. Did you mean to use 'import SubAppOptions from "@btc/shared-core"' instead?
+src/main.ts(5,15): error TS2614: Module '"@btc/shared-core"' has no exported member 'QiankunProps'. Did you mean to use 'import QiankunProps from "@btc/shared-core"' instead?
+src/modules/inventory/views/result/composables/useFinanceInventoryExport.ts(1,1): error TS6133: 'ref' is declared but its value is never read.
+src/modules/inventory/views/result/composables/useFinanceInventoryExport.ts(12,9): error TS6133: 'variancePercent' is declared but its value is never read.
+src/modules/inventory/views/result/composables/useFinanceInventoryService.ts(1,15): error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+src/modules/inventory/views/result/composables/useFinanceInventoryService.ts(2,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'createCrudServiceFromEps'. Did you mean to use 'import createCrudServiceFromEps from "@btc/shared-core"' instead?
+src/plugins/echarts/config.ts(4,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'registerEChartsThemes'.
+src/router/index.ts(49,31): error TS6133: 'from' is declared but its value is never read.
+src/services/eps.ts(2,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'loadEpsService'. Did you mean to use 'import loadEpsService from "@btc/shared-core"' instead?
+src/store/index.ts(2,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'useThemeStore'. Did you mean to use 'import useThemeStore from "@btc/shared-core"' instead?
+src/utils/app-storage.ts(6,32): error TS6133: 'syncSettingsFromCookie' is declared but its value is never read.
+src/utils/app-storage.ts(6,56): error TS6133: 'syncUserToCookie' is declared but its value is never read.
+src/utils/app-storage.ts(10,7): error TS6133: 'getSettingsFromCookie' is declared but its value is never read.
+src/utils/app-storage.ts(50,7): error TS6133: 'setItem' is declared but its value is never read.
+src/utils/app-storage.ts(129,32): error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domain' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/utils/app-storage.ts(242,8): error TS6133: 'version' is declared but its value is never read.
+src/utils/app-storage.ts(255,16): error TS6133: 'token' is declared but its value is never read.
+../../configs/app-scanner.ts(64,18): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../configs/vite/build/rollup.config.ts(38,9): error TS6133: 'externalSingleSpa' is declared but its value is never read.
+../../configs/vite/factories/mainapp.config.ts(439,3): error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | undefined; plugins: (Plugin<...> | Plugin<...>[])[]; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'resolve' are incompatible.
+    Type '(ResolveOptions & { alias?: AliasOptions; }) | undefined' is not assignable to type 'ResolveOptions & { alias?: AliasOptions; }'.
+      Type 'undefined' is not assignable to type 'ResolveOptions & { alias?: AliasOptions; }'.
+        Type 'undefined' is not assignable to type 'ResolveOptions'.
+../../configs/vite/factories/subapp.config.ts(472,3): error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: (ResolveOptions & { alias?: AliasOptions; }) | { alias: any; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; } | undefined; ... 6 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'resolve' are incompatible.
+    Type '(ResolveOptions & { alias?: AliasOptions; }) | { alias: any; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; } | undefined' is not assignable to type 'ResolveOptions & { alias?: AliasOptions; }'.
+      Type 'undefined' is not assignable to type 'ResolveOptions & { alias?: AliasOptions; }'.
+        Type 'undefined' is not assignable to type 'ResolveOptions'.
+../../configs/vite/plugins/duty-static.ts(120,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+../../configs/vite/plugins/dynamic-import-cdn.ts(114,15): error TS6133: 'isLayoutResource' is declared but its value is never read.
+../../configs/vite/plugins/public-images.ts(266,82): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type '(substring: string, ...args: any[]) => string'.
+      Type 'undefined' is not assignable to type '(substring: string, ...args: any[]) => string'.
+../../configs/vite/plugins/public-images.ts(395,84): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type '(substring: string, ...args: any[]) => string'.
+      Type 'undefined' is not assignable to type '(substring: string, ...args: any[]) => string'.
+../../packages/shared-components/src/charts/bar/basic/composables/useBarChart.ts(13,3): error TS6133: 'isDark' is declared but its value is never read.
+../../packages/shared-components/src/charts/bar/dual-compare/composables/useDualBarCompareChart.ts(12,3): error TS6133: 'isDark' is declared but its value is never read.
+../../packages/shared-components/src/charts/bar/horizontal/composables/useHBarChart.ts(13,3): error TS6133: 'isDark' is declared but its value is never read.
+../../packages/shared-components/src/charts/composables/useChart.ts(384,9): error TS6133: '_hasParentSize' is declared but its value is never read.
+../../packages/shared-components/src/charts/kline/basic/composables/useKLineChart.ts(4,1): error TS6133: 'getThemeColors' is declared but its value is never read.
+../../packages/shared-components/src/charts/kline/basic/composables/useKLineChart.ts(21,11): error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: boolean; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; }; ... 4 more ...; series: any; }' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'dataZoom' are incompatible.
+    Type '({ type: string; xAxisIndex: number[]; start: number; end: number; } | { show: true; xAxisIndex: number[]; type: string; top: string; start: number; end: number; })[] | undefined' is not assignable to type 'DataZoomComponentOption | DataZoomComponentOption[]'.
+      Type 'undefined' is not assignable to type 'DataZoomComponentOption | DataZoomComponentOption[]'.
+../../packages/shared-components/src/charts/line/basic/composables/useLineChart.ts(13,3): error TS6133: 'isDark' is declared but its value is never read.
+../../packages/shared-components/src/charts/line/basic/composables/useLineChart.ts(21,11): error TS2375: Type '{ title: any; tooltip: any; legend: any; toolbox: { show: true; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { ...; }; }; } | undefined; grid: GridConfig; xAxis: any; yAxis: any...' is not assignable to type 'EChartsOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'toolbox' are incompatible.
+    Type '{ show: true; right: string; top: string; feature: { saveAsImage: { show: true; title: string; type: "png"; pixelRatio: number; }; dataView: { show: true; title: string; readOnly: false; }; restore: { show: true; title: string; }; }; } | undefined' is not assignable to type 'ToolboxComponentOption | ToolboxComponentOption[]'.
+      Type 'undefined' is not assignable to type 'ToolboxComponentOption | ToolboxComponentOption[]'.
+../../packages/shared-components/src/charts/radar/basic/composables/useRadarChart.ts(86,7): error TS2322: Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }[]' is not assignable to type 'SeriesOption | SeriesOption[]'.
+  Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }[]' is not assignable to type 'SeriesOption[]'.
+    Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }' is not assignable to type 'SeriesOption'.
+      Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }' is not assignable to type 'RadarSeriesOption$1'.
+        Type '{ name: string; type: "radar"; data: { value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]; }' is not assignable to type 'RadarSeriesOption'.
+          Types of property 'data' are incompatible.
+            Type '{ value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }[]' is not assignable to type '(RadarSeriesDataItemOption | RadarSeriesDataValue)[]'.
+              Type '{ value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }' is not assignable to type 'RadarSeriesDataItemOption | RadarSeriesDataValue'.
+                Type '{ value: number[]; itemStyle: { color: string; }; areaStyle: { color: string; } | undefined; lineStyle: { color: string; width: number; }; }' is not assignable to type 'RadarSeriesDataItemOption' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Types of property 'areaStyle' are incompatible.
+                    Type '{ color: string; } | undefined' is not assignable to type 'AreaStyleOption<ZRColor>'.
+                      Type 'undefined' is not assignable to type 'AreaStyleOption<ZRColor>'.
+../../packages/shared-components/src/charts/scatter/basic/composables/useScatterChart.ts(12,3): error TS6133: 'isDark' is declared but its value is never read.
+../../packages/shared-components/src/charts/utils/color.ts(12,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/color.ts(13,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/color.ts(14,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/color.ts(97,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/css-var.ts(28,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/css-var.ts(29,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/css-var.ts(30,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/theme.ts(19,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/theme.ts(19,50): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/charts/utils/theme.ts(19,78): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-components/src/common/dialog/index.tsx(1,27): error TS6133: 'h' is declared but its value is never read.
+../../packages/shared-components/src/common/form/composables/useFormItemActions.ts(43,25): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-components/src/common/form/composables/useFormItemActions.ts(46,14): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-components/src/common/form/composables/useFormItems.ts(52,14): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-components/src/common/form/composables/useFormItems.ts(53,11): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-components/src/common/form/composables/useFormItems.ts(56,22): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-components/src/common/form/composables/useFormSetup.ts(2,10): error TS2614: Module '"@btc/shared-core"' has no exported member 'useBtcForm'. Did you mean to use 'import useBtcForm from "@btc/shared-core"' instead?
+../../packages/shared-components/src/common/form/composables/useFormSetup.ts(2,22): error TS2614: Module '"@btc/shared-core"' has no exported member 'useTabs'. Did you mean to use 'import useTabs from "@btc/shared-core"' instead?
+../../packages/shared-components/src/common/form/composables/useFormSetup.ts(2,31): error TS2614: Module '"@btc/shared-core"' has no exported member 'useAction'. Did you mean to use 'import useAction from "@btc/shared-core"' instead?
+../../packages/shared-components/src/common/form/composables/useFormSetup.ts(2,42): error TS2614: Module '"@btc/shared-core"' has no exported member 'useElApi'. Did you mean to use 'import useElApi from "@btc/shared-core"' instead?
+../../packages/shared-components/src/common/form/composables/useFormSetup.ts(2,52): error TS2614: Module '"@btc/shared-core"' has no exported member 'usePlugins'. Did you mean to use 'import usePlugins from "@btc/shared-core"' instead?
+../../packages/shared-components/src/common/view-group/composables/useViewGroupActions.ts(7,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'BtcConfirm'.
+../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts(164,20): error TS18048: 'angle' is possibly 'undefined'.
+../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts(190,56): error TS18048: 'angle' is possibly 'undefined'.
+../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts(203,20): error TS18048: 'angle' is possibly 'undefined'.
+../../packages/shared-components/src/components/basic/btc-avatar/composables/useAvatarRhythm.ts(223,31): error TS18048: 'currentAngle' is possibly 'undefined'.
+../../packages/shared-components/src/components/data/btc-transfer-drawer/types.ts(1,48): error TS6196: 'SelectedItemDisplay' is declared but never used.
+../../packages/shared-components/src/components/data/btc-transfer-panel/types.ts(2,15): error TS2614: Module '"@btc/shared-core"' has no exported member 'CrudService'. Did you mean to use 'import CrudService from "@btc/shared-core"' instead?
+../../packages/shared-components/src/components/feedback/btc-notification/notification-manager.ts(80,7): error TS2322: Type 'number' is not assignable to type 'EpPropFinalized<NumberConstructor, unknown, unknown, 4500, boolean>'.
+  Type 'number' is not assignable to type '{ readonly type: PropType<number>; readonly required: false; readonly validator: ((val: unknown) => boolean) | undefined; __epPropKey: true; }'.
+../../packages/shared-components/src/components/feedback/btc-notification/notification-manager.ts(81,7): error TS2322: Type 'boolean' is not assignable to type 'EpPropFinalized<BooleanConstructor, unknown, unknown, true, boolean>'.
+../../packages/shared-components/src/components/layout/app-layout/global-search/useSearchIndex.ts(2,18): error TS7016: Could not find a declaration file for module 'lunr'. 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/node_modules/.pnpm/lunr@2.3.9/node_modules/lunr/lunr.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/lunr` if it exists or add a new declaration (.d.ts) file containing `declare module 'lunr';`
+../../packages/shared-components/src/composables/useCurrentApp.ts(104,11): error TS6133: 'checkHostname' is declared but its value is never read.
+../../packages/shared-components/src/crud/table/composables/useTableColumns.ts(60,23): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-components/src/crud/table/composables/useTableSort.ts(87,23): error TS6133: 'prop' is declared but its value is never read.
+../../packages/shared-components/src/crud/upsert/composables/useFormData.ts(4,10): error TS2305: Module '"@btc/shared-components"' has no exported member 'useFormRenderer'.
+../../packages/shared-components/src/crud/upsert/composables/usePlugins.ts(67,15): error TS18048: 'p' is possibly 'undefined'.
+../../packages/shared-components/src/crud/upsert/composables/usePlugins.ts(68,13): error TS18048: 'p' is possibly 'undefined'.
+../../packages/shared-components/src/utils/mitt.ts(131,5): error TS2412: Type 'number | undefined' is not assignable to type 'number' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'number'.
+../../packages/shared-components/src/utils/mount-dev-tools.ts(14,28): error TS6133: 'data' is declared but its value is never read.
+../../packages/shared-components/src/utils/mount-dev-tools.ts(48,19): error TS6133: 'err' is declared but its value is never read.
+../../packages/shared-core/src/btc/composables/useTheme.ts(67,5): error TS2345: Argument of type 'ThemeConfig | undefined' is not assignable to parameter of type 'ThemeConfig'.
+  Type 'undefined' is not assignable to type 'ThemeConfig'.
+../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts(185,13): error TS18048: 'key' is possibly 'undefined'.
+../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts(186,17): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts(188,25): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-core/src/btc/plugins/i18n/namespace-loader.ts(191,13): error TS2538: Type 'undefined' cannot be used as an index type.
+../../packages/shared-core/src/btc/plugins/i18n/type-safe.ts(139,35): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/plugins/manager/config-helper.ts(68,29): error TS2379: Argument of type '{ label: string; description: string; author: string; version: string; updateTime: string | undefined; category: string; tags: string[]; }' is not assignable to parameter of type 'PluginMetadata' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'updateTime' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/plugins/manager/resource-loader.ts(120,20): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts(27,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts(28,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/plugins/theme/composables/useThemeColor.ts(29,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/plugins/theme/composables/useThemeMigration.ts(68,3): error TS2322: Type 'ThemeConfig | undefined' is not assignable to type 'ThemeConfig'.
+  Type 'undefined' is not assignable to type 'ThemeConfig'.
+../../packages/shared-core/src/btc/utils/dynamic-import-interceptor.ts(202,9): error TS2375: Type '{ appName: string; timeout: number | undefined; cdnDomain: string | undefined; ossDomain: string | undefined; }' is not assignable to type 'ResourceLoaderOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'timeout' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+../../packages/shared-core/src/btc/utils/resource-loader.ts(486,11): error TS6133: 'isModule' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/resource-loader.ts(600,36): error TS6133: 'options' is declared but its value is never read.
+../../packages/shared-core/src/composables/form-helpers/action.ts(3,43): error TS6133: 'Form' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppGlobals.ts(22,18): error TS6133: 'basePath' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts(493,5): error TS2412: Type 'undefined' is not assignable to type '() => void' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts(7,62): error TS6133: 'appId' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts(65,23): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts(66,22): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppRouteSync.ts(148,56): error TS6133: 'appId' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppTabbar.ts(14,41): error TS6133: 'appId' is declared but its value is never read.
+../../packages/shared-core/src/utils/menu-icon-assigner.ts(351,3): error TS2322: Type '{ icon: string; children: { index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[] | undefined; index: string; labelKey?: string; label?: string; }[]' is not assignable to type '{ index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[]'.
+  Type '{ icon: string; children: { index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[] | undefined; index: string; labelKey?: string; label?: string; }' is not assignable to type '{ index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'children' are incompatible.
+      Type '{ index: string; labelKey?: string; label?: string; icon: string; children?: any[]; }[] | undefined' is not assignable to type 'any[]'.
+        Type 'undefined' is not assignable to type 'any[]'.
+../../packages/shared-utils/src/array/index.ts(137,6): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+../../packages/shared-utils/src/array/index.ts(137,17): error TS2322: Type 'T | undefined' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'T | undefined'.
+../../packages/shared-utils/src/eps/load-global-eps.ts(39,11): error TS6133: 'epsServiceUrl' is declared but its value is never read.
+../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts(181,31): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts(182,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-utils/src/error-monitor/errorMonitorCore.ts(183,30): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-utils/src/error-monitor/formatError.ts(35,3): error TS2375: Type '{ id: string; type: string; message: string; source: string; stack: string; url: string; time: string; isWarning: boolean; lineno: number | undefined; colno: number | undefined; }' is not assignable to type 'FormattedError' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'lineno' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+../../packages/shared-utils/src/error-monitor/subappErrorCapture.ts(36,17): error TS2379: Argument of type '{ type: string; message: string; source: string; stack: string; url: string; lineno: number | undefined; colno: number | undefined; }' is not assignable to parameter of type 'ErrorInfo' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'lineno' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+../../packages/shared-utils/src/http/index.ts(224,5): error TS2412: Type 'undefined' is not assignable to type 'MessageHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+../../packages/shared-utils/src/http/index.ts(225,5): error TS2412: Type 'undefined' is not assignable to type 'ConfirmHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+../../packages/shared-utils/src/http/index.ts(226,5): error TS2412: Type 'undefined' is not assignable to type 'RouterHandler' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+../../packages/shared-utils/src/qiankun/load-layout-app.ts(619,21): error TS6133: 'originalFileUrl' is declared but its value is never read.
+../../packages/shared-utils/src/qiankun/load-layout-app.ts(884,37): error TS18048: 'fileName' is possibly 'undefined'.
+../../packages/shared-utils/src/qiankun/load-layout-app.ts(884,70): error TS18048: 'fileName' is possibly 'undefined'.
+../../packages/shared-utils/src/storage/cross-domain.ts(263,39): error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domain' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-utils/src/storage/cross-domain.ts(269,35): error TS2379: Argument of type '{ domain: string | undefined; path: string; }' is not assignable to parameter of type '{ domain?: string; path?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'domain' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-utils/src/string/index.ts(82,44): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+../../packages/subapp-manifests/src/index.ts(103,3): error TS2322: Type '{ key: string; path: string; labelKey: string | undefined; label: string | undefined; }[]' is not assignable to type '{ key: string; path: string; labelKey?: string; label?: string; }[]'.
+  Type '{ key: string; path: string; labelKey: string | undefined; label: string | undefined; }' is not assignable to type '{ key: string; path: string; labelKey?: string; label?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'labelKey' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
 C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\finance-app:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  finance-app@1.0.0 type-check: `tsc --noEmit --skipLibCheck`
 Exit status 2

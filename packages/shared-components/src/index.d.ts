@@ -10,6 +10,7 @@ import './components/basic/btc-icon-button/index.scss';
 import './components/basic/btc-table-button/index.scss';
 import './components/basic/btc-avatar/index.scss';
 export * from './charts';
+export { registerEChartsThemes } from './charts/utils/theme';
 export { default as sharedLocalesZhCN } from './locales/zh-CN.json';
 export { default as sharedLocalesEnUS } from './locales/en-US.json';
 export { default as BtcButton } from './components/basic/btc-button/index.vue';
@@ -37,6 +38,7 @@ export { default as BtcTransferPanel } from './components/data/btc-transfer-pane
 export { default as BtcTransferDrawer } from './components/data/btc-transfer-drawer/index.vue';
 export { default as BtcDialog } from './common/dialog/index';
 export { BtcMessage } from './components/feedback/btc-message';
+export type { BtcMessage as BtcMessageType } from './components/feedback/btc-message';
 export { BtcNotification } from './components/feedback/btc-notification';
 export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
 export { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
@@ -88,6 +90,7 @@ export type { IconButtonConfig, IconButtonDropdown, IconButtonDropdownItem, Icon
 export type { BtcTableButtonConfig } from './components/basic/btc-table-button/types';
 // 显式导出函数和枚举
 export { useCurrentApp } from './composables/useCurrentApp';
+export { useGlobalBreakpoints, initGlobalBreakpoints } from './composables/useGlobalBreakpoints';
 export { useProcessStore, getCurrentAppFromPath } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry } from './store/menuRegistry';
 export { mountDevTools, unmountDevTools } from './utils/mount-dev-tools';

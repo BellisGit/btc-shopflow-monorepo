@@ -91,9 +91,13 @@ defineOptions({
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
+// Check 在模板中使用，但 TypeScript 可能未识别
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Check } from '@element-plus/icons-vue';
 import type { ThemeConfig } from '@btc/shared-core';
 // import { BtcColorPicker, BtcIconButton, BtcMessage } from '@btc/shared-components';
+// BtcIconButton 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { BtcIconButton, BtcMessage } from '@btc/shared-components';
 
 const { t } = useI18n();
@@ -120,6 +124,8 @@ const customTheme = computed<ThemeConfig>(() => ({
 }));
 
 // 合并所有主题，自定义主题放在最后
+// allThemes 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const allThemes = computed(() => {
   const currentCustomColor = theme.currentTheme.value?.name === 'custom'
     ? theme.currentTheme.value.color
@@ -141,6 +147,8 @@ watch(() => theme.currentTheme.value, (newTheme) => {
   }
 });
 
+// openDrawer 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openDrawer() {
   drawerVisible.value = true;
   // 如果当前是自定义主题，同步自定义颜色
@@ -151,7 +159,8 @@ function openDrawer() {
 
 // 获取自定义颜色的显示值
 // 如果当前是自定义主题，显示主题颜色；否则返回空字符串（显示彩虹渐变）
-const customColorDisplay = computed(() => {
+// customColorDisplay 在注释的模板代码中使用，暂时保留
+const _customColorDisplay = computed(() => {
   if (theme.currentTheme.value?.name === 'custom') {
     return theme.currentTheme.value.color || '';
   }
@@ -159,6 +168,8 @@ const customColorDisplay = computed(() => {
 });
 
 // 判断是否是当前主题
+// isCurrentTheme 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isCurrentTheme(themeConfig: ThemeConfig): boolean {
   const current = theme.currentTheme.value;
   if (!current) return false;
@@ -171,7 +182,8 @@ function isCurrentTheme(themeConfig: ThemeConfig): boolean {
 }
 
 // 处理自定义主题点击（颜色选择器打开时）
-function handleCustomThemeClick() {
+// handleCustomThemeClick 在注释的模板代码中使用，暂时保留
+function _handleCustomThemeClick() {
   // 保存打开时的原始颜色值和主题状态
   originalColor.value = customColor.value || null;
   originalTheme.value = theme.currentTheme.value ? { ...theme.currentTheme.value } : null;
@@ -199,6 +211,8 @@ function handleCustomThemeClick() {
 
 
 // 处理预设主题点击
+// handleThemeClick 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleThemeClick(themeConfig: ThemeConfig) {
   // 点击预设主题，直接切换（不改变 customColor）
   theme.switchTheme(themeConfig);
@@ -206,7 +220,8 @@ function handleThemeClick(themeConfig: ThemeConfig) {
 }
 
 // 处理颜色变化（点击预设颜色或输入框变化时触发）
-function handleColorChange(color: string | null) {
+// handleColorChange 在注释的模板代码中使用，暂时保留
+function _handleColorChange(color: string | null) {
   // 实时更新主题颜色（点击预设颜色时也需要实时更新）
   updateThemeColorPreview(color);
 }
@@ -231,7 +246,8 @@ function updateThemeColorPreview(color: string | null) {
 }
 
 // 处理清空颜色
-function handleClearColor() {
+// handleClearColor 在注释的模板代码中使用，暂时保留
+function _handleClearColor() {
   customColor.value = '';
   // 清空时恢复彩虹渐变（将主题颜色设为空）
   theme.currentTheme.value = {
@@ -242,7 +258,8 @@ function handleClearColor() {
 }
 
 // 处理确认颜色
-function handleConfirmColor(color: string | null) {
+// handleConfirmColor 在注释的模板代码中使用，暂时保留
+function _handleConfirmColor(color: string | null) {
   // 标记已确认，避免在 hide 时恢复
   isConfirmed.value = true;
 
@@ -269,13 +286,15 @@ function handleConfirmColor(color: string | null) {
 }
 
 // 处理活动颜色变化（实时预览，拖拽时触发）
-function handleActiveColorChange(color: string | null) {
+// handleActiveColorChange 在注释的模板代码中使用，暂时保留
+function _handleActiveColorChange(color: string | null) {
   // 使用统一的更新函数
   updateThemeColorPreview(color);
 }
 
 // 处理颜色选择器关闭
-function handleColorPickerHide() {
+// handleColorPickerHide 在注释的模板代码中使用，暂时保留
+function _handleColorPickerHide() {
   // 如果没有确认，恢复原始状态
   if (!isConfirmed.value && originalTheme.value) {
     // 恢复 customColor 到原始值
@@ -295,6 +314,8 @@ function handleColorPickerHide() {
   isConfirmed.value = false;
 }
 
+// handleDarkToggle 在模板中使用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleDarkToggle(event?: MouseEvent) {
   console.log('[ThemeSwitcher] handleDarkToggle 被调用', {
     hasEvent: !!event,

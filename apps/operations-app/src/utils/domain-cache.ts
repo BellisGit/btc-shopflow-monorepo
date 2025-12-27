@@ -75,13 +75,13 @@ function handleLogout() {
 }
 
 /**
- * 健康检查
- * @returns 如果健康返回 true，如果401返回 false，其他错误抛出异常
+ * 用户检查（检查用户登录状态）
+ * @returns 如果正常返回 true，如果401返回 false，其他错误抛出异常
  */
-async function checkHealth(): Promise<boolean> {
+async function checkUser(): Promise<boolean> {
   try {
-    // 使用 fetch API 调用健康检查接口，避免构建时的依赖问题
-    const response = await fetch('/api/system/auth/health', {
+    // 使用 fetch API 调用用户检查接口，避免构建时的依赖问题
+    const response = await fetch('/api/system/auth/user-check', {
       method: 'GET',
       credentials: 'include', // 包含 cookie
       headers: {
@@ -90,7 +90,17 @@ async function checkHealth(): Promise<boolean> {
     });
 
     // 解析响应数据
-    const responseData = await response.json();
+    // 先读取文本，避免响应体为空时 JSON 解析失败
+    const responseText = await response.text();
+    let responseData: any = null;
+    if (responseText.trim()) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        // JSON 解析失败，但继续处理状态码
+        console.warn('[checkUser] Failed to parse JSON response:', parseError);
+      }
+    }
     const code = responseData?.code;
     const status = response.status;
 
@@ -113,7 +123,7 @@ async function checkHealth(): Promise<boolean> {
     }
 
     // 其他错误，默认认为正常（避免因为网络错误导致无法加载域列表）
-    console.warn('[getDomainList] Health check failed, but continue:', error);
+    console.warn('[getDomainList] User check failed, but continue:', error);
     return true;
   }
 }
@@ -137,8 +147,8 @@ export async function getDomainList(service: ServiceType): Promise<unknown> {
   // 创建新请求
   pendingRequest = (async () => {
     try {
-      // 首先进行健康检查
-      const isHealthy = await checkHealth();
+      // 首先进行用户检查
+      const isHealthy = await checkUser();
       if (!isHealthy) {
         // cookie已过期，执行退出登录逻辑（同步执行，不等待）
         handleLogout();

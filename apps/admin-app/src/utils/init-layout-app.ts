@@ -122,13 +122,14 @@ async function injectAppConfigFromManifest(appId: string) {
     // 动态导入必要的模块
     const [
       { registerManifestMenusForApp, resolveAppLogoUrl, registerAppEnvAccessors },
-      { getMenuRegistry },
+      sharedComponents,
       { getManifest }
     ] = await Promise.all([
       import('@configs/layout-bridge'),
-      import('@btc/shared-components/store/menuRegistry'),
+      import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
+    const { getMenuRegistry } = sharedComponents;
 
     // 1. 确保菜单注册表已初始化
     let registry = getMenuRegistry();

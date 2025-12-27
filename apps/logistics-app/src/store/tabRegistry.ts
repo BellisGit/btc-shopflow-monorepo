@@ -97,11 +97,12 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
         const manifestKey = routePath.replace(/^\//, "") || "home";
         
+        const i18nKey = manifestRoute.tab?.labelKey ?? manifestRoute.labelKey;
         return {
           key: manifestKey,
           title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
           path: fullPath,
-          i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
+          ...(i18nKey !== undefined && { i18nKey }),
         };
       }
     }

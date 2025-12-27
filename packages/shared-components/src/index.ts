@@ -28,6 +28,8 @@ import './components/basic/btc-avatar/index.scss';
 
 // 图表组件
 export * from './charts';
+// 显式导出 registerEChartsThemes 以确保类型定义正确
+export { registerEChartsThemes } from './charts/utils/theme';
 
 // 导入图表组件样式（必须在导出后导入，确保样式被正确提取）
 // 注意：由于 cssCodeSplit: false，所有 CSS 会被合并到一个 style.css 文件中
@@ -57,6 +59,7 @@ export { default as BtcContainer } from './components/layout/btc-container/index
 export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
 export { default as AppLayout } from './components/layout/app-layout/index.vue';
 export { default as AppSkeleton } from './components/basic/app-skeleton/index.vue';
+export { default as GlobalSearch } from './components/layout/app-layout/global-search/index.vue';
 
 // Navigation 导航组件
 export { default as BtcTabs } from './components/navigation/btc-tabs/index.vue';
@@ -141,6 +144,7 @@ export { provideContentHeight, useContentHeight, type ContentHeightContext } fro
 export { useBrowser } from './composables/useBrowser';
 export { useUser, type UserInfo } from './composables/useUser';
 export { useCurrentApp } from './composables/useCurrentApp';
+export { useGlobalBreakpoints, initGlobalBreakpoints } from './composables/useGlobalBreakpoints';
 export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
 export { useFormRenderer } from './common/form/composables/useFormRenderer';
