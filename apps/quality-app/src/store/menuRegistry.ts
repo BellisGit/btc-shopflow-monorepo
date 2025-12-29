@@ -3,7 +3,6 @@
  */
 
 import { ref, type Ref } from 'vue';
-import { assignIconsToMenuTree } from '@btc/shared-core';
 
 // 定义类型，避免直接导入
 export type MenuItem = {

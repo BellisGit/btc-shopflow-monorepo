@@ -10,6 +10,48 @@ import { getCookie } from '../utils/cookie';
 import { appStorage } from '../utils/app-storage';
 
 /**
+ * 获取主应用的登录页面URL
+ * 用于子应用在独立运行时重定向到主应用的登录页面
+ */
+function getMainAppLoginUrl(redirectPath?: string): string {
+  if (typeof window === 'undefined') {
+    return '/login';
+  }
+
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
+
+  // 生产环境：主应用在 bellis.com.cn
+  if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
+    // 子域名环境，重定向到主域名
+    const mainDomain = 'bellis.com.cn';
+    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+    return `${protocol}//${mainDomain}/login${redirectQuery}`;
+  }
+
+  // 开发环境：主应用在 localhost:8080 (system-app)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const mainAppPort = '8080';
+    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+    return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
+  }
+
+  // 其他环境：尝试推断主域名（取域名的主部分）
+  const parts = hostname.split('.');
+  if (parts.length > 2) {
+    // 子域名情况，取主域名部分
+    const mainDomain = parts.slice(-2).join('.');
+    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+    return `${protocol}//${mainDomain}${port ? `:${port}` : ''}/login${redirectQuery}`;
+  }
+
+  // 默认情况：使用相对路径（假设主应用在同一域名下）
+  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+  return `/login${redirectQuery}`;
+}
+
+/**
  * 规范化路径：在生产环境子域名下，移除应用前缀
  */
 function normalizePath(path: string): string {
@@ -28,12 +70,16 @@ function normalizePath(path: string): string {
   // 检测是否是 admin 子域名
   if (hostname === 'admin.bellis.com.cn' && path.startsWith('/admin/')) {
     const normalized = path.substring('/admin'.length) || '/';
-    console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
     return normalized;
   }
 
   return path;
 }
+
+// 路由级别loading的延迟定时器
+let routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+// 路由级别loading的延迟时间（毫秒）
+const ROUTE_LOADING_DELAY = 300;
 
 export const createAdminRouter = (): Router => {
   // 在创建路由时动态获取路由配置，确保 isStandalone 检测正确
@@ -58,53 +104,21 @@ export const createAdminRouter = (): Router => {
     }
 
     // 独立运行时：检查本地认证状态
-    // 关键：在子域名环境下，即使无法直接读取 HttpOnly cookie，也应该尝试其他方式判断
-    
-    // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
-    // 注意：如果 cookie 是 HttpOnly 的，getCookie 无法读取，但浏览器会自动在请求中发送
+    // 关键：cookie 是后端设置的，是认证的权威来源。如果 cookie 不存在，说明后端已经认为用户未认证。
+    // 因此，如果 cookie 不存在，应该立即返回 false，不再检查其他本地存储。
     const cookieToken = getCookie('access_token');
-    if (cookieToken) {
-      return true;
+    
+    // 如果 cookie 不存在，立即返回 false
+    // 这是安全的关键：cookie 是后端设置的，如果后端移除了 cookie，说明用户未认证
+    if (!cookieToken) {
+      return false;
     }
 
-    // 2. 检查用户信息是否存在（从 Cookie 或 localStorage 读取）
-    // 关键：使用 appStorage.user.get() 会优先从 Cookie 读取（跨子域名共享）
-    const userInfo = appStorage.user.get();
-    if (userInfo?.id) {
-      return true;
-    }
-
-    // 3. 检查 localStorage 中的 token
-    const storageToken = appStorage.auth.getToken();
-    if (storageToken) {
-      return true;
-    }
-
-    // 4. 检查登录状态标记（从 settings 中读取，settings 也会优先从 Cookie 读取）
-    const settings = appStorage.settings.get() as Record<string, any> | null;
-    const isLoggedIn = settings?.is_logged_in === true;
-    if (isLoggedIn) {
-      return true;
-    }
-
-    // 5. 检查 localStorage 中的旧登录状态标记（向后兼容）
-    const legacyIsLoggedIn = localStorage.getItem('is_logged_in') === 'true';
-    if (legacyIsLoggedIn) {
-      return true;
-    }
-
-    // 6. 在子域名环境下，如果无法读取 cookie，尝试通过检查是否有其他认证相关的 cookie
-    // 例如检查是否有 session cookie 或其他认证标记
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-    if (isProductionSubdomain) {
-      // 在子域名环境下，如果 cookie 是 HttpOnly 的，前端无法读取
-      // 但可以通过检查是否有其他认证相关的标记来判断
-      // 如果都没有，说明可能未认证，返回 false 让路由守卫处理重定向
-      // 注意：这里不假设已认证，避免安全风险
-    }
-
-    return false;
+    // cookie 存在时，可以进一步检查其他本地存储作为补充（可选）
+    // 但即使其他本地存储没有数据，只要 cookie 存在，也应该返回 true
+    // 因为 cookie 是后端设置的，是认证的权威来源
+    
+    return true;
   };
 
   // 路由守卫：在生产环境子域名下规范化路径，并在独立运行时检查认证
@@ -122,38 +136,63 @@ export const createAdminRouter = (): Router => {
       return;
     }
 
-    // 独立运行时：检查认证（排除登录页等公开页面）
+    // 清除之前的延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+
+    // 检查是否有应用级别loading正在显示
+    // 注意：使用DOM查询作为同步检查（因为beforeEach需要同步判断）
+    // 应用级别loading使用fixed定位，添加到body，所以直接在body中查找
+    const isAppLoadingVisible = ((): boolean => {
+      try {
+        // 检查body中是否有.app-loading元素（因为应用级别loading使用fixed定位，添加到body）
+        const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+        if (!appLoadingEl) {
+          return false;
+        }
+        
+        const style = window.getComputedStyle(appLoadingEl);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               parseFloat(style.opacity) > 0;
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    // 延迟显示路由loading（如果应用loading未显示）
+    if (!isAppLoadingVisible) {
+      // 延迟300ms显示路由loading，避免快速切换时的闪烁
+      routeLoadingTimer = setTimeout(async () => {
+        try {
+          const { routeLoadingService } = await import('@btc/shared-core');
+          routeLoadingService.show();
+        } catch (error) {
+          // 静默失败
+        }
+      }, ROUTE_LOADING_DELAY);
+    }
+
+    // 独立运行时：检查认证
     // 关键：如果正在使用 layout-app（通过 qiankun 加载），由 layout-app 处理认证
     // 此时不应该进行认证检查，避免在 layout-app 加载完成前误判为未认证
     const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
     
     if (!isUsingLayoutApp) {
-      const isPublicPage = to.path === '/login' || 
-                          to.path === '/forget-password' || 
-                          to.path === '/register';
-      
-      if (!isPublicPage && !isAuthenticated()) {
-        // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
-        console.warn('[admin-app] 未认证，重定向到登录页', {
-          path: to.path,
-          hasCookieToken: !!getCookie('access_token'),
-          hasStorageToken: !!appStorage.auth.getToken(),
-          hasUserInfo: !!appStorage.user.get()?.id,
-          hostname: window.location.hostname,
-        });
-        next({
-          path: '/login',
-          query: { redirect: to.fullPath },
-        });
-        return;
-      }
-
-      // 如果已认证且访问登录页，重定向到首页
-      // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
-      if (to.path === '/login' && isAuthenticated() && !to.query.logout) {
-        const redirect = (to.query.redirect as string) || '/';
-        const redirectPath = redirect.split('?')[0];
-        next(redirectPath);
+      // 独立运行时，如果未认证，重定向到主应用的登录页面
+      if (!isAuthenticated()) {
+        // 构建重定向路径：确保包含应用前缀，以便登录后能够正确返回
+        let redirectPath = to.fullPath;
+        // 在开发环境独立运行时，路径可能不包含 /admin 前缀，需要添加
+        if (!redirectPath.startsWith('/admin') && redirectPath !== '/') {
+          redirectPath = `/admin${redirectPath}`;
+        }
+        const mainAppLoginUrl = getMainAppLoginUrl(redirectPath);
+        // 使用 window.location 进行跨域重定向（如果需要）
+        window.location.href = mainAppLoginUrl;
         return;
       }
     } else {
@@ -164,11 +203,41 @@ export const createAdminRouter = (): Router => {
     next();
   });
 
+  // 路由后置守卫：清除路由loading的延迟定时器并隐藏路由loading
+  router.afterEach(async () => {
+    // 清除延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading
+    try {
+      const { routeLoadingService } = await import('@btc/shared-core');
+      routeLoadingService.hide();
+    } catch (error) {
+      // 静默失败
+    }
+  });
+
   // 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
   // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
   // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
   let loadingClosed = false;
-  router.beforeResolve(() => {
+  router.beforeResolve(async () => {
+    // 清除路由loading的延迟定时器（路由即将解析完成，不需要再显示路由loading）
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading（如果正在显示）
+    try {
+      const { routeLoadingService } = await import('@btc/shared-core');
+      routeLoadingService.hide();
+    } catch (error) {
+      // 静默失败
+    }
     if (!loadingClosed) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -191,11 +260,44 @@ export const createAdminRouter = (): Router => {
         
         loadingClosed = true;
       }
+      
+      // 关键：在qiankun环境下，也要关闭appLoadingService显示的应用级别loading
+      // 避免与应用级别loading冲突，确保路由解析完成后立即关闭
+      const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+      if (isUsingLayoutApp) {
+        try {
+          const { appLoadingService } = await import('@btc/shared-core');
+          // admin-app的显示名称是'管理模块'，使用显示名称关闭应用级别loading
+          appLoadingService.hide('管理模块');
+        } catch (e) {
+          // 静默失败，不影响路由解析
+        }
+      }
+      
+      // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
+      // 在独立运行时，不应该显示 NProgress 或 AppSkeleton
+      try {
+        // 关闭 NProgress（如果正在运行）
+        const NProgress = (window as any).NProgress;
+        if (NProgress && typeof NProgress.done === 'function') {
+          NProgress.done();
+        }
+        
+        // 隐藏 AppSkeleton（如果存在）
+        const skeleton = document.getElementById('app-skeleton');
+        if (skeleton) {
+          skeleton.style.setProperty('display', 'none', 'important');
+          skeleton.style.setProperty('visibility', 'hidden', 'important');
+          skeleton.style.setProperty('opacity', '0', 'important');
+        }
+      } catch (e) {
+        // 静默失败
+      }
     }
   });
 
-  router.onError((error) => {
-    console.warn('[admin-app] Router error:', error);
+  router.onError(() => {
+    // 路由错误已处理
   });
 
   return router;

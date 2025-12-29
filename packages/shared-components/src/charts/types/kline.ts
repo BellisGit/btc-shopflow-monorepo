@@ -24,18 +24,18 @@ export interface KLineChartProps extends BaseChartProps, InteractionProps {
   /** K线图数据 */
   data: KLineChartDataItem[];
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** 是否显示成交量 */
-  showVolume?: boolean;
+  showVolume?: boolean | undefined;
   /** 是否显示数据缩放控件 */
-  showDataZoom?: boolean;
+  showDataZoom?: boolean | undefined;
   /** 数据缩放初始开始位置 */
-  dataZoomStart?: number;
+  dataZoomStart?: number | undefined;
   /** 数据缩放初始结束位置 */
-  dataZoomEnd?: number;
+  dataZoomEnd?: number | undefined;
   /** 上涨颜色 */
-  upColor?: string;
+  upColor?: string | undefined;
   /** 下跌颜色 */
-  downColor?: string;
+  downColor?: string | undefined;
 }
 

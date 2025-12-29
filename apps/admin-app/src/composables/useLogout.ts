@@ -98,7 +98,7 @@ export function useLogout() {
       // 显示退出成功提示
       BtcMessage.success(t('common.logoutSuccess'));
 
-      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
       // 判断是否在生产环境的子域名下
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
@@ -106,17 +106,23 @@ export function useLogout() {
       
       // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
-        // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+        // 构建登录页 URL，包含当前路径作为 redirect 参数
+        const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
         if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
         } else {
-          window.location.href = '/login?logout=1';
+          window.location.href = buildLogoutUrl('/login');
         }
       } else {
-        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数和 redirect 参数
+        const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const currentPath = getCurrentUnifiedPath();
         router.replace({
           path: '/login',
-          query: { logout: '1' }
+          query: { 
+            logout: '1',
+            ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+          }
         });
       }
     } catch (error: any) {
@@ -141,7 +147,7 @@ export function useLogout() {
       clearUserInfo();
       processStore.clear();
 
-      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
       // 判断是否在生产环境的子域名下
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
@@ -149,17 +155,23 @@ export function useLogout() {
       
       // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
-        // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+        // 构建登录页 URL，包含当前路径作为 redirect 参数
+        const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
         if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
         } else {
-          window.location.href = '/login?logout=1';
+          window.location.href = buildLogoutUrl('/login');
         }
       } else {
-        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数和 redirect 参数
+        const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const currentPath = getCurrentUnifiedPath();
         router.replace({
           path: '/login',
-          query: { logout: '1' }
+          query: { 
+            logout: '1',
+            ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+          }
         });
       }
     }

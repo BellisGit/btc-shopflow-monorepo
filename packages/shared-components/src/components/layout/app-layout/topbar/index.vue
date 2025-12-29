@@ -161,6 +161,13 @@ const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
     return; // 不应该处理，直接返回
   }
 
+  // 关键：对于 open-drawer 事件，检查页面是否可见
+  // 当标签页从隐藏变为可见时，如果鼠标正好在汉堡菜单位置，浏览器可能会触发 mouseenter 事件
+  // 这会导致抽屉在不应该打开的时候被打开，所以需要检查页面可见性
+  if (eventName === 'open-drawer' && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+    return;
+  }
+
   // 检查组件是否仍然挂载
   if (!isMounted) {
     return;
@@ -183,6 +190,11 @@ const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
   nextTick(() => {
     // 再次检查组件是否仍然挂载（可能在 nextTick 期间卸载）
     if (!isMounted) {
+      return;
+    }
+
+    // 再次检查页面可见性（对于 open-drawer 事件）
+    if (eventName === 'open-drawer' && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
       return;
     }
 

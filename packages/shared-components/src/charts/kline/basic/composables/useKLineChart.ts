@@ -1,7 +1,6 @@
 import { type Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { KLineChartProps } from '../../../types/kline';
-import { getThemeColors } from '../../../utils/css-var';
 import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
 
 /**
@@ -18,7 +17,7 @@ export function useKLineChart(
     const downColor = props.downColor || '#00da3c';
     const borderColor = isDark.value ? themeColors.dark.borderColor : themeColors.borderColor;
 
-    const option: EChartsOption = {
+    const option = {
       title: {
         text: props.title || '',
         ...styleHelpers.getTitleStyle()
@@ -239,7 +238,7 @@ export function useKLineChart(
       ] as any
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

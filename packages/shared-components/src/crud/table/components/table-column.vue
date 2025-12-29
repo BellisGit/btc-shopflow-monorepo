@@ -79,8 +79,8 @@ const renderContent = (column: TableColumn, scope: any) => {
   // 字典颜色标签
   if (column._dictFormatter && column.prop) {
     const dict = column._dictFormatter(scope.row);
-    return h(ElTag, {
-      type: dict.type,
+    return h(ElTag as any, {
+      type: dict.type as any,
       size: 'small',
       effect: 'plain', // 使用 plain 效果，减少动画
       style: {

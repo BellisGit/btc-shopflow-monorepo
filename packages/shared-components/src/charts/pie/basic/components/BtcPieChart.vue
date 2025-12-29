@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { usePieChart } from '../composables/usePieChart';
 import type { PieChartProps } from '../../../types/pie';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<PieChartProps>(), {
   height: '300px',

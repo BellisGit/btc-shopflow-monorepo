@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useDualBarCompareChart } from '../composables/useDualBarCompareChart';
 import type { DualBarCompareChartProps } from '../../../types/bar';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<DualBarCompareChartProps>(), {
   height: '300px',

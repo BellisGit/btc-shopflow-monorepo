@@ -134,6 +134,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
 
     bars.forEach((bar, index) => {
       const angle = baseAngles[index];
+      if (angle === undefined) return; // 跳过未初始化的角度
 
       // 摇滚律动：70%概率低，30%概率爆发到峰值（模拟鼓点）
       const isPeak = Math.random() > 0.7;
@@ -200,6 +201,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
   function triggerBurst() {
     bars.forEach((bar, index) => {
       const angle = baseAngles[index];
+      if (angle === undefined) return; // 跳过未初始化的角度
       const hue = (angle + 135) % 360;
 
       // 超峰值爆发
@@ -220,6 +222,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
         if (bars[index]) {
           const randomColor = gradientColors[Math.floor(Math.random() * gradientColors.length)];
           const currentAngle = baseAngles[index];
+          if (currentAngle === undefined) return; // 跳过未初始化的角度
           const currentHue = (currentAngle + 135) % 360;
           bar.style.background = `linear-gradient(to top,
             hsla(${currentHue}, 80%, 50%, 0.9),

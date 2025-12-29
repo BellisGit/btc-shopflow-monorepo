@@ -9,11 +9,14 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"],
+      "@configs": ["../../configs"],
       "@configs/*": ["../../configs/*"],
+      "@btc/shared-utils": ["../shared-utils/src", "../shared-utils/dist"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*", "../shared-utils/dist/*"],
       "@btc/shared-components": ["../shared-components/dist"],
-      "@btc/shared-components/*": ["../shared-components/dist/*"]
+      "@btc/shared-components/*": ["../shared-components/dist/*"],
+      "@btc/auth-shared": ["../../auth/shared"],
+      "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],

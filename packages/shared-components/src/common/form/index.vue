@@ -487,9 +487,9 @@ export default defineComponent({
         'onUpdate:modelValue': (val: boolean) => {
           visible.value = val;
         },
-        title: config.title,
-        width: config.width,
-        height: config.height,
+        ...(config.title !== undefined ? { title: config.title } : {}),
+        ...(config.width !== undefined ? { width: config.width } : {}),
+        ...((config as any).height !== undefined ? { height: (config as any).height } : {}),
         ...config.dialog,
         onClosed
       }, {

@@ -61,7 +61,7 @@ function extractAppName(filePath: string): string {
   // 从路径 apps/docs-app/src/app.ts 提取 docs
   // 匹配 apps/ 和 -app/ 之间的所有内容（包括连字符）
   const match = filePath.match(/apps\/(.+?)-app\//);
-  return match ? match[1] : '';
+  return match && match[1] ? match[1] : '';
 }
 
 /**

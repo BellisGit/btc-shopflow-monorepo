@@ -354,6 +354,32 @@
       ]
     },
     {
+      "path": "/governance/dictionary/fields",
+      "labelKey": "menu.data.dictionary.fields",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.dictionary.fields"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.governance", "icon": "Setting" },
+        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.data.dictionary.fields", "icon": "Document" }
+      ]
+    },
+    {
+      "path": "/governance/dictionary/values",
+      "labelKey": "menu.data.dictionary.values",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.dictionary.values"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.governance", "icon": "Setting" },
+        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.data.dictionary.values", "icon": "List" }
+      ]
+    },
+    {
       "path": "/test/components",
       "labelKey": "menu.test_features.components",
       "tab": {
@@ -489,6 +515,14 @@
           "labelKey": "menu.data.files",
           "children": [
             { "index": "/governance/files/templates", "labelKey": "menu.data.files.templates" }
+          ]
+        },
+        {
+          "index": "governance-dictionary",
+          "labelKey": "menu.data.dictionary",
+          "children": [
+            { "index": "/governance/dictionary/fields", "labelKey": "menu.data.dictionary.fields" },
+            { "index": "/governance/dictionary/values", "labelKey": "menu.data.dictionary.values" }
           ]
         }
       ]

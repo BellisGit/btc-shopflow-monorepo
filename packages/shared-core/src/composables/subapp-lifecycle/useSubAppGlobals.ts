@@ -19,7 +19,7 @@ export interface SubAppGlobalsOptions {
  * 以财务应用为标准，所有子应用使用相同的逻辑
  */
 export async function setupSubAppGlobals(options: SubAppGlobalsOptions): Promise<void> {
-  const { appId, basePath, domainCachePath, domainCacheModule } = options;
+  const { appId, domainCachePath, domainCacheModule } = options;
 
   if (typeof window === 'undefined') {
     return;

@@ -130,7 +130,9 @@ export function registerTabs(app: string, tabs: TabMeta[]) {
   }
 
   tabs.forEach(tab => {
-    registry[app][tab.key] = tab;
+    if (registry[app]) {
+      registry[app][tab.key] = tab;
+    }
   });
 }
 

@@ -655,10 +655,27 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     cacheDir: appCacheDir,
     resolve: {
       ...baseResolve,
-      alias: {
-        ...baseResolve?.alias,
-        ...layoutAliases,
-      },
+      // 合并别名：baseResolve.alias 是数组形式，layoutAliases 是对象形式
+      // 关键：layoutAliases 中的别名必须放在数组前面，确保优先匹配（特别是 @ 别名）
+      alias: Array.isArray(baseResolve?.alias)
+        ? [
+            // layout-app 特有的别名放在前面，优先匹配
+            ...Object.entries(layoutAliases).map(([find, replacement]) => ({
+              find,
+              replacement,
+            })),
+            // 过滤掉 baseResolve.alias 中与 layoutAliases 冲突的别名（如 @）
+            ...baseResolve.alias.filter((alias) => {
+              if (typeof alias.find === 'string') {
+                return !(alias.find in layoutAliases);
+              }
+              return true;
+            }),
+          ]
+        : {
+            ...(baseResolve?.alias as Record<string, string> || {}),
+            ...layoutAliases,
+          },
     },
     plugins,
     esbuild: {

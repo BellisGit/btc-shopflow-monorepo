@@ -144,6 +144,14 @@ export function useSettingsHandlers() {
     },
   };
 
+  // Loading 样式处理器
+  type LoadingStyle = 'circle' | 'dots';
+  const loadingStyleHandlers = {
+    setStyle: (style: LoadingStyle) => {
+      settingsState.setLoadingStyle(style);
+    },
+  };
+
   // 主题风格处理器
   const themeStyleHandlers = {
     // 切换主题风格
@@ -178,6 +186,7 @@ export function useSettingsHandlers() {
     colorHandlers,
     containerHandlers,
     buttonStyleHandlers,
+    loadingStyleHandlers,
     themeStyleHandlers,
     menuLayoutHandlers,
     menuStyleHandlers,

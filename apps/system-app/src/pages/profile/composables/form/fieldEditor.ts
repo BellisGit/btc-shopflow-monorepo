@@ -106,7 +106,7 @@ export function useFieldEditor({
     openFieldEditForm(field);
   };
 
-  const handleBindField = (field: string) => {
+  const handleBindField = (_field: string) => {
     // 绑定字段逻辑由主页面处理，这里保留函数用于兼容
   };
 

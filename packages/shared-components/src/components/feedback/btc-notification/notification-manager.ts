@@ -77,8 +77,8 @@ class BtcNotificationManager {
       title: options.title as any,
       message: content as any,
       type: type as any,
-      duration: 0, // 设置为0，完全手动控制关闭时机
-      showClose: options.showClose,
+      duration: 0 as any, // 设置为0，完全手动控制关闭时机
+      showClose: options.showClose as any,
       position: options.position as any,
       dangerouslyUseHTMLString: options.dangerouslyUseHTMLString,
       onClose: () => {

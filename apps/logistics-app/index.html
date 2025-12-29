@@ -18,6 +18,19 @@
         overflow: hidden;
       }
 
+      /* 关键：在 HTML 解析时立即设置 body 背景色，避免白屏 */
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #ffffff; /* 默认白色背景 */
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #000000; /* 暗色模式黑色背景 */
+        }
+      }
+
       * {
         -webkit-font-smoothing: antialiased;
         font-family:
@@ -190,6 +203,38 @@
       // 关键：在页面加载时立即检查导航标记，立即显示 Loading，避免白屏
       (function() {
         try {
+          // 关键：在qiankun环境下，应用级别loading由qiankun统一管理，不应该显示index.html中的#Loading
+          // 检查是否为qiankun环境（包括__POWERED_BY_QIANKUN__和__USE_LAYOUT_APP__两种情况）
+          const isQiankun = typeof window !== 'undefined' && (
+            window['__POWERED_BY_QIANKUN__'] || 
+            window['__USE_LAYOUT_APP__']
+          );
+          if (isQiankun) {
+            // qiankun环境下，立即隐藏#Loading元素，避免与应用级别loading冲突
+            var loadingEl = document.getElementById('Loading');
+            if (loadingEl) {
+              loadingEl.style.setProperty('display', 'none', 'important');
+              loadingEl.style.setProperty('visibility', 'hidden', 'important');
+              loadingEl.style.setProperty('opacity', '0', 'important');
+              loadingEl.style.setProperty('pointer-events', 'none', 'important');
+              loadingEl.classList.add('is-hide');
+            }
+            // 如果DOM还没加载完成，也监听DOMContentLoaded确保隐藏
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', function() {
+                var loadingEl = document.getElementById('Loading');
+                if (loadingEl) {
+                  loadingEl.style.setProperty('display', 'none', 'important');
+                  loadingEl.style.setProperty('visibility', 'hidden', 'important');
+                  loadingEl.style.setProperty('opacity', '0', 'important');
+                  loadingEl.style.setProperty('pointer-events', 'none', 'important');
+                  loadingEl.classList.add('is-hide');
+                }
+              });
+            }
+            return; // qiankun环境下不显示index.html中的loading
+          }
+          
           const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
           if (shouldShowLoading) {
             // 使用内联样式立即显示 Loading，不等待 DOMContentLoaded

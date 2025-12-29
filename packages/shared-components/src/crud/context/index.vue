@@ -14,7 +14,7 @@ import {
   nextTick,
   onBeforeUnmount,
   computed,
-  reactive,
+  // reactive 未使用，已移除
   watchEffect,
   watch,
 } from 'vue';
@@ -75,14 +75,17 @@ const hasPagination = ref(false);
 const crudRef = ref<HTMLElement>();
 
 // 创建 CRUD 实例
-const crud = useCrud({
+const crudOptions: any = {
   service: props.service,
-  onBeforeRefresh: props.onBeforeRefresh,
   onSuccess: (message: string) => {
     BtcMessage.success(message);
   },
   ...props.options,
-});
+};
+if (props.onBeforeRefresh !== undefined) {
+  crudOptions.onBeforeRefresh = props.onBeforeRefresh;
+}
+const crud = useCrud(crudOptions);
 
 // 关键：确保 crud 实例有效
 if (!crud) {

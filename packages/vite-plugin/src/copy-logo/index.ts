@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
+// @ts-expect-error: __dirname 未使用，保留用于未来功能
 const __dirname = dirname(__filename);
 
 /**

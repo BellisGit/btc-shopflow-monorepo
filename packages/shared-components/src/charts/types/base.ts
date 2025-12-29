@@ -7,19 +7,19 @@
  */
 export interface BaseChartProps {
   /** 图表标题 */
-  title?: string;
+  title?: string | undefined;
   /** 数据（通用类型，具体图表会定义具体结构） */
   data?: any;
   /** 高度 */
-  height?: string;
+  height?: string | undefined;
   /** 宽度 */
-  width?: string;
+  width?: string | undefined;
   /** 是否自动调整大小 */
-  autoresize?: boolean;
+  autoresize?: boolean | undefined;
   /** 是否显示加载状态 */
-  loading?: boolean;
+  loading?: boolean | undefined;
   /** 是否显示空状态 */
-  showEmpty?: boolean;
+  showEmpty?: boolean | undefined;
 }
 
 /**
@@ -27,15 +27,15 @@ export interface BaseChartProps {
  */
 export interface AxisDisplayProps {
   /** 是否显示坐标轴 */
-  show?: boolean;
+  show?: boolean | undefined;
   /** 坐标轴标签颜色 */
-  labelColor?: string;
+  labelColor?: string | undefined;
   /** 坐标轴线颜色 */
-  lineColor?: string;
+  lineColor?: string | undefined;
   /** 坐标轴分割线颜色 */
-  splitLineColor?: string;
+  splitLineColor?: string | undefined;
   /** 坐标轴标签格式化函数 */
-  formatter?: string | ((value: any) => string);
+  formatter?: string | ((value: any) => string) | undefined;
 }
 
 /**
@@ -43,23 +43,23 @@ export interface AxisDisplayProps {
  */
 export interface InteractionProps {
   /** 是否显示提示框 */
-  showTooltip?: boolean;
+  showTooltip?: boolean | undefined;
   /** 是否显示图例 */
-  showLegend?: boolean;
+  showLegend?: boolean | undefined;
   /** 是否显示工具栏 */
-  showToolbar?: boolean;
+  showToolbar?: boolean | undefined;
   /** 是否显示标签 */
-  showLabel?: boolean;
+  showLabel?: boolean | undefined;
 }
 
 /**
  * 网格配置
  */
 export interface GridConfig {
-  left?: string | number;
-  right?: string | number;
-  top?: string | number;
-  bottom?: string | number;
+  left?: string | number | undefined;
+  right?: string | number | undefined;
+  top?: string | number | undefined;
+  bottom?: string | number | undefined;
 }
 
 /**
@@ -67,12 +67,12 @@ export interface GridConfig {
  */
 export interface ChartThemeConfig {
   /** 字体大小 */
-  fontSize?: number;
+  fontSize?: number | undefined;
   /** 字体颜色 */
-  fontColor?: string;
+  fontColor?: string | undefined;
   /** 主题颜色 */
-  themeColor?: string;
+  themeColor?: string | undefined;
   /** 颜色组 */
-  colors?: string[];
+  colors?: string[] | undefined;
 }
 

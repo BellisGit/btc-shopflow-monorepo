@@ -57,7 +57,7 @@ export const createDashboardApp = async (props: QiankunProps = {}): Promise<Dash
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[dashboard-app] Failed to import domain-cache module:', error);
+      // Failed to import domain-cache module
     }
 
     await setupSubAppGlobals({

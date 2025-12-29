@@ -23,7 +23,6 @@ defineOptions({
 
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { useCurrentApp } from '../../../../composables/useCurrentApp';
 import { getMenusForApp } from '../../../../store/menuRegistry';
@@ -31,7 +30,6 @@ import MenuRenderer from '../menu-renderer/index.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
 const { currentApp } = useCurrentApp();
 const { uniqueOpened } = useSettingsState();
 
@@ -92,10 +90,10 @@ onMounted(() => {
 
 // 只显示一级菜单（混合菜单的顶部只显示一级）
 const firstLevelMenuItems = computed(() => {
-  return allMenuItems.value.map(item => ({
-    ...item,
-    children: undefined, // 移除子菜单，只显示一级
-  }));
+  return allMenuItems.value.map(item => {
+    const { children, ...rest } = item;
+    return rest;
+  });
 });
 
 watch(

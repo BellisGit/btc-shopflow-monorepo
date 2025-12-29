@@ -73,6 +73,15 @@ export function useSettingsState() {
     storage.set('settings', { ...initialSettings, buttonStyle: resolvedButtonStyle });
   }
 
+  // Loading 样式设置
+  type LoadingStyle = 'circle' | 'dots';
+  const storedLoadingStyle = initialSettings.loadingStyle as LoadingStyle | null;
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : 'circle';
+  const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
+  if (!initialSettings.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots')) {
+    storage.set('settings', { ...initialSettings, loadingStyle: resolvedLoadingStyle });
+  }
+
   const resolveThemePlugin = () => {
     try {
       return useThemePlugin();
@@ -98,6 +107,18 @@ export function useSettingsState() {
     const settings = getSettings();
     storage.set('settings', { ...settings, buttonStyle: style });
     applyButtonStyle(style);
+  }
+
+  /**
+   * 设置 Loading 样式
+   */
+  function setLoadingStyle(style: LoadingStyle) {
+    if (loadingStyle.value === style) return;
+    loadingStyle.value = style;
+    const settings = getSettings();
+    storage.set('settings', { ...settings, loadingStyle: style });
+    // 触发 loading 样式变化事件
+    window.dispatchEvent(new CustomEvent('loading-style-change', { detail: { style } }));
   }
 
   // 鍒濆鍖栨椂搴旂敤璁剧疆
@@ -397,6 +418,7 @@ export function useSettingsState() {
     pageTransition,
     customRadius,
     buttonStyle,
+    loadingStyle,
     isDark,
     switchMenuLayouts,
     switchMenuStyles,
@@ -418,6 +440,7 @@ export function useSettingsState() {
     setPageTransition,
     setCustomRadius,
     setButtonStyle,
+    setLoadingStyle,
     setMenuOpenWidth,
     toggleGlobalSearch,
   };

@@ -18,7 +18,7 @@ import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
 import { resolveAppLogoUrl } from '@configs/layout-bridge';
 
 // 处理器模块
-import { createMessageHandler, initMessageManager, createNotificationHandler, initNotificationManager } from './handlers';
+import { createNotificationHandler, initNotificationManager } from './handlers';
 
 // 集成模块
 import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integrations';

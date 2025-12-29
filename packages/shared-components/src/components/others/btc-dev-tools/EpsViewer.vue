@@ -62,7 +62,7 @@
               v-if="data.path"
               size="small"
               class="eps-viewer__path-tag"
-              :title="data.path"
+              :title="data.path || ''"
             >
               {{ formatPath(data.path) }}
             </el-tag>
@@ -338,11 +338,11 @@ function getMethodType(method: string): string {
   return methodTypes[methodUpper] || 'info';
 }
 
-function formatPath(path: string): string {
+function formatPath(path: string | undefined): string {
   if (!path) return '';
   // 只显示路径的最后一部分，完整路径在 title 中显示
   const parts = path.split('/').filter(p => p);
-  return parts.length > 0 ? parts[parts.length - 1] : path;
+  return parts.length > 0 ? (parts[parts.length - 1] || path) : path;
 }
 
 onMounted(() => {

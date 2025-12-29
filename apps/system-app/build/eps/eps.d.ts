@@ -1,270 +1,5 @@
 // Entity interface definitions
-    interface dictdata {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 字典数据ID
-           */
-          dictDataId?: any;
-        
-          /**
-           * 字典类型编码
-           */
-          dictTypeCode?: any;
-        
-          /**
-           * 字典值
-           */
-          dictValue?: any;
-        
-          /**
-           * 字典标签
-           */
-          dictLabel?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface info {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 字典编码
-           */
-          dictCode?: any;
-        
-          /**
-           * 字典名称
-           */
-          dictName?: any;
-        
-          /**
-           * 实体类名
-           */
-          entityClass?: any;
-        
-          /**
-           * 字段名称
-           */
-          fieldName?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 最后修改时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface item {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 字典字段标识
-           */
-          fieldName?: any;
-        
-          /**
-           * 字典值
-           */
-          itemValue?: any;
-        
-          /**
-           * 字典标签
-           */
-          itemLabel?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 最后修改时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface dicttype {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 字典类型ID
-           */
-          dictTypeId?: any;
-        
-          /**
-           * 字典类型编码
-           */
-          dictTypeCode?: any;
-        
-          /**
-           * 字典类型名称
-           */
-          dictTypeName?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface entitydictmapping {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 关联ID
-           */
-          mappingId?: any;
-        
-          /**
-           * 实体类名
-           */
-          entityClass?: any;
-        
-          /**
-           * 字典类型编码
-           */
-          dictTypeCode?: any;
-        
-          /**
-           * 字段名称
-           */
-          fieldName?: any;
-        
-          /**
-           * 继承自
-           */
-          inheritFrom?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface test {
+    interface test {
         /**
          * Any key-value pairs
          */
@@ -438,6 +173,54 @@ interface check {
       }
       
 
+interface approval {
+          /**
+           * 序号
+           */
+          id?: any;
+        
+          /**
+           * 域ID
+           */
+          domainId?: any;
+        
+          /**
+           * 盘点编号
+           */
+          checkNo?: any;
+        
+          /**
+           * 状态
+           */
+          status?: any;
+        
+          /**
+           * 确认人
+           */
+          confirmer?: any;
+        
+          /**
+           * 确认时间
+           */
+          createdAt?: any;
+        
+          /**
+           * name
+           */
+          name?: any;
+        
+          /**
+           * checkNo
+           */
+          checkNo?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
 interface bom {
           /**
            * 主键ID
@@ -594,54 +377,6 @@ interface data {
       }
       
 
-interface approval {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 盘点编号
-           */
-          checkNo?: any;
-        
-          /**
-           * 状态
-           */
-          status?: any;
-        
-          /**
-           * 确认人
-           */
-          confirmer?: any;
-        
-          /**
-           * 确认时间
-           */
-          createdAt?: any;
-        
-          /**
-           * name
-           */
-          name?: any;
-        
-          /**
-           * checkNo
-           */
-          checkNo?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
 interface datasource {
           /**
            * 主键ID
@@ -707,39 +442,6 @@ interface datasource {
            * partName
            */
           partName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface bom {
-          /**
-           * 父节点
-           */
-          parentNode?: any;
-        
-          /**
-           * 子节点
-           */
-          childNode?: any;
-        
-          /**
-           * 子节点数量
-           */
-          childQty?: any;
-        
-          /**
-           * parentNode
-           */
-          parentNode?: any;
-        
-          /**
-           * childNode
-           */
-          childNode?: any;
         
         /**
          * Any key-value pairs
@@ -1015,44 +717,6 @@ interface ticket {
       }
       
 
-interface data {
-          /**
-           * 库存代码
-           */
-          stockCode?: any;
-        
-          /**
-           * 仓库
-           */
-          warehouse?: any;
-        
-          /**
-           * 总数量
-           */
-          totalQty?: any;
-        
-          /**
-           * 单位成本
-           */
-          unitCost?: any;
-        
-          /**
-           * stockCode
-           */
-          stockCode?: any;
-        
-          /**
-           * warehouse
-           */
-          warehouse?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
 interface material {
           /**
            * 主键ID
@@ -1168,6 +832,77 @@ interface material {
            * 关键词
            */
           keyword?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface bom {
+          /**
+           * 父节点
+           */
+          parentNode?: any;
+        
+          /**
+           * 子节点
+           */
+          childNode?: any;
+        
+          /**
+           * 子节点数量
+           */
+          childQty?: any;
+        
+          /**
+           * parentNode
+           */
+          parentNode?: any;
+        
+          /**
+           * childNode
+           */
+          childNode?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface data {
+          /**
+           * 库存代码
+           */
+          stockCode?: any;
+        
+          /**
+           * 仓库
+           */
+          warehouse?: any;
+        
+          /**
+           * 总数量
+           */
+          totalQty?: any;
+        
+          /**
+           * 单位成本
+           */
+          unitCost?: any;
+        
+          /**
+           * stockCode
+           */
+          stockCode?: any;
+        
+          /**
+           * warehouse
+           */
+          warehouse?: any;
         
         /**
          * Any key-value pairs
@@ -1304,136 +1039,6 @@ interface phone {
       
 
 interface deletelog {
-          /**
-           * logId
-           */
-          logId?: any;
-        
-          /**
-           * id
-           */
-          id?: any;
-        
-          /**
-           * tenantId
-           */
-          tenantId?: any;
-        
-          /**
-           * operationType
-           */
-          operationType?: any;
-        
-          /**
-           * operationDesc
-           */
-          operationDesc?: any;
-        
-          /**
-           * entityType
-           */
-          entityType?: any;
-        
-          /**
-           * entityId
-           */
-          entityId?: any;
-        
-          /**
-           * tableName
-           */
-          tableName?: any;
-        
-          /**
-           * beforeData
-           */
-          beforeData?: any;
-        
-          /**
-           * afterData
-           */
-          afterData?: any;
-        
-          /**
-           * changedFields
-           */
-          changedFields?: any;
-        
-          /**
-           * sqlStatement
-           */
-          sqlStatement?: any;
-        
-          /**
-           * sqlParams
-           */
-          sqlParams?: any;
-        
-          /**
-           * userId
-           */
-          userId?: any;
-        
-          /**
-           * userName
-           */
-          userName?: any;
-        
-          /**
-           * requestUrl
-           */
-          requestUrl?: any;
-        
-          /**
-           * requestMethod
-           */
-          requestMethod?: any;
-        
-          /**
-           * requestParams
-           */
-          requestParams?: any;
-        
-          /**
-           * ipAddress
-           */
-          ipAddress?: any;
-        
-          /**
-           * userAgent
-           */
-          userAgent?: any;
-        
-          /**
-           * executionTime
-           */
-          executionTime?: any;
-        
-          /**
-           * status
-           */
-          status?: any;
-        
-          /**
-           * errorMessage
-           */
-          errorMessage?: any;
-        
-          /**
-           * createdAt
-           */
-          createdAt?: any;
-        
-          /**
-           * isRestore
-           */
-          isRestore?: any;
-        
-          /**
-           * ids
-           */
-          ids?: any;
-        
         /**
          * Any key-value pairs
          */
@@ -1442,46 +1047,6 @@ interface deletelog {
       
 
 interface config {
-          /**
-           * id
-           */
-          id?: any;
-        
-          /**
-           * logTime
-           */
-          logTime?: any;
-        
-          /**
-           * logType
-           */
-          logType?: any;
-        
-          /**
-           * keyDays
-           */
-          keyDays?: any;
-        
-          /**
-           * autoClean
-           */
-          autoClean?: any;
-        
-          /**
-           * createdAt
-           */
-          createdAt?: any;
-        
-          /**
-           * updatedAt
-           */
-          updatedAt?: any;
-        
-          /**
-           * deletedAt
-           */
-          deletedAt?: any;
-        
         /**
          * Any key-value pairs
          */
@@ -1490,136 +1055,6 @@ interface config {
       
 
 interface operation {
-          /**
-           * logId
-           */
-          logId?: any;
-        
-          /**
-           * id
-           */
-          id?: any;
-        
-          /**
-           * tenantId
-           */
-          tenantId?: any;
-        
-          /**
-           * operationType
-           */
-          operationType?: any;
-        
-          /**
-           * operationDesc
-           */
-          operationDesc?: any;
-        
-          /**
-           * entityType
-           */
-          entityType?: any;
-        
-          /**
-           * entityId
-           */
-          entityId?: any;
-        
-          /**
-           * tableName
-           */
-          tableName?: any;
-        
-          /**
-           * beforeData
-           */
-          beforeData?: any;
-        
-          /**
-           * afterData
-           */
-          afterData?: any;
-        
-          /**
-           * changedFields
-           */
-          changedFields?: any;
-        
-          /**
-           * sqlStatement
-           */
-          sqlStatement?: any;
-        
-          /**
-           * sqlParams
-           */
-          sqlParams?: any;
-        
-          /**
-           * userId
-           */
-          userId?: any;
-        
-          /**
-           * userName
-           */
-          userName?: any;
-        
-          /**
-           * requestUrl
-           */
-          requestUrl?: any;
-        
-          /**
-           * requestMethod
-           */
-          requestMethod?: any;
-        
-          /**
-           * requestParams
-           */
-          requestParams?: any;
-        
-          /**
-           * ipAddress
-           */
-          ipAddress?: any;
-        
-          /**
-           * userAgent
-           */
-          userAgent?: any;
-        
-          /**
-           * executionTime
-           */
-          executionTime?: any;
-        
-          /**
-           * status
-           */
-          status?: any;
-        
-          /**
-           * errorMessage
-           */
-          errorMessage?: any;
-        
-          /**
-           * createdAt
-           */
-          createdAt?: any;
-        
-          /**
-           * isRestore
-           */
-          isRestore?: any;
-        
-          /**
-           * ids
-           */
-          ids?: any;
-        
         /**
          * Any key-value pairs
          */
@@ -1628,51 +1063,6 @@ interface operation {
       
 
 interface request {
-          /**
-           * id
-           */
-          id?: any;
-        
-          /**
-           * userId
-           */
-          userId?: any;
-        
-          /**
-           * username
-           */
-          username?: any;
-        
-          /**
-           * requestUrl
-           */
-          requestUrl?: any;
-        
-          /**
-           * params
-           */
-          params?: any;
-        
-          /**
-           * ip
-           */
-          ip?: any;
-        
-          /**
-           * duration
-           */
-          duration?: any;
-        
-          /**
-           * status
-           */
-          status?: any;
-        
-          /**
-           * createdAt
-           */
-          createdAt?: any;
-        
         /**
          * Any key-value pairs
          */
@@ -2233,34 +1623,9 @@ interface resource {
           tableName?: any;
         
           /**
-           * 所属域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 所属模块ID
-           */
-          moduleId?: any;
-        
-          /**
            * 资源说明
            */
           description?: any;
-        
-          /**
-           * 图标
-           */
-          icon?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 是否敏感资源
-           */
-          isSensitive?: any;
         
           /**
            * 创建时间
@@ -2276,6 +1641,31 @@ interface resource {
            * 删除时间
            */
           deletedAt?: any;
+        
+          /**
+           * resourceCode
+           */
+          resourceCode?: any;
+        
+          /**
+           * resourceNameCn
+           */
+          resourceNameCn?: any;
+        
+          /**
+           * resourceNameEn
+           */
+          resourceNameEn?: any;
+        
+          /**
+           * resourceType
+           */
+          resourceType?: any;
+        
+          /**
+           * tableName
+           */
+          tableName?: any;
         
         /**
          * Any key-value pairs
@@ -2596,6 +1986,107 @@ interface userrole {
            * roleName
            */
           roleName?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface dictdata {
+          /**
+           * 序号
+           */
+          id?: any;
+        
+          /**
+           * 字典数据ID
+           */
+          dictDataId?: any;
+        
+          /**
+           * 字典类型编码
+           */
+          dictTypeCode?: any;
+        
+          /**
+           * 字典值
+           */
+          dictValue?: any;
+        
+          /**
+           * 字典标签
+           */
+          dictLabel?: any;
+        
+          /**
+           * 排序
+           */
+          sortOrder?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface info {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 实体类名
+           */
+          entityClass?: any;
+        
+          /**
+           * 字段名称
+           */
+          fieldName?: any;
+        
+          /**
+           * 域ID
+           */
+          domainId?: any;
+        
+          /**
+           * 备注
+           */
+          remark?: any;
+        
+          /**
+           * 创建人
+           */
+          createdBy?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 最后修改时间
+           */
+          updatedAt?: any;
+        
+          /**
+           * 删除时间
+           */
+          deletedAt?: any;
         
         /**
          * Any key-value pairs

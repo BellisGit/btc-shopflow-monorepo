@@ -5,19 +5,6 @@
 // 使用动态导入避免循环依赖（micro/index.ts 导入 store/tabRegistry，而 store/tabRegistry 导入 micro/manifests）
 // import { getManifestRoute, getManifest } from '@/micro/manifests';
 
-// 延迟加载的 manifest 函数（避免循环依赖）
-let getManifestRoute: any = null;
-let getManifest: any = null;
-
-async function _loadManifestFunctions() {
-  if (!getManifestRoute || !getManifest) {
-    const manifestModule = await import('@/micro/manifests');
-    getManifestRoute = manifestModule.getManifestRoute;
-    getManifest = manifestModule.getManifest;
-  }
-  return { getManifestRoute, getManifest };
-}
-
 export interface TabMeta {
   key: string;
   title: string;

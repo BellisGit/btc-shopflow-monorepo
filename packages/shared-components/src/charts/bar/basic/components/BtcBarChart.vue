@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useBarChart } from '../composables/useBarChart';
 import type { BarChartProps } from '../../../types/bar';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<BarChartProps>(), {
   height: '300px',

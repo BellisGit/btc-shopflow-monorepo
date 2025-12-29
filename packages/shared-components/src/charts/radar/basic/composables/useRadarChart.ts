@@ -21,7 +21,7 @@ export function useRadarChart(
       : themeColors;
     const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
 
-    const option: EChartsOption = {
+    const option: any = {
       title: {
         text: props.title || '',
         ...styleHelpers.getTitleStyle()
@@ -108,7 +108,7 @@ export function useRadarChart(
       })
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

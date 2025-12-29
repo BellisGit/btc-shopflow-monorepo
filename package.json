@@ -1,6 +1,6 @@
 {
   "name": "btc-shopflow-monorepo",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "private": true,
   "description": "BTC ShopFlow 微前端项目",
   "packageManager": "pnpm@8.15.0",
@@ -132,6 +132,7 @@
     "@element-plus/icons-vue": "^2.3.2",
     "@playwright/test": "^1.48.2",
     "@types/file-saver": "^2.0.7",
+    "@types/lunr": "^2.3.7",
     "@types/node": "^24.7.0",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",

@@ -56,7 +56,7 @@ function isValidPluginConfig(config: any): config is Plugin {
  * 转换 cool-admin-vue 风格的配置为 Plugin 格式
  */
 function convertToPluginConfig(config: any, name: string): Plugin {
-  return {
+  const result: any = {
     name: config.name || name,
     version: config.version || '1.0.0',
     description: config.description || config.label,
@@ -84,13 +84,6 @@ function convertToPluginConfig(config: any, name: string): Plugin {
       }
     } : {}),
 
-    // 转换布局配置
-    layout: config.layout ? {
-      position: config.layout.position || 'global',
-      order: config.layout.order || 0,
-      component: config.layout.component
-    } : undefined,
-
     // 转换安装钩子
     install: config.install,
 
@@ -107,6 +100,17 @@ function convertToPluginConfig(config: any, name: string): Plugin {
     dependencies: config.dependencies || [],
     options: config.options || {}
   };
+
+  // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  if (config.layout) {
+    result.layout = {
+      position: config.layout.position || 'global',
+      order: config.layout.order || 0,
+      component: config.layout.component
+    };
+  }
+
+  return result as Plugin;
 }
 
 /**

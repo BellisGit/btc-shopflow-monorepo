@@ -54,7 +54,8 @@ export function createTag(code: string, id: string): { code: string; map: any } 
 
     if (!descriptor.script && descriptor.scriptSetup) {
       // 清理 id 中的查询参数，获取真实文件路径
-      const filename = id.split('?')[0];
+      const filename = id.split('?')[0] || id;
+      if (!filename) return null;
       const fileDir = dirname(filename);
 
       const res = compileScript(descriptor, {

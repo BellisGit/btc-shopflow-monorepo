@@ -47,6 +47,7 @@ export function invokeData(d: any) {
   for (const i in d) {
     if (i.includes('-')) {
       const [a, ...arr] = i.split('-');
+      if (!a) return;
       const k: string = arr.pop() || '';
 
       if (!d[a]) {
@@ -56,6 +57,7 @@ export function invokeData(d: any) {
       let f: any = d[a];
 
       arr.forEach((e) => {
+        if (!e) return;
         if (!f[e]) {
           f[e] = {};
         }

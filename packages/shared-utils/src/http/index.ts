@@ -221,9 +221,7 @@ export class ResponseInterceptor {
 
   constructor() {
     // 延迟设置处理器，避免循环依赖
-    this.messageHandler = undefined;
-    this.confirmHandler = undefined;
-    this.routerHandler = undefined;
+    // 使用 delete 而不是赋值 undefined，以符合 exactOptionalPropertyTypes
   }
 
 

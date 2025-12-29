@@ -117,7 +117,7 @@ export class ResourceLoader {
    */
   private extractFileName(path: string): string | null {
     const match = path.match(/\/([^/]+)\.svg$/);
-    return match ? match[1] : null;
+    return match && match[1] ? match[1] : null;
   }
 }
 

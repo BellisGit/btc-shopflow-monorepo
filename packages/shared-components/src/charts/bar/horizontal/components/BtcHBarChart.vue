@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useHBarChart } from '../composables/useHBarChart';
 import type { HBarChartProps } from '../../../types/bar';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<HBarChartProps>(), {
   height: '300px',

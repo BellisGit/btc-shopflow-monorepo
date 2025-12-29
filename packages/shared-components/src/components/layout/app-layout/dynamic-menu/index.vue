@@ -15,8 +15,10 @@
     <!-- 使用配置文件动态渲染菜单 -->
     <MenuRenderer
       :menu-items="currentMenuItems"
-      :search-keyword="searchKeyword"
-      :is-collapse="isCollapse"
+      v-bind="{
+        ...(searchKeyword !== undefined ? { 'search-keyword': searchKeyword } : {}),
+        ...(isCollapse !== undefined ? { 'is-collapse': isCollapse } : {})
+      }"
     />
   </el-menu>
 </template>

@@ -74,6 +74,12 @@
                                           "@btc/subapp-manifests":  [
                                                                        "../../packages/subapp-manifests/src",
                                                                        "../../packages/subapp-manifests/dist"
+                                                                   ],
+                                          "@btc/auth-shared":  [
+                                                                       "../../auth/shared"
+                                                                   ],
+                                          "@btc/auth-shared/*":  [
+                                                                       "../../auth/shared/*"
                                                                    ]
                                       }
                         },
@@ -85,7 +91,7 @@
                     "src/env.d.ts",
                     "../../configs/**/*.ts"
                 ],
-    "exclude": ["node_modules", "dist", "../../packages/**/dist"],
+    "exclude": ["node_modules", "dist", "../../packages/**/dist/**/*.js", "../../packages/**/dist/**/*.mjs"],
     "references":  [
                        {
                            "path":  "./tsconfig.node.json"

@@ -89,7 +89,7 @@ export function useDialogRender(props: DialogProps, dialogContext: any, slots: a
   // 关键：render 函数必须每次调用时都读取响应式值，确保 Vue 能正确追踪依赖
   function render() {
     // 每次渲染时都读取响应式值，确保 Vue 能正确追踪依赖
-    visible.value; // 读取以追踪依赖
+    void visible.value; // 读取以追踪依赖
     const currentHeight = isFullscreen.value ? '100%' : props.height;
 
     // 关键：完全按照 cool-admin 的实现方式

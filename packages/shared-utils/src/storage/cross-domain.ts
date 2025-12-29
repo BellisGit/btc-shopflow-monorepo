@@ -260,16 +260,22 @@ export function clearCrossDomainCookies(): void {
     const domain = getCookieDomain();
     
     // 清除用户偏好设置 Cookie
-    deleteCookie(SETTINGS_COOKIE_KEY, {
-      domain: domain,
+    const settingsCookieOptions: { path: string; domain?: string } = {
       path: '/',
-    });
+    };
+    if (domain) {
+      settingsCookieOptions.domain = domain;
+    }
+    deleteCookie(SETTINGS_COOKIE_KEY, settingsCookieOptions);
     
     // 清除用户信息 Cookie
-    deleteCookie(USER_COOKIE_KEY, {
-      domain: domain,
+    const userCookieOptions: { path: string; domain?: string } = {
       path: '/',
-    });
+    };
+    if (domain) {
+      userCookieOptions.domain = domain;
+    }
+    deleteCookie(USER_COOKIE_KEY, userCookieOptions);
   } catch (error) {
     console.error('[CrossDomain] 清除跨子域名共享的 Cookie 失败:', error);
   }

@@ -66,7 +66,7 @@ const getAppEntry = (appName: string): string => {
   }
 
   switch (envType) {
-    case 'production':
+    case 'production': {
       // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
       if (appConfig.prodHost) {
         const protocol =
@@ -77,6 +77,7 @@ const getAppEntry = (appName: string): string => {
       }
       // 如果没有配置 prodHost，使用相对路径
       return `/${appName}/`;
+    }
 
     case 'preview': {
       // 预览环境：使用统一配置中的预览主机和端口
@@ -89,27 +90,6 @@ const getAppEntry = (appName: string): string => {
       // 开发环境：使用统一配置中的开发主机和端口
       return `//${appConfig.devHost}:${appConfig.devPort}`;
   }
-};
-
-/**
- * 子域名到应用路径的映射
- */
-const subdomainToPathMap: Record<string, string> = {
-  'admin.bellis.com.cn': '/admin',
-  'logistics.bellis.com.cn': '/logistics',
-  'quality.bellis.com.cn': '/quality',
-  'production.bellis.com.cn': '/production',
-  'engineering.bellis.com.cn': '/engineering',
-  'finance.bellis.com.cn': '/finance',
-  'dashboard.bellis.com.cn': '/dashboard',
-  'personnel.bellis.com.cn': '/personnel',
-};
-
-/**
- * 根据子域名获取应用路径
- */
-const getPathFromSubdomain = (hostname: string): string | null => {
-  return subdomainToPathMap[hostname] || null;
 };
 
 /**

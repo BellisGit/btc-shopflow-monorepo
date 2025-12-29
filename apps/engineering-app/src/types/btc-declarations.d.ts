@@ -3,6 +3,7 @@ declare module '@btc/shared-core' {
   export type SubAppContext = any;
   export type SubAppOptions = any;
   export type UseCrudReturn<T = any> = any;
+  export type CrudService<T = any> = any;
   export type ThemeConfig = any;
   export type ButtonStyle = any;
 
@@ -35,11 +36,16 @@ declare module '@btc/shared-components' {
   export const AppLayout: Component;
   export const BtcMessage: any;
   export const BtcMessageBox: any;
+  export const BtcConfirm: any;
   export const getCurrentAppFromPath: any;
   export type ProcessItem = any;
   export function useProcessStore(...args: any[]): any;
   export function registerMenus(...args: any[]): any;
   export function getMenuRegistry(...args: any[]): any;
+  export function getMenusForApp(...args: any[]): any;
+  export function registerEChartsThemes(...args: any[]): any;
+  export function useFormRenderer(...args: any[]): any;
+  export const globalMitt: any;
   export const MenuThemeEnum: any;
   export const SystemThemeEnum: any;
 }

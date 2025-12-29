@@ -118,7 +118,7 @@ function loadCurrentApi() {
 function handleSwitch(item: ApiItem) {
   // 统一使用 /api，不允许切换到其他值
   if (item.value !== '/api') {
-    ElMessage.warning('统一使用 /api 代理，不允许切换');
+    ElMessage.warning({ message: '统一使用 /api 代理，不允许切换' } as any);
     return;
   }
   
@@ -136,7 +136,7 @@ function handleSwitch(item: ApiItem) {
   // 更新 http 实例
   http.setBaseURL(item.value);
   
-  ElMessage.success(`已切换到 ${item.label}，正在刷新页面...`);
+  ElMessage.success({ message: `已切换到 ${item.label}，正在刷新页面...` } as any);
   
   // 自动刷新页面
   reloading.value = true;

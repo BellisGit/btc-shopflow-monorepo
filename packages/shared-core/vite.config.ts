@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@configs': resolve(__dirname, '../../configs'),
       '@btc/shared-components': resolve(__dirname, '../shared-components/src'),
+      '@btc/auth-shared': resolve(__dirname, '../../auth/shared'),
     },
   },
   plugins: [
@@ -20,7 +21,7 @@ export default defineConfig({
       // 生成类型声明文件后，插入类型引用路径
       insertTypesEntry: true,
       // 跳过类型检查，避免 rootDir 限制问题
-      // @ts-ignore - skipDiagnostics 在较新版本的 vite-plugin-dts 中可用
+      // @ts-expect-error - skipDiagnostics 在较新版本的 vite-plugin-dts 中可用
       skipDiagnostics: true,
       // 静默模式，不显示诊断信息
       logLevel: 'silent',
@@ -52,6 +53,8 @@ export default defineConfig({
         /^@configs\/.*/,
         '@btc/shared-components',
         /^@btc\/shared-components\/.*/,
+        '@btc/auth-shared',
+        /^@btc\/auth-shared\/.*/,
       ],
       output: {
         globals: {

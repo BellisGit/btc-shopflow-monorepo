@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useLineChart } from '../composables/useLineChart';
 import type { LineChartProps } from '../../../types/line';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<LineChartProps>(), {
   height: '300px',

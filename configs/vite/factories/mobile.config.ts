@@ -494,10 +494,19 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
     publicDir,
     resolve: {
       ...baseResolve,
-      alias: {
-        ...baseResolve?.alias,
-        ...mobileAliases,
-      },
+      // 合并别名：baseResolve.alias 是数组形式，mobileAliases 是对象形式
+      alias: Array.isArray(baseResolve?.alias)
+        ? [
+            ...baseResolve.alias,
+            ...Object.entries(mobileAliases).map(([find, replacement]) => ({
+              find,
+              replacement,
+            })),
+          ]
+        : {
+            ...(baseResolve?.alias as Record<string, string> || {}),
+            ...mobileAliases,
+          },
     },
     plugins,
     esbuild: {

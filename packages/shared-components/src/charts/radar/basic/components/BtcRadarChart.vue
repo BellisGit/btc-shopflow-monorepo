@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useRadarChart } from '../composables/useRadarChart';
 import type { RadarChartProps } from '../../../types/radar';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<RadarChartProps>(), {
   height: '300px',

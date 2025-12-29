@@ -79,7 +79,7 @@ function handleClick() {
 const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({
   icon: 'batch-unbind',
   tooltip: accessibleLabel.value,
-  badge: selectionCount.value || undefined,
+  ...(selectionCount.value > 0 ? { badge: selectionCount.value } : {}),
   type: 'danger',
   ariaLabel: accessibleLabel.value,
   onClick: () => {

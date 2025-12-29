@@ -3,7 +3,7 @@
  * 使用 localStorage 持久化设置状态
  */
 
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';

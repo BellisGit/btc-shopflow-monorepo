@@ -201,10 +201,16 @@ export async function loadModule(
   const appName = options?.appName || getCurrentAppName();
   const loaderOptions: ResourceLoaderOptions = {
     appName,
-    timeout: options?.timeout,
-    cdnDomain: options?.cdnDomain,
-    ossDomain: options?.ossDomain,
   };
+  if (options?.timeout !== undefined) {
+    loaderOptions.timeout = options.timeout;
+  }
+  if (options?.cdnDomain !== undefined) {
+    loaderOptions.cdnDomain = options.cdnDomain;
+  }
+  if (options?.ossDomain !== undefined) {
+    loaderOptions.ossDomain = options.ossDomain;
+  }
   
   return loadModuleWithResourceLoader(specifier, loaderOptions);
 }

@@ -97,12 +97,17 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
         const manifestKey = routePath.replace(/^\//, "") || "home";
 
-        return {
+        const i18nKey = manifestRoute.tab?.labelKey ?? manifestRoute.labelKey;
+        const result: TabMeta = {
           key: manifestKey,
           title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
           path: fullPath,
-          i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
         };
+        // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+        if (i18nKey !== undefined) {
+          result.i18nKey = i18nKey;
+        }
+        return result;
       }
     }
 
@@ -129,7 +134,9 @@ export function registerTabs(app: string, tabs: TabMeta[]) {
   }
 
   tabs.forEach(tab => {
-    registry[app][tab.key] = tab;
+    if (registry[app]) {
+      registry[app][tab.key] = tab;
+    }
   });
 }
 

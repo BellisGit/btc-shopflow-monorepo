@@ -37,8 +37,9 @@ export function formatName(name: string): string {
   return (name || '').replace(/[:,\s,/,-]/g, '');
 }
 
-export function toCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+export function toCamel(str: string | undefined): string {
+  if (!str) return '';
+  return str.replace(/-([a-z])/g, (g) => g[1]?.toUpperCase() || '');
 }
 
 export function firstUpperCase(str: string): string {

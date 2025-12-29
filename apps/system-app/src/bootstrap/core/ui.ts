@@ -48,10 +48,9 @@ export const getCurrentLocale = (): string => {
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
+  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
 
-  app.use(ElementPlus, {
-    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
-  });
+  app.use(ElementPlus, { locale } as any);
 };
 
 /**

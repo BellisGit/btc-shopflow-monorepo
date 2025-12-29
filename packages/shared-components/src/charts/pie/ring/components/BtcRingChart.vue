@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useRingChart } from '../composables/useRingChart';
 import type { RingChartProps } from '../../../types/pie';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<RingChartProps>(), {
   height: '300px',

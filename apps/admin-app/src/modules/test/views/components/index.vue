@@ -26,7 +26,7 @@
       >
         <div class="test-card-header">
           <div class="test-icon">
-            <img src="/logo.png" alt="BTC Logo" class="test-logo" />
+            <img :src="logoUrl" alt="BTC Logo" class="test-logo" />
           </div>
           <div class="test-info">
             <h3 class="test-title">{{ t(testInstance.title) }}</h3>
@@ -91,6 +91,9 @@ defineOptions({
 });
 
 const { t } = useI18n();
+
+// Logo URL（使用动态绑定避免 Vite 模块解析问题）
+const logoUrl = '/logo.png';
 
 // 搜索关键词
 const searchKeyword = ref('');

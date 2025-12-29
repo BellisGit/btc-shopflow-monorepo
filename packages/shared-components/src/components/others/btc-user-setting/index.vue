@@ -14,7 +14,7 @@
       :config="{
         icon: () => theme?.isDark.value ? 'light' : 'dark',
         tooltip: t('common.tooltip.toggle_dark'),
-        onClick: handleDarkToggle
+        ...(handleDarkToggle ? { onClick: handleDarkToggle } : {})
       }"
     />
   </div>

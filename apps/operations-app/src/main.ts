@@ -24,8 +24,10 @@ import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
 import { isMainApp } from '@configs/unified-env-config';
 
 // 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
-import('@btc/shared-components').then(utils => {
-  utils.setIsMainAppFn(isMainApp);
+import('@btc/shared-components').then((utils: any) => {
+  if (utils.setIsMainAppFn) {
+    utils.setIsMainAppFn(isMainApp);
+  }
 }).catch(() => {
   // 静默处理导入失败，不影响应用启动
   if (import.meta.env.DEV) {

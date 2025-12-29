@@ -3,17 +3,28 @@ import type { SubAppContext } from './types';
 
 /**
  * 创建退出登录函数（标准化模板）
+ * @param context - 子应用上下文
+ * @param _appId - 应用 ID
+ * @param getAuthApi - 可选的获取 authApi 的函数，如果不提供，则使用全局 __APP_AUTH_API__
  */
-export function createLogoutFunction(context: SubAppContext, appId: string): () => Promise<void> {
+export function createLogoutFunction(
+  context: SubAppContext, 
+  _appId: string,
+  getAuthApi?: () => Promise<{ logout: () => Promise<void> } | undefined>
+): () => Promise<void> {
   return async () => {
     try {
-      // 调用后端 logout API（通过全局 authApi，由 system-app 提供）
+      // 调用后端 logout API（优先使用全局 authApi，如果没有则使用自定义获取函数）
       try {
-        const authApi = (window as any).__APP_AUTH_API__;
+        let authApi = (window as any).__APP_AUTH_API__;
+        if (!authApi?.logout && getAuthApi) {
+          // 如果没有全局 authApi，尝试使用自定义获取函数
+          authApi = await getAuthApi();
+        }
         if (authApi?.logout) {
           await authApi.logout();
         } else {
-          console.warn('[useLogout] Auth API logout function not available globally.');
+          console.warn('[useLogout] Auth API logout function not available.');
         }
       } catch (error: any) {
         // 后端 API 失败不影响前端清理
@@ -64,14 +75,14 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
       }
 
       // 显示退出成功提示
-      const sharedComponents = await import('@btc/shared-components') as typeof import('@btc/shared-components');
-      const { BtcMessage } = sharedComponents;
+      const sharedComponents = await import('@btc/shared-components');
+      const { BtcMessage } = sharedComponents as { BtcMessage?: any };
       const t = context.i18n?.i18n?.global?.t;
       if (t) {
         BtcMessage.success(t('common.logoutSuccess'));
       }
 
-      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
       // 判断是否在生产环境的子域名下
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
@@ -79,17 +90,23 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
 
       // 在生产环境子域名下或 qiankun 环境下，使用 window.location 跳转，确保能正确跳转到主应用的登录页
       if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
-        // 如果是生产环境子域名，跳转到主域名；否则保持当前域名
+        // 构建登录页 URL，包含当前路径作为 redirect 参数
+        const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
         if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
         } else {
-          window.location.href = '/login?logout=1';
+          window.location.href = buildLogoutUrl('/login');
         }
       } else {
-        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数和 redirect 参数
+        const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const currentPath = getCurrentUnifiedPath();
         context.router.replace({
           path: '/login',
-          query: { logout: '1' }
+          query: { 
+            logout: '1',
+            ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+          }
         });
       }
     } catch (error: any) {
@@ -133,21 +150,29 @@ export function createLogoutFunction(context: SubAppContext, appId: string): () 
         // 静默失败
       }
 
-      // 跳转到登录页
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径）
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
       if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
+        // 构建登录页 URL，包含当前路径作为 redirect 参数
+        const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
         if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
         } else {
-          window.location.href = '/login?logout=1';
+          window.location.href = buildLogoutUrl('/login');
         }
       } else {
+        // 开发环境独立运行模式：使用路由跳转，添加 logout=1 参数和 redirect 参数
+        const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+        const currentPath = getCurrentUnifiedPath();
         context.router.replace({
           path: '/login',
-          query: { logout: '1' }
+          query: { 
+            logout: '1',
+            ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+          }
         });
       }
     }

@@ -33,6 +33,7 @@
   "devDependencies": {
     "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
+    "@types/lunr": "^2.3.7",
     "@vitejs/plugin-vue": "^5.0.0",
     "element-plus": "^2.13.0",
     "sass": "^1.93.2",

@@ -22,6 +22,9 @@ export interface RequestOptions {
   timeout?: number;
   baseURL?: string;
   permission?: string; // 添加权限字段
+  showLoading?: boolean; // 是否显示操作级loading（默认false，避免过多loading）
+  loadingTarget?: HTMLElement | string; // loading目标元素（可选，默认不指定则使用全屏loading）
+  loadingText?: string; // loading提示文字（可选）
 }
 
 /**
@@ -386,7 +389,7 @@ export function createRequest(baseURL: string = ''): Request {
 
   // 返回 request 函数
   return async (options: RequestOptions): Promise<any> => {
-    const { url: originalUrl, method = 'GET', data, params, headers, timeout, baseURL: customBaseURL } = options;
+    const { url: originalUrl, method = 'GET', data, params, headers, timeout, baseURL: customBaseURL, showLoading, loadingTarget, loadingText } = options;
 
     // 直接使用 axios 实例，URL 和 baseURL 的处理在拦截器中统一完成
     // 这样可以避免重复处理，确保 URL 处理的一致性
@@ -399,15 +402,14 @@ export function createRequest(baseURL: string = ''): Request {
       timeout,
       // 如果提供了自定义 baseURL，传递给拦截器处理
       baseURL: customBaseURL,
+      // 传递loading相关配置到拦截器（虽然目前不自动使用，但保留配置供未来扩展）
+      showLoading,
+      loadingTarget,
+      loadingText,
     };
 
-    try {
-      const response = await axiosInstance.request(config);
-      return response;
-    } catch (error) {
-      // 错误已经在响应拦截器中处理，这里直接抛出，不打印日志
-      throw error;
-    }
+    // 错误已经在响应拦截器中处理，这里直接返回结果
+    return await axiosInstance.request(config);
   };
 }
 

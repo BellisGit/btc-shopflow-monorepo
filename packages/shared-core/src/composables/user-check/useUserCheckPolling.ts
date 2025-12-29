@@ -3,7 +3,7 @@
  */
 
 import { checkUser } from './useUserCheck';
-import { storeUserCheckData } from './useUserCheckStorage';
+import { storeUserCheckData, getUserCheckDataFromStorage } from './useUserCheckStorage';
 
 type PollingCallback = (data: { remainingTime: number; status: string }) => void;
 
@@ -99,8 +99,9 @@ async function performCheck(): Promise<void> {
 /**
  * 启动用户检查轮询
  * @param callback 每次检查后的回调函数
+ * @param forceImmediate 是否强制立即检查（登录后需要立即调用一次）
  */
-export function startPolling(callback?: PollingCallback): void {
+export function startPolling(callback?: PollingCallback, forceImmediate = false): void {
   if (isPolling) {
     // 如果已经在轮询，先停止
     stopPolling();
@@ -109,7 +110,34 @@ export function startPolling(callback?: PollingCallback): void {
   isPolling = true;
   currentCallback = callback || null;
 
-  // 立即执行一次检查
+  // 如果不是强制立即检查，尝试从 sessionStorage 恢复剩余时间
+  if (!forceImmediate && typeof window !== 'undefined') {
+    try {
+      const storedData = getUserCheckDataFromStorage();
+      const storedRemainingTime = storedData?.remainingTime;
+
+      // 如果存在有效的剩余时间（大于0），使用该时间计算第一次轮询间隔
+      if (storedRemainingTime !== undefined && storedRemainingTime !== null && storedRemainingTime > 0) {
+        // 计算下次轮询间隔
+        const interval = calculatePollingInterval(storedRemainingTime);
+
+        // 如果间隔大于0，延迟执行第一次检查
+        if (interval > 0) {
+          pollingTimer = setTimeout(() => {
+            performCheck();
+          }, interval);
+          return;
+        }
+      }
+    } catch (error) {
+      // 如果恢复失败，继续执行立即检查
+      if (import.meta.env.DEV) {
+        console.warn('[useUserCheckPolling] Failed to restore remaining time from storage:', error);
+      }
+    }
+  }
+
+  // 如果没有存储的剩余时间，或者强制立即检查，立即执行一次检查
   performCheck();
 }
 

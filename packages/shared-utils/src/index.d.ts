@@ -4,6 +4,7 @@ export * from './format';
 export * from './validate';
 export * from './storage';
 export * from './storage/cross-domain';
+export { syncSettingsToCookie } from './storage/cross-domain';
 export * from './array';
 export * from './object';
 export * from './string';
@@ -11,6 +12,7 @@ export * from './number';
 export * from './form';
 export * from './hooks';
 export * from './http';
+export type { MessageHandler, ConfirmHandler, RouterHandler, ApiResponse } from './http';
 export * from './composables/usePageTransition';
 // 显式导出 usePageTransition，确保被正确导出
 export { usePageTransition } from './composables/usePageTransition';

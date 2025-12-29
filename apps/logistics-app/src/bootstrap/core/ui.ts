@@ -38,10 +38,10 @@ export const getCurrentLocale = (): string => {
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
+  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
 
-  app.use(ElementPlus, {
-    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
-  });
+  // @ts-expect-error - ElementPlus plugin options type mismatch
+  app.use(ElementPlus, { locale });
 };
 
 // 缓存 themePlugin 实例，避免重复创建

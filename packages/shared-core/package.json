@@ -5,12 +5,27 @@
   "description": "BTC ShopFlow 共享核心库，主要是逻辑层面共享（区别于组件共享）",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./locales/zh-CN": {
+      "types": "./src/btc/plugins/i18n/locales/zh-CN.d.ts",
+      "import": "./src/btc/plugins/i18n/locales/zh-CN.ts",
+      "require": "./src/btc/plugins/i18n/locales/zh-CN.ts"
+    },
+    "./locales/en-US": {
+      "types": "./src/btc/plugins/i18n/locales/en-US.d.ts",
+      "import": "./src/btc/plugins/i18n/locales/en-US.ts",
+      "require": "./src/btc/plugins/i18n/locales/en-US.ts"
+    },
+    "./composables/user-check": {
+      "types": "./dist/src/composables/user-check/index.d.ts",
+      "import": "./dist/src/composables/user-check/index.js",
+      "require": "./dist/src/composables/user-check/index.js"
     }
   },
   "publishConfig": {
@@ -22,7 +37,8 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build",
+    "build": "vite build && node scripts/create-dist-src-index.mjs",
+    "postbuild": "node scripts/create-dist-src-index.mjs",
     "type-check": "tsc --noEmit --project tsconfig.type-check.json"
   },
   "peerDependencies": {

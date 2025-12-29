@@ -10,7 +10,7 @@ import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
  */
 export function useLineChart(
   props: LineChartProps,
-  isDark: Ref<boolean>,
+  _isDark: Ref<boolean>,
   _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
   styleHelpers: ChartStyleHelpers
 ) {
@@ -18,7 +18,7 @@ export function useLineChart(
     // 使用固定的灰色值，在浅色和深色主题下都能看到（参考 art-design-pro）
     const textColor = '#999';
 
-    const option: EChartsOption = {
+    const option = {
       title: {
         text: props.title || '',
         ...styleHelpers.getTitleStyle()
@@ -120,7 +120,7 @@ export function useLineChart(
       })
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

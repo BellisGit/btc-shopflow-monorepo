@@ -267,7 +267,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import { Star, Search, Clock } from '@element-plus/icons-vue';
 import { type MenuItem } from '../../../../store/menuRegistry';
-import { useCurrentApp } from '../../../../composables/useCurrentApp';
+// useCurrentApp 未使用，已移除导入
 import { useSearchIndex, type SearchDataItem as SearchDataItemType } from './useSearchIndex';
 import { getManifestMenus } from '@btc/subapp-manifests';
 

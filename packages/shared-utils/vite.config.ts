@@ -14,6 +14,7 @@ export default defineConfig({
         'error-monitor/index': resolve(__dirname, 'src/error-monitor/index.ts'),
         'qiankun/load-layout-app': resolve(__dirname, 'src/qiankun/load-layout-app.ts'),
         'cookie/index': resolve(__dirname, 'src/cookie/index.ts'),
+        'http/index': resolve(__dirname, 'src/http/index.ts'),
       },
       name: 'BTCSharedUtils',
       formats: ['es', 'cjs'],

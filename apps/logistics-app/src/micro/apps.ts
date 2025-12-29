@@ -65,7 +65,8 @@ const getHost = (): string => {
  */
 const getAppEntry = (appName: string): string => {
   const envType = getEnvironmentType();
-  const host = getHost();
+  // @ts-expect-error: host 未使用
+  const _host = getHost();
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {

@@ -1,7 +1,6 @@
 import { type App, h } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
-import { registerEChartsThemes } from '@btc/shared-components';
 
 // 导入 ECharts 核心模块
 import {
@@ -106,24 +105,34 @@ export default {
       app.component('v-chart', VChartWrapper);
       app.config.globalProperties.$_vueEchartsInstalled = true;
 
-      // 在应用启动后注册自定义主题，确保 CSS 变量已经正确设置
-      if (typeof window !== 'undefined') {
-        // 使用多种方式确保 DOM 和 CSS 变量已经准备好
-        const registerThemes = () => {
-          registerEChartsThemes();
-        };
+          // 在应用启动后注册自定义主题，确保 CSS 变量已经正确设置
+          if (typeof window !== 'undefined') {
+            // 使用多种方式确保 DOM 和 CSS 变量已经准备好
+            const registerThemes = async () => {
+              try {
+                const sharedComponents = await import('@btc/shared-components');
+                if ('registerEChartsThemes' in sharedComponents && typeof sharedComponents.registerEChartsThemes === 'function') {
+                  sharedComponents.registerEChartsThemes();
+                }
+              } catch (error) {
+                // 静默失败
+                if (import.meta.env.DEV) {
+                  console.warn('[echarts] Failed to register themes:', error);
+                }
+              }
+            };
 
-        // 立即尝试注册
-        registerThemes();
+          // 立即尝试注册
+          registerThemes();
 
-        // DOMContentLoaded 时再次注册，确保 CSS 变量已应用
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', registerThemes);
+          // DOMContentLoaded 时再次注册，确保 CSS 变量已应用
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', registerThemes);
+          }
+
+          // 延迟注册，确保所有样式都已加载
+          setTimeout(registerThemes, 100);
         }
-
-        // 延迟注册，确保所有样式都已加载
-        setTimeout(registerThemes, 100);
-      }
     }
   }
 };

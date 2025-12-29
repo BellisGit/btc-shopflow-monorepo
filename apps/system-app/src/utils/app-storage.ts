@@ -245,7 +245,7 @@ export const appStorage = {
   /**
    * 初始化存储管理器
    */
-  init(version?: string): void {
+  init(_version?: string): void {
     // 初始化逻辑（如果需要）
   },
   auth: {

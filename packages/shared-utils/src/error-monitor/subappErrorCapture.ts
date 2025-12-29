@@ -33,15 +33,21 @@ export function setupSubAppErrorCapture(config: SubAppErrorCaptureConfig) {
 
   // 1. 捕获子应用JS运行时错误
   window.onerror = (message, source, lineno, colno, error) => {
-    reportError({
+    const errorInfo: any = {
       type: 'script',
       message: String(message),
       source: appName,
       stack: error?.stack || '',
       url: source || window.location.href,
-      lineno,
-      colno,
-    });
+    };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (lineno !== undefined) {
+      errorInfo.lineno = lineno;
+    }
+    if (colno !== undefined) {
+      errorInfo.colno = colno;
+    }
+    reportError(errorInfo);
     // 返回 false 以允许默认的错误处理
     return false;
   };

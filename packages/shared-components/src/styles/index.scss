@@ -351,7 +351,7 @@
 		&--danger,
 		&--info,
 		&--default {
-			border-color: transparent;
+			border-color: color-mix(in srgb, var(--btc-crud-btn-color) 35%, transparent);
 			color: var(--btc-crud-btn-color);
 			background-color: color-mix(in srgb, var(--btc-crud-btn-color) 6%, transparent);
 		}
@@ -613,25 +613,27 @@
 }
 
 .btc-search-key {
-	flex: 0 0 var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
-	width: var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
-	max-width: var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
 	display: inline-flex;
 	align-items: center;
 	overflow: hidden;
 	margin-left: auto;
 	margin-right: 0;
 	min-width: 0;
+	flex: 0 0 var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
+	width: var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
+	max-width: var(--btc-crud-search-width, var(--btc-crud-op-width, 220px));
+
 	&.is-expanded {
 		flex: 0 1 var(--btc-crud-search-width, 200px);
 		width: var(--btc-crud-search-width, 200px);
 		max-width: var(--btc-crud-search-width, 200px);
 	}
+
 	&.is-collapsible:not(.is-expanded) {
-		flex: 0 0 34px;
-		width: 34px;
-		max-width: 34px;
-		min-width: 34px;
+		flex: 0 0 34px !important;
+		width: 34px !important;
+		max-width: 34px !important;
+		min-width: 34px !important;
 		justify-content: flex-end;
 	}
 
@@ -1091,8 +1093,8 @@
 
 				&:last-child {
 					margin-left: 5px;
-    }
-  }
+				}
+			}
 
 			&.is-active {
 				background-color: #f7f7f7;
@@ -1143,18 +1145,9 @@
 					height: 6px;
 					width: 6px;
 				}
-    }
-  }
-}
-
-.btc-search-key {
-		width: 100%;
-		margin-right: 0 !important;
-
-		&__wrap {
-			width: 100% !important;
-  }
-}
+			}
+		}
+	}
 }
 // end of imported styles
 
@@ -1362,21 +1355,21 @@ body.theme-brand-red {
   width: 100%;
   height: 100%;
   position: relative;
-  
+
   &--main-app {
     display: block;
   }
-  
+
   &--sub-app {
     display: flex;
     flex-direction: column;
   }
-  
+
   &--loading {
     display: flex;
     flex-direction: column;
   }
-  
+
   &--hidden {
     display: none !important;
   }

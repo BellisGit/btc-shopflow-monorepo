@@ -272,7 +272,6 @@ router.onError((error: Error) => {
             }
           } catch (error) {
             // 如果路由解析失败，使用 window.location 作为回退
-            console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
             window.location.href = '/login';
           } finally {
             // 无论成功与否，都移除 Loading 元素
@@ -307,7 +306,7 @@ router.onError((error: Error) => {
           }
         } catch (error) {
           // 如果路由解析失败，使用 window.location 作为回退
-          console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
+          // 登录页路由解析失败，使用 window.location
           window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
         } finally {
           // 无论成功与否，都移除 Loading 元素
@@ -363,7 +362,7 @@ router.onError((error: Error) => {
           }
         } catch (error) {
           // 如果路由解析失败，使用 window.location 作为回退
-          console.error('[system-app] 登录页路由解析失败，使用 window.location:', error);
+          // 登录页路由解析失败，使用 window.location
           window.location.href = '/login';
         } finally {
           // 无论成功与否，都移除 Loading 元素
@@ -426,17 +425,55 @@ router.onError((error: Error) => {
 let currentRoute: RouteLocationNormalized | null = null;
 
 /**
- * 生成完整的浏览器标题
- * 格式：主模块 - BTC ShopFlow（系统主应用统一格式，不使用页面标题）
+ * 根据路径获取当前应用名称
  */
-function formatDocumentTitle(): string {
-  // 使用 domain.type.system 国际化键获取"主模块"
-  const moduleName = tSync('domain.type.system');
+function getCurrentAppFromPath(path: string): string {
+  if (path.startsWith('/admin')) return 'admin';
+  if (path.startsWith('/logistics')) return 'logistics';
+  if (path.startsWith('/engineering')) return 'engineering';
+  if (path.startsWith('/quality')) return 'quality';
+  if (path.startsWith('/production')) return 'production';
+  if (path.startsWith('/finance')) return 'finance';
+  if (path.startsWith('/operations')) return 'operations';
+  if (path.startsWith('/dashboard')) return 'dashboard';
+  if (path.startsWith('/personnel')) return 'personnel';
+  if (path.startsWith('/docs')) return 'docs';
+  // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
+  return 'system';
+}
+
+/**
+ * 应用名称映射（用于显示友好的中文名称，兜底方案）
+ */
+const appNameMap: Record<string, string> = {
+  system: '主模块',
+  admin: '管理模块',
+  logistics: '物流模块',
+  engineering: '工程模块',
+  quality: '品质模块',
+  production: '生产模块',
+  finance: '财务模块',
+  operations: '运维模块',
+  dashboard: '图表模块',
+  personnel: '人事模块',
+  docs: '文档模块',
+};
+
+/**
+ * 生成完整的浏览器标题
+ * 根据当前应用路径动态生成标题：{应用名称} - BTC ShopFlow
+ */
+function formatDocumentTitle(path: string): string {
+  const appName = getCurrentAppFromPath(path);
   const appShortName = config.app.shortName;
 
-  // 如果国际化加载失败，使用默认值
-  if (moduleName === 'domain.type.system') {
-    return `主模块 - ${appShortName}`;
+  // 尝试使用国际化键获取应用名称
+  const i18nKey = `domain.type.${appName}`;
+  let moduleName = tSync(i18nKey);
+
+  // 如果国际化加载失败或返回的是 key 本身，使用兜底映射
+  if (moduleName === i18nKey || !moduleName) {
+    moduleName = appNameMap[appName] || appName;
   }
 
   return `${moduleName} - ${appShortName}`;
@@ -444,24 +481,27 @@ function formatDocumentTitle(): string {
 
 /**
  * 更新浏览器标题（同步，无闪烁）
- * 系统主应用统一使用：主模块 - BTC ShopFlow（不使用页面标题）
+ * 根据当前路由路径判断应用，动态设置标题：{应用名称} - BTC ShopFlow
  */
 function updateDocumentTitle(to: RouteLocationNormalized) {
   currentRoute = to;
 
-  // 系统主应用统一使用"主模块 - BTC ShopFlow"格式，不使用页面标题
-  document.title = formatDocumentTitle();
+  // 根据路径判断当前应用，动态设置标题
+  document.title = formatDocumentTitle(to.path);
 
   // 如果国际化还没加载完成，延迟重试以确保标题正确
-  const moduleName = tSync('domain.type.system');
-  if (moduleName === 'domain.type.system') {
+  const appName = getCurrentAppFromPath(to.path);
+  const i18nKey = `domain.type.${appName}`;
+  const moduleName = tSync(i18nKey);
+  
+  if (moduleName === i18nKey) {
     const retryTranslation = (attempt: number = 1) => {
       if (attempt > 5) return; // 最多重试5次
 
       setTimeout(() => {
-        const retryModuleName = tSync('domain.type.system');
-        if (retryModuleName !== 'domain.type.system') {
-          document.title = formatDocumentTitle();
+        const retryModuleName = tSync(i18nKey);
+        if (retryModuleName !== i18nKey) {
+          document.title = formatDocumentTitle(to.path);
         } else {
           // 继续重试
           retryTranslation(attempt + 1);
@@ -498,58 +538,26 @@ export function setupI18nTitleWatcher() {
 
 /**
  * 检查用户是否已认证
- * 注意：后端设置了 http-only cookie，前端无法直接读取
- * 因此通过检查 cookie、localStorage 中的登录状态标记、token 和用户信息来判断
+ * 注意：cookie 是后端设置的，是认证的权威来源。如果 cookie 不存在，说明后端已经认为用户未认证。
+ * 因此，如果 cookie 不存在，应该立即返回 false，不再检查其他本地存储。
  */
 export function isAuthenticated(): boolean {
-  // 关键：在子域名环境下，即使无法读取 HttpOnly cookie，也应该尝试其他方式判断
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-
-  // 1. 检查 cookie 中的 token（优先，因为跨子域名共享）
-  // 注意：如果 cookie 是 HttpOnly 的，getCookie 无法读取，但浏览器会自动在请求中发送
-  // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该认为可能已认证（由后端验证）
+  // 关键：cookie 是后端设置的，是认证的权威来源
+  // 如果 cookie 不存在，说明后端已经认为用户未认证（比如 token 已过期被后端移除）
+  // 此时应该立即返回 false，不应该继续检查其他本地存储的数据
   const cookieToken = getCookie('access_token');
-  if (cookieToken) {
-    return true;
+  
+  // 如果 cookie 不存在，立即返回 false
+  // 这是安全的关键：cookie 是后端设置的，如果后端移除了 cookie，说明用户未认证
+  if (!cookieToken) {
+    return false;
   }
 
-  // 2. 在主域名（bellis.com.cn）下，必须严格检查认证状态
-  // 不能假设已认证，必须通过实际的认证标记来判断
-  // 只有在子域名环境下，才允许通过其他方式判断（因为子应用的认证由子应用自己处理）
-
-  // 3. 检查登录状态标记（从统一的 settings 存储中读取）
-  const settings = appStorage.settings.get() as Record<string, any> | null;
-  const isLoggedIn = settings?.is_logged_in === true;
-  if (isLoggedIn) {
-    return true;
-  }
-
-  // 4. 检查 localStorage 中的 token
-  const storageToken = appStorage.auth.getToken();
-  if (storageToken) {
-    return true;
-  }
-
-  // 5. 检查用户信息是否存在
-  const userInfo = appStorage.user.get();
-  if (userInfo?.id) {
-    return true;
-  }
-
-  // 6. 在子域名环境下，如果无法读取 cookie，尝试通过其他方式判断
-  // 如果 cookie 是 HttpOnly 的，前端无法读取，但浏览器会自动发送给后端
-  // 注意：这仅适用于子域名环境，主域名必须严格检查
-  if (isProductionSubdomain) {
-    // 在子域名环境下，即使无法读取 HttpOnly cookie，也应该假设可能已认证
-    // 因为浏览器会自动发送 cookie 给后端，后端会验证
-    // 如果后端验证失败，会在响应中返回 401，由 HTTP 拦截器处理
-    // 这里返回 true，让请求继续，由后端验证
-    return true;
-  }
-
-  // 主域名下，如果没有找到任何认证标记，返回 false
-  return false;
+  // cookie 存在时，可以进一步检查其他本地存储作为补充（可选）
+  // 但即使其他本地存储没有数据，只要 cookie 存在，也应该返回 true
+  // 因为 cookie 是后端设置的，是认证的权威来源
+  
+  return true;
 }
 
 /**
@@ -597,38 +605,152 @@ function normalizeRoutePath(path: string): string | null {
   return null;
 }
 
-// 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
+// 关键：参考 cool-admin，在路由解析完成后立即关闭全局根级 Loading（beforeResolve）
 // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
 // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
+// 关键：子应用路由不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
 let loadingClosed = false;
-router.beforeResolve(() => {
+router.beforeResolve(async (to) => {
+  // 关键：如果是子应用路由，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
+  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
+  const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
+  
+  // 子应用路由的loading由appLoadingService统一管理，不应该在这里处理
+  if (isSubAppRoute) {
+    return;
+  }
+  
   if (!loadingClosed) {
-    const loadingEl = document.getElementById('Loading');
-    if (loadingEl) {
-      // 关键：立即隐藏并移除 loading，确保与 cool-admin 一致的性能
-      // 使用内联样式确保优先级，立即隐藏
-      loadingEl.style.setProperty('display', 'none', 'important');
-      loadingEl.style.setProperty('visibility', 'hidden', 'important');
-      loadingEl.style.setProperty('opacity', '0', 'important');
-      loadingEl.style.setProperty('pointer-events', 'none', 'important');
-      loadingEl.classList.add('is-hide');
-      
-      // 延迟移除 DOM 元素（不影响显示，只是清理）
-      setTimeout(() => {
-        try {
-          loadingEl.remove();
-        } catch {
-          // 忽略移除错误
-        }
-      }, 350);
-      
-      loadingClosed = true;
+    try {
+      const loadingModule = await import('@btc/shared-core');
+      const rootLoadingService = loadingModule.rootLoadingService;
+      if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
+        rootLoadingService.hide();
+        loadingClosed = true;
+      } else {
+        throw new Error('rootLoadingService 未定义或方法不存在');
+      }
+    } catch (error) {
+      console.warn('[system-app router] 无法加载 RootLoadingService，使用备用方案', error);
+      // 备用方案：直接操作 DOM（向后兼容）
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        loadingEl.style.setProperty('display', 'none', 'important');
+        loadingEl.style.setProperty('visibility', 'hidden', 'important');
+        loadingEl.style.setProperty('opacity', '0', 'important');
+        loadingEl.style.setProperty('pointer-events', 'none', 'important');
+        loadingEl.classList.add('is-hide');
+        loadingClosed = true;
+      }
     }
   }
 });
 
 // 路由前置守卫：处理认证、Loading 显示和侧边栏
-router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
+router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
+  // 关键：判断是否是子应用路由
+  // system-app的#Loading（"拜里斯科技"）只应该在主应用路由时显示
+  const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
+  const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
+  
+  // 关键：如果是子应用路由，立即隐藏system-app的#Loading（"拜里斯科技"）
+  // 必须在路径规范化之前就隐藏，避免"拜里斯科技"loading被显示
+  // 子应用的loading由appLoadingService统一管理
+  if (isSubAppRoute) {
+    // 立即隐藏"拜里斯科技"loading，使用同步方式，确保优先级
+    const systemLoadingEl = document.getElementById('Loading');
+    if (systemLoadingEl) {
+      // 无论是否包含"拜里斯科技"，都隐藏（可能已经被更新）
+      systemLoadingEl.style.setProperty('display', 'none', 'important');
+      systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+      systemLoadingEl.style.setProperty('opacity', '0', 'important');
+      systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+      systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+      systemLoadingEl.classList.add('is-hide');
+    }
+    
+    // 关键：立即隐藏rootLoadingService（如果正在显示）
+    // 使用同步方式，避免异步延迟导致"拜里斯科技"loading被显示
+    try {
+      // 尝试同步隐藏（如果rootLoadingService已经加载）
+      if ((window as any).__BTC_ROOT_LOADING_SERVICE__) {
+        const rootLoadingService = (window as any).__BTC_ROOT_LOADING_SERVICE__;
+        if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
+          rootLoadingService.hide();
+        }
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
+    // 关键：立即隐藏路由loading（如果正在显示），避免蓝色loading闪烁
+    // 子应用路由应该使用应用级别loading，而不是路由loading
+    try {
+      // 同步检查并隐藏路由loading
+      const routeLoadingEl = document.querySelector('.route-loading') as HTMLElement;
+      if (routeLoadingEl) {
+        routeLoadingEl.style.setProperty('display', 'none', 'important');
+        routeLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+        routeLoadingEl.style.setProperty('opacity', '0', 'important');
+      }
+      // 异步调用routeLoadingService.hide()，确保完全隐藏
+      import('@btc/shared-core').then(({ routeLoadingService }) => {
+        routeLoadingService.hide();
+      }).catch(() => {
+        // 静默失败
+      });
+    } catch (error) {
+      // 静默失败
+    }
+
+    // 关键：立即隐藏容器，避免布局闪烁
+    // 容器会在应用级别loading显示后，由beforeLoad钩子控制显示
+    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (container) {
+      container.style.setProperty('display', 'none', 'important');
+      container.style.setProperty('visibility', 'hidden', 'important');
+      container.style.setProperty('opacity', '0', 'important');
+    }
+
+    // 关键：立即显示应用级别loading，避免"拜里斯科技"和空布局显示
+    // 从路径中提取应用名称
+    const appNameMap: Record<string, string> = {
+      'admin': '管理模块',
+      'logistics': '物流模块',
+      'engineering': '工程模块',
+      'quality': '品质模块',
+      'production': '生产模块',
+      'finance': '财务模块',
+      'operations': '运维模块',
+      'dashboard': '仪表盘模块',
+      'personnel': '人事模块',
+      'docs': '文档模块',
+    };
+    
+    // 从路径中提取应用名称（例如 /admin/xxx -> admin）
+    const pathParts = to.path.split('/').filter(Boolean);
+    const appName = pathParts[0] || '';
+    const appDisplayName = appNameMap[appName] || appName;
+    
+    // 如果应用名称有效且不是"应用"，立即显示应用级别loading
+    if (appDisplayName && appDisplayName !== '应用' && appDisplayName !== appName) {
+      // 异步显示应用级别loading，不阻塞路由导航
+      import('@btc/shared-core').then(({ appLoadingService }) => {
+        // 再次确保容器隐藏
+        const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
+        if (viewport) {
+          viewport.style.setProperty('display', 'none', 'important');
+          viewport.style.setProperty('visibility', 'hidden', 'important');
+          viewport.style.setProperty('opacity', '0', 'important');
+        }
+        // 显示应用级别loading
+        appLoadingService.show(appDisplayName, viewport || undefined);
+      }).catch(() => {
+        // 静默失败
+      });
+    }
+  }
+  
   // 最优先：检查是否是静态 HTML 文件（duty 下的页面）
   // 这些页面应该由服务器直接提供，完全绕过 Vue Router
   if (to.path.startsWith('/duty/')) {
@@ -646,8 +768,43 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
   }
 
   // 关键：路径规范化 - 确保子应用路径有正确的前缀
+  // 注意：路径规范化会导致路由重定向，会再次触发 beforeEach
+  // 使用标记避免在路径规范化重定向时重复处理loading
+  const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
   const normalizedPath = normalizeRoutePath(to.path);
   if (normalizedPath) {
+    // 设置标记，表示正在进行路径规范化
+    sessionStorage.setItem('__BTC_ROUTE_NORMALIZING__', '1');
+    // 关键：在规范化路径中提取应用名称，并保存到 sessionStorage，确保占位loading能正确显示
+    const appNameMap: Record<string, string> = {
+      'admin': '管理模块',
+      'logistics': '物流模块',
+      'engineering': '工程模块',
+      'quality': '品质模块',
+      'production': '生产模块',
+      'finance': '财务模块',
+      'operations': '运维模块',
+      'docs': '文档模块',
+      'dashboard': '图表模块',
+      'personnel': '人事模块',
+    };
+    const appName = Object.keys(appNameMap).find(key => normalizedPath.startsWith(`/${key}`));
+    if (appName) {
+      const appDisplayName = appNameMap[appName];
+      // 保存应用名称到 sessionStorage
+      sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+    }
+    // 关键：在重定向前，再次确保"拜里斯科技"loading被隐藏
+    const systemLoadingEl = document.getElementById('Loading');
+    if (systemLoadingEl) {
+      systemLoadingEl.style.setProperty('display', 'none', 'important');
+      systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+      systemLoadingEl.style.setProperty('opacity', '0', 'important');
+      systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+      systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+      systemLoadingEl.classList.add('is-hide');
+    }
+    // 关键：使用 replace: true 进行路由重定向，不会导致浏览器刷新
     next({
       path: normalizedPath,
       query: to.query,
@@ -655,6 +812,13 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
       replace: true,
     });
     return;
+  }
+  // 如果路径规范化完成，清除标记（延迟清除，确保 index.html 中的脚本能检测到）
+  if (isNormalizing) {
+    // 延迟清除，确保 index.html 中的脚本能检测到规范化完成
+    setTimeout(function() {
+      sessionStorage.removeItem('__BTC_ROUTE_NORMALIZING__');
+    }, 100);
   }
 
   // 关键：在子域名环境下，如果是子应用域名，不应该由 system-app 进行认证检查
@@ -731,7 +895,6 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: impor
         }
       } catch (error) {
         // 如果路由解析失败，使用 window.location 作为回退
-        console.error('[system-app] 路由重定向失败，使用 window.location:', error);
         window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
       }
       return;
@@ -845,10 +1008,8 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
             router.replace({
               path: '/login',
               query: { redirect: to.fullPath },
-            }).catch((err: Error) => {
-              // 重定向到登录页失败（日志已移除）
+            }).catch(() => {
               // 如果重定向失败，使用 window.location 作为回退
-              console.error('[system-app] router.replace 失败，使用 window.location:', err);
               window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
             });
           } else {
@@ -857,7 +1018,7 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
           }
         } catch (error) {
           // 如果路由解析失败，使用 window.location 作为回退
-          console.error('[system-app] 路由解析失败，使用 window.location:', error);
+          // 路由解析失败，使用 window.location
           window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
         } finally {
           // 无论成功与否，都移除 Loading 元素
@@ -869,7 +1030,6 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
       } else {
         // 已认证但路由未匹配，可能是路由配置问题
         // 不应该重定向到登录页，而是移除 Loading 元素，让应用正常显示（可能显示 404）
-        console.warn('[system-app] 已认证但路由未匹配，可能是路由配置问题:', to.fullPath);
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {
           loadingEl.style.setProperty('display', 'none', 'important');

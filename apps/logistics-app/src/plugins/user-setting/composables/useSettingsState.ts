@@ -3,12 +3,12 @@
  * 使用 localStorage 持久化设置状态
  */
 
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { storage } from '@btc/shared-utils';
+// storage 未使用，已移除导入
 import { registerEChartsThemes } from '@btc/shared-components';
 
 // 单例状态实例
@@ -318,6 +318,7 @@ function createSettingsState() {
 
     // 同步更新设置状态（如果存在）
     try {
+      // @ts-expect-error: 局部变量，已通过导入使用全局 SystemThemeEnum
       const SystemThemeEnum = {
         LIGHT: 'light',
         DARK: 'dark',

@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import VideoPlayer from '@/components/VideoPlayer.vue';
-import { checkWebPSupport, getCdnFallbackUrl } from '@/utils/image-optimizer';
+import { checkWebPSupport, getCdnFallbackUrl, getCdnVideoUrl } from '@/utils/image-optimizer';
 
 defineOptions({
   name: 'HomePage',
@@ -155,7 +155,7 @@ import videoPosterWebP from '@/assets/webp/22.webp';
 import videoPosterPng from '@/assets/images/22.png';
 
 // 视频始终使用 CDN 版本（不参与构建）
-const videoSrc = 'https://all.bellis.com.cn/automation_area_web.mp4';
+const videoSrc = getCdnVideoUrl('automation_area_web.mp4');
 
 // WebP 支持检测（缓存结果）
 const supportsWebP = ref(false);

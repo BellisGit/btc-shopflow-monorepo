@@ -9,16 +9,18 @@ import type { UserCheckData } from './useUserCheck';
 
 /**
  * 启动用户检查轮询
- * 在登录成功后立即调用，或在应用启动时检查到已登录时调用
+ * @param forceImmediate 是否强制立即检查（登录后需要立即调用一次，获取最新的剩余时间）
+ * 在登录成功后立即调用时，应传递 forceImmediate = true
+ * 在应用启动时检查到已登录时调用，应传递 forceImmediate = false（使用存储的剩余时间）
  */
-export function startUserCheckPolling(): void {
+export function startUserCheckPolling(forceImmediate = false): void {
   // 如果已经在轮询，不重复启动
   if (isPollingActive()) {
     return;
   }
 
   // 启动轮询，每次检查后根据剩余时间决定是否启动倒计时
-  startPolling(({ remainingTime, status }) => {
+  startPolling(({ remainingTime }) => {
     // 如果剩余时间不足30秒，启动倒计时
     if (remainingTime < 30) {
       startCountdown();
@@ -26,7 +28,7 @@ export function startUserCheckPolling(): void {
       // 如果剩余时间大于30秒，停止倒计时
       stopCountdown();
     }
-  });
+  }, forceImmediate);
 }
 
 /**
@@ -51,7 +53,35 @@ export function startUserCheckPollingIfLoggedIn(): void {
 
   // 检查是否已登录
   try {
-    // 方式1: 检查 cookie 中的 access_token
+    // 优先检查是否是刚登录（通过 is_logged_in 标记）
+    const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+    let isJustLoggedIn = false;
+    if (appStorage) {
+      const settings = appStorage.settings?.get?.() as Record<string, any> | null;
+      if (settings?.is_logged_in === true) {
+        // 清除登录标记，避免下次启动时再次强制检查
+        isJustLoggedIn = true;
+        delete settings.is_logged_in;
+        appStorage.settings.set(settings);
+      }
+    }
+
+    // 如果检测到刚登录，强制立即检查
+    if (isJustLoggedIn) {
+      startUserCheckPolling(true);
+      return;
+    }
+
+    // 方式1: 检查 sessionStorage 中是否有用户检查数据（说明之前已登录）
+    // 优先使用存储的剩余时间，避免页面刷新时立即调用
+    const hasUserCheckData = sessionStorage.getItem('btc_user_check_status');
+    if (hasUserCheckData) {
+      // 页面刷新后恢复，使用存储的剩余时间，不强制立即检查
+      startUserCheckPolling(false);
+      return;
+    }
+
+    // 方式2: 检查 cookie 中的 access_token
     const getCookie = (name: string): string | null => {
       if (typeof document === 'undefined') return null;
       const nameEQ = name + '=';
@@ -69,32 +99,20 @@ export function startUserCheckPollingIfLoggedIn(): void {
 
     const token = getCookie('access_token');
     if (token) {
-      startUserCheckPolling();
+      // 有 token 但没有 sessionStorage 数据，可能是首次登录或 sessionStorage 被清除
+      // 此时应该立即检查，获取最新的剩余时间
+      startUserCheckPolling(true);
       return;
     }
 
-    // 方式2: 检查全局 appStorage
-    const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
+    // 方式3: 检查全局 appStorage
     if (appStorage) {
       const user = appStorage.user?.get?.();
       if (user?.id) {
-        startUserCheckPolling();
+        // 有用户数据但没有 sessionStorage 数据，应该立即检查
+        startUserCheckPolling(true);
         return;
       }
-
-      // 方式3: 检查登录状态标记
-      const settings = appStorage.settings?.get?.() as Record<string, any> | null;
-      if (settings?.is_logged_in === true) {
-        startUserCheckPolling();
-        return;
-      }
-    }
-
-    // 方式4: 检查 sessionStorage 中是否有用户检查数据（说明之前已登录）
-    const hasUserCheckData = sessionStorage.getItem('btc_user_check_status');
-    if (hasUserCheckData) {
-      startUserCheckPolling();
-      return;
     }
   } catch (error) {
     // 静默失败，不影响应用启动

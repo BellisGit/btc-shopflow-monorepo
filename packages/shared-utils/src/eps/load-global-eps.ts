@@ -29,14 +29,10 @@ export async function loadGlobalEpsService(): Promise<any> {
 
   // 尝试从 system-app 加载全局 EPS 服务
   // 通过动态加载 system-app 的 EPS 服务脚本
-  const protocol = window.location.protocol;
-  const systemAppUrl = `${protocol}//bellis.com.cn`;
-  
   try {
     // 加载 system-app 的 EPS 服务脚本
     // 注意：这需要 system-app 暴露一个全局 EPS 服务脚本
     // 目前先尝试直接访问全局变量，如果不存在则返回 null
-    const epsServiceUrl = `${systemAppUrl}/eps-service.js`;
     
     // 尝试通过动态 script 标签加载（如果 system-app 提供了独立的 EPS 服务脚本）
     // 目前暂时不实现，因为需要额外的构建配置

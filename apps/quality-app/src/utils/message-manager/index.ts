@@ -88,11 +88,12 @@ export class MessageManager {
   /**
    * 从队列中移除消息
    */
-  private _removeMessageFromQueue(messageId: string): void {
+  // @ts-expect-error: 私有方法，可能在未来使用
+  private _removeMessageFromQueue(_messageId: string): void {
     // 从普通队列中移除
-    this.normalQueue.removeMessage(messageId);
+    this.normalQueue.removeMessage(_messageId);
     // 从错误队列中移除
-    this.errorQueue.removeMessage(messageId);
+    this.errorQueue.removeMessage(_messageId);
   }
 
   /**
@@ -129,19 +130,20 @@ export class MessageManager {
   /**
    * 检查消息实例是否有效
    */
-  private _isMessageInstanceValid(messageInstance: any): boolean {
+  // @ts-expect-error: 私有方法，可能在未来使用
+  private _isMessageInstanceValid(_messageInstance: any): boolean {
     try {
-      if (!messageInstance) {
+      if (!_messageInstance) {
         return false;
       }
 
       // 检查消息实例是否已经被关闭
-      if (messageInstance.closed === true || messageInstance.visible === false) {
+      if (_messageInstance.closed === true || _messageInstance.visible === false) {
         return false;
       }
 
       // 检查 DOM 元素是否存在
-      const domElement = messageInstance.$el || messageInstance.el;
+      const domElement = _messageInstance.$el || _messageInstance.el;
       if (!domElement) {
         return false;
       }
@@ -172,28 +174,18 @@ export class MessageManager {
   /**
    * 重新创建消息
    */
-  private _recreateMessage(message: any): void {
+  // @ts-expect-error: 私有方法，可能在未来使用
+  private _recreateMessage(_message: any): void {
     // 从显示中的消息集合移除
-    this.displayingMessages.delete(message.id);
+    this.displayingMessages.delete(_message.id);
 
     // 清理生命周期状态
     if (this.lifecycleManager) {
-      this.lifecycleManager.cleanup(message.id);
+      this.lifecycleManager.cleanup(_message.id);
     }
 
     // 重新显示消息
-    this.displayMessage(message);
-  }
-
-  /**
-   * 重新显示消息
-   */
-  private _reDisplayMessage(message: any): void {
-    // 从显示中的消息集合移除
-    this.displayingMessages.delete(message.id);
-
-    // 重新显示消息
-    this.displayMessage(message);
+    this.displayMessage(_message);
   }
 
   /**
@@ -294,14 +286,15 @@ export class MessageManager {
   /**
    * 清理消息（已废弃，现在由生命周期管理器处理）
    */
-  private _cleanupMessage(messageId: string): void {
+  // @ts-expect-error: 私有方法，可能在未来使用
+  private _cleanupMessage(_messageId: string): void {
     // 这个方法现在主要用于紧急清理
-    this.displayingMessages.delete(messageId);
-    this.badgeManager.stopCountdownAnimation(messageId);
+    this.displayingMessages.delete(_messageId);
+    this.badgeManager.stopCountdownAnimation(_messageId);
 
     // 清理生命周期状态
     if (this.lifecycleManager) {
-      this.lifecycleManager.cleanup(messageId);
+      this.lifecycleManager.cleanup(_messageId);
     }
   }
 

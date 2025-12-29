@@ -131,12 +131,13 @@ export function createTypeSafeI18n(t: any): TypeSafeT {
 export function validateI18nKey(key: string): key is keyof I18nKeyPath {
   // 杩愯鏃堕獙璇侀€昏緫
   const validNamespaces = ['ui', 'platform', 'procurement', 'inventory'];
+  if (!key) return false;
   const parts = key.split('.');
 
   if (parts.length < 2) return false;
 
   const namespace = parts[0];
-  return validNamespaces.includes(namespace);
+  return namespace ? validNamespaces.includes(namespace) : false;
 }
 
 /**

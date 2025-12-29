@@ -37,14 +37,14 @@ export interface ScatterChartProps extends BaseChartProps, InteractionProps {
   /** 散点图数据 */
   data: ScatterChartDataItem[];
   /** X轴名称 */
-  xAxisName?: string;
+  xAxisName?: string | undefined;
   /** Y轴名称 */
-  yAxisName?: string;
+  yAxisName?: string | undefined;
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** X轴格式化 */
-  xAxisFormatter?: string;
+  xAxisFormatter?: string | undefined;
   /** Y轴格式化 */
-  yAxisFormatter?: string;
+  yAxisFormatter?: string | undefined;
 }
 

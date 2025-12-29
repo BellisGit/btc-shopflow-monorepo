@@ -91,9 +91,9 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded: number, total: number) => {
+        onProgress: (_loaded: number, _total: number) => {
           if (import.meta.env.DEV) {
-            console.log(`[finance-app] 加载共享资源进度: ${loaded}/${total}`);
+            console.log(`[finance-app] 加载共享资源进度: ${_loaded}/${_total}`);
           }
         },
       });

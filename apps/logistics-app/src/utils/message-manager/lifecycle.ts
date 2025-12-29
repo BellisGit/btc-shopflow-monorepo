@@ -82,7 +82,7 @@ export class LifecycleManager {
     // 关键修复：无论什么情况，都要取消单条消息的定时器
     if (state.singleMessageTimer) {
       clearTimeout(state.singleMessageTimer);
-      state.singleMessageTimer = undefined;
+      delete state.singleMessageTimer;
     }
 
     // 特殊处理：如果当前是单条消息状态（count=1），但现在count>1，需要创建徽章

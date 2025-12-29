@@ -694,7 +694,7 @@ function setupStylesheetInterceptor() {
  * 注意：资源加载器只负责降级（CDN -> OSS -> 本地），不负责 URL 转换
  * URL 转换在构建时完成（通过 cdnAssetsPlugin 和 renderChunk 插件）
  */
-export function initResourceLoader(options?: Partial<ResourceLoaderOptions>) {
+export function initResourceLoader(_options?: Partial<ResourceLoaderOptions>) {
   if (typeof window === 'undefined') {
     return;
   }

@@ -46,7 +46,7 @@ export const createFinanceRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to: any, from: any, next: any) => {
+  router.beforeEach((to: any, _from: any, next: any) => {
     const normalizedPath = normalizePath(to.path);
 
     if (normalizedPath !== to.path) {

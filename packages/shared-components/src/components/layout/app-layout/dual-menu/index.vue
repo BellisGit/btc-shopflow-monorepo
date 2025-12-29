@@ -184,7 +184,6 @@ const { uniqueOpened } = useSettingsState();
 // 获取原始 console 方法，避免被日志过滤拦截
 const originalConsoleLog = (console as any).__originalLog || console.log;
 const originalConsoleWarn = (console as any).__originalWarn || console.warn;
-const originalConsoleError = (console as any).__originalError || console.error;
 
 // 关键：activeMenu 不能是一级菜单的 index，只能是有实际路由的子菜单路径
 const getInitialActiveMenu = () => {

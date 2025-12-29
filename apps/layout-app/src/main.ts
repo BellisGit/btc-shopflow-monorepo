@@ -21,8 +21,8 @@ import { storage } from '@btc/shared-utils';
 import { MenuThemeEnum, SystemThemeEnum } from '@system/plugins/user-setting/config/enums';
 // 导入 layout-app 自己的 EPS service 和域列表工具函数
 import { service } from './services/eps';
-// 使用相对路径导入 mitt，避免 TypeScript 路径解析问题
-import mitt from '../../../packages/shared-components/src/utils/mitt';
+// 使用包的 exports 路径导入 mitt
+import { mitt } from '@btc/shared-components';
 import 'virtual:svg-icons';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
@@ -364,9 +364,11 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     // 延迟启动，确保 EPS 服务已加载
     setTimeout(() => {
       try {
-        import('@btc/shared-core/composables/user-check').then(({ startUserCheckPollingIfLoggedIn }) => {
+        import('@btc/shared-core').then((sharedCore: any) => {
           // 检查是否已登录，如果已登录则启动轮询
-          startUserCheckPollingIfLoggedIn();
+          if (sharedCore.startUserCheckPollingIfLoggedIn) {
+            sharedCore.startUserCheckPollingIfLoggedIn();
+          }
         }).catch((error) => {
           if (import.meta.env.DEV) {
             console.warn('[layout-app] Failed to start user check polling:', error);
@@ -588,14 +590,26 @@ const ensureMicroAppsRegistered = async () => {
     subApps,
     {
       beforeLoad: [async (_app: any) => {
-        // 显示加载状态
+        // 关键：确保应用级别loading已显示，然后再显示容器
+        // 检查应用级别loading是否已显示
+        const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+        const isAppLoadingVisible = appLoadingEl && window.getComputedStyle(appLoadingEl).display !== 'none';
+        
+        // 如果应用级别loading未显示，先隐藏容器，等待loading显示
         const viewport = document.querySelector('#subapp-viewport');
         if (viewport) {
           viewport.setAttribute('data-qiankun-loading', 'true');
-          // 关键：确保容器可见，使用 flex 而不是 block（与样式定义一致）
-          (viewport as HTMLElement).style.setProperty('display', 'flex', 'important');
-          (viewport as HTMLElement).style.setProperty('visibility', 'visible', 'important');
-          (viewport as HTMLElement).style.setProperty('opacity', '1', 'important');
+          if (!isAppLoadingVisible) {
+            // 应用级别loading未显示，先隐藏容器
+            (viewport as HTMLElement).style.setProperty('display', 'none', 'important');
+            (viewport as HTMLElement).style.setProperty('visibility', 'hidden', 'important');
+            (viewport as HTMLElement).style.setProperty('opacity', '0', 'important');
+          } else {
+            // 应用级别loading已显示，可以显示容器
+            (viewport as HTMLElement).style.setProperty('display', 'flex', 'important');
+            (viewport as HTMLElement).style.setProperty('visibility', 'visible', 'important');
+            (viewport as HTMLElement).style.setProperty('opacity', '1', 'important');
+          }
         }
 
         // 设置超时保护：生产环境15秒，开发环境30秒后自动清除 loading 状态

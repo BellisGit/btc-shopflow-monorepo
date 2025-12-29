@@ -81,7 +81,7 @@
           ref="contentRef"
         >
             <!-- 主应用路由视图 -->
-            <div 
+            <div
               v-if="mountState.showMainApp"
               class="content-mount content-mount--main-app"
             >
@@ -99,7 +99,7 @@
             <div
               v-if="mountState.showSubApp"
               id="subapp-viewport"
-              :ref="(el) => mountState.subappViewportRef.value = el as HTMLElement | null"
+              :ref="(el) => { mountState.subappViewportRef.value = el as HTMLElement | null; }"
               class="content-mount content-mount--sub-app"
             >
             </div>
@@ -124,7 +124,6 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { mitt } from '@btc/shared-components';
-import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { useBrowser } from '../../../composables/useBrowser';
 import { useSettingsState } from '../../others/btc-user-setting/composables';
 import { MenuThemeEnum, MenuTypeEnum } from '../../others/btc-user-setting/config/enums';
@@ -287,13 +286,12 @@ const isDarkMenuStyle = computed(() => {
 });
 
 // 监听页面切换动画变化
-function handlePageTransitionChange(event: CustomEvent) {
+function handlePageTransitionChange(_event: CustomEvent) {
   // 动画名称会自动通过 computed 更新
 }
 
 const isFullscreen = ref(false);
 const viewKey = ref(1); // 手动刷新时递增
-const routeKey = computed(() => route.fullPath); // 常规路由 key
 const isOpsLogs = computed(() => route.path.startsWith('/admin/ops/logs'));
 
 // 浏览器信息
@@ -370,49 +368,6 @@ const pageTransitionName = computed(() => {
 
 // 监听 #subapp-viewport 内容变化（用于触发重新计算）
 let subappContentObserver: MutationObserver | null = null;
-
-// 判断是否是首页（使用全局配置）
-const isHomePage = computed(() => {
-  const path = route.path;
-
-  // 检查路由 meta 中的 isHome 标记
-  if (route.meta?.isHome === true) {
-    return true;
-  }
-
-  // 检查是否是系统应用首页（主应用）
-  if (path === '/' && isMainApp.value) {
-    return true;
-  }
-
-  // 生产环境子域名判断：路径为 / 且当前应用是子应用
-  if (path === '/' && typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const appBySubdomain = getAppBySubdomain(hostname);
-    // 如果通过子域名识别到子应用，则认为是首页
-    if (appBySubdomain && appBySubdomain.type === 'sub') {
-      return true;
-    }
-  }
-
-  // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
-  const subApps = getSubApps();
-  for (const app of subApps) {
-    const normalizedPathPrefix = app.pathPrefix.endsWith('/')
-      ? app.pathPrefix.slice(0, -1)
-      : app.pathPrefix;
-    const normalizedPath = path.endsWith('/') && path !== '/'
-      ? path.slice(0, -1)
-      : path;
-
-    // 精确匹配 pathPrefix 认为是首页
-    if (normalizedPath === normalizedPathPrefix) {
-      return true;
-    }
-  }
-
-  return false;
-});
 
 // 判断是否显示面包屑区域（使用全局配置，所有应用首页都不显示）
 const showBreadcrumb = computed(() => {
@@ -524,7 +479,7 @@ const setupMutationObserver = () => {
 
   nextTick(() => {
     const container = mountState.subappViewportRef.value;
-    if (container && container.isConnected) {
+    if (container && (container as HTMLElement).isConnected) {
       // 使用 MutationObserver 监听子应用挂载点内容变化
       subappContentObserver = new MutationObserver(() => {
         // 内容变化时，触发重新计算（通过访问 computed 属性）

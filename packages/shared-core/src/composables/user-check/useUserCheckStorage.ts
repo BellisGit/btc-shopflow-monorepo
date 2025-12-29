@@ -42,12 +42,22 @@ export function storeUserCheckData(data: UserCheckData): void {
     // 重新设置 cookie
     const domain = getCookieDomain();
     const isHttps = window.location.protocol === 'https:';
-    setCookie('btc_user', JSON.stringify(btcUser), 7, {
-      sameSite: isHttps ? 'None' : undefined,
+    const cookieOptions: {
+      sameSite?: 'Strict' | 'Lax' | 'None';
+      secure: boolean;
+      path: string;
+      domain?: string;
+    } = {
       secure: isHttps,
       path: '/',
-      domain: domain,
-    });
+    };
+    if (isHttps) {
+      cookieOptions.sameSite = 'None';
+    }
+    if (domain) {
+      cookieOptions.domain = domain;
+    }
+    setCookie('btc_user', JSON.stringify(btcUser), 7, cookieOptions);
 
     // 2. 将其他四个字段存储到 sessionStorage
     sessionStorage.setItem(SESSION_STORAGE_KEYS.STATUS, data.status);
@@ -100,12 +110,20 @@ export function getUserCheckDataFromStorage(): Partial<UserCheckData> | null {
       return null;
     }
 
-    return {
-      status: status as UserCheckData['status'] | undefined,
-      serverCurrentTime: serverTime || undefined,
-      remainingTime: remainingTime ? Number(remainingTime) : undefined,
-      details: details || undefined,
-    };
+    const result: Partial<UserCheckData> = {};
+    if (status) {
+      result.status = status as UserCheckData['status'];
+    }
+    if (serverTime) {
+      result.serverCurrentTime = serverTime;
+    }
+    if (remainingTime) {
+      result.remainingTime = Number(remainingTime);
+    }
+    if (details) {
+      result.details = details;
+    }
+    return result;
   } catch (error) {
     console.error('[getUserCheckDataFromStorage] Failed to get data:', error);
     return null;

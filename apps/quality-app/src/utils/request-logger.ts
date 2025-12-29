@@ -297,7 +297,7 @@ class RequestLogQueue {
       const maxArrayLength = 20; // 减少数组长度限制
       const limitedArray = obj.slice(0, maxArrayLength);
 
-      return limitedArray.map((item, index) => {
+      return limitedArray.map((item, _index) => {
         if (typeof item === 'object' && item !== null) {
           // 对于对象元素，进一步简化
           return this.sanitizeForJava(item, depth + 1, maxDepth);

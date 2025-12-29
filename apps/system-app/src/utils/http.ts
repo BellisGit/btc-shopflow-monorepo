@@ -223,10 +223,10 @@ export class Http {
             }
           }
 
-          // 启动全局用户检查轮询
+          // 启动全局用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
           try {
             import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
-              startUserCheckPolling();
+              startUserCheckPolling(true);
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {
@@ -359,6 +359,7 @@ export class Http {
 /**
  * 判断是否在开发环境中运行
  */
+// @ts-expect-error: isDevelopment 未使用，保留用于未来功能
 function isDevelopment(): boolean {
   if (typeof window === 'undefined') return false;
   const hostname = window.location.hostname;

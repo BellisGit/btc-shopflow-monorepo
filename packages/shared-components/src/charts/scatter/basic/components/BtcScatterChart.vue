@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useScatterChart } from '../composables/useScatterChart';
 import type { ScatterChartProps } from '../../../types/scatter';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<ScatterChartProps>(), {
   height: '300px',

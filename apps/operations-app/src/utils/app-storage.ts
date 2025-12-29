@@ -3,10 +3,11 @@
  */
 
 import { getCookie, getCookieDomain, deleteCookie } from './cookie';
-import { syncSettingsToCookie, syncSettingsFromCookie, syncUserToCookie } from '@btc/shared-utils';
+import { syncSettingsToCookie } from '@btc/shared-utils';
 import { storage } from '@btc/shared-utils';
 
 // 从 Cookie 读取设置
+// @ts-expect-error: 可能在未来使用
 const getSettingsFromCookie = (): Record<string, any> => {
   const settingsCookie = getCookie('btc_settings');
   if (settingsCookie) {
@@ -47,6 +48,7 @@ const getItem = (key: string): string | null => {
   }
 };
 
+// @ts-expect-error: 可能在未来使用
 const setItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
@@ -127,7 +129,7 @@ const userStorage = {
     try {
       const domain = getCookieDomain();
       deleteCookie('btc_user', {
-        domain: domain,
+        ...(domain ? { domain } : {}),
         path: '/',
       });
     } catch {
@@ -239,7 +241,7 @@ export const appStorage = {
   /**
    * 初始化存储管理器
    */
-  init(version?: string): void {
+  init(_version?: string): void {
     // 初始化逻辑（如果需要）
   },
   auth: {
@@ -252,7 +254,7 @@ export const appStorage = {
       // 向后兼容：如果 cookie 中没有，尝试从旧的 localStorage 键读取（用于迁移）
       return getItem('token') || getItem('access_token');
     },
-    setToken: (token: string) => {
+    setToken: (_token: string) => {
       // 不再保存到 localStorage，token 应该由后端通过 Set-Cookie 设置
       // 这里只做向后兼容处理，清理旧的 localStorage 键
       removeItem('token');

@@ -62,8 +62,8 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
   );
 
   // 比较路径（去掉 query 和 hash 进行比较）
-  const currentPath = currentRoute.split('?')[0].split('#')[0];
-  const targetPath = normalizedTarget.split('?')[0].split('#')[0];
+  const currentPath = currentRoute.split('?')[0]?.split('#')[0] || '';
+  const targetPath = normalizedTarget.split('?')[0]?.split('#')[0] || '';
 
   if (targetPath === currentPath) {
     // 路径相同，不需要更新（query 和 hash 的变化会由路由本身处理）
@@ -145,7 +145,7 @@ function triggerRouteChangeEvent(
 /**
  * 设置路由同步监听（标准化模板）
  */
-export function setupRouteSync(context: SubAppContext, appId: string, basePath: string): void {
+export function setupRouteSync(context: SubAppContext, _appId: string, basePath: string): void {
   // 关键：在 layout-app 环境下也需要设置路由同步
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {

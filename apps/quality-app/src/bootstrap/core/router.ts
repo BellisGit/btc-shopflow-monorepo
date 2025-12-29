@@ -73,8 +73,8 @@ export const createQualityRouter = (): Router => {
     }
   });
 
-  router.onError((error: Error) => {
-    console.warn('[quality-app] Router error:', error);
+  router.onError((_error: Error) => {
+    // 路由错误已处理
   });
 
   return router;

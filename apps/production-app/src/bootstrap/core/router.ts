@@ -44,7 +44,7 @@ export const createProductionRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to: any, from: any, next: any) => {
+  router.beforeEach((to: any, _from: any, next: any) => {
     // 只在独立运行（非 qiankun）且是生产环境子域名时处理
     if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       const hostname = window.location.hostname;
@@ -96,8 +96,8 @@ export const createProductionRouter = (): Router => {
     }
   });
 
-  router.onError((error: any) => {
-    console.warn('[production-app] Router error:', error);
+  router.onError((_error: any) => {
+    // 路由错误已处理
   });
 
   return router;

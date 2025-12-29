@@ -57,7 +57,7 @@ export function useTableColumns(props: TableProps) {
     }
 
     // 第一部分必须以字母开头
-    const firstPart = parts[0].trim();
+    const firstPart = parts[0]?.trim();
     if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
       return false;
     }

@@ -55,6 +55,8 @@ const registry: Record<string, Record<string, TabMeta>> = {
 
     // 数据治理
     'governance-files-templates': { key: 'governance-files-templates', title: 'Controlled Files', path: '/admin/governance/files/templates', i18nKey: 'menu.data.files.templates' },
+    'governance-dictionary-fields': { key: 'governance-dictionary-fields', title: 'Field Management', path: '/admin/governance/dictionary/fields', i18nKey: 'menu.data.dictionary.fields' },
+    'governance-dictionary-values': { key: 'governance-dictionary-values', title: 'Dictionary Value Management', path: '/admin/governance/dictionary/values', i18nKey: 'menu.data.dictionary.values' },
 
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/admin/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },

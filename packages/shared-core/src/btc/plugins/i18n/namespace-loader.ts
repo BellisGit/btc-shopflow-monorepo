@@ -182,13 +182,18 @@ export class NamespaceI18nLoader {
 
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
-      if (!(key in current)) {
+      if (key && !(key in current)) {
         current[key] = {};
       }
-      current = current[key];
+      if (key) {
+        current = current[key];
+      }
     }
 
-    current[keys[keys.length - 1]] = value;
+    const lastKey = keys[keys.length - 1];
+    if (lastKey) {
+      current[lastKey] = value;
+    }
   }
 
   /**

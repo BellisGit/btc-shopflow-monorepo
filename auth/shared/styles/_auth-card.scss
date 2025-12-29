@@ -36,6 +36,15 @@
 		flex-direction: column;
 	}
 	
+	// 响应式设计 - 屏幕宽度严重不足时（如手机端）水平居中
+	@media (max-width: 768px) {
+		right: auto;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		max-width: calc(100% - 32px); // 左右各留 16px 边距
+		width: 100%;
+	}
+	
 	// 响应式样式已移至 _responsive.scss，使用全局布局类系统
 	// 移动端和平板端样式由 .col-mobile 和 .col-tablet 处理
 }

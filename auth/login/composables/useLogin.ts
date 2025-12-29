@@ -106,10 +106,10 @@ export function useLogin() {
         // 使用 nextTick 确保状态更新后再跳转
         await nextTick();
 
-        // 启动用户检查轮询
+        // 启动用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
         try {
           const { startUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
-          startUserCheckPolling();
+          startUserCheckPolling(true);
         } catch (error) {
           console.warn('[useLogin] Failed to start user check polling:', error);
         }

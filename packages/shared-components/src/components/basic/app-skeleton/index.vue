@@ -18,6 +18,9 @@ defineOptions({
 </script>
 
 <style lang="scss" scoped>
+// z-index 层级常量（与应用级loading保持一致）
+$APP_Z_INDEX: 9999;
+
 .app-skeleton {
   // 关键：骨架屏组件被渲染出来时就应该可见（显示/隐藏由父组件 v-if/v-show 控制）
   // 之前这里写成 display: none 会导致无论如何都显示不出来，从而在切换子应用时出现白屏。
@@ -28,7 +31,7 @@ defineOptions({
   width: 100%;
   height: 100%;
   background-color: var(--el-bg-color);
-  z-index: 100;
+  z-index: $APP_Z_INDEX; // 使用应用级loading的z-index，确保与应用级loading兼容
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s ease-in;

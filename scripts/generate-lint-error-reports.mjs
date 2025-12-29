@@ -5,7 +5,7 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync, mkdirSync, readdirSync, unlinkSync, statSync } from 'fs';
+import { writeFileSync, mkdirSync, readdirSync, unlinkSync, statSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join } from 'path';
 
@@ -13,8 +13,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
-// 应用列表（单独生成日志）- 使用简短的名称，对应 scripts/commands/lint.mjs 中的格式
-const apps = [
+// 定义所有可能的应用列表
+const allApps = [
   { name: 'admin', packageName: 'admin-app', pattern: 'apps/admin-app/src/**/*.{ts,tsx,vue}' },
   { name: 'logistics', packageName: 'logistics-app', pattern: 'apps/logistics-app/src/**/*.{ts,tsx,vue}' },
   { name: 'system', packageName: 'system-app', pattern: 'apps/system-app/src/**/*.{ts,tsx,vue}' },
@@ -26,7 +26,14 @@ const apps = [
   { name: 'layout', packageName: 'layout-app', pattern: 'apps/layout-app/src/**/*.{ts,tsx,vue}' },
   { name: 'mobile', packageName: 'mobile-app', pattern: 'apps/mobile-app/src/**/*.{ts,tsx,vue}' },
   { name: 'docs', packageName: 'docs-app', pattern: 'apps/docs-app/src/**/*.{ts,tsx,vue}' },
+  { name: 'home', packageName: 'home-app', pattern: 'apps/home-app/src/**/*.{ts,tsx,vue}' },
 ];
+
+// 只包含实际存在的应用目录（单独生成日志）- 使用简短的名称，对应 scripts/commands/lint.mjs 中的格式
+const apps = allApps.filter(app => {
+  const appPath = resolve(rootDir, `apps/${app.packageName}`);
+  return existsSync(appPath);
+});
 
 // 共享包列表（合并为一个日志文件）
 const packages = [

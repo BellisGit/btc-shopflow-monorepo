@@ -48,13 +48,14 @@
               <BtcTable
                 ref="tableComponentRef"
                 :columns="tableColumns"
-                :op="undefined"
                 :row-key="rowKeyProp"
                 :disable-auto-created-at="true"
                 :auto-height="autoHeight"
-                :max-height="maxHeight"
-                border
-                :reserve-selection="true"
+                v-bind="{
+                  ...(maxHeight !== undefined ? { 'max-height': maxHeight } : {}),
+                  border: true,
+                  'reserve-selection': true
+                }"
               >
                 <template v-for="( slotName ) in scopedSlots" v-slot:[slotName]="scope">
                   <slot :name="slotName" v-bind="scope" />
@@ -581,7 +582,8 @@ function handleRemove(key: TransferKey) {
 }
 
 function handleClear() {
-  const crud = crudInstance.value;
+  // crud 变量未使用，但保留 crudInstance.value 的引用以保持代码结构
+  void crudInstance.value; // 确保引用被使用
   const table = tableComponentRef.value?.tableRef;
 
   // 先更新 selectedKeySet

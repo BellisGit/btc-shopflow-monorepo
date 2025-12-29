@@ -36,10 +36,7 @@ const render = async (props: QiankunProps = {}) => {
       try {
         await unmountLogisticsApp(context);
       } catch (error) {
-        // 卸载失败不影响后续流程，但记录错误
-        if (import.meta.env.DEV) {
-          console.warn('[logistics-app] 卸载前一个实例失败:', error);
-        }
+        // 卸载失败不影响后续流程
       } finally {
         context = null;
       }
@@ -53,7 +50,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[logistics-app] 渲染失败:', error);
+    console.error('渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     removeLoadingElement();
     clearNavigationFlag();
@@ -79,14 +76,12 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded: number, total: number) => {
-          if (import.meta.env.DEV) {
-            console.log(`[logistics-app] 加载共享资源进度: ${loaded}/${total}`);
-          }
+        onProgress: (_loaded: number, _total: number) => {
+          // 加载进度回调
         },
       });
     } catch (error) {
-      console.warn('[logistics-app] 加载共享资源失败，继续使用本地资源:', error);
+      // 加载共享资源失败，继续使用本地资源
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -94,11 +89,7 @@ async function mount(props: QiankunProps) {
   try {
     await render(props);
   } catch (error) {
-    console.error('[logistics-app] ❌ mount 失败:', error, {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-      props,
-    });
+    console.error('mount 失败:', error);
     throw error;
   }
 }
@@ -114,9 +105,6 @@ async function unmount(props: QiankunProps = {}) {
       await unmountLogisticsApp(context, props);
     } catch (error) {
       // 卸载失败不影响后续流程
-      if (import.meta.env.DEV) {
-        console.warn('[logistics-app] 卸载失败:', error);
-      }
     } finally {
       context = null;
     }
@@ -215,41 +203,38 @@ if (shouldRunStandalone()) {
             if (viewport) {
               // 挂载到 layout-app 的 #subapp-viewport
               render({ container: viewport } as any).then(() => {
-              }).catch((error) => {
-                console.error('[logistics-app] 挂载到 layout-app 失败:', error);
+              }).catch(() => {
+                // 挂载失败
               });
             } else {
-              console.error('[logistics-app] 等待 #subapp-viewport 超时，尝试独立渲染');
-              render().catch((error) => {
-                console.error('[logistics-app] 独立运行失败:', error);
+              render().catch(() => {
+                // 独立运行失败
               });
             }
           });
         } else {
           // layout-app 加载失败或不需要加载，独立渲染
-          render().catch((error) => {
-            console.error('[logistics-app] 独立运行失败:', error);
+          render().catch(() => {
+            // 独立运行失败
           });
         }
       })
-      .catch((error) => {
-        console.error('[logistics-app] 初始化 layout-app 失败:', error);
+      .catch(() => {
         // layout-app 加载失败，独立渲染
-          render().catch((err) => {
-            console.error('[logistics-app] 独立运行失败:', err);
+          render().catch(() => {
+            // 独立运行失败
           });
         });
-    }).catch((error) => {
-      console.error('[logistics-app] 导入 init-layout-app 失败:', error);
+    }).catch(() => {
       // 导入失败，直接渲染
-        render().catch((err) => {
-          console.error('[logistics-app] 独立运行失败:', err);
+        render().catch(() => {
+          // 独立运行失败
         });
       });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-    render().catch((error) => {
-      console.error('[logistics-app] 独立运行失败:', error);
+    render().catch(() => {
+      // 独立运行失败
     });
   }
 }
