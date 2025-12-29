@@ -175,7 +175,6 @@ const { t } = useI18n();
 const theme = useThemePlugin();
 
 // 从 CRUD 上下文获取数据
-const crud = inject<UseCrudReturn<any>>('btc-crud');
 const tableRefContext = inject<any>('btc-table-ref');
 
 const props = defineProps({
@@ -290,105 +289,6 @@ const columnMapping = computed(() => {
   return mapping;
 });
 
-// 分析文件名和CRUD实体的匹配度
-const analyzeFileNameMatch = (filename: string) => {
-  if (!filename || !crud) {
-    return null;
-  }
-
-  // 获取当前CRUD实体的名称（从service或配置中推断）
-  const entityName = getEntityName();
-  if (!entityName) {
-    return null;
-  }
-
-  // 提取文件名（去掉扩展名）
-  const fileName = filename.replace(/\.[^/.]+$/, '').toLowerCase();
-  const entityNameLower = entityName.toLowerCase();
-
-  // 计算匹配度
-  const suggestions: string[] = [];
-  let matchScore = 0;
-
-  // 1. 完全匹配
-  if (fileName === entityNameLower) {
-    matchScore = 100;
-  }
-  // 2. 包含实体名
-  else if (fileName.includes(entityNameLower)) {
-    matchScore = 80;
-  }
-  // 3. 实体名包含文件名
-  else if (entityNameLower.includes(fileName)) {
-    matchScore = 60;
-  }
-  // 4. 部分匹配
-  else {
-    const commonWords = findCommonWords(fileName, entityNameLower);
-    if (commonWords.length > 0) {
-      matchScore = 40;
-    } else {
-      matchScore = 0;
-    }
-  }
-
-  // 生成建议
-  if (matchScore < 60) {
-    suggestions.push(`建议文件名包含"${entityName}"，如：${entityName}_导入数据.xlsx`);
-
-    // 根据实体类型给出更具体的建议
-    if (entityName.includes('user') || entityName.includes('用户')) {
-      suggestions.push('用户数据导入建议使用：用户列表.xlsx、用户信息.xlsx');
-    } else if (entityName.includes('product') || entityName.includes('产品')) {
-      suggestions.push('产品数据导入建议使用：产品列表.xlsx、产品信息.xlsx');
-    } else if (entityName.includes('order') || entityName.includes('订单')) {
-      suggestions.push('订单数据导入建议使用：订单列表.xlsx、订单信息.xlsx');
-    }
-  }
-
-  return {
-    matchScore,
-    suggestions,
-    entityName,
-    fileName
-  };
-};
-
-// 获取实体名称
-const getEntityName = () => {
-  if (!crud?.service) {
-    return null;
-  }
-
-  // 尝试从service的URL路径推断实体名
-  const serviceUrl = crud.service.baseURL || '';
-  const pathMatch = serviceUrl.match(/\/([^/]+)(?:\/|$)/);
-  if (pathMatch) {
-    return pathMatch[1];
-  }
-
-  // 尝试从service的方法名推断
-  if (crud.service.page && crud.service.page.toString().includes('user')) {
-    return 'user';
-  }
-  if (crud.service.page && crud.service.page.toString().includes('product')) {
-    return 'product';
-  }
-
-  // 默认返回通用名称
-  return 'data';
-};
-
-// 查找共同词汇
-const findCommonWords = (str1: string, str2: string) => {
-  const words1 = str1.split(/[_\-\s]+/);
-  const words2 = str2.split(/[_\-\s]+/);
-
-  return words1.filter(word =>
-    word.length > 2 && words2.some(w => w.includes(word) || word.includes(w))
-  );
-};
-
 // 动态验证导入数据
 const validateImportData = (data: any[]) => {
   if (!data || data.length === 0) {
@@ -399,7 +299,7 @@ const validateImportData = (data: any[]) => {
   const validationRules = dynamicValidationRules.value;
   const columnMap = columnMapping.value;
 
-  data.forEach((item, index) => {
+  data.forEach((item) => {
     const validatedItem: any = {};
     let isValid = true;
 
@@ -666,11 +566,13 @@ function onUpload(raw: File, _: any, { next }: any) {
     let json: any[] = [];
     for (const sheet in workbook.Sheets) {
       if (Object.prototype.hasOwnProperty.call(workbook.Sheets, sheet)) {
-        const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], {
+        const worksheet = workbook.Sheets[sheet];
+        if (!worksheet) continue;
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, {
           raw: false,
           dateNF: 'yyyy-mm-dd',
           defval: ''
-        });
+        }) as any[];
 
         json = json.concat(sheetData);
       }

@@ -106,11 +106,14 @@ export function getManifestTabs(
       const fullPath = `${basePath}${route.path === "/" ? "" : route.path}`;
       const key = route.path.replace(/^\//, "") || "home";
 
+      const labelKey = route.tab?.labelKey ?? route.labelKey;
+      const label = route.tab?.label ?? route.label;
+
       return {
         key,
         path: fullPath,
-        labelKey: route.tab?.labelKey ?? route.labelKey,
-        label: route.tab?.label ?? route.label,
+        ...(labelKey != null ? { labelKey } : {}),
+        ...(label != null ? { label } : {}),
       };
     });
 }

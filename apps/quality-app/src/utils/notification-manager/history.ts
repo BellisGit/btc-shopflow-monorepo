@@ -23,11 +23,14 @@ export class HistoryManager {
       id,
       type,
       content,
-      title,
       count,
       timestamp: Date.now(),
       duration
     };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (title !== undefined) {
+      historyItem.title = title;
+    }
 
     this.history.unshift(historyItem); // 添加到开头
 

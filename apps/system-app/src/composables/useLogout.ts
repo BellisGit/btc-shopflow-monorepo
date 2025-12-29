@@ -5,7 +5,7 @@ import { authApi } from '@/modules/api-services';
 import { useUser } from './useUser';
 // 使用动态导入避免循环依赖
 // import { useProcessStore } from '@/store/process';
-import { deleteCookie } from '@/utils/cookie';
+import { deleteCookie, getCookieDomain } from '@/utils/cookie';
 import { appStorage } from '@/utils/app-storage';
 
 /**
@@ -63,8 +63,12 @@ export function useLogout() {
         console.warn('Logout API failed, but continue with frontend cleanup:', error);
       }
 
-      // 清除 cookie 中的 token
-      deleteCookie('access_token');
+      // 清除 cookie 中的 token（需要指定正确的 domain 才能删除跨域 cookie）
+      const cookieDomain = getCookieDomain();
+      deleteCookie('access_token', {
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
+        path: '/'
+      });
 
       // 清除登录状态标记（从统一的 settings 存储中移除）
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
@@ -94,11 +98,16 @@ export function useLogout() {
       // 显示退出成功提示
       BtcMessage.success(t('common.logoutSuccess'));
 
-      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
       // 使用 replace 而不是 push，避免在历史记录中留下退出前的页面
+      const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+      const currentPath = getCurrentUnifiedPath();
       router.replace({
         path: '/login',
-        query: { logout: '1' }
+        query: { 
+          logout: '1',
+          ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+        }
       });
     } catch (error: any) {
       // 即使出现错误，也执行清理操作
@@ -112,8 +121,12 @@ export function useLogout() {
         // 如果导入失败，静默处理
       }
 
-      // 强制清除所有缓存
-      deleteCookie('access_token');
+      // 强制清除所有缓存（需要指定正确的 domain 才能删除跨域 cookie）
+      const cookieDomain = getCookieDomain();
+      deleteCookie('access_token', {
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
+        path: '/'
+      });
       // 清除登录状态标记（从统一的 settings 存储中移除）
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
       if (currentSettings.is_logged_in) {
@@ -128,10 +141,15 @@ export function useLogout() {
         // 忽略错误
       });
 
-      // 跳转到登录页，添加 logout=1 参数，让路由守卫知道这是退出登录，不要重定向
+      // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
+      const { getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
+      const currentPath = getCurrentUnifiedPath();
       router.replace({
         path: '/login',
-        query: { logout: '1' }
+        query: { 
+          logout: '1',
+          ...(currentPath && currentPath !== '/login' ? { redirect: currentPath } : {})
+        }
       });
     }
   };

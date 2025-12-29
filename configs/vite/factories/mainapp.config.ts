@@ -436,12 +436,11 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 这里始终启用 publicDir，开发环境直接使用，构建环境会在 vite.config.ts 中被覆盖
   const finalPublicDir = publicDir;
 
-  return {
+  const config: any = {
     base: baseUrl,
     publicDir: finalPublicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     cacheDir: appCacheDir,
-    resolve: createBaseResolve(appDir, appName),
     plugins,
     esbuild: {
       charset: 'utf8',
@@ -457,5 +456,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     css: cssConfig,
     build: buildConfig,
   };
+
+  // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  const resolveValue = createBaseResolve(appDir, appName);
+  if (resolveValue !== undefined) {
+    config.resolve = resolveValue;
+  }
+
+  return config;
 }
 

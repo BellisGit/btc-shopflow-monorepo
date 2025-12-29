@@ -185,7 +185,7 @@ const handleMenuLayoutChange = ((event: Event) => {
   } catch (error) {
     // 静默失败
   }
-}) as EventListener;
+}) as (event: Event) => void;
 
 onMounted(() => {
   window.addEventListener('menu-layout-change', handleMenuLayoutChange);

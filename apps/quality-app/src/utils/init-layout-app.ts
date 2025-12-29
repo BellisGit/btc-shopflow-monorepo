@@ -159,7 +159,7 @@ async function injectAppConfigFromManifest(appId: string) {
 
     if (import.meta.env.DEV) {
       console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
-        hasMenus: registry?.value?.[appId]?.length > 0,
+        hasMenus: (registry?.value?.[appId]?.length ?? 0) > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }

@@ -125,7 +125,7 @@ export const globalMitt = mitt();
  */
 export class Mitt {
   private emitter: Emitter<Record<string, any>>;
-  public uid?: number;
+  public uid: number | undefined;
 
   constructor(uid?: number) {
     this.uid = uid;

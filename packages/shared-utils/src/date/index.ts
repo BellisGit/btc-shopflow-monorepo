@@ -1,4 +1,4 @@
-﻿// 使用兼容方式导入 dayjs
+// 使用兼容方式导入 dayjs
 import * as dayjsLib from 'dayjs';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dayjs = (dayjsLib as any).default || dayjsLib;

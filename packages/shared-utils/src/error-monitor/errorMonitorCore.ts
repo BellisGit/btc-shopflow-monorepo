@@ -177,7 +177,7 @@ function clearExpiredErrors(): void {
     const datesToRemove: string[] = [];
     Object.keys(storageData.errors).forEach((dateStr) => {
       const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (dateMatch) {
+      if (dateMatch && dateMatch[1] && dateMatch[2] && dateMatch[3]) {
         const year = parseInt(dateMatch[1], 10);
         const month = parseInt(dateMatch[2], 10) - 1; // 月份从 0 开始
         const day = parseInt(dateMatch[3], 10);

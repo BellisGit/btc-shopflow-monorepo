@@ -63,9 +63,9 @@ export const THEME_PRESETS: ThemeConfig[] = [
  */
 export function useTheme() {
   const isDark = ref(false);
-  const currentTheme = ref<ThemeConfig>(
-    storage.get('theme') || THEME_PRESETS[0]
-  );
+  const savedTheme = storage.get('theme') as ThemeConfig | undefined;
+  const initialTheme = (savedTheme ?? THEME_PRESETS[0]) as ThemeConfig;
+  const currentTheme = ref<ThemeConfig>(initialTheme);
 
   /**
    * 设置主题色

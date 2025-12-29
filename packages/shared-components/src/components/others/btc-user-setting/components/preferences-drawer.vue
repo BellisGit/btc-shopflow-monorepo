@@ -32,6 +32,9 @@
       <!-- 按钮风格 -->
       <ButtonStyleSettings />
 
+      <!-- Loading 样式 -->
+      <LoadingStyleSettings />
+
       <!-- 盒子样式 -->
       <BoxStyleSettings />
 
@@ -47,13 +50,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+// watch 未使用，已移除
 import SettingHeader from './shared/SettingHeader.vue';
 import MenuLayoutSettings from '../settings/menu-layout/index.vue';
 import MenuStyleSettings from '../settings/menu-style/index.vue';
 import ThemeStyleSettings from '../settings/theme-style/index.vue';
 import ColorSettings from '../settings/color-settings/index.vue';
 import ButtonStyleSettings from '../settings/button-style/index.vue';
+import LoadingStyleSettings from '../settings/loading-style/index.vue';
 import BoxStyleSettings from '../settings/box-style/index.vue';
 import ContainerWidthSettings from '../settings/container-width/index.vue';
 import BasicSettings from '../settings/basic-settings/index.vue';

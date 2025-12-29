@@ -73,7 +73,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm } from '@btc/shared-components';
 // useMessage 不再需要，直接使用 BtcMessage
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
@@ -118,12 +118,12 @@ const isDark = computed(() => {
   return isDarkTheme?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
 
-// 用户相关
-const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+// 用户相关（暂时未使用，保留用于未来扩展）
+void useUser();
 
 // 使用 composable
 const {
-  profileUserInfo,
+  profileUserInfo: _profileUserInfo,
   displayedName,
   isTyping,
   cursorPosition,

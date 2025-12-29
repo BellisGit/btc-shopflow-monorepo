@@ -50,22 +50,9 @@ const getEnvironmentType = (): EnvironmentType => {
 };
 
 /**
- * 获取主机地址
- */
-const getHost = (): string => {
-  if (typeof window === 'undefined') {
-    return 'localhost';
-  }
-  const hostname = window.location.hostname;
-  return hostname === '0.0.0.0' ? 'localhost' : hostname;
-};
-
-/**
  * 获取应用入口地址
  */
 const getAppEntry = (appName: string): string => {
-  const envType = getEnvironmentType();
-  const host = getHost();
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {
@@ -73,6 +60,7 @@ const getAppEntry = (appName: string): string => {
     return `/${appName}/`;
   }
 
+  const envType = getEnvironmentType();
   switch (envType) {
     case 'production':
       // 生产环境：根据子域名判断使用子域名还是相对路径

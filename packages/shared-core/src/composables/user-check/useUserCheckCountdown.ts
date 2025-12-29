@@ -55,11 +55,14 @@ function showWarning(): void {
 
   try {
     // 动态导入 BtcMessage 避免循环依赖
-    import('@btc/shared-components').then(({ BtcMessage }) => {
-      BtcMessage.warning('您的登录凭证即将过期，系统将在几秒后自动退出，请及时保存工作', {
-        duration: 5000, // 显示5秒
-      });
-      warningShown = true;
+    import('@btc/shared-components').then((sharedComponents) => {
+      const { BtcMessage } = sharedComponents as { BtcMessage?: any };
+      if (BtcMessage && typeof BtcMessage.warning === 'function') {
+        BtcMessage.warning('您的登录凭证即将过期，系统将在几秒后自动退出，请及时保存工作', {
+          duration: 5000, // 显示5秒
+        });
+        warningShown = true;
+      }
     }).catch((error) => {
       console.error('[useUserCheckCountdown] Failed to import BtcMessage:', error);
     });

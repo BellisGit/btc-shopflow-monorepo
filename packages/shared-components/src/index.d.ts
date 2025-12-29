@@ -64,6 +64,7 @@ export declare const BtcCodeJson: import("vue").DefineComponent<object, object, 
 export { DEFAULT_OPERATION_WIDTH } from './crud/context/layout';
 export { CommonColumns } from './crud/table/utils/common-columns';
 export { useUpload } from './components/form/btc-upload/composables/useUpload';
+export { useFormRenderer } from './common/form/composables/useFormRenderer';
 export { addClass, removeClass } from './utils/dom';
 export type { VerifyPhoneApi, VerifyEmailApi } from './components/feedback/btc-identity-verify/types';
 export type { SaveBindingApi } from './components/feedback/btc-binding-dialog/types';

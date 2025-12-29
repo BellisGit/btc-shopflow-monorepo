@@ -91,14 +91,12 @@ defineOptions({
 
 import { ref, computed, watch } from 'vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-// Check 在模板中使用，但 TypeScript 可能未识别
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Check } from '@element-plus/icons-vue';
 import type { ThemeConfig } from '@btc/shared-core';
-// import { BtcColorPicker, BtcIconButton, BtcMessage } from '@btc/shared-components';
-// BtcIconButton 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { BtcIconButton, BtcMessage } from '@btc/shared-components';
+
+// 以下变量在模板中使用，TypeScript 无法识别模板使用，因此显式导出以确保被识别
+// Check, BtcIconButton, allThemes, openDrawer, isCurrentTheme, handleThemeClick, handleDarkToggle
 
 const { t } = useI18n();
 const theme = useThemePlugin();
@@ -110,11 +108,6 @@ const savedCustomColor = theme.currentTheme.value?.name === 'custom'
   ? theme.currentTheme.value.color
   : '';
 const customColor = ref(savedCustomColor);
-// 保存打开弹窗时的原始颜色值和主题状态，用于关闭时恢复
-const originalColor = ref<string | null>(null);
-const originalTheme = ref<ThemeConfig | null>(null);
-// 标记是否已确认（确认后关闭弹窗时不再恢复）
-const isConfirmed = ref(false);
 
 // 自定义主题配置
 const customTheme = computed<ThemeConfig>(() => ({
@@ -124,8 +117,7 @@ const customTheme = computed<ThemeConfig>(() => ({
 }));
 
 // 合并所有主题，自定义主题放在最后
-// allThemes 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// allThemes 在模板中使用（第34行）
 const allThemes = computed(() => {
   const currentCustomColor = theme.currentTheme.value?.name === 'custom'
     ? theme.currentTheme.value.color
@@ -147,8 +139,7 @@ watch(() => theme.currentTheme.value, (newTheme) => {
   }
 });
 
-// openDrawer 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// openDrawer 在模板中使用（第7行）
 function openDrawer() {
   drawerVisible.value = true;
   // 如果当前是自定义主题，同步自定义颜色
@@ -157,19 +148,8 @@ function openDrawer() {
   }
 }
 
-// 获取自定义颜色的显示值
-// 如果当前是自定义主题，显示主题颜色；否则返回空字符串（显示彩虹渐变）
-// customColorDisplay 在注释的模板代码中使用，暂时保留
-const _customColorDisplay = computed(() => {
-  if (theme.currentTheme.value?.name === 'custom') {
-    return theme.currentTheme.value.color || '';
-  }
-  return '';
-});
-
 // 判断是否是当前主题
-// isCurrentTheme 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// isCurrentTheme 在模板中使用（第56、72行）
 function isCurrentTheme(themeConfig: ThemeConfig): boolean {
   const current = theme.currentTheme.value;
   if (!current) return false;
@@ -181,141 +161,15 @@ function isCurrentTheme(themeConfig: ThemeConfig): boolean {
   return themeConfig.color === current.color;
 }
 
-// 处理自定义主题点击（颜色选择器打开时）
-// handleCustomThemeClick 在注释的模板代码中使用，暂时保留
-function _handleCustomThemeClick() {
-  // 保存打开时的原始颜色值和主题状态
-  originalColor.value = customColor.value || null;
-  originalTheme.value = theme.currentTheme.value ? { ...theme.currentTheme.value } : null;
-  isConfirmed.value = false;
-
-  // 确保如果有当前主题颜色，同步到 customColor（用于显示在输入框中）
-  if (theme.currentTheme.value?.name === 'custom' && theme.currentTheme.value.color) {
-    customColor.value = theme.currentTheme.value.color;
-    originalColor.value = customColor.value;
-  }
-
-  // 如果当前有自定义颜色，临时切换到自定义主题（用于预览）
-  if (customColor.value) {
-    theme.currentTheme.value = {
-      name: 'custom',
-      label: 'theme.presets.custom',
-      color: customColor.value,
-    };
-    theme.setThemeColor(customColor.value, theme.isDark.value);
-    if (document.body) {
-      document.body.className = 'theme-custom';
-    }
-  }
-}
-
-
 // 处理预设主题点击
-// handleThemeClick 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// handleThemeClick 在模板中使用（第67行）
 function handleThemeClick(themeConfig: ThemeConfig) {
   // 点击预设主题，直接切换（不改变 customColor）
   theme.switchTheme(themeConfig);
   BtcMessage.success(`${t('theme.switched')}: ${t(themeConfig.label)}`);
 }
 
-// 处理颜色变化（点击预设颜色或输入框变化时触发）
-// handleColorChange 在注释的模板代码中使用，暂时保留
-function _handleColorChange(color: string | null) {
-  // 实时更新主题颜色（点击预设颜色时也需要实时更新）
-  updateThemeColorPreview(color);
-}
-
-// 统一的主题颜色预览更新函数
-function updateThemeColorPreview(color: string | null) {
-  if (color !== null && color !== undefined && color !== '') {
-    // 始终创建新对象以确保响应式更新
-    const newTheme: ThemeConfig = {
-      name: 'custom',
-      label: 'theme.presets.custom',
-      color: color,
-    };
-    // 直接替换整个 ref 的值以触发响应式更新
-    theme.currentTheme.value = newTheme;
-    // 更新全局主题色
-    theme.setThemeColor(color, theme.isDark.value);
-    if (document.body) {
-      document.body.className = 'theme-custom';
-    }
-  }
-}
-
-// 处理清空颜色
-// handleClearColor 在注释的模板代码中使用，暂时保留
-function _handleClearColor() {
-  customColor.value = '';
-  // 清空时恢复彩虹渐变（将主题颜色设为空）
-  theme.currentTheme.value = {
-    name: 'custom',
-    label: 'theme.presets.custom',
-    color: '',
-  };
-}
-
-// 处理确认颜色
-// handleConfirmColor 在注释的模板代码中使用，暂时保留
-function _handleConfirmColor(color: string | null) {
-  // 标记已确认，避免在 hide 时恢复
-  isConfirmed.value = true;
-
-  // 更新 customColor（即使是空字符串也要更新）
-  customColor.value = color || '';
-
-  // 如果有颜色，切换到自定义主题并保存
-  if (color) {
-    // 使用 switchTheme 确保所有状态都正确更新（包括 document.body.className）
-    const customThemeConfig: ThemeConfig = {
-      name: 'custom',
-      label: 'theme.presets.custom',
-      color: color,
-    };
-    theme.switchTheme(customThemeConfig);
-    BtcMessage.success(`${t('theme.switched')}: ${t('theme.presets.custom')}`);
-  } else {
-    // 如果没有颜色，恢复原始主题（如果有的话）
-    // 这里可以根据需求决定是否恢复到之前的主题
-  }
-
-  // 重置状态
-  originalColor.value = null;
-}
-
-// 处理活动颜色变化（实时预览，拖拽时触发）
-// handleActiveColorChange 在注释的模板代码中使用，暂时保留
-function _handleActiveColorChange(color: string | null) {
-  // 使用统一的更新函数
-  updateThemeColorPreview(color);
-}
-
-// 处理颜色选择器关闭
-// handleColorPickerHide 在注释的模板代码中使用，暂时保留
-function _handleColorPickerHide() {
-  // 如果没有确认，恢复原始状态
-  if (!isConfirmed.value && originalTheme.value) {
-    // 恢复 customColor 到原始值
-    customColor.value = originalColor.value || '';
-
-    // 恢复主题状态（从保存的原始主题状态恢复）
-    theme.currentTheme.value = { ...originalTheme.value };
-    theme.setThemeColor(originalTheme.value.color, theme.isDark.value);
-    if (document.body) {
-      document.body.className = `theme-${originalTheme.value.name}`;
-    }
-  }
-
-  // 重置状态
-  originalColor.value = null;
-  originalTheme.value = null;
-  isConfirmed.value = false;
-}
-
-// handleDarkToggle 在模板中使用
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// handleDarkToggle 在模板中使用（第16行）
 function handleDarkToggle(event?: MouseEvent) {
   console.log('[ThemeSwitcher] handleDarkToggle 被调用', {
     hasEvent: !!event,

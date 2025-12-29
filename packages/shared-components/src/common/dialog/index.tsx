@@ -1,4 +1,4 @@
-import { defineComponent, h, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { DialogProps } from './types';
 import { useDialog, useDialogRender } from './composables';
 import './styles/index.scss';

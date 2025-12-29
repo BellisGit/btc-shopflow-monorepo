@@ -442,9 +442,6 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 立即关闭抽屉
-  handleClose();
-
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = window.location.hostname.includes('bellis.com.cn');
 
@@ -518,8 +515,36 @@ const handleClose = () => {
   });
 };
 
+// 记录页面变为可见的时间戳，用于忽略页面刚变为可见时的误触发事件
+let lastVisibilityChangeTime = 0;
+const VISIBILITY_CHANGE_IGNORE_DURATION = 200; // 页面变为可见后 200ms 内忽略点击事件
+
+// 监听页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    // 记录页面变为可见的时间
+    lastVisibilityChangeTime = Date.now();
+  }
+};
+
 const handleClickOutside = (event: MouseEvent) => {
   if (!props.visible) return;
+
+  // 检查事件是否可信（避免程序触发的事件）
+  if (event.isTrusted === false) {
+    return;
+  }
+
+  // 检查页面是否可见（避免关闭标签页时触发）
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+    return;
+  }
+
+  // 关键：忽略页面刚变为可见后的短时间内的点击事件（避免切换回标签页时误触发）
+  const now = Date.now();
+  if (lastVisibilityChangeTime > 0 && (now - lastVisibilityChangeTime) < VISIBILITY_CHANGE_IGNORE_DURATION) {
+    return;
+  }
 
   const drawer = document.querySelector('.menu-drawer');
   if (drawer && !drawer.contains(event.target as Node)) {
@@ -537,11 +562,14 @@ const handleIframeClick = () => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('iframe-clicked', handleIframeClick);
+  // 监听页面可见性变化
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('iframe-clicked', handleIframeClick);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 

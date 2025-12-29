@@ -167,10 +167,13 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
         // 确保图标正确传递：优先使用配置中的图标
         const icon = item.icon || menuIcon;
 
-        return {
+        const result: BreadcrumbItem = {
           label,
-          icon,
         };
+        if (icon) {
+          result.icon = icon;
+        }
+        return result;
       })
       .filter(Boolean) as BreadcrumbItem[];
   };
@@ -396,7 +399,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
     // 如果仍然没有匹配到，尝试在所有子应用中查找（处理子域名访问的情况，如 operations.bellis.com.cn/ops/error）
     if (!breadcrumbData) {
-      for (const [appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
+      for (const [_appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
         if (appBreadcrumbs[normalizedPath]) {
           breadcrumbData = appBreadcrumbs[normalizedPath];
           break;
@@ -405,7 +408,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     }
   } else {
     // 如果无法识别应用，先尝试在所有子应用中查找
-    for (const [appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
+    for (const [_appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
       if (appBreadcrumbs[normalizedPath]) {
         breadcrumbData = appBreadcrumbs[normalizedPath];
         break;
@@ -423,13 +426,17 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 
   // 转换为带翻译的面包屑，并从菜单注册表中获取图标
-  return breadcrumbData.map((item) => {
+  return breadcrumbData.map((item): BreadcrumbItem => {
     // 优先使用配置中的图标，如果没有则从菜单注册表中查找
-    const menuIcon = findMenuIconByI18nKey(item.i18nKey, currentApp);
-    return {
-      label: t(item.i18nKey),
-      icon: item.icon || menuIcon,
+    const menuIcon = item.i18nKey ? findMenuIconByI18nKey(item.i18nKey, currentApp) : undefined;
+    const result: BreadcrumbItem = {
+      label: item.i18nKey ? t(item.i18nKey) : '',
     };
+    const icon = item.icon || menuIcon;
+    if (icon) {
+      result.icon = icon;
+    }
+    return result;
   });
 });
 </script>

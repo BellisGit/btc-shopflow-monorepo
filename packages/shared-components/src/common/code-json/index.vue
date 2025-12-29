@@ -57,16 +57,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useAttrs, ref } from 'vue';
+import { computed, ref } from 'vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 
 defineOptions({
   name: 'BtcCodeJson',
   inheritAttrs: false
 });
-
-// 获取所有传入的属性
-const attrs = useAttrs();
 
 interface Props {
   /** JSON 数据 */
@@ -92,12 +89,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const dialogVisible = ref(false);
-
-// 过滤掉不应该传递给 el-popover 的属性
-const filteredAttrs = computed(() => {
-  const { popover, popoverWidth, popoverTrigger, format, maxLength, modelValue, ...rest } = attrs;
-  return rest;
-});
 
 // 格式化 JSON 数据
 const formattedJson = computed(() => {

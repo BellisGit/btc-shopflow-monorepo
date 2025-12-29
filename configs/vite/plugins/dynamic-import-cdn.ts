@@ -110,14 +110,6 @@ export function dynamicImportCdnPlugin(options: DynamicImportCdnOptions): Plugin
           normalizedPath = specifier;
         }
 
-        // 判断是否是布局应用资源
-        const isLayoutResource = normalizedPath.includes('/assets/layout/');
-
-        // 计算 fallback URL（用于错误降级）
-        const fallbackUrl = normalizedPath.startsWith('/')
-          ? `new URL(${quote}${normalizedPath}${quote}, window.location.origin).href`
-          : quote + normalizedPath + quote;
-
         // 转换为使用资源加载器的代码
         // 使用 window.__BTC_RESOURCE_LOADER__ 加载资源，支持三级降级
         // 注意：使用规范化后的路径（normalizedPath）作为资源路径

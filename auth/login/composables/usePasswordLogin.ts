@@ -94,19 +94,36 @@ export function usePasswordLogin() {
       // 等待状态更新，确保路由守卫能正确识别登录状态
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // 启动用户检查轮询
+      // 启动用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
       try {
         const { startUserCheckPolling } = await import('@btc/shared-core/composables/user-check');
-        startUserCheckPolling();
+        startUserCheckPolling(true);
       } catch (error) {
         console.warn('[usePasswordLogin] Failed to start user check polling:', error);
       }
 
       // 跳转到首页或 redirect 页面
-      const redirect = (route.query.redirect as string) || '/';
-      // 只取路径部分，忽略查询参数，避免循环重定向
-      const redirectPath = redirect.split('?')[0];
-      router.push(redirectPath);
+      // 优先级：URL 参数中的 redirect > 保存的退出前路径 > 默认路径
+      const { handleCrossAppRedirect, getAndClearLogoutRedirectPath } = await import('@btc/auth-shared/composables/redirect');
+      
+      let redirectPath: string;
+      const urlRedirect = route.query.redirect as string;
+      if (urlRedirect) {
+        // 优先使用 URL 参数中的 redirect
+        redirectPath = urlRedirect.split('?')[0];
+      } else {
+        // 如果没有 URL 参数，尝试从 localStorage 获取保存的退出前路径
+        const savedPath = getAndClearLogoutRedirectPath();
+        redirectPath = savedPath || '/';
+      }
+      
+      // 尝试跨应用重定向，如果是子应用路径会使用window.location跳转
+      const isCrossAppRedirect = handleCrossAppRedirect(redirectPath, router);
+      
+      // 如果不是跨应用跳转，使用router跳转
+      if (!isCrossAppRedirect) {
+        router.push(redirectPath);
+      }
     } catch (error: any) {
       console.error('登录错误:', error);
       BtcMessage.error(error.message || t('登录失败'));

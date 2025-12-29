@@ -59,8 +59,8 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         entryPrefix: '',
       },
       docs: {
-        url: 'http://localhost:4172',
-        port: '4172',
+        url: 'http://localhost:8092',
+        port: '8092',
       },
       ws: {
         url: 'ws://10.80.9.76:8115',
@@ -133,8 +133,8 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         entryPrefix: '',
       },
       docs: {
-        url: 'http://localhost:4172',
-        port: '4172',
+        url: 'http://localhost:8092',
+        port: '8092',
       },
       ws: {
         url: 'ws://10.80.9.76:8115',

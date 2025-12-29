@@ -35,7 +35,7 @@
           <div v-else-if="filteredApplications.length > 0" class="app-list">
             <div class="app-list__column">
               <template
-                v-for="(app, index) in filteredApplications.filter((_, i) => i % 2 === 0)"
+                v-for="app in filteredApplications.filter((_, i) => i % 2 === 0)"
                 :key="app.name"
               >
                 <el-tooltip
@@ -68,7 +68,7 @@
             </div>
             <div class="app-list__column">
               <template
-                v-for="(app, index) in filteredApplications.filter((_, i) => i % 2 === 1)"
+                v-for="app in filteredApplications.filter((_, i) => i % 2 === 1)"
                 :key="app.name"
               >
                 <el-tooltip
@@ -118,7 +118,6 @@ defineOptions({
 });
 
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { Check, Loading, Search } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 
@@ -141,22 +140,6 @@ async function getDomainList(service: any) {
   return [];
 }
 
-// 开始加载（立即显示 loading，避免白屏）
-function startLoading() {
-  // 立即设置 loading 状态，确保在路由切换前就显示 loading
-  const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-  if (viewport) {
-    viewport.setAttribute('data-qiankun-loading', 'true');
-    // 确保容器可见
-    viewport.style.setProperty('display', 'flex', 'important');
-    viewport.style.setProperty('visibility', 'visible', 'important');
-    viewport.style.setProperty('opacity', '1', 'important');
-    // 触发自定义事件，通知 Layout 组件立即更新状态
-    window.dispatchEvent(new CustomEvent('qiankun:before-load', {
-      detail: { appName: 'switching' }
-    }));
-  }
-}
 
 // 完成加载（从全局或应用提供）
 function finishLoading() {
@@ -229,7 +212,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const router = useRouter();
 
 /**
  * 环境类型
@@ -423,9 +405,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
-
-// 固定显示的应用配置（文档域不再默认显示）
-const fixedApplications: MicroApp[] = [];
 
 // 域到应用的映射配置（不包括管理域和文档域）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
@@ -805,11 +784,23 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 立即关闭抽屉
-  handleClose();
-
   // 判断是否为生产环境（通过 hostname 判断）
   const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
+
+  // 获取应用显示名称（用于占位loading）- 必须在构建 URL 之前定义
+  const appNameMap: Record<string, string> = {
+    'admin': '管理模块',
+    'logistics': '物流模块',
+    'engineering': '工程模块',
+    'quality': '品质模块',
+    'production': '生产模块',
+    'finance': '财务模块',
+    'operations': '运维模块',
+    'docs': '文档模块',
+    'dashboard': '图表模块',
+    'personnel': '人事模块',
+  };
+  const appDisplayName = appNameMap[app.name] || '应用';
 
   let targetUrl: string;
 
@@ -822,7 +813,10 @@ const handleSwitchApp = async (app: MicroApp) => {
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
-      targetUrl = `${protocol}//${hostname}${targetPath}`;
+      const url = new URL(`${protocol}//${hostname}${targetPath}`);
+      // 关键：通过 URL 参数传递应用名称
+      url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
+      targetUrl = url.toString();
     } else {
       // 根据应用名称获取生产环境域名配置
       // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
@@ -840,31 +834,63 @@ const handleSwitchApp = async (app: MicroApp) => {
       const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
       const appConfig = getAppConfig(mappedAppName);
       if (appConfig && appConfig.prodHost) {
-        // 构建完整的 URL，直接跳转到子域名根路径（不添加任何参数）
+        // 构建完整的 URL，通过 URL 参数传递应用名称
+        // 关键：由于不同子域名之间 sessionStorage 不共享，需要通过 URL 参数传递
         const protocol = window.location.protocol;
-        targetUrl = `${protocol}//${appConfig.prodHost}/`;
+        const url = new URL(`${protocol}//${appConfig.prodHost}/`);
+        url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
+        targetUrl = url.toString();
       } else {
         console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
         const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
-        targetUrl = `${protocol}//${hostname}${targetPath}`;
+        const url = new URL(`${protocol}//${hostname}${targetPath}`);
+        url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
+        targetUrl = url.toString();
       }
     }
   } else {
     // 开发/预览环境：基于主应用 URL 拼接路径
-    const envType = getEnvironmentType();
+    // 环境类型检查（暂时未使用，保留用于未来扩展）
+    void getEnvironmentType();
     const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-    
+
     // 开发环境和预览环境都使用当前主应用的 URL + 路径前缀
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     const port = window.location.port;
-    targetUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`;
+    const url = new URL(`${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`);
+    // 关键：通过 URL 参数传递应用名称
+    // 虽然开发环境 sessionStorage 可以共享，但为了统一处理，也使用 URL 参数
+    url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
+    targetUrl = url.toString();
   }
 
-  // 使用 window.open 在新标签页打开
-  window.open(targetUrl, '_blank');
+  // 关键：无论开发环境还是生产环境，都要设置 sessionStorage
+  try {
+    sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+  } catch (e) {
+    // 静默失败
+  }
+
+  // 关键：在开发环境，如果是同一标签页内的应用切换，先隐藏容器，再跳转
+  if (!isProduction) {
+    // 隐藏容器，避免布局闪烁
+    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (container) {
+      container.style.setProperty('display', 'none', 'important');
+      container.style.setProperty('visibility', 'hidden', 'important');
+      container.style.setProperty('opacity', '0', 'important');
+    }
+
+    // 使用 window.location.href 在同一标签页跳转（开发环境）
+    // 抽屉已经在函数开头同步关闭了
+    window.location.href = targetUrl;
+  } else {
+    // 生产环境：使用 window.open 在新标签页打开
+    window.open(targetUrl, '_blank');
+  }
 };
 
 // 辅助函数：检查是否应该处理抽屉事件
@@ -916,6 +942,32 @@ const handleClickOutside = (event: MouseEvent) => {
 
   if (!props.visible) return;
 
+  // 检查事件是否可信（避免程序触发的事件）
+  if (event.isTrusted === false) {
+    return;
+  }
+
+  // 检查页面是否可见（避免关闭标签页时触发）
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+    return;
+  }
+
+  // 关键：忽略页面刚变为可见后的短时间内的点击事件（避免切换回标签页时误触发）
+  const now = Date.now();
+  if (lastVisibilityChangeTime > 0 && (now - lastVisibilityChangeTime) < VISIBILITY_CHANGE_IGNORE_DURATION) {
+    return;
+  }
+
+  // 排除标签页区域的点击（避免关闭标签页时触发抽屉关闭）
+  const target = event.target as HTMLElement;
+  if (target) {
+    // 检查是否点击在标签页区域内（包括关闭按钮）
+    const isInProcessArea = target.closest('.app-process') !== null;
+    if (isInProcessArea) {
+      return;
+    }
+  }
+
   const drawer = document.querySelector('.menu-drawer');
   if (drawer && !drawer.contains(event.target as Node)) {
     handleClose();
@@ -950,14 +1002,29 @@ watch(
   }
 );
 
+// 记录页面变为可见的时间戳，用于忽略页面刚变为可见时的误触发事件
+let lastVisibilityChangeTime = 0;
+const VISIBILITY_CHANGE_IGNORE_DURATION = 200; // 页面变为可见后 200ms 内忽略点击事件
+
+// 监听页面可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    // 记录页面变为可见的时间
+    lastVisibilityChangeTime = Date.now();
+  }
+};
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('iframe-clicked', handleIframeClick);
+  // 监听页面可见性变化
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('iframe-clicked', handleIframeClick);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 

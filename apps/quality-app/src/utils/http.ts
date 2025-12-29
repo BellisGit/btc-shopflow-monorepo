@@ -382,10 +382,12 @@ export class Http {
 
   // 测试响应拦截器的方法
   testResponseInterceptor() {
+    // @ts-expect-error: 测试方法，未使用变量
     const interceptor = responseInterceptor.createResponseInterceptor();
 
 
     // 模拟一个成功的响应
+    // @ts-expect-error: 测试方法，未使用变量
     const mockResponse = {
       data: { code: 200, msg: '测试消息', data: null },
       status: 200,
@@ -395,8 +397,8 @@ export class Http {
 
     try {
       // const result = interceptor.onFulfilled(mockResponse); // 未使用
-    } catch (error) {
-      console.error('Interceptor error:', error);
+    } catch (_error) {
+      // Interceptor error
     }
   }
 
@@ -510,7 +512,7 @@ export const http = new Http(config.api.baseURL);
  * 基础服务类 - 参考 cool-admin 的 BaseService
  */
 export class BaseService {
-  private namespace?: string;
+  private namespace: string | undefined;
   private readonly httpClient: Http;
 
   constructor(namespace?: string, httpClient: Http = http) {

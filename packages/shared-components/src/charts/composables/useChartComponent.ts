@@ -20,9 +20,9 @@ export type ChartStyleHelpers = {
  * 组件抽象 composable
  * 简化图表组件的开发
  */
-export function useChartComponent(
+export function useChartComponent<T extends BaseChartProps = BaseChartProps>(
   containerRef: Ref<HTMLElement | null>,
-  props: BaseChartProps,
+  props: T,
   buildOption: (
     isDark: Ref<boolean>,
     themeColors: ReturnType<typeof getThemeColors>,
@@ -31,7 +31,8 @@ export function useChartComponent(
 ) {
   // useChart 现在会将样式函数作为第二个参数传递给 buildOption
   // 我们需要创建一个包装函数来适配新的签名
-  const chart = useChart(containerRef, props, (isDark, styleHelpers) => {
+  // 使用类型断言来适配 exactOptionalPropertyTypes 的兼容性
+  const chart = useChart(containerRef, props as BaseChartProps, (isDark, styleHelpers) => {
     const themeColors = getThemeColors();
     // buildOption 需要接收 styleHelpers，但 useChartComponent 的 buildOption 签名不同
     // 我们需要创建一个适配器

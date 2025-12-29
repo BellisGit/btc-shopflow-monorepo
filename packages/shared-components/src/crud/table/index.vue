@@ -140,11 +140,6 @@ const props = withDefaults(defineProps<TableProps>(), {
   rowKey: 'id',
   sortRefresh: true,
   emptyText: 'common.table.empty',
-  border: undefined,
-  stripe: undefined,
-  headerBackground: undefined,
-  size: undefined,
-  op: undefined,
   disableAutoCreatedAt: false,
   toolbar: true,
 });
@@ -247,12 +242,6 @@ const currentSize = computed<TableSize>({
   },
 });
 
-const sizeDropdownOptions = computed(() => [
-  { value: 'small' as TableSize, label: t('btc.table.size.small') },
-  { value: 'default' as TableSize, label: t('btc.table.size.default') },
-  { value: 'large' as TableSize, label: t('btc.table.size.large') },
-]);
-
 const sizeButtonConfig = computed(() => ({
   icon: 'table-density',
   tooltip: () => t('btc.table.toolbar.size'),
@@ -303,7 +292,7 @@ const tableAttrs = computed(() => attrs);
 const tableRef = ref<TableInstance>();
 const crudLayout = inject(crudLayoutKey, null);
 
-const { computedColumns } = useTableColumns(props);
+const { computedColumns } = useTableColumns(props as any);
 
 const getColumnKey = (column: TableColumn): string | undefined => {
   if (column.prop) return column.prop;
@@ -366,7 +355,7 @@ const isI18nKey = (str: string): boolean => {
   if (parts.length < 2) {
     return false;
   }
-  const firstPart = parts[0].trim();
+  const firstPart = parts[0]?.trim();
   if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
     return false;
   }
@@ -537,7 +526,7 @@ if (tableRefContext) {
 }
 
 const { getOpButtons, getButtonType, getButtonText, getButtonIcon, handleOpClick, showColumn, hideColumn, setColumns, reBuild, rebuildKey } =
-  useTableOp(crud, props);
+  useTableOp(crud, props as any);
 
 const isMinimalButtonStyle = computed(() => theme.buttonStyle?.value === 'minimal');
 
@@ -573,9 +562,9 @@ const getObjectOpButtonConfig = (btn: any, scope: any): BtcTableButtonConfig => 
   };
 };
 
-const { maxHeight: autoMaxHeight, calcMaxHeight } = useTableHeight(props, tableRef);
-const { onRowContextMenu } = useTableContextMenu(crud, props, tableRef);
-const { defaultSort: tableDefaultSort, onSortChange, clearSort } = useTableSort(crud, props, emit);
+const { maxHeight: autoMaxHeight, calcMaxHeight } = useTableHeight(props as any, tableRef);
+const { onRowContextMenu } = useTableContextMenu(crud, props as any, tableRef);
+const { defaultSort: tableDefaultSort, onSortChange, clearSort } = useTableSort(crud, props as any, emit);
 
 const computedDefaultSort = computed(() => tableDefaultSort.value ?? defaultSort.value);
 

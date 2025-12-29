@@ -1,6 +1,6 @@
 import type { BtcFormConfig } from '../useBtcForm';
 
-export function useAction({ config, form, Form }: { config: BtcFormConfig; form: any; Form?: any }) {
+export function useAction({ config, form }: { config: BtcFormConfig; form: any; Form?: any }) {
   // 设置表单数据
   function setForm(prop: string, value: any) {
     form[prop] = value;

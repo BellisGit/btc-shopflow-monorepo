@@ -95,6 +95,14 @@
     	"preHost": "localhost",
         "prePort": "4191",
         "prodHost":"mobile.bellis.com.cn"
+	},
+      {
+        "appName": "docs-app",
+        "devHost": "localhost",
+        "devPort": "8092",
+    	"preHost": "localhost",
+        "prePort": "4192",
+        "prodHost":"docs.bellis.com.cn"
 	}
 ]
 ```

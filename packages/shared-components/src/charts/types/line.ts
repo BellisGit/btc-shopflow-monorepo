@@ -31,14 +31,14 @@ export interface LineChartProps extends BaseChartProps, InteractionProps {
   /** X轴数据 */
   xAxisData: string[];
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** Y轴格式化 */
-  yAxisFormatter?: string;
+  yAxisFormatter?: string | undefined;
   /** 是否堆叠 */
-  stack?: string;
+  stack?: string | undefined;
   /** 动画配置 */
-  animation?: boolean;
+  animation?: boolean | undefined;
   /** 动画时长 */
-  animationDuration?: number;
+  animationDuration?: number | undefined;
 }
 

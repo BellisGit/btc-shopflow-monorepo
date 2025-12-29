@@ -10,12 +10,12 @@ import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
  */
 export function useHBarChart(
   props: HBarChartProps,
-  isDark: Ref<boolean>,
+  _isDark: Ref<boolean>,
   _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
   styleHelpers: ChartStyleHelpers
 ) {
   const buildOption = (): EChartsOption => {
-    const option: EChartsOption = {
+    const option: any = {
       title: {
         text: props.title || '',
         ...styleHelpers.getTitleStyle()
@@ -111,7 +111,7 @@ export function useHBarChart(
       })
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

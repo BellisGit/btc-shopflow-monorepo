@@ -2,24 +2,28 @@
   <div class="btc-import-export-group">
     <slot name="export">
       <BtcExportBtn
-        :columns="exportColumns"
-        :data="exportData"
-        :filename="exportFilenameComputed"
-        :auto-width="exportAutoWidth"
-        :book-type="exportBookType"
-        :max-export-limit="exportMaxLimit"
-        :text="exportButtonText"
+        v-bind="{
+          ...(exportColumns !== undefined ? { columns: exportColumns } : {}),
+          ...(exportData !== undefined ? { data: exportData } : {}),
+          filename: exportFilenameComputed,
+          ...(exportAutoWidth !== undefined ? { 'auto-width': exportAutoWidth } : {}),
+          ...(exportBookType !== undefined ? { 'book-type': exportBookType } : {}),
+          ...(exportMaxLimit !== undefined ? { 'max-export-limit': exportMaxLimit } : {}),
+          ...(exportButtonText !== undefined ? { text: exportButtonText } : {})
+        }"
       />
     </slot>
     <slot name="import">
       <BtcImportBtn
-        :columns="importColumns"
-        :on-submit="handleImport"
-        :tips="importTips"
-        :template="importTemplate"
-        :limit-size="importLimitSize"
-        :type="importButtonType"
-        :disabled="disabled"
+        v-bind="{
+          ...(importColumns !== undefined ? { columns: importColumns } : {}),
+          'on-submit': handleImport,
+          ...(importTips !== undefined ? { tips: importTips } : {}),
+          ...(importTemplate !== undefined ? { template: importTemplate } : {}),
+          ...(importLimitSize !== undefined ? { 'limit-size': importLimitSize } : {}),
+          ...(importButtonType !== undefined ? { type: importButtonType } : {}),
+          ...(disabled !== undefined ? { disabled } : {})
+        }"
         @change="handleImportChange"
         @validate-filename="handleFilenameValidate"
       />

@@ -19,15 +19,15 @@ export interface PieChartProps extends BaseChartProps, InteractionProps {
   /** 饼图数据 */
   data: PieChartDataItem[];
   /** 半径 [内半径, 外半径] */
-  radius?: [string, string] | string;
+  radius?: [string, string] | string | undefined;
   /** 中心位置 [x, y] */
-  center?: [string, string];
+  center?: [string, string] | undefined;
   /** 图例位置 */
-  legendPosition?: 'top' | 'bottom' | 'left' | 'right';
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right' | undefined;
   /** 是否显示标签线 */
-  showLabelLine?: boolean;
+  showLabelLine?: boolean | undefined;
   /** 标签位置 */
-  labelPosition?: 'inside' | 'outside' | 'center';
+  labelPosition?: 'inside' | 'outside' | 'center' | undefined;
 }
 
 /**
@@ -35,8 +35,8 @@ export interface PieChartProps extends BaseChartProps, InteractionProps {
  */
 export interface RingChartProps extends PieChartProps {
   /** 内半径（默认使用 radius[0]） */
-  innerRadius?: string;
+  innerRadius?: string | undefined;
   /** 外半径（默认使用 radius[1]） */
-  outerRadius?: string;
+  outerRadius?: string | undefined;
 }
 

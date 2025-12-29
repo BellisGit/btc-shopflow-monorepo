@@ -34,13 +34,21 @@ export function parsePathData(pathData: string): Point[] {
       .filter((n) => !isNaN(n));
 
     if (type === 'M' && coords.length >= 2) {
-      currentX = coords[0];
-      currentY = coords[1];
-      points.push({ x: currentX, y: currentY });
+      const x = coords[0];
+      const y = coords[1];
+      if (x !== undefined && y !== undefined) {
+        currentX = x;
+        currentY = y;
+        points.push({ x: currentX, y: currentY });
+      }
     } else if (type === 'L' && coords.length >= 2) {
-      currentX = coords[0];
-      currentY = coords[1];
-      points.push({ x: currentX, y: currentY });
+      const x = coords[0];
+      const y = coords[1];
+      if (x !== undefined && y !== undefined) {
+        currentX = x;
+        currentY = y;
+        points.push({ x: currentX, y: currentY });
+      }
     }
   });
 
@@ -97,14 +105,15 @@ export function pathIntersection(
   // 查找交点
   for (let i = 0; i < points1.length - 1; i++) {
     for (let j = 0; j < points2.length - 1; j++) {
-      const intersection = lineIntersection(
-        points1[i],
-        points1[i + 1],
-        points2[j],
-        points2[j + 1]
-      );
-      if (intersection) {
-        return intersection;
+      const p1 = points1[i];
+      const p2 = points1[i + 1];
+      const p3 = points2[j];
+      const p4 = points2[j + 1];
+      if (p1 && p2 && p3 && p4) {
+        const intersection = lineIntersection(p1, p2, p3, p4);
+        if (intersection) {
+          return intersection;
+        }
       }
     }
   }
@@ -118,10 +127,13 @@ export function pathIntersection(
 export function pointInPolygon(point: Point, polygon: Point[]): boolean {
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x;
-    const yi = polygon[i].y;
-    const xj = polygon[j].x;
-    const yj = polygon[j].y;
+    const pi = polygon[i];
+    const pj = polygon[j];
+    if (!pi || !pj) continue;
+    const xi = pi.x;
+    const yi = pi.y;
+    const xj = pj.x;
+    const yj = pj.y;
 
     const intersect =
       yi > point.y !== yj > point.y &&
@@ -139,16 +151,22 @@ export function polygonBoundingBox(polygon: Point[]): Rectangle {
     return { x: 0, y: 0, width: 0, height: 0 };
   }
 
-  let minX = polygon[0].x;
-  let minY = polygon[0].y;
-  let maxX = polygon[0].x;
-  let maxY = polygon[0].y;
+  const firstPoint = polygon[0];
+  if (!firstPoint) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+  let minX = firstPoint.x;
+  let minY = firstPoint.y;
+  let maxX = firstPoint.x;
+  let maxY = firstPoint.y;
 
   polygon.forEach((p) => {
-    minX = Math.min(minX, p.x);
-    minY = Math.min(minY, p.y);
-    maxX = Math.max(maxX, p.x);
-    maxY = Math.max(maxY, p.y);
+    if (p) {
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    }
   });
 
   return {
@@ -212,7 +230,6 @@ export function calculateLargestInscribedRectangle(
   // x - (viewBoxWidth - 16vw) = intersection.y * 16vw / 70vh
   // x = viewBoxWidth - 16vw + intersection.y * 16vw / 70vh
   const rightX = viewBoxWidth - 16 * vw + (intersection.y * 16 * vw) / (70 * vh);
-  const rightY = intersection.y;
   
   // 右下角layer-1的斜边：从(viewBoxWidth - 20vw, viewBoxHeight)到(viewBoxWidth, viewBoxHeight - 30vh)
   // 斜边方程：y = viewBoxHeight - 30vh * ((x - (viewBoxWidth - 20vw)) / 20vw)
@@ -262,13 +279,11 @@ export function calculateLargestInscribedRectangle(
   // 计算最大内接矩形
   // 矩形的四个顶点：
   // 左上角：intersection (intersection.x, intersection.y)
-  // 右上角：(rightX, rightY)
+  // 右上角：(rightX, intersection.y)
   // 右下角：(bottomX, bottomY)
   // 左下角：需要计算，向左移动相同的宽度
   const width = rightX - intersection.x;
   const height = bottomY - intersection.y;
-  const leftX = bottomX - width;
-  const leftY = bottomY;
 
   // 返回矩形（使用左上角和宽度高度）
   return {

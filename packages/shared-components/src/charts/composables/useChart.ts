@@ -380,35 +380,6 @@ export function useChart(
     return false;
   };
 
-  // 检查容器是否在qiankun子应用挂载点内且有父元素尺寸
-  const _hasParentSize = (): boolean => {
-    if (!containerRef.value) {
-      return false;
-    }
-    const el = containerRef.value;
-    let parent = el.parentElement;
-    const maxDepth = 20;
-    let depth = 0;
-
-    // 查找qiankun容器或任何有尺寸的父元素
-    while (parent && depth < maxDepth) {
-      const rect = parent.getBoundingClientRect();
-      // 如果父元素有尺寸，认为容器可以渲染（子应用环境中，容器可能暂时无尺寸，但父元素有）
-      if (rect.width > 0 && rect.height > 0) {
-        return true;
-      }
-      // 如果到达qiankun容器，停止查找
-      if (parent.id === 'subapp-viewport' ||
-          parent.id?.startsWith('__qiankun_microapp_wrapper') ||
-          parent.getAttribute('data-qiankun')) {
-        break;
-      }
-      parent = parent.parentElement;
-      depth++;
-    }
-    return false;
-  };
-
   // 检查容器是否可见（参考 art-design-pro 的实现）
   // 使用 getBoundingClientRect 和 clientWidth/clientHeight 检查容器的实际尺寸
   const isContainerVisible = (element?: HTMLElement): boolean => {

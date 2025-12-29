@@ -79,7 +79,8 @@ export function useFormEnterKey(options: UseFormEnterKeyOptions) {
     let currentIndex = -1;
     for (let i = 0; i < inputs.length; i++) {
       // 检查是否是目标元素或其子元素（Element Plus 的输入框可能是嵌套的）
-      if (inputs[i].contains(target) || inputs[i] === target) {
+      const input = inputs[i];
+      if (input && (input.contains(target) || input === target)) {
         currentIndex = i;
         break;
       }

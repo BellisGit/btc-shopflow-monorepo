@@ -7,6 +7,17 @@
 const CDN_BASE_URL = 'https://all.bellis.com.cn';
 
 /**
+ * 获取 CDN 视频 URL
+ * @param filename 视频文件名，例如 'automation_area_web.mp4'
+ * @returns CDN 视频 URL
+ */
+export function getCdnVideoUrl(filename: string): string {
+  // 确保文件名不包含路径分隔符
+  const cleanFilename = filename.split('/').pop() || filename;
+  return `${CDN_BASE_URL}/${cleanFilename}`;
+}
+
+/**
  * 获取 CDN 降级 URL
  * @param localPath 本地图片路径，例如 '/assets/images/1.jpg'
  * @returns CDN URL
@@ -14,17 +25,19 @@ const CDN_BASE_URL = 'https://all.bellis.com.cn';
 export function getCdnFallbackUrl(localPath: string): string {
   // 从本地路径提取文件名
   const filename = localPath.split('/').pop() || '';
-  
+
   // 22.png 在根目录，其他图片在 images 目录
   if (filename === '22.png') {
     return `${CDN_BASE_URL}/${filename}`;
   }
-  
-  // 视频文件在根目录
-  if (filename.endsWith('.mp4')) {
-    return `${CDN_BASE_URL}/${filename}`;
+
+  // 视频文件在根目录（使用统一的 CDN 视频 URL 函数）
+  if (filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.avi') ||
+      filename.endsWith('.mov') || filename.endsWith('.mkv') || filename.endsWith('.flv') ||
+      filename.endsWith('.m4v')) {
+    return getCdnVideoUrl(filename);
   }
-  
+
   // 其他图片在 images 目录
   return `${CDN_BASE_URL}/images/${filename}`;
 }
@@ -122,7 +135,7 @@ export function getOptimizedImageProps(
     const webpUrl = getWebPUrl(src);
     // 检查浏览器是否支持 WebP
     const supportsWebP = checkWebPSupport();
-    
+
     if (supportsWebP && webpUrl !== src) {
       // 使用 WebP 作为主要源
       props.src = webpUrl;
@@ -167,7 +180,7 @@ export function checkWebPSupport(): boolean {
   const canvas = document.createElement('canvas');
   canvas.width = 1;
   canvas.height = 1;
-  
+
   try {
     const dataURL = canvas.toDataURL('image/webp');
     webPSupportCache = dataURL.indexOf('data:image/webp') === 0;
@@ -203,17 +216,17 @@ export async function preloadImages(
   maxConcurrent: number = 3
 ): Promise<void> {
   const queue: Promise<void>[] = [];
-  
+
   for (let i = 0; i < urls.length; i += maxConcurrent) {
     const batch = urls.slice(i, i + maxConcurrent);
-    const batchPromises = batch.map(url => 
+    const batchPromises = batch.map(url =>
       preloadImage(url).catch(() => {
         // 忽略单个图片加载失败
       })
     );
     queue.push(Promise.all(batchPromises).then(() => {}));
   }
-  
+
   await Promise.all(queue);
 }
 
@@ -233,29 +246,29 @@ export function getCdnImageUrl(
 ): string {
   const { width, quality = 85, format } = options;
   const baseUrl = `${CDN_BASE_URL}/${path}`;
-  
+
   // 如果 CDN 支持图片处理参数，可以添加
   // 这里假设使用常见的图片处理服务（如阿里云 OSS、腾讯云 COS 等）
   const params: string[] = [];
-  
+
   if (width) {
     params.push(`w_${width}`);
   }
-  
+
   if (quality !== 85) {
     params.push(`q_${quality}`);
   }
-  
+
   if (format === 'webp') {
     params.push('format,webp');
   }
-  
+
   if (params.length > 0) {
     // 假设 CDN 使用 x-oss-process 或类似参数
     // 根据实际 CDN 服务调整
     return `${baseUrl}?x-oss-process=image/resize,${params.join(',')}`;
   }
-  
+
   return baseUrl;
 }
 

@@ -58,7 +58,7 @@ export const createQualityApp = async (props: QiankunProps = {}): Promise<Qualit
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[quality-app] Failed to import domain-cache module:', error);
+      // Failed to import domain-cache module
     }
 
     await setupSubAppGlobals({

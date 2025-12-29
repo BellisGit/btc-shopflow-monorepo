@@ -6,11 +6,14 @@
     "declaration": true,
     "baseUrl": ".",
     "paths": {
+      "@configs": ["../../configs"],
       "@configs/*": ["../../configs/*"],
       "@btc/shared-components": ["../shared-components/dist"],
       "@btc/shared-components/*": ["../shared-components/dist/*"],
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"]
+      "@btc/shared-utils": ["../shared-utils/src", "../shared-utils/dist"],
+      "@btc/shared-utils/*": ["../shared-utils/src/*", "../shared-utils/dist/*"],
+      "@btc/auth-shared": ["../../auth/shared"],
+      "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src"],

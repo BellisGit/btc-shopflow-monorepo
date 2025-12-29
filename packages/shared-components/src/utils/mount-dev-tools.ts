@@ -11,7 +11,7 @@ let devToolsContainer: HTMLElement | null = null;
 
 // 处理 Vite 热重载：如果模块被热更新，清理旧实例
 if (import.meta.hot) {
-  import.meta.hot.dispose((data) => {
+  import.meta.hot.dispose((_data) => {
     if (devToolsApp && devToolsContainer) {
       try {
         devToolsApp.unmount();
@@ -45,7 +45,7 @@ if (import.meta.hot) {
         mountDevTools({
           httpInstance,
           epsList,
-        }).catch((err) => {
+        }).catch((_err) => {
           // 热重载后重新挂载失败
         });
       }

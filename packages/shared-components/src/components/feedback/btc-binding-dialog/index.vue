@@ -170,12 +170,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, h } from 'vue';
+import { computed, watch, h } from 'vue';
 
 import { Close } from '@element-plus/icons-vue';
 import {
   useIdentityVerify,
-  type VerifyType,
   type SendSmsCodeFn,
   type SendEmailCodeFn,
   type VerifySmsCodeFn,
@@ -265,7 +264,7 @@ const {
     try {
       if (props.bindField === 'phone' && phoneForm.phone && phoneForm.smsCode) {
         await props.saveBinding({
-          id: props.userInfo.id,
+          ...(props.userInfo.id !== undefined ? { id: props.userInfo.id } : {}),
           phone: phoneForm.phone,
           smsCode: phoneForm.smsCode,
           smsType: 'bind',
@@ -274,7 +273,7 @@ const {
         BtcMessage.success('手机号绑定成功');
       } else if (props.bindField === 'email' && emailForm.email && emailForm.emailCode) {
         await props.saveBinding({
-          id: props.userInfo.id,
+          ...(props.userInfo.id !== undefined ? { id: props.userInfo.id } : {}),
           email: emailForm.email,
           emailCode: emailForm.emailCode,
           smsType: 'bind',

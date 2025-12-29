@@ -53,17 +53,17 @@ function chineseTokenizer(token: string | null | undefined): lunr.Token[] {
     if (isChinese) {
       // 中文字符：每个字符作为一个 token
       if (currentToken) {
-        tokens.push(new lunr.Token(currentToken));
+        tokens.push(new lunr.Token(currentToken, {}));
         currentToken = '';
       }
-      tokens.push(new lunr.Token(char));
+      tokens.push(new lunr.Token(char, {}));
     } else if (char && /[\w\u00c0-\u024f\u1e00-\u1eff]/.test(char)) {
       // 英文字母或带重音的字母：累积到当前 token
       currentToken += char;
     } else {
       // 其他字符（空格、标点等）：结束当前 token
       if (currentToken) {
-        tokens.push(new lunr.Token(currentToken));
+        tokens.push(new lunr.Token(currentToken, {}));
         currentToken = '';
       }
     }
@@ -71,7 +71,7 @@ function chineseTokenizer(token: string | null | undefined): lunr.Token[] {
 
   // 处理最后一个 token
   if (currentToken) {
-    tokens.push(new lunr.Token(currentToken));
+    tokens.push(new lunr.Token(currentToken, {}));
   }
 
   return tokens;
@@ -97,7 +97,7 @@ export function useSearchIndex(searchData: Ref<SearchDataItem[]>) {
       // 构建 lunr 索引
       const index = lunr(function(this: lunr.Builder) {
         // 设置自定义分词器（支持中文）
-        this.tokenizer = chineseTokenizer;
+        this.tokenizer = chineseTokenizer as typeof lunr.tokenizer;
 
         // 设置文档引用字段
         this.ref('id');

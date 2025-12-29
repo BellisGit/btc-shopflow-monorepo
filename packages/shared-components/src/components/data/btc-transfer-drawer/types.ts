@@ -1,4 +1,5 @@
-import type { TransferKey, TransferPanelProps, SelectedItemDisplay } from '../btc-transfer-panel/types';
+import type { TransferKey, TransferPanelProps } from '../btc-transfer-panel/types';
+// SelectedItemDisplay 未使用，已移除
 
 export interface TransferDrawerSection {
   key: string;

@@ -99,13 +99,6 @@ export function useCurrentApp() {
     // 立即执行一次检测
     detectCurrentApp();
 
-    // 监听 hostname 变化（虽然通常不会变化，但作为保险）
-    const originalHostname = window.location.hostname;
-    const checkHostname = () => {
-      if (window.location.hostname !== originalHostname) {
-        detectCurrentApp();
-      }
-    };
     // 使用 MutationObserver 监听 location 变化（虽然不直接支持，但可以通过其他方式）
     // 或者使用 setInterval 定期检查（不推荐，但作为后备）
   }

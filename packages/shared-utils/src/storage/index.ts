@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 本地存储工具类
  */
 import { syncSettingsToCookie, syncUserToCookie, getCookieDomain } from './cross-domain';

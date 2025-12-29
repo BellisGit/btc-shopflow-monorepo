@@ -469,13 +469,12 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       }
     : baseResolve;
 
-  return {
+  const config: any = {
     base: baseUrl,
     publicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
     cacheDir: appCacheDir,
-    resolve: finalResolve,
     plugins,
     esbuild: {
       charset: 'utf8',
@@ -491,5 +490,12 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     css: cssConfig,
     build: buildConfig,
   };
+
+  // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  if (finalResolve !== undefined) {
+    config.resolve = finalResolve;
+  }
+
+  return config;
 }
 

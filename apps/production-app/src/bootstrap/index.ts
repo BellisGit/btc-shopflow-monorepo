@@ -57,7 +57,7 @@ export const createProductionApp = async (props: QiankunProps = {}): Promise<Pro
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[production-app] Failed to import domain-cache module:', error);
+      // Failed to import domain-cache module
     }
 
     await setupSubAppGlobals({

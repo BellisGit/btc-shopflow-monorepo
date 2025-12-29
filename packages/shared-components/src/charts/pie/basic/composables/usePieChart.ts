@@ -21,7 +21,7 @@ export function usePieChart(
       : themeColors;
     const bgColor = isDark.value ? currentThemeColors.dark.bgColor : currentThemeColors.bgColor;
 
-    const option: EChartsOption = {
+    const option: any = {
       title: {
         text: props.title || '',
         ...styleHelpers.getTitleStyle()
@@ -103,7 +103,7 @@ export function usePieChart(
       ]
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

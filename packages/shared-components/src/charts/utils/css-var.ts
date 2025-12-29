@@ -21,7 +21,7 @@ export function getCssVar(varName: string, element?: HTMLElement): string {
 function rgbToHex(rgb: string): string {
   // 匹配 rgb(r, g, b) 或 rgba(r, g, b, a) 格式
   const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-  if (!match) {
+  if (!match || !match[1] || !match[2] || !match[3]) {
     return rgb; // 如果不是 RGB 格式，直接返回原值
   }
 

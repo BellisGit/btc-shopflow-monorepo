@@ -1,6 +1,6 @@
 import { epsState, type EpsState } from './state';
 import { checkName, firstUpperCase, formatName, toCamel } from './utils';
-import { config } from '../../config';
+// config 未使用，已移除导入
 
 export function createService(_epsUrl: string, state: EpsState = epsState) {
   if (state.epsList.length === 0) {
@@ -39,6 +39,7 @@ export function createService(_epsUrl: string, state: EpsState = epsState) {
     let currentLevel = state.service;
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
+      if (part === undefined) continue; // 跳过 undefined
       if (!currentLevel[part]) {
         currentLevel[part] = {};
       }

@@ -2,7 +2,7 @@
 engineering-app - ESLint 错误报告
 ============================================================
 
-生成时间: 2025/12/19 09:06:07
+生成时间: 2025/12/27 20:42:59
 总错误数: 0
 
 ✅ 未发现 lint 错误
@@ -11,3 +11,22 @@ engineering-app - ESLint 错误报告
 完整输出:
 ============================================================
 
+
+Oops! Something went wrong! :(
+
+ESLint: 8.57.1
+
+Error: .eslintrc.js:
+	Configuration for rule "import/no-restricted-paths" is invalid:
+	Value {"zones":[{"target":"./apps/**","from":"./packages/**/src/**","except":["./packages/**/src/**/*.scss","./packages/**/src/**/*.css"],"message":"应用不能直接导入包的源码，请使用 dist 或 exports"},{"target":"./packages/**","from":"./packages/**/src/**","except":["./packages/**/dist"],"message":"包之间不能直接导入源码"}],"allowSameFolder":false} should NOT have additional properties.
+
+    at ConfigValidator.validateRuleOptions (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2048:23)
+    at C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2103:18
+    at Array.forEach (<anonymous>)
+    at ConfigValidator.validateRules (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2100:34)
+    at ConfigValidator.validateConfigArray (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2226:18)
+    at CascadingConfigArrayFactory._finalizeConfigArray (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:3985:23)
+    at CascadingConfigArrayFactory.getConfigArrayForFile (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:3791:21)
+    at FileEnumerator._iterateFilesRecursive (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\eslint@8.57.1\node_modules\eslint\lib\cli-engine\file-enumerator.js:450:49)
+    at _iterateFilesRecursive.next (<anonymous>)
+    at FileEnumerator.iterateFiles (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\eslint@8.57.1\node_modules\eslint\lib\cli-engine\file-enumerator.js:299:49)

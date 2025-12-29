@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 验证邮箱
  * @param email 邮箱地址
  * @returns 是否有效

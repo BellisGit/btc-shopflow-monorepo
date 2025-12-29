@@ -52,7 +52,7 @@ const render = async (props: QiankunProps = {}) => {
       } catch (error) {
         // 卸载失败不影响后续流程，但记录错误
         if (import.meta.env.DEV) {
-          console.warn('[production-app] 卸载前一个实例失败:', error);
+          // 卸载前一个实例失败
         }
       } finally {
         context = null;
@@ -67,7 +67,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[production-app] 渲染失败:', error);
+    console.error('渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     removeLoadingElement();
     clearNavigationFlag();
@@ -90,14 +90,14 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded: number, total: number) => {
+        onProgress: (_loaded: number, _total: number) => {
           if (import.meta.env.DEV) {
-            console.log(`[production-app] 加载共享资源进度: ${loaded}/${total}`);
+            // 加载共享资源进度
           }
         },
       });
-    } catch (error) {
-      console.warn('[production-app] 加载共享资源失败，继续使用本地资源:', error);
+    } catch (_error) {
+      // 加载共享资源失败，继续使用本地资源
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -114,10 +114,10 @@ async function unmount(props: QiankunProps = {}) {
   if (context) {
     try {
       await unmountProductionApp(context, props);
-    } catch (error) {
+    } catch (_error) {
       // 卸载失败不影响后续流程
       if (import.meta.env.DEV) {
-        console.warn('[production-app] 卸载失败:', error);
+        // 卸载失败
       }
     } finally {
       context = null;
@@ -202,41 +202,41 @@ if (shouldRunStandalone()) {
               if (viewport) {
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
-                }).catch((error) => {
-                  console.error('[production-app] 挂载到 layout-app 失败:', error);
+                }).catch((_error) => {
+                  // 挂载到 layout-app 失败
                 });
               } else {
-                console.error('[production-app] 等待 #subapp-viewport 超时，尝试独立渲染');
-                render().catch((error) => {
-                  console.error('[production-app] 独立运行失败:', error);
+                // 等待 #subapp-viewport 超时，尝试独立渲染
+                render().catch((_error) => {
+                  // 独立运行失败
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
-            render().catch((error) => {
-              console.error('[production-app] 独立运行失败:', error);
+            render().catch((_error) => {
+              // 独立运行失败
             });
           }
         })
-        .catch((error) => {
-          console.error('[production-app] 初始化 layout-app 失败:', error);
+        .catch((_error) => {
+          // 初始化 layout-app 失败
           // layout-app 加载失败，独立渲染
-          render().catch((error) => {
-            console.error('[production-app] 独立运行失败:', error);
+          render().catch((_error) => {
+            // 独立运行失败
           });
         });
-    }).catch((error) => {
-      console.error('[production-app] 导入 init-layout-app 失败:', error);
+    }).catch((_error) => {
+      // 导入 init-layout-app 失败
       // 导入失败，直接渲染
-      render().catch((error) => {
-        console.error('[production-app] 独立运行失败:', error);
+      render().catch((_error) => {
+        // 独立运行失败
       });
     });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-    render().catch((error) => {
-      console.error('[production-app] 独立运行失败:', error);
+    render().catch((_error) => {
+      // 独立运行失败
     });
   }
 }

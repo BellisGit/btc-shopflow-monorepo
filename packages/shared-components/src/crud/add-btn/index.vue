@@ -112,12 +112,7 @@ const handleAddClick = (event?: MouseEvent) => {
     throw new Error(errorMsg);
   }
 
-  try {
-    crud.handleAdd();
-  } catch (error) {
-    // 重新抛出错误，确保错误可见
-    throw error;
-  }
+  crud.handleAdd();
 };
 
 const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({

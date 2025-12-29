@@ -45,7 +45,7 @@ export const createLogisticsRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-    router.beforeEach((to: import('vue-router').RouteLocationNormalized, from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
+    router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
     const normalizedPath = normalizePath(to.path);
 
     if (normalizedPath !== to.path) {
@@ -92,8 +92,8 @@ export const createLogisticsRouter = (): Router => {
     }
   });
 
-  router.onError((error: Error) => {
-    console.warn('[logistics-app] Router error:', error);
+  router.onError((_error: Error) => {
+    // 路由错误已处理
   });
 
   return router;

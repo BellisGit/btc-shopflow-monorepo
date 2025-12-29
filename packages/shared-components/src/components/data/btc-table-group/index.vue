@@ -4,13 +4,15 @@
     ref="viewGroupRef"
     :left-service="leftService"
     :right-service="rightService"
-    :left-title="leftTitle"
-    :right-title="rightTitle"
-    :show-unassigned="showUnassigned"
-    :unassigned-label="unassignedLabel"
-    :enable-drag="enableDrag"
-    :enable-key-search="enableKeySearch"
-    v-bind="viewGroupBindProps"
+    v-bind="{
+      ...(leftTitle !== undefined ? { 'left-title': leftTitle } : {}),
+      ...(rightTitle !== undefined ? { 'right-title': rightTitle } : {}),
+      ...(showUnassigned !== undefined ? { 'show-unassigned': showUnassigned } : {}),
+      ...(unassignedLabel !== undefined ? { 'unassigned-label': unassignedLabel } : {}),
+      ...(enableDrag !== undefined ? { 'enable-drag': enableDrag } : {}),
+      ...(enableKeySearch !== undefined ? { 'enable-key-search': enableKeySearch } : {}),
+      ...viewGroupBindProps
+    }"
     @select="handleSelect"
     @left-data-loaded="handleLeftDataLoaded"
   >
@@ -72,14 +74,16 @@
           <slot name="search">
             <BtcSearchKey v-if="props.showSearchKey" v-bind="searchPlaceholder ? { placeholder: searchPlaceholder } : {}" />
           </slot>
-          <BtcCrudActions v-if="props.showToolbar" :show-toolbar="props.op !== undefined">
+          <BtcCrudActions v-if="props.showToolbar" :show-toolbar="true">
             <template #default>
               <slot
                 name="actions"
-                :selected="selected ?? undefined"
-                :keyword="keyword ?? undefined"
-                :left-data="leftData ?? undefined"
-                :right-data="rightData ?? undefined"
+                v-bind="{
+                  ...(selected !== null && selected !== undefined ? { selected } : {}),
+                  ...(keyword !== null && keyword !== undefined ? { keyword } : {}),
+                  ...(leftData !== null && leftData !== undefined ? { leftData } : {}),
+                  ...(rightData !== null && rightData !== undefined ? { rightData } : {})
+                }"
               />
             </template>
           </BtcCrudActions>
@@ -111,7 +115,6 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
-import { useI18n } from '@btc/shared-core';
 import { globalMitt } from '@btc/shared-components';
 import BtcViewGroup from '@btc-common/view-group/index.vue';
 import BtcCrud from '@btc-crud/context/index.vue';
@@ -154,19 +157,15 @@ const props = withDefaults(defineProps<TableGroupProps>(), {
   unassignedLabel: '未分配',
   enableDrag: false,
   enableKeySearch: false,
-  leftWidth: undefined, // 如果未指定，将根据 leftSize 计算
   leftSize: 'default', // 默认类型
   upsertWidth: 800,
   searchPlaceholder: '搜索',
   showCreateTime: true,  // 默认显示创建时间列
   showUpdateTime: false,  // 默认不显示更新时间列
-  op: undefined, // 操作列配置，默认为 undefined
   showAddBtn: true, // 默认显示新增按钮
   showMultiDeleteBtn: true, // 默认显示批量删除按钮
   showSearchKey: true, // 默认显示搜索框
   showToolbar: true, // 默认显示右侧工具栏按钮
-  rightOpFields: undefined, // 右侧操作栏搜索字段配置
-  rightOpFieldsValue: undefined, // 右侧操作栏搜索字段的值
 });
 
 // 定义插槽类型

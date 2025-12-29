@@ -22,7 +22,9 @@
     "./dist/style.css": "./dist/style.css",
     "./style.css": "./dist/style.css",
     "./styles/dark-theme.css": "./dist/styles/dark-theme.css",
-    "./styles/index.scss": "./src/styles/index.scss"
+    "./styles/index.scss": "./src/styles/index.scss",
+    "./locales/zh-CN.json": "./src/locales/zh-CN.json",
+    "./locales/en-US.json": "./src/locales/en-US.json"
   },
   "scripts": {
     "dev": "vite build --watch",

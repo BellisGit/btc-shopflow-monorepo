@@ -36,7 +36,9 @@
           v-if="process.scheduledStartTime && process.scheduledEndTime"
           :start-time="process.scheduledStartTime"
           :end-time="process.scheduledEndTime"
-          :actual-start-time="process.actualStartTime"
+          v-bind="{
+            ...(process.actualStartTime !== undefined ? { 'actual-start-time': process.actualStartTime } : {})
+          }"
         />
 
         <!-- 描述信息 -->

@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue';
+import { createApp } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { resetPluginManager, usePluginManager } from '../../btc/plugins/manager';
@@ -473,12 +473,12 @@ export async function mountSubApp(
     
     // 立即触发路由导航，直接调用不延迟
     // 应用已经挂载，路由可以立即开始工作，不需要 setTimeout
-    context.router.replace(initialRoute).catch((error) => {
+    context.router.replace(initialRoute).catch((error: unknown) => {
       // 路由导航失败时输出错误信息
       console.error(`[${options.appId}-app] 路由导航失败:`, error, {
         initialRoute,
         currentPath: window.location.pathname,
-        routerReady: context.router.isReady ? 'pending' : 'unknown',
+        routerReady: 'pending',
       });
     });
   }
@@ -556,7 +556,7 @@ export async function unmountSubApp(
   // 先清理事件监听器和路由钩子，阻止后续的响应式更新
   if (context.cleanup.routerAfterEach) {
     context.cleanup.routerAfterEach();
-    context.cleanup.routerAfterEach = undefined;
+    delete context.cleanup.routerAfterEach;
   }
 
   context.cleanup.listeners.forEach(([event, handler]) => {

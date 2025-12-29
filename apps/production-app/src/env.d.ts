@@ -52,6 +52,12 @@ declare module '@btc/shared-components' {
   export { MenuThemeEnum, SystemThemeEnum, MenuTypeEnum, ContainerWidthEnum, BoxStyleType } from '../../../packages/shared-components/src/components/others/btc-user-setting/config/enums';
   // 显式声明函数（export * 可能无法正确转发函数）
   export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry } from '../../../packages/shared-components/src/store/menuRegistry';
+  // 显式声明 process store 相关导出
+  export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from '../../../packages/shared-components/src/store/process';
+  // 显式声明 ECharts 主题注册函数
+  export { registerEChartsThemes } from '../../../packages/shared-components/src/charts/utils/theme';
+  // 显式声明反馈组件
+  export { BtcMessage } from '../../../packages/shared-components/src/components/feedback/btc-message';
   // 显式声明 Vue 组件（export * 可能无法正确转发 Vue 组件的 default export）
   export { default as AppLayout } from '../../../packages/shared-components/src/components/layout/app-layout/index.vue';
   export { default as AppSkeleton } from '../../../packages/shared-components/src/components/basic/app-skeleton/index.vue';

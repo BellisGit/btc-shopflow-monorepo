@@ -5,7 +5,6 @@
 
 import { deleteCookie } from './cookie';
 import { appStorage } from './app-storage';
-import { BtcMessage } from '@btc/shared-components';
 
 interface ServiceType {
   admin?: {
@@ -46,7 +45,11 @@ function handleLogout() {
     }
 
     // 显示提示信息
-    BtcMessage.error('身份已过期，请重新登录');
+    import('@btc/shared-components').then(({ BtcMessage }: any) => {
+      BtcMessage?.error('身份已过期，请重新登录');
+    }).catch(() => {
+      // 静默失败
+    });
 
     // 判断是否在生产环境的子域名下
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';

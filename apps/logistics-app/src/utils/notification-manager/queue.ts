@@ -28,7 +28,7 @@ export class NotificationQueue {
       id: notificationId,
       type,
       content,
-      title,
+      ...(title !== undefined && { title }),
       count: 1,
       priority: NOTIFICATION_PRIORITIES[type],
       duration: this.calculateDuration(content, 1),
@@ -61,7 +61,7 @@ export class NotificationQueue {
   /**
    * 计算通知显示时长
    */
-  private calculateDuration(content: string, count: number): number {
+  private calculateDuration(_content: string, count: number): number {
     const baseDuration = 3000; // 基础3秒
     const repeatBonus = (count - 1) * 1000; // 每次重复增加1秒
     const waitingPeriod = 500; // 等待期

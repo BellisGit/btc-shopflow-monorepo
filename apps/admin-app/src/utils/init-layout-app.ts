@@ -13,14 +13,22 @@
 function showLoading() {
   // 检查是否有导航标记或需要显示 Loading
   try {
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    // 关键：只在有导航标记时显示 Loading，避免与 HTML 中的内联脚本重复显示
+    // HTML 中的内联脚本已经会在有导航标记时显示 Loading，这里不需要重复
+    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
-        loadingEl.style.setProperty('display', 'flex', 'important');
-        loadingEl.style.setProperty('visibility', 'visible', 'important');
-        loadingEl.style.setProperty('opacity', '1', 'important');
-        loadingEl.classList.remove('is-hide');
+        // 检查是否已经显示，避免重复操作
+        const isAlreadyVisible = loadingEl.style.display === 'flex' || 
+                                 loadingEl.style.visibility === 'visible' ||
+                                 !loadingEl.classList.contains('is-hide');
+        if (!isAlreadyVisible) {
+          loadingEl.style.setProperty('display', 'flex', 'important');
+          loadingEl.style.setProperty('visibility', 'visible', 'important');
+          loadingEl.style.setProperty('opacity', '1', 'important');
+          loadingEl.classList.remove('is-hide');
+        }
       }
     }
   } catch (e) {

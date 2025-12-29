@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 格式化金额
  * @param value 金额
  * @param currency 货币符号

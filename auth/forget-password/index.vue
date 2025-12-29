@@ -7,7 +7,7 @@
         <!-- 返回登录链接 - 与登录页面的"前往注册"链接位置一致 -->
         <div class="back-to-login-wrapper">
           <div class="back-to-login">
-            <router-link to="/login" class="back-to-login-link">
+            <router-link to="/login?from=forget-password" class="back-to-login-link">
               {{ t('auth.back_to_login') }}
               <el-icon class="arrow-right">
                 <ArrowRight />
@@ -36,8 +36,6 @@
         />
       </div>
     </div>
-
-    <BtcAuthFooter />
   </BtcAuthLayout>
 </template>
 
@@ -47,7 +45,6 @@ import { useI18n } from 'vue-i18n';
 import { ArrowRight } from '@element-plus/icons-vue';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
-import BtcAuthFooter from '../shared/components/auth-footer/index.vue';
 import BtcForgetPasswordForm from './forget-password-form/index.vue';
 import BtcAgreementText from '../shared/components/agreement-text/index.vue';
 import { BtcMessage } from '@btc/shared-components';

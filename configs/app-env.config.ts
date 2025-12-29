@@ -83,9 +83,9 @@ export const APP_ENV_CONFIGS: AppEnvConfig[] = [
   {
     appName: 'docs-app',
     devHost: 'localhost',
-    devPort: '4172',
+    devPort: '8092',
     preHost: 'localhost',
-    prePort: '4173',
+    prePort: '4192',
     prodHost: 'docs.bellis.com.cn',
   },
   {

@@ -65,15 +65,19 @@ export function mergePluginConfig<T extends Record<string, any>>(
  * @returns 插件配置模板
  */
 export function createPluginConfigTemplate(pluginName: string): PluginMetadata {
-  return definePluginConfig({
+  const updateTime = new Date().toISOString().split('T')[0];
+  const config: PluginMetadata = {
     label: pluginName,
     description: `${pluginName} 插件`,
     author: 'BTC Team',
     version: '1.0.0',
-    updateTime: new Date().toISOString().split('T')[0],
     category: 'custom',
     tags: [pluginName.toLowerCase()],
-  });
+  };
+  if (updateTime) {
+    config.updateTime = updateTime;
+  }
+  return definePluginConfig(config);
 }
 
 /**

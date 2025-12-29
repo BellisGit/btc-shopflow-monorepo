@@ -616,7 +616,6 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
               }
 
               let fileUrl = entry.file;
-              const originalFileUrl = fileUrl;
               // 检查是否有重复的路径
               if (fileUrl.includes('/assets/layout/assets/layout/')) {
                 fileUrl = fileUrl.replace(/\/assets\/layout\/assets\/layout\//g, '/assets/layout/');
@@ -881,7 +880,7 @@ export function loadLayoutApp(_qiankunAPI: { registerMicroApps: any; start: any 
         // 如果 URL 包含 /assets/ 且文件名是 index- 或 main- 开头，且域名不是 layout-app，直接放行
         if (url.includes('/assets/') && (url.endsWith('.js') || url.endsWith('.mjs'))) {
           const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
-          const isSubAppEntryFile = fileName.startsWith('index-') || fileName.startsWith('main-');
+          const isSubAppEntryFile = fileName ? (fileName.startsWith('index-') || fileName.startsWith('main-')) : false;
           const isLayoutDomain = url.includes('layout.bellis.com.cn') ||
                                  url.includes('localhost:4192') ||
                                  url.includes('localhost:4188');

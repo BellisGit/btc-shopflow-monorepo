@@ -10,6 +10,7 @@ interface ProxyOptions {
   secure?: boolean;
   selfHandleResponse?: boolean;
   configure?: (proxy: any, options: any) => void;
+  rewrite?: (path: string) => string;
 }
 
 // 开发环境代理目标：从统一环境配置获取

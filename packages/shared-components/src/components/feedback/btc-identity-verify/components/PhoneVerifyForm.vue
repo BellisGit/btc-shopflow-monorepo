@@ -27,6 +27,7 @@
       <label :for="`phone-sms-code-0`" class="verify-form__item-label">验证码</label>
       <div class="verify-form__item-code-wrapper">
         <component
+          v-if="smsCodeInputComponent"
           :is="smsCodeInputComponent"
           id-prefix="phone-sms-code"
           :model-value="smsCode"
@@ -92,7 +93,7 @@ interface Props {
   smsHasSent: boolean;
   smsCanSend: boolean;
   hasPhone: boolean;
-  smsCodeInputComponent: Component;
+  smsCodeInputComponent?: Component;
 }
 
 const props = defineProps<Props>();

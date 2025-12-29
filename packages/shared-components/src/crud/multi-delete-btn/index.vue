@@ -111,7 +111,7 @@ const handleMultiDeleteClick = () => {
 const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({
   icon: 'delete-batch',
   tooltip: accessibleLabel.value,
-  badge: selectionCount.value || undefined,
+  ...(selectionCount.value > 0 ? { badge: selectionCount.value } : {}),
   type: 'danger',
   ariaLabel: accessibleLabel.value,
   onClick: handleMultiDeleteClick,

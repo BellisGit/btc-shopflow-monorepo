@@ -39,44 +39,44 @@ export interface UpsertPlugin {
  * Props 配置
  */
 export interface UpsertProps {
-  items?: FormItem[] | (() => FormItem)[]; // 支持函数返回
+  items?: FormItem[] | (() => FormItem)[] | undefined; // 支持函数返回
 
   // Dialog 配置
-  width?: string | number;
-  padding?: string;
-  dialogProps?: Record<string, any>;
+  width?: string | number | undefined;
+  padding?: string | undefined;
+  dialogProps?: Record<string, any> | undefined;
 
   // Form 配置
-  labelWidth?: string | number;
-  labelPosition?: 'left' | 'right' | 'top';
-  formProps?: Record<string, any>;
-  gutter?: number;
+  labelWidth?: string | number | undefined;
+  labelPosition?: 'left' | 'right' | 'top' | undefined;
+  formProps?: Record<string, any> | undefined;
+  gutter?: number | undefined;
 
   // 文本
-  addTitle?: string;
-  editTitle?: string;
-  infoTitle?: string; // 详情标题
-  submitText?: string;
-  cancelText?: string;
+  addTitle?: string | undefined;
+  editTitle?: string | undefined;
+  infoTitle?: string | undefined; // 详情标题
+  submitText?: string | undefined;
+  cancelText?: string | undefined;
 
   // 高级参数（对标 cl-upsert）
-  sync?: boolean; // 编辑时是否同步打开弹窗（先显示弹窗再加载数据）
-  plugins?: UpsertPlugin[]; // 插件系统
-  enablePlugin?: boolean; // 是否启用插件
+  sync?: boolean | undefined; // 编辑时是否同步打开弹窗（先显示弹窗再加载数据）
+  plugins?: UpsertPlugin[] | undefined; // 插件系统
+  enablePlugin?: boolean | undefined; // 是否启用插件
 
   // 生命周期钩子（对标 cl-upsert）
-  onOpen?: () => void; // 打开时（无数据）
-  onInfo?: (
+  onOpen?: (() => void) | undefined; // 打开时（无数据）
+  onInfo?: ((
     data: any,
     event: { next: (params?: any) => Promise<any>; done: (data: any) => void }
-  ) => Promise<void> | void; // 获取详情
-  onOpened?: (data: any) => void; // 打开后（有数据）
-  onSubmit?: (
+  ) => Promise<void> | void) | undefined; // 获取详情
+  onOpened?: ((data: any) => void) | undefined; // 打开后（有数据）
+  onSubmit?: ((
     data: any,
     event: { close: () => void; done: () => void; next: (data: any) => Promise<any> }
-  ) => Promise<void> | void; // 提交
-  onClose?: (action: 'close' | 'save', done: () => void) => void; // 关闭前
-  onClosed?: () => void; // 关闭后
+  ) => Promise<void> | void) | undefined; // 提交
+  onClose?: ((action: 'close' | 'save', done: () => void) => void) | undefined; // 关闭前
+  onClosed?: (() => void) | undefined; // 关闭后
 }
 
 /**

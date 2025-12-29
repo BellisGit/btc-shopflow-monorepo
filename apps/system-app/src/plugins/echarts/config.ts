@@ -76,7 +76,7 @@ function registerEChartsOnce() {
   } catch (error) {
     // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
     if (import.meta.env.DEV) {
-      console.warn('[system-app][echarts] ECharts use() register failed (ignored):', error);
+      // ECharts use() register failed (ignored)
     }
   } finally {
     if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;

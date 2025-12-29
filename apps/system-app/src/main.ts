@@ -5,6 +5,7 @@ import { registerAppEnvAccessors } from '@configs/layout-bridge';
 import { getAppBySubdomain } from '@configs/app-scanner';
 import { setAppBySubdomainFn } from '@btc/subapp-manifests';
 import { isMainApp } from '@configs/unified-env-config';
+import { removeLoadingElement } from '@btc/shared-core';
 // 动态导入避免构建时错误（延迟到运行时导入）
 
 // 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
@@ -43,9 +44,6 @@ import('@btc/shared-components').then(sharedComponents => {
   sharedComponents.setIsMainAppFn(isMainApp);
 }).catch(() => {
   // 静默处理导入失败，不影响应用启动
-  if (import.meta.env.DEV) {
-    console.warn('[system-app] 无法导入 setIsMainAppFn，跳过设置');
-  }
 });
 
 const app = createApp(App);
@@ -175,69 +173,100 @@ if (typeof window !== 'undefined') {
  * 移除 Loading 元素的统一函数
  * 确保 Loading 元素被可靠地移除，避免页面一直显示 loading 状态
  */
-function removeLoadingElement() {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏（使用内联样式确保优先级）
-    loadingEl.style.setProperty('display', 'none', 'important');
-    loadingEl.style.setProperty('visibility', 'hidden', 'important');
-    loadingEl.style.setProperty('opacity', '0', 'important');
-    loadingEl.style.setProperty('pointer-events', 'none', 'important');
+// 使用全局根级 Loading 服务
+let rootLoadingInitialized = false;
 
-    // 添加淡出类（如果 CSS 中有定义）
-    loadingEl.classList.add('is-hide');
-
-    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
-    setTimeout(() => {
-      try {
-        if (loadingEl.parentNode) {
-          loadingEl.parentNode.removeChild(loadingEl);
-        } else if (loadingEl.isConnected) {
-          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
-          loadingEl.remove();
-        }
-      } catch (error) {
-        // 如果移除失败，至少确保元素被隐藏
-        loadingEl.style.setProperty('display', 'none', 'important');
+// 初始化全局根级 Loading
+async function initRootLoading() {
+  if (rootLoadingInitialized) {
+    return;
+  }
+  
+  // 关键：如果是子应用路由，不应该显示"拜里斯科技"loading
+  // 子应用的loading由appLoadingService统一管理
+  // 关键：立即检查并隐藏#Loading元素（如果存在），避免显示"拜里斯科技"
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
+    const isSubAppRoute = knownSubAppPrefixes.some(prefix => pathname.startsWith(prefix));
+    if (isSubAppRoute) {
+      // 子应用路由，立即隐藏"拜里斯科技"loading
+      const systemLoadingEl = document.getElementById('Loading');
+      if (systemLoadingEl) {
+        systemLoadingEl.style.setProperty('display', 'none', 'important');
+        systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+        systemLoadingEl.style.setProperty('opacity', '0', 'important');
+        systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+        systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+        systemLoadingEl.classList.add('is-hide');
       }
-    }, 350);
+      // 不显示"拜里斯科技"loading
+      return;
+    }
+  }
+  
+  try {
+    const loadingModule = await import('@btc/shared-core');
+    const rootLoadingService = loadingModule.rootLoadingService;
+    if (rootLoadingService && typeof rootLoadingService.show === 'function') {
+      rootLoadingService.show('正在初始化应用...');
+      rootLoadingInitialized = true;
+    } else {
+      throw new Error('rootLoadingService 未定义或方法不存在');
+    }
+  } catch (error) {
+    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
+    // 备用方案：直接操作 DOM（向后兼容）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'flex', 'important');
+      loadingEl.style.setProperty('visibility', 'visible', 'important');
+      loadingEl.style.setProperty('opacity', '1', 'important');
+    }
   }
 }
 
-// 关键：添加超时机制，确保 Loading 元素最终会被移除
-// 即使应用启动失败或卡住，也要在超时后移除 Loading
-// 参考 cool-admin：但需要给应用足够的启动时间（3秒）
-const LOADING_TIMEOUT = 3000; // 3 秒超时（给应用足够的启动时间）
-let loadingTimeoutId: ReturnType<typeof setTimeout> | null = null;
+// 隐藏全局根级 Loading
+async function hideRootLoading() {
+  try {
+    const loadingModule = await import('@btc/shared-core');
+    const rootLoadingService = loadingModule.rootLoadingService;
+    if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
+      rootLoadingService.hide();
+    } else {
+      throw new Error('rootLoadingService 未定义或方法不存在');
+    }
+  } catch (error) {
+    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
+    // 备用方案：直接操作 DOM（向后兼容）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.classList.add('is-hide');
+    }
+  }
+}
+
 let isAppMounted = false; // 跟踪应用是否已挂载
 
-// 确保loading一定会被关闭的兜底函数
-const ensureLoadingRemoved = () => {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏（使用内联样式确保优先级）
-    loadingEl.style.setProperty('display', 'none', 'important');
-    loadingEl.style.setProperty('visibility', 'hidden', 'important');
-    loadingEl.style.setProperty('opacity', '0', 'important');
-    loadingEl.style.setProperty('pointer-events', 'none', 'important');
-    loadingEl.classList.add('is-hide');
-  }
-};
+// Loading 超时定时器 ID
+let loadingTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-// 设置超时定时器
-loadingTimeoutId = setTimeout(() => {
-  console.warn('[system-app] Loading 超时（5秒），强制关闭');
-  ensureLoadingRemoved();
-  removeLoadingElement();
-  // 关键：超时后只关闭 loading，不尝试强制挂载
-  // 因为正常流程会处理挂载，强制挂载可能导致重复挂载错误
-  // 如果应用真的卡住了，至少用户能看到页面（即使没有内容）
-  loadingTimeoutId = null;
-}, LOADING_TIMEOUT);
+// 确保 Loading 被移除的函数（立即隐藏 loading）
+async function ensureLoadingRemoved(): Promise<void> {
+  await hideRootLoading();
+}
+
+// 初始化全局根级 Loading
+initRootLoading();
 
 // 启动应用（优化：不等待 EPS 服务，立即启动应用）
 // 关键：EPS 服务已经在后台异步加载，不需要等待它完成
 // 这样可以更快地显示应用界面，提升用户体验
+// @ts-expect-error: startupPromise 未使用，保留用于未来功能
 const startupPromise = Promise.resolve()
   .then(async () => {
     // 尝试快速获取 EPS 服务（如果已经加载）
@@ -291,26 +320,15 @@ const startupPromise = Promise.resolve()
 
   try {
     // 关键：检查应用是否已经挂载，避免重复挂载
-    if (isAppMounted) {
-      console.warn('[system-app] 应用已经挂载，跳过重复挂载');
-    } else {
+    if (!isAppMounted) {
       app.mount('#app');
       isAppMounted = true; // 标记应用已挂载
     }
 
-    // 关键：应用挂载后，立即关闭并移除 Loading 元素（不等待任何其他操作）
+    // 关键：应用挂载后，立即关闭全局根级 Loading（不等待任何其他操作）
     // 参考 cool-admin：在路由 beforeResolve 中已经关闭了 loading，这里作为兜底
     // 如果路由 beforeResolve 还没执行，这里确保 loading 被关闭
-    if (loadingTimeoutId) {
-      clearTimeout(loadingTimeoutId); // 清除超时定时器
-      loadingTimeoutId = null;
-    }
-    // 检查 loading 是否已经被关闭（通过检查 is-hide 类）
-    const loadingEl = document.getElementById('Loading');
-    if (loadingEl && !loadingEl.classList.contains('is-hide')) {
-      ensureLoadingRemoved(); // 立即隐藏loading
-      removeLoadingElement(); // 延迟移除loading元素
-    }
+    await hideRootLoading();
 
     // 关键：立即触发路由导航，不延迟（参考 cool-admin）
     // Loading 已经在 router.beforeResolve 中关闭，这里立即导航确保路由正确
@@ -351,7 +369,6 @@ const startupPromise = Promise.resolve()
               });
             } catch (navError) {
               // 如果路由导航失败，使用 window.location 作为回退
-              console.warn('[system-app] 路由导航失败，使用 window.location:', navError);
               window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
             }
           } else {
@@ -372,7 +389,7 @@ const startupPromise = Promise.resolve()
           }
         }
       } catch (error) {
-        console.error('[system-app] 路由导航处理失败:', error);
+        // 路由导航处理失败
       }
       });
     });
@@ -382,7 +399,7 @@ const startupPromise = Promise.resolve()
       clearTimeout(loadingTimeoutId);
       loadingTimeoutId = null;
     }
-    ensureLoadingRemoved(); // 立即隐藏loading
+    await ensureLoadingRemoved(); // 立即隐藏loading
     removeLoadingElement(); // 延迟移除loading元素
     throw mountError;
   }
@@ -415,14 +432,11 @@ const startupPromise = Promise.resolve()
         // 这样可以确保 DevTools 在路由切换时不会卸载
       } catch (err) {
         // 静默失败，不影响应用运行
-        if (import.meta.env.DEV) {
-          console.warn('[system-app] DevTools 相关设置失败:', err);
-        }
       }
     })();
   })
-  .catch(err => {
-    console.error('[system-app] 应用启动失败:', err);
+  .catch(async () => {
+    // 应用启动失败
 
     // 清除超时定时器
     if (loadingTimeoutId) {
@@ -431,6 +445,6 @@ const startupPromise = Promise.resolve()
     }
 
     // 关键：即使启动失败，也要移除 Loading 元素
-    ensureLoadingRemoved(); // 立即隐藏loading
+    await ensureLoadingRemoved(); // 立即隐藏loading
     removeLoadingElement(); // 延迟移除loading元素
   });

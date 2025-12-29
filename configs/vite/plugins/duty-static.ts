@@ -117,7 +117,7 @@ export function dutyStaticPlugin(appDir: string): Plugin {
       // 优先选择 3.x 版本（稳定版），如果没有则选择第一个
       if (jqueryFiles.length > 0) {
         const stableVersion = jqueryFiles.find(f => f.includes('jquery-3.'));
-        jqueryFile = stableVersion || jqueryFiles[0];
+        jqueryFile = (stableVersion || jqueryFiles[0]) ?? null;
         if (jqueryFiles.length > 1) {
           console.log(`[duty-static] 📋 找到多个 jQuery 文件: ${jqueryFiles.join(', ')}`);
           console.log(`[duty-static] 📌 使用: ${jqueryFile}`);

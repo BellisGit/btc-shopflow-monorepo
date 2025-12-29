@@ -1,5 +1,5 @@
-import sharedCoreZh from '../../../../packages/shared-core/src/btc/plugins/i18n/locales/zh-CN';
-import sharedCoreEn from '../../../../packages/shared-core/src/btc/plugins/i18n/locales/en-US';
+import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
+import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedComponentsZh from '../../../../packages/shared-components/src/locales/zh-CN.json';
 import sharedComponentsEn from '../../../../packages/shared-components/src/locales/en-US.json';
 import zhCN from '../locales/zh-CN.json';

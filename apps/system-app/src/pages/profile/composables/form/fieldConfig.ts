@@ -80,7 +80,7 @@ function createEmailItems({
           placeholder: '请输入新邮箱'
         },
         slots: {
-          suffix: ({ scope }: any) => h(ElButton, {
+          suffix: ({ scope }: any) => h(ElButton as any, {
             link: true,
             size: 'small',
             disabled: emailUpdateCountdown.value > 0 || emailUpdateSending.value || !scope.email,
@@ -125,7 +125,7 @@ function createPhoneItems({ phoneUpdateSmsCodeState }: FieldConfigContext): Fiel
           placeholder: '请输入新手机号'
         },
         slots: {
-          suffix: ({ scope }: any) => h(ElButton, {
+          suffix: ({ scope }: any) => h(ElButton as any, {
             link: true,
             size: 'small',
             disabled: !phoneUpdateSmsCodeState.canSend.value || !scope.phone,

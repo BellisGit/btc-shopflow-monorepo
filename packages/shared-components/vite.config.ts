@@ -70,7 +70,7 @@ export default defineConfig({
       skipDiagnostics: true,
       logLevel: 'silent',
       tsconfigPath: resolve(__dirname, 'tsconfig.build.json'),
-      rollupTypes: false, // 禁用 rollupTypes，避免路径解析错误
+      rollupTypes: false, // 禁用 rollupTypes，保留目录结构
     }),
   ],
   css: {

@@ -9,6 +9,9 @@ import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '../../styles/theme.scss';
 
+// ECharts 插件
+import EChartsPlugin from '../../plugins/echarts';
+
 // Element Plus 国际化
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import en from 'element-plus/es/locale/lang/en';
@@ -55,6 +58,9 @@ export const setupUI = (app: App) => {
 
   // 配置 themePlugin
   app.use(themePluginInstance);
+
+  // 配置ECharts
+  app.use(EChartsPlugin);
 
   return themePluginInstance;
 };

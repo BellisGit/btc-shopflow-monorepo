@@ -9,7 +9,7 @@ export function migrateThemeConfig(): ThemeConfig {
   const savedTheme = storage.get('theme');
 
   // 默认主题（现在是 cool-admin 蓝色）
-  let migratedTheme = THEME_PRESETS[0];
+  let migratedTheme: ThemeConfig = THEME_PRESETS[0]!;
 
   if (savedTheme && typeof savedTheme === 'object' && savedTheme !== null) {
     // 检查是否是旧格式（硬编码中文或英文标签）
@@ -47,7 +47,7 @@ export function migrateThemeConfig(): ThemeConfig {
         migratedTheme = matchedPreset;
       } else if ((savedTheme as any).name === 'pink' || (savedTheme as any).color === '#FF69B4') {
         // 粉色主题已删除，回退到默认主题
-        migratedTheme = THEME_PRESETS[0];
+        migratedTheme = THEME_PRESETS[0]!;
       } else if ((savedTheme as any).name === 'custom') {
         // 自定义主题
         migratedTheme = {
@@ -61,7 +61,10 @@ export function migrateThemeConfig(): ThemeConfig {
       storage.set('settings', { ...currentSettings, theme: migratedTheme });
     } else {
       // 已经是新格式，直接使用
-      migratedTheme = savedTheme as ThemeConfig;
+      const themeConfig = savedTheme as ThemeConfig | null;
+      if (themeConfig) {
+        migratedTheme = themeConfig;
+      }
     }
   }
 

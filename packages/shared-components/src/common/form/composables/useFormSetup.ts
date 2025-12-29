@@ -18,7 +18,7 @@ export function useFormSetup(props: any) {
   const Tabs = useTabs({ config, Form });
 
   // 操作
-  const Action = useAction({ config, form, Form });
+  const Action = useAction({ config, form });
 
   // el-form 方法
   const ElFormApi = useElApi(

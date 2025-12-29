@@ -38,7 +38,8 @@ interface Props {
   canUseEmailVerify: boolean;
 }
 
-const props = defineProps<Props>();
+// props未直接使用，但在Vue组件中自动可用
+defineProps<Props>();
 
 const emit = defineEmits<{
   switch: [type: VerifyType];

@@ -42,7 +42,9 @@
       "@btc/shared-utils/*": ["../shared-utils/src/*"],
       "@btc/shared-core": ["../shared-core/src"],
       "@btc/subapp-manifests": ["../subapp-manifests/src"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../../configs/*"],
+      "@btc/auth-shared": ["../../auth/shared"],
+      "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src", "src/**/*.json", "src/types/**/*.d.ts", "src/env.d.ts"],

@@ -32,7 +32,7 @@ export interface FormattedError {
  * 格式化错误信息为统一格式
  */
 export function formatError(errorInfo: ErrorInfo): FormattedError {
-  return {
+  const result: FormattedError = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     type: errorInfo.type || 'unknown',
     message: errorInfo.message || '',
@@ -50,8 +50,16 @@ export function formatError(errorInfo: ErrorInfo): FormattedError {
       return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
     })(),
     isWarning: errorInfo.isWarning || false,
-    lineno: errorInfo.lineno,
-    colno: errorInfo.colno,
   };
+  
+  // 明确处理可选属性的 undefined
+  if (errorInfo.lineno !== undefined) {
+    result.lineno = errorInfo.lineno;
+  }
+  if (errorInfo.colno !== undefined) {
+    result.colno = errorInfo.colno;
+  }
+  
+  return result;
 }
 

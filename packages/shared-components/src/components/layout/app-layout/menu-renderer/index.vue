@@ -22,8 +22,10 @@
       <!-- 递归渲染子菜单 -->
       <MenuRenderer
         :menu-items="item.children"
-        :search-keyword="searchKeyword"
-        :is-collapse="isCollapse"
+        v-bind="{
+          ...(searchKeyword !== undefined ? { 'search-keyword': searchKeyword } : {}),
+          ...(isCollapse !== undefined ? { 'is-collapse': isCollapse } : {})
+        }"
       />
     </el-sub-menu>
 
@@ -46,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineComponent } from 'vue';
+// defineComponent 未使用，已移除导入
 import { useI18n } from '@btc/shared-core';
 import type { MenuItem } from '../../../../store/menuRegistry';
 import { BtcSvg } from '@btc/shared-components';

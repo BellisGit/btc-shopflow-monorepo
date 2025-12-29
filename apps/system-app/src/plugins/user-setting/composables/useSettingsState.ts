@@ -112,6 +112,15 @@ function createSettingsState() {
     appStorage.settings.set({ buttonStyle: resolvedButtonStyle });
   }
 
+  // Loading 样式设置
+  type LoadingStyle = 'circle' | 'dots';
+  const storedLoadingStyle = initialSettings?.loadingStyle as LoadingStyle | null;
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : 'circle';
+  const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
+  if (!initialSettings?.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots')) {
+    appStorage.settings.set({ loadingStyle: resolvedLoadingStyle });
+  }
+
   const resolveThemePlugin = () => {
     try {
       return useThemePlugin();
@@ -139,6 +148,17 @@ function createSettingsState() {
     buttonStyle.value = style;
     appStorage.settings.set({ buttonStyle: style });
     applyButtonStyle(style);
+  }
+
+  /**
+   * 设置 Loading 样式
+   */
+  function setLoadingStyle(style: LoadingStyle) {
+    if (loadingStyle.value === style) return;
+    loadingStyle.value = style;
+    appStorage.settings.set({ loadingStyle: style });
+    // 触发 loading 样式变化事件
+    window.dispatchEvent(new CustomEvent('loading-style-change', { detail: { style } }));
   }
 
   // 初始化时应用设置
@@ -654,6 +674,7 @@ function createSettingsState() {
     pageTransition,
     customRadius,
     buttonStyle,
+    loadingStyle,
     isDark,
     // 方法
     switchMenuLayouts,
@@ -676,6 +697,7 @@ function createSettingsState() {
     setPageTransition,
     setCustomRadius,
     setButtonStyle,
+    setLoadingStyle,
     setMenuOpenWidth,
     toggleGlobalSearch,
     setWorkTab,

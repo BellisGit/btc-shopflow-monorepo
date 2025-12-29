@@ -5,7 +5,7 @@
     <div class="btc-color-picker-trigger-wrapper" @click="handleTriggerClick">
       <slot name="reference">
         <div class="btc-color-picker-trigger">
-          <el-button :size="triggerSize" :type="triggerType">
+          <el-button :size="triggerSize as any" :type="triggerType ?? 'default'">
             <span v-if="modelValue">{{ modelValue }}</span>
             <span v-else>{{ placeholder }}</span>
           </el-button>
@@ -15,12 +15,12 @@
     <!-- el-color-picker，让触发器与自定义按钮重叠，以便 popover 能正确定位 -->
     <el-color-picker
       ref="colorPickerRef"
-      :model-value="localColor || undefined"
-      :show-alpha="showAlpha"
-      :predefine="predefineColors"
-      :popper-class="`btc-color-picker-popover ${popperClass || ''}`"
-      :popper-style="{ zIndex: 2030, position: 'fixed' }"
-      :teleported="teleported"
+      :model-value="localColor ?? null"
+      :show-alpha="showAlpha ?? true"
+      :predefine="predefineColors as any"
+      :popper-class="popperClassComputed"
+      :popper-style="{ position: 'fixed' } as any"
+      :teleported="teleported ?? false"
       class="btc-color-picker-overlay"
       @change="handleColorChange"
       @active-change="handleActiveColorChange"
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, watch, nextTick, onMounted, onUnmounted, computed } from 'vue';
 import { ElColorPicker, ElButton } from 'element-plus';
 import type { ColorPickerInstance } from 'element-plus';
 
@@ -75,12 +75,12 @@ const props = withDefaults(defineProps<BtcColorPickerProps>(), {
     'hsl(181, 100%, 37%)',
     'rgba(31, 147, 255, 0.73)',
     'rgba(199, 21, 133, 0.47)',
-  ],
+  ] as any,
   showAlpha: true,
   placeholder: '选择颜色',
   teleported: false,
-  popperClass: '',
-  triggerSize: 'default',
+  popperClass: '' as any,
+  triggerSize: 'default' as any,
   triggerType: 'default',
   immediate: false,
 });
@@ -98,6 +98,13 @@ const emit = defineEmits<{
 const colorPickerRef = ref<ColorPickerInstance | null>(null);
 const wrapperRef = ref<HTMLElement | null>(null);
 const localColor = ref<string | null>(props.modelValue || null);
+
+// 计算 popper-class，解决类型问题
+const popperClassComputed = computed(() => {
+  const baseClass = 'btc-color-picker-popover';
+  const additionalClass = typeof props.popperClass === 'string' ? props.popperClass : '';
+  return `${baseClass} ${additionalClass}`.trim() as any;
+});
 
 // 同步外部传入的值
 watch(() => props.modelValue, (newValue) => {

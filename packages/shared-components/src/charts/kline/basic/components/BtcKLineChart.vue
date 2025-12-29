@@ -16,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useKLineChart } from '../composables/useKLineChart';
 import type { KLineChartProps } from '../../../types/kline';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<KLineChartProps>(), {
   height: '300px',

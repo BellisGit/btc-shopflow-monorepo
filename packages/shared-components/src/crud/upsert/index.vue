@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, computed, unref, ref } from 'vue';
+import { inject, onMounted, onUnmounted, computed, unref } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
 import BtcDialog from '../../common/dialog/index';
 import type { UpsertProps } from './types';
@@ -116,7 +116,7 @@ function handleModelValueUpdate(val: boolean) {
 }
 
 // 表单数据管理
-const formDataContext = useFormData(props);
+const formDataContext = useFormData(props as UpsertProps);
 const {
   formRef,
   formData,

@@ -82,7 +82,6 @@ const chartThemeKey = ref(0);
 
 // 使用 computed 让 chartOption 响应式，当 isDark 变化时会自动重新计算
 const chartOption = computed(() => {
-  const currentIsDark = isDark.value;
   const baseSeries = props.data.map((item) => {
     const baseColor = item.color || '#409eff';
     const seriesConfig: any = {

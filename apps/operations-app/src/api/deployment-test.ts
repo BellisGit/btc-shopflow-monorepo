@@ -121,6 +121,9 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
 
       for (let i = 0; i < totalApps; i++) {
         const appName = config.apps[i];
+        if (!appName) {
+          continue;
+        }
         status.currentApp = appName;
         status.progress = Math.round(((i + 1) / totalApps) * 100);
         localStorage.setItem(testStatusKey, JSON.stringify(status));

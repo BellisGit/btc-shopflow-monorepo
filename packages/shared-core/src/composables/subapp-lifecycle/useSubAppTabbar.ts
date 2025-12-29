@@ -11,7 +11,7 @@ import type { ProcessItem } from '@btc/shared-components';
  * 监听子应用路由变化事件并添加 tab（在 layout-app 中使用）
  * @param appId 应用 ID
  */
-export function listenSubAppRouteChange(appId: string): void {
+export function listenSubAppRouteChange(_appId: string): void {
   window.addEventListener('subapp:route-change', async (event: Event) => {
     const customEvent = event as CustomEvent;
     const { path, fullPath, name, meta } = customEvent.detail;

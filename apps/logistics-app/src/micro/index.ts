@@ -25,12 +25,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
     return Promise.resolve();
   }
 
-  const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
-    key: tab.key,
-    title: tab.labelKey ?? tab.label ?? tab.path,
-    path: tab.path,
-    i18nKey: tab.labelKey,
-  }));
+  const normalizedTabs: TabMeta[] = tabs.map((tab) => {
+    const result: TabMeta = {
+      key: tab.key,
+      title: tab.labelKey ?? tab.label ?? tab.path,
+      path: tab.path,
+    };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (tab.labelKey !== undefined) {
+      result.i18nKey = tab.labelKey;
+    }
+    return result;
+  });
 
   registerTabs(appName, normalizedTabs);
   return Promise.resolve();

@@ -53,7 +53,7 @@ export async function smsLogin(data: any) {
  */
 export async function getTenantList(tenantType: string) {
   // 保留原有实现，后续迁移到 tenantService
-  const { request } = await import('/@/btc/service/request');
+  const { request } = await import('@btc/shared-core');
   return request({
     url: '/dev/user/tenant/tenantList',
     method: 'POST',
@@ -67,7 +67,7 @@ export async function getTenantList(tenantType: string) {
  */
 export async function searchTenantLike(tenantName: string) {
   // 保留原有实现，后续迁移到 tenantService
-  const { request } = await import('/@/btc/service/request');
+  const { request } = await import('@btc/shared-core');
   return request({
     url: '/dev/user/tenant/tenantLike',
     method: 'POST',

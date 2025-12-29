@@ -7,13 +7,14 @@
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      }
-    : null;
+  if (!result || !result[1] || !result[2] || !result[3]) {
+    return null;
+  }
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  };
 }
 
 /**
@@ -94,6 +95,7 @@ export function getDefaultColors(): string[] {
  */
 export function getColorByIndex(index: number, colors?: string[]): string {
   const defaultColors = colors || getDefaultColors();
-  return defaultColors[index % defaultColors.length];
+  const color = defaultColors[index % defaultColors.length];
+  return color ?? '#409eff'; // 默认颜色
 }
 

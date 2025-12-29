@@ -199,6 +199,7 @@ export function useAvatarRhythm(containerRef: Ref<HTMLElement | null>) {
         if (bars[index]) {
           const randomColor = gradientColors[Math.floor(Math.random() * gradientColors.length)];
           const currentAngle = baseAngles[index];
+          if (currentAngle === undefined) return;
           const currentHue = (currentAngle + 135) % 360;
           bar.style.background = `linear-gradient(to top, hsla(${currentHue}, 80%, 50%, 0.9), ${randomColor}, hsla(${(currentHue + 60) % 360}, 90%, 70%, 0.8))`;
 

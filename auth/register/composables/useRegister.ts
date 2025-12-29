@@ -61,7 +61,7 @@ export function useRegister() {
       BtcMessage.success(t('auth.message.register_success'));
       // 注册成功后跳转到登录页
       setTimeout(() => {
-        router.push('/login');
+        router.push('/login?from=register');
       }, 1500);
     } catch (error: any) {
       console.error('注册失败:', error);

@@ -263,7 +263,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                   // 保留查询参数（如果有）
                   const queryMatch = match.match(/(\?[^)]*)/);
                   const query = queryMatch ? queryMatch[1] : '';
-                  return match.replace(originalPath, newPath).replace(/\?[^)]*/, query);
+                  return match.replace(originalPath, newPath).replace(/\?[^)]*/, query ? query : '');
                 });
                 modified = true;
                 console.log(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的引用: ${originalPath} -> ${newPath}`);
@@ -392,7 +392,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                     // 保留查询参数（如果有）
                     const queryMatch = match.match(/(\?[^)]*)/);
                     const query = queryMatch ? queryMatch[1] : '';
-                    return match.replace(originalPath, newPath).replace(/\?[^)]*/, query);
+                    return match.replace(originalPath, newPath).replace(/\?[^)]*/, query ? query : '');
                   });
                 } else {
                   // 对于字符串引用，也保留查询参数

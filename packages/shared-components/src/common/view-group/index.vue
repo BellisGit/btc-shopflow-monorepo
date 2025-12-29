@@ -11,16 +11,18 @@
           <BtcMasterList
             :key="`master-list-${masterListKey}`"
             ref="masterListRef"
-            :title="leftTitle"
-            :service="leftService"
-            :id-field="idField"
-            :label-field="labelField"
-            :parent-field="parentField"
-            :drag="enableDrag"
-            :show-unassigned="showUnassigned"
-            :unassigned-label="unassignedLabel"
-            :enable-key-search="enableKeySearch"
-            :hide-expand-icon="props.leftSize === 'small'"
+            v-bind="{
+              service: leftService,
+              ...(leftTitle !== undefined ? { title: leftTitle } : {}),
+              ...(idField !== undefined ? { 'id-field': idField } : {}),
+              ...(labelField !== undefined ? { 'label-field': labelField } : {}),
+              ...(parentField !== undefined ? { 'parent-field': parentField } : {}),
+              ...(enableDrag !== undefined ? { drag: enableDrag } : {}),
+              ...(showUnassigned !== undefined ? { 'show-unassigned': showUnassigned } : {}),
+              ...(unassignedLabel !== undefined ? { 'unassigned-label': unassignedLabel } : {}),
+              ...(enableKeySearch !== undefined ? { 'enable-key-search': enableKeySearch } : {}),
+              'hide-expand-icon': props.leftSize === 'small' || props.leftSize === 'middle'
+            }"
             @select="handleLeftSelect"
             @load="handleLeftLoad"
           />
@@ -65,12 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, useSlots, nextTick, provide } from 'vue';
+import { ref, computed, watch, nextTick, provide } from 'vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
-import { useViewGroupData, useViewGroupActions } from './composables';
-import { useI18n } from '@btc/shared-core';
+// useViewGroupData 和 useViewGroupActions 未使用，已移除导入
 import { useContentHeight } from '../../composables/content-height';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'BtcViewGroup',
@@ -105,7 +107,6 @@ const props = withDefaults(defineProps<{
   op?: { buttons?: any[] }; // 操作列配置
   enableKeySearch?: boolean; // 是否启用搜索
 }>(), {
-  op: undefined,
   enableKeySearch: false,
   leftSize: 'default',
 });

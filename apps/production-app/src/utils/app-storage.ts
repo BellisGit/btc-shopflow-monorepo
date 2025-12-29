@@ -6,6 +6,7 @@ import { getCookie, getCookieDomain, deleteCookie } from './cookie';
 import { storage } from '@btc/shared-utils';
 
 // 从 Cookie 读取设置（未使用，保留用于将来）
+// @ts-expect-error - 保留用于将来
 const _getSettingsFromCookie = (): Record<string, any> => {
   const settingsCookie = getCookie('btc_settings');
   if (settingsCookie) {
@@ -46,6 +47,8 @@ const getItem = (key: string): string | null => {
   }
 };
 
+// localStorage 辅助函数（未使用，保留用于将来）
+// @ts-expect-error - 保留用于将来
 const _setItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
@@ -73,8 +76,8 @@ const getAllSettings = (): Record<string, any> => {
 
 // 保存所有设置（只写入 Cookie，不写入 localStorage）
 const setAllSettings = (settings: Record<string, any>): void => {
-  // 直接同步到 Cookie
-  syncSettingsToCookie(settings);
+  // 使用 storage.set 确保同步到 Cookie
+  storage.set('settings', settings);
 };
 
 // 先定义 user 对象，以便在 auth 中引用
@@ -126,7 +129,7 @@ const userStorage = {
     try {
       const domain = getCookieDomain();
       deleteCookie('btc_user', {
-        domain: domain,
+        ...(domain ? { domain } : {}),
         path: '/',
       });
     } catch {

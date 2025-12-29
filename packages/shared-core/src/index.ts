@@ -37,6 +37,8 @@ export { useTabs, useAction, useElApi, usePlugins } from './composables/form-hel
 export { useContentMount } from './composables/useContentMount';
 export type { ContentMountType, ContentMountState } from './composables/useContentMount';
 export { startUserCheckPolling, stopUserCheckPolling, getUserCheckData, startUserCheckPollingIfLoggedIn } from './composables/user-check';
+export { useLogout } from './composables/useLogout';
+export type { UseLogoutOptions } from './composables/useLogout';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
@@ -45,6 +47,10 @@ export type { EpsServiceData } from './eps';
 export { initResourceLoader, loadResource, getResourceLoaderConfig, clearResourceLoaderCache, setupImageFallback, getCssUrlFallback } from './btc/utils/resource-loader';
 export type { ResourceLoaderOptions } from './btc/utils/resource-loader';
 export { initDynamicImportInterceptor, loadModule, clearModuleCache, getModuleCacheInfo } from './btc/utils/dynamic-import-interceptor';
+
+// Loading 相关导出
+export * from './btc/utils/loading';
+export { appLoadingService, rootLoadingService, routeLoadingService } from './btc/utils/loading';
 
 // ========== 其他导出（使用 export *，但关键导出已在上方显式声明）==========
 export * from './btc';

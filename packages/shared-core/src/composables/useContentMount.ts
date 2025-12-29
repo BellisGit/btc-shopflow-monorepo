@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef } from 'vue';
+import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
@@ -19,7 +19,7 @@ export interface ContentMountState {
   /** 是否显示子应用挂载点 */
   showSubApp: ComputedRef<boolean>;
   /** 子应用挂载点引用（用于设置 ref） */
-  subappViewportRef: { value: HTMLElement | null };
+  subappViewportRef: Ref<HTMLElement | null>;
 }
 
 /**

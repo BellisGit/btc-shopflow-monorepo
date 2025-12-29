@@ -33,7 +33,8 @@ defineOptions({
   name: 'LayoutLocaleSwitcher'
 });
 
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+// computed 未使用，已移除
 import { useI18n } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 

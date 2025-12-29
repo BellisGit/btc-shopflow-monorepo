@@ -45,7 +45,7 @@ function loadMenuRegistryFromStorage(): Record<string, MenuItem[]> | null {
       const apps = ['admin', 'system', 'logistics', 'engineering', 'quality', 'production', 'finance', 'docs', 'operations'];
       apps.forEach(app => {
         const key = `${STORAGE_KEY_PREFIX}${app}`;
-        const menus = storage.get<MenuItem[]>(key);
+        const menus = storage.get(key) as MenuItem[] | null;
         if (Array.isArray(menus) && menus.length > 0) {
           allData[key] = menus;
         }

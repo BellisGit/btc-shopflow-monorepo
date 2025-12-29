@@ -25,10 +25,12 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
     '@configs': withConfigs(''),
     // @btc/* 包别名（用于 configs 目录中的文件，确保能正确解析）
     // 注意：这些别名主要用于开发环境，构建时会从 node_modules 解析
+    // locales 子路径别名在 createBaseResolve 中单独处理，确保优先匹配
     '@btc/shared-core': withPackages('shared-core/src'),
     '@btc/shared-components': withPackages('shared-components/src'),
     '@btc/shared-utils': withPackages('shared-utils/src'),
     '@btc/subapp-manifests': withPackages('subapp-manifests/src/index.ts'),
+    '@btc/auth-shared': withRoot('auth/shared'),
     // shared-components 内部使用的别名（用于解析 shared-components 内部的导入）
     '@btc-common': withPackages('shared-components/src/common'),
     '@btc-components': withPackages('shared-components/src/components'),
@@ -60,8 +62,38 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
  * @returns resolve 配置对象
  */
 export function createBaseResolve(appDir: string, appName: string): UserConfig['resolve'] {
+  const { withPackages } = createPathHelpers(appDir);
+  const aliases = createBaseAliases(appDir, appName);
+  
+  // 使用数组形式的别名，确保更具体的别名优先匹配
+  // Vite 会按数组顺序匹配，第一个匹配的别名会被使用
+  const aliasArray: Array<{ find: string | RegExp; replacement: string }> = [
+    // 具体的 locales 子路径别名（必须放在通用别名之前）
+    {
+      find: '@btc/shared-core/locales/zh-CN',
+      replacement: withPackages('shared-core/src/btc/plugins/i18n/locales/zh-CN'),
+    },
+    {
+      find: '@btc/shared-core/locales/en-US',
+      replacement: withPackages('shared-core/src/btc/plugins/i18n/locales/en-US'),
+    },
+    {
+      find: '@btc/shared-components/locales/zh-CN.json',
+      replacement: withPackages('shared-components/src/locales/zh-CN.json'),
+    },
+    {
+      find: '@btc/shared-components/locales/en-US.json',
+      replacement: withPackages('shared-components/src/locales/en-US.json'),
+    },
+    // 其他别名（从对象转换为数组形式）
+    ...Object.entries(aliases).map(([find, replacement]) => ({
+      find,
+      replacement,
+    })),
+  ];
+  
   return {
-    alias: createBaseAliases(appDir, appName),
+    alias: aliasArray,
     dedupe: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
   };

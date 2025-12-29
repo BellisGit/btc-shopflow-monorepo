@@ -1,7 +1,8 @@
 ﻿import type { Plugin } from 'vite';
 import fs from 'fs';
 import axios from 'axios';
-import { rootDir, error } from '../utils';
+import { rootDir } from '../utils';
+// error 未使用，已移除导入
 import { config } from '../config';
 
 export interface CtxData {

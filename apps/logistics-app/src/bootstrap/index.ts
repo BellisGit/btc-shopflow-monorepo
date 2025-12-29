@@ -12,7 +12,7 @@ import {
   mountSubApp,
   unmountSubApp,
   updateSubApp,
-  setupRouteSync,
+  // setupRouteSync 未使用，已移除
   setupHostLocationBridge,
   ensureCleanUrl,
   ensureLeadingSlash,
@@ -25,8 +25,7 @@ import {
 import App from '../App.vue';
 import { userSettingPlugin } from '../plugins/user-setting';
 import { createLogisticsRouter, setupRouter, setupStore, setupI18n, setupUI } from './core';
-import type { LogisticsI18nPlugin } from './core/i18n';
-import type { LogisticsThemePlugin } from './core/ui';
+// LogisticsI18nPlugin 和 LogisticsThemePlugin 未使用，已移除导入
 import { elementLocale } from './core/ui';
 
 // 扩展 SubAppContext 以包含 registerTabs
@@ -102,7 +101,7 @@ const setupLogisticsGlobals = async () => {
       const { service } = await import('../services/eps');
       (window as any).__APP_EPS_SERVICE__ = service;
     } catch (error) {
-      console.warn('[logistics-app] Failed to load EPS service:', error);
+      // Failed to load EPS service
       (window as any).__APP_EPS_SERVICE__ = {};
     }
   }
@@ -112,7 +111,7 @@ const setupLogisticsGlobals = async () => {
     const { appStorage } = await import('../utils/app-storage');
     (window as any).__APP_STORAGE__ = appStorage;
   } catch (error) {
-    console.warn('[logistics-app] Failed to load app storage:', error);
+    // Failed to load app storage
     (window as any).__APP_STORAGE__ = {
       user: {
         getAvatar: () => null,
@@ -129,7 +128,7 @@ const setupLogisticsGlobals = async () => {
   try {
     domainCacheModule = await import('../utils/domain-cache');
   } catch (error) {
-    console.warn('[logistics-app] Failed to import domain-cache module:', error);
+    // Failed to import domain-cache module
   }
   await injectDomainListResolver(LOGISTICS_APP_ID, domainCacheModule || LOGISTICS_DOMAIN_CACHE_PATH);
 
@@ -137,7 +136,7 @@ const setupLogisticsGlobals = async () => {
     const { finishLoading } = await import('../utils/loadingManager');
     (window as any).__APP_FINISH_LOADING__ = finishLoading;
   } catch (error) {
-    console.warn('[logistics-app] Failed to load loading manager:', error);
+    // Failed to load loading manager
     (window as any).__APP_FINISH_LOADING__ = () => {};
   }
 
@@ -445,7 +444,7 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
           await logout();
         } catch (error) {
           // 如果加载失败，使用兜底逻辑
-          console.warn('[logistics-app] useLogout failed, using fallback:', error);
+          // useLogout failed, using fallback
           try {
             const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
             if (appStorage) {

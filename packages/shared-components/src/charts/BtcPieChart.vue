@@ -73,7 +73,8 @@ const defaultColors = [
 ];
 
 function getDefaultColor(index: number): string {
-  return defaultColors[index % defaultColors.length];
+  const color = defaultColors[index % defaultColors.length];
+  return color || defaultColors[0] || '#409eff';
 }
 
 // 使用 computed 让 chartOption 响应式，当 isDark 变化时会自动重新计算

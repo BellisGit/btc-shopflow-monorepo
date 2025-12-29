@@ -25,13 +25,13 @@ export interface BarChartProps extends BaseChartProps, InteractionProps {
   /** X轴数据 */
   xAxisData: string[];
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** Y轴格式化 */
-  yAxisFormatter?: string;
+  yAxisFormatter?: string | undefined;
   /** 是否使用渐变 */
-  useGradient?: boolean;
+  useGradient?: boolean | undefined;
   /** 渐变方向 */
-  gradientDirection?: 'vertical' | 'horizontal';
+  gradientDirection?: 'vertical' | 'horizontal' | undefined;
 }
 
 /**
@@ -43,11 +43,11 @@ export interface HBarChartProps extends BaseChartProps, InteractionProps {
   /** Y轴数据（类别） */
   yAxisData: string[];
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** X轴格式化 */
-  xAxisFormatter?: string;
+  xAxisFormatter?: string | undefined;
   /** 是否使用渐变 */
-  useGradient?: boolean;
+  useGradient?: boolean | undefined;
 }
 
 /**
@@ -61,12 +61,12 @@ export interface DualBarCompareChartProps extends BaseChartProps, InteractionPro
   /** X轴数据 */
   xAxisData: string[];
   /** 第一组数据标签 */
-  label1?: string;
+  label1?: string | undefined;
   /** 第二组数据标签 */
-  label2?: string;
+  label2?: string | undefined;
   /** 网格配置 */
-  grid?: GridConfig;
+  grid?: GridConfig | undefined;
   /** Y轴格式化 */
-  yAxisFormatter?: string;
+  yAxisFormatter?: string | undefined;
 }
 

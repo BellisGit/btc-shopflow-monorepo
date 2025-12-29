@@ -105,7 +105,7 @@ export function useForgetPassword() {
       
       // 跳转到登录页
       setTimeout(() => {
-        router.push('/login');
+        router.push('/login?from=forget-password');
       }, 1500);
     } catch (error: any) {
       if (error.message) {

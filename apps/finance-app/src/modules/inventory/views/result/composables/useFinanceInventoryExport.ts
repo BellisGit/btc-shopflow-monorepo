@@ -1,4 +1,5 @@
-import { ref } from 'vue';
+// ref 未使用，已移除
+// import { ref } from 'vue';
 import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { UseCrudReturn } from '@btc/shared-core';
@@ -8,7 +9,8 @@ import { getEpsServiceNode } from './useFinanceInventoryService';
  * 格式化Result数据行（按照正确的列顺序）
  */
 function formatResultRow(item: any): any[] {
-  // 计算差异百分比
+  // 计算差异百分比（未使用，保留用于未来功能）
+  // @ts-expect-error: 可能在未来使用
   const variancePercent = item.sysTotal !== 0
     ? ((item.variance / item.sysTotal) * 100).toFixed(2)
     : (item.btcTotal !== 0 ? '100.00' : '0.00');

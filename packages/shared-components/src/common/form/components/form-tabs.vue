@@ -48,8 +48,10 @@ watch(() => props.modelValue, (val) => {
 });
 
 watch(active, (val) => {
-  emit('update:modelValue', val);
-  emit('change', val);
+  if (val !== undefined) {
+    emit('update:modelValue', val);
+    emit('change', val);
+  }
 });
 </script>
 
