@@ -162,14 +162,24 @@ pipeline {
                     echo "📚 安装依赖..."
                     if (isUnix()) {
                         sh '''
-                            # 清理并安装依赖
-                            pnpm install --frozen-lockfile
+                            # 获取 pnpm store 路径（用于缓存说明）
+                            STORE_PATH=$(pnpm store path 2>/dev/null || echo "")
+                            if [ -n "$STORE_PATH" ]; then
+                                echo "📦 pnpm store 路径: $STORE_PATH"
+                            fi
+                            
+                            # 使用 --prefer-offline 优先使用本地缓存，加速安装
+                            # Jenkins workspace 会持久化，所以 node_modules 和 pnpm store 会保留
+                            # 只有在 pnpm-lock.yaml 变更时才需要重新安装
+                            echo "🔄 检查依赖（优先使用缓存）..."
+                            pnpm install --frozen-lockfile --prefer-offline
                             echo "✅ 依赖安装完成"
                         '''
                     } else {
                         bat '''
                             @echo off
-                            call pnpm install --frozen-lockfile
+                            echo 🔄 检查依赖（优先使用缓存）...
+                            call pnpm install --frozen-lockfile --prefer-offline
                             echo ✅ 依赖安装完成
                         '''
                     }
