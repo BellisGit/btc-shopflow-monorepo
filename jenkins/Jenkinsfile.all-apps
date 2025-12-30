@@ -111,23 +111,22 @@ pipeline {
                     echo "🔧 设置构建环境..."
                     if (isUnix()) {
                         sh '''
-                            if command -v nvm &> /dev/null; then
-                                source ~/.nvm/nvm.sh
-                                nvm install ${NODE_VERSION}
-                                nvm use ${NODE_VERSION}
-                            elif command -v node &> /dev/null; then
+                            # 检查 Node.js 是否已安装
+                            if command -v node >/dev/null 2>&1; then
                                 echo "Node.js 已安装: $(node --version)"
                             else
                                 echo "错误: 未找到 Node.js，请安装 Node.js ${NODE_VERSION}"
                                 exit 1
                             fi
                             
-                            # 安装 pnpm
-                            if ! command -v pnpm &> /dev/null; then
+                            # 检查并安装 pnpm
+                            if ! command -v pnpm >/dev/null 2>&1; then
                                 echo "安装 pnpm ${PNPM_VERSION}..."
-                                npm install -g pnpm@${PNPM_VERSION}
+                                npm install -g pnpm@${PNPM_VERSION} || {
+                                    echo "警告: pnpm 安装失败，尝试继续..."
+                                }
                             fi
-                            echo "pnpm 版本: $(pnpm --version)"
+                            echo "pnpm 版本: $(pnpm --version 2>/dev/null || echo '未安装')"
                         '''
                     } else {
                         bat '''
