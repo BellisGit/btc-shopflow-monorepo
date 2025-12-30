@@ -301,6 +301,36 @@ pipeline {
                     }
                 }
                 stages {
+                    stage('Check Dependencies') {
+                        steps {
+                            script {
+                                if (isUnix()) {
+                                    sh '''
+                                        # 检查 node_modules 是否存在，如果不存在则安装依赖
+                                        if [ ! -d "node_modules" ] || [ ! -f "node_modules/.pnpm/lock.yaml" ]; then
+                                            echo "⚠️ node_modules 缺失，正在安装依赖..."
+                                            pnpm install --frozen-lockfile --prefer-offline
+                                            echo "✅ 依赖安装完成"
+                                        else
+                                            echo "✅ node_modules 已存在，跳过依赖安装"
+                                        fi
+                                    '''
+                                } else {
+                                    bat '''
+                                        @echo off
+                                        if not exist "node_modules" (
+                                            echo ⚠️ node_modules 缺失，正在安装依赖...
+                                            call pnpm install --frozen-lockfile --prefer-offline
+                                            echo ✅ 依赖安装完成
+                                        ) else (
+                                            echo ✅ node_modules 已存在，跳过依赖安装
+                                        )
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                    
                     stage('Build') {
                         steps {
                             script {
