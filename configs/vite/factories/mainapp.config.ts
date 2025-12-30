@@ -17,7 +17,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { createRollupConfig } from '../build/rollup.config';
+import { createRollupConfig } from '../build/rollup.config.js';
 import {
   cleanDistPlugin,
   chunkVerifyPlugin,
@@ -32,6 +32,7 @@ import {
   uploadCdnPlugin,
   cdnAssetsPlugin,
   cdnImportPlugin,
+  resolveBtcImportsPlugin,
 } from '../plugins';
 
 export interface MainAppViteConfigOptions {
@@ -147,11 +148,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. Public 图片资源处理插件（如果启用）
+    // 3. 解析 @btc/* 包导入插件（确保能够解析从已构建包中导入的 @btc/* 模块）
+    resolveBtcImportsPlugin({ appDir }),
+    // 4. Public 图片资源处理插件（如果启用）
     ...(publicImagesToAssets && !isPreviewBuild ? [publicImagesToAssetsPlugin(appDir)] : []),
-    // 4. 资源预加载插件（如果启用）
+    // 5. 资源预加载插件（如果启用）
     ...(enableResourcePreload !== false ? [resourcePreloadPlugin()] : []),
-    // 5. 自定义插件（在核心插件之前）
+    // 6. 自定义插件（在核心插件之前）
     ...customPlugins,
     // 6. Vue 插件
     vue({
@@ -209,13 +212,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
     cdnAssetsPlugin({
       appName,
-      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
     }),
     // 17.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
     // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
     cdnImportPlugin({
       appName,
-      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
     }),
     // 17.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
@@ -297,9 +300,13 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     emptyOutDir: false,
     // 关键：system-app 作为主应用，也需要打包 single-spa 和 qiankun
     // 不将它们标记为 external，确保它们被打包到构建产物中
+    // 关键：主应用也需要打包 @btc 包，避免浏览器无法解析路径别名
+    // 关键：主应用也需要打包 @configs 包，避免浏览器无法解析路径别名
     rollupOptions: {
       ...createRollupConfig(appName, {
         externalSingleSpa: false, // 主应用需要打包 single-spa 和 qiankun
+        externalBtcPackages: false, // 主应用需要打包 @btc 包，避免浏览器无法解析路径别名
+        externalConfigsPackages: false, // 主应用需要打包 @configs 包，避免浏览器无法解析路径别名
       }),
     },
     chunkSizeWarningLimit: 1000,
@@ -335,11 +342,17 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+  
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     strictPort: true,
     open: false,
     host: '0.0.0.0',
+    // 关键：设置预览服务器的根目录为 dist/{prodHost}
+    root: previewRoot,
     proxy,
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -458,6 +471,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
   const resolveValue = createBaseResolve(appDir, appName);
   if (resolveValue !== undefined) {
     config.resolve = resolveValue;

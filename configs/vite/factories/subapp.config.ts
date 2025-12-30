@@ -28,7 +28,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getBaseUrl, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { createRollupConfig } from '../build/rollup.config';
+import { createRollupConfig } from '../build/rollup.config.js';
 import {
   cleanDistPlugin,
   chunkVerifyPlugin,
@@ -42,6 +42,7 @@ import {
   uploadCdnPlugin,
   cdnAssetsPlugin,
   cdnImportPlugin,
+  resolveBtcImportsPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
 
@@ -167,9 +168,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. Logo 路径解析插件（在自定义插件之前，确保 /logo.png 能被正确解析）
+    // 3. 解析 @btc/* 包导入插件（在 Logo 插件之前，确保能够解析从已构建包中导入的 @btc/* 模块）
+    resolveBtcImportsPlugin({ appDir }),
+    // 4. Logo 路径解析插件（在自定义插件之前，确保 /logo.png 能被正确解析）
     resolveLogoPlugin(appDir),
-    // 4. 自定义插件（在核心插件之前）
+    // 5. 自定义插件（在核心插件之前）
     ...customPlugins,
     // 4. Vue 插件
     vue({
@@ -230,16 +233,17 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
     cdnAssetsPlugin({
       appName,
-      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
     }),
     // 16.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
     // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
     cdnImportPlugin({
       appName,
-      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
     }),
     // 16.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
+    // 注意：不再需要 resolveExternalImportsPlugin，因为所有应用都打包 @btc/* 包
     // 17. 优化 chunks 插件
     optimizeChunksPlugin(),
     // 18. Chunk 验证插件
@@ -313,7 +317,11 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // cleanDistPlugin 已经有重试机制（5次，递增等待时间），如果清理失败会继续构建
     // 注意：如果清理失败，旧的构建产物不会被删除，可能导致重复文件
     emptyOutDir: false,
-    rollupOptions: createRollupConfig(appName),
+    // 所有应用都打包 @btc/* 包和 @configs 包，避免运行时模块解析问题
+    rollupOptions: createRollupConfig(appName, {
+      externalBtcPackages: false, // 显式设置为 false，打包 @btc/* 包
+      externalConfigsPackages: false, // 显式设置为 false，打包 @configs 包
+    }),
     chunkSizeWarningLimit: 1000,
     ...customBuild,
   };
@@ -347,11 +355,17 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+  
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     strictPort: true,
     open: false,
     host: '0.0.0.0',
+    // 关键：设置预览服务器的根目录为 dist/{prodHost}
+    root: previewRoot,
     proxy,
     headers: {
       'Access-Control-Allow-Origin': appConfig.mainAppOrigin,
@@ -454,6 +468,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   };
 
   // 返回完整配置
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
   const baseResolve = createBaseResolve(appDir, appName);
   // 关键：生产/预览构建时，子应用不再使用本地 virtual:eps（由 layout-app 提供共享 EPS 服务）
   // 这样可以避免子应用入口产生对自身 eps-service-xxx.js 的引用，导致共享不生效或 404。
@@ -462,10 +477,19 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   const finalResolve = shouldUseSharedEps
     ? {
         ...baseResolve,
-        alias: {
-          ...(baseResolve?.alias as any),
-          'virtual:eps': sharedEpsStub,
-        },
+        // 关键：保持别名数组形式，添加 virtual:eps 别名
+        alias: Array.isArray(baseResolve?.alias)
+          ? [
+              ...baseResolve.alias,
+              {
+                find: 'virtual:eps',
+                replacement: sharedEpsStub,
+              },
+            ]
+          : {
+              ...(baseResolve?.alias as Record<string, string> || {}),
+              'virtual:eps': sharedEpsStub,
+            },
       }
     : baseResolve;
 
