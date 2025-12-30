@@ -305,18 +305,20 @@ pipeline {
                         steps {
                             script {
                                 def appName = env.APP_NAME
-                                echo "🔨 构建应用: ${appName}..."
+                                // 将应用名称转换为 package.json 中的脚本名称（去掉 -app 后缀）
+                                def scriptName = appName.replace('-app', '')
+                                echo "🔨 构建应用: ${appName} (脚本: build-dist:${scriptName})..."
                                 if (isUnix()) {
                                     sh """
                                         echo "构建应用: ${appName}..."
-                                        pnpm build-dist:${appName}
+                                        pnpm build-dist:${scriptName}
                                         echo "✅ ${appName} 构建完成，产物在 dist 目录"
                                     """
                                 } else {
                                     bat """
                                         @echo off
                                         echo 构建应用: ${appName}...
-                                        call pnpm build-dist:${appName}
+                                        call pnpm build-dist:${scriptName}
                                         echo ✅ ${appName} 构建完成，产物在 dist 目录
                                     """
                                 }
