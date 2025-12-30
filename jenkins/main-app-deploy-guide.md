@@ -61,6 +61,8 @@ bash jenkins/setup-jenkins-job.sh btc-shopflow-deploy-system-app jenkins/Jenkins
 | `SKIP_TESTS` | Boolean | `true` | 是否跳过测试（加快构建速度） |
 | `CLEAN_BUILD` | Boolean | `false` | 是否清理构建缓存（强制重新构建） |
 | `BUILD_SHARED_DEPS` | Boolean | `true` | 是否构建共享依赖包（@btc/* 包） |
+| `ENABLE_CDN` | Boolean | `true` | 是否启用 CDN 加速（将资源 URL 转换为 CDN 地址） |
+| `ENABLE_CDN_UPLOAD` | Boolean | `false` | 是否启用 CDN 上传（将构建产物上传到 CDN，需要配置 CDN 凭证） |
 
 ## 构建流程
 

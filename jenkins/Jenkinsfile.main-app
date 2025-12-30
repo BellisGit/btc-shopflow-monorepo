@@ -70,6 +70,18 @@ pipeline {
             defaultValue: true,
             description: '是否构建共享依赖包（@btc/* 包），确保依赖最新版本'
         )
+        // 是否启用 CDN 加速
+        booleanParam(
+            name: 'ENABLE_CDN',
+            defaultValue: true,
+            description: '是否启用 CDN 加速（将资源 URL 转换为 CDN 地址）'
+        )
+        // 是否启用 CDN 上传
+        booleanParam(
+            name: 'ENABLE_CDN_UPLOAD',
+            defaultValue: false,
+            description: '是否启用 CDN 上传（将构建产物上传到 CDN，需要配置 CDN 凭证）'
+        )
     }
     
     stages {
@@ -294,13 +306,17 @@ pipeline {
                     // 将应用名称转换为 package.json 中的脚本名称（去掉 -app 后缀）
                     def scriptName = appName.replace('-app', '')
                     echo "🔨 构建主应用: ${appName} (脚本: build-dist:${scriptName})..."
+                    def enableCdn = params.ENABLE_CDN ? 'true' : 'false'
+                    def enableCdnUpload = params.ENABLE_CDN_UPLOAD ? 'true' : 'false'
                     if (isUnix()) {
                         sh """
                             # 设置环境变量（不使用 cross-env，直接在 shell 中设置）
-                            export ENABLE_CDN_ACCELERATION=false
-                            export ENABLE_CDN_UPLOAD=false
+                            export ENABLE_CDN_ACCELERATION=${enableCdn}
+                            export ENABLE_CDN_UPLOAD=${enableCdnUpload}
                             
                             echo "构建主应用: ${appName}..."
+                            echo "CDN 加速: ${enableCdn}"
+                            echo "CDN 上传: ${enableCdnUpload}"
                             # 直接执行构建命令，而不是使用 package.json 中的脚本（因为脚本使用了 cross-env）
                             pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
                             echo "✅ ${appName} 构建完成，产物在 dist 目录"
@@ -309,10 +325,12 @@ pipeline {
                         bat """
                             @echo off
                             REM 设置环境变量
-                            set ENABLE_CDN_ACCELERATION=false
-                            set ENABLE_CDN_UPLOAD=false
+                            set ENABLE_CDN_ACCELERATION=${enableCdn}
+                            set ENABLE_CDN_UPLOAD=${enableCdnUpload}
                             
                             echo 构建主应用: ${appName}...
+                            echo CDN 加速: ${enableCdn}
+                            echo CDN 上传: ${enableCdnUpload}
                             call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
                             echo ✅ ${appName} 构建完成，产物在 dist 目录
                         """
