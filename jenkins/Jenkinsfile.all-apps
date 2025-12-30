@@ -373,24 +373,43 @@ pipeline {
                                 if (isUnix()) {
                                     sh """
                                         # build-to-dist.mjs 会将应用复制到 dist/<domain> 目录
-                                        # 应用名称到域名的映射关系
-                                        declare -A APP_DOMAIN_MAP
-                                        APP_DOMAIN_MAP['system-app']='bellis.com.cn'
-                                        APP_DOMAIN_MAP['admin-app']='admin.bellis.com.cn'
-                                        APP_DOMAIN_MAP['logistics-app']='logistics.bellis.com.cn'
-                                        APP_DOMAIN_MAP['quality-app']='quality.bellis.com.cn'
-                                        APP_DOMAIN_MAP['production-app']='production.bellis.com.cn'
-                                        APP_DOMAIN_MAP['engineering-app']='engineering.bellis.com.cn'
-                                        APP_DOMAIN_MAP['finance-app']='finance.bellis.com.cn'
-                                        APP_DOMAIN_MAP['operations-app']='operations.bellis.com.cn'
-                                        APP_DOMAIN_MAP['dashboard-app']='dashboard.bellis.com.cn'
-                                        APP_DOMAIN_MAP['personnel-app']='personnel.bellis.com.cn'
-                                        
-                                        DOMAIN=\${APP_DOMAIN_MAP['${appName}']}
-                                        if [ -z "\$DOMAIN" ]; then
-                                            echo "❌ ${appName}: 未找到对应的域名映射"
-                                            exit 1
-                                        fi
+                                        # 应用名称到域名的映射关系（使用 case 语句，兼容 /bin/sh）
+                                        case "${appName}" in
+                                            system-app)
+                                                DOMAIN="bellis.com.cn"
+                                                ;;
+                                            admin-app)
+                                                DOMAIN="admin.bellis.com.cn"
+                                                ;;
+                                            logistics-app)
+                                                DOMAIN="logistics.bellis.com.cn"
+                                                ;;
+                                            quality-app)
+                                                DOMAIN="quality.bellis.com.cn"
+                                                ;;
+                                            production-app)
+                                                DOMAIN="production.bellis.com.cn"
+                                                ;;
+                                            engineering-app)
+                                                DOMAIN="engineering.bellis.com.cn"
+                                                ;;
+                                            finance-app)
+                                                DOMAIN="finance.bellis.com.cn"
+                                                ;;
+                                            operations-app)
+                                                DOMAIN="operations.bellis.com.cn"
+                                                ;;
+                                            dashboard-app)
+                                                DOMAIN="dashboard.bellis.com.cn"
+                                                ;;
+                                            personnel-app)
+                                                DOMAIN="personnel.bellis.com.cn"
+                                                ;;
+                                            *)
+                                                echo "❌ ${appName}: 未找到对应的域名映射"
+                                                exit 1
+                                                ;;
+                                        esac
                                         
                                         APP_DIR="dist/\$DOMAIN"
                                         if [ -d "\$APP_DIR" ] && [ -n "\$(ls -A \$APP_DIR 2>/dev/null)" ]; then
