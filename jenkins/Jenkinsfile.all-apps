@@ -110,12 +110,21 @@ pipeline {
                 script {
                     echo "🔧 设置构建环境..."
                     if (isUnix()) {
+                        // 尝试使用 Jenkins NodeJS 插件配置的 Node.js
+                        def nodejsHome = tool name: 'NodeJS', type: 'hudson.plugins.nodejs.tools.NodeJSInstallation'
+                        if (nodejsHome) {
+                            env.PATH = "${nodejsHome}/bin:${env.PATH}"
+                            echo "✅ 使用 Jenkins NodeJS 插件配置的 Node.js: ${nodejsHome}"
+                        }
+                        
                         sh '''
-                            # 检查 Node.js 是否已安装
+                            # 检查 Node.js 是否可用
                             if command -v node >/dev/null 2>&1; then
                                 echo "Node.js 已安装: $(node --version)"
                             else
-                                echo "错误: 未找到 Node.js，请安装 Node.js ${NODE_VERSION}"
+                                echo "⚠️ 警告: 未找到 Node.js"
+                                echo "💡 提示: 请在 Jenkins 中配置 NodeJS 插件，或在容器中安装 Node.js"
+                                echo "   安装方法: docker exec -it jenkins bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs'"
                                 exit 1
                             fi
                             
@@ -123,10 +132,11 @@ pipeline {
                             if ! command -v pnpm >/dev/null 2>&1; then
                                 echo "安装 pnpm ${PNPM_VERSION}..."
                                 npm install -g pnpm@${PNPM_VERSION} || {
-                                    echo "警告: pnpm 安装失败，尝试继续..."
+                                    echo "❌ 错误: pnpm 安装失败"
+                                    exit 1
                                 }
                             fi
-                            echo "pnpm 版本: $(pnpm --version 2>/dev/null || echo '未安装')"
+                            echo "pnpm 版本: $(pnpm --version)"
                         '''
                     } else {
                         bat '''
