@@ -5,6 +5,7 @@
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
+import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 import UnoCSS from 'unocss/vite';
@@ -17,7 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { createRollupConfig } from '../build/rollup.config.js';
+import { createRollupConfig } from '../build/rollup.config.ts';
 import {
   cleanDistPlugin,
   chunkVerifyPlugin,
