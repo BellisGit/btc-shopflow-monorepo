@@ -19,17 +19,31 @@ export function getCdnVideoUrl(filename: string): string {
 
 /**
  * 获取 CDN 降级 URL
- * @param localPath 本地图片路径，例如 '/assets/images/1.jpg'
+ * @param localPath 本地图片路径，例如 '/assets/images/1.jpg' 或 '/images/webp/1.webp'
  * @returns CDN URL
  */
 export function getCdnFallbackUrl(localPath: string): string {
+  // 如果路径已经包含 /images/webp/，保持该路径结构
+  if (localPath.includes('/images/webp/')) {
+    // 提取 /images/webp/ 之后的部分
+    const parts = localPath.split('/images/webp/');
+    if (parts.length > 1) {
+      const filename = parts[1];
+      return `${CDN_BASE_URL}/images/webp/${filename}`;
+    }
+  }
+
+  // 如果路径已经包含 /images/（但不是webp子目录），保持该路径结构
+  if (localPath.includes('/images/') && !localPath.includes('/images/webp/')) {
+    const parts = localPath.split('/images/');
+    if (parts.length > 1) {
+      const filename = parts[1];
+      return `${CDN_BASE_URL}/images/${filename}`;
+    }
+  }
+
   // 从本地路径提取文件名
   const filename = localPath.split('/').pop() || '';
-
-  // 22.png 在根目录，其他图片在 images 目录
-  if (filename === '22.png') {
-    return `${CDN_BASE_URL}/${filename}`;
-  }
 
   // 视频文件在根目录（使用统一的 CDN 视频 URL 函数）
   if (filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.avi') ||
@@ -38,7 +52,7 @@ export function getCdnFallbackUrl(localPath: string): string {
     return getCdnVideoUrl(filename);
   }
 
-  // 其他图片在 images 目录
+  // 所有图片都在 images 目录
   return `${CDN_BASE_URL}/images/${filename}`;
 }
 

@@ -16,7 +16,8 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./src/index.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./error-monitor": {
@@ -52,7 +53,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "dayjs": "^1.11.18"
+    "dayjs": "^1.11.18",
+    "file-type": "^21.2.0"
   },
   "peerDependencies": {
     "qiankun": "^2.10.16",

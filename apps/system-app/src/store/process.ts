@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 // 使用动态导入避免循环依赖（tabRegistry 可能导入 micro/manifests，而 micro/index.ts 导入 process.ts）
 // import { getActiveApp, resolveTabMeta } from './tabRegistry';
 
@@ -38,11 +38,96 @@ export function getCurrentAppFromPath(path: string): string {
 }
 
 /**
+ * 持久化存储键名
+ */
+const STORAGE_KEY = 'btc_process_tabs';
+
+/**
+ * 持久化数据结构
+ */
+interface PersistedData {
+  list: ProcessItem[];
+  pinned: string[];
+  version?: number; // 数据版本，用于未来迁移
+}
+
+/**
+ * 持久化工具函数
+ */
+const persistenceUtils = {
+  /**
+   * 保存数据到 localStorage
+   */
+  save(data: PersistedData): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // 序列化时排除 active 状态（刷新后需要重新计算）
+      const dataToSave: PersistedData = {
+        list: data.list.map((tab) => {
+          const { active, ...tabWithoutActive } = tab;
+          return tabWithoutActive;
+        }),
+        pinned: data.pinned,
+        version: 1,
+      };
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (error) {
+      // 处理 localStorage 不可用的情况（隐私模式、存储空间不足等）
+      console.warn('[Process] Failed to save tabs to localStorage:', error);
+    }
+  },
+
+  /**
+   * 从 localStorage 读取数据
+   */
+  load(): PersistedData | null {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return null;
+      
+      const data = JSON.parse(stored) as PersistedData;
+      
+      // 验证数据结构
+      if (!data || typeof data !== 'object') return null;
+      if (!Array.isArray(data.list) || !Array.isArray(data.pinned)) return null;
+      
+      return data;
+    } catch (error) {
+      console.warn('[Process] Failed to load tabs from localStorage:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 清除持久化数据
+   */
+  clear(): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn('[Process] Failed to clear tabs from localStorage:', error);
+    }
+  },
+};
+
+/**
  * 页面标签（Process）Store
  */
 export const useProcessStore = defineStore('process', () => {
   const list = ref<ProcessItem[]>([]); // 所有标签
   const pinned = ref<string[]>([]);
+  
+  // 恢复标志，用于避免恢复数据时触发保存
+  let isRestoring = false;
+  
+  // 防抖定时器
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   const isPinned = (fullPath: string) => pinned.value.includes(fullPath);
 
@@ -331,6 +416,8 @@ export const useProcessStore = defineStore('process', () => {
   function clear() {
     list.value = [];
     pinned.value = [];
+    // 同时清除持久化数据
+    clearPersistedData();
   }
 
   /**
@@ -359,6 +446,150 @@ export const useProcessStore = defineStore('process', () => {
     }
   }
 
+  /**
+   * 保存数据到 localStorage（带防抖）
+   */
+  function saveToStorage() {
+    if (isRestoring) return; // 恢复数据时不保存
+    
+    // 清除之前的定时器
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+    }
+    
+    // 防抖：延迟 300ms 保存，避免频繁写入
+    saveTimer = setTimeout(() => {
+      persistenceUtils.save({
+        list: list.value,
+        pinned: pinned.value,
+      });
+      saveTimer = null;
+    }, 300);
+  }
+
+  /**
+   * 从 localStorage 恢复数据
+   */
+  function restoreFromStorage() {
+    if (typeof window === 'undefined') return;
+    
+    isRestoring = true;
+    
+    try {
+      const data = persistenceUtils.load();
+      if (!data) {
+        isRestoring = false;
+        return;
+      }
+      
+      // 验证并过滤无效的标签页
+      const validTabs: ProcessItem[] = [];
+      const validPinned: string[] = [];
+      
+      // 验证标签页数据
+      data.list.forEach((tab) => {
+        // 基本验证：必须有 path 和 fullPath
+        if (tab && typeof tab === 'object' && tab.path && tab.fullPath) {
+          // 过滤掉不应该持久化的页面
+          if (
+            tab.path === '/profile' ||
+            tab.path === '/login' ||
+            tab.path === '/register' ||
+            tab.path === '/forget-password'
+          ) {
+            return;
+          }
+          
+          // 确保 meta 存在
+          if (!tab.meta) {
+            tab.meta = {};
+          }
+          
+          // 确保 app 字段存在
+          if (!tab.app) {
+            tab.app = getCurrentAppFromPath(tab.path);
+          }
+          
+          validTabs.push(tab);
+        }
+      });
+      
+      // 验证固定标签列表：只保留在有效标签中的固定标签
+      const validFullPaths = new Set(validTabs.map((tab) => tab.fullPath));
+      data.pinned.forEach((path) => {
+        if (typeof path === 'string' && validFullPaths.has(path)) {
+          validPinned.push(path);
+        }
+      });
+      
+      // 恢复数据
+      list.value = validTabs;
+      pinned.value = validPinned;
+      
+      // 重新排序（固定标签在前）
+      reorderTabs();
+      
+      // 根据当前路由设置 active 状态
+      // 注意：这里使用 pathname 匹配，因为 fullPath 可能包含 query 参数
+      // 路由守卫会在路由变化时通过 add() 方法更新 active 状态
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const currentFullPath = window.location.pathname + window.location.search;
+        
+        // 优先匹配 fullPath（包含 query），其次匹配 path
+        const currentTab = list.value.find((tab) => {
+          if (tab.fullPath === currentFullPath) return true;
+          if (tab.path === currentPath) return true;
+          // 如果 fullPath 不包含 query，也尝试匹配
+          if (tab.fullPath === currentPath) return true;
+          return false;
+        });
+        
+        if (currentTab) {
+          list.value.forEach((tab) => {
+            tab.active = tab.fullPath === currentTab.fullPath;
+          });
+        } else {
+          // 如果没有匹配的标签，将所有标签设为非激活状态
+          list.value.forEach((tab) => {
+            tab.active = false;
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('[Process] Failed to restore tabs from localStorage:', error);
+    } finally {
+      // 使用 nextTick 确保所有响应式更新完成后再清除恢复标志
+      nextTick(() => {
+        isRestoring = false;
+      });
+    }
+  }
+
+  /**
+   * 清除持久化数据
+   */
+  function clearPersistedData() {
+    persistenceUtils.clear();
+  }
+
+  // 监听 list 和 pinned 的变化，自动保存
+  watch(
+    [list, pinned],
+    () => {
+      saveToStorage();
+    },
+    { deep: true }
+  );
+
+  // 初始化时恢复数据
+  if (typeof window !== 'undefined') {
+    // 使用 nextTick 确保在 DOM 准备好后再恢复
+    nextTick(() => {
+      restoreFromStorage();
+    });
+  }
+
   return {
     list,
     pinned,
@@ -379,5 +610,7 @@ export const useProcessStore = defineStore('process', () => {
     clearCurrentApp,
     getAppTabs,
     setTitle,
+    restoreFromStorage,
+    clearPersistedData,
   };
 });

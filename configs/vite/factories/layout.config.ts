@@ -110,7 +110,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   const publicDir = getPublicDir(appName, appDir);
 
   // 扩展别名配置（布局应用特有）
-  const baseResolve = createBaseResolve(appDir, appName);
+  // 注意：baseResolve 在后面根据 mode 创建，这里只定义 layout 特有的别名
   const layoutAliases = {
     '@layout': resolve(appDir, 'src'),
     '@system': resolve(appDir, '../system-app/src'),
@@ -119,6 +119,8 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   };
 
   // 构建插件列表
+  // 关键：开发环境和预览环境必须禁用 CDN
+  const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
   const plugins: any[] = [
     // 1. 清理插件（在构建前清理 dist 目录，包括旧的 assets 和 assets/layout 目录）
     cleanDistPlugin(appDir),
@@ -197,9 +199,10 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     // 12. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
     // 12.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    // 关键：开发环境和预览环境必须禁用 CDN
     cdnAssetsPlugin({
       appName,
-      enabled: process.env.ENABLE_CDN_ACCELERATION !== 'false',
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
     }),
     // 15. 构建后清理插件：删除 .vite 目录（Vite 缓存目录不应出现在构建产物中）
     {
@@ -558,11 +561,17 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+  
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     host: appConfig.preHost,
     strictPort: true,
     open: false,
+    // 关键：设置预览服务器的根目录为 dist/{prodHost}
+    root: previewRoot,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,OPTIONS',
@@ -648,6 +657,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   };
 
   // 返回完整配置
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
+  const baseResolve = createBaseResolve(appDir, appName);
+  
   return {
     base: baseUrl,
     publicDir,

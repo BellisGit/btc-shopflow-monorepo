@@ -18,6 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
+// 使用相对路径导入，添加 .ts 扩展名以确保 esbuild 能正确解析
 import { createRollupConfig } from '../build/rollup.config.ts';
 import {
   cleanDistPlugin,

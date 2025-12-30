@@ -110,7 +110,8 @@ export function useTicketService() {
           total: total, // 直接返回 total，而不是嵌套在 pagination 中
         };
       } catch (error) {
-        console.error('[InventoryTicketPrint] Load data failed:', error);
+        // 响应拦截器已显示错误消息，不需要在控制台打印
+        // 如果响应拦截器没有显示消息（如网络错误），这里再显示一次
         BtcMessage.error(t('inventory.ticket.print.load_failed'));
         return { list: [], total: 0 };
       } finally {
@@ -154,7 +155,7 @@ export function useTicketService() {
         // 返回域列表
         return Array.from(domainMap.values());
       } catch (error) {
-        console.error('[InventoryTicketPrint] Failed to load domains from position service:', error);
+        // 响应拦截器已显示错误消息，不需要在控制台打印
         return [];
       }
     }

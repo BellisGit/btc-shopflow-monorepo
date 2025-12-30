@@ -4,7 +4,7 @@
  */
 
 import { getAllApps, getAppById } from './app-scanner';
-import { getAllDevPorts, getAllPrePorts, getAppConfig } from './app-env.config';
+import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort } from './app-env.config';
 
 export type Environment = 'development' | 'preview' | 'production';
 export type ConfigScheme = 'default' | 'custom'; // 可以通过 .env 切换
@@ -368,7 +368,26 @@ export function isMainApp(
     return true;
   }
 
-  // 开发/预览环境：通过路径判断（基于应用身份配置）
+  // 预览环境：通过端口判断（类似生产环境通过子域名判断）
+  // 预览环境中，每个应用都有独立的端口（如 admin-app 在 4181），访问该端口时应该识别为对应的子应用
+  if (env === 'preview') {
+    const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+    if (port) {
+      const appConfig = getAppConfigByPrePort(port);
+      if (appConfig) {
+        // 通过端口找到对应的应用配置，然后通过应用名称找到应用身份
+        const appName = appConfig.appName.replace('-app', '');
+        const app = getAllApps().find(a => a.id === appName);
+        if (app && app.type === 'sub') {
+          return false;
+        }
+      }
+    }
+    // 预览环境主应用端口（4180）或其他未匹配的端口，判断为主应用
+    return true;
+  }
+
+  // 开发环境：通过路径判断（基于应用身份配置）
   // 关键：在开发环境中，所有应用都使用同一个端口（8080），所以只能通过路径前缀判断
   // 主应用路径：/data/...、/profile 等
   // 子应用路径：/logistics/...、/admin/... 等
@@ -432,6 +451,7 @@ export function getCurrentSubApp(): string | null {
   const env = getEnvironment();
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const port = typeof window !== 'undefined' ? window.location.port || '' : '';
 
   // 生产环境：通过子域名判断（优先级最高）
   if (env === 'production' && hostname) {
@@ -443,7 +463,23 @@ export function getCurrentSubApp(): string | null {
     return null;
   }
 
-  // 开发/预览环境：通过路径判断（与 isMainApp 使用相同的匹配逻辑）
+  // 预览环境：通过端口判断（类似生产环境通过子域名判断）
+  // 预览环境中，每个应用都有独立的端口（如 admin-app 在 4181），访问该端口时应该识别为对应的子应用
+  if (env === 'preview' && port) {
+    const appConfig = getAppConfigByPrePort(port);
+    if (appConfig) {
+      // 通过端口找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub' && app.enabled) {
+        return app.id;
+      }
+    }
+    // 预览环境主应用端口（4180）或其他未匹配的端口，返回 null
+    return null;
+  }
+
+  // 开发环境：通过路径判断（与 isMainApp 使用相同的匹配逻辑）
   const apps = getAllApps();
 
   for (const app of apps) {

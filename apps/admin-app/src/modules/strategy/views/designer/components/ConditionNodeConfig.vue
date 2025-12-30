@@ -67,8 +67,8 @@
               v-model="condition.logicalOperator"
               @change="emitUpdate"
             >
-              <el-radio label="AND">且</el-radio>
-              <el-radio label="OR">或</el-radio>
+              <el-radio value="AND">且</el-radio>
+              <el-radio value="OR">或</el-radio>
             </el-radio-group>
           </btc-config-form-item>
         </btc-config-form>

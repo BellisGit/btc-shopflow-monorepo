@@ -197,7 +197,6 @@ watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
   if (newAvatar !== oldAvatar && newAvatar) {
     avatarLoadError.value = false;
     errorHandled.value = false;
-    console.log('[UserInfo] 头像 URL 已更新，重置错误状态:', newAvatar);
   }
 });
 

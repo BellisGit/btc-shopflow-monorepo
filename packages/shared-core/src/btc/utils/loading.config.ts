@@ -23,16 +23,16 @@ export const LOADING_Z_INDEX = {
  * 超时时间定义（毫秒）
  */
 export const LOADING_TIMEOUT = {
-  /** 全局根级 loading 超时时间（30秒） */
-  ROOT: 30000,
-  /** 应用级 loading 超时时间（15秒） */
-  APP: 15000,
-  /** 路由级 loading 超时时间（5秒） */
-  ROUTE: 5000,
-  /** 操作级 loading 超时时间（5秒） */
-  OPERATION: 5000,
-  /** 组件级 loading 超时时间（5秒） */
-  COMPONENT: 5000,
+  /** 全局根级 loading 超时时间（10秒） */
+  ROOT: 10000,
+  /** 应用级 loading 超时时间（10秒） */
+  APP: 10000,
+  /** 路由级 loading 超时时间（10秒） */
+  ROUTE: 10000,
+  /** 操作级 loading 超时时间（10秒） */
+  OPERATION: 10000,
+  /** 组件级 loading 超时时间（10秒） */
+  COMPONENT: 10000,
 } as const;
 
 /**

@@ -81,37 +81,84 @@ import img21Jpg from '@/assets/images/21.jpg';
 import img22Png from '@/assets/images/22.png';
 import img23Jpg from '@/assets/images/23.jpg';
 
-// 图片加载策略：优先使用 WebP（体积更小），失败后降级到 JPG/PNG，最后降级到 CDN
+// 图片加载策略：
+// 开发环境：优先使用本地 WebP，失败后降级到 JPG/PNG
+// 生产环境：直接使用 CDN 图片（WebP 格式）
+
+import { getCdnFallbackUrl } from '@/utils/image-optimizer';
 
 defineOptions({
   name: 'NewsPage',
 });
 
-// 照片数据（优先使用 WebP，降级到 JPG/PNG，最后降级到 CDN）
-const galleryItems = ref<MasonryItem[]>([
-  { id: 1, src: img1WebP, alt: '图片1', fallback: img1Jpg },
-  { id: 2, src: img2WebP, alt: '图片2', fallback: img2Jpg },
-  { id: 3, src: img3WebP, alt: '图片3', fallback: img3Png },
-  { id: 5, src: img5WebP, alt: '图片5', fallback: img5Jpg },
-  { id: 6, src: img6WebP, alt: '图片6', fallback: img6Png },
-  { id: 7, src: img7WebP, alt: '图片7', fallback: img7Jpg },
-  { id: 8, src: img8WebP, alt: '图片8', fallback: img8Jpg },
-  { id: 9, src: img9WebP, alt: '图片9', fallback: img9Jpg },
-  { id: 10, src: img10WebP, alt: '图片10', fallback: img10Jpg },
-  { id: 11, src: img11WebP, alt: '图片11', fallback: img11Png },
-  { id: 12, src: img12WebP, alt: '图片12', fallback: img12Png },
-  { id: 13, src: img13WebP, alt: '图片13', fallback: img13Jpg },
-  { id: 14, src: img14WebP, alt: '图片14', fallback: img14Png },
-  { id: 15, src: img15WebP, alt: '图片15', fallback: img15Png },
-  { id: 16, src: img16WebP, alt: '图片16', fallback: img16Jpg },
-  { id: 17, src: img17WebP, alt: '图片17', fallback: img17Jpg },
-  { id: 18, src: img18WebP, alt: '图片18', fallback: img18Jpg },
-  { id: 19, src: img19WebP, alt: '图片19', fallback: img19Jpg },
-  { id: 20, src: img20WebP, alt: '图片20', fallback: img20Jpg },
-  { id: 21, src: img21WebP, alt: '图片21', fallback: img21Jpg },
-  { id: 22, src: img22WebP, alt: '图片22', fallback: img22Png },
-  { id: 23, src: img23WebP, alt: '图片23', fallback: img23Jpg },
-]);
+// 判断是否是生产环境
+const isProduction = import.meta.env.PROD;
+
+// 生成图片数据
+// 生产环境：直接使用 CDN URL
+// 开发环境：使用本地导入的图片
+const generateImageItem = (id: number, webpPath: any, fallbackPath: any, alt: string, isPng: boolean = false): MasonryItem => {
+  if (isProduction) {
+    // 生产环境：直接使用 CDN
+    // 使用 getCdnFallbackUrl 构建 CDN URL，确保路径一致
+    // WebP 文件：https://all.bellis.com.cn/images/webp/21.webp
+    // JPG/PNG 文件：https://all.bellis.com.cn/images/21.jpg 或 21.png
+    const extension = isPng ? 'png' : 'jpg';
+    const cdnWebpUrl = getCdnFallbackUrl(`/images/webp/${id}.webp`);
+    const cdnFallbackUrl = getCdnFallbackUrl(`/images/${id}.${extension}`);
+    
+    return {
+      id,
+      src: cdnWebpUrl,
+      alt,
+      fallback: cdnFallbackUrl,
+    };
+  } else {
+    // 开发环境：使用本地导入的图片
+    return {
+      id,
+      src: webpPath,
+      alt,
+      fallback: fallbackPath,
+    };
+  }
+};
+
+// 照片数据
+// 关键：使用 Set 去重，确保每个图片只显示一次（根据 id 去重）
+const allItems: MasonryItem[] = [
+  generateImageItem(1, img1WebP, img1Jpg, '图片1', false),
+  generateImageItem(2, img2WebP, img2Jpg, '图片2', false),
+  generateImageItem(3, img3WebP, img3Png, '图片3', true),
+  generateImageItem(5, img5WebP, img5Jpg, '图片5', false),
+  generateImageItem(6, img6WebP, img6Png, '图片6', true),
+  generateImageItem(7, img7WebP, img7Jpg, '图片7', false),
+  generateImageItem(8, img8WebP, img8Jpg, '图片8', false),
+  generateImageItem(9, img9WebP, img9Jpg, '图片9', false),
+  generateImageItem(10, img10WebP, img10Jpg, '图片10', false),
+  generateImageItem(11, img11WebP, img11Png, '图片11', true),
+  generateImageItem(12, img12WebP, img12Png, '图片12', true),
+  generateImageItem(13, img13WebP, img13Jpg, '图片13', false),
+  generateImageItem(14, img14WebP, img14Png, '图片14', true),
+  generateImageItem(15, img15WebP, img15Png, '图片15', true),
+  generateImageItem(16, img16WebP, img16Jpg, '图片16', false),
+  generateImageItem(17, img17WebP, img17Jpg, '图片17', false),
+  generateImageItem(18, img18WebP, img18Jpg, '图片18', false),
+  generateImageItem(19, img19WebP, img19Jpg, '图片19', false),
+  generateImageItem(20, img20WebP, img20Jpg, '图片20', false),
+  generateImageItem(21, img21WebP, img21Jpg, '图片21', false),
+  generateImageItem(22, img22WebP, img22Png, '图片22', true),
+  generateImageItem(23, img23WebP, img23Jpg, '图片23', false),
+];
+
+// 去重：根据图片编号（id）去重，确保webp和jpg/png作为同一张图片的不同格式不会重复显示
+// 关键：webp和jpg/png是同一张图片的不同格式，应该根据id去重，而不是根据src路径
+const uniqueItems = allItems.filter((item, index, self) => {
+  // 根据id去重，如果id相同，只保留第一个出现的项
+  return index === self.findIndex((i) => i.id === item.id);
+});
+
+const galleryItems = ref<MasonryItem[]>(uniqueItems);
 
 const handleGalleryItemClick = () => {
   // 图片预览功能由组件内部处理

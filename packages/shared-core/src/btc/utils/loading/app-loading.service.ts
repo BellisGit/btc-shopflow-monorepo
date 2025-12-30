@@ -15,6 +15,7 @@ interface AppLoadingInstance {
   skeletonElement: HTMLElement | null;
   timeoutId: ReturnType<typeof setTimeout> | null;
   isVisible: boolean;
+  showTime: number; // 显示时间戳
 }
 
 type LoadingStyle = 'circle' | 'dots';
@@ -394,6 +395,7 @@ class AppLoadingService {
         skeletonElement: null,
         timeoutId: null,
         isVisible: false,
+        showTime: 0,
       };
       this.instances.set(instanceKey, instance);
     } else {
@@ -409,6 +411,10 @@ class AppLoadingService {
       instance.timeoutId = null;
     }
 
+    // 记录显示时间戳
+    const showTime = Date.now();
+    instance.showTime = showTime;
+    
     // 优先使用骨架屏
     const skeleton = this.findOrCreateSkeleton(instance.container);
     if (skeleton) {
@@ -441,9 +447,8 @@ class AppLoadingService {
       instance.isVisible = true;
     }
 
-    // 设置超时关闭（15秒）
+    // 设置超时关闭（10秒）
     instance.timeoutId = setTimeout(() => {
-      console.warn(`[AppLoadingService] 应用 ${appDisplayName} loading 超时自动关闭（15秒）`);
       this.hide(appDisplayName);
     }, LOADING_TIMEOUT.APP);
   }
@@ -453,10 +458,37 @@ class AppLoadingService {
    * @param appDisplayName 应用显示名称（如"财务模块"）
    */
   hide(appDisplayName: string): void {
+    const hideTime = Date.now();
+    
     const instance = this.instances.get(appDisplayName);
-    if (!instance || !instance.isVisible) {
+    
+    // 如果实例不存在，尝试通过 DOM 直接查找并关闭所有 .app-loading 元素（兜底方案）
+    if (!instance) {
+      // 查找所有 .app-loading 元素并强制关闭
+      const loadingEls = document.querySelectorAll('.app-loading');
+      loadingEls.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+          setTimeout(() => {
+            if (el.parentNode) {
+              el.parentNode.removeChild(el);
+            }
+          }, 100);
+        }
+      });
       return;
     }
+
+    // 如果实例存在但不可见，直接返回（不重复隐藏）
+    if (!instance.isVisible) {
+      return;
+    }
+
+    // 计算持续时间
+    const duration = instance.showTime > 0 ? hideTime - instance.showTime : 0;
 
     // 清除超时定时器
     if (instance.timeoutId) {
@@ -471,21 +503,35 @@ class AppLoadingService {
       instance.skeletonElement.style.setProperty('opacity', '0', 'important');
     }
 
-    // 隐藏 loading 元素
+    // 隐藏 loading 元素（强制关闭，确保移除）
     if (instance.loadingElement) {
+      instance.loadingElement.style.setProperty('display', 'none', 'important');
+      instance.loadingElement.style.setProperty('visibility', 'hidden', 'important');
       instance.loadingElement.style.setProperty('opacity', '0', 'important');
       instance.loadingElement.style.setProperty('pointer-events', 'none', 'important');
       
-      // 延迟移除 DOM 元素（确保动画完成）
-      setTimeout(() => {
-        if (instance.loadingElement && instance.loadingElement.parentNode) {
+      // 立即移除 DOM 元素（不等待动画，确保强制关闭）
+      try {
+        if (instance.loadingElement.parentNode) {
           instance.loadingElement.parentNode.removeChild(instance.loadingElement);
         }
-        instance.loadingElement = null;
-      }, 300);
+      } catch (e) {
+        // 如果移除失败，尝试延迟移除
+        setTimeout(() => {
+          if (instance.loadingElement && instance.loadingElement.parentNode) {
+            try {
+              instance.loadingElement.parentNode.removeChild(instance.loadingElement);
+            } catch (err) {
+              // 忽略移除错误
+            }
+          }
+        }, 100);
+      }
+      instance.loadingElement = null;
     }
 
     instance.isVisible = false;
+    instance.showTime = 0;
   }
 
   /**

@@ -91,17 +91,31 @@ export function setCookie(
   // 确定 domain：优先使用 options.domain，否则使用自动检测的 domain
   const domain = options?.domain ?? getCookieDomain();
   
+  // 跟踪是否设置了 SameSite=None（无论是明确指定还是自动添加）
+  let hasSameSiteNone = false;
+  
   if (options?.sameSite) {
     if (options.sameSite === 'None' && !isHttps) {
       // 不设置 SameSite，让浏览器使用默认值
     } else {
       cookieString += `; SameSite=${options.sameSite}`;
+      if (options.sameSite === 'None') {
+        hasSameSiteNone = true;
+      }
     }
   } else if (isHttps) {
     cookieString += '; SameSite=None';
+    hasSameSiteNone = true;
   }
 
-  if (isHttps && options?.secure) {
+  // 添加 Secure 属性
+  // 关键：如果设置了 SameSite=None，必须同时设置 Secure（浏览器要求）
+  // 如果设置了 SameSite=None，必须在 HTTPS 环境下设置 Secure
+  if (hasSameSiteNone && isHttps) {
+    // SameSite=None 必须配合 Secure，且只能在 HTTPS 环境下使用
+    cookieString += '; Secure';
+  } else if (isHttps && options?.secure) {
+    // 其他情况下，如果明确指定了 secure，也设置 Secure
     cookieString += '; Secure';
   }
 

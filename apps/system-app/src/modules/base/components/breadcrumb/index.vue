@@ -222,6 +222,26 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.data.files', icon: 'Document' },
       { i18nKey: 'menu.data.files.templates', icon: 'Files' },
     ],
+    '/admin/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.fields', icon: 'Document' },
+    ],
+    '/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.fields', icon: 'Document' },
+    ],
+    '/admin/governance/dictionary/values': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.values', icon: 'List' },
+    ],
+    '/governance/dictionary/values': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.values', icon: 'List' },
+    ],
     // 测试功能
     '/admin/test/components': [
       { i18nKey: 'menu.test_features', icon: 'Coin' },

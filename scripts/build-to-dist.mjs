@@ -240,14 +240,18 @@ function buildApp(appName) {
     // 关键：强制在应用目录执行构建，避免 pnpm --filter 在某些环境下未切到包目录，
     // 导致 dist 输出位置不确定（进而 copy 阶段找不到 apps/<app>/dist）。
     const appDir = join(rootDir, 'apps', appName);
+    // 关键：build-dist 命令必须禁用 CDN，确保构建产物不包含 CDN URL
     execSync('pnpm build', {
       cwd: appDir,
         stdio: 'inherit',
         env: { 
           ...process.env, 
           BTC_BUILD_TIMESTAMP: process.env.BTC_BUILD_TIMESTAMP,
+          // 关键：明确禁用 CDN 加速和上传
           ENABLE_CDN_ACCELERATION: 'false',
           ENABLE_CDN_UPLOAD: 'false',
+          // 确保不是预览构建（预览构建有特殊处理）
+          VITE_PREVIEW: undefined,
         },
       });
     
@@ -1473,13 +1477,17 @@ function main() {
   
   try {
     const turboScript = join(rootDir, 'scripts', 'turbo.js');
+    // 关键：build-dist 命令必须禁用 CDN，确保构建产物不包含 CDN URL
     execSync(`node ${turboScript} run build --force --no-cache --filter=@btc/vite-plugin --filter=@btc/shared-utils --filter=@btc/shared-core --filter=@btc/shared-components --filter=@btc/subapp-manifests`, {
       cwd: rootDir,
       stdio: 'inherit',
       env: {
         ...process.env,
+        // 关键：明确禁用 CDN 加速和上传
         ENABLE_CDN_ACCELERATION: 'false',
         ENABLE_CDN_UPLOAD: 'false',
+        // 确保不是预览构建
+        VITE_PREVIEW: undefined,
       },
     });
     console.log('  ✅ 共享包构建完成\n');

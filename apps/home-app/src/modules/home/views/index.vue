@@ -150,23 +150,27 @@ defineOptions({
   name: 'HomePage',
 });
 
-// 导入封面图（优先使用 WebP，降级到 PNG）
+// 导入封面图（开发环境使用，生产环境使用 CDN）
 import videoPosterWebP from '@/assets/webp/22.webp';
 import videoPosterPng from '@/assets/images/22.png';
+
+// 判断是否是生产环境
+const isProduction = import.meta.env.PROD;
 
 // 视频始终使用 CDN 版本（不参与构建）
 const videoSrc = getCdnVideoUrl('automation_area_web.mp4');
 
 // WebP 支持检测（缓存结果）
 const supportsWebP = ref(false);
-onMounted(() => {
-  supportsWebP.value = checkWebPSupport();
-  // 根据 WebP 支持情况设置封面图
-  videoPoster.value = supportsWebP.value ? videoPosterWebP : videoPosterPng;
-});
+
+// 封面图 CDN URL（生产环境使用）
+const CDN_BASE_URL = 'https://all.bellis.com.cn';
+const cdnPosterWebP = `${CDN_BASE_URL}/images/webp/22.webp`;
+const cdnPosterPng = `${CDN_BASE_URL}/images/22.png`;
+
 
 // 封面图（使用 ref，支持动态切换）
-const videoPoster = ref(videoPosterPng); // 默认使用 PNG，mounted 后根据支持情况切换
+const videoPoster = ref(isProduction ? cdnPosterPng : videoPosterPng); // 默认值根据环境设置
 
 // 产品图片加载错误处理（多级降级：WebP -> PNG -> CDN）
 const handleProductImageError = (event: Event, currentSrc: string) => {
@@ -198,10 +202,13 @@ const videoSrcRef = ref(videoSrc);
 const preloadHeroPoster = () => {
   if (typeof window === 'undefined') return;
 
-  // 优先加载 WebP 格式
-  const posterUrl = supportsWebP.value ? videoPosterWebP : videoPosterPng;
+  // 根据环境选择图片 URL
+  const posterUrl = isProduction
+    ? (supportsWebP.value ? cdnPosterWebP : cdnPosterPng)
+    : (supportsWebP.value ? videoPosterWebP : videoPosterPng);
 
-  // 方法1: 使用 link preload（最高优先级，浏览器会优先下载）
+  // 使用 link preload（最高优先级，浏览器会优先下载）
+  // 注意：video 标签的 poster 属性会自动使用预加载的资源，无需重复请求
   const existingLink = document.querySelector(`link[href="${posterUrl}"]`);
   if (!existingLink) {
     const link = document.createElement('link');
@@ -212,28 +219,24 @@ const preloadHeroPoster = () => {
     document.head.appendChild(link);
   }
 
-  // 方法2: 使用 Image 对象预加载（确保图片缓存到内存）
-  const img = new Image();
-  img.src = posterUrl;
-  img.loading = 'eager';
-  img.decoding = 'sync';
+  // 如果支持 WebP 且当前使用 WebP，预加载 PNG 作为后备
+  // 注意：这里只预加载，不设置错误处理，因为 video 标签会自动降级
+  if (supportsWebP.value) {
+    const webpUrl = isProduction ? cdnPosterWebP : videoPosterWebP;
+    const pngUrl = isProduction ? cdnPosterPng : videoPosterPng;
 
-  // 如果 WebP 加载失败，降级到 PNG
-  if (supportsWebP.value && posterUrl === videoPosterWebP) {
-    img.onerror = () => {
-      const fallbackImg = new Image();
-      fallbackImg.src = videoPosterPng;
-      fallbackImg.loading = 'eager';
-      fallbackImg.decoding = 'sync';
-
-      // 如果 PNG 也失败，降级到 CDN
-      fallbackImg.onerror = () => {
-        const cdnImg = new Image();
-        cdnImg.src = 'https://all.bellis.com.cn/22.png';
-        cdnImg.loading = 'eager';
-        cdnImg.decoding = 'sync';
-      };
-    };
+    if (posterUrl === webpUrl) {
+      // 预加载 PNG 后备图片（使用较低的优先级，避免干扰 WebP 加载）
+      const existingPngLink = document.querySelector(`link[href="${pngUrl}"]`);
+      if (!existingPngLink) {
+        const pngLink = document.createElement('link');
+        pngLink.rel = 'preload';
+        pngLink.as = 'image';
+        pngLink.href = pngUrl;
+        pngLink.setAttribute('fetchpriority', 'low');
+        document.head.appendChild(pngLink);
+      }
+    }
   }
 };
 
@@ -505,6 +508,17 @@ let scrollHandlerRef: (() => void) | null = null;
 let resizeHandlerRef: (() => void) | null = null;
 
 onMounted(async () => {
+  // 检测 WebP 支持并设置封面图
+  supportsWebP.value = checkWebPSupport();
+  // 根据环境和支持情况设置封面图
+  if (isProduction) {
+    // 生产环境：使用 CDN
+    videoPoster.value = supportsWebP.value ? cdnPosterWebP : cdnPosterPng;
+  } else {
+    // 开发环境：使用本地导入的图片
+    videoPoster.value = supportsWebP.value ? videoPosterWebP : videoPosterPng;
+  }
+
   // 预加载首屏封面图（关键资源，优先加载）
   preloadHeroPoster();
 

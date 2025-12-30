@@ -57,9 +57,9 @@
             @toggle-fullscreen="toggleFullscreen"
           />
 
-          <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
+          <!-- 面包屑：使用 v-show 避免刷新时闪烁 -->
           <Breadcrumb
-            v-if="showBreadcrumb && showCrumbs"
+            v-show="showBreadcrumb && showCrumbs"
           />
         </div>
 
@@ -250,7 +250,18 @@ const isHomePage = computed(() => {
 
 // 判断是否显示面包屑
 const showBreadcrumb = computed(() => {
-  const path = route.path;
+  // 关键：优先使用 window.location.pathname，因为它不受路由初始化时机影响
+  // 在页面刷新时，window.location.pathname 已经有正确的值，而 route.path 可能还在初始化
+  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const routePath = route?.path;
+  
+  // 优先使用 locationPath，如果不存在则使用 routePath
+  const path = locationPath || routePath;
+  
+  if (!path) {
+    // 如果 path 还没有初始化，默认显示面包屑（后续会根据实际路径更新）
+    return true;
+  }
 
   // 任意应用首页不显示
   if (isHomePage.value) {

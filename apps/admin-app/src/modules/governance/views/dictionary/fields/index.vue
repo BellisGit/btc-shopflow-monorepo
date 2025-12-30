@@ -6,9 +6,10 @@
       :right-service="wrappedFieldService"
       :table-columns="fieldColumns"
       :form-items="fieldFormItems"
-      :op="{ buttons: ['custom'] }"
+      :op="opConfig"
       :show-add-btn="false"
       :show-multi-delete-btn="false"
+      :show-create-time="false"
       :left-title="t('menu.access.resources')"
       :right-title="t('data.dictionary.field.list')"
       :search-placeholder="t('data.dictionary.field.search_placeholder')"
@@ -20,16 +21,6 @@
       @select="onResourceSelect"
       @form-submit="handleFormSubmit"
     >
-      <template #slot-custom="{ scope }">
-        <el-button
-          link
-          type="warning"
-          @click="goToDictionaryValues(scope.row)"
-        >
-          <BtcSvg class="btc-crud-btn__icon" name="dict" />
-          {{ t('data.dictionary.actions.manage_values') }}
-        </el-button>
-      </template>
     </BtcTableGroup>
   </div>
 </template>
@@ -41,7 +32,6 @@ import { useMessage } from '@/utils/use-message';
 import { useI18n } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -67,7 +57,44 @@ const fieldService = service.admin?.dict?.info;
 
 const wrappedFieldService = {
   ...fieldService,
+  // 自定义 page 方法，简化 keyword 对象，只保留 entityClass
+  page: async (params: any) => {
+    // 获取当前选中的资源
+    const currentResource = selectedResource.value || tableGroupRef.value?.viewGroupRef?.selectedItem;
+
+    // 保留原有参数结构，但简化 keyword 对象
+    const simplifiedParams: any = {
+      page: params.page || 1,
+      size: params.size || 20,
+    };
+
+    // 如果有选中的资源，在 keyword 中只保留 entityClass（使用 resourceCode）
+    if (currentResource && currentResource.resourceCode) {
+      simplifiedParams.keyword = {
+        entityClass: currentResource.resourceCode
+      };
+    }
+
+    // 调用原始的 page 方法
+    if (fieldService?.page) {
+      return fieldService.page(simplifiedParams);
+    }
+
+    return { list: [], total: 0 };
+  },
 };
+
+// 操作按钮配置
+const opConfig = computed(() => ({
+  buttons: [
+    {
+      label: t('common.button.detail'),
+      type: 'warning',
+      icon: 'dict',
+      onClick: ({ scope }: { scope: any }) => goToDictionaryValues(scope.row),
+    },
+  ],
+}));
 
 // 资源选择处理
 const onResourceSelect = (resource: any) => {
@@ -109,11 +136,8 @@ const goToDictionaryValues = (field: any) => {
 // 字段表格列
 const fieldColumns = computed<TableColumn[]>(() => [
   { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'dictCode', label: t('data.dictionary.field.code'), minWidth: 150 },
-  { prop: 'dictName', label: t('data.dictionary.field.name'), minWidth: 150 },
   { prop: 'entityClass', label: t('data.dictionary.field.entity_class'), minWidth: 180 },
   { prop: 'fieldName', label: t('data.dictionary.field.field_name'), minWidth: 150 },
-  { prop: 'remark', label: t('data.dictionary.field.remark'), minWidth: 200 },
 ]);
 
 // 字段表单
@@ -122,20 +146,6 @@ const fieldFormItems = computed<FormItem[]>(() => {
     (tableGroupRef.value?.viewGroupRef?.selectedItem);
 
   return [
-    {
-      prop: 'dictCode',
-      label: t('data.dictionary.field.code'),
-      span: 12,
-      required: true,
-      component: { name: 'el-input' }
-    },
-    {
-      prop: 'dictName',
-      label: t('data.dictionary.field.name'),
-      span: 12,
-      required: true,
-      component: { name: 'el-input' }
-    },
     {
       prop: 'entityClass',
       label: t('data.dictionary.field.entity_class'),
@@ -160,12 +170,6 @@ const fieldFormItems = computed<FormItem[]>(() => {
           placeholder: currentResource?.id ? currentResource.id : t('data.dictionary.field.domain_select_required')
         }
       }
-    },
-    {
-      prop: 'remark',
-      label: t('data.dictionary.field.remark'),
-      span: 24,
-      component: { name: 'el-input', props: { type: 'textarea', rows: 3 } }
     },
   ];
 });

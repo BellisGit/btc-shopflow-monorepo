@@ -88,6 +88,29 @@
 	flex: 1; // 页面组件根元素需要占据完整高度
 }
 
+// 关键：确保子应用挂载点（#subapp-viewport）内的内容能够正确填充高度
+// 子应用内容直接挂载在 #subapp-viewport 中，不经过 router-view
+.app-layout__content > #subapp-viewport {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	flex: 1; // 子应用挂载点需要占据完整高度
+
+	// 确保子应用内容根元素能够正确填充高度
+	> * {
+		height: 100%;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+		flex: 1; // 子应用内容根元素需要占据完整高度
+	}
+}
+
 // 确保 btc-table-group 和 btc-views-group 能正确继承父容器高度
 .btc-table-group,
 .btc-views-tabs-group,
@@ -207,6 +230,12 @@
 
 		.btc-crud-btn__icon {
 			font-size: 14px;
+		}
+
+		.btc-crud-btn__text {
+			display: inline;
+			align-items: unset;
+			gap: 0;
 		}
 	}
 
@@ -1372,6 +1401,44 @@ body.theme-brand-red {
 
   &--hidden {
     display: none !important;
+  }
+}
+
+// 关键：确保同时存在多个 content-mount 容器时，隐藏的容器不占用空间
+// 这可以防止在生产环境中由于竞态条件导致两个容器同时存在时，第一个容器占用空间
+.app-layout__content {
+  // 关键修复：如果子应用容器（#subapp-viewport）存在，隐藏所有主应用容器
+  // 使用通用兄弟选择器（最兼容的方案）
+  // 注意：CSS 无法选择前面的兄弟元素，所以我们需要确保主应用容器为空时不占用空间
+  #subapp-viewport {
+    // 如果子应用容器存在，隐藏后面的主应用容器（虽然不应该存在）
+    & ~ .content-mount--main-app {
+      display: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      visibility: hidden !important;
+    }
+  }
+
+  // 关键修复：如果主应用容器为空（只有注释），不占用空间
+  // 这可以防止在生产环境中由于竞态条件导致两个容器同时存在时，第一个容器占用空间
+  > .content-mount--main-app:empty,
+  > .content-mount--main-app:only-child:empty {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    visibility: hidden !important;
+  }
+
+  // 关键修复：如果主应用容器后面有子应用容器，隐藏主应用容器
+  // 使用相邻兄弟选择器（最兼容的方案）
+  > .content-mount--main-app + #subapp-viewport {
+    // 前面的主应用容器应该被隐藏（通过 JavaScript 或确保 v-if 正确）
+    // CSS 无法直接选择前面的兄弟元素，所以这个规则只是标记
   }
 }
 

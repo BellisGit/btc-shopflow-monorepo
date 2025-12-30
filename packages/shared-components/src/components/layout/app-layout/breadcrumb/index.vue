@@ -99,7 +99,12 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     return [];
   }
 
-  const normalizedPath = route.path.replace(/\/+$/, '') || '/';
+  // 关键：优先使用 window.location.pathname，因为它不受路由初始化时机影响
+  // 在页面刷新时，window.location.pathname 已经有正确的值，而 route.path 可能还在初始化
+  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const routePath = route?.path || '';
+  const pathToUse = locationPath || routePath;
+  const normalizedPath = pathToUse.replace(/\/+$/, '') || '/';
 
   // 生产环境子域名判断：路径为 / 且当前应用是子应用（双重保险，即使 showBreadcrumb 判断失败也能保证不显示内容）
   if (normalizedPath === '/' && typeof window !== 'undefined') {
@@ -141,7 +146,7 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       return [];
     }
 
-    const normalizedPath = route.path.replace(/\/+$/, '') || '/';
+    // 使用外部已经计算好的 normalizedPath，确保路径一致性
     const currentApp = getCurrentAppFromPath(normalizedPath);
 
     return entries
@@ -381,12 +386,24 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 
   // 获取面包屑数据
-  // 生产环境下路径没有 /admin 前缀（如 /platform/domains），直接匹配
+  // 生产环境下路径没有 /admin 前缀（如 /platform/domains），开发环境有 /admin 前缀
   let breadcrumbData: BreadcrumbConfig[] | undefined;
 
   // 优先使用识别到的应用类型
   if (currentApp === 'admin') {
+    // 先尝试直接匹配（开发环境路径，如 /admin/governance/dictionary/fields）
     breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+
+    // 如果没匹配到，尝试去掉 /admin 前缀后再匹配（处理开发环境和生产环境的路径差异）
+    if (!breadcrumbData && normalizedPath.startsWith('/admin/')) {
+      const pathWithoutAdmin = normalizedPath.substring('/admin'.length) || '/';
+      breadcrumbData = adminAppBreadcrumbs[pathWithoutAdmin];
+    }
+
+    // 如果还没匹配到，尝试添加 /admin 前缀后再匹配（处理生产环境路径）
+    if (!breadcrumbData && !normalizedPath.startsWith('/admin')) {
+      breadcrumbData = adminAppBreadcrumbs[`/admin${normalizedPath}`];
+    }
   } else if (currentApp && subAppBreadcrumbs[currentApp]) {
     // 先尝试直接匹配
     breadcrumbData = subAppBreadcrumbs[currentApp][normalizedPath];

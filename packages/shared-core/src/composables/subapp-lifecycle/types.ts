@@ -10,6 +10,7 @@ export type CleanupListener = [event: string, handler: EventListener];
 export interface CleanupState {
   routerAfterEach?: () => void;
   listeners: CleanupListener[];
+  historyPatches?: () => void;
 }
 
 export interface SubAppContext {

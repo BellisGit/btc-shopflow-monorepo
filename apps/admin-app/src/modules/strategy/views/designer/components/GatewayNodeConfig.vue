@@ -55,9 +55,9 @@
 
       <btc-config-form-item label="失败处理" prop="failureHandling">
         <el-radio-group v-model="configForm.failureHandling" @change="emitUpdate">
-          <el-radio label="continue">继续执行</el-radio>
-          <el-radio label="stop">停止执行</el-radio>
-          <el-radio label="retry">重试</el-radio>
+          <el-radio value="continue">继续执行</el-radio>
+          <el-radio value="stop">停止执行</el-radio>
+          <el-radio value="retry">重试</el-radio>
         </el-radio-group>
       </btc-config-form-item>
 

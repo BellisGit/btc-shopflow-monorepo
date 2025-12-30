@@ -19,10 +19,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
+import { useLogout } from '@/composables/useLogout';
 
 defineOptions({
   name: 'LogisticsApp',
 });
+
+// 关键：在应用启动时立即初始化通信桥和登出监听
+useLogout();
 
 const viewKey = ref(1);
 // 关键：在 layout-app 环境下，isStandalone 应该是 false

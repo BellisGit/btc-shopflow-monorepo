@@ -57,6 +57,7 @@ export function useCanvasDimensions() {
 
   // 监听窗口大小变化
   let resizeObserver: ResizeObserver | null = null;
+  let rafId: number | null = null;
 
   onMounted(async () => {
     // 等待 DOM 完全渲染后再计算尺寸，确保能正确获取容器尺寸
@@ -70,7 +71,15 @@ export function useCanvasDimensions() {
     
     if (container) {
       resizeObserver = new ResizeObserver(() => {
-        updateCanvasDimensions();
+        // 使用 requestAnimationFrame 延迟执行，避免在 ResizeObserver 回调中同步修改 DOM
+        // 这样可以避免 ResizeObserver loop 警告
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+        rafId = requestAnimationFrame(() => {
+          updateCanvasDimensions();
+          rafId = null;
+        });
       });
       resizeObserver.observe(container);
     }
@@ -80,6 +89,10 @@ export function useCanvasDimensions() {
   });
 
   onUnmounted(() => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
     if (resizeObserver) {
       resizeObserver.disconnect();
     }

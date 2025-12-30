@@ -312,11 +312,23 @@ const detectCurrentApp = () => {
     'production.bellis.com.cn': 'production',
     'engineering.bellis.com.cn': 'engineering',
     'finance.bellis.com.cn': 'finance',
+    'dashboard.bellis.com.cn': 'dashboard',
+    'personnel.bellis.com.cn': 'personnel',
   };
 
   // 运维应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
   if (isProductionSubdomain && hostname === 'operations.bellis.com.cn') {
     currentApp.value = 'operations';
+    return;
+  }
+
+  // 看板和人事应用在生产环境子域名下的处理
+  if (isProductionSubdomain && hostname === 'dashboard.bellis.com.cn') {
+    currentApp.value = 'dashboard';
+    return;
+  }
+  if (isProductionSubdomain && hostname === 'personnel.bellis.com.cn') {
+    currentApp.value = 'personnel';
     return;
   }
 
@@ -336,6 +348,10 @@ const detectCurrentApp = () => {
     }
     if (path.startsWith('/dashboard')) {
       currentApp.value = 'dashboard';
+      return;
+    }
+    if (path.startsWith('/personnel')) {
+      currentApp.value = 'personnel';
       return;
     }
     if (path.startsWith('/docs')) {
@@ -813,10 +829,7 @@ const handleSwitchApp = async (app: MicroApp) => {
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
-      const url = new URL(`${protocol}//${hostname}${targetPath}`);
-      // 关键：通过 URL 参数传递应用名称
-      url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
-      targetUrl = url.toString();
+      targetUrl = `${protocol}//${hostname}${targetPath}`;
     } else {
       // 根据应用名称获取生产环境域名配置
       // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
@@ -834,20 +847,15 @@ const handleSwitchApp = async (app: MicroApp) => {
       const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
       const appConfig = getAppConfig(mappedAppName);
       if (appConfig && appConfig.prodHost) {
-        // 构建完整的 URL，通过 URL 参数传递应用名称
-        // 关键：由于不同子域名之间 sessionStorage 不共享，需要通过 URL 参数传递
+        // 构建完整的 URL，直接跳转到子域名的根路径，不添加任何查询参数
         const protocol = window.location.protocol;
-        const url = new URL(`${protocol}//${appConfig.prodHost}/`);
-        url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
-        targetUrl = url.toString();
+        targetUrl = `${protocol}//${appConfig.prodHost}/`;
       } else {
         console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
         const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
-        const url = new URL(`${protocol}//${hostname}${targetPath}`);
-        url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
-        targetUrl = url.toString();
+        targetUrl = `${protocol}//${hostname}${targetPath}`;
       }
     }
   } else {
@@ -861,9 +869,9 @@ const handleSwitchApp = async (app: MicroApp) => {
     const hostname = window.location.hostname;
     const port = window.location.port;
     const url = new URL(`${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`);
-    // 关键：通过 URL 参数传递应用名称
-    // 虽然开发环境 sessionStorage 可以共享，但为了统一处理，也使用 URL 参数
-    url.searchParams.set('__appName', encodeURIComponent(appDisplayName));
+    // 关键：通过 URL 参数传递应用名称（仅开发环境）
+    // 注意：searchParams.set() 会自动进行 URL 编码，不需要手动 encodeURIComponent
+    url.searchParams.set('__appName', appDisplayName);
     targetUrl = url.toString();
   }
 

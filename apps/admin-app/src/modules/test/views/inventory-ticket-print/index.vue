@@ -200,7 +200,7 @@ const handlePrint = async () => {
       BtcMessage.warning('没有可打印的数据');
     }
   } catch (error) {
-    console.error('[InventoryTicketPrint] Failed to load data:', error);
+    // 响应拦截器已显示错误消息，不需要在控制台打印
     BtcMessage.error(t('inventory.ticket.print.load_failed'));
   }
 };

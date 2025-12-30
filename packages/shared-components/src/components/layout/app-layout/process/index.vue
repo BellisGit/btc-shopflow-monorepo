@@ -1,8 +1,6 @@
 <template>
-  <!-- 关键优化：使用 v-show 而不是 v-if，确保组件立即渲染，避免等待 storage 读取导致的延迟 -->
-  <!-- 这样即使 showWorkTab 初始值未确定，组件也会立即渲染，只是隐藏 -->
-  <!-- 当 showWorkTab 从 storage 读取完成后，组件会立即显示，不会出现 2 秒延迟 -->
-  <div v-show="showWorkTab" class="app-process" :class="tabStyleClass">
+  <!-- 关键：使用 v-show 控制显示/隐藏，隐藏时不占空间 -->
+  <div v-show="shouldShow" class="app-process" :class="tabStyleClass">
     <!-- 左侧操作按钮 -->
     <ul class="app-process__op">
       <li>
@@ -181,21 +179,27 @@ const processStore = useProcessStore();
 const showWorkTab = ref<boolean>(true); // 默认显示，确保组件立即渲染
 const tabStyle = ref<string>('tab-default'); // 默认样式
 
-// 异步获取实际设置值（不阻塞渲染）
+// 获取实际设置值（同步读取，避免闪烁）
 try {
   const settingsState = useSettingsState();
   // 关键：立即同步实际值，确保响应式更新
-  showWorkTab.value = settingsState.showWorkTab.value ?? true;
-  tabStyle.value = settingsState.tabStyle.value ?? 'tab-default';
+  // 先读取值，再用正确的初始值创建 ref，避免先显示后隐藏的闪烁
+  const initialShowWorkTab = settingsState.showWorkTab.value ?? true;
+  const initialTabStyle = settingsState.tabStyle.value ?? 'tab-default';
+  
+  // 使用正确的初始值更新 ref，避免闪烁
+  showWorkTab.value = initialShowWorkTab;
+  tabStyle.value = initialTabStyle;
   
   // 监听设置变化，确保用户切换设置时能响应
+  // 注意：不需要 immediate: true，因为我们已经在上面同步设置了初始值
   watch(settingsState.showWorkTab, (val) => {
     showWorkTab.value = val ?? true;
-  }, { immediate: true });
+  });
   
   watch(settingsState.tabStyle, (val) => {
     tabStyle.value = val ?? 'tab-default';
-  }, { immediate: true });
+  });
 } catch (error) {
   // 如果 useSettingsState() 初始化失败，使用默认值（已经设置）
   console.warn('[Process] useSettingsState 初始化失败，使用默认值', error);
@@ -203,6 +207,12 @@ try {
 
 // 标签页样式类
 const tabStyleClass = computed(() => tabStyle.value || 'tab-default');
+
+// 判断是否应该显示内容（根据 showWorkTab 控制）
+// 关键：容器始终渲染，只是根据 showWorkTab 控制内容的可见性
+const shouldShow = computed(() => {
+  return showWorkTab.value;
+});
 
 // 监听标签页样式变化
 function handleTabStyleChange(_event: CustomEvent) {

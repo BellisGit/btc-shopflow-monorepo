@@ -17,8 +17,14 @@ import { onMounted } from 'vue';
 import { initEpsData } from '@btc/shared-core';
 import { BtcDevTools } from '@btc/shared-components';
 import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
+import { useLogout } from '@/composables/useLogout';
 
 import epsData from 'virtual:eps';
+
+// 关键：在应用启动时立即初始化通信桥和登出监听
+// 这样确保即使没有组件使用 useLogout，也能接收到跨标签页的登出消息
+// 注意：这里只是调用 useLogout 来初始化订阅，不实际使用 logout 函数
+useLogout();
 
 // 初始化 EPS 数据
 onMounted(() => {

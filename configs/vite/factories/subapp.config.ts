@@ -4,7 +4,8 @@
  */
 
 import type { UserConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
@@ -12,6 +13,10 @@ import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import { existsSync, readFileSync } from 'node:fs';
 import { createPathHelpers } from '../utils/path-helpers';
+
+// 获取当前文件的目录路径（ESM 方式）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // 延迟加载 VueI18nPlugin，从应用目录解析
 // 使用函数内动态导入，确保从调用者的 node_modules 解析
@@ -28,6 +33,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getBaseUrl, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
+// 使用相对路径导入，添加 .ts 扩展名以确保 esbuild 能正确解析
 import { createRollupConfig } from '../build/rollup.config.ts';
 import {
   cleanDistPlugin,

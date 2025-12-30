@@ -19,10 +19,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
+import { useLogout } from '@btc/shared-core';
 
 defineOptions({
   name: 'DashboardApp',
 });
+
+// 初始化登出功能（确保跨域通信桥尽早初始化）
+useLogout();
 
 const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;

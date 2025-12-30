@@ -8,6 +8,14 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { getFinanceRoutes } from './routes/finance';
 
 /**
+ * 动态导入 @btc/shared-core
+ * 所有应用都打包 @btc/shared-core，所以可以直接使用动态导入
+ */
+async function importSharedCore() {
+  return await import('@btc/shared-core');
+}
+
+/**
  * 规范化路径：在生产环境子域名下，移除应用前缀
  */
 function normalizePath(path: string): string {
@@ -32,6 +40,11 @@ function normalizePath(path: string): string {
 
   return path;
 }
+
+// 路由级别loading的延迟定时器
+let routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+// 路由级别loading的延迟时间（毫秒）
+const ROUTE_LOADING_DELAY = 300;
 
 export const createFinanceRouter = (): Router => {
   // 动态获取路由配置，确保在运行时正确检测是否使用 layout-app
@@ -60,14 +73,86 @@ export const createFinanceRouter = (): Router => {
       return;
     }
 
+    // 清除之前的延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+
+    // 检查是否有应用级别loading正在显示
+    const isAppLoadingVisible = ((): boolean => {
+      try {
+        const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+        if (!appLoadingEl) {
+          return false;
+        }
+        const style = window.getComputedStyle(appLoadingEl);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               parseFloat(style.opacity) > 0;
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    // 延迟显示路由loading（如果应用loading未显示）
+    if (!isAppLoadingVisible) {
+      routeLoadingTimer = setTimeout(async () => {
+        try {
+          const sharedCore = await importSharedCore();
+          if (sharedCore?.routeLoadingService) {
+            sharedCore.routeLoadingService.show();
+          }
+        } catch (error) {
+          // 静默失败
+        }
+      }, ROUTE_LOADING_DELAY);
+    }
+
     next();
+  });
+
+  // 路由后置守卫：清除路由loading的延迟定时器并隐藏路由loading
+  router.afterEach(async () => {
+    // 清除延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading
+    try {
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
   });
 
   // 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
   // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
   // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
   let loadingClosed = false;
-  router.beforeResolve(() => {
+  router.beforeResolve(async () => {
+    // 清除路由loading的延迟定时器（路由即将解析完成，不需要再显示路由loading）
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading（如果正在显示）
+    try {
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
     if (!loadingClosed) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {

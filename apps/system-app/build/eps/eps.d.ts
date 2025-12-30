@@ -1759,32 +1759,32 @@ interface role {
 
 interface rolepermission {
           /**
-           * id
+           * ID
            */
           id?: any;
         
           /**
-           * tenantId
+           * 租户ID
            */
           tenantId?: any;
         
           /**
-           * roleId
+           * 角色ID
            */
           roleId?: any;
         
           /**
-           * permissionId
+           * 权限ID
            */
           permissionId?: any;
         
           /**
-           * createdAt
+           * 创建时间
            */
           createdAt?: any;
         
           /**
-           * deletedAt
+           * 删除时间
            */
           deletedAt?: any;
         
@@ -2001,11 +2001,6 @@ interface dictdata {
           id?: any;
         
           /**
-           * 字典数据ID
-           */
-          dictDataId?: any;
-        
-          /**
            * 字典类型编码
            */
           dictTypeCode?: any;
@@ -2021,11 +2016,6 @@ interface dictdata {
           dictLabel?: any;
         
           /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
            * 创建时间
            */
           createdAt?: any;
@@ -2034,6 +2024,11 @@ interface dictdata {
            * 更新时间
            */
           updatedAt?: any;
+        
+          /**
+           * 删除时间
+           */
+          deletedAt?: any;
         
         /**
          * Any key-value pairs
@@ -2087,6 +2082,11 @@ interface info {
            * 删除时间
            */
           deletedAt?: any;
+        
+          /**
+           * entityClass
+           */
+          entityClass?: any;
         
         /**
          * Any key-value pairs

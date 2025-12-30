@@ -16,6 +16,14 @@ import { appStorage } from '../utils/app-storage';
 import { getTabsForNamespace } from '../store/tabRegistry';
 import { getAppBySubdomain } from '@configs/app-scanner';
 
+/**
+ * 动态导入 @btc/shared-core
+ * 所有应用都打包 @btc/shared-core，所以可以直接使用动态导入
+ */
+async function importSharedCore() {
+  return await import('@btc/shared-core');
+}
+
 const routes: RouteRecordRaw[] = [
   // 登录页面（不在 Layout 中）- 使用根目录 auth 包
   {
@@ -461,11 +469,10 @@ const appNameMap: Record<string, string> = {
 
 /**
  * 生成完整的浏览器标题
- * 根据当前应用路径动态生成标题：{应用名称} - BTC ShopFlow
+ * 根据当前应用路径动态生成标题：{应用名称}
  */
 function formatDocumentTitle(path: string): string {
   const appName = getCurrentAppFromPath(path);
-  const appShortName = config.app.shortName;
 
   // 尝试使用国际化键获取应用名称
   const i18nKey = `domain.type.${appName}`;
@@ -476,12 +483,12 @@ function formatDocumentTitle(path: string): string {
     moduleName = appNameMap[appName] || appName;
   }
 
-  return `${moduleName} - ${appShortName}`;
+  return moduleName;
 }
 
 /**
  * 更新浏览器标题（同步，无闪烁）
- * 根据当前路由路径判断应用，动态设置标题：{应用名称} - BTC ShopFlow
+ * 根据当前路由路径判断应用，动态设置标题：{应用名称}
  */
 function updateDocumentTitle(to: RouteLocationNormalized) {
   currentRoute = to;
@@ -539,25 +546,51 @@ export function setupI18nTitleWatcher() {
 /**
  * 检查用户是否已认证
  * 注意：cookie 是后端设置的，是认证的权威来源。如果 cookie 不存在，说明后端已经认为用户未认证。
- * 因此，如果 cookie 不存在，应该立即返回 false，不再检查其他本地存储。
+ * 支持通过 btc_user cookie 中的 credentialExpireTime 来判断是否过期。
  */
 export function isAuthenticated(): boolean {
-  // 关键：cookie 是后端设置的，是认证的权威来源
-  // 如果 cookie 不存在，说明后端已经认为用户未认证（比如 token 已过期被后端移除）
-  // 此时应该立即返回 false，不应该继续检查其他本地存储的数据
+  // 首先尝试检查 access_token cookie（如果后端没有设置 HttpOnly，可以读取）
   const cookieToken = getCookie('access_token');
   
-  // 如果 cookie 不存在，立即返回 false
-  // 这是安全的关键：cookie 是后端设置的，如果后端移除了 cookie，说明用户未认证
-  if (!cookieToken) {
-    return false;
+  // 如果 access_token cookie 存在，说明已认证（后端会管理 cookie 的生命周期）
+  if (cookieToken) {
+    return true;
   }
 
-  // cookie 存在时，可以进一步检查其他本地存储作为补充（可选）
-  // 但即使其他本地存储没有数据，只要 cookie 存在，也应该返回 true
-  // 因为 cookie 是后端设置的，是认证的权威来源
-  
-  return true;
+  // 如果 access_token 读不到（可能是 HttpOnly），则检查 btc_user cookie 中的过期时间
+  // user-check 会将 credentialExpireTime 存储到 btc_user cookie 中
+  try {
+    const btcUserCookie = getCookie('btc_user');
+    if (!btcUserCookie) {
+      // 如果 btc_user cookie 也不存在，说明未登录
+      return false;
+    }
+
+    // 解析 btc_user cookie（getCookie 已经处理了 URL 解码）
+    const btcUser = JSON.parse(btcUserCookie);
+    const credentialExpireTime = btcUser?.credentialExpireTime;
+
+    if (!credentialExpireTime) {
+      // 如果没有过期时间，无法判断，保守返回 false
+      return false;
+    }
+
+    // 比较当前时间与过期时间
+    const expireTime = new Date(credentialExpireTime).getTime();
+    const now = Date.now();
+
+    // 如果当前时间小于过期时间，说明还在有效期内
+    if (now < expireTime) {
+      return true;
+    }
+
+    // 已过期
+    return false;
+  } catch (error) {
+    // 解析失败，保守返回 false
+    console.warn('[isAuthenticated] Failed to check credential expire time:', error);
+    return false;
+  }
 }
 
 /**
@@ -610,20 +643,74 @@ function normalizeRoutePath(path: string): string | null {
 // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
 // 关键：子应用路由不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
 let loadingClosed = false;
+
+// 监听 qiankun:after-mount 事件，立即关闭应用级 loading
+// 这样可以避免等待 10 秒超时，在应用挂载后立即关闭 loading
+if (typeof window !== 'undefined') {
+  window.addEventListener('qiankun:after-mount', (event: any) => {
+    const appName = event.detail?.appName;
+    if (!appName) return;
+
+    // 获取应用显示名称
+    const appNameMap: Record<string, string> = {
+      'admin': '管理模块',
+      'logistics': '物流模块',
+      'engineering': '工程模块',
+      'quality': '品质模块',
+      'production': '生产模块',
+      'finance': '财务模块',
+      'operations': '运维模块',
+      'dashboard': '图表模块',
+      'personnel': '人事模块',
+      'docs': '文档模块',
+    };
+    const appDisplayName = appNameMap[appName] || appName;
+
+    // 立即同步关闭应用级 loading（不等待异步导入）
+    const loadingEls = document.querySelectorAll('.app-loading');
+    loadingEls.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+        // 立即移除 DOM 元素
+        try {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        } catch (e) {
+          // 忽略移除错误
+        }
+      }
+    });
+
+    // 异步调用 appLoadingService.hide() 进行清理
+    importSharedCore().then((sharedCore) => {
+      if (sharedCore?.appLoadingService) {
+        sharedCore.appLoadingService.hide(appDisplayName);
+      }
+    }).catch(() => {
+      // 静默失败
+    });
+  });
+}
+
 router.beforeResolve(async (to) => {
-  // 关键：如果是子应用路由，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
+  // 关键：如果是子应用路由或登录页，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
+  const isLoginPage = to.path === '/login' || to.path.startsWith('/login?');
   
-  // 子应用路由的loading由appLoadingService统一管理，不应该在这里处理
-  if (isSubAppRoute) {
+  // 子应用路由和登录页的loading由各自管理，不应该在这里处理
+  if (isSubAppRoute || isLoginPage) {
     return;
   }
   
   if (!loadingClosed) {
     try {
-      const loadingModule = await import('@btc/shared-core');
-      const rootLoadingService = loadingModule.rootLoadingService;
+      const loadingModule = await importSharedCore();
+      const rootLoadingService = loadingModule?.rootLoadingService;
       if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
         rootLoadingService.hide();
         loadingClosed = true;
@@ -694,8 +781,10 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
         routeLoadingEl.style.setProperty('opacity', '0', 'important');
       }
       // 异步调用routeLoadingService.hide()，确保完全隐藏
-      import('@btc/shared-core').then(({ routeLoadingService }) => {
-        routeLoadingService.hide();
+      importSharedCore().then((sharedCore) => {
+        if (sharedCore?.routeLoadingService) {
+          sharedCore.routeLoadingService.hide();
+        }
       }).catch(() => {
         // 静默失败
       });
@@ -703,51 +792,67 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
       // 静默失败
     }
 
-    // 关键：立即隐藏容器，避免布局闪烁
-    // 容器会在应用级别loading显示后，由beforeLoad钩子控制显示
-    const container = document.querySelector('#subapp-viewport') as HTMLElement;
-    if (container) {
-      container.style.setProperty('display', 'none', 'important');
-      container.style.setProperty('visibility', 'hidden', 'important');
-      container.style.setProperty('opacity', '0', 'important');
-    }
-
-    // 关键：立即显示应用级别loading，避免"拜里斯科技"和空布局显示
-    // 从路径中提取应用名称
-    const appNameMap: Record<string, string> = {
-      'admin': '管理模块',
-      'logistics': '物流模块',
-      'engineering': '工程模块',
-      'quality': '品质模块',
-      'production': '生产模块',
-      'finance': '财务模块',
-      'operations': '运维模块',
-      'dashboard': '仪表盘模块',
-      'personnel': '人事模块',
-      'docs': '文档模块',
+    // 关键：判断是否是真正的应用切换（不是同一应用内的路由切换）
+    // 全局应用loading应该只在汉堡菜单切换应用时触发，不应该在应用内路由切换时触发
+    const getAppNameFromPath = (path: string): string | null => {
+      const pathParts = path.split('/').filter(Boolean);
+      const firstPart = pathParts[0] || '';
+      // 检查是否是已知的子应用前缀
+      return knownSubAppPrefixes.some(prefix => prefix === `/${firstPart}`) ? firstPart : null;
     };
     
-    // 从路径中提取应用名称（例如 /admin/xxx -> admin）
-    const pathParts = to.path.split('/').filter(Boolean);
-    const appName = pathParts[0] || '';
-    const appDisplayName = appNameMap[appName] || appName;
+    const fromAppName = _from.path ? getAppNameFromPath(_from.path) : null;
+    const toAppName = getAppNameFromPath(to.path);
     
-    // 如果应用名称有效且不是"应用"，立即显示应用级别loading
-    if (appDisplayName && appDisplayName !== '应用' && appDisplayName !== appName) {
-      // 异步显示应用级别loading，不阻塞路由导航
-      import('@btc/shared-core').then(({ appLoadingService }) => {
-        // 再次确保容器隐藏
-        const viewport = document.querySelector('#subapp-viewport') as HTMLElement;
-        if (viewport) {
-          viewport.style.setProperty('display', 'none', 'important');
-          viewport.style.setProperty('visibility', 'hidden', 'important');
-          viewport.style.setProperty('opacity', '0', 'important');
-        }
-        // 显示应用级别loading
-        appLoadingService.show(appDisplayName, viewport || undefined);
-      }).catch(() => {
-        // 静默失败
-      });
+    // 只有真正的应用切换时才显示全局应用loading：
+    // 1. 从非子应用路由切换到子应用路由（首次进入子应用）
+    // 2. 从一个子应用切换到另一个子应用（如从 admin 切换到 logistics）
+    // 3. 从子应用路由切换到另一个子应用路由（应用名称不同）
+    // 不应该触发的情况：
+    // - 同一应用内的路由切换（如从 /admin/user 切换到 /admin/role）
+    const isRealAppSwitch = 
+      (fromAppName === null && toAppName !== null) || // 从非子应用切换到子应用
+      (fromAppName !== null && toAppName !== null && fromAppName !== toAppName); // 从一个子应用切换到另一个子应用
+    
+    // 关键：只有真正的应用切换时才隐藏容器并显示应用级别loading
+    // 同一应用内的路由切换不应该隐藏容器，让子应用自己处理路由切换
+    if (isRealAppSwitch && toAppName) {
+      // 只在真正的应用切换时隐藏容器，避免布局闪烁
+      const container = document.querySelector('#subapp-viewport') as HTMLElement;
+      if (container) {
+        container.style.setProperty('display', 'none', 'important');
+        container.style.setProperty('visibility', 'hidden', 'important');
+        container.style.setProperty('opacity', '0', 'important');
+      }
+
+      const appNameMap: Record<string, string> = {
+        'admin': '管理模块',
+        'logistics': '物流模块',
+        'engineering': '工程模块',
+        'quality': '品质模块',
+        'production': '生产模块',
+        'finance': '财务模块',
+        'operations': '运维模块',
+        'dashboard': '图表模块', // 修复：与micro/index.ts中的定义保持一致
+        'personnel': '人事模块',
+        'docs': '文档模块',
+      };
+      
+      const appDisplayName = appNameMap[toAppName] || toAppName;
+      
+      // 如果应用名称有效且不是"应用"，立即显示应用级别loading
+      if (appDisplayName && appDisplayName !== '应用' && appDisplayName !== toAppName) {
+        // 异步显示应用级别loading，不阻塞路由导航
+        importSharedCore().then((sharedCore) => {
+          if (sharedCore?.appLoadingService) {
+            // 显示应用级别loading（仅在真正的应用切换时）
+            // 容器已经在上面隐藏了，不需要再次隐藏
+            sharedCore.appLoadingService.show(appDisplayName, container || undefined);
+          }
+        }).catch(() => {
+          // 静默失败
+        });
+      }
     }
   }
   

@@ -19,10 +19,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
+import { useLogout } from '@btc/shared-core';
 
 defineOptions({
   name: 'OperationsApp',
 });
+
+// 关键：在应用启动时立即初始化通信桥和登出监听
+useLogout();
 
 const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;

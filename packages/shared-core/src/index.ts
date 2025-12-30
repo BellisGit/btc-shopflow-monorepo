@@ -39,6 +39,8 @@ export type { ContentMountType, ContentMountState } from './composables/useConte
 export { startUserCheckPolling, stopUserCheckPolling, getUserCheckData, startUserCheckPollingIfLoggedIn } from './composables/user-check';
 export { useLogout } from './composables/useLogout';
 export type { UseLogoutOptions } from './composables/useLogout';
+export { useCrossDomainBridge } from './composables/useCrossDomainBridge';
+export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';

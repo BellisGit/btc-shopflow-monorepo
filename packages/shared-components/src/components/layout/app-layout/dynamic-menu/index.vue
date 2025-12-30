@@ -661,20 +661,35 @@ watch(
     // 子应用的路由路径可能包含应用前缀（如 /finance/inventory/result）
     // 但菜单的 index 是子应用内部路径（如 /inventory/result）
     const isLayoutApp = typeof window !== 'undefined' && !!(window as any).__IS_LAYOUT_APP__;
-    if (isLayoutApp) {
-      // 在 layout-app 环境下，尝试从子应用的路由变化事件中获取路径
-      // 如果子应用已发送路由变化事件，activeMenu 会通过事件监听器更新
-      // 这里只处理 layout-app 自己的路由变化（如跨应用切换）
+    const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+    if (isLayoutApp || isUsingLayoutApp) {
+      // 在 layout-app 环境下，尝试从子应用的路由路径中提取正确的路径
+      // 在生产环境子域名模式下，路径直接是子应用路由（如 /org/departments）
+      // 在开发环境下，路径可能包含应用前缀（如 /admin/org/departments）
       const app = currentApp.value;
-      if (app && newPath.startsWith(`/${app}`)) {
-        // 去掉应用前缀，获取子应用内部路径
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+      if (isProductionSubdomain) {
+        // 生产环境子域名模式：路径直接是子应用路由
+        activeMenu.value = normalizeActivePath(newPath);
+      } else if (app && newPath.startsWith(`/${app}`)) {
+        // 开发环境：去掉应用前缀，获取子应用内部路径
         const subAppPath = newPath.slice(`/${app}`.length) || '/';
-        activeMenu.value = subAppPath;
+        activeMenu.value = normalizeActivePath(subAppPath);
       } else {
-        activeMenu.value = newPath;
+        activeMenu.value = normalizeActivePath(newPath);
       }
+
+      // 确保父级展开
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          syncMenuOpenState();
+        });
+      });
     } else {
-      activeMenu.value = newPath;
+      activeMenu.value = normalizeActivePath(newPath);
     }
   },
   { immediate: true }
@@ -686,15 +701,20 @@ onMounted(() => {
   if (typeof window !== 'undefined' && (window as any).__IS_LAYOUT_APP__) {
     const updateActiveMenu = (path: string) => {
       // 从子应用的路由路径中提取子应用内部路径
-      // path 可能是完整路径（如 /finance/inventory/result）或子应用内部路径（如 /inventory/result）
+      // path 可能是完整路径（如 /admin/org/departments）或子应用内部路径（如 /org/departments）
       let subAppPath = normalizeActivePath(path);
       if (!subAppPath) return;
 
-      // 如果路径包含应用前缀，去掉前缀
+      // 关键：在 layout-app 环境下，路径应该直接是子应用路由（不包含应用前缀）
+      // 但如果 path 包含应用前缀，需要去掉前缀
+      const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
       const app = currentApp.value;
+
       if (app && subAppPath.startsWith(`/${app}`)) {
+        // 如果路径包含应用前缀，去掉前缀
         subAppPath = subAppPath.slice(`/${app}`.length) || '/';
       }
+
       subAppPath = normalizeActivePath(subAppPath);
       if (!subAppPath) return;
 
@@ -712,7 +732,8 @@ onMounted(() => {
         console.log('[DynamicMenu] 更新菜单激活状态:', {
           originalPath: path,
           subAppPath,
-          currentApp: app
+          currentApp: app,
+          isUsingLayoutApp
         });
       }
     };

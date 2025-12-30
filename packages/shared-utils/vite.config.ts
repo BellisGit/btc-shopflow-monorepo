@@ -27,6 +27,7 @@ export default defineConfig({
       // 不将 dayjs 设为 external，打包到库中，避免运行时 ES 模块导入问题
       // external: ['dayjs'],
       // qiankun 和 vue 作为 peerDependency，应该由使用该工具函数的应用提供，不打包到库中
+      // file-type 需要被打包到库中，因为它在浏览器环境中也需要使用
       external: ['qiankun', 'vue'],
       output: {
         globals: {

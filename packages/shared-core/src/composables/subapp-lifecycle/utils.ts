@@ -22,11 +22,18 @@ export function getCurrentHostPath(): string {
 export function normalizeToHostPath(relativeFullPath: string, basePath: string): string {
   const normalizedRelative = relativeFullPath === '' ? '/' : ensureLeadingSlash(relativeFullPath);
 
+  // 关键：在 layout-app 环境下（生产环境子域名模式），直接返回相对路径
+  // 因为 layout-app 模式下，URL 已经是正确的（子域名模式），不需要添加应用前缀
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    return normalizedRelative;
+  }
+
   if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
     return normalizedRelative;
   }
 
-  // 检测是否在生产环境的子域名下
+  // 检测是否在生产环境的子域名下（兜底检查）
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
@@ -110,6 +117,17 @@ export function extractHostSubRoute(appId: string, basePath: string): string {
   // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
   if (isProductionSubdomain) {
     // 如果路径是 /finance/xxx，需要去掉 /finance 前缀
+    if (pathname.startsWith(basePath)) {
+      const suffix = pathname.slice(basePath.length) || '/';
+      return `${ensureLeadingSlash(suffix)}${search}${hash}`;
+    }
+    // 否则直接使用当前路径（已经是子应用路由）
+    return `${pathname}${search}${hash}`;
+  }
+
+  // layout-app 模式下，如果不在子域名环境，检查是否是路径前缀模式
+  if (isUsingLayoutApp) {
+    // 如果路径包含应用前缀，去掉前缀
     if (pathname.startsWith(basePath)) {
       const suffix = pathname.slice(basePath.length) || '/';
       return `${ensureLeadingSlash(suffix)}${search}${hash}`;

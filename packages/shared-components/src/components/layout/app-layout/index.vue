@@ -64,16 +64,20 @@
       <div class="app-layout__main">
         <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
         <div class="app-layout__header">
-          <!-- Tabbar -->
+          <!-- Tabbar：始终渲染，内部控制显示/隐藏 -->
           <Process
             :is-fullscreen="isFullscreen"
             @toggle-fullscreen="toggleFullscreen"
           />
 
-          <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
-          <Breadcrumb
-            v-if="showBreadcrumb && showCrumbs?.value !== false"
-          />
+          <!-- 面包屑：使用 v-show 控制显示/隐藏，隐藏时不占空间，内容栏自动上移 -->
+          <!-- 关键：showCrumbs 使用 ?? 操作符，确保在 undefined 时默认显示（避免初始化时的闪烁） -->
+          <div
+            v-show="showBreadcrumb && (showCrumbs?.value ?? true)"
+            class="app-layout__breadcrumb-wrapper"
+          >
+            <Breadcrumb />
+          </div>
         </div>
 
         <div
@@ -84,6 +88,7 @@
             <div
               v-if="mountState.showMainApp"
               class="content-mount content-mount--main-app"
+              data-router-view
             >
               <router-view v-slot="{ Component, route }">
                 <transition :name="pageTransitionName" mode="out-in">
@@ -197,9 +202,20 @@ let isDark: any;
 // 关键：先初始化 menuType 为默认值，确保始终有值
 menuType = ref<MenuTypeEnum>(MenuTypeEnum.LEFT);
 
+// 关键：先初始化 showCrumbs 为默认值 true，避免刷新时闪烁
+// 这样即使 useSettingsState() 初始化需要时间，面包屑也会先显示，然后根据实际设置值更新
+const defaultShowCrumbs = ref(true);
+showCrumbs = defaultShowCrumbs;
+
 try {
   const settingsState = useSettingsState();
-  showCrumbs = settingsState.showCrumbs;
+  // 关键：确保 settingsState.showCrumbs 存在且有效，否则使用默认值
+  if (settingsState.showCrumbs && typeof settingsState.showCrumbs.value !== 'undefined') {
+    showCrumbs = settingsState.showCrumbs;
+  } else {
+    // 如果 settingsState.showCrumbs 无效，保持使用默认值
+    showCrumbs = defaultShowCrumbs;
+  }
   pageTransition = settingsState.pageTransition;
   // 关键：如果 settingsState.menuType 存在且有效，使用它；否则保持默认值
   if (settingsState.menuType) {
@@ -369,52 +385,96 @@ const pageTransitionName = computed(() => {
 // 监听 #subapp-viewport 内容变化（用于触发重新计算）
 let subappContentObserver: MutationObserver | null = null;
 
-// 判断是否显示面包屑区域（使用全局配置，所有应用首页都不显示）
+// 判断是否显示面包屑区域
+// 简化逻辑：默认显示面包屑，只有特殊页面（各应用首页、个人信息页面、404等孤立页面）才隐藏
+// 关键：采用"白名单"方式，默认返回 true，只有明确判断为特殊页面时才返回 false
+// 优化：使用稳定的判断方式，避免因状态初始化时机导致的闪烁
+// 使用稳定的判断顺序：先判断稳定的条件（路径、子域名、pathPrefix），最后判断依赖状态的条件
 const showBreadcrumb = computed(() => {
-  const path = route.path;
+  // 关键：优先使用 window.location.pathname，因为它不受路由初始化时机影响
+  // 在页面刷新时，window.location.pathname 已经有正确的值，而 route.path 可能还在初始化
+  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const routePath = route?.path || '';
 
-  // 如果路由 meta 中标记为首页，不显示面包屑区域
-  if (route.meta?.isHome === true) {
+  // 优先使用 locationPath，如果不存在则使用 routePath
+  const path = locationPath || routePath;
+
+  // 如果 path 还没有初始化，默认显示面包屑（避免初始化时的闪烁）
+  if (!path) {
+    return true;
+  }
+
+  // 规范化路径（移除尾部斜杠，但保留根路径）
+  const normalizedPath = path.replace(/\/+$/, '') || '/';
+
+  // 1. 如果路由 meta 中明确标记为首页或404，不显示面包屑
+  // 关键：只有当 route 对象存在且 meta 明确存在时才判断，避免初始化时的不稳定
+  // 使用路由路径优先判断，因为路径判断更稳定，不受路由对象初始化时机影响
+  // 只有在路径判断无法确定时，才依赖 route.meta（因为它可能在初始化时不稳定）
+  if (route?.meta && (route.meta.isHome === true || route.meta.is404 === true)) {
     return false;
   }
 
-  // 检查是否是主应用首页（系统应用）
-  if (path === '/' && isMainApp.value) {
+  // 2. 404 页面（孤立页面）- 通过路径判断
+  if (normalizedPath === '/404') {
     return false;
   }
 
-  // 生产环境子域名判断：路径为 / 且当前应用是子应用
-  if (path === '/' && typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const appBySubdomain = getAppBySubdomain(hostname);
-    // 如果通过子域名识别到子应用，则不显示面包屑区域
-    if (appBySubdomain && appBySubdomain.type === 'sub') {
-      return false;
+  // 3. 个人中心页面（孤立页面）
+  if (normalizedPath === '/profile') {
+    return false;
+  }
+
+  // 4. 判断是否为各应用首页
+  // 关键优化：优先使用稳定的判断方式（路径匹配、子域名判断），这些在页面加载时就已经确定
+  // 最后才判断依赖 mountState.type.value 的条件，避免因状态初始化时机导致的闪烁
+
+  // 4.1 开发/预览环境：子应用首页（通过 pathPrefix 精确匹配）
+  // 关键：这个判断不依赖 mountState，只依赖路径，所以很稳定，应该优先判断
+  try {
+    const subApps = getSubApps();
+    if (subApps.length > 0) {
+      for (const app of subApps) {
+        const normalizedPathPrefix = app.pathPrefix.replace(/\/+$/, '') || app.pathPrefix;
+        // 精确匹配 pathPrefix（如 /admin 匹配 /admin，但 /admin/xxx 不匹配）
+        if (normalizedPath === normalizedPathPrefix) {
+          return false;
+        }
+      }
+    }
+  } catch (error) {
+    // 出错时继续执行，默认显示面包屑
+  }
+
+  // 4.2 生产环境：子应用首页（通过子域名识别）- 最稳定的判断方式
+  if (normalizedPath === '/' && typeof window !== 'undefined') {
+    try {
+      const hostname = window.location.hostname;
+      const appBySubdomain = getAppBySubdomain(hostname);
+      if (appBySubdomain && appBySubdomain.type === 'sub') {
+        return false;
+      }
+    } catch (error) {
+      // 出错时继续执行，默认显示面包屑
     }
   }
 
-  // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
-  const subApps = getSubApps();
-  for (const app of subApps) {
-    const normalizedPathPrefix = app.pathPrefix.endsWith('/')
-      ? app.pathPrefix.slice(0, -1)
-      : app.pathPrefix;
-    const normalizedPath = path.endsWith('/') && path !== '/'
-      ? path.slice(0, -1)
-      : path;
-
-    // 精确匹配 pathPrefix 不显示面包屑区域
-    if (normalizedPath === normalizedPathPrefix) {
+  // 4.3 主应用首页（系统应用）：路径为 / 且是主应用
+  // 关键：这个判断依赖 mountState.type.value，可能初始化有延迟
+  // 优化策略：只有在 mountState.type.value 有明确值且为 'main-app' 时才判断为首页
+  // 如果 mountState.type.value 还没有初始化，默认显示面包屑（避免初始化时闪烁）
+  // 注意：这个判断放在最后，因为它是唯一可能不稳定的判断
+  if (normalizedPath === '/') {
+    // 只有在 mountState.type.value 有明确值且是主应用时，才判断为首页
+    const mountType = mountState.type.value;
+    if (mountType === 'main-app') {
       return false;
     }
+    // 如果 mountState.type.value 还没有值或不是 'main-app'，继续执行，最终返回 true
+    // 这样可以避免在 mountState.type.value 初始化过程中出现闪烁
   }
 
-  // 个人中心页面不显示面包屑（孤立页面）
-  if (path === '/profile') {
-    return false;
-  }
-
-  // 其他页面显示面包屑区域
+  // 默认显示面包屑（所有其他页面）
   return true;
 });
 
@@ -711,6 +771,15 @@ onUnmounted(() => {
   &__header {
     flex-shrink: 0;
     width: 100%; // 与系统域一致，移除 !important
+  }
+
+  // 面包屑包装容器：使用 v-show 控制显示/隐藏
+  // 关键：v-show="false" 时元素设置为 display:none，不占空间，内容栏自动上移
+  // 显示时正常高度，隐藏时完全不占空间，避免布局闪烁
+  &__breadcrumb-wrapper {
+    // 显示时的高度由内部 Breadcrumb 组件控制（39px）
+    // v-show 隐藏时元素不占空间，无需固定高度
+    overflow: hidden;
   }
 
   &__mask {
@@ -1101,6 +1170,15 @@ onUnmounted(() => {
   height: 100% !important; // 关键：必须设置高度为 100%，与系统域一致
   overflow: hidden !important;
   min-width: 0 !important; // 确保 flex 子元素可以收缩
+}
+
+.app-layout__content {
+  flex: 1 !important; // 关键：占据 app-layout__main 的剩余高度
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important; // 关键：允许 flex 子元素收缩
+  overflow: hidden !important;
+  height: 100% !important; // 关键：确保有明确的高度
 }
 
 // 折叠状态样式（桌面端，> 768px）

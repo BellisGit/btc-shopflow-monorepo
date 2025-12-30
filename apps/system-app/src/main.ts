@@ -182,15 +182,18 @@ async function initRootLoading() {
     return;
   }
   
-  // 关键：如果是子应用路由，不应该显示"拜里斯科技"loading
+  // 关键：如果是子应用路由或登录页，不应该显示"拜里斯科技"loading
   // 子应用的loading由appLoadingService统一管理
+  // 登录页不需要显示全局loading
   // 关键：立即检查并隐藏#Loading元素（如果存在），避免显示"拜里斯科技"
   if (typeof window !== 'undefined') {
     const pathname = window.location.pathname;
     const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
     const isSubAppRoute = knownSubAppPrefixes.some(prefix => pathname.startsWith(prefix));
-    if (isSubAppRoute) {
-      // 子应用路由，立即隐藏"拜里斯科技"loading
+    const isLoginPage = pathname === '/login' || pathname.startsWith('/login?');
+    
+    if (isSubAppRoute || isLoginPage) {
+      // 子应用路由或登录页，立即隐藏"拜里斯科技"loading
       const systemLoadingEl = document.getElementById('Loading');
       if (systemLoadingEl) {
         systemLoadingEl.style.setProperty('display', 'none', 'important');

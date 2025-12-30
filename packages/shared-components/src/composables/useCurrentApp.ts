@@ -24,6 +24,8 @@ export function useCurrentApp() {
       'engineering.bellis.com.cn': 'engineering',
       'finance.bellis.com.cn': 'finance',
       'operations.bellis.com.cn': 'operations',
+      'dashboard.bellis.com.cn': 'dashboard',
+      'personnel.bellis.com.cn': 'personnel',
     };
 
     // 预览环境端口映射（根据 app-env.config.ts 中的配置）
@@ -79,6 +81,10 @@ export function useCurrentApp() {
       currentApp.value = 'docs';
     } else if (path.startsWith('/operations')) {
       currentApp.value = 'operations';
+    } else if (path.startsWith('/dashboard')) {
+      currentApp.value = 'dashboard';
+    } else if (path.startsWith('/personnel')) {
+      currentApp.value = 'personnel';
     } else {
       // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
       currentApp.value = 'system';

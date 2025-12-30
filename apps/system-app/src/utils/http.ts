@@ -237,6 +237,24 @@ export class Http {
             // 静默失败
           }
 
+          // 关键：登录成功后，广播登录消息到所有标签页
+          try {
+            import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
+              const bridge = useCrossDomainBridge();
+              bridge.sendMessage('login', { timestamp: Date.now() });
+              if (import.meta.env.DEV) {
+                console.log('[http] Broadcasted login message to all tabs');
+              }
+            }).catch((error) => {
+              // 如果导入失败，静默处理
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to broadcast login message:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
           // 从响应体中提取 token（代理已经添加到响应体中）
           // 注意：originalResponseData 是 response.data，包含完整的响应结构
           // result 是经过 responseInterceptor 处理后的数据，可能只包含 data 字段

@@ -85,7 +85,13 @@ export function useContentMount(): ContentMountState {
   });
 
   // 是否显示主应用路由视图
+  // 核心原则：确保与 showSubApp 严格互斥
   const showMainApp = computed(() => {
+    // layout-app 模式下，永远不显示主应用路由视图
+    if (isUsingLayoutApp.value || isLayoutAppSelf.value) {
+      return false;
+    }
+    // 确保只有在 type 为 'main-app' 时才显示
     return type.value === 'main-app';
   });
 
@@ -100,6 +106,7 @@ export function useContentMount(): ContentMountState {
     // 其他模式：基于 type 判断，确保互斥
     // type === 'main-app' → 只显示主应用，隐藏子应用挂载点
     // type === 'sub-app' → 只显示子应用挂载点，隐藏主应用
+    // 关键：确保与 showMainApp 严格互斥（通过 type 判断，而不是依赖 showMainApp）
     return type.value === 'sub-app';
   });
 

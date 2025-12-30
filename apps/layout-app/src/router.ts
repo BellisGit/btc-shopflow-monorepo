@@ -8,6 +8,8 @@
  */
 
 import { createRouter, createWebHistory } from 'vue-router';
+import { getManifestRoute, getManifest } from '@btc/subapp-manifests';
+import { getCurrentAppFromPath } from '@btc/shared-components';
 
 // 路由配置：包含404页面和catchAll路由
 const routes = [
@@ -149,6 +151,68 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
 
   if (isEmbeddedBySubApp || isUsingLayoutApp) {
+    // 关键修复：在 layout-app 模式下，立即触发 subapp:route-change 事件，让 tabbar 和菜单立即更新
+    // 这样用户点击菜单后，tabbar 和菜单激活状态能立即更新，而不需要等待子应用路由同步
+    const app = getCurrentAppFromPath(to.path);
+    
+    // 如果是子应用路由，立即触发 subapp:route-change 事件
+    if (app && app !== 'main' && app !== 'docs') {
+      const manifest = getManifest(app);
+      if (!manifest) {
+        // 如果找不到 manifest，跳过
+        return;
+      }
+      
+      const basePath = manifest.app.basePath ?? `/${app}`;
+      
+      // 构建路由路径（在生产环境子域名模式下，路径直接是子应用路由）
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      // 提取子应用内部路径
+      let subAppPath = to.path;
+      if (!isProductionSubdomain && subAppPath.startsWith(basePath)) {
+        // 开发环境：去掉应用前缀
+        subAppPath = subAppPath.slice(basePath.length) || '/';
+      }
+      
+      // 确保路径以 / 开头
+      if (!subAppPath.startsWith('/')) {
+        subAppPath = `/${subAppPath}`;
+      }
+      
+      // 从 manifest 中查找路由信息
+      const manifestRoute = manifest.routes.find((route) => route.path === subAppPath);
+      
+      if (manifestRoute) {
+        // 构建 fullPath（完整路径）
+        // 在生产环境子域名模式下，fullPath 就是当前路径（已经是子域名）
+        // 在开发环境下，fullPath 需要包含应用前缀
+        const fullPath = isProductionSubdomain ? to.path : (to.path.startsWith(basePath) ? to.path : `${basePath}${subAppPath}`);
+        
+        // 获取 labelKey
+        const labelKey = manifestRoute.tab?.labelKey ?? manifestRoute.labelKey;
+        
+        // 立即触发 subapp:route-change 事件
+        window.dispatchEvent(
+          new CustomEvent('subapp:route-change', {
+            detail: {
+              path: fullPath,
+              fullPath,
+              name: undefined,
+              meta: {
+                labelKey,
+                titleKey: labelKey,
+                isHome: manifestRoute.path === '/',
+                process: manifestRoute.tab?.enabled !== false,
+                breadcrumbs: manifestRoute.breadcrumbs,
+              },
+            },
+          })
+        );
+      }
+    }
+
     // 嵌入模式或 layout-app 模式：每次路由变化都触发 popstate，确保子应用能收到路由同步信号
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
@@ -157,13 +221,22 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
       });
     });
   } else {
-    // 独立运行模式（qiankun 模式）：只在跨应用切换时触发 qiankun 重新匹配
-    if (previousAppPrefix && previousAppPrefix !== currentAppPrefix) {
+    // 独立运行模式（qiankun 模式）
+    // 关键修复：即使是在同一应用内切换路由，也需要触发 popstate 事件
+    // 让子应用的 setupHostLocationBridge 能够同步路由并更新内容
+    const isAppSwitch = previousAppPrefix && previousAppPrefix !== currentAppPrefix;
+    const isSameAppRouteChange = previousAppPrefix && previousAppPrefix === currentAppPrefix && currentAppPrefix !== 'system';
+    
+    // 触发 popstate 事件的情况：
+    // 1. 跨应用切换：让 qiankun 重新匹配路由（qiankun 内部使用 single-spa，会监听 popstate 事件）
+    // 2. 同一应用内路由切换：让子应用的 setupHostLocationBridge 能够同步路由并更新内容
+    if (isAppSwitch || isSameAppRouteChange) {
       // 使用 nextTick 确保路由切换完成后再触发
       import('vue').then(({ nextTick }) => {
         nextTick(() => {
-          // 触发 popstate 事件，让 qiankun 重新匹配路由
-          // qiankun 内部使用 single-spa，会监听 popstate 事件来重新匹配应用
+          // 触发 popstate 事件
+          // 注意：qiankun 的 activeRule 会判断应用是否应该激活，不会因为 popstate 就重新挂载
+          // 所以即使在同一应用内切换路由时触发 popstate，也不会导致应用重新挂载
           window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
         });
       });

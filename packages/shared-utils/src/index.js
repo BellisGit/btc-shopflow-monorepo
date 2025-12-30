@@ -16,5 +16,8 @@ export * from './hooks';
 export * from './http';
 // Composables
 export * from './composables/usePageTransition';
+export * from './composables/useFileType';
+// 显式导出 useFileType 相关函数，确保被正确导出
+export { useFileType, detectFileType, detectFileTypeFromBuffer, detectFileTypeFromFileName } from './composables/useFileType';
 // 微前端相关
 export * from './qiankun/load-layout-app';

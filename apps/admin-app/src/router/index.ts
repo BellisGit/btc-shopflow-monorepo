@@ -10,6 +10,14 @@ import { getCookie } from '../utils/cookie';
 import { appStorage } from '../utils/app-storage';
 
 /**
+ * 动态导入 @btc/shared-core
+ * 所有应用都打包 @btc/shared-core，所以可以直接使用动态导入
+ */
+async function importSharedCore() {
+  return await import('@btc/shared-core');
+}
+
+/**
  * 获取主应用的登录页面URL
  * 用于子应用在独立运行时重定向到主应用的登录页面
  */
@@ -168,8 +176,10 @@ export const createAdminRouter = (): Router => {
       // 延迟300ms显示路由loading，避免快速切换时的闪烁
       routeLoadingTimer = setTimeout(async () => {
         try {
-          const { routeLoadingService } = await import('@btc/shared-core');
-          routeLoadingService.show();
+          const sharedCore = await importSharedCore();
+          if (sharedCore?.routeLoadingService) {
+            sharedCore.routeLoadingService.show();
+          }
         } catch (error) {
           // 静默失败
         }
@@ -182,8 +192,28 @@ export const createAdminRouter = (): Router => {
     const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
     
     if (!isUsingLayoutApp) {
-      // 独立运行时，如果未认证，重定向到主应用的登录页面
-      if (!isAuthenticated()) {
+      const isAuth = isAuthenticated();
+      
+      // 关键：如果已经在登录页且用户已认证，重定向到目标页面
+      // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
+      if (to.path === '/login' || to.path.startsWith('/login?')) {
+        if (isAuth && !to.query.logout && !to.query.from) {
+          // 已认证且不是退出登录，重定向到目标页面
+          const redirect = (to.query.redirect as string) || '/admin';
+          // 只取路径部分，忽略查询参数，避免循环重定向
+          const redirectPath = redirect.split('?')[0] || '/admin';
+          // 确保路径包含 /admin 前缀
+          const finalPath = redirectPath.startsWith('/admin') ? redirectPath : `/admin${redirectPath}`;
+          next(finalPath);
+          return;
+        }
+        // 如果是退出登录或未认证，允许访问登录页
+        next();
+        return;
+      }
+      
+      // 非登录页：如果未认证，重定向到主应用的登录页面
+      if (!isAuth) {
         // 构建重定向路径：确保包含应用前缀，以便登录后能够正确返回
         let redirectPath = to.fullPath;
         // 在开发环境独立运行时，路径可能不包含 /admin 前缀，需要添加
@@ -213,8 +243,10 @@ export const createAdminRouter = (): Router => {
     
     // 隐藏路由loading
     try {
-      const { routeLoadingService } = await import('@btc/shared-core');
-      routeLoadingService.hide();
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
     } catch (error) {
       // 静默失败
     }
@@ -233,8 +265,10 @@ export const createAdminRouter = (): Router => {
     
     // 隐藏路由loading（如果正在显示）
     try {
-      const { routeLoadingService } = await import('@btc/shared-core');
-      routeLoadingService.hide();
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
     } catch (error) {
       // 静默失败
     }
@@ -263,16 +297,19 @@ export const createAdminRouter = (): Router => {
       
       // 关键：在qiankun环境下，也要关闭appLoadingService显示的应用级别loading
       // 避免与应用级别loading冲突，确保路由解析完成后立即关闭
-      const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
-      if (isUsingLayoutApp) {
-        try {
-          const { appLoadingService } = await import('@btc/shared-core');
-          // admin-app的显示名称是'管理模块'，使用显示名称关闭应用级别loading
-          appLoadingService.hide('管理模块');
-        } catch (e) {
-          // 静默失败，不影响路由解析
-        }
-      }
+      // 注意：应用级loading应该由system-app的afterMount钩子关闭，这里不应该重复关闭
+      // 如果在这里关闭，可能会导致实例被提前清除，导致afterMount中的hide()找不到实例
+      // 因此注释掉这里的hide调用，让afterMount统一处理
+      // const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+      // if (isUsingLayoutApp) {
+      //   try {
+      //     const { appLoadingService } = await import('@btc/shared-core');
+      //     // admin-app的显示名称是'管理模块'，使用显示名称关闭应用级别loading
+      //     appLoadingService.hide('管理模块');
+      //   } catch (e) {
+      //     // 静默失败，不影响路由解析
+      //   }
+      // }
       
       // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
       // 在独立运行时，不应该显示 NProgress 或 AppSkeleton

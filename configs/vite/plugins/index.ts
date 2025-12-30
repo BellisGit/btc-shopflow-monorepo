@@ -18,5 +18,7 @@ export { dutyStaticPlugin } from './duty-static';
 export { uploadCdnPlugin } from './upload-cdn';
 export { cdnAssetsPlugin } from './cdn-assets';
 export { cdnImportPlugin } from './cdn-import';
+export { resolveExternalImportsPlugin } from './resolve-external-imports';
+export { resolveBtcImportsPlugin } from './resolve-btc-imports';
 // 已移除 dynamicImportCdnPlugin 导出，该插件会导致 Blob URL 上下文中的模块解析失败
 // 如果需要，可以直接从 './dynamic-import-cdn' 导入

@@ -120,6 +120,47 @@ export class Http {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
 
+        // 检查响应是否成功（code: 200）
+        const isLoginSuccess = originalResponseData &&
+                               typeof originalResponseData === 'object' &&
+                               originalResponseData.code === 200;
+
+        if (isLoginSuccess) {
+          // 登录成功，设置登录状态标记到统一的 settings 存储中
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+
+          // 启动全局用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
+          try {
+            import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
+              startUserCheckPolling(true);
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to start user check polling after login:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，广播登录消息到所有标签页
+          try {
+            import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
+              const bridge = useCrossDomainBridge();
+              bridge.sendMessage('login', { timestamp: Date.now() });
+              if (import.meta.env.DEV) {
+                console.log('[http] Broadcasted login message to all tabs');
+              }
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to broadcast login message:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+        }
+
         // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
         const setCookieHeaders = response.headers?.getSetCookie?.() || [];
         if (setCookieHeaders.length > 0) {

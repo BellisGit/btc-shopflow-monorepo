@@ -15,6 +15,7 @@ interface RouteLoadingInstance {
   skeletonElement: HTMLElement | null;
   timeoutId: ReturnType<typeof setTimeout> | null;
   isVisible: boolean;
+  showTime: number; // 显示时间戳
 }
 
 /**
@@ -28,16 +29,60 @@ class RouteLoadingService {
     skeletonElement: null,
     timeoutId: null,
     isVisible: false,
+    showTime: 0,
   };
 
   /**
    * 查找路由视图容器
    */
   private findContainer(): HTMLElement | null {
-    // 默认查找 router-view
-    return document.querySelector('router-view') as HTMLElement ||
-           document.querySelector('[data-router-view]') as HTMLElement ||
-           document.querySelector('.router-view-container') as HTMLElement;
+    // 1. 优先查找带有 data-router-view 属性的容器（AppLayout 使用）
+    const dataRouterView = document.querySelector('[data-router-view]') as HTMLElement;
+    if (dataRouterView) {
+      return dataRouterView;
+    }
+
+    // 2. 在 qiankun 模式下，查找 #subapp-viewport 内的容器
+    const subappViewport = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (subappViewport) {
+      // 在 subapp-viewport 内查找 router-view
+      const routerViewInSubapp = subappViewport.querySelector('router-view') as HTMLElement;
+      if (routerViewInSubapp) {
+        return routerViewInSubapp;
+      }
+      // 如果找不到 router-view，使用 subapp-viewport 本身（如果它有内容）
+      if (subappViewport.children.length > 0) {
+        return subappViewport;
+      }
+    }
+
+    // 3. 查找 .app-layout__content（AppLayout 的内容容器）
+    const appLayoutContent = document.querySelector('.app-layout__content') as HTMLElement;
+    if (appLayoutContent) {
+      return appLayoutContent;
+    }
+
+    // 4. 查找全局的 router-view
+    const routerView = document.querySelector('router-view') as HTMLElement;
+    if (routerView) {
+      return routerView;
+    }
+
+    // 5. 查找 .router-view-container（备用选择器）
+    const routerViewContainer = document.querySelector('.router-view-container') as HTMLElement;
+    if (routerViewContainer) {
+      return routerViewContainer;
+    }
+
+    // 6. 在 qiankun 模式下，如果找不到其他容器，尝试查找子应用的根容器
+    if (subappViewport) {
+      const subappRoot = subappViewport.querySelector('#app, [data-qiankun]') as HTMLElement;
+      if (subappRoot) {
+        return subappRoot;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -143,9 +188,36 @@ class RouteLoadingService {
     }
 
     // 查找容器
-    const container = this.findContainer();
+    let container = this.findContainer();
+    
+    // 如果找不到容器，尝试延迟查找一次（DOM 可能还在渲染中）
     if (!container) {
-      console.warn('[RouteLoadingService] 无法找到路由视图容器');
+      // 使用 setTimeout 延迟查找，给 DOM 一些时间渲染
+      setTimeout(() => {
+        container = this.findContainer();
+        if (!container) {
+          // 使用保存的原始方法，如果不存在则使用当前 console.warn（可能是被其他代码替换过的）
+          const originalWarn = (console as any).__originalWarn;
+          const warnFn = originalWarn || (console as any).__originalWarn || console.warn;
+          if (typeof warnFn === 'function') {
+            warnFn.apply(console, ['[RouteLoadingService] 无法找到路由视图容器']);
+          }
+          return;
+        }
+        // 找到容器后，继续显示 loading
+        this.showLoadingInContainer(container);
+      }, 100);
+      return;
+    }
+
+    this.showLoadingInContainer(container);
+  }
+
+  /**
+   * 在指定容器中显示 Loading
+   */
+  private showLoadingInContainer(container: HTMLElement): void {
+    if (!container) {
       return;
     }
 
@@ -156,6 +228,9 @@ class RouteLoadingService {
     if (computedStyle.position === 'static') {
       container.style.position = 'relative';
     }
+
+    // 记录显示时间戳
+    this.instance.showTime = Date.now();
 
     // 优先使用骨架屏
     const skeleton = this.findSkeleton(container);
@@ -189,9 +264,8 @@ class RouteLoadingService {
       this.instance.timeoutId = null;
     }
 
-    // 设置超时关闭（5秒）
+    // 设置超时关闭（10秒）
     this.instance.timeoutId = setTimeout(() => {
-      console.warn('[RouteLoadingService] 路由 loading 超时自动关闭（5秒）');
       this.hide();
     }, LOADING_TIMEOUT.ROUTE);
   }
@@ -204,38 +278,52 @@ class RouteLoadingService {
       return;
     }
 
+    // 计算持续时间
+    const hideTime = Date.now();
+    const duration = this.instance.showTime > 0 ? hideTime - this.instance.showTime : 0;
+
     // 清除超时定时器
     if (this.instance.timeoutId) {
       clearTimeout(this.instance.timeoutId);
       this.instance.timeoutId = null;
     }
 
-    // 隐藏骨架屏
+    // 隐藏骨架屏（强制关闭）
     if (this.instance.skeletonElement) {
+      this.instance.skeletonElement.style.setProperty('display', 'none', 'important');
+      this.instance.skeletonElement.style.setProperty('visibility', 'hidden', 'important');
       this.instance.skeletonElement.style.setProperty('opacity', '0', 'important');
-      setTimeout(() => {
-        if (this.instance.skeletonElement) {
-          this.instance.skeletonElement.style.setProperty('display', 'none', 'important');
-          this.instance.skeletonElement.style.setProperty('visibility', 'hidden', 'important');
-        }
-      }, 300);
     }
 
-    // 隐藏 loading 元素
+    // 隐藏 loading 元素（强制关闭，立即移除）
     if (this.instance.loadingElement) {
+      this.instance.loadingElement.style.setProperty('display', 'none', 'important');
+      this.instance.loadingElement.style.setProperty('visibility', 'hidden', 'important');
       this.instance.loadingElement.style.setProperty('opacity', '0', 'important');
       this.instance.loadingElement.style.setProperty('pointer-events', 'none', 'important');
       
-      // 延迟移除 DOM 元素（确保动画完成）
-      setTimeout(() => {
-        if (this.instance.loadingElement && this.instance.loadingElement.parentNode) {
+      // 立即移除 DOM 元素（不等待动画，确保强制关闭）
+      try {
+        if (this.instance.loadingElement.parentNode) {
           this.instance.loadingElement.parentNode.removeChild(this.instance.loadingElement);
         }
-        this.instance.loadingElement = null;
-      }, 300);
+      } catch (e) {
+        // 如果移除失败，尝试延迟移除
+        setTimeout(() => {
+          if (this.instance.loadingElement && this.instance.loadingElement.parentNode) {
+            try {
+              this.instance.loadingElement.parentNode.removeChild(this.instance.loadingElement);
+            } catch (err) {
+              // 忽略移除错误
+            }
+          }
+        }, 100);
+      }
+      this.instance.loadingElement = null;
     }
 
     this.instance.isVisible = false;
+    this.instance.showTime = 0;
   }
 
   /**

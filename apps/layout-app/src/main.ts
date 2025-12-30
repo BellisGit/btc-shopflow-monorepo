@@ -142,11 +142,23 @@ const getAppEntry = (appName: string): string => {
     return fallbackUrl;
   }
 
-  // 开发/预览环境：使用配置的端口
-  const port = window.location.port || appConfig.prePort;
-  const host = window.location.hostname || appConfig.preHost;
-  const entryUrl = `//${host}:${port}`;
-  return entryUrl;
+  // 开发/预览环境：使用配置的开发端口或预览端口
+  // 关键：根据当前环境判断使用开发端口还是预览端口
+  // 优先使用 import.meta.env.DEV 判断（最准确），然后根据端口判断
+  const isDevMode = import.meta.env.DEV;
+  const currentPort = typeof window !== 'undefined' ? window.location.port || '' : '';
+  const isPreview = !isDevMode && currentPort.startsWith('41');
+  const isDev = isDevMode || currentPort.startsWith('80');
+  
+  if (isPreview) {
+    // 预览环境：使用预览端口
+    const entryUrl = `http://${appConfig.preHost}:${appConfig.prePort}`;
+    return entryUrl;
+  } else {
+    // 开发环境：使用开发端口
+    const entryUrl = `//${appConfig.devHost}:${appConfig.devPort}`;
+    return entryUrl;
+  }
 };
 
 let settingsInitialized = false;
@@ -343,6 +355,9 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     (window as any).service = service;
     (window as any).__BTC_SERVICE__ = service;
   }
+
+  // 注意：不再需要将 @btc/shared-core 暴露到全局变量
+  // 因为所有应用（包括子应用）都单独打包 @btc/* 包，不再需要从全局变量访问
 
   // layout-app 作为容器：不提供域列表/应用配置等业务数据（由子应用提供）。
   // 仅提供空兜底，避免 shared-components 调用时报错。

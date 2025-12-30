@@ -13,6 +13,7 @@ class RootLoadingService {
   private instance: HTMLElement | null = null;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
   private isVisible = false;
+  private showTime: number = 0;
 
   /**
    * 获取或创建 Loading 元素
@@ -120,6 +121,9 @@ class RootLoadingService {
       }
     }
 
+    // 记录显示时间戳
+    this.showTime = Date.now();
+    
     // 显示
     loadingEl.style.setProperty('display', 'flex', 'important');
     loadingEl.style.setProperty('visibility', 'visible', 'important');
@@ -134,9 +138,8 @@ class RootLoadingService {
       this.timeoutId = null;
     }
 
-    // 设置超时关闭（30秒）
+    // 设置超时关闭（10秒）
     this.timeoutId = setTimeout(() => {
-      console.warn('[RootLoadingService] 超时自动关闭 loading（30秒）');
       this.hide();
     }, LOADING_TIMEOUT.ROOT);
   }
@@ -145,7 +148,21 @@ class RootLoadingService {
    * 隐藏全局根级 Loading
    */
   hide(): void {
-    if (!this.instance || !this.isVisible) {
+    // 如果实例不存在，尝试通过 DOM 直接查找并关闭 #Loading 元素（兜底方案）
+    if (!this.instance) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        loadingEl.style.setProperty('display', 'none', 'important');
+        loadingEl.style.setProperty('visibility', 'hidden', 'important');
+        loadingEl.style.setProperty('opacity', '0', 'important');
+        loadingEl.style.setProperty('pointer-events', 'none', 'important');
+        loadingEl.classList.add('is-hide');
+      }
+      this.isVisible = false;
+      return;
+    }
+
+    if (!this.isVisible) {
       return;
     }
 
@@ -155,19 +172,14 @@ class RootLoadingService {
       this.timeoutId = null;
     }
 
-    // 隐藏
+    // 强制隐藏（立即生效）
+    this.instance.style.setProperty('display', 'none', 'important');
+    this.instance.style.setProperty('visibility', 'hidden', 'important');
     this.instance.style.setProperty('opacity', '0', 'important');
     this.instance.style.setProperty('pointer-events', 'none', 'important');
     this.instance.classList.add('is-hide');
     this.isVisible = false;
-
-    // 延迟移除 DOM 元素（确保动画完成）
-    setTimeout(() => {
-      if (this.instance) {
-        this.instance.style.setProperty('display', 'none', 'important');
-        this.instance.style.setProperty('visibility', 'hidden', 'important');
-      }
-    }, 300);
+    this.showTime = 0;
   }
 
   /**

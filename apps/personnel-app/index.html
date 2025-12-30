@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>人事应用 - BTC ShopFlow</title>
+    <title>人事应用</title>
     <style>
       /* 统一的首屏 Loading 样式 */
       html,
@@ -273,6 +273,69 @@
       })();
     </script>
     <script>
+      // 立即读取loading样式并写入内联样式，避免闪烁
+      (function() {
+        try {
+          function getCookie(name) {
+            const nameEQ = name + '=';
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+              let c = ca[i];
+              while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+              if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+          }
+
+          function getLoadingStyle() {
+            try {
+              if (typeof localStorage !== 'undefined') {
+                const settingsStr = localStorage.getItem('settings');
+                if (settingsStr) {
+                  const settings = JSON.parse(settingsStr);
+                  if (settings.loadingStyle === 'dots' || settings.loadingStyle === 'circle') {
+                    return settings.loadingStyle;
+                  }
+                }
+              }
+              const settingsCookie = getCookie('btc_settings');
+              if (settingsCookie) {
+                const settings = JSON.parse(decodeURIComponent(settingsCookie));
+                if (settings.loadingStyle === 'dots' || settings.loadingStyle === 'circle') {
+                  return settings.loadingStyle;
+                }
+              }
+            } catch (e) {}
+            return 'circle';
+          }
+
+          const loadingStyle = getLoadingStyle();
+          if (loadingStyle === 'dots') {
+            // 使用document.write在解析阶段写入样式和script，完全避免闪烁
+            // 注意：只在解析阶段有效，如果DOM已加载完成则无效
+            if (document.readyState === 'loading') {
+              // 写入样式，隐藏圆圈
+              document.write('<style id="preload-loading-dots-hide">.preload__loading { border: none !important; border-radius: 0 !important; background: none !important; animation: none !important; } .preload__loading::before, .preload__loading::after { display: none !important; }</style>');
+              // 写入dots样式和动画
+              document.write('<style id="preload-dots-style">.preload__loading .preload-dots-svg { width: 44px; height: 44px; } .preload__loading .preload-dots-spinner { transform-origin: 22px 22px; animation: preload-dots-rotate 1.6s linear infinite; } .preload__loading .preload-dot { animation: preload-dots-fade 1.6s infinite, preload-dots-color-change 3.2s infinite ease-in-out; } .preload__loading .preload-dot-1 { fill: #409eff; animation-delay: 0s, 0s; } .preload__loading .preload-dot-2 { fill: #67c23a; animation-delay: 0.4s, 0.8s; } .preload__loading .preload-dot-3 { fill: #e6a23c; animation-delay: 0.8s, 1.6s; } .preload__loading .preload-dot-4 { fill: #f56c6c; animation-delay: 1.2s, 2.4s; } @keyframes preload-dots-rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } @keyframes preload-dots-fade { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } } @keyframes preload-dots-color-change { 0% { fill: #409eff; } 25% { fill: #67c23a; } 50% { fill: #e6a23c; } 75% { fill: #f56c6c; } 100% { fill: #409eff; } }</style>');
+              // 写入一个script到body开始处，在元素解析时立即设置内容
+              document.write('<script>(function(){var el=document.currentScript;if(el&&el.previousElementSibling&&el.previousElementSibling.classList.contains("preload__loading")){var loadingEl=el.previousElementSibling;loadingEl.style.border="none";loadingEl.style.borderRadius="0";loadingEl.style.background="none";loadingEl.style.width="44px";loadingEl.style.height="44px";loadingEl.innerHTML=\'<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" class="preload-dots-svg"><g class="preload-dots-spinner"><circle class="preload-dot preload-dot-1" cx="22" cy="8" r="5" fill="#409eff"/><circle class="preload-dot preload-dot-2" cx="36" cy="22" r="5" fill="#67c23a"/><circle class="preload-dot preload-dot-3" cx="22" cy="36" r="5" fill="#e6a23c"/><circle class="preload-dot preload-dot-4" cx="8" cy="22" r="5" fill="#f56c6c"/></g></svg>\';}else{setTimeout(function(){var loadingEl=document.querySelector(".preload__loading");if(loadingEl&&!loadingEl.querySelector(".preload-dots-svg")){loadingEl.style.border="none";loadingEl.style.borderRadius="0";loadingEl.style.background="none";loadingEl.style.width="44px";loadingEl.style.height="44px";loadingEl.innerHTML=\'<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" class="preload-dots-svg"><g class="preload-dots-spinner"><circle class="preload-dot preload-dot-1" cx="22" cy="8" r="5" fill="#409eff"/><circle class="preload-dot preload-dot-2" cx="36" cy="22" r="5" fill="#67c23a"/><circle class="preload-dot preload-dot-3" cx="22" cy="36" r="5" fill="#e6a23c"/><circle class="preload-dot preload-dot-4" cx="8" cy="22" r="5" fill="#f56c6c"/></g></svg>\';}},0);}})();<\/script>');
+              // 设置一个标记，让后续脚本知道要使用dots
+              window.__PRELOD_LOADING_STYLE__ = 'dots';
+            } else {
+              // DOM已加载，使用createElement
+              const style = document.createElement('style');
+              style.id = 'preload-loading-dots-hide';
+              style.textContent = '.preload__loading { border: none !important; border-radius: 0 !important; background: none !important; animation: none !important; } .preload__loading::before, .preload__loading::after { display: none !important; }';
+              document.head.appendChild(style);
+            }
+          } else {
+            window.__PRELOD_LOADING_STYLE__ = 'circle';
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script>
       // 关键：在页面加载时立即应用主题类，避免水合不匹配
       // 必须在 JavaScript 执行前就应用，确保 Vue 组件渲染时主题类已存在
       (function() {
@@ -333,10 +396,182 @@
           } catch (e2) {
             // 完全失败，不做任何操作
           }
-        }
-      })();
-    </script>
-  </head>
+				}
+			})();
+		</script>
+		<script>
+			// 根据用户偏好设置更新loading样式（dots 或 circle）
+			(function() {
+				try {
+					function getCookie(name) {
+						const nameEQ = name + '=';
+						const ca = document.cookie.split(';');
+						for (let i = 0; i < ca.length; i++) {
+							let c = ca[i];
+							while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+							if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+						}
+						return null;
+					}
+
+					function getLoadingStyle() {
+						try {
+							// 先尝试从localStorage读取
+							const settingsStr = localStorage.getItem('settings');
+							if (settingsStr) {
+								const settings = JSON.parse(settingsStr);
+								if (settings.loadingStyle === 'dots' || settings.loadingStyle === 'circle') {
+									return settings.loadingStyle;
+								}
+							}
+
+							// 如果localStorage中没有，尝试从Cookie读取
+							const settingsCookie = getCookie('btc_settings');
+							if (settingsCookie) {
+								const settings = JSON.parse(decodeURIComponent(settingsCookie));
+								if (settings.loadingStyle === 'dots' || settings.loadingStyle === 'circle') {
+									return settings.loadingStyle;
+								}
+							}
+						} catch (e) {
+							// 忽略错误
+						}
+						return 'circle'; // 默认使用circle
+					}
+
+					function updateLoadingStyle() {
+						const loadingEl = document.querySelector('.preload__loading');
+						if (!loadingEl) return;
+
+						// 优先使用全局标记（在解析阶段设置的）
+						const loadingStyle = window.__PRELOD_LOADING_STYLE__ || getLoadingStyle();
+						
+						// 如果已经有SVG内容，说明已经在解析阶段写入，不需要再次设置
+						if (loadingStyle === 'dots' && loadingEl.querySelector('.preload-dots-svg')) {
+							return;
+						}
+						
+						if (loadingStyle === 'dots') {
+							// 确保data属性已设置
+							loadingEl.setAttribute('data-loading-style', 'dots');
+							
+							// 移除圆圈样式，替换为dots SVG
+							loadingEl.style.border = 'none';
+							loadingEl.style.borderRadius = '0';
+							loadingEl.style.background = 'none';
+							loadingEl.style.width = '44px';
+							loadingEl.style.height = '44px';
+							loadingEl.className = 'preload__loading preload__loading-dots';
+							
+							loadingEl.innerHTML = `
+								<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" class="preload-dots-svg">
+									<g class="preload-dots-spinner">
+										<circle class="preload-dot preload-dot-1" cx="22" cy="8" r="5" fill="#409eff"/>
+										<circle class="preload-dot preload-dot-2" cx="36" cy="22" r="5" fill="#67c23a"/>
+										<circle class="preload-dot preload-dot-3" cx="22" cy="36" r="5" fill="#e6a23c"/>
+										<circle class="preload-dot preload-dot-4" cx="8" cy="22" r="5" fill="#f56c6c"/>
+									</g>
+								</svg>
+							`;
+							
+							// 添加dots样式和动画（如果不存在）
+							if (!document.getElementById('preload-dots-style')) {
+								const style = document.createElement('style');
+								style.id = 'preload-dots-style';
+								style.textContent = `
+									.preload__loading-dots {
+										border: none !important;
+										border-radius: 0 !important;
+										background: none !important;
+										animation: none !important;
+									}
+									.preload__loading-dots::before,
+									.preload__loading-dots::after {
+										display: none !important;
+									}
+									.preload__loading .preload-dots-svg {
+										width: 44px;
+										height: 44px;
+									}
+									.preload__loading .preload-dots-spinner {
+										transform-origin: 22px 22px;
+										animation: preload-dots-rotate 1.6s linear infinite;
+									}
+									.preload__loading .preload-dot {
+										animation: preload-dots-fade 1.6s infinite, preload-dots-color-change 3.2s infinite ease-in-out;
+									}
+									.preload__loading .preload-dot-1 {
+										fill: #409eff;
+										animation-delay: 0s, 0s;
+									}
+									.preload__loading .preload-dot-2 {
+										fill: #67c23a;
+										animation-delay: 0.4s, 0.8s;
+									}
+									.preload__loading .preload-dot-3 {
+										fill: #e6a23c;
+										animation-delay: 0.8s, 1.6s;
+									}
+									.preload__loading .preload-dot-4 {
+										fill: #f56c6c;
+										animation-delay: 1.2s, 2.4s;
+									}
+									@keyframes preload-dots-rotate {
+										0% { transform: rotate(0deg); }
+										100% { transform: rotate(360deg); }
+									}
+									@keyframes preload-dots-fade {
+										0%, 100% { opacity: 1; }
+										50% { opacity: 0.5; }
+									}
+									@keyframes preload-dots-color-change {
+										0% { fill: #409eff; }
+										25% { fill: #67c23a; }
+										50% { fill: #e6a23c; }
+										75% { fill: #f56c6c; }
+										100% { fill: #409eff; }
+									}
+								`;
+								document.head.appendChild(style);
+							}
+						} else {
+							// circle样式：恢复原有样式
+							loadingEl.removeAttribute('data-loading-style');
+							loadingEl.innerHTML = '';
+							loadingEl.className = 'preload__loading';
+							loadingEl.style.border = '';
+							loadingEl.style.borderRadius = '';
+							loadingEl.style.background = '';
+							loadingEl.style.width = '';
+							loadingEl.style.height = '';
+						}
+					}
+
+					// 立即执行，不等待任何事件
+					updateLoadingStyle();
+
+					// 监听DOMContentLoaded，确保在DOM加载完成后再次更新（如果之前没有成功）
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', updateLoadingStyle);
+					}
+
+					// 监听storage事件，当设置变化时更新样式
+					window.addEventListener('storage', function(e) {
+						if (e.key === 'settings') {
+							updateLoadingStyle();
+						}
+					});
+
+					// 监听自定义事件，当设置变化时更新样式（用于同标签页内的设置变化）
+					window.addEventListener('settings-change', function() {
+						updateLoadingStyle();
+					});
+				} catch (e) {
+					// 静默失败
+				}
+			})();
+		</script>
+	</head>
   <body>
     <div id="Loading">
       <div class="preload__container">

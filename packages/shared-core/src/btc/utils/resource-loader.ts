@@ -5,7 +5,8 @@
  */
 
 /**
- * 判断是否是开发环境
+ * 判断是否是开发环境或预览环境（本地环境）
+ * 本地环境不应该使用 CDN，应该使用本地资源
  */
 function isDevelopment(): boolean {
   if (typeof window === 'undefined') {
@@ -25,13 +26,32 @@ function isDevelopment(): boolean {
   // 1. localhost 或 127.0.0.1
   // 2. 内网 IP（10.x.x.x, 192.168.x.x, 172.16-31.x.x）
   // 3. 开发服务器端口（5173, 3000, 8080, 9000 等）
-  // 4. 包含 dev、test 等关键词的域名
+  // 4. 预览服务器端口（41xx 系列，如 4180, 4181, 4173 等）
+  // 5. 包含 dev、test 等关键词的域名
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
   const isInternalIP = /^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname);
-  const isDevPort = Boolean(port && ['5173', '3000', '8080', '9000', '8081', '5174'].includes(port));
+  const isDevPort = Boolean(port && ['5173', '3000', '8080', '9000', '8081', '5174', '8088', '4188'].includes(port));
+  // 预览环境端口：41xx 系列（4180, 4181, 4173 等）
+  const isPreviewPort = Boolean(port && port.startsWith('41'));
+  // 开发环境端口：80xx 系列（8080, 8081, 8088 等）
+  const isDevPortRange = Boolean(port && port.startsWith('80'));
   const isDevDomain = hostname.includes('dev') || hostname.includes('test') || hostname.includes('local');
+  
+  // 关键：优先检查 import.meta.env.DEV（如果可用）
+  // 注意：不能使用 typeof import，因为 import 是关键字，会导致 esbuild 解析错误
+  // 直接访问 import.meta.env.DEV，如果不存在会抛出异常，我们捕获即可
+  try {
+    // 直接访问 import.meta（在模块上下文中可用）
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - import.meta 在运行时可能不可用
+    if (import.meta && import.meta.env && (import.meta.env as any).DEV === true) {
+      return true;
+    }
+  } catch (e) {
+    // import.meta 不可用（非模块上下文），继续使用其他判断
+  }
 
-  return isLocalhost || isInternalIP || isDevPort || isDevDomain;
+  return isLocalhost || isInternalIP || isDevPort || isDevPortRange || isPreviewPort || isDevDomain;
 }
 
 export interface ResourceLoaderOptions {
@@ -274,11 +294,96 @@ export async function loadResource(
 ): Promise<Response> {
   // 开发环境直接使用本地资源，不进行 CDN/OSS 降级
   if (isDevelopment()) {
-    const response = await fetchWithTimeout(url, options.timeout || 5000);
+    // 关键修复：如果 URL 是 CDN/OSS URL，转换为本地路径
+    let localUrl = url;
+    
+    // 关键：在预览/开发环境中，如果是布局应用的资源（/assets/layout/），需要从 layout-app 服务器加载
+    if (url.includes('/assets/layout/')) {
+      const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+      const isPreview = port.startsWith('41');
+      const isDev = port.startsWith('80');
+      
+      // 如果 URL 已经是完整 URL，检查是否是 layout-app 的 URL
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        try {
+          const urlObj = new URL(url);
+          // 如果已经是 layout-app 的 URL，直接使用
+          if (urlObj.hostname.includes('layout.bellis.com.cn') ||
+              urlObj.hostname.includes('localhost:4192') ||
+              urlObj.hostname.includes('localhost:4188')) {
+            const response = await fetchWithTimeout(url, options.timeout || 5000);
+            if (isSuccessfulResponse(response)) {
+              return response;
+            }
+          }
+        } catch (e) {
+          // URL 解析失败，继续处理
+        }
+      }
+      
+      // 提取路径部分
+      let path = url;
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        try {
+          const urlObj = new URL(url);
+          // 检查是否是 CDN/OSS URL，如果是则提取路径
+          if (urlObj.hostname.includes('all.bellis.com.cn') || 
+              urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+            path = urlObj.pathname;
+            // 去掉应用前缀（如 /layout-app/assets/layout/xxx.js -> /assets/layout/xxx.js）
+            if (path.includes('/assets/layout/')) {
+              path = path.substring(path.indexOf('/assets/layout/'));
+            }
+          } else {
+            path = urlObj.pathname + (urlObj.search || '') + (urlObj.hash || '');
+          }
+        } catch (e) {
+          // URL 解析失败，使用原始 URL
+        }
+      }
+      
+      // 确保路径以 / 开头
+      if (!path.startsWith('/')) {
+        path = '/' + path;
+      }
+      
+      // 构建 layout-app 的完整 URL
+      let layoutAppBase: string;
+      if (isPreview) {
+        layoutAppBase = 'http://localhost:4192';
+      } else if (isDev) {
+        layoutAppBase = 'http://localhost:4188';
+      } else {
+        // 默认使用预览端口
+        layoutAppBase = 'http://localhost:4192';
+      }
+      
+      localUrl = layoutAppBase + path;
+    } else if (url.startsWith('http://') || url.startsWith('https://')) {
+      // 处理 CDN/OSS URL（非布局资源）
+      try {
+        const urlObj = new URL(url);
+        // 检查是否是 CDN/OSS URL
+        if (urlObj.hostname.includes('all.bellis.com.cn') || 
+            urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+          // 提取路径部分，去掉应用前缀（如 /system-app/assets/xxx.js -> /assets/xxx.js）
+          let path = urlObj.pathname;
+          if (path.includes('/assets/')) {
+            path = path.substring(path.indexOf('/assets/'));
+          }
+          // 保留查询参数和哈希
+          localUrl = path + (urlObj.search || '') + (urlObj.hash || '');
+        }
+      } catch (e) {
+        // URL 解析失败，使用原始 URL
+      }
+    }
+    
+    const response = await fetchWithTimeout(localUrl, options.timeout || 5000);
     if (isSuccessfulResponse(response)) {
       return response;
     }
-    throw new Error(`Failed to load resource: ${url}`);
+    throw new Error(`Failed to load resource: ${localUrl}`);
   }
 
   const {
@@ -485,12 +590,8 @@ function setupScriptInterceptor() {
     return;
   }
 
-  // 开发环境不需要拦截
-  if (isDevelopment()) {
-    return;
-  }
-
   const originalCreateElement = document.createElement.bind(document);
+  const isDev = isDevelopment();
 
   document.createElement = function(tagName: string, options?: ElementCreationOptions) {
     const element = originalCreateElement(tagName, options);
@@ -508,6 +609,54 @@ function setupScriptInterceptor() {
         set(value: string) {
           originalSrc = value;
 
+          // 开发环境：如果 URL 是 CDN/OSS URL，转换为本地路径
+          if (isDev) {
+            if (value && (value.startsWith('http://') || value.startsWith('https://'))) {
+              try {
+                const urlObj = new URL(value);
+                // 检查是否是 CDN/OSS URL
+                if (urlObj.hostname.includes('all.bellis.com.cn') || 
+                    urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+                  // 提取路径部分，去掉应用前缀（如 /system-app/assets/xxx.js -> /assets/xxx.js）
+                  let path = urlObj.pathname;
+                  if (path.includes('/assets/layout/')) {
+                    // 布局应用资源：需要从 layout-app 服务器加载
+                    path = path.substring(path.indexOf('/assets/layout/'));
+                    const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+                    const isPreview = port.startsWith('41');
+                    const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+                    const localPath = layoutAppBase + path + (urlObj.search || '') + (urlObj.hash || '');
+                    script.setAttribute('src', localPath);
+                    return;
+                  } else if (path.includes('/assets/')) {
+                    path = path.substring(path.indexOf('/assets/'));
+                  }
+                  // 保留查询参数和哈希
+                  const localPath = path + (urlObj.search || '') + (urlObj.hash || '');
+                  script.setAttribute('src', localPath);
+                  return;
+                }
+              } catch (e) {
+                // URL 解析失败，使用原始值
+              }
+            }
+            
+            // 处理本地路径中的布局应用资源
+            if (value && value.includes('/assets/layout/') && !value.startsWith('http://') && !value.startsWith('https://')) {
+              const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+              const isPreview = port.startsWith('41');
+              const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+              const localPath = layoutAppBase + (value.startsWith('/') ? value : '/' + value);
+              script.setAttribute('src', localPath);
+              return;
+            }
+            
+            // 非 CDN URL，直接设置
+            script.setAttribute('src', value);
+            return;
+          }
+
+          // 生产环境：原有的 CDN 加速逻辑
           // 检查是否是静态资源路径
           if (value && (value.includes('/assets/') || value.includes('/assets/layout/'))) {
             // 规范化 URL 用于去重检查
@@ -605,10 +754,84 @@ function setupStylesheetInterceptor() {
     return;
   }
 
-  // 开发环境不需要拦截
-  if (isDevelopment()) {
+  const isDev = isDevelopment();
+
+  // 开发环境：拦截所有 link 标签，将 CDN URL 转换为本地路径
+  if (isDev) {
+    const handleLinkInsert = (link: HTMLLinkElement) => {
+      const href = link.href || link.getAttribute('href');
+      if (!href) {
+        return;
+      }
+
+      // 检查是否是 CDN/OSS URL
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        try {
+          const urlObj = new URL(href);
+          if (urlObj.hostname.includes('all.bellis.com.cn') || 
+              urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+            // 提取路径部分，去掉应用前缀
+            let path = urlObj.pathname;
+            if (path.includes('/assets/layout/')) {
+              // 布局应用资源：需要从 layout-app 服务器加载
+              path = path.substring(path.indexOf('/assets/layout/'));
+              const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+              const isPreview = port.startsWith('41');
+              const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+              const localPath = layoutAppBase + path + (urlObj.search || '') + (urlObj.hash || '');
+              link.href = localPath;
+              return;
+            } else if (path.includes('/assets/')) {
+              path = path.substring(path.indexOf('/assets/'));
+            }
+            // 保留查询参数和哈希
+            const localPath = path + (urlObj.search || '') + (urlObj.hash || '');
+            link.href = localPath;
+          }
+        } catch (e) {
+          // URL 解析失败，忽略
+        }
+      }
+      
+      // 处理本地路径中的布局应用资源
+      if (href.includes('/assets/layout/') && !href.startsWith('http://') && !href.startsWith('https://')) {
+        const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+        const isPreview = port.startsWith('41');
+        const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+        const localPath = layoutAppBase + (href.startsWith('/') ? href : '/' + href);
+        link.href = localPath;
+      }
+    };
+
+    // 处理现有的 link 标签
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(handleLinkInsert);
+
+    // 监听新添加的 link 标签
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            if (element.tagName.toLowerCase() === 'link') {
+              const link = element as HTMLLinkElement;
+              if (link.rel === 'stylesheet' || link.getAttribute('rel') === 'stylesheet') {
+                handleLinkInsert(link);
+              }
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.head || document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+
     return;
   }
+
+  // 生产环境：原有的错误回退逻辑
 
   // 监听所有 link 标签的错误事件
   const handleLinkError = (event: Event) => {
@@ -699,9 +922,10 @@ export function initResourceLoader(_options?: Partial<ResourceLoaderOptions>) {
     return;
   }
 
-  // 开发环境不需要 CDN 降级方案，直接使用本地资源
+  // 开发/预览环境：需要拦截器将 CDN URL 转换为本地路径
+  // 因为预览环境使用构建产物，可能包含硬编码的 CDN URL
   if (isDevelopment()) {
-    // 仍然挂载资源加载器到全局对象，但禁用拦截功能
+    // 挂载资源加载器到全局对象
     (window as any).__BTC_RESOURCE_LOADER__ = {
       loadResource,
       getConfig: getResourceLoaderConfig,
@@ -709,6 +933,127 @@ export function initResourceLoader(_options?: Partial<ResourceLoaderOptions>) {
       setupImageFallback,
       getCssUrlFallback,
     };
+    
+    // 关键：在开发/预览环境中也启用拦截器，用于将 CDN URL 转换为本地路径
+    // 因为预览环境使用构建产物，可能包含硬编码的 CDN URL
+    setupScriptInterceptor();
+    setupStylesheetInterceptor();
+    
+    // 关键：立即处理所有已存在的 script 和 link 标签，在它们被浏览器请求之前就修改 URL
+    // 这必须在拦截器设置后立即执行，确保 HTML 中已存在的标签也被处理
+    const processExistingScripts = () => {
+      document.querySelectorAll('script[src]').forEach((script) => {
+        const htmlScript = script as HTMLScriptElement;
+        const src = htmlScript.src || htmlScript.getAttribute('src');
+        if (!src) return;
+        
+        // 处理 CDN/OSS URL
+        if (src.startsWith('http://') || src.startsWith('https://')) {
+          try {
+            const urlObj = new URL(src);
+            if (urlObj.hostname.includes('all.bellis.com.cn') || 
+                urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+              // 提取路径部分，去掉应用前缀
+              let path = urlObj.pathname;
+              if (path.includes('/assets/layout/')) {
+                // 布局应用资源：需要从 layout-app 服务器加载
+                path = path.substring(path.indexOf('/assets/layout/'));
+                const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+                const isPreview = port.startsWith('41');
+                const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+                const localPath = layoutAppBase + path + (urlObj.search || '') + (urlObj.hash || '');
+                if (htmlScript.src === src || htmlScript.getAttribute('src') === src) {
+                  htmlScript.src = localPath;
+                  htmlScript.setAttribute('src', localPath);
+                }
+                return;
+              } else if (path.includes('/assets/')) {
+                path = path.substring(path.indexOf('/assets/'));
+              }
+              // 保留查询参数和哈希
+              const localPath = path + (urlObj.search || '') + (urlObj.hash || '');
+              if (htmlScript.src === src || htmlScript.getAttribute('src') === src) {
+                htmlScript.src = localPath;
+                htmlScript.setAttribute('src', localPath);
+              }
+            }
+          } catch (e) {
+            // URL 解析失败，忽略
+          }
+        } else if (src.includes('/assets/layout/')) {
+          // 处理本地路径中的布局应用资源
+          const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+          const isPreview = port.startsWith('41');
+          const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+          const localPath = layoutAppBase + (src.startsWith('/') ? src : '/' + src);
+          if (htmlScript.src === src || htmlScript.getAttribute('src') === src) {
+            htmlScript.src = localPath;
+            htmlScript.setAttribute('src', localPath);
+          }
+        }
+      });
+    };
+    
+    const processExistingLinks = () => {
+      document.querySelectorAll('link[rel="stylesheet"], link[href]').forEach((link) => {
+        const htmlLink = link as HTMLLinkElement;
+        const href = htmlLink.href || htmlLink.getAttribute('href');
+        if (!href) return;
+        
+        // 处理 CDN/OSS URL
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          try {
+            const urlObj = new URL(href);
+            if (urlObj.hostname.includes('all.bellis.com.cn') || 
+                urlObj.hostname.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+              // 提取路径部分，去掉应用前缀
+              let path = urlObj.pathname;
+              if (path.includes('/assets/layout/')) {
+                // 布局应用资源：需要从 layout-app 服务器加载
+                path = path.substring(path.indexOf('/assets/layout/'));
+                const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+                const isPreview = port.startsWith('41');
+                const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+                const localPath = layoutAppBase + path + (urlObj.search || '') + (urlObj.hash || '');
+                htmlLink.href = localPath;
+                htmlLink.setAttribute('href', localPath);
+                return;
+              } else if (path.includes('/assets/')) {
+                path = path.substring(path.indexOf('/assets/'));
+              }
+              // 保留查询参数和哈希
+              const localPath = path + (urlObj.search || '') + (urlObj.hash || '');
+              htmlLink.href = localPath;
+              htmlLink.setAttribute('href', localPath);
+            }
+          } catch (e) {
+            // URL 解析失败，忽略
+          }
+        } else if (href.includes('/assets/layout/')) {
+          // 处理本地路径中的布局应用资源
+          const port = typeof window !== 'undefined' ? window.location.port || '' : '';
+          const isPreview = port.startsWith('41');
+          const layoutAppBase = isPreview ? 'http://localhost:4192' : 'http://localhost:4188';
+          const localPath = layoutAppBase + (href.startsWith('/') ? href : '/' + href);
+          htmlLink.href = localPath;
+          htmlLink.setAttribute('href', localPath);
+        }
+      });
+    };
+    
+    // 立即处理已存在的标签
+    if (document.readyState === 'loading') {
+      // 如果文档还在加载，等待 DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', () => {
+        processExistingScripts();
+        processExistingLinks();
+      });
+    } else {
+      // 如果文档已经加载，立即处理
+      processExistingScripts();
+      processExistingLinks();
+    }
+    
     return;
   }
 

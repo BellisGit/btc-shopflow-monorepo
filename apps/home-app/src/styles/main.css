@@ -100,6 +100,69 @@ body {
   color: #409eff;
 }
 
+/* 移动端响应式样式 */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+    min-height: 60px;
+  }
+
+  .header .container {
+    padding-right: 0;
+    flex-wrap: nowrap;
+  }
+
+  .header-left {
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    height: 40px;
+  }
+
+  .nav {
+    gap: 0.75rem;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .nav-link {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-link.home-link {
+    font-size: 0.875rem;
+  }
+}
+
+/* 超小屏幕（手机竖屏） */
+@media (max-width: 480px) {
+  .header {
+    padding: 0 12px;
+    min-height: 56px;
+  }
+
+  .header-left {
+    gap: 0.5rem;
+  }
+
+  .logo {
+    height: 36px;
+  }
+
+  .nav {
+    gap: 0.5rem;
+  }
+
+  .nav-link {
+    font-size: 0.75rem;
+    padding: 0 4px;
+  }
+}
+
 html,
 body {
   height: 100%;

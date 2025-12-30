@@ -19,10 +19,15 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
+import { useLogout } from '@/composables/useLogout';
 
 defineOptions({
   name: 'AdminApp',
 });
+
+// 关键：在应用启动时立即初始化通信桥和登出监听
+// 这样确保即使没有组件使用 useLogout，也能接收到跨标签页的登出消息
+useLogout();
 
 const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;

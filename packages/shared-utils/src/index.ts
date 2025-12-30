@@ -25,6 +25,10 @@ export * from './http';
 export * from './composables/usePageTransition';
 // 显式导出 usePageTransition，确保被正确导出
 export { usePageTransition } from './composables/usePageTransition';
+export * from './composables/useFileType';
+// 显式导出 useFileType 相关函数，确保被正确导出
+export { useFileType, detectFileType, detectFileTypeFromBuffer, detectFileTypeFromFileName } from './composables/useFileType';
+export type { FileTypeResult } from './composables/useFileType';
 // 显式导出 http 模块的类型，确保类型被正确导出
 export type { MessageHandler, ConfirmHandler, RouterHandler, ApiResponse } from './http';
 

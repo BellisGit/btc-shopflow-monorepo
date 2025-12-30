@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'path';
 
 // 模块名称（硬编码，因为构建时无法访问运行时 i18n）
-// 格式：管理模块 - BTC ShopFlow（不使用页面标题）
+// 格式：管理模块（不使用页面标题）
 const moduleName = '管理模块';
 
 // 标题映射表（从 i18n 同步）
@@ -108,8 +108,8 @@ export function titleInjectPlugin(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
-        // 统一使用"管理模块 - BTC ShopFlow"格式（不使用页面标题）
-        const finalTitle = `${moduleName} - BTC ShopFlow`;
+        // 统一使用"管理模块"格式（不使用页面标题）
+        const finalTitle = moduleName;
 
         // 替换占位符
         return html.replace('__PAGE_TITLE__', finalTitle);

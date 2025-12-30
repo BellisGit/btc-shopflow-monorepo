@@ -1281,10 +1281,6 @@ export function setupQiankun() {
                   container.style.setProperty('visibility', 'hidden', 'important');
                   container.style.setProperty('opacity', '0', 'important');
                 }
-                // 添加调试日志
-                if (import.meta.env.DEV) {
-                  console.log(`[qiankun] 显示应用级别loading: ${appDisplayName} (应用ID: ${app.name})`);
-                }
                 // 立即显示，不等待容器（因为使用fixed定位，可以直接添加到body）
                 // app-loading.service.ts已经禁止显示"应用"loading，所以这里不需要特殊处理
                 appLoadingService.show(appDisplayName, container);
@@ -1473,16 +1469,46 @@ export function setupQiankun() {
         // 更新当前激活的应用名称
         currentActiveApp = _app.name;
 
-        // 隐藏应用级 Loading（使用显示名称作为key）
+        // 关键优化：立即同步关闭应用级 Loading，不等待异步导入
+        // 这样可以避免 loading 显示时间过长（10秒超时）
+        // 先通过 DOM 直接关闭所有 .app-loading 元素（同步操作，立即生效）
+        const loadingEls = document.querySelectorAll('.app-loading');
+        loadingEls.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('opacity', '0', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+            // 立即移除 DOM 元素，不等待异步操作
+            try {
+              if (el.parentNode) {
+                el.parentNode.removeChild(el);
+              }
+            } catch (e) {
+              // 如果移除失败，延迟移除
+              setTimeout(() => {
+                if (el.parentNode) {
+                  try {
+                    el.parentNode.removeChild(el);
+                  } catch (err) {
+                    // 忽略移除错误
+                  }
+                }
+              }, 100);
+            }
+          }
+        });
+
+        // 然后异步调用 appLoadingService.hide() 进行清理（确保状态一致）
         try {
           const { appLoadingService } = await import('@btc/shared-core');
-          // 隐藏当前应用的loading
+          // 隐藏当前应用的loading（即使已经通过 DOM 关闭，也要更新服务状态）
           appLoadingService.hide(appDisplayName);
           // 清除标记，允许下次重新显示
           const loadingKey = `__app_loading_${_app.name}__`;
           delete (window as any)[loadingKey];
         } catch (error) {
-          console.warn('[qiankun] 无法加载 AppLoadingService，跳过应用级loading', error);
+          // 静默失败，因为已经通过 DOM 关闭了 loading
         }
 
 
@@ -1499,74 +1525,44 @@ export function setupQiankun() {
           // console.log(`[qiankun] 子应用 ${_app.name} 清除超时保护`);
         }
 
-        // 清理加载标记（必须在触发事件之前，确保 Layout 组件能正确读取状态）
+        // 清理加载标记和隐藏样式（子应用已挂载，应该显示容器）
         const container = document.querySelector('#subapp-viewport') as HTMLElement;
         if (container) {
           container.removeAttribute('data-qiankun-loading');
-          // 移除强制样式，让 Vue 的 v-show 正常控制
-          container.style.removeProperty('display');
-          container.style.removeProperty('visibility');
-          container.style.removeProperty('opacity');
 
-          // 确保容器可见（使用 nextTick 确保 Vue 的响应式更新完成）
-          // 使用 requestAnimationFrame 确保 DOM 更新完成
+          // 移除之前设置的隐藏样式，让容器的显示由 Vue 的 v-if 和 CSS 控制
+          // 使用 requestAnimationFrame 确保在 DOM 更新后执行
           requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (container) {
-                // 检查容器是否真的可见
-                const computedStyle = window.getComputedStyle(container);
-                const isVisible = computedStyle.display !== 'none' &&
-                                  computedStyle.visibility !== 'hidden' &&
-                                  computedStyle.opacity !== '0';
-                // console.log(`[qiankun] 子应用 ${_app.name} 容器可见性检查:`, {
-                //   display: computedStyle.display,
-                //   visibility: computedStyle.visibility,
-                //   opacity: computedStyle.opacity,
-                //   isVisible,
-                //   hasChild: container.children.length > 0,
-                //   childCount: container.children.length
-                // });
+            if (!container) return;
 
-                // 如果容器不可见，强制显示（作为兜底）
-                if (!isVisible) {
-                  // console.warn(`[qiankun] 子应用 ${_app.name} 容器不可见，强制显示`);
-                  container.style.setProperty('display', 'flex', 'important');
-                  container.style.setProperty('visibility', 'visible', 'important');
-                  container.style.setProperty('opacity', '1', 'important');
-                }
+            // 移除隐藏样式属性（包括带 !important 的，通过 removeProperty 移除）
+            container.style.removeProperty('display');
+            container.style.removeProperty('visibility');
+            container.style.removeProperty('opacity');
 
-                // 检查子应用是否正确挂载
-                // if (container.children.length === 0) {
-                //   console.warn(`[qiankun] 子应用 ${_app.name} 容器内没有子元素，可能挂载失败`);
-                // } else {
-                //   console.log(`[qiankun] 子应用 ${_app.name} 容器内有 ${container.children.length} 个子元素`);
+            // 如果 style 属性中还有内联的隐藏样式，手动清理
+            const styleAttr = container.getAttribute('style') || '';
+            if (styleAttr) {
+              const cleanedStyle = styleAttr
+                .replace(/display\s*:\s*none\s*!important;?/gi, '')
+                .replace(/visibility\s*:\s*hidden\s*!important;?/gi, '')
+                .replace(/opacity\s*:\s*0\s*!important;?/gi, '')
+                .replace(/display\s*:\s*none;?/gi, '')
+                .replace(/visibility\s*:\s*hidden;?/gi, '')
+                .replace(/opacity\s*:\s*0;?/gi, '')
+                .replace(/;\s*;/g, ';')
+                .replace(/^\s*;\s*|\s*;\s*$/g, '')
+                .trim();
 
-                //   // 检查子应用的第一个子元素是否可见
-                //   const firstChild = container.children[0] as HTMLElement;
-                //   if (firstChild) {
-                //     const childStyle = window.getComputedStyle(firstChild);
-                //     const childIsVisible = childStyle.display !== 'none' && childStyle.visibility !== 'hidden' && childStyle.opacity !== '0';
-                //     console.log(`[qiankun] 子应用 ${_app.name} 第一个子元素可见性:`, {
-                //       display: childStyle.display,
-                //       visibility: childStyle.visibility,
-                //       opacity: childStyle.opacity,
-                //       isVisible: childIsVisible,
-                //       tagName: firstChild.tagName,
-                //       id: firstChild.id,
-                //       className: firstChild.className
-                //     });
-
-                //     // 如果子元素不可见，尝试强制显示
-                //     if (!childIsVisible) {
-                //       console.warn(`[qiankun] 子应用 ${_app.name} 第一个子元素不可见，尝试强制显示`);
-                //       firstChild.style.setProperty('display', 'flex', 'important');
-                //       firstChild.style.setProperty('visibility', 'visible', 'important');
-                //       firstChild.style.setProperty('opacity', '1', 'important');
-                //     }
-                //   }
-                // }
+              if (cleanedStyle) {
+                container.setAttribute('style', cleanedStyle);
+              } else {
+                container.removeAttribute('style');
               }
-            });
+            }
+
+            // 移除隐藏类
+            container.classList.remove('content-mount--hidden');
           });
         }
 
@@ -2469,7 +2465,22 @@ export function setupQiankun() {
         const { appLoadingService } = await import('@btc/shared-core');
         appLoadingService.hide(appName);
       } catch (error) {
-        console.warn('[qiankun] 无法加载 AppLoadingService，跳过应用级loading', error);
+        console.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
+        // 兜底方案：直接通过 DOM 关闭所有 .app-loading 元素
+        const loadingEls = document.querySelectorAll('.app-loading');
+        loadingEls.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('opacity', '0', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+            setTimeout(() => {
+              if (el.parentNode) {
+                el.parentNode.removeChild(el);
+              }
+            }, 100);
+          }
+        });
       }
 
       // 动态导入避免循环依赖

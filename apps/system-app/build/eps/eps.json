@@ -4,6 +4,51 @@
 		"name": "test",
 		"api": [
 			{
+				"name": "510",
+				"method": "GET",
+				"path": "/510",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "方法参数校验异常",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "512",
+				"method": "GET",
+				"path": "/512",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "keycloak客户端地址错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "501",
+				"method": "GET",
+				"path": "/501",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "系统繁忙，请稍候再试",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "500",
 				"method": "GET",
 				"path": "/500",
@@ -34,21 +79,6 @@
 				}
 			},
 			{
-				"name": "501",
-				"method": "GET",
-				"path": "/501",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "系统繁忙，请稍候再试",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
 				"name": "513",
 				"method": "GET",
 				"path": "/513",
@@ -58,126 +88,6 @@
 				"auth": "login",
 				"permission": "admin.test:System:read",
 				"summary": "获取领域失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "517",
-				"method": "GET",
-				"path": "/517",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "身份令牌已过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "520",
-				"method": "GET",
-				"path": "/520",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "没有该工号",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "514",
-				"method": "GET",
-				"path": "/514",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取客户端id失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "522",
-				"method": "GET",
-				"path": "/522",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "参数不能为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "516",
-				"method": "GET",
-				"path": "/516",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "连接keycloak失败",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "521",
-				"method": "GET",
-				"path": "/521",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "初始密码错误",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "518",
-				"method": "GET",
-				"path": "/518",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "获取到的身份令牌为空",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "512",
-				"method": "GET",
-				"path": "/512",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "keycloak客户端地址错误",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -199,15 +109,60 @@
 				}
 			},
 			{
-				"name": "527",
+				"name": "523",
 				"method": "GET",
-				"path": "/527",
+				"path": "/523",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "手机号不存在",
+				"summary": "数据错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "521",
+				"method": "GET",
+				"path": "/521",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "初始密码错误",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "520",
+				"method": "GET",
+				"path": "/520",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "没有该工号",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "522",
+				"method": "GET",
+				"path": "/522",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "参数不能为空",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -229,6 +184,66 @@
 				}
 			},
 			{
+				"name": "518",
+				"method": "GET",
+				"path": "/518",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取到的身份令牌为空",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "516",
+				"method": "GET",
+				"path": "/516",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "连接keycloak失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "514",
+				"method": "GET",
+				"path": "/514",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "获取客户端id失败",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
+				"name": "517",
+				"method": "GET",
+				"path": "/517",
+				"module": "admin.test",
+				"ignoreToken": false,
+				"action": "READ",
+				"auth": "login",
+				"permission": "admin.test:System:read",
+				"summary": "身份令牌已过期",
+				"tag": "TestController",
+				"dts": {
+					"parameters": []
+				}
+			},
+			{
 				"name": "529",
 				"method": "GET",
 				"path": "/529",
@@ -244,30 +259,15 @@
 				}
 			},
 			{
-				"name": "528",
+				"name": "527",
 				"method": "GET",
-				"path": "/528",
+				"path": "/527",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "验证码已过期",
-				"tag": "TestController",
-				"dts": {
-					"parameters": []
-				}
-			},
-			{
-				"name": "523",
-				"method": "GET",
-				"path": "/523",
-				"module": "admin.test",
-				"ignoreToken": false,
-				"action": "READ",
-				"auth": "login",
-				"permission": "admin.test:System:read",
-				"summary": "数据错误",
+				"summary": "手机号不存在",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -289,15 +289,15 @@
 				}
 			},
 			{
-				"name": "510",
+				"name": "528",
 				"method": "GET",
-				"path": "/510",
+				"path": "/528",
 				"module": "admin.test",
 				"ignoreToken": false,
 				"action": "READ",
 				"auth": "login",
 				"permission": "admin.test:System:read",
-				"summary": "方法参数校验异常",
+				"summary": "验证码已过期",
 				"tag": "TestController",
 				"dts": {
 					"parameters": []
@@ -8074,7 +8074,7 @@
 		],
 		"columns": [
 			{
-				"comment": "id",
+				"comment": "ID",
 				"nullable": true,
 				"propertyName": "id",
 				"source": "id",
@@ -8084,7 +8084,7 @@
 				"extensions": null
 			},
 			{
-				"comment": "tenantId",
+				"comment": "租户ID",
 				"nullable": true,
 				"propertyName": "tenantId",
 				"source": "tenant_id",
@@ -8094,7 +8094,7 @@
 				"extensions": null
 			},
 			{
-				"comment": "roleId",
+				"comment": "角色ID",
 				"nullable": true,
 				"propertyName": "roleId",
 				"source": "role_id",
@@ -8104,7 +8104,7 @@
 				"extensions": null
 			},
 			{
-				"comment": "permissionId",
+				"comment": "权限ID",
 				"nullable": true,
 				"propertyName": "permissionId",
 				"source": "permission_id",
@@ -8114,7 +8114,7 @@
 				"extensions": null
 			},
 			{
-				"comment": "createdAt",
+				"comment": "创建时间",
 				"nullable": true,
 				"propertyName": "createdAt",
 				"source": "created_at",
@@ -8124,7 +8124,7 @@
 				"extensions": null
 			},
 			{
-				"comment": "deletedAt",
+				"comment": "删除时间",
 				"nullable": true,
 				"propertyName": "deletedAt",
 				"source": "deleted_at",
@@ -8832,32 +8832,6 @@
 		"name": "user-role",
 		"api": [
 			{
-				"name": "unbind",
-				"method": "POST",
-				"path": "/unbind",
-				"module": "admin.iam",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.iam:sys_user_role:create",
-				"summary": "用户解绑角色",
-				"tag": "UserRoleController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "data",
 				"method": "POST",
 				"path": "/data",
@@ -8893,6 +8867,32 @@
 				"auth": "permission",
 				"permission": "admin.iam:sys_user_role:create",
 				"summary": "批量新增授权",
+				"tag": "UserRoleController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "object",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "unbind",
+				"method": "POST",
+				"path": "/unbind",
+				"module": "admin.iam",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "permission",
+				"permission": "admin.iam:sys_user_role:create",
+				"summary": "用户解绑角色",
 				"tag": "UserRoleController",
 				"dts": {
 					"parameters": [
@@ -9324,32 +9324,6 @@
 				}
 			},
 			{
-				"name": "batch",
-				"method": "POST",
-				"path": "/options/batch",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.dict:dict-data:create",
-				"summary": "批量获取下拉菜单",
-				"tag": "DictDataController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": true,
-							"schema": {
-								"type": "array",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "{dictTypeCode}",
 				"method": "GET",
 				"path": "/options/{dictTypeCode}",
@@ -9368,6 +9342,32 @@
 							"required": true,
 							"schema": {
 								"type": "string",
+								"format": null,
+								"items": null
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "batch",
+				"method": "POST",
+				"path": "/options/batch",
+				"module": "admin.dict",
+				"ignoreToken": false,
+				"action": "CREATE",
+				"auth": "login",
+				"permission": "admin.dict:dict-data:create",
+				"summary": "批量获取下拉菜单",
+				"tag": "DictDataController",
+				"dts": {
+					"parameters": [
+						{
+							"description": "arg0",
+							"name": "body:arg0",
+							"required": true,
+							"schema": {
+								"type": "array",
 								"format": null,
 								"items": null
 							}
@@ -9403,16 +9403,6 @@
 				"extensions": null
 			},
 			{
-				"comment": "字典数据ID",
-				"nullable": true,
-				"propertyName": "dictDataId",
-				"source": "dict_data_id",
-				"type": "varchar",
-				"dict": [],
-				"defaultValue": null,
-				"extensions": null
-			},
-			{
 				"comment": "字典类型编码",
 				"nullable": true,
 				"propertyName": "dictTypeCode",
@@ -9443,21 +9433,11 @@
 				"extensions": null
 			},
 			{
-				"comment": "排序",
-				"nullable": true,
-				"propertyName": "sortOrder",
-				"source": "sort_order",
-				"type": "int",
-				"dict": [],
-				"defaultValue": null,
-				"extensions": null
-			},
-			{
 				"comment": "创建时间",
 				"nullable": true,
 				"propertyName": "createdAt",
 				"source": "created_at",
-				"type": "varchar",
+				"type": "datetime",
 				"dict": [],
 				"defaultValue": null,
 				"extensions": null
@@ -9467,7 +9447,17 @@
 				"nullable": true,
 				"propertyName": "updatedAt",
 				"source": "updated_at",
-				"type": "varchar",
+				"type": "datetime",
+				"dict": [],
+				"defaultValue": null,
+				"extensions": null
+			},
+			{
+				"comment": "删除时间",
+				"nullable": true,
+				"propertyName": "deletedAt",
+				"source": "deleted_at",
+				"type": "datetime",
 				"dict": [],
 				"defaultValue": null,
 				"extensions": null
@@ -9492,126 +9482,22 @@
 		"name": "info",
 		"api": [
 			{
-				"name": "add",
-				"method": "POST",
-				"path": "/add",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "permission",
-				"permission": "admin.dict:dict-info:create",
-				"summary": "新增",
-				"tag": "DictInfoController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "update",
-				"method": "PUT",
-				"path": "/update",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "UPDATE",
-				"auth": "permission",
-				"permission": "admin.dict:dict-info:update",
-				"summary": "根据ID更新",
-				"tag": "DictInfoController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "list",
-				"method": "POST",
-				"path": "/list",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "CREATE",
-				"auth": "login",
-				"permission": "admin.dict:dict-info:create",
-				"summary": "查询列表",
-				"tag": "DictInfoController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "arg0",
-							"name": "body:arg0",
-							"required": false,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
-				"name": "delete",
-				"method": "DELETE",
-				"path": "/delete/{id}",
-				"module": "admin.dict",
-				"ignoreToken": false,
-				"action": "DELETE",
-				"auth": "permission",
-				"permission": "admin.dict:dict-info:delete",
-				"summary": "根据ID删除",
-				"tag": "DictInfoController",
-				"dts": {
-					"parameters": [
-						{
-							"description": "id",
-							"name": "path:id",
-							"required": true,
-							"schema": {
-								"type": "object",
-								"format": null,
-								"items": null
-							}
-						}
-					]
-				}
-			},
-			{
 				"name": "page",
 				"method": "POST",
 				"path": "/page",
 				"module": "admin.dict",
 				"ignoreToken": false,
 				"action": "CREATE",
-				"auth": "login",
+				"auth": "permission",
 				"permission": "admin.dict:dict-info:create",
-				"summary": "分页查询",
+				"summary": "分页查询字典信息",
 				"tag": "DictInfoController",
 				"dts": {
 					"parameters": [
 						{
 							"description": "arg0",
 							"name": "body:arg0",
-							"required": false,
+							"required": true,
 							"schema": {
 								"type": "object",
 								"format": null,
@@ -9714,14 +9600,43 @@
 				"extensions": null
 			}
 		],
-		"pageColumns": [],
+		"pageColumns": [
+			{
+				"comment": "",
+				"nullable": false,
+				"propertyName": "entityClass",
+				"source": "",
+				"type": "string",
+				"dict": null,
+				"defaultValue": "",
+				"extensions": null
+			}
+		],
 		"pageQueryOp": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"field": "entityClass",
+					"value": ""
+				}
+			],
 			"fieldLike": [],
-			"keyWordLikeFields": []
+			"keyWordLikeFields": [
+				""
+			]
 		},
 		"search": {
-			"fieldEq": [],
+			"fieldEq": [
+				{
+					"comment": "实体类名",
+					"nullable": true,
+					"propertyName": "entityClass",
+					"source": "entity_class",
+					"type": "varchar",
+					"dict": [],
+					"defaultValue": null,
+					"extensions": null
+				}
+			],
 			"fieldLike": [],
 			"keyWordLikeFields": []
 		},

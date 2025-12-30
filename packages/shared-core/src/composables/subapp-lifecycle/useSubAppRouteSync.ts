@@ -13,6 +13,23 @@ export function syncHostWithSubRoute(fullPath: string, basePath: string, context
   if (context?.isUnmounted) {
     return;
   }
+
+  // 关键：在 layout-app 模式下，不需要修改 URL（因为子域名模式下 URL 已经是正确的）
+  // 但我们需要标记正在从子应用同步，避免循环
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+  if (isUsingLayoutApp) {
+    // layout-app 模式下，URL 已经是正确的（子域名模式），不需要修改
+    // 但需要标记正在同步，避免触发 setupHostLocationBridge 的循环
+    syncingFromSubApp = true;
+    // 立即重置标志，因为 layout-app 模式下不需要等待 URL 更新
+    setTimeout(() => {
+      syncingFromSubApp = false;
+    }, 0);
+    return;
+  }
+
+  // qiankun 模式下的原有逻辑
   if (!qiankunWindow.__POWERED_BY_QIANKUN__ || syncingFromHost) {
     return;
   }
@@ -65,15 +82,75 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
   const currentPath = currentRoute.split('?')[0]?.split('#')[0] || '';
   const targetPath = normalizedTarget.split('?')[0]?.split('#')[0] || '';
 
+  if (import.meta.env.DEV) {
+    console.log('[syncSubRouteWithHost]', {
+      appId,
+      basePath,
+      currentPath,
+      targetPath,
+      isUsingLayoutApp,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
+      pathname: typeof window !== 'undefined' ? window.location.pathname : '',
+      targetRoute,
+      normalizedTarget,
+      currentRoute
+    });
+  }
+
   if (targetPath === currentPath) {
     // 路径相同，不需要更新（query 和 hash 的变化会由路由本身处理）
+    if (import.meta.env.DEV) {
+      console.log('[syncSubRouteWithHost] 路径相同，跳过同步');
+    }
     return;
   }
 
+  // 关键修复：在 layout-app 模式下，确保路由同步后能触发事件
   syncingFromHost = true;
-  context.router.replace(normalizedTarget).catch(() => {}).finally(() => {
-    syncingFromHost = false;
-  });
+
+  // 关键修复：在 layout-app 模式下，使用 push 而不是 replace，确保路由变化能被 Vue Router 正确检测
+  // 这样可以确保组件能够响应式更新（菜单激活状态、tabbar 激活状态、内容区域）
+  // 但是，我们需要在同步完成后立即使用 replaceState 替换历史记录，避免在浏览器历史中添加条目
+  if (isUsingLayoutApp) {
+    context.router.push(normalizedTarget).then(() => {
+      // 路由同步成功，立即使用 replaceState 替换历史记录，避免在浏览器历史中添加条目
+      // 这样既保证了 Vue Router 的响应式更新，又不会污染浏览器历史记录
+      window.history.replaceState(window.history.state, '', window.location.href);
+
+      // 使用 nextTick 确保 router.afterEach 已经执行
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          syncingFromHost = false;
+        });
+      }).catch(() => {
+        syncingFromHost = false;
+      });
+    }).catch((error: unknown) => {
+      // 路由同步失败，直接重置
+      if (import.meta.env.DEV) {
+        console.error('[syncSubRouteWithHost] 路由同步失败:', error);
+      }
+      syncingFromHost = false;
+    });
+  } else {
+    // qiankun 模式下，使用 replace
+    context.router.replace(normalizedTarget).then(() => {
+      // 路由同步成功，使用 nextTick 确保 router.afterEach 已经执行
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          syncingFromHost = false;
+        });
+      }).catch(() => {
+        syncingFromHost = false;
+      });
+    }).catch((error: unknown) => {
+      // 路由同步失败，直接重置
+      if (import.meta.env.DEV) {
+        console.error('[syncSubRouteWithHost] 路由同步失败:', error);
+      }
+      syncingFromHost = false;
+    });
+  }
 }
 
 /**
@@ -152,6 +229,9 @@ export function setupRouteSync(context: SubAppContext, _appId: string, basePath:
     return;
   }
 
+  // 在 layout-app 模式下，保存 isUsingLayoutApp 标志，供 routerAfterEach 使用
+  const layoutAppMode = isUsingLayoutApp;
+
   context.cleanup.routerAfterEach = context.router.afterEach((to: any) => {
     // 如果应用已卸载，不再同步路由
     if (context.isUnmounted) {
@@ -197,8 +277,35 @@ export function setupRouteSync(context: SubAppContext, _appId: string, basePath:
       syncHostWithSubRoute(fullPath, basePath, context);
     }
 
-    // 触发路由变化事件
-    triggerRouteChangeEvent(to, context, basePath);
+    // 关键修复：确保路由变化事件总是被触发，即使是从主机同步过来的路由
+    // 这确保了 tabbar、面包屑和内容区域能够正确响应路由变化
+    // 关键：即使 syncingFromHost 为 true，也要触发事件，因为这是子应用路由的真实变化
+    // 使用 nextTick 确保在路由完全更新后再触发事件
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        // 关键：在 layout-app 模式下，即使 syncingFromHost 为 true，也要触发事件
+        // 因为这是子应用路由的真实变化，需要通知 layout-app 更新菜单和 tabbar
+        triggerRouteChangeEvent(to, context, basePath);
+      });
+    }).catch(() => {
+      // 如果导入失败，直接触发事件（兜底处理）
+      triggerRouteChangeEvent(to, context, basePath);
+    });
+
+    // 关键修复：在 layout-app 模式下，子应用路由变化时，主动触发路由同步检查
+    // 因为 layout-app 模式下，syncHostWithSubRoute 不会修改 URL，所以 setupHostLocationBridge 不会被触发
+    // 但是，如果 layout-app 的路由变化了（比如用户点击了 layout-app 的菜单），需要同步到子应用
+    // 这里我们通过触发 popstate 事件来触发 setupHostLocationBridge 的路由同步
+    if (layoutAppMode && !syncingFromHost) {
+      // 在 layout-app 模式下，子应用路由变化时，触发 popstate 事件
+      // 这样 setupHostLocationBridge 会检查 layout-app 的路由，并同步到子应用（如果需要）
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+        });
+      });
+    }
+
   });
 
   // 关键：页面刷新时，主动触发一次当前路由的路由变化事件，确保标签页能够恢复
@@ -229,11 +336,64 @@ export function setupHostLocationBridge(context: SubAppContext, appId: string, b
     return;
   }
 
+  let lastPath = window.location.pathname;
+  // 防抖定时器（用于 layout-app 模式）
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   const handleRoutingEvent = () => {
-    if (syncingFromSubApp) {
+    // 关键修复：在 layout-app 模式下，syncingFromSubApp 不应该阻止路由同步
+    // 因为 layout-app 模式下，子应用路由变化不会修改 URL（URL 已经是正确的）
+    // 所以 syncingFromSubApp 标志不应该影响从 layout-app 到子应用的路由同步
+    if (syncingFromSubApp && !isUsingLayoutApp) {
       syncingFromSubApp = false;
       return;
     }
+
+    // 在 layout-app 模式下，如果 syncingFromSubApp 为 true，重置它但不返回
+    // 这样可以确保 layout-app 的路由变化能够同步到子应用
+    if (syncingFromSubApp && isUsingLayoutApp) {
+      syncingFromSubApp = false;
+    }
+
+    // 检查路径是否真的变化了
+    const currentPath = window.location.pathname;
+
+    // 关键修复：在 layout-app 模式下，使用防抖避免重复调用
+    // 因为 pushState 的 patch 和 popstate 事件可能都会触发，导致重复同步
+    if (isUsingLayoutApp) {
+      // 清除之前的定时器
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      // 使用 nextTick 确保路由完全更新后再同步
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          // 再次检查路径，确保真的需要同步
+          const finalPath = window.location.pathname;
+          if (finalPath !== lastPath) {
+            syncSubRouteWithHost(context, appId, basePath);
+            lastPath = finalPath;
+          }
+        });
+      }).catch(() => {
+        // 如果导入失败，使用 setTimeout 作为兜底
+        debounceTimer = setTimeout(() => {
+          const finalPath = window.location.pathname;
+          if (finalPath !== lastPath) {
+            syncSubRouteWithHost(context, appId, basePath);
+            lastPath = finalPath;
+          }
+          debounceTimer = null;
+        }, 10);
+      });
+      return;
+    }
+
+    // qiankun 模式下的原有逻辑：只有路径变化时才同步
+    if (currentPath === lastPath) {
+      return;
+    }
+    lastPath = currentPath;
 
     syncSubRouteWithHost(context, appId, basePath);
   };
@@ -248,6 +408,62 @@ export function setupHostLocationBridge(context: SubAppContext, appId: string, b
   // layout-app 的 router.afterEach 会触发 popstate 事件
   window.addEventListener('popstate', handleRoutingEvent);
   context.cleanup.listeners.push(['popstate', handleRoutingEvent]);
+
+  // 关键修复：在 qiankun 模式和 layout-app 模式下，都需要监听 pushState 和 replaceState 的变化
+  // 因为：
+  // 1. qiankun 模式：主应用使用 router.push() 时，会调用 pushState，但不会触发 popstate
+  // 2. layout-app 模式：layout-app 使用 router.push() 时，会调用 pushState，但不会触发 popstate
+  //    需要监听这些变化，确保 layout-app 的路由变化能同步到子应用
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    const patchedPushState = function(state: any, title: string, url?: string | URL | null) {
+      originalPushState.call(history, state, title, url);
+      // 关键修复：在 layout-app 模式下，使用 nextTick 确保路由完全更新后再同步
+      // 这样可以确保子应用路由能够正确同步，并触发 subapp:route-change 事件
+      if (isUsingLayoutApp) {
+        import('vue').then(({ nextTick }) => {
+          nextTick(() => {
+            handleRoutingEvent();
+          });
+        }).catch(() => {
+          // 如果导入失败，使用 setTimeout 作为兜底
+          setTimeout(handleRoutingEvent, 0);
+        });
+      } else {
+        // qiankun 模式下，使用 setTimeout 延迟执行
+        setTimeout(handleRoutingEvent, 0);
+      }
+    };
+
+    const patchedReplaceState = function(state: any, title: string, url?: string | URL | null) {
+      originalReplaceState.call(history, state, title, url);
+      // 关键修复：在 layout-app 模式下，使用 nextTick 确保路由完全更新后再同步
+      if (isUsingLayoutApp) {
+        import('vue').then(({ nextTick }) => {
+          nextTick(() => {
+            handleRoutingEvent();
+          });
+        }).catch(() => {
+          // 如果导入失败，使用 setTimeout 作为兜底
+          setTimeout(handleRoutingEvent, 0);
+        });
+      } else {
+        // qiankun 模式下，使用 setTimeout 延迟执行
+        setTimeout(handleRoutingEvent, 0);
+      }
+    };
+
+    // 只在当前应用激活时重写 history API
+    history.pushState = patchedPushState;
+    history.replaceState = patchedReplaceState;
+
+    context.cleanup.historyPatches = () => {
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  }
 
   handleRoutingEvent();
 }

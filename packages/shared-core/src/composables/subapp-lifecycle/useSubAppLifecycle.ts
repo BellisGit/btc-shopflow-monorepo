@@ -390,21 +390,17 @@ export async function mountSubApp(
 
   // 如果 props.container 不存在或查找失败，尝试其他方式
   if (!mountPoint) {
-    // 关键：在生产环境子域名下，优先尝试查找 #subapp-viewport（无论是否设置了 __USE_LAYOUT_APP__）
-    // 因为 layout-app 可能已经加载，但 __USE_LAYOUT_APP__ 标志可能还没设置
-    const isProductionSubdomain = typeof window !== 'undefined' && 
-      import.meta.env.PROD &&
-      window.location.hostname.includes('bellis.com.cn') && 
-      window.location.hostname !== 'bellis.com.cn';
+    // 关键：只有当 __USE_LAYOUT_APP__ 为 true 时，才查找 #subapp-viewport
+    // 如果 __USE_LAYOUT_APP__ 为 false，说明 layout-app 加载失败，应该使用独立渲染模式（#app）
+    const isUsingLayoutApp = !!(window as any).__USE_LAYOUT_APP__;
     
-    if (isProductionSubdomain || (window as any).__USE_LAYOUT_APP__) {
+    if (isUsingLayoutApp) {
       // 使用 layout-app：尝试查找 #subapp-viewport
       mountPoint = await waitForContainer('#subapp-viewport', 80, 50); // 增加重试次数和延迟
       if (!mountPoint) {
         const errorMsg = `[${options.appId}-app] 使用 layout-app 但未找到 #subapp-viewport 元素`;
         console.error(errorMsg, {
           __USE_LAYOUT_APP__: (window as any).__USE_LAYOUT_APP__,
-          isProductionSubdomain,
           hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
           documentBody: typeof document !== 'undefined' ? document.body : null,
           appElement: typeof document !== 'undefined' ? document.querySelector('#app') : null,
@@ -563,6 +559,12 @@ export async function unmountSubApp(
     window.removeEventListener(event, handler);
   });
   context.cleanup.listeners = [];
+
+  // 清理 history API 的补丁
+  if (context.cleanup.historyPatches) {
+    context.cleanup.historyPatches();
+    delete context.cleanup.historyPatches;
+  }
 
   const clearTabs = props.clearTabs ?? context.props?.clearTabs;
   if (clearTabs) {

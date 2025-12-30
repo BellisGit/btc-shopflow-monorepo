@@ -27,7 +27,13 @@ export interface CdnImportPluginOptions {
 export function cdnImportPlugin(options: CdnImportPluginOptions): Plugin {
   const {
     appName,
-    enabled = process.env.NODE_ENV === 'production' && process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    // 关键：默认启用条件必须明确检查 ENABLE_CDN_ACCELERATION 环境变量
+    // 如果 ENABLE_CDN_ACCELERATION 被设置为 'false'，则禁用 CDN
+    // 只有在明确启用（ENABLE_CDN_ACCELERATION=true）或未设置且是生产构建时，才启用 CDN
+    enabled = process.env.ENABLE_CDN_ACCELERATION === 'true' || 
+              (process.env.ENABLE_CDN_ACCELERATION !== 'false' && 
+               process.env.NODE_ENV === 'production' && 
+               process.env.VITE_PREVIEW !== 'true'),
     cdnDomain = 'https://all.bellis.com.cn',
   } = options;
 

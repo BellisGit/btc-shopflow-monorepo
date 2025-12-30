@@ -545,13 +545,16 @@ const dualBarXAxis = ref<string[]>([
     border-radius: var(--custom-radius, var(--el-border-radius-base, 0.25rem));
     border: 1px solid var(--el-border-color-light);
     box-sizing: border-box;
+    padding: 20px;
 
     .card-header {
+      padding-bottom: 15px;
+      margin-bottom: 0;
 
       span {
         font-size: 16px;
         font-weight: 500;
-      color: var(--el-text-color-primary);
+        color: var(--el-text-color-primary);
       }
     }
 

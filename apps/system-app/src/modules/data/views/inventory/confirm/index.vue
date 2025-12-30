@@ -74,7 +74,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[InventoryConfirm] 获取盘点列表失败:', error);
+      // 响应拦截器已显示错误消息，不需要在控制台打印
       return {
         list: [],
         pagination: {
@@ -120,7 +120,7 @@ const approvalService = {
         total: normalized.total,
       };
     } catch (error) {
-      console.error('[InventoryConfirm] 获取流程确认列表失败:', error);
+      // 响应拦截器已显示错误消息，不需要在控制台打印
       return {
         list: [],
         total: 0
@@ -231,8 +231,8 @@ const handleConfirm = async (row: any) => {
     if (error === 'cancel' || error?.message === 'cancel') {
       return;
     }
-    console.error('[InventoryConfirm] 确认失败:', error);
-    BtcMessage.error(error?.msg || t('inventory.confirm.failed') || '确认失败');
+    // 响应拦截器已显示错误消息，不需要在控制台打印
+    // 响应拦截器会在业务错误时显示消息，这里不需要再显示
   }
 };
 
