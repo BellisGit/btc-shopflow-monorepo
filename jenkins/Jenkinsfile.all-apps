@@ -310,15 +310,24 @@ pipeline {
                                 echo "🔨 构建应用: ${appName} (脚本: build-dist:${scriptName})..."
                                 if (isUnix()) {
                                     sh """
+                                        # 设置环境变量（不使用 cross-env，直接在 shell 中设置）
+                                        export ENABLE_CDN_ACCELERATION=false
+                                        export ENABLE_CDN_UPLOAD=false
+                                        
                                         echo "构建应用: ${appName}..."
-                                        pnpm build-dist:${scriptName}
+                                        # 直接执行构建命令，而不是使用 package.json 中的脚本（因为脚本使用了 cross-env）
+                                        pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
                                         echo "✅ ${appName} 构建完成，产物在 dist 目录"
                                     """
                                 } else {
                                     bat """
                                         @echo off
+                                        REM 设置环境变量
+                                        set ENABLE_CDN_ACCELERATION=false
+                                        set ENABLE_CDN_UPLOAD=false
+                                        
                                         echo 构建应用: ${appName}...
-                                        call pnpm build-dist:${scriptName}
+                                        call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
                                         echo ✅ ${appName} 构建完成，产物在 dist 目录
                                     """
                                 }
