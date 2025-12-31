@@ -2,18 +2,18 @@
   <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['logistics-app']">
-    <router-view v-slot="{ Component, route }">
+    <router-view v-slot="{ Component }">
       <transition :name="pageTransition" mode="out-in">
         <keep-alive :key="viewKey" :include="keepAliveList">
-          <component v-if="Component" :is="Component" :key="`${route.path}-${route.fullPath}-${viewKey}`" />
+          <component v-if="Component" :is="Component" />
         </keep-alive>
       </transition>
     </router-view>
   </div>
-  <router-view v-else v-slot="{ Component, route }">
+  <router-view v-else v-slot="{ Component }">
     <transition :name="pageTransition" mode="out-in">
       <keep-alive :key="viewKey" :include="keepAliveList">
-        <component v-if="Component" :is="Component" :key="`${route.path}-${route.fullPath}-${viewKey}`" />
+        <component v-if="Component" :is="Component" />
       </keep-alive>
     </transition>
   </router-view>
@@ -56,20 +56,22 @@ function refreshView() {
 }
 
 // 关键修复：在 layout-app 模式下，监听路由变化，确保组件能够重新渲染
-// 当路由变化时，强制刷新视图以确保组件能够正确更新
+// 参考 cool-admin 的实现：
+// - keep-alive 使用 key 来控制刷新
+// - component 不使用 key，让 Vue Router 自动处理组件切换
+// - 当路由变化时，如果组件不在 keepAliveList 中，Vue Router 会自动创建新组件
+// - 如果组件在 keepAliveList 中，会使用缓存的组件（这是 keep-alive 的正常行为）
+// 在 layout-app 模式下，由于路由同步机制，可能需要强制刷新来确保组件更新
 if (!isStandalone) {
   watch(
-    () => [route.path, route.fullPath],
-    ([newPath, newFullPath], [oldPath, oldFullPath]) => {
-      // 如果路径真的变化了，强制刷新视图以确保组件重新渲染
-      if ((newPath !== oldPath || newFullPath !== oldFullPath) && oldPath) {
-        // 使用 nextTick 确保路由完全更新后再刷新
-        import('vue').then(({ nextTick }) => {
-          nextTick(() => {
-            // 路由已更新，强制刷新视图以确保组件重新渲染
-            viewKey.value += 1;
-          });
-        });
+    () => route.fullPath,
+    (newFullPath, oldFullPath) => {
+      // 如果路径真的变化了，强制刷新 keep-alive 实例
+      // 这样可以确保组件能够正确更新，即使组件在 keepAliveList 中
+      if (newFullPath !== oldFullPath && oldFullPath) {
+        // 更新 viewKey，强制刷新整个 keep-alive 实例
+        // 参考 cool-admin：通过更新 keep-alive 的 key 来刷新整个实例
+        viewKey.value += 1;
       }
     },
     { immediate: false }

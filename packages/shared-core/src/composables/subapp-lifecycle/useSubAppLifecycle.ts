@@ -458,11 +458,50 @@ export async function mountSubApp(
   
   context.app.mount(mountPoint);
   
+  // 关键：在 layout-app 模式下，应用挂载后立即调用 finishLoading 隐藏 loading
+  // 不需要等到路由准备好，因为应用已经挂载，loading 应该立即隐藏
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (isUsingLayoutApp) {
+    // 调用 finishLoading 隐藏 loading
+    const finishLoading = (window as any).__APP_FINISH_LOADING__;
+    if (typeof finishLoading === 'function') {
+      try {
+        finishLoading();
+      } catch (error) {
+        // 静默失败
+      }
+    }
+    
+    // 同时隐藏应用级 loading（如果存在）
+    import('@btc/shared-core').then(({ appLoadingService }) => {
+      if (appLoadingService) {
+        // 获取应用显示名称
+        const appNameMap: Record<string, string> = {
+          logistics: '物流模块',
+          admin: '管理模块',
+          finance: '财务模块',
+          engineering: '工程模块',
+          quality: '质量模块',
+          production: '生产模块',
+          operations: '运维模块',
+          dashboard: '图表模块',
+          personnel: '人事模块',
+        };
+        const appDisplayName = appNameMap[options.appId] || options.appId;
+        try {
+          appLoadingService.hide(appDisplayName);
+        } catch (error) {
+          // 静默失败
+        }
+      }
+    }).catch(() => {
+      // 静默失败
+    });
+  }
 
   // 关键修复：在 qiankun 或 layout-app 环境下，需要等待路由准备好后再进行导航
   // 这样可以确保路由已经完全初始化，组件可以正确加载
   // 注意：独立运行模式下，Vue Router 会自动根据当前 URL 匹配路由，无需手动触发
-  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
     
