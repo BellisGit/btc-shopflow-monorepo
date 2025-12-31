@@ -70,6 +70,67 @@ Nginx 反向代理到容器端口
 - ✅ 有足够的磁盘空间（构建镜像需要空间）
 - ✅ SSH 访问部署服务器的权限
 
+**⚠️ 重要：如果 Jenkins 运行在 Docker 容器中，需要额外配置：**
+
+#### 在 Jenkins 容器中配置 Docker 支持
+
+如果 Jenkins 运行在 Docker 容器中（最常见的情况），需要进行以下配置：
+
+**方法 1：挂载 Docker socket 并安装 Docker CLI（推荐）**
+
+1. **挂载 Docker socket**：在启动 Jenkins 容器时添加以下参数：
+   ```bash
+   -v /var/run/docker.sock:/var/run/docker.sock
+   ```
+
+2. **安装 Docker CLI**：进入容器安装 Docker CLI
+   ```bash
+   docker exec -u root jenkins bash -c 'apt-get update && apt-get install -y docker.io'
+   ```
+
+3. **完整启动命令示例**：
+   ```bash
+   docker run -d \
+     -p 9000:8080 \
+     -p 50000:50000 \
+     -v jenkins_home:/var/jenkins_home \
+     -v /var/run/docker.sock:/var/run/docker.sock \
+     --name jenkins \
+     jenkins/jenkins:lts
+   
+   # 然后安装 Docker CLI
+   docker exec -u root jenkins bash -c 'apt-get update && apt-get install -y docker.io'
+   ```
+
+**方法 2：使用包含 Docker 的 Jenkins 镜像**
+
+使用自定义 Dockerfile 创建包含 Docker CLI 的 Jenkins 镜像：
+
+```dockerfile
+FROM jenkins/jenkins:lts
+USER root
+RUN apt-get update && \
+    apt-get install -y docker.io && \
+    usermod -aG docker jenkins
+USER jenkins
+```
+
+**方法 3：使用 Docker-in-Docker (DinD)**
+
+如果需要完全隔离的 Docker 环境，可以使用 DinD：
+
+```bash
+docker run -d \
+  -p 9000:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  --privileged \
+  docker:dind \
+  jenkins/jenkins:lts
+```
+
+⚠️ **注意**：DinD 需要 `--privileged` 模式，安全性较低，不推荐用于生产环境。
+
 ### 2. 部署服务器需要
 
 - ✅ Docker 已安装
@@ -86,6 +147,16 @@ docker --version
 
 # 检查 Docker 是否运行
 docker ps
+```
+
+**如果 Jenkins 在容器中运行，检查容器内的 Docker：**
+
+```bash
+# 进入容器检查
+docker exec jenkins docker --version
+
+# 检查 Docker socket 是否挂载
+docker exec jenkins ls -l /var/run/docker.sock
 ```
 
 在部署服务器上检查：
