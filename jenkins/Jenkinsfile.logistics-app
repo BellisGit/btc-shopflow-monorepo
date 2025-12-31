@@ -20,6 +20,26 @@ pipeline {
         timestamps()
     }
     
+    // 配置构建触发器
+    // 方式 1：GitHub Webhook（推荐）- 推送代码时立即触发构建
+    triggers {
+        githubPush()  // 当代码推送到 GitHub 时自动触发构建
+    }
+    
+    // 方式 2：自动轮询（备用方案）- 如果 Webhook 不可用，可以取消下面的注释
+    // triggers {
+    //     pollSCM('H/5 * * * *')  // 每 5 分钟检查一次代码变更
+    //     // 其他常用配置：
+    //     // pollSCM('H/15 * * * *')  // 每 15 分钟检查一次
+    //     // pollSCM('H * * * *')      // 每小时检查一次
+    // }
+    
+    // 方式 3：同时使用 Webhook 和轮询（推荐用于生产环境）
+    // triggers {
+    //     githubPush()                    // 推送时立即触发
+    //     pollSCM('H/30 * * * *')        // 每 30 分钟检查一次作为备用
+    // }
+    
     parameters {
         string(name: 'SERVER_HOST', defaultValue: '47.112.31.96', description: '服务器地址')
         string(name: 'SERVER_USER', defaultValue: 'root', description: '服务器用户名')
