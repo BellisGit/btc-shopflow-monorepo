@@ -89,7 +89,7 @@ cp deploy.config.example.json deploy.config.json
 
 ```groovy
 triggers {
-    pollSCM('H/5 * * * *')  // 每 5 分钟检查一次
+    pollSCM('H/2 * * * *')  // 每 2 分钟检查一次
 }
 ```
 

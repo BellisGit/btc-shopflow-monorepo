@@ -27,7 +27,7 @@
    - **Repository URL**: 输入你的 Git 仓库地址
    - **Credentials**: 选择相应的 Git 凭证（如果需要）
    - **Branches to build**: 输入分支（如 `*/main` 或 `*/master`）
-   - **Script Path**: 输入 `jenkins/Jenkinsfile.main-app`
+   - **Script Path**: 输入 `jenkins/Jenkinsfile.system-app`
    - 点击 "Save"
 
 3. **配置参数（可选）**
@@ -39,7 +39,7 @@
 ```powershell
 # 使用项目提供的创建脚本
 cd btc-shopflow-monorepo
-.\jenkins\create-jobs.ps1 -JobName "btc-shopflow-deploy-system-app" -JenkinsfilePath "jenkins/Jenkinsfile.main-app"
+.\jenkins\create-jobs.ps1 -JobName "btc-shopflow-deploy-system-app" -JenkinsfilePath "jenkins/Jenkinsfile.system-app"
 ```
 
 ### 方法 3：使用 Shell 脚本（Linux/Unix）
@@ -47,7 +47,7 @@ cd btc-shopflow-monorepo
 ```bash
 # 使用项目提供的创建脚本
 cd btc-shopflow-monorepo
-bash jenkins/setup-jenkins-job.sh btc-shopflow-deploy-system-app jenkins/Jenkinsfile.main-app
+bash jenkins/setup-jenkins-job.sh btc-shopflow-deploy-system-app jenkins/Jenkinsfile.system-app
 ```
 
 ## 构建参数说明

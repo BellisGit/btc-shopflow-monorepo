@@ -585,4 +585,4 @@ foreach ($app in $apps) {
     Write-Host "  - btc-shopflow-deploy-$($app.Name)" -ForegroundColor Cyan
 }
 Write-Host ""
-Write-Info "注意：此脚本已排除系统应用构建（main-app）和全量构建（all-apps）"
+Write-Info "注意：此脚本已排除系统应用构建（system-app）和全量构建（all-apps）"

@@ -47,8 +47,8 @@ function Write-Error { Write-Host "[ERROR] $args" -ForegroundColor Red }
 $dockerApps = @(
     @{ Name = "home-app"; Jenkinsfile = "Jenkinsfile.home-app.docker"; JobName = "btc-shopflow-deploy-home-app-docker" },
     @{ Name = "layout-app"; Jenkinsfile = "Jenkinsfile.layout-app.docker"; JobName = "btc-shopflow-deploy-layout-app-docker" }
-    # 注意：main-app 的 Docker 部署可能使用不同的 Job 名称，如果需要请添加
-    # @{ Name = "main-app"; Jenkinsfile = "Jenkinsfile.main-app.docker"; JobName = "btc-shopflow-deploy-main-app-docker" }
+    # 注意：system-app 的 Docker 部署可能使用不同的 Job 名称，如果需要请添加
+    # @{ Name = "system-app"; Jenkinsfile = "Jenkinsfile.main-app.docker"; JobName = "btc-shopflow-deploy-system-app-docker" }
 )
 
 Write-Info "开始更新 Jenkins Docker 部署 Jobs（使用 Java CLI）..."

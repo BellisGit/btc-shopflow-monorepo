@@ -6,7 +6,7 @@
 
 ### 排除的构建类型
 
-- ❌ **系统应用构建**（`Jenkinsfile.main-app` 和 `Jenkinsfile.main-app.docker`）
+- ❌ **系统应用构建**（`Jenkinsfile.system-app` 和 `Jenkinsfile.main-app.docker`）
 - ❌ **全量构建**（`Jenkinsfile.all-apps`）
 
 ### 创建的独立构建 Jobs

@@ -253,7 +253,7 @@ function Create-MainAppJobConfig {
       <submoduleCfg class="list"/>
       <extensions/>
     </scm>
-    <scriptPath>jenkins/Jenkinsfile.main-app</scriptPath>
+    <scriptPath>jenkins/Jenkinsfile.system-app</scriptPath>
     <lightweight>true</lightweight>
   </definition>
   <triggers/>
