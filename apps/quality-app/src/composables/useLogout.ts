@@ -110,14 +110,16 @@ export function useLogout() {
       }
 
       // 跳转到登录页
+      // 关键修复：只有 system-app（主应用）有登录页面，其他子应用都没有
+      // 在生产环境子域名下，统一跳转到主域名（bellis.com.cn）的登录页面
       const hostname = window.location.hostname;
       const protocol = window.location.protocol;
       const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
       if (isProductionSubdomain) {
-        // 子域名下应该重定向到当前子域名的登录页面，而不是主域名
-        const port = window.location.port ? `:${window.location.port}` : '';
-        window.location.href = `${protocol}//${hostname}${port}/login?logout=1`;
+        // 子域名下统一跳转到主域名的登录页面（只有主应用有登录页面）
+        const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
+        window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
       } else {
         router.replace({
           path: '/login',
