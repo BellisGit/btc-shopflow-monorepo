@@ -209,7 +209,10 @@ pipeline {
                             echo "📦 构建 @btc/subapp-manifests..."
                             pnpm --filter @btc/subapp-manifests run build --force || pnpm --filter @btc/subapp-manifests run build || echo "⚠️ subapp-manifests 构建失败，但继续构建"
                             
-                            echo "✅ 共享依赖包构建完成（部分失败不影响应用构建）"
+                            echo "✅ 共享依赖包构建完成"
+                            echo "🔄 重新安装依赖以确保 workspace 链接正确..."
+                            pnpm install --frozen-lockfile --prefer-offline
+                            echo "✅ 依赖链接更新完成"
                         '''
                     } else {
                         bat '''
@@ -229,7 +232,10 @@ pipeline {
                             echo 📦 构建 @btc/subapp-manifests...
                             call pnpm --filter @btc/subapp-manifests run build --force || call pnpm --filter @btc/subapp-manifests run build || echo ⚠️ subapp-manifests 构建失败，但继续构建
                             
-                            echo ✅ 共享依赖包构建完成（部分失败不影响应用构建）
+                            echo ✅ 共享依赖包构建完成
+                            echo 🔄 重新安装依赖以确保 workspace 链接正确...
+                            call pnpm install --frozen-lockfile --prefer-offline
+                            echo ✅ 依赖链接更新完成
                         '''
                     }
                 }
@@ -306,25 +312,27 @@ pipeline {
                             script {
                                 if (isUnix()) {
                                     sh '''
-                                        # 检查 node_modules 是否存在，如果不存在则安装依赖
-                                        if [ ! -d "node_modules" ] || [ ! -f "node_modules/.pnpm/lock.yaml" ]; then
-                                            echo "⚠️ node_modules 缺失，正在安装依赖..."
-                                            pnpm install --frozen-lockfile --prefer-offline
-                                            echo "✅ 依赖安装完成"
-                                        else
-                                            echo "✅ node_modules 已存在，跳过依赖安装"
+                                        # 检查共享依赖包的构建产物是否存在，并确保 workspace 链接正确
+                                        echo "🔍 检查共享依赖包构建产物..."
+                                        
+                                        # 即使构建产物存在，也需要确保 node_modules 中的链接正确
+                                        echo "🔄 确保 workspace 依赖链接正确..."
+                                        pnpm install --frozen-lockfile --prefer-offline
+                                        echo "✅ 依赖链接检查完成"
+                                        
+                                        # 验证共享依赖包是否可访问
+                                        if [ ! -f "node_modules/@btc/vite-plugin/dist/index.mjs" ] && [ ! -L "node_modules/@btc/vite-plugin" ]; then
+                                            echo "⚠️ @btc/vite-plugin 在 node_modules 中未正确链接，尝试重新安装..."
+                                            pnpm install --force
                                         fi
                                     '''
                                 } else {
                                     bat '''
                                         @echo off
-                                        if not exist "node_modules" (
-                                            echo ⚠️ node_modules 缺失，正在安装依赖...
-                                            call pnpm install --frozen-lockfile --prefer-offline
-                                            echo ✅ 依赖安装完成
-                                        ) else (
-                                            echo ✅ node_modules 已存在，跳过依赖安装
-                                        )
+                                        echo 🔍 检查共享依赖包构建产物...
+                                        echo 🔄 确保 workspace 依赖链接正确...
+                                        call pnpm install --frozen-lockfile --prefer-offline
+                                        echo ✅ 依赖链接检查完成
                                     '''
                                 }
                             }
