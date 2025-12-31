@@ -473,7 +473,7 @@ export async function mountSubApp(
     }
     
     // 同时隐藏应用级 loading（如果存在）
-    import('@btc/shared-core').then(({ appLoadingService }) => {
+    import('../../btc/utils/loading').then(({ appLoadingService }) => {
       if (appLoadingService) {
         // 获取应用显示名称
         const appNameMap: Record<string, string> = {

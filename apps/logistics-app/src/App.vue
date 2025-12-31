@@ -2,18 +2,18 @@
   <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['logistics-app']">
-    <router-view v-slot="{ Component }">
+    <router-view v-slot="{ Component, route: currentRoute }">
       <transition :name="pageTransition" mode="out-in">
         <keep-alive :key="viewKey" :include="keepAliveList">
-          <component v-if="Component" :is="Component" />
+          <component v-if="Component" :is="Component" :key="currentRoute.fullPath" />
         </keep-alive>
       </transition>
     </router-view>
   </div>
-  <router-view v-else v-slot="{ Component }">
+  <router-view v-else v-slot="{ Component, route: currentRoute }">
     <transition :name="pageTransition" mode="out-in">
       <keep-alive :key="viewKey" :include="keepAliveList">
-        <component v-if="Component" :is="Component" />
+        <component v-if="Component" :is="Component" :key="currentRoute.fullPath" />
       </keep-alive>
     </transition>
   </router-view>
@@ -55,28 +55,9 @@ function refreshView() {
   viewKey.value += 1;
 }
 
-// 关键修复：在 layout-app 模式下，监听路由变化，确保组件能够重新渲染
-// 参考 cool-admin 的实现：
-// - keep-alive 使用 key 来控制刷新
-// - component 不使用 key，让 Vue Router 自动处理组件切换
-// - 当路由变化时，如果组件不在 keepAliveList 中，Vue Router 会自动创建新组件
-// - 如果组件在 keepAliveList 中，会使用缓存的组件（这是 keep-alive 的正常行为）
-// 在 layout-app 模式下，由于路由同步机制，可能需要强制刷新来确保组件更新
-if (!isStandalone) {
-  watch(
-    () => route.fullPath,
-    (newFullPath, oldFullPath) => {
-      // 如果路径真的变化了，强制刷新 keep-alive 实例
-      // 这样可以确保组件能够正确更新，即使组件在 keepAliveList 中
-      if (newFullPath !== oldFullPath && oldFullPath) {
-        // 更新 viewKey，强制刷新整个 keep-alive 实例
-        // 参考 cool-admin：通过更新 keep-alive 的 key 来刷新整个实例
-        viewKey.value += 1;
-      }
-    },
-    { immediate: false }
-  );
-}
+// 关键修复：component 使用 route.fullPath 作为 key，确保路由切换时组件能够正确更新
+// 这样当路由变化时，Vue 会识别出这是不同的组件实例，即使组件在 keepAliveList 中也会重新渲染
+// viewKey 保留用于外部触发的刷新场景（如 subapp.refresh 事件）
 
 onMounted(() => {
   if (emitter) {

@@ -78,7 +78,9 @@
 
 // 确保 router-view 内部的所有页面组件根元素占据完整高度
 // 这是全局样式，用于处理所有页面组件
-.app-layout__content > router-view > * {
+// 注意：router-view 在 content-mount--main-app 内部，需要使用正确的选择器
+.app-layout__content > router-view > *,
+.app-layout__content .content-mount--main-app > router-view > * {
 	height: 100%;
 	width: 100%;
 	display: flex;
@@ -86,6 +88,14 @@
 	min-height: 0;
 	overflow: hidden;
 	flex: 1; // 页面组件根元素需要占据完整高度
+}
+
+// 确保 content-mount--main-app 内部的 router-view 正确显示
+.app-layout__content .content-mount--main-app > router-view {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
 }
 
 // 关键：确保子应用挂载点（#subapp-viewport）内的内容能够正确填充高度
@@ -1427,6 +1437,17 @@ body.theme-brand-red {
 // 关键：确保同时存在多个 content-mount 容器时，隐藏的容器不占用空间
 // 这可以防止在生产环境中由于竞态条件导致两个容器同时存在时，第一个容器占用空间
 .app-layout__content {
+  // 关键：主应用容器需要是 flex 容器，才能正确占据 app-layout__content 的空间
+  .content-mount--main-app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+  }
+
   // 关键修复：如果子应用容器（#subapp-viewport）存在，隐藏所有主应用容器
   // 使用通用兄弟选择器（最兼容的方案）
   // 注意：CSS 无法选择前面的兄弟元素，所以我们需要确保主应用容器为空时不占用空间

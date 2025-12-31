@@ -811,17 +811,21 @@ onUnmounted(() => {
     // 当 app-layout__header 高度减少时（面包屑不显示），app-layout__content 会自动占据更多空间
     // 不需要额外的样式调整，flex 布局会自动处理
 
-
     // 主应用路由视图容器（占据内容区域完整尺寸）
-    // 注意：display 通过 :style 绑定控制，这里不设置
-    > .main-app-router-view {
+    // 关键：content-mount--main-app 需要是 flex 容器，才能正确占据 app-layout__content 的空间
+    .content-mount--main-app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       width: 100%;
       height: 100%;
+      min-height: 0;
       position: relative;
     }
 
     // 主应用路由视图（占据内容区域完整尺寸）
-    :deep(> router-view) {
+    // 关键：router-view 在 content-mount--main-app 内部，需要使用正确的选择器
+    :deep(.content-mount--main-app > router-view) {
       flex: 1;
       display: flex;
       flex-direction: column;

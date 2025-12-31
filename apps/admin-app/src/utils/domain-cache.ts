@@ -142,9 +142,11 @@ export async function getDomainList(service: any): Promise<any> {
       // 首先进行用户检查
       const isHealthy = await checkUser();
       if (!isHealthy) {
-        // cookie已过期，执行退出登录逻辑（同步执行，不等待）
-        handleLogout();
-        // 返回空数组，避免继续执行
+        // cookie已过期，但不应该在这里直接触发登出
+        // 因为路由守卫已经处理了认证失败的情况
+        // 这里只返回空数组，让调用方知道无法获取域列表
+        // 如果确实需要登出，应该由路由守卫或认证检查逻辑统一处理
+        console.warn('[getDomainList] User check failed, returning empty list');
         return [];
       }
 
