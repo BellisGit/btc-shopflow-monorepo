@@ -12,11 +12,14 @@ on:
           - all
           - system-app
           - admin-app
-          - logistics-app
-          - quality-app
-          - production-app
+          - dashboard-app
           - engineering-app
           - finance-app
+          - logistics-app
+          - operations-app
+          - personnel-app
+          - production-app
+          - quality-app
           - mobile-app
           - layout-app
       skip_build:
@@ -66,7 +69,7 @@ jobs:
           fi
           
           if [ "$APP_INPUT" = "all" ]; then
-            APPS="system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app layout-app"
+            APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app mobile-app layout-app"
             BUILD_ALL=true
           else
             APPS="$APP_INPUT"

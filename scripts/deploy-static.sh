@@ -53,11 +53,14 @@ fi
 APPS=(
     "system-app"
     "admin-app"
+    "dashboard-app"
+    "engineering-app"
     "finance-app"
     "logistics-app"
-    "quality-app"
+    "operations-app"
+    "personnel-app"
     "production-app"
-    "engineering-app"
+    "quality-app"
     "mobile-app"
     "layout-app"
 )

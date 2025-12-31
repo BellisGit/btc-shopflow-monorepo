@@ -110,7 +110,7 @@ jobs:
           APPS_LIST=$(echo "$APPS_INPUT" | tr '[:upper:]' '[:lower:]' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr '\n' ' ')
           
           # Validate apps
-          VALID_APPS="system-app admin-app logistics-app quality-app production-app engineering-app finance-app mobile-app layout-app"
+          VALID_APPS="system-app admin-app dashboard-app engineering-app finance-app logistics-app operations-app personnel-app production-app quality-app mobile-app layout-app"
           INVALID_APPS=""
           
           for app in $APPS_LIST; do
