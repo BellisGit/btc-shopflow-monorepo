@@ -20,7 +20,8 @@ async function importSharedCore() {
 /**
  * 获取登录页面URL
  * 用于子应用在独立运行时重定向到登录页面
- * 注意：子域名下应该重定向到当前子域名的登录页面，而不是主域名
+ * 关键：只有主应用（bellis.com.cn）有登录页面，子应用没有登录页面
+ * 所以子应用在生产环境子域名下必须重定向到主应用的登录页面
  */
 function getMainAppLoginUrl(redirectPath?: string): string {
   if (typeof window === 'undefined') {
@@ -32,11 +33,11 @@ function getMainAppLoginUrl(redirectPath?: string): string {
   const port = window.location.port;
   const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
 
-  // 生产环境：如果是子域名（如 admin.bellis.com.cn），使用当前子域名的登录页面
-  // 子域名应用应该独立运行，不需要重定向到主域名
+  // 生产环境：如果是子域名（如 admin.bellis.com.cn），重定向到主应用的登录页面
+  // 关键：只有主应用（bellis.com.cn）有登录页面，子应用没有登录页面
   if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
-    // 子域名环境，使用当前子域名的登录页面
-    return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
+    // 子域名环境，重定向到主应用的登录页面
+    return `${protocol}//bellis.com.cn/login${redirectQuery}`;
   }
 
   // 开发环境：主应用在 localhost:8080 (system-app)
@@ -45,7 +46,7 @@ function getMainAppLoginUrl(redirectPath?: string): string {
     return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
   }
 
-  // 其他环境：使用当前域名的登录页面
+  // 其他环境：使用当前域名的登录页面（假设是主应用）
   return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
 }
 
@@ -140,6 +141,11 @@ export const createAdminRouter = (): Router => {
       routeLoadingTimer = null;
     }
 
+    // 关键：在独立运行模式下，不显示路由 loading
+    // 因为独立运行模式下，应用级 loading 已经处理了，不需要路由级 loading
+    const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+    const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp;
+    
     // 检查是否有应用级别loading正在显示
     // 注意：使用DOM查询作为同步检查（因为beforeEach需要同步判断）
     // 应用级别loading使用fixed定位，添加到body，所以直接在body中查找
@@ -161,8 +167,9 @@ export const createAdminRouter = (): Router => {
       }
     })();
 
-    // 延迟显示路由loading（如果应用loading未显示）
-    if (!isAppLoadingVisible) {
+    // 关键：在独立运行模式下，不显示路由 loading，避免黑屏问题
+    // 延迟显示路由loading（如果应用loading未显示且不是独立运行模式）
+    if (!isAppLoadingVisible && !isStandalone) {
       // 延迟300ms显示路由loading，避免快速切换时的闪烁
       routeLoadingTimer = setTimeout(async () => {
         try {
@@ -179,7 +186,7 @@ export const createAdminRouter = (): Router => {
     // 独立运行时：检查认证
     // 关键：如果正在使用 layout-app（通过 qiankun 加载），由 layout-app 处理认证
     // 此时不应该进行认证检查，避免在 layout-app 加载完成前误判为未认证
-    const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+    // 注意：isUsingLayoutApp 已在上面声明，这里直接使用
     
     if (!isUsingLayoutApp) {
       const isAuth = isAuthenticated();
@@ -206,10 +213,25 @@ export const createAdminRouter = (): Router => {
       if (!isAuth) {
         // 构建重定向路径：确保包含应用前缀，以便登录后能够正确返回
         let redirectPath = to.fullPath;
-        // 在开发环境独立运行时，路径可能不包含 /admin 前缀，需要添加
-        if (!redirectPath.startsWith('/admin') && redirectPath !== '/') {
-          redirectPath = `/admin${redirectPath}`;
+        
+        // 判断是否在生产环境子域名下
+        const hostname = window.location.hostname;
+        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+        
+        // 在生产环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀
+        // 在开发环境或其他环境下，路径可能已经包含 /admin 前缀，需要检查
+        if (isProductionSubdomain) {
+          // 生产环境子域名下，路径是规范化后的（如 /user/list），需要添加 /admin 前缀
+          if (!redirectPath.startsWith('/admin') && redirectPath !== '/') {
+            redirectPath = `/admin${redirectPath}`;
+          }
+        } else {
+          // 开发环境或其他环境，路径可能不包含 /admin 前缀，需要添加
+          if (!redirectPath.startsWith('/admin') && redirectPath !== '/') {
+            redirectPath = `/admin${redirectPath}`;
+          }
         }
+        
         const mainAppLoginUrl = getMainAppLoginUrl(redirectPath);
         // 使用 window.location 进行跨域重定向（如果需要）
         window.location.href = mainAppLoginUrl;
@@ -223,8 +245,8 @@ export const createAdminRouter = (): Router => {
     next();
   });
 
-  // 路由后置守卫：清除路由loading的延迟定时器并隐藏路由loading
-  router.afterEach(async () => {
+  // 路由后置守卫：清除路由loading的延迟定时器并隐藏路由loading，同时添加tabbar
+  router.afterEach(async (to) => {
     // 清除延迟定时器
     if (routeLoadingTimer) {
       clearTimeout(routeLoadingTimer);
@@ -239,6 +261,90 @@ export const createAdminRouter = (): Router => {
       }
     } catch (error) {
       // 静默失败
+    }
+
+    // 关键：在独立运行模式下，添加 tabbar 逻辑
+    // 检查是否是独立运行模式（非 qiankun 且非 layout-app）
+    const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+    
+    if (!isUsingLayoutApp) {
+      // 独立运行模式，需要自己添加 tabbar
+      // 跳过首页和登录页
+      if (to.meta?.isHome === true || to.path === '/' || to.path === '/login' || to.path.startsWith('/login')) {
+        // 如果是首页，将所有标签设为未激活
+        if (to.meta?.isHome === true || to.path === '/') {
+          try {
+            const { useProcessStore } = await import('../store/process');
+            const process = useProcessStore();
+            process.list.forEach((tab) => {
+              tab.active = false;
+            });
+          } catch (error) {
+            // 静默失败
+          }
+        }
+        return;
+      }
+
+      // 跳过个人信息页面
+      if (to.path === '/profile') {
+        return;
+      }
+
+      // 只添加有效的路由（必须有 name）
+      if (!to.name) {
+        return;
+      }
+
+      // 构建完整路径（在生产环境子域名下，需要添加 /admin 前缀）
+      const hostname = window.location.hostname;
+      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      
+      let fullPath = to.fullPath;
+      let path = to.path;
+      
+      // 在生产环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀用于 tabbar
+      if (isProductionSubdomain) {
+        if (!path.startsWith('/admin') && path !== '/') {
+          path = `/admin${path}`;
+          // 构建 fullPath，包含查询参数和 hash
+          const queryString = to.fullPath.includes('?') ? to.fullPath.substring(to.fullPath.indexOf('?')) : '';
+          fullPath = `${path}${queryString}`;
+        }
+      }
+
+      // 使用 store 添加路由到标签页
+      try {
+        const { useProcessStore } = await import('../store/process');
+        const process = useProcessStore();
+        
+        // 关键优化：检查当前路由的标签是否已经是激活状态，避免重复更新导致闪烁
+        const existingTab = process.list.find((tab) => 
+          tab.fullPath === fullPath || tab.path === path
+        );
+        if (existingTab && existingTab.active) {
+          // 标签已经是激活状态，不需要更新
+          return;
+        }
+        
+        // 将路由的 titleKey 转换为 labelKey，以便 tabbar 正确显示
+        const meta = { ...to.meta } as any;
+        if (meta.titleKey && !meta.labelKey) {
+          meta.labelKey = meta.titleKey;
+        }
+        
+        process.add({
+          path,
+          fullPath,
+          name: to.name as string,
+          meta,
+        });
+      } catch (error) {
+        // 静默失败
+        if (import.meta.env.DEV) {
+          console.warn('[admin-app router] Failed to add tab:', error);
+        }
+      }
     }
   });
 

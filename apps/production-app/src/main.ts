@@ -44,6 +44,39 @@ const render = async (props: QiankunProps = {}) => {
   }
 
   isRendering = true;
+  
+  // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+  // 并使用 appLoadingService 显示应用级 loading
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  let appLoadingService: any = null;
+  
+  if (isStandalone) {
+    // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
+      loadingEl.classList.add('is-hide');
+    }
+    
+    // 显示应用级 loading
+    try {
+      const sharedCore = await import('@btc/shared-core');
+      appLoadingService = sharedCore.appLoadingService;
+      if (appLoadingService) {
+        appLoadingService.show('生产模块');
+      }
+    } catch (error) {
+      // 静默失败，继续执行
+      if (import.meta.env.DEV) {
+        console.warn('[production-app] 无法显示应用级 loading:', error);
+      }
+    }
+  }
+  
   try {
     // 先卸载前一个实例（如果存在）
     if (context) {
@@ -64,11 +97,27 @@ const render = async (props: QiankunProps = {}) => {
     await mountProductionApp(context, props);
 
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('生产模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
     console.error('渲染失败:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('生产模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
     context = null;

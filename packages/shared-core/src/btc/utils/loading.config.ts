@@ -25,8 +25,8 @@ export const LOADING_Z_INDEX = {
 export const LOADING_TIMEOUT = {
   /** 全局根级 loading 超时时间（10秒） */
   ROOT: 10000,
-  /** 应用级 loading 超时时间（10秒） */
-  APP: 10000,
+  /** 应用级 loading 超时时间（5秒） */
+  APP: 5000,
   /** 路由级 loading 超时时间（10秒） */
   ROUTE: 10000,
   /** 操作级 loading 超时时间（10秒） */

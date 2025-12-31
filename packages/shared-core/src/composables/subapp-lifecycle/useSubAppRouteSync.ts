@@ -112,6 +112,20 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
   // 这样可以确保组件能够响应式更新（菜单激活状态、tabbar 激活状态、内容区域）
   // 但是，我们需要在同步完成后立即使用 replaceState 替换历史记录，避免在浏览器历史中添加条目
   if (isUsingLayoutApp) {
+    // 关键修复：检查当前路由是否已经是目标路由，如果是则不需要同步
+    // 这样可以避免不必要的路由同步，确保组件能够正确更新
+    const currentRoute = context.router.currentRoute.value;
+    const currentRoutePath = ensureLeadingSlash(
+      currentRoute.fullPath || currentRoute.path || '/',
+    );
+    const currentPath = currentRoutePath.split('?')[0]?.split('#')[0] || '';
+    
+    if (currentPath === targetPath) {
+      // 路径相同，不需要同步，但需要重置标志
+      syncingFromHost = false;
+      return;
+    }
+    
     context.router.push(normalizedTarget).then(() => {
       // 路由同步成功，立即使用 replaceState 替换历史记录，避免在浏览器历史中添加条目
       // 这样既保证了 Vue Router 的响应式更新，又不会污染浏览器历史记录
@@ -225,6 +239,8 @@ function triggerRouteChangeEvent(
 export function setupRouteSync(context: SubAppContext, _appId: string, basePath: string): void {
   // 关键：在 layout-app 环境下也需要设置路由同步
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  // 关键：在独立运行模式下，直接返回，不设置路由同步
+  // 因为子应用的路由守卫已经处理了所有逻辑（包括 ECharts 清理等）
   if (!qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp) {
     return;
   }
@@ -281,6 +297,7 @@ export function setupRouteSync(context: SubAppContext, _appId: string, basePath:
     // 这确保了 tabbar、面包屑和内容区域能够正确响应路由变化
     // 关键：即使 syncingFromHost 为 true，也要触发事件，因为这是子应用路由的真实变化
     // 使用 nextTick 确保在路由完全更新后再触发事件
+    // 关键：只在 qiankun 或 layout-app 模式下触发事件（独立运行模式下已在路由守卫中处理）
     import('vue').then(({ nextTick }) => {
       nextTick(() => {
         // 关键：在 layout-app 模式下，即使 syncingFromHost 为 true，也要触发事件

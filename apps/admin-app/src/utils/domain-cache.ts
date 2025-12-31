@@ -45,10 +45,11 @@ function handleLogout() {
 
     // 使用 setTimeout 确保消息提示先显示，然后再跳转
     setTimeout(() => {
-      // 在生产环境子域名下，使用当前子域名的登录页面（子域名应用应该独立运行）
+      // 关键：只有主应用（bellis.com.cn）有登录页面，子应用没有登录页面
+      // 所以在生产环境子域名下，必须重定向到主应用的登录页面
       if (isProductionSubdomain) {
-        const port = typeof window !== 'undefined' && window.location.port ? `:${window.location.port}` : '';
-        window.location.href = `${protocol}//${hostname}${port}/login?logout=1`;
+        // 子域名环境，重定向到主应用的登录页面
+        window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
       } else {
         // 开发环境：使用 window.location 跳转，添加 logout=1 参数
         window.location.href = '/login?logout=1';

@@ -294,7 +294,21 @@ const setupLogisticsRouteSync = (context: LogisticsAppContext) => {
     const fullPath = normalizeToHostPath(relativeFullPath, LOGISTICS_BASE_PATH);
 
     syncHostWithSubRoute(fullPath);
-    triggerRouteChangeEvent(to);
+    
+    // 关键修复：在 layout-app 模式下，使用 nextTick 确保路由完全更新后再触发事件
+    // 这样可以确保组件能够响应式更新（菜单激活状态、tabbar 激活状态、内容区域）
+    if (isUsingLayoutApp) {
+      import('vue').then(({ nextTick }) => {
+        nextTick(() => {
+          triggerRouteChangeEvent(to);
+        });
+      }).catch(() => {
+        // 如果导入失败，直接触发事件（兜底处理）
+        triggerRouteChangeEvent(to);
+      });
+    } else {
+      triggerRouteChangeEvent(to);
+    }
   });
 
   // 关键：页面刷新时，主动触发一次当前路由的路由变化事件，确保标签页能够恢复

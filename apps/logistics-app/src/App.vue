@@ -4,22 +4,28 @@
   <div v-if="!isStandalone" :class="['logistics-app']">
     <router-view v-slot="{ Component, route }">
       <transition :name="pageTransition" mode="out-in">
-        <component v-if="Component" :is="Component" :key="route.fullPath || viewKey" />
+        <keep-alive :key="viewKey" :include="keepAliveList">
+          <component v-if="Component" :is="Component" :key="`${route.path}-${route.fullPath}-${viewKey}`" />
+        </keep-alive>
       </transition>
     </router-view>
   </div>
   <router-view v-else v-slot="{ Component, route }">
     <transition :name="pageTransition" mode="out-in">
-      <component v-if="Component" :is="Component" :key="route.fullPath || viewKey" />
+      <keep-alive :key="viewKey" :include="keepAliveList">
+        <component v-if="Component" :is="Component" :key="`${route.path}-${route.fullPath}-${viewKey}`" />
+      </keep-alive>
     </transition>
   </router-view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
 import { useLogout } from '@/composables/useLogout';
+import { useProcessStore } from '@/store/modules/process';
 
 defineOptions({
   name: 'LogisticsApp',
@@ -28,16 +34,46 @@ defineOptions({
 // 关键：在应用启动时立即初始化通信桥和登出监听
 useLogout();
 
+const route = useRoute();
 const viewKey = ref(1);
 // 关键：在 layout-app 环境下，isStandalone 应该是 false
 // 这样会使用包装层（.logistics-app），确保样式正确应用
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 const emitter = (window as any).__APP_EMITTER__;
 const { pageTransition } = usePageTransition();
+const processStore = useProcessStore();
+
+// 获取需要缓存的组件名称列表
+const keepAliveList = computed(() => {
+  return processStore.list
+    .filter((tab) => tab.meta?.keepAlive === true && tab.name)
+    .map((tab) => tab.name as string);
+});
 
 // 刷新视图
 function refreshView() {
   viewKey.value += 1;
+}
+
+// 关键修复：在 layout-app 模式下，监听路由变化，确保组件能够重新渲染
+// 当路由变化时，强制刷新视图以确保组件能够正确更新
+if (!isStandalone) {
+  watch(
+    () => [route.path, route.fullPath],
+    ([newPath, newFullPath], [oldPath, oldFullPath]) => {
+      // 如果路径真的变化了，强制刷新视图以确保组件重新渲染
+      if ((newPath !== oldPath || newFullPath !== oldFullPath) && oldPath) {
+        // 使用 nextTick 确保路由完全更新后再刷新
+        import('vue').then(({ nextTick }) => {
+          nextTick(() => {
+            // 路由已更新，强制刷新视图以确保组件重新渲染
+            viewKey.value += 1;
+          });
+        });
+      }
+    },
+    { immediate: false }
+  );
 }
 
 onMounted(() => {

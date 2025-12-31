@@ -176,11 +176,6 @@ export const useProcessStore = defineStore('process', () => {
    * 添加标签
    */
   function add(data: ProcessItem) {
-    // 将所有标签设为非激活状态
-    list.value.forEach((e) => {
-      e.active = false;
-    });
-
     if (!data.meta) {
       data.meta = {};
     }
@@ -254,6 +249,21 @@ export const useProcessStore = defineStore('process', () => {
         (data.fullPath && e.fullPath === data.fullPath) ||
         (data.path && e.path === data.path)
       );
+
+      // 关键优化：如果目标标签已经是激活状态且路径相同，直接返回，避免不必要的更新导致闪烁
+      if (index >= 0) {
+        const existingTab = list.value[index];
+        if (existingTab.active && 
+            (existingTab.fullPath === data.fullPath || existingTab.path === data.path)) {
+          // 标签已经是激活状态且路径相同，不需要更新
+          return;
+        }
+      }
+
+      // 将所有标签设为非激活状态（仅在需要更新时执行）
+      list.value.forEach((e) => {
+        e.active = false;
+      });
 
       if (index < 0) {
         // 添加新标签

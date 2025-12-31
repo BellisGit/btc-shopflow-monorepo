@@ -653,44 +653,56 @@ watch(
   }
 );
 
-// 监听 layout-app 的路由变化（用于独立运行模式）
+// 监听路由变化，更新菜单激活状态
 watch(
   () => route.path,
   (newPath) => {
-    // 关键：在 layout-app 环境下，需要从子应用的路由路径中提取正确的路径
-    // 子应用的路由路径可能包含应用前缀（如 /finance/inventory/result）
-    // 但菜单的 index 是子应用内部路径（如 /inventory/result）
+    // 关键：在生产环境子域名模式下，路径直接是子应用路由（如 /platform/modules）
+    // 在开发环境下，路径可能包含应用前缀（如 /admin/platform/modules）
     const isLayoutApp = typeof window !== 'undefined' && !!(window as any).__IS_LAYOUT_APP__;
     const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+
+    let targetPath: string;
 
     if (isLayoutApp || isUsingLayoutApp) {
       // 在 layout-app 环境下，尝试从子应用的路由路径中提取正确的路径
       // 在生产环境子域名模式下，路径直接是子应用路由（如 /org/departments）
       // 在开发环境下，路径可能包含应用前缀（如 /admin/org/departments）
       const app = currentApp.value;
-      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
 
       if (isProductionSubdomain) {
         // 生产环境子域名模式：路径直接是子应用路由
-        activeMenu.value = normalizeActivePath(newPath);
+        targetPath = normalizeActivePath(newPath);
       } else if (app && newPath.startsWith(`/${app}`)) {
         // 开发环境：去掉应用前缀，获取子应用内部路径
         const subAppPath = newPath.slice(`/${app}`.length) || '/';
-        activeMenu.value = normalizeActivePath(subAppPath);
+        targetPath = normalizeActivePath(subAppPath);
       } else {
-        activeMenu.value = normalizeActivePath(newPath);
+        targetPath = normalizeActivePath(newPath);
       }
-
-      // 确保父级展开
-      import('vue').then(({ nextTick }) => {
-        nextTick(() => {
-          syncMenuOpenState();
-        });
-      });
+    } else if (isProductionSubdomain) {
+      // 独立运行模式 + 生产环境子域名：路径直接是子应用路由
+      targetPath = normalizeActivePath(newPath);
     } else {
-      activeMenu.value = normalizeActivePath(newPath);
+      // 其他情况：直接使用路由路径
+      targetPath = normalizeActivePath(newPath);
     }
+
+    // 关键优化：如果目标路径与当前激活菜单相同，不需要更新，避免闪烁
+    if (activeMenu.value === targetPath) {
+      return;
+    }
+
+    activeMenu.value = targetPath;
+
+    // 确保父级展开
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        syncMenuOpenState();
+      });
+    });
   },
   { immediate: true }
 );
@@ -717,6 +729,11 @@ onMounted(() => {
 
       subAppPath = normalizeActivePath(subAppPath);
       if (!subAppPath) return;
+
+      // 关键优化：如果目标路径与当前激活菜单相同，不需要更新，避免闪烁
+      if (activeMenu.value === subAppPath) {
+        return;
+      }
 
       // 更新菜单激活状态
       activeMenu.value = subAppPath;

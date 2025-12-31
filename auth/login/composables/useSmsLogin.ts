@@ -53,7 +53,8 @@ export function useSmsLogin() {
       const urlRedirect = route.query.redirect as string;
       if (urlRedirect) {
         // 优先使用 URL 参数中的 redirect
-        redirectPath = decodeURIComponent(urlRedirect).split('?')[0];
+        // 保留完整的路径，包括查询参数和 hash
+        redirectPath = decodeURIComponent(urlRedirect);
       } else {
         // 如果没有 URL 参数，尝试从 localStorage 获取保存的退出前路径
         const savedPath = getAndClearLogoutRedirectPath();

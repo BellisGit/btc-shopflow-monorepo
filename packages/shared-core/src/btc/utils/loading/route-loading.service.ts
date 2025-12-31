@@ -76,12 +76,16 @@ class RouteLoadingService {
 
     // 6. 在 qiankun 模式下，如果找不到其他容器，尝试查找子应用的根容器
     if (subappViewport) {
-      const subappRoot = subappViewport.querySelector('#app, [data-qiankun]') as HTMLElement;
+      const subappRoot = subappViewport.querySelector('[data-qiankun]') as HTMLElement;
       if (subappRoot) {
         return subappRoot;
       }
+      // 关键：避免返回 #app，因为这会覆盖整个应用导致黑屏
+      // 如果找不到其他容器，返回 null，不显示 loading
     }
 
+    // 关键：不要返回 #app，避免覆盖整个应用导致黑屏
+    // 如果找不到正确的路由视图容器，返回 null
     return null;
   }
 
@@ -187,8 +191,36 @@ class RouteLoadingService {
       return;
     }
 
+    // 关键：在独立运行模式下（非 qiankun 且非 layout-app），不显示路由 loading
+    // 因为独立运行模式下，应用级 loading 已经处理了，不需要路由级 loading
+    const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+    const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
+    const isStandalone = !isQiankun && !isUsingLayoutApp;
+    
+    if (isStandalone) {
+      // 独立运行模式，不显示路由 loading
+      return;
+    }
+
     // 查找容器
     let container = this.findContainer();
+    
+    // 关键：如果找到的容器是 #app，说明找不到正确的路由视图容器，不应该显示 loading
+    // 避免整个应用被 loading 覆盖导致黑屏
+    if (container && container.id === 'app') {
+      // 在独立运行模式下，不应该显示路由 loading
+      if (isStandalone) {
+        return;
+      }
+      // 在 qiankun 或 layout-app 模式下，如果找到 #app，尝试查找更具体的容器
+      const routerView = container.querySelector('router-view');
+      if (routerView) {
+        container = routerView as HTMLElement;
+      } else {
+        // 如果找不到 router-view，不显示 loading，避免覆盖整个应用
+        return;
+      }
+    }
     
     // 如果找不到容器，尝试延迟查找一次（DOM 可能还在渲染中）
     if (!container) {
@@ -204,6 +236,12 @@ class RouteLoadingService {
           }
           return;
         }
+        
+        // 关键：如果找到的容器是 #app，不显示 loading
+        if (container.id === 'app') {
+          return;
+        }
+        
         // 找到容器后，继续显示 loading
         this.showLoadingInContainer(container);
       }, 100);

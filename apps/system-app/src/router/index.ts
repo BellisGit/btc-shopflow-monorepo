@@ -547,9 +547,25 @@ export function setupI18nTitleWatcher() {
  * 检查用户是否已认证
  * 注意：cookie 是后端设置的，是认证的权威来源。如果 cookie 不存在，说明后端已经认为用户未认证。
  * 支持通过 btc_user cookie 中的 credentialExpireTime 来判断是否过期。
+ * 同时支持检查 is_logged_in 标记，用于解决登录成功后立即跳转时 cookie 可能还没准备好的问题。
  */
 export function isAuthenticated(): boolean {
-  // 首先尝试检查 access_token cookie（如果后端没有设置 HttpOnly，可以读取）
+  // 首先检查 is_logged_in 标记（登录成功后立即设置，用于解决 cookie 同步时序问题）
+  try {
+    const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+    if (currentSettings.is_logged_in === true) {
+      // 如果标记存在，说明刚登录成功，即使 cookie 还没准备好，也认为已认证
+      // 这样可以避免登录成功后立即跳转时被路由守卫重定向回登录页
+      return true;
+    }
+  } catch (error) {
+    // 如果检查失败，继续检查其他方式
+    if (import.meta.env.DEV) {
+      console.warn('[isAuthenticated] Failed to check is_logged_in flag:', error);
+    }
+  }
+
+  // 然后尝试检查 access_token cookie（如果后端没有设置 HttpOnly，可以读取）
   const cookieToken = getCookie('access_token');
   
   // 如果 access_token cookie 存在，说明已认证（后端会管理 cookie 的生命周期）

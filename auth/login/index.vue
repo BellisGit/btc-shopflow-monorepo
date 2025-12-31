@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcMessage } from '@btc/shared-components';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
@@ -122,13 +122,20 @@ const handleAgreementChange = (agreed: boolean) => {
 };
 
 // 检查协议同意状态
-const checkAgreement = (): boolean => {
+const checkAgreement = async (): Promise<boolean> => {
   if (!isAgreed.value) {
     // 自动勾选协议，提升用户体验
     if (agreementRef.value) {
       agreementRef.value.checkAgreement();
+      // 等待 Vue 响应式更新完成（使用 nextTick 确保状态已同步）
+      await nextTick();
+      // 再次检查状态，如果已经勾选，直接返回 true，不需要用户再次点击
+      if (isAgreed.value) {
+        // 静默处理，不显示提示，直接允许登录
+        return true;
+      }
     }
-    // 显示一条提示，同时提醒需要勾选和已自动勾选（使用 success 类型，绿色更明显）
+    // 如果自动勾选失败，显示提示
     BtcMessage.success(t('auth.message.agreement_auto_checked'));
     // 返回 false，需要用户再次点击登录
     return false;
@@ -139,10 +146,10 @@ const checkAgreement = (): boolean => {
 // 账密登录提交
 const handlePasswordSubmit = async (form: { username: string; password: string }) => {
   try {
-    if (!checkAgreement()) {
+    if (!(await checkAgreement())) {
       return;
     }
-  await passwordSubmit(form);
+    await passwordSubmit(form);
   } catch (error) {
     console.error('密码登录错误:', error);
     // 错误已在 usePasswordLogin 中处理，这里只是防止未捕获的错误
@@ -152,7 +159,7 @@ const handlePasswordSubmit = async (form: { username: string; password: string }
 // 短信登录提交
 const handleSmsSubmit = async (form: { phone: string; smsCode: string }) => {
   try {
-    if (!checkAgreement()) {
+    if (!(await checkAgreement())) {
       return;
     }
     await smsSubmit(form);

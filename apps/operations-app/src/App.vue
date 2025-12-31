@@ -2,24 +2,29 @@
   <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['operations-app']">
-    <router-view v-slot="{ Component }">
+    <router-view v-slot="{ Component, route }">
       <transition :name="pageTransition" mode="out-in">
-        <component :is="Component" :key="viewKey" />
+        <keep-alive :key="viewKey" :include="keepAliveList">
+          <component v-if="Component" :is="Component" :key="route.fullPath" />
+        </keep-alive>
       </transition>
     </router-view>
   </div>
-  <router-view v-else v-slot="{ Component }">
+  <router-view v-else v-slot="{ Component, route }">
     <transition :name="pageTransition" mode="out-in">
-      <component :is="Component" :key="viewKey" />
+      <keep-alive :key="viewKey" :include="keepAliveList">
+        <component v-if="Component" :is="Component" :key="route.fullPath" />
+      </keep-alive>
     </transition>
   </router-view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { usePageTransition } from '@btc/shared-utils';
 import { useLogout } from '@btc/shared-core';
+import { useProcessStore } from '@btc/shared-components';
 
 defineOptions({
   name: 'OperationsApp',
@@ -32,6 +37,14 @@ const viewKey = ref(1);
 const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
 const emitter = (window as any).__APP_EMITTER__;
 const { pageTransition } = usePageTransition();
+const processStore = useProcessStore();
+
+// 获取需要缓存的组件名称列表
+const keepAliveList = computed(() => {
+  return processStore.list
+    .filter((tab) => tab.meta?.keepAlive === true && tab.name)
+    .map((tab) => tab.name as string);
+});
 
 // 刷新视图
 function refreshView() {

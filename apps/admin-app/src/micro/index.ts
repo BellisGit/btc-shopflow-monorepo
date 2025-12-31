@@ -498,6 +498,16 @@ export function listenSubAppReady() {
  * 监听子应用路由变化事件
  */
 export function listenSubAppRouteChange() {
+  // 关键：在独立运行模式下（非 qiankun 且非 layout-app），不需要监听 subapp:route-change 事件
+  // 因为路由变化已经在 router.afterEach 中处理了，避免重复处理导致冲突
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
+  
+  if (!isQiankun && !isUsingLayoutApp) {
+    // 独立运行模式，路由变化已在 router.afterEach 中处理，不需要监听事件
+    return;
+  }
+
   window.addEventListener('subapp:route-change', (event: Event) => {
     const customEvent = event as CustomEvent;
     const { path, fullPath, name, meta } = customEvent.detail;
