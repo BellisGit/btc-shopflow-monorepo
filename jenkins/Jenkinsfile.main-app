@@ -70,18 +70,6 @@ pipeline {
             defaultValue: true,
             description: '是否构建共享依赖包（@btc/* 包），确保依赖最新版本'
         )
-        // 是否启用 CDN 加速
-        booleanParam(
-            name: 'ENABLE_CDN',
-            defaultValue: true,
-            description: '是否启用 CDN 加速（将资源 URL 转换为 CDN 地址）'
-        )
-        // 是否启用 CDN 上传
-        booleanParam(
-            name: 'ENABLE_CDN_UPLOAD',
-            defaultValue: false,
-            description: '是否启用 CDN 上传（将构建产物上传到 CDN，需要配置 CDN 凭证）'
-        )
     }
     
     stages {
@@ -306,8 +294,8 @@ pipeline {
                     // 将应用名称转换为 package.json 中的脚本名称（去掉 -app 后缀）
                     def scriptName = appName.replace('-app', '')
                     echo "🔨 构建主应用: ${appName} (脚本: build-dist:${scriptName})..."
-                    def enableCdn = params.ENABLE_CDN ? 'true' : 'false'
-                    def enableCdnUpload = params.ENABLE_CDN_UPLOAD ? 'true' : 'false'
+                    def enableCdn = 'true'
+                    def enableCdnUpload = 'true'
                     if (isUnix()) {
                         sh """
                             # 设置环境变量（不使用 cross-env，直接在 shell 中设置）

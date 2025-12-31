@@ -1,0 +1,380 @@
+// 布局应用（layout-app）Docker 部署 Jenkinsfile
+// 使用 Docker 方式部署：构建 Docker 镜像 → 推送到服务器 → docker-compose 部署
+// 使用方法：
+// 1. 创建一个 Job（如 btc-shopflow-deploy-layout-app-docker）
+// 2. 在 Job 配置中，Pipeline 部分选择 "Pipeline script from SCM"
+// 3. 设置 Script Path 为 "jenkins/Jenkinsfile.layout-app.docker"
+
+pipeline {
+    agent any
+    
+    environment {
+        NODE_VERSION = '20'
+        PNPM_VERSION = '8.15.0'
+        APP_NAME = 'layout-app'
+        DOCKER_REGISTRY = 'btc-shopflow'
+        DOCKER_IMAGE = "btc-shopflow/${APP_NAME}"
+    }
+    
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+    }
+    
+    parameters {
+        string(
+            name: 'SERVER_HOST',
+            defaultValue: '47.112.31.96',
+            description: '服务器地址'
+        )
+        string(
+            name: 'SERVER_USER',
+            defaultValue: 'root',
+            description: '服务器用户名'
+        )
+        string(
+            name: 'SERVER_PORT',
+            defaultValue: '22',
+            description: 'SSH 端口'
+        )
+        string(
+            name: 'SSH_KEY_PATH',
+            defaultValue: '/var/jenkins_home/.ssh/id_rsa',
+            description: 'SSH 私钥路径'
+        )
+        string(
+            name: 'REMOTE_PATH',
+            defaultValue: '/www/wwwroot/btc-shopflow-monorepo',
+            description: '服务器上的项目路径'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: true,
+            description: '是否跳过测试'
+        )
+        booleanParam(
+            name: 'CLEAN_BUILD',
+            defaultValue: false,
+            description: '是否清理构建缓存'
+        )
+        booleanParam(
+            name: 'BUILD_SHARED_DEPS',
+            defaultValue: true,
+            description: '是否构建共享依赖包'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "📦 检出代码..."
+                    checkout scm
+                    if (isUnix()) {
+                        sh '''
+                            echo "Git 信息:"
+                            echo "  分支: $(git branch --show-current)"
+                            echo "  提交: $(git rev-parse --short HEAD)"
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                script {
+                    echo "🔧 设置构建环境..."
+                    if (isUnix()) {
+                        sh '''
+                            # 检查 Node.js
+                            if ! command -v node &> /dev/null; then
+                                echo "⚠️ Node.js 未安装，请先安装 Node.js ${NODE_VERSION}"
+                                exit 1
+                            fi
+                            
+                            # 检查 pnpm
+                            if ! command -v pnpm &> /dev/null; then
+                                echo "📦 安装 pnpm..."
+                                npm install -g pnpm@${PNPM_VERSION}
+                            fi
+                            
+                            # 检查 Docker
+                            if ! command -v docker &> /dev/null; then
+                                echo "❌ Docker 未安装，请先安装 Docker"
+                                exit 1
+                            fi
+                            
+                            echo "✅ 环境检查完成"
+                            echo "  Node.js: $(node --version)"
+                            echo "  pnpm: $(pnpm --version)"
+                            echo "  Docker: $(docker --version)"
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    echo "📥 安装依赖..."
+                    if (isUnix()) {
+                        sh '''
+                            if [ "${CLEAN_BUILD}" = "true" ]; then
+                                echo "🧹 清理 node_modules..."
+                                rm -rf node_modules
+                            fi
+                            
+                            pnpm install --frozen-lockfile --prefer-offline
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Build Shared Dependencies') {
+            when {
+                expression { params.BUILD_SHARED_DEPS }
+            }
+            steps {
+                script {
+                    echo "📦 构建共享依赖包..."
+                    if (isUnix()) {
+                        sh '''
+                            pnpm --filter @btc/vite-plugin run build || true
+                            pnpm --filter @btc/shared-utils run build || true
+                            pnpm --filter @btc/shared-core run build || true
+                            pnpm --filter @btc/shared-components run build || true
+                            pnpm --filter @btc/subapp-manifests run build || true
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Build Application') {
+            steps {
+                script {
+                    echo "🔨 构建应用: ${APP_NAME}..."
+                    if (isUnix()) {
+                        sh '''
+                            echo "构建应用: ${APP_NAME}..."
+                            pnpm --filter ${APP_NAME} build
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "🐳 构建 Docker 镜像..."
+                    if (isUnix()) {
+                        sh """
+                            # 构建 Docker 镜像（使用通用 Dockerfile）
+                            docker build -t ${DOCKER_IMAGE}:latest --build-arg APP_DIR=apps/${APP_NAME} .
+                            
+                            # 显示镜像信息
+                            docker images ${DOCKER_IMAGE}:latest
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Save Docker Image') {
+            steps {
+                script {
+                    echo "💾 保存 Docker 镜像..."
+                    if (isUnix()) {
+                        sh """
+                            # 创建临时目录
+                            mkdir -p /tmp/docker-images
+                            
+                            # 保存镜像为 tar.gz
+                            docker save ${DOCKER_IMAGE}:latest | gzip > /tmp/docker-images/${APP_NAME}.tar.gz
+                            
+                            # 显示文件大小
+                            ls -lh /tmp/docker-images/${APP_NAME}.tar.gz
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Upload to Server') {
+            steps {
+                script {
+                    echo "📤 上传镜像到服务器..."
+                    if (isUnix()) {
+                        sh """
+                            # 检查 SSH 密钥
+                            if [ ! -f "${params.SSH_KEY_PATH}" ]; then
+                                echo "❌ SSH 密钥文件不存在: ${params.SSH_KEY_PATH}"
+                                exit 1
+                            fi
+                            
+                            chmod 600 "${params.SSH_KEY_PATH}" || true
+                            
+                            # 测试 SSH 连接
+                            ssh -i "${params.SSH_KEY_PATH}" -p ${params.SERVER_PORT} \
+                                -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                                ${params.SERVER_USER}@${params.SERVER_HOST} \
+                                "echo 'SSH connection successful'" || {
+                                echo "❌ SSH 连接失败"
+                                exit 1
+                            }
+                            
+                            # 在服务器上创建临时目录
+                            ssh -i "${params.SSH_KEY_PATH}" -p ${params.SERVER_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                ${params.SERVER_USER}@${params.SERVER_HOST} \
+                                "mkdir -p ${params.REMOTE_PATH}/tmp/docker-images"
+                            
+                            # 上传镜像
+                            scp -i "${params.SSH_KEY_PATH}" -P ${params.SERVER_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                /tmp/docker-images/${APP_NAME}.tar.gz \
+                                ${params.SERVER_USER}@${params.SERVER_HOST}:${params.REMOTE_PATH}/tmp/docker-images/
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy on Server') {
+            steps {
+                script {
+                    echo "🚀 在服务器上部署..."
+                    if (isUnix()) {
+                        sh """
+                            # 在服务器上执行部署脚本
+                            ssh -i "${params.SSH_KEY_PATH}" -p ${params.SERVER_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                ${params.SERVER_USER}@${params.SERVER_HOST} << 'REMOTE_SCRIPT'
+set -e
+
+REMOTE_PATH="${params.REMOTE_PATH}"
+APP_NAME="${APP_NAME}"
+DOCKER_IMAGE="${DOCKER_IMAGE}"
+
+cd "\$REMOTE_PATH"
+
+# 加载 Docker 镜像
+echo "[INFO] 加载 Docker 镜像..."
+docker load < "tmp/docker-images/\${APP_NAME}.tar.gz"
+
+# 确保 docker-compose 可用
+if ! command -v docker-compose &> /dev/null && command -v docker &> /dev/null; then
+    # 尝试使用 docker compose (v2)
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
+
+# 创建或更新 docker-compose.yml
+echo "[INFO] 创建 Docker Compose 配置..."
+cat > docker-compose.prod.yml << EOF
+version: '3.8'
+
+services:
+  \${APP_NAME}:
+    image: \${DOCKER_IMAGE}:latest
+    container_name: btc-\${APP_NAME}
+    ports:
+      - "30088:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - btc-network
+
+networks:
+  btc-network:
+    driver: bridge
+EOF
+
+# 停止并启动容器
+echo "[INFO] 启动容器..."
+\$DOCKER_COMPOSE -f docker-compose.prod.yml down 2>/dev/null || true
+\$DOCKER_COMPOSE -f docker-compose.prod.yml up -d
+
+# 清理临时文件
+echo "[INFO] 清理临时文件..."
+rm -rf tmp/docker-images/\${APP_NAME}.tar.gz
+
+# 等待容器启动
+echo "[INFO] 等待容器启动..."
+sleep 10
+
+# 健康检查
+if curl -f -s --max-time 10 "http://localhost:30088" > /dev/null 2>&1; then
+    echo "[SUCCESS] 容器运行正常"
+else
+    echo "[WARNING] 容器可能仍在启动中"
+fi
+
+echo "[SUCCESS] 部署完成！"
+REMOTE_SCRIPT
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                script {
+                    echo "🧹 清理临时文件..."
+                    if (isUnix()) {
+                        sh '''
+                            rm -rf /tmp/docker-images/${APP_NAME}.tar.gz
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            script {
+                echo """
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Docker 部署成功！
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+应用: ${APP_NAME}
+镜像: ${DOCKER_IMAGE}:latest
+服务器: ${params.SERVER_HOST}
+访问地址: http://${params.SERVER_HOST}:30088
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+            }
+        }
+        failure {
+            script {
+                echo """
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ Docker 部署失败
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+请检查构建日志以确定失败原因
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+            }
+        }
+        always {
+            script {
+                if (isUnix()) {
+                    sh '''
+                        # 清理本地 Docker 镜像（可选）
+                        # docker rmi ${DOCKER_IMAGE}:latest || true
+                    '''
+                }
+            }
+        }
+    }
+}
+
