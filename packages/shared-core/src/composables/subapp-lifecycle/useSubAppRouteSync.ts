@@ -355,6 +355,29 @@ export function setupHostLocationBridge(context: SubAppContext, appId: string, b
       syncingFromSubApp = false;
     }
 
+    // 关键修复：检查路由是否已经匹配且路径正确，如果是则跳过同步
+    // 这样可以避免在初始导航完成后立即触发路由同步，导致组件内容被清空
+    const currentRoute = context.router.currentRoute.value;
+    if (currentRoute.matched.length > 0) {
+      // 路由已匹配，检查路径是否正确
+      const targetRoute = extractHostSubRoute(appId, basePath);
+      const normalizedTarget = ensureLeadingSlash(targetRoute);
+      const currentRoutePath = ensureLeadingSlash(
+        currentRoute.fullPath || currentRoute.path || '/',
+      );
+      
+      // 比较路径（去掉 query 和 hash 进行比较）
+      const currentPath = currentRoutePath.split('?')[0]?.split('#')[0] || '';
+      const targetPath = normalizedTarget.split('?')[0]?.split('#')[0] || '';
+      
+      // 如果路由已匹配且路径正确，跳过同步
+      if (currentPath === targetPath) {
+        // 更新 lastPath，避免下次触发
+        lastPath = window.location.pathname;
+        return;
+      }
+    }
+
     // 检查路径是否真的变化了
     const currentPath = window.location.pathname;
 

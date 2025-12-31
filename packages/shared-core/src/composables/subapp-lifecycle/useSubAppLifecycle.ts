@@ -472,26 +472,63 @@ export async function mountSubApp(
     Promise.race([
       context.router.isReady(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('路由就绪超时')), 3000))
-    ]).then(() => {
+    ]).then(async () => {
       // 路由已准备好，进行导航
-      context.router.replace(initialRoute).catch((error: unknown) => {
+      try {
+        await context.router.replace(initialRoute);
+        
+        // 关键修复：等待路由导航完成，并确保组件已加载
+        // 使用 nextTick 确保 Vue 已经完成组件渲染
+        await import('vue').then(({ nextTick }) => {
+          return new Promise<void>((resolve) => {
+            nextTick(() => {
+              // 检查路由是否已匹配，确保组件已加载
+              const currentRoute = context.router.currentRoute.value;
+              if (currentRoute.matched.length > 0) {
+                // 路由已匹配，组件应该已经加载，再等待一个 nextTick 确保渲染完成
+                nextTick(() => {
+                  resolve();
+                });
+              } else {
+                // 如果路由未匹配，等待一段时间后继续（兼容性处理）
+                setTimeout(() => {
+                  resolve();
+                }, 200);
+              }
+            });
+          });
+        });
+      } catch (error: unknown) {
         // 路由导航失败时输出错误信息
         console.error(`[${options.appId}-app] 路由导航失败:`, error, {
           initialRoute,
           currentPath: window.location.pathname,
           routerReady: 'ready',
         });
-      });
-    }).catch((error: unknown) => {
+      }
+    }).catch(async (error: unknown) => {
       // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
       console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
-      context.router.replace(initialRoute).catch((navError: unknown) => {
+      try {
+        await context.router.replace(initialRoute);
+        
+        // 即使路由就绪检查失败，也等待导航完成
+        await import('vue').then(({ nextTick }) => {
+          return new Promise<void>((resolve) => {
+            nextTick(() => {
+              setTimeout(() => {
+                resolve();
+              }, 200);
+            });
+          });
+        });
+      } catch (navError: unknown) {
         console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
           initialRoute,
           currentPath: window.location.pathname,
           routerReady: 'timeout',
         });
-      });
+      }
     });
   }
 

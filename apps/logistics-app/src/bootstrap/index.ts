@@ -425,6 +425,37 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
   // 使用标准化的 mountSubApp
   await mountSubApp(context, subAppOptions, props);
 
+  // 关键修复：等待路由导航完成后再设置路由同步
+  // 这样可以避免路由同步覆盖正在进行的初始导航，导致组件内容被清空
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
+    // 等待路由准备好，并确保路由已匹配
+    try {
+      await context.router.isReady();
+      
+      // 使用 nextTick 确保路由已经完全初始化
+      await import('vue').then(({ nextTick }) => {
+        return new Promise<void>((resolve) => {
+          nextTick(() => {
+            // 检查路由是否已匹配，如果已匹配则继续，否则等待一段时间
+            const currentRoute = context.router.currentRoute.value;
+            if (currentRoute.matched.length > 0) {
+              resolve();
+            } else {
+              // 如果路由未匹配，等待一段时间后继续（兼容性处理）
+              setTimeout(() => {
+                resolve();
+              }, 200);
+            }
+          });
+        });
+      });
+    } catch (error) {
+      // 如果路由就绪失败，延迟一段时间后继续（兼容性处理）
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+  }
+
   // 设置路由同步、事件桥接等（使用自定义版本）
   setupLogisticsRouteSync(context);
   setupHostLocationBridge(context, LOGISTICS_APP_ID, LOGISTICS_BASE_PATH);
