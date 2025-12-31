@@ -105,11 +105,27 @@ pipeline {
                                 echo "✅ pnpm 安装完成: $(pnpm --version)"
                             fi
                             
-                            # 检查 Docker
+                            # 检查 Docker（与 Node.js 检测方式一致）
                             if command -v docker >/dev/null 2>&1; then
-                                echo "✅ Docker 已安装: $(docker --version)"
+                                if docker --version >/dev/null 2>&1; then
+                                    echo "✅ Docker 已安装: $(docker --version)"
+                                else
+                                    echo "⚠️ Docker 命令存在但无法执行，可能是权限问题"
+                                    echo "💡 请检查："
+                                    echo "   1. Jenkins 用户是否在 docker 组中: groups \$USER"
+                                    echo "   2. Docker socket 权限: ls -l /var/run/docker.sock"
+                                    echo "   3. 如果在容器中运行，是否挂载了 Docker socket"
+                                    exit 1
+                                fi
                             else
-                                echo "❌ Docker 未安装，请先安装 Docker"
+                                echo "❌ Docker 未安装或不在 PATH 中"
+                                echo "💡 调试信息："
+                                echo "   PATH: \$PATH"
+                                echo "   which docker: $(which docker 2>&1 || echo 'not found')"
+                                echo "💡 请检查："
+                                echo "   1. Docker 是否已安装"
+                                echo "   2. Docker 是否在 PATH 中"
+                                echo "   3. 如果在容器中运行 Jenkins，需要配置 Docker-in-Docker 或挂载 Docker socket"
                                 exit 1
                             fi
                             
