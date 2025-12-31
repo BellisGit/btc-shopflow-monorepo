@@ -26,8 +26,8 @@ pipeline {
         string(name: 'SERVER_PORT', defaultValue: '22', description: 'SSH 端口')
         string(name: 'SSH_KEY_PATH', defaultValue: '/var/jenkins_home/.ssh/id_rsa', description: 'SSH 私钥路径')
         booleanParam(name: 'SKIP_TESTS', defaultValue: true, description: '是否跳过测试')
-        booleanParam(name: 'CLEAN_BUILD', defaultValue: false, description: '是否清理构建缓存')
-        booleanParam(name: 'BUILD_SHARED_DEPS', defaultValue: true, description: '是否构建共享依赖包')
+        booleanParam(name: 'CLEAN_BUILD', defaultValue: true, description: '是否清理构建缓存')
+        booleanParam(name: 'BUILD_SHARED_DEPS', defaultValue: false, description: '是否构建共享依赖包')
     }
     
     stages {

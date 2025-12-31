@@ -55,12 +55,12 @@ pipeline {
         )
         booleanParam(
             name: 'CLEAN_BUILD',
-            defaultValue: false,
+            defaultValue: true,
             description: '是否清理构建缓存'
         )
         booleanParam(
             name: 'BUILD_SHARED_DEPS',
-            defaultValue: true,
+            defaultValue: false,
             description: '是否构建共享依赖包'
         )
     }

@@ -61,13 +61,13 @@ pipeline {
         // 是否清理缓存
         booleanParam(
             name: 'CLEAN_BUILD',
-            defaultValue: false,
+            defaultValue: true,
             description: '是否清理构建缓存（强制重新构建）'
         )
         // 是否构建共享依赖
         booleanParam(
             name: 'BUILD_SHARED_DEPS',
-            defaultValue: true,
+            defaultValue: false,
             description: '是否构建共享依赖包（@btc/* 包），确保依赖最新版本'
         )
     }

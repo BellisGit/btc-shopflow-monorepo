@@ -71,7 +71,7 @@ pipeline {
         // 是否清理缓存
         booleanParam(
             name: 'CLEAN_BUILD',
-            defaultValue: false,
+            defaultValue: true,
             description: '是否清理构建缓存（强制重新构建）'
         )
     }
@@ -341,8 +341,8 @@ pipeline {
                                 if (isUnix()) {
                                     sh """
                                         # 设置环境变量（不使用 cross-env，直接在 shell 中设置）
-                                        export ENABLE_CDN_ACCELERATION=false
-                                        export ENABLE_CDN_UPLOAD=false
+                                        export ENABLE_CDN_ACCELERATION=true
+                                        export ENABLE_CDN_UPLOAD=true
                                         
                                         echo "构建应用: ${appName}..."
                                         # 直接执行构建命令，而不是使用 package.json 中的脚本（因为脚本使用了 cross-env）
@@ -353,8 +353,8 @@ pipeline {
                                     bat """
                                         @echo off
                                         REM 设置环境变量
-                                        set ENABLE_CDN_ACCELERATION=false
-                                        set ENABLE_CDN_UPLOAD=false
+                                        set ENABLE_CDN_ACCELERATION=true
+                                        set ENABLE_CDN_UPLOAD=true
                                         
                                         echo 构建应用: ${appName}...
                                         call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}

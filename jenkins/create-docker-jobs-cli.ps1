@@ -150,12 +150,12 @@ function Create-DockerJobConfig {
         <hudson.model.BooleanParameterDefinition>
           <name>CLEAN_BUILD</name>
           <description>是否清理构建缓存（强制重新构建）</description>
-          <defaultValue>false</defaultValue>
+          <defaultValue>true</defaultValue>
         </hudson.model.BooleanParameterDefinition>
         <hudson.model.BooleanParameterDefinition>
           <name>BUILD_SHARED_DEPS</name>
           <description>是否构建共享依赖包</description>
-          <defaultValue>true</defaultValue>
+          <defaultValue>false</defaultValue>
         </hudson.model.BooleanParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
