@@ -18,8 +18,9 @@ async function importSharedCore() {
 }
 
 /**
- * 获取主应用的登录页面URL
- * 用于子应用在独立运行时重定向到主应用的登录页面
+ * 获取登录页面URL
+ * 用于子应用在独立运行时重定向到登录页面
+ * 注意：子域名下应该重定向到当前子域名的登录页面，而不是主域名
  */
 function getMainAppLoginUrl(redirectPath?: string): string {
   if (typeof window === 'undefined') {
@@ -29,34 +30,23 @@ function getMainAppLoginUrl(redirectPath?: string): string {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
   const port = window.location.port;
+  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
 
-  // 生产环境：主应用在 bellis.com.cn
+  // 生产环境：如果是子域名（如 admin.bellis.com.cn），使用当前子域名的登录页面
+  // 子域名应用应该独立运行，不需要重定向到主域名
   if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
-    // 子域名环境，重定向到主域名
-    const mainDomain = 'bellis.com.cn';
-    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
-    return `${protocol}//${mainDomain}/login${redirectQuery}`;
+    // 子域名环境，使用当前子域名的登录页面
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
   }
 
   // 开发环境：主应用在 localhost:8080 (system-app)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const mainAppPort = '8080';
-    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
     return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
   }
 
-  // 其他环境：尝试推断主域名（取域名的主部分）
-  const parts = hostname.split('.');
-  if (parts.length > 2) {
-    // 子域名情况，取主域名部分
-    const mainDomain = parts.slice(-2).join('.');
-    const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
-    return `${protocol}//${mainDomain}${port ? `:${port}` : ''}/login${redirectQuery}`;
-  }
-
-  // 默认情况：使用相对路径（假设主应用在同一域名下）
-  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
-  return `/login${redirectQuery}`;
+  // 其他环境：使用当前域名的登录页面
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
 }
 
 /**

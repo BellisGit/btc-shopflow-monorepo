@@ -2,15 +2,15 @@
   <!-- 独立运行时：直接渲染 router-view，让 AppLayout 占据整个容器 -->
   <!-- qiankun 模式：使用包装层，因为子应用需要被主应用的布局包裹 -->
   <div v-if="!isStandalone" :class="['logistics-app']">
-    <router-view v-slot="{ Component }">
+    <router-view v-slot="{ Component, route }">
       <transition :name="pageTransition" mode="out-in">
-        <component :is="Component" :key="viewKey" />
+        <component v-if="Component" :is="Component" :key="route.fullPath || viewKey" />
       </transition>
     </router-view>
   </div>
-  <router-view v-else v-slot="{ Component }">
+  <router-view v-else v-slot="{ Component, route }">
     <transition :name="pageTransition" mode="out-in">
-      <component :is="Component" :key="viewKey" />
+      <component v-if="Component" :is="Component" :key="route.fullPath || viewKey" />
     </transition>
   </router-view>
 </template>
@@ -56,14 +56,45 @@ onUnmounted(() => {
 <style scoped>
 /* 只在 qiankun 模式下使用包装层样式 */
 .logistics-app {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  box-sizing: border-box;
+  flex: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* 确保 router-view 正确渲染 */
+.logistics-app :deep(> router-view) {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 确保 router-view 渲染的组件正确显示 */
+.logistics-app :deep(> router-view > *) {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 确保 transition 组件正确渲染 */
+.logistics-app :deep(.transition-group),
+.logistics-app :deep(.transition-group > *) {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 </style>
 

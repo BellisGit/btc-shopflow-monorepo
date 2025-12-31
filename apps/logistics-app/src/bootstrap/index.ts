@@ -460,7 +460,9 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
           const protocol = window.location.protocol;
           const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
           if (isProductionSubdomain) {
-            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+            // 子域名下应该重定向到当前子域名的登录页面，而不是主域名
+            const port = window.location.port ? `:${window.location.port}` : '';
+            window.location.href = `${protocol}//${hostname}${port}/login?logout=1`;
           } else {
             window.location.href = '/login?logout=1';
           }

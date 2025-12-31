@@ -139,7 +139,9 @@ export function useLogout() {
       if (isProductionSubdomain || qiankunWindow.__POWERED_BY_QIANKUN__) {
         const { buildLogoutUrl } = await import('@btc/auth-shared/composables/redirect');
         if (isProductionSubdomain) {
-          window.location.href = buildLogoutUrl(`${protocol}//bellis.com.cn/login`);
+          // 子域名下应该重定向到当前子域名的登录页面，而不是主域名
+          const port = window.location.port ? `:${window.location.port}` : '';
+          window.location.href = buildLogoutUrl(`${protocol}//${hostname}${port}/login`);
         } else {
           window.location.href = buildLogoutUrl('/login');
         }

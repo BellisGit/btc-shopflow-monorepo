@@ -101,13 +101,33 @@
 
 	// 确保子应用内容根元素能够正确填充高度
 	> * {
-		height: 100%;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
+		height: 100% !important;
+		width: 100% !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
 		overflow: hidden;
-		flex: 1; // 子应用内容根元素需要占据完整高度
+		flex: 1 !important; // 子应用内容根元素需要占据完整高度
+	}
+	
+	// 确保子应用内部的 router-view 也能正确渲染
+	> * :deep(> router-view) {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
+	}
+	
+	// 确保 router-view 渲染的组件正确显示
+	> * :deep(> router-view > *) {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
 	}
 }
 
