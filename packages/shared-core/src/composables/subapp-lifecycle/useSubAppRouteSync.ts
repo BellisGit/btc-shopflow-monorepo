@@ -465,7 +465,50 @@ export function setupHostLocationBridge(context: SubAppContext, appId: string, b
     };
   }
 
-  handleRoutingEvent();
+  // 关键修复：延迟调用 handleRoutingEvent，等待路由准备好后再同步
+  // 这样可以避免在初始挂载时立即触发路由同步，导致内容被覆盖
+  // 使用 router.isReady() 确保路由已经完全初始化
+  context.router.isReady().then(() => {
+    // 使用 nextTick 确保路由已经完全初始化，并且初始路由导航已经完成
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        // 检查路由是否已经匹配，如果已经匹配且路径正确，就不需要同步
+        const currentRoute = context.router.currentRoute.value;
+        const targetRoute = extractHostSubRoute(appId, basePath);
+        const normalizedTarget = ensureLeadingSlash(targetRoute);
+        const currentRoutePath = ensureLeadingSlash(
+          currentRoute.fullPath || currentRoute.path || '/',
+        );
+        
+        // 比较路径（去掉 query 和 hash 进行比较）
+        const currentPath = currentRoutePath.split('?')[0]?.split('#')[0] || '';
+        const targetPath = normalizedTarget.split('?')[0]?.split('#')[0] || '';
+        
+        // 如果路由已经匹配且路径正确，就不需要同步
+        if (currentRoute.matched.length > 0 && currentPath === targetPath) {
+          // 路由已经正确匹配，更新 lastPath 但不触发同步
+          lastPath = window.location.pathname;
+          return;
+        }
+        
+        // 路由未匹配或路径不正确，需要同步
+        // 再次延迟，确保 mountSubApp 中的路由导航已经完成
+        setTimeout(() => {
+          handleRoutingEvent();
+        }, 100);
+      });
+    }).catch(() => {
+      // 如果导入失败，使用 setTimeout 作为兜底
+      setTimeout(() => {
+        handleRoutingEvent();
+      }, 200);
+    });
+  }).catch(() => {
+    // 如果路由就绪失败，延迟调用（兼容性处理）
+    setTimeout(() => {
+      handleRoutingEvent();
+    }, 300);
+  });
 }
 
 /**
