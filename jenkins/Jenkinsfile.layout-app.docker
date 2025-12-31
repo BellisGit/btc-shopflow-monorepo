@@ -86,13 +86,27 @@ pipeline {
             steps {
                 script {
                     echo "🔧 设置构建环境..."
+                    
+                    // 尝试使用 NodeJS Plugin（如果已安装）
+                    try {
+                        def nodejs = tool name: 'NodeJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                        env.PATH = "${nodejs}/bin:${env.PATH}"
+                        echo "✅ 使用 NodeJS Plugin 安装的 Node.js: ${nodejs}"
+                    } catch (Exception e) {
+                        echo "ℹ️ NodeJS Plugin 未配置或未找到，尝试使用系统 Node.js"
+                    }
+                    
                     if (isUnix()) {
                         sh '''
-                            # 检查 Node.js
+                            # 检查 Node.js（优先使用 NodeJS Plugin 设置的 PATH）
                             if command -v node >/dev/null 2>&1; then
                                 echo "✅ Node.js 已安装: $(node --version)"
                             else
-                                echo "⚠️ Node.js 未安装，请先安装 Node.js ${NODE_VERSION}"
+                                echo "❌ Node.js 未找到"
+                                echo "💡 请确保："
+                                echo "   1. 如果使用 NodeJS Plugin：在 Jenkins 全局配置中配置 Node.js 工具，名称为 'NodeJS'"
+                                echo "   2. 如果使用系统安装：在 Jenkins 容器中安装 Node.js"
+                                echo "      安装方法：docker exec -u root jenkins bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs'"
                                 exit 1
                             fi
                             

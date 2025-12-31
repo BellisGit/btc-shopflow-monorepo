@@ -89,6 +89,8 @@ Nginx 反向代理到容器端口
    ```
 
 3. **完整启动命令示例**：
+
+   **Linux/Mac (bash)**:
    ```bash
    docker run -d \
      -p 9000:8080 \
@@ -100,6 +102,34 @@ Nginx 反向代理到容器端口
    
    # 然后安装 Docker CLI
    docker exec -u root jenkins bash -c 'apt-get update && apt-get install -y docker.io'
+   ```
+
+   **Windows PowerShell（推荐使用一行命令）**:
+   ```powershell
+   docker run -d -p 9000:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock --name jenkins jenkins/jenkins:lts
+   ```
+   
+   ⚠️ **注意**：如果容器 `jenkins` 已存在，需要先删除：
+   ```powershell
+   docker rm jenkins
+   ```
+   
+   然后安装 Docker CLI 和 Node.js：
+   ```powershell
+   # 安装 Docker CLI
+   docker exec -u root jenkins bash -c 'apt-get update && apt-get install -y docker.io'
+   
+   # 安装 Node.js 20
+   docker exec -u root jenkins bash -c 'curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs'
+   ```
+   
+   验证安装：
+   ```powershell
+   # 验证 Docker
+   docker exec jenkins docker --version
+   
+   # 验证 Node.js
+   docker exec jenkins node --version
    ```
 
 **方法 2：使用包含 Docker 的 Jenkins 镜像**
