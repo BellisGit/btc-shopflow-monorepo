@@ -20,6 +20,14 @@ pipeline {
         timestamps()
     }
     
+    // 配置构建触发器
+    // 使用 Poll SCM 自动轮询（每 5 分钟检查一次代码变更）
+    // 优点：无需配置 Webhook，适合本地 Jenkins，自动触发构建
+    // 流程：修改代码 → 提交推送 → 自动构建（5分钟内） → 查看结果
+    triggers {
+        pollSCM('H/5 * * * *')  // 每 5 分钟检查一次代码变更
+    }
+    
     parameters {
         string(name: 'SERVER_HOST', defaultValue: '47.112.31.96', description: '服务器地址')
         string(name: 'SERVER_USER', defaultValue: 'root', description: '服务器用户名')
@@ -76,7 +84,24 @@ pipeline {
                         sh '''
                             # 检查 Node.js（优先使用 NodeJS Plugin 设置的 PATH）
                             if command -v node >/dev/null 2>&1; then
-                                echo "✅ Node.js 已安装: $(node --version)"
+                                # 验证 Node.js 是否能正常运行
+                                if node --version >/dev/null 2>&1; then
+                                    echo "✅ Node.js 已安装: $(node --version)"
+                                else
+                                    echo "❌ Node.js 命令存在但无法运行"
+                                    echo "错误信息: $(node --version 2>&1 || true)"
+                                    echo ""
+                                    echo "💡 可能的原因："
+                                    echo "   1. 缺少系统库（如 libatomic.so.1）"
+                                    echo "   2. Node.js 二进制文件损坏或不兼容"
+                                    echo ""
+                                    echo "💡 解决方案："
+                                    echo "   如果使用 NodeJS Plugin，可能需要在 Jenkins 容器中安装缺失的库："
+                                    echo "   docker exec -u root jenkins bash -c 'apt-get update && apt-get install -y libatomic1'"
+                                    echo ""
+                                    echo "   或者使用系统安装的 Node.js（如果容器中已安装）"
+                                    exit 1
+                                fi
                             else
                                 echo "❌ Node.js 未找到"
                                 echo "💡 请确保："

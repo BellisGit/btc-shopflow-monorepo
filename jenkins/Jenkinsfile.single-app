@@ -30,6 +30,14 @@ pipeline {
         timestamps()
     }
     
+    // 配置构建触发器
+    // 使用 Poll SCM 自动轮询（每 5 分钟检查一次代码变更）
+    // 优点：无需配置 Webhook，适合本地 Jenkins，自动触发构建
+    // 流程：修改代码 → 提交推送 → 自动构建（5分钟内） → 查看结果
+    triggers {
+        pollSCM('H/5 * * * *')  // 每 5 分钟检查一次代码变更
+    }
+    
     parameters {
         // 应用名称（默认从 Job 名称提取，可以手动覆盖）
         string(

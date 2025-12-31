@@ -459,22 +459,38 @@ export async function mountSubApp(
   context.app.mount(mountPoint);
   
 
-  // 关键优化：应用挂载后立即触发路由导航（类似 cool-admin 的做法）
-  // 在 qiankun 或 layout-app 环境下，立即触发路由导航，不等待任何异步操作
-  // 这样路由组件可以立即开始加载，与其他区域同步出现
+  // 关键修复：在 qiankun 或 layout-app 环境下，需要等待路由准备好后再进行导航
+  // 这样可以确保路由已经完全初始化，组件可以正确加载
   // 注意：独立运行模式下，Vue Router 会自动根据当前 URL 匹配路由，无需手动触发
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
     
-    // 立即触发路由导航，直接调用不延迟
-    // 应用已经挂载，路由可以立即开始工作，不需要 setTimeout
-    context.router.replace(initialRoute).catch((error: unknown) => {
-      // 路由导航失败时输出错误信息
-      console.error(`[${options.appId}-app] 路由导航失败:`, error, {
-        initialRoute,
-        currentPath: window.location.pathname,
-        routerReady: 'pending',
+    // 关键：先等待路由准备好，然后再进行导航
+    // 这样可以确保路由已经完全初始化，组件可以正确加载
+    // 使用 Promise.race 避免无限等待（最多等待 3 秒）
+    Promise.race([
+      context.router.isReady(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('路由就绪超时')), 3000))
+    ]).then(() => {
+      // 路由已准备好，进行导航
+      context.router.replace(initialRoute).catch((error: unknown) => {
+        // 路由导航失败时输出错误信息
+        console.error(`[${options.appId}-app] 路由导航失败:`, error, {
+          initialRoute,
+          currentPath: window.location.pathname,
+          routerReady: 'ready',
+        });
+      });
+    }).catch((error: unknown) => {
+      // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
+      console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
+      context.router.replace(initialRoute).catch((navError: unknown) => {
+        console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+          initialRoute,
+          currentPath: window.location.pathname,
+          routerReady: 'timeout',
+        });
       });
     });
   }
