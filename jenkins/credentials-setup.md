@@ -12,6 +12,8 @@
 | `deploy-server-host` | Secret text | 服务器地址 | `47.112.31.96` 或 `your-server.com` |
 | `deploy-server-user` | Secret text | 服务器用户名 | `root` |
 | `deploy-server-port` | Secret text | SSH 端口 | `22` |
+| `oss-access-key-id` | Secret text | 阿里云 OSS AccessKey ID（可选，用于 CDN 上传） | `LTAI5t...` |
+| `oss-access-key-secret` | Secret text | 阿里云 OSS AccessKey Secret（可选，用于 CDN 上传） | `xxx...` |
 
 ## 配置步骤
 
@@ -79,6 +81,33 @@
    - **ID**: `deploy-server-port`
    - **Description**: `SSH 端口`
 3. 点击 **OK**
+
+### 6. 配置 OSS AccessKey ID（可选，用于 CDN 上传）
+
+如果需要在构建时自动上传构建产物到阿里云 OSS/CDN，需要配置 OSS 凭证：
+
+1. 点击 **Add Credentials**（添加凭证）
+2. 配置如下：
+   - **Kind**（类型）: `Secret text`
+   - **Secret**（密钥）: 输入阿里云 OSS AccessKey ID（如 `LTAI5t...`）
+   - **ID**: `oss-access-key-id`
+   - **Description**: `阿里云 OSS AccessKey ID`
+3. 点击 **OK**
+
+### 7. 配置 OSS AccessKey Secret（可选，用于 CDN 上传）
+
+1. 点击 **Add Credentials**（添加凭证）
+2. 配置如下：
+   - **Kind**（类型）: `Secret text`
+   - **Secret**（密钥）: 输入阿里云 OSS AccessKey Secret
+   - **ID**: `oss-access-key-secret`
+   - **Description**: `阿里云 OSS AccessKey Secret`
+3. 点击 **OK**
+
+**注意**：
+- OSS 凭证是可选的，只有在需要自动上传构建产物到 CDN 时才需要配置
+- 如果未配置 OSS 凭证，构建时会跳过 CDN 上传步骤，但不会影响构建成功
+- OSS 凭证用于上传构建产物到阿里云 OSS，然后通过 CDN 加速访问
 
 ## 验证配置
 

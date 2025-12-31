@@ -144,27 +144,74 @@ pipeline {
                     echo "🔨 构建应用: ${appName}..."
                     def enableCdn = 'true'
                     def enableCdnUpload = 'true'
-                    if (isUnix()) {
-                        sh """
-                            export ENABLE_CDN_ACCELERATION=${enableCdn}
-                            export ENABLE_CDN_UPLOAD=${enableCdnUpload}
-                            echo "构建应用: ${appName}..."
-                            echo "CDN 加速: ${enableCdn}"
-                            echo "CDN 上传: ${enableCdnUpload}"
-                            pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
-                            echo "✅ ${appName} 构建完成，产物在 dist 目录"
-                        """
-                    } else {
-                        bat """
-                            @echo off
-                            set ENABLE_CDN_ACCELERATION=${enableCdn}
-                            set ENABLE_CDN_UPLOAD=${enableCdnUpload}
-                            echo 构建应用: ${appName}...
-                            echo CDN 加速: ${enableCdn}
-                            echo CDN 上传: ${enableCdnUpload}
-                            call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
-                            echo ✅ ${appName} 构建完成
-                        """
+                    
+                    // 尝试使用 OSS 凭证（如果已配置）
+                    // 注意：如果凭证不存在，withCredentials 会抛出异常，需要用 try-catch 处理
+                    try {
+                        withCredentials([
+                            string(credentialsId: 'oss-access-key-id', variable: 'OSS_ACCESS_KEY_ID'),
+                            string(credentialsId: 'oss-access-key-secret', variable: 'OSS_ACCESS_KEY_SECRET')
+                        ]) {
+                            echo "✅ OSS 凭证已从 Jenkins Credentials 读取"
+                            if (isUnix()) {
+                                sh """
+                                    export ENABLE_CDN_ACCELERATION=${enableCdn}
+                                    export ENABLE_CDN_UPLOAD=${enableCdnUpload}
+                                    export OSS_ACCESS_KEY_ID="\${OSS_ACCESS_KEY_ID}"
+                                    export OSS_ACCESS_KEY_SECRET="\${OSS_ACCESS_KEY_SECRET}"
+                                    echo "构建应用: ${appName}..."
+                                    echo "CDN 加速: ${enableCdn}"
+                                    echo "CDN 上传: ${enableCdnUpload}"
+                                    echo "✅ OSS 凭证已配置，将上传到 CDN"
+                                    pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
+                                    echo "✅ ${appName} 构建完成，产物在 dist 目录"
+                                """
+                            } else {
+                                bat """
+                                    @echo off
+                                    set ENABLE_CDN_ACCELERATION=${enableCdn}
+                                    set ENABLE_CDN_UPLOAD=${enableCdnUpload}
+                                    set OSS_ACCESS_KEY_ID=%OSS_ACCESS_KEY_ID%
+                                    set OSS_ACCESS_KEY_SECRET=%OSS_ACCESS_KEY_SECRET%
+                                    echo 构建应用: ${appName}...
+                                    echo CDN 加速: ${enableCdn}
+                                    echo CDN 上传: ${enableCdnUpload}
+                                    echo ✅ OSS 凭证已配置，将上传到 CDN
+                                    call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
+                                    echo ✅ ${appName} 构建完成
+                                """
+                            }
+                        }
+                    } catch (Exception e) {
+                        // 如果凭证不存在，继续构建但不配置 OSS 环境变量
+                        echo "⚠️  OSS 凭证未配置（凭证 ID: oss-access-key-id 或 oss-access-key-secret 不存在）"
+                        echo "   错误信息: ${e.getMessage()}"
+                        echo "   提示：如需启用 CDN 上传，请运行以下命令配置 OSS 凭证："
+                        echo "   .\\jenkins\\setup-oss-credentials-cli.ps1 -AccessKeyId \"xxx\" -AccessKeySecret \"xxx\" -JenkinsUser \"mose\" -JenkinsPassword \"123456\""
+                        if (isUnix()) {
+                            sh """
+                                export ENABLE_CDN_ACCELERATION=${enableCdn}
+                                export ENABLE_CDN_UPLOAD=${enableCdnUpload}
+                                echo "构建应用: ${appName}..."
+                                echo "CDN 加速: ${enableCdn}"
+                                echo "CDN 上传: ${enableCdnUpload}"
+                                echo "⚠️  OSS 凭证未配置，将跳过 CDN 上传"
+                                pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
+                                echo "✅ ${appName} 构建完成，产物在 dist 目录"
+                            """
+                        } else {
+                            bat """
+                                @echo off
+                                set ENABLE_CDN_ACCELERATION=${enableCdn}
+                                set ENABLE_CDN_UPLOAD=${enableCdnUpload}
+                                echo 构建应用: ${appName}...
+                                echo CDN 加速: ${enableCdn}
+                                echo CDN 上传: ${enableCdnUpload}
+                                echo ⚠️  OSS 凭证未配置，将跳过 CDN 上传
+                                call pnpm build:${scriptName} && node scripts/build-to-dist.mjs --app ${appName}
+                                echo ✅ ${appName} 构建完成
+                            """
+                        }
                     }
                 }
             }

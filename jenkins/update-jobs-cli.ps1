@@ -179,6 +179,171 @@ function Create-AppJobConfig {
     return $xml
 }
 
+# 创建主应用（main-app）Job 配置 XML
+function Create-MainAppJobConfig {
+    param(
+        [string]$RepoUrl,
+        [string]$BranchName
+    )
+    
+    $xml = @"
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.42">
+  <description>BTC ShopFlow - Deploy system-app (Main App)</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_HOST</name>
+          <description>服务器地址</description>
+          <defaultValue>47.112.31.96</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_USER</name>
+          <description>服务器用户名</description>
+          <defaultValue>root</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_PORT</name>
+          <description>SSH 端口</description>
+          <defaultValue>22</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SSH_KEY_PATH</name>
+          <description>SSH 私钥路径（Jenkins 服务器上的路径）</description>
+          <defaultValue>/var/jenkins_home/.ssh/id_rsa</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>SKIP_TESTS</name>
+          <description>是否跳过测试（加速构建）</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>CLEAN_BUILD</name>
+          <description>是否清理构建缓存（强制重新构建）</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>BUILD_SHARED_DEPS</name>
+          <description>是否构建共享依赖包</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.90">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.8.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>$RepoUrl</url>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/$BranchName</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>jenkins/Jenkinsfile.main-app</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
+"@
+    
+    return $xml
+}
+
+# 创建全量构建（all-apps）Job 配置 XML
+function Create-AllAppsJobConfig {
+    param(
+        [string]$RepoUrl,
+        [string]$BranchName
+    )
+    
+    $xml = @"
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.42">
+  <description>BTC ShopFlow - Deploy All Apps</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_HOST</name>
+          <description>服务器地址</description>
+          <defaultValue>47.112.31.96</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_USER</name>
+          <description>服务器用户名</description>
+          <defaultValue>root</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SERVER_PORT</name>
+          <description>SSH 端口</description>
+          <defaultValue>22</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SSH_KEY_PATH</name>
+          <description>SSH 私钥路径（Jenkins 服务器上的路径）</description>
+          <defaultValue>/var/jenkins_home/.ssh/id_rsa</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>SKIP_TESTS</name>
+          <description>是否跳过测试（加快构建速度）</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>CLEAN_BUILD</name>
+          <description>是否清理构建缓存（强制重新构建）</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.90">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.8.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>$RepoUrl</url>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/$BranchName</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>jenkins/Jenkinsfile.all-apps</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
+"@
+    
+    return $xml
+}
+
 # 使用 Jenkins CLI 更新 Job
 function Update-Job-WithCli {
     param(
@@ -387,6 +552,42 @@ foreach ($app in $apps) {
     Write-Host ""
 }
 
+# 更新主应用构建 Job
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Info "处理主应用构建: system-app"
+$mainAppJobName = "btc-shopflow-deploy-system-app"
+if (Job-Exists-Cli -JobName $mainAppJobName -CliPath $JenkinsCliPath -Url $JenkinsUrl -User $JenkinsUser -Password $JenkinsPassword -JavaCmd $javaCommand) {
+    Write-Info "Job 名称: $mainAppJobName"
+    $mainAppConfig = Create-MainAppJobConfig -RepoUrl $GitRepoUrl -BranchName $Branch
+    if (Update-Job-WithCli -JobName $mainAppJobName -JobConfig $mainAppConfig -CliPath $JenkinsCliPath -Url $JenkinsUrl -User $JenkinsUser -Password $JenkinsPassword -JavaCmd $javaCommand) {
+        $successCount++
+    } else {
+        $failCount++
+    }
+} else {
+    Write-Warning "Job '$mainAppJobName' 不存在，跳过"
+    $skipCount++
+}
+Write-Host ""
+
+# 更新全量构建 Job
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Info "处理全量构建: all-apps"
+$allAppsJobName = "btc-shopflow-deploy-all"
+if (Job-Exists-Cli -JobName $allAppsJobName -CliPath $JenkinsCliPath -Url $JenkinsUrl -User $JenkinsUser -Password $JenkinsPassword -JavaCmd $javaCommand) {
+    Write-Info "Job 名称: $allAppsJobName"
+    $allAppsConfig = Create-AllAppsJobConfig -RepoUrl $GitRepoUrl -BranchName $Branch
+    if (Update-Job-WithCli -JobName $allAppsJobName -JobConfig $allAppsConfig -CliPath $JenkinsCliPath -Url $JenkinsUrl -User $JenkinsUser -Password $JenkinsPassword -JavaCmd $javaCommand) {
+        $successCount++
+    } else {
+        $failCount++
+    }
+} else {
+    Write-Warning "Job '$allAppsJobName' 不存在，跳过"
+    $skipCount++
+}
+Write-Host ""
+
 # 输出总结
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "更新完成" -ForegroundColor Cyan
@@ -402,10 +603,11 @@ Write-Host ""
 Write-Info "访问 Jenkins: $JenkinsUrl"
 Write-Info "所有 Jobs 列表: $JenkinsUrl/view/all/"
 Write-Host ""
-Write-Info "已更新的 Jobs："
+Write-Info "已更新的 Jobs 包括："
 foreach ($app in $apps) {
     Write-Host "  - btc-shopflow-deploy-$($app.Name)" -ForegroundColor Cyan
 }
+Write-Host "  - btc-shopflow-deploy-system-app (主应用构建)" -ForegroundColor Cyan
+Write-Host "  - btc-shopflow-deploy-all (全量构建)" -ForegroundColor Cyan
 Write-Host ""
-Write-Info "注意：此脚本只更新独立应用构建 Jobs，不包括系统应用构建（main-app）和全量构建（all-apps）"
 
