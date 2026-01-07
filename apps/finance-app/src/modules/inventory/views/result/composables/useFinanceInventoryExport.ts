@@ -597,7 +597,7 @@ export function useFinanceInventoryExport() {
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
       // 如果有checkType，使用checkType作为文件名前缀，否则使用默认的国际化文本
-      const filenamePrefix = checkType ? `${checkType}财务结果` : t('menu.finance.inventoryManagement.result');
+      const filenamePrefix = checkType ? `${checkType}财务结果` : t('menu.finance.inventory_management.result');
       const filename = `${filenamePrefix}_${timestamp}.xlsx`;
 
       saveAs(blob, filename);

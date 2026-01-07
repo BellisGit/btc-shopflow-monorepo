@@ -5,6 +5,7 @@
 import { startPolling, stopPolling, isPollingActive } from './useUserCheckPolling';
 import { startCountdown, stopCountdown } from './useUserCheckCountdown';
 import { getUserCheckDataFromStorage, getCredentialExpireTime, clearUserCheckData } from './useUserCheckStorage';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import type { UserCheckData } from './useUserCheck';
 
 /**
@@ -74,7 +75,7 @@ export function startUserCheckPollingIfLoggedIn(): void {
 
     // 方式1: 检查 sessionStorage 中是否有用户检查数据（说明之前已登录）
     // 优先使用存储的剩余时间，避免页面刷新时立即调用
-    const hasUserCheckData = sessionStorage.getItem('btc_user_check_status');
+    const hasUserCheckData = sessionStorage.get('user_check_status');
     if (hasUserCheckData) {
       // 页面刷新后恢复，使用存储的剩余时间，不强制立即检查
       startUserCheckPolling(false);
@@ -143,5 +144,51 @@ export function getUserCheckData(): {
     credentialExpireTime: getCredentialExpireTime(),
     sessionData: getUserCheckDataFromStorage(),
   };
+}
+
+/**
+ * 应用切换时重新初始化 user-check
+ * 在 qiankun afterMount 或主应用切换时调用
+ */
+export async function reinitializeUserCheckOnAppSwitch(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  // 如果当前在登录页面，不重新初始化
+  const currentPath = window.location.pathname;
+  if (currentPath === '/login' || currentPath.startsWith('/login?')) {
+    return;
+  }
+
+  try {
+    // 停止当前轮询和倒计时
+    stopUserCheckPolling();
+
+    // 立即调用 user-check 获取最新数据
+    const { checkUser } = await import('./useUserCheck');
+    const { storeUserCheckData } = await import('./useUserCheckStorage');
+    
+    const result = await checkUser();
+
+    if (!result || !result.isValid || !result.data) {
+      // 检查失败，不启动轮询
+      if (import.meta.env.DEV) {
+        console.warn('[reinitializeUserCheckOnAppSwitch] User check failed, not starting polling');
+      }
+      return;
+    }
+
+    // 立即更新会话存储数据（保证数据最新，用于比对）
+    storeUserCheckData(result.data);
+
+    // 根据新的数据重新启动轮询（强制立即检查，获取最新数据）
+    startUserCheckPolling(true);
+  } catch (error) {
+    // 静默失败，不影响应用切换
+    if (import.meta.env.DEV) {
+      console.warn('[reinitializeUserCheckOnAppSwitch] Failed to reinitialize user check:', error);
+    }
+  }
 }
 

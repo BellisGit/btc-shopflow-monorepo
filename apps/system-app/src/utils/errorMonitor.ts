@@ -152,6 +152,21 @@ export function setupGlobalErrorCapture() {
     if (message.includes('Extraneous non-props attributes') && message.includes('exportFilename')) {
       return true;
     }
+    // 过滤表单验证错误（Element Plus 表单验证失败时输出的对象，格式如 {username: Array(1)}）
+    // 匹配模式：{字段名: Array(...)} 或包含常见表单字段名和 Array 的对象
+    if (
+      /^\s*\{[^}]*:\s*Array\([^)]*\)[^}]*\}\s*$/.test(message) ||
+      (message.includes('Array(') && (
+        message.includes('username') ||
+        message.includes('password') ||
+        message.includes('phone') ||
+        message.includes('smsCode') ||
+        message.includes('email') ||
+        message.includes('confirmPassword')
+      ))
+    ) {
+      return true;
+    }
     return false;
   };
 

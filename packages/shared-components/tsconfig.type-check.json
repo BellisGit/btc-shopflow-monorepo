@@ -23,8 +23,6 @@
       "@charts-composables/*": ["src/charts/composables/*"],
       "@btc/shared-core": ["../shared-core/dist/src"],
       "@btc/shared-core/*": ["../shared-core/dist/*", "../shared-core/dist/src/*"],
-      "@btc/shared-utils": ["../shared-utils/src"],
-      "@btc/shared-utils/*": ["../shared-utils/src/*"],
       "@btc/subapp-manifests": ["../subapp-manifests/dist"],
       "@btc/subapp-manifests/*": ["../subapp-manifests/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],

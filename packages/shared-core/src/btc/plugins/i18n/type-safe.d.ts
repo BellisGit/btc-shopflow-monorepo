@@ -135,3 +135,4 @@ export declare class I18nAuditor {
         coverage: number;
     };
 }
+//# sourceMappingURL=type-safe.d.ts.map

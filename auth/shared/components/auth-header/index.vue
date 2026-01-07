@@ -31,7 +31,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   toggleIcon: 'qr',
-  toggleLabel: '切换扫码登录'
+  toggleLabel: 'auth.login.toggle.qr'
 });
 
 const emit = defineEmits<{

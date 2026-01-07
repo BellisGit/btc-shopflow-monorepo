@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { getCookie, setCookie } from './cookie';
+import { getCookie, setCookie } from '@btc/shared-core/utils/cookie';
 import { useAuthStore } from '@/stores/auth';
 
 /**

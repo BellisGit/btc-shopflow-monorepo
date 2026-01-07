@@ -42,11 +42,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { BtcConfirm, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn, CommonColumns } from '@btc/shared-components';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn, CommonColumns } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
@@ -54,8 +53,18 @@ const crudRef = ref();
 const tableRef = ref();
 let detachCrudRefreshListener: (() => void) | null = null;
 
-// 部门服务 - 使用EPS服务（注意路径：api/system/iam/department）
-const departmentService = service.admin?.iam?.department;
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('org.departments');
+const { formItems: baseFormItems } = usePageForms('org.departments');
+const pageConfig = getPageConfigFull('org.departments');
+
+// 部门服务 - 使用 config.ts 中定义的 service（用于加载选项数据）
+const departmentService = pageConfig?.service?.department;
+
+// 使用 config.ts 中定义的 service，并添加删除确认逻辑（用于 CRUD 操作）
+const wrappedDepartmentService = usePageService('org.departments', 'department', {
+  showSuccessMessage: true,
+});
 
 // 部门选项数据
 const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
@@ -90,25 +99,6 @@ const loadDepartmentOptions = async () => {
   }
 };
 
-const wrappedDepartmentService = {
-  ...departmentService,
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 单个删除：直接传递 ID
-    await departmentService.delete(id);
-
-    message.success(t('crud.message.delete_success'));
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await departmentService.deleteBatch(ids);
-
-    message.success(t('crud.message.delete_success'));
-  },
-};
 
 function resolveDepartmentImportFn() {
   const candidates = ['import', 'importBatch', 'importExcel'];
@@ -154,74 +144,61 @@ const handleImport = async (
   }
 };
 
-// 部门表格列
-const columns = computed<TableColumn[]>(() => [
-  CommonColumns.selection(),
-  CommonColumns.index(),
-  { prop: 'name', label: '部门名称', minWidth: 150 },
-  { prop: 'deptCode', label: '部门编码', width: 120 },
-  {
-    prop: 'parentId',
-    label: '上级部门',
-    width: 120,
-    formatter: (row: any) => {
-      if (!row.parentId || row.parentId === '0') return '';
-      // 如果 parentId 是部门名称，直接返回
-      if (typeof row.parentId === 'string' && isNaN(Number(row.parentId)) && !row.parentId.match(/^[A-Z0-9-]+$/)) {
-        return row.parentId;
-      }
-      // 如果 parentId 是 ID，查找对应的部门名称
-      const parentDept = departmentOptions.value.find(dept => dept.value === row.parentId);
-      return parentDept ? parentDept.label : row.parentId;
-    }
-  },
-  { prop: 'sort', label: '排序', width: 80 },
-]);
-
-// 部门表单
-const formItems = computed<FormItem[]>(() => [
-  { prop: 'name', label: '部门名称', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'deptCode', label: '部门编码', span: 12, required: true, component: { name: 'el-input' } },
-  {
-    prop: 'parentId',
-    label: '上级部门',
-    span: 12,
-    component: {
-      name: 'el-select',
-      props: {
-        placeholder: '请选择上级部门',
-        clearable: true,
-        filterable: true
-      },
-      options: departmentOptions.value
-    },
-    // 使用 hook 进行数据转换
-    hook: {
-      bind: (value: any) => {
-        // 数据绑定到表单时：将部门名称转换为部门ID
-        if (typeof value === 'string' && isNaN(Number(value)) && !value.match(/^[A-Z0-9-]+$/)) {
-          const dept = departmentOptions.value.find(d => d.label === value);
-          return dept ? dept.value : value;
+// 部门表格列 - 扩展配置以支持动态 formatter
+const columns = computed<TableColumn[]>(() => {
+  const cols = baseColumns.value.map(col => {
+    // 如果列是 parentId，添加动态 formatter
+    if (col.prop === 'parentId') {
+      return {
+        ...col,
+        formatter: (row: any) => {
+          if (!row.parentId || row.parentId === '0') return '';
+          // 如果 parentId 是部门名称，直接返回
+          if (typeof row.parentId === 'string' && isNaN(Number(row.parentId)) && !row.parentId.match(/^[A-Z0-9-]+$/)) {
+            return row.parentId;
+          }
+          // 如果 parentId 是 ID，查找对应的部门名称
+          const parentDept = departmentOptions.value.find(dept => dept.value === row.parentId);
+          return parentDept ? parentDept.label : row.parentId;
         }
-        return value;
-      },
-      submit: (value: any) => {
-        // 提交时保持部门ID不变
-        return value;
-      }
+      };
     }
-  },
-  {
-    prop: 'sort',
-    label: '排序',
-    span: 12,
-    value: 0,
-    component: {
-      name: 'el-input-number',
-      props: { min: 0, style: { width: '100%' } }
+    return col;
+  });
+  return cols;
+});
+
+// 部门表单 - 扩展配置以支持动态 options
+const formItems = computed<FormItem[]>(() => {
+  const items = baseFormItems.value.map(item => {
+    // 如果表单项是 parentId，添加动态 options 和 hook
+    if (item.prop === 'parentId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          options: departmentOptions.value
+        },
+        hook: {
+          bind: (value: any) => {
+            // 数据绑定到表单时：将部门名称转换为部门ID
+            if (typeof value === 'string' && isNaN(Number(value)) && !value.match(/^[A-Z0-9-]+$/)) {
+              const dept = departmentOptions.value.find(d => d.label === value);
+              return dept ? dept.value : value;
+            }
+            return value;
+          },
+          submit: (value: any) => {
+            // 提交时保持部门ID不变
+            return value;
+          }
+        }
+      };
     }
-  },
-]);
+    return item;
+  });
+  return items;
+});
 
 
 // 组件挂载时加载部门选项

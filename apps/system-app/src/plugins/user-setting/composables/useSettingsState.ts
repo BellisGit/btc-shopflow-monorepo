@@ -113,11 +113,11 @@ function createSettingsState() {
   }
 
   // Loading 样式设置
-  type LoadingStyle = 'circle' | 'dots';
+  type LoadingStyle = 'circle' | 'dots' | 'gradient';
   const storedLoadingStyle = initialSettings?.loadingStyle as LoadingStyle | null;
-  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : 'circle';
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : 'circle';
   const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
-  if (!initialSettings?.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots')) {
+  if (!initialSettings?.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient')) {
     appStorage.settings.set({ loadingStyle: resolvedLoadingStyle });
   }
 

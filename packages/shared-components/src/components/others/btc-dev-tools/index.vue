@@ -62,6 +62,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch, nextTick } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import { Setting, Lightning, Switch, Document, InfoFilled } from '@element-plus/icons-vue';
+import { getCurrentEnvironment } from '@btc/shared-core';
 import ApiSwitch from './ApiSwitch.vue';
 import EpsViewer from './EpsViewer.vue';
 import EnvInfo from './EnvInfo.vue';
@@ -378,18 +379,23 @@ const tabList = [
     tooltip: '文档中心 - 系统使用指南和API文档',
     isAction: true, // 直接跳转
     action: () => {
-      // 判断是否为生产环境
-      const hostname = window.location.hostname;
-      const isProduction = hostname.includes('bellis.com.cn');
-
-      // 生产环境：跳转到子域名（无论是主域名还是子域名，都跳转到 docs.bellis.com.cn）
-      // 开发环境：跳转到路径
+      // 使用统一的环境检测函数
+      const env = getCurrentEnvironment();
+      
+      // 生产环境或测试环境：跳转到子域名（无论是主域名还是子域名，都跳转到 docs.bellis.com.cn）
+      // 开发环境或预览环境：跳转到路径
       // 关键：跳转到子域名时，只跳转到根路径，不包含当前路径
       let targetUrl: string;
-      if (isProduction) {
-        targetUrl = `${window.location.protocol}//docs.bellis.com.cn/`;
+      if (env === 'production' || env === 'test') {
+        const protocol = window.location.protocol;
+        // 测试环境使用测试子域名，生产环境使用生产子域名
+        if (env === 'test') {
+          targetUrl = `${protocol}//docs.test.bellis.com.cn/`;
+        } else {
+          targetUrl = `${protocol}//docs.bellis.com.cn/`;
+        }
       } else {
-        // 开发环境：构建完整的 URL
+        // 开发环境或预览环境：构建完整的 URL
         const protocol = window.location.protocol;
         const host = window.location.host;
         targetUrl = `${protocol}//${host}/docs`;

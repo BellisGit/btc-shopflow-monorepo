@@ -29,10 +29,8 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { BtcTableGroup } from '@btc/shared-components';
-import { service } from '@services/eps';
 
 defineOptions({
   name: 'AdminDictionaryFields'
@@ -44,17 +42,16 @@ const router = useRouter();
 const tableGroupRef = ref();
 const selectedResource = ref<any>(null);
 
-// 资源服务配置
-const resourceService = {
-  list: (params?: any) => {
-    const finalParams = params || {};
-    return service.admin?.iam?.resource?.list(finalParams);
-  }
-};
+// 从 config.ts 读取配置
+const { columns: baseFieldColumns } = usePageColumns('governance.dictionary.fields');
+const { formItems: baseFieldFormItems } = usePageForms('governance.dictionary.fields');
+const pageConfig = getPageConfigFull('governance.dictionary.fields');
 
-// 字段服务（右侧表）
-const fieldService = service.admin?.dict?.info;
+// 使用 config.ts 中定义的服务
+const resourceService = pageConfig?.service?.resourceService;
+const fieldService = pageConfig?.service?.dictInfo;
 
+// 字段服务（右侧表）- 需要自定义 page 方法
 const wrappedFieldService = {
   ...fieldService,
   // 自定义 page 方法，简化 keyword 对象，只保留 entityClass
@@ -133,45 +130,34 @@ const goToDictionaryValues = (field: any) => {
   });
 };
 
-// 字段表格列
-const fieldColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'entityClass', label: t('data.dictionary.field.entity_class'), minWidth: 180 },
-  { prop: 'fieldName', label: t('data.dictionary.field.field_name'), minWidth: 150 },
-]);
+// 字段表格列 - 从 config.ts 读取（移除 selection 列，因为页面设置了 show-add-btn="false"）
+const fieldColumns = computed(() => {
+  return baseFieldColumns.value.filter(col => col.type !== 'selection');
+});
 
-// 字段表单
-const fieldFormItems = computed<FormItem[]>(() => {
+// 字段表单 - 扩展以支持动态 domainId
+const fieldFormItems = computed(() => {
   const currentResource = selectedResource.value ||
     (tableGroupRef.value?.viewGroupRef?.selectedItem);
 
-  return [
-    {
-      prop: 'entityClass',
-      label: t('data.dictionary.field.entity_class'),
-      span: 12,
-      component: { name: 'el-input' }
-    },
-    {
-      prop: 'fieldName',
-      label: t('data.dictionary.field.field_name'),
-      span: 12,
-      component: { name: 'el-input' }
-    },
-    {
-      prop: 'domainId',
-      label: t('data.dictionary.field.domain_id'),
-      span: 12,
-      value: currentResource?.id,
-      component: {
-        name: 'el-input',
-        props: {
-          disabled: true,
-          placeholder: currentResource?.id ? currentResource.id : t('data.dictionary.field.domain_select_required')
+  return baseFieldFormItems.value.map(item => {
+    // 如果表单项是 domainId，添加动态 value 和 disabled
+    if (item.prop === 'domainId') {
+      return {
+        ...item,
+        value: currentResource?.id,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            disabled: true,
+            placeholder: currentResource?.id ? currentResource.id : t('data.dictionary.field.domain_select_required')
+          }
         }
-      }
-    },
-  ];
+      };
+    }
+    return item;
+  });
 });
 
 </script>

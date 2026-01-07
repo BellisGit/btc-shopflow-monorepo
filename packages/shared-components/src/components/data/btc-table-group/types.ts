@@ -85,5 +85,6 @@ export interface TableGroupSlots {
   actions?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
   'add-btn'?: () => any;
   'multi-delete-btn'?: () => any;
+  'after-refresh-btn'?: () => any;
   search?: () => any;
 }

@@ -6,8 +6,8 @@
       :right-service="wrappedTicketService"
       :table-columns="ticketColumns"
       :form-items="ticketFormItems"
-      :left-title="t('inventory.dataSource.domain')"
-      :right-title="t('menu.inventory.dataSource.ticket')"
+      :left-title="t('inventory.data_source.domain')"
+      :right-title="t('menu.inventory.data_source.ticket')"
       :show-unassigned="false"
       :enable-key-search="false"
       :show-search-key="false"
@@ -19,7 +19,7 @@
       <template #add-btn>
         <BtcImportBtn
           :on-submit="handleImport"
-          :tips="t('inventory.dataSource.ticket.import.tips')"
+          :tips="t('inventory.data_source.ticket.import.tips')"
         />
       </template>
       <template #actions>
@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
@@ -53,7 +53,7 @@ const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
 
 // 统一导出/导入文件名
-const exportFilename = computed(() => t('menu.inventory.dataSource.ticket'));
+const exportFilename = computed(() => t('menu.inventory.data_source.ticket'));
 
 // 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
 // provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
@@ -177,7 +177,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
   try {
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域');
+      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
       done();
       return;
     }
@@ -189,7 +189,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     if (!rows.length) {
       const warnMessage = data?.filename
         ? t('common.import.no_data_or_mapping')
-        : t('inventory.dataSource.ticket.import.no_file');
+        : t('inventory.data_source.ticket.import.no_file');
       message.warning(warnMessage);
       done();
       return;
@@ -211,7 +211,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
 
     const response = await service.logistics?.warehouse?.ticket?.import?.(payload);
 
-    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导入失败
+    // 检查响应中的 code 字段，如果 code 不是 200，说明导入失败
     let responseData: any = response;
     if (response && typeof response === 'object' && 'data' in response) {
       responseData = (response as any).data;
@@ -219,20 +219,19 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
 
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
-      if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.ticket.import.failed');
+      if (code !== 200) {
+        const errorMsg = responseData.msg || responseData.message || t('inventory.data_source.ticket.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success(t('inventory.dataSource.ticket.import.success'));
+    message.success(t('inventory.data_source.ticket.import.success'));
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
-    console.error('[InventoryTicket] import failed:', error);
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.dataSource.ticket.import.failed');
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.ticket.import.failed');
     message.error(errorMsg);
     done();
   }
@@ -251,19 +250,25 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.ticket');
+const { formItems } = usePageForms('data.inventory.ticket');
+const pageConfig = getPageConfigFull('data.inventory.ticket');
+
 // 盘点票表格列（不包含盘点类型）
-const ticketColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const ticketColumns = computed(() => {
+  return baseColumns.value.map(col => {
+    if (col.prop === 'createdAt') {
+      return { ...col, formatter: formatDateCell };
+    }
+    return col;
+  });
+});
 
 // 导出用的列（不包含时间字段和盘点类型字段）
-const ticketExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'partName', label: t('system.material.fields.materialCode') },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
-]);
+const { columns: exportColumns } = usePageColumns('data.inventory.ticket.export');
+const ticketExportColumns = computed(() => exportColumns.value);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
@@ -353,13 +358,8 @@ const handleExport = async () => {
   }
 };
 
-// 盘点票表单
-const ticketFormItems = computed<FormItem[]>(() => [
-  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
-  { prop: 'checkType', label: t('system.inventory.base.fields.checkType'), span: 12, component: { name: 'el-input' } },
-]);
+// 盘点票表单（使用 config.ts 中的配置）
+const ticketFormItems = computed(() => formItems.value);
 
 // 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>

@@ -32,11 +32,11 @@ const isProduction = process.env.NODE_ENV === 'production';
  */
 export function createManualChunksStrategy(appName: string) {
   const isLayoutApp = appName === 'layout-app';
-  const isSystemApp = appName === 'system-app';
+  const isMainApp = appName === 'main-app';
   const appUsage = APP_USAGE[appName] || { echarts: false, monaco: false, three: false };
   // 生产环境且非 layout-app 时，共享资源不打包（从 layout-app 加载）
-  // 但 system-app 作为主应用，需要生成自己的 EPS 服务
-  const skipSharedResources = isProduction && !isLayoutApp && !isSystemApp;
+  // 但 main-app 作为主应用，需要生成自己的 EPS 服务
+  const skipSharedResources = isProduction && !isLayoutApp && !isMainApp;
 
   return (id: string): string | undefined => {
     // 0. EPS 服务单独打包（所有应用共享，必须在最前面）
@@ -47,7 +47,7 @@ export function createManualChunksStrategy(appName: string) {
       // 关键：生产环境的子应用不应该再单独拆出 eps-service chunk
       // 否则子应用入口会产生对自身 /assets/eps-service-xxx.js 的引用，导致"共享未生效 + 404"风险。
       // layout-app 负责提供共享 eps-service，并将服务挂到 window.__APP_EPS_SERVICE__。
-      // system-app 作为主应用，需要生成自己的 EPS 服务（独立运行时不依赖 layout-app）
+      // main-app 作为主应用，需要生成自己的 EPS 服务（独立运行时不依赖 layout-app）
       if (skipSharedResources) {
         return undefined;
       }

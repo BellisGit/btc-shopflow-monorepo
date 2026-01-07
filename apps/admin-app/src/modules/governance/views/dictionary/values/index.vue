@@ -9,6 +9,10 @@
           <BtcRefreshBtn />
           <BtcAddBtn />
           <BtcMultiDeleteBtn />
+          <BtcImportBtn
+            :columns="dictionaryValueColumns"
+            :on-submit="handleImport"
+          />
         </div>
         <BtcFlex1 />
         <BtcSearchKey :placeholder="t('data.dictionary.value.search_placeholder')" />
@@ -34,11 +38,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { BtcConfirm } from '@btc/shared-components';
+import { ref } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import {
   BtcCrud,
   BtcTable,
@@ -47,6 +49,7 @@ import {
   BtcAddBtn,
   BtcRefreshBtn,
   BtcMultiDeleteBtn,
+  BtcImportBtn,
   BtcRow,
   BtcFlex1,
   BtcSearchKey,
@@ -62,69 +65,67 @@ const { t } = useI18n();
 const message = useMessage();
 const crudRef = ref();
 
-// 字典值服务
-const dictionaryValueService = {
-  ...service.admin?.dict?.dictData,
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await service.admin?.dict?.dictData?.delete(id);
-    message.success(t('crud.message.delete_success'));
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-    await service.admin?.dict?.dictData?.deleteBatch(ids);
-    message.success(t('crud.message.delete_success'));
-  },
+// 从 config.ts 读取配置
+const { columns: dictionaryValueColumns } = usePageColumns('governance.dictionary.values');
+const { formItems: dictionaryValueFormItems } = usePageForms('governance.dictionary.values');
+const dictionaryValueService = usePageService('governance.dictionary.values', 'dictData', {
+  showSuccessMessage: true,
+});
+
+// 处理导入
+const handleImport = async (
+  data: any,
+  { done, close }: { done: () => void; close: () => void }
+) => {
+  try {
+    const rows = (data?.list || data?.rows || []).map((row: Record<string, any>) => {
+      const { _index, ...rest } = row || {};
+      return rest;
+    });
+    if (!rows.length) {
+      const warnMessage = data?.filename
+        ? t('common.import.no_data_or_mapping')
+        : t('common.import.select_file');
+      message.warning(warnMessage);
+      done();
+      return;
+    }
+
+    // 调用字典数据的导入 API（传递与表格 columns 一致的字段）
+    const payload = rows.map((row: Record<string, any>) => ({
+      dictTypeCode: row.dictTypeCode,
+      dictValue: row.dictValue,
+      dictLabel: row.dictLabel,
+    }));
+
+    const response = await service.admin?.dict?.dictData?.import?.(payload);
+
+    // 检查响应中的 code 字段
+    let responseData: any = response;
+    if (response && typeof response === 'object' && 'data' in response) {
+      responseData = (response as any).data;
+    }
+
+    if (responseData && typeof responseData === 'object' && 'code' in responseData) {
+      const code = responseData.code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        const errorMsg = responseData.msg || responseData.message || '导入失败';
+        message.error(errorMsg);
+        done();
+        return;
+      }
+    }
+
+    message.success('导入成功');
+    crudRef.value?.crud?.refresh?.();
+    close();
+  } catch (error: any) {
+    console.error('[DictionaryValues] import failed:', error);
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || '导入失败';
+    message.error(errorMsg);
+    done();
+  }
 };
-
-// 字典值表格列
-const dictionaryValueColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'dictTypeCode', label: t('data.dictionary.value.type_code'), minWidth: 150 },
-  { prop: 'dictValue', label: t('data.dictionary.value.value'), minWidth: 150 },
-  { prop: 'dictLabel', label: t('data.dictionary.value.label'), minWidth: 150 },
-  { prop: 'sortOrder', label: t('data.dictionary.value.sort'), width: 100 },
-]);
-
-// 字典值表单
-const dictionaryValueFormItems = computed<FormItem[]>(() => [
-  { 
-    prop: 'dictTypeCode', 
-    label: t('data.dictionary.value.type_code'), 
-    span: 12, 
-    required: true,
-    component: { 
-      name: 'el-input',
-      props: { 
-        placeholder: t('data.dictionary.value.type_code_placeholder')
-      } 
-    } 
-  },
-  { 
-    prop: 'dictValue', 
-    label: t('data.dictionary.value.value'), 
-    span: 12, 
-    required: true, 
-    component: { name: 'el-input' } 
-  },
-  { 
-    prop: 'dictLabel', 
-    label: t('data.dictionary.value.label'), 
-    span: 12, 
-    required: true, 
-    component: { name: 'el-input' } 
-  },
-  { 
-    prop: 'sortOrder', 
-    label: t('data.dictionary.value.sort'), 
-    span: 12, 
-    component: { 
-      name: 'el-input-number', 
-      props: { min: 0, precision: 0 } 
-    } 
-  },
-]);
 
 </script>
 

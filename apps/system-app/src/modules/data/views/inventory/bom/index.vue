@@ -6,8 +6,8 @@
       :right-service="wrappedBomService"
       :table-columns="bomColumns"
       :form-items="bomFormItems"
-      :left-title="t('inventory.dataSource.domain')"
-      :right-title="t('menu.inventory.dataSource.bom')"
+      :left-title="t('inventory.data_source.domain')"
+      :right-title="t('menu.inventory.data_source.bom')"
       :show-unassigned="false"
       :enable-key-search="false"
       :left-size="'small'"
@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -53,7 +53,7 @@ const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
 
 // 统一导出/导入文件名
-const exportFilename = computed(() => t('menu.inventory.dataSource.bom'));
+const exportFilename = computed(() => t('menu.inventory.data_source.bom'));
 
 // 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
 // provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
@@ -200,7 +200,7 @@ const handleImport = async (
     if (!rows.length) {
       const warnMessage = data?.filename
         ? t('common.import.no_data_or_mapping')
-        : t('inventory.dataSource.bom.import.no_file');
+        : t('inventory.data_source.bom.import.no_file');
       message.warning(warnMessage);
       done();
       return;
@@ -208,7 +208,7 @@ const handleImport = async (
 
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域');
+      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
       done();
       return;
     }
@@ -245,38 +245,35 @@ const handleImport = async (
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
       if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.bom.import.failed');
+        const errorMsg = responseData.msg || responseData.message || t('inventory.data_source.bom.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success(t('inventory.dataSource.bom.import.success'));
+    message.success(t('inventory.data_source.bom.import.success'));
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
     console.error('[InventoryBom] import failed:', error);
-    const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.dataSource.bom.import.failed');
+    const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.data_source.bom.import.failed');
     message.error(errorMsg);
     done();
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.bom');
+const { formItems } = usePageForms('data.inventory.bom');
+const pageConfig = getPageConfigFull('data.inventory.bom');
+
 // 物料构成表表格列（移除选择列和操作列，不包含盘点类型）
-const bomColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialCodeName'), minWidth: 140, showOverflowTooltip: true },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentTotalQty'), width: 120 },
-]);
+const bomColumns = computed(() => baseColumns.value);
 
 // 导出用的列（不包含时间字段和盘点类型字段）
-const bomExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName') },
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialCodeName') },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentTotalQty') },
-]);
+const { columns: exportColumns } = usePageColumns('data.inventory.bom.export');
+const bomExportColumns = computed(() => exportColumns.value);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
@@ -367,38 +364,25 @@ const handleExport = async () => {
   }
 };
 
-// 物料构成表表单
-const bomFormItems = computed<FormItem[]>(() => [
-  {
-    prop: 'parentNode',
-    label: t('inventory.dataSource.bom.fields.parentNode'),
-    span: 12,
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    prop: 'childNode',
-    label: t('inventory.dataSource.bom.fields.childNode'),
-    span: 12,
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
+// 物料构成表表单（使用 config.ts 中的配置）
+const bomFormItems = computed(() => formItems.value);
   },
   {
     prop: 'childQty',
-    label: t('inventory.dataSource.bom.fields.childQty'),
+    label: t('inventory.data_source.bom.fields.child_qty'),
     span: 12,
     required: true,
     component: { name: 'el-input-number', props: { min: 0, precision: 2 } },
   },
   {
     prop: 'checkType',
-    label: t('inventory.dataSource.bom.fields.checkType'),
+    label: t('inventory.data_source.bom.fields.check_type'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },
   {
     prop: 'domainId',
-    label: t('inventory.dataSource.bom.fields.domainId'),
+    label: t('inventory.data_source.bom.fields.domain_id'),
     span: 12,
     component: { name: 'el-input', props: { disabled: true } },
     hook: {
@@ -409,13 +393,13 @@ const bomFormItems = computed<FormItem[]>(() => [
   },
   {
     prop: 'processId',
-    label: t('inventory.dataSource.bom.fields.processId'),
+    label: t('inventory.data_source.bom.fields.process_id'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },
   {
     prop: 'checkNo',
-    label: t('inventory.dataSource.bom.fields.checkNo'),
+    label: t('inventory.data_source.bom.fields.check_no'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },

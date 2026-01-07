@@ -4,3 +4,4 @@
  */
 import type { CrudOptions, UseCrudReturn } from './types';
 export declare function useCrud<T = Record<string, unknown>>(options: CrudOptions<T>, callback?: (app: UseCrudReturn<T>) => void): UseCrudReturn<T>;
+//# sourceMappingURL=use-crud.d.ts.map

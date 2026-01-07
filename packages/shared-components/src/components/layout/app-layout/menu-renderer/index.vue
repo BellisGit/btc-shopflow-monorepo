@@ -17,7 +17,7 @@
           />
           <BtcSvg v-else :name="getSvgName(item.icon)" :size="18" />
         </el-icon>
-        <span>{{ t(item.title) }}</span>
+        <span>{{ getMenuTitle(item) }}</span>
       </template>
       <!-- 递归渲染子菜单 -->
       <MenuRenderer
@@ -42,14 +42,13 @@
         />
         <BtcSvg v-else :name="getSvgName(item.icon)" :size="18" />
       </el-icon>
-      <span>{{ t(item.title) }}</span>
+      <span>{{ getMenuTitle(item) }}</span>
     </el-menu-item>
   </template>
 </template>
 
 <script setup lang="ts">
 // defineComponent 未使用，已移除导入
-import { useI18n } from '@btc/shared-core';
 import type { MenuItem } from '../../../../store/menuRegistry';
 import { BtcSvg } from '@btc/shared-components';
 import {
@@ -155,7 +154,11 @@ const props = withDefaults(defineProps<Props>(), {
   isCollapse: false,
 });
 
-const { t } = useI18n();
+// 获取菜单标题
+// 模仿 cool-admin-vue-7.x 的方式：title 已经是翻译后的文本，直接返回
+const getMenuTitle = (item: MenuItem): string => {
+  return item.title || '';
+};
 
 // 图标映射表
 const iconMap: Record<string, any> = {
@@ -264,7 +267,7 @@ const isMenuVisible = (item: MenuItem): boolean => {
   if (!keyword) return true;
 
   // 检查当前菜单项是否匹配
-  const currentMatch = t(item.title).toLowerCase().includes(keyword);
+  const currentMatch = getMenuTitle(item).toLowerCase().includes(keyword);
 
   // 如果有子菜单，检查子菜单是否有匹配项
   if (item.children && item.children.length > 0) {

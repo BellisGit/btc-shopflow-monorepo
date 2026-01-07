@@ -4,7 +4,7 @@
       ref="tableGroupRef"
       :left-service="checkService"
       :left-title="t('inventory.check.list')"
-      :right-title="t('menu.finance.inventoryManagement.result')"
+      :right-title="t('menu.finance.inventory_management.result')"
       :show-unassigned="false"
       :enable-key-search="true"
       :left-size="'small'"
@@ -54,15 +54,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
-import { useI18n, normalizePageResponse } from '@btc/shared-core';
-import { formatTableNumber } from '@btc/shared-utils';
+import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { BtcSvg, BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
-import { service } from '@/services/eps';
-import { useFinanceInventoryService } from './composables/useFinanceInventoryService';
 import { useFinanceInventoryExport } from './composables/useFinanceInventoryExport';
-import { useFinanceInventoryColumns } from './composables/useFinanceInventoryColumns';
-import { useFinanceInventoryForm } from './composables/useFinanceInventoryForm';
 
 defineOptions({
   name: 'btc-finance-inventory-result',
@@ -82,65 +77,23 @@ onBeforeUnmount(() => {
   isUnmounted = true;
 });
 
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('finance.inventory.result');
+const { formItems } = usePageForms('finance.inventory.result');
+const pageConfig = getPageConfigFull('finance.inventory.result');
+
 // 使用 composables
-const { financeInventoryService } = useFinanceInventoryService();
 const { handleExport: handleExportInternal } = useFinanceInventoryExport();
-const { columns } = useFinanceInventoryColumns();
-const { formItems } = useFinanceInventoryForm();
 
 // 盘点列表服务（左侧）- 使用物流应用的盘点列表接口
-const checkService = {
-  list: async (params?: any) => {
-    const checkListService = service.logistics?.warehouse?.check?.list;
-    if (!checkListService) {
-      console.warn('[FinanceInventoryResult] 盘点列表接口不存在');
-      return {
-        list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
-      };
-    }
+const checkService = pageConfig?.service?.checkList;
 
-    try {
-      // 调用后端接口
-      const response = await checkListService(params || {});
-
-      // 处理响应格式：后端返回 { code, msg, data } 格式
-      let data = response;
-      if (response && typeof response === 'object' && 'data' in response) {
-        // 如果响应包含 data 字段，使用 data 字段
-        data = response.data;
-      }
-
-      // 标准化响应格式
-      const page = params?.page || 1;
-      const size = params?.size || 10;
-      const normalized = normalizePageResponse(data, page, size);
-
-      return {
-        list: normalized.list,
-        pagination: normalized.pagination,
-      };
-    } catch (error) {
-      console.error('[FinanceInventoryResult] 获取盘点列表失败:', error);
-      return {
-        list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
-      };
-    }
-  }
-};
+// 财务盘点结果服务 - 使用 usePageService 包装
+const baseFinanceInventoryService = usePageService('finance.inventory.result', 'financeResult');
 
 // 包装财务盘点结果服务，将checkNo作为参数传递
 const wrappedFinanceInventoryService = {
-  ...financeInventoryService,
+  ...baseFinanceInventoryService,
   async page(params: any) {
     // 检查组件是否已卸载
     if (isUnmounted) {
@@ -182,28 +135,28 @@ const wrappedFinanceInventoryService = {
       finalParams.keyword.position = '';
     }
 
-    // 再次检查组件是否已卸载（异步操作后）
-    if (isUnmounted) {
-      return {
-        list: [],
-        total: 0
-      };
-    }
+        // 再次检查组件是否已卸载（异步操作后）
+        if (isUnmounted) {
+          return {
+            list: [],
+            total: 0
+          };
+        }
 
-    try {
-      return await financeInventoryService.page(finalParams);
-    } catch (error) {
-      // 如果组件已卸载，返回空结果
-      if (isUnmounted) {
-        return {
-          list: [],
-          total: 0
-        };
+        try {
+          return await baseFinanceInventoryService.page(finalParams);
+        } catch (error) {
+          // 如果组件已卸载，返回空结果
+          if (isUnmounted) {
+            return {
+              list: [],
+              total: 0
+            };
+          }
+          throw error;
+        }
       }
-      throw error;
-    }
-  }
-};
+    };
 
 // 刷新前钩子 - 注入 keyword 参数
 const handleBeforeRefresh = (params: Record<string, unknown>) => {

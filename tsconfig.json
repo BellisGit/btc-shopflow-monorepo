@@ -22,20 +22,14 @@
       "@btc/shared-core/*": ["packages/shared-core/dist/*"],
       "@btc/shared-components": ["packages/shared-components/dist"],
       "@btc/shared-components/*": ["packages/shared-components/dist/*"],
-      "@btc/shared-utils": ["packages/shared-utils/dist"],
-      "@btc/shared-utils/*": ["packages/shared-utils/dist/*"],
       "@btc/vite-plugin": ["packages/vite-plugin/dist"],
-      "@btc/vite-plugin/*": ["packages/vite-plugin/dist/*"],
-      "@btc/subapp-manifests": ["packages/subapp-manifests/dist"],
-      "@btc/subapp-manifests/*": ["packages/subapp-manifests/dist/*"]
+      "@btc/vite-plugin/*": ["packages/vite-plugin/dist/*"]
     }
   },
   "exclude": ["node_modules", "dist", "**/dist"],
   "references": [
-    { "path": "./packages/shared-utils" },
     { "path": "./packages/shared-core" },
     { "path": "./packages/shared-components" },
-    { "path": "./packages/vite-plugin" },
-    { "path": "./packages/subapp-manifests" }
+    { "path": "./packages/vite-plugin" }
   ]
 }

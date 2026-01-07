@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 
 type TableSize = 'small' | 'default' | 'large';
 

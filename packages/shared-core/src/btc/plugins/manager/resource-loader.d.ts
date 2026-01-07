@@ -66,3 +66,4 @@ export declare function useResourceLoader(): ResourceLoader;
  * 重置资源加载器（用于测试）
  */
 export declare function resetResourceLoader(): void;
+//# sourceMappingURL=resource-loader.d.ts.map

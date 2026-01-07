@@ -120,7 +120,7 @@ export declare class PluginManager {
     /**
      * 获取插件的 qiankun 配置
      */
-    getQiankunConfig(name: string): import("./types").QiankunConfig;
+    getQiankunConfig(name: string): import("./types").QiankunConfig | undefined;
     /**
      * 获取所有共享给子应用的插件
      */
@@ -147,7 +147,7 @@ export declare class PluginManager {
      * @param name 插件名称
      * @returns 插件元数据
      */
-    getPluginMetadata(name: string): import("./types").PluginMetadata;
+    getPluginMetadata(name: string): import("./types").PluginMetadata | undefined;
     /**
      * 按作者筛选插件
      * @param author 作者名称
@@ -183,13 +183,13 @@ export declare class PluginManager {
      */
     getPluginsInfo(): {
         name: string;
-        config: import("./types").PluginMetadata;
-        version: string;
-        author: string;
-        description: string;
-        status: PluginStatus;
-        installedAt: Date;
-        error: Error;
+        config: import("./types").PluginMetadata | undefined;
+        version: string | undefined;
+        author: string | undefined;
+        description: string | undefined;
+        status: PluginStatus | undefined;
+        installedAt: Date | undefined;
+        error: Error | undefined;
         hasApi: boolean;
         hasComponents: boolean;
         hasDirectives: boolean;
@@ -212,3 +212,4 @@ export declare function usePluginManager(options?: PluginManagerOptions): Plugin
  * 重置插件管理器（主要用于测试）
  */
 export declare function resetPluginManager(): void;
+//# sourceMappingURL=index.d.ts.map

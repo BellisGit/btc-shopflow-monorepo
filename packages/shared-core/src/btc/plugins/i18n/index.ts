@@ -3,7 +3,7 @@ import { createI18n, useI18n as useI18nOriginal } from 'vue-i18n';
 import type { App } from 'vue';
 import type { Composer } from 'vue-i18n';
 import { watch } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 
 // import { buildMessages } from './buildMessages'; // 暂时不使用
 

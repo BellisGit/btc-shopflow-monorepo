@@ -27,9 +27,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -88,63 +87,48 @@ onMounted(() => {
   loadTenantOptions();
 });
 
-// 使用 EPS 域服务
-const wrappedDomainService = {
-  ...(service.admin?.iam?.domain || {}),
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('platform.domains');
+const { formItems: baseFormItems } = usePageForms('platform.domains');
+const pageConfig = getPageConfigFull('platform.domains');
 
-    // 单个删除：直接传递 ID
-    // 注意：成功消息由 BtcCrud 的 onSuccess 回调统一处理，不需要在这里手动调用
-    await service.admin?.iam?.domain?.delete(id);
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+// 使用 config.ts 中定义的 service，并添加删除确认逻辑
+const wrappedDomainService = usePageService('platform.domains', 'domain');
 
-    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    // 注意：成功消息由 BtcCrud 的 onSuccess 回调统一处理，不需要在这里手动调用
-    await service.admin?.iam?.domain?.deleteBatch(ids);
-  },
-};
-
-// 域表格列
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
-  { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
-  { prop: 'domainType', label: t('platform.domains.domain_type'), width: 120 },
-  {
-    prop: 'tenantId',
-    label: '租户名称',
-    width: 150,
-    formatter: (_row, _column, cellValue) => tenantLabelMap.value.get(cellValue) ?? cellValue ?? '-',
-  },
-  { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
-]);
-
-// 域表单
-const formItems = computed<FormItem[]>(() => [
-  { prop: 'name', label: t('platform.domain.name'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'domainCode', label: t('platform.domain.code'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'domainType', label: t('platform.domains.domain_type'), span: 12, component: { name: 'el-input' } },
-  {
-    prop: 'tenantId',
-    label: '租户名称',
-    span: 12,
-    required: true,
-    component: {
-      name: 'el-select',
-      props: {
-        filterable: true,
-        clearable: true,
-        loading: tenantLoading.value,
-      },
-      options: tenantOptions.value
+// 域表格列 - 扩展配置以支持动态 formatter
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是 tenantId，添加动态 formatter
+    if (col.prop === 'tenantId') {
+      return {
+        ...col,
+        formatter: (_row: any, _column: any, cellValue: any) => tenantLabelMap.value.get(cellValue) ?? cellValue ?? '-',
+      };
     }
-  },
-  { prop: 'description', label: t('common.description'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
+    return col;
+  });
+});
+
+// 域表单 - 扩展配置以支持动态 options
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 tenantId，添加动态 options 和 loading
+    if (item.prop === 'tenantId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            loading: tenantLoading.value,
+          },
+          options: tenantOptions.value,
+        },
+      };
+    }
+    return item;
+  });
+});
 
 
 // 移除手动调用 loadData，让 BtcCrud 自动加载

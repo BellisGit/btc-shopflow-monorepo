@@ -177,12 +177,14 @@ export function removeLoadingElement(): void {
   }
 }
 
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+
 /**
  * 清理导航标记
  */
 export function clearNavigationFlag(): void {
   try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+    sessionStorage.remove('nav_loading');
   } catch (e) {
     // 静默失败（某些浏览器可能禁用 sessionStorage）
   }

@@ -4,7 +4,7 @@ import { microApps } from './apps';
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
-import { getManifestTabs, getManifestMenus } from './manifests';
+import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 

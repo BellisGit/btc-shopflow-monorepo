@@ -68,9 +68,10 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
+            <!-- 关键：直接使用 type 作为判断依据，确保互斥 -->
             <div 
-              v-if="mountState.showMainApp.value"
-              :key="`main-app-${mountState.type.value}-${mountState.showMainApp.value}`"
+              v-if="mountType === 'main-app'"
+              :key="`main-app-${mountType}`"
               class="content-mount content-mount--main-app"
             >
               <router-view v-slot="{ Component, route }">
@@ -88,10 +89,11 @@
             </div>
 
             <!-- 子应用挂载点 -->
+            <!-- 关键：直接使用 type 作为判断依据，确保互斥 -->
             <div
-              v-if="mountState.showSubApp.value"
+              v-if="mountType === 'sub-app'"
               id="subapp-viewport"
-              :ref="(el) => mountState.subappViewportRef.value = el as HTMLElement | null"
+              :ref="(el) => { if (el) mountState.subappViewportRef.value = el as HTMLElement | null; }"
               class="content-mount content-mount--sub-app"
             >
             </div>
@@ -123,7 +125,7 @@ import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
-import MenuDrawer from './menu-drawer/index.vue';
+import MenuDrawer from '@btc/shared-components/src/components/layout/app-layout/menu-drawer/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
@@ -230,6 +232,9 @@ let prevIsMini = browser.isMini;
 const isMainApp = computed(() => {
   return mountState.type.value === 'main-app';
 });
+
+// 解包 mountState.type 以便在模板中使用（解决 TypeScript 类型检查问题）
+const mountType = computed(() => mountState.type.value);
 
 
 // 判断是否是首页

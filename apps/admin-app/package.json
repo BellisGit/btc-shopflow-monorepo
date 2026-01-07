@@ -7,8 +7,9 @@
     "module": "src/main.ts",
     "scripts": {
         "predev": "turbo run build --filter=@btc/vite-plugin",
-        "dev": "vite --port 8081",
+        "dev": "vite",
         "clean": "node scripts/clean.js",
+        "prebuild": "",
         "build": "vite build",
         "preview": "vite preview",
         "mock": "node mock-server.js",
@@ -19,8 +20,7 @@
     "dependencies": {
         "@btc/shared-components": "workspace:*",
         "@btc/shared-core": "workspace:*",
-        "@btc/shared-utils": "workspace:*",
-        "@btc/subapp-manifests": "workspace:*",
+        "@btc/shared-router": "workspace:*",
         "@element-plus/icons-vue": "^2.3.2",
         "@types/nprogress": "^0.2.3",
         "@vueuse/core": "^13.9.0",

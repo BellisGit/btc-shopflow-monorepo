@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
-    "dev": "vite --port 8085",
+    "dev": "vite",
     "build": "vite build",
     "build:preview": "VITE_PREVIEW=true vite build",
     "preview": "vite preview",
@@ -15,8 +15,6 @@
   "dependencies": {
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
-    "@btc/subapp-manifests": "workspace:*",
     "@vueuse/core": "^13.9.0",
     "chardet": "^2.1.0",
     "echarts": "^6.0.0",

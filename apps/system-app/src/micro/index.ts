@@ -4,9 +4,9 @@ import { getAppConfig } from '@configs/app-env.config';
 import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
 import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
 
-// 获取主应用配置（用于判断当前是否在主应用预览端口）
-const MAIN_APP_CONFIG = getAppConfig('system-app');
-const MAIN_APP_PREVIEW_PORT = MAIN_APP_CONFIG?.prePort || '4180';
+// 获取 system-app 配置（用于判断当前是否在 system-app 预览端口）
+const SYSTEM_APP_CONFIG = getAppConfig('system-app');
+const SYSTEM_APP_PREVIEW_PORT = SYSTEM_APP_CONFIG?.prePort || '4181';
 // 使用动态导入避免循环依赖导致的打包错误
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 
@@ -36,7 +36,7 @@ function clearLoadingElement() {
   });
 }
 
-import { getManifestTabs, getManifestMenus } from './manifests';
+import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
 // 关键：在模块加载时立即设置日志过滤，确保能拦截所有警告
@@ -543,9 +543,9 @@ if (typeof window !== 'undefined') {
       // 判断是否是资源文件
       const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
 
-      // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
+      // 如果当前在 system-app 预览端口且是资源文件，检查是否需要修复
       const currentPort = window.location.port;
-      if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+      if (currentPort === SYSTEM_APP_PREVIEW_PORT && isAssetFile) {
         // 如果当前在子应用路径下，检查 URL 是否需要修复
         const currentPath = window.location.pathname;
         let targetAppName: string | null = null;
@@ -574,7 +574,7 @@ if (typeof window !== 'undefined') {
               const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
               if (entryMatch) {
                 const targetPort = entryMatch[4] || '';
-                if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
                   const currentHost = window.location.hostname;
                   const protocol = window.location.protocol;
                   let needsFix = false;
@@ -600,7 +600,7 @@ if (typeof window !== 'undefined') {
                       const urlHost = hostMatch[1];
                       const urlPort = hostMatch[2];
                       // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
-                      if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                      if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === SYSTEM_APP_PREVIEW_PORT)) {
                         fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
                         needsFix = true;
                       }
@@ -656,7 +656,7 @@ if (typeof window !== 'undefined') {
             targetAppName = 'finance';
           }
 
-          if (targetAppName && currentPort === MAIN_APP_PREVIEW_PORT) {
+          if (targetAppName && currentPort === SYSTEM_APP_PREVIEW_PORT) {
             try {
               const entryMap = getGlobalEntryMap();
               const appEntry = entryMap.get(targetAppName);
@@ -664,7 +664,7 @@ if (typeof window !== 'undefined') {
                 const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
                 if (entryMatch) {
                   const targetPort = entryMatch[4] || '';
-                  if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                  if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
                     const currentHost = window.location.hostname;
                     const protocol = window.location.protocol;
 
@@ -752,7 +752,7 @@ function setupGlobalResourceInterceptor() {
 
     // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
     const currentPort = window.location.port;
-    if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+    if (currentPort === SYSTEM_APP_PREVIEW_PORT && isAssetFile) {
       // 如果当前在子应用路径下，检查 URL 是否需要修复
       const currentPath = window.location.pathname;
       let targetAppName: string | null = null;
@@ -778,7 +778,7 @@ function setupGlobalResourceInterceptor() {
           const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
           if (entryMatch) {
             const targetPort = entryMatch[4] || '';
-            if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+            if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
               const currentHost = window.location.hostname;
               const protocol = window.location.protocol;
               let needsFix = false;
@@ -787,7 +787,7 @@ function setupGlobalResourceInterceptor() {
               // 情况1：URL 包含错误的端口（主应用预览端口）- 这是最常见的情况
               // 检查 URL 中是否包含主应用预览端口或当前端口
               const portRegex = new RegExp(`:${currentPort}(?=/|$|\\s)`, 'g');
-              const mainPortRegex = new RegExp(`:${MAIN_APP_PREVIEW_PORT}(?=/|$|\\s)`, 'g');
+              const mainPortRegex = new RegExp(`:${SYSTEM_APP_PREVIEW_PORT}(?=/|$|\\s)`, 'g');
               if (portRegex.test(url) || mainPortRegex.test(url)) {
                 fixedUrl = url.replace(portRegex, `:${targetPort}`).replace(mainPortRegex, `:${targetPort}`);
                 needsFix = true;
@@ -805,7 +805,7 @@ function setupGlobalResourceInterceptor() {
                   const urlHost = hostMatch[1];
                   const urlPort = hostMatch[2];
                   // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
-                  if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                  if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === SYSTEM_APP_PREVIEW_PORT)) {
                     fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
                     needsFix = true;
                   }
@@ -860,7 +860,7 @@ function setupGlobalResourceInterceptor() {
     }
 
     // 检查是否是资源请求且从错误的端口加载
-    if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === MAIN_APP_PREVIEW_PORT) {
+    if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
       // 根据当前路径判断是哪个应用
       const currentPath = window.location.pathname;
       let targetAppName: string | null = null;
@@ -885,7 +885,7 @@ function setupGlobalResourceInterceptor() {
           const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
           if (entryMatch) {
             const port = entryMatch[4] || '';
-            if (port && port !== MAIN_APP_PREVIEW_PORT) {
+            if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
               urlStr = urlStr.replace(`:${window.location.port}`, `:${port}`);
             }
           }
@@ -1193,13 +1193,13 @@ export function setupQiankun() {
         // console.log(`[qiankun] 子应用 ${app.name} beforeLoad 开始`);
 
         // 关键：在加载子应用前，先清除可能存在的 #Loading 元素
-        // 包括system-app自己的#Loading（"拜里斯科技"），因为它只应该在主应用路由时显示
+        // 包括system-app自己的#Loading（"拜里斯科技"），因为它只应该在 system-app 路由时显示
         // 避免上一个子应用的 Loading 元素残留
         // 必须在显示新的loading之前清除，确保不会覆盖新的loading
         clearLoadingElement();
 
         // 关键：确保system-app的#Loading也被隐藏（访问子应用时不应该显示"拜里斯科技"）
-        // system-app的#Loading应该只在访问主应用路由（如 /、/profile等）时显示
+        // system-app的#Loading应该只在访问 system-app 路由（如 /system/...）时显示
         const systemLoadingEl = document.getElementById('Loading');
         if (systemLoadingEl && systemLoadingEl.textContent?.includes('拜里斯科技')) {
           systemLoadingEl.style.setProperty('display', 'none', 'important');
@@ -1313,7 +1313,7 @@ export function setupQiankun() {
 
         return new Promise<void>((resolve, reject) => {
           let retryCount = 0;
-          const maxRetries = 4; // 最多重试 4 次（约 200ms）
+          const maxRetries = 20; // 增加重试次数到 20 次（约 1000ms），确保容器有足够时间被创建
           const retryDelay = 50; // 每次重试间隔 50ms
 
           const ensureContainer = async () => {
@@ -1579,6 +1579,23 @@ export function setupQiankun() {
           }));
         });
 
+        // 关键：应用切换时重新初始化 user-check
+        // 确保切换应用后立即获取最新的 user-check 数据并更新存储
+        try {
+          const { reinitializeUserCheckOnAppSwitch } = await import('@btc/shared-core/composables/user-check');
+          reinitializeUserCheckOnAppSwitch().catch((error) => {
+            // 静默失败，不影响应用切换
+            if (import.meta.env.DEV) {
+              console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+            }
+          });
+        } catch (error) {
+          // 静默失败，不影响应用切换
+          if (import.meta.env.DEV) {
+            console.warn('[qiankun:afterMount] Failed to import reinitializeUserCheckOnAppSwitch:', error);
+          }
+        }
+
         return Promise.resolve();
       }],
 
@@ -1651,7 +1668,7 @@ export function setupQiankun() {
         }
 
         // 如果当前在子应用路径下，且请求的 URL 包含错误的端口（主应用预览端口），需要修复
-        if (targetAppName && window.location.port === MAIN_APP_PREVIEW_PORT) {
+        if (targetAppName && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
           const appEntry = entryMap.get(targetAppName);
           if (appEntry && !appEntry.startsWith('/')) {
             const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
@@ -1873,7 +1890,7 @@ export function setupQiankun() {
                   }
                   // 如果 src 是绝对路径但包含错误的端口（当前页面的端口），修复它
                   if ((src.startsWith('http://') || src.startsWith('https://') || src.startsWith('//'))
-                      && window.location.port === MAIN_APP_PREVIEW_PORT && src.includes(`:${window.location.port}`)) {
+                      && window.location.port === SYSTEM_APP_PREVIEW_PORT && src.includes(`:${window.location.port}`)) {
                     const fixedUrl = src.replace(`:${window.location.port}`, `:${port}`);
                     return `<script${before} src="${fixedUrl}"${after}>`;
                   }
@@ -1892,7 +1909,7 @@ export function setupQiankun() {
                   }
                   // 如果 href 是绝对路径但包含错误的端口（当前页面的端口），修复它
                   if ((href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))
-                      && window.location.port === MAIN_APP_PREVIEW_PORT && href.includes(`:${window.location.port}`)) {
+                      && window.location.port === SYSTEM_APP_PREVIEW_PORT && href.includes(`:${window.location.port}`)) {
                     const fixedUrl = href.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
                     return `<link${before} href="${fixedUrl}"${after}>`;
                   }
@@ -1931,7 +1948,7 @@ export function setupQiankun() {
         // 如果是资源文件请求且包含错误的端口，修复它（在响应处理之后，作为最后的兜底）
         // 关键：检查 URL 是否包含当前页面的端口（主应用预览端口），如果是，说明需要修复
         const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
-        if (isAssetFile && window.location.port === MAIN_APP_PREVIEW_PORT) {
+        if (isAssetFile && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
           // 根据当前路径判断是哪个应用
           const currentPath = window.location.pathname;
           let targetAppName: string | null = null;
@@ -1959,7 +1976,7 @@ export function setupQiankun() {
                 const protocol = window.location.protocol;
                 const host = window.location.hostname;
 
-                if (port && port !== MAIN_APP_PREVIEW_PORT) {
+                if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
                   // 修复 URL，将端口替换为正确的端口
                   let fixedUrl = url;
 
@@ -2550,7 +2567,7 @@ export function setupQiankun() {
               const protocol = window.location.protocol;
               const host = window.location.hostname;
 
-              if (port && port !== MAIN_APP_PREVIEW_PORT) {
+              if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
                 // 修复 URL
                 let fixedUrl = src;
 

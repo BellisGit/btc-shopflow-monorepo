@@ -95,7 +95,7 @@ import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
-import { getManifestRoute } from '@/micro/manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { useSettingsState } from '@/plugins/user-setting/composables';
 
 interface Props {

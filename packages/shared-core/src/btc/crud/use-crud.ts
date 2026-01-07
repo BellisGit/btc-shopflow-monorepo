@@ -4,7 +4,7 @@
  */
 
 import { ref, reactive, computed, shallowRef } from 'vue';
-import { normalizeKeywordIds } from '../../utils/array';
+import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
 import type { CrudOptions, PaginationConfig, UseCrudReturn } from './types';
 
 export function useCrud<T = Record<string, unknown>>(

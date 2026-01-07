@@ -3,7 +3,7 @@
 		class="qr-toggle-btn"
 		role="button"
 		tabindex="0"
-		:aria-label="t(label || '切换扫码登录')"
+		:aria-label="t(label || 'auth.login.toggle.qr')"
 		:style="{
 			// Y轴偏移：qr 模式(0%)，pc 模式(100%)
 			'--sy': icon === 'pc' ? '100%' : '0%'
@@ -14,7 +14,7 @@
 	>
 		<div class="tips">
 			<span class="account"></span>
-			<span class="tips-text">{{ t(label || '切换扫码登录') }}</span>
+			<span class="tips-text">{{ t(label || 'auth.login.toggle.qr') }}</span>
 		</div>
 		<div class="sprite-icon"></div>
 	</div>
@@ -32,7 +32,7 @@ const props = withDefaults(defineProps<{
 	icon?: string;
 	onClick?: () => void;
 }>(), {
-	label: '切换扫码登录',
+	label: 'auth.login.toggle.qr',
 	icon: 'qr'
 });
 

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { getAppBySubdomain, getAppByPathPrefix, getSubApps } from '@configs/app-scanner';
+import { getAppIdFromPath } from '@btc/shared-core';
 
 export interface ProcessItem {
   path: string;
@@ -37,6 +38,9 @@ export function getCurrentAppFromPath(path: string): string {
       return appBySubdomain.id;
     }
   }
+
+  // 使用统一的工具函数获取应用标识（优先从 app-scanner，回退到路径推断）
+  return getAppIdFromPath(path);
 
   // 回退到路径匹配（开发环境或主域名访问时，使用应用扫描器）
   const pathPrefix = path.split('/')[1] ? `/${path.split('/')[1]}` : '/';

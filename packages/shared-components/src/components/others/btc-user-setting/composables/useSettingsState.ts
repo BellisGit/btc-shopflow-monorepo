@@ -2,7 +2,7 @@
  * 璁剧疆鐘舵€佺鐞? * 浣跨敤 localStorage 鎸佷箙鍖栬缃姸鎬? */
 
 import { ref, computed } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
 
@@ -74,11 +74,11 @@ export function useSettingsState() {
   }
 
   // Loading 样式设置
-  type LoadingStyle = 'circle' | 'dots';
+  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
   const storedLoadingStyle = initialSettings.loadingStyle as LoadingStyle | null;
-  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : 'circle';
+  const resolvedLoadingStyle: LoadingStyle = storedLoadingStyle === 'dots' ? 'dots' : storedLoadingStyle === 'gradient' ? 'gradient' : storedLoadingStyle === 'progress' ? 'progress' : 'circle';
   const loadingStyle = ref<LoadingStyle>(resolvedLoadingStyle);
-  if (!initialSettings.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots')) {
+  if (!initialSettings.loadingStyle || (initialSettings.loadingStyle !== 'circle' && initialSettings.loadingStyle !== 'dots' && initialSettings.loadingStyle !== 'gradient')) {
     storage.set('settings', { ...initialSettings, loadingStyle: resolvedLoadingStyle });
   }
 

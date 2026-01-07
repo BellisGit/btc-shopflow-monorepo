@@ -198,9 +198,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
-import type { TableColumn, FormItem } from '@btc/shared-components';
 import type {
   Strategy,
   StrategyTemplate,
@@ -239,9 +238,19 @@ const strategyStatuses = [
   { value: 'ARCHIVED', label: '已归档' }
 ];
 
-// 策略服务适配器 - 简化版本，避免响应式循环
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('strategy.management');
+const { formItems: baseFormItems } = usePageForms('strategy.management');
+
+// 策略服务 - 使用 usePageService 但需要特殊处理（strategyService 有自定义方法）
+const pageStrategyService = usePageService('strategy.management', 'strategy', {
+  showSuccessMessage: true,
+});
+
+// 策略服务适配器 - 需要包装自定义的 deleteStrategy 和 deleteStrategies 方法
 const wrappedService = {
   ...strategyService,
+  ...(pageStrategyService || {}),
   delete: async (id: string) => {
     await BtcConfirm(
       t('crud.message.delete_confirm'),
@@ -268,84 +277,12 @@ const wrappedService = {
   }
 };
 
-// 表格列配置
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { prop: 'name', label: '策略名称', minWidth: 180 },
-  {
-    prop: 'type',
-    label: '类型',
-    width: 120,
-    dict: [
-      { label: '权限', value: 'PERMISSION', type: 'danger' },
-      { label: '业务', value: 'BUSINESS', type: 'success' },
-      { label: '数据', value: 'DATA', type: 'warning' },
-      { label: '工作流', value: 'WORKFLOW', type: 'info' }
-    ]
-  },
-  {
-    prop: 'status',
-    label: '状态',
-    width: 100,
-    dict: [
-      { label: '草稿', value: 'DRAFT', type: 'info' },
-      { label: '测试中', value: 'TESTING', type: 'warning' },
-      { label: '激活', value: 'ACTIVE', type: 'success' },
-      { label: '停用', value: 'INACTIVE', type: 'danger' },
-      { label: '已归档', value: 'ARCHIVED', type: 'default' }
-    ]
-  },
-  { prop: 'priority', label: '优先级', width: 100 },
-  { prop: 'version', label: '版本', width: 100 },
-  { prop: 'tags', label: '标签', width: 150 },
-  { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'updatedAt', label: '更新时间', width: 180 }
-]);
+// 表格列配置 - 从 config.ts 读取
+const columns = baseColumns;
 
-// 表单配置
-const formItems = computed<FormItem[]>(() => [
-  {
-    prop: 'name',
-    label: '策略名称',
-    span: 12,
-    required: true,
-    component: { name: 'el-input' }
-  },
-  {
-    prop: 'type',
-    label: '策略类型',
-    span: 12,
-    required: true,
-    component: {
-      name: 'el-select',
-      options: [
-        { label: '权限策略', value: 'PERMISSION' },
-        { label: '业务策略', value: 'BUSINESS' },
-        { label: '数据策略', value: 'DATA' },
-        { label: '工作流策略', value: 'WORKFLOW' }
-      ]
-    }
-  },
-  {
-    prop: 'priority',
-    label: '优先级',
-    span: 12,
-    component: {
-      name: 'el-input-number',
-      props: { min: 0, max: 1000 }
-    },
-    value: 100
-  },
-  {
-    prop: 'tags',
-    label: '标签',
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: { placeholder: '多个标签用逗号分隔' }
-    }
-  },
+// 表单配置 - 从 config.ts 读取
+const formItems = [
+  ...baseFormItems,
   {
     prop: 'description',
     label: '描述',
@@ -355,7 +292,7 @@ const formItems = computed<FormItem[]>(() => [
       props: { type: 'textarea', rows: 3 }
     }
   }
-]);
+];
 
 // 工具函数
 const getStatusTagType = (status: StrategyStatus) => {

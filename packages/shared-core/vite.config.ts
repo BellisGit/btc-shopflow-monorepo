@@ -9,7 +9,10 @@ export default defineConfig({
       '@configs': resolve(__dirname, '../../configs'),
       '@btc/shared-components': resolve(__dirname, '../shared-components/src'),
       '@btc/auth-shared': resolve(__dirname, '../../auth/shared'),
+      '@btc/shared-core/utils': resolve(__dirname, 'src/utils'),
+      '@btc/shared-core/utils/array': resolve(__dirname, 'src/utils/array'),
     },
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
   },
   plugins: [
     dts({
@@ -45,9 +48,10 @@ export default defineConfig({
         'vue',
         'axios',
         'vue-i18n',
-        '@btc/shared-utils',
-        /^@btc\/shared-utils\/.*/,
         'pinia',
+        'dayjs',
+        'file-type',
+        'zod',
         '@vueuse/core',
         '@configs/layout-bridge',
         /^@configs\/.*/,

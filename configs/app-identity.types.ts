@@ -31,6 +31,18 @@ export interface AppIdentity {
   // 应用版本
   version?: string;
   
+  // 路由配置（仅主应用需要）
+  routes?: {
+    // 主应用的路由列表（用于判断哪些路由属于主应用）
+    mainAppRoutes?: string[];
+    // 不可关闭的路由列表（如概览页）
+    nonClosableRoutes?: string[];
+    // 首页路由（用于重定向）
+    homeRoute?: string;
+    // 需要跳过 Tabbar 的路由列表（如登录页、个人信息页）
+    skipTabbarRoutes?: string[];
+  };
+  
   // 其他元数据
   metadata?: Record<string, any>;
 }

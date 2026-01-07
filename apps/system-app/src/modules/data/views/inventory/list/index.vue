@@ -6,8 +6,8 @@
       :right-service="wrappedMaterialService"
       :table-columns="materialColumns"
       :form-items="materialFormItems"
-      :left-title="t('inventory.dataSource.domain')"
-      :right-title="t('menu.inventory.dataSource.list')"
+      :left-title="t('inventory.data_source.domain')"
+      :right-title="t('menu.inventory.data_source.list')"
       :show-unassigned="false"
       :enable-key-search="false"
       :show-search-key="false"
@@ -20,7 +20,7 @@
         <BtcImportBtn
           :columns="materialColumns"
           :on-submit="handleImport"
-          :tips="t('inventory.dataSource.list.import.tips')"
+          :tips="t('inventory.data_source.list.import.tips')"
         />
       </template>
       <template #actions>
@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
@@ -54,7 +54,7 @@ const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
 
 // 统一导出/导入文件名
-const exportFilename = computed(() => t('menu.inventory.dataSource.list'));
+const exportFilename = computed(() => t('menu.inventory.data_source.list'));
 
 // 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
 // provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
@@ -175,9 +175,9 @@ const createWrappedService = (baseService: any) => {
   };
 };
 
-// 物料信息表服务（右侧表），使用系统域的 data 服务
-const materialService = service.system?.base?.data;
-const wrappedMaterialService = createWrappedService(materialService);
+// 物料信息表服务（右侧表），使用 config.ts 中定义的服务或创建包装服务
+const baseMaterialService = pageConfig?.service?.inventoryList || service.system?.base?.data;
+const wrappedMaterialService = createWrappedService(baseMaterialService);
 
 // 域选择处理
 const onDomainSelect = (domain: any) => {
@@ -194,7 +194,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     if (!rows.length) {
       const warnMessage = data?.filename
         ? t('common.import.no_data_or_mapping')
-        : t('inventory.dataSource.list.import.no_file');
+        : t('inventory.data_source.list.import.no_file');
       message.warning(warnMessage);
       done();
       return;
@@ -212,7 +212,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
       domainId = dataDomainIds[0];
     } else if (!domainId) {
       // 如果既没有选中域，数据中也没有 domainId，则提示错误
-      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域或在导入数据中包含域ID');
+      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域或在导入数据中包含域ID');
       done();
       return;
     }
@@ -246,24 +246,29 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
       if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.list.import.failed');
+        const errorMsg = responseData.msg || responseData.message || t('inventory.data_source.list.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success(t('inventory.dataSource.list.import.success'));
+    message.success(t('inventory.data_source.list.import.success'));
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
     console.error('[InventoryList] import failed:', error);
     // 优先从错误对象中提取后端返回的 msg
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.dataSource.list.import.failed');
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.list.import.failed');
     message.error(errorMsg);
     done();
   }
 };
+
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.list');
+const { formItems: baseFormItems } = usePageForms('data.inventory.list');
+const pageConfig = getPageConfigFull('data.inventory.list');
 
 // 日期格式化函数
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) => {
@@ -279,20 +284,23 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
 };
 
 // 盘点清单表格列（对应 data 服务的字段，不包含盘点类型）
-const materialColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'partQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const materialColumns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是日期字段，添加动态 formatter
+    if (col.prop === 'createdAt') {
+      return {
+        ...col,
+        formatter: formatDateCell,
+      };
+    }
+    return col;
+  });
+});
 
 // 导出用的列（不包含时间字段和盘点类型字段）
-const materialExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'partName', label: t('system.material.fields.materialCode') },
-  { prop: 'partQty', label: t('inventory.result.fields.actualQty') },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
-]);
+const { columns: exportColumns } = usePageColumns('data.inventory.list.export');
+const materialExportColumns = computed(() => exportColumns.value);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
@@ -383,29 +391,25 @@ const handleExport = async () => {
 };
 
 // 物料信息表表单
-const materialFormItems = computed<FormItem[]>(() => [
-  { prop: 'materialCode', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'materialName', label: t('system.material.fields.materialName'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'specification', label: t('system.material.fields.specification'), span: 12, component: { name: 'el-input' } },
-  { prop: 'unit', label: t('system.material.fields.unit'), span: 12, component: { name: 'el-input' } },
-  { prop: 'category', label: t('inventory.dataSource.list.fields.category'), span: 12, component: { name: 'el-input' } },
-  {
-    prop: 'status',
-    label: t('inventory.dataSource.list.fields.status'),
-    span: 12,
-    component: {
-      name: 'el-select',
-      props: {
-        placeholder: t('inventory.dataSource.list.fields.status_placeholder'),
-      },
-    },
-    options: [
-      { label: t('common.enabled'), value: 1 },
-      { label: t('common.disabled'), value: 0 },
-    ],
-  },
-  { prop: 'remark', label: t('system.inventory.base.fields.remark'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
+// 扩展配置以支持动态 options
+const materialFormItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 status，添加动态 options
+    if (item.prop === 'status') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          options: [
+            { label: t('common.enabled'), value: 1 },
+            { label: t('common.disabled'), value: 0 },
+          ],
+        },
+      };
+    }
+    return item;
+  });
+});
 
 // 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>

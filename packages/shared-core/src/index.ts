@@ -33,17 +33,26 @@ export { useCrud } from './btc/crud';
 export { useSmsCode } from './composables/use-sms-code';
 export { usePluginManager } from './btc/plugins/manager';
 export { useBtcForm } from './composables/useBtcForm';
+export { useEnvInfo } from './composables/useEnvInfo';
+export type { EnvInfo } from './composables/useEnvInfo';
 export { useTabs, useAction, useElApi, usePlugins } from './composables/form-helpers';
 export { useContentMount } from './composables/useContentMount';
 export type { ContentMountType, ContentMountState } from './composables/useContentMount';
 export { startUserCheckPolling, stopUserCheckPolling, getUserCheckData, startUserCheckPollingIfLoggedIn } from './composables/user-check';
 export { useLogout } from './composables/useLogout';
 export type { UseLogoutOptions } from './composables/useLogout';
-export { useCrossDomainBridge } from './composables/useCrossDomainBridge';
+export { useServiceWithConfirm } from './composables/useServiceWithConfirm';
+export { logoutCore } from './auth/logoutCore';
+export type { LogoutCoreOptions } from './auth/logoutCore';
+export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
+export { getMainAppId, isMainAppRoute, isRouteClosable, shouldSkipTabbar, getMainAppHomeRoute, getAppIdFromPath, getMainAppRoutes } from './utils/app-route-utils';
+export { getEnvInfo, getCurrentEnvironment, getCurrentAppId, getCurrentAppConfig } from './utils/env-info';
+// EnvInfo 类型已在上面从 './composables/useEnvInfo' 导出，避免重复导出
+export { initGlobalStateManager, getGlobalState, waitForGlobalState, setGlobalState, getGlobalStateValue, onGlobalStateChange, cleanupAllListeners, useGlobalState, isGlobalStateInitialized } from './composables/useGlobalState';
 export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
 export type { EpsServiceData } from './eps';
 export { initResourceLoader, loadResource, getResourceLoaderConfig, clearResourceLoaderCache, setupImageFallback, getCssUrlFallback } from './btc/utils/resource-loader';
@@ -53,6 +62,22 @@ export { initDynamicImportInterceptor, loadModule, clearModuleCache, getModuleCa
 // Loading 相关导出
 export * from './btc/utils/loading';
 export { appLoadingService, rootLoadingService, routeLoadingService } from './btc/utils/loading';
+
+// 页面标题相关导出
+export {
+  setPageTitle,
+  buildTitle,
+  buildTitleSync,
+  isStandardApp,
+  isStandardAppSync,
+  getAppDisplayName,
+  getAppDisplayNameSync,
+  getAppConfig,
+  getAppConfigSync,
+  preloadAppsConfig,
+  PAGE_TITLE_CONFIG,
+} from './btc/utils/page-title';
+export type { PageTitleOptions } from './btc/utils/page-title';
 
 // ========== 其他导出（使用 export *，但关键导出已在上方显式声明）==========
 export * from './btc';
@@ -75,8 +100,30 @@ export * from './composables/use-email-code';
 export * from './composables/useCountdown';
 export * from './composables/user-check';
 export * from './composables/useContentMount';
+export * from './composables/useEnvInfo';
 export * from './types/common';
 export * from './types/crud';
 export * from './utils/menu-icon-assigner';
+export * from './utils/app-route-utils';
 export * from './eps';
+
+// ========== 从 shared-utils 迁移的工具模块 ==========
+export * from './utils';
+export { getCookieDomain } from './utils/storage/cookie';
+export {
+  usePageColumns,
+  usePageForms,
+  usePageService,
+  getPageConfigFull,
+  registerPageConfig,
+  registerConfigsFromGlob,
+  getPageConfig,
+  getAllRegisteredPageKeys,
+} from './utils/config-loader';
+
+// ========== 从 subapp-manifests 迁移的清单模块 ==========
+export * from './manifest';
+
+// ========== 从 env 迁移的环境变量模块 ==========
+export * from './env';
 

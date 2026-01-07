@@ -110,7 +110,7 @@ import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
-import MenuDrawer from './menu-drawer/index.vue';
+import MenuDrawer from '@btc/shared-components/src/components/layout/app-layout/menu-drawer/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';

@@ -12,5 +12,11 @@ export interface AppIdentity {
     enabled: boolean;
     icon?: string;
     version?: string;
+    routes?: {
+        mainAppRoutes?: string[];
+        nonClosableRoutes?: string[];
+        homeRoute?: string;
+        skipTabbarRoutes?: string[];
+    };
     metadata?: Record<string, any>;
 }

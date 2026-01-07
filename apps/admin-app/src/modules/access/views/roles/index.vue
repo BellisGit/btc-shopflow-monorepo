@@ -8,8 +8,8 @@
       :form-items="formItems"
       :op="{ buttons: ['edit', 'delete'] }"
       :on-info="handleRoleInfo"
-      left-title="域列表"
-      right-title="角色列表"
+      :left-title="t('access.roles.fields.domain_id')"
+      :right-title="t('access.roles.fields.role_name')"
       :show-unassigned="true"
       :enable-key-search="true"
       :left-size="'small'"
@@ -20,71 +20,91 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, h } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { BtcTableGroup } from '@btc/shared-components';
-import {
-  getRoleFormItems,
-  services
-} from './config';
+import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
 
+const { t } = useI18n();
 const tableGroupRef = ref();
 const domainOptions = ref<any[]>([]);
 const roleOptions = ref<any[]>([]);
 
-// 动态表格列配置，父级角色和域列会根据选项格式化显示
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('access.roles');
+const { formItems: baseFormItems } = usePageForms('access.roles');
+const pageConfig = getPageConfigFull('access.roles');
+
+// 使用 config.ts 中定义的服务
+const services = {
+  sysdomain: pageConfig?.service?.sysdomain,
+  sysrole: usePageService('access.roles', 'sysrole'),
+};
+
+// 动态表格列配置 - 扩展以支持动态 formatter
 const roleColumns = computed(() => {
-  const baseColumns = [
-    { type: 'selection', width: 60 },
-    { type: 'index', label: '序号', width: 60 },
-    {
-      prop: 'roleName',
-      label: '角色名称',
-      minWidth: 150
-    },
-    { prop: 'roleCode', label: '角色编码', width: 180 },
-    {
-      prop: 'roleType',
-      label: '角色类型',
-      width: 100,
-      dict: [
-        { label: '管理员', value: 'ADMIN', type: 'danger' },
-        { label: '业务员', value: 'BUSINESS', type: 'success' },
-        { label: '访客', value: 'GUEST', type: 'info' }
-      ],
-      dictColor: true
-    },
-    {
-      prop: 'parentId',
-      label: '父级角色',
-      width: 100,
-      formatter: (row: any) => {
-        if (!row.parentId || row.parentId === '0' || roleOptions.value.length === 0) {
-          return '无';
+  return baseColumns.value.map(col => {
+    // 如果列是 parentId，添加动态 formatter
+    if (col.prop === 'parentId') {
+      return {
+        ...col,
+        formatter: (row: any) => {
+          if (!row.parentId || row.parentId === '0' || roleOptions.value.length === 0) {
+            return '无';
+          }
+          const parentRole = roleOptions.value.find((r: any) => r.id === row.parentId);
+          return parentRole ? parentRole.roleName : row.parentId;
         }
-        const parentRole = roleOptions.value.find((r: any) => r.id === row.parentId);
-        return parentRole ? parentRole.roleName : row.parentId;
-      }
-    },
-    {
-      prop: 'domainId',
-      label: '所属域',
-      width: 100,
-      formatter: (row: any) => {
-        if (!row.domainId || domainOptions.value.length === 0) {
-          return '未分配';
+      };
+    }
+    // 如果列是 domainId，添加动态 formatter
+    if (col.prop === 'domainId') {
+      return {
+        ...col,
+        formatter: (row: any) => {
+          if (!row.domainId || domainOptions.value.length === 0) {
+            return '未分配';
+          }
+          const domain = domainOptions.value.find((d: any) => d.id === row.domainId);
+          return domain ? domain.name : row.domainId;
         }
-        const domain = domainOptions.value.find((d: any) => d.id === row.domainId);
-        return domain ? domain.name : row.domainId;
-      }
-    },
-    { prop: 'description', label: '描述', minWidth: 200, showOverflowTooltip: true },
-    { prop: 'createdAt', label: '创建时间', width: 160, sortable: true }
-  ];
-  return baseColumns;
+      };
+    }
+    return col;
+  });
 });
 
-// 动态表单配置
-const formItems = computed(() => getRoleFormItems(domainOptions.value, roleOptions.value));
+// 动态表单配置 - 扩展以支持动态 options
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 parentId，添加动态 options
+    if (item.prop === 'parentId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            options: roleOptions.value,
+          },
+        },
+      };
+    }
+    // 如果表单项是 domainId，添加动态 options
+    if (item.prop === 'domainId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            options: domainOptions.value,
+          },
+        },
+      };
+    }
+    return item;
+  });
+});
 
 // 获取角色标签类型
 function getRoleTagType(roleType: string): 'danger' | 'success' | 'info' | 'primary' | 'warning' {
@@ -99,8 +119,8 @@ function getRoleTagType(roleType: string): 'danger' | 'success' | 'info' | 'prim
 // 加载角色数据
 async function loadRoleOptions() {
   try {
-    const response = await services.sysrole.list({});
-    roleOptions.value = response.list || [];
+    const response = await services.sysrole?.list({});
+    roleOptions.value = response?.list || [];
     // 注意：不需要手动刷新表格，因为：
     // 1. roleOptions 是响应式的，更新后会自动触发表格列的 formatter 重新计算
     // 2. 表格会在左侧选择时自动刷新，避免重复调用

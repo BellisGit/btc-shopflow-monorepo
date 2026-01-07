@@ -30,14 +30,15 @@ defineOptions({
   name: 'LayoutBreadcrumb',
 });
 
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
-import { getManifestRoute } from '@btc/subapp-manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { getMenusForApp } from '../../../../store/menuRegistry';
 import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
+import { initGlobalTabBreadcrumbListener, globalBreadcrumbList } from '../../../../composables/useGlobalTabBreadcrumbState';
 
 // 判断是否为SVG图标
 function isSvgIcon(iconName?: string): boolean {
@@ -50,8 +51,13 @@ function getSvgName(iconName?: string): string {
 }
 
 const route = useRoute();
-const { t } = useI18n();
+const { t, te } = useI18n();
 const processStore = useProcessStore();
+
+// 初始化全局状态监听器（单例模式，只注册一次）
+onMounted(() => {
+  initGlobalTabBreadcrumbListener();
+});
 
 interface BreadcrumbItem {
   label: string;
@@ -162,15 +168,100 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
           return null;
         }
 
-        const translated = key ? t(key) : t(rawLabel);
-        const label =
-          translated && translated !== (key ?? rawLabel) ? translated : rawLabel;
+        // 优先使用主应用的 i18n 实例进行翻译
+        let label: string;
+        if (key) {
+          // 优先使用主应用的 i18n 实例进行翻译
+          const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+          if (mainAppI18n && mainAppI18n.global) {
+            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+            const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+            
+            // 直接访问消息对象，确保能访问到已合并的语言包
+            if (key in messages) {
+              const value = messages[key];
+              if (typeof value === 'string' && value.trim() !== '') {
+                label = value;
+              } else if (typeof value === 'function') {
+                try {
+                  const result = value({ normalize: (arr: any[]) => arr[0] });
+                  if (typeof result === 'string' && result.trim() !== '') {
+                    label = result;
+                  }
+                } catch {
+                  // 如果函数调用失败，继续使用其他方法
+                }
+              }
+            }
+            
+            // 如果直接访问失败，使用 t() 函数
+            if (!label && mainAppI18n.global.te(key, currentLocale)) {
+              const mainTranslated = mainAppI18n.global.t(key, currentLocale);
+              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== key && mainTranslated.trim() !== '') {
+                label = mainTranslated;
+              }
+            }
+          }
+          
+          // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+          if (!label && te(key)) {
+            label = t(key);
+          } else if (!label) {
+            // 翻译键不存在，使用兜底文本
+            label = rawLabel;
+          }
+        } else {
+          // 没有翻译键，尝试翻译 rawLabel
+          // 优先使用主应用的 i18n 实例进行翻译
+          const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+          if (mainAppI18n && mainAppI18n.global && rawLabel.includes('.')) {
+            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+            const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+            
+            // 直接访问消息对象，确保能访问到已合并的语言包
+            if (rawLabel in messages) {
+              const value = messages[rawLabel];
+              if (typeof value === 'string' && value.trim() !== '') {
+                label = value;
+              } else if (typeof value === 'function') {
+                try {
+                  const result = value({ normalize: (arr: any[]) => arr[0] });
+                  if (typeof result === 'string' && result.trim() !== '') {
+                    label = result;
+                  }
+                } catch {
+                  // 如果函数调用失败，继续使用其他方法
+                }
+              }
+            }
+            
+            // 如果直接访问失败，使用 t() 函数
+            if (!label && mainAppI18n.global.te(rawLabel, currentLocale)) {
+              const mainTranslated = mainAppI18n.global.t(rawLabel, currentLocale);
+              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== rawLabel && mainTranslated.trim() !== '') {
+                label = mainTranslated;
+              }
+            }
+          }
+          
+          // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+          if (!label) {
+            label = te(rawLabel) ? t(rawLabel) : rawLabel;
+          }
+        }
 
-        // 优先使用配置中的图标，如果没有则从菜单注册表中查找
-        const menuIcon = key ? findMenuIconByI18nKey(key, currentApp) : undefined;
-
-        // 确保图标正确传递：优先使用配置中的图标
-        const icon = item.icon || menuIcon;
+        // 优先从菜单注册表中查找图标（确保与左侧菜单图标一致）
+        let icon: string | undefined;
+        if (key) {
+          const menuIcon = findMenuIconByI18nKey(key, currentApp);
+          if (menuIcon) {
+            icon = menuIcon;
+          }
+        }
+        // 如果菜单注册表中没有找到图标，使用 manifest/路由 meta 中指定的图标（兜底）
+        if (!icon && item.icon) {
+          icon = item.icon;
+        }
 
         const result: BreadcrumbItem = {
           label,
@@ -178,10 +269,18 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
         if (icon) {
           result.icon = icon;
         }
+        if (item.path) {
+          result.path = item.path;
+        }
         return result;
       })
       .filter(Boolean) as BreadcrumbItem[];
   };
+
+  // 优先级 1: 全局状态的 breadcrumbList（微应用推送或主应用更新）
+  if (globalBreadcrumbList.value.length > 0) {
+    return normalizeBreadcrumbEntries(globalBreadcrumbList.value);
+  }
 
   const metaBreadcrumbs = normalizeBreadcrumbEntries(
     currentTab?.meta?.breadcrumbs,

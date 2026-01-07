@@ -5,9 +5,10 @@
  */
 
 declare module '@configs/unified-env-config' {
-  export type Environment = 'development' | 'preview' | 'production';
+  export type Environment = 'development' | 'preview' | 'test' | 'production';
 
   export function getEnvironment(): Environment;
+  export function getCurrentEnvironment(): Environment;
   export function getCurrentSubApp(): string | null;
   export function isMainApp(
     routePath?: string,
@@ -25,7 +26,15 @@ declare module '@configs/app-scanner' {
     subdomain?: string;
     type: 'main' | 'sub' | 'layout' | 'docs';
     enabled: boolean;
+    icon?: string;
     version?: string;
+    routes?: {
+      mainAppRoutes?: string[];
+      nonClosableRoutes?: string[];
+      homeRoute?: string;
+      skipTabbarRoutes?: string[];
+    };
+    metadata?: Record<string, any>;
   }
 
   export function getAllApps(): AppIdentity[];

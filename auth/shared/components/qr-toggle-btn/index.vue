@@ -47,9 +47,9 @@ function handleClick() {
   emit('click');
 }
 
-// 如果没有提供label，使用默认国际化文本
+// 翻译 label，如果没有提供则使用默认国际化文本
 const labelText = computed(() => {
-  return props.label || t('切换扫码登录');
+  return props.label ? t(props.label) : t('auth.login.toggle.qr');
 });
 </script>
 

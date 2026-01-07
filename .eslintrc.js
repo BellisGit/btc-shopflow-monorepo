@@ -11,6 +11,8 @@
     '**/coverage/**',
     'build/**',
     '**/build/**',
+    // 忽略国际化文件本身（避免检查 JSON 文件中的 key）
+    '**/locales/**/*.json',
   ],
   env: {
     browser: true,
@@ -27,11 +29,33 @@
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint', 'import'],
+  plugins: [
+    '@typescript-eslint',
+    'import',
+    'i18n',
+  ],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     'no-unused-vars': 'off',
+    // 国际化规范检查
+    // 1. 禁止硬编码中文文本（核心规则）
+    'i18n/no-chinese-character': [
+      'error',
+      {
+        // 允许在注释中使用中文
+        ignoreComments: true,
+        // 允许在字符串字面量中使用中文（如果是在国际化 key 中）
+        ignoreStrings: false,
+        // 允许在模板字符串中使用中文（如果是在国际化 key 中）
+        ignoreTemplateLiterals: false,
+        // 允许在正则表达式中使用中文
+        ignoreRegExpLiterals: true,
+      },
+    ],
+    // 2. 强制国际化 key 使用 snake_case 格式，且符合层级结构（自定义规则）
+    // 注意：由于 ESLint 插件注册限制，此规则暂时通过自定义脚本检查
+    // 可以使用 scripts/check-i18n-keys.js 进行手动检查
     // 重构 import/no-restricted-paths 规则
     // 规则1：禁止 应用(apps) 导入 包(packages) 的源码
     // 规则2：禁止 包A 的源码 导入 包B 的源码（跨包源码导入）
@@ -82,6 +106,10 @@
       parser: 'vue-eslint-parser',
       parserOptions: {
         parser: '@typescript-eslint/parser',
+      },
+      rules: {
+        // Vue 模板中也需要检查国际化规范
+        'i18n/no-chinese-character': 'error',
       },
     },
     // 允许应用导入包的样式和语言文件（通过禁用规则实现）

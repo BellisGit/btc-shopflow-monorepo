@@ -24,7 +24,7 @@
         <BtcFlex1 />
         <BtcSearchKey />
         <BtcCrudActions>
-          <BtcExportBtn :filename="t('menu.logistics.inventoryManagement.info')" />
+          <BtcExportBtn :filename="t('menu.logistics.inventory_management.info')" />
         </BtcCrudActions>
       </BtcRow>
 
@@ -49,7 +49,7 @@
     <!-- 子流程详情弹窗 -->
     <BtcDialog
       v-model="subProcessDialogVisible"
-      :title="t('logistics.inventory.subProcess.detail.title')"
+      :title="t('logistics.inventory.sub_process.detail.title')"
       width="1200px"
       @closed="handleSubProcessDialogClosed"
     >
@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { useI18n, useThemePlugin, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert, BtcMessage, BtcSvg, BtcTableButton, BtcDialog } from '@btc/shared-components';
@@ -134,10 +134,13 @@ const pullButtonConfig = computed<BtcTableButtonConfig>(() => ({
   },
 }));
 
-const inventoryInfoService: CrudService<any> = createCrudServiceFromEps(
-  ['logistics', 'warehouse', 'check'],
-  service
-);
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('logistics.inventory.info');
+const { formItems: baseFormItems } = usePageForms('logistics.inventory.info');
+const pageConfig = getPageConfigFull('logistics.inventory.info');
+
+// 使用 config.ts 中定义的服务
+const inventoryInfoService = usePageService('logistics.inventory.info', 'info');
 
 // 子流程服务
 const subProcessService: CrudService<any> = createCrudServiceFromEps(
@@ -148,19 +151,19 @@ const subProcessService: CrudService<any> = createCrudServiceFromEps(
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
   value ? formatDateTime(value) : '--';
 
-const columns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { label: t('logistics.inventory.base.fields.checkNo'), prop: 'checkNo', minWidth: 160, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.domainId'), prop: 'domainId', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.checkType'), prop: 'checkType', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.checkStatus'), prop: 'checkStatus', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.startTime'), prop: 'startTime', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.base.fields.endTime'), prop: 'endTime', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.base.fields.checkerId'), prop: 'checkerId', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.remark'), prop: 'remark', minWidth: 200, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.createdAt'), prop: 'createdAt', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.base.fields.updateAt'), prop: 'updateAt', width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是日期字段，添加动态 formatter
+    if (col.prop === 'startTime' || col.prop === 'endTime' || col.prop === 'createdAt' || col.prop === 'updateAt') {
+      return {
+        ...col,
+        formatter: formatDateCell,
+      };
+    }
+    return col;
+  });
+});
 
 // 操作按钮配置
 const opButtons = computed(() => [
@@ -188,128 +191,76 @@ const opButtons = computed(() => [
   },
 ]);
 
-const formItems = computed<FormItem[]>(() => [
-  {
-    label: t('logistics.inventory.base.fields.checkNo'),
-    prop: 'checkNo',
-    required: true,
-    span: 24,
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.domainId'),
-    prop: 'domainId',
-    span: 24,
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.checkType'),
-    prop: 'checkType',
-    span: 24,
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.checkStatus'),
-    prop: 'checkStatus',
-    span: 24,
-    component: {
-      name: 'el-select',
-      props: {
-        clearable: true,
-        placeholder: t('common.pleaseSelect'),
-      },
-      options: [
-        { label: t('logistics.inventory.base.fields.checkStatus.notStarted'), value: 'notStarted' },
-        { label: t('logistics.inventory.base.fields.checkStatus.inProgress'), value: 'inProgress' },
-        { label: t('logistics.inventory.base.fields.checkStatus.completed'), value: 'completed' },
-      ],
-    },
-  },
-  {
-    label: t('logistics.inventory.base.fields.startTime'),
-    prop: 'startTime',
-    span: 12,
-    component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.endTime'),
-    prop: 'endTime',
-    span: 12,
-    component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.checkerId'),
-    prop: 'checkerId',
-    span: 24,
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.base.fields.remark'),
-    prop: 'remark',
-    span: 24,
-    component: { name: 'el-input', props: { type: 'textarea', rows: 2, maxlength: 255 } },
-  },
-]);
+// 扩展表单配置以支持动态 options
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 checkStatus，添加动态 options
+    if (item.prop === 'checkStatus') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          options: [
+            { label: t('logistics.inventory.base.fields.check_status.notStarted'), value: 'notStarted' },
+            { label: t('logistics.inventory.base.fields.check_status.inProgress'), value: 'inProgress' },
+            { label: t('logistics.inventory.base.fields.check_status.completed'), value: 'completed' },
+          ],
+        },
+      };
+    }
+    return item;
+  });
+});
+
+// 从 config.ts 读取子流程配置
+const { columns: baseSubProcessColumns } = usePageColumns('logistics.inventory.info.subProcess');
+const { formItems: baseSubProcessFormItems } = usePageForms('logistics.inventory.info.subProcess');
 
 // 子流程表格列配置
-const subProcessColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { label: t('logistics.inventory.subProcess.fields.subProcessNo'), prop: 'subProcessNo', minWidth: 160, showOverflowTooltip: true },
-  { label: t('logistics.inventory.subProcess.fields.checkStatus'), prop: 'checkStatus', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.subProcess.fields.startTime'), prop: 'startTime', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.subProcess.fields.endTime'), prop: 'endTime', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.subProcess.fields.remainingSeconds'), prop: 'remainingSeconds', minWidth: 120 },
-  { label: t('logistics.inventory.subProcess.fields.parentProcessNo'), prop: 'parentProcessNo', minWidth: 160, showOverflowTooltip: true },
-  { label: t('logistics.inventory.base.fields.createdAt'), prop: 'createdAt', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.base.fields.updateAt'), prop: 'updatedAt', width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const subProcessColumns = computed(() => {
+  return baseSubProcessColumns.value.map(col => {
+    if (col.prop === 'startTime' || col.prop === 'endTime' || col.prop === 'createdAt' || col.prop === 'updatedAt') {
+      return { ...col, formatter: formatDateCell };
+    }
+    return col;
+  });
+});
 
 // 子流程表单项配置
-const subProcessFormItems = computed<FormItem[]>(() => [
+// 扩展配置以支持动态 options
+const subProcessFormItems = computed(() => {
+  return baseSubProcessFormItems.value.map(item => {
+    if (item.prop === 'checkStatus') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          options: [
+            { label: t('logistics.inventory.base.fields.check_status.notStarted'), value: 'notStarted' },
+            { label: t('logistics.inventory.base.fields.check_status.inProgress'), value: 'inProgress' },
+            { label: t('logistics.inventory.base.fields.check_status.completed'), value: 'completed' },
+          ],
+        },
+      };
+    }
+    return item;
+  });
+});
   {
-    label: t('logistics.inventory.subProcess.fields.subProcessNo'),
-    prop: 'subProcessNo',
-    required: true,
-    span: 12,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.subProcess.fields.parentProcessNo'),
-    prop: 'parentProcessNo',
-    span: 12,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.subProcess.fields.checkStatus'),
-    prop: 'checkStatus',
-    span: 12,
-    component: {
-      name: 'el-select',
-      props: {
-        clearable: true,
-        placeholder: t('common.pleaseSelect'),
-      },
-      options: [
-        { label: t('logistics.inventory.base.fields.checkStatus.notStarted'), value: 'notStarted' },
-        { label: t('logistics.inventory.base.fields.checkStatus.inProgress'), value: 'inProgress' },
-        { label: t('logistics.inventory.base.fields.checkStatus.completed'), value: 'completed' },
-      ],
-    },
-  },
-  {
-    label: t('logistics.inventory.subProcess.fields.remainingSeconds'),
+    label: t('logistics.inventory.sub_process.fields.remainingSeconds'),
     prop: 'remainingSeconds',
     span: 12,
     component: { name: 'el-input-number', props: { style: 'width: 100%', min: 0 } },
   },
   {
-    label: t('logistics.inventory.subProcess.fields.startTime'),
+    label: t('logistics.inventory.sub_process.fields.startTime'),
     prop: 'startTime',
     span: 12,
     component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },
   },
   {
-    label: t('logistics.inventory.subProcess.fields.endTime'),
+    label: t('logistics.inventory.sub_process.fields.endTime'),
     prop: 'endTime',
     span: 12,
     component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },

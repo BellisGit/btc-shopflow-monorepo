@@ -1,0 +1,415 @@
+import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router';
+import { getAppBySubdomain } from '@configs/app-scanner';
+import { getMainAppHomeRoute } from '@btc/shared-core';
+import { createLogoutGuard, createLoginRedirectGuard, createAuthGuard } from '@btc/shared-router';
+import { KNOWN_SUB_APP_PREFIXES, APP_NAME_MAP, PUBLIC_PAGES } from '../constants';
+import { isAuthenticated } from '../utils/auth';
+import { normalizeRoutePath } from '../utils/path';
+
+/**
+ * 动态导入 @btc/shared-core
+ */
+async function importSharedCore() {
+  return await import('@btc/shared-core');
+}
+
+/**
+ * 初始化 qiankun 事件监听器
+ */
+function setupQiankunEventListener() {
+  if (typeof window === 'undefined') return;
+
+  // 监听 qiankun:after-mount 事件，立即关闭应用级 loading
+  window.addEventListener('qiankun:after-mount', (event: any) => {
+    const appName = event.detail?.appName;
+    if (!appName) return;
+
+    const appDisplayName = APP_NAME_MAP[appName] || appName;
+
+    // 立即同步关闭应用级 loading（不等待异步导入）
+    const loadingEls = document.querySelectorAll('.app-loading');
+    loadingEls.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+        // 立即移除 DOM 元素
+        try {
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        } catch (e) {
+          // 忽略移除错误
+        }
+      }
+    });
+
+    // 异步调用 appLoadingService.hide() 进行清理
+    importSharedCore().then((sharedCore) => {
+      if (sharedCore?.appLoadingService) {
+        sharedCore.appLoadingService.hide(appDisplayName);
+      }
+    }).catch(() => {
+      // 静默失败
+    });
+  });
+}
+
+/**
+ * 处理子应用路由
+ */
+function handleSubAppRoute(
+  to: RouteLocationNormalized,
+  _from: RouteLocationNormalized,
+  router: Router
+) {
+  const isSubAppRoute = KNOWN_SUB_APP_PREFIXES.some(prefix => to.path.startsWith(prefix));
+
+  if (!isSubAppRoute) {
+    return false;
+  }
+
+  // 立即隐藏"拜里斯科技"loading，使用同步方式，确保优先级
+  const systemLoadingEl = document.getElementById('Loading');
+  if (systemLoadingEl) {
+    systemLoadingEl.style.setProperty('display', 'none', 'important');
+    systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+    systemLoadingEl.style.setProperty('opacity', '0', 'important');
+    systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+    systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+    systemLoadingEl.classList.add('is-hide');
+  }
+
+  // 立即隐藏rootLoadingService（如果正在显示）
+  try {
+    if ((window as any).__BTC_ROOT_LOADING_SERVICE__) {
+      const rootLoadingService = (window as any).__BTC_ROOT_LOADING_SERVICE__;
+      if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
+        rootLoadingService.hide();
+      }
+    }
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 立即隐藏路由loading（如果正在显示）
+  try {
+    const routeLoadingEl = document.querySelector('.route-loading') as HTMLElement;
+    if (routeLoadingEl) {
+      routeLoadingEl.style.setProperty('display', 'none', 'important');
+      routeLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+      routeLoadingEl.style.setProperty('opacity', '0', 'important');
+    }
+    importSharedCore().then((sharedCore) => {
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
+    }).catch(() => {
+      // 静默失败
+    });
+  } catch (error) {
+    // 静默失败
+  }
+
+  // 判断是否是真正的应用切换
+  const getAppNameFromPath = (path: string): string | null => {
+    const pathParts = path.split('/').filter(Boolean);
+    const firstPart = pathParts[0] || '';
+    return KNOWN_SUB_APP_PREFIXES.some(prefix => prefix === `/${firstPart}`) ? firstPart : null;
+  };
+
+  const fromAppName = _from.path ? getAppNameFromPath(_from.path) : null;
+  const toAppName = getAppNameFromPath(to.path);
+
+  const isRealAppSwitch =
+    (fromAppName === null && toAppName !== null) ||
+    (fromAppName !== null && toAppName !== null && fromAppName !== toAppName);
+
+  // 只有真正的应用切换时才显示应用级别loading
+  if (isRealAppSwitch && toAppName) {
+    const container = document.querySelector('#subapp-viewport') as HTMLElement;
+    if (container) {
+      container.style.setProperty('display', 'none', 'important');
+      container.style.setProperty('visibility', 'hidden', 'important');
+      container.style.setProperty('opacity', '0', 'important');
+    }
+
+    const appDisplayName = APP_NAME_MAP[toAppName] || toAppName;
+
+    if (appDisplayName && appDisplayName !== '应用' && appDisplayName !== toAppName) {
+      importSharedCore().then((sharedCore) => {
+        if (sharedCore?.appLoadingService) {
+          sharedCore.appLoadingService.show(appDisplayName, container || undefined);
+        }
+      }).catch(() => {
+        // 静默失败
+      });
+    }
+  }
+
+  return true;
+}
+
+/**
+ * 处理路径规范化
+ */
+function handlePathNormalization(
+  to: RouteLocationNormalized,
+  next: NavigationGuardNext
+): boolean {
+  const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
+  const normalizedPath = normalizeRoutePath(to.path);
+
+  if (normalizedPath) {
+    sessionStorage.setItem('__BTC_ROUTE_NORMALIZING__', '1');
+    
+    const appName = Object.keys(APP_NAME_MAP).find(key => normalizedPath.startsWith(`/${key}`));
+    if (appName) {
+      const appDisplayName = APP_NAME_MAP[appName];
+      if (appDisplayName) {
+        sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+      }
+    }
+
+    // 再次确保"拜里斯科技"loading被隐藏
+    const systemLoadingEl = document.getElementById('Loading');
+    if (systemLoadingEl) {
+      systemLoadingEl.style.setProperty('display', 'none', 'important');
+      systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+      systemLoadingEl.style.setProperty('opacity', '0', 'important');
+      systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+      systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+      systemLoadingEl.classList.add('is-hide');
+    }
+
+    next({
+      path: normalizedPath,
+      query: to.query,
+      hash: to.hash,
+      replace: true,
+    });
+    return true;
+  }
+
+  // 如果路径规范化完成，清除标记
+  if (isNormalizing) {
+    setTimeout(function() {
+      sessionStorage.removeItem('__BTC_ROUTE_NORMALIZING__');
+    }, 100);
+  }
+
+  return false;
+}
+
+/**
+ * 检查是否为公开页面
+ */
+function isPublicPage(to: RouteLocationNormalized): boolean {
+  return (
+    to.meta?.public === true ||
+    to.path === '/login' ||
+    to.path === '/forget-password' ||
+    to.path === '/register' ||
+    to.path.startsWith('/duty/')
+  );
+}
+
+// 创建共享路由守卫实例
+const logoutGuard = createLogoutGuard({
+  appName: 'main',
+});
+
+const loginRedirectGuard = createLoginRedirectGuard({
+  appName: 'main',
+  homeRoute: '/overview',
+  getMainAppHomeRoute: () => getMainAppHomeRoute(),
+  isAuthenticated,
+});
+
+const authGuard = createAuthGuard({
+  appName: 'main',
+  publicPages: PUBLIC_PAGES,
+  loginPath: '/login',
+  isAuthenticated,
+});
+
+/**
+ * 处理认证检查
+ */
+function handleAuthentication(
+  to: RouteLocationNormalized,
+  next: NavigationGuardNext,
+  router: Router
+): boolean {
+  const publicPage = isPublicPage(to);
+  
+  if (publicPage) {
+    return false;
+  }
+
+  const isAuthenticatedUser = isAuthenticated();
+
+  if (!isAuthenticatedUser) {
+    try {
+      const loginRoute = router.resolve('/login');
+      if (loginRoute && loginRoute.matched.length > 0) {
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath },
+        });
+      } else {
+        window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+      }
+    } catch (error) {
+      window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * 处理未匹配路由
+ */
+function handleUnmatchedRoute(
+  to: RouteLocationNormalized,
+  next: NavigationGuardNext
+): boolean {
+  if (to.matched.length > 0) {
+    return false;
+  }
+
+  // 对于首页，应该总是匹配
+  if (to.path === getMainAppHomeRoute()) {
+    next();
+    return true;
+  }
+
+  const isPublicPageCheck = PUBLIC_PAGES.includes(to.path);
+  const isDutyPage = to.path.startsWith('/duty/');
+  const isHomePage = to.path.startsWith('/home');
+
+  if (isHomePage) {
+    next(false);
+    return true;
+  }
+
+  if (isPublicPageCheck || isDutyPage) {
+    next();
+    return true;
+  }
+
+  const isAuthenticatedUser = isAuthenticated();
+
+  if (!isAuthenticatedUser) {
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath },
+    });
+    return true;
+  }
+
+  // 检查是否是子应用路由
+  const isSubAppRoute = KNOWN_SUB_APP_PREFIXES.some(prefix => to.path.startsWith(prefix));
+
+  if (isSubAppRoute) {
+    next();
+    return true;
+  }
+
+  // 主应用路由未匹配，重定向到 404 页面
+  next('/404');
+  return true;
+}
+
+/**
+ * 设置路由前置守卫
+ */
+export function setupBeforeEachGuard(router: Router) {
+  // 初始化 qiankun 事件监听器
+  setupQiankunEventListener();
+
+  router.beforeEach(async (to, _from, next) => {
+    // 处理子应用路由
+    if (handleSubAppRoute(to, _from, router)) {
+      // 继续处理其他逻辑
+    }
+
+    // 检查是否是静态 HTML 文件
+    if (to.path.startsWith('/duty/')) {
+      next(false);
+      return;
+    }
+
+    // 检查是否是 home-app 的页面
+    if (to.path.startsWith('/home')) {
+      next(false);
+      return;
+    }
+
+    // 处理路径规范化
+    if (handlePathNormalization(to, next)) {
+      return;
+    }
+
+    // 处理子域名环境
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+    const appBySubdomain = getAppBySubdomain(hostname);
+    const currentSubdomainApp = appBySubdomain?.id;
+
+    if (isProductionSubdomain && currentSubdomainApp) {
+      const publicPage = isPublicPage(to);
+      if (publicPage) {
+        next();
+        return;
+      }
+      next();
+      return;
+    }
+
+    // 执行共享路由守卫（按优先级顺序）
+    // 使用一个标志来跟踪是否已经调用了 next()
+    let nextCalled = false;
+    const wrappedNext: NavigationGuardNext = ((result?: any) => {
+      if (!nextCalled) {
+        nextCalled = true;
+        next(result);
+      }
+    }) as NavigationGuardNext;
+
+    // 1. 退出登录守卫（最高优先级）
+    await logoutGuard(to, _from, wrappedNext);
+    if (nextCalled) {
+      return;
+    }
+
+    // 2. 登录页重定向守卫
+    await loginRedirectGuard(to, _from, wrappedNext);
+    if (nextCalled) {
+      return;
+    }
+
+    // 3. 认证守卫
+    await authGuard(to, _from, wrappedNext, router);
+    if (nextCalled) {
+      return;
+    }
+
+    // 处理应用特定的认证检查（保留原有逻辑作为兜底）
+    if (handleAuthentication(to, next, router)) {
+      return;
+    }
+
+    // 处理未匹配路由
+    if (handleUnmatchedRoute(to, next)) {
+      return;
+    }
+
+    // 继续路由导航
+    next();
+  });
+}
+

@@ -4,7 +4,7 @@
       ref="tableGroupRef"
       :left-service="checkService"
       :left-title="t('inventory.check.list')"
-      :right-title="t('menu.logistics.inventoryManagement.result')"
+      :right-title="t('menu.logistics.inventory_management.result')"
       :show-unassigned="false"
       :enable-key-search="true"
       :left-size="'small'"
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { useI18n, normalizePageResponse } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
@@ -131,15 +131,15 @@ const checkService = {
   }
 };
 
-// 盘点结果服务（右侧表）
-const inventoryCheckService = createCrudServiceFromEps(
+// 盘点结果服务（右侧表）- 使用 config.ts 中定义的服务或创建新服务
+const baseInventoryCheckService = pageConfig?.service?.result || createCrudServiceFromEps(
   ['logistics', 'base', 'check'],
   service
 );
 
 // 包装盘点结果服务，将checkNo作为参数传递
 const wrappedInventoryCheckService = {
-  ...inventoryCheckService,
+  ...baseInventoryCheckService,
   async page(params: any) {
     // 检查组件是否已卸载
     if (isUnmounted) {
@@ -182,7 +182,7 @@ const wrappedInventoryCheckService = {
     }
 
     try {
-      return await inventoryCheckService.page(finalParams);
+      return await baseInventoryCheckService.page(finalParams);
     } catch (error) {
       // 如果组件已卸载，返回空结果
       if (isUnmounted) {
@@ -297,103 +297,27 @@ const handleExport = async () => {
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('logistics.inventory.result');
+const { formItems } = usePageForms('logistics.inventory.result');
+const pageConfig = getPageConfigFull('logistics.inventory.result');
+
 const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: any) => formatTableNumber(value);
 
 // 盘点结果表格列（只显示：序号、物料编码、仓位、账面数量、实际数量、差异数量、操作列）
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 48 },
-  { type: 'index', label: t('common.index'), width: 60 },
-  { label: t('logistics.inventory.check.fields.materialCode'), prop: 'materialCode', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.check.fields.position'), prop: 'position', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.inventory.check.fields.bookQty'), prop: 'bookQty', minWidth: 120, formatter: formatNumber },
-  { label: t('logistics.inventory.check.fields.actualQty'), prop: 'actualQty', minWidth: 120, formatter: formatNumber },
-  { label: t('logistics.inventory.check.fields.diffQty'), prop: 'diffQty', minWidth: 120, formatter: formatNumber },
-]);
-
-
-const formItems = computed<FormItem[]>(() => [
-  {
-    label: t('logistics.inventory.check.fields.baseId'),
-    prop: 'baseId',
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.materialCode'),
-    prop: 'materialCode',
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.materialName'),
-    prop: 'materialName',
-    component: { name: 'el-input', props: { maxlength: 200 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.specification'),
-    prop: 'specification',
-    component: { name: 'el-input', props: { maxlength: 200 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.unit'),
-    prop: 'unit',
-    component: { name: 'el-input', props: { maxlength: 20 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.batchNo'),
-    prop: 'batchNo',
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.bookQty'),
-    prop: 'bookQty',
-    component: { name: 'el-input', props: { maxlength: 50 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.actualQty'),
-    prop: 'actualQty',
-    component: { name: 'el-input', props: { maxlength: 50 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.storageLocation'),
-    prop: 'storageLocation',
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.diffQty'),
-    prop: 'diffQty',
-    component: { name: 'el-input', props: { maxlength: 50 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.diffRate'),
-    prop: 'diffRate',
-    component: { name: 'el-input', props: { maxlength: 50 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.checkerId'),
-    prop: 'checkerId',
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.check.fields.isDiff'),
-    prop: 'isDiff',
-    component: {
-      name: 'el-select',
-      props: {
-        clearable: true,
-      },
-      options: [
-        { label: t('common.enabled'), value: 1 },
-        { label: t('common.disabled'), value: 0 },
-      ],
-    },
-  },
-  {
-    label: t('logistics.inventory.check.fields.remark'),
-    prop: 'remark',
-    component: { name: 'el-input', props: { type: 'textarea', rows: 3, maxlength: 500 } },
-  },
-]);
+// 扩展配置以支持动态 formatter
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是数字字段，添加动态 formatter
+    if (col.prop === 'bookQty' || col.prop === 'actualQty' || col.prop === 'diffQty') {
+      return {
+        ...col,
+        formatter: formatNumber,
+      };
+    }
+    return col;
+  });
+});
 
 </script>
 

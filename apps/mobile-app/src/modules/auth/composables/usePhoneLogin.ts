@@ -3,7 +3,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/services/auth';
-import { getCookie } from '@/utils/cookie';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 
 export function usePhoneLogin() {
   const router = useRouter();

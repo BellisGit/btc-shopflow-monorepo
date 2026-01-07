@@ -3,7 +3,7 @@ import App from './App.vue';
 import { bootstrap } from './bootstrap';
 import { registerAppEnvAccessors } from '@configs/layout-bridge';
 import { getAppBySubdomain } from '@configs/app-scanner';
-import { setAppBySubdomainFn } from '@btc/subapp-manifests';
+import { setAppBySubdomainFn } from '@btc/shared-core/manifest';
 import { isMainApp } from '@configs/unified-env-config';
 import { removeLoadingElement } from '@btc/shared-core';
 // 动态导入避免构建时错误（延迟到运行时导入）
@@ -39,12 +39,10 @@ registerAppEnvAccessors();
 // 注入 getAppBySubdomain 函数到 subapp-manifests
 setAppBySubdomainFn(getAppBySubdomain);
 
-// 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
-import('@btc/shared-components').then(sharedComponents => {
-  sharedComponents.setIsMainAppFn(isMainApp);
-}).catch(() => {
-  // 静默处理导入失败，不影响应用启动
-});
+// 注入 isMainApp 函数到 shared-components（同步导入，确保在菜单组件初始化前已注入）
+// 关键：使用同步导入，确保菜单激活逻辑能正确判断主应用路由
+import { setIsMainAppFn } from '@btc/shared-components';
+setIsMainAppFn(isMainApp);
 
 const app = createApp(App);
 
@@ -285,17 +283,16 @@ const startupPromise = Promise.resolve()
       }
     });
 
-    // 暴露 authApi 到全局（异步加载，不阻塞启动）
-    import('./modules/api-services/auth').then(({ authApi }) => {
-      if (authApi && typeof (window as any).__APP_AUTH_API__ === 'undefined') {
-        (window as any).__APP_AUTH_API__ = authApi;
-      }
-    }).catch(() => {
-      // 静默失败，不影响应用运行
-    });
+    // 注意：authApi 已移除，请使用全局 __APP_AUTH_API__ 获取（由 main-app 提供）
+    // system-app 不再暴露 authApi 到全局，因为 auth 模块已移除
 
-    // 暴露域列表缓存清除函数（异步加载，不阻塞启动）
-    import('./utils/domain-cache').then(({ clearDomainCache }) => {
+    // 暴露域列表获取函数和清除函数（异步加载，不阻塞启动）
+    import('./utils/domain-cache').then(({ getDomainList, clearDomainCache }) => {
+      // 设置全局域列表获取函数（供共享组件版本的 menu-drawer 使用）
+      if (getDomainList && typeof (window as any).__APP_GET_DOMAIN_LIST__ === 'undefined') {
+        (window as any).__APP_GET_DOMAIN_LIST__ = getDomainList;
+      }
+      // 设置全局域列表缓存清除函数
       if (clearDomainCache && typeof (window as any).__APP_CLEAR_DOMAIN_CACHE__ === 'undefined') {
         (window as any).__APP_CLEAR_DOMAIN_CACHE__ = clearDomainCache;
       }

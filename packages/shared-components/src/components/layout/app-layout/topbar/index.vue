@@ -89,7 +89,7 @@ import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
 import { useBrowser } from '../../../../composables/useBrowser';
-import { getCurrentSubApp } from '@configs/unified-env-config';
+import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
 import { getAppById } from '@configs/app-scanner';
 import { getIsMainAppFn } from '../utils';
 import GlobalSearch from '../global-search/index.vue';
@@ -132,10 +132,16 @@ const shouldHandleDrawerEvent = (): boolean => {
   }
   // 检查 hostname 是否是 layout-app 的域名
   if (typeof window !== 'undefined') {
+    const env = getEnvironment();
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
-                             (hostname === 'localhost' && (port === '4192' || port === '4188'));
+    
+    const isLayoutAppDomain =
+      (env === 'production' && hostname === 'layout.bellis.com.cn') ||
+      (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
+      (env === 'preview' && port === '4192') ||
+      (env === 'development' && port === '4188');
+    
     if (isLayoutAppDomain) {
       return true; // layout-app 自己的域名，应该处理
     }

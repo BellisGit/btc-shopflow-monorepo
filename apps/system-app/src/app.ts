@@ -1,15 +1,15 @@
 import type { AppIdentity } from '@configs/app-identity.types';
 
 /**
- * 系统主应用身份配置
+ * 系统应用身份配置（子应用）
  */
 const systemAppIdentity: AppIdentity = {
   id: 'system',
-  name: '系统主应用',
-  description: 'BTC车间管理系统 - 系统主应用',
-  pathPrefix: '/',
-  subdomain: 'bellis.com.cn', // 修复：使用实际的域名（不带 www）
-  type: 'main',
+  name: '系统应用',
+  description: 'BTC车间管理系统 - 系统应用',
+  pathPrefix: '/system',
+  subdomain: 'system.bellis.com.cn',
+  type: 'sub',
   enabled: true,
   version: '1.0.0',
 };

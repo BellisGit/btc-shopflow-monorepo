@@ -28,7 +28,7 @@ export const githubPlugin: Plugin = {
     order: 1, // 在最左侧
     pc: true,
     h5: true,
-    component: () => import('./components/code.vue')
+    component: () => import('@btc/shared-components/components/layout/app-layout/github-icon/index.vue')
   },
 
   // 插件API

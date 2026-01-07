@@ -7,7 +7,7 @@
   "module": "src/main.ts",
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
-    "dev": "vite --port 8087",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
@@ -15,8 +15,6 @@
   "dependencies": {
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
-    "@btc/subapp-manifests": "workspace:*",
     "@element-plus/icons-vue": "^2.3.2",
     "@vueuse/core": "^13.9.0",
     "chardet": "^2.1.0",

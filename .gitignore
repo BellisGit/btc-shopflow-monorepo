@@ -13,6 +13,10 @@ build/
 !build/eps/
 !build/eps/eps.json
 !build/eps/eps.d.ts
+# 主应用使用 src/build/eps 目录
+!**/src/build/eps/
+!**/src/build/eps/eps.json
+!**/src/build/eps/eps.d.ts
 coverage/
 *.tsbuildinfo
 .turbo

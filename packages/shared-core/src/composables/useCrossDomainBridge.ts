@@ -350,8 +350,6 @@ export function useCrossDomainBridge(
     iframe.id = iframeId;
     iframe.src = finalBridgeUrl;
     iframe.style.display = 'none';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
     iframe.style.border = 'none';
     iframe.setAttribute('title', 'Auth Bridge');
     iframe.setAttribute('aria-hidden', 'true');
@@ -882,3 +880,56 @@ export function useCrossDomainBridge(
   };
 }
 
+/**
+ * 独立工具函数：发送登录消息（不依赖 Vue composable）
+ * 用于在非组件上下文中发送登录消息（如 HTTP 拦截器）
+ */
+export function broadcastLoginMessage(): void {
+  try {
+    // 方法1: 使用 BroadcastChannel（同源标签页通信）
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel('btc-auth-bridge');
+        channel.postMessage({
+          type: 'login',
+          payload: { timestamp: Date.now() },
+          origin: window.location.origin
+        });
+        channel.close();
+      } catch (error) {
+        // BroadcastChannel 可能不可用，继续尝试其他方法
+      }
+    }
+
+    // 方法2: 使用 localStorage 事件（同源标签页通信）
+    try {
+      const event = new StorageEvent('storage', {
+        key: 'btc-login-event',
+        newValue: JSON.stringify({ type: 'login', timestamp: Date.now() }),
+        url: window.location.href,
+        storageArea: localStorage
+      });
+      window.dispatchEvent(event);
+    } catch (error) {
+      // localStorage 事件可能不可用
+    }
+
+    // 方法3: 尝试通过已存在的 iframe（如果存在）
+    try {
+      const iframe = document.getElementById('btc-auth-bridge') as HTMLIFrameElement;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
+          { type: 'login', payload: { timestamp: Date.now() }, timestamp: Date.now() },
+          '*'
+        );
+      }
+    } catch (error) {
+      // iframe 可能不存在或未加载完成
+    }
+  } catch (error) {
+    // 静默失败，不影响登录流程
+    if (import.meta.env.DEV) {
+      console.warn('[broadcastLoginMessage] Failed to broadcast login message:', error);
+    }
+  }
+}

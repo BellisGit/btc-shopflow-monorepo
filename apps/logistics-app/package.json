@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
-    "dev": "vite --port 8082",
+    "dev": "vite",
     "clean": "node scripts/clean.js",
     "build": "vite build",
     "preview": "vite preview",
@@ -14,8 +14,6 @@
   "dependencies": {
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
-    "@btc/subapp-manifests": "workspace:*",
     "@vueuse/core": "^13.9.0",
     "chardet": "^2.1.0",
     "dayjs": "^1.11.18",

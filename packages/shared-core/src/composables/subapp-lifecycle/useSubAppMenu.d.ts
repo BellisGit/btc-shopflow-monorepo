@@ -5,3 +5,4 @@
  * 这里重新导出 registerManifestMenusForApp
  */
 export { registerManifestMenusForApp } from '@configs/layout-bridge';
+//# sourceMappingURL=useSubAppMenu.d.ts.map

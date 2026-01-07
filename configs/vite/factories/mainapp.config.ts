@@ -1,6 +1,6 @@
 /**
  * 主应用 Vite 配置工厂
- * 生成主应用的完整 Vite 配置（system-app）
+ * 生成主应用的完整 Vite 配置（main-app）
  */
 
 import type { UserConfig, Plugin } from 'vite';
@@ -34,6 +34,7 @@ import {
   cdnAssetsPlugin,
   cdnImportPlugin,
   resolveBtcImportsPlugin,
+  resolveAuthAliasesPlugin,
 } from '../plugins';
 
 export interface MainAppViteConfigOptions {
@@ -136,12 +137,12 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   const publicDir = getPublicDir(appName, appDir);
 
   // 获取主应用配置（用于 ensureBaseUrlPlugin）
-  const mainAppConfig = getViteAppConfig('system-app');
+  const mainAppConfig = getViteAppConfig('main-app');
   const mainAppPort = mainAppConfig.prePort.toString();
 
   // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
-  // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
-  const epsOutputDir = resolve(appDir, 'build', 'eps');
+  // 主应用使用 src/build/eps 目录，确保 EPS 数据在源码目录中，便于版本控制和开发
+  const epsOutputDir = resolve(appDir, 'src', 'build', 'eps');
 
   // 构建插件列表
   const plugins: (Plugin | Plugin[])[] = [
@@ -149,7 +150,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. 解析 @btc/* 包导入插件（确保能够解析从已构建包中导入的 @btc/* 模块）
+    // 3. 解析 auth 目录下的 @ 别名插件（必须在 resolveBtcImportsPlugin 之前）
+    resolveAuthAliasesPlugin({ appDir }),
+    // 4. 解析 @btc/* 包导入插件（确保能够解析从已构建包中导入的 @btc/* 模块）
     resolveBtcImportsPlugin({ appDir }),
     // 4. Public 图片资源处理插件（如果启用）
     ...(publicImagesToAssets && !isPreviewBuild ? [publicImagesToAssetsPlugin(appDir)] : []),
@@ -299,7 +302,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     emptyOutDir: false,
-    // 关键：system-app 作为主应用，也需要打包 single-spa 和 qiankun
+    // 关键：main-app 作为主应用，也需要打包 single-spa 和 qiankun
     // 不将它们标记为 external，确保它们被打包到构建产物中
     // 关键：主应用也需要打包 @btc 包，避免浏览器无法解析路径别名
     // 关键：主应用也需要打包 @configs 包，避免浏览器无法解析路径别名
@@ -315,10 +318,14 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 服务器配置
+  // 关键：优先使用 customServer.proxy，如果不存在则使用 proxy 参数
+  // 注意：customServer 会在最后展开，如果包含 proxy 会覆盖这里的设置
+  const finalProxy = customServer?.proxy !== undefined ? customServer.proxy : proxy;
+  const { proxy: _customProxy, ...restCustomServer } = customServer || {};
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     cors: true,
     origin: `http://${appConfig.devHost}:${appConfig.devPort}`,
     headers: {
@@ -331,7 +338,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       port: appConfig.devPort,
       overlay: false,
     },
-    proxy,
+    proxy: finalProxy,
     fs: {
       strict: false,
       allow: [
@@ -339,7 +346,11 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       ],
       cachedChecks: true,
     },
-    ...customServer,
+    // 禁用 page reload 日志输出
+    watch: {
+      ignored: ['**/locales/**/*.json'],
+    },
+    ...restCustomServer,
   };
 
   // 预览服务器配置

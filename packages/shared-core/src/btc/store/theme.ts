@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { useDark } from '@vueuse/core';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { THEME_PRESETS, type ThemeConfig, mixColor } from '../composables/useTheme';
 import { setBodyClassName } from '../utils/body-class';
 

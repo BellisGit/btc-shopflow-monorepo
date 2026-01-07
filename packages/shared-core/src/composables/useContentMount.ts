@@ -69,45 +69,39 @@ export function useContentMount(): ContentMountState {
 
   // 判断当前挂载类型（一次判断确定）
   const type = computed<ContentMountType>(() => {
-    // layout-app 模式下，始终显示子应用挂载点
-    if (isUsingLayoutApp.value || isLayoutAppSelf.value) {
-      return 'sub-app';
-    }
-
-    // 核心原则：基于路由判断，不检查 DOM 内容（避免延迟判断导致的问题）
-    // 如果是主应用路由，直接返回 'main-app'
+    // 关键：优先判断是否是主应用路由
+    // 即使是 layout-app 模式，如果访问的是主应用路由（如 /inventory/process），也应该显示主应用内容
     if (isMainAppRoute.value) {
       return 'main-app';
     }
 
     // 不是主应用路由，返回 'sub-app'
+    // 注意：layout-app 模式下，如果不是主应用路由，应该显示子应用挂载点
     return 'sub-app';
   });
 
   // 是否显示主应用路由视图
   // 核心原则：确保与 showSubApp 严格互斥
+  // 关键：基于 type 判断，即使是在 layout-app 模式下，如果是主应用路由也应该显示
   const showMainApp = computed(() => {
-    // layout-app 模式下，永远不显示主应用路由视图
-    if (isUsingLayoutApp.value || isLayoutAppSelf.value) {
-      return false;
-    }
     // 确保只有在 type 为 'main-app' 时才显示
-    return type.value === 'main-app';
+    // 关键：严格基于 type 判断，并确保 showSubApp 为 false（强制互斥）
+    const currentType = type.value;
+    const result = currentType === 'main-app';
+    return result;
   });
 
   // 是否显示子应用挂载点
   // 核心原则：主应用和子应用互斥，基于 type 判断
+  // 关键：基于 type 判断，确保互斥
   const showSubApp = computed(() => {
-    // layout-app 模式下，始终显示子应用挂载点（layout-app 只负责子应用）
-    if (isUsingLayoutApp.value || isLayoutAppSelf.value) {
-      return true;
-    }
-
-    // 其他模式：基于 type 判断，确保互斥
+    // 基于 type 判断，确保互斥
     // type === 'main-app' → 只显示主应用，隐藏子应用挂载点
     // type === 'sub-app' → 只显示子应用挂载点，隐藏主应用
-    // 关键：确保与 showMainApp 严格互斥（通过 type 判断，而不是依赖 showMainApp）
-    return type.value === 'sub-app';
+    // 关键：严格基于 type 判断，并确保 showMainApp 为 false（强制互斥）
+    const currentType = type.value;
+    const result = currentType === 'sub-app';
+    return result;
   });
 
 

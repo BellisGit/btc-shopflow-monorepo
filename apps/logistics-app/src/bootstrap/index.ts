@@ -501,7 +501,7 @@ export const mountLogisticsApp = async (context: LogisticsAppContext, props: Qia
             // 静默失败
           }
           // 跳转到登录页
-          // 关键修复：只有 system-app（主应用）有登录页面，其他子应用都没有
+          // 关键修复：只有 main-app（主应用）有登录页面，其他子应用都没有
           // 在生产环境子域名下，统一跳转到主域名（bellis.com.cn）的登录页面
           const hostname = window.location.hostname;
           const protocol = window.location.protocol;

@@ -126,7 +126,7 @@ import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
 import { BtcMessage } from '@btc/shared-components';
-import { detectFileType, detectFileTypeFromFileName } from '@btc/shared-utils';
+import { detectFileType, detectFileTypeFromFileName } from '@btc/shared-core/utils';
 
 defineOptions({
   name: 'BtcUpload'

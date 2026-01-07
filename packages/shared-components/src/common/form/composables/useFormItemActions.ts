@@ -1,4 +1,4 @@
-﻿import { formHook } from '@btc/shared-utils';
+﻿import { formHook } from '@btc/shared-core/utils/form';
 
 /**
  * 琛ㄥ崟椤瑰姩鎬佹帶鍒舵柟娉曪紙瀵归綈 cool-admin form/helper/action.ts锛? */

@@ -1,6 +1,6 @@
 {
   "name": "@btc/shared-core",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "description": "BTC ShopFlow 共享核心库，主要是逻辑层面共享（区别于组件共享）",
   "main": "./dist/index.js",
@@ -11,6 +11,60 @@
       "types": "./src/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./utils": {
+      "types": "./src/utils/index.d.ts",
+      "development": "./src/utils/index.ts",
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.js"
+    },
+    "./utils/cookie": {
+      "types": "./src/utils/storage/cookie/index.d.ts",
+      "development": "./src/utils/storage/cookie/index.ts",
+      "import": "./dist/utils/storage/cookie/index.mjs",
+      "require": "./dist/utils/storage/cookie/index.js"
+    },
+    "./utils/storage": {
+      "types": "./src/utils/storage/index.d.ts",
+      "development": "./src/utils/storage/index.ts",
+      "import": "./dist/utils/storage/index.mjs",
+      "require": "./dist/utils/storage/index.js"
+    },
+    "./utils/http": {
+      "types": "./src/utils/http/index.d.ts",
+      "development": "./src/utils/http/index.ts",
+      "import": "./dist/utils/http/index.mjs",
+      "require": "./dist/utils/http/index.js"
+    },
+    "./utils/error-monitor": {
+      "types": "./src/utils/error-monitor/index.d.ts",
+      "development": "./src/utils/error-monitor/index.ts",
+      "import": "./dist/utils/error-monitor/index.mjs",
+      "require": "./dist/utils/error-monitor/index.js"
+    },
+    "./utils/qiankun/load-layout-app": {
+      "types": "./src/utils/qiankun/load-layout-app.d.ts",
+      "development": "./src/utils/qiankun/load-layout-app.ts",
+      "import": "./dist/utils/qiankun/load-layout-app.mjs",
+      "require": "./dist/utils/qiankun/load-layout-app.js"
+    },
+    "./utils/cdn/load-shared-resources": {
+      "types": "./src/utils/cdn/load-shared-resources.d.ts",
+      "development": "./src/utils/cdn/load-shared-resources.ts",
+      "import": "./src/utils/cdn/load-shared-resources.ts",
+      "require": "./dist/index.js"
+    },
+    "./manifest": {
+      "types": "./src/manifest/index.d.ts",
+      "development": "./src/manifest/index.ts",
+      "import": "./src/manifest/index.ts",
+      "require": "./dist/manifest/index.js"
+    },
+    "./env": {
+      "types": "./src/env/index.d.ts",
+      "development": "./src/env/index.ts",
+      "import": "./src/env/index.ts",
+      "require": "./src/env/index.ts"
     },
     "./locales/zh-CN": {
       "types": "./src/btc/plugins/i18n/locales/zh-CN.d.ts",
@@ -42,14 +96,19 @@
     "type-check": "tsc --noEmit --project tsconfig.type-check.json"
   },
   "peerDependencies": {
-    "@btc/shared-utils": "^1.0.0",
     "@vueuse/core": "^12.0.0 || ^13.0.0",
     "pinia": "^2.0.0 || ^3.0.0",
+    "qiankun": "^2.10.16",
     "vue": "^3.3.0",
     "vue-router": "^4.0.0"
   },
   "dependencies": {
-    "axios": "^1.12.2"
+    "axios": "^1.12.2",
+    "dayjs": "^1.11.18",
+    "dexie": "^4.2.1",
+    "file-type": "^21.2.0",
+    "pinia-plugin-persistedstate": "^3.2.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@vueuse/core": "^13.9.0",

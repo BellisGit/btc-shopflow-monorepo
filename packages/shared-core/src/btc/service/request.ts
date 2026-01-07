@@ -296,16 +296,8 @@ export function createRequest(baseURL: string = ''): Request {
               if (BtcMessage && BtcMessage.error) {
                 BtcMessage.error(errorMessage);
               } else {
-                // 最后的兜底：使用 console.error 并尝试动态导入响应拦截器
+                // 最后的兜底：使用 console.error
                 console.error(errorMessage);
-                import('@btc/shared-utils/http').then((module) => {
-                  const { responseInterceptor: ri } = module;
-                  if (ri && ri.handleError) {
-                    ri.handleError({ code, message: msg });
-                  }
-                }).catch(() => {
-                  // 导入失败，已经通过 console.error 输出了
-                });
               }
             }
           }

@@ -46,3 +46,4 @@ export declare function loadEpsService(epsModule?: any): {
  * @param service - EPS 服务对象
  */
 export declare function exportEpsServiceToGlobal(service: any): void;
+//# sourceMappingURL=service.d.ts.map

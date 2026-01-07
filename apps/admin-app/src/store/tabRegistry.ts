@@ -2,7 +2,7 @@
  * Tab 元数据注册表（主应用主导，命名空间化）
  */
 
-import { getManifestRoute, getManifest } from '@/micro/manifests';
+import { getManifestRoute, getManifest } from '@btc/shared-core/manifest';
 
 export interface TabMeta {
   key: string;

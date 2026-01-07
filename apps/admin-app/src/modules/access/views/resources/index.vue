@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="resources-page">
-    <BtcCrud ref="crudRef" :service="resourceService">
+    <BtcCrud ref="crudRef" :service="crudResourceService">
       <BtcRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
@@ -22,7 +22,7 @@
       </BtcRow>
 
       <BtcRow>
-        <BtcTable :columns="resourceColumns" border />
+        <BtcTable :columns="columns" border />
       </BtcRow>
 
       <BtcRow>
@@ -30,16 +30,15 @@
         <BtcPagination />
       </BtcRow>
 
-      <BtcUpsert :items="resourceFormItems" />
+      <BtcUpsert :items="formItems" />
     </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
-import type { TableColumn, FormItem } from '@btc/shared-components';
 import {
   BtcCrud,
   BtcTable,
@@ -59,21 +58,29 @@ const message = useMessage();
 const crudRef = ref();
 const syncLoading = ref(false);
 
-// 资源服务 - 使用EPS服务
-const resourceService = service.admin?.iam?.resource;
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('access.resources');
+const { formItems } = usePageForms('access.resources');
+const pageConfig = getPageConfigFull('access.resources');
+
+// 资源服务 - 使用 config.ts 中定义的 service（用于同步操作）
+const resourceService = pageConfig?.service?.resource || service.admin?.iam?.resource;
+
+// 使用 config.ts 中定义的 service，并添加删除确认逻辑（用于 CRUD 操作）
+const crudResourceService = usePageService('access.resources', 'resource');
 
 // 数据同步处理
 const handleSync = async () => {
   if (syncLoading.value) return;
-  
+
   try {
     syncLoading.value = true;
-    
+
     // 调用 pull 接口拉取资源
-    await service.admin?.iam?.resource?.pull();
-    
+    await resourceService?.pull();
+
     message.success(t('access.resources.sync_success'));
-    
+
     // 刷新表格数据
     if (crudRef.value?.crud) {
       await crudRef.value.crud.refresh();
@@ -85,47 +92,6 @@ const handleSync = async () => {
     syncLoading.value = false;
   }
 };
-
-// 资源表格列
-const resourceTypeDict = [
-  { label: '文件', value: 'FILE', type: 'info' },
-  { label: 'API', value: 'API', type: 'warning' },
-  { label: '数据表', value: 'TABLE', type: 'primary' },
-] as const;
-
-const resourceColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'resourceNameCn', label: '资源名称', minWidth: 150 },
-  { prop: 'resourceCode', label: '资源编码', minWidth: 150 },
-  {
-    prop: 'resourceType',
-    label: '类型',
-    width: 120,
-    dict: resourceTypeDict.map((item) => ({ ...item })),
-    dictColor: true,
-  },
-  { prop: 'description', label: '描述', minWidth: 200 },
-]);
-
-// 资源表单
-const resourceFormItems = computed<FormItem[]>(() => [
-  { prop: 'resourceNameCn', label: '资源名称', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'resourceCode', label: '资源编码', span: 12, required: true, component: { name: 'el-input' } },
-  {
-    prop: 'resourceType',
-    label: '类型',
-    span: 12,
-    component: {
-      name: 'el-select',
-      options: resourceTypeDict.map((item) => ({
-        label: item.label,
-        value: item.value,
-      })),
-    }
-  },
-  { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
-
 </script>
 
 <style lang="scss" scoped>

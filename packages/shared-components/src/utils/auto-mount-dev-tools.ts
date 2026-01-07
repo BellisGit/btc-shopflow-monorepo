@@ -4,6 +4,8 @@
  * 注意：只在主应用（admin-app/system-app）中启用，子应用不显示 DevTools
  */
 
+import { isMainApp as isMainAppGlobal } from '@configs/unified-env-config';
+
 let devToolsMounted = false;
 let observer: MutationObserver | null = null;
 let checkTimer: number | null = null;
@@ -65,58 +67,20 @@ function isMoseluUser(): boolean {
 
 /**
  * 检查是否为主应用
+ * 使用统一的环境检测方案
  */
 function isMainApp(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
 
-  // 开发环境：优先检查开发环境标志，在开发环境下更宽松地判断
-  if (import.meta.env.DEV) {
-    // 开发环境下，如果 hostname 是本地地址或开发服务器地址，且不是明确的子应用路径，则认为是主应用
-    const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-
-    // 排除明确的子应用路径
-    const isSubAppPath = pathname.startsWith('/logistics') ||
-                        pathname.startsWith('/engineering') ||
-                        pathname.startsWith('/quality') ||
-                        pathname.startsWith('/production') ||
-                        pathname.startsWith('/finance') ||
-                        pathname.startsWith('/operations') ||
-                        pathname.startsWith('/dashboard') ||
-                        pathname.startsWith('/personnel');
-
-    // 开发环境：如果是本地地址或开发服务器地址，且不是子应用路径，则为主应用
-    if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('10.80.8.199')) && !isSubAppPath) {
-      return true;
-    }
-
-    // 开发环境：检查路径（兼容原有逻辑）
-    if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/data')) {
-      return true;
-    }
+  // 使用统一的环境检测函数
+  try {
+    return isMainAppGlobal(window.location.pathname, window.location.pathname, !(window as any).__POWERED_BY_QIANKUN__);
+  } catch (error) {
+    // 如果检测失败，默认返回 true（主应用）
+    return true;
   }
-
-  const hostname = window.location.hostname;
-  const pathname = window.location.pathname;
-
-  // 生产环境：检查是否是主应用的子域名
-  if (hostname === 'admin.bellis.com.cn' || hostname === 'bellis.com.cn') {
-    // 如果是主域名或 admin 子域名，且路径不是子应用路径，则为主应用
-    if (!pathname.startsWith('/logistics') &&
-        !pathname.startsWith('/engineering') &&
-        !pathname.startsWith('/quality') &&
-        !pathname.startsWith('/production') &&
-        !pathname.startsWith('/finance') &&
-        !pathname.startsWith('/operations') &&
-        !pathname.startsWith('/dashboard') &&
-        !pathname.startsWith('/personnel')) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**

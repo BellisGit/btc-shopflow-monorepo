@@ -1,0 +1,330 @@
+// ==================== Loading 动画样式 ====================
+// 包含 Circle、Dots、Gradient、Progress 四种动画样式
+// 同时支持根级别（#Loading）和应用级（body .btc-app-loading-mask--show）loading
+
+// ==================== Circle 样式：圆圈旋转动画 ====================
+// 参考偏好设置中的简洁实现，使用 currentColor 并确保初始颜色值
+#Loading .preload__loading.loading-style-circle,
+body .btc-app-loading-mask--show .preload__loading.loading-style-circle {
+	height: 44px !important; // 从 30px 增加到 44px，参考偏好设置
+	width: 44px !important; // 从 30px 增加到 44px，参考偏好设置
+	border-radius: 44px !important; // 从 30px 增加到 44px
+	border: 7px solid currentColor !important;
+	// 关键：底部边框使用白色，形成圆环缺口效果（与偏好设置一致）
+	border-bottom-color: #ffffff !important;
+	position: relative !important;
+	animation:
+		btc-loading-circle-rotate 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
+		btc-loading-circle-color-change 2s infinite ease-in !important;
+	box-sizing: border-box !important;
+}
+
+@keyframes btc-loading-circle-rotate {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes btc-loading-circle-color-change {
+	0% {
+		color: #409eff;
+	}
+	25% {
+		color: #67c23a;
+	}
+	50% {
+		color: #e6a23c;
+	}
+	75% {
+		color: #f56c6c;
+	}
+	100% {
+		color: #409eff;
+	}
+}
+
+// ==================== Dots 样式：四点旋转动画 ====================
+#Loading .preload__loading.loading-style-dots,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots {
+	// 确保清除 circle 和 gradient 样式的属性
+	border: none !important;
+	border-radius: 0 !important;
+	background: none !important;
+	animation: none !important;
+	transform: none !important;
+	color: transparent !important;
+	width: 50px !important; // 从 40px 增加到 50px
+	height: 50px !important; // 从 40px 增加到 50px
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+#Loading .preload__loading.loading-style-dots svg,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots svg {
+	width: 50px !important; // 从 40px 增加到 50px
+	height: 50px !important; // 从 40px 增加到 50px
+	color: var(--el-color-primary, #409eff) !important;
+}
+
+#Loading .preload__loading.loading-style-dots .spinner,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .spinner {
+	transform-origin: 25px 25px !important; // 从 20px 20px 增加到 25px 25px（对应 50px 尺寸）
+	animation: btc-loading-dots-rotate 1.6s linear infinite !important;
+}
+
+#Loading .preload__loading.loading-style-dots .dot,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot {
+	animation:
+		btc-loading-dots-fade 1.6s infinite,
+		btc-loading-dots-color-change 3.2s infinite ease-in-out !important;
+}
+
+#Loading .preload__loading.loading-style-dots .dot-1,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-1 {
+	fill: #409eff !important;
+	animation-delay: 0s, 0s !important;
+}
+
+#Loading .preload__loading.loading-style-dots .dot-2,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-2 {
+	fill: #67c23a !important;
+	animation-delay: 0.4s, 0.8s !important;
+}
+
+#Loading .preload__loading.loading-style-dots .dot-3,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-3 {
+	fill: #e6a23c !important;
+	animation-delay: 0.8s, 1.6s !important;
+}
+
+#Loading .preload__loading.loading-style-dots .dot-4,
+body .btc-app-loading-mask--show .preload__loading.loading-style-dots .dot-4 {
+	fill: #f56c6c !important;
+	animation-delay: 1.2s, 2.4s !important;
+}
+
+@keyframes btc-loading-dots-rotate {
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes btc-loading-dots-fade {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+@keyframes btc-loading-dots-color-change {
+	0% {
+		fill: #409eff;
+	}
+	25% {
+		fill: #67c23a;
+	}
+	50% {
+		fill: #e6a23c;
+	}
+	75% {
+		fill: #f56c6c;
+	}
+	100% {
+		fill: #409eff;
+	}
+}
+
+// ==================== Gradient 样式：渐变圆环旋转动画 ====================
+#Loading .preload__loading.loading-style-gradient,
+body .btc-app-loading-mask--show .preload__loading.loading-style-gradient {
+	// 确保清除 circle 和 dots 样式的属性
+	border: none !important;
+	border-radius: 0 !important;
+	background: none !important;
+	animation: none !important;
+	transform: none !important;
+	color: transparent !important;
+	// 清除 circle 的伪元素（在 ::before 和 ::after 重新定义之前）
+	&::before {
+		content: '' !important;
+		display: block !important;
+	}
+	&::after {
+		content: '' !important;
+		display: block !important;
+	}
+	position: relative !important;
+	width: 50px !important; // 从 40px 增加到 50px
+	height: 50px !important; // 从 40px 增加到 50px
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	// 确保清除 SVG 相关样式
+	svg {
+		display: none !important;
+	}
+}
+
+#Loading .preload__loading.loading-style-gradient::before,
+body .btc-app-loading-mask--show .preload__loading.loading-style-gradient::before {
+	content: '' !important;
+	position: absolute !important;
+	width: 50px !important; // 从 40px 增加到 50px
+	height: 50px !important; // 从 40px 增加到 50px
+	border-radius: 50% !important;
+	background: conic-gradient(from 0deg, #2196f3, #e91e63, #2196f3) !important;
+	animation: btc-loading-gradient-rotate 2s linear infinite !important;
+}
+
+#Loading .preload__loading.loading-style-gradient::after,
+body .btc-app-loading-mask--show .preload__loading.loading-style-gradient::after {
+	content: '' !important;
+	position: absolute !important;
+	inset: 7px !important; // 从 6px 增加到 7px，保持比例
+	background: #0a0a0a !important;
+	border-radius: 50% !important;
+}
+
+@keyframes btc-loading-gradient-rotate {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+// ==================== Progress 样式：炫彩进度条 ====================
+#Loading .preload__loading.loading-style-progress,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress {
+	// 确保清除其他样式的属性
+	border: none !important;
+	border-radius: 0 !important;
+	background: none !important;
+	animation: none !important;
+	transform: none !important;
+	color: transparent !important;
+	// 清除其他样式的伪元素
+	&::before,
+	&::after {
+		content: none !important;
+		display: none !important;
+	}
+	width: 300px !important; // 进度条宽度
+	height: 24px !important; // 进度条高度
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	svg {
+		display: none !important;
+	}
+}
+
+// 进度条容器
+#Loading .preload__loading.loading-style-progress .progress-bar-container,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-container {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important; // 从 16px 减小到 8px，缩小与百分比数字的间距
+	width: 100% !important;
+	height: 100% !important;
+}
+
+// 进度条轨道
+#Loading .preload__loading.loading-style-progress .progress-bar-track,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-track {
+	position: relative !important;
+	flex: 1 !important;
+	height: 8px !important;
+	background: rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+	overflow: hidden !important;
+	// 立体效果：使用 box-shadow 创建深度感
+	box-shadow:
+		inset 0 1px 2px rgba(0, 0, 0, 0.3),
+		0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+// 进度条填充
+#Loading .preload__loading.loading-style-progress .progress-bar-fill,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-fill {
+	position: relative !important;
+	height: 100% !important;
+	// 炫彩渐变：使用多色渐变创建炫彩效果
+	background: linear-gradient(
+		90deg,
+		#409eff 0%,
+		#67c23a 25%,
+		#e6a23c 50%,
+		#f56c6c 75%,
+		#409eff 100%
+	) !important;
+	background-size: 200% 100% !important;
+	border-radius: 4px !important;
+	// 动画：让渐变流动
+	animation: btc-loading-progress-gradient 2s linear infinite !important;
+	// 立体效果：使用 box-shadow 创建高光
+	box-shadow:
+		0 0 10px rgba(64, 158, 255, 0.5),
+		inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+	transition: width 0.3s ease !important;
+	overflow: hidden !important;
+}
+
+// 进度条光泽效果（蒙层）
+#Loading .preload__loading.loading-style-progress .progress-bar-fill .progress-bar-shine,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-bar-fill .progress-bar-shine {
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	// 使用渐变蒙层创建立体光泽效果
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 255, 255, 0.3) 50%,
+		transparent 100%
+	) !important;
+	// 光泽动画：从左到右移动
+	animation: btc-loading-progress-shine 1.5s ease-in-out infinite !important;
+	border-radius: 4px !important;
+}
+
+// 百分比显示
+#Loading .preload__loading.loading-style-progress .progress-percentage,
+body .btc-app-loading-mask--show .preload__loading.loading-style-progress .progress-percentage {
+	font-size: 16px !important;
+	font-weight: 700 !important; // 加粗
+	color: #fff !important;
+	min-width: 45px !important; // 固定宽度，避免数字跳动
+	text-align: right !important;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important; // 文字阴影增强可读性
+}
+
+// 进度条渐变流动动画
+@keyframes btc-loading-progress-gradient {
+	0% {
+		background-position: 0% 0%;
+	}
+	100% {
+		background-position: 200% 0%;
+	}
+}
+
+// 进度条光泽移动动画
+@keyframes btc-loading-progress-shine {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(200%);
+	}
+}

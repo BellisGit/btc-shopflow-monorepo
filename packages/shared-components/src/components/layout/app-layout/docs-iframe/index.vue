@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { useI18n } from '@btc/shared-core';
 import { useRoute } from 'vue-router';
 

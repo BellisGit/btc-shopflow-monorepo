@@ -3,7 +3,7 @@
  * 用于避免多个组件同时请求域列表接口
  */
 
-import { deleteCookie } from './cookie';
+import { deleteCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { BtcMessage } from '@btc/shared-components';
 

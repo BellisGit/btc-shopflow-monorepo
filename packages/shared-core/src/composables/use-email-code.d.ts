@@ -67,3 +67,4 @@ export interface UseEmailCodeReturn {
  * ```
  */
 export declare function useEmailCode(options: UseEmailCodeOptions): UseEmailCodeReturn;
+//# sourceMappingURL=use-email-code.d.ts.map

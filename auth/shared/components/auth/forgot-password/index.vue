@@ -1,7 +1,7 @@
 <template>
   <div class="forgot-password">
     <a href="/forget-password" class="forgot-password-link">
-      {{ t('忘记密码') }}
+      {{ t('auth.forget_password') }}
       <el-icon class="arrow-right">
         <arrow-right />
       </el-icon>

@@ -22,7 +22,7 @@
         "devPort": "8082",
     	"preHost": "localhost",
         "prePort": "4182",
-        "prodHost":"admin.bellis.com.cn"
+        "prodHost":"logistics.bellis.com.cn"
 	},
     {
         "appName": "quality-app",
@@ -83,9 +83,9 @@
         {
         "appName": "personnel-app",
         "devHost": "localhost",
-        "devPort": "8090",
+        "devPort": "8092",
     	"preHost": "localhost",
-        "prePort": "4190",
+        "prePort": "4192",
         "prodHost":"personnel.bellis.com.cn"
 	},
     {

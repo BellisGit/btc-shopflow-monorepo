@@ -12,3 +12,4 @@ export interface SubAppGlobalsOptions {
  * 以财务应用为标准，所有子应用使用相同的逻辑
  */
 export declare function setupSubAppGlobals(options: SubAppGlobalsOptions): Promise<void>;
+//# sourceMappingURL=useSubAppGlobals.d.ts.map

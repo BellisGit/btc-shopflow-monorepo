@@ -94,6 +94,10 @@ export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
 export { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
 export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/feedback/btc-message-box';
 
+// Loading 组件
+export { default as AppLoading } from './components/loading/app-loading/index.vue';
+export { default as RootLoading } from './components/loading/root-loading/index.vue';
+
 // Others 其他组件
 export { default as BtcSvg } from './components/others/btc-svg/index.vue';
 export { default as BtcViewGroup } from './common/view-group/index.vue';
@@ -197,3 +201,9 @@ export type {
 // 使用副作用导入确保这些模块被加载
 import './components/layout/app-layout/global-search/useSearchIndex';
 import './plugins/excel/components/import-btn/index.vue';
+
+// ========== 从 shared-plugins 迁移的插件模块 ==========
+export * from './plugins';
+
+// ========== 从 i18n 迁移的国际化模块 ==========
+export * from './i18n';

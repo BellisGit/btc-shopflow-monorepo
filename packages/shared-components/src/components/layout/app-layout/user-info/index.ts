@@ -141,11 +141,11 @@ export function useUserInfo() {
   });
 
   // 等待 EPS 服务可用（轮询方式，最多等待 5 秒）
-  // 注意：某些子应用会先把 __APP_EPS_SERVICE__ 初始化为 {}（占位），这时不能视为“服务可用”。
+  // 注意：某些子应用会先把 __APP_EPS_SERVICE__ 初始化为 {}（占位），这时不能视为"服务可用"。
   const waitForEpsService = async (
     maxWaitTime = 5000,
     interval = 100,
-    predicate: (service: any) => boolean = (s) => !!s && !(typeof s === 'object' && Object.keys(s).length === 0),
+    predicate: (service: any) => boolean = (s) => !!s?.admin?.base?.profile?.info,
   ): Promise<any> => {
     const startTime = Date.now();
     while (Date.now() - startTime < maxWaitTime) {
@@ -175,19 +175,16 @@ export function useUserInfo() {
         // 在子域/嵌入环境下，layout-app 可能还在初始化，等待一下
         currentService = await waitForEpsService(5000, 100, isProfileReady);
         if (!isProfileReady(currentService)) {
-          console.warn('[useUserInfo] EPS service not available after waiting');
           return;
         }
       }
       
       const profileService = currentService.admin?.base?.profile;
       if (!profileService) {
-        console.warn('[useUserInfo] profileService not available');
         return;
       }
 
       if (!profileService.info) {
-        console.warn('[useUserInfo] profileService.info not available');
         return;
       }
 
@@ -235,12 +232,9 @@ export function useUserInfo() {
 
         // 初始化显示名称
         displayedName.value = data.name || data.realName || '';
-      } else {
-        console.warn('[useUserInfo] API 未返回数据');
       }
     } catch (error) {
       // 静默失败，不影响页面显示
-      console.error('[useUserInfo] 加载用户信息失败:', error);
     }
   };
 

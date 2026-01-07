@@ -82,26 +82,8 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
   const currentPath = currentRoute.split('?')[0]?.split('#')[0] || '';
   const targetPath = normalizedTarget.split('?')[0]?.split('#')[0] || '';
 
-  if (import.meta.env.DEV) {
-    console.log('[syncSubRouteWithHost]', {
-      appId,
-      basePath,
-      currentPath,
-      targetPath,
-      isUsingLayoutApp,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : '',
-      pathname: typeof window !== 'undefined' ? window.location.pathname : '',
-      targetRoute,
-      normalizedTarget,
-      currentRoute
-    });
-  }
-
   if (targetPath === currentPath) {
     // 路径相同，不需要更新（query 和 hash 的变化会由路由本身处理）
-    if (import.meta.env.DEV) {
-      console.log('[syncSubRouteWithHost] 路径相同，跳过同步');
-    }
     return;
   }
 
@@ -139,11 +121,8 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
       }).catch(() => {
         syncingFromHost = false;
       });
-    }).catch((error: unknown) => {
+    }).catch(() => {
       // 路由同步失败，直接重置
-      if (import.meta.env.DEV) {
-        console.error('[syncSubRouteWithHost] 路由同步失败:', error);
-      }
       syncingFromHost = false;
     });
   } else {
@@ -157,11 +136,8 @@ export function syncSubRouteWithHost(context: SubAppContext, appId: string, base
       }).catch(() => {
         syncingFromHost = false;
       });
-    }).catch((error: unknown) => {
+    }).catch(() => {
       // 路由同步失败，直接重置
-      if (import.meta.env.DEV) {
-        console.error('[syncSubRouteWithHost] 路由同步失败:', error);
-      }
       syncingFromHost = false;
     });
   }

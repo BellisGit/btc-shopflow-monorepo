@@ -25,8 +25,6 @@
       "@configs/*": ["../../configs/*"],
       "@btc/shared-core": ["../../packages/shared-core/dist/src"],
       "@btc/shared-core/*": ["../../packages/shared-core/dist/*", "../../packages/shared-core/dist/src/*"],
-      "@btc/shared-utils": ["../../packages/shared-utils/src", "../../packages/shared-utils/dist"],
-      "@btc/shared-utils/*": ["../../packages/shared-utils/src/*", "../../packages/shared-utils/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]
     }

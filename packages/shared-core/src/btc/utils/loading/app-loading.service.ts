@@ -1,9 +1,11 @@
 /**
  * 应用级 Loading 服务
  * 管理覆盖单个应用容器的 loading，仅遮挡当前应用区域，不影响其他应用
+ * 使用 Vue 组件（AppLoading）挂载实现
  */
 
 import { LOADING_Z_INDEX, LOADING_TIMEOUT } from '../loading.config';
+import { createApp, type App } from 'vue';
 
 /**
  * 应用 Loading 实例信息
@@ -11,14 +13,16 @@ import { LOADING_Z_INDEX, LOADING_TIMEOUT } from '../loading.config';
 interface AppLoadingInstance {
   appName: string;
   container: HTMLElement;
-  loadingElement: HTMLElement | null;
+  loadingElement: HTMLElement | null; // 容器元素
+  vueApp: App | null; // Vue 应用实例
+  vueInstance: any; // Vue 组件实例
   skeletonElement: HTMLElement | null;
   timeoutId: ReturnType<typeof setTimeout> | null;
   isVisible: boolean;
   showTime: number; // 显示时间戳
 }
 
-type LoadingStyle = 'circle' | 'dots';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
 
 /**
  * 获取当前的 Loading 样式（同步版本）
@@ -45,6 +49,9 @@ function getLoadingStyle(): LoadingStyle {
         if (settings.loadingStyle === 'circle') {
           return 'circle';
         }
+        if (settings.loadingStyle === 'gradient') {
+          return 'gradient';
+        }
       }
       
       // 如果 localStorage 中没有，尝试从 Cookie 读取（如果可用）
@@ -61,6 +68,9 @@ function getLoadingStyle(): LoadingStyle {
           }
           if (settings.loadingStyle === 'circle') {
             return 'circle';
+          }
+          if (settings.loadingStyle === 'gradient') {
+            return 'gradient';
           }
         }
       } catch (cookieError) {
@@ -85,17 +95,7 @@ class AppLoadingService {
   
   constructor() {
     // 监听 loading 样式变化事件
-    if (typeof window !== 'undefined') {
-      window.addEventListener('loading-style-change', (event: any) => {
-        const newStyle = event.detail?.style;
-        // 更新所有现有的 loading 元素
-        this.instances.forEach((instance) => {
-          if (instance.loadingElement && instance.isVisible) {
-            this.updateLoadingSpinner(instance.loadingElement, newStyle);
-          }
-        });
-      });
-    }
+    // 组件内部已监听此事件，这里不需要额外处理
   }
 
   /**
@@ -117,214 +117,54 @@ class AppLoadingService {
   }
 
   /**
-   * 更新 Loading spinner 样式
+   * 创建 Vue 应用实例（延迟加载，避免循环依赖）
    */
-  private updateLoadingSpinner(loadingElement: HTMLElement, style: LoadingStyle): void {
-    const spinnerContainer = loadingElement.querySelector('.app-loading-spinner-container');
-    if (spinnerContainer) {
-      spinnerContainer.innerHTML = this.getSpinnerHTML(style);
-    }
-  }
+  private async createVueAppInstance(appDisplayName: string, container: HTMLElement): Promise<{ vueApp: App; vueInstance: any; loadingElement: HTMLElement }> {
+    try {
+      // 动态导入 Vue 组件
+      const sharedComponents = await import('@btc/shared-components');
+      const AppLoading = sharedComponents.AppLoading;
+      
+      if (!AppLoading) {
+        throw new Error('AppLoading component not found in @btc/shared-components');
+      }
+      
+      const { createApp: createVueApp } = await import('vue');
 
-  /**
-   * 获取 Spinner HTML
-   */
-  private getSpinnerHTML(style: LoadingStyle): string {
-    if (style === 'dots') {
-      return `
-        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" class="app-loading-dots-svg">
-          <g class="app-loading-dots-spinner">
-            <circle class="app-loading-dot app-loading-dot-1" cx="22" cy="8" r="5"/>
-            <circle class="app-loading-dot app-loading-dot-2" cx="36" cy="22" r="5"/>
-            <circle class="app-loading-dot app-loading-dot-3" cx="22" cy="36" r="5"/>
-            <circle class="app-loading-dot app-loading-dot-4" cx="8" cy="22" r="5"/>
-          </g>
-        </svg>
+      // 创建容器元素
+      const loadingEl = document.createElement('div');
+      loadingEl.className = 'app-loading-container-wrapper';
+      // 关键：使用 fixed 定位覆盖整个屏幕，确保能覆盖子应用index.html中的#Loading元素
+      // 关键修复：初始时背景透明，只有在内容显示时才设置背景色
+      loadingEl.style.cssText = `
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        z-index: ${LOADING_Z_INDEX.APP};
+        background-color: transparent;
+        opacity: 1;
+        pointer-events: auto;
       `;
+
+      // 创建 Vue 应用实例
+      const vueApp = createVueApp(AppLoading, {
+        visible: true,
+        title: appDisplayName,
+        tip: '正在加载资源',
+        isFail: false,
+        timeout: LOADING_TIMEOUT.APP,
+        minShowTime: 500,
+      });
+
+      // 挂载到容器元素
+      const vueInstance = vueApp.mount(loadingEl);
+
+      return { vueApp, vueInstance, loadingElement: loadingEl };
+    } catch (error) {
+      throw error;
     }
-    // circle 样式（默认）
-    return '<div class="app-loading-spinner"></div>';
-  }
-
-  /**
-   * 创建 Loading 元素
-   * @param appDisplayName 应用显示名称（如"财务模块"）
-   */
-  private createLoadingElement(_container: HTMLElement, appDisplayName: string): HTMLElement {
-    const loadingStyle = getLoadingStyle();
-    const loadingEl = document.createElement('div');
-    loadingEl.className = 'app-loading';
-    // 关键：使用 fixed 定位覆盖整个屏幕，确保能覆盖子应用index.html中的#Loading元素
-    loadingEl.style.cssText = `
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      z-index: ${LOADING_Z_INDEX.APP};
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--el-bg-color);
-      opacity: 1;
-      pointer-events: auto;
-    `;
-
-    loadingEl.innerHTML = `
-      <div class="app-loading-container" style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        user-select: none;
-        -webkit-user-select: none;
-      ">
-        <div class="app-loading-name" style="
-          font-size: 30px;
-          color: var(--el-text-color-primary, #303133);
-          letter-spacing: 5px;
-          font-weight: bold;
-          margin-bottom: 30px;
-          min-height: 50px;
-          animation: app-loading-fade-in 0.5s ease-in;
-        ">${appDisplayName}</div>
-        <div class="app-loading-spinner-container">${this.getSpinnerHTML(loadingStyle)}</div>
-        <div class="app-loading-title" style="
-          color: var(--el-text-color-regular, #606266);
-          font-size: 14px;
-          margin: 30px 0 20px 0;
-          min-height: 20px;
-          animation: app-loading-fade-in 0.5s ease-in;
-        ">正在加载资源</div>
-        <div class="app-loading-subtitle" style="
-          color: var(--el-text-color-secondary, #909399);
-          font-size: 12px;
-          min-height: 20px;
-          animation: app-loading-fade-in 0.5s ease-in;
-        ">部分资源可能加载时间较长，请耐心等待</div>
-      </div>
-    `;
-
-    // 添加样式（如果不存在）
-    if (!document.getElementById('app-loading-style')) {
-      const style = document.createElement('style');
-      style.id = 'app-loading-style';
-      style.textContent = `
-        .app-loading-spinner-container {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 44px;
-          width: 44px;
-        }
-        .app-loading-spinner-container .app-loading-spinner {
-          height: 44px;
-          width: 44px;
-          border-radius: 30px;
-          border: 7px solid currentColor;
-          border-bottom-color: #ffffff;
-          position: relative;
-          animation:
-            app-loading-spin 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
-            app-loading-color-change 2s infinite ease-in;
-          transform: rotate(0deg);
-          box-sizing: border-box;
-          color: #409eff;
-        }
-        .app-loading-spinner-container .app-loading-spinner::before,
-        .app-loading-spinner-container .app-loading-spinner::after {
-          content: '';
-          display: inline-block;
-          position: absolute;
-          bottom: -2px;
-          height: 7px;
-          width: 7px;
-          border-radius: 10px;
-          background-color: currentColor;
-        }
-        .app-loading-spinner-container .app-loading-spinner::before {
-          left: -1px;
-        }
-        .app-loading-spinner-container .app-loading-spinner::after {
-          right: -1px;
-        }
-        @keyframes app-loading-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes app-loading-color-change {
-          0% { color: #409eff; }
-          25% { color: #67c23a; }
-          50% { color: #e6a23c; }
-          75% { color: #f56c6c; }
-          100% { color: #409eff; }
-        }
-        @keyframes app-loading-fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .app-loading-spinner-container .app-loading-dots-svg {
-          color: var(--el-color-primary, #409eff);
-        }
-        .app-loading-spinner-container .app-loading-dots-spinner {
-          transform-origin: 22px 22px;
-          animation: app-loading-dots-rotate 1.6s linear infinite;
-        }
-        .app-loading-spinner-container .app-loading-dot {
-          animation:
-            app-loading-dots-fade 1.6s infinite,
-            app-loading-dots-color-change 3.2s infinite ease-in-out;
-        }
-        .app-loading-spinner-container .app-loading-dot-1 {
-          fill: #409eff;
-          animation-delay: 0s, 0s;
-        }
-        .app-loading-spinner-container .app-loading-dot-2 {
-          fill: #67c23a;
-          animation-delay: 0.4s, 0.8s;
-        }
-        .app-loading-spinner-container .app-loading-dot-3 {
-          fill: #e6a23c;
-          animation-delay: 0.8s, 1.6s;
-        }
-        .app-loading-spinner-container .app-loading-dot-4 {
-          fill: #f56c6c;
-          animation-delay: 1.2s, 2.4s;
-        }
-        @keyframes app-loading-dots-rotate {
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes app-loading-dots-fade {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes app-loading-dots-color-change {
-          0% { fill: #409eff; }
-          25% { fill: #67c23a; }
-          50% { fill: #e6a23c; }
-          75% { fill: #f56c6c; }
-          100% { fill: #409eff; }
-        }
-        @media (prefers-color-scheme: dark) {
-          .app-loading-name {
-            color: var(--el-text-color-primary, #ffffff) !important;
-          }
-          .app-loading-title {
-            color: var(--el-text-color-regular, #ffffff) !important;
-          }
-          .app-loading-subtitle {
-            color: var(--el-text-color-secondary, #ababab) !important;
-          }
-          .app-loading-spinner-container .app-loading-spinner {
-            border-bottom-color: #000000 !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    return loadingEl;
   }
 
   /**
@@ -347,25 +187,20 @@ class AppLoadingService {
    * @param appDisplayName 应用显示名称（如"财务模块"，用于显示在loading中）
    * @param container 应用容器（可选，默认查找 #subapp-viewport，即使不存在也会显示，因为使用fixed定位）
    */
-  show(appDisplayName: string, container?: HTMLElement): void {
+  async show(appDisplayName: string, container?: HTMLElement): Promise<void> {
     // 关键：不允许显示"应用"loading（这是默认值，不应该显示）
     // 如果传入"应用"，说明应用名称还没有确定，不应该显示loading
     if (appDisplayName === '应用') {
-      console.warn('[AppLoadingService] 不允许显示"应用"loading，应用名称未确定');
       return;
     }
     
     // 关键：在显示新的loading之前，先清除所有#Loading元素（包括system-app的"拜里斯科技"）
     // 确保不会被子应用的index.html中的loading覆盖，也不会被system-app的loading覆盖
+    // 使用 is-hide 类，样式已在 loading.css 中定义
     const loadingEls = document.querySelectorAll('#Loading');
     loadingEls.forEach((loadingEl) => {
       if (loadingEl instanceof HTMLElement) {
         // 特别处理system-app的#Loading（包含"拜里斯科技"），在子应用时应该隐藏
-        loadingEl.style.setProperty('display', 'none', 'important');
-        loadingEl.style.setProperty('visibility', 'hidden', 'important');
-        loadingEl.style.setProperty('opacity', '0', 'important');
-        loadingEl.style.setProperty('pointer-events', 'none', 'important');
-        loadingEl.style.setProperty('z-index', '-1', 'important');
         loadingEl.classList.add('is-hide');
       }
     });
@@ -392,6 +227,8 @@ class AppLoadingService {
         appName: appDisplayName,
         container: appContainer,
         loadingElement: null,
+        vueApp: null,
+        vueInstance: null,
         skeletonElement: null,
         timeoutId: null,
         isVisible: false,
@@ -424,27 +261,80 @@ class AppLoadingService {
       skeleton.style.setProperty('opacity', '1', 'important');
       instance.isVisible = true;
     } else {
-      // 如果没有骨架屏，使用 loading 元素
-      if (!instance.loadingElement) {
-        instance.loadingElement = this.createLoadingElement(instance.container, appDisplayName);
-        // 关键：由于使用fixed定位，应该添加到body而不是container，确保覆盖整个屏幕
-        document.body.appendChild(instance.loadingElement);
-      } else {
-        // 如果loading元素已存在，更新显示名称（如果变化了）
-        const nameEl = instance.loadingElement.querySelector('.app-loading-name') as HTMLElement;
-        if (nameEl && nameEl.textContent !== appDisplayName) {
-          nameEl.textContent = appDisplayName;
+      // 如果没有骨架屏，使用 Vue 组件
+      try {
+        if (!instance.loadingElement || !instance.vueApp) {
+          // 创建 Vue 应用实例
+          const { vueApp, vueInstance, loadingElement } = await this.createVueAppInstance(appDisplayName, instance.container);
+          instance.loadingElement = loadingElement;
+          instance.vueApp = vueApp;
+          instance.vueInstance = vueInstance;
+          // 关键：由于使用fixed定位，应该添加到body而不是container，确保覆盖整个屏幕
+          document.body.appendChild(loadingElement);
+          
+          // 关键修复：确保背景色在有内容时显示（和根级别一样使用深色背景）
+          requestAnimationFrame(() => {
+            const mask = loadingElement.querySelector('.btc-app-loading-mask');
+            const container = loadingElement.querySelector('.btc-app-loading-container');
+            if (mask instanceof HTMLElement) {
+              // 和根级别一样使用深色背景
+              mask.style.setProperty('background-color', '#0a0a0a', 'important');
+            }
+            // 添加 ready 类，使容器显示
+            if (container instanceof HTMLElement) {
+              container.classList.add('btc-app-loading-container--ready');
+            }
+          });
+        } else {
+          // 如果 Vue 应用已存在，更新 props（如果需要）
+          // 注意：Vue 3 中 props 是只读的，如果需要更新，需要重新挂载
+          // 这里暂时不更新，因为 AppLoading 组件内部已经通过响应式状态管理
+          
+          // 确保loading元素在body中（如果不在，移动到body）
+          if (instance.loadingElement.parentNode !== document.body) {
+            document.body.appendChild(instance.loadingElement);
+          }
+          
+          // 关键修复：确保背景色在有内容时显示（和根级别一样使用深色背景）
+          requestAnimationFrame(() => {
+            const mask = instance.loadingElement?.querySelector('.btc-app-loading-mask');
+            const container = instance.loadingElement?.querySelector('.btc-app-loading-container');
+            if (mask instanceof HTMLElement) {
+              // 和根级别一样使用深色背景
+              mask.style.setProperty('background-color', '#0a0a0a', 'important');
+            }
+            // 添加 ready 类，使容器显示
+            if (container instanceof HTMLElement) {
+              container.classList.add('btc-app-loading-container--ready');
+            }
+          });
         }
-        // 确保loading元素在body中（如果不在，移动到body）
-        if (instance.loadingElement.parentNode !== document.body) {
-          document.body.appendChild(instance.loadingElement);
+        
+        instance.isVisible = true;
+      } catch (error) {
+        // 如果 Vue 组件加载失败，降级方案：创建一个简单的 loading 元素
+        if (!instance.loadingElement) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'app-loading-fallback';
+          // 关键：使用深色背景，确保页面内容在 loading 期间被遮挡
+          loadingEl.style.cssText = `
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: ${LOADING_Z_INDEX.APP};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #0a0a0a;
+          `;
+          loadingEl.innerHTML = `<div style="text-align: center; color: var(--el-text-color-primary);">${appDisplayName}<br/>正在加载...</div>`;
+          instance.loadingElement = loadingEl;
+          document.body.appendChild(loadingEl);
         }
+        instance.isVisible = true;
       }
-      
-      instance.loadingElement.style.setProperty('display', 'flex', 'important');
-      instance.loadingElement.style.setProperty('visibility', 'visible', 'important');
-      instance.loadingElement.style.setProperty('opacity', '1', 'important');
-      instance.isVisible = true;
     }
 
     // 设置超时关闭（10秒）
@@ -503,31 +393,70 @@ class AppLoadingService {
       instance.skeletonElement.style.setProperty('opacity', '0', 'important');
     }
 
-    // 隐藏 loading 元素（强制关闭，确保移除）
-    if (instance.loadingElement) {
-      instance.loadingElement.style.setProperty('display', 'none', 'important');
+    // 隐藏 loading 元素（卸载 Vue 应用实例）
+    if (instance.vueApp && instance.loadingElement) {
+      // 关键修复：立即移除背景色，让页面内容透过显示
+      const mask = instance.loadingElement.querySelector('.btc-app-loading-mask');
+      if (mask instanceof HTMLElement) {
+        mask.style.removeProperty('background');
+        // 关键修复：移除 show 类，触发平滑过渡
+        mask.classList.remove('btc-app-loading-mask--show');
+        // 确保过渡生效
+        mask.style.setProperty('visibility', 'hidden', 'important');
+        mask.style.setProperty('opacity', '0', 'important');
+      }
+      
+      // 等待过渡完成后再卸载和移除
+      setTimeout(() => {
+        try {
+          // 卸载 Vue 应用实例
+          instance.vueApp?.unmount();
+          // 移除 DOM 元素
+          if (instance.loadingElement?.parentNode) {
+            instance.loadingElement.parentNode.removeChild(instance.loadingElement);
+          }
+        } catch (e) {
+          // 如果卸载失败，强制移除 DOM 元素
+          try {
+            if (instance.loadingElement?.parentNode) {
+              instance.loadingElement.parentNode.removeChild(instance.loadingElement);
+            }
+          } catch (err) {
+            // 忽略移除错误
+          }
+        }
+        instance.vueApp = null;
+        instance.vueInstance = null;
+        instance.loadingElement = null;
+      }, 300); // 匹配 CSS transition 时长
+    } else if (instance.loadingElement) {
+      // 如果没有 Vue 应用实例（降级方案），使用平滑过渡
+      // 关键修复：立即移除背景色
+      instance.loadingElement.style.removeProperty('background-color');
       instance.loadingElement.style.setProperty('visibility', 'hidden', 'important');
       instance.loadingElement.style.setProperty('opacity', '0', 'important');
       instance.loadingElement.style.setProperty('pointer-events', 'none', 'important');
       
-      // 立即移除 DOM 元素（不等待动画，确保强制关闭）
-      try {
-        if (instance.loadingElement.parentNode) {
-          instance.loadingElement.parentNode.removeChild(instance.loadingElement);
-        }
-      } catch (e) {
-        // 如果移除失败，尝试延迟移除
-        setTimeout(() => {
-          if (instance.loadingElement && instance.loadingElement.parentNode) {
-            try {
-              instance.loadingElement.parentNode.removeChild(instance.loadingElement);
-            } catch (err) {
-              // 忽略移除错误
-            }
+      // 等待过渡完成后再移除
+      setTimeout(() => {
+        try {
+          if (instance.loadingElement?.parentNode) {
+            instance.loadingElement.parentNode.removeChild(instance.loadingElement);
           }
-        }, 100);
-      }
-      instance.loadingElement = null;
+        } catch (e) {
+          // 如果移除失败，尝试延迟移除
+          setTimeout(() => {
+            if (instance.loadingElement?.parentNode) {
+              try {
+                instance.loadingElement.parentNode.removeChild(instance.loadingElement);
+              } catch (err) {
+                // 忽略移除错误
+              }
+            }
+          }, 100);
+        }
+        instance.loadingElement = null;
+      }, 300); // 匹配 CSS transition 时长
     }
 
     instance.isVisible = false;

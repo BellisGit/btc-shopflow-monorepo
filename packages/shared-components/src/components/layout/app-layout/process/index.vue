@@ -45,25 +45,17 @@
             @click="onTap(item, index)"
             @contextmenu.stop.prevent="openContextMenu($event, item, index)"
           >
-            <!-- 图标 -->
-            <el-icon
-              v-if="getTabIcon(item) && !isSvgIcon(getTabIcon(item)) && ElementPlusIconsVue[getTabIcon(item) as keyof typeof ElementPlusIconsVue]"
-              :size="14"
-              class="tab-icon"
-            >
-              <component :is="ElementPlusIconsVue[getTabIcon(item) as keyof typeof ElementPlusIconsVue]" />
-            </el-icon>
-            <btc-svg
-              v-else-if="isSvgIcon(getTabIcon(item))"
-              :name="getSvgIconName(getTabIcon(item))"
-              :size="14"
-              class="tab-icon"
-            />
+            <!-- 图标：所有应用的 tabbar 标签都不显示图标（参考 cool-admin-vue-7.x） -->
             <span class="label" :title="getTabLabel(item)">
               {{ getTabLabel(item) }}
             </span>
 
-            <btc-svg class="close" name="close" @mousedown.stop="onDel(index)" />
+            <btc-svg
+              v-if="isTabClosable(item.fullPath || item.path)"
+              class="close"
+              name="close"
+              @mousedown.stop="onDel(index)"
+            />
           </div>
         </div>
       </el-scrollbar>
@@ -106,53 +98,16 @@ defineOptions({
 
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, setGlobalState } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
+import { getCurrentEnvironment } from '@configs/unified-env-config';
 // BtcMessage 未使用
 import type { ProcessItem } from '../../../../store/process';
 import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
-import { getManifestRoute } from '@btc/subapp-manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
-import * as ElementPlusIconsVue from '@element-plus/icons-vue';
-import { getMenusForApp } from '../../../../store/menuRegistry';
 import { getAppById } from '@configs/app-scanner';
-
-// 判断是否为SVG图标
-function isSvgIcon(iconName?: string): boolean {
-  return iconName?.startsWith('svg:') ?? false;
-}
-
-// 获取SVG图标名称（移除 svg: 前缀）
-function getSvgIconName(iconName?: string): string {
-  return iconName?.replace(/^svg:/, '') || '';
-}
-
-// 从菜单注册表中查找菜单项的图标
-function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined {
-  const menus = getMenusForApp(app);
-
-  // 递归查找菜单项
-  function findInMenuItems(items: any[]): string | undefined {
-    for (const item of items) {
-      // 优先通过 labelKey 匹配（菜单注册时保存的原始 i18n key）
-      // 如果 labelKey 不存在，则通过 title 匹配（兼容旧数据）
-      const matches = (item.labelKey === i18nKey) || (item.title === i18nKey);
-      if (matches && item.icon) {
-        return item.icon;
-      }
-      // 递归查找子菜单
-      if (item.children && item.children.length > 0) {
-        const found = findInMenuItems(item.children);
-        if (found) {
-          return found;
-        }
-      }
-    }
-    return undefined;
-  }
-
-  return findInMenuItems(menus);
-}
+import { initGlobalTabBreadcrumbListener, globalTabbarList, globalActiveTabKey } from '../../../../composables/useGlobalTabBreadcrumbState';
 
 interface Props {
   isFullscreen?: boolean;
@@ -168,10 +123,15 @@ defineEmits<{
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 // 使用静态导入的 store
 const processStore = useProcessStore();
+
+// 初始化全局状态监听器（单例模式，只注册一次）
+onMounted(() => {
+  initGlobalTabBreadcrumbListener();
+});
 
 // 获取设置状态
 // 关键优化：确保 showWorkTab 有默认值 true，避免等待 useSettingsState() 初始化导致的延迟
@@ -186,17 +146,17 @@ try {
   // 先读取值，再用正确的初始值创建 ref，避免先显示后隐藏的闪烁
   const initialShowWorkTab = settingsState.showWorkTab.value ?? true;
   const initialTabStyle = settingsState.tabStyle.value ?? 'tab-default';
-  
+
   // 使用正确的初始值更新 ref，避免闪烁
   showWorkTab.value = initialShowWorkTab;
   tabStyle.value = initialTabStyle;
-  
+
   // 监听设置变化，确保用户切换设置时能响应
   // 注意：不需要 immediate: true，因为我们已经在上面同步设置了初始值
   watch(settingsState.showWorkTab, (val) => {
     showWorkTab.value = val ?? true;
   });
-  
+
   watch(settingsState.tabStyle, (val) => {
     tabStyle.value = val ?? 'tab-default';
   });
@@ -233,10 +193,77 @@ onUnmounted(() => {
 const scrollerRef = ref();
 const itemRefs = ref<Record<number, HTMLElement>>({});
 
-// 根据当前路由过滤标签（只显示当前应用的标签）
+// 判断 Tab 是否可关闭
+function isTabClosable(path: string): boolean {
+  const normalizedPath = path.replace(/\/+$/, '') || '/';
+  // 概览页面不可关闭
+  return normalizedPath !== '/overview';
+}
+
+// 获取应用的首页路径（使用全局配置，移除硬编码）
+function getAppHomePath(appId: string): string {
+  const app = getAppById(appId);
+
+  if (!app) {
+    // 如果找不到应用配置，回退到 /
+    return '/';
+  }
+
+  // 判断目标路径：
+  // - 生产环境子域名：跳转到 /（子域名本身就是应用的根路径）
+  // - 开发/预览环境主域名：子应用跳转到 pathPrefix（如 /logistics），主应用跳转到 / 或配置的 homeRoute
+  if (app.type === 'main') {
+    // 主应用：优先使用配置的 homeRoute，否则使用 /
+    return app.routes?.homeRoute || '/';
+  }
+
+  if (app.type === 'sub' && typeof window !== 'undefined') {
+    const env = getCurrentEnvironment();
+    const hostname = window.location.hostname;
+    
+    // 生产环境或测试环境子域名：首页是 /
+    if ((env === 'production' || env === 'test') && app.subdomain && hostname === app.subdomain) {
+      return '/';
+    } else if (app.pathPrefix) {
+      // 开发/预览环境主域名：子应用首页是 pathPrefix
+      return app.pathPrefix;
+    }
+  }
+
+  // 默认返回 /
+  return '/';
+}
+
+// 将全局状态的 TabbarItem 转换为 ProcessItem 格式（兼容性）
+function convertGlobalTabToProcessItem(tab: any): ProcessItem {
+  return {
+    path: tab.path,
+    fullPath: tab.path,
+    name: tab.key,
+    meta: {
+      label: tab.label,
+      labelKey: tab.i18nKey,
+      title: tab.label,
+      titleKey: tab.i18nKey,
+    },
+    active: tab.key === globalActiveTabKey.value,
+    app: tab.appName,
+  };
+}
+
+// 根据当前路由过滤标签（优先使用全局状态，兼容 processStore）
 const filteredTabs = computed(() => {
-  if (!processStore) return [];
   const currentApp = getCurrentAppFromPath(route.path);
+
+  // 优先级 1: 使用全局状态的 tabbarList
+  if (globalTabbarList.value.length > 0) {
+    return globalTabbarList.value
+      .filter((tab: any) => tab.appName === currentApp)
+      .map(convertGlobalTabToProcessItem);
+  }
+
+  // 优先级 2: 兼容 processStore（过渡期）
+  if (!processStore) return [];
   return processStore.list.filter((tab: ProcessItem) => tab.app === currentApp);
 });
 
@@ -352,25 +379,108 @@ function setItemRef(el: any, index: number) {
   }
 }
 
+// 获取主应用的 i18n 实例（用于确保翻译正确）
+function getMainAppI18n() {
+  if (typeof window !== 'undefined' && (window as any).__MAIN_APP_I18N__) {
+    return (window as any).__MAIN_APP_I18N__;
+  }
+  return null;
+}
+
+// 使用主应用 i18n 实例进行翻译
+function translateWithMainI18n(key: string): string | null {
+  const mainAppI18n = getMainAppI18n();
+  if (mainAppI18n && mainAppI18n.global) {
+    const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+    const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+
+    // 直接访问消息对象，确保能访问到已合并的语言包
+    if (key in messages) {
+      const value = messages[key];
+      if (typeof value === 'string' && value.trim() !== '') {
+        return value;
+      } else if (typeof value === 'function') {
+        try {
+          const result = value({ normalize: (arr: any[]) => arr[0] });
+          if (typeof result === 'string' && result.trim() !== '') {
+            return result;
+          }
+        } catch {
+          // 如果函数调用失败，继续使用其他方法
+        }
+      }
+    }
+
+    // 如果直接访问失败，使用 te 和 t
+    if (mainAppI18n.global.te(key, currentLocale)) {
+      const translated = mainAppI18n.global.t(key, currentLocale);
+      if (translated && typeof translated === 'string' && translated !== key && translated.trim() !== '') {
+        return translated;
+      }
+    }
+  }
+  return null;
+}
+
 // 获取标签的国际化文本
-function getTabLabel(item: ProcessItem) {
+function getTabLabel(item: ProcessItem): string {
+  // 优先级 1: 检查 meta.label 是否是 i18n key（包含 '.' 或 'menu.' 前缀）
+  // 如果是 i18n key，尝试翻译；否则直接使用
+  if (typeof item.meta?.label === 'string' && item.meta.label.length > 0) {
+    const label = item.meta.label;
+    // 检查是否是 i18n key（包含 '.' 或 'menu.' 前缀）
+    const isI18nKey = label.includes('.') || label.startsWith('menu.');
+    if (isI18nKey) {
+      // 优先使用主应用的 i18n 实例进行翻译
+      const mainTranslated = translateWithMainI18n(label);
+      if (mainTranslated) {
+        return mainTranslated;
+      }
+      // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+      if (te(label)) {
+        const translated = t(label);
+        if (translated && translated !== label) {
+          return translated;
+        }
+      }
+      // 如果翻译失败，继续使用其他优先级
+    } else {
+      // 不是 i18n key，直接使用
+      return label;
+    }
+  }
+
+  // 优先级 2: 如果没有 label，尝试从 manifest 获取并翻译
   const app = getCurrentAppFromPath(item.path);
   const manifestRoute = getManifestRoute(app, item.path);
 
   if (manifestRoute?.tab?.labelKey) {
-    const translated = t(manifestRoute.tab.labelKey);
-    if (translated && translated !== manifestRoute.tab.labelKey) {
-      return translated;
+    const key = manifestRoute.tab.labelKey;
+    // 优先使用主应用的 i18n 实例进行翻译
+    const mainTranslated = translateWithMainI18n(key);
+    if (mainTranslated) {
+      return mainTranslated;
+    }
+    // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+    if (te(key)) {
+      return t(key);
     }
   }
 
   if (manifestRoute?.labelKey) {
-    const translated = t(manifestRoute.labelKey);
-    if (translated && translated !== manifestRoute.labelKey) {
-      return translated;
+    const key = manifestRoute.labelKey;
+    // 优先使用主应用的 i18n 实例进行翻译
+    const mainTranslated = translateWithMainI18n(key);
+    if (mainTranslated) {
+      return mainTranslated;
+    }
+    // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+    if (te(key)) {
+      return t(key);
     }
   }
 
+  // 优先级 3: 尝试从 meta.labelKey 或 meta.hostLabelKey 翻译
   const metaLabelKey =
     typeof item.meta?.labelKey === 'string' && item.meta.labelKey.length > 0
       ? item.meta.labelKey
@@ -379,169 +489,32 @@ function getTabLabel(item: ProcessItem) {
       : undefined;
 
   if (metaLabelKey) {
-    const translated = t(metaLabelKey);
-    if (translated && translated !== metaLabelKey) {
-      return translated;
+    // 优先使用主应用的 i18n 实例进行翻译
+    const mainTranslated = translateWithMainI18n(metaLabelKey);
+    if (mainTranslated) {
+      return mainTranslated;
+    }
+    // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+    if (te(metaLabelKey)) {
+      return t(metaLabelKey);
     }
   }
 
-  if (typeof item.meta?.label === 'string' && item.meta.label.length > 0) {
-    const translated = t(item.meta.label);
-    if (translated && translated !== item.meta.label) {
-      return translated;
-    }
-    return item.meta.label;
-  }
-
-  if (typeof item.meta?.title === 'string' && item.meta.title.length > 0) {
-    const translated = t(item.meta.title);
-    if (translated && translated !== item.meta.title) {
-      return translated;
-    }
-    return item.meta.title;
-  }
-
-  // 路径到 i18n key 的映射
-  const pathToI18nKey: Record<string, string> = {
-    // 404 页面
-    '/404': 'common.page_not_found',
-
-    // 个人中心
-    '/profile': 'common.profile',
-
-    // 测试功能
-    '/test/components': 'menu.test_features.components',
-
-    // 文档中心
-    '/docs': 'menu.docs_center',
-
-    // 平台治理
-    '/platform/domains': 'menu.platform.domains',
-    '/platform/modules': 'menu.platform.modules',
-    '/platform/plugins': 'menu.platform.plugins',
-
-    // 组织与账号
-    '/org/tenants': 'menu.org.tenants',
-    '/org/departments': 'menu.org.departments',
-    '/org/users': 'menu.org.users',
-
-    // 访问控制
-    '/access/resources': 'menu.access.resources',
-    '/access/actions': 'menu.access.actions',
-    '/access/permissions': 'menu.access.permissions',
-    '/access/roles': 'menu.access.roles',
-    '/access/perm-compose': 'menu.access.perm_compose',
-    '/org/users/users-roles': 'menu.access.user_role_bind',
-
-    // 导航与可见性
-    '/navigation/menus': 'menu.navigation.menus',
-    '/navigation/menus/preview': 'menu.navigation.menu_preview',
-
-    // 数据管理
-    '/data/files/list': 'menu.data.files.list',
-    '/data/files/templates': 'menu.data.files.templates',
-    '/data/files/preview': 'menu.data.files.preview',
-    '/data/inventory/check': 'menu.data.inventory',
-    '/data/dictionary/file-categories': 'menu.data.dictionary.file_categories',
-    '/data/recycle': 'menu.data.recycle',
-
-    // 运维与审计
-    '/ops/logs/operation': 'menu.ops.operation_log',
-    '/ops/logs/request': 'menu.ops.request_log',
-    '/ops/api-list': 'menu.ops.api_list',
-    '/ops/baseline': 'menu.ops.baseline',
-    '/ops/simulator': 'menu.ops.simulator',
-
-    // 策略相关
-    '/strategy/management': 'menu.strategy.management',
-    '/strategy/designer': 'menu.strategy.designer',
-    '/strategy/monitor': 'menu.strategy.monitor',
-
-    // 子应用路由（只保留首页）
-    '/logistics': 'menu.logistics.overview',
-    '/engineering': 'menu.engineering.overview',
-    '/quality': 'menu.quality.overview',
-    '/production': 'menu.production.overview',
-  };
-
-  const i18nKey = pathToI18nKey[item.path];
-
-  if (i18nKey) {
-    return t(i18nKey);
-  }
-
-  // 回退到原始标签
-  return item.meta?.label || item.name || item.path;
-}
-
-// 获取标签图标
-function getTabIcon(item: ProcessItem): string | undefined {
-  const app = getCurrentAppFromPath(item.path);
-  const manifestRoute = getManifestRoute(app, item.path);
-
-  // 优先从 manifest 的 tab 配置中获取图标
-  if (manifestRoute?.tab?.icon) {
-    return manifestRoute.tab.icon;
-  }
-
-  // 从 manifest 的 breadcrumbs 中获取最后一个面包屑的图标（当前页面图标）
-  if (manifestRoute?.breadcrumbs && manifestRoute.breadcrumbs.length > 0) {
-    const lastBreadcrumb = manifestRoute.breadcrumbs[manifestRoute.breadcrumbs.length - 1];
-    if (lastBreadcrumb && lastBreadcrumb.icon) {
-      return lastBreadcrumb.icon;
-    }
-  }
-
-  // 从 meta.breadcrumbs 中获取最后一个面包屑的图标
-  if (item.meta?.breadcrumbs && Array.isArray(item.meta.breadcrumbs) && item.meta.breadcrumbs.length > 0) {
-    const lastBreadcrumb = item.meta.breadcrumbs[item.meta.breadcrumbs.length - 1];
-    if (lastBreadcrumb.icon) {
-      return lastBreadcrumb.icon;
-    }
-  }
-
-  // 从菜单注册表中查找图标
-  const appForMenu = getCurrentAppFromPath(item.path);
-  const metaLabelKey =
-    typeof item.meta?.labelKey === 'string' && item.meta.labelKey.length > 0
-      ? item.meta.labelKey
-      : typeof item.meta?.hostLabelKey === 'string'
-      ? item.meta.hostLabelKey
-      : undefined;
-
-  if (metaLabelKey) {
-    const menuIcon = findMenuIconByI18nKey(metaLabelKey, appForMenu);
-    if (menuIcon) {
-      return menuIcon;
-    }
-  }
-
-  // 路径到图标的映射
-  const pathToIcon: Record<string, string> = {
-    '/404': 'svg:404',
-  };
-
-  return pathToIcon[item.path];
+  // 优先级 4: 回退到其他字段
+  return item.meta?.title || item.name || item.path;
 }
 
 // 返回上一页（在当前应用内）
 function toBack() {
-  const currentApp = getCurrentAppFromPath(route.path);
-  const appHomes: Record<string, string> = {
-    main: '/crud',
-    logistics: '/logistics',
-    engineering: '/engineering',
-    quality: '/quality',
-    production: '/production',
-    operations: '/operations',
-  };
-
-  // 如果有历史记录且在当前应用内，则返回
+  // 参考 cool-admin-vue-7.x 的实现：直接返回上一页
+  // 如果有历史记录，则返回；否则会自然回到首页
   if (window.history.length > 1) {
     router.back();
   } else {
-    // 否则回到当前应用首页
-    router.push(appHomes[currentApp] || '/');
+    // 如果没有历史记录，回到当前应用首页
+    const currentApp = getCurrentAppFromPath(route.path);
+    const homePath = getAppHomePath(currentApp);
+    router.push(homePath);
   }
 }
 
@@ -556,32 +529,11 @@ function toRefresh() {
 // 回到当前应用首页（使用全局配置，包含所有子应用）
 function toHome() {
   const currentApp = getCurrentAppFromPath(route.path);
-  const app = getAppById(currentApp);
-
-  // 判断目标路径：
-  // - 生产环境子域名：跳转到 /（子域名本身就是应用的根路径）
-  // - 开发/预览环境主域名：子应用跳转到 pathPrefix（如 /logistics），主应用跳转到 /
-  let targetPath = '/';
-
-  if (app && app.type === 'sub' && typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-
-    if (isProductionSubdomain && app.subdomain && hostname === app.subdomain) {
-      // 生产环境子域名：首页是 /
-      targetPath = '/';
-    } else if (app.pathPrefix) {
-      // 开发/预览环境主域名：子应用首页是 pathPrefix
-      targetPath = app.pathPrefix;
-    }
-  } else if (app && app.type === 'main') {
-    // 主应用：首页是 /
-    targetPath = '/';
-  }
+  const homePath = getAppHomePath(currentApp);
 
   // 仅当不在首页时执行跳转，避免无效操作
-  if (route.path !== targetPath) {
-    router.push(targetPath);
+  if (route.path !== homePath) {
+    router.push(homePath);
   }
 }
 
@@ -605,6 +557,25 @@ function adjustScroll(index: number) {
 // 点击标签
 function onTap(item: any, index: number) {
   adjustScroll(index);
+
+  // 优先使用全局状态更新（通过统一中间层）
+  const tabKey = item.fullPath || item.path;
+  const currentTabbarList = globalTabbarList.value || [];
+  const tab = currentTabbarList.find((tab: any) => tab.key === tabKey);
+
+  if (tab) {
+    setGlobalState({
+      activeTabKey: tabKey,
+      currentApp: tab.appName,
+    }, false).catch(() => {
+      // 忽略错误
+    });
+  } else {
+    setGlobalState({ activeTabKey: tabKey }, false).catch(() => {
+      // 忽略错误
+    });
+  }
+
   router.push(item.fullPath);
 }
 
@@ -613,7 +584,51 @@ function onDel(index: number) {
   const item = filteredTabs.value[index];
   if (!item) return;
 
-  // 在原始列表中找到并删除
+  const tabPath = item.fullPath || item.path;
+  const tabKey = tabPath;
+
+  // 优先使用全局状态关闭 Tab（通过统一中间层）
+  // 使用组件中的状态（从监听器获取）
+  const currentTabbarList = globalTabbarList.value || [];
+  const currentActiveTabKey = globalActiveTabKey.value || '';
+
+  const tabToClose = currentTabbarList.find((tab: any) => tab.key === tabKey);
+
+  // 如果是概览 Tab，关闭后重定向到 /overview
+  if (tabToClose && tabToClose.path === '/overview') {
+    const newTabList = currentTabbarList.filter((tab: any) => tab.key !== tabKey);
+    setGlobalState({
+      tabbarList: newTabList,
+      activeTabKey: '/overview',
+      currentApp: 'main-app',
+    }, false).then(() => {
+      router.push('/overview').catch(() => {});
+    }).catch(() => {
+      // 忽略错误
+    });
+    return;
+  }
+
+  // 其他 Tab 正常关闭
+  const newTabList = currentTabbarList.filter((tab: any) => tab.key !== tabKey);
+  const newActiveKey = currentActiveTabKey === tabKey
+    ? (newTabList[newTabList.length - 1]?.key || '')
+    : currentActiveTabKey;
+
+  setGlobalState({
+    tabbarList: newTabList,
+    activeTabKey: newActiveKey,
+  }, false).then(() => {
+    // 如果删除的是当前激活标签，跳转到最后一个标签或首页
+    if (currentActiveTabKey === tabKey) {
+      const lastTab = newTabList[newTabList.length - 1];
+      router.push(lastTab ? lastTab.path : '/').catch(() => {});
+    }
+  }).catch(() => {
+    // 忽略错误，继续使用 processStore
+  });
+
+  // 兼容性：使用 processStore（过渡期）
   const globalIndex = processStore.list.findIndex((t) => t.fullPath === item.fullPath);
   if (globalIndex > -1) {
     processStore.remove(globalIndex);
@@ -671,16 +686,9 @@ function handleTabCommand(command: string) {
       // 关闭所有标签（只在当前应用内）
       processStore.closeAll(currentApp);
 
-      // 跳转到当前应用首页
-      const appHomes: Record<string, string> = {
-        main: '/',
-        logistics: '/logistics',
-        engineering: '/engineering',
-        quality: '/quality',
-        production: '/production',
-        operations: '/operations',
-      };
-      router.push(appHomes[currentApp] || '/');
+      // 跳转到当前应用首页（使用全局配置）
+      const homePath = getAppHomePath(currentApp);
+      router.push(homePath);
       break;
     }
   }

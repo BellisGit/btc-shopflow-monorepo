@@ -58,6 +58,11 @@ export async function bootstrap(app: App) {
 
   await autoDiscoverPlugins(app);  // 自动发现插件
   await setupMicroApps(app);       // 微前端设置
+  
+  // 初始化插件消费（消费主应用提供的全局插件状态）
+  const { initPluginConsumer } = await import('./plugins');
+  initPluginConsumer(app);
+  
   setupInterceptors();             // 拦截器配置
 
   // 3. 处理器初始化
@@ -73,15 +78,8 @@ export async function bootstrap(app: App) {
   // 暴露 cleanupBadge 方法（生命周期管理器需要）
   (window as any).cleanupNotificationBadge = notificationHandler.cleanupBadge;
 
-  // 暴露 authApi 到全局（已在 main.ts 中暴露，这里作为兜底确保暴露）
-  // 如果 main.ts 中的暴露失败，这里会再次尝试
-  if (typeof (window as any).__APP_AUTH_API__ === 'undefined') {
-    import('../modules/api-services/auth').then(({ authApi }) => {
-      (window as any).__APP_AUTH_API__ = authApi;
-    }).catch((error) => {
-      console.warn('[bootstrap] Failed to expose authApi globally:', error);
-    });
-  }
+  // 注意：authApi 已移除，请使用全局 __APP_AUTH_API__ 获取（由 main-app 提供）
+  // system-app 不再暴露 authApi 到全局，因为 auth 模块已移除
 
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();

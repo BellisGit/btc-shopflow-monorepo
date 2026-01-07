@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi } from '@/services/auth';
-import { getCookie, deleteCookie } from '@/utils/cookie';
+import { getCookie, deleteCookie } from '@btc/shared-core/utils/cookie';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null);

@@ -28,7 +28,7 @@ export interface RollupConfigOptions {
   externalBtcPackages?: boolean;
   /**
    * 是否将 @configs 包标记为外部库（默认: true）
-   * 主应用（system-app）应该设置为 false，以便打包这些库
+   * 主应用（main-app）应该设置为 false，以便打包这些库
    * 子应用应该设置为 true，从 layout-app 加载共享资源
    */
   externalConfigsPackages?: boolean;
@@ -52,7 +52,7 @@ export function createRollupConfig(appName: string, options?: RollupConfigOption
   // 如果设置为 true，则标记为 external（不推荐）
   const externalBtcPackages = options?.externalBtcPackages === true;
   // 默认将 @configs 包标记为 external（子应用从 layout-app 加载）
-  // 主应用（system-app）需要显式设置 externalConfigsPackages: false，以便打包这些库
+  // 主应用（main-app）需要显式设置 externalConfigsPackages: false，以便打包这些库
   const externalConfigsPackages = options?.externalConfigsPackages !== false;
 
   // 构建 external 数组
@@ -92,7 +92,7 @@ export function createRollupConfig(appName: string, options?: RollupConfigOption
       },
     ] : []),
     // @configs 包：根据配置决定是否标记为 external
-    // 主应用（system-app）应该打包这些库，子应用从 layout-app 加载
+    // 主应用（main-app）应该打包这些库，子应用从 layout-app 加载
     ...(externalConfigsPackages ? [
       '@configs/layout-bridge',
       '@configs/unified-env-config',

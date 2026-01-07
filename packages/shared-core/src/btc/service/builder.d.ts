@@ -20,3 +20,4 @@ export declare class ServiceBuilder {
      * @param epsData - virtual:eps 鎻愪緵鐨勬暟鎹?   */
     build(epsData: EpsData): DynamicService;
 }
+//# sourceMappingURL=builder.d.ts.map

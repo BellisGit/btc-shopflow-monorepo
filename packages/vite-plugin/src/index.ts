@@ -68,6 +68,7 @@ export { ctxPlugin } from './ctx';
 export { tagPlugin } from './tag';
 export { copyLogoPlugin } from './copy-logo';
 export { fixChunkReferencesPlugin } from './fix-chunk-references';
+export { injectFallbackTitle } from './inject-fallback-title';
 
 // 导出类型
 export * from './eps/types';

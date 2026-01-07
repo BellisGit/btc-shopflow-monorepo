@@ -22,54 +22,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
-import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
-import { service } from '@services/eps';
+import { ref } from 'vue';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 
-const { t } = useI18n();
-const message = useMessage();
 const crudRef = ref();
 
-const actionService = {
-  ...service.admin?.iam?.action,
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 单个删除：直接传递 ID
-    await service.admin?.iam?.action?.delete(id);
-
-    message.success(t('crud.message.delete_success'));
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.admin?.iam?.action?.deleteBatch(ids);
-
-    message.success(t('crud.message.delete_success'));
-  },
-};
-
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'actionNameCn', label: '行为名称' },
-  { prop: 'actionCode', label: '行为编码' },
-  { prop: 'actionType', label: '类型' },
-  { prop: 'httpMethod', label: 'HTTP方法' },
-  { prop: 'description', label: '描述' },
-]);
-
-const formItems = computed<FormItem[]>(() => [
-  { prop: 'actionNameCn', label: '行为名称', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'actionCode', label: '行为编码', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'actionType', label: '类型', span: 12, component: { name: 'el-input' } },
-  { prop: 'httpMethod', label: 'HTTP方法', span: 12, component: { name: 'el-input' } },
-  { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea' } } },
-]);
+// 从 config.ts 读取配置（platform.access.actions 使用 access 模块的配置）
+const { columns } = usePageColumns('access.actions');
+const { formItems } = usePageForms('access.actions');
+const actionService = usePageService('access.actions', 'action', {
+  showSuccessMessage: true,
+});
 
 
 // 移除手动调用 loadData，让 BtcCrud 自动加载

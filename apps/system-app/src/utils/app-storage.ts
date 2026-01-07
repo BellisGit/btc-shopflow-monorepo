@@ -2,7 +2,7 @@
  * 统一的存储管理工具
  */
 
-import { getCookie, getCookieDomain, deleteCookie } from './cookie';
+import { getCookie, getCookieDomain, deleteCookie } from '@btc/shared-core/utils/cookie';
 import { syncSettingsToCookie } from '@btc/shared-utils';
 
 // 从 Cookie 读取设置（当前未使用）

@@ -1,6 +1,6 @@
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
-import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-utils';
+import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-core/utils';
 
 /**
  * 二维数组转 worksheet

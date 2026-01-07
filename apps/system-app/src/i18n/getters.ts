@@ -1,7 +1,10 @@
 // i18n/getters.ts
 import { createI18n } from 'vue-i18n';
 import type { I18n } from 'vue-i18n';
-import { zhCN as sharedCoreZh, enUS as sharedCoreEn } from '@btc/shared-core';
+import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
+import sharedCoreEn from '@btc/shared-core/locales/en-US';
+import sharedLocalesZhCN from '@btc/shared-components/locales/zh-CN.json';
+import sharedLocalesEnUS from '@btc/shared-components/locales/en-US.json';
 
 // 延迟加载 messages，避免初始化顺序问题
 let messagesCache: Record<string, any> | null = null;
@@ -33,14 +36,16 @@ let i18nInstance: I18n | null = null;
 const getI18nInstance = (): I18n => {
   if (!i18nInstance) {
     const messages = getMessages();
-    // 合并所有语言包：shared-core + unplugin 自动加载的 messages
+    // 合并所有语言包：shared-core + shared-components + unplugin 自动加载的 messages
     const normalizedMessages = {
       'zh-CN': mergeMessages(
         sharedCoreZh as Record<string, any>,
+        sharedLocalesZhCN as Record<string, any>,
         (messages as Record<string, any>)['zh-CN'] || {}
       ),
       'en-US': mergeMessages(
         sharedCoreEn as Record<string, any>,
+        sharedLocalesEnUS as Record<string, any>,
         (messages as Record<string, any>)['en-US'] || {}
       ),
     };

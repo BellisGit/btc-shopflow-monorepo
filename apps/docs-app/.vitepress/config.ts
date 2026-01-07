@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { generateNav } from './utils/auto-nav';
 import { generateSidebar } from './utils/auto-sidebar';
 import { getViteAppConfig } from '../../../configs/vite-app-config';
+import { localesStaticPlugin } from '../../../configs/vite/plugins';
 
 export default defineConfig({
   title: '拜里斯文档库',
@@ -149,7 +150,8 @@ export default defineConfig({
   // Vite 配置
   vite: {
     plugins: [
-      exportSearchIndexPlugin() // 导出搜索索引给主应用
+      exportSearchIndexPlugin(), // 导出搜索索引给主应用
+      localesStaticPlugin(fileURLToPath(new URL('../', import.meta.url))), // 提供 locales 文件
     ],
 
     // 确保 public 目录被正确处理
@@ -193,6 +195,13 @@ export default defineConfig({
         port: getViteAppConfig('docs-app').devPort + 1, // 使用不同的端口避免冲突
         host: 'localhost', // 改为 localhost，避免 0.0.0.0 的问题
       },
+    },
+
+    // 预览服务器配置
+    preview: {
+      port: getViteAppConfig('docs-app').prePort,
+      host: '0.0.0.0',
+      strictPort: true, // 端口被占用时报错而不是自动换端口
     },
   }
 });

@@ -1,20 +1,27 @@
 import {
   createRouter,
   createWebHistory,
+  createMemoryHistory,
   type RouteRecordRaw,
   type RouteLocationNormalized,
+  type Router,
+  type NavigationGuardNext,
 } from 'vue-router';
-import Layout from '../modules/base/components/layout/index.vue';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { AppLayout as Layout } from '@btc/shared-components';
+import { createAuthGuard, createTitleGuard } from '@btc/shared-router';
 import { config } from '../config';
 import { tSync } from '../i18n/getters';
 // 使用动态导入避免循环依赖
 // import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from '../micro/index';
 import { systemRoutes } from './routes/system';
-import { getCookie } from '../utils/cookie';
+import { getSystemRoutes } from './routes/system-routes';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from '../utils/app-storage';
 import { getTabsForNamespace } from '../store/tabRegistry';
 import { getAppBySubdomain } from '@configs/app-scanner';
+import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
 
 /**
  * 动态导入 @btc/shared-core
@@ -24,40 +31,42 @@ async function importSharedCore() {
   return await import('@btc/shared-core');
 }
 
+/**
+ * 获取登录页面URL
+ * 用于子应用在独立运行时重定向到登录页面
+ * 关键：只有主应用（bellis.com.cn/main-app）有登录页面，子应用没有登录页面
+ * 所以子应用在生产环境子域名下必须重定向到主应用的登录页面
+ */
+function getMainAppLoginUrl(redirectPath?: string): string {
+  if (typeof window === 'undefined') {
+    return '/login';
+  }
+
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
+  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
+
+  // 生产环境或测试环境：如果是子域名（如 system.bellis.com.cn 或 system.test.bellis.com.cn），重定向到主应用的登录页面
+  // 关键：只有主应用有登录页面，子应用没有登录页面
+  const env = getEnvironment();
+  if ((env === 'production' || env === 'test') && getCurrentSubApp()) {
+    // 子域名环境，重定向到主应用的登录页面
+    const mainDomain = env === 'test' ? 'test.bellis.com.cn' : 'bellis.com.cn';
+    return `${protocol}//${mainDomain}/login${redirectQuery}`;
+  }
+
+  // 开发环境：主应用在 localhost:8080 (main-app)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const mainAppPort = '8080';
+    return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
+  }
+
+  // 其他环境：使用当前域名的登录页面（假设是主应用）
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
+}
+
 const routes: RouteRecordRaw[] = [
-  // 登录页面（不在 Layout 中）- 使用根目录 auth 包
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@auth/login/index.vue'),
-    meta: {
-      public: true, // 公开页面，不需要认证
-      noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.login'
-    }
-  },
-  // 忘记密码页面（不在 Layout 中）- 使用根目录 auth 包
-  {
-    path: '/forget-password',
-    name: 'ForgetPassword',
-    component: () => import('@auth/forget-password/index.vue'),
-    meta: {
-      public: true, // 公开页面，不需要认证
-      noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.login.password.forgot'
-    }
-  },
-  // 注册页面（不在 Layout 中）- 使用根目录 auth 包
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('@auth/register/index.vue'),
-    meta: {
-      public: true, // 公开页面，不需要认证
-      noLayout: true, // 不使用 Layout 布局
-      titleKey: 'auth.register'
-    }
-  },
   // 系统域路由（主应用路由）
   {
     path: '/',
@@ -227,12 +236,10 @@ const routes: RouteRecordRaw[] = [
       // 检查是否已登录
       const isAuthenticatedUser = isAuthenticated();
 
-      // 如果未登录，重定向到登录页
+      // 如果未登录，重定向到主应用登录页
       if (!isAuthenticatedUser) {
-        next({
-          path: '/login',
-          query: { redirect: to.fullPath },
-        });
+        const loginUrl = getMainAppLoginUrl(to.fullPath);
+        window.location.href = loginUrl;
         return;
       }
 
@@ -262,66 +269,28 @@ router.onError((error: Error) => {
       const route = currentRoute.matched[currentRoute.matched.length - 1];
       // Failed component route 日志已移除
 
-      // 关键：如果是登录页组件加载失败，尝试重定向到登录页（使用 replace 避免历史记录）
-      if (route && (route.path === '/login' || currentRoute.path === '/login')) {
-        // 登录页组件加载失败 日志已移除
-        setTimeout(() => {
-          try {
-            // 先检查登录页路由是否存在
-            const loginRoute = router.resolve('/login');
-            if (loginRoute && loginRoute.matched.length > 0) {
-              router.replace('/login').catch(() => {
-                // 如果 router.replace 失败，使用 window.location
-                window.location.href = '/login';
-              });
-            } else {
-              // 如果登录页路由不存在，直接使用 window.location
-              window.location.href = '/login';
-            }
-          } catch (error) {
-            // 如果路由解析失败，使用 window.location 作为回退
-            window.location.href = '/login';
-          } finally {
-            // 无论成功与否，都移除 Loading 元素
-            const loadingEl = document.getElementById('Loading');
-            if (loadingEl) {
-              loadingEl.style.setProperty('display', 'none', 'important');
-            }
-          }
-        }, 100);
-        return;
-      }
+      // 关键：system-app 不再有登录页，组件加载失败时不需要特殊处理
+      // 移除 Loading 元素并返回
+      setTimeout(() => {
+        const loadingEl = document.getElementById('Loading');
+        if (loadingEl) {
+          loadingEl.classList.add('is-hide');
+        }
+      }, 100);
+      return;
     }
 
-    // 如果组件加载失败且不是登录页，尝试重定向到登录页
-    if (currentRoute && currentRoute.path !== '/login') {
+    // 组件加载失败，重定向到主应用登录页
+    if (currentRoute) {
       // 组件加载失败 日志已移除
       setTimeout(() => {
-        try {
-          // 先检查登录页路由是否存在
-          const loginRoute = router.resolve('/login');
-          if (loginRoute && loginRoute.matched.length > 0) {
-            router.replace({
-              path: '/login',
-              query: { redirect: currentRoute.fullPath },
-            }).catch(() => {
-              // 如果 router.replace 失败，使用 window.location
-              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
-            });
-          } else {
-            // 如果登录页路由不存在，直接使用 window.location
-            window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
-          }
-        } catch (error) {
-          // 如果路由解析失败，使用 window.location 作为回退
-          // 登录页路由解析失败，使用 window.location
-          window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
-        } finally {
-          // 无论成功与否，都移除 Loading 元素
-          const loadingEl = document.getElementById('Loading');
-          if (loadingEl) {
-            loadingEl.style.setProperty('display', 'none', 'important');
-          }
+        const loginUrl = getMainAppLoginUrl(currentRoute.fullPath);
+        window.location.href = loginUrl;
+        
+        // 移除 Loading 元素
+        const loadingEl = document.getElementById('Loading');
+        if (loadingEl) {
+          loadingEl.style.setProperty('display', 'none', 'important');
         }
       }, 100);
     }
@@ -487,36 +456,74 @@ function formatDocumentTitle(path: string): string {
 }
 
 /**
- * 更新浏览器标题（同步，无闪烁）
- * 根据当前路由路径判断应用，动态设置标题：{应用名称}
+ * 判断是否为首页
  */
-function updateDocumentTitle(to: RouteLocationNormalized) {
+function isHomePage(to: RouteLocationNormalized): boolean {
+  // 检查 meta.isHome
+  if (to.meta?.isHome === true) {
+    return true;
+  }
+  
+  // 检查路径是否为根路径
+  if (to.path === '/' || to.path === '') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * 获取页面标题
+ * 优先使用 meta.titleKey（如果提供了翻译函数），否则使用 meta.title
+ */
+function getPageTitle(to: RouteLocationNormalized): string | null {
+  const meta = to.meta || {};
+  
+  // 1. 如果有 titleKey，尝试翻译
+  if (meta.titleKey && typeof meta.titleKey === 'string') {
+    const translated = tSync(meta.titleKey);
+    // 如果翻译成功（返回值不等于 key），使用翻译结果
+    if (translated !== meta.titleKey) {
+      return translated;
+    }
+  }
+  
+  // 2. 如果有 title，直接使用
+  if (meta.title && typeof meta.title === 'string') {
+    return meta.title;
+  }
+  
+  // 3. 如果 titleKey 存在但没有翻译函数，返回 null（让 buildTitle 使用兜底逻辑）
+  if (meta.titleKey && typeof meta.titleKey === 'string') {
+    return null;
+  }
+  
+  return null;
+}
+
+/**
+ * 更新浏览器标题（用于语言切换时）
+ * 使用新的标题工具函数
+ */
+async function updateDocumentTitle(to: RouteLocationNormalized) {
   currentRoute = to;
 
-  // 根据路径判断当前应用，动态设置标题
-  document.title = formatDocumentTitle(to.path);
-
-  // 如果国际化还没加载完成，延迟重试以确保标题正确
-  const appName = getCurrentAppFromPath(to.path);
-  const i18nKey = `domain.type.${appName}`;
-  const moduleName = tSync(i18nKey);
-  
-  if (moduleName === i18nKey) {
-    const retryTranslation = (attempt: number = 1) => {
-      if (attempt > 5) return; // 最多重试5次
-
-      setTimeout(() => {
-        const retryModuleName = tSync(i18nKey);
-        if (retryModuleName !== i18nKey) {
-          document.title = formatDocumentTitle(to.path);
-        } else {
-          // 继续重试
-          retryTranslation(attempt + 1);
-        }
-      }, attempt * 100); // 递增延迟：100ms, 200ms, 300ms, 400ms, 500ms
-    };
-
-    retryTranslation();
+  try {
+    // 获取应用 ID
+    const { getAppIdFromPath, setPageTitle } = await import('@btc/shared-core');
+    const appId = getAppIdFromPath(to.path);
+    
+    // 判断是否为首页
+    const isHome = isHomePage(to);
+    
+    // 获取页面标题
+    const pageTitle = getPageTitle(to);
+    
+    // 设置标题（传递翻译函数以支持应用名称国际化）
+    await setPageTitle(appId, pageTitle, { isHome, sync: false, translate: tSync });
+  } catch (error) {
+    // 标题设置失败不影响功能
+    console.warn('[title] 更新标题失败:', error);
   }
 }
 
@@ -621,7 +628,7 @@ function normalizeRoutePath(path: string): string | null {
   }
 
   // 如果是系统域路径，不需要规范化
-  if (path === '/' || path === '/profile' || path.startsWith('/data') || path.startsWith('/login') || path.startsWith('/forget-password') || path.startsWith('/register')) {
+  if (path === '/' || path === '/profile' || path.startsWith('/data')) {
     return null;
   }
 
@@ -713,13 +720,12 @@ if (typeof window !== 'undefined') {
 }
 
 router.beforeResolve(async (to) => {
-  // 关键：如果是子应用路由或登录页，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
+  // 关键：如果是子应用路由，不应该关闭"拜里斯科技"loading（因为它应该已经被隐藏了）
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
-  const isLoginPage = to.path === '/login' || to.path.startsWith('/login?');
   
-  // 子应用路由和登录页的loading由各自管理，不应该在这里处理
-  if (isSubAppRoute || isLoginPage) {
+  // 子应用路由的loading由各自管理，不应该在这里处理
+  if (isSubAppRoute) {
     return;
   }
   
@@ -750,9 +756,9 @@ router.beforeResolve(async (to) => {
 });
 
 // 路由前置守卫：处理认证、Loading 显示和侧边栏
-router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
+router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from: import('vue-router').RouteLocationNormalized, next: import('vue-router').NavigationGuardNext) => {
   // 关键：判断是否是子应用路由
-  // system-app的#Loading（"拜里斯科技"）只应该在主应用路由时显示
+  // system-app的#Loading（"拜里斯科技"）只应该在 system-app 路由时显示
   const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
   const isSubAppRoute = knownSubAppPrefixes.some(prefix => to.path.startsWith(prefix));
   
@@ -944,25 +950,19 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
 
   // 关键：在子域名环境下，如果是子应用域名，不应该由 system-app 进行认证检查
   // 子应用的认证应该由子应用自己处理（通过 layout-app 或子应用自己的路由守卫）
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  // 使用顶层导入的应用扫描器（app-scanner 在构建时已加载）
-  const appBySubdomain = getAppBySubdomain(hostname);
-  const currentSubdomainApp = appBySubdomain?.id;
+  const env = getEnvironment();
+  const currentSubdomainApp = getCurrentSubApp();
 
   // 关键：在子域名环境下，如果是子应用域名，跳过 system-app 的认证检查
   // 因为子域名访问时，应该由 layout-app 或子应用自己处理认证
-  // 只有在主域名（bellis.com.cn）或开发环境下，system-app 才进行认证检查
-  if (isProductionSubdomain && currentSubdomainApp) {
+  // 只有在主域名或开发环境下，system-app 才进行认证检查
+  if ((env === 'production' || env === 'test') && currentSubdomainApp) {
     // 子域名环境下，跳过 system-app 的认证检查，让子应用或 layout-app 处理
-    // 但是，如果是登录页等公开页面，仍然需要处理
-    const isPublicPage = to.meta?.public === true ||
-                         to.path === '/login' ||
-                         to.path === '/forget-password' ||
-                         to.path === '/register';
+    // duty 下的页面需要处理
+    const isDutyPage = to.path.startsWith('/duty/');
 
-    if (isPublicPage) {
-      // 公开页面，直接放行
+    if (isDutyPage) {
+      // duty 下的页面，直接放行
       next();
       return;
     }
@@ -975,49 +975,65 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
   }
 
   // 检查是否为公开页面（不需要认证）
-  // 关键：登录页、忘记密码页、注册页、duty下的页面都是公开页面
+  // 关键：duty下的页面是公开页面
   const isPublicPage = to.meta?.public === true ||
-                       to.path === '/login' ||
-                       to.path === '/forget-password' ||
-                       to.path === '/register' ||
                        to.path.startsWith('/duty/');
+
+  // 使用共享的认证守卫（但需要自定义重定向逻辑）
+  // 注意：系统应用没有登录页，需要重定向到主应用登录页
+  const authGuard = createAuthGuard({
+    appName: 'system',
+    publicPages: ['/404'], // 404 页面是公开的
+    loginPath: '/login', // 虽然系统应用没有登录页，但这里用于构建 URL
+    isAuthenticated,
+    isPublicPage: (to: RouteLocationNormalized) => {
+      // 自定义公开页面检查
+      return to.meta?.public === true || to.path.startsWith('/duty/');
+    },
+  });
+
+  // 执行认证守卫（使用包装的 next 函数来重定向到主应用登录页）
+  let nextCalled = false;
+  const wrappedNext: NavigationGuardNext = ((result?: any) => {
+    if (!nextCalled) {
+      nextCalled = true;
+      if (result === undefined) {
+        // 守卫调用了 next()，允许继续
+        next();
+      } else if (result === false) {
+        // 守卫取消了导航
+        next(false);
+      } else if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
+        // 守卫要求重定向，但系统应用需要重定向到主应用登录页
+        // 如果重定向目标是登录页，使用主应用登录页 URL
+        const redirectPath = typeof result === 'string' ? result : (result as any).path || '/login';
+        if (redirectPath === '/login' || redirectPath.startsWith('/login')) {
+          const loginUrl = getMainAppLoginUrl(to.fullPath);
+          window.location.href = loginUrl;
+        } else {
+          next(result);
+        }
+      } else {
+        next(result);
+      }
+    }
+  }) as NavigationGuardNext;
+
+  await authGuard(to, _from, wrappedNext, router);
+  if (nextCalled) {
+    return;
+  }
 
   // 关键：在主域名（bellis.com.cn）下，必须严格检查认证状态
   // 不能假设已认证，必须通过实际的认证标记来判断
   const isAuthenticatedUser = isAuthenticated();
 
-  // 如果是登录页且用户已认证，重定向到首页
-  // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
-  // 或者如果查询参数中有 from=duty，说明是从 duty 页面返回的，也应该允许访问登录页
-  if (to.path === '/login' && isAuthenticatedUser && !to.query.logout && !to.query.from) {
-    const redirect = (to.query.redirect as string) || '/';
-    // 只取路径部分，忽略查询参数，避免循环重定向
-    const redirectPath = redirect.split('?')[0] || '/';
-    next(redirectPath);
-    return;
-  }
-
-  // 如果不是公开页面，检查认证状态
+  // 如果不是公开页面，检查认证状态（兜底逻辑）
   if (!isPublicPage) {
     if (!isAuthenticatedUser) {
-      // 未认证，重定向到登录页，并保存原始路径以便登录后跳转
-      // 关键：确保重定向到登录页，并添加错误处理
-      try {
-        // 先检查登录页路由是否存在
-        const loginRoute = router.resolve('/login');
-        if (loginRoute && loginRoute.matched.length > 0) {
-          next({
-            path: '/login',
-            query: { redirect: to.fullPath },
-          });
-        } else {
-          // 如果登录页路由不存在，使用 window.location 重定向
-          window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
-        }
-      } catch (error) {
-        // 如果路由解析失败，使用 window.location 作为回退
-        window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
-      }
+      // 未认证，重定向到主应用登录页
+      const loginUrl = getMainAppLoginUrl(to.fullPath);
+      window.location.href = loginUrl;
       return;
     }
   }
@@ -1031,9 +1047,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
       return;
     }
 
-    // 检查是否是公开页面（登录、注册、忘记密码）或 duty 下的页面，或 home-app 的页面
-    const publicPages = ['/login', '/register', '/forget-password'];
-    const isPublicPage = publicPages.includes(to.path);
+    // 检查是否是 duty 下的页面，或 home-app 的页面
     const isDutyPage = to.path.startsWith('/duty/');
     const isHomePage = to.path.startsWith('/home');
 
@@ -1043,19 +1057,17 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
       return;
     }
 
-    if (isPublicPage || isDutyPage) {
-      // 公开页面、duty 下的页面，直接放行（这些是静态HTML页面，不需要路由匹配）
+    if (isDutyPage) {
+      // duty 下的页面，直接放行（这些是静态HTML页面，不需要路由匹配）
       next();
       return;
     }
 
     // 其他未匹配的路由，根据认证状态处理
     if (!isAuthenticatedUser) {
-      // 未认证，重定向到登录页
-      next({
-        path: '/login',
-        query: { redirect: to.fullPath },
-      });
+      // 未认证，重定向到主应用登录页
+      const loginUrl = getMainAppLoginUrl(to.fullPath);
+      window.location.href = loginUrl;
       return;
     }
 
@@ -1107,46 +1119,25 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
       return;
     }
 
-    // 关键：如果路由未匹配，尝试重定向到登录页（避免一直 loading）
+    // 关键：如果路由未匹配，尝试重定向到主应用登录页（避免一直 loading）
     // 但只对非公开页面进行重定向，避免循环
     const isPublicPage = to.meta?.public === true ||
-                         to.path === '/login' ||
-                         to.path === '/forget-password' ||
-                         to.path === '/register' ||
                          to.path.startsWith('/duty/');
 
-    if (!isPublicPage && to.path !== '/login') {
+    if (!isPublicPage) {
       // 关键：先检查认证状态，只有未认证时才重定向到登录页
       // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
       const isAuth = isAuthenticated();
 
       if (!isAuth) {
-        // 未认证，重定向到登录页
-        try {
-          // 先检查登录页路由是否存在
-          const loginRoute = router.resolve('/login');
-          if (loginRoute && loginRoute.matched.length > 0) {
-            router.replace({
-              path: '/login',
-              query: { redirect: to.fullPath },
-            }).catch(() => {
-              // 如果重定向失败，使用 window.location 作为回退
-              window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
-            });
-          } else {
-            // 如果登录页路由不存在，直接使用 window.location
-            window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
-          }
-        } catch (error) {
-          // 如果路由解析失败，使用 window.location 作为回退
-          // 路由解析失败，使用 window.location
-          window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
-        } finally {
-          // 无论成功与否，都移除 Loading 元素
-          const loadingEl = document.getElementById('Loading');
-          if (loadingEl) {
-            loadingEl.style.setProperty('display', 'none', 'important');
-          }
+        // 未认证，重定向到主应用登录页
+        const loginUrl = getMainAppLoginUrl(to.fullPath);
+        window.location.href = loginUrl;
+        
+        // 移除 Loading 元素
+        const loadingEl = document.getElementById('Loading');
+        if (loadingEl) {
+          loadingEl.style.setProperty('display', 'none', 'important');
         }
       } else {
         // 已认证但路由未匹配，可能是路由配置问题
@@ -1192,8 +1183,7 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   } catch (error) {
     // 忽略错误
   }
-  // 动态更新浏览器标题
-  updateDocumentTitle(to);
+  // 标题设置已移至 shared-router 的 titleGuard（在 beforeEach 中处理）
 
   // 检查是否是系统域路径（包括根路径、/profile 和 /data/* 路径）
   const isSystemPath = to.path === '/' || to.path === '/profile' || to.path.startsWith('/data');
@@ -1282,4 +1272,182 @@ router.afterEach((to: import('vue-router').RouteLocationNormalized) => {
   });
 });
 
+// 注册标题守卫（使用国际化翻译函数）
+createTitleGuard(router, {
+  translate: tSync,
+  preloadConfig: true,
+});
+
 export default router;
+
+/**
+ * 创建系统应用路由（子应用模式）
+ * 使用 getSystemRoutes() 获取路由配置，简化路由守卫
+ */
+export const createSystemRouter = (): Router => {
+  // 使用 getSystemRoutes 获取路由配置
+  const routes = getSystemRoutes();
+
+  const systemRouter = createRouter({
+    history: qiankunWindow.__POWERED_BY_QIANKUN__
+      ? createMemoryHistory()
+      : createWebHistory(),
+    strict: true,
+    routes,
+  });
+
+  // 路由级别loading的延迟定时器
+  let routeLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+  // 路由级别loading的延迟时间（毫秒）
+  const ROUTE_LOADING_DELAY = 300;
+
+  /**
+   * 规范化路径：在生产环境子域名下，移除应用前缀
+   */
+  function normalizePath(path: string): string {
+    // 只在独立运行（非 qiankun）且是生产环境子域名时处理
+    if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+      return path; // qiankun 模式保持原路径
+    }
+
+    const env = getEnvironment();
+    const currentSubdomainApp = getCurrentSubApp();
+
+    if (env !== 'production' && env !== 'test') {
+      return path; // 非生产/测试环境，保持原路径
+    }
+
+    // 检测是否是 system 子域名
+    if (currentSubdomainApp === 'system' && path.startsWith('/system/')) {
+      const normalized = path.substring('/system'.length) || '/';
+      console.log(`[Router Path Normalize] ${path} -> ${normalized} (subdomain: ${hostname})`);
+      return normalized;
+    }
+
+    return path;
+  }
+
+  // 路由守卫：在生产环境子域名下规范化路径
+  systemRouter.beforeEach((to: any, _from: any, next: any) => {
+    const normalizedPath = normalizePath(to.path);
+
+    if (normalizedPath !== to.path) {
+      // 路径需要规范化，重定向到规范化后的路径
+      next({
+        path: normalizedPath,
+        query: to.query,
+        hash: to.hash,
+        replace: true,
+      });
+      return;
+    }
+
+    // 清除之前的延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+
+    // 检查是否有应用级别loading正在显示
+    const isAppLoadingVisible = ((): boolean => {
+      try {
+        const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+        if (!appLoadingEl) {
+          return false;
+        }
+        const style = window.getComputedStyle(appLoadingEl);
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' && 
+               style.opacity !== '0' &&
+               parseFloat(style.opacity) > 0;
+      } catch (e) {
+        return false;
+      }
+    })();
+
+    // 延迟显示路由loading（如果应用loading未显示）
+    if (!isAppLoadingVisible) {
+      routeLoadingTimer = setTimeout(async () => {
+        try {
+          const sharedCore = await importSharedCore();
+          if (sharedCore?.routeLoadingService) {
+            sharedCore.routeLoadingService.show();
+          }
+        } catch (error) {
+          // 静默失败
+        }
+      }, ROUTE_LOADING_DELAY);
+    }
+
+    next();
+  });
+
+  // 路由后置守卫：清除路由loading的延迟定时器并隐藏路由loading
+  systemRouter.afterEach(async () => {
+    // 清除延迟定时器
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading
+    try {
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+  });
+
+  // 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
+  // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
+  let loadingClosed = false;
+  systemRouter.beforeResolve(async () => {
+    // 清除路由loading的延迟定时器（路由即将解析完成，不需要再显示路由loading）
+    if (routeLoadingTimer) {
+      clearTimeout(routeLoadingTimer);
+      routeLoadingTimer = null;
+    }
+    
+    // 隐藏路由loading（如果正在显示）
+    try {
+      const sharedCore = await importSharedCore();
+      if (sharedCore?.routeLoadingService) {
+        sharedCore.routeLoadingService.hide();
+      }
+    } catch (error) {
+      // 静默失败
+    }
+
+    if (!loadingClosed) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        // 关键：立即隐藏并移除 loading，确保与 cool-admin 一致的性能
+        loadingEl.style.setProperty('display', 'none', 'important');
+        loadingEl.style.setProperty('visibility', 'hidden', 'important');
+        loadingEl.style.setProperty('opacity', '0', 'important');
+        loadingEl.style.setProperty('pointer-events', 'none', 'important');
+        loadingEl.classList.add('is-hide');
+        
+        // 延迟移除 DOM 元素（不影响显示，只是清理）
+        setTimeout(() => {
+          try {
+            loadingEl.remove();
+          } catch {
+            // 忽略移除错误
+          }
+        }, 350);
+        
+        loadingClosed = true;
+      }
+    }
+  });
+
+  systemRouter.onError((error: any) => {
+    console.warn('[system-app] Router error:', error);
+  });
+
+  return systemRouter;
+};

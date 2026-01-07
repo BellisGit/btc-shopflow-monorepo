@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 8091",
+    "dev": "vite",
     "build": "vite build",
     "build:clean": "pnpm clean:cache && vite build",
     "preview": "vite preview",
@@ -15,7 +15,6 @@
   "dependencies": {
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
     "@capacitor/core": "^6.0.0",
     "@vueuse/core": "^13.9.0",
     "axios": "^1.12.2",
@@ -34,7 +33,6 @@
     "@vitejs/plugin-vue": "^5.0.0",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "@zxing/library": "^0.21.0",
-    "element-plus": "2.13.0",
     "sass": "^1.93.2",
     "sharp": "^0.34.5",
     "typescript": "^5.3.3",

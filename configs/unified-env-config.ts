@@ -4,9 +4,9 @@
  */
 
 import { getAllApps, getAppById } from './app-scanner';
-import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort } from './app-env.config';
+import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost } from './app-env.config';
 
-export type Environment = 'development' | 'preview' | 'production';
+export type Environment = 'development' | 'preview' | 'test' | 'production';
 export type ConfigScheme = 'default' | 'custom'; // 可以通过 .env 切换
 
 export interface EnvironmentConfig {
@@ -95,6 +95,29 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         staticAssetsUrl: '',
       },
     },
+    test: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+      },
+      microApp: {
+        baseURL: 'https://test.bellis.com.cn',
+        entryPrefix: '', // 构建产物直接部署到子域名根目录（与生产环境一致）
+      },
+      docs: {
+        url: 'https://docs.test.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.test.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
     production: {
       api: {
         baseURL: '/api',
@@ -169,6 +192,29 @@ const configSchemes: Record<ConfigScheme, Record<Environment, EnvironmentConfig>
         staticAssetsUrl: '',
       },
     },
+    test: {
+      api: {
+        baseURL: '/api',
+        timeout: 30000,
+      },
+      microApp: {
+        baseURL: 'https://test.bellis.com.cn',
+        entryPrefix: '', // 构建产物直接部署到子域名根目录（与生产环境一致）
+      },
+      docs: {
+        url: 'https://docs.test.bellis.com.cn',
+        port: '',
+      },
+      ws: {
+        url: 'wss://api.test.bellis.com.cn',
+      },
+      upload: {
+        url: '/api/upload',
+      },
+      cdn: {
+        staticAssetsUrl: 'https://all.bellis.com.cn',
+      },
+    },
     production: {
       api: {
         baseURL: '/api',
@@ -222,7 +268,18 @@ export function getEnvironment(): Environment {
   const hostname = window.location.hostname;
   const port = window.location.port || '';
 
-  if (hostname.includes('bellis.com.cn')) {
+  // 测试环境：hostname 为 test.bellis.com.cn 或以 .test.bellis.com.cn 结尾
+  // 例如：test.bellis.com.cn, admin.test.bellis.com.cn
+  if (hostname === 'test.bellis.com.cn' || hostname.endsWith('.test.bellis.com.cn')) {
+    return 'test';
+  }
+
+  // 生产环境：hostname 为 bellis.com.cn 或以 .bellis.com.cn 结尾，但不包含 .test.bellis.com.cn
+  // 注意：只检查 hostname，避免路径中的 /test/ 被误判
+  if (
+    (hostname === 'bellis.com.cn' || hostname.endsWith('.bellis.com.cn')) &&
+    !hostname.includes('.test.bellis.com.cn')
+  ) {
     return 'production';
   }
 
@@ -359,6 +416,21 @@ export function isMainApp(
     return false;
   }
 
+  // 测试环境：通过子域名判断（类似生产环境）
+  if (env === 'test' && hostname) {
+    const appConfig = getAppConfigByTestHost(hostname);
+    if (appConfig) {
+      // 通过测试域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub') {
+        return false;
+      }
+    }
+    // 测试环境主域名（test.bellis.com.cn）或其他未匹配的域名，判断为主应用
+    return true;
+  }
+
   // 生产环境：通过子域名判断（基于应用身份配置）
   if (env === 'production') {
     const app = getAllApps().find(a => a.subdomain === hostname);
@@ -453,6 +525,21 @@ export function getCurrentSubApp(): string | null {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const port = typeof window !== 'undefined' ? window.location.port || '' : '';
 
+  // 测试环境：通过子域名判断（类似生产环境）
+  if (env === 'test' && hostname) {
+    const appConfig = getAppConfigByTestHost(hostname);
+    if (appConfig) {
+      // 通过测试域名找到对应的应用配置，然后通过应用名称找到应用身份
+      const appName = appConfig.appName.replace('-app', '');
+      const app = getAllApps().find(a => a.id === appName);
+      if (app && app.type === 'sub' && app.enabled) {
+        return app.id;
+      }
+    }
+    // 测试环境主域名（test.bellis.com.cn）或其他未匹配的域名，返回 null
+    return null;
+  }
+
   // 生产环境：通过子域名判断（优先级最高）
   if (env === 'production' && hostname) {
     const app = getAllApps().find(a => a.subdomain === hostname);
@@ -525,6 +612,16 @@ export function getSubAppEntry(appId: string): string {
   }
 
   switch (env) {
+    case 'test':
+      // 测试环境：直接使用测试子域名根路径，构建产物直接部署到子域名根目录（与生产环境一致）
+      if (appEnvConfig.testHost) {
+        const protocol = typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+        return `${protocol}//${appEnvConfig.testHost}/`;
+      }
+      return `/${appId}/`;
+
     case 'production':
       // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
       if (app.subdomain && appEnvConfig.prodHost) {
@@ -555,12 +652,22 @@ export function getSubAppActiveRule(appId: string): string | ((location: Locatio
   }
 
   const env = getEnvironment();
+  const appEnvConfig = getAppConfig(`${appId}-app`);
 
-  if (env === 'production' && app.subdomain) {
+  // 测试环境和生产环境：通过子域名判断
+  if ((env === 'test' || env === 'production') && appEnvConfig) {
     return (location: Location) => {
-      if (location.hostname === app.subdomain) {
+      // 测试环境：检查是否为测试子域名
+      if (env === 'test' && appEnvConfig.testHost) {
+        if (location.hostname === appEnvConfig.testHost) {
+          return true;
+        }
+      }
+      // 生产环境：检查是否为生产子域名
+      if (env === 'production' && app.subdomain && location.hostname === app.subdomain) {
         return true;
       }
+      // 路径匹配（作为兜底）
       if (location.pathname.startsWith(app.pathPrefix)) {
         return true;
       }
@@ -606,3 +713,6 @@ export const envConfig = getCurrentEnvConfig();
 // 这些函数依赖 getAllApps()，可能导致初始化顺序问题
 // 请使用 getCurrentSubApp() 和 isMainApp() 函数来获取当前值
 
+// 从 app-env.config 重新导出，以便从 unified-env-config 统一导入
+export { getAppConfig, getAppConfigByTestHost, getAppConfigByPrePort, getAppConfigByDevPort } from './app-env.config';
+export type { AppEnvConfig } from './app-env.config';

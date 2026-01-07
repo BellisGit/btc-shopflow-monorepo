@@ -3,7 +3,7 @@ export declare function useTabs({ config, Form }: {
     config: BtcFormConfig;
     Form: any;
 }): {
-    active: import("vue").Ref<string, string>;
+    active: import("vue").Ref<string | undefined, string | undefined>;
     list: import("vue").ComputedRef<any>;
     isLoaded: (value: any) => any;
     onLoad: (value: any) => void;
@@ -18,3 +18,4 @@ export declare function useTabs({ config, Form }: {
         refs: any;
     }) => void;
 };
+//# sourceMappingURL=tabs.d.ts.map

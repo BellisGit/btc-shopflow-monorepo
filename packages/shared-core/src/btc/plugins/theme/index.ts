@@ -1,7 +1,7 @@
 import type { App, Plugin } from 'vue';
 import { ref, computed } from 'vue';
 import { useDark } from '@vueuse/core';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { THEME_PRESETS, type ThemeConfig } from '../../composables/useTheme';
 import { setBodyClassName } from '../../utils/body-class';
 import { setThemeColor, syncThemeColorToSubApps } from './composables/useThemeColor';

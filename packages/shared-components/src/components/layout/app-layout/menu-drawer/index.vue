@@ -1,7 +1,5 @@
 <template>
   <teleport to="body">
-    <!-- 关键：使用 v-show 替代 v-if，保持 DOM 节点始终存在，避免销毁重建导致的 DOM 操作冲突 -->
-    <!-- 保证在子应用切换时，menu-drawer 的 DOM 不被销毁，避免 insertBefore 等报错 -->
     <transition name="drawer-slide">
       <div v-show="visible" class="menu-drawer">
         <div class="menu-drawer__header">
@@ -120,6 +118,8 @@ defineOptions({
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import { Check, Loading, Search } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { getEnvironment, getCurrentSubApp, type Environment } from '@configs/unified-env-config';
 
 // 通过全局函数获取应用特定的依赖
 // 这些函数需要由使用共享布局的应用提供
@@ -170,22 +170,81 @@ function getAppConfig(appName: string) {
   return null;
 }
 
-// 获取所有开发端口（从全局或应用提供）
-function getAllDevPorts(): string[] {
-  const getAllDevPortsFn = (window as any).__APP_GET_ALL_DEV_PORTS__;
-  if (getAllDevPortsFn) {
-    return getAllDevPortsFn();
+
+
+/**
+ * 根据应用短名称（如 'admin'）获取配置中的应用名称（如 'admin-app'）
+ * 动态从配置中查找，避免硬编码
+ */
+function getConfigAppName(appShortName: string): string {
+  // 常见的应用名称格式：{name}-app
+  const commonFormats = [
+    `${appShortName}-app`, // 最常见：admin -> admin-app
+    appShortName, // 直接使用：某些特殊应用可能不遵循 -app 格式
+  ];
+
+  // 尝试每种格式，找到第一个存在的配置
+  for (const format of commonFormats) {
+    const config = getAppConfig(format);
+    if (config) {
+      return format;
+    }
   }
-  return [];
+
+  // 如果都找不到，使用默认格式
+  return `${appShortName}-app`;
 }
 
-// 获取所有预览端口（从全局或应用提供）
-function getAllPrePorts(): string[] {
-  const getAllPrePortsFn = (window as any).__APP_GET_ALL_PRE_PORTS__;
-  if (getAllPrePortsFn) {
-    return getAllPrePortsFn();
+/**
+ * 动态构建子域名到应用名称的映射（从配置中获取）
+ * 例如：'admin.bellis.com.cn' -> 'admin'
+ */
+function buildSubdomainToAppMap(): Record<string, string> {
+  const map: Record<string, string> = {};
+
+  // 子应用名称列表（排除特殊应用：mobile, home, docs）
+  const commonAppNames = [
+    'admin', 'logistics', 'engineering', 'quality', 'production',
+    'finance', 'system', 'dashboard', 'personnel', 'operations'
+  ];
+
+  for (const appShortName of commonAppNames) {
+    const configAppName = getConfigAppName(appShortName);
+    const config = getAppConfig(configAppName);
+    if (config && config.prodHost) {
+      // 从 prodHost 提取子域名（如 'admin.bellis.com.cn'）
+      const hostname = config.prodHost;
+      map[hostname] = appShortName;
+
+      // 也支持测试环境的子域名（如 'admin.test.bellis.com.cn'）
+      if (config.testHost) {
+        map[config.testHost] = appShortName;
+      }
+    }
   }
-  return [];
+
+  return map;
+}
+
+/**
+ * 根据应用短名称获取显示名称（用于 loading 提示）
+ * 动态从国际化或配置获取，避免硬编码
+ */
+function getAppDisplayName(appShortName: string): string {
+  // 尝试从国际化获取
+  try {
+    const i18nKey = `micro_app.${appShortName}.title`;
+    const i18nValue = t(i18nKey);
+    // 如果国际化值存在且不是 key 本身，则使用国际化值
+    if (i18nValue && i18nValue !== i18nKey) {
+      return i18nValue;
+    }
+  } catch (e) {
+    // 静默失败
+  }
+
+  // 回退：使用应用名称本身
+  return appShortName || '应用';
 }
 
 interface MicroApp {
@@ -214,42 +273,10 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 /**
- * 环境类型
- */
-type EnvironmentType = 'development' | 'preview' | 'production';
-
-/**
- * 检测当前环境类型
- */
-const getEnvironmentType = (): EnvironmentType => {
-  if (typeof window === 'undefined') {
-    return import.meta.env.PROD ? 'production' : 'development';
-  }
-
-  const port = window.location.port || '';
-  const previewPorts = getAllPrePorts();
-  const devPorts = getAllDevPorts();
-
-  if (previewPorts.includes(port)) {
-    return 'preview';
-  }
-
-  if (devPorts.includes(port)) {
-    return 'development';
-  }
-
-  if (import.meta.env.PROD) {
-    return 'production';
-  }
-
-  return 'development';
-};
-
-/**
  * 获取应用入口地址
  */
 const getAppEntry = (appName: string): string => {
-  const envType = getEnvironmentType();
+  const env = getEnvironment();
   const appConfig = getAppConfig(`${appName}-app`);
 
   if (!appConfig) {
@@ -257,38 +284,42 @@ const getAppEntry = (appName: string): string => {
     return `/${appName}/`;
   }
 
-  switch (envType) {
-    case 'production':
-      // 生产环境：根据子域名判断使用子域名还是相对路径
-      if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        const subdomainMap: Record<string, string> = {
-          'bellis.com.cn': 'system',
-          'logistics.bellis.com.cn': 'logistics',
-          'quality.bellis.com.cn': 'quality',
-          'production.bellis.com.cn': 'production',
-          'engineering.bellis.com.cn': 'engineering',
-          'finance.bellis.com.cn': 'finance',
-        };
-
-        if (subdomainMap[hostname] === appName) {
-          const protocol = window.location.protocol;
-          return `${protocol}//${hostname}/`;
-        }
-      }
-      return `/${appName}/`;
-
-    case 'preview': {
-      return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+  // 使用 if/else 避免 TypeScript 类型检查问题
+  const envStr = env as string;
+  if (envStr === 'test') {
+    // 测试环境：使用测试环境的子域名
+    if (appConfig.testHost) {
+      const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
+      return `${protocol}//${appConfig.testHost}/`;
     }
-
-    case 'development':
-    default:
-      return `//${appConfig.devHost}:${appConfig.devPort}`;
+    return `/${appName}/`;
   }
+
+  if (envStr === 'production') {
+    // 生产环境：根据子域名判断使用子域名还是相对路径
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      // 动态构建子域名映射（从配置中获取）
+      const subdomainMap = buildSubdomainToAppMap();
+
+      // 检查是否匹配当前 hostname
+      if (subdomainMap[hostname] === appName) {
+        const protocol = window.location.protocol;
+        return `${protocol}//${hostname}/`;
+      }
+    }
+    return `/${appName}/`;
+  }
+
+  if (envStr === 'preview') {
+    return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+  }
+
+  // 开发环境或默认情况
+  return `//${appConfig.devHost}:${appConfig.devPort}`;
 };
 
-// 根据当前路由判断当前应用（系统域是默认域）
+// 根据当前路由判断当前应用
 const currentApp = ref('system');
 
 // 加载状态
@@ -299,114 +330,42 @@ const detectCurrentApp = () => {
     return;
   }
 
-  // 检测是否在生产环境的子域名下
-  const hostname = window.location.hostname;
-  const isProduction = hostname.includes('bellis.com.cn');
-  const isProductionSubdomain = isProduction && hostname !== 'bellis.com.cn';
-
-  // 子域名映射
-  const subdomainMap: Record<string, string> = {
-    'admin.bellis.com.cn': 'admin',
-    'logistics.bellis.com.cn': 'logistics',
-    'quality.bellis.com.cn': 'quality',
-    'production.bellis.com.cn': 'production',
-    'engineering.bellis.com.cn': 'engineering',
-    'finance.bellis.com.cn': 'finance',
-    'dashboard.bellis.com.cn': 'dashboard',
-    'personnel.bellis.com.cn': 'personnel',
-  };
-
-  // 运维应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
-  if (isProductionSubdomain && hostname === 'operations.bellis.com.cn') {
-    currentApp.value = 'operations';
-    return;
-  }
-
-  // 看板和人事应用在生产环境子域名下的处理
-  if (isProductionSubdomain && hostname === 'dashboard.bellis.com.cn') {
-    currentApp.value = 'dashboard';
-    return;
-  }
-  if (isProductionSubdomain && hostname === 'personnel.bellis.com.cn') {
-    currentApp.value = 'personnel';
-    return;
-  }
-
-  // 如果在生产环境子域名下，直接通过 hostname 判断
-  if (isProductionSubdomain && subdomainMap[hostname]) {
-    currentApp.value = subdomainMap[hostname];
-    return;
-  }
-
-  // 如果在生产环境主域名下，通过路径前缀判断
-  if (isProduction && hostname === 'bellis.com.cn') {
-    const path = window.location.pathname;
-    // 运维应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
-    if (path.startsWith('/operations')) {
-      currentApp.value = 'operations';
-      return;
-    }
-    if (path.startsWith('/dashboard')) {
-      currentApp.value = 'dashboard';
-      return;
-    }
-    if (path.startsWith('/personnel')) {
-      currentApp.value = 'personnel';
-      return;
-    }
-    if (path.startsWith('/docs')) {
-      currentApp.value = 'docs';
-    } else if (path.startsWith('/logistics')) {
-      currentApp.value = 'logistics';
-    } else if (path.startsWith('/engineering')) {
-      currentApp.value = 'engineering';
-    } else if (path.startsWith('/quality')) {
-      currentApp.value = 'quality';
-    } else if (path.startsWith('/production')) {
-      currentApp.value = 'production';
-    } else if (path.startsWith('/finance')) {
-      currentApp.value = 'finance';
-    } else if (path.startsWith('/admin')) {
-      currentApp.value = 'admin';
-    } else {
-      // 系统域是默认域，负责全域系统用户处理日常事务的共享域
-      currentApp.value = 'system';
-    }
-    return;
-  }
-
-  // 开发/预览环境：通过路径前缀判断
-  const path = window.location.pathname;
-  // 运维应用属于运维层面，不属于任何已有汉堡菜单应用列表的模块，不应该选中任意模块
-  if (path.startsWith('/operations')) {
-    currentApp.value = 'operations';
-    return;
-  }
-  if (path.startsWith('/dashboard')) {
-    currentApp.value = 'dashboard';
-    return;
-  }
-  if (path.startsWith('/personnel')) {
-    currentApp.value = 'personnel';
-    return;
-  }
-  if (path.startsWith('/docs')) {
-    currentApp.value = 'docs';
-  } else if (path.startsWith('/logistics')) {
-    currentApp.value = 'logistics';
-  } else if (path.startsWith('/engineering')) {
-    currentApp.value = 'engineering';
-  } else if (path.startsWith('/quality')) {
-    currentApp.value = 'quality';
-  } else if (path.startsWith('/production')) {
-    currentApp.value = 'production';
-  } else if (path.startsWith('/finance')) {
-    currentApp.value = 'finance';
-  } else if (path.startsWith('/admin')) {
-    currentApp.value = 'admin';
+  // 使用统一的环境检测函数
+  const detectedApp = getCurrentSubApp();
+  if (detectedApp) {
+    currentApp.value = detectedApp;
   } else {
-    // 系统域是默认域，负责全域系统用户处理日常事务的共享域
-    currentApp.value = 'system';
+    // 如果没有检测到子应用，尝试通过路径前缀判断（开发环境的兜底逻辑）
+    const path = window.location.pathname;
+    const env = getEnvironment();
+
+    // 只有在开发环境或预览环境才需要路径匹配（测试和生产环境通过子域名/端口判断）
+    if (env === 'development' || env === 'preview') {
+      // 动态从配置中获取所有可能的应用路径前缀
+      // 子应用名称列表（排除特殊应用：mobile, home, docs）
+      const commonAppNames = [
+        'operations', 'dashboard', 'personnel', 'logistics',
+        'engineering', 'quality', 'production', 'finance', 'admin',
+        'system'
+      ];
+
+      // 按路径长度降序排序，确保更长的路径前缀优先匹配（如 /operations 优先于 /op）
+      const sortedAppNames = commonAppNames.sort((a, b) => b.length - a.length);
+
+      for (const appName of sortedAppNames) {
+        if (path.startsWith(`/${appName}`)) {
+          // 检查配置是否存在
+          const configAppName = getConfigAppName(appName);
+          const config = getAppConfig(configAppName);
+          if (config) {
+            currentApp.value = appName;
+            return;
+          }
+        }
+      }
+    }
+
+    // 如果没有匹配到任何子应用路径，保持当前应用状态不变
   }
 };
 
@@ -422,7 +381,7 @@ onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
 
-// 域到应用的映射配置（不包括管理域和文档域）
+// 域到应用的映射配置（包括所有子应用，排除特殊应用：mobile, home, docs）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
   'LOGISTICS': {
     icon: 'map',
@@ -523,86 +482,54 @@ const domainCodeToI18nKey: Record<string, string> = {
 
 // 获取域显示名称
 const getDomainDisplayName = (app: MicroApp) => {
-  // 固定应用使用国际化配置
-  if (app.name === 'docs') {
-    return t(`micro_app.${app.name}.title`);
+  // 优先使用后端返回的 domainType
+  // 统一处理所有应用，从域数据中查找匹配的域
+  let domain: any = undefined;
+
+  // 首先尝试使用 app.name 的大写形式作为 key
+  domain = domainDataMap.value.get(app.name.toUpperCase());
+
+  // 如果找不到，尝试从所有域中查找匹配的域
+  if (!domain) {
+    domain = Array.from(domainDataMap.value.values())
+      .find((d: any) => {
+        const code = d.domainCode || d.id || d.name;
+        return code && typeof code === 'string' && code.toUpperCase() === app.name.toUpperCase();
+      });
   }
 
-  // 优先使用国际化配置，确保名称一致性
-  // 首先尝试从域数据中获取 domainCode，然后使用国际化映射
-  let domainCode: string | undefined;
-
-  // 系统域
-  if (app.name === 'system') {
-    const systemDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) =>
-        domain.domainCode === 'SYSTEM' ||
-        domain.name === '系统域' ||
-        domain.id === '17601901464201'
-      );
-    // 优先使用后端返回的 domainType
-    if (systemDomain && systemDomain.domainType) {
-      return systemDomain.domainType;
-    }
-    domainCode = systemDomain?.domainCode || 'SYSTEM';
-  }
-  // 管理域
-  else if (app.name === 'admin') {
-    const adminDomain = Array.from(domainDataMap.value.values())
-      .find((domain: any) =>
-        domain.domainCode === 'ADMIN' ||
-        domain.name === '管理域' ||
-        domain.id === 'SDOM-9473'
-      );
-    // 优先使用后端返回的 domainType
-    if (adminDomain && adminDomain.domainType) {
-      return adminDomain.domainType;
-    }
-    domainCode = adminDomain?.domainCode || 'ADMIN';
-  }
-  // 其他域
-  else {
-    // 首先尝试使用 app.name 的大写形式作为 key
-    let domain = domainDataMap.value.get(app.name.toUpperCase());
-
-    // 如果找不到，尝试从所有域中查找匹配的域
-    if (!domain) {
+  // 如果还是找不到，尝试使用域名称匹配（用于处理中文名称）
+  if (!domain) {
+    // 构建域名称映射表（动态从 domainAppMapping 推断）
+    const domainNameMap: Record<string, string> = {
+      'system': '系统域',
+      'admin': '管理域',
+      'logistics': '物流域',
+      'finance': '财务域',
+      'quality': '品质域',
+      'production': '生产域',
+      'engineering': '工程域',
+      'operations': '运维域',
+      'dashboard': '看板域',
+      'personnel': '人事域',
+    };
+    const domainName = domainNameMap[app.name];
+    if (domainName) {
       domain = Array.from(domainDataMap.value.values())
-        .find((d: any) => {
-          const code = d.domainCode || d.id || d.name;
-          return code && code.toUpperCase() === app.name.toUpperCase();
-        });
+        .find((d: any) => d.name === domainName);
     }
-
-    // 如果还是找不到，尝试使用其他可能的匹配方式
-    if (!domain) {
-      const domainNameMap: Record<string, string> = {
-        'logistics': '物流域',
-        'finance': '财务域',
-        'quality': '品质域',
-        'production': '生产域',
-        'engineering': '工程域',
-        'operations': '运维域',
-        'dashboard': '看板域',
-        'personnel': '人事域',
-      };
-      const domainName = domainNameMap[app.name];
-      if (domainName) {
-        domain = Array.from(domainDataMap.value.values())
-          .find((d: any) => d.name === domainName);
-      }
-    }
-
-    // 优先使用后端返回的 domainType
-    if (domain && domain.domainType) {
-      return domain.domainType;
-    }
-
-    domainCode = domain?.domainCode || app.name.toUpperCase();
   }
+
+  // 优先使用后端返回的 domainType
+  if (domain && domain.domainType) {
+    return domain.domainType;
+  }
+
+  // 获取 domainCode，用于国际化映射
+  const domainCode = domain?.domainCode || app.name.toUpperCase();
 
   // 如果后端没有返回 domainType，使用国际化映射获取显示名称
-  const i18nKey = domainCode ? domainCodeToI18nKey[domainCode] : undefined;
+  const i18nKey = domainCodeToI18nKey[domainCode];
   if (i18nKey) {
     const i18nValue = t(i18nKey);
     // 如果国际化值存在且不是 key 本身，则使用国际化值
@@ -635,10 +562,8 @@ const loadApplications = async () => {
     // 获取 EPS 服务，如果不可用则等待
     let service = getEpsService();
     if (!service) {
-      // 在子域环境下，layout-app 可能还在初始化，等待一下
       service = await waitForEpsService(5000, 100);
       if (!service) {
-        console.warn('[menu-drawer] EPS service not available after waiting');
         loading.value = false;
         finishLoading();
         return;
@@ -647,9 +572,6 @@ const loadApplications = async () => {
 
     // 使用共享缓存获取域列表
     const response = await getDomainList(service);
-
-    // me 接口返回的数据结构：{ code: 200, msg: "...", data: [...] }
-    // 兼容处理：支持 response.data（me接口）、response.list（list接口）、直接数组
     const domainList = Array.isArray(response)
       ? response
       : (response?.data || response?.list || []);
@@ -659,19 +581,31 @@ const loadApplications = async () => {
       const domainMap = new Map();
       domainList.forEach((domain: any) => {
         // me 接口返回的域数据可能没有 domainCode，需要根据 name 或 id 推断
-        // 或者使用 name 作为 key
-        const domainCode = domain.domainCode ||
-          (domain.name === '系统域' ? 'SYSTEM' :
-           domain.name === '管理域' ? 'ADMIN' :
-           domain.name === '物流域' ? 'LOGISTICS' :
-           domain.name === '财务域' ? 'FINANCE' :
-           domain.name === '品质域' ? 'QUALITY' :
-           domain.name === '生产域' ? 'PRODUCTION' :
-           domain.name === '工程域' ? 'ENGINEERING' :
-           domain.name === '运维域' ? 'OPERATIONS' :
-           domain.name === '看板域' ? 'DASHBOARD' :
-           domain.name === '人事域' ? 'PERSONNEL' :
-           domain.id || domain.name);
+        // 统一处理所有域，不特殊处理任何应用
+        let domainCode = domain.domainCode;
+
+        // 如果没有 domainCode，尝试从 name 推断
+        if (!domainCode && domain.name) {
+          // 构建名称到代码的映射（不特殊处理，统一规则）
+          const nameToCodeMap: Record<string, string> = {
+            '系统域': 'SYSTEM',
+            '管理域': 'ADMIN',
+            '物流域': 'LOGISTICS',
+            '财务域': 'FINANCE',
+            '品质域': 'QUALITY',
+            '生产域': 'PRODUCTION',
+            '工程域': 'ENGINEERING',
+            '运维域': 'OPERATIONS',
+            '看板域': 'DASHBOARD',
+            '人事域': 'PERSONNEL',
+          };
+          domainCode = nameToCodeMap[domain.name];
+        }
+
+        // 如果还是没有，使用 id 或 name
+        if (!domainCode) {
+          domainCode = domain.id || domain.name;
+        }
         if (domainCode) {
           // 使用 domainCode 作为主 key
           domainMap.set(domainCode, domain);
@@ -693,66 +627,24 @@ const loadApplications = async () => {
       // 更新域数据映射（用于显示名称）
       domainDataMap.value = domainMap;
 
-      // 构建应用列表
+      // 构建应用列表 - 统一处理所有子应用，排除特殊应用（docs）
       const appList: MicroApp[] = [];
 
-      // 1. 添加主应用（系统域 - 默认域）
-      const systemDomain = Array.from(domainMap.values())
-        .find((domain: any) =>
-          domain.domainCode === 'SYSTEM' ||
-          domain.name === '系统域' ||
-          domain.id === '17601901464201'
-        );
-
-      appList.push({
-        name: 'system',
-        icon: 'user',
-        color: '#722ed1',
-        entry: '//localhost:8081',
-        activeRule: '/',
-        description: systemDomain ?
-          (systemDomain.description || `${systemDomain.name} - 全域系统用户处理日常事务的共享域`) :
-          '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-      });
-
-      // 2. 添加管理域应用
-      const adminDomain = Array.from(domainMap.values())
-        .find((domain: any) =>
-          domain.domainCode === 'ADMIN' ||
-          domain.name === '管理域' ||
-          domain.id === 'SDOM-9473'
-        );
-
-      if (adminDomain) {
-        appList.push({
-          name: 'admin',
-          icon: 'settings',
-          color: '#13c2c2',
-          entry: '//localhost:8080',
-          activeRule: '/admin',
-          description: adminDomain.description || `${adminDomain.name} - 平台管理、组织架构、权限管理、导航管理`
-        });
-      }
-
-      // 3. 添加其他业务域应用（排除系统域、管理域和文档域）
       domainList
-        .filter((domain: any) =>
-          domain.domainCode !== 'SYSTEM' &&
-          domain.name !== '系统域' &&
-          domain.id !== '17601901464201' &&
-          domain.domainCode !== 'ADMIN' &&
-          domain.name !== '管理域' &&
-          domain.id !== 'SDOM-9473' &&
-          domain.domainCode !== 'DOCS' &&
-          domain.name !== '文档中心'
-        )
+        .filter((domain: any) => {
+          // 排除文档域（特殊应用）
+          const domainCode = domain.domainCode || domain.id || domain.name;
+          const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
+          return upperDomainCode !== 'DOCS' && domain.name !== '文档中心';
+        })
         .forEach((domain: any) => {
           const domainCode = domain.domainCode || domain.id || domain.name;
-          const appConfig = domainAppMapping[domainCode];
+          const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
+          const appConfig = domainAppMapping[upperDomainCode];
 
           if (appConfig) {
             const app = {
-              name: domainCode.toLowerCase(), // 应用名称使用小写，用于路由匹配
+              name: upperDomainCode.toLowerCase(), // 应用名称使用小写，用于路由匹配
               ...appConfig,
               description: domain.description || `${domain.name} - 业务域应用`
             };
@@ -762,35 +654,17 @@ const loadApplications = async () => {
 
       applications.value = appList;
     } else {
-      // 如果服务不可用，使用默认配置
-      applications.value = [
-        {
-          name: 'system',
-          icon: 'user',
-          color: '#722ed1',
-          entry: '//localhost:8081',
-          activeRule: '/',
-          description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-        }
-      ];
+      // 如果服务不可用，返回空列表（由应用自行处理）
+      applications.value = [];
       domainDataMap.value.clear();
     }
   } catch (error) {
-    console.warn('获取域列表失败，使用默认应用配置:', error);
-    // 服务不可用时，使用默认配置
-    applications.value = [
-      {
-        name: 'system',
-        icon: 'user',
-        color: '#722ed1',
-        entry: '//localhost:8081',
-        activeRule: '/',
-        description: '系统应用 - 全域系统用户处理日常事务的共享域，可以处理不需要具体区分域的业务'
-      }
-    ];
+    // 服务不可用时，返回空列表（由应用自行处理）
+    applications.value = [];
     domainDataMap.value.clear();
   } finally {
     loading.value = false;
+    finishLoading();
   }
 };
 
@@ -800,91 +674,86 @@ const handleSwitchApp = async (app: MicroApp) => {
     return;
   }
 
-  // 判断是否为生产环境（通过 hostname 判断）
-  const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('bellis.com.cn');
+  // 使用统一的环境检测函数
+  const environment: Environment = getEnvironment();
+  const isTest = (environment as string) === 'test';
+  const isProduction = environment === 'production';
+  const isPreview = environment === 'preview';
+  const isDevelopment = environment === 'development';
 
-  // 获取应用显示名称（用于占位loading）- 必须在构建 URL 之前定义
-  const appNameMap: Record<string, string> = {
-    'admin': '管理模块',
-    'logistics': '物流模块',
-    'engineering': '工程模块',
-    'quality': '品质模块',
-    'production': '生产模块',
-    'finance': '财务模块',
-    'operations': '运维模块',
-    'docs': '文档模块',
-    'dashboard': '图表模块',
-    'personnel': '人事模块',
-  };
-  const appDisplayName = appNameMap[app.name] || '应用';
+  // 动态获取应用显示名称（用于占位loading）
+  const appDisplayName = getAppDisplayName(app.name);
 
   let targetUrl: string;
 
-  // 生产环境：使用子域名跳转
-  if (isProduction) {
-    // 文档应用特殊处理（文档应用可能没有独立的子域名）
-    if (app.name === 'docs') {
-      // 文档应用在生产环境可能仍使用路径方式，或者有独立的子域名
-      // 这里先使用路径方式，如果需要可以后续配置
+  // 测试环境：使用测试环境的子域名（如 admin.test.bellis.com.cn）
+  if (isTest) {
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
+    // 动态从配置获取应用配置名称（如 admin -> admin-app）
+    const configAppName = getConfigAppName(app.name);
+    const appConfig = getAppConfig(configAppName);
+
+    // 优先使用配置文件中的 testHost，如果没有配置则回退到拼接方式
+    if (appConfig && appConfig.testHost) {
+      targetUrl = `${protocol}//${appConfig.testHost}/`;
+    } else {
+      // 回退：使用拼接方式构建测试域名
+      const testHost = `${app.name}.test.bellis.com.cn`;
+      targetUrl = `${protocol}//${testHost}/`;
+    }
+  }
+  // 生产环境：使用生产环境的子域名（如 admin.bellis.com.cn）
+  else if (isProduction) {
+    // 动态从配置获取应用配置名称（如 admin -> admin-app）
+    const configAppName = getConfigAppName(app.name);
+    const appConfig = getAppConfig(configAppName);
+    if (appConfig && appConfig.prodHost) {
+      // 构建完整的 URL，直接跳转到子域名的根路径，不添加任何查询参数
+      const protocol = window.location.protocol;
+      targetUrl = `${protocol}//${appConfig.prodHost}/`;
+    } else {
       const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
       targetUrl = `${protocol}//${hostname}${targetPath}`;
-    } else {
-      // 根据应用名称获取生产环境域名配置
-      // 应用名称映射：finance -> finance-app, quality -> quality-app, etc.
-      const appNameMapping: Record<string, string> = {
-        'system': 'system-app',
-        'admin': 'admin-app',
-        'logistics': 'logistics-app',
-        'engineering': 'engineering-app',
-        'quality': 'quality-app',
-        'production': 'production-app',
-        'finance': 'finance-app',
-        'mobile': 'mobile-app',
-        'docs': 'docs-app', // 文档应用使用 docs-app
-      };
-      const mappedAppName = appNameMapping[app.name] || `${app.name}-app`;
-      const appConfig = getAppConfig(mappedAppName);
-      if (appConfig && appConfig.prodHost) {
-        // 构建完整的 URL，直接跳转到子域名的根路径，不添加任何查询参数
-        const protocol = window.location.protocol;
-        targetUrl = `${protocol}//${appConfig.prodHost}/`;
-      } else {
-        console.warn(`[MenuDrawer] 未找到应用 ${app.name} 的生产环境配置，使用路径方式切换`);
-        const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        targetUrl = `${protocol}//${hostname}${targetPath}`;
-      }
     }
-  } else {
-    // 开发/预览环境：基于主应用 URL 拼接路径
-    // 环境类型检查（暂时未使用，保留用于未来扩展）
-    void getEnvironmentType();
+  }
+  // 预览环境：使用预览环境的端口（如 http://localhost:4181/index.html）
+  else if (isPreview) {
+    // 动态从配置获取应用配置名称（如 admin -> admin-app）
+    const configAppName = getConfigAppName(app.name);
+    const appConfig = getAppConfig(configAppName);
+    if (appConfig && appConfig.preHost && appConfig.prePort) {
+      // 预览环境使用完整的 URL，包含 /index.html
+      targetUrl = `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+    } else {
+      // 回退：使用当前路径前缀
+      const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
+      const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      targetUrl = `${protocol}//${hostname}${targetPath}`;
+    }
+  }
+  // 开发环境：使用路径前缀，不带参数
+  else {
     const targetPath = app.activeRule.startsWith('/') ? app.activeRule : `/${app.activeRule}`;
-
-    // 开发环境和预览环境都使用当前主应用的 URL + 路径前缀
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    const url = new URL(`${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`);
-    // 关键：通过 URL 参数传递应用名称（仅开发环境）
-    // 注意：searchParams.set() 会自动进行 URL 编码，不需要手动 encodeURIComponent
-    url.searchParams.set('__appName', appDisplayName);
-    targetUrl = url.toString();
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const port = typeof window !== 'undefined' ? window.location.port : '';
+    // 开发环境：直接使用路径前缀，不带任何查询参数
+    targetUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}${targetPath}`;
   }
 
-  // 关键：无论开发环境还是生产环境，都要设置 sessionStorage
+  // 关键：无论哪个环境，都要设置 sessionStorage
   try {
-    sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+    sessionStorage.set('nav_app_name', appDisplayName);
   } catch (e) {
     // 静默失败
   }
 
-  // 关键：在开发环境，如果是同一标签页内的应用切换，先隐藏容器，再跳转
-  if (!isProduction) {
-    // 隐藏容器，避免布局闪烁
+  // 跳转方式：开发环境同一标签页跳转，其他环境新标签页打开
+  if (isDevelopment) {
+    // 开发环境：隐藏容器，避免布局闪烁
     const container = document.querySelector('#subapp-viewport') as HTMLElement;
     if (container) {
       container.style.setProperty('display', 'none', 'important');
@@ -896,7 +765,7 @@ const handleSwitchApp = async (app: MicroApp) => {
     // 抽屉已经在函数开头同步关闭了
     window.location.href = targetUrl;
   } else {
-    // 生产环境：使用 window.open 在新标签页打开
+    // 预览、测试和生产环境：使用 window.open 在新标签页打开
     window.open(targetUrl, '_blank');
   }
 };
@@ -908,10 +777,16 @@ const shouldHandleDrawerEvent = (): boolean => {
     return true;
   }
   if (typeof window !== 'undefined') {
+    const env = getEnvironment();
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
-                             (hostname === 'localhost' && (port === '4192' || port === '4188'));
+    
+    const isLayoutAppDomain =
+      (env === 'production' && hostname === 'layout.bellis.com.cn') ||
+      (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
+      (env === 'preview' && port === '4192') ||
+      (env === 'development' && port === '4188');
+    
     if (isLayoutAppDomain) {
       return true;
     }
@@ -935,9 +810,6 @@ const handleClose = () => {
       emit('update:visible', false);
     } catch (error) {
       // 静默处理错误，避免在子应用环境中抛出异常
-      if (import.meta.env.DEV) {
-        console.warn('[MenuDrawer] handleClose error:', error);
-      }
     }
   });
 };

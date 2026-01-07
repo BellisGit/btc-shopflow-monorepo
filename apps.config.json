@@ -3,10 +3,17 @@
   "description": "BTC ShopFlow Monorepo 应用配置",
   "apps": [
     {
+      "id": "main",
+      "name": "main-app",
+      "displayName": "主应用",
+      "category": "core",
+      "packageName": "main-app"
+    },
+    {
       "id": "system",
       "name": "system-app",
       "displayName": "系统应用",
-      "category": "core",
+      "category": "business",
       "packageName": "system-app"
     },
     {

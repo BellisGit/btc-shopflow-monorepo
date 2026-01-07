@@ -25,7 +25,7 @@ import { ref, computed, inject, watch, onBeforeUnmount } from 'vue';
 import type { ComponentPublicInstance } from 'vue';
 
 import { useI18n, exportTableToExcel, useThemePlugin } from '@btc/shared-core';
-import { formatDate, getDateRange } from '@btc/shared-utils';
+import { formatDate, getDateRange } from '@btc/shared-core/utils';
 import BtcForm from '@btc-common/form/index.vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';

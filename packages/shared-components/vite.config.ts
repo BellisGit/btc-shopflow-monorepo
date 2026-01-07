@@ -52,6 +52,10 @@ export default defineConfig({
       '@charts-types': resolve(__dirname, 'src/charts/types'),
       '@charts-utils': resolve(__dirname, 'src/charts/utils'),
       '@charts-composables': resolve(__dirname, 'src/charts/composables'),
+      '@btc/shared-core/utils': resolve(__dirname, '../shared-core/src/utils'),
+      '@btc/shared-core/utils/form': resolve(__dirname, '../shared-core/src/utils/form'),
+      '@btc/shared-core/utils/format': resolve(__dirname, '../shared-core/src/utils/format'),
+      '@btc/i18n': resolve(__dirname, 'src/i18n'),
     },
     // 关键：确保 Vite 能够正确解析 .tsx 和 .jsx 文件
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
@@ -97,7 +101,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', '@btc/shared-utils', '@btc/subapp-manifests', '@configs/unified-env-config', '@configs/app-scanner'],
+      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@configs/unified-env-config', '@configs/app-scanner', '@configs/layout-bridge'],
       output: {
         globals: {
           vue: 'Vue',
@@ -106,7 +110,6 @@ export default defineConfig({
           'element-plus': 'ElementPlus',
           '@element-plus/icons-vue': 'ElementPlusIconsVue',
           '@btc/shared-core': 'BTCSharedCore',
-          '@btc/shared-utils': 'BTCSharedUtils',
           '@btc/subapp-manifests': 'BTCSubappManifests',
         },
         assetFileNames: (assetInfo: { name?: string }) => {

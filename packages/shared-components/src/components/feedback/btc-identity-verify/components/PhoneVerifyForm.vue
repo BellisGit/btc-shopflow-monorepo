@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Loading } from '@element-plus/icons-vue';
-import { hidePhone } from '@btc/shared-utils';
+import { hidePhone } from '@btc/shared-core/utils/format';
 import type { Component } from 'vue';
 
 defineOptions({

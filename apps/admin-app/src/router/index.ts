@@ -3,11 +3,13 @@ import {
   createWebHistory,
   createMemoryHistory,
 } from 'vue-router';
-import type { Router } from 'vue-router';
+import type { Router, RouteLocationNormalized } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { getAdminRoutes } from './routes/admin';
-import { getCookie } from '../utils/cookie';
-import { appStorage } from '../utils/app-storage';
+import { getCookie } from '@btc/shared-core/utils/cookie';
+import { createTitleGuard } from '@btc/shared-router';
+import { tSync } from '../i18n/getters';
+import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
 
 /**
  * 动态导入 @btc/shared-core
@@ -33,14 +35,16 @@ function getMainAppLoginUrl(redirectPath?: string): string {
   const port = window.location.port;
   const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
 
-  // 生产环境：如果是子域名（如 admin.bellis.com.cn），重定向到主应用的登录页面
-  // 关键：只有主应用（bellis.com.cn）有登录页面，子应用没有登录页面
-  if (hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn') {
+  // 生产环境或测试环境：如果是子域名（如 admin.bellis.com.cn 或 admin.test.bellis.com.cn），重定向到主应用的登录页面
+  // 关键：只有主应用有登录页面，子应用没有登录页面
+  const env = getEnvironment();
+  if ((env === 'production' || env === 'test') && getCurrentSubApp()) {
     // 子域名环境，重定向到主应用的登录页面
-    return `${protocol}//bellis.com.cn/login${redirectQuery}`;
+    const mainDomain = env === 'test' ? 'test.bellis.com.cn' : 'bellis.com.cn';
+    return `${protocol}//${mainDomain}/login${redirectQuery}`;
   }
 
-  // 开发环境：主应用在 localhost:8080 (system-app)
+  // 开发环境：主应用在 localhost:8080 (main-app)
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const mainAppPort = '8080';
     return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
@@ -59,15 +63,15 @@ function normalizePath(path: string): string {
     return path; // qiankun 模式保持原路径
   }
 
-  const hostname = window.location.hostname;
-  const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-  
-  if (!isProductionSubdomain) {
-    return path; // 非生产环境子域名，保持原路径
+  const env = getEnvironment();
+  const currentSubdomainApp = getCurrentSubApp();
+
+  if (env !== 'production' && env !== 'test') {
+    return path; // 非生产/测试环境，保持原路径
   }
 
   // 检测是否是 admin 子域名
-  if (hostname === 'admin.bellis.com.cn' && path.startsWith('/admin/')) {
+  if (currentSubdomainApp === 'admin' && path.startsWith('/admin/')) {
     const normalized = path.substring('/admin'.length) || '/';
     return normalized;
   }
@@ -106,7 +110,7 @@ export const createAdminRouter = (): Router => {
     // 关键：cookie 是后端设置的，是认证的权威来源。如果 cookie 不存在，说明后端已经认为用户未认证。
     // 因此，如果 cookie 不存在，应该立即返回 false，不再检查其他本地存储。
     const cookieToken = getCookie('access_token');
-    
+
     // 如果 cookie 不存在，立即返回 false
     // 这是安全的关键：cookie 是后端设置的，如果后端移除了 cookie，说明用户未认证
     if (!cookieToken) {
@@ -116,14 +120,132 @@ export const createAdminRouter = (): Router => {
     // cookie 存在时，可以进一步检查其他本地存储作为补充（可选）
     // 但即使其他本地存储没有数据，只要 cookie 存在，也应该返回 true
     // 因为 cookie 是后端设置的，是认证的权威来源
-    
+
     return true;
   };
 
+  // 关键：先注册 titleGuard，确保它的 beforeEach 能够被触发
+  // 注册标题守卫（使用国际化翻译函数）
+  // 优先使用主应用的 i18n 实例（包含已合并的子应用国际化消息），否则使用子应用的 tSync
+  // 关键：使用同步导入，确保 titleGuard 在路由变化前已注册完成
+  try {
+    // 创建翻译函数：优先使用主应用的 i18n 实例
+    const translate = (key: string): string => {
+      // 优先使用主应用的 i18n 实例（包含已合并的子应用国际化消息）
+      if (typeof window !== 'undefined' && (window as any).__MAIN_APP_I18N__) {
+        const mainI18n = (window as any).__MAIN_APP_I18N__;
+        if (mainI18n && mainI18n.global) {
+          try {
+            // 获取当前语言
+            const localeValue = mainI18n.global.locale;
+            const currentLocale = (typeof localeValue === 'string' ? localeValue : localeValue.value) as 'zh-CN' | 'en-US';
+            
+            // 更新语言（如果需要）
+            if (typeof mainI18n.global.locale === 'object' && 'value' in mainI18n.global.locale) {
+              const stored = localStorage.getItem('locale');
+              if (stored === 'zh-CN' || stored === 'en-US') {
+                mainI18n.global.locale.value = stored;
+              }
+            }
+            
+            // 尝试翻译
+            const g = mainI18n.global as any;
+            if (g && g.te && g.t) {
+              // 优先直接访问消息对象
+              const localeMessages = g.getLocaleMessage(currentLocale) || {};
+              if (key in localeMessages) {
+                const value = localeMessages[key];
+                if (typeof value === 'string') {
+                  return value;
+                } else if (typeof value === 'function') {
+                  try {
+                    return value({ normalize: (arr: any[]) => arr[0] });
+                  } catch {
+                    // 如果函数调用失败，继续使用 g.t
+                  }
+                }
+              }
+              
+              // 使用 g.te 和 g.t
+              if (g.te(key, currentLocale)) {
+                const translated = g.t(key, currentLocale);
+                if (translated && typeof translated === 'string' && translated !== key) {
+                  return translated;
+                }
+              }
+            }
+          } catch (error) {
+            // 如果主应用 i18n 翻译失败，继续使用子应用的 tSync
+          }
+        }
+      }
+      
+      // 后备：使用子应用的 tSync 函数
+      return tSync(key);
+    };
+    
+    // 创建自定义的 getAppId 函数，确保在 qiankun 环境下使用 'admin' 作为应用 ID
+    const getAppId = (to: RouteLocationNormalized): string => {
+      // 在 qiankun 环境下，子应用的路由路径不包含应用前缀
+      // 但是我们需要确保应用 ID 是 'admin'
+      return 'admin';
+    };
+    
+    createTitleGuard(router, {
+      getAppId,
+      translate,
+      preloadConfig: true,
+    });
+  } catch (error) {
+    // 如果导入失败，不影响路由功能
+    if (import.meta.env.DEV) {
+      console.warn('[admin-app router] Failed to setup title guard:', error);
+    }
+  }
+
   // 路由守卫：在生产环境子域名下规范化路径，并在独立运行时检查认证
   router.beforeEach((to, from, next) => {
+    // 关键修复：在 qiankun 或 layout-app 环境下，如果当前路由是首页但 URL 不是首页，
+    // 说明路由初始化时匹配到了默认路由，需要立即重定向到正确的路由
+    const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
+    const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+
+    if ((isQiankun || isUsingLayoutApp) && to.path === '/' && from.path === '/') {
+      // 检查当前 URL 是否真的是首页
+      const { pathname } = window.location;
+      const basePath = '/admin';
+
+      // 检查是否在子域名环境下（生产/测试环境）
+      const env = getEnvironment();
+      const currentSubdomainApp = getCurrentSubApp();
+      const isProductionOrTestSubdomain = (env === 'production' || env === 'test') && currentSubdomainApp === 'admin';
+
+      let expectedPath = '/';
+      if (isProductionOrTestSubdomain) {
+        // 子域名环境下，路径直接是子应用路由
+        expectedPath = pathname === '/' ? '/' : pathname;
+      } else {
+        // 路径前缀环境下（如 /admin/xxx）
+        if (pathname.startsWith(basePath)) {
+          const suffix = pathname.slice(basePath.length) || '/';
+          expectedPath = suffix.startsWith('/') ? suffix : `/${suffix}`;
+        }
+      }
+
+      // 如果期望的路由不是首页，立即重定向
+      if (expectedPath !== '/') {
+        next({
+          path: expectedPath,
+          query: to.query,
+          hash: to.hash,
+          replace: true,
+        });
+        return;
+      }
+    }
+
     const normalizedPath = normalizePath(to.path);
-    
+
     if (normalizedPath !== to.path) {
       // 路径需要规范化，重定向到规范化后的路径
       next({
@@ -143,9 +265,9 @@ export const createAdminRouter = (): Router => {
 
     // 关键：在独立运行模式下，不显示路由 loading
     // 因为独立运行模式下，应用级 loading 已经处理了，不需要路由级 loading
-    const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
+    // 注意：isUsingLayoutApp 已在上面声明，这里直接使用
     const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !isUsingLayoutApp;
-    
+
     // 检查是否有应用级别loading正在显示
     // 注意：使用DOM查询作为同步检查（因为beforeEach需要同步判断）
     // 应用级别loading使用fixed定位，添加到body，所以直接在body中查找
@@ -156,10 +278,10 @@ export const createAdminRouter = (): Router => {
         if (!appLoadingEl) {
           return false;
         }
-        
+
         const style = window.getComputedStyle(appLoadingEl);
-        return style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
+        return style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
                style.opacity !== '0' &&
                parseFloat(style.opacity) > 0;
       } catch (e) {
@@ -187,10 +309,10 @@ export const createAdminRouter = (): Router => {
     // 关键：如果正在使用 layout-app（通过 qiankun 加载），由 layout-app 处理认证
     // 此时不应该进行认证检查，避免在 layout-app 加载完成前误判为未认证
     // 注意：isUsingLayoutApp 已在上面声明，这里直接使用
-    
+
     if (!isUsingLayoutApp) {
       const isAuth = isAuthenticated();
-      
+
       // 关键：如果已经在登录页且用户已认证，重定向到目标页面
       // 但是，如果查询参数中有 logout=1，说明是退出登录，应该允许访问登录页
       if (to.path === '/login' || to.path.startsWith('/login?')) {
@@ -208,19 +330,20 @@ export const createAdminRouter = (): Router => {
         next();
         return;
       }
-      
+
       // 非登录页：如果未认证，重定向到主应用的登录页面
       if (!isAuth) {
         // 构建重定向路径：确保包含应用前缀，以便登录后能够正确返回
         let redirectPath = to.fullPath;
-        
-        // 判断是否在生产环境子域名下
-        const hostname = window.location.hostname;
-        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-        
-        // 在生产环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀
+
+        // 判断是否在生产/测试环境子域名下
+        const env = getEnvironment();
+        const currentSubdomainApp = getCurrentSubApp();
+        const isProductionOrTestSubdomain = (env === 'production' || env === 'test') && currentSubdomainApp === 'admin';
+
+        // 在生产/测试环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀
         // 在开发环境或其他环境下，路径可能已经包含 /admin 前缀，需要检查
-        if (isProductionSubdomain) {
+        if (isProductionOrTestSubdomain) {
           // 生产环境子域名下，路径是规范化后的（如 /user/list），需要添加 /admin 前缀
           if (!redirectPath.startsWith('/admin') && redirectPath !== '/') {
             redirectPath = `/admin${redirectPath}`;
@@ -231,7 +354,7 @@ export const createAdminRouter = (): Router => {
             redirectPath = `/admin${redirectPath}`;
           }
         }
-        
+
         const mainAppLoginUrl = getMainAppLoginUrl(redirectPath);
         // 使用 window.location 进行跨域重定向（如果需要）
         window.location.href = mainAppLoginUrl;
@@ -241,7 +364,7 @@ export const createAdminRouter = (): Router => {
       // 在 layout-app 环境下，认证由 layout-app 处理
       // 这里不进行认证检查
     }
-    
+
     next();
   });
 
@@ -252,7 +375,7 @@ export const createAdminRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading
     try {
       const sharedCore = await importSharedCore();
@@ -266,7 +389,7 @@ export const createAdminRouter = (): Router => {
     // 关键：在独立运行模式下，添加 tabbar 逻辑
     // 检查是否是独立运行模式（非 qiankun 且非 layout-app）
     const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
-    
+
     if (!isUsingLayoutApp) {
       // 独立运行模式，需要自己添加 tabbar
       // 跳过首页和登录页
@@ -296,15 +419,16 @@ export const createAdminRouter = (): Router => {
         return;
       }
 
-      // 构建完整路径（在生产环境子域名下，需要添加 /admin 前缀）
-      const hostname = window.location.hostname;
-      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-      
+      // 构建完整路径（在生产/测试环境子域名下，需要添加 /admin 前缀）
+      const env = getEnvironment();
+      const currentSubdomainApp = getCurrentSubApp();
+      const isProductionOrTestSubdomain = (env === 'production' || env === 'test') && currentSubdomainApp === 'admin';
+
       let fullPath = to.fullPath;
       let path = to.path;
-      
-      // 在生产环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀用于 tabbar
-      if (isProductionSubdomain) {
+
+      // 在生产/测试环境子域名下，路径已经规范化（没有 /admin 前缀），需要添加前缀用于 tabbar
+      if (isProductionOrTestSubdomain) {
         if (!path.startsWith('/admin') && path !== '/') {
           path = `/admin${path}`;
           // 构建 fullPath，包含查询参数和 hash
@@ -317,22 +441,22 @@ export const createAdminRouter = (): Router => {
       try {
         const { useProcessStore } = await import('../store/process');
         const process = useProcessStore();
-        
+
         // 关键优化：检查当前路由的标签是否已经是激活状态，避免重复更新导致闪烁
-        const existingTab = process.list.find((tab) => 
+        const existingTab = process.list.find((tab) =>
           tab.fullPath === fullPath || tab.path === path
         );
         if (existingTab && existingTab.active) {
           // 标签已经是激活状态，不需要更新
           return;
         }
-        
+
         // 将路由的 titleKey 转换为 labelKey，以便 tabbar 正确显示
         const meta = { ...to.meta } as any;
         if (meta.titleKey && !meta.labelKey) {
           meta.labelKey = meta.titleKey;
         }
-        
+
         process.add({
           path,
           fullPath,
@@ -358,7 +482,7 @@ export const createAdminRouter = (): Router => {
       clearTimeout(routeLoadingTimer);
       routeLoadingTimer = null;
     }
-    
+
     // 隐藏路由loading（如果正在显示）
     try {
       const sharedCore = await importSharedCore();
@@ -378,7 +502,7 @@ export const createAdminRouter = (): Router => {
         loadingEl.style.setProperty('opacity', '0', 'important');
         loadingEl.style.setProperty('pointer-events', 'none', 'important');
         loadingEl.classList.add('is-hide');
-        
+
         // 延迟移除 DOM 元素（不影响显示，只是清理）
         setTimeout(() => {
           try {
@@ -387,35 +511,17 @@ export const createAdminRouter = (): Router => {
             // 忽略移除错误
           }
         }, 350);
-        
+
         loadingClosed = true;
       }
-      
-      // 关键：在qiankun环境下，也要关闭appLoadingService显示的应用级别loading
-      // 避免与应用级别loading冲突，确保路由解析完成后立即关闭
-      // 注意：应用级loading应该由system-app的afterMount钩子关闭，这里不应该重复关闭
-      // 如果在这里关闭，可能会导致实例被提前清除，导致afterMount中的hide()找不到实例
-      // 因此注释掉这里的hide调用，让afterMount统一处理
-      // const isUsingLayoutApp = qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__USE_LAYOUT_APP__;
-      // if (isUsingLayoutApp) {
-      //   try {
-      //     const { appLoadingService } = await import('@btc/shared-core');
-      //     // admin-app的显示名称是'管理模块'，使用显示名称关闭应用级别loading
-      //     appLoadingService.hide('管理模块');
-      //   } catch (e) {
-      //     // 静默失败，不影响路由解析
-      //   }
-      // }
-      
-      // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
-      // 在独立运行时，不应该显示 NProgress 或 AppSkeleton
+
       try {
         // 关闭 NProgress（如果正在运行）
         const NProgress = (window as any).NProgress;
         if (NProgress && typeof NProgress.done === 'function') {
           NProgress.done();
         }
-        
+
         // 隐藏 AppSkeleton（如果存在）
         const skeleton = document.getElementById('app-skeleton');
         if (skeleton) {
@@ -432,6 +538,8 @@ export const createAdminRouter = (): Router => {
   router.onError(() => {
     // 路由错误已处理
   });
+
+  // 注意：titleGuard 已经在上面注册了，这里不需要重复注册
 
   return router;
 };

@@ -2,6 +2,7 @@ import { defineConfig, type ConfigEnv } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { createMainAppViteConfig } from '../../configs/vite/factories/mainapp.config';
 import { copyIconsPlugin, dutyStaticPlugin } from '../../configs/vite/plugins';
+import { injectFallbackTitle } from '@btc/vite-plugin';
 import { proxy } from './src/config/proxy';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
@@ -19,6 +20,8 @@ export default defineConfig(({ command, mode }: ConfigEnv) => {
       // copyIconsPlugin(appDir),
       // 添加 duty 静态文件插件，在开发服务器层面处理 /duty/ 路径
       dutyStaticPlugin(appDir),
+      // 注入静态兜底标题
+      injectFallbackTitle({ packageName: 'system-app' }),
     ],
     customServer: { proxy },
     proxy,

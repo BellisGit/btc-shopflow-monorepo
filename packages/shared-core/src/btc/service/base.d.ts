@@ -55,3 +55,4 @@ export declare class BaseService {
         ids: (string | number)[];
     }): Promise<any>;
 }
+//# sourceMappingURL=base.d.ts.map

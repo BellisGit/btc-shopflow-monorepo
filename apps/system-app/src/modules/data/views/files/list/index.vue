@@ -138,7 +138,7 @@ import { useI18n } from 'vue-i18n';
 import { service } from '@/services/eps';
 import type { CrudService } from '@btc/shared-core';
 import BtcFileThumbnailCell from '@/components/btc-file-thumbnail-cell/BtcFileThumbnailCell.vue';
-import { useThemePlugin } from '@btc/shared-core';
+import { useThemePlugin, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { DEFAULT_OPERATION_WIDTH } from '@btc/shared-components';
 
 defineOptions({
@@ -193,73 +193,65 @@ const deleteButtonConfig = computed(() => ({
 
 const OPERATION_WIDTH = DEFAULT_OPERATION_WIDTH + 60; // 三个按钮需要更宽的空间
 
-const columns = computed<TableColumn[]>(() => [
-  CommonColumns.selection(),
-  CommonColumns.index(),
-  {
-    label: '缩略图',
-    prop: 'fileUrl',
-    width: 88,
-    align: 'center',
-    headerAlign: 'center',
-    component: {
-      name: BtcFileThumbnailCell,
-      props: (scope: any) => ({
-        modelValue: scope.row.fileUrl,
-        mime: scope.row.mime,
-        originalName: scope.row.originalName,
-      }),
-    },
-  },
-  {
-    label: '文件名',
-    prop: 'originalName',
-    minWidth: 200
-  },
-  {
-    label: '文件类型',
-    prop: 'mime',
-    width: 120
-  },
-  {
-    label: '文件大小',
-    prop: 'sizeBytes',
-    width: 120,
-    formatter: (row: any) => formatSize(row.sizeBytes)
-  },
-  {
-    label: '上传时间',
-    prop: 'createdAt',
-    width: 180
-  },
-  {
-    type: 'op',
-    label: '操作',
-    width: OPERATION_WIDTH,
-    align: 'center',
-    fixed: 'right' as const,
-    buttons: [
-      {
-        label: '分享',
-        type: 'success',
-        icon: 'share',
-        onClick: ({ scope }: { scope: any }) => handleShare(scope.row),
-      },
-      {
-        label: '详情',
-        type: 'primary',
-        icon: 'info',
-        onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
-      },
-      {
-        label: '删除',
-        type: 'danger',
-        icon: 'delete',
-        onClick: ({ scope }: { scope: any }) => handleDeleteSingle(scope.row),
-      },
-    ],
-  }
-]);
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.files.list');
+const { formItems } = usePageForms('data.files.list');
+const pageConfig = getPageConfigFull('data.files.list');
+
+// 扩展配置以支持动态组件和 formatter
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果是 fileUrl 列，添加自定义组件
+    if (col.prop === 'fileUrl') {
+      return {
+        ...col,
+        component: {
+          name: BtcFileThumbnailCell,
+          props: (scope: any) => ({
+            modelValue: scope.row.fileUrl,
+            mime: scope.row.mime,
+            originalName: scope.row.originalName,
+          }),
+        },
+      };
+    }
+    // 如果是 sizeBytes 列，添加 formatter
+    if (col.prop === 'sizeBytes') {
+      return {
+        ...col,
+        formatter: (row: any) => formatSize(row.sizeBytes),
+      };
+    }
+    // 如果是操作列，添加按钮
+    if (col.type === 'op') {
+      return {
+        ...col,
+        width: OPERATION_WIDTH,
+        buttons: [
+          {
+            label: '分享',
+            type: 'success',
+            icon: 'share',
+            onClick: ({ scope }: { scope: any }) => handleShare(scope.row),
+          },
+          {
+            label: '详情',
+            type: 'primary',
+            icon: 'info',
+            onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
+          },
+          {
+            label: '删除',
+            type: 'danger',
+            icon: 'delete',
+            onClick: ({ scope }: { scope: any }) => handleDeleteSingle(scope.row),
+          },
+        ],
+      };
+    }
+    return col;
+  });
+});
 
 const epsFileService = service.upload?.file?.files;
 

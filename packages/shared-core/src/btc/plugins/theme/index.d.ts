@@ -12,6 +12,11 @@ export interface ThemePlugin {
     color: ReturnType<typeof computed<string>>;
     THEME_PRESETS: typeof THEME_PRESETS;
     switchTheme: (theme: ThemeConfig) => void;
+    setTheme: (options: {
+        color?: string;
+        name?: string;
+        dark?: boolean;
+    }) => void;
     toggleDark: (event?: MouseEvent) => void;
     changeDark: (el: Element, isDark: boolean, cb: () => void) => void;
     setThemeColor: (color: string, dark: boolean) => void;
@@ -34,3 +39,4 @@ export declare function useThemePlugin(): ThemePlugin;
  */
 export type { ThemeConfig } from '../../composables/useTheme';
 export { THEME_PRESETS };
+//# sourceMappingURL=index.d.ts.map

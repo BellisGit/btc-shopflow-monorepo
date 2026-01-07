@@ -32,8 +32,8 @@
       "@btc/shared-core/*": ["../packages/shared-core/src/*", "../packages/shared-core/dist/*"],
       "@btc/shared-components": ["../packages/shared-components/src", "../packages/shared-components/dist"],
       "@btc/shared-components/*": ["../packages/shared-components/src/*", "../packages/shared-components/dist/*"],
-      "@btc/shared-utils": ["../packages/shared-utils/src", "../packages/shared-utils/dist"],
-      "@btc/shared-utils/*": ["../packages/shared-utils/src/*", "../packages/shared-utils/dist/*"]
+      "@btc/shared-utils": ["../packages/shared-core/src/utils", "../packages/shared-core/dist/utils"],
+      "@btc/shared-utils/*": ["../packages/shared-core/src/utils/*", "../packages/shared-core/dist/utils/*"]
     }
   },
   "include": ["src"],

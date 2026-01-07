@@ -10,13 +10,13 @@ export function useFinanceInventoryForm() {
 
   const formItems = computed<FormItem[]>(() => [
     {
-      label: t('finance.inventory.result.fields.materialCode'),
+      label: t('finance.inventory.result.fields.material_code'),
       prop: 'materialCode',
       required: true,
       component: {
         name: 'el-input',
         props: {
-          placeholder: t('finance.inventory.result.fields.materialCode'),
+          placeholder: t('finance.inventory.result.fields.material_code'),
           maxlength: 50
         }
       },
@@ -34,13 +34,13 @@ export function useFinanceInventoryForm() {
       },
     },
     {
-      label: t('finance.inventory.result.fields.unitCost'),
+      label: t('finance.inventory.result.fields.unit_cost'),
       prop: 'unitCost',
       required: true,
       component: {
         name: 'el-input-number',
         props: {
-          placeholder: t('finance.inventory.result.fields.unitCost'),
+          placeholder: t('finance.inventory.result.fields.unit_cost'),
           precision: 5,
           min: 0,
           step: 0.01,
@@ -49,13 +49,13 @@ export function useFinanceInventoryForm() {
       },
     },
     {
-      label: t('finance.inventory.result.fields.bookQty'),
+      label: t('finance.inventory.result.fields.book_qty'),
       prop: 'bookQty',
       required: true,
       component: {
         name: 'el-input-number',
         props: {
-          placeholder: t('finance.inventory.result.fields.bookQty'),
+          placeholder: t('finance.inventory.result.fields.book_qty'),
           precision: 0,
           min: 0,
           step: 1,
@@ -64,13 +64,13 @@ export function useFinanceInventoryForm() {
       },
     },
     {
-      label: t('finance.inventory.result.fields.actualQty'),
+      label: t('finance.inventory.result.fields.actual_qty'),
       prop: 'actualQty',
       required: true,
       component: {
         name: 'el-input-number',
         props: {
-          placeholder: t('finance.inventory.result.fields.actualQty'),
+          placeholder: t('finance.inventory.result.fields.actual_qty'),
           precision: 0,
           min: 0,
           step: 1,

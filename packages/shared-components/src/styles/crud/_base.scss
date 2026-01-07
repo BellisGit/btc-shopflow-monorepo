@@ -1,0 +1,71 @@
+// ==================== CRUD 基础样式 ====================
+// 容器和行布局
+
+.btc-crud {
+	height: 100%;
+	overflow: hidden auto;
+	position: relative;
+	box-sizing: border-box;
+
+	&.is-border {
+		border: 1px solid var(--el-border-color);
+		border-radius: var(--el-border-radius-base);
+	}
+
+	> .btc-crud-row {
+		width: 100%;
+
+		.btc-flex1 {
+			margin-right: 0;
+		}
+	}
+
+	> .btc-crud-row > .btc-table {
+		width: 100%;
+	}
+
+	> .btc-crud-row + .btc-crud-row {
+		margin-top: var(--btc-crud-gap, 10px);
+	}
+}
+
+.btc-crud-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	row-gap: 10px;
+	column-gap: 10px;
+	// 注意：不使用 flex-grow 或 flex-shrink，保持内容高度
+	// 表格高度由 useTableHeight 通过 JavaScript 动态计算
+}
+
+.btc-crud-row > .btc-search-key {
+	margin-right: -10px;
+
+	&:first-child {
+		margin-left: -10px;
+	}
+}
+
+.btc-table {
+	width: 100%;
+}
+
+.btc-crud-primary-actions {
+	display: inline-flex;
+	align-items: center;
+	column-gap: 12px;
+}
+
+.btc-crud-row .el-button + .el-button {
+	margin-left: 0;
+}
+
+// BTC CRUD Component Global Styles
+// 完全对齐 cool-admin 的样式结构（逐字复制）
+
+// source is cool-admin-vue-8.x/packages/crud/src/static/index.scss - ensure btc classes mirror cl classes closely
+.btc-crud {
+	--btc-crud-gap: 10px;
+	--btc-crud-op-width: 220px;
+}

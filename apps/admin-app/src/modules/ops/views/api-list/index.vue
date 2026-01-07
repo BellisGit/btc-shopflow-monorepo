@@ -26,11 +26,14 @@ defineOptions({
 });
 
 import { computed, ref } from 'vue';
-import type { TableColumn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
-import { useI18n, type CrudService } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull, type CrudService } from '@btc/shared-core';
 import { sortByLocale } from '@btc/shared-utils';
 import { sysApi } from '@/modules/api-services';
+
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('ops.api_list');
+const pageConfig = getPageConfigFull('ops.api_list');
 
 const { t } = useI18n();
 
@@ -268,97 +271,72 @@ const apiService: CrudService<ApiListRecord> = {
   },
 };
 
-const columns = computed<TableColumn[]>(() => [
-  {
-    type: 'index',
-    width: 60,
-    label: '#',
-    align: 'center',
-    headerAlign: 'center',
-  },
-  {
-    prop: 'tagsText',
-    label: t('ops.api_list.fields.tags'),
-    minWidth: 160,
-    align: 'center',
-    headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.tagsText || '-',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'controller',
-    label: t('ops.api_list.fields.controller'),
-    minWidth: 200,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'methodName',
-    label: t('ops.api_list.fields.name'),
-    minWidth: 140,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'httpMethods',
-    label: t('ops.api_list.fields.request_type'),
-    width: 120,
-    align: 'center',
-    headerAlign: 'center',
-    dictColor: true,
-    dict: [
-      { value: 'GET', label: 'GET', type: 'success' as const },
-      { value: 'POST', label: 'POST', type: 'primary' as const },
-      { value: 'PUT', label: 'PUT', type: 'warning' as const },
-      { value: 'DELETE', label: 'DELETE', type: 'danger' as const },
-      { value: 'PATCH', label: 'PATCH', type: 'info' as const },
-      { value: 'OPTIONS', label: 'OPTIONS', type: 'info' as const },
-      { value: 'HEAD', label: 'HEAD', type: 'info' as const }
-    ],
-  },
-  {
-    prop: 'paths',
-    label: t('ops.api_list.fields.path'),
-    minWidth: 260,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'description',
-    label: t('ops.api_list.fields.description'),
-    minWidth: 220,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'parameters',
-    label: t('ops.api_list.fields.parameters'),
-    minWidth: 280,
-    align: 'center',
-    headerAlign: 'center',
-    component: {
-      name: 'BtcCodeJson',
-      props: {
-        popover: true,
-        maxLength: 800,
-      },
-    },
-  },
-  {
-    prop: 'notes',
-    label: t('ops.api_list.fields.notes'),
-    minWidth: 220,
-    align: 'center',
-    headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.notes || '-',
-    showOverflowTooltip: true,
-    fixed: 'right' as const,
-  },
-]);
+// 扩展 columns 以支持特殊的 formatter、align 和组件
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是 tagsText，添加 formatter 和 align
+    if (col.prop === 'tagsText') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        formatter: (row: ApiListRecord) => row.tagsText || '-',
+      };
+    }
+    // 如果列是 controller、methodName、paths、description，添加 align
+    if (['controller', 'methodName', 'paths', 'description'].includes(col.prop || '')) {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+      };
+    }
+    // 如果列是 httpMethods，添加 dict 和 align
+    if (col.prop === 'httpMethods') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        dictColor: true,
+        dict: [
+          { value: 'GET', label: 'GET', type: 'success' },
+          { value: 'POST', label: 'POST', type: 'primary' },
+          { value: 'PUT', label: 'PUT', type: 'warning' },
+          { value: 'DELETE', label: 'DELETE', type: 'danger' },
+          { value: 'PATCH', label: 'PATCH', type: 'info' },
+          { value: 'OPTIONS', label: 'OPTIONS', type: 'info' },
+          { value: 'HEAD', label: 'HEAD', type: 'info' }
+        ],
+      };
+    }
+    // 如果列是 parameters，添加 BtcCodeJson 组件和 align
+    if (col.prop === 'parameters') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        component: {
+          name: 'BtcCodeJson',
+          props: {
+            popover: true,
+            maxLength: 800,
+          },
+        },
+      };
+    }
+    // 如果列是 notes，添加 formatter 和 align
+    if (col.prop === 'notes') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        formatter: (row: ApiListRecord) => row.notes || '-',
+        fixed: 'right' as const,
+      };
+    }
+    return col;
+  });
+});
 
 const tableGroupRef = ref();
 

@@ -9,8 +9,8 @@ type MenuItem = {
   icon?: string;
   children?: MenuItem[];
 };
-import { getManifestMenus, getManifestTabs, getManifest } from '@btc/subapp-manifests';
-import { storage } from '@btc/shared-utils';
+import { getManifestMenus, getManifestTabs, getManifest } from '@btc/shared-core/manifest';
+import { storage } from '@btc/shared-core/utils';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { getAppBySubdomain } from './app-scanner';
 import { getEnvConfig } from './unified-env-config';

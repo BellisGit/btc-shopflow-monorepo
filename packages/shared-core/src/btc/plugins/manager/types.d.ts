@@ -251,3 +251,4 @@ export interface PluginRecord<T = any> {
     installedAt?: Date;
     error?: Error;
 }
+//# sourceMappingURL=types.d.ts.map

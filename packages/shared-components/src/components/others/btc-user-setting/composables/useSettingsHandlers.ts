@@ -145,7 +145,7 @@ export function useSettingsHandlers() {
   };
 
   // Loading 样式处理器
-  type LoadingStyle = 'circle' | 'dots';
+  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
   const loadingStyleHandlers = {
     setStyle: (style: LoadingStyle) => {
       settingsState.setLoadingStyle(style);

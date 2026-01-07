@@ -58,3 +58,4 @@ export declare function validatePluginConfig(metadata: PluginMetadata): {
  * @returns 格式化的插件信息
  */
 export declare function formatPluginInfo(metadata: PluginMetadata): string;
+//# sourceMappingURL=config-helper.d.ts.map

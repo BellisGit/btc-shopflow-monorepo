@@ -2,7 +2,7 @@
  * 统一的环境配置系统
  * 支持通过 .env 切换配置方案，但内部规则不变
  */
-export type Environment = 'development' | 'preview' | 'production';
+export type Environment = 'development' | 'preview' | 'test' | 'production';
 export type ConfigScheme = 'default' | 'custom';
 export interface EnvironmentConfig {
     api: {
@@ -56,3 +56,6 @@ export declare function getCurrentEnvironment(): Environment;
 export declare function getCurrentEnvConfig(): EnvironmentConfig;
 export declare const currentEnvironment: Environment;
 export declare const envConfig: EnvironmentConfig;
+// 从 app-env.config 重新导出，以便从 unified-env-config 统一导入
+export { getAppConfig, getAppConfigByTestHost, getAppConfigByPrePort, getAppConfigByDevPort } from './app-env.config';
+export type { AppEnvConfig } from './app-env.config';

@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
+    "dev:clean": "node scripts/kill-port.mjs",
     "build": "vitepress build",
-    "preview": "vitepress preview --port 4192 --host 0.0.0.0",
+    "preview": "vitepress preview",
     "migrate": "tsx scripts/migrate-docs.ts",
     "add-frontmatter-batch": "tsx scripts/add-frontmatter-batch.ts",
     "ingest": "tsx scripts/ingest.ts",
@@ -18,7 +19,6 @@
   "dependencies": {
     "@btc/shared-components": "workspace:*",
     "@btc/shared-core": "workspace:*",
-    "@btc/shared-utils": "workspace:*",
     "@element-plus/icons-vue": "^2.3.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",

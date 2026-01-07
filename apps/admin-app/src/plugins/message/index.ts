@@ -27,9 +27,6 @@ export const messagePlugin: Plugin = {
     order: 4, // 在通知之后
     pc: true,
     h5: false, // 移动端隐藏
-    component: () => import('./components/message-icon.vue')
+    component: () => import('@btc/shared-components/components/layout/app-layout/message-icon/index.vue')
   }
 };
-
-// 导出组件（仅导出面板，图标组件通过动态导入使用）
-export { default as BtcMessagePanel } from './components/message-panel.vue';

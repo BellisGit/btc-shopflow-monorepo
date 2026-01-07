@@ -10,7 +10,7 @@
         <ArrowRight />
       </el-icon>
     </div>
-    <span class="divider-text">{{ $t('其他方式登录') }}</span>
+    <span class="divider-text">{{ $t('auth.login.third_party.divider') }}</span>
     <div class="divider-line right-arrows" ref="rightLineRef">
       <el-icon 
         v-for="n in rightArrowCount" 

@@ -116,7 +116,7 @@ sidebar_group: guides
 ## 微前端架构
 
 ### qiankun 框架
-- **主应用**: system-app 作为容器应用，负责路由管理和子应用加载
+- **主应用**: main-app 作为容器应用，负责路由管理和子应用加载
 - **子应用**: 各业务应用作为独立应用（admin-app、logistics-app 等）
 - **通信**: 通过 qiankun 的 props 和全局状态管理进行应用间通信
 

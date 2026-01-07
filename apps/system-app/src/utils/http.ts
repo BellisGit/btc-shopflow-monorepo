@@ -3,7 +3,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { processURL } from '@btc/shared-core';
-import { getCookie, setCookie, getCookieDomain } from './cookie';
+import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -242,9 +242,6 @@ export class Http {
             import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
               const bridge = useCrossDomainBridge();
               bridge.sendMessage('login', { timestamp: Date.now() });
-              if (import.meta.env.DEV) {
-                console.log('[http] Broadcasted login message to all tabs');
-              }
             }).catch((error) => {
               // 如果导入失败，静默处理
               if (import.meta.env.DEV) {

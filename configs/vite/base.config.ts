@@ -30,8 +30,13 @@ export function createBaseAliases(
     // @btc/* 包别名：所有应用都打包这些包，所以始终使用别名指向源码
     '@btc/shared-core': withPackages('shared-core/src'),
     '@btc/shared-components': withPackages('shared-components/src'),
-    '@btc/shared-utils': withPackages('shared-utils/src'),
-    '@btc/subapp-manifests': withPackages('subapp-manifests/src/index.ts'),
+    '@btc/shared-router': withPackages('shared-router/src'),
+    // 向后兼容：废弃包的别名指向归并后的位置
+    '@btc/shared-utils': withPackages('shared-core/src/utils'),
+    '@btc/shared-plugins': withPackages('shared-components/src/plugins'),
+    '@btc/i18n': withPackages('shared-components/src/i18n'),
+    '@btc/subapp-manifests': withPackages('shared-core/src/manifest'),
+    '@btc/env': withPackages('shared-core/src/env'),
     
     // shared-components 内部使用的别名（用于解析 shared-components 内部的导入）
     '@btc-common': withPackages('shared-components/src/common'),

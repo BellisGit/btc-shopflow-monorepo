@@ -9,8 +9,6 @@
       "@configs/*": ["../../configs/*"],
       "@btc/shared-components": ["../shared-components/dist"],
       "@btc/shared-components/*": ["../shared-components/dist/*"],
-      "@btc/shared-utils": ["../shared-utils/src"],
-      "@btc/shared-utils/*": ["../shared-utils/src/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]
     }

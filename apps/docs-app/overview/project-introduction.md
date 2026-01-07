@@ -294,7 +294,7 @@ pnpm test:ci
 
 项目使用 qiankun 实现微前端架构：
 
-- **主应用 (system-app)**: 负责路由管理和子应用加载
+- **主应用 (main-app)**: 负责路由管理和子应用加载
 - **子应用**: 独立开发和部署的业务模块（admin-app、logistics-app 等）
 - **通信**: 通过 props 和全局状态管理进行应用间通信
 

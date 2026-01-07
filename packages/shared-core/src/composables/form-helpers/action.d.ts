@@ -1,5 +1,5 @@
 import type { BtcFormConfig } from '../useBtcForm';
-export declare function useAction({ config, form, Form }: {
+export declare function useAction({ config, form }: {
     config: BtcFormConfig;
     form: any;
     Form?: any;
@@ -12,3 +12,4 @@ export declare function useAction({ config, form, Form }: {
     hideItem: (...props: string[]) => void;
     toggleItem: (prop: string, visible?: boolean) => void;
 };
+//# sourceMappingURL=action.d.ts.map

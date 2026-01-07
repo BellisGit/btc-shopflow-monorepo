@@ -1,35 +1,24 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { getCurrentSubApp } from '@configs/unified-env-config';
 
 /**
  * 获取当前应用名称
+ * 使用统一的环境检测方案
  */
 export function useCurrentApp() {
   const route = useRoute();
   const currentApp = ref('system');
 
   const detectCurrentApp = () => {
-    // 检测是否在生产环境的子域名下
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
-    
-    // 子域名映射
-    const subdomainMap: Record<string, string> = {
-      'admin.bellis.com.cn': 'admin',
-      'logistics.bellis.com.cn': 'logistics',
-      'quality.bellis.com.cn': 'quality',
-      'production.bellis.com.cn': 'production',
-      'engineering.bellis.com.cn': 'engineering',
-      'finance.bellis.com.cn': 'finance',
-    };
-    
-    // 如果在生产环境子域名下，直接通过 hostname 判断
-    if (isProductionSubdomain && subdomainMap[hostname]) {
-      currentApp.value = subdomainMap[hostname];
+    // 使用统一的环境检测函数
+    const detectedApp = getCurrentSubApp();
+    if (detectedApp) {
+      currentApp.value = detectedApp;
       return;
     }
     
-    // 否则通过路径前缀判断（开发环境或主域访问时）
+    // 如果没有检测到子应用，尝试通过路径前缀判断（开发环境的兜底逻辑）
     const path = route.path;
     if (path.startsWith('/admin')) {
       // 管理域

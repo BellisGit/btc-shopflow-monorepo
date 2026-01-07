@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { setBodyClassName } from '../utils/body-class';
 
 /**

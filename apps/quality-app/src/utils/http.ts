@@ -4,7 +4,7 @@ import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie } from './cookie';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -148,9 +148,6 @@ export class Http {
             import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
               const bridge = useCrossDomainBridge();
               bridge.sendMessage('login', { timestamp: Date.now() });
-              if (import.meta.env.DEV) {
-                console.log('[http] Broadcasted login message to all tabs');
-              }
             }).catch((error) => {
               if (import.meta.env.DEV) {
                 console.warn('[http] Failed to broadcast login message:', error);

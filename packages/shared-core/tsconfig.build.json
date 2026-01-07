@@ -11,8 +11,6 @@
     "paths": {
       "@configs": ["../../configs"],
       "@configs/*": ["../../configs/*"],
-      "@btc/shared-utils": ["../shared-utils/src", "../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/src/*", "../shared-utils/dist/*"],
       "@btc/shared-components": ["../shared-components/dist"],
       "@btc/shared-components/*": ["../shared-components/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],

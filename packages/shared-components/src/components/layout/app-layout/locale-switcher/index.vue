@@ -17,10 +17,10 @@
         >
           <div
             class="locale-switcher__item"
-            :class="{ active: locale.value === lang.value }"
+            :class="{ active: locale === lang.value }"
           >
             <span class="locale-switcher__item-label">{{ lang.label }}</span>
-            <span v-if="locale.value === lang.value" class="locale-switcher__item-dot"></span>
+            <span v-if="locale === lang.value" class="locale-switcher__item-dot"></span>
           </div>
         </el-dropdown-item>
       </el-dropdown-menu>
@@ -52,6 +52,18 @@ const languages = ref([
 ]);
 
 const handleCommand = (value: string) => {
+  // 优先使用插件API
+  const pluginAPI = (window as any).__PLUGIN_API__;
+  if (pluginAPI?.i18n?.changeLocale) {
+    try {
+      pluginAPI.i18n.changeLocale(value);
+      return;
+    } catch (error) {
+      console.warn('[LocaleSwitcher] 调用插件API失败:', error);
+    }
+  }
+
+  // 向后兼容：直接操作
   locale.value = value;
 
   // 同步更新 localStorage

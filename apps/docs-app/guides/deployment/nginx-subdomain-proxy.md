@@ -26,7 +26,7 @@ sidebar_group: deployment
 客户端请求
     ↓
 [Nginx反向代理] (服务器:80/443)
-    ├─ bellis.com.cn → 30080 (system-app)
+    ├─ bellis.com.cn → 30080 (main-app)
     ├─ admin.bellis.com.cn → 30081 (admin-app)
     ├─ logistics.bellis.com.cn → 30082 (logistics-app)
     ├─ quality.bellis.com.cn → 30083 (quality-app)
@@ -42,7 +42,7 @@ sidebar_group: deployment
 
 | 应用 | 子域名 | 容器端口 | 说明 |
 |------|--------|---------|------|
-| system-app | `bellis.com.cn` | 30080 | 主应用（根域名） |
+| main-app | `bellis.com.cn` | 30080 | 主应用（根域名） |
 | admin-app | `admin.bellis.com.cn` | 30081 | 管理应用 |
 | logistics-app | `logistics.bellis.com.cn` | 30082 | 物流应用 |
 | quality-app | `quality.bellis.com.cn` | 30083 | 质量应用 |
@@ -120,10 +120,10 @@ server {
     ssl_session_timeout 10m;
 
     # 日志配置
-    access_log /var/log/nginx/btc-system-app.access.log;
-    error_log /var/log/nginx/btc-system-app.error.log;
-
-    # 代理到system-app容器
+    access_log /var/log/nginx/btc-main-app.access.log;
+    error_log /var/log/nginx/btc-main-app.error.log;
+    
+    # 代理到main-app容器
     location / {
         proxy_pass http://127.0.0.1:30080;
         proxy_set_header Host $host;

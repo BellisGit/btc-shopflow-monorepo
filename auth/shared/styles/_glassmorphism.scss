@@ -11,13 +11,6 @@
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
 
-    // 明确保持原有定位不变（响应式样式会通过更高优先级覆盖这些样式）
-    // 这里作为基础样式，确保在没有响应式布局类时也能正常显示
-    position: absolute;
-    right: 5%;
-    top: 50%;
-    transform: translateY(-50%);
-
     // 移除原有边框，使用伪元素创建双层渐变边框
     border: none !important;
 
@@ -91,6 +84,9 @@
       // 内层内阴影 - 轻微收缩
       inset 0 1px 0 rgba(255, 255, 255, 0.4),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+
+    // 卡片淡入动画
+    animation: glassCardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 
     // Hover 时发光强度提升 30%
     &:hover {
@@ -491,15 +487,13 @@ html.dark .auth-page.glassmorphism {
       transform: translateY(-50%) !important;
       max-height: calc(100vh - 40px) !important;
       height: auto !important;
-      overflow: hidden !important; // 隐藏滚动条，内容自适应高度
+      // overflow 已移除，由基础样式和 el-scrollbar 处理滚动
       
-      .card-content {
-        // 隐藏滚动条，内容自适应高度
-        overflow: hidden !important;
-        overflow-y: hidden !important;
+      .card-content-scrollbar {
+        // 移除 overflow 限制，让 el-scrollbar 处理滚动
+        // overflow 已在 .card-content-scrollbar 基础样式中设置
         
         // 隐藏第三方登录 - 使用多种选择器确保生效
-        .third-party-login,
         :deep(.third-party-login) {
           display: none !important;
         }
@@ -508,6 +502,12 @@ html.dark .auth-page.glassmorphism {
         :deep(.login-form-layout) {
           flex: 1 !important; // 占据更多空间，因为第三方登录已隐藏
         }
+      }
+      
+      .card-content {
+        // 移除 overflow 限制，让 el-scrollbar 处理滚动
+        // 但保留 position: relative，因为 glassmorphism 需要它
+        position: relative;
       }
     }
   }
@@ -662,10 +662,6 @@ html.dark .auth-page.glassmorphism {
 
 // ===== 动画增强 =====
 .auth-page.glassmorphism {
-  .login-card {
-    animation: glassCardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
   :deep(.login-form-layout) {
     .form-container {
       animation: formSlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;

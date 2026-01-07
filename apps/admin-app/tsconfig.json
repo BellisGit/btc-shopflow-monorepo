@@ -63,6 +63,14 @@
                                                                        "../../packages/shared-components/src/*",
                                                                        "../../packages/shared-components/dist/*"
                                                                    ],
+                                          "@btc/shared-router":  [
+                                                                       "../../packages/shared-router/src",
+                                                                       "../../packages/shared-router/dist/src"
+                                                                   ],
+                                          "@btc/shared-router/*":  [
+                                                                       "../../packages/shared-router/src/*",
+                                                                       "../../packages/shared-router/dist/src/*"
+                                                                   ],
                                           "@btc/shared-utils":  [
                                                                        "../../packages/shared-utils/src",
                                                                        "../../packages/shared-utils/dist"

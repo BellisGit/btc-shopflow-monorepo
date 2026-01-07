@@ -54,3 +54,4 @@ export declare const useThemeStore: import("pinia").StoreDefinition<"theme", Pic
     setThemeColor: (color: string, dark: boolean) => void;
     updateThemeColor: (color: string) => void;
 }, "switchTheme" | "toggleDark" | "setThemeColor" | "updateThemeColor">>;
+//# sourceMappingURL=theme.d.ts.map

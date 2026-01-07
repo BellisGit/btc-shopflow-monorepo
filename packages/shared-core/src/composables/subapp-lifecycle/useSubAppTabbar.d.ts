@@ -7,4 +7,5 @@
  * 监听子应用路由变化事件并添加 tab（在 layout-app 中使用）
  * @param appId 应用 ID
  */
-export declare function listenSubAppRouteChange(appId: string): void;
+export declare function listenSubAppRouteChange(_appId: string): void;
+//# sourceMappingURL=useSubAppTabbar.d.ts.map

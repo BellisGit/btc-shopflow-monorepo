@@ -31,3 +31,4 @@ export declare function useTheme(): {
     toggleDark: (event?: MouseEvent) => void;
     setThemeColor: (color: string, dark?: boolean) => void;
 };
+//# sourceMappingURL=useTheme.d.ts.map

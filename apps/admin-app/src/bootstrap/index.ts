@@ -51,6 +51,12 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
 
+  // 关键：在创建子应用之前，设置props（用于i18n初始化）
+  const { setAdminAppProps } = await import('./core/i18n');
+  setAdminAppProps(props);
+
+  // 注意：国际化消息获取器已在 getters.ts 模块加载时注册，这里不需要重复注册
+
   // 独立运行或 layout-app 环境下都需要设置全局函数
   if (isStandalone || isUsingLayoutApp) {
     // 关键：静态导入 domain-cache 模块，确保在生产构建时被正确打包
@@ -79,6 +85,28 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
 };
 
 export const mountAdminApp = async (context: AdminAppContext, props: QiankunProps = {}) => {
+  // 关键优化：在 mountSubApp 之前就发送国际化消息
+  // 因为 getLocaleMessages() 不需要等待路由或应用挂载，可以立即获取
+  // 这样可以减少主应用 afterMount 钩子的等待时间
+  if (props.setGlobalState && typeof props.setGlobalState === 'function') {
+    try {
+      // 获取动态生成的国际化消息（不依赖路由或应用挂载状态）
+      const { getLocaleMessages } = await import('../i18n/getters');
+      const messages = getLocaleMessages();
+
+      if (messages && (messages['zh-CN'] || messages['en-US'])) {
+        // 通过 globalState 发送国际化消息（在 mountSubApp 之前）
+        props.setGlobalState({
+          subAppI18nMessages: {
+            [ADMIN_APP_ID]: messages,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn('[admin-app] 发送国际化消息到主应用失败:', error);
+    }
+  }
+
   // 使用标准化的 mountSubApp
   await mountSubApp(context, subAppOptions, props);
 

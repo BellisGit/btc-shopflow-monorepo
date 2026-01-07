@@ -269,7 +269,7 @@ import { Star, Search, Clock } from '@element-plus/icons-vue';
 import { type MenuItem } from '../../../../store/menuRegistry';
 // useCurrentApp 未使用，已移除导入
 import { useSearchIndex, type SearchDataItem as SearchDataItemType } from './useSearchIndex';
-import { getManifestMenus } from '@btc/subapp-manifests';
+import { getManifestMenus } from '@btc/shared-core/manifest';
 
 // DocSearchResult 类型定义
 interface DocSearchResult {

@@ -7,16 +7,6 @@ export const systemRoutes: RouteRecordRaw[] = [
     component: () => import('../../modules/home/views/index.vue'),
     meta: { isHome: true, process: false, tabLabelKey: 'menu.system.home' },
   },
-  // 个人信息页面（不在菜单中）
-  {
-    path: 'profile',
-    name: 'Profile',
-    component: () => import('../../pages/profile/index.vue'),
-    meta: {
-      titleKey: 'common.profile',
-      // 不在菜单中显示
-    },
-  },
   // 数据管理
   {
     path: 'data/files/list',

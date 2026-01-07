@@ -5,6 +5,11 @@ import '@btc/shared-components/styles/dark-theme.css';
 // 应用全局样式（已在 bootstrap/index.ts 中导入，这里不再重复导入）
 // import './styles/global.scss';
 // import './styles/theme.scss';
+
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
+
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createAdminApp,

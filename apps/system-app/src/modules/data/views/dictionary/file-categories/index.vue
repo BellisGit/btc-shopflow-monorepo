@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useI18n, type CrudService } from '@btc/shared-core';
+import { useI18n, type CrudService, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { service } from '@services/eps';
 
@@ -158,48 +158,33 @@ const categoryService: CrudService<any> = {
   },
 };
 
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection' },
-  { label: t('dictionary.fileCategories.code'), prop: 'category', minWidth: 140, showOverflowTooltip: true },
-  { label: t('dictionary.fileCategories.label'), prop: 'categoryLabel', minWidth: 160, showOverflowTooltip: true },
-  { label: t('dictionary.fileCategories.mime'), prop: 'mime', minWidth: 160, showOverflowTooltip: true },
-  { label: t('dictionary.fileCategories.createdAt'), prop: 'createdAt', width: 170 },
-  { label: t('dictionary.fileCategories.updatedAt'), prop: 'updatedAt', width: 170 },
-]);
-
-const formItems = computed<FormItem[]>(() => [
-  {
-    label: t('dictionary.fileCategories.code'),
-    prop: 'category',
-    required: true,
-    component: {
-      name: 'el-input',
-      props: {
-        maxlength: 60,
-        placeholder: t('dictionary.fileCategories.codePlaceholder'),
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('data.dictionary.file-categories');
+const { formItems } = usePageForms('data.dictionary.file-categories');
+const pageConfig = getPageConfigFull('data.dictionary.file-categories');
       },
     },
   },
   {
-    label: t('dictionary.fileCategories.label'),
+    label: t('data.dictionary.file_categories.fields.label'),
     prop: 'categoryLabel',
     required: true,
     component: {
       name: 'el-input',
       props: {
         maxlength: 60,
-        placeholder: t('dictionary.fileCategories.labelPlaceholder'),
+        placeholder: t('data.dictionary.file_categories.fields.label_placeholder'),
       },
     },
   },
   {
-    label: t('dictionary.fileCategories.mime'),
+    label: t('data.dictionary.file_categories.fields.mime'),
     prop: 'mime',
     component: {
       name: 'el-input',
       props: {
         maxlength: 255,
-        placeholder: t('dictionary.fileCategories.mimePlaceholder'),
+        placeholder: t('data.dictionary.file_categories.fields.mime_placeholder'),
       },
     },
   },

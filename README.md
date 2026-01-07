@@ -33,10 +33,12 @@ BTC ShopFlow 是一个完整的供应链管理解决方案，包含以下核心�
 ### 核心技术栈
 
 - **前端框架**: Vue 3 + TypeScript
+- **状态管理**: Pinia + pinia-plugin-persistedstate
 - **微前端**: qiankun
 - **构建工具**: Vite + Turbo
 - **UI 组件**: Element Plus + 自定义组件库
 - **样式方案**: SCSS + UnoCSS
+- **存储方案**: Cookie、LocalStorage、SessionStorage、IndexedDB (Dexie.js)
 - **包管理**: pnpm
 - **代码规范**: ESLint + Prettier + Commitlint
 - **容器化**: Docker + GitHub Container Registry (GHCR)
@@ -83,7 +85,42 @@ btc-shopflow-monorepo/
 
 ## 📦 版本历史
 
-### v1.0.6 (当前版本)
+### v1.0.7 (当前版本)
+
+**发布日期**: 2025-01-XX
+
+- ✨ **存储系统重构（核心功能）**：
+  - 引入 `pinia-plugin-persistedstate`，统一管理所有 Pinia Store 持久化
+  - 重组存储工具目录，统一到 `utils/storage/` 下
+  - 重构所有 Store 持久化逻辑，移除手动实现，使用插件自动管理
+  - 重构所有直接使用 `localStorage`/`sessionStorage` 的代码，使用统一工具
+  - 新增 SessionStorage 工具，提供统一的 sessionStorage 操作接口
+  - 新增 IndexedDB 工具（基于 Dexie.js），支持大容量历史数据查询
+    - 默认数据库：`BTCDashboardDB`
+    - 支持时间范围、操作人、类型等多维度筛选
+    - 提供 Vue3 响应式查询支持（`useLiveQuery`）
+    - 适用于可视化看板、数据回收站、错误数据表等场景
+  - 创建完整的存储工具使用文档（Cookie、SessionStorage、IndexedDB）
+- 🐛 **Bug 修复**：
+  - 修复应用切换和路由渲染问题
+  - 修复子应用 loading 不停止问题
+  - 修复管理应用菜单切换卡顿闪烁问题
+  - 修复生产环境子应用内容挂载失败问题
+  - 修复子应用登录跳转逻辑，统一跳转到主域名登录页
+  - 修复 Jenkins 构建时 rollup.config 导入路径解析问题
+  - 修复全量构建中共享依赖包链接问题
+  - 修复 Docker 检测逻辑，添加 Docker socket 检查
+- 🚀 **功能增强**：
+  - 为所有子应用添加 keep-alive 路由持久化
+  - 优化 Jenkins 构建配置，添加 Poll SCM 自动触发器
+  - 添加 CDN 加速参数支持，默认启用 CDN 加速
+  - 更新 Jenkinsfile.all-apps 支持并行部署 10 个应用
+- 📝 **代码优化**：
+  - 统一存储工具 API，保持一致的接口设计
+  - 优化错误处理和日志记录
+  - 提供向后兼容的导入路径
+
+### v1.0.6
 
 **发布日期**: 2025-01-XX
 
@@ -282,7 +319,9 @@ pnpm build-deploy:k8s:app --app=system-app  # 部署特定应用
 ### 共享包
 
 - **@btc/shared-components**: 通用组件库，包含表格、表单、CRUD、图表等组件
-- **@btc/shared-core**: 核心功能库，包含 CRUD 逻辑、服务管理、插件系统等
+- **@btc/shared-core**: 核心功能库，包含 CRUD 逻辑、服务管理、插件系统、存储工具等
+  - **存储工具**: 统一的 Cookie、LocalStorage、SessionStorage、IndexedDB 工具
+  - **Pinia 持久化**: 基于 `pinia-plugin-persistedstate` 的统一持久化配置
 - **@btc/shared-utils**: 工具函数库，包含数组、日期、格式化、验证等工具函数
 - **@btc/vite-plugin**: 自定义 Vite 插件，支持 SVG 处理、EPS 自动生成、虚拟模块等
 - **@btc/subapp-manifests**: 子应用清单配置

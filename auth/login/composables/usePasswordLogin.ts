@@ -49,16 +49,17 @@ export function usePasswordLogin() {
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
       appStorage.settings.set({ ...currentSettings, is_logged_in: true });
 
-      // 跳转到首页或 redirect 页面
-      // 优先级：URL 参数中的 redirect > 保存的退出前路径 > 默认路径
+      // 跳转到首页或 oauth_callback 页面
+      // 优先级：URL 参数中的 oauth_callback > 保存的退出前路径 > 默认路径
       const { handleCrossAppRedirect, getAndClearLogoutRedirectPath } = await import('@btc/auth-shared/composables/redirect');
       
       let redirectPath: string;
-      const urlRedirect = route.query.redirect as string;
-      if (urlRedirect) {
-        // 优先使用 URL 参数中的 redirect
+      // 优先读取 oauth_callback 参数，如果没有则尝试 redirect（向后兼容）
+      const urlOAuthCallback = (route.query.oauth_callback as string) || (route.query.redirect as string);
+      if (urlOAuthCallback) {
+        // 优先使用 URL 参数中的 oauth_callback
         // 保留完整的路径，包括查询参数和 hash
-        redirectPath = decodeURIComponent(urlRedirect);
+        redirectPath = decodeURIComponent(urlOAuthCallback);
       } else {
         // 如果没有 URL 参数，尝试从 localStorage 获取保存的退出前路径
         const savedPath = getAndClearLogoutRedirectPath();
@@ -66,7 +67,7 @@ export function usePasswordLogin() {
       }
       
       // 尝试跨应用重定向，如果是子应用路径会使用window.location跳转
-      const isCrossAppRedirect = handleCrossAppRedirect(redirectPath, router);
+      const isCrossAppRedirect = await handleCrossAppRedirect(redirectPath, router);
       
       // 如果不是跨应用跳转
       if (!isCrossAppRedirect) {

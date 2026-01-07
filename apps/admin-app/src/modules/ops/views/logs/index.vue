@@ -122,16 +122,34 @@ import {
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';
-import {
-  operationLogColumns,
-  requestLogColumns,
-  logServices,
-  logTabs
-} from './config';
+import { usePageColumns, getPageConfigFull } from '@btc/shared-core';
 
 defineOptions({
   name: 'OpsLogs'
 });
+
+// 从模块级配置读取
+const { columns: operationLogColumns } = usePageColumns('ops.logs.operation');
+const { columns: requestLogColumns } = usePageColumns('ops.logs.request');
+const opsPageConfig = getPageConfigFull('ops.logs.operation'); // 使用同一个配置，因为 service 在同一个 config 中
+
+// 服务配置
+const logServices = {
+  operationLog: opsPageConfig?.service?.operation,
+  requestLog: opsPageConfig?.service?.request,
+};
+
+// Tab 配置
+const logTabs = [
+  {
+    name: 'operation',
+    label: '操作日志'
+  },
+  {
+    name: 'request',
+    label: '请求日志'
+  }
+];
 
 // 当前激活的tab
 const activeTab = ref('operation');

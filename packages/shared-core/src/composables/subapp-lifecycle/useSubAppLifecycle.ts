@@ -427,6 +427,9 @@ export async function mountSubApp(
     throw new Error(`[${options.appId}-app] 无法找到挂载节点`);
   }
   
+  // 关键：判断是否使用 layout-app（提前定义，避免重复）
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  
   // 关键：再次确认容器已连接到 DOM 且已准备好
   if (!mountPoint.isConnected) {
     mountPoint = await waitForContainer(mountPoint, 80, 50);
@@ -444,6 +447,110 @@ export async function mountSubApp(
     });
   });
 
+  // 关键：检查是否应该挂载（避免重复挂载）
+  // 在 layout-app 嵌入模式下，如果 qiankun 已经挂载了子应用，不应该再次挂载
+  const isEmbeddedMode = typeof window !== 'undefined' && !!(window as any).__BTC_LAYOUT_APP_EMBEDDED_BY_SUBAPP__;
+  if (isEmbeddedMode && qiankunWindow.__POWERED_BY_QIANKUN__) {
+    // 嵌入模式 + qiankun：检查容器中是否已经有内容（qiankun 可能已经挂载）
+    // 如果已经有 #app 元素且已挂载，不应该再次挂载
+    const existingApp = mountPoint.querySelector('#app');
+    if (existingApp && existingApp.children.length > 0) {
+      // qiankun 已经挂载了子应用，不应该再次挂载
+      if (import.meta.env.DEV) {
+        console.warn(`[${options.appId}-app] 检测到 qiankun 已挂载，跳过重复挂载`);
+      }
+      return; // 直接返回，不执行挂载
+    }
+  }
+
+  // 关键：清理容器中的旧内容，避免多个 #app 元素和多余的 iframe 容器
+  // 在 qiankun 模式下，qiankun 会注入子应用的 HTML（包括 #app 元素）
+  // 但在 layout-app 模式下，子应用直接挂载到 #subapp-viewport，需要清理旧内容
+  // 关键：在所有模式下都进行清理，确保 DOM 结构干净
+  
+  // 1. 特别清理可能存在的 iframe 容器（docs-iframe）
+  // 先清理 iframe，避免它们占据高度
+  const iframeWrappers = mountPoint.querySelectorAll('.docs-iframe-wrapper, iframe');
+  iframeWrappers.forEach((iframe) => {
+    try {
+      iframe.remove();
+    } catch (error) {
+      // 静默失败
+    }
+  });
+  
+  // 2. 清理可能存在的多个 body 元素（qiankun 可能注入的）
+  // 注意：body 元素不应该出现在挂载点内，如果出现，需要清理
+  const bodyElements = mountPoint.querySelectorAll('body');
+  bodyElements.forEach((body) => {
+    try {
+      // 将 body 内的内容移到挂载点，然后移除 body
+      while (body.firstChild) {
+        mountPoint.appendChild(body.firstChild);
+      }
+      body.remove();
+    } catch (error) {
+      // 静默失败
+    }
+  });
+  
+  // 3. 清理可能存在的多个 #app 元素
+  // 注意：在 layout-app 模式下，子应用会直接挂载到 #subapp-viewport
+  // 如果容器中已经有 #app 元素，可能是之前挂载留下的，需要清理
+  const appElements = mountPoint.querySelectorAll('#app');
+  if (appElements.length > 0) {
+    // 在 layout-app 模式下，应该清空所有 #app 元素，让 Vue 重新创建
+    // 在独立运行模式下，如果只有一个 #app，保留它；如果有多个，只保留第一个
+    if (isUsingLayoutApp) {
+      // layout-app 模式：清空所有 #app 元素
+      appElements.forEach((app) => {
+        try {
+          app.remove();
+        } catch (error) {
+          // 静默失败
+        }
+      });
+    } else if (appElements.length > 1) {
+      // 独立运行模式：保留第一个，移除其他的
+      for (let i = 1; i < appElements.length; i++) {
+        try {
+          appElements[i].remove();
+        } catch (error) {
+          // 静默失败
+        }
+      }
+    }
+  }
+  
+  // 4. 清理 qiankun 包装器内的多余内容（如果存在）
+  // qiankun 可能会注入多个包装器，需要清理旧的
+  const qiankunWrappers = mountPoint.querySelectorAll('[data-qiankun], [id^="__qiankun_microapp_wrapper"]');
+  if (qiankunWrappers.length > 1) {
+    // 如果存在多个 qiankun 包装器，只保留最后一个，移除其他的
+    for (let i = 0; i < qiankunWrappers.length - 1; i++) {
+      try {
+        qiankunWrappers[i].remove();
+      } catch (error) {
+        // 静默失败
+      }
+    }
+  }
+  
+  // 5. 最后清理容器中的所有其他子元素（包括 qiankun 包装器等）
+  // 注意：在 layout-app 模式下，需要清空容器，让 Vue 重新挂载
+  // 在独立运行模式下，如果容器是 #app，不应该清空（因为 Vue 需要挂载到它）
+  if (isUsingLayoutApp) {
+    // layout-app 模式：清空容器中的所有子元素，让 Vue 重新挂载
+    while (mountPoint.firstChild) {
+      mountPoint.removeChild(mountPoint.firstChild);
+    }
+  } else if (!qiankunWindow.__POWERED_BY_QIANKUN__ && mountPoint.id !== 'app') {
+    // 独立运行模式且容器不是 #app：清空容器中的所有子元素
+    while (mountPoint.firstChild) {
+      mountPoint.removeChild(mountPoint.firstChild);
+    }
+  }
+
   // 关键：确保容器可见（如果容器被 v-show 隐藏，强制显示）
   // 因为 qiankun 需要容器可见才能正确挂载
   const computedStyle = window.getComputedStyle(mountPoint);
@@ -460,7 +567,6 @@ export async function mountSubApp(
   
   // 关键：在 layout-app 模式下，应用挂载后立即调用 finishLoading 隐藏 loading
   // 不需要等到路由准备好，因为应用已经挂载，loading 应该立即隐藏
-  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
   if (isUsingLayoutApp) {
     // 调用 finishLoading 隐藏 loading
     const finishLoading = (window as any).__APP_FINISH_LOADING__;
@@ -505,70 +611,93 @@ export async function mountSubApp(
   if (qiankunWindow.__POWERED_BY_QIANKUN__ || isUsingLayoutApp) {
     const initialRoute = deriveInitialSubRoute(options.appId, options.basePath);
     
-    // 关键：先等待路由准备好，然后再进行导航
-    // 这样可以确保路由已经完全初始化，组件可以正确加载
-    // 使用 Promise.race 避免无限等待（最多等待 3 秒）
-    Promise.race([
-      context.router.isReady(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('路由就绪超时')), 3000))
-    ]).then(async () => {
-      // 路由已准备好，进行导航
-      try {
-        await context.router.replace(initialRoute);
-        
-        // 关键修复：等待路由导航完成，并确保组件已加载
-        // 使用 nextTick 确保 Vue 已经完成组件渲染
-        await import('vue').then(({ nextTick }) => {
-          return new Promise<void>((resolve) => {
-            nextTick(() => {
-              // 检查路由是否已匹配，确保组件已加载
-              const currentRoute = context.router.currentRoute.value;
-              if (currentRoute.matched.length > 0) {
-                // 路由已匹配，组件应该已经加载，再等待一个 nextTick 确保渲染完成
-                nextTick(() => {
-                  resolve();
-                });
-              } else {
-                // 如果路由未匹配，等待一段时间后继续（兼容性处理）
+    // 关键优化：如果初始路由不是首页（'/'），立即进行导航，避免先匹配到首页
+    // 这样可以避免刷新浏览器时先显示首页再跳转的问题
+    if (initialRoute !== '/') {
+      // 立即导航到正确的路由，不等待 router.isReady()
+      // 这样可以避免路由初始化时先匹配到首页
+      context.router.replace(initialRoute).catch((error: unknown) => {
+        // 如果立即导航失败（可能路由还未准备好），等待路由准备好后再导航
+        Promise.race([
+          context.router.isReady(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('路由就绪超时')), 3000))
+        ]).then(async () => {
+          try {
+            await context.router.replace(initialRoute);
+          } catch (navError: unknown) {
+            console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+              initialRoute,
+              currentPath: window.location.pathname,
+            });
+          }
+        }).catch((readyError: unknown) => {
+          console.warn(`[${options.appId}-app] 路由就绪检查失败:`, readyError);
+        });
+      });
+    } else {
+      // 如果初始路由是首页，等待路由准备好后再进行导航（保持原有逻辑）
+      Promise.race([
+        context.router.isReady(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('路由就绪超时')), 3000))
+      ]).then(async () => {
+        // 路由已准备好，进行导航
+        try {
+          await context.router.replace(initialRoute);
+          
+          // 关键修复：等待路由导航完成，并确保组件已加载
+          // 使用 nextTick 确保 Vue 已经完成组件渲染
+          await import('vue').then(({ nextTick }) => {
+            return new Promise<void>((resolve) => {
+              nextTick(() => {
+                // 检查路由是否已匹配，确保组件已加载
+                const currentRoute = context.router.currentRoute.value;
+                if (currentRoute.matched.length > 0) {
+                  // 路由已匹配，组件应该已经加载，再等待一个 nextTick 确保渲染完成
+                  nextTick(() => {
+                    resolve();
+                  });
+                } else {
+                  // 如果路由未匹配，等待一段时间后继续（兼容性处理）
+                  setTimeout(() => {
+                    resolve();
+                  }, 200);
+                }
+              });
+            });
+          });
+        } catch (error: unknown) {
+          // 路由导航失败时输出错误信息
+          console.error(`[${options.appId}-app] 路由导航失败:`, error, {
+            initialRoute,
+            currentPath: window.location.pathname,
+            routerReady: 'ready',
+          });
+        }
+      }).catch(async (error: unknown) => {
+        // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
+        console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
+        try {
+          await context.router.replace(initialRoute);
+          
+          // 即使路由就绪检查失败，也等待导航完成
+          await import('vue').then(({ nextTick }) => {
+            return new Promise<void>((resolve) => {
+              nextTick(() => {
                 setTimeout(() => {
                   resolve();
                 }, 200);
-              }
+              });
             });
           });
-        });
-      } catch (error: unknown) {
-        // 路由导航失败时输出错误信息
-        console.error(`[${options.appId}-app] 路由导航失败:`, error, {
-          initialRoute,
-          currentPath: window.location.pathname,
-          routerReady: 'ready',
-        });
-      }
-    }).catch(async (error: unknown) => {
-      // 路由就绪超时或失败，仍然尝试导航（兼容性处理）
-      console.warn(`[${options.appId}-app] 路由就绪检查失败，尝试直接导航:`, error);
-      try {
-        await context.router.replace(initialRoute);
-        
-        // 即使路由就绪检查失败，也等待导航完成
-        await import('vue').then(({ nextTick }) => {
-          return new Promise<void>((resolve) => {
-            nextTick(() => {
-              setTimeout(() => {
-                resolve();
-              }, 200);
-            });
+        } catch (navError: unknown) {
+          console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
+            initialRoute,
+            currentPath: window.location.pathname,
+            routerReady: 'timeout',
           });
-        });
-      } catch (navError: unknown) {
-        console.error(`[${options.appId}-app] 路由导航失败:`, navError, {
-          initialRoute,
-          currentPath: window.location.pathname,
-          routerReady: 'timeout',
-        });
-      }
-    });
+        }
+      });
+    }
   }
 
   // 关键优化：将后续操作改为后台异步执行，不阻塞应用挂载和路由导航

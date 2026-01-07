@@ -19,3 +19,4 @@ export declare function createGitHubPlugin(): Plugin & {
  * 缁勫悎寮?API锛氫娇鐢℅itHub鎻掍欢
  */
 export declare function useGitHubPlugin(): GitHubPlugin;
+//# sourceMappingURL=index.d.ts.map

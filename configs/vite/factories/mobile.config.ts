@@ -442,7 +442,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     https: {},
     cors: true,
     headers: {

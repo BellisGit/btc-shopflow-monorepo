@@ -43,7 +43,7 @@
         <div class="user-role-assign-drawer">
           <!-- 用户选择部分 -->
           <div class="drawer-section user-section">
-            <div class="section-title">{{ t('org.user_role_assign.drawer.subjectSectionTitle') }}</div>
+            <div class="section-title">{{ t('org.user_role_assign.drawer.subject_section_title') }}</div>
             <el-select
               ref="userSelectRef"
               v-model="selectedUserId"
@@ -51,7 +51,7 @@
               remote
               :remote-method="searchUsers"
               :loading="userSearchLoading"
-              :placeholder="t('org.user_role_assign.drawer.searchUser')"
+              :placeholder="t('org.user_role_assign.drawer.search_user')"
               clearable
               multiple
               collapse-tags
@@ -77,7 +77,7 @@
 
           <!-- 角色选择部分 -->
           <div class="drawer-section role-section">
-            <div class="section-title">{{ t('org.user_role_assign.drawer.roleSectionTitle') }}</div>
+            <div class="section-title">{{ t('org.user_role_assign.drawer.role_section_title') }}</div>
             <BtcTransferPanel
               ref="roleTransferRef"
               v-model="selectedRoleKeys"
@@ -107,12 +107,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, getPageConfigFull } from '@btc/shared-core';
 import { BtcMessage, BtcTransferPanel, BtcMultiUnbindBtn, BtcConfirm, BtcTableGroup, BtcSvg } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
 import { service } from '@services/eps';
-import { services as userServices } from '../users/config';
-import { services as roleServices } from '@modules/access/views/roles/config';
 
 const { t } = useI18n();
 const tableGroupRef = ref();
@@ -220,8 +218,8 @@ const roleColumns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
   { type: 'index', label: t('common.index'), width: 60 },
   { prop: 'name', label: t('org.user_role_assign.columns.username'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'realName', label: t('org.user_role_assign.user.realName'), minWidth: 120, showOverflowTooltip: true },
-  { prop: 'roleName', label: t('org.user_role_assign.columns.roleName'), minWidth: 180, showOverflowTooltip: true },
+  { prop: 'realName', label: t('org.user_role_assign.user.real_name'), minWidth: 120, showOverflowTooltip: true },
+  { prop: 'roleName', label: t('org.user_role_assign.columns.role_name'), minWidth: 180, showOverflowTooltip: true },
   {
     type: 'op',
     label: t('crud.table.operation'),
@@ -240,11 +238,15 @@ const roleColumns = computed<TableColumn[]>(() => [
   },
 ]);
 
-const userService = userServices.sysuser;
-const roleService = roleServices.sysrole;
+// 从 config.ts 读取服务配置
+const orgConfig = getPageConfigFull('org.users');
+const accessConfig = getPageConfigFull('access.roles');
+
+const userService = orgConfig?.service?.sysuser;
+const roleService = accessConfig?.service?.sysrole;
 
 const roleTransferColumns = computed<TransferPanelColumn[]>(() => [
-  { prop: 'roleName', label: t('org.user_role_assign.columns.roleName'), minWidth: 160 },
+  { prop: 'roleName', label: t('org.user_role_assign.columns.role_name'), minWidth: 160 },
   { prop: 'description', label: t('org.user_role_assign.columns.description'), minWidth: 220 },
 ]);
 

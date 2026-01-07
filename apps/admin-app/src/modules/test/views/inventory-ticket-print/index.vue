@@ -3,7 +3,7 @@
     <BtcViewGroup
       ref="viewGroupRef"
       :left-service="domainService"
-      :left-title="t('inventory.dataSource.domain')"
+      :left-title="t('inventory.data_source.domain')"
       :show-unassigned="false"
       :enable-key-search="false"
       :left-size="'small'"
@@ -180,7 +180,7 @@ const loadTicketData = () => {
 const handlePrint = async () => {
   try {
     if (!selectedDomain.value) {
-      BtcMessage.warning(t('inventory.dataSource.domain.selectRequired'));
+      BtcMessage.warning(t('inventory.data_source.domain.select_required'));
       return;
     }
 

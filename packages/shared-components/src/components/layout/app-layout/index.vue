@@ -36,28 +36,28 @@
     <div class="app-layout__body">
       <!-- 关键：在 layout-app 环境下，隐藏子应用自己的侧边栏 -->
       <!-- 左侧边栏（左侧菜单、双栏菜单左侧、混合菜单左侧） -->
-      <!-- 调试信息：在开发环境或首次渲染时显示 -->
-      <template v-if="isDev && (!isUsingLayoutApp || !shouldShowSidebar)">
-        <div style="position: fixed; top: 0; left: 0; z-index: 9999; background: yellow; padding: 10px; font-size: 12px;">
-          <div>isUsingLayoutApp: {{ isUsingLayoutApp }}</div>
-          <div>shouldShowSidebar: {{ shouldShowSidebar }}</div>
-          <div>menuType: {{ menuType?.value }}</div>
-          <div>__USE_LAYOUT_APP__: {{ useLayoutAppFlag }}</div>
-          <div>__IS_LAYOUT_APP__: {{ isLayoutAppFlag }}</div>
-        </div>
-      </template>
+      <!-- 关键：使用 keep-alive 缓存菜单组件，避免切换时重新创建 DOM -->
       <div
         v-if="!isUsingLayoutApp && shouldShowSidebar"
         class="app-layout__sidebar"
         :class="{ 'has-dark-menu': isDarkMenuStyle }"
       >
-        <Sidebar
-          v-if="currentMenuType === 'left'"
-          :is-collapse="isCollapse"
-          :drawer-visible="drawerVisible"
-        />
-        <DualMenu v-else-if="currentMenuType === 'dual-menu'" />
-        <TopLeftSidebar v-else-if="currentMenuType === 'top-left'" />
+        <keep-alive>
+          <Sidebar
+            v-if="currentMenuType === 'left'"
+            :key="`sidebar-${currentMenuType}`"
+            :is-collapse="isCollapse"
+            :drawer-visible="drawerVisible"
+          />
+          <DualMenu
+            v-else-if="currentMenuType === 'dual-menu'"
+            :key="`dual-menu-${currentMenuType}`"
+          />
+          <TopLeftSidebar
+            v-else-if="currentMenuType === 'top-left'"
+            :key="`top-left-${currentMenuType}`"
+          />
+        </keep-alive>
       </div>
 
       <!-- 右侧内容 -->
@@ -85,8 +85,9 @@
           ref="contentRef"
         >
             <!-- 主应用路由视图 -->
+            <!-- 关键：直接使用 type 作为判断依据，确保互斥 -->
             <div
-              v-if="mountState.showMainApp"
+              v-if="mountType === 'main-app'"
               class="content-mount content-mount--main-app"
               data-router-view
             >
@@ -101,11 +102,14 @@
             </div>
 
             <!-- 子应用挂载点 -->
+            <!-- 关键：使用 v-show 而不是 v-if，确保容器始终存在于 DOM 中，避免 qiankun 加载时找不到容器 -->
+            <!-- 容器始终存在，通过 v-show 控制显示/隐藏，这样 qiankun 在 beforeLoad 时就能找到容器 -->
             <div
-              v-if="mountState.showSubApp"
+              v-show="mountType === 'sub-app'"
               id="subapp-viewport"
-              :ref="(el) => { mountState.subappViewportRef.value = el as HTMLElement | null; }"
+              :ref="(el) => { if (el) mountState.subappViewportRef.value = el as HTMLElement | null; }"
               class="content-mount content-mount--sub-app"
+              style="display: none;"
             >
             </div>
           </div>
@@ -122,6 +126,21 @@
 
     <!-- 偏好设置抽屉（用于 layout-app 环境） -->
     <BtcUserSettingDrawer v-model="preferencesDrawerVisible" />
+
+    <!-- 全局 Loading 组件（仅主应用显示） -->
+    <!-- 注意：不能使用 v-show，因为 AppLoading 的根节点是 teleport（不是 DOM 元素） -->
+    <!-- 使用 v-if 控制组件是否创建，组件内部通过 visible prop 控制显示/隐藏 -->
+    <AppLoading
+      v-if="shouldShowAppLoading"
+      :visible="appLoadingVisible"
+      :title="appLoadingTitle"
+      :tip="appLoadingTip"
+      :is-fail="appLoadingFail"
+      :fail-desc="appLoadingFailDesc"
+      :timeout="appLoadingTimeout"
+      @retry="handleRetryLoading"
+      @timeout="handleLoadingTimeout"
+    />
   </div>
 </template>
 
@@ -143,14 +162,8 @@ import DualMenu from './dual-menu/index.vue';
 import BtcUserSettingDrawer from '../../others/btc-user-setting/components/preferences-drawer.vue';
 import { provideContentHeight } from '../../../composables/content-height';
 import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
-
-// 开发环境标志（在模板中使用）
-const isDev = import.meta.env.DEV;
-
-// Window 对象引用（在模板中使用）
-const windowObj = typeof window !== 'undefined' ? (window as any) : null;
-const useLayoutAppFlag = windowObj ? windowObj.__USE_LAYOUT_APP__ : false;
-const isLayoutAppFlag = windowObj ? windowObj.__IS_LAYOUT_APP__ : false;
+import { getEnvironment } from '@configs/unified-env-config';
+import AppLoading from '../../loading/app-loading/index.vue';
 
 // 创建事件总线
 // 关键：如果全局事件总线已存在（由 layout-app 初始化时创建），则使用它；否则创建新的
@@ -159,13 +172,6 @@ if (!emitter) {
   emitter = mitt();
   // 将事件总线挂载到 window，供其他组件使用
   (window as any).__APP_EMITTER__ = emitter;
-  if (import.meta.env.DEV) {
-    console.log('[AppLayout] 创建了新的事件总线并挂载到 window.__APP_EMITTER__');
-  }
-} else {
-  if (import.meta.env.DEV) {
-    console.log('[AppLayout] 使用已存在的全局事件总线 (window.__APP_EMITTER__)');
-  }
 }
 
 const route = useRoute();
@@ -324,13 +330,21 @@ const isLayoutAppSelf = computed(() => {
     return true;
   }
   // 检查 hostname 是否是 layout-app 的域名
+  const env = getEnvironment();
   const hostname = window.location.hostname;
   const port = window.location.port || '';
-  // 生产环境：layout.bellis.com.cn
-  // 预览环境：localhost:4192
-  // 开发环境：localhost:4188
-  if (hostname === 'layout.bellis.com.cn' ||
-      (hostname === 'localhost' && (port === '4192' || port === '4188'))) {
+  
+  // 使用统一的环境检测
+  if (env === 'production' && hostname === 'layout.bellis.com.cn') {
+    return true;
+  }
+  if (env === 'test' && hostname === 'layout.test.bellis.com.cn') {
+    return true;
+  }
+  if (env === 'preview' && port === '4192') {
+    return true;
+  }
+  if (env === 'development' && port === '4188') {
     return true;
   }
   return false;
@@ -351,6 +365,100 @@ const isUsingLayoutApp = computed(() => {
 const isMainApp = computed(() => {
   return mountState.type.value === 'main-app';
 });
+
+// Loading 相关状态（仅主应用使用，通过全局 window 对象访问）
+const appLoadingState = ref<{
+  loadingApp: any;
+  loadingVisible: any;
+  loadingFail: any;
+  loadingFailDesc: any;
+  showLoading: any;
+  hideLoading: any;
+  markLoadingFail: any;
+  retryLoadingApp: any;
+} | null>(null);
+
+// 从全局 window 对象获取 Loading 状态（主应用会暴露）
+// 关键：使用 onMounted 和 watch 确保状态能正确获取，因为 __BTC_APP_LOADING__ 可能在组件初始化后才暴露
+const initAppLoadingState = () => {
+  if (typeof window !== 'undefined') {
+    const globalLoading = (window as any).__BTC_APP_LOADING__;
+    if (globalLoading && !appLoadingState.value) {
+      appLoadingState.value = globalLoading;
+    }
+  }
+};
+
+// 组件挂载时初始化
+onMounted(() => {
+  initAppLoadingState();
+  // 延迟再次检查，确保主应用的 Loading 状态已初始化
+  setTimeout(() => {
+    initAppLoadingState();
+  }, 0);
+});
+
+// 监听全局对象的变化（主应用可能在组件初始化后才暴露状态）
+watch(
+  () => (window as any).__BTC_APP_LOADING__,
+  (newVal) => {
+    if (newVal && !appLoadingState.value) {
+      appLoadingState.value = newVal;
+    }
+  },
+  { immediate: true }
+);
+
+// 计算属性：Loading 相关状态
+const appLoadingVisible = computed(() => {
+  return appLoadingState.value?.loadingVisible?.value ?? false;
+});
+
+const appLoadingTitle = computed(() => {
+  const app = appLoadingState.value?.loadingApp?.value;
+  return app?.title || app?.name || '加载中...';
+});
+
+const appLoadingTip = computed(() => {
+  const app = appLoadingState.value?.loadingApp?.value;
+  return app?.loadingTip || '';
+});
+
+const appLoadingFail = computed(() => {
+  return appLoadingState.value?.loadingFail?.value ?? false;
+});
+
+const appLoadingFailDesc = computed(() => {
+  return appLoadingState.value?.loadingFailDesc?.value || '';
+});
+
+const appLoadingTimeout = computed(() => {
+  const app = appLoadingState.value?.loadingApp?.value;
+  return app?.timeout || 10000;
+});
+
+// 判断是否应该显示 Loading（仅主应用）
+// 关键：只要主应用且 Loading 状态对象已初始化，就允许组件渲染（使用 v-show 控制显示）
+const shouldShowAppLoading = computed(() => {
+  return isMainApp.value && appLoadingState.value !== null;
+});
+
+// Loading 相关事件处理
+function handleRetryLoading() {
+  if (appLoadingState.value?.retryLoadingApp) {
+    appLoadingState.value.retryLoadingApp();
+  }
+}
+
+function handleLoadingTimeout() {
+  if (appLoadingState.value?.markLoadingFail) {
+    const title = appLoadingTitle.value || '应用';
+    appLoadingState.value.markLoadingFail(`【${title}】加载超时`);
+  }
+}
+
+// 解包 mountState.type 以便在模板中使用（解决 TypeScript 类型检查问题）
+const mountType = computed(() => mountState.type.value);
 
 // 跟踪之前的 isMainApp 状态，用于检测跨应用切换
 const prevIsMainApp = ref(false);
@@ -420,12 +528,7 @@ const showBreadcrumb = computed(() => {
     return false;
   }
 
-  // 3. 个人中心页面（孤立页面）
-  if (normalizedPath === '/profile') {
-    return false;
-  }
-
-  // 4. 判断是否为各应用首页
+  // 3. 判断是否为各应用首页
   // 关键优化：优先使用稳定的判断方式（路径匹配、子域名判断），这些在页面加载时就已经确定
   // 最后才判断依赖 mountState.type.value 的条件，避免因状态初始化时机导致的闪烁
 
@@ -863,27 +966,36 @@ onUnmounted(() => {
       min-width: 0 !important; // 使用 !important 防止被覆盖，确保 flex 子元素可以收缩
       padding: 0 !important;
       box-sizing: border-box !important; // 使用 !important 防止被覆盖，确保宽度计算一致
+      background-color: var(--el-bg-color) !important;
+      font-size: 0 !important; // 关键：隐藏可能被错误渲染的文本内容
+      line-height: 0 !important; // 关键：隐藏可能被错误渲染的文本内容
     }
 
     :deep(#subapp-viewport > [data-qiankun]) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      min-width: 0;
-      height: 100%;
-      width: 100%;
+      flex: 1 !important; // 使用 !important 确保占据完整高度
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      height: 100% !important; // 关键：确保高度为 100%
+      width: 100% !important;
+      font-size: var(--el-font-size-base) !important; // 恢复字体大小
+      line-height: calc(var(--el-font-size-base) * 1.5) !important; // 恢复行高
+      // 确保 position 不会影响高度计算
+      position: relative !important;
+      // 确保 box-sizing 正确
+      box-sizing: border-box !important;
     }
 
     // qiankun 包装器容器（确保高度正确）
     :deep(#subapp-viewport [id^="__qiankun_microapp_wrapper"]) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      min-width: 0;
-      height: 100%;
-      width: 100%;
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
     }
 
     // 当 layout-app 在 qiankun 包装容器内部时，确保 #subapp-viewport 正确显示
@@ -928,31 +1040,140 @@ onUnmounted(() => {
       flex-basis: auto;
     }
 
-    :deep(#subapp-viewport > [data-qiankun] > *) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      min-width: 0;
-    }
-
     // 子应用的 #app 元素（确保高度正确）
-    :deep(#subapp-viewport #app) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      min-width: 0;
-      height: 100%;
-      width: 100%;
+    // 关键：使用更具体的选择器，确保样式优先级高于子应用的 scoped 样式
+    // 添加多个层级的选择器，确保覆盖所有可能的 DOM 结构
+    :deep(#subapp-viewport #app),
+    :deep(#subapp-viewport [data-qiankun] #app),
+    :deep(#subapp-viewport [id^="__qiankun_microapp_wrapper"] #app),
+    :deep(#subapp-viewport > [data-qiankun] > #app),
+    :deep(#subapp-viewport > [id^="__qiankun_microapp_wrapper"] > #app),
+    :deep(#subapp-viewport [data-qiankun] > #app),
+    :deep(#subapp-viewport [id^="__qiankun_microapp_wrapper"] > #app) {
+      flex: 1 !important; // 使用 !important 确保占据完整高度
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      height: 100% !important; // 关键：确保高度为 100%
+      width: 100% !important;
+      box-sizing: border-box !important;
+      // 确保 position 不会影响高度计算
+      position: relative !important;
+      // 确保 overflow 不会影响高度
+      overflow: hidden !important;
     }
 
-
-    :deep(qiankun-head) {
+    // 关键：隐藏 qiankun 注入的 qiankun-head 元素及其所有内容
+    // qiankun-head 包含子应用的 script 和 style 标签，不应该作为可见文本显示
+    // 使用全局选择器，确保无论 qiankun-head 在哪里都能被隐藏
+    :deep(qiankun-head),
+    qiankun-head {
       display: none !important;
       height: 0 !important;
       width: 0 !important;
       overflow: hidden !important;
+      visibility: hidden !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      // 确保所有子元素也被隐藏
+      * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
+        line-height: 0 !important;
+      }
+    }
+
+    // 关键：隐藏可能被错误渲染为文本的脚本和样式内容
+    // qiankun 注入的脚本和样式不应该作为文本显示在页面上
+    // 如果这些内容被错误地作为文本节点插入到 DOM 中，使用 CSS 隐藏它们
+    :deep(#subapp-viewport) {
+      // 隐藏所有可能的文本内容（脚本/样式代码）
+      // 使用 font-size: 0 和 line-height: 0 确保文本不会显示
+      font-size: 0 !important; // 关键：隐藏可能被错误渲染的文本内容
+      line-height: 0 !important; // 关键：隐藏可能被错误渲染的文本内容
+      // 确保文本节点不显示
+      white-space: nowrap !important;
+      text-indent: -9999px !important;
+      
+      // 恢复子元素的字体设置（只针对实际的 DOM 元素）
+      > * {
+        font-size: var(--el-font-size-base) !important; // 恢复字体大小
+        line-height: calc(var(--el-font-size-base) * 1.5) !important; // 恢复行高
+        white-space: normal !important;
+        text-indent: 0 !important;
+      }
+    }
+    
+    // 特别处理 data-qiankun 容器中的文本内容
+    :deep(#subapp-viewport > [data-qiankun]) {
+      // 确保容器本身不显示文本
+      font-size: 0 !important;
+      line-height: 0 !important;
+      white-space: nowrap !important;
+      text-indent: -9999px !important;
+      
+      // 恢复子元素的字体设置（只针对实际的 DOM 元素）
+      > * {
+        font-size: var(--el-font-size-base) !important;
+        line-height: calc(var(--el-font-size-base) * 1.5) !important;
+        white-space: normal !important;
+        text-indent: 0 !important;
+      }
+    }
+
+    // 关键：隐藏 qiankun 注入的 script 和 style 标签（如果它们被错误地渲染为文本）
+    // 这些标签应该被 qiankun 正确处理，但如果它们被错误地插入到 DOM 中，需要隐藏它们
+    // 使用更广泛的选择器，确保所有可能的 script 和 style 标签都被隐藏
+    :deep([data-qiankun] > script),
+    :deep([data-qiankun] > style),
+    :deep([data-qiankun] script),
+    :deep([data-qiankun] style),
+    :deep(#subapp-viewport > script),
+    :deep(#subapp-viewport > style),
+    :deep(#subapp-viewport script),
+    :deep(#subapp-viewport style),
+    :deep([id^="__qiankun_microapp_wrapper"] > script),
+    :deep([id^="__qiankun_microapp_wrapper"] > style),
+    :deep([id^="__qiankun_microapp_wrapper"] script),
+    :deep([id^="__qiankun_microapp_wrapper"] style) {
+      display: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+    }
+
+    // 关键：隐藏所有可能包含脚本/样式文本的文本节点
+    // 如果 qiankun 将脚本/样式内容作为文本节点插入，这些规则会隐藏它们
+    :deep(#subapp-viewport),
+    :deep([data-qiankun]),
+    :deep([id^="__qiankun_microapp_wrapper"]) {
+      // 确保文本节点不显示（通过设置容器属性）
+      // 注意：CSS 无法直接选择文本节点，但可以通过设置容器的属性来影响文本显示
+      // 使用 text-indent 和 white-space 来隐藏可能的文本内容
+      text-indent: -9999px !important;
+      white-space: nowrap !important;
+      
+      // 恢复实际内容元素的文本显示
+      > *:not(script):not(style):not(qiankun-head) {
+        text-indent: 0 !important;
+        white-space: normal !important;
+      }
     }
 
     // 文档 iframe 容器（覆盖默认样式，不需要 padding）
@@ -1147,6 +1368,35 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss">
+/**
+ * 全局样式：隐藏 qiankun 注入的 qiankun-head 元素
+ * 这个元素包含子应用的 script 和 style 标签，不应该作为可见文本显示
+ * 使用全局样式确保无论 qiankun-head 在哪里都能被隐藏
+ */
+qiankun-head {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  
+  // 确保所有子元素也被隐藏
+  * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+}
+
 /**
  * 布局容器核心样式（非 scoped）
  * 当 layout-app 作为 qiankun 子应用被加载到子应用的 #app 容器时，

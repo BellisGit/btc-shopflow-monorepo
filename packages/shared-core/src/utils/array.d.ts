@@ -13,3 +13,4 @@ export declare function normalizeIds(ids: string | number | (string | number)[] 
  * @returns 处理后的 keyword 对象，ids 字段统一为数组
  */
 export declare function normalizeKeywordIds(keyword: any): any;
+//# sourceMappingURL=array.d.ts.map

@@ -259,6 +259,26 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
         return sourcePath;
       }
 
+      // 处理 @btc/shared-plugins
+      if (id === '@btc/shared-plugins' || id.startsWith('@btc/shared-plugins/')) {
+        const sourcePath = id === '@btc/shared-plugins'
+          ? withPackages('shared-plugins/src/index.ts')
+          : withPackages(`shared-plugins/src/${id.replace('@btc/shared-plugins/', '')}`);
+        
+        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        return ensureFileExtension(sourcePath);
+      }
+
+      // 处理 @btc/i18n
+      if (id === '@btc/i18n' || id.startsWith('@btc/i18n/')) {
+        const sourcePath = id === '@btc/i18n'
+          ? withPackages('i18n/src/index.ts')
+          : withPackages(`i18n/src/${id.replace('@btc/i18n/', '')}`);
+        
+        console.log(`[resolve-btc-imports] 解析 ${id} (来自已构建包 ${importer?.split('/').slice(-2).join('/') || 'unknown'}) -> ${sourcePath.split('/').slice(-3).join('/')}`);
+        return ensureFileExtension(sourcePath);
+      }
+
       // 处理 @btc/auth-shared
       if (id === '@btc/auth-shared' || id.startsWith('@btc/auth-shared/')) {
         let sourcePath: string;

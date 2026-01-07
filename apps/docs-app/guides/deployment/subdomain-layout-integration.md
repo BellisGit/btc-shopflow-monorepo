@@ -29,7 +29,7 @@ sidebar_group: deployment
 ```
 用户访问 quality.bellis.com.cn
     ↓
-Nginx 将请求代理到主应用容器（system-app）
+Nginx 将请求代理到主应用容器（main-app）
     ↓
 主应用检测到子域名 quality.bellis.com.cn
     ↓
@@ -46,7 +46,7 @@ qiankun 检测到子域名或路径匹配，加载 quality-app
 
 ### 关键组件
 
-1. **主应用（system-app）**
+1. **主应用（main-app）**
    - 域名：`bellis.com.cn` 和所有子域名（通过 Nginx 配置）
    - 职责：提供统一的 Layout，根据子域名/路径加载对应子应用
    - 技术：Vue 3 + qiankun
@@ -69,7 +69,7 @@ server {
   server_name bellis.com.cn;
   
   location / {
-    proxy_pass http://127.0.0.1:30080;  # system-app 容器
+    proxy_pass http://127.0.0.1:30080;  # main-app 容器
     # ... 其他配置
   }
 }
@@ -80,7 +80,7 @@ server {
   server_name quality.bellis.com.cn;
   
   location / {
-    proxy_pass http://127.0.0.1:30080;  # 同样指向 system-app 容器
+    proxy_pass http://127.0.0.1:30080;  # 同样指向 main-app 容器
     # ... 其他配置
   }
 }
@@ -101,7 +101,7 @@ server {
   
   # 其他请求代理到主应用
   location / {
-    proxy_pass http://127.0.0.1:30080;  # system-app 容器
+    proxy_pass http://127.0.0.1:30080;  # main-app 容器
   }
 }
 ```
@@ -111,7 +111,7 @@ server {
 主应用在路由守卫中检测子域名，自动跳转到对应路径：
 
 ```typescript
-// apps/system-app/src/router/index.ts
+// apps/main-app/src/router/index.ts
 
 const subdomainToPathMap: Record<string, string> = {
   'admin.bellis.com.cn': '/admin',
@@ -149,7 +149,7 @@ router.beforeEach((to, from, next) => {
 qiankun 的 `activeRule` 同时支持路径匹配和子域名匹配：
 
 ```typescript
-// apps/system-app/src/micro/apps.ts
+// apps/main-app/src/micro/apps.ts
 
 export const microApps: MicroAppConfig[] = [
   {
@@ -175,7 +175,7 @@ export const microApps: MicroAppConfig[] = [
 在生产环境，如果当前访问的是对应子应用的子域名，使用子域名作为入口：
 
 ```typescript
-// apps/system-app/src/micro/apps.ts
+// apps/main-app/src/micro/apps.ts
 
 case 'production':
   // 生产环境：根据子域名判断使用子域名还是相对路径
@@ -201,7 +201,7 @@ case 'production':
 ### 场景 1：用户通过子域名访问
 
 1. 用户访问 `https://quality.bellis.com.cn/`
-2. Nginx 将请求代理到主应用容器（system-app）
+2. Nginx 将请求代理到主应用容器（main-app）
 3. 主应用加载，路由守卫检测到子域名 `quality.bellis.com.cn`
 4. 自动跳转到 `/quality`（URL 仍为 `quality.bellis.com.cn/quality`）
 5. 主应用显示 Layout
@@ -265,7 +265,7 @@ server {
   
   # 其他请求代理到主应用
   location / {
-    proxy_pass http://127.0.0.1:30080;  # system-app 容器
+    proxy_pass http://127.0.0.1:30080;  # main-app 容器
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -39,3 +39,4 @@ export declare function exportTableToExcel(options: {
     autoWidth?: boolean;
     bookType?: XLSX.BookType;
 }): void;
+//# sourceMappingURL=utils.d.ts.map

@@ -296,7 +296,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
       }
 
       // 关键：复制 bridge.html 到根目录（用于跨子域通信）
-      // 注意：bridge.html 应该只在 system-app 中存在，因为所有子应用都访问主域的 bridge.html
+      // 注意：bridge.html 应该只在 main-app 中存在，因为所有子应用都访问主域的 bridge.html
       const publicDir = resolve(appDir, 'public');
       const bridgeHtmlPath = join(publicDir, 'bridge.html');
       if (existsSync(bridgeHtmlPath)) {
@@ -310,10 +310,10 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
           throw error; // 抛出错误，确保构建失败
         }
       } else {
-        // bridge.html 不存在，检查是否是 system-app（应该存在）
+        // bridge.html 不存在，检查是否是 main-app（应该存在）
         const appName = appDir.split(/[/\\]/).pop() || '';
-        if (appName === 'system-app') {
-          console.warn(`[public-images-to-assets] ⚠️  警告: system-app 的 public/bridge.html 不存在！`);
+        if (appName === 'main-app') {
+          console.warn(`[public-images-to-assets] ⚠️  警告: main-app 的 public/bridge.html 不存在！`);
           console.warn(`[public-images-to-assets] ⚠️  这会导致跨子域通信失败。请确保 bridge.html 存在于 public 目录。`);
         }
         // 其他应用不需要 bridge.html（它们访问主域的 bridge.html）

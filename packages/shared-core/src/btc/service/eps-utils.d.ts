@@ -40,3 +40,4 @@ export declare function normalizePageResponse(response: any, page: number, size:
  */
 export declare function createCrudServiceFromEps(servicePath: string | string[], serviceRoot: any): CrudService<any>;
 export {};
+//# sourceMappingURL=eps-utils.d.ts.map

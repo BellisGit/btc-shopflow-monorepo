@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 
 /**
  * 用户信息接口

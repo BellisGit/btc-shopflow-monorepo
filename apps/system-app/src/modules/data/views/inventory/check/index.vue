@@ -39,25 +39,25 @@
       :append-to-body="true"
     >
       <el-descriptions :column="2" border>
-        <el-descriptions-item :label="t('system.inventory.base.fields.checkNo')">
+        <el-descriptions-item :label="t('system.inventory.base.fields.check_no')">
           {{ detailRow?.checkNo || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="流程ID">
           {{ detailRow?.processId || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('system.material.fields.materialCode')">
+        <el-descriptions-item :label="t('system.material.fields.material_code')">
           {{ detailRow?.partName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.actualQty')">
+        <el-descriptions-item :label="t('inventory.result.fields.actual_qty')">
           {{ detailRow?.partQty || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('system.inventory.base.fields.checkerId')">
+        <el-descriptions-item :label="t('system.inventory.base.fields.checker_id')">
           {{ detailRow?.checker || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('inventory.result.fields.storageLocation')">
+        <el-descriptions-item :label="t('inventory.result.fields.storage_location')">
           {{ detailRow?.position || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('system.inventory.base.fields.createdAt')">
+        <el-descriptions-item :label="t('system.inventory.base.fields.created_at')">
           {{ formatDateTimeFriendly(detailRow?.createdAt) }}
         </el-descriptions-item>
       </el-descriptions>
@@ -69,7 +69,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, normalizePageResponse, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { formatDateTimeFriendly } from '@btc/shared-utils';
 import type { TableColumn, FormItem, UseCrudReturn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
@@ -267,13 +267,13 @@ const rightOpFields = computed(() => [
   {
     type: 'input' as const,
     prop: 'partName',
-    placeholder: t('system.material.fields.materialCode'),
+    placeholder: t('system.material.fields.material_code'),
     width: '150px',
   },
   {
     type: 'select' as const,
     prop: 'position',
-    placeholder: t('inventory.result.fields.storageLocation'),
+    placeholder: t('inventory.result.fields.storage_location'),
     width: '100px',
     options: positionOptions.value,
     loading: positionLoading.value,
@@ -281,7 +281,7 @@ const rightOpFields = computed(() => [
   {
     type: 'input' as const,
     prop: 'checker',
-    placeholder: t('system.inventory.base.fields.checkerId'),
+    placeholder: t('system.inventory.base.fields.checker_id'),
     width: '150px',
   },
 ]);
@@ -310,13 +310,14 @@ const handleDetail = (row: any) => {
 };
 
 // 导出用的列配置
-const resultExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo') },
-  { prop: 'partName', label: t('system.material.fields.materialCode') },
-  { prop: 'partQty', label: t('inventory.result.fields.actualQty') },
-  { prop: 'checker', label: t('system.inventory.base.fields.checkerId') },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt') },
+const { columns: exportColumns } = usePageColumns('data.inventory.check.export');
+const resultExportColumns = computed(() => exportColumns.value);
+  { prop: 'checkNo', label: t('system.inventory.base.fields.check_no') },
+  { prop: 'partName', label: t('system.material.fields.material_code') },
+  { prop: 'partQty', label: t('inventory.result.fields.actual_qty') },
+  { prop: 'checker', label: t('system.inventory.base.fields.checker_id') },
+  { prop: 'position', label: t('inventory.result.fields.storage_location') },
+  { prop: 'createdAt', label: t('system.inventory.base.fields.created_at') },
 ]);
 
 // 导出功能
@@ -407,71 +408,34 @@ const handleExport = async () => {
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.check');
+const { formItems: baseFormItems } = usePageForms('data.inventory.check');
+const pageConfig = getPageConfigFull('data.inventory.check');
+
 // 盘点结果表格列（根据新的data-source API字段）
-const resultColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'partQty', label: t('inventory.result.fields.actualQty'), minWidth: 120 },
-  { prop: 'checker', label: t('system.inventory.base.fields.checkerId'), minWidth: 120 },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-]);
+const resultColumns = computed(() => baseColumns.value);
 
 // 盘点结果表单（根据新的data-source API字段）
-const resultFormItems = computed<FormItem[]>(() => [
-  // 物料编码 - 只读
-  {
-    prop: 'partName',
-    label: t('system.material.fields.materialCode'),
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: {
-        readonly: true
-      }
-    },
-    required: true
-  },
-  // 实际数量 - 可编辑
-  {
-    prop: 'partQty',
-    label: t('inventory.result.fields.actualQty'),
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: {
-        type: 'number'
-      }
-    },
-    required: true
-  },
-  // 盘点人 - 只读
-  {
-    prop: 'checker',
-    label: t('system.inventory.base.fields.checkerId'),
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: {
-        readonly: true
-      }
-    },
-    required: true
-  },
-  // 仓位 - 只读
-  {
-    prop: 'position',
-    label: t('inventory.result.fields.storageLocation'),
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: {
-        readonly: true
-      }
-    },
-    required: true
-  },
-]);
+// 扩展配置以支持动态 readonly 属性
+const resultFormItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 对于只读字段，添加 readonly 属性
+    if (['partName', 'checker', 'position'].includes(item.prop || '')) {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            readonly: true,
+          },
+        },
+      };
+    }
+    return item;
+  });
+});
 
 // 组件挂载时加载仓位选项
 onMounted(() => {

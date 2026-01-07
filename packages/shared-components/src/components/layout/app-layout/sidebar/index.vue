@@ -73,6 +73,9 @@ const handleSearchFocus = () => {
   background-color: transparent;
   // 关键：允许子元素（菜单）在 flex 中正确计算剩余高度
   min-height: 0;
+  // 关键：CSS 优化，减少菜单重绘时的浏览器回流
+  contain: layout paint; // 浏览器优化：仅重绘菜单自身，不影响全局
+  will-change: auto; // 告诉浏览器无需提前优化，避免过度渲染
 
   // 搜索框基础样式
   &__search {

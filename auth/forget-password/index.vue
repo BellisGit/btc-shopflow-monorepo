@@ -1,38 +1,57 @@
 <template>
   <BtcAuthLayout class="glassmorphism">
     <div class="login-card">
-      <BtcAuthHeader />
+      <BtcAuthHeader>
+        <template #toggle>
+          <BtcQrToggleBtn
+            :icon="toggleInfo.icon"
+            :label="toggleInfo.label"
+            @click="handleToggleQrLogin"
+          />
+        </template>
+      </BtcAuthHeader>
 
-      <div class="card-content">
-        <!-- 返回登录链接 - 与登录页面的"前往注册"链接位置一致 -->
-        <div class="back-to-login-wrapper">
-          <div class="back-to-login">
-            <router-link to="/login?from=forget-password" class="back-to-login-link">
-              {{ t('auth.back_to_login') }}
-              <el-icon class="arrow-right">
-                <ArrowRight />
-              </el-icon>
-            </router-link>
+      <!-- 忘记密码表单（非二维码模式）使用 el-scrollbar 包裹 -->
+      <el-scrollbar v-if="currentLoginMode !== 'qr'" class="card-content-scrollbar">
+        <div class="card-content">
+          <!-- 返回登录链接 - 与登录页面的"前往注册"链接位置一致 -->
+          <div class="back-to-login-wrapper">
+            <div class="back-to-login">
+              <router-link to="/login?from=forget-password" class="back-to-login-link">
+                {{ t('auth.back_to_login') }}
+                <el-icon class="arrow-right">
+                  <ArrowRight />
+                </el-icon>
+              </router-link>
+            </div>
           </div>
+
+          <BtcForgetPasswordForm
+            :form="form"
+            :rules="rules"
+            :loading="loading"
+            :sending="sending"
+            :sms-countdown="smsCountdown"
+            :has-sent-sms="hasSentSms"
+            @send-sms="handleSendSmsCode"
+            @code-complete="handleCodeComplete"
+            @submit="handleSubmit"
+            ref="formRef"
+          />
+
+          <!-- 协议文本 -->
+          <BtcAgreementText 
+            ref="agreementRef"
+            @agreement-change="handleAgreementChange" 
+          />
         </div>
+      </el-scrollbar>
 
-        <BtcForgetPasswordForm
-          :form="form"
-          :rules="rules"
-          :loading="loading"
-          :sending="sending"
-          :sms-countdown="smsCountdown"
-          :has-sent-sms="hasSentSms"
-          @send-sms="handleSendSmsCode"
-          @code-complete="handleCodeComplete"
-          @submit="handleSubmit"
-          ref="formRef"
-        />
-
-        <!-- 协议文本 -->
-        <BtcAgreementText 
-          ref="agreementRef"
-          @agreement-change="handleAgreementChange" 
+      <!-- 二维码登录不使用 el-scrollbar，直接使用 card-content -->
+      <div v-else class="card-content qr-only">
+        <BtcQrForm
+          :qr-code-url="qrCodeUrl"
+          @refresh="handleRefreshQrCode"
         />
       </div>
     </div>
@@ -40,15 +59,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { ArrowRight } from '@element-plus/icons-vue';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
+import BtcQrToggleBtn from '../shared/components/qr-toggle-btn/index.vue';
 import BtcForgetPasswordForm from './forget-password-form/index.vue';
+import BtcQrForm from '../login/qr-form/index.vue';
 import BtcAgreementText from '../shared/components/agreement-text/index.vue';
 import { BtcMessage } from '@btc/shared-components';
 import { useForgetPassword } from './composables/useForgetPassword';
+import { useAuthTabs } from '../shared/composables/useAuthTabs';
+import { useQrLogin } from '../login/composables/useQrLogin';
 import '../shared/styles/index.scss';
 
 defineOptions({
@@ -56,10 +80,38 @@ defineOptions({
 });
 
 const { t } = useI18n();
+const router = useRouter();
 const formRef = ref();
 const agreementRef = ref();
 // 协议同意状态
 const isAgreed = ref(false);
+
+// 登录模式管理（初始模式为 password，表示忘记密码模式）
+const { currentLoginMode, isQrMode, toggleQrLogin, getToggleInfo } = useAuthTabs('password');
+
+// 二维码登录
+const { qrCodeUrl, refreshQrCode } = useQrLogin();
+
+// 切换二维码登录
+const handleToggleQrLogin = () => {
+  // 如果当前是二维码模式，切换到账号登录时应该跳转到登录页面
+  if (isQrMode.value) {
+    router.push('/login?from=forget-password');
+  } else {
+    // 从忘记密码模式切换到二维码登录
+    toggleQrLogin();
+  }
+};
+
+// 获取切换按钮信息
+const toggleInfo = computed(() => {
+  return getToggleInfo();
+});
+
+// 刷新二维码
+const handleRefreshQrCode = () => {
+  refreshQrCode();
+};
 
 const {
   form,

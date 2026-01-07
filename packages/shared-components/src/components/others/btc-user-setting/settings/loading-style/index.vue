@@ -27,6 +27,19 @@
                 </g>
               </svg>
             </div>
+            <div v-else-if="item.value === 'gradient'" class="loading-preview-gradient">
+              <div class="loading-preview-gradient-circle"></div>
+            </div>
+            <div v-else-if="item.value === 'progress'" class="loading-preview-progress">
+              <div class="progress-bar-container">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" style="width: 65%">
+                    <div class="progress-bar-shine"></div>
+                  </div>
+                </div>
+                <div class="progress-percentage">65%</div>
+              </div>
+            </div>
           </div>
         </div>
         <p class="name">{{ item.label }}</p>
@@ -42,7 +55,7 @@ import { useI18n } from '@btc/shared-core';
 import { useSettingsHandlers, useSettingsState } from '../../composables';
 import './styles/index.scss';
 
-type LoadingStyle = 'circle' | 'dots';
+type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
 
 const { t } = useI18n();
 const settingsState = useSettingsState();
@@ -58,6 +71,14 @@ const loadingStyleOptions = computed(() => [
   {
     value: 'dots' as LoadingStyle,
     label: t('theme.loadingStyles.dots'),
+  },
+  {
+    value: 'gradient' as LoadingStyle,
+    label: t('theme.loadingStyles.gradient'),
+  },
+  {
+    value: 'progress' as LoadingStyle,
+    label: t('theme.loadingStyles.progress'),
   },
 ]);
 

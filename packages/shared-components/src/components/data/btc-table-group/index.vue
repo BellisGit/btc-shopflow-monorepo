@@ -63,6 +63,7 @@
         <BtcRow>
           <div class="btc-crud-primary-actions">
             <BtcRefreshBtn />
+            <slot name="after-refresh-btn" />
             <slot name="add-btn">
               <BtcAddBtn v-if="props.showAddBtn" />
             </slot>
@@ -173,6 +174,7 @@ defineSlots<{
   actions?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
   'add-btn'?: () => any;
   'multi-delete-btn'?: () => any;
+  'after-refresh-btn'?: () => any;
   search?: () => any;
 }>();
 
@@ -211,11 +213,15 @@ const viewGroupBindProps = computed(() => {
   if (props.leftWidth !== undefined) {
     bindProps['left-width'] = props.leftWidth;
   }
+  // 创建 rightOpFieldsValue 的浅拷贝，避免循环引用
   if (props.rightOpFieldsValue !== undefined) {
-    bindProps['right-op-fields-value'] = props.rightOpFieldsValue;
+    bindProps['right-op-fields-value'] = { ...props.rightOpFieldsValue };
   }
+  // 只传递 op 的 buttons 属性，避免传递整个对象（可能包含循环引用）
   if (props.op) {
-    bindProps.op = props.op;
+    bindProps.op = {
+      buttons: props.op.buttons ? [...props.op.buttons] : undefined
+    };
   }
   if (props.idField !== undefined) {
     bindProps['id-field'] = props.idField;
@@ -308,6 +314,9 @@ const computedFormItems = computed(() => {
   if (!props.formItems || !Array.isArray(props.formItems)) {
     return [];
   }
+  // 创建左侧数据的浅拷贝，避免循环引用
+  const leftData = Array.isArray(leftListData.value) ? [...leftListData.value] : [];
+  
   return props.formItems.map(item => {
     // 如果是级联选择器，注入左侧列表数据
     if (item.component?.name === 'btc-cascader') {
@@ -315,7 +324,7 @@ const computedFormItems = computed(() => {
         ...item,
         component: {
           ...item.component,
-          options: leftListData.value
+          options: leftData
         }
       };
     }

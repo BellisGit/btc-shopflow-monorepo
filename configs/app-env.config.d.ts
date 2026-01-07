@@ -31,3 +31,4 @@ export declare function getAllPrePorts(): string[];
  */
 export declare function getAppConfigByDevPort(port: string): AppEnvConfig | undefined;
 export declare function getAppConfigByPrePort(port: string): AppEnvConfig | undefined;
+export declare function getAppConfigByTestHost(testHost: string): AppEnvConfig | undefined;

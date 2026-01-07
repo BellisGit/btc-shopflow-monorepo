@@ -5,6 +5,7 @@
 
 import { computed } from 'vue';
 import { useI18n, useThemePlugin, type ButtonStyle } from '@btc/shared-core';
+import { getCurrentEnvironment } from '@configs/unified-env-config';
 import { configImages as defaultConfigImages } from '../config/images';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 
@@ -24,13 +25,26 @@ function fixImagePath(path: string): string {
   if (path.startsWith('/assets/layout/')) {
     // 检查当前是否在 layout-app 域名下
     if (typeof window !== 'undefined') {
-      const isLayoutAppDomain = window.location.hostname === 'layout.bellis.com.cn' ||
-                                 window.location.hostname.includes('layout.bellis.com.cn');
+      const env = getCurrentEnvironment();
+      const hostname = window.location.hostname;
+      const port = window.location.port || '';
+
+      const isLayoutAppDomain =
+        (env === 'production' && hostname === 'layout.bellis.com.cn') ||
+        (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
+        (env === 'preview' && port === '4192') ||
+        (env === 'development' && port === '4188');
 
       // 如果不在 layout-app 域名下，转换为完整 URL
       if (!isLayoutAppDomain) {
-        // 使用 layout-app 的域名（生产环境）
-        const layoutOrigin = 'https://layout.bellis.com.cn';
+        // 使用 layout-app 的域名
+        const protocol = window.location.protocol;
+        let layoutOrigin: string;
+        if (env === 'test') {
+          layoutOrigin = `${protocol}//layout.test.bellis.com.cn`;
+        } else {
+          layoutOrigin = `${protocol}//layout.bellis.com.cn`;
+        }
         return `${layoutOrigin}${path}`;
       }
     }

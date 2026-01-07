@@ -3,7 +3,7 @@
  * 提供 EPS 服务的标准化处理，包括参数标准化、响应格式标准化和 CrudService 包装
  */
 
-import { normalizeKeywordIds } from '../../utils/array';
+import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
 import type { CrudService } from '../crud/types';
 
 type AnyRecord = Record<string, any>;

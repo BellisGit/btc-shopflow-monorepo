@@ -22,8 +22,6 @@
       "@charts-composables/*": ["src/charts/composables/*"],
       "@btc/shared-core": ["../shared-core/dist/src"],
       "@btc/shared-core/*": ["../shared-core/dist/*", "../shared-core/dist/src/*"],
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"],
       "@configs/*": ["../../configs/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]
@@ -32,7 +30,6 @@
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.json"],
   "exclude": ["node_modules", "dist", "../../configs"],
   "references": [
-    { "path": "../shared-utils" },
     { "path": "../shared-core" }
   ]
 }

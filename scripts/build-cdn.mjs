@@ -22,6 +22,7 @@ const projectRoot = resolve(__dirname, '..');
 
 // 应用名称映射（简化名称 -> 完整名称）
 const APP_NAME_MAP = {
+  'main': 'main-app',
   'system': 'system-app',
   'admin': 'admin-app',
   'logistics': 'logistics-app',
@@ -41,7 +42,8 @@ const APP_LIST = Object.values(APP_NAME_MAP);
 
 // 应用和子域名的映射关系（用于复制到 dist-cdn）
 const APP_DOMAIN_MAP = {
-  'system-app': 'bellis.com.cn',
+  'main-app': 'bellis.com.cn',
+  'system-app': 'system.bellis.com.cn',
   'admin-app': 'admin.bellis.com.cn',
   'logistics-app': 'logistics.bellis.com.cn',
   'quality-app': 'quality.bellis.com.cn',

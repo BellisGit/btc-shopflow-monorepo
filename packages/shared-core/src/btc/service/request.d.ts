@@ -11,6 +11,9 @@ export interface RequestOptions {
     timeout?: number;
     baseURL?: string;
     permission?: string;
+    showLoading?: boolean;
+    loadingTarget?: HTMLElement | string;
+    loadingText?: string;
 }
 /**
  * 请求函数类型定义
@@ -34,3 +37,4 @@ export declare const request: Request;
  * @returns 带权限检查的 Request 函数
  */
 export declare function createRequestWithPermission(permissions?: Record<string, boolean>, baseURL?: string): Request;
+//# sourceMappingURL=request.d.ts.map

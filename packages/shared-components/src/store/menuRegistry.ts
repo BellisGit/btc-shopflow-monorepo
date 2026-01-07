@@ -10,7 +10,7 @@
  */
 
 import { ref, triggerRef, type Ref } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 // import { assignIconsToMenuTree } from '@btc/shared-core'; // 未使用
 
 // 定义类型，避免直接导入
@@ -138,6 +138,7 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
     const registry: Ref<Record<string, MenuItem[]>> = ref(
       cachedData || {
         // 所有应用的菜单在进入时通过 manifest 注册
+        main: [], // 主应用菜单（概览页面）
         admin: [],
         system: [],
         logistics: [],
@@ -159,6 +160,7 @@ function getGlobalRegistry(): Ref<Record<string, MenuItem[]>> {
 
   // SSR 环境或非浏览器环境，创建本地注册表
   return ref({
+    main: [], // 主应用菜单（概览页面）
     admin: [],
     system: [],
     logistics: [],
