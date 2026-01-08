@@ -1,0 +1,13 @@
+﻿
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\app.ts: line 8, col 9, Error - Using Chinese characters: '看板应用' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\app.ts: line 9, col 16, Error - Using Chinese characters: 'BTC车间管理系统 - 看板应用' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\main.ts: line 70, col 32, Error - Using Chinese characters: '图表模块' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\main.ts: line 75, col 22, Error - Using Chinese characters: '[dashboard-app] 无法显示应用级 loading:' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\main.ts: line 103, col 32, Error - Using Chinese characters: '图表模块' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\main.ts: line 111, col 19, Error - Using Chinese characters: '渲染失败:' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\main.ts: line 116, col 32, Error - Using Chinese characters: '图表模块' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\utils\domain-cache.ts: line 39, col 22, Error - Using Chinese characters: '身份已过期，请重新登录' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\utils\init-layout-app.ts: line 172, col 19, Error - Using Chinese characters: [initLayoutApp] 已从 manifest 注入应用配置:  (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\dashboard-app\src\utils\init-layout-app.ts: line 178, col 18, Error - Using Chinese characters: [initLayoutApp] 从 manifest 注入配置失败: (i18n/no-chinese-character)
+
+

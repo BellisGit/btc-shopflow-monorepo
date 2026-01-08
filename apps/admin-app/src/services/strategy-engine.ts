@@ -92,7 +92,7 @@ export class StrategyExecutionEngine {
   ): Promise<StrategyExecutionResult> {
     // 检查并发限制
     if (this.sessions.size >= this.config.maxConcurrentExecutions) {
-      throw new Error('超出最大并发执行数限制');
+      throw new Error('Exceeded maximum concurrent execution limit');
     }
 
     const sessionId = this.generateSessionId();
@@ -163,7 +163,7 @@ export class StrategyExecutionEngine {
     // 查找开始节点
     const startNodes = orchestration.nodes.filter(node => node.type === 'START');
     if (startNodes.length === 0) {
-      throw new Error('编排中未找到开始节点');
+      throw new Error('Start node not found in orchestration');
     }
 
     // 初始化所有节点状态
@@ -257,7 +257,7 @@ export class StrategyExecutionEngine {
           result = await this.executeGatewayNode(session, node, input);
           break;
         default:
-          throw new Error(`不支持的节点类型: ${node.type}`);
+          throw new Error(`Unsupported node type: ${node.type}`);
       }
 
       // 更新状态
@@ -387,7 +387,7 @@ export class StrategyExecutionEngine {
         });
         break; // 使用第一个成功评估的规则
       } catch (error) {
-        console.warn(`规则评估失败: ${rule.expression}`, error);
+        console.warn(`Rule evaluation failed: ${rule.expression}`, error);
       }
     }
 
@@ -519,12 +519,12 @@ export class StrategyExecutionEngine {
         return { output: { ...context, access: 'denied' }, effect: StrategyEffect.DENY };
 
       case 'LOG_EVENT':
-        console.log('策略日志:', parameters.message || '动作执行', context);
+        console.log('Strategy log:', parameters.message || 'Action execution', context);
         return { output: context };
 
       case 'SEND_NOTIFICATION':
         // 模拟发送通知
-        console.log('发送通知:', parameters);
+        console.log('Send notification:', parameters);
         return { output: { ...context, notificationSent: true } };
 
       case 'UPDATE_DATA':
@@ -548,11 +548,11 @@ export class StrategyExecutionEngine {
           const scriptResult = this.evaluateExpression(parameters.script || 'true', context, variables);
           return { output: { ...context, scriptResult } };
         } catch (error) {
-          throw new Error(`脚本执行失败: ${error}`);
+          throw new Error(`Script execution failed: ${error}`);
         }
 
       default:
-        console.warn(`未知的动作类型: ${action.type}`);
+        console.warn(`Unknown action type: ${action.type}`);
         return { output: context };
     }
   }
@@ -595,7 +595,7 @@ export class StrategyExecutionEngine {
       const func = new Function(...Object.keys(safeContext), `return (${expression})`);
       return func(...Object.values(safeContext));
     } catch (error) {
-      throw new Error(`表达式评估失败: ${expression} - ${error}`);
+      throw new Error(`Expression evaluation failed: ${expression} - ${error}`);
     }
   }
 
@@ -648,7 +648,7 @@ export class StrategyExecutionEngine {
       try {
         listener(event);
       } catch (error) {
-        console.error('事件监听器执行失败:', error);
+        console.error('Event listener execution failed:', error);
       }
     });
   }

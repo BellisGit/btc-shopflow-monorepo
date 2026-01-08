@@ -36,7 +36,7 @@ function handleLogout() {
     }
 
     // 显示提示信息
-    BtcMessage.error('身份已过期，请重新登录');
+    BtcMessage.error('Identity expired, please login again');
 
     // 判断是否在生产环境的子域名下
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';

@@ -100,13 +100,13 @@ import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n, setGlobalState } from '@btc/shared-core';
 import { BtcConfirm } from '@btc/shared-components';
-import { getCurrentEnvironment } from '@configs/unified-env-config';
+import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 // BtcMessage 未使用
 import type { ProcessItem } from '../../../../store/process';
 import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
 import { getManifestRoute } from '@btc/shared-core/manifest';
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
-import { getAppById } from '@configs/app-scanner';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
 import { initGlobalTabBreadcrumbListener, globalTabbarList, globalActiveTabKey } from '../../../../composables/useGlobalTabBreadcrumbState';
 
 interface Props {

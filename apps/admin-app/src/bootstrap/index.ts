@@ -18,6 +18,7 @@ import {
   setupEventBridge,
   ensureCleanUrl,
   setupStandalonePlugins,
+  useI18n,
   createLogoutFunction,
   type SubAppContext,
   type SubAppOptions,
@@ -75,7 +76,7 @@ export const createAdminApp = async (props: QiankunProps = {}): Promise<AdminApp
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(ADMIN_APP_ID);
     registerManifestTabsForApp(ADMIN_APP_ID);
   }
@@ -103,7 +104,8 @@ export const mountAdminApp = async (context: AdminAppContext, props: QiankunProp
         });
       }
     } catch (error) {
-      console.warn('[admin-app] 发送国际化消息到主应用失败:', error);
+      const { t } = useI18n();
+      console.warn('[admin-app]', t('common.error.send_i18n_message_failed'), error);
     }
   }
 

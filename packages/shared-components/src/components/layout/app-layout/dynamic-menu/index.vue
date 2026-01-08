@@ -31,7 +31,7 @@ defineOptions({
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
-import { getCurrentEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
+import { getCurrentEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
 import { useCurrentApp } from '../../../../composables/useCurrentApp';
@@ -286,7 +286,7 @@ onMounted(() => {
               const manifestMenus = module.getManifestMenus(app);
               if (manifestMenus && manifestMenus.length > 0) {
                 // 动态导入注册函数
-                import('@configs/layout-bridge').then((bridgeModule) => {
+                import('@btc/shared-core/configs/layout-bridge').then((bridgeModule) => {
                   try {
                     bridgeModule.registerManifestMenusForApp(app);
                     const retryMenus = menuRegistry?.value?.[app] || [];
@@ -1000,10 +1000,19 @@ const handleMenuSelect = (index: string) => {
     const app = currentApp.value;
     let routePath = absolutePath;
 
+    // 检查是否在 qiankun 模式下
+    const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
+    
     // 如果当前应用是 system，菜单项的 index 包含 /system 前缀
-    // 但路由配置使用的是相对路径，需要去掉 /system 前缀
+    // 在 qiankun 模式下，系统应用的路由器使用 createMemoryHistory()，路径应该是相对于子应用的
+    // 所以需要去掉 /system 前缀，得到子应用内部路径（如 /data/files/list）
+    // 在独立运行模式下，路径应该保持 /system 前缀
     if (app === 'system' && routePath.startsWith('/system')) {
-      routePath = routePath.slice('/system'.length) || '/';
+      if (isQiankun) {
+        // qiankun 模式：去掉 /system 前缀，使用子应用内部路径
+        routePath = routePath.slice('/system'.length) || '/';
+      }
+      // 独立运行模式：保持 /system 前缀，不做处理
     }
 
     router.push(routePath).catch((err: unknown) => {

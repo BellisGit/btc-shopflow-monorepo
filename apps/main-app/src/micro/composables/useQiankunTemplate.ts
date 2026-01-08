@@ -3,7 +3,7 @@
  * 用于处理 HTML 模板，修复资源路径并确保 script 标签为 module 类型
  */
 
-import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
+import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
 
 /**
  * 清理旧 chunk 引用

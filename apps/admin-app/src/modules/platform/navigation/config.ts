@@ -1,6 +1,6 @@
 ﻿export default {
   name: 'navigation',
-  label: '导航管理',
-  description: '菜单、权限绑定、预览管理',
+  label: 'platform.navigation.label',
+  description: 'platform.navigation.description',
   order: 4
 };

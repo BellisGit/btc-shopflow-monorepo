@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 // 使用相对路径，因为 Vite 配置文件在 Node.js 环境中执行，无法解析路径别名
 // 从 apps/main-app/src/config/ 到 configs/ 需要向上 4 级
-import { envConfig } from '../../../../configs/unified-env-config';
+import { envConfig } from '@btc/shared-core/configs/unified-env-config';
 
 // Vite 代理配置类型
 interface ProxyOptions {

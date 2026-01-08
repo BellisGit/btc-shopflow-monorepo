@@ -2,7 +2,7 @@
  * IndexedDB 工具类型定义
  */
 
-import type { Dexie } from 'dexie';
+import type { Dexie, Transaction } from 'dexie';
 
 /**
  * 默认看板数据项结构
@@ -42,7 +42,7 @@ export interface DatabaseConfig {
   /** 表结构定义 */
   stores: StoreSchema;
   /** 版本升级迁移函数（可选） */
-  upgrade?: (trans: IDBTransaction) => void | Promise<void>;
+  upgrade?: (trans: Transaction) => void | Promise<void>;
 }
 
 /**

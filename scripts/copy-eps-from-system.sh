@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 将 system-app 的 EPS 产物复制到其他子应用
+# 将 main-app 的 EPS 产物复制到其他子应用
 # 确保所有子应用都能共享相同的 EPS 数据
 
 set -e
@@ -23,8 +23,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT"
 
-# system-app 的 EPS 数据源
-SYSTEM_EPS_DIR="apps/system-app/build/eps"
+# main-app 的 EPS 数据源
+MAIN_EPS_DIR="apps/main-app/build/eps"
 
 # 需要复制 EPS 数据的子应用列表
 SUB_APPS=(
@@ -34,26 +34,27 @@ SUB_APPS=(
   "quality-app"
   "production-app"
   "finance-app"
+  "system-app"
 )
 
-# 检查 system-app 的 EPS 数据是否存在
-if [ ! -d "$SYSTEM_EPS_DIR" ]; then
-  log_error "system-app 的 EPS 数据目录不存在: $SYSTEM_EPS_DIR"
-  log_info "请先构建 system-app 以生成 EPS 数据"
+# 检查 main-app 的 EPS 数据是否存在
+if [ ! -d "$MAIN_EPS_DIR" ]; then
+  log_error "main-app 的 EPS 数据目录不存在: $MAIN_EPS_DIR"
+  log_info "请先构建 main-app 以生成 EPS 数据"
   exit 1
 fi
 
 # 检查 EPS 数据文件是否存在
-if [ ! -f "$SYSTEM_EPS_DIR/eps.json" ]; then
-  log_error "system-app 的 EPS 数据文件不存在: $SYSTEM_EPS_DIR/eps.json"
-  log_info "请先构建 system-app 以生成 EPS 数据"
+if [ ! -f "$MAIN_EPS_DIR/eps.json" ]; then
+  log_error "main-app 的 EPS 数据文件不存在: $MAIN_EPS_DIR/eps.json"
+  log_info "请先构建 main-app 以生成 EPS 数据"
   exit 1
 fi
 
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info "📦 复制 system-app 的 EPS 数据到其他子应用"
+log_info "📦 复制 main-app 的 EPS 数据到其他子应用"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info "EPS 数据源: $SYSTEM_EPS_DIR"
+log_info "EPS 数据源: $MAIN_EPS_DIR"
 log_info ""
 
 # 复制 EPS 数据到每个子应用
@@ -72,19 +73,19 @@ for app in "${SUB_APPS[@]}"; do
   mkdir -p "$target_eps_dir"
   
   # 复制所有 EPS 文件
-  if [ -f "$SYSTEM_EPS_DIR/eps.json" ]; then
-    cp "$SYSTEM_EPS_DIR/eps.json" "$target_eps_dir/eps.json"
+  if [ -f "$MAIN_EPS_DIR/eps.json" ]; then
+    cp "$MAIN_EPS_DIR/eps.json" "$target_eps_dir/eps.json"
     log_info "  ✓ 复制 eps.json"
   fi
   
-  if [ -f "$SYSTEM_EPS_DIR/eps.d.ts" ]; then
-    cp "$SYSTEM_EPS_DIR/eps.d.ts" "$target_eps_dir/eps.d.ts"
+  if [ -f "$MAIN_EPS_DIR/eps.d.ts" ]; then
+    cp "$MAIN_EPS_DIR/eps.d.ts" "$target_eps_dir/eps.d.ts"
     log_info "  ✓ 复制 eps.d.ts"
   fi
   
   # 复制其他可能存在的 EPS 相关文件
-  if [ -d "$SYSTEM_EPS_DIR" ]; then
-    for file in "$SYSTEM_EPS_DIR"/*; do
+  if [ -d "$MAIN_EPS_DIR" ]; then
+    for file in "$MAIN_EPS_DIR"/*; do
       if [ -f "$file" ] && [[ "$(basename "$file")" != "eps.json" ]] && [[ "$(basename "$file")" != "eps.d.ts" ]]; then
         cp "$file" "$target_eps_dir/$(basename "$file")"
         log_info "  ✓ 复制 $(basename "$file")"

@@ -5,7 +5,7 @@
 
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
-import { usePluginManager, resetPluginManager } from '@btc/shared-core';
+import { usePluginManager, resetPluginManager, useI18n } from '@btc/shared-core';
 import { scanAndRegisterPlugins } from './module-scanner';
 import { createAdminRouter } from '../../router';
 
@@ -39,7 +39,8 @@ export async function autoDiscoverPlugins(app: App, router?: Router) {
     try {
       pluginManager.register(plugin);
     } catch (error) {
-      console.error(`[PluginManager] 注册插件失败: ${plugin.name}`, error);
+      const { t } = useI18n();
+      console.error(`[PluginManager] ${t('common.plugin.register_failed')}: ${plugin.name}`, error);
     }
   }
 
@@ -49,7 +50,8 @@ export async function autoDiscoverPlugins(app: App, router?: Router) {
       try {
         await pluginManager.install(plugin.name);
       } catch (error) {
-        console.error(`[PluginManager] 安装插件失败: ${plugin.name}`, error);
+        const { t } = useI18n();
+        console.error(`[PluginManager] ${t('common.plugin.install_failed')}: ${plugin.name}`, error);
       }
     }
   }

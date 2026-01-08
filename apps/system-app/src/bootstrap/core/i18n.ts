@@ -4,7 +4,6 @@
  */
 
 import type { App } from 'vue';
-import { createThemePlugin } from '@btc/shared-core';
 import { initSystemI18n } from '../../i18n';
 
 // 存储 props（用于在 setupI18n 中获取 i18n 实例和 globalState）
@@ -25,14 +24,14 @@ export function setSystemAppProps(props: any) {
 export const setupI18n = (app: App, locale?: string) => {
   // 使用新的 i18n 初始化（支持微前端和独立运行模式）
   // 从存储的 props 中获取 i18n 实例和 globalState
-  const i18n = initSystemI18n({
+  const i18nPlugin = initSystemI18n({
     i18n: storedProps?.i18n,
     locale: (storedProps?.locale || locale) as any,
     globalState: storedProps?.globalState,
   });
   
-  app.use(i18n);
-
-  // 主题
-  app.use(createThemePlugin());
+  app.use(i18nPlugin);
+  
+  // 返回 i18n 实例（与 admin-app 保持一致）
+  return i18nPlugin.i18n;
 };

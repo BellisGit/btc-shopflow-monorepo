@@ -12,8 +12,8 @@ export const notificationPlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: '通知管理',
-    description: '提供系统通知、消息提醒功能',
+    label: 'Notification Management',
+    description: 'Provides system notifications and message reminders',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',

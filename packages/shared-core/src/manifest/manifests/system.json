@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "system",
-    "basePath": "/",
+    "basePath": "/system",
     "nameKey": "menu.system.home",
     "app-name": "domain.type.system"
   },
@@ -197,10 +197,6 @@
         { "index": "/inventory/confirm", "labelKey": "menu.inventory.confirm", "icon": "Check" }
       ]
     }
-  ],
-  "locales": {
-    "zh-CN": "src/locales/zh-CN.json",
-    "en-US": "src/locales/en-US.json"
-  }
+  ]
 }
 

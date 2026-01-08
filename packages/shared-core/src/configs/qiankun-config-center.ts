@@ -35,4 +35,3 @@ export function generateQiankunConfigs(): MicroAppConfig[] {
 export function getAllSubAppConfigs() {
   return getSubApps();
 }
-

@@ -28,6 +28,21 @@ export default {
         monitoring: '工程监控',
       },
     },
+    common: {
+      // 错误消息
+      error: {
+        render_failed: '渲染失败',
+        cannot_display_loading: '无法显示应用级 loading',
+        identity_expired: '身份已过期，请重新登录',
+        manifest_injected: '已从 manifest 注入应用配置',
+        manifest_inject_failed: '从 manifest 注入配置失败',
+      },
+      // 系统相关
+      system: {
+        engineering_module: '工程模块',
+        btc_shop_management_system: 'BTC车间管理系统 - 工程应用',
+      },
+    },
   },
   'en-US': {
     app: {
@@ -52,6 +67,21 @@ export default {
     },
     page: {
       // 应用级页面配置（可选）
+    },
+    common: {
+      // 错误消息
+      error: {
+        render_failed: 'Render failed',
+        cannot_display_loading: 'Cannot display app-level loading',
+        identity_expired: 'Identity expired, please login again',
+        manifest_injected: 'Application configuration injected from manifest',
+        manifest_inject_failed: 'Failed to inject configuration from manifest',
+      },
+      // 系统相关
+      system: {
+        engineering_module: 'Engineering Module',
+        btc_shop_management_system: 'BTC Shop Management System - Engineering Application',
+      },
     },
   },
 } satisfies LocaleConfig;

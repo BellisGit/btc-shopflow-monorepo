@@ -2,6 +2,9 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 import '@btc/shared-components/styles/dark-theme.css';
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createLogisticsApp,
@@ -53,12 +56,12 @@ const render = async (props: QiankunProps = {}) => {
       const sharedCore = await import('@btc/shared-core');
       appLoadingService = sharedCore.appLoadingService;
       if (appLoadingService) {
-        appLoadingService.show('物流模块');
+        appLoadingService.show('common.system.logistics_module');
       }
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[logistics-app] 无法显示应用级 loading:', error);
+        console.warn('[logistics-app]', 'common.system.cannot_display_loading', error);
       }
     }
   }
@@ -83,7 +86,7 @@ const render = async (props: QiankunProps = {}) => {
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('物流模块');
+        appLoadingService.hide('common.system.logistics_module');
       } catch (error) {
         // 静默失败
       }
@@ -91,12 +94,12 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('渲染失败:', error);
+    console.error('common.error.render_failed', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('物流模块');
+        appLoadingService.hide('common.system.logistics_module');
       } catch (error) {
         // 静默失败
       }
@@ -138,7 +141,7 @@ async function mount(props: QiankunProps) {
   try {
     await render(props);
   } catch (error) {
-    console.error('mount 失败:', error);
+    console.error('common.error.mount_failed', error);
     throw error;
   }
 }

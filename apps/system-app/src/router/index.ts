@@ -20,8 +20,8 @@ import { getSystemRoutes } from './routes/system-routes';
 import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from '../utils/app-storage';
 import { getTabsForNamespace } from '../store/tabRegistry';
-import { getAppBySubdomain } from '@configs/app-scanner';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
+import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
+import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 
 /**
  * 动态导入 @btc/shared-core
@@ -66,14 +66,13 @@ function getMainAppLoginUrl(redirectPath?: string): string {
   return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
 }
 
+// 关键：系统应用应该使用 getSystemRoutes() 返回的路由配置
+// 这个函数会根据运行模式（qiankun 或独立运行）返回正确的路由配置
+// 在 qiankun 模式下，路由使用相对路径（由主应用处理 basePath）
+// 在独立运行时，路由使用 /system 前缀
 const routes: RouteRecordRaw[] = [
-  // 系统域路由（主应用路由）
-  {
-    path: '/',
-    component: Layout,
-    children: systemRoutes,
-    meta: { isMainApp: true }, // 标记为主应用路由，便于调试
-  },
+  // 使用 getSystemRoutes() 获取正确的路由配置
+  ...getSystemRoutes(),
   // 子应用路由占位（qiankun会接管，这里只需要Layout）
   {
     path: '/admin',
@@ -848,6 +847,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
       }
 
       const appNameMap: Record<string, string> = {
+        'system': '系统模块',
         'admin': '管理模块',
         'logistics': '物流模块',
         'engineering': '工程模块',

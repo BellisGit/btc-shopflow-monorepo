@@ -43,6 +43,10 @@ export * from './cdn/load-shared-resources';
 export * from './storage/cookie';
 export { getCookieDomain } from './storage/cookie';
 
+// Pinia 持久化插件（显式导出，确保正确导出）
+export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './storage/pinia-persist';
+export type { PersistedStatePluginOptions } from './storage/pinia-persist';
+
 // 错误监控
 export * from './error-monitor';
 

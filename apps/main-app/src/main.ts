@@ -1,10 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { bootstrap } from './bootstrap';
-import { registerAppEnvAccessors } from '@configs/layout-bridge';
-import { getAppBySubdomain } from '@configs/app-scanner';
+import { registerAppEnvAccessors } from '@btc/shared-core/configs/layout-bridge';
+import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { setAppBySubdomainFn } from '@btc/shared-core/manifest';
-import { isMainApp } from '@configs/unified-env-config';
+import { isMainApp } from '@btc/shared-core/configs/unified-env-config';
 import { removeLoadingElement } from '@btc/shared-core';
 import { appStorage } from './utils/app-storage';
 // 动态导入避免构建时错误（延迟到运行时导入）

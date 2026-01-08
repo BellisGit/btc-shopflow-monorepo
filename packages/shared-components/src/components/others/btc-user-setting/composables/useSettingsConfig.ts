@@ -5,7 +5,7 @@
 
 import { computed } from 'vue';
 import { useI18n, useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { getCurrentEnvironment } from '@configs/unified-env-config';
+import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 import { configImages as defaultConfigImages } from '../config/images';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 

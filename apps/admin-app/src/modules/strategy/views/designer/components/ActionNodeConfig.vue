@@ -94,15 +94,16 @@ interface ExtendedAction extends StrategyAction {
 }
 
 // 动作类型选项
+const { t } = useI18n();
 const actionTypes = [
-  { value: 'ALLOW_ACCESS', label: '允许访问' },
-  { value: 'DENY_ACCESS', label: '拒绝访问' },
-  { value: 'LOG_EVENT', label: '记录日志' },
-  { value: 'SEND_NOTIFICATION', label: '发送通知' },
-  { value: 'UPDATE_DATA', label: '更新数据' },
-  { value: 'CALL_API', label: '调用接口' },
-  { value: 'EXECUTE_SCRIPT', label: '执行脚本' },
-  { value: 'SET_VARIABLE', label: '设置变量' }
+  { value: 'ALLOW_ACCESS', label: t('common.strategy.designer.action_types.allow_access') },
+  { value: 'DENY_ACCESS', label: t('common.strategy.designer.action_types.deny_access') },
+  { value: 'LOG_EVENT', label: t('common.strategy.designer.action_types.log_event') },
+  { value: 'SEND_NOTIFICATION', label: t('common.strategy.designer.action_types.send_notification') },
+  { value: 'UPDATE_DATA', label: t('common.strategy.designer.action_types.update_data') },
+  { value: 'CALL_API', label: t('common.strategy.designer.action_types.call_api') },
+  { value: 'EXECUTE_SCRIPT', label: t('common.strategy.designer.action_types.execute_script') },
+  { value: 'SET_VARIABLE', label: t('common.strategy.designer.action_types.set_variable') }
 ];
 
 // 计算属性
@@ -148,7 +149,7 @@ const updateParameters = (action: ExtendedAction) => {
     action.parameters = JSON.parse(action.parametersJson || '{}');
     emitUpdate();
   } catch (error) {
-    BtcMessage.error('参数格式错误，请输入有效的JSON');
+    BtcMessage.error(t('common.strategy.designer.invalid_json_format'));
   }
 };
 

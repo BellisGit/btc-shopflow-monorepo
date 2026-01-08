@@ -22,7 +22,7 @@ class SessionStorageUtil {
 
     try {
       const fullKey = this.prefix + key;
-      const value = sessionStorage.getItem(fullKey);
+      const value = window.sessionStorage.getItem(fullKey);
       
       if (value === null) {
         return null;
@@ -53,7 +53,7 @@ class SessionStorageUtil {
     try {
       const fullKey = this.prefix + key;
       const serialized = JSON.stringify(value);
-      sessionStorage.setItem(fullKey, serialized);
+      window.sessionStorage.setItem(fullKey, serialized);
     } catch (error) {
       console.warn(`[SessionStorage] 设置键 "${key}" 失败:`, error);
       // 如果存储失败（可能是存储空间不足），尝试清理一些旧数据
@@ -74,7 +74,7 @@ class SessionStorageUtil {
 
     try {
       const fullKey = this.prefix + key;
-      sessionStorage.removeItem(fullKey);
+      window.sessionStorage.removeItem(fullKey);
     } catch (error) {
       console.warn(`[SessionStorage] 移除键 "${key}" 失败:`, error);
     }
@@ -92,8 +92,8 @@ class SessionStorageUtil {
       const keysToRemove: string[] = [];
       
       // 收集所有带前缀的键
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const key = window.sessionStorage.key(i);
         if (key && key.startsWith(this.prefix)) {
           keysToRemove.push(key);
         }
@@ -101,7 +101,7 @@ class SessionStorageUtil {
 
       // 删除所有收集到的键
       keysToRemove.forEach(key => {
-        sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
       });
     } catch (error) {
       console.warn('[SessionStorage] 清空存储失败:', error);
@@ -120,8 +120,8 @@ class SessionStorageUtil {
     }
 
     try {
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const key = window.sessionStorage.key(i);
         if (key && key.startsWith(this.prefix)) {
           const actualKey = key.substring(this.prefix.length);
           const value = this.get(actualKey);

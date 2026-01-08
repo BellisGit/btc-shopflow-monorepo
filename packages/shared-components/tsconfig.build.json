@@ -44,11 +44,11 @@
       "@btc/shared-core/*": ["../shared-core/src/*"],
       "@btc/shared-core/manifest": ["../shared-core/src/manifest"],
       "@btc/subapp-manifests": ["../shared-core/src/manifest"],
-      "@configs/*": ["../../configs/*"],
+      "@configs/*": ["../shared-core/src/configs/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src", "src/**/*.json", "src/types/**/*.d.ts", "src/env.d.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs", "../../apps"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs", "../../apps", "../shared-core/src/configs/app-scanner.ts", "../shared-core/src/configs/app-configs-collected.ts", "../shared-core/src/configs/**/*"]
 }

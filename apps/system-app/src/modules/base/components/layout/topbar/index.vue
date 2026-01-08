@@ -91,13 +91,13 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
-import { resolveAppLogoUrl } from '@configs/layout-bridge';
+import { resolveAppLogoUrl } from '@btc/shared-core/configs/layout-bridge';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useBrowser } from '@/composables/useBrowser';
-import { getCurrentSubApp, isMainApp } from '@configs/unified-env-config';
-import { getAppById } from '@configs/app-scanner';
+import { getCurrentSubApp, isMainApp } from '@btc/shared-core/configs/unified-env-config';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
 // 使用共享组件中的全局搜索（已集成 lunr.js 和动态菜单数据）
 import { GlobalSearch } from '@btc/shared-components';
 import TopMenu from '../top-menu/index.vue';

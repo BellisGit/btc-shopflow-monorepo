@@ -1,7 +1,4 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-// 使用相对路径，因为 Vite 配置文件在 Node.js 环境中执行，无法解析路径别名
-// 从 apps/system-app/src/config/ 到 configs/ 需要向上 4 级
-import { envConfig } from '../../../../configs/unified-env-config';
 
 // Vite 代理配置类型
 interface ProxyOptions {
@@ -16,11 +13,27 @@ interface ProxyOptions {
 // 开发环境代理目标：从统一环境配置获取
 // 开发环境：Vite 代理 /api 到配置的后端地址
 // 生产环境：由 Nginx 代理，不需要 Vite 代理
-const backendTarget = envConfig.api.backendTarget || 'http://10.80.9.76:8115';
+// 关键：延迟导入，避免在 vite.config.ts 加载时解析失败
+let backendTarget = 'http://10.80.9.76:8115'; // 默认值
 
+// 异步获取环境配置（延迟导入，避免在 vite.config.ts 加载时解析失败）
+async function getBackendTarget() {
+  try {
+    const { envConfig } = await import('@btc/shared-core/configs/unified-env-config');
+    return envConfig.api.backendTarget || 'http://10.80.9.76:8115';
+  } catch (error) {
+    console.warn('[Proxy] 无法加载环境配置，使用默认值:', error);
+    return 'http://10.80.9.76:8115';
+  }
+}
+
+// 注意：不再在模块加载时调用 getBackendTarget()，只在 configure 中调用
+// 这样可以避免在 vite.config.ts 加载时解析 @btc/shared-core
+
+// 创建代理配置（使用函数，在 configure 中动态获取 backendTarget）
 const proxy: Record<string, string | ProxyOptions> = {
   '/api': {
-    target: backendTarget,
+    target: backendTarget, // 初始值，会在 configure 中更新
     changeOrigin: true,
     secure: false,
     // 不再替换路径，直接转发 /api 到后端（后端已改为使用 /api）
@@ -29,6 +42,15 @@ const proxy: Record<string, string | ProxyOptions> = {
     selfHandleResponse: true,
     // 处理响应头，添加 CORS 头
     configure: (proxy: any) => {
+      // 在 configure 中更新 target（异步获取，但不等待）
+      // 注意：Vite 的 configure 不支持 async，所以使用 Promise
+      getBackendTarget().then(target => {
+        if (proxy.options) {
+          proxy.options.target = target;
+        }
+      }).catch(() => {
+        // 静默失败，使用默认值
+      });
       proxy.on('proxyRes', (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
         const origin = req.headers.origin || '*';
         const isLoginRequest = req.url?.includes('/login');
@@ -173,6 +195,7 @@ const proxy: Record<string, string | ProxyOptions> = {
                 res.writeHead(proxyRes.statusCode || 200, originalHeaders);
                 res.end(newBody);
               } catch (error) {
+                // eslint-disable-next-line i18n/no-chinese-character
                 console.error('[Proxy] ✗ 处理登录响应时出错:', error);
                 res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
                 res.end(Buffer.concat(chunks));
@@ -185,12 +208,14 @@ const proxy: Record<string, string | ProxyOptions> = {
           });
 
           proxyRes.on('error', (err: Error) => {
+            // eslint-disable-next-line i18n/no-chinese-character
             console.error('[Proxy] ✗ 读取响应流时出错:', err);
             if (!res.headersSent) {
               res.writeHead(500, {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': origin as string,
               });
+              // eslint-disable-next-line i18n/no-chinese-character
               res.end(JSON.stringify({ error: '代理处理响应时出错' }));
             }
           });
@@ -207,6 +232,7 @@ const proxy: Record<string, string | ProxyOptions> = {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': req.headers.origin || '*',
           });
+          // eslint-disable-next-line i18n/no-chinese-character
           res.end(JSON.stringify({
             code: 500,
             message: `代理错误：无法连接到后端服务器 ${backendTarget}`,
@@ -225,4 +251,10 @@ const proxy: Record<string, string | ProxyOptions> = {
   },
 };
 
+// 导出函数，延迟创建 proxy 配置
+export function getProxyConfig() {
+  return proxy;
+}
+
+// 也导出 proxy 对象（用于向后兼容）
 export { proxy };

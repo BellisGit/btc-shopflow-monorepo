@@ -4,8 +4,8 @@
  */
 
 import { appConfig } from './app';
-import { envConfig, currentEnvironment } from '@configs/unified-env-config';
-import { getAllSubAppConfigs } from '@configs/qiankun-config-center';
+import { envConfig, currentEnvironment } from '@btc/shared-core/configs/unified-env-config';
+import { getAllSubAppConfigs } from '@btc/shared-core/configs/qiankun-config-center';
 
 // 是否开发模式
 export const isDev = (import.meta as any).env.DEV;

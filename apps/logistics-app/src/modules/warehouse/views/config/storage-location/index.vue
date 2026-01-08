@@ -52,12 +52,44 @@ const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
 
-// 从 config.ts 读取配置
-const { columns: baseColumns } = usePageColumns('logistics.warehouse.config.storage-location');
-const { formItems: baseFormItems } = usePageForms('logistics.warehouse.config.storage-location');
-const pageConfig = getPageConfigFull('logistics.warehouse.config.storage-location');
+// 从 config.ts 读取配置（仓位配置属于盘点模块）
+const { columns: baseColumns } = usePageColumns('logistics.inventory.storage-location');
+const { formItems: baseFormItems } = usePageForms('logistics.inventory.storage-location');
+const pageConfig = getPageConfigFull('logistics.inventory.storage-location');
 
-// 使用 config.ts 中定义的服务
+// 开发环境：验证国际化消息是否正确加载
+if (import.meta.env.DEV) {
+  nextTick(() => {
+    const testKey = 'common.inventory.storage_location.fields.name';
+    const translated = t(testKey);
+    if (translated === testKey) {
+      console.warn('[StorageLocation] 国际化消息未找到:', testKey);
+      // 检查 i18n 实例
+      const i18nInstance = (t as any).__i18n || (t as any).$i18n;
+      if (i18nInstance?.global) {
+        const currentLocale = i18nInstance.global.locale?.value || 'zh-CN';
+        const messages = i18nInstance.global.getLocaleMessage(currentLocale) || {};
+        const hasCommon = 'common' in messages;
+        const hasInventory = hasCommon && messages.common && 'inventory' in messages.common;
+        const hasStorageLocation = hasInventory && messages.common.inventory && 'storage_location' in messages.common.inventory;
+        console.debug('[StorageLocation] 国际化消息检查:', {
+          testKey,
+          currentLocale,
+          hasCommon,
+          hasInventory,
+          hasStorageLocation,
+          commonKeys: hasCommon ? Object.keys(messages.common || {}).slice(0, 5) : [],
+          inventoryKeys: hasInventory ? Object.keys(messages.common.inventory || {}).slice(0, 5) : [],
+          storageLocationKeys: hasStorageLocation ? Object.keys(messages.common.inventory.storage_location || {}).slice(0, 5) : [],
+        });
+      }
+    } else {
+      console.debug('[StorageLocation] 国际化消息已找到:', testKey, '->', translated);
+    }
+  });
+}
+
+// 使用 config.ts 中定义的服务（仓位配置属于盘点模块）
 const baseService = pageConfig?.service?.storageLocation || createCrudServiceFromEps(
   ['logistics', 'base', 'position'],
   service

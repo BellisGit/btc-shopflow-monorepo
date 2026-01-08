@@ -87,7 +87,7 @@ const handleSync = async () => {
     }
   } catch (error) {
     message.error(t('access.resources.sync_failed'));
-    console.error('数据同步失败:', error);
+    console.error('Data sync failed:', error);
   } finally {
     syncLoading.value = false;
   }

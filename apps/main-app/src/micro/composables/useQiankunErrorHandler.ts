@@ -3,7 +3,7 @@
  * 处理子应用加载错误和资源加载错误
  */
 
-import { getAppConfig } from '@configs/app-env.config';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 import { microApps } from '../apps';
 
 // 获取主应用配置（用于判断当前是否在主应用预览端口）
@@ -12,7 +12,7 @@ const MAIN_APP_PREVIEW_PORT = MAIN_APP_CONFIG?.prePort || '4180';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
-  system: '主模块',
+  system: '系统模块',
   admin: '管理模块',
   logistics: '物流模块',
   engineering: '工程模块',

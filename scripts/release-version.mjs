@@ -291,6 +291,19 @@ async function main() {
       }
     }
 
+    // 步骤 7.5: 自动更新 CHANGELOG.md
+    log('\n📋 步骤 7.5: 自动更新 CHANGELOG.md...', 'cyan');
+    try {
+      // 使用子进程执行更新脚本，避免 ES 模块导入问题
+      exec(`node scripts/update-changelog.mjs ${version}`, { stdio: 'inherit' });
+      log('✅ CHANGELOG.md 已自动更新', 'green');
+      log('请检查并确认内容，如有需要可以手动调整', 'yellow');
+    } catch (error) {
+      log(`⚠️  自动更新 CHANGELOG.md 失败: ${error.message}`, 'yellow');
+      log('请手动更新 CHANGELOG.md', 'yellow');
+      log(`可以运行: node scripts/update-changelog.mjs ${version}`, 'blue');
+    }
+
     // 步骤 8: 合并 release 回 develop
     log('\n📋 步骤 8: 合并回 develop 分支...', 'cyan');
     log('切换到 develop 分支...', 'yellow');

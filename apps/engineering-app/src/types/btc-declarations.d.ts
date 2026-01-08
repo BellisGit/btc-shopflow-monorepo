@@ -87,6 +87,6 @@ declare module 'vue-router' {
   export interface RouteLocationNormalizedLoaded { [key: string]: any }
 }
 
-declare module '@configs/layout-bridge' {
+declare module '@btc/shared-core/configs/layout-bridge' {
   export function injectDomainListResolver(appId: string, moduleOrPath: any): Promise<any>;
 }

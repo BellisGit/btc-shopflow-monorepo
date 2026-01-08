@@ -1,4 +1,5 @@
 import type { Plugin } from '@btc/shared-core';
+import { tSync } from '../i18n/getters';
 
 /**
  * 扫描 system-app 中定义的工具栏插件
@@ -31,7 +32,7 @@ export async function discoverSystemPlugins(): Promise<Plugin[]> {
         }
       }
     } catch (error) {
-      console.error('[layout-app] 解析插件失败:', filePath, error);
+      console.error(`[layout-app] ${tSync('common.error.plugin_parse_failed')}:`, filePath, error);
     }
   }
 

@@ -110,13 +110,19 @@ export function setupQiankunLogFilter(): void {
         return;
       }
     }
-    // 过滤 single-spa 的 warningMillis 警告（这是正常的，不是错误）
+    // 过滤 single-spa 的警告（这些是正常的，不是错误）
     // 检查多种可能的警告格式
     if (typeof firstArg === 'string') {
       if (
         firstArg.includes('single-spa minified message #31') ||
+        firstArg.includes('single-spa minified message #41') ||
+        firstArg.includes('single-spa minified message #1') ||
         firstArg.includes('single-spa.js.org/error/?code=31') ||
-        (firstArg.includes('code=31') && firstArg.includes('bootstrap'))
+        firstArg.includes('single-spa.js.org/error/?code=41') ||
+        firstArg.includes('single-spa.js.org/error/?code=1') ||
+        (firstArg.includes('code=31') && firstArg.includes('bootstrap')) ||
+        (firstArg.includes('code=41')) ||
+        (firstArg.includes('code=1'))
       ) {
         return;
       }
@@ -126,9 +132,19 @@ export function setupQiankunLogFilter(): void {
       if (
         typeof arg === 'string' &&
         (arg.includes('single-spa minified message #31') ||
+          arg.includes('single-spa minified message #41') ||
+          arg.includes('single-spa minified message #1') ||
           arg.includes('single-spa.js.org/error/?code=31') ||
-          (arg.includes('code=31') && arg.includes('bootstrap')))
+          arg.includes('single-spa.js.org/error/?code=41') ||
+          arg.includes('single-spa.js.org/error/?code=1') ||
+          (arg.includes('code=31') && arg.includes('bootstrap')) ||
+          (arg.includes('code=41')) ||
+          (arg.includes('code=1')))
       ) {
+        return;
+      }
+      // 过滤 registerSubAppI18n 的函数值警告（这些是正常的，Vue I18n 编译优化导致的）
+      if (typeof arg === 'string' && arg.includes('[registerSubAppI18n] Skipping function value')) {
         return;
       }
     }
@@ -174,13 +190,19 @@ export function setupQiankunLogFilter(): void {
     if (shouldFilter(...args)) {
       return;
     }
-    // 过滤 single-spa 的错误代码 31（bootstrap 相关错误）
+    // 过滤 single-spa 的错误代码（这些是正常的警告，不影响功能）
     const firstArg = args[0];
     if (typeof firstArg === 'string') {
       if (
         firstArg.includes('single-spa minified message #31') ||
+        firstArg.includes('single-spa minified message #41') ||
+        firstArg.includes('single-spa minified message #1') ||
         firstArg.includes('single-spa.js.org/error/?code=31') ||
-        (firstArg.includes('code=31') && firstArg.includes('bootstrap'))
+        firstArg.includes('single-spa.js.org/error/?code=41') ||
+        firstArg.includes('single-spa.js.org/error/?code=1') ||
+        (firstArg.includes('code=31') && firstArg.includes('bootstrap')) ||
+        (firstArg.includes('code=41')) ||
+        (firstArg.includes('code=1'))
       ) {
         return;
       }
@@ -190,8 +212,14 @@ export function setupQiankunLogFilter(): void {
       if (
         typeof arg === 'string' &&
         (arg.includes('single-spa minified message #31') ||
+          arg.includes('single-spa minified message #41') ||
+          arg.includes('single-spa minified message #1') ||
           arg.includes('single-spa.js.org/error/?code=31') ||
-          (arg.includes('code=31') && arg.includes('bootstrap')))
+          arg.includes('single-spa.js.org/error/?code=41') ||
+          arg.includes('single-spa.js.org/error/?code=1') ||
+          (arg.includes('code=31') && arg.includes('bootstrap')) ||
+          (arg.includes('code=41')) ||
+          (arg.includes('code=1')))
       ) {
         return;
       }

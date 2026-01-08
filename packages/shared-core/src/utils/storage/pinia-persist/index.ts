@@ -57,12 +57,18 @@ export function createPersistedStatePlugin(
 
 /**
  * 默认的持久化插件（使用 localStorage）
+ * 在浏览器环境中创建，SSR 环境返回空插件
  */
-export const persistedStatePlugin = createPersistedStatePlugin();
+export const persistedStatePlugin: ReturnType<typeof createPersistedStatePlugin> =
+  typeof window !== 'undefined'
+    ? createPersistedStatePlugin()
+    : ((_context: any) => {}) as ReturnType<typeof createPersistedStatePlugin>;
 
 /**
  * 使用 sessionStorage 的持久化插件
+ * 在浏览器环境中创建，SSR 环境返回空插件
  */
-export const persistedStatePluginSession = createPersistedStatePlugin({
-  storage: 'sessionStorage',
-});
+export const persistedStatePluginSession: ReturnType<typeof createPersistedStatePlugin> =
+  typeof window !== 'undefined'
+    ? createPersistedStatePlugin({ storage: 'sessionStorage' })
+    : ((_context: any) => {}) as ReturnType<typeof createPersistedStatePlugin>;

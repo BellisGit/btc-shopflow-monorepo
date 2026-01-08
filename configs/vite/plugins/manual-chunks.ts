@@ -81,7 +81,7 @@ export function createManualChunksStrategy(appName: string) {
     // 只将 manifest 数据和 layout-bridge 打包到 menu-registry
     // 但 layout-bridge 会导入 menuRegistry，所以 layout-bridge 也应该打包到 vendor
     if (id.includes('configs/layout-bridge') ||
-        id.includes('@configs/layout-bridge')) {
+        id.includes('@btc/shared-core/configs/layout-bridge')) {
       // Layout-App：layout-bridge 导入 menuRegistry，所以也应该打包到 vendor
       // 其他应用（生产环境）：不打包，从 layout-app 加载
       if (skipSharedResources) {

@@ -5,6 +5,34 @@ import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedLocalesZhCN from '@btc/shared-components/locales/zh-CN.json';
 import sharedLocalesEnUS from '@btc/shared-components/locales/en-US.json';
+import { registerSubAppI18n } from '@btc/shared-core';
+import systemAppZhCN from '../locales/zh-CN.json';
+import systemAppEnUS from '../locales/en-US.json';
+
+// 动态加载所有 config.ts 文件（应用级和页面级）
+// 使用 import.meta.glob 扫描所有 config.ts 文件
+const configFiles = import.meta.glob<{ default: any }>(
+  [
+    '../locales/config.ts',
+    '../modules/**/config.ts',
+  ],
+  { eager: true }
+);
+
+// 初始化配置注册表（用于 columns 和 forms）
+import { registerConfigsFromGlob } from '@btc/shared-core';
+registerConfigsFromGlob(configFiles);
+
+// 关键：注册子应用的国际化消息获取器，让主应用能够访问子应用的国际化配置
+// 这样主应用的概览页就能正确显示子应用的名称和菜单名称
+if (typeof window !== 'undefined') {
+  const SYSTEM_APP_ID = 'system';
+  // 合并 JSON 文件中的国际化消息（补充 config.ts 中可能缺失的消息）
+  registerSubAppI18n(SYSTEM_APP_ID, configFiles, {
+    'zh-CN': systemAppZhCN as Record<string, any>,
+    'en-US': systemAppEnUS as Record<string, any>,
+  });
+}
 
 // 延迟加载 messages，避免初始化顺序问题
 let messagesCache: Record<string, any> | null = null;
@@ -28,6 +56,228 @@ const getMessages = (): Record<string, any> => {
 // 合并 shared-core 的语言包
 const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => {
   return Object.assign({}, ...sources.filter(Boolean));
+};
+
+/**
+ * 深度合并对象
+ */
+function deepMerge(target: any, source: any): any {
+  const output = { ...target };
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach((key) => {
+      if (isObject(source[key])) {
+        if (!(key in target)) {
+          Object.assign(output, { [key]: source[key] });
+        } else {
+          output[key] = deepMerge(target[key], source[key]);
+        }
+      } else {
+        Object.assign(output, { [key]: source[key] });
+      }
+    });
+  }
+  return output;
+}
+
+function isObject(item: any): boolean {
+  return item && typeof item === 'object' && !Array.isArray(item);
+}
+
+/**
+ * 将嵌套对象转换为扁平化对象
+ * 支持多层嵌套，如 { app: { loading: { title: "..." } } } -> { "app.loading.title": "..." }
+ */
+function flattenObject(obj: any, prefix = '', result: Record<string, string> = {}): Record<string, string> {
+  // 如果 obj 本身是字符串，直接设置
+  if (typeof obj === 'string' && prefix) {
+    result[prefix] = obj;
+    return result;
+  }
+
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const newKey = prefix ? `${prefix}.${key}` : key;
+      const value = obj[key];
+
+      if (value && typeof value === 'object' && !Array.isArray(value) && value !== null) {
+        // 如果对象包含 '_' 键，将其值设置为父键的值
+        if ('_' in value && typeof value._ === 'string') {
+          result[newKey] = value._;
+        }
+        // 递归处理嵌套对象（跳过 '_' 键）
+        for (const subKey in value) {
+          if (subKey !== '_' && Object.prototype.hasOwnProperty.call(value, subKey)) {
+            flattenObject(value[subKey], `${newKey}.${subKey}`, result);
+          }
+        }
+      } else if (value !== null && value !== undefined) {
+        // 处理各种类型的值
+        if (typeof value === 'string') {
+          result[newKey] = value;
+        } else if (typeof value === 'function') {
+          // Vue I18n 编译时优化，某些消息会被编译为函数
+          // 优先从 loc.source 获取原始消息模板（最可靠的方法，避免复杂的函数调用）
+          const locSource = (value as any).loc?.source;
+          if (typeof locSource === 'string') {
+            result[newKey] = locSource;
+          } else {
+            // 如果没有 loc.source，尝试从其他可能的属性获取
+            const possibleSources = [
+              (value as any).source,
+              (value as any).message,
+              (value as any).template,
+            ];
+
+            const source = possibleSources.find(s => typeof s === 'string');
+            if (source) {
+              result[newKey] = source;
+            } else {
+              // 如果所有方法都失败，静默跳过（这些是包含命名参数的消息，运行时会被正确翻译）
+              // 不打印警告，因为这些消息在运行时会被 Vue I18n 正确处理
+            }
+          }
+        } else {
+          // 其他类型转换为字符串
+          result[newKey] = String(value);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * 从 config.ts 文件中提取并合并国际化配置
+ */
+function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string, string> } {
+  let mergedZhCN: any = {
+    app: {},
+    menu: {},
+    page: {},
+  };
+  let mergedEnUS: any = {
+    app: {},
+    menu: {},
+    page: {},
+  };
+
+  // 遍历所有加载的 config.ts 文件
+  for (const path in configFiles) {
+    const config = configFiles[path].default;
+    if (!config) continue;
+
+    // 处理应用级配置（src/locales/config.ts）
+    // 应用级配置格式：{ 'zh-CN': { app: {...}, menu: {...}, page: {...} }, 'en-US': {...} }
+    if (path.includes('/locales/config.ts')) {
+      if (config['zh-CN']) {
+        mergedZhCN = deepMerge(mergedZhCN, config['zh-CN']);
+      }
+      if (config['en-US']) {
+        mergedEnUS = deepMerge(mergedEnUS, config['en-US']);
+      }
+    } else {
+      const localeConfig = config.locale;
+
+      if (localeConfig) {
+        // 页面级配置可能包含 app 和 menu（用于覆盖）
+        if (localeConfig.app) {
+          mergedZhCN.app = deepMerge(mergedZhCN.app, localeConfig.app);
+          mergedEnUS.app = deepMerge(mergedEnUS.app, localeConfig.app || {});
+        }
+        if (localeConfig.menu) {
+          mergedZhCN.menu = deepMerge(mergedZhCN.menu, localeConfig.menu);
+          mergedEnUS.menu = deepMerge(mergedEnUS.menu, localeConfig.menu || {});
+        }
+        // 将模块配置直接合并到顶层（不再使用 page 层级）
+        // localeConfig 中除了 app 和 menu 之外的所有键都是模块配置
+        for (const key in localeConfig) {
+          if (key !== 'app' && key !== 'menu' && key !== 'page') {
+            // 直接合并模块配置到顶层
+            if (!mergedZhCN[key]) {
+              mergedZhCN[key] = {};
+            }
+            if (!mergedEnUS[key]) {
+              mergedEnUS[key] = {};
+            }
+            mergedZhCN[key] = deepMerge(mergedZhCN[key], localeConfig[key]);
+            mergedEnUS[key] = deepMerge(mergedEnUS[key], localeConfig[key] || {});
+          }
+        }
+        // 兼容旧格式：如果还有 page 层级，也处理（逐步迁移）
+        if (localeConfig.page) {
+          // 将 page 下的内容直接合并到顶层
+          for (const moduleKey in localeConfig.page) {
+            if (!mergedZhCN[moduleKey]) {
+              mergedZhCN[moduleKey] = {};
+            }
+            if (!mergedEnUS[moduleKey]) {
+              mergedEnUS[moduleKey] = {};
+            }
+            mergedZhCN[moduleKey] = deepMerge(mergedZhCN[moduleKey], localeConfig.page[moduleKey]);
+            mergedEnUS[moduleKey] = deepMerge(mergedEnUS[moduleKey], localeConfig.page[moduleKey] || {});
+          }
+        }
+      }
+    }
+  }
+
+  // 转换为扁平化结构
+  return {
+    zhCN: flattenObject(mergedZhCN),
+    enUS: flattenObject(mergedEnUS),
+  };
+}
+
+// 类型定义
+type LocaleMessages = Record<'zh-CN' | 'en-US', Record<string, any>>;
+
+// 缓存合并结果，避免每次调用都重新合并
+let cachedMessages: LocaleMessages | null = null;
+
+// 清除缓存（开发环境使用，确保获取最新消息）
+export const clearLocaleMessagesCache = () => {
+  cachedMessages = null;
+};
+
+/**
+ * 获取国际化消息（用于主应用获取子应用的国际化配置）
+ * 返回格式：{ 'zh-CN': {...}, 'en-US': {...} }
+ * 包括从 config.ts 中提取的国际化消息
+ */
+export const getLocaleMessages = (): LocaleMessages => {
+  // 开发环境：每次都重新合并，确保包含最新的国际化文件
+  // 生产环境：使用缓存以提高性能
+  if (import.meta.env.DEV || !cachedMessages) {
+    // 处理 sharedCore 的默认导出（TypeScript 文件使用 export default）
+    const sharedCoreZhMessages = (sharedCoreZh as any)?.default ?? sharedCoreZh;
+    const sharedCoreEnMessages = (sharedCoreEn as any)?.default ?? sharedCoreEn;
+
+    // 从 config.ts 文件中合并配置
+    const configMessages = mergeConfigFiles();
+
+    // 合并所有语言包
+    // 合并顺序：sharedCore -> sharedComponents -> config.ts (应用级+页面级) -> 旧的 JSON 文件（兼容）
+    const zhCNMessages = mergeMessages(
+      sharedCoreZhMessages || {},
+      sharedLocalesZhCN as Record<string, any> || {},
+      configMessages.zhCN || {}, // 从 config.ts 合并的配置
+      systemAppZhCN as Record<string, any> || {} // 旧的 JSON 文件（兼容，逐步迁移）
+    );
+    const enUSMessages = mergeMessages(
+      sharedCoreEnMessages || {},
+      sharedLocalesEnUS as Record<string, any> || {},
+      configMessages.enUS || {}, // 从 config.ts 合并的配置
+      systemAppEnUS as Record<string, any> || {} // 旧的 JSON 文件（兼容，逐步迁移）
+    );
+
+    // 更新缓存
+    cachedMessages = {
+      'zh-CN': zhCNMessages,
+      'en-US': enUSMessages,
+    };
+  }
+
+  return cachedMessages!;
 };
 
 // 延迟初始化 i18n 实例，避免在模块顶层初始化

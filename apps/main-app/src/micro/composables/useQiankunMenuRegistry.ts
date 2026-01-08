@@ -6,7 +6,7 @@
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 import { tSync } from '../../i18n/getters';
-import { getAppBySubdomain } from '@configs/app-scanner';
+import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getAppsUsingDynamicI18n } from '../apps';
 
 // 定义类型
@@ -167,29 +167,19 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
           const hasKey = labelKey in messages;
 
           // 检查是否正在等待 globalState 消息
-          // 关键：对于使用动态国际化的应用，在 globalState 消息到达前，key 可能暂时不存在
-          // 这种情况下不应该打印警告，因为 key 会在 globalState 消息到达后可用
+          // 关键：对于使用动态国际化的应用，在消息合并到主应用 i18n 实例前，key 可能暂时不存在
+          // 这种情况下不应该打印警告，因为 key 会在消息合并后可用
           let isWaitingForGlobalState = false;
           try {
-            // 使用同步方式检查（避免 async/await）
-            if (typeof window !== 'undefined' && (window as any).__QIANKUN_GLOBAL_STATE__) {
-              const globalState = (window as any).__QIANKUN_GLOBAL_STATE__;
-              if (globalState && typeof globalState.getGlobalState === 'function') {
-                const currentState = globalState.getGlobalState();
-                // 关键：检查当前正在注册的应用是否正在等待 globalState 消息
-                const currentAppId = (window as any).__CURRENT_REGISTERING_APP_ID__ || appName;
-                const appsUsingDynamicI18n = getAppsUsingDynamicI18n();
+            const currentAppId = (window as any).__CURRENT_REGISTERING_APP_ID__ || appName;
+            const appsUsingDynamicI18n = getAppsUsingDynamicI18n();
 
-                // 如果当前应用使用动态国际化
-                if (currentAppId && appsUsingDynamicI18n.includes(currentAppId)) {
-                  // 检查消息是否已经到达
-                  const messages = currentState?.subAppI18nMessages?.[currentAppId];
-                  // 如果消息还没有到达，或者消息为空，说明正在等待，不打印警告
-                  if (!messages || (!messages['zh-CN'] && !messages['en-US'])) {
-                    isWaitingForGlobalState = true;
-                  }
-                }
-              }
+            // 如果当前应用使用动态国际化
+            if (currentAppId && appsUsingDynamicI18n.includes(currentAppId)) {
+              // 关键：只要应用使用动态国际化，且 key 不在主应用 i18n 中，就认为正在等待
+              // 即使 globalState 中已经有消息，也可能还没有合并到主应用 i18n 实例
+              // 所以直接认为正在等待，不打印警告
+              isWaitingForGlobalState = true;
             }
           } catch (error) {
             // 忽略错误

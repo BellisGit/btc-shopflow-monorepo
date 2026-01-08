@@ -19,6 +19,34 @@ export default {
         title: '正在加载资源',
         subtitle: '部分资源可能加载时间较长，请耐心等待',
       },
+      // 系统名称（用于 config/app.ts）
+      systemName: 'BTC车间管理',
+      // 加载系统资源（用于 config/app.ts）
+      loadingSystemResources: '正在加载系统资源...',
+      loadingSystemResourcesSubtitle: '初次加载可能需要较多时间，请耐心等待',
+      // 公司信息
+      company: {
+        fullNameCn: '拜里斯',
+      },
+      // 联系方式
+      contact: {
+        address: '深圳市南山区科技园',
+      },
+    },
+    // 配置相关
+    config: {
+      locale: {
+        'zh-CN': '简体中文',
+      },
+    },
+    // 代理相关错误消息
+    proxy: {
+      error: {
+        processLoginResponse: '代理处理登录响应时出错',
+        readResponseStream: '代理读取响应流时出错',
+        processResponse: '代理处理响应时出错',
+        connectBackend: '代理错误：无法连接到后端服务器',
+      },
     },
     menu: {
       data: {
@@ -55,6 +83,34 @@ export default {
       loading: {
         title: 'Loading resources',
         subtitle: 'Some resources may take longer to load, please wait patiently',
+      },
+      // 系统名称（用于 config/app.ts）
+      systemName: 'BTC Shop Management',
+      // 加载系统资源（用于 config/app.ts）
+      loadingSystemResources: 'Loading system resources...',
+      loadingSystemResourcesSubtitle: 'Initial loading may take longer, please wait patiently',
+      // 公司信息
+      company: {
+        fullNameCn: 'Bellis',
+      },
+      // 联系方式
+      contact: {
+        address: 'Nanshan District, Shenzhen, China',
+      },
+    },
+    // 配置相关
+    config: {
+      locale: {
+        'zh-CN': 'Simplified Chinese',
+      },
+    },
+    // 代理相关错误消息
+    proxy: {
+      error: {
+        processLoginResponse: 'Error processing login response',
+        readResponseStream: 'Error reading response stream',
+        processResponse: 'Error processing response',
+        connectBackend: 'Proxy error: Unable to connect to backend server',
       },
     },
     menu: {

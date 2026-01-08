@@ -8,7 +8,7 @@
       :form-items="diffFormItems"
       :op="opConfig"
       :left-title="t('inventory.check.list')"
-      :right-title="t('menu.logistics.inventory_management.detail')"
+      :right-title="t('menu.inventory_management.detail')"
       :show-unassigned="false"
       :enable-key-search="true"
       :left-size="'small'"
@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
-import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcTableGroup, BtcDialog } from '@btc/shared-components';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
@@ -134,6 +134,11 @@ const checkService = {
     }
   }
 };
+
+// 从 config.ts 读取配置
+const { columns: baseDiffColumns } = usePageColumns('logistics.inventory.detail');
+const { formItems: baseDiffFormItems } = usePageForms('logistics.inventory.detail');
+const pageConfig = getPageConfigFull('logistics.inventory.detail');
 
 // 差异记录服务（右侧表）- 使用 config.ts 中定义的服务
 const diffService = pageConfig?.service?.detail || service.logistics?.warehouse?.diff;
@@ -338,13 +343,8 @@ const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: an
   return formatTableNumber(value);
 };
 
-// 从 config.ts 读取配置
-const { columns: baseDiffColumns } = usePageColumns('logistics.inventory.detail');
-const { formItems: baseDiffFormItems } = usePageForms('logistics.inventory.detail');
-const pageConfig = getPageConfigFull('logistics.inventory.detail');
-
-// 使用 config.ts 中定义的服务
-const baseDiffService = usePageService('logistics.inventory.detail', 'detail');
+// 使用 config.ts 中定义的服务（如果需要的话，可以在这里使用）
+// const baseDiffService = usePageService('logistics.inventory.detail', 'detail');
 
 // 差异记录表格列（根据 EPS 服务定义的字段）
 // 差异原因、处理时间、处理备注在详情弹窗中显示，不在表格中显示
@@ -410,7 +410,7 @@ const diffExportColumns = computed(() => exportColumns.value);
 // 导出功能
 const handleExport = async () => {
   if (!diffService?.export) {
-    BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
+    BtcMessage.error(t('common.ui.export_failed') || '导出服务不可用');
     return;
   }
 
@@ -489,7 +489,7 @@ const handleExport = async () => {
     exportJsonToExcel({
       header,
       data,
-      filename: t('menu.logistics.inventory_management.detail') || '差异记录表',
+      filename: t('menu.inventory_management.detail') || '差异记录表',
       autoWidth: true,
       bookType: 'xlsx',
     });
@@ -497,7 +497,7 @@ const handleExport = async () => {
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
     console.error('[InventoryDetail] Export failed:', error);
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.ui.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
     exportLoading.value = false;

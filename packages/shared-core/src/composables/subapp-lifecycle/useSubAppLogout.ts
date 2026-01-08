@@ -1,5 +1,5 @@
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '../../utils/storage/session';
 import type { SubAppContext } from './types';
 
 /**
@@ -167,7 +167,7 @@ export function createLogoutFunction(
       // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径），让路由守卫知道这是退出登录
       try {
         // 使用统一的环境检测
-        const { getEnvironment, getCurrentSubApp } = await import('@configs/unified-env-config');
+        const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
         const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
         
         const env = getEnvironment();
@@ -338,7 +338,7 @@ export function createLogoutFunction(
       // 跳转到登录页，添加 logout=1 参数和 redirect 参数（当前路径）
       try {
         // 使用统一的环境检测
-        const { getEnvironment, getCurrentSubApp } = await import('@configs/unified-env-config');
+        const { getEnvironment, getCurrentSubApp } = await import('../../configs/unified-env-config');
         const { buildLogoutUrlWithFullUrl, buildLogoutUrl, getCurrentUnifiedPath } = await import('@btc/auth-shared/composables/redirect');
         
         const env = getEnvironment();

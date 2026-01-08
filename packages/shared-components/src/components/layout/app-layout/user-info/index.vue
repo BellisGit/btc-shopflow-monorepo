@@ -74,7 +74,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { BtcConfirm } from '@btc/shared-components';
-import { getCurrentEnvironment } from '@configs/unified-env-config';
+import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 // useMessage 不再需要，直接使用 BtcMessage
 import { useSettingsState } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';

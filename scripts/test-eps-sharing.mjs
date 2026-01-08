@@ -2,7 +2,7 @@
 
 /**
  * 测试 EPS 数据共享功能
- * 验证所有应用是否能从共享位置（system-app/build/eps）读取 EPS 数据
+ * 验证所有应用是否能从共享位置（main-app/build/eps）读取 EPS 数据
  */
 
 import { existsSync, readFileSync } from 'fs';
@@ -33,6 +33,7 @@ const log = {
 
 // 所有应用列表
 const ALL_APPS = [
+  'main-app',
   'system-app',
   'logistics-app',
   'admin-app',
@@ -44,31 +45,31 @@ const ALL_APPS = [
   'layout-app',
 ];
 
-// 子应用列表（不包括 system-app）
-const SUB_APPS = ALL_APPS.filter(app => app !== 'system-app');
+// 子应用列表（不包括 main-app）
+const SUB_APPS = ALL_APPS.filter(app => app !== 'main-app');
 
 function testEpsSharing() {
   log.section('测试 EPS 数据共享功能');
 
-  // 1. 检查 system-app 的 EPS 数据
-  log.info('1. 检查 system-app 的 EPS 数据源...');
-  const systemEpsDir = join(PROJECT_ROOT, 'apps', 'system-app', 'build', 'eps');
-  const systemEpsJson = join(systemEpsDir, 'eps.json');
+  // 1. 检查 main-app 的 EPS 数据
+  log.info('1. 检查 main-app 的 EPS 数据源...');
+  const mainEpsDir = join(PROJECT_ROOT, 'apps', 'main-app', 'build', 'eps');
+  const mainEpsJson = join(mainEpsDir, 'eps.json');
 
-  if (!existsSync(systemEpsJson)) {
-    log.error(`system-app 的 EPS 数据不存在: ${systemEpsJson}`);
-    log.warning('请先构建 system-app 以生成 EPS 数据:');
-    log.warning('  pnpm --filter system-app build');
+  if (!existsSync(mainEpsJson)) {
+    log.error(`main-app 的 EPS 数据不存在: ${mainEpsJson}`);
+    log.warning('请先构建 main-app 以生成 EPS 数据:');
+    log.warning('  pnpm --filter main-app build');
     process.exit(1);
   }
 
-  const systemEpsData = JSON.parse(readFileSync(systemEpsJson, 'utf-8'));
-  const systemEpsCount = Array.isArray(systemEpsData) 
-    ? systemEpsData.length 
-    : (systemEpsData.data ? Object.values(systemEpsData.data).flat().length : 0);
+  const mainEpsData = JSON.parse(readFileSync(mainEpsJson, 'utf-8'));
+  const mainEpsCount = Array.isArray(mainEpsData) 
+    ? mainEpsData.length 
+    : (mainEpsData.data ? Object.values(mainEpsData.data).flat().length : 0);
   
-  log.success(`✓ system-app EPS 数据存在 (${systemEpsCount} 个实体)`);
-  log.info(`  路径: ${systemEpsJson}`);
+  log.success(`✓ main-app EPS 数据存在 (${mainEpsCount} 个实体)`);
+  log.info(`  路径: ${mainEpsJson}`);
 
   // 2. 检查子应用的共享配置
   log.info('\n2. 检查子应用的共享配置...');
@@ -104,7 +105,7 @@ function testEpsSharing() {
 
   for (const app of SUB_APPS) {
     const appDir = join(PROJECT_ROOT, 'apps', app);
-    const expectedSharedEpsDir = join(appDir, '../../apps/system-app/build/eps');
+    const expectedSharedEpsDir = join(appDir, '../../apps/main-app/build/eps');
     const expectedSharedEpsJson = join(expectedSharedEpsDir, 'eps.json');
 
     if (existsSync(expectedSharedEpsJson)) {
@@ -160,7 +161,7 @@ function testEpsSharing() {
   log.info('  - 所有子应用已配置 sharedEpsDir');
   log.info('  - 所有子应用使用共享的 loadEpsService 函数');
   log.info('\n下一步：');
-  log.info('  1. 构建 system-app: pnpm --filter system-app build');
+  log.info('  1. 构建 main-app: pnpm --filter main-app build');
   log.info('  2. 构建子应用: pnpm --filter logistics-app build');
   log.info('  3. 检查构建产物，确认所有应用共享同一个 eps-service chunk');
 }

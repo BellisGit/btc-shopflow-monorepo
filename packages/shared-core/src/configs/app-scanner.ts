@@ -5,42 +5,11 @@
 
 import type { AppIdentity } from './app-identity.types';
 
-// 手动导入所有应用的 app.ts 文件
-// 由于 import.meta.glob 在跨应用目录时可能无法正常工作，改为手动导入
-// 注意：这些文件可能不在各个应用的 tsconfig.json 的 include 范围内，但运行时可用
-import mainAppIdentity from '../apps/main-app/src/app';
-import adminAppIdentity from '../apps/admin-app/src/app';
-import logisticsAppIdentity from '../apps/logistics-app/src/app';
-import qualityAppIdentity from '../apps/quality-app/src/app';
-import productionAppIdentity from '../apps/production-app/src/app';
-import engineeringAppIdentity from '../apps/engineering-app/src/app';
-import financeAppIdentity from '../apps/finance-app/src/app';
-import operationsAppIdentity from '../apps/operations-app/src/app';
-import systemAppIdentity from '../apps/system-app/src/app';
-import layoutAppIdentity from '../apps/layout-app/src/app';
-import docsAppIdentity from '../apps/docs-app/src/app';
-import mobileAppIdentity from '../apps/mobile-app/src/app';
-import dashboardAppIdentity from '../apps/dashboard-app/src/app';
-import personnelAppIdentity from '../apps/personnel-app/src/app';
-
-// 将所有应用配置组织成对象，模拟 glob 的结果
-// 注意：直接导入的默认导出就是配置对象本身，需要包装成 { default: ... } 格式
-const appFiles: Record<string, { default: AppIdentity }> = {
-  '../apps/main-app/src/app': { default: mainAppIdentity },
-  '../apps/admin-app/src/app': { default: adminAppIdentity },
-  '../apps/logistics-app/src/app': { default: logisticsAppIdentity },
-  '../apps/quality-app/src/app': { default: qualityAppIdentity },
-  '../apps/production-app/src/app': { default: productionAppIdentity },
-  '../apps/engineering-app/src/app': { default: engineeringAppIdentity },
-  '../apps/finance-app/src/app': { default: financeAppIdentity },
-  '../apps/operations-app/src/app': { default: operationsAppIdentity },
-  '../apps/system-app/src/app': { default: systemAppIdentity },
-  '../apps/layout-app/src/app': { default: layoutAppIdentity },
-  '../apps/docs-app/src/app': { default: docsAppIdentity },
-  '../apps/mobile-app/src/app': { default: mobileAppIdentity },
-  '../apps/dashboard-app/src/app': { default: dashboardAppIdentity },
-  '../apps/personnel-app/src/app': { default: personnelAppIdentity },
-};
+/**
+ * 从构建时生成的应用配置文件导入所有应用配置
+ * 这些配置在构建时已经被内联为 JSON，不需要运行时动态导入
+ */
+import { appConfigsMap } from './app-configs-collected';
 
 /**
  * 应用注册表
@@ -128,11 +97,12 @@ function validateAppIdentity(identity: any, appName: string): identity is AppIde
 
 /**
  * 扫描并注册所有应用
+ * 使用构建时生成的应用配置文件，避免运行时动态导入失败
  */
 export function scanAndRegisterApps(): Map<string, AppIdentity> {
   // 关键：每次都重新获取 appRegistry，确保使用的是最新的实例
   const registry = getAppRegistry();
-  
+
   // 安全调用 clear，确保 registry 已初始化且是有效的 Map 实例
   if (registry && registry instanceof Map && typeof registry.clear === 'function') {
     try {
@@ -165,26 +135,24 @@ export function scanAndRegisterApps(): Map<string, AppIdentity> {
       console.error('[app-scanner] 无法初始化 registry', e);
     }
   }
-  
+
   // 重新获取 registry（可能已经被重新创建）
   const finalRegistry = getAppRegistry();
 
-  // 确保 appFiles 存在且是对象（检查 null 和数组）
+  // 确保 appConfigsMap 存在且是对象（检查 null 和数组）
   // 注意：typeof null === 'object'，所以需要额外检查
-  if (!appFiles || typeof appFiles !== 'object' || appFiles === null || Array.isArray(appFiles)) {
+  if (!appConfigsMap || typeof appConfigsMap !== 'object' || appConfigsMap === null || Array.isArray(appConfigsMap)) {
     // 只在开发环境或真正有问题时才警告
     if (import.meta.env.DEV) {
-      console.warn('[app-scanner] appFiles 不存在或不是对象，跳过扫描', { appFiles });
+      console.warn('[app-scanner] appConfigsMap 不存在或不是对象，跳过扫描', { appConfigsMap });
     }
     return finalRegistry;
   }
 
-  // 防御性检查：确保 appFiles 不是 null 或 undefined
-  const appFilesEntries = Object.entries(appFiles || {});
-  for (const [filePath, appConfigWrapper] of appFilesEntries) {
+  // 防御性检查：确保 appConfigsMap 不是 null 或 undefined
+  const appConfigsEntries = Object.entries(appConfigsMap || {});
+  for (const [filePath, appConfig] of appConfigsEntries) {
     try {
-      // 从包装对象中提取实际的配置对象
-      const appConfig = appConfigWrapper.default;
       const appName = extractAppName(filePath);
 
       if (!appName) {
@@ -263,4 +231,3 @@ export function getAppByPathPrefix(pathPrefix: string): AppIdentity | undefined 
 export function getAppBySubdomain(subdomain: string): AppIdentity | undefined {
   return getAllApps().find(app => app.subdomain === subdomain);
 }
-

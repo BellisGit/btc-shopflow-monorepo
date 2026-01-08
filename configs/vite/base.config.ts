@@ -25,7 +25,7 @@ export function createBaseAliases(
     '@components': withSrc('src/components'),
     '@utils': withSrc('src/utils'),
     '@auth': withRoot('auth'),
-    '@configs': withConfigs(''),
+    '@configs': withPackages('shared-core/src/configs'),
     '@btc/auth-shared': withRoot('auth/shared'),
     // @btc/* 包别名：所有应用都打包这些包，所以始终使用别名指向源码
     '@btc/shared-core': withPackages('shared-core/src'),
@@ -111,7 +111,8 @@ export function createBaseResolve(
     dedupe: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     // 确保 Vite 优先使用 package.json 的 exports 配置
-    conditions: ['import', 'module', 'browser', 'default'],
+    // 关键：添加 'development' 条件，确保在开发环境中使用源码
+    conditions: ['development', 'import', 'module', 'browser', 'default'],
   };
 }
 

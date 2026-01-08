@@ -64,9 +64,11 @@ const proxy: Record<string, string | ProxyOptions> = {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': req.headers.origin || '*',
           });
+          // 注意：这里在代理配置中，无法使用 i18n，所以保留原始错误消息
+          // 实际错误消息应该在后端或前端错误处理中使用 i18n
           res.end(JSON.stringify({
             code: 500,
-            message: '代理错误：无法连接到后端服务器 http://10.80.9.76:8115',
+            message: 'Proxy error: Unable to connect to backend server http://10.80.9.76:8115',
             error: err.message,
           }));
         }

@@ -1,4 +1,4 @@
-import { storage } from '@btc/shared-core/utils';
+import { storage } from '../../../../utils';
 import type { ThemeConfig } from '../../../composables/useTheme';
 import { THEME_PRESETS } from '../../../composables/useTheme';
 

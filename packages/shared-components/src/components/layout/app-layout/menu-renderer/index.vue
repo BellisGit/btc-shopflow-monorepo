@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <template v-for="item in menuItems" :key="item.index">
     <!-- 有子菜单的情况 -->
     <!-- 关键：Element Plus 的 el-sub-menu 要求必须有 index 属性 -->
@@ -51,6 +51,7 @@
 // defineComponent 未使用，已移除导入
 import type { MenuItem } from '../../../../store/menuRegistry';
 import { BtcSvg } from '@btc/shared-components';
+import { useI18n } from '@btc/shared-core';
 import {
   Lock,
   Location,
@@ -154,9 +155,88 @@ const props = withDefaults(defineProps<Props>(), {
   isCollapse: false,
 });
 
+const { t, te } = useI18n();
+
+// 使用主应用 i18n 实例进行翻译（与 tabbar 保持一致）
+function getMainAppI18n() {
+  if (typeof window !== 'undefined' && (window as any).__MAIN_APP_I18N__) {
+    return (window as any).__MAIN_APP_I18N__;
+  }
+  return null;
+}
+
+// 使用主应用 i18n 实例进行翻译（与 tabbar 的 translateWithMainI18n 保持一致）
+function translateWithMainI18n(key: string): string | null {
+  const mainAppI18n = getMainAppI18n();
+  if (mainAppI18n && mainAppI18n.global) {
+    const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+    const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+
+    // 直接访问消息对象，确保能访问到已合并的语言包
+    // vue-i18n 的 te 和 t 函数支持点号分隔的嵌套 key，所以这里先尝试扁平化访问
+    if (key in messages) {
+      const value = messages[key];
+      if (typeof value === 'string' && value.trim() !== '') {
+        return value;
+      } else if (typeof value === 'function') {
+        try {
+          const result = value({ normalize: (arr: any[]) => arr[0] });
+          if (typeof result === 'string' && result.trim() !== '') {
+            return result;
+          }
+        } catch {
+          // 如果函数调用失败，继续使用其他方法
+        }
+      }
+    }
+
+    // 如果直接访问失败，使用 te 和 t（vue-i18n 支持点号分隔的嵌套 key）
+    if (mainAppI18n.global.te(key, currentLocale)) {
+      const translated = mainAppI18n.global.t(key, currentLocale);
+      if (translated && typeof translated === 'string' && translated !== key && translated.trim() !== '') {
+        return translated;
+      }
+    }
+  }
+  return null;
+}
+
 // 获取菜单标题
-// 模仿 cool-admin-vue-7.x 的方式：title 已经是翻译后的文本，直接返回
+// 优先使用 labelKey 进行翻译，如果没有 labelKey 或翻译失败，则使用 title
 const getMenuTitle = (item: MenuItem): string => {
+  // 如果有 labelKey，尝试翻译
+  if (item.labelKey) {
+    // 优先使用主应用的 i18n 实例进行翻译（与 tabbar 保持一致）
+    const mainTranslated = translateWithMainI18n(item.labelKey);
+    if (mainTranslated) {
+      return mainTranslated;
+    }
+    
+    // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+    if (te(item.labelKey)) {
+      const translated = t(item.labelKey);
+      if (translated && typeof translated === 'string' && translated !== item.labelKey && translated.trim() !== '') {
+        return translated;
+      }
+    }
+  }
+  
+  // 如果没有 labelKey 或翻译失败，使用 title（可能是已翻译的文本或原始 key）
+  // 但如果 title 看起来像 key（包含点号），不直接返回，而是尝试翻译
+  if (item.title && item.title.includes('.')) {
+    // title 可能是 key，尝试翻译
+    const mainTranslated = translateWithMainI18n(item.title);
+    if (mainTranslated) {
+      return mainTranslated;
+    }
+    if (te(item.title)) {
+      const translated = t(item.title);
+      if (translated && typeof translated === 'string' && translated !== item.title && translated.trim() !== '') {
+        return translated;
+      }
+    }
+  }
+  
   return item.title || '';
 };
 

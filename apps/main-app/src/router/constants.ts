@@ -24,7 +24,7 @@ export const KNOWN_SUB_APP_PREFIXES = [
  */
 export const APP_NAME_MAP: Record<string, string> = {
   main: '概览',
-  system: '主模块',
+  system: '系统模块',
   admin: '管理模块',
   logistics: '物流模块',
   engineering: '工程模块',

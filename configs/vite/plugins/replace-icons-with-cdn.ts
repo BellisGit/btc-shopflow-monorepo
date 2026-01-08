@@ -4,7 +4,6 @@
  */
 
 import type { Plugin, ResolvedConfig } from 'vite';
-import { getEnvConfig } from '../../unified-env-config';
 
 export function replaceIconsWithCdnPlugin(): Plugin {
   let isProductionBuild = false;
@@ -25,6 +24,8 @@ export function replaceIconsWithCdnPlugin(): Plugin {
       }
 
       try {
+        // 延迟导入，避免在 vite.config.ts 加载时解析失败
+        const { getEnvConfig } = await import('@btc/shared-core/configs/unified-env-config');
         // 获取环境配置
         const envConfig = getEnvConfig();
         const cdnUrl = envConfig.cdn?.staticAssetsUrl;

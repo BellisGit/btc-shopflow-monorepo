@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getAppBySubdomain, getAppByPathPrefix, getSubApps } from '@configs/app-scanner';
+import { getAppBySubdomain, getSubApps } from '@btc/shared-core/configs/app-scanner';
 import { getAppIdFromPath } from '@btc/shared-core';
 
 export interface ProcessItem {
@@ -40,25 +40,8 @@ export function getCurrentAppFromPath(path: string): string {
   }
 
   // 使用统一的工具函数获取应用标识（优先从 app-scanner，回退到路径推断）
+  // 这个函数已经处理了主应用路由优先、排除公开应用的逻辑
   return getAppIdFromPath(path);
-
-  // 回退到路径匹配（开发环境或主域名访问时，使用应用扫描器）
-  const pathPrefix = path.split('/')[1] ? `/${path.split('/')[1]}` : '/';
-  const appByPath = getAppByPathPrefix(pathPrefix);
-  if (appByPath) {
-    return appByPath.id;
-  }
-
-  // 兼容旧代码的路径匹配（如果扫描器没有找到）
-  if (path.startsWith('/admin')) return 'admin';
-  if (path.startsWith('/logistics')) return 'logistics';
-  if (path.startsWith('/engineering')) return 'engineering';
-  if (path.startsWith('/quality')) return 'quality';
-  if (path.startsWith('/production')) return 'production';
-  if (path.startsWith('/finance')) return 'finance';
-  if (path.startsWith('/docs')) return 'docs';
-  if (path.startsWith('/operations')) return 'operations';
-  return 'system';
 }
 
 /**

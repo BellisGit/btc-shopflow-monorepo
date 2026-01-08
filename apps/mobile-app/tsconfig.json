@@ -24,7 +24,7 @@
       "@modules/*": ["src/modules/*"],
       "@db/*": ["src/db/*"],
       "@pwa/*": ["src/pwa/*"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../../packages/shared-core/src/configs/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/env.d.ts", "src/components.d.ts"],

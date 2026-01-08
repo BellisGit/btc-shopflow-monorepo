@@ -219,13 +219,14 @@ export function useComponentMenu(
     return componentLibrary.value.slice(0, 6);
   };
 
+  const { t } = useI18n();
   // 获取方向文本
   const getDirectionText = (direction: string) => {
     const directionMap: Record<string, string> = {
-      'top': '上方',
-      'right': '右侧',
-      'bottom': '下方',
-      'left': '左侧'
+      'top': t('common.strategy.designer.directions.top'),
+      'right': t('common.strategy.designer.directions.right'),
+      'bottom': t('common.strategy.designer.directions.bottom'),
+      'left': t('common.strategy.designer.directions.left')
     };
     return directionMap[direction] || '';
   };

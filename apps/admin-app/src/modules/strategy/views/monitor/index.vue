@@ -200,7 +200,8 @@ const configureAlerts = (strategy: Strategy) => {
 
 
 const handleAlertSave = () => {
-  BtcMessage.success('告警配置保存成功');
+  const { t } = useI18n();
+  BtcMessage.success(t('common.strategy.monitor.alert_save_success'));
   showAlertsDialog.value = false;
 };
 

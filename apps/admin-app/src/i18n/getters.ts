@@ -16,13 +16,44 @@ const configFiles = import.meta.glob<{ default: any }>(
 );
 
 // 初始化配置注册表（用于 columns 和 forms）
-import { registerConfigsFromGlob } from '@btc/shared-core';
+import { registerConfigsFromGlob, registerSubAppI18n } from '@btc/shared-core';
 registerConfigsFromGlob(configFiles);
 
 // 优化：使用 Object.assign 的优化版本，避免多次合并
 const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => {
   // 使用展开运算符和 Object.assign 的组合，性能更好
-  return Object.assign({}, ...sources.filter(Boolean));
+  const merged = Object.assign({}, ...sources.filter(Boolean));
+
+  // 处理函数值：如果值是函数（Vue I18n 编译后的消息函数），调用它获取字符串
+  const cleaned: any = {};
+  for (const key in merged) {
+    const value = merged[key];
+    if (typeof value === 'function') {
+      // Vue I18n 编译时优化，某些消息会被编译为函数
+      // 优先从 loc.source 获取原始消息模板（最可靠的方法，避免复杂的函数调用）
+      const locSource = (value as any).loc?.source;
+      if (typeof locSource === 'string') {
+        cleaned[key] = locSource;
+      } else {
+        // 如果没有 loc.source，尝试从其他可能的属性获取
+        const possibleSources = [
+          (value as any).source,
+          (value as any).message,
+          (value as any).template,
+        ];
+
+        const source = possibleSources.find(s => typeof s === 'string');
+        if (source) {
+          cleaned[key] = source;
+        }
+        // 如果所有方法都失败，静默跳过（这些是包含命名参数的消息，运行时会被正确翻译）
+      }
+    } else {
+      cleaned[key] = value;
+    }
+  }
+
+  return cleaned as T;
 };
 
 /**
@@ -78,8 +109,35 @@ function flattenObject(obj: any, prefix = '', result: Record<string, string> = {
           }
         }
       } else if (value !== null && value !== undefined) {
-        // 处理字符串值
-        result[newKey] = String(value);
+        // 处理各种类型的值
+        if (typeof value === 'string') {
+          result[newKey] = value;
+        } else if (typeof value === 'function') {
+          // Vue I18n 编译时优化，某些消息会被编译为函数
+          // 优先从 loc.source 获取原始消息模板（最可靠的方法，避免复杂的函数调用）
+          const locSource = (value as any).loc?.source;
+          if (typeof locSource === 'string') {
+            result[newKey] = locSource;
+          } else {
+            // 如果没有 loc.source，尝试从其他可能的属性获取
+            const possibleSources = [
+              (value as any).source,
+              (value as any).message,
+              (value as any).template,
+            ];
+
+            const source = possibleSources.find(s => typeof s === 'string');
+            if (source) {
+              result[newKey] = source;
+            } else {
+              // 如果所有方法都失败，静默跳过（这些是包含命名参数的消息，运行时会被正确翻译）
+              // 不打印警告，因为这些消息在运行时会被 Vue I18n 正确处理
+            }
+          }
+        } else {
+          // 其他类型转换为字符串
+          result[newKey] = String(value);
+        }
       }
     }
   }
@@ -90,16 +148,9 @@ function flattenObject(obj: any, prefix = '', result: Record<string, string> = {
  * 从 config.ts 文件中提取并合并国际化配置
  */
 function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string, string> } {
-  let mergedZhCN: any = {
-    app: {},
-    menu: {},
-    page: {},
-  };
-  let mergedEnUS: any = {
-    app: {},
-    menu: {},
-    page: {},
-  };
+  // 直接使用扁平化结构存储，避免多次转换
+  let flatZhCN: Record<string, string> = {};
+  let flatEnUS: Record<string, string> = {};
 
   // 遍历所有加载的 config.ts 文件
   for (const path in configFiles) {
@@ -110,61 +161,86 @@ function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string
     // 应用级配置格式：{ 'zh-CN': { app: {...}, menu: {...}, page: {...} }, 'en-US': {...} }
     if (path.includes('/locales/config.ts')) {
       if (config['zh-CN']) {
-        mergedZhCN = deepMerge(mergedZhCN, config['zh-CN']);
+        const flat = flattenObject(config['zh-CN']);
+        flatZhCN = { ...flatZhCN, ...flat };
       }
       if (config['en-US']) {
-        mergedEnUS = deepMerge(mergedEnUS, config['en-US']);
+        const flat = flattenObject(config['en-US']);
+        flatEnUS = { ...flatEnUS, ...flat };
       }
     } else {
+      // 处理模块级配置（src/modules/**/config.ts）
       const localeConfig = config.locale;
 
       if (localeConfig) {
-        // 页面级配置可能包含 app 和 menu（用于覆盖）
-        if (localeConfig.app) {
-          mergedZhCN.app = deepMerge(mergedZhCN.app, localeConfig.app);
-          mergedEnUS.app = deepMerge(mergedEnUS.app, localeConfig.app || {});
-        }
-        if (localeConfig.menu) {
-          mergedZhCN.menu = deepMerge(mergedZhCN.menu, localeConfig.menu);
-          mergedEnUS.menu = deepMerge(mergedEnUS.menu, localeConfig.menu || {});
-        }
-        // 将模块配置直接合并到顶层（不再使用 page 层级）
-        // localeConfig 中除了 app 和 menu 之外的所有键都是模块配置
-        for (const key in localeConfig) {
-          if (key !== 'app' && key !== 'menu' && key !== 'page') {
-            // 直接合并模块配置到顶层
-            if (!mergedZhCN[key]) {
-              mergedZhCN[key] = {};
-            }
-            if (!mergedEnUS[key]) {
-              mergedEnUS[key] = {};
-            }
-            mergedZhCN[key] = deepMerge(mergedZhCN[key], localeConfig[key]);
-            mergedEnUS[key] = deepMerge(mergedEnUS[key], localeConfig[key] || {});
+        // 检查是否是扁平结构（包含 'zh-CN' 和 'en-US' 键）
+        if (localeConfig['zh-CN'] || localeConfig['en-US']) {
+          // 扁平结构：localeConfig['zh-CN'] 已经是扁平化的键值对，直接合并
+          if (localeConfig['zh-CN']) {
+            flatZhCN = { ...flatZhCN, ...localeConfig['zh-CN'] };
           }
-        }
-        // 兼容旧格式：如果还有 page 层级，也处理（逐步迁移）
-        if (localeConfig.page) {
-          // 将 page 下的内容直接合并到顶层
-          for (const moduleKey in localeConfig.page) {
-            if (!mergedZhCN[moduleKey]) {
-              mergedZhCN[moduleKey] = {};
-            }
-            if (!mergedEnUS[moduleKey]) {
-              mergedEnUS[moduleKey] = {};
-            }
-            mergedZhCN[moduleKey] = deepMerge(mergedZhCN[moduleKey], localeConfig.page[moduleKey]);
-            mergedEnUS[moduleKey] = deepMerge(mergedEnUS[moduleKey], localeConfig.page[moduleKey] || {});
+          if (localeConfig['en-US']) {
+            flatEnUS = { ...flatEnUS, ...localeConfig['en-US'] };
           }
+        } else {
+          // 旧格式：嵌套结构（兼容处理）
+          // 先转换为嵌套结构，再扁平化
+          let nestedZhCN: any = {};
+          let nestedEnUS: any = {};
+          
+          // 页面级配置可能包含 app 和 menu（用于覆盖）
+          if (localeConfig.app) {
+            nestedZhCN.app = deepMerge(nestedZhCN.app || {}, localeConfig.app);
+            nestedEnUS.app = deepMerge(nestedEnUS.app || {}, localeConfig.app || {});
+          }
+          if (localeConfig.menu) {
+            nestedZhCN.menu = deepMerge(nestedZhCN.menu || {}, localeConfig.menu);
+            nestedEnUS.menu = deepMerge(nestedEnUS.menu || {}, localeConfig.menu || {});
+          }
+          // 将模块配置直接合并到顶层（不再使用 page 层级）
+          // localeConfig 中除了 app 和 menu 之外的所有键都是模块配置
+          for (const key in localeConfig) {
+            if (key !== 'app' && key !== 'menu' && key !== 'page') {
+              // 直接合并模块配置到顶层
+              if (!nestedZhCN[key]) {
+                nestedZhCN[key] = {};
+              }
+              if (!nestedEnUS[key]) {
+                nestedEnUS[key] = {};
+              }
+              nestedZhCN[key] = deepMerge(nestedZhCN[key], localeConfig[key]);
+              nestedEnUS[key] = deepMerge(nestedEnUS[key], localeConfig[key] || {});
+            }
+          }
+          // 兼容旧格式：如果还有 page 层级，也处理（逐步迁移）
+          if (localeConfig.page) {
+            // 将 page 下的内容直接合并到顶层
+            for (const moduleKey in localeConfig.page) {
+              if (!nestedZhCN[moduleKey]) {
+                nestedZhCN[moduleKey] = {};
+              }
+              if (!nestedEnUS[moduleKey]) {
+                nestedEnUS[moduleKey] = {};
+              }
+              nestedZhCN[moduleKey] = deepMerge(nestedZhCN[moduleKey], localeConfig.page[moduleKey]);
+              nestedEnUS[moduleKey] = deepMerge(nestedEnUS[moduleKey], localeConfig.page[moduleKey] || {});
+            }
+          }
+          
+          // 扁平化嵌套结构并合并
+          const flat = flattenObject(nestedZhCN);
+          flatZhCN = { ...flatZhCN, ...flat };
+          const flatEn = flattenObject(nestedEnUS);
+          flatEnUS = { ...flatEnUS, ...flatEn };
         }
       }
     }
   }
 
-  // 转换为扁平化结构
+  // 返回扁平化结构
   return {
-    zhCN: flattenObject(mergedZhCN),
-    enUS: flattenObject(mergedEnUS),
+    zhCN: flatZhCN,
+    enUS: flatEnUS,
   };
 }
 
@@ -226,62 +302,6 @@ export const getLocaleMessages = (): LocaleMessages => {
       'menu.ops.logs',
       'menu.strategy.management',
     ];
-
-    const missingZhKeys = menuKeys.filter(key => !zhCNMessages[key]);
-    const missingEnKeys = menuKeys.filter(key => !enUSMessages[key]);
-
-    if (missingZhKeys.length > 0) {
-      console.warn(`[i18n] Missing menu keys in zhCNMessages:`, missingZhKeys);
-      console.log('[i18n] Available menu keys in zhCNMessages:', Object.keys(zhCNMessages).filter(k => k.startsWith('menu.')).slice(0, 20));
-    }
-    if (missingEnKeys.length > 0) {
-      console.warn(`[i18n] Missing menu keys in enUSMessages:`, missingEnKeys);
-      console.log('[i18n] Available menu keys in enUSMessages:', Object.keys(enUSMessages).filter(k => k.startsWith('menu.')).slice(0, 20));
-    }
-
-    // 验证页面键（新格式：不再有 page. 前缀）
-    const pageKeys = [
-      'org.tenants.tenant_name',
-      'org.tenants.tenant_code',
-      'platform.domains.fields.domain_name',
-    ];
-
-    const missingPageZhKeys = pageKeys.filter(key => !zhCNMessages[key]);
-    const missingPageEnKeys = pageKeys.filter(key => !enUSMessages[key]);
-
-    if (missingPageZhKeys.length > 0) {
-      console.warn(`[i18n] Missing page keys in zhCNMessages:`, missingPageZhKeys);
-      // 查找模块相关的键（新格式：org.xxx, platform.xxx 等）
-      const moduleKeys = Object.keys(zhCNMessages).filter(k =>
-        k.startsWith('org.') || k.startsWith('platform.') || k.startsWith('access.') ||
-        k.startsWith('navigation.') || k.startsWith('governance.') || k.startsWith('strategy.') || k.startsWith('ops.')
-      ).slice(0, 20);
-      console.log('[i18n] Available module keys in zhCNMessages:', moduleKeys);
-    }
-    if (missingPageEnKeys.length > 0) {
-      console.warn(`[i18n] Missing page keys in enUSMessages:`, missingPageEnKeys);
-      // 查找模块相关的键（新格式：org.xxx, platform.xxx 等）
-      const moduleKeys = Object.keys(enUSMessages).filter(k =>
-        k.startsWith('org.') || k.startsWith('platform.') || k.startsWith('access.') ||
-        k.startsWith('navigation.') || k.startsWith('governance.') || k.startsWith('strategy.') || k.startsWith('ops.')
-      ).slice(0, 20);
-      console.log('[i18n] Available module keys in enUSMessages:', moduleKeys);
-    }
-
-    // 验证应用键
-    const appKeys = ['app.name', 'app.title'];
-    const missingAppZhKeys = appKeys.filter(key => !zhCNMessages[key]);
-    const missingAppEnKeys = appKeys.filter(key => !enUSMessages[key]);
-
-    if (missingAppZhKeys.length > 0) {
-      console.warn(`[i18n] Missing app keys in zhCNMessages:`, missingAppZhKeys);
-      console.log('[i18n] Available app keys in zhCNMessages:', Object.keys(zhCNMessages).filter(k => k.startsWith('app.')).slice(0, 10));
-    }
-    if (missingAppEnKeys.length > 0) {
-      console.warn(`[i18n] Missing app keys in enUSMessages:`, missingAppEnKeys);
-      console.log('[i18n] Available app keys in enUSMessages:', Object.keys(enUSMessages).filter(k => k.startsWith('app.')).slice(0, 10));
-    }
-
   }
 
     // 更新缓存（与物流域和财务域保持一致，只返回标准格式）
@@ -361,12 +381,7 @@ export function tSync(key: string): string {
 
 // 关键：在模块加载时就注册国际化消息获取器，而不是等到 createAdminApp
 // 这样可以确保主应用在 beforeMount 时就能获取到动态生成的国际化消息
+// 使用统一的 registerSubAppI18n 工具函数，保持与其他应用一致
 if (typeof window !== 'undefined') {
-  const ADMIN_APP_ID = 'admin';
-  // 在模块加载完成时立即注册（同步执行）
-  if (!(window as any).__SUBAPP_I18N_GETTERS__) {
-    (window as any).__SUBAPP_I18N_GETTERS__ = new Map();
-  }
-  // 注册 getLocaleMessages 函数
-  (window as any).__SUBAPP_I18N_GETTERS__.set(ADMIN_APP_ID, getLocaleMessages);
+  registerSubAppI18n('admin', configFiles);
 }

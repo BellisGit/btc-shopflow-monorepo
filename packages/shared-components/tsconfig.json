@@ -22,7 +22,7 @@
       "@charts-composables/*": ["src/charts/composables/*"],
       "@btc/shared-core": ["../shared-core/dist/src"],
       "@btc/shared-core/*": ["../shared-core/dist/*", "../shared-core/dist/src/*"],
-      "@configs/*": ["../../configs/*"],
+      "@configs/*": ["../shared-core/src/configs/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"]
     }

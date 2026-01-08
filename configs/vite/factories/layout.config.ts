@@ -156,9 +156,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
         // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
         // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
         dist: resolve(appDir, 'build', 'eps'),
-        // 共享的 EPS 数据源目录（从 system-app 读取）
-        // layout-app 优先从 system-app 的 build/eps 读取 EPS 数据，实现真正的共享
-        sharedEpsDir: resolve(appDir, '../system-app/build/eps'),
+        // 共享的 EPS 数据源目录（从 main-app 读取）
+        // layout-app 优先从 main-app 的 build/eps 读取 EPS 数据，实现真正的共享
+        sharedEpsDir: resolve(appDir, '../main-app/build/eps'),
         api: '/api/login/eps/contract',
         ...btcOptions.eps,
       },
@@ -507,7 +507,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
               id.includes('packages/shared-components/src/store/menuRegistry') ||
               id.includes('configs/layout-bridge') ||
               id.includes('@btc/subapp-manifests') ||
-              id.includes('@configs/layout-bridge')) {
+              id.includes('@btc/shared-core/configs/layout-bridge')) {
             return 'menu-registry';
           }
           if (id.includes('node_modules/monaco-editor')) {
@@ -564,7 +564,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
   const rootDistDir = resolve(appDir, '../../dist');
   const previewRoot = resolve(rootDistDir, appConfig.prodHost);
-  
+
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     host: appConfig.preHost,
@@ -631,9 +631,9 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
       // Vite 会在运行时自动发现并优化这些依赖，不需要在 include 中显式声明
     ],
     exclude: [
-      // 关键：@configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 关键：@btc/shared-core/configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
       // 注意：exclude 只支持字符串模式，不支持正则表达式
-      '@configs/layout-bridge',
+      '@btc/shared-core/configs/layout-bridge',
       // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
       // 在开发环境中，应该直接从源码导入，而不是预构建
       // 这样可以避免 JSX 解析问题
@@ -643,9 +643,6 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
     // 注意：不再包含 shared-components/src/index.ts，因为它包含 TSX 文件，应该在运行时直接处理
     entries: [
       resolve(appDir, 'src/main.ts'),
-      // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
-      // 这样 file-saver 等依赖就能在启动时被识别
-      resolve(appDir, '../../packages/shared-core/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],
@@ -659,7 +656,7 @@ export function createLayoutAppViteConfig(options: LayoutAppViteConfigOptions): 
   // 返回完整配置
   // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
   const baseResolve = createBaseResolve(appDir, appName);
-  
+
   return {
     base: baseUrl,
     publicDir,

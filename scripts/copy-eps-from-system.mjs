@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 将 system-app 的 EPS 产物复制到其他子应用
+ * 将 main-app 的 EPS 产物复制到其他子应用
  * 确保所有子应用都能共享相同的 EPS 数据
  */
 
@@ -13,8 +13,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, '..');
 
-// system-app 的 EPS 数据源
-const SYSTEM_EPS_DIR = join(PROJECT_ROOT, 'apps/system-app/build/eps');
+// main-app 的 EPS 数据源
+const MAIN_EPS_DIR = join(PROJECT_ROOT, 'apps/main-app/build/eps');
 
 // 需要复制 EPS 数据的子应用列表
 const SUB_APPS = [
@@ -24,6 +24,7 @@ const SUB_APPS = [
   'quality-app',
   'production-app',
   'finance-app',
+  'system-app',
   'layout-app',
 ];
 
@@ -44,25 +45,25 @@ const log = {
 };
 
 function copyEpsData() {
-  // 检查 system-app 的 EPS 数据是否存在
-  if (!existsSync(SYSTEM_EPS_DIR)) {
-    log.error(`system-app 的 EPS 数据目录不存在: ${SYSTEM_EPS_DIR}`);
-    log.info('请先构建 system-app 以生成 EPS 数据');
+  // 检查 main-app 的 EPS 数据是否存在
+  if (!existsSync(MAIN_EPS_DIR)) {
+    log.error(`main-app 的 EPS 数据目录不存在: ${MAIN_EPS_DIR}`);
+    log.info('请先构建 main-app 以生成 EPS 数据');
     process.exit(1);
   }
 
   // 检查 EPS 数据文件是否存在
-  const epsJsonPath = join(SYSTEM_EPS_DIR, 'eps.json');
+  const epsJsonPath = join(MAIN_EPS_DIR, 'eps.json');
   if (!existsSync(epsJsonPath)) {
-    log.error(`system-app 的 EPS 数据文件不存在: ${epsJsonPath}`);
-    log.info('请先构建 system-app 以生成 EPS 数据');
+    log.error(`main-app 的 EPS 数据文件不存在: ${epsJsonPath}`);
+    log.info('请先构建 main-app 以生成 EPS 数据');
     process.exit(1);
   }
 
   log.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  log.info('📦 复制 system-app 的 EPS 数据到其他子应用');
+  log.info('📦 复制 main-app 的 EPS 数据到其他子应用');
   log.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  log.info(`EPS 数据源: ${SYSTEM_EPS_DIR}`);
+  log.info(`EPS 数据源: ${MAIN_EPS_DIR}`);
   log.info('');
 
   let successCount = 0;
@@ -90,10 +91,10 @@ function copyEpsData() {
 
     // 复制所有 EPS 文件
     try {
-      const files = readdirSync(SYSTEM_EPS_DIR);
+      const files = readdirSync(MAIN_EPS_DIR);
       
       for (const file of files) {
-        const sourcePath = join(SYSTEM_EPS_DIR, file);
+        const sourcePath = join(MAIN_EPS_DIR, file);
         const targetPath = join(targetEpsDir, file);
 
         // 只复制文件，不复制目录

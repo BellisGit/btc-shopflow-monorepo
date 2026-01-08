@@ -35,8 +35,8 @@ function extractSubAppName(path: string): string | null {
 async function extractSubAppNameFromHost(hostname: string): Promise<string | null> {
   try {
     // 使用统一的环境检测和配置
-    const { getEnvironment } = await import('@configs/unified-env-config');
-    const { getAppConfigByTestHost, getAppConfigByPrePort, getAppConfig, getAppConfigByDevPort } = await import('@configs/app-env.config');
+    const { getEnvironment } = await import('@btc/shared-core/configs/unified-env-config');
+    const { getAppConfigByTestHost, getAppConfigByPrePort, getAppConfig, getAppConfigByDevPort } = await import('@btc/shared-core/configs/app-env.config');
 
     const env = getEnvironment();
     const port = typeof window !== 'undefined' ? window.location.port || '' : '';
@@ -46,7 +46,7 @@ async function extractSubAppNameFromHost(hostname: string): Promise<string | nul
       const appConfig = getAppConfigByTestHost(hostname);
       if (!appConfig && env === 'production') {
         // 生产环境：尝试通过所有配置查找匹配的子域名
-        const { APP_ENV_CONFIGS } = await import('@configs/app-env.config');
+        const { APP_ENV_CONFIGS } = await import('@btc/shared-core/configs/app-env.config');
         const matched = APP_ENV_CONFIGS.find(config => config.prodHost === hostname);
         if (matched) {
           return matched.appName.replace('-app', '');
@@ -243,8 +243,8 @@ export async function buildLogoutUrlWithFullUrl(baseLoginUrl: string = '/login')
 
   try {
     // 使用统一的环境检测
-    const { getEnvironment, getCurrentSubApp } = await import('@configs/unified-env-config');
-    const { getAppConfig } = await import('@configs/app-env.config');
+    const { getEnvironment, getCurrentSubApp } = await import('@btc/shared-core/configs/unified-env-config');
+    const { getAppConfig } = await import('@btc/shared-core/configs/app-env.config');
 
     const env = getEnvironment();
     const currentSubApp = getCurrentSubApp();
@@ -367,7 +367,7 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
     try {
       const url = new URL(redirectPath);
       // 动态获取允许的主机列表（从配置中读取，支持测试环境）
-      const { APP_ENV_CONFIGS } = await import('@configs/app-env.config');
+      const { APP_ENV_CONFIGS } = await import('@btc/shared-core/configs/app-env.config');
       const allowedHosts = new Set<string>([
         'bellis.com.cn',
         'test.bellis.com.cn',
@@ -445,8 +445,8 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
 
   try {
     // 使用统一的环境检测和配置
-    const { getEnvironment } = await import('@configs/unified-env-config');
-    const { getAppConfig } = await import('@configs/app-env.config');
+    const { getEnvironment } = await import('@btc/shared-core/configs/unified-env-config');
+    const { getAppConfig } = await import('@btc/shared-core/configs/app-env.config');
 
     const env = getEnvironment();
     const protocol = window.location.protocol;

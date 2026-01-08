@@ -52,10 +52,10 @@
       "labelKey": "menu.finance.inventory_management",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.finance.inventoryManagement"
+        "labelKey": "menu.finance.inventory_management"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.finance.inventoryManagement", "icon": "Box" }
+        { "labelKey": "menu.finance.inventory_management", "icon": "Box" }
       ]
     },
     {
@@ -63,11 +63,11 @@
       "labelKey": "menu.finance.inventory_management.result",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.finance.inventoryManagement.result"
+        "labelKey": "menu.finance.inventory_management.result"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.finance.inventoryManagement", "icon": "Box" },
-        { "labelKey": "menu.finance.inventoryManagement.result", "icon": "List" }
+        { "labelKey": "menu.finance.inventory_management", "icon": "Box" },
+        { "labelKey": "menu.finance.inventory_management.result", "icon": "List" }
       ]
     }
   ],
@@ -76,13 +76,9 @@
       "index": "/inventory",
       "labelKey": "menu.finance.inventory_management",
       "children": [
-        { "index": "/inventory/result", "labelKey": "menu.finance.inventoryManagement.result" }
+        { "index": "/inventory/result", "labelKey": "menu.finance.inventory_management.result" }
       ]
     }
-  ],
-  "locales": {
-    "zh-CN": "src/locales/zh-CN.json",
-    "en-US": "src/locales/en-US.json"
-  }
+  ]
 }
 

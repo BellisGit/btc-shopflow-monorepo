@@ -1,6 +1,6 @@
 ﻿export default {
   name: 'access',
-  label: '权限管理',
-  description: '资源、操作、权限、角色管理',
+  label: 'platform.access.label',
+  description: 'platform.access.description',
   order: 3
 };

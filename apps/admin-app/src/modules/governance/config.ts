@@ -8,37 +8,67 @@ import type { TableColumn, FormItem } from '@btc/shared-components';
 import { service } from '@services/eps';
 
 export default {
+  // 国际化配置（扁平结构）
   locale: {
-    governance: {
-        dictionary: {
-          fields: {
-            field_name: '字段名称',
-            field_code: '字典编码',
-            entity_class: '实体类名',
-            domain_id: '域ID',
-            remark: '备注',
-          },
-          values: {
-            type_code: '字典类型编码',
-            value: '字典值',
-            label: '字典标签',
-            sort: '排序',
-          },
-        },
-        files: {
-          templates: {
-            fields: {
-              template_name: '模板名称',
-              template_code: '模板编码',
-              category: '模板分类',
-              version: '版本号',
-              status: '状态',
-              description: '模板描述',
-            },
-          },
-        },
-      },
+    'zh-CN': {
+      // 菜单配置
+      'menu.governance': '数据治理',
+      'menu.data.files': '文件管理',
+      'menu.data.files.templates': '模板管理',
+      'menu.data.dictionary': '字典管理',
+      'menu.data.dictionary.fields': '字段管理',
+      'menu.data.dictionary.values': '字典值管理',
+      // 字典相关
+      'governance.dictionary.fields.field_name': '字段名称',
+      'governance.dictionary.fields.field_code': '字典编码',
+      'governance.dictionary.fields.entity_class': '实体类名',
+      'governance.dictionary.fields.domain_id': '域ID',
+      'governance.dictionary.fields.remark': '备注',
+      'governance.dictionary.values.type_code': '字典类型编码',
+      'governance.dictionary.values.value': '字典值',
+      'governance.dictionary.values.label': '字典标签',
+      'governance.dictionary.values.sort': '排序',
+      // 文件相关
+      'governance.files.templates.fields.template_name': '模板名称',
+      'governance.files.templates.fields.template_code': '模板编码',
+      'governance.files.templates.fields.category': '模板分类',
+      'governance.files.templates.fields.version': '版本号',
+      'governance.files.templates.fields.status': '状态',
+      'governance.files.templates.fields.description': '模板描述',
+      'governance.files.templates.categories.approval': '审批流程',
+      'governance.files.templates.categories.purchase': '采购流程',
+      'governance.files.templates.categories.other': '其他',
     },
+    'en-US': {
+      // 菜单配置
+      'menu.governance': 'Data Governance',
+      'menu.data.files': 'File Management',
+      'menu.data.files.templates': 'Template Management',
+      'menu.data.dictionary': 'Dictionary Management',
+      'menu.data.dictionary.fields': 'Field Management',
+      'menu.data.dictionary.values': 'Dictionary Value Management',
+      // 字典相关
+      'governance.dictionary.fields.field_name': 'Field Name',
+      'governance.dictionary.fields.field_code': 'Dictionary Code',
+      'governance.dictionary.fields.entity_class': 'Entity Class',
+      'governance.dictionary.fields.domain_id': 'Domain ID',
+      'governance.dictionary.fields.remark': 'Remark',
+      'governance.dictionary.values.type_code': 'Dictionary Type Code',
+      'governance.dictionary.values.value': 'Dictionary Value',
+      'governance.dictionary.values.label': 'Dictionary Label',
+      'governance.dictionary.values.sort': 'Sort',
+      // 文件相关
+      'governance.files.templates.fields.template_name': 'Template Name',
+      'governance.files.templates.fields.template_code': 'Template Code',
+      'governance.files.templates.fields.category': 'Template Category',
+      'governance.files.templates.fields.version': 'Version',
+      'governance.files.templates.fields.status': 'Status',
+      'governance.files.templates.fields.description': 'Template Description',
+      'governance.files.templates.categories.approval': 'Approval Process',
+      'governance.files.templates.categories.purchase': 'Purchase Process',
+      'governance.files.templates.categories.other': 'Other',
+    },
+  },
 
   columns: {
     'governance.dictionary.fields': [
@@ -97,9 +127,9 @@ export default {
         component: {
           name: 'el-select',
           options: [
-            { label: '审批流程', value: 'APPROVAL' },
-            { label: '采购流程', value: 'PURCHASE' },
-            { label: '其他', value: 'OTHER' },
+            { label: 'governance.files.templates.categories.approval', value: 'APPROVAL' },
+            { label: 'governance.files.templates.categories.purchase', value: 'PURCHASE' },
+            { label: 'governance.files.templates.categories.other', value: 'OTHER' },
           ],
         },
       },

@@ -2,13 +2,13 @@
   "app": {
     "id": "logistics",
     "basePath": "/logistics",
-    "nameKey": "menu.logistics.overview",
+    "nameKey": "menu.overview",
     "app-name": "domain.type.logistics"
   },
   "routes": [
     {
       "path": "/",
-      "labelKey": "menu.logistics.overview",
+      "labelKey": "menu.overview",
       "tab": {
         "enabled": false
       },
@@ -16,189 +16,189 @@
     },
     {
       "path": "/procurement",
-      "labelKey": "menu.logistics.procurement_module",
+      "labelKey": "menu.procurement",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.procurement_module"
+        "labelKey": "menu.procurement"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.procurement_module", "icon": "ShoppingCart" }
+        { "labelKey": "menu.procurement", "icon": "ShoppingCart" }
       ]
     },
     {
       "path": "/procurement/auxiliary",
-      "labelKey": "menu.logistics.procurement.auxiliary",
+      "labelKey": "menu.procurement.auxiliary",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.procurement.auxiliary"
+        "labelKey": "menu.procurement.auxiliary"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.procurement_module", "icon": "ShoppingCart" },
-        { "labelKey": "menu.logistics.procurement.auxiliary", "icon": "Collection" }
+        { "labelKey": "menu.procurement", "icon": "ShoppingCart" },
+        { "labelKey": "menu.procurement.auxiliary", "icon": "Collection" }
       ]
     },
     {
       "path": "/procurement/packaging",
-      "labelKey": "menu.logistics.procurement.packaging",
+      "labelKey": "menu.procurement.packaging",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.procurement.packaging"
+        "labelKey": "menu.procurement.packaging"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.procurement_module", "icon": "ShoppingCart" },
-        { "labelKey": "menu.logistics.procurement.packaging", "icon": "CollectionTag" }
+        { "labelKey": "menu.procurement", "icon": "ShoppingCart" },
+        { "labelKey": "menu.procurement.packaging", "icon": "CollectionTag" }
       ]
     },
     {
       "path": "/procurement/supplier",
-      "labelKey": "menu.logistics.procurement.supplier",
+      "labelKey": "menu.procurement.supplier",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.procurement.supplier"
+        "labelKey": "menu.procurement.supplier"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.procurement_module", "icon": "ShoppingCart" },
-        { "labelKey": "menu.logistics.procurement.supplier", "icon": "User" }
+        { "labelKey": "menu.procurement", "icon": "ShoppingCart" },
+        { "labelKey": "menu.procurement.supplier", "icon": "User" }
       ]
     },
     {
       "path": "/warehouse",
-      "labelKey": "menu.logistics.warehouse_module",
+      "labelKey": "menu.warehouse",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.warehouse_module"
+        "labelKey": "menu.warehouse"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouse_module", "icon": "FolderOpened" }
+        { "labelKey": "menu.warehouse", "icon": "FolderOpened" }
       ]
     },
     {
       "path": "/warehouse/material",
-      "labelKey": "menu.logistics.warehouse.material",
+      "labelKey": "menu.warehouse.material",
       "tab": {
         "enabled": false
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouse_module", "icon": "FolderOpened" },
-        { "labelKey": "menu.logistics.warehouse.material", "icon": "Files" }
+        { "labelKey": "menu.warehouse", "icon": "FolderOpened" },
+        { "labelKey": "menu.warehouse.material", "icon": "Files" }
       ]
     },
     {
       "path": "/warehouse/material/list",
-      "labelKey": "menu.logistics.warehouse.material.list",
+      "labelKey": "menu.warehouse.material.list",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.warehouse.material.list"
+        "labelKey": "menu.warehouse.material.list"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.warehouse_module", "icon": "FolderOpened" },
-        { "labelKey": "menu.logistics.warehouse.material", "icon": "Files" },
-        { "labelKey": "menu.logistics.warehouse.material.list", "icon": "List" }
+        { "labelKey": "menu.warehouse", "icon": "FolderOpened" },
+        { "labelKey": "menu.warehouse.material", "icon": "Files" },
+        { "labelKey": "menu.warehouse.material.list", "icon": "List" }
       ]
     },
     {
       "path": "/customs",
-      "labelKey": "menu.logistics.customs_module",
+      "labelKey": "menu.customs_module",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.customs_module"
+        "labelKey": "menu.customs_module"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.customs_module", "icon": "MapLocation" }
+        { "labelKey": "menu.customs_module", "icon": "MapLocation" }
       ]
     },
     {
       "path": "/inventory",
-      "labelKey": "menu.logistics.inventory_management",
+      "labelKey": "menu.inventory_management",
       "tab": {
         "enabled": false
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.inventory_management", "icon": "Odometer" }
+        { "labelKey": "menu.inventory_management", "icon": "Odometer" }
       ]
     },
     {
       "path": "/inventory/storage-location",
-            "labelKey": "menu.logistics.inventory_management.storage_location",
+            "labelKey": "menu.inventory_management.storage_location",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.inventory_management.storage_location"
+        "labelKey": "menu.inventory_management.storage_location"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.inventory_management", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.inventory_management.storage_location", "icon": "Location" }
+        { "labelKey": "menu.inventory_management", "icon": "Odometer" },
+        { "labelKey": "menu.inventory_management.storage_location", "icon": "Location" }
       ]
     },
     {
       "path": "/inventory/info",
-      "labelKey": "menu.logistics.inventory_management.info",
+      "labelKey": "menu.inventory_management.info",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.inventory_management.info"
+        "labelKey": "menu.inventory_management.info"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.inventory_management", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.inventory_management.info", "icon": "Document" }
+        { "labelKey": "menu.inventory_management", "icon": "Odometer" },
+        { "labelKey": "menu.inventory_management.info", "icon": "Document" }
       ]
     },
     {
       "path": "/inventory/detail",
-      "labelKey": "menu.logistics.inventory_management.detail",
+      "labelKey": "menu.inventory_management.detail",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.inventory_management.detail"
+        "labelKey": "menu.inventory_management.detail"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.inventory_management", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.inventory_management.detail", "icon": "Histogram" }
+        { "labelKey": "menu.inventory_management", "icon": "Odometer" },
+        { "labelKey": "menu.inventory_management.detail", "icon": "Histogram" }
       ]
     },
     {
       "path": "/inventory/result",
-      "labelKey": "menu.logistics.inventory_management.result",
+      "labelKey": "menu.inventory_management.result",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.logistics.inventory_management.result"
+        "labelKey": "menu.inventory_management.result"
       },
       "breadcrumbs": [
-        { "labelKey": "menu.logistics.inventory_management", "icon": "Odometer" },
-        { "labelKey": "menu.logistics.inventory_management.result", "icon": "List" }
+        { "labelKey": "menu.inventory_management", "icon": "Odometer" },
+        { "labelKey": "menu.inventory_management.result", "icon": "List" }
       ]
     }
   ],
   "menus": [
     {
       "index": "/procurement",
-      "labelKey": "menu.logistics.procurement_module",
+      "labelKey": "menu.procurement",
       "icon": "svg:cart",
       "children": [
-        { "index": "/procurement/auxiliary", "labelKey": "menu.logistics.procurement.auxiliary" },
-        { "index": "/procurement/packaging", "labelKey": "menu.logistics.procurement.packaging" },
-        { "index": "/procurement/supplier", "labelKey": "menu.logistics.procurement.supplier" }
+        { "index": "/procurement/auxiliary", "labelKey": "menu.procurement.auxiliary" },
+        { "index": "/procurement/packaging", "labelKey": "menu.procurement.packaging" },
+        { "index": "/procurement/supplier", "labelKey": "menu.procurement.supplier" }
       ]
     },
     {
       "index": "/warehouse",
-      "labelKey": "menu.logistics.warehouse_module",
+      "labelKey": "menu.warehouse",
       "icon": "svg:folder",
       "children": [
-        { "index": "/warehouse/material/list", "labelKey": "menu.logistics.warehouse.material" }
+        { "index": "/warehouse/material/list", "labelKey": "menu.warehouse.material" }
       ]
     },
     {
       "index": "/customs",
-      "labelKey": "menu.logistics.customs_module",
+      "labelKey": "menu.customs_module",
       "icon": "svg:map"
     },
     {
       "index": "/inventory",
-      "labelKey": "menu.logistics.inventory_management",
+      "labelKey": "menu.inventory_management",
       "icon": "Setting",
       "children": [
-        { "index": "/inventory/storage-location", "labelKey": "menu.logistics.inventory_management.storage_location" },
-        { "index": "/inventory/info", "labelKey": "menu.logistics.inventory_management.info" },
-        { "index": "/inventory/detail", "labelKey": "menu.logistics.inventory_management.detail" },
-        { "index": "/inventory/result", "labelKey": "menu.logistics.inventory_management.result" }
+        { "index": "/inventory/storage-location", "labelKey": "menu.inventory_management.storage_location" },
+        { "index": "/inventory/info", "labelKey": "menu.inventory_management.info" },
+        { "index": "/inventory/detail", "labelKey": "menu.inventory_management.detail" },
+        { "index": "/inventory/result", "labelKey": "menu.inventory_management.result" }
       ]
     }
   ],
@@ -207,7 +207,7 @@
       {
         "id": "logistics-procurement",
         "title": "采购模块",
-        "labelKey": "menu.logistics.procurement_module",
+        "labelKey": "menu.procurement",
         "icon": "svg:cart",
         "sort": 1,
         "showInOverview": true,
@@ -215,16 +215,16 @@
         "children": [
           {
             "id": "logistics-procurement-auxiliary",
-            "title": "辅助采购",
-            "labelKey": "menu.logistics.procurement.auxiliary",
+            "title": "辅料管理",
+            "labelKey": "menu.procurement.auxiliary",
             "path": "/procurement/auxiliary",
             "sort": 1,
             "showInOverview": true
           },
           {
             "id": "logistics-procurement-packaging",
-            "title": "包装管理",
-            "labelKey": "menu.logistics.procurement.packaging",
+            "title": "包材管理",
+            "labelKey": "menu.procurement.packaging",
             "path": "/procurement/packaging",
             "sort": 2,
             "showInOverview": true
@@ -232,7 +232,7 @@
           {
             "id": "logistics-procurement-supplier",
             "title": "供应商管理",
-            "labelKey": "menu.logistics.procurement.supplier",
+            "labelKey": "menu.procurement.supplier",
             "path": "/procurement/supplier",
             "sort": 3,
             "showInOverview": true
@@ -242,7 +242,7 @@
       {
         "id": "logistics-warehouse",
         "title": "仓储模块",
-        "labelKey": "menu.logistics.warehouse_module",
+        "labelKey": "menu.warehouse",
         "icon": "svg:folder",
         "sort": 2,
         "showInOverview": true,
@@ -251,7 +251,7 @@
           {
             "id": "logistics-warehouse-material",
             "title": "物料管理",
-            "labelKey": "menu.logistics.warehouse.material",
+            "labelKey": "menu.warehouse.material",
             "path": "/warehouse/material/list",
             "sort": 1,
             "showInOverview": true
@@ -261,7 +261,7 @@
       {
         "id": "logistics-inventory",
         "title": "库存管理",
-        "labelKey": "menu.logistics.inventory_management",
+        "labelKey": "menu.inventory_management",
         "icon": "Setting",
         "sort": 3,
         "showInOverview": true,
@@ -270,7 +270,7 @@
           {
             "id": "logistics-inventory-storage-location",
             "title": "库位管理",
-            "labelKey": "menu.logistics.inventory_management.storage_location",
+            "labelKey": "menu.inventory_management.storage_location",
             "path": "/inventory/storage-location",
             "sort": 1,
             "showInOverview": true
@@ -278,7 +278,7 @@
           {
             "id": "logistics-inventory-info",
             "title": "库存信息",
-            "labelKey": "menu.logistics.inventory_management.info",
+            "labelKey": "menu.inventory_management.info",
             "path": "/inventory/info",
             "sort": 2,
             "showInOverview": true
@@ -286,7 +286,7 @@
           {
             "id": "logistics-inventory-detail",
             "title": "库存明细",
-            "labelKey": "menu.logistics.inventory_management.detail",
+            "labelKey": "menu.inventory_management.detail",
             "path": "/inventory/detail",
             "sort": 3,
             "showInOverview": true
@@ -294,7 +294,7 @@
           {
             "id": "logistics-inventory-result",
             "title": "盘点结果",
-            "labelKey": "menu.logistics.inventory_management.result",
+            "labelKey": "menu.inventory_management.result",
             "path": "/inventory/result",
             "sort": 4,
             "showInOverview": true
@@ -302,10 +302,6 @@
         ]
       }
     ]
-  },
-  "locales": {
-    "zh-CN": "src/locales/zh-CN.json",
-    "en-US": "src/locales/en-US.json"
   }
 }
 

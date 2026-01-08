@@ -21,7 +21,7 @@ import {
 import type { MonitorAppContext as OperationsAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
-import { isMainApp } from '@configs/unified-env-config';
+import { isMainApp } from '@btc/shared-core/configs/unified-env-config';
 
 // 注入 isMainApp 函数到 shared-components（异步导入，避免构建时错误）
 import('@btc/shared-components').then((utils: any) => {

@@ -12,6 +12,7 @@ import {
 import type { EngineeringAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { tSync } from './i18n/getters';
 
 let context: EngineeringAppContext | null = null;
 
@@ -67,12 +68,12 @@ const render = async (props: QiankunProps = {}) => {
       const sharedCore = await import('@btc/shared-core');
       appLoadingService = sharedCore.appLoadingService;
       if (appLoadingService) {
-        appLoadingService.show('工程模块');
+        appLoadingService.show(tSync('common.system.engineering_module'));
       }
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[engineering-app] 无法显示应用级 loading:', error);
+        console.warn(`[engineering-app] ${tSync('common.error.cannot_display_loading')}:`, error);
       }
     }
   }
@@ -108,7 +109,7 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('渲染失败:', error);
+    console.error(`${tSync('common.error.render_failed')}:`, error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading

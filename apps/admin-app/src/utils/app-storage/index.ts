@@ -323,7 +323,7 @@ class AppStorageManager {
         try {
           listener(key, newValue, oldValue);
         } catch (error) {
-          console.error(`[AppStorage] 监听器执行出错 (key: ${key}):`, error);
+          console.error(`[AppStorage] Listener execution error (key: ${key}):`, error);
         }
       });
     }

@@ -115,13 +115,13 @@ export class MockStrategyService implements StrategyService {
     this.strategies = [
       {
         id: '1',
-        name: '用户权限验证策略',
-        description: '验证用户是否有权限访问特定资源',
+        name: 'User Permission Verification Strategy',
+        description: 'Verify if user has permission to access specific resource',
         type: StrategyType.PERMISSION,
         status: StrategyStatus.ACTIVE,
         version: '1.0.0',
         priority: 100,
-        tags: ['权限', '安全'],
+        tags: ['Permission', 'Security'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: 'admin',
@@ -131,7 +131,7 @@ export class MockStrategyService implements StrategyService {
             id: 'rule1',
             expression: 'user.roles.includes("admin") || user.permissions.includes(resource.permission)',
             variables: { resource: { permission: 'read' } },
-            description: '管理员或有权限的用户可以访问'
+            description: 'Admin or authorized users can access'
           }
         ],
         conditions: [
@@ -158,13 +158,13 @@ export class MockStrategyService implements StrategyService {
       },
       {
         id: '2',
-        name: '订单审批流程策略',
-        description: '根据订单金额和用户级别确定审批流程',
+        name: 'Order Approval Process Strategy',
+        description: 'Determine approval process based on order amount and user level',
         type: StrategyType.BUSINESS,
         status: StrategyStatus.TESTING,
         version: '1.2.0',
         priority: 200,
-        tags: ['审批', '订单'],
+        tags: ['Approval', 'Order'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdBy: 'admin',
@@ -202,9 +202,9 @@ export class MockStrategyService implements StrategyService {
     this.templates = [
       {
         id: 'tpl1',
-        name: 'RBAC权限验证模板',
-        description: '基于角色的访问控制模板',
-        category: '权限控制',
+        name: 'RBAC Permission Verification Template',
+        description: 'Role-based access control template',
+        category: 'Permission Control',
         type: StrategyType.PERMISSION,
         template: {
           rules: [
@@ -233,22 +233,22 @@ export class MockStrategyService implements StrategyService {
             type: 'string',
             defaultValue: 'user',
             required: true,
-            description: '所需角色'
+            description: 'Required role'
           },
           {
             name: 'userRole',
             type: 'string',
             required: true,
-            description: '用户角色'
+            description: 'User role'
           },
           {
             name: 'resourceName',
             type: 'string',
             required: true,
-            description: '资源名称'
+            description: 'Resource name'
           }
         ],
-        tags: ['RBAC', '权限', '模板'],
+        tags: ['RBAC', 'Permission', 'Template'],
         createdAt: new Date().toISOString(),
         createdBy: 'system'
       }
@@ -488,8 +488,8 @@ export class MockStrategyService implements StrategyService {
 
     // 从模板创建策略（简化实现）
     const strategy: Omit<Strategy, 'id' | 'createdAt' | 'updatedAt'> = {
-      name: `基于${template.name}的策略`,
-      description: `从模板${template.name}创建`,
+      name: `Strategy based on ${template.name}`,
+      description: `Created from template ${template.name}`,
       type: template.type,
       status: StrategyStatus.DRAFT,
       version: '1.0.0',
@@ -545,12 +545,12 @@ export class MockStrategyService implements StrategyService {
 
     // 简单验证逻辑
     if (orchestration.nodes.length === 0) {
-      errors.push('编排图必须包含至少一个节点');
+      errors.push('Orchestration must contain at least one node');
     }
 
     const startNodes = orchestration.nodes.filter(n => n.type === 'START');
     if (startNodes.length === 0) {
-      errors.push('编排图必须包含一个开始节点');
+      errors.push('Orchestration must contain a start node');
     }
 
     return {

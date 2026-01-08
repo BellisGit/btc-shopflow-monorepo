@@ -68,7 +68,7 @@ export const createPersonnelApp = async (props: QiankunProps = {}): Promise<Pers
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const layoutBridgeModule = await import('@configs/layout-bridge');
+    const layoutBridgeModule = await import('@btc/shared-core/configs/layout-bridge');
     const layoutBridge = layoutBridgeModule as unknown as {
       registerManifestMenusForApp: (appId: string) => void;
       registerManifestTabsForApp: (appId: string) => void;

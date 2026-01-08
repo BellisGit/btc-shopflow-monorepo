@@ -16,6 +16,7 @@ import type { App } from 'vue';
 import { usePluginManager } from '@btc/shared-core';
 import router from '../router';
 import { discoverSystemPlugins } from './auto-discover';
+import { tSync } from '../i18n/getters';
 
 /**
  * 注册 layout-app 的通用插件
@@ -38,7 +39,7 @@ export async function registerLayoutPlugins(app: App) {
         await pluginManager.install(plugin.name);
       }
     } catch (error) {
-      console.error(`[layout-app] 注册插件失败: ${plugin.name}`, error);
+      console.error(`[layout-app] ${tSync('common.error.plugin_register_failed')}: ${plugin.name}`, error);
     }
   }
   

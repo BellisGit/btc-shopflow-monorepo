@@ -1,5 +1,6 @@
 ﻿import { computed, Ref } from 'vue';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 操作过滤逻辑
@@ -10,6 +11,7 @@ export function useActionFilter(
   resourceTreeRef: Ref<any>,
   resourceTree: Ref<any[]>
 ) {
+  const { t } = useI18n();
   const message = useMessage();
   
   const filteredActions = computed(() => {
@@ -39,7 +41,7 @@ export function useActionFilter(
     });
     
     if (filtered.length === 0) {
-      message.warning('当前选中的资源没有任何共同支持的操作');
+      message.warning(t('common.access.no_common_actions'));
     }
     
     return filtered;

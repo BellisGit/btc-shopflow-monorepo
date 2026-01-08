@@ -1,4 +1,5 @@
 ﻿import { ref, computed, type Ref } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import type { StrategyOrchestration, StrategyNode, StrategyConnection } from '@/types/strategy';
 import { strategyService } from '@/services/strategy';
@@ -10,8 +11,9 @@ export function useStrategyOperations(
   nodes: Ref<StrategyNode[]>,
   connections: Ref<StrategyConnection[]>
 ) {
+  const { t } = useI18n();
   // 策略信息
-  const strategyName = ref('新策略编排');
+  const strategyName = ref(t('common.strategy.designer.operations.new_orchestration'));
   const showPreview = ref(false);
 
   // 当前编排数据
@@ -34,14 +36,14 @@ export function useStrategyOperations(
       const result = await strategyService.validateOrchestration(currentOrchestration.value);
 
       if (result.valid) {
-        BtcMessage.success('策略编排验证通过');
+        BtcMessage.success(t('common.strategy.designer.operations.validation_passed'));
         return true;
       } else {
-        BtcMessage.error(`验证失败：${result.errors.join(', ')}`);
+        BtcMessage.error(`${t('common.strategy.designer.operations.validation_failed_prefix')}${result.errors.join(', ')}`);
         return false;
       }
     } catch (error) {
-      BtcMessage.error('验证失败');
+      BtcMessage.error(t('common.strategy.designer.operations.validation_failed'));
       return false;
     }
   };
@@ -49,7 +51,7 @@ export function useStrategyOperations(
   // 预览执行
   const previewExecution = () => {
     if (nodes.value.length === 0) {
-      BtcMessage.warning('请先添加节点');
+      BtcMessage.warning(t('common.strategy.designer.execution_preview.add_nodes_first'));
       return;
     }
 
@@ -59,16 +61,16 @@ export function useStrategyOperations(
   // 保存编排
   const saveOrchestration = async (strategyId?: string) => {
     if (!strategyId) {
-      BtcMessage.warning('请先选择或创建策略');
+      BtcMessage.warning(t('common.strategy.designer.operations.select_or_create_strategy_first'));
       return false;
     }
 
     try {
       await strategyService.updateOrchestration(strategyId, currentOrchestration.value);
-      BtcMessage.success('策略编排保存成功');
+      BtcMessage.success(t('common.strategy.designer.operations.save_success'));
       return true;
     } catch (error) {
-      BtcMessage.error('保存失败');
+      BtcMessage.error(t('common.save_failed'));
       return false;
     }
   };
@@ -84,11 +86,11 @@ export function useStrategyOperations(
         strategyName.value = orchestration.metadata.name;
       }
 
-      BtcMessage.success('策略编排加载成功');
+      BtcMessage.success(t('common.strategy.designer.operations.load_success'));
       return orchestration;
     } catch (error) {
       console.error('Failed to load orchestration:', error);
-      BtcMessage.error('加载策略编排失败');
+      BtcMessage.error(t('common.strategy.designer.operations.load_failed'));
       return null;
     }
   };
@@ -97,8 +99,8 @@ export function useStrategyOperations(
   const clearOrchestration = () => {
     nodes.value = [];
     connections.value = [];
-    strategyName.value = '新策略编排';
-    BtcMessage.success('编排已清空');
+    strategyName.value = t('common.strategy.designer.operations.new_orchestration');
+    BtcMessage.success(t('common.strategy.designer.operations.clear_success'));
   };
 
   // 导出编排
@@ -113,7 +115,7 @@ export function useStrategyOperations(
     link.click();
 
     URL.revokeObjectURL(url);
-    BtcMessage.success('编排导出成功');
+    BtcMessage.success(t('common.strategy.designer.operations.export_success'));
   };
 
   // 导入编排
@@ -133,20 +135,20 @@ export function useStrategyOperations(
               strategyName.value = data.metadata.name;
             }
 
-            BtcMessage.success('编排导入成功');
+            BtcMessage.success(t('common.strategy.designer.operations.import_success'));
             resolve(true);
           } else {
-            BtcMessage.error('无效的编排文件格式');
+            BtcMessage.error(t('common.strategy.designer.operations.invalid_file_format'));
             resolve(false);
           }
         } catch (error) {
-          BtcMessage.error('编排文件解析失败');
+          BtcMessage.error(t('common.strategy.designer.operations.parse_failed'));
           resolve(false);
         }
       };
 
       reader.onerror = () => {
-        BtcMessage.error('文件读取失败');
+        BtcMessage.error(t('common.strategy.designer.operations.file_read_failed'));
         resolve(false);
       };
 
@@ -157,12 +159,12 @@ export function useStrategyOperations(
   // 处理保存
   const handleSave = async () => {
     if (nodes.value.length === 0) {
-      BtcMessage.warning('请先添加节点');
+      BtcMessage.warning(t('common.strategy.designer.execution_preview.add_nodes_first'));
       return;
     }
 
     // 这里可以添加保存逻辑，比如保存到本地存储或发送到服务器
-    BtcMessage.success('策略编排保存成功');
+    BtcMessage.success(t('common.strategy.designer.operations.save_success'));
   };
 
   return {

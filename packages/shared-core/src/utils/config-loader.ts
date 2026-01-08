@@ -79,8 +79,15 @@ function shouldSkipPath(path: string, config?: any): boolean {
   // 例如：modules/api-services/config.ts, modules/base/config.ts, modules/platform/config.ts
   // 注意：如果这些文件包含 columns/forms/service，上面的检查会返回 false，不会被跳过
   // 路径可能是相对路径（如 ../modules/org/config.ts）或绝对路径，需要匹配两种情况
-  const moduleLevelMatch = path.match(/modules\/([^/\\]+)\/config\.ts$/);
+  // 匹配模式：modules/{module}/config.ts（不包含 views 或其他子目录）
+  // 使用更宽松的匹配，支持相对路径和绝对路径
+  const moduleLevelMatch = path.match(/modules[\/\\]([^\/\\]+)[\/\\]config\.ts$/);
   if (moduleLevelMatch) {
+    // 如果路径包含 views 或其他子目录，说明是页面级配置，不应该跳过
+    // 例如：modules/inventory/views/info/config.ts 不应该被跳过
+    if (path.includes('/views/') || path.includes('\\views\\')) {
+      return false;
+    }
     return true;
   }
   return false;
@@ -231,6 +238,15 @@ export function registerConfigsFromGlob(configFiles: Record<string, { default: P
     }
   }
 
+  // 开发环境：输出注册摘要
+  if (import.meta.env.DEV) {
+    console.debug(`[config-loader] Registration summary:`, {
+      registered: registeredKeys.length,
+      skipped: skippedPaths.length,
+      registeredKeys: registeredKeys.slice(0, 20), // 只显示前20个，避免输出过多
+      skippedPaths: skippedPaths.slice(0, 10), // 只显示前10个
+    });
+  }
 }
 
 /**
@@ -316,6 +332,18 @@ function translateKey(key: string | undefined, t: any): string {
 
     if (typeof translated === 'string') {
       translatedStr = translated;
+    } else if (typeof translated === 'function') {
+      // 如果返回的是函数（Vue I18n 编译后的消息函数），调用它获取字符串
+      try {
+        const result = translated({});
+        translatedStr = typeof result === 'string' ? result : String(result);
+      } catch (error) {
+        // 如果调用失败，使用 key 作为回退
+        if (import.meta.env.DEV) {
+          console.warn(`[config-loader] Failed to call translation function for key "${key}":`, error);
+        }
+        translatedStr = key;
+      }
     } else if (translated != null) {
       translatedStr = String(translated);
     } else {

@@ -1,4 +1,4 @@
-import type { AppIdentity } from '@configs/app-identity.types';
+import type { AppIdentity } from '@btc/shared-core/configs/app-identity.types';
 /**
  * {{APP_TITLE}}身份配置
  */

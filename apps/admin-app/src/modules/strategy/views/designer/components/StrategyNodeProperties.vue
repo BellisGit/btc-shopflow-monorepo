@@ -154,6 +154,8 @@ const emit = defineEmits<{
   update: [nodeId: string, properties: Partial<IStrategyNode>];
 }>();
 
+const { t } = useI18n();
+
 // 响应式数据
 const nodeForm = ref({
   name: props.node.name,
@@ -168,14 +170,15 @@ const styleForm = ref({
   borderColor: props.node.style?.borderColor || '#409eff'
 });
 
+const { t } = useI18n();
 // 节点类型选项
 const nodeTypes = computed(() => [
-  { value: 'START', label: '开始节点' },
-  { value: 'END', label: '结束节点' },
-  { value: 'CONDITION', label: '条件节点' },
-  { value: 'ACTION', label: '动作节点' },
-  { value: 'DECISION', label: '决策节点' },
-  { value: 'GATEWAY', label: '网关节点' }
+  { value: 'START', label: `${t('common.strategy.designer.node_types.start')}${t('common.strategy.designer.node_types.node')}` },
+  { value: 'END', label: `${t('common.strategy.designer.node_types.end')}${t('common.strategy.designer.node_types.node')}` },
+  { value: 'CONDITION', label: `${t('common.strategy.designer.node_types.condition')}${t('common.strategy.designer.node_types.node')}` },
+  { value: 'ACTION', label: `${t('common.strategy.designer.node_types.action')}${t('common.strategy.designer.node_types.node')}` },
+  { value: 'DECISION', label: `${t('common.strategy.designer.node_types.decision')}${t('common.strategy.designer.node_types.node')}` },
+  { value: 'GATEWAY', label: `${t('common.strategy.designer.node_types.gateway')}${t('common.strategy.designer.node_types.node')}` }
 ]);
 
 // 监听节点变化

@@ -43,7 +43,7 @@ sidebar_group: deployment
 
 **缺点**：
 - 需要修改现有代码结构
-- EPS 数据仍然需要从 system-app 复制
+- EPS 数据仍然需要从 main-app 复制
 
 ### 方案2：优化构建配置，共享 EPS chunk
 
@@ -73,7 +73,7 @@ sidebar_group: deployment
 
 将 EPS 服务代码提取到 `@btc/shared-core` 中，因为：
 1. EPS 服务代码是共享逻辑，符合 `@btc/shared-core` 的定位
-2. 所有应用都使用相同的 EPS 数据（从 system-app 复制）
+2. 所有应用都使用相同的 EPS 数据（从 main-app 复制）
 3. 可以减少包的数量，简化依赖管理
 
 ## 实施步骤（已完成）
@@ -85,7 +85,7 @@ sidebar_group: deployment
 2. **✅ 修改 EPS 插件**
    - 已修改 `@btc/vite-plugin` 的 EPS 插件
    - 添加 `sharedEpsDir` 选项，支持从共享位置读取 EPS 数据
-   - 子应用优先从 `system-app/build/eps` 读取 EPS 数据
+   - 子应用优先从 `main-app/build/eps` 读取 EPS 数据
 
 3. **✅ 修改应用代码**
    - 所有应用的 `src/services/eps.ts` 已更新为使用共享的 EPS 服务模块
@@ -96,13 +96,13 @@ sidebar_group: deployment
    - 所有应用共享同一个 EPS chunk（通过 `virtual:eps` 虚拟模块）
 
 5. **✅ 更新构建脚本**
-   - 子应用配置已更新，自动从 `system-app/build/eps` 读取 EPS 数据
+   - 子应用配置已更新，自动从 `main-app/build/eps` 读取 EPS 数据
    - 构建流程保持不变，但子应用不再独立生成 EPS 数据
 
 ## 注意事项
 
-1. **EPS 数据仍然需要从 system-app 复制**
-   - EPS 数据是动态生成的，需要从 system-app 获取
+1. **EPS 数据仍然需要从 main-app 复制**
+   - EPS 数据是动态生成的，需要从 main-app 获取
    - 但服务代码可以共享
 
 2. **保持向后兼容**

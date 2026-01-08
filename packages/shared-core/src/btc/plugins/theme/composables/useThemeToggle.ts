@@ -1,7 +1,7 @@
 import { useDark } from '@vueuse/core';
 import type { Ref } from 'vue';
 import type { ThemeConfig } from '../../../composables/useTheme';
-import { storage } from '@btc/shared-core/utils';
+import { storage } from '../../../../utils';
 
 /**
  * 禁用过渡效果（避免主题切换时的水合问题）

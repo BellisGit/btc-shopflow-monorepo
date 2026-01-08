@@ -10,7 +10,7 @@
         <BtcFlex1 />
         <BtcSearchKey />
         <BtcCrudActions>
-          <BtcExportBtn :filename="t('menu.logistics.warehouse.material.list')" />
+          <BtcExportBtn :filename="t('menu.warehouse.material.list')" />
         </BtcCrudActions>
       </BtcRow>
 

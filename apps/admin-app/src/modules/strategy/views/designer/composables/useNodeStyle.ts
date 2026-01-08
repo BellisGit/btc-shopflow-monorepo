@@ -1,4 +1,5 @@
 ﻿import { computed, type Ref } from 'vue';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 节点样式getter函数
@@ -25,17 +26,18 @@ export function useNodeStyle(
     return false;
   });
 
+  const { t } = useI18n();
   // 获取节点文字 - 简化版本
   const getNodeText = (type: string) => {
     const textMap: Record<string, string> = {
-      'START': '开始',
-      'END': '结束',
-      'CONDITION': '条件',
-      'ACTION': '动作',
-      'DECISION': '决策',
-      'GATEWAY': '网关'
+      'START': t('common.strategy.designer.node_types.start'),
+      'END': t('common.strategy.designer.node_types.end'),
+      'CONDITION': t('common.strategy.designer.node_types.condition'),
+      'ACTION': t('common.strategy.designer.node_types.action'),
+      'DECISION': t('common.strategy.designer.node_types.decision'),
+      'GATEWAY': t('common.strategy.designer.node_types.gateway')
     };
-    return textMap[type] || '节点';
+    return textMap[type] || t('common.strategy.designer.node_types.node');
   };
 
   // 获取节点填充颜色 - 无填充，只显示形状轮廓

@@ -89,8 +89,8 @@ import { BtcIconButton } from '@btc/shared-components';
 import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
 import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
 import { useBrowser } from '../../../../composables/useBrowser';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
-import { getAppById } from '@configs/app-scanner';
+import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
 import { getIsMainAppFn } from '../utils';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
@@ -345,16 +345,69 @@ const logoTitle = computed(() => {
       // 获取应用配置
       const appConfig = getAppById(currentSubAppId);
       if (appConfig) {
-        // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
+        // 优先使用应用配置中的 name（可能是国际化键或已翻译的值）
+        // 如果 name 看起来像国际化键（包含点号），尝试翻译它
+        if (appConfig.name && appConfig.name.includes('.')) {
+          // 优先使用主应用的 i18n 实例进行翻译（包含已合并的子应用国际化消息）
+          const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+          if (mainAppI18n && mainAppI18n.global) {
+            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+            // 直接尝试使用 t() 函数来翻译，不依赖 te() 检查（因为 te() 可能不准确）
+            try {
+              const mainTranslated = mainAppI18n.global.t(appConfig.name, currentLocale);
+              // 如果翻译成功（返回值不是 key 本身），使用翻译后的值
+              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== appConfig.name && mainTranslated.trim() !== '') {
+                return mainTranslated;
+              }
+            } catch (error) {
+              // 如果翻译失败，继续尝试其他方法
+              if (import.meta.env.DEV) {
+                console.warn('[Topbar] 主应用 i18n 翻译失败:', appConfig.name, error);
+              }
+            }
+          }
+          
+          // 如果主应用翻译失败，尝试使用共享组件的 t() 函数
+          try {
+            const translatedName = t(appConfig.name);
+            // 如果翻译成功（返回值不是 key 本身），使用翻译后的值
+            if (translatedName && translatedName !== appConfig.name) {
+              return translatedName;
+            }
+          } catch (error) {
+            // 如果翻译失败，继续使用原始值
+            if (import.meta.env.DEV) {
+              console.warn('[Topbar] 共享组件 i18n 翻译失败:', appConfig.name, error);
+            }
+          }
+        }
+        
+        // 如果 name 不是国际化键或翻译失败，尝试使用 domain.type.{appId}
         const domainTypeKey = `domain.type.${currentSubAppId}`;
-        const domainTypeName = t(domainTypeKey);
+        // 优先使用主应用的 i18n 实例
+        const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+        let domainTypeName: string | undefined;
+        if (mainAppI18n && mainAppI18n.global) {
+          const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+          if (mainAppI18n.global.te(domainTypeKey, currentLocale)) {
+            const translated = mainAppI18n.global.t(domainTypeKey, currentLocale);
+            if (translated && typeof translated === 'string' && translated !== domainTypeKey) {
+              domainTypeName = translated;
+            }
+          }
+        }
+        
+        // 如果主应用翻译失败，使用共享组件的 t() 函数
+        if (!domainTypeName) {
+          domainTypeName = t(domainTypeKey);
+        }
 
         // 如果国际化值存在且不是 key 本身，则使用国际化值
         if (domainTypeName && domainTypeName !== domainTypeKey) {
           return domainTypeName;
         }
 
-        // 兜底使用应用配置中的 name
+        // 最后兜底使用应用配置中的 name（可能是已翻译的值）
         return appConfig.name;
       }
     }
@@ -412,12 +465,29 @@ watch(
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
 // 关键：必须在 watch 之前定义，避免"在初始化之前访问"的错误
 const menuThemeConfig = computed(() => {
-  // 优先判断菜单风格类型（不受系统主题影响）
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  try {
+    // 优先判断菜单风格类型（不受系统主题影响）
+    const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
 
-  // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
-  if (theme === MenuThemeEnum.DARK) {
-    // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+    // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
+    if (theme === MenuThemeEnum.DARK) {
+      // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+      if (isDark?.value === true) {
+        return {
+          background: '#0a0a0a',
+          systemNameColor: '#FFFFFF',
+          rightLineColor: '#EDEEF0',
+        };
+      }
+      // 浅色系统主题下，使用深色菜单背景色
+      return {
+        background: '#0a0a0a',
+        systemNameColor: '#BABBBD',
+        rightLineColor: '#3F4257',
+      };
+    }
+
+    // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
     if (isDark?.value === true) {
       return {
         background: '#0a0a0a',
@@ -425,40 +495,36 @@ const menuThemeConfig = computed(() => {
         rightLineColor: '#EDEEF0',
       };
     }
-    // 浅色系统主题下，使用深色菜单背景色
-    return {
-      background: '#0a0a0a',
-      systemNameColor: '#BABBBD',
-      rightLineColor: '#3F4257',
-    };
-  }
 
-  // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
-  if (isDark?.value === true) {
+    // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
+    // 安全访问 menuStyleList，避免在初始化之前访问
+    if (menuStyleList && menuStyleList.value && Array.isArray(menuStyleList.value)) {
+      const themeConfig = menuStyleList.value.find((item: any) => item.theme === theme);
+
+      if (themeConfig) {
+        return {
+          background: themeConfig.background,
+          systemNameColor: themeConfig.systemNameColor,
+          rightLineColor: themeConfig.rightLineColor,
+        };
+      }
+    }
+
+    // 默认配置
     return {
-      background: '#0a0a0a',
-      systemNameColor: '#FFFFFF',
+      background: '#FFFFFF',
+      systemNameColor: 'var(--el-text-color-primary)',
+      rightLineColor: '#EDEEF0',
+    };
+  } catch (error) {
+    // 如果出现任何错误，返回默认配置
+    console.warn('[Topbar] menuThemeConfig 计算错误:', error);
+    return {
+      background: '#FFFFFF',
+      systemNameColor: 'var(--el-text-color-primary)',
       rightLineColor: '#EDEEF0',
     };
   }
-
-  // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const themeConfig = menuStyleList.value.find((item: any) => item.theme === theme);
-
-  if (themeConfig) {
-    return {
-      background: themeConfig.background,
-      systemNameColor: themeConfig.systemNameColor,
-      rightLineColor: themeConfig.rightLineColor,
-    };
-  }
-
-  // 默认配置
-  return {
-    background: '#FFFFFF',
-    systemNameColor: 'var(--el-text-color-primary)',
-    rightLineColor: '#EDEEF0',
-  };
 });
 
 // 监听 menuThemeConfig 变化，确保样式立即更新

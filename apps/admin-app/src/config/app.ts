@@ -5,8 +5,8 @@
 import { systemSettingConfig } from './settings';
 
 export const appConfig = {
-  // 系统名称
-  name: 'BTC车间管理',
+  // 系统名称（使用国际化 key）
+  nameKey: 'common.system.btc_shop_management',
 
   // 系统简称
   shortName: 'BTC ShopFlow',
@@ -24,7 +24,7 @@ export const appConfig = {
   company: {
     name: 'BTC',
     fullName: 'BTC Technology',
-    fullNameCn: '拜里斯',
+    fullNameCnKey: 'common.system.bellis',
     fullNameEn: 'Bellis Technology',
     website: 'https://www.btc.com',
     // Slogan 使用国际化键
@@ -41,13 +41,13 @@ export const appConfig = {
   contact: {
     email: 'support@btc.com',
     phone: '400-123-4567',
-    address: '深圳市南山区科技园',
+    addressKey: 'common.system.address',
   },
 
-  // 加载页面文案
+  // 加载页面文案（使用国际化 key）
   loading: {
-    title: '正在加载系统资源...',
-    subTitle: '初次加载可能需要较多时间，请耐心等待',
+    titleKey: 'common.system.loading_resources',
+    subTitleKey: 'common.system.loading_resources_subtitle',
   },
 
   // 路由配置

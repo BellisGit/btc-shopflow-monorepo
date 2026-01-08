@@ -69,7 +69,7 @@ export const create{{APP_NAME_PASCAL}}App = async (props: QiankunProps = {}): Pr
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp({{APP_NAME_PASCAL}}_APP_ID);
     registerManifestTabsForApp({{APP_NAME_PASCAL}}_APP_ID);
   }

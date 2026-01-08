@@ -50,7 +50,7 @@ const loadTenantOptions = async () => {
   const tenantService = service.admin?.iam?.tenant;
 
   if (!tenantService || typeof tenantService.list !== 'function') {
-    console.warn('[Domain] 租户列表服务不可用');
+    console.warn('[Domain] Tenant list service unavailable');
     tenantOptions.value = [];
     return;
   }
@@ -76,7 +76,7 @@ const loadTenantOptions = async () => {
       })
       .filter((item): item is { label: string; value: any } => !!item);
   } catch (error) {
-    console.warn('[Domain] 获取租户列表失败:', error);
+    console.warn('[Domain] Failed to get tenant list:', error);
     tenantOptions.value = [];
   } finally {
     tenantLoading.value = false;

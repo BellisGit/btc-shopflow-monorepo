@@ -21,6 +21,7 @@ import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { tSync } from './i18n/getters';
 // 注意：不再暴露 configImages 到全局，让共享组件直接使用默认配置
 // 共享组件的默认配置会从 @btc-assets 导入图片，这些图片在 layout-app 的构建产物中
 // 共享组件的 fixImagePath 函数会自动修复路径，确保在子应用中也能正确加载
@@ -53,7 +54,7 @@ if (typeof window !== 'undefined') {
       errorStack.includes('BtcCrud')
     ) {
       // CRUD 组件错误，必须输出，帮助排查问题
-      console.error('CRUD 组件错误（必须修复）:', errorMessage, {
+      console.error('CRUD component error (must fix):', errorMessage, {
         error: event.error,
         stack: errorStack,
       });
@@ -123,12 +124,12 @@ const render = async (props: QiankunProps = {}) => {
       const sharedCore = await import('@btc/shared-core');
       appLoadingService = sharedCore.appLoadingService;
       if (appLoadingService) {
-        appLoadingService.show('管理模块');
+        appLoadingService.show(tSync('common.system.admin_module'));
       }
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[admin-app] 无法显示应用级 loading:', error);
+        console.warn('[admin-app] Cannot display app-level loading:', error);
       }
     }
   }
@@ -153,7 +154,7 @@ const render = async (props: QiankunProps = {}) => {
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('管理模块');
+        appLoadingService.hide(tSync('common.system.admin_module'));
       } catch (error) {
         // 静默失败
       }
@@ -181,12 +182,12 @@ const render = async (props: QiankunProps = {}) => {
       // 静默失败
     }
   } catch (error) {
-    console.error('渲染失败:', error);
+    console.error('Render failed:', error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('管理模块');
+        appLoadingService.hide(tSync('common.system.admin_module'));
       } catch (error) {
         // 静默失败
       }

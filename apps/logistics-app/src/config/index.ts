@@ -2,6 +2,21 @@ import { MenuThemeEnum, SystemThemeEnum } from '@/plugins/user-setting/config/en
 
 export const config = {
   app: {
+    // 系统名称（使用国际化 key）
+    nameKey: 'app.name',
+    // 系统标题（使用国际化 key）
+    titleKey: 'app.title',
+    // 系统描述（使用国际化 key）
+    descriptionKey: 'app.description',
+    // 系统版本
+    version: '1.0.0',
+    // 欢迎信息（使用国际化 key）
+    welcomeKey: 'app.welcome',
+    // 加载页面文案（使用国际化 key）
+    loading: {
+      titleKey: 'app.loading.title',
+      subTitleKey: 'app.loading.subtitle',
+    },
     systemSetting: {
       defaultMenuWidth: 255,
       defaultSystemThemeType: SystemThemeEnum.AUTO,

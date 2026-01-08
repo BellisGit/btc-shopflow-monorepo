@@ -13,6 +13,9 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "terminal.integrated.defaultProfile.windows": "CMD UTF-8",
   "terminal.integrated.profiles.windows": {
     "CMD UTF-8": {
@@ -27,5 +30,42 @@
         "chcp 65001 >$null; [Console]::OutputEncoding=[System.Text.Encoding]::UTF8; [Console]::InputEncoding=[System.Text.Encoding]::UTF8"
       ]
     }
-  }
+  },
+  // 排除不需要索引的大型文件夹，提升 TypeScript/JavaScript 语言服务性能
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.vite": true,
+    "**/.turbo": true,
+    "**/dist-cdn": true,
+    "**/.deploy": true,
+    "**/coverage": true,
+    "**/.next": true,
+    "**/.nuxt": true,
+    "**/.output": true,
+    "**/.cache": true,
+    "**/build": true,
+    "**/ts-error-reports": true,
+    "**/lint-error-reports": true
+  },
+  // 排除文件监视器监控的文件夹，减少系统资源占用
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.vite/**": true,
+    "**/.turbo/**": true,
+    "**/dist-cdn/**": true,
+    "**/.deploy/**": true,
+    "**/coverage/**": true,
+    "**/.next/**": true,
+    "**/.nuxt/**": true,
+    "**/.output/**": true,
+    "**/.cache/**": true,
+    "**/build/**": true,
+    "**/ts-error-reports/**": true,
+    "**/lint-error-reports/**": true
+  },
+  // TypeScript 配置：限制项目范围，只处理必要的文件
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.preferences.includePackageJsonAutoImports": "on"
 }

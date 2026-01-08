@@ -8,11 +8,11 @@
       <div class="header-right">
         <el-button @click="handleClearAll" :disabled="composedPermissions.length === 0">
           <el-icon><Delete /></el-icon>
-          清空全部
+          {{ t('common.access.clear_all') }}
         </el-button>
         <el-button type="primary" @click="handleSave" :loading="saving" :disabled="composedPermissions.length === 0">
           <el-icon><Select /></el-icon>
-          保存权限
+          {{ t('common.access.save_permissions') }}
         </el-button>
       </div>
     </div>
@@ -37,19 +37,19 @@
           <div class="scope">
             <!-- 操作标题 -->
             <div class="head">
-              <el-text class="label">{{ mode === 'matrix' ? '权限矩阵' : '操作列表' }}</el-text>
+              <el-text class="label">{{ mode === 'matrix' ? t('common.access.permission_matrix') : t('common.access.action_list') }}</el-text>
               <div class="head-actions" v-if="mode === 'compose'">
-                <el-button size="small" text @click="handleSelectAllActions">全选</el-button>
+                <el-button size="small" text @click="handleSelectAllActions">{{ t('common.access.select_all') }}</el-button>
                 <el-divider direction="vertical" />
                 <el-dropdown trigger="click" @command="handleActionTemplate">
                   <el-button size="small" text>
-                    快速选择<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                    {{ t('common.access.quick_select') }}<el-icon class="el-icon--right"><ArrowDown /></el-icon>
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="readonly">只读权限</el-dropdown-item>
-                      <el-dropdown-item command="editor">编辑权限</el-dropdown-item>
-                      <el-dropdown-item command="full">完整CRUD</el-dropdown-item>
+                      <el-dropdown-item command="readonly">{{ t('common.access.readonly_permission') }}</el-dropdown-item>
+                      <el-dropdown-item command="editor">{{ t('common.access.edit_permission') }}</el-dropdown-item>
+                      <el-dropdown-item command="full">{{ t('common.access.full_crud') }}</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -80,11 +80,11 @@
           <div class="scope">
             <!-- 预览标题 -->
             <div class="head">
-              <el-text class="label">{{ mode === 'matrix' ? '已选权限' : '权限预览' }}</el-text>
+              <el-text class="label">{{ mode === 'matrix' ? t('common.access.selected_permissions') : t('common.access.permission_preview') }}</el-text>
               <div class="head-stat">
                 <el-statistic
                   :value="composedPermissions.length"
-                  suffix="个"
+                  :suffix="t('common.access.count_unit')"
                   :value-style="{ fontSize: '16px', fontWeight: 600, color: 'var(--el-color-primary)' }"
                 />
               </div>
@@ -101,7 +101,7 @@
                 size="large"
               >
                 <el-icon><Connection /></el-icon>
-                    生成权限 {{ composeCount }} 个
+                    {{ t('common.access.generate_permissions') }} {{ composeCount }} {{ t('common.access.count_unit') }}
               </el-button>
             </div>
 
@@ -122,8 +122,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 import { Delete, Select, ArrowDown, Connection } from '@element-plus/icons-vue';
 import { service } from '@services/eps';
 import { usePermComposeData } from './composables/usePermComposeData';
@@ -136,12 +137,13 @@ import BtcPermissionList from './components/BtcPermissionList.vue';
 import './styles/perm-compose.scss';
 
 // 初始化
+const { t } = useI18n();
 const message = useMessage();
 const mode = ref<'matrix' | 'compose'>('matrix');
-const modeOptions = [
-  { label: '矩阵模式', value: 'matrix' },
-  { label: '组合模式', value: 'compose' },
-];
+const modeOptions = computed(() => [
+  { label: t('common.access.matrix_mode'), value: 'matrix' },
+  { label: t('common.access.compose_mode'), value: 'compose' },
+]);
 
 // 权限服务
 const permissionService = service.admin?.iam?.permission;
@@ -191,7 +193,8 @@ const saving = ref(false);
 
 // 切换模式
 const handleModeChange = (val: 'matrix' | 'compose') => {
-  message.info(`已切换到${val === 'matrix' ? '矩阵' : '组合'}模式`);
+  const modeText = val === 'matrix' ? t('common.access.matrix') : t('common.access.compose');
+  message.info(`${t('common.access.switched_to')}${modeText}${t('common.access.mode')}`);
 
   if (val === 'matrix') {
     selectedResources.value = [];
@@ -211,13 +214,13 @@ const handleSelectAllActions = () => {
   if (selectedActions.value.length === filteredActions.value.length) {
     selectedActions.value = [];
     actionTableRef.value?.clearSelection();
-    message.info('已取消全选');
+    message.info(t('common.access.deselected_all'));
   } else {
     selectedActions.value = filteredActions.value.map((a: any) => a.id);
     filteredActions.value.forEach((row: any) => {
       actionTableRef.value?.toggleRowSelection(row, true);
     });
-    message.success('已选择全部');
+    message.success(t('common.access.selected_all'));
   }
 };
 
@@ -229,15 +232,15 @@ const handleActionTemplate = (command: string) => {
   switch (command) {
     case 'readonly':
       targetActions = actions.value.filter((a: any) => a.actionCode === 'view');
-      message.success('已选择只读权限');
+      message.success(t('common.access.selected_readonly'));
       break;
     case 'editor':
       targetActions = actions.value.filter((a: any) => ['view', 'edit'].includes(a.actionCode));
-      message.success('已选择编辑权限');
+      message.success(t('common.access.selected_edit'));
       break;
     case 'full':
       targetActions = actions.value;
-      message.success('已选择完整CRUD');
+      message.success(t('common.access.selected_full_crud'));
       break;
   }
 
@@ -270,14 +273,14 @@ const handleRemovePermission = (index: number) => {
     matrixSelections.value.delete(perm.key);
   }
 
-  message.success('已移除');
+  message.success(t('common.access.removed'));
 };
 
 // 清空全部
 const handleClearAll = () => {
   composedPermissions.value = [];
   matrixSelections.value.clear();
-  message.success('已清空全部');
+  message.success(t('common.access.cleared_all'));
 };
 
 // 保存权限
@@ -287,11 +290,11 @@ const handleSave = async () => {
     for (const perm of composedPermissions.value) {
       await permissionService.add(perm);
     }
-    message.success(`已保存 ${composedPermissions.value.length} 个权限`);
+    message.success(`${t('common.access.saved')} ${composedPermissions.value.length} ${t('common.access.permissions')}`);
     composedPermissions.value = [];
     matrixSelections.value.clear();
   } catch (_error) {
-    message.error('保存失败');
+    message.error(t('common.access.save_failed'));
   } finally {
     saving.value = false;
   }

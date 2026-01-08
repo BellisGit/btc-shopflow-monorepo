@@ -50,6 +50,7 @@ export const config: BtcPluginConfig = {
     api: '/api/v1/eps', // 内置 EPS API 路径
     dist: './build/eps',
     dict: false, // 默认禁用字典功能
+    dictApi: '/api/system/auth/dict', // 字典接口 URL
     mapping: [
       {
         // 自定义映射

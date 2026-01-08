@@ -134,14 +134,15 @@ export function useStrategyDesigner() {
 
   const nodeTextConfig = ref({ ...defaultTextConfig });
 
+  const { t } = useI18n();
   // 常用形状
   const commonShapes = ref([
-    { type: 'start', name: '开始', color: '#67c23a' },
-    { type: 'end', name: '结束', color: '#f56c6c' },
-    { type: 'condition', name: '条件', color: '#e6a23c' },
-    { type: 'action', name: '动作', color: '#409eff' },
-    { type: 'decision', name: '决策', color: '#909399' },
-    { type: 'gateway', name: '网关', color: '#9c27b0' }
+    { type: 'start', name: t('common.strategy.designer.node_types.start'), color: '#67c23a' },
+    { type: 'end', name: t('common.strategy.designer.node_types.end'), color: '#f56c6c' },
+    { type: 'condition', name: t('common.strategy.designer.node_types.condition'), color: '#e6a23c' },
+    { type: 'action', name: t('common.strategy.designer.node_types.action'), color: '#409eff' },
+    { type: 'decision', name: t('common.strategy.designer.node_types.decision'), color: '#909399' },
+    { type: 'gateway', name: t('common.strategy.designer.node_types.gateway'), color: '#9c27b0' }
   ]);
 
   // 画布事件处理

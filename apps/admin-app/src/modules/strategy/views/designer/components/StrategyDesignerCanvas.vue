@@ -320,6 +320,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import type { StrategyNode, StrategyConnection, NodeType } from '@/types/strategy';
 import { NodeType as NodeTypeEnum } from '@/types/strategy';
 
@@ -444,16 +445,17 @@ const getNodeTextColor = (type: NodeType): string => {
   return '#ffffff';
 };
 
+const { t } = useI18n();
 const getNodeText = (type: NodeType): string => {
   const textMap = {
-    [NodeTypeEnum.START]: '开始',
-    [NodeTypeEnum.END]: '结束',
-    [NodeTypeEnum.CONDITION]: '条件',
-    [NodeTypeEnum.ACTION]: '动作',
-    [NodeTypeEnum.DECISION]: '决策',
-    [NodeTypeEnum.GATEWAY]: '网关'
+    [NodeTypeEnum.START]: t('common.strategy.designer.node_types.start'),
+    [NodeTypeEnum.END]: t('common.strategy.designer.node_types.end'),
+    [NodeTypeEnum.CONDITION]: t('common.strategy.designer.node_types.condition'),
+    [NodeTypeEnum.ACTION]: t('common.strategy.designer.node_types.action'),
+    [NodeTypeEnum.DECISION]: t('common.strategy.designer.node_types.decision'),
+    [NodeTypeEnum.GATEWAY]: t('common.strategy.designer.node_types.gateway')
   };
-  return textMap[type] || '节点';
+  return textMap[type] || t('common.strategy.designer.node_types.node');
 };
 
 const getConnectionPath = (connection: StrategyConnection): string => {

@@ -3,8 +3,8 @@
  * 用于处理 qiankun 的 fetch 请求，修复资源路径
  */
 
-import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
-import { getAppConfig } from '@configs/app-env.config';
+import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 import { getGlobalEntryMap } from './useResourceInterceptor';
 
 // 获取主应用配置

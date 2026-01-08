@@ -31,71 +31,93 @@
             <span>{{ t('common.loading') }}...</span>
           </div>
           <div v-else-if="filteredApplications.length > 0" class="app-list">
-            <div class="app-list__column">
-              <template
-                v-for="app in filteredApplications.filter((_, i) => i % 2 === 0)"
-                :key="app.name"
-              >
-                <el-tooltip
-                  :content="app.description || t(`micro_app.${app.name}.description`)"
-                  placement="right"
-                  :show-after="300"
-                  trigger="hover"
+            <!-- 主应用卡片（占据整行，2列宽度，排在最上面） -->
+            <template v-for="app in filteredApplications.filter(a => a.isMainApp)" :key="app.name">
+              <div class="app-card app-card--main" :class="{ 'is-active': app.name === currentApp }" @click="handleSwitchApp(app)">
+                <div class="app-card__icon" :style="{ backgroundColor: app.color }">
+                  <btc-svg :name="app.icon" :size="28" />
+                </div>
+                <div class="app-card__info">
+                  <div class="app-card__title">
+                    {{ getDomainDisplayName(app) }}
+                  </div>
+                </div>
+                <div class="app-card__action" v-if="app.name === currentApp">
+                  <el-icon color="#67c23a">
+                    <Check />
+                  </el-icon>
+                </div>
+              </div>
+            </template>
+
+            <!-- 子应用列表（2列布局） -->
+            <div class="app-list__row">
+              <div class="app-list__column">
+                <template
+                  v-for="app in filteredApplications.filter(a => !a.isMainApp).filter((_, i) => i % 2 === 0)"
+                  :key="app.name"
                 >
-                  <div
-                    class="app-card"
-                    :class="{ 'is-active': app.name === currentApp }"
-                    @click="handleSwitchApp(app)"
+                  <el-tooltip
+                    :content="app.description || t(`micro_app.${app.name}.description`)"
+                    placement="right"
+                    :show-after="300"
+                    trigger="hover"
                   >
-                    <div class="app-card__icon" :style="{ backgroundColor: app.color }">
-                      <btc-svg :name="app.icon" :size="22" />
-                    </div>
-                    <div class="app-card__info">
-                      <div class="app-card__title">
-                        {{ getDomainDisplayName(app) }}
+                    <div
+                      class="app-card"
+                      :class="{ 'is-active': app.name === currentApp }"
+                      @click="handleSwitchApp(app)"
+                    >
+                      <div class="app-card__icon" :style="{ backgroundColor: app.color }">
+                        <btc-svg :name="app.icon" :size="22" />
+                      </div>
+                      <div class="app-card__info">
+                        <div class="app-card__title">
+                          {{ getDomainDisplayName(app) }}
+                        </div>
+                      </div>
+                      <div class="app-card__action" v-if="app.name === currentApp">
+                        <el-icon color="#67c23a">
+                          <Check />
+                        </el-icon>
                       </div>
                     </div>
-                    <div class="app-card__action" v-if="app.name === currentApp">
-                      <el-icon color="#67c23a">
-                        <Check />
-                      </el-icon>
-                    </div>
-                  </div>
-                </el-tooltip>
-              </template>
-            </div>
-            <div class="app-list__column">
-              <template
-                v-for="app in filteredApplications.filter((_, i) => i % 2 === 1)"
-                :key="app.name"
-              >
-                <el-tooltip
-                  :content="app.description || t(`micro_app.${app.name}.description`)"
-                  placement="right"
-                  :show-after="300"
-                  trigger="hover"
+                  </el-tooltip>
+                </template>
+              </div>
+              <div class="app-list__column">
+                <template
+                  v-for="app in filteredApplications.filter(a => !a.isMainApp).filter((_, i) => i % 2 === 1)"
+                  :key="app.name"
                 >
-                  <div
-                    class="app-card"
-                    :class="{ 'is-active': app.name === currentApp }"
-                    @click="handleSwitchApp(app)"
+                  <el-tooltip
+                    :content="app.description || t(`micro_app.${app.name}.description`)"
+                    placement="right"
+                    :show-after="300"
+                    trigger="hover"
                   >
-                    <div class="app-card__icon" :style="{ backgroundColor: app.color }">
-                      <btc-svg :name="app.icon" :size="22" />
-                    </div>
-                    <div class="app-card__info">
-                      <div class="app-card__title">
-                        {{ getDomainDisplayName(app) }}
+                    <div
+                      class="app-card"
+                      :class="{ 'is-active': app.name === currentApp }"
+                      @click="handleSwitchApp(app)"
+                    >
+                      <div class="app-card__icon" :style="{ backgroundColor: app.color }">
+                        <btc-svg :name="app.icon" :size="22" />
+                      </div>
+                      <div class="app-card__info">
+                        <div class="app-card__title">
+                          {{ getDomainDisplayName(app) }}
+                        </div>
+                      </div>
+                      <div class="app-card__action" v-if="app.name === currentApp">
+                        <el-icon color="#67c23a">
+                          <Check />
+                        </el-icon>
                       </div>
                     </div>
-                    <div class="app-card__action" v-if="app.name === currentApp">
-                      <el-icon color="#67c23a">
-                        <Check />
-                      </el-icon>
-                    </div>
-                  </div>
-                </el-tooltip>
-              </template>
+                  </el-tooltip>
+                </template>
+              </div>
             </div>
           </div>
           <div v-else class="empty-state">
@@ -119,7 +141,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue';
 import { Check, Loading, Search } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
 import { sessionStorage } from '@btc/shared-core/utils/storage/session';
-import { getEnvironment, getCurrentSubApp, type Environment } from '@configs/unified-env-config';
+import { getEnvironment, getCurrentSubApp, type Environment } from '@btc/shared-core/configs/unified-env-config';
 
 // 通过全局函数获取应用特定的依赖
 // 这些函数需要由使用共享布局的应用提供
@@ -254,6 +276,7 @@ interface MicroApp {
   entry: string;
   activeRule: string;
   description?: string;
+  isMainApp?: boolean; // 标记是否为主应用
 }
 
 interface Props {
@@ -320,7 +343,7 @@ const getAppEntry = (appName: string): string => {
 };
 
 // 根据当前路由判断当前应用
-const currentApp = ref('system');
+const currentApp = ref<string | null>(null);
 
 // 加载状态
 const loading = ref(false);
@@ -335,37 +358,8 @@ const detectCurrentApp = () => {
   if (detectedApp) {
     currentApp.value = detectedApp;
   } else {
-    // 如果没有检测到子应用，尝试通过路径前缀判断（开发环境的兜底逻辑）
-    const path = window.location.pathname;
-    const env = getEnvironment();
-
-    // 只有在开发环境或预览环境才需要路径匹配（测试和生产环境通过子域名/端口判断）
-    if (env === 'development' || env === 'preview') {
-      // 动态从配置中获取所有可能的应用路径前缀
-      // 子应用名称列表（排除特殊应用：mobile, home, docs）
-      const commonAppNames = [
-        'operations', 'dashboard', 'personnel', 'logistics',
-        'engineering', 'quality', 'production', 'finance', 'admin',
-        'system'
-      ];
-
-      // 按路径长度降序排序，确保更长的路径前缀优先匹配（如 /operations 优先于 /op）
-      const sortedAppNames = commonAppNames.sort((a, b) => b.length - a.length);
-
-      for (const appName of sortedAppNames) {
-        if (path.startsWith(`/${appName}`)) {
-          // 检查配置是否存在
-          const configAppName = getConfigAppName(appName);
-          const config = getAppConfig(configAppName);
-          if (config) {
-            currentApp.value = appName;
-            return;
-          }
-        }
-      }
-    }
-
-    // 如果没有匹配到任何子应用路径，保持当前应用状态不变
+    // 如果没有检测到子应用，说明是主应用
+    currentApp.value = 'main';
   }
 };
 
@@ -385,61 +379,61 @@ onUnmounted(() => {
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
   'LOGISTICS': {
     icon: 'map',
-    color: '#67c23a',
+    color: '#67c23a', // 绿色
     entry: getAppEntry('logistics'),
     activeRule: '/logistics',
   },
   'ENGINEERING': {
     icon: 'design',
-    color: '#e6a23c',
+    color: '#ff7a45', // 橙红色，与主应用橙色区分
     entry: getAppEntry('engineering'),
     activeRule: '/engineering',
   },
   'QUALITY': {
     icon: 'approve',
-    color: '#f56c6c',
+    color: '#f56c6c', // 红色
     entry: getAppEntry('quality'),
     activeRule: '/quality',
   },
   'PRODUCTION': {
     icon: 'work',
-    color: '#909399',
+    color: '#595959', // 深灰色
     entry: getAppEntry('production'),
     activeRule: '/production',
   },
   'FINANCE': {
     icon: 'amount-alt',
-    color: '#1890ff',
+    color: '#1890ff', // 蓝色
     entry: getAppEntry('finance'),
     activeRule: '/finance',
   },
   'SYSTEM': {
     icon: 'user',
-    color: '#722ed1',
+    color: '#722ed1', // 紫色
     entry: getAppEntry('system'),
     activeRule: '/system',
   },
   'ADMIN': {
     icon: 'settings',
-    color: '#13c2c2',
+    color: '#13c2c2', // 青色
     entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
   'OPERATIONS': {
     icon: 'monitor',
-    color: '#52c41a',
+    color: '#2f54eb', // 深蓝色，与财务蓝色区分
     entry: getAppEntry('operations'),
     activeRule: '/operations',
   },
   'DASHBOARD': {
     icon: 'trend',
-    color: '#ff6b9d',
+    color: '#ff6b9d', // 粉色
     entry: getAppEntry('dashboard'),
     activeRule: '/dashboard',
   },
   'PERSONNEL': {
     icon: 'team',
-    color: '#ffc107',
+    color: '#ffc107', // 黄色
     entry: getAppEntry('personnel'),
     activeRule: '/personnel',
   },
@@ -453,21 +447,42 @@ const searchKeyword = ref('');
 // 存储域数据映射
 const domainDataMap = ref<Map<string, any>>(new Map());
 
-// 过滤后的应用列表
+// 过滤后的应用列表（主应用排在最前面，然后是系统应用，管理应用，其他应用）
 const filteredApplications = computed(() => {
-  if (!searchKeyword.value.trim()) {
-    return applications.value;
+  let apps = applications.value;
+
+  // 如果有搜索关键词，先过滤
+  if (searchKeyword.value.trim()) {
+    const keyword = searchKeyword.value.toLowerCase().trim();
+    apps = apps.filter((app) => {
+      const displayName = getDomainDisplayName(app).toLowerCase();
+      const description = (app.description || '').toLowerCase();
+      return displayName.includes(keyword) || description.includes(keyword);
+    });
   }
-  const keyword = searchKeyword.value.toLowerCase().trim();
-  return applications.value.filter((app) => {
-    const displayName = getDomainDisplayName(app).toLowerCase();
-    const description = (app.description || '').toLowerCase();
-    return displayName.includes(keyword) || description.includes(keyword);
+
+  // 将主应用排在最前面
+  const mainApp = apps.find(app => app.isMainApp);
+  const otherApps = apps.filter(app => !app.isMainApp);
+
+  // 对子应用进行排序：系统应用第一个，管理应用第二个，其他保持原顺序
+  const sortedOtherApps = [...otherApps].sort((a, b) => {
+    // 系统应用排第一个
+    if (a.name === 'system') return -1;
+    if (b.name === 'system') return 1;
+    // 管理应用排第二个
+    if (a.name === 'admin') return -1;
+    if (b.name === 'admin') return 1;
+    // 其他保持原顺序
+    return 0;
   });
+
+  return mainApp ? [mainApp, ...sortedOtherApps] : sortedOtherApps;
 });
 
 // 域代码到国际化键的映射（用于显示名称）
 const domainCodeToI18nKey: Record<string, string> = {
+  'MAIN': 'domain.type.main',
   'SYSTEM': 'domain.type.system',
   'ADMIN': 'domain.type.admin',
   'QUALITY': 'domain.type.quality',
@@ -482,6 +497,17 @@ const domainCodeToI18nKey: Record<string, string> = {
 
 // 获取域显示名称
 const getDomainDisplayName = (app: MicroApp) => {
+  // 如果是主应用，直接使用国际化键
+  if (app.isMainApp) {
+    const i18nKey = 'domain.type.main';
+    const i18nValue = t(i18nKey);
+    // 如果国际化值存在且不是 key 本身，则使用国际化值
+    if (i18nValue && i18nValue !== i18nKey) {
+      return i18nValue;
+    }
+    return '拜里斯控制台';
+  }
+
   // 优先使用后端返回的 domainType
   // 统一处理所有应用，从域数据中查找匹配的域
   let domain: any = undefined;
@@ -630,6 +656,43 @@ const loadApplications = async () => {
       // 构建应用列表 - 统一处理所有子应用，排除特殊应用（docs）
       const appList: MicroApp[] = [];
 
+      // 首先添加主应用（排在最前面）
+      const mainAppConfig = getAppConfig('main-app');
+      if (mainAppConfig) {
+        const mainApp: MicroApp = {
+          name: 'main',
+          icon: 'home',
+          color: '#ff9800', // 橙色，与财务应用的蓝色区分开
+          entry: getAppEntry('main'),
+          activeRule: '/',
+          description: t('domain.type.main') || '拜里斯控制台',
+          isMainApp: true,
+        };
+        appList.push(mainApp);
+      }
+
+      // 手动添加系统应用（如果后端接口中没有返回）
+      const systemAppConfig = domainAppMapping['SYSTEM'];
+      if (systemAppConfig) {
+        const systemAppExists = domainList.some((domain: any) => {
+          const domainCode = domain.domainCode || domain.id || domain.name;
+          const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
+          return upperDomainCode === 'SYSTEM';
+        });
+
+        if (!systemAppExists) {
+          // 如果后端接口中没有系统域，手动添加系统应用
+          const systemApp: MicroApp = {
+            name: 'system',
+            ...systemAppConfig,
+            description: t('domain.type.system') || '系统应用',
+            isMainApp: false,
+          };
+          appList.push(systemApp);
+        }
+      }
+
+      // 然后添加子应用（包括系统应用）
       domainList
         .filter((domain: any) => {
           // 排除文档域（特殊应用）
@@ -646,7 +709,8 @@ const loadApplications = async () => {
             const app = {
               name: upperDomainCode.toLowerCase(), // 应用名称使用小写，用于路由匹配
               ...appConfig,
-              description: domain.description || `${domain.name} - 业务域应用`
+              description: domain.description || `${domain.name} - 业务域应用`,
+              isMainApp: false,
             };
             appList.push(app);
           }
@@ -682,7 +746,8 @@ const handleSwitchApp = async (app: MicroApp) => {
   const isDevelopment = environment === 'development';
 
   // 动态获取应用显示名称（用于占位loading）
-  const appDisplayName = getAppDisplayName(app.name);
+  // 使用 getDomainDisplayName 确保正确获取所有应用的显示名称，包括系统应用
+  const appDisplayName = getDomainDisplayName(app);
 
   let targetUrl: string;
 
@@ -751,23 +816,8 @@ const handleSwitchApp = async (app: MicroApp) => {
     // 静默失败
   }
 
-  // 跳转方式：开发环境同一标签页跳转，其他环境新标签页打开
-  if (isDevelopment) {
-    // 开发环境：隐藏容器，避免布局闪烁
-    const container = document.querySelector('#subapp-viewport') as HTMLElement;
-    if (container) {
-      container.style.setProperty('display', 'none', 'important');
-      container.style.setProperty('visibility', 'hidden', 'important');
-      container.style.setProperty('opacity', '0', 'important');
-    }
-
-    // 使用 window.location.href 在同一标签页跳转（开发环境）
-    // 抽屉已经在函数开头同步关闭了
-    window.location.href = targetUrl;
-  } else {
-    // 预览、测试和生产环境：使用 window.open 在新标签页打开
-    window.open(targetUrl, '_blank');
-  }
+  // 跳转方式：所有环境都使用新标签页打开
+  window.open(targetUrl, '_blank');
 };
 
 // 辅助函数：检查是否应该处理抽屉事件
@@ -780,13 +830,13 @@ const shouldHandleDrawerEvent = (): boolean => {
     const env = getEnvironment();
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    
+
     const isLayoutAppDomain =
       (env === 'production' && hostname === 'layout.bellis.com.cn') ||
       (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
       (env === 'preview' && port === '4192') ||
       (env === 'development' && port === '4188');
-    
+
     if (isLayoutAppDomain) {
       return true;
     }
@@ -1015,9 +1065,15 @@ onUnmounted(() => {
 
 .app-list {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 10px;
   padding: 2px 0;
+}
+
+.app-list__row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
 }
 
 .app-list__column {
@@ -1034,6 +1090,11 @@ onUnmounted(() => {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
+
+  // 主应用卡片：占据2列宽度
+  &--main {
+    width: 100%;
+  }
 }
 
 /* 可选：响应式优化 - 小屏幕（如手机）下恢复单列 */
@@ -1060,6 +1121,44 @@ onUnmounted(() => {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // 主应用卡片：占据整行（2列宽度）
+  &--main {
+    width: 100%;
+    margin-bottom: 0;
+    background-color: var(--el-color-primary-light-8);
+    justify-content: center;
+    gap: 10px;
+
+    .app-card__icon {
+      width: 44px;
+      height: 44px;
+
+      :deep(svg) {
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    .app-card__info {
+      flex: 0 1 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-card__title {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    // 激活态时保持绿色边框和背景
+    &.is-active {
+      border-color: var(--el-color-success);
+      background-color: var(--el-color-success-light-9);
+    }
+  }
 
   &:hover {
     border-color: var(--el-color-primary);

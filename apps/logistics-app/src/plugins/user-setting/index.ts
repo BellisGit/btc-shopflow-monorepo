@@ -12,8 +12,8 @@ export const userSettingPlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: '用户设置',
-    description: '提供用户偏好设置和主题配置',
+    label: 'common.plugin.user_setting',
+    description: 'common.plugin.user_setting_description',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',

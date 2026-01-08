@@ -162,33 +162,6 @@ const categoryService: CrudService<any> = {
 const { columns } = usePageColumns('data.dictionary.file-categories');
 const { formItems } = usePageForms('data.dictionary.file-categories');
 const pageConfig = getPageConfigFull('data.dictionary.file-categories');
-      },
-    },
-  },
-  {
-    label: t('data.dictionary.file_categories.fields.label'),
-    prop: 'categoryLabel',
-    required: true,
-    component: {
-      name: 'el-input',
-      props: {
-        maxlength: 60,
-        placeholder: t('data.dictionary.file_categories.fields.label_placeholder'),
-      },
-    },
-  },
-  {
-    label: t('data.dictionary.file_categories.fields.mime'),
-    prop: 'mime',
-    component: {
-      name: 'el-input',
-      props: {
-        maxlength: 255,
-        placeholder: t('data.dictionary.file_categories.fields.mime_placeholder'),
-      },
-    },
-  },
-]);
 </script>
 
 <style scoped lang="scss">

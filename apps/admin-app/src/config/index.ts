@@ -35,10 +35,10 @@ export const config = {
   i18n: {
     // 默认语言
     locale: localStorage.getItem('locale') || 'zh-CN',
-    // 可选语言列表
+    // 可选语言列表（label 使用国际化 key）
     languages: [
-      { label: '简体中文', value: 'zh-CN' },
-      { label: 'English', value: 'en-US' },
+      { labelKey: 'common.system.simplified_chinese', value: 'zh-CN' },
+      { labelKey: 'common.system.english', value: 'en-US' },
     ],
   },
 

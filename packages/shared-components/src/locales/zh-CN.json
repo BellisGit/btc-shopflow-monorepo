@@ -236,6 +236,7 @@
   "app_center.subtitle": "选择要访问的应用",
   "app_center.search_placeholder": "搜索应用...",
   "app_center.no_results": "未找到匹配的应用",
+  "domain.type.main": "拜里斯控制台",
   "auth.login": "登录",
   "auth.login.account": "账号登录",
   "auth.login.phone": "手机号登录",

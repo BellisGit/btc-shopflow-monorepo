@@ -1,4 +1,5 @@
 ﻿import { ref, computed, watch, type Ref } from 'vue';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 文本编辑逻辑
@@ -27,16 +28,17 @@ export function useTextEditor(
     fontStyle: 'normal'
   };
 
+  const { t } = useI18n();
   // 字体族选项
   const fontFamilyOptions = [
-    { label: '系统默认', value: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-    { label: '等宽字体', value: "'Courier New', 'Monaco', 'Menlo', monospace" },
-    { label: '衬线字体', value: "'Times New Roman', 'Times', serif" },
-    { label: '圆润字体', value: "'Comic Sans MS', 'Chalkboard', cursive" },
-    { label: '粗体字体', value: "'Impact', 'Arial Black', sans-serif" },
-    { label: '微软雅黑', value: "'Microsoft YaHei', '微软雅黑', sans-serif" },
-    { label: '宋体', value: "'SimSun', '宋体', serif" },
-    { label: '黑体', value: "'SimHei', '黑体', sans-serif" }
+    { label: t('common.strategy.designer.font_family.system_default'), value: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
+    { label: t('common.strategy.designer.font_family.monospace'), value: "'Courier New', 'Monaco', 'Menlo', monospace" },
+    { label: t('common.strategy.designer.font_family.serif'), value: "'Times New Roman', 'Times', serif" },
+    { label: t('common.strategy.designer.font_family.rounded'), value: "'Comic Sans MS', 'Chalkboard', cursive" },
+    { label: t('common.strategy.designer.font_family.bold'), value: "'Impact', 'Arial Black', sans-serif" },
+    { label: 'Microsoft YaHei', value: "'Microsoft YaHei', sans-serif" },
+    { label: 'SimSun', value: "'SimSun', serif" },
+    { label: 'SimHei', value: "'SimHei', sans-serif" }
   ];
 
   // 获取字体族的友好标签

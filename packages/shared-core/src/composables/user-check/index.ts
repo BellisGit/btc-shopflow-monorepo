@@ -5,7 +5,7 @@
 import { startPolling, stopPolling, isPollingActive } from './useUserCheckPolling';
 import { startCountdown, stopCountdown } from './useUserCheckCountdown';
 import { getUserCheckDataFromStorage, getCredentialExpireTime, clearUserCheckData } from './useUserCheckStorage';
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '../../utils/storage/session';
 import type { UserCheckData } from './useUserCheck';
 
 /**

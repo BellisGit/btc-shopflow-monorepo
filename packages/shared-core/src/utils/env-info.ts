@@ -3,9 +3,9 @@
  * 提供非响应式的环境信息获取函数，方便在非 Vue 代码中使用
  */
 
-import type { Environment } from '@configs/unified-env-config';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
-import { getAppConfig } from '@configs/app-env.config';
+import type { Environment } from '../configs/unified-env-config';
+import { getEnvironment, getCurrentSubApp } from '../configs/unified-env-config';
+import { getAppConfig } from '../configs/app-env.config';
 
 /**
  * 环境信息接口

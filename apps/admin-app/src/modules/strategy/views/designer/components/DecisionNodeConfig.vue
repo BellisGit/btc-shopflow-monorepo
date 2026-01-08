@@ -107,6 +107,8 @@ interface ExtendedRule extends StrategyRule {
   variablesJson?: string;
 }
 
+const { t } = useI18n();
+
 // 计算属性
 const rules = computed({
   get: () => props.rules.map(rule => ({
@@ -150,7 +152,7 @@ const updateVariables = (rule: ExtendedRule) => {
     rule.variables = JSON.parse(rule.variablesJson || '{}');
     emitUpdate();
   } catch (error) {
-    BtcMessage.error('变量格式错误，请输入有效的JSON');
+    BtcMessage.error(t('common.strategy.designer.variable_invalid_json'));
   }
 };
 

@@ -9,7 +9,7 @@ import { getAdminRoutes } from './routes/admin';
 import { getCookie } from '@btc/shared-core/utils/cookie';
 import { createTitleGuard } from '@btc/shared-router';
 import { tSync } from '../i18n/getters';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
+import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 
 /**
  * 动态导入 @btc/shared-core

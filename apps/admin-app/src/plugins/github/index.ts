@@ -12,8 +12,8 @@ export const githubPlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: 'GitHub 集成',
-    description: '提供 GitHub 仓库访问和代码展示功能',
+    label: 'GitHub Integration',
+    description: 'Provides GitHub repository access and code display functionality',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',

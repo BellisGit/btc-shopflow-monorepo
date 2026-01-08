@@ -49,7 +49,7 @@ const roleColumns = computed(() => {
         ...col,
         formatter: (row: any) => {
           if (!row.parentId || row.parentId === '0' || roleOptions.value.length === 0) {
-            return '无';
+            return t('common.access.none');
           }
           const parentRole = roleOptions.value.find((r: any) => r.id === row.parentId);
           return parentRole ? parentRole.roleName : row.parentId;
@@ -62,7 +62,7 @@ const roleColumns = computed(() => {
         ...col,
         formatter: (row: any) => {
           if (!row.domainId || domainOptions.value.length === 0) {
-            return '未分配';
+            return t('common.access.unassigned');
           }
           const domain = domainOptions.value.find((d: any) => d.id === row.domainId);
           return domain ? domain.name : row.domainId;
@@ -125,7 +125,7 @@ async function loadRoleOptions() {
     // 1. roleOptions 是响应式的，更新后会自动触发表格列的 formatter 重新计算
     // 2. 表格会在左侧选择时自动刷新，避免重复调用
   } catch (error) {
-    console.error('加载角色数据失败:', error);
+    console.error('Failed to load role data:', error);
   }
 }
 
@@ -187,7 +187,7 @@ async function handleRoleInfo(role: any, { next, done }: any) {
 
     done(roleDetail);
   } catch (error) {
-    console.error('获取角色详情失败:', error);
+    console.error('Failed to get role details:', error);
     done(role);
   }
 }

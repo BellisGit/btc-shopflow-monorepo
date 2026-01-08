@@ -4,8 +4,8 @@
  */
 
 import { appConfig } from './app';
-import { envConfig, currentEnvironment } from '@configs/unified-env-config';
-import { getAllSubAppConfigs } from '@configs/qiankun-config-center';
+import { envConfig, currentEnvironment } from '@btc/shared-core/configs/unified-env-config';
+import { getAllSubAppConfigs } from '@btc/shared-core/configs/qiankun-config-center';
 
 // 是否开发模式
 export const isDev = (import.meta as any).env.DEV;
@@ -33,9 +33,9 @@ export const config = {
   i18n: {
     // 默认语言
     locale: localStorage.getItem('locale') || 'zh-CN',
-    // 可选语言列表
+    // 可选语言列表（label 使用国际化 key）
     languages: [
-      { label: '简体中文', value: 'zh-CN' },
+      { labelKey: 'config.locale.zh-CN', value: 'zh-CN' },
       { label: 'English', value: 'en-US' },
     ],
   },

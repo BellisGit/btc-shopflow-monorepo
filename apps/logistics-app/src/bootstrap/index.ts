@@ -59,7 +59,7 @@ const setupLogisticsPlugins = async (app: any, router: any) => {
 
 // 自定义 setupStandaloneGlobals（使用 appStorage 而不是 createAppStorageBridge）
 const setupLogisticsGlobals = async () => {
-  const { registerAppEnvAccessors, registerMenuRegistrationFunction, resolveAppLogoUrl, injectDomainListResolver } = await import('@configs/layout-bridge');
+  const { registerAppEnvAccessors, registerMenuRegistrationFunction, resolveAppLogoUrl, injectDomainListResolver } = await import('@btc/shared-core/configs/layout-bridge');
 
   registerAppEnvAccessors();
   registerMenuRegistrationFunction();
@@ -160,25 +160,25 @@ const createRegisterTabs = (context: LogisticsAppContext) => {
         key: 'procurement',
         title: translate('logistics.menu.procurementModule'),
         path: '/logistics/procurement',
-        i18nKey: 'menu.logistics.procurementModule',
+        i18nKey: 'menu.procurementModule',
       },
       {
         key: 'warehouse',
         title: translate('logistics.menu.warehouseModule'),
         path: '/logistics/warehouse',
-        i18nKey: 'menu.logistics.warehouseModule',
+        i18nKey: 'menu.warehouseModule',
       },
       {
         key: 'customs',
         title: translate('logistics.menu.customsModule'),
         path: '/logistics/customs',
-        i18nKey: 'menu.logistics.customsModule',
+        i18nKey: 'menu.customsModule',
       },
       {
         key: 'inventory',
         title: translate('logistics.menu.inventoryManagement'),
         path: '/logistics/inventory',
-        i18nKey: 'menu.logistics.inventoryManagement',
+        i18nKey: 'menu.inventoryManagement',
       },
     ]);
   };
@@ -407,7 +407,7 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
     } catch (error) {
       // 静默失败
     }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(LOGISTICS_APP_ID);
     registerManifestTabsForApp(LOGISTICS_APP_ID);
   } else {
@@ -421,7 +421,7 @@ export const createLogisticsApp = async (props: QiankunProps = {}): Promise<Logi
     } catch (error) {
       // 静默失败
     }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(LOGISTICS_APP_ID);
     registerManifestTabsForApp(LOGISTICS_APP_ID);
   }

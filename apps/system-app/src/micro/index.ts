@@ -1,7 +1,10 @@
-import { registerMicroApps, start } from 'qiankun';
+// 关键：qiankun 使用动态导入，避免在作为子应用时加载 qiankun 模块
+// 静态导入会导致 qiankun 的 effects 模块被执行，触发定时器创建，导致警告
+// import { registerMicroApps, start } from 'qiankun';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { microApps } from './apps';
-import { getAppConfig } from '@configs/app-env.config';
-import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
 import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
 
 // 获取 system-app 配置（用于判断当前是否在 system-app 预览端口）
@@ -903,16 +906,17 @@ let currentActiveApp: string | null = null;
 /**
  * 初始化qiankun微前端
  */
-export function setupQiankun() {
-  // 防止重复注册：如果已经初始化过，直接返回
-  if ((window as any).__qiankun_setup__) {
-    // 只在开发环境显示警告，生产环境静默处理
-    if (import.meta.env.DEV) {
-      console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
-    }
+export async function setupQiankun() {
+  // 关键：如果 system-app 作为 qiankun 子应用运行，不应该启动 qiankun
+  // 只有主应用才应该调用 start()
+  // 双重检查：检查 qiankunWindow 和 window.__POWERED_BY_QIANKUN__
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__POWERED_BY_QIANKUN__) {
     return;
   }
-  (window as any).__qiankun_setup__ = true;
+
+  // 关键：动态导入 qiankun，避免在作为子应用时加载 qiankun 模块
+  // 这样可以防止 qiankun 的 effects 模块被执行，避免定时器警告
+  const { registerMicroApps, start } = await import('qiankun');
 
   // 初始化错误监控全局状态
   initErrorMonitor();
@@ -1627,8 +1631,13 @@ export function setupQiankun() {
   );
 
   // 启动qiankun
+  // 关键：再次检查是否在 qiankun 环境下（防止在 start 调用时状态已改变）
   // 关键：timeouts 配置已在 registerMicroApps 时通过 timeouts 属性传递
   // qiankun 会将 timeouts 配置传递给 single-spa，确保超时设置正确生效
+  // 双重检查：检查 qiankunWindow 和 window.__POWERED_BY_QIANKUN__
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__POWERED_BY_QIANKUN__) {
+    return;
+  }
   start({
     prefetch: false,
     sandbox: {

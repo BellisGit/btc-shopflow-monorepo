@@ -26,7 +26,7 @@
               class="overview__visit-item"
               @click="handleRecentAccessClick(item)"
             >
-              {{ item.labelKey ? t(item.labelKey) : item.label }}
+              {{ getRecentAccessLabel(item as any) }}
             </div>
           </div>
         </div>
@@ -57,7 +57,7 @@
               >
                 <!-- 一级菜单标题（可点击，作为子卡片标题） -->
                 <div class="overview__menu-card-title" @click="handleMenuClick(app, menu)">
-                  {{ getMenuLabel(menu) }}
+                  {{ getMenuLabelReactive(menu) }}
                 </div>
                 <!-- 二级菜单（水平排列在子卡片内容区域） -->
                 <div v-if="menu.children && menu.children.length > 0" class="overview__menu-card-content">
@@ -67,7 +67,7 @@
                     class="overview__sub-menu-item"
                     @click.stop="handleSubMenuClick(app, menu, subMenu)"
                   >
-                    {{ getMenuLabel(subMenu) }}
+                    {{ getMenuLabelReactive(subMenu) }}
                   </div>
                 </div>
               </div>
@@ -121,6 +121,8 @@ import {
   type AppDataItem,
   type MenuItem,
 } from '../utils/appData';
+import { tSync } from '@/i18n/getters';
+import { getAppIdFromPath, getAppById } from '@btc/shared-core';
 // 不再使用菜单聚合服务，恢复原有的应用卡片样式
 // import { useMenuAggregation, type OverviewMenuCategory, type OverviewMenuModule, type OverviewMenuItem } from '../composables/useMenuAggregation';
 
@@ -176,6 +178,148 @@ function filteredMenus(menus: MenuItem[]): MenuItem[] {
   return menus.filter(menu => menu.children && menu.children.length > 0);
 }
 
+// 响应式获取菜单标签（使用响应式的 t() 函数，确保国际化数据加载后能自动更新）
+function getMenuLabelReactive(menu: MenuItem): string {
+  if (menu.labelKey) {
+    // 使用响应式的 t() 函数，确保国际化数据加载后能自动更新
+    const translated = t(menu.labelKey);
+    // 如果翻译成功（返回值不是 key），使用翻译结果
+    if (translated && translated !== menu.labelKey) {
+      return translated;
+    }
+  }
+  // 如果有 label，优先使用 label
+  if (menu.label) {
+    return menu.label;
+  }
+  // 最后回退到 index，但如果是路径格式，提取最后一部分
+  if (menu.index.startsWith('/')) {
+    const parts = menu.index.split('/').filter(Boolean);
+    return parts[parts.length - 1] || menu.index;
+  }
+  return menu.index;
+}
+
+// 获取最近访问项的显示标签
+function getRecentAccessLabel(item: { 
+  labelKey?: string; 
+  label?: string; 
+  path?: string;
+  appId?: string;
+  appName?: string;
+}): string {
+  // 确保有 appId（从 path 推断）
+  let appId = item.appId;
+  if (!appId && item.path) {
+    appId = getAppIdFromPath(item.path);
+  }
+  
+  let displayLabel = '';
+  
+  // 1. 优先使用 labelKey 进行国际化翻译
+  if (item.labelKey) {
+    // 先尝试使用响应式的 t() 函数
+    let translated = t(item.labelKey);
+    // 如果翻译失败（返回值是 key），尝试使用 tSync
+    if (translated === item.labelKey) {
+      translated = tSync(item.labelKey);
+    }
+    // 如果翻译成功（返回值不是 key），使用翻译结果
+    if (translated && translated !== item.labelKey) {
+      displayLabel = translated;
+    }
+  }
+  
+  // 2. 如果翻译失败，使用 label
+  if (!displayLabel && item.label) {
+    displayLabel = item.label;
+  }
+  
+  // 3. 如果还是没有，从 path 提取最后一部分（但如果是首页路径，不提取）
+  if (!displayLabel && item.path) {
+    const parts = item.path.split('/').filter(Boolean);
+    displayLabel = parts[parts.length - 1] || item.path;
+  }
+  
+  // 4. 检查是否是"首页"（通过 label、labelKey 或路径判断）
+  const homeLabel = t('menu.home') || '首页';
+  const normalizedPath = item.path?.replace(/\/+$/, '') || '';
+  
+  // 判断是否是首页路径
+  const isHomePagePath = 
+    normalizedPath === '/' ||
+    (appId && normalizedPath === `/${appId}`) ||
+    (appId && normalizedPath === `/${appId}/`);
+  
+  // 判断是否是首页标签
+  const isHomePageLabel = 
+    displayLabel === '首页' || 
+    displayLabel === 'Home' ||
+    displayLabel === homeLabel ||
+    (item.labelKey && (
+      item.labelKey.includes('home') || 
+      item.labelKey.includes('Home') ||
+      item.labelKey === 'menu.home'
+    ));
+  
+  const isHomePage = isHomePagePath || isHomePageLabel;
+  
+  // 5. 如果是首页，显示"应用名 - 首页"
+  if (isHomePage && appId) {
+    // 获取应用显示名称
+    let appDisplayName = item.appName;
+    
+    // 如果 appName 不存在或就是 appId，尝试获取显示名称
+    if (!appDisplayName || appDisplayName === appId) {
+      // 尝试从所有应用数据中查找
+      const allApps = getAllAppData();
+      const appData = allApps.find(app => app.appId === appId);
+      if (appData) {
+        appDisplayName = getAppDisplayName(appData);
+      } else {
+        // 如果找不到，尝试从 app-scanner 获取
+        const appConfig = getAppById(appId);
+        if (appConfig?.name) {
+          appDisplayName = appConfig.name;
+        } else {
+          // 使用 domain.type.{appId} 翻译
+          const domainTypeKey = `domain.type.${appId}`;
+          const translated = tSync(domainTypeKey);
+          if (translated && translated !== domainTypeKey) {
+            appDisplayName = translated;
+          } else {
+            appDisplayName = appId;
+          }
+        }
+      }
+    }
+    
+    // 如果是首页，强制使用"首页"而不是路径
+    const finalHomeLabel = isHomePageLabel ? displayLabel : homeLabel;
+    if (appDisplayName && appDisplayName !== appId) {
+      return `${appDisplayName} - ${finalHomeLabel}`;
+    } else if (appDisplayName) {
+      return `${appDisplayName} - ${finalHomeLabel}`;
+    }
+  }
+  
+  // 6. 如果翻译失败且显示的是路径，尝试从路径提取更好的显示名称
+  if (!displayLabel || displayLabel.startsWith('/') || displayLabel === item.path) {
+    if (item.path) {
+      const parts = item.path.split('/').filter(Boolean);
+      if (parts.length > 0) {
+        // 使用最后一部分，但如果是单个部分且等于 appId，尝试使用更好的名称
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && lastPart !== appId) {
+          displayLabel = lastPart;
+        }
+      }
+    }
+  }
+  
+  return displayLabel || item.path || '';
+}
+
 // 最近访问列表（最多显示 8 个）
 const recentItems = computed(() => {
   return recentAccessStore.getRecentItems(8);
@@ -197,7 +341,7 @@ const tableData = computed(() => {
       data.push({
         appId: app.appId,
         appName: getAppDisplayName(app),
-        menuName: getMenuLabel(menu),
+        menuName: getMenuLabelReactive(menu),
         path: buildMenuPath(app, menu),
         appData: app,
         menu,
@@ -227,7 +371,7 @@ function handleMenuClick(app: AppDataItem, menu: MenuItem) {
     appId: app.appId,
     appName: getAppDisplayName(app),
     path,
-    label: getMenuLabel(menu),
+    label: getMenuLabelReactive(menu),
     ...(menu.labelKey && { labelKey: menu.labelKey }),
     ...(menu.icon && { icon: menu.icon }),
   });
@@ -273,7 +417,7 @@ function handleSubMenuClick(app: AppDataItem, parentMenu: MenuItem, subMenu: Men
     appId: app.appId,
     appName: getAppDisplayName(app),
     path,
-    label: getMenuLabel(subMenu),
+    label: getMenuLabelReactive(subMenu),
     ...(subMenu.labelKey && { labelKey: subMenu.labelKey }),
     ...(subMenu.icon && { icon: subMenu.icon }),
   });

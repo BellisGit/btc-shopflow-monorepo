@@ -69,7 +69,7 @@ export const createFinanceApp = async (props: QiankunProps = {}): Promise<Financ
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(FINANCE_APP_ID);
     registerManifestTabsForApp(FINANCE_APP_ID);
   }

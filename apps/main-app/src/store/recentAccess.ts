@@ -107,8 +107,7 @@ export const useRecentAccessStore = defineStore('recentAccess', () => {
       items.value = items.value.slice(0, MAX_RECENT_ITEMS);
     }
 
-    // 保存到 localStorage
-    saveToStorage();
+    // 注意：持久化由 pinia-plugin-persistedstate 自动处理，无需手动调用 saveToStorage
   }
 
   /**

@@ -4,7 +4,7 @@
  */
 
 import { microApps } from '../apps';
-import { getAppConfig } from '@configs/app-env.config';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 
 // 获取主应用配置（用于判断当前是否在主应用预览端口）
 const MAIN_APP_CONFIG = getAppConfig('main-app');

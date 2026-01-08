@@ -15,13 +15,13 @@ import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-co
 
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
-import { resolveAppLogoUrl } from '@configs/layout-bridge';
+import { resolveAppLogoUrl } from '@btc/shared-core/configs/layout-bridge';
 
 // 处理器模块
 import { createNotificationHandler, initNotificationManager } from './handlers';
 
-// 集成模块
-import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integrations';
+// 集成模块（子应用不需要微前端设置和插件自动发现）
+// import { autoDiscoverPlugins, setupMicroApps, setupInterceptors } from './integrations';
 
 // 管理器实例
 import { notificationManager } from '../utils/notification-manager';
@@ -56,14 +56,14 @@ export async function bootstrap(app: App) {
   // 初始化设置配置（现在都在 app-src chunk 中，使用静态导入）
   await initSettingsConfig();
 
-  await autoDiscoverPlugins(app);  // 自动发现插件
-  await setupMicroApps(app);       // 微前端设置
+  // 注意：子应用不需要以下主应用功能：
+  // - autoDiscoverPlugins: 插件自动发现（主应用功能）
+  // - setupMicroApps: 微前端设置（主应用功能）
+  // - setupInterceptors: 拦截器配置（主应用功能）
   
   // 初始化插件消费（消费主应用提供的全局插件状态）
   const { initPluginConsumer } = await import('./plugins');
   initPluginConsumer(app);
-  
-  setupInterceptors();             // 拦截器配置
 
   // 3. 处理器初始化
   const notificationHandler = createNotificationHandler();
@@ -133,77 +133,8 @@ export async function bootstrap(app: App) {
     }
   });
 
-  // 不再过滤 console.error，允许所有错误日志正常显示
-  // 保留原始方法的引用，但不重写 console.error
-  // 这样所有错误日志都能正常显示，包括调试日志
-
-  // 重写XMLHttpRequest来拦截网络请求日志
-  // 注意：index.html 中已经设置了 HTTP URL 拦截，这里只需要添加日志记录功能
-  const currentXHROpen = XMLHttpRequest.prototype.open;
-  const currentXHRSend = XMLHttpRequest.prototype.send;
-
-  XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) {
-    // 记录请求信息（用于日志拦截）
-    (this as any)._method = method;
-    (this as any)._url = url;
-    // 调用当前的 open（index.html 中设置的拦截器）
-    return currentXHROpen.call(this, method, url, async ?? true, user, password);
-  };
-
-  XMLHttpRequest.prototype.send = function(data?: any) {
-    // 监听状态变化（用于日志拦截）
-    this.addEventListener('readystatechange', function() {
-      if (this.readyState === 4) {
-        // 检查是否是接口测试中心的请求
-        const url = (this as any)._url || '';
-        const isTestCenterRequest = url.includes('/api/system/test/');
-
-        // 如果是404错误且不是测试中心的请求，阻止默认的错误日志显示
-        if (this.status === 404 && !isTestCenterRequest) {
-          // 静默处理404错误，不显示在控制台
-          return;
-        }
-      }
-    });
-
-    // 调用当前的 send（index.html 中设置的拦截器）
-    return currentXHRSend.call(this, data);
-  };
-
-  // 重写fetch来拦截网络请求日志
-  // 注意：index.html 中已经设置了 HTTP URL 拦截，这里只需要添加错误处理
-  const currentFetch = window.fetch;
-  window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
-    // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
-    // 这确保 EPS 请求和其他 API 请求不会被影响
-    let url: string;
-    if (typeof input === 'string') {
-      url = input;
-    } else if (input instanceof URL) {
-      url = input.href;
-    } else {
-      url = input.url;
-    }
-    
-    // 检查多种形式的 API URL：
-    // - /api/... (相对路径)
-    // - http://host/api/... (完整 URL)
-    // - https://host/api/... (完整 URL)
-    if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
-      // API 请求直接放行，不添加额外的错误处理
-      return currentFetch.call(this, input, init);
-    }
-    
-    // 调用当前的 fetch（index.html 中设置的拦截器）
-    return currentFetch.call(this, input, init).catch((error) => {
-      // 如果是网络错误，静默处理
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        // 静默处理网络错误
-        return Promise.reject(error);
-      }
-      return Promise.reject(error);
-    });
-  };
+  // 注意：子应用不需要重写 XMLHttpRequest 和 fetch
+  // 这些拦截逻辑应该只在主应用中存在
 }
 
 // 导出各个模块，供其他地方使用

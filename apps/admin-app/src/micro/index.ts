@@ -7,13 +7,19 @@ import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuI
 import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { assignIconsToMenuTree } from '@btc/shared-core';
+import { tSync } from '../i18n/getters';
 
 // 应用名称映射（用于显示友好的中文名称）
-const appNameMap: Record<string, string> = {
-  logistics: '物流应用',
-  engineering: '工程应用',
-  quality: '品质应用',
-  production: '生产应用',
+// 使用 tSync 函数在非 Vue 组件中获取国际化文本
+const getAppName = (appName: string): string => {
+  const appNameMap: Record<string, string> = {
+    logistics: 'common.apps.logistics',
+    engineering: 'common.apps.engineering',
+    quality: 'common.apps.quality',
+    production: 'common.apps.production',
+  };
+  const i18nKey = appNameMap[appName];
+  return i18nKey ? tSync(i18nKey) : appName;
 };
 
 export function registerManifestTabsForApp(appName: string): Promise<void> {
@@ -278,7 +284,7 @@ export function setupQiankun() {
     {
       // 应用加载前
       beforeLoad: [async (app) => {
-        const appName = appNameMap[app.name] || app.name;
+        const appName = getAppName(app.name);
         // 延迟导入以避免循环依赖
         const { startLoading } = await import('../utils/loadingManager');
         startLoading(appName);
@@ -303,8 +309,8 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
-                      reject(new Error(`容器 #subapp-viewport 不在 DOM 中，无法加载应用 ${app.name}`));
+                      console.error(`[qiankun] Container #subapp-viewport is not in DOM`);
+                      reject(new Error(`Container #subapp-viewport is not in DOM, cannot load application ${app.name}`));
                       return;
                     }
                   }
@@ -338,7 +344,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      console.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
+                      console.warn(`[qiankun] Container #subapp-viewport is still invisible, forcing display`);
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -360,8 +366,8 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
-                    reject(new Error(`容器 #subapp-viewport 不存在，无法加载应用 ${app.name}`));
+                    console.error(`[qiankun] Container #subapp-viewport not found within ${maxRetries * retryDelay}ms`);
+                    reject(new Error(`Container #subapp-viewport does not exist, cannot load application ${app.name}`));
                   }
                 }
               });
@@ -476,7 +482,7 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch ? getAppName(appMatch[1]) : tSync('common.apps.app');
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
     }

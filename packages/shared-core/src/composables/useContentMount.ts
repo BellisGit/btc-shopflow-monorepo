@@ -1,7 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { isMainApp as getIsMainApp } from '@configs/unified-env-config';
+import { isMainApp as getIsMainApp } from '../configs/unified-env-config';
 
 /**
  * 内容挂载类型

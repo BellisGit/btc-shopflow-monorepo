@@ -214,7 +214,7 @@ export function resolveBtcImportsPlugin(options: ResolveBtcImportsOptions): Plug
         return sharedComponentsAlias;
       }
 
-      // 处理 @configs 包的导入（从已构建包中导入时）
+      // 处理 @configs 包的导入（从已构建包中导入时，现在指向 shared-core/src/configs）
       if (id.startsWith('@configs/')) {
         const subPath = id.replace('@configs/', '');
         const sourcePath = withConfigs(subPath);

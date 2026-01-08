@@ -4,7 +4,7 @@
       ref="tableGroupRef"
       :left-service="checkService"
       :left-title="t('inventory.check.list')"
-      :right-title="t('menu.logistics.inventory_management.result')"
+      :right-title="t('menu.inventory_management.result')"
       :show-unassigned="false"
       :enable-key-search="true"
       :left-size="'small'"
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount } from 'vue';
-import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions, BtcSvg } from '@btc/shared-components';
 import { createCrudServiceFromEps } from '@btc/shared-core';
@@ -130,6 +130,11 @@ const checkService = {
     }
   }
 };
+
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('logistics.inventory.result');
+const { formItems } = usePageForms('logistics.inventory.result');
+const pageConfig = getPageConfigFull('logistics.inventory.result');
 
 // 盘点结果服务（右侧表）- 使用 config.ts 中定义的服务或创建新服务
 const baseInventoryCheckService = pageConfig?.service?.result || createCrudServiceFromEps(
@@ -296,11 +301,6 @@ const handleExport = async () => {
     throw error;
   }
 };
-
-// 从 config.ts 读取配置
-const { columns: baseColumns } = usePageColumns('logistics.inventory.result');
-const { formItems } = usePageForms('logistics.inventory.result');
-const pageConfig = getPageConfigFull('logistics.inventory.result');
 
 const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: any) => formatTableNumber(value);
 

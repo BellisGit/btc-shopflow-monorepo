@@ -19,6 +19,7 @@
     "create-app": "node scripts/create-app-cli.mjs",
     "cmd": "node scripts/commands/index.mjs",
     "release:version": "node scripts/release-version.mjs",
+    "release:push": "node scripts/release-push.mjs",
     "dev": "node scripts/dev-all.mjs",
     "dev:app": "node scripts/turbo.js run dev --filter=$npm_config_app",
     "dev:all": "node scripts/dev-all-with-check.mjs",

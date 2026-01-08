@@ -2,8 +2,8 @@
  * 用户检查数据存储
  */
 
-import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/storage/cookie';
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { getCookie, setCookie, getCookieDomain } from '../../utils/storage/cookie';
+import { sessionStorage } from '../../utils/storage/session';
 import type { UserCheckData } from './useUserCheck';
 
 const SESSION_STORAGE_KEYS = {

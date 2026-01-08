@@ -73,7 +73,7 @@ class RequestLogQueue {
 
     // 检查队列长度，防止内存溢出
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-      console.warn(`请求日志队列已满(${this.MAX_QUEUE_SIZE})，丢弃最旧的日志`);
+      console.warn(`Request log queue is full (${this.MAX_QUEUE_SIZE}), dropping oldest log`);
       this.queue.shift(); // 移除最旧的日志
     }
 
@@ -90,7 +90,7 @@ class RequestLogQueue {
         // 转换为 JSON 字符串
         paramsString = JSON.stringify(normalizedParams);
       } catch (error) {
-        console.warn('参数序列化失败，使用空对象:', error);
+        console.warn('Failed to serialize params, using empty object:', error);
         paramsString = '{}';
       }
     }
@@ -171,12 +171,12 @@ class RequestLogQueue {
         const service = typeof window !== 'undefined' ? (window as any).__BTC_SERVICE__ : null;
         
         if (!service) {
-          throw new Error('Service 未初始化，无法发送请求日志');
+          throw new Error('Service not initialized, cannot send request logs');
         }
 
         // 检查服务是否可用
         if (!service?.admin?.log?.sys?.request?.update) {
-          throw new Error('请求日志服务不可用');
+          throw new Error('Request log service unavailable');
         }
 
         // 批量发送：将所有日志作为数组一次性发送
@@ -197,7 +197,7 @@ class RequestLogQueue {
         this.tryFlush();
       }
     } catch (error) {
-      console.error('批量发送请求日志失败（已重试）:', error);
+        console.error('Failed to send request logs in batch (retried):', error);
 
       // 重试机制已经处理了重试，这里只需要暂停发送
       this.isPaused = true;
@@ -207,7 +207,7 @@ class RequestLogQueue {
       setTimeout(() => {
         this.isServiceAvailable = true;
         this.isPaused = false;
-        console.log('请求日志服务已重新启用，继续发送队列中的数据');
+        console.log('Request log service re-enabled, continuing to send queued data');
         if (this.queue.length > 0) {
           this.tryFlush();
         }
@@ -273,7 +273,7 @@ class RequestLogQueue {
   private sanitizeForJava(obj: any, depth = 0, maxDepth = 5): any {
     // 防止无限递归
     if (depth > maxDepth) {
-      return '[深度超限]';
+        return '[Depth exceeded]';
     }
 
     // null 或 undefined

@@ -67,7 +67,8 @@ export function createIndexedDB(dbName: string, config: DatabaseConfig): Dexie {
   }
 
   try {
-    class CustomDatabase extends Dexie {
+    // 使用匿名类避免类型推断问题
+    const CustomDatabase = class extends Dexie {
       constructor() {
         super(dbName);
         
@@ -80,10 +81,10 @@ export function createIndexedDB(dbName: string, config: DatabaseConfig): Dexie {
           version.upgrade(config.upgrade);
         }
       }
-    }
+    };
 
-    const db = new CustomDatabase();
-    return db;
+    // @ts-expect-error - Dexie 类型系统导致的类型推断过深问题
+    return new CustomDatabase() as Dexie;
   } catch (error) {
     console.error(`[IndexedDB] 创建数据库 "${dbName}" 失败:`, error);
     throw error;

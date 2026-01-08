@@ -3,8 +3,9 @@
  * 提供统一的应用标识获取和路由判断函数，消除硬编码
  */
 
-import { getMainApp, getAllApps } from '@configs/app-scanner';
-import { isMainApp as isMainAppRouteUtil } from '@configs/unified-env-config';
+import { getMainApp, getAllApps } from '../configs/app-scanner';
+import { isMainApp as isMainAppRouteUtil } from '../configs/unified-env-config';
+import { isSpecialAppById } from '../configs/app-env.config';
 
 /**
  * 获取主应用标识（从配置动态获取，不硬编码）
@@ -83,9 +84,33 @@ export function getMainAppHomeRoute(): string {
  * 根据路径获取应用标识（优先从 app-scanner，回退到路径推断）
  */
 export function getAppIdFromPath(path: string): string {
-  // 1. 优先从 app-scanner 通过 pathPrefix 获取
+  const mainApp = getMainApp();
+  const mainAppRoutes = mainApp?.routes?.mainAppRoutes || [];
+  
+  // 1. 优先检查是否是主应用路由（避免 home 应用的 pathPrefix '/' 影响判断）
+  if (mainAppRoutes.length > 0) {
+    const normalizedPath = path.endsWith('/') && path !== '/'
+      ? path.slice(0, -1)
+      : path;
+    if (mainAppRoutes.some(route => {
+      const normalizedRoute = route.endsWith('/') && route !== '/'
+        ? route.slice(0, -1)
+        : route;
+      return normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+    })) {
+      return getMainAppId();
+    }
+  }
+  
+  // 2. 从 app-scanner 通过 pathPrefix 获取（排除特殊应用和公开应用）
   const apps = getAllApps();
   for (const app of apps) {
+    // 跳过主应用、特殊应用（如 home, docs, layout, mobile）和公开应用
+    // 特殊应用在 SPECIAL_APP_CONFIGS 中定义，不应该影响主应用路由的判断
+    if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
+      continue;
+    }
+    
     if (app.type === 'sub' && app.enabled) {
       const normalizedPathPrefix = app.pathPrefix.endsWith('/')
         ? app.pathPrefix.slice(0, -1)
@@ -101,12 +126,12 @@ export function getAppIdFromPath(path: string): string {
     }
   }
   
-  // 2. 检查是否是主应用路由
+  // 3. 检查是否是主应用路由（兜底逻辑）
   if (isMainAppRoute(path)) {
     return getMainAppId();
   }
   
-  // 3. 回退到路径推断（兼容旧代码）
+  // 4. 回退到路径推断（兼容旧代码）
   if (path.startsWith('/admin')) return 'admin';
   if (path.startsWith('/logistics')) return 'logistics';
   if (path.startsWith('/engineering')) return 'engineering';

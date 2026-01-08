@@ -312,13 +312,6 @@ const handleDetail = (row: any) => {
 // 导出用的列配置
 const { columns: exportColumns } = usePageColumns('data.inventory.check.export');
 const resultExportColumns = computed(() => exportColumns.value);
-  { prop: 'checkNo', label: t('system.inventory.base.fields.check_no') },
-  { prop: 'partName', label: t('system.material.fields.material_code') },
-  { prop: 'partQty', label: t('inventory.result.fields.actual_qty') },
-  { prop: 'checker', label: t('system.inventory.base.fields.checker_id') },
-  { prop: 'position', label: t('inventory.result.fields.storage_location') },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.created_at') },
-]);
 
 // 导出功能
 const handleExport = async () => {

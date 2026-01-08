@@ -16,46 +16,47 @@ export function useComponentLibrary(nodes?: Ref<any[]>) {
     return nodes.value.some(node => node.type === nodeType);
   };
 
+  const { t } = useI18n();
   // 组件库配置
   const componentCategories = computed(() => [
     {
       name: 'basic',
-      title: '基础组件',
+      title: t('common.strategy.designer.component_library.basic'),
       components: [
         {
           type: NodeTypeEnum.START,
-          name: '开始',
+          name: t('common.strategy.designer.node_types.start'),
           disabled: isNodeTypeExists(NodeTypeEnum.START)
         },
         {
           type: NodeTypeEnum.END,
-          name: '结束',
+          name: t('common.strategy.designer.node_types.end'),
           disabled: isNodeTypeExists(NodeTypeEnum.END)
         },
         {
           type: NodeTypeEnum.CONDITION,
-          name: '条件',
+          name: t('common.strategy.designer.node_types.condition'),
           disabled: false
         },
         {
           type: NodeTypeEnum.ACTION,
-          name: '动作',
+          name: t('common.strategy.designer.node_types.action'),
           disabled: false
         }
       ]
     },
     {
       name: 'advanced',
-      title: '高级组件',
+      title: t('common.strategy.designer.component_library.advanced'),
       components: [
         {
           type: NodeTypeEnum.DECISION,
-          name: '决策',
+          name: t('common.strategy.designer.node_types.decision'),
           disabled: false
         },
         {
           type: NodeTypeEnum.GATEWAY,
-          name: '网关',
+          name: t('common.strategy.designer.node_types.gateway'),
           disabled: false
         }
       ]
@@ -139,14 +140,14 @@ export function useComponentLibrary(nodes?: Ref<any[]>) {
   // 获取节点文本
   const getNodeText = (type: NodeType): string => {
     const textMap = {
-      [NodeTypeEnum.START]: '开始',
-      [NodeTypeEnum.END]: '结束',
-      [NodeTypeEnum.CONDITION]: '条件',
-      [NodeTypeEnum.ACTION]: '动作',
-      [NodeTypeEnum.DECISION]: '决策',
-      [NodeTypeEnum.GATEWAY]: '网关'
+      [NodeTypeEnum.START]: t('common.strategy.designer.node_types.start'),
+      [NodeTypeEnum.END]: t('common.strategy.designer.node_types.end'),
+      [NodeTypeEnum.CONDITION]: t('common.strategy.designer.node_types.condition'),
+      [NodeTypeEnum.ACTION]: t('common.strategy.designer.node_types.action'),
+      [NodeTypeEnum.DECISION]: t('common.strategy.designer.node_types.decision'),
+      [NodeTypeEnum.GATEWAY]: t('common.strategy.designer.node_types.gateway')
     };
-    return textMap[type] || '节点';
+    return textMap[type] || t('common.strategy.designer.node_types.node');
   };
 
   const handleCanvasDragOver = (event: DragEvent) => {

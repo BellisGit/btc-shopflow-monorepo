@@ -57,9 +57,5 @@
         }
       ]
     }
-  ],
-  "locales": {
-    "zh-CN": "src/locales/zh-CN.json",
-    "en-US": "src/locales/en-US.json"
-  }
+  ]
 }

@@ -1,5 +1,6 @@
 import { getAllManifests, getManifestMenus } from '@btc/shared-core/manifest';
 import { tSync } from '@/i18n/getters';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 应用数据项
@@ -80,13 +81,50 @@ export function getAllAppData(): AppDataItem[] {
 
 /**
  * 获取菜单的显示标签（优先使用 labelKey 翻译，否则使用 label）
+ * 注意：这个函数在概览页面中使用，概览页面已经预加载了所有子应用的国际化数据
+ * 如果翻译失败，可能是国际化数据还未加载完成，会回退到 label 或 index
  */
 export function getMenuLabel(menu: MenuItem): string {
   if (menu.labelKey) {
-    const translated = tSync(menu.labelKey);
-    // 如果翻译成功（返回值不是 key），使用翻译结果
-    if (translated !== menu.labelKey) {
-      return translated;
+    // 优先尝试从主应用的 i18n 实例获取翻译（包含预加载的子应用数据）
+    try {
+      const mainI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+      if (mainI18n && mainI18n.global) {
+        const currentLocale = mainI18n.global.locale.value as 'zh-CN' | 'en-US';
+        const messages = mainI18n.global.getLocaleMessage(currentLocale);
+        
+        // 直接访问消息对象，确保能访问到已合并的语言包
+        if (menu.labelKey in messages) {
+          const value = messages[menu.labelKey];
+          if (typeof value === 'string') {
+            return value;
+          } else if (typeof value === 'function') {
+            try {
+              return value({ normalize: (arr: any[]) => arr[0] });
+            } catch {
+              // 如果函数调用失败，继续使用 tSync
+            }
+          }
+        }
+        
+        // 如果直接访问失败，使用 tSync（它会使用主应用的 i18n 实例）
+        const translated = tSync(menu.labelKey);
+        if (translated !== menu.labelKey) {
+          return translated;
+        }
+      } else {
+        // 如果主应用 i18n 实例不存在，使用 tSync
+        const translated = tSync(menu.labelKey);
+        if (translated !== menu.labelKey) {
+          return translated;
+        }
+      }
+    } catch (error) {
+      // 如果出错，继续使用 tSync
+      const translated = tSync(menu.labelKey);
+      if (translated !== menu.labelKey) {
+        return translated;
+      }
     }
   }
   return menu.label || menu.index;

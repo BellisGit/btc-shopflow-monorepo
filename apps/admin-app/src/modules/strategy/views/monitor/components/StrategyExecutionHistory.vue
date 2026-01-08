@@ -188,7 +188,7 @@ const refreshHistory = async () => {
     executionHistory.value = result.list;
     totalRecords.value = result.total;
   } catch (error) {
-    BtcMessage.error('加载执行历史失败');
+    BtcMessage.error(t('common.strategy.monitor.load_execution_history_failed'));
   } finally {
     loading.value = false;
   }
@@ -212,9 +212,9 @@ const viewExecutionDetail = (execution: StrategyExecutionResult) => {
 const replayExecution = async (execution: StrategyExecutionResult) => {
   try {
     // 模拟重放执行
-    BtcMessage.success('执行重放已启动');
+    BtcMessage.success(t('common.strategy.monitor.execution_replay_started'));
   } catch (error) {
-    BtcMessage.error('执行重放失败');
+    BtcMessage.error(t('common.strategy.monitor.execution_replay_failed'));
   }
 };
 

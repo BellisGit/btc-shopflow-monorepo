@@ -98,7 +98,7 @@ async function handleUserInfo(user: any, { next, done }: any) {
 
     done(userDetail);
   } catch (error) {
-    console.error('获取用户详情失败:', error);
+    console.error('Failed to get user details:', error);
     done(user);
   }
 }

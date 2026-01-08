@@ -148,28 +148,29 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const { t } = useI18n();
 // 字体配置选项
 const fontFamilyOptions = [
-  { label: '系统默认', value: 'system-ui, -apple-system, sans-serif' },
-  { label: '等宽字体', value: '"JetBrains Mono", "Fira Code", monospace' },
-  { label: '衬线字体', value: '"Times New Roman", "Georgia", serif' },
-  { label: '圆润字体', value: '"Segoe UI", "PingFang SC", sans-serif' },
-  { label: '粗体字体', value: '"Impact", "Arial Black", sans-serif' }
+  { label: t('common.strategy.designer.font_family.system_default'), value: 'system-ui, -apple-system, sans-serif' },
+  { label: t('common.strategy.designer.font_family.monospace'), value: '"JetBrains Mono", "Fira Code", monospace' },
+  { label: t('common.strategy.designer.font_family.serif'), value: '"Times New Roman", "Georgia", serif' },
+  { label: t('common.strategy.designer.font_family.rounded'), value: '"Segoe UI", "PingFang SC", sans-serif' },
+  { label: t('common.strategy.designer.font_family.bold'), value: '"Impact", "Arial Black", sans-serif' }
 ];
 
 const fontWeightOptions = [
-  { label: '极细', value: '100' },
-  { label: '细体', value: '200' },
-  { label: '轻体', value: '300' },
-  { label: '正常', value: '400' },
-  { label: '中等', value: '500' },
-  { label: '粗体', value: '700' }
+  { label: t('common.strategy.designer.font_weight.thin'), value: '100' },
+  { label: t('common.strategy.designer.font_weight.extra_light'), value: '200' },
+  { label: t('common.strategy.designer.font_weight.light'), value: '300' },
+  { label: t('common.strategy.designer.font_weight.normal'), value: '400' },
+  { label: t('common.strategy.designer.font_weight.medium'), value: '500' },
+  { label: t('common.strategy.designer.font_weight.bold'), value: '700' }
 ];
 
 const fontStyleOptions = [
-  { label: '正常', value: 'normal' },
-  { label: '斜体', value: 'italic' },
-  { label: '倾斜', value: 'oblique' }
+  { label: t('common.strategy.designer.font_style.normal'), value: 'normal' },
+  { label: t('common.strategy.designer.font_style.italic'), value: 'italic' },
+  { label: t('common.strategy.designer.font_style.oblique'), value: 'oblique' }
 ];
 
 // 计算属性
@@ -207,14 +208,14 @@ const getNodeTextColor = (type: NodeType): string => {
 
 const getNodeText = (type: NodeType): string => {
   const textMap = {
-    [NodeTypeEnum.START]: '开始',
-    [NodeTypeEnum.END]: '结束',
-    [NodeTypeEnum.CONDITION]: '条件',
-    [NodeTypeEnum.ACTION]: '动作',
-    [NodeTypeEnum.DECISION]: '决策',
-    [NodeTypeEnum.GATEWAY]: '网关'
+    [NodeTypeEnum.START]: t('common.strategy.designer.node_types.start'),
+    [NodeTypeEnum.END]: t('common.strategy.designer.node_types.end'),
+    [NodeTypeEnum.CONDITION]: t('common.strategy.designer.node_types.condition'),
+    [NodeTypeEnum.ACTION]: t('common.strategy.designer.node_types.action'),
+    [NodeTypeEnum.DECISION]: t('common.strategy.designer.node_types.decision'),
+    [NodeTypeEnum.GATEWAY]: t('common.strategy.designer.node_types.gateway')
   };
-  return textMap[type] || '节点';
+  return textMap[type] || t('common.strategy.designer.node_types.node');
 };
 </script>
 

@@ -10,10 +10,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ElTooltip } from 'element-plus';
 import { getRetryStatus } from '@/utils/requestAdapter';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'RetryStatusIndicator'
 });
+
+const { t } = useI18n();
 
 const showIndicator = ref(false);
 const retryStatus = ref({
@@ -37,12 +40,19 @@ const statusClass = computed(() => {
 
 const tooltipContent = computed(() => {
   if (retryStatus.value.isRetrying) {
-    return `正在重试请求 (${retryStatus.value.retryCount}/3)，下次重试延迟: ${retryStatus.value.nextRetryDelay}ms`;
+    return t('common.retry.retrying', {
+      count: retryStatus.value.retryCount,
+      max: 3,
+      delay: retryStatus.value.nextRetryDelay
+    });
   }
   if (retryStatus.value.retryCount > 0) {
-    return `请求重试失败 (${retryStatus.value.retryCount}/3)，请检查网络连接`;
+    return t('common.retry.failed', {
+      count: retryStatus.value.retryCount,
+      max: 3
+    });
   }
-  return '网络连接正常';
+  return t('common.retry.normal');
 });
 
 function checkRetryStatus() {

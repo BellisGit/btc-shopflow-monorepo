@@ -93,7 +93,7 @@ const loadDepartmentOptions = async () => {
 
     departmentOptions.value = processedData;
   } catch (_error) {
-    console.error('加载部门选项失败:', _error);
+    console.error('Failed to load department options:', _error);
     // 出错时设置为空数组
     departmentOptions.value = [];
   }
@@ -119,27 +119,27 @@ const handleImport = async (
   const rows = Array.isArray(payload?.list) ? payload.list.filter(Boolean) : [];
 
   if (rows.length === 0) {
-    message.warning(t('org.departments.import_empty') || '导入数据为空，请检查模板内容');
+    message.warning(t('common.org.departments.import_empty'));
     done?.();
     return;
   }
 
   const importFn = resolveDepartmentImportFn();
   if (!importFn) {
-    message.warning(t('org.departments.import_unsupported') || '当前环境未配置部门导入接口');
+    message.warning(t('common.org.departments.import_unsupported'));
     done?.();
     return;
   }
 
   try {
     await importFn(rows);
-    message.success(t('org.departments.import_success') || '导入成功');
+    message.success(t('common.org.departments.import_success'));
     done?.();
     close?.();
     crudRef.value?.crud?.refresh?.();
   } catch (error) {
-    console.error('[Departments] 导入失败', error);
-    message.error(t('org.departments.import_failed') || '导入失败，请检查文件格式或内容');
+    console.error('[Departments] Import failed', error);
+    message.error(t('common.org.departments.import_failed'));
     done?.(error);
   }
 };

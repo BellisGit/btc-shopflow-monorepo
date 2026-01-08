@@ -899,9 +899,7 @@ export function broadcastLoginMessage(): void {
       } catch (error) {
         // BroadcastChannel 可能不可用，继续尝试其他方法
       }
-    }
-
-    // 方法2: 使用 localStorage 事件（同源标签页通信）
+    }    // 方法2: 使用 localStorage 事件（同源标签页通信）
     try {
       const event = new StorageEvent('storage', {
         key: 'btc-login-event',
@@ -912,9 +910,7 @@ export function broadcastLoginMessage(): void {
       window.dispatchEvent(event);
     } catch (error) {
       // localStorage 事件可能不可用
-    }
-
-    // 方法3: 尝试通过已存在的 iframe（如果存在）
+    }    // 方法3: 尝试通过已存在的 iframe（如果存在）
     try {
       const iframe = document.getElementById('btc-auth-bridge') as HTMLIFrameElement;
       if (iframe && iframe.contentWindow) {

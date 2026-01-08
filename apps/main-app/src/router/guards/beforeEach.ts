@@ -1,5 +1,5 @@
 import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router';
-import { getAppBySubdomain } from '@configs/app-scanner';
+import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getMainAppHomeRoute } from '@btc/shared-core';
 import { createLogoutGuard, createLoginRedirectGuard, createAuthGuard } from '@btc/shared-router';
 import { KNOWN_SUB_APP_PREFIXES, APP_NAME_MAP, PUBLIC_PAGES } from '../constants';

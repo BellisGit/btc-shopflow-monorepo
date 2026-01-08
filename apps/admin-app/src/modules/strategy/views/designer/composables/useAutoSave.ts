@@ -57,7 +57,7 @@ export function useAutoSave(options: AutoSaveOptions) {
         canvasScale: canvasScale.value
       };
 
-      const name = strategyName?.value || '未命名策略';
+      const name = strategyName?.value || 'Unnamed Strategy';
       await indexedDBManager.saveFile(fileId.value, name, data);
       lastSaved.value = new Date();
     } catch (error) {

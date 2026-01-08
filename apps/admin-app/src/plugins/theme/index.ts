@@ -13,8 +13,8 @@ export const themePlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: '主题切换',
-    description: '提供明暗主题切换和自定义主题配置（已整合到用户设置）',
+    label: 'Theme Switching',
+    description: 'Provides light/dark theme switching and custom theme configuration (integrated into user settings)',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',

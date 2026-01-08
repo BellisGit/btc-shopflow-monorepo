@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { useRoute } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
 import { service } from '@services/eps';
@@ -58,7 +59,7 @@ const loadDeptInfo = async () => {
     const data = await departmentService.info({ deptId });
     deptInfo.value = data;
   } catch (_error) {
-    message.error('加载部门信息失败');
+    message.error(t('common.org.departments.load_dept_info_failed'));
   }
 };
 
@@ -74,7 +75,7 @@ const loadRoles = async () => {
 
     // Mock：随机选择一些已绑定的角�?    selectedRoles.value = [1, 3]; // 默认绑定管理员和员工
   } catch (_error) {
-    message.error('加载角色列表失败');
+    message.error(t('common.org.load_roles_failed'));
   }
 };
 
@@ -87,9 +88,9 @@ const handleSave = async () => {
     // 这里应该调用后端API保存绑定关系
     // await http.post(`/departments/${deptId}/roles`, { roleIds: selectedRoles.value });
 
-    message.success('保存成功');
+    message.success(t('common.save_success'));
   } catch (_error) {
-    message.error('保存失败');
+    message.error(t('common.save_failed'));
   } finally {
     saving.value = false;
   }

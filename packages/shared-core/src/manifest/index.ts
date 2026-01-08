@@ -10,7 +10,7 @@ import docsManifestJson from "./manifests/docs.json" with { type: "json" };
 import dashboardManifestJson from "./manifests/dashboard.json" with { type: "json" };
 import personnelManifestJson from "./manifests/personnel.json" with { type: "json" };
 import mainManifestJson from "./manifests/main.json" with { type: "json" };
-import { getCurrentEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
+import { getCurrentEnvironment, getCurrentSubApp } from '../configs/unified-env-config';
 
 export interface SubAppManifestRoute {
   path: string;
@@ -46,10 +46,6 @@ export interface SubAppManifest<M = unknown> {
   routes: SubAppManifestRoute[];
   menus?: Array<{ index: string; labelKey?: string; label?: string; icon?: string; children?: any[] }>;
   menuConfig?: MenuConfig; // 阿里云控制台风格的菜单配置
-  locales?: {
-    'zh-CN'?: string | string[]; // 相对路径，如 'src/locales/zh-CN.json' 或 ['src/locales/zh-CN.json', 'src/modules/base/locales/zh-CN.json']
-    'en-US'?: string | string[];
-  };
   raw: M;
 }
 
@@ -163,7 +159,6 @@ registerManifest("admin", {
   },
   routes: adminManifestJson.routes ?? [],
   menus: adminManifestJson.menus ?? [],
-  locales: adminManifestJson.locales,
   raw: adminManifestJson,
 });
 
@@ -176,7 +171,6 @@ registerManifest("logistics", {
   },
   routes: logisticsManifestJson.routes ?? [],
   menus: logisticsManifestJson.menus ?? [],
-  locales: logisticsManifestJson.locales,
   raw: logisticsManifestJson,
 });
 
@@ -189,7 +183,6 @@ registerManifest("system", {
   },
   routes: systemManifestJson.routes ?? [],
   menus: systemManifestJson.menus ?? [],
-  locales: systemManifestJson.locales,
   raw: systemManifestJson,
 });
 
@@ -202,7 +195,6 @@ registerManifest("quality", {
   },
   routes: qualityManifestJson.routes ?? [],
   menus: qualityManifestJson.menus ?? [],
-  locales: qualityManifestJson.locales,
   raw: qualityManifestJson,
 });
 
@@ -215,7 +207,6 @@ registerManifest("engineering", {
   },
   routes: engineeringManifestJson.routes ?? [],
   menus: engineeringManifestJson.menus ?? [],
-  locales: engineeringManifestJson.locales,
   raw: engineeringManifestJson,
 });
 
@@ -228,7 +219,6 @@ registerManifest("production", {
   },
   routes: productionManifestJson.routes ?? [],
   menus: productionManifestJson.menus ?? [],
-  locales: productionManifestJson.locales,
   raw: productionManifestJson,
 });
 
@@ -241,7 +231,6 @@ registerManifest("finance", {
   },
   routes: financeManifestJson.routes ?? [],
   menus: financeManifestJson.menus ?? [],
-  locales: financeManifestJson.locales,
   raw: financeManifestJson,
 });
 
@@ -254,7 +243,6 @@ registerManifest("operations", {
   },
   routes: operationsManifestJson.routes ?? [],
   menus: operationsManifestJson.menus ?? [],
-  locales: operationsManifestJson.locales,
   raw: operationsManifestJson,
 });
 
@@ -267,7 +255,6 @@ registerManifest("docs", {
   },
   routes: docsManifestJson.routes ?? [],
   menus: docsManifestJson.menus ?? [],
-  locales: docsManifestJson.locales,
   raw: docsManifestJson,
 });
 
@@ -280,7 +267,6 @@ registerManifest("dashboard", {
   },
   routes: dashboardManifestJson.routes ?? [],
   menus: dashboardManifestJson.menus ?? [],
-  locales: dashboardManifestJson.locales,
   raw: dashboardManifestJson,
 });
 
@@ -293,7 +279,6 @@ registerManifest("personnel", {
   },
   routes: personnelManifestJson.routes ?? [],
   menus: personnelManifestJson.menus ?? [],
-  locales: personnelManifestJson.locales,
   raw: personnelManifestJson,
 });
 
@@ -307,6 +292,5 @@ registerManifest("main", {
   routes: mainManifestJson.routes ?? [],
   menus: mainManifestJson.menus ?? [],
   menuConfig: mainManifestJson.menuConfig, // 传递 menuConfig 用于概览页面
-  locales: mainManifestJson.locales,
   raw: mainManifestJson,
 });

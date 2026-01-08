@@ -161,8 +161,8 @@ import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import BtcUserSettingDrawer from '../../others/btc-user-setting/components/preferences-drawer.vue';
 import { provideContentHeight } from '../../../composables/content-height';
-import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
-import { getEnvironment } from '@configs/unified-env-config';
+import { getSubApps, getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
+import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 import AppLoading from '../../loading/app-loading/index.vue';
 
 // 创建事件总线

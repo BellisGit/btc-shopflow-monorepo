@@ -233,10 +233,10 @@ build_all_apps() {
     log_info "步骤 1: 构建所有应用"
     log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    # 先构建 system-app 生成 EPS 数据
-    log_info "构建 system-app（生成 EPS 数据）..."
-    pnpm build:system || {
-        log_error "system-app 构建失败"
+    # 先构建 main-app 生成 EPS 数据
+    log_info "构建 main-app（生成 EPS 数据）..."
+    pnpm build:main || {
+        log_error "main-app 构建失败"
         exit 1
     }
     

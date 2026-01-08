@@ -20,7 +20,7 @@ const rootDir = join(__dirname, '..');
  */
 function loadPortConfigs() {
   try {
-    const configPath = join(rootDir, 'configs', 'app-env.config.ts');
+    const configPath = join(rootDir, 'packages', 'shared-core', 'src', 'configs', 'app-env.config.ts');
     const content = readFileSync(configPath, 'utf-8');
     
     // 使用正则表达式提取应用配置

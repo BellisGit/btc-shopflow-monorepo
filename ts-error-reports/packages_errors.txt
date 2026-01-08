@@ -2,19 +2,402 @@
 共享包 - TypeScript 类型错误合并报告
 ============================================================
 
-生成时间: 2025/12/28 14:50:18
+生成时间: 2026/1/7 15:16:35
 涉及包数: 5
-总错误数: 0
+总错误数: 37
 
 按包统计:
 ------------------------------------------------------------
-  @btc/shared-components        : 0 个错误
-  @btc/shared-core              : 0 个错误
+  @btc/shared-components        : 33 个错误
+  @btc/vite-plugin              : 3 个错误
+  @btc/shared-core              : 1 个错误
   @btc/shared-utils             : 0 个错误
   @btc/subapp-manifests         : 0 个错误
-  @btc/vite-plugin              : 0 个错误
 
-✅ 所有共享包均未发现类型错误
+按错误代码分类:
+------------------------------------------------------------
+  TS2305    : 18 个
+  TS2454    : 5 个
+  TS18048   : 4 个
+  TS7006    : 3 个
+  TS2307    : 1 个
+  TS2532    : 1 个
+  TS2379    : 1 个
+  TS2209    : 1 个
+  TS6133    : 1 个
+  TS2322    : 1 个
+  TS2345    : 1 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  错误数: 5
+    [TS2454] 行 198:18 - error TS2454: Variable 'label' is used before being assigned.
+    [TS2454] 行 207:16 - error TS2454: Variable 'label' is used before being assigned.
+    [TS2454] 行 209:23 - error TS2454: Variable 'label' is used before being assigned.
+    [TS2454] 行 239:18 - error TS2454: Variable 'label' is used before being assigned.
+    [TS2454] 行 248:16 - error TS2454: Variable 'label' is used before being assigned.
+
+文件: [@btc/shared-components] src/store/process.ts
+  错误数: 4
+    [TS18048] 行 49:12 - error TS18048: 'appByPath' is possibly 'undefined'.
+    [TS18048] 行 260:13 - error TS18048: 'existingTab' is possibly 'undefined'.
+    [TS18048] 行 261:14 - error TS18048: 'existingTab' is possibly 'undefined'.
+    [TS18048] 行 261:56 - error TS18048: 'existingTab' is possibly 'undefined'.
+
+文件: [@btc/vite-plugin] src/inject-fallback-title/index.ts
+  错误数: 3
+    [TS6133] 行 12:7 - error TS6133: '__dirname' is declared but its value is never read.
+    [TS2322] 行 151:11 - error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+    [TS2345] 行 158:53 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | null'.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/notification-icon/notification-panel.vue
+  错误数: 2
+    [TS2532] 行 54:42 - error TS2532: Object is possibly 'undefined'.
+    [TS2305] 行 74:19 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+文件: [@btc/shared-components] src/composables/useGlobalTabBreadcrumbState.ts
+  错误数: 2
+    [TS2305] 行 7:24 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+    [TS2305] 行 7:45 - error TS2305: Module '"@btc/shared-core"' has no exported member 'getGlobalStateValue'.
+
+文件: [@btc/shared-components] src/plugins/i18n/consumer.ts
+  错误数: 2
+    [TS2305] 行 8:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+    [TS7006] 行 39:6 - error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+文件: [@btc/shared-components] src/plugins/preference/consumer.ts
+  错误数: 2
+    [TS2305] 行 5:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+    [TS7006] 行 25:6 - error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+文件: [@btc/shared-components] src/plugins/theme/consumer.ts
+  错误数: 2
+    [TS2305] 行 7:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+    [TS7006] 行 36:6 - error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/dynamic-menu/index.vue
+  错误数: 1
+    [TS2307] 行 284:18 - error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/message-icon/index.vue
+  错误数: 1
+    [TS2305] 行 11:19 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/message-icon/message-panel.vue
+  错误数: 1
+    [TS2305] 行 55:19 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/notification-icon/index.vue
+  错误数: 1
+    [TS2305] 行 11:19 - error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+文件: [@btc/shared-components] src/components/layout/app-layout/process/index.vue
+  错误数: 1
+    [TS2305] 行 101:19 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/components/loading/root-loading/index.vue
+  错误数: 1
+    [TS2379] 行 28:50 - error TS2379: Argument of type '{ appName: string; title: string; subTitle: string; initialLoadingStyle: undefined; }' is not assignable to parameter of type 'InferDefaults<LooseRequired<Props>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: [@btc/shared-components] src/components/others/btc-dev-tools/EnvInfo.vue
+  错误数: 1
+    [TS2305] 行 42:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'useEnvInfo'.
+
+文件: [@btc/shared-components] src/components/others/btc-dev-tools/index.vue
+  错误数: 1
+    [TS2305] 行 65:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'getCurrentEnvironment'.
+
+文件: [@btc/shared-components] src/plugins/github/host.ts
+  错误数: 1
+    [TS2305] 行 7:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/plugins/i18n/host.ts
+  错误数: 1
+    [TS2305] 行 11:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/plugins/message/host.ts
+  错误数: 1
+    [TS2305] 行 6:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/plugins/notification/host.ts
+  错误数: 1
+    [TS2305] 行 6:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/plugins/preference/host.ts
+  错误数: 1
+    [TS2305] 行 6:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-components] src/plugins/theme/host.ts
+  错误数: 1
+    [TS2305] 行 10:10 - error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+文件: [@btc/shared-core] @btc/shared-core - 未指定文件
+  错误数: 1
+    [TS2209] 行 0:0 - error TS2209: The project root is ambiguous, but is required to resolve export map entry '.' in file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-core/package.json'. Supply the `rootDir` compiler option to disambiguate.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  位置: 198:18
+  代码: TS2454
+  消息: error TS2454: Variable 'label' is used before being assigned.
+
+错误 #2
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  位置: 207:16
+  代码: TS2454
+  消息: error TS2454: Variable 'label' is used before being assigned.
+
+错误 #3
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  位置: 209:23
+  代码: TS2454
+  消息: error TS2454: Variable 'label' is used before being assigned.
+
+错误 #4
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  位置: 239:18
+  代码: TS2454
+  消息: error TS2454: Variable 'label' is used before being assigned.
+
+错误 #5
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/breadcrumb/index.vue
+  位置: 248:16
+  代码: TS2454
+  消息: error TS2454: Variable 'label' is used before being assigned.
+
+错误 #6
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/dynamic-menu/index.vue
+  位置: 284:18
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+
+错误 #7
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/message-icon/index.vue
+  位置: 11:19
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #8
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/message-icon/message-panel.vue
+  位置: 55:19
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #9
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/notification-icon/index.vue
+  位置: 11:19
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #10
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/notification-icon/notification-panel.vue
+  位置: 54:42
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #11
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/notification-icon/notification-panel.vue
+  位置: 74:19
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #12
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/layout/app-layout/process/index.vue
+  位置: 101:19
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #13
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/loading/root-loading/index.vue
+  位置: 28:50
+  代码: TS2379
+  消息: error TS2379: Argument of type '{ appName: string; title: string; subTitle: string; initialLoadingStyle: undefined; }' is not assignable to parameter of type 'InferDefaults<LooseRequired<Props>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #14
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/others/btc-dev-tools/EnvInfo.vue
+  位置: 42:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'useEnvInfo'.
+
+错误 #15
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/components/others/btc-dev-tools/index.vue
+  位置: 65:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'getCurrentEnvironment'.
+
+错误 #16
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/composables/useGlobalTabBreadcrumbState.ts
+  位置: 7:24
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #17
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/composables/useGlobalTabBreadcrumbState.ts
+  位置: 7:45
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'getGlobalStateValue'.
+
+错误 #18
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/github/host.ts
+  位置: 7:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #19
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/i18n/consumer.ts
+  位置: 8:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #20
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/i18n/consumer.ts
+  位置: 39:6
+  代码: TS7006
+  消息: error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+错误 #21
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/i18n/host.ts
+  位置: 11:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #22
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/message/host.ts
+  位置: 6:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #23
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/notification/host.ts
+  位置: 6:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #24
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/preference/consumer.ts
+  位置: 5:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #25
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/preference/consumer.ts
+  位置: 25:6
+  代码: TS7006
+  消息: error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+错误 #26
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/preference/host.ts
+  位置: 6:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #27
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/theme/consumer.ts
+  位置: 7:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+
+错误 #28
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/theme/consumer.ts
+  位置: 36:6
+  代码: TS7006
+  消息: error TS7006: Parameter 'state' implicitly has an 'any' type.
+
+错误 #29
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/plugins/theme/host.ts
+  位置: 10:10
+  代码: TS2305
+  消息: error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+
+错误 #30
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/store/process.ts
+  位置: 49:12
+  代码: TS18048
+  消息: error TS18048: 'appByPath' is possibly 'undefined'.
+
+错误 #31
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/store/process.ts
+  位置: 260:13
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #32
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/store/process.ts
+  位置: 261:14
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #33
+  包: @btc/shared-components
+  文件: [@btc/shared-components] src/store/process.ts
+  位置: 261:56
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #34
+  包: @btc/shared-core
+  文件: [@btc/shared-core] @btc/shared-core - 未指定文件
+  位置: 0:0
+  代码: TS2209
+  消息: error TS2209: The project root is ambiguous, but is required to resolve export map entry '.' in file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-core/package.json'. Supply the `rootDir` compiler option to disambiguate.
+
+错误 #35
+  包: @btc/vite-plugin
+  文件: [@btc/vite-plugin] src/inject-fallback-title/index.ts
+  位置: 12:7
+  代码: TS6133
+  消息: error TS6133: '__dirname' is declared but its value is never read.
+
+错误 #36
+  包: @btc/vite-plugin
+  文件: [@btc/vite-plugin] src/inject-fallback-title/index.ts
+  位置: 151:11
+  代码: TS2322
+  消息: error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+
+错误 #37
+  包: @btc/vite-plugin
+  文件: [@btc/vite-plugin] src/inject-fallback-title/index.ts
+  位置: 158:53
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | null'.
 
 ============================================================
 各包完整输出:
@@ -26,36 +409,47 @@
 ============================================================
 
 
-> @btc/shared-components@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components
+> @btc/shared-components@2.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components
 > vue-tsc --noEmit --project tsconfig.type-check.json
 
-
-
-============================================================
-@btc/shared-core 完整输出:
-============================================================
-
-
-> @btc/shared-core@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-core
-> tsc --noEmit --project tsconfig.type-check.json
-
-
-
-============================================================
-@btc/shared-utils 完整输出:
-============================================================
-
-
-> @btc/shared-utils@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-utils
-> tsc --noEmit
-
-
-
-============================================================
-@btc/subapp-manifests 完整输出:
-============================================================
-
-None of the selected packages has a "type-check" script
+src/components/layout/app-layout/breadcrumb/index.vue(198,18): error TS2454: Variable 'label' is used before being assigned.
+src/components/layout/app-layout/breadcrumb/index.vue(207,16): error TS2454: Variable 'label' is used before being assigned.
+src/components/layout/app-layout/breadcrumb/index.vue(209,23): error TS2454: Variable 'label' is used before being assigned.
+src/components/layout/app-layout/breadcrumb/index.vue(239,18): error TS2454: Variable 'label' is used before being assigned.
+src/components/layout/app-layout/breadcrumb/index.vue(248,16): error TS2454: Variable 'label' is used before being assigned.
+src/components/layout/app-layout/dynamic-menu/index.vue(284,18): error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+src/components/layout/app-layout/message-icon/index.vue(11,19): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/components/layout/app-layout/message-icon/message-panel.vue(55,19): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/components/layout/app-layout/notification-icon/index.vue(11,19): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/components/layout/app-layout/notification-icon/notification-panel.vue(54,42): error TS2532: Object is possibly 'undefined'.
+src/components/layout/app-layout/notification-icon/notification-panel.vue(74,19): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/components/layout/app-layout/process/index.vue(101,19): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/components/loading/root-loading/index.vue(28,50): error TS2379: Argument of type '{ appName: string; title: string; subTitle: string; initialLoadingStyle: undefined; }' is not assignable to parameter of type 'InferDefaults<LooseRequired<Props>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'initialLoadingStyle' are incompatible.
+    Type 'undefined' is not assignable to type '"progress" | "circle" | "dots" | "gradient" | ((props: LooseRequired<Props>) => "progress" | "circle" | "dots" | "gradient")'.
+src/components/others/btc-dev-tools/EnvInfo.vue(42,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'useEnvInfo'.
+src/components/others/btc-dev-tools/index.vue(65,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'getCurrentEnvironment'.
+src/composables/useGlobalTabBreadcrumbState.ts(7,24): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/composables/useGlobalTabBreadcrumbState.ts(7,45): error TS2305: Module '"@btc/shared-core"' has no exported member 'getGlobalStateValue'.
+src/plugins/github/host.ts(7,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/plugins/i18n/consumer.ts(8,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/plugins/i18n/consumer.ts(39,6): error TS7006: Parameter 'state' implicitly has an 'any' type.
+src/plugins/i18n/host.ts(11,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/plugins/message/host.ts(6,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/plugins/notification/host.ts(6,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/plugins/preference/consumer.ts(5,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/plugins/preference/consumer.ts(25,6): error TS7006: Parameter 'state' implicitly has an 'any' type.
+src/plugins/preference/host.ts(6,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/plugins/theme/consumer.ts(7,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'onGlobalStateChange'.
+src/plugins/theme/consumer.ts(36,6): error TS7006: Parameter 'state' implicitly has an 'any' type.
+src/plugins/theme/host.ts(10,10): error TS2305: Module '"@btc/shared-core"' has no exported member 'setGlobalState'.
+src/store/process.ts(49,12): error TS18048: 'appByPath' is possibly 'undefined'.
+src/store/process.ts(260,13): error TS18048: 'existingTab' is possibly 'undefined'.
+src/store/process.ts(261,14): error TS18048: 'existingTab' is possibly 'undefined'.
+src/store/process.ts(261,56): error TS18048: 'existingTab' is possibly 'undefined'.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-components:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @btc/shared-components@2.0.0 type-check: `vue-tsc --noEmit --project tsconfig.type-check.json`
+Exit status 2
 
 
 ============================================================
@@ -66,4 +460,40 @@ None of the selected packages has a "type-check" script
 > @btc/vite-plugin@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\vite-plugin
 > tsc --noEmit
 
+src/inject-fallback-title/index.ts(12,7): error TS6133: '__dirname' is declared but its value is never read.
+src/inject-fallback-title/index.ts(151,11): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/inject-fallback-title/index.ts(158,53): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\vite-plugin:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @btc/vite-plugin@1.0.0 type-check: `tsc --noEmit`
+Exit status 2
+
+
+============================================================
+@btc/shared-core 完整输出:
+============================================================
+
+
+> @btc/shared-core@2.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-core
+> tsc --noEmit --project tsconfig.type-check.json
+
+error TS2209: The project root is ambiguous, but is required to resolve export map entry '.' in file 'C:/Users/mlu/Desktop/btc-shopflow/btc-shopflow-monorepo/packages/shared-core/package.json'. Supply the `rootDir` compiler option to disambiguate.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-core:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @btc/shared-core@2.0.0 type-check: `tsc --noEmit --project tsconfig.type-check.json`
+Exit status 2
+
+
+============================================================
+@btc/shared-utils 完整输出:
+============================================================
+
+No projects matched the filters in "C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo"
+
+
+============================================================
+@btc/subapp-manifests 完整输出:
+============================================================
+
+No projects matched the filters in "C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo"
 

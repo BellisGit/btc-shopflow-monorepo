@@ -537,9 +537,5 @@
         { "index": "/test/inventory-ticket-print", "labelKey": "menu.test_features.inventory_ticket_print" }
       ]
     }
-  ],
-  "locales": {
-    "zh-CN": "src/locales/zh-CN.json",
-    "en-US": "src/locales/en-US.json"
-  }
+  ]
 }

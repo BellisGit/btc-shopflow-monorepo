@@ -9,6 +9,7 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
+      "development": "./src/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
@@ -29,6 +30,18 @@
       "development": "./src/utils/storage/index.ts",
       "import": "./dist/utils/storage/index.mjs",
       "require": "./dist/utils/storage/index.js"
+    },
+    "./utils/storage/cookie": {
+      "types": "./src/utils/storage/cookie/index.d.ts",
+      "development": "./src/utils/storage/cookie/index.ts",
+      "import": "./dist/utils/storage/cookie/index.mjs",
+      "require": "./dist/utils/storage/cookie/index.js"
+    },
+    "./utils/storage/session": {
+      "types": "./src/utils/storage/session/index.d.ts",
+      "development": "./src/utils/storage/session/index.ts",
+      "import": "./dist/utils/storage/session/index.mjs",
+      "require": "./dist/utils/storage/session/index.js"
     },
     "./utils/http": {
       "types": "./src/utils/http/index.d.ts",
@@ -80,6 +93,37 @@
       "types": "./dist/src/composables/user-check/index.d.ts",
       "import": "./dist/src/composables/user-check/index.js",
       "require": "./dist/src/composables/user-check/index.js"
+    },
+    "./configs/layout-bridge": {
+      "types": "./src/configs/layout-bridge.d.ts",
+      "import": "./dist/configs/layout-bridge.mjs",
+      "require": "./dist/configs/layout-bridge.js"
+    },
+    "./configs/app-env.config": {
+      "types": "./src/configs/app-env.config.d.ts",
+      "import": "./dist/configs/app-env.config.mjs",
+      "require": "./dist/configs/app-env.config.js"
+    },
+    "./configs/app-scanner": {
+      "types": "./src/configs/app-scanner.d.ts",
+      "import": "./dist/configs/app-scanner.mjs",
+      "require": "./dist/configs/app-scanner.js"
+    },
+    "./configs/unified-env-config": {
+      "types": "./src/configs/unified-env-config.d.ts",
+      "development": "./src/configs/unified-env-config.ts",
+      "import": "./dist/configs/unified-env-config.mjs",
+      "require": "./dist/configs/unified-env-config.js"
+    },
+    "./configs/qiankun-config-center": {
+      "types": "./src/configs/qiankun-config-center.d.ts",
+      "import": "./dist/configs/qiankun-config-center.mjs",
+      "require": "./dist/configs/qiankun-config-center.js"
+    },
+    "./configs/app-identity.types": {
+      "types": "./src/configs/app-identity.types.d.ts",
+      "import": "./dist/configs/app-identity.types.mjs",
+      "require": "./dist/configs/app-identity.types.js"
     }
   },
   "publishConfig": {
@@ -107,7 +151,7 @@
     "dayjs": "^1.11.18",
     "dexie": "^4.2.1",
     "file-type": "^21.2.0",
-    "pinia-plugin-persistedstate": "^3.2.0",
+    "pinia-plugin-persistedstate": "^3.2.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -2,6 +2,9 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 import '@btc/shared-components/styles/dark-theme.css';
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createFinanceApp,
@@ -11,6 +14,7 @@ import {
 } from './bootstrap';
 import type { FinanceAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+import { tSync } from './i18n/getters';
 
 let context: FinanceAppContext | null = null;
 
@@ -66,12 +70,12 @@ const render = async (props: QiankunProps = {}) => {
       const sharedCore = await import('@btc/shared-core');
       appLoadingService = sharedCore.appLoadingService;
       if (appLoadingService) {
-        appLoadingService.show('财务模块');
+        appLoadingService.show(tSync('common.system.finance_module'));
       }
     } catch (error) {
       // 静默失败，继续执行
       if (import.meta.env.DEV) {
-        console.warn('[finance-app] 无法显示应用级 loading:', error);
+        console.warn(`[finance-app] ${tSync('common.error.cannot_display_loading')}:`, error);
       }
     }
   }
@@ -84,7 +88,7 @@ const render = async (props: QiankunProps = {}) => {
       } catch (error) {
         // 卸载失败不影响后续流程，但记录错误
         if (import.meta.env.DEV) {
-          console.warn('[finance-app] 卸载前一个实例失败:', error);
+          console.warn(`[finance-app] ${tSync('common.error.unmount_previous_failed')}:`, error);
         }
       } finally {
         context = null;
@@ -99,7 +103,7 @@ const render = async (props: QiankunProps = {}) => {
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('财务模块');
+        appLoadingService.hide(tSync('common.system.finance_module'));
       } catch (error) {
         // 静默失败
       }
@@ -107,12 +111,12 @@ const render = async (props: QiankunProps = {}) => {
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    console.error('[finance-app] 渲染失败:', error);
+    console.error(`[finance-app] ${tSync('common.error.render_failed')}:`, error);
     // 即使挂载失败，也要移除 Loading 并清理 context
     if (isStandalone && appLoadingService) {
       // 隐藏应用级 loading
       try {
-        appLoadingService.hide('财务模块');
+        appLoadingService.hide(tSync('common.system.finance_module'));
       } catch (error) {
         // 静默失败
       }
@@ -142,12 +146,12 @@ async function mount(props: QiankunProps) {
       await loadSharedResourcesFromLayoutApp({
         onProgress: (_loaded: number, _total: number) => {
           if (import.meta.env.DEV) {
-            console.log(`[finance-app] 加载共享资源进度: ${_loaded}/${_total}`);
+            console.log(`[finance-app] ${tSync('common.error.load_shared_resources_progress')}: ${_loaded}/${_total}`);
           }
         },
       });
     } catch (error) {
-      console.warn('[finance-app] 加载共享资源失败，继续使用本地资源:', error);
+      console.warn(`[finance-app] ${tSync('common.error.load_shared_resources_failed')}:`, error);
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -167,7 +171,7 @@ async function unmount(props: QiankunProps = {}) {
     } catch (error) {
       // 卸载失败不影响后续流程
       if (import.meta.env.DEV) {
-        console.warn('[finance-app] 卸载失败:', error);
+        console.warn(`[finance-app] ${tSync('common.error.unmount_failed')}:`, error);
       }
     } finally {
       context = null;
@@ -253,7 +257,7 @@ if (shouldRunStandalone()) {
                 // 生产环境下输出诊断信息
                 if (import.meta.env.PROD) {
                   const computedStyle = window.getComputedStyle(viewport);
-                  console.warn('[finance-app] 找到 #subapp-viewport，准备挂载', {
+                  console.warn(`[finance-app] ${tSync('common.error.viewport_found')}`, {
                     viewportExists: !!viewport,
                     isConnected: viewport.isConnected,
                     display: computedStyle.display,
@@ -266,41 +270,41 @@ if (shouldRunStandalone()) {
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
                   if (import.meta.env.PROD) {
-                    console.warn('[finance-app] 成功挂载到 layout-app');
+                    console.warn(`[finance-app] ${tSync('common.error.mount_success')}`);
                   }
                 }).catch((error) => {
-                  console.error('[finance-app] 挂载到 layout-app 失败:', error);
+                  console.error(`[finance-app] ${tSync('common.error.mount_failed')}:`, error);
                 });
               } else {
-                console.error('[finance-app] 等待 #subapp-viewport 超时，尝试独立渲染');
+                console.error(`[finance-app] ${tSync('common.error.viewport_timeout')}`);
                 if (import.meta.env.PROD) {
-                  console.warn('[finance-app] 诊断信息', {
+                  console.warn(`[finance-app] ${tSync('common.error.diagnostic_info')}`, {
                     viewportElement: document.querySelector('#subapp-viewport'),
                     isUsingLayoutApp: !!(window as any).__USE_LAYOUT_APP__,
                     isLayoutApp: !!(window as any).__IS_LAYOUT_APP__,
                   });
                 }
                 render().catch((error) => {
-                  console.error('[finance-app] 独立运行失败:', error);
+                  console.error(`[finance-app] ${tSync('common.error.standalone_failed')}:`, error);
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
             render().catch((error) => {
-              console.error('[finance-app] 独立运行失败:', error);
+              console.error(`[finance-app] ${tSync('common.error.standalone_failed')}:`, error);
             });
           }
         })
         .catch((error) => {
-          console.error('[finance-app] 初始化 layout-app 失败:', error);
+          console.error(`[finance-app] ${tSync('common.error.init_layout_app_failed')}:`, error);
           // layout-app 加载失败，独立渲染
           render().catch((error) => {
             console.error('[finance-app] 独立运行失败:', error);
           });
         });
     }).catch((error) => {
-      console.error('[finance-app] 导入 init-layout-app 失败:', error);
+      console.error(`[finance-app] ${tSync('common.error.import_init_layout_app_failed')}:`, error);
       // 导入失败，直接渲染
       render().catch((error) => {
         console.error('[finance-app] 独立运行失败:', error);

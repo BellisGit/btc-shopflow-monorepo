@@ -349,15 +349,15 @@ export function useLogisticsInventoryExport() {
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
       // 如果有checkType，使用checkType作为文件名前缀，否则使用默认的国际化文本
-      const filenamePrefix = checkType ? `${checkType}采购结果` : t('menu.logistics.inventoryManagement.result');
+      const filenamePrefix = checkType ? `${checkType}采购结果` : t('menu.inventory_management.result');
       const filename = `${filenamePrefix}_${timestamp}.xlsx`;
 
       saveAs(blob, filename);
 
-      BtcMessage.success(t('platform.common.export_success'));
+      BtcMessage.success(t('common.ui.export_success'));
     } catch (error: any) {
       console.error('导出失败:', error);
-      BtcMessage.error(error.message || t('platform.common.export_failed'));
+      BtcMessage.error(error.message || t('common.ui.export_failed'));
     }
   };
 

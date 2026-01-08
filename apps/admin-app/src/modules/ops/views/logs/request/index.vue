@@ -15,12 +15,12 @@
             type="danger"
             @click="clearLogs"
           >
-            清空
+            {{ t('common.ops.logs.request.clear') }}
           </el-button>
         </div>
 
         <div class="log-keep-filter">
-          <span>日志保存天数：</span>
+          <span>{{ t('common.ops.logs.request.log_retention_days') }}：</span>
           <el-input-number
             v-model="keepDays"
             :min="1"
@@ -31,7 +31,7 @@
         </div>
 
         <BtcFlex1 />
-        <BtcSearchKey placeholder="搜索请求地址、用户昵称、IP..." />
+        <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
         <BtcCrudActions />
       </BtcRow>
 
@@ -73,6 +73,8 @@ import { service } from '@services/eps';
 defineOptions({
   name: 'RequestLog'
 });
+
+const { t } = useI18n();
 
 // 请求日志服务（打印可用方法）
 // 确保 service 存在，避免 undefined 错误
@@ -201,7 +203,7 @@ const requestColumns = computed(() => {
             const ipStr = row.ip.length > 1000 ? row.ip.substring(0, 1000) + '...' : row.ip;
             return ipStr.split(',').map((ip: string) => ip.trim()).filter((ip: any) => ip).join(', ');
           } catch (error) {
-            console.error('IP字段格式化错误:', error);
+            console.error('IP field format error:', error);
             return '-';
           }
         }
@@ -221,8 +223,8 @@ const requestColumns = computed(() => {
       return {
         ...col,
         dict: [
-          { label: '成功', value: 'success', type: 'success' },
-          { label: '失败', value: 'failed', type: 'danger' }
+          { label: t('common.success'), value: 'success', type: 'success' },
+          { label: t('common.failed'), value: 'failed', type: 'danger' }
         ],
         dictColor: true
       };
@@ -246,7 +248,7 @@ onMounted(async () => {
     // const res = await requestService.getKeep();
     // keepDays.value = Number(res);
   } catch (err) {
-    console.error('获取日志保存天数失败', err);
+    console.error('Failed to get log retention days', err);
   }
   await nextTick();
   try {
@@ -293,25 +295,25 @@ async function saveKeepDays() {
   try {
     // 暂时注释掉，等待后端提供接口
     // await requestService.setKeep({ value: keepDays.value });
-    BtcMessage.success('保存成功');
+    BtcMessage.success(t('common.save_success'));
   } catch (err: any) {
-    BtcMessage.error(err.message || '保存失败');
+    BtcMessage.error(err.message || t('common.save_failed'));
   }
 }
 
 // 清空日志
 function clearLogs() {
-  BtcConfirm('是否要清空日志？', '提示', {
+  BtcConfirm(t('common.ops.logs.request.clear_confirm'), t('common.tip'), {
     type: 'warning'
   })
     .then(async () => {
       try {
         // 暂时注释掉，等待后端提供接口
         // await requestService.clear();
-        BtcMessage.success('清空成功');
+        BtcMessage.success(t('common.ops.logs.request.clear_success'));
         requestCrudRef.value?.refresh?.();
       } catch (err: any) {
-        BtcMessage.error(err.message || '清空失败');
+        BtcMessage.error(err.message || t('common.ops.logs.request.clear_failed'));
       }
     })
     .catch(() => null);

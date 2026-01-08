@@ -4,7 +4,7 @@
  */
 
 import { getAllApps, getAppById } from './app-scanner';
-import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost } from './app-env.config';
+import { getAllDevPorts, getAllPrePorts, getAppConfig, getAppConfigByPrePort, getAppConfigByTestHost, isSpecialAppById } from './app-env.config';
 
 export type Environment = 'development' | 'preview' | 'test' | 'production';
 export type ConfigScheme = 'default' | 'custom'; // 可以通过 .env 切换
@@ -379,8 +379,18 @@ export function isMainApp(
     }
 
     // 检查路径是否匹配任何子应用的 pathPrefix
+    // 关键：排除公开应用（如 home），它们虽然 pathPrefix 是 '/'，但不应该影响主应用路由的判断
     const apps = getAllApps();
+    const mainApp = apps.find(app => app.type === 'main');
+    const mainAppRoutes = mainApp?.routes?.mainAppRoutes || [];
+    
     for (const app of apps) {
+      // 跳过主应用、特殊应用（如 home, docs, layout, mobile）和公开应用
+      // 特殊应用在 SPECIAL_APP_CONFIGS 中定义，不应该影响主应用路由的判断
+      if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
+        continue;
+      }
+      
       if (app.type === 'sub' && app.enabled) {
         const normalizedPathPrefix = app.pathPrefix.endsWith('/')
           ? app.pathPrefix.slice(0, -1)
@@ -394,6 +404,22 @@ export function isMainApp(
           // 匹配到子应用，不是主应用
           return false;
         }
+      }
+    }
+    
+    // 关键：如果路径匹配主应用的路由配置，优先判断为主应用
+    // 这样可以避免 home 应用的 pathPrefix '/' 影响主应用路由的判断
+    if (mainAppRoutes.length > 0) {
+      const normalizedPath = path.endsWith('/') && path !== '/'
+        ? path.slice(0, -1)
+        : path;
+      if (mainAppRoutes.some(route => {
+        const normalizedRoute = route.endsWith('/') && route !== '/'
+          ? route.slice(0, -1)
+          : route;
+        return normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+      })) {
+        return true;
       }
     }
 
@@ -464,9 +490,34 @@ export function isMainApp(
   // 主应用路径：/data/...、/profile 等
   // 子应用路径：/logistics/...、/admin/... 等
   const apps = getAllApps();
+  const mainApp = apps.find(app => app.type === 'main');
+  const mainAppRoutes = mainApp?.routes?.mainAppRoutes || [];
+
+  // 关键：如果路径匹配主应用的路由配置，优先判断为主应用
+  // 这样可以避免 home 应用的 pathPrefix '/' 影响主应用路由的判断
+  if (mainAppRoutes.length > 0) {
+    const normalizedPath = path.endsWith('/') && path !== '/'
+      ? path.slice(0, -1)
+      : path;
+    if (mainAppRoutes.some(route => {
+      const normalizedRoute = route.endsWith('/') && route !== '/'
+        ? route.slice(0, -1)
+        : route;
+      return normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+    })) {
+      return true;
+    }
+  }
 
   // 先检查是否是子应用路径（子应用的 pathPrefix 优先级更高）
-  for (const app of apps) {
+  // 关键：排除公开应用（如 home），它们虽然 pathPrefix 是 '/'，但不应该影响主应用路由的判断
+    for (const app of apps) {
+      // 跳过主应用、特殊应用（如 home, docs, layout, mobile）和公开应用
+      // 特殊应用在 SPECIAL_APP_CONFIGS 中定义，不应该影响主应用路由的判断
+      if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
+        continue;
+      }
+    
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠
       const normalizedPathPrefix = app.pathPrefix.endsWith('/')
@@ -490,12 +541,33 @@ export function isMainApp(
   // 关键：在 layout-app 环境下，如果路径是根路径 '/'，但实际 locationPath 是子应用路径，
   // 需要再次检查 locationPath（因为 route.path 可能是 '/'，但 window.location.pathname 是子应用路径）
   if (path === '/' && locationPath && locationPath !== '/') {
+    // 先检查 locationPath 是否匹配主应用路由
+    if (mainAppRoutes.length > 0) {
+      const normalizedLocationPath = locationPath.endsWith('/') && locationPath !== '/'
+        ? locationPath.slice(0, -1)
+        : locationPath;
+      if (mainAppRoutes.some(route => {
+        const normalizedRoute = route.endsWith('/') && route !== '/'
+          ? route.slice(0, -1)
+          : route;
+        return normalizedLocationPath === normalizedRoute || normalizedLocationPath.startsWith(normalizedRoute + '/');
+      })) {
+        return true;
+      }
+    }
+    
     // 使用 locationPath 重新检查
     const normalizedLocationPath = locationPath.endsWith('/') && locationPath !== '/'
       ? locationPath.slice(0, -1)
       : locationPath;
 
     for (const app of apps) {
+      // 跳过主应用、特殊应用（如 home, docs, layout, mobile）和公开应用
+      // 特殊应用在 SPECIAL_APP_CONFIGS 中定义，不应该影响主应用路由的判断
+      if (app.type === 'main' || isSpecialAppById(app.id) || (app.type === 'sub' && app.metadata?.public === true)) {
+        continue;
+      }
+      
       if (app.type === 'sub' && app.enabled) {
         const normalizedPathPrefix = app.pathPrefix.endsWith('/')
           ? app.pathPrefix.slice(0, -1)
@@ -568,8 +640,31 @@ export function getCurrentSubApp(): string | null {
 
   // 开发环境：通过路径判断（与 isMainApp 使用相同的匹配逻辑）
   const apps = getAllApps();
+  const mainApp = apps.find(app => app.type === 'main');
+  const mainAppRoutes = mainApp?.routes?.mainAppRoutes || [];
+
+  // 关键：如果路径匹配主应用的路由配置，优先判断为主应用，返回 null
+  // 这样可以避免 home 应用的 pathPrefix '/' 影响主应用路由的判断
+  if (mainAppRoutes.length > 0) {
+    const normalizedPath = path.endsWith('/') && path !== '/'
+      ? path.slice(0, -1)
+      : path;
+    if (mainAppRoutes.some(route => {
+      const normalizedRoute = route.endsWith('/') && route !== '/'
+        ? route.slice(0, -1)
+        : route;
+      return normalizedPath === normalizedRoute || normalizedPath.startsWith(normalizedRoute + '/');
+    })) {
+      return null; // 主应用路由，返回 null
+    }
+  }
 
   for (const app of apps) {
+    // 跳过主应用和公开应用（如 home），它们不应该被识别为子应用
+    if (app.type === 'main' || (app.type === 'sub' && app.metadata?.public === true)) {
+      continue;
+    }
+    
     if (app.type === 'sub' && app.enabled) {
       // 支持 pathPrefix 带或不带尾部斜杠（与 isMainApp 使用相同的匹配逻辑）
       const normalizedPathPrefix = app.pathPrefix.endsWith('/')
@@ -714,5 +809,5 @@ export const envConfig = getCurrentEnvConfig();
 // 请使用 getCurrentSubApp() 和 isMainApp() 函数来获取当前值
 
 // 从 app-env.config 重新导出，以便从 unified-env-config 统一导入
-export { getAppConfig, getAppConfigByTestHost, getAppConfigByPrePort, getAppConfigByDevPort } from './app-env.config';
+export { getAppConfig, getAppConfigByTestHost, getAppConfigByPrePort, getAppConfigByDevPort, isSpecialAppById, isSpecialApp, isBusinessApp } from './app-env.config';
 export type { AppEnvConfig } from './app-env.config';

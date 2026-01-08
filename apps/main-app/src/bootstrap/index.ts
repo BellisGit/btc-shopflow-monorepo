@@ -15,7 +15,7 @@ import { initResourceLoader, initDynamicImportInterceptor } from '@btc/shared-co
 
 // 核心模块
 import { setupStore, setupUI, setupRouter, setupI18n, setupEps } from './core';
-import { resolveAppLogoUrl, registerManifestMenusForApp } from '@configs/layout-bridge';
+import { resolveAppLogoUrl, registerManifestMenusForApp } from '@btc/shared-core/configs/layout-bridge';
 
 // 处理器模块
 import { createNotificationHandler, initNotificationManager } from './handlers';
@@ -114,7 +114,7 @@ export async function bootstrap(app: App) {
     try {
       // 直接使用 logoutCore，不需要 Vue 上下文
       const { logoutCore } = await import('@btc/shared-core/auth/logoutCore');
-      const { deleteCookie: deleteCookieUtil, getCookieDomain } = await import('../utils/cookie');
+      const { deleteCookie: deleteCookieUtil, getCookieDomain } = await import('@btc/shared-core/utils/storage/cookie');
       
       // 获取 processStore 的函数（在应用挂载后通过 Pinia 获取）
       const getProcessStore = async () => {

@@ -417,9 +417,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       // 'file-saver', // 只在部分应用中使用，不是所有应用都安装
     ],
     exclude: [
-      // 关键：@configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 关键：@btc/shared-core/configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
       // 注意：exclude 只支持字符串模式，不支持正则表达式
-      '@configs/layout-bridge',
+      '@btc/shared-core/configs/layout-bridge',
       // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
       // 在开发环境中，应该直接从源码导入，而不是预构建
       // 这样可以避免 JSX 解析问题
@@ -430,9 +430,8 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     // 注意：不再包含 shared-components/src/index.ts，因为它包含 TSX 文件，应该在运行时直接处理
     entries: [
       resolve(appDir, 'src/main.ts'),
-      // 关键：显式包含 @btc/shared-core 的入口文件，确保其依赖被扫描
-      // 这样 file-saver 等依赖就能在启动时被识别
-      resolve(appDir, '../../packages/shared-core/src/index.ts'),
+      // 注意：不再直接引用 shared-core/src/index.ts，避免在配置加载时解析 @configs/layout-bridge
+      // shared-core 的依赖会在运行时通过应用的入口文件自动发现和优化
     ],
     esbuildOptions: {
       plugins: [],

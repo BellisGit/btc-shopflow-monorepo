@@ -50,10 +50,10 @@ export function initResponseInterceptor(router: Router) {
 
   // 设置确认对话框处理器
   const confirmHandler: ConfirmHandler = {
-    confirm: (message: string, title = '确认') => {
+    confirm: (message: string, title = 'Confirm') => {
       return BtcConfirm(message, title, {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => true).catch(() => false);
     }

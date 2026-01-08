@@ -109,19 +109,19 @@ const handleImport = async (
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
       if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || '导入失败';
+        const errorMsg = responseData.msg || responseData.message || t('common.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success('导入成功');
+    message.success(t('common.import.success'));
     crudRef.value?.crud?.refresh?.();
     close();
   } catch (error: any) {
     console.error('[DictionaryValues] import failed:', error);
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || '导入失败';
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.import.failed');
     message.error(errorMsg);
     done();
   }

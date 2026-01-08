@@ -40,9 +40,9 @@ export default defineConfig({
       '@plugins': resolve(__dirname, 'src/plugins'),
       '@utils': resolve(__dirname, 'src/utils'),
       '@btc/shared-components': resolve(__dirname, 'src'),
-      // 添加 @configs 别名，指向项目根目录的 configs 文件夹（用于开发环境）
+      // 添加 @configs 别名，指向 shared-core 的 configs 目录（用于开发环境）
       // 在构建时，这些模块会被标记为 external，不会被打包
-      '@configs': resolve(__dirname, '../../configs'),
+      '@configs': resolve(__dirname, '../shared-core/src/configs'),
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, 'src/charts/utils/css-var'),
       '@charts-utils/color': resolve(__dirname, 'src/charts/utils/color'),
@@ -101,7 +101,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@configs/unified-env-config', '@configs/app-scanner', '@configs/layout-bridge'],
+      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@btc/shared-core/configs/unified-env-config', '@btc/shared-core/configs/app-scanner', '@btc/shared-core/configs/layout-bridge'],
       output: {
         globals: {
           vue: 'Vue',

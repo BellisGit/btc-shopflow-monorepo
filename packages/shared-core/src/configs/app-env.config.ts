@@ -240,3 +240,27 @@ export function getAppConfigByPrePort(port: string): AppEnvConfig | undefined {
 export function getAppConfigByTestHost(testHost: string): AppEnvConfig | undefined {
   return APP_ENV_CONFIGS.find((config) => config.testHost === testHost);
 }
+
+/**
+ * 判断应用是否为特殊应用（在 SPECIAL_APP_CONFIGS 中）
+ * 特殊应用包括：docs-app, home-app, layout-app, mobile-app
+ */
+export function isSpecialApp(appName: string): boolean {
+  return SPECIAL_APP_CONFIGS.some((config) => config.appName === appName);
+}
+
+/**
+ * 判断应用是否为业务应用（在 BUSINESS_APP_CONFIGS 中）
+ */
+export function isBusinessApp(appName: string): boolean {
+  return BUSINESS_APP_CONFIGS.some((config) => config.appName === appName);
+}
+
+/**
+ * 根据应用 ID 判断是否为特殊应用
+ * 应用 ID 是 appName 去掉 '-app' 后缀后的值
+ */
+export function isSpecialAppById(appId: string): boolean {
+  const appName = `${appId}-app`;
+  return isSpecialApp(appName);
+}

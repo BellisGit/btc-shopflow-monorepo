@@ -1,6 +1,6 @@
 ﻿export default {
   name: 'base',
-  label: '基础模块',
-  description: '提供布局、导航等核心功能',
+  label: 'common.module.base.label',
+  description: 'common.module.base.description',
   order: 0
 };

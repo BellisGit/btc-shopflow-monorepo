@@ -6,8 +6,8 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"],
+      "@configs": ["../../packages/shared-core/src/configs"],
+      "@configs/*": ["../../packages/shared-core/src/configs/*"],
       "@btc/shared-core": ["../../packages/shared-core/src", "../../packages/shared-core/dist"],
       "@btc/shared-core/*": ["../../packages/shared-core/src/*", "../../packages/shared-core/dist/*"],
       "@btc/shared-components": ["../../packages/shared-components/src", "../../packages/shared-components/dist"],

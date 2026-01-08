@@ -8,17 +8,17 @@ const pageRoutes: RouteRecordRaw[] = [
     path: '/',
     name: 'logistics-home',
     component: () => import('../../modules/home/views/index.vue'),
-    meta: { isHome: true, process: false, tabLabelKey: 'logistics.placeholder.disabledHome' },
+      meta: { isHome: true, process: false, tabLabelKey: 'app.placeholder.disabledHome' },
   },
   {
     path: '/procurement',
     name: 'logistics-procurement',
     component: () => import('../../modules/procurement/views/index.vue'),
     meta: {
-      tabLabelKey: 'menu.logistics.procurementModule',
-      labelKey: 'menu.logistics.procurementModule',
+      tabLabelKey: 'menu.procurement',
+      labelKey: 'menu.procurement',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
+        { labelKey: 'menu.procurement', icon: 'ShoppingCart' },
       ],
     },
   },
@@ -27,12 +27,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-procurement-auxiliary',
     component: () => import('../../modules/procurement/views/auxiliary/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.auxiliary',
+      labelKey: 'menu.procurement.auxiliary',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.auxiliary', icon: 'Collection' },
+        { labelKey: 'menu.procurement', icon: 'ShoppingCart' },
+        { labelKey: 'menu.procurement.auxiliary', icon: 'Collection' },
       ],
-      tabLabelKey: 'menu.logistics.procurement.auxiliary',
+      tabLabelKey: 'menu.procurement.auxiliary',
     },
   },
   {
@@ -40,12 +40,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-procurement-packaging',
     component: () => import('../../modules/procurement/views/packaging/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.packaging',
+      labelKey: 'menu.procurement.packaging',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.packaging', icon: 'CollectionTag' },
+        { labelKey: 'menu.procurement', icon: 'ShoppingCart' },
+        { labelKey: 'menu.procurement.packaging', icon: 'CollectionTag' },
       ],
-      tabLabelKey: 'menu.logistics.procurement.packaging',
+      tabLabelKey: 'menu.procurement.packaging',
     },
   },
   {
@@ -53,12 +53,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-procurement-supplier',
     component: () => import('../../modules/procurement/views/supplier/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.supplier',
+      labelKey: 'menu.procurement.supplier',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.supplier', icon: 'User' },
+        { labelKey: 'menu.procurement', icon: 'ShoppingCart' },
+        { labelKey: 'menu.procurement.supplier', icon: 'User' },
       ],
-      tabLabelKey: 'menu.logistics.procurement.supplier',
+      tabLabelKey: 'menu.procurement.supplier',
     },
   },
   {
@@ -66,10 +66,10 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-warehouse',
     component: () => import('../../modules/warehouse/views/index.vue'),
     meta: {
-      tabLabelKey: 'menu.logistics.warehouseModule',
-      labelKey: 'menu.logistics.warehouseModule',
+      tabLabelKey: 'menu.warehouse',
+      labelKey: 'menu.warehouse',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
+        { labelKey: 'menu.warehouse', icon: 'FolderOpened' },
       ],
     },
   },
@@ -85,13 +85,13 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-warehouse-material-list',
     component: () => import('../../modules/warehouse/views/material/list/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.warehouse.material.list',
+      labelKey: 'menu.warehouse.material.list',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-        { labelKey: 'menu.logistics.warehouse.material', icon: 'Files' },
-        { labelKey: 'menu.logistics.warehouse.material.list', icon: 'List' },
+        { labelKey: 'menu.warehouse', icon: 'FolderOpened' },
+        { labelKey: 'menu.warehouse.material', icon: 'Files' },
+        { labelKey: 'menu.warehouse.material.list', icon: 'List' },
       ],
-      tabLabelKey: 'menu.logistics.warehouse.material.list',
+      tabLabelKey: 'menu.warehouse.material.list',
     },
   },
   {
@@ -106,12 +106,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-inventory-storage-location',
     component: () => import('../../modules/warehouse/views/config/storage-location/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.storageLocation',
+      labelKey: 'menu.inventory_management.storage_location',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.storageLocation', icon: 'Location' },
+        { labelKey: 'menu.inventory_management', icon: 'Odometer' },
+        { labelKey: 'menu.inventory_management.storage_location', icon: 'Location' },
       ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.storageLocation',
+      tabLabelKey: 'menu.inventory_management.storage_location',
     },
   },
   {
@@ -119,12 +119,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-inventory-info',
     component: () => import('../../modules/inventory/views/info/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.info',
+      labelKey: 'menu.inventory_management.info',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.info', icon: 'Document' },
+        { labelKey: 'menu.inventory_management', icon: 'Odometer' },
+        { labelKey: 'menu.inventory_management.info', icon: 'Document' },
       ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.info',
+      tabLabelKey: 'menu.inventory_management.info',
     },
   },
   {
@@ -132,12 +132,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-inventory-detail',
     component: () => import('../../modules/inventory/views/detail/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.detail',
+      labelKey: 'menu.inventory_management.detail',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.detail', icon: 'Histogram' },
+        { labelKey: 'menu.inventory_management', icon: 'Odometer' },
+        { labelKey: 'menu.inventory_management.detail', icon: 'Histogram' },
       ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.detail',
+      tabLabelKey: 'menu.inventory_management.detail',
     },
   },
   {
@@ -145,12 +145,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-inventory-result',
     component: () => import('../../modules/inventory/views/result/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.result',
+      labelKey: 'menu.inventory_management.result',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.result', icon: 'List' },
+        { labelKey: 'menu.inventory_management', icon: 'Odometer' },
+        { labelKey: 'menu.inventory_management.result', icon: 'List' },
       ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.result',
+      tabLabelKey: 'menu.inventory_management.result',
     },
   },
   {
@@ -158,11 +158,11 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-customs',
     component: () => import('../../modules/customs/views/index.vue'),
     meta: {
-      tabLabelKey: 'logistics.menu.customsModule',
-      labelKey: 'menu.logistics.customsModule',
+      tabLabelKey: 'menu.customs_module',
+      labelKey: 'menu.customs_module',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.overview', icon: 'Coin' },
-        { labelKey: 'menu.logistics.customsModule', icon: 'MapLocation' },
+        { labelKey: 'menu.overview', icon: 'Coin' },
+        { labelKey: 'menu.customs_module', icon: 'MapLocation' },
       ],
     },
   },
@@ -178,13 +178,13 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'logistics-warehouse-config-storage-location',
     component: () => import('../../modules/warehouse/views/config/storage-location/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.warehouse.config.storageLocation',
+      labelKey: 'menu.warehouse.config.storage_location',
       breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-        { labelKey: 'menu.logistics.warehouse.config', icon: 'Setting' },
-        { labelKey: 'menu.logistics.warehouse.config.storageLocation', icon: 'Location' },
+        { labelKey: 'menu.warehouse', icon: 'FolderOpened' },
+        { labelKey: 'menu.warehouse.config', icon: 'Setting' },
+        { labelKey: 'menu.warehouse.config.storage_location', icon: 'Location' },
       ],
-      tabLabelKey: 'menu.logistics.warehouse.config.storageLocation',
+      tabLabelKey: 'menu.warehouse.config.storage_location',
     },
   },
 ];

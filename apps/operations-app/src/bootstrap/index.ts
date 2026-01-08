@@ -109,7 +109,7 @@ export const createMonitorApp = async (props: QiankunProps = {}): Promise<Monito
     } catch (error) {
       // 静默失败
     }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(OPERATIONS_APP_ID);
     registerManifestTabsForApp(OPERATIONS_APP_ID);
   } else {
@@ -123,7 +123,7 @@ export const createMonitorApp = async (props: QiankunProps = {}): Promise<Monito
     } catch (error) {
       // 静默失败
     }
-    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@configs/layout-bridge');
+    const { registerManifestMenusForApp, registerManifestTabsForApp } = await import('@btc/shared-core/configs/layout-bridge');
     registerManifestMenusForApp(OPERATIONS_APP_ID);
     registerManifestTabsForApp(OPERATIONS_APP_ID);
   }

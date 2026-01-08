@@ -33,12 +33,19 @@ export type PageLevelConfig = Record<
 >;
 
 /**
+ * 通用配置类型（支持多层嵌套，用于 common 等）
+ * 例如：{ error: { failed: "执行失败" }, retry: { retrying: "正在重试..." } }
+ */
+export type CommonLevelConfig = Record<ValidKey, string | CommonLevelConfig>;
+
+/**
  * 国际化配置类型（单语言）
  */
 export interface LocaleConfigSingle {
   app?: AppLevelConfig;
   menu?: MenuLevelConfig;
   page?: PageLevelConfig;
+  common?: CommonLevelConfig;
 }
 
 /**

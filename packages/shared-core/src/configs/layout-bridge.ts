@@ -1,7 +1,7 @@
-import type { Plugin } from '@btc/shared-core';
+import type { Plugin } from '../btc/plugins/manager/types';
 import type { AppEnvConfig } from './app-env.config';
 import { getAppConfig, getAllDevPorts, getAllPrePorts } from './app-env.config';
-import { registerMenus, getMenuRegistry } from '@btc/shared-components';
+import { registerMenus, getMenuRegistry, clearMenus } from '@btc/shared-components';
 // MenuItem 类型定义（从 shared-components 复制，因为类型导出在 dist 中可能不可用）
 type MenuItem = {
   index: string;
@@ -9,10 +9,10 @@ type MenuItem = {
   icon?: string;
   children?: MenuItem[];
 };
-import { getManifestMenus, getManifestTabs, getManifest } from '@btc/shared-core/manifest';
-import { storage } from '@btc/shared-core/utils';
-import { assignIconsToMenuTree } from '@btc/shared-core';
-import { getAppBySubdomain } from './app-scanner';
+import { getManifestMenus, getManifestTabs, getManifest } from '../manifest';
+import { storage } from '../utils';
+import { assignIconsToMenuTree } from '../utils/menu-icon-assigner';
+import { getAppBySubdomain, getAppById } from './app-scanner';
 import { getEnvConfig } from './unified-env-config';
 
 declare global {
@@ -177,6 +177,34 @@ export function registerManifestMenusForApp(appId: string) {
       }
     }
 
+    // 开发环境下：检查并清除可能包含旧 labelKey 格式的菜单缓存
+    if (import.meta.env.DEV && appId === 'logistics') {
+      const existingMenus = registry.value[appId] || [];
+      const hasOldFormat = existingMenus.some((menu: any) => {
+        const checkMenu = (m: any): boolean => {
+          if (m.labelKey && m.labelKey.includes('menu.logistics.')) {
+            return true;
+          }
+          if (m.title && m.title.includes('menu.logistics.')) {
+            return true;
+          }
+          if (m.children) {
+            return m.children.some(checkMenu);
+          }
+          return false;
+        };
+        return checkMenu(menu);
+      });
+
+      if (hasOldFormat) {
+        if (import.meta.env.DEV) {
+          console.log(`[registerManifestMenusForApp] Detected old format menu cache, clearing ${appId} menu cache`);
+        }
+        // 清除旧缓存
+        clearMenus(appId);
+      }
+    }
+
     // 先尝试通过 getManifestMenus 获取菜单
     let manifestMenus = getManifestMenus(appId);
 
@@ -185,6 +213,17 @@ export function registerManifestMenusForApp(appId: string) {
       const manifest = getManifest(appId);
 
       if (!manifest) {
+        // 检查应用配置，如果是公开应用（如 home），静默跳过，不输出警告
+        try {
+          const appConfig = getAppById(appId);
+          // 如果是公开应用，静默跳过菜单注册
+          if (appConfig?.metadata?.public === true) {
+            return;
+          }
+        } catch (error) {
+          // 如果获取应用配置失败，继续输出警告
+        }
+
         if (import.meta.env.DEV) {
           console.warn(`[registerManifestMenusForApp] 应用 ${appId} 的 manifest 不存在`);
         }
@@ -469,4 +508,3 @@ export function createSharedUserSettingPlugin(): Plugin {
     },
   };
 }
-

@@ -20,7 +20,7 @@ declare global {
  * 运行时由使用 shared-plugins 的应用提供
  */
 
-declare module '@configs/unified-env-config' {
+declare module '@btc/shared-core/configs/unified-env-config' {
   export type Environment = 'development' | 'preview' | 'production';
 
   export function getEnvironment(): Environment;
@@ -32,7 +32,7 @@ declare module '@configs/unified-env-config' {
   ): boolean;
 }
 
-declare module '@configs/app-scanner' {
+declare module '@btc/shared-core/configs/app-scanner' {
   export interface AppIdentity {
     id: string;
     name: string;
@@ -59,7 +59,7 @@ declare module '@configs/app-scanner' {
   export function getAppByPathPrefix(pathPrefix: string): AppIdentity | undefined;
 }
 
-declare module '@configs/layout-bridge' {
+declare module '@btc/shared-core/configs/layout-bridge' {
   export function registerManifestMenusForApp(app: string): void;
   export function registerManifestTabsForApp(app: string): void;
   export function registerAppEnvAccessors(): void;

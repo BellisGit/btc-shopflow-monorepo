@@ -42,10 +42,10 @@
                                                            "src/utils/*"
                                                        ],
                                           "@configs":  [
-                                                           "../../configs"
+                                                           "../../packages/shared-core/src/configs"
                                                        ],
                                           "@configs/*":  [
-                                                             "../../configs/*"
+                                                             "../../packages/shared-core/src/configs/*"
                                                          ],
                                           "@btc/shared-core":  [
                                                                        "../../packages/shared-core/src",

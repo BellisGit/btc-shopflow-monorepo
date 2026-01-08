@@ -12,8 +12,8 @@ export const messagePlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: '消息中心',
-    description: '提供私信、系统消息功能',
+    label: 'Message Center',
+    description: 'Provides private messages and system message functionality',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',

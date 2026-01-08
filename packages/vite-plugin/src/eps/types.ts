@@ -26,8 +26,10 @@ export interface EpsColumn {
   source?: string;
   /**
    * 字典类型
+   * 如果为 true，表示该字段是字典字段，需要从字典接口获取选项
+   * 如果为数组，表示字典选项数组 [{label: string, value: any}]
    */
-  dict?: string[];
+  dict?: boolean | Array<{label: string, value: any}>;
   /**
    * 默认值
    */
@@ -175,7 +177,11 @@ export interface EpsConfig {
    */
   dict?: boolean;
   /**
-   * 共享的 EPS 数据源目录（用于从 system-app 读取 EPS 数据）
+   * 字典接口 URL，默认：/api/system/auth/dict
+   */
+  dictApi?: string;
+  /**
+   * 共享的 EPS 数据源目录（用于从 main-app 读取 EPS 数据）
    * 如果指定，将优先从此目录读取 EPS 数据，而不是从当前应用的 dist 读取
    */
   sharedEpsDir?: string;
@@ -195,7 +201,11 @@ export interface EpsPluginOptions {
    */
   watch?: boolean;
   /**
-   * 共享的 EPS 数据源目录（用于从 system-app 读取 EPS 数据）
+   * 字典接口 URL，默认：/api/system/auth/dict
+   */
+  dictApi?: string;
+  /**
+   * 共享的 EPS 数据源目录（用于从 main-app 读取 EPS 数据）
    * 如果指定，将优先从此目录读取 EPS 数据，而不是从当前应用的 outputDir 读取
    */
   sharedEpsDir?: string;

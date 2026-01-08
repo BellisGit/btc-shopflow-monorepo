@@ -40,8 +40,8 @@ interface BaseAdapterOptions<TData = any> {
   errorMessage?: string | ((error: any) => string | null | undefined | false);
 }
 
-const DEFAULT_SUCCESS_MESSAGE = '操作成功';
-const DEFAULT_ERROR_MESSAGE = '操作失败，请稍后重试';
+const DEFAULT_SUCCESS_MESSAGE = 'Operation successful';
+const DEFAULT_ERROR_MESSAGE = 'Operation failed, please retry later';
 
 function resolveShouldNotifySuccess(method: HttpMethod, options?: BaseAdapterOptions): boolean {
   if (options?.notifySuccess !== undefined) {

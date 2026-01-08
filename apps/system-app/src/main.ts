@@ -1,450 +1,268 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import { bootstrap } from './bootstrap';
-import { registerAppEnvAccessors } from '@configs/layout-bridge';
-import { getAppBySubdomain } from '@configs/app-scanner';
-import { setAppBySubdomainFn } from '@btc/shared-core/manifest';
-import { isMainApp } from '@configs/unified-env-config';
-import { removeLoadingElement } from '@btc/shared-core';
-// 动态导入避免构建时错误（延迟到运行时导入）
-
-// 注意：HTTP URL 拦截逻辑已在 index.html 中实现（内联脚本，最早执行）
-// 这里不再需要重复拦截，避免多次重写同一原型导致的不确定行为
-// SVG 图标注册（必须在最前面，确保 SVG sprite 在应用启动时就被加载）
-import 'virtual:svg-register';
+import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
-// 关键：确保 Element Plus 样式在最前面加载，避免被其他样式覆盖
-// 开启样式隔离后，需要确保 Element Plus 样式在主应用中被正确加载
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
-// 关键：直接导入确保构建时被正确打包，避免通过 SCSS @use 导入时的路径解析问题
 import '@btc/shared-components/styles/dark-theme.css';
-// 关键：在关闭样式隔离的情况下，需要在主应用入口直接引入样式，确保样式被正确加载
-// 虽然 bootstrap/core/ui.ts 中也引入了，但在入口文件引入可以确保样式在应用启动时就被处理
-import '@btc/shared-components/styles/index.scss';
-// 关键：显式导入 BtcSvg 组件，确保在生产环境构建时被正确打包
-// 即使组件在 bootstrap/core/ui.ts 中已经注册，这里显式导入可以确保组件被包含在构建产物中
-import { BtcSvg } from '@btc/shared-components';
-// 移除可能残留的布局类
-if (typeof document !== 'undefined') {
-  document.documentElement.classList.remove('col-mobile', 'col-tablet', 'col-desktop');
-}
+// 应用全局样式（已在 bootstrap-subapp.ts 中导入，这里不再重复导入）
 
-registerAppEnvAccessors();
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
 
-// 初始化全局响应式布局断点监听（已禁用，避免影响全局样式）
-// initGlobalBreakpoints();
+import type { QiankunProps } from '@btc/shared-core';
+import {
+  createSystemApp,
+  mountSystemApp,
+  unmountSystemApp,
+  updateSystemApp,
+} from './bootstrap-subapp';
+import type { SystemAppContext } from './bootstrap-subapp';
+import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
+import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { tSync } from './i18n/getters';
 
-// 注入 getAppBySubdomain 函数到 subapp-manifests
-setAppBySubdomainFn(getAppBySubdomain);
+let context: SystemAppContext | null = null;
+let isRendering = false; // 防止并发渲染
 
-// 注入 isMainApp 函数到 shared-components（同步导入，确保在菜单组件初始化前已注入）
-// 关键：使用同步导入，确保菜单激活逻辑能正确判断主应用路由
-import { setIsMainAppFn } from '@btc/shared-components';
-setIsMainAppFn(isMainApp);
-
-const app = createApp(App);
-
-// 全局错误处理：捕获并显示错误
-app.config.errorHandler = (err, _instance, info) => {
-  console.error('[Vue Error Handler]', err, info);
-};
-
-// 在 bootstrap 之前就注册组件，确保组件在任何地方使用前都已注册
-// 使用 typeof 确保组件被实际引用，避免被 tree-shake 掉
-if (typeof BtcSvg !== 'undefined') {
-  app.component('BtcSvg', BtcSvg);
-  app.component('btc-svg', BtcSvg);
-} else {
-  console.error('[BtcSvg] 组件导入失败，请检查 @btc/shared-components 构建');
-}
-
-// 等待 EPS 服务加载完成后再暴露到全局
-// 因为 eps-service chunk 是动态导入的，需要等待它加载完成
-// 优化：减少等待时间，使用渐进式轮询间隔，更快响应
-// 关键：如果 EPS 服务加载失败或超时，不阻塞应用启动，返回空对象
-async function waitForEpsService(maxWaitTime = 1000, initialInterval = 50): Promise<any> {
-  const startTime = Date.now();
-
-  // 首先尝试直接导入（如果 eps-service chunk 已经加载，这会立即返回）
-  try {
-    const epsModule = await import('./services/eps');
-    const service = epsModule.service || epsModule.default;
-
-    // 检查服务是否有有效内容（不是空对象）
-    if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-      return service;
+const render = async (props: QiankunProps = {}) => {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
-  } catch (error) {
-    // 如果导入失败（chunk 还没加载），继续等待
-    // 不打印日志，避免控制台噪音
-  }
-
-  // 检查全局是否已经有服务（可能已经被其他脚本加载）
-  const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
-  if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
-    return globalService;
-  }
-
-  // 渐进式轮询：开始时使用较短的间隔，逐渐增加
-  let currentInterval = initialInterval;
-  let attemptCount = 0;
-
-  while (Date.now() - startTime < maxWaitTime) {
-    try {
-      // 再次尝试导入
-      const epsModule = await import('./services/eps');
-      const service = epsModule.service || epsModule.default;
-
-      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-        return service;
-      }
-    } catch (error) {
-      // 继续等待
-    }
-
-    // 检查全局是否已经有服务（可能已经被其他脚本加载）
-    const globalService = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
-    if (globalService && typeof globalService === 'object' && Object.keys(globalService).length > 0) {
-      return globalService;
-    }
-
-    // 渐进式增加轮询间隔：前几次使用短间隔，之后逐渐增加
-    attemptCount++;
-    if (attemptCount <= 5) {
-      currentInterval = initialInterval; // 前 5 次保持短间隔（50ms）
-    } else if (attemptCount <= 10) {
-      currentInterval = 100; // 接下来 5 次使用 100ms
-    } else {
-      currentInterval = 150; // 之后使用 150ms
-    }
-
-    await new Promise(resolve => setTimeout(resolve, currentInterval));
-  }
-
-  // 如果等待超时，尝试最后一次导入（作为兜底）
-  try {
-    const epsModule = await import('./services/eps');
-    const service = epsModule.service || epsModule.default;
-    if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-      return service;
-    }
-  } catch (error) {
-    // 静默处理，不打印错误
-  }
-
-  // 返回空对象作为兜底，不阻塞应用启动
-  // 不打印警告，避免控制台噪音（EPS 服务可以在后台继续加载）
-  // 关键：即使 EPS 服务未加载完成，也继续启动应用，EPS 服务可以在后台异步加载
-  return {};
-}
-
-// 优化：在后台异步加载 EPS 服务，不阻塞应用启动
-// 这样即使 EPS 服务很大，也不会阻塞 DOMContentLoaded
-if (typeof window !== 'undefined') {
-  // 使用 requestIdleCallback 或 setTimeout 在后台加载 EPS 服务
-  const loadEpsServiceInBackground = () => {
-    import('./services/eps').then((epsModule) => {
-      const service = epsModule.service || epsModule.default;
-      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-        // 更新全局服务
-        (window as any).__BTC_SERVICE__ = service;
-        (window as any).__APP_EPS_SERVICE__ = service;
-        (window as any).service = service;
-      }
-    }).catch(() => {
-      // 静默失败，不影响应用运行
-    });
-  };
-
-  // 使用 requestIdleCallback 在浏览器空闲时加载，如果没有则使用 setTimeout
-  if (typeof requestIdleCallback !== 'undefined') {
-    requestIdleCallback(loadEpsServiceInBackground, { timeout: 2000 });
-  } else {
-    setTimeout(loadEpsServiceInBackground, 100);
-  }
-}
-
-
-/**
- * 移除 Loading 元素的统一函数
- * 确保 Loading 元素被可靠地移除，避免页面一直显示 loading 状态
- */
-// 使用全局根级 Loading 服务
-let rootLoadingInitialized = false;
-
-// 初始化全局根级 Loading
-async function initRootLoading() {
-  if (rootLoadingInitialized) {
-    return;
-  }
-  
-  // 关键：如果是子应用路由或登录页，不应该显示"拜里斯科技"loading
-  // 子应用的loading由appLoadingService统一管理
-  // 登录页不需要显示全局loading
-  // 关键：立即检查并隐藏#Loading元素（如果存在），避免显示"拜里斯科技"
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname;
-    const knownSubAppPrefixes = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/docs', '/dashboard', '/personnel'];
-    const isSubAppRoute = knownSubAppPrefixes.some(prefix => pathname.startsWith(prefix));
-    const isLoginPage = pathname === '/login' || pathname.startsWith('/login?');
-    
-    if (isSubAppRoute || isLoginPage) {
-      // 子应用路由或登录页，立即隐藏"拜里斯科技"loading
-      const systemLoadingEl = document.getElementById('Loading');
-      if (systemLoadingEl) {
-        systemLoadingEl.style.setProperty('display', 'none', 'important');
-        systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
-        systemLoadingEl.style.setProperty('opacity', '0', 'important');
-        systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
-        systemLoadingEl.style.setProperty('z-index', '-1', 'important');
-        systemLoadingEl.classList.add('is-hide');
-      }
-      // 不显示"拜里斯科技"loading
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
+    if (context) {
       return;
     }
   }
-  
-  try {
-    const loadingModule = await import('@btc/shared-core');
-    const rootLoadingService = loadingModule.rootLoadingService;
-    if (rootLoadingService && typeof rootLoadingService.show === 'function') {
-      rootLoadingService.show('正在初始化应用...');
-      rootLoadingInitialized = true;
-    } else {
-      throw new Error('rootLoadingService 未定义或方法不存在');
-    }
-  } catch (error) {
-    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
-    // 备用方案：直接操作 DOM（向后兼容）
-    const loadingEl = document.getElementById('Loading');
-    if (loadingEl) {
-      loadingEl.style.setProperty('display', 'flex', 'important');
-      loadingEl.style.setProperty('visibility', 'visible', 'important');
-      loadingEl.style.setProperty('opacity', '1', 'important');
-    }
-  }
-}
 
-// 隐藏全局根级 Loading
-async function hideRootLoading() {
-  try {
-    const loadingModule = await import('@btc/shared-core');
-    const rootLoadingService = loadingModule.rootLoadingService;
-    if (rootLoadingService && typeof rootLoadingService.hide === 'function') {
-      rootLoadingService.hide();
-    } else {
-      throw new Error('rootLoadingService 未定义或方法不存在');
-    }
-  } catch (error) {
-    console.warn('[system-app] 无法加载 RootLoadingService，使用备用方案', error);
-    // 备用方案：直接操作 DOM（向后兼容）
+  isRendering = true;
+  
+  // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+  // 并使用 appLoadingService 显示应用级 loading
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  let appLoadingService: any = null;
+  
+  if (isStandalone) {
+    // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
     const loadingEl = document.getElementById('Loading');
     if (loadingEl) {
       loadingEl.style.setProperty('display', 'none', 'important');
       loadingEl.style.setProperty('visibility', 'hidden', 'important');
       loadingEl.style.setProperty('opacity', '0', 'important');
       loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
       loadingEl.classList.add('is-hide');
     }
+    
+    // 显示应用级 loading
+    try {
+      const sharedCore = await import('@btc/shared-core');
+      appLoadingService = sharedCore.appLoadingService;
+      if (appLoadingService) {
+        appLoadingService.show(tSync('domain.type.system') || '系统模块');
+      }
+    } catch (error) {
+      // 静默失败，继续执行
+      if (import.meta.env.DEV) {
+        console.warn('[system-app] 无法显示应用级 loading:', error);
+      }
+    }
   }
+  
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountSystemApp(context);
+      } catch (error) {
+        // 卸载失败不影响后续流程
+      } finally {
+        context = null;
+      }
+    }
+
+    // 创建新实例
+    context = await createSystemApp(props);
+    await mountSystemApp(context, props);
+
+    // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide(tSync('domain.type.system') || '系统模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
+    removeLoadingElement();
+    clearNavigationFlag();
+    
+    // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
+    // 在独立运行时，不应该显示 NProgress 或 AppSkeleton
+    try {
+      // 关闭 NProgress（如果正在运行）
+      const NProgress = (await import('nprogress')).default;
+      if (NProgress && typeof NProgress.done === 'function') {
+        NProgress.done();
+      }
+      
+      // 隐藏 AppSkeleton（如果存在）
+      const skeleton = document.getElementById('app-skeleton');
+      if (skeleton) {
+        skeleton.style.setProperty('display', 'none', 'important');
+        skeleton.style.setProperty('visibility', 'hidden', 'important');
+        skeleton.style.setProperty('opacity', '0', 'important');
+      }
+    } catch (e) {
+      // 静默失败
+    }
+  } catch (error) {
+    console.error('[system-app] 渲染失败:', error);
+    // 即使挂载失败，也要移除 Loading 并清理 context
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide(tSync('domain.type.system') || '系统模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
+    removeLoadingElement();
+    clearNavigationFlag();
+    context = null;
+    throw error;
+  } finally {
+    isRendering = false;
+  }
+};
+
+
+// qiankun 生命周期钩子（标准 ES 模块导出格式）
+// bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
+// 关键：bootstrap 阶段不做任何初始化工作，所有初始化都在 mount 阶段完成
+// 这样可以避免在应用切换时出现竞态条件
+function bootstrap() {
+  // 确保 context 状态被重置（防止应用切换时的状态残留）
+  // 注意：这里不清理 context，因为可能还在使用，真正的清理在 unmount 中完成
+  return Promise.resolve();
 }
 
-let isAppMounted = false; // 跟踪应用是否已挂载
-
-// Loading 超时定时器 ID
-let loadingTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-// 确保 Loading 被移除的函数（立即隐藏 loading）
-async function ensureLoadingRemoved(): Promise<void> {
-  await hideRootLoading();
-}
-
-// 初始化全局根级 Loading
-initRootLoading();
-
-// 启动应用（优化：不等待 EPS 服务，立即启动应用）
-// 关键：EPS 服务已经在后台异步加载，不需要等待它完成
-// 这样可以更快地显示应用界面，提升用户体验
-// @ts-expect-error: startupPromise 未使用，保留用于未来功能
-const startupPromise = Promise.resolve()
-  .then(async () => {
-    // 尝试快速获取 EPS 服务（如果已经加载）
-    // 但不等待，立即继续启动流程
-    const quickEpsCheck = waitForEpsService(200, 20).catch(() => ({}));
-    quickEpsCheck.then((service) => {
-      if (service && typeof service === 'object' && Object.keys(service).length > 0) {
-        if (typeof window !== 'undefined') {
-          (window as any).__BTC_SERVICE__ = service;
-          (window as any).__APP_EPS_SERVICE__ = service;
-          (window as any).service = service;
-        }
-      }
-    });
-
-    // 注意：authApi 已移除，请使用全局 __APP_AUTH_API__ 获取（由 main-app 提供）
-    // system-app 不再暴露 authApi 到全局，因为 auth 模块已移除
-
-    // 暴露域列表获取函数和清除函数（异步加载，不阻塞启动）
-    import('./utils/domain-cache').then(({ getDomainList, clearDomainCache }) => {
-      // 设置全局域列表获取函数（供共享组件版本的 menu-drawer 使用）
-      if (getDomainList && typeof (window as any).__APP_GET_DOMAIN_LIST__ === 'undefined') {
-        (window as any).__APP_GET_DOMAIN_LIST__ = getDomainList;
-      }
-      // 设置全局域列表缓存清除函数
-      if (clearDomainCache && typeof (window as any).__APP_CLEAR_DOMAIN_CACHE__ === 'undefined') {
-        (window as any).__APP_CLEAR_DOMAIN_CACHE__ = clearDomainCache;
-      }
-    }).catch(() => {
+async function mount(props: QiankunProps) {
+  // 关键优化：将共享资源加载改为后台异步执行，不阻塞应用挂载
+  // 应用可以立即挂载，共享资源在后台加载，如果加载失败会使用本地资源作为降级方案
+  if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
+    // 不 await，让它在后台执行
+    loadSharedResourcesFromLayoutApp({
+      onProgress: (loaded, total) => {
+        // 加载进度回调
+      },
+    }).catch((error) => {
+      // 加载共享资源失败，继续使用本地资源
       // 静默失败，不影响应用运行
     });
-
-    // 立即启动应用，不等待 EPS 服务
-    // 为 bootstrap 添加超时保护
-    const bootstrapPromise = bootstrap(app);
-    const bootstrapTimeout = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Bootstrap 超时（8秒）')), 8000);
-    });
-    return Promise.race([bootstrapPromise, bootstrapTimeout]);
-  })
-  .then(async () => {
-  // 优化：不等待路由就绪，立即挂载应用
-  // 路由可以在应用挂载后异步初始化，不阻塞首次渲染
-
-  // 检查 #app 元素是否存在
-  const appEl = document.getElementById('app');
-  if (!appEl) {
-    throw new Error('#app 元素不存在');
   }
 
+  // 设置子应用错误捕获（如果主应用传递了错误上报方法）
+  // 关键：使用 try-catch 确保错误捕获设置失败不会阻塞应用挂载
   try {
-    // 关键：检查应用是否已经挂载，避免重复挂载
-    if (!isAppMounted) {
-      app.mount('#app');
-      isAppMounted = true; // 标记应用已挂载
-    }
-
-    // 关键：应用挂载后，立即关闭全局根级 Loading（不等待任何其他操作）
-    // 参考 cool-admin：在路由 beforeResolve 中已经关闭了 loading，这里作为兜底
-    // 如果路由 beforeResolve 还没执行，这里确保 loading 被关闭
-    await hideRootLoading();
-
-    // 关键：立即触发路由导航，不延迟（参考 cool-admin）
-    // Loading 已经在 router.beforeResolve 中关闭，这里立即导航确保路由正确
-    // 使用 nextTick 确保在下一个事件循环中执行，但不延迟太久
-    import('vue').then(({ nextTick }) => {
-      nextTick(async () => {
-      try {
-        // 异步获取 router 实例
-        const { router } = await import('./bootstrap/core/router');
-        if (!router) return;
-
-        // 快速检查路由是否就绪（最多等待 500ms）
-        try {
-          const routerReadyPromise = router.isReady();
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('路由就绪超时')), 500);
-          });
-          await Promise.race([routerReadyPromise, timeoutPromise]);
-        } catch (error) {
-          // 路由就绪检查失败或超时，继续导航
-        }
-
-        // 检查当前路由是否已匹配
-        const currentRoute = router.currentRoute.value;
-        if (currentRoute.matched.length === 0) {
-          // 关键：先检查认证状态，只有未认证时才重定向到登录页
-          // 如果已认证但路由未匹配，可能是路由配置问题，不应该重定向到登录页
-          const { isAuthenticated } = await import('./router/index');
-          const isAuth = isAuthenticated();
-
-          if (!isAuth) {
-            // 未认证，直接重定向到登录页，避免触发 router.push 导致组件守卫提取错误
-            try {
-              // 使用 router.replace 而不是 router.push，避免触发组件守卫提取
-              await router.replace({
-                path: '/login',
-                query: { redirect: currentRoute.fullPath },
-              });
-            } catch (navError) {
-              // 如果路由导航失败，使用 window.location 作为回退
-              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
-            }
-          } else {
-            // 已认证但路由未匹配，可能是子应用路由或无效路由
-            // 不要触发 router.push，避免 Vue Router 尝试提取 undefined 组件的守卫
-            // 直接让应用正常显示（可能显示 Layout 或子应用挂载点）
-            // 路由守卫已经处理了这种情况，不需要再次导航
-          }
-        } else {
-          // 即使路由已匹配，也要确保路由守卫执行了认证检查
-          // 如果未认证，路由守卫会自动重定向到登录页
-          // 触发一次路由导航，确保路由守卫执行
-          try {
-            await router.push(currentRoute.fullPath);
-          } catch (error) {
-            // 忽略错误，路由守卫可能已经处理了
-            // 如果是组件守卫提取错误，已经在全局错误处理器中处理了
-          }
-        }
-      } catch (error) {
-        // 路由导航处理失败
-      }
+    if (props.appName && typeof props.appName === 'string') {
+      setupSubAppErrorCapture({
+        updateErrorList: typeof props.updateErrorList === 'function'
+          ? (props.updateErrorList as (errorInfo: any) => void | Promise<void>)
+          : undefined,
+        appName: props.appName,
       });
-    });
-  } catch (mountError) {
-    // 即使挂载失败，也要移除 Loading 元素
-    if (loadingTimeoutId) {
-      clearTimeout(loadingTimeoutId);
-      loadingTimeoutId = null;
     }
-    await ensureLoadingRemoved(); // 立即隐藏loading
-    removeLoadingElement(); // 延迟移除loading元素
-    throw mountError;
+  } catch (error) {
+    // 错误捕获设置失败不影响应用运行
   }
 
-    // 设置全局对象，并挂载 DevTools
-    (async () => {
-      try {
-        // 暴露 http 实例到全局，供 DevTools 使用
-        try {
-          const { http } = await import('./utils/http');
-          if (http && typeof (window as any).__APP_HTTP__ === 'undefined') {
-            (window as any).__APP_HTTP__ = http;
-          }
-        } catch (err) {
-          // http 实例可能还未加载，忽略错误
-        }
+  await render(props);
+}
 
-        // 暴露 EPS list 到全局，供 DevTools 使用
-        try {
-          const epsModule = await import('./services/eps');
-          if (epsModule.list && typeof (window as any).__APP_EPS_LIST__ === 'undefined') {
-            (window as any).__APP_EPS_LIST__ = epsModule.list;
-            // epsList = epsModule.list;
-          }
-        } catch (err) {
-          // EPS 服务可能还未加载，忽略错误
-        }
+async function unmount(props: QiankunProps = {}) {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
 
-        // 注意：DevTools 现在直接在 App.vue 中使用，不再需要在这里挂载
-        // 这样可以确保 DevTools 在路由切换时不会卸载
-      } catch (err) {
-        // 静默失败，不影响应用运行
-      }
-    })();
-  })
-  .catch(async () => {
-    // 应用启动失败
-
-    // 清除超时定时器
-    if (loadingTimeoutId) {
-      clearTimeout(loadingTimeoutId);
-      loadingTimeoutId = null;
+  if (context) {
+    try {
+      await unmountSystemApp(context, props);
+    } catch (error) {
+      // 卸载失败不影响后续流程
+    } finally {
+      context = null;
     }
+  }
+}
 
-    // 关键：即使启动失败，也要移除 Loading 元素
-    await ensureLoadingRemoved(); // 立即隐藏loading
-    removeLoadingElement(); // 延迟移除loading元素
+// 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+// 关键：只在 qiankun 环境下注册生命周期。
+// renderWithQiankun 在非 qiankun 环境会自动调用 mount，导致"子应用独立先挂载一次 + 加载 layout-app 后又手动挂载一次"的双挂载，
+// 进而引发内容区空白以及 single-spa #41/#1 等问题。
+if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+renderWithQiankun({
+  bootstrap,
+  mount,
+  async update(props: QiankunProps) {
+    if (context) {
+      updateSystemApp(context, props);
+    }
+  },
+  unmount,
+});
+}
+
+// 导出 timeouts 配置，供 single-spa 使用
+// 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
+// 这里的配置作为 fallback，主应用配置为准
+// 关键：增加生产环境的超时时间，避免网络延迟和资源加载导致的超时
+// 注意：使用 import.meta.env.PROD 而不是 !import.meta.env.DEV，确保生产环境构建时正确识别
+const isProd = import.meta.env.PROD;
+export const timeouts = {
+  bootstrap: {
+    millis: isProd ? 20000 : 8000, // 生产环境 20 秒，开发环境 8 秒（考虑网络延迟和资源加载）
+    dieOnTimeout: false, // 超时后不终止应用，只警告（避免因网络问题导致应用无法加载）
+    warningMillis: isProd ? 15000 : 4000, // 警告时间：生产环境 15 秒，开发环境 4 秒（避免过早警告）
+  },
+  mount: {
+    millis: isProd ? 15000 : 8000, // 生产环境 15 秒，开发环境 8 秒
+    dieOnTimeout: false, // 超时后不终止应用，只警告
+    warningMillis: isProd ? 12000 : 4000, // 警告时间：生产环境 12 秒，开发环境 4 秒
+  },
+  unmount: {
+    millis: 5000, // 增加到 5 秒，确保卸载完成
+    dieOnTimeout: false,
+    warningMillis: 4000,
+  },
+};
+
+// 标准 ES 模块导出（qiankun 需要）
+// 关键：将 timeouts 也添加到 default 导出中，确保 single-spa 能够读取
+export default { bootstrap, mount, unmount, timeouts };
+
+// 独立运行（非 qiankun 环境）
+// 注意：system-app 作为子应用，独立运行时应该直接渲染（不加载 layout-app）
+// 因为 system-app 现在已经是子应用，不再需要 layout-app 的支持
+const shouldRunStandalone = () => {
+  // 关键：如果 hostname 匹配生产环境域名，即使 __USE_LAYOUT_APP__ 还未设置，也不应该立即独立运行
+  // 应该等待 initLayoutApp 完成后再决定
+  const isProductionDomain = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+  if (isProductionDomain) {
+    // 生产环境域名：如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 已加载，不应该独立运行
+    // 如果还未设置，也不应该立即独立运行，应该等待 initLayoutApp
+    return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  }
+  // 非生产环境：正常判断
+  return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+};
+
+if (shouldRunStandalone()) {
+  // 直接渲染，不需要加载 layout-app
+  render().catch((error) => {
+    console.error('[system-app] 独立运行失败:', error);
   });
+}

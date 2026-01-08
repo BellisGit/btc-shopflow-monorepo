@@ -1,12 +1,12 @@
-import type { AppIdentity } from '@configs/app-identity.types';
+import type { AppIdentity } from '@btc/shared-core/configs/app-identity.types';
 
 /**
  * 物流应用身份配置
  */
 const logisticsAppIdentity: AppIdentity = {
   id: 'logistics',
-  name: '物流应用',
-  description: 'BTC车间管理系统 - 物流应用',
+  name: 'common.apps.logistics',
+  description: 'common.system.btc_shop_management_system_logistics',
   pathPrefix: '/logistics',
   subdomain: 'logistics.bellis.com.cn',
   type: 'sub',

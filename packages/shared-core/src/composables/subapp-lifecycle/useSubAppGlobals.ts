@@ -5,7 +5,7 @@ import {
   createAppStorageBridge,
   resolveAppLogoUrl,
   injectDomainListResolver,
-} from '@configs/layout-bridge';
+} from '@btc/shared-core/configs/layout-bridge';
 
 export interface SubAppGlobalsOptions {
   appId: string;

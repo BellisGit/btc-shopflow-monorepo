@@ -18,7 +18,7 @@
   "todo.title": "My Todo",
   "todo.empty": "No todo items",
   "menu.operations.name": "Operations App",
-  "domain.type.system": "Main Module",
+  "domain.type.system": "System App",
   "domain.type.logistics": "Logistics Module",
   "domain.type.finance": "Finance Module",
   "domain.type.quality": "Quality Module",

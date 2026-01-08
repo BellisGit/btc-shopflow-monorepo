@@ -236,6 +236,7 @@
   "app_center.subtitle": "Select an app to access",
   "app_center.search_placeholder": "Search apps...",
   "app_center.no_results": "No matching apps found",
+  "domain.type.main": "Bellis Console",
   "auth.login": "Login",
   "auth.login.account": "Account Login",
   "auth.login.phone": "Phone Login",

@@ -44,10 +44,17 @@ export type { UseLogoutOptions } from './composables/useLogout';
 export { useServiceWithConfirm } from './composables/useServiceWithConfirm';
 export { logoutCore } from './auth/logoutCore';
 export type { LogoutCoreOptions } from './auth/logoutCore';
+export { registerSubAppI18n } from './composables/subapp-i18n/registerSubAppI18n';
 export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
+export { getEpsColumns, epsColumnsToTableColumns, epsColumnsToFormItems, generateConfigFromEps } from './btc/service/eps-columns-utils';
+export { getDictData, getAllDictData, updateDictData, batchUpdateDictData, refreshDictData, onDictUpdate, offDictUpdate, setDefaultDictApi, getDefaultDictApi, clearDictCache, initSSEIntegration, cleanupSSEIntegration } from './btc/service/dict-manager';
+export type { DictUpdateEvent } from './btc/service/dict-manager';
+export { connectSSE, disconnectSSE, on, off, getSSEStatus } from './btc/service/sse-manager';
+export type { SSEStatus, SSEOptions } from './btc/service/sse-manager';
+export { useDictData, useDictDataMultiple } from './btc/composables/useDictData';
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
 export { getMainAppId, isMainAppRoute, isRouteClosable, shouldSkipTabbar, getMainAppHomeRoute, getAppIdFromPath, getMainAppRoutes } from './utils/app-route-utils';
 export { getEnvInfo, getCurrentEnvironment, getCurrentAppId, getCurrentAppConfig } from './utils/env-info';
@@ -110,6 +117,9 @@ export * from './eps';
 // ========== 从 shared-utils 迁移的工具模块 ==========
 export * from './utils';
 export { getCookieDomain } from './utils/storage/cookie';
+// 显式导出存储工具（确保 Pinia 插件正确导出）
+export { persistedStatePlugin, persistedStatePluginSession, createPersistedStatePlugin } from './utils/storage/pinia-persist';
+export type { PersistedStatePluginOptions } from './utils/storage/pinia-persist';
 export {
   usePageColumns,
   usePageForms,
@@ -126,4 +136,8 @@ export * from './manifest';
 
 // ========== 从 env 迁移的环境变量模块 ==========
 export * from './env';
+
+// ========== 从 configs 导出的应用扫描器函数 ==========
+export { getAppById, getAllApps, getAppBySubdomain } from './configs/app-scanner';
+export type { AppIdentity } from './configs/app-identity.types';
 

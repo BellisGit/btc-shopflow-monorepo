@@ -107,16 +107,17 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
     const existingNode = nodes.value.find(node => node.type === nodeType);
 
     if (nodeType === NodeTypeEnum.START && existingNode) {
+      const { t } = useI18n();
       return {
         valid: false,
-        message: '策略中只能有一个开始节点'
+        message: t('common.strategy.designer.node_management.only_one_start_node')
       };
     }
 
     if (nodeType === NodeTypeEnum.END && existingNode) {
       return {
         valid: false,
-        message: '策略中只能有一个结束节点'
+        message: t('common.strategy.designer.node_management.only_one_end_node')
       };
     }
 
@@ -209,9 +210,9 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
   const deleteNode = async (nodeId: string, skipConfirm = false) => {
     try {
       if (!skipConfirm) {
-        await BtcConfirm('确定要删除这个节点吗？', '确认删除', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+        await BtcConfirm(t('common.strategy.designer.node_management.delete_confirm'), t('common.confirm_delete'), {
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         });
       }
@@ -222,7 +223,7 @@ export function useNodeManagement(canvasDimensions?: { value: { width: number; h
         selectedNodeId.value = '';
       }
 
-      BtcMessage.success('节点删除成功');
+      BtcMessage.success(t('common.strategy.designer.node_management.delete_success'));
       return true;
     } catch {
       return false;

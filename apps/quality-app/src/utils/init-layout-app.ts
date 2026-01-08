@@ -7,6 +7,9 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+
+import { tSync } from '../i18n/getters';
+
 /**
  * 显示 Loading（如果尚未显示）
  */
@@ -125,7 +128,7 @@ async function injectAppConfigFromManifest(appId: string) {
       { getMenuRegistry },
       { getManifest }
     ] = await Promise.all([
-      import('@configs/layout-bridge'),
+      import('@btc/shared-core/configs/layout-bridge'),
       import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
@@ -158,13 +161,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
+      console.log(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
         hasMenus: (registry?.value?.[appId]?.length ?? 0) > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    console.warn(`[initLayoutApp] 从 manifest 注入配置失败:`, error);
+    console.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
     // 继续执行，使用默认配置
   }
 }

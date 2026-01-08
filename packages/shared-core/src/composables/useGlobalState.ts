@@ -272,7 +272,10 @@ function registerUnifiedListener(globalState: MicroAppStateActions, fireImmediat
   const hasExistingListener = 
     (qiankunState._listeners && Array.isArray(qiankunState._listeners) && qiankunState._listeners.length > 0) ||
     (qiankunState.listeners && Array.isArray(qiankunState.listeners) && qiankunState.listeners.length > 0) ||
-    (qiankunState._callbacks && Array.isArray(qiankunState._callbacks) && qiankunState._callbacks.length > 0);
+    (qiankunState._callbacks && Array.isArray(qiankunState._callbacks) && qiankunState._callbacks.length > 0) ||
+    // 检查 qiankun 内部存储的监听器 Map（某些版本使用 Map 存储）
+    (qiankunState._listenersMap && qiankunState._listenersMap instanceof Map && qiankunState._listenersMap.size > 0) ||
+    (qiankunState.listenersMap && qiankunState.listenersMap instanceof Map && qiankunState.listenersMap.size > 0);
   
   if (hasExistingListener) {
     // qiankun 已经注册了监听器，我们标记为已注册，但不重复注册

@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getCurrentSubApp } from '@configs/unified-env-config';
+import { getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
 
 /**
  * 获取当前应用名称

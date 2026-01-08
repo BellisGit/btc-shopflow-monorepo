@@ -177,7 +177,7 @@ export function removeLoadingElement(): void {
   }
 }
 
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '../../utils/storage/session';
 
 /**
  * 清理导航标记

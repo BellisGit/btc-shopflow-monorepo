@@ -27,7 +27,7 @@
       "@btc/subapp-manifests/*": ["../subapp-manifests/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],
       "@btc/auth-shared/*": ["../../auth/shared/*"],
-      "@configs/*": ["../../configs/*"]
+      "@configs/*": ["../shared-core/src/configs/*"]
     }
   },
   "exclude": ["node_modules", "dist", "../../configs"]

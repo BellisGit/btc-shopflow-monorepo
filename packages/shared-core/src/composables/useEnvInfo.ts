@@ -5,9 +5,9 @@
 
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import type { Environment } from '@configs/unified-env-config';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
-import { getAppConfig } from '@configs/app-env.config';
+import type { Environment } from '../configs/unified-env-config';
+import { getEnvironment, getCurrentSubApp } from '../configs/unified-env-config';
+import { getAppConfig } from '../configs/app-env.config';
 
 /**
  * 环境信息接口

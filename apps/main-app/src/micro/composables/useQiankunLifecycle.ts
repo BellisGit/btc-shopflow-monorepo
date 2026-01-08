@@ -11,7 +11,7 @@ import { microApps } from '../apps';
 
 // 应用名称映射（用于显示友好的中文名称）
 const appNameMap: Record<string, string> = {
-  system: '主模块',
+  system: '系统模块',
   admin: '管理模块',
   logistics: '物流模块',
   engineering: '工程模块',

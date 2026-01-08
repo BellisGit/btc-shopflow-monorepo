@@ -3,7 +3,7 @@
  * 统一实现，支持环境判断、SameSite、Secure 等完整功能
  */
 
-import { getEnvironment } from '@configs/unified-env-config';
+import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 import { getCookieDomain } from '../cross-domain';
 
 /**

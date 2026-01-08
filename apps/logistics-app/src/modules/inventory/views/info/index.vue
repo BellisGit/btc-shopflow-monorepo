@@ -24,7 +24,7 @@
         <BtcFlex1 />
         <BtcSearchKey />
         <BtcCrudActions>
-          <BtcExportBtn :filename="t('menu.logistics.inventory_management.info')" />
+          <BtcExportBtn :filename="t('menu.inventory_management.info')" />
         </BtcCrudActions>
       </BtcRow>
 
@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n, useThemePlugin, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { useI18n, useThemePlugin, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert, BtcMessage, BtcSvg, BtcTableButton, BtcDialog } from '@btc/shared-components';
@@ -121,23 +121,9 @@ const subProcessUpsertRef = ref();
 
 const isMinimal = computed(() => theme.buttonStyle?.value === 'minimal');
 
-const pullButtonConfig = computed<BtcTableButtonConfig>(() => ({
-  icon: 'pull',
-  tooltip: t('logistics.inventory.base.button.pull'),
-  ariaLabel: t('logistics.inventory.base.button.pull'),
-  type: 'warning',
-  disabled: pullLoading.value,
-  onClick: () => {
-    if (!pullLoading.value) {
-      handlePullData();
-    }
-  },
-}));
-
 // 从 config.ts 读取配置
 const { columns: baseColumns } = usePageColumns('logistics.inventory.info');
 const { formItems: baseFormItems } = usePageForms('logistics.inventory.info');
-const pageConfig = getPageConfigFull('logistics.inventory.info');
 
 // 使用 config.ts 中定义的服务
 const inventoryInfoService = usePageService('logistics.inventory.info', 'info');
@@ -150,6 +136,39 @@ const subProcessService: CrudService<any> = createCrudServiceFromEps(
 
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
   value ? formatDateTime(value) : '--';
+
+// 拉取数据
+const handlePullData = async () => {
+  try {
+    pullLoading.value = true;
+
+    // 调用拉取数据的API
+    await service.logistics?.warehouse?.check?.pull?.();
+
+    BtcMessage.success(t('logistics.inventory.base.pull.success'));
+
+    // 刷新表格数据
+    crudRef.value?.crud?.loadData?.();
+  } catch (error: any) {
+    console.error('[InventoryInfo] Pull data failed:', error);
+    BtcMessage.error(error?.message || t('logistics.inventory.base.pull.failed'));
+  } finally {
+    pullLoading.value = false;
+  }
+};
+
+const pullButtonConfig = computed<BtcTableButtonConfig>(() => ({
+  icon: 'pull',
+  tooltip: t('logistics.inventory.base.button.pull'),
+  ariaLabel: t('logistics.inventory.base.button.pull'),
+  type: 'warning',
+  disabled: pullLoading.value,
+  onClick: () => {
+    if (!pullLoading.value) {
+      handlePullData();
+    }
+  },
+}));
 
 // 扩展配置以支持动态 formatter
 const columns = computed(() => {
@@ -247,25 +266,6 @@ const subProcessFormItems = computed(() => {
     return item;
   });
 });
-  {
-    label: t('logistics.inventory.sub_process.fields.remainingSeconds'),
-    prop: 'remainingSeconds',
-    span: 12,
-    component: { name: 'el-input-number', props: { style: 'width: 100%', min: 0 } },
-  },
-  {
-    label: t('logistics.inventory.sub_process.fields.startTime'),
-    prop: 'startTime',
-    span: 12,
-    component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },
-  },
-  {
-    label: t('logistics.inventory.sub_process.fields.endTime'),
-    prop: 'endTime',
-    span: 12,
-    component: { name: 'el-date-picker', props: { type: 'datetime', clearable: true, style: 'width: 100%' } },
-  },
-]);
 
 // 处理子流程详情按钮点击
 const handleSubProcessDetail = (row: any) => {
@@ -319,26 +319,6 @@ const handleSubProcessDialogClosed = () => {
     });
   }
   currentCheckNo.value = '';
-};
-
-// 拉取数据
-const handlePullData = async () => {
-  try {
-    pullLoading.value = true;
-
-    // 调用拉取数据的API
-    await service.logistics?.warehouse?.check?.pull?.();
-
-    BtcMessage.success(t('logistics.inventory.base.pull.success'));
-
-    // 刷新表格数据
-    crudRef.value?.crud?.loadData?.();
-  } catch (error: any) {
-    console.error('[InventoryInfo] Pull data failed:', error);
-    BtcMessage.error(error?.message || t('logistics.inventory.base.pull.failed'));
-  } finally {
-    pullLoading.value = false;
-  }
 };
 
 onMounted(() => {

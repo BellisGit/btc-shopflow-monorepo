@@ -9,6 +9,7 @@ import type { SystemLocaleMessages } from './types';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import type { createI18nPlugin } from '@btc/shared-core';
 import { sharedLocalesZhCN, sharedLocalesEnUS } from '@btc/shared-components';
+import { getLocaleMessages } from './getters';
 
 /**
  * 子应用 i18n 初始化（兼容两种模式）
@@ -24,16 +25,19 @@ export function initSystemI18n(props?: {
   if (props?.i18n && qiankunWindow.__POWERED_BY_QIANKUN__) {
     const { i18n, locale, globalState } = props;
     
+    // 获取系统应用的语言包（包括从 config.ts 中提取的国际化消息）
+    const systemAppMessages = getLocaleMessages();
+    
     // 合并全局+业务词条（包括 shared-components 的语言包）
     i18n.global.setLocaleMessage('zh-CN', {
       ...i18n.global.getLocaleMessage('zh-CN'),
       ...(sharedLocalesZhCN as Record<string, any>),
-      ...systemMessages['zh-CN'],
+      ...systemAppMessages['zh-CN'],
     });
     i18n.global.setLocaleMessage('en-US', {
       ...i18n.global.getLocaleMessage('en-US'),
       ...(sharedLocalesEnUS as Record<string, any>),
-      ...systemMessages['en-US'],
+      ...systemAppMessages['en-US'],
     });
     
     // 设置当前语言
@@ -62,14 +66,16 @@ export function initSystemI18n(props?: {
 
   // 独立运行模式：自己初始化 i18n
   const defaultLocale = getLocaleFromStorage();
+  // 获取系统应用的语言包（包括从 config.ts 中提取的国际化消息）
+  const systemAppMessages = getLocaleMessages();
   const i18nInstance = createAppI18n<SystemLocaleMessages>(defaultLocale, {
     'zh-CN': {
       ...(sharedLocalesZhCN as Record<string, any>),
-      ...systemMessages['zh-CN'],
+      ...systemAppMessages['zh-CN'],
     },
     'en-US': {
       ...(sharedLocalesEnUS as Record<string, any>),
-      ...systemMessages['en-US'],
+      ...systemAppMessages['en-US'],
     },
   });
   

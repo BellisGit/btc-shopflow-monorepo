@@ -46,7 +46,7 @@ export class Http {
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
-            console.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
+            console.warn('[HTTP]', 'common.other.request_no_token', config.url, {
               hasCookieToken: !!cookieToken,
               hasStorageToken: !!storageToken,
               cookies: document.cookie.split(';').map(c => c.trim()),
@@ -227,7 +227,7 @@ export class Http {
    */
   private limitObjectSize(obj: any, maxDepth: number, maxSize: number): any {
     if (maxDepth <= 0 || maxSize <= 0) {
-      return '[数据过大，已截断]';
+      return 'common.other.data_truncated';
     }
 
     if (obj === null || obj === undefined) {
@@ -258,7 +258,7 @@ export class Http {
       let currentSize = 0;
       for (const key in obj) {
         if (currentSize >= maxSize) {
-          limitedObj['...'] = '[更多数据已截断]';
+          limitedObj['...'] = 'common.other.more_data_truncated';
           break;
         }
         const limitedValue = this.limitObjectSize(obj[key], maxDepth - 1, maxSize - currentSize);
@@ -295,7 +295,7 @@ export class Http {
         }
       } catch (err) {
         // 获取用户信息失败，仍然记录日志但不包含用户信息
-        console.warn('获取用户信息失败:', err);
+        console.warn('common.error.get_user_info_failed', err);
       }
 
       // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
@@ -361,7 +361,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('记录请求日志失败:', error);
+      console.error('common.other.request_log_service_unavailable', error);
     }
   }
 
@@ -425,7 +425,7 @@ export class Http {
 
     // 模拟一个成功的响应
     const mockResponse = {
-      data: { code: 200, msg: '测试消息', data: null },
+      data: { code: 200, msg: 'common.other.test_message', data: null },
       status: 200,
       config: { url: '/test' }
     };
@@ -454,20 +454,21 @@ export class Http {
       }
 
       // 检查消息是否包含错误关键词
+      // 错误关键词使用国际化键（在实际使用时需要翻译）
       const errorKeywords = [
-        '不存在',
-        '错误',
-        '失败',
-        '异常',
-        '无效',
-        '过期',
-        '拒绝',
-        '禁止',
-        '未找到',
-        '无法',
-        '不能',
-        '缺少',
-        '不足'
+        'common.other.not_exists',
+        'common.other.error',
+        'common.other.failed',
+        'common.other.exception',
+        'common.other.invalid',
+        'common.other.expired',
+        'common.other.rejected',
+        'common.other.forbidden',
+        'common.other.not_found',
+        'common.other.cannot',
+        'common.other.cannot_do',
+        'common.other.missing',
+        'common.other.insufficient'
       ];
 
       // 如果消息包含错误关键词，认为是错误响应
@@ -496,7 +497,7 @@ export class Http {
         if (!data) {
           // 对于404等错误状态码，即使没有响应体也要按错误处理
           if (status === 404) {
-            const error = new Error('请求的资源不存在');
+            const error = new Error('common.other.resource_not_found');
             (error as any).code = 404;
             (error as any).response = response;
             return Promise.reject(error);
@@ -518,7 +519,7 @@ export class Http {
         }
 
         // 业务错误，抛出错误
-        const error = new Error(msg || '未知错误');
+        const error = new Error(msg || 'common.other.unknown_error');
         (error as any).code = code;
         (error as any).response = response;
         return Promise.reject(error);

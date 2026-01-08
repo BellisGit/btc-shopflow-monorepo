@@ -2,10 +2,178 @@
 admin-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/28 14:49:09
-总错误数: 0
+生成时间: 2026/1/7 15:14:56
+总错误数: 22
 
-✅ 未发现类型错误
+按错误代码分类:
+------------------------------------------------------------
+  TS1005    : 12 个
+  TS1128    : 6 个
+  TS1109    : 3 个
+  TS1434    : 1 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: src/modules/org/config.ts
+  错误数: 22
+    [TS1005] 行 65:8 - error TS1005: ';' expected.
+    [TS1128] 行 66:5 - error TS1128: Declaration or statement expected.
+    [TS1128] 行 66:6 - error TS1128: Declaration or statement expected.
+    [TS1005] 行 70:18 - error TS1005: ';' expected.
+    [TS1005] 行 88:22 - error TS1005: ';' expected.
+    [TS1005] 行 105:16 - error TS1005: ';' expected.
+    [TS1005] 行 127:27 - error TS1005: ';' expected.
+    [TS1109] 行 150:3 - error TS1109: Expression expected.
+    [TS1128] 行 150:4 - error TS1128: Declaration or statement expected.
+    [TS1005] 行 154:18 - error TS1005: ';' expected.
+    [TS1005] 行 161:22 - error TS1005: ';' expected.
+    [TS1005] 行 190:16 - error TS1005: ';' expected.
+    [TS1109] 行 257:3 - error TS1109: Expression expected.
+    [TS1128] 行 257:4 - error TS1128: Declaration or statement expected.
+    [TS1005] 行 262:15 - error TS1005: ';' expected.
+    [TS1005] 行 263:9 - error TS1005: ';' expected.
+    [TS1005] 行 265:18 - error TS1005: ';' expected.
+    [TS1005] 行 266:12 - error TS1005: ';' expected.
+    [TS1109] 行 267:3 - error TS1109: Expression expected.
+    [TS1128] 行 267:4 - error TS1128: Declaration or statement expected.
+    [TS1128] 行 268:1 - error TS1128: Declaration or statement expected.
+    [TS1434] 行 268:3 - error TS1434: Unexpected keyword or identifier.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  文件: src/modules/org/config.ts
+  位置: 65:8
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #2
+  文件: src/modules/org/config.ts
+  位置: 66:5
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #3
+  文件: src/modules/org/config.ts
+  位置: 66:6
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #4
+  文件: src/modules/org/config.ts
+  位置: 70:18
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #5
+  文件: src/modules/org/config.ts
+  位置: 88:22
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #6
+  文件: src/modules/org/config.ts
+  位置: 105:16
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #7
+  文件: src/modules/org/config.ts
+  位置: 127:27
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #8
+  文件: src/modules/org/config.ts
+  位置: 150:3
+  代码: TS1109
+  消息: error TS1109: Expression expected.
+
+错误 #9
+  文件: src/modules/org/config.ts
+  位置: 150:4
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #10
+  文件: src/modules/org/config.ts
+  位置: 154:18
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #11
+  文件: src/modules/org/config.ts
+  位置: 161:22
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #12
+  文件: src/modules/org/config.ts
+  位置: 190:16
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #13
+  文件: src/modules/org/config.ts
+  位置: 257:3
+  代码: TS1109
+  消息: error TS1109: Expression expected.
+
+错误 #14
+  文件: src/modules/org/config.ts
+  位置: 257:4
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #15
+  文件: src/modules/org/config.ts
+  位置: 262:15
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #16
+  文件: src/modules/org/config.ts
+  位置: 263:9
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #17
+  文件: src/modules/org/config.ts
+  位置: 265:18
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #18
+  文件: src/modules/org/config.ts
+  位置: 266:12
+  代码: TS1005
+  消息: error TS1005: ';' expected.
+
+错误 #19
+  文件: src/modules/org/config.ts
+  位置: 267:3
+  代码: TS1109
+  消息: error TS1109: Expression expected.
+
+错误 #20
+  文件: src/modules/org/config.ts
+  位置: 267:4
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #21
+  文件: src/modules/org/config.ts
+  位置: 268:1
+  代码: TS1128
+  消息: error TS1128: Declaration or statement expected.
+
+错误 #22
+  文件: src/modules/org/config.ts
+  位置: 268:3
+  代码: TS1434
+  消息: error TS1434: Unexpected keyword or identifier.
 
 ============================================================
 完整输出:
@@ -15,3 +183,28 @@ admin-app - TypeScript 类型错误报告
 > admin-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\admin-app
 > tsc --noEmit
 
+src/modules/org/config.ts(65,8): error TS1005: ';' expected.
+src/modules/org/config.ts(66,5): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(66,6): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(70,18): error TS1005: ';' expected.
+src/modules/org/config.ts(88,22): error TS1005: ';' expected.
+src/modules/org/config.ts(105,16): error TS1005: ';' expected.
+src/modules/org/config.ts(127,27): error TS1005: ';' expected.
+src/modules/org/config.ts(150,3): error TS1109: Expression expected.
+src/modules/org/config.ts(150,4): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(154,18): error TS1005: ';' expected.
+src/modules/org/config.ts(161,22): error TS1005: ';' expected.
+src/modules/org/config.ts(190,16): error TS1005: ';' expected.
+src/modules/org/config.ts(257,3): error TS1109: Expression expected.
+src/modules/org/config.ts(257,4): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(262,15): error TS1005: ';' expected.
+src/modules/org/config.ts(263,9): error TS1005: ';' expected.
+src/modules/org/config.ts(265,18): error TS1005: ';' expected.
+src/modules/org/config.ts(266,12): error TS1005: ';' expected.
+src/modules/org/config.ts(267,3): error TS1109: Expression expected.
+src/modules/org/config.ts(267,4): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(268,1): error TS1128: Declaration or statement expected.
+src/modules/org/config.ts(268,3): error TS1434: Unexpected keyword or identifier.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\admin-app:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  admin-app@1.0.0 type-check: `tsc --noEmit`
+Exit status 2

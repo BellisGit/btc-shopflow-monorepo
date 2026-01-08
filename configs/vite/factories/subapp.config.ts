@@ -164,9 +164,9 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
   const epsOutputDir = resolve(appDir, 'build', 'eps');
 
-  // 共享的 EPS 数据源目录（从 system-app 读取）
-  // 子应用优先从 system-app 的 build/eps 读取 EPS 数据，实现真正的共享
-  const sharedEpsDir = resolve(appDir, '../../apps/system-app/build/eps');
+  // 共享的 EPS 数据源目录（从 main-app 读取）
+  // 子应用优先从 main-app 的 build/eps 读取 EPS 数据，实现真正的共享
+  const sharedEpsDir = resolve(appDir, '../../apps/main-app/build/eps');
 
   // 确保 eps enable 始终为 boolean 类型
   const epsEnable: boolean = btcOptions.eps?.enable ?? true;
@@ -391,9 +391,9 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // 排除不应该被优化的依赖
     // 注意：exclude 使用包名或文件路径模式
     exclude: [
-      // 关键：@configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 关键：@btc/shared-core/configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
       // 注意：exclude 只支持字符串模式，不支持正则表达式
-      '@configs/layout-bridge',
+      '@btc/shared-core/configs/layout-bridge',
       // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
       // 在开发环境中，应该直接从源码导入，而不是预构建
       // 这样可以避免 JSX 解析问题

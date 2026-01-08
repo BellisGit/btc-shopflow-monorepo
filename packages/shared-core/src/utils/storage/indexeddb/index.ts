@@ -31,15 +31,14 @@ export async function queryByTimeRange<T = any>(
   options?: QueryOptions
 ): Promise<T[]> {
   try {
-    let query = table.where('time').between(startTime, endTime, true, true);
+    const baseQuery = table.where('time').between(startTime, endTime, true, true);
 
+    let results: T[];
     if (options?.orderBy) {
-      query = query.sortBy(options.orderBy);
+      results = await baseQuery.sortBy(options.orderBy);
     } else {
-      query = query.sortBy('time');
+      results = await baseQuery.sortBy('time');
     }
-
-    const results = await query;
     
     // 处理排序方向
     if (options?.orderDirection === 'desc') {

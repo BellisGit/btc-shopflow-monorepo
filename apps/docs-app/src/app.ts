@@ -1,12 +1,15 @@
-import type { AppIdentity } from '@configs/app-identity.types';
+import type { AppIdentity } from '@btc/shared-core/configs/app-identity.types';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 文档应用身份配置
  */
+const { t } = useI18n();
+
 const docsSiteAppIdentity: AppIdentity = {
   id: 'docs',
-  name: '文档应用',
-  description: 'BTC车间管理系统 - 文档应用',
+  name: t('app.name'),
+  description: t('app.description'),
   pathPrefix: '/docs',
   subdomain: 'docs.bellis.com.cn',
   type: 'docs',

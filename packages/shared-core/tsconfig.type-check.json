@@ -5,8 +5,8 @@
     "declaration": false,
     "skipLibCheck": true,
     "paths": {
-      "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"],
+      "@configs": ["./src/configs"],
+      "@configs/*": ["./src/configs/*"],
       "@btc/shared-components": ["../shared-components/dist"],
       "@btc/shared-components/*": ["../shared-components/dist/*"],
       "@btc/auth-shared": ["../../auth/shared"],

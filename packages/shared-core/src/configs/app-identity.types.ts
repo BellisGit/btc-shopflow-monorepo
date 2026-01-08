@@ -46,4 +46,3 @@ export interface AppIdentity {
   // 其他元数据
   metadata?: Record<string, any>;
 }
-

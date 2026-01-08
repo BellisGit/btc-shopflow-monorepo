@@ -1,6 +1,7 @@
 import { readFile, writeFile } from '../utils';
 import type { EpsState } from './state';
 import type { EpsColumn, EpsEntity } from '../types';
+import { fetchDictData } from './fetch-data';
 
 export function getEpsPath(outputDir: string, filename?: string): string {
   return `${outputDir}/${filename || ''}`;
@@ -60,7 +61,8 @@ export async function getData(
   outputDir: string,
   state: EpsState,
   cachedData?: any,
-  sharedEpsDir?: string
+  sharedEpsDir?: string,
+  dictApi?: string
 ) {
   // 如果提供了缓存数据且数据不为空，使用缓存数据
   if (cachedData && cachedData.list && Array.isArray(cachedData.list) && cachedData.list.length > 0) {
@@ -149,6 +151,39 @@ export async function getData(
       };
     }
   });
+
+  // 如果配置了字典接口，获取字典数据并映射到 columns
+  if (dictApi) {
+    try {
+      const dictData = await fetchDictData(dictApi, _reqUrl);
+      
+      // 遍历所有实体，映射字典数据
+      state.epsList.forEach((entity) => {
+        // 通过 resource 字段在字典数据中查找
+        if (entity.resource && dictData[entity.resource]) {
+          const resourceDict = dictData[entity.resource];
+          
+          // 遍历 columns，找到 dict: true 的字段
+          if (entity.columns && Array.isArray(entity.columns)) {
+            entity.columns.forEach((column) => {
+              // 如果字段标记为字典字段（dict === true）
+              if (column.dict === true) {
+                // 通过 propertyName 在字典数据中查找对应的字典选项数组
+                const dictOptions = resourceDict[column.propertyName];
+                if (Array.isArray(dictOptions) && dictOptions.length > 0) {
+                  // 将字典选项数组赋值给字段的 dict 属性
+                  column.dict = dictOptions;
+                }
+              }
+            });
+          }
+        }
+      });
+    } catch (err) {
+      // 字典数据获取失败不影响 EPS 数据加载
+      console.warn('[eps] 字典数据获取失败，跳过字典映射:', err);
+    }
+  }
 }
 
 export async function createJson(outputDir: string, state: EpsState): Promise<boolean> {

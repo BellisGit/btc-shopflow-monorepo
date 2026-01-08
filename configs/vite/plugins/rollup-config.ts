@@ -91,14 +91,14 @@ export function createRollupConfig(appName: string, options?: RollupConfigOption
         return false;
       },
     ] : []),
-    // @configs 包：根据配置决定是否标记为 external
+    // @btc/shared-core/configs 包：根据配置决定是否标记为 external
     // 主应用（main-app）应该打包这些库，子应用从 layout-app 加载
     ...(externalConfigsPackages ? [
-      '@configs/layout-bridge',
-      '@configs/unified-env-config',
-      '@configs/app-scanner',
-      '@configs/app-env.config',
-      /^@configs\/.*/,
+      '@btc/shared-core/configs/layout-bridge',
+      '@btc/shared-core/configs/unified-env-config',
+      '@btc/shared-core/configs/app-scanner',
+      '@btc/shared-core/configs/app-env.config',
+      /^@btc\/shared-core\/configs\/.*/,
     ] : []),
   ];
 

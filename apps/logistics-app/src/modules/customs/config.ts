@@ -5,11 +5,8 @@
 import type { PageConfig } from '../../../../../types/locale';
 
 export default {
-  locale: {
-    logistics: {
-      customs: {},
-    },
-  },
+  // 国际化配置已移至 locales/config.ts，此处不再需要硬编码值
+  locale: {},
 
   columns: {},
 

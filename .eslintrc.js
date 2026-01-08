@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   root: true,
   ignorePatterns: [
     'dist/**',
@@ -40,19 +40,8 @@
     'no-unused-vars': 'off',
     // 国际化规范检查
     // 1. 禁止硬编码中文文本（核心规则）
-    'i18n/no-chinese-character': [
-      'error',
-      {
-        // 允许在注释中使用中文
-        ignoreComments: true,
-        // 允许在字符串字面量中使用中文（如果是在国际化 key 中）
-        ignoreStrings: false,
-        // 允许在模板字符串中使用中文（如果是在国际化 key 中）
-        ignoreTemplateLiterals: false,
-        // 允许在正则表达式中使用中文
-        ignoreRegExpLiterals: true,
-      },
-    ],
+    // 注意：eslint-plugin-i18n v2.4.0 的配置选项已变更，使用默认配置
+    'i18n/no-chinese-character': 'error',
     // 2. 强制国际化 key 使用 snake_case 格式，且符合层级结构（自定义规则）
     // 注意：由于 ESLint 插件注册限制，此规则暂时通过自定义脚本检查
     // 可以使用 scripts/check-i18n-keys.js 进行手动检查
@@ -60,6 +49,7 @@
     // 规则1：禁止 应用(apps) 导入 包(packages) 的源码
     // 规则2：禁止 包A 的源码 导入 包B 的源码（跨包源码导入）
     // 例外：允许导入样式文件和语言文件（.scss, .css, locales）
+    // 例外：允许通过包名导入（@btc/shared-core, @btc/shared-components 等），这些是合法的包导出
     // 注意：except 匹配的是导入路径（可能包含别名），需要匹配实际文件路径模式
     'import/no-restricted-paths': [
       'error',
@@ -76,6 +66,12 @@
               './packages/shared-core/src/**/locales/**',
               './packages/shared-components/src/locales/**',
               './packages/shared-components/src/styles/**',
+              // 允许通过包导出路径导入（这些是合法的包导出，在 package.json exports 中定义）
+              './packages/shared-core/src/index.ts',
+              './packages/shared-core/src/manifest/index.ts',
+              './packages/shared-core/src/env/index.ts',
+              './packages/shared-core/src/utils/**',
+              './packages/shared-components/src/index.ts',
             ],
           },
           {
@@ -122,6 +118,13 @@
       ],
       rules: {
         'import/no-restricted-paths': 'off',
+      },
+    },
+    // 允许 locales/config.ts 中的中文字符串（这些是国际化文本本身）
+    {
+      files: ['apps/**/src/locales/config.ts'],
+      rules: {
+        'i18n/no-chinese-character': 'off',
       },
     },
   ],

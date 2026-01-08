@@ -1,23 +1,21 @@
-import { defineConfig, type ConfigEnv } from 'vite';
+import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
-import { createMainAppViteConfig } from '../../configs/vite/factories/mainapp.config';
-import { copyIconsPlugin, dutyStaticPlugin } from '../../configs/vite/plugins';
+import { createSubAppViteConfig } from '../../configs/vite/factories/subapp.config';
+import { dutyStaticPlugin } from '../../configs/vite/plugins';
 import { injectFallbackTitle } from '@btc/vite-plugin';
-import { proxy } from './src/config/proxy';
+import { getProxyConfig } from './src/config/proxy';
 
 const appDir = fileURLToPath(new URL('.', import.meta.url));
 
-export default defineConfig(({ command, mode }: ConfigEnv) => {
-  const baseConfig = createMainAppViteConfig({
+// 获取 proxy 配置（使用函数，避免在模块加载时解析 @btc/shared-core）
+const proxy = getProxyConfig();
+
+export default defineConfig(
+  createSubAppViteConfig({
     appName: 'system-app',
     appDir,
-    // 启用 public 图片资源处理插件（构建时自动启用）
-    publicImagesToAssets: true,
-    // 启用资源预加载插件（默认启用）
-    enableResourcePreload: true,
+    qiankunName: 'system',
     customPlugins: [
-      // 移除：不再需要复制 icons 目录，统一使用 CDN
-      // copyIconsPlugin(appDir),
       // 添加 duty 静态文件插件，在开发服务器层面处理 /duty/ 路径
       dutyStaticPlugin(appDir),
       // 注入静态兜底标题
@@ -25,23 +23,5 @@ export default defineConfig(({ command, mode }: ConfigEnv) => {
     ],
     customServer: { proxy },
     proxy,
-  });
-
-  // 关键：根据 command 动态配置 publicDir
-  // - 开发环境（serve）：启用 publicDir，让 Vite 正常服务 public 目录的文件
-  // - 构建环境（build）：禁用 publicDir，由 publicImagesToAssetsPlugin 插件处理文件
-  if (command === 'serve') {
-    // 开发环境：启用 publicDir
-    return baseConfig;
-  } else {
-    // 构建环境：如果启用了 publicImagesToAssets 插件，禁用 publicDir
-    const isPreviewBuild = process.env.VITE_PREVIEW === 'true';
-    if (!isPreviewBuild) {
-      return {
-        ...baseConfig,
-        publicDir: false, // 构建时禁用 publicDir，由插件处理
-      };
-    }
-    return baseConfig;
-  }
-});
+  })
+);

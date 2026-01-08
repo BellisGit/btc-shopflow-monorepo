@@ -102,7 +102,7 @@ export function useLogout(options: UseLogoutOptions = {}) {
         setTimeout(async () => {
           try {
             // 使用统一的环境检测
-            const { getEnvironment, getCurrentSubApp } = await import('@configs/unified-env-config');
+            const { getEnvironment, getCurrentSubApp } = await import('../configs/unified-env-config');
             const { buildLogoutUrlWithFullUrl } = await import('@btc/auth-shared/composables/redirect');
 
             const env = getEnvironment();

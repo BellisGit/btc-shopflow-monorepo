@@ -37,6 +37,11 @@ const { t } = useI18n();
 const tableGroupRef = ref();
 const selectedCheck = ref<any>(null);
 
+// 从 config.ts 读取配置（必须在其他使用 pageConfig 的代码之前）
+const { columns: baseColumns } = usePageColumns('data.inventory.confirm');
+const { formItems } = usePageForms('data.inventory.confirm');
+const pageConfig = getPageConfigFull('data.inventory.confirm');
+
 // 盘点列表服务（左侧）- 使用后端接口
 const checkService = {
   list: async (params?: any) => {
@@ -238,29 +243,20 @@ const handleConfirm = async (row: any) => {
 };
 
 // 操作列配置（根据状态动态渲染按钮）
+// 注意：BtcTableGroup 期望 op.buttons 是一个数组，而不是函数
+// 如果需要根据行数据动态显示按钮，需要在按钮的 onClick 中处理状态判断
 const opConfig = computed(() => ({
-  buttons: ({ scope }: any) => {
-    const row = scope?.row;
-    const confirmed = isConfirmed(row);
-
-    return [
-      {
-        label: confirmed
-          ? (t('inventory.confirm.confirmed') || '已确认')
-          : (t('inventory.confirm.confirm') || '确认'),
-        type: confirmed ? 'success' : 'primary',
-        onClick: ({ scope }: any) => {
-          handleConfirm(scope.row);
-        }
+  buttons: [
+    {
+      label: t('inventory.confirm.confirm') || '确认',
+      type: 'primary',
+      onClick: ({ scope }: any) => {
+        const row = scope?.row;
+        handleConfirm(row);
       }
-    ];
-  }
+    }
+  ]
 }));
-
-// 从 config.ts 读取配置
-const { columns: baseColumns } = usePageColumns('data.inventory.confirm');
-const { formItems } = usePageForms('data.inventory.confirm');
-const pageConfig = getPageConfigFull('data.inventory.confirm');
 
 // 流程确认表格列配置
 // 扩展配置以支持动态 formatter

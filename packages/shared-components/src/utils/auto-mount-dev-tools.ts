@@ -4,7 +4,7 @@
  * 注意：只在主应用（admin-app/system-app）中启用，子应用不显示 DevTools
  */
 
-import { isMainApp as isMainAppGlobal } from '@configs/unified-env-config';
+import { isMainApp as isMainAppGlobal } from '@btc/shared-core/configs/unified-env-config';
 
 let devToolsMounted = false;
 let observer: MutationObserver | null = null;

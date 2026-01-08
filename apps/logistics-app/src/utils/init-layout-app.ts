@@ -125,7 +125,7 @@ async function injectAppConfigFromManifest(appId: string) {
       { getMenuRegistry },
       { getManifest }
     ] = await Promise.all([
-      import('@configs/layout-bridge'),
+      import('@btc/shared-core/configs/layout-bridge'),
       import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
@@ -158,13 +158,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
+      console.log('[initLayoutApp]', 'common.other.manifest_injected', `${appId}`, {
         hasMenus: (registry?.value?.[appId]?.length ?? 0) > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    console.warn(`[initLayoutApp] 从 manifest 注入配置失败:`, error);
+    console.warn('[initLayoutApp]', 'common.other.manifest_inject_failed', error);
     // 继续执行，使用默认配置
   }
 }

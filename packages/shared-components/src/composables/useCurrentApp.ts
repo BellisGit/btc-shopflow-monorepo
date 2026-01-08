@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getCurrentSubApp } from '@configs/unified-env-config';
+import { getAppIdFromPath } from '@btc/shared-core';
 
 /**
  * 获取当前应用名称
@@ -8,49 +8,13 @@ import { getCurrentSubApp } from '@configs/unified-env-config';
  */
 export function useCurrentApp() {
   const route = useRoute();
-  const currentApp = ref('system');
+  const currentApp = ref('main');
 
   const detectCurrentApp = () => {
-    // 使用统一的环境检测函数
-    const detectedApp = getCurrentSubApp();
-    if (detectedApp) {
-      currentApp.value = detectedApp;
-      return;
-    }
-
-    // 如果没有检测到子应用，尝试通过路径前缀判断（开发环境的兜底逻辑）
-    const path = route.path;
-
-    // 回退到路径匹配（开发环境或主域名访问时）
-    // 关键：主应用路由包括 /overview、/todo、/profile
-    if (path === '/overview' || path === '/' || path === '/todo' || path.startsWith('/todo/') || path === '/profile') {
-      currentApp.value = 'main';
-    } else if (path.startsWith('/admin')) {
-      currentApp.value = 'admin';
-    } else if (path.startsWith('/logistics')) {
-      currentApp.value = 'logistics';
-    } else if (path.startsWith('/engineering')) {
-      currentApp.value = 'engineering';
-    } else if (path.startsWith('/quality')) {
-      currentApp.value = 'quality';
-    } else if (path.startsWith('/production')) {
-      currentApp.value = 'production';
-    } else if (path.startsWith('/finance')) {
-      currentApp.value = 'finance';
-    } else if (path.startsWith('/docs')) {
-      currentApp.value = 'docs';
-    } else if (path.startsWith('/operations')) {
-      currentApp.value = 'operations';
-    } else if (path.startsWith('/dashboard')) {
-      currentApp.value = 'dashboard';
-    } else if (path.startsWith('/personnel')) {
-      currentApp.value = 'personnel';
-    } else if (path.startsWith('/system')) {
-      currentApp.value = 'system';
-    } else {
-      // 系统域是默认域，包括 /data/* 以及其他所有未匹配的路径
-      currentApp.value = 'system';
-    }
+    // 使用统一的工具函数获取应用标识
+    // getAppIdFromPath 已经处理了主应用路由优先、排除公开应用的逻辑
+    const path = typeof window !== 'undefined' ? window.location.pathname : route.path;
+    currentApp.value = getAppIdFromPath(path);
   };
 
   watch(

@@ -114,9 +114,5 @@
         "children": []
       }
     ]
-  },
-  "locales": {
-    "zh-CN": "src/modules/overview/locales/zh-CN.json",
-    "en-US": "src/modules/overview/locales/en-US.json"
   }
 }

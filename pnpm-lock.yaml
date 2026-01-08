@@ -1336,7 +1336,7 @@ importers:
         specifier: ^21.2.0
         version: 21.2.0
       pinia-plugin-persistedstate:
-        specifier: ^3.2.0
+        specifier: ^3.2.3
         version: 3.2.3(pinia@3.0.4)
       qiankun:
         specifier: 2.10.16

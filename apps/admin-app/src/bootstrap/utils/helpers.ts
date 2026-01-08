@@ -3,6 +3,8 @@
  * 提供启动过程中的各种辅助函数
  */
 
+import { useI18n } from '@btc/shared-core';
+
 /**
  * 延迟执行函数
  */
@@ -15,12 +17,13 @@ export const delay = (ms: number): Promise<void> => {
  */
 export const safeExecute = async <T>(
   fn: () => Promise<T>,
-  errorMessage: string = '执行失败'
+  errorMessage?: string
 ): Promise<T | null> => {
   try {
     return await fn();
   } catch (error) {
-    console.error(errorMessage, error);
+    const { t } = useI18n();
+    console.error(errorMessage || t('common.error.failed'), error);
     return null;
   }
 };

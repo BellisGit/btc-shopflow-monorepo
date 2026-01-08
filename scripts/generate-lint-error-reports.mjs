@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
 // 定义所有可能的应用列表
+// 注意：mobile-app 不参与 lint 检查
 const allApps = [
   { name: 'admin', packageName: 'admin-app', pattern: 'apps/admin-app/src/**/*.{ts,tsx,vue}' },
   { name: 'logistics', packageName: 'logistics-app', pattern: 'apps/logistics-app/src/**/*.{ts,tsx,vue}' },
@@ -24,13 +25,20 @@ const allApps = [
   { name: 'production', packageName: 'production-app', pattern: 'apps/production-app/src/**/*.{ts,tsx,vue}' },
   { name: 'monitor', packageName: 'monitor-app', pattern: 'apps/monitor-app/src/**/*.{ts,tsx,vue}' },
   { name: 'layout', packageName: 'layout-app', pattern: 'apps/layout-app/src/**/*.{ts,tsx,vue}' },
-  { name: 'mobile', packageName: 'mobile-app', pattern: 'apps/mobile-app/src/**/*.{ts,tsx,vue}' },
   { name: 'docs', packageName: 'docs-app', pattern: 'apps/docs-app/src/**/*.{ts,tsx,vue}' },
+  { name: 'personnel', packageName: 'personnel-app', pattern: 'apps/personnel-app/src/**/*.{ts,tsx,vue}' },
+  { name: 'dashboard', packageName: 'dashboard-app', pattern: 'apps/dashboard-app/src/**/*.{ts,tsx,vue}' },
+  { name: 'operations', packageName: 'operations-app', pattern: 'apps/operations-app/src/**/*.{ts,tsx,vue}' },
   { name: 'home', packageName: 'home-app', pattern: 'apps/home-app/src/**/*.{ts,tsx,vue}' },
 ];
 
 // 只包含实际存在的应用目录（单独生成日志）- 使用简短的名称，对应 scripts/commands/lint.mjs 中的格式
+// 排除 mobile-app
 const apps = allApps.filter(app => {
+  // 排除 mobile-app
+  if (app.packageName === 'mobile-app') {
+    return false;
+  }
   const appPath = resolve(rootDir, `apps/${app.packageName}`);
   return existsSync(appPath);
 });
@@ -39,8 +47,7 @@ const apps = allApps.filter(app => {
 const packages = [
   { name: '@btc/shared-components', pattern: 'packages/shared-components/src/**/*.{ts,tsx,vue}' },
   { name: '@btc/shared-core', pattern: 'packages/shared-core/src/**/*.{ts,tsx,vue}' },
-  { name: '@btc/shared-utils', pattern: 'packages/shared-utils/src/**/*.{ts,tsx,vue}' },
-  { name: '@btc/subapp-manifests', pattern: 'packages/subapp-manifests/src/**/*.{ts,tsx,vue}' },
+  { name: '@btc/shared-router', pattern: 'packages/shared-router/src/**/*.{ts,tsx,vue}' },
   { name: '@btc/vite-plugin', pattern: 'packages/vite-plugin/src/**/*.{ts,tsx,vue}' }
 ];
 

@@ -37,7 +37,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '../../../../store/process';
 import { getManifestRoute } from '@btc/shared-core/manifest';
 import { getMenusForApp } from '../../../../store/menuRegistry';
-import { getSubApps, getAppBySubdomain } from '@configs/app-scanner';
+import { getSubApps, getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { initGlobalTabBreadcrumbListener, globalBreadcrumbList } from '../../../../composables/useGlobalTabBreadcrumbState';
 
 // 判断是否为SVG图标
@@ -168,16 +168,17 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
           return null;
         }
 
-        // 优先使用主应用的 i18n 实例进行翻译
+        // 优先使用主应用的 i18n 实例进行翻译（与 tabbar 保持一致）
         let label: string;
         if (key) {
-          // 优先使用主应用的 i18n 实例进行翻译
+          // 使用与 tabbar 相同的翻译逻辑
           const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
           if (mainAppI18n && mainAppI18n.global) {
             const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
             const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
-            
+
             // 直接访问消息对象，确保能访问到已合并的语言包
+            // vue-i18n 的 te 和 t 函数支持点号分隔的嵌套 key，所以这里先尝试扁平化访问
             if (key in messages) {
               const value = messages[key];
               if (typeof value === 'string' && value.trim() !== '') {
@@ -193,8 +194,8 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
                 }
               }
             }
-            
-            // 如果直接访问失败，使用 t() 函数
+
+            // 如果直接访问失败，使用 te 和 t（vue-i18n 支持点号分隔的嵌套 key）
             if (!label && mainAppI18n.global.te(key, currentLocale)) {
               const mainTranslated = mainAppI18n.global.t(key, currentLocale);
               if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== key && mainTranslated.trim() !== '') {

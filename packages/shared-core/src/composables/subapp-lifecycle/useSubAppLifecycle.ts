@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import type { App as VueApp } from 'vue';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { resetPluginManager, usePluginManager } from '../../btc/plugins/manager';
-import { createSharedUserSettingPlugin } from '@configs/layout-bridge';
+import { createSharedUserSettingPlugin } from '@btc/shared-core/configs/layout-bridge';
 import type { QiankunProps } from '../../types/qiankun';
 import type { SubAppContext, SubAppOptions } from './types';
 import { deriveInitialSubRoute } from './utils';
@@ -707,7 +707,7 @@ export async function mountSubApp(
       // 在应用挂载后再次注册菜单，确保菜单注册表已经初始化并且菜单已经注册
       // 这解决了生产环境子域名下独立运行时菜单为空的问题
       try {
-        const { registerManifestMenusForApp } = await import('@configs/layout-bridge');
+        const { registerManifestMenusForApp } = await import('../../configs/layout-bridge');
         registerManifestMenusForApp(options.appId);
       } catch (error) {
         // 静默失败

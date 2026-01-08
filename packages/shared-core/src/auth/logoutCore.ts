@@ -3,7 +3,7 @@
  * 负责清理凭证、调用API、设置标记等，但不处理路由重定向
  */
 
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { sessionStorage } from '../utils/storage/session';
 
 export interface LogoutCoreOptions {
   /**

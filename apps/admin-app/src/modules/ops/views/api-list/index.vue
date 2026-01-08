@@ -7,13 +7,13 @@
       :table-columns="columns"
       :form-items="[]"
       :op="undefined"
-      left-title="控制器"
-      right-title="接口列表"
+      :left-title="t('common.ops.api_list.controller')"
+      :right-title="t('common.ops.api_list.api_list')"
       :show-create-time="false"
       :show-update-time="false"
       :enable-key-search="true"
       left-width="320px"
-      search-placeholder="搜索接口..."
+      :search-placeholder="t('common.ops.api_list.search_placeholder')"
       @select="handleSelect"
       @load="handleControllerLoad"
     />
@@ -76,12 +76,12 @@ async function fetchApiDocsWithFallback() {
   try {
     const result = await Promise.race([sysApi.apiDocs.list(), timeoutPromise]);
     if (result === API_DOCS_TIMEOUT_TOKEN) {
-      console.warn('[OpsApiList] 获取接口文档超时，使用空列表作为回退');
+      console.warn('[OpsApiList] API docs fetch timeout, using empty list as fallback');
       return [];
     }
     return result;
   } catch (error) {
-    console.warn('[OpsApiList] 获取接口文档失败，使用空列表作为回退', error);
+    console.warn('[OpsApiList] API docs fetch failed, using empty list as fallback', error);
     return [];
   }
 }
@@ -258,16 +258,16 @@ const apiService: CrudService<ApiListRecord> = {
     };
   },
   async add() {
-    throw new Error('接口列表不支持新增操作');
+    throw new Error(t('common.ops.api_list.add_not_supported'));
   },
   async update() {
-    throw new Error('接口列表不支持编辑操作');
+    throw new Error(t('common.ops.api_list.update_not_supported'));
   },
   async delete() {
-    throw new Error('接口列表不支持删除操作');
+    throw new Error(t('common.ops.api_list.delete_not_supported'));
   },
   async deleteBatch() {
-    throw new Error('接口列表不支持删除操作');
+    throw new Error(t('common.ops.api_list.delete_not_supported'));
   },
 };
 

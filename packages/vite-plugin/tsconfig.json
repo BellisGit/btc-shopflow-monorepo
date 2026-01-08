@@ -5,10 +5,10 @@
     "lib": ["ES2020", "DOM"],
     "baseUrl": "./",
     "paths": {
-      "@configs": ["../../configs"],
-      "@configs/*": ["../../configs/*"],
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"]
+      "@configs": ["../shared-core/src/configs"],
+      "@configs/*": ["../shared-core/src/configs/*"],
+      "@btc/shared-utils": ["../shared-core/src/utils", "../shared-core/dist/utils"],
+      "@btc/shared-utils/*": ["../shared-core/src/utils/*", "../shared-core/dist/utils/*"]
     },
     "outDir": "dist",
     "rootDir": "src",
@@ -19,6 +19,6 @@
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"],
   "references": [
-    { "path": "../shared-utils" }
+    { "path": "../shared-core" }
   ]
 }

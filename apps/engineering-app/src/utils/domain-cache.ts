@@ -6,6 +6,7 @@
 import { deleteCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { BtcMessage } from '@btc/shared-components';
+import { tSync } from '../i18n/getters';
 
 let domainListCache: { data: any; timestamp: number } | null = null;
 let pendingRequest: Promise<any> | null = null;
@@ -36,7 +37,7 @@ function handleLogout() {
     }
 
     // 显示提示信息
-    BtcMessage.error('身份已过期，请重新登录');
+    BtcMessage.error(tSync('common.error.identity_expired'));
 
     // 判断是否在生产环境的子域名下
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';

@@ -1,6 +1,6 @@
-import { getAppConfig } from '@configs/app-env.config';
-import { getAppById } from '@configs/app-scanner';
-import { getEnvironment } from '@configs/unified-env-config';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
+import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 
 /**
  * 获取所有使用动态国际化的应用ID列表

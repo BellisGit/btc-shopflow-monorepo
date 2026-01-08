@@ -10,7 +10,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { getManifestRoute, getManifest } from '@btc/shared-core/manifest';
 import { getCurrentAppFromPath } from '@btc/shared-components';
-import { isMainApp } from '@configs/unified-env-config';
+import { isMainApp } from '@btc/shared-core/configs/unified-env-config';
+import { tSync } from './i18n/getters';
 
 // 路由配置：包含404页面和catchAll路由
 const routes = [
@@ -131,7 +132,7 @@ router.beforeEach((to: import('vue-router').RouteLocationNormalized, _from: impo
     // 主应用路由应该由 main-app 处理，但 layout-app 没有注册 main-app
     // 所以应该重定向到404，提示用户主应用路由在 layout-app 环境下不可用
     if (import.meta.env.DEV) {
-      console.warn('[layout-app router] 主应用路由在 layout-app 环境下不可用，重定向到404:', to.path);
+      console.warn(`[layout-app router] ${tSync('common.error.router_unavailable')}:`, to.path);
     }
     next('/404');
     return;

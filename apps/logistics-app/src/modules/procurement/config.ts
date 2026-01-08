@@ -6,8 +6,14 @@ import type { PageConfig } from '../../../../../types/locale';
 
 export default {
   locale: {
-    logistics: {
-      procurement: {},
+    page: {
+      procurement: {
+        placeholder: {
+          auxiliary: '辅料管理页面内容待建设',
+          packaging: '包材管理页面内容待建设',
+          supplier: '供应商管理页面内容待建设',
+        },
+      },
     },
   },
 
