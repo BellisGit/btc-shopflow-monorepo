@@ -261,7 +261,7 @@ export class Http {
             // 使用动态导入避免循环依赖
             import('@/router').then(({ default: router }) => {
               const currentPath = router.currentRoute.value.fullPath;
-              router.push({ name: 'Login', query: { redirect: currentPath } });
+              router.push({ name: 'Login', query: { oauth_callback: currentPath } });
             });
           }
         }

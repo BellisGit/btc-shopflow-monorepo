@@ -5,6 +5,7 @@ import {
 } from 'vue-router';
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { getMainAppLoginUrl } from '@btc/shared-core';
 import { getLogisticsRoutes, logisticsRoutes } from './routes/logistics';
 
 /**

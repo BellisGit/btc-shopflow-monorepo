@@ -62,7 +62,10 @@ export function initI18nPluginHost(options: I18nPluginHostOptions = {}) {
 
         // 4. 设置 cookie（供服务端读取）
         if (typeof document !== 'undefined') {
-          document.cookie = `locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+          (async () => {
+            const { setCookie } = await import('@btc/shared-core/utils/cookie');
+            setCookie('locale', newLocale, 365, { path: '/', sameSite: 'Lax' });
+          })();
         }
       },
       { immediate: false }

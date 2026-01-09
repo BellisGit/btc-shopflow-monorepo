@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 
@@ -58,10 +59,10 @@ export function useUser() {
   const clearUserInfo = () => {
     // 使用 appStorage.user.remove 清除 Cookie
     appStorage.user.remove();
-    // 清理旧的 localStorage 数据（向后兼容）
+    // 清理旧的 storage 数据（向后兼容）
     try {
-      localStorage.removeItem('btc_user');
-      localStorage.removeItem('user');
+      storage.remove('btc_user');
+      storage.remove('user');
     } catch {
       // 忽略错误
     }

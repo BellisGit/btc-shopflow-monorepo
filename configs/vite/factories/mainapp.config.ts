@@ -83,6 +83,7 @@ export interface MainAppViteConfigOptions {
     eps?: {
       enable?: boolean;
       dict?: boolean;
+      dictApi?: string;
       dist?: string;
     };
     svg?: {
@@ -186,7 +187,8 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       proxy,
       eps: {
         enable: true,
-        dict: false,
+        dict: btcOptions.eps?.dict ?? true, // 默认启用字典功能
+        dictApi: btcOptions.eps?.dictApi || '/api/system/auth/dict', // 默认字典接口
         dist: epsOutputDir,
         ...btcOptions.eps,
       },

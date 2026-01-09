@@ -4,6 +4,8 @@
  */
 
 import type { AppIdentity } from './app-identity.types';
+// 导入 Zod 验证工具（可选）
+import { AppIdentitySchema, validateConfig } from './schemas';
 
 /**
  * 从构建时生成的应用配置文件导入所有应用配置
@@ -60,39 +62,20 @@ function extractAppName(filePath: string): string {
 
 /**
  * 验证应用身份配置
+ * 使用 Zod schema 进行验证
  */
 function validateAppIdentity(identity: any, appName: string): identity is AppIdentity {
-  if (!identity || typeof identity !== 'object') {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：不是对象`);
+  try {
+    // 使用 Zod schema 验证
+    validateConfig(AppIdentitySchema, identity, `应用 ${appName} 的身份配置`);
+    return true;
+  } catch (error) {
+    // 验证失败，记录警告但返回 false（向后兼容）
+    if (import.meta.env.DEV) {
+      console.warn(`[app-scanner] 应用 ${appName} 的配置验证失败:`, error);
+    }
     return false;
   }
-
-  if (!identity.id || typeof identity.id !== 'string') {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 id`);
-    return false;
-  }
-
-  if (!identity.name || typeof identity.name !== 'string') {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 name`);
-    return false;
-  }
-
-  if (!identity.pathPrefix || typeof identity.pathPrefix !== 'string') {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：缺少 pathPrefix`);
-    return false;
-  }
-
-  if (!identity.type || !['main', 'sub', 'layout', 'docs'].includes(identity.type)) {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：type 必须是 main、sub、layout 或 docs`);
-    return false;
-  }
-
-  if (typeof identity.enabled !== 'boolean') {
-    console.warn(`[app-scanner] 应用 ${appName} 的配置无效：enabled 必须是布尔值`);
-    return false;
-  }
-
-  return true;
 }
 
 /**

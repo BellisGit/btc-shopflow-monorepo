@@ -52,6 +52,8 @@ export default {
       'org.role.list': '角色列表',
       'org.role.unassigned': '未分配角色',
       // 用户角色分配
+      'org.user_role_assign.left_title': '业务域',
+      'org.user_role_assign.right_title': '角色绑定列表',
       'org.user_role_assign.actions.assign': '新增绑定',
       'org.user_role_assign.actions.modify_bind': '改绑',
       'org.user_role_assign.actions.multi_unbind': '批量解绑',
@@ -88,6 +90,11 @@ export default {
       'org.user_role_assign.messages.submitSuccess': '角色分配请求已提交',
       'org.user_role_assign.messages.loadRolesFailed': '加载可分配角色失败',
       'org.user_role_assign.messages.sameRole': '新角色与当前角色相同，无需修改',
+      'org.user_role_assign.messages.userCodeNotFound': '用户 {identifier} 没有 userCode 字段',
+      'org.user_role_assign.messages.userNotFound': '找不到用户 {identifier}',
+      'org.user_role_assign.messages.roleCodeNotFound': '角色 {identifier} 没有 roleCode 字段',
+      'org.user_role_assign.messages.roleNotFound': '找不到角色 {identifier}',
+      'org.user_role_assign.messages.codeNotFound': '缺少 userCode 或 roleCode 字段',
       'org.user_role_assign.search_placeholder': '请输入用户名、角色ID或域ID',
       'org.user_role_assign.user.username': '账号',
       'org.user_role_assign.user.real_name': '姓名',
@@ -98,6 +105,9 @@ export default {
       'org.status.enabled': '启用',
       'org.status.disabled': '禁用',
       'org.load_roles_failed': '加载角色列表失败',
+      // common.button 应用专有按钮
+      'common.button.authorize': '授权',
+      'common.button.batch_unbind': '批量解绑',
     },
     'en-US': {
       // 菜单配置
@@ -141,6 +151,8 @@ export default {
       'org.role.list': 'Role List',
       'org.role.unassigned': 'Unassigned Role',
       // 用户角色分配
+      'org.user_role_assign.left_title': 'Business Domain',
+      'org.user_role_assign.right_title': 'Role Binding List',
       'org.user_role_assign.actions.assign': 'Add Binding',
       'org.user_role_assign.actions.modify_bind': 'Modify Binding',
       'org.user_role_assign.actions.multi_unbind': 'Batch Unbind',
@@ -177,6 +189,11 @@ export default {
       'org.user_role_assign.messages.submitSuccess': 'Role assignment request submitted',
       'org.user_role_assign.messages.loadRolesFailed': 'Failed to load assignable roles',
       'org.user_role_assign.messages.sameRole': 'New role is the same as current role, no modification needed',
+      'org.user_role_assign.messages.userCodeNotFound': 'User {identifier} does not have userCode field',
+      'org.user_role_assign.messages.userNotFound': 'User {identifier} not found',
+      'org.user_role_assign.messages.roleCodeNotFound': 'Role {identifier} does not have roleCode field',
+      'org.user_role_assign.messages.roleNotFound': 'Role {identifier} not found',
+      'org.user_role_assign.messages.codeNotFound': 'Missing userCode or roleCode field',
       'org.user_role_assign.search_placeholder': 'Please enter username, role ID or domain ID',
       'org.user_role_assign.user.username': 'Account',
       'org.user_role_assign.user.real_name': 'Name',
@@ -187,6 +204,9 @@ export default {
       'org.status.enabled': 'Enabled',
       'org.status.disabled': 'Disabled',
       'org.load_roles_failed': 'Failed to load roles list',
+      // common.button 应用专有按钮
+      'common.button.authorize': 'Authorize',
+      'common.button.batch_unbind': 'Batch Unbind',
     },
   },
 

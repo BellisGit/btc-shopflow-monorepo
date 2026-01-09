@@ -5,6 +5,7 @@
 
 import { storage } from '@btc/shared-utils';
 import type { UserStorage, AppSettingsStorage } from '../storage-manager';
+import { checkStorageValidity, triggerAutoLogout } from '@btc/shared-core/utils/storage-validity-check';
 
 /**
  * 存储键名常量
@@ -88,6 +89,15 @@ class AppStorageManager {
        * 获取用户信息
        */
       get(): UserStorage | null {
+        // 关键：在读取之前先检查存储有效性
+        // 如果关键存储不存在，说明存储被清除，需要退出
+        if (!checkStorageValidity()) {
+          // 异步触发退出，不阻塞当前读取操作
+          triggerAutoLogout().catch(() => {
+            // 静默失败
+          });
+          return null;
+        }
         return storage.get<UserStorage>(APP_STORAGE_KEYS.USER) || null;
       },
 
@@ -150,8 +160,8 @@ class AppStorageManager {
      */
     setUsername(username: string): void {
       this.set({ username });
-      // 清理旧的 localStorage 中的 username
-      localStorage.removeItem(APP_STORAGE_KEYS.USERNAME);
+      // 清理旧的 storage 中的 username
+      storage.remove(APP_STORAGE_KEYS.USERNAME);
     },
 
     /**
@@ -176,7 +186,19 @@ class AppStorageManager {
        * 获取所有设置
        */
       get(): AppSettingsStorage {
-        return storage.get<AppSettingsStorage>(APP_STORAGE_KEYS.SETTINGS) || {};
+        // 关键：在读取 is_logged_in 标记时，先检查存储有效性
+        const settings = storage.get<AppSettingsStorage>(APP_STORAGE_KEYS.SETTINGS) || {};
+        // 如果存在 is_logged_in 标记，说明用户已登录，需要检查存储有效性
+        if ((settings as any).is_logged_in === true && !checkStorageValidity()) {
+          // 存储无效，清除标记并触发退出
+          delete (settings as any).is_logged_in;
+          storage.set(APP_STORAGE_KEYS.SETTINGS, settings);
+          // 异步触发退出，不阻塞当前读取操作
+          triggerAutoLogout().catch(() => {
+            // 静默失败
+          });
+        }
+        return settings;
       },
 
       /**
@@ -193,7 +215,19 @@ class AppStorageManager {
      * 获取单个设置项
      */
     getItem<K extends keyof AppSettingsStorage>(key: K): AppSettingsStorage[K] | null {
+      // 关键：在读取 is_logged_in 标记时，先检查存储有效性
       const settings = this.get();
+      // 如果读取的是 is_logged_in 且为 true，需要检查存储有效性
+      if (key === 'is_logged_in' && (settings as any)[key] === true && !checkStorageValidity()) {
+        // 存储无效，清除标记并触发退出
+        delete (settings as any).is_logged_in;
+        storage.set(APP_STORAGE_KEYS.SETTINGS, settings);
+        // 异步触发退出，不阻塞当前读取操作
+        triggerAutoLogout().catch(() => {
+          // 静默失败
+        });
+        return null;
+      }
       return settings[key] ?? null;
     },
 
@@ -237,7 +271,17 @@ class AppStorageManager {
        * 获取 token
        */
       getToken(): string | null {
-        return localStorage.getItem(APP_STORAGE_KEYS.TOKEN);
+        // 关键：在读取之前先检查存储有效性
+        // 如果关键存储不存在，说明存储被清除，需要退出
+        if (!checkStorageValidity()) {
+          // 异步触发退出，不阻塞当前读取操作
+          triggerAutoLogout().catch(() => {
+            // 静默失败
+          });
+          return null;
+        }
+        const token = storage.get<string>(APP_STORAGE_KEYS.TOKEN);
+        return token || null;
       },
 
       /**
@@ -245,7 +289,7 @@ class AppStorageManager {
        */
       setToken(token: string): void {
         const oldToken = this.getToken();
-        localStorage.setItem(APP_STORAGE_KEYS.TOKEN, token);
+        storage.set(APP_STORAGE_KEYS.TOKEN, token);
         self.notifyListeners(APP_STORAGE_KEYS.TOKEN, token, oldToken);
       },
 
@@ -253,7 +297,8 @@ class AppStorageManager {
        * 获取 refresh token
        */
       getRefreshToken(): string | null {
-        return localStorage.getItem(APP_STORAGE_KEYS.REFRESH_TOKEN);
+        const refreshToken = storage.get<string>(APP_STORAGE_KEYS.REFRESH_TOKEN);
+        return refreshToken || null;
       },
 
       /**
@@ -261,7 +306,7 @@ class AppStorageManager {
        */
       setRefreshToken(token: string): void {
         const oldRefreshToken = this.getRefreshToken();
-        localStorage.setItem(APP_STORAGE_KEYS.REFRESH_TOKEN, token);
+        storage.set(APP_STORAGE_KEYS.REFRESH_TOKEN, token);
         self.notifyListeners(APP_STORAGE_KEYS.REFRESH_TOKEN, token, oldRefreshToken);
       },
 
@@ -271,8 +316,8 @@ class AppStorageManager {
       clear(): void {
         const oldToken = this.getToken();
         const oldRefreshToken = this.getRefreshToken();
-        localStorage.removeItem(APP_STORAGE_KEYS.TOKEN);
-        localStorage.removeItem(APP_STORAGE_KEYS.REFRESH_TOKEN);
+        storage.remove(APP_STORAGE_KEYS.TOKEN);
+        storage.remove(APP_STORAGE_KEYS.REFRESH_TOKEN);
         self.notifyListeners(APP_STORAGE_KEYS.TOKEN, null, oldToken);
         self.notifyListeners(APP_STORAGE_KEYS.REFRESH_TOKEN, null, oldRefreshToken);
       },
@@ -336,22 +381,21 @@ class AppStorageManager {
     const keys: StorageStats['keys'] = [];
     let totalSize = 0;
 
-    // 统计所有 btc_ 前缀的 key
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('btc_')) {
-        const value = localStorage.getItem(key);
-        if (value) {
-          const size = new Blob([value]).size;
-          totalSize += size;
-          keys.push({
-            key,
-            size,
-            type: this.getStorageType(key),
-          });
-        }
+    // 使用 storage.info() 获取所有存储数据
+    const allStorage = storage.info();
+    Object.keys(allStorage).forEach(key => {
+      if (key.startsWith('btc_')) {
+        const value = allStorage[key];
+        const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+        const size = new Blob([valueStr]).size;
+        totalSize += size;
+        keys.push({
+          key,
+          size,
+          type: this.getStorageType(key),
+        });
       }
-    }
+    });
 
     // 统计其他重要 key
     const otherKeys = [
@@ -362,9 +406,10 @@ class AppStorageManager {
     ];
 
     otherKeys.forEach(key => {
-      const value = localStorage.getItem(key);
-      if (value) {
-        const size = new Blob([value]).size;
+      const value = storage.get(key);
+      if (value !== null) {
+        const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+        const size = new Blob([valueStr]).size;
         totalSize += size;
         keys.push({
           key,
@@ -411,10 +456,11 @@ class AppStorageManager {
     ];
 
     oldKeys.forEach(key => {
-      const value = localStorage.getItem(key);
-      if (value) {
-        const size = new Blob([value]).size;
-        localStorage.removeItem(key);
+      const value = storage.get(key);
+      if (value !== null) {
+        const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+        const size = new Blob([valueStr]).size;
+        storage.remove(key);
         removed.push(key);
         freed += size;
       }
@@ -430,20 +476,13 @@ class AppStorageManager {
   export(): Record<string, any> {
     const data: Record<string, any> = {};
 
-    // 导出所有 btc_ 前缀的 key
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('btc_')) {
-        try {
-          const value = localStorage.getItem(key);
-          if (value) {
-            data[key] = JSON.parse(value);
-          }
-        } catch {
-          data[key] = localStorage.getItem(key);
-        }
+    // 使用 storage.info() 获取所有存储数据
+    const allStorage = storage.info();
+    Object.keys(allStorage).forEach(key => {
+      if (key.startsWith('btc_')) {
+        data[key] = allStorage[key];
       }
-    }
+    });
 
     // 导出其他重要 key
     const otherKeys = [
@@ -454,13 +493,9 @@ class AppStorageManager {
     ];
 
     otherKeys.forEach(key => {
-      const value = localStorage.getItem(key);
-      if (value) {
-        try {
-          data[key] = JSON.parse(value);
-        } catch {
-          data[key] = value;
-        }
+      const value = storage.get(key);
+      if (value !== null) {
+        data[key] = value;
       }
     });
 
@@ -471,18 +506,14 @@ class AppStorageManager {
    * 清除所有应用存储（危险操作）
    */
   clearAll(): void {
-    // 清除所有 btc_ 前缀的 key
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('btc_')) {
-        keysToRemove.push(key);
+    // 使用 storage.info() 获取所有存储数据，然后清除所有 btc_ 前缀的 key
+    const allStorage = storage.info();
+    Object.keys(allStorage).forEach(key => {
+      if (key.startsWith('btc_')) {
+        const oldValue = storage.get(key);
+        storage.remove(key);
+        this.notifyListeners(key, null, oldValue);
       }
-    }
-    keysToRemove.forEach(key => {
-      const oldValue = localStorage.getItem(key);
-      localStorage.removeItem(key);
-      this.notifyListeners(key, null, oldValue);
     });
 
     // 清除其他重要 key
@@ -493,8 +524,8 @@ class AppStorageManager {
     ];
 
     otherKeys.forEach(key => {
-      const oldValue = localStorage.getItem(key);
-      localStorage.removeItem(key);
+      const oldValue = storage.get(key);
+      storage.remove(key);
       this.notifyListeners(key, null, oldValue);
     });
   }

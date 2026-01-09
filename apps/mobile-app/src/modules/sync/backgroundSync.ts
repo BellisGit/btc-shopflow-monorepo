@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { getDeviceInfo } from '@/utils/device';
 
@@ -137,7 +138,7 @@ export async function processQueue() {
     }
   }
 
-  localStorage.setItem('last_sync_time', Date.now().toString());
+  storage.set('last_sync_time', Date.now().toString());
 }
 
 async function syncOp(op: any) {

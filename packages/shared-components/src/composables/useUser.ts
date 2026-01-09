@@ -59,10 +59,10 @@ export function useUser() {
   const clearUserInfo = () => {
     // 使用 storage.remove('user') 清除 Cookie
     storage.remove('user');
-    // 清理旧的 localStorage 数据（向后兼容）
+    // 清理旧的 storage 数据（向后兼容）
     try {
-      localStorage.removeItem('btc_user');
-      localStorage.removeItem('user');
+      storage.remove('btc_user');
+      storage.remove('user');
     } catch {
       // 忽略错误
     }

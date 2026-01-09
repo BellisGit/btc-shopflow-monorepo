@@ -30,7 +30,7 @@ defineOptions({
   name: 'LayoutBreadcrumb',
 });
 
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, type ComputedRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
@@ -51,7 +51,7 @@ function getSvgName(iconName?: string): string {
 }
 
 const route = useRoute();
-const { t, te } = useI18n();
+const { t } = useI18n();
 const processStore = useProcessStore();
 
 // 初始化全局状态监听器（单例模式，只注册一次）
@@ -67,7 +67,9 @@ interface BreadcrumbItem {
 
 // 内部使用的面包屑配置类型
 interface BreadcrumbConfig {
-  i18nKey: string;
+  i18nKey?: string;
+  labelKey?: string;
+  label?: string;
   icon?: string;
 }
 
@@ -99,7 +101,7 @@ function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined
 }
 
 // 根据路由生成面包屑（应用隔离）
-const breadcrumbList = computed<BreadcrumbItem[]>(() => {
+const breadcrumbList: ComputedRef<BreadcrumbItem[]> = computed(() => {
   // 如果路由 meta 中标记为首页，不显示面包屑
   if (route.meta?.isHome === true) {
     return [];
@@ -147,6 +149,39 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
         (tab.path && tab.path.replace(/\/+$/, '') === normalizedPath),
     ) ?? null;
 
+  // 辅助函数：处理翻译结果（与菜单组件保持一致）
+  const processTranslation = (translated: any, key: string): string | null => {
+    if (!translated || translated === key) {
+      return null;
+    }
+
+    // 如果是字符串，直接返回
+    if (typeof translated === 'string') {
+      return translated;
+    }
+
+    // 如果是对象且包含 _ 键，使用 _ 键的值（用于处理父键同时有子键的情况）
+    if (typeof translated === 'object' && translated !== null && !Array.isArray(translated)) {
+      if ('_' in translated && typeof translated._ === 'string') {
+        return translated._;
+      }
+    }
+
+    // 如果是函数，尝试调用
+    if (typeof translated === 'function') {
+      try {
+        const result = translated({ normalize: (arr: any[]) => arr[0] });
+        if (typeof result === 'string' && result.trim() !== '') {
+          return result;
+        }
+      } catch {
+        // 函数调用失败，返回 null
+      }
+    }
+
+    return null;
+  };
+
   const normalizeBreadcrumbEntries = (entries: any[] | undefined) => {
     if (!Array.isArray(entries) || entries.length === 0) {
       return [];
@@ -157,104 +192,121 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
 
     return entries
       .map((item) => {
-        const key =
-          (typeof item.labelKey === 'string' && item.labelKey) ||
+        // 优先使用传入的 label，如果没有则翻译 i18nKey
+        let label: string = item.label || '';
+        const i18nKey = (typeof item.labelKey === 'string' && item.labelKey) ||
           (typeof item.i18nKey === 'string' && item.i18nKey);
-        const rawLabel =
-          (typeof item.label === 'string' && item.label) ||
-          (typeof key === 'string' ? key : '');
 
-        if (!rawLabel) {
-          return null;
-        }
-
-        // 优先使用主应用的 i18n 实例进行翻译（与 tabbar 保持一致）
-        let label: string;
-        if (key) {
-          // 使用与 tabbar 相同的翻译逻辑
+        if (!label && i18nKey) {
+          // 优先使用主应用的 i18n 实例（确保能访问到已合并的语言包）
+          // 注意：与菜单组件使用相同的翻译逻辑
           const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
           if (mainAppI18n && mainAppI18n.global) {
-            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+            // 关键：访问响应式的 locale，确保当 i18n 更新时 computed 会重新计算
+            const localeValue = mainAppI18n.global.locale;
+            const currentLocale = (typeof localeValue === 'string' ? localeValue : localeValue.value) || 'zh-CN';
             const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+            // 为了确保响应式，我们访问 locale（响应式的），这样当 i18n 更新时会重新计算
+            void localeValue; // 触发响应式追踪
 
-            // 直接访问消息对象，确保能访问到已合并的语言包
-            // vue-i18n 的 te 和 t 函数支持点号分隔的嵌套 key，所以这里先尝试扁平化访问
-            if (key in messages) {
-              const value = messages[key];
-              if (typeof value === 'string' && value.trim() !== '') {
-                label = value;
-              } else if (typeof value === 'function') {
-                try {
-                  const result = value({ normalize: (arr: any[]) => arr[0] });
-                  if (typeof result === 'string' && result.trim() !== '') {
-                    label = result;
+            // 优先级1：直接访问扁平化的 key（支持扁平化消息结构）
+            if (i18nKey in messages) {
+              const value = messages[i18nKey];
+              const processed = processTranslation(value, i18nKey);
+              if (processed) {
+                label = processed;
+              }
+            }
+
+            // 优先级2：如果直接访问失败，尝试按路径访问嵌套结构（处理嵌套消息结构）
+            if (!label) {
+              const keys = i18nKey.split('.');
+              let value = messages;
+              let pathSoFar = '';
+              for (const k of keys) {
+                pathSoFar += (pathSoFar ? '.' : '') + k;
+                if (value && typeof value === 'object' && k in value) {
+                  value = value[k];
+                  // 如果 value 是字符串，但还有更多层级要访问，说明结构有问题
+                  // 这可能是因为 value 是父键的值（如 menu.access = "权限管理"），而不是对象
+                  // 在这种情况下，应该停止路径访问，尝试使用 t() 函数
+                  if (typeof value === 'string' && keys.indexOf(k) < keys.length - 1) {
+                    value = undefined;
+                    break;
                   }
-                } catch {
-                  // 如果函数调用失败，继续使用其他方法
+                } else {
+                  // 如果 value 是字符串，说明已经到达了叶子节点，但当前 i18nKey 还有更多层级
+                  // 这可能是因为 value 是父键的值（如 menu.access = "权限管理"），而不是对象
+                  // 在这种情况下，应该尝试使用组件内的 t() 函数
+                  value = undefined;
+                  break;
+                }
+              }
+              if (value !== undefined) {
+                // 如果值是对象且包含 _ 键，需要判断：
+                // - 如果当前 i18nKey 是父键（如 menu.access），且有子键（如 relations），使用 _ 键的值
+                // - 如果当前 i18nKey 是子键（如 menu.access.relations），直接使用 value 本身（字符串）
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                  if ('_' in value) {
+                    // 检查当前 i18nKey 是否还有更深层的子键
+                    // 如果有子键，说明当前 i18nKey 是父键，应该使用 _ 键的值
+                    // 如果没有子键，说明当前 i18nKey 是叶子节点，但 value 是对象，说明可能是父键的值，使用 _ 键
+                    const childKeys = Object.keys(value).filter(k => k !== '_');
+                    if (childKeys.length > 0) {
+                      // 有子键，说明当前 i18nKey 是父键，使用 _ 键的值
+                      value = value._;
+                    } else {
+                      // 没有子键，但 value 是对象且只有 _ 键，说明这是父键的值，使用 _ 键
+                      value = value._;
+                    }
+                  }
+                }
+                const processed = processTranslation(value, i18nKey);
+                if (processed) {
+                  label = processed;
                 }
               }
             }
 
-            // 如果直接访问失败，使用 te 和 t（vue-i18n 支持点号分隔的嵌套 key）
-            if (!label && mainAppI18n.global.te(key, currentLocale)) {
-              const mainTranslated = mainAppI18n.global.t(key, currentLocale);
-              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== key && mainTranslated.trim() !== '') {
-                label = mainTranslated;
-              }
-            }
-          }
-          
-          // 如果主应用翻译失败，尝试使用子应用的 t() 函数
-          if (!label && te(key)) {
-            label = t(key);
-          } else if (!label) {
-            // 翻译键不存在，使用兜底文本
-            label = rawLabel;
-          }
-        } else {
-          // 没有翻译键，尝试翻译 rawLabel
-          // 优先使用主应用的 i18n 实例进行翻译
-          const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
-          if (mainAppI18n && mainAppI18n.global && rawLabel.includes('.')) {
-            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
-            const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
-            
-            // 直接访问消息对象，确保能访问到已合并的语言包
-            if (rawLabel in messages) {
-              const value = messages[rawLabel];
-              if (typeof value === 'string' && value.trim() !== '') {
-                label = value;
-              } else if (typeof value === 'function') {
-                try {
-                  const result = value({ normalize: (arr: any[]) => arr[0] });
-                  if (typeof result === 'string' && result.trim() !== '') {
-                    label = result;
-                  }
-                } catch {
-                  // 如果函数调用失败，继续使用其他方法
+            // 优先级3：如果路径访问失败，尝试使用 Vue I18n 的 t() 函数（作为后备）
+            if (!label) {
+              const keyExists = mainAppI18n.global.te(i18nKey, currentLocale);
+              if (keyExists) {
+                const translated = mainAppI18n.global.t(i18nKey, currentLocale);
+                const processed = processTranslation(translated, i18nKey);
+                if (processed) {
+                  label = processed;
                 }
               }
             }
-            
-            // 如果直接访问失败，使用 t() 函数
-            if (!label && mainAppI18n.global.te(rawLabel, currentLocale)) {
-              const mainTranslated = mainAppI18n.global.t(rawLabel, currentLocale);
-              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== rawLabel && mainTranslated.trim() !== '') {
-                label = mainTranslated;
-              }
-            }
           }
-          
-          // 如果主应用翻译失败，尝试使用子应用的 t() 函数
+
+          // 如果主应用 i18n 实例不可用或翻译失败，使用组件内的 t() 函数（响应式）
+          // 注意：组件内的 t() 函数会自动访问主应用的 i18n（如果已合并），并且是响应式的
           if (!label) {
-            label = te(rawLabel) ? t(rawLabel) : rawLabel;
+            const translated = t(i18nKey);
+            const processed = processTranslation(translated, i18nKey);
+            if (processed) {
+              label = processed;
+            } else {
+              label = i18nKey;
+            }
           }
+        }
+
+        if (!label) {
+          label = i18nKey || '';
+        }
+
+        if (!label) {
+          return null;
         }
 
         // 优先从菜单注册表中查找图标（确保与左侧菜单图标一致）
         let icon: string | undefined;
-        if (key) {
-          const menuIcon = findMenuIconByI18nKey(key, currentApp);
+        // i18nKey 已经在上面声明过了，这里直接使用
+        if (i18nKey) {
+          const menuIcon = findMenuIconByI18nKey(i18nKey, currentApp);
           if (menuIcon) {
             icon = menuIcon;
           }
@@ -297,244 +349,81 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     return manifestBreadcrumbs;
   }
 
-  // 管理域的路径映射（完整层级结构）
-  // 注意：图标将从菜单注册表中自动获取，这里只保留 i18nKey
-  // 生产环境下路径没有 /admin 前缀（如 /platform/domains 而不是 /admin/platform/domains）
-  const adminAppBreadcrumbs: Record<string, BreadcrumbConfig[]> = {
-    // 平台治理
-    '/platform/domains': [
-      { i18nKey: 'menu.platform' },
-      { i18nKey: 'menu.platform.domains' },
-    ],
-    '/platform/modules': [
-      { i18nKey: 'menu.platform' },
-      { i18nKey: 'menu.platform.modules' },
-    ],
-    '/platform/plugins': [
-      { i18nKey: 'menu.platform' },
-      { i18nKey: 'menu.platform.plugins' },
-    ],
-
-    // 组织与账号
-    '/org/tenants': [
-      { i18nKey: 'menu.org' },
-      { i18nKey: 'menu.org.tenants' },
-    ],
-    '/org/departments': [
-      { i18nKey: 'menu.org' },
-      { i18nKey: 'menu.org.departments' },
-    ],
-    '/org/users': [
-      { i18nKey: 'menu.org' },
-      { i18nKey: 'menu.org.users' },
-    ],
-
-    // 访问控制
-    '/access/resources': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.config' },
-      { i18nKey: 'menu.access.resources' },
-    ],
-    '/access/actions': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.config' },
-      { i18nKey: 'menu.access.actions' },
-    ],
-    '/access/permissions': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.config' },
-      { i18nKey: 'menu.access.permissions' },
-    ],
-    '/access/roles': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.config' },
-      { i18nKey: 'menu.access.roles' },
-    ],
-    '/access/perm-compose': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.relations' },
-      { i18nKey: 'menu.access.perm_compose' },
-    ],
-    '/org/users/:id/roles': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.relations' },
-      { i18nKey: 'menu.access.user_assign' },
-      { i18nKey: 'menu.access.user_role_bind' },
-    ],
-    '/org/users/users-roles': [
-      { i18nKey: 'menu.access' },
-      { i18nKey: 'menu.access.relations' },
-      { i18nKey: 'menu.access.user_assign' },
-      { i18nKey: 'menu.access.user_role_bind' },
-    ],
-
-    // 导航与可见性
-    '/navigation/menus': [
-      { i18nKey: 'menu.navigation' },
-      { i18nKey: 'menu.navigation.menus' },
-    ],
-    '/navigation/menus/preview': [
-      { i18nKey: 'menu.navigation' },
-      { i18nKey: 'menu.navigation.menu_preview' },
-    ],
-
-    // 运维与审计
-    '/ops/logs/operation': [
-      { i18nKey: 'menu.ops' },
-      { i18nKey: 'menu.ops.logs' },
-      { i18nKey: 'menu.ops.operation_log' },
-    ],
-    '/ops/logs/request': [
-      { i18nKey: 'menu.ops' },
-      { i18nKey: 'menu.ops.logs' },
-      { i18nKey: 'menu.ops.request_log' },
-    ],
-    '/ops/baseline': [
-      { i18nKey: 'menu.ops' },
-      { i18nKey: 'menu.ops.baseline' },
-    ],
-    '/ops/api-list': [
-      { i18nKey: 'menu.ops' },
-      { i18nKey: 'menu.ops.api_list' },
-    ],
-    '/ops/simulator': [
-      { i18nKey: 'menu.ops' },
-      { i18nKey: 'menu.ops.simulator' },
-    ],
-    // 策略相关
-    '/strategy/management': [
-      { i18nKey: 'menu.strategy' },
-      { i18nKey: 'menu.strategy.management' },
-    ],
-    '/strategy/designer': [
-      { i18nKey: 'menu.strategy' },
-      { i18nKey: 'menu.strategy.designer' },
-    ],
-    '/strategy/monitor': [
-      { i18nKey: 'menu.strategy' },
-      { i18nKey: 'menu.strategy.monitor' },
-    ],
-    // 数据治理
-    '/governance/files/templates': [
-      { i18nKey: 'menu.governance' },
-      { i18nKey: 'menu.data.files' },
-      { i18nKey: 'menu.data.files.templates' },
-    ],
-    // 测试功能（图标将从菜单注册表中获取）
-    '/test/components': [
-      { i18nKey: 'menu.test_features' },
-      { i18nKey: 'menu.test_features.components' },
-    ],
-    '/test/api-test-center': [
-      { i18nKey: 'menu.test_features' },
-      { i18nKey: 'menu.test_features.api_test_center' },
-    ],
-    '/test/inventory-ticket-print': [
-      { i18nKey: 'menu.test_features' },
-      { i18nKey: 'menu.test_features.inventory_ticket_print' },
-    ],
-    // 开发环境路径（带 /admin 前缀）
-    '/admin/test/inventory-ticket-print': [
-      { i18nKey: 'menu.test_features' },
-      { i18nKey: 'menu.test_features.inventory_ticket_print' },
-    ],
-  };
-
-  // 子应用的面包屑映射（暂时为空，待实现具体页面）
-  const subAppBreadcrumbs: Record<string, Record<string, BreadcrumbConfig[]>> = {
-    system: {
-      '/404': [
-        { i18nKey: 'common.page_not_found', icon: 'svg:404' },
-      ],
-    },
-    logistics: {},
-    engineering: {},
-    quality: {},
-    production: {},
-    finance: {},
-    operations: {
-      '/': [
-        { i18nKey: 'menu.operations.overview' },
-      ],
-      '/ops/error': [
-        { i18nKey: 'menu.operations.name' },
-        { i18nKey: 'menu.operations.error' },
-      ],
-      '/ops/deployment-test': [
-        { i18nKey: 'menu.operations.name' },
-        { i18nKey: 'menu.operations.deploymentTest' },
-      ],
-    },
-  };
-
   // 如果路由 meta 中标记为首页，不显示面包屑（已在开头检查，这里保留兼容逻辑）
   // 系统应用和管理应用的首页不显示面包屑
-  const homePaths = new Set([
-    '/',
-    '/admin',
-  ]);
-
-  // 特殊处理：系统应用（system）和管理应用（admin）的首页不显示面包屑
+  const homePaths = new Set(['/', '/admin']);
   if (homePaths.has(normalizedPath)) {
-    // 如果是系统应用或管理应用的首页，不显示面包屑
-    if (normalizedPath === '/' && currentApp === 'system') {
-      return [];
-    }
-    if (normalizedPath === '/admin' && currentApp === 'admin') {
+    if ((normalizedPath === '/' && currentApp === 'system') ||
+        (normalizedPath === '/admin' && currentApp === 'admin')) {
       return [];
     }
   }
 
-  // 获取面包屑数据
-  // 生产环境下路径没有 /admin 前缀（如 /platform/domains），开发环境有 /admin 前缀
+  // 统一的面包屑生成逻辑：优先从菜单注册表中根据路径查找，然后从路由 meta.titleKey 生成
   let breadcrumbData: BreadcrumbConfig[] | undefined;
 
-  // 优先使用识别到的应用类型
-  if (currentApp === 'admin') {
-    // 先尝试直接匹配（开发环境路径，如 /admin/governance/dictionary/fields）
-    breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+  // 方法1：从菜单注册表中根据路径反向查找菜单项，生成面包屑路径
+  if (currentApp) {
+    const menus = getMenusForApp(currentApp);
 
-    // 如果没匹配到，尝试去掉 /admin 前缀后再匹配（处理开发环境和生产环境的路径差异）
-    if (!breadcrumbData && normalizedPath.startsWith('/admin/')) {
-      const pathWithoutAdmin = normalizedPath.substring('/admin'.length) || '/';
-      breadcrumbData = adminAppBreadcrumbs[pathWithoutAdmin];
-    }
+    // 递归查找匹配路径的菜单项
+    function findMenuItemByPath(items: any[], targetPath: string, pathStack: any[] = []): any[] | null {
+      for (const item of items) {
+        const currentStack = [...pathStack, item];
 
-    // 如果还没匹配到，尝试添加 /admin 前缀后再匹配（处理生产环境路径）
-    if (!breadcrumbData && !normalizedPath.startsWith('/admin')) {
-      breadcrumbData = adminAppBreadcrumbs[`/admin${normalizedPath}`];
-    }
-  } else if (currentApp && subAppBreadcrumbs[currentApp]) {
-    // 先尝试直接匹配
-    breadcrumbData = subAppBreadcrumbs[currentApp][normalizedPath];
+        // 检查当前菜单项的路径是否匹配（支持精确匹配和前缀匹配）
+        if (item.index) {
+          const itemPath = item.index.replace(/\/+$/, '') || '/';
+          const normalizedItemPath = itemPath;
+          const normalizedTargetPath = targetPath.replace(/\/+$/, '') || '/';
 
-    // 如果直接匹配失败，尝试移除应用前缀（处理主域名访问的情况，如 /operations/ops/error -> /ops/error）
-    if (!breadcrumbData && normalizedPath.startsWith(`/${currentApp}/`)) {
-      const pathWithoutPrefix = normalizedPath.substring(`/${currentApp}`.length) || '/';
-      breadcrumbData = subAppBreadcrumbs[currentApp][pathWithoutPrefix];
-    }
+          // 精确匹配
+          if (normalizedItemPath === normalizedTargetPath) {
+            return currentStack;
+          }
 
-    // 如果仍然没有匹配到，尝试在所有子应用中查找（处理子域名访问的情况，如 operations.bellis.com.cn/ops/error）
-    if (!breadcrumbData) {
-      for (const [_appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
-        if (appBreadcrumbs[normalizedPath]) {
-          breadcrumbData = appBreadcrumbs[normalizedPath];
-          break;
+          // 处理动态路由（如 /org/users/:id/roles）
+          // 使用正则表达式匹配动态路由参数
+          const dynamicPattern = normalizedItemPath.replace(/:[^/]+/g, '[^/]+');
+          const regex = new RegExp(`^${dynamicPattern}$`);
+          if (regex.test(normalizedTargetPath)) {
+            return currentStack;
+          }
+        }
+
+        // 递归查找子菜单
+        if (item.children && item.children.length > 0) {
+          const found = findMenuItemByPath(item.children, targetPath, currentStack);
+          if (found) {
+            return found;
+          }
         }
       }
-    }
-  } else {
-    // 如果无法识别应用，先尝试在所有子应用中查找
-    for (const [_appId, appBreadcrumbs] of Object.entries(subAppBreadcrumbs)) {
-      if (appBreadcrumbs[normalizedPath]) {
-        breadcrumbData = appBreadcrumbs[normalizedPath];
-        break;
-      }
+      return null;
     }
 
-    // 如果仍然没有匹配到，尝试使用 admin 应用的面包屑配置（作为后备方案）
-    if (!breadcrumbData) {
-      breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+    const menuPath = findMenuItemByPath(menus, normalizedPath);
+    if (menuPath && menuPath.length > 0) {
+      // 从菜单路径生成面包屑配置
+      breadcrumbData = menuPath.map((item: any) => ({
+        i18nKey: item.labelKey || item.title,
+      }));
+    }
+  }
+
+  // 方法2：如果菜单注册表中找不到，从路由 meta.titleKey 自动生成
+  if (!breadcrumbData) {
+    const titleKey = (route.meta?.titleKey || route.meta?.labelKey) as string | undefined;
+    if (titleKey && titleKey.startsWith('menu.')) {
+      // 从 titleKey 生成面包屑路径（如 menu.procurement.auxiliary -> [menu.procurement, menu.procurement.auxiliary]）
+      const parts = titleKey.split('.');
+      breadcrumbData = [];
+
+      // 生成层级路径（menu.procurement, menu.procurement.auxiliary）
+      for (let i = 1; i < parts.length; i++) {
+        const key = `menu.${parts.slice(1, i + 1).join('.')}`;
+        breadcrumbData.push({ i18nKey: key });
+      }
     }
   }
 
@@ -542,12 +431,131 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     return [];
   }
 
-  // 转换为带翻译的面包屑，并从菜单注册表中获取图标
+  // 转换为面包屑，并从菜单注册表中获取图标
   return breadcrumbData.map((item): BreadcrumbItem => {
     // 优先使用配置中的图标，如果没有则从菜单注册表中查找
     const menuIcon = item.i18nKey ? findMenuIconByI18nKey(item.i18nKey, currentApp) : undefined;
+    // 优先使用传入的 label，如果没有则翻译 i18nKey
+    let label: string = item.label || '';
+
+    if (!label && item.i18nKey) {
+      // 优先使用主应用的 i18n 实例（确保能访问到已合并的语言包）
+      // 注意：与菜单组件使用相同的翻译逻辑
+      const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+      if (mainAppI18n && mainAppI18n.global) {
+        // 关键：访问响应式的 locale，确保当 i18n 更新时 computed 会重新计算
+        const localeValue = mainAppI18n.global.locale;
+        const currentLocale = (typeof localeValue === 'string' ? localeValue : localeValue.value) || 'zh-CN';
+        const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+        // 为了确保响应式，我们访问 locale（响应式的），这样当 i18n 更新时会重新计算
+        void localeValue; // 触发响应式追踪
+
+        // 优先级1：直接访问扁平化的 key（支持扁平化消息结构）
+        if (item.i18nKey in messages) {
+          const value = messages[item.i18nKey];
+          const processed = processTranslation(value, item.i18nKey);
+          if (processed) {
+            label = processed;
+          }
+        }
+
+        // 优先级2：如果直接访问失败，尝试按路径访问嵌套结构（处理嵌套消息结构）
+        if (!label) {
+          const keys = item.i18nKey.split('.');
+          let value = messages;
+          for (const k of keys) {
+            if (value && typeof value === 'object' && k in value) {
+              value = value[k];
+            } else {
+              value = undefined;
+              break;
+            }
+          }
+          if (value !== undefined) {
+            // 如果值是对象且包含 _ 键，使用 _ 键的值（Vue I18n 的约定，用于处理父键同时有子键的情况）
+            if (typeof value === 'object' && value !== null && !Array.isArray(value) && '_' in value) {
+              value = value._;
+            }
+            const processed = processTranslation(value, item.i18nKey);
+            if (processed) {
+              label = processed;
+            }
+          }
+        }
+
+        // 优先级3：如果路径访问失败，尝试使用 Vue I18n 的 t() 函数（作为后备）
+        if (!label) {
+          const keyExists = mainAppI18n.global.te(item.i18nKey, currentLocale);
+          if (keyExists) {
+            const translated = mainAppI18n.global.t(item.i18nKey, currentLocale);
+            const processed = processTranslation(translated, item.i18nKey);
+            if (processed) {
+              label = processed;
+            }
+          }
+        }
+      }
+
+      // 如果主应用 i18n 实例不可用或翻译失败，使用组件内的 t() 函数（响应式）
+      // 注意：组件内的 t() 函数会自动访问主应用的 i18n（如果已合并），并且是响应式的
+      // 关键：即使主应用 i18n 可用，如果路径访问和 t() 都失败，也要尝试组件内的 t()
+      // 因为组件内的 t() 可能能访问到已合并的消息
+      if (!label) {
+        const translated = t(item.i18nKey);
+        // 如果组件内的 t() 返回的是键本身，尝试从主应用 i18n 直接访问
+        if (translated === item.i18nKey && mainAppI18n && mainAppI18n.global) {
+          // 重新获取 currentLocale（因为可能不在上面的作用域内）
+          const localeValueForFallback = mainAppI18n.global.locale;
+          const currentLocaleForFallback = (typeof localeValueForFallback === 'string' ? localeValueForFallback : localeValueForFallback.value) || 'zh-CN';
+          const messagesForFallback = mainAppI18n.global.getLocaleMessage(currentLocaleForFallback);
+          
+          // 优先级1：直接访问扁平化的 key
+          if (item.i18nKey in messagesForFallback) {
+            const value = messagesForFallback[item.i18nKey];
+            const processed = processTranslation(value, item.i18nKey);
+            if (processed) {
+              label = processed;
+            }
+          }
+          
+          // 优先级2：如果直接访问失败，尝试路径访问
+          if (!label) {
+            const keys = item.i18nKey.split('.');
+            let value = messagesForFallback;
+            for (const k of keys) {
+              if (value && typeof value === 'object' && k in value) {
+                value = value[k];
+              } else {
+                value = undefined;
+                break;
+              }
+            }
+            if (value !== undefined) {
+              if (typeof value === 'object' && value !== null && !Array.isArray(value) && '_' in value) {
+                value = value._;
+              }
+              const processed = processTranslation(value, item.i18nKey);
+              if (processed) {
+                label = processed;
+              }
+            }
+          }
+        } else {
+          const processed = processTranslation(translated, item.i18nKey);
+          if (processed) {
+            label = processed;
+          } else {
+            label = item.i18nKey;
+          }
+        }
+      }
+    }
+
+    if (!label) {
+      label = item.i18nKey || '';
+    }
     const result: BreadcrumbItem = {
-      label: item.i18nKey ? t(item.i18nKey) : '',
+      label,
     };
     const icon = item.icon || menuIcon;
     if (icon) {

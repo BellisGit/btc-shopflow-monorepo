@@ -7,7 +7,8 @@ import type { PageConfig } from '../../../../../types/locale';
 
 export default {
   locale: {
-    procurement: {},
+    'zh-CN': {},
+    'en-US': {},
   },
 
   columns: {},

@@ -9,86 +9,173 @@ import { service } from '@services/eps';
 
 export default {
   locale: {
-    data: {
-      inventory: {
-        list: {
-          fields: {
-            material_code: '物料编码',
-            material_name: '物料名称',
-            actual_qty: '实际数量',
-            storage_location: '仓位',
-            category: '分类',
-            status: '状态',
-            status_placeholder: '请选择状态',
-            remark: '备注',
-          },
-        },
-        confirm: {
-          fields: {
-            name: '名称',
-            status: '状态',
-            confirmer: '确认人',
-            created_at: '确认时间',
-          },
-          status: {
-            confirmed: '已确认',
-            unconfirmed: '未确认',
-          },
-        },
-        ticket: {
-          fields: {
-            check_no: '盘点单号',
-            material_code: '物料编码',
-            position: '仓位',
-          },
-        },
-        bom: {
-          fields: {
-            component_name: '组件名称',
-            material_code_name: '物料编码名称',
-            component_total_qty: '组件总数量',
-            parent_node: '父节点',
-            child_node: '子节点',
-          },
-        },
-        check: {
-          fields: {
-            material_code: '物料编码',
-            actual_qty: '实际数量',
-            checker_id: '负责人',
-            storage_location: '仓位',
-          },
-        },
-      },
-      dictionary: {
-        file_categories: {
-          fields: {
-            code: '编码',
-            label: '标签',
-            mime: 'MIME类型',
-            created_at: '创建时间',
-            updated_at: '更新时间',
-          },
-        },
-      },
-      files: {
-        list: {
-          fields: {
-            file_url: '文件URL',
-            original_name: '文件名',
-            mime: '文件类型',
-            size_bytes: '文件大小',
-            created_at: '上传时间',
-          },
-        },
-      },
-      recycle: {
-        fields: {
-          name: '名称',
-          type: '类型',
-          deleted_at: '删除时间',
-        },
-      },
+    'zh-CN': {
+      // 菜单配置
+      'menu.data': '数据管理',
+      'menu.data.files': '文件管理',
+      'menu.data.files.list': '文件列表',
+      'menu.data.files.template': '文件模板',
+      'menu.data.files.templates': '文件模板',
+      'menu.data.files.preview': '文件预览',
+      'menu.data.dictionary': '字典管理',
+      'menu.data.dictionary.fields': '字段管理',
+      'menu.data.dictionary.values': '字典值管理',
+      'menu.data.dictionary.file_categories': '文件分类',
+      'menu.data.recycle': '数据回收站',
+      'menu.inventory': '盘点管理',
+      'menu.inventory.data_source': '盘点数据源',
+      'menu.inventory.dataSource': '盘点数据源',
+      'menu.inventory.data_source.bom': '非SysPro BOM表',
+      'menu.inventory.dataSource.bom': '非SysPro BOM表',
+      'menu.inventory.data_source.list': '清单上传',
+      'menu.inventory.dataSource.list': '清单上传',
+      'menu.inventory.data_source.ticket': '盘点票导入',
+      'menu.inventory.dataSource.ticket': '盘点票导入',
+      'menu.inventory.process': '流程管理',
+      'menu.inventory.result': '实盘数据',
+      'menu.inventory.confirm': '流程确认',
+      // 盘点列表
+      'data.inventory.list.fields.material_code': '物料编码',
+      'data.inventory.list.fields.material_name': '物料名称',
+      'data.inventory.list.fields.actual_qty': '实际数量',
+      'data.inventory.list.fields.storage_location': '仓位',
+      'data.inventory.list.fields.category': '分类',
+      'data.inventory.list.fields.status': '状态',
+      'data.inventory.list.fields.status_placeholder': '请选择状态',
+      'data.inventory.list.fields.remark': '备注',
+      // 流程确认
+      'data.inventory.confirm.fields.name': '名称',
+      'data.inventory.confirm.fields.status': '状态',
+      'data.inventory.confirm.fields.confirmer': '确认人',
+      'data.inventory.confirm.fields.created_at': '确认时间',
+      'data.inventory.confirm.status.confirmed': '已确认',
+      'data.inventory.confirm.status.unconfirmed': '未确认',
+      // 盘点票
+      'data.inventory.ticket.fields.check_no': '盘点单号',
+      'data.inventory.ticket.fields.material_code': '物料编码',
+      'data.inventory.ticket.fields.position': '仓位',
+      // BOM
+      'data.inventory.bom.fields.component_name': '组件名称',
+      'data.inventory.bom.fields.material_code_name': '物料编码名称',
+      'data.inventory.bom.fields.component_total_qty': '组件总数量',
+      'data.inventory.bom.fields.parent_node': '父节点',
+      'data.inventory.bom.fields.child_node': '子节点',
+      // 盘点
+      'data.inventory.check.fields.material_code': '物料编码',
+      'data.inventory.check.fields.actual_qty': '实际数量',
+      'data.inventory.check.fields.checker_id': '负责人',
+      'data.inventory.check.fields.storage_location': '仓位',
+      // 字典
+      'data.dictionary.file_categories.fields.code': '编码',
+      'data.dictionary.file_categories.fields.label': '标签',
+      'data.dictionary.file_categories.fields.mime': 'MIME类型',
+      'data.dictionary.file_categories.fields.created_at': '创建时间',
+      'data.dictionary.file_categories.fields.updated_at': '更新时间',
+      // 文件
+      'data.files.list.fields.file_url': '文件URL',
+      'data.files.list.fields.original_name': '文件名',
+      'data.files.list.fields.mime': '文件类型',
+      'data.files.list.fields.size_bytes': '文件大小',
+      'data.files.list.fields.created_at': '上传时间',
+      // 回收站
+      'data.recycle.fields.name': '名称',
+      'data.recycle.fields.type': '类型',
+      'data.recycle.fields.deleted_at': '删除时间',
+      // 系统通用字段（用于 columns）
+      'system.inventory.base.fields.created_at': '创建时间',
+      'system.inventory.base.fields.check_no': '盘点单号',
+      'system.inventory.base.fields.check_type': '盘点类型',
+      'system.inventory.base.fields.remark': '备注',
+      'system.material.fields.material_code': '物料编码',
+      'system.material.fields.specification': '规格型号',
+      'system.material.fields.unit': '单位',
+      // 盘点结果通用字段
+      'inventory.result.fields.storage_location': '仓位',
+      'inventory.result.fields.actual_qty': '实际数量',
+    },
+    'en-US': {
+      // 菜单配置
+      'menu.data': 'Data Management',
+      'menu.data.files': 'File Management',
+      'menu.data.files.list': 'File List',
+      'menu.data.files.template': 'File Template',
+      'menu.data.files.templates': 'File Template',
+      'menu.data.files.preview': 'File Preview',
+      'menu.data.dictionary': 'Dictionary Management',
+      'menu.data.dictionary.fields': 'Field Management',
+      'menu.data.dictionary.values': 'Dictionary Value Management',
+      'menu.data.dictionary.file_categories': 'File Categories',
+      'menu.data.recycle': 'Data Recycle Bin',
+      'menu.inventory': 'Inventory Management',
+      'menu.inventory.data_source': 'Inventory Data Source',
+      'menu.inventory.dataSource': 'Inventory Data Source',
+      'menu.inventory.data_source.bom': 'Non-SysPro BOM Table',
+      'menu.inventory.dataSource.bom': 'Non-SysPro BOM Table',
+      'menu.inventory.data_source.list': 'Checklist Upload',
+      'menu.inventory.dataSource.list': 'Checklist Upload',
+      'menu.inventory.data_source.ticket': 'Check Ticket Import',
+      'menu.inventory.dataSource.ticket': 'Check Ticket Import',
+      'menu.inventory.process': 'Process Management',
+      'menu.inventory.result': 'Live Inventory Data',
+      'menu.inventory.confirm': 'Process Confirmation',
+      // 盘点列表
+      'data.inventory.list.fields.material_code': 'Material Code',
+      'data.inventory.list.fields.material_name': 'Material Name',
+      'data.inventory.list.fields.actual_qty': 'Actual Quantity',
+      'data.inventory.list.fields.storage_location': 'Storage Location',
+      'data.inventory.list.fields.category': 'Category',
+      'data.inventory.list.fields.status': 'Status',
+      'data.inventory.list.fields.status_placeholder': 'Please select status',
+      'data.inventory.list.fields.remark': 'Remark',
+      // 流程确认
+      'data.inventory.confirm.fields.name': 'Name',
+      'data.inventory.confirm.fields.status': 'Status',
+      'data.inventory.confirm.fields.confirmer': 'Confirmer',
+      'data.inventory.confirm.fields.created_at': 'Confirm Time',
+      'data.inventory.confirm.status.confirmed': 'Confirmed',
+      'data.inventory.confirm.status.unconfirmed': 'Unconfirmed',
+      // 盘点票
+      'data.inventory.ticket.fields.check_no': 'Check No',
+      'data.inventory.ticket.fields.material_code': 'Material Code',
+      'data.inventory.ticket.fields.position': 'Position',
+      // BOM
+      'data.inventory.bom.fields.component_name': 'Component Name',
+      'data.inventory.bom.fields.material_code_name': 'Material Code Name',
+      'data.inventory.bom.fields.component_total_qty': 'Component Total Quantity',
+      'data.inventory.bom.fields.parent_node': 'Parent Node',
+      'data.inventory.bom.fields.child_node': 'Child Node',
+      // 盘点
+      'data.inventory.check.fields.material_code': 'Material Code',
+      'data.inventory.check.fields.actual_qty': 'Actual Quantity',
+      'data.inventory.check.fields.checker_id': 'Checker',
+      'data.inventory.check.fields.storage_location': 'Storage Location',
+      // 字典
+      'data.dictionary.file_categories.fields.code': 'Code',
+      'data.dictionary.file_categories.fields.label': 'Label',
+      'data.dictionary.file_categories.fields.mime': 'MIME Type',
+      'data.dictionary.file_categories.fields.created_at': 'Created At',
+      'data.dictionary.file_categories.fields.updated_at': 'Updated At',
+      // 文件
+      'data.files.list.fields.file_url': 'File URL',
+      'data.files.list.fields.original_name': 'File Name',
+      'data.files.list.fields.mime': 'File Type',
+      'data.files.list.fields.size_bytes': 'File Size',
+      'data.files.list.fields.created_at': 'Upload Time',
+      // 回收站
+      'data.recycle.fields.name': 'Name',
+      'data.recycle.fields.type': 'Type',
+      'data.recycle.fields.deleted_at': 'Deleted At',
+      // 系统通用字段（用于 columns）
+      'system.inventory.base.fields.created_at': 'Created At',
+      'system.inventory.base.fields.check_no': 'Check No',
+      'system.inventory.base.fields.check_type': 'Check Type',
+      'system.inventory.base.fields.remark': 'Remark',
+      'system.material.fields.material_code': 'Material Code',
+      'system.material.fields.specification': 'Specification',
+      'system.material.fields.unit': 'Unit',
+      // 盘点结果通用字段
+      'inventory.result.fields.storage_location': 'Storage Location',
+      'inventory.result.fields.actual_qty': 'Actual Quantity',
     },
   },
 

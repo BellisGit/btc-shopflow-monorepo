@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { registerMicroApps, start } from 'qiankun';
 import { getActivePinia } from 'pinia';
 import { nextTick } from 'vue';
@@ -125,9 +126,11 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
     const normalizedIndex = normalizeMenuPath(item.index, appName);
+    const labelKey = item.labelKey || item.title || item.label;
     return {
       index: normalizedIndex,
-      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      title: labelKey ?? normalizedIndex,
+      labelKey: labelKey, // 关键：保存 labelKey 用于面包屑翻译
       icon: item.icon,
       children: item.children && item.children.length > 0
         ? item.children.map(convertToMenuItem)
@@ -209,8 +212,7 @@ export function registerManifestMenusForApp(appName: string): Promise<void> {
  */
 function getCurrentLocale(): string {
   // 从统一存储读取，或返回默认值
-  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 }
 
 /**

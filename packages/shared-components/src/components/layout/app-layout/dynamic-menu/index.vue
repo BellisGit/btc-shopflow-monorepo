@@ -317,23 +317,129 @@ onMounted(() => {
       // 延迟检查：只启动一次重试循环，避免初始化时反复抖动（多次 setTimeout + 多个 interval）
       if (!retrying) {
         retrying = true;
-        let retryCount = 0;
-        const maxRetries = 30;
-        const checkInterval = setInterval(() => {
-          retryCount++;
-          const retryMenus = menuRegistry?.value?.[app] || [];
-          if (retryMenus.length > 0) {
-            clearInterval(checkInterval);
-            menuKey.value++; // 强制重新渲染
-            retrying = false;
-          } else if (retryCount >= maxRetries) {
-            clearInterval(checkInterval);
-            retrying = false;
-            if (import.meta.env.DEV) {
-              console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+        
+        // 关键：检查应用是否有菜单配置
+        // 菜单配置可能在 manifest 中，也可能在模块级配置文件的 locale 中（以 menu. 开头的 key）
+        const checkHasMenuConfig = async (): Promise<boolean> => {
+          // 方法1：检查 manifest 中是否有菜单配置
+          try {
+            const { getManifestMenus } = await import('@btc/subapp-manifests');
+            const manifestMenus = getManifestMenus(app);
+            if (manifestMenus && manifestMenus.length > 0) {
+              return true;
             }
+          } catch (error) {
+            // 静默失败，继续检查其他方法
           }
-        }, 100);
+          
+          // 方法2：从国际化消息中检查是否有 menu. 开头的 key
+          // 菜单配置在模块级配置文件的 locale 中，以 menu. 开头的 key 形式存在
+          try {
+            const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
+            if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(app)) {
+              const getLocaleMessages = subAppI18nGetters.get(app);
+              if (typeof getLocaleMessages === 'function') {
+                const messages = getLocaleMessages();
+                // 检查中文和英文消息中是否有 menu. 开头的 key
+                const zhCNMessages = messages['zh-CN'] || {};
+                const enUSMessages = messages['en-US'] || {};
+                
+                // 检查扁平化的 key（如果消息是扁平化结构）
+                const hasMenuKey = (msgs: any): boolean => {
+                  if (typeof msgs === 'object' && msgs !== null) {
+                    // 扁平化结构：直接检查 key
+                    if (Array.isArray(msgs) === false) {
+                      const keys = Object.keys(msgs);
+                      if (keys.some(key => key.startsWith('menu.'))) {
+                        return true;
+                      }
+                    }
+                    // 嵌套结构：递归检查
+                    for (const key in msgs) {
+                      if (key === 'menu') {
+                        // 如果存在 menu 键，检查其内容是否为空
+                        const menuValue = msgs[key];
+                        if (menuValue && typeof menuValue === 'object' && Object.keys(menuValue).length > 0) {
+                          return true;
+                        }
+                      }
+                      if (typeof msgs[key] === 'object' && msgs[key] !== null && !Array.isArray(msgs[key])) {
+                        if (hasMenuKey(msgs[key])) {
+                          return true;
+                        }
+                      }
+                    }
+                  }
+                  return false;
+                };
+                
+                if (hasMenuKey(zhCNMessages) || hasMenuKey(enUSMessages)) {
+                  return true;
+                }
+              }
+            }
+          } catch (error) {
+            // 静默失败
+          }
+          
+          return false;
+        };
+        
+        // 异步检查是否有菜单配置
+        checkHasMenuConfig().then((hasMenuConfig) => {
+          if (!hasMenuConfig) {
+            // 如果没有菜单配置，说明该应用本来就没有菜单，直接跳过等待
+            retrying = false;
+            return;
+          }
+          
+          // 只有在有菜单配置时才等待注册
+          let retryCount = 0;
+          const maxRetries = 30;
+          const checkInterval = setInterval(() => {
+            retryCount++;
+            const retryMenus = menuRegistry?.value?.[app] || [];
+            if (retryMenus.length > 0) {
+              clearInterval(checkInterval);
+              menuKey.value++; // 强制重新渲染
+              retrying = false;
+            } else if (retryCount >= maxRetries) {
+              clearInterval(checkInterval);
+              retrying = false;
+              // 再次检查是否有菜单配置
+              // 如果确实有菜单配置但注册超时，才输出警告
+              checkHasMenuConfig().then((stillHasMenuConfig) => {
+                if (stillHasMenuConfig) {
+                  if (import.meta.env.DEV) {
+                    console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+                  }
+                }
+                // 如果没有菜单配置，静默跳过，不输出警告
+              }).catch(() => {
+                // 如果检查失败，不输出警告
+              });
+            }
+          }, 100);
+        }).catch(() => {
+          // 如果检查失败，使用原来的逻辑（向后兼容）
+          let retryCount = 0;
+          const maxRetries = 30;
+          const checkInterval = setInterval(() => {
+            retryCount++;
+            const retryMenus = menuRegistry?.value?.[app] || [];
+            if (retryMenus.length > 0) {
+              clearInterval(checkInterval);
+              menuKey.value++; // 强制重新渲染
+              retrying = false;
+            } else if (retryCount >= maxRetries) {
+              clearInterval(checkInterval);
+              retrying = false;
+              if (import.meta.env.DEV) {
+                console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+              }
+            }
+          }, 100);
+        });
       }
       return false;
     } else {

@@ -1,3 +1,4 @@
+import { storage } from '../storage/local';
 import { formatError, type ErrorInfo, type FormattedError } from './formatError';
 
 /**
@@ -93,29 +94,26 @@ interface ErrorStorageData {
 }
 
 /**
- * 从 localStorage 加载存储数据
+ * 从 storage 加载存储数据
  */
 function loadStorageData(): ErrorStorageData {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const data = JSON.parse(stored) as ErrorStorageData;
-      return data || {};
-    }
+    const data = storage.get<ErrorStorageData>(STORAGE_KEY);
+    return data || {};
   } catch (error) {
-    console.warn('[errorMonitor] 从 localStorage 加载数据失败:', error);
+    console.warn('[errorMonitor] 从 storage 加载数据失败:', error);
   }
   return {};
 }
 
 /**
- * 保存数据到 localStorage
+ * 保存数据到 storage
  */
 function saveStorageData(data: ErrorStorageData): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    storage.set(STORAGE_KEY, data);
   } catch (error) {
-    console.warn('[errorMonitor] 保存数据到 localStorage 失败:', error);
+    console.warn('[errorMonitor] 保存数据到 storage 失败:', error);
   }
 }
 

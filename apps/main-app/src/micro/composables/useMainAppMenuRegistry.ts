@@ -45,6 +45,16 @@ export async function registerMainAppMenus(): Promise<void> {
   const currentPath = window.location.pathname;
   const isMainAppRouteCheck = isMainAppRoute(currentPath);
 
+  // 关键：预加载所有子应用的 i18n 消息，确保菜单、tabbar、面包屑都能正确翻译
+  // 因为菜单需要显示所有子应用的菜单项，而不仅仅是当前激活的应用
+  // 注意：preloadAllSubAppsI18n 内部会等待子应用的 i18n 获取器注册完成（最多等待 2000ms）
+  const { preloadAllSubAppsI18n } = await import('../../i18n/subapp-i18n-manager');
+  const { i18n } = await import('../../i18n');
+  
+  await preloadAllSubAppsI18n(i18n).catch(() => {
+    // 静默忽略错误
+  });
+
   if (isMainAppRouteCheck) {
     // 如果是主应用路由，使用 manifest 注册菜单（与其他子应用保持一致）
     registerManifestTabsForApp('main').catch(console.error);
@@ -53,6 +63,13 @@ export async function registerMainAppMenus(): Promise<void> {
     // 对于子应用路由，先加载国际化消息，再注册菜单
     // 这样支持使用动态生成的国际化消息（从 config.ts）的子应用
     const appId = getAppIdFromPath(currentPath);
+
+    // 跳过 main 应用，它的国际化消息已经在初始化时加载了
+    if (appId === 'main') {
+      registerManifestTabsForApp('main').catch(console.error);
+      registerManifestMenusForApp('main').catch(console.error);
+      return;
+    }
 
     // 跳过 docs-app，它的国际化方式和普通业务应用不一样（VitePress）
     if (appId === 'docs') {

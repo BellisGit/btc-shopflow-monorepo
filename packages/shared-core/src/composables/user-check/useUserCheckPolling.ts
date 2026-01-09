@@ -11,6 +11,7 @@ let pollingTimer: ReturnType<typeof setTimeout> | null = null;
 let isPolling = false;
 let currentCallback: PollingCallback | null = null;
 let exitTimer: ReturnType<typeof setTimeout> | null = null;
+let isChecking = false; // 防止 performCheck 并发执行（虽然只有一个调用点，但保留此机制以防万一）
 
 /**
  * 执行退出逻辑
@@ -78,9 +79,9 @@ function startExitProcess(): void {
 }
 
 /**
- * 计算实际剩余时间（使用 UTC 时间差）
+ * 计算实际剩余时间（使用当前时间，而不是存储的服务器时间）
  * @param credentialExpireTime 凭证过期时间（ISO 8601）
- * @param serverCurrentTime 服务器当前时间（ISO 8601）
+ * @param serverCurrentTime 服务器当前时间（ISO 8601，仅用于验证，不用于计算）
  * @returns 实际剩余时间（秒）
  */
 function calculateActualRemainingTime(
@@ -89,12 +90,15 @@ function calculateActualRemainingTime(
 ): number {
   try {
     const expireTime = new Date(credentialExpireTime).getTime();
-    const currentTime = new Date(serverCurrentTime).getTime();
+    // 关键：使用当前时间计算，而不是存储的服务器时间
+    // 因为存储的服务器时间是旧的，使用它会导致计算不准确
+    const currentTime = Date.now();
 
-    if (isNaN(expireTime) || isNaN(currentTime)) {
+    if (isNaN(expireTime)) {
       return -1; // 无效时间
     }
 
+    // 计算实际剩余时间（秒）
     const actualRemainingTime = Math.max(0, Math.floor((expireTime - currentTime) / 1000));
     return actualRemainingTime;
   } catch (error) {
@@ -110,6 +114,16 @@ async function performCheck(): Promise<void> {
   if (!isPolling) {
     return;
   }
+
+  // 防止并发执行
+  if (isChecking) {
+    if (import.meta.env.DEV) {
+      console.warn('[useUserCheckPolling] performCheck is already running, skipping');
+    }
+    return;
+  }
+
+  isChecking = true;
 
   try {
     const result = await checkUser();
@@ -231,6 +245,8 @@ async function performCheck(): Promise<void> {
         performCheck();
       }, 5 * 60 * 1000); // 默认5分钟
     }
+  } finally {
+    isChecking = false;
   }
 }
 
@@ -240,8 +256,13 @@ async function performCheck(): Promise<void> {
  * @param forceImmediate 是否强制立即检查（登录后需要立即调用一次）
  */
 export function startPolling(callback?: PollingCallback, forceImmediate = false): void {
+  // 如果已经在轮询，且不是强制立即检查，直接返回（避免重复启动）
+  if (isPolling && !forceImmediate) {
+    return;
+  }
+
+  // 如果已经在轮询且是强制立即检查，先停止
   if (isPolling) {
-    // 如果已经在轮询，先停止
     stopPolling();
   }
 
@@ -262,7 +283,7 @@ export function startPolling(callback?: PollingCallback, forceImmediate = false)
         storedCredentialExpireTime &&
         storedServerCurrentTime
       ) {
-        // 计算实际剩余时间（使用存储的 UTC 时间）
+        // 计算实际剩余时间（使用当前时间，而不是存储的服务器时间）
         const actualRemainingTime = calculateActualRemainingTime(
           storedCredentialExpireTime,
           storedServerCurrentTime
@@ -278,10 +299,11 @@ export function startPolling(callback?: PollingCallback, forceImmediate = false)
             const interval = Math.min(nextCallTime * 1000, maxInterval);
 
             if (interval > 0) {
+              // 成功恢复剩余时间，设置定时器延迟调用，不立即调用
               pollingTimer = setTimeout(() => {
                 performCheck();
               }, interval);
-              return;
+              return; // 关键：返回，不执行立即检查
             }
           }
         }
@@ -304,6 +326,7 @@ export function startPolling(callback?: PollingCallback, forceImmediate = false)
 export function stopPolling(): void {
   isPolling = false;
   currentCallback = null;
+  isChecking = false; // 重置检查状态
 
   if (pollingTimer) {
     clearTimeout(pollingTimer);

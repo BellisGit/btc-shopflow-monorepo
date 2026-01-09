@@ -72,6 +72,15 @@ export function useFormRenderer() {
             return value;
           });
 
+          // 对于 el-select 组件，使用 computed 来追踪 options 的变化
+          // 关键：在 setup 中定义 computed，确保响应式追踪正确
+          const selectOptions = componentName === 'el-select' 
+            ? computed(() => {
+                const options = itemRef?.component?.options;
+                return Array.isArray(options) ? options : [];
+              })
+            : null;
+
           return () => {
             // 获取表单数据（form 是 ref，需要 unref）- 完全参考 cool-admin
             // 使用 computed 确保响应式追踪正确
@@ -135,9 +144,9 @@ export function useFormRenderer() {
             // 处理特殊组件
             if (componentName === 'el-select') {
               // 使用 Element Plus 2.10.5+ 的 options prop
-              const currentOptions = Array.isArray(itemRef?.component?.options)
-                ? itemRef.component.options
-                : [];
+              // 关键：使用在 setup 中定义的 computed 来追踪 options 的变化
+              // 这样当 options 更新时，组件会自动重新渲染
+              const currentOptions = selectOptions?.value || [];
 
               // 如果没有设置 placeholder，默认使用空字符串（而不是 "Select"）
               if (props.placeholder === undefined) {

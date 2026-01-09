@@ -57,3 +57,6 @@ export * from './eps/load-global-eps';
 export * from './env-info';
 export { getEnvInfo, getCurrentEnvironment, getCurrentAppId, getCurrentAppConfig } from './env-info';
 export type { EnvInfo } from './env-info';
+
+// 主应用登录 URL 工具
+export { getMainAppLoginUrl } from './get-main-app-login-url';

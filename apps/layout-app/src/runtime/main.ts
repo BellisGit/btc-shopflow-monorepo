@@ -380,27 +380,7 @@ const initLayoutEnvironment = async (appInstance: VueApp) => {
     // 静默失败
   });
 
-  // 关键：启动全局用户检查轮询（使用新的全局实现）
-  // 在应用启动后异步启动，不阻塞应用初始化
-  if (typeof window !== 'undefined') {
-    // 延迟启动，确保 EPS 服务已加载
-    setTimeout(() => {
-      try {
-        import('@btc/shared-core').then((sharedCore: any) => {
-          // 检查是否已登录，如果已登录则启动轮询
-          if (sharedCore.startUserCheckPollingIfLoggedIn) {
-            sharedCore.startUserCheckPollingIfLoggedIn();
-          }
-        }).catch((error) => {
-          if (import.meta.env.DEV) {
-            console.warn('[layout-app] Failed to start user check polling:', error);
-          }
-        });
-      } catch (error) {
-        // 静默失败
-      }
-    }, 500); // 延迟 500ms，确保 EPS 服务已加载
-  }
+  // 注意：user-check 轮询由主应用（main-app）统一管理，layout-app 不需要启动
 
   // 注意：DevTools 现在直接在 App.vue 中使用，不再需要在这里挂载
   // 这样可以确保 DevTools 在路由切换时不会卸载

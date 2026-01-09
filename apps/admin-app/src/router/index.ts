@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import {
   createRouter,
   createWebHistory,
@@ -10,6 +11,7 @@ import { getCookie } from '@btc/shared-core/utils/cookie';
 import { createTitleGuard } from '@btc/shared-router';
 import { tSync } from '../i18n/getters';
 import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
+import { getAppIdFromPath, getMainAppLoginUrl } from '@btc/shared-core';
 
 /**
  * 动态导入 @btc/shared-core
@@ -19,40 +21,7 @@ async function importSharedCore() {
   return await import('@btc/shared-core');
 }
 
-/**
- * 获取登录页面URL
- * 用于子应用在独立运行时重定向到登录页面
- * 关键：只有主应用（bellis.com.cn）有登录页面，子应用没有登录页面
- * 所以子应用在生产环境子域名下必须重定向到主应用的登录页面
- */
-function getMainAppLoginUrl(redirectPath?: string): string {
-  if (typeof window === 'undefined') {
-    return '/login';
-  }
-
-  const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  const port = window.location.port;
-  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
-
-  // 生产环境或测试环境：如果是子域名（如 admin.bellis.com.cn 或 admin.test.bellis.com.cn），重定向到主应用的登录页面
-  // 关键：只有主应用有登录页面，子应用没有登录页面
-  const env = getEnvironment();
-  if ((env === 'production' || env === 'test') && getCurrentSubApp()) {
-    // 子域名环境，重定向到主应用的登录页面
-    const mainDomain = env === 'test' ? 'test.bellis.com.cn' : 'bellis.com.cn';
-    return `${protocol}//${mainDomain}/login${redirectQuery}`;
-  }
-
-  // 开发环境：主应用在 localhost:8080 (main-app)
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    const mainAppPort = '8080';
-    return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
-  }
-
-  // 其他环境：使用当前域名的登录页面（假设是主应用）
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
-}
+// 使用共享的 getMainAppLoginUrl 函数，不再需要本地实现
 
 /**
  * 规范化路径：在生产环境子域名下，移除应用前缀
@@ -142,7 +111,7 @@ export const createAdminRouter = (): Router => {
             
             // 更新语言（如果需要）
             if (typeof mainI18n.global.locale === 'object' && 'value' in mainI18n.global.locale) {
-              const stored = localStorage.getItem('locale');
+              const stored = storage.get<string>('locale');
               if (stored === 'zh-CN' || stored === 'en-US') {
                 mainI18n.global.locale.value = stored;
               }
@@ -204,7 +173,7 @@ export const createAdminRouter = (): Router => {
   }
 
   // 路由守卫：在生产环境子域名下规范化路径，并在独立运行时检查认证
-  router.beforeEach((to, from, next) => {
+  router.beforeEach(async (to, from, next) => {
     // 关键修复：在 qiankun 或 layout-app 环境下，如果当前路由是首页但 URL 不是首页，
     // 说明路由初始化时匹配到了默认路由，需要立即重定向到正确的路由
     const isQiankun = qiankunWindow.__POWERED_BY_QIANKUN__;
@@ -255,6 +224,55 @@ export const createAdminRouter = (): Router => {
         replace: true,
       });
       return;
+    }
+
+    // 关键：只在应用切换时调用 checkUser（同一应用内的路由切换不调用）
+    // 使用全局环境检测工具判断是否是应用切换
+    const isAppSwitch = (() => {
+      // 如果是首次加载（from.name 为 undefined 或 from.path === '/'），不算应用切换
+      if (!from.name || from.path === '/') {
+        return false;
+      }
+
+      // 在 qiankun 或 layout-app 环境下，通过全局环境检测工具判断是否是应用切换
+      if (isQiankun || isUsingLayoutApp) {
+        try {
+          // 使用 getAppIdFromPath 获取 from 和 to 对应的应用 ID
+          const fromAppId = getAppIdFromPath(from.path);
+          const toAppId = getAppIdFromPath(to.path);
+          // 如果应用 ID 不同，说明是应用切换
+          return fromAppId !== toAppId;
+        } catch (error) {
+          // 如果获取失败，静默失败，不调用 checkUser
+          if (import.meta.env.DEV) {
+            console.warn('[router] Failed to get app ID from path:', error);
+          }
+          return false;
+        }
+      }
+
+      // 默认情况下（独立运行模式），不算应用切换
+      return false;
+    })();
+
+    // 只在应用切换时调用 checkUser
+    if (isAppSwitch) {
+      try {
+        // 动态导入 checkUser 函数，避免循环依赖
+        const { checkUser } = await import('../utils/domain-cache');
+        // 异步调用 checkUser，但不阻塞路由跳转
+        // 如果检查失败，会在后续的认证检查中处理
+        checkUser().catch((error) => {
+          if (import.meta.env.DEV) {
+            console.warn('[router] User check failed:', error);
+          }
+        });
+      } catch (error) {
+        // 静默失败，不影响路由跳转
+        if (import.meta.env.DEV) {
+          console.warn('[router] Failed to import checkUser:', error);
+        }
+      }
     }
 
     // 清除之前的延迟定时器
@@ -318,7 +336,7 @@ export const createAdminRouter = (): Router => {
       if (to.path === '/login' || to.path.startsWith('/login?')) {
         if (isAuth && !to.query.logout && !to.query.from) {
           // 已认证且不是退出登录，重定向到目标页面
-          const redirect = (to.query.redirect as string) || '/admin';
+          const redirect = (to.query.oauth_callback as string) || '/admin';
           // 只取路径部分，忽略查询参数，避免循环重定向
           const redirectPath = redirect.split('?')[0] || '/admin';
           // 确保路径包含 /admin 前缀

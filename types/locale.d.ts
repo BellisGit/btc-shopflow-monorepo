@@ -39,14 +39,29 @@ export type PageLevelConfig = Record<
 export type CommonLevelConfig = Record<ValidKey, string | CommonLevelConfig>;
 
 /**
+ * 子应用配置类型（扁平结构，只包含 name）
+ * 例如：{ name: "管理应用" }
+ */
+export type SubAppLevelConfig = {
+  name: string;
+};
+
+/**
  * 国际化配置类型（单语言）
  */
 export interface LocaleConfigSingle {
   app?: AppLevelConfig;
+  subapp?: SubAppLevelConfig;
   menu?: MenuLevelConfig;
   page?: PageLevelConfig;
   common?: CommonLevelConfig;
 }
+
+/**
+ * 应用级国际化配置类型（单语言）
+ * 应用级配置不包含 page 属性，page 配置应该在模块级 config.ts 中
+ */
+export type AppLevelLocaleConfigSingle = Omit<LocaleConfigSingle, 'page'>;
 
 /**
  * 页面级 config.ts 的国际化配置导出类型
@@ -76,6 +91,15 @@ export interface AppLocaleConfig {
 export interface LocaleConfig {
   'zh-CN': LocaleConfigSingle;
   'en-US': LocaleConfigSingle;
+}
+
+/**
+ * 应用级多语言配置类型（包含 zh-CN 和 en-US）
+ * 应用级配置不包含 page 属性，page 配置应该在模块级 config.ts 中
+ */
+export interface AppLevelLocaleConfig {
+  'zh-CN': AppLevelLocaleConfigSingle;
+  'en-US': AppLevelLocaleConfigSingle;
 }
 
 /**

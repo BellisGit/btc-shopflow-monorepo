@@ -57,7 +57,15 @@ export function getDictData(
   if (!dictCache[resource]) {
     return [];
   }
-  return dictCache[resource][fieldName] || [];
+  const data = dictCache[resource][fieldName] || [];
+  return data;
+}
+
+/**
+ * 检查字典缓存是否为空
+ */
+export function isDictCacheEmpty(): boolean {
+  return Object.keys(dictCache).length === 0;
 }
 
 /**

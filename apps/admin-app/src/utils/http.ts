@@ -143,6 +143,27 @@ export class Http {
             // 静默失败
           }
 
+          // 关键：登录成功后，加载域列表数据并存储
+          try {
+            // 等待 EPS 服务就绪后再调用
+            setTimeout(async () => {
+              try {
+                const { service } = await import('@services/eps');
+                const { loadDomainListOnLogin } = await import('../utils/domain-cache');
+                if (service && loadDomainListOnLogin) {
+                  await loadDomainListOnLogin(service);
+                }
+              } catch (error) {
+                // 静默失败，不影响登录流程
+                if (import.meta.env.DEV) {
+                  console.warn('[http] Failed to load domain list after login:', error);
+                }
+              }
+            }, 500); // 延迟 500ms 确保 EPS 服务已初始化
+          } catch (error) {
+            // 静默失败
+          }
+
           // 关键：登录成功后，广播登录消息到所有标签页
           try {
             import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {

@@ -10,8 +10,15 @@ import docsManifestJson from "./manifests/docs.json" with { type: "json" };
 import dashboardManifestJson from "./manifests/dashboard.json" with { type: "json" };
 import personnelManifestJson from "./manifests/personnel.json" with { type: "json" };
 import mainManifestJson from "./manifests/main.json" with { type: "json" };
+import overviewI18nJson from "./manifests/overview.json" with { type: "json" };
 import { getCurrentEnvironment, getCurrentSubApp } from '../configs/unified-env-config';
+import { SubAppManifestSchema, validateConfig } from '../configs/schemas';
 
+/**
+ * 子应用清单路由
+ * 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+ * @see packages/shared-core/src/configs/schemas.ts
+ */
 export interface SubAppManifestRoute {
   path: string;
   labelKey?: string;
@@ -20,6 +27,11 @@ export interface SubAppManifestRoute {
   breadcrumbs?: Array<{ labelKey?: string; label?: string; icon?: string }>;
 }
 
+/**
+ * 菜单配置项
+ * 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+ * @see packages/shared-core/src/configs/schemas.ts
+ */
 export interface MenuConfigItem {
   id: string;
   title?: string;
@@ -35,12 +47,22 @@ export interface MenuConfigItem {
   path?: string; // 菜单项对应的路径
 }
 
+/**
+ * 菜单配置
+ * 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+ * @see packages/shared-core/src/configs/schemas.ts
+ */
 export interface MenuConfig {
   global?: MenuConfigItem[]; // 主应用自有概览级菜单
   mountPoints?: MenuConfigItem[]; // 子应用菜单挂载点
   module?: MenuConfigItem[]; // 子应用业务菜单（用于挂载）
 }
 
+/**
+ * 子应用清单
+ * 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+ * @see packages/shared-core/src/configs/schemas.ts
+ */
 export interface SubAppManifest<M = unknown> {
   app: { id: string; basePath?: string; nameKey?: string; 'app-name'?: string };
   routes: SubAppManifestRoute[];
@@ -52,6 +74,31 @@ export interface SubAppManifest<M = unknown> {
 const manifestRegistry: Record<string, SubAppManifest> = {};
 
 export function registerManifest(app: string, manifest: SubAppManifest) {
+  // 开发和生产环境：验证 manifest 结构
+  try {
+    validateConfig(SubAppManifestSchema, manifest, `应用 ${app} 的清单配置`);
+  } catch (error) {
+    // 开发环境：抛出错误（帮助发现配置问题）
+    if (import.meta.env.DEV) {
+      throw error;
+    }
+    // 生产环境：记录警告并上报，但继续注册
+    console.warn(`[registerManifest] 应用 ${app} 的清单配置验证失败:`, error);
+    // 上报验证失败（异步，不阻塞）
+    if (error instanceof Error && 'errors' in error) {
+      import('../utils/zod/reporting').then(({ reportValidationError }) => {
+        reportValidationError(
+          'config',
+          `应用 ${app} 的清单配置`,
+          error as any,
+          { configPath: `manifest:${app}` }
+        );
+      }).catch(() => {
+        // 如果导入失败，静默跳过
+      });
+    }
+  }
+  
   manifestRegistry[app] = manifest;
 }
 
@@ -148,6 +195,29 @@ export function getManifestMenus(app: string): Array<{ index: string; labelKey?:
 
 export function getAllManifests() {
   return { ...manifestRegistry };
+}
+
+/**
+ * 获取概览页面的国际化配置
+ * 从构建时生成的 overview.json 文件中读取所有应用的菜单国际化配置
+ * 这个文件在构建 shared-core 时自动生成，包含所有有菜单的应用的模块级 config.ts 中的菜单国际化配置
+ */
+export function getOverviewI18n(): {
+  'zh-CN': Record<string, string>;
+  'en-US': Record<string, string>;
+} | null {
+  if (overviewI18nJson?.i18n) {
+    // 检查是否是占位符（首次构建时可能是空对象）
+    const zhCNKeys = Object.keys(overviewI18nJson.i18n['zh-CN'] || {});
+    const enUSKeys = Object.keys(overviewI18nJson.i18n['en-US'] || {});
+    
+    // 如果有实际的菜单 key，返回数据
+    if (zhCNKeys.length > 0 || enUSKeys.length > 0) {
+      return overviewI18nJson.i18n;
+    }
+  }
+  
+  return null;
 }
 
 registerManifest("admin", {

@@ -2,6 +2,8 @@
  * 个人信息页面业务逻辑
  */
 
+import { storage } from '@btc/shared-utils';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { ref } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
 import { appStorage } from '@/utils/app-storage';
@@ -21,7 +23,92 @@ export function useProfile() {
    * @param showFull 是否显示完整信息（true=明文，false=脱敏）
    */
   const loadUserInfo = async (showFull = false) => {
-    // 优先从统一存储读取缓存
+    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+    const user = appStorage.user.get();
+    if (!user) {
+      BtcMessage.warning('请先登录');
+      return;
+    }
+
+    // 优先从持久化存储读取缓存（避免每次刷新都调用接口）
+    // 关键：只有在需要显示完整信息（showFull=true）时才调用接口
+    // 如果缓存为空且不需要完整信息，不调用接口（等待登录时加载）
+    if (!showFull) {
+      try {
+        const { getProfileInfoFromCache } = await import('@btc/shared-core/utils/profile-info-cache');
+        const cachedProfileInfo = getProfileInfoFromCache();
+        
+        if (cachedProfileInfo && Object.keys(cachedProfileInfo).length > 0) {
+          // 使用缓存的数据
+          if (import.meta.env.DEV) {
+            console.log('[useProfile] 使用缓存数据，不调用接口');
+          }
+          userInfo.value = cachedProfileInfo;
+          
+          // 更新统一存储（头像和用户名）
+          if (cachedProfileInfo.avatar) {
+            appStorage.user.setAvatar(cachedProfileInfo.avatar);
+          }
+          if (cachedProfileInfo.name) {
+            appStorage.user.setName(cachedProfileInfo.name);
+          }
+          
+          // 触发同步事件，通知顶栏更新
+          window.dispatchEvent(new CustomEvent('userInfoUpdated', {
+            detail: {
+              avatar: cachedProfileInfo.avatar,
+              name: cachedProfileInfo.name
+            }
+          }));
+          
+          return; // 有缓存数据，直接返回，不调用接口
+        } else {
+          // 缓存为空，但不调用接口（等待登录时加载）
+          // 从统一存储读取基本数据（向后兼容）
+          const cachedAvatar = appStorage.user.getAvatar();
+          const cachedName = appStorage.user.getName();
+          if (cachedAvatar || cachedName) {
+            userInfo.value = {
+              ...userInfo.value,
+              ...(cachedAvatar && { avatar: cachedAvatar }),
+              ...(cachedName && { name: cachedName }),
+            };
+          }
+          
+          if (import.meta.env.DEV) {
+            console.log('[useProfile] 缓存为空，但不调用接口（等待登录时加载）');
+          }
+          
+          // 关键：缓存为空时不调用接口，直接返回
+          // 数据会在登录时通过 loadProfileInfoOnLogin 加载
+          return;
+        }
+      } catch (error) {
+        // 如果读取缓存失败，也不调用接口（避免刷新时调用）
+        if (import.meta.env.DEV) {
+          console.warn('[useProfile] Failed to read cache:', error);
+        }
+        // 从统一存储读取基本数据（向后兼容）
+        const cachedAvatar = appStorage.user.getAvatar();
+        const cachedName = appStorage.user.getName();
+        if (cachedAvatar || cachedName) {
+          userInfo.value = {
+            ...userInfo.value,
+            ...(cachedAvatar && { avatar: cachedAvatar }),
+            ...(cachedName && { name: cachedName }),
+          };
+        }
+        return;
+      }
+    } else {
+      // 需要显示完整信息，调用接口
+      if (import.meta.env.DEV) {
+        console.log('[useProfile] 需要显示完整信息，将调用接口');
+      }
+    }
+
+    // 只有在需要显示完整信息时才继续执行到这里
+    // 从统一存储读取缓存（向后兼容）
     const cachedAvatar = appStorage.user.getAvatar();
     const cachedName = appStorage.user.getName();
     if (cachedAvatar || cachedName) {
@@ -30,13 +117,6 @@ export function useProfile() {
         ...(cachedAvatar && { avatar: cachedAvatar }),
         ...(cachedName && { name: cachedName }),
       };
-    }
-
-    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
-    const user = appStorage.user.get();
-    if (!user) {
-      BtcMessage.warning('请先登录');
-      return;
     }
 
     loading.value = true;
@@ -100,6 +180,12 @@ export function useProfile() {
         return;
       }
 
+      // 添加调用栈追踪，帮助定位问题
+      if (import.meta.env.DEV) {
+        console.log('[useProfile] 准备调用接口 /api/system/base/profile/info, showFull:', showFull);
+        console.log('[useProfile] 调用栈:', new Error().stack);
+      }
+
       const data = await currentService.admin.base.profile.info(showFull ? { showFull: true } : undefined);
       userInfo.value = data || {};
 
@@ -109,6 +195,21 @@ export function useProfile() {
       }
       if (data?.name) {
         appStorage.user.setName(data.name);
+      }
+
+      // 保存到持久化存储（用于刷新时读取）
+      // 注意：这里直接保存到存储，与 loadProfileInfoOnLogin 的逻辑保持一致
+      if (data) {
+        try {
+          const PROFILE_INFO_STORAGE_KEY = 'btc_profile_info_data';
+          sessionStorage.set(PROFILE_INFO_STORAGE_KEY, data);
+          storage.set(PROFILE_INFO_STORAGE_KEY, data);
+        } catch (error) {
+          // 静默失败，不影响功能
+          if (import.meta.env.DEV) {
+            console.warn('[useProfile] Failed to save to cache:', error);
+          }
+        }
       }
 
       // 触发同步事件，通知顶栏更新

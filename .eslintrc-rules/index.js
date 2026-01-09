@@ -4,9 +4,11 @@
  */
 
 const i18nKeyFormat = require('./i18n-key-format');
+const noDirectStorage = require('./no-direct-storage');
 
 module.exports = {
   rules: {
     'i18n-key-format': i18nKeyFormat,
+    'no-direct-storage': noDirectStorage,
   },
 };

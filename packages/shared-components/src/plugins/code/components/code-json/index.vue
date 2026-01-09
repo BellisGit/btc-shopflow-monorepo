@@ -28,7 +28,7 @@
 </div>
 </template>
 
-<script lang="tsx" setup>
+<script lang="ts" setup>
 defineOptions({
 	name: 'BtcCodeJson'
 });

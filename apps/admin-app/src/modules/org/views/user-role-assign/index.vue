@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="user-role-assign-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -6,9 +6,9 @@
       :right-service="wrappedUserRoleService"
       :table-columns="roleColumns"
       :form-items="[]"
-      left-title="业务域"
-      right-title="角色绑定列表"
-      search-placeholder="搜索用户或角色..."
+      :left-title="t('org.user_role_assign.left_title')"
+      :right-title="t('org.user_role_assign.right_title')"
+      :search-placeholder="t('org.user_role_assign.search_placeholder')"
       :show-unassigned="true"
       unassigned-label="未分配"
       :enable-key-search="true"
@@ -108,7 +108,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n, getPageConfigFull } from '@btc/shared-core';
-import { BtcMessage, BtcTransferPanel, BtcMultiUnbindBtn, BtcConfirm, BtcTableGroup, BtcSvg } from '@btc/shared-components';
+// @ts-ignore - BtcMultiUnbindBtn 已从 @btc/shared-components 导出，但类型定义可能未更新
+import { BtcMessage, BtcTransferPanel, BtcConfirm, BtcTableGroup, BtcSvg, BtcMultiUnbindBtn } from '@btc/shared-components';
 import type { TableColumn, TransferPanelColumn, TransferKey } from '@btc/shared-components';
 import { service } from '@services/eps';
 
@@ -122,6 +123,7 @@ const selectedDomain = ref<any>(null);
 const selectedUserId = ref<(string | number)[]>([]); // multiple 模式下使用数组
 const selectedRoleKeys = ref<TransferKey[]>([]);
 const userOptions = ref<any[]>([]);
+const selectedUsers = ref<any[]>([]); // 保存选中的用户对象，用于获取 userCode
 const userSearchLoading = ref(false);
 
 // 监听域选择变化，如果已选择用户则重新加载角色列表
@@ -143,64 +145,95 @@ const domainService = {
 // 使用 EPS userRole 服务
 const userRoleService = service.admin?.iam?.userRole;
 
-// 包装 userRoleService，处理 domainId 参数
+// 包装 userRoleService，处理 domainCode 参数
 const wrappedUserRoleService = {
   ...userRoleService,
   page: async (params: any) => {
     // BtcTableGroup 会将左侧选中的域 ID 作为 keyword 传递，格式为 { ids: [...] }
-    // 需要将 domainId 放在 keyword 对象中
+    // 需要从 selectedDomain 中获取 domainCode，放在 keyword 对象中
     const finalParams = { ...params };
 
     // 处理 keyword 参数
     if (finalParams.keyword !== undefined && finalParams.keyword !== null) {
       const keyword = finalParams.keyword;
 
+      // 确保 keyword 是一个对象
+      if (typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
+        finalParams.keyword = {};
+      }
+
+      // 从 selectedDomain 中获取 domainCode（优先使用 code 或 domainCode 字段）
+      let domainCode = '';
+      if (selectedDomain.value) {
+        domainCode =selectedDomain.value.domainCode || '';
+      }
+
       // 如果 keyword 是对象且包含 ids 字段（BtcTableGroup 的标准格式）
+      // 或者从 selectedDomain 中获取到了 domainCode
       if (typeof keyword === 'object' && !Array.isArray(keyword) && keyword.ids) {
-        const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
-        // 取第一个 ID 作为 domainId，放在 keyword 对象中
-        if (ids.length > 0 && ids[0] !== undefined && ids[0] !== null && ids[0] !== '') {
-          // 确保 keyword 是一个对象
-          if (typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
-            finalParams.keyword = {};
-          }
-          // 将 domainId 放在 keyword 对象中
-          finalParams.keyword.domainId = ids[0];
-          // 确保 keyword 中有 username 和 roleId 字段
-          if (finalParams.keyword.username === undefined) {
-            finalParams.keyword.username = '';
-          }
-          if (finalParams.keyword.roleId === undefined) {
-            finalParams.keyword.roleId = '';
+        // 如果从 selectedDomain 中获取到了 domainCode，使用它
+        // 否则尝试从 ids 中获取（向后兼容）
+        if (domainCode) {
+          finalParams.keyword.domainCode = domainCode;
+        } else {
+          const ids = Array.isArray(keyword.ids) ? keyword.ids : [keyword.ids];
+          // 如果 ids 是 code 格式（字符串且不是纯数字），直接使用
+          if (ids.length > 0 && ids[0] !== undefined && ids[0] !== null && ids[0] !== '') {
+            const firstId = ids[0];
+            // 判断是否是 code 格式（字符串且不是纯数字）
+            if (typeof firstId === 'string' && isNaN(Number(firstId))) {
+              finalParams.keyword.domainCode = firstId;
+            } else {
+              // 如果是数字 ID，需要从左侧列表中查找对应的 code
+              // 这里暂时使用 id，但建议后端返回的数据中包含 code 字段
+              finalParams.keyword.domainCode = String(firstId);
+            }
           }
         }
-        // 删除 ids 字段，因为已经转换为 domainId
+        // 删除 ids 字段，因为已经转换为 domainCode
         delete finalParams.keyword.ids;
-      } else if (typeof keyword === 'number' || (typeof keyword === 'string' && !isNaN(Number(keyword)) && keyword !== '')) {
-        // 如果 keyword 直接是数字或可转换为数字的字符串
-        finalParams.keyword = {
-          username: '',
-          roleId: '',
-          domainId: typeof keyword === 'number' ? keyword : keyword,
-        };
-      } else if (typeof keyword === 'object' && !Array.isArray(keyword)) {
-        // 如果 keyword 已经是对象，确保有 domainId、username 和 roleId 字段
-        if (finalParams.keyword.domainId === undefined) {
-          finalParams.keyword.domainId = '';
-        }
-        if (finalParams.keyword.username === undefined) {
-          finalParams.keyword.username = '';
-        }
-        if (finalParams.keyword.roleId === undefined) {
-          finalParams.keyword.roleId = '';
+      } else if (domainCode) {
+        // 如果从 selectedDomain 中获取到了 domainCode，直接使用
+        finalParams.keyword.domainCode = domainCode;
+      } else if (typeof keyword === 'string' && keyword !== '') {
+        // 如果 keyword 直接是字符串，判断是否是 code 格式
+        if (isNaN(Number(keyword))) {
+          // 是 code 格式
+          finalParams.keyword = {
+            userCode: '',
+            domainCode: keyword,
+            roleName: '',
+          };
+        } else {
+          // 是数字 ID，需要转换为 code（这里暂时使用 id，但建议后端返回的数据中包含 code 字段）
+          finalParams.keyword = {
+            userCode: '',
+            domainCode: keyword,
+            roleName: '',
+          };
         }
       }
+
+      // 确保 keyword 中有 userCode、domainCode 和 roleName 字段（根据 pageQueryOp 配置）
+      if (finalParams.keyword.userCode === undefined) {
+        finalParams.keyword.userCode = '';
+      }
+      if (finalParams.keyword.domainCode === undefined) {
+        finalParams.keyword.domainCode = '';
+      }
+      if (finalParams.keyword.roleName === undefined) {
+        finalParams.keyword.roleName = '';
+      }
     } else {
-      // 如果 keyword 不存在，初始化一个包含 domainId 的对象
+      // 如果 keyword 不存在，初始化一个包含 domainCode 的对象
+      const domainCode = selectedDomain.value?.code ||
+                         selectedDomain.value?.domainCode ||
+                         selectedDomain.value?.id ||
+                         '';
       finalParams.keyword = {
-        username: '',
-        roleId: '',
-        domainId: '',
+        userCode: '',
+        domainCode: domainCode,
+        roleName: '',
       };
     }
 
@@ -268,13 +301,23 @@ const handleRoleBeforeRefresh = (params: Record<string, unknown>) => {
       }
     }
   }
-  // 添加用户ID和域ID参数
+  // 添加用户Code和域Code参数
   if (selectedUserId.value.length > 0) {
     if (!params.keyword || typeof params.keyword !== 'object' || Array.isArray(params.keyword)) {
       params.keyword = {};
     }
-    (params.keyword as Record<string, unknown>).userId = selectedUserId.value[0];
-    (params.keyword as Record<string, unknown>).domainId = selectedDomain.value?.id || '';
+    // 从 userOptions 中获取 userCode
+    const userId = selectedUserId.value[0];
+    const user = userOptions.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+    const userCode = user?.userCode || user?.code || '';
+    (params.keyword as Record<string, unknown>).userCode = userCode;
+
+    // 从 selectedDomain 中获取 domainCode
+    const domainCode = selectedDomain.value?.code ||
+                       selectedDomain.value?.domainCode ||
+                       selectedDomain.value?.id ||
+                       '';
+    (params.keyword as Record<string, unknown>).domainCode = domainCode;
   }
   return params;
 };
@@ -302,25 +345,32 @@ const roleTransferService = computed(() => ({
     const finalParams = { ...params };
 
     // 确保 keyword 格式正确
+    // 从 userOptions 中获取 userCode
+    const userId = selectedUserId.value[0];
+    const user = userOptions.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+    const userCode = user?.userCode || user?.code || '';
+
+    // 从 selectedDomain 中获取 domainCode
+    const domainCode = selectedDomain.value?.code ||
+                       selectedDomain.value?.domainCode ||
+                       selectedDomain.value?.id ||
+                       '';
+
     if (!finalParams.keyword || typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
       finalParams.keyword = {
-        username: '',
-        roleId: '',
-        domainId: selectedDomain.value?.id || '',
-        userId: selectedUserId.value[0],
+        userCode: userCode,
+        domainCode: domainCode,
+        roleName: '',
       };
     } else {
-      if (finalParams.keyword.userId === undefined) {
-        finalParams.keyword.userId = selectedUserId.value[0];
+      if (finalParams.keyword.userCode === undefined) {
+        finalParams.keyword.userCode = userCode;
       }
-      if (finalParams.keyword.domainId === undefined) {
-        finalParams.keyword.domainId = selectedDomain.value?.id || '';
+      if (finalParams.keyword.domainCode === undefined) {
+        finalParams.keyword.domainCode = domainCode;
       }
-      if (finalParams.keyword.username === undefined) {
-        finalParams.keyword.username = '';
-      }
-      if (finalParams.keyword.roleId === undefined) {
-        finalParams.keyword.roleId = '';
+      if (finalParams.keyword.roleName === undefined) {
+        finalParams.keyword.roleName = '';
       }
     }
 
@@ -373,6 +423,23 @@ const handleUserChange = (value: (string | number)[]) => {
     selectedUserId.value = value;
   }
 
+  // 保存选中的用户对象，用于后续获取 userCode
+  if (selectedUserId.value.length > 0) {
+    const userId = selectedUserId.value[0];
+    const user = userOptions.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+    if (user) {
+      selectedUsers.value = [user];
+    } else {
+      // 如果 userOptions 中没有，尝试从已保存的 selectedUsers 中查找
+      const existingUser = selectedUsers.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+      if (!existingUser) {
+        selectedUsers.value = [];
+      }
+    }
+  } else {
+    selectedUsers.value = [];
+  }
+
   // 选择后清空输入内容
   if (selectedUserId.value.length > 0) {
     nextTick(() => {
@@ -392,7 +459,7 @@ const handleUserChange = (value: (string | number)[]) => {
           }
         }
       }
-      // 清空搜索关键字和选项
+      // 清空搜索关键字和选项（但保留已选中的用户对象）
       userOptions.value = [];
     });
   }
@@ -412,6 +479,7 @@ const handleUserChange = (value: (string | number)[]) => {
 // 处理移除用户
 const handleRemoveUser = () => {
   selectedUserId.value = [];
+  selectedUsers.value = [];
   selectedRoleKeys.value = [];
   userOptions.value = [];
 
@@ -438,6 +506,7 @@ const handleSelectVisibleChange = (visible: boolean) => {
 function openDrawer() {
   // 清空之前的选择
   selectedUserId.value = [];
+  selectedUsers.value = [];
   selectedRoleKeys.value = [];
   userOptions.value = [];
   drawerVisible.value = true;
@@ -448,6 +517,7 @@ function closeDrawer() {
   // 延迟重置状态，确保抽屉关闭动画完成
   setTimeout(() => {
     selectedUserId.value = [];
+    selectedUsers.value = [];
     selectedRoleKeys.value = [];
     userOptions.value = [];
   }, 300);
@@ -469,13 +539,61 @@ async function handleSubmit() {
   const currentDomain = selectedDomain.value;
   const currentDomainId = currentDomain?.id;
 
+  // 将 userId 转换为 userCode
+  const userCodes: string[] = [];
+  for (const userId of selectedUserId.value) {
+    // 优先从 selectedUsers 中获取（保存的完整用户对象）
+    let user = selectedUsers.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+    // 如果 selectedUsers 中没有，尝试从 userOptions 中获取
+    if (!user) {
+      user = userOptions.value.find((u: any) => u.id === userId || String(u.id) === String(userId));
+    }
+    if (user) {
+      const userCode = user.userCode || user.code;
+      if (userCode) {
+        userCodes.push(userCode);
+      } else {
+        console.warn(`[UserRoleAssign] 用户没有 userCode 字段:`, user);
+        const identifier = user.username || user.realName || String(userId);
+        BtcMessage.error(t('org.user_role_assign.messages.userCodeNotFound', { identifier }));
+        return;
+      }
+    } else {
+      console.warn(`[UserRoleAssign] 找不到用户:`, userId);
+      BtcMessage.error(t('org.user_role_assign.messages.userNotFound', { identifier: String(userId) }));
+      return;
+    }
+  }
+
+  // 将 roleId 转换为 roleCode
+  const roleCodes: string[] = [];
+  const selectedRoleItems = roleTransferRef.value?.selectedItems || [];
+  for (const roleId of selectedRoleKeys.value) {
+    const role = selectedRoleItems.find((r: any) => r.id === roleId || String(r.id) === String(roleId));
+    if (role) {
+      const roleCode = role.roleCode || role.code;
+      if (roleCode) {
+        roleCodes.push(roleCode);
+      } else {
+        console.warn(`[UserRoleAssign] 角色没有 roleCode 字段:`, role);
+        const identifier = role.roleName || String(roleId);
+        BtcMessage.error(t('org.user_role_assign.messages.roleCodeNotFound', { identifier }));
+        return;
+      }
+    } else {
+      console.warn(`[UserRoleAssign] 找不到角色:`, roleId);
+      BtcMessage.error(t('org.user_role_assign.messages.roleNotFound', { identifier: String(roleId) }));
+      return;
+    }
+  }
+
   submitting.value = true;
   try {
     // 批量绑定模式：使用 batchBind
-    // 后端要求 roleId 和 userId 都为数组格式
+    // 后端要求 userCode 和 roleCode 都为数组格式
     await userRoleService?.batchBind?.({
-      userId: selectedUserId.value,
-      roleId: selectedRoleKeys.value,
+      userCode: userCodes,
+      roleCode: roleCodes,
     });
 
     BtcMessage.success(t('org.user_role_assign.messages.bindSuccess'));
@@ -535,9 +653,18 @@ async function handleUnbind(row: any) {
       { type: 'warning' }
     );
 
+    // 使用 userCode 和 roleCode，而不是 userId 和 roleId
+    const userCode = row.userCode || row.code;
+    const roleCode = row.roleCode || row.role_code;
+
+    if (!userCode || !roleCode) {
+      BtcMessage.error(t('org.user_role_assign.messages.codeNotFound'));
+      return;
+    }
+
     await userRoleService?.unbind?.({
-      userId: row.userId,
-      roleId: row.roleId,
+      userCode: userCode,
+      roleCode: roleCode,
     });
 
     BtcMessage.success(t('org.user_role_assign.messages.unbindSuccess'));
@@ -597,10 +724,26 @@ async function handleMultiUnbind(rows: any[]) {
       { type: 'warning' }
     );
 
-    const unbindList = rows.map((row) => ({
-      userId: row.userId,
-      roleId: row.roleId,
-    }));
+    // 使用 userCode 和 roleCode，而不是 userId 和 roleId
+    const unbindList = rows.map((row) => {
+      const userCode = row.userCode || row.code;
+      const roleCode = row.roleCode || row.role_code;
+
+      if (!userCode || !roleCode) {
+        console.warn('[UserRoleAssign] 行数据缺少 userCode 或 roleCode:', row);
+        return null;
+      }
+
+      return {
+        userCode: userCode,
+        roleCode: roleCode,
+      };
+    }).filter((item) => item !== null);
+
+    if (unbindList.length === 0) {
+      BtcMessage.error(t('org.user_role_assign.messages.codeNotFound'));
+      return;
+    }
 
     await userRoleService?.batchUnbind?.(unbindList);
 

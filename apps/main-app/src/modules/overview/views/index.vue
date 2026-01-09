@@ -104,7 +104,7 @@ defineOptions({
   name: 'OverviewPage',
 });
 
-import { computed, ref, onBeforeMount } from 'vue';
+import { computed, ref, onBeforeMount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import {
@@ -122,7 +122,7 @@ import {
   type MenuItem,
 } from '../utils/appData';
 import { tSync } from '@/i18n/getters';
-import { getAppIdFromPath, getAppById } from '@btc/shared-core';
+import { getAppIdFromPath, getAppById, getOverviewI18n } from '@btc/shared-core';
 // 不再使用菜单聚合服务，恢复原有的应用卡片样式
 // import { useMenuAggregation, type OverviewMenuCategory, type OverviewMenuModule, type OverviewMenuItem } from '../composables/useMenuAggregation';
 
@@ -133,17 +133,34 @@ const recentAccessStore = useRecentAccessStore();
 
 const viewMode = ref<'card' | 'list'>('card');
 const currentPath = computed(() => route?.path || '');
+const i18nLoaded = ref(false);
+const overviewI18n = ref<{ 'zh-CN': Record<string, string>; 'en-US': Record<string, string> } | null>(null);
 
-// 预加载所有子应用的国际化数据（用于概览页面显示所有应用信息）
+// 从 overview.json 加载菜单国际化配置（构建时生成，包含所有应用的菜单配置）
 onBeforeMount(async () => {
   try {
-    const { preloadAllSubAppsI18n } = await import('@/i18n/subapp-i18n-manager');
-    const { i18n } = await import('@/i18n');
-    await preloadAllSubAppsI18n(i18n);
+    // 从 overview.json 获取国际化配置（同步函数）
+    const i18nData = getOverviewI18n();
+    
+    if (i18nData) {
+      overviewI18n.value = i18nData;
+      
+      // 合并到主应用的 i18n 实例
+      const { i18n } = await import('@/i18n');
+      const currentLocale = i18n.global.locale.value || 'zh-CN';
+      const currentMessages = i18n.global.getLocaleMessage(currentLocale);
+      
+      // 合并 overview.json 中的国际化配置
+      const mergedMessages = { ...currentMessages, ...i18nData[currentLocale] };
+      i18n.global.setLocaleMessage(currentLocale, mergedMessages);
+    }
+    
+    i18nLoaded.value = true;
   } catch (error) {
-    console.warn('[Overview] Failed to preload all sub-apps i18n:', error);
+    i18nLoaded.value = true;
   }
 });
+
 
 // 保留原有的 appDataList 用于列表视图和兼容性
 const appDataList = computed(() => {
@@ -178,20 +195,104 @@ function filteredMenus(menus: MenuItem[]): MenuItem[] {
   return menus.filter(menu => menu.children && menu.children.length > 0);
 }
 
-// 响应式获取菜单标签（使用响应式的 t() 函数，确保国际化数据加载后能自动更新）
+// 响应式获取菜单标签（优先从 overview.json 获取，然后从主应用 i18n 获取）
 function getMenuLabelReactive(menu: MenuItem): string {
   if (menu.labelKey) {
-    // 使用响应式的 t() 函数，确保国际化数据加载后能自动更新
+    // 优先级0：从 overview.json 获取（构建时生成，最可靠）
+    if (overviewI18n.value) {
+      const mainI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+      const currentLocale = mainI18n?.global?.locale?.value || 'zh-CN';
+      const localeMessages = overviewI18n.value[currentLocale];
+      
+      // 使用 hasOwnProperty 或直接访问，确保能正确查找
+      if (localeMessages && (menu.labelKey in localeMessages || localeMessages[menu.labelKey])) {
+        const value = localeMessages[menu.labelKey];
+        if (typeof value === 'string' && value.trim() !== '') {
+          return value;
+        }
+      }
+    }
+    
+    // 优先级1：优先使用主应用的 i18n 实例（包含已合并的子应用数据）
+    const mainI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+    if (mainI18n && mainI18n.global) {
+      const currentLocale = mainI18n.global.locale.value || 'zh-CN';
+      const messages = mainI18n.global.getLocaleMessage(currentLocale);
+      
+      // 直接访问扁平化的 key（支持扁平化消息结构）
+      if (menu.labelKey in messages) {
+        const value = messages[menu.labelKey];
+        if (typeof value === 'string' && value.trim() !== '') {
+          return value;
+        } else if (typeof value === 'function') {
+          try {
+            const result = value({ normalize: (arr: any[]) => arr[0] });
+            if (typeof result === 'string' && result.trim() !== '') {
+              return result;
+            }
+          } catch (error) {
+            // 静默忽略错误
+          }
+        }
+      }
+      
+      // 按路径访问嵌套结构（处理嵌套消息结构和 _ 键）
+      const keys = menu.labelKey.split('.');
+      let value = messages;
+      for (const k of keys) {
+        if (value && typeof value === 'object' && k in value) {
+          value = value[k];
+        } else {
+          value = undefined;
+          break;
+        }
+      }
+      if (value !== undefined) {
+        // 如果值是对象且包含 _ 键，使用 _ 键的值（Vue I18n 的约定）
+        if (typeof value === 'object' && value !== null && !Array.isArray(value) && '_' in value) {
+          value = value._;
+        }
+        if (typeof value === 'string' && value.trim() !== '') {
+          return value;
+        } else if (typeof value === 'function') {
+          try {
+            const result = value({ normalize: (arr: any[]) => arr[0] });
+            if (typeof result === 'string' && result.trim() !== '') {
+              return result;
+            }
+          } catch (error) {
+            // 静默忽略错误
+          }
+        }
+      }
+      
+      // 使用 Vue I18n 的 t() 函数（作为后备）
+      if (mainI18n.global.te(menu.labelKey, currentLocale)) {
+        const translated = mainI18n.global.t(menu.labelKey, currentLocale);
+        if (translated && typeof translated === 'string' && translated !== menu.labelKey && translated.trim() !== '') {
+          return translated;
+        }
+      }
+    }
+    
+    // 优先级2：使用响应式的 t() 函数（组件级别的 i18n）
     const translated = t(menu.labelKey);
-    // 如果翻译成功（返回值不是 key），使用翻译结果
-    if (translated && translated !== menu.labelKey) {
+    if (translated && translated !== menu.labelKey && typeof translated === 'string' && translated.trim() !== '') {
       return translated;
     }
+    
+    // 优先级3：使用 tSync（同步翻译，更可靠）
+    const syncTranslated = tSync(menu.labelKey);
+    if (syncTranslated && syncTranslated !== menu.labelKey && typeof syncTranslated === 'string' && syncTranslated.trim() !== '') {
+      return syncTranslated;
+    }
   }
+  
   // 如果有 label，优先使用 label
   if (menu.label) {
     return menu.label;
   }
+  
   // 最后回退到 index，但如果是路径格式，提取最后一部分
   if (menu.index.startsWith('/')) {
     const parts = menu.index.split('/').filter(Boolean);
@@ -218,15 +319,84 @@ function getRecentAccessLabel(item: {
   
   // 1. 优先使用 labelKey 进行国际化翻译
   if (item.labelKey) {
-    // 先尝试使用响应式的 t() 函数
-    let translated = t(item.labelKey);
-    // 如果翻译失败（返回值是 key），尝试使用 tSync
-    if (translated === item.labelKey) {
-      translated = tSync(item.labelKey);
+    // 优先级1：优先使用主应用的 i18n 实例（包含已合并的子应用数据）
+    const mainI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+    if (mainI18n && mainI18n.global) {
+      const currentLocale = mainI18n.global.locale.value || 'zh-CN';
+      const messages = mainI18n.global.getLocaleMessage(currentLocale);
+      
+      // 直接访问扁平化的 key（支持扁平化消息结构）
+      if (item.labelKey in messages) {
+        const value = messages[item.labelKey];
+        if (typeof value === 'string' && value.trim() !== '') {
+          displayLabel = value;
+        } else if (typeof value === 'function') {
+          try {
+            const result = value({ normalize: (arr: any[]) => arr[0] });
+            if (typeof result === 'string' && result.trim() !== '') {
+              displayLabel = result;
+            }
+          } catch {
+            // 函数调用失败，继续使用其他方法
+          }
+        }
+      }
+      
+      // 如果直接访问失败，按路径访问嵌套结构
+      if (!displayLabel) {
+        const keys = item.labelKey.split('.');
+        let value = messages;
+        for (const k of keys) {
+          if (value && typeof value === 'object' && k in value) {
+            value = value[k];
+          } else {
+            value = undefined;
+            break;
+          }
+        }
+        if (value !== undefined) {
+          // 如果值是对象且包含 _ 键，使用 _ 键的值
+          if (typeof value === 'object' && value !== null && !Array.isArray(value) && '_' in value) {
+            value = value._;
+          }
+          if (typeof value === 'string' && value.trim() !== '') {
+            displayLabel = value;
+          } else if (typeof value === 'function') {
+            try {
+              const result = value({ normalize: (arr: any[]) => arr[0] });
+              if (typeof result === 'string' && result.trim() !== '') {
+                displayLabel = result;
+              }
+            } catch {
+              // 函数调用失败，继续使用其他方法
+            }
+          }
+        }
+      }
+      
+      // 使用 Vue I18n 的 t() 函数（作为后备）
+      if (!displayLabel && mainI18n.global.te(item.labelKey, currentLocale)) {
+        const translated = mainI18n.global.t(item.labelKey, currentLocale);
+        if (translated && typeof translated === 'string' && translated !== item.labelKey && translated.trim() !== '') {
+          displayLabel = translated;
+        }
+      }
     }
-    // 如果翻译成功（返回值不是 key），使用翻译结果
-    if (translated && translated !== item.labelKey) {
-      displayLabel = translated;
+    
+    // 优先级2：使用响应式的 t() 函数（组件级别的 i18n）
+    if (!displayLabel) {
+      const translated = t(item.labelKey);
+      if (translated && translated !== item.labelKey && typeof translated === 'string' && translated.trim() !== '') {
+        displayLabel = translated;
+      }
+    }
+    
+    // 优先级3：使用 tSync（同步翻译，更可靠）
+    if (!displayLabel) {
+      const syncTranslated = tSync(item.labelKey);
+      if (syncTranslated && syncTranslated !== item.labelKey && typeof syncTranslated === 'string' && syncTranslated.trim() !== '') {
+        displayLabel = syncTranslated;
+      }
     }
   }
   

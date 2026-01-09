@@ -43,7 +43,7 @@ export function getAllAppData(): AppDataItem[] {
       return;
     }
 
-    // 获取一级菜单（只取第一层，不递归处理子菜单）
+    // 获取一级菜单（包含子菜单）
     const menus = getManifestMenus(appId);
 
     // 如果没有菜单，跳过该应用
@@ -55,14 +55,26 @@ export function getAllAppData(): AppDataItem[] {
       // 如果 index 是路径格式（以 / 开头），则作为路径
       const path = menu.index.startsWith('/') ? menu.index : undefined;
 
+      // 递归处理子菜单，确保 labelKey 被正确传递
+      const processChildren = (children: any[]): MenuItem[] => {
+        return children.map((child: any) => ({
+          index: child.index,
+          ...(child.labelKey && { labelKey: child.labelKey }),
+          ...(child.label && { label: child.label }),
+          ...(child.icon && { icon: child.icon }),
+          ...(child.path && { path: child.path }),
+          ...(child.children && child.children.length > 0 && { children: processChildren(child.children) }),
+        }));
+      };
+
       return {
         index: menu.index,
         ...(menu.labelKey && { labelKey: menu.labelKey }),
         ...(menu.label && { label: menu.label }),
         ...(menu.icon && { icon: menu.icon }),
         ...(path && { path }),
-        // 一级菜单的 children 暂不处理，概览页面只显示一级菜单
-        ...(menu.children && menu.children.length > 0 && { children: menu.children }),
+        // 处理子菜单，确保 labelKey 被正确传递
+        ...(menu.children && menu.children.length > 0 && { children: processChildren(menu.children) }),
       };
     });
 

@@ -4,6 +4,7 @@
  * 使用 Vue 组件（AppLoading）挂载实现
  */
 
+import { storage } from '../../../utils';
 import { LOADING_Z_INDEX, LOADING_TIMEOUT } from '../loading.config';
 import { createApp, type App } from 'vue';
 
@@ -34,14 +35,13 @@ function getLoadingStyle(): LoadingStyle {
       return 'circle';
     }
     
-    // 直接读取 localStorage 中的 settings（因为这是同步函数）
-    // 注意：由于 appStorage.settings 可能存储在 Cookie 中，这里需要同时检查 localStorage 和 Cookie
+    // 直接读取 storage 中的 settings（因为这是同步函数）
+    // 注意：由于 appStorage.settings 可能存储在 Cookie 中，这里需要同时检查 storage 和 Cookie
     try {
-      // 尝试读取 localStorage 中的 settings
-      const settingsStr = localStorage.getItem('settings');
+      // 尝试读取 storage 中的 settings
+      const settings = storage.get<Record<string, any>>('settings');
       
-      if (settingsStr) {
-        const settings = JSON.parse(settingsStr);
+      if (settings) {
         
         if (settings.loadingStyle === 'dots') {
           return 'dots';

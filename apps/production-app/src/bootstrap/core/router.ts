@@ -3,6 +3,7 @@ import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
+import { getMainAppLoginUrl } from '@btc/shared-core';
 
 // 基础路由（页面组件）
 const pageRoutes = [

@@ -9,6 +9,7 @@ import {
 } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout as Layout } from '@btc/shared-components';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { createAuthGuard, createTitleGuard } from '@btc/shared-router';
 import { config } from '../config';
 import { tSync } from '../i18n/getters';
@@ -22,6 +23,7 @@ import { appStorage } from '../utils/app-storage';
 import { getTabsForNamespace } from '../store/tabRegistry';
 import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
+import { getMainAppLoginUrl } from '@btc/shared-core';
 
 /**
  * 动态导入 @btc/shared-core
@@ -31,40 +33,7 @@ async function importSharedCore() {
   return await import('@btc/shared-core');
 }
 
-/**
- * 获取登录页面URL
- * 用于子应用在独立运行时重定向到登录页面
- * 关键：只有主应用（bellis.com.cn/main-app）有登录页面，子应用没有登录页面
- * 所以子应用在生产环境子域名下必须重定向到主应用的登录页面
- */
-function getMainAppLoginUrl(redirectPath?: string): string {
-  if (typeof window === 'undefined') {
-    return '/login';
-  }
-
-  const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
-  const port = window.location.port;
-  const redirectQuery = redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : '';
-
-  // 生产环境或测试环境：如果是子域名（如 system.bellis.com.cn 或 system.test.bellis.com.cn），重定向到主应用的登录页面
-  // 关键：只有主应用有登录页面，子应用没有登录页面
-  const env = getEnvironment();
-  if ((env === 'production' || env === 'test') && getCurrentSubApp()) {
-    // 子域名环境，重定向到主应用的登录页面
-    const mainDomain = env === 'test' ? 'test.bellis.com.cn' : 'bellis.com.cn';
-    return `${protocol}//${mainDomain}/login${redirectQuery}`;
-  }
-
-  // 开发环境：主应用在 localhost:8080 (main-app)
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    const mainAppPort = '8080';
-    return `${protocol}//${hostname}:${mainAppPort}/login${redirectQuery}`;
-  }
-
-  // 其他环境：使用当前域名的登录页面（假设是主应用）
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}/login${redirectQuery}`;
-}
+// 使用共享的 getMainAppLoginUrl 函数，不再需要本地实现
 
 // 关键：系统应用应该使用 getSystemRoutes() 返回的路由配置
 // 这个函数会根据运行模式（qiankun 或独立运行）返回正确的路由配置
@@ -376,7 +345,7 @@ router.onError((error: Error) => {
           if (currentRoute.path !== '/login') {
             router.replace({
               path: '/login',
-              query: { redirect: currentRoute.fullPath },
+              query: { oauth_callback: currentRoute.fullPath },
             }).catch(() => {
               const loadingEl = document.getElementById('Loading');
               if (loadingEl) {
@@ -897,11 +866,11 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
   // 关键：路径规范化 - 确保子应用路径有正确的前缀
   // 注意：路径规范化会导致路由重定向，会再次触发 beforeEach
   // 使用标记避免在路径规范化重定向时重复处理loading
-  const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
+  const isNormalizing = sessionStorage.get<string>('__BTC_ROUTE_NORMALIZING__') === '1';
   const normalizedPath = normalizeRoutePath(to.path);
   if (normalizedPath) {
     // 设置标记，表示正在进行路径规范化
-    sessionStorage.setItem('__BTC_ROUTE_NORMALIZING__', '1');
+    sessionStorage.set('__BTC_ROUTE_NORMALIZING__', '1');
     // 关键：在规范化路径中提取应用名称，并保存到 sessionStorage，确保占位loading能正确显示
     const appNameMap: Record<string, string> = {
       'admin': '管理模块',
@@ -919,7 +888,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
     if (appName) {
       const appDisplayName = appNameMap[appName];
       // 保存应用名称到 sessionStorage
-      sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+      sessionStorage.set('__BTC_NAV_APP_NAME__', appDisplayName);
     }
     // 关键：在重定向前，再次确保"拜里斯科技"loading被隐藏
     const systemLoadingEl = document.getElementById('Loading');
@@ -944,7 +913,7 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
   if (isNormalizing) {
     // 延迟清除，确保 index.html 中的脚本能检测到规范化完成
     setTimeout(function() {
-      sessionStorage.removeItem('__BTC_ROUTE_NORMALIZING__');
+      sessionStorage.remove('__BTC_ROUTE_NORMALIZING__');
     }, 100);
   }
 
@@ -979,17 +948,19 @@ router.beforeEach(async (to: import('vue-router').RouteLocationNormalized, _from
   const isPublicPage = to.meta?.public === true ||
                        to.path.startsWith('/duty/');
 
-  // 使用共享的认证守卫（但需要自定义重定向逻辑）
+  // 使用共享的认证守卫
   // 注意：系统应用没有登录页，需要重定向到主应用登录页
   const authGuard = createAuthGuard({
     appName: 'system',
     publicPages: ['/404'], // 404 页面是公开的
-    loginPath: '/login', // 虽然系统应用没有登录页，但这里用于构建 URL
+    loginPath: '/login', // 虽然系统应用没有登录页，但这里用于构建 URL（如果 getLoginUrl 未提供时的回退）
     isAuthenticated,
     isPublicPage: (to: RouteLocationNormalized) => {
       // 自定义公开页面检查
       return to.meta?.public === true || to.path.startsWith('/duty/');
     },
+    // 使用共享的 getMainAppLoginUrl 函数，统一处理子应用独立运行时的登录重定向
+    getLoginUrl: getMainAppLoginUrl,
   });
 
   // 执行认证守卫（使用包装的 next 函数来重定向到主应用登录页）

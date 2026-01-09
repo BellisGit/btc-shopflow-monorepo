@@ -6,6 +6,7 @@ import {
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
+import { getMainAppLoginUrl } from '@btc/shared-core';
 
 /**
  * 动态导入 @btc/shared-core

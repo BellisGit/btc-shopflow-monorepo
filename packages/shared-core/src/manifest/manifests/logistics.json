@@ -76,24 +76,12 @@
       "path": "/warehouse/material",
       "labelKey": "menu.warehouse.material",
       "tab": {
-        "enabled": false
-      },
-      "breadcrumbs": [
-        { "labelKey": "menu.warehouse", "icon": "FolderOpened" },
-        { "labelKey": "menu.warehouse.material", "icon": "Files" }
-      ]
-    },
-    {
-      "path": "/warehouse/material/list",
-      "labelKey": "menu.warehouse.material.list",
-      "tab": {
         "enabled": true,
-        "labelKey": "menu.warehouse.material.list"
+        "labelKey": "menu.warehouse.material"
       },
       "breadcrumbs": [
         { "labelKey": "menu.warehouse", "icon": "FolderOpened" },
-        { "labelKey": "menu.warehouse.material", "icon": "Files" },
-        { "labelKey": "menu.warehouse.material.list", "icon": "List" }
+        { "labelKey": "menu.warehouse.material", "icon": "List" }
       ]
     },
     {
@@ -182,7 +170,7 @@
       "labelKey": "menu.warehouse",
       "icon": "svg:folder",
       "children": [
-        { "index": "/warehouse/material/list", "labelKey": "menu.warehouse.material" }
+        { "index": "/warehouse/material", "labelKey": "menu.warehouse.material" }
       ]
     },
     {
@@ -252,7 +240,7 @@
             "id": "logistics-warehouse-material",
             "title": "物料管理",
             "labelKey": "menu.warehouse.material",
-            "path": "/warehouse/material/list",
+            "path": "/warehouse/material",
             "sort": 1,
             "showInOverview": true
           }

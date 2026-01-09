@@ -342,72 +342,93 @@ const logoTitle = computed(() => {
     // 子应用：获取当前应用信息
     const currentSubAppId = getCurrentSubApp();
     if (currentSubAppId) {
-      // 获取应用配置
-      const appConfig = getAppById(currentSubAppId);
-      if (appConfig) {
-        // 优先使用应用配置中的 name（可能是国际化键或已翻译的值）
-        // 如果 name 看起来像国际化键（包含点号），尝试翻译它
-        if (appConfig.name && appConfig.name.includes('.')) {
-          // 优先使用主应用的 i18n 实例进行翻译（包含已合并的子应用国际化消息）
-          const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
-          if (mainAppI18n && mainAppI18n.global) {
-            const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
-            // 直接尝试使用 t() 函数来翻译，不依赖 te() 检查（因为 te() 可能不准确）
+      // 优先使用主应用的 i18n 实例进行翻译（包含已合并的子应用国际化消息）
+      const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+      if (mainAppI18n && mainAppI18n.global) {
+        const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+        const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+        
+        // 优先尝试 subapp.name（子应用名称）
+        // 注意：messages 中的 subapp 是嵌套对象，需要访问 messages.subapp.name
+        if (messages?.subapp?.name) {
+          const value = messages.subapp.name;
+          if (typeof value === 'string' && value.trim() !== '') {
+            return value;
+          } else if (typeof value === 'function') {
             try {
-              const mainTranslated = mainAppI18n.global.t(appConfig.name, currentLocale);
-              // 如果翻译成功（返回值不是 key 本身），使用翻译后的值
-              if (mainTranslated && typeof mainTranslated === 'string' && mainTranslated !== appConfig.name && mainTranslated.trim() !== '') {
-                return mainTranslated;
+              const result = value({ normalize: (arr: any[]) => arr[0] });
+              if (typeof result === 'string' && result.trim() !== '') {
+                return result;
               }
             } catch (error) {
-              // 如果翻译失败，继续尝试其他方法
-              if (import.meta.env.DEV) {
-                console.warn('[Topbar] 主应用 i18n 翻译失败:', appConfig.name, error);
-              }
+              // 函数调用失败，继续尝试其他方法
             }
           }
-          
-          // 如果主应用翻译失败，尝试使用共享组件的 t() 函数
+        }
+        
+        // 如果直接访问失败，使用 t() 函数
+        try {
+          // 优先尝试 subapp.name
+          const subappNameKey = 'subapp.name';
+          const subappTranslated = mainAppI18n.global.t(subappNameKey);
+          if (subappTranslated && typeof subappTranslated === 'string' && subappTranslated !== subappNameKey && subappTranslated.trim() !== '') {
+            return subappTranslated;
+          }
+        } catch (error) {
+          // 如果翻译失败，继续尝试其他方法
+        }
+      }
+      
+      // 如果主应用翻译失败，尝试使用共享组件的 t() 函数
+      try {
+        // 优先尝试 subapp.name
+        const subappTranslated = t('subapp.name');
+        if (subappTranslated && subappTranslated !== 'subapp.name') {
+          return subappTranslated;
+        }
+      } catch (error) {
+        // 如果翻译失败，继续使用其他方法
+      }
+      
+      // 如果 subapp.name 不存在，尝试使用 domain.type.{appId} 作为后备
+      const domainTypeKey = `domain.type.${currentSubAppId}`;
+      // 优先使用主应用的 i18n 实例（复用上面已声明的 mainAppI18n）
+      let domainTypeName: string | undefined;
+      if (mainAppI18n && mainAppI18n.global) {
+        const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+        if (mainAppI18n.global.te(domainTypeKey, currentLocale)) {
+          const translated = mainAppI18n.global.t(domainTypeKey, currentLocale);
+          if (translated && typeof translated === 'string' && translated !== domainTypeKey) {
+            domainTypeName = translated;
+          }
+        }
+      }
+      
+      // 如果主应用翻译失败，使用共享组件的 t() 函数
+      if (!domainTypeName) {
+        domainTypeName = t(domainTypeKey);
+      }
+
+      // 如果国际化值存在且不是 key 本身，则使用国际化值
+      if (domainTypeName && domainTypeName !== domainTypeKey) {
+        return domainTypeName;
+      }
+      
+      // 最后兜底：获取应用配置
+      const appConfig = getAppById(currentSubAppId);
+      if (appConfig && appConfig.name) {
+        // 如果 name 是国际化键，尝试翻译
+        if (appConfig.name.includes('.')) {
           try {
-            const translatedName = t(appConfig.name);
-            // 如果翻译成功（返回值不是 key 本身），使用翻译后的值
-            if (translatedName && translatedName !== appConfig.name) {
-              return translatedName;
+            const translated = t(appConfig.name);
+            if (translated && translated !== appConfig.name) {
+              return translated;
             }
-          } catch (error) {
-            // 如果翻译失败，继续使用原始值
-            if (import.meta.env.DEV) {
-              console.warn('[Topbar] 共享组件 i18n 翻译失败:', appConfig.name, error);
-            }
+          } catch {
+            // 忽略错误
           }
         }
-        
-        // 如果 name 不是国际化键或翻译失败，尝试使用 domain.type.{appId}
-        const domainTypeKey = `domain.type.${currentSubAppId}`;
-        // 优先使用主应用的 i18n 实例
-        const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
-        let domainTypeName: string | undefined;
-        if (mainAppI18n && mainAppI18n.global) {
-          const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
-          if (mainAppI18n.global.te(domainTypeKey, currentLocale)) {
-            const translated = mainAppI18n.global.t(domainTypeKey, currentLocale);
-            if (translated && typeof translated === 'string' && translated !== domainTypeKey) {
-              domainTypeName = translated;
-            }
-          }
-        }
-        
-        // 如果主应用翻译失败，使用共享组件的 t() 函数
-        if (!domainTypeName) {
-          domainTypeName = t(domainTypeKey);
-        }
-
-        // 如果国际化值存在且不是 key 本身，则使用国际化值
-        if (domainTypeName && domainTypeName !== domainTypeKey) {
-          return domainTypeName;
-        }
-
-        // 最后兜底使用应用配置中的 name（可能是已翻译的值）
+        // 否则直接返回 name（可能是已翻译的值）
         return appConfig.name;
       }
     }

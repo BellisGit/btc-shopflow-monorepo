@@ -287,7 +287,10 @@ const handleCommand = (command: string) => {
             appStorage.user?.clear();
           }
           // 清除 cookie
-          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          (async () => {
+            const { deleteCookie } = await import('@btc/shared-core/utils/cookie');
+            deleteCookie('access_token', { path: '/' });
+          })();
         } catch (e) {
           // 静默失败
         }

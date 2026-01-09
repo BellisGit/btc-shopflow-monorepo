@@ -175,11 +175,13 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   const epsConfig: {
     enable: boolean;
     dict: boolean;
+    dictApi?: string;
     dist: string;
     sharedEpsDir: string;
   } = {
     enable: epsEnable,
-    dict: btcOptions.eps?.dict ?? false,
+    dict: btcOptions.eps?.dict ?? true, // 默认启用字典功能
+    dictApi: btcOptions.eps?.dictApi || '/api/system/auth/dict', // 默认字典接口
     dist: epsOutputDir,
     sharedEpsDir: sharedEpsDir,
   };

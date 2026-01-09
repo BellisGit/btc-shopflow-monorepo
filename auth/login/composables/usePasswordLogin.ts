@@ -54,10 +54,10 @@ export function usePasswordLogin() {
       const { handleCrossAppRedirect, getAndClearLogoutRedirectPath } = await import('@btc/auth-shared/composables/redirect');
       
       let redirectPath: string;
-      // 优先读取 oauth_callback 参数，如果没有则尝试 redirect（向后兼容）
-      const urlOAuthCallback = (route.query.oauth_callback as string) || (route.query.redirect as string);
+      // 读取 oauth_callback 参数
+      const urlOAuthCallback = route.query.oauth_callback as string;
       if (urlOAuthCallback) {
-        // 优先使用 URL 参数中的 oauth_callback
+        // 使用 URL 参数中的 oauth_callback
         // 保留完整的路径，包括查询参数和 hash
         redirectPath = decodeURIComponent(urlOAuthCallback);
       } else {

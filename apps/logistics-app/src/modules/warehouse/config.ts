@@ -9,8 +9,18 @@ import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
-  // 国际化配置已移至 locales/config.ts，此处不再需要硬编码值
-  locale: {},
+  locale: {
+    'zh-CN': {
+      // 菜单配置
+      'menu.warehouse': '仓储模块',
+      'menu.warehouse.material': '物料清单表',
+    },
+    'en-US': {
+      // 菜单配置
+      'menu.warehouse': 'Warehouse Module',
+      'menu.warehouse.material': 'Material List',
+    },
+  },
 
   columns: {
     'logistics.warehouse.material.list': [

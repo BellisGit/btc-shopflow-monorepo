@@ -1,6 +1,8 @@
 /**
  * 应用身份配置接口
  * 每个子应用必须实现此接口，定义自己的身份信息
+ * 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+ * @see packages/shared-core/src/configs/schemas.ts
  */
 
 export interface AppIdentity {

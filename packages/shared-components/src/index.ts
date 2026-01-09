@@ -53,6 +53,7 @@ export { BtcIconButton } from './components/basic/btc-icon-button';
 export { default as BtcTableButton } from './components/basic/btc-table-button/index.vue';
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
+export { default as BtcTag } from './components/basic/btc-tag/index.vue';
 
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';

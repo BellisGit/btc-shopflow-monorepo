@@ -3,6 +3,7 @@
  * 参考：cool-admin-vue-8.x/src/config/index.ts
  */
 
+import { storage } from '@btc/shared-utils';
 import { appConfig } from './app';
 import { envConfig, currentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 import { getAllSubAppConfigs } from '@btc/shared-core/configs/qiankun-config-center';
@@ -32,18 +33,18 @@ export const config = {
   // 国际化配置
   i18n: {
     // 默认语言
-    locale: localStorage.getItem('locale') || 'zh-CN',
+    locale: storage.get<string>('locale') || 'zh-CN',
     // 可选语言列表（label 使用国际化 key）
     languages: [
-      { labelKey: 'config.locale.zh-CN', value: 'zh-CN' },
-      { label: 'English', value: 'en-US' },
+      { labelKey: 'common.system.simplified_chinese', value: 'zh-CN' },
+      { labelKey: 'common.system.english', value: 'en-US' },
     ],
   },
 
   // 主题配置
   theme: {
     // 默认主题模式
-    mode: localStorage.getItem('theme-mode') || 'light',
+    mode: storage.get<string>('theme-mode') || 'light',
     // 主题色
     primaryColor: '#409eff',
   },

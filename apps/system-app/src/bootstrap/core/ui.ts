@@ -3,6 +3,7 @@
  * 负责配置Element Plus、主题、样式等UI相关设置
  */
 
+import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
 import ElementPlus from 'element-plus';
 import { createThemePlugin } from '@btc/shared-core';
@@ -41,7 +42,7 @@ export const elementLocale = {
  * 获取当前语言设置
  */
 export const getCurrentLocale = (): string => {
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 };
 
 /**

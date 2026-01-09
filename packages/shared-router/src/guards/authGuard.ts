@@ -15,7 +15,7 @@ export interface AuthGuardConfig {
    */
   publicPages: string[];
   /**
-   * 登录页路径
+   * 登录页路径（用于同域重定向，如果提供了 getLoginUrl 则优先使用 getLoginUrl）
    */
   loginPath: string;
   /**
@@ -26,6 +26,11 @@ export interface AuthGuardConfig {
    * 检查路由是否为公开页面的函数（可选，如果不提供，使用 publicPages 列表）
    */
   isPublicPage?: (to: RouteLocationNormalized) => boolean;
+  /**
+   * 获取登录页完整 URL 的函数（可选，用于子应用独立运行时重定向到主应用登录页）
+   * 如果提供，将优先使用此函数构建登录 URL，而不是使用 loginPath
+   */
+  getLoginUrl?: (redirectPath: string) => string;
 }
 
 /**
@@ -72,23 +77,36 @@ export function createAuthGuard(config: AuthGuardConfig) {
     const isAuthenticatedUser = config.isAuthenticated();
 
     if (!isAuthenticatedUser) {
-      // 未认证，重定向到登录页（带 redirect 参数）
+      // 未认证，重定向到登录页（带 oauth_callback 参数）
       try {
+        // 如果提供了 getLoginUrl 函数，优先使用它（用于子应用独立运行时重定向到主应用登录页）
+        if (config.getLoginUrl) {
+          const loginUrl = config.getLoginUrl(to.fullPath);
+          window.location.href = loginUrl;
+          return;
+        }
+
+        // 否则使用 loginPath（同域重定向）
         if (router) {
           const loginRoute = router.resolve(config.loginPath);
           if (loginRoute && loginRoute.matched.length > 0) {
             next({
               path: config.loginPath,
-              query: { redirect: to.fullPath },
+              query: { oauth_callback: to.fullPath },
             });
           } else {
-            window.location.href = `${config.loginPath}?redirect=${encodeURIComponent(to.fullPath)}`;
+            window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
           }
         } else {
-          window.location.href = `${config.loginPath}?redirect=${encodeURIComponent(to.fullPath)}`;
+          window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
         }
       } catch (error) {
-        window.location.href = `${config.loginPath}?redirect=${encodeURIComponent(to.fullPath)}`;
+        // 如果出错，尝试使用 getLoginUrl（如果提供），否则使用 loginPath
+        if (config.getLoginUrl) {
+          window.location.href = config.getLoginUrl(to.fullPath);
+        } else {
+          window.location.href = `${config.loginPath}?oauth_callback=${encodeURIComponent(to.fullPath)}`;
+        }
       }
       return;
     }

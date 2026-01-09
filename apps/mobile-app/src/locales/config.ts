@@ -8,21 +8,13 @@ import type { LocaleConfig } from '../../../../types/locale';
 
 export default {
   'zh-CN': {
-    app: {
+    subapp: {
       name: '移动应用',
-      title: '移动应用',
-      description: 'BTC车间管理系统 - 移动应用',
-      version: '版本 1.0.0',
-      welcome: '欢迎使用移动应用',
     },
   },
   'en-US': {
-    app: {
+    subapp: {
       name: 'Mobile Application',
-      title: 'Mobile Application',
-      description: 'BTC Shop Management System - Mobile Application',
-      version: 'Version 1.0.0',
-      welcome: 'Welcome to Mobile Application',
     },
   },
 } satisfies LocaleConfig;

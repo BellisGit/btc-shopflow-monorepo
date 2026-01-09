@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedComponentsZh from '@btc/shared-components/locales/zh-CN.json';
@@ -96,6 +97,19 @@ function flattenObject(obj: any, prefix = '', result: Record<string, string> = {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const newKey = prefix ? `${prefix}.${key}` : key;
       const value = obj[key];
+
+      // 如果当前键是 'subapp'，且值是对象，需要特殊处理其子属性（扁平结构）
+      if (key === 'subapp' && value && typeof value === 'object' && !Array.isArray(value) && value !== null) {
+        // 递归处理 subapp 对象的子属性，使用 'subapp' 作为前缀
+        flattenObject(value, 'subapp', result);
+        continue;
+      }
+
+      // 对于 subapp 对象的子属性（prefix === 'subapp'），如果值已经是字符串，直接设置（扁平结构）
+      if (prefix === 'subapp' && typeof value === 'string') {
+        result[newKey] = value;
+        continue;
+      }
 
       if (value && typeof value === 'object' && !Array.isArray(value) && value !== null) {
         // 如果对象包含 '_' 键，将其值设置为父键的值
@@ -272,20 +286,89 @@ export const getLocaleMessages = (): LocaleMessages => {
   const sharedCoreZhMessages = (sharedCoreZh as any)?.default ?? sharedCoreZh;
   const sharedCoreEnMessages = (sharedCoreEn as any)?.default ?? sharedCoreEn;
 
-  // 从 config.ts 文件中合并配置
+  // 从 config.ts 文件中合并配置（返回扁平化结构）
   const configMessages = mergeConfigFiles();
+
+  // 将扁平化的 configMessages 转换为嵌套对象
+  // 因为 Vue I18n 需要嵌套对象，而 mergeConfigFiles 返回的是扁平化结构
+  // 关键：按键的深度排序，先处理深度更深的键（子键），再处理深度较浅的键（父键）
+  // 这样可以避免在字符串上创建属性的错误（如 menu.access 是字符串，但又有 menu.access.config）
+  const unflattenObject = (flat: Record<string, any>): Record<string, any> => {
+    const result: Record<string, any> = {};
+
+    // 按键的深度排序：先处理深度更深的键（子键），再处理深度较浅的键（父键）
+    const sortedKeys = Object.keys(flat).sort((a, b) => {
+      const depthA = a.split('.').length;
+      const depthB = b.split('.').length;
+      // 深度更深的键排在前面
+      if (depthA !== depthB) {
+        return depthB - depthA;
+      }
+      // 如果深度相同，按字母顺序排序
+      return a.localeCompare(b);
+    });
+
+    for (const key of sortedKeys) {
+      if (Object.prototype.hasOwnProperty.call(flat, key)) {
+        const keys = key.split('.');
+        let current = result;
+        
+        for (let i = 0; i < keys.length - 1; i++) {
+          const k = keys[i];
+          
+          // 确保 current 是对象
+          if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+            current = {};
+          }
+          
+          if (!(k in current)) {
+            current[k] = {};
+          } else if (typeof current[k] === 'string') {
+            // 如果当前键已经是字符串，需要转换为对象 { _: stringValue }
+            // 这样可以允许在父键上设置子键（如 menu.access 是字符串，但又有 menu.access.config）
+            const stringValue = current[k];
+            current[k] = { _: stringValue };
+          }
+          
+          current = current[k];
+        }
+        
+        // 确保 current 是对象
+        if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+          current = {};
+        }
+        
+        const lastKey = keys[keys.length - 1];
+        
+        // 如果目标键已经存在且是字符串，需要转换为对象
+        if (lastKey in current && typeof current[lastKey] === 'string') {
+          const stringValue = current[lastKey];
+          current[lastKey] = { _: stringValue };
+          // 然后设置新值（覆盖 _ 键）
+          current[lastKey] = flat[key];
+        } else {
+          current[lastKey] = flat[key];
+        }
+      }
+    }
+    
+    return result;
+  };
+
+  const configMessagesZhCN = configMessages.zhCN ? unflattenObject(configMessages.zhCN) : {};
+  const configMessagesEnUS = configMessages.enUS ? unflattenObject(configMessages.enUS) : {};
 
   // 确保所有源都是对象
   const zhCNMessages = mergeMessages(
     sharedCoreZhMessages || {},
     sharedComponentsZh as Record<string, any> || {},
-    configMessages.zhCN || {}, // 从 config.ts 合并的配置
+    configMessagesZhCN, // 从 config.ts 合并的配置（已转换为嵌套对象）
     zhCN || {} // 旧的 JSON 文件（兼容，逐步迁移）
   );
   const enUSMessages = mergeMessages(
     sharedCoreEnMessages || {},
     sharedComponentsEn as Record<string, any> || {},
-    configMessages.enUS || {}, // 从 config.ts 合并的配置
+    configMessagesEnUS, // 从 config.ts 合并的配置（已转换为嵌套对象）
     enUS || {} // 旧的 JSON 文件（兼容，逐步迁移）
   );
 
@@ -333,7 +416,7 @@ const i18n = createI18n({
 
 export function tSync(key: string): string {
   try {
-    const currentLocale = localStorage.getItem('locale') || 'zh-CN';
+    const currentLocale = storage.get<string>('locale') || 'zh-CN';
     i18n.global.locale.value = currentLocale as any;
     const g = i18n.global as any;
 

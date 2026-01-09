@@ -1,11 +1,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser';
-import { service } from '@services/eps';
 import { appStorage } from '@/utils/app-storage';
 
 export function useUserInfo() {
   // 用户相关（需要在读取缓存之前初始化）
-  const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+  const { userInfo: userInfoComputed, getUserInfo } = useUser();
 
   // 从个人信息服务获取的用户信息
   // 初始化时立即从缓存读取，避免闪烁
@@ -117,76 +116,6 @@ export function useUserInfo() {
     };
   });
 
-  // 加载用户信息（从个人信息服务）
-  const loadProfileInfo = async () => {
-    try {
-      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
-      const user = appStorage.user.get();
-      if (!user) {
-        return;
-      }
-
-      // 确保 service 存在，避免 undefined 错误
-      if (!service) {
-        console.warn('[useUserInfo] EPS service not available');
-        return;
-      }
-      const profileService = service.admin?.base?.profile;
-      if (!profileService) {
-        return;
-      }
-
-      if (!profileService.info) {
-        return;
-      }
-
-      // 如果 profileUserInfo 还没有值，从缓存读取（初始化时已经读取过，这里作为兜底）
-      if (!profileUserInfo.value) {
-        const cachedUser = getUserInfo();
-        const cachedAvatar = appStorage.user.getAvatar();
-        const cachedName = appStorage.user.getName();
-
-        if (cachedAvatar || cachedName) {
-          profileUserInfo.value = {
-            name: cachedName || (cachedUser?.name || ''),
-            avatar: cachedAvatar || (cachedUser?.avatar || '/logo.png'),
-          };
-          displayedName.value = cachedName || cachedUser?.name || '';
-        }
-      }
-
-      // 获取脱敏信息（用于显示头像和基本信息）
-      const data = await profileService.info();
-      if (data) {
-        profileUserInfo.value = data;
-
-        // 更新统一存储（头像和用户名）
-        if (data.avatar) {
-          appStorage.user.setAvatar(data.avatar);
-        }
-        if (data.name) {
-          appStorage.user.setName(data.name);
-        }
-
-        // 同时更新 useUser 中的信息，保持一致性
-        const currentUser = getUserInfo();
-        if (currentUser) {
-          setUserInfo({
-            ...currentUser,
-            name: data.name || currentUser.name,
-            position: data.position || currentUser.position,
-            avatar: data.avatar || currentUser.avatar,
-          });
-        }
-
-        // 初始化显示名称
-        displayedName.value = data.name || data.realName || '';
-      }
-    } catch (error) {
-      // 静默失败，不影响页面显示
-      console.warn('加载用户信息失败:', error);
-    }
-  };
 
   // 打字机效果（悬浮时触发）
   const handleNameHover = () => {
@@ -254,7 +183,6 @@ export function useUserInfo() {
     isTyping,
     cursorPosition,
     userInfo,
-    loadProfileInfo,
     handleNameHover,
     handleNameLeave
   };

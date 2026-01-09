@@ -284,7 +284,7 @@ export const routes: RouteRecordRaw[] = [
       if (!isAuthenticatedUser) {
         next({
           path: '/login',
-          query: { redirect: to.fullPath },
+          query: { oauth_callback: to.fullPath },
         });
         return;
       }

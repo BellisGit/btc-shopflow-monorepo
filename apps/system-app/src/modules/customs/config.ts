@@ -6,7 +6,8 @@ import type { PageConfig } from '../../../../../types/locale';
 
 export default {
   locale: {
-    customs: {},
+    'zh-CN': {},
+    'en-US': {},
   },
 
   columns: {},

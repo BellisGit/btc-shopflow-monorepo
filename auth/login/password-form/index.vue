@@ -70,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-utils';
 import { ref, reactive } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
@@ -98,7 +99,7 @@ const { t } = useI18n();
 
 // 表单数据
 const form = reactive({
-  username: localStorage.getItem('username') || '',
+  username: storage.get<string>('username') || '',
   password: ''
 });
 

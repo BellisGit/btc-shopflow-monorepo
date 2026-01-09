@@ -31,6 +31,8 @@ export default defineConfig({
     ['script', {},
 `(function(){
   try {
+    // 特殊情况：在 VitePress 配置的内联脚本中，无法等待模块加载，必须直接使用 localStorage
+    // 注意：正常情况下应使用 @btc/shared-core/utils/storage/local 中的 storage 工具
     // 如果是在iframe中，尝试从主应用同步主题（可选）
     // 如果不在iframe中，让VitePress自己处理主题
     if (window.parent !== window) {

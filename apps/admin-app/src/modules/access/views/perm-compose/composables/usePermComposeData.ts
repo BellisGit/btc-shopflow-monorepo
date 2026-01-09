@@ -1,4 +1,5 @@
-﻿import { ref, watch } from 'vue';
+import { storage } from '@btc/shared-utils';
+import { ref, watch } from 'vue';
 import { useI18n } from '@btc/shared-core';
 
 /**
@@ -35,11 +36,11 @@ export function usePermComposeData() {
   });
   
   const loadData = async () => {
-    const resourcesRaw = localStorage.getItem('btc_mock_btc_resources');
-    const actionsRaw = localStorage.getItem('btc_mock_btc_actions');
+    const resourcesRaw = storage.get<any>('btc_mock_btc_resources');
+    const actionsRaw = storage.get<any>('btc_mock_btc_actions');
     
     if (resourcesRaw) {
-      resourceTree.value = JSON.parse(resourcesRaw);
+      resourceTree.value = resourcesRaw;
     } else {
       resourceTree.value = [
         {
@@ -85,11 +86,11 @@ export function usePermComposeData() {
           ]
         },
       ];
-      localStorage.setItem('btc_mock_btc_resources', JSON.stringify(resourceTree.value));
+      storage.set('btc_mock_btc_resources', resourceTree.value);
     }
     
     if (actionsRaw) {
-      actions.value = JSON.parse(actionsRaw);
+      actions.value = actionsRaw;
     } else {
       actions.value = [
         { id: 1, actionNameCn: t('menu.view'), actionCode: 'view', httpMethod: 'GET' },
@@ -97,7 +98,7 @@ export function usePermComposeData() {
         { id: 3, actionNameCn: t('menu.delete'), actionCode: 'delete', httpMethod: 'DELETE' },
         { id: 4, actionNameCn: t('menu.add'), actionCode: 'create', httpMethod: 'POST' },
       ];
-      localStorage.setItem('btc_mock_btc_actions', JSON.stringify(actions.value));
+      storage.set('btc_mock_btc_actions', actions.value);
     }
   };
   

@@ -7,6 +7,8 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 /**
  * 显示 Loading（如果尚未显示）
  */
@@ -15,7 +17,7 @@ function showLoading() {
   try {
     // 关键：只在有导航标记时显示 Loading，避免与 HTML 中的内联脚本重复显示
     // HTML 中的内联脚本已经会在有导航标记时显示 Loading，这里不需要重复
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
+    const shouldShowLoading = sessionStorage.get<string>('__BTC_NAV_LOADING__') === '1';
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -73,7 +75,7 @@ function removeLoadingElement() {
  */
 function clearNavigationFlag() {
   try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+    sessionStorage.remove('__BTC_NAV_LOADING__');
   } catch (e) {
     // 静默失败（某些浏览器可能禁用 sessionStorage）
   }

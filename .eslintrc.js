@@ -41,7 +41,15 @@ module.exports = {
     // 国际化规范检查
     // 1. 禁止硬编码中文文本（核心规则）
     // 注意：eslint-plugin-i18n v2.4.0 的配置选项已变更，使用默认配置
-    'i18n/no-chinese-character': 'error',
+    // 允许在 console.log/console.warn/console.error 中使用中文（用于调试日志）
+    'i18n/no-chinese-character': [
+      'error',
+      {
+        ignorePatterns: [
+          /console\.(log|warn|error|info|debug)\([^)]*[\u4e00-\u9fa5][^)]*\)/,
+        ],
+      },
+    ],
     // 2. 强制国际化 key 使用 snake_case 格式，且符合层级结构（自定义规则）
     // 注意：由于 ESLint 插件注册限制，此规则暂时通过自定义脚本检查
     // 可以使用 scripts/check-i18n-keys.js 进行手动检查
@@ -82,6 +90,26 @@ module.exports = {
       },
     ],
     'import/no-cycle': 'error',
+    // 禁止直接使用存储 API，必须使用统一工具
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'MemberExpression[object.name="localStorage"][property.name=/^(getItem|setItem|removeItem|clear)$/]',
+        message: '禁止直接使用 localStorage API，请使用统一的 storage 工具：import { storage } from "@btc/shared-utils"',
+      },
+      {
+        selector: 'MemberExpression[object.name="sessionStorage"][property.name=/^(getItem|setItem|removeItem|clear)$/]',
+        message: '禁止直接使用 sessionStorage API，请使用统一的 sessionStorage 工具：import { sessionStorage } from "@btc/shared-core/utils/storage/session"',
+      },
+      {
+        selector: 'AssignmentExpression[left.object.name="document"][left.property.name="cookie"]',
+        message: '禁止直接使用 document.cookie，请使用统一的 cookie 工具：import { setCookie, deleteCookie } from "@btc/shared-core/utils/cookie"',
+      },
+      {
+        selector: 'MemberExpression[object.object.name="document"][object.property.name="cookie"]',
+        message: '禁止直接使用 document.cookie，请使用统一的 cookie 工具：import { getCookie } from "@btc/shared-core/utils/cookie"',
+      },
+    ],
   },
   settings: {
     'import/resolver': {
@@ -125,6 +153,13 @@ module.exports = {
       files: ['apps/**/src/locales/config.ts'],
       rules: {
         'i18n/no-chinese-character': 'off',
+      },
+    },
+    // 允许存储工具库内部直接使用原生 API
+    {
+      files: ['packages/shared-core/src/utils/storage/**/*.{ts,js}', 'packages/shared-core/src/utils/cookie/**/*.{ts,js}', 'packages/shared-core/src/utils/cross-domain/**/*.{ts,js}'],
+      rules: {
+        'no-restricted-syntax': 'off',
       },
     },
   ],

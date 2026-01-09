@@ -148,18 +148,11 @@ function flattenObject(obj: any, prefix = '', result: Record<string, string> = {
 
 /**
  * 从 config.ts 文件中提取并合并国际化配置
+ * 所有配置都使用扁平结构：{ 'zh-CN': { key: value, ... }, 'en-US': { key: value, ... } }
  */
 function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string, string> } {
-  let mergedZhCN: any = {
-    app: {},
-    menu: {},
-    page: {},
-  };
-  let mergedEnUS: any = {
-    app: {},
-    menu: {},
-    page: {},
-  };
+  let flatZhCN: Record<string, string> = {};
+  let flatEnUS: Record<string, string> = {};
 
   // 遍历所有加载的 config.ts 文件
   for (const path in configFiles) {
@@ -167,64 +160,39 @@ function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string
     if (!config) continue;
 
     // 处理应用级配置（src/locales/config.ts）
-    // 应用级配置格式：{ 'zh-CN': { app: {...}, menu: {...}, page: {...} }, 'en-US': {...} }
+    // 应用级配置格式：{ 'zh-CN': { ... }, 'en-US': { ... } }
     if (path.includes('/locales/config.ts')) {
       if (config['zh-CN']) {
-        mergedZhCN = deepMerge(mergedZhCN, config['zh-CN']);
+        // 应用级配置可能是嵌套结构，需要扁平化
+        const flat = flattenObject(config['zh-CN']);
+        flatZhCN = { ...flatZhCN, ...flat };
       }
       if (config['en-US']) {
-        mergedEnUS = deepMerge(mergedEnUS, config['en-US']);
+        // 应用级配置可能是嵌套结构，需要扁平化
+        const flat = flattenObject(config['en-US']);
+        flatEnUS = { ...flatEnUS, ...flat };
       }
     } else {
+      // 处理模块级配置（src/modules/**/config.ts）
+      // 模块级配置格式：{ locale: { 'zh-CN': { key: value, ... }, 'en-US': { key: value, ... } } }
       const localeConfig = config.locale;
 
       if (localeConfig) {
-        // 页面级配置可能包含 app 和 menu（用于覆盖）
-        if (localeConfig.app) {
-          mergedZhCN.app = deepMerge(mergedZhCN.app, localeConfig.app);
-          mergedEnUS.app = deepMerge(mergedEnUS.app, localeConfig.app || {});
+        // 扁平结构：localeConfig['zh-CN'] 已经是扁平化的键值对，直接合并
+        if (localeConfig['zh-CN']) {
+          flatZhCN = { ...flatZhCN, ...localeConfig['zh-CN'] };
         }
-        if (localeConfig.menu) {
-          mergedZhCN.menu = deepMerge(mergedZhCN.menu, localeConfig.menu);
-          mergedEnUS.menu = deepMerge(mergedEnUS.menu, localeConfig.menu || {});
-        }
-        // 将模块配置直接合并到顶层（不再使用 page 层级）
-        // localeConfig 中除了 app 和 menu 之外的所有键都是模块配置
-        for (const key in localeConfig) {
-          if (key !== 'app' && key !== 'menu' && key !== 'page') {
-            // 直接合并模块配置到顶层
-            if (!mergedZhCN[key]) {
-              mergedZhCN[key] = {};
-            }
-            if (!mergedEnUS[key]) {
-              mergedEnUS[key] = {};
-            }
-            mergedZhCN[key] = deepMerge(mergedZhCN[key], localeConfig[key]);
-            mergedEnUS[key] = deepMerge(mergedEnUS[key], localeConfig[key] || {});
-          }
-        }
-        // 兼容旧格式：如果还有 page 层级，也处理（逐步迁移）
-        if (localeConfig.page) {
-          // 将 page 下的内容直接合并到顶层
-          for (const moduleKey in localeConfig.page) {
-            if (!mergedZhCN[moduleKey]) {
-              mergedZhCN[moduleKey] = {};
-            }
-            if (!mergedEnUS[moduleKey]) {
-              mergedEnUS[moduleKey] = {};
-            }
-            mergedZhCN[moduleKey] = deepMerge(mergedZhCN[moduleKey], localeConfig.page[moduleKey]);
-            mergedEnUS[moduleKey] = deepMerge(mergedEnUS[moduleKey], localeConfig.page[moduleKey] || {});
-          }
+        if (localeConfig['en-US']) {
+          flatEnUS = { ...flatEnUS, ...localeConfig['en-US'] };
         }
       }
     }
   }
 
-  // 转换为扁平化结构
+  // 返回扁平化结构
   return {
-    zhCN: flattenObject(mergedZhCN),
-    enUS: flattenObject(mergedEnUS),
+    zhCN: flatZhCN,
+    enUS: flatEnUS,
   };
 }
 

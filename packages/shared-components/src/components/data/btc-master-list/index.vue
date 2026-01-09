@@ -1,7 +1,7 @@
 <template>
   <div class="btc-master-list">
     <div class="btc-master-list__header">
-      <el-text>{{ title }}</el-text>
+      <el-text>{{ displayTitle }}</el-text>
 
       <div class="btc-master-list__op">
         <div class="btcs" v-if="isDrag">
@@ -202,6 +202,20 @@ const emit = defineEmits(['refresh', 'select', 'add', 'edit', 'delete', 'load'])
 
 const { t } = useI18n();
 
+// 计算显示标题（支持国际化 key）
+const displayTitle = computed(() => {
+  // 如果 title 包含点号，可能是国际化 key，尝试翻译
+  if (props.title && props.title.includes('.')) {
+    const translated = t(props.title);
+    // 如果翻译成功（返回值不是 key 本身），使用翻译结果
+    if (translated && translated !== props.title) {
+      return translated;
+    }
+  }
+  // 否则直接使用 title（可能是已翻译的文本或普通文本）
+  return props.title;
+});
+
 // 响应式数据
 const list = ref<any[]>([]);
 const loading = ref(false);
@@ -236,7 +250,7 @@ async function refresh() {
     if (keyWord.value) {
       params.keyword = keyWord.value;
     }
-    
+
     // 调用服务获取数据
     const res = await props.service.list(params);
     const dataArray = extractDataArray(res);

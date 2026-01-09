@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedComponentsZh from '@btc/shared-components/locales/zh-CN.json';
@@ -119,7 +120,7 @@ const i18n = createI18n({
 
 export function tSync(key: string): string {
   try {
-    const currentLocale = localStorage.getItem('locale') || 'zh-CN';
+    const currentLocale = storage.get<string>('locale') || 'zh-CN';
     i18n.global.locale.value = currentLocale as any;
     const g = i18n.global as any;
 

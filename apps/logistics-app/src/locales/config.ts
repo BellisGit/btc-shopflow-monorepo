@@ -4,44 +4,12 @@
  * 详细的页面配置应该在页面级 config.ts 中
  */
 
-import type { LocaleConfig } from '../../../../types/locale';
+import type { AppLevelLocaleConfig } from '../../../../types/locale';
 
 export default {
   'zh-CN': {
-    app: {
-      name: '物流管理系统',
-      title: '物流管理系统',
-      description: '物流配送、仓储管理、运输调度',
-      version: '版本 1.0.0',
-      welcome: '欢迎使用物流管理系统',
-      loading: {
-        title: '正在加载资源',
-        subtitle: '部分资源可能加载时间较长，请耐心等待',
-      },
-      placeholder: {
-        disabledHome: '物流子应用首页已停用，请从左侧菜单进入业务页面',
-      },
-    },
-    menu: {
-      procurement: {
-        _: '采购模块',
-        auxiliary: '辅料管理',
-        packaging: '包材管理',
-        supplier: '供应商管理',
-      },
-      warehouse: {
-        _: '仓储模块',
-        material: {
-          list: '物料列表',
-        },
-      },
-      customs_module: '海关模块',
-      inventory_management: {
-        storage_location: '仓位配置',
-        info: '盘点记录表',
-        detail: '盘点差异表',
-        result: '盘点结果表',
-      },
+    subapp: {
+      name: '物流模块',
     },
     common: {
       // 错误消息
@@ -76,6 +44,12 @@ export default {
         btc_shop_management: 'BTC车间管理',
         btc_shop_management_system_logistics: 'BTC车间管理系统 - 物流应用',
         logistics_module: '物流模块',
+        bellis: '拜里斯',
+        address: '深圳市南山区科技园',
+        loading_resources: '正在加载系统资源...',
+        loading_resources_subtitle: '初次加载可能需要较多时间，请耐心等待',
+        simplified_chinese: '简体中文',
+        english: 'English',
         app_config_not_found: '未找到应用配置',
         container_not_in_dom: '容器 #subapp-viewport 不在 DOM 中',
         container_not_in_dom_cannot_load: '容器 #subapp-viewport 不在 DOM 中，无法加载应用',
@@ -240,87 +214,52 @@ export default {
             remark: '明细备注',
           },
         },
-      },
-    },
-  },
-  'en-US': {
-    app: {
-      name: 'Logistics Management System',
-      title: 'Logistics Management System',
-      description: 'Logistics delivery, warehouse management, transportation scheduling',
-      version: 'Version 1.0.0',
-      welcome: 'Welcome to Logistics Management System',
-      loading: {
-        title: 'Loading resources',
-        subtitle: 'Some resources may take longer to load, please wait patiently',
-      },
-      placeholder: {
-        disabledHome: 'The logistics sub-application home is disabled. Please use the left menu to navigate.',
-      },
-    },
-    menu: {
-      procurement: {
-        _: 'Procurement Module',
-        auxiliary: 'Auxiliary Management',
-        packaging: 'Packaging Management',
-        supplier: 'Supplier Management',
-      },
-      warehouse: {
-        _: 'Warehouse Module',
-        material: {
-          list: 'Material List',
-        },
-      },
-      customs_module: 'Customs Module',
-      inventory_management: {
-        storage_location: 'Storage Location Configuration',
-        info: 'Inventory Records',
-        detail: 'Inventory Variance',
-        result: 'Inventory Result',
-      },
-    },
-    page: {
-      inventory: {
+        // 页面相关配置（从 page 层级移到这里，因为支持多层嵌套）
         base: {
           button: {
-            pull: 'Pull Data',
+            pull: '拉取数据',
           },
           pull: {
-            success: 'Data pulled successfully',
-            failed: 'Failed to pull data',
+            success: '数据拉取成功',
+            failed: '数据拉取失败',
           },
           fields: {
             check_status: {
-              notStarted: 'Not Started',
-              inProgress: 'In Progress',
-              completed: 'Completed',
+              notStarted: '未开始',
+              inProgress: '进行中',
+              completed: '已完成',
             },
           },
         },
         diff: {
           detail: {
-            title: 'Difference Record Detail',
+            title: '差异记录详情',
           },
           fields: {
-            diff_reason: 'Difference Reason',
-            process_time: 'Process Time',
-            process_remark: 'Process Remark',
-            material_code: 'Material Code',
-            position: 'Position',
+            diff_reason: '差异原因',
+            process_time: '处理时间',
+            process_remark: '处理备注',
+            material_code: '物料编码',
+            position: '仓位',
           },
         },
-        result: {
+        result_page: {
           detail: {
-            title: 'Inventory Result Detail',
+            title: '盘点结果详情',
           },
-          search_placeholder: 'Search inventory results',
+          search_placeholder: '搜索盘点结果',
         },
         subProcess: {
           detail: {
-            title: 'Sub Process Detail',
+            title: '子流程详情',
           },
         },
       },
+    },
+  },
+  'en-US': {
+    subapp: {
+      name: 'Logistics Module',
     },
     common: {
       error: {
@@ -351,6 +290,12 @@ export default {
         btc_shop_management: 'BTC Shop Management',
         btc_shop_management_system_logistics: 'BTC Shop Management System - Logistics App',
         logistics_module: 'Logistics Module',
+        bellis: 'Bellis',
+        address: 'Nanshan District, Shenzhen',
+        loading_resources: 'Loading system resources...',
+        loading_resources_subtitle: 'Initial loading may take some time, please wait patiently',
+        simplified_chinese: 'Simplified Chinese',
+        english: 'English',
         app_config_not_found: 'App config not found',
         container_not_in_dom: 'Container #subapp-viewport not in DOM',
         container_not_in_dom_cannot_load: 'Container #subapp-viewport not in DOM, cannot load app',
@@ -511,7 +456,47 @@ export default {
             remark: 'Detail Remark',
           },
         },
+        // 页面相关配置（从 page 层级移到这里，因为支持多层嵌套）
+        base: {
+          button: {
+            pull: 'Pull Data',
+          },
+          pull: {
+            success: 'Data pulled successfully',
+            failed: 'Failed to pull data',
+          },
+          fields: {
+            check_status: {
+              notStarted: 'Not Started',
+              inProgress: 'In Progress',
+              completed: 'Completed',
+            },
+          },
+        },
+        diff: {
+          detail: {
+            title: 'Difference Record Detail',
+          },
+          fields: {
+            diff_reason: 'Difference Reason',
+            process_time: 'Process Time',
+            process_remark: 'Process Remark',
+            material_code: 'Material Code',
+            position: 'Position',
+          },
+        },
+        result_page: {
+          detail: {
+            title: 'Inventory Result Detail',
+          },
+          search_placeholder: 'Search inventory results',
+        },
+        subProcess: {
+          detail: {
+            title: 'Sub Process Detail',
+          },
+        },
       },
     },
   },
-} satisfies LocaleConfig;
+} satisfies AppLevelLocaleConfig;

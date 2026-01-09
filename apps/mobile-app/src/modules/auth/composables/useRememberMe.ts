@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue';
+import { storage } from '@btc/shared-utils';
 
 const STORAGE_KEY = 'mobile_remembered_username';
 
@@ -8,7 +9,7 @@ export function useRememberMe() {
 
   // 从本地存储恢复记住的用户名
   onMounted(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = storage.get<string>(STORAGE_KEY);
     if (stored) {
       rememberedUsername.value = stored;
       rememberMe.value = true;
@@ -18,9 +19,9 @@ export function useRememberMe() {
   // 保存用户名
   const saveUsername = (username: string) => {
     if (rememberMe.value) {
-      localStorage.setItem(STORAGE_KEY, username);
+      storage.set(STORAGE_KEY, username);
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      storage.remove(STORAGE_KEY);
     }
   };
 

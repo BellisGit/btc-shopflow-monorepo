@@ -44,13 +44,14 @@ export type { UseLogoutOptions } from './composables/useLogout';
 export { useServiceWithConfirm } from './composables/useServiceWithConfirm';
 export { logoutCore } from './auth/logoutCore';
 export type { LogoutCoreOptions } from './auth/logoutCore';
+export { checkStorageValidity, triggerAutoLogout } from './utils/storage-validity-check';
 export { registerSubAppI18n } from './composables/subapp-i18n/registerSubAppI18n';
 export { useCrossDomainBridge, broadcastLoginMessage } from './composables/useCrossDomainBridge';
 export type { UseCrossDomainBridgeOptions, UseCrossDomainBridgeReturn, BridgeMessage } from './composables/useCrossDomainBridge';
 export { useThemeStore } from './btc/store/theme';
 export { createCrudServiceFromEps } from './btc/service/eps-utils';
-export { getEpsColumns, epsColumnsToTableColumns, epsColumnsToFormItems, generateConfigFromEps } from './btc/service/eps-columns-utils';
-export { getDictData, getAllDictData, updateDictData, batchUpdateDictData, refreshDictData, onDictUpdate, offDictUpdate, setDefaultDictApi, getDefaultDictApi, clearDictCache, initSSEIntegration, cleanupSSEIntegration } from './btc/service/dict-manager';
+export { getEpsColumns, epsColumnsToTableColumns, epsColumnsToFormItems, generateConfigFromEps, mergeEpsDictIntoColumns, mergeEpsDictIntoFormItems } from './btc/service/eps-columns-utils';
+export { getDictData, getAllDictData, updateDictData, batchUpdateDictData, refreshDictData, onDictUpdate, offDictUpdate, setDefaultDictApi, getDefaultDictApi, clearDictCache, initSSEIntegration, cleanupSSEIntegration, isDictCacheEmpty } from './btc/service/dict-manager';
 export type { DictUpdateEvent } from './btc/service/dict-manager';
 export { connectSSE, disconnectSSE, on, off, getSSEStatus } from './btc/service/sse-manager';
 export type { SSEStatus, SSEOptions } from './btc/service/sse-manager';
@@ -58,6 +59,7 @@ export { useDictData, useDictDataMultiple } from './btc/composables/useDictData'
 export { assignIconsToMenuTree } from './utils/menu-icon-assigner';
 export { getMainAppId, isMainAppRoute, isRouteClosable, shouldSkipTabbar, getMainAppHomeRoute, getAppIdFromPath, getMainAppRoutes } from './utils/app-route-utils';
 export { getEnvInfo, getCurrentEnvironment, getCurrentAppId, getCurrentAppConfig } from './utils/env-info';
+export { getMainAppLoginUrl } from './utils/get-main-app-login-url';
 // EnvInfo 类型已在上面从 './composables/useEnvInfo' 导出，避免重复导出
 export { initGlobalStateManager, getGlobalState, waitForGlobalState, setGlobalState, getGlobalStateValue, onGlobalStateChange, cleanupAllListeners, useGlobalState, isGlobalStateInitialized } from './composables/useGlobalState';
 export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './eps';
@@ -65,6 +67,7 @@ export type { EpsServiceData } from './eps';
 export { initResourceLoader, loadResource, getResourceLoaderConfig, clearResourceLoaderCache, setupImageFallback, getCssUrlFallback } from './btc/utils/resource-loader';
 export type { ResourceLoaderOptions } from './btc/utils/resource-loader';
 export { initDynamicImportInterceptor, loadModule, clearModuleCache, getModuleCacheInfo } from './btc/utils/dynamic-import-interceptor';
+export { getProfileInfoFromCache, loadProfileInfoOnLogin, clearProfileInfoCache } from './utils/profile-info-cache';
 
 // Loading 相关导出
 export * from './btc/utils/loading';
@@ -108,7 +111,8 @@ export * from './composables/useCountdown';
 export * from './composables/user-check';
 export * from './composables/useContentMount';
 export * from './composables/useEnvInfo';
-export * from './types/common';
+// 显式导出 types/common 中的类型，避免与 types/schemas 冲突
+export type { BaseResponse } from './types/common';
 export * from './types/crud';
 export * from './utils/menu-icon-assigner';
 export * from './utils/app-route-utils';
@@ -140,4 +144,31 @@ export * from './env';
 // ========== 从 configs 导出的应用扫描器函数 ==========
 export { getAppById, getAllApps, getAppBySubdomain } from './configs/app-scanner';
 export type { AppIdentity } from './configs/app-identity.types';
+
+// ========== Zod 验证工具导出 ==========
+export * from './utils/zod';
+// 注意：createBaseResponseSchema 在 utils/http/schemas 和 types/schemas 中都有定义
+// 优先使用 utils/http/schemas 中的版本（更通用）
+export { 
+  createBaseResponseSchema, 
+  createPageResponseSchema, 
+  createApiResponseSchema, 
+  validateResponse, 
+  safeValidateResponse, 
+  emptyDataSchema,
+  // API 类型验证相关
+  validateApiResponseByType,
+  inferApiDataType,
+  listApiResponseSchema,
+  detailApiResponseSchema,
+  booleanApiResponseSchema,
+  numberApiResponseSchema,
+  stringApiResponseSchema,
+} from './utils/http/schemas';
+export type { ApiDataType } from './utils/http/schemas';
+export * from './utils/form/zod-validator';
+export * from './configs/schemas';
+// 从 types/schemas 导出类型和 schema，但排除 createBaseResponseSchema（已在上面导出）
+export { DictItemSchema, PageParamsSchema, PageResponseSchema } from './types/schemas';
+export type { DictItem, PageParams, PageResponse } from './types/schemas';
 

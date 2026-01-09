@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CRUD 相关类型定义
  */
 
@@ -65,6 +65,26 @@ export interface TableColumn {
 }
 
 /**
+ * 表单验证规则（兼容 Element Plus 格式）
+ */
+export interface FormItemRule {
+  required?: boolean;
+  message?: string;
+  trigger?: string | string[];
+  validator?: (rule: any, value: any, callback: any) => void;
+  // 字符串验证
+  min?: number; // 最小长度
+  max?: number; // 最大长度
+  pattern?: RegExp; // 正则表达式
+  // 数字验证
+  type?: 'string' | 'number' | 'boolean' | 'method' | 'regexp' | 'integer' | 'float' | 'array' | 'object' | 'enum' | 'date' | 'url' | 'hex' | 'email';
+  // 其他验证选项
+  len?: number; // 精确长度
+  enum?: any[]; // 枚举值
+  whitespace?: boolean; // 是否允许空白字符
+}
+
+/**
  * 表单项配置
  */
 export interface FormItem {
@@ -76,7 +96,9 @@ export interface FormItem {
   disabled?: boolean;
   readonly?: boolean;
   options?: Array<{ label: string; value: any; disabled?: boolean }>;
-  rules?: Array<{ required?: boolean; message?: string; trigger?: string; validator?: (rule: any, value: any, callback: any) => void }>;
+  rules?: FormItemRule | FormItemRule[]; // 支持单个规则或规则数组
+  // Zod schema 支持（可选，用于类型安全的表单验证）
+  zodSchema?: import('zod').ZodTypeAny;
   span?: number;
   offset?: number;
   push?: number;

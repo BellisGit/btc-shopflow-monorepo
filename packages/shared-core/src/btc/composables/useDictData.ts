@@ -42,7 +42,8 @@ export function useDictData(
   onMounted(() => {
     onDictUpdate(updateOptions);
     // 初始化时也更新一次
-    options.value = getDictData(resource, fieldName);
+    const initialData = getDictData(resource, fieldName);
+    options.value = initialData;
   });
 
   // 取消订阅

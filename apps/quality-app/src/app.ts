@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const qualityAppIdentity: AppIdentity = {
   id: 'quality',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('common.system.btc_shop_management_system'),
   pathPrefix: '/quality',
   subdomain: 'quality.bellis.com.cn',

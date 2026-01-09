@@ -44,15 +44,15 @@ export function setupErrorHandler(router: Router) {
             if (loginRoute && loginRoute.matched.length > 0) {
               router.replace({
                 path: '/login',
-                query: { redirect: currentRoute.fullPath },
+                query: { oauth_callback: currentRoute.fullPath },
               }).catch(() => {
-                window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+                window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
               });
             } else {
-              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+              window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
             }
           } catch (error) {
-            window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+            window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
           } finally {
             const loadingEl = document.getElementById('Loading');
             if (loadingEl) {
@@ -125,7 +125,7 @@ export function setupErrorHandler(router: Router) {
             if (currentRoute.path !== '/login') {
               router.replace({
                 path: '/login',
-                query: { redirect: currentRoute.fullPath },
+                query: { oauth_callback: currentRoute.fullPath },
               }).catch(() => {
                 const loadingEl = document.getElementById('Loading');
                 if (loadingEl) {

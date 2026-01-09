@@ -2,6 +2,8 @@
 // 静态导入会导致 qiankun 的 effects 模块被执行，触发定时器创建，导致警告
 // import { registerMicroApps, start } from 'qiankun';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { storage } from '@btc/shared-utils';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { microApps } from './apps';
 import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
 import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
@@ -312,9 +314,11 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
     const normalizedIndex = normalizeMenuPath(item.index, appName);
+    const labelKey = item.labelKey || item.title || item.label;
     return {
       index: normalizedIndex,
-      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      title: labelKey ?? normalizedIndex,
+      labelKey: labelKey, // 关键：保存 labelKey 用于面包屑翻译
       icon: item.icon,
       children: item.children && item.children.length > 0
         ? item.children.map(convertToMenuItem)
@@ -404,8 +408,7 @@ export async function registerManifestMenusForApp(appName: string) {
  */
 function getCurrentLocale(): string {
   // 从统一存储读取，或返回默认值
-  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 }
 
 /**
@@ -1238,7 +1241,7 @@ export async function setupQiankun() {
         // 在切换应用时显示应用级 Loading（包括首次加载）
         // 关键：确保容器隐藏，loading已显示（可能在路由守卫中已显示）
         // 关键：如果正在进行路径规范化，跳过loading处理，避免重复显示
-        const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
+        const isNormalizing = sessionStorage.get<string>('__BTC_ROUTE_NORMALIZING__') === '1';
         if (isAppSwitch && !isNormalizing) {
           // 先隐藏路由loading（如果正在显示），避免蓝色loading闪烁
           try {

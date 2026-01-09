@@ -3,7 +3,11 @@
  * 基于 axios，参考 cool-admin 的实现
  */
 
+import { storage } from '../../utils';
 import axios from 'axios';
+// 导入 Zod 验证工具（可选）
+import { createApiResponseSchema, safeValidateResponse } from '../../utils/http/schemas';
+import { z } from 'zod';
 // axios 1.x 类型导入：直接使用 any 类型作为临时解决方案
 // 注意：axios 1.12.2 的类型导出在不同 TypeScript 配置下可能表现不同
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,22 +67,22 @@ function isDevelopment(): boolean {
 function getDynamicBaseURL(): string {
   // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    // HTTPS 页面：强制清理 localStorage 并返回 /api
-    const stored = localStorage.getItem('dev_api_base_url');
+    // HTTPS 页面：强制清理 storage 并返回 /api
+    const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
     return '/api';
   }
 
-  // 开发环境（HTTP）：清理所有旧的 localStorage 数据（统一使用 /api，不再支持 HTTP URL）
+  // 开发环境（HTTP）：清理所有旧的 storage 数据（统一使用 /api，不再支持 HTTP URL）
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('dev_api_base_url');
+    const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
   }
 
@@ -92,8 +96,8 @@ export function processURL(baseURL: string, url: string): { url: string; baseURL
     if (baseURL.startsWith('http://')) {
       console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
       baseURL = '/api';
-      // 清理 localStorage 中的 HTTP URL
-      localStorage.removeItem('dev_api_base_url');
+      // 清理 storage 中的 HTTP URL
+      storage.remove('dev_api_base_url');
     }
   }
 
@@ -150,8 +154,8 @@ export function createRequest(baseURL: string = ''): Request {
     if (finalBaseURL.startsWith('http://')) {
       console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', finalBaseURL);
       finalBaseURL = '/api';
-      // 清理 localStorage 中的 HTTP URL
-      localStorage.removeItem('dev_api_base_url');
+      // 清理 storage 中的 HTTP URL
+      storage.remove('dev_api_base_url');
     } else if (finalBaseURL && finalBaseURL !== '/api') {
       // HTTPS 页面下，如果不是 /api，也强制使用 /api
       console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', finalBaseURL);
@@ -171,11 +175,11 @@ export function createRequest(baseURL: string = ''): Request {
     (config: any) => {
       // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        // HTTPS 页面：强制清理 localStorage 并返回 /api
-        const stored = localStorage.getItem('dev_api_base_url');
+        // HTTPS 页面：强制清理 storage 并返回 /api
+        const stored = storage.get<string>('dev_api_base_url');
         if (stored && stored !== '/api') {
-          console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-          localStorage.removeItem('dev_api_base_url');
+          console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+          storage.remove('dev_api_base_url');
         }
         // 强制使用 /api，忽略任何其他值
         config.baseURL = '/api';
@@ -217,7 +221,7 @@ export function createRequest(baseURL: string = ''): Request {
       }
 
       // 获取 token
-      const token = localStorage.getItem('token') || '';
+      const token = storage.get<string>('token') || '';
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }

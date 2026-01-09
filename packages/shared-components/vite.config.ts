@@ -101,7 +101,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@btc/shared-core/configs/unified-env-config', '@btc/shared-core/configs/app-scanner', '@btc/shared-core/configs/layout-bridge'],
+      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@btc/shared-core/configs/unified-env-config', '@btc/shared-core/configs/app-scanner', '@btc/shared-core/configs/layout-bridge', 'zod'],
       output: {
         globals: {
           vue: 'Vue',

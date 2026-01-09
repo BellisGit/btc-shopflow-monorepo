@@ -6,7 +6,8 @@
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
-import { responseInterceptor } from '@btc/shared-utils';
+import { responseInterceptor, storage } from '@btc/shared-utils';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { processURL } from '@btc/shared-core';
 import { getCookie, setCookie, getCookieDomain } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
@@ -25,8 +26,8 @@ export class Http {
       if (baseURL.startsWith('http://')) {
         console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
-        // 清理 localStorage 中的 HTTP URL
-        localStorage.removeItem('dev_api_base_url');
+        // 清理 storage 中的 HTTP URL
+        storage.remove('dev_api_base_url');
       } else if (baseURL && baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
         console.warn('[HTTP] 构造函数：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
@@ -52,11 +53,11 @@ export class Http {
       (config: any) => {
         // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
         if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-          // HTTPS 页面：强制清理 localStorage 并返回 /api
-          const stored = localStorage.getItem('dev_api_base_url');
+          // HTTPS 页面：强制清理 storage 并返回 /api
+          const stored = storage.get<string>('dev_api_base_url');
           if (stored && stored !== '/api') {
-            console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-            localStorage.removeItem('dev_api_base_url');
+            console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+            storage.remove('dev_api_base_url');
           }
           // 强制使用 /api，忽略任何其他值
           config.baseURL = '/api';
@@ -149,8 +150,9 @@ export class Http {
     const interceptor = responseInterceptor.createResponseInterceptor();
 
     const onFulfilled = (response: any) => {
-      // 检查是否是登录接口的响应
-      const isLoginResponse = response.config?.url?.includes('/login');
+      // 检查是否是登录接口的响应（必须是 /base/open/login，避免误判其他接口）
+      const url = response.config?.url || '';
+      const isLoginResponse = url.includes('/base/open/login') || url.endsWith('/login');
 
       const result = interceptor.onFulfilled(response);
 
@@ -172,9 +174,9 @@ export class Http {
 
           // 关键：登录成功后，清除 sessionStorage 中的旧轮询状态
           // 这样启动轮询时会立即调用一次 user-check，获取最新的剩余时间
-          if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+          if (typeof window !== 'undefined') {
             try {
-              sessionStorage.removeItem('__btc_user_check_polling_state');
+              sessionStorage.remove('__btc_user_check_polling_state');
             } catch (error) {
               // 静默失败，不影响登录流程
             }
@@ -190,6 +192,48 @@ export class Http {
                 console.warn('[http] Failed to start user check polling after login:', error);
               }
             });
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，加载域列表数据并存储
+          try {
+            // 等待 EPS 服务就绪后再调用
+            setTimeout(async () => {
+              try {
+                const { service } = await import('@services/eps');
+                const { loadDomainListOnLogin } = await import('../utils/domain-cache');
+                if (service && loadDomainListOnLogin) {
+                  await loadDomainListOnLogin(service);
+                }
+              } catch (error) {
+                // 静默失败，不影响登录流程
+                if (import.meta.env.DEV) {
+                  console.warn('[http] Failed to load domain list after login:', error);
+                }
+              }
+            }, 500); // 延迟 500ms 确保 EPS 服务已初始化
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，加载个人信息数据并存储
+          try {
+            // 等待 EPS 服务就绪后再调用
+            setTimeout(async () => {
+              try {
+                const { service } = await import('@services/eps');
+                const { loadProfileInfoOnLogin } = await import('@btc/shared-core');
+                if (service && loadProfileInfoOnLogin) {
+                  await loadProfileInfoOnLogin(service);
+                }
+              } catch (error) {
+                // 静默失败，不影响登录流程
+                if (import.meta.env.DEV) {
+                  console.warn('[http] Failed to load profile info after login:', error);
+                }
+              }
+            }, 500); // 延迟 500ms 确保 EPS 服务已初始化
           } catch (error) {
             // 静默失败
           }
@@ -305,8 +349,8 @@ export class Http {
       if (baseURL.startsWith('http://')) {
         console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
         baseURL = '/api';
-        // 清理 localStorage 中的 HTTP URL
-        localStorage.removeItem('dev_api_base_url');
+        // 清理 storage 中的 HTTP URL
+        storage.remove('dev_api_base_url');
       } else if (baseURL !== '/api') {
         // HTTPS 页面下，如果不是 /api，也强制使用 /api
         console.warn('[HTTP] 检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', baseURL);
@@ -336,22 +380,22 @@ export class Http {
 function getDynamicBaseURL(): string {
   // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    // HTTPS 页面：强制清理 localStorage 并返回 /api
-    const stored = localStorage.getItem('dev_api_base_url');
+    // HTTPS 页面：强制清理 storage 并返回 /api
+    const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
     return '/api';
   }
 
-  // 开发环境（HTTP）：清理所有旧的 localStorage 数据（统一使用 /api，不再支持 HTTP URL）
+  // 开发环境（HTTP）：清理所有旧的 storage 数据（统一使用 /api，不再支持 HTTP URL）
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('dev_api_base_url');
+    const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
   }
 

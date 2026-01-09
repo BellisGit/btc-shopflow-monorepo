@@ -53,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-utils';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { clearErrorList, getErrorListSync, onErrorListUpdate, setCleanupPeriod, type CleanupPeriod } from '@btc/shared-utils/error-monitor';
 import { BtcCrud, BtcRow, BtcFlex1 } from '@btc/shared-components';
@@ -115,12 +116,11 @@ const getErrorTypeDisplayName = (type: string): string => {
   return t(i18nKey);
 };
 
-// 清理周期（从 localStorage 读取，默认保留当天）
+// 清理周期（从 storage 读取，默认保留当天）
 const getStoredCleanupPeriod = (): CleanupPeriod => {
   try {
-    const stored = localStorage.getItem('btc_error');
-    if (stored) {
-      const data = JSON.parse(stored);
+    const data = storage.get<{ cleanupPeriod?: CleanupPeriod }>('btc_error');
+    if (data) {
       if (data.cleanupPeriod &&
           (data.cleanupPeriod === 'today' ||
            data.cleanupPeriod === '3days' ||

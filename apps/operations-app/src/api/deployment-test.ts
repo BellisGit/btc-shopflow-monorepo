@@ -2,6 +2,8 @@
  * 部署测试API接口
  */
 
+import { storage } from '@btc/shared-utils';
+
 export interface TestConfig {
   apps: string[];
   timeout?: number;
@@ -88,7 +90,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
     progress: 0,
   };
   console.log('[deployment-test API] 设置初始状态为 pending');
-  localStorage.setItem(testStatusKey, JSON.stringify(status));
+  storage.set(testStatusKey, status);
 
   // 使用 setTimeout 确保状态更新能被轮询捕获
   setTimeout(async () => {
@@ -98,7 +100,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
       console.log('[deployment-test API] 更新状态为 running');
       status.status = 'running';
       status.progress = 0;
-      localStorage.setItem(testStatusKey, JSON.stringify(status));
+      storage.set(testStatusKey, status);
 
       // 加载部署配置
       const deployConfig = await loadDeployConfig();
@@ -126,7 +128,7 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
         }
         status.currentApp = appName;
         status.progress = Math.round(((i + 1) / totalApps) * 100);
-        localStorage.setItem(testStatusKey, JSON.stringify(status));
+        storage.set(testStatusKey, status);
 
         console.log(`[deployment-test API] 测试应用: ${appName}`);
         const appConfig = deployConfig.apps?.[appName];
@@ -172,15 +174,15 @@ async function executeTestInBackground(testId: string, config: TestConfig) {
       results.summary.duration = Date.now() - startTime;
       status.status = 'completed';
       status.progress = 100;
-      localStorage.setItem(testStatusKey, JSON.stringify(status));
-      localStorage.setItem(testResultsKey, JSON.stringify(results));
+      storage.set(testStatusKey, status);
+      storage.set(testResultsKey, results);
 
       console.log('[deployment-test API] 测试完成:', results);
     } catch (error: unknown) {
       console.error('[deployment-test API] 测试执行失败:', error);
       status.status = 'failed';
       status.error = error instanceof Error ? error.message : String(error);
-      localStorage.setItem(testStatusKey, JSON.stringify(status));
+      storage.set(testStatusKey, status);
     }
   }, 100); // 100ms 后开始执行，确保状态能被轮询捕获
 }
@@ -368,13 +370,13 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
     };
   }
 
-  // 直接从localStorage读取状态（前端实现）
+  // 直接从 storage 读取状态（前端实现）
   const statusKey = `deployment-test-${testId}`;
-  const statusJson = localStorage.getItem(statusKey);
+  const status = storage.get<TestStatus>(statusKey);
 
-  console.log('[deployment-test API] localStorage key:', statusKey, 'value:', statusJson);
+  console.log('[deployment-test API] storage key:', statusKey, 'value:', status);
 
-  if (!statusJson) {
+  if (!status) {
     console.warn('[deployment-test API] 测试状态不存在');
     return {
       status: 'failed',
@@ -382,8 +384,7 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
     };
   }
 
-  const status = JSON.parse(statusJson);
-  console.log('[deployment-test API] 从localStorage读取的状态:', status);
+  console.log('[deployment-test API] 从 storage 读取的状态:', status);
   return status;
 }
 
@@ -391,17 +392,16 @@ export async function getTestStatus(testId: string): Promise<TestStatus> {
  * 获取测试报告
  */
 export async function getTestReport(testId: string): Promise<TestReport> {
-  // 直接从localStorage读取报告（前端实现）
+  // 直接从 storage 读取报告（前端实现）
   console.log('[deployment-test API] 获取测试报告，testId:', testId);
   const resultsKey = `deployment-test-results-${testId}`;
-  const resultsJson = localStorage.getItem(resultsKey);
+  const report = storage.get<TestReport>(resultsKey);
 
-  if (!resultsJson) {
+  if (!report) {
     throw new Error('测试报告不存在');
   }
 
-  const report = JSON.parse(resultsJson);
-  console.log('[deployment-test API] 从localStorage读取的报告:', report);
+  console.log('[deployment-test API] 从 storage 读取的报告:', report);
   return report;
 }
 
@@ -412,13 +412,12 @@ export async function stopTest(testId: string): Promise<void> {
   // 前端实现：更新状态为停止
   console.log('[deployment-test API] 停止测试，testId:', testId);
   const statusKey = `deployment-test-${testId}`;
-  const statusJson = localStorage.getItem(statusKey);
+  const status = storage.get<TestStatus>(statusKey);
 
-  if (statusJson) {
-    const status: TestStatus = JSON.parse(statusJson);
+  if (status) {
     status.status = 'failed';
     status.error = '测试已停止';
-    localStorage.setItem(statusKey, JSON.stringify(status));
+    storage.set(statusKey, status);
   }
 }
 

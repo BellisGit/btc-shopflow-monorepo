@@ -22,7 +22,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { BtcTableGroup } from '@btc/shared-components';
-import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
+import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n, mergeEpsDictIntoColumns, mergeEpsDictIntoFormItems } from '@btc/shared-core';
+import { service, list } from '@services/eps';
 
 const { t } = useI18n();
 const tableGroupRef = ref();
@@ -40,9 +41,31 @@ const services = {
   sysrole: usePageService('access.roles', 'sysrole'),
 };
 
-// 动态表格列配置 - 扩展以支持动态 formatter
+// 从 EPS 数据中自动合并字典数据到表格列
 const roleColumns = computed(() => {
-  return baseColumns.value.map(col => {
+  // 先合并 EPS 字典数据
+  let mergedColumns = mergeEpsDictIntoColumns(
+    baseColumns.value,
+    ['admin', 'iam', 'role'],
+    service,
+    list
+  );
+
+  // 然后处理特殊字段（domainId 和 parentId 不是从字典接口获取的）
+  return mergedColumns.map(col => {
+    // 如果列是 domainId，使用左侧列表的 domainOptions
+    if (col.prop === 'domainId') {
+      return {
+        ...col,
+        formatter: (row: any) => {
+          if (!row.domainId || domainOptions.value.length === 0) {
+            return t('common.access.unassigned');
+          }
+          const domain = domainOptions.value.find((d: any) => d.id === row.domainId);
+          return domain ? domain.name : row.domainId;
+        }
+      };
+    }
     // 如果列是 parentId，添加动态 formatter
     if (col.prop === 'parentId') {
       return {
@@ -56,48 +79,31 @@ const roleColumns = computed(() => {
         }
       };
     }
-    // 如果列是 domainId，添加动态 formatter
-    if (col.prop === 'domainId') {
-      return {
-        ...col,
-        formatter: (row: any) => {
-          if (!row.domainId || domainOptions.value.length === 0) {
-            return t('common.access.unassigned');
-          }
-          const domain = domainOptions.value.find((d: any) => d.id === row.domainId);
-          return domain ? domain.name : row.domainId;
-        }
-      };
-    }
     return col;
   });
 });
 
-// 动态表单配置 - 扩展以支持动态 options
+// 从 EPS 数据中自动合并字典数据到表单项
 const formItems = computed(() => {
-  return baseFormItems.value.map(item => {
-    // 如果表单项是 parentId，添加动态 options
+  // 先合并 EPS 字典数据
+  let mergedFormItems = mergeEpsDictIntoFormItems(
+    baseFormItems.value,
+    ['admin', 'iam', 'role'],
+    service,
+    list
+  );
+
+  // 然后处理特殊字段（parentId 不是从字典接口获取的）
+  return mergedFormItems.map(item => {
+    // 如果表单项是 parentId，添加动态 options（从角色列表获取）
     if (item.prop === 'parentId') {
       return {
         ...item,
         component: {
           ...item.component,
           props: {
-            ...item.component?.props,
+            ...(typeof item.component === 'object' && item.component?.props ? item.component.props : {}),
             options: roleOptions.value,
-          },
-        },
-      };
-    }
-    // 如果表单项是 domainId，添加动态 options
-    if (item.prop === 'domainId') {
-      return {
-        ...item,
-        component: {
-          ...item.component,
-          props: {
-            ...item.component?.props,
-            options: domainOptions.value,
           },
         },
       };
@@ -116,14 +122,12 @@ function getRoleTagType(roleType: string): 'danger' | 'success' | 'info' | 'prim
   return typeMap[roleType] || 'info';
 }
 
+
 // 加载角色数据
 async function loadRoleOptions() {
   try {
     const response = await services.sysrole?.list({});
     roleOptions.value = response?.list || [];
-    // 注意：不需要手动刷新表格，因为：
-    // 1. roleOptions 是响应式的，更新后会自动触发表格列的 formatter 重新计算
-    // 2. 表格会在左侧选择时自动刷新，避免重复调用
   } catch (error) {
     console.error('Failed to load role data:', error);
   }
@@ -133,7 +137,7 @@ async function loadRoleOptions() {
 function handleLoad(data: any[]) {
   // 左侧数据加载完成，更新域选项
   domainOptions.value = data;
-  
+
   // 延迟加载角色选项，避免在页面初始化时立即调用
   // 等待左侧列表加载完成后再加载角色选项
   if (roleOptions.value.length === 0) {
@@ -155,7 +159,7 @@ async function handleRoleInfo(role: any, { next, done }: any) {
     // 调用 service.info 获取角色详情
     const roleDetail = await next(role);
 
-    // 处理域数据回填
+    // 处理域数据回填（使用左侧列表的 domainOptions）
     if (roleDetail.domainId && domainOptions.value.length > 0) {
       // 查找对应的域对象
       const findDomain = (options: any[], id: string): any => {
@@ -192,7 +196,7 @@ async function handleRoleInfo(role: any, { next, done }: any) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 注意：不再在 onMounted 时立即加载角色选项
   // 改为在 handleLoad 中延迟加载，避免重复调用
   // loadRoleOptions();

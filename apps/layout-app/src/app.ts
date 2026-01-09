@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const layoutAppIdentity: AppIdentity = {
   id: 'layout',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('app.description'),
   pathPrefix: '/',
   subdomain: 'layout.bellis.com.cn',

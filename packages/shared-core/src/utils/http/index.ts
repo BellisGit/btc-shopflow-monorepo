@@ -5,6 +5,10 @@
 
 // messageManager 现在由外部提供，不再从本地导入
 
+// 导入 Zod 验证工具（可选）
+import { createApiResponseSchema, safeValidateResponse } from './schemas';
+import { z } from 'zod';
+
 // 消息显示接口，由外部实现
 export interface MessageHandler {
   success: (message: string) => void;
@@ -24,6 +28,8 @@ export interface RouterHandler {
 }
 
 // 响应数据结构
+// 注意：类型定义保留以保持向后兼容，实际类型可以从 Zod schema 推断
+// @see packages/shared-core/src/utils/http/schemas.ts
 export interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -248,9 +254,54 @@ export class ResponseInterceptor {
 
   /**
    * 处理成功响应
+   * @param response API 响应数据
+   * @param responseSchema 可选的 Zod schema，用于验证响应结构
    */
-  handleSuccess<T>(response: ApiResponse<T>): T | ApiResponse<T> | Promise<never> {
+  handleSuccess<T>(
+    response: ApiResponse<T>,
+    responseSchema?: z.ZodType<ApiResponse<T>>
+  ): T | ApiResponse<T> | Promise<never> {
     const { code, data, msg } = response;
+
+    // 开发和生产环境：如果提供了 schema，进行验证
+    if (responseSchema) {
+      const validation = safeValidateResponse(responseSchema, response);
+      if (!validation.success) {
+        // TypeScript 类型守卫：在 !validation.success 分支中，validation 一定是 { success: false; error: ... }
+        const error = (validation as { success: false; error: z.ZodError }).error;
+        const errorMessage = `[HTTP响应验证] 响应数据不符合预期格式: ${error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`;
+        
+        if (import.meta.env.DEV) {
+          console.warn(errorMessage, {
+            errors: error.errors,
+            response,
+          });
+        } else {
+          // 生产环境：记录警告并上报
+          console.warn(errorMessage);
+          // 上报验证失败（异步，不阻塞）
+          import('../zod/reporting').then(({ reportValidationError }) => {
+            // 构建上下文对象，只在属性存在时才添加（避免 undefined，符合 exactOptionalPropertyTypes）
+            const errorContext: {
+              url?: string;
+            } = {};
+            if (typeof window !== 'undefined' && window.location.href) {
+              errorContext.url = window.location.href;
+            }
+            
+            reportValidationError(
+              'api-response',
+              'ApiResponse',
+              error,
+              errorContext
+            );
+          }).catch(() => {
+            // 如果导入失败，静默跳过
+          });
+        }
+        // 验证失败不中断流程，继续处理
+      }
+    }
 
     // 如果没有 code 字段，直接返回原始数据
     if (code === undefined || code === null) {
@@ -499,6 +550,7 @@ export class ResponseInterceptor {
         // 调用 handleSuccess 处理 response.data（业务响应数据）
         // handleSuccess 会提取出 data.data（实际业务数据）
         // 注意：handleSuccess 可能返回 Promise.reject，这会被 axios 正确处理
+        // 开发环境：可选验证响应结构
         const result = this.handleSuccess(data);
 
         // 确保返回处理后的数据（response.data 经过 handleSuccess 处理后的结果）

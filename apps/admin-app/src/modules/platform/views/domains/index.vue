@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
-import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
@@ -38,13 +38,6 @@ const tableRef = ref();
 // 租户下拉选项
 const tenantOptions = ref<{ label: string; value: any }[]>([]);
 const tenantLoading = ref(false);
-const tenantLabelMap = computed(() => {
-  const map = new Map<any, string>();
-  tenantOptions.value.forEach((item) => {
-    map.set(item.value, item.label);
-  });
-  return map;
-});
 
 const loadTenantOptions = async () => {
   const tenantService = service.admin?.iam?.tenant;
@@ -62,7 +55,8 @@ const loadTenantOptions = async () => {
 
     tenantOptions.value = list
       .map((tenant: any) => {
-        const value = tenant?.id ?? tenant?.tenantId ?? tenant?.tenantCode ?? tenant?.code;
+        // 使用 tenantCode 作为值，优先使用 tenantName 作为显示标签，如果没有则使用 tenantCode
+        const value = tenant?.tenantCode ?? tenant?.code;
         const label = tenant?.tenantName ?? tenant?.name ?? tenant?.tenantCode ?? value;
 
         if (value === undefined || value === null) {
@@ -90,30 +84,20 @@ onMounted(() => {
 // 从 config.ts 读取配置
 const { columns: baseColumns } = usePageColumns('platform.domains');
 const { formItems: baseFormItems } = usePageForms('platform.domains');
-const pageConfig = getPageConfigFull('platform.domains');
 
 // 使用 config.ts 中定义的 service，并添加删除确认逻辑
 const wrappedDomainService = usePageService('platform.domains', 'domain');
 
-// 域表格列 - 扩展配置以支持动态 formatter
+// 域表格列 - 直接使用 baseColumns，因为 tenantCode 不需要 formatter
 const columns = computed(() => {
-  return baseColumns.value.map(col => {
-    // 如果列是 tenantId，添加动态 formatter
-    if (col.prop === 'tenantId') {
-      return {
-        ...col,
-        formatter: (_row: any, _column: any, cellValue: any) => tenantLabelMap.value.get(cellValue) ?? cellValue ?? '-',
-      };
-    }
-    return col;
-  });
+  return baseColumns.value;
 });
 
 // 域表单 - 扩展配置以支持动态 options
 const formItems = computed(() => {
   return baseFormItems.value.map(item => {
-    // 如果表单项是 tenantId，添加动态 options 和 loading
-    if (item.prop === 'tenantId') {
+    // 如果表单项是 tenantCode，添加动态 options 和 loading
+    if (item.prop === 'tenantCode') {
       return {
         ...item,
         component: {

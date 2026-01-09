@@ -9,13 +9,22 @@
 ### 新增
 - 添加 Git 提交模板和标签规范文档
 - 统一管理应用和物流应用的国际化配置方式
+- 新增存储有效性检查工具（`checkStorageValidity` 和 `triggerAutoLogout`），实现自动退出功能
+- 新增统一登录跳转工具（`getMainAppLoginUrl`），支持所有子应用统一跳转到主应用登录页
 
 ### 变更
 - 将管理应用的 JSON 国际化文件置空，统一使用 config.ts 扫描方案
 - 修复物流应用菜单层级结构，使用 `_` 键作为一级菜单文本
+- 统一重定向参数：所有登录、退出、重定向统一使用 `oauth_callback` 参数，移除 `redirect` 参数兼容性
+- 统一登录跳转逻辑：所有子应用使用共享的 `getMainAppLoginUrl` 函数，支持跨域/跨端口跳转
+- 优化路由变化事件处理：从 manifest 获取路由信息，补充 labelKey 等 meta 信息
 
 ### 修复
 - 修复 `registerSubAppI18n` 中 `flattenObject` 和 `unflattenObject` 对 `_` 键的处理逻辑
+- 修复自动退出逻辑：改为在存储工具中检查有效性，只检查 `btc_profile_info_data` 是否存在
+- 修复概览页面跳转时 tag 国际化失效问题：从 manifest 获取路由信息并补充 labelKey
+- 修复登录页面刷新瞬间显示整个紫色背景的问题：为渐变边框添加初始隐藏状态和淡入动画
+- 修复构建时 `@btc/subapp-manifests` 导入错误：改为使用相对路径导入 manifest 模块
 
 ---
 

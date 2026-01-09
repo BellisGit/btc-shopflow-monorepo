@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const engineeringAppIdentity: AppIdentity = {
   id: 'engineering',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('common.system.btc_shop_management_system'),
   pathPrefix: '/engineering',
   subdomain: 'engineering.bellis.com.cn',

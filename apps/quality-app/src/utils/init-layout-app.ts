@@ -8,6 +8,7 @@
  * 3. 提供详细的错误日志，便于排查问题
  */
 
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { tSync } from '../i18n/getters';
 
 /**
@@ -16,7 +17,7 @@ import { tSync } from '../i18n/getters';
 function showLoading() {
   // 检查是否有导航标记或需要显示 Loading
   try {
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    const shouldShowLoading = sessionStorage.get<string>('__BTC_NAV_LOADING__') === '1' || true;
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -68,7 +69,7 @@ function removeLoadingElement() {
  */
 function clearNavigationFlag() {
   try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+    sessionStorage.remove('__BTC_NAV_LOADING__');
   } catch (e) {
     // 静默失败（某些浏览器可能禁用 sessionStorage）
   }

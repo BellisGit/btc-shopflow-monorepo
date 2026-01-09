@@ -411,3 +411,116 @@ export function generateConfigFromEps(
     forms: formItems,
   };
 }
+
+/**
+ * 从 EPS 数据中合并字典数据到现有的表格列配置
+ * @param columns 现有的表格列配置
+ * @param servicePath EPS 服务路径
+ * @param serviceRoot EPS 服务根对象
+ * @param epsList 可选的 EPS 实体列表
+ * @returns 合并后的表格列配置
+ */
+export function mergeEpsDictIntoColumns(
+  columns: TableColumn[],
+  servicePath: string | string[],
+  serviceRoot: any,
+  epsList?: any[]
+): TableColumn[] {
+  // 获取 EPS columns
+  const epsColumns = getEpsColumns(servicePath, serviceRoot, epsList);
+  
+  // 创建 EPS columns 的映射（按 propertyName）
+  const epsDictMap = new Map<string, Array<{label: string, value: any}>>();
+  epsColumns.forEach((col) => {
+    if (col.dict && Array.isArray(col.dict) && col.dict.length > 0) {
+      epsDictMap.set(col.propertyName, col.dict);
+    }
+  });
+  
+  // 合并字典数据到现有 columns
+  return columns.map((col) => {
+    if (!col.prop) return col;
+    
+    const dictData = epsDictMap.get(col.prop);
+    if (dictData) {
+      return {
+        ...col,
+        dict: dictData,
+        dictColor: col.dictColor !== undefined ? col.dictColor : true, // 如果未设置，默认启用彩色标签
+      };
+    }
+    
+    return col;
+  });
+}
+
+/**
+ * 从 EPS 数据中合并字典数据到现有的表单项配置
+ * @param formItems 现有的表单项配置
+ * @param servicePath EPS 服务路径
+ * @param serviceRoot EPS 服务根对象
+ * @param epsList 可选的 EPS 实体列表
+ * @returns 合并后的表单项配置
+ */
+export function mergeEpsDictIntoFormItems(
+  formItems: FormItem[],
+  servicePath: string | string[],
+  serviceRoot: any,
+  epsList?: any[]
+): FormItem[] {
+  // 获取 EPS columns
+  const epsColumns = getEpsColumns(servicePath, serviceRoot, epsList);
+  
+  // 创建 EPS columns 的映射（按 propertyName）
+  const epsDictMap = new Map<string, Array<{label: string, value: any}>>();
+  epsColumns.forEach((col) => {
+    if (col.dict && Array.isArray(col.dict) && col.dict.length > 0) {
+      epsDictMap.set(col.propertyName, col.dict);
+    }
+  });
+  
+  // 合并字典数据到现有 formItems
+  return formItems.map((item) => {
+    if (!item.prop) return item;
+    
+    const dictData = epsDictMap.get(item.prop);
+    if (dictData) {
+      // 如果表单项已经有 component 配置，更新其 options
+      // 如果没有 component 配置，创建一个 el-select 组件
+      const existingComponent = item.component;
+      
+      if (existingComponent && typeof existingComponent === 'object') {
+        // 已有 component 配置，更新 options
+        const componentName = existingComponent.name || 'el-select';
+        return {
+          ...item,
+          component: {
+            ...existingComponent,
+            name: componentName,
+            options: dictData,
+            props: {
+              ...(existingComponent.props || {}),
+              clearable: existingComponent.props?.clearable !== undefined ? existingComponent.props.clearable : true,
+              ...(componentName === 'el-select' && existingComponent.props?.filterable === undefined ? { filterable: true } : {}),
+            },
+          },
+        };
+      } else {
+        // 没有 component 配置，创建一个 el-select 组件
+        return {
+          ...item,
+          component: {
+            name: 'el-select',
+            options: dictData,
+            props: {
+              clearable: true,
+              filterable: true,
+            },
+          },
+        };
+      }
+    }
+    
+    return item;
+  });
+}

@@ -97,7 +97,8 @@
                     "src/**/*.tsx",
                     "src/**/*.vue",
                     "src/env.d.ts",
-                    "../../configs/**/*.ts"
+                    "../../configs/**/*.ts",
+                    "../../types/**/*.d.ts"
                 ],
     "exclude": ["node_modules", "dist", "../../packages/**/dist/**/*.js", "../../packages/**/dist/**/*.mjs"],
     "references":  [

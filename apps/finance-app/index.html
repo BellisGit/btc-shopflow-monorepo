@@ -93,6 +93,8 @@
             return; // qiankun环境下不显示index.html中的loading
           }
           
+          // 特殊情况：在 HTML 内联脚本中，无法等待模块加载，必须直接使用 sessionStorage
+          // 注意：正常情况下应使用 @btc/shared-core/utils/storage/session 中的 sessionStorage 工具
           const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1';
           if (shouldShowLoading) {
             // 使用内联样式立即显示 Loading，不等待 DOMContentLoaded

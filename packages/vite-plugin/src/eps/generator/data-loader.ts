@@ -181,7 +181,7 @@ export async function getData(
       });
     } catch (err) {
       // 字典数据获取失败不影响 EPS 数据加载
-      console.warn('[eps] 字典数据获取失败，跳过字典映射:', err);
+      // 静默失败，不输出日志
     }
   }
 }

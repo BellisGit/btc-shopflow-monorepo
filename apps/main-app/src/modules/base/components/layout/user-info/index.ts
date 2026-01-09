@@ -86,7 +86,8 @@ export function useUserInfo() {
 
   // 监听用户信息更新事件
   const handleUserInfoUpdated = (event: CustomEvent) => {
-    const { avatar, name } = event.detail || {};
+    const detail = event.detail || {};
+    const { avatar, name, ...restInfo } = detail;
 
     // 更新统一存储
     if (avatar) {
@@ -97,7 +98,16 @@ export function useUserInfo() {
     }
 
     // 更新 profileUserInfo，触发响应式更新
-    if (profileUserInfo.value) {
+    // 关键：如果事件中传递了完整的用户信息，使用完整信息；否则只更新 avatar 和 name
+    if (Object.keys(restInfo).length > 0) {
+      // 有完整的用户信息，使用完整信息
+      profileUserInfo.value = {
+        ...restInfo,
+        ...(avatar && { avatar }),
+        ...(name && { name }),
+      };
+    } else if (profileUserInfo.value) {
+      // 只有部分信息，合并到现有数据
       profileUserInfo.value = {
         ...profileUserInfo.value,
         ...(avatar && { avatar }),
@@ -111,8 +121,20 @@ export function useUserInfo() {
       profileUserInfo.value = {
         avatar: avatar || cachedAvatar || currentUser?.avatar || '/logo.png',
         name: name || cachedName || currentUser?.name || '',
-        position: currentUser?.position || '',
+        position: currentUser?.position || restInfo?.position || '',
+        ...restInfo, // 合并其他信息
       };
+    }
+
+    // 同时更新 useUser 中的信息，保持一致性
+    const currentUser = getUserInfo();
+    if (currentUser) {
+      setUserInfo({
+        ...currentUser,
+        name: name || currentUser.name,
+        position: restInfo?.position || currentUser.position,
+        avatar: avatar || currentUser.avatar,
+      });
     }
 
     // 更新显示名称
@@ -173,27 +195,58 @@ export function useUserInfo() {
     };
   });
 
-  // 加载用户信息（从个人信息服务）
+  // 加载用户信息（只从持久化存储读取，不调用接口）
+  // 关键：刷新时只从存储读取，接口由主应用在登录时统一调用
   const loadProfileInfo = async () => {
     try {
-      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+      if (import.meta.env.DEV) {
+        console.log('[useUserInfo] loadProfileInfo 被调用（只从缓存读取，不调用接口）');
+      }
+      
+      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该加载
       const user = appStorage.user.get();
       if (!user) {
+        if (import.meta.env.DEV) {
+          console.log('[useUserInfo] 用户未登录，跳过加载');
+        }
         return;
       }
 
-      // 等待 EPS 服务可用
-      const currentService = await waitForEpsService();
-      if (!currentService) {
-        return;
+      // 从持久化存储读取个人信息数据（只从缓存读取，不调用接口）
+      const { getProfileInfoFromCache } = await import('@btc/shared-core/utils/profile-info-cache');
+      const cachedProfileInfo = getProfileInfoFromCache();
+      
+      if (import.meta.env.DEV) {
+        console.log('[useUserInfo] 从缓存读取结果:', cachedProfileInfo ? '有数据' : '无数据');
       }
 
-      if (!currentService.admin?.base?.profile?.info) {
-        return;
-      }
+      if (cachedProfileInfo) {
+        // 使用存储的数据
+        profileUserInfo.value = cachedProfileInfo;
 
-      // 如果 profileUserInfo 还没有值，从缓存读取（初始化时已经读取过，这里作为兜底）
-      if (!profileUserInfo.value) {
+        // 更新统一存储（头像和用户名）
+        if (cachedProfileInfo.avatar) {
+          appStorage.user.setAvatar(cachedProfileInfo.avatar);
+        }
+        if (cachedProfileInfo.name) {
+          appStorage.user.setName(cachedProfileInfo.name);
+        }
+
+        // 同时更新 useUser 中的信息，保持一致性
+        const currentUser = getUserInfo();
+        if (currentUser) {
+          setUserInfo({
+            ...currentUser,
+            name: cachedProfileInfo.name || currentUser.name,
+            position: cachedProfileInfo.position || currentUser.position,
+            avatar: cachedProfileInfo.avatar || currentUser.avatar,
+          });
+        }
+
+        // 初始化显示名称
+        displayedName.value = cachedProfileInfo.name || cachedProfileInfo.realName || '';
+      } else {
+        // 如果存储中没有数据，从现有的缓存读取（向后兼容）
         const cachedUser = getUserInfo();
         const cachedAvatar = appStorage.user.getAvatar();
         const cachedName = appStorage.user.getName();
@@ -206,37 +259,11 @@ export function useUserInfo() {
           displayedName.value = cachedName || cachedUser?.name || '';
         }
       }
-
-      // 获取脱敏信息（用于显示头像和基本信息）
-      const data = await currentService.admin.base.profile.info();
-
-      if (data) {
-        profileUserInfo.value = data;
-
-        // 更新统一存储（头像和用户名）
-        if (data.avatar) {
-          appStorage.user.setAvatar(data.avatar);
-        }
-        if (data.name) {
-          appStorage.user.setName(data.name);
-        }
-
-        // 同时更新 useUser 中的信息，保持一致性
-        const currentUser = getUserInfo();
-        if (currentUser) {
-          setUserInfo({
-            ...currentUser,
-            name: data.name || currentUser.name,
-            position: data.position || currentUser.position,
-            avatar: data.avatar || currentUser.avatar,
-          });
-        }
-
-        // 初始化显示名称
-        displayedName.value = data.name || data.realName || '';
-      }
     } catch (error) {
       // 静默失败，不影响页面显示
+      if (import.meta.env.DEV) {
+        console.warn('加载用户信息失败:', error);
+      }
     }
   };
 

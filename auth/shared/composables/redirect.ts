@@ -3,8 +3,10 @@
  * 用于处理登录后跳转到子应用的逻辑
  */
 
+import { storage } from '@btc/shared-core/utils/storage';
+
 /**
- * localStorage 键名：保存退出前的路径
+ * storage 键名：保存退出前的路径
  */
 const LOGOUT_REDIRECT_KEY = 'btc_logout_redirect_path';
 
@@ -151,10 +153,10 @@ export async function saveLogoutRedirectPath(): Promise<void> {
 
   try {
     const currentPath = await getCurrentUnifiedPath();
-    // 保存到 localStorage，以便在跨域跳转后仍能访问
-    // 注意：由于跨域限制，localStorage 在不同子域名之间无法共享
+    // 保存到 storage，以便在跨域跳转后仍能访问
+    // 注意：由于跨域限制，storage 在不同子域名之间无法共享
     // 但可以在同一域名下使用（开发环境或主域名下）
-    localStorage.setItem(LOGOUT_REDIRECT_KEY, currentPath);
+    storage.set(LOGOUT_REDIRECT_KEY, currentPath);
   } catch (error) {
     console.warn('[saveLogoutRedirectPath] Failed to save logout redirect path:', error);
   }
@@ -172,10 +174,10 @@ export function getAndClearLogoutRedirectPath(): string | null {
   }
 
   try {
-    const savedPath = localStorage.getItem(LOGOUT_REDIRECT_KEY);
+    const savedPath = storage.get<string>(LOGOUT_REDIRECT_KEY);
     if (savedPath) {
       // 获取后清除
-      localStorage.removeItem(LOGOUT_REDIRECT_KEY);
+      storage.remove(LOGOUT_REDIRECT_KEY);
       return savedPath;
     }
     return null;
@@ -437,11 +439,19 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
 
   // 提取子应用内的路径（移除应用前缀）
   const appPrefix = `/${subAppName}`;
-  const subAppPath = redirectPath.startsWith(`${appPrefix}/`)
+  let subAppPath = redirectPath.startsWith(`${appPrefix}/`)
     ? redirectPath.substring(appPrefix.length)
     : redirectPath === appPrefix
     ? '/'
     : redirectPath;
+
+  // 规范化路径：确保以 / 开头，但避免多个斜杠
+  // 如果 subAppPath 为空或不是以 / 开头，添加 /
+  if (!subAppPath || !subAppPath.startsWith('/')) {
+    subAppPath = `/${subAppPath}`;
+  }
+  // 移除多余的斜杠（但保留单个 /）
+  subAppPath = subAppPath.replace(/\/+/g, '/');
 
   try {
     // 使用统一的环境检测和配置
@@ -483,8 +493,9 @@ export async function handleCrossAppRedirect(redirectPath: string, _router?: any
       }
     } else if (env === 'development') {
       // 开发环境：使用开发环境的端口
+      // 注意：使用 protocol-relative URL (//host:port) 时，需要确保 subAppPath 以 / 开头
       if (appConfig.devHost && appConfig.devPort) {
-        targetUrl = `//${appConfig.devHost}:${appConfig.devPort}${subAppPath}`;
+        targetUrl = `${protocol}//${appConfig.devHost}:${appConfig.devPort}${subAppPath}`;
       } else {
         return false;
       }

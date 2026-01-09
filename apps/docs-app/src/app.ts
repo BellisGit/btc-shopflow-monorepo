@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const docsSiteAppIdentity: AppIdentity = {
   id: 'docs',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('app.description'),
   pathPrefix: '/docs',
   subdomain: 'docs.bellis.com.cn',

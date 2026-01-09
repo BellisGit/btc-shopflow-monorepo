@@ -9,8 +9,46 @@ import { service } from '@services/eps';
 import { createCrudServiceFromEps } from '@btc/shared-core';
 
 export default {
-  // 国际化配置已移至 locales/config.ts，此处不再需要硬编码值
-  locale: {},
+  locale: {
+    'zh-CN': {
+      // 菜单配置
+      'menu.inventory_management': '盘点管理',
+      'menu.inventory_management.storage_location': '仓位管理',
+      'menu.inventory_management.info': '盘点基础表',
+      'menu.inventory_management.detail': '盘点差异表',
+      'menu.inventory_management.result': '盘点结果表',
+      // 页面标题
+      'inventory.check.list': '盘点列表',
+      // 按钮
+      'logistics.inventory.base.button.pull': '拉取数据',
+      // 错误消息
+      'logistics.inventory.base.pull.failed': '拉取数据失败',
+      // 搜索占位符
+      'logistics.inventory.result.search_placeholder': '请输入物料编码、仓位等信息',
+      // 盘点差异表搜索字段占位符
+      'logistics.inventory.diff.fields.material_code': '物料编码',
+      'logistics.inventory.diff.fields.position': '仓位',
+    },
+    'en-US': {
+      // 菜单配置
+      'menu.inventory_management': 'Inventory Management',
+      'menu.inventory_management.storage_location': 'Storage Location Management',
+      'menu.inventory_management.info': 'Inventory Base Table',
+      'menu.inventory_management.detail': 'Inventory Variance',
+      'menu.inventory_management.result': 'Inventory Result',
+      // 页面标题
+      'inventory.check.list': 'Inventory Check List',
+      // 按钮
+      'logistics.inventory.base.button.pull': 'Pull Data',
+      // 错误消息
+      'logistics.inventory.base.pull.failed': 'Failed to pull data',
+      // 搜索占位符
+      'logistics.inventory.result.search_placeholder': 'Please enter material code, storage location, etc.',
+      // 盘点差异表搜索字段占位符
+      'logistics.inventory.diff.fields.material_code': 'Material Code',
+      'logistics.inventory.diff.fields.position': 'Position',
+    },
+  },
 
   columns: {
     'logistics.inventory.info': [

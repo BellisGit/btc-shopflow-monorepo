@@ -84,25 +84,7 @@ export async function bootstrap(app: App) {
   // 暴露 Logo URL 获取函数，保持与其他应用的一致性
   (window as any).__APP_GET_LOGO_URL__ = () => resolveAppLogoUrl();
 
-  // 关键：启动全局用户检查轮询（使用新的全局实现）
-  // 在应用启动后异步启动，不阻塞应用初始化
-  if (typeof window !== 'undefined') {
-    // 延迟启动，确保 EPS 服务已加载
-    setTimeout(() => {
-      try {
-        import('@btc/shared-core/composables/user-check').then(({ startUserCheckPollingIfLoggedIn }) => {
-          // 检查是否已登录，如果已登录则启动轮询
-          startUserCheckPollingIfLoggedIn();
-        }).catch((error) => {
-          if (import.meta.env.DEV) {
-            console.warn('[bootstrap] Failed to start user check polling:', error);
-          }
-        });
-      } catch (error) {
-        // 静默失败
-      }
-    }, 500); // 延迟 500ms，确保 EPS 服务已加载
-  }
+  // 注意：user-check 轮询由主应用（main-app）统一管理，system-app 不需要启动
 
   // 注意：DevTools 不再在这里挂载
   // 改为统一在 layout-app 中挂载，避免重复挂载

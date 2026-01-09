@@ -164,8 +164,12 @@ function triggerRouteChangeEvent(
     return;
   }
 
+  // 从 basePath 提取应用 ID（例如 '/logistics' -> 'logistics'）
+  const appId = basePath.replace(/^\//, '').replace(/\/$/, '') || basePath.replace(/^\//, '');
+
   // 优先使用 tabLabelKey，如果没有则使用 titleKey（admin-app 使用 titleKey）
-  const tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
+  let tabLabelKey = (to.meta?.tabLabelKey ?? to.meta?.titleKey) as string | undefined;
+  
   const tabLabel =
     tabLabelKey ??
     (to.meta?.tabLabel as string | undefined) ??
@@ -180,6 +184,7 @@ function triggerRouteChangeEvent(
     label,
   } as Record<string, any>;
 
+  // 如果 meta 中没有 labelKey，尝试从 tabLabelKey 获取
   if (
     typeof metaPayload.labelKey !== 'string' ||
     metaPayload.labelKey.length === 0
@@ -193,10 +198,7 @@ function triggerRouteChangeEvent(
     }
   }
 
-  if (!metaPayload.breadcrumbs && Array.isArray(to.meta?.breadcrumbs)) {
-    metaPayload.breadcrumbs = to.meta.breadcrumbs;
-  }
-
+  // 立即触发事件，确保 tab 能够及时创建
   window.dispatchEvent(
     new CustomEvent('subapp:route-change', {
       detail: {
@@ -207,6 +209,56 @@ function triggerRouteChangeEvent(
       },
     }),
   );
+
+  // 异步从 manifest 获取路由信息并更新（补充 labelKey 等 meta 信息）
+  // 这样可以确保从概览页面跳转时，即使路由 meta 不完整，也能从 manifest 获取正确的 labelKey
+  // 使用相对路径导入，避免构建时的解析问题
+  import('../../manifest/index').then(({ getManifestRoute }) => {
+    const route = getManifestRoute(appId, fullPath);
+    if (route) {
+      // 从 manifest 获取 labelKey
+      const manifestLabelKey = route.tab?.labelKey ?? route.labelKey;
+      
+      // 如果 manifest 中有 labelKey，且当前 meta 中没有或使用的是临时的 labelKey，则更新
+      if (manifestLabelKey && typeof manifestLabelKey === 'string' && manifestLabelKey.length > 0) {
+        // 检查是否需要更新（如果当前 labelKey 不存在或与 tabLabelKey 相同，说明是从 titleKey 转换的临时值）
+        const needsUpdate = 
+          !metaPayload.labelKey || 
+          metaPayload.labelKey.length === 0 ||
+          (tabLabelKey && metaPayload.labelKey === tabLabelKey && manifestLabelKey !== tabLabelKey);
+        
+        if (needsUpdate) {
+          // 更新 meta 中的 labelKey
+          metaPayload.labelKey = manifestLabelKey;
+          
+          // 更新 label（使用新的 labelKey 翻译）
+          const newLabel = context.translate(manifestLabelKey);
+          if (newLabel && newLabel !== manifestLabelKey) {
+            metaPayload.label = newLabel;
+          }
+          
+          // 如果 manifest 中有 breadcrumbs，也更新
+          if (route.breadcrumbs && Array.isArray(route.breadcrumbs) && route.breadcrumbs.length > 0) {
+            metaPayload.breadcrumbs = route.breadcrumbs;
+          }
+          
+          // 重新触发事件，更新 tab 的 meta 信息
+          window.dispatchEvent(
+            new CustomEvent('subapp:route-change', {
+              detail: {
+                path: fullPath,
+                fullPath,
+                name: to.name,
+                meta: metaPayload,
+              },
+            }),
+          );
+        }
+      }
+    }
+  }).catch(() => {
+    // 如果导入失败，静默处理（不影响基本功能）
+  });
 }
 
 /**

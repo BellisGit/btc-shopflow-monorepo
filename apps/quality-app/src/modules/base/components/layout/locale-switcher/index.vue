@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-dropdown trigger="click" @command="handleCommand">
     <template #default>
       <BtcIconButton
@@ -34,6 +34,7 @@ defineOptions({
 });
 
 import { ref, computed } from 'vue';
+import { storage } from '@btc/shared-utils';
 import { useI18n } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 
@@ -53,8 +54,8 @@ const languages = ref([
 const handleCommand = (value: string) => {
   locale.value = value;
 
-  // 同步更新 localStorage
-  localStorage.setItem('locale', value);
+  // 同步更新 storage
+  storage.set('locale', value);
 
   // 触发语言切换事件
   window.dispatchEvent(new CustomEvent('language-change', {

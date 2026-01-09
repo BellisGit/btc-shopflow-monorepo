@@ -111,8 +111,8 @@ export function createLoginRedirectGuard(config: LoginRedirectGuardConfig) {
       return;
     }
 
-    // 已认证且没有退出参数，重定向到首页或 redirect 参数指定的页面
-    const redirect = (to.query.redirect as string) || config.getMainAppHomeRoute?.() || config.homeRoute;
+    // 已认证且没有退出参数，重定向到首页或 oauth_callback 参数指定的页面
+    const redirect = (to.query.oauth_callback as string) || config.getMainAppHomeRoute?.() || config.homeRoute;
     const redirectPath = redirect.split('?')[0] || config.homeRoute;
     next(redirectPath);
   };

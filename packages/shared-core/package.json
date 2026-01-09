@@ -135,6 +135,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
+    "prebuild": "node scripts/generate-overview-i18n.mjs",
     "build": "vite build && node scripts/create-dist-src-index.mjs",
     "postbuild": "node scripts/create-dist-src-index.mjs",
     "type-check": "tsc --noEmit --project tsconfig.type-check.json"

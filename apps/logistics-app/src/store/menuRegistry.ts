@@ -11,6 +11,7 @@ export type MenuItem = {
   title: string;
   icon?: string;
   children?: MenuItem[];
+  labelKey?: string; // 国际化 key，用于翻译菜单标题
 };
 
 // 使用响应式对象存储菜单

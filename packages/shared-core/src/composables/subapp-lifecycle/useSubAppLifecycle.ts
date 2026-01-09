@@ -713,13 +713,7 @@ export async function mountSubApp(
         // 静默失败
       }
 
-      // 检查并启动用户检查轮询（如果已登录且尚未启动）
-      try {
-        const { startUserCheckPollingIfLoggedIn } = await import('../user-check');
-        startUserCheckPollingIfLoggedIn();
-      } catch (error) {
-        // 静默失败，不影响应用运行
-      }
+      // 注意：user-check 轮询由主应用（main-app）统一管理，子应用不需要启动
 
       // 在路由准备好后调用 onReady 回调（但不阻塞路由导航）
       // 路由导航已经在应用挂载后立即触发，这里只需要等待路由准备好后调用回调

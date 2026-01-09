@@ -3,6 +3,7 @@
  * 处理 qiankun 应用的生命周期事件
  */
 
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { clearLoadingElement } from './useQiankunUtils';
 import { registerManifestTabsForApp, registerManifestMenusForApp } from './useQiankunMenuRegistry';
 import { showLoading, hideLoading, markLoadingFail } from '../../composables/useAppLoading';
@@ -64,7 +65,7 @@ export function createBeforeLoadHook() {
 
     // 判断是否是真正的应用切换
     const isAppSwitch = currentActiveApp === null || (currentActiveApp !== null && currentActiveApp !== app.name);
-    const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
+    const isNormalizing = sessionStorage.get<string>('__BTC_ROUTE_NORMALIZING__') === '1';
 
     if (isAppSwitch && !isNormalizing) {
       // 先隐藏路由 loading
@@ -143,9 +144,6 @@ export function createBeforeLoadHook() {
                 const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
                 if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(app.name)) {
                   // 已经注册，可以提前加载国际化消息
-                  if (import.meta.env.DEV) {
-                    console.log(`[QiankunLifecycle] ✅ ${app.name} 的国际化获取器已在 beforeLoad 阶段注册`);
-                  }
                   break;
                 }
               }
@@ -222,9 +220,6 @@ export function createBeforeMountHook() {
             const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
             if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(_app.name)) {
               // 已经注册，直接加载
-              if (import.meta.env.DEV) {
-                console.log(`[QiankunLifecycle] ✅ ${_app.name} 的国际化获取器已注册，开始加载（重试 ${retryCount + 1}/${maxRetries}）`);
-              }
               await loadAndMergeSubAppI18n(i18n, _app.name);
               break;
             }
@@ -243,9 +238,6 @@ export function createBeforeMountHook() {
             const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
             if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(_app.name)) {
               // 已经注册，重新加载以使用动态生成的消息
-              if (import.meta.env.DEV) {
-                console.log(`[QiankunLifecycle] ✅ ${_app.name} 的国际化获取器在加载过程中注册，重新加载（重试 ${retryCount + 1}/${maxRetries}）`);
-              }
               await loadAndMergeSubAppI18n(i18n, _app.name);
               break;
             }
@@ -254,13 +246,6 @@ export function createBeforeMountHook() {
           retryCount++;
         }
 
-        // 如果最终还是没有注册，记录警告
-        if (import.meta.env.DEV && retryCount >= maxRetries) {
-          const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
-          if (!subAppI18nGetters || !subAppI18nGetters.has(_app.name)) {
-            console.warn(`[QiankunLifecycle] ⚠️ ${_app.name} 的国际化获取器在 ${maxRetries * retryDelay}ms 后仍未注册，将使用 JSON 文件`);
-          }
-        }
 
         // 验证国际化消息是否已正确合并（开发环境）
         if (import.meta.env.DEV) {
@@ -449,20 +434,43 @@ export function createAfterMountHook() {
       }));
     });
 
-    // 关键：应用切换时重新初始化 user-check
-    // 确保切换应用后立即获取最新的 user-check 数据并更新存储
+    // 关键：仅在应用切换时重新初始化 user-check
+    // 刷新浏览器时不应该调用，应该使用存储的剩余时间
     try {
-      const { reinitializeUserCheckOnAppSwitch } = await import('@btc/shared-core/composables/user-check');
-      reinitializeUserCheckOnAppSwitch().catch((error) => {
-        // 静默失败，不影响应用切换
-        if (import.meta.env.DEV) {
-          console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+      // 检测是否是应用切换（通过比较当前应用 ID 和 sessionStorage 中存储的上一次应用 ID）
+      const { getAppIdFromPath } = await import('@btc/shared-core');
+      const { sessionStorage } = await import('@btc/shared-core/utils/storage/session');
+      
+      const currentPath = window.location.pathname;
+      const currentAppId = getAppIdFromPath(currentPath);
+      const lastAppId = sessionStorage.get('__last_app_id__') as string | undefined;
+      
+      // 只有在应用切换时才调用（应用 ID 不同，且不是首次访问）
+      const isAppSwitch = lastAppId && currentAppId !== lastAppId;
+      
+      if (isAppSwitch) {
+        // 更新当前应用 ID
+        sessionStorage.set('__last_app_id__', currentAppId);
+        
+        // 应用切换：立即检查并更新会话存储
+        const { reinitializeUserCheckOnAppSwitch } = await import('@btc/shared-core/composables/user-check');
+        reinitializeUserCheckOnAppSwitch().catch((error) => {
+          // 静默失败，不影响应用切换
+          if (import.meta.env.DEV) {
+            console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+          }
+        });
+      } else {
+        // 页面刷新或首次访问：更新应用 ID，但不调用 user-check
+        // user-check 由主应用的 bootstrap 统一管理
+        if (currentAppId) {
+          sessionStorage.set('__last_app_id__', currentAppId);
         }
-      });
+      }
     } catch (error) {
-      // 静默失败，不影响应用切换
+      // 静默失败，不影响应用挂载
       if (import.meta.env.DEV) {
-        console.warn('[qiankun:afterMount] Failed to import reinitializeUserCheckOnAppSwitch:', error);
+        console.warn('[qiankun:afterMount] Failed to check app switch:', error);
       }
     }
 

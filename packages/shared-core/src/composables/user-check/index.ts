@@ -15,8 +15,11 @@ import type { UserCheckData } from './useUserCheck';
  * 在应用启动时检查到已登录时调用，应传递 forceImmediate = false（使用存储的剩余时间）
  */
 export function startUserCheckPolling(forceImmediate = false): void {
-  // 如果已经在轮询，不重复启动
-  if (isPollingActive()) {
+  // 如果已经在轮询，且不是强制立即检查，不重复启动
+  if (isPollingActive() && !forceImmediate) {
+    if (import.meta.env.DEV) {
+      console.warn('[startUserCheckPolling] Polling is already active, skipping');
+    }
     return;
   }
 
@@ -35,6 +38,7 @@ export function startUserCheckPolling(forceImmediate = false): void {
 /**
  * 检查是否已登录，如果已登录则启动轮询
  * 在应用启动时调用
+ * 注意：此函数应该只在主应用（main-app）的 bootstrap 中调用一次
  */
 export function startUserCheckPollingIfLoggedIn(): void {
   if (typeof window === 'undefined') {
@@ -42,6 +46,19 @@ export function startUserCheckPollingIfLoggedIn(): void {
   }
 
   // 如果已经在轮询，不重复启动
+  if (isPollingActive()) {
+    return;
+  }
+
+  // 直接执行启动逻辑
+  doStartUserCheckPollingIfLoggedIn();
+}
+
+/**
+ * 实际执行启动轮询的逻辑
+ */
+function doStartUserCheckPollingIfLoggedIn(): void {
+  // 再次检查是否已经在轮询
   if (isPollingActive()) {
     return;
   }
@@ -55,30 +72,54 @@ export function startUserCheckPollingIfLoggedIn(): void {
   // 检查是否已登录
   try {
     // 优先检查是否是刚登录（通过 is_logged_in 标记）
+    // 注意：这个标记应该在登录成功后立即设置，并在启动轮询后立即清除
+    // 如果页面刷新时还存在，说明上次没有正确清除，需要清除并记录警告
     const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
     let isJustLoggedIn = false;
     if (appStorage) {
       const settings = appStorage.settings?.get?.() as Record<string, any> | null;
       if (settings?.is_logged_in === true) {
-        // 清除登录标记，避免下次启动时再次强制检查
-        isJustLoggedIn = true;
-        delete settings.is_logged_in;
-        appStorage.settings.set(settings);
+        // 检查是否有会话存储数据，如果有说明不是刚登录，而是标记没有清除
+        const hasUserCheckData = sessionStorage.get('user_check_status');
+        if (hasUserCheckData) {
+          // 有会话存储数据，说明不是刚登录，标记应该已经被清除但没有清除
+          // 清除标记，但不强制立即检查
+          delete settings.is_logged_in;
+          appStorage.settings.set(settings);
+          // 不设置 isJustLoggedIn，继续后续逻辑（使用存储的剩余时间）
+        } else {
+          // 没有会话存储数据，说明是真正的刚登录
+          isJustLoggedIn = true;
+          delete settings.is_logged_in;
+          appStorage.settings.set(settings);
+        }
       }
     }
 
     // 如果检测到刚登录，强制立即检查
     if (isJustLoggedIn) {
+      // 更新当前应用 ID 到 sessionStorage
+      updateCurrentAppId();
       startUserCheckPolling(true);
       return;
     }
 
+    // 检测是否是应用切换
+    const isAppSwitch = checkIfAppSwitch();
+
     // 方式1: 检查 sessionStorage 中是否有用户检查数据（说明之前已登录）
-    // 优先使用存储的剩余时间，避免页面刷新时立即调用
     const hasUserCheckData = sessionStorage.get('user_check_status');
     if (hasUserCheckData) {
-      // 页面刷新后恢复，使用存储的剩余时间，不强制立即检查
-      startUserCheckPolling(false);
+      if (isAppSwitch) {
+        // 应用切换：立即检查并更新会话存储
+        startUserCheckPolling(true);
+      } else {
+        // 页面刷新：使用存储的剩余时间，不强制立即检查
+        // 最长调用间隔为1小时
+        startUserCheckPolling(false);
+      }
+      // 更新当前应用 ID
+      updateCurrentAppId();
       return;
     }
 
@@ -102,6 +143,7 @@ export function startUserCheckPollingIfLoggedIn(): void {
     if (token) {
       // 有 token 但没有 sessionStorage 数据，可能是首次登录或 sessionStorage 被清除
       // 此时应该立即检查，获取最新的剩余时间
+      updateCurrentAppId();
       startUserCheckPolling(true);
       return;
     }
@@ -111,6 +153,7 @@ export function startUserCheckPollingIfLoggedIn(): void {
       const user = appStorage.user?.get?.();
       if (user?.id) {
         // 有用户数据但没有 sessionStorage 数据，应该立即检查
+        updateCurrentAppId();
         startUserCheckPolling(true);
         return;
       }
@@ -119,6 +162,110 @@ export function startUserCheckPollingIfLoggedIn(): void {
     // 静默失败，不影响应用启动
     if (import.meta.env.DEV) {
       console.warn('[startUserCheckPollingIfLoggedIn] Failed to check login status:', error);
+    }
+  }
+}
+
+/**
+ * 检测是否是应用切换
+ * 通过比较当前应用 ID 和 sessionStorage 中存储的上一次应用 ID
+ */
+function checkIfAppSwitch(): boolean {
+  try {
+    // 从 sessionStorage 获取上一次的应用 ID
+    const lastAppId = sessionStorage.get('__last_app_id__') as string | undefined;
+
+    // 如果是首次访问（没有存储的应用 ID），不算应用切换
+    if (!lastAppId) {
+      return false;
+    }
+
+    // 动态导入 getAppIdFromPath，避免循环依赖
+    // 注意：这里使用同步方式获取，因为需要立即判断
+    // 如果模块还未加载，使用路径解析作为兜底
+    let currentAppId: string;
+    try {
+      // 尝试从全局获取（如果已经加载）
+      const appRouteUtils = (window as any).__APP_ROUTE_UTILS__;
+      if (appRouteUtils && typeof appRouteUtils.getAppIdFromPath === 'function') {
+        const appId = appRouteUtils.getAppIdFromPath(window.location.pathname);
+        currentAppId = appId || inferAppIdFromPath(window.location.pathname);
+      } else {
+        // 兜底：从路径推断应用 ID
+        currentAppId = inferAppIdFromPath(window.location.pathname);
+      }
+    } catch {
+      // 如果获取失败，使用路径推断
+      currentAppId = inferAppIdFromPath(window.location.pathname);
+    }
+
+    // 如果应用 ID 不同，说明是应用切换
+    return currentAppId !== lastAppId;
+  } catch (error) {
+    // 如果获取失败，默认不算应用切换（保守策略）
+    if (import.meta.env.DEV) {
+      console.warn('[checkIfAppSwitch] Failed to check app switch:', error);
+    }
+    return false;
+  }
+}
+
+/**
+ * 从路径推断应用 ID（兜底方案）
+ */
+function inferAppIdFromPath(path: string): string {
+  // 移除开头的斜杠
+  const normalizedPath = path.replace(/^\/+/, '');
+
+  // 如果路径为空或是根路径，返回主应用
+  if (!normalizedPath || normalizedPath === '/') {
+    return 'main';
+  }
+
+  // 提取第一个路径段作为应用 ID
+  const segments = normalizedPath.split('/');
+  const firstSegment = segments[0] || '';
+
+  // 如果第一个路径段为空，返回主应用
+  if (!firstSegment) {
+    return 'main';
+  }
+
+  // 常见的主应用路由
+  const mainAppRoutes = ['login', 'overview', 'profile', 'settings'];
+  if (mainAppRoutes.includes(firstSegment)) {
+    return 'main';
+  }
+
+  return firstSegment;
+}
+
+/**
+ * 更新当前应用 ID 到 sessionStorage
+ */
+function updateCurrentAppId(): void {
+  try {
+    let currentAppId: string;
+    try {
+      // 尝试从全局获取（如果已经加载）
+      const appRouteUtils = (window as any).__APP_ROUTE_UTILS__;
+      if (appRouteUtils && typeof appRouteUtils.getAppIdFromPath === 'function') {
+        const appId = appRouteUtils.getAppIdFromPath(window.location.pathname);
+        currentAppId = appId || inferAppIdFromPath(window.location.pathname);
+      } else {
+        // 兜底：从路径推断应用 ID
+        currentAppId = inferAppIdFromPath(window.location.pathname);
+      }
+    } catch {
+      // 如果获取失败，使用路径推断
+      currentAppId = inferAppIdFromPath(window.location.pathname);
+    }
+
+    sessionStorage.set('__last_app_id__', currentAppId);
+  } catch (error) {
+    // 静默失败
+    if (import.meta.env.DEV) {
+      console.warn('[updateCurrentAppId] Failed to update app id:', error);
     }
   }
 }
@@ -168,7 +315,7 @@ export async function reinitializeUserCheckOnAppSwitch(): Promise<void> {
     // 立即调用 user-check 获取最新数据
     const { checkUser } = await import('./useUserCheck');
     const { storeUserCheckData } = await import('./useUserCheckStorage');
-    
+
     const result = await checkUser();
 
     if (!result || !result.isValid || !result.data) {

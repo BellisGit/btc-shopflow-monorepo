@@ -40,15 +40,15 @@ function handleRouteMatching(to: RouteLocationNormalized, router: Router) {
         if (loginRoute && loginRoute.matched.length > 0) {
           router.replace({
             path: '/login',
-            query: { redirect: to.fullPath },
+            query: { oauth_callback: to.fullPath },
           }).catch(() => {
-            window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+            window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
           });
         } else {
-          window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+          window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
         }
       } catch (error) {
-        window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+        window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
       } finally {
         const loadingEl = document.getElementById('Loading');
         if (loadingEl) {

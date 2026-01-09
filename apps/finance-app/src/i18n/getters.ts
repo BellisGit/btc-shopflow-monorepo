@@ -1,9 +1,12 @@
+import { storage } from '@btc/shared-utils';
 import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
 import sharedComponentsZh from '@btc/shared-components/locales/zh-CN.json';
 import sharedComponentsEn from '@btc/shared-components/locales/en-US.json';
 import zhCN from '../locales/zh-CN.json';
 import enUS from '../locales/en-US.json';
+
+// 注意：zhCN 和 enUS 会在 getLocaleMessages 中使用，registerSubAppI18n 会从 configFiles 自动提取
 
 // 动态加载所有 config.ts 文件（应用级和页面级）
 // 使用 import.meta.glob 扫描所有 config.ts 文件
@@ -19,23 +22,12 @@ const configFiles = import.meta.glob<{ default: any }>(
 import { registerConfigsFromGlob, registerSubAppI18n } from '@btc/shared-core';
 registerConfigsFromGlob(configFiles);
 
-// 关键：注册子应用的国际化消息获取器，让主应用能够访问子应用的国际化配置
-// 使用 getLocaleMessages 函数来注册，确保返回完整的国际化消息（包含所有合并后的消息）
+// 关键：在模块加载时就注册国际化消息获取器，而不是等到应用启动
+// 这样可以确保主应用在 beforeMount 时就能获取到动态生成的国际化消息
+// 使用统一的 registerSubAppI18n 工具函数，保持与管理应用一致
+// registerSubAppI18n 会从 configFiles 中提取国际化配置（不需要传入 additionalMessages，因为 JSON 文件内容已包含在 configFiles 中或不再使用）
 if (typeof window !== 'undefined') {
-  // 创建一个包装函数，使用 getLocaleMessages 来获取完整的国际化消息
-  const getLocaleMessagesWrapper = () => getLocaleMessages();
-  
-  // 注册到全局
-  if (!(window as any).__SUBAPP_I18N_GETTERS__) {
-    (window as any).__SUBAPP_I18N_GETTERS__ = new Map();
-  }
-  (window as any).__SUBAPP_I18N_GETTERS__.set('finance', getLocaleMessagesWrapper);
-  
-  // 同时调用 registerSubAppI18n 以保持兼容性（虽然它不会被使用，因为我们已经直接注册了）
-  // registerSubAppI18n('finance', configFiles, {
-  //   'zh-CN': zhCN as Record<string, any>,
-  //   'en-US': enUS as Record<string, any>,
-  // });
+  registerSubAppI18n('finance', configFiles);
 }
 
 // 优化：使用 Object.assign 的优化版本，避免多次合并
@@ -46,27 +38,98 @@ const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => {
 /**
  * 将扁平化对象转换为嵌套对象
  * 支持点号分隔的键，如 { "app.loading.title": "..." } -> { app: { loading: { title: "..." } } }
+ * 支持冲突处理：当同一个键既作为字符串值，又作为对象的父键时，使用 '_' 键存储字符串值
+ * 例如：{ "menu.a": "A", "menu.a.b": "B" } -> { menu: { a: { "_": "A", "b": "B" } } }
+ * 关键：按键的深度排序，先处理深度更深的键（子键），再处理深度较浅的键（父键）
+ * 这样可以避免在字符串上创建属性的错误
  */
 function unflattenObject(flat: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
-  
-  for (const key in flat) {
-    if (Object.prototype.hasOwnProperty.call(flat, key)) {
-      const keys = key.split('.');
-      let current = result;
-      
-      for (let i = 0; i < keys.length - 1; i++) {
-        const k = keys[i];
-        if (!(k in current)) {
-          current[k] = {};
-        }
-        current = current[k];
+
+  // 按键的深度排序：先处理深度更深的键（子键），再处理深度较浅的键（父键）
+  // 这样可以确保在处理子键时，父键还没有被设置为字符串
+  const sortedKeys = Object.keys(flat).sort((a, b) => {
+    const depthA = a.split('.').length;
+    const depthB = b.split('.').length;
+    // 深度更深的键排在前面
+    if (depthA !== depthB) {
+      return depthB - depthA;
+    }
+    // 如果深度相同，按字母顺序排序
+    return a.localeCompare(b);
+  });
+
+  for (const key of sortedKeys) {
+    if (!Object.prototype.hasOwnProperty.call(flat, key)) continue;
+
+    const keys = key.split('.');
+    if (keys.length === 0) continue;
+
+    let current = result;
+
+    // 构建到倒数第二层的路径
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (!k || k.trim() === '') continue;
+
+      // 确保 current 是对象
+      if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+        current = {};
       }
-      
-      current[keys[keys.length - 1]] = flat[key];
+      if (!(k in current)) {
+        current[k] = {};
+      } else if (typeof current[k] === 'string') {
+        // 如果当前键已经是字符串，需要转换为对象（使用 '_' 键存储原值）
+        const stringValue = current[k];
+        current[k] = { '_': stringValue };
+      }
+      current = current[k];
+    }
+
+    // 确保 current 是对象
+    if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+      current = {};
+    }
+    const lastKey = keys[keys.length - 1];
+    if (!lastKey || lastKey.trim() === '') continue;
+
+    // 如果目标键已经存在
+    if (lastKey in current) {
+      if (typeof current[lastKey] === 'string') {
+        // 如果当前键已经是字符串，但存在子键（因为按深度排序，子键先处理），需要转换为对象
+        // 检查是否存在以当前键为前缀的其他键（子键）
+        const hasChildKeys = sortedKeys.some(otherKey => {
+          if (otherKey === key) return false;
+          // 检查 otherKey 是否以 key + '.' 开头
+          return otherKey.startsWith(key + '.');
+        });
+
+        if (hasChildKeys) {
+          // 如果存在子键，将字符串值保存到 _ 键中，然后创建新对象
+          // 这是 Vue I18n 需要的格式，用于处理父键同时有子键的情况
+          const stringValue = current[lastKey];
+          current[lastKey] = { '_': stringValue };
+        } else {
+          // 如果不存在子键，直接覆盖
+          current[lastKey] = flat[key];
+        }
+      } else if (typeof current[lastKey] === 'object' && current[lastKey] !== null) {
+        // 如果目标键已经是对象（包含子键），说明子键已经处理过了
+        // 将父键的值保存到 _ 键中，这样父键和子键都能正确访问
+        // 这是 Vue I18n 需要的格式，用于处理父键同时有子键的情况
+        if (typeof flat[key] === 'string' && flat[key].trim() !== '') {
+          current[lastKey]._ = flat[key];
+        }
+      } else {
+        // 其他情况直接覆盖
+        current[lastKey] = flat[key];
+      }
+    } else {
+      // 目标键不存在，直接设置
+      current[lastKey] = flat[key];
     }
   }
-  
+
   return result;
 }
 
@@ -191,31 +254,62 @@ function mergeConfigFiles(): { zhCN: Record<string, string>; enUS: Record<string
       }
     } else {
       // 处理页面级配置（src/modules/**/config.ts）
-      // 页面级配置格式：{ locale: { page: {...} }, columns?: {...}, forms?: {...} }
+      // 页面级配置格式：{ locale: { 'zh-CN': { 'menu.finance.inventory_management': '...' }, 'en-US': {...} }, columns?: {...}, forms?: {...} }
       const localeConfig = config.locale;
-      
+
       if (localeConfig) {
-        // 页面级配置通常只包含 page 配置，但可能也包含 app、menu 和 common（用于覆盖）
-        if (localeConfig.app) {
-          mergedZhCN.app = deepMerge(mergedZhCN.app, localeConfig.app);
-          mergedEnUS.app = deepMerge(mergedEnUS.app, localeConfig.app || {});
+        // 模块级配置使用扁平化键，需要先转换为嵌套结构
+        if (localeConfig['zh-CN']) {
+          const zhCNUnflattened = unflattenObject(localeConfig['zh-CN']);
+
+          // 合并到对应的层级
+          if (zhCNUnflattened.app) {
+            mergedZhCN.app = deepMerge(mergedZhCN.app, zhCNUnflattened.app);
+          }
+          if (zhCNUnflattened.menu) {
+            mergedZhCN.menu = deepMerge(mergedZhCN.menu, zhCNUnflattened.menu);
+          }
+          if (zhCNUnflattened.page) {
+            mergedZhCN.page = deepMerge(mergedZhCN.page, zhCNUnflattened.page);
+          }
+          if (zhCNUnflattened.common) {
+            mergedZhCN.common = deepMerge(mergedZhCN.common, zhCNUnflattened.common);
+          }
         }
-        if (localeConfig.menu) {
-          mergedZhCN.menu = deepMerge(mergedZhCN.menu, localeConfig.menu);
-          mergedEnUS.menu = deepMerge(mergedEnUS.menu, localeConfig.menu || {});
-        }
-        if (localeConfig.page) {
-          mergedZhCN.page = deepMerge(mergedZhCN.page, localeConfig.page);
-          // 页面级配置通常只有中文，如果需要英文可以扩展
-          // 暂时使用中文配置作为英文的占位符
-          mergedEnUS.page = deepMerge(mergedEnUS.page, localeConfig.page || {});
-        }
-        if (localeConfig.common) {
-          mergedZhCN.common = deepMerge(mergedZhCN.common, localeConfig.common);
-          mergedEnUS.common = deepMerge(mergedEnUS.common, localeConfig.common || {});
+
+        if (localeConfig['en-US']) {
+          const enUSUnflattened = unflattenObject(localeConfig['en-US']);
+
+          // 合并到对应的层级
+          if (enUSUnflattened.app) {
+            mergedEnUS.app = deepMerge(mergedEnUS.app, enUSUnflattened.app);
+          }
+          if (enUSUnflattened.menu) {
+            mergedEnUS.menu = deepMerge(mergedEnUS.menu, enUSUnflattened.menu);
+          }
+          if (enUSUnflattened.page) {
+            mergedEnUS.page = deepMerge(mergedEnUS.page, enUSUnflattened.page);
+          }
+          if (enUSUnflattened.common) {
+            mergedEnUS.common = deepMerge(mergedEnUS.common, enUSUnflattened.common);
+          }
         }
       }
     }
+  }
+
+  // 清理空的字段（移除空对象）
+  if (mergedZhCN.page && Object.keys(mergedZhCN.page).length === 0) {
+    delete mergedZhCN.page;
+  }
+  if (mergedEnUS.page && Object.keys(mergedEnUS.page).length === 0) {
+    delete mergedEnUS.page;
+  }
+  if (mergedZhCN.app && Object.keys(mergedZhCN.app).length === 0) {
+    delete mergedZhCN.app;
+  }
+  if (mergedEnUS.app && Object.keys(mergedEnUS.app).length === 0) {
+    delete mergedEnUS.app;
   }
 
   // 转换为扁平化结构
@@ -247,23 +341,23 @@ export const getLocaleMessages = (): LocaleMessages => {
     // 合并消息（每次都重新合并，确保包含最新的国际化文件）
     // 合并顺序：sharedCore -> sharedComponents -> config.ts (应用级+页面级) -> 旧的 JSON 文件（兼容）
     // 后面的会覆盖前面的
-  
+
     // 处理 sharedCore 的默认导出（TypeScript 文件使用 export default）
     // Vite 在构建时会处理默认导出，但在开发环境中可能需要手动处理
     const sharedCoreZhMessages = (sharedCoreZh as any)?.default ?? sharedCoreZh;
     const sharedCoreEnMessages = (sharedCoreEn as any)?.default ?? sharedCoreEn;
-    
+
     // 从 config.ts 文件中合并配置
     const configMessages = mergeConfigFiles();
-    
+
     // 将扁平化的 configMessages 转换为嵌套对象
     const configMessagesZhCN = unflattenObject(configMessages.zhCN || {});
     const configMessagesEnUS = unflattenObject(configMessages.enUS || {});
-    
+
     // 旧的 JSON 文件也是扁平化键，需要先转换为嵌套结构
     const zhCNUnflattened = unflattenObject(zhCN as Record<string, any> || {});
     const enUSUnflattened = unflattenObject(enUS as Record<string, any> || {});
-    
+
     // 合并所有语言包（使用深度合并，确保嵌套对象正确合并）
     // 合并顺序：sharedCore -> sharedComponents -> config.ts (应用级+页面级) -> 旧的 JSON 文件（兼容）
     const zhCNMessages = deepMerge(
@@ -286,14 +380,14 @@ export const getLocaleMessages = (): LocaleMessages => {
       ),
       enUSUnflattened // 旧的 JSON 文件（已转换为嵌套结构）
     );
-    
+
     // 更新缓存
     cachedMessages = {
       'zh-CN': zhCNMessages,
       'en-US': enUSMessages,
     };
   }
-  
+
   return cachedMessages!;
 };
 
@@ -316,7 +410,7 @@ const i18n = createI18n({
 
 export function tSync(key: string): string {
   try {
-    const currentLocale = localStorage.getItem('locale') || 'zh-CN';
+    const currentLocale = storage.get<string>('locale') || 'zh-CN';
     i18n.global.locale.value = currentLocale as any;
     const g = i18n.global as any;
 

@@ -8,7 +8,6 @@ export declare function useUserInfo(): {
         position: any;
         avatar: any;
     }>;
-    loadProfileInfo: () => Promise<void>;
     handleNameHover: () => void;
     handleNameLeave: () => void;
 };

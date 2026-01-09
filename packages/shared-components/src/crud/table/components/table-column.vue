@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-table-column
     v-if="!column.hidden"
     v-bind="column"
@@ -27,9 +27,10 @@
 
 <script setup lang="ts">
 import { h, getCurrentInstance, toRaw, resolveComponent } from 'vue';
-import { ElTag } from 'element-plus';
 import type { TableColumn } from '../types';
 import { BtcCodeJson } from '@btc/shared-components/plugins/code';
+import BtcTag from '../../../components/basic/btc-tag/index.vue';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'TableColumn',
@@ -40,6 +41,45 @@ defineProps<{
 }>();
 
 const instance = getCurrentInstance();
+
+/**
+ * 判断字符串是否是国际化 key（而不是翻译后的值）
+ * 国际化 key 的格式：以字母开头，包含至少一个点，且点前后都有非空字符
+ */
+function isI18nKey(str: string): boolean {
+  if (!str.includes('.')) {
+    return false;
+  }
+  const parts = str.split('.');
+  if (parts.length < 2) {
+    return false;
+  }
+  const firstPart = parts[0]?.trim();
+  if (!firstPart || !/^[a-zA-Z]/.test(firstPart)) {
+    return false;
+  }
+  return parts.every(part => part.trim().length > 0);
+}
+
+/**
+ * 安全的翻译函数，确保返回字符串
+ */
+function safeTranslate(key: string): string {
+  try {
+    const { t } = useI18n();
+    const result = t(key);
+    // 确保返回字符串类型
+    if (typeof result === 'string') {
+      return result;
+    }
+    // 如果不是字符串，转换为字符串
+    return String(result || key);
+  } catch (error) {
+    // 翻译失败，返回原 key
+    console.warn('[table-column] Translation failed:', error);
+    return key;
+  }
+}
 
 // 组件名称到组件实例的映射
 const componentMap: Record<string, any> = {
@@ -68,7 +108,9 @@ const renderContent = (column: TableColumn, scope: any) => {
     const labels = values.map((val: any) => {
       const match = dictArray.find((item: any) => item?.value === val || item?.value === Number(val) || String(item?.value) === String(val));
       if (match && match.label != null) {
-        return match.label;
+        const label = match.label;
+        // 如果 label 是国际化 key，进行翻译
+        return typeof label === 'string' && isI18nKey(label) ? safeTranslate(label) : label;
       }
       return val ?? '';
     });
@@ -79,15 +121,25 @@ const renderContent = (column: TableColumn, scope: any) => {
   // 字典颜色标签
   if (column._dictFormatter && column.prop) {
     const dict = column._dictFormatter(scope.row);
-    return h(ElTag as any, {
+    return h(BtcTag, {
       type: dict.type as any,
       size: 'small',
-      effect: 'plain', // 使用 plain 效果，减少动画
-      style: {
-        transition: 'none', // 禁用过渡动画
-        animation: 'none'   // 禁用动画
-      }
+      effect: 'light', // 使用 light 效果，更接近原生样式
+      disableTransitions: true,
     }, { default: () => dict.label });
+  }
+
+  // 自动 code/status/type 字段标签渲染
+  if (column._codeTagFormatter && column.prop) {
+    const tagInfo = column._codeTagFormatter(scope.row);
+    if (tagInfo.label) {
+      return h(BtcTag, {
+        type: tagInfo.type as any,
+        size: 'small',
+        effect: 'light', // 使用 light 效果，更接近原生样式
+        disableTransitions: true,
+      }, { default: () => tagInfo.label });
+    }
   }
 
   // 自定义渲染组件

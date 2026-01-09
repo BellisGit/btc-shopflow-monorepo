@@ -10,7 +10,7 @@
         <BtcFlex1 />
         <BtcSearchKey />
         <BtcCrudActions>
-          <BtcExportBtn :filename="t('menu.warehouse.material.list')" />
+          <BtcExportBtn :filename="t('menu.warehouse.material-list')" />
         </BtcCrudActions>
       </BtcRow>
 
@@ -42,7 +42,7 @@ import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1,
 import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({
-  name: 'btc-logistics-warehouse-material-list',
+  name: 'btc-logistics-warehouse-material',
 });
 
 const { t } = useI18n();
@@ -91,5 +91,3 @@ onMounted(() => {
   box-sizing: border-box;
 }
 </style>
-
-

@@ -485,9 +485,9 @@ export async function injectDomainListResolver(
   }
   if (domainModule.clearDomainCache) {
     win.__APP_CLEAR_DOMAIN_CACHE__ = domainModule.clearDomainCache;
-    // 关键：在子应用初始化时清除域列表缓存，强制重新请求 me 接口
-    // 这确保子应用显示的应用列表标题是最新的
-    domainModule.clearDomainCache();
+    // 注意：不再在子应用初始化时清除域列表缓存
+    // 因为域列表数据现在存储在持久化存储中，只在登录时调用一次接口
+    // 如果需要在退出登录时清除，应该在退出登录逻辑中调用 clearDomainCache()
   }
 }
 

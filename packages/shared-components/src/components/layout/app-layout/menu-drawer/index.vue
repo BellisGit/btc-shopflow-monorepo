@@ -375,65 +375,146 @@ onUnmounted(() => {
   window.removeEventListener('popstate', detectCurrentApp);
 });
 
-// 域到应用的映射配置（包括所有子应用，排除特殊应用：mobile, home, docs）
+/**
+ * 从完整的 domainCode 中提取应用短名称
+ * 例如：'DOM_BTC_ADMIN' -> 'admin', 'DOM_BTC_FINANCE' -> 'finance'
+ */
+function extractAppNameFromDomainCode(domainCode: string): string {
+  if (!domainCode || typeof domainCode !== 'string') {
+    return '';
+  }
+
+  // 处理新格式：DOM_BTC_ADMIN, DOM_BTC_FINANCE 等
+  if (domainCode.startsWith('DOM_BTC_')) {
+    const suffix = domainCode.replace('DOM_BTC_', '').toLowerCase();
+    return suffix;
+  }
+
+  // 兼容旧格式：直接返回小写
+  return domainCode.toLowerCase();
+}
+
+// 域到应用的映射配置（支持完整的 domainCode 格式，如 'DOM_BTC_ADMIN'）
 const domainAppMapping: Record<string, Omit<MicroApp, 'name' | 'description'>> = {
-  'LOGISTICS': {
+  // 新格式：完整的 domainCode
+  'DOM_BTC_LOGISTICS': {
     icon: 'map',
     color: '#67c23a', // 绿色
     entry: getAppEntry('logistics'),
     activeRule: '/logistics',
   },
-  'ENGINEERING': {
+  'DOM_BTC_ENGINEERING': {
     icon: 'design',
     color: '#ff7a45', // 橙红色，与主应用橙色区分
     entry: getAppEntry('engineering'),
     activeRule: '/engineering',
   },
-  'QUALITY': {
+  'DOM_BTC_QUALITY': {
     icon: 'approve',
     color: '#f56c6c', // 红色
     entry: getAppEntry('quality'),
     activeRule: '/quality',
   },
-  'PRODUCTION': {
+  'DOM_BTC_PRODUCTION': {
     icon: 'work',
     color: '#595959', // 深灰色
     entry: getAppEntry('production'),
     activeRule: '/production',
   },
-  'FINANCE': {
+  'DOM_BTC_FINANCE': {
     icon: 'amount-alt',
     color: '#1890ff', // 蓝色
     entry: getAppEntry('finance'),
     activeRule: '/finance',
   },
-  'SYSTEM': {
+  'DOM_BTC_SYSTEM': {
     icon: 'user',
     color: '#722ed1', // 紫色
     entry: getAppEntry('system'),
     activeRule: '/system',
   },
-  'ADMIN': {
+  'DOM_BTC_ADMIN': {
     icon: 'settings',
     color: '#13c2c2', // 青色
     entry: getAppEntry('admin'),
     activeRule: '/admin',
   },
-  'OPERATIONS': {
+  'DOM_BTC_OPERATIONS': {
     icon: 'monitor',
     color: '#2f54eb', // 深蓝色，与财务蓝色区分
     entry: getAppEntry('operations'),
     activeRule: '/operations',
   },
-  'DASHBOARD': {
+  'DOM_BTC_DASHBOARD': {
     icon: 'trend',
     color: '#ff6b9d', // 粉色
     entry: getAppEntry('dashboard'),
     activeRule: '/dashboard',
   },
-  'PERSONNEL': {
+  'DOM_BTC_PERSONNEL': {
     icon: 'team',
     color: '#ffc107', // 黄色
+    entry: getAppEntry('personnel'),
+    activeRule: '/personnel',
+  },
+  // 兼容旧格式（向后兼容）
+  'LOGISTICS': {
+    icon: 'map',
+    color: '#67c23a',
+    entry: getAppEntry('logistics'),
+    activeRule: '/logistics',
+  },
+  'ENGINEERING': {
+    icon: 'design',
+    color: '#ff7a45',
+    entry: getAppEntry('engineering'),
+    activeRule: '/engineering',
+  },
+  'QUALITY': {
+    icon: 'approve',
+    color: '#f56c6c',
+    entry: getAppEntry('quality'),
+    activeRule: '/quality',
+  },
+  'PRODUCTION': {
+    icon: 'work',
+    color: '#595959',
+    entry: getAppEntry('production'),
+    activeRule: '/production',
+  },
+  'FINANCE': {
+    icon: 'amount-alt',
+    color: '#1890ff',
+    entry: getAppEntry('finance'),
+    activeRule: '/finance',
+  },
+  'SYSTEM': {
+    icon: 'user',
+    color: '#722ed1',
+    entry: getAppEntry('system'),
+    activeRule: '/system',
+  },
+  'ADMIN': {
+    icon: 'settings',
+    color: '#13c2c2',
+    entry: getAppEntry('admin'),
+    activeRule: '/admin',
+  },
+  'OPERATIONS': {
+    icon: 'monitor',
+    color: '#2f54eb',
+    entry: getAppEntry('operations'),
+    activeRule: '/operations',
+  },
+  'DASHBOARD': {
+    icon: 'trend',
+    color: '#ff6b9d',
+    entry: getAppEntry('dashboard'),
+    activeRule: '/dashboard',
+  },
+  'PERSONNEL': {
+    icon: 'team',
+    color: '#ffc107',
     entry: getAppEntry('personnel'),
     activeRule: '/personnel',
   },
@@ -481,7 +562,20 @@ const filteredApplications = computed(() => {
 });
 
 // 域代码到国际化键的映射（用于显示名称）
+// 支持新格式（DOM_BTC_XXX）和旧格式（XXX）的映射
 const domainCodeToI18nKey: Record<string, string> = {
+  // 新格式
+  'DOM_BTC_SYSTEM': 'domain.type.system',
+  'DOM_BTC_ADMIN': 'domain.type.admin',
+  'DOM_BTC_QUALITY': 'domain.type.quality',
+  'DOM_BTC_ENGINEERING': 'domain.type.engineering',
+  'DOM_BTC_PRODUCTION': 'domain.type.production',
+  'DOM_BTC_LOGISTICS': 'domain.type.logistics',
+  'DOM_BTC_FINANCE': 'domain.type.finance',
+  'DOM_BTC_OPERATIONS': 'domain.type.operations',
+  'DOM_BTC_DASHBOARD': 'domain.type.dashboard',
+  'DOM_BTC_PERSONNEL': 'domain.type.personnel',
+  // 兼容旧格式
   'MAIN': 'domain.type.main',
   'SYSTEM': 'domain.type.system',
   'ADMIN': 'domain.type.admin',
@@ -526,7 +620,7 @@ const getDomainDisplayName = (app: MicroApp) => {
 
   // 如果还是找不到，尝试使用域名称匹配（用于处理中文名称）
   if (!domain) {
-    // 构建域名称映射表（动态从 domainAppMapping 推断）
+    // 构建域名称映射表
     const domainNameMap: Record<string, string> = {
       'system': '系统域',
       'admin': '管理域',
@@ -546,6 +640,19 @@ const getDomainDisplayName = (app: MicroApp) => {
     }
   }
 
+  // 如果还是找不到，尝试使用 domainCode 匹配（处理新格式）
+  if (!domain) {
+    domain = Array.from(domainDataMap.value.values())
+      .find((d: any) => {
+        const code = d.domainCode || d.id || d.name;
+        if (!code || typeof code !== 'string') return false;
+        const upperCode = code.toUpperCase();
+        // 尝试匹配完整格式或简化格式
+        const appNameUpper = app.name.toUpperCase();
+        return upperCode === `DOM_BTC_${appNameUpper}` || upperCode === appNameUpper;
+      });
+  }
+
   // 优先使用后端返回的 domainType
   if (domain && domain.domainType) {
     return domain.domainType;
@@ -554,8 +661,18 @@ const getDomainDisplayName = (app: MicroApp) => {
   // 获取 domainCode，用于国际化映射
   const domainCode = domain?.domainCode || app.name.toUpperCase();
 
+  // 处理新格式的 domainCode（DOM_BTC_XXX）
+  const normalizedDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
+
   // 如果后端没有返回 domainType，使用国际化映射获取显示名称
-  const i18nKey = domainCodeToI18nKey[domainCode];
+  // 优先尝试使用完整的 domainCode，如果找不到再尝试提取的简化版本
+  let i18nKey = domainCodeToI18nKey[normalizedDomainCode];
+  if (!i18nKey && normalizedDomainCode.startsWith('DOM_BTC_')) {
+    // 如果找不到，尝试使用简化版本
+    const simplifiedCode = normalizedDomainCode.replace('DOM_BTC_', '');
+    i18nKey = domainCodeToI18nKey[simplifiedCode];
+  }
+
   if (i18nKey) {
     const i18nValue = t(i18nKey);
     // 如果国际化值存在且不是 key 本身，则使用国际化值
@@ -610,20 +727,20 @@ const loadApplications = async () => {
         // 统一处理所有域，不特殊处理任何应用
         let domainCode = domain.domainCode;
 
-        // 如果没有 domainCode，尝试从 name 推断
+        // 如果没有 domainCode，尝试从 name 推断（向后兼容）
         if (!domainCode && domain.name) {
-          // 构建名称到代码的映射（不特殊处理，统一规则）
+          // 构建名称到代码的映射（支持新格式）
           const nameToCodeMap: Record<string, string> = {
-            '系统域': 'SYSTEM',
-            '管理域': 'ADMIN',
-            '物流域': 'LOGISTICS',
-            '财务域': 'FINANCE',
-            '品质域': 'QUALITY',
-            '生产域': 'PRODUCTION',
-            '工程域': 'ENGINEERING',
-            '运维域': 'OPERATIONS',
-            '看板域': 'DASHBOARD',
-            '人事域': 'PERSONNEL',
+            '系统域': 'DOM_BTC_SYSTEM',
+            '管理域': 'DOM_BTC_ADMIN',
+            '物流域': 'DOM_BTC_LOGISTICS',
+            '财务域': 'DOM_BTC_FINANCE',
+            '品质域': 'DOM_BTC_QUALITY',
+            '生产域': 'DOM_BTC_PRODUCTION',
+            '工程域': 'DOM_BTC_ENGINEERING',
+            '运维域': 'DOM_BTC_OPERATIONS',
+            '看板域': 'DOM_BTC_DASHBOARD',
+            '人事域': 'DOM_BTC_PERSONNEL',
           };
           domainCode = nameToCodeMap[domain.name];
         }
@@ -643,8 +760,14 @@ const loadApplications = async () => {
           if (domain.name) {
             domainMap.set(domain.name, domain);
           }
-          // 使用小写的 domainCode 作为 key（用于 app.name 查找）
+          // 使用从 domainCode 提取的应用名称作为 key（用于 app.name 查找）
           if (typeof domainCode === 'string') {
+            const appName = extractAppNameFromDomainCode(domainCode);
+            if (appName) {
+              domainMap.set(appName, domain);
+              domainMap.set(appName.toUpperCase(), domain);
+            }
+            // 同时保留小写形式（向后兼容）
             domainMap.set(domainCode.toLowerCase(), domain);
           }
         }
@@ -671,45 +794,37 @@ const loadApplications = async () => {
         appList.push(mainApp);
       }
 
-      // 手动添加系统应用（如果后端接口中没有返回）
-      const systemAppConfig = domainAppMapping['SYSTEM'];
-      if (systemAppConfig) {
-        const systemAppExists = domainList.some((domain: any) => {
-          const domainCode = domain.domainCode || domain.id || domain.name;
-          const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
-          return upperDomainCode === 'SYSTEM';
-        });
-
-        if (!systemAppExists) {
-          // 如果后端接口中没有系统域，手动添加系统应用
-          const systemApp: MicroApp = {
-            name: 'system',
-            ...systemAppConfig,
-            description: t('domain.type.system') || '系统应用',
-            isMainApp: false,
-          };
-          appList.push(systemApp);
-        }
-      }
-
-      // 然后添加子应用（包括系统应用）
+      // 然后添加子应用（仅从后端返回的域列表中构建，不手动添加）
       domainList
         .filter((domain: any) => {
           // 排除文档域（特殊应用）
           const domainCode = domain.domainCode || domain.id || domain.name;
           const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
-          return upperDomainCode !== 'DOCS' && domain.name !== '文档中心';
+          return upperDomainCode !== 'DOCS' &&
+                 upperDomainCode !== 'DOM_BTC_DOCS' &&
+                 domain.name !== '文档中心';
         })
         .forEach((domain: any) => {
           const domainCode = domain.domainCode || domain.id || domain.name;
           const upperDomainCode = typeof domainCode === 'string' ? domainCode.toUpperCase() : '';
-          const appConfig = domainAppMapping[upperDomainCode];
+
+          // 优先尝试使用完整的 domainCode，如果找不到则尝试简化版本
+          let appConfig = domainAppMapping[upperDomainCode];
+
+          // 如果是新格式但找不到，尝试简化版本（向后兼容）
+          if (!appConfig && upperDomainCode.startsWith('DOM_BTC_')) {
+            const simplifiedCode = upperDomainCode.replace('DOM_BTC_', '');
+            appConfig = domainAppMapping[simplifiedCode];
+          }
 
           if (appConfig) {
+            // 从 domainCode 中提取应用名称（如 'DOM_BTC_ADMIN' -> 'admin'）
+            const appName = extractAppNameFromDomainCode(upperDomainCode) || upperDomainCode.toLowerCase();
+
             const app = {
-              name: upperDomainCode.toLowerCase(), // 应用名称使用小写，用于路由匹配
+              name: appName, // 应用名称使用小写，用于路由匹配
               ...appConfig,
-              description: domain.description || `${domain.name} - 业务域应用`,
+              description: domain.description || domain.domainType || `${domain.name} - 业务域应用`,
               isMainApp: false,
             };
             appList.push(app);
@@ -916,17 +1031,14 @@ const handleIframeClick = () => {
   }
 };
 
-// 监听抽屉打开，重新加载应用列表（确保获取最新的域数据）
+// 监听抽屉打开，重新加载应用列表（从缓存读取，不调用接口）
 watch(
   () => props.visible,
   (newVisible) => {
     if (newVisible) {
-      // 清除域列表缓存，确保获取最新数据
-      const clearDomainCacheFn = (window as any).__APP_CLEAR_DOMAIN_CACHE__;
-      if (clearDomainCacheFn && typeof clearDomainCacheFn === 'function') {
-        clearDomainCacheFn();
-      }
-      // 重新加载应用列表
+      // 关键：不从缓存清除，直接从持久化存储读取
+      // 域列表数据在登录时已存储，刷新时应该从缓存读取，不调用接口
+      // 重新加载应用列表（会从缓存读取）
       loadApplications();
     }
   }

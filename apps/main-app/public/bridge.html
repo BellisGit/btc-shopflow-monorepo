@@ -151,7 +151,9 @@
                     }
 
                     if (e.data && e.data.type === 'logout') {
-                        // 修改 localStorage 触发 storage 事件
+                        // 特殊情况：在 HTML 内联脚本中，无法等待模块加载，必须直接使用 localStorage
+                        // 这是为了触发 storage 事件以实现跨标签页通信的降级方案
+                        // 注意：正常情况下应使用 @btc/shared-core/utils/storage/local 中的 storage 工具
                         const key = 'bellis-logout-signal';
                         const value = Date.now().toString();
                         try {

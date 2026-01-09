@@ -6,7 +6,7 @@ import { systemSettingConfig } from './settings';
 
 export const appConfig = {
   // 系统名称（使用国际化 key）
-  nameKey: 'app.systemName',
+  nameKey: 'common.system.btc_shop_management',
 
   // 系统简称
   shortName: 'BTC ShopFlow',
@@ -24,7 +24,7 @@ export const appConfig = {
   company: {
     name: 'BTC',
     fullName: 'BTC Technology',
-    fullNameCnKey: 'app.company.fullNameCn',
+    fullNameCnKey: 'common.system.bellis',
     fullNameEn: 'Bellis Technology',
     website: 'https://www.btc.com',
     // Slogan 使用国际化键
@@ -41,13 +41,13 @@ export const appConfig = {
   contact: {
     email: 'support@btc.com',
     phone: '400-123-4567',
-    addressKey: 'app.contact.address',
+    addressKey: 'common.system.address',
   },
 
   // 加载页面文案（使用国际化 key）
   loading: {
-    titleKey: 'app.loadingSystemResources',
-    subTitleKey: 'app.loadingSystemResourcesSubtitle',
+    titleKey: 'common.system.loading_resources',
+    subTitleKey: 'common.system.loading_resources_subtitle',
   },
 
   // 路由配置

@@ -1,456 +1,5 @@
 // Entity interface definitions
-    interface test {
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface position {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 部门ID
-           */
-          deptId?: any;
-        
-          /**
-           * 仓位
-           */
-          position?: any;
-        
-          /**
-           * 描述
-           */
-          description?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 域名称
-           */
-          name?: any;
-        
-          /**
-           * 页码
-           */
-          page?: any;
-        
-          /**
-           * 每页数量
-           */
-          size?: any;
-        
-          /**
-           * 关键词
-           */
-          keyword?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface check {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 关联盘点任务
-           */
-          baseId?: any;
-        
-          /**
-           * 物料编码
-           */
-          materialCode?: any;
-        
-          /**
-           * 物料名称
-           */
-          materialName?: any;
-        
-          /**
-           * 物料规格
-           */
-          specification?: any;
-        
-          /**
-           * 计量单位
-           */
-          unit?: any;
-        
-          /**
-           * 批次号
-           */
-          batchNo?: any;
-        
-          /**
-           * 账面数量
-           */
-          bookQty?: any;
-        
-          /**
-           * 实际数量
-           */
-          actualQty?: any;
-        
-          /**
-           * 仓位
-           */
-          storageLocation?: any;
-        
-          /**
-           * 差异数量
-           */
-          diffQty?: any;
-        
-          /**
-           * 差异率
-           */
-          diffRate?: any;
-        
-          /**
-           * 盘点人
-           */
-          checkerId?: any;
-        
-          /**
-           * 是否有差异
-           */
-          isDiff?: any;
-        
-          /**
-           * 明细备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * materialCode
-           */
-          materialCode?: any;
-        
-          /**
-           * position
-           */
-          position?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface approval {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 盘点编号
-           */
-          checkNo?: any;
-        
-          /**
-           * 状态
-           */
-          status?: any;
-        
-          /**
-           * 确认人
-           */
-          confirmer?: any;
-        
-          /**
-           * 确认时间
-           */
-          createdAt?: any;
-        
-          /**
-           * name
-           */
-          name?: any;
-        
-          /**
-           * checkNo
-           */
-          checkNo?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface bom {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 流程ID
-           */
-          processId?: any;
-        
-          /**
-           * 盘点序号
-           */
-          checkNo?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 父级
-           */
-          parentNode?: any;
-        
-          /**
-           * 子级
-           */
-          childNode?: any;
-        
-          /**
-           * 子级数量
-           */
-          childQty?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * checkType
-           */
-          checkType?: any;
-        
-          /**
-           * domainId
-           */
-          domainId?: any;
-        
-          /**
-           * parentNode
-           */
-          parentNode?: any;
-        
-          /**
-           * childNode
-           */
-          childNode?: any;
-        
-          /**
-           * checkType
-           */
-          checkType?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface data {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 物料号
-           */
-          partName?: any;
-        
-          /**
-           * 数量
-           */
-          partQty?: any;
-        
-          /**
-           * 仓位
-           */
-          position?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 流程ID
-           */
-          processId?: any;
-        
-          /**
-           * 盘点序号
-           */
-          checkNo?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * checkType
-           */
-          checkType?: any;
-        
-          /**
-           * partName
-           */
-          partName?: any;
-        
-          /**
-           * position
-           */
-          position?: any;
-        
-          /**
-           * domainId
-           */
-          domainId?: any;
-        
-          /**
-           * checkType
-           */
-          checkType?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface datasource {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 盘点序号
-           */
-          checkNo?: any;
-        
-          /**
-           * 流程ID
-           */
-          processId?: any;
-        
-          /**
-           * 物料号
-           */
-          partName?: any;
-        
-          /**
-           * 数量
-           */
-          partQty?: any;
-        
-          /**
-           * 扫码人
-           */
-          checker?: any;
-        
-          /**
-           * 仓位
-           */
-          position?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * deleted_at
-           */
-          deleted_at?: any;
-        
-          /**
-           * checkNo
-           */
-          checkNo?: any;
-        
-          /**
-           * position
-           */
-          position?: any;
-        
-          /**
-           * checker
-           */
-          checker?: any;
-        
-          /**
-           * partName
-           */
-          partName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface check {
+    interface check {
           /**
            * 主键ID
            */
@@ -462,9 +11,9 @@ interface check {
           checkNo?: any;
         
           /**
-           * 域ID
+           * 域Code
            */
-          domainId?: any;
+          domainCode?: any;
         
           /**
            * 盘点类型
@@ -911,7 +460,62 @@ interface data {
       }
       
 
-interface checkTicket {
+interface position {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 域ID
+           */
+          domainId?: any;
+        
+          /**
+           * 部门ID
+           */
+          deptId?: any;
+        
+          /**
+           * 仓位
+           */
+          position?: any;
+        
+          /**
+           * 描述
+           */
+          description?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 更新时间
+           */
+          updatedAt?: any;
+        
+          /**
+           * 域名称
+           */
+          name?: any;
+        
+          /**
+           * 页码
+           */
+          page?: any;
+        
+          /**
+           * 每页数量
+           */
+          size?: any;
+        
+          /**
+           * 关键词
+           */
+          keyword?: any;
+        
         /**
          * Any key-value pairs
          */
@@ -919,7 +523,110 @@ interface checkTicket {
       }
       
 
-interface profile {
+interface check {
+          /**
+           * 主键ID
+           */
+          id?: any;
+        
+          /**
+           * 关联盘点任务
+           */
+          baseId?: any;
+        
+          /**
+           * 物料编码
+           */
+          materialCode?: any;
+        
+          /**
+           * 物料名称
+           */
+          materialName?: any;
+        
+          /**
+           * 物料规格
+           */
+          specification?: any;
+        
+          /**
+           * 计量单位
+           */
+          unit?: any;
+        
+          /**
+           * 批次号
+           */
+          batchNo?: any;
+        
+          /**
+           * 账面数量
+           */
+          bookQty?: any;
+        
+          /**
+           * 实际数量
+           */
+          actualQty?: any;
+        
+          /**
+           * 仓位
+           */
+          storageLocation?: any;
+        
+          /**
+           * 差异数量
+           */
+          diffQty?: any;
+        
+          /**
+           * 差异率
+           */
+          diffRate?: any;
+        
+          /**
+           * 盘点人
+           */
+          checkerId?: any;
+        
+          /**
+           * 是否有差异
+           */
+          isDiff?: any;
+        
+          /**
+           * 明细备注
+           */
+          remark?: any;
+        
+          /**
+           * 创建时间
+           */
+          createdAt?: any;
+        
+          /**
+           * 删除时间
+           */
+          deletedAt?: any;
+        
+          /**
+           * materialCode
+           */
+          materialCode?: any;
+        
+          /**
+           * position
+           */
+          position?: any;
+        
+        /**
+         * Any key-value pairs
+         */
+        [key: string]: any;
+      }
+      
+
+interface BaseUserEntity {
           /**
            * ID
            */
@@ -992,7 +699,7 @@ interface profile {
       }
       
 
-interface email {
+interface EmailEntity {
           /**
            * 页码
            */
@@ -1015,7 +722,7 @@ interface email {
       }
       
 
-interface phone {
+interface PhoneEntity {
           /**
            * 页码
            */
@@ -1030,1086 +737,6 @@ interface phone {
            * 关键词
            */
           keyword?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface deletelog {
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface config {
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface operation {
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface request {
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface action {
-          /**
-           * 行为ID
-           */
-          id?: any;
-        
-          /**
-           * 行为编码
-           */
-          actionCode?: any;
-        
-          /**
-           * 行为中文名
-           */
-          actionNameCn?: any;
-        
-          /**
-           * 行为英文名
-           */
-          actionNameEn?: any;
-        
-          /**
-           * 行为类型
-           */
-          actionType?: any;
-        
-          /**
-           * HTTP方法
-           */
-          httpMethod?: any;
-        
-          /**
-           * 行为说明
-           */
-          description?: any;
-        
-          /**
-           * 图标
-           */
-          icon?: any;
-        
-          /**
-           * 颜色标识
-           */
-          color?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 是否危险操作
-           */
-          isDanger?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface department {
-          /**
-           * 部门ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 部门编码
-           */
-          deptCode?: any;
-        
-          /**
-           * 部门名
-           */
-          name?: any;
-        
-          /**
-           * 上级部门ID
-           */
-          parentId?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 排序
-           */
-          sort?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * parentName
-           */
-          parentName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface domain {
-          /**
-           * 域ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 域编码
-           */
-          domainCode?: any;
-        
-          /**
-           * 域名称
-           */
-          name?: any;
-        
-          /**
-           * 域类型
-           */
-          domainType?: any;
-        
-          /**
-           * 域说明
-           */
-          description?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface menu {
-          /**
-           * 菜单ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 所属模块ID
-           */
-          moduleId?: any;
-        
-          /**
-           * 域id
-           */
-          domainId?: any;
-        
-          /**
-           * 菜单编码
-           */
-          menuCode?: any;
-        
-          /**
-           * 菜单中文名
-           */
-          menuNameCn?: any;
-        
-          /**
-           * 菜单英文名
-           */
-          menuNameEn?: any;
-        
-          /**
-           * 菜单类型
-           */
-          menuType?: any;
-        
-          /**
-           * 菜单路径
-           */
-          menuPath?: any;
-        
-          /**
-           * 组件路径
-           */
-          componentPath?: any;
-        
-          /**
-           * 图标
-           */
-          icon?: any;
-        
-          /**
-           * 父菜单ID
-           */
-          parentMenuId?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 是否可见
-           */
-          visible?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * 路由缓存
-           */
-          routerCache?: any;
-        
-          /**
-           * 文件路径
-           */
-          filePath?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface module {
-          /**
-           * 模块ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 所属域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 模块编码
-           */
-          moduleCode?: any;
-        
-          /**
-           * 模块名称
-           */
-          moduleName?: any;
-        
-          /**
-           * 模块类型
-           */
-          moduleType?: any;
-        
-          /**
-           * 模块说明
-           */
-          description?: any;
-        
-          /**
-           * 排序
-           */
-          sortOrder?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface permission {
-          /**
-           * 权限ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 所属模块ID
-           */
-          moduleId?: any;
-        
-          /**
-           * 所属插件ID
-           */
-          pluginId?: any;
-        
-          /**
-           * 权限编码
-           */
-          permCode?: any;
-        
-          /**
-           * 权限名称
-           */
-          permName?: any;
-        
-          /**
-           * 权限类型
-           */
-          permType?: any;
-        
-          /**
-           * 权限分类
-           */
-          permCategory?: any;
-        
-          /**
-           * 权限说明
-           */
-          description?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface plugin {
-          /**
-           * 插件ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 插件编码
-           */
-          pluginCode?: any;
-        
-          /**
-           * 插件名称
-           */
-          pluginName?: any;
-        
-          /**
-           * 插件类型
-           */
-          pluginType?: any;
-        
-          /**
-           * 插件分类
-           */
-          pluginCategory?: any;
-        
-          /**
-           * 插件版本
-           */
-          version?: any;
-        
-          /**
-           * 插件作者
-           */
-          author?: any;
-        
-          /**
-           * 插件说明
-           */
-          description?: any;
-        
-          /**
-           * 配置模式
-           */
-          configSchema?: any;
-        
-          /**
-           * 默认配置
-           */
-          defaultConfig?: any;
-        
-          /**
-           * 状态
-           */
-          status?: any;
-        
-          /**
-           * 安装路径
-           */
-          installPath?: any;
-        
-          /**
-           * 依赖插件
-           */
-          dependencies?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface resource {
-          /**
-           * 资源ID
-           */
-          id?: any;
-        
-          /**
-           * 资源编码
-           */
-          resourceCode?: any;
-        
-          /**
-           * 资源中文名
-           */
-          resourceNameCn?: any;
-        
-          /**
-           * 资源英文名
-           */
-          resourceNameEn?: any;
-        
-          /**
-           * 资源类型
-           */
-          resourceType?: any;
-        
-          /**
-           * 数据库表名
-           */
-          tableName?: any;
-        
-          /**
-           * 资源说明
-           */
-          description?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * resourceCode
-           */
-          resourceCode?: any;
-        
-          /**
-           * resourceNameCn
-           */
-          resourceNameCn?: any;
-        
-          /**
-           * resourceNameEn
-           */
-          resourceNameEn?: any;
-        
-          /**
-           * resourceType
-           */
-          resourceType?: any;
-        
-          /**
-           * tableName
-           */
-          tableName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface role {
-          /**
-           * 角色ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 所属域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 角色编码
-           */
-          roleCode?: any;
-        
-          /**
-           * 角色名称
-           */
-          roleName?: any;
-        
-          /**
-           * 角色类型
-           */
-          roleType?: any;
-        
-          /**
-           * 角色说明
-           */
-          description?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * 父级ID
-           */
-          parentId?: any;
-        
-          /**
-           * ids
-           */
-          ids?: any;
-        
-          /**
-           * roleName
-           */
-          roleName?: any;
-        
-          /**
-           * userId
-           */
-          userId?: any;
-        
-          /**
-           * domainId
-           */
-          domainId?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface rolepermission {
-          /**
-           * ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 角色ID
-           */
-          roleId?: any;
-        
-          /**
-           * 权限ID
-           */
-          permissionId?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface tenant {
-          /**
-           * 租户ID
-           */
-          id?: any;
-        
-          /**
-           * 租户编码
-           */
-          tenantCode?: any;
-        
-          /**
-           * 租户名称
-           */
-          tenantName?: any;
-        
-          /**
-           * 租户中文名
-           */
-          tenantNameZh?: any;
-        
-          /**
-           * 租户类型
-           */
-          tenantType?: any;
-        
-          /**
-           * 状态
-           */
-          status?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface user {
-          /**
-           * 用户ID
-           */
-          id?: any;
-        
-          /**
-           * 租户ID
-           */
-          tenantId?: any;
-        
-          /**
-           * 登录名
-           */
-          username?: any;
-        
-          /**
-           * 密码哈希
-           */
-          passwordHash?: any;
-        
-          /**
-           * 状态
-           */
-          status?: any;
-        
-          /**
-           * 最后登录时间
-           */
-          lastLoginAt?: any;
-        
-          /**
-           * 最后登录IP
-           */
-          lastLoginIp?: any;
-        
-          /**
-           * 登录次数
-           */
-          loginCount?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * deptId
-           */
-          deptId?: any;
-        
-          /**
-           * roleId
-           */
-          roleId?: any;
-        
-          /**
-           * ids
-           */
-          ids?: any;
-        
-          /**
-           * username
-           */
-          username?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface userrole {
-          /**
-           * id
-           */
-          id?: any;
-        
-          /**
-           * 用户id
-           */
-          userId?: any;
-        
-          /**
-           * 角色id
-           */
-          roleId?: any;
-        
-          /**
-           * 租户id
-           */
-          tenantId?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * name
-           */
-          name?: any;
-        
-          /**
-           * realName
-           */
-          realName?: any;
-        
-          /**
-           * roleName
-           */
-          roleName?: any;
-        
-          /**
-           * userId
-           */
-          userId?: any;
-        
-          /**
-           * domainId
-           */
-          domainId?: any;
-        
-          /**
-           * roleName
-           */
-          roleName?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface dictData {
-          /**
-           * 序号
-           */
-          id?: any;
-        
-          /**
-           * 字段名称
-           */
-          fieldName?: any;
-        
-          /**
-           * 字典值
-           */
-          dictValue?: any;
-        
-          /**
-           * 字典标签
-           */
-          dictLabel?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 更新时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface dictInfo {
-          /**
-           * 主键ID
-           */
-          id?: any;
-        
-          /**
-           * 实体类名
-           */
-          entityClass?: any;
-        
-          /**
-           * 字段名称
-           */
-          fieldName?: any;
-        
-          /**
-           * 域ID
-           */
-          domainId?: any;
-        
-          /**
-           * 备注
-           */
-          remark?: any;
-        
-          /**
-           * 创建人
-           */
-          createdBy?: any;
-        
-          /**
-           * 创建时间
-           */
-          createdAt?: any;
-        
-          /**
-           * 最后修改时间
-           */
-          updatedAt?: any;
-        
-          /**
-           * 删除时间
-           */
-          deletedAt?: any;
-        
-          /**
-           * entityClass
-           */
-          entityClass?: any;
-        
-        /**
-         * Any key-value pairs
-         */
-        [key: string]: any;
-      }
-      
-
-interface financeresult {
-          /**
-           * materialCode
-           */
-          materialCode?: any;
-        
-          /**
-           * position
-           */
-          position?: any;
-        
-          /**
-           * checkNo
-           */
-          checkNo?: any;
         
         /**
          * Any key-value pairs

@@ -7,12 +7,15 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+
 /**
  * 显示 Loading（如果尚未显示）
  */
 function showLoading() {
   try {
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    const shouldShowLoading = sessionStorage.get<string>('__BTC_NAV_LOADING__') === '1' || true;
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {

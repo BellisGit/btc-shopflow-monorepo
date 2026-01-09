@@ -100,11 +100,25 @@ export function setupQiankun() {
                 const mergedMessages = deepMerge(currentMessages, localeMessages);
                 // 关键：对于子应用发送的消息，直接覆盖主应用的值（包括 shared-components 的值）
                 // 因为子应用的消息是权威来源，应该优先于 shared-components 的默认值
+                // 对于顶级键，如果是对象，需要递归合并；如果是字符串，直接覆盖
                 for (const key in localeMessages) {
-                  if (localeMessages.hasOwnProperty(key) && typeof localeMessages[key] === 'string') {
-                    mergedMessages[key] = localeMessages[key];
+                  if (localeMessages.hasOwnProperty(key)) {
+                    if (typeof localeMessages[key] === 'string') {
+                      mergedMessages[key] = localeMessages[key];
+                    } else if (typeof localeMessages[key] === 'object' && localeMessages[key] !== null) {
+                      // 对于对象（如 subapp、menu），确保子应用的值完全覆盖主应用的值
+                      // 使用 deepMerge 确保子应用的所有属性都被保留
+                      mergedMessages[key] = deepMerge(mergedMessages[key] || {}, localeMessages[key]);
+                    }
                   }
                 }
+
+                // 特别处理 subapp 对象，确保所有属性都被保留（包括 name）
+                // 注意：subapp 对象可能不存在于主应用的消息中，需要直接设置
+                if (localeMessages.subapp && typeof localeMessages.subapp === 'object') {
+                  mergedMessages.subapp = { ...localeMessages.subapp }; // 直接复制，确保所有属性都被保留
+                }
+
                 i18n.global.setLocaleMessage(currentLocale, mergedMessages);
 
                 // 关键：合并国际化消息后，重新注册菜单和标签页，确保使用最新的国际化消息
@@ -165,7 +179,7 @@ export function setupQiankun() {
     const currentPath = window.location.pathname;
     const noLayoutPages = ['/login', '/register', '/forget-password'];
     const needsLayout = !noLayoutPages.some(page => currentPath === page || currentPath.startsWith(page + '?'));
-    
+
     // 如果当前路由不需要 Layout，直接 resolve，不检查容器
     if (!needsLayout) {
       return;
@@ -181,7 +195,7 @@ export function setupQiankun() {
           // 再次检查路由（可能在等待过程中路由发生了变化）
           const currentPathNow = window.location.pathname;
           const needsLayoutNow = !noLayoutPages.some(page => currentPathNow === page || currentPathNow.startsWith(page + '?'));
-          
+
           // 如果路由已经变为不需要 Layout 的页面，直接 resolve
           if (!needsLayoutNow) {
             resolve();
@@ -250,9 +264,10 @@ export function setupQiankun() {
     // 初始加载时，根据当前路径注册对应应用的菜单和 tabs
     // 关键：延迟注册菜单，给子应用时间挂载并发送 globalState 消息
     // 对于使用动态国际化的应用，registerMainAppMenus 内部会等待 globalState 消息
+    // 同时等待子应用的 i18n 获取器注册完成（registerSubAppI18n 在模块加载时调用）
     setTimeout(() => {
       registerMainAppMenus();
-    }, 100); // 延迟 100ms，确保 qiankun 已经开始加载子应用
+    }, 300); // 延迟 300ms，确保子应用的 i18n 获取器已经注册（registerSubAppI18n 在模块加载时调用）
 
     // 设置错误处理器
     setupQiankunErrorHandler();
@@ -281,7 +296,7 @@ export function setupQiankun() {
     // 延迟注册菜单（与上面的逻辑保持一致）
     setTimeout(() => {
       registerMainAppMenus();
-    }, 100);
+    }, 300); // 延迟 300ms，确保子应用的 i18n 获取器已经注册
     setupQiankunErrorHandler();
   });
 

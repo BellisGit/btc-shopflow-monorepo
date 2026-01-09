@@ -8,6 +8,9 @@ import { ensureString, validatePasswordStrength, validatePhone, validateSmsCode 
 import { sendSmsCode, registerUser } from '../../shared/composables/api';
 import { createCountState } from '../../shared/composables/state';
 import type { EmployeeInfo } from './identity';
+// 导入 Zod 验证工具
+import { zodToElementPlusRules } from '@btc/shared-core/utils/form/zod-validator';
+import { registerFormFieldSchemas, createConfirmPasswordSchema } from '../../schemas/register-form.schema';
 
 /**
  * 注册表单数据
@@ -104,58 +107,18 @@ export function createRegisterForm(initialData: Partial<RegisterForm> = {}) {
 }
 
 /**
- * 注册表单验证规则
+ * 注册表单验证规则（使用 Zod schema 生成）
  */
 export function createRegisterRules(form: RegisterForm) {
+  // 从 Zod schema 生成 Element Plus 规则
   return {
-    password: [
-      { required: true, message: '请输入系统登录密码', trigger: 'blur' },
-      { min: 8, max: 20, message: '密码长度8-20个字符', trigger: 'blur' },
-      {
-        validator: (rule: any, value: any, callback: (error?: Error) => void) => {
-          const passwordValue = ensureString(value);
-          if (!validatePasswordStrength(passwordValue)) {
-            callback(new Error('密码必须包含字母和数字'));
-          } else {
-            callback();
-          }
-        },
-        trigger: 'blur'
-      }
-    ],
-    confirmPassword: [
-      { required: true, message: '请确认密码', trigger: 'blur' }
-    ],
-    phone: [
-      { required: true, message: '请输入手机号', trigger: 'blur' },
-      {
-        validator: (rule: any, value: any, callback: (error?: Error) => void) => {
-          if (!value) {
-            callback(new Error('请输入手机号'));
-          } else if (!validatePhone(value)) {
-            callback(new Error('请输入正确的手机号'));
-          } else {
-            callback();
-          }
-        },
-        trigger: 'blur'
-      }
-    ],
-    smsCode: [
-      { required: true, message: '请输入短信验证码', trigger: 'blur' },
-      {
-        validator: (rule: any, value: any, callback: (error?: Error) => void) => {
-          if (!value) {
-            callback(new Error('请输入短信验证码'));
-          } else if (!validateSmsCode(value)) {
-            callback(new Error('请输入6位数字验证码'));
-          } else {
-            callback();
-          }
-        },
-        trigger: 'blur'
-      }
-    ]
+    password: zodToElementPlusRules(registerFormFieldSchemas.password, '系统登录密码'),
+    confirmPassword: zodToElementPlusRules(
+      createConfirmPasswordSchema(ensureString(form.password)),
+      '确认密码'
+    ),
+    phone: zodToElementPlusRules(registerFormFieldSchemas.phone, '手机号'),
+    smsCode: zodToElementPlusRules(registerFormFieldSchemas.smsCode, '短信验证码'),
   };
 }
 

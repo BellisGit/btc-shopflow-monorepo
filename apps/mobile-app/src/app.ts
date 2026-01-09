@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const mobileAppIdentity: AppIdentity = {
   id: 'mobile',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('app.description'),
   pathPrefix: '/mobile',
   subdomain: 'mobile.bellis.com.cn',

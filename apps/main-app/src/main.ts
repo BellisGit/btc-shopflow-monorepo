@@ -367,11 +367,11 @@ const startupPromise = Promise.resolve()
               // 使用 router.replace 而不是 router.push，避免触发组件守卫提取
               await router.replace({
                 path: '/login',
-                query: { redirect: currentRoute.fullPath },
+                query: { oauth_callback: currentRoute.fullPath },
               });
             } catch (navError) {
               // 如果路由导航失败，使用 window.location 作为回退
-              window.location.href = `/login?redirect=${encodeURIComponent(currentRoute.fullPath)}`;
+              window.location.href = `/login?oauth_callback=${encodeURIComponent(currentRoute.fullPath)}`;
             }
           } else {
             // 已认证但路由未匹配，可能是子应用路由或无效路由

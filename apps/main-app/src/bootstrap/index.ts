@@ -180,10 +180,10 @@ export async function bootstrap(app: App) {
       
       if (isProductionSubdomain) {
         // 生产环境子域名，跳转到主域名登录页
-        window.location.href = `${protocol}//bellis.com.cn/login?redirect=${encodeURIComponent(currentPath)}`;
+        window.location.href = `${protocol}//bellis.com.cn/login?oauth_callback=${encodeURIComponent(currentPath)}`;
       } else {
         // 开发环境或主域名，跳转到本地登录页
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        window.location.href = `/login?oauth_callback=${encodeURIComponent(currentPath)}`;
       }
     } catch (error) {
       console.error('[bootstrap] Failed to execute logout:', error);

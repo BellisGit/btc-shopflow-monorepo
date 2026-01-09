@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 平台治理模块配置
  * 包含 domains、modules、plugins 等页面的配置
  */
@@ -29,7 +29,7 @@ export default {
       'platform.domains.fields.domain_name': '域名称',
       'platform.domains.fields.domain_code': '域编码',
       'platform.domains.fields.domain_type': '域类型',
-      'platform.domains.fields.tenant_id': '租户名称',
+      'platform.domains.fields.tenant_id': '租户编码',
       'platform.domains.fields.description': '描述',
       'platform.domains.search_placeholder': '搜索域名称或编码',
       'platform.domains.list': '域列表',
@@ -60,7 +60,7 @@ export default {
       'platform.domains.fields.domain_name': 'Domain Name',
       'platform.domains.fields.domain_code': 'Domain Code',
       'platform.domains.fields.domain_type': 'Domain Type',
-      'platform.domains.fields.tenant_id': 'Tenant Name',
+      'platform.domains.fields.tenant_id': 'Tenant Code',
       'platform.domains.fields.description': 'Description',
       'platform.domains.search_placeholder': 'Search domain name or code',
       'platform.domains.list': 'Domain List',
@@ -88,13 +88,9 @@ export default {
       { prop: 'domainCode', label: 'platform.domains.fields.domain_code', width: 120 },
       { prop: 'domainType', label: 'platform.domains.fields.domain_type', width: 120 },
       {
-        prop: 'tenantId',
+        prop: 'tenantCode',
         label: 'platform.domains.fields.tenant_id',
         width: 150,
-        formatter: (row: any) => {
-          // formatter 需要在页面中动态处理
-          return row.tenantId;
-        },
       },
       { prop: 'description', label: 'platform.domains.fields.description', minWidth: 200 },
     ] as TableColumn[],
@@ -125,7 +121,7 @@ export default {
       { prop: 'domainCode', label: 'platform.domains.fields.domain_code', span: 12, required: true, component: { name: 'el-input' } },
       { prop: 'domainType', label: 'platform.domains.fields.domain_type', span: 12, component: { name: 'el-input' } },
       {
-        prop: 'tenantId',
+        prop: 'tenantCode',
         label: 'platform.domains.fields.tenant_id',
         span: 12,
         required: true,

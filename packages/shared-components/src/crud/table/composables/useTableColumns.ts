@@ -9,9 +9,28 @@ import { useCrudLayout, DEFAULT_CRUD_GAP } from '../../context/layout';
  * 表格列配置处理
  */
 export function useTableColumns(props: TableProps) {
-  const { t, locale } = useI18n();
+  const { t: tOriginal, locale } = useI18n();
   const crudLayout = useCrudLayout();
   const gap = crudLayout?.gap?.value ?? DEFAULT_CRUD_GAP;
+
+  /**
+   * 安全的翻译函数，确保返回字符串类型，避免循环引用
+   */
+  const t = (key: string): string => {
+    try {
+      const result = tOriginal(key);
+      // 确保返回字符串类型
+      if (typeof result === 'string') {
+        return result;
+      }
+      // 如果不是字符串，转换为字符串
+      return String(result || key);
+    } catch (error) {
+      // 翻译失败，返回原 key
+      console.warn('[useTableColumns] Translation failed:', error);
+      return key;
+    }
+  };
 
   /**
    * 将 prop 转换为首字母大写的显示文本
@@ -67,6 +86,33 @@ export function useTableColumns(props: TableProps) {
   }
 
   /**
+   * 根据字符串哈希值选择颜色类型
+   * @param value 字符串值
+   * @param colorTypes 可用的颜色类型数组（支持 btc-tag 的所有类型）
+   * @returns 选中的颜色类型
+   */
+  function getColorByHash(
+    value: string,
+    colorTypes: Array<
+      | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+      | 'purple' | 'pink' | 'cyan' | 'teal' | 'indigo'
+      | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon'
+    >
+  ): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'pink' | 'cyan' | 'teal' | 'indigo' | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon' {
+    // 简单的哈希函数，将字符串转换为数字
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+      const char = value.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+    // 使用绝对值并取模，确保结果在数组范围内
+    const index = Math.abs(hash) % colorTypes.length;
+    // 确保返回有效的颜色类型，如果数组为空则返回 'info'
+    return colorTypes[index] || 'info';
+  }
+
+  /**
    * 格式化字典值
    */
   function formatDictValue(value: any, dict: any[], allLevels: boolean = false): string {
@@ -79,7 +125,10 @@ export function useTableColumns(props: TableProps) {
 
       const findPath = (list: any[], val: any): boolean => {
         for (const item of list) {
-          path.push(item.label);
+          const label = item.label;
+          // 如果 label 是国际化 key，进行翻译
+          const translatedLabel = typeof label === 'string' && isI18nKey(label) ? t(label) : label;
+          path.push(translatedLabel);
 
           if (item.value === val) {
             return true;
@@ -114,7 +163,12 @@ export function useTableColumns(props: TableProps) {
     }
 
     const item = find(dict);
-    return item ? item.label : value;
+    if (item) {
+      const label = item.label;
+      // 如果 label 是国际化 key，进行翻译
+      return typeof label === 'string' && isI18nKey(label) ? t(label) : label;
+    }
+    return value;
   }
 
   /**
@@ -266,7 +320,13 @@ export function useTableColumns(props: TableProps) {
             }
 
             const item = find(dict);
-            return item || { label: value, type: 'info' };
+            if (item) {
+              const label = item.label;
+              // 如果 label 是国际化 key，进行翻译
+              const translatedLabel = typeof label === 'string' && isI18nKey(label) ? t(label) : label;
+              return { label: translatedLabel, type: item.type || 'info' };
+            }
+            return { label: value, type: 'info' };
           };
         } else {
           // 普通字典匹配，覆盖 formatter
@@ -279,6 +339,61 @@ export function useTableColumns(props: TableProps) {
               return formatDictValue(value, column.dict!, column.dictAllLevels || false);
             };
           }
+        }
+      }
+
+      // 自动为包含 status、code 或 type 的字段添加 tag 渲染
+      // 仅在未配置 dict、component 和 formatter 时自动添加
+      if (column.prop && !column.dict && !column.component && !column.formatter) {
+        const propName = column.prop.toLowerCase();
+        const isStatusField = propName.includes('status');
+        const isCodeField = propName.includes('code');
+        const isTypeField = propName.includes('type');
+
+        if (isStatusField || isCodeField || isTypeField) {
+          // 根据字段类型和值生成不同的颜色
+          config._codeTagFormatter = (row: any) => {
+            const value = row[column.prop!];
+            
+            // 处理空值
+            if (value === null || value === undefined || value === '') {
+              return { label: '', type: 'info' };
+            }
+
+            const valueStr = String(value);
+            
+            // 根据字段类型选择颜色方案（支持 btc-tag 的所有类型）
+            let colorType: 
+              | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+              | 'purple' | 'pink' | 'cyan' | 'teal' | 'indigo'
+              | 'orange' | 'brown' | 'gray' | 'lime' | 'olive' | 'navy' | 'maroon' 
+              = 'info';
+            
+            if (isStatusField) {
+              // status 字段：根据值的内容判断
+              const statusLower = valueStr.toLowerCase();
+              if (statusLower.includes('active') || statusLower.includes('enabled') || statusLower.includes('success')) {
+                colorType = 'success';
+              } else if (statusLower.includes('inactive') || statusLower.includes('disabled') || statusLower.includes('error')) {
+                colorType = 'danger';
+              } else if (statusLower.includes('pending') || statusLower.includes('warning')) {
+                colorType = 'warning';
+              } else {
+                // 使用哈希值生成稳定的颜色
+                colorType = getColorByHash(valueStr, ['success', 'warning', 'danger', 'info']);
+              }
+            } else if (isCodeField) {
+              // code 字段：使用不同的颜色方案（避免与 status 相近）
+              // 使用扩展颜色：purple, pink, cyan, teal, indigo, orange
+              colorType = getColorByHash(valueStr, ['purple', 'pink', 'cyan', 'teal', 'indigo', 'orange']);
+            } else if (isTypeField) {
+              // type 字段：使用另一套颜色方案
+              // 使用扩展颜色：brown, gray, lime, olive, navy, maroon
+              colorType = getColorByHash(valueStr, ['brown', 'gray', 'lime', 'olive', 'navy', 'maroon']);
+            }
+
+            return { label: valueStr, type: colorType };
+          };
         }
       }
 

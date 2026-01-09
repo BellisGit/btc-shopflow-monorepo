@@ -5,6 +5,7 @@
 import { getCookie, getCookieDomain, deleteCookie } from '@btc/shared-core/utils/cookie';
 import { syncSettingsToCookie } from '@btc/shared-utils';
 import { storage } from '@btc/shared-utils';
+import { checkStorageValidity, triggerAutoLogout } from '@btc/shared-core/utils/storage-validity-check';
 
 // 从 Cookie 读取设置
 // @ts-expect-error: 可能在未来使用
@@ -42,7 +43,9 @@ const getUserFromCookie = (): Record<string, any> | null => {
 // localStorage 辅助函数（用于向后兼容和清理旧数据）
 const getItem = (key: string): string | null => {
   try {
-    return localStorage.getItem(key);
+    const value = storage.get(key);
+    // storage.get 返回的是反序列化后的值，需要转换为字符串以保持向后兼容
+    return value !== null ? (typeof value === 'string' ? value : JSON.stringify(value)) : null;
   } catch {
     return null;
   }
@@ -51,7 +54,7 @@ const getItem = (key: string): string | null => {
 // @ts-expect-error: 可能在未来使用
 const setItem = (key: string, value: string): void => {
   try {
-    localStorage.setItem(key, value);
+    storage.set(key, value);
   } catch {
     // 忽略存储错误
   }
@@ -59,7 +62,7 @@ const setItem = (key: string, value: string): void => {
 
 const removeItem = (key: string): void => {
   try {
-    localStorage.removeItem(key);
+    storage.remove(key);
   } catch {
     // 忽略删除错误
   }
@@ -82,7 +85,17 @@ const setAllSettings = (settings: Record<string, any>): void => {
 
 // 先定义 user 对象，以便在 auth 中引用
 const userStorage = {
-  get: () => {
+    get: () => {
+    // 关键：在读取之前先检查存储有效性
+    // 如果关键存储不存在，说明存储被清除，需要退出
+    if (!checkStorageValidity()) {
+      // 异步触发退出，不阻塞当前读取操作
+      triggerAutoLogout().catch(() => {
+        // 静默失败
+      });
+      return null;
+    }
+
     // 优先从 Cookie 读取
     const cookieUser = getUserFromCookie();
     if (cookieUser) {
@@ -95,12 +108,12 @@ const userStorage = {
       return storageUser;
     }
 
-    // 向后兼容：如果 Cookie 和 storage 都没有，尝试从 localStorage 读取旧的 user key（但不创建新key）
+    // 向后兼容：如果 Cookie 和 storage 都没有，尝试从 storage 读取旧的 user key（但不创建新key）
     try {
-      const oldUserStr = localStorage.getItem('user');
-      if (oldUserStr) {
+      const oldUserValue = storage.get('user');
+      if (oldUserValue) {
         try {
-          const oldUser = JSON.parse(oldUserStr);
+          const oldUser = typeof oldUserValue === 'object' ? oldUserValue : JSON.parse(String(oldUserValue));
           // 迁移到 Cookie（通过 storage.set）
           storage.set('user', oldUser);
           return oldUser;
@@ -109,7 +122,7 @@ const userStorage = {
         }
       }
     } catch {
-      // 忽略 localStorage 错误
+      // 忽略 storage 错误
     }
 
     return null;
@@ -246,6 +259,16 @@ export const appStorage = {
   },
   auth: {
     getToken: () => {
+      // 关键：在读取之前先检查存储有效性
+      // 如果关键存储不存在，说明存储被清除，需要退出
+      if (!checkStorageValidity()) {
+        // 异步触发退出，不阻塞当前读取操作
+        triggerAutoLogout().catch(() => {
+          // 静默失败
+        });
+        return null;
+      }
+
       // 直接从 cookie 获取 access_token（不再从 localStorage 读取）
       const cookieToken = getCookie('access_token');
       if (cookieToken) {
@@ -293,14 +316,38 @@ export const appStorage = {
   user: userStorage,
   settings: {
     get: (): Record<string, any> => {
-      return getAllSettings();
+      // 关键：在读取 is_logged_in 标记时，先检查存储有效性
+      const settings = getAllSettings();
+      // 如果存在 is_logged_in 标记，说明用户已登录，需要检查存储有效性
+      if (settings.is_logged_in === true && !checkStorageValidity()) {
+        // 存储无效，清除标记并触发退出
+        delete settings.is_logged_in;
+        setAllSettings(settings);
+        // 异步触发退出，不阻塞当前读取操作
+        triggerAutoLogout().catch(() => {
+          // 静默失败
+        });
+      }
+      return settings;
     },
     set: (data: Record<string, any>): void => {
       const current = getAllSettings();
       setAllSettings({ ...current, ...data });
     },
     getItem: (key: string): any => {
+      // 关键：在读取 is_logged_in 标记时，先检查存储有效性
       const settings = getAllSettings();
+      // 如果读取的是 is_logged_in 且为 true，需要检查存储有效性
+      if (key === 'is_logged_in' && settings[key] === true && !checkStorageValidity()) {
+        // 存储无效，清除标记并触发退出
+        delete settings.is_logged_in;
+        setAllSettings(settings);
+        // 异步触发退出，不阻塞当前读取操作
+        triggerAutoLogout().catch(() => {
+          // 静默失败
+        });
+        return null;
+      }
       return settings[key] ?? null;
     },
     setItem: (key: string, value: any): void => {

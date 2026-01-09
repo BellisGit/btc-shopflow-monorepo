@@ -16,7 +16,7 @@ export function useNumberAuthLogin() {
   });
 
   const redirectAfterLogin = async () => {
-    const redirect = (route.query.redirect as string) || '/query';
+    const redirect = (route.query.oauth_callback as string) || '/query';
     const redirectPath = redirect.split('?')[0];
     try {
       await router.replace(redirectPath);

@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-core/utils/storage';
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 
@@ -96,14 +97,14 @@ const currentApiType = computed(() => {
   return item?.type || 'dev';
 });
 
-// 从 localStorage 或 http 实例获取当前 API
+// 从 storage 或 http 实例获取当前 API
 function loadCurrentApi() {
   // 统一使用 /api，清理所有非 /api 的值
-  const stored = localStorage.getItem('dev_api_base_url');
+  const stored = storage.get<string>('dev_api_base_url');
   if (stored && stored !== '/api') {
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
-    console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
-    localStorage.removeItem('dev_api_base_url');
+    console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+    storage.remove('dev_api_base_url');
   }
   
   // 统一使用 /api
@@ -130,8 +131,8 @@ function handleSwitch(item: ApiItem) {
   // 更新当前 API
   currentApi.value = item.value;
   
-  // 保存到 localStorage（统一使用 /api）
-  localStorage.setItem('dev_api_base_url', item.value);
+  // 保存到 storage（统一使用 /api）
+  storage.set('dev_api_base_url', item.value);
   
   // 更新 http 实例
   http.setBaseURL(item.value);
@@ -145,13 +146,13 @@ function handleSwitch(item: ApiItem) {
   }, 300);
 }
 
-// 清理旧的 localStorage 数据（统一使用 /api）
+// 清理旧的 storage 数据（统一使用 /api）
 function cleanupOldStorage() {
-  const stored = localStorage.getItem('dev_api_base_url');
+  const stored = storage.get<string>('dev_api_base_url');
   if (stored && stored !== '/api') {
     // 清理所有非 /api 的值
-    console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
-    localStorage.removeItem('dev_api_base_url');
+    console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+    storage.remove('dev_api_base_url');
   }
 }
 

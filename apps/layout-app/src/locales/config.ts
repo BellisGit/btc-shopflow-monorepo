@@ -8,12 +8,8 @@ import type { LocaleConfig } from '../../../../types/locale';
 
 export default {
   'zh-CN': {
-    app: {
+    subapp: {
       name: '布局应用',
-      title: '布局应用',
-      description: 'BTC车间管理系统 - 布局应用',
-      version: '版本 1.0.0',
-      welcome: '欢迎使用布局应用',
     },
     common: {
       // 错误消息
@@ -47,12 +43,8 @@ export default {
     },
   },
   'en-US': {
-    app: {
+    subapp: {
       name: 'Layout Application',
-      title: 'Layout Application',
-      description: 'BTC Shop Management System - Layout Application',
-      version: 'Version 1.0.0',
-      welcome: 'Welcome to Layout Application',
     },
     common: {
       // 错误消息

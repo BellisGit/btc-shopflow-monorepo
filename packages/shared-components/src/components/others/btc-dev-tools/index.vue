@@ -99,43 +99,41 @@ function getCookie(name: string): string | null {
 const isDev = import.meta.env.DEV;
 
 // 检查是否为允许在生产环境显示 DevTools 的用户
-// 从个人信息接口获取用户信息，而不是从 cookie
+// 从缓存读取用户信息，不调用接口
 async function checkAllowedUser(): Promise<boolean> {
   try {
-    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该调用接口
+    // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该加载
     const appStorage = (window as any).__APP_STORAGE__ || (window as any).appStorage;
     const user = appStorage?.user?.get?.();
     if (!user) {
-      // 没有用户信息，直接返回 false，不调用接口
+      // 没有用户信息，直接返回 false
       return false;
     }
 
-    // 尝试从接口获取用户信息
-    const service = (window as any).__APP_EPS_SERVICE__ || (window as any).service || (window as any).__BTC_SERVICE__;
-    if (!service?.admin?.base?.profile?.info) {
-      // 降级：如果接口不可用，尝试从 cookie 获取
-      return checkAllowedUserFromCookie();
-    }
-
+    // 关键：从缓存读取用户信息，不调用接口
+    // 接口由主应用在登录时统一调用并存储到缓存
     try {
-      const data = await service.admin.base.profile.info();
+      const { getProfileInfoFromCache } = await import('@btc/shared-core/utils/profile-info-cache');
+      const data = getProfileInfoFromCache();
 
       if (!data) {
-        return false;
+        // 缓存为空，降级：尝试从 cookie 获取
+        return checkAllowedUserFromCookie();
       }
 
       // 优先使用 name 字段（接口返回的字段），不区分大小写
       const userName = (data?.name || '').toLowerCase();
 
       if (!userName) {
-        return false;
+        // 没有用户名，降级：尝试从 cookie 获取
+        return checkAllowedUserFromCookie();
       }
 
       // 检查用户名是否为 moselu（不区分大小写）
       const isAllowed = userName === 'moselu';
       return isAllowed;
     } catch (error) {
-      // 降级：如果接口调用失败，尝试从 cookie 获取
+      // 降级：如果读取缓存失败，尝试从 cookie 获取
       return checkAllowedUserFromCookie();
     }
   } catch (error) {

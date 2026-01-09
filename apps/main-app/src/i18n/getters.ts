@@ -3,6 +3,7 @@
  * 用于在非组件环境中进行同步翻译（如路由标题、文档标题等）
  */
 
+import { storage } from '@btc/shared-utils';
 import { createI18n } from 'vue-i18n';
 import sharedCoreZh from '@btc/shared-core/locales/zh-CN';
 import sharedCoreEn from '@btc/shared-core/locales/en-US';
@@ -68,17 +69,15 @@ export function tSync(key: string): string {
   try {
     const i18n = getI18nInstance();
 
-    // 获取当前语言设置（从 localStorage 读取，与 getLocaleFromStorage 保持一致）
+    // 获取当前语言设置（从 storage 读取，与 getLocaleFromStorage 保持一致）
     let currentLocale = 'zh-CN';
     try {
-      if (typeof localStorage !== 'undefined') {
-        const stored = localStorage.getItem('locale');
-        if (stored === 'zh-CN' || stored === 'en-US') {
-          currentLocale = stored;
-        }
+      const stored = storage.get<string>('locale');
+      if (stored === 'zh-CN' || stored === 'en-US') {
+        currentLocale = stored;
       }
     } catch {
-      // 如果 localStorage 读取失败，使用默认值
+      // 如果 storage 读取失败，使用默认值
     }
 
     // 更新 i18n 实例的语言

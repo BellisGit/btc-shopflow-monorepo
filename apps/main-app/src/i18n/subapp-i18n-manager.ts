@@ -51,6 +51,11 @@ export async function loadAndMergeSubAppI18n(
   appId: string
 ): Promise<void> {
   try {
+    // 跳过 main 应用，它的国际化消息已经在初始化时加载了，不需要通过这个函数加载
+    if (appId === 'main') {
+      return;
+    }
+    
     // 跳过 docs-app，它的国际化方式和普通业务应用不一样（VitePress）
     if (appId === 'docs') {
       return;
@@ -70,79 +75,29 @@ export async function loadAndMergeSubAppI18n(
         if (typeof getLocaleMessages === 'function') {
           try {
             const messages = getLocaleMessages();
+            
 
             if (messages && messages[currentLocale]) {
               const localeMessages = messages[currentLocale];
 
-              // 调试日志：打印物流应用和管理应用的国际化消息对象（提供给主应用）
-              if ((appId === 'logistics' || appId === 'admin') && import.meta.env.DEV) {
-                console.group(`[SubAppI18nManager] 📦 ${appId === 'logistics' ? '物流' : '管理'}应用国际化消息（提供给主应用）`);
-                console.log('当前语言:', currentLocale);
-                console.log('从 getLocaleMessages() 获取的消息对象:', localeMessages);
-                console.log('菜单相关的 key:', {
-                  menuKeys: Object.keys(localeMessages).filter(k => k.startsWith('menu.')),
-                  menuObject: localeMessages.menu,
-                });
-                console.log('合并前主应用的菜单 key:', {
-                  menuKeys: Object.keys(i18n.global.getLocaleMessage(currentLocale)).filter(k => k.startsWith('menu.')),
-                });
-                console.groupEnd();
-              }
-
               // 合并到主应用i18n实例
               const currentMessages = i18n.global.getLocaleMessage(currentLocale);
               const mergedMessages = deepMerge(currentMessages, localeMessages);
+              
+              // 关键：对于子应用的 subapp 对象，确保所有属性都被保留（包括 name）
+              // 因为主应用可能没有 subapp 对象，需要确保子应用的 subapp 对象被正确合并
+              // 注意：直接复制 subapp 对象，确保所有属性都被保留
+              if (localeMessages.subapp && typeof localeMessages.subapp === 'object') {
+                mergedMessages.subapp = { ...localeMessages.subapp }; // 直接复制，确保所有属性都被保留
+              }
+              
               i18n.global.setLocaleMessage(currentLocale, mergedMessages);
 
-              // 调试日志：打印合并后的结果
-              if ((appId === 'logistics' || appId === 'admin') && import.meta.env.DEV) {
-                console.group(`[SubAppI18nManager] ✅ ${appId === 'logistics' ? '物流' : '管理'}应用国际化消息已合并到主应用`);
-                console.log('合并后的菜单对象:', mergedMessages.menu);
-                if (appId === 'logistics') {
-                  console.log('测试翻译 menu.procurement:', {
-                    te: i18n.global.te('menu.procurement', currentLocale),
-                    t: i18n.global.t('menu.procurement', currentLocale),
-                    direct: mergedMessages.menu?.procurement?._,
-                  });
-                  console.log('测试翻译 menu.warehouse.material.list:', {
-                    te: i18n.global.te('menu.warehouse.material.list', currentLocale),
-                    t: i18n.global.t('menu.warehouse.material.list', currentLocale),
-                    direct: mergedMessages.menu?.warehouse?.material?.list,
-                  });
-                } else if (appId === 'admin') {
-                  console.log('测试翻译 menu.platform.domains:', {
-                    te: i18n.global.te('menu.platform.domains', currentLocale),
-                    t: i18n.global.t('menu.platform.domains', currentLocale),
-                    direct: mergedMessages.menu?.platform?.domains,
-                  });
-                  console.log('测试翻译 menu.org.users:', {
-                    te: i18n.global.te('menu.org.users', currentLocale),
-                    t: i18n.global.t('menu.org.users', currentLocale),
-                    direct: mergedMessages.menu?.org?.users,
-                  });
-                }
-                console.groupEnd();
-              }
-
               return;
-            } else {
-              console.warn(`[SubAppI18nManager] ⚠️ ${appId} getLocaleMessages() 返回的消息中没有 ${currentLocale} 键:`, {
-                appId,
-                currentLocale,
-                availableLocales: messages ? Object.keys(messages) : [],
-                messages,
-              });
             }
           } catch (error) {
-            console.warn(`[SubAppI18nManager] Failed to get i18n messages from ${appId} getter:`, error);
-            // 继续执行，回退到 JSON 文件加载
+            // 静默忽略错误，继续执行
           }
-        } else {
-          console.warn(`[SubAppI18nManager] ⚠️ ${appId} 的 getLocaleMessages 不是函数:`, {
-            appId,
-            type: typeof getLocaleMessages,
-            value: getLocaleMessages,
-          });
         }
       }
     }
@@ -176,10 +131,8 @@ export async function loadAndMergeSubAppI18n(
 
     // 注意：已移除基于 manifest 的 JSON 文件加载方式，现在统一使用扫描方案（从 config.ts 提取）
     // 如果 getter 不存在，说明子应用还没有注册国际化消息，等待即可
-    console.warn(`[SubAppI18nManager] ⚠️ ${appId} 的国际化消息获取器不存在，等待子应用注册`);
 
   } catch (error) {
-    console.error(`[SubAppI18nManager] ❌ Failed to load i18n for ${appId}:`, error);
     // 不抛出错误，避免阻塞应用挂载
   }
 }
@@ -199,6 +152,50 @@ export async function preloadAllSubAppsI18n(i18n: I18n): Promise<void> {
 
     const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
     if (!subAppI18nGetters || !(subAppI18nGetters instanceof Map)) {
+      // 等待一段时间后重试（最多等待 10000ms，每次 100ms，共 100 次）
+      // 因为子应用的模块可能在菜单渲染之后才加载（特别是财务和物流应用）
+      // 概览页面需要显示所有应用信息，所以需要等待更长时间
+      let retryCount = 0;
+      const maxRetries = 100;
+      const retryDelay = 100;
+      
+      while (retryCount < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        const retryGetters = (window as any).__SUBAPP_I18N_GETTERS__;
+        if (retryGetters && retryGetters instanceof Map && retryGetters.size > 0) {
+          // 使用找到的获取器继续处理
+          const loadPromises = Array.from(retryGetters.entries()).map(async ([appId, getLocaleMessages]) => {
+            if (appId === 'docs') {
+              return {};
+            }
+            if (typeof getLocaleMessages === 'function') {
+              try {
+                const messages = getLocaleMessages();
+                if (messages && messages[currentLocale]) {
+                  return messages[currentLocale];
+                }
+              } catch (error) {
+                return {};
+              }
+            }
+            return {};
+          });
+          const allMessages = await Promise.all(loadPromises);
+          const currentMessages = i18n.global.getLocaleMessage(currentLocale);
+          let mergedMessages = { ...currentMessages };
+          for (const messages of allMessages) {
+            if (Object.keys(messages).length > 0) {
+              mergedMessages = deepMerge(mergedMessages, messages);
+            }
+          }
+          i18n.global.setLocaleMessage(currentLocale, mergedMessages);
+          
+          return;
+        }
+        
+        retryCount++;
+      }
+      
       return;
     }
 
@@ -216,7 +213,6 @@ export async function preloadAllSubAppsI18n(i18n: I18n): Promise<void> {
             return messages[currentLocale];
           }
         } catch (error) {
-          console.warn(`[SubAppI18nManager] Failed to get i18n messages from ${appId} getter:`, error);
           return {};
         }
       }
@@ -238,7 +234,7 @@ export async function preloadAllSubAppsI18n(i18n: I18n): Promise<void> {
 
     i18n.global.setLocaleMessage(currentLocale, mergedMessages);
   } catch (error) {
-    console.error(`[SubAppI18nManager] ❌ Failed to preload all sub-apps i18n:`, error);
+    // 静默忽略错误
   }
 }
 

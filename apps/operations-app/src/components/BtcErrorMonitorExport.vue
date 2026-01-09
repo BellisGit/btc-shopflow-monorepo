@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
 import { useI18n, exportTableToExcel } from '@btc/shared-core';
 import { formatDate, getDateRange } from '@btc/shared-utils';
@@ -38,16 +39,15 @@ const { t } = useI18n();
 const loading = ref(false);
 const formRef = ref();
 
-// 获取所有错误数据（从 localStorage 和内存中）
+// 获取所有错误数据（从 storage 和内存中）
 const getAllErrors = (): FormattedError[] => {
   try {
     const allErrors: FormattedError[] = [];
 
-    // 从 localStorage 读取所有日期的错误
+    // 从 storage 读取所有日期的错误
     const storageKey = 'btc_error';
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      const data = JSON.parse(stored);
+    const data = storage.get<{ errors?: Record<string, FormattedError[]> }>(storageKey);
+    if (data) {
       if (data.errors && typeof data.errors === 'object') {
         Object.values(data.errors).forEach((errors: any) => {
           if (Array.isArray(errors)) {

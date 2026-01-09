@@ -1,6 +1,7 @@
 import type { Router, RouteLocationNormalized, NavigationGuardNext } from 'vue-router';
 import { getAppBySubdomain } from '@btc/shared-core/configs/app-scanner';
 import { getMainAppHomeRoute } from '@btc/shared-core';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { createLogoutGuard, createLoginRedirectGuard, createAuthGuard } from '@btc/shared-router';
 import { KNOWN_SUB_APP_PREFIXES, APP_NAME_MAP, PUBLIC_PAGES } from '../constants';
 import { isAuthenticated } from '../utils/auth';
@@ -158,17 +159,17 @@ function handlePathNormalization(
   to: RouteLocationNormalized,
   next: NavigationGuardNext
 ): boolean {
-  const isNormalizing = sessionStorage.getItem('__BTC_ROUTE_NORMALIZING__') === '1';
+  const isNormalizing = sessionStorage.get<string>('__BTC_ROUTE_NORMALIZING__') === '1';
   const normalizedPath = normalizeRoutePath(to.path);
 
   if (normalizedPath) {
-    sessionStorage.setItem('__BTC_ROUTE_NORMALIZING__', '1');
+    sessionStorage.set('__BTC_ROUTE_NORMALIZING__', '1');
     
     const appName = Object.keys(APP_NAME_MAP).find(key => normalizedPath.startsWith(`/${key}`));
     if (appName) {
       const appDisplayName = APP_NAME_MAP[appName];
       if (appDisplayName) {
-        sessionStorage.setItem('__BTC_NAV_APP_NAME__', appDisplayName);
+        sessionStorage.set('__BTC_NAV_APP_NAME__', appDisplayName);
       }
     }
 
@@ -195,7 +196,7 @@ function handlePathNormalization(
   // 如果路径规范化完成，清除标记
   if (isNormalizing) {
     setTimeout(function() {
-      sessionStorage.removeItem('__BTC_ROUTE_NORMALIZING__');
+      sessionStorage.remove('__BTC_ROUTE_NORMALIZING__');
     }, 100);
   }
 
@@ -256,13 +257,13 @@ function handleAuthentication(
       if (loginRoute && loginRoute.matched.length > 0) {
         next({
           path: '/login',
-          query: { redirect: to.fullPath },
+          query: { oauth_callback: to.fullPath },
         });
       } else {
-        window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+        window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
       }
     } catch (error) {
-      window.location.href = `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+      window.location.href = `/login?oauth_callback=${encodeURIComponent(to.fullPath)}`;
     }
     return true;
   }
@@ -279,6 +280,12 @@ function handleUnmatchedRoute(
 ): boolean {
   if (to.matched.length > 0) {
     return false;
+  }
+
+  // 对于根路径，应该允许它继续，让路由配置中的 redirect 处理
+  if (to.path === '/') {
+    next();
+    return true;
   }
 
   // 对于首页，应该总是匹配
@@ -306,7 +313,7 @@ function handleUnmatchedRoute(
   if (!isAuthenticatedUser) {
     next({
       path: '/login',
-      query: { redirect: to.fullPath },
+      query: { oauth_callback: to.fullPath },
     });
     return true;
   }

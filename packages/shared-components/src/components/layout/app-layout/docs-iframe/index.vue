@@ -128,7 +128,7 @@ function hideLoading() {
 function onIframeLoad() {
   // 立即更新iframe的parent-theme
   const currentTheme = document.documentElement.classList.contains('dark');
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
 
   // iframe已加载
 
@@ -178,7 +178,7 @@ function syncToIframe() {
   // 使用VueUse的useDark()来检测主题状态
   const isDark = document.documentElement.classList.contains('dark');
 
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
 
   // 同步主题到iframe
   // 如果主题没有变化，跳过同步
@@ -443,12 +443,12 @@ onMounted(() => {
   }
 
   // 监听VueUse的useDark变化
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
   let lastVueuseTheme = vueuseTheme;
 
   // 定期检查VueUse主题变化
   const checkVueUseTheme = () => {
-    const currentVueuseTheme = localStorage.getItem('vueuse-color-scheme');
+    const currentVueuseTheme = storage.get<string>('vueuse-color-scheme');
     if (currentVueuseTheme !== lastVueuseTheme) {
       lastVueuseTheme = currentVueuseTheme;
       handleVueUseThemeChange();

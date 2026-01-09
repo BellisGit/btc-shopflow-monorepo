@@ -54,18 +54,18 @@ function getLoadingStyle(): LoadingStyle {
       return 'circle';
     }
 
-    // 尝试读取 localStorage 中的 settings
+    // 尝试读取 storage 中的 settings
     try {
-      const settingsStr = localStorage.getItem('settings');
-      if (settingsStr) {
-        const settings = JSON.parse(settingsStr);
+      const { storage } = require('@btc/shared-core/utils/storage');
+      const settings: Record<string, any> | null = storage.get('settings');
+      if (settings) {
         const style = settings.loadingStyle;
         if (style && typeof style === 'string' && animationComponents[style as LoadingStyle]) {
           return style as LoadingStyle;
         }
       }
 
-      // 如果 localStorage 中没有，尝试从 Cookie 读取
+      // 如果 storage 中没有，尝试从 Cookie 读取
       try {
         const cookieSettings = document.cookie
           .split('; ')

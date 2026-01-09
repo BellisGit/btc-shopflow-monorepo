@@ -220,7 +220,7 @@ function getAppHomePath(appId: string): string {
   if (app.type === 'sub' && typeof window !== 'undefined') {
     const env = getCurrentEnvironment();
     const hostname = window.location.hostname;
-    
+
     // 生产环境或测试环境子域名：首页是 /
     if ((env === 'production' || env === 'test') && app.subdomain && hostname === app.subdomain) {
       return '/';
@@ -399,6 +399,9 @@ function translateWithMainI18n(key: string): string | null {
       const value = messages[key];
       if (typeof value === 'string' && value.trim() !== '') {
         return value;
+      } else if (typeof value === 'object' && value !== null && '_' in value && typeof value._ === 'string') {
+        // 如果返回的是对象且包含 _ 键，使用 _ 键的值（用于处理父键同时有子键的情况）
+        return value._;
       } else if (typeof value === 'function') {
         try {
           const result = value({ normalize: (arr: any[]) => arr[0] });
@@ -414,6 +417,10 @@ function translateWithMainI18n(key: string): string | null {
     // 如果直接访问失败，使用 te 和 t
     if (mainAppI18n.global.te(key, currentLocale)) {
       const translated = mainAppI18n.global.t(key, currentLocale);
+      // 如果返回的是对象且包含 _ 键，使用 _ 键的值（用于处理父键同时有子键的情况）
+      if (translated && typeof translated === 'object' && translated !== null && '_' in translated && typeof translated._ === 'string') {
+        return translated._;
+      }
       if (translated && typeof translated === 'string' && translated !== key && translated.trim() !== '') {
         return translated;
       }
@@ -619,10 +626,17 @@ function onDel(index: number) {
     tabbarList: newTabList,
     activeTabKey: newActiveKey,
   }, false).then(() => {
-    // 如果删除的是当前激活标签，跳转到最后一个标签或首页
+    // 如果删除的是当前激活标签，跳转到最后一个标签或当前应用的首页
     if (currentActiveTabKey === tabKey) {
       const lastTab = newTabList[newTabList.length - 1];
-      router.push(lastTab ? lastTab.path : '/').catch(() => {});
+      if (lastTab) {
+        router.push(lastTab.path).catch(() => {});
+      } else {
+        // 没有剩余标签时，跳转到当前应用的首页
+        const currentApp = getCurrentAppFromPath(route.path);
+        const homePath = getAppHomePath(currentApp);
+        router.push(homePath).catch(() => {});
+      }
     }
   }).catch(() => {
     // 忽略错误，继续使用 processStore
@@ -634,10 +648,17 @@ function onDel(index: number) {
     processStore.remove(globalIndex);
   }
 
-  // 如果删除的是当前激活标签，跳转到最后一个标签或首页
+  // 如果删除的是当前激活标签，跳转到最后一个标签或当前应用的首页
   if (item.active) {
     const last = filteredTabs.value[filteredTabs.value.length - 1];
-    router.push(last ? last.fullPath : '/');
+    if (last) {
+      router.push(last.fullPath);
+    } else {
+      // 没有剩余标签时，跳转到当前应用的首页
+      const currentApp = getCurrentAppFromPath(route.path);
+      const homePath = getAppHomePath(currentApp);
+      router.push(homePath);
+    }
   }
 }
 

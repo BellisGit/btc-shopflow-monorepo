@@ -223,8 +223,8 @@ export function useLogout(options: UseLogoutOptions = {}) {
         // 在登录页，获取重定向路径并跳转
         // 关键：从当前页面的 URL 查询参数中获取 oauth_callback，确保每个标签页跳转到自己的目标页面
         const urlParams = new URLSearchParams(window.location.search);
-        // 优先读取 oauth_callback 参数，如果没有则尝试 redirect（向后兼容）
-        let redirect = urlParams.get('oauth_callback') || urlParams.get('redirect');
+        // 读取 oauth_callback 参数
+        let redirect = urlParams.get('oauth_callback');
 
         // 如果没有 oauth_callback 参数，尝试从 localStorage 获取保存的退出前路径
         if (!redirect) {

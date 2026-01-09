@@ -262,6 +262,7 @@ defineOptions({
   name: 'GlobalSearch'
 });
 
+import { storage } from '@btc/shared-core/utils/storage';
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
@@ -922,18 +923,14 @@ const addRecentSearch = (keyword: string) => {
   const searches = recentSearches.value.filter(s => s !== keyword);
   searches.unshift(keyword);
   recentSearches.value = searches.slice(0, 5); // 最多保存5条
-  localStorage.setItem('recent-searches', JSON.stringify(recentSearches.value));
+  storage.set('recent-searches', recentSearches.value);
 };
 
 // 加载最近搜索
 const loadRecentSearches = () => {
-  const saved = localStorage.getItem('recent-searches');
+  const saved = storage.get<string[]>('recent-searches');
   if (saved) {
-    try {
-      recentSearches.value = JSON.parse(saved);
-    } catch (_e) {
-      recentSearches.value = [];
-    }
+    recentSearches.value = saved;
   }
 };
 

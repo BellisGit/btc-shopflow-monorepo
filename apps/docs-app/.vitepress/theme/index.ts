@@ -4,6 +4,7 @@ import type { Theme } from 'vitepress';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
+import { storage } from '@btc/shared-utils';
 
 // 复用主应用的样式（CSS 变量会被继承）
 import '../../../admin-app/src/styles/theme.scss';
@@ -28,15 +29,15 @@ if (typeof window !== 'undefined') {
   // 保存当前路由状态
   const currentPath = window.location.pathname;
   if (currentPath && currentPath !== '/') {
-    localStorage.setItem('vitepress-last-path', currentPath);
+    storage.set('vitepress-last-path', currentPath);
   }
 
   // 如果是在iframe中，可选地从主应用同步主题（不强制）
   // 如果不在iframe中，让VitePress的appearance配置自己处理主题
   if (window.parent !== window) {
     // 在iframe中：尝试从主应用同步主题（可选）
-    const parentTheme = localStorage.getItem('parent-theme');
-    const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+    const parentTheme = storage.get<string>('parent-theme');
+    const vueuseTheme = storage.get<string>('vueuse-color-scheme');
 
     let isDark = false;
     if (parentTheme) {
@@ -95,7 +96,7 @@ function applyTheme(isDark: boolean) {
   // 让VitePress自己管理主题存储，不再强制清理或覆盖
   // 如果是在iframe中，可选地保存到parent-theme（但不强制）
   if (window.parent !== window) {
-    localStorage.setItem('parent-theme', isDark ? 'dark' : 'light');
+    storage.set('parent-theme', isDark ? 'dark' : 'light');
   }
 
   // 更新所有可能的主题相关元素

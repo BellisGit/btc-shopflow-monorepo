@@ -6,7 +6,7 @@ import type { AppIdentity } from '@btc/shared-core/configs/app-identity.types';
  */
 const adminAppIdentity: AppIdentity = {
   id: 'admin',
-  name: 'app.name', // 使用国际化键，而不是调用 t() 函数（避免模块加载时 i18n 未初始化的问题）
+  name: 'subapp.name', // 使用国际化键，而不是调用 t() 函数（避免模块加载时 i18n 未初始化的问题）
   description: 'common.system.btc_shop_management_system', // 同样使用国际化键
   pathPrefix: '/admin',
   subdomain: 'admin.bellis.com.cn',

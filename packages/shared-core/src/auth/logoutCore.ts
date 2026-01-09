@@ -126,8 +126,21 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
       }
     }
 
-    // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
-    localStorage.removeItem('is_logged_in');
+    // 清除 storage 中的 is_logged_in 标记（向后兼容）
+    try {
+      const { storage } = await import('../utils');
+      storage.remove('is_logged_in');
+    } catch (e) {
+      // 静默失败
+    }
+
+    // 关键：清除个人信息缓存
+    try {
+      const { clearProfileInfoCache } = await import('../utils/profile-info-cache');
+      clearProfileInfoCache();
+    } catch (error) {
+      // 静默失败，不影响退出流程
+    }
 
     // 关键：设置退出登录标记到 sessionStorage，用于路由守卫判断
     // 退出登录后短时间内（5秒），即使 isAuthenticated() 返回 true，也允许访问登录页
@@ -164,8 +177,7 @@ export async function logoutCore(options: LogoutCoreOptions = {}): Promise<boole
     try {
       const { storage } = await import('../utils');
       storage.remove('user');
-      localStorage.removeItem('btc_user');
-      localStorage.removeItem('user');
+      storage.remove('btc_user');
     } catch (e) {
       // 静默失败
     }

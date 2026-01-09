@@ -1,5 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error - AppLayout 在类型声明文件中已导出，可能是 TypeScript 缓存问题
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）

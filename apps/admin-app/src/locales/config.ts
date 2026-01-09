@@ -4,21 +4,12 @@
  * 模块特定的国际化配置应该在模块级 config.ts 中
  */
 
-import type { LocaleConfig } from '../../../../types/locale';
+import type { AppLevelLocaleConfig } from '../../../../types/locale';
 
 export default {
   'zh-CN': {
-    app: {
+    subapp: {
       name: '管理应用',
-      title: '管理应用',
-      description: '系统管理、平台治理、组织与账号、访问控制',
-      version: '版本 1.0.0',
-      welcome: '欢迎使用管理应用',
-      slogan: '拜里斯：智慧验币・安全储存，因你而精彩！',
-      loading: {
-        title: '正在加载资源',
-        subtitle: '部分资源可能加载时间较长，请耐心等待',
-      },
     },
     common: {
       // 错误消息
@@ -118,17 +109,8 @@ export default {
     }
   },
   'en-US': {
-    app: {
+    subapp: {
       name: 'Admin Application',
-      title: 'Admin Application',
-      description: 'System management, platform governance, organization and accounts, access control',
-      version: 'Version 1.0.0',
-      welcome: 'Welcome to Admin Application',
-      slogan: 'Bellis Technology: Intelligent Currency Verification, Secure Storage, Brilliance with You!',
-      loading: {
-        title: 'Loading resources',
-        subtitle: 'Some resources may take longer to load, please wait patiently',
-      },
     },
     common: {
       // 错误消息
@@ -204,8 +186,5 @@ export default {
         },
       },
     },
-    page: {
-      // 应用级页面配置（可选）
-    },
   },
-} satisfies LocaleConfig;
+} satisfies AppLevelLocaleConfig;

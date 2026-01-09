@@ -8,7 +8,7 @@ const { t } = useI18n();
 
 const productionAppIdentity: AppIdentity = {
   id: 'production',
-  name: t('app.name'),
+  name: t('subapp.name'),
   description: t('common.system.btc_shop_management_system'),
   pathPrefix: '/production',
   subdomain: 'production.bellis.com.cn',

@@ -72,6 +72,49 @@ export function createEpsService(epsModule: any): { service: any; list: any[] } 
 }
 
 /**
+ * 包装 profile.info 方法，添加调用拦截和日志
+ */
+function wrapProfileInfo(originalInfo: any): any {
+  if (!originalInfo || typeof originalInfo !== 'function') {
+    return originalInfo;
+  }
+  
+  return function(...args: any[]) {
+    if (import.meta.env.DEV) {
+      console.warn('[EPS Service] ⚠️ profile.info() 被直接调用！');
+      console.warn('[EPS Service] 调用栈:', new Error().stack);
+      console.warn('[EPS Service] 参数:', args);
+      console.warn('[EPS Service] 提示: 应该使用 getProfileInfoFromCache() 从缓存读取，或使用 loadProfileInfoOnLogin() 在登录时调用');
+    }
+    // 继续执行原始调用
+    return originalInfo.apply(this, args);
+  };
+}
+
+/**
+ * 递归包装 service 对象，拦截 profile.info 调用
+ */
+function wrapServiceWithProfileInterceptor(service: any): any {
+  if (!service || typeof service !== 'object') {
+    return service;
+  }
+  
+  // 如果存在 admin.base.profile.info，包装它
+  if (service.admin?.base?.profile?.info) {
+    const wrapped = { ...service };
+    wrapped.admin = { ...service.admin };
+    wrapped.admin.base = { ...service.admin.base };
+    wrapped.admin.base.profile = {
+      ...service.admin.base.profile,
+      info: wrapProfileInfo(service.admin.base.profile.info)
+    };
+    return wrapped;
+  }
+  
+  return service;
+}
+
+/**
  * 加载 EPS 服务
  * 优先使用全局共享的服务，如果没有则从 virtual:eps 加载本地服务
  * 
@@ -126,18 +169,20 @@ export function loadEpsService(epsModule?: any): { service: any; list: any[] } {
     }
     
     const mergedService = deepMergeObjects(globalService, local.service);
+    const wrappedService = wrapServiceWithProfileInterceptor(mergedService);
     if (typeof window !== 'undefined') {
       // 回写到全局，供后续模块/组件复用（不覆盖已有节点，仅补全缺失）
-      (window as any).__APP_EPS_SERVICE__ = mergedService;
-      (window as any).service = mergedService;
-      (window as any).__BTC_SERVICE__ = mergedService;
+      (window as any).__APP_EPS_SERVICE__ = wrappedService;
+      (window as any).service = wrappedService;
+      (window as any).__BTC_SERVICE__ = wrappedService;
     }
-    return { service: mergedService, list: local.list };
+    return { service: wrappedService, list: local.list };
   }
 
   if (globalService) {
+    const wrappedService = wrapServiceWithProfileInterceptor(globalService);
     return {
-      service: globalService,
+      service: wrappedService,
       list: [], // 全局服务可能没有 list，保持兼容性
     };
   }
@@ -145,13 +190,14 @@ export function loadEpsService(epsModule?: any): { service: any; list: any[] } {
   // 如果没有全局服务，使用本地构建的服务
   if (epsModule) {
     const { service, list } = createEpsService(epsModule);
+    const wrappedService = wrapServiceWithProfileInterceptor(service);
     
     // 如果子应用独立运行，也将本地服务暴露到全局，供其他组件使用
     if (typeof window !== 'undefined') {
-      (window as any).__APP_EPS_SERVICE__ = service;
+      (window as any).__APP_EPS_SERVICE__ = wrappedService;
     }
     
-    return { service, list };
+    return { service: wrappedService, list };
   }
   
   // 如果既没有全局服务，也没有本地模块，返回空服务
@@ -174,9 +220,62 @@ export function exportEpsServiceToGlobal(service: any): void {
   
   // 如果已经有全局服务，不要覆盖它（避免覆盖 layout-app 提供的全局服务）
   if (!(window as any).__APP_EPS_SERVICE__) {
-    (window as any).__APP_EPS_SERVICE__ = service;
-    (window as any).service = service; // 也设置到 window.service，保持兼容性
-    (window as any).__BTC_SERVICE__ = service; // 也设置到 __BTC_SERVICE__，保持兼容性
+    const wrappedService = wrapServiceWithProfileInterceptor(service);
+    (window as any).__APP_EPS_SERVICE__ = wrappedService;
+    (window as any).service = wrappedService; // 也设置到 window.service，保持兼容性
+    (window as any).__BTC_SERVICE__ = wrappedService; // 也设置到 __BTC_SERVICE__，保持兼容性
   }
 }
 
+/**
+ * 从 EPS 数据中提取字典数据并初始化 dict-manager
+ * 在应用启动时调用，确保字典数据可用
+ * 
+ * @param epsList - EPS 实体列表
+ */
+export function initDictDataFromEps(epsList: any[]): void {
+  if (!epsList || !Array.isArray(epsList)) {
+    return;
+  }
+
+  // 动态导入 dict-manager 以避免循环依赖
+  import('../btc/service/dict-manager').then(({ batchUpdateDictData }) => {
+    // 构建字典数据映射
+    const dictMap: Record<string, Record<string, Array<{label: string, value: any}>>> = {};
+
+    // 遍历所有 EPS 实体
+    epsList.forEach((entity) => {
+      if (!entity.resource || !entity.columns || !Array.isArray(entity.columns)) {
+        return;
+      }
+
+      const resource = entity.resource;
+      
+      // 遍历 columns，提取字典数据
+      entity.columns.forEach((column: any) => {
+        // 如果字段有 dict 属性且是数组（说明已经加载了字典数据）
+        if (column.dict && Array.isArray(column.dict) && column.dict.length > 0) {
+          const fieldName = column.propertyName;
+          if (fieldName) {
+            // 初始化 resource 对象
+            if (!dictMap[resource]) {
+              dictMap[resource] = {};
+            }
+            // 将字典数据添加到映射中
+            dictMap[resource][fieldName] = column.dict;
+          }
+        }
+      });
+    });
+
+    // 批量更新字典数据到 dict-manager
+    if (Object.keys(dictMap).length > 0) {
+      batchUpdateDictData(dictMap);
+    }
+  }).catch((err) => {
+    // 静默失败，不影响应用运行
+    if (import.meta.env.DEV) {
+      console.warn('[eps] 初始化字典数据失败:', err);
+    }
+  });
+}

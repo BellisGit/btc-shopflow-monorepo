@@ -82,8 +82,13 @@ export function createLogoutFunction(
         // 静默失败
       }
 
-      // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
-      localStorage.removeItem('is_logged_in');
+      // 清除 storage 中的 is_logged_in 标记（向后兼容）
+      try {
+        const { storage } = await import('../../utils');
+        storage.remove('is_logged_in');
+      } catch (e) {
+        // 静默失败
+      }
 
       // 关键：设置退出登录标记到 sessionStorage，用于路由守卫判断
       // 退出登录后短时间内（5秒），即使 isAuthenticated() 返回 true，也允许访问登录页
@@ -139,9 +144,7 @@ export function createLogoutFunction(
       try {
         const { storage } = await import('../../utils');
         storage.remove('user');
-        // 清理旧的 localStorage 数据（向后兼容）
-        localStorage.removeItem('btc_user');
-        localStorage.removeItem('user');
+        storage.remove('btc_user');
       } catch (e) {
         // 静默失败
       }
@@ -262,9 +265,10 @@ export function createLogoutFunction(
         // 静默失败
       }
 
-      // 清除 localStorage 中的 is_logged_in 标记（向后兼容）
+      // 清除 storage 中的 is_logged_in 标记（向后兼容）
       try {
-        localStorage.removeItem('is_logged_in');
+        const { storage } = await import('../../utils');
+        storage.remove('is_logged_in');
       } catch (e) {
         // 静默失败
       }
@@ -319,8 +323,7 @@ export function createLogoutFunction(
       try {
         const { storage } = await import('../../utils');
         storage.remove('user');
-        localStorage.removeItem('btc_user');
-        localStorage.removeItem('user');
+        storage.remove('btc_user');
       } catch (e) {
         // 静默失败
       }

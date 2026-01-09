@@ -77,9 +77,9 @@ function execInteractive(command) {
 /**
  * 简单的输入提示
  */
-function prompt(question) {
-  const readline = require('readline');
-  const rl = readline.createInterface({
+async function prompt(question) {
+  const { createInterface } = await import('readline');
+  const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
   });
