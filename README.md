@@ -85,9 +85,30 @@ btc-shopflow-monorepo/
 
 ## 📦 版本历史
 
-### v1.0.7 (当前版本)
+### v1.0.8 (当前版本)
 
 **发布日期**: 2025-01-XX
+
+- ✨ **统一重定向和登录跳转（核心功能）**：
+  - 统一所有登录、退出、重定向使用 `oauth_callback` 参数，移除 `redirect` 参数兼容性
+  - 新增 `getMainAppLoginUrl` 函数，所有子应用统一跳转到主应用登录页
+  - 支持跨域/跨端口跳转，适配生产环境子域名场景
+- 🔐 **自动退出功能**：
+  - 新增存储有效性检查工具（`checkStorageValidity` 和 `triggerAutoLogout`）
+  - 在存储工具中检查用户个人信息（`btc_profile_info_data`）是否存在
+  - 当检测到存储被清除时，自动触发退出逻辑
+- 🌐 **国际化系统优化**：
+  - 统一管理应用和物流应用的国际化配置方式
+  - 修复概览页面跳转时 tag 国际化失效问题
+  - 从 manifest 获取路由信息，补充 labelKey 等 meta 信息
+- 🐛 **Bug 修复**：
+  - 修复登录页面刷新瞬间显示整个紫色背景的问题
+  - 修复构建时 `@btc/subapp-manifests` 导入错误
+  - 修复 `registerSubAppI18n` 中 `flattenObject` 和 `unflattenObject` 对 `_` 键的处理逻辑
+
+### v1.0.7
+
+**发布日期**: 2026-01-07
 
 - ✨ **存储系统重构（核心功能）**：
   - 引入 `pinia-plugin-persistedstate`，统一管理所有 Pinia Store 持久化
