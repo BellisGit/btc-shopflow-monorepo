@@ -3,8 +3,10 @@
  * 负责配置Element Plus、主题、样式等UI相关设置
  */
 
+import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
 import ElementPlus from 'element-plus';
+import { createThemePlugin } from '@btc/shared-core';
 // 关键：确保 Element Plus 样式在最前面加载，避免被其他样式覆盖
 // 开启样式隔离后，需要确保 Element Plus 样式在主应用中被正确加载
 // 注意：main.ts 中已经引入了，这里再次引入确保样式被正确加载
@@ -40,7 +42,7 @@ export const elementLocale = {
  * 获取当前语言设置
  */
 export const getCurrentLocale = (): string => {
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 };
 
 /**
@@ -48,10 +50,9 @@ export const getCurrentLocale = (): string => {
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
+  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
 
-  app.use(ElementPlus, {
-    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
-  });
+  app.use(ElementPlus, { locale } as any);
 };
 
 /**
@@ -62,12 +63,23 @@ export const setupGlobalStyles = () => {
   // 例如：动态主题切换、自定义CSS变量等
 };
 
+// 缓存 themePlugin 实例，避免重复创建
+let themePluginInstance: ReturnType<typeof createThemePlugin> | null = null;
+
 /**
  * 配置UI框架
  */
 export const setupUI = (app: App) => {
+  // 复用 themePlugin 实例，避免重复创建
+  if (!themePluginInstance) {
+    themePluginInstance = createThemePlugin();
+  }
+
   // 配置Element Plus
   setupElementPlus(app);
+
+  // 配置 themePlugin
+  app.use(themePluginInstance);
 
   // 配置ECharts
   app.use(EChartsPlugin);
@@ -76,4 +88,6 @@ export const setupUI = (app: App) => {
 
   // 配置全局样式
   setupGlobalStyles();
+
+  return themePluginInstance;
 };

@@ -4,6 +4,8 @@
  * 注意：只在主应用（admin-app/system-app）中启用，子应用不显示 DevTools
  */
 
+import { isMainApp as isMainAppGlobal } from '@btc/shared-core/configs/unified-env-config';
+
 let devToolsMounted = false;
 let observer: MutationObserver | null = null;
 let checkTimer: number | null = null;
@@ -21,6 +23,7 @@ function getCookie(name: string): string | null {
 
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
+    if (!c) continue;
     while (c.charAt(0) === ' ') {
       c = c.substring(1, c.length);
     }
@@ -58,67 +61,43 @@ function isMoseluUser(): boolean {
 
     return isMoselu;
   } catch (error) {
-    console.warn('[DevTools] 检查 moselu 用户时出错:', error);
     return false;
   }
 }
 
 /**
  * 检查是否为主应用
+ * 使用统一的环境检测方案
  */
 function isMainApp(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
 
-  // 开发环境：优先检查开发环境标志，在开发环境下更宽松地判断
-  if (import.meta.env.DEV) {
-    // 开发环境下，如果 hostname 是本地地址或开发服务器地址，且不是明确的子应用路径，则认为是主应用
-    const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-
-    // 排除明确的子应用路径
-    const isSubAppPath = pathname.startsWith('/logistics') ||
-                        pathname.startsWith('/engineering') ||
-                        pathname.startsWith('/quality') ||
-                        pathname.startsWith('/production') ||
-                        pathname.startsWith('/finance') ||
-                        pathname.startsWith('/monitor');
-
-    // 开发环境：如果是本地地址或开发服务器地址，且不是子应用路径，则为主应用
-    if ((hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('10.80.8.199')) && !isSubAppPath) {
-      return true;
-    }
-
-    // 开发环境：检查路径（兼容原有逻辑）
-    if (pathname === '/' || pathname.startsWith('/admin') || pathname.startsWith('/data')) {
-      return true;
-    }
+  // 使用统一的环境检测函数
+  try {
+    return isMainAppGlobal(window.location.pathname, window.location.pathname, !(window as any).__POWERED_BY_QIANKUN__);
+  } catch (error) {
+    // 如果检测失败，默认返回 true（主应用）
+    return true;
   }
-
-  const hostname = window.location.hostname;
-  const pathname = window.location.pathname;
-
-  // 生产环境：检查是否是主应用的子域名
-  if (hostname === 'admin.bellis.com.cn' || hostname === 'bellis.com.cn') {
-    // 如果是主域名或 admin 子域名，且路径不是子应用路径，则为主应用
-    if (!pathname.startsWith('/logistics') &&
-        !pathname.startsWith('/engineering') &&
-        !pathname.startsWith('/quality') &&
-        !pathname.startsWith('/production') &&
-        !pathname.startsWith('/finance') &&
-        !pathname.startsWith('/monitor')) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**
  * 自动挂载 DevTools（从全局对象获取依赖）
  */
 async function mountDevToolsOnce() {
+  // 关键：使用全局标志，防止跨模块实例重复挂载
+  if (typeof window !== 'undefined') {
+    if ((window as any).__DEVTOOLS_MOUNTED__) {
+      // 检查 DOM 元素是否还存在
+      const existingContainer = document.querySelector('[data-dev-tools-container]');
+      if (existingContainer) {
+        return;
+      }
+    }
+  }
+
   // 只挂载一次，避免重复挂载
   if (devToolsMounted) {
     return;
@@ -150,7 +129,6 @@ async function mountDevToolsOnce() {
     }
   } catch (err) {
     // 静默失败，不影响应用运行
-    console.error('[DevTools] 自动挂载失败:', err);
   }
 }
 
@@ -166,7 +144,7 @@ function checkAppMounted() {
   ];
 
   // 如果任何一个容器有内容，说明应用已挂载
-  for (const { selector, element } of containers) {
+  for (const { element } of containers) {
     if (element && element.children.length > 0) {
       return true;
     }
@@ -196,7 +174,7 @@ export function setupAutoMountDevTools() {
     return;
   }
 
-  // 检查是否已经设置过
+  // 检查是否已经设置过（使用全局标志，防止跨模块实例重复设置）
   if ((window as any).__DEVTOOLS_AUTO_MOUNT_SETUP__) {
     return;
   }
@@ -208,8 +186,8 @@ export function setupAutoMountDevTools() {
   const appMounted = checkAppMounted();
 
   if (appMounted) {
-    mountDevToolsOnce().catch((err) => {
-      console.error('[DevTools] 立即挂载失败:', err);
+    mountDevToolsOnce().catch(() => {
+      // 立即挂载失败
     });
     return;
   }

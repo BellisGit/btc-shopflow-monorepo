@@ -23,7 +23,7 @@ export class HistoryManager {
       id,
       type,
       content,
-      title,
+      ...(title !== undefined && { title }),
       count,
       timestamp: Date.now(),
       duration

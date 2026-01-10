@@ -34,8 +34,8 @@
                 v-for="themePreset in allThemes"
                 :key="themePreset.name"
               >
-                <!-- 自定义主题：点击后弹出颜色选择器弹窗 -->
-                <template v-if="themePreset.name === 'custom'">
+                <!-- 自定义主题：点击后弹出颜色选择器弹窗 - 暂时移除 -->
+                <!-- <template v-if="themePreset.name === 'custom'">
                   <BtcColorPicker
                     v-model="customColor"
                     :teleported="false"
@@ -61,7 +61,7 @@
                       </div>
                     </template>
                   </BtcColorPicker>
-                </template>
+                </template> -->
                 <!-- 预设主题：直接点击切换 -->
                 <template v-else>
                   <div class="theme-item-wrapper" @click="handleThemeClick(themePreset)">
@@ -94,7 +94,8 @@ import { useI18n, useThemePlugin } from '@btc/shared-core';
 import { Check } from '@element-plus/icons-vue';
 import { useMessage } from '@/utils/use-message';
 import type { ThemeConfig } from '@btc/shared-core';
-import { BtcColorPicker, BtcIconButton } from '@btc/shared-components';
+// import { BtcColorPicker, BtcIconButton } from '@btc/shared-components';
+import { BtcIconButton } from '@btc/shared-components';
 
 const { t } = useI18n();
 const theme = useThemePlugin();

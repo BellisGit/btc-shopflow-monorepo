@@ -46,6 +46,7 @@ import { ref, computed, onActivated } from 'vue';
 import { ElButton } from 'element-plus';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import { useI18n } from 'vue-i18n';
+import { usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { requestAdapter } from '@/utils/requestAdapter';
 
 defineOptions({
@@ -66,77 +67,46 @@ const tableSelection = computed(() => {
   return crudRef.value?.selection || [];
 });
 
-// 表格列配置 - 根据后端真实数据结构调整
-const columns = computed(() => [
-  {
-    type: 'selection'
-  },
-  {
-    label: t('recycle.operator'),
-    prop: 'username',
-    minWidth: 120
-  },
-  {
-    label: t('recycle.operation_desc'),
-    prop: 'operationDesc',
-    minWidth: 150,
-    showOverflowTooltip: true
-  },
-  {
-    label: t('recycle.ip_address'),
-    prop: 'ipAddress',
-    minWidth: 120
-  },
-  {
-    label: t('recycle.deleted_data'),
-    prop: 'beforeData',
-    minWidth: 200,
-    component: {
-      name: 'btc-code-json',
-      props: {
-        popover: true
-      }
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.recycle');
+const { formItems } = usePageForms('data.recycle');
+const pageConfig = getPageConfigFull('data.recycle');
+
+// 表格列配置 - 扩展配置以支持动态组件和按钮
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果是 beforeData 或 params 列，添加自定义组件
+    if (col.prop === 'beforeData' || col.prop === 'params') {
+      return {
+        ...col,
+        component: {
+          name: 'btc-code-json',
+          props: {
+            popover: true,
+          },
+        },
+      };
     }
-  },
-  {
-    label: t('recycle.request_url'),
-    prop: 'requestUrl',
-    showOverflowTooltip: true,
-    minWidth: 200
-  },
-  {
-    label: t('recycle.request_params'),
-    prop: 'params',
-    minWidth: 200,
-    component: {
-      name: 'btc-code-json',
-      props: {
-        popover: true
-      }
+    // 如果是操作列，添加按钮
+    if (col.type === 'op') {
+      return {
+        ...col,
+        width: 120,
+        buttons: [
+          {
+            label: t('recycle.restore'),
+            type: 'success',
+            onClick: ({ scope }: { scope: { row: any } }) => {
+              const id = scope.row.id;
+              restore(id);
+            },
+          },
+        ],
+      };
     }
-  },
-  {
-    label: t('recycle.create_time'),
-    prop: 'createdAt',
-    minWidth: 170,
-    sortable: 'custom' as const
-  },
-  {
-    type: 'op',
-    width: 120,
-    buttons: [
-      {
-        label: t('recycle.restore'),
-        type: 'success',
-        onClick: ({ scope }: { scope: { row: any } }) => {
-          // 使用日志记录本身的ID
-          const id = scope.row.id;
-          restore(id);
-        }
-      }
-    ]
-  }
-]);
+    return col;
+  });
+});
 
 // CRUD 配置已在上面定义
 

@@ -1,33 +1,10 @@
 @use 'variables' as *;
 
-// 卡片内容样式
-.auth-page .login-card .card-content {
-	padding: 0; // 移除 padding，让内容占据完整宽度
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	
-	// 所有登录方式：现在由统一容器管理 padding
-	.password-login,
-	.sms-login {
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-height: 0;
-	}
-	
-	// 二维码登录：在card-content内垂直居中
-	.qr-login {
-		width: 100%;
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-	}
+// 注意：.card-content 的基础样式已移至 _auth-card.scss，避免重复定义
+// 这里只保留注册页面相关的样式
 
+// 注册页面内容样式
+.auth-page .login-card .card-content {
 	// 注册页面内容样式
 	&.register-content {
 		padding: 0;
@@ -342,8 +319,6 @@
 	// 	}
 	// }
 	
-	// 响应式设计 - 移动端调整边距
-	@media (max-width: 768px) {
-		padding: 20px; // 移动端：统一 20px 边距
-	}
+	// 响应式样式已移至 _responsive.scss，使用全局布局类系统
+	// 移动端边距由 .col-mobile 处理
 }

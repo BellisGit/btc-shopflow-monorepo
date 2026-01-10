@@ -8,7 +8,7 @@
       :form-items="diffFormItems"
       :op="opConfig"
       :left-title="t('inventory.check.list')"
-      :right-title="t('menu.logistics.inventoryManagement.detail')"
+      :right-title="t('menu.inventory_management.detail')"
       :show-unassigned="false"
       :enable-key-search="true"
       :left-size="'small'"
@@ -37,13 +37,13 @@
       width="800px"
     >
       <el-descriptions :column="1" border>
-        <el-descriptions-item :label="t('logistics.inventory.diff.fields.diffReason')">
+        <el-descriptions-item :label="t('logistics.inventory.diff.fields.diff_reason')">
           {{ detailRow?.diffReason || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('logistics.inventory.diff.fields.processTime')">
+        <el-descriptions-item :label="t('logistics.inventory.diff.fields.process_time')">
           {{ detailRow?.processTime ? formatDateTime(detailRow.processTime) : '-' }}
         </el-descriptions-item>
-        <el-descriptions-item :label="t('logistics.inventory.diff.fields.processRemark')">
+        <el-descriptions-item :label="t('logistics.inventory.diff.fields.process_remark')">
           {{ detailRow?.processRemark || '-' }}
         </el-descriptions-item>
       </el-descriptions>
@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { BtcMessage } from '@btc/shared-components';
-import { useI18n, normalizePageResponse, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcTableGroup, BtcDialog } from '@btc/shared-components';
 import { formatDateTime, formatTableNumber } from '@btc/shared-utils';
@@ -135,8 +135,13 @@ const checkService = {
   }
 };
 
-// 差异记录服务（右侧表）
-const diffService = service.logistics?.warehouse?.diff;
+// 从 config.ts 读取配置
+const { columns: baseDiffColumns } = usePageColumns('logistics.inventory.detail');
+const { formItems: baseDiffFormItems } = usePageForms('logistics.inventory.detail');
+const pageConfig = getPageConfigFull('logistics.inventory.detail');
+
+// 差异记录服务（右侧表）- 使用 config.ts 中定义的服务
+const diffService = pageConfig?.service?.detail || service.logistics?.warehouse?.diff;
 
 // 包装差异记录服务，将左侧选中的 checkNo 转换为 keyword.checkNo，并合并搜索表单的值
 const wrappedDiffService = {
@@ -298,7 +303,7 @@ const rightOpFields = computed(() => [
   {
     type: 'input' as const,
     prop: 'materialCode',
-    placeholder: t('logistics.inventory.diff.fields.materialCode'),
+    placeholder: t('logistics.inventory.diff.fields.material_code'),
     width: '150px',
   },
   {
@@ -338,16 +343,24 @@ const formatNumber = (_row: Record<string, any>, _column: TableColumn, value: an
   return formatTableNumber(value);
 };
 
+// 使用 config.ts 中定义的服务（如果需要的话，可以在这里使用）
+// const baseDiffService = usePageService('logistics.inventory.detail', 'detail');
+
 // 差异记录表格列（根据 EPS 服务定义的字段）
 // 差异原因、处理时间、处理备注在详情弹窗中显示，不在表格中显示
-const diffColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('common.index'), width: 60 },
-  { label: t('logistics.inventory.diff.fields.materialCode'), prop: 'materialCode', minWidth: 160, showOverflowTooltip: true },
-  { label: t('logistics.inventory.diff.fields.position'), prop: 'position', minWidth: 120, showOverflowTooltip: true },
-  { label: t('logistics.inventory.diff.fields.diffQty'), prop: 'diffQty', minWidth: 120, formatter: formatNumber },
-  { label: t('logistics.inventory.diff.fields.processPerson'), prop: 'processPerson', minWidth: 140 },
-]);
+// 扩展配置以支持动态 formatter
+const diffColumns = computed(() => {
+  return baseDiffColumns.value.map(col => {
+    // 如果列是数字字段，添加动态 formatter
+    if (col.prop === 'diffQty') {
+      return {
+        ...col,
+        formatter: formatNumber,
+      };
+    }
+    return col;
+  });
+});
 
 // 操作按钮配置
 const opConfig = computed(() => ({
@@ -370,69 +383,34 @@ const handleDetail = (row: any) => {
 
 // 差异记录表单（根据 EPS 服务定义的字段）
 // 只有处理人、处理时间、处理备注可以填写，其他字段都是只读
-const diffFormItems = computed<FormItem[]>(() => [
-  {
-    label: t('logistics.inventory.diff.fields.checkNo'),
-    prop: 'checkNo',
-    disabled: false,
-    component: { name: 'el-input', props: { readonly: true } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.materialCode'),
-    prop: 'materialCode',
-    disabled: false,
-    component: { name: 'el-input', props: { readonly: true, maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.position'),
-    prop: 'position',
-    disabled: false,
-    component: { name: 'el-input', props: { readonly: true, maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.diffQty'),
-    prop: 'diffQty',
-    disabled: false,
-    component: { name: 'el-input-number', props: { readonly: true, controlsPosition: 'right' } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.diffReason'),
-    prop: 'diffReason',
-    disabled: false,
-    component: { name: 'el-input', props: { type: 'textarea', rows: 2, maxlength: 255, readonly: true } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processPerson'),
-    prop: 'processPerson',
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processTime'),
-    prop: 'processTime',
-    component: { name: 'el-date-picker', props: { type: 'datetime', valueFormat: 'YYYY-MM-DD HH:mm:ss', clearable: true } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processRemark'),
-    prop: 'processRemark',
-    component: { name: 'el-input', props: { type: 'textarea', rows: 2, maxlength: 255 } },
-  },
-]);
+// 扩展配置以支持动态 readonly 属性
+const diffFormItems = computed(() => {
+  return baseDiffFormItems.value.map(item => {
+    // 对于只读字段，添加 readonly 属性
+    if (['checkNo', 'materialCode', 'position', 'diffQty', 'diffReason'].includes(item.prop || '')) {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            readonly: true,
+          },
+        },
+      };
+    }
+    return item;
+  });
+});
 
-// 导出用的列配置（根据 EPS 服务定义的字段）
-const diffExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'materialCode', label: t('logistics.inventory.diff.fields.materialCode') },
-  { prop: 'position', label: t('logistics.inventory.diff.fields.position') },
-  { prop: 'diffQty', label: t('logistics.inventory.diff.fields.diffQty') },
-  { prop: 'diffReason', label: t('logistics.inventory.diff.fields.diffReason') },
-  { prop: 'processPerson', label: t('logistics.inventory.diff.fields.processPerson') },
-  { prop: 'processTime', label: t('logistics.inventory.diff.fields.processTime') },
-  { prop: 'processRemark', label: t('logistics.inventory.diff.fields.processRemark') },
-]);
+// 导出用的列配置（从 config.ts 读取）
+const { columns: exportColumns } = usePageColumns('logistics.inventory.detail.export');
+const diffExportColumns = computed(() => exportColumns.value);
 
 // 导出功能
 const handleExport = async () => {
   if (!diffService?.export) {
-    BtcMessage.error(t('platform.common.export_failed') || '导出服务不可用');
+    BtcMessage.error(t('common.ui.export_failed') || '导出服务不可用');
     return;
   }
 
@@ -511,7 +489,7 @@ const handleExport = async () => {
     exportJsonToExcel({
       header,
       data,
-      filename: t('menu.logistics.inventoryManagement.detail') || '差异记录表',
+      filename: t('menu.inventory_management.detail') || '差异记录表',
       autoWidth: true,
       bookType: 'xlsx',
     });
@@ -519,7 +497,7 @@ const handleExport = async () => {
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
     console.error('[InventoryDetail] Export failed:', error);
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('platform.common.export_failed');
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('common.ui.export_failed');
     BtcMessage.error(errorMsg);
   } finally {
     exportLoading.value = false;

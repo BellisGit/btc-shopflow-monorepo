@@ -2,10 +2,580 @@
 logistics-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/18 14:04:56
-总错误数: 0
+生成时间: 2026/1/7 15:15:04
+总错误数: 64
 
-✅ 未发现类型错误
+按错误代码分类:
+------------------------------------------------------------
+  TS6133    : 31 个
+  TS2307    : 7 个
+  TS2353    : 6 个
+  TS18048   : 5 个
+  TS2322    : 3 个
+  TS2345    : 3 个
+  TS2532    : 3 个
+  TS6196    : 3 个
+  TS2375    : 2 个
+  TS7006    : 1 个
+
+按文件分类:
+------------------------------------------------------------
+
+文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  错误数: 5
+    [TS6133] 行 8:10 - error TS6133: 'createApp' is declared but its value is never read.
+    [TS6133] 行 31:10 - error TS6133: 'getLoadingStyle' is declared but its value is never read.
+    [TS2345] 行 63:50 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS6133] 行 122:62 - error TS6133: 'container' is declared but its value is never read.
+    [TS6133] 行 381:11 - error TS6133: 'duration' is declared but its value is never read.
+
+文件: ../../configs/vite/plugins/locales-static.ts
+  错误数: 4
+    [TS6133] 行 9:10 - error TS6133: 'join' is declared but its value is never read.
+    [TS6133] 行 16:7 - error TS6133: 'viteConfig' is declared but its value is never read.
+    [TS2353] 行 70:5 - error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+    [TS7006] 行 72:20 - error TS7006: Parameter 'config' implicitly has an 'any' type.
+
+文件: ../../configs/vite/plugins/resolve-external-imports.ts
+  错误数: 4
+    [TS6133] 行 145:71 - error TS6133: 'quote' is declared but its value is never read.
+    [TS18048] 行 203:44 - error TS18048: 'specifier' is possibly 'undefined'.
+    [TS2345] 行 211:54 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+    [TS6133] 行 224:71 - error TS6133: 'quote' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/store/process.ts
+  错误数: 4
+    [TS18048] 行 49:12 - error TS18048: 'appByPath' is possibly 'undefined'.
+    [TS18048] 行 260:13 - error TS18048: 'existingTab' is possibly 'undefined'.
+    [TS18048] 行 261:14 - error TS18048: 'existingTab' is possibly 'undefined'.
+    [TS18048] 行 261:56 - error TS18048: 'existingTab' is possibly 'undefined'.
+
+文件: ../../auth/shared/composables/redirect.ts
+  错误数: 3
+    [TS6133] 行 39:60 - error TS6133: 'getAppConfig' is declared but its value is never read.
+    [TS6133] 行 265:11 - error TS6133: 'hostname' is declared but its value is never read.
+    [TS6133] 行 453:11 - error TS6133: 'hostname' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  错误数: 3
+    [TS2532] 行 517:11 - error TS2532: Object is possibly 'undefined'.
+    [TS2532] 行 532:9 - error TS2532: Object is possibly 'undefined'.
+    [TS6133] 行 619:51 - error TS6133: 'error' is declared but its value is never read.
+
+文件: src/utils/init-layout-app.ts
+  错误数: 2
+    [TS2307] 行 130:14 - error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+    [TS2307] 行 205:44 - error TS2307: Cannot find module '@btc/shared-utils/qiankun/load-layout-app' or its corresponding type declarations.
+
+文件: src/utils/response-interceptor-init.ts
+  错误数: 2
+    [TS2307] 行 6:99 - error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+    [TS2307] 行 81:37 - error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+文件: ../../configs/vite/factories/layout.config.ts
+  错误数: 2
+    [TS2353] 行 574:5 - error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+    [TS2375] 行 663:3 - error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: { alias: any[] | { '@layout': string; '@system': string; '@': string; '@services': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 6 more ...; optimizeDeps: DepO...' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../configs/vite/factories/mainapp.config.ts
+  错误数: 2
+    [TS6133] 行 8:1 - error TS6133: 'createRequire' is declared but its value is never read.
+    [TS2353] 行 367:5 - error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+
+文件: ../../configs/vite/factories/mobile.config.ts
+  错误数: 2
+    [TS2353] 行 480:5 - error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+    [TS2375] 行 501:3 - error TS2375: Type '{ base: string; publicDir: string | false; resolve: { alias: any[] | { '@modules': string; '@db': string; '@pwa': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+文件: ../../configs/vite/plugins/resolve-auth-aliases.ts
+  错误数: 2
+    [TS6133] 行 7:1 - error TS6133: 'resolve' is declared but its value is never read.
+    [TS2353] 行 52:7 - error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+
+文件: ../../configs/vite/plugins/resolve-btc-imports.ts
+  错误数: 2
+    [TS6133] 行 9:1 - error TS6133: 'resolve' is declared but its value is never read.
+    [TS2353] 行 32:7 - error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+
+文件: ../../packages/shared-core/src/btc/utils/loading/route-loading.service.ts
+  错误数: 2
+    [TS6133] 行 95:32 - error TS6133: 'container' is declared but its value is never read.
+    [TS6133] 行 321:11 - error TS6133: 'duration' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/btc/utils/page-title.ts
+  错误数: 2
+    [TS2322] 行 58:3 - error TS2322: Type 'Promise<AppsConfig | null>' is not assignable to type 'Promise<AppsConfig>'.
+    [TS2322] 行 95:3 - error TS2322: Type 'AppsConfig | null' is not assignable to type 'AppsConfig'.
+
+文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts
+  错误数: 2
+    [TS6133] 行 171:44 - error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+    [TS6133] 行 342:44 - error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/composables/useContentMount.ts
+  错误数: 2
+    [TS6133] 行 38:9 - error TS6133: 'isUsingLayoutApp' is declared but its value is never read.
+    [TS6133] 行 46:9 - error TS6133: 'isLayoutAppSelf' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/utils/storage/indexeddb/index.ts
+  错误数: 2
+    [TS6196] 行 6:15 - error TS6196: 'Dexie' is declared but never used.
+    [TS6196] 行 8:15 - error TS6196: 'DashboardDataItem' is declared but never used.
+
+文件: src/bootstrap/index.ts
+  错误数: 1
+    [TS2322] 行 512:13 - error TS2322: Type 'Promise<string>' is not assignable to type 'string'.
+
+文件: src/main.ts
+  错误数: 1
+    [TS2307] 行 13:50 - error TS2307: Cannot find module '@btc/shared-utils/cdn/load-shared-resources' or its corresponding type declarations.
+
+文件: src/utils/app-storage/index.ts
+  错误数: 1
+    [TS2307] 行 6:25 - error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+文件: src/utils/storage-manager.ts
+  错误数: 1
+    [TS2307] 行 6:25 - error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+文件: ../../configs/app-scanner.ts
+  错误数: 1
+    [TS6133] 行 74:7 - error TS6133: 'appRegistry' is declared but its value is never read.
+
+文件: ../../configs/vite/factories/subapp.config.ts
+  错误数: 1
+    [TS6133] 行 19:7 - error TS6133: '__dirname' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/plugins/github/host.ts
+  错误数: 1
+    [TS6133] 行 24:9 - error TS6133: 'globalState' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/plugins/i18n/host.ts
+  错误数: 1
+    [TS6133] 行 42:9 - error TS6133: 'globalState' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/plugins/notification/host.ts
+  错误数: 1
+    [TS6133] 行 25:9 - error TS6133: 'globalState' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/plugins/preference/host.ts
+  错误数: 1
+    [TS6133] 行 22:9 - error TS6133: 'globalState' is declared but its value is never read.
+
+文件: ../../packages/shared-components/src/plugins/theme/host.ts
+  错误数: 1
+    [TS6133] 行 27:9 - error TS6133: 'globalState' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/auth/logoutCore.ts
+  错误数: 1
+    [TS6133] 行 203:17 - error TS6133: 'useI18n' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/btc/utils/resource-loader.ts
+  错误数: 1
+    [TS2345] 行 807:65 - error TS2345: Argument of type '(link: HTMLLinkElement) => void' is not assignable to parameter of type '(value: Element, key: number, parent: NodeListOf<Element>) => void'.
+
+文件: ../../packages/shared-core/src/composables/subapp-i18n/registerSubAppI18n.ts
+  错误数: 1
+    [TS2532] 行 89:20 - error TS2532: Object is possibly 'undefined'.
+
+文件: ../../packages/shared-core/src/manifest/index.ts
+  错误数: 1
+    [TS6133] 行 78:10 - error TS6133: 'getAppBySubdomain' is declared but its value is never read.
+
+文件: ../../packages/shared-core/src/utils/storage/indexeddb/types.ts
+  错误数: 1
+    [TS6196] 行 5:15 - error TS6196: 'Dexie' is declared but never used.
+
+文件: ../../packages/shared-core/src/utils/storage/pinia-persist/index.ts
+  错误数: 1
+    [TS6133] 行 7:1 - error TS6133: 'PiniaPluginContext' is declared but its value is never read.
+
+详细错误列表:
+------------------------------------------------------------
+
+错误 #1
+  文件: src/bootstrap/index.ts
+  位置: 512:13
+  代码: TS2322
+  消息: error TS2322: Type 'Promise<string>' is not assignable to type 'string'.
+
+错误 #2
+  文件: src/main.ts
+  位置: 13:50
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils/cdn/load-shared-resources' or its corresponding type declarations.
+
+错误 #3
+  文件: src/utils/app-storage/index.ts
+  位置: 6:25
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+错误 #4
+  文件: src/utils/init-layout-app.ts
+  位置: 130:14
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+
+错误 #5
+  文件: src/utils/init-layout-app.ts
+  位置: 205:44
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils/qiankun/load-layout-app' or its corresponding type declarations.
+
+错误 #6
+  文件: src/utils/response-interceptor-init.ts
+  位置: 6:99
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+错误 #7
+  文件: src/utils/response-interceptor-init.ts
+  位置: 81:37
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+错误 #8
+  文件: src/utils/storage-manager.ts
+  位置: 6:25
+  代码: TS2307
+  消息: error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+
+错误 #9
+  文件: ../../auth/shared/composables/redirect.ts
+  位置: 39:60
+  代码: TS6133
+  消息: error TS6133: 'getAppConfig' is declared but its value is never read.
+
+错误 #10
+  文件: ../../auth/shared/composables/redirect.ts
+  位置: 265:11
+  代码: TS6133
+  消息: error TS6133: 'hostname' is declared but its value is never read.
+
+错误 #11
+  文件: ../../auth/shared/composables/redirect.ts
+  位置: 453:11
+  代码: TS6133
+  消息: error TS6133: 'hostname' is declared but its value is never read.
+
+错误 #12
+  文件: ../../configs/app-scanner.ts
+  位置: 74:7
+  代码: TS6133
+  消息: error TS6133: 'appRegistry' is declared but its value is never read.
+
+错误 #13
+  文件: ../../configs/vite/factories/layout.config.ts
+  位置: 574:5
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+
+错误 #14
+  文件: ../../configs/vite/factories/layout.config.ts
+  位置: 663:3
+  代码: TS2375
+  消息: error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: { alias: any[] | { '@layout': string; '@system': string; '@': string; '@services': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 6 more ...; optimizeDeps: DepO...' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #15
+  文件: ../../configs/vite/factories/mainapp.config.ts
+  位置: 8:1
+  代码: TS6133
+  消息: error TS6133: 'createRequire' is declared but its value is never read.
+
+错误 #16
+  文件: ../../configs/vite/factories/mainapp.config.ts
+  位置: 367:5
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+
+错误 #17
+  文件: ../../configs/vite/factories/mobile.config.ts
+  位置: 480:5
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+
+错误 #18
+  文件: ../../configs/vite/factories/mobile.config.ts
+  位置: 501:3
+  代码: TS2375
+  消息: error TS2375: Type '{ base: string; publicDir: string | false; resolve: { alias: any[] | { '@modules': string; '@db': string; '@pwa': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+
+错误 #19
+  文件: ../../configs/vite/factories/subapp.config.ts
+  位置: 19:7
+  代码: TS6133
+  消息: error TS6133: '__dirname' is declared but its value is never read.
+
+错误 #20
+  文件: ../../configs/vite/plugins/locales-static.ts
+  位置: 9:10
+  代码: TS6133
+  消息: error TS6133: 'join' is declared but its value is never read.
+
+错误 #21
+  文件: ../../configs/vite/plugins/locales-static.ts
+  位置: 16:7
+  代码: TS6133
+  消息: error TS6133: 'viteConfig' is declared but its value is never read.
+
+错误 #22
+  文件: ../../configs/vite/plugins/locales-static.ts
+  位置: 70:5
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+
+错误 #23
+  文件: ../../configs/vite/plugins/locales-static.ts
+  位置: 72:20
+  代码: TS7006
+  消息: error TS7006: Parameter 'config' implicitly has an 'any' type.
+
+错误 #24
+  文件: ../../configs/vite/plugins/resolve-auth-aliases.ts
+  位置: 7:1
+  代码: TS6133
+  消息: error TS6133: 'resolve' is declared but its value is never read.
+
+错误 #25
+  文件: ../../configs/vite/plugins/resolve-auth-aliases.ts
+  位置: 52:7
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+
+错误 #26
+  文件: ../../configs/vite/plugins/resolve-btc-imports.ts
+  位置: 9:1
+  代码: TS6133
+  消息: error TS6133: 'resolve' is declared but its value is never read.
+
+错误 #27
+  文件: ../../configs/vite/plugins/resolve-btc-imports.ts
+  位置: 32:7
+  代码: TS2353
+  消息: error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+
+错误 #28
+  文件: ../../configs/vite/plugins/resolve-external-imports.ts
+  位置: 145:71
+  代码: TS6133
+  消息: error TS6133: 'quote' is declared but its value is never read.
+
+错误 #29
+  文件: ../../configs/vite/plugins/resolve-external-imports.ts
+  位置: 203:44
+  代码: TS18048
+  消息: error TS18048: 'specifier' is possibly 'undefined'.
+
+错误 #30
+  文件: ../../configs/vite/plugins/resolve-external-imports.ts
+  位置: 211:54
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #31
+  文件: ../../configs/vite/plugins/resolve-external-imports.ts
+  位置: 224:71
+  代码: TS6133
+  消息: error TS6133: 'quote' is declared but its value is never read.
+
+错误 #32
+  文件: ../../packages/shared-components/src/plugins/github/host.ts
+  位置: 24:9
+  代码: TS6133
+  消息: error TS6133: 'globalState' is declared but its value is never read.
+
+错误 #33
+  文件: ../../packages/shared-components/src/plugins/i18n/host.ts
+  位置: 42:9
+  代码: TS6133
+  消息: error TS6133: 'globalState' is declared but its value is never read.
+
+错误 #34
+  文件: ../../packages/shared-components/src/plugins/notification/host.ts
+  位置: 25:9
+  代码: TS6133
+  消息: error TS6133: 'globalState' is declared but its value is never read.
+
+错误 #35
+  文件: ../../packages/shared-components/src/plugins/preference/host.ts
+  位置: 22:9
+  代码: TS6133
+  消息: error TS6133: 'globalState' is declared but its value is never read.
+
+错误 #36
+  文件: ../../packages/shared-components/src/plugins/theme/host.ts
+  位置: 27:9
+  代码: TS6133
+  消息: error TS6133: 'globalState' is declared but its value is never read.
+
+错误 #37
+  文件: ../../packages/shared-components/src/store/process.ts
+  位置: 49:12
+  代码: TS18048
+  消息: error TS18048: 'appByPath' is possibly 'undefined'.
+
+错误 #38
+  文件: ../../packages/shared-components/src/store/process.ts
+  位置: 260:13
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #39
+  文件: ../../packages/shared-components/src/store/process.ts
+  位置: 261:14
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #40
+  文件: ../../packages/shared-components/src/store/process.ts
+  位置: 261:56
+  代码: TS18048
+  消息: error TS18048: 'existingTab' is possibly 'undefined'.
+
+错误 #41
+  文件: ../../packages/shared-core/src/auth/logoutCore.ts
+  位置: 203:17
+  代码: TS6133
+  消息: error TS6133: 'useI18n' is declared but its value is never read.
+
+错误 #42
+  文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  位置: 8:10
+  代码: TS6133
+  消息: error TS6133: 'createApp' is declared but its value is never read.
+
+错误 #43
+  文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  位置: 31:10
+  代码: TS6133
+  消息: error TS6133: 'getLoadingStyle' is declared but its value is never read.
+
+错误 #44
+  文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  位置: 63:50
+  代码: TS2345
+  消息: error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+
+错误 #45
+  文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  位置: 122:62
+  代码: TS6133
+  消息: error TS6133: 'container' is declared but its value is never read.
+
+错误 #46
+  文件: ../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts
+  位置: 381:11
+  代码: TS6133
+  消息: error TS6133: 'duration' is declared but its value is never read.
+
+错误 #47
+  文件: ../../packages/shared-core/src/btc/utils/loading/route-loading.service.ts
+  位置: 95:32
+  代码: TS6133
+  消息: error TS6133: 'container' is declared but its value is never read.
+
+错误 #48
+  文件: ../../packages/shared-core/src/btc/utils/loading/route-loading.service.ts
+  位置: 321:11
+  代码: TS6133
+  消息: error TS6133: 'duration' is declared but its value is never read.
+
+错误 #49
+  文件: ../../packages/shared-core/src/btc/utils/page-title.ts
+  位置: 58:3
+  代码: TS2322
+  消息: error TS2322: Type 'Promise<AppsConfig | null>' is not assignable to type 'Promise<AppsConfig>'.
+
+错误 #50
+  文件: ../../packages/shared-core/src/btc/utils/page-title.ts
+  位置: 95:3
+  代码: TS2322
+  消息: error TS2322: Type 'AppsConfig | null' is not assignable to type 'AppsConfig'.
+
+错误 #51
+  文件: ../../packages/shared-core/src/btc/utils/resource-loader.ts
+  位置: 807:65
+  代码: TS2345
+  消息: error TS2345: Argument of type '(link: HTMLLinkElement) => void' is not assignable to parameter of type '(value: Element, key: number, parent: NodeListOf<Element>) => void'.
+
+错误 #52
+  文件: ../../packages/shared-core/src/composables/subapp-i18n/registerSubAppI18n.ts
+  位置: 89:20
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #53
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  位置: 517:11
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #54
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  位置: 532:9
+  代码: TS2532
+  消息: error TS2532: Object is possibly 'undefined'.
+
+错误 #55
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts
+  位置: 619:51
+  代码: TS6133
+  消息: error TS6133: 'error' is declared but its value is never read.
+
+错误 #56
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts
+  位置: 171:44
+  代码: TS6133
+  消息: error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+
+错误 #57
+  文件: ../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts
+  位置: 342:44
+  代码: TS6133
+  消息: error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+
+错误 #58
+  文件: ../../packages/shared-core/src/composables/useContentMount.ts
+  位置: 38:9
+  代码: TS6133
+  消息: error TS6133: 'isUsingLayoutApp' is declared but its value is never read.
+
+错误 #59
+  文件: ../../packages/shared-core/src/composables/useContentMount.ts
+  位置: 46:9
+  代码: TS6133
+  消息: error TS6133: 'isLayoutAppSelf' is declared but its value is never read.
+
+错误 #60
+  文件: ../../packages/shared-core/src/manifest/index.ts
+  位置: 78:10
+  代码: TS6133
+  消息: error TS6133: 'getAppBySubdomain' is declared but its value is never read.
+
+错误 #61
+  文件: ../../packages/shared-core/src/utils/storage/indexeddb/index.ts
+  位置: 6:15
+  代码: TS6196
+  消息: error TS6196: 'Dexie' is declared but never used.
+
+错误 #62
+  文件: ../../packages/shared-core/src/utils/storage/indexeddb/index.ts
+  位置: 8:15
+  代码: TS6196
+  消息: error TS6196: 'DashboardDataItem' is declared but never used.
+
+错误 #63
+  文件: ../../packages/shared-core/src/utils/storage/indexeddb/types.ts
+  位置: 5:15
+  代码: TS6196
+  消息: error TS6196: 'Dexie' is declared but never used.
+
+错误 #64
+  文件: ../../packages/shared-core/src/utils/storage/pinia-persist/index.ts
+  位置: 7:1
+  代码: TS6133
+  消息: error TS6133: 'PiniaPluginContext' is declared but its value is never read.
 
 ============================================================
 完整输出:
@@ -15,3 +585,83 @@ logistics-app - TypeScript 类型错误报告
 > logistics-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\logistics-app
 > tsc --noEmit --skipLibCheck
 
+src/bootstrap/index.ts(512,13): error TS2322: Type 'Promise<string>' is not assignable to type 'string'.
+src/main.ts(13,50): error TS2307: Cannot find module '@btc/shared-utils/cdn/load-shared-resources' or its corresponding type declarations.
+src/utils/app-storage/index.ts(6,25): error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+src/utils/init-layout-app.ts(130,14): error TS2307: Cannot find module '@btc/subapp-manifests' or its corresponding type declarations.
+src/utils/init-layout-app.ts(205,44): error TS2307: Cannot find module '@btc/shared-utils/qiankun/load-layout-app' or its corresponding type declarations.
+src/utils/response-interceptor-init.ts(6,99): error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+src/utils/response-interceptor-init.ts(81,37): error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+src/utils/storage-manager.ts(6,25): error TS2307: Cannot find module '@btc/shared-utils' or its corresponding type declarations.
+../../auth/shared/composables/redirect.ts(39,60): error TS6133: 'getAppConfig' is declared but its value is never read.
+../../auth/shared/composables/redirect.ts(265,11): error TS6133: 'hostname' is declared but its value is never read.
+../../auth/shared/composables/redirect.ts(453,11): error TS6133: 'hostname' is declared but its value is never read.
+../../configs/app-scanner.ts(74,7): error TS6133: 'appRegistry' is declared but its value is never read.
+../../configs/vite/factories/layout.config.ts(574,5): error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+../../configs/vite/factories/layout.config.ts(663,3): error TS2375: Type '{ base: string; publicDir: string | false; cacheDir: string; resolve: { alias: any[] | { '@layout': string; '@system': string; '@': string; '@services': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 6 more ...; optimizeDeps: DepO...' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'preview' are incompatible.
+    Type 'PreviewOptions | undefined' is not assignable to type 'PreviewOptions'.
+      Type 'undefined' is not assignable to type 'PreviewOptions'.
+../../configs/vite/factories/mainapp.config.ts(8,1): error TS6133: 'createRequire' is declared but its value is never read.
+../../configs/vite/factories/mainapp.config.ts(367,5): error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+../../configs/vite/factories/mobile.config.ts(480,5): error TS2353: Object literal may only specify known properties, and 'root' does not exist in type 'PreviewOptions'.
+../../configs/vite/factories/mobile.config.ts(501,3): error TS2375: Type '{ base: string; publicDir: string | false; resolve: { alias: any[] | { '@modules': string; '@db': string; '@pwa': string; }; mainFields?: string[]; conditions?: string[]; extensions?: string[]; dedupe?: string[]; preserveSymlinks?: boolean; }; ... 5 more ...; build: BuildOptions; }' is not assignable to type 'UserConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'preview' are incompatible.
+    Type 'PreviewOptions | undefined' is not assignable to type 'PreviewOptions'.
+      Type 'undefined' is not assignable to type 'PreviewOptions'.
+../../configs/vite/factories/subapp.config.ts(19,7): error TS6133: '__dirname' is declared but its value is never read.
+../../configs/vite/plugins/locales-static.ts(9,10): error TS6133: 'join' is declared but its value is never read.
+../../configs/vite/plugins/locales-static.ts(16,7): error TS6133: 'viteConfig' is declared but its value is never read.
+../../configs/vite/plugins/locales-static.ts(70,5): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+../../configs/vite/plugins/locales-static.ts(72,20): error TS7006: Parameter 'config' implicitly has an 'any' type.
+../../configs/vite/plugins/resolve-auth-aliases.ts(7,1): error TS6133: 'resolve' is declared but its value is never read.
+../../configs/vite/plugins/resolve-auth-aliases.ts(52,7): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+../../configs/vite/plugins/resolve-btc-imports.ts(9,1): error TS6133: 'resolve' is declared but its value is never read.
+../../configs/vite/plugins/resolve-btc-imports.ts(32,7): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Plugin<any>'.
+../../configs/vite/plugins/resolve-external-imports.ts(145,71): error TS6133: 'quote' is declared but its value is never read.
+../../configs/vite/plugins/resolve-external-imports.ts(203,44): error TS18048: 'specifier' is possibly 'undefined'.
+../../configs/vite/plugins/resolve-external-imports.ts(211,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../configs/vite/plugins/resolve-external-imports.ts(224,71): error TS6133: 'quote' is declared but its value is never read.
+../../packages/shared-components/src/plugins/github/host.ts(24,9): error TS6133: 'globalState' is declared but its value is never read.
+../../packages/shared-components/src/plugins/i18n/host.ts(42,9): error TS6133: 'globalState' is declared but its value is never read.
+../../packages/shared-components/src/plugins/notification/host.ts(25,9): error TS6133: 'globalState' is declared but its value is never read.
+../../packages/shared-components/src/plugins/preference/host.ts(22,9): error TS6133: 'globalState' is declared but its value is never read.
+../../packages/shared-components/src/plugins/theme/host.ts(27,9): error TS6133: 'globalState' is declared but its value is never read.
+../../packages/shared-components/src/store/process.ts(49,12): error TS18048: 'appByPath' is possibly 'undefined'.
+../../packages/shared-components/src/store/process.ts(260,13): error TS18048: 'existingTab' is possibly 'undefined'.
+../../packages/shared-components/src/store/process.ts(261,14): error TS18048: 'existingTab' is possibly 'undefined'.
+../../packages/shared-components/src/store/process.ts(261,56): error TS18048: 'existingTab' is possibly 'undefined'.
+../../packages/shared-core/src/auth/logoutCore.ts(203,17): error TS6133: 'useI18n' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts(8,10): error TS6133: 'createApp' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts(31,10): error TS6133: 'getLoadingStyle' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts(63,50): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts(122,62): error TS6133: 'container' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/app-loading.service.ts(381,11): error TS6133: 'duration' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/route-loading.service.ts(95,32): error TS6133: 'container' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/loading/route-loading.service.ts(321,11): error TS6133: 'duration' is declared but its value is never read.
+../../packages/shared-core/src/btc/utils/page-title.ts(58,3): error TS2322: Type 'Promise<AppsConfig | null>' is not assignable to type 'Promise<AppsConfig>'.
+  Type 'AppsConfig | null' is not assignable to type 'AppsConfig'.
+    Type 'null' is not assignable to type 'AppsConfig'.
+../../packages/shared-core/src/btc/utils/page-title.ts(95,3): error TS2322: Type 'AppsConfig | null' is not assignable to type 'AppsConfig'.
+  Type 'null' is not assignable to type 'AppsConfig'.
+../../packages/shared-core/src/btc/utils/resource-loader.ts(807,65): error TS2345: Argument of type '(link: HTMLLinkElement) => void' is not assignable to parameter of type '(value: Element, key: number, parent: NodeListOf<Element>) => void'.
+  Types of parameters 'link' and 'value' are incompatible.
+    Type 'Element' is missing the following properties from type 'HTMLLinkElement': as, blocking, charset, crossOrigin, and 149 more.
+../../packages/shared-core/src/composables/subapp-i18n/registerSubAppI18n.ts(89,20): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts(517,11): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts(532,9): error TS2532: Object is possibly 'undefined'.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLifecycle.ts(619,51): error TS6133: 'error' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts(171,44): error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+../../packages/shared-core/src/composables/subapp-lifecycle/useSubAppLogout.ts(342,44): error TS6133: 'buildLogoutUrl' is declared but its value is never read.
+../../packages/shared-core/src/composables/useContentMount.ts(38,9): error TS6133: 'isUsingLayoutApp' is declared but its value is never read.
+../../packages/shared-core/src/composables/useContentMount.ts(46,9): error TS6133: 'isLayoutAppSelf' is declared but its value is never read.
+../../packages/shared-core/src/manifest/index.ts(78,10): error TS6133: 'getAppBySubdomain' is declared but its value is never read.
+../../packages/shared-core/src/utils/storage/indexeddb/index.ts(6,15): error TS6196: 'Dexie' is declared but never used.
+../../packages/shared-core/src/utils/storage/indexeddb/index.ts(8,15): error TS6196: 'DashboardDataItem' is declared but never used.
+../../packages/shared-core/src/utils/storage/indexeddb/types.ts(5,15): error TS6196: 'Dexie' is declared but never used.
+../../packages/shared-core/src/utils/storage/pinia-persist/index.ts(7,1): error TS6133: 'PiniaPluginContext' is declared but its value is never read.
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\logistics-app:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  logistics-app@1.0.0 type-check: `tsc --noEmit --skipLibCheck`
+Exit status 2

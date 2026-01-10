@@ -1,10 +1,13 @@
 import { ref, watch, computed, provide } from 'vue';
 import type { DialogProps } from '../types';
+import { useBrowser } from '../../../composables/useBrowser';
 
 /**
  * 对话框状态管理
  */
 export function useDialog(props: DialogProps, emit: any) {
+  const browser = useBrowser();
+
   // el-dialog ref
   const Dialog = ref();
 
@@ -12,22 +15,19 @@ export function useDialog(props: DialogProps, emit: any) {
   const fullscreen = ref(false);
 
   // 是否可见
+  // 完全按照 cool-admin 的实现：初始值为 false
   const visible = ref(false);
 
   // 缓存数
   const cacheKey = ref(0);
 
-  // 检测移动端（简单实现）
-  const isMobile = computed(() => {
-    return window.innerWidth < 768;
-  });
-
   // 是否全屏（移动端强制全屏）
   const isFullscreen = computed(() => {
-    return isMobile.value ? true : fullscreen.value;
+    return browser.browser.isMini ? true : fullscreen.value;
   });
 
   // 监听绑定值
+  // 完全按照 cool-admin 的实现：直接赋值，没有额外的检查
   watch(
     () => props.modelValue,
     (val) => {
@@ -63,6 +63,7 @@ export function useDialog(props: DialogProps, emit: any) {
     fullscreen: isFullscreen,
   });
 
+
   // 打开
   function open() {
     visible.value = true;
@@ -75,7 +76,7 @@ export function useDialog(props: DialogProps, emit: any) {
     }
 
     if (props.beforeClose) {
-      props.beforeClose();
+      props.beforeClose(done);
     } else {
       done();
     }
@@ -112,7 +113,6 @@ export function useDialog(props: DialogProps, emit: any) {
 
     // computed
     isFullscreen,
-    isMobile,
 
     // methods
     open,

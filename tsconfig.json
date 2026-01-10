@@ -15,20 +15,25 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@btc/shared-core": ["packages/shared-core/dist"],
-      "@btc/shared-core/*": ["packages/shared-core/dist/*"],
-      "@btc/shared-components": ["packages/shared-components/dist"],
-      "@btc/shared-components/*": ["packages/shared-components/dist/*"],
-      "@btc/shared-utils": ["packages/shared-utils/dist"],
-      "@btc/shared-utils/*": ["packages/shared-utils/dist/*"],
-      "@btc/vite-plugin": ["packages/vite-plugin/dist"],
-      "@btc/vite-plugin/*": ["packages/vite-plugin/dist/*"],
-      "@btc/subapp-manifests": ["packages/subapp-manifests/dist"],
-      "@btc/subapp-manifests/*": ["packages/subapp-manifests/dist/*"]
-    }
+    "jsx": "preserve"
   },
-  "exclude": ["node_modules", "dist", "**/dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/dist",
+    "**/node_modules",
+    "**/.build-timestamp",
+    "**/.deploy",
+    "**/dist-cdn",
+    "**/.vite",
+    "**/.turbo",
+    "**/coverage",
+    "**/.next",
+    "**/.nuxt",
+    "**/.output",
+    "**/.cache",
+    "**/build",
+    "**/ts-error-reports",
+    "**/lint-error-reports"
+  ]
 }

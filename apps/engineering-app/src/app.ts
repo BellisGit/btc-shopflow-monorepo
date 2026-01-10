@@ -1,12 +1,15 @@
-import type { AppIdentity } from '@configs/app-identity.types';
+import type { AppIdentity } from '@btc/shared-core/configs/app-identity.types';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 工程应用身份配置
  */
+const { t } = useI18n();
+
 const engineeringAppIdentity: AppIdentity = {
   id: 'engineering',
-  name: '工程应用',
-  description: 'BTC车间管理系统 - 工程应用',
+  name: t('subapp.name'),
+  description: t('common.system.btc_shop_management_system'),
   pathPrefix: '/engineering',
   subdomain: 'engineering.bellis.com.cn',
   type: 'sub',

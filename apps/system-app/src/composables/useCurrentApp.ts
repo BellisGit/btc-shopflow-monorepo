@@ -12,6 +12,8 @@ const subdomainToAppMap: Record<string, string> = {
   'production.bellis.com.cn': 'production',
   'engineering.bellis.com.cn': 'engineering',
   'finance.bellis.com.cn': 'finance',
+  'dashboard.bellis.com.cn': 'dashboard',
+  'personnel.bellis.com.cn': 'personnel',
 };
 
 /**

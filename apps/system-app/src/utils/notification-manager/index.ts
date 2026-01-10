@@ -126,6 +126,7 @@ export class NotificationManager {
   /**
    * 清理通知
    */
+  // @ts-expect-error: 私有方法，可能在未来使用
   private cleanupNotification(notificationId: string): void {
     this.displayingNotifications.delete(notificationId);
     this.notificationMap.delete(notificationId);

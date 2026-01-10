@@ -37,7 +37,7 @@ export async function handleLint(appName, subCommand = 'check', options = {}) {
   const isFix = subCommand === 'fix';
   
   // 修复 docs 应用名称
-  const actualAppName = appName === 'docs' ? 'docs-site-app' : `${appName}-app`;
+  const actualAppName = appName === 'docs' ? 'docs-app' : `${appName}-app`;
   const pattern = `apps/${actualAppName}/src/**/*.{ts,tsx,vue}`;
   let command = `pnpm exec eslint "${pattern}"`;
   

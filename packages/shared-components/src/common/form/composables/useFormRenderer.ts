@@ -6,7 +6,7 @@ import { h, resolveComponent, unref, defineComponent, computed } from 'vue';
 import {
   ElInput, ElInputNumber, ElSelect, ElOption, ElRadioGroup, ElRadio,
   ElCheckboxGroup, ElCheckbox, ElSwitch, ElDatePicker, ElTimePicker,
-  ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload, ElDivider,
+  ElCascader, ElTreeSelect, /* ElColorPicker, */ ElRate, ElSlider, ElUpload, ElDivider,
   ElDescriptions, ElDescriptionsItem
 } from 'element-plus';
 import BtcCascader from '@btc-components/navigation/btc-cascader/index.vue';
@@ -27,7 +27,7 @@ export const componentMap: Record<string, any> = {
   'el-time-picker': ElTimePicker,
   'el-cascader': ElCascader,
   'el-tree-select': ElTreeSelect,
-  'el-color-picker': ElColorPicker,
+  // 'el-color-picker': ElColorPicker, // 暂时禁用，避免 getBoundingClientRect 错误
   'el-rate': ElRate,
   'el-slider': ElSlider,
   'el-upload': ElUpload,
@@ -72,6 +72,15 @@ export function useFormRenderer() {
             return value;
           });
 
+          // 对于 el-select 组件，使用 computed 来追踪 options 的变化
+          // 关键：在 setup 中定义 computed，确保响应式追踪正确
+          const selectOptions = componentName === 'el-select' 
+            ? computed(() => {
+                const options = itemRef?.component?.options;
+                return Array.isArray(options) ? options : [];
+              })
+            : null;
+
           return () => {
             // 获取表单数据（form 是 ref，需要 unref）- 完全参考 cool-admin
             // 使用 computed 确保响应式追踪正确
@@ -86,13 +95,37 @@ export function useFormRenderer() {
             const props: any = {
               ...itemRef.component?.props,
               disabled: itemRef.disabled,
+              // 支持 readonly 属性（从 component.props 中获取，如果没有则从 itemRef 顶层获取）
+              readonly: itemRef.component?.props?.readonly ?? itemRef.readonly,
             };
 
             // 为组件设置 id，确保 label 的 for 属性能正确关联
             // Element Plus 的 el-form-item 会自动为 label 生成 for 属性，需要组件有对应的 id
-            if (prop) {
-              // 生成唯一的 id，使用 prop 作为基础，确保每个字段都有唯一的 id
-              props.id = `form-item-${prop}`;
+            // 生成唯一的 id，使用 prop 作为基础，确保每个字段都有唯一的 id
+            const inputId = prop ? `form-item-${prop}` : undefined;
+            
+            // 定义不包含标准 input 元素的组件列表
+            // 这些组件需要添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+            const componentsWithoutStandardInput = [
+              // 'el-color-picker', // 暂时禁用，避免 getBoundingClientRect 错误
+              'el-radio-group',
+              'el-checkbox-group',
+              'el-switch',
+              'el-rate',
+              'el-slider',
+              'el-upload',
+              'el-cascader',
+              'el-tree-select',
+              'btc-cascader',
+              'btc-upload'
+            ];
+            
+            const needsHiddenInput = componentsWithoutStandardInput.includes(componentName);
+            
+            // 为需要隐藏 input 的组件设置 id（但不传递给组件本身，避免冲突）
+            // 为其他组件也设置 id
+            if (inputId && !needsHiddenInput) {
+              props.id = inputId;
             }
 
             // 添加双向绑定（完全参考 cool-admin 的实现）
@@ -111,15 +144,17 @@ export function useFormRenderer() {
             // 处理特殊组件
             if (componentName === 'el-select') {
               // 使用 Element Plus 2.10.5+ 的 options prop
-              const currentOptions = Array.isArray(itemRef?.component?.options)
-                ? itemRef.component.options
-                : [];
+              // 关键：使用在 setup 中定义的 computed 来追踪 options 的变化
+              // 这样当 options 更新时，组件会自动重新渲染
+              const currentOptions = selectOptions?.value || [];
 
               // 如果没有设置 placeholder，默认使用空字符串（而不是 "Select"）
               if (props.placeholder === undefined) {
                 props.placeholder = '';
               }
 
+              // 确保 el-select 内部的输入元素有正确的 id
+              // Element Plus 的 el-select 会将 id 传递给内部的 el-input
               return h(Component, {
                 ...props,
                 options: currentOptions,
@@ -236,10 +271,86 @@ export function useFormRenderer() {
               }, slots);
             }
 
-            // 日期选择器和时间选择器特殊处理 - 过滤掉 id 和 name 属性
+            // 日期选择器和时间选择器特殊处理
+            // 这些组件内部可能不包含标准的 input 元素，所以 Element Plus 的 el-form-item 生成的 for 属性可能无法匹配
+            // 为了修复警告，我们保留 id，让 Element Plus 尝试匹配，如果不行，至少不会报错
             if (componentName === 'el-date-picker' || componentName === 'el-time-picker') {
-              const { id, name, ...filteredProps } = props;
+              // 保留 id，但过滤掉 name（某些组件可能不支持 name）
+              const { name, ...filteredProps } = props;
+              
+              // 为日期/时间选择器添加隐藏的 input 元素
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabindex: -1,
+                    'aria-hidden': 'true',
+                    value: Array.isArray(currentScope[prop])
+                      ? currentScope[prop].join(' - ')
+                      : (currentScope[prop] || ''),
+                    readonly: true
+                  }),
+                  h(Component, filteredProps)
+                ]);
+              }
+              
               return h(Component, filteredProps);
+            }
+
+            // 对于不包含标准 input 的组件，添加隐藏的 input 元素
+            // 这样 label 的 for 属性就能正确匹配，避免浏览器警告
+            if (needsHiddenInput && inputId) {
+              // 获取当前值，用于隐藏 input
+              let hiddenInputValue = '';
+              if (currentScope && prop) {
+                const value = currentScope[prop];
+                if (Array.isArray(value)) {
+                  hiddenInputValue = value.join(', ');
+                } else if (value !== null && value !== undefined) {
+                  hiddenInputValue = String(value);
+                }
+              }
+              
+              return h('div', { style: { position: 'relative' } }, [
+                h('input', {
+                  id: inputId,
+                  name: prop || '',
+                  type: 'text',
+                  style: {
+                    position: 'absolute',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden',
+                    clip: 'rect(0, 0, 0, 0)',
+                    whiteSpace: 'nowrap',
+                    border: 'none',
+                    padding: 0,
+                    margin: 0
+                  },
+                  tabindex: -1,
+                  'aria-hidden': 'true',
+                  value: hiddenInputValue,
+                  readonly: true
+                }),
+                h(Component, props)
+              ]);
             }
 
             // 默认组件

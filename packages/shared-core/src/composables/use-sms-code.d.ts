@@ -67,3 +67,4 @@ export interface UseSmsCodeReturn {
  * ```
  */
 export declare function useSmsCode(options: UseSmsCodeOptions): UseSmsCodeReturn;
+//# sourceMappingURL=use-sms-code.d.ts.map

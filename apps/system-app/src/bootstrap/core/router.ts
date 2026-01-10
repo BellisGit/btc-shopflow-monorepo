@@ -4,17 +4,25 @@
  */
 
 import type { App } from 'vue';
+import type { Router } from 'vue-router';
 import router from '../../router';
+import { createSystemRouter } from '../../router';
+
+/**
+ * 导出 createSystemRouter 函数
+ */
+export { createSystemRouter } from '../../router';
 
 /**
  * 配置路由
  */
-export const setupRouter = (app: App) => {
-  // 安装路由
-  app.use(router);
+export const setupRouter = (app: App, routerInstance?: Router) => {
+  const instance = routerInstance ?? createSystemRouter();
+  app.use(instance);
+  return instance;
 };
 
 /**
- * 导出路由实例
+ * 导出路由实例（向后兼容）
  */
 export { router };

@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="gateway-node-config">
     <div class="config-header">
-      <span>网关配置</span>
+      <span>{{ t('common.strategy.designer.gateway_config') }}</span>
     </div>
 
     <btc-config-form :model="configForm" size="small" label-width="80px">
-      <btc-config-form-item label="网关类型" prop="gatewayType">
+      <btc-config-form-item :label="t('common.strategy.designer.gateway_type')" prop="gatewayType">
         <el-select v-model="configForm.gatewayType" @change="emitUpdate">
           <el-option
             v-for="type in gatewayTypes"
@@ -16,26 +16,26 @@
         </el-select>
       </btc-config-form-item>
 
-      <btc-config-form-item label="合并策略" prop="mergeStrategy">
+      <btc-config-form-item :label="t('common.strategy.designer.merge_strategy')" prop="mergeStrategy">
         <el-select v-model="configForm.mergeStrategy" @change="emitUpdate">
-          <el-option label="全部通过" value="all" />
-          <el-option label="任一通过" value="any" />
-          <el-option label="多数通过" value="majority" />
-          <el-option label="自定义" value="custom" />
+          <el-option :label="t('common.strategy.designer.merge_strategy_all')" value="all" />
+          <el-option :label="t('common.strategy.designer.merge_strategy_any')" value="any" />
+          <el-option :label="t('common.strategy.designer.merge_strategy_majority')" value="majority" />
+          <el-option :label="t('common.strategy.designer.merge_strategy_custom')" value="custom" />
         </el-select>
       </btc-config-form-item>
 
-      <btc-config-form-item v-if="configForm.mergeStrategy === 'custom'" label="自定义规则" prop="customRule">
+      <btc-config-form-item v-if="configForm.mergeStrategy === 'custom'" :label="t('common.strategy.designer.custom_rule')" prop="customRule">
         <el-input
           v-model="configForm.customRule"
           type="textarea"
           :rows="3"
-          placeholder="如：(result1 && result2) || result3"
+          :placeholder="t('common.strategy.designer.custom_rule_placeholder')"
           @blur="emitUpdate"
         />
       </btc-config-form-item>
 
-      <btc-config-form-item label="超时时间" prop="timeout">
+      <btc-config-form-item :label="t('common.strategy.designer.timeout')" prop="timeout">
         <el-input-number
           v-model="configForm.timeout"
           :min="1000"
@@ -43,25 +43,25 @@
           :step="1000"
           @change="emitUpdate"
         />
-        <span style="margin-left: 8px; font-size: 12px; color: var(--el-text-color-secondary);">毫秒</span>
+        <span style="margin-left: 8px; font-size: 12px; color: var(--el-text-color-secondary);">{{ t('common.strategy.designer.milliseconds') }}</span>
       </btc-config-form-item>
 
-      <btc-config-form-item label="并行执行" prop="parallel">
+      <btc-config-form-item :label="t('common.strategy.designer.parallel_execution')" prop="parallel">
         <el-switch
           v-model="configForm.parallel"
           @change="emitUpdate"
         />
       </btc-config-form-item>
 
-      <btc-config-form-item label="失败处理" prop="failureHandling">
+      <btc-config-form-item :label="t('common.strategy.designer.failure_handling')" prop="failureHandling">
         <el-radio-group v-model="configForm.failureHandling" @change="emitUpdate">
-          <el-radio label="continue">继续执行</el-radio>
-          <el-radio label="stop">停止执行</el-radio>
-          <el-radio label="retry">重试</el-radio>
+          <el-radio value="continue">{{ t('common.strategy.designer.failure_handling_continue') }}</el-radio>
+          <el-radio value="stop">{{ t('common.strategy.designer.failure_handling_stop') }}</el-radio>
+          <el-radio value="retry">{{ t('common.strategy.designer.failure_handling_retry') }}</el-radio>
         </el-radio-group>
       </btc-config-form-item>
 
-      <btc-config-form-item v-if="configForm.failureHandling === 'retry'" label="重试次数" prop="retryCount">
+      <btc-config-form-item v-if="configForm.failureHandling === 'retry'" :label="t('common.strategy.designer.retry_count')" prop="retryCount">
         <el-input-number
           v-model="configForm.retryCount"
           :min="1"
@@ -73,7 +73,7 @@
 
     <!-- 配置预览 -->
     <div class="config-preview">
-      <h5>配置预览</h5>
+      <h5>{{ t('common.strategy.designer.config_preview') }}</h5>
       <pre class="config-json">{{ JSON.stringify(configForm, null, 2) }}</pre>
     </div>
   </div>
@@ -81,6 +81,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props
@@ -95,12 +96,14 @@ const emit = defineEmits<{
   update: [config: Record<string, any>];
 }>();
 
+const { t } = useI18n();
+
 // 网关类型选项
 const gatewayTypes = [
-  { value: 'parallel', label: '并行网关' },
-  { value: 'exclusive', label: '排他网关' },
-  { value: 'inclusive', label: '包容网关' },
-  { value: 'complex', label: '复杂网关' }
+  { value: 'parallel', label: t('common.strategy.designer.gateway_types.parallel') },
+  { value: 'exclusive', label: t('common.strategy.designer.gateway_types.exclusive') },
+  { value: 'inclusive', label: t('common.strategy.designer.gateway_types.inclusive') },
+  { value: 'complex', label: t('common.strategy.designer.gateway_types.complex') }
 ];
 
 // 配置表单

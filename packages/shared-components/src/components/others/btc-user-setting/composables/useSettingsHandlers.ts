@@ -12,6 +12,8 @@ import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
  * 设置处理器组合式函数
  */
 export function useSettingsHandlers() {
+  // 注意：useSettingsState 已经会优先使用应用的实现（如果存在）
+  // 所以这里直接调用 useSettingsState 即可，它会自动使用正确的实现
   const settingsState = useSettingsState();
 
   // DOM 操作相关
@@ -101,34 +103,23 @@ export function useSettingsHandlers() {
     // 选择主题色
     selectColor: (color: string) => {
       if (!color) {
-        console.warn('[Settings] selectColor: color is empty');
         return;
       }
-      
-      console.log('[Settings] selectColor called with:', color);
-      
+
       settingsState.setSystemThemeColor(color);
-      
+
       // 如果存在主题插件，也更新主题插件
       // 使用静态导入，确保同步执行
       try {
         const theme = useThemePlugin();
-        console.log('[Settings] useThemePlugin result:', theme);
         if (theme && theme.updateThemeColor) {
-          console.log('[Settings] Calling theme.updateThemeColor with:', color);
           theme.updateThemeColor(color);
-        } else {
-          console.warn('[Settings] Theme plugin or updateThemeColor method not available');
         }
       } catch (e) {
-        console.error('[Settings] Error calling useThemePlugin:', e);
         // 如果主题插件不可用，尝试从全局获取
         const globalTheme = (globalThis as any).__THEME_PLUGIN__ || (window as any).__THEME_PLUGIN__;
         if (globalTheme && globalTheme.updateThemeColor) {
-          console.log('[Settings] Using global theme plugin');
           globalTheme.updateThemeColor(color);
-        } else {
-          console.warn('[Settings] Theme plugin not available:', e);
         }
       }
       // 触发页面重新加载或更新主题
@@ -153,6 +144,14 @@ export function useSettingsHandlers() {
     },
   };
 
+  // Loading 样式处理器
+  type LoadingStyle = 'circle' | 'dots' | 'gradient' | 'progress';
+  const loadingStyleHandlers = {
+    setStyle: (style: LoadingStyle) => {
+      settingsState.setLoadingStyle(style);
+    },
+  };
+
   // 主题风格处理器
   const themeStyleHandlers = {
     // 切换主题风格
@@ -166,6 +165,7 @@ export function useSettingsHandlers() {
     // 切换菜单布局
     switchLayout: (layout: MenuTypeEnum) => {
       settingsState.switchMenuLayouts(layout);
+      // 触发菜单布局变化事件，让布局组件响应
       window.dispatchEvent(new CustomEvent('menu-layout-change', { detail: { layout } }));
     },
   };
@@ -186,6 +186,7 @@ export function useSettingsHandlers() {
     colorHandlers,
     containerHandlers,
     buttonStyleHandlers,
+    loadingStyleHandlers,
     themeStyleHandlers,
     menuLayoutHandlers,
     menuStyleHandlers,

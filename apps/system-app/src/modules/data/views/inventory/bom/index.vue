@@ -6,8 +6,8 @@
       :right-service="wrappedBomService"
       :table-columns="bomColumns"
       :form-items="bomFormItems"
-      :left-title="t('inventory.dataSource.domain')"
-      :right-title="t('menu.inventory.dataSource.bom')"
+      :left-title="t('inventory.data_source.domain')"
+      :right-title="t('menu.inventory.data_source.bom')"
       :show-unassigned="false"
       :enable-key-search="false"
       :left-size="'small'"
@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -53,7 +53,7 @@ const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
 
 // 统一导出/导入文件名
-const exportFilename = computed(() => t('menu.inventory.dataSource.bom'));
+const exportFilename = computed(() => t('menu.inventory.data_source.bom'));
 
 // 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
 // provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
@@ -65,16 +65,16 @@ const domainService = {
     try {
       // 调用物流域仓位配置的 me 接口
       const response = await service.logistics?.base?.position?.me?.();
-      
+
       // 处理响应数据
       let data = response;
       if (response && typeof response === 'object' && 'data' in response) {
         data = response.data;
       }
-      
+
       // me 接口可能直接返回数组，也可能返回包含 list 的对象
       const list = Array.isArray(data) ? data : (data?.list || []);
-      
+
       // 判断返回的数据是域列表还是仓位列表
       // 如果第一个元素有 domianId 或 domainId 字段，说明是域列表
       const firstItem = list[0];
@@ -200,7 +200,7 @@ const handleImport = async (
     if (!rows.length) {
       const warnMessage = data?.filename
         ? t('common.import.no_data_or_mapping')
-        : t('inventory.dataSource.bom.import.no_file');
+        : t('inventory.data_source.bom.import.no_file');
       message.warning(warnMessage);
       done();
       return;
@@ -208,7 +208,7 @@ const handleImport = async (
 
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域');
+      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
       done();
       return;
     }
@@ -245,38 +245,35 @@ const handleImport = async (
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
       if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.bom.import.failed');
+        const errorMsg = responseData.msg || responseData.message || t('inventory.data_source.bom.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success(t('inventory.dataSource.bom.import.success'));
+    message.success(t('inventory.data_source.bom.import.success'));
     tableGroupRef.value?.crudRef?.crud?.refresh();
     close();
   } catch (error) {
     console.error('[InventoryBom] import failed:', error);
-    const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.dataSource.bom.import.failed');
+    const errorMsg = (error as any)?.response?.data?.msg || (error as any)?.msg || t('inventory.data_source.bom.import.failed');
     message.error(errorMsg);
     done();
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.bom');
+const { formItems } = usePageForms('data.inventory.bom');
+const pageConfig = getPageConfigFull('data.inventory.bom');
+
 // 物料构成表表格列（移除选择列和操作列，不包含盘点类型）
-const bomColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName'), minWidth: 140, showOverflowTooltip: true },
-  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName'), minWidth: 160, showOverflowTooltip: true },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty'), width: 120 },
-]);
+const bomColumns = computed(() => baseColumns.value);
 
 // 导出用的列（不包含时间字段和盘点类型字段）
-const bomExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'parentNode', label: t('inventory.dataSource.bom.fields.materialName') },
-  { prop: 'childNode', label: t('inventory.dataSource.bom.fields.componentName') },
-  { prop: 'childQty', label: t('inventory.dataSource.bom.fields.componentQty') },
-]);
+const { columns: exportColumns } = usePageColumns('data.inventory.bom.export');
+const bomExportColumns = computed(() => exportColumns.value);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
@@ -290,42 +287,64 @@ const handleExport = async () => {
   try {
     // 获取当前筛选参数
     const params = tableGroupRef.value?.crudRef?.getParams?.() || {};
-    
+
     // 获取当前选中的域 ID
     const domainId = resolveSelectedDomainId();
-    
-    // 构建导出参数（与导入保持一致）
+
+    // 构建导出参数：将 domainId 放在 keyword 对象内部
     const exportParams = {
-      domainId,
-      keyword: params.keyword || {},
-      ...params,
+      keyword: {
+        ...(params.keyword || {}),
+        domainId,
+      },
+      page: params.page,
+      size: params.size,
+      order: params.order,
+      sort: params.sort,
     };
 
     // 调用后端导出接口，返回 JSON 数据
     const response = await service.system.base.bom.export(exportParams);
-    
-    // 处理响应数据
+
+    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导出失败
+    // 注意：只对非Syspro BOM表进行此检查
+    if (response && typeof response === 'object' && 'code' in response) {
+      const code = response.code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        // 导出失败，显示错误信息，不生成文件
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败';
+        BtcMessage.error(errorMsg);
+        return;
+      }
+    }
+
+    // 处理响应数据：只有当 code 为 200 且 data 为数组时才允许导出
     let dataList: any[] = [];
     if (response && typeof response === 'object') {
       if ('data' in response && Array.isArray(response.data)) {
         dataList = response.data;
       } else if (Array.isArray(response)) {
         dataList = response;
+      } else if ('data' in response && !Array.isArray(response.data)) {
+        // data 存在但不是数组，说明导出失败
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败：数据格式不正确';
+        BtcMessage.error(errorMsg);
+        return;
       }
     }
-    
+
     // 准备导出数据（即使为空也生成 Excel，只有表头）
     const exportColumns = bomExportColumns.value;
-    const header = exportColumns.map(col => col.label || col.prop);
-    const data = dataList && dataList.length > 0 
+    const header = exportColumns.map(col => col.label || col.prop || '');
+    const data = dataList && dataList.length > 0
       ? dataList.map(item => {
           return exportColumns.map(col => {
-            const value = item[col.prop];
+            const value = col.prop ? item[col.prop] : undefined;
             return value ?? '';
           });
         })
       : []; // 空数据时，data 为空数组，只保留表头
-    
+
     // 使用 exportJsonToExcel 生成并下载 Excel 文件
     exportJsonToExcel({
       header,
@@ -334,7 +353,7 @@ const handleExport = async () => {
       autoWidth: true,
       bookType: 'xlsx',
     });
-    
+
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
     console.error('[InventoryBom] Export failed:', error);
@@ -345,38 +364,25 @@ const handleExport = async () => {
   }
 };
 
-// 物料构成表表单
-const bomFormItems = computed<FormItem[]>(() => [
-  {
-    prop: 'parentNode',
-    label: t('inventory.dataSource.bom.fields.parentNode'),
-    span: 12,
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    prop: 'childNode',
-    label: t('inventory.dataSource.bom.fields.childNode'),
-    span: 12,
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
+// 物料构成表表单（使用 config.ts 中的配置）
+const bomFormItems = computed(() => formItems.value);
   },
   {
     prop: 'childQty',
-    label: t('inventory.dataSource.bom.fields.childQty'),
+    label: t('inventory.data_source.bom.fields.child_qty'),
     span: 12,
     required: true,
     component: { name: 'el-input-number', props: { min: 0, precision: 2 } },
   },
   {
     prop: 'checkType',
-    label: t('inventory.dataSource.bom.fields.checkType'),
+    label: t('inventory.data_source.bom.fields.check_type'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },
   {
     prop: 'domainId',
-    label: t('inventory.dataSource.bom.fields.domainId'),
+    label: t('inventory.data_source.bom.fields.domain_id'),
     span: 12,
     component: { name: 'el-input', props: { disabled: true } },
     hook: {
@@ -387,13 +393,13 @@ const bomFormItems = computed<FormItem[]>(() => [
   },
   {
     prop: 'processId',
-    label: t('inventory.dataSource.bom.fields.processId'),
+    label: t('inventory.data_source.bom.fields.process_id'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },
   {
     prop: 'checkNo',
-    label: t('inventory.dataSource.bom.fields.checkNo'),
+    label: t('inventory.data_source.bom.fields.check_no'),
     span: 12,
     component: { name: 'el-input', props: { maxlength: 120 } },
   },

@@ -14,13 +14,13 @@ export function useFinanceInventoryColumns() {
   const columns = computed<TableColumn[]>(() => [
     { type: 'selection', width: 48 },
     { type: 'index', label: t('common.index'), width: 60 },
-    { label: t('finance.inventory.result.fields.materialCode'), prop: 'materialCode', minWidth: 120, showOverflowTooltip: true },
+    { label: t('finance.inventory.result.fields.material_code'), prop: 'materialCode', minWidth: 120, showOverflowTooltip: true },
     { label: t('finance.inventory.result.fields.position'), prop: 'position', width: 80, showOverflowTooltip: true },
-    { label: `${t('finance.inventory.result.fields.unitCost')} ($)`, prop: 'unitCost', width: 100, align: 'right', formatter: formatNumber },
-    { label: t('finance.inventory.result.fields.bookQty'), prop: 'bookQty', width: 100, align: 'right', formatter: formatNumber },
-    { label: t('finance.inventory.result.fields.actualQty'), prop: 'actualQty', width: 100, align: 'right', formatter: formatNumber },
-    { label: t('finance.inventory.result.fields.diffQty'), prop: 'diffQty', width: 100, align: 'right', formatter: formatNumber },
-    { label: `${t('finance.inventory.result.fields.varianceCost')} ($)`, prop: 'varianceCost', width: 120, align: 'right', formatter: formatNumber },
+    { label: `${t('finance.inventory.result.fields.unit_cost')} ($)`, prop: 'unitCost', width: 100, align: 'right', formatter: formatNumber },
+    { label: t('finance.inventory.result.fields.book_qty'), prop: 'bookQty', width: 100, align: 'right', formatter: formatNumber },
+    { label: t('finance.inventory.result.fields.actual_qty'), prop: 'actualQty', width: 100, align: 'right', formatter: formatNumber },
+    { label: t('finance.inventory.result.fields.diff_qty'), prop: 'diffQty', width: 100, align: 'right', formatter: formatNumber },
+    { label: `${t('finance.inventory.result.fields.variance_cost')} ($)`, prop: 'varianceCost', width: 120, align: 'right', formatter: formatNumber },
   ]);
 
   return {

@@ -284,6 +284,45 @@
       }
     }
   }
+
+  // middle 类型下，菜单项文本居中显示，隐藏勾选
+  &.is-left-size-middle {
+    :deep(.btc-master-list) {
+      // 隐藏 el-tree 的 checkbox（如果启用）
+      .el-tree-node__checkbox {
+        display: none !important;
+      }
+
+      // 隐藏 el-tree 的 selection 相关元素
+      .el-tree-node__selection {
+        display: none !important;
+      }
+
+      .el-tree-node__content {
+        justify-content: center !important;
+
+        // 完全隐藏展开/折叠图标元素（即使内容为空，元素本身仍占据空间）
+        .el-tree-node__expand-icon {
+          display: none !important;
+          width: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .btc-master-list__node {
+          justify-content: center !important;
+          width: auto !important; // 不占据全部宽度，让内容自然居中
+          flex: 0 0 auto !important; // 不占据剩余空间
+
+          .btc-master-list__node-label {
+            justify-content: center !important;
+            text-align: center !important;
+            flex: 0 0 auto !important; // 移除 flex: 1，不占据剩余空间
+          }
+        }
+      }
+    }
+  }
 }
 
 // Utility classes

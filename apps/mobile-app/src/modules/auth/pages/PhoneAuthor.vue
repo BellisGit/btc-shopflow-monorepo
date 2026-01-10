@@ -171,9 +171,9 @@ onMounted(async () => {
 
                   // 登录成功，后端已经设置了 httpOnly cookie
                   // 直接跳转，不需要更新 authStore，后端会通过 cookie 验证
-                  const redirect = (router.currentRoute.value.query.redirect as string);
+                  const redirect = (router.currentRoute.value.query.oauth_callback as string);
                   if (redirect) {
-                    // 如果有 redirect 参数，使用它
+                    // 如果有 oauth_callback 参数，使用它
                     const redirectPath = redirect.split('?')[0];
                     window.location.href = redirectPath;
                   } else {

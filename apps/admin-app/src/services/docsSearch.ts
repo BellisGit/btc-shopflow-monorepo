@@ -17,23 +17,23 @@ export async function searchDocs(keyword: string): Promise<DocSearchResult[]> {
     {
       id: 'doc1',
       type: 'doc',
-      title: '组件文档',
+      title: 'Component Documentation',
       path: '/components/',
-      breadcrumb: '文档中心'
+      breadcrumb: 'Documentation Center'
     },
     {
       id: 'doc2',
       type: 'doc',
-      title: 'API 文档',
+      title: 'API Documentation',
       path: '/api/',
-      breadcrumb: '文档中心'
+      breadcrumb: 'Documentation Center'
     },
     {
       id: 'doc3',
       type: 'doc',
-      title: '开发指南',
+      title: 'Development Guide',
       path: '/guide/',
-      breadcrumb: '文档中心'
+      breadcrumb: 'Documentation Center'
     }
   ];
 

@@ -3,6 +3,7 @@ import type { FormInstance, FormRules } from 'element-plus';
 import { useI18n } from '@btc/shared-core';
 import { useFormRenderer } from '@btc/shared-components';
 import type { FormItem, UpsertProps, UpsertMode } from '../types';
+// 注意：zodToElementPlusRules 和 createFormSchema 在动态导入中使用，不需要静态导入
 
 /**
  * 表单数据管理
@@ -104,23 +105,54 @@ export function useFormData(props: UpsertProps) {
     computedItems.value.forEach((item) => {
       if (!item.prop) return; // 跳过没有 prop 的项
 
-      if (item.rules) {
-        // 如果已有规则，确保每个规则都有 trigger
-        const normalizedRules = Array.isArray(item.rules) ? item.rules : [item.rules];
-        rules[item.prop] = normalizedRules.map((rule: any) => {
-          // 如果规则没有 trigger，添加默认的 trigger
-          if (!rule.trigger) {
-            return { ...rule, trigger: ['blur', 'change'] };
-          }
-          return rule;
-        });
-      } else if (item.required) {
-        // 只有 required 时，添加完整的验证规则（包括 trigger）
-        rules[item.prop] = [{
-          required: true,
-          message: `${t('common.validation.required_prefix')}${item.label}`,
-          trigger: ['blur', 'change']
-        }];
+      // 优先使用 Zod schema（如果提供）
+      if (item.zodSchema) {
+        try {
+          // 动态导入 Zod 验证工具（避免循环依赖）
+          import('@btc/shared-core/utils/form/zod-validator').then(({ zodToElementPlusRules }) => {
+            const zodRules = zodToElementPlusRules(item.zodSchema!, item.label);
+            // 处理 Arrayable 类型
+            const rulesArray = Array.isArray(zodRules) ? zodRules : (zodRules ? [zodRules] : []);
+            if (rulesArray.length > 0) {
+              rules[item.prop] = rulesArray;
+            }
+          }).catch(() => {
+            // 如果导入失败，回退到原有规则
+            if (item.rules) {
+              const normalizedRules = Array.isArray(item.rules) ? item.rules : [item.rules];
+              rules[item.prop] = normalizedRules.map((rule: any) => {
+                if (!rule.trigger) {
+                  return { ...rule, trigger: ['blur', 'change'] };
+                }
+                return rule;
+              });
+            }
+          });
+        } catch {
+          // 如果导入失败，继续使用原有规则
+        }
+      }
+
+      // 如果没有 Zod schema 或导入失败，使用原有规则
+      if (!item.zodSchema || !rules[item.prop]) {
+        if (item.rules) {
+          // 如果已有规则，确保每个规则都有 trigger
+          const normalizedRules = Array.isArray(item.rules) ? item.rules : [item.rules];
+          rules[item.prop] = normalizedRules.map((rule: any) => {
+            // 如果规则没有 trigger，添加默认的 trigger
+            if (!rule.trigger) {
+              return { ...rule, trigger: ['blur', 'change'] };
+            }
+            return rule;
+          });
+        } else if (item.required) {
+          // 只有 required 时，添加完整的验证规则（包括 trigger）
+          rules[item.prop] = [{
+            required: true,
+            message: `${t('common.validation.required_prefix')}${item.label}`,
+            trigger: ['blur', 'change']
+          }];
+        }
       }
     });
     return rules;

@@ -58,7 +58,7 @@ export const APPS = {
   docs: {
     name: 'docs',
     displayName: '文档站点',
-    packageName: 'docs-site-app',
+    packageName: 'docs-app',
   },
 };
 

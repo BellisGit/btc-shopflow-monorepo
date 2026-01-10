@@ -34,7 +34,7 @@
         <img :src="logoUrl" alt="BTC Logo" class="topbar__logo-img" @error="handleLogoError" />
         <h2
           class="topbar__logo-text"
-          :style="{ color: menuThemeConfig.systemNameColor }"
+          :style="{ color: menuThemeConfig?.systemNameColor || 'var(--el-text-color-primary)' }"
         >{{ logoTitle }}</h2>
       </div>
     </div>
@@ -86,11 +86,11 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
-import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { useBrowser } from '@btc/shared-components/composables/useBrowser';
-import { getCurrentSubApp } from '@configs/unified-env-config';
-import { getAppById } from '@configs/app-scanner';
+import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
+import { useBrowser } from '../../../../composables/useBrowser';
+import { getEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
 import { getIsMainAppFn } from '../utils';
 import GlobalSearch from '../global-search/index.vue';
 import TopMenu from '../top-menu/index.vue';
@@ -132,10 +132,16 @@ const shouldHandleDrawerEvent = (): boolean => {
   }
   // 检查 hostname 是否是 layout-app 的域名
   if (typeof window !== 'undefined') {
+    const env = getEnvironment();
     const hostname = window.location.hostname;
     const port = window.location.port || '';
-    const isLayoutAppDomain = hostname === 'layout.bellis.com.cn' ||
-                             (hostname === 'localhost' && (port === '4192' || port === '4188'));
+    
+    const isLayoutAppDomain =
+      (env === 'production' && hostname === 'layout.bellis.com.cn') ||
+      (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
+      (env === 'preview' && port === '4192') ||
+      (env === 'development' && port === '4188');
+    
     if (isLayoutAppDomain) {
       return true; // layout-app 自己的域名，应该处理
     }
@@ -161,6 +167,13 @@ const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
     return; // 不应该处理，直接返回
   }
 
+  // 关键：对于 open-drawer 事件，检查页面是否可见
+  // 当标签页从隐藏变为可见时，如果鼠标正好在汉堡菜单位置，浏览器可能会触发 mouseenter 事件
+  // 这会导致抽屉在不应该打开的时候被打开，所以需要检查页面可见性
+  if (eventName === 'open-drawer' && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+    return;
+  }
+
   // 检查组件是否仍然挂载
   if (!isMounted) {
     return;
@@ -183,6 +196,11 @@ const safeEmit = (eventName: 'toggle-drawer' | 'open-drawer') => {
   nextTick(() => {
     // 再次检查组件是否仍然挂载（可能在 nextTick 期间卸载）
     if (!isMounted) {
+      return;
+    }
+
+    // 再次检查页面可见性（对于 open-drawer 事件）
+    if (eventName === 'open-drawer' && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
       return;
     }
 
@@ -324,19 +342,93 @@ const logoTitle = computed(() => {
     // 子应用：获取当前应用信息
     const currentSubAppId = getCurrentSubApp();
     if (currentSubAppId) {
-      // 获取应用配置
-      const appConfig = getAppById(currentSubAppId);
-      if (appConfig) {
-        // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
-        const domainTypeKey = `domain.type.${currentSubAppId}`;
-        const domainTypeName = t(domainTypeKey);
-
-        // 如果国际化值存在且不是 key 本身，则使用国际化值
-        if (domainTypeName && domainTypeName !== domainTypeKey) {
-          return domainTypeName;
+      // 优先使用主应用的 i18n 实例进行翻译（包含已合并的子应用国际化消息）
+      const mainAppI18n = typeof window !== 'undefined' ? (window as any).__MAIN_APP_I18N__ : null;
+      if (mainAppI18n && mainAppI18n.global) {
+        const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+        const messages = mainAppI18n.global.getLocaleMessage(currentLocale);
+        
+        // 优先尝试 subapp.name（子应用名称）
+        // 注意：messages 中的 subapp 是嵌套对象，需要访问 messages.subapp.name
+        if (messages?.subapp?.name) {
+          const value = messages.subapp.name;
+          if (typeof value === 'string' && value.trim() !== '') {
+            return value;
+          } else if (typeof value === 'function') {
+            try {
+              const result = value({ normalize: (arr: any[]) => arr[0] });
+              if (typeof result === 'string' && result.trim() !== '') {
+                return result;
+              }
+            } catch (error) {
+              // 函数调用失败，继续尝试其他方法
+            }
+          }
         }
+        
+        // 如果直接访问失败，使用 t() 函数
+        try {
+          // 优先尝试 subapp.name
+          const subappNameKey = 'subapp.name';
+          const subappTranslated = mainAppI18n.global.t(subappNameKey);
+          if (subappTranslated && typeof subappTranslated === 'string' && subappTranslated !== subappNameKey && subappTranslated.trim() !== '') {
+            return subappTranslated;
+          }
+        } catch (error) {
+          // 如果翻译失败，继续尝试其他方法
+        }
+      }
+      
+      // 如果主应用翻译失败，尝试使用共享组件的 t() 函数
+      try {
+        // 优先尝试 subapp.name
+        const subappTranslated = t('subapp.name');
+        if (subappTranslated && subappTranslated !== 'subapp.name') {
+          return subappTranslated;
+        }
+      } catch (error) {
+        // 如果翻译失败，继续使用其他方法
+      }
+      
+      // 如果 subapp.name 不存在，尝试使用 domain.type.{appId} 作为后备
+      const domainTypeKey = `domain.type.${currentSubAppId}`;
+      // 优先使用主应用的 i18n 实例（复用上面已声明的 mainAppI18n）
+      let domainTypeName: string | undefined;
+      if (mainAppI18n && mainAppI18n.global) {
+        const currentLocale = mainAppI18n.global.locale.value || 'zh-CN';
+        if (mainAppI18n.global.te(domainTypeKey, currentLocale)) {
+          const translated = mainAppI18n.global.t(domainTypeKey, currentLocale);
+          if (translated && typeof translated === 'string' && translated !== domainTypeKey) {
+            domainTypeName = translated;
+          }
+        }
+      }
+      
+      // 如果主应用翻译失败，使用共享组件的 t() 函数
+      if (!domainTypeName) {
+        domainTypeName = t(domainTypeKey);
+      }
 
-        // 兜底使用应用配置中的 name
+      // 如果国际化值存在且不是 key 本身，则使用国际化值
+      if (domainTypeName && domainTypeName !== domainTypeKey) {
+        return domainTypeName;
+      }
+      
+      // 最后兜底：获取应用配置
+      const appConfig = getAppById(currentSubAppId);
+      if (appConfig && appConfig.name) {
+        // 如果 name 是国际化键，尝试翻译
+        if (appConfig.name.includes('.')) {
+          try {
+            const translated = t(appConfig.name);
+            if (translated && translated !== appConfig.name) {
+              return translated;
+            }
+          } catch {
+            // 忽略错误
+          }
+        }
+        // 否则直接返回 name（可能是已翻译的值）
         return appConfig.name;
       }
     }
@@ -392,13 +484,31 @@ watch(
 );
 
 // 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
+// 关键：必须在 watch 之前定义，避免"在初始化之前访问"的错误
 const menuThemeConfig = computed(() => {
-  // 优先判断菜单风格类型（不受系统主题影响）
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  try {
+    // 优先判断菜单风格类型（不受系统主题影响）
+    const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
 
-  // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
-  if (theme === MenuThemeEnum.DARK) {
-    // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+    // 如果是深色菜单风格，无论系统主题如何，都使用深色菜单配置
+    if (theme === MenuThemeEnum.DARK) {
+      // 深色系统主题下，使用 #0a0a0a 与内容区域一致
+      if (isDark?.value === true) {
+        return {
+          background: '#0a0a0a',
+          systemNameColor: '#FFFFFF',
+          rightLineColor: '#EDEEF0',
+        };
+      }
+      // 浅色系统主题下，使用深色菜单背景色
+      return {
+        background: '#0a0a0a',
+        systemNameColor: '#BABBBD',
+        rightLineColor: '#3F4257',
+      };
+    }
+
+    // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
     if (isDark?.value === true) {
       return {
         background: '#0a0a0a',
@@ -406,41 +516,61 @@ const menuThemeConfig = computed(() => {
         rightLineColor: '#EDEEF0',
       };
     }
-    // 浅色系统主题下，使用深色菜单背景色
-    return {
-      background: '#0a0a0a',
-      systemNameColor: '#BABBBD',
-      rightLineColor: '#3F4257',
-    };
-  }
 
-  // 深色系统主题下强制使用深色菜单配置（展示层逻辑）
-  if (isDark?.value === true) {
+    // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
+    // 安全访问 menuStyleList，避免在初始化之前访问
+    if (menuStyleList && menuStyleList.value && Array.isArray(menuStyleList.value)) {
+      const themeConfig = menuStyleList.value.find((item: any) => item.theme === theme);
+
+      if (themeConfig) {
+        return {
+          background: themeConfig.background,
+          systemNameColor: themeConfig.systemNameColor,
+          rightLineColor: themeConfig.rightLineColor,
+        };
+      }
+    }
+
+    // 默认配置
     return {
-      background: '#0a0a0a',
-      systemNameColor: '#FFFFFF',
+      background: '#FFFFFF',
+      systemNameColor: 'var(--el-text-color-primary)',
+      rightLineColor: '#EDEEF0',
+    };
+  } catch (error) {
+    // 如果出现任何错误，返回默认配置
+    console.warn('[Topbar] menuThemeConfig 计算错误:', error);
+    return {
+      background: '#FFFFFF',
+      systemNameColor: 'var(--el-text-color-primary)',
       rightLineColor: '#EDEEF0',
     };
   }
-
-  // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const themeConfig = menuStyleList.value.find((item: any) => item.theme === theme);
-
-  if (themeConfig) {
-    return {
-      background: themeConfig.background,
-      systemNameColor: themeConfig.systemNameColor,
-      rightLineColor: themeConfig.rightLineColor,
-    };
-  }
-
-  // 默认配置
-  return {
-    background: '#FFFFFF',
-    systemNameColor: 'var(--el-text-color-primary)',
-    rightLineColor: '#EDEEF0',
-  };
 });
+
+// 监听 menuThemeConfig 变化，确保样式立即更新
+// 关键：必须在 menuThemeConfig 定义之后才能使用
+watch(
+  () => menuThemeConfig.value,
+  (newConfig) => {
+    // 确保 newConfig 存在且有效
+    if (!newConfig || !newConfig.background) {
+      return;
+    }
+    // 使用 nextTick 确保 DOM 更新完成后再强制更新样式
+    nextTick(() => {
+      // 强制更新所有使用 menuThemeConfig 的元素的样式
+      const logoContentEls = document.querySelectorAll('.topbar__logo-content');
+      logoContentEls.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl && newConfig.background) {
+          htmlEl.style.setProperty('background-color', newConfig.background);
+        }
+      });
+    });
+  },
+  { immediate: false, deep: true }
+);
 
 // 插件管理器
 const pluginManager = usePluginManager();

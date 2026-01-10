@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { registerMicroApps, start } from 'qiankun';
 import { getActivePinia } from 'pinia';
 import { nextTick } from 'vue';
@@ -6,17 +7,17 @@ import { microApps } from './apps';
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
-import { getManifestTabs, getManifestMenus } from './manifests';
+import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, type ProcessItem } from '../store';
 import { getCurrentAppFromPath } from '@btc/shared-components';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
-// 应用名称映射（用于显示友好的中文名称）
+// 应用名称映射（用于显示友好的中文名称，使用国际化键）
 const appNameMap: Record<string, string> = {
-  logistics: '物流应用',
-  engineering: '工程应用',
-  quality: '品质应用',
-  production: '生产应用',
+  logistics: 'common.apps.logistics',
+  engineering: 'common.apps.engineering',
+  quality: 'common.apps.quality',
+  production: 'common.apps.production',
 };
 
 export function registerManifestTabsForApp(appName: string): Promise<void> {
@@ -25,12 +26,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
     return Promise.resolve();
   }
 
-  const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
-    key: tab.key,
-    title: tab.labelKey ?? tab.label ?? tab.path,
-    path: tab.path,
-    i18nKey: tab.labelKey,
-  }));
+  const normalizedTabs: TabMeta[] = tabs.map((tab) => {
+    const result: TabMeta = {
+      key: tab.key,
+      title: tab.labelKey ?? tab.label ?? tab.path,
+      path: tab.path,
+    };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (tab.labelKey !== undefined) {
+      result.i18nKey = tab.labelKey;
+    }
+    return result;
+  });
 
   registerTabs(appName, normalizedTabs);
   return Promise.resolve();
@@ -119,9 +126,11 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
     const normalizedIndex = normalizeMenuPath(item.index, appName);
+    const labelKey = item.labelKey || item.title || item.label;
     return {
       index: normalizedIndex,
-      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      title: labelKey ?? normalizedIndex,
+      labelKey: labelKey, // 关键：保存 labelKey 用于面包屑翻译
       icon: item.icon,
       children: item.children && item.children.length > 0
         ? item.children.map(convertToMenuItem)
@@ -142,6 +151,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
   for (let i = 0; i < menus1.length; i++) {
     const item1 = menus1[i];
     const item2 = menus2[i];
+
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
 
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||
@@ -198,8 +212,7 @@ export function registerManifestMenusForApp(appName: string): Promise<void> {
  */
 function getCurrentLocale(): string {
   // 从统一存储读取，或返回默认值
-  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 }
 
 /**
@@ -332,8 +345,8 @@ export function setupQiankun() {
                       setTimeout(ensureContainer, retryDelay);
                       return;
                     } else {
-                      console.error(`[qiankun] 容器 #subapp-viewport 不在 DOM 中`);
-                      reject(new Error(`容器 #subapp-viewport 不在 DOM 中，无法加载应用 ${app.name}`));
+                      console.error(`[qiankun]`, 'common.system.container_not_in_dom');
+                      reject(new Error(`common.system.container_not_in_dom_cannot_load ${app.name}`));
                       return;
                     }
                   }
@@ -358,7 +371,7 @@ export function setupQiankun() {
                                     computedStyle.opacity !== '0';
 
                     if (!isVisible) {
-                      console.warn(`[qiankun] 容器 #subapp-viewport 仍然不可见，强制显示`);
+                      console.warn(`[qiankun]`, 'common.system.container_still_invisible');
                       container.style.setProperty('display', 'flex', 'important');
                       container.style.setProperty('visibility', 'visible', 'important');
                       container.style.setProperty('opacity', '1', 'important');
@@ -380,8 +393,8 @@ export function setupQiankun() {
                     setTimeout(ensureContainer, retryDelay);
                   } else {
                     // 超过最大重试次数，报错
-                    console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
-                    reject(new Error(`容器 #subapp-viewport 不存在，无法加载应用 ${app.name}`));
+                    console.error(`[qiankun]`, 'common.system.container_not_found', `${maxRetries * retryDelay}ms`);
+                    reject(new Error(`common.system.container_not_exists ${app.name}`));
                   }
                 }
               });
@@ -490,7 +503,7 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch && appMatch[1] ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
     }
@@ -512,6 +525,16 @@ export function listenSubAppReady() {
  * 监听子应用路由变化事件
  */
 export function listenSubAppRouteChange() {
+  // 关键：在独立运行模式下（非 qiankun 且非 layout-app），不需要监听 subapp:route-change 事件
+  // 因为路由变化已经在 router.afterEach 中处理了，避免重复处理导致冲突
+  const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+  const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
+  
+  if (!isQiankun && !isUsingLayoutApp) {
+    // 独立运行模式，路由变化已在 router.afterEach 中处理，不需要监听事件
+    return;
+  }
+
   window.addEventListener('subapp:route-change', (event: Event) => {
     const customEvent = event as CustomEvent;
     const { path, fullPath, name, meta } = customEvent.detail;

@@ -8,15 +8,17 @@
     :collapse-transition="false"
     :unique-opened="uniqueOpened"
     :class="[menuThemeClass, 'sidebar__menu']"
-    :text-color="menuThemeConfig.textColor"
-    :active-text-color="menuThemeConfig.textActiveColor"
+    :text-color="menuThemeConfig?.textColor"
+    :active-text-color="menuThemeConfig?.textActiveColor"
     @select="handleMenuSelect"
   >
     <!-- 使用配置文件动态渲染菜单 -->
     <MenuRenderer
       :menu-items="currentMenuItems"
-      :search-keyword="searchKeyword"
-      :is-collapse="isCollapse"
+      v-bind="{
+        ...(searchKeyword !== undefined ? { 'search-keyword': searchKeyword } : {}),
+        ...(isCollapse !== undefined ? { 'is-collapse': isCollapse } : {})
+      }"
     />
   </el-menu>
 </template>
@@ -26,13 +28,15 @@ defineOptions({
   name: 'LayoutDynamicMenu',
 });
 
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
-import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
-import { getMenuRegistry } from '@btc/shared-components/store/menuRegistry';
+import { useI18n, useThemePlugin } from '@btc/shared-core';
+import { getCurrentEnvironment, getCurrentSubApp } from '@btc/shared-core/configs/unified-env-config';
+import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
+import { useCurrentApp } from '../../../../composables/useCurrentApp';
+import { getMenuRegistry } from '../../../../store/menuRegistry';
+import { getIsMainAppFn } from '../utils';
 import MenuRenderer from '../menu-renderer/index.vue';
 
 interface Props {
@@ -49,8 +53,12 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { currentApp } = useCurrentApp();
-const { uniqueOpened, menuThemeType, isDark } = useSettingsState();
+const { uniqueOpened, menuThemeType } = useSettingsState();
 const { menuStyleList } = useSettingsConfig();
+// 关键：从 useThemePlugin 获取 isDark，直接响应主题切换按钮的变化
+// 这样可以避免通过 systemThemeType 间接判断导致的时序问题
+const theme = useThemePlugin();
+const isDark = theme.isDark;
 
 // 关键：Element Plus 的 default-active 在部分情况下不会响应后续变更
 // 刷新/直达时，优先用 location.pathname 作为初始值，并通过 key 包含 activeMenu 强制重建
@@ -68,8 +76,8 @@ const getInitialActiveMenu = () => {
 
 const normalizeActivePath = (value: string) => {
   const raw = (value || '/').trim();
-  const noHash = raw.split('#')[0];
-  const noQuery = noHash.split('?')[0];
+  const noHash = raw.split('#')[0] ?? raw;
+  const noQuery = noHash.split('?')[0] ?? noHash;
   const ensured = noQuery.startsWith('/') ? noQuery : `/${noQuery}`;
   return ensured === '' ? '/' : ensured;
 };
@@ -82,9 +90,10 @@ const menuKey = ref(0); // 用于强制重新渲染菜单
 const isInitialMount = ref(true); // 标记是否是首次挂载
 
 // 关键：只在菜单数据变化时更新 key，不在路由变化时更新 key，避免菜单重绘闪烁
-// Element Plus 的 default-active 只在初始化时生效，但我们可以通过 watch 和 menuRef 来手动更新激活状态
+// Element Plus 的 default-active 是响应式的，会随着 activeMenu 的变化自动更新激活状态
+// 参考 cool-admin：直接使用 default-active={route.path}，无需通过 key 强制重新渲染
 const menuRenderKey = computed(() => {
-  // 只包含 menuKey，避免 activeMenu 变化时导致菜单重新渲染
+  // 只包含 menuKey，避免 activeMenu 变化时导致菜单重新渲染（Element Plus 会自动处理激活状态）
   return String(menuKey.value);
 });
 
@@ -135,24 +144,7 @@ const currentMenuItems = computed(() => {
   // 这样当 menuRegistry.value[app] 变化时，computed 会自动重新计算
   const menus = menuRegistry.value[app] || [];
 
-  // 关键调试：如果当前应用的菜单为空，但注册表中有其他应用的菜单，输出详细信息
-  if (menus.length === 0 && menuRegistry.value) {
-    const allAppsWithMenus = Object.keys(menuRegistry.value).filter(key => (menuRegistry.value[key] || []).length > 0);
-    if (allAppsWithMenus.length > 0 && !(window as any)[`__MENU_MISMATCH_${app}__`]) {
-      console.warn(`[DynamicMenu] 当前应用 ${app} 的菜单为空，但注册表中有其他应用的菜单:`, {
-        currentApp: app,
-        currentAppMenus: menus.length,
-        appsWithMenus: allAppsWithMenus,
-        allMenusCount: Object.keys(menuRegistry.value).reduce((acc, key) => {
-          acc[key] = (menuRegistry.value[key] || []).length;
-          return acc;
-        }, {} as Record<string, number>),
-        systemMenus: menuRegistry.value['system'],
-        registryValue: menuRegistry.value
-      });
-      (window as any)[`__MENU_MISMATCH_${app}__`] = true;
-    }
-  }
+  // 允许菜单为空，这是正常的（某些应用可能没有菜单）
 
 
   // 如果菜单为空，尝试通过全局函数注册菜单（作为后备机制）
@@ -164,9 +156,7 @@ const currentMenuItems = computed(() => {
         // 重新获取菜单（注册后可能已更新）
         const retryMenus = menuRegistry.value[app] || [];
         if (retryMenus.length > 0) {
-          if (import.meta.env.DEV) {
-            console.log(`[DynamicMenu] 菜单注册成功: ${app}`, retryMenus.length);
-          }
+          // 菜单注册成功
           return retryMenus;
         }
       } catch (error) {
@@ -176,6 +166,7 @@ const currentMenuItems = computed(() => {
         }
       }
     } else {
+      // 如果菜单注册函数不存在，输出警告
       if (import.meta.env.DEV || !(window as any)[`__MENU_REGISTER_FN_MISSING_${app}__`]) {
         console.warn(`[DynamicMenu] 菜单注册函数不存在: ${app}`, {
           __REGISTER_MENUS_FOR_APP__: typeof registerMenusFn,
@@ -184,11 +175,6 @@ const currentMenuItems = computed(() => {
         });
         (window as any)[`__MENU_REGISTER_FN_MISSING_${app}__`] = true;
       }
-    }
-  } else {
-    if (import.meta.env.DEV && !(window as any)[`__MENU_LOADED_${app}__`]) {
-      console.log(`[DynamicMenu] 菜单已加载: ${app}`, menus.length);
-      (window as any)[`__MENU_LOADED_${app}__`] = true;
     }
   }
 
@@ -199,10 +185,12 @@ const currentMenuItems = computed(() => {
 // 只在应用切换时更新菜单（通过 currentMenuItems computed 自动响应）
 
 // 监听 currentApp 的变化，确保应用切换时菜单也更新
+// 关键：应用切换时，菜单数据会通过 currentMenuItems computed 自动更新
+// 只有当菜单数据真正变化时才更新 menuKey，避免不必要的重绘
 watch(
   () => currentApp.value,
   (newApp, oldApp) => {
-    if (newApp !== oldApp) {
+    if (newApp !== oldApp && oldApp !== undefined) {
       // 应用切换时，尝试注册新应用的菜单
       const registerMenusFn = (window as any).__REGISTER_MENUS_FOR_APP__;
       if (typeof registerMenusFn === 'function') {
@@ -212,8 +200,8 @@ watch(
           // 静默失败
         }
       }
-      // 强制重新渲染菜单
-      menuKey.value++;
+      // 关键：不在这里强制更新 menuKey，让菜单数据变化的 watch 来处理
+      // 这样可以避免应用切换但菜单数据未变化时的重复渲染
     }
   }
 );
@@ -298,7 +286,7 @@ onMounted(() => {
               const manifestMenus = module.getManifestMenus(app);
               if (manifestMenus && manifestMenus.length > 0) {
                 // 动态导入注册函数
-                import('@configs/layout-bridge').then((bridgeModule) => {
+                import('@btc/shared-core/configs/layout-bridge').then((bridgeModule) => {
                   try {
                     bridgeModule.registerManifestMenusForApp(app);
                     const retryMenus = menuRegistry?.value?.[app] || [];
@@ -329,23 +317,129 @@ onMounted(() => {
       // 延迟检查：只启动一次重试循环，避免初始化时反复抖动（多次 setTimeout + 多个 interval）
       if (!retrying) {
         retrying = true;
-        let retryCount = 0;
-        const maxRetries = 30;
-        const checkInterval = setInterval(() => {
-          retryCount++;
-          const retryMenus = menuRegistry?.value?.[app] || [];
-          if (retryMenus.length > 0) {
-            clearInterval(checkInterval);
-            menuKey.value++; // 强制重新渲染
-            retrying = false;
-          } else if (retryCount >= maxRetries) {
-            clearInterval(checkInterval);
-            retrying = false;
-            if (import.meta.env.DEV) {
-              console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+        
+        // 关键：检查应用是否有菜单配置
+        // 菜单配置可能在 manifest 中，也可能在模块级配置文件的 locale 中（以 menu. 开头的 key）
+        const checkHasMenuConfig = async (): Promise<boolean> => {
+          // 方法1：检查 manifest 中是否有菜单配置
+          try {
+            const { getManifestMenus } = await import('@btc/subapp-manifests');
+            const manifestMenus = getManifestMenus(app);
+            if (manifestMenus && manifestMenus.length > 0) {
+              return true;
             }
+          } catch (error) {
+            // 静默失败，继续检查其他方法
           }
-        }, 100);
+          
+          // 方法2：从国际化消息中检查是否有 menu. 开头的 key
+          // 菜单配置在模块级配置文件的 locale 中，以 menu. 开头的 key 形式存在
+          try {
+            const subAppI18nGetters = (window as any).__SUBAPP_I18N_GETTERS__;
+            if (subAppI18nGetters && subAppI18nGetters instanceof Map && subAppI18nGetters.has(app)) {
+              const getLocaleMessages = subAppI18nGetters.get(app);
+              if (typeof getLocaleMessages === 'function') {
+                const messages = getLocaleMessages();
+                // 检查中文和英文消息中是否有 menu. 开头的 key
+                const zhCNMessages = messages['zh-CN'] || {};
+                const enUSMessages = messages['en-US'] || {};
+                
+                // 检查扁平化的 key（如果消息是扁平化结构）
+                const hasMenuKey = (msgs: any): boolean => {
+                  if (typeof msgs === 'object' && msgs !== null) {
+                    // 扁平化结构：直接检查 key
+                    if (Array.isArray(msgs) === false) {
+                      const keys = Object.keys(msgs);
+                      if (keys.some(key => key.startsWith('menu.'))) {
+                        return true;
+                      }
+                    }
+                    // 嵌套结构：递归检查
+                    for (const key in msgs) {
+                      if (key === 'menu') {
+                        // 如果存在 menu 键，检查其内容是否为空
+                        const menuValue = msgs[key];
+                        if (menuValue && typeof menuValue === 'object' && Object.keys(menuValue).length > 0) {
+                          return true;
+                        }
+                      }
+                      if (typeof msgs[key] === 'object' && msgs[key] !== null && !Array.isArray(msgs[key])) {
+                        if (hasMenuKey(msgs[key])) {
+                          return true;
+                        }
+                      }
+                    }
+                  }
+                  return false;
+                };
+                
+                if (hasMenuKey(zhCNMessages) || hasMenuKey(enUSMessages)) {
+                  return true;
+                }
+              }
+            }
+          } catch (error) {
+            // 静默失败
+          }
+          
+          return false;
+        };
+        
+        // 异步检查是否有菜单配置
+        checkHasMenuConfig().then((hasMenuConfig) => {
+          if (!hasMenuConfig) {
+            // 如果没有菜单配置，说明该应用本来就没有菜单，直接跳过等待
+            retrying = false;
+            return;
+          }
+          
+          // 只有在有菜单配置时才等待注册
+          let retryCount = 0;
+          const maxRetries = 30;
+          const checkInterval = setInterval(() => {
+            retryCount++;
+            const retryMenus = menuRegistry?.value?.[app] || [];
+            if (retryMenus.length > 0) {
+              clearInterval(checkInterval);
+              menuKey.value++; // 强制重新渲染
+              retrying = false;
+            } else if (retryCount >= maxRetries) {
+              clearInterval(checkInterval);
+              retrying = false;
+              // 再次检查是否有菜单配置
+              // 如果确实有菜单配置但注册超时，才输出警告
+              checkHasMenuConfig().then((stillHasMenuConfig) => {
+                if (stillHasMenuConfig) {
+                  if (import.meta.env.DEV) {
+                    console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+                  }
+                }
+                // 如果没有菜单配置，静默跳过，不输出警告
+              }).catch(() => {
+                // 如果检查失败，不输出警告
+              });
+            }
+          }, 100);
+        }).catch(() => {
+          // 如果检查失败，使用原来的逻辑（向后兼容）
+          let retryCount = 0;
+          const maxRetries = 30;
+          const checkInterval = setInterval(() => {
+            retryCount++;
+            const retryMenus = menuRegistry?.value?.[app] || [];
+            if (retryMenus.length > 0) {
+              clearInterval(checkInterval);
+              menuKey.value++; // 强制重新渲染
+              retrying = false;
+            } else if (retryCount >= maxRetries) {
+              clearInterval(checkInterval);
+              retrying = false;
+              if (import.meta.env.DEV) {
+                console.warn(`[DynamicMenu] 菜单注册超时，应用: ${app}`);
+              }
+            }
+          }, 100);
+        });
       }
       return false;
     } else {
@@ -398,6 +492,7 @@ const defaultOpeneds = computed(() => {
   // 关键：无搜索时，默认展开当前激活菜单的父级（解决刷新后菜单立刻收起/激活丢失的问题）
   const resolveOpenedsByActive = (items: any[], activePath: string): string[] => {
     const normalizedActive = normalizeActivePath(activePath || '/');
+    if (!normalizedActive) return [];
     const parents: string[] = [];
 
     const dfs = (nodes: any[], parentIndexes: string[]): boolean => {
@@ -485,46 +580,27 @@ const defaultOpeneds = computed(() => {
   return resolveOpenedsByActive(currentMenuItems.value, activeMenu.value);
 });
 
-// 关键：刷新时经常出现“先算 activeMenu/route，再异步注册菜单”的顺序
+// 关键：刷新时经常出现"先算 activeMenu/route，再异步注册菜单"的顺序
 // 这会导致首次展开失败，所以这里监听菜单数据到达后再强制展开一次
+// 优化：只监听菜单数据变化，不监听 activeMenu（路由变化时 Element Plus 会自动处理激活状态）
 watch(
-  () => [activeMenu.value, currentMenuItems.value],
+  () => currentMenuItems.value,
   () => {
     // 只有当菜单已加载时才尝试展开
     if (!Array.isArray(currentMenuItems.value) || currentMenuItems.value.length === 0) {
       return;
     }
-    import('vue').then(({ nextTick }) => {
-      nextTick(() => {
-        syncMenuOpenState();
-      });
+    // 使用 nextTick 确保 DOM 更新完成后再同步展开状态
+    nextTick(() => {
+      syncMenuOpenState();
     });
   },
   { immediate: true },
 );
 
-// 关键：监听 activeMenu 变化，使用 Element Plus 的内部状态来更新激活状态
-// 通过访问 menuRef 的内部状态来更新，避免重新渲染整个菜单
-watch(
-  () => activeMenu.value,
-  (newActiveMenu) => {
-    // 使用 nextTick 确保菜单组件已渲染
-    import('vue').then(({ nextTick }) => {
-      nextTick(() => {
-        try {
-          const inst: any = menuRef.value;
-          // Element Plus 的 el-menu 内部使用 activeIndex 来管理激活状态
-          // 直接设置内部状态可以避免重新渲染
-          if (inst && inst.activeIndex !== undefined) {
-            inst.activeIndex = newActiveMenu;
-          }
-        } catch (error) {
-          // 静默失败
-        }
-      });
-    });
-  }
-);
+// 关键：Element Plus 的 el-menu 的 default-active 是响应式的
+// 参考 cool-admin：直接使用 default-active={route.path}，Element Plus 会自动响应式更新激活状态
+// 不需要 watch activeMenu 来手动更新，让 Element Plus 自己处理即可
 
 // 菜单主题类 - 实现类似 art-design-pro 的展示层逻辑
 // 深色主题下强制显示深色菜单风格，但不修改 menuThemeType 的值
@@ -555,7 +631,11 @@ const menuThemeClass = computed(() => {
 // 菜单主题配置 - 类似 art-design-pro 的 getMenuTheme
 const menuThemeConfig = computed(() => {
   // 深色系统主题下，菜单背景必须和内容区域一致（都使用 var(--el-bg-color)）
-  if (isDark?.value === true) {
+  // 关键：同时检查 isDark 和 menuThemeType，确保在主题切换时能正确响应
+  const isSystemDark = isDark?.value === true;
+  const isMenuDark = menuThemeType?.value === MenuThemeEnum.DARK;
+
+  if (isSystemDark || isMenuDark) {
     // 深色系统主题下，菜单使用与内容区域一致的深色背景
     return {
       background: 'var(--el-bg-color)',
@@ -565,8 +645,8 @@ const menuThemeConfig = computed(() => {
   }
 
   // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
-  const themeConfig = menuStyleList.value.find(item => item.theme === theme);
+  const menuTheme = menuThemeType?.value || MenuThemeEnum.DESIGN;
+  const themeConfig = menuStyleList.value.find(item => item.theme === menuTheme);
 
   if (themeConfig) {
     return {
@@ -584,45 +664,190 @@ const menuThemeConfig = computed(() => {
   };
 });
 
-// 监听菜单主题和系统主题变化，强制重新渲染菜单
+// 关键：主题变化时不需要重新渲染整个菜单，只需要更新 CSS 变量
+// Element Plus 的菜单组件会自动响应 CSS 变量的变化
+// 移除这里的 menuKey 更新，避免主题切换时的菜单重绘闪烁
+// 主题变化由 updateMenuCSSVariables 函数处理
+
+// 菜单主题配置类型
+type MenuThemeConfig = {
+  background: string;
+  textColor: string;
+  textActiveColor: string;
+};
+
+// 强制更新菜单 CSS 变量的辅助函数
+const updateMenuCSSVariables = (newConfig: MenuThemeConfig) => {
+  if (!menuRef.value) return;
+
+  const menuEl = menuRef.value.$el as HTMLElement;
+  if (!menuEl) return;
+
+  // 关键：使用双重 requestAnimationFrame 确保在浏览器渲染之后设置
+  // 这样可以确保在全局 CSS 规则应用之后再设置内联样式
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 强制更新 Element Plus 的 CSS 变量
+      // 注意：CSS 变量不支持 !important，但内联样式的优先级通常高于外部样式表
+      // 通过延迟设置确保在全局样式之后应用
+      menuEl.style.setProperty('--el-menu-text-color', newConfig.textColor);
+      menuEl.style.setProperty('--el-menu-active-text-color', newConfig.textActiveColor);
+      menuEl.style.setProperty('--el-menu-hover-text-color', newConfig.textColor);
+
+    });
+  });
+};
+
+// 监听 menuThemeConfig 变化，确保 Element Plus 的 CSS 变量立即更新
 watch(
-  () => [menuThemeType?.value, isDark?.value],
+  () => menuThemeConfig.value,
+  (newConfig) => {
+    // 确保 newConfig 存在且有效
+    if (!newConfig || !newConfig.background) {
+      return;
+    }
+    // 使用 nextTick 确保 DOM 更新完成后再强制更新 CSS 变量
+    nextTick(() => {
+      updateMenuCSSVariables(newConfig);
+    });
+  },
+  { immediate: false, deep: true }
+);
+
+// 监听 HTML dark 类变化，确保在主题切换时重新设置 CSS 变量
+// 因为全局 CSS 规则可能在主题切换后重新应用
+watch(
+  () => document.documentElement.classList.contains('dark'),
   () => {
-    menuKey.value++;
+    nextTick(() => {
+      // 确保 menuThemeConfig 已初始化
+      if (menuThemeConfig.value && menuThemeConfig.value.background) {
+      updateMenuCSSVariables(menuThemeConfig.value);
+      }
+    });
   }
 );
 
-// 监听搜索关键词变化，强制重新渲染菜单以应用新的 defaultOpeneds
-watch(
-  () => props.searchKeyword,
-  () => {
-    menuKey.value++;
-  }
-);
+// 关键：搜索关键词变化时，defaultOpeneds computed 会自动重新计算
+// Element Plus 的菜单组件会自动响应 default-openeds 的变化
+// 不需要强制重新渲染整个菜单，避免搜索时的闪烁
+// 如果确实需要强制展开/收起，可以通过 syncMenuOpenState 函数处理
 
-// 监听 layout-app 的路由变化（用于独立运行模式）
+// 关键：监听路由变化，只更新 activeMenu，不触发菜单重绘
+// Element Plus 的 default-active 是响应式的，会自动更新激活状态
+// 不需要手动操作 DOM，避免菜单重绘闪烁
 watch(
   () => route.path,
   (newPath) => {
-    // 关键：在 layout-app 环境下，需要从子应用的路由路径中提取正确的路径
-    // 子应用的路由路径可能包含应用前缀（如 /finance/inventory/result）
-    // 但菜单的 index 是子应用内部路径（如 /inventory/result）
+    // 关键：在生产环境子域名模式下，路径直接是子应用路由（如 /platform/modules）
+    // 在开发环境下，路径可能包含应用前缀（如 /admin/platform/modules）
     const isLayoutApp = typeof window !== 'undefined' && !!(window as any).__IS_LAYOUT_APP__;
-    if (isLayoutApp) {
-      // 在 layout-app 环境下，尝试从子应用的路由变化事件中获取路径
-      // 如果子应用已发送路由变化事件，activeMenu 会通过事件监听器更新
-      // 这里只处理 layout-app 自己的路由变化（如跨应用切换）
+    const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
+    const env = getCurrentEnvironment();
+    const isProductionOrTestSubdomain = env === 'production' || env === 'test';
+
+    let targetPath: string;
+
+    // 关键：检查是否是主应用路由（使用统一的 isMainApp 函数判断）
+    // 如果是主应用路由，直接使用路径，不进行应用前缀处理
+    const locationPath = typeof window !== 'undefined' ? window.location.pathname : newPath;
+    const isStandalone = typeof window !== 'undefined' && !(window as any).__POWERED_BY_QIANKUN__;
+    const isMainAppFn = getIsMainAppFn();
+    const isMainAppRoute = isMainAppFn ? isMainAppFn(newPath, locationPath, isStandalone) : false;
+
+    // 关键：如果是主应用路由，需要根据当前应用统一处理路径格式
+    // 在 system-app 环境下，菜单项的 index 包含 /system 前缀，所以 targetPath 也需要添加前缀以保持一致性
+    if (isMainAppRoute) {
       const app = currentApp.value;
-      if (app && newPath.startsWith(`/${app}`)) {
-        // 去掉应用前缀，获取子应用内部路径
-        const subAppPath = newPath.slice(`/${app}`.length) || '/';
-        activeMenu.value = subAppPath;
+      // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回，不尝试激活菜单
+      // 根路径 `/` 是父路由，它的子路由才是实际的菜单项
+      if (newPath === '/' || newPath === '') {
+        if (import.meta.env.DEV) {
+          console.log('[DynamicMenu] 根路径，跳过菜单激活:', {
+            originalPath: newPath,
+            currentApp: app,
+          });
+        }
+        return;
+      } else if (app === 'system' && !newPath.startsWith('/system')) {
+        // 如果当前应用是 system，菜单项的 index 包含 /system 前缀，所以 targetPath 也需要添加前缀
+        targetPath = normalizeActivePath(`/system${newPath}`);
       } else {
-        activeMenu.value = newPath;
+        targetPath = normalizeActivePath(newPath);
       }
+    } else if (isLayoutApp || isUsingLayoutApp) {
+      // 在 layout-app 环境下，尝试从子应用的路由路径中提取正确的路径
+      // 在生产环境子域名模式下，路径直接是子应用路由（如 /org/departments）
+      // 在开发环境下，路径可能包含应用前缀（如 /admin/org/departments）
+      const app = currentApp.value;
+
+      if (isProductionOrTestSubdomain) {
+        // 生产环境子域名模式：路径直接是子应用路由
+        // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回
+        if (newPath === '/' || newPath === '') {
+          if (import.meta.env.DEV) {
+            console.log('[DynamicMenu] 子应用根路径（生产环境），跳过菜单激活:', {
+              originalPath: newPath,
+              currentApp: app,
+            });
+          }
+          return;
+        }
+        targetPath = normalizeActivePath(newPath);
+      } else if (app && newPath.startsWith(`/${app}`)) {
+        // 开发环境：去掉应用前缀，获取子应用内部路径
+        const subAppPath = newPath.slice(`/${app}`.length) || '/';
+        // 特殊处理：子应用根路径（如 `/admin` -> `/`）没有对应的菜单项，直接返回
+        if (subAppPath === '/' || subAppPath === '') {
+          if (import.meta.env.DEV) {
+            console.log('[DynamicMenu] 子应用根路径（开发环境），跳过菜单激活:', {
+              originalPath: newPath,
+              subAppPath,
+              currentApp: app,
+            });
+          }
+          return;
+        }
+        targetPath = normalizeActivePath(subAppPath);
+      } else {
+        targetPath = normalizeActivePath(newPath);
+      }
+    } else if (isProductionOrTestSubdomain) {
+      // 独立运行模式 + 生产环境子域名：路径直接是子应用路由
+      // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回
+      if (newPath === '/' || newPath === '') {
+        if (import.meta.env.DEV) {
+          console.log('[DynamicMenu] 子应用根路径（独立运行+生产环境），跳过菜单激活:', {
+            originalPath: newPath,
+            currentApp: currentApp.value,
+          });
+        }
+        return;
+      }
+      targetPath = normalizeActivePath(newPath);
     } else {
-      activeMenu.value = newPath;
+      // 其他情况：直接使用路由路径
+      // 特殊处理：子应用根路径（如 `/admin`、`/logistics` 等）没有对应的菜单项
+      // 这些路径是占位路由，实际的菜单项是它们的子路由
+      const subAppRootPaths = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/dashboard', '/personnel', '/monitor'];
+      if (subAppRootPaths.includes(newPath)) {
+        // 子应用根路径，跳过菜单激活
+        return;
+      }
+      targetPath = normalizeActivePath(newPath);
     }
+
+    // 关键：只更新 activeMenu，让 Element Plus 的 default-active 自动处理激活状态
+    // 避免手动操作 DOM，减少菜单重绘闪烁
+    if (activeMenu.value !== targetPath) {
+      activeMenu.value = targetPath;
+    }
+
+    // 关键：使用 nextTick 确保菜单展开状态同步，但不操作 DOM 激活状态
+    // Element Plus 会自动响应 default-active 的变化
+    nextTick(() => {
+      syncMenuOpenState();
+    });
   },
   { immediate: true }
 );
@@ -633,15 +858,27 @@ onMounted(() => {
   if (typeof window !== 'undefined' && (window as any).__IS_LAYOUT_APP__) {
     const updateActiveMenu = (path: string) => {
       // 从子应用的路由路径中提取子应用内部路径
-      // path 可能是完整路径（如 /finance/inventory/result）或子应用内部路径（如 /inventory/result）
+      // path 可能是完整路径（如 /admin/org/departments）或子应用内部路径（如 /org/departments）
       let subAppPath = normalizeActivePath(path);
+      if (!subAppPath) return;
 
-      // 如果路径包含应用前缀，去掉前缀
+      // 关键：在 layout-app 环境下，路径应该直接是子应用路由（不包含应用前缀）
+      // 但如果 path 包含应用前缀，需要去掉前缀
+      const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
       const app = currentApp.value;
+
       if (app && subAppPath.startsWith(`/${app}`)) {
+        // 如果路径包含应用前缀，去掉前缀
         subAppPath = subAppPath.slice(`/${app}`.length) || '/';
       }
+
       subAppPath = normalizeActivePath(subAppPath);
+      if (!subAppPath) return;
+
+      // 关键优化：如果目标路径与当前激活菜单相同，不需要更新，避免闪烁
+      if (activeMenu.value === subAppPath) {
+        return;
+      }
 
       // 更新菜单激活状态
       activeMenu.value = subAppPath;
@@ -653,13 +890,6 @@ onMounted(() => {
         });
       });
 
-      if (import.meta.env.DEV) {
-        console.log('[DynamicMenu] 更新菜单激活状态:', {
-          originalPath: path,
-          subAppPath,
-          currentApp: app
-        });
-      }
     };
 
     // 关键：在组件挂载时，主动检查当前路由并设置菜单激活状态
@@ -672,42 +902,96 @@ onMounted(() => {
 
       // 优先从 window.location 获取路径（更准确，不受路由初始化时机影响）
       const locationPath = normalizeActivePath(window.location.pathname);
+      if (!locationPath) return;
       let subAppPath = locationPath;
 
-      // 检查是否在子域名环境下（生产环境）
-      const hostname = window.location.hostname;
-      const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+      // 关键：检查是否是主应用路由（使用统一的 isMainApp 函数判断）
+      // 如果是主应用路由，需要根据当前应用统一处理路径格式
+      const isStandalone = typeof window !== 'undefined' && !(window as any).__POWERED_BY_QIANKUN__;
+      const isMainAppFn = getIsMainAppFn();
+      const isMainAppRoute = isMainAppFn ? isMainAppFn(route.path, locationPath, isStandalone) : false;
 
-      if (isProductionSubdomain) {
+      // 关键：如果是主应用路由，需要根据当前应用统一处理路径格式
+      // 在 system-app 环境下，菜单项的 index 包含 /system 前缀，所以路径也需要添加前缀以保持一致性
+      if (isMainAppRoute) {
+        let normalizedPath = normalizeActivePath(locationPath);
+        // 特殊处理：根路径 `/` 没有对应的菜单项，不需要添加前缀
+        // 根路径 `/` 是父路由，它的子路由才是实际的菜单项
+        if (normalizedPath === '/' || normalizedPath === '') {
+          // 根路径不尝试激活菜单项，直接返回
+          return;
+        } else if (app === 'system' && normalizedPath && !normalizedPath.startsWith('/system')) {
+          // 如果当前应用是 system，菜单项的 index 包含 /system 前缀，所以路径也需要添加前缀
+          normalizedPath = normalizeActivePath(`/system${normalizedPath}`);
+        }
+        if (normalizedPath) {
+          updateActiveMenu(normalizedPath);
+        }
+        return;
+      }
+
+      // 检查是否在子域名环境下（生产环境）
+      const env = getCurrentEnvironment();
+      const isProductionOrTestSubdomainLocal = env === 'production' || env === 'test';
+
+      if (isProductionOrTestSubdomainLocal) {
         // 子域名环境下，路径直接是子应用路由（如 / 或 /xxx）
         // 如果路径是 /finance/xxx，需要去掉 /finance 前缀
         if (locationPath.startsWith(`/${app}`)) {
-          subAppPath = locationPath.slice(`/${app}`.length) || '/';
+          const subAppPathRaw = locationPath.slice(`/${app}`.length) || '/';
+          // 特殊处理：子应用根路径（如 `/admin` -> `/`）没有对应的菜单项，直接返回
+          if (subAppPathRaw === '/' || subAppPathRaw === '') {
+            return;
+          }
+          subAppPath = subAppPathRaw;
         } else {
           // 否则直接使用当前路径
+          // 特殊处理：根路径 `/` 没有对应的菜单项，直接返回
+          if (locationPath === '/' || locationPath === '') {
+            return;
+          }
           subAppPath = locationPath;
         }
       } else {
         // 路径前缀环境下（如 /finance/xxx）
         if (locationPath.startsWith(`/${app}`)) {
-          subAppPath = locationPath.slice(`/${app}`.length) || '/';
+          const subAppPathRaw = locationPath.slice(`/${app}`.length) || '/';
+          // 特殊处理：子应用根路径（如 `/admin` -> `/`）没有对应的菜单项，直接返回
+          if (subAppPathRaw === '/' || subAppPathRaw === '') {
+            return;
+          }
+          subAppPath = subAppPathRaw;
         } else {
           // 如果没有应用前缀，尝试从 route.path 获取
           const currentPath = route.path;
           if (currentPath.startsWith(`/${app}`)) {
-            subAppPath = currentPath.slice(`/${app}`.length) || '/';
+            const subAppPathRaw = currentPath.slice(`/${app}`.length) || '/';
+            // 特殊处理：子应用根路径（如 `/admin` -> `/`）没有对应的菜单项，直接返回
+            if (subAppPathRaw === '/' || subAppPathRaw === '') {
+              return;
+            }
+            subAppPath = subAppPathRaw;
           } else {
+            // 其他情况：可能是子应用根路径（如 `/admin`、`/logistics` 等）
+            // 这些路径是占位路由，没有对应的菜单项
+            const subAppRootPaths = ['/admin', '/logistics', '/engineering', '/quality', '/production', '/finance', '/operations', '/dashboard', '/personnel', '/monitor'];
+            if (subAppRootPaths.includes(currentPath) || subAppRootPaths.includes(locationPath)) {
+              return;
+            }
             subAppPath = currentPath;
           }
         }
       }
 
       // 确保路径以 / 开头
-      if (!subAppPath.startsWith('/')) {
-        subAppPath = `/${subAppPath}`;
+      if (!subAppPath || !subAppPath.startsWith('/')) {
+        subAppPath = subAppPath ? `/${subAppPath}` : '/';
       }
 
-      updateActiveMenu(normalizeActivePath(subAppPath));
+      const normalizedPath = normalizeActivePath(subAppPath);
+      if (normalizedPath) {
+        updateActiveMenu(normalizedPath);
+      }
     };
 
     // 立即初始化一次（处理刷新浏览器的情况）
@@ -809,14 +1093,45 @@ const handleMenuSelect = (index: string) => {
     // 这确保了菜单选择后立即显示激活状态
     activeMenu.value = normalizeActivePath(absolutePath);
 
-    // 菜单路径已经在加载时被规范化了（manifest 中没有前缀，开发环境会自动添加，生产环境保持原样）
-    // 所以这里直接使用 index，不需要再次规范化
-    // 使用 catch 捕获路由跳转错误，避免未匹配路由时导致的问题
-    router.push(absolutePath).catch((err: unknown) => {
+    // 确保父级菜单展开
+    import('vue').then(({ nextTick }) => {
+      nextTick(() => {
+        syncMenuOpenState();
+      });
+    });
+
+    // 关键：统一处理路由跳转路径
+    // 菜单项的 index 可能包含应用前缀（如 /system/inventory/check），但路由配置使用的是相对路径（如 inventory/check）
+    // 需要根据当前应用和路由配置，统一处理路径格式
+    const app = currentApp.value;
+    let routePath = absolutePath;
+
+    // 检查是否在 qiankun 模式下
+    const isQiankun = typeof window !== 'undefined' && (window as any).__POWERED_BY_QIANKUN__;
+    
+    // 如果当前应用是 system，菜单项的 index 包含 /system 前缀
+    // 在 qiankun 模式下，系统应用的路由器使用 createMemoryHistory()，路径应该是相对于子应用的
+    // 所以需要去掉 /system 前缀，得到子应用内部路径（如 /data/files/list）
+    // 在独立运行模式下，路径应该保持 /system 前缀
+    if (app === 'system' && routePath.startsWith('/system')) {
+      if (isQiankun) {
+        // qiankun 模式：去掉 /system 前缀，使用子应用内部路径
+        routePath = routePath.slice('/system'.length) || '/';
+      }
+      // 独立运行模式：保持 /system 前缀，不做处理
+    }
+
+    router.push(routePath).catch((err: unknown) => {
       // 路由跳转失败（通常是路由未匹配），记录错误但不抛出
       // 这通常发生在点击分组节点时，虽然我们已经过滤了，但作为兜底处理
       if (import.meta.env.DEV) {
-        console.warn('[dynamic-menu] 路由跳转失败:', absolutePath, err);
+        console.error('[dynamic-menu] 路由跳转失败:', {
+          absolutePath,
+          routePath,
+          error: err,
+          currentApp: app,
+          matchedItem,
+        });
       }
     });
 };

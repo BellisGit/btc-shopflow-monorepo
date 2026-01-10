@@ -79,7 +79,7 @@ export function useDisableAutofill() {
             }
             
             // 如果包含输入框
-            if (element.querySelectorAll) {
+            if (element.querySelectorAll && typeof element.querySelectorAll === 'function') {
               setupInputObserver(element);
             }
           }
@@ -119,7 +119,7 @@ export function useDisableAutofill() {
    */
   const cleanup = () => {
     // 清理 MutationObserver
-    observers.value.forEach(observer => observer.disconnect());
+    observers.value.forEach((observer: MutationObserver) => observer.disconnect());
     observers.value = [];
     
     // 清理输入框事件监听器

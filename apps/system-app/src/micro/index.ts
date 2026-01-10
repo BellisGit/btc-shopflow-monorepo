@@ -1,12 +1,17 @@
-import { registerMicroApps, start } from 'qiankun';
+// 关键：qiankun 使用动态导入，避免在作为子应用时加载 qiankun 模块
+// 静态导入会导致 qiankun 的 effects 模块被执行，触发定时器创建，导致警告
+// import { registerMicroApps, start } from 'qiankun';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { storage } from '@btc/shared-utils';
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 import { microApps } from './apps';
-import { getAppConfig } from '@configs/app-env.config';
-import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getAppBySubdomain, getAppByPathPrefix } from '@btc/shared-core/configs/app-scanner';
 import { initErrorMonitor, updateErrorList, setupGlobalErrorCapture } from '../utils/errorMonitor';
 
-// 获取主应用配置（用于判断当前是否在主应用预览端口）
-const MAIN_APP_CONFIG = getAppConfig('system-app');
-const MAIN_APP_PREVIEW_PORT = MAIN_APP_CONFIG?.prePort || '4180';
+// 获取 system-app 配置（用于判断当前是否在 system-app 预览端口）
+const SYSTEM_APP_CONFIG = getAppConfig('system-app');
+const SYSTEM_APP_PREVIEW_PORT = SYSTEM_APP_CONFIG?.prePort || '4181';
 // 使用动态导入避免循环依赖导致的打包错误
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 
@@ -15,23 +20,28 @@ const MAIN_APP_PREVIEW_PORT = MAIN_APP_CONFIG?.prePort || '4180';
  * 这个元素会导致页面一直显示 loading 状态
  */
 function clearLoadingElement() {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏
-    loadingEl.style.display = 'none';
-    loadingEl.style.visibility = 'hidden';
-    loadingEl.style.opacity = '0';
-    loadingEl.style.pointerEvents = 'none';
-    // 延迟移除，确保动画完成
-    setTimeout(() => {
-      if (loadingEl.parentNode) {
-        loadingEl.parentNode.removeChild(loadingEl);
-      }
-    }, 100);
-  }
+  // 查找所有可能的#Loading元素（可能有多个，来自不同子应用）
+  const loadingEls = document.querySelectorAll('#Loading');
+  loadingEls.forEach((loadingEl) => {
+    if (loadingEl instanceof HTMLElement) {
+      // 立即隐藏，使用important确保优先级
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
+      loadingEl.classList.add('is-hide');
+      // 延迟移除，确保动画完成
+      setTimeout(() => {
+        if (loadingEl.parentNode) {
+          loadingEl.parentNode.removeChild(loadingEl);
+        }
+      }, 100);
+    }
+  });
 }
 
-import { getManifestTabs, getManifestMenus } from './manifests';
+import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
 // 关键：在模块加载时立即设置日志过滤，确保能拦截所有警告
@@ -64,6 +74,7 @@ if (typeof window !== 'undefined') {
     const originalLog = ((console as any).__originalLog || console.log).bind(console);
     const originalInfo = ((console as any).__originalInfo || console.info).bind(console);
     const originalWarn = ((console as any).__originalWarn || console.warn).bind(console);
+    const originalError = ((console as any).__originalError || console.error).bind(console);
 
     // 检查是否应该过滤日志的辅助函数
     const shouldFilter = (...args: any[]): boolean => {
@@ -128,6 +139,38 @@ if (typeof window !== 'undefined') {
       warnFn.apply(console, args);
     }
   };
+
+  // 过滤 console.error（single-spa 错误代码 31 通过 error 输出）
+  console.error = (...args: any[]) => {
+    // 过滤 qiankun sandbox 错误
+    if (shouldFilter(...args)) {
+      return;
+    }
+    // 过滤 single-spa 的错误代码 31（bootstrap 相关错误）
+    const firstArg = args[0];
+    if (typeof firstArg === 'string') {
+      if (firstArg.includes('single-spa minified message #31') ||
+          firstArg.includes('single-spa.js.org/error/?code=31') ||
+          (firstArg.includes('code=31') && firstArg.includes('bootstrap'))) {
+        return;
+      }
+    }
+    // 检查所有参数中是否包含 single-spa 错误
+    for (const arg of args) {
+      if (typeof arg === 'string' && (
+        arg.includes('single-spa minified message #31') ||
+        arg.includes('single-spa.js.org/error/?code=31') ||
+        (arg.includes('code=31') && arg.includes('bootstrap'))
+      )) {
+        return;
+      }
+    }
+    // 使用保存的原始方法，如果不存在则使用当前 console.error（可能是被其他代码替换过的）
+    const errorFn = originalError || (console as any).__originalError || console.error;
+    if (typeof errorFn === 'function') {
+      errorFn.apply(console, args);
+    }
+  };
 })();
 }
 
@@ -150,12 +193,19 @@ type MenuItem = {
 };
 
 
-// 应用名称映射（用于显示友好的中文名称）
+// 应用名称映射（用于显示友好的中文名称，使用 domain.type 的值）
 const appNameMap: Record<string, string> = {
-  logistics: '物流应用',
-  engineering: '工程应用',
-  quality: '品质应用',
-  production: '生产应用',
+  system: '主模块',
+  admin: '管理模块',
+  logistics: '物流模块',
+  engineering: '工程模块',
+  quality: '品质模块',
+  production: '生产模块',
+  finance: '财务模块',
+  operations: '运维模块',
+  dashboard: '图表模块',
+  personnel: '人事模块',
+  docs: '文档模块',
 };
 
 export async function registerManifestTabsForApp(appName: string): Promise<void> {
@@ -167,12 +217,18 @@ export async function registerManifestTabsForApp(appName: string): Promise<void>
   // 动态导入避免循环依赖
   const { registerTabs } = await import('../store/tabRegistry');
 
-  const normalizedTabs: TabMeta[] = tabs.map((tab: any) => ({
-    key: tab.key,
-    title: tab.labelKey ?? tab.label ?? tab.path,
-    path: tab.path,
-    i18nKey: tab.labelKey,
-  }));
+  const normalizedTabs: TabMeta[] = tabs.map((tab: any) => {
+    const result: TabMeta = {
+      key: tab.key,
+      title: tab.labelKey ?? tab.label ?? tab.path,
+      path: tab.path,
+    };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (tab.labelKey !== undefined) {
+      result.i18nKey = tab.labelKey;
+    }
+    return result;
+  });
 
   registerTabs(appName, normalizedTabs);
   return Promise.resolve();
@@ -258,9 +314,11 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
     const normalizedIndex = normalizeMenuPath(item.index, appName);
+    const labelKey = item.labelKey || item.title || item.label;
     return {
       index: normalizedIndex,
-      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
+      title: labelKey ?? normalizedIndex,
+      labelKey: labelKey, // 关键：保存 labelKey 用于面包屑翻译
       icon: item.icon,
       children: item.children && item.children.length > 0
         ? item.children.map(convertToMenuItem)
@@ -281,6 +339,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
   for (let i = 0; i < menus1.length; i++) {
     const item1 = menus1[i];
     const item2 = menus2[i];
+
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
 
     // 比较所有字段，包括 externalUrl
     if (item1.index !== item2.index ||
@@ -345,8 +408,7 @@ export async function registerManifestMenusForApp(appName: string) {
  */
 function getCurrentLocale(): string {
   // 从统一存储读取，或返回默认值
-  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 }
 
 /**
@@ -474,12 +536,22 @@ if (typeof window !== 'undefined') {
         url = input.url;
       }
 
+      // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
+      // 这确保 EPS 请求和其他 API 请求不会被影响
+      // 检查多种形式的 API URL：
+      // - /api/... (相对路径)
+      // - http://host/api/... (完整 URL)
+      // - https://host/api/... (完整 URL)
+      if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
+        return originalFetch.call(this, input as any, init);
+      }
+
       // 判断是否是资源文件
       const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
 
-      // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
+      // 如果当前在 system-app 预览端口且是资源文件，检查是否需要修复
       const currentPort = window.location.port;
-      if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+      if (currentPort === SYSTEM_APP_PREVIEW_PORT && isAssetFile) {
         // 如果当前在子应用路径下，检查 URL 是否需要修复
         const currentPath = window.location.pathname;
         let targetAppName: string | null = null;
@@ -508,7 +580,7 @@ if (typeof window !== 'undefined') {
               const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
               if (entryMatch) {
                 const targetPort = entryMatch[4] || '';
-                if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
                   const currentHost = window.location.hostname;
                   const protocol = window.location.protocol;
                   let needsFix = false;
@@ -534,7 +606,7 @@ if (typeof window !== 'undefined') {
                       const urlHost = hostMatch[1];
                       const urlPort = hostMatch[2];
                       // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
-                      if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                      if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === SYSTEM_APP_PREVIEW_PORT)) {
                         fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
                         needsFix = true;
                       }
@@ -568,6 +640,7 @@ if (typeof window !== 'undefined') {
       }
 
       // 默认行为：先执行原始请求
+      // 注意：对于非资源文件的请求（如 API 请求），应该已经在上面的检查中被放行了
       return originalFetch.call(this, input as any, init).then(async (response) => {
         // 如果响应是 HTML（说明可能是 404 页面），且请求的是 JavaScript 文件，尝试修复并重试
         const contentType = response.headers.get('content-type');
@@ -589,7 +662,7 @@ if (typeof window !== 'undefined') {
             targetAppName = 'finance';
           }
 
-          if (targetAppName && currentPort === MAIN_APP_PREVIEW_PORT) {
+          if (targetAppName && currentPort === SYSTEM_APP_PREVIEW_PORT) {
             try {
               const entryMap = getGlobalEntryMap();
               const appEntry = entryMap.get(targetAppName);
@@ -597,7 +670,7 @@ if (typeof window !== 'undefined') {
                 const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
                 if (entryMatch) {
                   const targetPort = entryMatch[4] || '';
-                  if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+                  if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
                     const currentHost = window.location.hostname;
                     const protocol = window.location.protocol;
 
@@ -668,6 +741,16 @@ function setupGlobalResourceInterceptor() {
       url = input.url;
     }
 
+    // 关键：API 请求（包含 /api/ 路径）直接放行，不进行任何拦截处理
+    // 这确保 EPS 请求和其他 API 请求不会被影响
+    // 检查多种形式的 API URL：
+    // - /api/... (相对路径)
+    // - http://host/api/... (完整 URL)
+    // - https://host/api/... (完整 URL)
+    if (url.includes('/api/') || url.endsWith('/api') || url.match(/\/api(\?|$|#)/)) {
+      return originalFetch.call(this, input as any, init);
+    }
+
     // 关键：在主应用预览端口下，检查所有资源请求
     // 包括：/assets/ 路径、.js 文件、相对路径等
     // 判断是否是资源文件
@@ -675,7 +758,7 @@ function setupGlobalResourceInterceptor() {
 
     // 如果当前在主应用预览端口且是资源文件，检查是否需要修复
     const currentPort = window.location.port;
-    if (currentPort === MAIN_APP_PREVIEW_PORT && isAssetFile) {
+    if (currentPort === SYSTEM_APP_PREVIEW_PORT && isAssetFile) {
       // 如果当前在子应用路径下，检查 URL 是否需要修复
       const currentPath = window.location.pathname;
       let targetAppName: string | null = null;
@@ -701,7 +784,7 @@ function setupGlobalResourceInterceptor() {
           const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
           if (entryMatch) {
             const targetPort = entryMatch[4] || '';
-            if (targetPort && targetPort !== MAIN_APP_PREVIEW_PORT) {
+            if (targetPort && targetPort !== SYSTEM_APP_PREVIEW_PORT) {
               const currentHost = window.location.hostname;
               const protocol = window.location.protocol;
               let needsFix = false;
@@ -710,7 +793,7 @@ function setupGlobalResourceInterceptor() {
               // 情况1：URL 包含错误的端口（主应用预览端口）- 这是最常见的情况
               // 检查 URL 中是否包含主应用预览端口或当前端口
               const portRegex = new RegExp(`:${currentPort}(?=/|$|\\s)`, 'g');
-              const mainPortRegex = new RegExp(`:${MAIN_APP_PREVIEW_PORT}(?=/|$|\\s)`, 'g');
+              const mainPortRegex = new RegExp(`:${SYSTEM_APP_PREVIEW_PORT}(?=/|$|\\s)`, 'g');
               if (portRegex.test(url) || mainPortRegex.test(url)) {
                 fixedUrl = url.replace(portRegex, `:${targetPort}`).replace(mainPortRegex, `:${targetPort}`);
                 needsFix = true;
@@ -728,7 +811,7 @@ function setupGlobalResourceInterceptor() {
                   const urlHost = hostMatch[1];
                   const urlPort = hostMatch[2];
                   // 如果是当前 hostname 或 localhost，且端口是主应用预览端口或没有端口
-                  if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === MAIN_APP_PREVIEW_PORT)) {
+                  if ((urlHost === currentHost || urlHost === 'localhost') && (!urlPort || urlPort === SYSTEM_APP_PREVIEW_PORT)) {
                     fixedUrl = url.replace(/^\/\/[^/]+/, `//${currentHost}:${targetPort}`);
                     needsFix = true;
                   }
@@ -783,7 +866,7 @@ function setupGlobalResourceInterceptor() {
     }
 
     // 检查是否是资源请求且从错误的端口加载
-    if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === MAIN_APP_PREVIEW_PORT) {
+    if ((urlStr.includes('/assets/') || urlStr.endsWith('.js') || urlStr.endsWith('.css')) && urlStr.includes(`:${window.location.port}`) && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
       // 根据当前路径判断是哪个应用
       const currentPath = window.location.pathname;
       let targetAppName: string | null = null;
@@ -808,7 +891,7 @@ function setupGlobalResourceInterceptor() {
           const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
           if (entryMatch) {
             const port = entryMatch[4] || '';
-            if (port && port !== MAIN_APP_PREVIEW_PORT) {
+            if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
               urlStr = urlStr.replace(`:${window.location.port}`, `:${port}`);
             }
           }
@@ -820,19 +903,23 @@ function setupGlobalResourceInterceptor() {
   };
 }
 
+// 存储当前激活的应用名称（用于判断是否是真正的应用切换）
+let currentActiveApp: string | null = null;
+
 /**
  * 初始化qiankun微前端
  */
-export function setupQiankun() {
-  // 防止重复注册：如果已经初始化过，直接返回
-  if ((window as any).__qiankun_setup__) {
-    // 只在开发环境显示警告，生产环境静默处理
-    if (import.meta.env.DEV) {
-      console.warn('[qiankun] setupQiankun 已经被调用过，跳过重复注册');
-    }
+export async function setupQiankun() {
+  // 关键：如果 system-app 作为 qiankun 子应用运行，不应该启动 qiankun
+  // 只有主应用才应该调用 start()
+  // 双重检查：检查 qiankunWindow 和 window.__POWERED_BY_QIANKUN__
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__POWERED_BY_QIANKUN__) {
     return;
   }
-  (window as any).__qiankun_setup__ = true;
+
+  // 关键：动态导入 qiankun，避免在作为子应用时加载 qiankun 模块
+  // 这样可以防止 qiankun 的 effects 模块被执行，避免定时器警告
+  const { registerMicroApps, start } = await import('qiankun');
 
   // 初始化错误监控全局状态
   initErrorMonitor();
@@ -876,7 +963,7 @@ export function setupQiankun() {
     const timeoutsConfig = {
       bootstrap: {
         millis: timeout * 2, // 增加超时时间，确保容器检查和 DOM 操作有足够时间
-        dieOnTimeout: !isDev, // 生产环境超时终止，开发环境不终止（仅警告）
+        dieOnTimeout: false, // 超时后不终止应用，只警告（避免应用切换时的竞态条件导致应用无法加载）
         warningMillis: Math.floor(timeout * 1.5), // 警告时间也相应增加
       },
       mount: {
@@ -928,7 +1015,7 @@ export function setupQiankun() {
         const { clearTabs: clearTabsFn } = await import('../store/tabRegistry');
         clearTabsFn(app.name);
       },
-      setActiveTab: (tabKey: string) => {
+      setActiveTab: (_tabKey: string) => {
         // console.log('[Main] Sub-app set active tab:', app.name, tabKey);
       },
       // 错误上报方法（传递给子应用）
@@ -1091,54 +1178,206 @@ export function setupQiankun() {
   registerMicroApps(
     appsWithProps,
     {
+      // 关键：配置资源过滤函数，允许加载 CDN 上的 CSS 文件
+      // qiankun 默认会过滤外部资源，需要明确允许 CDN 资源
+      // @ts-expect-error - excludeAssetFilter 是 qiankun 的有效配置，但类型定义中缺失
+      excludeAssetFilter: (assetUrl: string) => {
+        // 允许加载 CDN 上的资源（CSS、JS 等）
+        // all.bellis.com.cn 是 CDN 域名
+        if (assetUrl.includes('all.bellis.com.cn') || assetUrl.includes('bellis1.oss-cn-shenzhen.aliyuncs.com')) {
+          return true; // 返回 true 表示不过滤，允许加载
+        }
+        // 默认行为：同源资源不过滤，外部资源过滤
+        // 这里返回 false 让 qiankun 使用默认过滤逻辑
+        return false;
+      },
       // 应用加载前（每次应用加载时都会调用，包括重复加载）
-      beforeLoad: [(app) => {
-        const appName = appNameMap[app.name] || app.name;
+      beforeLoad: [async (app) => {
+        // 关键：从appNameMap获取应用显示名称，如果不在映射中，使用app.name
+        // app-loading.service.ts已经禁止显示"应用"loading，所以这里不需要特殊处理
+        const appDisplayName = appNameMap[app.name] || app.name;
 
         // console.log(`[qiankun] 子应用 ${app.name} beforeLoad 开始`);
 
         // 关键：在加载子应用前，先清除可能存在的 #Loading 元素
+        // 包括system-app自己的#Loading（"拜里斯科技"），因为它只应该在 system-app 路由时显示
         // 避免上一个子应用的 Loading 元素残留
+        // 必须在显示新的loading之前清除，确保不会覆盖新的loading
         clearLoadingElement();
 
-        // 设置超时保护：如果 12 秒后仍未完成，强制清除 loading 状态
-        // 使用应用名称作为 key，避免多个应用切换时的冲突
-        // const timeoutKey = `__qiankun_timeout_${app.name}__`;
-        // const timeoutId = setTimeout(() => {
-        //   console.warn(`[qiankun] 子应用 ${app.name} 加载超时（12秒），强制清除 loading 状态`);
-        //   finishLoading();
-        //   delete (window as any)[timeoutKey];
-        // }, 12000);
-        // (window as any)[timeoutKey] = timeoutId;
+        // 关键：确保system-app的#Loading也被隐藏（访问子应用时不应该显示"拜里斯科技"）
+        // system-app的#Loading应该只在访问 system-app 路由（如 /system/...）时显示
+        const systemLoadingEl = document.getElementById('Loading');
+        if (systemLoadingEl && systemLoadingEl.textContent?.includes('拜里斯科技')) {
+          systemLoadingEl.style.setProperty('display', 'none', 'important');
+          systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+          systemLoadingEl.style.setProperty('opacity', '0', 'important');
+          systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+          systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+          systemLoadingEl.classList.add('is-hide');
+        }
 
-        // 快速确认容器存在，添加轻量重试（最多 200ms，避免阻塞）
+        // 额外检查：确保子应用的#Loading元素被清除（可能在clearLoadingElement之后又被添加）
+        // 使用setTimeout确保在DOM更新后再次清除
+        setTimeout(() => {
+          clearLoadingElement();
+          // 再次确保system-app的#Loading被隐藏
+          const systemLoadingEl2 = document.getElementById('Loading');
+          if (systemLoadingEl2 && systemLoadingEl2.textContent?.includes('拜里斯科技')) {
+            systemLoadingEl2.style.setProperty('display', 'none', 'important');
+            systemLoadingEl2.style.setProperty('visibility', 'hidden', 'important');
+            systemLoadingEl2.style.setProperty('opacity', '0', 'important');
+            systemLoadingEl2.style.setProperty('pointer-events', 'none', 'important');
+            systemLoadingEl2.style.setProperty('z-index', '-1', 'important');
+            systemLoadingEl2.classList.add('is-hide');
+          }
+        }, 0);
+
+        // 判断是否是真正的应用切换（不是刷新页面）
+        // 如果当前激活的应用与要加载的应用不同，说明是真正的应用切换
+        // 或者如果当前没有激活的应用（首次加载），也应该显示loading
+        const isAppSwitch = currentActiveApp === null || (currentActiveApp !== null && currentActiveApp !== app.name);
+
+        // 在切换应用时显示应用级 Loading（包括首次加载）
+        // 关键：确保容器隐藏，loading已显示（可能在路由守卫中已显示）
+        // 关键：如果正在进行路径规范化，跳过loading处理，避免重复显示
+        const isNormalizing = sessionStorage.get<string>('__BTC_ROUTE_NORMALIZING__') === '1';
+        if (isAppSwitch && !isNormalizing) {
+          // 先隐藏路由loading（如果正在显示），避免蓝色loading闪烁
+          try {
+            const { routeLoadingService } = await import('@btc/shared-core');
+            routeLoadingService.hide();
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 强制隐藏容器，避免布局先显示出来
+          const existingContainer = document.querySelector('#subapp-viewport') as HTMLElement;
+          if (existingContainer) {
+            existingContainer.style.setProperty('display', 'none', 'important');
+            existingContainer.style.setProperty('visibility', 'hidden', 'important');
+            existingContainer.style.setProperty('opacity', '0', 'important');
+          }
+
+          // 关键：确保应用级别loading已显示（这是唯一负责显示应用级别loading的地方）
+          // 使用标记避免重复显示，防止多次加载
+          const loadingKey = `__app_loading_${app.name}__`;
+          if (!(window as any)[loadingKey]) {
+            try {
+              const { appLoadingService } = await import('@btc/shared-core');
+              // 关键：在显示新loading之前，先隐藏"拜里斯科技"loading
+              // 确保#Loading元素被隐藏
+              const systemLoadingEl = document.getElementById('Loading');
+              if (systemLoadingEl) {
+                systemLoadingEl.style.setProperty('display', 'none', 'important');
+                systemLoadingEl.style.setProperty('visibility', 'hidden', 'important');
+                systemLoadingEl.style.setProperty('opacity', '0', 'important');
+                systemLoadingEl.style.setProperty('pointer-events', 'none', 'important');
+                systemLoadingEl.style.setProperty('z-index', '-1', 'important');
+                systemLoadingEl.classList.add('is-hide');
+              }
+
+              // 检查应用级别loading是否已显示
+              const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+              if (!appLoadingEl || window.getComputedStyle(appLoadingEl).display === 'none') {
+                // 如果未显示，则显示
+                // 关键：在显示loading之前，确保容器隐藏
+                const container = document.querySelector('#subapp-viewport') as HTMLElement;
+                if (container) {
+                  container.style.setProperty('display', 'none', 'important');
+                  container.style.setProperty('visibility', 'hidden', 'important');
+                  container.style.setProperty('opacity', '0', 'important');
+                }
+                // 立即显示，不等待容器（因为使用fixed定位，可以直接添加到body）
+                // app-loading.service.ts已经禁止显示"应用"loading，所以这里不需要特殊处理
+                appLoadingService.show(appDisplayName, container);
+                // 设置标记，避免重复显示
+                (window as any)[loadingKey] = true;
+
+                // 关键：在显示loading后，等待一个微任务，然后显示容器
+                // 这样可以确保loading已经渲染，避免布局闪烁
+                await new Promise(resolve => setTimeout(resolve, 0));
+                if (container) {
+                  container.style.setProperty('display', 'flex', 'important');
+                  container.style.setProperty('visibility', 'visible', 'important');
+                  container.style.setProperty('opacity', '1', 'important');
+                }
+              } else {
+                // 如果应用级别 loading 已显示，设置标记并显示容器
+                (window as any)[loadingKey] = true;
+                const container = document.querySelector('#subapp-viewport') as HTMLElement;
+                if (container) {
+                  container.style.setProperty('display', 'flex', 'important');
+                  container.style.setProperty('visibility', 'visible', 'important');
+                  container.style.setProperty('opacity', '1', 'important');
+                }
+              }
+            } catch (error) {
+              console.warn('[qiankun] 无法加载 AppLoadingService，跳过应用级loading', error);
+            }
+          }
+        }
+
         return new Promise<void>((resolve, reject) => {
           let retryCount = 0;
-          const maxRetries = 4; // 最多重试 4 次（约 200ms）
+          const maxRetries = 20; // 增加重试次数到 20 次（约 1000ms），确保容器有足够时间被创建
           const retryDelay = 50; // 每次重试间隔 50ms
 
           const ensureContainer = async () => {
-                const container = document.querySelector('#subapp-viewport') as HTMLElement;
+            let container = document.querySelector('#subapp-viewport') as HTMLElement;
 
-            if (container && container.isConnected) {
-              // 关键：使用 requestAnimationFrame 延迟 DOM 操作，避免与 Vue 的更新周期冲突
-              // 先触发事件，让 Layout 组件先更新状态，然后再操作 DOM
+            // 如果容器不存在，先触发事件让 Layout 组件创建容器
+            if (!container || !container.isConnected) {
+              // 关键：在触发事件之前，先等待一个微任务，确保 loading 已经显示
+              // 这样可以避免容器先显示出来，然后 loading 才显示
+              await new Promise(resolve => setTimeout(resolve, 0));
+
+              // 关键：触发事件，让 Layout 组件先更新状态，创建容器
               window.dispatchEvent(new CustomEvent('qiankun:before-load', {
                 detail: { appName: app.name }
               }));
 
-              // 等待 Vue 更新完成后再操作 DOM
-              requestAnimationFrame(() => {
+              // 等待 Vue 更新完成，容器被创建
+              await new Promise(resolve => {
                 requestAnimationFrame(() => {
-                  // 容器存在且已挂载，立即处理
-                  if (container && container.isConnected) {
-                    container.style.setProperty('display', 'flex', 'important');
-                    container.style.setProperty('visibility', 'visible', 'important');
-                    container.style.setProperty('opacity', '1', 'important');
-                    container.setAttribute('data-qiankun-loading', 'true');
-                  }
+                  requestAnimationFrame(() => {
+                    resolve(undefined);
+                  });
                 });
               });
+
+              // 重新查找容器
+              container = document.querySelector('#subapp-viewport') as HTMLElement;
+
+              // 关键：如果容器被创建了，先隐藏它，等 loading 显示后再显示
+              if (container && container.isConnected) {
+                container.style.setProperty('display', 'none', 'important');
+                container.style.setProperty('visibility', 'hidden', 'important');
+                container.style.setProperty('opacity', '0', 'important');
+                // 再等待一个微任务，确保 loading 已经显示
+                await new Promise(resolve => setTimeout(resolve, 0));
+              }
+            }
+
+            if (container && container.isConnected) {
+              // 容器存在且已挂载，立即处理
+              // 关键：只有在 loading 已经显示后才显示容器，避免布局闪烁
+              // 检查应用级别loading是否已显示
+              const appLoadingEl = document.querySelector('.app-loading') as HTMLElement;
+              const isAppLoadingVisible = appLoadingEl && window.getComputedStyle(appLoadingEl).display !== 'none';
+
+              container.setAttribute('data-qiankun-loading', 'true');
+              if (isAppLoadingVisible) {
+                // 应用级别loading已显示，可以显示容器
+                container.style.setProperty('display', 'flex', 'important');
+                container.style.setProperty('visibility', 'visible', 'important');
+                container.style.setProperty('opacity', '1', 'important');
+              } else {
+                // 应用级别loading未显示，继续隐藏容器
+                container.style.setProperty('display', 'none', 'important');
+                container.style.setProperty('visibility', 'hidden', 'important');
+                container.style.setProperty('opacity', '0', 'important');
+              }
 
               // 清理其他应用的 tabs/menus（快速操作，无阻塞）
               // 动态导入避免循环依赖
@@ -1166,7 +1405,7 @@ export function setupQiankun() {
                   } else {
                     // 超过最大重试次数，报错
               // console.error(`[qiankun] 容器 #subapp-viewport 在 ${maxRetries * retryDelay}ms 内未找到`);
-              reject(new Error(`容器缺失，无法加载应用 ${appName}`));
+              reject(new Error(`容器缺失，无法加载应用 ${app.name}`));
                 }
           };
 
@@ -1178,7 +1417,7 @@ export function setupQiankun() {
       // 应用挂载前（在 mount 之前调用，作为 beforeLoad 的兜底）
       // 如果 beforeLoad 被跳过（应用已加载过），这里确保 loading 状态被正确设置
       beforeMount: [async (_app) => {
-        const appName = appNameMap[_app.name] || _app.name;
+        // const appName = appNameMap[_app.name] || _app.name; // 未使用
         // console.log(`[qiankun] 子应用 ${_app.name} beforeMount 钩子被触发`);
 
         // 检查容器是否有 data-qiankun-loading 属性
@@ -1231,7 +1470,54 @@ export function setupQiankun() {
       }],
 
       // 应用挂载后
-      afterMount: [(_app) => {
+      afterMount: [async (_app) => {
+        const appDisplayName = appNameMap[_app.name] || _app.name;
+
+        // 更新当前激活的应用名称
+        currentActiveApp = _app.name;
+
+        // 关键优化：立即同步关闭应用级 Loading，不等待异步导入
+        // 这样可以避免 loading 显示时间过长（10秒超时）
+        // 先通过 DOM 直接关闭所有 .app-loading 元素（同步操作，立即生效）
+        const loadingEls = document.querySelectorAll('.app-loading');
+        loadingEls.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('opacity', '0', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+            // 立即移除 DOM 元素，不等待异步操作
+            try {
+              if (el.parentNode) {
+                el.parentNode.removeChild(el);
+              }
+            } catch (e) {
+              // 如果移除失败，延迟移除
+              setTimeout(() => {
+                if (el.parentNode) {
+                  try {
+                    el.parentNode.removeChild(el);
+                  } catch (err) {
+                    // 忽略移除错误
+                  }
+                }
+              }, 100);
+            }
+          }
+        });
+
+        // 然后异步调用 appLoadingService.hide() 进行清理（确保状态一致）
+        try {
+          const { appLoadingService } = await import('@btc/shared-core');
+          // 隐藏当前应用的loading（即使已经通过 DOM 关闭，也要更新服务状态）
+          appLoadingService.hide(appDisplayName);
+          // 清除标记，允许下次重新显示
+          const loadingKey = `__app_loading_${_app.name}__`;
+          delete (window as any)[loadingKey];
+        } catch (error) {
+          // 静默失败，因为已经通过 DOM 关闭了 loading
+        }
+
 
         // 关键：清除可能存在的 #Loading 元素（来自子应用的 index.html）
         // 这个元素会导致页面一直显示 loading 状态
@@ -1246,74 +1532,44 @@ export function setupQiankun() {
           // console.log(`[qiankun] 子应用 ${_app.name} 清除超时保护`);
         }
 
-        // 清理加载标记（必须在触发事件之前，确保 Layout 组件能正确读取状态）
+        // 清理加载标记和隐藏样式（子应用已挂载，应该显示容器）
         const container = document.querySelector('#subapp-viewport') as HTMLElement;
         if (container) {
           container.removeAttribute('data-qiankun-loading');
-          // 移除强制样式，让 Vue 的 v-show 正常控制
-          container.style.removeProperty('display');
-          container.style.removeProperty('visibility');
-          container.style.removeProperty('opacity');
 
-          // 确保容器可见（使用 nextTick 确保 Vue 的响应式更新完成）
-          // 使用 requestAnimationFrame 确保 DOM 更新完成
+          // 移除之前设置的隐藏样式，让容器的显示由 Vue 的 v-if 和 CSS 控制
+          // 使用 requestAnimationFrame 确保在 DOM 更新后执行
           requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (container) {
-                // 检查容器是否真的可见
-                const computedStyle = window.getComputedStyle(container);
-                const isVisible = computedStyle.display !== 'none' &&
-                                  computedStyle.visibility !== 'hidden' &&
-                                  computedStyle.opacity !== '0';
-                // console.log(`[qiankun] 子应用 ${_app.name} 容器可见性检查:`, {
-                //   display: computedStyle.display,
-                //   visibility: computedStyle.visibility,
-                //   opacity: computedStyle.opacity,
-                //   isVisible,
-                //   hasChild: container.children.length > 0,
-                //   childCount: container.children.length
-                // });
+            if (!container) return;
 
-                // 如果容器不可见，强制显示（作为兜底）
-                if (!isVisible) {
-                  // console.warn(`[qiankun] 子应用 ${_app.name} 容器不可见，强制显示`);
-                  container.style.setProperty('display', 'flex', 'important');
-                  container.style.setProperty('visibility', 'visible', 'important');
-                  container.style.setProperty('opacity', '1', 'important');
-                }
+            // 移除隐藏样式属性（包括带 !important 的，通过 removeProperty 移除）
+            container.style.removeProperty('display');
+            container.style.removeProperty('visibility');
+            container.style.removeProperty('opacity');
 
-                // 检查子应用是否正确挂载
-                // if (container.children.length === 0) {
-                //   console.warn(`[qiankun] 子应用 ${_app.name} 容器内没有子元素，可能挂载失败`);
-                // } else {
-                //   console.log(`[qiankun] 子应用 ${_app.name} 容器内有 ${container.children.length} 个子元素`);
+            // 如果 style 属性中还有内联的隐藏样式，手动清理
+            const styleAttr = container.getAttribute('style') || '';
+            if (styleAttr) {
+              const cleanedStyle = styleAttr
+                .replace(/display\s*:\s*none\s*!important;?/gi, '')
+                .replace(/visibility\s*:\s*hidden\s*!important;?/gi, '')
+                .replace(/opacity\s*:\s*0\s*!important;?/gi, '')
+                .replace(/display\s*:\s*none;?/gi, '')
+                .replace(/visibility\s*:\s*hidden;?/gi, '')
+                .replace(/opacity\s*:\s*0;?/gi, '')
+                .replace(/;\s*;/g, ';')
+                .replace(/^\s*;\s*|\s*;\s*$/g, '')
+                .trim();
 
-                //   // 检查子应用的第一个子元素是否可见
-                //   const firstChild = container.children[0] as HTMLElement;
-                //   if (firstChild) {
-                //     const childStyle = window.getComputedStyle(firstChild);
-                //     const childIsVisible = childStyle.display !== 'none' && childStyle.visibility !== 'hidden' && childStyle.opacity !== '0';
-                //     console.log(`[qiankun] 子应用 ${_app.name} 第一个子元素可见性:`, {
-                //       display: childStyle.display,
-                //       visibility: childStyle.visibility,
-                //       opacity: childStyle.opacity,
-                //       isVisible: childIsVisible,
-                //       tagName: firstChild.tagName,
-                //       id: firstChild.id,
-                //       className: firstChild.className
-                //     });
-
-                //     // 如果子元素不可见，尝试强制显示
-                //     if (!childIsVisible) {
-                //       console.warn(`[qiankun] 子应用 ${_app.name} 第一个子元素不可见，尝试强制显示`);
-                //       firstChild.style.setProperty('display', 'flex', 'important');
-                //       firstChild.style.setProperty('visibility', 'visible', 'important');
-                //       firstChild.style.setProperty('opacity', '1', 'important');
-                //     }
-                //   }
-                // }
+              if (cleanedStyle) {
+                container.setAttribute('style', cleanedStyle);
+              } else {
+                container.removeAttribute('style');
               }
-            });
+            }
+
+            // 移除隐藏类
+            container.classList.remove('content-mount--hidden');
           });
         }
 
@@ -1330,12 +1586,35 @@ export function setupQiankun() {
           }));
         });
 
+        // 关键：应用切换时重新初始化 user-check
+        // 确保切换应用后立即获取最新的 user-check 数据并更新存储
+        try {
+          const { reinitializeUserCheckOnAppSwitch } = await import('@btc/shared-core/composables/user-check');
+          reinitializeUserCheckOnAppSwitch().catch((error) => {
+            // 静默失败，不影响应用切换
+            if (import.meta.env.DEV) {
+              console.warn('[qiankun:afterMount] Failed to reinitialize user check:', error);
+            }
+          });
+        } catch (error) {
+          // 静默失败，不影响应用切换
+          if (import.meta.env.DEV) {
+            console.warn('[qiankun:afterMount] Failed to import reinitializeUserCheckOnAppSwitch:', error);
+          }
+        }
+
         return Promise.resolve();
       }],
 
       // 应用卸载后
       afterUnmount: [async (app) => {
         // console.log(`[qiankun] 子应用 ${app.name} afterUnmount 钩子被触发`);
+
+        // 如果卸载的是当前激活的应用，清除当前激活应用标记
+        if (currentActiveApp === app.name) {
+          currentActiveApp = null;
+        }
+
         // 离开子应用，清理其映射（使用动态导入避免循环依赖）
         const { clearTabs: clearTabsFn } = await import('../store/tabRegistry');
         const { clearMenus: clearMenusFn } = await import('../store/menuRegistry');
@@ -1355,8 +1634,13 @@ export function setupQiankun() {
   );
 
   // 启动qiankun
+  // 关键：再次检查是否在 qiankun 环境下（防止在 start 调用时状态已改变）
   // 关键：timeouts 配置已在 registerMicroApps 时通过 timeouts 属性传递
   // qiankun 会将 timeouts 配置传递给 single-spa，确保超时设置正确生效
+  // 双重检查：检查 qiankunWindow 和 window.__POWERED_BY_QIANKUN__
+  if (qiankunWindow.__POWERED_BY_QIANKUN__ || (window as any).__POWERED_BY_QIANKUN__) {
+    return;
+  }
   start({
     prefetch: false,
     sandbox: {
@@ -1371,7 +1655,7 @@ export function setupQiankun() {
       scriptType: 'module', // 全局强制 module 类型，双重保险
       // 自定义 fetch：拦截所有请求，包括 HTML 和资源文件
       // 这是修复资源路径的关键：在获取 HTML 时就修复其中的资源路径
-      fetch: async (url: string, options?: RequestInit, ...args: any[]) => {
+      fetch: async (url: string, options?: RequestInit, ..._args: any[]) => {
 
         // 关键：在发送请求前，先检查 URL 是否需要修复
         // 这可以避免请求错误的端口，导致服务器返回 HTML（404 页面）
@@ -1396,7 +1680,7 @@ export function setupQiankun() {
         }
 
         // 如果当前在子应用路径下，且请求的 URL 包含错误的端口（主应用预览端口），需要修复
-        if (targetAppName && window.location.port === MAIN_APP_PREVIEW_PORT) {
+        if (targetAppName && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
           const appEntry = entryMap.get(targetAppName);
           if (appEntry && !appEntry.startsWith('/')) {
             const entryMatch = appEntry.match(/^(\/\/)([^:]+)(:(\d+))?/);
@@ -1618,7 +1902,7 @@ export function setupQiankun() {
                   }
                   // 如果 src 是绝对路径但包含错误的端口（当前页面的端口），修复它
                   if ((src.startsWith('http://') || src.startsWith('https://') || src.startsWith('//'))
-                      && window.location.port === MAIN_APP_PREVIEW_PORT && src.includes(`:${window.location.port}`)) {
+                      && window.location.port === SYSTEM_APP_PREVIEW_PORT && src.includes(`:${window.location.port}`)) {
                     const fixedUrl = src.replace(`:${window.location.port}`, `:${port}`);
                     return `<script${before} src="${fixedUrl}"${after}>`;
                   }
@@ -1637,7 +1921,7 @@ export function setupQiankun() {
                   }
                   // 如果 href 是绝对路径但包含错误的端口（当前页面的端口），修复它
                   if ((href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))
-                      && window.location.port === MAIN_APP_PREVIEW_PORT && href.includes(`:${window.location.port}`)) {
+                      && window.location.port === SYSTEM_APP_PREVIEW_PORT && href.includes(`:${window.location.port}`)) {
                     const fixedUrl = href.replace(new RegExp(`:${window.location.port}(?=/|$)`, 'g'), `:${port}`);
                     return `<link${before} href="${fixedUrl}"${after}>`;
                   }
@@ -1676,7 +1960,7 @@ export function setupQiankun() {
         // 如果是资源文件请求且包含错误的端口，修复它（在响应处理之后，作为最后的兜底）
         // 关键：检查 URL 是否包含当前页面的端口（主应用预览端口），如果是，说明需要修复
         const isAssetFile = url.includes('/assets/') || url.endsWith('.js') || url.endsWith('.css') || url.endsWith('.mjs');
-        if (isAssetFile && window.location.port === MAIN_APP_PREVIEW_PORT) {
+        if (isAssetFile && window.location.port === SYSTEM_APP_PREVIEW_PORT) {
           // 根据当前路径判断是哪个应用
           const currentPath = window.location.pathname;
           let targetAppName: string | null = null;
@@ -1704,7 +1988,7 @@ export function setupQiankun() {
                 const protocol = window.location.protocol;
                 const host = window.location.hostname;
 
-                if (port && port !== MAIN_APP_PREVIEW_PORT) {
+                if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
                   // 修复 URL，将端口替换为正确的端口
                   let fixedUrl = url;
 
@@ -1776,7 +2060,7 @@ export function setupQiankun() {
             // 额外清理：删除内联脚本中的旧引用（如果 HTML 中包含内联脚本）
             // 匹配内联脚本中的动态导入：import('/assets/app-src-vga9bYFB.js')
             const inlineScriptPattern = new RegExp(`(<script[^>]*>)([\\s\\S]*?)(import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)[\\s\\S]*?)(</script>)`, 'gi');
-            processedTpl = processedTpl.replace(inlineScriptPattern, (match, openTag, before, importStmt, oldHash, closeTag) => {
+            processedTpl = processedTpl.replace(inlineScriptPattern, (_match, openTag, before, importStmt, _oldHash, closeTag) => {
               // 只删除包含旧引用的 import() 语句，保留其他代码
               const cleanedImport = importStmt.replace(new RegExp(`import\\s*\\(\\s*["'][^"']*(${oldHashList.join('|')})[^"']*["']\\s*\\)`, 'gi'), 'Promise.resolve()');
               return openTag + before + cleanedImport + closeTag;
@@ -1917,7 +2201,7 @@ export function setupQiankun() {
         // 如果还是没有找到，尝试从 HTML 中的资源路径推断
         if (!baseUrl) {
           const resourceMatch = tpl.match(/(?:src|href)=["']([^"']+)/);
-          if (resourceMatch) {
+          if (resourceMatch && resourceMatch[1]) {
             const resourceUrl = resourceMatch[1];
             // 如果是绝对路径，提取基础 URL
             if (resourceUrl.startsWith('http://') || resourceUrl.startsWith('https://')) {
@@ -2203,7 +2487,31 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch && appMatch[1] ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+
+      // 隐藏应用级 Loading
+      try {
+        const { appLoadingService } = await import('@btc/shared-core');
+        appLoadingService.hide(appName);
+      } catch (error) {
+        console.warn('[qiankun] 无法加载 AppLoadingService，尝试强制关闭loading', error);
+        // 兜底方案：直接通过 DOM 关闭所有 .app-loading 元素
+        const loadingEls = document.querySelectorAll('.app-loading');
+        loadingEls.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('opacity', '0', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+            setTimeout(() => {
+              if (el.parentNode) {
+                el.parentNode.removeChild(el);
+              }
+            }, 100);
+          }
+        });
+      }
+
       // 动态导入避免循环依赖
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
@@ -2271,7 +2579,7 @@ export function setupQiankun() {
               const protocol = window.location.protocol;
               const host = window.location.hostname;
 
-              if (port && port !== MAIN_APP_PREVIEW_PORT) {
+              if (port && port !== SYSTEM_APP_PREVIEW_PORT) {
                 // 修复 URL
                 let fixedUrl = src;
 

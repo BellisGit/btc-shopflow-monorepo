@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
 
 /**
@@ -26,9 +27,8 @@ export function useUser() {
    */
   const getUserInfo = (): UserInfo | null => {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
+      const user = storage.get<UserInfo>('user');
+      if (user) {
         userInfo.value = user;
         return user;
       }
@@ -43,7 +43,7 @@ export function useUser() {
    */
   const setUserInfo = (user: UserInfo) => {
     try {
-      localStorage.setItem('user', JSON.stringify(user));
+      storage.set('user', user);
       userInfo.value = user;
     } catch (err) {
       console.error('设置用户信息失败:', err);
@@ -54,7 +54,7 @@ export function useUser() {
    * 清除用户信息
    */
   const clearUserInfo = () => {
-    localStorage.removeItem('user');
+    storage.remove('user');
     userInfo.value = null;
   };
 

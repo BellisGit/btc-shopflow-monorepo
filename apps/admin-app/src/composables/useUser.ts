@@ -1,4 +1,6 @@
+import { storage } from '@btc/shared-utils';
 import { ref, computed } from 'vue';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 用户信息接口
@@ -26,14 +28,14 @@ export function useUser() {
    */
   const getUserInfo = (): UserInfo | null => {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
+      const user = storage.get<UserInfo>('user');
+      if (user) {
         userInfo.value = user;
         return user;
       }
     } catch (err) {
-      console.error('获取用户信息失败:', err);
+      const { t } = useI18n();
+      console.error(t('common.error.get_user_info_failed'), err);
     }
     return null;
   };
@@ -43,10 +45,11 @@ export function useUser() {
    */
   const setUserInfo = (user: UserInfo) => {
     try {
-      localStorage.setItem('user', JSON.stringify(user));
+      storage.set('user', user);
       userInfo.value = user;
     } catch (err) {
-      console.error('设置用户信息失败:', err);
+      const { t } = useI18n();
+      console.error(t('common.error.set_user_info_failed'), err);
     }
   };
 
@@ -54,7 +57,7 @@ export function useUser() {
    * 清除用户信息
    */
   const clearUserInfo = () => {
-    localStorage.removeItem('user');
+    storage.remove('user');
     userInfo.value = null;
   };
 

@@ -35,12 +35,12 @@ export function useAuthTabs(initialMode: LoginMode = 'password') {
     if (isQrMode.value) {
       return {
         icon: 'pc' as const,
-        label: '切换账号登录'
+        label: 'auth.login.toggle.account'
       };
     } else {
       return {
         icon: 'qr' as const,
-        label: '切换扫码登录'
+        label: 'auth.login.toggle.qr'
       };
     }
   };

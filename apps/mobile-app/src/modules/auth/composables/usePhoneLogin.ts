@@ -3,7 +3,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/services/auth';
-import { getCookie } from '@/utils/cookie';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 
 export function usePhoneLogin() {
   const router = useRouter();
@@ -72,8 +72,8 @@ export function usePhoneLogin() {
         duration: 1000,
       });
 
-      // 跳转到查询页面或 redirect 页面
-      const redirect = (route.query.redirect as string) || '/query';
+      // 跳转到查询页面或 oauth_callback 页面
+      const redirect = (route.query.oauth_callback as string) || '/query';
       const redirectPath = redirect.split('?')[0];
         await router.replace(redirectPath);
     } catch (error: any) {

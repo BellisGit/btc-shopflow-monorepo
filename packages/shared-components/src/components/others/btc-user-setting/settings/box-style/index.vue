@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+// computed 未使用，已移除导入
 import SectionTitle from '../../components/shared/SectionTitle.vue';
 import { useI18n } from '@btc/shared-core';
 import { useSettingsConfig, useSettingsHandlers, useSettingsState } from '../../composables';

@@ -1,0 +1,60 @@
+# BTC ShopFlow Monorepo Cursor Rules
+
+## Git 快速提交到 GitHub Develop 分支
+
+### 使用斜杠命令提交
+
+**重要**：为避免误触，只有使用 `/commit` 斜杠命令才会触发自动提交功能。
+
+普通对话中的 "commit"、"push"、"提交" 等词汇**不会**自动触发提交操作。
+
+### 使用方法
+
+1. **使用 `/commit` 斜杠命令**
+   - 在 Cursor 聊天框中输入 `/commit`
+   - AI 会自动分析最近的代码变更并生成合适的提交消息
+   - 然后执行完整的 git 提交流程到 develop 分支
+
+2. **带自定义提交信息（可选）**
+   - 如果用户提供了提交信息，则使用用户提供的
+   - `/commit 更新 Jenkins 配置`
+   - `/commit "修复构建问题"`
+
+### 默认行为
+
+- **默认分支**: `develop`
+- **默认远程**: `origin`
+- **提交信息生成**: AI 自动分析最近的代码变更并生成合适的提交消息（如果用户未提供）
+- **自动切换分支**: 如果当前不在 develop 分支，自动切换
+
+### 执行流程
+
+当使用 `/commit` 命令时，按以下顺序执行：
+
+1. 检查当前工作目录是否为项目根目录
+2. 使用 `git status --porcelain` 检查是否有未提交的更改（**不使用 `git diff`**）
+3. 使用 `git status` 查看变更的文件列表和类型
+4. 如果没有用户提供的提交信息，AI 需要：
+   - 分析变更的文件和修改内容
+   - 根据变更类型（新增、修改、删除）和涉及的文件/功能
+   - 自动生成合适的提交消息（格式：`type: description`，如 `feat: 添加新功能`、`fix: 修复bug`、`chore: 更新配置` 等）
+5. 如果当前分支不是 develop，执行 `git checkout develop`
+6. 执行 `git add .` 添加所有更改
+7. 执行 `git commit -m "生成的或用户提供的提交消息"`
+8. 执行 `git push origin develop` 推送到远程
+9. 显示提交结果和相关信息
+
+### 重要注意事项
+
+- ❌ **禁止使用 `git diff`**：根据用户记忆，`git diff` 会导致命令中止/卡住
+- ✅ **使用 `git status --porcelain`**：用于检查变更状态
+- ✅ **使用 `git status`**：用于显示变更信息（如果需要）
+- ✅ **执行前确认**：在执行推送前，可以显示将要提交的文件摘要
+- ⚠️ **只响应 `/commit` 命令**：普通对话中的 "commit"、"push" 等词不会触发提交
+
+### 脚本支持
+
+项目提供了便捷脚本（可在终端中直接使用）：
+- **Windows PowerShell**: `.\scripts\quick-commit.ps1 [提交信息]`
+- **Linux/Mac**: `bash scripts/quick-commit.sh [提交信息]`
+

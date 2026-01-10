@@ -6,9 +6,11 @@ import './styles/index.scss';
 // 初始化全局事件系统
 import './utils/resize';
 
-// 自动挂载 DevTools（拦截 Vue App 的 mount 方法）
-import { setupAutoMountDevTools } from './utils/auto-mount-dev-tools';
-setupAutoMountDevTools();
+// 注意：DevTools 不再在这里自动挂载
+// 改为在应用级别的 bootstrap 中挂载：
+// - layout-app: 在 initLayoutEnvironment 中挂载（供子应用使用）
+// - system-app: 在 bootstrap 中挂载（供主应用使用）
+// 这样可以避免多个应用重复挂载导致的问题
 
 // 插件系统
 import * as ExcelPlugin from './plugins/excel';
@@ -26,6 +28,8 @@ import './components/basic/btc-avatar/index.scss';
 
 // 图表组件
 export * from './charts';
+// 显式导出 registerEChartsThemes 以确保类型定义正确
+export { registerEChartsThemes } from './charts/utils/theme';
 
 // 导入图表组件样式（必须在导出后导入，确保样式被正确提取）
 // 注意：由于 cssCodeSplit: false，所有 CSS 会被合并到一个 style.css 文件中
@@ -49,12 +53,14 @@ export { BtcIconButton } from './components/basic/btc-icon-button';
 export { default as BtcTableButton } from './components/basic/btc-table-button/index.vue';
 export { default as BtcAvatar } from './components/basic/btc-avatar';
 export { default as BtcCard } from './components/basic/btc-card/index.vue';
+export { default as BtcTag } from './components/basic/btc-tag/index.vue';
 
 // Layout 布局组件
 export { default as BtcContainer } from './components/layout/btc-container/index.vue';
 export { default as BtcGridGroup } from './components/layout/btc-grid-group/index.vue';
 export { default as AppLayout } from './components/layout/app-layout/index.vue';
 export { default as AppSkeleton } from './components/basic/app-skeleton/index.vue';
+export { default as GlobalSearch } from './components/layout/app-layout/global-search/index.vue';
 
 // Navigation 导航组件
 export { default as BtcTabs } from './components/navigation/btc-tabs/index.vue';
@@ -82,12 +88,16 @@ export { default as BtcProcessCountdown } from './components/process/btc-process
 export { default as BtcProcessCard } from './components/process/btc-process-card/index.vue';
 
 // Feedback 反馈组件
-export { default as BtcDialog } from './common/dialog/index.vue';
+export { default as BtcDialog } from './common/dialog/index';
 export { BtcMessage } from './components/feedback/btc-message';
 export { BtcNotification } from './components/feedback/btc-notification';
 export { BtcIdentityVerify } from './components/feedback/btc-identity-verify';
 export { BtcBindingDialog } from './components/feedback/btc-binding-dialog';
 export { BtcMessageBox, BtcConfirm, BtcAlert, BtcPrompt } from './components/feedback/btc-message-box';
+
+// Loading 组件
+export { default as AppLoading } from './components/loading/app-loading/index.vue';
+export { default as RootLoading } from './components/loading/root-loading/index.vue';
 
 // Others 其他组件
 export { default as BtcSvg } from './components/others/btc-svg/index.vue';
@@ -139,6 +149,7 @@ export { provideContentHeight, useContentHeight, type ContentHeightContext } fro
 export { useBrowser } from './composables/useBrowser';
 export { useUser, type UserInfo } from './composables/useUser';
 export { useCurrentApp } from './composables/useCurrentApp';
+export { useGlobalBreakpoints, initGlobalBreakpoints } from './composables/useGlobalBreakpoints';
 export { useProcessStore, getCurrentAppFromPath, type ProcessItem } from './store/process';
 export { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, getMenuRegistry, type MenuItem } from './store/menuRegistry';
 export { useFormRenderer } from './common/form/composables/useFormRenderer';
@@ -184,3 +195,16 @@ export type {
   ProcessManagementItem,
   ProcessPauseRecord
 } from './components/process/types';
+
+// 关键：预加载可能在运行时动态导入的依赖，确保 Vite 在启动时就能扫描并预构建它们
+// 这样可以避免在运行时触发依赖优化导致页面重新加载
+// 注意：这些导入不会被实际执行（因为只导入类型/接口），但会被 Vite 的依赖扫描器识别
+// 使用副作用导入确保这些模块被加载
+import './components/layout/app-layout/global-search/useSearchIndex';
+import './plugins/excel/components/import-btn/index.vue';
+
+// ========== 从 shared-plugins 迁移的插件模块 ==========
+export * from './plugins';
+
+// ========== 从 i18n 迁移的国际化模块 ==========
+export * from './i18n';

@@ -1,11 +1,11 @@
 <template>
-  <el-config-provider :locale="elLocale">
+  <el-config-provider :locale="elLocale as any">
     <el-pagination
       v-model:current-page="crud.pagination.page"
       v-model:page-size="crud.pagination.size"
       :total="crud.pagination.total"
-      :page-sizes="pageSizes"
-      :layout="layout"
+      :page-sizes="props.pageSizes"
+      :layout="props.layout"
       v-bind="$attrs"
       @current-change="handleCurrentChange"
       @size-change="crud.handleSizeChange"
@@ -26,7 +26,7 @@ export interface Props {
   layout?: string;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   pageSizes: () => [10, 20, 50, 100],
   layout: 'total, sizes, prev, pager, next, jumper',
 });

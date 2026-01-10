@@ -260,6 +260,14 @@ export function useUserSetting() {
    * 处理暗黑模式切换
    */
   function handleDarkToggle(event?: MouseEvent) {
+    if (!themePlugin || !themePlugin.toggleDark) {
+      console.warn('[useThemeSwitcher-shared] themePlugin 或 toggleDark 不存在', {
+        themePlugin: !!themePlugin,
+        toggleDark: !!themePlugin?.toggleDark
+      });
+      return;
+    }
+
     themePlugin.toggleDark(event);
   }
 

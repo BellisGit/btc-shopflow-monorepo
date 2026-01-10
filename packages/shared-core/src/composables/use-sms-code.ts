@@ -146,7 +146,7 @@ export function useSmsCode(options: UseSmsCodeOptions): UseSmsCodeReturn {
 
     try {
       // 调用发送验证码 API
-      await sendSmsCodeApi({ phone, smsType });
+      await sendSmsCodeApi({ phone, ...(smsType !== undefined && { smsType }) });
       
       // 标记已发送
       hasSent.value = true;

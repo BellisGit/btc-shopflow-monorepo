@@ -1,5 +1,6 @@
 ﻿import { computed, Ref } from 'vue';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 矩阵模式逻辑
@@ -13,6 +14,7 @@ export function useMatrixMode(
   resourceTreeRef: Ref<any>
 ) {
   const message = useMessage();
+  const { t } = useI18n();
   
   const matrixData = computed(() => {
     if (selectedResources.value.length === 0) {
@@ -47,9 +49,9 @@ export function useMatrixMode(
             resourceName: resource.resourceNameCn,
             actionId: action.id,
             actionName: action.actionNameCn,
-            description: `${action.actionNameCn}${resource.resourceNameCn}的权限`,
+            description: `${action.actionNameCn}${resource.resourceNameCn}${t('common.access.permission_of')}`,
           });
-          message.success(`已添加${action.actionNameCn}${resource.resourceNameCn}`);
+          message.success(`${t('common.access.added')}${action.actionNameCn}${resource.resourceNameCn}`);
         }
       }
     } else {
@@ -59,7 +61,7 @@ export function useMatrixMode(
       if (index > -1) {
         const perm = composedPermissions.value[index];
         composedPermissions.value.splice(index, 1);
-        message.info(`已移除${perm.permissionName}`);
+        message.info(`${t('common.access.removed_permission')}${perm.permissionName}`);
       }
     }
   };

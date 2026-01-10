@@ -23,15 +23,13 @@ defineOptions({
 
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from '@btc/shared-core';
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { useCurrentApp } from '@btc/shared-components/composables/useCurrentApp';
-import { getMenusForApp } from '@btc/shared-components/store/menuRegistry';
+import { useSettingsState } from '../../../others/btc-user-setting/composables';
+import { useCurrentApp } from '../../../../composables/useCurrentApp';
+import { getMenusForApp } from '../../../../store/menuRegistry';
 import MenuRenderer from '../menu-renderer/index.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
 const { currentApp } = useCurrentApp();
 const { uniqueOpened } = useSettingsState();
 

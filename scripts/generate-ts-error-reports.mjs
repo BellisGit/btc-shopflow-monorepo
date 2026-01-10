@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
 // 应用列表（单独生成日志）
+// 注意：mobile-app 不参与类型检查
 const apps = [
   'admin-app',
   'logistics-app',
@@ -24,21 +25,54 @@ const apps = [
   'production-app',
   'monitor-app',
   'layout-app',
-  'mobile-app',
-  'docs-site-app',
+  'docs-app',
+  'personnel-app',  // 人事应用
+  'dashboard-app',  // 看板应用
+  'operations-app', // 运营应用
+  'home-app',       // 首页应用
 ];
 
 // 共享包列表（合并为一个日志文件）
 const packages = [
   '@btc/shared-components',
   '@btc/shared-core',
-  '@btc/shared-utils',
-  '@btc/subapp-manifests',
+  '@btc/shared-router',
   '@btc/vite-plugin'
 ];
 
 // 输出目录（保存到 btc-shopflow-monorepo/ts-error-reports）
 const outputDir = resolve(rootDir, 'ts-error-reports');
+
+// TypeScript 错误代码官方含义映射表
+// 参考: https://www.typescriptlang.org/docs/handbook/error-codes.html
+const ERROR_CODE_DESCRIPTIONS = {
+  'TS6133': '未使用的变量',
+  'TS2307': '无法找到模块或其类型声明',
+  'TS2353': '不能将类型 X 分配给类型 Y（类型不匹配）',
+  'TS1005': '语法错误，预期标识符、字符串字面量、数字字面量或 \'}\' 来结束对象字面量（常见为缺少分号/等号）',
+  'TS1128': '预期声明或语句（语句块中出现意外的标记）',
+  'TS2305': '模块/命名空间中不存在指定的导出成员',
+  'TS18048': '变量可能为 undefined（变量在赋值前被使用）',
+  'TS2375': '异步函数中的 return 语句只能返回可分配给 \'Promise<void>\' 的值（异步函数返回类型不兼容）',
+  'TS2345': '参数类型不匹配，"X"类型的参数不能赋给"Y"类型的参数',
+  'TS6307': '文件未在 tsconfig.json 的项目文件列表中',
+  'TS1136': '预期表达式（语句块中缺少必要的表达式）',
+  'TS7006': '变量隐式具有 any 类型',
+  'TS1180': '导入/导出声明中存在语法错误',
+  'TS1434': '装饰器在此处无效（仅允许在类、方法、访问器、属性或参数上使用）',
+  'TS2322': '类型不匹配，"X"类型不能分配给"Y"类型',
+  'TS2551': '"Y"类型上不存在属性"x"，可能存在拼写错误',
+  'TS2532': '对象可能为 undefined 或 null（访问可能为空的对象属性）',
+  'TS6196': '导出的变量已声明但从未使用',
+  'TS1109': '预期表达式（语句块中出现意外的标记，导致语句无法结束）',
+  'TS1131': '预期属性赋值（应为标识符或关键字）',
+  'TS2454': '变量在赋值前被使用',
+  'TS1003': '预期标识符（语法错误，缺少必要的标识符）',
+  'TS2304': '找不到名称/标识符（未定义的变量/类型）',
+  'TS1011': '未终止的字符串文本（字符串字面量未正确闭合）',
+  'TS2379': '条件类型的约束不能作用于非类型参数（条件类型约束不合法）',
+  'TS2209': '命名空间中的导入声明不能引用模块（导入语句仅允许在模块顶层使用）'
+};
 
 /**
  * 清理输出目录中的旧文件
@@ -335,7 +369,8 @@ function generateReport(result, errors, isPackage = false) {
     const sortedCodes = Object.entries(errors.errorsByCode)
       .sort((a, b) => b[1] - a[1]);
     sortedCodes.forEach(([code, count]) => {
-      report += `  ${code.padEnd(10)}: ${count} 个\n`;
+      const desc = ERROR_CODE_DESCRIPTIONS[code] || '查看官方文档';
+      report += `  ${code.padEnd(10)}: ${count.toString().padStart(4)} 个 - ${desc}\n`;
     });
     report += `\n`;
 
@@ -457,7 +492,8 @@ function generatePackagesReport(packageResults) {
     const sortedCodes = Object.entries(allErrorsByCode)
       .sort((a, b) => b[1] - a[1]);
     sortedCodes.forEach(([code, count]) => {
-      report += `  ${code.padEnd(10)}: ${count} 个\n`;
+      const desc = ERROR_CODE_DESCRIPTIONS[code] || '查看官方文档';
+      report += `  ${code.padEnd(10)}: ${count.toString().padStart(4)} 个 - ${desc}\n`;
     });
     report += `\n`;
 
@@ -586,33 +622,15 @@ function generateSummaryReport(results) {
   summary += `| 错误代码 | 总数 | 官方含义 |\n`;
   summary += `|---------|------|----------|\n`;
   
-  // TypeScript 错误代码官方含义（参考: https://www.typescriptlang.org/docs/handbook/error-codes.html）
-  const errorCodeDescriptions = {
-    'TS2305': '模块/命名空间中不存在指定的导出成员',
-    'TS2614': '模块无默认导出，或导入的命名空间对象无此导出成员',
-    'TS2307': '无法找到模块或其类型声明',
-    'TS2339': '对象上不存在该属性/方法',
-    'TS7006': '变量隐式具有 any 类型',
-    'TS2353': '不能将类型 X 分配给类型 Y（类型不匹配）',
-    'TS6307': '文件未在 tsconfig.json 的项目文件列表中',
-    'TS2578': '未使用的 @ts-expect-error 指令',
-    'TS6059': '文件不在项目根目录中，项目文件列表仅包含根目录文件',
-    'TS2322': '类型不匹配',
-    'TS18047': '可能为 null',
-    'TS6133': '未使用的变量',
-    'TS2741': '缺少必需属性',
-    'TS2352': '类型转换错误'
-  };
-  
   sortedCodes.forEach(([code, count]) => {
-    const desc = errorCodeDescriptions[code];
-    if (!desc) {
-      // 对于未知的错误代码，提供查找链接而不是标注"未知错误"
-      summary += `| ${code} | ${count} | [查看官方文档](https://www.typescriptlang.org/docs/handbook/error-codes.html) |\n`;
-    } else {
-      summary += `| ${code} | ${count} | ${desc} |\n`;
-    }
-  });
+      const desc = ERROR_CODE_DESCRIPTIONS[code];
+      if (!desc) {
+        // 对于未知的错误代码，提供查找链接
+        summary += `| ${code} | ${count} | [查看官方文档](https://www.typescriptlang.org/docs/handbook/error-codes.html) |\n`;
+      } else {
+        summary += `| ${code} | ${count} | ${desc} |\n`;
+      }
+    });
   
   // 添加详细说明章节
   summary += `\n## 错误代码详细说明与解决方案\n\n`;

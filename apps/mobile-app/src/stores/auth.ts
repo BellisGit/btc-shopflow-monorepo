@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { storage } from '@btc/shared-utils';
 import { authApi } from '@/services/auth';
-import { getCookie, deleteCookie } from '@/utils/cookie';
+import { getCookie, deleteCookie } from '@btc/shared-core/utils/cookie';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null);
@@ -26,18 +27,18 @@ export const useAuthStore = defineStore('auth', () => {
   function setToken(newToken: string | null) {
     token.value = newToken;
     if (newToken) {
-      localStorage.setItem('mobile_token', newToken);
+      storage.set('mobile_token', newToken);
     } else {
-      localStorage.removeItem('mobile_token');
+      storage.remove('mobile_token');
     }
   }
 
   function setUser(userData: any) {
     user.value = userData;
     if (userData) {
-      localStorage.setItem('mobile_user', JSON.stringify(userData));
+      storage.set('mobile_user', userData);
     } else {
-      localStorage.removeItem('mobile_user');
+      storage.remove('mobile_user');
     }
   }
 
@@ -77,23 +78,19 @@ export const useAuthStore = defineStore('auth', () => {
     // 如果 cookie 中有 token，优先使用 cookie 中的 token
     if (cookieToken) {
       token.value = cookieToken;
-      localStorage.setItem('mobile_token', cookieToken);
+      storage.set('mobile_token', cookieToken);
     } else {
-      // 如果 cookie 中没有，尝试从 localStorage 读取
-      const storedToken = localStorage.getItem('mobile_token');
+      // 如果 cookie 中没有，尝试从 storage 读取
+      const storedToken = storage.get<string>('mobile_token');
       if (storedToken) {
         token.value = storedToken;
       }
     }
     
     // 读取用户信息
-    const storedUser = localStorage.getItem('mobile_user');
+    const storedUser = storage.get<any>('mobile_user');
     if (storedUser) {
-      try {
-        user.value = JSON.parse(storedUser);
-      } catch (e) {
-        console.error('[Auth] Failed to parse stored user data', e);
-      }
+      user.value = storedUser;
     }
   }
 

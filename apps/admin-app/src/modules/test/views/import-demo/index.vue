@@ -104,7 +104,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useI18n, usePluginManager } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcImportBtn, BtcExportBtn } from '@btc/shared-components';
 
 const { t } = useI18n();
 const pluginManager = usePluginManager();

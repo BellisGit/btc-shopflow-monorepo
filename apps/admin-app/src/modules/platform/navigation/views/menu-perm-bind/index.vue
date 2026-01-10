@@ -62,7 +62,7 @@ const loadMenuInfo = async () => {
     const data = await menuService.info({ id: menuId });
     menuInfo.value = data;
   } catch (_error) {
-    message.error('加载菜单信息失败');
+    message.error(t('common.navigation.menu.load_menu_info_failed'));
   }
 };
 
@@ -78,7 +78,7 @@ const loadPermissions = async () => {
 
     // Mock：默认选中一些权�（    selectedPermissions.value = [1, 4];
   } catch (_error) {
-    message.error('加载权限列表失败');
+    message.error(t('common.navigation.menu.load_permissions_failed'));
   }
 };
 
@@ -91,10 +91,10 @@ const handleSave = async () => {
     // 这里应该调用后端API
     // await http.post(`/menus/${menuId}/permissions`, { permissionIds: selectedPermissions.value });
 
-    message.success('保存成功');
+    message.success(t('common.save_success'));
     router.back();
   } catch (_error) {
-    message.error('保存失败');
+    message.error(t('common.save_failed'));
   } finally {
     saving.value = false;
   }

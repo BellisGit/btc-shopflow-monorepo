@@ -28,72 +28,54 @@ export function useSmsLogin() {
       loading.value = true;
 
       // 调用短信登录接口
-      // 注意：token 会在 http-only cookie 中，前端无法直接读取
-      // 响应拦截器会处理响应，对于 code: 200 的响应会返回 data 字段
-      // 如果响应中没有 data 字段，会返回 undefined，但这也表示登录成功（没有抛出错误）
-      const response = await authApi.loginBySms({
+      // 关键：只要请求返回 200（没有抛出错误），就认为登录成功
+      // 响应拦截器会处理响应，如果 code 不是 200，会抛出错误
+      // 所以这里不需要检查响应格式，直接认为登录成功
+      await authApi.loginBySms({
         phone: formData.phone,
         smsCode: formData.smsCode,
         smsType: 'login'
       });
 
-      // 如果代码执行到这里，说明没有抛出错误，登录成功
-      // 响应拦截器已经处理了响应，如果 code 不是 200，会抛出错误
-      // 所以这里不需要再检查响应格式，直接认为登录成功
+      // 如果代码执行到这里，说明请求返回了 200，登录成功
+      // 不进行额外的鉴权检查，直接跳转
       BtcMessage.success(t('登录成功'));
 
       // 设置登录状态标记到统一的 settings 存储中
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
       appStorage.settings.set({ ...currentSettings, is_logged_in: true });
 
-      // 优先从响应体获取 token（如果后端返回）
-      let token: string | null = null;
-      if (response?.token) {
-        token = response.token;
-      } else if (response?.accessToken) {
-        token = response.accessToken;
-      } else if (response?.data?.token) {
-        token = response.data.token;
-      } else if (response?.data?.accessToken) {
-        token = response.data.accessToken;
+      // 跳转到首页或 oauth_callback 页面
+      // 优先级：URL 参数中的 oauth_callback > 保存的退出前路径 > 默认路径
+      const { handleCrossAppRedirect, getAndClearLogoutRedirectPath } = await import('@btc/auth-shared/composables/redirect');
+      
+      let redirectPath: string;
+      // 读取 oauth_callback 参数
+      const urlOAuthCallback = route.query.oauth_callback as string;
+      if (urlOAuthCallback) {
+        // 使用 URL 参数中的 oauth_callback
+        // 保留完整的路径，包括查询参数和 hash
+        redirectPath = decodeURIComponent(urlOAuthCallback);
+      } else {
+        // 如果没有 URL 参数，尝试从 localStorage 获取保存的退出前路径
+        const savedPath = getAndClearLogoutRedirectPath();
+        redirectPath = savedPath || '/';
       }
-
-      // 如果从响应体中找到了 token，设置到 cookie（不再保存到 localStorage）
-      if (token) {
-        // 清理旧的 localStorage 键（迁移）
-        appStorage.auth.setToken(token);
-        
-        // 设置 cookie
-        const isHttps = window.location.protocol === 'https:';
-        setCookie('access_token', token, 7, {
-          sameSite: isHttps ? 'None' : undefined,
-          secure: isHttps,
-          path: '/',
-          domain: getCookieDomain(),
+      
+      // 尝试跨应用重定向，如果是子应用路径会使用window.location跳转
+      const isCrossAppRedirect = await handleCrossAppRedirect(redirectPath, router);
+      
+      // 如果不是跨应用跳转
+      if (!isCrossAppRedirect) {
+        // 关键：cookie 已经在响应拦截器中同步设置好了，理论上可以立即使用 router.push
+        // 但是，如果路由守卫的认证检查失败（可能是 cookie 读取时序问题），使用 window.location 作为回退
+        router.push(redirectPath).catch((error) => {
+          // 如果路由跳转失败（可能是路由未匹配或认证检查失败），使用 window.location 作为回退
+          // 这样可以确保 cookie 被正确读取，路由守卫能够正确识别认证状态
+          console.warn('[useSmsLogin] Router push failed, using window.location as fallback:', error);
+          window.location.href = redirectPath;
         });
       }
-
-      // 保存用户信息（使用后端返回的准确数据）
-      const userData = response?.user || response?.data?.user;
-      if (userData) {
-        // 处理用户信息：删除 name 字段，将 name 的值赋给 username（使用后端权威值）
-        const processedUser = { ...userData };
-        if (processedUser.name) {
-          processedUser.username = processedUser.name; // 使用后端返回的 name 作为 username
-          delete processedUser.name; // 删除 name 字段
-        }
-        // 使用 appStorage.user.set 确保同时更新 localStorage 和 cookie
-        appStorage.user.set(processedUser);
-      }
-
-      // 等待状态更新，确保路由守卫能正确识别登录状态
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // 跳转到首页或 redirect 页面
-      const redirect = (route.query.redirect as string) || '/';
-      // 只取路径部分，忽略查询参数，避免循环重定向
-      const redirectPath = redirect.split('?')[0];
-      router.push(redirectPath);
     } catch (error: any) {
       console.error('登录错误:', error);
       BtcMessage.error(error.message || t('登录失败'));

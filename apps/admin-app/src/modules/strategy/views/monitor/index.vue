@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-monitor">
     <!-- 策略详情视图 -->
     <div class="strategy-details">
@@ -95,9 +95,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination } from '@btc/shared-components';
 import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageService } from '@btc/shared-core';
 import type { TableColumn } from '@btc/shared-components';
 import type {
   Strategy,
@@ -126,9 +126,18 @@ const showAlertsDialog = ref(false);
 const selectedStrategy = ref<Strategy | null>(null);
 const selectedStrategyStats = ref<StrategyMonitorStats | null>(null);
 
-// 策略服务适配器
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('strategy.monitor');
+
+// 策略服务 - 使用 usePageService 但需要特殊处理（strategyService 有自定义方法）
+const pageStrategyService = usePageService('strategy.monitor', 'strategy', {
+  showSuccessMessage: true,
+});
+
+// 策略服务适配器 - 需要包装自定义的 deleteStrategy 和 deleteStrategies 方法
 const wrappedService = {
   ...strategyService,
+  ...(pageStrategyService || {}),
   delete: async (id: string) => {
     await BtcConfirm(
       t('crud.message.delete_confirm'),
@@ -154,40 +163,6 @@ const wrappedService = {
     message.success(t('crud.message.delete_success'));
   }
 };
-
-// 表格列配置
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { prop: 'name', label: '策略名称', minWidth: 180 },
-  {
-    prop: 'type',
-    label: '类型',
-    width: 120,
-    dict: [
-      { label: '权限', value: 'PERMISSION', type: 'danger' },
-      { label: '业务', value: 'BUSINESS', type: 'success' },
-      { label: '数据', value: 'DATA', type: 'warning' },
-      { label: '工作流', value: 'WORKFLOW', type: 'info' }
-    ]
-  },
-  {
-    prop: 'status',
-    label: '状态',
-    width: 100,
-    dict: [
-      { label: '草稿', value: 'DRAFT', type: 'info' },
-      { label: '测试中', value: 'TESTING', type: 'warning' },
-      { label: '激活', value: 'ACTIVE', type: 'success' },
-      { label: '停用', value: 'INACTIVE', type: 'danger' },
-      { label: '已归档', value: 'ARCHIVED', type: 'default' }
-    ]
-  },
-  { prop: 'priority', label: '优先级', width: 100 },
-  { prop: 'version', label: '版本', width: 100 },
-  { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'updatedAt', label: '更新时间', width: 180 }
-]);
 
 // 事件处理方法
 const handleStatusFilter = () => {
@@ -225,7 +200,8 @@ const configureAlerts = (strategy: Strategy) => {
 
 
 const handleAlertSave = () => {
-  BtcMessage.success('告警配置保存成功');
+  const { t } = useI18n();
+  BtcMessage.success(t('common.strategy.monitor.alert_save_success'));
   showAlertsDialog.value = false;
 };
 

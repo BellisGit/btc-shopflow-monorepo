@@ -2,6 +2,7 @@
  * English language pack
  */
 declare const _default: {
+    'app.title': string;
     'app.slogan': string;
     'common.button.confirm': string;
     'common.button.cancel': string;
@@ -44,6 +45,11 @@ declare const _default: {
     'common.menu_items': string;
     'common.pages': string;
     'common.documents': string;
+    'common.menu': string;
+    'common.page': string;
+    'common.document': string;
+    'common.parent_menu': string;
+    'common.route': string;
     'common.navigate': string;
     'common.select': string;
     'common.close': string;
@@ -61,14 +67,31 @@ declare const _default: {
     'theme.buttonStyles.minimal': string;
     'theme.presets.brand_red': string;
     'theme.presets.brand_gray': string;
-    'theme.presets.blue': string;
+    'theme.presets.lake_blue': string;
     'theme.presets.green': string;
     'theme.presets.purple': string;
     'theme.presets.orange': string;
-    'theme.presets.pink': string;
     'theme.presets.mint': string;
+    'theme.presets.blue': string;
     'theme.presets.custom': string;
     'menu.home': string;
+    'menu.system.home': string;
+    'menu.data': string;
+    'menu.data.files': string;
+    'menu.data.files.list': string;
+    'menu.data.files.template': string;
+    'menu.data.files.preview': string;
+    'menu.data.dictionary': string;
+    'menu.data.dictionary.file_categories': string;
+    'menu.data.recycle': string;
+    'menu.inventory': string;
+    'menu.inventory.dataSource': string;
+    'menu.inventory.dataSource.bom': string;
+    'menu.inventory.dataSource.list': string;
+    'menu.inventory.dataSource.ticket': string;
+    'menu.inventory.process': string;
+    'menu.inventory.result': string;
+    'menu.inventory.confirm': string;
     'common.menu.dashboard': string;
     'common.menu.system': string;
     'common.menu.user': string;
@@ -186,8 +209,6 @@ declare const _default: {
     'user.field.avatar': string;
     'user.status.active': string;
     'user.status.inactive': string;
-    'app_center.title': string;
-    'app_center.subtitle': string;
     'app_center.current': string;
     'app_center.message.current_app': string;
     'app_center.message.switching': string;
@@ -211,10 +232,18 @@ declare const _default: {
     'micro_app.docs.description': string;
     'micro_app.monitor.title': string;
     'micro_app.monitor.description': string;
-    'menu.monitor.name': string;
-    'menu.monitor.overview': string;
-    'menu.monitor.error': string;
-    'menu.monitor.deploymentTest': string;
+    'micro_app.operations.title': string;
+    'micro_app.operations.description': string;
+    'micro_app.dashboard.title': string;
+    'micro_app.dashboard.description': string;
+    'micro_app.personnel.title': string;
+    'micro_app.personnel.description': string;
+    'domain.type.dashboard': string;
+    'domain.type.personnel': string;
+    'menu.operations.name': string;
+    'menu.operations.overview': string;
+    'menu.operations.error': string;
+    'menu.operations.deploymentTest': string;
     'menu.logistics.overview': string;
     'menu.logistics.orders': string;
     'menu.logistics.transport': string;
@@ -343,5 +372,16 @@ declare const _default: {
     'main.home.environment': string;
     'main.home.apps': string;
     'main.home.apps_loaded': string;
+    'notice.title': string;
+    'notice.btnRead': string;
+    'notice.viewAll': string;
+    'notice.bar[0]': string;
+    'notice.bar[1]': string;
+    'notice.bar[2]': string;
+    'notice.text[0]': string;
+    'message.title': string;
+    'message.viewAll': string;
+    'message.empty': string;
 };
 export default _default;
+//# sourceMappingURL=en-US.d.ts.map

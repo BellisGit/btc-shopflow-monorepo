@@ -2,7 +2,7 @@
 monitor-app - TypeScript 类型错误报告
 ============================================================
 
-生成时间: 2025/12/18 14:05:22
+生成时间: 2026/1/7 15:15:38
 总错误数: 0
 
 ✅ 未发现类型错误
@@ -11,7 +11,4 @@ monitor-app - TypeScript 类型错误报告
 完整输出:
 ============================================================
 
-
-> monitor-app@1.0.0 type-check C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app
-> tsc --noEmit
-
+No projects matched the filters in "C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo"

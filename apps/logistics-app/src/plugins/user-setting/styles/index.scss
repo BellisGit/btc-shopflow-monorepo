@@ -8,7 +8,18 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
-  // 不设置 overflow，让内容自然流动，滚动由具体组件（如 btc-table）自己处理
+  // 关键：这是自定义的偏好设置抽屉（不是 Element Plus Drawer）
+  // 需要在这里提供滚动容器，否则内容超出时无法滚动（生产环境子应用问题）
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  // 隐藏滚动条但保持滚动能力
+  scrollbar-width: none; // Firefox
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
 }
 
 // 公共的设置框样式（用于菜单布局、菜单风格、主题风格）

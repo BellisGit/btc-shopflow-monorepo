@@ -7,13 +7,13 @@
       :table-columns="columns"
       :form-items="[]"
       :op="undefined"
-      left-title="控制器"
-      right-title="接口列表"
+      :left-title="t('common.ops.api_list.controller')"
+      :right-title="t('common.ops.api_list.api_list')"
       :show-create-time="false"
       :show-update-time="false"
       :enable-key-search="true"
       left-width="320px"
-      search-placeholder="搜索接口..."
+      :search-placeholder="t('common.ops.api_list.search_placeholder')"
       @select="handleSelect"
       @load="handleControllerLoad"
     />
@@ -26,11 +26,14 @@ defineOptions({
 });
 
 import { computed, ref } from 'vue';
-import type { TableColumn } from '@btc/shared-components';
 import { BtcTableGroup } from '@btc/shared-components';
-import { useI18n, type CrudService } from '@btc/shared-core';
+import { useI18n, usePageColumns, getPageConfigFull, type CrudService } from '@btc/shared-core';
 import { sortByLocale } from '@btc/shared-utils';
 import { sysApi } from '@/modules/api-services';
+
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('ops.api_list');
+const pageConfig = getPageConfigFull('ops.api_list');
 
 const { t } = useI18n();
 
@@ -73,12 +76,12 @@ async function fetchApiDocsWithFallback() {
   try {
     const result = await Promise.race([sysApi.apiDocs.list(), timeoutPromise]);
     if (result === API_DOCS_TIMEOUT_TOKEN) {
-      console.warn('[OpsApiList] 获取接口文档超时，使用空列表作为回退');
+      console.warn('[OpsApiList] API docs fetch timeout, using empty list as fallback');
       return [];
     }
     return result;
   } catch (error) {
-    console.warn('[OpsApiList] 获取接口文档失败，使用空列表作为回退', error);
+    console.warn('[OpsApiList] API docs fetch failed, using empty list as fallback', error);
     return [];
   }
 }
@@ -106,40 +109,55 @@ function buildControllers(payload: Record<string, any>): ApiControllerNode[] {
     return [];
   }
 
+  // api-docs.json 的 data 是一个对象，key 是控制器的完整类名（className），value 是控制器对象
+  // 需要将对象转换为数组进行处理
   const controllers = Array.isArray(payload) ? payload : Object.values(payload);
+
   return controllers.map((controller: any) => {
-    const simpleName = controller?.simpleName || controller?.className || '';
+    // 从控制器对象中提取信息
+    const className = controller?.className || '';
+    const simpleName = controller?.simpleName || className.split('.').pop() || className;
     const tags: string[] = Array.isArray(controller?.tags) ? controller.tags : [];
-    const tagsText = tags.join(' / ');
+    const tagsText = tags.length > 0 ? tags.join(' / ') : '';
     const apis = Array.isArray(controller?.apis) ? controller.apis : [];
 
+    // 处理每个 API
     const apiRecords: ApiListRecord[] = apis.map((api: any) => {
       const description = api?.description || {};
+      // api-docs.json 中 description 包含 summary 和 description 字段
+      const summary = description?.summary || '';
+      const descriptionText = description?.description || '';
+      // 合并 summary 和 description 作为接口说明
+      const fullDescription = summary && descriptionText
+        ? `${summary}\n${descriptionText}`
+        : (summary || descriptionText || '');
+
       const method = normalizeValue(api?.httpMethods).toUpperCase();
       const paths = normalizeValue(api?.paths);
       const parameters = Array.isArray(api?.parameters) ? api.parameters : [];
 
       return {
         controller: simpleName,
-        className: controller?.className || simpleName,
+        className: className || simpleName,
         tags,
         tagsText,
         methodName: api?.methodName || '',
         httpMethods: method,
         paths,
-        description: description?.value || '',
-        notes: description?.notes || '',
+        description: fullDescription,
+        notes: descriptionText || '', // 使用 description 字段作为备注
         parameters,
       };
     });
 
+    // 显示名称：优先使用 tags，其次使用 simpleName
     const displayName = tagsText || simpleName;
 
     return {
-      id: controller?.className || simpleName,
+      id: className || simpleName,
       label: displayName,
       name: displayName,
-      className: controller?.className || simpleName,
+      className: className || simpleName,
       simpleName,
       tags,
       apis: apiRecords,
@@ -240,110 +258,85 @@ const apiService: CrudService<ApiListRecord> = {
     };
   },
   async add() {
-    throw new Error('接口列表不支持新增操作');
+    throw new Error(t('common.ops.api_list.add_not_supported'));
   },
   async update() {
-    throw new Error('接口列表不支持编辑操作');
+    throw new Error(t('common.ops.api_list.update_not_supported'));
   },
   async delete() {
-    throw new Error('接口列表不支持删除操作');
+    throw new Error(t('common.ops.api_list.delete_not_supported'));
   },
   async deleteBatch() {
-    throw new Error('接口列表不支持删除操作');
+    throw new Error(t('common.ops.api_list.delete_not_supported'));
   },
 };
 
-const columns = computed<TableColumn[]>(() => [
-  {
-    type: 'index',
-    width: 60,
-    label: '#',
-    align: 'center',
-    headerAlign: 'center',
-  },
-  {
-    prop: 'tagsText',
-    label: t('ops.api_list.fields.tags'),
-    minWidth: 160,
-    align: 'center',
-    headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.tagsText || '-',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'controller',
-    label: t('ops.api_list.fields.controller'),
-    minWidth: 200,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'methodName',
-    label: t('ops.api_list.fields.name'),
-    minWidth: 140,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'httpMethods',
-    label: t('ops.api_list.fields.request_type'),
-    width: 120,
-    align: 'center',
-    headerAlign: 'center',
-    dictColor: true,
-    dict: [
-      { value: 'GET', label: 'GET', type: 'success' as const },
-      { value: 'POST', label: 'POST', type: 'primary' as const },
-      { value: 'PUT', label: 'PUT', type: 'warning' as const },
-      { value: 'DELETE', label: 'DELETE', type: 'danger' as const },
-      { value: 'PATCH', label: 'PATCH', type: 'info' as const },
-      { value: 'OPTIONS', label: 'OPTIONS', type: 'info' as const },
-      { value: 'HEAD', label: 'HEAD', type: 'info' as const }
-    ],
-  },
-  {
-    prop: 'paths',
-    label: t('ops.api_list.fields.path'),
-    minWidth: 260,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'description',
-    label: t('ops.api_list.fields.description'),
-    minWidth: 220,
-    align: 'center',
-    headerAlign: 'center',
-    showOverflowTooltip: true,
-  },
-  {
-    prop: 'parameters',
-    label: t('ops.api_list.fields.parameters'),
-    minWidth: 280,
-    align: 'center',
-    headerAlign: 'center',
-    component: {
-      name: 'BtcCodeJson',
-      props: {
-        popover: true,
-        maxLength: 800,
-      },
-    },
-  },
-  {
-    prop: 'notes',
-    label: t('ops.api_list.fields.notes'),
-    minWidth: 220,
-    align: 'center',
-    headerAlign: 'center',
-    formatter: (row: ApiListRecord) => row.notes || '-',
-    showOverflowTooltip: true,
-    fixed: 'right' as const,
-  },
-]);
+// 扩展 columns 以支持特殊的 formatter、align 和组件
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是 tagsText，添加 formatter 和 align
+    if (col.prop === 'tagsText') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        formatter: (row: ApiListRecord) => row.tagsText || '-',
+      };
+    }
+    // 如果列是 controller、methodName、paths、description，添加 align
+    if (['controller', 'methodName', 'paths', 'description'].includes(col.prop || '')) {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+      };
+    }
+    // 如果列是 httpMethods，添加 dict 和 align
+    if (col.prop === 'httpMethods') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        dictColor: true,
+        dict: [
+          { value: 'GET', label: 'GET', type: 'success' },
+          { value: 'POST', label: 'POST', type: 'primary' },
+          { value: 'PUT', label: 'PUT', type: 'warning' },
+          { value: 'DELETE', label: 'DELETE', type: 'danger' },
+          { value: 'PATCH', label: 'PATCH', type: 'info' },
+          { value: 'OPTIONS', label: 'OPTIONS', type: 'info' },
+          { value: 'HEAD', label: 'HEAD', type: 'info' }
+        ],
+      };
+    }
+    // 如果列是 parameters，添加 BtcCodeJson 组件和 align
+    if (col.prop === 'parameters') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        component: {
+          name: 'BtcCodeJson',
+          props: {
+            popover: true,
+            maxLength: 800,
+          },
+        },
+      };
+    }
+    // 如果列是 notes，添加 formatter 和 align
+    if (col.prop === 'notes') {
+      return {
+        ...col,
+        align: 'center',
+        headerAlign: 'center',
+        formatter: (row: ApiListRecord) => row.notes || '-',
+        fixed: 'right' as const,
+      };
+    }
+    return col;
+  });
+});
 
 const tableGroupRef = ref();
 

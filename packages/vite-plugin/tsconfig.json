@@ -1,26 +1,24 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
+    "composite": true,
+    "lib": ["ES2020", "DOM"],
+    "baseUrl": "./",
+    "paths": {
+      "@configs": ["../shared-core/src/configs"],
+      "@configs/*": ["../shared-core/src/configs/*"],
+      "@btc/shared-utils": ["../shared-core/src/utils", "../shared-core/dist/utils"],
+      "@btc/shared-utils/*": ["../shared-core/src/utils/*", "../shared-core/dist/utils/*"]
+    },
+    "outDir": "dist",
+    "rootDir": "src",
     "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {}
+    "declarationDir": "dist",
+    "emitDeclarationOnly": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["dist", "node_modules"],
+  "references": [
+    { "path": "../shared-core" }
+  ]
 }

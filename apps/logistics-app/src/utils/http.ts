@@ -1,10 +1,10 @@
 import axios from 'axios';
 // @ts-expect-error - axios 类型定义可能有问题，但运行时可用
 import type { AxiosRequestConfig } from 'axios';
-import { responseInterceptor } from '@btc/shared-utils';
+import { responseInterceptor } from '@btc/shared-core/utils/http';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie, deleteCookie } from './cookie';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -42,18 +42,18 @@ export class Http {
         const cookieToken = getCookie('access_token');
         const storageToken = appStorage.auth.getToken();
         const token = cookieToken || storageToken || '';
-        
+
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
-            console.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
+            console.warn('[HTTP]', 'common.other.request_no_token', config.url, {
               hasCookieToken: !!cookieToken,
               hasStorageToken: !!storageToken,
               cookies: document.cookie.split(';').map(c => c.trim()),
             });
           }
         }
-        
+
         if (token) {
           config.headers['Authorization'] = `Bearer ${token}`;
         }
@@ -69,9 +69,9 @@ export class Http {
           const hostname = window.location.hostname;
           const port = window.location.port || '';
           // 判断是否为生产环境：hostname 包含 bellis.com.cn 且不是开发/预览端口
-          const isProduction = hostname.includes('bellis.com.cn') && 
-                               !port.startsWith('41') && 
-                               port !== '5173' && 
+          const isProduction = hostname.includes('bellis.com.cn') &&
+                               !port.startsWith('41') &&
+                               port !== '5173' &&
                                port !== '3000' &&
                                hostname !== 'localhost' &&
                                !hostname.startsWith('127.0.0.1') &&
@@ -111,20 +111,58 @@ export class Http {
     const onFulfilled = (response: any) => {
       // 检查是否是登录接口的响应
       const isLoginResponse = response.config?.url?.includes('/login');
-      
+
       this.recordRequestLog(response, 'success');
       const result = interceptor.onFulfilled(response);
-      
+
       // 如果是登录响应，尝试从响应中提取 token 并保存
       if (isLoginResponse) {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
-        
+
+        // 检查响应是否成功（code: 200）
+        const isLoginSuccess = originalResponseData &&
+                               typeof originalResponseData === 'object' &&
+                               originalResponseData.code === 200;
+
+        if (isLoginSuccess) {
+          // 登录成功，设置登录状态标记到统一的 settings 存储中
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+
+          // 启动全局用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
+          try {
+            import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
+              startUserCheckPolling(true);
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to start user check polling after login:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，广播登录消息到所有标签页
+          try {
+            import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
+              const bridge = useCrossDomainBridge();
+              bridge.sendMessage('login', { timestamp: Date.now() });
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to broadcast login message:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+        }
+
         // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
         const setCookieHeaders = response.headers?.getSetCookie?.() || [];
         if (setCookieHeaders.length > 0) {
           // 查找包含 access_token 的 cookie
-          const accessTokenCookie = setCookieHeaders.find((cookie: string) => 
+          const accessTokenCookie = setCookieHeaders.find((cookie: string) =>
             cookie.includes('access_token')
           );
           if (accessTokenCookie) {
@@ -137,38 +175,38 @@ export class Http {
             }
           }
         }
-        
+
         // 延迟检查 cookie（等待浏览器设置完成）
         setTimeout(() => {
           const token = getCookie('access_token') || appStorage.auth.getToken();
           if (!token) {
             // 尝试从原始响应数据中提取 token（可能在不同层级）
             let tokenValue: string | null = null;
-            
+
             // 检查原始响应数据
             if (originalResponseData) {
-              tokenValue = originalResponseData.token || 
+              tokenValue = originalResponseData.token ||
                           originalResponseData.accessToken ||
                           originalResponseData.data?.token ||
                           originalResponseData.data?.accessToken ||
                           originalResponseData.data?.data?.token;
             }
-            
+
             // 检查拦截器处理后的结果
             if (!tokenValue && result) {
-              tokenValue = result.token || 
+              tokenValue = result.token ||
                           result.accessToken ||
                           result.data?.token ||
                           result.data?.accessToken;
             }
-            
+
             if (tokenValue) {
               appStorage.auth.setToken(tokenValue);
             }
           }
         }, 100);
       }
-      
+
       return result;
     };
 
@@ -189,7 +227,7 @@ export class Http {
    */
   private limitObjectSize(obj: any, maxDepth: number, maxSize: number): any {
     if (maxDepth <= 0 || maxSize <= 0) {
-      return '[数据过大，已截断]';
+      return 'common.other.data_truncated';
     }
 
     if (obj === null || obj === undefined) {
@@ -220,7 +258,7 @@ export class Http {
       let currentSize = 0;
       for (const key in obj) {
         if (currentSize >= maxSize) {
-          limitedObj['...'] = '[更多数据已截断]';
+          limitedObj['...'] = 'common.other.more_data_truncated';
           break;
         }
         const limitedValue = this.limitObjectSize(obj[key], maxDepth - 1, maxSize - currentSize);
@@ -239,7 +277,7 @@ export class Http {
   private recordRequestLog(response: any, status: 'success' | 'failed') {
     try {
       const config = response?.config || {};
-      
+
       // 检查用户是否已登录，未登录时不记录日志
       const token = getCookie('access_token') || appStorage.auth.getToken() || '';
       if (!token) {
@@ -257,7 +295,7 @@ export class Http {
         }
       } catch (err) {
         // 获取用户信息失败，仍然记录日志但不包含用户信息
-        console.warn('获取用户信息失败:', err);
+        console.warn('common.error.get_user_info_failed', err);
       }
 
       // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
@@ -278,7 +316,7 @@ export class Http {
         '/api/system/log/sys/request/update',
         '/api/system/log/sys/operation/update'
       ];
-      
+
       if (filteredPaths.some(path => url.includes(path))) {
         return; // 跳过这些接口的日志记录
       }
@@ -323,7 +361,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('记录请求日志失败:', error);
+      console.error('common.other.request_log_service_unavailable', error);
     }
   }
 
@@ -387,16 +425,17 @@ export class Http {
 
     // 模拟一个成功的响应
     const mockResponse = {
-      data: { code: 200, msg: '测试消息', data: null },
+      data: { code: 200, msg: 'common.other.test_message', data: null },
       status: 200,
       config: { url: '/test' }
     };
 
 
     try {
-      const result = interceptor.onFulfilled(mockResponse);
-    } catch (error) {
-      console.error('Interceptor error:', error);
+      // @ts-expect-error: 测试方法，未使用变量
+      const _result = interceptor.onFulfilled(mockResponse);
+    } catch (_error) {
+      // Interceptor error
     }
   }
 
@@ -415,20 +454,21 @@ export class Http {
       }
 
       // 检查消息是否包含错误关键词
+      // 错误关键词使用国际化键（在实际使用时需要翻译）
       const errorKeywords = [
-        '不存在',
-        '错误',
-        '失败',
-        '异常',
-        '无效',
-        '过期',
-        '拒绝',
-        '禁止',
-        '未找到',
-        '无法',
-        '不能',
-        '缺少',
-        '不足'
+        'common.other.not_exists',
+        'common.other.error',
+        'common.other.failed',
+        'common.other.exception',
+        'common.other.invalid',
+        'common.other.expired',
+        'common.other.rejected',
+        'common.other.forbidden',
+        'common.other.not_found',
+        'common.other.cannot',
+        'common.other.cannot_do',
+        'common.other.missing',
+        'common.other.insufficient'
       ];
 
       // 如果消息包含错误关键词，认为是错误响应
@@ -457,7 +497,7 @@ export class Http {
         if (!data) {
           // 对于404等错误状态码，即使没有响应体也要按错误处理
           if (status === 404) {
-            const error = new Error('请求的资源不存在');
+            const error = new Error('common.other.resource_not_found');
             (error as any).code = 404;
             (error as any).response = response;
             return Promise.reject(error);
@@ -479,7 +519,7 @@ export class Http {
         }
 
         // 业务错误，抛出错误
-        const error = new Error(msg || '未知错误');
+        const error = new Error(msg || 'common.other.unknown_error');
         (error as any).code = code;
         (error as any).response = response;
         return Promise.reject(error);
@@ -510,7 +550,7 @@ export const http = new Http(config.api.baseURL);
  * 基础服务类 - 参考 cool-admin 的 BaseService
  */
 export class BaseService {
-  private namespace?: string;
+  private namespace: string | undefined;
   private readonly httpClient: Http;
 
   constructor(namespace?: string, httpClient: Http = http) {

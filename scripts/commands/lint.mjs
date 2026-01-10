@@ -11,6 +11,7 @@ import { handleLint } from './handlers/lint.mjs';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import { existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,19 +24,29 @@ const appName = args.find(arg => !arg.startsWith('--'));
 // 如果没有指定应用，检查所有应用
 if (!appName) {
   // 使用旧的逻辑：检查所有应用、packages 和 configs
-  const apps = {
-    system: 'apps/system-app/src/**/*.{ts,tsx,vue}',
-    admin: 'apps/admin-app/src/**/*.{ts,tsx,vue}',
-    logistics: 'apps/logistics-app/src/**/*.{ts,tsx,vue}',
-    finance: 'apps/finance-app/src/**/*.{ts,tsx,vue}',
-    engineering: 'apps/engineering-app/src/**/*.{ts,tsx,vue}',
-    quality: 'apps/quality-app/src/**/*.{ts,tsx,vue}',
-    production: 'apps/production-app/src/**/*.{ts,tsx,vue}',
-    monitor: 'apps/monitor-app/src/**/*.{ts,tsx,vue}',
-    layout: 'apps/layout-app/src/**/*.{ts,tsx,vue}',
-    mobile: 'apps/mobile-app/src/**/*.{ts,tsx,vue}',
-    docs: 'apps/docs-site-app/src/**/*.{ts,tsx,vue}',
+  // 定义所有可能的应用映射
+  const allApps = {
+    system: 'apps/system-app',
+    admin: 'apps/admin-app',
+    logistics: 'apps/logistics-app',
+    finance: 'apps/finance-app',
+    engineering: 'apps/engineering-app',
+    quality: 'apps/quality-app',
+    production: 'apps/production-app',
+    monitor: 'apps/monitor-app',
+    layout: 'apps/layout-app',
+    mobile: 'apps/mobile-app',
+    docs: 'apps/docs-app',
   };
+  
+  // 只包含实际存在的应用目录
+  const apps = {};
+  for (const [key, appDir] of Object.entries(allApps)) {
+    const appPath = resolve(rootDir, appDir);
+    if (existsSync(appPath)) {
+      apps[key] = `${appDir}/src/**/*.{ts,tsx,vue}`;
+    }
+  }
   
   const patterns = [
     ...Object.values(apps),

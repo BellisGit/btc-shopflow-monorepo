@@ -1,7 +1,7 @@
 import { type App, h } from 'vue';
 import VueECharts from 'vue-echarts';
 import { use } from 'echarts/core';
-import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
+import { registerEChartsThemes } from '@btc/shared-components';
 
 // 导入 ECharts 核心模块
 import {
@@ -73,7 +73,7 @@ function registerEChartsOnce() {
   } catch (error) {
     // 重复注册在微前端场景下是可预期的，兜底不让应用崩溃
     if (import.meta.env.DEV && !alreadyMarked) {
-      console.warn('[admin-app][echarts] ECharts use() register failed (ignored):', error);
+      // ECharts use() register failed (ignored)
     }
   } finally {
     if (w) w[GLOBAL_ECHARTS_USE_FLAG] = true;

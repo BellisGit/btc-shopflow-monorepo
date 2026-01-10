@@ -62,7 +62,7 @@
               v-if="data.path"
               size="small"
               class="eps-viewer__path-tag"
-              :title="data.path"
+              :title="data.path || ''"
             >
               {{ formatPath(data.path) }}
             </el-tag>
@@ -177,7 +177,7 @@ function buildTree() {
 
       // 如果是函数，说明这是一个 API 端点
       if (typeof value === 'function') {
-        node.children = undefined;
+        delete node.children;
         // 如果没有找到 API 信息，尝试从函数名推断
         if (!apiInfo && value.name) {
           node.label = `${key} (${value.name})`;
@@ -188,15 +188,15 @@ function buildTree() {
 
         // 如果没有子节点，移除空的 children
         if (node.children && node.children.length === 0) {
-          node.children = undefined;
+          delete node.children;
         }
       } else if (typeof value === 'string') {
         // 字符串值可能是配置
         node.label += ` (${value})`;
-        node.children = undefined;
+        delete node.children;
       } else {
         // 其他类型
-        node.children = undefined;
+        delete node.children;
       }
 
       if (parent) {
@@ -305,14 +305,14 @@ async function reload() {
     // 注意：实际的刷新可能需要重新加载页面或调用后端接口
     // 这里我们先提示用户刷新页面
 
-    ElMessage.info('正在刷新 EPS 数据，页面将自动刷新...');
+    ElMessage.info({ message: '正在刷新 EPS 数据，页面将自动刷新...' } as any);
 
     // 延迟刷新，给用户看到消息
     setTimeout(() => {
       window.location.reload();
     }, 1000);
   } catch (error) {
-    ElMessage.error('刷新失败：' + (error as Error).message);
+    ElMessage.error({ message: '刷新失败：' + (error as Error).message } as any);
     reloading.value = false;
   }
 }
@@ -338,11 +338,11 @@ function getMethodType(method: string): string {
   return methodTypes[methodUpper] || 'info';
 }
 
-function formatPath(path: string): string {
+function formatPath(path: string | undefined): string {
   if (!path) return '';
   // 只显示路径的最后一部分，完整路径在 title 中显示
   const parts = path.split('/').filter(p => p);
-  return parts.length > 0 ? parts[parts.length - 1] : path;
+  return parts.length > 0 ? (parts[parts.length - 1] || path) : path;
 }
 
 onMounted(() => {

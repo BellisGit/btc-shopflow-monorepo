@@ -84,7 +84,7 @@ export function useTableSort(crud: UseCrudReturn<any>, props: TableProps, emit: 
   /**
    * 改变排序（参考 cool-admin 的逻辑）
    */
-  function changeSort(prop: string, order: string) {
+  function changeSort(_prop: string, order: string) {
     if (order === "desc") {
       order = "descending";
     }

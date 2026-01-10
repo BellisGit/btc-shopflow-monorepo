@@ -153,7 +153,7 @@ export function useEmailCode(options: UseEmailCodeOptions): UseEmailCodeReturn {
 
     try {
       // 调用发送验证码 API
-      await sendEmailCodeApi({ email, type });
+      await sendEmailCodeApi({ email, ...(type !== undefined && { type }) });
       
       // 标记已发送
       hasSent.value = true;

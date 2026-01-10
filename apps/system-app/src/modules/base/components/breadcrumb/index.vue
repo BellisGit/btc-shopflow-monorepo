@@ -27,7 +27,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
-import { getManifestRoute } from '@/micro/manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 
 const route = useRoute();
 const { t } = useI18n();
@@ -221,6 +221,26 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.governance', icon: 'DataAnalysis' },
       { i18nKey: 'menu.data.files', icon: 'Document' },
       { i18nKey: 'menu.data.files.templates', icon: 'Files' },
+    ],
+    '/admin/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.fields', icon: 'Document' },
+    ],
+    '/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.fields', icon: 'Document' },
+    ],
+    '/admin/governance/dictionary/values': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.values', icon: 'List' },
+    ],
+    '/governance/dictionary/values': [
+      { i18nKey: 'menu.governance', icon: 'Setting' },
+      { i18nKey: 'menu.data.dictionary', icon: 'Collection' },
+      { i18nKey: 'menu.data.dictionary.values', icon: 'List' },
     ],
     // 测试功能
     '/admin/test/components': [

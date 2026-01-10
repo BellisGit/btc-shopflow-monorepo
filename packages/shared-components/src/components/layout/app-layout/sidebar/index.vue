@@ -18,7 +18,7 @@
     </div>
 
     <!-- 动态菜单 -->
-    <DynamicMenu :is-collapse="isCollapse" :search-keyword="searchKeyword" />
+    <DynamicMenu :is-collapse="isCollapse ?? undefined" :search-keyword="searchKeyword" />
   </div>
 </template>
 
@@ -30,12 +30,13 @@ defineOptions({
 import DynamicMenu from '../dynamic-menu/index.vue';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useSettingsState, useSettingsConfig } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
+import { useSettingsState, useSettingsConfig } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
 
 const { t } = useI18n();
 const { menuThemeType, isDark } = useSettingsState();
-const { menuStyleList } = useSettingsConfig();
+// menuStyleList 暂时未使用，保留用于未来扩展
+void useSettingsConfig();
 
 // 搜索关键词
 const searchKeyword = ref('');
@@ -45,46 +46,17 @@ const isDarkMenuStyle = computed(() => {
   return isDark?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
 
-// 获取当前菜单主题配置（类似 art-design-pro 的 getMenuTheme）
-const menuThemeConfig = computed(() => {
-  // 深色主题下强制使用深色菜单配置（展示层逻辑）
-  if (isDark?.value === true) {
-    return {
-      background: 'var(--el-bg-color)',
-      systemNameColor: '#BABBBD',
-      rightLineColor: '#EDEEF0',
-    };
-  }
-  
-  // 浅色主题下，根据用户选择的菜单风格类型返回对应的配置
-  const theme = menuThemeType?.value || MenuThemeEnum.DESIGN;
-  const themeConfig = menuStyleList.value.find(item => item.theme === theme);
-  
-  if (themeConfig) {
-    return {
-      background: themeConfig.background,
-      systemNameColor: themeConfig.systemNameColor,
-      rightLineColor: themeConfig.rightLineColor,
-    };
-  }
-  
-  // 默认配置
-  return {
-    background: '#FFFFFF',
-    systemNameColor: 'var(--el-text-color-primary)',
-    rightLineColor: '#EDEEF0',
-  };
-});
-
 interface Props {
   isCollapse?: boolean;
   drawerVisible?: boolean;
 }
 
-const _props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   isCollapse: false,
   drawerVisible: false,
 });
+
+const { isCollapse } = props;
 
 // 搜索框聚焦时的处理（现在不需要做任何事，因为搜索框只在非折叠时显示）
 const handleSearchFocus = () => {
@@ -101,6 +73,9 @@ const handleSearchFocus = () => {
   background-color: transparent;
   // 关键：允许子元素（菜单）在 flex 中正确计算剩余高度
   min-height: 0;
+  // 关键：CSS 优化，减少菜单重绘时的浏览器回流
+  contain: layout paint; // 浏览器优化：仅重绘菜单自身，不影响全局
+  will-change: auto; // 告诉浏览器无需提前优化，避免过度渲染
 
   // 搜索框基础样式
   &__search {

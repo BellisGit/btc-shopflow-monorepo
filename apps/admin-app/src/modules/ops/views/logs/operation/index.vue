@@ -28,8 +28,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onActivated, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import type { TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcTable, BtcPagination, BtcRefreshBtn, BtcRow, BtcFlex1, BtcSearchKey, BtcCrudActions } from '@btc/shared-components';
+import { usePageColumns, getPageConfigFull } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
@@ -128,33 +128,23 @@ function onBeforeRefresh(params: Record<string, unknown>) {
   return params || {};
 }
 
-// 审计日志列配置
-const auditColumns = computed<TableColumn[]>(() => [
-  { label: '操作人', prop: 'username', width: 120 },
-  {
-    label: '操作类型',
-    prop: 'operationType',
-    width: 120,
-    dict: [
-      { label: '查询', value: 'SELECT', type: 'info' },
-      { label: '新增', value: 'INSERT', type: 'success' },
-      { label: '更新', value: 'UPDATE', type: 'warning' },
-      { label: '删除', value: 'DELETE', type: 'danger' }
-    ],
-    dictColor: true
-  },
-  { label: '操作资源', prop: 'tableName', width: 150, showOverflowTooltip: true },
-  { label: 'IP地址', prop: 'ipAddress', width: 120 },
-  { label: '操作描述', prop: 'operationDesc', minWidth: 180, showOverflowTooltip: true },
-  {
-    label: '操作数据',
-    prop: 'beforeData',
-    width: 150,
-    showOverflowTooltip: false,
-    component: { name: 'BtcCodeJson', props: { popover: true, maxLength: 500, popoverTrigger: 'hover', teleported: true, popperStrategy: 'fixed' } }
-  },
-  { prop: 'createdAt', label: '操作时间', width: 170, sortable: true, fixed: 'right' }
-]);
+// 从 config.ts 读取配置
+const { columns: baseAuditColumns } = usePageColumns('ops.logs.operation');
+const pageConfig = getPageConfigFull('ops.logs.operation');
+
+// 审计日志列配置 - 扩展以支持 BtcCodeJson 组件
+const auditColumns = computed(() => {
+  return baseAuditColumns.value.map(col => {
+    // 如果列是 beforeData，添加 BtcCodeJson 组件
+    if (col.prop === 'beforeData') {
+      return {
+        ...col,
+        component: { name: 'BtcCodeJson', props: { popover: true, maxLength: 500, popoverTrigger: 'hover', teleported: true, popperStrategy: 'fixed' } }
+      };
+    }
+    return col;
+  });
+});
 
 // CRUD / 表格引用
 const auditCrudRef = ref();

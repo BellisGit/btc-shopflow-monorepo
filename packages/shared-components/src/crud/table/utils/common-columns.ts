@@ -3,7 +3,7 @@
  */
 
 import type { TableColumn, OpButton } from '../types';
-import { formatDateTimeFriendly } from '@btc/shared-utils';
+import { formatDateTimeFriendly } from '@btc/shared-core/utils';
 
 /**
  * 鍒涘缓鏃堕棿鍒楅厤缃? * 浣跨敤鍚庣鏍囧噯鐨?createdAt 瀛楁

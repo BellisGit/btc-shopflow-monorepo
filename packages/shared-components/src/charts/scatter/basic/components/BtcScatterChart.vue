@@ -4,7 +4,6 @@
       v-if="isContainerReady"
       :key="chartThemeKey"
       :option="chartOption"
-      :theme="chartTheme"
       :autoresize="autoresize"
       :style="{ width: '100%', height: '100%' }"
       @ready="handleChartReady"
@@ -17,7 +16,6 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useScatterChart } from '../composables/useScatterChart';
 import type { ScatterChartProps } from '../../../types/scatter';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<ScatterChartProps>(), {
   height: '300px',
@@ -36,18 +34,17 @@ const props = withDefaults(defineProps<ScatterChartProps>(), {
 });
 
 const chartContainerRef = ref<HTMLElement | null>(null);
-const themeColors = getThemeColors();
 
 const chart = useChartComponent(
   chartContainerRef,
   props,
-  (isDark) => {
-    const { buildOption } = useScatterChart(props, isDark, themeColors);
+  (isDark, themeColors, styleHelpers) => {
+    const { buildOption } = useScatterChart(props, isDark, themeColors, styleHelpers);
     return buildOption();
   }
 );
 
-const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartTheme, chartThemeKey } = chart;
+const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartThemeKey } = chart;
 
 const handleChartReady = () => {
   updateChartInstance();

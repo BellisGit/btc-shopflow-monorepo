@@ -1,10 +1,11 @@
+import { storage } from '@btc/shared-utils';
 import { registerMicroApps, start } from 'qiankun';
 import { microApps } from './apps';
 // 延迟导入 loadingManager 以避免循环依赖
 // import { startLoading, finishLoading, loadingError } from '../utils/loadingManager';
 import { registerTabs, clearTabs, clearTabsExcept, type TabMeta } from '../store/tabRegistry';
 import { registerMenus, clearMenus, clearMenusExcept, getMenusForApp, type MenuItem } from '../store/menuRegistry';
-import { getManifestTabs, getManifestMenus } from './manifests';
+import { getManifestTabs, getManifestMenus } from '@btc/shared-core/manifest';
 import { useProcessStore, getCurrentAppFromPath } from '../store/process';
 import { assignIconsToMenuTree } from '@btc/shared-core';
 
@@ -22,12 +23,18 @@ export function registerManifestTabsForApp(appName: string): Promise<void> {
     return Promise.resolve();
   }
 
-  const normalizedTabs: TabMeta[] = tabs.map((tab) => ({
-    key: tab.key,
-    title: tab.labelKey ?? tab.label ?? tab.path,
-    path: tab.path,
-    i18nKey: tab.labelKey,
-  }));
+  const normalizedTabs: TabMeta[] = tabs.map((tab) => {
+    const result: TabMeta = {
+      key: tab.key,
+      title: tab.labelKey ?? tab.label ?? tab.path,
+      path: tab.path,
+    };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (tab.labelKey !== undefined) {
+      result.i18nKey = tab.labelKey;
+    }
+    return result;
+  });
 
   registerTabs(appName, normalizedTabs);
   return Promise.resolve();
@@ -92,13 +99,15 @@ function normalizeMenuItems(items: any[], appName: string, usedIcons?: Set<strin
   // 在生产环境子域名下，自动移除应用前缀
   const convertToMenuItem = (item: any): MenuItem => {
     const normalizedIndex = normalizeMenuPath(item.index, appName);
+    const labelKey = item.labelKey || item.title || item.label;
     return {
       index: normalizedIndex,
-      title: item.labelKey ?? item.label ?? item.title ?? normalizedIndex,
-    icon: item.icon,
-    children: item.children && item.children.length > 0
-      ? item.children.map(convertToMenuItem)
-      : undefined,
+      title: labelKey ?? normalizedIndex,
+      labelKey: labelKey, // 关键：保存 labelKey 用于面包屑翻译
+      icon: item.icon,
+      children: item.children && item.children.length > 0
+        ? item.children.map(convertToMenuItem)
+        : undefined,
     };
   };
 
@@ -115,6 +124,11 @@ function menusEqual(menus1: MenuItem[], menus2: MenuItem[]): boolean {
   for (let i = 0; i < menus1.length; i++) {
     const item1 = menus1[i];
     const item2 = menus2[i];
+
+    // 如果任一项目为 undefined，不相等
+    if (!item1 || !item2) {
+      return false;
+    }
 
     if (item1.index !== item2.index ||
         item1.title !== item2.title ||
@@ -169,8 +183,7 @@ export function registerManifestMenusForApp(appName: string): Promise<void> {
  */
 function getCurrentLocale(): string {
   // 从统一存储读取，或返回默认值
-  // 注意：locale 暂时保留在 localStorage，因为可能被其他系统使用
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 }
 
 /**
@@ -461,7 +474,7 @@ export function setupQiankun() {
   window.addEventListener('error', async (event) => {
     if (event.message?.includes('application')) {
       const appMatch = event.message.match(/'(\w+)'/);
-      const appName = appMatch ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
+      const appName = appMatch && appMatch[1] ? appNameMap[appMatch[1]] || appMatch[1] : '应用';
       const { loadingError } = await import('../utils/loadingManager');
       loadingError(appName, event.error);
     }

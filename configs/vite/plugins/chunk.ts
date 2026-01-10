@@ -76,6 +76,7 @@ export function chunkVerifyPlugin(): Plugin {
           let match;
           while ((match = importPattern.exec(codeWithoutComments)) !== null) {
             const resourcePath = match[1];
+            if (!resourcePath) continue;
             const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
             if (!referencedFiles.has(resourceFile)) {
               referencedFiles.set(resourceFile, []);
@@ -86,6 +87,7 @@ export function chunkVerifyPlugin(): Plugin {
           const urlPattern = /new\s+URL\s*\(\s*["'](\/?assets\/[^"'`\s]+\.(js|mjs|css))["']/g;
           while ((match = urlPattern.exec(codeWithoutComments)) !== null) {
             const resourcePath = match[1];
+            if (!resourcePath) continue;
             const resourceFile = resourcePath.replace(/^\/?assets\//, 'assets/');
             if (!referencedFiles.has(resourceFile)) {
               referencedFiles.set(resourceFile, []);

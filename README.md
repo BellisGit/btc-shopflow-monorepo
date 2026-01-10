@@ -33,10 +33,12 @@ BTC ShopFlow 是一个完整的供应链管理解决方案，包含以下核心�
 ### 核心技术栈
 
 - **前端框架**: Vue 3 + TypeScript
+- **状态管理**: Pinia + pinia-plugin-persistedstate
 - **微前端**: qiankun
 - **构建工具**: Vite + Turbo
 - **UI 组件**: Element Plus + 自定义组件库
 - **样式方案**: SCSS + UnoCSS
+- **存储方案**: Cookie、LocalStorage、SessionStorage、IndexedDB (Dexie.js)
 - **包管理**: pnpm
 - **代码规范**: ESLint + Prettier + Commitlint
 - **容器化**: Docker + GitHub Container Registry (GHCR)
@@ -57,7 +59,7 @@ btc-shopflow-monorepo/
 │   ├── monitor-app/               # 监控应用
 │   ├── layout-app/                # 布局应用
 │   ├── mobile-app/                # 移动应用
-│   └── docs-site-app/             # 文档站点
+│   └── docs-app/             # 文档站点
 ├── packages/                       # 共享包
 │   ├── shared-components/         # 共享组件库
 │   ├── shared-core/               # 核心功能库
@@ -81,15 +83,119 @@ btc-shopflow-monorepo/
 └── implementation-docs/           # 实现文档
 ```
 
-## ✨ 最近更新 (v1.0.0)
+## 📦 版本历史
 
-- ✅ **分支策略优化**：从 `master` 迁移到 `develop` 作为开发分支，建立 `main`（生产）、`develop`（开发）、`release/*`（发布）三分支体系
+### v1.0.7 (当前版本)
+
+**发布日期**: 2025-01-XX
+
+- ✨ **存储系统重构（核心功能）**：
+  - 引入 `pinia-plugin-persistedstate`，统一管理所有 Pinia Store 持久化
+  - 重组存储工具目录，统一到 `utils/storage/` 下
+  - 重构所有 Store 持久化逻辑，移除手动实现，使用插件自动管理
+  - 重构所有直接使用 `localStorage`/`sessionStorage` 的代码，使用统一工具
+  - 新增 SessionStorage 工具，提供统一的 sessionStorage 操作接口
+  - 新增 IndexedDB 工具（基于 Dexie.js），支持大容量历史数据查询
+    - 默认数据库：`BTCDashboardDB`
+    - 支持时间范围、操作人、类型等多维度筛选
+    - 提供 Vue3 响应式查询支持（`useLiveQuery`）
+    - 适用于可视化看板、数据回收站、错误数据表等场景
+  - 创建完整的存储工具使用文档（Cookie、SessionStorage、IndexedDB）
+- 🐛 **Bug 修复**：
+  - 修复应用切换和路由渲染问题
+  - 修复子应用 loading 不停止问题
+  - 修复管理应用菜单切换卡顿闪烁问题
+  - 修复生产环境子应用内容挂载失败问题
+  - 修复子应用登录跳转逻辑，统一跳转到主域名登录页
+  - 修复 Jenkins 构建时 rollup.config 导入路径解析问题
+  - 修复全量构建中共享依赖包链接问题
+  - 修复 Docker 检测逻辑，添加 Docker socket 检查
+- 🚀 **功能增强**：
+  - 为所有子应用添加 keep-alive 路由持久化
+  - 优化 Jenkins 构建配置，添加 Poll SCM 自动触发器
+  - 添加 CDN 加速参数支持，默认启用 CDN 加速
+  - 更新 Jenkinsfile.all-apps 支持并行部署 10 个应用
+- 📝 **代码优化**：
+  - 统一存储工具 API，保持一致的接口设计
+  - 优化错误处理和日志记录
+  - 提供向后兼容的导入路径
+
+### v1.0.6
+
+**发布日期**: 2025-01-XX
+
+- ✨ **加载样式系统优化**：
+  - 优化偏好设置中的加载样式选项卡，使其与按钮风格选项卡样式一致（外边框和文本选中激活，无额外背景）
+  - 修复彩色圆圈加载样式预览问题，确保预览与实际加载样式一致
+  - 优化四个圆点加载样式，实现渐变彩色效果（蓝→绿→橙→红循环）
+  - 将彩色渐变效果应用到实际的应用级 loading 中
+- 🎨 **应用级加载体验优化**：
+  - 修复应用级加载显示问题，确保正确显示模块名称
+  - 为子应用加载添加副标题支持
+  - 优化彩色旋转圆圈样式，添加颜色变化动画
+  - 修复通过汉堡菜单切换应用时的白屏和空加载问题
+- 🐛 **Bug 修复**：
+  - 修复加载样式设置功能缺失问题（`setLoadingStyle` 函数）
+  - 修复 SVG 样式在 Vue 模板中的兼容性问题
+  - 移除调试日志，优化代码质量
+
+### v1.0.5
+
+**发布日期**: 2025-12-27
+
+- ✅ **版本发布准备**：准备 v1.0.5 版本发布
+
+### v1.0.4
+
+**发布日期**: 2025-12-23
+
+- ✅ **盘点票打印功能增强**：添加盘点票打印范围选择功能，支持默认1-50范围并自动递增
+- ✅ **图表组件优化**：移除图表示例的tooltip并改进清理逻辑
+- ✅ **全局搜索组件优化**：删除全局搜索组件中的调试样式和调试代码
+
+### v1.0.3
+
+**发布日期**: 2025-12-20
+
+- ✅ **图表组件优化**：优化图表组件布局和渲染逻辑
+- ✅ **盘点票打印逻辑优化**：拆分生产和非生产盘点票打印逻辑，优化非生产域打印样式
+- ✅ **财务应用修复**：修复财务应用盘点结果表页面加载时未自动获取数据的问题
+- ✅ **应用中心菜单优化**：优化应用中心菜单抽屉样式并修复生产环境白屏问题
+- ✅ **构建依赖修复**：修复健康检查和构建依赖问题
+
+### v1.0.2
+
+**发布日期**: 2025-12-19
+
+- ✅ **库存盘点页面优化**：优化库存盘点页面并修复样式问题
+- ✅ **Jenkins 部署支持**：添加 PowerShell 脚本自动创建 Jenkins 任务，添加 Jenkins 部署策略和模板
+- ✅ **构建部署简化**：重构构建和部署流程，使用 build-dist:all 简化操作
+- ✅ **Windows 支持**：为 Jenkins 流水线添加 Windows 支持
+- ✅ **表格固定列修复**：修复表格固定列层级遮挡问题，使用样式穿透和背景色设置确保固定列正确显示
+- ✅ **子应用标签栏修复**：修复子应用标签栏刷新问题和 501 错误处理
+
+### v1.0.1
+
+**发布日期**: 2025-12-18
+
+- ✅ **表格固定列修复**：修复子应用表格固定列背景透明问题
+- ✅ **表格固定列层级优化**：使用样式穿透和背景色设置确保固定列正确显示
+
+### v1.0.0
+
+**发布日期**: 2025-12-18
+
+- ✅ **项目初始化**：建立 monorepo 项目结构
+- ✅ **核心应用开发**：完成 system-app、admin-app、logistics-app 等核心应用
+- ✅ **基础组件库**：建立基础组件库，包含表格、表单、CRUD 等常用组件
 - ✅ **系统域流程确认功能**：实现流程确认功能，支持状态标签渲染和操作列确认按钮
-- ✅ **统一使用 `repository_dispatch` 触发部署工作流**：优化 CI/CD 流程
-- ✅ **完善了 GitHub Actions CI/CD 工作流**：支持多应用独立部署
-- ✅ **支持本地构建并自动触发远程部署**：简化部署流程
-- ✅ **EPS 系统优化**：自动生成类型定义和服务方法
-- ✅ **组件库增强**：新增 BtcTableGroup、BtcMasterList 等复合组件
+- ✅ **多语言支持**：实现中英文多语言切换
+- ✅ **主题系统**：实现亮色/暗色主题切换
+- ✅ **开发工具链**：配置 ESLint、Prettier、Commitlint 等开发工具
+
+## ✨ 最近更新
+
+查看最新版本更新，请参考 [版本历史](#-版本历史) 部分。
 
 ## 🚀 快速开始
 
@@ -109,21 +215,17 @@ pnpm install
 ### 开发模式
 
 ```bash
-# 启动所有应用开发服务器
+# 启动默认应用开发服务器（使用 apps.config.json 中的 defaultDevApps）
 pnpm dev
 
-# 或启动所有应用（包含依赖构建）
+# 启动所有应用开发服务器
 pnpm dev:all
 
-# 启动特定应用
-pnpm dev:system      # 系统应用
-pnpm dev:admin       # 管理应用
-pnpm dev:logistics   # 物流应用
-pnpm dev:production  # 生产应用
-pnpm dev:quality     # 品质应用
-pnpm dev:engineering # 工程应用
-pnpm dev:finance     # 财务应用
-pnpm dev:docs        # 文档站点
+# 启动特定应用（使用参数化脚本）
+pnpm dev:app --app=system-app    # 系统应用
+pnpm dev:app --app=admin-app     # 管理应用
+pnpm dev:app --app=logistics-app # 物流应用
+# ... 其他应用类似
 ```
 
 ### 构建项目
@@ -132,11 +234,27 @@ pnpm dev:docs        # 文档站点
 # 构建所有应用
 pnpm build:all
 
-# 构建特定应用
-pnpm build:system
-pnpm build:admin
-pnpm build:logistics
+# 构建特定应用（使用参数化脚本）
+pnpm build:app --app=system-app
+pnpm build:app --app=admin-app
+pnpm build:app --app=logistics-app
 # ... 其他应用类似
+```
+
+### 预览构建结果
+
+```bash
+# 预览所有应用
+pnpm preview:all
+
+# 预览特定应用
+pnpm preview:app --app=system-app
+
+# 构建并预览（单个应用）
+pnpm build-preview:app --app=system-app
+
+# 构建并预览（所有应用）
+pnpm build-preview:all
 ```
 
 ## 🚢 部署
@@ -146,25 +264,26 @@ pnpm build:logistics
 项目支持在本地构建 Docker 镜像并自动触发 GitHub Actions 进行远程部署：
 
 ```bash
-# 构建并部署系统应用
-pnpm build-deploy:system
-
-# 构建并部署其他应用
-pnpm build-deploy:admin
-pnpm build-deploy:logistics
-pnpm build-deploy:quality
-pnpm build-deploy:production
-pnpm build-deploy:engineering
-pnpm build-deploy:finance
-pnpm build-deploy:mobile
+# 构建并部署应用（使用参数化脚本）
+pnpm build-deploy:app --app=system-app
+pnpm build-deploy:app --app=admin-app
+pnpm build-deploy:app --app=logistics-app
+# ... 其他应用类似
 
 # 部署所有应用
 pnpm deploy:all
 
+# 部署特定应用
+pnpm deploy:app --app=system-app
+
+# 部署静态资源
+pnpm deploy:static:app --app=system-app
+pnpm deploy:static:all
+
 # Kubernetes 部署（增量部署）
 pnpm build-deploy:k8s              # 自动检测变更的应用
 pnpm build-deploy:k8s:all          # 部署所有应用
-pnpm build-deploy:k8s:system       # 部署特定应用
+pnpm build-deploy:k8s:app --app=system-app  # 部署特定应用
 ```
 
 ### 部署流程
@@ -200,7 +319,9 @@ pnpm build-deploy:k8s:system       # 部署特定应用
 ### 共享包
 
 - **@btc/shared-components**: 通用组件库，包含表格、表单、CRUD、图表等组件
-- **@btc/shared-core**: 核心功能库，包含 CRUD 逻辑、服务管理、插件系统等
+- **@btc/shared-core**: 核心功能库，包含 CRUD 逻辑、服务管理、插件系统、存储工具等
+  - **存储工具**: 统一的 Cookie、LocalStorage、SessionStorage、IndexedDB 工具
+  - **Pinia 持久化**: 基于 `pinia-plugin-persistedstate` 的统一持久化配置
 - **@btc/shared-utils**: 工具函数库，包含数组、日期、格式化、验证等工具函数
 - **@btc/vite-plugin**: 自定义 Vite 插件，支持 SVG 处理、EPS 自动生成、虚拟模块等
 - **@btc/subapp-manifests**: 子应用清单配置
@@ -215,7 +336,7 @@ pnpm build-deploy:k8s:system       # 部署特定应用
 - **engineering-app**: 工程管理应用
 - **finance-app**: 财务管理应用
 - **mobile-app**: 移动端应用（支持 Capacitor）
-- **docs-site-app**: 文档站点，包含项目文档和组件库文档
+- **docs-app**: 文档站点，包含项目文档和组件库文档
 
 ## 🌿 分支策略
 
@@ -256,14 +377,23 @@ develop (开发) → release/* (测试) → main (生产)
 项目使用 ESLint + Prettier 进行代码格式化，使用 Commitlint 规范提交信息。
 
 ```bash
-# 代码检查
+# 代码检查（所有应用）
 pnpm lint
+
+# 代码检查（特定应用）
+pnpm lint:app --app=system-app
+
+# 自动修复代码问题
+pnpm lint:fix --app=system-app
 
 # 代码格式化
 pnpm format
 
-# 类型检查
+# 类型检查（所有应用）
 pnpm type-check
+
+# 类型检查（特定应用）
+pnpm type-check:app --app=system-app
 
 # 检查循环依赖
 pnpm check:circular
@@ -356,13 +486,24 @@ pnpm test:ci
 
 ## 📚 文档
 
+### 部署文档
+
+- [Jenkins 配置指南](./docs/JENKINS_SETUP.md) - Jenkins 自动化部署完整配置
+- [Jenkins 快速开始](./jenkins/quick-start.md) - 5 分钟快速配置 Jenkins
+- [Jenkins Credentials 配置](./jenkins/credentials-setup.md) - 凭证配置详细说明
+- [静态部署指南](./docs/STATIC_DEPLOYMENT.md) - 静态文件部署说明
+- [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md) - Kubernetes 部署指南
+- [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md) - GitHub Actions K8s 配置
+
+### 开发文档
+
 - [架构设计文档](./implementation-docs/)
-- [组件文档](./apps/docs-site-app/)
-- [部署文档](./apps/docs-site-app/guides/deployment/)
-  - [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
-  - [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
-  - [静态部署](./apps/docs-site-app/guides/deployment/static-deployment.md)
-  - [子域名代理配置](./apps/docs-site-app/guides/deployment/nginx-subdomain-proxy.md)
+- [组件文档](./apps/docs-app/)
+- [脚本使用指南](./docs/SCRIPTS_USAGE.md)
+- [版本发布指南](./docs/VERSION_RELEASE_GUIDE.md)
+- [部署文档](./apps/docs-app/guides/deployment/)
+  - [静态部署](./apps/docs-app/guides/deployment/static-deployment.md)
+  - [子域名代理配置](./apps/docs-app/guides/deployment/nginx-subdomain-proxy.md)
 
 ## 🤝 贡献指南
 
@@ -374,11 +515,31 @@ pnpm test:ci
 
 ### 版本发布流程
 
+#### 使用自动化脚本（推荐）
+
+```bash
+# 发布新版本（例如 1.0.0）
+pnpm release 1.0.0
+```
+
+脚本会自动执行完整的 Git Flow 流程：
+1. 从 `develop` 创建 `release/v1.x.x` 分支
+2. 在 release 分支进行发布准备（修复bug、更新版本号等）
+3. 合并 release 到 `main` 分支并打标签
+4. 合并 release 回 `develop` 分支
+5. 删除临时 release 分支
+6. 推送所有更改到远程
+
+#### 手动发布流程
+
 1. **创建 Release 分支**：从 `develop` 创建 `release/v1.x.x` 分支
 2. **测试和修复**：在 release 分支上进行测试和 bug 修复
 3. **合并到 main**：测试通过后合并到 `main` 分支
 4. **打标签**：在 `main` 分支上打版本标签（如 `v1.0.0`）
-5. **推送标签**：将标签推送到远程仓库
+5. **合并回 develop**：将 release 分支合并回 `develop`
+6. **推送标签**：将标签和分支推送到远程仓库
+
+详细说明请参考：[版本发布指南](./docs/VERSION_RELEASE_GUIDE.md)
 
 ## 📄 许可证
 

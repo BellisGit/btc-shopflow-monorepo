@@ -29,14 +29,10 @@
       </header>
 
       <div class="btc-transfer-drawer__content">
-        <el-splitter class="btc-transfer-drawer__splitter" layout="vertical">
-          <el-splitter-panel
+        <div class="btc-transfer-drawer__splitter">
+          <div
             v-for="section in normalizedSections"
             :key="section.key"
-            :size="50"
-            :min="10"
-            :max="90"
-            :resizable="false"
             class="btc-transfer-drawer__panel"
             :class="{ 'is-expanded': isExpanded(section.key), 'is-collapsed': !isExpanded(section.key) }"
           >
@@ -76,8 +72,8 @@
                 </template>
               </BtcTransferPanel>
             </div>
-          </el-splitter-panel>
-        </el-splitter>
+          </div>
+        </div>
       </div>
 
       <footer class="btc-transfer-drawer__footer">
@@ -94,7 +90,6 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
-import { ElSplitter, ElSplitterPanel } from 'element-plus';
 import BtcSvg from '../../others/btc-svg/index.vue';
 import BtcTransferPanel from '../btc-transfer-panel/index.vue';
 import type { TransferKey, TransferPanelChangePayload } from '../btc-transfer-panel/types';

@@ -181,6 +181,13 @@ REPO_DISPATCH_BODY=$(echo "$REPO_DISPATCH_RESPONSE" | sed '$d')
     log_info "  - engineering-app"
     log_info "  - finance-app"
     log_info "  - mobile-app"
+    log_info ""
+    log_warning "注意：以下应用未包含在并行工作流中："
+    log_info "  - operations-app（需要添加到工作流）"
+    log_info "  - dashboard-app（需要添加到工作流）"
+    log_info "  - personnel-app（需要添加到工作流）"
+    log_info "  - layout-app（使用静态文件部署）"
+    log_info "  - docs-app（文档站点，静态部署）"
             log_info ""
     log_info "每个应用构建完成后立即部署，互不等待"
             exit 0

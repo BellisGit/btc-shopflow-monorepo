@@ -1,0 +1,5 @@
+﻿
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\engineering-app\src\main.ts: line 104, col 32, Error - Using Chinese characters: '工程模块' (i18n/no-chinese-character)
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\engineering-app\src\main.ts: line 117, col 32, Error - Using Chinese characters: '工程模块' (i18n/no-chinese-character)
+
+

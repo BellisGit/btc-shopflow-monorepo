@@ -1,6 +1,6 @@
 <template>
-  <!-- Popover 模式（消息、通知） -->
-  <el-popover
+  <!-- Popover 模式（消息、通知） - 暂时禁用，避免 getBoundingClientRect 错误 -->
+  <!-- <el-popover
     v-if="config.popover"
     v-model:visible="popoverVisible"
     :placement="config.popover.placement || 'bottom-end'"
@@ -17,7 +17,17 @@
       v-if="popoverVisible"
       @close="handlePopoverClose"
     />
-  </el-popover>
+  </el-popover> -->
+  <!-- 临时替代方案：直接显示组件内容 -->
+  <div v-if="config.popover" @click="popoverVisible = !popoverVisible">
+    <IconButtonInner :config="config" />
+    <div v-if="popoverVisible" class="btc-icon-button__popover-fallback">
+      <component
+        :is="config.popover.component"
+        @close="handlePopoverClose"
+      />
+    </div>
+  </div>
 
   <!-- Dropdown 模式（关闭其他标签页） -->
   <el-dropdown

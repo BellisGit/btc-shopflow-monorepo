@@ -1,6 +1,6 @@
 <template>
   <div class="logistics-procurement-auxiliary">
-    <el-empty :description="t('logistics.placeholder.procurementAux')" />
+    <el-empty :description="t('page.procurement.placeholder.auxiliary')" />
   </div>
 </template>
 

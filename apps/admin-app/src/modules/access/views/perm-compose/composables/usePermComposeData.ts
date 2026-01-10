@@ -1,9 +1,12 @@
-﻿import { ref, watch } from 'vue';
+import { storage } from '@btc/shared-utils';
+import { ref, watch } from 'vue';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 权限组合数据管理
  */
 export function usePermComposeData() {
+  const { t } = useI18n();
   const resourceTree = ref<any[]>([]);
   const actions = ref<any[]>([]);
   const composedPermissions = ref<any[]>([]);
@@ -33,69 +36,69 @@ export function usePermComposeData() {
   });
   
   const loadData = async () => {
-    const resourcesRaw = localStorage.getItem('btc_mock_btc_resources');
-    const actionsRaw = localStorage.getItem('btc_mock_btc_actions');
+    const resourcesRaw = storage.get<any>('btc_mock_btc_resources');
+    const actionsRaw = storage.get<any>('btc_mock_btc_actions');
     
     if (resourcesRaw) {
-      resourceTree.value = JSON.parse(resourcesRaw);
+      resourceTree.value = resourcesRaw;
     } else {
       resourceTree.value = [
         {
           id: 1,
-          resourceNameCn: '用户管理',
+          resourceNameCn: t('menu.org.users'),
           resourceCode: 'user',
-          resourceType: '菜单',
+          resourceType: t('common.menu'),
           supportedActions: [1, 2, 3, 4],
           children: [
-            { id: 11, resourceNameCn: '用户列表', resourceCode: 'user.list', resourceType: '菜单', supportedActions: [1, 2, 3, 4] },
-            { id: 12, resourceNameCn: '用户详情', resourceCode: 'user.detail', resourceType: '菜单', supportedActions: [1] },
+            { id: 11, resourceNameCn: t('menu.org.users'), resourceCode: 'user.list', resourceType: t('common.menu'), supportedActions: [1, 2, 3, 4] },
+            { id: 12, resourceNameCn: t('menu.org.user_detail'), resourceCode: 'user.detail', resourceType: t('common.menu'), supportedActions: [1] },
           ]
         },
         {
           id: 2,
-          resourceNameCn: '角色管理',
+          resourceNameCn: t('menu.access.roles'),
           resourceCode: 'role',
-          resourceType: '菜单',
+          resourceType: t('common.menu'),
           supportedActions: [1, 2, 3, 4],
           children: [
-            { id: 21, resourceNameCn: '角色列表', resourceCode: 'role.list', resourceType: '菜单', supportedActions: [1, 2, 3, 4] },
-            { id: 22, resourceNameCn: '角色分配', resourceCode: 'role.assign', resourceType: '菜单', supportedActions: [1, 4] },
+            { id: 21, resourceNameCn: t('menu.access.roles'), resourceCode: 'role.list', resourceType: t('common.menu'), supportedActions: [1, 2, 3, 4] },
+            { id: 22, resourceNameCn: t('menu.access.role_assign'), resourceCode: 'role.assign', resourceType: t('common.menu'), supportedActions: [1, 4] },
           ]
         },
         {
           id: 3,
-          resourceNameCn: '部门管理',
+          resourceNameCn: t('menu.org.departments'),
           resourceCode: 'department',
-          resourceType: '菜单',
+          resourceType: t('common.menu'),
           supportedActions: [1, 2, 3, 4],
           children: [
-            { id: 31, resourceNameCn: '部门列表', resourceCode: 'dept.list', resourceType: '菜单', supportedActions: [1, 2, 3, 4] },
+            { id: 31, resourceNameCn: t('menu.org.departments'), resourceCode: 'dept.list', resourceType: t('common.menu'), supportedActions: [1, 2, 3, 4] },
           ]
         },
         {
           id: 4,
-          resourceNameCn: '系统设置',
+          resourceNameCn: t('menu.system_settings'),
           resourceCode: 'system',
-          resourceType: '菜单',
+          resourceType: t('common.menu'),
           supportedActions: [1, 2],
           children: [
-            { id: 41, resourceNameCn: '系统配置', resourceCode: 'system.config', resourceType: '菜单', supportedActions: [1, 2] },
+            { id: 41, resourceNameCn: t('menu.system_config'), resourceCode: 'system.config', resourceType: t('common.menu'), supportedActions: [1, 2] },
           ]
         },
       ];
-      localStorage.setItem('btc_mock_btc_resources', JSON.stringify(resourceTree.value));
+      storage.set('btc_mock_btc_resources', resourceTree.value);
     }
     
     if (actionsRaw) {
-      actions.value = JSON.parse(actionsRaw);
+      actions.value = actionsRaw;
     } else {
       actions.value = [
-        { id: 1, actionNameCn: '查看', actionCode: 'view', httpMethod: 'GET' },
-        { id: 2, actionNameCn: '编辑', actionCode: 'edit', httpMethod: 'PUT' },
-        { id: 3, actionNameCn: '删除', actionCode: 'delete', httpMethod: 'DELETE' },
-        { id: 4, actionNameCn: '新增', actionCode: 'create', httpMethod: 'POST' },
+        { id: 1, actionNameCn: t('menu.view'), actionCode: 'view', httpMethod: 'GET' },
+        { id: 2, actionNameCn: t('menu.edit'), actionCode: 'edit', httpMethod: 'PUT' },
+        { id: 3, actionNameCn: t('menu.delete'), actionCode: 'delete', httpMethod: 'DELETE' },
+        { id: 4, actionNameCn: t('menu.add'), actionCode: 'create', httpMethod: 'POST' },
       ];
-      localStorage.setItem('btc_mock_btc_actions', JSON.stringify(actions.value));
+      storage.set('btc_mock_btc_actions', actions.value);
     }
   };
   

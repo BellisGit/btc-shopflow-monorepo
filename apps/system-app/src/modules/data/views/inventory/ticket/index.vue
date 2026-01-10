@@ -6,8 +6,8 @@
       :right-service="wrappedTicketService"
       :table-columns="ticketColumns"
       :form-items="ticketFormItems"
-      :left-title="t('inventory.dataSource.domain')"
-      :right-title="t('menu.inventory.dataSource.ticket')"
+      :left-title="t('inventory.data_source.domain')"
+      :right-title="t('menu.inventory.data_source.ticket')"
       :show-unassigned="false"
       :enable-key-search="false"
       :show-search-key="false"
@@ -19,7 +19,7 @@
       <template #add-btn>
         <BtcImportBtn
           :on-submit="handleImport"
-          :tips="t('inventory.dataSource.ticket.import.tips')"
+          :tips="t('inventory.data_source.ticket.import.tips')"
         />
       </template>
       <template #actions>
@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, computed, provide } from 'vue';
 import { useMessage } from '@/utils/use-message';
-import { useI18n, exportJsonToExcel } from '@btc/shared-core';
+import { useI18n, exportJsonToExcel, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import { formatDateTime } from '@btc/shared-utils';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcImportBtn, IMPORT_FILENAME_KEY, IMPORT_FORBIDDEN_KEYWORDS_KEY, BtcMessage } from '@btc/shared-components';
@@ -53,7 +53,7 @@ const selectedDomain = ref<any>(null);
 const exportLoading = ref(false);
 
 // 统一导出/导入文件名
-const exportFilename = computed(() => t('menu.inventory.dataSource.ticket'));
+const exportFilename = computed(() => t('menu.inventory.data_source.ticket'));
 
 // 不强制要求文件名匹配（允许任意文件名，只要不包含禁止关键词即可）
 // provide(IMPORT_FILENAME_KEY, exportFilename); // 注释掉，不强制文件名匹配
@@ -68,7 +68,7 @@ const domainService = {
 
       // 处理响应数据，支持多种数据结构
       let list: any[] = [];
-      
+
       if (Array.isArray(response)) {
         // 直接返回数组
         list = response;
@@ -91,7 +91,7 @@ const domainService = {
       const domainMap = new Map<string, any>();
       list.forEach((item: any) => {
         if (!item || typeof item !== 'object') return;
-        
+
         const domainId = item.domianId || item.domainId; // 兼容拼写错误
         if (domainId && !domainMap.has(domainId)) {
           domainMap.set(domainId, {
@@ -177,7 +177,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
   try {
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.dataSource.domain.selectRequired') || '请先选择左侧域');
+      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
       done();
       return;
     }
@@ -189,7 +189,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
     if (!rows.length) {
       const warnMessage = data?.filename
         ? t('common.import.no_data_or_mapping')
-        : t('inventory.dataSource.ticket.import.no_file');
+        : t('inventory.data_source.ticket.import.no_file');
       message.warning(warnMessage);
       done();
       return;
@@ -211,7 +211,7 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
 
     const response = await service.logistics?.warehouse?.ticket?.import?.(payload);
 
-    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导入失败
+    // 检查响应中的 code 字段，如果 code 不是 200，说明导入失败
     let responseData: any = response;
     if (response && typeof response === 'object' && 'data' in response) {
       responseData = (response as any).data;
@@ -219,20 +219,19 @@ const handleImport = async (data: any, { done, close }: { done: () => void; clos
 
     if (responseData && typeof responseData === 'object' && 'code' in responseData) {
       const code = responseData.code;
-      if (code !== 200 && code !== 1000 && code !== 2000) {
-        const errorMsg = responseData.msg || responseData.message || t('inventory.dataSource.ticket.import.failed');
+      if (code !== 200) {
+        const errorMsg = responseData.msg || responseData.message || t('inventory.data_source.ticket.import.failed');
         message.error(errorMsg);
         done();
         return;
       }
     }
 
-    message.success(t('inventory.dataSource.ticket.import.success'));
+    message.success(t('inventory.data_source.ticket.import.success'));
     tableGroupRef.value?.crudRef?.refresh?.();
     close();
   } catch (error: any) {
-    console.error('[InventoryTicket] import failed:', error);
-    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.dataSource.ticket.import.failed');
+    const errorMsg = error?.response?.data?.msg || error?.msg || error?.message || t('inventory.data_source.ticket.import.failed');
     message.error(errorMsg);
     done();
   }
@@ -251,19 +250,25 @@ const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: 
   }
 };
 
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('data.inventory.ticket');
+const { formItems } = usePageForms('data.inventory.ticket');
+const pageConfig = getPageConfigFull('data.inventory.ticket');
+
 // 盘点票表格列（不包含盘点类型）
-const ticketColumns = computed<TableColumn[]>(() => [
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140 },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120 },
-  { prop: 'createdAt', label: t('system.inventory.base.fields.createdAt'), width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const ticketColumns = computed(() => {
+  return baseColumns.value.map(col => {
+    if (col.prop === 'createdAt') {
+      return { ...col, formatter: formatDateCell };
+    }
+    return col;
+  });
+});
 
 // 导出用的列（不包含时间字段和盘点类型字段）
-const ticketExportColumns = computed<TableColumn[]>(() => [
-  { prop: 'partName', label: t('system.material.fields.materialCode') },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation') },
-]);
+const { columns: exportColumns } = usePageColumns('data.inventory.ticket.export');
+const ticketExportColumns = computed(() => exportColumns.value);
 
 // 直接导出（使用后端导出接口，返回 JSON 数据，前端生成 Excel）
 const handleExport = async () => {
@@ -277,42 +282,63 @@ const handleExport = async () => {
   try {
     // 获取当前筛选参数
     const params = tableGroupRef.value?.crudRef?.getParams?.() || {};
-    
+
     // 获取当前选中的域 ID
     const domainId = resolveSelectedDomainId();
-    
-    // 构建导出参数（与导入保持一致）
+
+    // 构建导出参数：将 domainId 放在 keyword 对象内部
     const exportParams = {
-      domainId,
-      keyword: params.keyword || {},
-      ...params,
+      keyword: {
+        ...(params.keyword || {}),
+        domainId,
+      },
+      page: params.page,
+      size: params.size,
+      order: params.order,
+      sort: params.sort,
     };
 
     // 调用后端导出接口，返回 JSON 数据
     const response = await service.logistics.warehouse.ticket.export(exportParams);
-    
-    // 处理响应数据
+
+    // 检查响应中的 code 字段，如果 code 不是 200/1000/2000，说明导出失败
+    if (response && typeof response === 'object' && 'code' in response) {
+      const code = response.code;
+      if (code !== 200 && code !== 1000 && code !== 2000) {
+        // 导出失败，显示错误信息，不生成文件
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败';
+        BtcMessage.error(errorMsg);
+        return;
+      }
+    }
+
+    // 处理响应数据：只有当 code 为 200 且 data 为数组时才允许导出
     let dataList: any[] = [];
     if (response && typeof response === 'object') {
       if ('data' in response && Array.isArray(response.data)) {
         dataList = response.data;
       } else if (Array.isArray(response)) {
         dataList = response;
+      } else if ('data' in response && !Array.isArray(response.data)) {
+        // data 存在但不是数组，说明导出失败
+        const errorMsg = response.msg || t('platform.common.export_failed') || '导出失败：数据格式不正确';
+        BtcMessage.error(errorMsg);
+        return;
       }
     }
-    
+
     // 准备导出数据（即使为空也生成 Excel，只有表头）
     const exportColumns = ticketExportColumns.value;
-    const header = exportColumns.map(col => col.label || col.prop);
-    const data = dataList && dataList.length > 0 
+    const header = exportColumns.map(col => col.label || col.prop || '');
+    const data = dataList && dataList.length > 0
       ? dataList.map(item => {
           return exportColumns.map(col => {
-            const value = item[col.prop];
+            const value = col.prop ? item[col.prop] : undefined;
             return value ?? '';
           });
         })
       : []; // 空数据时，data 为空数组，只保留表头
-    
+
     // 使用 exportJsonToExcel 生成并下载 Excel 文件
     exportJsonToExcel({
       header,
@@ -321,7 +347,7 @@ const handleExport = async () => {
       autoWidth: true,
       bookType: 'xlsx',
     });
-    
+
     BtcMessage.success(t('platform.common.export_success'));
   } catch (error: any) {
     console.error('[InventoryTicket] Export failed:', error);
@@ -332,13 +358,8 @@ const handleExport = async () => {
   }
 };
 
-// 盘点票表单
-const ticketFormItems = computed<FormItem[]>(() => [
-  { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'partName', label: t('system.material.fields.materialCode'), span: 12, component: { name: 'el-input' }, required: true },
-  { prop: 'position', label: t('inventory.result.fields.storageLocation'), span: 12, component: { name: 'el-input' } },
-  { prop: 'checkType', label: t('system.inventory.base.fields.checkType'), span: 12, component: { name: 'el-input' } },
-]);
+// 盘点票表单（使用 config.ts 中的配置）
+const ticketFormItems = computed(() => formItems.value);
 
 // 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>

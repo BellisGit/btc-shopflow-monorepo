@@ -1,0 +1,31 @@
+﻿=== btc-shopflow-monorepo ESLint 国际化错误统计报告 ===
+生成时间: 2026-01-07 16:43:09
+
+总错误数: 3785
+
+=== 按应用分类 ===
+system-app: 524
+main-app: 451
+docs-app: 387
+mobile-app: 171
+quality-app: 139
+logistics-app: 73
+home-app: 40
+operations-app: 31
+admin-app: 28
+personnel-app: 23
+finance-app: 15
+dashboard-app: 10
+layout-app: 4
+engineering-app: 2
+production-app: 2
+
+=== 按包分类 ===
+shared-core: 706
+shared-components: 517
+vite-plugin: 94
+shared-router: 1
+
+=== 按文件类型 ===
+TypeScript: 2640
+Vue: 1063

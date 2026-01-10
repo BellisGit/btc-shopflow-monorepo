@@ -655,10 +655,10 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             margin: 0 auto;
           }
           .barcode canvas {
-            width: 21.2mm !important;
-            height: 21.2mm !important;
-            max-width: 21.2mm !important;
-            max-height: 21.2mm !important;
+            width: 23mm !important;
+            height: 23mm !important;
+            max-width: 23mm !important;
+            max-height: 23mm !important;
             aspect-ratio: 1 / 1;
             object-fit: contain;
             display: block;
@@ -673,7 +673,7 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             height: 100%;
           }
           .barcode > div > div {
-            font-size: 9px;
+            font-size: 12px;
             margin-top: 1px;
             line-height: 1.2;
           }
@@ -687,7 +687,7 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             margin-top: 0;
             margin-bottom: 0;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 18px;
           }
 
           /* 控制内容部分的样式 */
@@ -711,18 +711,18 @@ function buildPrintHTML(content: string, useProductionScan: boolean): string {
             text-align: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 16px;
           }
 
           /* 所有文字元素加粗 */
           .t-line > div {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 16px;
           }
 
           .t-title > div {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 18px;
           }
         </style>
       </head>

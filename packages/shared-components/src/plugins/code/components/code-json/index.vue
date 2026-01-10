@@ -4,7 +4,7 @@
 		<el-popover
 			width="auto"
 			placement="right"
-			popper-class="btc-code-json__popper"
+			:popper-class="popperClassComputed"
 			effect="dark"
 			:trigger="popoverTrigger"
 			:teleported="teleported"
@@ -28,7 +28,7 @@
 </div>
 </template>
 
-<script lang="tsx" setup>
+<script lang="ts" setup>
 defineOptions({
 	name: 'BtcCodeJson'
 });
@@ -75,6 +75,9 @@ const props = defineProps({
 
 // 获取值，兼容 content 和 modelValue
 const value = computed(() => props.modelValue || props.content);
+
+// popper-class 计算属性，解决类型问题
+const popperClassComputed = computed(() => 'btc-code-json__popper' as any);
 
 // 复制功能 - 使用更可靠的方法
 const copyToClipboard = async (text: string) => {
@@ -166,12 +169,12 @@ const viewer = defineComponent({
 				h('div', { class: 'btc-code-json__op' }, [
 					fullContent.value && fullContent.value != '{}' &&
 						h(
-							ElButton,
+							ElButton as any,
 							{
 								type: 'success',
 								size: 'small',
 								onClick: toCopy
-							},
+							} as any,
 							{ default: () => '复制' }
 						),
 					slots.op && slots.op()

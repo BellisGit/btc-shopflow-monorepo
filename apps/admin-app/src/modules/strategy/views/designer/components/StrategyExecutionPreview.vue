@@ -175,6 +175,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import {
   Refresh,
@@ -206,6 +207,8 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   close: [];
 }>();
+
+const { t } = useI18n();
 
 // 响应式数据
 const isExecuting = ref(false);
@@ -294,12 +297,12 @@ const resetPreview = () => {
   nodeResults.value.clear();
   executionLogs.value = [];
 
-  addLog('info', '预览已重置');
+  addLog('info', t('common.strategy.designer.execution_preview.reset'));
 };
 
 const startPreview = async () => {
   if (props.orchestration.nodes.length === 0) {
-    BtcMessage.warning('请先添加节点');
+    BtcMessage.warning(t('common.strategy.designer.execution_preview.add_nodes_first'));
     return;
   }
 
@@ -307,19 +310,19 @@ const startPreview = async () => {
     const inputData = JSON.parse(configForm.value.inputData);
     await executeOrchestration(inputData);
   } catch (error) {
-    BtcMessage.error('输入数据格式错误，请输入有效的JSON');
+    BtcMessage.error(t('common.strategy.designer.execution_preview.invalid_input_json'));
   }
 };
 
 const executeOrchestration = async (inputData: any) => {
   isExecuting.value = true;
-  addLog('info', '开始执行策略编排');
+  addLog('info', t('common.strategy.designer.execution_preview.start_execution'));
 
   try {
     // 找到开始节点
     const startNodes = props.orchestration.nodes.filter(n => n.type === 'START');
     if (startNodes.length === 0) {
-      throw new Error('未找到开始节点');
+      throw new Error(t('common.strategy.designer.execution_preview.start_node_not_found'));
     }
 
     // 从开始节点开始执行
@@ -327,9 +330,9 @@ const executeOrchestration = async (inputData: any) => {
       await executeNode(startNode, inputData);
     }
 
-    addLog('success', '策略执行完成');
+    addLog('success', t('common.strategy.designer.execution_preview.execution_completed'));
   } catch (error) {
-    addLog('error', `策略执行失败: ${error}`);
+    addLog('error', `${t('common.strategy.designer.execution_preview.execution_failed')}: ${error}`);
   } finally {
     isExecuting.value = false;
     currentExecutingNode.value = '';
@@ -338,7 +341,7 @@ const executeOrchestration = async (inputData: any) => {
 
 const executeNode = async (node: StrategyNode, context: any): Promise<any> => {
   currentExecutingNode.value = node.id;
-  addLog('info', `开始执行节点: ${node.name}`);
+  addLog('info', `${t('common.strategy.designer.execution_preview.start_executing_node')}: ${node.name}`);
 
   // 模拟执行延迟
   await new Promise(resolve => setTimeout(resolve, configForm.value.speed));
@@ -349,7 +352,7 @@ const executeNode = async (node: StrategyNode, context: any): Promise<any> => {
     executedNodes.value.add(node.id);
     nodeResults.value.set(node.id, result);
 
-    addLog('success', `节点 ${node.name} 执行成功`);
+    addLog('success', `${t('common.strategy.designer.node_types.node')} ${node.name} ${t('common.strategy.designer.execution_preview.node_execution_success')}`);
 
     // 执行后续节点
     const nextConnections = props.orchestration.connections.filter(
@@ -377,7 +380,7 @@ const executeNode = async (node: StrategyNode, context: any): Promise<any> => {
     executedNodes.value.add(node.id);
     nodeResults.value.set(node.id, errorResult);
 
-    addLog('error', `节点 ${node.name} 执行失败: ${error}`);
+    addLog('error', `${t('common.strategy.designer.node_types.node')} ${node.name} ${t('common.strategy.designer.execution_preview.node_execution_failed')}: ${error}`);
 
     throw error;
   }
@@ -459,7 +462,7 @@ const simulateNodeExecution = async (node: StrategyNode, context: any): Promise<
 
 // 生命周期
 onMounted(() => {
-  addLog('info', '预览组件已加载');
+  addLog('info', t('common.strategy.designer.execution_preview.component_loaded'));
 });
 </script>
 

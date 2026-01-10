@@ -3,7 +3,7 @@ import { createI18n, useI18n as useI18nOriginal } from 'vue-i18n';
 import type { App } from 'vue';
 import type { Composer } from 'vue-i18n';
 import { watch } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 
 // import { buildMessages } from './buildMessages'; // 暂时不使用
 
@@ -85,7 +85,10 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
 
   // 初始化时也写 cookie（确保服务端能读到）
   if (typeof document !== 'undefined') {
-    document.cookie = `locale=${currentLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    (async () => {
+      const { setCookie } = await import('../../../utils/cookie');
+      setCookie('locale', currentLocale, 365, { path: '/', sameSite: 'Lax' });
+    })();
   }
 
   // 直接使用传入的 messages（完全类似 cool-admin 的方式）
@@ -148,10 +151,11 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
       const { locale } = i18n.global;
       // 当 legacy: false 时，locale 是一个 Ref<string>
       if (locale && typeof locale === 'object' && 'value' in locale) {
-        watch(() => (locale as { value: string }).value, (newLocale: string) => {
-          // 只写 cookie，不再写入 localStorage（locale 只需要 cookie 供服务端读取）
+        watch(() => (locale as { value: string }).value, async (newLocale: string) => {
+          // 只写 cookie，不再写入 storage（locale 只需要 cookie 供服务端读取）
           // 前端读取 locale 从 cookie 或 i18n 实例中获取即可
-          document.cookie = `locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+          const { setCookie } = await import('../../../utils/cookie');
+          setCookie('locale', newLocale, 365, { path: '/', sameSite: 'Lax' });
 
           // 触发自定义事件，通知浏览器标题等更新（同步）
           window.dispatchEvent(new CustomEvent('locale-change', { detail: { locale: newLocale } }));

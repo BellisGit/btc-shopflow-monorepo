@@ -62,6 +62,10 @@ declare module '@btc/shared-core' {
   export const enUS: any;
   export function useThemePlugin(...args: any[]): any;
   export type ButtonStyle = any;
+  
+  // Loading services
+  export const appLoadingService: any;
+  export const rootLoadingService: any;
 }
 
 

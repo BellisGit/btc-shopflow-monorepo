@@ -64,7 +64,7 @@ export function usePlugins(props: UpsertProps) {
         if (index < registeredPlugins.value.length) {
           const p = registeredPlugins.value[index];
           index++;
-          if (p.onClose) {
+          if (p && p.onClose) {
             p.onClose(next);
           } else {
             next();

@@ -5,6 +5,7 @@
 
 import { BtcMessage } from '@btc/shared-components';
 import type { MessageHandler } from 'element-plus';
+import { useI18n } from '@btc/shared-core';
 import { messageManager } from '../../utils/message-manager';
 
 // 扩展消息实例类型
@@ -221,7 +222,8 @@ export const handleMessage = (type: 'success' | 'error' | 'warning' | 'info', me
       };
     }
   } catch (error) {
-    console.warn('无法重写消息关闭方法:', error);
+    const { t } = useI18n();
+    console.warn(t('common.error.override_message_close_failed'), error);
   }
 
   // 将消息添加到待处理列表

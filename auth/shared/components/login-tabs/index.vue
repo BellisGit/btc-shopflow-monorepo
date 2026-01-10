@@ -9,7 +9,7 @@
     </div>
     <div class="register-link">
       <router-link to="/register" class="register-link-a">
-        {{ $t('前往注册') }}
+        {{ $t('auth.login.tabs.go_to_register') }}
         <el-icon class="arrow-right">
           <ArrowRight />
         </el-icon>
@@ -43,8 +43,8 @@ const emit = defineEmits<{
 }>();
 
 const tabs = [
-  { name: 'password', label: t('账号登录') },
-  { name: 'sms', label: t('手机号登录') }
+  { name: 'password', label: t('auth.login.account') },
+  { name: 'sms', label: t('auth.login.phone') }
 ];
 
 function handleTabChange(tab: any, index: number) {

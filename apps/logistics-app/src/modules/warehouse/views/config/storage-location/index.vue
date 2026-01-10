@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';
 import type { FormItem, TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcConfirm, BtcMessage } from '@btc/shared-components';
@@ -52,8 +52,45 @@ const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
 
-// 使用 logistics.base.position EPS 服务，并添加删除确认
-const baseService = createCrudServiceFromEps(
+// 从 config.ts 读取配置（仓位配置属于盘点模块）
+const { columns: baseColumns } = usePageColumns('logistics.inventory.storage-location');
+const { formItems: baseFormItems } = usePageForms('logistics.inventory.storage-location');
+const pageConfig = getPageConfigFull('logistics.inventory.storage-location');
+
+// 开发环境：验证国际化消息是否正确加载
+if (import.meta.env.DEV) {
+  nextTick(() => {
+    const testKey = 'common.inventory.storage_location.fields.name';
+    const translated = t(testKey);
+    if (translated === testKey) {
+      console.warn('[StorageLocation] 国际化消息未找到:', testKey);
+      // 检查 i18n 实例
+      const i18nInstance = (t as any).__i18n || (t as any).$i18n;
+      if (i18nInstance?.global) {
+        const currentLocale = i18nInstance.global.locale?.value || 'zh-CN';
+        const messages = i18nInstance.global.getLocaleMessage(currentLocale) || {};
+        const hasCommon = 'common' in messages;
+        const hasInventory = hasCommon && messages.common && 'inventory' in messages.common;
+        const hasStorageLocation = hasInventory && messages.common.inventory && 'storage_location' in messages.common.inventory;
+        console.debug('[StorageLocation] 国际化消息检查:', {
+          testKey,
+          currentLocale,
+          hasCommon,
+          hasInventory,
+          hasStorageLocation,
+          commonKeys: hasCommon ? Object.keys(messages.common || {}).slice(0, 5) : [],
+          inventoryKeys: hasInventory ? Object.keys(messages.common.inventory || {}).slice(0, 5) : [],
+          storageLocationKeys: hasStorageLocation ? Object.keys(messages.common.inventory.storage_location || {}).slice(0, 5) : [],
+        });
+      }
+    } else {
+      console.debug('[StorageLocation] 国际化消息已找到:', testKey, '->', translated);
+    }
+  });
+}
+
+// 使用 config.ts 中定义的服务（仓位配置属于盘点模块）
+const baseService = pageConfig?.service?.storageLocation || createCrudServiceFromEps(
   ['logistics', 'base', 'position'],
   service
 );
@@ -76,14 +113,15 @@ const storageLocationService: CrudService<any> = {
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
   value ? formatDateTime(value) : '--';
 
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 48 },
-  { label: t('logistics.config.storageLocation.fields.name'), prop: 'name', minWidth: 140, showOverflowTooltip: true },
-  { label: t('logistics.config.storageLocation.fields.position'), prop: 'position', minWidth: 180, showOverflowTooltip: true },
-  { label: t('logistics.config.storageLocation.fields.description'), prop: 'description', minWidth: 200, showOverflowTooltip: true },
-  { label: t('logistics.config.storageLocation.fields.createdAt'), prop: 'createdAt', width: 180, formatter: formatDateCell },
-  { label: t('logistics.config.storageLocation.fields.updatedAt'), prop: 'updatedAt', width: 180, formatter: formatDateCell },
-]);
+// 扩展配置以支持动态 formatter
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    if (col.prop === 'createdAt' || col.prop === 'updatedAt') {
+      return { ...col, formatter: formatDateCell };
+    }
+    return col;
+  });
+});
 
 // 域列表选项
 const domainOptions = ref<{ label: string; value: string }[]>([]);
@@ -128,34 +166,27 @@ const loadDomainOptions = async () => {
   }
 };
 
-const formItems = computed<FormItem[]>(() => [
-  {
-    label: t('logistics.config.storageLocation.fields.name'),
-    prop: 'domainId',
-    required: true,
-    component: {
-      name: 'el-select',
-      props: {
-        filterable: true,
-        clearable: true,
-        loading: domainLoading.value,
-        placeholder: t('logistics.config.storageLocation.fields.name'),
-      },
-      options: domainOptions.value,
-    },
-  },
-  {
-    label: t('logistics.config.storageLocation.fields.position'),
-    prop: 'position',
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120, placeholder: t('logistics.config.storageLocation.fields.position') } },
-  },
-  {
-    label: t('logistics.config.storageLocation.fields.description'),
-    prop: 'description',
-    component: { name: 'el-input', props: { type: 'textarea', rows: 3, maxlength: 500, placeholder: t('logistics.config.storageLocation.fields.description') } },
-  },
-]);
+// 扩展配置以支持动态 options
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 domainId，添加动态 options
+    if (item.prop === 'domainId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            filterable: true,
+            loading: domainLoading.value,
+          },
+          options: domainOptions.value,
+        },
+      };
+    }
+    return item;
+  });
+});
 
 onMounted(() => {
   // 加载域列表（用于表单下拉选项）

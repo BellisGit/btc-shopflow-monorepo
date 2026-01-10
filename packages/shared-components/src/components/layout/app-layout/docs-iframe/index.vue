@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { useI18n } from '@btc/shared-core';
 import { useRoute } from 'vue-router';
 
@@ -53,7 +53,7 @@ const getDocsUrl = () => {
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
 
-  // 从配置中获取文档应用的端口（docs-site-app 的开发端口是 4172）
+  // 从配置中获取文档应用的端口（docs-app 的开发端口是 4172）
   // 使用同步方式获取配置，避免异步问题
   let docsPort = '4172';
   let shouldWarn = false;
@@ -62,12 +62,12 @@ const getDocsUrl = () => {
     // 尝试从全局配置中获取（如果已加载）
     if ((window as any).__BTC_APP_CONFIGS__) {
       const docsConfig = (window as any).__BTC_APP_CONFIGS__.find(
-        (config: any) => config.appName === 'docs-site-app'
+        (config: any) => config.appName === 'docs-app'
       );
       if (docsConfig && docsConfig.devPort) {
         docsPort = docsConfig.devPort;
       } else {
-        // 配置存在但没有找到 docs-site-app 的配置，可能需要警告
+        // 配置存在但没有找到 docs-app 的配置，可能需要警告
         shouldWarn = true;
       }
     } else {
@@ -128,7 +128,7 @@ function hideLoading() {
 function onIframeLoad() {
   // 立即更新iframe的parent-theme
   const currentTheme = document.documentElement.classList.contains('dark');
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
 
   // iframe已加载
 
@@ -178,7 +178,7 @@ function syncToIframe() {
   // 使用VueUse的useDark()来检测主题状态
   const isDark = document.documentElement.classList.contains('dark');
 
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
 
   // 同步主题到iframe
   // 如果主题没有变化，跳过同步
@@ -443,12 +443,12 @@ onMounted(() => {
   }
 
   // 监听VueUse的useDark变化
-  const vueuseTheme = localStorage.getItem('vueuse-color-scheme');
+  const vueuseTheme = storage.get<string>('vueuse-color-scheme');
   let lastVueuseTheme = vueuseTheme;
 
   // 定期检查VueUse主题变化
   const checkVueUseTheme = () => {
-    const currentVueuseTheme = localStorage.getItem('vueuse-color-scheme');
+    const currentVueuseTheme = storage.get<string>('vueuse-color-scheme');
     if (currentVueuseTheme !== lastVueuseTheme) {
       lastVueuseTheme = currentVueuseTheme;
       handleVueUseThemeChange();

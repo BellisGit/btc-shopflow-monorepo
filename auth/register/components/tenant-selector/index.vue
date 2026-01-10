@@ -111,7 +111,7 @@ const selectTenant = (tenant: TenantOption) => {
 
 // 返回
 const handleBack = () => {
-  router.push('/login')
+  router.push('/login?from=register')
 }
 
 // 下一步

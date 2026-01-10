@@ -67,8 +67,8 @@
               v-model="condition.logicalOperator"
               @change="emitUpdate"
             >
-              <el-radio label="AND">且</el-radio>
-              <el-radio label="OR">或</el-radio>
+              <el-radio value="AND">且</el-radio>
+              <el-radio value="OR">或</el-radio>
             </el-radio-group>
           </btc-config-form-item>
         </btc-config-form>
@@ -114,6 +114,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyCondition } from '@/types/strategy';
@@ -136,21 +137,22 @@ const testData = ref('{"user": {"role": "admin"}, "resource": {"type": "document
 const testResult = ref<boolean | null>(null);
 
 // 操作符选项
+const { t } = useI18n();
 const operators = [
-  { value: 'eq', label: '等于 (=)' },
-  { value: 'ne', label: '不等于 (≠)' },
-  { value: 'gt', label: '大于 (>)' },
-  { value: 'gte', label: '大于等于 (≥)' },
-  { value: 'lt', label: '小于 (<)' },
-  { value: 'lte', label: '小于等于 (≤)' },
-  { value: 'in', label: '包含于 (in)' },
-  { value: 'nin', label: '不包含于 (not in)' },
-  { value: 'contains', label: '包含 (contains)' },
-  { value: 'startsWith', label: '开始于 (starts with)' },
-  { value: 'endsWith', label: '结束于 (ends with)' },
-  { value: 'regex', label: '正则匹配 (regex)' },
-  { value: 'exists', label: '存在 (exists)' },
-  { value: 'notExists', label: '不存在 (not exists)' }
+  { value: 'eq', label: t('common.strategy.designer.operators.eq') },
+  { value: 'ne', label: t('common.strategy.designer.operators.ne') },
+  { value: 'gt', label: t('common.strategy.designer.operators.gt') },
+  { value: 'gte', label: t('common.strategy.designer.operators.gte') },
+  { value: 'lt', label: t('common.strategy.designer.operators.lt') },
+  { value: 'lte', label: t('common.strategy.designer.operators.lte') },
+  { value: 'in', label: t('common.strategy.designer.operators.in') },
+  { value: 'nin', label: t('common.strategy.designer.operators.nin') },
+  { value: 'contains', label: t('common.strategy.designer.operators.contains') },
+  { value: 'startsWith', label: t('common.strategy.designer.operators.startsWith') },
+  { value: 'endsWith', label: t('common.strategy.designer.operators.endsWith') },
+  { value: 'regex', label: t('common.strategy.designer.operators.regex') },
+  { value: 'exists', label: t('common.strategy.designer.operators.exists') },
+  { value: 'notExists', label: t('common.strategy.designer.operators.notExists') }
 ];
 
 // 计算属性
@@ -237,7 +239,7 @@ const testConditions = () => {
     const result = evaluateConditions(conditions.value, data);
     testResult.value = result;
   } catch (error) {
-    BtcMessage.error('测试数据格式错误，请输入有效的JSON');
+    BtcMessage.error(t('common.strategy.designer.test_data_invalid_json'));
     testResult.value = null;
   }
 };

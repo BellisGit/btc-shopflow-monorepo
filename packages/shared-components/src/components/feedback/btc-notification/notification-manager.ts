@@ -74,11 +74,11 @@ class BtcNotificationManager {
   ) {
     // 使用 Element Plus 原生功能创建通知，完全手动控制生命周期
     const notificationInstance = ElNotification({
-      title: options.title,
-      message: content,
-      type: type,
-      duration: 0, // 设置为0，完全手动控制关闭时机
-      showClose: options.showClose,
+      title: options.title as any,
+      message: content as any,
+      type: type as any,
+      duration: 0 as any, // 设置为0，完全手动控制关闭时机
+      showClose: options.showClose as any,
       position: options.position as any,
       dangerouslyUseHTMLString: options.dangerouslyUseHTMLString,
       onClose: () => {

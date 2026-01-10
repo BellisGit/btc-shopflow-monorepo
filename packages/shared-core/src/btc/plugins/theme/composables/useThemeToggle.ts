@@ -1,8 +1,7 @@
 import { useDark } from '@vueuse/core';
 import type { Ref } from 'vue';
 import type { ThemeConfig } from '../../../composables/useTheme';
-import { setThemeColor } from './useThemeColor';
-import { storage } from '@btc/shared-utils';
+import { storage } from '../../../../utils';
 
 /**
  * 禁用过渡效果（避免主题切换时的水合问题）
@@ -27,11 +26,12 @@ const enableTransitions = () => {
 };
 
 /**
- * 切换暗黑模式（重构后调用 changeDark，参考 cool-admin-vue-8.x）
+ * 切换暗黑模式（完全按照 cool-admin 的方式实现）
  */
 export function createToggleDark(
   isDark: ReturnType<typeof useDark>,
   currentTheme: Ref<ThemeConfig>,
+  setTheme: (options: { color?: string; name?: string; dark?: boolean }) => void,
   changeDark?: (el: Element, isDark: boolean, cb: () => void) => void
 ) {
   return function toggleDark(event?: MouseEvent) {
@@ -42,25 +42,25 @@ export function createToggleDark(
       // 获取点击的元素（参考 cool-admin-vue-8.x，使用 currentTarget 获取事件绑定的元素）
       // 如果 currentTarget 不存在，则使用 target 并向上查找最近的元素
       let el: Element | null = (event.currentTarget as Element) || (event.target as Element);
-      
+
       // 如果获取到的是 SVG 内部元素，向上查找父元素
       if (el && (el.tagName === 'path' || el.tagName === 'svg' || el.tagName === 'use')) {
         el = el.closest('.btc-comm__icon') || el.parentElement || el;
       }
-      
+
       // 如果仍然没有找到有效的元素，使用 document.body 作为后备
       if (!el || !(el instanceof Element)) {
         el = document.body;
       }
-      
-      // 调用 changeDark 方法（参考 cool-admin-vue-8.x 的 setDark 实现）
+
+      // 调用 changeDark 方法（完全按照 cool-admin 的方式）
       changeDark(el, newDarkValue, () => {
-        // 同步更新状态
+        // 关键：只更新 isDark.value，让 useDark 自动管理 HTML class
+        // 然后调用统一的 setTheme 函数
         isDark.value = newDarkValue;
-        setThemeColor(currentTheme.value.color, isDark.value);
+        setTheme({ color: currentTheme.value.color, dark: isDark.value });
 
         // 同步更新设置状态（如果存在）
-        // 使用统一的 settings 存储，而不是单独的 systemThemeType 和 systemThemeMode
         try {
           const SystemThemeEnum = {
             LIGHT: 'light',
@@ -68,8 +68,6 @@ export function createToggleDark(
             AUTO: 'auto',
           };
           const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
-          // 获取现有的 settings，更新主题相关字段
-          // 重要：每次设置前都重新读取最新的 settings，确保不会丢失其他字段（如 theme）
           const currentSettings = (storage.get('settings') as Record<string, any>) || {};
           const updatedSettings = {
             ...currentSettings,
@@ -77,19 +75,42 @@ export function createToggleDark(
             systemThemeMode: newTheme
           };
           storage.set('settings', updatedSettings);
-          // 清理旧的独立存储 key
           storage.remove('systemThemeType');
           storage.remove('systemThemeMode');
         } catch (e) {
           // 忽略错误
+        }
+
+        // 触发 theme-toggle 事件
+        try {
+          const SystemThemeEnum = {
+            LIGHT: 'light',
+            DARK: 'dark',
+            AUTO: 'auto',
+          };
+          const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
+          window.dispatchEvent(new CustomEvent('theme-toggle', {
+            detail: { theme: newTheme, isDark: newDarkValue }
+          }));
+
+          // 触发 theme-changed 事件
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('theme-changed', {
+              detail: { isDark: newDarkValue, theme: newTheme }
+            }));
+          }, 0);
+        } catch (e) {
+          console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
         }
       });
     } else {
       // 没有 event 或 changeDark 方法，直接切换（设置面板切换时使用此路径）
       disableTransitions();
 
+      // 关键：只更新 isDark.value，让 useDark 自动管理 HTML class
+      // 然后调用统一的 setTheme 函数
       isDark.value = newDarkValue;
-      setThemeColor(currentTheme.value.color, isDark.value);
+      setTheme({ color: currentTheme.value.color, dark: isDark.value });
 
       try {
         const SystemThemeEnum = {
@@ -98,18 +119,38 @@ export function createToggleDark(
           AUTO: 'auto',
         };
         const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
-        // 获取现有的 settings，更新主题相关字段
         const currentSettings = (storage.get('settings') as Record<string, any>) || {};
         storage.set('settings', {
           ...currentSettings,
           systemThemeType: newTheme,
           systemThemeMode: newTheme
         });
-        // 清理旧的独立存储 key
         storage.remove('systemThemeType');
         storage.remove('systemThemeMode');
       } catch (e) {
         // 忽略错误
+      }
+
+      // 触发 theme-toggle 事件
+      try {
+        const SystemThemeEnum = {
+          LIGHT: 'light',
+          DARK: 'dark',
+          AUTO: 'auto',
+        };
+        const newTheme = newDarkValue ? SystemThemeEnum.DARK : SystemThemeEnum.LIGHT;
+        window.dispatchEvent(new CustomEvent('theme-toggle', {
+          detail: { theme: newTheme, isDark: newDarkValue }
+        }));
+
+        // 触发 theme-changed 事件
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('theme-changed', {
+            detail: { isDark: newDarkValue, theme: newTheme }
+          }));
+        }, 0);
+      } catch (e) {
+        console.error('[createToggleDark] 触发 theme-toggle 事件失败', e);
       }
 
       requestAnimationFrame(() => {

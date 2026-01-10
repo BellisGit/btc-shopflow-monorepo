@@ -11,12 +11,6 @@
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
 
-    // 明确保持原有定位不变
-    position: absolute !important;
-    right: 5% !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-
     // 移除原有边框，使用伪元素创建双层渐变边框
     border: none !important;
 
@@ -43,11 +37,26 @@
       padding: 2px;
       border-radius: 16px;
 
-      // 现代浏览器 mask 方案
+      // 关键修复：确保 mask 属性在页面加载时立即生效，避免显示整个紫色背景
+      // 使用 will-change 提示浏览器优化渲染
+      will-change: mask, -webkit-mask;
+      // 强制 GPU 加速，确保 mask 立即生效
+      transform: translateZ(0);
+      
+      // 现代浏览器 mask 方案（必须在 opacity 之前设置，确保 mask 立即生效）
       mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       mask-composite: xor;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
+      
+      // 降级方案：在页面刷新瞬间，如果 mask 还未生效，先隐藏渐变背景
+      // 使用极短的延迟确保 mask 属性已生效，避免显示整个紫色背景
+      // 如果 mask 已生效，opacity 不会影响显示（因为 mask 会裁剪掉内部区域）
+      // 如果 mask 未生效，opacity: 0 会隐藏整个渐变背景
+      opacity: 0;
+      // 使用极短的动画延迟（0.01s），确保在 mask 生效后立即显示边框
+      // 这样既能避免刷新瞬间的紫色背景，又不会让用户感觉到边框延迟
+      animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 3s ease-in-out 0.16s infinite;
 
       // 旧版浏览器备用方案
       @supports not (mask-composite: xor) {
@@ -56,10 +65,11 @@
         );
         border: 2px solid transparent;
         background-clip: padding-box;
+        // 旧版浏览器也需要延迟显示
+        opacity: 0;
+        animation: borderFadeIn 0.3s ease-out 0.1s forwards;
       }
 
-      // 呼吸发光动画
-      animation: breathingGlow 3s ease-in-out infinite;
       filter: blur(0.5px);
     }
 
@@ -90,6 +100,9 @@
       // 内层内阴影 - 轻微收缩
       inset 0 1px 0 rgba(255, 255, 255, 0.4),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+
+    // 卡片淡入动画
+    animation: glassCardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 
     // Hover 时发光强度提升 30%
     &:hover {
@@ -136,12 +149,20 @@
           #9d4edd 100%    // 淡紫
         );
         padding: 0 0 1px 0; // 只在底部添加边框
+        
+        // 关键修复：确保 mask 属性在页面加载时立即生效
+        will-change: mask, -webkit-mask;
+        transform: translateZ(0);
+        
+        // 现代浏览器 mask 方案
         mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
         mask-composite: xor;
         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
         -webkit-mask-composite: xor;
-
-        animation: breathingGlow 4s ease-in-out infinite;
+        
+        // 降级方案：避免刷新瞬间显示整个紫色背景
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 4s ease-in-out 0.16s infinite;
         filter: blur(0.3px);
       }
 
@@ -188,7 +209,9 @@
           rgba(157, 78, 221, 0.3) 80%,
           transparent 100%
         );
-        animation: breathingGlow 5s ease-in-out infinite;
+        // 降级方案：避免刷新瞬间显示紫色装饰线
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 5s ease-in-out 0.16s infinite;
       }
 
       // 内容区域侧边装饰线
@@ -207,7 +230,9 @@
           transparent 100%
         );
         border-radius: 0 2px 2px 0;
-        animation: breathingGlow 6s ease-in-out infinite;
+        // 降级方案：避免刷新瞬间显示紫色装饰线
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 6s ease-in-out 0.16s infinite;
       }
     }
   }
@@ -225,6 +250,12 @@ html.dark .auth-page.glassmorphism {
         #6a1b9a 75%,    // 深紫
         #7b1fa2 100%    // 深紫红
       );
+      // 关键修复：确保 mask 属性在页面加载时立即生效
+      will-change: mask, -webkit-mask;
+      transform: translateZ(0);
+      // 降级方案：避免刷新瞬间显示整个紫色背景
+      opacity: 0;
+      animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 3s ease-in-out 0.16s infinite;
       filter: blur(0.8px);
     }
 
@@ -274,6 +305,12 @@ html.dark .auth-page.glassmorphism {
           #512da8 60%,    // 深蓝紫
           #6a1b9a 100%    // 深紫
         );
+        // 关键修复：确保 mask 属性在页面加载时立即生效
+        will-change: mask, -webkit-mask;
+        transform: translateZ(0);
+        // 降级方案：避免刷新瞬间显示整个紫色背景
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 4s ease-in-out 0.16s infinite;
         filter: blur(0.5px);
       }
 
@@ -296,6 +333,9 @@ html.dark .auth-page.glassmorphism {
           rgba(106, 27, 154, 0.4) 80%,
           transparent 100%
         );
+        // 降级方案：避免刷新瞬间显示紫色装饰线
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 5s ease-in-out 0.16s infinite;
       }
 
       &::after {
@@ -306,6 +346,9 @@ html.dark .auth-page.glassmorphism {
           rgba(106, 27, 154, 0.3) 70%,
           transparent 100%
         );
+        // 降级方案：避免刷新瞬间显示紫色装饰线
+        opacity: 0;
+        animation: borderFadeIn 0.15s ease-out 0.01s forwards, breathingGlow 6s ease-in-out 0.16s infinite;
       }
     }
   }
@@ -490,23 +533,27 @@ html.dark .auth-page.glassmorphism {
       transform: translateY(-50%) !important;
       max-height: calc(100vh - 40px) !important;
       height: auto !important;
-      overflow: hidden !important; // 隐藏滚动条，内容自适应高度
-      
-      .card-content {
-        // 隐藏滚动条，内容自适应高度
-        overflow: hidden !important;
-        overflow-y: hidden !important;
-        
+      // overflow 已移除，由基础样式和 el-scrollbar 处理滚动
+
+      .card-content-scrollbar {
+        // 移除 overflow 限制，让 el-scrollbar 处理滚动
+        // overflow 已在 .card-content-scrollbar 基础样式中设置
+
         // 隐藏第三方登录 - 使用多种选择器确保生效
-        .third-party-login,
         :deep(.third-party-login) {
           display: none !important;
         }
-        
+
         // 调整登录表单区域的 flex 值，因为第三方登录已隐藏
         :deep(.login-form-layout) {
           flex: 1 !important; // 占据更多空间，因为第三方登录已隐藏
         }
+      }
+
+      .card-content {
+        // 移除 overflow 限制，让 el-scrollbar 处理滚动
+        // 但保留 position: relative，因为 glassmorphism 需要它
+        position: relative;
       }
     }
   }
@@ -661,10 +708,6 @@ html.dark .auth-page.glassmorphism {
 
 // ===== 动画增强 =====
 .auth-page.glassmorphism {
-  .login-card {
-    animation: glassCardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
   :deep(.login-form-layout) {
     .form-container {
       animation: formSlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
@@ -734,6 +777,16 @@ html.dark .auth-page.glassmorphism {
     opacity: 1.3;
     filter: blur(0.2px) brightness(1.5);
     transform: scale(1.004);
+  }
+}
+
+// 边框淡入动画 - 确保在 CSS 加载完成后再显示渐变边框，避免刷新瞬间显示整个紫色背景
+@keyframes borderFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

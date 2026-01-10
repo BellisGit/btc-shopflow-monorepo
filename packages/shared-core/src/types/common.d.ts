@@ -31,3 +31,4 @@ export interface DictItem {
     type?: string;
     color?: string;
 }
+//# sourceMappingURL=common.d.ts.map

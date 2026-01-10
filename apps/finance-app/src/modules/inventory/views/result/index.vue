@@ -1,88 +1,63 @@
 <template>
-  <div class="finance-crud-wrapper">
-    <BtcCrud ref="crudRef" :service="financeInventoryService">
-      <BtcRow>
-        <div class="btc-crud-primary-actions">
-          <BtcRefreshBtn />
-          <BtcAddBtn />
-          <BtcMultiDeleteBtn />
-        </div>
-        <BtcFlex1 />
-        <BtcSearchKey />
-        <BtcCrudActions>
-          <el-button type="info" @click="handleExport">
-            <BtcSvg name="export" class="mr-[5px]" />
-            {{ t('ui.export') }}
-          </el-button>
-        </BtcCrudActions>
-      </BtcRow>
-
-      <BtcRow>
-        <BtcTable
-          ref="tableRef"
-          :columns="columns"
-          :disable-auto-created-at="true"
-          border
-          :op="{ buttons: opButtons }"
-        />
-      </BtcRow>
-
-      <BtcRow>
-        <BtcFlex1 />
-        <BtcPagination />
-      </BtcRow>
-
-      <BtcUpsert ref="upsertRef" :items="formItems" width="640px" />
-    </BtcCrud>
-
-    <!-- 详情弹窗 -->
-    <BtcDialog
-      v-model="detailVisible"
-      :title="t('finance.inventory.result.detail.title')"
-      width="900px"
+  <div class="finance-inventory-result-page">
+    <BtcViewGroup
+      ref="tableGroupRef"
+      :left-service="checkService"
+      :left-title="t('inventory.check.list')"
+      :right-title="t('menu.finance.inventory_management.result')"
+      :show-unassigned="false"
+      :enable-key-search="true"
+      :left-size="'small'"
+      :label-field="'checkType'"
+      @select="onCheckSelect"
     >
-      <el-descriptions :column="2" border>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.materialCode')">
-          {{ detailRow?.materialCode || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.position')">
-          {{ detailRow?.position || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.unitCost')">
-          {{ formatTableNumber(detailRow?.unitCost) || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.bookQty')">
-          {{ formatTableNumber(detailRow?.bookQty) || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.actualQty')">
-          {{ formatTableNumber(detailRow?.actualQty) || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.diffQty')">
-          <span :class="{ 'text-red-500': (detailRow?.diffQty || 0) < 0, 'text-green-500': (detailRow?.diffQty || 0) > 0 }">
-            {{ formatTableNumber(detailRow?.diffQty) || '-' }}
-          </span>
-        </el-descriptions-item>
-        <el-descriptions-item :label="t('finance.inventory.result.fields.varianceCost')" :span="2">
-          <span :class="{ 'text-red-500': (detailRow?.varianceCost || 0) < 0, 'text-green-500': (detailRow?.varianceCost || 0) > 0 }">
-            {{ formatTableNumber(detailRow?.varianceCost) || '-' }}
-          </span>
-        </el-descriptions-item>
-      </el-descriptions>
-    </BtcDialog>
+      <template #right>
+        <BtcCrud
+          ref="crudRef"
+          :service="wrappedFinanceInventoryService"
+          :auto-load="false"
+          :on-before-refresh="handleBeforeRefresh"
+          style="padding: 10px;"
+        >
+          <BtcRow>
+            <div class="btc-crud-primary-actions">
+              <BtcRefreshBtn />
+            </div>
+            <BtcFlex1 />
+            <BtcSearchKey :placeholder="t('finance.inventory.result.search_placeholder')" />
+            <BtcCrudActions>
+              <el-button type="info" @click="handleExport" :loading="exportLoading">
+                <BtcSvg name="export" class="mr-[5px]" />
+                {{ t('ui.export') }}
+              </el-button>
+            </BtcCrudActions>
+          </BtcRow>
+          <BtcRow>
+            <BtcTable
+              :columns="columns"
+              :disable-auto-created-at="true"
+              border
+            />
+          </BtcRow>
+          <BtcRow>
+            <BtcFlex1 />
+            <BtcPagination />
+          </BtcRow>
+          <BtcUpsert
+            :items="formItems"
+            width="640px"
+          />
+        </BtcCrud>
+      </template>
+    </BtcViewGroup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, inject } from 'vue';
-import { useI18n } from '@btc/shared-core';
-import { formatTableNumber } from '@btc/shared-utils';
-import { BtcSvg } from '@btc/shared-components';
-import type { UseCrudReturn } from '@btc/shared-core';
-import { useFinanceInventoryService } from './composables/useFinanceInventoryService';
+import { ref, onBeforeUnmount, onMounted, nextTick } from 'vue';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import { BtcSvg, BtcViewGroup, BtcCrud, BtcRow, BtcRefreshBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination, BtcUpsert, BtcCrudActions } from '@btc/shared-components';
 import { useFinanceInventoryExport } from './composables/useFinanceInventoryExport';
-import { useFinanceInventoryColumns } from './composables/useFinanceInventoryColumns';
-import { useFinanceInventoryForm } from './composables/useFinanceInventoryForm';
-import { useFinanceInventoryDetail } from './composables/useFinanceInventoryDetail';
 
 defineOptions({
   name: 'btc-finance-inventory-result',
@@ -90,41 +65,232 @@ defineOptions({
 
 const { t } = useI18n();
 
-// 获取CRUD上下文
-const crudRef = ref<any>(null);
-const injectedCrud = inject<UseCrudReturn<any> | undefined>('btc-crud', undefined);
+const tableGroupRef = ref();
+const crudRef = ref();
+const selectedCheck = ref<any>(null);
+const exportLoading = ref(false);
+
+// 组件卸载标志，用于检查组件是否已卸载
+let isUnmounted = false;
+
+onBeforeUnmount(() => {
+  isUnmounted = true;
+});
+
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('finance.inventory.result');
+const { formItems } = usePageForms('finance.inventory.result');
+const pageConfig = getPageConfigFull('finance.inventory.result');
 
 // 使用 composables
-const { financeInventoryService } = useFinanceInventoryService();
 const { handleExport: handleExportInternal } = useFinanceInventoryExport();
-const { columns } = useFinanceInventoryColumns();
-const { formItems } = useFinanceInventoryForm();
-const { detailVisible, detailRow, handleDetail } = useFinanceInventoryDetail();
+
+// 盘点列表服务（左侧）- 使用物流应用的盘点列表接口
+const checkService = pageConfig?.service?.checkList;
+
+// 财务盘点结果服务 - 使用 usePageService 包装
+const baseFinanceInventoryService = usePageService('finance.inventory.result', 'financeResult');
+
+// 包装财务盘点结果服务，将checkNo作为参数传递
+const wrappedFinanceInventoryService = {
+  ...baseFinanceInventoryService,
+  async page(params: any) {
+    // 检查组件是否已卸载
+    if (isUnmounted) {
+      return {
+        list: [],
+        total: 0
+      };
+    }
+
+    // 安全访问 ref
+    if (!tableGroupRef.value) {
+      return {
+        list: [],
+        total: 0
+      };
+    }
+
+    // 从tableGroupRef获取选中的checkNo
+    const selectedItem = tableGroupRef.value?.selectedItem;
+
+    // 构建最终参数
+    const finalParams = { ...params };
+
+    // 确保keyword是一个对象
+    if (!finalParams.keyword || typeof finalParams.keyword !== 'object' || Array.isArray(finalParams.keyword)) {
+      finalParams.keyword = {};
+    }
+
+    // 如果选中了盘点项，添加checkNo到keyword
+    if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+      finalParams.keyword.checkNo = selectedItem.checkNo;
+    }
+
+    // 根据EPS配置的fieldEq，添加必需的字段
+    if (finalParams.keyword.materialCode === undefined) {
+      finalParams.keyword.materialCode = '';
+    }
+    if (finalParams.keyword.position === undefined) {
+      finalParams.keyword.position = '';
+    }
+
+        // 再次检查组件是否已卸载（异步操作后）
+        if (isUnmounted) {
+          return {
+            list: [],
+            total: 0
+          };
+        }
+
+        try {
+          return await baseFinanceInventoryService.page(finalParams);
+        } catch (error) {
+          // 如果组件已卸载，返回空结果
+          if (isUnmounted) {
+            return {
+              list: [],
+              total: 0
+            };
+          }
+          throw error;
+        }
+      }
+    };
+
+// 刷新前钩子 - 注入 keyword 参数
+const handleBeforeRefresh = (params: Record<string, unknown>) => {
+  const selectedItem = tableGroupRef.value?.selectedItem;
+
+  // 确保保留所有原始参数（包括 page 和 size）
+  const finalParams = { ...params };
+
+  // 获取现有的 keyword 对象（可能包含用户输入的搜索内容）
+  const existingKeyword = (params.keyword && typeof params.keyword === 'object' && !Array.isArray(params.keyword))
+    ? { ...(params.keyword as Record<string, unknown>) }
+    : {};
+
+  // 如果选中项有 checkNo 字段，将 checkNo 合并到 keyword 对象中
+  if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+    finalParams.keyword = {
+      ...existingKeyword,
+      checkNo: selectedItem.checkNo
+    };
+  } else if (Object.keys(existingKeyword).length > 0) {
+    // 如果没有 selectedKeyword，但已有 keyword 对象，保留现有的 keyword
+    finalParams.keyword = existingKeyword;
+  }
+
+  return finalParams;
+};
+
+// 盘点选择处理
+const onCheckSelect = (check: any) => {
+  selectedCheck.value = check;
+  // 刷新右侧表格 - 使用 nextTick 确保 crudRef 已准备好
+  nextTick(() => {
+    if (crudRef.value && !isUnmounted) {
+      crudRef.value.refresh();
+    } else if (!isUnmounted) {
+      // 如果 nextTick 后还是没有引用，再延迟一点
+      setTimeout(() => {
+        if (crudRef.value && !isUnmounted) {
+          crudRef.value.refresh();
+        }
+      }, 100);
+    }
+  });
+};
+
+// 页面挂载时，检查是否有选中的项，如果有则自动加载数据
+onMounted(() => {
+  // 延迟检查，确保 BtcViewGroup 已经加载完成并可能已经选中了第一项
+  nextTick(() => {
+    if (isUnmounted) return;
+
+    // 检查是否有选中的盘点项
+    const selectedItem = tableGroupRef.value?.selectedItem;
+    if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo && crudRef.value) {
+      // 如果有选中的项，自动加载数据
+      crudRef.value.refresh();
+    } else if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+      // 如果选中了项但 crudRef 还没准备好，再延迟一点
+      setTimeout(() => {
+        if (crudRef.value && !isUnmounted) {
+          crudRef.value.refresh();
+        }
+      }, 200);
+    }
+  });
+});
 
 // 导出处理函数
 const handleExport = async () => {
-  const crudInstance = crudRef.value?.crud || injectedCrud;
-  await handleExportInternal(crudInstance);
+  // 检查组件是否已卸载
+  if (isUnmounted) {
+    return;
+  }
+
+  // 安全访问 ref
+  if (!tableGroupRef.value) {
+    return;
+  }
+
+  try {
+    const crudInstance = crudRef.value?.crud || undefined;
+
+    // 再次检查组件是否已卸载
+    if (isUnmounted) {
+      return;
+    }
+
+    // 获取当前选中的盘点项
+    const selectedItem = tableGroupRef.value?.selectedItem;
+    let checkType: string | undefined;
+
+    if (selectedItem && !selectedItem.isUnassigned && selectedItem.checkNo) {
+      // 如果选中了盘点项，设置checkNo参数
+      if (crudInstance && !isUnmounted) {
+        try {
+          const currentParams = crudInstance.getParams();
+          crudInstance.setParams({
+            ...currentParams,
+            keyword: {
+              ...(currentParams.keyword || {}),
+              checkNo: selectedItem.checkNo
+            }
+          });
+        } catch (error) {
+          // 组件可能正在卸载，静默处理
+          if (import.meta.env.DEV) {
+            console.warn('[FinanceInventoryResult] 设置参数失败（组件可能正在卸载）:', error);
+          }
+          return;
+        }
+      }
+      // 获取checkType用于文件名
+      checkType = selectedItem.checkType;
+    }
+
+    // 再次检查组件是否已卸载（异步操作前）
+    if (isUnmounted) {
+      return;
+    }
+
+    await handleExportInternal(crudInstance, checkType);
+  } catch (error) {
+    // 如果组件已卸载，静默处理错误
+    if (isUnmounted) {
+      return;
+    }
+    throw error;
+  }
 };
 
-// 操作按钮配置
-const opButtons = computed(() => [
-  {
-    label: t('common.button.detail'),
-    type: 'warning',
-    icon: 'info',
-    onClick: ({ scope }: { scope: any }) => handleDetail(scope.row),
-  },
-  {
-    label: t('common.button.edit'),
-    type: 'primary',
-    icon: 'Edit',
-  },
-]);
 </script>
 
 <style scoped lang="scss">
-.finance-crud-wrapper {
+.finance-inventory-result-page {
   height: 100%;
   box-sizing: border-box;
 }

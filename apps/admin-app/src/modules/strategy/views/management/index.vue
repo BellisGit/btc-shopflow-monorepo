@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-management">
     <!-- 策略列表 -->
     <BtcCrud ref="crudRef" :service="wrappedService" :on-before-refresh="onBeforeRefresh" class="strategy-crud">
@@ -12,7 +12,7 @@
         <!-- 状态筛选 -->
         <el-select
           v-model="statusFilter"
-          placeholder="状态筛选"
+          :placeholder="t('common.strategy.management.status_filter')"
           clearable
           style="width: 120px; margin-left: 8px;"
           @change="handleStatusFilter"
@@ -104,65 +104,65 @@
     </BtcCrud>
 
     <!-- 版本历史对话框 -->
-    <el-dialog v-model="showVersionDialog" title="版本历史" width="800px">
+    <el-dialog v-model="showVersionDialog" :title="t('common.strategy.management.version_history')" width="800px">
       <el-table :data="versionHistory" stripe>
-        <el-table-column prop="version" label="版本" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="version" :label="t('common.strategy.management.version')" width="100" />
+        <el-table-column prop="status" :label="t('common.strategy.management.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)" size="small">
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-        <el-table-column prop="updatedBy" label="更新人" width="120" />
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="updatedAt" :label="t('common.strategy.management.updated_at')" width="180" />
+        <el-table-column prop="updatedBy" :label="t('common.strategy.management.updated_by')" width="120" />
+        <el-table-column :label="t('crud.table.operation')" width="200">
           <template #default="{ row }">
-            <el-button size="small" @click="activateVersion(row)">激活</el-button>
-            <el-button size="small" type="info" @click="compareVersion(row)">对比</el-button>
+            <el-button size="small" @click="activateVersion(row)">{{ t('common.strategy.management.activate') }}</el-button>
+            <el-button size="small" type="info" @click="compareVersion(row)">{{ t('common.strategy.management.compare') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-dialog>
 
     <!-- 策略测试对话框 -->
-    <el-dialog v-model="showTestDialog" title="策略测试" width="800px">
+    <el-dialog v-model="showTestDialog" :title="t('common.strategy.management.test')" width="800px">
       <div class="test-form">
         <el-form :model="testForm" label-width="120px">
-          <el-form-item label="测试上下文">
+          <el-form-item :label="t('common.strategy.management.test_context')">
             <el-input
               v-model="testForm.context"
               type="textarea"
               :rows="8"
-              placeholder="请输入JSON格式的测试上下文"
+              :placeholder="t('common.strategy.management.test_context_placeholder')"
             />
           </el-form-item>
         </el-form>
       </div>
 
       <div v-if="testResult" class="test-result">
-        <el-divider>测试结果</el-divider>
+        <el-divider>{{ t('common.strategy.management.test_result') }}</el-divider>
         <el-descriptions border :column="2">
-          <el-descriptions-item label="执行结果">
+          <el-descriptions-item :label="t('common.strategy.management.execution_result')">
             <el-tag :type="testResult.success ? 'success' : 'danger'">
-              {{ testResult.success ? '成功' : '失败' }}
+              {{ testResult.success ? t('common.strategy.management.success') : t('common.strategy.management.failed') }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="策略效果">
+          <el-descriptions-item :label="t('common.strategy.management.strategy_effect')">
             <el-tag :type="testResult.effect === 'ALLOW' ? 'success' : 'danger'">
               {{ testResult.effect }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="执行时间">
+          <el-descriptions-item :label="t('common.strategy.management.execution_time')">
             {{ testResult.executionTime }}ms
           </el-descriptions-item>
-          <el-descriptions-item label="执行步骤">
+          <el-descriptions-item :label="t('common.strategy.management.execution_steps')">
             {{ testResult.steps?.length || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
         <el-collapse v-if="testResult.steps && testResult.steps.length > 0" style="margin-top: 16px;">
-          <el-collapse-item title="执行步骤详情" name="steps">
+          <el-collapse-item :title="t('common.strategy.management.execution_steps_detail')" name="steps">
             <el-timeline>
               <el-timeline-item
                 v-for="step in testResult.steps"
@@ -173,10 +173,10 @@
                   <div class="step-name">{{ step.nodeName }}</div>
                   <div class="step-duration">{{ step.duration }}ms</div>
                   <div v-if="step.result" class="step-result">
-                    结果: {{ JSON.stringify(step.result) }}
+                    {{ t('common.strategy.management.result') }}: {{ JSON.stringify(step.result) }}
                   </div>
                   <div v-if="step.error" class="step-error">
-                    错误: {{ step.error }}
+                    {{ t('common.strategy.management.error') }}: {{ step.error }}
                   </div>
                 </div>
               </el-timeline-item>
@@ -186,9 +186,9 @@
       </div>
 
       <template #footer>
-        <el-button @click="showTestDialog = false">关闭</el-button>
+        <el-button @click="showTestDialog = false">{{ t('common.button.close') }}</el-button>
         <el-button type="primary" @click="runTest" :loading="testing">
-          执行测试
+          {{ t('common.strategy.management.execute_test') }}
         </el-button>
       </template>
     </el-dialog>
@@ -197,10 +197,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { BtcConfirm, BtcMessage, BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
-import type { TableColumn, FormItem } from '@btc/shared-components';
 import type {
   Strategy,
   StrategyTemplate,
@@ -232,16 +231,26 @@ const currentTestStrategy = ref<Strategy | null>(null);
 
 // 策略状态选项
 const strategyStatuses = [
-  { value: 'DRAFT', label: '草稿' },
-  { value: 'TESTING', label: '测试中' },
-  { value: 'ACTIVE', label: '激活' },
-  { value: 'INACTIVE', label: '停用' },
-  { value: 'ARCHIVED', label: '已归档' }
+  { value: 'DRAFT', label: t('common.strategy.management.status.draft') },
+  { value: 'TESTING', label: t('common.strategy.management.status.testing') },
+  { value: 'ACTIVE', label: t('common.strategy.management.status.active') },
+  { value: 'INACTIVE', label: t('common.strategy.management.status.inactive') },
+  { value: 'ARCHIVED', label: t('common.strategy.management.status.archived') }
 ];
 
-// 策略服务适配器 - 简化版本，避免响应式循环
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('strategy.management');
+const { formItems: baseFormItems } = usePageForms('strategy.management');
+
+// 策略服务 - 使用 usePageService 但需要特殊处理（strategyService 有自定义方法）
+const pageStrategyService = usePageService('strategy.management', 'strategy', {
+  showSuccessMessage: true,
+});
+
+// 策略服务适配器 - 需要包装自定义的 deleteStrategy 和 deleteStrategies 方法
 const wrappedService = {
   ...strategyService,
+  ...(pageStrategyService || {}),
   delete: async (id: string) => {
     await BtcConfirm(
       t('crud.message.delete_confirm'),
@@ -268,94 +277,22 @@ const wrappedService = {
   }
 };
 
-// 表格列配置
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('crud.table.index'), width: 60 },
-  { prop: 'name', label: '策略名称', minWidth: 180 },
-  {
-    prop: 'type',
-    label: '类型',
-    width: 120,
-    dict: [
-      { label: '权限', value: 'PERMISSION', type: 'danger' },
-      { label: '业务', value: 'BUSINESS', type: 'success' },
-      { label: '数据', value: 'DATA', type: 'warning' },
-      { label: '工作流', value: 'WORKFLOW', type: 'info' }
-    ]
-  },
-  {
-    prop: 'status',
-    label: '状态',
-    width: 100,
-    dict: [
-      { label: '草稿', value: 'DRAFT', type: 'info' },
-      { label: '测试中', value: 'TESTING', type: 'warning' },
-      { label: '激活', value: 'ACTIVE', type: 'success' },
-      { label: '停用', value: 'INACTIVE', type: 'danger' },
-      { label: '已归档', value: 'ARCHIVED', type: 'default' }
-    ]
-  },
-  { prop: 'priority', label: '优先级', width: 100 },
-  { prop: 'version', label: '版本', width: 100 },
-  { prop: 'tags', label: '标签', width: 150 },
-  { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'updatedAt', label: '更新时间', width: 180 }
-]);
+// 表格列配置 - 从 config.ts 读取
+const columns = baseColumns;
 
-// 表单配置
-const formItems = computed<FormItem[]>(() => [
-  {
-    prop: 'name',
-    label: '策略名称',
-    span: 12,
-    required: true,
-    component: { name: 'el-input' }
-  },
-  {
-    prop: 'type',
-    label: '策略类型',
-    span: 12,
-    required: true,
-    component: {
-      name: 'el-select',
-      options: [
-        { label: '权限策略', value: 'PERMISSION' },
-        { label: '业务策略', value: 'BUSINESS' },
-        { label: '数据策略', value: 'DATA' },
-        { label: '工作流策略', value: 'WORKFLOW' }
-      ]
-    }
-  },
-  {
-    prop: 'priority',
-    label: '优先级',
-    span: 12,
-    component: {
-      name: 'el-input-number',
-      props: { min: 0, max: 1000 }
-    },
-    value: 100
-  },
-  {
-    prop: 'tags',
-    label: '标签',
-    span: 12,
-    component: {
-      name: 'el-input',
-      props: { placeholder: '多个标签用逗号分隔' }
-    }
-  },
+// 表单配置 - 从 config.ts 读取
+const formItems = [
+  ...baseFormItems,
   {
     prop: 'description',
-    label: '描述',
+    label: 'common.description',
     span: 24,
     component: {
       name: 'el-input',
       props: { type: 'textarea', rows: 3 }
     }
   }
-]);
+];
 
 // 工具函数
 const getStatusTagType = (status: StrategyStatus) => {
@@ -371,11 +308,11 @@ const getStatusTagType = (status: StrategyStatus) => {
 
 const getStatusLabel = (status: StrategyStatus) => {
   const labelMap = {
-    'DRAFT': '草稿',
-    'TESTING': '测试中',
-    'ACTIVE': '激活',
-    'INACTIVE': '停用',
-    'ARCHIVED': '已归档'
+    'DRAFT': t('common.strategy.management.status.draft'),
+    'TESTING': t('common.strategy.management.status.testing'),
+    'ACTIVE': t('common.strategy.management.status.active'),
+    'INACTIVE': t('common.strategy.management.status.inactive'),
+    'ARCHIVED': t('common.strategy.management.status.archived')
   };
   return labelMap[status] || status;
 };
@@ -399,23 +336,23 @@ const showVersionHistory = async (strategy: Strategy) => {
     versionHistory.value = await strategyService.getStrategyVersions(strategy.id);
     showVersionDialog.value = true;
   } catch (error) {
-    BtcMessage.error('获取版本历史失败');
+    BtcMessage.error(t('common.strategy.management.get_version_history_failed'));
   }
 };
 
 const activateVersion = async (version: Strategy) => {
   try {
     await strategyService.activateStrategyVersion(version.id, version.version);
-    BtcMessage.success('版本激活成功');
+    BtcMessage.success(t('common.strategy.management.version_activate_success'));
     showVersionDialog.value = false;
     crudRef.value?.crud.loadData();
   } catch (error) {
-    BtcMessage.error('版本激活失败');
+    BtcMessage.error(t('common.strategy.management.version_activate_failed'));
   }
 };
 
 const compareVersion = (version: Strategy) => {
-  BtcMessage.info('版本对比功能将在后续版本实现');
+  BtcMessage.info(t('common.strategy.management.version_compare_coming_soon'));
 };
 
 const testStrategy = (strategy: Strategy) => {
@@ -443,9 +380,9 @@ const runTest = async () => {
     };
 
     testResult.value = await strategyService.testStrategy(currentTestStrategy.value.id, context);
-    BtcMessage.success('策略测试完成');
+    BtcMessage.success(t('common.strategy.management.test_complete'));
   } catch (error) {
-    BtcMessage.error('策略测试失败');
+    BtcMessage.error(t('common.strategy.management.test_failed'));
   } finally {
     testing.value = false;
     testingStrategies.value.delete(currentTestStrategy.value.id);
@@ -456,14 +393,14 @@ const cloneStrategy = async (strategy: Strategy) => {
   try {
     const cloned = await strategyService.createStrategy({
       ...strategy,
-      name: `${strategy.name} (副本)`,
+      name: `${strategy.name} ${t('common.strategy.management.copy_suffix')}`,
       status: 'DRAFT' as StrategyStatus,
       version: '1.0.0'
     });
-    BtcMessage.success('策略克隆成功');
+    BtcMessage.success(t('common.strategy.management.clone_success'));
     crudRef.value?.crud.loadData();
   } catch (error) {
-    BtcMessage.error('策略克隆失败');
+    BtcMessage.error(t('common.strategy.management.clone_failed'));
   }
 };
 
@@ -476,9 +413,9 @@ const exportStrategy = async (strategy: Strategy) => {
     a.download = `strategy-${strategy.name}-${strategy.version}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    BtcMessage.success('策略导出成功');
+    BtcMessage.success(t('common.strategy.management.export_success'));
   } catch (error) {
-    BtcMessage.error('策略导出失败');
+    BtcMessage.error(t('common.strategy.management.export_failed'));
   }
 };
 

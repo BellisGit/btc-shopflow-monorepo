@@ -6,9 +6,8 @@
  * @description 提供所有认证相关的 API 调用，包括登录、注册、忘记密码等
  */
 
-import { request } from '/@/btc/service/request';
-import { storage } from '/@/btc/utils';
-import type { ApiResponse } from '/@/btc/service/request';
+import { request } from '@btc/shared-core';
+import { storage, type ApiResponse } from '@btc/shared-utils';
 
 // ==================== 类型定义 ====================
 
@@ -127,7 +126,7 @@ export class AuthService {
    */
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
     return handleApiCall(
-      () => request.post<AuthResponse>(`${this.apiPrefix}/login`, data),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/login`, data }) as Promise<ApiResponse<AuthResponse>>,
       '账号密码登录失败'
     );
   }
@@ -137,7 +136,7 @@ export class AuthService {
    */
   async smsLogin(data: SmsLoginRequest): Promise<ApiResponse<AuthResponse>> {
     return handleApiCall(
-      () => request.post<AuthResponse>(`${this.apiPrefix}/sms-login`, data),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/sms-login`, data }) as Promise<ApiResponse<AuthResponse>>,
       '短信登录失败'
     );
   }
@@ -147,7 +146,7 @@ export class AuthService {
    */
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
     return handleApiCall(
-      () => request.post<AuthResponse>(`${this.apiPrefix}/register`, data),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/register`, data }) as Promise<ApiResponse<AuthResponse>>,
       '用户注册失败'
     );
   }
@@ -157,7 +156,7 @@ export class AuthService {
    */
   async forgotPassword(data: ForgotPasswordRequest): Promise<ApiResponse<any>> {
     return handleApiCall(
-      () => request.post(`${this.apiPrefix}/forgot-password`, data),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/forgot-password`, data }),
       '密码重置失败'
     );
   }
@@ -167,7 +166,7 @@ export class AuthService {
    */
   async sendSmsCode(phone: string, type: 'login' | 'register' | 'forgot'): Promise<ApiResponse<any>> {
     return handleApiCall(
-      () => request.post(`${this.apiPrefix}/sms-code`, { phone, type }),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/sms-code`, data: { phone, type } }),
       '发送短信验证码失败'
     );
   }
@@ -177,7 +176,7 @@ export class AuthService {
    */
   async refreshQrCode(): Promise<ApiResponse<{ qrCodeUrl: string; qrCodeId: string }>> {
     return handleApiCall(
-      () => request.get(`${this.apiPrefix}/qr-code`),
+      () => request({ method: 'GET', url: `${this.apiPrefix}/qr-code` }) as Promise<ApiResponse<{ qrCodeUrl: string; qrCodeId: string }>>,
       '刷新二维码失败'
     );
   }
@@ -187,7 +186,7 @@ export class AuthService {
    */
   async checkQrCodeStatus(qrCodeId: string): Promise<ApiResponse<AuthResponse | null>> {
     return handleApiCall(
-      () => request.get(`${this.apiPrefix}/qr-code/status`, { params: { qrCodeId } }),
+      () => request({ method: 'GET', url: `${this.apiPrefix}/qr-code/status`, params: { qrCodeId } }) as Promise<ApiResponse<AuthResponse | null>>,
       '检查二维码状态失败'
     );
   }
@@ -197,7 +196,7 @@ export class AuthService {
    */
   async verifyIdentity(data: { employeeId: string; name: string }): Promise<ApiResponse<any>> {
     return handleApiCall(
-      () => request.post(`${this.apiPrefix}/verify-identity`, data),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/verify-identity`, data }),
       '身份验证失败'
     );
   }
@@ -212,7 +211,7 @@ export class AuthService {
     }
     
     return handleApiCall(
-      () => request.post(`${this.apiPrefix}/logout`),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/logout` }),
       '登出失败'
     );
   }
@@ -227,7 +226,11 @@ export class AuthService {
     }
 
     return handleApiCall(
-      () => request.get(`${this.apiPrefix}/refreshToken?refreshToken=${encodeURIComponent(refreshToken)}`),
+      () => request({ 
+        method: 'GET', 
+        url: `${this.apiPrefix}/refreshToken`, 
+        params: { refreshToken } 
+      }) as Promise<ApiResponse<{ token: string; refresh_token: string; expires_in: number }>>,
       '刷新令牌失败'
     );
   }
@@ -237,7 +240,7 @@ export class AuthService {
    */
   async getUserInfo(): Promise<ApiResponse<AuthUser>> {
     return handleApiCall(
-      () => request.get('/admin/base/comm/person'),
+      () => request({ method: 'GET', url: '/admin/base/comm/person' }) as Promise<ApiResponse<AuthUser>>,
       '获取用户信息失败'
     );
   }
@@ -247,7 +250,7 @@ export class AuthService {
    */
   async getCaptcha(): Promise<ApiResponse<{ captchaId: string; captchaImage: string }>> {
     return handleApiCall(
-      () => request.get(`${this.apiPrefix}/captcha`),
+      () => request({ method: 'GET', url: `${this.apiPrefix}/captcha` }) as Promise<ApiResponse<{ captchaId: string; captchaImage: string }>>,
       '获取验证码失败'
     );
   }
@@ -257,7 +260,7 @@ export class AuthService {
    */
   async verifyCaptcha(captchaId: string, verifyCode: string): Promise<ApiResponse<boolean>> {
     return handleApiCall(
-      () => request.post(`${this.apiPrefix}/verify-captcha`, { captchaId, verifyCode }),
+      () => request({ method: 'POST', url: `${this.apiPrefix}/verify-captcha`, data: { captchaId, verifyCode } }) as Promise<ApiResponse<boolean>>,
       '验证码验证失败'
     );
   }

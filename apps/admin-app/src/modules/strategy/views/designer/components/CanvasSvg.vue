@@ -267,14 +267,23 @@ const clientH = ref(0);
 const initialBodyMiddleH = ref<number>(0);
 const currentBodyMiddleH = ref<number>(0);
 let ro: ResizeObserver | null = null;
+let rafId: number | null = null;
 
 onMounted(() => {
   const el = svgRef.value as SVGSVGElement | null;
   if (!el) return;
   const update = () => {
     const rect = el.getBoundingClientRect();
-    clientW.value = rect.width;
-    clientH.value = rect.height;
+    const newW = rect.width;
+    const newH = rect.height;
+    
+    // 检查尺寸是否真的发生了变化，避免不必要的更新
+    if (newW === clientW.value && newH === clientH.value) {
+      return;
+    }
+    
+    clientW.value = newW;
+    clientH.value = newH;
     const bodyMiddle = el.closest('.btc-grid-group__body-middle') as HTMLElement | null;
     const bodyH = bodyMiddle ? bodyMiddle.getBoundingClientRect().height : rect.height;
     currentBodyMiddleH.value = bodyH;
@@ -283,12 +292,28 @@ onMounted(() => {
     }
   };
   update();
-  ro = new ResizeObserver(update);
+  ro = new ResizeObserver(() => {
+    // 使用 requestAnimationFrame 延迟执行，避免在 ResizeObserver 回调中同步修改 DOM
+    // 这样可以避免 ResizeObserver loop 警告
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+    }
+    rafId = requestAnimationFrame(() => {
+      update();
+      rafId = null;
+    });
+  });
   ro.observe(el);
 });
 
 onBeforeUnmount(() => {
-  if (ro && svgRef.value) ro.disconnect();
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  if (ro && svgRef.value) {
+    ro.disconnect();
+  }
   ro = null;
 });
 

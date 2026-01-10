@@ -1,7 +1,7 @@
 <template>
   <div class="forgot-password-link">
     <router-link to="/forget-password" class="link">
-      {{ $t('忘记密码？') }}
+      {{ $t('auth.login.password.forgot') }}
       <el-icon class="arrow-right">
         <ArrowRight />
       </el-icon>

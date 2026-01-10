@@ -3,6 +3,7 @@ import type { Router } from 'vue-router';
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
+import { getMainAppLoginUrl } from '@btc/shared-core';
 
 // 基础路由（页面组件）
 const pageRoutes = [
@@ -44,7 +45,7 @@ export const createEngineeringRouter = (): Router => {
   });
 
   // 路由守卫：在生产环境子域名下规范化路径
-  router.beforeEach((to: any, from: any, next: any) => {
+  router.beforeEach((to: any, _from: any, next: any) => {
     // 只在独立运行（非 qiankun）且是生产环境子域名时处理
     if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
       const hostname = window.location.hostname;
@@ -66,8 +67,38 @@ export const createEngineeringRouter = (): Router => {
     next();
   });
 
-  router.onError((error: any) => {
-    console.warn('[engineering-app] Router error:', error);
+  // 关键：参考 cool-admin，在路由解析完成后立即关闭 Loading（beforeResolve）
+  // 这样可以在路由解析完成后、组件渲染前就关闭 loading，比等待应用挂载更快
+  // 关键优化：立即关闭 loading，确保与 cool-admin 一致的性能
+  let loadingClosed = false;
+  router.beforeResolve(() => {
+    if (!loadingClosed) {
+      const loadingEl = document.getElementById('Loading');
+      if (loadingEl) {
+        // 关键：立即隐藏并移除 loading，确保与 cool-admin 一致的性能
+        // 使用内联样式确保优先级，立即隐藏
+        loadingEl.style.setProperty('display', 'none', 'important');
+        loadingEl.style.setProperty('visibility', 'hidden', 'important');
+        loadingEl.style.setProperty('opacity', '0', 'important');
+        loadingEl.style.setProperty('pointer-events', 'none', 'important');
+        loadingEl.classList.add('is-hide');
+        
+        // 延迟移除 DOM 元素（不影响显示，只是清理）
+        setTimeout(() => {
+          try {
+            loadingEl.remove();
+          } catch {
+            // 忽略移除错误
+          }
+        }, 350);
+        
+        loadingClosed = true;
+      }
+    }
+  });
+
+  router.onError((_error: any) => {
+    // 路由错误已处理
   });
 
   return router;

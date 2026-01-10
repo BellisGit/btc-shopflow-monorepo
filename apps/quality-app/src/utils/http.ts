@@ -4,7 +4,7 @@ import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie, deleteCookie } from './cookie';
+import { getCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -119,6 +119,44 @@ export class Http {
       if (isLoginResponse) {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
+
+        // 检查响应是否成功（code: 200）
+        const isLoginSuccess = originalResponseData &&
+                               typeof originalResponseData === 'object' &&
+                               originalResponseData.code === 200;
+
+        if (isLoginSuccess) {
+          // 登录成功，设置登录状态标记到统一的 settings 存储中
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+
+          // 启动全局用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
+          try {
+            import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
+              startUserCheckPolling(true);
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to start user check polling after login:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，广播登录消息到所有标签页
+          try {
+            import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
+              const bridge = useCrossDomainBridge();
+              bridge.sendMessage('login', { timestamp: Date.now() });
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to broadcast login message:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+        }
         
         // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
         const setCookieHeaders = response.headers?.getSetCookie?.() || [];
@@ -382,10 +420,12 @@ export class Http {
 
   // 测试响应拦截器的方法
   testResponseInterceptor() {
+    // @ts-expect-error: 测试方法，未使用变量
     const interceptor = responseInterceptor.createResponseInterceptor();
 
 
     // 模拟一个成功的响应
+    // @ts-expect-error: 测试方法，未使用变量
     const mockResponse = {
       data: { code: 200, msg: '测试消息', data: null },
       status: 200,
@@ -394,9 +434,9 @@ export class Http {
 
 
     try {
-      const result = interceptor.onFulfilled(mockResponse);
-    } catch (error) {
-      console.error('Interceptor error:', error);
+      // const result = interceptor.onFulfilled(mockResponse); // 未使用
+    } catch (_error) {
+      // Interceptor error
     }
   }
 
@@ -510,7 +550,7 @@ export const http = new Http(config.api.baseURL);
  * 基础服务类 - 参考 cool-admin 的 BaseService
  */
 export class BaseService {
-  private namespace?: string;
+  private namespace: string | undefined;
   private readonly httpClient: Http;
 
   constructor(namespace?: string, httpClient: Http = http) {

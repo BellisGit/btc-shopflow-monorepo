@@ -30,3 +30,4 @@ export declare function usePermission(): {
     checkPermission: (permission: string) => boolean;
 };
 export default createPermissionPlugin;
+//# sourceMappingURL=index.d.ts.map

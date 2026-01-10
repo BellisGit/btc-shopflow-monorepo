@@ -1,7 +1,7 @@
 /**
  * 初始化qiankun微前端
  */
-export declare function setupQiankun(): void;
+export declare function setupQiankun(): Promise<void>;
 /**
  * 监听子应用就绪事件
  */

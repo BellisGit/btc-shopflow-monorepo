@@ -35,7 +35,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
-import { getManifestRoute } from '@/micro/manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { getMenusForApp } from '@/store/menuRegistry';
 
 const route = useRoute();
@@ -138,9 +138,10 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
     return metaBreadcrumbs;
   }
 
-  const manifestBreadcrumbs = normalizeBreadcrumbEntries(
-    getManifestRoute(currentApp, normalizedPath)?.breadcrumbs,
-  );
+  // 尝试从 manifest 获取面包屑
+  // 注意：getManifestRoute 需要完整路径（包含应用前缀），它会自动去掉前缀后匹配 manifest
+  const manifestRoute = getManifestRoute(currentApp, normalizedPath);
+  const manifestBreadcrumbs = normalizeBreadcrumbEntries(manifestRoute?.breadcrumbs);
   if (manifestBreadcrumbs.length > 0) {
     return manifestBreadcrumbs;
   }
@@ -267,6 +268,26 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
       { i18nKey: 'menu.data.files' },
       { i18nKey: 'menu.data.files.templates' },
     ],
+    '/admin/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance' },
+      { i18nKey: 'menu.data.dictionary' },
+      { i18nKey: 'menu.data.dictionary.fields' },
+    ],
+    '/governance/dictionary/fields': [
+      { i18nKey: 'menu.governance' },
+      { i18nKey: 'menu.data.dictionary' },
+      { i18nKey: 'menu.data.dictionary.fields' },
+    ],
+    '/admin/governance/dictionary/values': [
+      { i18nKey: 'menu.governance' },
+      { i18nKey: 'menu.data.dictionary' },
+      { i18nKey: 'menu.data.dictionary.values' },
+    ],
+    '/governance/dictionary/values': [
+      { i18nKey: 'menu.governance' },
+      { i18nKey: 'menu.data.dictionary' },
+      { i18nKey: 'menu.data.dictionary.values' },
+    ],
     // 测试功能（图标将从菜单注册表中获取）
     '/admin/test/components': [
       { i18nKey: 'menu.test_features' },
@@ -311,10 +332,30 @@ const breadcrumbList = computed<BreadcrumbItem[]>(() => {
   }
 
   // 获取面包屑数据
-  const breadcrumbData =
-    currentApp === 'admin'
-      ? adminAppBreadcrumbs[normalizedPath]
-      : subAppBreadcrumbs[currentApp]?.[normalizedPath];
+  // 尝试多种路径格式匹配（处理路径格式不一致的问题）
+  let breadcrumbData: BreadcrumbConfig[] | undefined;
+  if (currentApp === 'admin') {
+    // 尝试直接匹配
+    breadcrumbData = adminAppBreadcrumbs[normalizedPath];
+    // 如果没匹配到，尝试去掉尾随斜杠
+    if (!breadcrumbData && normalizedPath.endsWith('/')) {
+      breadcrumbData = adminAppBreadcrumbs[normalizedPath.slice(0, -1)];
+    }
+    // 如果还没匹配到，尝试添加尾随斜杠
+    if (!breadcrumbData && !normalizedPath.endsWith('/')) {
+      breadcrumbData = adminAppBreadcrumbs[`${normalizedPath}/`];
+    }
+  } else {
+    breadcrumbData = subAppBreadcrumbs[currentApp]?.[normalizedPath];
+    // 如果没匹配到，尝试去掉尾随斜杠
+    if (!breadcrumbData && normalizedPath.endsWith('/')) {
+      breadcrumbData = subAppBreadcrumbs[currentApp]?.[normalizedPath.slice(0, -1)];
+    }
+    // 如果还没匹配到，尝试添加尾随斜杠
+    if (!breadcrumbData && !normalizedPath.endsWith('/')) {
+      breadcrumbData = subAppBreadcrumbs[currentApp]?.[`${normalizedPath}/`];
+    }
+  }
 
   if (!breadcrumbData) {
     return [];

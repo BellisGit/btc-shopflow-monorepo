@@ -7,13 +7,17 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { tSync } from '../i18n/getters';
+
 /**
  * 显示 Loading（如果尚未显示）
  */
 function showLoading() {
   // 检查是否有导航标记或需要显示 Loading
   try {
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    const shouldShowLoading = sessionStorage.get<string>('__BTC_NAV_LOADING__') === '1' || true;
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
@@ -65,7 +69,7 @@ function removeLoadingElement() {
  */
 function clearNavigationFlag() {
   try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+    sessionStorage.remove('__BTC_NAV_LOADING__');
   } catch (e) {
     // 静默失败（某些浏览器可能禁用 sessionStorage）
   }
@@ -125,8 +129,8 @@ async function injectAppConfigFromManifest(appId: string) {
       { getMenuRegistry },
       { getManifest }
     ] = await Promise.all([
-      import('@configs/layout-bridge'),
-      import('@btc/shared-components/store/menuRegistry'),
+      import('@btc/shared-core/configs/layout-bridge'),
+      import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
 
@@ -158,13 +162,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
-        hasMenus: registry?.value?.[appId]?.length > 0,
+      console.log(`[initLayoutApp] ${tSync('common.error.manifest_injected')}: ${appId}`, {
+        hasMenus: (registry?.value?.[appId]?.length ?? 0) > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    console.warn(`[initLayoutApp] 从 manifest 注入配置失败:`, error);
+    console.warn(`[initLayoutApp] ${tSync('common.error.manifest_inject_failed')}:`, error);
     // 继续执行，使用默认配置
   }
 }

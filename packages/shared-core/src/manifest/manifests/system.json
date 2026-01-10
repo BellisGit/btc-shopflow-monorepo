@@ -1,0 +1,202 @@
+{
+  "app": {
+    "id": "system",
+    "basePath": "/system",
+    "nameKey": "menu.system.home",
+    "app-name": "domain.type.system"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "labelKey": "menu.system.home",
+      "tab": {
+        "enabled": false
+      },
+      "breadcrumbs": []
+    },
+    {
+      "path": "/data/files/list",
+      "labelKey": "menu.data.files.list",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.list"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.list", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/data/files/template",
+      "labelKey": "menu.data.files.template",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.template"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.template", "icon": "Files" }
+      ]
+    },
+    {
+      "path": "/data/files/preview",
+      "labelKey": "menu.data.files.preview",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.files.preview"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.files", "icon": "Document" },
+        { "labelKey": "menu.data.files.preview", "icon": "View" }
+      ]
+    },
+    {
+      "path": "/inventory/dataSource/bom",
+      "labelKey": "menu.inventory.data_source.bom",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.dataSource.bom"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.data_source", "icon": "Files" },
+        { "labelKey": "menu.inventory.data_source.bom", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/inventory/dataSource/list",
+      "labelKey": "menu.inventory.data_source.list",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.dataSource.list"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.dataSource", "icon": "Files" },
+        { "labelKey": "menu.inventory.dataSource.list", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/inventory/dataSource/ticket",
+      "labelKey": "menu.inventory.data_source.ticket",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.dataSource.ticket"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.dataSource", "icon": "Files" },
+        { "labelKey": "menu.inventory.dataSource.ticket", "icon": "Tickets" }
+      ]
+    },
+    {
+      "path": "/inventory/process",
+      "labelKey": "menu.inventory.process",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.process"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.process", "icon": "Operation" }
+      ]
+    },
+    {
+      "path": "/inventory/check",
+      "labelKey": "menu.inventory.result",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.result"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.result", "icon": "List" }
+      ]
+    },
+    {
+      "path": "/inventory/confirm",
+      "labelKey": "menu.inventory.confirm",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.inventory.confirm"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.inventory", "icon": "Odometer" },
+        { "labelKey": "menu.inventory.confirm", "icon": "Check" }
+      ]
+    },
+    {
+      "path": "/data/dictionary/file-categories",
+      "labelKey": "menu.data.dictionary.file_categories",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.dictionary.file_categories"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.data.dictionary.file_categories", "icon": "FolderOpened" }
+      ]
+    },
+    {
+      "path": "/data/recycle",
+      "labelKey": "menu.data.recycle",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.data.recycle"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.data", "icon": "Folder" },
+        { "labelKey": "menu.data.recycle", "icon": "Delete" }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "index": "data",
+      "labelKey": "menu.data",
+      "children": [
+        {
+          "index": "data-files",
+          "labelKey": "menu.data.files",
+          "children": [
+            { "index": "/data/files/list", "labelKey": "menu.data.files.list" },
+            { "index": "/data/files/template", "labelKey": "menu.data.files.template" },
+            { "index": "/data/files/preview", "labelKey": "menu.data.files.preview" }
+          ]
+        },
+        {
+          "index": "data-dictionary",
+          "labelKey": "menu.data.dictionary",
+          "children": [
+            { "index": "/data/dictionary/file-categories", "labelKey": "menu.data.dictionary.file_categories" }
+          ]
+        },
+        { "index": "/data/recycle", "labelKey": "menu.data.recycle" }
+      ]
+    },
+    {
+      "index": "/inventory",
+      "labelKey": "menu.inventory",
+      "icon": "Odometer",
+      "children": [
+        {
+          "index": "inventory-dataSource",
+          "labelKey": "menu.inventory.data_source",
+          "children": [
+            { "index": "/inventory/dataSource/bom", "labelKey": "menu.inventory.data_source.bom" },
+            { "index": "/inventory/dataSource/list", "labelKey": "menu.inventory.data_source.list" },
+            { "index": "/inventory/dataSource/ticket", "labelKey": "menu.inventory.data_source.ticket" }
+          ]
+        },
+        { "index": "/inventory/process", "labelKey": "menu.inventory.process", "icon": "Operation" },
+        { "index": "/inventory/check", "labelKey": "menu.inventory.result", "icon": "List" },
+        { "index": "/inventory/confirm", "labelKey": "menu.inventory.confirm", "icon": "Check" }
+      ]
+    }
+  ]
+}
+

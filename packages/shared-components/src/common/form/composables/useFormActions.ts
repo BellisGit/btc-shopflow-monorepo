@@ -1,5 +1,5 @@
 import { nextTick } from 'vue';
-import { formHook } from '@btc/shared-utils';
+import { formHook } from '@btc/shared-core/utils/form';
 import { cloneDeep, invokeData } from './useFormItems';
 
 /**

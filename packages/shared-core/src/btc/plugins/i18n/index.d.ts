@@ -28,10 +28,11 @@ export interface I18nPluginOptions {
 export declare function createI18nPlugin(options?: I18nPluginOptions): {
     name: string;
     install(app: App): void;
-    i18n: import("vue-i18n").I18n<Record<string, any>, Record<string, never>, Record<string, never>, string, false>;
+    i18n: import("vue-i18n").I18n<Record<string, any>, {}, {}, string, false>;
 };
 export declare function useI18n(): Composer;
 export declare function td(_key: string, def: string, _params?: any): string;
 export { default as zhCN } from './locales/zh-CN';
 export { default as enUS } from './locales/en-US';
 export type { TypeSafeT } from './type-safe';
+//# sourceMappingURL=index.d.ts.map

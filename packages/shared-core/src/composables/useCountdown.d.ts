@@ -24,3 +24,4 @@ export declare function useCountdown(targetTime: MaybeRef<Date | string | number
     stop: () => void;
     restart: () => void;
 };
+//# sourceMappingURL=useCountdown.d.ts.map

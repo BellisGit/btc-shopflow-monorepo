@@ -3,14 +3,16 @@
     <BtcViewGroup
       ref="viewGroupRef"
       :left-service="viewGroupOptions.leftService"
-      :left-title="viewGroupOptions.title"
-      :show-unassigned="viewGroupOptions.showUnassigned"
-      :unassigned-label="viewGroupOptions.unassignedLabel"
-      :enable-drag="viewGroupOptions.enableDrag"
-      :enable-key-search="viewGroupOptions.enableKeySearch"
-      :enable-refresh="viewGroupOptions.enableRefresh"
+      v-bind="{
+        ...(viewGroupOptions.title !== undefined ? { 'left-title': viewGroupOptions.title } : {}),
+        ...(viewGroupOptions.showUnassigned !== undefined ? { 'show-unassigned': viewGroupOptions.showUnassigned } : {}),
+        ...(viewGroupOptions.unassignedLabel !== undefined ? { 'unassigned-label': viewGroupOptions.unassignedLabel } : {}),
+        ...(viewGroupOptions.enableDrag !== undefined ? { 'enable-drag': viewGroupOptions.enableDrag } : {}),
+        ...(viewGroupOptions.enableKeySearch !== undefined ? { 'enable-key-search': viewGroupOptions.enableKeySearch } : {}),
+        ...(viewGroupOptions.enableRefresh !== undefined ? { 'enable-refresh': viewGroupOptions.enableRefresh } : {}),
+        style: { height: '100%' }
+      }"
       @select="handleViewGroupSelect"
-      style="height: 100%"
     >
       <template #right>
         <BtcTabs v-model="activeTab" :tabs="tabList" @tab-change="handleTabChange">
@@ -58,7 +60,7 @@ import BtcTabs from '@btc-components/navigation/btc-tabs/index.vue';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcTable, BtcPagination } from '@btc/shared-components';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import type { BtcViewsTabsGroupConfig } from './types';
-import { useContentHeight } from '@btc/shared-components/composables/content-height';
+import { useContentHeight } from '../../../composables/content-height';
 
 defineOptions({
   name: 'BtcViewsTabsGroup'
@@ -113,7 +115,6 @@ const computedFormItems = computed(() => {
 // 计算属性
 const tabList = computed(() => props.config.tabs);
 const columns = computed(() => props.config.columns);
-const formItems = computed(() => props.config.formItems);
 const searchPlaceholder = computed(() => props.config.searchPlaceholder || '搜索...');
 const upsertWidth = computed(() => props.config.upsertWidth || '800px');
 
@@ -259,7 +260,7 @@ const handleFormSubmit = async (data: any, { close, done, next }: any) => {
 };
 
 // 处理 ViewGroup 的 select 事件
-const handleViewGroupSelect = (item: any, ids?: any) => {
+const handleViewGroupSelect = (item: any, _ids?: any) => {
   selectedItem.value = item;
   emit('selected-change', item);
 
@@ -291,7 +292,10 @@ const handleViewGroupSelect = (item: any, ids?: any) => {
 onMounted(() => {
   // 默认选中第一个 tab
   if (props.config.tabs.length > 0) {
-    activeTab.value = props.config.tabs[0].name;
+    const firstTab = props.config.tabs[0];
+    if (firstTab) {
+      activeTab.value = firstTab.name;
+    }
   }
   // 标记初始化完成
   isInitialized.value = true;

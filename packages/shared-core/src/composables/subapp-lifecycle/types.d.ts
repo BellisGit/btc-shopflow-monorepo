@@ -8,6 +8,7 @@ export type CleanupListener = [event: string, handler: EventListener];
 export interface CleanupState {
     routerAfterEach?: () => void;
     listeners: CleanupListener[];
+    historyPatches?: () => void;
 }
 export interface SubAppContext {
     app: VueApp;
@@ -32,3 +33,4 @@ export interface SubAppOptions {
     setupUI: (app: VueApp) => ReturnType<typeof createThemePlugin>;
     setupPlugins?: (app: VueApp, router: Router) => Promise<void>;
 }
+//# sourceMappingURL=types.d.ts.map

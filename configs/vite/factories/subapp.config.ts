@@ -4,13 +4,19 @@
  */
 
 import type { UserConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import qiankun from 'vite-plugin-qiankun';
 import UnoCSS from 'unocss/vite';
 import { existsSync, readFileSync } from 'node:fs';
 import { createPathHelpers } from '../utils/path-helpers';
+
+// 获取当前文件的目录路径（ESM 方式）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // 延迟加载 VueI18nPlugin，从应用目录解析
 // 使用函数内动态导入，确保从调用者的 node_modules 解析
@@ -27,7 +33,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getBaseUrl, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { createRollupConfig } from '../build/rollup.config';
+import { createRollupConfig } from '../plugins/rollup-config';
 import {
   cleanDistPlugin,
   chunkVerifyPlugin,
@@ -38,6 +44,11 @@ import {
   addVersionPlugin,
   replaceIconsWithCdnPlugin,
   resolveLogoPlugin,
+  uploadCdnPlugin,
+  cdnAssetsPlugin,
+  cdnImportPlugin,
+  resolveBtcImportsPlugin,
+  localesStaticPlugin,
 } from '../plugins';
 import type { Plugin } from 'vite';
 
@@ -146,16 +157,34 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   const publicDir = isPreviewBuild ? getPublicDir(appName, appDir) : false;
 
   // 获取主应用配置
-  const mainAppConfig = getViteAppConfig('system-app');
+  const mainAppConfig = getViteAppConfig('main-app');
   const mainAppPort = mainAppConfig.prePort.toString();
 
   // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
   // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
   const epsOutputDir = resolve(appDir, 'build', 'eps');
 
-  // 共享的 EPS 数据源目录（从 system-app 读取）
-  // 子应用优先从 system-app 的 build/eps 读取 EPS 数据，实现真正的共享
-  const sharedEpsDir = resolve(appDir, '../../apps/system-app/build/eps');
+  // 共享的 EPS 数据源目录（从 main-app 读取）
+  // 子应用优先从 main-app 的 build/eps 读取 EPS 数据，实现真正的共享
+  const sharedEpsDir = resolve(appDir, '../../apps/main-app/build/eps');
+
+  // 确保 eps enable 始终为 boolean 类型
+  const epsEnable: boolean = btcOptions.eps?.enable ?? true;
+
+  // 构建 eps 配置，确保 enable 始终为 boolean
+  const epsConfig: {
+    enable: boolean;
+    dict: boolean;
+    dictApi?: string;
+    dist: string;
+    sharedEpsDir: string;
+  } = {
+    enable: epsEnable,
+    dict: btcOptions.eps?.dict ?? true, // 默认启用字典功能
+    dictApi: btcOptions.eps?.dictApi || '/api/system/auth/dict', // 默认字典接口
+    dist: epsOutputDir,
+    sharedEpsDir: sharedEpsDir,
+  };
 
   // 构建插件列表
   const plugins: Plugin[] = [
@@ -163,9 +192,13 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. Logo 路径解析插件（在自定义插件之前，确保 /logo.png 能被正确解析）
+    // 3. 解析 @btc/* 包导入插件（在 Logo 插件之前，确保能够解析从已构建包中导入的 @btc/* 模块）
+    resolveBtcImportsPlugin({ appDir }),
+    // 4. Logo 路径解析插件（在自定义插件之前，确保 /logo.png 能被正确解析）
     resolveLogoPlugin(appDir),
-    // 4. 自定义插件（在核心插件之前）
+    // 4.5. Locales 静态文件插件（提供 src/locales/*.json 文件，供主应用通过 fetch 加载）
+    localesStaticPlugin(appDir),
+    // 5. 自定义插件（在核心插件之前）
     ...customPlugins,
     // 4. Vue 插件
     vue({
@@ -176,6 +209,8 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
         },
       },
     }),
+    // 4.5. Vue JSX 插件（支持 TSX 文件中的 JSX 语法）
+    vueJsx(),
     // 5. 自动导入插件
     createAutoImportConfig(),
     // 6. 组件自动注册插件
@@ -188,13 +223,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     btc({
       type: 'subapp' as any,
       proxy,
-      eps: {
-        enable: true,
-        dict: false,
-        dist: epsOutputDir,
-        sharedEpsDir: sharedEpsDir,
-        ...btcOptions.eps,
-      },
+      eps: epsConfig as any, // 类型断言：确保 enable 始终为 boolean
       svg: {
         skipNames: ['base', 'icons'],
         ...btcOptions.svg,
@@ -204,8 +233,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     // 9. VueI18n 插件
     getVueI18nPlugin(appDir)({
       include: vueI18nOptions?.include || [
-        resolve(appDir, 'src/locales/**'),
-        resolve(appDir, 'src/{modules,plugins}/**/locales/**'),
+        resolve(appDir, 'src/locales/**')
       ],
       runtimeOnly: vueI18nOptions?.runtimeOnly ?? true,
     }),
@@ -219,12 +247,29 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 16. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
-    // 16.5. 替换图标路径为 CDN URL（生产环境）
+    // 16.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
+    cdnAssetsPlugin({
+      appName,
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 16.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
+    // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
+    cdnImportPlugin({
+      appName,
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 16.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
+    // 注意：不再需要 resolveExternalImportsPlugin，因为所有应用都打包 @btc/* 包
     // 17. 优化 chunks 插件
     optimizeChunksPlugin(),
     // 18. Chunk 验证插件
     chunkVerifyPlugin(),
+    // 19. CDN 上传插件（仅在生产构建且启用时）
+    ...(process.env.ENABLE_CDN_UPLOAD === 'true' && !isPreviewBuild
+      ? [uploadCdnPlugin(appName, appDir)]
+      : []),
   ];
 
   // 构建配置
@@ -235,71 +280,33 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     cssMinify: true,
     // 关键：禁用代码压缩，避免 Terser 压缩导致的对象属性分隔符丢失问题
     minify: false,
-    // terserOptions 已禁用，保留配置以备将来使用
-    /* terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        reduce_vars: false,
-        reduce_funcs: false,
-        passes: 1,
-        collapse_vars: false,
-        dead_code: false,
-        // 关键：禁用可能导致对象属性分隔符丢失的优化
-        sequences: false, // 禁用序列优化，避免语句被错误合并
-        join_vars: false, // 禁用变量连接，避免变量声明被错误合并
-        // 关键：禁用不安全的优化，避免数字字面量和字符串被错误处理
-        unsafe: false,
-        unsafe_comps: false,
-        unsafe_math: false,
-        unsafe_methods: false,
-        unsafe_proto: false,
-        unsafe_regexp: false,
-        unsafe_undefined: false,
-        // 关键：禁用对象属性优化，确保对象属性之间有正确的逗号分隔符
-        properties: false, // 禁用对象属性优化，防止属性被错误合并
-        // 关键：禁用表达式优化，确保字符串和数字不会被错误连接
-        evaluate: false, // 禁用表达式求值，防止字符串和数字被错误处理
-        // 关键：禁用纯函数优化，防止对象字面量被错误处理
-        pure_funcs: [], // 不将任何函数视为纯函数，防止对象字面量被错误优化
-        // 关键：禁用副作用优化，确保对象字面量格式正确
-        side_effects: false, // 不禁用副作用，确保对象字面量格式正确
-      },
-      // 关键：保留函数名和类名，但禁用变量名混淆
-      // 这样可以防止导出名称被混淆，同时允许基本的压缩优化
-      mangle: {
-        keep_fnames: true,
-        keep_classnames: true,
-      },
-      format: {
-        comments: false,
-        // 确保导出名称格式正确
-        preserve_annotations: false,
-        // 关键：确保代码格式正确，避免数字字面量被错误处理
-        ascii_only: false, // 允许非 ASCII 字符，避免数字被错误编码
-        beautify: false, // 不美化代码，保持压缩后的格式
-        // 关键：确保对象属性之间有正确的分隔符
-        semicolons: true, // 使用分号，确保语句正确分隔
-      },
-    }, */
+
     assetsInlineLimit: 10 * 1024,
-    outDir: 'dist',
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     // 关键：禁用 Vite 的自动清理，因为我们已经有 cleanDistPlugin 在构建前清理
     // 这样可以避免 Windows 上的文件锁定问题（EBUSY）
     // cleanDistPlugin 已经有重试机制（5次，递增等待时间），如果清理失败会继续构建
     // 注意：如果清理失败，旧的构建产物不会被删除，可能导致重复文件
     emptyOutDir: false,
-    rollupOptions: createRollupConfig(appName.replace('-app', '')),
+    // 所有应用都打包 @btc/* 包和 @configs 包，避免运行时模块解析问题
+    rollupOptions: createRollupConfig(appName, {
+      externalBtcPackages: false, // 显式设置为 false，打包 @btc/* 包
+      externalConfigsPackages: false, // 显式设置为 false，打包 @configs 包
+    }),
     chunkSizeWarningLimit: 1000,
     ...customBuild,
   };
 
   // 服务器配置
+  // 关键：优先使用 customServer.proxy，如果不存在则使用 proxy 参数
+  // 注意：customServer 会在最后展开，如果包含 proxy 会覆盖这里的设置
+  const finalProxy = customServer?.proxy !== undefined ? customServer.proxy : proxy;
+  const { proxy: _customProxy, ...restCustomServer } = customServer || {};
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     cors: true,
     origin: `http://${appConfig.devHost}:${appConfig.devPort}`,
     headers: {
@@ -312,7 +319,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       port: appConfig.devPort,
       overlay: false,
     },
-    proxy,
+    proxy: finalProxy,
     fs: {
       strict: false,
       allow: [
@@ -320,10 +327,14 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       ],
       cachedChecks: true,
     },
-    ...customServer,
+    ...restCustomServer,
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     strictPort: true,
@@ -337,15 +348,12 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       'Access-Control-Allow-Headers': 'Content-Type',
     },
     ...customPreview,
-  };
+  } as any;
 
-  // 优化依赖配置
-  // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
-  // 当切换应用时，如果发现新的依赖没有被预构建，Vite 会触发依赖优化并重新加载页面
-  // 通过在 include 中预先包含这些依赖，可以避免这个问题
-  //
-  // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
-  // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
+  // 关键：设置预览服务器的根目录为 dist/{prodHost}
+  // 注意：root 属性在新版本的 Vite 类型中可能未定义，但运行时仍支持
+  (previewConfig as any).root = previewRoot;
+
   const appCacheDir = resolve(appDir, 'node_modules/.vite');
 
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
@@ -361,7 +369,9 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
       'element-plus/es/components/cascader/style/css',
       '@element-plus/icons-vue',
       '@btc/shared-core',
-      '@btc/shared-components',
+      // 注意：@btc/shared-components 已从 include 中移除，因为它包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // '@btc/shared-components',
       '@btc/shared-utils',
       '@btc/subapp-manifests',
       'vite-plugin-qiankun/dist/helper',
@@ -382,22 +392,31 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     ],
     // 排除不应该被优化的依赖
     // 注意：exclude 使用包名或文件路径模式
-    exclude: [],
+    exclude: [
+      // 关键：@btc/shared-core/configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 注意：exclude 只支持字符串模式，不支持正则表达式
+      '@btc/shared-core/configs/layout-bridge',
+      // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // 这样可以避免 JSX 解析问题
+      '@btc/shared-components',
+    ],
     // 关键：设置为 true，强制重新构建所有依赖，确保所有依赖都被预构建
     // 这会在首次启动时构建所有依赖，之后就不会再触发了
     force: false,
-    // 关键：指定需要扫描的入口文件，确保扫描到 @btc/shared-components 内部的依赖
-    // 这样即使依赖是通过 workspace 包间接导入的，也能被正确识别和预构建
-    // 注意：这会增加启动时的扫描时间，但可以避免运行时触发依赖优化
+    // 关键：参考 cool-admin 的做法
+    // 注意：不再包含 shared-components/src/index.ts，因为它包含 TSX 文件，应该在运行时直接处理
+    // shared-components 中的依赖（如 lunr, chardet 等）会在运行时被自动发现和优化
     entries: [
       // 应用的入口文件
       resolve(appDir, 'src/main.ts'),
-      // 关键：显式包含 @btc/shared-components 的入口文件，确保其依赖被扫描
-      // 这样 lodash-es, chardet, echarts 等依赖就能在启动时被识别
-      resolve(appDir, '../../packages/shared-components/src/index.ts'),
     ],
     esbuildOptions: {
       plugins: [],
+      // 关键：确保依赖预构建时也使用 Vue 的 JSX 转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
     },
     ...customOptimizeDeps,
   };
@@ -415,6 +434,7 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   };
 
   // 返回完整配置
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
   const baseResolve = createBaseResolve(appDir, appName);
   // 关键：生产/预览构建时，子应用不再使用本地 virtual:eps（由 layout-app 提供共享 EPS 服务）
   // 这样可以避免子应用入口产生对自身 eps-service-xxx.js 的引用，导致共享不生效或 404。
@@ -423,23 +443,36 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
   const finalResolve = shouldUseSharedEps
     ? {
         ...baseResolve,
-        alias: {
-          ...(baseResolve?.alias as any),
-          'virtual:eps': sharedEpsStub,
-        },
+        // 关键：保持别名数组形式，添加 virtual:eps 别名
+        alias: Array.isArray(baseResolve?.alias)
+          ? [
+              ...baseResolve.alias,
+              {
+                find: 'virtual:eps',
+                replacement: sharedEpsStub,
+              },
+            ]
+          : {
+              ...(baseResolve?.alias as Record<string, string> || {}),
+              'virtual:eps': sharedEpsStub,
+            },
       }
     : baseResolve;
 
-  return {
+  const config: any = {
     base: baseUrl,
     publicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     // 虽然这会增加一些存储空间，但可以确保每个应用的缓存状态一致，避免频繁重新构建
     cacheDir: appCacheDir,
-    resolve: finalResolve,
     plugins,
     esbuild: {
       charset: 'utf8',
+      // 关键：确保 esbuild 正确处理 JSX，使用 Vue 的 h 函数而不是 React.createElement
+      // 这样即使 esbuild 处理某些 JSX 文件，也会使用正确的转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
     },
     server: serverConfig,
     preview: previewConfig,
@@ -447,5 +480,12 @@ export function createSubAppViteConfig(options: SubAppViteConfigOptions): UserCo
     css: cssConfig,
     build: buildConfig,
   };
+
+  // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  if (finalResolve !== undefined) {
+    config.resolve = finalResolve;
+  }
+
+  return config;
 }
 

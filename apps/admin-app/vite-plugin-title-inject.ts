@@ -5,12 +5,47 @@
  * 效果：刷新时浏览器标签从第一帧就显示正确标题，无闪烁
  */
 import type { Plugin } from 'vite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'path';
 
 // 模块名称（硬编码，因为构建时无法访问运行时 i18n）
-// 格式：管理模块 - BTC ShopFlow（不使用页面标题）
+// 格式：管理模块（不使用页面标题）
 const moduleName = '管理模块';
+
+// 应用配置类型
+interface AppConfig {
+  id: string;
+  name: string;
+  displayName: string;
+  category?: string;
+  packageName?: string;
+}
+
+interface AppsConfig {
+  apps: AppConfig[];
+}
+
+/**
+ * 加载应用配置（从项目根目录的 apps.config.json）
+ */
+function loadAppsConfig(root: string): AppsConfig | null {
+  try {
+    // 从项目根目录读取 apps.config.json
+    // root 通常是应用目录（如 apps/admin-app），需要向上两级到项目根目录
+    const configPath = resolve(root, '../../apps.config.json');
+    
+    if (!existsSync(configPath)) {
+      console.warn('[title-inject] apps.config.json 不存在:', configPath);
+      return null;
+    }
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    return JSON.parse(configContent) as AppsConfig;
+  } catch (error) {
+    console.error('[title-inject] 加载 apps.config.json 失败:', error);
+    return null;
+  }
+}
 
 // 标题映射表（从 i18n 同步）
 const titles: Record<string, Record<string, string>> = {
@@ -92,9 +127,14 @@ function getLocaleFromCookie(cookieHeader?: string): string {
 export function titleInjectPlugin(): Plugin {
   let requestPath = '/';
   let requestCookie = '';
+  let viteConfig: any = null;
 
   return {
     name: 'vite-plugin-title-inject',
+
+    configResolved(config) {
+      viteConfig = config;
+    },
 
     configureServer(server) {
       // 在 Vite 内部中间件之前拦截请求，保存路径和 cookie
@@ -108,11 +148,30 @@ export function titleInjectPlugin(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
-        // 统一使用"管理模块 - BTC ShopFlow"格式（不使用页面标题）
-        const finalTitle = `${moduleName} - BTC ShopFlow`;
+        // 统一使用"管理模块"格式（不使用页面标题）
+        const finalTitle = moduleName;
 
         // 替换占位符
-        return html.replace('__PAGE_TITLE__', finalTitle);
+        let updatedHtml = html.replace('__PAGE_TITLE__', finalTitle);
+
+        // 关键：注入 apps.config.json 到 window 全局变量（如果配置存在）
+        // 这样子应用在运行时可以通过 window.__BTC_APPS_CONFIG__ 访问配置
+        if (viteConfig) {
+          try {
+            const root = viteConfig.root || process.cwd();
+            const config = loadAppsConfig(root);
+            
+            if (config) {
+              const configScript = `<script>window.__BTC_APPS_CONFIG__ = ${JSON.stringify(config)};</script>`;
+              // 在 </head> 前注入配置脚本
+              updatedHtml = updatedHtml.replace('</head>', `${configScript}</head>`);
+            }
+          } catch (error) {
+            console.error('[title-inject] 注入配置失败:', error);
+          }
+        }
+
+        return updatedHtml;
       },
     },
   };

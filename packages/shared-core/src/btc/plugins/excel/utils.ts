@@ -1,6 +1,6 @@
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
-import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-utils';
+import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-core/utils';
 
 /**
  * 二维数组转 worksheet
@@ -13,14 +13,16 @@ function sheet_from_array_of_arrays(data: any[][]) {
   };
 
   for (let R = 0; R < data.length; R++) {
-    for (let C = 0; C < data[R].length; C++) {
+    const row = data[R];
+    if (!row) continue;
+    for (let C = 0; C < row.length; C++) {
       if (range.s.r > R) range.s.r = R;
       if (range.s.c > C) range.s.c = C;
       if (range.e.r < R) range.e.r = R;
       if (range.e.c < C) range.e.c = C;
 
       const cell: XLSX.CellObject = {
-        v: data[R][C],
+        v: row[C],
         t: 's' // 统一设置为字符串类型，避免格式问题
       };
       if (cell.v == null) continue;
@@ -118,7 +120,10 @@ export function exportJsonToExcel(options: ExportExcelOptions) {
 
   // 添加多级表头（从后往前添加）
   for (let i = multiHeader.length - 1; i >= 0; i--) {
-    sheetData.unshift(multiHeader[i]);
+    const headerRow = multiHeader[i];
+    if (headerRow) {
+      sheetData.unshift(headerRow);
+    }
   }
 
   const ws_name = 'Sheet1';
@@ -150,10 +155,15 @@ export function exportJsonToExcel(options: ExportExcelOptions) {
 
     // 以第一行为初始值
     const result = colWidth[0];
+    if (!result) return;
     for (let i = 1; i < colWidth.length; i++) {
-      for (let j = 0; j < colWidth[i].length; j++) {
-        if (result[j]['wch'] < colWidth[i][j]['wch']) {
-          result[j]['wch'] = colWidth[i][j]['wch'];
+      const row = colWidth[i];
+      if (!row) continue;
+      for (let j = 0; j < row.length; j++) {
+        const resultCol = result[j];
+        const rowCol = row[j];
+        if (resultCol && rowCol && resultCol.wch < rowCol.wch) {
+          resultCol.wch = rowCol.wch;
         }
       }
     }

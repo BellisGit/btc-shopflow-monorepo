@@ -1,5 +1,5 @@
 import { watch, nextTick } from 'vue';
-import { formHook } from '@btc/shared-utils';
+import { formHook } from '@btc/shared-core/utils/form';
 import type { UseCrudReturn } from '@btc/shared-core';
 import type { UpsertProps } from '../types';
 

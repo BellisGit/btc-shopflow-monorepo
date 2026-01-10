@@ -67,6 +67,10 @@ export function useFormEnterKey(options: UseFormEnterKeyOptions) {
     if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
       return;
     }
+    
+    // 阻止默认行为和事件冒泡，防止触发表单的原生 submit 事件
+    event.preventDefault();
+    event.stopPropagation();
 
     const target = (currentElement || event.target) as HTMLElement;
     if (!target) return;
@@ -79,7 +83,8 @@ export function useFormEnterKey(options: UseFormEnterKeyOptions) {
     let currentIndex = -1;
     for (let i = 0; i < inputs.length; i++) {
       // 检查是否是目标元素或其子元素（Element Plus 的输入框可能是嵌套的）
-      if (inputs[i].contains(target) || inputs[i] === target) {
+      const input = inputs[i];
+      if (input && (input.contains(target) || input === target)) {
         currentIndex = i;
         break;
       }
@@ -112,6 +117,7 @@ export function useFormEnterKey(options: UseFormEnterKeyOptions) {
     // 如果是最后一个输入框，提交表单
     if (currentIndex >= 0 && currentIndex === inputs.length - 1) {
       event.preventDefault();
+      event.stopPropagation(); // 阻止事件冒泡，防止触发表单的原生 submit 事件
       await onSubmit();
       return;
     }

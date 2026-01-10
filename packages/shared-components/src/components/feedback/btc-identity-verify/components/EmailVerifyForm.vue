@@ -27,6 +27,7 @@
       <label :for="`email-sms-code-0`" class="verify-form__item-label">验证码</label>
       <div class="verify-form__item-code-wrapper">
         <component
+          v-if="smsCodeInputComponent"
           :is="smsCodeInputComponent"
           id-prefix="email-sms-code"
           :model-value="emailCode"
@@ -86,7 +87,7 @@ interface Props {
   emailCountdown: number;
   emailSending: boolean;
   emailHasSent: boolean;
-  smsCodeInputComponent: Component;
+  smsCodeInputComponent?: Component;
 }
 
 const props = defineProps<Props>();

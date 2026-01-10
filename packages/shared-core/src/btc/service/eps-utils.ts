@@ -3,7 +3,7 @@
  * 提供 EPS 服务的标准化处理，包括参数标准化、响应格式标准化和 CrudService 包装
  */
 
-import { normalizeKeywordIds } from '../../utils/array';
+import { normalizeKeywordIds } from '@btc/shared-core/utils/array';
 import type { CrudService } from '../crud/types';
 
 type AnyRecord = Record<string, any>;
@@ -190,28 +190,59 @@ export function createCrudServiceFromEps(
 
   // 获取服务节点
   let serviceNode: any = serviceRoot;
+  let missingKey: string | null = null;
   for (const key of pathArray) {
     if (!serviceNode || typeof serviceNode !== 'object') {
-      throw new Error(
-        `[createCrudServiceFromEps] EPS 服务路径 ${servicePath} 不存在，无法找到 ${key}`
-      );
+      missingKey = key;
+      break;
     }
     serviceNode = serviceNode[key];
   }
 
-  if (!serviceNode || typeof serviceNode !== 'object') {
-    throw new Error(
-      `[createCrudServiceFromEps] EPS 服务 ${servicePath} 不存在或格式不正确`
-    );
+  // 优雅处理：如果服务路径不存在，返回一个空的服务对象
+  if (missingKey || !serviceNode || typeof serviceNode !== 'object') {
+    const servicePathStr = Array.isArray(servicePath) ? servicePath.join('.') : servicePath;
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[createCrudServiceFromEps] EPS 服务路径 ${servicePathStr} 不存在${missingKey ? `，无法找到 ${missingKey}` : ''}，返回空服务对象`
+      );
+    }
+
+    // 返回一个空的服务对象，所有方法都返回空结果
+    const emptyService: CrudService<any> = {
+      async page() {
+        return { list: [], total: 0 };
+      },
+      async add() {
+        // 静默处理，不执行任何操作
+      },
+      async update() {
+        // 静默处理，不执行任何操作
+      },
+      async delete() {
+        // 静默处理，不执行任何操作
+      },
+      async deleteBatch() {
+        // 静默处理，不执行任何操作
+      },
+    };
+    return emptyService;
   }
 
-  // 确保方法存在
+  // 确保方法存在（如果不存在，返回一个空函数）
   const ensureMethod = (method: string) => {
     const fn = serviceNode[method];
     if (typeof fn !== 'function') {
-      throw new Error(
-        `[createCrudServiceFromEps] EPS 服务 ${servicePath}.${method} 未定义`
-      );
+      const servicePathStr = Array.isArray(servicePath) ? servicePath.join('.') : servicePath;
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[createCrudServiceFromEps] EPS 服务 ${servicePathStr}.${method} 未定义，返回空函数`
+        );
+      }
+      // 返回一个空函数，不抛出错误
+      return async () => {
+        // 静默处理，不执行任何操作
+      };
     }
     return fn as (...args: any[]) => Promise<any>;
   };

@@ -42,3 +42,4 @@ export declare function useBtcForm(): {
     loading: import("vue").Ref<boolean, boolean>;
     disabled: import("vue").Ref<boolean, boolean>;
 };
+//# sourceMappingURL=useBtcForm.d.ts.map

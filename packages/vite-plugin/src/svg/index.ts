@@ -300,7 +300,7 @@ export function svgPlugin(): Plugin {
       }
     },
 
-    transformIndexHtml(html: string, { path, filename }: { path?: string; filename?: string }) {
+    transformIndexHtml(html: string) {
       // 直接注入 SVG sprite 代码到 HTML，避免虚拟模块的 CORS 问题
       // 在构建和开发模式下都确保 SVG sprite 被注入
       if (svgCode) {

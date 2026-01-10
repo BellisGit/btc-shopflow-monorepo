@@ -2,51 +2,20 @@
 monitor-app - ESLint 错误报告
 ============================================================
 
-生成时间: 2025/12/18 14:19:34
-总错误数: 2
+生成时间: 2025/12/27 20:43:05
+总错误数: 0
 
-按严重程度分类:
-------------------------------------------------------------
-  error   : 2 个
-  warning : 0 个
-
-按规则分类:
-------------------------------------------------------------
-  @typescript-eslint/ban-ts-comment       : 2 个
-
-按文件分类:
-------------------------------------------------------------
-
-文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app\src\i18n\getters.ts
-  错误数: 2
-    [ERROR] @typescript-eslint/ban-ts-comment - 行 2:1 - Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free
-    [ERROR] @typescript-eslint/ban-ts-comment - 行 4:1 - Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free
-
-详细错误列表:
-------------------------------------------------------------
-
-错误 #1
-  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app\src\i18n\getters.ts
-  位置: 2:1
-  严重程度: error
-  规则: @typescript-eslint/ban-ts-comment
-  消息: Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free
-
-错误 #2
-  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app\src\i18n\getters.ts
-  位置: 4:1
-  严重程度: error
-  规则: @typescript-eslint/ban-ts-comment
-  消息: Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free
+✅ 未发现 lint 错误
 
 ============================================================
 完整输出:
 ============================================================
 
 
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\monitor-app\src\i18n\getters.ts
-  2:1  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
-  4:1  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+Oops! Something went wrong! :(
 
-✖ 2 problems (2 errors, 0 warnings)
+ESLint: 8.57.1
+
+No files matching the pattern "apps/monitor-app/src/**/*.{ts,tsx,vue}" were found.
+Please check for typing mistakes in the pattern.
 

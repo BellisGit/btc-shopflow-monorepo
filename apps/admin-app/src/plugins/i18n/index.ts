@@ -12,8 +12,8 @@ export const i18nPlugin: Plugin = {
 
   // 插件配置元数据
   config: definePluginConfig({
-    label: '国际化',
-    description: '提供多语言切换和国际化支持',
+    label: 'Internationalization',
+    description: 'Provides multi-language switching and internationalization support',
     author: 'BTC Team',
     version: '1.0.0',
     updateTime: '2024-01-15',
@@ -27,6 +27,6 @@ export const i18nPlugin: Plugin = {
     order: 2, // GitHub之后
     pc: true,
     h5: true,
-    component: () => import('../../modules/base/components/layout/locale-switcher/index.vue')
+    component: () => import('@btc/shared-components/components/layout/app-layout/locale-switcher/index.vue')
   }
 };

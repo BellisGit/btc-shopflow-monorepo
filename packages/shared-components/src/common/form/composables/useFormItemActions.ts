@@ -1,4 +1,4 @@
-﻿import { formHook } from '@btc/shared-utils';
+﻿import { formHook } from '@btc/shared-core/utils/form';
 
 /**
  * 琛ㄥ崟椤瑰姩鎬佹帶鍒舵柟娉曪紙瀵归綈 cool-admin form/helper/action.ts锛? */
@@ -40,10 +40,15 @@ export function useFormItemActions(formSetup: any) {
       let target: any = config;
 
       for (let i = 0; i < keys.length - 1; i++) {
-        target = target[keys[i]];
+        const key = keys[i];
+        if (key === undefined) continue;
+        target = target[key];
       }
 
-      target[keys[keys.length - 1]] = data;
+      const lastKey = keys[keys.length - 1];
+      if (lastKey !== undefined) {
+        target[lastKey] = data;
+      }
       return;
     }
 

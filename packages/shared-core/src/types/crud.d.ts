@@ -36,3 +36,4 @@ export interface CrudOperation {
     onClick: (row?: any) => void;
     permission?: string;
 }
+//# sourceMappingURL=crud.d.ts.map

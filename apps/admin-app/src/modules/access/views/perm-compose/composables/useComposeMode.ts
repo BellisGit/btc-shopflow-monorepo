@@ -1,5 +1,6 @@
 ﻿import { computed, Ref } from 'vue';
 import { useMessage } from '@/utils/use-message';
+import { useI18n } from '@btc/shared-core';
 
 /**
  * 组合模式逻辑
@@ -11,6 +12,7 @@ export function useComposeMode(
   resourceTreeRef: Ref<any>,
   composedPermissions: Ref<any[]>
 ) {
+  const { t } = useI18n();
   const message = useMessage();
   
   const composeCount = computed(() => {
@@ -38,7 +40,7 @@ export function useComposeMode(
   
   const handleCompose = async (composing: Ref<boolean>) => {
     if (!canCompose.value) {
-      message.warning('请至少选择一个资源和操作');
+      message.warning(t('common.access.select_resource_and_action'));
       return;
     }
     
@@ -70,24 +72,24 @@ export function useComposeMode(
             resourceName: resource.resourceNameCn,
             actionId: action.id,
             actionName: action.actionNameCn,
-            description: `${action.actionNameCn}${resource.resourceNameCn}的权限`,
+            description: `${action.actionNameCn}${resource.resourceNameCn}${t('common.access.permission_of')}`,
           });
         });
       });
       
       if (newPermissions.length === 0) {
-        message.warning('没有可添加的权限');
+        message.warning(t('common.access.no_permissions_to_add'));
         return;
       }
       
       composedPermissions.value.push(...newPermissions);
-      message.success(`已添加 ${newPermissions.length} 个权限`);
+      message.success(`${t('common.access.added')} ${newPermissions.length} ${t('common.access.permissions')}`);
       
       resourceTreeRef.value?.setCheckedKeys([]);
       selectedResources.value.length = 0;
       selectedActions.value.length = 0;
     } catch (_error) {
-      message.error('生成失败');
+      message.error(t('common.error.generate_failed'));
     } finally {
       composing.value = false;
     }

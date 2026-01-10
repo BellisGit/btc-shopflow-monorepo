@@ -34,17 +34,21 @@
       "@utils/*": ["src/utils/*"],
       "@btc/shared-components": ["src/index.ts"],
       "@btc/shared-components/*": ["src/*"],
+      "@btc/i18n": ["src/i18n"],
+      "@btc/i18n/*": ["src/i18n/*"],
       "@charts/*": ["src/charts/*"],
       "@charts-types/*": ["src/charts/types/*"],
       "@charts-utils/*": ["src/charts/utils/*"],
       "@charts-composables/*": ["src/charts/composables/*"],
-      "@btc/shared-utils": ["../shared-utils/src"],
-      "@btc/shared-utils/*": ["../shared-utils/src/*"],
       "@btc/shared-core": ["../shared-core/src"],
-      "@btc/subapp-manifests": ["../subapp-manifests/src"],
-      "@configs/*": ["../../configs/*"]
+      "@btc/shared-core/*": ["../shared-core/src/*"],
+      "@btc/shared-core/manifest": ["../shared-core/src/manifest"],
+      "@btc/subapp-manifests": ["../shared-core/src/manifest"],
+      "@configs/*": ["../shared-core/src/configs/*"],
+      "@btc/auth-shared": ["../../auth/shared"],
+      "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src", "src/**/*.json", "src/types/**/*.d.ts", "src/env.d.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs", "../../apps"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "../../configs", "../../apps", "../shared-core/src/configs/app-scanner.ts", "../shared-core/src/configs/app-configs-collected.ts", "../shared-core/src/configs/**/*"]
 }

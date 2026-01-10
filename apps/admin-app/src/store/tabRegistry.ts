@@ -2,7 +2,7 @@
  * Tab 元数据注册表（主应用主导，命名空间化）
  */
 
-import { getManifestRoute, getManifest } from '@/micro/manifests';
+import { getManifestRoute, getManifest } from '@btc/shared-core/manifest';
 
 export interface TabMeta {
   key: string;
@@ -55,6 +55,8 @@ const registry: Record<string, Record<string, TabMeta>> = {
 
     // 数据治理
     'governance-files-templates': { key: 'governance-files-templates', title: 'Controlled Files', path: '/admin/governance/files/templates', i18nKey: 'menu.data.files.templates' },
+    'governance-dictionary-fields': { key: 'governance-dictionary-fields', title: 'Field Management', path: '/admin/governance/dictionary/fields', i18nKey: 'menu.data.dictionary.fields' },
+    'governance-dictionary-values': { key: 'governance-dictionary-values', title: 'Dictionary Value Management', path: '/admin/governance/dictionary/values', i18nKey: 'menu.data.dictionary.values' },
 
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/admin/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },
@@ -83,6 +85,9 @@ export function getActiveApp(pathname: string): string {
   if (pathname.startsWith('/production')) return 'production';
   if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/docs')) return 'docs';
+  if (pathname.startsWith('/operations')) return 'operations';
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/personnel')) return 'personnel';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }
@@ -128,14 +133,14 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
     if (appDict && appDict[key]) {
       return appDict[key];
     }
-    
+
     // 如果精确匹配失败，尝试匹配动态路由
     // 例如：/admin/org/departments/123/roles -> org-departments-123-roles
     // 应该匹配：org-dept-role-bind（对应路径 /admin/org/departments/:id/roles）
     if (appDict) {
       // 移除路径中的数字参数，然后尝试匹配
       const pathWithoutNumbers = key.replace(/-\d+-/g, '-').replace(/-\d+$/g, '').replace(/^\d+-/g, '');
-      
+
       // 尝试匹配所有 registry key，查找路径模式匹配的
       for (const [registryKey, tabMeta] of Object.entries(appDict)) {
         // 如果 registry key 对应的路径模式与当前路径匹配
@@ -143,34 +148,34 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         // 提取路径模式：org-departments-:id-roles -> org-departments-roles（移除 :id）
         const registryPath = tabMeta.path.replace(/\/admin/, '').replace(/^\//, '').replace(/\/:id\//g, '/').replace(/\/:id$/g, '').replace(/\//g, '-');
         const currentPathPattern = pathWithoutNumbers;
-        
+
         // 如果路径模式匹配（忽略参数位置）
-        if (registryPath === currentPathPattern || 
+        if (registryPath === currentPathPattern ||
             (registryPath.includes('dept') && currentPathPattern.includes('departments')) ||
             (registryPath.includes('role') && currentPathPattern.includes('roles'))) {
           // 进一步验证：检查关键路径段是否匹配
           const registrySegments = registryPath.split('-').filter(s => s.length > 2);
           const currentSegments = currentPathPattern.split('-').filter(s => s.length > 2);
-          
+
           // 如果关键段匹配度足够高，返回该 tabMeta
-          const matchCount = registrySegments.filter(regSeg => 
+          const matchCount = registrySegments.filter(regSeg =>
             currentSegments.some(curSeg => regSeg.includes(curSeg) || curSeg.includes(regSeg))
           ).length;
-          
+
           if (matchCount >= Math.min(registrySegments.length, currentSegments.length) * 0.6) {
             return tabMeta;
           }
         }
       }
     }
-    
+
     return null;
   }
 
   // 所有子应用都从 manifest 查找
   if (app !== 'main') {
     const manifestRoute = getManifestRoute(app, pathname);
-    
+
     if (manifestRoute && manifestRoute.tab?.enabled !== false) {
       // 从 manifest 构建 TabMeta
       const manifest = getManifest(app);
@@ -179,7 +184,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         const routePath = manifestRoute.path;
         const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
         const manifestKey = routePath.replace(/^\//, "") || "home";
-        
+
         return {
           key: manifestKey,
           title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
@@ -188,7 +193,7 @@ export function resolveTabMeta(pathname: string): TabMeta | null {
         };
       }
     }
-    
+
     // 如果从 manifest 查不到，返回 null
     return null;
   }

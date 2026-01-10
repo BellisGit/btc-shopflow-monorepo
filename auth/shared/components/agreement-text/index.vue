@@ -48,6 +48,10 @@ defineExpose({
   agreed,
   resetAgreement: () => {
     agreed.value = false;
+  },
+  // 自动勾选协议
+  checkAgreement: () => {
+    agreed.value = true;
   }
 });
 </script>

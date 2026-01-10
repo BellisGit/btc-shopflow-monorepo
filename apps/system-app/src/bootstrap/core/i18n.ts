@@ -4,40 +4,34 @@
  */
 
 import type { App } from 'vue';
-import { createI18nPlugin, createThemePlugin, zhCN as sharedCoreZh, enUS as sharedCoreEn } from '@btc/shared-core';
-import messages from '@intlify/unplugin-vue-i18n/messages';
-// 导入 shared-components 的翻译文件
-// 使用 shared-components 导出的方式，更可靠
-import { sharedLocalesZhCN, sharedLocalesEnUS } from '@btc/shared-components';
+import { initSystemI18n } from '../../i18n';
 
-// 合并 shared-core 的语言包
-const mergeMessages = <T extends Record<string, any>>(...sources: T[]): T => {
-  return Object.assign({}, ...sources.filter(Boolean));
-};
+// 存储 props（用于在 setupI18n 中获取 i18n 实例和 globalState）
+let storedProps: any = null;
 
-// 合并所有语言包：shared-core + shared-components + unplugin 自动加载的 messages
-// 合并顺序：sharedCore -> sharedComponents -> unplugin messages
-// 后面的会覆盖前面的，确保应用特定的翻译可以覆盖共享组件的翻译
-const mergedMessages = {
-  'zh-CN': mergeMessages(
-    sharedCoreZh as Record<string, any>,
-    sharedLocalesZhCN as Record<string, any>,
-    (messages as Record<string, any>)['zh-CN'] || {}
-  ),
-  'en-US': mergeMessages(
-    sharedCoreEn as Record<string, any>,
-    sharedLocalesEnUS as Record<string, any>,
-    (messages as Record<string, any>)['en-US'] || {}
-  ),
-};
+/**
+ * 设置 props（由 bootstrap-subapp 调用）
+ */
+export function setSystemAppProps(props: any) {
+  storedProps = props;
+}
 
 /**
  * 配置国际化
+ * @param app Vue 应用实例
+ * @param locale 语言
  */
-export const setupI18n = (app: App) => {
-  // 国际化
-  app.use(createI18nPlugin({ messages: mergedMessages }));
-
-  // 主题
-  app.use(createThemePlugin());
+export const setupI18n = (app: App, locale?: string) => {
+  // 使用新的 i18n 初始化（支持微前端和独立运行模式）
+  // 从存储的 props 中获取 i18n 实例和 globalState
+  const i18nPlugin = initSystemI18n({
+    i18n: storedProps?.i18n,
+    locale: (storedProps?.locale || locale) as any,
+    globalState: storedProps?.globalState,
+  });
+  
+  app.use(i18nPlugin);
+  
+  // 返回 i18n 实例（与 admin-app 保持一致）
+  return i18nPlugin.i18n;
 };

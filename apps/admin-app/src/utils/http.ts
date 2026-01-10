@@ -4,7 +4,7 @@ import type { AxiosRequestConfig } from 'axios';
 import { responseInterceptor } from '@btc/shared-utils';
 import { requestLogger } from './request-logger';
 import { createHttpRetry, RETRY_CONFIGS } from '@/composables/useRetry';
-import { getCookie, deleteCookie } from './cookie';
+import { getCookie, deleteCookie } from '@btc/shared-core/utils/cookie';
 import { appStorage } from './app-storage';
 import { config } from '../config';
 
@@ -46,7 +46,7 @@ export class Http {
         // 调试日志（仅在开发/预览环境）
         if (import.meta.env.DEV || window.location.port.startsWith('41')) {
           if (!token && config.url?.includes('/api/')) {
-            console.warn(`[HTTP] 请求 ${config.url} 没有 token:`, {
+            console.warn(`[HTTP] Request ${config.url} has no token:`, {
               hasCookieToken: !!cookieToken,
               hasStorageToken: !!storageToken,
               cookies: document.cookie.split(';').map(c => c.trim()),
@@ -120,6 +120,65 @@ export class Http {
         // 保存原始响应数据，因为拦截器可能会修改
         const originalResponseData = response.data;
         
+        // 检查响应是否成功（code: 200）
+        const isLoginSuccess = originalResponseData &&
+                               typeof originalResponseData === 'object' &&
+                               originalResponseData.code === 200;
+
+        if (isLoginSuccess) {
+          // 登录成功，设置登录状态标记到统一的 settings 存储中
+          const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
+          appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+
+          // 启动全局用户检查轮询（登录后强制立即检查，获取最新的剩余时间）
+          try {
+            import('@btc/shared-core/composables/user-check').then(({ startUserCheckPolling }) => {
+              startUserCheckPolling(true);
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to start user check polling after login:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，加载域列表数据并存储
+          try {
+            // 等待 EPS 服务就绪后再调用
+            setTimeout(async () => {
+              try {
+                const { service } = await import('@services/eps');
+                const { loadDomainListOnLogin } = await import('../utils/domain-cache');
+                if (service && loadDomainListOnLogin) {
+                  await loadDomainListOnLogin(service);
+                }
+              } catch (error) {
+                // 静默失败，不影响登录流程
+                if (import.meta.env.DEV) {
+                  console.warn('[http] Failed to load domain list after login:', error);
+                }
+              }
+            }, 500); // 延迟 500ms 确保 EPS 服务已初始化
+          } catch (error) {
+            // 静默失败
+          }
+
+          // 关键：登录成功后，广播登录消息到所有标签页
+          try {
+            import('@btc/shared-core/composables/useCrossDomainBridge').then(({ useCrossDomainBridge }) => {
+              const bridge = useCrossDomainBridge();
+              bridge.sendMessage('login', { timestamp: Date.now() });
+            }).catch((error) => {
+              if (import.meta.env.DEV) {
+                console.warn('[http] Failed to broadcast login message:', error);
+              }
+            });
+          } catch (error) {
+            // 静默失败
+          }
+        }
+        
         // 检查 Set-Cookie headers，尝试从 cookie 字符串中提取 token 值
         const setCookieHeaders = response.headers?.getSetCookie?.() || [];
         if (setCookieHeaders.length > 0) {
@@ -189,7 +248,7 @@ export class Http {
    */
   private limitObjectSize(obj: any, maxDepth: number, maxSize: number): any {
     if (maxDepth <= 0 || maxSize <= 0) {
-      return '[数据过大，已截断]';
+      return '[Data too large, truncated]';
     }
 
     if (obj === null || obj === undefined) {
@@ -220,7 +279,7 @@ export class Http {
       let currentSize = 0;
       for (const key in obj) {
         if (currentSize >= maxSize) {
-          limitedObj['...'] = '[更多数据已截断]';
+          limitedObj['...'] = '[More data truncated]';
           break;
         }
         const limitedValue = this.limitObjectSize(obj[key], maxDepth - 1, maxSize - currentSize);
@@ -257,7 +316,7 @@ export class Http {
         }
       } catch (err) {
         // 获取用户信息失败，仍然记录日志但不包含用户信息
-        console.warn('获取用户信息失败:', err);
+        console.warn('Failed to get user info:', err);
       }
 
       // 如果没有用户ID，说明未登录或用户信息不完整，不记录日志
@@ -323,7 +382,7 @@ export class Http {
       } as any); // 使用 as any 避免类型检查，因为 params 在 add 方法中会被处理
     } catch (error) {
       // 日志记录失败不应影响主业务流程
-      console.error('记录请求日志失败:', error);
+      console.error('Failed to log request:', error);
     }
   }
 
@@ -387,7 +446,7 @@ export class Http {
 
     // 模拟一个成功的响应
     const mockResponse = {
-      data: { code: 200, msg: '测试消息', data: null },
+      data: { code: 200, msg: 'Test message', data: null },
       status: 200,
       config: { url: '/test' }
     };
@@ -416,19 +475,19 @@ export class Http {
 
       // 检查消息是否包含错误关键词
       const errorKeywords = [
-        '不存在',
-        '错误',
-        '失败',
-        '异常',
-        '无效',
-        '过期',
-        '拒绝',
-        '禁止',
-        '未找到',
-        '无法',
-        '不能',
-        '缺少',
-        '不足'
+        'Not Found',
+        'Error',
+        'Failed',
+        'Exception',
+        'Invalid',
+        'Expired',
+        'Rejected',
+        'Forbidden',
+        'Not Found',
+        'Unable',
+        'Cannot',
+        'Missing',
+        'Insufficient'
       ];
 
       // 如果消息包含错误关键词，认为是错误响应
@@ -457,7 +516,7 @@ export class Http {
         if (!data) {
           // 对于404等错误状态码，即使没有响应体也要按错误处理
           if (status === 404) {
-            const error = new Error('请求的资源不存在');
+            const error = new Error('Requested resource not found');
             (error as any).code = 404;
             (error as any).response = response;
             return Promise.reject(error);
@@ -479,7 +538,7 @@ export class Http {
         }
 
         // 业务错误，抛出错误
-        const error = new Error(msg || '未知错误');
+        const error = new Error(msg || 'Unknown error');
         (error as any).code = code;
         (error as any).response = response;
         return Promise.reject(error);

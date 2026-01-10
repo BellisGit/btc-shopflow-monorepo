@@ -1,5 +1,5 @@
 ﻿import type { TableColumn } from '../types';
-import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-utils';
+import { formatDateTimeFriendly, isDateTimeField } from '@btc/shared-core/utils';
 
 /**
  * 鑷姩鏍煎紡鍖栬〃鏍煎垪锛堥拡瀵规椂闂村瓧娈碉級

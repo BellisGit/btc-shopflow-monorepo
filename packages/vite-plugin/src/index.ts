@@ -10,7 +10,8 @@
  * - Proxy: 代理配置
  */
 
-import type { Plugin } from 'vite';
+// Plugin 类型未使用，但保留用于类型定义
+// Plugin 类型未使用，已移除导入
 import { epsPlugin } from './eps';
 import { svgPlugin } from './svg';
 import { ctxPlugin } from './ctx';
@@ -45,7 +46,8 @@ export function btc(options: Partial<BtcPluginConfig> & { proxy?: any } = {}) {
         epsUrl: config.eps?.api || '/api/login/eps/contract',
         outputDir: config.eps?.dist || 'build/eps',
         reqUrl: config.reqUrl || '',
-        sharedEpsDir: config.eps?.sharedEpsDir,
+        dictApi: config.eps?.dictApi,
+        ...(config.eps?.sharedEpsDir !== undefined ? { sharedEpsDir: config.eps.sharedEpsDir } : {}),
       })
     );
   }
@@ -67,6 +69,7 @@ export { ctxPlugin } from './ctx';
 export { tagPlugin } from './tag';
 export { copyLogoPlugin } from './copy-logo';
 export { fixChunkReferencesPlugin } from './fix-chunk-references';
+export { injectFallbackTitle } from './inject-fallback-title';
 
 // 导出类型
 export * from './eps/types';

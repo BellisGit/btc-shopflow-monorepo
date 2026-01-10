@@ -22,8 +22,8 @@ export interface MenuItem {
  * Qiankun 子应用 Props 类型定义
  */
 export interface QiankunProps {
-  /** 挂载容器 */
-  container?: HTMLElement;
+  /** 挂载容器（支持 HTMLElement 或字符串选择器） */
+  container?: HTMLElement | string;
   /** 当前语言 */
   locale?: string;
   /** 就绪回调 */

@@ -5,14 +5,120 @@
 
 import { computed } from 'vue';
 import { useI18n, useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { configImages } from '../config/images';
+import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
+import { configImages as defaultConfigImages } from '../config/images';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
+
+/**
+ * 修复图片路径：如果路径是 /assets/layout/ 开头，且当前不在 layout-app 域名下，转换为完整 URL
+ * 这样可以确保在子应用（如 admin-app）中也能正确加载 layout-app 的图片资源
+ */
+function fixImagePath(path: string): string {
+  if (!path) return path;
+
+  // 如果路径已经是完整 URL，直接返回
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  // 如果路径是 /assets/layout/ 开头，需要检查是否需要转换为完整 URL
+  if (path.startsWith('/assets/layout/')) {
+    // 检查当前是否在 layout-app 域名下
+    if (typeof window !== 'undefined') {
+      const env = getCurrentEnvironment();
+      const hostname = window.location.hostname;
+      const port = window.location.port || '';
+
+      const isLayoutAppDomain =
+        (env === 'production' && hostname === 'layout.bellis.com.cn') ||
+        (env === 'test' && hostname === 'layout.test.bellis.com.cn') ||
+        (env === 'preview' && port === '4192') ||
+        (env === 'development' && port === '4188');
+
+      // 如果不在 layout-app 域名下，转换为完整 URL
+      if (!isLayoutAppDomain) {
+        // 使用 layout-app 的域名
+        const protocol = window.location.protocol;
+        let layoutOrigin: string;
+        if (env === 'test') {
+          layoutOrigin = `${protocol}//layout.test.bellis.com.cn`;
+        } else {
+          layoutOrigin = `${protocol}//layout.bellis.com.cn`;
+        }
+        return `${layoutOrigin}${path}`;
+      }
+    }
+  }
+
+  return path;
+}
+
+/**
+ * 获取应用特定的图片配置（支持覆盖）
+ * 优先使用应用提供的配置，如果没有则使用共享组件的默认配置
+ * 如果应用配置中的图片路径为空字符串，则使用共享组件的默认配置
+ * 关键：修复图片路径，确保在子应用中也能正确加载 layout-app 的图片资源
+ */
+function getConfigImages() {
+  // 检查是否有应用特定的配置
+  const globalAny = globalThis as any;
+  const appConfigImages = globalAny?.__CONFIG_IMAGES__;
+
+  let finalConfig;
+  if (appConfigImages) {
+    // 合并应用配置和默认配置：如果应用配置中的值为空字符串，使用默认配置
+    finalConfig = {
+      themeStyles: {
+        light: appConfigImages.themeStyles?.light || defaultConfigImages.themeStyles.light,
+        dark: appConfigImages.themeStyles?.dark || defaultConfigImages.themeStyles.dark,
+        system: appConfigImages.themeStyles?.system || defaultConfigImages.themeStyles.system,
+      },
+      menuLayouts: {
+        vertical: appConfigImages.menuLayouts?.vertical || defaultConfigImages.menuLayouts.vertical,
+        horizontal: appConfigImages.menuLayouts?.horizontal || defaultConfigImages.menuLayouts.horizontal,
+        mixed: appConfigImages.menuLayouts?.mixed || defaultConfigImages.menuLayouts.mixed,
+        dualColumn: appConfigImages.menuLayouts?.dualColumn || defaultConfigImages.menuLayouts.dualColumn,
+      },
+      menuStyles: {
+        design: appConfigImages.menuStyles?.design || defaultConfigImages.menuStyles.design,
+        dark: appConfigImages.menuStyles?.dark || defaultConfigImages.menuStyles.dark,
+        light: appConfigImages.menuStyles?.light || defaultConfigImages.menuStyles.light,
+      },
+    };
+  } else {
+    // 使用共享组件的默认配置
+    finalConfig = defaultConfigImages;
+  }
+
+  // 修复所有图片路径
+  return {
+    themeStyles: {
+      light: fixImagePath(finalConfig.themeStyles.light),
+      dark: fixImagePath(finalConfig.themeStyles.dark),
+      system: fixImagePath(finalConfig.themeStyles.system),
+    },
+    menuLayouts: {
+      vertical: fixImagePath(finalConfig.menuLayouts.vertical),
+      horizontal: fixImagePath(finalConfig.menuLayouts.horizontal),
+      mixed: fixImagePath(finalConfig.menuLayouts.mixed),
+      dualColumn: fixImagePath(finalConfig.menuLayouts.dualColumn),
+    },
+    menuStyles: {
+      design: fixImagePath(finalConfig.menuStyles.design),
+      dark: fixImagePath(finalConfig.menuStyles.dark),
+      light: fixImagePath(finalConfig.menuStyles.light),
+    },
+  };
+}
 
 /**
  * 设置配置管理组合式函数
  */
 export function useSettingsConfig() {
   const { t } = useI18n();
+  // 获取图片配置（支持应用特定覆盖）
+  const configImages = getConfigImages();
+
   // 安全地获取主题插件
   let theme: ReturnType<typeof useThemePlugin> | null = null;
   try {

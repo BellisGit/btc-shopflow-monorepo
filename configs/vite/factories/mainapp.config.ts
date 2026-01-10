@@ -1,11 +1,13 @@
 /**
  * 主应用 Vite 配置工厂
- * 生成主应用的完整 Vite 配置（system-app）
+ * 生成主应用的完整 Vite 配置（main-app）
  */
 
 import type { UserConfig, Plugin } from 'vite';
 import { resolve } from 'path';
+import { createRequire } from 'module';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import UnoCSS from 'unocss/vite';
 import { existsSync, readFileSync } from 'node:fs';
 import { createPathHelpers } from '../utils/path-helpers';
@@ -16,7 +18,7 @@ import { createAutoImportConfig, createComponentsConfig } from '../../auto-impor
 import { btc, fixChunkReferencesPlugin } from '@btc/vite-plugin';
 import { getViteAppConfig, getPublicDir } from '../../vite-app-config';
 import { createBaseResolve } from '../base.config';
-import { createRollupConfig } from '../build/rollup.config';
+import { createRollupConfig } from '../plugins/rollup-config';
 import {
   cleanDistPlugin,
   chunkVerifyPlugin,
@@ -28,6 +30,11 @@ import {
   replaceIconsWithCdnPlugin,
   publicImagesToAssetsPlugin,
   resourcePreloadPlugin,
+  uploadCdnPlugin,
+  cdnAssetsPlugin,
+  cdnImportPlugin,
+  resolveBtcImportsPlugin,
+  resolveAuthAliasesPlugin,
 } from '../plugins';
 
 export interface MainAppViteConfigOptions {
@@ -76,6 +83,7 @@ export interface MainAppViteConfigOptions {
     eps?: {
       enable?: boolean;
       dict?: boolean;
+      dictApi?: string;
       dist?: string;
     };
     svg?: {
@@ -130,12 +138,12 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   const publicDir = getPublicDir(appName, appDir);
 
   // 获取主应用配置（用于 ensureBaseUrlPlugin）
-  const mainAppConfig = getViteAppConfig('system-app');
+  const mainAppConfig = getViteAppConfig('main-app');
   const mainAppPort = mainAppConfig.prePort.toString();
 
   // 关键：EPS 的 outputDir 必须使用绝对路径，基于 appDir 解析
-  // 避免在构建时因为工作目录变化而在 dist 目录下创建 build 目录
-  const epsOutputDir = resolve(appDir, 'build', 'eps');
+  // 主应用使用 src/build/eps 目录，确保 EPS 数据在源码目录中，便于版本控制和开发
+  const epsOutputDir = resolve(appDir, 'src', 'build', 'eps');
 
   // 构建插件列表
   const plugins: (Plugin | Plugin[])[] = [
@@ -143,11 +151,15 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     cleanDistPlugin(appDir),
     // 2. CORS 插件
     corsPlugin(),
-    // 3. Public 图片资源处理插件（如果启用）
+    // 3. 解析 auth 目录下的 @ 别名插件（必须在 resolveBtcImportsPlugin 之前）
+    resolveAuthAliasesPlugin({ appDir }),
+    // 4. 解析 @btc/* 包导入插件（确保能够解析从已构建包中导入的 @btc/* 模块）
+    resolveBtcImportsPlugin({ appDir }),
+    // 4. Public 图片资源处理插件（如果启用）
     ...(publicImagesToAssets && !isPreviewBuild ? [publicImagesToAssetsPlugin(appDir)] : []),
-    // 4. 资源预加载插件（如果启用）
+    // 5. 资源预加载插件（如果启用）
     ...(enableResourcePreload !== false ? [resourcePreloadPlugin()] : []),
-    // 5. 自定义插件（在核心插件之前）
+    // 6. 自定义插件（在核心插件之前）
     ...customPlugins,
     // 6. Vue 插件
     vue({
@@ -158,6 +170,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
         },
       },
     }),
+    // 6.5. Vue JSX 插件（支持 TSX 文件中的 JSX 语法）
+    // 关键：与 cool-admin 保持一致，使用默认配置，让插件自动处理所有 JSX/TSX 文件
+    vueJsx(),
     // 7. 自动导入插件
     createAutoImportConfig(),
     // 8. 组件自动注册插件
@@ -172,7 +187,8 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       proxy,
       eps: {
         enable: true,
-        dict: false,
+        dict: btcOptions.eps?.dict ?? true, // 默认启用字典功能
+        dictApi: btcOptions.eps?.dictApi || '/api/system/auth/dict', // 默认字典接口
         dist: epsOutputDir,
         ...btcOptions.eps,
       },
@@ -198,12 +214,28 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     ensureBaseUrlPlugin(baseUrl, appConfig.devHost, appConfig.prePort, mainAppPort),
     // 17. 添加版本号插件（为 HTML 资源引用添加时间戳版本号）
     addVersionPlugin(),
-    // 17.5. 替换图标路径为 CDN URL（生产环境）
+    // 17.5. CDN 资源加速插件（在版本号插件之后，确保版本号参数被保留）
+    // 处理 HTML 中的资源 URL（<script>、<link>、<img> 等）
+    cdnAssetsPlugin({
+      appName,
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 17.6. CDN 动态导入转换插件（转换代码中的 import() 调用）
+    // 将相对路径转换为 CDN URL，与 cdnAssetsPlugin 配合实现完整的 CDN 加速
+    cdnImportPlugin({
+      appName,
+      enabled: !isPreviewBuild && process.env.ENABLE_CDN_ACCELERATION !== 'false',
+    }),
+    // 17.7. 替换图标路径为 CDN URL（生产环境）
     replaceIconsWithCdnPlugin(),
     // 18. 优化 chunks 插件
     optimizeChunksPlugin(),
     // 19. Chunk 验证插件
     chunkVerifyPlugin(),
+    // 20. CDN 上传插件（仅在生产构建且启用时）
+    ...(process.env.ENABLE_CDN_UPLOAD === 'true' && !isPreviewBuild
+      ? [uploadCdnPlugin(appName, appDir)]
+      : []),
   ];
 
   // 构建配置
@@ -269,14 +301,18 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       },
     }, */
     assetsInlineLimit: 10 * 1024,
-    outDir: 'dist',
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     assetsDir: 'assets',
     emptyOutDir: false,
-    // 关键：system-app 作为主应用，也需要打包 single-spa 和 qiankun
+    // 关键：main-app 作为主应用，也需要打包 single-spa 和 qiankun
     // 不将它们标记为 external，确保它们被打包到构建产物中
+    // 关键：主应用也需要打包 @btc 包，避免浏览器无法解析路径别名
+    // 关键：主应用也需要打包 @configs 包，避免浏览器无法解析路径别名
     rollupOptions: {
-      ...createRollupConfig(appName.replace('-app', ''), {
+      ...createRollupConfig(appName, {
         externalSingleSpa: false, // 主应用需要打包 single-spa 和 qiankun
+        externalBtcPackages: false, // 主应用需要打包 @btc 包，避免浏览器无法解析路径别名
+        externalConfigsPackages: false, // 主应用需要打包 @configs 包，避免浏览器无法解析路径别名
       }),
     },
     chunkSizeWarningLimit: 1000,
@@ -284,10 +320,14 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   };
 
   // 服务器配置
+  // 关键：优先使用 customServer.proxy，如果不存在则使用 proxy 参数
+  // 注意：customServer 会在最后展开，如果包含 proxy 会覆盖这里的设置
+  const finalProxy = customServer?.proxy !== undefined ? customServer.proxy : proxy;
+  const { proxy: _customProxy, ...restCustomServer } = customServer || {};
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     cors: true,
     origin: `http://${appConfig.devHost}:${appConfig.devPort}`,
     headers: {
@@ -300,7 +340,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       port: appConfig.devPort,
       overlay: false,
     },
-    proxy,
+    proxy: finalProxy,
     fs: {
       strict: false,
       allow: [
@@ -308,15 +348,25 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       ],
       cachedChecks: true,
     },
-    ...customServer,
+    // 禁用 page reload 日志输出
+    watch: {
+      ignored: ['**/locales/**/*.json'],
+    },
+    ...restCustomServer,
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+  
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     strictPort: true,
     open: false,
     host: '0.0.0.0',
+    // 关键：设置预览服务器的根目录为 dist/{prodHost}
+    root: previewRoot,
     proxy,
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -331,7 +381,7 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 关键：预先包含所有子应用可能用到的依赖，避免切换应用时触发重新加载
   // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
   const appCacheDir = resolve(appDir, 'node_modules/.vite');
-  
+
   const optimizeDepsConfig: UserConfig['optimizeDeps'] = {
     include: [
       // 核心依赖：所有应用都安装的依赖
@@ -345,7 +395,9 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       'element-plus/es/components/cascader/style/css',
       '@element-plus/icons-vue',
       '@btc/shared-core',
-      '@btc/shared-components',
+      // 注意：@btc/shared-components 已从 include 中移除，因为它包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // '@btc/shared-components',
       '@btc/shared-utils',
       'vite-plugin-qiankun/dist/helper',
       'qiankun',
@@ -361,16 +413,34 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
       'echarts/core',
       'echarts',
       'vue-echarts',
+      // 注意：lunr 和 file-saver 不是所有应用都安装，不应该在 include 中强制声明
+      // 如果应用安装了这些依赖，Vite 会在扫描 entries 时自动发现并优化
+      // 'lunr', // 只在 shared-components 中使用，不是所有应用都安装
+      // 'file-saver', // 只在部分应用中使用，不是所有应用都安装
     ],
-    exclude: [],
+    exclude: [
+      // 关键：@btc/shared-core/configs/layout-bridge 是本地别名路径，不是 npm 包，不应该被优化
+      // 注意：exclude 只支持字符串模式，不支持正则表达式
+      '@btc/shared-core/configs/layout-bridge',
+      // 关键：排除 @btc/shared-components，因为它是本地包，包含 TSX 文件
+      // 在开发环境中，应该直接从源码导入，而不是预构建
+      // 这样可以避免 JSX 解析问题
+      '@btc/shared-components',
+    ],
     force: false,
     // 关键：指定需要扫描的入口文件，确保扫描到 @btc/shared-components 内部的依赖
+    // 注意：不再包含 shared-components/src/index.ts，因为它包含 TSX 文件，应该在运行时直接处理
     entries: [
       resolve(appDir, 'src/main.ts'),
-      resolve(appDir, '../../packages/shared-components/src/index.ts'),
+      // 注意：不再直接引用 shared-core/src/index.ts，避免在配置加载时解析 @configs/layout-bridge
+      // shared-core 的依赖会在运行时通过应用的入口文件自动发现和优化
     ],
     esbuildOptions: {
       plugins: [],
+      // 关键：确保依赖预构建时也使用 Vue 的 JSX 转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
     },
     ...customOptimizeDeps,
   };
@@ -392,15 +462,19 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
   // 这里始终启用 publicDir，开发环境直接使用，构建环境会在 vite.config.ts 中被覆盖
   const finalPublicDir = publicDir;
 
-  return {
+  const config: any = {
     base: baseUrl,
     publicDir: finalPublicDir,
     // 关键：每个应用使用独立的缓存目录，避免不同应用的配置差异导致缓存冲突
     cacheDir: appCacheDir,
-    resolve: createBaseResolve(appDir, appName),
     plugins,
     esbuild: {
       charset: 'utf8',
+      // 关键：确保 esbuild 正确处理 JSX，使用 Vue 的 h 函数而不是 React.createElement
+      // 这样即使 esbuild 处理某些 JSX 文件，也会使用正确的转换方式
+      jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+      jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+      jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
     },
     server: serverConfig,
     preview: previewConfig,
@@ -408,5 +482,14 @@ export function createMainAppViteConfig(options: MainAppViteConfigOptions): User
     css: cssConfig,
     build: buildConfig,
   };
+
+  // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
+  const resolveValue = createBaseResolve(appDir, appName);
+  if (resolveValue !== undefined) {
+    config.resolve = resolveValue;
+  }
+
+  return config;
 }
 

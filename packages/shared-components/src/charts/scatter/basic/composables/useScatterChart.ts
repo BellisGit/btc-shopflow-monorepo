@@ -2,26 +2,25 @@ import { type Ref } from 'vue';
 import type { EChartsOption } from 'echarts';
 import type { ScatterChartProps } from '../../../types/scatter';
 import { getColorByIndex } from '../../../utils/color';
-// import { getThemeColors } from '../../../utils/css-var'; // 未使用
+import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
 
 /**
- * ??? composable
+ * 散点图 composable
  */
 export function useScatterChart(
   props: ScatterChartProps,
   _isDark: Ref<boolean>,
-  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
+  styleHelpers: ChartStyleHelpers
 ) {
   const buildOption = (): EChartsOption => {
-    const option: EChartsOption = {
+    const option: any = {
       title: {
-        text: props.title || ''
-        // textStyle.color 由 ECharts 主题处理
+        text: props.title || '',
+        ...styleHelpers.getTitleStyle()
       },
-      tooltip: {
-        trigger: 'item',
-        show: props.showTooltip ?? true,
-        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
+      tooltip: props.showTooltip ?? true ? {
+        ...styleHelpers.getTooltipStyle('item'),
         formatter: (params: any) => {
           const data = params.data;
           if (Array.isArray(data.value)) {
@@ -31,13 +30,8 @@ export function useScatterChart(
         },
         confine: true,
         appendToBody: true
-      },
-      legend: {
-        show: props.showLegend ?? true,
-        top: '0%',
-        left: 'center'
-        // textStyle.color 由 ECharts 主题处理
-      },
+      } : undefined,
+      legend: props.showLegend ?? true ? styleHelpers.getLegendStyle('top') : undefined,
       toolbox: {
         show: props.showToolbar ?? false,
         right: '10px',
@@ -69,18 +63,28 @@ export function useScatterChart(
       },
       xAxis: {
         type: 'value',
-        name: props.xAxisName
-        // nameTextStyle.color, axisLine.lineStyle.color, axisLabel.color, splitLine.lineStyle.color 由 ECharts 主题处理
+        name: props.xAxisName,
+        nameTextStyle: {
+          ...styleHelpers.getAxisLabelStyle(true)
+        },
+        axisLabel: styleHelpers.getAxisLabelStyle(true),
+        ...styleHelpers.getAxisLineStyle(true),
+        ...styleHelpers.getSplitLineStyle(true)
       },
       yAxis: {
         type: 'value',
-        name: props.yAxisName
-        // nameTextStyle.color, axisLine.lineStyle.color, axisLabel.color, splitLine.lineStyle.color 由 ECharts 主题处理
+        name: props.yAxisName,
+        nameTextStyle: {
+          ...styleHelpers.getAxisLabelStyle(true)
+        },
+        axisLabel: styleHelpers.getAxisLabelStyle(true),
+        ...styleHelpers.getAxisLineStyle(true),
+        ...styleHelpers.getSplitLineStyle(true)
       },
       series: (props.data || []).map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
         const symbolSize = item.symbolSize || 10;
-        
+
         return {
           name: item.name,
           type: 'scatter' as const,
@@ -104,14 +108,15 @@ export function useScatterChart(
           },
           label: {
             show: props.showLabel ?? false,
+            // 使用固定的灰色值，在浅色和深色主题下都能看到（参考 art-design-pro）
+            color: '#999',
             fontSize: 12
-            // color 由 ECharts 主题处理
           }
         };
       }) as any
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

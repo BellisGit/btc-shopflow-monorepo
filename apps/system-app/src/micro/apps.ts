@@ -1,4 +1,5 @@
-import { getAppConfig, getAllDevPorts, getAllPrePorts } from '@configs/app-env.config';
+import { getAppConfig } from '@btc/shared-core/configs/app-env.config';
+import { getEnvironment } from '@btc/shared-core/configs/unified-env-config';
 
 /**
  * 微前端应用配置
@@ -13,51 +14,12 @@ export interface MicroAppConfig {
 }
 
 /**
- * 环境类型
- */
-type EnvironmentType = 'development' | 'preview' | 'production';
-
-/**
- * 检测当前环境类型
- */
-const getEnvironmentType = (): EnvironmentType => {
-  if (typeof window === 'undefined') {
-    return import.meta.env.PROD ? 'production' : 'development';
-  }
-
-  // 关键：优先通过端口判断环境类型，而不是依赖 import.meta.env.PROD
-  // 因为预览模式也使用构建产物（import.meta.env.PROD 为 true），但端口不同
-  const port = window.location.port || '';
-  const previewPorts = getAllPrePorts();
-  const devPorts = getAllDevPorts();
-
-  // 预览环境：端口在配置的预览端口列表中
-  if (previewPorts.includes(port)) {
-    return 'preview';
-  }
-
-  // 开发环境：端口在配置的开发端口列表中
-  if (devPorts.includes(port)) {
-    return 'development';
-  }
-
-  // 其他情况：如果 import.meta.env.PROD 为 true，且端口不在预览/开发端口范围内，则认为是生产环境
-  // 生产环境通常没有端口（使用默认端口 80/443）或使用其他端口
-  if (import.meta.env.PROD) {
-    return 'production';
-  }
-
-  // 默认返回开发环境
-  return 'development';
-};
-
-/**
  * 获取应用入口地址
  */
 const getAppEntry = (appName: string): string => {
-  const envType = getEnvironmentType();
-  // docs-site-app 的特殊处理：appName 是 'docs'，但配置名称是 'docs-site-app'
-  const configAppName = appName === 'docs' ? 'docs-site-app' : `${appName}-app`;
+  const env = getEnvironment();
+  // docs-app 的特殊处理：appName 是 'docs'，但配置名称是 'docs-app'
+  const configAppName = appName === 'docs' ? 'docs-app' : `${appName}-app`;
   const appConfig = getAppConfig(configAppName);
 
   if (!appConfig) {
@@ -65,49 +27,41 @@ const getAppEntry = (appName: string): string => {
     return `/${appName}/`;
   }
 
-  switch (envType) {
-    case 'production':
-      // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
-      if (appConfig.prodHost) {
-        const protocol =
-          typeof window !== 'undefined' && window.location.protocol
-            ? window.location.protocol
-            : 'https:';
-        return `${protocol}//${appConfig.prodHost}/`;
-      }
-      // 如果没有配置 prodHost，使用相对路径
-      return `/${appName}/`;
+  const envStr = env as string;
 
-    case 'preview': {
-      // 预览环境：使用统一配置中的预览主机和端口
-      // 关键：使用完整的 URL（包含 /index.html），确保 qiankun 能正确加载构建产物
-      return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+  if (envStr === 'test') {
+    // 测试环境：使用测试环境的子域名
+    if (appConfig.testHost) {
+      const protocol =
+        typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+      return `${protocol}//${appConfig.testHost}/`;
     }
-
-    case 'development':
-    default:
-      // 开发环境：使用统一配置中的开发主机和端口
-      return `//${appConfig.devHost}:${appConfig.devPort}`;
+    return `/${appName}/`;
   }
-};
 
-/**
- * 子域名到应用路径的映射
- */
-const subdomainToPathMap: Record<string, string> = {
-  'admin.bellis.com.cn': '/admin',
-  'logistics.bellis.com.cn': '/logistics',
-  'quality.bellis.com.cn': '/quality',
-  'production.bellis.com.cn': '/production',
-  'engineering.bellis.com.cn': '/engineering',
-  'finance.bellis.com.cn': '/finance',
-};
+  if (envStr === 'production') {
+    // 生产环境：直接使用子域名根路径，构建产物直接部署到子域名根目录
+    if (appConfig.prodHost) {
+      const protocol =
+        typeof window !== 'undefined' && window.location.protocol
+          ? window.location.protocol
+          : 'https:';
+      return `${protocol}//${appConfig.prodHost}/`;
+    }
+    // 如果没有配置 prodHost，使用相对路径
+    return `/${appName}/`;
+  }
 
-/**
- * 根据子域名获取应用路径
- */
-const getPathFromSubdomain = (hostname: string): string | null => {
-  return subdomainToPathMap[hostname] || null;
+  if (envStr === 'preview') {
+    // 预览环境：使用统一配置中的预览主机和端口
+    // 关键：使用完整的 URL（包含 /index.html），确保 qiankun 能正确加载构建产物
+    return `http://${appConfig.preHost}:${appConfig.prePort}/index.html`;
+  }
+
+  // 开发环境或默认情况
+  return `//${appConfig.devHost}:${appConfig.devPort}`;
 };
 
 /**
@@ -120,6 +74,8 @@ const hostnameToAppMap: Record<string, string> = {
   'production.bellis.com.cn': 'production',
   'engineering.bellis.com.cn': 'engineering',
   'finance.bellis.com.cn': 'finance',
+  'dashboard.bellis.com.cn': 'dashboard',
+  'personnel.bellis.com.cn': 'personnel',
 };
 
 /**
@@ -231,12 +187,12 @@ export const microApps: MicroAppConfig[] = [
     timeout: 10000,
   },
   {
-    name: 'monitor',
-    entry: getAppEntry('monitor'),
+    name: 'operations',
+    entry: getAppEntry('operations'),
     container: '#subapp-viewport',
     activeRule: (location) => {
-      // 监控应用通过 /monitor 路径访问
-      if (location.pathname.startsWith('/monitor')) {
+      // 运维应用通过 /operations 路径访问
+      if (location.pathname.startsWith('/operations')) {
         return true;
       }
       return false;
@@ -250,6 +206,40 @@ export const microApps: MicroAppConfig[] = [
     activeRule: (location) => {
       // 文档应用通过 /docs 路径访问
       if (location.pathname.startsWith('/docs')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'dashboard',
+    entry: getAppEntry('dashboard'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'dashboard') {
+        return true;
+      }
+      // 图表应用通过 /dashboard 路径访问
+      if (location.pathname.startsWith('/dashboard')) {
+        return true;
+      }
+      return false;
+    },
+    timeout: 10000,
+  },
+  {
+    name: 'personnel',
+    entry: getAppEntry('personnel'),
+    container: '#subapp-viewport',
+    activeRule: (location) => {
+      const appFromHostname = getAppFromHostname(location.hostname);
+      if (appFromHostname === 'personnel') {
+        return true;
+      }
+      // 人事应用通过 /personnel 路径访问
+      if (location.pathname.startsWith('/personnel')) {
         return true;
       }
       return false;

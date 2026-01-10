@@ -1,21 +1,268 @@
 <template>
   <div class="btc-chart-demo">
-    <BtcContainer :gap="gap" :cols-per-row="colsPerRow">
-      <div v-for="chart in visibleCharts" :key="chart.key" class="chart-item">
-        <h4 v-if="chart.title">{{ chart.title }}</h4>
-        <component
-          :is="chart.component"
-          v-bind="chart.props"
-          :height="chartHeight"
+    <div class="btc-chart-demo__container">
+      <ElRow :gutter="10">
+      <!-- 1. 柱状图（单数据） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（单数据）</span>
+          </div>
+          <BtcBarChart
+            :data="singleBarData"
+            :x-axis-data="xAxisData"
+            :show-legend="true"
+            :show-tooltip="false"
+            legend-position="right"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 2. 柱状图（多组数据） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（多组数据）</span>
+          </div>
+          <BtcBarChart
+            :data="multiBarData"
+            :x-axis-data="xAxisData"
+            :show-legend="true"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 3. 柱状图（堆叠） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（堆叠）</span>
+          </div>
+          <BtcBarChart
+            :data="stackBarData"
+            :x-axis-data="stackXAxisData"
+            :show-legend="true"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 4. 折线图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>折线图</span>
+          </div>
+          <BtcLineChart
+            :data="lineChartData1"
+            :x-axis-data="lineChartXAxis1"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 5. 折线图（渐变背景） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>折线图（渐变背景）</span>
+          </div>
+          <BtcLineChart
+            :data="lineChartData2"
+            :x-axis-data="lineChartXAxis2"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 6. 折线图（多组数据） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>折线图（多组数据）</span>
+          </div>
+          <BtcLineChart
+            :data="multiLineData"
+            :x-axis-data="multiLineXAxis"
+            :show-legend="true"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 7. 柱状图（水平） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（水平）</span>
+          </div>
+          <BtcHBarChart
+            :data="hBarChartData1"
+            :y-axis-data="hBarChartYAxis1"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 8. 柱状图（水平）- 多组数据 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（水平）</span>
+          </div>
+          <BtcHBarChart
+            :data="hBarChartData2"
+            :y-axis-data="hBarChartYAxis2"
+            :show-legend="true"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 9. 柱状图（水平堆叠） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>柱状图（水平堆叠）</span>
+          </div>
+          <BtcHBarChart
+            :data="hBarChartStackData"
+            :y-axis-data="hBarChartStackYAxis"
+            :show-legend="true"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 10. 环形图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>环形图</span>
+          </div>
+          <BtcRingChart
+            :data="ringChartData1"
+            :radius="['54%', '70%']"
+            :show-tooltip="false"
+            legend-position="bottom"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 11. 环形图（带中心文本） -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>环形图</span>
+          </div>
+          <BtcRingChart
+            :data="ringChartData2"
+            :radius="['54%', '70%']"
+            :show-legend="true"
+            :show-tooltip="false"
+            legend-position="bottom"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 12. 饼图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>饼图</span>
+          </div>
+          <BtcPieChart
+            :data="pieChartData"
+            :radius="['0%', '70%']"
+            :show-legend="true"
+            :show-tooltip="false"
+            legend-position="right"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 13. 散点图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>散点图</span>
+          </div>
+          <BtcScatterChart
+            :data="scatterChartData"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 14. 雷达图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>雷达图</span>
+          </div>
+          <BtcRadarChart
+            :indicators="radarIndicators"
+            :data="radarChartData"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 15. k线图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>k线图</span>
+          </div>
+          <BtcKLineChart
+            :data="klineChartData"
+            :show-volume="false"
+            :show-data-zoom="false"
+            :show-tooltip="false"
+            height="16rem"
+          />
+        </div>
+      </ElCol>
+
+      <!-- 16. 双向堆叠柱状图 -->
+      <ElCol :xs="24" :md="12" :lg="8">
+        <div class="card">
+          <div class="card-header">
+            <span>双向堆叠柱状图</span>
+          </div>
+          <BtcDualBarCompareChart
+            :data1="dualBarData1"
+            :data2="dualBarData2"
+            :x-axis-data="dualBarXAxis"
+            :show-tooltip="false"
+            label1="男性年龄分布"
+            label2="女性年龄分布"
+            height="16rem"
         />
       </div>
-    </BtcContainer>
+      </ElCol>
+      </ElRow>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import BtcContainer from '../../layout/btc-container/index.vue';
+import { ref } from 'vue';
+import { ElRow, ElCol } from 'element-plus';
 import {
   BtcLineChart,
   BtcBarChart,
@@ -24,277 +271,295 @@ import {
   BtcDualBarCompareChart,
   BtcRingChart,
   BtcRadarChart,
-  BtcScatterChart
+  BtcScatterChart,
+  BtcKLineChart
 } from '../../../charts';
 import type {
   LineChartData,
   BarChartData,
-  PieChartDataItem
+  PieChartDataItem,
+  KLineChartDataItem,
+  ScatterChartDataItem
 } from '../../../charts';
 
 defineOptions({
   name: 'BtcChartDemo'
 });
 
-interface ChartItem {
-  key: string;
-  title?: string;
-  component: any;
-  props: Record<string, any>;
-}
-
-interface Props {
-  /** 图表间距 */
-  gap?: number;
-  /** 每行显示的列数 */
-  colsPerRow?: number;
-  /** 图表高度 */
-  chartHeight?: string;
-  /** 要显示的图表类型，不传则显示全部 */
-  chartTypes?: string[];
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  gap: 8,
-  colsPerRow: 4,
-  chartHeight: '300px'
-});
-
-// 折线图数据
-const executionTrendData = ref<LineChartData[]>([
+// 1. 柱状图（单数据）- 需要转换为对象数组格式
+const singleBarDataRaw = [120, 200, 150, 80, 70, 110, 130];
+const singleBarData = ref<BarChartData[]>([
   {
-    name: '执行次数',
-    data: [120, 132, 101, 134, 90, 230, 210],
-    color: '#409eff',
-    smooth: true,
-    areaStyle: true
+    name: '数据',
+    data: singleBarDataRaw
   }
 ]);
-const executionTrendXAxis = ref<string[]>(['周一', '周二', '周三', '周四', '周五', '周六', '周日']);
+const xAxisData = ref<string[]>(['周一', '周二', '周三', '周四', '周五', '周六', '周日']);
 
-// 柱状图数据
-const responseTimeData = ref<BarChartData[]>([
+// 2. 柱状图（多组数据）
+const multiBarData = ref<BarChartData[]>([
   {
-    name: '响应时间分布',
-    data: [320, 280, 150, 80, 20],
-    color: '#67c23a'
-  }
-]);
-const responseTimeXAxis = ref<string[]>(['0-50ms', '50-100ms', '100-200ms', '200-500ms', '500ms+']);
-
-// 饼图数据
-const typeDistributionData = ref<PieChartDataItem[]>([
-  { name: '权限策略', value: 35, color: '#f56c6c' },
-  { name: '业务策略', value: 25, color: '#67c23a' },
-  { name: '数据策略', value: 20, color: '#e6a23c' },
-  { name: '工作流策略', value: 20, color: '#409eff' }
-]);
-
-// 横向柱状图数据
-const hBarChartData = ref<BarChartData[]>([
-  {
-    name: '数据量',
+    name: '销售额',
     data: [120, 200, 150, 80, 70, 110, 130],
-    color: '#409eff'
+    barWidth: '26%'
+  },
+  {
+    name: '利润',
+    data: [20, 50, 30, 15, 10, 25, 35],
+    barWidth: '26%'
   }
 ]);
-const hBarChartYAxis = ref<string[]>(['类别A', '类别B', '类别C', '类别D', '类别E', '类别F', '类别G']);
 
-// 双柱对比图数据
-const dualBarData1 = ref<BarChartData[]>([
+// 3. 柱状图（堆叠）
+const stackBarData = ref<BarChartData[]>([
   {
-    name: '本月',
-    data: [120, 200, 150, 80, 70],
-    color: '#409eff'
+    name: 'Q1',
+    data: [20, 25, 30, 35, 40],
+    stack: 'total',
+    barWidth: '26%'
+  },
+  {
+    name: 'Q2',
+    data: [30, 35, 40, 45, 50],
+    stack: 'total',
+    barWidth: '26%'
   }
 ]);
-const dualBarData2 = ref<BarChartData[]>([
+const stackXAxisData = ref<string[]>(['产品A', '产品B', '产品C', '产品D', '产品E']);
+
+// 4. 折线图
+const lineChartData1 = ref<LineChartData[]>([
   {
-    name: '上月',
-    data: [100, 180, 130, 90, 60],
-    color: '#67c23a'
+    name: '数据',
+    data: [58, 15, 82, 35, 120, 62, 45]
   }
 ]);
-const dualBarXAxis = ref<string[]>(['项目1', '项目2', '项目3', '项目4', '项目5']);
+const lineChartXAxis1 = ref<string[]>(['一月', '二月', '三月', '四月', '五月', '六月', '七月']);
 
-// 环形图数据
-const ringChartData = ref<PieChartDataItem[]>([
-  { name: '类型A', value: 35, color: '#409eff' },
-  { name: '类型B', value: 25, color: '#67c23a' },
-  { name: '类型C', value: 20, color: '#e6a23c' },
-  { name: '类型D', value: 20, color: '#f56c6c' }
-]);
-
-// 雷达图数据
-const radarIndicators = ref([
-  { name: '指标A', max: 100 },
-  { name: '指标B', max: 100 },
-  { name: '指标C', max: 100 },
-  { name: '指标D', max: 100 },
-  { name: '指标E', max: 100 }
-]);
-const radarChartData = ref([
+// 5. 折线图（渐变背景）
+const lineChartData2 = ref<LineChartData[]>([
   {
-    name: '数据系列1',
-    data: [80, 90, 70, 85, 75],
-    color: '#409eff',
+    name: '数据',
+    data: [28, 45, 82, 35, 100, 32, 55],
     areaStyle: true
   }
 ]);
+const lineChartXAxis2 = ref<string[]>(['一月', '二月', '三月', '四月', '五月', '六月', '七月']);
 
-// 散点图数据
-const scatterChartData = ref([
+// 6. 折线图（多组数据）
+const multiLineData = ref<LineChartData[]>([
+  {
+    name: '销售额',
+    data: [120, 132, 101, 134, 90, 130],
+    areaStyle: true
+  },
+  {
+    name: '利润',
+    data: [80, 92, 71, 94, 60, 80],
+    areaStyle: true
+  }
+]);
+const multiLineXAxis = ref<string[]>(['1月', '2月', '3月', '4月', '5月', '6月']);
+
+// 7. 柱状图（水平）- 单数据
+const hBarChartData1Raw = [50, 80, 120, 90, 60];
+const hBarChartData1 = ref<BarChartData[]>([
+  {
+    name: '数据',
+    data: hBarChartData1Raw
+  }
+]);
+const hBarChartYAxis1 = ref<string[]>(['产品A', '产品B', '产品C', '产品D', '产品E']);
+
+// 8. 柱状图（水平）- 多组数据
+const hBarChartData2 = ref<BarChartData[]>([
+  {
+    name: '系列1',
+    data: [10, 20, 30],
+    barWidth: '30%'
+  },
+  {
+    name: '系列2',
+    data: [15, 25, 35],
+    barWidth: '30%'
+  }
+]);
+const hBarChartYAxis2 = ref<string[]>(['类目1', '类目2', '类目3']);
+
+// 9. 柱状图（水平堆叠）
+const hBarChartStackData = ref<BarChartData[]>([
+  {
+    name: '系列1',
+    data: [10, 20, 30],
+    stack: 'total',
+    barWidth: '30%'
+  },
+  {
+    name: '系列2',
+    data: [15, 25, 35],
+    stack: 'total',
+    barWidth: '30%'
+  }
+]);
+const hBarChartStackYAxis = ref<string[]>(['类目1', '类目2', '类目3']);
+
+// 10. 环形图
+const ringChartData1 = ref<PieChartDataItem[]>([
+  { name: '分类A', value: 35 },
+  { name: '分类B', value: 28 },
+  { name: '分类C', value: 42 }
+]);
+
+// 11. 环形图（带中心文本）
+const ringChartData2 = ref<PieChartDataItem[]>([
+  { name: '分类A', value: 35 },
+  { name: '分类B', value: 28 },
+  { name: '分类C', value: 42 },
+  { name: '分类D', value: 32 },
+  { name: '分类E', value: 26 },
+  { name: '分类F', value: 37 }
+]);
+
+// 12. 饼图
+const pieChartData = ref<PieChartDataItem[]>([
+  { name: '分类A', value: 30 },
+  { name: '分类B', value: 25 },
+  { name: '分类C', value: 45 }
+]);
+
+// 13. 散点图
+const scatterChartData = ref<ScatterChartDataItem[]>([
   {
     name: '数据点',
     data: [
-      { value: [10, 20], name: '点1' },
-      { value: [15, 30], name: '点2' },
-      { value: [20, 25], name: '点3' },
-      { value: [25, 40], name: '点4' },
-      { value: [30, 35], name: '点5' },
-      { value: [35, 50], name: '点6' },
-      { value: [40, 45], name: '点7' },
-      { value: [45, 60], name: '点8' }
+      { value: [1, 3] as [number, number] },
+      { value: [2, 4] as [number, number] },
+      { value: [3, 5] as [number, number] },
+      { value: [4, 6] as [number, number] },
+      { value: [5, 7] as [number, number] },
+      { value: [6, 8] as [number, number] },
+      { value: [7, 7] as [number, number] },
+      { value: [8, 9] as [number, number] },
+      { value: [9, 8] as [number, number] },
+      { value: [10, 6] as [number, number] },
+      { value: [11, 7] as [number, number] },
+      { value: [12, 8] as [number, number] }
     ],
     color: '#409eff'
   }
 ]);
 
-// 所有图表配置
-const allCharts = computed<ChartItem[]>(() => [
+// 14. 雷达图
+const radarIndicators = ref([
+  { name: '销售', max: 100 },
+  { name: '管理', max: 100 },
+  { name: '技术', max: 100 },
+  { name: '客服', max: 100 },
+  { name: '开发', max: 100 }
+]);
+const radarChartData = ref([
   {
-    key: 'line',
-    title: '折线图',
-    component: BtcLineChart,
-    props: {
-      data: executionTrendData.value,
-      'x-axis-data': executionTrendXAxis.value,
-      showTooltip: false
-    }
+    name: '预算分配',
+    data: [80, 70, 90, 85, 75],
+    color: '#409eff',
+    areaStyle: true
   },
   {
-    key: 'bar',
-    title: '柱状图',
-    component: BtcBarChart,
-    props: {
-      data: responseTimeData.value,
-      'x-axis-data': responseTimeXAxis.value,
-      showTooltip: false
-    }
-  },
-  {
-    key: 'pie',
-    title: '饼图',
-    component: BtcPieChart,
-    props: {
-      data: typeDistributionData.value,
-      showTooltip: false
-    }
-  },
-  {
-    key: 'hbar',
-    title: '横向柱状图',
-    component: BtcHBarChart,
-    props: {
-      data: hBarChartData.value,
-      'y-axis-data': hBarChartYAxis.value,
-      showTooltip: false
-    }
-  },
-  {
-    key: 'dual-bar',
-    title: '双柱对比图',
-    component: BtcDualBarCompareChart,
-    props: {
-      data1: dualBarData1.value,
-      data2: dualBarData2.value,
-      'x-axis-data': dualBarXAxis.value,
-      label1: '本月',
-      label2: '上月',
-      showTooltip: false
-    }
-  },
-  {
-    key: 'ring',
-    title: '环形图',
-    component: BtcRingChart,
-    props: {
-      data: ringChartData.value,
-      showTooltip: false
-    }
-  },
-  {
-    key: 'radar',
-    title: '雷达图',
-    component: BtcRadarChart,
-    props: {
-      indicators: radarIndicators.value,
-      data: radarChartData.value,
-      showTooltip: false
-    }
-  },
-  {
-    key: 'scatter',
-    title: '散点图',
-    component: BtcScatterChart,
-    props: {
-      data: scatterChartData.value,
-      'x-axis-name': 'X轴',
-      'y-axis-name': 'Y轴',
-      showTooltip: false
-    }
+    name: '实际开销',
+    data: [70, 75, 85, 80, 70],
+    color: '#67c23a',
+    areaStyle: true
   }
 ]);
 
-// 根据 chartTypes 过滤要显示的图表
-const visibleCharts = computed(() => {
-  if (!props.chartTypes || props.chartTypes.length === 0) {
-    return allCharts.value;
+// 15. k线图
+const klineChartData = ref<KLineChartDataItem[]>([
+  { date: '2024-01-01', value: [20, 23, 18, 25] },
+  { date: '2024-01-02', value: [23, 21, 20, 24] },
+  { date: '2024-01-03', value: [21, 25, 21, 26] }
+]);
+
+// 16. 双向堆叠柱状图
+const dualBarData1 = ref<BarChartData[]>([
+  {
+    name: '男性年龄分布',
+    data: [50, 28, 80, 65, 68, 70, 60, 55]
   }
-  return allCharts.value.filter(chart => props.chartTypes!.includes(chart.key));
-});
+]);
+const dualBarData2 = ref<BarChartData[]>([
+  {
+    name: '女性年龄分布',
+    data: [50, 28, 40, 45, 38, 50, 42, 48]
+  }
+]);
+const dualBarXAxis = ref<string[]>([
+  '0-4岁',
+  '5-14岁',
+  '15-24岁',
+  '25-34岁',
+  '35-44岁',
+  '45-54岁',
+  '55-64岁',
+  '65岁以上'
+]);
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .btc-chart-demo {
-  width: 100%;
-  height: 100%;
-  // 确保容器使用 flex 布局，能够自适应填充父容器
-  // 如果父容器是 flex 布局，使用 flex: 1 自适应；否则使用 height: 100%
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 
-  :deep(.btc-container) {
+  &__container {
     flex: 1;
-    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    box-sizing: border-box;
+    width: 100%;
     height: 100%;
-    align-content: start;
-    grid-auto-flow: row;
-  }
 
-  .chart-item {
-    background: var(--el-bg-color-page);
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 6px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    min-height: 0;
-    height: 100%; // 让图表项填充网格行的高度
-
-    h4 {
-      margin: 0 0 8px 0;
-      color: var(--el-text-color-primary);
-      font-size: 13px;
-      font-weight: 500;
-      flex-shrink: 0;
-      height: 20px;
-      line-height: 20px;
+    // 自定义滚动条样式
+    &::-webkit-scrollbar {
+      width: 6px;
     }
 
+    &::-webkit-scrollbar-track {
+      background: transparent;
+  }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--el-border-color);
+      border-radius: 3px;
+
+      &:hover {
+        background: var(--el-border-color-darker);
+      }
+    }
+  }
+
+  .card {
+    background-color: var(--el-bg-color);
+    border-radius: var(--custom-radius, var(--el-border-radius-base, 0.25rem));
+    border: 1px solid var(--el-border-color-light);
+    box-sizing: border-box;
+    padding: 20px;
+
+    .card-header {
+      padding-bottom: 15px;
+      margin-bottom: 0;
+
+      span {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    // 图表组件使用 props 中的高度，不需要 flex 布局
+    // 参考 art-design-pro 的实现，直接使用 height 属性
     :deep(.btc-line-chart),
     :deep(.btc-bar-chart),
     :deep(.btc-pie-chart),
@@ -302,12 +567,15 @@ const visibleCharts = computed(() => {
     :deep(.btc-dual-bar-compare-chart),
     :deep(.btc-ring-chart),
     :deep(.btc-radar-chart),
-    :deep(.btc-scatter-chart) {
-      width: 100%;
-      flex: 1;
-      min-height: 0;
+    :deep(.btc-scatter-chart),
+    :deep(.btc-kline-chart) {
+      // 移除 flex: 1，让图表使用 props 中的高度
+      // 图表组件会通过 :style="chartStyle" 设置高度
     }
+  }
+
+  :deep(.el-col) {
+    margin-bottom: 10px;
   }
 }
 </style>
-

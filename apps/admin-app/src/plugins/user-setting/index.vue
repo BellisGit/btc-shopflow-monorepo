@@ -28,7 +28,7 @@ import { provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { BtcIconButton } from '@btc/shared-components';
 import { useUserSetting } from './composables';
-import BtcUserSettingDrawer from './components/preferences-drawer.vue';
+import { BtcUserSettingDrawer } from '@btc/shared-components';
 
 defineOptions({
   name: 'BtcUserSetting'

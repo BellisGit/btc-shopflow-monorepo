@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { storage } from '@btc/shared-utils';
+import { storage } from '@btc/shared-core/utils';
 import { setBodyClassName } from '../utils/body-class';
 
 /**
@@ -7,7 +7,7 @@ import { setBodyClassName } from '../utils/body-class';
  */
 export function mixColor(color1: string, color2: string, weight: number): string {
   weight = Math.max(Math.min(Number(weight), 1), 0);
-  
+
   // 确保颜色格式正确（必须是 #RRGGBB 格式）
   if (!color1.startsWith('#') || color1.length !== 7) {
     throw new Error(`mixColor: color1 must be in #RRGGBB format, got: ${color1}`);
@@ -15,19 +15,19 @@ export function mixColor(color1: string, color2: string, weight: number): string
   if (!color2.startsWith('#') || color2.length !== 7) {
     throw new Error(`mixColor: color2 must be in #RRGGBB format, got: ${color2}`);
   }
-  
+
   const r1 = parseInt(color1.substring(1, 3), 16);
   const g1 = parseInt(color1.substring(3, 5), 16);
   const b1 = parseInt(color1.substring(5, 7), 16);
   const r2 = parseInt(color2.substring(1, 3), 16);
   const g2 = parseInt(color2.substring(3, 5), 16);
   const b2 = parseInt(color2.substring(5, 7), 16);
-  
+
   // 验证解析结果
   if (isNaN(r1) || isNaN(g1) || isNaN(b1) || isNaN(r2) || isNaN(g2) || isNaN(b2)) {
     throw new Error(`mixColor: Failed to parse color values. color1: ${color1}, color2: ${color2}`);
   }
-  
+
   let r = Math.round(r1 * (1 - weight) + r2 * weight).toString(16);
   let g = Math.round(g1 * (1 - weight) + g2 * weight).toString(16);
   let b = Math.round(b1 * (1 - weight) + b2 * weight).toString(16);
@@ -48,14 +48,14 @@ export interface ThemeConfig {
  * 注意：label 字段存储国际化键值，需要在模板中使用 t() 函数进行翻译
  */
 export const THEME_PRESETS: ThemeConfig[] = [
+  { name: 'default', label: 'theme.presets.lake_blue', color: '#4165d7' },
   { name: 'brand-red', label: 'theme.presets.brand_red', color: '#DA281C' },
   { name: 'brand-gray', label: 'theme.presets.brand_gray', color: '#404040' },
-  { name: 'default', label: 'theme.presets.blue', color: '#409eff' },
   { name: 'green', label: 'theme.presets.green', color: '#51C21A' },
   { name: 'purple', label: 'theme.presets.purple', color: '#d0378d' },
   { name: 'orange', label: 'theme.presets.orange', color: '#FFA500' },
-  { name: 'pink', label: 'theme.presets.pink', color: '#FF69B4' },
   { name: 'mint', label: 'theme.presets.mint', color: '#3EB489' },
+  { name: 'blue', label: 'theme.presets.blue', color: '#409EFF' },
 ];
 
 /**
@@ -63,9 +63,9 @@ export const THEME_PRESETS: ThemeConfig[] = [
  */
 export function useTheme() {
   const isDark = ref(false);
-  const currentTheme = ref<ThemeConfig>(
-    storage.get('theme') || THEME_PRESETS[0]
-  );
+  const savedTheme = storage.get('theme') as ThemeConfig | undefined;
+  const initialTheme = (savedTheme ?? THEME_PRESETS[0]) as ThemeConfig;
+  const currentTheme = ref<ThemeConfig>(initialTheme);
 
   /**
    * 设置主题色

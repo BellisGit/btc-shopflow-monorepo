@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'path';
-import { getAppConfig } from './app-env.config';
+import { getAppConfig } from '../packages/shared-core/src/configs/app-env.config';
 
 /**
  * 获取应用配置（用于 vite.config.ts）
@@ -22,7 +22,7 @@ export function getViteAppConfig(appName: string): {
     throw new Error(`未找到 ${appName} 的环境配置`);
   }
 
-  const mainAppConfig = getAppConfig('system-app');
+  const mainAppConfig = getAppConfig('main-app');
   const mainAppOrigin = mainAppConfig
     ? `http://${mainAppConfig.preHost}:${mainAppConfig.prePort}`
     : 'http://localhost:4180';
@@ -43,7 +43,7 @@ export function getViteAppConfig(appName: string): {
  * @returns 应用类型
  */
 export function getAppType(appName: string): 'main' | 'sub' | 'layout' | 'mobile' {
-  if (appName === 'system-app') return 'main';
+  if (appName === 'main-app') return 'main';
   if (appName === 'layout-app') return 'layout';
   if (appName === 'mobile-app') return 'mobile';
   return 'sub'; // 其他都是子应用
@@ -78,8 +78,8 @@ export function getBaseUrl(appName: string, isPreviewBuild: boolean = false): st
  * @returns publicDir 路径或 false
  */
 export function getPublicDir(appName: string, appDir: string): string | false {
-  // admin-app、mobile-app 和 system-app 使用自己的 public 目录
-  if (appName === 'admin-app' || appName === 'mobile-app' || appName === 'system-app') {
+  // main-app、admin-app、mobile-app 和 system-app 使用自己的 public 目录
+  if (appName === 'main-app' || appName === 'admin-app' || appName === 'mobile-app' || appName === 'system-app') {
     return resolve(appDir, 'public');
   }
   

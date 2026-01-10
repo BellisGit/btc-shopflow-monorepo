@@ -26,5 +26,9 @@ declare module '@btc/shared-components' {
   
   // 导出其他可能需要的导出
   export * from '../../../packages/shared-components/src/index';
+  
+  // 显式导出 setIsMainAppFn 以确保类型正确
+  export { setIsMainAppFn, getIsMainAppFn } from '../../../packages/shared-components/src/components/layout/app-layout/utils';
+  export { registerEChartsThemes } from '../../../packages/shared-components/src/charts/utils/theme';
 }
 

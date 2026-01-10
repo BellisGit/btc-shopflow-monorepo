@@ -13,6 +13,7 @@ export function useTicketService() {
   const ticketList = ref<any[]>([]);
   const selectedDomain = ref<any>(null);
   const positionFilter = ref('');
+  const materialCodeFilter = ref('');
   const pagination = ref({
     page: 1,
     size: 20,
@@ -24,6 +25,12 @@ export function useTicketService() {
     const prefix = t('common.validation.required_prefix');
     const storageLocation = t('inventory.result.fields.storageLocation');
     return `${prefix}${storageLocation}`;
+  });
+
+  // 物料编码输入框 placeholder
+  const materialCodePlaceholder = computed(() => {
+    const materialCode = t('system.material.fields.materialCode');
+    return t('inventory.ticket.print.material_code_placeholder', { materialCode });
   });
 
   // 表格列配置
@@ -77,6 +84,15 @@ export function useTicketService() {
           }
         }
 
+        // 前端筛选：根据物料编码进行模糊匹配（后端不支持，需要在前端筛选）
+        if (materialCodeFilter.value?.trim()) {
+          const filterText = materialCodeFilter.value.trim().toLowerCase();
+          list = list.filter((item: any) => {
+            const partName = (item.partName || '').toLowerCase();
+            return partName.includes(filterText);
+          });
+        }
+
         // 前端分页处理
         const page = params.page || pagination.value.page || 1;
         const size = params.size || pagination.value.size || 20;
@@ -94,7 +110,8 @@ export function useTicketService() {
           total: total, // 直接返回 total，而不是嵌套在 pagination 中
         };
       } catch (error) {
-        console.error('[InventoryTicketPrint] Load data failed:', error);
+        // 响应拦截器已显示错误消息，不需要在控制台打印
+        // 如果响应拦截器没有显示消息（如网络错误），这里再显示一次
         BtcMessage.error(t('inventory.ticket.print.load_failed'));
         return { list: [], total: 0 };
       } finally {
@@ -138,7 +155,7 @@ export function useTicketService() {
         // 返回域列表
         return Array.from(domainMap.values());
       } catch (error) {
-        console.error('[InventoryTicketPrint] Failed to load domains from position service:', error);
+        // 响应拦截器已显示错误消息，不需要在控制台打印
         return [];
       }
     }
@@ -149,8 +166,10 @@ export function useTicketService() {
     ticketList,
     selectedDomain,
     positionFilter,
+    materialCodeFilter,
     pagination,
     positionPlaceholder,
+    materialCodePlaceholder,
     tableColumns,
     ticketService,
     domainService,

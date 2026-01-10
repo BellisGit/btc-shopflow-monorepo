@@ -1,118 +1,97 @@
 ﻿<template>
   <div class="resources-page">
-    <BtcTableGroup
-      ref="tableGroupRef"
-      :left-service="domainService"
-      :right-service="wrappedResourceService"
-      :table-columns="resourceColumns"
-      :form-items="resourceFormItems"
-      :op="{ buttons: ['edit', 'delete'] }"
-      left-title="业务域"
-      right-title="资源列表"
-      search-placeholder="搜索资源..."
-      :show-unassigned="true"
-      unassigned-label="未分配"
-      :enable-key-search="true"
-      :left-size="'small'"
-      @select="onDomainSelect"
-    />
+    <BtcCrud ref="crudRef" :service="crudResourceService">
+      <BtcRow>
+        <div class="btc-crud-primary-actions">
+          <BtcRefreshBtn />
+          <el-button
+            type="warning"
+            class="btc-crud-btn"
+            :loading="syncLoading"
+            @click="handleSync"
+          >
+            <BtcSvg class="btc-crud-btn__icon" name="sync" />
+            <span class="btc-crud-btn__text">
+              {{ t('access.resources.sync') }}
+            </span>
+          </el-button>
+        </div>
+        <BtcFlex1 />
+        <BtcSearchKey />
+        <BtcCrudActions />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcTable :columns="columns" border />
+      </BtcRow>
+
+      <BtcRow>
+        <BtcFlex1 />
+        <BtcPagination />
+      </BtcRow>
+
+      <BtcUpsert :items="formItems" />
+    </BtcCrud>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import { useI18n } from '@btc/shared-core';
+import { useI18n, usePageColumns, usePageForms, usePageService, getPageConfigFull } from '@btc/shared-core';
 import { useMessage } from '@/utils/use-message';
-import type { TableColumn, FormItem } from '@btc/shared-components';
-import { BtcTableGroup } from '@btc/shared-components';
+import {
+  BtcCrud,
+  BtcTable,
+  BtcUpsert,
+  BtcPagination,
+  BtcRefreshBtn,
+  BtcRow,
+  BtcFlex1,
+  BtcSearchKey,
+  BtcCrudActions,
+} from '@btc/shared-components';
+import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
 const message = useMessage();
-const tableGroupRef = ref();
-const selectedDomain = ref<any>(null);
+const crudRef = ref();
+const syncLoading = ref(false);
 
-// 域服务配置 - 直接调用域列表的list API
-const domainService = {
-  list: (params?: any) => {
-    // 必须传递参数至少为空对象{}，否则后台框架默认参数处理逻辑
-    const finalParams = params || {};
-    return service.admin?.iam?.domain?.list(finalParams);
+// 从 config.ts 读取配置
+const { columns } = usePageColumns('access.resources');
+const { formItems } = usePageForms('access.resources');
+const pageConfig = getPageConfigFull('access.resources');
+
+// 资源服务 - 使用 config.ts 中定义的 service（用于同步操作）
+const resourceService = pageConfig?.service?.resource || service.admin?.iam?.resource;
+
+// 使用 config.ts 中定义的 service，并添加删除确认逻辑（用于 CRUD 操作）
+const crudResourceService = usePageService('access.resources', 'resource');
+
+// 数据同步处理
+const handleSync = async () => {
+  if (syncLoading.value) return;
+
+  try {
+    syncLoading.value = true;
+
+    // 调用 pull 接口拉取资源
+    await resourceService?.pull();
+
+    message.success(t('access.resources.sync_success'));
+
+    // 刷新表格数据
+    if (crudRef.value?.crud) {
+      await crudRef.value.crud.refresh();
+    }
+  } catch (error) {
+    message.error(t('access.resources.sync_failed'));
+    console.error('Data sync failed:', error);
+  } finally {
+    syncLoading.value = false;
   }
 };
-
-// 资源服务（右侧表）- 使用EPS服务
-const resourceService = service.admin?.iam?.resource;
-
-const wrappedResourceService = {
-  ...resourceService,
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 单个删除：直接传递 ID
-    await resourceService.delete(id);
-
-    message.success(t('crud.message.delete_success'));
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
-
-    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await resourceService.deleteBatch(ids);
-
-    message.success(t('crud.message.delete_success'));
-  },
-};
-
-
-// 域选择处理
-const onDomainSelect = (domain: any) => {
-  selectedDomain.value = domain;
-};
-
-// 资源表格列
-const resourceTypeDict = [
-  { label: '文件', value: 'FILE', type: 'info' },
-  { label: 'API', value: 'API', type: 'warning' },
-  { label: '数据表', value: 'TABLE', type: 'primary' },
-] as const;
-
-const resourceColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'resourceNameCn', label: '资源名称', minWidth: 150 },
-  { prop: 'resourceCode', label: '资源编码', minWidth: 150 },
-  {
-    prop: 'resourceType',
-    label: '类型',
-    width: 120,
-    dict: resourceTypeDict.map((item) => ({ ...item })),
-    dictColor: true,
-  },
-  { prop: 'description', label: '描述', minWidth: 200 },
-]);
-
-// 资源表单
-const resourceFormItems = computed<FormItem[]>(() => [
-  { prop: 'resourceNameCn', label: '资源名称', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'resourceCode', label: '资源编码', span: 12, required: true, component: { name: 'el-input' } },
-  {
-    prop: 'resourceType',
-    label: '类型',
-    span: 12,
-    component: {
-      name: 'el-select',
-      options: resourceTypeDict.map((item) => ({
-        label: item.label,
-        value: item.value,
-      })),
-    }
-  },
-  { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
-
-
 </script>
 
 <style lang="scss" scoped>

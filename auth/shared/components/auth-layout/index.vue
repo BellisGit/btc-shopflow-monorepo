@@ -5,10 +5,8 @@
       <BtcSvg name="bg" />
     </div>
 
-    <!-- 表单卡片 -->
-    <div class="auth-card">
-      <slot />
-    </div>
+    <!-- 表单卡片内容 -->
+    <slot />
 
     <!-- 底部版权信息 -->
     <slot name="footer" />

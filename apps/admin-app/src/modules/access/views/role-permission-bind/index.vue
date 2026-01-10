@@ -81,19 +81,19 @@ const rolePermissionService = {
 // 表格列配置
 const columns = computed<TableColumn[]>(() => [
   { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
+  { type: 'index', label: 'common.fields.index', width: 60 },
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'roleId', label: '角色ID', width: 150 },
-  { prop: 'permissionId', label: '权限ID', width: 150 },
-  { prop: 'tenantId', label: '租户ID', width: 150 },
-  { prop: 'createdAt', label: '创建时间', width: 180, sortable: true },
+  { prop: 'roleId', label: 'common.fields.role_id', width: 150 },
+  { prop: 'permissionId', label: 'common.fields.permission_id', width: 150 },
+  { prop: 'tenantId', label: 'common.fields.tenant_id', width: 150 },
+  { prop: 'createdAt', label: 'common.fields.create_time', width: 180, sortable: true },
 ]);
 
 // 表单项配置
 const formItems = computed<FormItem[]>(() => [
-  { prop: 'roleId', label: '角色ID', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'permissionId', label: '权限ID', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'tenantId', label: '租户ID', span: 12, component: { name: 'el-input' } },
+  { prop: 'roleId', label: 'common.fields.role_id', span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'permissionId', label: 'common.fields.permission_id', span: 12, required: true, component: { name: 'el-input' } },
+  { prop: 'tenantId', label: 'common.fields.tenant_id', span: 12, component: { name: 'el-input' } },
 ]);
 
 onMounted(() => {

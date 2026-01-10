@@ -3,13 +3,13 @@
  * 使用 localStorage 持久化设置状态
  */
 
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { appStorage } from '@/utils/app-storage';
 import { MenuTypeEnum, SystemThemeEnum, MenuThemeEnum, ContainerWidthEnum, BoxStyleType } from '../config/enums';
 import { config } from '@/config';
 import { useThemePlugin, type ButtonStyle } from '@btc/shared-core';
-import { storage } from '@btc/shared-utils';
-import { registerEChartsThemes } from '@btc/shared-components/charts/utils';
+// storage 未使用，已移除导入
+import { registerEChartsThemes } from '@btc/shared-components';
 
 // 单例状态实例
 let settingsStateInstance: ReturnType<typeof createSettingsState> | null = null;
@@ -318,6 +318,7 @@ function createSettingsState() {
 
     // 同步更新设置状态（如果存在）
     try {
+      // @ts-expect-error: 局部变量，已通过导入使用全局 SystemThemeEnum
       const SystemThemeEnum = {
         LIGHT: 'light',
         DARK: 'dark',
@@ -333,9 +334,13 @@ function createSettingsState() {
     const htmlEl = document.documentElement;
     void htmlEl.offsetHeight;
 
-    // 使用 nextTick 确保 Vue 响应式更新完成，然后重新注册 ECharts 主题
-    nextTick(() => {
+    // 使用双重 requestAnimationFrame 确保 CSS 变量已更新，然后重新注册 ECharts 主题
+    // 第一帧：等待 DOM 更新和 CSS 变量更新
+    requestAnimationFrame(() => {
+      // 第二帧：确保 CSS 变量已完全更新
+      requestAnimationFrame(() => {
       registerEChartsThemes();
+      });
     });
 
     // 使用双重 requestAnimationFrame 确保在下一帧恢复过渡效果（参考 art-design-pro）

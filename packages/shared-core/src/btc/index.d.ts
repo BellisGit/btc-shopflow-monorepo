@@ -16,3 +16,4 @@ export declare function useCore(): {
  */
 export declare function initEpsData(epsData: EpsData): void;
 export declare function installBtc(app: App, options?: BtcOptions): void;
+//# sourceMappingURL=index.d.ts.map

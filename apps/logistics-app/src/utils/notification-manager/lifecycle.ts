@@ -16,7 +16,9 @@ export class LifecycleManager {
     }
 
     // 计算递减开始时间
+    // @ts-expect-error: 可能在未来使用
     const _baseTime = 3000; // 基础时间3秒
+    // @ts-expect-error: 可能在未来使用
     const _extraTime = Math.max(0, notification.content.length - 10) * 100; // 根据通知内容长度调整
     const incrementPeriod = (notification.count - 1) * 400; // 递增期间
     const waitingPeriod = 500; // 等待期

@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n, normalizePageResponse } from '@btc/shared-core';
+import { useI18n, normalizePageResponse, usePageColumns, usePageForms, getPageConfigFull } from '@btc/shared-core';
 import type { TableColumn, FormItem } from '@btc/shared-components';
 import { BtcTableGroup, BtcMessage, BtcConfirm } from '@btc/shared-components';
 import { service } from '@/services/eps';
@@ -36,6 +36,11 @@ defineOptions({
 const { t } = useI18n();
 const tableGroupRef = ref();
 const selectedCheck = ref<any>(null);
+
+// 从 config.ts 读取配置（必须在其他使用 pageConfig 的代码之前）
+const { columns: baseColumns } = usePageColumns('data.inventory.confirm');
+const { formItems } = usePageForms('data.inventory.confirm');
+const pageConfig = getPageConfigFull('data.inventory.confirm');
 
 // 盘点列表服务（左侧）- 使用后端接口
 const checkService = {
@@ -74,7 +79,7 @@ const checkService = {
         pagination: normalized.pagination,
       };
     } catch (error) {
-      console.error('[InventoryConfirm] 获取盘点列表失败:', error);
+      // 响应拦截器已显示错误消息，不需要在控制台打印
       return {
         list: [],
         pagination: {
@@ -87,18 +92,15 @@ const checkService = {
   }
 };
 
-// 流程确认服务（右侧）- 使用 approval 服务
+// 流程确认服务（右侧）- 使用 config.ts 中定义的服务或创建新服务
+const baseApprovalService = pageConfig?.service?.inventoryConfirm || service.system?.base?.approval;
 const approvalService = {
   page: async (params?: any) => {
     const approvalPageService = service.system?.base?.approval?.page;
     if (!approvalPageService) {
       return {
         list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
+        total: 0
       };
     }
 
@@ -118,19 +120,16 @@ const approvalService = {
       const size = params?.size || 10;
       const normalized = normalizePageResponse(data, page, size);
 
+      // BtcTableGroup 期望返回 { list, total } 格式，而不是 { list, pagination }
       return {
         list: normalized.list,
-        pagination: normalized.pagination,
+        total: normalized.total,
       };
     } catch (error) {
-      console.error('[InventoryConfirm] 获取流程确认列表失败:', error);
+      // 响应拦截器已显示错误消息，不需要在控制台打印
       return {
         list: [],
-        pagination: {
-          total: 0,
-          page: params?.page || 1,
-          size: params?.size || 10,
-        }
+        total: 0
       };
     }
   },
@@ -173,7 +172,7 @@ const isConfirmed = (row: any): boolean => {
 const handleConfirm = async (row: any) => {
   // 检查是否已确认
   if (isConfirmed(row)) {
-    BtcMessage.warning(t('inventory.confirm.alreadyConfirmed') || '已确认，无需再次确认！');
+    BtcMessage.warning(t('inventory.confirm.already_confirmed') || '已确认，无需再次确认！');
     return;
   }
 
@@ -181,7 +180,7 @@ const handleConfirm = async (row: any) => {
   const id = row?.id;
 
   if (!id) {
-    BtcMessage.warning(t('inventory.confirm.idNotFound') || '数据ID不存在');
+    BtcMessage.warning(t('inventory.confirm.id_not_found') || '数据ID不存在');
     return;
   }
 
@@ -191,8 +190,8 @@ const handleConfirm = async (row: any) => {
   try {
     // 二次确认对话框
     await BtcConfirm(
-      t('inventory.confirm.confirmMessage') || `确定要确认流程 ${checkNo || id} 吗？`,
-      t('inventory.confirm.confirmTitle') || '确认',
+      t('inventory.confirm.confirm_message') || `确定要确认流程 ${checkNo || id} 吗？`,
+      t('inventory.confirm.confirm_title') || '确认',
       {
         confirmButtonText: t('common.button.confirm') || '确定',
         cancelButtonText: t('common.button.cancel') || '取消',
@@ -203,7 +202,7 @@ const handleConfirm = async (row: any) => {
     // 调用确认接口
     const confirmService = service.system?.base?.approval?.confirm;
     if (!confirmService) {
-      BtcMessage.error(t('inventory.confirm.serviceNotFound') || '确认接口不存在');
+      BtcMessage.error(t('inventory.confirm.service_not_found') || '确认接口不存在');
       return;
     }
 
@@ -238,84 +237,47 @@ const handleConfirm = async (row: any) => {
     if (error === 'cancel' || error?.message === 'cancel') {
       return;
     }
-    console.error('[InventoryConfirm] 确认失败:', error);
-    BtcMessage.error(error?.msg || t('inventory.confirm.failed') || '确认失败');
+    // 响应拦截器已显示错误消息，不需要在控制台打印
+    // 响应拦截器会在业务错误时显示消息，这里不需要再显示
   }
 };
 
 // 操作列配置（根据状态动态渲染按钮）
+// 注意：BtcTableGroup 期望 op.buttons 是一个数组，而不是函数
+// 如果需要根据行数据动态显示按钮，需要在按钮的 onClick 中处理状态判断
 const opConfig = computed(() => ({
-  buttons: ({ scope }: any) => {
-    const row = scope?.row;
-    const confirmed = isConfirmed(row);
-
-    return [
-      {
-        label: confirmed
-          ? (t('inventory.confirm.confirmed') || '已确认')
-          : (t('inventory.confirm.confirm') || '确认'),
-        type: confirmed ? 'success' : 'primary',
-        onClick: ({ scope }: any) => {
-          handleConfirm(scope.row);
-        }
+  buttons: [
+    {
+      label: t('inventory.confirm.confirm') || '确认',
+      type: 'primary',
+      onClick: ({ scope }: any) => {
+        const row = scope?.row;
+        handleConfirm(row);
       }
-    ];
-  }
+    }
+  ]
 }));
 
 // 流程确认表格列配置
-const approvalColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: t('common.index'), width: 60 },
-  { prop: 'name', label: t('inventory.confirm.fields.name') || '名称', minWidth: 150 },
-  {
-    prop: 'status',
-    label: t('inventory.confirm.fields.status') || '状态',
-    width: 120,
-    dictColor: true,
-    dict: [
-      {
-        label: t('inventory.confirm.status.confirmed') || '已确认',
-        value: '已确认',
-        type: 'success'
-      },
-      {
-        label: t('inventory.confirm.status.unconfirmed') || '未确认',
-        value: '未确认',
-        type: 'info'
-      },
-      // 兼容英文状态值
-      {
-        label: t('inventory.confirm.status.confirmed') || '已确认',
-        value: 'confirmed',
-        type: 'success'
-      },
-      {
-        label: t('inventory.confirm.status.unconfirmed') || '未确认',
-        value: 'unconfirmed',
-        type: 'info'
-      },
-      {
-        label: t('inventory.confirm.status.confirmed') || '已确认',
-        value: 'CONFIRMED',
-        type: 'success'
-      },
-      {
-        label: t('inventory.confirm.status.unconfirmed') || '未确认',
-        value: 'UNCONFIRMED',
-        type: 'info'
-      }
-    ]
-  },
-  { prop: 'confirmer', label: t('inventory.confirm.fields.confirmer') || '确认人', width: 120 },
-  { prop: 'createdAt', label: t('inventory.confirm.fields.createdAt') || '确认时间', width: 180, formatter: (row: any) => {
-    if (!row.createdAt) return '-';
-    return new Date(row.createdAt).toLocaleString('zh-CN');
-  }},
-]);
+// 扩展配置以支持动态 formatter
+const approvalColumns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是日期字段，添加动态 formatter
+    if (col.prop === 'createdAt') {
+      return {
+        ...col,
+        formatter: (row: any) => {
+          if (!row.createdAt) return '-';
+          return new Date(row.createdAt).toLocaleString('zh-CN');
+        },
+      };
+    }
+    return col;
+  });
+});
 
 // 流程确认表单项配置（暂时不需要表单）
-const approvalFormItems = computed<FormItem[]>(() => []);
+const approvalFormItems = computed(() => formItems.value);
 </script>
 
 <style lang="scss" scoped>

@@ -169,18 +169,18 @@ console.log('');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('🔍 步骤 2.5: 验证 EPS 数据复制结果');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-const systemEpsPath = path.join(repoRoot, 'apps', 'system-app', 'build', 'eps', 'eps.json');
-const targetApps = ['admin-app', 'logistics-app', 'engineering-app', 'quality-app', 'production-app', 'finance-app', 'layout-app'];
+const mainEpsPath = path.join(repoRoot, 'apps', 'main-app', 'build', 'eps', 'eps.json');
+const targetApps = ['admin-app', 'logistics-app', 'engineering-app', 'quality-app', 'production-app', 'finance-app', 'system-app', 'layout-app'];
 
-if (!fs.existsSync(systemEpsPath)) {
-  console.error('❌ 错误: system-app 的 EPS 文件不存在:', systemEpsPath);
+if (!fs.existsSync(mainEpsPath)) {
+  console.error('❌ 错误: main-app 的 EPS 文件不存在:', mainEpsPath);
   process.exit(1);
 }
 
-const systemEpsData = JSON.parse(fs.readFileSync(systemEpsPath, 'utf-8'));
-const systemEpsCount = Array.isArray(systemEpsData) ? systemEpsData.length : 
-                       (systemEpsData.data ? Object.values(systemEpsData.data).flat().length : 0);
-console.log(`✅ system-app EPS 数据: ${systemEpsCount} 个实体`);
+const mainEpsData = JSON.parse(fs.readFileSync(mainEpsPath, 'utf-8'));
+const mainEpsCount = Array.isArray(mainEpsData) ? mainEpsData.length : 
+                       (mainEpsData.data ? Object.values(mainEpsData.data).flat().length : 0);
+console.log(`✅ main-app EPS 数据: ${mainEpsCount} 个实体`);
 
 let allValid = true;
 for (const appName of targetApps) {

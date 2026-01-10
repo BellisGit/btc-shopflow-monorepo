@@ -49,7 +49,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     if (canvasRef) {
       updateTempConnection(event, canvasRef);
     } else {
-      console.error('找不到画布元素');
+      console.error('Canvas element not found');
     }
   };
 
@@ -142,7 +142,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     );
 
     if (existingConnection) {
-      BtcMessage.warning('节点之间已存在连接');
+      BtcMessage.warning('Connection already exists between nodes');
       connectionState.isConnecting = false;
       connectionState.tempConnection = null;
       connectionState.fromNodeId = '';
@@ -175,7 +175,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
     connectionState.fromNodeId = '';
     connectionState.fromCondition = undefined;
 
-    BtcMessage.success('连接创建成功');
+      BtcMessage.success('Connection created successfully');
     return true;
   };
 
@@ -200,9 +200,9 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
   const deleteConnection = async (connectionId: string, skipConfirm = false) => {
     try {
       if (!skipConfirm) {
-        await BtcConfirm('确定要删除这个连接吗？', '确认删除', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+        await BtcConfirm('Are you sure to delete this connection?', 'Confirm Delete', {
+          confirmButtonText: 'Confirm',
+          cancelButtonText: 'Cancel',
           type: 'warning'
         });
       }
@@ -213,7 +213,7 @@ export function useConnectionManagement(nodes: Ref<StrategyNode[]>) {
         selectedConnectionId.value = '';
       }
 
-      BtcMessage.success('连接删除成功');
+        BtcMessage.success('Connection deleted successfully');
       return true;
     } catch {
       return false;

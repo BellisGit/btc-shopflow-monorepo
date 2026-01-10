@@ -23,3 +23,4 @@ export declare function updateSubApp(context: SubAppContext, props: QiankunProps
  */
 export declare function unmountSubApp(context: SubAppContext, props?: QiankunProps): Promise<void>;
 export { setupStandalonePlugins };
+//# sourceMappingURL=useSubAppLifecycle.d.ts.map

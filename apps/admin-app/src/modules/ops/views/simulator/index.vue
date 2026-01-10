@@ -10,32 +10,32 @@
         class="simulator-form"
       >
         <el-form-item prop="user">
-          <el-select v-model="simulatorForm.user" :placeholder="t('ops.simulator.select_user')" style="width: 120px" size="default">
-            <el-option :label="t('ops.simulator.admin')" value="admin" />
-            <el-option :label="t('ops.simulator.manager')" value="manager" />
-            <el-option :label="t('ops.simulator.employee')" value="employee" />
+          <el-select v-model="simulatorForm.user" :placeholder="t('common.ops.simulator.select_user')" style="width: 120px" size="default">
+            <el-option :label="t('common.ops.simulator.admin')" value="admin" />
+            <el-option :label="t('common.ops.simulator.manager')" value="manager" />
+            <el-option :label="t('common.ops.simulator.employee')" value="employee" />
           </el-select>
         </el-form-item>
         <el-form-item prop="resource">
-          <el-select v-model="simulatorForm.resource" :placeholder="t('ops.simulator.select_resource')" style="width: 120px" size="default">
-            <el-option :label="t('ops.simulator.user_resource')" value="user" />
-            <el-option :label="t('ops.simulator.role_resource')" value="role" />
-            <el-option :label="t('ops.simulator.system_resource')" value="system" />
-            <el-option :label="t('ops.simulator.order_resource')" value="order" />
+          <el-select v-model="simulatorForm.resource" :placeholder="t('common.ops.simulator.select_resource')" style="width: 120px" size="default">
+            <el-option :label="t('common.ops.simulator.user_resource')" value="user" />
+            <el-option :label="t('common.ops.simulator.role_resource')" value="role" />
+            <el-option :label="t('common.ops.simulator.system_resource')" value="system" />
+            <el-option :label="t('common.ops.simulator.order_resource')" value="order" />
           </el-select>
         </el-form-item>
         <el-form-item prop="action">
-          <el-select v-model="simulatorForm.action" :placeholder="t('ops.simulator.select_action')" style="width: 120px" size="default">
-            <el-option :label="t('ops.simulator.view')" value="view" />
-            <el-option :label="t('ops.simulator.edit')" value="edit" />
-            <el-option :label="t('ops.simulator.delete')" value="delete" />
-            <el-option :label="t('ops.simulator.create')" value="create" />
+          <el-select v-model="simulatorForm.action" :placeholder="t('common.ops.simulator.select_action')" style="width: 120px" size="default">
+            <el-option :label="t('common.ops.simulator.view')" value="view" />
+            <el-option :label="t('common.ops.simulator.edit')" value="edit" />
+            <el-option :label="t('common.ops.simulator.delete')" value="delete" />
+            <el-option :label="t('common.ops.simulator.create')" value="create" />
           </el-select>
         </el-form-item>
       </el-form>
       <el-button type="primary" @click="handleSimulate" :loading="simulating" size="default">
         <el-icon><VideoPlay /></el-icon>
-        {{ t('ops.simulator.start') }}
+        {{ t('common.ops.simulator.start') }}
       </el-button>
     </BtcRow>
 
@@ -44,7 +44,7 @@
         <!-- 模拟结果 -->
         <div class="simulator-result" v-if="simulationResult">
           <el-alert
-            :title="simulationResult.decision === 'allow' ? '允许访问' : '拒绝访问'"
+            :title="simulationResult.decision === 'allow' ? t('common.ops.simulator.allow_access') : t('common.ops.simulator.deny_access')"
             :type="simulationResult.decision === 'allow' ? 'success' : 'error'"
             :description="simulationResult.reason"
             show-icon
@@ -53,24 +53,24 @@
 
           <!-- 匹配策略 -->
           <div class="matched-policies" v-if="simulationResult.matchedPolicies.length > 0">
-            <h4>匹配策略</h4>
+            <h4>{{ t('common.ops.simulator.matched_policies') }}</h4>
             <el-table :data="simulationResult.matchedPolicies" border>
-              <el-table-column prop="policyName" label="策略名称" />
-              <el-table-column prop="policyType" label="策略类型" />
-              <el-table-column prop="effect" label="效果">
+              <el-table-column prop="policyName" :label="t('common.ops.simulator.policy_name')" />
+              <el-table-column prop="policyType" :label="t('common.ops.simulator.policy_type')" />
+              <el-table-column prop="effect" :label="t('common.ops.simulator.effect')">
                 <template #default="{ row }">
                   <el-tag :type="row.effect === 'allow' ? 'success' : 'danger'">
-                    {{ row.effect === 'allow' ? '允许' : '拒绝' }}
+                    {{ row.effect === 'allow' ? t('common.ops.simulator.allow') : t('common.ops.simulator.deny') }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="priority" label="优先级" />
+              <el-table-column prop="priority" :label="t('common.ops.simulator.priority')" />
             </el-table>
           </div>
 
           <!-- 执行步骤 -->
           <div class="execution-steps" v-if="simulationResult.steps.length > 0">
-            <h4>执行步骤</h4>
+            <h4>{{ t('common.ops.simulator.execution_steps') }}</h4>
             <el-timeline>
               <el-timeline-item
                 v-for="(step, index) in simulationResult.steps"
@@ -108,9 +108,9 @@ const simulatorForm = reactive({
 });
 
 const formRules = {
-  user: [{ required: true, message: '请选择用户', trigger: 'change' }],
-  resource: [{ required: true, message: '请选择资源', trigger: 'change' }],
-  action: [{ required: true, message: '请选择操作', trigger: 'change' }]
+  user: [{ required: true, message: t('common.ops.simulator.select_user'), trigger: 'change' }],
+  resource: [{ required: true, message: t('common.ops.simulator.select_resource'), trigger: 'change' }],
+  action: [{ required: true, message: t('common.ops.simulator.select_action'), trigger: 'change' }]
 };
 
 // 模拟结果
@@ -148,31 +148,31 @@ const simulatePermission = (user: string, resource: string, action: string) => {
   return {
     decision: hasPermission ? 'allow' : 'deny',
     reason: hasPermission
-      ? `用户"${user}"对"${resource}"资源有"${action}"权限`
-      : `用户"${user}"对"${resource}"资源没有"${action}"权限`,
+      ? t('common.ops.simulator.user_has_permission', { user, resource, action })
+      : t('common.ops.simulator.user_no_permission', { user, resource, action }),
     matchedPolicies: hasPermission ? [
-      { policyName: '管理员策略', policyType: 'RBAC', effect: 'allow', priority: 100 },
+      { policyName: t('common.ops.simulator.admin_policy'), policyType: 'RBAC', effect: 'allow', priority: 100 },
     ] : [
-      { policyName: '默认拒绝策略', policyType: 'RBAC', effect: 'deny', priority: 200 },
+      { policyName: t('common.ops.simulator.default_deny_policy'), policyType: 'RBAC', effect: 'deny', priority: 200 },
     ],
     steps: [
       {
-        description: `检查用户 ${user} 权限`,
+        description: t('common.ops.simulator.check_user_permission', { user }),
         timestamp: new Date().toLocaleTimeString(),
         type: 'primary'
       },
       {
-        description: `验证资源 ${resource} 访问权限`,
+        description: t('common.ops.simulator.verify_resource_access', { resource }),
         timestamp: new Date().toLocaleTimeString(),
         type: 'info'
       },
       {
-        description: `执行操作 ${action} 权限检查`,
+        description: t('common.ops.simulator.execute_action_check', { action }),
         timestamp: new Date().toLocaleTimeString(),
         type: hasPermission ? 'success' : 'danger'
       },
       {
-        description: hasPermission ? '权限验证通过' : '权限验证失败',
+        description: hasPermission ? t('common.ops.simulator.permission_verify_passed') : t('common.ops.simulator.permission_verify_failed'),
         timestamp: new Date().toLocaleTimeString(),
         type: hasPermission ? 'success' : 'danger'
       }
@@ -199,9 +199,9 @@ const handleSimulate = async () => {
 
     simulationResult.value = result;
 
-    BtcMessage.success('模拟完成');
+    BtcMessage.success(t('common.ops.simulator.simulation_complete'));
   } catch (_error) {
-    BtcMessage.error('表单验证失败，请检查输入');
+    BtcMessage.error(t('common.ops.simulator.form_validation_failed'));
   } finally {
     simulating.value = false;
   }

@@ -363,11 +363,20 @@ export function assignIconsToMenuTree(
       ? assignIconsToMenuTree(item.children, usedIcons)
       : undefined;
 
-    return {
-      ...item,
+    const result: { index: string; labelKey?: string; label?: string; icon: string; children?: any[] } = {
+      index: item.index,
       icon: assignedIcon,
-      children,
     };
+    if (item.labelKey) {
+      result.labelKey = item.labelKey;
+    }
+    if (item.label) {
+      result.label = item.label;
+    }
+    if (children) {
+      result.children = children;
+    }
+    return result;
   });
 }
 

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="domains-page">
     <BtcCrud ref="crudRef" :service="wrappedDomainService">
       <BtcRow>
@@ -27,33 +27,23 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { BtcConfirm } from '@btc/shared-components';
-import { useMessage } from '@/utils/use-message';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert, BtcExportBtn } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, usePageService } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 const { t } = useI18n();
-const message = useMessage();
 const crudRef = ref();
 const tableRef = ref();
 
 // 租户下拉选项
 const tenantOptions = ref<{ label: string; value: any }[]>([]);
 const tenantLoading = ref(false);
-const tenantLabelMap = computed(() => {
-  const map = new Map<any, string>();
-  tenantOptions.value.forEach((item) => {
-    map.set(item.value, item.label);
-  });
-  return map;
-});
 
 const loadTenantOptions = async () => {
   const tenantService = service.admin?.iam?.tenant;
 
   if (!tenantService || typeof tenantService.list !== 'function') {
-    console.warn('[Domain] 租户列表服务不可用');
+    console.warn('[Domain] Tenant list service unavailable');
     tenantOptions.value = [];
     return;
   }
@@ -65,7 +55,8 @@ const loadTenantOptions = async () => {
 
     tenantOptions.value = list
       .map((tenant: any) => {
-        const value = tenant?.id ?? tenant?.tenantId ?? tenant?.tenantCode ?? tenant?.code;
+        // 使用 tenantCode 作为值，优先使用 tenantName 作为显示标签，如果没有则使用 tenantCode
+        const value = tenant?.tenantCode ?? tenant?.code;
         const label = tenant?.tenantName ?? tenant?.name ?? tenant?.tenantCode ?? value;
 
         if (value === undefined || value === null) {
@@ -79,7 +70,7 @@ const loadTenantOptions = async () => {
       })
       .filter((item): item is { label: string; value: any } => !!item);
   } catch (error) {
-    console.warn('[Domain] 获取租户列表失败:', error);
+    console.warn('[Domain] Failed to get tenant list:', error);
     tenantOptions.value = [];
   } finally {
     tenantLoading.value = false;
@@ -90,65 +81,38 @@ onMounted(() => {
   loadTenantOptions();
 });
 
-// 使用 EPS 域服务
-const wrappedDomainService = {
-  ...(service.admin?.iam?.domain || {}),
-  delete: async (id: string | number) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('platform.domains');
+const { formItems: baseFormItems } = usePageForms('platform.domains');
 
-    // 单个删除：直接传递 ID
-    await service.admin?.iam?.domain?.delete(id);
+// 使用 config.ts 中定义的 service，并添加删除确认逻辑
+const wrappedDomainService = usePageService('platform.domains', 'domain');
 
-    message.success(t('crud.message.delete_success'));
-  },
-  deleteBatch: async (ids: (string | number)[]) => {
-    await BtcConfirm(t('crud.message.delete_confirm'), t('common.button.confirm'), { type: 'warning' });
+// 域表格列 - 直接使用 baseColumns，因为 tenantCode 不需要 formatter
+const columns = computed(() => {
+  return baseColumns.value;
+});
 
-    // 批量删除：调用 deleteBatch 方法，传递 ID 数组
-    await service.admin?.iam?.domain?.deleteBatch(ids);
-
-    message.success(t('crud.message.delete_success'));
-  },
-};
-
-// 域表格列
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'name', label: t('platform.domains.domain_name'), minWidth: 150 },
-  { prop: 'domainCode', label: t('platform.domains.domain_code'), width: 120 },
-  { prop: 'domainType', label: t('platform.domains.domain_type'), width: 120 },
-  {
-    prop: 'tenantId',
-    label: '租户名称',
-    width: 150,
-    formatter: (_row, _column, cellValue) => tenantLabelMap.value.get(cellValue) ?? cellValue ?? '-',
-  },
-  { prop: 'description', label: t('platform.domains.description'), minWidth: 200 },
-]);
-
-// 域表单
-const formItems = computed<FormItem[]>(() => [
-  { prop: 'name', label: t('platform.domain.name'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'domainCode', label: t('platform.domain.code'), span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'domainType', label: t('platform.domains.domain_type'), span: 12, component: { name: 'el-input' } },
-  {
-    prop: 'tenantId',
-    label: '租户名称',
-    span: 12,
-    required: true,
-    component: {
-      name: 'el-select',
-      props: {
-        filterable: true,
-        clearable: true,
-        loading: tenantLoading.value,
-      },
-      options: tenantOptions.value
+// 域表单 - 扩展配置以支持动态 options
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 tenantCode，添加动态 options 和 loading
+    if (item.prop === 'tenantCode') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            loading: tenantLoading.value,
+          },
+          options: tenantOptions.value,
+        },
+      };
     }
-  },
-  { prop: 'description', label: t('common.description'), span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
+    return item;
+  });
+});
 
 
 // 移除手动调用 loadData，让 BtcCrud 自动加载

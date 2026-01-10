@@ -3,35 +3,29 @@ import type { EChartsOption } from 'echarts';
 import type { BarChartProps } from '../../../types/bar';
 import { createVerticalGradient, createHorizontalGradient } from '../../../utils/gradient';
 import { getColorByIndex } from '../../../utils/color';
-// import { getThemeColors } from '../../../utils/css-var'; // 未使用
+import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
 
 /**
- * ??? composable
+ * 柱状图 composable
  */
 export function useBarChart(
   props: BarChartProps,
   _isDark: Ref<boolean>,
-  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  _themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
+  styleHelpers: ChartStyleHelpers
 ) {
   const buildOption = (): EChartsOption => {
-    const option: EChartsOption = {
+    const option: any = {
       title: {
-        text: props.title || ''
-        // textStyle.color 由 ECharts 主题处理
+        text: props.title || '',
+        ...styleHelpers.getTitleStyle()
       },
-      tooltip: {
-        trigger: 'axis',
-        show: props.showTooltip ?? true,
-        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
+      tooltip: props.showTooltip ?? true ? {
+        ...styleHelpers.getTooltipStyle('axis'),
         confine: true,
         appendToBody: true
-      },
-      legend: {
-        show: props.showLegend ?? true,
-        top: '0%',
-        left: 'center'
-        // textStyle.color 由 ECharts 主题处理
-      },
+      } : undefined,
+      legend: props.showLegend ?? true ? styleHelpers.getLegendStyle('top') : undefined,
       toolbox: {
         show: props.showToolbar ?? false,
         right: '10px',
@@ -63,8 +57,9 @@ export function useBarChart(
       },
       xAxis: {
         type: 'category',
-        data: props.xAxisData
-        // axisLine.lineStyle.color, axisLabel.color 由 ECharts 主题处理
+        data: props.xAxisData,
+        ...styleHelpers.getAxisLineStyle(true),
+        axisLabel: styleHelpers.getAxisLabelStyle(true)
       },
       yAxis: {
         type: 'value',
@@ -74,10 +69,10 @@ export function useBarChart(
         axisTick: {
           show: false
         },
-        // splitLine.lineStyle.color 由 ECharts 主题处理
+        ...styleHelpers.getSplitLineStyle(true),
         axisLabel: {
+          ...styleHelpers.getAxisLabelStyle(true),
           formatter: props.yAxisFormatter ? `{value}${props.yAxisFormatter}` : '{value}'
-          // color 由 ECharts 主题处理
         }
       },
       series: props.data.map((item, index) => {
@@ -91,8 +86,9 @@ export function useBarChart(
           label: {
             show: props.showLabel ?? false,
             position: 'top',
+            // 使用固定的灰色值，在浅色和深色主题下都能看到（参考 art-design-pro）
+            color: '#999',
             fontSize: 12
-            // color 由 ECharts 主题处理
           }
         };
 
@@ -119,7 +115,7 @@ export function useBarChart(
       })
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

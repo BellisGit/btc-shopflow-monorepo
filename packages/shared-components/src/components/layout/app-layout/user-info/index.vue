@@ -73,11 +73,12 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { BtcConfirm, BtcMessage } from '@btc/shared-components';
+import { BtcConfirm } from '@btc/shared-components';
+import { getCurrentEnvironment } from '@btc/shared-core/configs/unified-env-config';
 // useMessage 不再需要，直接使用 BtcMessage
-import { useSettingsState } from '@btc/shared-components/components/others/btc-user-setting/composables';
-import { MenuThemeEnum } from '@btc/shared-components/components/others/btc-user-setting/config/enums';
-import { useUser } from '@btc/shared-components/composables/useUser';
+import { useSettingsState } from '../../../others/btc-user-setting/composables';
+import { MenuThemeEnum } from '../../../others/btc-user-setting/config/enums';
+import { useUser } from '../../../../composables/useUser';
 
 // 通过全局函数获取应用特定的依赖
 declare global {
@@ -94,10 +95,8 @@ function getLogoutFunction() {
   if (logoutFn && typeof logoutFn === 'function') {
     return logoutFn;
   }
-  // 生产环境可能无法显示日志，但保留错误日志用于调试
-  if (import.meta.env.DEV) {
-    console.error('[user-info] Logout function not available, __APP_LOGOUT__:', logoutFn);
-  }
+  // 如果退出登录函数不可用，静默返回 null（代码已处理这种情况）
+  // 不再打印错误日志，因为这是正常情况（layout-app 提供空兜底函数）
   return null;
 }
 import { User } from '@element-plus/icons-vue';
@@ -118,12 +117,12 @@ const isDark = computed(() => {
   return isDarkTheme?.value === true || menuThemeType?.value === MenuThemeEnum.DARK;
 });
 
-// 用户相关
-const { userInfo: userInfoComputed, getUserInfo, setUserInfo } = useUser();
+// 用户相关（暂时未使用，保留用于未来扩展）
+void useUser();
 
 // 使用 composable
 const {
-  profileUserInfo,
+  profileUserInfo: _profileUserInfo,
   displayedName,
   isTyping,
   cursorPosition,
@@ -197,7 +196,6 @@ watch(() => userInfo.value?.avatar, (newAvatar, oldAvatar) => {
   if (newAvatar !== oldAvatar && newAvatar) {
     avatarLoadError.value = false;
     errorHandled.value = false;
-    console.log('[UserInfo] 头像 URL 已更新，重置错误状态:', newAvatar);
   }
 });
 
@@ -278,9 +276,8 @@ const handleCommand = (command: string) => {
       // 如果没有退出登录函数，直接执行兜底方案（不显示确认对话框，立即退出）
       if (!logoutFn || typeof logoutFn !== 'function') {
         // 即使没有退出登录函数，也直接执行退出逻辑
-        const hostname = window.location.hostname;
         const protocol = window.location.protocol;
-        const isProductionSubdomain = hostname.includes('bellis.com.cn') && hostname !== 'bellis.com.cn';
+        const env = getCurrentEnvironment();
 
         // 清除认证数据
         try {
@@ -290,13 +287,22 @@ const handleCommand = (command: string) => {
             appStorage.user?.clear();
           }
           // 清除 cookie
-          document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          (async () => {
+            const { deleteCookie } = await import('@btc/shared-core/utils/cookie');
+            deleteCookie('access_token', { path: '/' });
+          })();
         } catch (e) {
           // 静默失败
         }
 
-        if (isProductionSubdomain) {
-          window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+        // 生产环境或测试环境：跳转到主域名登录页
+        if (env === 'production' || env === 'test') {
+          // 测试环境使用测试主域名，生产环境使用生产主域名
+          if (env === 'test') {
+            window.location.href = `${protocol}//test.bellis.com.cn/login?logout=1`;
+          } else {
+            window.location.href = `${protocol}//bellis.com.cn/login?logout=1`;
+          }
         } else {
           router.replace({
             path: '/login',

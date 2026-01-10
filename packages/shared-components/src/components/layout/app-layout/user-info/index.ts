@@ -1,5 +1,5 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useUser } from '@btc/shared-components/composables/useUser';
+import { useUser } from '../../../../composables/useUser';
 
 // 通过全局函数获取应用特定的依赖
 // 这些函数需要由使用共享布局的应用提供
@@ -141,11 +141,11 @@ export function useUserInfo() {
   });
 
   // 等待 EPS 服务可用（轮询方式，最多等待 5 秒）
-  // 注意：某些子应用会先把 __APP_EPS_SERVICE__ 初始化为 {}（占位），这时不能视为“服务可用”。
+  // 注意：某些子应用会先把 __APP_EPS_SERVICE__ 初始化为 {}（占位），这时不能视为"服务可用"。
   const waitForEpsService = async (
     maxWaitTime = 5000,
     interval = 100,
-    predicate: (service: any) => boolean = (s) => !!s && !(typeof s === 'object' && Object.keys(s).length === 0),
+    predicate: (service: any) => boolean = (s) => !!s?.admin?.base?.profile?.info,
   ): Promise<any> => {
     const startTime = Date.now();
     while (Date.now() - startTime < maxWaitTime) {
@@ -158,34 +158,50 @@ export function useUserInfo() {
     return null;
   };
 
-  // 加载用户信息（从个人信息服务）
+  // 加载用户信息（只从持久化存储读取，不调用接口）
+  // 关键：刷新时只从存储读取，接口由主应用在登录时统一调用
   const loadProfileInfo = async () => {
     try {
-      // 如果 EPS service 尚未就绪（含 {} 占位），等待它就绪
-      let currentService = getEpsService();
-      const isProfileReady = (s: any) => !!s?.admin?.base?.profile?.info;
-      if (!isProfileReady(currentService)) {
-        // 在子域/嵌入环境下，layout-app 可能还在初始化，等待一下
-        currentService = await waitForEpsService(5000, 100, isProfileReady);
-        if (!isProfileReady(currentService)) {
-          console.warn('[useUserInfo] EPS service not available after waiting');
-          return;
+      // 关键：检查用户是否已登录（通过 btc_user cookie 判断），退出登录后不应该加载
+      const appStorage = getAppStorage();
+      const user = appStorage?.user?.get?.();
+      if (!user) {
+        return;
+      }
+
+      // 从持久化存储读取个人信息数据
+      const { getProfileInfoFromCache } = await import('@btc/shared-core/utils/profile-info-cache');
+      const cachedProfileInfo = getProfileInfoFromCache();
+
+      if (cachedProfileInfo) {
+        // 使用存储的数据
+        profileUserInfo.value = cachedProfileInfo;
+
+        // 更新统一存储（头像和用户名）
+        if (appStorage?.user) {
+          if (cachedProfileInfo.avatar) {
+            appStorage.user.setAvatar?.(cachedProfileInfo.avatar);
+          }
+          if (cachedProfileInfo.name) {
+            appStorage.user.setName?.(cachedProfileInfo.name);
+          }
         }
-      }
-      
-      const profileService = currentService.admin?.base?.profile;
-      if (!profileService) {
-        console.warn('[useUserInfo] profileService not available');
-        return;
-      }
 
-      if (!profileService.info) {
-        console.warn('[useUserInfo] profileService.info not available');
-        return;
-      }
+        // 同时更新 useUser 中的信息，保持一致性
+        const currentUser = getUserInfo();
+        if (currentUser) {
+          setUserInfo({
+            ...currentUser,
+            name: cachedProfileInfo.name || currentUser.name,
+            position: cachedProfileInfo.position || currentUser.position,
+            avatar: cachedProfileInfo.avatar || currentUser.avatar,
+          });
+        }
 
-      // 如果 profileUserInfo 还没有值，从缓存读取（初始化时已经读取过，这里作为兜底）
-      if (!profileUserInfo.value) {
+        // 初始化显示名称
+        displayedName.value = cachedProfileInfo.name || cachedProfileInfo.realName || '';
+      } else {
+        // 如果存储中没有数据，从现有的缓存读取（向后兼容）
         const cachedUser = getUserInfo();
         const cachedAvatar = appStorage?.user?.getAvatar?.() || null;
         const cachedName = appStorage?.user?.getName?.() || null;
@@ -198,42 +214,11 @@ export function useUserInfo() {
           displayedName.value = cachedName || cachedUser?.name || '';
         }
       }
-
-      // 获取脱敏信息（用于显示头像和基本信息）
-      const data = await profileService.info();
-      
-      if (data) {
-        profileUserInfo.value = data;
-
-        // 更新统一存储（头像和用户名）
-        if (appStorage?.user) {
-          if (data.avatar) {
-            appStorage.user.setAvatar?.(data.avatar);
-          }
-          if (data.name) {
-            appStorage.user.setName?.(data.name);
-          }
-        }
-
-        // 同时更新 useUser 中的信息，保持一致性
-        const currentUser = getUserInfo();
-        if (currentUser) {
-          setUserInfo({
-            ...currentUser,
-            name: data.name || currentUser.name,
-            position: data.position || currentUser.position,
-            avatar: data.avatar || currentUser.avatar,
-          });
-        }
-
-        // 初始化显示名称
-        displayedName.value = data.name || data.realName || '';
-      } else {
-        console.warn('[useUserInfo] API 未返回数据');
-      }
     } catch (error) {
       // 静默失败，不影响页面显示
-      console.error('[useUserInfo] 加载用户信息失败:', error);
+      if (import.meta.env.DEV) {
+        console.warn('加载用户信息失败:', error);
+      }
     }
   };
 

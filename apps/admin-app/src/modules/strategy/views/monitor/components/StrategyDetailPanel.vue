@@ -294,12 +294,13 @@ const getTypeTagType = (type: StrategyType) => {
   return typeMap[type] || 'default';
 };
 
+const { t } = useI18n();
 const getTypeLabel = (type: StrategyType) => {
   const labelMap = {
-    'PERMISSION': '权限策略',
-    'BUSINESS': '业务策略',
-    'DATA': '数据策略',
-    'WORKFLOW': '工作流策略'
+    'PERMISSION': t('common.strategy.types.permission'),
+    'BUSINESS': t('common.strategy.types.business'),
+    'DATA': t('common.strategy.types.data'),
+    'WORKFLOW': t('common.strategy.types.workflow')
   };
   return labelMap[type] || type;
 };
@@ -317,11 +318,11 @@ const getStatusTagType = (status: StrategyStatus) => {
 
 const getStatusLabel = (status: StrategyStatus) => {
   const labelMap = {
-    'DRAFT': '草稿',
-    'TESTING': '测试中',
-    'ACTIVE': '激活',
-    'INACTIVE': '停用',
-    'ARCHIVED': '已归档'
+    'DRAFT': t('common.strategy.status.draft'),
+    'TESTING': t('common.strategy.status.testing'),
+    'ACTIVE': t('common.strategy.status.active'),
+    'INACTIVE': t('common.strategy.status.inactive'),
+    'ARCHIVED': t('common.strategy.status.archived')
   };
   return labelMap[status] || status;
 };

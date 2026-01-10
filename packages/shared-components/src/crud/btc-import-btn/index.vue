@@ -155,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, inject, type PropType, type Ref, type ComputedRef } from 'vue';
+import { ref, reactive, computed, inject, type Ref, type ComputedRef } from 'vue';
 
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
@@ -416,16 +416,6 @@ const getEntityName = () => {
   return '数据';
 };
 
-// 查找共同词汇
-const findCommonWords = (str1: string, str2: string) => {
-  const words1 = str1.split(/[_\-\s]+/);
-  const words2 = str2.split(/[_\-\s]+/);
-
-  return words1.filter(word =>
-    word.length > 2 && words2.some(w => w.includes(word) || word.includes(w))
-  );
-};
-
 // 动态验证导入数据
 const validateImportData = (data: any[]) => {
   if (!data || data.length === 0) {
@@ -436,7 +426,7 @@ const validateImportData = (data: any[]) => {
   const validationRules = dynamicValidationRules.value;
   const columnMap = columnMapping.value;
 
-  data.forEach((item, index) => {
+  data.forEach((item) => {
     const validatedItem: any = {};
     let isValid = true;
 
@@ -708,11 +698,13 @@ function onUpload(raw: File, _: any, { next }: any) {
     let json: any[] = [];
     for (const sheet in workbook.Sheets) {
       if (Object.prototype.hasOwnProperty.call(workbook.Sheets, sheet)) {
-        const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], {
+        const worksheet = workbook.Sheets[sheet];
+        if (!worksheet) continue;
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, {
           raw: false,
           dateNF: 'yyyy-mm-dd',
           defval: ''
-        });
+        }) as any[];
 
         json = json.concat(sheetData);
       }

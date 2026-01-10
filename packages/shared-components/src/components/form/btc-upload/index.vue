@@ -126,6 +126,7 @@ import { useUpload } from './composables/useUpload';
 import BtcUploadItem from './components/upload-item.vue';
 import type { UploadItem } from './types';
 import { BtcMessage } from '@btc/shared-components';
+import { detectFileType, detectFileTypeFromFileName } from '@btc/shared-core/utils';
 
 defineOptions({
   name: 'BtcUpload'
@@ -328,19 +329,10 @@ function uuid(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-// 获取文件类型
+// 获取文件类型（从文件名，同步方法，用于 URL 字符串）
 function getType(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase() || '';
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
-    return 'image';
-  }
-  if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(ext)) {
-    return 'video';
-  }
-  if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) {
-    return 'audio';
-  }
-  return 'file';
+  const result = detectFileTypeFromFileName(fileName);
+  return result.category;
 }
 
 // 获取 URL 数组
@@ -350,14 +342,18 @@ function getUrls(list: UploadItem[]): string[] {
 
 // 上传前
 async function onBeforeUpload(file: File, item?: UploadItem) {
-  function next() {
+  async function next() {
     // File 对象没有 uid 属性，使用 uuid() 生成
     const fileUid = (file as any).uid || uuid();
+    
+    // 使用增强的文件类型检测
+    const fileTypeResult = await detectFileType(file);
+    
     const d: UploadItem = {
       uid: fileUid,
       size: file.size,
       name: file.name,
-      type: getType(file.name),
+      type: fileTypeResult.category,
       progress: props.autoUpload ? 0 : 100,
       url: '',
       preload: '',
@@ -433,16 +429,16 @@ async function onBeforeUpload(file: File, item?: UploadItem) {
     const r = props.beforeUpload(file, item, { next });
 
     if (r instanceof Promise) {
-      r.then(next).catch(() => null);
+      r.then(() => next()).catch(() => null);
     } else {
       if (r) {
-        return next();
+        return await next();
       }
     }
 
     return r;
   } else {
-    return next();
+    return await next();
   }
 }
 

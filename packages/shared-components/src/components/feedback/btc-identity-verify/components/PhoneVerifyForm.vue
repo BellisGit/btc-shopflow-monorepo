@@ -27,6 +27,7 @@
       <label :for="`phone-sms-code-0`" class="verify-form__item-label">验证码</label>
       <div class="verify-form__item-code-wrapper">
         <component
+          v-if="smsCodeInputComponent"
           :is="smsCodeInputComponent"
           id-prefix="phone-sms-code"
           :model-value="smsCode"
@@ -74,7 +75,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Loading } from '@element-plus/icons-vue';
-import { hidePhone } from '@btc/shared-utils';
+import { hidePhone } from '@btc/shared-core/utils/format';
 import type { Component } from 'vue';
 
 defineOptions({
@@ -92,7 +93,7 @@ interface Props {
   smsHasSent: boolean;
   smsCanSend: boolean;
   hasPhone: boolean;
-  smsCodeInputComponent: Component;
+  smsCodeInputComponent?: Component;
 }
 
 const props = defineProps<Props>();

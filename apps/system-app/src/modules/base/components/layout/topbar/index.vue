@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="topbar" :class="{ 'is-dark-menu': isDarkMenuStyle }">
     <!-- 左侧：汉堡菜单 + Logo 区域（与侧边栏宽度一致） -->
       <div
@@ -28,18 +28,18 @@
         class="topbar__logo-content"
         :class="{ 'is-dark-menu': isDarkMenuStyle }"
         :style="{
-          backgroundColor: menuThemeConfig.background,
+          backgroundColor: menuThemeConfig?.background || '#FFFFFF',
         }"
       >
-        <img 
-          :src="logoUrl" 
-          alt="BTC Logo" 
-          class="topbar__logo-img" 
-          @error="handleLogoError" 
+        <img
+          :src="logoUrl"
+          alt="BTC Logo"
+          class="topbar__logo-img"
+          @error="handleLogoError"
         />
         <h2
           class="topbar__logo-text"
-          :style="{ color: menuThemeConfig.systemNameColor }"
+          :style="{ color: menuThemeConfig?.systemNameColor || '#29343D' }"
         >{{ logoTitle }}</h2>
       </div>
     </div>
@@ -91,14 +91,15 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { usePluginManager } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
-import { resolveAppLogoUrl } from '@configs/layout-bridge';
+import { resolveAppLogoUrl } from '@btc/shared-core/configs/layout-bridge';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { useSettingsConfig } from '@/plugins/user-setting/composables/useSettingsConfig';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
 import { useBrowser } from '@/composables/useBrowser';
-import { getCurrentSubApp, isMainApp } from '@configs/unified-env-config';
-import { getAppById } from '@configs/app-scanner';
-import GlobalSearch from '../global-search/index.vue';
+import { getCurrentSubApp, isMainApp } from '@btc/shared-core/configs/unified-env-config';
+import { getAppById } from '@btc/shared-core/configs/app-scanner';
+// 使用共享组件中的全局搜索（已集成 lunr.js 和动态菜单数据）
+import { GlobalSearch } from '@btc/shared-components';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
 import UserInfo from '../user-info/index.vue';
@@ -161,15 +162,15 @@ const logoTitle = computed(() => {
   void currentPath.value;
   void currentHostname.value;
   void route.path; // 也依赖路由路径
-  
+
   // 判断是否是主应用路由
   const isMain = isMainApp();
-  
+
   if (isMain) {
     // 主应用：显示"拜里斯科技"
     return t('app.title');
   }
-  
+
   // 子应用：获取当前应用信息
   const currentSubAppId = getCurrentSubApp();
   if (currentSubAppId) {
@@ -179,17 +180,17 @@ const logoTitle = computed(() => {
       // 优先使用国际化键 domain.type.{appId}（与菜单抽屉保持一致）
       const domainTypeKey = `domain.type.${currentSubAppId}`;
       const domainTypeName = t(domainTypeKey);
-      
+
       // 如果国际化值存在且不是 key 本身，则使用国际化值
       if (domainTypeName && domainTypeName !== domainTypeKey) {
         return domainTypeName;
       }
-      
+
       // 兜底使用应用配置中的 name
       return appConfig.name;
     }
   }
-  
+
   // 默认使用 app.title
   return t('app.title');
 });
@@ -316,7 +317,7 @@ onMounted(async () => {
       try {
         const component = await config.component();
         const componentInstance = component.default || component;
-        
+
         toolbarComponents.value.push({
           ...config,
           component: markRaw(componentInstance)

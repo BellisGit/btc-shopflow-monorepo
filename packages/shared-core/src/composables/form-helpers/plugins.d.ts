@@ -6,7 +6,7 @@ export interface FormPlugin {
     onSubmit?: (data: any, ctx: any) => any | Promise<any>;
     onClose?: (done: () => void, ctx: any) => void;
 }
-export declare function usePlugins(enablePlugin: boolean, { visible }: {
+export declare function usePlugins(enablePlugin: boolean | undefined, { visible }: {
     visible: any;
 }): {
     plugins: import("vue").Ref<{
@@ -28,3 +28,4 @@ export declare function usePlugins(enablePlugin: boolean, { visible }: {
     clear: () => void;
     submit: (data: any) => Promise<any>;
 };
+//# sourceMappingURL=plugins.d.ts.map

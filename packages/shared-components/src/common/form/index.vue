@@ -4,9 +4,9 @@ import {
   ElForm, ElRow, ElCol, ElFormItem, ElButton, ElTabs, ElTabPane, ElDivider,
   ElInput, ElInputNumber, ElSelect, ElOption, ElRadioGroup, ElRadio,
   ElCheckboxGroup, ElCheckbox, ElSwitch, ElDatePicker, ElTimePicker,
-  ElCascader, ElTreeSelect, ElColorPicker, ElRate, ElSlider, ElUpload
+  ElCascader, ElTreeSelect, /* ElColorPicker, */ ElRate, ElSlider, ElUpload
 } from 'element-plus';
-import BtcDialog from '../dialog/index.vue';
+import BtcDialog from '../dialog/index';
 import BtcUpload from '../../components/form/btc-upload/index.vue';
 import { useFormSetup, useFormActions, useFormItemActions, isBoolean, parseHidden, collapseItem } from './composables';
 
@@ -25,7 +25,7 @@ const componentMap: Record<string, any> = {
   'el-time-picker': ElTimePicker,
   'el-cascader': ElCascader,
   'el-tree-select': ElTreeSelect,
-  'el-color-picker': ElColorPicker,
+  // 'el-color-picker': ElColorPicker, // 暂时禁用，避免 getBoundingClientRect 错误
   'el-rate': ElRate,
   'el-slider': ElSlider,
   'el-upload': ElUpload,
@@ -174,11 +174,35 @@ export default defineComponent({
             const baseProp = e.prop || `field-${index}`;
             const inputId = `${formUid}-${baseProp}-${index}`;
 
-            // 日期选择器和时间选择器：不传递 id 和 name（避免类型错误），使用隐藏 input 作为表单字段
-            const isDateOrTimePicker = componentName === 'el-date-picker' || componentName === 'el-time-picker';
+            // 定义不包含标准 input 元素的组件列表
+            // 这些组件需要添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+            const componentsWithoutStandardInput = [
+              // 'el-color-picker', // 暂时禁用，避免 getBoundingClientRect 错误
+              'el-radio-group',
+              'el-checkbox-group',
+              'el-switch',
+              'el-rate',
+              'el-slider',
+              'el-upload',
+              'el-cascader',
+              'el-tree-select',
+              'btc-upload'
+            ];
             
-            // 对于日期/时间选择器，先添加隐藏的 input 作为第一个子元素（用于可访问性，让 label 的 for 属性能找到它）
-            if (isDateOrTimePicker) {
+            const isDateOrTimePicker = componentName === 'el-date-picker' || componentName === 'el-time-picker';
+            const needsHiddenInput = componentsWithoutStandardInput.includes(componentName) || isDateOrTimePicker;
+            
+            // 对于需要隐藏 input 的组件，先添加隐藏的 input 作为第一个子元素（用于可访问性，让 label 的 for 属性能找到它）
+            if (needsHiddenInput) {
+              // 获取当前值，用于隐藏 input
+              let hiddenInputValue = '';
+              const formValue = (form as Record<string, any>)[e.prop];
+              if (Array.isArray(formValue)) {
+                hiddenInputValue = isDateOrTimePicker ? formValue.join(' - ') : formValue.join(', ');
+              } else if (formValue !== null && formValue !== undefined) {
+                hiddenInputValue = String(formValue);
+              }
+              
               content.push(h('input', {
                 id: inputId,
                 name: baseProp,
@@ -198,9 +222,7 @@ export default defineComponent({
                 },
                 tabindex: -1,
                 'aria-hidden': 'true',
-                value: Array.isArray((form as Record<string, any>)[e.prop]) 
-                  ? (form as Record<string, any>)[e.prop].join(' - ') 
-                  : ((form as Record<string, any>)[e.prop] || ''),
+                value: hiddenInputValue,
                 readonly: true
               }));
             }
@@ -211,7 +233,9 @@ export default defineComponent({
                 (form as Record<string, any>)[e.prop] = val;
               },
               disabled: disabled.value || e.component.props?.disabled,
-              ...(isDateOrTimePicker ? {} : { id: inputId, name: baseProp }), // 日期/时间选择器不添加 id 和 name
+              // 对于需要隐藏 input 的组件，不传递 id 和 name（避免冲突）
+              // 对于其他组件，传递 id 和 name
+              ...(needsHiddenInput ? {} : { id: inputId, name: baseProp }),
               ...e.component.props
             };
 
@@ -463,9 +487,9 @@ export default defineComponent({
         'onUpdate:modelValue': (val: boolean) => {
           visible.value = val;
         },
-        title: config.title,
-        width: config.width,
-        height: config.height,
+        ...(config.title !== undefined ? { title: config.title } : {}),
+        ...(config.width !== undefined ? { width: config.width } : {}),
+        ...((config as any).height !== undefined ? { height: (config as any).height } : {}),
         ...config.dialog,
         onClosed
       }, {

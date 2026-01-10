@@ -17,12 +17,12 @@
         </div>
 
         <!-- 右上角登录链接 -->
-        <a href="/login" class="login-link">
+        <router-link to="/login?from=register" class="login-link">
           {{ viewModel.t('已有账号？立即登录') }}
           <el-icon class="arrow-right">
             <ArrowRight />
           </el-icon>
-        </a>
+        </router-link>
       </div>
 
       <!-- 注册主要内容 -->

@@ -1,0 +1,298 @@
+// ==================== 布局相关样式 ====================
+
+// 页面内容容器样式 - 确保高度正确传递
+// 注意：所有通过 router-view 渲染的页面组件根元素都应该占据完整高度
+// 注意：使用更精确的选择器，避免匹配到 el-pagination（el-pagination 包含 -page）
+.btc-page-content,
+[class*="page-content"],
+[class*="PageContent"],
+[class$="-page"]:not(.el-pagination) {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+// 排除 el-pagination，防止被上面的全局样式影响
+.el-pagination {
+	flex-direction: row !important;
+}
+
+// 确保 router-view 内部的所有页面组件根元素占据完整高度
+// 这是全局样式，用于处理所有页面组件
+// 注意：router-view 在 content-mount--main-app 内部，需要使用正确的选择器
+.app-layout__content > router-view > *,
+.app-layout__content .content-mount--main-app > router-view > * {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	flex: 1; // 页面组件根元素需要占据完整高度
+}
+
+// 确保 content-mount--main-app 内部的 router-view 正确显示
+.app-layout__content .content-mount--main-app > router-view {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+// 关键：确保子应用挂载点（#subapp-viewport）内的内容能够正确填充高度
+// 子应用内容直接挂载在 #subapp-viewport 中，不经过 router-view
+.app-layout__content > #subapp-viewport {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+	flex: 1; // 子应用挂载点需要占据完整高度
+
+	// 确保子应用内容根元素能够正确填充高度
+	> * {
+		height: 100% !important;
+		width: 100% !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		overflow: hidden;
+		flex: 1 !important; // 子应用内容根元素需要占据完整高度
+	}
+
+	// 关键：确保 qiankun 包装器（[data-qiankun]）占据完整高度
+	[data-qiankun] {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
+		// 确保 position 不会影响高度计算
+		position: relative !important;
+		// 确保 box-sizing 正确
+		box-sizing: border-box !important;
+	}
+
+	// 关键：确保子应用的 #app 元素占据完整高度
+	// 使用多个选择器确保覆盖所有情况
+	// 添加更具体的选择器，确保覆盖所有可能的 DOM 结构
+	#app,
+	[data-qiankun] #app,
+	[id^="__qiankun_microapp_wrapper"] #app,
+	> [data-qiankun] > #app,
+	> [id^="__qiankun_microapp_wrapper"] > #app,
+	[data-qiankun] > #app,
+	[id^="__qiankun_microapp_wrapper"] > #app {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+		// 确保 position 不会影响高度计算
+		position: relative !important;
+		// 确保 overflow 不会影响高度
+		overflow: hidden !important;
+	}
+
+	// 确保子应用内部的 router-view 也能正确渲染
+	> * :deep(> router-view),
+	#app :deep(> router-view),
+	[data-qiankun] #app :deep(> router-view) {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
+	}
+
+	// 确保 router-view 渲染的组件正确显示
+	> * :deep(> router-view > *),
+	#app :deep(> router-view > *),
+	[data-qiankun] #app :deep(> router-view > *) {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
+	}
+}
+
+// 确保 btc-table-group 和 btc-views-group 能正确继承父容器高度
+.btc-table-group,
+.btc-views-tabs-group,
+.btc-views-group {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+// =========================
+// 内容挂载容器样式（统一管理主应用和子应用的显示/隐藏）
+// =========================
+.content-mount {
+	width: 100%;
+	height: 100%;
+	position: relative;
+
+	&--main-app {
+		display: block;
+	}
+
+	&--sub-app {
+		display: flex;
+		flex-direction: column;
+	}
+
+	&--loading {
+		display: flex;
+		flex-direction: column;
+	}
+
+	&--hidden {
+		display: none !important;
+	}
+}
+
+// 关键：确保同时存在多个 content-mount 容器时，隐藏的容器不占用空间
+// 这可以防止在生产环境中由于竞态条件导致两个容器同时存在时，第一个容器占用空间
+.app-layout__content {
+	// 关键：主应用容器需要是 flex 容器，才能正确占据 app-layout__content 的空间
+	.content-mount--main-app {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		height: 100%;
+		min-height: 0;
+		position: relative;
+	}
+
+	// 关键修复：如果子应用容器（#subapp-viewport）存在，隐藏所有主应用容器
+	// 使用通用兄弟选择器（最兼容的方案）
+	// 注意：CSS 无法选择前面的兄弟元素，所以我们需要确保主应用容器为空时不占用空间
+	#subapp-viewport {
+		// 如果子应用容器存在，隐藏后面的主应用容器（虽然不应该存在）
+		& ~ .content-mount--main-app {
+			display: none !important;
+			height: 0 !important;
+			width: 0 !important;
+			overflow: hidden !important;
+			position: absolute !important;
+			visibility: hidden !important;
+		}
+	}
+
+	// 关键修复：如果主应用容器为空（只有注释），不占用空间
+	// 这可以防止在生产环境中由于竞态条件导致两个容器同时存在时，第一个容器占用空间
+	> .content-mount--main-app:empty,
+	> .content-mount--main-app:only-child:empty {
+		display: none !important;
+		height: 0 !important;
+		width: 0 !important;
+		overflow: hidden !important;
+		position: absolute !important;
+		visibility: hidden !important;
+	}
+
+	// 关键修复：如果主应用容器后面有子应用容器，隐藏主应用容器
+	// 使用相邻兄弟选择器（最兼容的方案）
+	> .content-mount--main-app + #subapp-viewport {
+		// 前面的主应用容器应该被隐藏（通过 JavaScript 或确保 v-if 正确）
+		// CSS 无法直接选择前面的兄弟元素，所以这个规则只是标记
+	}
+}
+
+// =========================
+// 全局页面滚动条规则（.page 容器）
+// =========================
+// 参考 cool-admin-vue-7.x 的逻辑，实现递归的 .page 容器滚动条规则
+// 当内容超出父级最大高度时，所有层级的 .page 容器自动出现右侧滚动条
+// 适用于主应用和所有子应用
+
+// Mixin：页面滚动条样式（可复用于自动应用样式的选择器）
+@mixin page-scrollbar-styles {
+	max-height: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+	// 确保滚动条不影响布局
+	scrollbar-gutter: stable;
+
+	// Webkit 浏览器（Chrome、Safari、Edge）
+	&::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: rgba(0, 0, 0, 0.2);
+		border-radius: 3px;
+		opacity: 0;
+		transition: opacity 0.3s ease-in-out;
+	}
+
+	// 悬停或滚动时显示滚动条
+	&:hover::-webkit-scrollbar-thumb,
+	&.is-scrolling::-webkit-scrollbar-thumb {
+		opacity: 1;
+	}
+
+	// Firefox 浏览器
+	scrollbar-width: thin;
+	scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+// 暗黑模式滚动条样式 mixin
+@mixin page-scrollbar-styles-dark {
+	&::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+// 递归的 .page 容器规则（支持无限层级嵌套）
+.page,
+.page .page,
+.page .page .page,
+.page .page .page .page {
+	@include page-scrollbar-styles;
+}
+
+// 暗黑模式适配
+html.dark {
+	.page,
+	.page .page,
+	.page .page .page,
+	.page .page .page .page {
+		@include page-scrollbar-styles-dark;
+	}
+}
+
+// 禁用滚动条的覆盖类（允许特殊页面禁用滚动条）
+.page-no-scroll {
+	overflow-y: hidden !important;
+	overflow-x: hidden !important;
+}
+
+// =========================
+// Theme Brand Red Body Background
+// =========================
+body.theme-brand-red {
+	background-color: var(--el-bg-color-page);
+}

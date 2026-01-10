@@ -1,53 +1,72 @@
 <template>
-  <div class="system-app">
+  <!-- 嵌入 main-app / qiankun 时需要外层容器样式；独立运行时无需强制包裹 -->
+  <div v-if="!isStandalone" class="system-app">
     <router-view v-slot="{ Component, route }">
-      <!-- 关键：根据路由的 noLayout 标记决定是否使用 key -->
-      <!-- 如果路由标记为 noLayout（如登录页），使用 key 强制重新创建组件 -->
-      <!-- 否则不使用 key，让 Vue 复用 Layout 组件实例，避免顶栏、侧边栏、标签栏等固定元素重新渲染 -->
-      <!-- 关键：对于主应用路由（如登录页），直接渲染 Component，让 Vue 处理 -->
-      <!-- 如果 Component 不存在，Vue Router 会自动处理并显示404页面 -->
-      <component
-        v-if="Component"
-        :is="Component"
-        :key="route.meta?.noLayout ? route.fullPath : undefined"
-      />
+      <transition :name="pageTransition" mode="out-in">
+        <keep-alive :key="viewKey" :include="keepAliveList">
+          <component v-if="Component" :is="Component" :key="route.fullPath" />
+        </keep-alive>
+      </transition>
     </router-view>
-    <RetryStatusIndicator />
   </div>
+  <router-view v-else v-slot="{ Component, route }">
+    <transition :name="pageTransition" mode="out-in">
+      <keep-alive :key="viewKey" :include="keepAliveList">
+        <component v-if="Component" :is="Component" :key="route.fullPath" />
+      </keep-alive>
+    </transition>
+  </router-view>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { initEpsData } from '@btc/shared-core';
-import RetryStatusIndicator from '@/components/RetryStatusIndicator/index.vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+import { usePageTransition } from '@btc/shared-utils';
+import { useLogout } from '@/composables/useLogout';
+import { useProcessStore } from '@/store/process';
 
-import epsData from 'virtual:eps';
+defineOptions({
+  name: 'SystemApp',
+});
 
-// 初始化 EPS 数据
+// 关键：在应用启动时立即初始化通信桥和登出监听
+useLogout();
+
+const viewKey = ref(1);
+// 关键：在 layout-app 环境下，isStandalone 应该是 false（因为不是独立运行）
+// 这样会使用包装层样式，确保正确渲染
+const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+const emitter = (window as any).__APP_EMITTER__;
+const { pageTransition } = usePageTransition();
+const processStore = useProcessStore();
+
+// 获取需要缓存的组件名称列表
+const keepAliveList = computed(() => {
+  return processStore.list
+    .filter((tab) => tab.meta?.keepAlive === true && tab.name)
+    .map((tab) => tab.name as string);
+});
+
+// 刷新视图
+function refreshView() {
+  viewKey.value += 1;
+}
+
 onMounted(() => {
-  try {
-    initEpsData(epsData as any);
-  } catch (error) {
-    console.error('[App] Failed to load EPS data:', error);
+  if (emitter) {
+    emitter.on('subapp.refresh', refreshView);
+  }
+});
+
+onUnmounted(() => {
+  if (emitter) {
+    emitter.off('subapp.refresh', refreshView);
   }
 });
 </script>
 
-<style>
-#app {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-}
-
-#main-app {
-  width: 100%;
-  height: 100%;
-}
-
+<style scoped>
+/* 只在 qiankun 模式下使用包装层样式 */
 .system-app {
   flex: 1;
   width: 100%;
@@ -57,12 +76,5 @@ onMounted(() => {
   min-height: 0;
   min-width: 0;
   box-sizing: border-box;
-}
-
-.system-app > router-view {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 </style>

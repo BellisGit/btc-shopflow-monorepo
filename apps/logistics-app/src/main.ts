@@ -2,6 +2,9 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import 'virtual:svg-icons';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
 import '@btc/shared-components/styles/dark-theme.css';
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createLogisticsApp,
@@ -14,25 +17,99 @@ import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-sha
 import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
 
 let context: LogisticsAppContext | null = null;
+let isRendering = false; // 防止并发渲染
 
 const render = async (props: QiankunProps = {}) => {
-  try {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
     if (context) {
-      unmountLogisticsApp(context);
-      context = null;
+      return;
+    }
+  }
+
+  isRendering = true;
+  
+  // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+  // 并使用 appLoadingService 显示应用级 loading
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  let appLoadingService: any = null;
+  
+  if (isStandalone) {
+    // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
+      loadingEl.classList.add('is-hide');
+    }
+    
+    // 显示应用级 loading
+    try {
+      const sharedCore = await import('@btc/shared-core');
+      appLoadingService = sharedCore.appLoadingService;
+      if (appLoadingService) {
+        appLoadingService.show('common.system.logistics_module');
+      }
+    } catch (error) {
+      // 静默失败，继续执行
+      if (import.meta.env.DEV) {
+        console.warn('[logistics-app]', 'common.system.cannot_display_loading', error);
+      }
+    }
+  }
+  
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountLogisticsApp(context);
+      } catch (error) {
+        // 卸载失败不影响后续流程
+      } finally {
+        context = null;
+      }
     }
 
+    // 创建新实例
     context = await createLogisticsApp(props);
     await mountLogisticsApp(context, props);
 
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('common.system.logistics_module');
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
   } catch (error) {
-    // 即使挂载失败，也要移除 Loading
+    console.error('common.error.render_failed', error);
+    // 即使挂载失败，也要移除 Loading 并清理 context
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('common.system.logistics_module');
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
+    context = null;
     throw error;
+  } finally {
+    isRendering = false;
   }
 };
 
@@ -51,14 +128,12 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded: number, total: number) => {
-          if (import.meta.env.DEV) {
-            console.log(`[logistics-app] 加载共享资源进度: ${loaded}/${total}`);
-          }
+        onProgress: (_loaded: number, _total: number) => {
+          // 加载进度回调
         },
       });
     } catch (error) {
-      console.warn('[logistics-app] 加载共享资源失败，继续使用本地资源:', error);
+      // 加载共享资源失败，继续使用本地资源
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -66,24 +141,25 @@ async function mount(props: QiankunProps) {
   try {
     await render(props);
   } catch (error) {
-    console.error('[logistics-app] ❌ mount 失败:', error, {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-      props,
-    });
+    console.error('common.error.mount_failed', error);
     throw error;
   }
 }
 
 async function unmount(props: QiankunProps = {}) {
-  try {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   if (context) {
-    await unmountLogisticsApp(context, props);
-    context = null;
+    try {
+      await unmountLogisticsApp(context, props);
+    } catch (error) {
+      // 卸载失败不影响后续流程
+    } finally {
+      context = null;
     }
-  } catch (error) {
-    console.error('[logistics-app] unmount 失败:', error);
-    throw error;
   }
 }
 
@@ -179,41 +255,38 @@ if (shouldRunStandalone()) {
             if (viewport) {
               // 挂载到 layout-app 的 #subapp-viewport
               render({ container: viewport } as any).then(() => {
-              }).catch((error) => {
-                console.error('[logistics-app] 挂载到 layout-app 失败:', error);
+              }).catch(() => {
+                // 挂载失败
               });
             } else {
-              console.error('[logistics-app] 等待 #subapp-viewport 超时，尝试独立渲染');
-              render().catch((error) => {
-                console.error('[logistics-app] 独立运行失败:', error);
+              render().catch(() => {
+                // 独立运行失败
               });
             }
           });
         } else {
           // layout-app 加载失败或不需要加载，独立渲染
-          render().catch((error) => {
-            console.error('[logistics-app] 独立运行失败:', error);
+          render().catch(() => {
+            // 独立运行失败
           });
         }
       })
-      .catch((error) => {
-        console.error('[logistics-app] 初始化 layout-app 失败:', error);
+      .catch(() => {
         // layout-app 加载失败，独立渲染
-          render().catch((err) => {
-            console.error('[logistics-app] 独立运行失败:', err);
+          render().catch(() => {
+            // 独立运行失败
           });
         });
-    }).catch((error) => {
-      console.error('[logistics-app] 导入 init-layout-app 失败:', error);
+    }).catch(() => {
       // 导入失败，直接渲染
-        render().catch((err) => {
-          console.error('[logistics-app] 独立运行失败:', err);
+        render().catch(() => {
+          // 独立运行失败
         });
       });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-    render().catch((error) => {
-      console.error('[logistics-app] 独立运行失败:', error);
+    render().catch(() => {
+      // 独立运行失败
     });
   }
 }

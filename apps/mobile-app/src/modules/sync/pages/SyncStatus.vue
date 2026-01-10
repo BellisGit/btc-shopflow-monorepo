@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-utils';
 import { ref, onMounted } from 'vue';
 import { CellGroup, Cell, Button } from 'vant';
 import { db } from '@/db';
@@ -32,7 +33,7 @@ onMounted(async () => {
 async function updateStatus() {
   pendingOpsCount.value = await db.pending_ops.count();
   // TODO: 从本地存储读取最后同步时间
-  const lastSync = localStorage.getItem('last_sync_time');
+  const lastSync = storage.get<number>('last_sync_time');
   if (lastSync) {
     lastSyncTime.value = new Date(Number(lastSync)).toLocaleString('zh-CN');
   }

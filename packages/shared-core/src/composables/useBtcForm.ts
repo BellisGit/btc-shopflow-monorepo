@@ -37,7 +37,6 @@ export function useBtcForm() {
   // 表单配置
   const config = reactive<BtcFormConfig>({
     title: '-',
-    height: undefined,
     width: '50%',
     props: {
       labelWidth: '100px',

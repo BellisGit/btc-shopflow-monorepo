@@ -3,7 +3,11 @@
  * 基于 axios，参考 cool-admin 的实现
  */
 
+import { storage } from '../../utils';
 import axios from 'axios';
+// 导入 Zod 验证工具（可选）
+import { createApiResponseSchema, safeValidateResponse } from '../../utils/http/schemas';
+import { z } from 'zod';
 // axios 1.x 类型导入：直接使用 any 类型作为临时解决方案
 // 注意：axios 1.12.2 的类型导出在不同 TypeScript 配置下可能表现不同
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,14 +16,6 @@ type AxiosResponse = any;
 // 定义 AxiosRequestConfig 类型，使用 any 作为兜底
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AxiosRequestConfig = any;
-
-/*
-interface ApiResponse<T = any> {
-  code: number;
-  data: T;
-  message: string;
-}
-*/
 
 export interface RequestOptions {
   url: string;
@@ -30,6 +26,9 @@ export interface RequestOptions {
   timeout?: number;
   baseURL?: string;
   permission?: string; // 添加权限字段
+  showLoading?: boolean; // 是否显示操作级loading（默认false，避免过多loading）
+  loadingTarget?: HTMLElement | string; // loading目标元素（可选，默认不指定则使用全屏loading）
+  loadingText?: string; // loading提示文字（可选）
 }
 
 /**
@@ -68,22 +67,22 @@ function isDevelopment(): boolean {
 function getDynamicBaseURL(): string {
   // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    // HTTPS 页面：强制清理 localStorage 并返回 /api
-    const stored = localStorage.getItem('dev_api_base_url');
+    // HTTPS 页面：强制清理 storage 并返回 /api
+    const stored = storage.get<string>('dev_api_base_url');
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
     return '/api';
   }
 
-  // 开发环境（HTTP）：清理所有旧的 localStorage 数据（统一使用 /api，不再支持 HTTP URL）
+  // 开发环境（HTTP）：清理所有旧的 storage 数据（统一使用 /api，不再支持 HTTP URL）
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('dev_api_base_url');
+    const stored = storage.get<string>('dev_api_base_url');
     // 清理所有非 /api 的值（包括 HTTP URL、/api-prod 等）
     if (stored && stored !== '/api') {
-      console.warn('[HTTP] 清理 localStorage 中的非 /api baseURL:', stored);
-      localStorage.removeItem('dev_api_base_url');
+      console.warn('[HTTP] 清理 storage 中的非 /api baseURL:', stored);
+      storage.remove('dev_api_base_url');
     }
   }
 
@@ -97,8 +96,8 @@ export function processURL(baseURL: string, url: string): { url: string; baseURL
     if (baseURL.startsWith('http://')) {
       console.warn('[HTTP] processURL：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', baseURL);
       baseURL = '/api';
-      // 清理 localStorage 中的 HTTP URL
-      localStorage.removeItem('dev_api_base_url');
+      // 清理 storage 中的 HTTP URL
+      storage.remove('dev_api_base_url');
     }
   }
 
@@ -155,8 +154,8 @@ export function createRequest(baseURL: string = ''): Request {
     if (finalBaseURL.startsWith('http://')) {
       console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 HTTP baseURL:', finalBaseURL);
       finalBaseURL = '/api';
-      // 清理 localStorage 中的 HTTP URL
-      localStorage.removeItem('dev_api_base_url');
+      // 清理 storage 中的 HTTP URL
+      storage.remove('dev_api_base_url');
     } else if (finalBaseURL && finalBaseURL !== '/api') {
       // HTTPS 页面下，如果不是 /api，也强制使用 /api
       console.warn('[HTTP] createRequest：检测到 HTTPS 页面，强制使用 /api 代理，忽略 baseURL:', finalBaseURL);
@@ -176,11 +175,11 @@ export function createRequest(baseURL: string = ''): Request {
     (config: any) => {
       // 强制验证：在 HTTPS 页面下，强制使用 /api，忽略所有其他值
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        // HTTPS 页面：强制清理 localStorage 并返回 /api
-        const stored = localStorage.getItem('dev_api_base_url');
+        // HTTPS 页面：强制清理 storage 并返回 /api
+        const stored = storage.get<string>('dev_api_base_url');
         if (stored && stored !== '/api') {
-          console.warn('[HTTP] HTTPS 页面：清理 localStorage 中的非 /api baseURL:', stored);
-          localStorage.removeItem('dev_api_base_url');
+          console.warn('[HTTP] HTTPS 页面：清理 storage 中的非 /api baseURL:', stored);
+          storage.remove('dev_api_base_url');
         }
         // 强制使用 /api，忽略任何其他值
         config.baseURL = '/api';
@@ -222,7 +221,7 @@ export function createRequest(baseURL: string = ''): Request {
       }
 
       // 获取 token
-      const token = localStorage.getItem('token') || '';
+      const token = storage.get<string>('token') || '';
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
@@ -281,6 +280,39 @@ export function createRequest(baseURL: string = ''): Request {
       if (responseData && typeof responseData === 'object' && responseData.code !== undefined) {
         const { code, data, msg } = responseData;
 
+        // 特殊处理：当 code 为 501 且消息为"系统繁忙，请稍候再试"时，显示自定义消息
+        if (code === 501 && msg === '系统繁忙，请稍候再试') {
+          // 立即显示错误消息（同步方式，确保消息能够立即显示）
+          const errorMessage = '数据暂时无法获取，请联系管理员Jarvis';
+
+          // 优先尝试使用全局的响应拦截器（如果已初始化）
+          const responseInterceptor = (window as any).__BTC_RESPONSE_INTERCEPTOR__;
+          if (responseInterceptor && responseInterceptor.handleError) {
+            responseInterceptor.handleError({ code, message: msg });
+          } else {
+            // 如果响应拦截器不可用，尝试使用全局消息处理器
+            const messageHandler = (window as any).__APP_MESSAGE_HANDLER__;
+            if (messageHandler && messageHandler.error) {
+              messageHandler.error(errorMessage);
+            } else {
+              // 尝试使用 BtcMessage（物流应用使用的消息组件）
+              const BtcMessage = (window as any).BtcMessage;
+              if (BtcMessage && BtcMessage.error) {
+                BtcMessage.error(errorMessage);
+              } else {
+                // 最后的兜底：使用 console.error
+                console.error(errorMessage);
+              }
+            }
+          }
+          // 返回 rejected Promise，让调用方知道这是错误
+          const error = new Error(msg || errorMessage);
+          (error as any).code = code;
+          (error as any).data = data;
+          (error as any).response = response;
+          return Promise.reject(error);
+        }
+
         // 成功响应（code: 200, 1000, 2000）
         if (code === 1000 || code === 2000) {
           // 返回 data 字段
@@ -314,16 +346,46 @@ export function createRequest(baseURL: string = ''): Request {
       return response;
     },
     (error: any) => {
-      // 网络错误或 HTTP 错误 - 输出错误信息用于调试
-      console.error('[Request] 请求错误:', error);
-      // 返回一个已解决的Promise，避免未处理的Promise rejection
-      return Promise.resolve();
+
+      // 检查是否是业务错误（包含 code 字段）
+      if (error && typeof error === 'object' && error.code !== undefined) {
+        const { code, message, msg } = error;
+        const errorMsg = message || msg || '请求失败';
+
+        // 特殊处理：当 code 为 501 且消息为"系统繁忙，请稍候再试"时，显示自定义消息
+        if (code === 501 && (msg === '系统繁忙，请稍候再试' || message === '系统繁忙，请稍候再试')) {
+          const errorMessage = '数据暂时无法获取，请联系管理员Jarvis';
+
+          // 优先尝试使用全局的响应拦截器（如果已初始化）
+          const responseInterceptor = (window as any).__BTC_RESPONSE_INTERCEPTOR__;
+          if (responseInterceptor && responseInterceptor.handleError) {
+            responseInterceptor.handleError({ code, message: errorMsg });
+          } else {
+            // 如果响应拦截器不可用，尝试使用全局消息处理器
+            const messageHandler = (window as any).__APP_MESSAGE_HANDLER__;
+            if (messageHandler && messageHandler.error) {
+              messageHandler.error(errorMessage);
+            } else {
+              // 尝试使用 BtcMessage（物流应用使用的消息组件）
+              const BtcMessage = (window as any).BtcMessage;
+              if (BtcMessage && BtcMessage.error) {
+                BtcMessage.error(errorMessage);
+              } else {
+                console.error('[EPS Request]', errorMessage);
+              }
+            }
+          }
+        }
+      }
+
+      // 返回 rejected Promise，让调用方能够处理错误
+      return Promise.reject(error);
     }
   );
 
   // 返回 request 函数
   return async (options: RequestOptions): Promise<any> => {
-    const { url: originalUrl, method = 'GET', data, params, headers, timeout, baseURL: customBaseURL } = options;
+    const { url: originalUrl, method = 'GET', data, params, headers, timeout, baseURL: customBaseURL, showLoading, loadingTarget, loadingText } = options;
 
     // 直接使用 axios 实例，URL 和 baseURL 的处理在拦截器中统一完成
     // 这样可以避免重复处理，确保 URL 处理的一致性
@@ -336,15 +398,14 @@ export function createRequest(baseURL: string = ''): Request {
       timeout,
       // 如果提供了自定义 baseURL，传递给拦截器处理
       baseURL: customBaseURL,
+      // 传递loading相关配置到拦截器（虽然目前不自动使用，但保留配置供未来扩展）
+      showLoading,
+      loadingTarget,
+      loadingText,
     };
 
-    try {
-      const response = await axiosInstance.request(config);
-      return response;
-    } catch (error) {
-      console.error('[Request] 请求失败:', error);
-      throw error;
-    }
+    // 错误已经在响应拦截器中处理，这里直接返回结果
+    return await axiosInstance.request(config);
   };
 }
 

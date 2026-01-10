@@ -12,6 +12,7 @@ import {
 import type { EngineeringAppContext } from './bootstrap';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
 import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { tSync } from './i18n/getters';
 
 let context: EngineeringAppContext | null = null;
 
@@ -28,24 +29,102 @@ const shouldRunStandalone = () => {
   return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
 };
 
-const render = async (props: QiankunProps = {}) => {
-      try {
-    if (context) {
-      unmountEngineeringApp(context);
-      context = null;
-      }
+let isRendering = false; // 防止并发渲染
 
+const render = async (props: QiankunProps = {}) => {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
+    if (context) {
+      return;
+    }
+  }
+
+  isRendering = true;
+  
+  // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+  // 并使用 appLoadingService 显示应用级 loading
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  let appLoadingService: any = null;
+  
+  if (isStandalone) {
+    // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
+      loadingEl.classList.add('is-hide');
+    }
+    
+    // 显示应用级 loading
+    try {
+      const sharedCore = await import('@btc/shared-core');
+      appLoadingService = sharedCore.appLoadingService;
+      if (appLoadingService) {
+        appLoadingService.show(tSync('common.system.engineering_module'));
+      }
+    } catch (error) {
+      // 静默失败，继续执行
+      if (import.meta.env.DEV) {
+        console.warn(`[engineering-app] ${tSync('common.error.cannot_display_loading')}:`, error);
+      }
+    }
+  }
+  
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountEngineeringApp(context);
+      } catch (_error) {
+        // 卸载失败不影响后续流程，但记录错误
+        if (import.meta.env.DEV) {
+          // 卸载前一个实例失败
+        }
+      } finally {
+        context = null;
+      }
+    }
+
+    // 创建新实例
     context = await createEngineeringApp(props);
     await mountEngineeringApp(context, props);
 
-  // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
-  removeLoadingElement();
-  clearNavigationFlag();
-  } catch (error) {
-    // 即使挂载失败，也要移除 Loading
+    // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('工程模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
+  } catch (error) {
+    console.error(`${tSync('common.error.render_failed')}:`, error);
+    // 即使挂载失败，也要移除 Loading 并清理 context
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide('工程模块');
+      } catch (error) {
+        // 静默失败
+      }
+    }
+    removeLoadingElement();
+    clearNavigationFlag();
+    context = null;
     throw error;
+  } finally {
+    isRendering = false;
   }
 };
 
@@ -61,14 +140,14 @@ async function mount(props: QiankunProps) {
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
     try {
       await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded: number, total: number) => {
+        onProgress: (_loaded: number, _total: number) => {
           if (import.meta.env.DEV) {
-            console.log(`[engineering-app] 加载共享资源进度: ${loaded}/${total}`);
+            // 加载共享资源进度
           }
         },
       });
-    } catch (error) {
-      console.warn('[engineering-app] 加载共享资源失败，继续使用本地资源:', error);
+    } catch (_error) {
+      // 加载共享资源失败，继续使用本地资源
       // 继续执行，使用本地打包的资源作为降级方案
     }
   }
@@ -77,9 +156,22 @@ async function mount(props: QiankunProps) {
 }
 
 async function unmount(props: QiankunProps = {}) {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   if (context) {
-    await unmountEngineeringApp(context, props);
-    context = null;
+    try {
+      await unmountEngineeringApp(context, props);
+    } catch (_error) {
+      // 卸载失败不影响后续流程
+      if (import.meta.env.DEV) {
+        // 卸载失败
+      }
+    } finally {
+      context = null;
+    }
   }
 }
 
@@ -160,41 +252,41 @@ if (shouldRunStandalone()) {
               if (viewport) {
                 // 挂载到 layout-app 的 #subapp-viewport
                 render({ container: viewport } as any).then(() => {
-                }).catch((error) => {
-                  console.error('[engineering-app] 挂载到 layout-app 失败:', error);
+                }).catch((_error) => {
+                  // 挂载到 layout-app 失败
                 });
               } else {
-                console.error('[engineering-app] 等待 #subapp-viewport 超时，尝试独立渲染');
-                render().catch((error) => {
-                  console.error('[engineering-app] 独立运行失败:', error);
+                // 等待 #subapp-viewport 超时，尝试独立渲染
+                render().catch((_error) => {
+                  // 独立运行失败
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
-            render().catch((error) => {
-              console.error('[engineering-app] 独立运行失败:', error);
+            render().catch((_error) => {
+              // 独立运行失败
             });
           }
         })
-        .catch((error) => {
-      console.error('[engineering-app] 初始化 layout-app 失败:', error);
+        .catch((_error) => {
+      // 初始化 layout-app 失败
           // layout-app 加载失败，独立渲染
-          render().catch((error) => {
-            console.error('[engineering-app] 独立运行失败:', error);
+          render().catch((_error) => {
+            // 独立运行失败
           });
         });
-    }).catch((error) => {
-      console.error('[engineering-app] 导入 init-layout-app 失败:', error);
+    }).catch((_error) => {
+      // 导入 init-layout-app 失败
       // 导入失败，直接渲染
-      render().catch((error) => {
-        console.error('[engineering-app] 独立运行失败:', error);
+      render().catch((_error) => {
+        // 独立运行失败
     });
   });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-  render().catch((error) => {
-    console.error('[engineering-app] 独立运行失败:', error);
+  render().catch((_error) => {
+    // 独立运行失败
   });
   }
 }

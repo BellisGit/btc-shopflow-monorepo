@@ -1,2 +1,40 @@
-pnpm exec commitlint --edit "$1"
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
+echo "🔍 正在检查提交信息格式..."
+
+# 运行 commitlint 检查提交信息
+pnpm exec commitlint --edit "$1"
+EXIT_CODE=$?
+
+# 如果 commitlint 检查失败，提供友好的提示
+if [ $EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ 提交信息格式不符合规范！"
+  echo ""
+  echo "📝 提交信息格式要求："
+  echo "   <type>(<scope>): <subject>"
+  echo ""
+  echo "   类型（type）：feat, fix, docs, style, refactor, test, chore"
+  echo "   作用域（scope）：可选，如 i18n, menu, logistics 等"
+  echo "   主题（subject）：简短描述，不超过50字符，首字母小写"
+  echo ""
+  echo "📋 正确示例："
+  echo "   ✅ feat(i18n): Fix menu structure for logistics app"
+  echo "   ✅ fix(menu): Correct procurement module naming"
+  echo "   ✅ docs: Update commit message template"
+  echo ""
+  echo "📋 错误示例："
+  echo "   ❌ fix menu structure  (缺少类型和冒号)"
+  echo "   ❌ Fix menu structure  (类型首字母大写)"
+  echo "   ❌ feat:fix menu structure  (缺少空格)"
+  echo ""
+  echo "💡 提示："
+  echo "   - 使用 'git commit' 会自动打开提交模板"
+  echo "   - 只需填写第一行即可完成简单提交"
+  echo "   - 详细说明可以写在正文部分（可选）"
+  echo ""
+  exit 1
+fi
+
+echo "✅ 提交信息格式验证通过！"

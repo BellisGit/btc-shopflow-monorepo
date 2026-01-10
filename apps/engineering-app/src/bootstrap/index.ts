@@ -57,7 +57,7 @@ export const createEngineeringApp = async (props: QiankunProps = {}): Promise<En
     try {
       domainCacheModule = await import('../utils/domain-cache');
     } catch (error) {
-      console.warn('[engineering-app] Failed to import domain-cache module:', error);
+      // Failed to import domain-cache module
     }
 
     await setupSubAppGlobals({
@@ -68,7 +68,7 @@ export const createEngineeringApp = async (props: QiankunProps = {}): Promise<En
     });
   } else {
     // qiankun 环境下也需要注册菜单和 Tabs
-    const layoutBridgeModule = await import('@configs/layout-bridge');
+    const layoutBridgeModule = await import('@btc/shared-core/configs/layout-bridge');
     const layoutBridge = layoutBridgeModule as unknown as {
       registerManifestMenusForApp: (appId: string) => void;
       registerManifestTabsForApp: (appId: string) => void;

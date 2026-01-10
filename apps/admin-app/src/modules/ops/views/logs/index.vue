@@ -29,7 +29,7 @@
           </BtcRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
-          <el-empty description="操作日志服务暂不可用" />
+          <el-empty :description="t('common.ops.logs.operation.service_unavailable')" />
         </div>
       </template>
 
@@ -44,7 +44,7 @@
           <BtcRow>
             <BtcRefreshBtn />
             <BtcFlex1 />
-            <BtcSearchKey placeholder="搜索请求日志..." />
+            <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
           </BtcRow>
           <BtcRow>
             <BtcTable
@@ -61,7 +61,7 @@
           </BtcRow>
         </BtcCrud>
         <div v-else class="service-unavailable">
-          <el-empty description="请求日志服务暂不可用" />
+          <el-empty :description="t('common.ops.logs.request.service_unavailable')" />
         </div>
       </template>
     </BtcTabs>
@@ -122,16 +122,34 @@ import {
   BtcTable,
   BtcPagination
 } from '@btc/shared-components';
-import {
-  operationLogColumns,
-  requestLogColumns,
-  logServices,
-  logTabs
-} from './config';
+import { useI18n, usePageColumns, getPageConfigFull } from '@btc/shared-core';
 
 defineOptions({
   name: 'OpsLogs'
 });
+
+// 从模块级配置读取
+const { columns: operationLogColumns } = usePageColumns('ops.logs.operation');
+const { columns: requestLogColumns } = usePageColumns('ops.logs.request');
+const opsPageConfig = getPageConfigFull('ops.logs.operation'); // 使用同一个配置，因为 service 在同一个 config 中
+
+// 服务配置
+const logServices = {
+  operationLog: opsPageConfig?.service?.operation,
+  requestLog: opsPageConfig?.service?.request,
+};
+
+// Tab 配置
+const logTabs = [
+  {
+    name: 'operation',
+    label: t('menu.ops.operation_log')
+  },
+  {
+    name: 'request',
+    label: t('menu.ops.request_log')
+  }
+];
 
 // 当前激活的tab
 const activeTab = ref('operation');
@@ -149,32 +167,32 @@ const currentLog = ref<any>({});
 
 // 详情标题
 const detailTitle = computed(() => {
-  return activeTab.value === 'operation' ? '操作日志详情' : '请求日志详情';
+  return activeTab.value === 'operation' ? t('common.ops.logs.operation.detail') : t('common.ops.logs.request.detail');
 });
 
 // 详情字段配置
 const detailFields = computed(() => {
   if (activeTab.value === 'operation') {
     return [
-      { prop: 'createdAt', label: '操作时间' },
-      { prop: 'username', label: '用户名' },
-      { prop: 'operationType', label: '操作类型' },
-      { prop: 'operationDesc', label: '操作描述' },
-      { prop: 'tableName', label: '表名' },
-      { prop: 'ipAddress', label: 'IP地址' },
-      { prop: 'beforeData', label: '操作前数据' }
+      { prop: 'createdAt', label: t('common.ops.logs.operation.fields.create_time') },
+      { prop: 'username', label: t('common.ops.logs.operation.fields.operator') },
+      { prop: 'operationType', label: t('common.ops.logs.operation.fields.operation_type') },
+      { prop: 'operationDesc', label: t('common.ops.logs.operation.fields.operation_desc') },
+      { prop: 'tableName', label: t('common.ops.logs.operation.fields.table_name') },
+      { prop: 'ipAddress', label: t('common.ops.logs.operation.fields.ip_address') },
+      { prop: 'beforeData', label: t('common.ops.logs.operation.fields.before_data') }
     ];
   } else {
     return [
-      { prop: 'requestTime', label: '请求时间' },
-      { prop: 'userName', label: '用户名' },
-      { prop: 'requestUrl', label: '请求地址' },
-      { prop: 'method', label: '请求方法' },
-      { prop: 'ipAddress', label: 'IP地址' },
-      { prop: 'duration', label: '耗时(ms)' },
-      { prop: 'status', label: '状态' },
-      { prop: 'requestData', label: '请求数据' },
-      { prop: 'responseData', label: '响应数据' }
+      { prop: 'requestTime', label: t('common.ops.logs.request.fields.create_time') },
+      { prop: 'userName', label: t('common.ops.logs.request.fields.username') },
+      { prop: 'requestUrl', label: t('common.ops.logs.request.fields.url') },
+      { prop: 'method', label: t('common.ops.logs.request.fields.method') },
+      { prop: 'ipAddress', label: t('common.ops.logs.request.fields.ip') },
+      { prop: 'duration', label: t('common.ops.logs.request.fields.duration') },
+      { prop: 'status', label: t('common.ops.logs.request.fields.status') },
+      { prop: 'requestData', label: t('common.ops.logs.request.fields.request_data') },
+      { prop: 'responseData', label: t('common.ops.logs.request.fields.response_data') }
     ];
   }
 });

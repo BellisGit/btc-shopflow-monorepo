@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import type { App } from 'vue';
 import ElementPlus from 'element-plus';
 import { createThemePlugin } from '@btc/shared-core';
@@ -30,7 +31,7 @@ export const elementLocale = {
  * 获取当前语言设置
  */
 export const getCurrentLocale = (): string => {
-  return localStorage.getItem('locale') || 'zh-CN';
+  return storage.get<string>('locale') || 'zh-CN';
 };
 
 /**
@@ -38,10 +39,10 @@ export const getCurrentLocale = (): string => {
  */
 export const setupElementPlus = (app: App) => {
   const currentLocale = getCurrentLocale();
+  const locale = elementLocale[currentLocale as keyof typeof elementLocale] || zhCn;
 
-  app.use(ElementPlus, {
-    locale: elementLocale[currentLocale as keyof typeof elementLocale] || zhCn
-  });
+  // @ts-expect-error - ElementPlus plugin options type mismatch
+  app.use(ElementPlus, { locale });
 };
 
 // 缓存 themePlugin 实例，避免重复创建

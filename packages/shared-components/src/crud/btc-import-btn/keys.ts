@@ -1,4 +1,4 @@
-import { InjectionKey, type Ref, type ComputedRef } from 'vue';
+import { type InjectionKey, type Ref, type ComputedRef } from 'vue';
 
 /**
  * 导入文件名匹配的 provide/inject keys

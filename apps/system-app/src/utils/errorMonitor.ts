@@ -1,7 +1,6 @@
 import {
   initErrorMonitor as initErrorMonitorCore,
   updateErrorList as updateErrorListCore,
-  setupSubAppErrorCapture,
   type ErrorInfo,
 } from '@btc/shared-utils/error-monitor';
 
@@ -50,8 +49,8 @@ export function setupGlobalErrorCapture() {
       source: 'main-app',
       stack: error?.stack || '',
       url: source || window.location.href,
-      lineno,
-      colno,
+      ...(lineno !== undefined && { lineno }),
+      ...(colno !== undefined && { colno }),
     });
     // 返回 false 以允许默认的错误处理
     return false;
@@ -72,7 +71,7 @@ export function setupGlobalErrorCapture() {
   const safeStringify = (obj: any): string => {
     const seen = new WeakSet();
     try {
-      return JSON.stringify(obj, (key, value) => {
+      return JSON.stringify(obj, (_key, value) => {
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) {
             return '[Circular]';
@@ -151,6 +150,21 @@ export function setupGlobalErrorCapture() {
     }
     // 过滤 Vue 的 extraneous non-props attributes 警告（BtcImportBtn 的 exportFilename prop）
     if (message.includes('Extraneous non-props attributes') && message.includes('exportFilename')) {
+      return true;
+    }
+    // 过滤表单验证错误（Element Plus 表单验证失败时输出的对象，格式如 {username: Array(1)}）
+    // 匹配模式：{字段名: Array(...)} 或包含常见表单字段名和 Array 的对象
+    if (
+      /^\s*\{[^}]*:\s*Array\([^)]*\)[^}]*\}\s*$/.test(message) ||
+      (message.includes('Array(') && (
+        message.includes('username') ||
+        message.includes('password') ||
+        message.includes('phone') ||
+        message.includes('smsCode') ||
+        message.includes('email') ||
+        message.includes('confirmPassword')
+      ))
+    ) {
       return true;
     }
     return false;

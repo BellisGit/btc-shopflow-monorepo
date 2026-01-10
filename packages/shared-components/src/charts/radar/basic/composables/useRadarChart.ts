@@ -3,14 +3,16 @@ import type { EChartsOption } from 'echarts';
 import type { RadarChartProps } from '../../../types/radar';
 import { getColorByIndex } from '../../../utils/color';
 import { getThemeColors } from '../../../utils/css-var';
+import type { ChartStyleHelpers } from '../../../composables/useChartComponent';
 
 /**
- * ??? composable
+ * 雷达图 composable
  */
 export function useRadarChart(
   props: RadarChartProps,
   isDark: Ref<boolean>,
-  themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>
+  themeColors: ReturnType<typeof import('../../../utils/css-var').getThemeColors>,
+  styleHelpers: ChartStyleHelpers
 ) {
   const buildOption = (): EChartsOption => {
     // 每次构建时重新获取主题颜色，用于需要动态计算的颜色（如雷达图分割区域）
@@ -19,25 +21,20 @@ export function useRadarChart(
       : themeColors;
     const borderColor = isDark.value ? currentThemeColors.dark.borderColor : currentThemeColors.borderColorLight;
 
-    const option: EChartsOption = {
+    const option: any = {
       title: {
-        text: props.title || ''
-        // textStyle.color 由 ECharts 主题处理
+        text: props.title || '',
+        ...styleHelpers.getTitleStyle()
       },
-      tooltip: {
-        trigger: 'item',
-        show: props.showTooltip ?? true,
-        // backgroundColor, borderColor, textStyle.color 由 ECharts 主题处理
+      tooltip: props.showTooltip ?? true ? {
+        ...styleHelpers.getTooltipStyle('item'),
         confine: true,
         appendToBody: true
-      },
-      legend: {
-        show: props.showLegend ?? true,
-        top: '0%',
-        left: 'center',
+      } : undefined,
+      legend: props.showLegend ?? true ? {
+        ...styleHelpers.getLegendStyle('top'),
         data: (props.data || []).map(item => item.name)
-        // textStyle.color 由 ECharts 主题处理
-      },
+      } : undefined,
       toolbox: {
         show: props.showToolbar ?? false,
         right: '10px',
@@ -68,15 +65,23 @@ export function useRadarChart(
         indicator: props.indicators.map(indicator => ({
           name: indicator.name,
           max: indicator.max,
-          min: indicator.min ?? 0
+          min: indicator.min ?? 0,
+          // 使用样式函数设置指标名称颜色
+          nameTextStyle: {
+            ...styleHelpers.getAxisLabelStyle(true)
+          }
         })),
-        // axisName.color 由 ECharts 主题处理
         splitArea: {
           areaStyle: {
             color: [borderColor + '20', borderColor + '10']
           }
         },
-        // splitLine.lineStyle.color, axisLine.lineStyle.color 由 ECharts 主题处理
+        splitLine: {
+          ...styleHelpers.getSplitLineStyle(true)
+        },
+        axisLine: {
+          ...styleHelpers.getAxisLineStyle(true)
+        }
       },
       series: (props.data || []).map((item, index) => {
         const baseColor = item.color || getColorByIndex(index);
@@ -103,7 +108,7 @@ export function useRadarChart(
       })
     };
 
-    return option;
+    return option as EChartsOption;
   };
 
   return {

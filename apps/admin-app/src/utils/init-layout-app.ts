@@ -7,20 +7,30 @@
  * 2. 任何失败（网络错误、超时、挂载失败等）都会清除标志，允许子应用独立渲染
  * 3. 提供详细的错误日志，便于排查问题
  */
+
+import { sessionStorage } from '@btc/shared-core/utils/storage/session';
 /**
  * 显示 Loading（如果尚未显示）
  */
 function showLoading() {
   // 检查是否有导航标记或需要显示 Loading
   try {
-    const shouldShowLoading = sessionStorage.getItem('__BTC_NAV_LOADING__') === '1' || true;
+    // 关键：只在有导航标记时显示 Loading，避免与 HTML 中的内联脚本重复显示
+    // HTML 中的内联脚本已经会在有导航标记时显示 Loading，这里不需要重复
+    const shouldShowLoading = sessionStorage.get<string>('__BTC_NAV_LOADING__') === '1';
     if (shouldShowLoading) {
       const loadingEl = document.getElementById('Loading');
       if (loadingEl) {
-        loadingEl.style.setProperty('display', 'flex', 'important');
-        loadingEl.style.setProperty('visibility', 'visible', 'important');
-        loadingEl.style.setProperty('opacity', '1', 'important');
-        loadingEl.classList.remove('is-hide');
+        // 检查是否已经显示，避免重复操作
+        const isAlreadyVisible = loadingEl.style.display === 'flex' || 
+                                 loadingEl.style.visibility === 'visible' ||
+                                 !loadingEl.classList.contains('is-hide');
+        if (!isAlreadyVisible) {
+          loadingEl.style.setProperty('display', 'flex', 'important');
+          loadingEl.style.setProperty('visibility', 'visible', 'important');
+          loadingEl.style.setProperty('opacity', '1', 'important');
+          loadingEl.classList.remove('is-hide');
+        }
       }
     }
   } catch (e) {
@@ -65,7 +75,7 @@ function removeLoadingElement() {
  */
 function clearNavigationFlag() {
   try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
+    sessionStorage.remove('__BTC_NAV_LOADING__');
   } catch (e) {
     // 静默失败（某些浏览器可能禁用 sessionStorage）
   }
@@ -122,13 +132,14 @@ async function injectAppConfigFromManifest(appId: string) {
     // 动态导入必要的模块
     const [
       { registerManifestMenusForApp, resolveAppLogoUrl, registerAppEnvAccessors },
-      { getMenuRegistry },
+      sharedComponents,
       { getManifest }
     ] = await Promise.all([
-      import('@configs/layout-bridge'),
-      import('@btc/shared-components/store/menuRegistry'),
+      import('@btc/shared-core/configs/layout-bridge'),
+      import('@btc/shared-components'),
       import('@btc/subapp-manifests')
     ]);
+    const { getMenuRegistry } = sharedComponents;
 
     // 1. 确保菜单注册表已初始化
     let registry = getMenuRegistry();
@@ -158,13 +169,13 @@ async function injectAppConfigFromManifest(appId: string) {
     }
 
     if (import.meta.env.DEV) {
-      console.log(`[initLayoutApp] 已从 manifest 注入应用配置: ${appId}`, {
+      console.log(`[initLayoutApp] Application config injected from manifest: ${appId}`, {
         hasMenus: registry?.value?.[appId]?.length > 0,
         hasLogoUrl: !!(window as any).__APP_GET_LOGO_URL__
       });
     }
   } catch (error) {
-    console.warn(`[initLayoutApp] 从 manifest 注入配置失败:`, error);
+    console.warn(`[initLayoutApp] Failed to inject config from manifest:`, error);
     // 继续执行，使用默认配置
   }
 }

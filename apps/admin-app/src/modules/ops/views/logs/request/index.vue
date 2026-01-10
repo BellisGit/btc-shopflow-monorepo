@@ -15,12 +15,12 @@
             type="danger"
             @click="clearLogs"
           >
-            清空
+            {{ t('common.ops.logs.request.clear') }}
           </el-button>
         </div>
 
         <div class="log-keep-filter">
-          <span>日志保存天数：</span>
+          <span>{{ t('common.ops.logs.request.log_retention_days') }}：</span>
           <el-input-number
             v-model="keepDays"
             :min="1"
@@ -31,7 +31,7 @@
         </div>
 
         <BtcFlex1 />
-        <BtcSearchKey placeholder="搜索请求地址、用户昵称、IP..." />
+        <BtcSearchKey :placeholder="t('common.ops.logs.request.search_placeholder')" />
         <BtcCrudActions />
       </BtcRow>
 
@@ -57,7 +57,6 @@
 import { ref, computed, onMounted, onActivated, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
-import type { TableColumn } from '@btc/shared-components';
 import {
   BtcCrud,
   BtcTable,
@@ -68,11 +67,14 @@ import {
   BtcSearchKey,
   BtcCrudActions,
 } from '@btc/shared-components';
+import { usePageColumns, getPageConfigFull, useI18n } from '@btc/shared-core';
 import { service } from '@services/eps';
 
 defineOptions({
   name: 'RequestLog'
 });
+
+const { t } = useI18n();
 
 // 请求日志服务（打印可用方法）
 // 确保 service 存在，避免 undefined 错误
@@ -167,99 +169,68 @@ function onBeforeRefresh(params: Record<string, unknown>) {
   return params || {};
 }
 
-// 请求日志列配置
-const requestColumns = computed<TableColumn[]>(() => {
-  const columns = [
-  {
-    type: 'index',
-    label: '#',
-    width: 60
-  },
-  {
-    label: '用户ID',
-    prop: 'userId',
-    width: 100
-  },
-  {
-    label: '用户昵称',
-    prop: 'username',
-    width: 120
-  },
-  {
-    label: '请求地址',
-    prop: 'requestUrl',
-    minWidth: 200,
-    showOverflowTooltip: true
-  },
-  {
-    label: '请求参数',
-    prop: 'params',
-    minWidth: 200,
-    showOverflowTooltip: false,
-    component: {
-      name: 'BtcCodeJson',
-      props: {
-        popover: true,
-        maxLength: 500, // 限制显示长度
-        popoverTrigger: 'hover',
-        teleported: true,
-        popperStrategy: 'fixed'
-      }
-    }
-    // 移除 formatter，BtcCodeJson 组件已支持字符串输入
-  },
-  {
-    label: 'IP',
-    prop: 'ip',
-    width: 150,
-    formatter(row: any) {
-      // 安全处理IP字段
-      try {
-        if (row.ip === null || row.ip === undefined || typeof row.ip !== 'string') {
-          return '-';
+// 请求日志列配置 - 从 config.ts 读取并扩展以支持特殊组件和 formatter
+const requestColumns = computed(() => {
+  return baseRequestColumns.value.map(col => {
+    // 如果列是 params，添加 BtcCodeJson 组件
+    if (col.prop === 'params') {
+      return {
+        ...col,
+        component: {
+          name: 'BtcCodeJson',
+          props: {
+            popover: true,
+            maxLength: 500,
+            popoverTrigger: 'hover',
+            teleported: true,
+            popperStrategy: 'fixed'
+          }
         }
-        // 如果是空字符串，直接显示空字符串
-        if (row.ip === '') {
-          return '';
+      };
+    }
+    // 如果列是 ip，添加自定义 formatter
+    if (col.prop === 'ip') {
+      return {
+        ...col,
+        formatter(row: any) {
+          try {
+            if (row.ip === null || row.ip === undefined || typeof row.ip !== 'string') {
+              return '-';
+            }
+            if (row.ip === '') {
+              return '';
+            }
+            const ipStr = row.ip.length > 1000 ? row.ip.substring(0, 1000) + '...' : row.ip;
+            return ipStr.split(',').map((ip: string) => ip.trim()).filter((ip: any) => ip).join(', ');
+          } catch (error) {
+            console.error('IP field format error:', error);
+            return '-';
+          }
         }
-        // 限制字符串长度，避免过长的IP字符串
-        const ipStr = row.ip.length > 1000 ? row.ip.substring(0, 1000) + '...' : row.ip;
-        return ipStr.split(',').map((ip: string) => ip.trim()).filter((ip: any) => ip).join(', ');
-      } catch (error) {
-        console.error('IP字段格式化错误:', error);
-        return '-';
-      }
+      };
     }
-  },
-  {
-    label: '耗时(ms)',
-    prop: 'duration',
-    width: 100,
-    sortable: true,
-    formatter(row: any) {
-      return row.duration ? `${row.duration}ms` : '-';
+    // 如果列是 duration，添加自定义 formatter
+    if (col.prop === 'duration') {
+      return {
+        ...col,
+        formatter(row: any) {
+          return row.duration ? `${row.duration}ms` : '-';
+        }
+      };
     }
-  },
-  {
-    label: '状态',
-    prop: 'status',
-    width: 100,
-    dict: [
-      { label: '成功', value: 'success', type: 'success' as const },
-      { label: '失败', value: 'failed', type: 'danger' as const }
-    ],
-    dictColor: true
-  },
-  {
-    label: '请求时间',
-    prop: 'createdAt',
-    width: 170,
-    sortable: true,
-    fixed: 'right'
-  }
-  ];
-
-  return columns;
+    // 如果列是 status，添加 dict 配置
+    if (col.prop === 'status') {
+      return {
+        ...col,
+        dict: [
+          { label: t('common.success'), value: 'success', type: 'success' },
+          { label: t('common.failed'), value: 'failed', type: 'danger' }
+        ],
+        dictColor: true
+      };
+    }
+    return col;
+  });
 });
 
 // CRUD 引用
@@ -277,7 +248,7 @@ onMounted(async () => {
     // const res = await requestService.getKeep();
     // keepDays.value = Number(res);
   } catch (err) {
-    console.error('获取日志保存天数失败', err);
+    console.error('Failed to get log retention days', err);
   }
   await nextTick();
   try {
@@ -324,25 +295,25 @@ async function saveKeepDays() {
   try {
     // 暂时注释掉，等待后端提供接口
     // await requestService.setKeep({ value: keepDays.value });
-    BtcMessage.success('保存成功');
+    BtcMessage.success(t('common.save_success'));
   } catch (err: any) {
-    BtcMessage.error(err.message || '保存失败');
+    BtcMessage.error(err.message || t('common.save_failed'));
   }
 }
 
 // 清空日志
 function clearLogs() {
-  BtcConfirm('是否要清空日志？', '提示', {
+  BtcConfirm(t('common.ops.logs.request.clear_confirm'), t('common.tip'), {
     type: 'warning'
   })
     .then(async () => {
       try {
         // 暂时注释掉，等待后端提供接口
         // await requestService.clear();
-        BtcMessage.success('清空成功');
+        BtcMessage.success(t('common.ops.logs.request.clear_success'));
         requestCrudRef.value?.refresh?.();
       } catch (err: any) {
-        BtcMessage.error(err.message || '清空失败');
+        BtcMessage.error(err.message || t('common.ops.logs.request.clear_failed'));
       }
     })
     .catch(() => null);

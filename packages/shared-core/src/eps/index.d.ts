@@ -4,3 +4,4 @@
 export * from './service';
 export { getGlobalEpsService, createEpsService, loadEpsService, exportEpsServiceToGlobal } from './service';
 export type { EpsServiceData } from './service';
+//# sourceMappingURL=index.d.ts.map

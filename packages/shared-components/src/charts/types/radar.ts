@@ -35,10 +35,10 @@ export interface RadarChartProps extends BaseChartProps, InteractionProps {
   /** 雷达图数据 */
   data: RadarChartDataItem[];
   /** 雷达图中心位置 */
-  center?: [string, string];
+  center?: [string, string] | undefined;
   /** 雷达图半径 */
-  radius?: string;
+  radius?: string | undefined;
   /** 分割数 */
-  splitNumber?: number;
+  splitNumber?: number | undefined;
 }
 

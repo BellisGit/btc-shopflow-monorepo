@@ -9,14 +9,15 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@btc/shared-utils": ["../shared-utils/dist"],
-      "@btc/shared-utils/*": ["../shared-utils/dist/*"],
-      "@configs/*": ["../../configs/*"],
+      "@configs": ["./src/configs"],
+      "@configs/*": ["./src/configs/*"],
       "@btc/shared-components": ["../shared-components/dist"],
-      "@btc/shared-components/*": ["../shared-components/dist/*"]
+      "@btc/shared-components/*": ["../shared-components/dist/*"],
+      "@btc/auth-shared": ["../../auth/shared"],
+      "@btc/auth-shared/*": ["../../auth/shared/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "src/configs/app-configs-collected.ts"]
 }
 

@@ -162,6 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { Strategy, StrategyAlert } from '@/types/strategy';
 import { StrategyType, StrategyStatus } from '@/types/strategy';
@@ -201,7 +202,7 @@ const alertForm = ref({
 // 动作配置
 const emailConfig = ref({
   recipients: '',
-  subject: '策略监控告警'
+  subject: t('common.strategy.monitor.alert_subject')
 });
 
 const webhookConfig = ref({
@@ -216,10 +217,10 @@ const smsConfig = ref({
 // 表单验证规则
 const alertRules = {
   name: [
-    { required: true, message: '请输入告警名称', trigger: 'blur' }
+    { required: true, message: t('common.strategy.monitor.please_input_alert_name'), trigger: 'blur' }
   ],
   type: [
-    { required: true, message: '请选择告警类型', trigger: 'change' }
+    { required: true, message: t('common.strategy.monitor.please_select_alert_type'), trigger: 'change' }
   ]
 };
 
@@ -227,17 +228,17 @@ const alertRules = {
 const availableMetrics = computed(() => {
   const metricsMap = {
     'PERFORMANCE': [
-      { value: 'avg_response_time', label: '平均响应时间' },
-      { value: 'p95_response_time', label: 'P95响应时间' },
-      { value: 'p99_response_time', label: 'P99响应时间' }
+      { value: 'avg_response_time', label: t('common.strategy.monitor.metrics.avg_response_time') },
+      { value: 'p95_response_time', label: t('common.strategy.monitor.metrics.p95_response_time') },
+      { value: 'p99_response_time', label: t('common.strategy.monitor.metrics.p99_response_time') }
     ],
     'ERROR_RATE': [
-      { value: 'error_rate', label: '错误率' },
-      { value: 'failure_count', label: '失败次数' }
+      { value: 'error_rate', label: t('common.strategy.monitor.metrics.error_rate') },
+      { value: 'failure_count', label: t('common.strategy.monitor.metrics.failure_count') }
     ],
     'EXECUTION_COUNT': [
-      { value: 'execution_count', label: '执行次数' },
-      { value: 'execution_rate', label: '执行频率' }
+      { value: 'execution_count', label: t('common.strategy.monitor.metrics.execution_count') },
+      { value: 'execution_rate', label: t('common.strategy.monitor.metrics.execution_rate') }
     ]
   };
 
@@ -258,41 +259,47 @@ const getThresholdUnit = () => {
     'p95_response_time': 'ms',
     'p99_response_time': 'ms',
     'error_rate': '%',
-    'failure_count': '次',
-    'execution_count': '次',
-    'execution_rate': '次/分钟'
+    'failure_count': t('common.strategy.monitor.units.times'),
+    'execution_count': t('common.strategy.monitor.units.times'),
+    'execution_rate': t('common.strategy.monitor.units.times_per_minute')
   };
   return unitMap[metric] || '';
 };
 
 const getTypeLabel = (type: string) => {
   const labelMap = {
-    'PERFORMANCE': '性能',
-    'ERROR_RATE': '错误率',
-    'EXECUTION_COUNT': '执行次数'
+    'PERFORMANCE': t('common.strategy.monitor.types.performance'),
+    'ERROR_RATE': t('common.strategy.monitor.types.error_rate'),
+    'EXECUTION_COUNT': t('common.strategy.monitor.types.execution_count')
   };
   return labelMap[type] || type;
 };
 
 const getPreviewTitle = () => {
-  if (!alertForm.value.name) return '告警规则预览';
-  return `告警规则: ${alertForm.value.name}`;
+  if (!alertForm.value.name) return t('common.strategy.monitor.alert_rule_preview');
+  return `${t('common.strategy.monitor.alert_rule')}: ${alertForm.value.name}`;
 };
 
 const getPreviewDescription = () => {
   const { condition } = alertForm.value;
-  if (!condition.metric) return '请完善告警配置';
+  if (!condition.metric) return t('common.strategy.monitor.please_complete_alert_config');
 
   const metricLabel = availableMetrics.value.find(m => m.value === condition.metric)?.label || condition.metric;
   const operatorMap = {
-    'gt': '大于',
-    'gte': '大于等于',
-    'lt': '小于',
-    'lte': '小于等于',
-    'eq': '等于'
+    'gt': t('common.strategy.monitor.operators.gt'),
+    'gte': t('common.strategy.monitor.operators.gte'),
+    'lt': t('common.strategy.monitor.operators.lt'),
+    'lte': t('common.strategy.monitor.operators.lte'),
+    'eq': t('common.strategy.monitor.operators.eq')
   };
 
-  return `当 ${metricLabel} ${operatorMap[condition.operator]} ${condition.threshold}${getThresholdUnit()} 且持续 ${condition.duration} 秒时触发告警`;
+  return t('common.strategy.monitor.alert_rule_description', {
+    metric: metricLabel,
+    operator: operatorMap[condition.operator],
+    threshold: condition.threshold,
+    unit: getThresholdUnit(),
+    duration: condition.duration
+  });
 };
 
 // 事件处理
@@ -314,7 +321,7 @@ const resetForm = () => {
     enabled: true
   };
   selectedActionTypes.value = [];
-  emailConfig.value = { recipients: '', subject: '策略监控告警' };
+  emailConfig.value = { recipients: '', subject: t('common.strategy.monitor.alert_subject') };
   webhookConfig.value = { url: '', method: 'POST' };
   smsConfig.value = { phoneNumbers: '' };
 };
@@ -350,7 +357,7 @@ const saveAlert = async () => {
 
     await strategyService.createAlert(alertData);
 
-    BtcMessage.success('告警规则保存成功');
+    BtcMessage.success(t('common.strategy.monitor.alert_save_success'));
     emit('save');
 
     // 重新加载告警列表
@@ -358,7 +365,7 @@ const saveAlert = async () => {
     resetForm();
 
   } catch (error) {
-    BtcMessage.error(error.message || '保存失败');
+    BtcMessage.error(error.message || t('common.save_failed'));
   } finally {
     saving.value = false;
   }
@@ -388,19 +395,19 @@ const editAlert = (alert: StrategyAlert) => {
 
 const deleteAlert = async (alert: StrategyAlert) => {
   try {
-    await BtcConfirm('确定要删除这个告警规则吗？', '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await BtcConfirm(t('common.strategy.monitor.delete_alert_confirm'), t('common.confirm_delete'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     });
 
     await strategyService.deleteAlert(alert.id);
-    BtcMessage.success('告警规则删除成功');
+    BtcMessage.success(t('common.strategy.monitor.alert_delete_success'));
 
     loadExistingAlerts();
   } catch (error) {
     if (error !== 'cancel') {
-      BtcMessage.error('删除失败');
+      BtcMessage.error(t('common.delete_failed'));
     }
   }
 };
@@ -410,7 +417,7 @@ const loadExistingAlerts = async () => {
     const alerts = await strategyService.getAlerts(props.strategy?.id);
     existingAlerts.value = alerts;
   } catch (error) {
-    console.error('加载告警列表失败:', error);
+    console.error('Failed to load alert list:', error);
   }
 };
 
@@ -420,7 +427,7 @@ onMounted(() => {
 
   // 设置默认告警名称
   if (props.strategy) {
-    alertForm.value.name = `${props.strategy.name} - 性能告警`;
+    alertForm.value.name = `${props.strategy.name} - ${t('common.strategy.monitor.types.performance')}`;
   }
 });
 </script>

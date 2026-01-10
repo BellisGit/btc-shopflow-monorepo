@@ -12,23 +12,32 @@ import { createPathHelpers } from './utils/path-helpers';
  * @param appName 应用名称
  * @returns 别名配置对象
  */
-export function createBaseAliases(appDir: string, _appName: string): Record<string, string> {
+export function createBaseAliases(
+  appDir: string, 
+  _appName: string
+): Record<string, string> {
   const { withSrc, withRoot, withConfigs, withPackages } = createPathHelpers(appDir);
 
-  return {
+  const aliases: Record<string, string> = {
     '@': withSrc('src'),
     '@modules': withSrc('src/modules'),
     '@services': withSrc('src/services'),
     '@components': withSrc('src/components'),
     '@utils': withSrc('src/utils'),
     '@auth': withRoot('auth'),
-    '@configs': withConfigs(''),
-    // @btc/* 包别名（用于 configs 目录中的文件，确保能正确解析）
-    // 注意：这些别名主要用于开发环境，构建时会从 node_modules 解析
+    '@configs': withPackages('shared-core/src/configs'),
+    '@btc/auth-shared': withRoot('auth/shared'),
+    // @btc/* 包别名：所有应用都打包这些包，所以始终使用别名指向源码
     '@btc/shared-core': withPackages('shared-core/src'),
     '@btc/shared-components': withPackages('shared-components/src'),
-    '@btc/shared-utils': withPackages('shared-utils/src'),
-    '@btc/subapp-manifests': withPackages('subapp-manifests/src/index.ts'),
+    '@btc/shared-router': withPackages('shared-router/src'),
+    // 向后兼容：废弃包的别名指向归并后的位置
+    '@btc/shared-utils': withPackages('shared-core/src/utils'),
+    '@btc/shared-plugins': withPackages('shared-components/src/plugins'),
+    '@btc/i18n': withPackages('shared-components/src/i18n'),
+    '@btc/subapp-manifests': withPackages('shared-core/src/manifest'),
+    '@btc/env': withPackages('shared-core/src/env'),
+    
     // shared-components 内部使用的别名（用于解析 shared-components 内部的导入）
     '@btc-common': withPackages('shared-components/src/common'),
     '@btc-components': withPackages('shared-components/src/components'),
@@ -39,6 +48,7 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
     '@assets': withPackages('shared-components/src/assets'), // @assets 别名，用于图片资源导入
     '@btc-utils': withPackages('shared-components/src/utils'),
     '@plugins': withPackages('shared-components/src/plugins'),
+    
     // 图表相关别名
     '@charts-utils/css-var': withPackages('shared-components/src/charts/utils/css-var'),
     '@charts-utils/color': withPackages('shared-components/src/charts/utils/color'),
@@ -47,10 +57,13 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
     '@charts-types': withPackages('shared-components/src/charts/types'),
     '@charts-utils': withPackages('shared-components/src/charts/utils'),
     '@charts-composables': withPackages('shared-components/src/charts/composables'),
-    // Element Plus 别名
+
+    // Element Plus 别名（始终使用）
     'element-plus/es': 'element-plus/es',
     'element-plus/dist': 'element-plus/dist',
   };
+
+  return aliases;
 }
 
 /**
@@ -59,11 +72,47 @@ export function createBaseAliases(appDir: string, _appName: string): Record<stri
  * @param appName 应用名称
  * @returns resolve 配置对象
  */
-export function createBaseResolve(appDir: string, appName: string): UserConfig['resolve'] {
+export function createBaseResolve(
+  appDir: string, 
+  appName: string
+): UserConfig['resolve'] {
+  const { withPackages } = createPathHelpers(appDir);
+  const aliases = createBaseAliases(appDir, appName);
+  
+  // 使用数组形式的别名，确保更具体的别名优先匹配
+  // Vite 会按数组顺序匹配，第一个匹配的别名会被使用
+  const aliasArray: Array<{ find: string | RegExp; replacement: string }> = [
+    // locales 子路径别名（所有应用都使用别名指向源码）
+    {
+      find: '@btc/shared-core/locales/zh-CN',
+      replacement: withPackages('shared-core/src/btc/plugins/i18n/locales/zh-CN'),
+    },
+    {
+      find: '@btc/shared-core/locales/en-US',
+      replacement: withPackages('shared-core/src/btc/plugins/i18n/locales/en-US'),
+    },
+    {
+      find: '@btc/shared-components/locales/zh-CN.json',
+      replacement: withPackages('shared-components/src/locales/zh-CN.json'),
+    },
+    {
+      find: '@btc/shared-components/locales/en-US.json',
+      replacement: withPackages('shared-components/src/locales/en-US.json'),
+    },
+    // 其他别名（从对象转换为数组形式）
+    ...Object.entries(aliases).map(([find, replacement]) => ({
+      find,
+      replacement,
+    })),
+  ];
+  
   return {
-    alias: createBaseAliases(appDir, appName),
+    alias: aliasArray,
     dedupe: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
     extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+    // 确保 Vite 优先使用 package.json 的 exports 配置
+    // 关键：添加 'development' 条件，确保在开发环境中使用源码
+    conditions: ['development', 'import', 'module', 'browser', 'default'],
   };
 }
 

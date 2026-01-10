@@ -6,33 +6,33 @@ import { AppLayout } from '@btc/shared-components';
 const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'finance-home',
+    name: 'FinanceHome',
     component: () => import('../../modules/home/views/index.vue'),
-    meta: { isHome: true, process: false, tabLabelKey: 'menu.finance.home' },
+    meta: { isHome: true, process: false },
   },
   {
     path: '/inventory',
-    name: 'finance-inventory',
+    name: 'FinanceInventory',
     component: () => import('../../modules/inventory/views/index.vue'),
     meta: {
-      labelKey: 'menu.finance.inventoryManagement',
+      labelKey: 'menu.finance.inventory_management',
       breadcrumbs: [
-        { labelKey: 'menu.finance.inventoryManagement', icon: 'Box' },
+        { labelKey: 'menu.finance.inventory_management', icon: 'Box' },
       ],
-      tabLabelKey: 'menu.finance.inventoryManagement',
+      tabLabelKey: 'menu.finance.inventory_management',
     },
   },
   {
     path: '/inventory/result',
-    name: 'finance-inventory-result',
+    name: 'FinanceInventoryResult',
     component: () => import('../../modules/inventory/views/result/index.vue'),
     meta: {
-      labelKey: 'menu.finance.inventoryManagement.result',
+      labelKey: 'menu.finance.inventory_management.result',
       breadcrumbs: [
-        { labelKey: 'menu.finance.inventoryManagement', icon: 'Box' },
-        { labelKey: 'menu.finance.inventoryManagement.result', icon: 'List' },
+        { labelKey: 'menu.finance.inventory_management', icon: 'Box' },
+        { labelKey: 'menu.finance.inventory_management.result', icon: 'List' },
       ],
-      tabLabelKey: 'menu.finance.inventoryManagement.result',
+      tabLabelKey: 'menu.finance.inventory_management.result',
     },
   },
 ];

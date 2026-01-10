@@ -1,0 +1,318 @@
+.loading-style-settings {
+  .setting-box-wrap {
+    margin-top: 20px;
+    gap: 10px 16px;
+  }
+
+  .setting-item {
+    flex: 1 1 calc(50% - 8px); // 每排展示2个
+    max-width: calc(50% - 8px); // 每排展示2个
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+
+    &:focus-visible .loading-style-preview {
+      border-color: var(--el-color-primary);
+    }
+
+    &:hover .loading-style-preview {
+      border-color: var(--el-border-color);
+    }
+
+    &.is-active .loading-style-preview {
+      border-color: var(--el-color-primary);
+    }
+
+    &.is-active .name {
+      color: var(--el-color-primary);
+      font-weight: 600;
+    }
+  }
+
+  .loading-style-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 80px;
+    border: 2px solid var(--el-border-color-light);
+    border-radius: 10px;
+    transition: border-color 0.2s ease;
+  }
+
+  .loading-preview__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .loading-preview-circle {
+    width: 44px;
+    height: 44px;
+    border: 7px solid currentColor;
+    border-bottom-color: #ffffff;
+    border-radius: 30px;
+    position: relative;
+    animation:
+      loading-spin 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
+      loading-color-change 2s infinite ease-in;
+    transform: rotate(0deg);
+    box-sizing: border-box;
+    color: #409eff;
+
+    &::before,
+    &::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      bottom: -2px;
+      height: 7px;
+      width: 7px;
+      border-radius: 10px;
+      background-color: currentColor;
+    }
+
+    &::before {
+      left: -1px;
+    }
+
+    &::after {
+      right: -1px;
+    }
+  }
+
+  .loading-preview-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+
+    svg {
+      color: currentColor;
+    }
+
+    .spinner {
+      transform-origin: 20px 20px;
+      animation: loading-dots-rotate 1.6s linear infinite;
+    }
+
+    .dot {
+      animation:
+        loading-dots-fade 1.6s infinite,
+        loading-dots-color-change 3.2s infinite ease-in-out;
+
+      &.dot-1 {
+        fill: #409eff;
+        animation-delay: 0s, 0s;
+      }
+
+      &.dot-2 {
+        fill: #67c23a;
+        animation-delay: 0.4s, 0.8s;
+      }
+
+      &.dot-3 {
+        fill: #e6a23c;
+        animation-delay: 0.8s, 1.6s;
+      }
+
+      &.dot-4 {
+        fill: #f56c6c;
+        animation-delay: 1.2s, 2.4s;
+      }
+    }
+  }
+
+  @keyframes loading-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes loading-color-change {
+    0% {
+      color: #409eff;
+    }
+    25% {
+      color: #67c23a;
+    }
+    50% {
+      color: #e6a23c;
+    }
+    75% {
+      color: #f56c6c;
+    }
+    100% {
+      color: #409eff;
+    }
+  }
+
+  @keyframes loading-dots-rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes loading-dots-fade {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes loading-dots-color-change {
+    0% {
+      fill: #409eff;
+    }
+    25% {
+      fill: #67c23a;
+    }
+    50% {
+      fill: #e6a23c;
+    }
+    75% {
+      fill: #f56c6c;
+    }
+    100% {
+      fill: #409eff;
+    }
+  }
+
+  .loading-preview-gradient {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loading-preview-gradient-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #2196f3, #e91e63, #2196f3);
+    animation: loading-gradient-rotate 2s linear infinite;
+    position: relative;
+  }
+
+  .loading-preview-gradient-circle::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: var(--el-bg-color, #ffffff);
+    border-radius: 50%;
+  }
+
+  .loading-preview-progress {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .loading-preview-progress .progress-bar-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 280px; // 从 200px 增加到 280px，增加进度条长度
+  }
+
+  .loading-preview-progress .progress-bar-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .loading-preview-progress .progress-bar-fill {
+    position: relative;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      #409eff 0%,
+      #67c23a 25%,
+      #e6a23c 50%,
+      #f56c6c 75%,
+      #409eff 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 3px;
+    animation: loading-progress-gradient 2s linear infinite;
+    box-shadow:
+      0 0 8px rgba(64, 158, 255, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+
+  .loading-preview-progress .progress-bar-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    animation: loading-progress-shine 1.5s ease-in-out infinite;
+    border-radius: 3px;
+  }
+
+  .loading-preview-progress .progress-percentage {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--el-text-color-primary, #303133);
+    min-width: 40px;
+    text-align: right;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-left: 8px; // 使用 margin-left 替代 gap，保持与进度条的间距
+  }
+
+  @keyframes loading-progress-gradient {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 0%;
+    }
+  }
+
+  @keyframes loading-progress-shine {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(200%);
+    }
+  }
+
+  @keyframes loading-gradient-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+

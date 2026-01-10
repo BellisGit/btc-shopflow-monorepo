@@ -5,22 +5,19 @@
   "type": "module",
   "scripts": {
     "predev": "pnpm --filter @btc/vite-plugin build",
-    "dev": "vite --port 8082",
+    "dev": "vite",
     "clean": "node scripts/clean.js",
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {
-    "@btc/shared-components": "^1.0.0",
-    "@btc/shared-core": "^1.0.0",
-    "@btc/shared-utils": "^1.0.0",
-    "@btc/subapp-manifests": "^0.0.1",
+    "@btc/shared-components": "workspace:*",
+    "@btc/shared-core": "workspace:*",
     "@vueuse/core": "^13.9.0",
     "chardet": "^2.1.0",
     "dayjs": "^1.11.18",
     "echarts": "^6.0.0",
-    "element-plus": "^2.8.10",
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.3",
     "qiankun": "^2.10.16",
@@ -31,10 +28,11 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@btc/vite-plugin": "^1.0.0",
+    "@btc/vite-plugin": "workspace:*",
     "@intlify/unplugin-vue-i18n": "^1.4.0",
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.0.0",
+    "element-plus": "^2.13.0",
     "nprogress": "^0.2.0",
     "sass": "^1.93.2",
     "typescript": "^5.3.3",
@@ -42,4 +40,3 @@
     "vue-tsc": "^1.8.27"
   }
 }
-

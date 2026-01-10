@@ -1,4 +1,4 @@
-import { inject, onBeforeUnmount, provide, ref, Ref } from 'vue';
+import { inject, onBeforeUnmount, provide, ref, type Ref } from 'vue';
 
 const CONTENT_HEIGHT_KEY = Symbol('btc-content-height');
 

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-dropdown trigger="click" @command="handleCommand">
     <template #default>
       <BtcIconButton
@@ -33,7 +33,9 @@ defineOptions({
   name: 'LayoutLocaleSwitcher'
 });
 
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+// computed 未使用，已移除
+import { storage } from '@btc/shared-core/utils/storage';
 import { useI18n } from '@btc/shared-core';
 import { BtcIconButton } from '@btc/shared-components';
 
@@ -51,10 +53,22 @@ const languages = ref([
 ]);
 
 const handleCommand = (value: string) => {
+  // 优先使用插件API
+  const pluginAPI = (window as any).__PLUGIN_API__;
+  if (pluginAPI?.i18n?.changeLocale) {
+    try {
+      pluginAPI.i18n.changeLocale(value);
+      return;
+    } catch (error) {
+      console.warn('[LocaleSwitcher] 调用插件API失败:', error);
+    }
+  }
+
+  // 向后兼容：直接操作
   locale.value = value;
 
-  // 同步更新 localStorage
-  localStorage.setItem('locale', value);
+  // 同步更新 storage
+  storage.set('locale', value);
 
   // 触发语言切换事件
   window.dispatchEvent(new CustomEvent('language-change', {

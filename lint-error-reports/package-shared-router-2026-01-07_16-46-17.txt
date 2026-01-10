@@ -1,0 +1,4 @@
+﻿
+C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\packages\shared-router\src\guards\titleGuard.ts: line 197, col 20, Error - Using Chinese characters: '[titleGuard] 设置标题失败:' (i18n/no-chinese-character)
+
+

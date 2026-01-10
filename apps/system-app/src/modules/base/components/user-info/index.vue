@@ -109,7 +109,6 @@ const {
   isTyping,
   cursorPosition,
   userInfo,
-  loadProfileInfo,
   handleNameHover,
   handleNameLeave
 } = useUserInfo();
@@ -126,10 +125,7 @@ const handleAvatarError = (event: Event) => {
   img.src = '/logo.png';
 };
 
-// 初始化
-onMounted(async () => {
-  await loadProfileInfo();
-});
+// 初始化（个人信息由主应用或 layout-app 统一处理，system-app 不需要加载）
 
 // 处理用户下拉菜单命令
 const handleCommand = (command: string) => {

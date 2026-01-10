@@ -1,10 +1,11 @@
-﻿{
+{
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["tsconfig.json", ".eslintrc.js", ".prettierrc"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", ".vitepress/dist/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.tsx", "src/**/*.jsx", "!src/**/*.test.ts", "!src/**/*.test.tsx", "!src/**/*.spec.ts", "!src/**/*.spec.tsx"],
       "cache": true
     },
     "dev": {
@@ -14,7 +15,7 @@
       "outputs": []
     },
     "preview": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "cache": false,
       "persistent": true,
       "outputs": []

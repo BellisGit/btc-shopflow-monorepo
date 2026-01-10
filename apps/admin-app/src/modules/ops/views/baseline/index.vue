@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <div class="baseline-page">
-    <BtcCrud ref="crudRef" :service="baselineService">
+    <BtcCrud ref="crudRef" :service="wrappedBaselineService || baselineService">
       <BtcRow>
         <div class="btc-crud-primary-actions">
           <BtcRefreshBtn />
@@ -27,9 +27,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useI18n } from '@btc/shared-core';
-import type { TableColumn, FormItem } from '@btc/shared-components';
+import { ref } from 'vue';
+import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
 import { createMockCrudService } from '@utils/http';
 
 const { t } = useI18n();
@@ -37,39 +37,14 @@ const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
 
-// 基线服务 - 使用Mock服务
-const baselineService = createMockCrudService('btc_baseline');
+// 从 config.ts 读取配置
+const { columns: baselineColumns } = usePageColumns('ops.baseline');
+const { formItems: baselineFormItems } = usePageForms('ops.baseline');
+const pageConfig = getPageConfigFull('ops.baseline');
 
-// 基线表格列
-const baselineColumns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 60 },
-  { type: 'index', label: '序号', width: 60 },
-  { prop: 'baselineName', label: '基线名称', minWidth: 150 },
-  { prop: 'baselineCode', label: '基线编码', minWidth: 150 },
-  { prop: 'version', label: '版本', width: 100 },
-  { prop: 'description', label: '描述', minWidth: 200 },
-  { prop: 'status', label: '状态', width: 100 },
-]);
-
-// 基线表单
-const baselineFormItems = computed<FormItem[]>(() => [
-  { prop: 'baselineName', label: '基线名称', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'baselineCode', label: '基线编码', span: 12, required: true, component: { name: 'el-input' } },
-  { prop: 'version', label: '版本', span: 12, component: { name: 'el-input' } },
-  {
-    prop: 'status',
-    label: '状态',
-    span: 12,
-    component: {
-      name: 'el-select',
-      options: [
-        { label: '启用', value: 'enabled' },
-        { label: '禁用', value: 'disabled' },
-      ]
-    }
-  },
-  { prop: 'description', label: '描述', span: 24, component: { name: 'el-input', props: { type: 'textarea', rows: 3 } } },
-]);
+// 基线服务 - 使用Mock服务（config.ts 中 baseline 为 null，使用 Mock 服务）
+const baselineService = pageConfig?.service?.baseline || createMockCrudService('btc_baseline');
+const wrappedBaselineService = usePageService('ops.baseline', 'baseline') || baselineService;
 
 </script>
 

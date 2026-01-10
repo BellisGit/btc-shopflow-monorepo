@@ -11,7 +11,7 @@ echo "🚀 开始构建 BTC ShopFlow 所有应用镜像..."
 PROJECT_ROOT=$(pwd)
 REGISTRY="btc-shopflow"
 
-# 应用列表（排除docs-site-app，它是文档站点，不需要Docker构建）
+# 应用列表（排除docs-app，它是文档站点，不需要Docker构建）
 APPS=(
     "system-app"
     "admin-app" 

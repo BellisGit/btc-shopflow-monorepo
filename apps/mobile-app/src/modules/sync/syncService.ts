@@ -1,3 +1,4 @@
+import { storage } from '@btc/shared-utils';
 import { db } from '@/db';
 import { processQueue } from './backgroundSync';
 
@@ -56,7 +57,7 @@ export async function pushUpdates() {
 }
 
 export async function fullSync() {
-  const lastSyncTime = Number(localStorage.getItem('last_sync_time') || 0);
+  const lastSyncTime = Number(storage.get<number>('last_sync_time') || 0);
   await pullUpdates(lastSyncTime);
   await pushUpdates();
 }

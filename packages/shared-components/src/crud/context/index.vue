@@ -14,7 +14,7 @@ import {
   nextTick,
   onBeforeUnmount,
   computed,
-  reactive,
+  // reactive 未使用，已移除
   watchEffect,
   watch,
 } from 'vue';
@@ -75,14 +75,40 @@ const hasPagination = ref(false);
 const crudRef = ref<HTMLElement>();
 
 // 创建 CRUD 实例
-const crud = useCrud({
+const crudOptions: any = {
   service: props.service,
-  onBeforeRefresh: props.onBeforeRefresh,
   onSuccess: (message: string) => {
     BtcMessage.success(message);
   },
   ...props.options,
-});
+};
+if (props.onBeforeRefresh !== undefined) {
+  crudOptions.onBeforeRefresh = props.onBeforeRefresh;
+}
+const crud = useCrud(crudOptions);
+
+// 关键：确保 crud 实例有效
+if (!crud) {
+  const error = new Error('[BtcCrud] useCrud returned undefined or null');
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+    service: props.service,
+    options: props.options,
+    timestamp: new Date().toISOString(),
+  });
+  throw error;
+}
+
+// 确保 crud.handleAdd 是函数
+if (typeof crud.handleAdd !== 'function') {
+  const error = new Error('[BtcCrud] crud.handleAdd is not a function');
+  console.error('[BtcCrud] CRITICAL ERROR:', error.message, {
+    crud,
+    handleAdd: crud.handleAdd,
+    crudKeys: Object.keys(crud),
+    timestamp: new Date().toISOString(),
+  });
+  throw error;
+}
 
 // 提供给子组件
 provide('btc-crud', crud);

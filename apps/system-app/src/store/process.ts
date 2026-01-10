@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 // 使用动态导入避免循环依赖（tabRegistry 可能导入 micro/manifests，而 micro/index.ts 导入 process.ts）
 // import { getActiveApp, resolveTabMeta } from './tabRegistry';
 
@@ -32,10 +32,12 @@ export function getCurrentAppFromPath(path: string): string {
   if (path.startsWith('/production')) return 'production';
   if (path.startsWith('/finance')) return 'finance';
   if (path.startsWith('/docs')) return 'docs';
-  if (path.startsWith('/monitor')) return 'monitor';
+  if (path.startsWith('/operations')) return 'operations';
   // 系统域是默认域，包括 /、/data/* 以及其他所有未匹配的路径
   return 'system';
 }
+
+// 持久化配置已通过 pinia-plugin-persistedstate 处理
 
 /**
  * 页面标签（Process）Store
@@ -164,9 +166,9 @@ export const useProcessStore = defineStore('process', () => {
    */
   function add(data: ProcessItem) {
     // 跳过个人信息页面和认证页面（不在菜单中，不需要添加到标签页）
-    if (data.path === '/profile' || 
-        data.path === '/login' || 
-        data.path === '/register' || 
+    if (data.path === '/profile' ||
+        data.path === '/login' ||
+        data.path === '/register' ||
         data.path === '/forget-password') {
       return;
     }
@@ -224,8 +226,11 @@ export const useProcessStore = defineStore('process', () => {
         list.value.push(newTab);
       } else {
         // 更新已存在的标签
-        list.value[index].active = true;
-        list.value[index].meta = buildMeta(list.value[index].meta);
+        const existingTab = list.value[index];
+        if (existingTab) {
+          existingTab.active = true;
+          existingTab.meta = buildMeta(existingTab.meta);
+        }
       }
     }
 
@@ -238,13 +243,13 @@ export const useProcessStore = defineStore('process', () => {
         // 首先尝试从 registry 解析（admin 应用）
         const { resolveTabMeta } = await import('./tabRegistry');
         let tabMeta = resolveTabMeta(data.path);
-        
+
         // 如果 registry 解析失败，尝试从 manifest 解析（监控应用和其他子应用）
         if (!tabMeta && app !== 'system' && app !== 'admin') {
           try {
             const { getManifestRoute, getManifest } = await import('@btc/subapp-manifests');
             const manifestRoute = getManifestRoute(app, data.fullPath || data.path);
-            
+
             if (manifestRoute && manifestRoute.tab?.enabled !== false) {
               const manifest = getManifest(app);
               if (manifest) {
@@ -252,12 +257,13 @@ export const useProcessStore = defineStore('process', () => {
                 const routePath = manifestRoute.path;
                 const fullPath = `${basePath}${routePath === "/" ? "" : routePath}`;
                 const manifestKey = routePath.replace(/^\//, "") || "home";
-                
+
+                const i18nKey = manifestRoute.tab?.labelKey ?? manifestRoute.labelKey;
                 tabMeta = {
                   key: manifestKey,
                   title: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey ?? manifestRoute.label ?? fullPath,
                   path: fullPath,
-                  i18nKey: manifestRoute.tab?.labelKey ?? manifestRoute.labelKey,
+                  ...(i18nKey !== undefined && { i18nKey }),
                 };
               }
             }
@@ -265,16 +271,19 @@ export const useProcessStore = defineStore('process', () => {
             console.warn('[Process] Failed to resolve tab meta from manifest:', manifestError);
           }
         }
-        
+
         if (tabMeta) {
           // 更新标签的 meta 信息
           const index = list.value.findIndex((e) => e.fullPath === data.fullPath);
           if (index >= 0) {
-            list.value[index].meta = {
-              ...list.value[index].meta,
-              ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
-              ...(tabMeta.title ? { title: tabMeta.title } : {}),
-            };
+            const existingTab = list.value[index];
+            if (existingTab) {
+              existingTab.meta = {
+                ...existingTab.meta,
+                ...(tabMeta.i18nKey ? { labelKey: tabMeta.i18nKey } : {}),
+                ...(tabMeta.title ? { title: tabMeta.title } : {}),
+              };
+            }
           }
         }
       } catch (error) {
@@ -324,6 +333,8 @@ export const useProcessStore = defineStore('process', () => {
   function clear() {
     list.value = [];
     pinned.value = [];
+    // 同时清除持久化数据
+    clearPersistedData();
   }
 
   /**
@@ -352,6 +363,102 @@ export const useProcessStore = defineStore('process', () => {
     }
   }
 
+  /**
+   * 从持久化数据恢复（由 pinia-plugin-persistedstate 调用）
+   * 在数据恢复后验证和清理数据
+   */
+  function restoreFromStorage() {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // 验证并过滤无效的标签页
+      const validTabs: ProcessItem[] = [];
+      const validPinned: string[] = [];
+      
+      // 验证标签页数据
+      list.value.forEach((tab) => {
+        // 基本验证：必须有 path 和 fullPath
+        if (tab && typeof tab === 'object' && tab.path && tab.fullPath) {
+          // 过滤掉不应该持久化的页面
+          if (
+            tab.path === '/profile' ||
+            tab.path === '/login' ||
+            tab.path === '/register' ||
+            tab.path === '/forget-password'
+          ) {
+            return;
+          }
+          
+          // 确保 meta 存在
+          if (!tab.meta) {
+            tab.meta = {};
+          }
+          
+          // 确保 app 字段存在
+          if (!tab.app) {
+            tab.app = getCurrentAppFromPath(tab.path);
+          }
+          
+          // 排除 active 状态（刷新后需要重新计算）
+          const { active, ...tabWithoutActive } = tab;
+          validTabs.push(tabWithoutActive);
+        }
+      });
+      
+      // 验证固定标签列表：只保留在有效标签中的固定标签
+      const validFullPaths = new Set(validTabs.map((tab) => tab.fullPath));
+      pinned.value.forEach((path) => {
+        if (typeof path === 'string' && validFullPaths.has(path)) {
+          validPinned.push(path);
+        }
+      });
+      
+      // 更新数据
+      list.value = validTabs;
+      pinned.value = validPinned;
+      
+      // 重新排序（固定标签在前）
+      reorderTabs();
+      
+      // 根据当前路由设置 active 状态
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const currentFullPath = window.location.pathname + window.location.search;
+        
+        // 优先匹配 fullPath（包含 query），其次匹配 path
+        const currentTab = list.value.find((tab) => {
+          if (tab.fullPath === currentFullPath) return true;
+          if (tab.path === currentPath) return true;
+          if (tab.fullPath === currentPath) return true;
+          return false;
+        });
+        
+        if (currentTab) {
+          list.value.forEach((tab) => {
+            tab.active = tab.fullPath === currentTab.fullPath;
+          });
+        } else {
+          list.value.forEach((tab) => {
+            tab.active = false;
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('[Process] Failed to restore tabs from storage:', error);
+      // 如果恢复失败，清空数据
+      list.value = [];
+      pinned.value = [];
+    }
+  }
+
+  /**
+   * 清除持久化数据
+   */
+  function clearPersistedData() {
+    list.value = [];
+    pinned.value = [];
+  }
+
   return {
     list,
     pinned,
@@ -372,5 +479,33 @@ export const useProcessStore = defineStore('process', () => {
     clearCurrentApp,
     getAppTabs,
     setTitle,
+    restoreFromStorage,
+    clearPersistedData,
   };
+}, {
+  persist: {
+    // 只持久化 list 和 pinned，排除 active 状态
+    paths: ['list', 'pinned'],
+    // 自定义序列化器，排除 active 状态
+    serializer: {
+      serialize: (value) => {
+        const data = {
+          list: value.list.map((tab: ProcessItem) => {
+            const { active, ...tabWithoutActive } = tab;
+            return tabWithoutActive;
+          }),
+          pinned: value.pinned,
+        };
+        return JSON.stringify(data);
+      },
+      deserialize: (value) => {
+        return JSON.parse(value);
+      },
+    },
+    // 数据恢复后的钩子
+    afterRestore: (ctx) => {
+      // 调用恢复函数进行数据验证和清理
+      ctx.store.restoreFromStorage();
+    },
+  },
 });

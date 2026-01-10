@@ -4,7 +4,6 @@
       v-if="isContainerReady"
       :key="chartThemeKey"
       :option="chartOption"
-      :theme="chartTheme"
       :autoresize="autoresize"
       :style="{ width: '100%', height: '100%' }"
       @ready="handleChartReady"
@@ -17,14 +16,13 @@ import { ref } from 'vue';
 import { useChartComponent } from '../../../composables/useChartComponent';
 import { useRingChart } from '../composables/useRingChart';
 import type { RingChartProps } from '../../../types/pie';
-import { getThemeColors } from '../../../utils/css-var';
 
 const props = withDefaults(defineProps<RingChartProps>(), {
   height: '300px',
   width: '100%',
   autoresize: true,
   radius: () => ['40%', '70%'],
-  center: () => ['50%', '50%'],
+  // center 不设置默认值，让 useRingChart 根据图例位置动态计算
   showLegend: true,
   showTooltip: true,
   showToolbar: false,
@@ -35,18 +33,17 @@ const props = withDefaults(defineProps<RingChartProps>(), {
 });
 
 const chartContainerRef = ref<HTMLElement | null>(null);
-const themeColors = getThemeColors();
 
 const chart = useChartComponent(
   chartContainerRef,
   props,
-  (isDark) => {
-    const { buildOption } = useRingChart(props, isDark, themeColors);
+  (isDark, themeColors, styleHelpers) => {
+    const { buildOption } = useRingChart(props, isDark, themeColors, styleHelpers);
     return buildOption();
   }
 );
 
-const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartTheme, chartThemeKey } = chart;
+const { chartOption, chartStyle, updateChartInstance, isContainerReady, chartThemeKey } = chart;
 
 const handleChartReady = () => {
   updateChartInstance();

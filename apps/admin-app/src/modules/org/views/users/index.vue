@@ -8,8 +8,8 @@
       :form-items="formItems"
       :op="{ buttons: ['edit', 'delete'] }"
       :on-info="handleUserInfo"
-      left-title="部门列表"
-      right-title="用户列表"
+      :left-title="t('org.dept.list')"
+      :right-title="t('org.users.title')"
       :show-unassigned="true"
       :enable-key-search="true"
       :left-size="'middle'"
@@ -21,42 +21,46 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { BtcTableGroup } from '@btc/shared-components';
-import {
-  getUserFormItems,
-  services
-} from './config';
+import { usePageColumns, usePageForms, getPageConfigFull, usePageService, useI18n } from '@btc/shared-core';
+
+const { t } = useI18n();
 
 const tableGroupRef = ref();
 const departmentOptions = ref<any[]>([]);
 
-// 动态表格列配置，角色列会根据角色选项格式化显示
-const userColumns = computed(() => {
-  const baseColumns = [
-    { type: 'selection', width: 60 },
-    { prop: 'username', label: '用户名', width: 120 },
-    { prop: 'realName', label: '中文名', minWidth: 100 },
-    { prop: 'position', label: '职位', minWidth: 100 },
-    {
-      prop: 'name',
-      label: '部门',
-      width: 120,
-    },
-    {
-      prop: 'status',
-      label: '状态',
-      width: 100,
-      dict: [
-        { label: '激活', value: 'ACTIVE', type: 'success' },
-        { label: '禁用', value: 'INACTIVE', type: 'danger' }
-      ],
-      dictColor: true
-    },
-  ];
-  return baseColumns;
-});
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('org.users');
+const { formItems: baseFormItems } = usePageForms('org.users');
+const pageConfig = getPageConfigFull('org.users');
 
-// 动态表单配置
-const formItems = computed(() => getUserFormItems(departmentOptions.value));
+// 使用 config.ts 中定义的服务
+const services = {
+  sysdepartment: pageConfig?.service?.sysdepartment,
+  sysuser: usePageService('org.users', 'sysuser'),
+};
+
+// 动态表格列配置（从 config.ts 读取）
+const userColumns = baseColumns;
+
+// 动态表单配置 - 扩展以支持动态 departmentOptions
+const formItems = computed(() => {
+  return baseFormItems.value.map(item => {
+    // 如果表单项是 deptId，添加动态 options
+    if (item.prop === 'deptId') {
+      return {
+        ...item,
+        component: {
+          ...item.component,
+          props: {
+            ...item.component?.props,
+            options: departmentOptions.value,
+          },
+        },
+      };
+    }
+    return item;
+  });
+});
 
 // 处理左侧数据加载
 function handleLoad(data: any[]) {
@@ -94,7 +98,7 @@ async function handleUserInfo(user: any, { next, done }: any) {
 
     done(userDetail);
   } catch (error) {
-    console.error('获取用户详情失败:', error);
+    console.error('Failed to get user details:', error);
     done(user);
   }
 }

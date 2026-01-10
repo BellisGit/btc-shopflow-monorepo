@@ -152,3 +152,4 @@ export interface UseCrudReturn<T = Record<string, unknown>> {
     toolbarContext?: any;
     setToolbarContext?: (context: any) => void;
 }
+//# sourceMappingURL=types.d.ts.map

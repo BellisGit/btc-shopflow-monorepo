@@ -37,141 +37,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import { Monitor, Grid } from '@element-plus/icons-vue';
-import { getEnvironment, getCurrentSubApp } from '@configs/unified-env-config';
-import { getAllApps, getMainApp, getAppBySubdomain } from '@configs/app-scanner';
+import { useEnvInfo } from '@btc/shared-core';
 
-// 当前环境和应用信息（响应式）
-const currentEnvironment = ref(getEnvironment());
-const currentSubApp = ref(getCurrentSubApp());
-const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '');
-const currentHostname = ref(typeof window !== 'undefined' ? window.location.hostname : '');
-const mainApp = computed(() => getMainApp());
+// 使用统一的环境信息 composable
+const { environment, currentApp: currentAppId } = useEnvInfo();
 
-// 根据当前路径和子域名动态计算当前应用
+// 计算当前应用显示名称
 const currentApp = computed(() => {
-  const env = currentEnvironment.value;
-  const path = currentPath.value;
-  const hostname = currentHostname.value;
-  const apps = getAllApps();
-  
-  // 生产环境：优先通过子域名识别应用（关键修复）
-  // 在生产环境中，子应用通过子域名访问，路径都是 /，必须通过子域名识别
-  if (env === 'production' && hostname) {
-    const app = getAppBySubdomain(hostname);
-    if (app && app.type === 'sub' && app.enabled) {
-      return app.name;
-    }
-  }
-  
-  // 开发/预览环境：通过路径匹配（与 getCurrentSubApp 使用相同的匹配逻辑）
-  for (const app of apps) {
-    if (app.type === 'sub' && app.enabled) {
-      const normalizedPathPrefix = app.pathPrefix.endsWith('/') 
-        ? app.pathPrefix.slice(0, -1) 
-        : app.pathPrefix;
-      const normalizedPath = path.endsWith('/') && path !== '/'
-        ? path.slice(0, -1)
-        : path;
-      
-      if (normalizedPath === normalizedPathPrefix || normalizedPath.startsWith(normalizedPathPrefix + '/')) {
-        return app.name;
-      }
-    }
-  }
-  
-  // 如果没有匹配到子应用，返回主应用
-  return mainApp.value?.name || 'system';
+  return currentAppId.value || 'system';
 });
 
 const envLabel = computed(() => {
-  const env = currentEnvironment.value;
+  const env = environment.value;
   const envMap: Record<string, string> = {
     development: '开发',
     preview: '预览',
+    test: '测试',
     production: '生产',
   };
   return envMap[env] || env;
 });
 
 const envTagType = computed(() => {
-  const env = currentEnvironment.value;
+  const env = environment.value;
   if (env === 'production') return 'warning';
+  if (env === 'test') return 'warning';
   if (env === 'preview') return 'info';
   return 'success';
 });
 
 const currentAppLabel = computed(() => currentApp.value);
 
-// 更新环境和应用信息
-function updateEnvInfo() {
-  currentEnvironment.value = getEnvironment();
-  currentSubApp.value = getCurrentSubApp();
-  currentPath.value = typeof window !== 'undefined' ? window.location.pathname : '';
-  currentHostname.value = typeof window !== 'undefined' ? window.location.hostname : '';
-}
-
-onMounted(() => {
-  // 初始化环境信息（立即更新路径和主机名）
-  currentPath.value = typeof window !== 'undefined' ? window.location.pathname : '';
-  currentHostname.value = typeof window !== 'undefined' ? window.location.hostname : '';
-  updateEnvInfo();
-  
-  // 监听事件总线的应用切换事件
-  const emitter = (window as any).__APP_EMITTER__;
-  if (emitter) {
-    // 监听应用切换事件（汉堡菜单切换应用时会触发）
-    emitter.on('app.switch', updateEnvInfo);
-    // 监听路由变化事件（作为兜底）
-    emitter.on('route.change', updateEnvInfo);
-  }
-  
-  // 监听浏览器历史记录变化（popstate 事件）
-  window.addEventListener('popstate', updateEnvInfo);
-  
-  // 监听 pushState 和 replaceState（通过重写 history API）
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-  
-  history.pushState = function(...args) {
-    originalPushState.apply(history, args);
-    // 延迟更新，确保路径已变化
-    setTimeout(updateEnvInfo, 0);
-  };
-  
-  history.replaceState = function(...args) {
-    originalReplaceState.apply(history, args);
-    // 延迟更新，确保路径已变化
-    setTimeout(updateEnvInfo, 0);
-  };
-  
-  // 保存原始方法以便清理
-  (window as any).__ENV_INFO_ORIGINAL_PUSH_STATE__ = originalPushState;
-  (window as any).__ENV_INFO_ORIGINAL_REPLACE_STATE__ = originalReplaceState;
-});
-
-onUnmounted(() => {
-  // 清理事件监听
-  const emitter = (window as any).__APP_EMITTER__;
-  if (emitter) {
-    emitter.off('app.switch', updateEnvInfo);
-    emitter.off('route.change', updateEnvInfo);
-  }
-  
-  // 恢复原始 history API
-  const originalPushState = (window as any).__ENV_INFO_ORIGINAL_PUSH_STATE__;
-  const originalReplaceState = (window as any).__ENV_INFO_ORIGINAL_REPLACE_STATE__;
-  
-  if (originalPushState) {
-    history.pushState = originalPushState;
-  }
-  if (originalReplaceState) {
-    history.replaceState = originalReplaceState;
-  }
-  
-  window.removeEventListener('popstate', updateEnvInfo);
-});
+// useEnvInfo composable 已经自动处理了事件监听和更新逻辑，无需手动管理
 </script>
 
 <style lang="scss" scoped>

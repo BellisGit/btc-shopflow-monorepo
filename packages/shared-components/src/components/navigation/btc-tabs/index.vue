@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch, type ComponentPublicInstance } from 'vue';
+import { ref, onMounted, watch, type ComponentPublicInstance } from 'vue';
 
 export interface BtcTab {
   name?: string | number;
@@ -58,9 +58,7 @@ const props = withDefaults(defineProps<{
   tabs: BtcTab[];
   defaultTab?: string | number;
 }>(), {
-  modelValue: undefined,
-  tabs: () => [],
-  defaultTab: undefined
+  tabs: () => []
 });
 
 const emit = defineEmits<{
@@ -96,10 +94,13 @@ const setItemRef = (el: Element | ComponentPublicInstance | null, index: number)
 const initActiveTab = () => {
   if (props.modelValue !== undefined) {
     activeTab.value = props.modelValue;
-  } else if (props.defaultTab !== undefined) {
+  } else   if (props.defaultTab !== undefined) {
     activeTab.value = props.defaultTab;
   } else if (props.tabs.length > 0) {
-    activeTab.value = props.tabs[0].name || 0;
+    const firstTab = props.tabs[0];
+    if (firstTab) {
+      activeTab.value = firstTab.name || 0;
+    }
   }
 };
 
@@ -110,7 +111,7 @@ const setActiveTab = async (tabName: string | number) => {
   const tabIndex = props.tabs.findIndex(tab => (tab.name || props.tabs.indexOf(tab)) === tabName);
   const tab = props.tabs[tabIndex];
 
-  if (tab?.disabled) return;
+  if (tab?.disabled || !tab) return;
 
   activeTab.value = tabName;
   emit('update:modelValue', tabName);

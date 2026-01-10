@@ -11,63 +11,61 @@
         </template>
       </BtcAuthHeader>
 
-      <div class="card-content">
+      <!-- 账户登录（账号登录和手机号登录）使用 el-scrollbar 包裹 -->
+      <el-scrollbar v-if="currentLoginMode !== 'qr'" class="card-content-scrollbar">
+        <div class="card-content">
+          <!-- 登录模式切换Tabs -->
+          <BtcLoginTabs
+            :current-mode="currentLoginMode"
+            @tab-change="handleSwitchLoginMode"
+          />
 
-    <!-- 登录模式切换Tabs（仅在非二维码模式显示） -->
-    <BtcLoginTabs
-      v-if="currentLoginMode !== 'qr'"
-      :current-mode="currentLoginMode"
-      @tab-change="handleSwitchLoginMode"
-    />
+          <!-- 账密登录表单 -->
+          <BtcPasswordForm
+            v-if="currentLoginMode === 'password'"
+            key="password-form"
+            :loading="passwordLoading"
+            @submit="handlePasswordSubmit"
+          />
 
-    <!-- 账密登录表单 -->
-    <BtcPasswordForm
-      v-if="currentLoginMode === 'password'"
-      key="password-form"
-      :loading="passwordLoading"
-      @submit="handlePasswordSubmit"
-    />
+          <!-- 短信验证码登录表单 -->
+          <BtcSmsForm
+            v-if="currentLoginMode === 'sms'"
+            key="sms-form"
+            :loading="smsLoading"
+            @submit="handleSmsSubmit"
+            @send-sms="handleSendSms"
+            @code-complete="handleCodeComplete"
+          />
 
-    <!-- 短信验证码登录表单 -->
-    <BtcSmsForm
-      v-if="currentLoginMode === 'sms'"
-      key="sms-form"
-      :loading="smsLoading"
-      @submit="handleSmsSubmit"
-      @send-sms="handleSendSms"
-      @code-complete="handleCodeComplete"
-    />
+          <!-- 第三方登录 -->
+          <BtcThirdPartyLogin />
 
-    <!-- 二维码登录表单 -->
-    <BtcQrForm
-      v-if="currentLoginMode === 'qr'"
-      :qr-code-url="qrCodeUrl"
-      @refresh="handleRefreshQrCode"
-    />
+          <!-- 协议文本 -->
+          <BtcAgreementText
+            ref="agreementRef"
+            @agreement-change="handleAgreementChange"
+          />
+        </div>
+      </el-scrollbar>
 
-    <!-- 第三方登录（仅在非二维码模式显示） -->
-    <BtcThirdPartyLogin v-if="currentLoginMode !== 'qr'" />
-
-    <!-- 协议文本（仅在非二维码模式显示） -->
-    <BtcAgreementText 
-      v-if="currentLoginMode !== 'qr'" 
-      ref="agreementRef"
-      @agreement-change="handleAgreementChange" 
-    />
+      <!-- 二维码登录不使用 el-scrollbar，直接使用 card-content -->
+      <div v-else class="card-content qr-only">
+        <BtcQrForm
+          :qr-code-url="qrCodeUrl"
+          @refresh="handleRefreshQrCode"
+        />
       </div>
     </div>
-
-    <BtcAuthFooter />
   </BtcAuthLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, ref, nextTick } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import BtcAuthLayout from '../shared/components/auth-layout/index.vue';
 import BtcAuthHeader from '../shared/components/auth-header/index.vue';
-import BtcAuthFooter from '../shared/components/auth-footer/index.vue';
 import BtcQrToggleBtn from '../shared/components/qr-toggle-btn/index.vue';
 import BtcLoginTabs from '../shared/components/login-tabs/index.vue';
 import BtcPasswordForm from './password-form/index.vue';
@@ -91,6 +89,8 @@ const { t } = useI18n();
 const agreementRef = ref();
 // 协议同意状态
 const isAgreed = ref(false);
+// 防止重复提交的标记
+let isSubmitting = false;
 
 // 登录模式管理
 const { currentLoginMode, switchLoginMode, toggleQrLogin, getToggleInfo } = useAuthTabs('password');
@@ -125,9 +125,26 @@ const handleAgreementChange = (agreed: boolean) => {
 };
 
 // 检查协议同意状态
-const checkAgreement = (): boolean => {
+const checkAgreement = async (): Promise<boolean> => {
   if (!isAgreed.value) {
-    BtcMessage.warning(t('auth.message.agreement_required'));
+    // 自动勾选协议，提升用户体验
+    if (agreementRef.value) {
+      agreementRef.value.checkAgreement();
+      // 等待 Vue 响应式更新完成（使用 nextTick 确保状态已同步）
+      // 需要等待多个 nextTick，确保 watch 和事件处理完成
+      await nextTick();
+      await nextTick();
+      // 再次检查状态，如果已经勾选，显示提示并返回 false，需要用户再次点击登录
+      if (isAgreed.value) {
+        // 显示提示，告知用户已自动勾选，需要再次点击登录
+        BtcMessage.success(t('auth.message.agreement_auto_checked'));
+        // 返回 false，需要用户再次点击登录
+        return false;
+      }
+    }
+    // 如果自动勾选失败，显示提示
+    BtcMessage.success(t('auth.message.agreement_auto_checked'));
+    // 返回 false，需要用户再次点击登录
     return false;
   }
   return true;
@@ -135,27 +152,53 @@ const checkAgreement = (): boolean => {
 
 // 账密登录提交
 const handlePasswordSubmit = async (form: { username: string; password: string }) => {
+  // 防止重复提交
+  if (isSubmitting) {
+    return;
+  }
+
   try {
-    if (!checkAgreement()) {
+    isSubmitting = true;
+    if (!(await checkAgreement())) {
+      // 协议检查失败，重置提交标记，允许用户再次提交
+      isSubmitting = false;
       return;
     }
-  await passwordSubmit(form);
+    await passwordSubmit(form);
   } catch (error) {
     console.error('密码登录错误:', error);
     // 错误已在 usePasswordLogin 中处理，这里只是防止未捕获的错误
+  } finally {
+    // 延迟重置标记，确保异步操作完成
+    setTimeout(() => {
+      isSubmitting = false;
+    }, 100);
   }
 };
 
 // 短信登录提交
 const handleSmsSubmit = async (form: { phone: string; smsCode: string }) => {
+  // 防止重复提交
+  if (isSubmitting) {
+    return;
+  }
+
   try {
-    if (!checkAgreement()) {
+    isSubmitting = true;
+    if (!(await checkAgreement())) {
+      // 协议检查失败，重置提交标记，允许用户再次提交
+      isSubmitting = false;
       return;
     }
     await smsSubmit(form);
   } catch (error) {
     // 错误已在 useSmsLogin 中处理，这里只是防止未捕获的错误
     console.error('短信登录错误:', error);
+  } finally {
+    // 延迟重置标记，确保异步操作完成
+    setTimeout(() => {
+      isSubmitting = false;
+    }, 100);
   }
 };
 

@@ -27,7 +27,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from '@btc/shared-core';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
-import { getManifestRoute } from '@/micro/manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { getMenusForApp } from '@/store/menuRegistry';
 
 const route = useRoute();

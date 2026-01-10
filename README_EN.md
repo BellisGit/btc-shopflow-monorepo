@@ -57,7 +57,7 @@ btc-shopflow-monorepo/
 │   ├── monitor-app/               # Monitor App
 │   ├── layout-app/                # Layout App
 │   ├── mobile-app/                # Mobile App
-│   └── docs-site-app/             # Documentation Site
+│   └── docs-app/             # Documentation Site
 ├── packages/                       # Shared Packages
 │   ├── shared-components/         # Shared Component Library
 │   ├── shared-core/               # Core Functionality Library
@@ -215,7 +215,7 @@ Configure the following Secrets in GitHub repository settings:
 - **engineering-app**: Engineering management application
 - **finance-app**: Financial management application
 - **mobile-app**: Mobile application (supports Capacitor)
-- **docs-site-app**: Documentation site, including project documentation and component library documentation
+- **docs-app**: Documentation site, including project documentation and component library documentation
 
 ## 🌿 Branch Strategy
 
@@ -357,12 +357,12 @@ The project uses GitHub Actions for automated CI/CD:
 ## 📚 Documentation
 
 - [Architecture Design Documentation](./implementation-docs/)
-- [Component Documentation](./apps/docs-site-app/)
-- [Deployment Documentation](./apps/docs-site-app/guides/deployment/)
+- [Component Documentation](./apps/docs-app/)
+- [Deployment Documentation](./apps/docs-app/guides/deployment/)
   - [K8s Incremental Deployment](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
   - [GitHub Actions K8s Setup](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
-  - [Static Deployment](./apps/docs-site-app/guides/deployment/static-deployment.md)
-  - [Subdomain Proxy Configuration](./apps/docs-site-app/guides/deployment/nginx-subdomain-proxy.md)
+  - [Static Deployment](./apps/docs-app/guides/deployment/static-deployment.md)
+  - [Subdomain Proxy Configuration](./apps/docs-app/guides/deployment/nginx-subdomain-proxy.md)
 
 ## 🤝 Contributing Guide
 

@@ -126,10 +126,11 @@ export class NotificationManager {
   /**
    * 清理通知
    */
-  private cleanupNotification(notificationId: string): void {
-    this.displayingNotifications.delete(notificationId);
-    this.notificationMap.delete(notificationId);
-    this.badgeManager.stopCountdownAnimation(notificationId);
+  // @ts-expect-error: 私有方法，可能在未来使用
+  private cleanupNotification(_notificationId: string): void {
+    this.displayingNotifications.delete(_notificationId);
+    this.notificationMap.delete(_notificationId);
+    this.badgeManager.stopCountdownAnimation(_notificationId);
   }
 
   /**

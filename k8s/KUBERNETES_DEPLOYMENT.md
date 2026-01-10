@@ -31,7 +31,7 @@ BTC ShopFlow 是一个基于微前端架构的企业级供应链管理系统，�
 | production-app | 8084 | production.bellis.com.cn | 1 | 否 |
 | engineering-app | 8085 | engineering.bellis.com.cn | 1 | 否 |
 | finance-app | 8086 | finance.bellis.com.cn | 1 | 否 |
-| docs-site-app | 8087 | docs.bellis.com.cn | 1 | 否 |
+| docs-app | 8087 | docs.bellis.com.cn | 1 | 否 |
 | mobile-app | 8091 | mobile.bellis.com.cn | 1 | 否 |
 
 ## 📁 部署文件结构

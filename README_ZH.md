@@ -57,7 +57,7 @@ btc-shopflow-monorepo/
 │   ├── monitor-app/               # 监控应用
 │   ├── layout-app/                # 布局应用
 │   ├── mobile-app/                # 移动应用
-│   └── docs-site-app/             # 文档站点
+│   └── docs-app/             # 文档站点
 ├── packages/                       # 共享包
 │   ├── shared-components/         # 共享组件库
 │   ├── shared-core/               # 核心功能库
@@ -215,7 +215,7 @@ pnpm build-deploy:k8s:system       # 部署特定应用
 - **engineering-app**: 工程管理应用
 - **finance-app**: 财务管理应用
 - **mobile-app**: 移动端应用（支持 Capacitor）
-- **docs-site-app**: 文档站点，包含项目文档和组件库文档
+- **docs-app**: 文档站点，包含项目文档和组件库文档
 
 ## 🌿 分支策略
 
@@ -357,12 +357,12 @@ pnpm test:ci
 ## 📚 文档
 
 - [架构设计文档](./implementation-docs/)
-- [组件文档](./apps/docs-site-app/)
-- [部署文档](./apps/docs-site-app/guides/deployment/)
+- [组件文档](./apps/docs-app/)
+- [部署文档](./apps/docs-app/guides/deployment/)
   - [K8s 增量部署](./docs/K8S_INCREMENTAL_DEPLOYMENT.md)
   - [GitHub Actions K8s 配置](./docs/GITHUB_ACTIONS_K8S_SETUP.md)
-  - [静态部署](./apps/docs-site-app/guides/deployment/static-deployment.md)
-  - [子域名代理配置](./apps/docs-site-app/guides/deployment/nginx-subdomain-proxy.md)
+  - [静态部署](./apps/docs-app/guides/deployment/static-deployment.md)
+  - [子域名代理配置](./apps/docs-app/guides/deployment/nginx-subdomain-proxy.md)
 
 ## 🤝 贡献指南
 

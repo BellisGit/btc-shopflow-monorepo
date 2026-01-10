@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from '@/utils/use-message';
 import { service } from '@services/eps';
@@ -69,7 +70,7 @@ const loadUserInfo = async () => {
     const data = await userService.info({ id: userId });
     userInfo.value = data;
   } catch (_error) {
-    message.error('加载用户信息失败');
+    message.error(t('common.org.users.load_user_info_failed'));
   }
 };
 
@@ -81,7 +82,7 @@ const loadRoles = async () => {
     // Mock：随机选择已分配的角色
     selectedRoles.value = [3]; // 默认分配员工角色
   } catch (_error) {
-    message.error('加载角色列表失败');
+    message.error(t('common.org.load_roles_failed'));
   }
 };
 
@@ -94,10 +95,10 @@ const handleSave = async () => {
     // 这里应该调用后端API
     // await http.post(`/users/${userId}/roles`, { roleIds: selectedRoles.value });
 
-    message.success('保存成功');
+    message.success(t('common.save_success'));
     router.back();
   } catch (_error) {
-    message.error('保存失败');
+    message.error(t('common.save_failed'));
   } finally {
     saving.value = false;
   }

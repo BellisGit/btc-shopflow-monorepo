@@ -5,6 +5,7 @@
 
 import type { App } from 'vue';
 import type { Plugin } from '@btc/shared-core';
+import { useI18n } from '@btc/shared-core';
 
 // 扫描 modules 和 plugins 目录下的 config.ts 文件
 const moduleFiles = import.meta.glob('/src/{modules,plugins}/*/config.ts', {
@@ -162,7 +163,8 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       for (const pluginConfig of pluginConfigs) {
         // 验证插件配置
         if (!pluginConfig.name) {
-          console.warn(`[ModuleScanner] 跳过无效插件: ${filePath} (缺少 name 属性)`);
+          const { t } = useI18n();
+          console.warn(`[ModuleScanner] ${t('common.plugin.skip_invalid')}: ${filePath} (${t('common.plugin.missing_name')})`);
           continue;
         }
 
@@ -172,7 +174,8 @@ export async function scanAndRegisterPlugins(app: App): Promise<Plugin[]> {
       }
 
     } catch (error) {
-      console.error(`[ModuleScanner] 解析插件失败: ${filePath}`, error);
+      const { t } = useI18n();
+      console.error(`[ModuleScanner] ${t('common.plugin.parse_failed')}: ${filePath}`, error);
     }
   }
 

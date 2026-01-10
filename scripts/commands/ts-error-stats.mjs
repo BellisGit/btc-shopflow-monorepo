@@ -136,7 +136,7 @@ function processStats(fullOutput, exitCode) {
   const appNames = [
     'admin-app', 'logistics-app', 'system-app', 'finance-app',
     'engineering-app', 'quality-app', 'production-app', 'monitor-app',
-    'layout-app', 'mobile-app', 'docs-site-app', '@btc/mobile-app'
+    'layout-app', 'mobile-app', 'docs-app', '@btc/mobile-app'
   ];
   
   lines.forEach(line => {

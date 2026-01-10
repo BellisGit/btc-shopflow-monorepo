@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <BtcTableButton
     class="btc-crud-action-icon"
     v-if="isMinimal"
@@ -9,7 +9,7 @@
     v-bind="$attrs"
     :type="type"
     class="btc-crud-btn"
-    @click="crud.handleAdd"
+    @click="handleAddClick"
   >
     <BtcSvg class="btc-crud-btn__icon" name="plus" />
     <span class="btc-crud-btn__text">
@@ -42,7 +42,17 @@ const attrs = useAttrs();
 const crud = inject<UseCrudReturn<any>>('btc-crud');
 
 if (!crud) {
-  throw new Error('[BtcAddBtn] Must be used inside <BtcCrud>');
+  // 关键：在生产环境下，这个错误必须可见，不能被静默处理
+  const error = new Error('[BtcAddBtn] Must be used inside <BtcCrud>. This usually means BtcCrud component is not properly rendered or provide/inject context is broken.');
+  // 确保错误在控制台可见
+  console.error('[BtcAddBtn] CRITICAL ERROR:', error.message, {
+    componentName: 'BtcAddBtn',
+    injectKey: 'btc-crud',
+    stack: error.stack,
+    timestamp: new Date().toISOString(),
+  });
+  // 在生产环境下也抛出错误，确保问题可见
+  throw error;
 }
 
 const buttonLabel = computed(() => props.text || t('crud.button.add'));
@@ -66,16 +76,51 @@ const iconType = computed<AllowedButtonType>(() => {
   return 'primary';
 });
 
+// 处理新增按钮点击
+const handleAddClick = (event?: MouseEvent) => {
+  // 阻止事件冒泡，避免被其他处理器拦截
+  if (event) {
+    event.stopPropagation();
+  }
+
+  if (isDisabled.value) {
+    return;
+  }
+
+  // 关键：在生产环境下，这些错误必须可见
+  if (!crud) {
+    const errorMsg = '[BtcAddBtn] crud is not available - inject failed or BtcCrud not rendered';
+    console.error(errorMsg, {
+      componentName: 'BtcAddBtn',
+      injectKey: 'btc-crud',
+      timestamp: new Date().toISOString(),
+    });
+    // 在生产环境下也抛出错误，确保问题可见
+    throw new Error(errorMsg);
+  }
+
+  if (typeof crud.handleAdd !== 'function') {
+    const errorMsg = '[BtcAddBtn] crud.handleAdd is not a function';
+    console.error(errorMsg, {
+      crud,
+      handleAdd: crud.handleAdd,
+      type: typeof crud.handleAdd,
+      crudKeys: crud ? Object.keys(crud) : [],
+      timestamp: new Date().toISOString(),
+    });
+    // 在生产环境下也抛出错误，确保问题可见
+    throw new Error(errorMsg);
+  }
+
+  crud.handleAdd();
+};
+
 const iconButtonConfig = computed<BtcTableButtonConfig>(() => ({
   icon: 'plus',
   tooltip: buttonLabel.value,
   ariaLabel: buttonLabel.value,
   type: iconType.value,
-  onClick: () => {
-    if (!isDisabled.value) {
-      crud.handleAdd();
-    }
-  },
+  onClick: handleAddClick,
   disabled: isDisabled.value,
 }));
 </script>

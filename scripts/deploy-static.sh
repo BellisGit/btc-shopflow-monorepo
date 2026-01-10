@@ -53,11 +53,14 @@ fi
 APPS=(
     "system-app"
     "admin-app"
+    "dashboard-app"
+    "engineering-app"
     "finance-app"
     "logistics-app"
-    "quality-app"
+    "operations-app"
+    "personnel-app"
     "production-app"
-    "engineering-app"
+    "quality-app"
     "mobile-app"
     "layout-app"
 )
@@ -454,7 +457,7 @@ deploy_app() {
     # 批量部署时将在所有应用完成后统一重载（避免多次重载）
     if [ "$DEPLOY_MODE" != "all" ]; then
         log_info "重载 Nginx 配置..."
-        ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+        ssh -i "$SSH_KEY" -p "$SERVER_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" \
             "nginx -s reload 2>/dev/null || systemctl reload nginx 2>/dev/null || true" || {
             log_warning "Nginx 重载失败，但不影响部署结果"
         }
@@ -714,7 +717,7 @@ main() {
         if [ "$can_deploy" = true ] && [ ${#failed_apps[@]} -eq 0 ]; then
             log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             log_info "重载 Nginx 配置..."
-            ssh -i "$SSH_KEY" -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" \
+            ssh -i "$SSH_KEY" -p "$SERVER_PORT" -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" \
                 "nginx -s reload 2>/dev/null || systemctl reload nginx 2>/dev/null || true" || {
                 log_warning "Nginx 重载失败，但不影响部署结果"
             }

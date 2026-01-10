@@ -3,12 +3,14 @@
     <el-cascader
       :model-value="modelValue"
       :options="processedOptions"
-      :placeholder="placeholder"
-      :clearable="clearable"
-      :filterable="filterable"
-      :show-all-levels="showAllLevels"
-      :props="cascaderProps"
-      :style="style"
+      v-bind="{
+        ...(placeholder !== undefined ? { placeholder } : {}),
+        ...(clearable !== undefined ? { clearable } : {}),
+        ...(filterable !== undefined ? { filterable } : {}),
+        ...(showAllLevels !== undefined ? { 'show-all-levels': showAllLevels } : {}),
+        props: cascaderProps,
+        ...(style !== undefined ? { style } : {})
+      }"
       @update:model-value="handleChange"
     >
       <template v-if="showCount" #default="{ data }">

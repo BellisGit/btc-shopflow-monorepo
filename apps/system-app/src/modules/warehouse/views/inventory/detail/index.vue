@@ -36,12 +36,9 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick } from 'vue';
-import { useI18n } from '@btc/shared-core';
-import type { CrudService } from '@btc/shared-core';
-import type { FormItem, TableColumn } from '@btc/shared-components';
+import { useI18n, usePageColumns, usePageForms, getPageConfigFull, usePageService } from '@btc/shared-core';
+import type { TableColumn } from '@btc/shared-components';
 import { BtcCrud, BtcRow, BtcRefreshBtn, BtcAddBtn, BtcMultiDeleteBtn, BtcFlex1, BtcSearchKey, BtcCrudActions, BtcExportBtn, BtcTable, BtcPagination, BtcUpsert } from '@btc/shared-components';
-import { createCrudServiceFromEps } from '@btc/shared-core';
-import { service } from '@services/eps';
 import { formatDateTime } from '@btc/shared-utils';
 
 defineOptions({
@@ -54,58 +51,30 @@ const crudRef = ref();
 const tableRef = ref();
 const upsertRef = ref();
 
-const inventoryDetailService: CrudService<any> = createCrudServiceFromEps(
-  ['logistics', 'warehouse', 'diff'],
-  service
-);
+// 从 config.ts 读取配置
+const { columns: baseColumns } = usePageColumns('warehouse.inventory.detail');
+const { formItems } = usePageForms('warehouse.inventory.detail');
+const pageConfig = getPageConfigFull('warehouse.inventory.detail');
 
+// 使用 config.ts 中定义的服务
+const inventoryDetailService = usePageService('warehouse.inventory.detail', 'inventoryDetail');
+
+// 扩展配置以支持动态 formatter
 const formatDateCell = (_row: Record<string, any>, _column: TableColumn, value: any) =>
   value ? formatDateTime(value) : '--';
 
-const columns = computed<TableColumn[]>(() => [
-  { type: 'selection', width: 48 },
-  { label: 'ID', prop: 'id', width: 100 },
-  { label: t('logistics.inventory.diff.fields.materialCode'), prop: 'materialCode', minWidth: 160, showOverflowTooltip: true },
-  { label: t('logistics.inventory.diff.fields.diffReason'), prop: 'diffReason', minWidth: 200, showOverflowTooltip: true },
-  { label: t('logistics.inventory.diff.fields.processPerson'), prop: 'processPerson', minWidth: 140 },
-  { label: t('logistics.inventory.diff.fields.processTime'), prop: 'processTime', width: 180, formatter: formatDateCell },
-  { label: t('logistics.inventory.diff.fields.processRemark'), prop: 'processRemark', minWidth: 200, showOverflowTooltip: true },
-]);
-
-const formItems = computed<FormItem[]>(() => [
-  {
-    label: t('logistics.inventory.diff.fields.inventoryCheckId'),
-    prop: 'inventoryCheckId',
-    required: true,
-    component: { name: 'el-input-number', props: { min: 0, step: 1, controlsPosition: 'right' } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.materialCode'),
-    prop: 'materialCode',
-    required: true,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.diffReason'),
-    prop: 'diffReason',
-    component: { name: 'el-input', props: { type: 'textarea', rows: 2, maxlength: 255 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processPerson'),
-    prop: 'processPerson',
-    component: { name: 'el-input', props: { maxlength: 60 } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processTime'),
-    prop: 'processTime',
-    component: { name: 'el-date-picker', props: { type: 'datetime', valueFormat: 'YYYY-MM-DD HH:mm:ss', clearable: true } },
-  },
-  {
-    label: t('logistics.inventory.diff.fields.processRemark'),
-    prop: 'processRemark',
-    component: { name: 'el-input', props: { type: 'textarea', rows: 2, maxlength: 255 } },
-  },
-]);
+const columns = computed(() => {
+  return baseColumns.value.map(col => {
+    // 如果列是日期字段，添加动态 formatter
+    if (col.prop === 'processTime') {
+      return {
+        ...col,
+        formatter: formatDateCell,
+      };
+    }
+    return col;
+  });
+});
 
 onMounted(() => {
   crudRef.value?.crud?.loadData?.();

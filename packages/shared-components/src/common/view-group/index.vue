@@ -11,16 +11,18 @@
           <BtcMasterList
             :key="`master-list-${masterListKey}`"
             ref="masterListRef"
-            :title="leftTitle"
-            :service="leftService"
-            :id-field="idField"
-            :label-field="labelField"
-            :parent-field="parentField"
-            :drag="enableDrag"
-            :show-unassigned="showUnassigned"
-            :unassigned-label="unassignedLabel"
-            :enable-key-search="enableKeySearch"
-            :hide-expand-icon="props.leftSize === 'small'"
+            v-bind="{
+              service: leftService,
+              ...(leftTitle !== undefined ? { title: leftTitle } : {}),
+              ...(idField !== undefined ? { 'id-field': idField } : {}),
+              ...(labelField !== undefined ? { 'label-field': labelField } : {}),
+              ...(parentField !== undefined ? { 'parent-field': parentField } : {}),
+              ...(enableDrag !== undefined ? { drag: enableDrag } : {}),
+              ...(showUnassigned !== undefined ? { 'show-unassigned': showUnassigned } : {}),
+              ...(unassignedLabel !== undefined ? { 'unassigned-label': unassignedLabel } : {}),
+              ...(enableKeySearch !== undefined ? { 'enable-key-search': enableKeySearch } : {}),
+              'hide-expand-icon': props.leftSize === 'small' || props.leftSize === 'middle'
+            }"
             @select="handleLeftSelect"
             @load="handleLeftLoad"
           />
@@ -65,13 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, inject, useSlots, nextTick, provide } from 'vue';
+import { ref, computed, watch, nextTick, provide } from 'vue';
 import BtcSvg from '@btc-components/others/btc-svg/index.vue';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
-import type { ViewGroupOptions } from './types';
-import { useViewGroupData, useViewGroupActions } from './composables';
-import { useI18n } from '@btc/shared-core';
+// useViewGroupData 和 useViewGroupActions 未使用，已移除导入
 import { useContentHeight } from '../../composables/content-height';
+import { useI18n } from '@btc/shared-core';
 
 defineOptions({
   name: 'BtcViewGroup',
@@ -81,13 +82,13 @@ defineOptions({
   }
 });
 
-// Helper function
-function isEmpty(value: any): boolean {
-  if (value == null) return true;
-  if (Array.isArray(value) || typeof value === 'string') return value.length === 0;
-  if (typeof value === 'object') return Object.keys(value).length === 0;
-  return false;
-}
+// Helper function (currently unused, but may be needed in the future)
+// function isEmpty(value: any): boolean {
+//   if (value == null) return true;
+//   if (Array.isArray(value) || typeof value === 'string') return value.length === 0;
+//   if (typeof value === 'object') return Object.keys(value).length === 0;
+//   return false;
+// }
 
 const props = withDefaults(defineProps<{
   leftService?: any; // 左侧服务（可选）
@@ -106,7 +107,6 @@ const props = withDefaults(defineProps<{
   op?: { buttons?: any[] }; // 操作列配置
   enableKeySearch?: boolean; // 是否启用搜索
 }>(), {
-  op: undefined,
   enableKeySearch: false,
   leftSize: 'default',
 });
@@ -120,10 +120,21 @@ const emit = defineEmits<{
   'load': [data: any[]];
 }>();
 
+// 定义插槽类型
+defineSlots<{
+  left?: () => any;
+  'left-op'?: () => any;
+  right?: (props: { selected?: any; keyword?: any; leftData?: any[]; rightData?: any }) => any;
+  'right-op'?: () => any;
+  title?: (props: { selected?: any }) => any;
+  item?: (props: { item: any; selected?: any; index: number }) => any;
+  'item-name'?: (props: { item: any; selected?: any; index: number }) => any;
+}>();
+
 // 国际化
 const { t } = useI18n();
 
-const slots = useSlots();
+// const slots = useSlots(); // 未使用
 
 // 响应式数据
 const selectedItem = ref<any>(null);
@@ -155,7 +166,7 @@ const viewGroupStyle = computed(() => {
   };
 });
 
-const { height: contentHeight, emit: emitContentResize } = useContentHeight();
+const { emit: emitContentResize } = useContentHeight();
 
 const scheduleContentResize = () => {
   nextTick(() => {
@@ -234,10 +245,10 @@ function handleLeftLoad(data: any[]) {
   scheduleContentResize();
 }
 
-// 处理左侧加载完成
-function handleLeftLoadComplete(_data: any[]) {
-  // 左侧数据加载完成，不需要额外处理
-}
+// 处理左侧加载完成（当前未使用）
+// function handleLeftLoadComplete(_data: any[]) {
+//   // 左侧数据加载完成，不需要额外处理
+// }
 
 // 收起、展开
 function expand(value?: boolean) {

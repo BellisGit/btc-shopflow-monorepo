@@ -3,188 +3,109 @@ import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
-const pageRoutes: RouteRecordRaw[] = [
+export const pageRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'logistics-home',
-    component: () => import('../../modules/home/views/index.vue'),
-    meta: { isHome: true, process: false, tabLabelKey: 'logistics.placeholder.disabledHome' },
-  },
-  {
-    path: '/procurement',
-    name: 'logistics-procurement',
-    component: () => import('../../modules/procurement/views/index.vue'),
+    redirect: '/procurement',
     meta: {
-      tabLabelKey: 'menu.logistics.procurementModule',
-      labelKey: 'menu.logistics.procurementModule',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-      ],
+      process: false,
     },
   },
   {
+    path: '/procurement',
+    name: 'LogisticsProcurement',
+    component: () => import('../../modules/procurement/views/index.vue'),
+    meta: {
+      titleKey: 'menu.procurement',
+    },
+  },
+
+  {
     path: '/procurement/auxiliary',
-    name: 'logistics-procurement-auxiliary',
+    name: 'LogisticsProcurementAuxiliary',
     component: () => import('../../modules/procurement/views/auxiliary/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.auxiliary',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.auxiliary', icon: 'Collection' },
-      ],
-      tabLabelKey: 'menu.logistics.procurement.auxiliary',
+      titleKey: 'menu.procurement.auxiliary',
     },
   },
   {
     path: '/procurement/packaging',
-    name: 'logistics-procurement-packaging',
+    name: 'LogisticsProcurementPackaging',
     component: () => import('../../modules/procurement/views/packaging/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.packaging',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.packaging', icon: 'CollectionTag' },
-      ],
-      tabLabelKey: 'menu.logistics.procurement.packaging',
+      titleKey: 'menu.procurement.packaging',
     },
   },
   {
     path: '/procurement/supplier',
-    name: 'logistics-procurement-supplier',
+    name: 'LogisticsProcurementSupplier',
     component: () => import('../../modules/procurement/views/supplier/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.procurement.supplier',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.procurementModule', icon: 'ShoppingCart' },
-        { labelKey: 'menu.logistics.procurement.supplier', icon: 'User' },
-      ],
-      tabLabelKey: 'menu.logistics.procurement.supplier',
+      titleKey: 'menu.procurement.supplier',
     },
   },
   {
     path: '/warehouse',
-    name: 'logistics-warehouse',
+    name: 'LogisticsWarehouse',
     component: () => import('../../modules/warehouse/views/index.vue'),
     meta: {
-      tabLabelKey: 'menu.logistics.warehouseModule',
-      labelKey: 'menu.logistics.warehouseModule',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-      ],
+      titleKey: 'menu.warehouse',
     },
   },
   {
     path: '/warehouse/material',
-    redirect: '/warehouse/material/list',
+    name: 'LogisticsWarehouseMaterial',
+    component: () => import('../../modules/warehouse/views/material/index.vue'),
     meta: {
-      process: false,
-    },
-  },
-  {
-    path: '/warehouse/material/list',
-    name: 'logistics-warehouse-material-list',
-    component: () => import('../../modules/warehouse/views/material/list/index.vue'),
-    meta: {
-      labelKey: 'menu.logistics.warehouse.material.list',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-        { labelKey: 'menu.logistics.warehouse.material', icon: 'Files' },
-        { labelKey: 'menu.logistics.warehouse.material.list', icon: 'List' },
-      ],
-      tabLabelKey: 'menu.logistics.warehouse.material.list',
+      titleKey: 'menu.warehouse.material',
     },
   },
   {
     path: '/inventory',
-    redirect: '/inventory/info',
+    name: 'LogisticsInventory',
+    component: () => import('../../modules/inventory/views/index.vue'),
     meta: {
-      process: false,
+      titleKey: 'menu.inventory_management',
     },
   },
   {
     path: '/inventory/storage-location',
-    name: 'logistics-inventory-storage-location',
+    name: 'LogisticsInventoryStorageLocation',
     component: () => import('../../modules/warehouse/views/config/storage-location/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.storageLocation',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.storageLocation', icon: 'Location' },
-      ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.storageLocation',
+      titleKey: 'menu.inventory_management.storage_location',
     },
   },
   {
     path: '/inventory/info',
-    name: 'logistics-inventory-info',
+    name: 'LogisticsInventoryInfo',
     component: () => import('../../modules/inventory/views/info/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.info',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.info', icon: 'Document' },
-      ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.info',
+      titleKey: 'menu.inventory_management.info',
     },
   },
   {
     path: '/inventory/detail',
-    name: 'logistics-inventory-detail',
+    name: 'LogisticsInventoryDetail',
     component: () => import('../../modules/inventory/views/detail/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.detail',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.detail', icon: 'Histogram' },
-      ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.detail',
+      titleKey: 'menu.inventory_management.detail',
     },
   },
   {
     path: '/inventory/result',
-    name: 'logistics-inventory-result',
+    name: 'LogisticsInventoryResult',
     component: () => import('../../modules/inventory/views/result/index.vue'),
     meta: {
-      labelKey: 'menu.logistics.inventoryManagement.result',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.inventoryManagement', icon: 'Odometer' },
-        { labelKey: 'menu.logistics.inventoryManagement.result', icon: 'List' },
-      ],
-      tabLabelKey: 'menu.logistics.inventoryManagement.result',
+      titleKey: 'menu.inventory_management.result',
     },
   },
   {
     path: '/customs',
-    name: 'logistics-customs',
+    name: 'LogisticsCustoms',
     component: () => import('../../modules/customs/views/index.vue'),
     meta: {
-      tabLabelKey: 'logistics.menu.customsModule',
-      labelKey: 'menu.logistics.customsModule',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.overview', icon: 'Coin' },
-        { labelKey: 'menu.logistics.customsModule', icon: 'MapLocation' },
-      ],
-    },
-  },
-  {
-    path: '/warehouse/config',
-    redirect: '/warehouse/config/storage-location',
-    meta: {
-      process: false,
-    },
-  },
-  {
-    path: '/warehouse/config/storage-location',
-    name: 'logistics-warehouse-config-storage-location',
-    component: () => import('../../modules/warehouse/views/config/storage-location/index.vue'),
-    meta: {
-      labelKey: 'menu.logistics.warehouse.config.storageLocation',
-      breadcrumbs: [
-        { labelKey: 'menu.logistics.warehouseModule', icon: 'FolderOpened' },
-        { labelKey: 'menu.logistics.warehouse.config', icon: 'Setting' },
-        { labelKey: 'menu.logistics.warehouse.config.storageLocation', icon: 'Location' },
-      ],
-      tabLabelKey: 'menu.logistics.warehouse.config.storageLocation',
+      titleKey: 'menu.customs_module',
     },
   },
 ];

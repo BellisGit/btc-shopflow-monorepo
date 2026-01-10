@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getAppBySubdomain, getAppByPathPrefix } from '@configs/app-scanner';
+import { getAppBySubdomain, getSubApps } from '@btc/shared-core/configs/app-scanner';
+import { getAppIdFromPath } from '@btc/shared-core';
 
 export interface ProcessItem {
   path: string;
@@ -30,31 +31,17 @@ export function getCurrentAppFromPath(path: string): string {
   // 优先检查子域名（生产环境的关键识别方式，使用应用扫描器）
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    
+
     // 关键：优先通过子域名识别应用（生产环境的主要方式）
     const appBySubdomain = getAppBySubdomain(hostname);
     if (appBySubdomain) {
       return appBySubdomain.id;
     }
   }
-  
-  // 回退到路径匹配（开发环境或主域名访问时，使用应用扫描器）
-  const pathPrefix = path.split('/')[1] ? `/${path.split('/')[1]}` : '/';
-  const appByPath = getAppByPathPrefix(pathPrefix);
-  if (appByPath) {
-    return appByPath.id;
-  }
-  
-  // 兼容旧代码的路径匹配（如果扫描器没有找到）
-  if (path.startsWith('/admin')) return 'admin';
-  if (path.startsWith('/logistics')) return 'logistics';
-  if (path.startsWith('/engineering')) return 'engineering';
-  if (path.startsWith('/quality')) return 'quality';
-  if (path.startsWith('/production')) return 'production';
-  if (path.startsWith('/finance')) return 'finance';
-  if (path.startsWith('/docs')) return 'docs';
-  if (path.startsWith('/monitor')) return 'monitor';
-  return 'system';
+
+  // 使用统一的工具函数获取应用标识（优先从 app-scanner，回退到路径推断）
+  // 这个函数已经处理了主应用路由优先、排除公开应用的逻辑
+  return getAppIdFromPath(path);
 }
 
 /**
@@ -176,11 +163,6 @@ export const useProcessStore = defineStore('process', () => {
    * 添加标签
    */
   function add(data: ProcessItem) {
-    // 将所有标签设为非激活状态
-    list.value.forEach((e) => {
-      e.active = false;
-    });
-
     if (!data.meta) {
       data.meta = {};
     }
@@ -193,17 +175,82 @@ export const useProcessStore = defineStore('process', () => {
       data.app = getCurrentAppFromPath(pathToCheck);
     }
 
+    // 检查是否是首页（使用全局配置）
+    let isHome = data.meta?.isHome === true;
+
+    if (!isHome) {
+      const path = data.path || data.fullPath || '';
+
+      // 生产环境子域名判断
+      if (path === '/' && typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const appBySubdomain = getAppBySubdomain(hostname);
+        if (appBySubdomain && appBySubdomain.type === 'sub') {
+          isHome = true;
+        }
+      }
+
+      // 开发/预览环境：检查路径是否匹配任何子应用的 pathPrefix
+      if (!isHome) {
+        const subApps = getSubApps();
+        for (const app of subApps) {
+          const normalizedPathPrefix = app.pathPrefix.endsWith('/')
+            ? app.pathPrefix.slice(0, -1)
+            : app.pathPrefix;
+          const normalizedPath = path.endsWith('/') && path !== '/'
+            ? path.slice(0, -1)
+            : path;
+
+          if (normalizedPath === normalizedPathPrefix) {
+            isHome = true;
+            break;
+          }
+        }
+      }
+
+      // 检查是否是主应用首页（系统应用）
+      if (!isHome && path === '/') {
+        // 如果不在子域名下，且路径是 /，可能是主应用首页
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const appBySubdomain = getAppBySubdomain(hostname);
+          // 如果没有通过子域名识别到子应用，且路径是 /，则可能是主应用首页
+          if (!appBySubdomain || appBySubdomain.type !== 'sub') {
+            isHome = true;
+          }
+        } else {
+          // SSR 环境，如果路径是 /，假设是主应用首页
+          isHome = true;
+        }
+      }
+    }
+
     // 如果不是首页且允许显示标签
-    if (!data.meta?.isHome && data.meta?.process !== false) {
+    if (!isHome && data.meta?.process !== false) {
       // 关键：使用 fullPath 或 path 来查找已存在的标签
       // 在 layout-app 环境下，fullPath 可能是完整路径（如 /finance/inventory/result）
       // 而 path 可能是子应用内部路径（如 /inventory/result）
-      const index = list.value.findIndex((e) => 
-        e.fullPath === data.fullPath || 
+      const index = list.value.findIndex((e) =>
+        e.fullPath === data.fullPath ||
         e.path === data.path ||
         (data.fullPath && e.fullPath === data.fullPath) ||
         (data.path && e.path === data.path)
       );
+
+      // 关键优化：如果目标标签已经是激活状态且路径相同，直接返回，避免不必要的更新导致闪烁
+      if (index >= 0) {
+        const existingTab = list.value[index];
+        if (existingTab.active && 
+            (existingTab.fullPath === data.fullPath || existingTab.path === data.path)) {
+          // 标签已经是激活状态且路径相同，不需要更新
+          return;
+        }
+      }
+
+      // 将所有标签设为非激活状态（仅在需要更新时执行）
+      list.value.forEach((e) => {
+        e.active = false;
+      });
 
       if (index < 0) {
         // 添加新标签

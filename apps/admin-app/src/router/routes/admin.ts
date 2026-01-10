@@ -1,5 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error - AppLayout 在类型声明文件中已导出，可能是 TypeScript 缓存问题
 import { AppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
@@ -179,6 +181,18 @@ const pageRoutes: RouteRecordRaw[] = [
     component: () => import('../../modules/governance/views/files/templates/index.vue'),
     meta: { titleKey: 'menu.data.files.templates' },
   },
+  {
+    path: '/governance/dictionary/fields',
+    name: 'AdminDictionaryFields',
+    component: () => import('../../modules/governance/views/dictionary/fields/index.vue'),
+    meta: { titleKey: 'menu.data.dictionary.fields' },
+  },
+  {
+    path: '/governance/dictionary/values',
+    name: 'AdminDictionaryValues',
+    component: () => import('../../modules/governance/views/dictionary/values/index.vue'),
+    meta: { titleKey: 'menu.data.dictionary.values' },
+  },
   // 测试功能
   {
     path: '/test/components',
@@ -202,73 +216,32 @@ const pageRoutes: RouteRecordRaw[] = [
 
 /**
  * 获取路由配置
- * - qiankun 模式：返回页面路由和公开路由（登录页等，由主应用提供 Layout）
- * - layout-app 模式：返回页面路由和公开路由（由 layout-app 提供 Layout）
- * - 独立运行时：使用 AppLayout 包裹所有路由（与财务域保持一致）
+ * - qiankun 模式：返回页面路由（登录页等由主应用提供）
+ * - layout-app 模式：返回页面路由（由 layout-app 提供 Layout）
+ * - 独立运行时：使用 AppLayout 包裹所有路由，未认证用户重定向到主应用登录页
  */
 export const getAdminRoutes = (): RouteRecordRaw[] => {
   const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__;
   const isUsingLayoutApp = typeof window !== 'undefined' && !!(window as any).__USE_LAYOUT_APP__;
-  
-  // 公开路由（登录页、忘记密码页、注册页）- 不需要 Layout
-  const publicRoutes: RouteRecordRaw[] = [
-    {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@auth/login/index.vue'),
-      meta: {
-        public: true, // 公开页面，不需要认证
-        noLayout: true, // 不使用 Layout 布局
-        titleKey: 'auth.login'
-      }
-    },
-    {
-      path: '/forget-password',
-      name: 'ForgetPassword',
-      component: () => import('@auth/forget-password/index.vue'),
-      meta: {
-        public: true, // 公开页面，不需要认证
-        noLayout: true, // 不使用 Layout 布局
-        titleKey: 'auth.login.password.forgot'
-      }
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: () => import('@auth/register/index.vue'),
-      meta: {
-        public: true, // 公开页面，不需要认证
-        noLayout: true, // 不使用 Layout 布局
-        titleKey: 'auth.register'
-      }
-    },
-  ];
-  
-  // 如果使用 layout-app，直接返回页面路由和公开路由（layout-app 会提供布局）
+
+  // 如果使用 layout-app，直接返回页面路由（layout-app 会提供布局）
   if (isUsingLayoutApp) {
-    return [
-      ...publicRoutes, // 公开路由放在最前面
-      ...pageRoutes, // 业务路由
-    ];
+    return pageRoutes;
   }
-  
-  if (isStandalone) {
-    // 独立运行时：使用 AppLayout 包裹所有路由
-    return [
-      ...publicRoutes, // 公开路由放在最前面，不需要 Layout
-      {
-        path: '/',
-        component: AppLayout, // Use AppLayout from shared package
-        children: pageRoutes,
-      },
-    ];
-  } else {
-    // qiankun 模式：返回页面路由和公开路由（由主应用提供 Layout）
-    return [
-      ...publicRoutes, // 公开路由放在最前面
-      ...pageRoutes, // 业务路由
-    ];
-  }
+
+  // 独立运行且不使用 layout-app：使用 AppLayout 包裹所有路由
+  const routes = isStandalone
+    ? [
+        {
+          path: '/',
+          component: AppLayout, // Use AppLayout from shared package
+          children: pageRoutes,
+        },
+      ]
+    : [
+        ...pageRoutes, // 业务路由（qiankun 模式，由主应用提供 Layout）
+      ];
+  return routes;
 };
 
 // 为了向后兼容，保留 adminRoutes 导出（使用函数动态获取）

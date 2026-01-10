@@ -36,13 +36,15 @@
               :sms-code="phoneForm.smsCode"
               :loading="loadingPhone"
               :verifying="verifying"
-              :verify-error="verifyError"
               :sms-countdown="smsCountdown"
               :sms-sending="smsSending"
               :sms-has-sent="smsHasSent"
               :sms-can-send="smsCanSend"
               :has-phone="hasPhone"
-              :sms-code-input-component="smsCodeInputComponent"
+              v-bind="{
+                ...(verifyError !== undefined ? { verifyError } : {}),
+                ...(smsCodeInputComponent !== undefined ? { smsCodeInputComponent } : {})
+              }"
               @update:phone="phoneForm.phone = $event"
               @update:sms-code="phoneForm.smsCode = $event"
               @send-sms-code="handleSendSmsCode"
@@ -57,11 +59,13 @@
               :email-code="emailForm.emailCode"
               :loading="loadingEmail"
               :verifying="verifying"
-              :verify-error="verifyError"
               :email-countdown="emailCountdown"
               :email-sending="emailSending"
               :email-has-sent="emailHasSent"
-              :sms-code-input-component="smsCodeInputComponent"
+              v-bind="{
+                ...(verifyError !== undefined ? { verifyError } : {}),
+                ...(smsCodeInputComponent !== undefined ? { smsCodeInputComponent } : {})
+              }"
               @update:email="emailForm.email = $event"
               @update:email-code="emailForm.emailCode = $event"
               @send-email-code="handleSendEmailCode"
@@ -83,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, h } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 import { Close } from '@element-plus/icons-vue';
 import {
@@ -95,7 +99,7 @@ import {
   type VerifyEmailCodeFn
 } from './composables/useIdentityVerify';
 import type { VerifyPhoneApi, VerifyEmailApi } from './types';
-import BtcDialog from '@btc-common/dialog/index.vue';
+import BtcDialog from '@btc-common/dialog/index';
 import type { Component } from 'vue';
 import VerifyHeader from './components/VerifyHeader.vue';
 import VerifyTabs from './components/VerifyTabs.vue';
@@ -137,8 +141,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   accountName: '您',
-  smsCodeInputComponent: () => h('div', '请提供 smsCodeInputComponent'),
-  editingField: null
+  editingField: null as string | null
 });
 
 const emit = defineEmits<{
@@ -205,7 +208,8 @@ const {
   smsSending,
   smsHasSent,
   smsCanSend,
-  sendSmsCode,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sendSmsCode: _sendSmsCode,
   emailCountdown,
   emailSending,
   emailHasSent,

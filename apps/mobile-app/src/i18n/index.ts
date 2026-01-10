@@ -16,7 +16,7 @@ export function setupI18n(app: App) {
     messages,
   });
 
-  app.use(i18n);
+  app.use(i18n as any); // 类型断言：vue-i18n 实例可以作为插件使用
   return i18n;
 }
 

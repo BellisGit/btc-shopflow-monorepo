@@ -1,18 +1,15 @@
 import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 import 'virtual:svg-icons';
-import 'virtual:uno.css';
-// Element Plus 样式
-import 'element-plus/dist/index.css';
-import 'element-plus/theme-chalk/dark/css-vars.css';
 // 暗色主题覆盖样式（必须在 Element Plus dark 样式之后加载，使用 CSS 确保在微前端环境下生效）
-// 关键：直接导入确保构建时被正确打包，避免代码分割导致的路径问题
 import '@btc/shared-components/styles/dark-theme.css';
-// 应用全局样式（global.scss 中已通过 @use 导入共享组件样式）
-// 注意：共享组件样式在 global.scss 中使用 @use 导入，确保构建时被正确合并
-import './styles/global.scss';
-import './styles/theme.scss';
-import './styles/nprogress.scss';
-import './styles/menu-themes.scss';
+// 应用全局样式（已在 bootstrap/index.ts 中导入，这里不再重复导入）
+// import './styles/global.scss';
+// import './styles/theme.scss';
+
+// 关键：在模块加载时就导入 getters.ts，确保 __SUBAPP_I18N_GETTERS__ 在 beforeMount 之前就注册
+// 这样主应用在 beforeMount 时就能获取到动态生成的国际化消息
+import './i18n/getters';
+
 import type { QiankunProps } from '@btc/shared-core';
 import {
   createAdminApp,
@@ -23,6 +20,11 @@ import {
 import type { AdminAppContext } from './bootstrap';
 import { setupSubAppErrorCapture } from '@btc/shared-utils/error-monitor';
 import { loadSharedResourcesFromLayoutApp } from '@btc/shared-utils/cdn/load-shared-resources';
+import { removeLoadingElement, clearNavigationFlag } from '@btc/shared-core';
+import { tSync } from './i18n/getters';
+// 注意：不再暴露 configImages 到全局，让共享组件直接使用默认配置
+// 共享组件的默认配置会从 @btc-assets 导入图片，这些图片在 layout-app 的构建产物中
+// 共享组件的 fixImagePath 函数会自动修复路径，确保在子应用中也能正确加载
 
 // 关键：在应用启动时立即设置全局错误监听器，捕获 Vue patch 过程中的 DOM 操作错误
 // 这些错误通常发生在组件更新时 DOM 节点已被移除的情况（如子应用卸载时）
@@ -31,6 +33,34 @@ if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
     const errorMessage = event.message || '';
     const errorStack = event.error?.stack || '';
+
+    // 关键：CRUD 组件相关的错误不应该被静默处理
+    // 这些错误通常表示组件配置问题，需要立即修复
+    if (
+      errorMessage.includes('Must be used inside') ||
+      errorMessage.includes('BtcAddBtn') ||
+      errorMessage.includes('BtcMultiDeleteBtn') ||
+      errorMessage.includes('BtcRefreshBtn') ||
+      errorMessage.includes('BtcUpsert') ||
+      errorMessage.includes('BtcTable') ||
+      errorMessage.includes('BtcPagination') ||
+      errorMessage.includes('BtcCrud') ||
+      errorStack.includes('BtcAddBtn') ||
+      errorStack.includes('BtcMultiDeleteBtn') ||
+      errorStack.includes('BtcRefreshBtn') ||
+      errorStack.includes('BtcUpsert') ||
+      errorStack.includes('BtcTable') ||
+      errorStack.includes('BtcPagination') ||
+      errorStack.includes('BtcCrud')
+    ) {
+      // CRUD 组件错误，必须输出，帮助排查问题
+      console.error('CRUD component error (must fix):', errorMessage, {
+        error: event.error,
+        stack: errorStack,
+      });
+      // 不阻止错误传播，让错误正常显示
+      return false;
+    }
 
     // 检查是否是 DOM 操作相关的错误
     if (
@@ -48,9 +78,6 @@ if (typeof window !== 'undefined') {
       // DOM 操作错误，静默处理，避免影响用户体验
       event.preventDefault();
       event.stopPropagation();
-      if (import.meta.env.DEV) {
-        console.warn('[admin-app] 全局错误监听器捕获到 DOM 操作错误:', errorMessage);
-      }
       return true; // 阻止默认错误处理
     }
     return false; // 其他错误继续正常处理
@@ -58,93 +85,146 @@ if (typeof window !== 'undefined') {
 }
 
 let context: AdminAppContext | null = null;
+let isRendering = false; // 防止并发渲染
 
 const render = async (props: QiankunProps = {}) => {
-  try {
+  // 防止并发渲染导致的竞态条件
+  if (isRendering) {
+    // 如果正在渲染，等待当前渲染完成
+    while (isRendering) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    // 如果渲染完成后 context 已存在，说明已经有其他渲染完成了，直接返回
     if (context) {
-      await unmountAdminApp(context);
-      context = null;
+      return;
+    }
+  }
+
+  isRendering = true;
+  
+  // 关键：在独立运行模式下，隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+  // 并使用 appLoadingService 显示应用级 loading
+  const isStandalone = !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  let appLoadingService: any = null;
+  
+  if (isStandalone) {
+    // 隐藏 index.html 中的 #Loading（显示"拜里斯科技"的那个）
+    const loadingEl = document.getElementById('Loading');
+    if (loadingEl) {
+      loadingEl.style.setProperty('display', 'none', 'important');
+      loadingEl.style.setProperty('visibility', 'hidden', 'important');
+      loadingEl.style.setProperty('opacity', '0', 'important');
+      loadingEl.style.setProperty('pointer-events', 'none', 'important');
+      loadingEl.style.setProperty('z-index', '-1', 'important');
+      loadingEl.classList.add('is-hide');
+    }
+    
+    // 显示应用级 loading
+    try {
+      const sharedCore = await import('@btc/shared-core');
+      appLoadingService = sharedCore.appLoadingService;
+      if (appLoadingService) {
+        appLoadingService.show(tSync('common.system.admin_module'));
+      }
+    } catch (error) {
+      // 静默失败，继续执行
+      if (import.meta.env.DEV) {
+        console.warn('[admin-app] Cannot display app-level loading:', error);
+      }
+    }
+  }
+  
+  try {
+    // 先卸载前一个实例（如果存在）
+    if (context) {
+      try {
+        await unmountAdminApp(context);
+      } catch (error) {
+        // 卸载失败不影响后续流程
+      } finally {
+        context = null;
+      }
     }
 
+    // 创建新实例
     context = await createAdminApp(props);
     await mountAdminApp(context, props);
 
     // 关键：应用挂载完成后，移除 Loading 并清理 sessionStorage 标记
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide(tSync('common.system.admin_module'));
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
+    
+    // 关键：确保 NProgress 和 AppSkeleton 也被关闭（避免双重 loading）
+    // 在独立运行时，不应该显示 NProgress 或 AppSkeleton
+    try {
+      // 关闭 NProgress（如果正在运行）
+      const NProgress = (await import('nprogress')).default;
+      if (NProgress && typeof NProgress.done === 'function') {
+        NProgress.done();
+      }
+      
+      // 隐藏 AppSkeleton（如果存在）
+      const skeleton = document.getElementById('app-skeleton');
+      if (skeleton) {
+        skeleton.style.setProperty('display', 'none', 'important');
+        skeleton.style.setProperty('visibility', 'hidden', 'important');
+        skeleton.style.setProperty('opacity', '0', 'important');
+      }
+    } catch (e) {
+      // 静默失败
+    }
   } catch (error) {
-    console.error('[admin-app] 渲染失败:', error);
-    // 即使挂载失败，也要移除 Loading
+    console.error('Render failed:', error);
+    // 即使挂载失败，也要移除 Loading 并清理 context
+    if (isStandalone && appLoadingService) {
+      // 隐藏应用级 loading
+      try {
+        appLoadingService.hide(tSync('common.system.admin_module'));
+      } catch (error) {
+        // 静默失败
+      }
+    }
     removeLoadingElement();
     clearNavigationFlag();
+    context = null;
     throw error;
+  } finally {
+    isRendering = false;
   }
 };
 
-/**
- * 移除 Loading 元素
- */
-function removeLoadingElement() {
-  const loadingEl = document.getElementById('Loading');
-  if (loadingEl) {
-    // 立即隐藏（使用内联样式确保优先级）
-    loadingEl.style.setProperty('display', 'none', 'important');
-    loadingEl.style.setProperty('visibility', 'hidden', 'important');
-    loadingEl.style.setProperty('opacity', '0', 'important');
-    loadingEl.style.setProperty('pointer-events', 'none', 'important');
-
-    // 添加淡出类（如果 CSS 中有定义）
-    loadingEl.classList.add('is-hide');
-
-    // 延迟移除，确保动画完成（300ms 过渡时间 + 50ms 缓冲）
-    setTimeout(() => {
-      try {
-        if (loadingEl.parentNode) {
-          loadingEl.parentNode.removeChild(loadingEl);
-        } else if (loadingEl.isConnected) {
-          // 如果 parentNode 为 null 但元素仍在 DOM 中，直接移除
-          loadingEl.remove();
-        }
-      } catch (error) {
-        // 如果移除失败，至少确保元素被隐藏
-        loadingEl.style.setProperty('display', 'none', 'important');
-      }
-    }, 350);
-  }
-}
-
-/**
- * 清理导航标记
- */
-function clearNavigationFlag() {
-  try {
-    sessionStorage.removeItem('__BTC_NAV_LOADING__');
-  } catch (e) {
-    // 静默失败（某些浏览器可能禁用 sessionStorage）
-  }
-}
 
 // qiankun 生命周期钩子（标准 ES 模块导出格式）
 // bootstrap 必须是轻量级的，直接返回 resolved Promise，确保最快速度
+// 关键：bootstrap 阶段不做任何初始化工作，所有初始化都在 mount 阶段完成
+// 这样可以避免在应用切换时出现竞态条件
 function bootstrap() {
+  // 确保 context 状态被重置（防止应用切换时的状态残留）
+  // 注意：这里不清理 context，因为可能还在使用，真正的清理在 unmount 中完成
   return Promise.resolve();
 }
 
 async function mount(props: QiankunProps) {
-  // 生产环境且非 layout-app：先加载共享资源
+  // 关键优化：将共享资源加载改为后台异步执行，不阻塞应用挂载
+  // 应用可以立即挂载，共享资源在后台加载，如果加载失败会使用本地资源作为降级方案
   if (import.meta.env.PROD && !(window as any).__IS_LAYOUT_APP__) {
-    try {
-      await loadSharedResourcesFromLayoutApp({
-        onProgress: (loaded, total) => {
-          if (import.meta.env.DEV) {
-            console.log(`[admin-app] 加载共享资源进度: ${loaded}/${total}`);
-          }
-        },
-      });
-    } catch (error) {
-      console.warn('[admin-app] 加载共享资源失败，继续使用本地资源:', error);
-      // 继续执行，使用本地打包的资源作为降级方案
-    }
+    // 不 await，让它在后台执行
+    loadSharedResourcesFromLayoutApp({
+      onProgress: (loaded, total) => {
+        // 加载进度回调
+      },
+    }).catch((error) => {
+      // 加载共享资源失败，继续使用本地资源
+      // 静默失败，不影响应用运行
+    });
   }
 
   // 设置子应用错误捕获（如果主应用传递了错误上报方法）
@@ -159,21 +239,34 @@ async function mount(props: QiankunProps) {
       });
     }
   } catch (error) {
-    // 错误捕获设置失败不影响应用运行，只记录警告
-    console.warn('[admin-app] 设置错误捕获失败:', error);
+    // 错误捕获设置失败不影响应用运行
   }
 
   await render(props);
 }
 
 async function unmount(props: QiankunProps = {}) {
+  // 等待当前渲染完成（如果正在渲染）
+  while (isRendering) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
   if (context) {
-    await unmountAdminApp(context, props);
-    context = null;
+    try {
+      await unmountAdminApp(context, props);
+    } catch (error) {
+      // 卸载失败不影响后续流程
+    } finally {
+      context = null;
+    }
   }
 }
 
 // 使用 vite-plugin-qiankun 的 renderWithQiankun（保持兼容性）
+// 关键：只在 qiankun 环境下注册生命周期。
+// renderWithQiankun 在非 qiankun 环境会自动调用 mount，导致"子应用独立先挂载一次 + 加载 layout-app 后又手动挂载一次"的双挂载，
+// 进而引发内容区空白以及 single-spa #41/#1 等问题。
+if (qiankunWindow.__POWERED_BY_QIANKUN__) {
 renderWithQiankun({
   bootstrap,
   mount,
@@ -184,6 +277,7 @@ renderWithQiankun({
   },
   unmount,
 });
+}
 
 // 导出 timeouts 配置，供 single-spa 使用
 // 注意：qiankun 封装后，优先读取主应用 start 中的 lifeCycles 配置
@@ -214,9 +308,18 @@ export const timeouts = {
 export default { bootstrap, mount, unmount, timeouts };
 
 // 独立运行（非 qiankun 环境）
-// 注意：与 logistics-app 保持一致，使用 shouldRunStandalone 检查
-const shouldRunStandalone = () =>
-  !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+const shouldRunStandalone = () => {
+  // 关键：如果 hostname 匹配生产环境域名，即使 __USE_LAYOUT_APP__ 还未设置，也不应该立即独立运行
+  // 应该等待 initLayoutApp 完成后再决定
+  const isProductionDomain = /\.bellis\.com\.cn$/i.test(window.location.hostname);
+  if (isProductionDomain) {
+    // 生产环境域名：如果 __USE_LAYOUT_APP__ 已设置，说明 layout-app 已加载，不应该独立运行
+    // 如果还未设置，也不应该立即独立运行，应该等待 initLayoutApp
+    return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+  }
+  // 非生产环境：正常判断
+  return !qiankunWindow.__POWERED_BY_QIANKUN__ && !(window as any).__USE_LAYOUT_APP__;
+};
 
 if (shouldRunStandalone()) {
   // 检查是否需要加载 layout-app
@@ -247,41 +350,38 @@ if (shouldRunStandalone()) {
             waitForViewport().then((viewport) => {
               if (viewport) {
                 // 挂载到 layout-app 的 #subapp-viewport
-                render({ container: viewport } as any).catch((error) => {
-                  console.error('[admin-app] 挂载到 layout-app 失败:', error);
+                render({ container: viewport } as any).catch(() => {
+                  // 挂载失败
                 });
               } else {
-                console.error('[admin-app] 等待 #subapp-viewport 超时，尝试独立渲染');
-                render().catch((error) => {
-                  console.error('[admin-app] 独立运行失败:', error);
+                render().catch(() => {
+                  // 独立运行失败
                 });
               }
             });
           } else {
             // layout-app 加载失败或不需要加载，独立渲染
-            render().catch((error) => {
-              console.error('[admin-app] 独立运行失败:', error);
+            render().catch(() => {
+              // 独立运行失败
             });
           }
         })
-        .catch((error) => {
-          console.error('[admin-app] 初始化 layout-app 失败:', error);
+        .catch(() => {
           // layout-app 加载失败，独立渲染
-          render().catch((err) => {
-            console.error('[admin-app] 独立运行失败:', err);
+          render().catch(() => {
+            // 独立运行失败
           });
         });
-    }).catch((error) => {
-      console.error('[admin-app] 导入 init-layout-app 失败:', error);
+    }).catch(() => {
       // 导入失败，直接渲染
-      render().catch((err) => {
-        console.error('[admin-app] 独立运行失败:', err);
+      render().catch(() => {
+        // 独立运行失败
       });
     });
   } else {
     // 不需要加载 layout-app（非生产环境），直接渲染
-    render().catch((error) => {
-      console.error('[admin-app] 独立运行失败:', error);
+    render().catch(() => {
+      // 独立运行失败
     });
   }
 }

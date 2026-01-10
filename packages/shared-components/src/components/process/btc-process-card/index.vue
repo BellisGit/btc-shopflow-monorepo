@@ -36,7 +36,9 @@
           v-if="process.scheduledStartTime && process.scheduledEndTime"
           :start-time="process.scheduledStartTime"
           :end-time="process.scheduledEndTime"
-          :actual-start-time="process.actualStartTime"
+          v-bind="{
+            ...(process.actualStartTime !== undefined ? { 'actual-start-time': process.actualStartTime } : {})
+          }"
         />
 
         <!-- 描述信息 -->
@@ -170,7 +172,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Clock, Loading, Check, Warning, Timer, Document } from '@element-plus/icons-vue';
-import { formatDateTime } from '@btc/shared-utils';
+import { formatDateTime } from '@btc/shared-core/utils';
 import { useThemePlugin } from '@btc/shared-core';
 import BtcCard from '@btc-components/basic/btc-card/index.vue';
 import BtcTableButton from '@btc-components/basic/btc-table-button/index.vue';

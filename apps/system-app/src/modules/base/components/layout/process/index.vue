@@ -95,7 +95,7 @@ import { useI18n } from '@btc/shared-core';
 import { BtcConfirm, BtcMessage } from '@btc/shared-components';
 import type { ProcessItem } from '@/store/process';
 import { useProcessStore, getCurrentAppFromPath } from '@/store/process';
-import { getManifestRoute } from '@/micro/manifests';
+import { getManifestRoute } from '@btc/shared-core/manifest';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 
 interface Props {
@@ -366,7 +366,7 @@ function toBack() {
     engineering: '/engineering',
     quality: '/quality',
     production: '/production',
-    monitor: '/monitor',
+    operations: '/operations',
   };
 
   // 如果有历史记录且在当前应用内，则返回
@@ -397,7 +397,7 @@ function toHome() {
     quality: '/quality',
     production: '/production',
     finance: '/finance',
-    monitor: '/monitor', // 监控应用首页
+    operations: '/operations', // 运维应用首页
   };
 
   router.push(appHomes[currentApp] || '/');
@@ -495,7 +495,7 @@ function handleTabCommand(command: string) {
         engineering: '/engineering',
         quality: '/quality',
         production: '/production',
-        monitor: '/monitor',
+        operations: '/operations',
       };
       router.push(appHomes[currentApp] || '/');
       break;

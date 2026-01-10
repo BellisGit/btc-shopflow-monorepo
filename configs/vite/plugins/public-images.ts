@@ -263,7 +263,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                   // 保留查询参数（如果有）
                   const queryMatch = match.match(/(\?[^)]*)/);
                   const query = queryMatch ? queryMatch[1] : '';
-                  return match.replace(originalPath, newPath).replace(/\?[^)]*/, query);
+                  return match.replace(originalPath, newPath).replace(/\?[^)]*/, query ? query : '');
                 });
                 modified = true;
                 console.log(`[public-images-to-assets] 🔄 更新 CSS ${fileName} 中的引用: ${originalPath} -> ${newPath}`);
@@ -293,6 +293,30 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
             console.warn(`[public-images-to-assets] ⚠️  复制 ${rootFile} 失败:`, error);
           }
         }
+      }
+
+      // 关键：复制 bridge.html 到根目录（用于跨子域通信）
+      // 注意：bridge.html 应该只在 main-app 中存在，因为所有子应用都访问主域的 bridge.html
+      const publicDir = resolve(appDir, 'public');
+      const bridgeHtmlPath = join(publicDir, 'bridge.html');
+      if (existsSync(bridgeHtmlPath)) {
+        const bridgeHtmlDest = join(outputDir, 'bridge.html');
+        try {
+          const fileContent = readFileSync(bridgeHtmlPath);
+          writeFileSync(bridgeHtmlDest, fileContent);
+          console.log(`[public-images-to-assets] ✅ 已复制 bridge.html 到根目录: ${bridgeHtmlDest}`);
+        } catch (error) {
+          console.error(`[public-images-to-assets] ❌ 复制 bridge.html 失败:`, error);
+          throw error; // 抛出错误，确保构建失败
+        }
+      } else {
+        // bridge.html 不存在，检查是否是 main-app（应该存在）
+        const appName = appDir.split(/[/\\]/).pop() || '';
+        if (appName === 'main-app') {
+          console.warn(`[public-images-to-assets] ⚠️  警告: main-app 的 public/bridge.html 不存在！`);
+          console.warn(`[public-images-to-assets] ⚠️  这会导致跨子域通信失败。请确保 bridge.html 存在于 public 目录。`);
+        }
+        // 其他应用不需要 bridge.html（它们访问主域的 bridge.html）
       }
 
       if (imageMap.size === 0) {
@@ -392,7 +416,7 @@ export function publicImagesToAssetsPlugin(appDir: string): Plugin {
                     // 保留查询参数（如果有）
                     const queryMatch = match.match(/(\?[^)]*)/);
                     const query = queryMatch ? queryMatch[1] : '';
-                    return match.replace(originalPath, newPath).replace(/\?[^)]*/, query);
+                    return match.replace(originalPath, newPath).replace(/\?[^)]*/, query ? query : '');
                   });
                 } else {
                   // 对于字符串引用，也保留查询参数

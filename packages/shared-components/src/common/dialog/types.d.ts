@@ -11,7 +11,7 @@ export interface DialogProps {
     fullscreen?: boolean;
     controls?: string[];
     hideHeader?: boolean;
-    beforeClose?: () => void | Promise<void>;
+    beforeClose?: (done: () => void) => void | Promise<void>;
     scrollbar?: boolean;
     transparent?: boolean;
     alignCenter?: boolean;

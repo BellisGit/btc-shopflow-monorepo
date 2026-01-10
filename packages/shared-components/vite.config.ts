@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import dts from 'vite-plugin-dts';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'path';
@@ -39,9 +40,9 @@ export default defineConfig({
       '@plugins': resolve(__dirname, 'src/plugins'),
       '@utils': resolve(__dirname, 'src/utils'),
       '@btc/shared-components': resolve(__dirname, 'src'),
-      // 添加 @configs 别名，指向项目根目录的 configs 文件夹（用于开发环境）
+      // 添加 @configs 别名，指向 shared-core 的 configs 目录（用于开发环境）
       // 在构建时，这些模块会被标记为 external，不会被打包
-      '@configs': resolve(__dirname, '../../configs'),
+      '@configs': resolve(__dirname, '../shared-core/src/configs'),
       // 图表相关别名（具体文件路径放在前面，确保优先匹配，去掉 .ts 扩展名让 Vite 自动处理）
       '@charts-utils/css-var': resolve(__dirname, 'src/charts/utils/css-var'),
       '@charts-utils/color': resolve(__dirname, 'src/charts/utils/color'),
@@ -51,13 +52,20 @@ export default defineConfig({
       '@charts-types': resolve(__dirname, 'src/charts/types'),
       '@charts-utils': resolve(__dirname, 'src/charts/utils'),
       '@charts-composables': resolve(__dirname, 'src/charts/composables'),
+      '@btc/shared-core/utils': resolve(__dirname, '../shared-core/src/utils'),
+      '@btc/shared-core/utils/form': resolve(__dirname, '../shared-core/src/utils/form'),
+      '@btc/shared-core/utils/format': resolve(__dirname, '../shared-core/src/utils/format'),
+      '@btc/i18n': resolve(__dirname, 'src/i18n'),
     },
+    // 关键：确保 Vite 能够正确解析 .tsx 和 .jsx 文件
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.vue'],
   },
   plugins: [
     vue(),
+    vueJsx(),
     copyDarkThemePlugin(),
     dts({
-      include: ['src/**/*.ts', 'src/**/*.vue'],
+      include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.vue'],
       exclude: ['src/**/*.d.ts', 'node_modules', 'dist', '**/*.test.ts', '**/*.spec.ts'],
       outDir: resolve(__dirname, 'dist'),
       root: __dirname,
@@ -66,7 +74,7 @@ export default defineConfig({
       skipDiagnostics: true,
       logLevel: 'silent',
       tsconfigPath: resolve(__dirname, 'tsconfig.build.json'),
-      rollupTypes: false, // 禁用 rollupTypes，避免路径解析错误
+      rollupTypes: false, // 禁用 rollupTypes，保留目录结构
     }),
   ],
   css: {
@@ -77,6 +85,13 @@ export default defineConfig({
       }
     }
   },
+  // 关键：确保 esbuild 正确处理 JSX，使用 Vue 的 h 函数而不是 React.createElement
+  // 这样即使 esbuild 处理某些 JSX 文件，也会使用正确的转换方式
+  esbuild: {
+    jsx: 'preserve', // 保留 JSX，让 vueJsx 插件处理
+    jsxFactory: 'h', // 使用 Vue 的 h 函数作为 JSX 工厂函数
+    jsxFragment: 'Fragment', // 使用 Vue 的 Fragment
+  },
   logLevel: 'error', // 鍙樉绀洪敊璇紝鎶戝埗璀﹀憡
   build: {
     lib: {
@@ -86,7 +101,7 @@ export default defineConfig({
       fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', '@btc/shared-utils', '@btc/subapp-manifests', '@configs/unified-env-config', '@configs/app-scanner'],
+      external: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue', '@btc/shared-core', /^@btc\/shared-core\/.*/, '@btc/i18n', /^@btc\/i18n\/.*/, '@octokit/rest', '@btc/subapp-manifests', '@btc/shared-core/configs/unified-env-config', '@btc/shared-core/configs/app-scanner', '@btc/shared-core/configs/layout-bridge', 'zod'],
       output: {
         globals: {
           vue: 'Vue',
@@ -95,7 +110,6 @@ export default defineConfig({
           'element-plus': 'ElementPlus',
           '@element-plus/icons-vue': 'ElementPlusIconsVue',
           '@btc/shared-core': 'BTCSharedCore',
-          '@btc/shared-utils': 'BTCSharedUtils',
           '@btc/subapp-manifests': 'BTCSubappManifests',
         },
         assetFileNames: (assetInfo: { name?: string }) => {

@@ -132,7 +132,7 @@ const clearCollapseTimer = () => {
   }
 };
 
-const scheduleCollapse = (reason: string) => {
+const scheduleCollapse = (_reason: string) => {
   if (!isCollapsible.value || !isExpanded.value || isPinned.value || appendHover.value || containerHover.value) {
     return;
   }

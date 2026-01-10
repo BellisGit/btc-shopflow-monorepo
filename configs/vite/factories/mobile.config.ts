@@ -115,7 +115,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   const publicDir = getPublicDir(appName, appDir);
 
   // 扩展别名配置（移动应用特有）
-  const baseResolve = createBaseResolve(appDir, appName);
+  // 注意：baseResolve 在后面根据 mode 创建，这里只定义 mobile 特有的别名
   const mobileAliases = {
     '@modules': resolve(appDir, 'src/modules'),
     '@db': resolve(appDir, 'src/db'),
@@ -442,7 +442,7 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   const serverConfig: UserConfig['server'] = {
     port: appConfig.devPort,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     https: {},
     cors: true,
     headers: {
@@ -468,10 +468,16 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   };
 
   // 预览服务器配置
+  // 关键：预览服务器从根目录的 dist/{prodHost} 读取构建产物，而不是从 apps/{appName}/dist 读取
+  const rootDistDir = resolve(appDir, '../../dist');
+  const previewRoot = resolve(rootDistDir, appConfig.prodHost);
+  
   const previewConfig: UserConfig['preview'] = {
     port: appConfig.prePort,
     host: '0.0.0.0',
     https: {},
+    // 关键：设置预览服务器的根目录为 dist/{prodHost}
+    root: previewRoot,
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
@@ -489,15 +495,27 @@ export function createMobileAppViteConfig(options: MobileAppViteConfigOptions): 
   };
 
   // 返回完整配置
+  // 所有应用都使用别名指向源码（因为都打包 @btc/* 包）
+  const baseResolve = createBaseResolve(appDir, appName);
+  
   return {
     base: baseUrl,
     publicDir,
     resolve: {
       ...baseResolve,
-      alias: {
-        ...baseResolve?.alias,
-        ...mobileAliases,
-      },
+      // 合并别名：baseResolve.alias 是数组形式，mobileAliases 是对象形式
+      alias: Array.isArray(baseResolve?.alias)
+        ? [
+            ...baseResolve.alias,
+            ...Object.entries(mobileAliases).map(([find, replacement]) => ({
+              find,
+              replacement,
+            })),
+          ]
+        : {
+            ...(baseResolve?.alias as Record<string, string> || {}),
+            ...mobileAliases,
+          },
     },
     plugins,
     esbuild: {

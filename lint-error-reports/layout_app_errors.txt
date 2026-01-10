@@ -2,57 +2,31 @@
 layout-app - ESLint 错误报告
 ============================================================
 
-生成时间: 2025/12/18 14:19:37
-总错误数: 2
+生成时间: 2025/12/27 20:43:07
+总错误数: 0
 
-按严重程度分类:
-------------------------------------------------------------
-  error   : 2 个
-  warning : 0 个
-
-按规则分类:
-------------------------------------------------------------
-  unknown                                 : 2 个
-
-按文件分类:
-------------------------------------------------------------
-
-文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
-  错误数: 2
-    [ERROR] unknown - 行 3:36 - The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
-    [ERROR] unknown - 行 3:40 - The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
-
-详细错误列表:
-------------------------------------------------------------
-
-错误 #1
-  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
-  位置: 3:36
-  严重程度: error
-  规则: unknown
-  消息: The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
-
-错误 #2
-  文件: C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
-  位置: 3:40
-  严重程度: error
-  规则: unknown
-  消息: The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`. - If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option. - If you want a type meaning "any object", you probably want `object` instead.
+✅ 未发现 lint 错误
 
 ============================================================
 完整输出:
 ============================================================
 
 
-C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\apps\layout-app\src\shims-vue.d.ts
-  3:36  error  The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
-- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
-- If you want a type meaning "any object", you probably want `object` instead.
-- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
-  3:40  error  The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
-- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
-- If you want a type meaning "any object", you probably want `object` instead.
-- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
+Oops! Something went wrong! :(
 
-✖ 2 problems (2 errors, 0 warnings)
+ESLint: 8.57.1
 
+Error: .eslintrc.js:
+	Configuration for rule "import/no-restricted-paths" is invalid:
+	Value {"zones":[{"target":"./apps/**","from":"./packages/**/src/**","except":["./packages/**/src/**/*.scss","./packages/**/src/**/*.css"],"message":"应用不能直接导入包的源码，请使用 dist 或 exports"},{"target":"./packages/**","from":"./packages/**/src/**","except":["./packages/**/dist"],"message":"包之间不能直接导入源码"}],"allowSameFolder":false} should NOT have additional properties.
+
+    at ConfigValidator.validateRuleOptions (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2048:23)
+    at C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2103:18
+    at Array.forEach (<anonymous>)
+    at ConfigValidator.validateRules (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2100:34)
+    at ConfigValidator.validateConfigArray (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:2226:18)
+    at CascadingConfigArrayFactory._finalizeConfigArray (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:3985:23)
+    at CascadingConfigArrayFactory.getConfigArrayForFile (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\@eslint+eslintrc@2.1.4\node_modules\@eslint\eslintrc\dist\eslintrc.cjs:3791:21)
+    at FileEnumerator._iterateFilesRecursive (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\eslint@8.57.1\node_modules\eslint\lib\cli-engine\file-enumerator.js:450:49)
+    at _iterateFilesRecursive.next (<anonymous>)
+    at FileEnumerator.iterateFiles (C:\Users\mlu\Desktop\btc-shopflow\btc-shopflow-monorepo\node_modules\.pnpm\eslint@8.57.1\node_modules\eslint\lib\cli-engine\file-enumerator.js:299:49)

@@ -47,16 +47,15 @@
       <div class="app-layout__main">
         <!-- 顶部区域容器（顶栏、tabbar、面包屑的统一容器，提供统一的 10px 间距） -->
         <div class="app-layout__header">
-          <!-- Tabbar：使用 v-show 保持 DOM，文档应用时隐藏 -->
+          <!-- Tabbar -->
           <Process
-            v-show="!isDocsApp"
             :is-fullscreen="isFullscreen"
             @toggle-fullscreen="toggleFullscreen"
           />
 
-          <!-- 面包屑：使用 v-if 条件渲染，不需要频繁计算 -->
+          <!-- 面包屑：使用 v-show 避免刷新时闪烁 -->
           <Breadcrumb
-            v-if="showBreadcrumb && showCrumbs"
+            v-show="showBreadcrumb && showCrumbs"
           />
         </div>
 
@@ -65,22 +64,27 @@
           ref="contentRef"
         >
             <!-- 主应用路由出口 -->
-            <router-view v-show="isMainApp && !isDocsApp" v-slot="{ Component, route }">
-              <transition :name="pageTransitionName" mode="out-in">
-                <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
-                <keep-alive v-else>
-                  <component :is="Component" :key="route.fullPath" />
-                </keep-alive>
-              </transition>
-            </router-view>
+            <div 
+              v-if="mountState.showMainApp"
+              class="content-mount content-mount--main-app"
+            >
+              <router-view v-slot="{ Component, route }">
+                <transition :name="pageTransitionName" mode="out-in">
+                  <component v-if="isOpsLogs" :is="Component" :key="route.fullPath" />
+                  <keep-alive v-else>
+                    <component :is="Component" :key="route.fullPath" />
+                  </keep-alive>
+                </transition>
+              </router-view>
+            </div>
 
-            <!-- 文档应用 iframe（全局缓存，v-show 控制显示/隐藏） -->
-            <DocsIframe :visible="isDocsApp" />
-
-            <!-- 子应用挂载点（始终存在，使用 v-show 控制显示/隐藏） -->
-            <div id="subapp-viewport" v-show="shouldShowSubAppViewport">
-              <!-- 骨架屏（挂载在这里，相对于内容区域定位） -->
-              <AppSkeleton />
+            <!-- 子应用挂载点 -->
+            <div
+              v-if="mountState.showSubApp"
+              id="subapp-viewport"
+              :ref="(el) => mountState.subappViewportRef.value = el as HTMLElement | null"
+              class="content-mount content-mount--sub-app"
+            >
             </div>
           </div>
         </div>
@@ -101,13 +105,12 @@ import mitt from 'mitt';
 import { useBrowser } from '@/composables/useBrowser';
 import { useSettingsState } from '@/plugins/user-setting/composables/useSettingsState';
 import { MenuThemeEnum } from '@/plugins/user-setting/config/enums';
+import { useContentMount } from '@btc/shared-core';
 import Sidebar from './sidebar/index.vue';
 import Topbar from './topbar/index.vue';
 import Process from './process/index.vue';
 import Breadcrumb from './breadcrumb/index.vue';
-import MenuDrawer from './menu-drawer/index.vue';
-// AppSkeleton 从共享组件库自动导入（通过 unplugin-vue-components）
-import DocsIframe from './docs-iframe/index.vue';
+import MenuDrawer from '@btc/shared-components/src/components/layout/app-layout/menu-drawer/index.vue';
 import TopLeftSidebar from './top-left-sidebar/index.vue';
 import DualMenu from './dual-menu/index.vue';
 import { provideContentHeight } from '@/composables/useContentHeight';
@@ -123,6 +126,9 @@ const isCollapse = ref(false);
 const drawerVisible = ref(false);
 const contentRef = ref<HTMLElement | null>(null);
 const { register: registerContentHeight, emit: emitContentResize } = provideContentHeight();
+
+// 使用统一的内容挂载状态管理
+const mountState = useContentMount();
 
 watch(
   () => contentRef.value,
@@ -177,55 +183,10 @@ const { browser, onScreenChange } = useBrowser();
 // 跟踪之前的 isMini 状态，只在真正切换移动端/桌面端时才改变折叠状态
 let prevIsMini = browser.isMini;
 
-// 判断是否为主应用路由（系统域路由）
-// 主应用就是系统域（默认域），处理所有非子应用的路径
-// 管理域（/admin/*）是子应用，不是主应用路由
+// 判断是否为主应用（用于其他逻辑，如刷新视图、面包屑等）
 const isMainApp = computed(() => {
-  const path = route.path;
-  // 排除不需要 Layout 的页面
-  if (path === '/login' ||
-      path === '/forget-password' ||
-      path === '/register') {
-    return false;
-  }
-  // 管理域是子应用，不是主应用
-  if (path.startsWith('/admin')) {
-    return false;
-  }
-  // 其他子应用路径
-  if (path.startsWith('/logistics') ||
-      path.startsWith('/engineering') ||
-      path.startsWith('/quality') ||
-      path.startsWith('/production') ||
-      path.startsWith('/finance') ||
-      path.startsWith('/docs')) {
-    return false;
-  }
-  // 系统域（默认域）是主应用，包括 /、/profile、/data/* 等
-  return true;
+  return mountState.type.value === 'main-app';
 });
-
-// 判断是否为文档应用
-const isDocsApp = computed(() => {
-  return route.path === '/docs' || route.path.startsWith('/docs/');
-});
-
-// qiankun 加载状态（用于追踪容器是否应该强制显示）
-const isQiankunLoading = ref(false);
-
-// 判断子应用容器是否应该显示
-// 当 qiankun 正在加载时，即使 isMainApp 为 true 也要显示
-const shouldShowSubAppViewport = computed(() => {
-  // 如果 qiankun 正在加载，强制显示容器
-  if (isQiankunLoading.value) {
-    return true;
-  }
-  // 正常情况：非主应用且非文档应用时显示
-  return !isMainApp.value && !isDocsApp.value;
-});
-
-// 监听 qiankun 加载状态变化（通过 DOM 属性）
-let qiankunLoadingObserver: MutationObserver | null = null;
 
 // 判断是否是首页
 const isHomePage = computed(() => {
@@ -242,7 +203,18 @@ const isHomePage = computed(() => {
 
 // 判断是否显示面包屑
 const showBreadcrumb = computed(() => {
-  const path = route.path;
+  // 关键：优先使用 window.location.pathname，因为它不受路由初始化时机影响
+  // 在页面刷新时，window.location.pathname 已经有正确的值，而 route.path 可能还在初始化
+  const locationPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const routePath = route?.path;
+  
+  // 优先使用 locationPath，如果不存在则使用 routePath
+  const path = locationPath || routePath;
+  
+  if (!path) {
+    // 如果 path 还没有初始化，默认显示面包屑（后续会根据实际路径更新）
+    return true;
+  }
 
   // 任意应用首页不显示
   if (isHomePage.value) {
@@ -271,9 +243,6 @@ const toggleDrawer = () => {
       scheduleContentResize();
     } catch (error) {
       // 静默处理错误，避免在子应用环境中抛出异常
-      if (import.meta.env.DEV) {
-        console.warn('[Layout] toggleDrawer error:', error);
-      }
     }
   });
 };
@@ -288,9 +257,6 @@ const openDrawer = () => {
       scheduleContentResize();
     } catch (error) {
       // 静默处理错误，避免在子应用环境中抛出异常
-      if (import.meta.env.DEV) {
-        console.warn('[Layout] openDrawer error:', error);
-      }
     }
   });
 };
@@ -317,21 +283,9 @@ function refreshView() {
   scheduleContentResize();
 }
 
-// qiankun 事件处理函数（需要在 onMounted 和 onUnmounted 中共享）
-const handleQiankunBeforeLoad = () => {
-  isQiankunLoading.value = true;
-};
-const handleQiankunAfterMount = () => {
-  isQiankunLoading.value = false;
-};
-
 onMounted(() => {
   emitter.on('view.refresh', refreshView);
   window.addEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
-
-  // 监听 qiankun 加载事件，直接更新状态（不依赖 DOM 属性）
-  window.addEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.addEventListener('qiankun:after-mount', handleQiankunAfterMount);
 
   // 监听屏幕变化，只在移动端/桌面端切换时改变折叠状态
   onScreenChange(() => {
@@ -342,29 +296,6 @@ onMounted(() => {
     }
     scheduleContentResize();
   }, true); // immediate = true，立即执行一次，确保初始状态正确
-
-  // 监听 qiankun 加载状态（通过 DOM 属性）
-  nextTick(() => {
-    const container = document.querySelector('#subapp-viewport');
-    if (container) {
-      // 检查初始状态
-      isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
-
-      // 使用 MutationObserver 监听属性变化
-      qiankunLoadingObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-qiankun-loading') {
-            isQiankunLoading.value = container.hasAttribute('data-qiankun-loading');
-          }
-        });
-      });
-
-      qiankunLoadingObserver.observe(container, {
-        attributes: true,
-        attributeFilter: ['data-qiankun-loading'],
-      });
-    }
-  });
 
   scheduleContentResize();
 });
@@ -379,14 +310,6 @@ watch(
 onUnmounted(() => {
   emitter.off('view.refresh', refreshView);
   window.removeEventListener('page-transition-change', handlePageTransitionChange as (event: Event) => void);
-  window.removeEventListener('qiankun:before-load', handleQiankunBeforeLoad);
-  window.removeEventListener('qiankun:after-mount', handleQiankunAfterMount);
-
-  // 清理 MutationObserver
-  if (qiankunLoadingObserver) {
-    qiankunLoadingObserver.disconnect();
-    qiankunLoadingObserver = null;
-  }
 
   delete (window as any).__APP_EMITTER__;
 });

@@ -86,8 +86,8 @@ export function loadingError(appName: string, error?: Error) {
   clearDelayHint();
 
   const message = useMessage();
-  message.error(`加载「${appName}」失败，请刷新重试`);
+  message.error('common.other.loading_failed', { name: appName });
 
-  console.error(`[应用加载失败] ${appName}:`, error);
+  console.error('common.other.app_load_failed', `${appName}:`, error);
 }
 

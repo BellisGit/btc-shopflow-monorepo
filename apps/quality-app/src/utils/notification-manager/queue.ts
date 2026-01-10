@@ -28,13 +28,16 @@ export class NotificationQueue {
       id: notificationId,
       type,
       content,
-      title,
       count: 1,
       priority: NOTIFICATION_PRIORITIES[type],
       duration: this.calculateDuration(content, 1),
       timestamp: Date.now(),
       retryCount: 0
     };
+    // 明确处理可选属性的 undefined（exactOptionalPropertyTypes）
+    if (title !== undefined) {
+      newNotification.title = title;
+    }
 
     this.notificationMap.set(notificationId, newNotification);
 
@@ -61,7 +64,7 @@ export class NotificationQueue {
   /**
    * 计算通知显示时长
    */
-  private calculateDuration(content: string, count: number): number {
+  private calculateDuration(_content: string, count: number): number {
     const baseDuration = 3000; // 基础3秒
     const repeatBonus = (count - 1) * 1000; // 每次重复增加1秒
     const waitingPeriod = 500; // 等待期

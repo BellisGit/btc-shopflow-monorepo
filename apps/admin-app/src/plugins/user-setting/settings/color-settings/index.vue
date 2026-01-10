@@ -15,8 +15,8 @@
             <Check />
           </el-icon>
         </div>
-        <!-- 自定义颜色选择器 -->
-        <BtcColorPicker
+        <!-- 自定义颜色选择器 - 暂时移除 -->
+        <!-- <BtcColorPicker
           v-model="customColor"
           :teleported="false"
           @show="handleCustomThemeClick"
@@ -37,7 +37,7 @@
               </el-icon>
             </div>
           </template>
-        </BtcColorPicker>
+        </BtcColorPicker> -->
       </div>
     </div>
 
@@ -49,7 +49,7 @@ import { computed, ref, watch } from 'vue';
 import { Check } from '@element-plus/icons-vue';
 import { useI18n, useThemePlugin } from '@btc/shared-core';
 import SectionTitle from '../../components/shared/SectionTitle.vue';
-import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
+// import BtcColorPicker from '@btc-components/form/btc-color-picker/index.vue';
 import { BtcMessage } from '@btc/shared-components';
 import '../../settings/color-settings/styles/index.scss';
 import type { ThemeConfig } from '@btc/shared-core';

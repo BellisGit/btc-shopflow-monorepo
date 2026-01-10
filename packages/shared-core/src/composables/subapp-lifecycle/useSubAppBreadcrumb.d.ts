@@ -9,3 +9,4 @@
  * @param app 应用 ID
  */
 export declare function findMenuIconByI18nKey(i18nKey: string, app: string): string | undefined;
+//# sourceMappingURL=useSubAppBreadcrumb.d.ts.map

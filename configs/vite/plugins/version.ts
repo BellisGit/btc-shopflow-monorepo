@@ -65,6 +65,16 @@ export function addVersionPlugin(): Plugin {
         let newHtml = html;
         let modified = false;
 
+        // 0) 移除空的 <style></style> 标签
+        // 说明：在微前端架构下，子应用在生产环境被 qiankun 加载时，主应用已经提供了 loading，
+        // 子应用的 style 标签可能被处理成空的。移除空标签可以简化 HTML 结构。
+        // 开发环境下，子应用独立运行，style 标签有内容（loading 样式），不会被移除。
+        const emptyStyleRegex = /<style>\s*<\/style>/gi;
+        if (emptyStyleRegex.test(newHtml)) {
+          newHtml = newHtml.replace(emptyStyleRegex, '');
+          modified = true;
+        }
+
         // 1) 为 <script src> 添加/更新 v
         //
         // 关键：不要给 ESM module script（type="module"）追加 ?v

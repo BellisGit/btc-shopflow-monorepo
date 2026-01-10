@@ -1,7 +1,7 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off" name="password-login-form" @submit.prevent="handleSubmit">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" autocomplete="off" name="password-login-form" @submit.prevent.stop="handleSubmit">
         <!-- 隐藏的假输入框，用于欺骗浏览器自动填充 -->
         <input 
           id="fake-username" 
@@ -48,7 +48,7 @@
         <!-- 提交按钮放在表单内部 -->
         <el-form-item>
           <el-button type="primary" size="large" :loading="loading" native-type="submit">
-            {{ t('立即登录') }}
+            {{ t('auth.login.immediately') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -59,7 +59,7 @@
     <template #extra>
       <div class="forgot-password-link">
         <router-link to="/forget-password" class="link">
-          {{ t('忘记密码？') }}
+          {{ t('auth.login.password.forgot') }}
           <el-icon class="arrow-right">
             <ArrowRight />
           </el-icon>
@@ -70,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { storage } from '@btc/shared-utils';
 import { ref, reactive } from 'vue';
 import type { FormInstance } from 'element-plus';
 import { useI18n } from 'vue-i18n';
@@ -98,7 +99,7 @@ const { t } = useI18n();
 
 // 表单数据
 const form = reactive({
-  username: localStorage.getItem('username') || '',
+  username: storage.get<string>('username') || '',
   password: ''
 });
 
@@ -116,15 +117,29 @@ const rules = reactive({
 
 const formRef = ref<FormInstance>();
 
+// 防止重复提交的标记
+let isSubmitting = false;
+
 // 提交函数
 const handleSubmit = async () => {
   if (!formRef.value) return;
   
+  // 防止重复提交
+  if (isSubmitting) {
+    return;
+  }
+  
   try {
+    isSubmitting = true;
     await formRef.value.validate();
     emit('submit', { ...form });
   } catch {
     // 验证失败，不继续执行
+  } finally {
+    // 延迟重置标记，确保异步操作完成
+    setTimeout(() => {
+      isSubmitting = false;
+    }, 100);
   }
 };
 

@@ -1,7 +1,7 @@
 <template>
   <BtcLoginFormLayout>
     <template #form>
-      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" name="sms-login-form" @submit.prevent="handleSubmit">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="0" class="form" name="sms-login-form" @submit.prevent.stop="handleSubmit">
         <el-form-item prop="phone">
           <el-input
             id="sms-phone"
@@ -45,7 +45,7 @@
             :disabled="!form.smsCode || form.smsCode.length !== 6"
             native-type="submit"
           >
-            {{ t('立即登录') }}
+            {{ t('auth.login.immediately') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -126,15 +126,29 @@ const {
   }
 });
 
+// 防止重复提交的标记
+let isSubmitting = false;
+
 // 提交函数
 const handleSubmit = async () => {
   if (!formRef.value) return;
   
+  // 防止重复提交
+  if (isSubmitting) {
+    return;
+  }
+  
   try {
+    isSubmitting = true;
     await formRef.value.validate();
     emit('submit', { ...form });
   } catch {
     // 验证失败
+  } finally {
+    // 延迟重置标记，确保异步操作完成
+    setTimeout(() => {
+      isSubmitting = false;
+    }, 100);
   }
 };
 
