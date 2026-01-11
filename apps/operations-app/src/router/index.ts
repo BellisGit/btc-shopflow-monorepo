@@ -5,7 +5,7 @@ import {
 } from 'vue-router';
 import type { Router } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
-import { AppLayout } from '@btc/shared-components';
+import { BtcAppLayout } from '@btc/shared-components';
 import { getMainAppLoginUrl } from '@btc/shared-core';
 
 /**

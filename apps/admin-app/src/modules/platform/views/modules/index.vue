@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="modules-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -7,7 +7,7 @@
       :table-columns="moduleColumns"
       :form-items="moduleFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
-      left-title="业务域"
+      left-title="title.platform.domains"
       right-title="模块列表"
       search-placeholder="搜索模块..."
       :show-unassigned="true"

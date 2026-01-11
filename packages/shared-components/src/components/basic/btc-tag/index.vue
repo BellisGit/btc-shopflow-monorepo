@@ -7,7 +7,7 @@
     :closable="closable"
     :disable-transitions="disableTransitions"
     :hit="hit"
-    :color="customColor"
+    :color="props.color"
     :class="tagClass"
     :style="customStyle"
     @click="(e: MouseEvent) => emit('click', e)"
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, markRaw } from 'vue';
 
 defineOptions({
   name: 'BtcTag'
@@ -53,7 +53,7 @@ export interface BtcTagProps {
    */
   size?: 'large' | 'default' | 'small';
   /**
-   * 主题（默认 light，更接近原生样式）
+   * 主题（默认 plain）
    */
   effect?: 'dark' | 'light' | 'plain';
   /**
@@ -80,7 +80,7 @@ export interface BtcTagProps {
 
 const props = withDefaults(defineProps<BtcTagProps>(), {
   type: 'primary',
-  effect: 'light',
+  effect: 'plain',
   round: false,
   closable: false,
   disableTransitions: false,
@@ -92,26 +92,28 @@ const emit = defineEmits<{
   close: [event: MouseEvent];
 }>();
 
-// 扩展颜色方案配置（参考 el-tag light effect 的样式：浅色背景 + 深色文本）
-const extendedColorMap: Record<string, { textColor: string; bgColor: string; borderColor: string }> = {
-  purple: { textColor: '#9c27b0', bgColor: '#f3e5f5', borderColor: '#ce93d8' },
-  pink: { textColor: '#e91e63', bgColor: '#fce4ec', borderColor: '#f48fb1' },
-  cyan: { textColor: '#00bcd4', bgColor: '#e0f7fa', borderColor: '#80deea' },
-  teal: { textColor: '#009688', bgColor: '#e0f2f1', borderColor: '#80cbc4' },
-  indigo: { textColor: '#3f51b5', bgColor: '#e8eaf6', borderColor: '#9fa8da' },
-  orange: { textColor: '#ff9800', bgColor: '#fff3e0', borderColor: '#ffb74d' },
-  brown: { textColor: '#795548', bgColor: '#efebe9', borderColor: '#bcaaa4' },
-  gray: { textColor: '#616161', bgColor: '#f5f5f5', borderColor: '#bdbdbd' },
-  lime: { textColor: '#827717', bgColor: '#f9fbe7', borderColor: '#d4e157' },
-  olive: { textColor: '#558b2f', bgColor: '#f1f8e9', borderColor: '#aed581' },
-  navy: { textColor: '#1976d2', bgColor: '#e3f2fd', borderColor: '#90caf9' },
-  maroon: { textColor: '#c2185b', bgColor: '#fce4ec', borderColor: '#f48fb1' },
-};
-
 // 基础类型（Element Plus 原生支持）
-const baseTypes = ['primary', 'success', 'warning', 'danger', 'info'];
+// 使用 markRaw 避免被 Vue 响应式系统处理，防止组件卸载时的错误
+const baseTypes = markRaw(['primary', 'success', 'warning', 'danger', 'info']);
 
-// 计算最终使用的 type（如果是扩展类型，返回 undefined，使用 color）
+// 扩展颜色到基础颜色的映射（用于 color 属性）
+// 使用 markRaw 避免被 Vue 响应式系统处理，防止组件卸载时的错误
+const extendedColorMap = markRaw<Record<string, string>>({
+  purple: '#9c27b0',
+  pink: '#e91e63',
+  cyan: '#00bcd4',
+  teal: '#009688',
+  indigo: '#3f51b5',
+  orange: '#ff9800',
+  brown: '#795548',
+  gray: '#616161',
+  lime: '#827717',
+  olive: '#558b2f',
+  navy: '#1976d2',
+  maroon: '#c2185b',
+});
+
+// 计算最终使用的 type（如果是扩展类型，返回 undefined，通过 CSS 类名和变量处理）
 const computedType = computed(() => {
   if (props.type && baseTypes.includes(props.type)) {
     return props.type as 'primary' | 'success' | 'warning' | 'danger' | 'info';
@@ -119,115 +121,347 @@ const computedType = computed(() => {
   return undefined;
 });
 
-// 自定义颜色（扩展类型不传 color，使用 CSS 样式覆盖）
-const customColor = computed(() => {
-  // 如果明确指定了 color，优先使用
-  if (props.color) {
-    return props.color;
-  }
-  // 扩展类型不传 color，使用 CSS 样式
-  return undefined;
-});
-
-// 自定义样式（通过 CSS 变量设置扩展颜色）
-const customStyle = computed<Record<string, string>>(() => {
-  // 如果是扩展类型且没有指定 color，使用 CSS 变量
-  if (props.type && !baseTypes.includes(props.type) && !props.color) {
-    const colors = extendedColorMap[props.type];
-    if (colors) {
-      return {
-        '--el-tag-text-color': colors.textColor,
-        '--el-tag-bg-color': colors.bgColor,
-        '--el-tag-border-color': colors.borderColor,
-      };
-    }
-  }
-  return {};
-});
-
-// 标签类名（用于扩展颜色的样式覆盖，作为备用方案）
+// 计算标签类名（扩展类型添加特定类名，通过 CSS 变量处理样式）
 const tagClass = computed(() => {
-  if (props.type && !baseTypes.includes(props.type) && !props.color) {
+  // 如果明确指定了 color，不使用扩展类型的样式
+  if (props.color) {
+    return '';
+  }
+  // 扩展类型：添加对应的类名，通过 CSS 变量处理样式
+  if (props.type && !baseTypes.includes(props.type)) {
     return `btc-tag--${props.type}`;
   }
   return '';
 });
 
+// 自定义样式（当前不需要）
+const customStyle = computed<Record<string, string>>(() => {
+  return {};
+});
+
 </script>
 
-<style lang="scss" scoped>
-// 扩展颜色样式（参考 el-tag light effect 的样式方案）
-// 使用浅色背景 + 深色文本 + 浅色边框，与原生 el-tag 样式保持一致
+<style lang="scss">
+// 扩展颜色类型的样式定义（模拟 el-tag 的 type 系统，使用 CSS 变量）
+// 注意：不使用 scoped，因为需要穿透到 el-tag 内部
+// 使用更具体的选择器确保只影响正确的元素
 
-:deep(.btc-tag--purple) {
-  --el-tag-text-color: #9c27b0;
-  --el-tag-bg-color: #f3e5f5;
-  --el-tag-border-color: #ce93d8;
+// 为每个扩展颜色类型定义 light 效果的样式
+@mixin extended-tag-light($color) {
+  --el-tag-text-color: #{$color};
+  --el-tag-bg-color: #{color-mix(in srgb, #{$color} 10%, var(--el-bg-color, #fff))};
+  --el-tag-border-color: #{color-mix(in srgb, #{$color} 20%, var(--el-bg-color, #fff))};
+  --el-tag-hover-color: #{$color};
 }
 
-:deep(.btc-tag--pink) {
-  --el-tag-text-color: #e91e63;
-  --el-tag-bg-color: #fce4ec;
-  --el-tag-border-color: #f48fb1;
+// 为每个扩展颜色类型定义 dark 效果的样式
+@mixin extended-tag-dark($color) {
+  --el-tag-text-color: #fff;
+  --el-tag-bg-color: #{$color};
+  --el-tag-border-color: #{$color};
+  --el-tag-hover-color: #{$color};
 }
 
-:deep(.btc-tag--cyan) {
-  --el-tag-text-color: #00bcd4;
-  --el-tag-bg-color: #e0f7fa;
-  --el-tag-border-color: #80deea;
+// 为每个扩展颜色类型定义 plain 效果的样式
+@mixin extended-tag-plain($color) {
+  --el-tag-text-color: #{$color};
+  --el-tag-bg-color: transparent;
+  --el-tag-border-color: #{$color};
+  --el-tag-hover-color: #{$color};
 }
 
-:deep(.btc-tag--teal) {
-  --el-tag-text-color: #009688;
-  --el-tag-bg-color: #e0f2f1;
-  --el-tag-border-color: #80cbc4;
+// purple
+.el-tag.btc-tag--purple.el-tag--light {
+  @include extended-tag-light(#9c27b0);
 }
 
-:deep(.btc-tag--indigo) {
-  --el-tag-text-color: #3f51b5;
-  --el-tag-bg-color: #e8eaf6;
-  --el-tag-border-color: #9fa8da;
+.el-tag.btc-tag--purple.el-tag--dark {
+  @include extended-tag-dark(#9c27b0);
 }
 
-:deep(.btc-tag--orange) {
-  --el-tag-text-color: #ff9800;
-  --el-tag-bg-color: #fff3e0;
-  --el-tag-border-color: #ffb74d;
+.el-tag.btc-tag--purple.el-tag--plain {
+  @include extended-tag-plain(#9c27b0);
 }
 
-:deep(.btc-tag--brown) {
-  --el-tag-text-color: #795548;
-  --el-tag-bg-color: #efebe9;
-  --el-tag-border-color: #bcaaa4;
+// pink
+.el-tag.btc-tag--pink.el-tag--light {
+  @include extended-tag-light(#e91e63);
 }
 
-:deep(.btc-tag--gray) {
-  --el-tag-text-color: #616161;
-  --el-tag-bg-color: #f5f5f5;
-  --el-tag-border-color: #bdbdbd;
+.el-tag.btc-tag--pink.el-tag--dark {
+  @include extended-tag-dark(#e91e63);
 }
 
-:deep(.btc-tag--lime) {
-  --el-tag-text-color: #827717;
-  --el-tag-bg-color: #f9fbe7;
-  --el-tag-border-color: #d4e157;
+.el-tag.btc-tag--pink.el-tag--plain {
+  @include extended-tag-plain(#e91e63);
 }
 
-:deep(.btc-tag--olive) {
-  --el-tag-text-color: #558b2f;
-  --el-tag-bg-color: #f1f8e9;
-  --el-tag-border-color: #aed581;
+// cyan
+.el-tag.btc-tag--cyan.el-tag--light {
+  @include extended-tag-light(#00bcd4);
 }
 
-:deep(.btc-tag--navy) {
-  --el-tag-text-color: #1976d2;
-  --el-tag-bg-color: #e3f2fd;
-  --el-tag-border-color: #90caf9;
+.el-tag.btc-tag--cyan.el-tag--dark {
+  @include extended-tag-dark(#00bcd4);
 }
 
-:deep(.btc-tag--maroon) {
-  --el-tag-text-color: #c2185b;
-  --el-tag-bg-color: #fce4ec;
-  --el-tag-border-color: #f48fb1;
+.el-tag.btc-tag--cyan.el-tag--plain {
+  @include extended-tag-plain(#00bcd4);
+}
+
+// teal
+.el-tag.btc-tag--teal.el-tag--light {
+  @include extended-tag-light(#009688);
+}
+
+.el-tag.btc-tag--teal.el-tag--dark {
+  @include extended-tag-dark(#009688);
+}
+
+.el-tag.btc-tag--teal.el-tag--plain {
+  @include extended-tag-plain(#009688);
+}
+
+// indigo
+.el-tag.btc-tag--indigo.el-tag--light {
+  @include extended-tag-light(#3f51b5);
+}
+
+.el-tag.btc-tag--indigo.el-tag--dark {
+  @include extended-tag-dark(#3f51b5);
+}
+
+.el-tag.btc-tag--indigo.el-tag--plain {
+  @include extended-tag-plain(#3f51b5);
+}
+
+// orange
+.el-tag.btc-tag--orange.el-tag--light {
+  @include extended-tag-light(#ff9800);
+}
+
+.el-tag.btc-tag--orange.el-tag--dark {
+  @include extended-tag-dark(#ff9800);
+}
+
+.el-tag.btc-tag--orange.el-tag--plain {
+  @include extended-tag-plain(#ff9800);
+}
+
+// brown
+.el-tag.btc-tag--brown.el-tag--light {
+  @include extended-tag-light(#795548);
+}
+
+.el-tag.btc-tag--brown.el-tag--dark {
+  @include extended-tag-dark(#795548);
+}
+
+.el-tag.btc-tag--brown.el-tag--plain {
+  @include extended-tag-plain(#795548);
+}
+
+// gray
+.el-tag.btc-tag--gray.el-tag--light {
+  @include extended-tag-light(#616161);
+}
+
+.el-tag.btc-tag--gray.el-tag--dark {
+  @include extended-tag-dark(#616161);
+}
+
+.el-tag.btc-tag--gray.el-tag--plain {
+  @include extended-tag-plain(#616161);
+}
+
+// lime
+.el-tag.btc-tag--lime.el-tag--light {
+  @include extended-tag-light(#827717);
+}
+
+.el-tag.btc-tag--lime.el-tag--dark {
+  @include extended-tag-dark(#827717);
+}
+
+.el-tag.btc-tag--lime.el-tag--plain {
+  @include extended-tag-plain(#827717);
+}
+
+// olive
+.el-tag.btc-tag--olive.el-tag--light {
+  @include extended-tag-light(#558b2f);
+}
+
+.el-tag.btc-tag--olive.el-tag--dark {
+  @include extended-tag-dark(#558b2f);
+}
+
+.el-tag.btc-tag--olive.el-tag--plain {
+  @include extended-tag-plain(#558b2f);
+}
+
+// navy
+.el-tag.btc-tag--navy.el-tag--light {
+  @include extended-tag-light(#1976d2);
+}
+
+.el-tag.btc-tag--navy.el-tag--dark {
+  @include extended-tag-dark(#1976d2);
+}
+
+.el-tag.btc-tag--navy.el-tag--plain {
+  @include extended-tag-plain(#1976d2);
+}
+
+// maroon
+.el-tag.btc-tag--maroon.el-tag--light {
+  @include extended-tag-light(#c2185b);
+}
+
+.el-tag.btc-tag--maroon.el-tag--dark {
+  @include extended-tag-dark(#c2185b);
+}
+
+.el-tag.btc-tag--maroon.el-tag--plain {
+  @include extended-tag-plain(#c2185b);
+}
+
+// 深色模式下的适配（对于 light 效果，使用 color-mix 混合深色背景）
+html.dark {
+  .el-tag.btc-tag--purple.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #9c27b0 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #9c27b0 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--pink.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #e91e63 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #e91e63 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--cyan.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #00bcd4 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #00bcd4 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--teal.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #009688 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #009688 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--indigo.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #3f51b5 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #3f51b5 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--orange.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #ff9800 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #ff9800 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--brown.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #795548 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #795548 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--gray.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #616161 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #616161 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--lime.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #827717 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #827717 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--olive.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #558b2f 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #558b2f 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--navy.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #1976d2 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #1976d2 30%, var(--el-bg-color))};
+  }
+
+  .el-tag.btc-tag--maroon.el-tag--light {
+    --el-tag-bg-color: #{color-mix(in srgb, #c2185b 15%, var(--el-bg-color))};
+    --el-tag-border-color: #{color-mix(in srgb, #c2185b 30%, var(--el-bg-color))};
+  }
+}
+
+// hit 边框颜色：为每个标签类型设置对应的 hit 边框颜色，而不是默认的主题色
+// 基础类型使用 Element Plus 的 CSS 变量
+.el-tag.el-tag--primary.is-hit {
+  border-color: var(--el-color-primary) !important;
+}
+
+.el-tag.el-tag--success.is-hit {
+  border-color: var(--el-color-success) !important;
+}
+
+.el-tag.el-tag--warning.is-hit {
+  border-color: var(--el-color-warning) !important;
+}
+
+.el-tag.el-tag--danger.is-hit {
+  border-color: var(--el-color-danger) !important;
+}
+
+.el-tag.el-tag--info.is-hit {
+  border-color: var(--el-color-info) !important;
+}
+
+// 扩展类型的 hit 边框颜色
+.el-tag.btc-tag--purple.is-hit {
+  border-color: #9c27b0 !important;
+}
+
+.el-tag.btc-tag--pink.is-hit {
+  border-color: #e91e63 !important;
+}
+
+.el-tag.btc-tag--cyan.is-hit {
+  border-color: #00bcd4 !important;
+}
+
+.el-tag.btc-tag--teal.is-hit {
+  border-color: #009688 !important;
+}
+
+.el-tag.btc-tag--indigo.is-hit {
+  border-color: #3f51b5 !important;
+}
+
+.el-tag.btc-tag--orange.is-hit {
+  border-color: #ff9800 !important;
+}
+
+.el-tag.btc-tag--brown.is-hit {
+  border-color: #795548 !important;
+}
+
+.el-tag.btc-tag--gray.is-hit {
+  border-color: #616161 !important;
+}
+
+.el-tag.btc-tag--lime.is-hit {
+  border-color: #827717 !important;
+}
+
+.el-tag.btc-tag--olive.is-hit {
+  border-color: #558b2f !important;
+}
+
+.el-tag.btc-tag--navy.is-hit {
+  border-color: #1976d2 !important;
+}
+
+.el-tag.btc-tag--maroon.is-hit {
+  border-color: #c2185b !important;
+}
+
+// 表格中的 small 尺寸标签，使用适中的 padding 以保持美观
+.el-table .el-tag.el-tag--small {
+  padding: 0 6px !important;
 }
 </style>

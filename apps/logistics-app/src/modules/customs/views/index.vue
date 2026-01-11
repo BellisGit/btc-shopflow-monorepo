@@ -1,11 +1,12 @@
 <template>
   <div class="customs-page">
-    <el-empty :description="t('page.customs.placeholder')" />
+    <BtcEmpty :description="t('page.customs.placeholder')" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@btc/shared-core';
+import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
   name: 'LogisticsCustoms',

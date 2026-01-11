@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <el-row
     class="btc-crud-row"
     :justify="justify"
@@ -13,7 +13,7 @@
 import type { RowJustify, RowAlign } from 'element-plus';
 
 defineOptions({
-  name: 'BtcRow',
+  name: 'BtcCrudRow',
   inheritAttrs: false,
 });
 

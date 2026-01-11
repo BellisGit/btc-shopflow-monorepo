@@ -6,7 +6,7 @@
       :right-service="wrappedBomService"
       :table-columns="bomColumns"
       :form-items="bomFormItems"
-      :left-title="t('inventory.data_source.domain')"
+      left-title="title.inventory.dataSource.domains"
       :right-title="t('menu.inventory.data_source.bom')"
       :show-unassigned="false"
       :enable-key-search="false"
@@ -208,7 +208,7 @@ const handleImport = async (
 
     const domainId = resolveSelectedDomainId();
     if (!domainId) {
-      message.warning(t('inventory.data_source.domain.select_required') || '请先选择左侧域');
+      message.warning(t('title.inventory.dataSource.domains.select_required') || '请先选择左侧域');
       done();
       return;
     }
@@ -366,44 +366,6 @@ const handleExport = async () => {
 
 // 物料构成表表单（使用 config.ts 中的配置）
 const bomFormItems = computed(() => formItems.value);
-  },
-  {
-    prop: 'childQty',
-    label: t('inventory.data_source.bom.fields.child_qty'),
-    span: 12,
-    required: true,
-    component: { name: 'el-input-number', props: { min: 0, precision: 2 } },
-  },
-  {
-    prop: 'checkType',
-    label: t('inventory.data_source.bom.fields.check_type'),
-    span: 12,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    prop: 'domainId',
-    label: t('inventory.data_source.bom.fields.domain_id'),
-    span: 12,
-    component: { name: 'el-input', props: { disabled: true } },
-    hook: {
-      onInit: (value: any, formData: Record<string, any>) => {
-        formData.domainId = resolveSelectedDomainId() ?? formData.domainId;
-      },
-    },
-  },
-  {
-    prop: 'processId',
-    label: t('inventory.data_source.bom.fields.process_id'),
-    span: 12,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-  {
-    prop: 'checkNo',
-    label: t('inventory.data_source.bom.fields.check_no'),
-    span: 12,
-    component: { name: 'el-input', props: { maxlength: 120 } },
-  },
-]);
 
 // 导出功能已由 BtcImportExportGroup 组件处理，不再需要单独的导出函数
 </script>

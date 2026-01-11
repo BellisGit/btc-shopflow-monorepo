@@ -66,15 +66,15 @@
         :on-before-refresh="handleBeforeRefresh"
         class="btc-double-group__crud"
       >
-        <BtcRow>
+        <BtcCrudRow>
           <div class="btc-crud-primary-actions">
             <BtcRefreshBtn />
             <slot name="add-btn">
               <BtcAddBtn v-if="showAddBtn" />
             </slot>
           </div>
-          <BtcFlex1 />
-          <BtcSearchKey v-if="showSearchKey" v-bind="searchPlaceholder !== undefined ? { placeholder: searchPlaceholder } : {}" />
+          <BtcCrudFlex1 />
+          <BtcCrudSearchKey v-if="showSearchKey" v-bind="searchPlaceholder !== undefined ? { placeholder: searchPlaceholder } : {}" />
           <BtcCrudActions v-if="showToolbar" :show-toolbar="op !== undefined">
             <template #default>
               <slot
@@ -87,21 +87,21 @@
               />
             </template>
           </BtcCrudActions>
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
+        <BtcCrudRow>
           <BtcTable
             :columns="tableColumns"
             v-bind="op !== undefined ? { op } : {}"
             :disable-auto-created-at="disableAutoCreatedAt"
             border
           />
-        </BtcRow>
+        </BtcCrudRow>
 
-        <BtcRow>
-          <BtcFlex1 />
+        <BtcCrudRow>
+          <BtcCrudFlex1 />
           <BtcPagination />
-        </BtcRow>
+        </BtcCrudRow>
 
         <BtcUpsert
           :items="computedFormItems"
@@ -125,16 +125,16 @@ import BtcPagination from '@btc-crud/pagination/index.vue';
 import BtcAddBtn from '@btc-crud/add-btn/index.vue';
 import BtcRefreshBtn from '@btc-crud/refresh-btn/index.vue';
 import BtcMultiDeleteBtn from '@btc-crud/multi-delete-btn/index.vue';
-import BtcRow from '@btc-crud/row/index.vue';
-import BtcFlex1 from '@btc-crud/flex1/index.vue';
-import BtcSearchKey from '@btc-crud/search-key/index.vue';
+import BtcCrudRow from '@btc-crud/crud-row/index.vue';
+import BtcCrudFlex1 from '@btc-crud/crud-flex1/index.vue';
+import BtcCrudSearchKey from '@btc-crud/crud-search-key/index.vue';
 import BtcUpsert from '@btc-crud/upsert/index.vue';
 import BtcCrudActions from '@btc-crud/actions/index.vue';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import type { DoubleGroupProps, DoubleGroupEmits, DoubleGroupExpose } from './types';
 
 defineOptions({
-  name: 'BtcDoubleGroup',
+  name: 'BtcDoubleLeftGroup',
   components: {
     BtcMasterList,
     BtcCrud,
@@ -143,9 +143,9 @@ defineOptions({
     BtcAddBtn,
     BtcRefreshBtn,
     BtcMultiDeleteBtn,
-    BtcRow,
-    BtcFlex1,
-    BtcSearchKey,
+    BtcCrudRow,
+    BtcCrudFlex1,
+    BtcCrudSearchKey,
     BtcUpsert,
     BtcCrudActions,
     BtcSvg,

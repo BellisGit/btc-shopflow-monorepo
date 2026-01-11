@@ -34,6 +34,14 @@ export default {
       'menu.inventory.process': '流程管理',
       'menu.inventory.result': '实盘数据',
       'menu.inventory.confirm': '流程确认',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.inventory.dataSource.domains': '域列表',
+      'title.inventory.dataSource.domains.select_required': '请先选择左侧域',
+      'title.inventory.check.list': '盘点列表',
+      'title.data.files.template.categories': '模板分类',
+      'title.data.files.template.templateList': '模板列表',
+      'title.data.files.preview.categories': '文件分类',
+      'title.data.files.preview.fileList': '文件列表',
       // 盘点列表
       'data.inventory.list.fields.material_code': '物料编码',
       'data.inventory.list.fields.material_name': '物料名称',
@@ -118,6 +126,14 @@ export default {
       'menu.inventory.process': 'Process Management',
       'menu.inventory.result': 'Live Inventory Data',
       'menu.inventory.confirm': 'Process Confirmation',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      'title.inventory.dataSource.domains': 'Domain List',
+      'title.inventory.dataSource.domains.select_required': 'Please select a domain on the left first',
+      'title.inventory.check.list': 'Check List',
+      'title.data.files.template.categories': 'Template Categories',
+      'title.data.files.template.templateList': 'Template List',
+      'title.data.files.preview.categories': 'File Categories',
+      'title.data.files.preview.fileList': 'File List',
       // 盘点列表
       'data.inventory.list.fields.material_code': 'Material Code',
       'data.inventory.list.fields.material_name': 'Material Name',
@@ -182,9 +198,9 @@ export default {
   columns: {
     'data.inventory.list': [
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'partName', label: 'data.inventory.list.fields.material_code', minWidth: 140 },
-      { prop: 'partQty', label: 'data.inventory.list.fields.actual_qty', minWidth: 120 },
-      { prop: 'position', label: 'data.inventory.list.fields.storage_location', minWidth: 120 },
+      { prop: 'partName', label: 'data.inventory.list.fields.material_code' },
+      { prop: 'partQty', label: 'data.inventory.list.fields.actual_qty' },
+      { prop: 'position', label: 'data.inventory.list.fields.storage_location' },
       { prop: 'createdAt', label: 'system.inventory.base.fields.created_at', width: 180 },
     ] as TableColumn[],
 
@@ -197,7 +213,7 @@ export default {
     'data.inventory.confirm': [
       { type: 'selection', width: 60 },
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'data.inventory.confirm.fields.name', minWidth: 150 },
+      { prop: 'name', label: 'data.inventory.confirm.fields.name' },
       {
         prop: 'status',
         label: 'data.inventory.confirm.fields.status',
@@ -218,8 +234,8 @@ export default {
 
     'data.inventory.ticket': [
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'partName', label: 'system.material.fields.material_code', minWidth: 140 },
-      { prop: 'position', label: 'inventory.result.fields.storage_location', minWidth: 120 },
+      { prop: 'partName', label: 'system.material.fields.material_code' },
+      { prop: 'position', label: 'inventory.result.fields.storage_location' },
       { prop: 'createdAt', label: 'system.inventory.base.fields.created_at', width: 180 },
     ] as TableColumn[],
 
@@ -230,8 +246,8 @@ export default {
 
     'data.inventory.bom': [
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'childNode', label: 'data.inventory.bom.fields.component_name', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'parentNode', label: 'data.inventory.bom.fields.material_code_name', minWidth: 140, showOverflowTooltip: true },
+      { prop: 'childNode', label: 'data.inventory.bom.fields.component_name', showOverflowTooltip: true },
+      { prop: 'parentNode', label: 'data.inventory.bom.fields.material_code_name', showOverflowTooltip: true },
       { prop: 'childQty', label: 'data.inventory.bom.fields.component_total_qty', width: 120 },
     ] as TableColumn[],
 
@@ -244,10 +260,10 @@ export default {
     'data.inventory.check': [
       { type: 'selection', width: 60 },
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'partName', label: 'system.material.fields.material_code', minWidth: 140 },
-      { prop: 'partQty', label: 'data.inventory.check.fields.actual_qty', minWidth: 120 },
-      { prop: 'checker', label: 'data.inventory.check.fields.checker_id', minWidth: 120 },
-      { prop: 'position', label: 'data.inventory.check.fields.storage_location', minWidth: 120 },
+      { prop: 'partName', label: 'system.material.fields.material_code' },
+      { prop: 'partQty', label: 'data.inventory.check.fields.actual_qty' },
+      { prop: 'checker', label: 'data.inventory.check.fields.checker_id' },
+      { prop: 'position', label: 'data.inventory.check.fields.storage_location' },
     ] as TableColumn[],
 
     'data.inventory.check.export': [
@@ -261,9 +277,9 @@ export default {
 
     'data.dictionary.file-categories': [
       { type: 'selection' },
-      { prop: 'category', label: 'data.dictionary.file_categories.fields.code', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'categoryLabel', label: 'data.dictionary.file_categories.fields.label', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'mime', label: 'data.dictionary.file_categories.fields.mime', minWidth: 160, showOverflowTooltip: true },
+      { prop: 'category', label: 'data.dictionary.file_categories.fields.code', showOverflowTooltip: true },
+      { prop: 'categoryLabel', label: 'data.dictionary.file_categories.fields.label', showOverflowTooltip: true },
+      { prop: 'mime', label: 'data.dictionary.file_categories.fields.mime', showOverflowTooltip: true },
       { prop: 'createdAt', label: 'data.dictionary.file_categories.fields.created_at', width: 170 },
       { prop: 'updatedAt', label: 'data.dictionary.file_categories.fields.updated_at', width: 170 },
     ] as TableColumn[],
@@ -272,7 +288,7 @@ export default {
       { type: 'selection' },
       { type: 'index' },
       { prop: 'fileUrl', label: 'data.files.list.fields.file_url', width: 88, align: 'center', headerAlign: 'center' },
-      { prop: 'originalName', label: 'data.files.list.fields.original_name', minWidth: 200 },
+      { prop: 'originalName', label: 'data.files.list.fields.original_name' },
       { prop: 'mime', label: 'data.files.list.fields.mime', width: 120 },
       { prop: 'sizeBytes', label: 'data.files.list.fields.size_bytes', width: 120 },
       { prop: 'createdAt', label: 'data.files.list.fields.created_at', width: 180 },
@@ -280,8 +296,8 @@ export default {
 
     'data.recycle': [
       { type: 'selection' },
-      { prop: 'name', label: 'data.recycle.fields.name', minWidth: 200 },
-      { prop: 'type', label: 'data.recycle.fields.type', minWidth: 120 },
+      { prop: 'name', label: 'data.recycle.fields.name' },
+      { prop: 'type', label: 'data.recycle.fields.type' },
       { prop: 'deletedAt', label: 'data.recycle.fields.deleted_at', width: 180 },
     ] as TableColumn[],
   },

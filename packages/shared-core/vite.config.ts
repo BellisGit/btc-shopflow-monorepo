@@ -66,6 +66,8 @@ export default defineConfig({
         /^@btc\/shared-components\/.*/,
         '@btc/auth-shared',
         /^@btc\/auth-shared\/.*/,
+        '@btc/shared-utils',
+        /^@btc\/shared-utils\/.*/,
         // 排除 apps 目录的导入，这些文件在运行时可用，但构建时无法解析
         /^\.\.\/\.\.\/\.\.\/apps\/.*/,
       ],

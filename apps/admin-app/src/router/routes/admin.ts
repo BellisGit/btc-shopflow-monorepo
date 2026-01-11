@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { qiankunWindow } from 'vite-plugin-qiankun/dist/helper';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error - AppLayout 在类型声明文件中已导出，可能是 TypeScript 缓存问题
-import { AppLayout } from '@btc/shared-components';
+import { BtcAppLayout } from '@btc/shared-components';
 
 // 基础路由（页面组件）
 const pageRoutes: RouteRecordRaw[] = [
@@ -179,19 +179,19 @@ const pageRoutes: RouteRecordRaw[] = [
     path: '/governance/files/templates',
     name: 'AdminGovernanceFilesTemplates',
     component: () => import('../../modules/governance/views/files/templates/index.vue'),
-    meta: { titleKey: 'menu.data.files.templates' },
+    meta: { titleKey: 'menu.governance.files.templates' },
   },
   {
     path: '/governance/dictionary/fields',
     name: 'AdminDictionaryFields',
     component: () => import('../../modules/governance/views/dictionary/fields/index.vue'),
-    meta: { titleKey: 'menu.data.dictionary.fields' },
+    meta: { titleKey: 'menu.governance.dictionary.fields' },
   },
   {
     path: '/governance/dictionary/values',
     name: 'AdminDictionaryValues',
     component: () => import('../../modules/governance/views/dictionary/values/index.vue'),
-    meta: { titleKey: 'menu.data.dictionary.values' },
+    meta: { titleKey: 'menu.governance.dictionary.values' },
   },
   // 测试功能
   {
@@ -211,6 +211,12 @@ const pageRoutes: RouteRecordRaw[] = [
     name: 'AdminInventoryTicketPrint',
     component: () => import('../../modules/test/views/inventory-ticket-print/index.vue'),
     meta: { titleKey: 'menu.test_features.inventory_ticket_print' },
+  },
+  {
+    path: '/test/filter-list-test',
+    name: 'AdminFilterListTest',
+    component: () => import('../../modules/test/views/filter-list-test/index.vue'),
+    meta: { titleKey: 'menu.test_features.filter_list_test' },
   },
 ];
 

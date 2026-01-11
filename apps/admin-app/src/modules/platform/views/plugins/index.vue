@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="plugins-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -7,7 +7,7 @@
       :table-columns="pluginColumns"
       :form-items="pluginFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
-      left-title="业务域"
+      left-title="title.platform.domains"
       right-title="插件列表"
       search-placeholder="搜索插件..."
       :show-unassigned="true"

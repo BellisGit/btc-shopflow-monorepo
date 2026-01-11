@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
-import { AppLayout as Layout } from '@btc/shared-components';
+import { BtcAppLayout as Layout } from '@btc/shared-components';
 import { getMainAppHomeRoute } from '@btc/shared-core';
 import { isAuthenticated } from './utils/auth';
 

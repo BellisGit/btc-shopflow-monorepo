@@ -45,9 +45,10 @@
               <!-- 默认输入框 -->
               <!-- 使用显式的 modelValue 和 onUpdate:modelValue，避免 ref + 动态属性的解包问题 -->
               <!-- 为 el-input 添加 id，确保 label 的 for 属性能正确匹配 -->
+              <!-- 使用 Element Plus 期望的 id 格式：el-form-item-${prop} -->
               <el-input
                 v-else
-                :id="item.prop ? `form-item-${item.prop}` : undefined"
+                :id="item.prop ? `el-form-item-${item.prop}` : undefined"
                 :model-value="formData[item.prop]"
                 @update:model-value="(val: any) => { formData[item.prop] = val; }"
                 :placeholder="`请输入${item.label}`"
@@ -73,7 +74,7 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, computed, unref } from 'vue';
 import type { UseCrudReturn } from '@btc/shared-core';
-import BtcDialog from '../../common/dialog/index';
+import BtcDialog from '../../components/feedback/btc-dialog/index';
 import type { UpsertProps } from './types';
 import { useFormData, useFormInit, useFormSubmit, usePlugins } from './composables';
 

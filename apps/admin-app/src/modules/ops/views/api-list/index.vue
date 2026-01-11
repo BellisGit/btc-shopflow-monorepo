@@ -7,7 +7,7 @@
       :table-columns="columns"
       :form-items="[]"
       :op="undefined"
-      :left-title="t('common.ops.api_list.controller')"
+      left-title="title.ops.apiList.controller"
       :right-title="t('common.ops.api_list.api_list')"
       :show-create-time="false"
       :show-update-time="false"

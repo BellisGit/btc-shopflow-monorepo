@@ -234,7 +234,7 @@
             </el-table>
           </div>
           <div v-else class="no-errors">
-            <el-empty description="无错误" :image-size="100" />
+            <BtcEmpty description="无错误" :image-size="100" />
           </div>
         </div>
       </el-dialog>
@@ -245,7 +245,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import { useI18n } from '@btc/shared-core';
-import { BtcRow, BtcFlex1, BtcTableButton } from '@btc/shared-components';
+import { BtcRow, BtcFlex1, BtcTableButton, BtcEmpty } from '@btc/shared-components';
 import type { BtcTableButtonConfig } from '@btc/shared-components';
 import { ElMessage, ElMessageBox, ElTable } from 'element-plus';
 import { Check, Close, View, Download, Loading, Warning } from '@element-plus/icons-vue';

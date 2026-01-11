@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="execution-detail-panel">
     <el-row :gutter="16">
       <!-- 执行概览 -->
@@ -149,7 +149,7 @@
               </el-descriptions-item>
             </el-descriptions>
           </div>
-          <el-empty v-else description="无错误信息" :image-size="80" />
+          <BtcEmpty v-else description="无错误信息" :image-size="80" />
         </el-card>
       </el-col>
     </el-row>
@@ -165,6 +165,7 @@ import {
   Timer
 } from '@element-plus/icons-vue';
 import type { StrategyExecutionResult } from '@/types/strategy';
+import { BtcEmpty } from '@btc/shared-components';
 
 // Props
 interface Props {

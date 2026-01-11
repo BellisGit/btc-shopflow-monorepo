@@ -185,6 +185,7 @@ export default {
       'strategy.designer.operations.invalid_file_format': '无效的编排文件格式',
       'strategy.designer.operations.parse_failed': '解析编排文件失败',
       'strategy.designer.operations.file_read_failed': '文件读取失败',
+      'strategy.designer.strategy_name_placeholder': '策略名称',
       // 策略监控相关
       'strategy.monitor.alert_subject': '策略监控告警',
       'strategy.monitor.please_input_alert_name': '请输入告警名称',
@@ -327,6 +328,12 @@ export default {
       'common.strategy.designer.node_management.only_one_end_node': '策略中只允许一个结束节点',
       'common.strategy.designer.node_management.delete_confirm': '确定要删除这个节点吗？',
       'common.strategy.designer.node_management.delete_success': '节点删除成功',
+      'common.strategy.designer.font_family.system_default': '系统默认',
+      'common.strategy.designer.font_family.monospace': '等宽字体',
+      'common.strategy.designer.font_family.serif': '衬线字体',
+      'common.strategy.designer.font_family.rounded': '圆体',
+      'common.strategy.designer.font_family.bold': '粗体',
+      'common.strategy.designer.operations.new_orchestration': '新建策略编排',
     },
     'en-US': {
       // 菜单配置
@@ -645,18 +652,23 @@ export default {
       'common.strategy.designer.node_management.only_one_end_node': 'Only one end node allowed in strategy',
       'common.strategy.designer.node_management.delete_confirm': 'Are you sure to delete this node?',
       'common.strategy.designer.node_management.delete_success': 'Node deleted successfully',
+      'common.strategy.designer.font_family.system_default': 'System Default',
+      'common.strategy.designer.font_family.monospace': 'Monospace',
+      'common.strategy.designer.font_family.serif': 'Serif',
+      'common.strategy.designer.font_family.rounded': 'Rounded',
+      'common.strategy.designer.font_family.bold': 'Bold',
+      'common.strategy.designer.operations.new_orchestration': 'New Strategy Orchestration',
     },
   },
 
   columns: {
     'strategy.management': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'strategy.management.fields.strategy_name', minWidth: 180 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'name', label: 'strategy.management.fields.strategy_name' },
       {
         prop: 'type',
         label: 'strategy.management.fields.type',
-        width: 120,
         dict: [
           { label: 'strategy.management.types.permission', value: 'PERMISSION', type: 'danger' },
           { label: 'strategy.management.types.business', value: 'BUSINESS', type: 'success' },
@@ -668,7 +680,6 @@ export default {
       {
         prop: 'status',
         label: 'strategy.management.fields.status',
-        width: 100,
         dict: [
           { label: 'strategy.management.status.draft', value: 'DRAFT', type: 'info' },
           { label: 'strategy.management.status.testing', value: 'TESTING', type: 'warning' },
@@ -678,31 +689,28 @@ export default {
         ],
         dictColor: true,
       },
-      { prop: 'priority', label: 'strategy.management.fields.priority', width: 100 },
+      { prop: 'priority', label: 'strategy.management.fields.priority' },
       {
         prop: 'version',
         label: 'strategy.management.fields.version',
-        width: 100,
         // 使用 slot 自定义显示
       },
       {
         prop: 'tags',
         label: 'strategy.management.fields.tags',
-        width: 150,
         // 使用 slot 自定义显示
       },
-      { prop: 'description', label: 'strategy.management.fields.description', minWidth: 200 },
-      { prop: 'updatedAt', label: 'strategy.management.fields.updated_at', width: 180 },
+      { prop: 'description', label: 'strategy.management.fields.description' },
+      { prop: 'updatedAt', label: 'strategy.management.fields.updated_at' },
     ] as TableColumn[],
 
     'strategy.monitor': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'strategy.monitor.fields.strategy_name', minWidth: 180 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'name', label: 'strategy.monitor.fields.strategy_name' },
       {
         prop: 'type',
         label: 'strategy.monitor.fields.type',
-        width: 120,
         dict: [
           { label: 'strategy.management.types.permission', value: 'PERMISSION', type: 'danger' },
           { label: 'strategy.management.types.business', value: 'BUSINESS', type: 'success' },
@@ -714,7 +722,6 @@ export default {
       {
         prop: 'status',
         label: 'strategy.monitor.fields.status',
-        width: 100,
         dict: [
           { label: 'strategy.management.status.draft', value: 'DRAFT', type: 'info' },
           { label: 'strategy.management.status.testing', value: 'TESTING', type: 'warning' },
@@ -724,10 +731,10 @@ export default {
         ],
         dictColor: true,
       },
-      { prop: 'priority', label: 'strategy.monitor.fields.priority', width: 100 },
-      { prop: 'version', label: 'strategy.monitor.fields.version', width: 100 },
-      { prop: 'description', label: 'strategy.monitor.fields.description', minWidth: 200 },
-      { prop: 'updatedAt', label: 'strategy.monitor.fields.updated_at', width: 180 },
+      { prop: 'priority', label: 'strategy.monitor.fields.priority' },
+      { prop: 'version', label: 'strategy.monitor.fields.version' },
+      { prop: 'description', label: 'strategy.monitor.fields.description' },
+      { prop: 'updatedAt', label: 'strategy.monitor.fields.updated_at' },
     ] as TableColumn[],
   },
 

@@ -16,6 +16,8 @@ export default {
       'menu.navigation.menus': '菜单列表',
       'menu.navigation.menu_perm_bind': '菜单权限绑定',
       'menu.navigation.menu_preview': '菜单预览',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.navigation.menus.domains': '域列表',
       // 导航相关配置
       'navigation.menu.name': '菜单名称',
       'navigation.menu.is_show': '是否显示',
@@ -51,6 +53,8 @@ export default {
       'menu.navigation.menus': 'Menu List',
       'menu.navigation.menu_perm_bind': 'Menu Permission Binding',
       'menu.navigation.menu_preview': 'Menu Preview',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.navigation.menus.domains': 'Domain List',
       // 导航相关配置
       'navigation.menu.name': 'Menu Name',
       'navigation.menu.is_show': 'Is Show',
@@ -84,28 +88,24 @@ export default {
 
   columns: {
     'navigation.menus': [
-      { type: 'selection', width: 60 },
+      { type: 'selection' },
       {
         prop: 'name',
         label: 'navigation.menu.name',
         align: 'left',
-        width: 200,
         fixed: 'left',
       },
       {
         prop: 'isShow',
         label: 'navigation.menu.is_show',
-        width: 100,
       },
       {
         prop: 'icon',
         label: 'navigation.menu.icon',
-        width: 100,
       },
       {
         prop: 'type',
         label: 'navigation.menu.type',
-        width: 110,
         dict: [
           { label: 'navigation.menu.type.directory', value: 0, type: 'warning' },
           { label: 'navigation.menu.type.menu', value: 1, type: 'success' },
@@ -115,30 +115,25 @@ export default {
       {
         prop: 'router',
         label: 'navigation.menu.router',
-        minWidth: 170,
       },
       {
         prop: 'keepAlive',
         label: 'navigation.menu.keep_alive',
-        width: 100,
       },
       {
         prop: 'viewPath',
         label: 'navigation.menu.view_path',
-        minWidth: 200,
         showOverflowTooltip: true,
       },
       {
         prop: 'perms',
         label: 'navigation.menu.perms',
         headerAlign: 'center',
-        minWidth: 300,
         showOverflowTooltip: true,
       },
       {
         prop: 'orderNum',
         label: 'navigation.menu.order_num',
-        width: 120,
         fixed: 'right',
         sortable: 'custom',
       },

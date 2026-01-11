@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, getCurrentInstance, toRaw, resolveComponent } from 'vue';
+import { h, getCurrentInstance, toRaw, resolveComponent, inject, computed, unref, type ComputedRef } from 'vue';
 import type { TableColumn } from '../types';
 import { BtcCodeJson } from '@btc/shared-components/plugins/code';
 import BtcTag from '../../../components/basic/btc-tag/index.vue';
@@ -41,6 +41,15 @@ defineProps<{
 }>();
 
 const instance = getCurrentInstance();
+
+// Inject tagRound from table component
+const tableTagRoundKey = Symbol.for('btc-table-tag-round');
+const tagRoundRef = inject<{ value: boolean } | ComputedRef<boolean> | undefined>(tableTagRoundKey);
+const tagRound = computed(() => {
+  if (!tagRoundRef) return false;
+  // 如果是 computed ref，直接访问 .value；如果是普通对象，也访问 .value
+  return unref(tagRoundRef as any) ?? false;
+});
 
 /**
  * 判断字符串是否是国际化 key（而不是翻译后的值）
@@ -121,10 +130,16 @@ const renderContent = (column: TableColumn, scope: any) => {
   // 字典颜色标签
   if (column._dictFormatter && column.prop) {
     const dict = column._dictFormatter(scope.row);
+    // 使用 _tagEffect，如果没有设置则使用默认值 'plain'
+    const tagEffect = (column as any)._tagEffect || 'plain';
+    // plain 效果使用 hit 描边，light 效果不使用描边
+    const hit = tagEffect === 'plain';
     return h(BtcTag, {
       type: dict.type as any,
       size: 'small',
-      effect: 'light', // 使用 light 效果，更接近原生样式
+      effect: tagEffect,
+      hit: hit,
+      round: tagRound.value,
       disableTransitions: true,
     }, { default: () => dict.label });
   }
@@ -133,10 +148,16 @@ const renderContent = (column: TableColumn, scope: any) => {
   if (column._codeTagFormatter && column.prop) {
     const tagInfo = column._codeTagFormatter(scope.row);
     if (tagInfo.label) {
+      // 使用 _tagEffect，如果没有设置则使用默认值 'plain'
+      const tagEffect = (column as any)._tagEffect || 'plain';
+      // plain 效果使用 hit 描边，light 效果不使用描边
+      const hit = tagEffect === 'plain';
       return h(BtcTag, {
         type: tagInfo.type as any,
         size: 'small',
-        effect: 'light', // 使用 light 效果，更接近原生样式
+        effect: tagEffect,
+        hit: hit,
+        round: tagRound.value,
         disableTransitions: true,
       }, { default: () => tagInfo.label });
     }

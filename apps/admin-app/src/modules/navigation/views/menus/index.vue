@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="menus-page">
     <BtcTableGroup
       ref="tableGroupRef"
@@ -7,7 +7,7 @@
       :table-columns="menuColumns"
       :form-items="menuFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
-      left-title="业务域"
+      left-title="title.navigation.menus.domains"
       right-title="菜单列表"
       search-placeholder="搜索菜单..."
       :show-unassigned="true"

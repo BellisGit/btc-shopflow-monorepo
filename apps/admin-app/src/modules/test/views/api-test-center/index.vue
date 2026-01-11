@@ -334,8 +334,9 @@ onMounted(() => {
   padding: 10px;
 }
 
-.search-row {
-  margin-bottom: 10px;
+:deep(.search-row.btc-crud-row),
+:deep(.search-row.el-row) {
+  margin-bottom: 10px !important;
 }
 
 .search-input {
@@ -343,10 +344,14 @@ onMounted(() => {
 }
 
 .test-table {
-  margin-top: 0;
+  margin-top: 10px;
+}
+
+.test-table :deep(.el-table) {
+  margin-bottom: 10px;
 }
 
 .pagination-row {
-  margin-top: 10px;
+  margin-top: 0;
 }
 </style>

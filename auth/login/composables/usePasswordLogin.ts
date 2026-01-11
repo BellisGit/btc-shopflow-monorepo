@@ -48,6 +48,17 @@ export function usePasswordLogin() {
       // 设置登录状态标记到统一的 settings 存储中
       const currentSettings = (appStorage.settings.get() as Record<string, any>) || {};
       appStorage.settings.set({ ...currentSettings, is_logged_in: true });
+      
+      // 记录登录时间，用于存储有效性检查的宽限期
+      try {
+        import('@btc/shared-core/utils/storage-validity-check').then(({ recordLoginTime }) => {
+          recordLoginTime();
+        }).catch(() => {
+          // 静默失败，不影响登录流程
+        });
+      } catch (error) {
+        // 静默失败，不影响登录流程
+      }
 
       // 跳转到首页或 oauth_callback 页面
       // 优先级：URL 参数中的 oauth_callback > 保存的退出前路径 > 默认路径

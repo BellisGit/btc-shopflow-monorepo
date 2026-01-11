@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="condition-node-config">
     <div class="config-header">
       <span>条件配置</span>
@@ -9,7 +9,7 @@
     </div>
 
     <div v-if="conditions.length === 0" class="empty-state">
-      <el-empty description="暂无条件，请添加条件" :image-size="60" />
+      <BtcEmpty description="暂无条件，请添加条件" :image-size="60" />
     </div>
 
     <div v-else class="conditions-list">
@@ -118,6 +118,7 @@ import { useI18n } from '@btc/shared-core';
 import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyCondition } from '@/types/strategy';
+import { BtcEmpty } from '@btc/shared-components';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
 
 // Props

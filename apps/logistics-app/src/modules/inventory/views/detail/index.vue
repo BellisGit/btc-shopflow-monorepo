@@ -7,7 +7,7 @@
       :table-columns="diffColumns"
       :form-items="diffFormItems"
       :op="opConfig"
-      :left-title="t('inventory.check.list')"
+      left-title="title.logistics.inventory.check.list"
       :right-title="t('menu.inventory_management.detail')"
       :show-unassigned="false"
       :enable-key-search="true"

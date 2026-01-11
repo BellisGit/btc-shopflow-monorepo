@@ -99,7 +99,7 @@ import { useBrowser } from '@/composables/useBrowser';
 import { getCurrentSubApp, isMainApp } from '@btc/shared-core/configs/unified-env-config';
 import { getAppById } from '@btc/shared-core/configs/app-scanner';
 // 使用共享组件中的全局搜索（已集成 lunr.js 和动态菜单数据）
-import { GlobalSearch } from '@btc/shared-components';
+import { BtcGlobalSearch } from '@btc/shared-components';
 import TopMenu from '../top-menu/index.vue';
 import TopLeftMenu from '../top-left-menu/index.vue';
 import UserInfo from '../user-info/index.vue';

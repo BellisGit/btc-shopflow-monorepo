@@ -7,7 +7,7 @@
       :table-columns="templateColumns"
       :form-items="templateFormItems"
       :op="{ buttons: ['edit', 'delete'] }"
-      left-title="业务域"
+      left-title="title.governance.files.templates.domains"
       right-title="受控文件列表"
       search-placeholder="搜索受控文件..."
       :show-unassigned="true"

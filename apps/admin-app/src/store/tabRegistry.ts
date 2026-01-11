@@ -21,6 +21,7 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'test-components': { key: 'test-components', title: 'Components Test Center', path: '/admin/test/components', i18nKey: 'menu.test_features.components' },
     'test-api-test-center': { key: 'test-api-test-center', title: 'API Test Center', path: '/admin/test/api-test-center', i18nKey: 'menu.test_features.api_test_center' },
     'test-inventory-ticket-print': { key: 'test-inventory-ticket-print', title: 'Inventory Ticket Print', path: '/admin/test/inventory-ticket-print', i18nKey: 'menu.test_features.inventory_ticket_print' },
+    'test-filter-list-test': { key: 'test-filter-list-test', title: 'Filter List Test', path: '/admin/test/filter-list-test', i18nKey: 'menu.test_features.filter_list_test' },
 
     // 平台治理
     'platform-domains': { key: 'platform-domains', title: 'Domains', path: '/admin/platform/domains', i18nKey: 'menu.platform.domains' },
@@ -54,9 +55,9 @@ const registry: Record<string, Record<string, TabMeta>> = {
     'strategy-monitor': { key: 'strategy-monitor', title: 'Strategy Monitor', path: '/admin/strategy/monitor', i18nKey: 'menu.strategy.monitor' },
 
     // 数据治理
-    'governance-files-templates': { key: 'governance-files-templates', title: 'Controlled Files', path: '/admin/governance/files/templates', i18nKey: 'menu.data.files.templates' },
-    'governance-dictionary-fields': { key: 'governance-dictionary-fields', title: 'Field Management', path: '/admin/governance/dictionary/fields', i18nKey: 'menu.data.dictionary.fields' },
-    'governance-dictionary-values': { key: 'governance-dictionary-values', title: 'Dictionary Value Management', path: '/admin/governance/dictionary/values', i18nKey: 'menu.data.dictionary.values' },
+    'governance-files-templates': { key: 'governance-files-templates', title: 'Controlled Files', path: '/admin/governance/files/templates', i18nKey: 'menu.governance.files.templates' },
+    'governance-dictionary-fields': { key: 'governance-dictionary-fields', title: 'Field Management', path: '/admin/governance/dictionary/fields', i18nKey: 'menu.governance.dictionary.fields' },
+    'governance-dictionary-values': { key: 'governance-dictionary-values', title: 'Dictionary Value Management', path: '/admin/governance/dictionary/values', i18nKey: 'menu.governance.dictionary.values' },
 
     // 运维与审计
     'ops-logs-operation': { key: 'ops-logs-operation', title: 'Operation Log', path: '/admin/ops/logs/operation', i18nKey: 'menu.ops.operation_log' },

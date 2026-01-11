@@ -2,13 +2,13 @@
   <div class="admin-home">
     <!-- 策略监控图表分析 -->
     <div class="strategy-charts">
-      <BtcChartDemo :gap="10" :cols-per-row="2" chart-height="300px" />
+      <BtcChartGallery :gap="10" :cols-per-row="2" chart-height="300px" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BtcChartDemo } from '@btc/shared-components';
+import { BtcChartGallery } from '@btc/shared-components';
 
 defineOptions({
   name: 'AdminHome',
@@ -33,7 +33,7 @@ defineOptions({
   min-height: 0;
   overflow: hidden;
 
-  :deep(.btc-chart-demo) {
+  :deep(.btc-chart-gallery) {
     height: 100%;
     min-height: 0;
   }

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-designer">
     <btc-grid-group left-width="200px" right-width="260px">
       <!-- 顶栏左侧：缩放控制 -->
@@ -21,7 +21,7 @@
       <template #headerMiddle>
         <el-input
           v-model="strategyName"
-          placeholder="策略名称"
+          :placeholder="t('strategy.designer.strategy_name_placeholder')"
           style="width: 200px;"
         />
       </template>
@@ -208,6 +208,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import { useSelection } from './composables/useSelection';
 import { BtcGridGroup } from '@btc/shared-components';
 import { useComponentLibrary } from './composables/useComponentLibrary';
@@ -240,6 +241,7 @@ import ShapeSelectorPopup from './components/ShapeSelectorPopup.vue';
 // 画布引用
 const canvasRef = ref<InstanceType<typeof CanvasSvg> | null>(null);
 
+const { t } = useI18n();
 
 // 使用 composables - 按依赖顺序初始化
 

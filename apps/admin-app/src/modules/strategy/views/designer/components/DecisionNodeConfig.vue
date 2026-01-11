@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="decision-node-config">
     <div class="config-header">
       <span>决策规则</span>
@@ -9,7 +9,7 @@
     </div>
 
     <div v-if="rules.length === 0" class="empty-state">
-      <el-empty description="暂无规则，请添加决策规则" :image-size="60" />
+      <BtcEmpty description="暂无规则，请添加决策规则" :image-size="60" />
     </div>
 
     <div v-else class="rules-list">
@@ -89,6 +89,7 @@ import { BtcMessage } from '@btc/shared-components';
 import { Plus, Delete } from '@element-plus/icons-vue';
 import type { StrategyRule } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
+import { BtcEmpty } from '@btc/shared-components';
 
 // Props
 interface Props {

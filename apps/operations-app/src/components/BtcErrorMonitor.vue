@@ -69,7 +69,7 @@
 
       <template #empty>
         <div class="error-table__empty">
-          <el-empty :image-size="100" description="暂无数据" />
+          <BtcEmpty :image-size="100" description="暂无数据" />
         </div>
       </template>
     </el-table>
@@ -98,6 +98,7 @@ import en from 'element-plus/es/locale/lang/en';
 import { onErrorListUpdate, getErrorListSync } from '@btc/shared-utils/error-monitor';
 import type { FormattedError } from '@btc/shared-utils/error-monitor';
 import { useI18n } from '@btc/shared-core';
+import { BtcEmpty } from '@btc/shared-components';
 
 const { t } = useI18n();
 

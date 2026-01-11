@@ -7,7 +7,7 @@
       :table-columns="resultColumns"
       :form-items="resultFormItems"
       :op="{ buttons: opButtons }"
-      :left-title="t('inventory.check.list')"
+      left-title="title.inventory.check.list"
       :right-title="t('inventory.result.title')"
       :search-placeholder="t('inventory.result.search_placeholder')"
       :show-unassigned="false"

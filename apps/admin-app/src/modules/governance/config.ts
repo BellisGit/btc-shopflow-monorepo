@@ -13,11 +13,14 @@ export default {
     'zh-CN': {
       // 菜单配置
       'menu.governance': '数据治理',
-      'menu.data.files': '文件管理',
-      'menu.data.files.templates': '模板管理',
-      'menu.data.dictionary': '字典管理',
-      'menu.data.dictionary.fields': '字段管理',
-      'menu.data.dictionary.values': '字典值管理',
+      'menu.governance.files': '文件管理',
+      'menu.governance.files.templates': '模板管理',
+      'menu.governance.dictionary': '字典管理',
+      'menu.governance.dictionary.fields': '字段管理',
+      'menu.governance.dictionary.values': '字典值管理',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.governance.files.templates.domains': '域列表',
+      'title.governance.dictionary.fields.resources': '资源列表',
       // 字典相关
       'governance.dictionary.fields.field_name': '字段名称',
       'governance.dictionary.fields.field_code': '字典编码',
@@ -42,11 +45,14 @@ export default {
     'en-US': {
       // 菜单配置
       'menu.governance': 'Data Governance',
-      'menu.data.files': 'File Management',
-      'menu.data.files.templates': 'Template Management',
-      'menu.data.dictionary': 'Dictionary Management',
-      'menu.data.dictionary.fields': 'Field Management',
-      'menu.data.dictionary.values': 'Dictionary Value Management',
+      'menu.governance.files': 'File Management',
+      'menu.governance.files.templates': 'Template Management',
+      'menu.governance.dictionary': 'Dictionary Management',
+      'menu.governance.dictionary.fields': 'Field Management',
+      'menu.governance.dictionary.values': 'Dictionary Value Management',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.governance.files.templates.domains': 'Domain List',
+      'title.governance.dictionary.fields.resources': 'Resource List',
       // 字典相关
       'governance.dictionary.fields.field_name': 'Field Name',
       'governance.dictionary.fields.field_code': 'Dictionary Code',
@@ -72,32 +78,32 @@ export default {
 
   columns: {
     'governance.dictionary.fields': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'fieldName', label: 'governance.dictionary.fields.field_name', minWidth: 150 },
-      { prop: 'fieldCode', label: 'governance.dictionary.fields.field_code', minWidth: 150 },
-      { prop: 'entityClass', label: 'governance.dictionary.fields.entity_class', minWidth: 150 },
-      { prop: 'domainId', label: 'governance.dictionary.fields.domain_id', width: 120 },
-      { prop: 'remark', label: 'governance.dictionary.fields.remark', minWidth: 200 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'fieldName', label: 'governance.dictionary.fields.field_name' },
+      { prop: 'fieldCode', label: 'governance.dictionary.fields.field_code' },
+      { prop: 'entityClass', label: 'governance.dictionary.fields.entity_class' },
+      { prop: 'domainId', label: 'governance.dictionary.fields.domain_id' },
+      { prop: 'remark', label: 'governance.dictionary.fields.remark' },
     ] as TableColumn[],
 
     'governance.dictionary.values': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'dictTypeCode', label: 'governance.dictionary.values.type_code', minWidth: 150 },
-      { prop: 'dictValue', label: 'governance.dictionary.values.value', minWidth: 150 },
-      { prop: 'dictLabel', label: 'governance.dictionary.values.label', minWidth: 150 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'dictTypeCode', label: 'governance.dictionary.values.type_code' },
+      { prop: 'dictValue', label: 'governance.dictionary.values.value' },
+      { prop: 'dictLabel', label: 'governance.dictionary.values.label' },
     ] as TableColumn[],
 
     'governance.files.templates': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'templateName', label: 'governance.files.templates.fields.template_name', minWidth: 150 },
-      { prop: 'templateCode', label: 'governance.files.templates.fields.template_code', minWidth: 150 },
-      { prop: 'category', label: 'governance.files.templates.fields.category', width: 120 },
-      { prop: 'version', label: 'governance.files.templates.fields.version', width: 100 },
-      { prop: 'status', label: 'governance.files.templates.fields.status', width: 100 },
-      { prop: 'description', label: 'governance.files.templates.fields.description', minWidth: 200 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'templateName', label: 'governance.files.templates.fields.template_name' },
+      { prop: 'templateCode', label: 'governance.files.templates.fields.template_code' },
+      { prop: 'category', label: 'governance.files.templates.fields.category' },
+      { prop: 'version', label: 'governance.files.templates.fields.version' },
+      { prop: 'status', label: 'governance.files.templates.fields.status' },
+      { prop: 'description', label: 'governance.files.templates.fields.description' },
     ] as TableColumn[],
   },
 

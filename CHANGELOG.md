@@ -6,6 +6,15 @@
 
 ## [未发布]
 
+### 重构
+- BTC组件库全面重构优化：完成组件分类调整、命名规范化和必要检查
+  - 分类调整：BtcSvg、BtcSearch、BtcForm、BtcViewGroup、BtcDialog 移动到正确目录
+  - 重命名：BtcChartDemo→BtcChartGallery, BtcViewGroup→BtcMasterViewGroup
+  - CRUD组件命名规范化：BtcRow→BtcCrudRow, BtcFlex1→BtcCrudFlex1, BtcSearchKey→BtcCrudSearchKey, BtcMenuExp→BtcMenuExport
+  - 统一命名前缀：AppLayout→BtcAppLayout, AppSkeleton→BtcAppSkeleton, AppLoading→BtcAppLoading, RootLoading→BtcRootLoading, GlobalSearch→BtcGlobalSearch
+  - 数据组件优化：BtcDoubleGroup→BtcDoubleLeftGroup
+  - 更新所有导入导出路径和使用处，确保组件库结构科学、命名规范
+
 ---
 
 ## [1.0.8] - 2025-01-XX

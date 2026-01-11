@@ -34,16 +34,16 @@
             </div>
           </header>
 
-          <BtcRow class="btc-transfer-panel__toolbar">
+          <BtcCrudRow class="btc-transfer-panel__toolbar">
             <BtcIconButton :config="refreshButtonConfig" />
             <slot name="filters" />
-            <BtcFlex1 />
+            <BtcCrudFlex1 />
             <div class="btc-transfer-panel__search-wrapper">
-              <BtcSearchKey />
+              <BtcCrudSearchKey />
             </div>
-          </BtcRow>
+          </BtcCrudRow>
 
-          <BtcRow class="btc-transfer-panel__table-row">
+          <BtcCrudRow class="btc-transfer-panel__table-row">
             <el-col :span="24">
               <BtcTable
                 ref="tableComponentRef"
@@ -62,11 +62,11 @@
                 </template>
               </BtcTable>
             </el-col>
-          </BtcRow>
+          </BtcCrudRow>
 
-          <BtcRow class="btc-transfer-panel__pagination-row" justify="center">
+          <BtcCrudRow class="btc-transfer-panel__pagination-row" justify="center">
             <BtcPagination size="small" />
-          </BtcRow>
+          </BtcCrudRow>
         </div>
       </template>
     </BtcCrud>
@@ -137,10 +137,10 @@ import { ElCol } from 'element-plus';
 import BtcCrud from '@btc-crud/context/index.vue';
 import BtcTable from '@btc-crud/table/index.vue';
 import BtcPagination from '@btc-crud/pagination/index.vue';
-import BtcRow from '@btc-crud/row/index.vue';
-import BtcFlex1 from '@btc-crud/flex1/index.vue';
-import BtcSearchKey from '@btc-crud/search-key/index.vue';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcCrudRow from '@btc-crud/crud-row/index.vue';
+import BtcCrudFlex1 from '@btc-crud/crud-flex1/index.vue';
+import BtcCrudSearchKey from '@btc-crud/crud-search-key/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcIconButton from '@btc-components/basic/btc-icon-button/index.vue';
 import { useI18n } from '@btc/shared-core';
 import type { CrudService } from '@btc/shared-core';

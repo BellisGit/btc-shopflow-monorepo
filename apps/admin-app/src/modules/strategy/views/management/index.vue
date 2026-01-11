@@ -230,13 +230,13 @@ const testResult = ref<StrategyExecutionResult | null>(null);
 const currentTestStrategy = ref<Strategy | null>(null);
 
 // 策略状态选项
-const strategyStatuses = [
+const strategyStatuses = computed(() => [
   { value: 'DRAFT', label: t('common.strategy.management.status.draft') },
   { value: 'TESTING', label: t('common.strategy.management.status.testing') },
   { value: 'ACTIVE', label: t('common.strategy.management.status.active') },
   { value: 'INACTIVE', label: t('common.strategy.management.status.inactive') },
   { value: 'ARCHIVED', label: t('common.strategy.management.status.archived') }
-];
+]);
 
 // 从 config.ts 读取配置
 const { columns: baseColumns } = usePageColumns('strategy.management');
@@ -281,8 +281,8 @@ const wrappedService = {
 const columns = baseColumns;
 
 // 表单配置 - 从 config.ts 读取
-const formItems = [
-  ...baseFormItems,
+const formItems = computed(() => [
+  ...(baseFormItems.value || []),
   {
     prop: 'description',
     label: 'common.description',
@@ -292,7 +292,7 @@ const formItems = [
       props: { type: 'textarea', rows: 3 }
     }
   }
-];
+]);
 
 // 工具函数
 const getStatusTagType = (status: StrategyStatus) => {

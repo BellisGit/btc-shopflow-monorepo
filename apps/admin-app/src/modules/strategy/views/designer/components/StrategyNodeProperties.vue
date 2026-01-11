@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="strategy-node-properties">
     <!-- 基础属性 -->
     <div class="property-section">
@@ -118,7 +118,7 @@
 
       <!-- 开始/结束节点 -->
       <div v-else class="node-config-empty">
-        <el-empty
+        <BtcEmpty
           description="此节点类型无需额外配置"
           :image-size="60"
         />
@@ -129,6 +129,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
+import { useI18n } from '@btc/shared-core';
 import type {
   StrategyNode as IStrategyNode,
   NodeType,
@@ -137,6 +138,7 @@ import type {
   StrategyRule
 } from '@/types/strategy';
 import { BtcConfigForm, BtcConfigFormItem } from '@/components/btc-config-form';
+import { BtcEmpty } from '@btc/shared-components';
 import ConditionNodeConfig from './ConditionNodeConfig.vue';
 import ActionNodeConfig from './ActionNodeConfig.vue';
 import DecisionNodeConfig from './DecisionNodeConfig.vue';
@@ -169,8 +171,6 @@ const styleForm = ref({
   backgroundColor: props.node.style?.backgroundColor || '#ffffff',
   borderColor: props.node.style?.borderColor || '#409eff'
 });
-
-const { t } = useI18n();
 // 节点类型选项
 const nodeTypes = computed(() => [
   { value: 'START', label: `${t('common.strategy.designer.node_types.start')}${t('common.strategy.designer.node_types.node')}` },

@@ -1,11 +1,12 @@
 <template>
   <div class="logistics-procurement-auxiliary">
-    <el-empty :description="t('logistics.placeholder.procurementAux')" />
+    <BtcEmpty :description="t('logistics.placeholder.procurementAux')" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from '@btc/shared-core';
+import { BtcEmpty } from '@btc/shared-components';
 
 defineOptions({
   name: 'btc-logistics-procurement-auxiliary',

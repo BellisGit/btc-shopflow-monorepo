@@ -17,6 +17,9 @@ export default {
       'menu.org.departments': '部门列表',
       'menu.org.users': '用户列表',
       'menu.org.dept_role_bind': '部门角色绑定',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.org.dept.list': '部门列表',
+      'title.org.userRoleAssign.domains': '域列表',
       // 租户相关
       'org.tenants.title': '租户列表',
       'org.tenants.tenant_name': '租户名称',
@@ -116,6 +119,9 @@ export default {
       'menu.org.departments': 'Department List',
       'menu.org.users': 'User List',
       'menu.org.dept_role_bind': 'Department Role Binding',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.org.dept.list': 'Department List',
+      'title.org.userRoleAssign.domains': 'Domain List',
       // 租户相关
       'org.tenants.title': 'Tenant List',
       'org.tenants.tenant_name': 'Tenant Name',
@@ -213,15 +219,14 @@ export default {
   // 表格列配置
   columns: {
     'org.tenants': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
       { prop: 'tenantName', label: 'org.tenants.tenant_name' },
       { prop: 'tenantCode', label: 'org.tenants.tenant_code' },
       { prop: 'tenantType', label: 'org.tenants.tenant_type' },
       {
         prop: 'status',
         label: 'org.users.status',
-        width: 120,
         dict: [
           { label: 'org.status.enabled', value: 'ACTIVE', type: 'success' },
           { label: 'org.status.disabled', value: 'INACTIVE', type: 'danger' },
@@ -231,36 +236,32 @@ export default {
     ] as TableColumn[],
 
     'org.departments': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'org.departments.department_name', minWidth: 150 },
-      { prop: 'deptCode', label: 'org.departments.dept_code', width: 120 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'name', label: 'org.departments.department_name' },
+      { prop: 'deptCode', label: 'org.departments.dept_code' },
       {
         prop: 'parentId',
         label: 'org.departments.parent_id',
-        width: 120,
         formatter: (row: any) => {
           // formatter 需要在页面中动态处理，这里只定义结构
           return row.parentId;
         },
       },
-      { prop: 'sort', label: 'org.departments.sort', width: 80 },
     ] as TableColumn[],
 
     'org.users': [
-      { type: 'selection', width: 60 },
-      { prop: 'username', label: 'org.users.username', width: 120 },
-      { prop: 'realName', label: 'org.users.real_name', minWidth: 100 },
-      { prop: 'position', label: 'org.users.position', minWidth: 100 },
+      { type: 'selection' },
+      { prop: 'username', label: 'org.users.username' },
+      { prop: 'realName', label: 'org.users.real_name' },
+      { prop: 'position', label: 'org.users.position' },
       {
         prop: 'name',
         label: 'org.users.dept_id',
-        width: 120,
       },
       {
         prop: 'status',
         label: 'org.users.status',
-        width: 100,
         dict: [
           { label: 'org.status.active', value: 'ACTIVE', type: 'success' },
           { label: 'org.status.inactive', value: 'INACTIVE', type: 'danger' },
@@ -270,16 +271,14 @@ export default {
     ] as TableColumn[],
 
     'org.user_role_assign': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'name', label: 'org.user_role_assign.columns.username', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'realName', label: 'org.user_role_assign.user.real_name', minWidth: 120, showOverflowTooltip: true },
-      { prop: 'roleName', label: 'org.user_role_assign.columns.role_name', minWidth: 180, showOverflowTooltip: true },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'name', label: 'org.user_role_assign.columns.username', showOverflowTooltip: true },
+      { prop: 'realName', label: 'org.user_role_assign.user.real_name', showOverflowTooltip: true },
+      { prop: 'roleName', label: 'org.user_role_assign.columns.role_name', showOverflowTooltip: true },
       {
         type: 'op',
         label: 'crud.table.operation',
-        minWidth: 126,
-        width: 126,
         align: 'center',
         fixed: 'right' as const,
         buttons: [
@@ -404,10 +403,10 @@ export default {
   // 服务配置
   service: {
     tenant: service.admin?.iam?.tenant,
-    department: service.admin?.iam?.department,
+    dept: service.admin?.iam?.dept,
     user: service.admin?.iam?.user,
     // BtcTableGroup 需要的左右服务
-    sysdepartment: service.admin?.iam?.department,
+    sysdept: service.admin?.iam?.dept,
     sysuser: service.admin?.iam?.user,
   },
 } satisfies PageConfig;

@@ -35,10 +35,10 @@ export function useTicketService() {
 
   // 表格列配置
   const tableColumns = computed<TableColumn[]>(() => [
-    { type: 'index', label: t('common.index'), width: 60 },
-    { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), minWidth: 140, showOverflowTooltip: true },
-    { prop: 'partName', label: t('system.material.fields.materialCode'), minWidth: 140, showOverflowTooltip: true },
-    { prop: 'position', label: t('inventory.result.fields.storageLocation'), minWidth: 120, showOverflowTooltip: true },
+    { type: 'index', label: t('common.index') },
+    { prop: 'checkNo', label: t('system.inventory.base.fields.checkNo'), showOverflowTooltip: true },
+    { prop: 'partName', label: t('system.material.fields.materialCode'), showOverflowTooltip: true },
+    { prop: 'position', label: t('inventory.result.fields.storageLocation'), showOverflowTooltip: true },
   ]);
 
   // 盘点票服务（包装为 BtcCrud 需要的格式）

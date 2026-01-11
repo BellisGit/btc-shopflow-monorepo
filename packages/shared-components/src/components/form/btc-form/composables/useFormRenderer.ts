@@ -101,8 +101,9 @@ export function useFormRenderer() {
 
             // 为组件设置 id，确保 label 的 for 属性能正确关联
             // Element Plus 的 el-form-item 会自动为 label 生成 for 属性，需要组件有对应的 id
-            // 生成唯一的 id，使用 prop 作为基础，确保每个字段都有唯一的 id
-            const inputId = prop ? `form-item-${prop}` : undefined;
+            // 生成唯一的 id，使用 Element Plus 期望的格式：el-form-item-${prop}
+            // 这样 label 的 for 属性就能正确匹配
+            const inputId = prop ? `el-form-item-${prop}` : undefined;
             
             // 定义不包含标准 input 元素的组件列表
             // 这些组件需要添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
@@ -178,6 +179,33 @@ export function useFormRenderer() {
                 }
               } : undefined;
 
+              // 为 el-radio-group 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  h(Component, props, slots)
+                ]);
+              }
+
               return h(Component, props, slots);
             }
 
@@ -192,6 +220,33 @@ export function useFormRenderer() {
                   });
                 }
               } : undefined;
+
+              // 为 el-checkbox-group 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  h(Component, props, slots)
+                ]);
+              }
 
               return h(Component, props, slots);
             }
@@ -212,25 +267,112 @@ export function useFormRenderer() {
                 showAllLevels: props.showAllLevels
               };
 
-              return h(Component, {
+              const cascaderVNode = h(Component, {
                 ...props,
                 options: itemRef.component?.options || [],
                 props: cascaderProps
               }, slots);
+
+              // 为 el-cascader 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  cascaderVNode
+                ]);
+              }
+
+              return cascaderVNode;
             }
 
             if (componentName === 'el-tree-select') {
-              return h(Component, {
+              const treeSelectVNode = h(Component, {
                 ...props,
                 data: itemRef.component?.options || []
               });
+
+              // 为 el-tree-select 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  treeSelectVNode
+                ]);
+              }
+
+              return treeSelectVNode;
             }
 
             if (componentName === 'btc-cascader') {
-              return h(Component, {
+              const btcCascaderVNode = h(Component, {
                 ...props,
                 options: itemRef.component?.options || []
               });
+
+              // 为 btc-cascader 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  btcCascaderVNode
+                ]);
+              }
+
+              return btcCascaderVNode;
             }
 
             if (componentName === 'btc-upload') {
@@ -239,11 +381,40 @@ export function useFormRenderer() {
                 uploadService = (window as any).__BTC_SERVICE__;
               }
 
-              return h(Component, {
+              const uploadVNode = h(Component, {
                 ...props,
                 prop: itemRef.prop,
                 uploadService
               });
+
+              // 为 btc-upload 添加隐藏的 input 元素，以便 label 的 for 属性能正确匹配
+              if (inputId) {
+                return h('div', { style: { position: 'relative' } }, [
+                  h('input', {
+                    id: inputId,
+                    name: prop || '',
+                    type: 'text',
+                    style: {
+                      position: 'absolute',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      width: '1px',
+                      height: '1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0
+                    },
+                    tabIndex: -1,
+                    'aria-hidden': 'true'
+                  }),
+                  uploadVNode
+                ]);
+              }
+
+              return uploadVNode;
             }
 
             if (componentName === 'el-descriptions') {

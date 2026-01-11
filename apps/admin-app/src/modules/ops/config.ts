@@ -18,6 +18,8 @@ export default {
       'menu.ops.request_log': '请求日志',
       'menu.ops.api_list': '接口列表',
       'menu.ops.baseline': '基线配置',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.ops.apiList.controller': '控制器列表',
       'menu.ops.simulator': '模拟器',
       // 基线相关
       'ops.baseline.search_placeholder': '搜索基线...',
@@ -116,6 +118,8 @@ export default {
       'menu.ops.api_list': 'API List',
       'menu.ops.baseline': 'Baseline Configuration',
       'menu.ops.simulator': 'Simulator',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.ops.apiList.controller': 'Controller List',
       // 基线相关
       'ops.baseline.search_placeholder': 'Search baseline...',
       'ops.baseline.fields.baseline_name': 'Baseline Name',
@@ -213,33 +217,32 @@ export default {
 
   columns: {
     'ops.baseline': [
-      { type: 'selection', width: 60 },
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'baselineName', label: 'ops.baseline.fields.baseline_name', minWidth: 150 },
-      { prop: 'baselineCode', label: 'ops.baseline.fields.baseline_code', minWidth: 150 },
-      { prop: 'version', label: 'ops.baseline.fields.version', width: 100 },
-      { prop: 'status', label: 'ops.baseline.fields.status', width: 100 },
-      { prop: 'description', label: 'ops.baseline.fields.description', minWidth: 200 },
+      { type: 'selection' },
+      { type: 'index', label: 'common.index' },
+      { prop: 'baselineName', label: 'ops.baseline.fields.baseline_name' },
+      { prop: 'baselineCode', label: 'ops.baseline.fields.baseline_code' },
+      { prop: 'version', label: 'ops.baseline.fields.version' },
+      { prop: 'status', label: 'ops.baseline.fields.status' },
+      { prop: 'description', label: 'ops.baseline.fields.description' },
     ] as TableColumn[],
 
     'ops.api_list': [
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'tagsText', label: 'ops.api_list.fields.tags', minWidth: 160 },
-      { prop: 'controller', label: 'ops.api_list.fields.controller', minWidth: 200 },
-      { prop: 'methodName', label: 'ops.api_list.fields.name', minWidth: 140 },
-      { prop: 'httpMethods', label: 'ops.api_list.fields.method', width: 120 },
-      { prop: 'paths', label: 'ops.api_list.fields.path', minWidth: 260 },
-      { prop: 'description', label: 'ops.api_list.fields.description', minWidth: 220 },
-      { prop: 'parameters', label: 'ops.api_list.fields.parameters', minWidth: 280 },
-      { prop: 'notes', label: 'ops.api_list.fields.notes', minWidth: 220 },
+      { type: 'index', label: 'common.index' },
+      { prop: 'tagsText', label: 'ops.api_list.fields.tags' },
+      { prop: 'controller', label: 'ops.api_list.fields.controller' },
+      { prop: 'methodName', label: 'ops.api_list.fields.name' },
+      { prop: 'httpMethods', label: 'ops.api_list.fields.method' },
+      { prop: 'paths', label: 'ops.api_list.fields.path' },
+      { prop: 'description', label: 'ops.api_list.fields.description' },
+      { prop: 'parameters', label: 'ops.api_list.fields.parameters' },
+      { prop: 'notes', label: 'ops.api_list.fields.notes' },
     ] as TableColumn[],
 
     'ops.logs.operation': [
-      { prop: 'username', label: 'ops.logs.operation.fields.operator', width: 120 },
+      { prop: 'username', label: 'ops.logs.operation.fields.operator' },
       {
         prop: 'operationType',
         label: 'ops.logs.operation.fields.operation_type',
-        width: 120,
         dict: [
           { label: 'ops.logs.operation.types.select', value: 'SELECT', type: 'info' },
           { label: 'ops.logs.operation.types.insert', value: 'INSERT', type: 'success' },
@@ -248,30 +251,29 @@ export default {
         ],
         dictColor: true
       },
-      { prop: 'tableName', label: 'ops.logs.operation.fields.table_name', width: 150, showOverflowTooltip: true },
-      { prop: 'ipAddress', label: 'ops.logs.operation.fields.ip_address', width: 120 },
-      { prop: 'operationDesc', label: 'ops.logs.operation.fields.operation_desc', minWidth: 180, showOverflowTooltip: true },
+      { prop: 'tableName', label: 'ops.logs.operation.fields.table_name', showOverflowTooltip: true },
+      { prop: 'ipAddress', label: 'ops.logs.operation.fields.ip_address' },
+      { prop: 'operationDesc', label: 'ops.logs.operation.fields.operation_desc', showOverflowTooltip: true },
       {
         prop: 'beforeData',
         label: 'ops.logs.operation.fields.before_data',
-        width: 150,
         showOverflowTooltip: false,
         // component 需要在页面中动态添加
       },
-      { prop: 'createdAt', label: 'ops.logs.operation.fields.create_time', width: 170, sortable: true, fixed: 'right' }
+      { prop: 'createdAt', label: 'ops.logs.operation.fields.create_time', sortable: true, fixed: 'right' }
     ] as TableColumn[],
 
     'ops.logs.request': [
-      { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'userId', label: 'ops.logs.request.fields.user_id', width: 100 },
-      { prop: 'username', label: 'ops.logs.request.fields.username', width: 120 },
-      { prop: 'requestUrl', label: 'ops.logs.request.fields.url', minWidth: 200, showOverflowTooltip: true },
-      { prop: 'params', label: 'ops.logs.request.fields.params', minWidth: 200, showOverflowTooltip: false },
-      { prop: 'method', label: 'ops.logs.request.fields.method', width: 100 },
-      { prop: 'status', label: 'ops.logs.request.fields.status', width: 100 },
-      { prop: 'ip', label: 'ops.logs.request.fields.ip', width: 120 },
-      { prop: 'duration', label: 'ops.logs.request.fields.duration', width: 100 },
-      { prop: 'createTime', label: 'ops.logs.request.fields.create_time', width: 160, sortable: true, fixed: 'right' }
+      { type: 'index', label: 'common.index' },
+      { prop: 'userId', label: 'ops.logs.request.fields.user_id' },
+      { prop: 'username', label: 'ops.logs.request.fields.username' },
+      { prop: 'requestUrl', label: 'ops.logs.request.fields.url', showOverflowTooltip: true },
+      { prop: 'params', label: 'ops.logs.request.fields.params', showOverflowTooltip: false },
+      { prop: 'method', label: 'ops.logs.request.fields.method' },
+      { prop: 'status', label: 'ops.logs.request.fields.status' },
+      { prop: 'ip', label: 'ops.logs.request.fields.ip' },
+      { prop: 'duration', label: 'ops.logs.request.fields.duration' },
+      { prop: 'createTime', label: 'ops.logs.request.fields.create_time', sortable: true, fixed: 'right' }
     ] as TableColumn[],
   },
 

@@ -60,7 +60,7 @@
           <slot name="right" :selected="selectedItem" :keyword="selectedKeyword" :left-data="leftListData" :right-data="rightData"></slot>
         </div>
 
-        <el-empty v-else :image-size="80" />
+        <BtcEmpty v-else :image-size="80" />
       </div>
     </div>
   </div>
@@ -68,17 +68,19 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, provide } from 'vue';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import BtcMasterList from '@btc-components/data/btc-master-list/index.vue';
+import BtcEmpty from '@btc-components/basic/btc-empty/index.vue';
 // useViewGroupData 和 useViewGroupActions 未使用，已移除导入
 import { useContentHeight } from '../../composables/content-height';
 import { useI18n } from '@btc/shared-core';
 
 defineOptions({
-  name: 'BtcViewGroup',
+  name: 'BtcMasterViewGroup',
   components: {
     BtcSvg,
-    BtcMasterList
+    BtcMasterList,
+    BtcEmpty
   }
 });
 

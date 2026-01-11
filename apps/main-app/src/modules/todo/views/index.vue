@@ -1,13 +1,14 @@
 <template>
   <div class="todo-page">
     <div class="todo-page__content">
-      <el-empty :description="t('todo.empty')" />
+      <BtcEmpty :description="t('todo.empty')" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { BtcEmpty } from '@btc/shared-components';
 
 const { t } = useI18n();
 </script>

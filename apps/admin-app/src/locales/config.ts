@@ -9,7 +9,7 @@ import type { AppLevelLocaleConfig } from '../../../../types/locale';
 export default {
   'zh-CN': {
     subapp: {
-      name: '管理应用',
+      name: '管理模块',
     },
     common: {
       // 错误消息
@@ -110,7 +110,7 @@ export default {
   },
   'en-US': {
     subapp: {
-      name: 'Admin Application',
+      name: 'Admin Module',
     },
     common: {
       // 错误消息

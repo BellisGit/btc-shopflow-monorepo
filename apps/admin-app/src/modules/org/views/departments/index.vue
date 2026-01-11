@@ -1,7 +1,7 @@
 <template>
   <BtcCrud
     ref="crudRef"
-    :service="wrappedDepartmentService"
+    :service="wrappedDeptService"
   >
     <BtcRow>
       <div class="btc-crud-primary-actions">
@@ -59,10 +59,10 @@ const { formItems: baseFormItems } = usePageForms('org.departments');
 const pageConfig = getPageConfigFull('org.departments');
 
 // 部门服务 - 使用 config.ts 中定义的 service（用于加载选项数据）
-const departmentService = pageConfig?.service?.department;
+const deptService = pageConfig?.service?.dept;
 
 // 使用 config.ts 中定义的 service，并添加删除确认逻辑（用于 CRUD 操作）
-const wrappedDepartmentService = usePageService('org.departments', 'department', {
+const wrappedDeptService = usePageService('org.departments', 'dept', {
   showSuccessMessage: true,
 });
 
@@ -72,7 +72,7 @@ const departmentOptions = ref<Array<{ label: string; value: string }>>([]);
 // 加载部门选项数据
 const loadDepartmentOptions = async () => {
   try {
-    const res = await departmentService.list({});
+    const res = await deptService.list({});
 
     // 处理响应数据结构：res.list 或 res.data.list 或直接是数组
     let dataArray: any[] = [];
@@ -103,7 +103,7 @@ const loadDepartmentOptions = async () => {
 function resolveDepartmentImportFn() {
   const candidates = ['import', 'importBatch', 'importExcel'];
   for (const name of candidates) {
-    const fn = (departmentService as Record<string, any>)?.[name];
+    const fn = (deptService as Record<string, any>)?.[name];
     if (typeof fn === 'function') {
       return fn;
     }

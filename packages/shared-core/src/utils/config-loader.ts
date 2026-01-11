@@ -578,6 +578,20 @@ function convertFormItem(
     );
   }
 
+  // 处理 component.options（select、radio-group、checkbox-group 等的选项）
+  if (item.component?.options && Array.isArray(item.component.options)) {
+    item.component.options = item.component.options.map((opt: any) => {
+      // 如果选项有 label 字段，且是国际化 key，进行翻译
+      if (opt.label && typeof opt.label === 'string') {
+        return {
+          ...opt,
+          label: translateKey(opt.label, t),
+        };
+      }
+      return opt;
+    });
+  }
+
   return item;
 }
 

@@ -3,8 +3,8 @@
  * 用于避免多个组件同时请求个人信息接口
  */
 
-import { storage } from '@btc/shared-core/utils/storage';
-import { sessionStorage } from '@btc/shared-core/utils/storage/session';
+import { storage } from './storage/local';
+import { sessionStorage } from './storage/session';
 
 // 持久化存储键名
 const PROFILE_INFO_STORAGE_KEY = 'btc_profile_info_data';
@@ -39,23 +39,14 @@ function getProfileInfoFromStorage(): any | null {
 function saveProfileInfoToStorage(data: any): void {
   try {
     if (!data) {
-      if (import.meta.env.DEV) {
-        console.warn('[saveProfileInfoToStorage] 数据为空，不保存');
-      }
       return;
     }
 
     // 同时保存到 sessionStorage 和 localStorage
     sessionStorage.set(PROFILE_INFO_STORAGE_KEY, data);
     storage.set(PROFILE_INFO_STORAGE_KEY, data);
-    if (import.meta.env.DEV) {
-      console.log('[saveProfileInfoToStorage] 已保存到 sessionStorage 和 localStorage');
-    }
   } catch (error) {
     // 静默失败，不影响功能
-    if (import.meta.env.DEV) {
-      console.warn('[saveProfileInfoToStorage] Failed to save to storage:', error);
-    }
   }
 }
 
@@ -74,38 +65,19 @@ export function getProfileInfoFromCache(): any | null {
  */
 export async function loadProfileInfoOnLogin(service: any): Promise<any> {
   try {
-    // 添加调用栈追踪，帮助定位问题
-    if (import.meta.env.DEV) {
-      console.log('[loadProfileInfoOnLogin] 被调用，调用栈:', new Error().stack);
-    }
-
     // 确保 service 存在
     if (!service) {
-      console.warn('[loadProfileInfoOnLogin] EPS service not available');
       return null;
     }
     const profileService = service.admin?.base?.profile;
     if (!profileService || !profileService.info) {
-      console.warn('[loadProfileInfoOnLogin] Profile service not available');
       return null;
-    }
-
-    if (import.meta.env.DEV) {
-      console.log('[loadProfileInfoOnLogin] 准备调用接口 /api/system/base/profile/info');
     }
 
     const response = await profileService.info();
 
-    if (import.meta.env.DEV) {
-      console.log('[loadProfileInfoOnLogin] 接口调用成功，响应数据:', response);
-    }
-
     // 保存到持久化存储
     saveProfileInfoToStorage(response);
-
-    if (import.meta.env.DEV) {
-      console.log('[loadProfileInfoOnLogin] 已保存到缓存');
-    }
 
     // 关键：立即更新统一存储（头像和用户名），确保顶栏能立即显示
     // 先更新存储，再触发事件，确保顶栏组件能获取到最新数据
@@ -124,9 +96,6 @@ export async function loadProfileInfoOnLogin(service: any): Promise<any> {
         }
       } catch (error) {
         // 静默失败，不影响登录流程
-        if (import.meta.env.DEV) {
-          console.warn('[loadProfileInfoOnLogin] Failed to update appStorage:', error);
-        }
       }
 
       // 触发 userInfoUpdated 事件，通知顶栏组件立即更新
@@ -141,18 +110,12 @@ export async function loadProfileInfoOnLogin(service: any): Promise<any> {
         }));
       } catch (error) {
         // 静默失败
-        if (import.meta.env.DEV) {
-          console.warn('[loadProfileInfoOnLogin] Failed to dispatch userInfoUpdated event:', error);
-        }
       }
     }
 
     return response;
   } catch (error) {
     // 静默失败，不影响登录流程
-    if (import.meta.env.DEV) {
-      console.warn('[loadProfileInfoOnLogin] Failed to load profile info:', error);
-    }
     return null;
   }
 }

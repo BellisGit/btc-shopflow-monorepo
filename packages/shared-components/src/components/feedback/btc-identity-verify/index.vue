@@ -99,7 +99,7 @@ import {
   type VerifyEmailCodeFn
 } from './composables/useIdentityVerify';
 import type { VerifyPhoneApi, VerifyEmailApi } from './types';
-import BtcDialog from '@btc-common/dialog/index';
+import BtcDialog from '../btc-dialog/index';
 import type { Component } from 'vue';
 import VerifyHeader from './components/VerifyHeader.vue';
 import VerifyTabs from './components/VerifyTabs.vue';

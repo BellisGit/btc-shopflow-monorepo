@@ -159,8 +159,8 @@ import { ref, reactive, computed, inject, type Ref, type ComputedRef } from 'vue
 
 import { UploadFilled } from '@element-plus/icons-vue';
 import { useI18n } from '@btc/shared-core';
-import BtcForm from '@btc-common/form/index.vue';
-import BtcSvg from '@btc-components/others/btc-svg/index.vue';
+import BtcForm from '../../components/form/btc-form/index.vue';
+import BtcSvg from '@btc-components/basic/btc-svg/index.vue';
 import * as XLSX from 'xlsx';
 import chardet from 'chardet';
 import type { TableColumn } from '../table/types';

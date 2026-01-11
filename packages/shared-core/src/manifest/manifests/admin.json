@@ -343,41 +343,41 @@
     },
     {
       "path": "/governance/files/templates",
-      "labelKey": "menu.data.files.templates",
+      "labelKey": "menu.governance.files.templates",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.data.files.templates"
+        "labelKey": "menu.governance.files.templates"
       },
       "breadcrumbs": [
         { "labelKey": "menu.governance", "icon": "Files" },
-        { "labelKey": "menu.data.files", "icon": "Document" },
-        { "labelKey": "menu.data.files.templates", "icon": "Files" }
+        { "labelKey": "menu.governance.files", "icon": "Document" },
+        { "labelKey": "menu.governance.files.templates", "icon": "Files" }
       ]
     },
     {
       "path": "/governance/dictionary/fields",
-      "labelKey": "menu.data.dictionary.fields",
+      "labelKey": "menu.governance.dictionary.fields",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.data.dictionary.fields"
+        "labelKey": "menu.governance.dictionary.fields"
       },
       "breadcrumbs": [
         { "labelKey": "menu.governance", "icon": "Setting" },
-        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
-        { "labelKey": "menu.data.dictionary.fields", "icon": "Document" }
+        { "labelKey": "menu.governance.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.governance.dictionary.fields", "icon": "Document" }
       ]
     },
     {
       "path": "/governance/dictionary/values",
-      "labelKey": "menu.data.dictionary.values",
+      "labelKey": "menu.governance.dictionary.values",
       "tab": {
         "enabled": true,
-        "labelKey": "menu.data.dictionary.values"
+        "labelKey": "menu.governance.dictionary.values"
       },
       "breadcrumbs": [
         { "labelKey": "menu.governance", "icon": "Setting" },
-        { "labelKey": "menu.data.dictionary", "icon": "Collection" },
-        { "labelKey": "menu.data.dictionary.values", "icon": "List" }
+        { "labelKey": "menu.governance.dictionary", "icon": "Collection" },
+        { "labelKey": "menu.governance.dictionary.values", "icon": "List" }
       ]
     },
     {
@@ -414,6 +414,18 @@
       "breadcrumbs": [
         { "labelKey": "menu.test_features", "icon": "Tools" },
         { "labelKey": "menu.test_features.inventory_ticket_print", "icon": "Printer" }
+      ]
+    },
+    {
+      "path": "/test/filter-list-test",
+      "labelKey": "menu.test_features.filter_list_test",
+      "tab": {
+        "enabled": true,
+        "labelKey": "menu.test_features.filter_list_test"
+      },
+      "breadcrumbs": [
+        { "labelKey": "menu.test_features", "icon": "Tools" },
+        { "labelKey": "menu.test_features.filter_list_test", "icon": "Filter" }
       ]
     }
   ],
@@ -513,17 +525,17 @@
       "children": [
         {
           "index": "governance-files",
-          "labelKey": "menu.data.files",
+          "labelKey": "menu.governance.files",
           "children": [
-            { "index": "/governance/files/templates", "labelKey": "menu.data.files.templates" }
+            { "index": "/governance/files/templates", "labelKey": "menu.governance.files.templates" }
           ]
         },
         {
           "index": "governance-dictionary",
-          "labelKey": "menu.data.dictionary",
+          "labelKey": "menu.governance.dictionary",
           "children": [
-            { "index": "/governance/dictionary/fields", "labelKey": "menu.data.dictionary.fields" },
-            { "index": "/governance/dictionary/values", "labelKey": "menu.data.dictionary.values" }
+            { "index": "/governance/dictionary/fields", "labelKey": "menu.governance.dictionary.fields" },
+            { "index": "/governance/dictionary/values", "labelKey": "menu.governance.dictionary.values" }
           ]
         }
       ]
@@ -534,7 +546,8 @@
       "children": [
         { "index": "/test/components", "labelKey": "menu.test_features.components" },
         { "index": "/test/api-test-center", "labelKey": "menu.test_features.api_test_center" },
-        { "index": "/test/inventory-ticket-print", "labelKey": "menu.test_features.inventory_ticket_print" }
+        { "index": "/test/inventory-ticket-print", "labelKey": "menu.test_features.inventory_ticket_print" },
+        { "index": "/test/filter-list-test", "labelKey": "menu.test_features.filter_list_test" }
       ]
     }
   ]

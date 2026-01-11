@@ -1,6 +1,6 @@
 <template>
   <div class="btc-chart-demo">
-    <div class="btc-chart-demo__container">
+    <div class="btc-chart-gallery__container">
       <ElRow :gutter="10">
       <!-- 1. 柱状图（单数据） -->
       <ElCol :xs="24" :md="12" :lg="8">
@@ -283,7 +283,7 @@ import type {
 } from '../../../charts';
 
 defineOptions({
-  name: 'BtcChartDemo'
+  name: 'BtcChartGallery'
 });
 
 // 1. 柱状图（单数据）- 需要转换为对象数组格式
@@ -505,7 +505,7 @@ const dualBarXAxis = ref<string[]>([
 </script>
 
 <style lang="scss" scoped>
-.btc-chart-demo {
+.btc-chart-gallery {
   display: flex;
   flex-direction: column;
   height: 100%;

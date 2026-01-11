@@ -26,6 +26,8 @@ export default {
       'finance.inventory.result.search_placeholder': '搜索盘点结果',
       'finance.placeholder.inventory_management': '盘点管理页面内容待建设',
       'inventory.check.list': '盘点列表',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.finance.inventory.check.list': '盘点列表',
       // common 配置
       'common.inventory.result.fields.material_code': '物料编码',
       'common.inventory.result.fields.position': '仓位',
@@ -51,6 +53,8 @@ export default {
       'finance.inventory.result.search_placeholder': 'Search inventory results',
       'finance.placeholder.inventory_management': 'Inventory management page is under construction',
       'inventory.check.list': 'Check List',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      'title.finance.inventory.check.list': 'Check List',
       // common 配置
       'common.inventory.result.fields.material_code': 'Material Code',
       'common.inventory.result.fields.position': 'Position',
@@ -66,7 +70,7 @@ export default {
     'finance.inventory.result': [
       { type: 'selection', width: 48 },
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'materialCode', label: 'common.inventory.result.fields.material_code', minWidth: 120, showOverflowTooltip: true },
+      { prop: 'materialCode', label: 'common.inventory.result.fields.material_code', showOverflowTooltip: true },
       { prop: 'position', label: 'common.inventory.result.fields.position', width: 80, showOverflowTooltip: true },
       { prop: 'unitCost', label: 'common.inventory.result.fields.unit_cost', width: 100, align: 'right' },
       { prop: 'bookQty', label: 'common.inventory.result.fields.book_qty', width: 100, align: 'right' },

@@ -1,6 +1,6 @@
 <template>
   <div class="file-template-page">
-    <BtcViewGroup ref="viewGroupRef" left-width="280px" :left-title="t('data.file.template.categories')" :right-title="t('data.file.template.template_list')">
+    <BtcViewGroup ref="viewGroupRef" left-width="280px" left-title="title.data.files.template.categories" right-title="title.data.files.template.templateList">
       <!-- 左侧分类列表 -->
       <template #left>
         <div class="file-template-left">

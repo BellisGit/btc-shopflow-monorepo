@@ -19,6 +19,8 @@ export default {
       'menu.inventory_management.result': '盘点结果表',
       // 页面标题
       'inventory.check.list': '盘点列表',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title 和 right-title）
+      'title.logistics.inventory.check.list': '盘点列表',
       // 按钮
       'logistics.inventory.base.button.pull': '拉取数据',
       // 错误消息
@@ -38,6 +40,8 @@ export default {
       'menu.inventory_management.result': 'Inventory Result',
       // 页面标题
       'inventory.check.list': 'Inventory Check List',
+      // 标题配置（用于 BtcViewGroup/BtcTableGroup 的 left-title  and right-title）
+      'title.logistics.inventory.check.list': 'Inventory Check List',
       // 按钮
       'logistics.inventory.base.button.pull': 'Pull Data',
       // 错误消息
@@ -53,45 +57,45 @@ export default {
   columns: {
     'logistics.inventory.info': [
       { type: 'index', label: 'common.index', width: 80 },
-      { prop: 'checkNo', label: 'common.inventory.info.fields.check_no', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'domainId', label: 'common.inventory.info.fields.domain_id', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'checkType', label: 'common.inventory.info.fields.check_type', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'checkStatus', label: 'common.inventory.info.fields.check_status', minWidth: 140, showOverflowTooltip: true },
+      { prop: 'checkNo', label: 'common.inventory.info.fields.check_no', showOverflowTooltip: true },
+      { prop: 'domainId', label: 'common.inventory.info.fields.domain_id', showOverflowTooltip: true },
+      { prop: 'checkType', label: 'common.inventory.info.fields.check_type', showOverflowTooltip: true },
+      { prop: 'checkStatus', label: 'common.inventory.info.fields.check_status', showOverflowTooltip: true },
       { prop: 'startTime', label: 'common.inventory.info.fields.start_time', width: 180 },
       { prop: 'endTime', label: 'common.inventory.info.fields.end_time', width: 180 },
-      { prop: 'checkerId', label: 'common.inventory.info.fields.checker_id', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'remark', label: 'common.inventory.info.fields.remark', minWidth: 200, showOverflowTooltip: true },
+      { prop: 'checkerId', label: 'common.inventory.info.fields.checker_id', showOverflowTooltip: true },
+      { prop: 'remark', label: 'common.inventory.info.fields.remark', showOverflowTooltip: true },
       { prop: 'createdAt', label: 'common.inventory.info.fields.created_at', width: 180 },
       { prop: 'updateAt', label: 'common.inventory.info.fields.update_at', width: 180 },
     ] as TableColumn[],
 
     'logistics.inventory.detail': [
       { type: 'index', label: 'common.index', width: 80 },
-      { prop: 'materialCode', label: 'common.inventory.detail.fields.material_code', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'diffReason', label: 'common.inventory.detail.fields.diff_reason', minWidth: 200, showOverflowTooltip: true },
-      { prop: 'processPerson', label: 'common.inventory.detail.fields.process_person', minWidth: 140 },
+      { prop: 'materialCode', label: 'common.inventory.detail.fields.material_code', showOverflowTooltip: true },
+      { prop: 'diffReason', label: 'common.inventory.detail.fields.diff_reason', showOverflowTooltip: true },
+      { prop: 'processPerson', label: 'common.inventory.detail.fields.process_person' },
       { prop: 'processTime', label: 'common.inventory.detail.fields.process_time', width: 180 },
-      { prop: 'processRemark', label: 'common.inventory.detail.fields.process_remark', minWidth: 200, showOverflowTooltip: true },
+      { prop: 'processRemark', label: 'common.inventory.detail.fields.process_remark', showOverflowTooltip: true },
     ] as TableColumn[],
 
     'logistics.inventory.result': [
       { type: 'selection', width: 48 },
       { type: 'index', label: 'common.index', width: 80 },
-      { prop: 'materialCode', label: 'common.inventory.result.fields.material_code', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'position', label: 'common.inventory.result.fields.position', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'bookQty', label: 'common.inventory.result.fields.book_qty', minWidth: 120 },
-      { prop: 'actualQty', label: 'common.inventory.result.fields.actual_qty', minWidth: 120 },
-      { prop: 'diffQty', label: 'common.inventory.result.fields.diff_qty', minWidth: 120 },
+      { prop: 'materialCode', label: 'common.inventory.result.fields.material_code', showOverflowTooltip: true },
+      { prop: 'position', label: 'common.inventory.result.fields.position', showOverflowTooltip: true },
+      { prop: 'bookQty', label: 'common.inventory.result.fields.book_qty' },
+      { prop: 'actualQty', label: 'common.inventory.result.fields.actual_qty' },
+      { prop: 'diffQty', label: 'common.inventory.result.fields.diff_qty' },
     ] as TableColumn[],
 
     'logistics.inventory.info.subProcess': [
       { type: 'index', label: 'common.index', width: 60 },
-      { prop: 'subProcessNo', label: 'common.inventory.sub_process.fields.sub_process_no', minWidth: 160, showOverflowTooltip: true },
-      { prop: 'checkStatus', label: 'common.inventory.sub_process.fields.check_status', minWidth: 140, showOverflowTooltip: true },
+      { prop: 'subProcessNo', label: 'common.inventory.sub_process.fields.sub_process_no', showOverflowTooltip: true },
+      { prop: 'checkStatus', label: 'common.inventory.sub_process.fields.check_status', showOverflowTooltip: true },
       { prop: 'startTime', label: 'common.inventory.sub_process.fields.start_time', width: 180 },
       { prop: 'endTime', label: 'common.inventory.sub_process.fields.end_time', width: 180 },
-      { prop: 'remainingSeconds', label: 'common.inventory.sub_process.fields.remaining_seconds', minWidth: 120 },
-      { prop: 'parentProcessNo', label: 'common.inventory.sub_process.fields.parent_process_no', minWidth: 160, showOverflowTooltip: true },
+      { prop: 'remainingSeconds', label: 'common.inventory.sub_process.fields.remaining_seconds' },
+      { prop: 'parentProcessNo', label: 'common.inventory.sub_process.fields.parent_process_no', showOverflowTooltip: true },
       { prop: 'createdAt', label: 'common.inventory.info.fields.created_at', width: 180 },
       { prop: 'updatedAt', label: 'common.inventory.info.fields.update_at', width: 180 },
     ] as TableColumn[],
@@ -108,9 +112,9 @@ export default {
 
     'logistics.inventory.storage-location': [
       { type: 'selection', width: 48 },
-      { prop: 'name', label: 'common.inventory.storage_location.fields.name', minWidth: 140, showOverflowTooltip: true },
-      { prop: 'position', label: 'common.inventory.storage_location.fields.position', minWidth: 180, showOverflowTooltip: true },
-      { prop: 'description', label: 'common.inventory.storage_location.fields.description', minWidth: 200, showOverflowTooltip: true },
+      { prop: 'name', label: 'common.inventory.storage_location.fields.name', showOverflowTooltip: true },
+      { prop: 'position', label: 'common.inventory.storage_location.fields.position', showOverflowTooltip: true },
+      { prop: 'description', label: 'common.inventory.storage_location.fields.description', showOverflowTooltip: true },
       { prop: 'createdAt', label: 'common.inventory.storage_location.fields.createdAt', width: 180 },
       { prop: 'updatedAt', label: 'common.inventory.storage_location.fields.updatedAt', width: 180 },
     ] as TableColumn[],

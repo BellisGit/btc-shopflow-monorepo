@@ -4,7 +4,7 @@
     <!-- 开发环境：所有应用都显示（通过 layout-app 显示给子应用） -->
     <!-- 生产环境：也通过 layout-app 显示 -->
     <BtcDevTools />
-    <AppLayout />
+    <BtcAppLayout />
   </div>
 </template>
 
@@ -18,7 +18,7 @@
  * 3. 不包含任何应用的 manifest 数据（子应用自己注册）
  */
 // 直接从组件路径导入，避免通过 index.ts 重新导出导致的循环依赖警告
-import { AppLayout } from '@btc/shared-components';
+import { BtcAppLayout } from '@btc/shared-components';
 import { BtcDevTools } from '@btc/shared-components';
 </script>
 
